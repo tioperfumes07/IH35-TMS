@@ -61,7 +61,7 @@ export function RandomTestingPool() {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-        <h3 className="text-xs font-semibold text-slate-900">Active pool ({members.length})</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">Active pool ({members.length})</h3>
         {poolQ.isError ? (
           <div data-testid="random-testing-pool-error"><ListErrorState status={0} message={userFacingApiError(poolQ.error, "Could not load the random testing pool.")} onRetry={() => void poolQ.refetch()} /></div>
         ) : (
@@ -76,12 +76,12 @@ export function RandomTestingPool() {
                 <span>{formatDateUS(member.added_at)}</span>
               </li>
             ))}
-            {members.length === 0 ? <li className="text-slate-500">No active CDL drivers in pool.</li> : null}
+            {members.length === 0 ? <li className="text-[#6B7280]">No active CDL drivers in pool.</li> : null}
           </ul>
         )}
       </div>
       <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-        <h3 className="text-xs font-semibold text-slate-900">Recent draws & selections</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">Recent draws & selections</h3>
         {drawsQ.isError ? (
           <div data-testid="random-testing-draws-error"><ListErrorState status={0} message={userFacingApiError(drawsQ.error, "Could not load random testing draws.")} onRetry={() => void drawsQ.refetch()} /></div>
         ) : (
@@ -93,7 +93,7 @@ export function RandomTestingPool() {
                   {String(draw.alcohol_count)}
                 </li>
               ))}
-              {draws.length === 0 ? <li className="text-slate-500">No draws yet.</li> : null}
+              {draws.length === 0 ? <li className="text-[#6B7280]">No draws yet.</li> : null}
             </ul>
             <div className="mt-2 flex items-center justify-end gap-2" data-testid="random-draws-server-pager">
               <Button size="sm" variant="secondary" disabled={drawPage <= 1 || drawsQ.isFetching} onClick={() => setDrawPage((page) => Math.max(1, page - 1))}>Previous draws</Button>

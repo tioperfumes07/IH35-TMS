@@ -72,7 +72,7 @@ export function DriverSchedulerRequestInboxPage({ embedded = false }: { embedded
       {!operatingCompanyId ? <div className="text-xs text-gray-500">Select an operating company to view leave requests.</div> : null}
       {!embedded ? (
         <div className="mb-2">
-          <Link to="/safety/driver-scheduler" className="text-xs text-slate-700 hover:underline">
+          <Link to="/safety/driver-scheduler" className="text-xs text-[#1F2A44] hover:underline">
             ← Back to Driver Scheduler grid
           </Link>
         </div>
@@ -102,12 +102,12 @@ export function DriverSchedulerRequestInboxPage({ embedded = false }: { embedded
       ) : null}
 
       {!query.isError && totalCount > PAGE_SIZE ? (
-        <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+        <div className="flex items-center justify-between rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs text-[#4B5563]">
           <span>{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}</span>
           <div className="flex gap-2">
             <button
               type="button"
-              className="rounded-sm border border-slate-300 px-2 py-1 disabled:opacity-50"
+              className="rounded-sm border border-[#E5E7EB] px-2 py-1 disabled:opacity-50"
               disabled={page === 0 || query.isFetching}
               onClick={() => setPage((value) => Math.max(0, value - 1))}
             >
@@ -115,7 +115,7 @@ export function DriverSchedulerRequestInboxPage({ embedded = false }: { embedded
             </button>
             <button
               type="button"
-              className="rounded-sm border border-slate-300 px-2 py-1 disabled:opacity-50"
+              className="rounded-sm border border-[#E5E7EB] px-2 py-1 disabled:opacity-50"
               disabled={(page + 1) * PAGE_SIZE >= totalCount || query.isFetching}
               onClick={() => setPage((value) => value + 1)}
             >
