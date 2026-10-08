@@ -42,7 +42,7 @@ export function GeocodePrecisionBadgeChip({
       <span
         data-testid={testId}
         data-geocode-precision="rooftop"
-        className="inline-flex rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700"
+        className="inline-flex rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-medium text-[#1F2A44]"
       >
         rooftop
       </span>
@@ -53,7 +53,7 @@ export function GeocodePrecisionBadgeChip({
       <span
         data-testid={testId}
         data-geocode-precision="approximate"
-        className="inline-flex rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600"
+        className="inline-flex rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-medium text-[#4B5563]"
       >
         approximate
       </span>
@@ -63,7 +63,7 @@ export function GeocodePrecisionBadgeChip({
     <span
       data-testid={testId}
       data-geocode-precision="unknown"
-      className="inline-flex rounded-sm border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-xs text-slate-600"
+      className="inline-flex rounded-sm border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-xs text-[#4B5563]"
     >
       unknown
     </span>

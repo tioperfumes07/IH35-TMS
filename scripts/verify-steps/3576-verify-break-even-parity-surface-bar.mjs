@@ -3,5 +3,6 @@ export default {
   name: "verify-break-even-parity-surface-bar",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-break-even-parity-surface-bar.mjs"]);
+    ctx.run("node", ["scripts/verify-geocode-contracts-score-slate-leftover-chrome.mjs"]);
   },
 };

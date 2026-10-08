@@ -199,7 +199,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
             { key: "effective_date", label: "Effective", render: (row: CustomerContract) => formatDate(row.effective_date) },
             { key: "expiration_date", label: "Expires", render: (row: CustomerContract) => formatDate(row.expiration_date) },
             { key: "created_at", label: "Uploaded", render: (row: CustomerContract) => formatDate(row.created_at) },
-            { key: "supersedes_id", label: "Status", render: (row: CustomerContract) => row.supersedes_id ? <span className="text-xs text-slate-500">Superseded</span> : <span className="text-xs text-slate-700">Current</span> },
+            { key: "supersedes_id", label: "Status", render: (row: CustomerContract) => row.supersedes_id ? <span className="text-xs text-[#6B7280]">Superseded</span> : <span className="text-xs text-[#1F2A44]">Current</span> },
             ...(canWrite
               ? [{
                   key: "actions",
@@ -220,15 +220,15 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
 
       <section className="space-y-2 border-t border-gray-200 pt-3" data-testid="customer-legal-contracts-reverse">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-xs font-semibold text-slate-900">E-signature contracts</h3>
-          <EntityLink kind="legal_contracts_customer" id={customerId} label="Open Legal Contracts" className="text-xs font-semibold text-slate-700 underline" />
+          <h3 className="text-xs font-semibold text-[#0F1219]">E-signature contracts</h3>
+          <EntityLink kind="legal_contracts_customer" id={customerId} label="Open Legal Contracts" className="text-xs font-semibold text-[#1F2A44] underline" />
         </div>
         {legalContractsQuery.isError ? <ListErrorState title="Couldn't load this customer's legal contracts" status={0} message={(legalContractsQuery.error as Error)?.message} onRetry={() => void legalContractsQuery.refetch()} /> : null}
         {legalContractsQuery.isLoading ? <p className="text-xs text-gray-500">Loading e-signature contracts…</p> : null}
         {!legalContractsQuery.isLoading && !legalContractsQuery.isError && legalContracts.length === 0 ? <p className="text-xs text-gray-500">No e-signature contracts linked to this customer.</p> : null}
         {legalContracts.map((contract) => (
           <div key={contract.id} className="rounded-sm border border-gray-200 p-2 text-xs">
-            <EntityLink kind="legal_contract" id={contract.id} label={contract.display_name_en ?? contract.template_code} className="font-semibold text-slate-700 underline" />
+            <EntityLink kind="legal_contract" id={contract.id} label={contract.display_name_en ?? contract.template_code} className="font-semibold text-[#1F2A44] underline" />
             <div className="text-gray-500">{contract.status} · {contract.signer_name}</div>
           </div>
         ))}
@@ -253,7 +253,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
         >
           <form className="space-y-3" onSubmit={handleMetaSubmit}>
             {supersedeTarget && (
-              <p className="text-xs text-slate-700 bg-slate-50 rounded-sm p-2">
+              <p className="text-xs text-[#1F2A44] bg-[#F7F8FA] rounded-sm p-2">
                 Superseding: <strong>{CONTRACT_TYPE_LABELS[supersedeTarget.contract_type]}</strong>
                 {supersedeTarget.effective_date ? ` (effective ${formatDate(supersedeTarget.effective_date)})` : ""}
               </p>
