@@ -63,7 +63,7 @@ const ENTITY_KINDS = new Set<string>([
 function HistoryLink({ link }: { link: LoadHistoryLink }) {
   if (!ENTITY_KINDS.has(link.kind)) {
     return (
-      <span className="text-xs text-slate-500" title={link.id}>
+      <span className="text-xs text-[#6B7280]" title={link.id}>
         {link.label ?? link.kind}
       </span>
     );
@@ -100,7 +100,7 @@ export default function LoadHistoryPage() {
       key: "kind",
       label: "Type",
       render: (row) => (
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">{kindLabel(row.kind)}</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">{kindLabel(row.kind)}</span>
       ),
     },
     {
@@ -108,10 +108,10 @@ export default function LoadHistoryPage() {
       label: "What happened",
       allowWrap: true,
       render: (row) => (
-        <div className="text-xs text-slate-800">
+        <div className="text-xs text-[#1F2A44]">
           <div>{row.summary}</div>
           {row.field ? (
-            <div className="mt-0.5 text-xs text-slate-500">
+            <div className="mt-0.5 text-xs text-[#6B7280]">
               {row.field.replace(/_/g, " ")}
               {row.before_value != null || row.after_value != null
                 ? `: ${row.before_value ?? "—"} → ${row.after_value ?? "—"}`
@@ -128,13 +128,13 @@ export default function LoadHistoryPage() {
         row.actor_user_id ? (
           <EntityLink kind="user" id={row.actor_user_id} label={row.actor_label ?? undefined} />
         ) : (
-          <span className="text-xs text-slate-400">—</span>
+          <span className="text-xs text-[#6B7280]">—</span>
         ),
     },
     {
       key: "source",
       label: "Source",
-      render: (row) => <span className="text-xs text-slate-600">{row.source ?? "—"}</span>,
+      render: (row) => <span className="text-xs text-[#4B5563]">{row.source ?? "—"}</span>,
     },
     {
       key: "links",
@@ -145,7 +145,7 @@ export default function LoadHistoryPage() {
           {row.links.slice(0, 5).map((l) => (
             <HistoryLink key={`${l.kind}:${l.id}`} link={l} />
           ))}
-          {row.links.length === 0 ? <span className="text-xs text-slate-400">—</span> : null}
+          {row.links.length === 0 ? <span className="text-xs text-[#6B7280]">—</span> : null}
         </div>
       ),
     },
@@ -155,7 +155,7 @@ export default function LoadHistoryPage() {
     {
       key: "kind",
       label: "Document",
-      render: (row) => <span className="text-xs uppercase text-slate-600">{row.kind.replace(/_/g, " ")}</span>,
+      render: (row) => <span className="text-xs uppercase text-[#4B5563]">{row.kind.replace(/_/g, " ")}</span>,
     },
     {
       key: "display_id",
@@ -186,8 +186,8 @@ export default function LoadHistoryPage() {
   if (!id) {
     return (
       <div className="p-4">
-        <p className="text-xs text-slate-600">Missing load id.</p>
-        <Link to="/dispatch?view=loads" className="text-xs text-slate-700 underline">
+        <p className="text-xs text-[#4B5563]">Missing load id.</p>
+        <Link to="/dispatch?view=loads" className="text-xs text-[#4B5563] underline">
           Open Dispatch loads
         </Link>
       </div>
@@ -203,7 +203,7 @@ export default function LoadHistoryPage() {
           <div className="flex gap-2">
             <Link
               to={`/dispatch/loads/${encodeURIComponent(id)}`}
-              className="inline-flex h-7 items-center rounded-sm border border-slate-300 bg-white px-2 text-xs font-medium text-slate-800"
+              className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs font-medium text-[#1F2A44]"
               data-testid="load-history-open-load"
             >
               Open load
@@ -219,8 +219,8 @@ export default function LoadHistoryPage() {
         />
       ) : null}
 
-      <section className="rounded-sm border border-slate-200 bg-white p-3" data-testid="load-history-linked-docs">
-        <h2 className="mb-2 text-section-header font-bold uppercase tracking-wide text-slate-600">Linked documents</h2>
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="load-history-linked-docs">
+        <h2 className="mb-2 text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Linked documents</h2>
         <ParityTable appearance="board"
           columns={docColumns}
           rows={historyQuery.data?.linked_documents ?? []}
@@ -231,8 +231,8 @@ export default function LoadHistoryPage() {
         />
       </section>
 
-      <section className="rounded-sm border border-slate-200 bg-white p-3" data-testid="load-history-timeline">
-        <h2 className="mb-2 text-section-header font-bold uppercase tracking-wide text-slate-600">Timeline</h2>
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="load-history-timeline">
+        <h2 className="mb-2 text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Timeline</h2>
         <ParityTable appearance="board"
           columns={timelineColumns}
           rows={historyQuery.data?.rows ?? []}
