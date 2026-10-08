@@ -41,8 +41,8 @@ const US_STATES = [
 
 function severityClass(severity: string) {
   if (severity === "expired") return "bg-red-100 text-red-800";
-  if (severity === "warning") return "bg-slate-100 text-slate-700";
-  if (severity === "ok") return "bg-slate-100 text-slate-700";
+  if (severity === "warning") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (severity === "ok") return "bg-[#F7F8FA] text-[#4B5563]";
   return "bg-gray-100 text-gray-700";
 }
 
@@ -180,7 +180,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
       label: "Action",
       render: (row) =>
         row.archived_at ? (
-          <button type="button" className="text-slate-700 underline" onClick={() => restoreMutation.mutate({ id: String(row.id), companyId: operatingCompanyId, generation: lifecycleGenerationRef.current })}>
+          <button type="button" className="text-[#4B5563] underline" onClick={() => restoreMutation.mutate({ id: String(row.id), companyId: operatingCompanyId, generation: lifecycleGenerationRef.current })}>
             Restore
           </button>
         ) : (
@@ -193,17 +193,17 @@ export function PermitsPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="permits-page">
-      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-[#4B5563]">
         Track operating authority, IFTA, oversize/overweight, and hazmat permits with configurable renewal alerts.
       </div>
 
       <div
-        className="rounded-sm border border-slate-200 bg-slate-50 p-3"
+        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3"
         data-testid="permits-renewal-dashboard"
       >
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold uppercase text-slate-700">Renewal alerts</span>
-          <span className="text-xs text-slate-700">
+          <span className="text-xs font-semibold uppercase text-[#4B5563]">Renewal alerts</span>
+          <span className="text-xs text-[#4B5563]">
             Alert window: {String((reminder as { days_before_expiry?: number })?.days_before_expiry ?? 30)} days before expiry
           </span>
           <div className="ml-auto flex items-center gap-2">
@@ -213,12 +213,12 @@ export function PermitsPage({ operatingCompanyId }: Props) {
               max={365}
               value={reminderDays}
               onChange={(event) => setReminderDays(event.target.value)}
-              className="w-16 rounded-sm border border-slate-300 px-2 py-1 text-xs"
+              className="w-16 rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
               data-testid="permits-reminder-days-input"
             />
             <button
               type="button"
-              className="rounded-sm bg-slate-700 px-2 py-1 text-xs font-semibold text-white"
+              className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white"
               disabled={permitsQuery.isError || reminderMutation.isPending}
               onClick={() => reminderMutation.mutate({ companyId: operatingCompanyId, generation: lifecycleGenerationRef.current, daysBeforeExpiry: Number(reminderDays) })}
             >
@@ -232,17 +232,17 @@ export function PermitsPage({ operatingCompanyId }: Props) {
           </p>
         ) : null}
         {!permitsQuery.isError && (renewalAlerts.length === 0 ? (
-          <p className="text-xs text-slate-700">No permits due for renewal within the alert window.</p>
+          <p className="text-xs text-[#4B5563]">No permits due for renewal within the alert window.</p>
         ) : (
           <ul className="space-y-1">
             {renewalAlerts.map((row) => (
-              <li key={String(row.id)} className="flex flex-wrap items-center gap-2 text-xs text-slate-700">
+              <li key={String(row.id)} className="flex flex-wrap items-center gap-2 text-xs text-[#4B5563]">
                 <span className={`rounded-sm px-1.5 py-0.5 font-semibold ${severityClass(String(row.renewal_severity ?? ""))}`}>
                   {String(row.days_to_expiry ?? "—")}d
                 </span>
                 <span>{PERMIT_TYPE_LABELS[(row.permit_type as SafetyPermitType) ?? "other"] ?? row.permit_type}</span>
                 <span>{String(row.holder_name || row.permit_number || "—")}</span>
-                <span className="text-slate-700">expires {row.expiry_date ? formatDateUS(row.expiry_date) : "—"}</span>
+                <span className="text-[#4B5563]">expires {row.expiry_date ? formatDateUS(row.expiry_date) : "—"}</span>
               </li>
             ))}
           </ul>
@@ -252,13 +252,13 @@ export function PermitsPage({ operatingCompanyId }: Props) {
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
           data-testid="permits-create-btn"
           onClick={() => setCreateOpen(true)}
         >
           + Create permit
         </button>
-        <label className="ml-auto flex items-center gap-1 text-xs text-slate-600">
+        <label className="ml-auto flex items-center gap-1 text-xs text-[#4B5563]">
           <input
             type="checkbox"
             checked={showArchived}
@@ -281,7 +281,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
           rows={activePermits}
           rowKey={(row) => String(row.id)}
           rowClassName={(row) =>
-            deepLinkPermitId && String(row.id) === deepLinkPermitId ? "bg-slate-100 ring-1 ring-slate-400" : ""
+            deepLinkPermitId && String(row.id) === deepLinkPermitId ? "bg-[#F7F8FA] ring-1 ring-[#E5E7EB]" : ""
           }
           loading={permitsQuery.isLoading}
           emptyText="No permits tracked yet. Use + Create permit to book operating authority and compliance documents."
@@ -303,7 +303,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
       {createOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" data-testid="permits-create-modal">
           <div className="w-full max-w-lg rounded-sm border border-gray-200 bg-white p-4 shadow-lg">
-            <h3 className="mb-3 text-xs font-semibold text-slate-800">Create permit</h3>
+            <h3 className="mb-3 text-xs font-semibold text-[#1F2A44]">Create permit</h3>
             <div className="grid gap-2">
               <label className="text-xs">
                 Permit type
@@ -398,7 +398,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
               </button>
               <button
                 type="button"
-                className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+                className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
                 disabled={!draft.expiry_date || createMutation.isPending}
                 onClick={() => createMutation.mutate({
                   companyId: operatingCompanyId,

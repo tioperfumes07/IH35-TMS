@@ -367,7 +367,7 @@ export function ComplaintsTab() {
           <>
             <button
               type="button"
-              className="mr-2 text-slate-700 underline disabled:opacity-60"
+              className="mr-2 text-[#4B5563] underline disabled:opacity-60"
               disabled={patchMutation.isPending}
               onClick={() => patchMutation.mutate({ id: String(row.id), status: "resolved", companyId, generation: lifecycleGenerationRef.current })}
             >
@@ -383,16 +383,16 @@ export function ComplaintsTab() {
             </button>
           </>
         ) : (
-          <span className="text-slate-400">Owner-only</span>
+          <span className="text-[#6B7280]">Owner-only</span>
         ),
     },
   ];
 
   if (isPrivacyGateError(complaintsQuery.error)) {
     return (
-      <div className="rounded-sm border border-slate-200 bg-slate-50 p-6 text-center">
-        <Lock className="mx-auto h-5 w-5 text-slate-700" />
-        <p className="mt-2 text-xs font-semibold text-slate-700">This area is restricted to Owner / Admin / Safety roles. Contact your administrator if you need access.</p>
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-6 text-center">
+        <Lock className="mx-auto h-5 w-5 text-[#4B5563]" />
+        <p className="mt-2 text-xs font-semibold text-[#4B5563]">This area is restricted to Owner / Admin / Safety roles. Contact your administrator if you need access.</p>
       </div>
     );
   }
@@ -400,8 +400,8 @@ export function ComplaintsTab() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-        <Lock className="h-4 w-4 text-slate-500" />
-        <span className="font-semibold text-slate-700">Privacy-gated complaints workflow</span>
+        <Lock className="h-4 w-4 text-[#6B7280]" />
+        <span className="font-semibold text-[#4B5563]">Privacy-gated complaints workflow</span>
       </div>
       {canCreate ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -428,7 +428,7 @@ export function ComplaintsTab() {
             </SelectCombobox>
 
             {form.complainant_type === "anonymous" ? (
-              <span className="rounded-sm border border-dashed border-gray-300 px-2 py-1 text-xs text-slate-500">No identity</span>
+              <span className="rounded-sm border border-dashed border-gray-300 px-2 py-1 text-xs text-[#6B7280]">No identity</span>
             ) : form.complainant_type === "driver" ? (
               <DriverPickerWithCreate
                 operatingCompanyId={companyId}
@@ -534,7 +534,7 @@ export function ComplaintsTab() {
               limit={200}
               total={complaintTypesQuery.data?.total}
               hint="Type to search the full complaint-type catalog."
-              className="text-xs text-slate-600"
+              className="text-xs text-[#4B5563]"
             />
             <input
               className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -586,11 +586,11 @@ export function ComplaintsTab() {
           </div>
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs">
             {missingFields.length > 0 ? (
-              <span className="text-slate-500">Add {missingFields.join(", ")} to file this complaint.</span>
+              <span className="text-[#6B7280]">Add {missingFields.join(", ")} to file this complaint.</span>
             ) : (
-              <span className="text-slate-400">Ready to file.</span>
+              <span className="text-[#6B7280]">Ready to file.</span>
             )}
-            <Link to="/lists/safety/complaint-types" className="text-slate-700 underline">
+            <Link to="/lists/safety/complaint-types" className="text-[#4B5563] underline">
               Manage types
             </Link>
           </div>
@@ -627,7 +627,7 @@ export function ComplaintsTab() {
         hidePager
         filterBar={
           <div className="relative flex flex-wrap items-end gap-2" data-testid="complaints-filters">
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Driver
               <EntityPicker
                 kind="driver"
@@ -670,7 +670,7 @@ export function ComplaintsTab() {
         }
         rowClassName={(row) =>
           highlightedComplaintId && String(row.id) === highlightedComplaintId
-            ? "bg-slate-100 ring-1 ring-inset ring-slate-300"
+            ? "bg-[#F7F8FA] ring-1 ring-inset ring-[#E5E7EB]"
             : ""
         }
       />
@@ -678,7 +678,7 @@ export function ComplaintsTab() {
       {!listState.isError && complaintTotal > pageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="complaints-tab-server-pager">
           <Button size="sm" variant="secondary" disabled={page <= 1 || complaintsQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous complaints</Button>
-          <span className="text-slate-600">Page {page} of {complaintPageCount} · {complaintTotal} complaints</span>
+          <span className="text-[#4B5563]">Page {page} of {complaintPageCount} · {complaintTotal} complaints</span>
           <Button size="sm" variant="secondary" disabled={page >= complaintPageCount || complaintsQuery.isFetching} onClick={() => setPage((current) => Math.min(complaintPageCount, current + 1))}>Next complaints</Button>
         </div>
       ) : null}
