@@ -301,18 +301,18 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
             {money(Number(debt?.total_active_debt ?? 0))}
           </div>
         </div>
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3">
-          <div className="text-xs uppercase text-slate-700">Outstanding liabilities</div>
-          <div className="text-page-title font-semibold text-slate-800" data-testid="driver-earnings-liabilities-total">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+          <div className="text-xs uppercase text-[#4B5563]">Outstanding liabilities</div>
+          <div className="text-page-title font-semibold text-[#1F2A44]" data-testid="driver-earnings-liabilities-total">
             {moneyOrError(liabilitiesQuery.isError, totalOutstandingLiabilities)}
           </div>
         </div>
-        <div className="rounded-sm border border-slate-300 bg-slate-100 p-3">
-          <div className="text-xs uppercase text-slate-700">Cash advances unpaid</div>
-          <div className="text-page-title font-semibold text-slate-700" data-testid="driver-earnings-cash-advances-unpaid">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+          <div className="text-xs uppercase text-[#4B5563]">Cash advances unpaid</div>
+          <div className="text-page-title font-semibold text-[#4B5563]" data-testid="driver-earnings-cash-advances-unpaid">
             {moneyOrError(liabilitiesQuery.isError, cashAdvancesUnpaid)}
           </div>
-          <div className="text-xs text-slate-700">
+          <div className="text-xs text-[#4B5563]">
             {cashAdvancesQuery.isError ? (
               <span className="text-red-600">Error loading advances</span>
             ) : (
@@ -321,18 +321,18 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           </div>
           <Link
             to={`/cash-advances?driver_id=${encodeURIComponent(driverId)}`}
-            className="text-xs text-slate-700 underline"
+            className="text-xs text-[#4B5563] underline"
             data-testid="driver-earnings-cash-advances-link"
           >
             View all cash advances →
           </Link>
         </div>
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3">
-          <div className="text-xs uppercase text-slate-700">Pending ack liabilities</div>
-          <div className="text-page-title font-semibold text-slate-800">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+          <div className="text-xs uppercase text-[#4B5563]">Pending ack liabilities</div>
+          <div className="text-page-title font-semibold text-[#1F2A44]">
             {money(Number(debt?.pending_ack_total ?? 0))}
           </div>
-          <div className="text-xs text-slate-700">{Number(debt?.pending_ack_count ?? 0)} pending</div>
+          <div className="text-xs text-[#4B5563]">{Number(debt?.pending_ack_count ?? 0)} pending</div>
         </div>
       </div>
 
@@ -344,7 +344,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           {onOpenOperationsView ? (
             <button
               type="button"
-              className="text-xs text-slate-700 underline"
+              className="text-xs text-[#4B5563] underline"
               data-testid="driver-earnings-escrow-link"
               onClick={() => onOpenOperationsView("escrow-history")}
             >
@@ -379,7 +379,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
               id={apVendorId}
               name={apVendorQuery.data?.vendor?.name}
               noun="Vendor"
-              className="text-xs text-slate-700 underline"
+              className="text-xs text-[#4B5563] underline"
               data-testid="driver-earnings-ap-vendor-open"
             />
           ) : null}
@@ -440,7 +440,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           <h4 className="text-xs font-semibold uppercase text-gray-600">Driver-attributed expenses</h4>
           <Link
             to={`/accounting/expenses?driver_id=${encodeURIComponent(driverId)}`}
-            className="text-xs text-slate-700 underline"
+            className="text-xs text-[#4B5563] underline"
           >
             Open all →
           </Link>
@@ -508,7 +508,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           <h3 className="text-xs font-semibold text-gray-900">Last 4 settlements</h3>
           <Link
             to={`/driver-finance/settlements?driver_id=${encodeURIComponent(driverId)}`}
-            className="text-xs text-slate-700 underline"
+            className="text-xs text-[#4B5563] underline"
             data-testid="driver-earnings-settlements-link"
           >
             View all settlements →
@@ -541,7 +541,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           <h3 className="text-xs font-semibold text-gray-900">Active liabilities</h3>
           <Link
             to={`/liabilities?driver_id=${encodeURIComponent(driverId)}`}
-            className="text-xs text-slate-700 underline"
+            className="text-xs text-[#4B5563] underline"
             data-testid="driver-earnings-liabilities-link"
           >
             View all liabilities →
@@ -577,7 +577,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
             kind="driver_deductions_filter"
             id={driverId}
             label="Manage auto-deduction policies →"
-            className="text-xs text-slate-700 underline"
+            className="text-xs text-[#4B5563] underline"
             data-testid="driver-earnings-auto-deductions-link"
           />
         </div>
@@ -626,7 +626,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
             </div>
             <button
               type="button"
-              className="whitespace-nowrap text-xs text-slate-700 underline"
+              className="whitespace-nowrap text-xs text-[#4B5563] underline"
               data-testid="driver-earnings-pay-rates-link"
               onClick={onOpenEquipmentAssignments}
             >

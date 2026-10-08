@@ -122,7 +122,7 @@ function PasswordChecklist({ password }: { password: string }) {
       {PASSWORD_CHECKLIST.map((item) => {
         const met = item.test(password);
         return (
-          <li key={item.key} className={met ? "text-slate-700" : "text-gray-500"}>
+          <li key={item.key} className={met ? "text-[#4B5563]" : "text-gray-500"}>
             {met ? "✓" : "○"} {item.label}
           </li>
         );
@@ -388,7 +388,7 @@ export function UsersPage() {
                 disabled={!isOwnerOrAdmin}
                 title={permReason ?? "Change this user's role"}
                 aria-label={`Change role for ${row.name}`}
-                className="whitespace-nowrap rounded-sm border border-gray-300 px-2 py-1 text-xs text-slate-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                className="whitespace-nowrap rounded-sm border border-gray-300 px-2 py-1 text-xs text-[#4B5563] hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={(event) => {
                   event.stopPropagation();
                   setRoleModalUser(row);
@@ -404,7 +404,7 @@ export function UsersPage() {
                   permReason ?? (isDeactivated ? "User is already deactivated" : "Deactivate this user")
                 }
                 aria-label={`Deactivate ${row.name}`}
-                className="whitespace-nowrap rounded-sm border border-gray-300 px-2 py-1 text-xs text-slate-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                className="whitespace-nowrap rounded-sm border border-gray-300 px-2 py-1 text-xs text-[#4B5563] hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={(event) => {
                   event.stopPropagation();
                   setPendingDeactivate({
@@ -732,7 +732,7 @@ export function UsersPage() {
                 A disabled "Coming soon" bulk control fails verify:no-prod-stubs. */}
             <button
               type="button"
-              className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+              className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#4B5563]"
               title="Download selected users as CSV"
               onClick={handleExportSelected}
             >
@@ -887,7 +887,7 @@ export function UsersPage() {
               />
               <PasswordChecklist password={inviteInitialPassword} />
               {!invitePasswordReady ? (
-                <p className="mt-1 text-xs text-slate-700">{OFFICE_PASSWORD_HINT}</p>
+                <p className="mt-1 text-xs text-[#4B5563]">{OFFICE_PASSWORD_HINT}</p>
               ) : null}
             </div>
           ) : null}
@@ -898,8 +898,8 @@ export function UsersPage() {
             </p>
           ) : null}
           {returningDetection ? (
-            <div ref={returningWarningRef} className="rounded-sm border-2 border-slate-400 bg-slate-100 p-3 text-xs text-slate-700">
-              <p className="flex items-center gap-1.5 font-semibold text-slate-700">
+            <div ref={returningWarningRef} className="rounded-sm border-2 border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#4B5563]">
+              <p className="flex items-center gap-1.5 font-semibold text-[#4B5563]">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 Returning dispatcher detected — review required
               </p>
@@ -996,7 +996,7 @@ export function UsersPage() {
                 onChange={(value) => setRoleApproverId(value ?? "")}
                 placeholder="Select approver"
               />
-              <p className="mt-1 text-xs text-slate-600">
+              <p className="mt-1 text-xs text-[#4B5563]">
                 Policy-sensitive role changes require a distinct approver before submission.
               </p>
             </div>
@@ -1022,28 +1022,28 @@ export function UsersPage() {
       </Modal>
 
       {isOwner ? (
-        <section className="mt-6 overflow-hidden rounded-sm border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-            <h3 className="mb-1 text-xs font-semibold text-slate-700">Admin Tools</h3>
-            <p className="text-xs text-slate-500">Owner-only maintenance actions.</p>
+        <section className="mt-6 overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+          <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-3">
+            <h3 className="mb-1 text-xs font-semibold text-[#4B5563]">Admin Tools</h3>
+            <p className="text-xs text-[#6B7280]">Owner-only maintenance actions.</p>
           </div>
           <div className="flex items-start justify-between gap-4 px-4 py-3">
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-700">Deactivate Probe Accounts</p>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="text-xs font-semibold text-[#4B5563]">Deactivate Probe Accounts</p>
+              <p className="mt-0.5 text-xs text-[#6B7280]">
                 Deactivates CI/test fixture accounts still live in production. Idempotent — runs at most
                 once per UTC day per requesting user.
               </p>
               {probeJobId && probeJobQuery.data ? (
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-[#6B7280]">
                   Probe job{" "}
                   <span
                     className={
                       probeJobQuery.data.status === "completed"
-                        ? "font-medium text-slate-700"
+                        ? "font-medium text-[#4B5563]"
                         : probeJobQuery.data.status === "failed"
                           ? "font-medium text-red-600"
-                          : "text-slate-400"
+                          : "text-[#6B7280]"
                     }
                   >
                     {probeJobQuery.data.status}
@@ -1053,7 +1053,7 @@ export function UsersPage() {
                     : ""}
                 </p>
               ) : probeJobId && !probeJobQuery.data ? (
-                <p className="mt-1 text-xs text-slate-400">Checking job status&hellip;</p>
+                <p className="mt-1 text-xs text-[#6B7280]">Checking job status&hellip;</p>
               ) : null}
             </div>
             <Button
