@@ -16,9 +16,9 @@ const LABEL = "verify-tasks-calendar-no-box-in-box";
 const FRAME_MARKER = 'data-testid="tasks-calendar-frame"';
 const GRID_MARKER = 'data-testid="tasks-calendar-grid"';
 const SIBLING_NAV_CARD_RE =
-  /<div className="[^"]*flex items-center justify-between rounded-sm border border-slate-200 bg-white[^"]*"[\s\S]*?<section[^>]*tasks-calendar-frame/g;
+  /<div className="[^"]*flex items-center justify-between rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white[^"]*"[\s\S]*?<section[^>]*tasks-calendar-frame/g;
 const NESTED_CALENDAR_CARD_RE =
-  /<section[^>]*tasks-calendar-frame[\s\S]*?<div className="[^"]*rounded-sm border border-slate-200 bg-white p-2[^"]*"[\s\S]*?tasks-calendar-grid/g;
+  /<section[^>]*tasks-calendar-frame[\s\S]*?<div className="[^"]*rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white p-2[^"]*"[\s\S]*?tasks-calendar-grid/g;
 
 function stripComments(src) {
   return src
@@ -50,7 +50,7 @@ export function collectProblems(region) {
     problems.push(`${TARGET}: missing tasks-calendar-grid marker`);
     return problems;
   }
-  if (!/border-b border-slate-200/.test(region)) {
+  if (!/border-b (?:border-slate-200|border-\[#E5E7EB\])/.test(region)) {
     problems.push(`${TARGET}: month nav must use border-b only (no separate nav card)`);
   }
   if (SIBLING_NAV_CARD_RE.test(region)) {

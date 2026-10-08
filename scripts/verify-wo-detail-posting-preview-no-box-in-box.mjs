@@ -14,7 +14,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TARGET = "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx";
 const LABEL = "verify-wo-detail-posting-preview-no-box-in-box";
 const SECTION_MARKER = 'data-testid="wo-detail-posting-preview-section"';
-const NESTED_TILE_RE = /className="[^"]*rounded-sm border border-(?:amber|gray|slate)-200[^"]*"/g;
+const NESTED_TILE_RE = /className="[^"]*rounded-sm border border-(?:(?:amber|gray|slate)-200|\[#E5E7EB\])[^"]*"/g;
 
 function stripComments(src) {
   return src
@@ -42,19 +42,19 @@ export function collectProblems(section) {
     problems.push(`${TARGET}: missing Posting Preview section marker (${SECTION_MARKER})`);
     return problems;
   }
-  if (!/\<section[\s\S]*?className="overflow-hidden rounded-sm border border-slate-200 bg-white"/.test(section)) {
+  if (!/\<section[\s\S]*?className="overflow-hidden rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white"/.test(section)) {
     problems.push(`${TARGET}: Posting Preview root must be a single overflow-hidden slate section frame`);
   }
   const nested = section.match(NESTED_TILE_RE) ?? [];
   const innerNested = nested.filter(
-    (m) => !m.includes("overflow-hidden rounded-sm border border-slate-200 bg-white"),
+    (m) => !/overflow-hidden rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white/.test(m),
   );
   if (innerNested.length > 0) {
     problems.push(
       `${TARGET}: Posting Preview nests ${innerNested.length} bordered tile(s) — use border-t slate rows only`,
     );
   }
-  if (!/border-t border-slate-200 bg-slate-50/.test(section)) {
+  if (!/border-t (?:border-slate-200|border-\[#E5E7EB\]) (?:bg-slate-50|bg-\[#F7F8FA\]|bg-\[#F1F5F9\])/.test(section)) {
     problems.push(`${TARGET}: Posting Preview status rows must use flat border-t slate-50 rows`);
   }
   if (/border-amber-200 bg-amber-50/.test(section)) {

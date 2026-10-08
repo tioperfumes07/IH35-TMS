@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TARGET = "apps/frontend/src/pages/finance/FinancialStatementsPage.tsx";
 const LABEL = "verify-finance-statements-no-box-in-box";
-const NESTED_TILE_RE = /className="[^"]*rounded-(?:t-sm|sm) border border-slate-200[^"]*"/g;
+const NESTED_TILE_RE = /className="[^"]*rounded-(?:t-sm|sm) border (?:border-slate-200|border-\[#E5E7EB\])[^"]*"/g;
 
 function stripComments(src) {
   return src
@@ -49,7 +49,7 @@ export function collectStatementSectionProblems(section) {
     problems.push(`${TARGET}: missing StatementSection helper`);
     return problems;
   }
-  if (!/\<section className="overflow-hidden rounded-sm border border-slate-200 bg-white"\>/.test(section)) {
+  if (!/\<section className="overflow-hidden rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white"\>/.test(section)) {
     problems.push(`${TARGET}: StatementSection must use a single overflow-hidden section frame`);
   }
   if (!section.includes("embedded")) {
@@ -60,7 +60,7 @@ export function collectStatementSectionProblems(section) {
   }
   const nested = section.match(NESTED_TILE_RE) ?? [];
   const innerNested = nested.filter(
-    (m) => !m.includes("overflow-hidden rounded-sm border border-slate-200 bg-white"),
+    (m) => !/overflow-hidden rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white/.test(m),
   );
   if (innerNested.length > 0) {
     problems.push(
@@ -70,10 +70,10 @@ export function collectStatementSectionProblems(section) {
   if (/mt-1 flex items-center justify-end gap-6 rounded-sm border/.test(section)) {
     problems.push(`${TARGET}: StatementSection footers must use border-t, not separate rounded tiles`);
   }
-  if (!/border-b border-slate-200 bg-slate-50/.test(section)) {
+  if (!/border-b (?:border-slate-200|border-\[#E5E7EB\]) (?:bg-slate-50|bg-\[#F7F8FA\]|bg-\[#F1F5F9\])/.test(section)) {
     problems.push(`${TARGET}: StatementSection title must use border-b header strip inside single frame`);
   }
-  if (!/border-t border-slate-200 bg-slate-50/.test(section)) {
+  if (!/border-t (?:border-slate-200|border-\[#E5E7EB\]) (?:bg-slate-50|bg-\[#F7F8FA\]|bg-\[#F1F5F9\])/.test(section)) {
     problems.push(`${TARGET}: StatementSection footers must flatten with border-t rows`);
   }
   return problems;
@@ -86,7 +86,7 @@ export function collectTrialBalanceProblems(section) {
     problems.push(`${TARGET}: missing Trial balance ParityTable section`);
     return problems;
   }
-  if (!/\<section className="overflow-hidden rounded-sm border border-slate-200 bg-white"\>/.test(section)) {
+  if (!/\<section className="overflow-hidden rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white"\>/.test(section)) {
     problems.push(`${TARGET}: Trial balance must use a single overflow-hidden section frame`);
   }
   if (!section.includes("embedded")) {
@@ -94,7 +94,7 @@ export function collectTrialBalanceProblems(section) {
   }
   const nested = section.match(NESTED_TILE_RE) ?? [];
   const innerNested = nested.filter(
-    (m) => !m.includes("overflow-hidden rounded-sm border border-slate-200 bg-white"),
+    (m) => !/overflow-hidden rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white/.test(m),
   );
   if (innerNested.length > 0) {
     problems.push(`${TARGET}: Trial balance nests ${innerNested.length} inner bordered tile(s)`);

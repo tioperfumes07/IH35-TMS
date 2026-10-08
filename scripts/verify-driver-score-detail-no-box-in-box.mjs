@@ -56,16 +56,16 @@ export function collectDetailProblems(detailRegion) {
   if (!detailRegion.includes(TABLE_MARKER)) {
     problems.push(`${TARGET}: missing driver-score-detail-periods ParityTable marker`);
   }
-  if (!/overflow-hidden rounded-sm border border-slate-200 bg-white/.test(detailRegion)) {
+  if (!/overflow-hidden rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white/.test(detailRegion)) {
     problems.push(`${TARGET}: trend panel must use overflow-hidden single section frame`);
   }
   if (/grid grid-cols-2 gap-2/.test(detailRegion)) {
     problems.push(`${TARGET}: KPI strip must not use gap-2 nested tile grids (box-in-box chrome)`);
   }
-  if (/rounded-sm border border-slate-100 p-2/.test(detailRegion)) {
+  if (/rounded-sm border (?:border-slate-100|border-\[#E5E7EB\]) p-2/.test(detailRegion)) {
     problems.push(`${TARGET}: KPI cells must not use per-card rounded borders (box-in-box)`);
   }
-  if (!/sm:divide-x sm:divide-slate-100/.test(detailRegion)) {
+  if (!/sm:divide-x sm:(?:divide-slate-100|divide-\[#E5E7EB\])/.test(detailRegion)) {
     problems.push(`${TARGET}: KPI grid must flatten with sm:divide-x columns`);
   }
   if (/rounded-sm border border-gray-200 bg-white p-3/.test(detailRegion)) {
@@ -81,13 +81,13 @@ export function collectEventsProblems(eventsRegion) {
     problems.push(`${TARGET}: missing driver-score-harsh-events-panel section wrapper`);
     return problems;
   }
-  if (!/overflow-hidden rounded-sm border border-slate-200 bg-white/.test(eventsRegion)) {
+  if (!/overflow-hidden rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white/.test(eventsRegion)) {
     problems.push(`${TARGET}: harsh-events panel must use overflow-hidden single section frame`);
   }
-  if (!/divide-y divide-slate-100/.test(eventsRegion)) {
+  if (!/divide-y (?:divide-slate-100|divide-\[#E5E7EB\])/.test(eventsRegion)) {
     problems.push(`${TARGET}: harsh-event rows must use divide-y (flat list, no nested cards)`);
   }
-  if (/rounded-sm border border-slate-100 px-2 py-1/.test(eventsRegion)) {
+  if (/rounded-sm border (?:border-slate-100|border-\[#E5E7EB\]) px-2 py-1/.test(eventsRegion)) {
     problems.push(`${TARGET}: harsh-event rows must not use per-row bordered cards (box-in-box)`);
   }
   return problems;

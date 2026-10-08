@@ -18,9 +18,9 @@ const TARGETS = [
   "apps/frontend/src/components/home/DispatcherKpiBar.tsx",
 ];
 const LABEL = "verify-dispatcher-home-no-box-in-box";
-const NESTED_TILE_RE = /className="[^"]*rounded-sm border border-(?:slate|red|amber)-/g;
+const NESTED_TILE_RE = /className="[^"]*rounded-sm border border-(?:(?:slate|red|amber)-|\[#E5E7EB\])/g;
 const OUTER_FRAME_RE =
-  /className="[^"]*overflow-hidden rounded-sm border border-slate-200 bg-white[^"]*"/;
+  /className="[^"]*overflow-hidden rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white[^"]*"/;
 
 function stripComments(src) {
   return src
@@ -58,7 +58,7 @@ export function collectProblemsForFile(rel, src) {
     if (/gap-2 p-3/.test(region)) {
       problems.push(`${rel}: must not use gap-2 padded nested tile grids (box-in-box chrome)`);
     }
-    if (!/border-t border-slate-100/.test(region)) {
+    if (!/border-t (?:border-slate-100|border-\[#E5E7EB\])/.test(region)) {
       problems.push(`${rel}: booking-gap cells must flatten with border-t rows`);
     }
     return problems;
@@ -68,7 +68,7 @@ export function collectProblemsForFile(rel, src) {
     if (!OUTER_FRAME_RE.test(body)) {
       problems.push(`${rel}: pending-actions must use overflow-hidden single section frame`);
     }
-    if (!body.includes("divide-y divide-slate-100")) {
+    if (!/divide-y divide-(?:slate-100|\[#E5E7EB\])/.test(body)) {
       problems.push(`${rel}: pending-actions rows must use divide-y (flat list, no nested cards)`);
     }
     if (/rounded-sm border border-(?:amber|red)-/.test(body)) {
@@ -84,10 +84,10 @@ export function collectProblemsForFile(rel, src) {
     if (/border-emerald-|border-amber-|bg-emerald-|bg-amber-/.test(body)) {
       problems.push(`${rel}: KPI bar must use slate palette only (no emerald/amber)`);
     }
-    if (/rounded-sm border/.test(body) && !body.includes("overflow-hidden rounded-sm border border-slate-200")) {
+    if (/rounded-sm border/.test(body) && !/overflow-hidden rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white/.test(body)) {
       problems.push(`${rel}: KPI cells must not use per-card rounded borders (box-in-box)`);
     }
-    if (!/sm:divide-x sm:divide-slate-100/.test(body)) {
+    if (!/sm:divide-x sm:(?:divide-slate-100|divide-\[#E5E7EB\])/.test(body)) {
       problems.push(`${rel}: KPI grid must flatten with sm:divide-x columns`);
     }
     return problems;
