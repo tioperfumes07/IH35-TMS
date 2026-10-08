@@ -8,5 +8,7 @@ export default {
   name: "verify-tms-native-mixed-linkage-orphan-guard-registry-batch",
   async run(ctx) {
     for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
+    // BANK leftover refuse — UserActivityTab / IdentityStatusHeader / OperationsDepthNav house tokens
+    await ctx.run("node", ["scripts/verify-91288-user-trailer-opsnav-slate-leftover-chrome.mjs"]);
   },
 };

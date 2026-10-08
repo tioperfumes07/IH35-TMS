@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — UserActivity / TrailerIdentity / OpsDepthNav
+
+FINDING: BANK-F91288 — UserActivityTab / IdentityStatusHeader / OperationsDepthNav Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25969 squash `a973f09a57` (BANK-F91287 ValidationPanel/ReportCard/CategoryHoverNav)
+GUARD: scripts/verify-91288-user-trailer-opsnav-slate-leftover-chrome.mjs + verify-steps/3420 piggyback
+LIVE PROOF: verify-91288-user-trailer-opsnav-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3420 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — ValidationPanel / ReportCard / CategoryHoverNav
 
 FINDING: BANK-F91287 — ValidationPanel / ReportCard / CategoryHoverNav Tailwind slate-* → house tokens
