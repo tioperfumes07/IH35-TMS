@@ -4,5 +4,6 @@ export default {
   run(ctx) {
     ctx.run("node", ["scripts/verify-pwa-driver-notifications-table.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-pwa-driver-notifications-table.mjs"]);
+    ctx.run("node", ["scripts/verify-permits-fines-dashcam-slate-leftover-chrome.mjs"]);
   },
 };

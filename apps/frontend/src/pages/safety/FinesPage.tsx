@@ -212,7 +212,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
             label={entityLabel(row.subject_driver_name, String(row.subject_driver_id), "Driver")}
           />
         ) : (
-          <span className="text-slate-400">—</span>
+          <span className="text-[#6B7280]">—</span>
         ),
     },
     {
@@ -226,7 +226,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
             label={entityLabel(row.related_unit_number, String(row.related_unit_id), "Unit")}
           />
         ) : (
-          <span className="text-slate-400">—</span>
+          <span className="text-[#6B7280]">—</span>
         ),
     },
     { key: "issued_by_authority", label: "Authority", render: (row) => String(row.issued_by_authority ?? "—") },
@@ -237,7 +237,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
       key: "action",
       label: "Action",
       render: (row) => (
-        <button type="button" className="text-slate-700 underline" onClick={() => setSelectedFine(row)}>
+        <button type="button" className="text-[#1F2A44] underline" onClick={() => setSelectedFine(row)}>
           Open
         </button>
       ),
@@ -327,7 +327,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
               <option value="driver">Driver</option>
               <option value="company">Company</option>
             </SelectCombobox>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Driver
               <EntityPicker
                 kind="driver"
@@ -340,7 +340,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
                 dataTestId="fines-filter-driver"
               />
             </label>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Unit
               <EntityPicker
                 kind="unit"
