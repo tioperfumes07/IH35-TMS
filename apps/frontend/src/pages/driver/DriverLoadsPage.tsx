@@ -28,21 +28,21 @@ export function DriverLoadsPage() {
       <h2 className="text-xs font-semibold">{t("driver.loads_title")}</h2>
       <ul className="space-y-2">
         {loads.map((load: DriverLoad) => (
-          <li key={load.id} className="rounded-sm border border-slate-200 bg-white p-3">
+          <li key={load.id} className="rounded-sm border border-[#E5E7EB] bg-white p-3">
             <EntityLink
               kind="driver_app_load"
               id={load.id}
               label={entityLabel(load.display_id, load.id, "Load")}
-              className="font-medium text-slate-900"
+              className="font-medium text-[#0F1219]"
             />
-            <p className="text-xs text-slate-600">
+            <p className="text-xs text-[#4B5563]">
               <EntityLink
                 kind="customer"
                 id={load.customer_id}
                 label={entityLabel(load.customer_name, load.customer_id, "Customer")}
               />
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#6B7280]">
               {t("driver.pickup")}: {load.pickup_location} → {t("driver.dropoff")}: {load.delivery_location}
             </p>
           </li>
