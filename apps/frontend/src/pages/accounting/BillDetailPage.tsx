@@ -232,6 +232,8 @@ export function BillDetailPage() {
     {
       key: "id",
       label: "Payment",
+      sortable: true,
+      sortValue: (pmt) => pmt.reference_number ?? pmt.check_number ?? "",
       render: (pmt) => (
         <EntityLink
           kind="bill_payment"

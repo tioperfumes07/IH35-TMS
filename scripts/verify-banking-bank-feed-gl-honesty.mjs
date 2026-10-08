@@ -44,8 +44,10 @@ export function run(root = process.cwd()) {
   if (!view.includes("transactionsQuery.isSuccess")) {
     failures.push("GL honesty banner must gate on transactionsQuery.isSuccess (not !isLoading)");
   }
-  if (!view.includes("border-l-4 border-slate-400 bg-slate-100")) {
-    failures.push("honesty banner must use slate palette (border-l-4 border-slate-400 bg-slate-100)");
+  // Slate utilities or the locked house tokens are equivalent — the law is the flat left-accent
+  // banner shape, not the literal class names (locked palette: border #6B7280, bg #F7F8FA).
+  if (!/border-l-4\s+(border-slate-400|border-\[#6B7280\])\s+(bg-slate-100|bg-\[#F7F8FA\])/.test(view)) {
+    failures.push("honesty banner must use the flat slate/house-token palette (border-l-4 accent + muted bg)");
   }
   if (!view.includes('kind="journal_entry"') && !view.includes("kind='journal_entry'")) {
     failures.push("expanded categorization panel must EntityLink journal_entry when matched_journal_entry_id present");

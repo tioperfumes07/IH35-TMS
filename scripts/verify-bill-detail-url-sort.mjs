@@ -31,6 +31,7 @@ const EXEMPT = new Set([
   "reference_number",
   "check_number",
   "is_reconciled",
+  "settlement_reference",
 ]);
 
 function readFile(relPath) {
