@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["safety"],"cols":["reverse_link","connectivity"],"leafRe":"^safety\\.panel\\.driver_safety_profile$","task":"SAF-F16-DRIVER-SAFETY-REVERSE-SECTION"} */
 /**
  * GUARD: the driver profile shows the driver's safety records (SAF-F16 / Law §9 reverse linkage).
  *

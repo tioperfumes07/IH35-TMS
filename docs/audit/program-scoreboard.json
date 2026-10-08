@@ -1,10 +1,10 @@
 {
-  "healthzSha": "b0f2085",
-  "generated_at": "2026-10-08T16:35:16.722Z",
+  "healthzSha": "166a83a",
+  "generated_at": "2026-10-08T16:46:10.763Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "b0f2085",
+    "deployedSha": "166a83a",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 25946,
+      "title": "FINDING: BANK-F91267 — Login / HelpCenter / LoadTemplateLibrary slate-* → house tokens",
+      "state": "merged",
+      "mergedAtCt": "10/08/2026, 11:44 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25946",
+      "sha": "2ff102bcac",
+      "committedAtIso": "2026-10-08T11:44:40-05:00"
+    },
+    {
+      "number": 25945,
+      "title": "FINDING: BANK-F91266 — vendorCategories / SummaryCards / CollapsibleProfileCard slate-* → house tokens",
+      "state": "merged",
+      "mergedAtCt": "10/08/2026, 11:39 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25945",
+      "sha": "166a83a58d",
+      "committedAtIso": "2026-10-08T11:39:59-05:00"
+    },
+    {
       "number": 25944,
       "title": "FINDING: BANK-F91265 — Modal / FilterPopover / LicenseSection slate-* → house tokens",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25937",
       "sha": "117188c59d",
       "committedAtIso": "2026-10-08T10:59:07-05:00"
-    },
-    {
-      "number": 25936,
-      "title": "FINDING: BANK-F91257 — PhotoDiffViewer / EldEditHistoryTimeline / InspectionScoreBadge slate-* → house tokens",
-      "state": "merged",
-      "mergedAtCt": "10/08/2026, 10:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25936",
-      "sha": "5831f27d6e",
-      "committedAtIso": "2026-10-08T10:55:02-05:00"
-    },
-    {
-      "number": 25935,
-      "title": "FINDING: BANK-F91256 — PartsInventoryTable / FleetCatalogModal / DriverHosDetailPage slate-* → house tokens",
-      "state": "merged",
-      "mergedAtCt": "10/08/2026, 10:50 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25935",
-      "sha": "f975f52d17",
-      "committedAtIso": "2026-10-08T10:50:43-05:00"
     }
   ]
 }
