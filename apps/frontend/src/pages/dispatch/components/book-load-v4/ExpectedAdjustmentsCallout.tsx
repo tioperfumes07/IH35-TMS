@@ -40,11 +40,11 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
   );
 
   return (
-    <div className="rounded-sm border border-slate-200 bg-[#FEF3C7] px-3 py-2 text-[11px] text-slate-700">
+    <div className="rounded-sm border border-[#E5E7EB] bg-[#FEF3C7] px-3 py-2 text-[11px] text-[#1F2A44]">
       <div className="mb-2 font-semibold uppercase tracking-wide">Expected adjustments</div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         <div className="space-y-1 p-2">
-          <div className="text-xs font-semibold text-slate-700">Anticipated chargeback</div>
+          <div className="text-xs font-semibold text-[#1F2A44]">Anticipated chargeback</div>
           {/* GO-23 QuickBooks-format fix: was a raw <input type="number"> exposing cents to the
               operator with no $, no thousands separator, and a native spinner -- the same defect
               class MoneyInput/NumberInput already closed everywhere else in this wizard. */}
@@ -61,14 +61,14 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
           />
         </div>
         <div className="space-y-1 p-2">
-          <div className="text-xs font-semibold text-slate-700">Detention expected</div>
+          <div className="text-xs font-semibold text-[#1F2A44]">Detention expected</div>
           <label className="flex items-center gap-2">
             <input type="checkbox" {...register("detention_expected_y_n")} />
             Yes
           </label>
           {detentionExpected ? (
             <div className="space-y-1">
-              <div className="text-xs font-semibold text-slate-700">Detention reason</div>
+              <div className="text-xs font-semibold text-[#1F2A44]">Detention reason</div>
               {/*
                 LST-PICKER-01: Book Load detention reason — ReferenceSelect first-row create → POST
                 catalogs.detention_reasons (same table Lists → Detention Reasons reads). Options keyed by UUID.
@@ -126,7 +126,7 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
           />
         </div>
         <div className="space-y-1 p-2">
-          <div className="text-xs font-semibold text-slate-700">Late delivery risk</div>
+          <div className="text-xs font-semibold text-[#1F2A44]">Late delivery risk</div>
           <label className="flex items-center gap-2">
             <input type="checkbox" {...register("late_delivery_risk_y_n")} />
             Yes

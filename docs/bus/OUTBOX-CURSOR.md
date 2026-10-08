@@ -1,3 +1,13 @@
+## 2026-10-08T21:05Z · BANK leftover slate — PlannerAxis / ExpectedAdjustments / LoadBOL
+
+FINDING: BANK-F91236 — PlannerAxisHead / ExpectedAdjustmentsCallout / LoadBolPanel Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25911 squash `ce15b95125` (BANK-F91235 safety evidence)
+GUARD: scripts/verify-planner-bookload-bol-slate-leftover-chrome.mjs + verify-steps/3628 piggyback
+LIVE PROOF: verify-planner-bookload-bol-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3628 piggyback + OUTBOX
+
 ## 2026-10-08T20:55Z · BANK leftover slate — PhotoEvidence / EvidenceChain / DiffFindings
 
 FINDING: BANK-F91235 — PhotoEvidenceViewer / EvidenceChainAudit / DiffFindingsList Tailwind slate-* → house tokens

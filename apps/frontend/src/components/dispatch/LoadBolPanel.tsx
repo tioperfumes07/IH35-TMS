@@ -71,12 +71,12 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
   const pods = summaryQuery.data?.pods ?? [];
 
   return (
-    <div className="rounded-sm border border-slate-200 bg-white p-3" data-testid="load-pod-bol-panel">
+    <div className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="load-pod-bol-panel">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-xs font-semibold text-[#1F2A44]">Load POD + BOL</h3>
         <div className="flex gap-2">
           <a
-            className="rounded-sm border border-slate-300 px-3 py-1 text-xs text-[#1F2A44]"
+            className="rounded-sm border border-[#E5E7EB] px-3 py-1 text-xs text-[#1F2A44]"
             href={resolveApiUrl(`/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/bol.pdf?operating_company_id=${encodeURIComponent(companyId)}`)}
             data-testid="bol-download-link"
           >
@@ -111,7 +111,7 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
         </p>
       ) : null}
       {summaryQuery.isLoading ? (
-        <p className="text-xs text-slate-600">Loading POD and BOL history…</p>
+        <p className="text-xs text-[#4B5563]">Loading POD and BOL history…</p>
       ) : summaryQuery.isError ? (
         <ListErrorState
           status={0}
@@ -120,7 +120,7 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
         />
       ) : (
         <>
-          <p className="mb-2 text-xs text-slate-600">
+          <p className="mb-2 text-xs text-[#4B5563]">
             {pods.length} POD(s) · {bols.length} generated BOL(s)
           </p>
           {bols.length > 0 ? (
@@ -143,7 +143,7 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
           ))}
         </ul>
           ) : (
-            <p className="text-xs text-slate-600">No stored BOL yet — generate from load data.</p>
+            <p className="text-xs text-[#4B5563]">No stored BOL yet — generate from load data.</p>
           )}
         </>
       )}
