@@ -33,7 +33,7 @@ function HosRetryButton({ onRetry, compact = false }: { onRetry: () => void; com
     <button
       type="button"
       data-hos-retry
-      className="rounded-sm border border-slate-200 bg-slate-100 px-1 text-xs font-medium text-slate-700"
+      className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1 text-xs font-medium text-[#1F2A44]"
       aria-label="Retry driver HOS"
       title="Driver HOS unavailable — retry"
       onClick={(event) => {
@@ -74,7 +74,7 @@ export function DriverHosClocksBlock({
 
   if (q.isError) {
     return (
-      <div className="rounded-sm border border-slate-200 bg-slate-50" data-hos-block="book-load">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA]" data-hos-block="book-load">
         <ListErrorState
           title="Couldn't load driver HOS"
           status={0}
@@ -96,7 +96,7 @@ export function DriverHosClocksBlock({
             Certified ELD
           </span>
         ) : driverId && q.data ? (
-          <span className="ml-1 rounded-sm bg-slate-100 px-1 text-xs font-semibold uppercase tracking-[0.3px] text-slate-700">
+          <span className="ml-1 rounded-sm bg-[#F7F8FA] px-1 text-xs font-semibold uppercase tracking-[0.3px] text-[#1F2A44]">
             In-app fallback
           </span>
         ) : null}
@@ -165,7 +165,7 @@ export function DriverHosClockCells({ driverId, operatingCompanyId }: { driverId
     return (
       <>
         {HOS_COLUMNS.map((col, index) => (
-          <td key={col.key} className="px-3 py-2 text-xs text-slate-500" data-hos-col={col.key}>
+          <td key={col.key} className="px-3 py-2 text-xs text-[#6B7280]" data-hos-col={col.key}>
             {index === 0 ? <HosRetryButton onRetry={() => void q.refetch()} /> : "—"}
           </td>
         ))}
