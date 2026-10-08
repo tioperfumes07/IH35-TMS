@@ -2,6 +2,16 @@
 
 ## 2026-10-08 · HEALTHZ — integrity dead-lease 90s catch-up → live ok=true
 
+## 2026-10-08 · BANK-F91055 — CreditMemos / VendorCredits / InvoiceTypeModal slate → house
+
+FINDING: BANK-F91055 — CreditMemos / VendorCredits / InvoiceTypeModalBase Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25988 squash `6eace62b8a` (HEALTHZ #25987 dead-lease live ok=true)
+GUARD: scripts/verify-91055-credits-invoice-slate-leftover-chrome.mjs + verify-steps/3622 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: CreditMemosPage + VendorCreditsPage + InvoiceTypeModalBase + refuse guard + 3622 piggyback + OUTBOX
+
 FINDING: healthz stale — dead integrity catch-up lease blocked tick (#follow 25986)
 LANE: Cursor backend health
 Squash merge: #25987 `66ace32016`

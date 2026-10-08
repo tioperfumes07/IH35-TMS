@@ -258,7 +258,7 @@ export function VendorCreditsPage() {
     <div className="flex flex-wrap items-end gap-3" data-vendor-credits-filter-toolbar="collapsed">
       <CollapsedListFilters activeFilterCount={(statusFilter.length === 1 && statusFilter[0] === "active" ? 0 : 1) + (vendorFilter ? 1 : 0)} testIdPrefix="vendor-credits" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <div className="flex flex-wrap gap-2">
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Vendor
             <EntityPicker
               kind="vendor"
@@ -379,7 +379,7 @@ export function VendorCreditsPage() {
                   limit={1000}
                   total={vendorsQuery.data?.total ?? null}
                   hint="Type in the vendor field to search the full roster."
-                  className="mt-1 text-xs text-slate-600"
+                  className="mt-1 text-xs text-[#4B5563]"
                 />
               </div>
             </label>
@@ -456,7 +456,7 @@ export function VendorCreditsPage() {
           </div>
         }
       >
-        {creditDetailQuery.isLoading ? <p className="text-xs text-slate-500">Loading vendor credit...</p> : null}
+        {creditDetailQuery.isLoading ? <p className="text-xs text-[#6B7280]">Loading vendor credit...</p> : null}
         {creditDetailQuery.isError ? (
           <ListErrorState
             title="Couldn't load vendor credit"
@@ -467,9 +467,9 @@ export function VendorCreditsPage() {
         ) : null}
         {credit ? (
           <div className="space-y-4 text-xs">
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
               <div>
-                <dt className="text-xs font-semibold text-slate-600">Vendor</dt>
+                <dt className="text-xs font-semibold text-[#4B5563]">Vendor</dt>
                 <dd className="mt-0.5">
                   <EntityLink
                     kind="vendor"
@@ -479,26 +479,26 @@ export function VendorCreditsPage() {
                 </dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold text-slate-600">Issue date</dt>
-                <dd className="mt-0.5 text-slate-900">{formatDateUS(credit.issue_date)}</dd>
+                <dt className="text-xs font-semibold text-[#4B5563]">Issue date</dt>
+                <dd className="mt-0.5 text-[#0F1219]">{formatDateUS(credit.issue_date)}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold text-slate-600">Credit amount</dt>
-                <dd className="mt-0.5 font-semibold text-slate-900">{money(credit.amount_cents)}</dd>
+                <dt className="text-xs font-semibold text-[#4B5563]">Credit amount</dt>
+                <dd className="mt-0.5 font-semibold text-[#0F1219]">{money(credit.amount_cents)}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold text-slate-600">Unapplied</dt>
-                <dd className="mt-0.5 font-semibold text-slate-900">{money(credit.amount_unapplied_cents)}</dd>
+                <dt className="text-xs font-semibold text-[#4B5563]">Unapplied</dt>
+                <dd className="mt-0.5 font-semibold text-[#0F1219]">{money(credit.amount_unapplied_cents)}</dd>
               </div>
             </dl>
             {credit.notes ? (
               <div>
-                <h3 className="text-xs font-semibold text-slate-600">Notes</h3>
-                <p className="mt-1 whitespace-pre-wrap text-slate-800">{credit.notes}</p>
+                <h3 className="text-xs font-semibold text-[#4B5563]">Notes</h3>
+                <p className="mt-1 whitespace-pre-wrap text-[#0F1219]">{credit.notes}</p>
               </div>
             ) : null}
             <div>
-              <h3 className="text-xs font-semibold text-slate-900">Applied bills</h3>
+              <h3 className="text-xs font-semibold text-[#0F1219]">Applied bills</h3>
               <VendorCreditApplications applications={creditDetailQuery.data?.applications ?? []} />
             </div>
             <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="vendor_credit" documentId={credit.id} />
@@ -531,8 +531,8 @@ export function VendorCreditsPage() {
         }
       >
         <div className="space-y-3 text-xs">
-          <p className="text-slate-600">
-            Available credit: <span className="font-semibold text-slate-900">{money(Number(credit?.amount_unapplied_cents ?? 0))}</span>
+          <p className="text-[#4B5563]">
+            Available credit: <span className="font-semibold text-[#0F1219]">{money(Number(credit?.amount_unapplied_cents ?? 0))}</span>
           </p>
           {vendorBillsQuery.isError ? (
             <ListErrorState
@@ -543,7 +543,7 @@ export function VendorCreditsPage() {
             />
           ) : null}
           <label className="block">
-            <span className="text-xs font-medium text-slate-600">Open bill *</span>
+            <span className="text-xs font-medium text-[#4B5563]">Open bill *</span>
             <div className="mt-1">
               <SelectCombobox
                 value={applyBillId ?? ""}
@@ -561,12 +561,12 @@ export function VendorCreditsPage() {
             </div>
           </label>
           <label className="block">
-            <span className="text-xs font-medium text-slate-600">Apply amount *</span>
+            <span className="text-xs font-medium text-[#4B5563]">Apply amount *</span>
             <div className="mt-1">
               <MoneyInput valueCents={applyAmountCents} onChangeCents={setApplyAmountCents} ariaLabel="Vendor credit apply amount" />
             </div>
           </label>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#6B7280]">
             The server verifies both the remaining credit and the selected bill&apos;s remaining balance before recording the application.
           </p>
         </div>
@@ -593,15 +593,15 @@ export function VendorCreditsPage() {
 
 function VendorCreditApplications({ applications }: { applications: VendorCreditApplication[] }) {
   if (applications.length === 0) {
-    return <p className="mt-1 text-xs text-slate-500">No bills have been credited yet.</p>;
+    return <p className="mt-1 text-xs text-[#6B7280]">No bills have been credited yet.</p>;
   }
   return (
     <div className="mt-2 space-y-2">
       {applications.map((application) => (
-        <div key={application.id} className="flex items-center justify-between gap-3 rounded-sm border border-slate-200 px-3 py-2">
+        <div key={application.id} className="flex items-center justify-between gap-3 rounded-sm border border-[#E5E7EB] px-3 py-2">
           <EntityLink kind="bill" id={application.bill_id} label={visibleDocumentLabel(application.bill_number, application.bill_id, "Bill")} />
-          <div className="text-right text-xs text-slate-600">
-            <div className="font-semibold text-slate-900">{money(application.applied_cents)}</div>
+          <div className="text-right text-xs text-[#4B5563]">
+            <div className="font-semibold text-[#0F1219]">{money(application.applied_cents)}</div>
             <div>{application.voided_at ? "Voided application" : `Applied ${formatDateUS(application.applied_at)}`}</div>
           </div>
         </div>
