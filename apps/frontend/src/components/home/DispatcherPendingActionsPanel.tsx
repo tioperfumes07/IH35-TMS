@@ -14,42 +14,42 @@ export function DispatcherPendingActionsPanel({
   return (
     <section
       data-testid="dispatcher-pending-actions-panel"
-      className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+      className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white"
     >
-      <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Pending actions</div>
-      <ul className="divide-y divide-slate-100 text-xs">
+      <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]">Pending actions</div>
+      <ul className="divide-y divide-[#E5E7EB] text-xs">
         <li className="flex items-center justify-between gap-2 px-3 py-2">
           <div>
-            <div className="font-semibold text-slate-900">Detention approvals</div>
-            <div className="text-xs text-slate-600">Requests waiting for owner approval on your queue.</div>
+            <div className="font-semibold text-[#0F1219]">Detention approvals</div>
+            <div className="text-xs text-[#4B5563]">Requests waiting for owner approval on your queue.</div>
           </div>
           <div className="text-right">
-            <div className="text-page-title font-semibold text-slate-900">{detentionApprovals}</div>
-            <Link to="/dispatch" className="text-xs font-medium text-slate-700 underline">
+            <div className="text-page-title font-semibold text-[#0F1219]">{detentionApprovals}</div>
+            <Link to="/dispatch" className="text-xs font-medium text-[#4B5563] underline">
               Open
             </Link>
           </div>
         </li>
         <li className="flex items-center justify-between gap-2 px-3 py-2">
           <div>
-            <div className="font-semibold text-slate-900">Message queue</div>
-            <div className="text-xs text-slate-600">Unread inbound driver/customer message threads.</div>
+            <div className="font-semibold text-[#0F1219]">Message queue</div>
+            <div className="text-xs text-[#4B5563]">Unread inbound driver/customer message threads.</div>
           </div>
           <div className="text-right">
-            <div className="text-page-title font-semibold text-slate-900">{incomingMessageQueue}</div>
-            <Link to="/drivers" className="text-xs font-medium text-slate-700 underline">
+            <div className="text-page-title font-semibold text-[#0F1219]">{incomingMessageQueue}</div>
+            <Link to="/drivers" className="text-xs font-medium text-[#4B5563] underline">
               Open
             </Link>
           </div>
         </li>
         <li className="flex items-center justify-between gap-2 px-3 py-2">
           <div>
-            <div className="font-semibold text-slate-900">Booking gaps (7d)</div>
-            <div className="text-xs text-slate-600">Loads still not dispatched from your recent bookings.</div>
+            <div className="font-semibold text-[#0F1219]">Booking gaps (7d)</div>
+            <div className="text-xs text-[#4B5563]">Loads still not dispatched from your recent bookings.</div>
           </div>
           <div className="text-right">
-            <div className="text-page-title font-semibold text-slate-900">{bookingGapOpen}</div>
-            <Link to="/dispatch?view=loads" className="text-xs font-medium text-slate-700 underline">
+            <div className="text-page-title font-semibold text-[#0F1219]">{bookingGapOpen}</div>
+            <Link to="/dispatch?view=loads" className="text-xs font-medium text-[#4B5563] underline">
               Review
             </Link>
           </div>

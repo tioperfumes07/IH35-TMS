@@ -1,3 +1,13 @@
+## 2026-10-08T06:55Z · BANK leftover slate — dispatcher active loads / home / pending actions
+
+FINDING: BANK-F91175 — DispatcherActiveLoadsPanel / DispatcherHome / DispatcherPendingActionsPanel Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25828 squash `c0717065e3` (BANK-F91174 catalogs/lists)
+GUARD: scripts/verify-dispatcher-home-slate-leftover-chrome.mjs + verify-steps/2330 piggyback
+LIVE PROOF: verify-dispatcher-home-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 dispatcher home surfaces + refuse guard + 2330 piggyback + OUTBOX
+
 ## 2026-10-08T06:50Z · BANK leftover slate — all catalogs map / locations list / names hub
 
 FINDING: BANK-F91174 — AllCatalogsMap / LocationsListPage / NamesMasterHub Tailwind slate-* → house tokens

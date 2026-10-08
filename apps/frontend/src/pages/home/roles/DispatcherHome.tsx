@@ -110,29 +110,29 @@ export function DispatcherHome({ auth }: Props) {
           />
           <section
             data-testid="dispatcher-booking-gap-panel"
-            className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+            className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white"
           >
-            <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">
+            <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]">
               Booking gap analytics (7d)
             </div>
-            <div className="grid grid-cols-2 text-xs sm:divide-x sm:divide-slate-100">
-              <div className="border-t border-slate-100 px-3 py-2">
-                <div className="text-xs text-slate-500">Booked loads</div>
-                <div className="text-page-title font-semibold text-slate-900">{data?.booking_gap_analytics.loads_booked_7d ?? 0}</div>
+            <div className="grid grid-cols-2 text-xs sm:divide-x sm:divide-[#E5E7EB]">
+              <div className="border-t border-[#E5E7EB] px-3 py-2">
+                <div className="text-xs text-[#6B7280]">Booked loads</div>
+                <div className="text-page-title font-semibold text-[#0F1219]">{data?.booking_gap_analytics.loads_booked_7d ?? 0}</div>
               </div>
-              <div className="border-t border-slate-100 px-3 py-2">
-                <div className="text-xs text-slate-500">Open gaps</div>
-                <div className="text-page-title font-semibold text-slate-900">
+              <div className="border-t border-[#E5E7EB] px-3 py-2">
+                <div className="text-xs text-[#6B7280]">Open gaps</div>
+                <div className="text-page-title font-semibold text-[#0F1219]">
                   {data?.booking_gap_analytics.unresolved_dispatch_gaps_7d ?? 0}
                 </div>
               </div>
-              <div className="border-t border-slate-100 px-3 py-2">
-                <div className="text-xs text-slate-500">Exceptions</div>
-                <div className="text-page-title font-semibold text-slate-900">{data?.booking_gap_analytics.exception_loads_7d ?? 0}</div>
+              <div className="border-t border-[#E5E7EB] px-3 py-2">
+                <div className="text-xs text-[#6B7280]">Exceptions</div>
+                <div className="text-page-title font-semibold text-[#0F1219]">{data?.booking_gap_analytics.exception_loads_7d ?? 0}</div>
               </div>
-              <div className="border-t border-slate-100 px-3 py-2">
-                <div className="text-xs text-slate-500">Gap rate</div>
-                <div className="text-page-title font-semibold text-slate-700">{data?.booking_gap_analytics.gap_rate_pct ?? 0}%</div>
+              <div className="border-t border-[#E5E7EB] px-3 py-2">
+                <div className="text-xs text-[#6B7280]">Gap rate</div>
+                <div className="text-page-title font-semibold text-[#4B5563]">{data?.booking_gap_analytics.gap_rate_pct ?? 0}%</div>
               </div>
             </div>
           </section>
