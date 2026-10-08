@@ -38,7 +38,7 @@ if (process.argv.includes("--selftest")) {
     source.replace("archiveComplianceRule(input.id, input.companyId)", "archiveComplianceRule(input.id, '')"),
     source.replaceAll("input.generation !== ruleGenerationRef.current", "false"),
     source.replace("ruleGenerationRef.current += 1;", "ruleGenerationRef.current += 0;"),
-    source.replace("<Modal open={ruleCreateOpen}", "<div open={ruleCreateOpen}"),
+    source.replace('title="Create notification rule"', 'title="Create rule"'),
   ];
   for (const [index, mutation] of mutations.entries()) {
     if (mutation === source || audit(mutation).length === 0) throw new Error(`mutation ${index + 1} escaped`);

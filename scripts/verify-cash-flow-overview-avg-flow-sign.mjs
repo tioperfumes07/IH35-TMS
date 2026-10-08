@@ -114,8 +114,8 @@ if (process.argv.includes("--selftest")) {
   }
 
   const fakeZero = good.replace(
-    "const hideOn = await isBankAccountHideEnabled(client, companyId).catch(() => false);",
-    `const hideOn = await isBankAccountHideEnabled(client, companyId).catch(() => false);
+    "const hideOn = await isBankAccountHideEnabled(client, companyId);",
+    `const hideOn = await isBankAccountHideEnabled(client, companyId);
       const planted = Promise.resolve().catch(() => ({ rows: [{ payroll_cents: "0", dip_cents: "0", total_cents: "0" }] }));`,
   );
   if (fakeZero === good) {

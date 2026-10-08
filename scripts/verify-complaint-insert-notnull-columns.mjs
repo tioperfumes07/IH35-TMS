@@ -89,7 +89,7 @@ if (SELFTEST) {
     ["complaint_date value dropped", { [ROUTE]: files[ROUTE].replace(/COALESCE\(\$2::timestamptz, now\(\)\)::date,/, "") }],
     ["respondent_id value dropped", { [ROUTE]: files[ROUTE].replace(/COALESCE\(\$10::uuid, \$11::uuid\),/, "") }],
     ["complaint_type lookup dropped", { [ROUTE]: files[ROUTE].replace(/SELECT ct\.type_code FROM catalogs\.complaint_types/, "SELECT ct.type_code FROM catalogs.x_removed") }],
-    ["complaint_type_id FK dropped", { [ROUTE]: files[ROUTE].replace(/\n\s*\$12::uuid\n\s*\)\n\s*RETURNING \*/, "\n            NULL\n          )\n          RETURNING *") }],
+    ["complaint_type_id FK dropped", { [ROUTE]: files[ROUTE].replace(/            \$12::uuid,\n            \$19::uuid/, "            NULL,\n            $19::uuid") }],
   ];
   for (const [name, planted] of checks) {
     if (!assert(planted).length) {

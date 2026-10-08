@@ -30,7 +30,10 @@ function assert(cond, msg) {
 export function checkPage(src, label, placeholder) {
   assert(src.includes("ParityTable"), `${label}: must use ParityTable`);
   assert(
-    src.includes(`placeholder="${placeholder}"`) || src.includes(`placeholder='${placeholder}'`),
+    src.includes(`placeholder="${placeholder}"`) ||
+      src.includes(`placeholder='${placeholder}'`) ||
+      src.includes(`searchPlaceholder="${placeholder}"`) ||
+      src.includes(`searchPlaceholder='${placeholder}'`),
     `${label}: must keep server-side search placeholder ${placeholder}`,
   );
   assert(/suppressToolbarSearch/.test(src), `${label}: must pass suppressToolbarSearch`);
