@@ -24,12 +24,12 @@ function statusLabel(status: "green" | "yellow" | "red") {
 export function VendorMappingIntegrityCard({ data, isLoading, isError, onRetry }: Props) {
   if (isLoading) {
     return (
-      <section className="rounded-sm border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Vendor Mapping Integrity</div>
+      <section className="rounded-sm border border-[#E5E7EB] bg-white">
+        <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]">Vendor Mapping Integrity</div>
         <div className="space-y-2 p-3">
-          <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
-          <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
-          <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
+          <div className="h-6 animate-pulse rounded-sm bg-[#F7F8FA]" />
+          <div className="h-6 animate-pulse rounded-sm bg-[#F7F8FA]" />
+          <div className="h-6 animate-pulse rounded-sm bg-[#F7F8FA]" />
         </div>
       </section>
     );
@@ -59,31 +59,31 @@ export function VendorMappingIntegrityCard({ data, isLoading, isError, onRetry }
   };
 
   return (
-    <section className="rounded-sm border border-slate-200 bg-white">
-      <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
-        <div className="text-xs font-semibold text-slate-900">Vendor Mapping Integrity</div>
+    <section className="rounded-sm border border-[#E5E7EB] bg-white">
+      <div className="flex items-center justify-between border-b border-[#E5E7EB] px-3 py-2">
+        <div className="text-xs font-semibold text-[#0F1219]">Vendor Mapping Integrity</div>
         <span className={`inline-flex rounded-sm border px-2 py-0.5 text-xs font-semibold ${pillClass(status)}`}>{statusLabel(status)}</span>
       </div>
       <div className="space-y-1 px-3 py-2">
-        <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
-          <span className="text-slate-600">Total issues</span>
-          <span className="font-semibold text-slate-800">{totals.total_issues}</span>
+        <div className="flex items-center justify-between rounded-sm bg-[#F7F8FA] px-2 py-1.5 text-xs">
+          <span className="text-[#6B7280]">Total issues</span>
+          <span className="font-semibold text-[#1F2A44]">{totals.total_issues}</span>
         </div>
-        <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
-          <span className="text-slate-600">Unmapped drivers</span>
-          <span className="font-semibold text-slate-800">{totals.unmapped_drivers}</span>
+        <div className="flex items-center justify-between rounded-sm bg-[#F7F8FA] px-2 py-1.5 text-xs">
+          <span className="text-[#6B7280]">Unmapped drivers</span>
+          <span className="font-semibold text-[#1F2A44]">{totals.unmapped_drivers}</span>
         </div>
-        <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
-          <span className="text-slate-600">Duplicate mappings</span>
-          <span className="font-semibold text-slate-800">{totals.duplicate_mapping}</span>
+        <div className="flex items-center justify-between rounded-sm bg-[#F7F8FA] px-2 py-1.5 text-xs">
+          <span className="text-[#6B7280]">Duplicate mappings</span>
+          <span className="font-semibold text-[#1F2A44]">{totals.duplicate_mapping}</span>
         </div>
-        <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
-          <span className="text-slate-600">Name drift</span>
-          <span className="font-semibold text-slate-800">{totals.name_mismatch}</span>
+        <div className="flex items-center justify-between rounded-sm bg-[#F7F8FA] px-2 py-1.5 text-xs">
+          <span className="text-[#6B7280]">Name drift</span>
+          <span className="font-semibold text-[#1F2A44]">{totals.name_mismatch}</span>
         </div>
       </div>
-      <div className="border-t border-slate-100 px-3 py-2">
-        <Link className="text-xs font-medium text-slate-700 hover:underline" to="/samsara/vendor-mapping-integrity">
+      <div className="border-t border-[#E5E7EB] px-3 py-2">
+        <Link className="text-xs font-medium text-[#4B5563] hover:underline" to="/samsara/vendor-mapping-integrity">
           Open mapping integrity details
         </Link>
       </div>

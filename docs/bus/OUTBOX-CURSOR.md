@@ -1,3 +1,14 @@
+## 2026-10-08T04:46Z · BANK leftover slate — home QBO / pending / vendor mapping
+
+FINDING: BANK leftover slate — QboSyncHealthCard / AccountingPendingApprovalsPanel / VendorMappingIntegrityCard still on Tailwind slate-* vs GLOBAL-TYPE-SIZE-BASELINE house tokens
+
+LANE: CURSOR / BANK leftover chrome drain
+Prior tip merge: #25810 squash `fa2c997db7` (R1 COMPLETE sep27 upserted=114)
+GUARD: scripts/verify-home-qbo-vendor-slate-leftover-chrome.mjs + verify-steps/1110 piggyback
+LIVE PROOF: verify-home-qbo-vendor-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; rg slate- on targets = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 home components + refuse guard + 1110 piggyback + OUTBOX
+
 ## 2026-10-08T04:37Z · ROUND 441.21-B R1 COMPLETE — sep27 upserted=114
 
 FINDING: BANK-F441216 R1c — Sep 27→2026-10-08 paced probe completed; USMCA fills now through today.
