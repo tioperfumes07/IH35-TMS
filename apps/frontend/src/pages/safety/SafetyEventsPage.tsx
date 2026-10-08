@@ -508,7 +508,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             allowClear
           />
           {/* SAF-F28: filters, not creators — allowCreate={false} (Idvr / Accidents law). */}
-          <label className="text-xs text-slate-600" aria-label="Filter by driver">
+          <label className="text-xs text-[#4B5563]" aria-label="Filter by driver">
             Driver
             <EntityPicker
               kind="driver"
@@ -522,7 +522,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
               dataTestId="safety-events-driver-filter"
             />
           </label>
-          <label className="text-xs text-slate-600" aria-label="Filter by unit">
+          <label className="text-xs text-[#4B5563]" aria-label="Filter by unit">
             Unit
             <EntityPicker
               kind="unit"
@@ -711,7 +711,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             placeholder="Event type"
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
-          <div className="text-xs text-slate-600">
+          <div className="text-xs text-[#4B5563]">
             <label htmlFor="safety-event-kpi-bucket">KPI bucket</label>
             <Combobox
             id="safety-event-kpi-bucket"
@@ -726,7 +726,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             placeholder="Select KPI bucket"
             />
           </div>
-          <div className="text-xs text-slate-600">
+          <div className="text-xs text-[#4B5563]">
             <label htmlFor="safety-event-severity">Severity</label>
             <Combobox
             id="safety-event-severity"
@@ -741,7 +741,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             placeholder="Select severity"
             />
           </div>
-          <div className="text-xs text-slate-600">
+          <div className="text-xs text-[#4B5563]">
             <label htmlFor="safety-event-status">Status</label>
             <Combobox
             id="safety-event-status"
@@ -755,7 +755,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             placeholder="Select status"
             />
           </div>
-          <div className="text-xs text-slate-600">
+          <div className="text-xs text-[#4B5563]">
             <label htmlFor="safety-event-subject-type">Subject type</label>
             <Combobox
             id="safety-event-subject-type"

@@ -164,11 +164,11 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
           {metrics.length > 0 ? (
             <div>
               <strong>Detection metrics:</strong>
-              <dl className="mt-1 grid grid-cols-[minmax(8rem,auto)_1fr] gap-x-3 gap-y-1 rounded-sm bg-slate-50 p-2 text-xs">
+              <dl className="mt-1 grid grid-cols-[minmax(8rem,auto)_1fr] gap-x-3 gap-y-1 rounded-sm bg-[#F7F8FA] p-2 text-xs">
                 {metrics.map(([key, value]) => (
                   <div key={key} className="contents">
-                    <dt className="font-medium capitalize text-slate-600">{key}</dt>
-                    <dd className="break-words text-slate-900">{value}</dd>
+                    <dt className="font-medium capitalize text-[#4B5563]">{key}</dt>
+                    <dd className="break-words text-[#0F1219]">{value}</dd>
                   </div>
                 ))}
               </dl>
@@ -204,7 +204,7 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
             disabled={actionPending}
             onClick={() => ackMutation.mutate({ alertId: String(alert.id), companyId: operatingCompanyId, generation: actionGenerationRef.current })}
           >
@@ -220,7 +220,7 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
           </button>
           <button
             type="button"
-            className="rounded-sm border border-slate-400 px-3 py-1 text-xs font-semibold text-slate-800"
+            className="rounded-sm border border-[#6B7280] px-3 py-1 text-xs font-semibold text-[#0F1219]"
             data-testid="integrity-alert-snooze-btn"
             disabled={actionPending}
             onClick={() => snoozeMutation.mutate({ alertId: String(alert.id), companyId: operatingCompanyId, generation: actionGenerationRef.current })}
