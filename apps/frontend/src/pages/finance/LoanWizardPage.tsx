@@ -39,7 +39,7 @@ const OPENING_JE_COLUMNS: Array<ParityColumn<OpeningJeRow>> = [
     key: "description",
     label: "Description",
     render: (r) => (
-      <span className={r.isTotals ? "font-medium text-slate-700" : "text-slate-600"}>{r.description}</span>
+      <span className={r.isTotals ? "font-medium text-[#1F2A44]" : "text-[#4B5563]"}>{r.description}</span>
     ),
   },
   {
@@ -47,14 +47,14 @@ const OPENING_JE_COLUMNS: Array<ParityColumn<OpeningJeRow>> = [
     label: "Debit",
     className: "text-right",
     cellClass: "text-right",
-    render: (r) => <span className={r.isTotals ? "font-medium text-slate-700" : undefined}>{r.debit}</span>,
+    render: (r) => <span className={r.isTotals ? "font-medium text-[#1F2A44]" : undefined}>{r.debit}</span>,
   },
   {
     key: "credit",
     label: "Credit",
     className: "text-right",
     cellClass: "text-right",
-    render: (r) => <span className={r.isTotals ? "font-medium text-slate-700" : undefined}>{r.credit}</span>,
+    render: (r) => <span className={r.isTotals ? "font-medium text-[#1F2A44]" : undefined}>{r.credit}</span>,
   },
 ];
 
@@ -165,7 +165,7 @@ export function LoanWizardPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <p className="text-xs text-slate-500">Loading…</p>
+        <p className="text-xs text-[#6B7280]">Loading…</p>
       </div>
     );
   }
@@ -175,7 +175,7 @@ export function LoanWizardPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#4B5563]">
           The Loan Wizard is not yet enabled for this company. (Feature flag{" "}
           <code>{FINANCE_HUB_LOAN_WIZARD_FLAG}</code> is off.)
         </div>
@@ -185,13 +185,13 @@ export function LoanWizardPage() {
 
   const field = (label: string, key: keyof typeof form, type: "text" | "number" = "text", placeholder = "") => (
     <label className="block">
-      <span className="text-xs font-medium text-slate-600">{label}</span>
+      <span className="text-xs font-medium text-[#4B5563]">{label}</span>
       <input
         type={type}
         value={form[key]}
         onChange={set(key)}
         placeholder={placeholder}
-        className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
+        className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs"
       />
     </label>
   );
@@ -202,7 +202,7 @@ export function LoanWizardPage() {
   // form keeps storing a plain string, unchanged submit contract (toCents(form.key) on Preview).
   const moneyField = (label: string, key: keyof typeof form) => (
     <label className="block">
-      <span className="text-xs font-medium text-slate-600">{label}</span>
+      <span className="text-xs font-medium text-[#4B5563]">{label}</span>
       <div className="mt-1">
         <MoneyInput
           valueDollars={form[key] === "" ? null : Number(form[key])}
@@ -218,11 +218,11 @@ export function LoanWizardPage() {
       <FinanceModuleTabs />
       {header}
       {/* Flat QBO-style workspace — single section frame, divide-x columns (no nested bordered tiles). */}
-      <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-        <div className="grid grid-cols-1 lg:grid-cols-2 lg:divide-x lg:divide-slate-100">
+      <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:divide-x lg:divide-[#E5E7EB]">
           {/* Inputs */}
           <div>
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">
+            <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-3 text-xs font-semibold text-[#1F2A44]">
               Loan &amp; asset
             </div>
             <div className="px-4 py-3">
@@ -235,7 +235,7 @@ export function LoanWizardPage() {
                 {field("Annual rate (%) *", "annualRatePct", "number")}
                 {field("Term (months) *", "termMonths", "number")}
                 <label className="block">
-                  <span className="text-xs font-medium text-slate-600">First payment date *</span>
+                  <span className="text-xs font-medium text-[#4B5563]">First payment date *</span>
                   <DatePicker
                     className="mt-1 w-full"
                     value={form.firstPaymentDate}
@@ -260,35 +260,35 @@ export function LoanWizardPage() {
 
           {/* Preview pane */}
           <div>
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">
+            <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-3 text-xs font-semibold text-[#1F2A44]">
               Will auto-create (preview)
             </div>
             <div className="px-4 py-3">
               {!preview ? (
-                <p className="text-xs text-slate-500">Enter loan details and Preview to see every generated entry.</p>
+                <p className="text-xs text-[#6B7280]">Enter loan details and Preview to see every generated entry.</p>
               ) : (
                 <div className="space-y-4 text-xs">
                   <div className="flex items-center gap-2">
-                    <span className={preview.balanced ? "rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700" : "rounded-sm bg-red-100 px-2 py-0.5 text-red-700"}>
+                    <span className={preview.balanced ? "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-[#1F2A44]" : "rounded-sm bg-red-100 px-2 py-0.5 text-red-700"}>
                       {preview.balanced ? "Opening JE balanced ✓" : "Opening JE does NOT balance"}
                     </span>
                   </div>
                   <div>
-                    <div className="font-medium text-slate-700">
+                    <div className="font-medium text-[#1F2A44]">
                       {preview.loan_record.loan_type === "note_payable" ? "Note Payable (long-term)" : "Loan Payable (current)"} — {preview.loan_record.lender}
                     </div>
-                    <div className="text-slate-500">
+                    <div className="text-[#6B7280]">
                       {dollars(preview.loan_record.principal_cents)} @ {preview.loan_record.annual_rate_pct}% × {preview.loan_record.term_months} mo · monthly {dollars(preview.summary.monthly_payment_cents)} · total interest {dollars(preview.summary.total_interest_cents)}
                     </div>
                   </div>
                   <div>
-                    <div className="font-medium text-slate-700">Fixed asset + depreciation</div>
-                    <div className="text-slate-500">
+                    <div className="font-medium text-[#1F2A44]">Fixed asset + depreciation</div>
+                    <div className="text-[#6B7280]">
                       Capitalized {dollars(preview.fixed_asset.capitalized_cost_cents)} · straight-line {preview.fixed_asset.useful_life_months} mo · salvage {dollars(preview.fixed_asset.salvage_value_cents)} ({preview.depreciation_schedule.length} periods)
                     </div>
                   </div>
                   <div>
-                    <div className="font-medium text-slate-700">Opening journal entry</div>
+                    <div className="font-medium text-[#1F2A44]">Opening journal entry</div>
                     <div className="mt-1">
                       <ParityTable
                         columns={OPENING_JE_COLUMNS}
@@ -317,7 +317,7 @@ export function LoanWizardPage() {
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-[#6B7280]">
                     Preview only — posting these entries is a separate, disabled step (not enabled here).
                   </p>
                 </div>

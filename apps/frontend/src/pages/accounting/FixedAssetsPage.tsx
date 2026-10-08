@@ -26,9 +26,9 @@ const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 const titleize = (s: string) => s.replace(/_/g, " ");
 
 const STATUS_COLOR: Record<string, string> = {
-  active: "bg-slate-100 text-slate-700",
-  fully_depreciated: "bg-slate-100 text-slate-700",
-  disposed: "bg-slate-100 text-slate-700",
+  active: "bg-[#F7F8FA] text-[#1F2A44]",
+  fully_depreciated: "bg-[#F7F8FA] text-[#1F2A44]",
+  disposed: "bg-[#F7F8FA] text-[#1F2A44]",
   voided: "bg-red-100 text-red-700",
 };
 
@@ -76,7 +76,7 @@ export function parseOwnerPricesJson(raw: string): ParsedPrices {
 
 function RegisterResultSummary({ result }: { result: RegisterTrkUnitsResult }) {
   return (
-    <div className="mt-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800 space-y-2" data-testid="fa-register-result">
+    <div className="mt-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44] space-y-2" data-testid="fa-register-result">
       <p><span className="font-semibold">Registered:</span> {result.registered}</p>
       <p><span className="font-semibold">Skipped (already registered):</span> {result.skipped_already}</p>
       {result.missing_price.length > 0 && (
@@ -167,12 +167,12 @@ function TrkBulkRegisterPanel({
           onChange={(e) => setPricesText(e.target.value)}
           rows={8}
           placeholder={PRICES_JSON_EXAMPLE}
-          className="w-full rounded-sm border border-gray-300 px-3 py-2 text-xs font-mono focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+          className="w-full rounded-sm border border-gray-300 px-3 py-2 text-xs font-mono focus:outline-hidden focus:ring-1 focus:ring-[#4B5563]"
         />
         {parseError ? <p className="mt-1 text-xs text-red-600">{parseError}</p> : null}
 
         <div className="mt-2">
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Or upload JSON file
             <input type="file" accept=".json,application/json" className="ml-2 text-xs" onChange={onFileChange} />
           </label>
@@ -195,7 +195,7 @@ function TrkBulkRegisterPanel({
             data-testid="fa-register-trk-submit"
             disabled={registerMutation.isPending || Object.keys(pricesMap).length === 0 || !parsed.ok}
             onClick={() => void registerMutation.mutate()}
-            className="rounded-sm bg-slate-800 text-white px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-slate-700"
+            className="rounded-sm bg-[#14314F] text-white px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-[#1F2A44]"
           >
             {registerMutation.isPending ? "Registering…" : "Register with owner prices"}
           </button>
@@ -219,10 +219,10 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
               {detail.asset_number ? `#${detail.asset_number} · ` : ""}{detail.class_name ?? "—"} · {titleize(detail.method)} · {detail.useful_life_months} mo · {titleize(detail.convention)}
             </p>
             {!detail.is_owner_operated && detail.owner_company_name && (
-              <p className="text-xs text-slate-600 mt-0.5">Owned by {detail.owner_company_name} (operated here)</p>
+              <p className="text-xs text-[#4B5563] mt-0.5">Owned by {detail.owner_company_name} (operated here)</p>
             )}
             {detail.unit_uuid ? (
-              <p className="text-xs text-slate-600 mt-0.5">
+              <p className="text-xs text-[#4B5563] mt-0.5">
                 Unit: <EntityLink kind="unit" id={detail.unit_uuid} label={entityLabel(detail.vin_serial, detail.unit_uuid, "Unit")} />
               </p>
             ) : null}
@@ -233,24 +233,24 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-xs">
           <div><div className="text-xs text-gray-500">Cost</div><div className="tabular-nums">{fmtCents(detail.purchase_price_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Salvage</div><div className="tabular-nums">{fmtCents(detail.salvage_value_cents)}</div></div>
-          <div><div className="text-xs text-gray-500">Depr. to date</div><div className="tabular-nums text-slate-700">{fmtCents(detail.depreciation_to_date_cents)}</div></div>
+          <div><div className="text-xs text-gray-500">Depr. to date</div><div className="tabular-nums text-[#1F2A44]">{fmtCents(detail.depreciation_to_date_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Net book value</div><div className="tabular-nums font-semibold">{fmtCents(detail.net_book_value_cents)}</div></div>
         </div>
 
         <div className="mb-4">
           <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Depreciated</span><span>{pct}%</span></div>
-          <div className="h-2 rounded-full bg-gray-200"><div className="h-2 rounded-full bg-slate-500 transition-all" style={{ width: `${Math.min(100, pct)}%` }} /></div>
+          <div className="h-2 rounded-full bg-gray-200"><div className="h-2 rounded-full bg-[#F7F8FA]0 transition-all" style={{ width: `${Math.min(100, pct)}%` }} /></div>
         </div>
 
         {detail.disposal && (
-          <div className="mb-4 border-y border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+          <div className="mb-4 border-y border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
             <p className="font-semibold mb-1">Disposed {fmtDate(detail.disposal.disposal_date)} ({titleize(detail.disposal.disposal_type)})</p>
             <p>Proceeds {fmtCents(detail.disposal.proceeds_cents)} · Book value {fmtCents(detail.disposal.book_value_at_disposal_cents)} · {detail.disposal.gain_loss_cents >= 0 ? "Gain" : "Loss"} {fmtCents(Math.abs(detail.disposal.gain_loss_cents))}</p>
           </div>
         )}
 
         {detail.je_preview.depreciation_je_template && (
-          <div className="mb-4 border-y border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+          <div className="mb-4 border-y border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
             <p className="font-semibold mb-1">
               {detail.je_preview.manual_posting_enabled
                 ? "GL Posting (manual trigger enabled for this entity)"
@@ -408,7 +408,7 @@ export function FixedAssetsPage() {
         label: "Name",
         sortable: true,
         render: (row) => (
-          <button onClick={() => openDetail(row.id)} className="text-slate-700 hover:underline text-left font-medium">{row.name}</button>
+          <button onClick={() => openDetail(row.id)} className="text-[#1F2A44] hover:underline text-left font-medium">{row.name}</button>
         ),
       },
       { key: "class_name", label: "Class", sortable: true, render: (row) => row.class_name ?? "—" },
@@ -420,7 +420,7 @@ export function FixedAssetsPage() {
         label: "Depr. to date",
         sortable: true,
         className: "text-right",
-        cellClass: "text-right tabular-nums text-slate-700",
+        cellClass: "text-right tabular-nums text-[#1F2A44]",
         render: (row) => fmtCents(row.depreciation_to_date_cents),
       },
       {
@@ -472,7 +472,7 @@ export function FixedAssetsPage() {
           type="button"
           data-testid="fa-open-trk-register"
           onClick={() => setRegisterOpen(true)}
-          className="ml-auto rounded-sm border border-slate-300 px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50"
+          className="ml-auto rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs text-[#1F2A44] hover:bg-[#F7F8FA]"
         >
           Register TRK units
         </button>
@@ -493,7 +493,7 @@ export function FixedAssetsPage() {
 
   return (
     <AccountingSubNavWrapper title="Fixed Assets" subtitle="Asset register, depreciation schedule, and disposals (read-only; GL posting gated)">
-      <div className="mb-3 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800" data-testid="fa-density-honesty-banner">
+      <div className="mb-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="fa-density-honesty-banner">
         Register density requires owner-provided purchase prices per unit (cents). Bulk registration never invents dollar amounts — units without an explicit price remain in <span className="font-medium">missing_price</span> until the owner supplies them.
       </div>
 
