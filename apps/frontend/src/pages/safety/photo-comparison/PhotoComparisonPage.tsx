@@ -64,7 +64,7 @@ export function PhotoComparisonPage() {
             kind="photo_comparison_session"
             id={session.uuid}
             label="View"
-            className="text-slate-700 underline"
+            className="text-[#1F2A44] underline"
           />
         ),
       },
@@ -101,14 +101,14 @@ export function PhotoComparisonPage() {
       )}
 
       {!query.isError && totalCount > PAGE_SIZE ? (
-        <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+        <div className="flex items-center justify-between rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs text-[#4B5563]">
           <span>
             {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}
           </span>
           <div className="flex gap-2">
             <button
               type="button"
-              className="rounded-sm border border-slate-300 px-2 py-1 disabled:opacity-50"
+              className="rounded-sm border border-[#E5E7EB] px-2 py-1 disabled:opacity-50"
               disabled={page === 0 || query.isFetching}
               onClick={() => setPage((value) => Math.max(0, value - 1))}
             >
@@ -116,7 +116,7 @@ export function PhotoComparisonPage() {
             </button>
             <button
               type="button"
-              className="rounded-sm border border-slate-300 px-2 py-1 disabled:opacity-50"
+              className="rounded-sm border border-[#E5E7EB] px-2 py-1 disabled:opacity-50"
               disabled={(page + 1) * PAGE_SIZE >= totalCount || query.isFetching}
               onClick={() => setPage((value) => value + 1)}
             >

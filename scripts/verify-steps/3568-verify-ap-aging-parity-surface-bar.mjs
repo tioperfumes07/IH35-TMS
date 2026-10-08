@@ -3,5 +3,6 @@ export default {
   name: "verify-ap-aging-parity-surface-bar",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-ap-aging-parity-surface-bar.mjs"]);
+    ctx.run("node", ["scripts/verify-safety-photo-pool-sched-slate-leftover-chrome.mjs"]);
   },
 };
