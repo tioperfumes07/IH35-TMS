@@ -27,8 +27,8 @@ const titleize = (s: string) => s.replace(/_/g, " ");
 
 const STATUS_COLOR: Record<string, string> = {
   draft: "bg-gray-100 text-gray-600",
-  active: "bg-slate-100 text-slate-700",
-  fully_recognized: "bg-slate-100 text-slate-700",
+  active: "bg-[#F7F8FA] text-[#1F2A44]",
+  fully_recognized: "bg-[#F7F8FA] text-[#1F2A44]",
   voided: "bg-red-100 text-red-700",
 };
 
@@ -41,7 +41,7 @@ function ObligationBlock({ ob }: { ob: RevenueObligation }) {
           <span className="ml-2 text-xs text-gray-500">({titleize(ob.recognition_method)})</span>
         </div>
         <div className="text-xs text-gray-600">
-          Allocated {fmtCents(ob.allocated_price_cents)} · Recognized <span className="text-slate-700">{fmtCents(ob.recognized_to_date_cents)}</span> · Deferred {fmtCents(ob.remaining_deferred_cents)}
+          Allocated {fmtCents(ob.allocated_price_cents)} · Recognized <span className="text-[#1F2A44]">{fmtCents(ob.recognized_to_date_cents)}</span> · Deferred {fmtCents(ob.remaining_deferred_cents)}
         </div>
       </div>
       {ob.schedule_note && <p className="px-3 py-2 text-xs text-gray-500">{ob.schedule_note}</p>}
@@ -103,7 +103,7 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
 
         <div className="grid grid-cols-3 gap-3 mb-3 text-xs">
           <div><div className="text-xs text-gray-500">Transaction price</div><div className="tabular-nums">{fmtCents(detail.transaction_price_cents)}</div></div>
-          <div><div className="text-xs text-gray-500">Recognized to date</div><div className="tabular-nums text-slate-700">{fmtCents(detail.recognized_to_date_cents)}</div></div>
+          <div><div className="text-xs text-gray-500">Recognized to date</div><div className="tabular-nums text-[#1F2A44]">{fmtCents(detail.recognized_to_date_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Deferred balance</div><div className="tabular-nums font-semibold">{fmtCents(detail.deferred_balance_cents)}</div></div>
         </div>
 
@@ -139,10 +139,10 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
 
         <div className="mb-4">
           <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Recognized</span><span>{pct}%</span></div>
-          <div className="h-2 bg-gray-200"><div className="h-2 rounded-full bg-slate-500 transition-all" style={{ width: `${Math.min(100, pct)}%` }} /></div>
+          <div className="h-2 bg-gray-200"><div className="h-2 rounded-full bg-[#6B7280] transition-all" style={{ width: `${Math.min(100, pct)}%` }} /></div>
         </div>
 
-        <div className="mb-3 border-t border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+        <div className="mb-3 border-t border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
           <p className="font-semibold mb-1">GL Posting (GATED — REVENUE_RECOGNITION_POST_ENABLED OFF)</p>
           <p>Deferral: Dr AR / Cr Deferred Revenue · Per-period: Dr Deferred Revenue / Cr Revenue</p>
         </div>
@@ -190,7 +190,7 @@ function LeakagePanel({ operatingCompanyId }: { operatingCompanyId: string }) {
         key: "gap",
         label: "Gap",
         sortable: true,
-        render: (row) => <span className="text-slate-700">{gapLabel(row.gap)}</span>,
+        render: (row) => <span className="text-[#1F2A44]">{gapLabel(row.gap)}</span>,
       },
       {
         key: "rate",
@@ -246,11 +246,11 @@ function LeakagePanel({ operatingCompanyId }: { operatingCompanyId: string }) {
               </div>
               <div>
                 <div className="text-gray-500">Missing earn</div>
-                <div className="text-xs font-semibold tabular-nums text-slate-700">{s.missing_earn_count}</div>
+                <div className="text-xs font-semibold tabular-nums text-[#1F2A44]">{s.missing_earn_count}</div>
               </div>
               <div>
                 <div className="text-gray-500">Earn w/o bill</div>
-                <div className="text-xs font-semibold tabular-nums text-slate-700">{s.earn_missing_bill_count}</div>
+                <div className="text-xs font-semibold tabular-nums text-[#1F2A44]">{s.earn_missing_bill_count}</div>
               </div>
               <div>
                 <div className="text-gray-500">Unbilled open</div>
@@ -315,7 +315,7 @@ export function RevenueRecognitionPage() {
         sortable: true,
         cellClass: "max-w-[220px] truncate font-medium",
         render: (row) => (
-          <button onClick={() => setDetailId(row.id)} className="text-slate-700 hover:underline text-left">{row.description}</button>
+          <button onClick={() => setDetailId(row.id)} className="text-[#1F2A44] hover:underline text-left">{row.description}</button>
         ),
       },
       {
@@ -345,7 +345,7 @@ export function RevenueRecognitionPage() {
         label: "Recognized",
         sortable: true,
         className: "text-right",
-        cellClass: "whitespace-nowrap text-right tabular-nums text-slate-700",
+        cellClass: "whitespace-nowrap text-right tabular-nums text-[#1F2A44]",
         render: (row) => fmtCents(row.recognized_to_date_cents),
       },
       {
