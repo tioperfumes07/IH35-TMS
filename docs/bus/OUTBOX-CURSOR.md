@@ -1,3 +1,13 @@
+## 2026-10-08T18:25Z · BANK leftover slate — driver fines / temp cover / unit temp cover
+
+FINDING: BANK-F91224 — DriverFinesReverseSection / DriverTempCoverReverseSection / UnitTempCoverReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25889 squash `9457130639` (BANK-F91223 disp settings/ratecon/miles)
+GUARD: scripts/verify-fines-tempcover-slate-leftover-chrome.mjs + verify-steps/3692 piggyback
+LIVE PROOF: verify-fines-tempcover-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3692 piggyback + OUTBOX
+
 ## 2026-10-08T18:15Z · BANK leftover slate — dispatch settings / rate-con upload / miles invert ack
 
 FINDING: BANK-F91223 — DispatchSettingsPage / RateConUploadPanel / MilesInvertAckDialog Tailwind slate-* → house tokens
