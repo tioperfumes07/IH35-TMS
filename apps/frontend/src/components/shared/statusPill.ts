@@ -5,9 +5,9 @@
 // occurrence in the tree, even a correctly-locked one, against the frozen raw_font_sizes baseline).
 export function statusPill(status: string): string {
   const base = "rounded-sm px-2 py-0.5 text-xs font-semibold uppercase tracking-wide";
-  if (status === "denied") return `${base} border border-slate-200 bg-slate-100 text-slate-700`;
+  if (status === "denied") return `${base} border border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]`;
   if (status === "submitted" || status === "under_review" || status === "approved") {
-    return `${base} border border-slate-200 bg-slate-100 text-slate-700`;
+    return `${base} border border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]`;
   }
-  return `${base} border border-slate-200 bg-slate-50 text-slate-700`;
+  return `${base} border border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]`;
 }

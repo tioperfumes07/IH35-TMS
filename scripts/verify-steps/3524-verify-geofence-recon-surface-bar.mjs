@@ -3,5 +3,7 @@ export default {
   name: "verify-geofence-recon-surface-bar",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-geofence-recon-surface-bar.mjs"]);
+    // BANK leftover refuse — QBOSyncStatusDashboard/CostBreakdownBox/statusPill house tokens
+    await ctx.run("node", ["scripts/verify-qbo-cost-pill-slate-leftover-chrome.mjs"]);
   },
 };
