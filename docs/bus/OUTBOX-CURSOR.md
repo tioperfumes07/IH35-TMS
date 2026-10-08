@@ -1,3 +1,13 @@
+## 2026-10-08T07:35Z · BANK leftover slate — DOT inspections / detention board / assignment history
+
+FINDING: BANK-F91183 — DOTInspectionsTab / DetentionBoardPage / AssignmentHistoryPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25837 squash `0ae1e2a2ab` (BANK-F91182 tasks calendar/DQF/lawsuit)
+GUARD: scripts/verify-dot-detention-assign-slate-leftover-chrome.mjs + verify-steps/4658 piggyback
+LIVE PROOF: verify-dot-detention-assign-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 4658 piggyback + OUTBOX
+
 ## 2026-10-08T07:30Z · BANK leftover slate — tasks calendar / driver DQF / lawsuit create
 
 FINDING: BANK-F91182 — TasksCalendarPage / DriverDqfPanel / LawsuitCreateModal Tailwind slate-* → house tokens

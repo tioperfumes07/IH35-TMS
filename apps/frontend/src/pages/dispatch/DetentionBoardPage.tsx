@@ -99,7 +99,7 @@ function DetentionApprovalQueue({
   const rows = pendingQ.data?.requests ?? [];
   if (pendingQ.isLoading) {
     return (
-      <div data-testid="detention-approval-queue" className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">
+      <div data-testid="detention-approval-queue" className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#4B5563]">
         Loading approval queue…
       </div>
     );
@@ -116,24 +116,24 @@ function DetentionApprovalQueue({
   if (rows.length === 0) return null;
 
   return (
-    <div data-testid="detention-approval-queue" className="rounded-sm border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 px-3 py-2 text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
+    <div data-testid="detention-approval-queue" className="rounded-sm border border-[#E5E7EB] bg-white">
+      <div className="border-b border-[#E5E7EB] px-3 py-2 text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
         Pending approval · METHOD required for invoice
       </div>
-      <ul className="divide-y divide-slate-100">
+      <ul className="divide-y divide-[#E5E7EB]">
         {rows.map((row: DetentionApprovalRequest) => {
           const method = methodById[row.id] ?? DETENTION_APPROVAL_METHODS[0];
           const stopLabel = [row.stop_city, row.stop_state].filter(Boolean).join(", ") || "—";
           return (
             <li key={row.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-xs text-[#0F1219]">
               <span className="min-w-[4.5rem] font-semibold">{row.load_number ?? "—"}</span>
-              <span className="min-w-[8rem] text-slate-600">{row.customer_name ?? "—"}</span>
+              <span className="min-w-[8rem] text-[#4B5563]">{row.customer_name ?? "—"}</span>
               <span className="min-w-[6rem] text-center">{stopLabel}</span>
               <span className="min-w-[4rem] text-center">{formatMoney(Number(row.amount_cents ?? 0))}</span>
               <label className="flex items-center gap-1">
                 <span className="text-section-header font-bold uppercase text-[#4B5563]">Method</span>
                 <select
-                  className="h-7 rounded-sm border border-slate-200 px-2 text-xs"
+                  className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
                   value={method}
                   aria-label={`Approval method for ${row.load_number ?? row.id}`}
                   onChange={(e) => setMethodById((prev) => ({ ...prev, [row.id]: e.target.value }))}
@@ -147,7 +147,7 @@ function DetentionApprovalQueue({
               </label>
               <button
                 type="button"
-                className="h-7 rounded-sm border border-slate-300 px-2 text-xs text-slate-700"
+                className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#4B5563]"
                 disabled={approveM.isPending || rejectM.isPending || !method.trim()}
                 onClick={() => approveM.mutate({ id: row.id, method })}
               >
@@ -155,7 +155,7 @@ function DetentionApprovalQueue({
               </button>
               <button
                 type="button"
-                className="h-7 rounded-sm border border-slate-300 px-2 text-xs text-slate-700"
+                className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#4B5563]"
                 disabled={approveM.isPending || rejectM.isPending}
                 onClick={() => rejectM.mutate({ id: row.id })}
               >
@@ -224,7 +224,7 @@ function EventActions({
       {event.status === "closed" ? (
         <button
           type="button"
-          className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs text-[#4B5563]"
           disabled={actionPending}
           onClick={() => bridgeM.mutate(actionVariables)}
         >
@@ -291,7 +291,7 @@ export function DetentionBoardPage() {
   type DetentionRow = (typeof events)[number];
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
   }
 
   // Migrated to the shared QBO-parity grid — columns, order, and per-row action buttons preserved
@@ -318,7 +318,7 @@ export function DetentionBoardPage() {
       render: (event) => (
         <>
           {[event.stop_city, event.stop_state].filter(Boolean).join(", ") || "—"}
-          {event.stop_type ? <span className="ml-1 text-xs text-slate-500">({event.stop_type})</span> : null}
+          {event.stop_type ? <span className="ml-1 text-xs text-[#6B7280]">({event.stop_type})</span> : null}
         </>
       ),
     },
@@ -409,7 +409,7 @@ export function DetentionBoardPage() {
 
       <DetentionApprovalQueue companyId={companyId} />
 
-      <p className="text-xs text-slate-600">
+      <p className="text-xs text-[#4B5563]">
         Active rows are estimates, not customer balances · stopped rows remain visible as unbilled receivables · customer notify after{" "}
         {boardQ.data?.notify_threshold_minutes ?? 60} billable minutes.
       </p>
