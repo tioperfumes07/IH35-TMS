@@ -16,6 +16,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
 import { humanizeAuditEventType } from "../../lib/humanizeAuditEventType";
+import { SelectCombobox } from "../Combobox";
 
 type Props = {
   driverId: string;
@@ -301,7 +302,7 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
               <div className="flex flex-wrap items-end gap-2">
                 <div className="text-xs text-gray-600">
                   <label htmlFor="driver-assigned-loads-status-filter" className="block">Status</label>
-                  <select
+                  <SelectCombobox
                     id="driver-assigned-loads-status-filter"
                     className="mt-1 rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs"
                     value={statusFilter}
@@ -311,7 +312,7 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
                     {STATUS_FILTER_OPTIONS.map((opt) => (
                       <option key={opt.label} value={opt.value}>{opt.label}</option>
                     ))}
-                  </select>
+                  </SelectCombobox>
                 </div>
                 <div className="text-xs text-gray-600">
                   <label htmlFor="driver-assigned-loads-filter-from">From</label>
