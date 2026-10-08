@@ -20,9 +20,9 @@ export function RateConUploadPanel({
   const { phase, error, result, busy, handleFile } = useRateConExtraction({ operatingCompanyId, onPrefill });
 
   return (
-    <div className="rounded border border-slate-200 p-3 text-xs">
+    <div className="rounded border border-[#E5E7EB] p-3 text-xs">
       <div className="flex items-center gap-2">
-        <label className="inline-flex cursor-pointer items-center rounded bg-slate-100 px-2 py-1 font-semibold text-slate-700 hover:bg-slate-200">
+        <label className="inline-flex cursor-pointer items-center rounded bg-[#F7F8FA] px-2 py-1 font-semibold text-[#1F2A44] hover:bg-[#E5E7EB]">
           {busy ? (phase === "uploading" ? "Uploading…" : "Reading rate con…") : "Upload Rate Con"}
           <input
             type="file"
@@ -36,20 +36,20 @@ export function RateConUploadPanel({
             }}
           />
         </label>
-        <span className="text-xs text-slate-500">PDF/image · fills the wizard for you to review (never auto-books)</span>
+        <span className="text-xs text-[#6B7280]">PDF/image · fills the wizard for you to review (never auto-books)</span>
       </div>
 
-      {error ? <p className="mt-2 text-slate-700">{error}</p> : null}
+      {error ? <p className="mt-2 text-[#1F2A44]">{error}</p> : null}
 
       {result ? (
         <div className="mt-2 space-y-1">
           {result.duplicate_of ? (
-            <p className="text-slate-700">This rate con was already used on a load — continue anyway, or cancel.</p>
+            <p className="text-[#1F2A44]">This rate con was already used on a load — continue anyway, or cancel.</p>
           ) : null}
           {!result.total_matches_components ? (
-            <p className="text-slate-700">The total doesn’t equal linehaul + fuel + accessorials — verify the rate before booking.</p>
+            <p className="text-[#1F2A44]">The total doesn’t equal linehaul + fuel + accessorials — verify the rate before booking.</p>
           ) : null}
-          <p className="text-slate-600">Extracted and prefilled. Review every field, especially any flagged low-confidence.</p>
+          <p className="text-[#4B5563]">Extracted and prefilled. Review every field, especially any flagged low-confidence.</p>
         </div>
       ) : null}
     </div>

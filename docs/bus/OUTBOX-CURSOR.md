@@ -1,3 +1,13 @@
+## 2026-10-08T18:15Z · BANK leftover slate — dispatch settings / rate-con upload / miles invert ack
+
+FINDING: BANK-F91223 — DispatchSettingsPage / RateConUploadPanel / MilesInvertAckDialog Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25888 squash `2382f6486c` (BANK-F91222 home charts/hub rpt)
+GUARD: scripts/verify-disp-settings-ratecon-miles-slate-leftover-chrome.mjs + verify-steps/3700 piggyback
+LIVE PROOF: verify-disp-settings-ratecon-miles-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3700 piggyback + OUTBOX
+
 ## 2026-10-08T17:35Z · BANK leftover slate — WO status pie / fleet utilization / driver hub reporting
 
 FINDING: BANK-F91222 — WOStatusPieChart / FleetUtilizationGauge / DriverHubReportingPage Tailwind slate-* → house tokens
