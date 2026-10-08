@@ -14,19 +14,19 @@ const CHANNEL_OPTIONS = [
 const PAGE_SIZE = 50;
 
 function ChannelIcon({ channel }: { channel: string }) {
-  if (channel === "sms") return <MessageSquare className="h-3.5 w-3.5 text-slate-700" aria-label="SMS" />;
-  if (channel === "email") return <Mail className="h-3.5 w-3.5 text-slate-700" aria-label="Email" />;
-  if (channel === "in_app") return <Phone className="h-3.5 w-3.5 text-slate-500" aria-label="In-App" />;
+  if (channel === "sms") return <MessageSquare className="h-3.5 w-3.5 text-[#4B5563]" aria-label="SMS" />;
+  if (channel === "email") return <Mail className="h-3.5 w-3.5 text-[#4B5563]" aria-label="Email" />;
+  if (channel === "in_app") return <Phone className="h-3.5 w-3.5 text-[#6B7280]" aria-label="In-App" />;
   return null;
 }
 
 function ChannelBadge({ channel }: { channel: string }) {
   const classes =
     channel === "sms"
-      ? "bg-slate-100 text-slate-700"
+      ? "bg-[#F7F8FA] text-[#4B5563]"
       : channel === "email"
-      ? "bg-slate-100 text-slate-700"
-      : "bg-slate-100 text-slate-700";
+      ? "bg-[#F7F8FA] text-[#4B5563]"
+      : "bg-[#F7F8FA] text-[#4B5563]";
   return (
     <span className={`inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${classes}`}>
       <ChannelIcon channel={channel} />
@@ -39,7 +39,7 @@ function DirectionBadge({ direction }: { direction: "inbound" | "outbound" }) {
   return (
     <span
       className={`rounded px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${
-        direction === "inbound" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-600"
+        direction === "inbound" ? "bg-[#F7F8FA] text-[#4B5563]" : "bg-gray-100 text-gray-600"
       }`}
     >
       {direction === "inbound" ? "← Driver" : "Office →"}
@@ -50,11 +50,11 @@ function DirectionBadge({ direction }: { direction: "inbound" | "outbound" }) {
 function DeliveryBadge({ status }: { status: string }) {
   const classes =
     status === "delivered" || status === "sent"
-      ? "text-slate-700"
+      ? "text-[#4B5563]"
       : status === "failed"
       ? "text-red-500"
       : status === "skipped"
-      ? "text-slate-700"
+      ? "text-[#4B5563]"
       : "text-gray-400";
   return <span className={`text-xs ${classes}`}>{status}</span>;
 }
@@ -149,7 +149,7 @@ export function DriverCommunicationsTab({
                 key={entry.id}
                 className={`flex gap-3 rounded border p-3 ${
                   entry.direction === "inbound"
-                    ? "border-slate-200 bg-slate-100"
+                    ? "border-[#E5E7EB] bg-[#F7F8FA]"
                     : "border-gray-200 bg-[var(--surface-unselected)]"
                 }`}
               >
