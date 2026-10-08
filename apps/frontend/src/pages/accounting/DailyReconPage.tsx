@@ -34,8 +34,8 @@ const MATCH_STATUS_OPTIONS: Array<{ value: DailyReconMatchStatus | "all"; label:
 ];
 
 const STATUS_BADGES: Record<DailyReconMatchStatus, { label: string; cls: string }> = {
-  matched:         { label: "Matched",           cls: "bg-slate-100 text-slate-700" },
-  missing_in_qbo:  { label: "Missing in QBO",    cls: "bg-slate-100 text-slate-700" },
+  matched:         { label: "Matched",           cls: "bg-[#F7F8FA] text-[#1F2A44]" },
+  missing_in_qbo:  { label: "Missing in QBO",    cls: "bg-[#F7F8FA] text-[#1F2A44]" },
   amount_mismatch: { label: "Amount Mismatch",   cls: "bg-red-100 text-red-800" },
   missing_in_tms:  { label: "Missing in TMS",    cls: "bg-orange-100 text-orange-800" },
 };
@@ -59,7 +59,7 @@ const RECON_COLUMNS: Array<ParityColumn<DailyReconRow>> = [
     label: "ID",
     render: (row) =>
       row.tms_detail_path ? (
-        <Link to={row.tms_detail_path} className="font-mono text-xs text-slate-600 hover:underline">
+        <Link to={row.tms_detail_path} className="font-mono text-xs text-[#4B5563] hover:underline">
           {formatEntityLabel(null, row.entity_id, "Entity")}
         </Link>
       ) : (
@@ -134,7 +134,7 @@ export function DailyReconPage() {
             type="button"
             onClick={() => setMatchStatus(matchStatus === s ? "all" : s)}
             className={`rounded border px-3 py-2 text-left text-xs transition-colors ${
-              matchStatus === s ? "border-slate-400 bg-slate-100" : "border-gray-200 bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
+              matchStatus === s ? "border-[#6B7280] bg-[#F7F8FA]" : "border-gray-200 bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
             }`}
           >
             <p className="font-semibold text-gray-900">{count}</p>
@@ -152,15 +152,15 @@ export function DailyReconPage() {
       kpiStrip={kpiStrip}
     >
       {!companyId ? (
-        <p className="text-xs text-slate-700">Select an operating company.</p>
+        <p className="text-xs text-[#1F2A44]">Select an operating company.</p>
       ) : query.isLoading ? (
         <p className="text-xs text-gray-500">Loading…</p>
       ) : query.isError ? (
         <p className="text-xs text-red-600">Failed to load reconciliation data.</p>
       ) : !data?.gl_posting_active ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-50 px-4 py-6 text-center">
-          <p className="font-semibold text-slate-700">TMS posting not enabled — nothing to reconcile yet.</p>
-          <p className="mt-1 text-xs text-slate-600">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-4 py-6 text-center">
+          <p className="font-semibold text-[#1F2A44]">TMS posting not enabled — nothing to reconcile yet.</p>
+          <p className="mt-1 text-xs text-[#4B5563]">
             GL posting is not yet turned on for this entity. Once posting is live, daily TMS
             journal entries will appear here paired against QBO sync queue results.
           </p>
@@ -228,14 +228,14 @@ export function DailyReconPage() {
                   {/* Day header */}
                   <div className={`flex items-center justify-between px-4 py-2 ${
                     day.all_reconciled
-                      ? "bg-slate-50 border-b border-slate-200"
+                      ? "bg-[#F7F8FA] border-b border-[#E5E7EB]"
                       : "bg-gray-50 border-b border-gray-200"
                   }`}>
                     <span className="font-semibold text-xs text-gray-900">{formatDateUS(day.date)}</span>
                     {day.all_reconciled ? (
-                      <span className="text-xs font-semibold text-slate-600">All reconciled</span>
+                      <span className="text-xs font-semibold text-[#4B5563]">All reconciled</span>
                     ) : (
-                      <span className="text-xs text-slate-600">
+                      <span className="text-xs text-[#4B5563]">
                         {day.rows.filter((r) => r.match_status !== "matched").length} item(s) need attention
                       </span>
                     )}

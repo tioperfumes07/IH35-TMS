@@ -39,12 +39,12 @@ function money(cents: number) {
 
 function statusPill(status: FactoringAdvance["status"]) {
   const base = "rounded-sm px-2 py-0.5 text-section-header font-semibold uppercase tracking-wide";
-  if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
-  if (status === "reserve_held" || status === "collected") return `${base} bg-slate-50 text-slate-600 border border-slate-200`;
-  if (status === "released") return `${base} bg-slate-100 text-slate-700 border border-slate-200`;
+  if (status === "advanced") return `${base} bg-[#F7F8FA] text-[#1F2A44] border border-[#E5E7EB]`;
+  if (status === "reserve_held" || status === "collected") return `${base} bg-[#F7F8FA] text-[#4B5563] border border-[#E5E7EB]`;
+  if (status === "released") return `${base} bg-[#F7F8FA] text-[#1F2A44] border border-[#E5E7EB]`;
   if (status === "recourse_returned") return `${base} bg-red-50 text-red-700 border border-red-200`;
-  if (status === "voided") return `${base} bg-slate-100 text-slate-500 border border-slate-200 line-through`;
-  return `${base} bg-slate-50 text-slate-700 border border-slate-200`;
+  if (status === "voided") return `${base} bg-[#F7F8FA] text-[#6B7280] border border-[#E5E7EB] line-through`;
+  return `${base} bg-[#F7F8FA] text-[#1F2A44] border border-[#E5E7EB]`;
 }
 
 export function FactoringListPage() {
@@ -155,7 +155,7 @@ export function FactoringListPage() {
       activeFilterCount={factoringActiveFilterCount}
       testIdPrefix="factoring"
     >
-      <label className="flex flex-col gap-1 text-xs text-slate-600" data-testid="factoring-entity-filters">
+      <label className="flex flex-col gap-1 text-xs text-[#4B5563]" data-testid="factoring-entity-filters">
         Load
         <EntityPicker
           kind="load"

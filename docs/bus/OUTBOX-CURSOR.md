@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91062 — FactoringList / DailyRecon / APAging slate → house
+
+FINDING: BANK-F91062 — FactoringListPage / DailyReconPage / APAgingPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25995 squash `33b03bdc7e` (BANK-F91061 Obligation/InvoiceDetail/MyAccountant)
+GUARD: scripts/verify-91062-factor-daily-aging-slate-leftover-chrome.mjs + verify-steps/3654 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: FactoringListPage + DailyReconPage + APAgingPage + refuse guard + 3654 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91061 — ObligationReconcile / InvoiceDetail / MyAccountant slate → house
 
 FINDING: BANK-F91061 — BankingObligationReconcilePage / InvoiceDetailPage / MyAccountantPage Tailwind slate-* → house tokens
