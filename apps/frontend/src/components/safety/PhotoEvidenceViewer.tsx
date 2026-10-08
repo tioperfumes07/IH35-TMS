@@ -19,24 +19,24 @@ export function PhotoEvidenceViewer({ open, onClose, imageUrl, sha256, exif }: P
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex overflow-y-auto bg-black/70 p-4" data-testid="photo-evidence-viewer">
-      <div className="mx-auto flex w-full max-w-5xl max-h-[calc(100vh-2rem)] gap-3 overflow-y-auto rounded-sm border border-slate-200 bg-white p-3">
+      <div className="mx-auto flex w-full max-w-5xl max-h-[calc(100vh-2rem)] gap-3 overflow-y-auto rounded-sm border border-[#E5E7EB] bg-white p-3">
         <div className="flex-1">
           {imageUrl ? (
             <img src={imageUrl} alt="Damage evidence" className="max-h-[70vh] w-full object-contain" />
           ) : (
-            <div className="flex h-64 items-center justify-center rounded-sm border border-dashed border-slate-300 text-xs text-slate-500">
+            <div className="flex h-64 items-center justify-center rounded-sm border border-dashed border-[#E5E7EB] text-xs text-[#6B7280]">
               No preview URL
             </div>
           )}
         </div>
         <aside className="w-64 space-y-2 text-xs">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-slate-800">EXIF metadata</h3>
-            <button type="button" className="text-slate-500 hover:text-slate-800" onClick={onClose}>
+            <h3 className="font-semibold text-[#0F1219]">EXIF metadata</h3>
+            <button type="button" className="text-[#6B7280] hover:text-[#0F1219]" onClick={onClose}>
               Close
             </button>
           </div>
-          <dl className="space-y-1 text-slate-600">
+          <dl className="space-y-1 text-[#4B5563]">
             <div>
               <dt className="font-semibold">SHA-256</dt>
               <dd className="break-all font-mono text-xs">{sha256 ?? "—"}</dd>

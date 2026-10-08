@@ -14,18 +14,18 @@ type Props = {
 
 export function DiffFindingsList({ findings, onAccept, onReject, readOnly = false }: Props) {
   if (findings.length === 0) {
-    return <p className="text-xs text-slate-500" data-testid="diff-findings-empty">No damage findings.</p>;
+    return <p className="text-xs text-[#6B7280]" data-testid="diff-findings-empty">No damage findings.</p>;
   }
 
   return (
     <ul className="space-y-2" data-testid="diff-findings-list">
       {findings.map((finding, index) => (
-        <li key={`${finding.location}-${index}`} className="rounded-sm border border-slate-200 bg-white p-3 text-xs">
+        <li key={`${finding.location}-${index}`} className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="font-semibold text-slate-900">{finding.location}</p>
-              <p className="text-slate-600">{finding.description}</p>
-              <p className="mt-1 text-slate-500">
+              <p className="font-semibold text-[#0F1219]">{finding.location}</p>
+              <p className="text-[#4B5563]">{finding.description}</p>
+              <p className="mt-1 text-[#6B7280]">
                 Severity: {finding.severity} · Confidence: {(finding.confidence * 100).toFixed(0)}%
               </p>
             </div>
