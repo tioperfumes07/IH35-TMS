@@ -23,7 +23,7 @@ import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { useStagedListFilters } from "../../components/table";
-import { formatDateUS, mmmDd, mmmDdTime } from "../../lib/formatDate";
+import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 const PAYROLL_ALERT_CENTS = 50_000_00;
@@ -309,7 +309,7 @@ export function CashFlowOverviewPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={projection} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => formatDateUS(v) || String(v)} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => mmmDd(v) || String(v)} />
                   <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 11 }} />
                   <Tooltip
                     content={({ active, payload, label }) =>

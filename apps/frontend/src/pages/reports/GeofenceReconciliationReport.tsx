@@ -5,7 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
-import { formatDateUS, mmmDdTime } from "../../lib/formatDate";
+import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -187,7 +187,7 @@ export function GeofenceReconciliationReport() {
           rowKey={(f) => f.uuid}
           loading={isLoading}
           storageKey="geofence-recon"
-          emptyText={`No anomalies found for ${formatDateUS(appliedDate)}.`}
+          emptyText={`No anomalies found for ${mmmDd(appliedDate)}.`}
           exportFilename={`geofence-recon-${appliedFilters.appliedDate}`}
           rowClassName={(f) => (f.resolved ? "opacity-50" : "")}
           rowActions={(f) =>

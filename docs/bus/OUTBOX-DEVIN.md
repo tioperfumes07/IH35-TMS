@@ -136,4 +136,7 @@ DONE: PR #25784 · squash 4b5df714c1e3d69bc388255f9a6b1087cd21f65e · money-pr-l
 DONE: PR #25787 · squash 37d3ae27cdb3359ff8d7b0b62ce62d4a9f9eeaa0 · money-pr-local-gate exit 0 · fixed selftest plant strings in verify-reserve-docs-liabilities-human-labels, verify-safety-creator-pickers, verify-vehicle-driver-history-exact-range · baseline-lines-added = 0
 
 ## 2026-10-08 — ROUND 441.22 Devin: accounting module hand-rolled currency formatting converted to canonical formatters
-DONE: PR #25788 · squash pending · money-pr-local-gate exit 0 · defect register created at docs/audit/ROUND-441-22-defect-register.md; converted RecurringBillList, AccountsPayableAgingPage, LoansAdvancesPage, CheckPrintPage, CheckDetailPage to formatUsdCents/formatUsd; re-anchored verify-recurring-bill-list-uses-paritytable to accept canonical money formatters · baseline-lines-added = 0
+DONE: PR #25788 · squash 075abe2cb9b928147e2822d23b0a5718b14e6847 · money-pr-local-gate exit 0 · defect register created at docs/audit/ROUND-441-22-defect-register.md; converted RecurringBillList, AccountsPayableAgingPage, LoansAdvancesPage, CheckPrintPage, CheckDetailPage to formatUsdCents/formatUsd; re-anchored verify-recurring-bill-list-uses-paritytable to accept canonical money formatters · baseline-lines-added = 0
+
+## 2026-10-08 — ROUND 441.22 Devin: re-anchor MoneyInput single-frame vertical selftest plant
+DONE: PR #25789 · squash c688f41032c4172979bd3be33afe61bc64cf344d · money-pr-local-gate exit 0 · verify-moneyinput-single-frame-vertical.mjs --selftest now catches removal of MoneyInput's own <input> frame · baseline-lines-added = 0
