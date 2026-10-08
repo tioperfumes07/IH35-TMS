@@ -338,7 +338,7 @@ export function DrugAlcoholTab() {
               <div data-testid="drug-alcohol-driver-detail-query-error"><ListErrorState status={0} message={userFacingApiError(driverDetailQueryError, "Could not load driver drug / eligibility status.")} onRetry={() => void retryFailedDriverDetailQueries()} /></div>
             ) : null}
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-sm border border-gray-100 p-3 text-xs">
+              <div className="border-t border-gray-100 p-3 text-xs">
                 <div className="font-medium text-[#1F2A44]">Drug status</div>
                 <div className="mt-1">
                   {drugStatusQ.isError ? (
@@ -350,7 +350,7 @@ export function DrugAlcoholTab() {
                   )}
                 </div>
               </div>
-              <div className="rounded-sm border border-gray-100 p-3 text-xs">
+              <div className="border-t border-gray-100 p-3 text-xs">
                 <div className="font-medium text-[#1F2A44]">Dispatch eligibility</div>
                 <div className="mt-1">
                   {eligibilityQ.isError ? (
@@ -367,7 +367,7 @@ export function DrugAlcoholTab() {
                   )}
                 </div>
               </div>
-              <div className="rounded-sm border border-gray-100 p-3 text-xs">
+              <div className="border-t border-gray-100 p-3 text-xs">
                 <div className="font-medium text-[#1F2A44]">RTD case</div>
                 <div className="mt-1">
                   {rtdCaseQ.isError ? "—" : rtdCase ? stageLabel(rtdCase.stage) : "None open"}

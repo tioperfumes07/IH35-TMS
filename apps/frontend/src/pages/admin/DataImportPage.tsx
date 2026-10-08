@@ -385,11 +385,11 @@ export function DataImportPage() {
           {commitResult ? (
             <>
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">
+                <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">
                   <div className="font-semibold">Inserted</div>
                   <div className="text-page-title font-bold text-[#0F1219]">{commitResult.inserted_rows}</div>
                 </div>
-                <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">
+                <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">
                   <div className="font-semibold">Skipped</div>
                   <div className="text-page-title font-bold text-[#0F1219]">{commitResult.skipped_rows}</div>
                 </div>

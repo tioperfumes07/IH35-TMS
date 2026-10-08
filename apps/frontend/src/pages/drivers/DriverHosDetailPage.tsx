@@ -19,8 +19,8 @@ function minutesToLabel(minutes: number) {
 
 function statusClass(status: "ok" | "warning_1hr" | "warning_15min" | "violation") {
   if (status === "violation") return "bg-red-100 text-red-700";
-  if (status === "warning_15min" || status === "warning_1hr") return "bg-[#F7F8FA] text-[#1F2A44]";
-  return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (status === "warning_15min" || status === "warning_1hr") return "bg-slate-100 text-slate-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 export function DriverHosDetailPage() {
@@ -72,7 +72,7 @@ export function DriverHosDetailPage() {
       ) : null}
 
       {!operatingCompanyId ? (
-        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
+        <div className="border-y border-slate-200 bg-slate-100 p-3 text-xs text-slate-700">
           Select an operating company to view HOS details.
         </div>
       ) : null}
@@ -108,7 +108,7 @@ export function DriverHosDetailPage() {
             <h2 className="text-xs font-semibold text-gray-900">24-hour duty status timeline</h2>
             <div className="mt-2 space-y-1">
               {hosQuery.data.timeline_24h.map((event) => (
-                <div key={event.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-100 bg-gray-50 px-2 py-1 text-xs">
+                <div key={event.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50 px-2 py-1 text-xs">
                   <span className="font-semibold">{event.duty_status}</span>
                   <span>{formatDateTimeUS(event.started_at)} CT → {event.ended_at ? `${formatDateTimeUS(event.ended_at)} CT` : "open"}</span>
                   <span className="text-gray-500">{event.location ?? "location n/a"}</span>
@@ -148,7 +148,7 @@ export function DriverHosDetailPage() {
             ) : (
               <div className="mt-2 space-y-1">
                 {hosQuery.data.manual_edits.events.map((event) => (
-                  <div key={event.id} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#0F1219]">
+                  <div key={event.id} className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-800">
                     {formatDateTimeUS(event.started_at)} CT · {event.duty_status}
                   </div>
                 ))}

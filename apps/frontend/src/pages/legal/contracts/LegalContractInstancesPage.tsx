@@ -497,7 +497,7 @@ export function LegalContractInstancesPage() {
                 <div><span className="font-semibold">Status:</span> {detailQuery.data.status}</div>
                 <div><span className="font-semibold">Language:</span> {detailQuery.data.language}</div>
               </div>
-              <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
+              <div className="border-t border-gray-200 bg-gray-50 p-2">
                 <div className="mb-1 text-xs font-semibold uppercase text-gray-500">Filled Variables</div>
                 <pre className="overflow-x-auto text-xs">{JSON.stringify(detailQuery.data.filled_variables ?? {}, null, 2)}</pre>
               </div>
@@ -507,7 +507,7 @@ export function LegalContractInstancesPage() {
                   <div className="space-y-1">
                     {detailQuery.data.signatures.length === 0 ? <div className="text-xs text-gray-500">No signatures yet.</div> : null}
                     {detailQuery.data.signatures.map((signature) => (
-                      <div key={signature.id} className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-xs">
+                      <div key={signature.id} className="border-b border-gray-200 bg-white px-2 py-1 text-xs">
                         {signature.signed_by_name} · {new Date(signature.signed_at).toLocaleString()} · IP {signature.signer_ip ?? "—"}
                       </div>
                     ))}
@@ -518,7 +518,7 @@ export function LegalContractInstancesPage() {
                   <div className="max-h-44 space-y-1 overflow-auto">
                     {detailQuery.data.audit_log.length === 0 ? <div className="text-xs text-gray-500">No audit events yet.</div> : null}
                     {detailQuery.data.audit_log.map((entry) => (
-                      <div key={entry.id} className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-xs">
+                      <div key={entry.id} className="border-b border-gray-200 bg-white px-2 py-1 text-xs">
                         <div className="font-semibold">{entry.event_type}</div>
                         <div>{new Date(entry.created_at).toLocaleString()}</div>
                       </div>
