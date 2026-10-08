@@ -11,6 +11,14 @@ import {
   QBO_DATE_PRESETS,
 } from "../../../components/table/UniversalListToolbar";
 
+const MONTH_OPTIONS = Array.from({ length: 15 }, (_, i) => {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 12 + i);
+  const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  const label = new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long" }).format(d);
+  return { value, label };
+});
+
 type Props = {
   filters: RunnerFilter[];
   values: Record<string, unknown>;
@@ -143,7 +151,14 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
               return (
                 <label key={filter.key} className="block">
                   <FilterLabel filter={filter} />
-                  <input type="month" className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs" value={String(draft[filter.key] ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })} />
+                  <Combobox
+                    options={MONTH_OPTIONS}
+                    value={String(draft[filter.key] ?? "")}
+                    onChange={(next) => staged.setDraft({ ...draft, [filter.key]: next ?? "" })}
+                    placeholder="Select month"
+                    className="h-9 w-full text-xs"
+                    dataField={`runner-filter-${filter.key}`}
+                  />
                 </label>
               );
             }
