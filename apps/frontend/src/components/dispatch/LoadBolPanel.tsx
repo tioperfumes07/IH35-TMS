@@ -73,10 +73,10 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
   return (
     <div className="rounded-sm border border-slate-200 bg-white p-3" data-testid="load-pod-bol-panel">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-xs font-semibold text-[#1f2a44]">Load POD + BOL</h3>
+        <h3 className="text-xs font-semibold text-[#1F2A44]">Load POD + BOL</h3>
         <div className="flex gap-2">
           <a
-            className="rounded-sm border border-slate-300 px-3 py-1 text-xs text-[#1f2a44]"
+            className="rounded-sm border border-slate-300 px-3 py-1 text-xs text-[#1F2A44]"
             href={resolveApiUrl(`/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/bol.pdf?operating_company_id=${encodeURIComponent(companyId)}`)}
             data-testid="bol-download-link"
           >
@@ -84,7 +84,7 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
           </a>
           <button
             type="button"
-            className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs text-white"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs text-white"
             data-testid="bol-generate-button"
             disabled={
               summaryQuery.isLoading ||
@@ -106,7 +106,7 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
         </div>
       </div>
       {generateError ? (
-        <p className="mb-2 text-xs text-[#dc2626]" data-testid="bol-generate-error">
+        <p className="mb-2 text-xs text-[#DC2626]" data-testid="bol-generate-error">
           {generateError.message || "BOL generate failed"}
         </p>
       ) : null}
@@ -132,7 +132,7 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
               </span>
               <button
                 type="button"
-                className="text-xs text-[#1f2a44] underline"
+                className="text-xs text-[#1F2A44] underline"
                 data-testid="bol-stored-download-button"
                 disabled={downloadingBolId !== null}
                 onClick={() => void downloadStoredBol(bol.id)}

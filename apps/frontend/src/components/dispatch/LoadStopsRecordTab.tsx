@@ -235,7 +235,7 @@ function StopDetailPopup({ stop, onClose }: { stop: StopsRecordStop; onClose: ()
         ))}
       </div>
       {stop.geocode_missing ? (
-        <p className="mt-2 text-xs text-[#93301f]">
+        <p className="mt-2 text-xs text-[#93301F]">
           No coordinates on file — no arrival fence can fire. Use “Geocode missing” on the tab to run the address
           geocoder; coordinates are never entered by hand.
         </p>
@@ -290,12 +290,12 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
   const stopColumns: Array<ParityColumn<StopsRecordStop>> = [
     { key: "sequence", label: "#" },
     { key: "stop_type", label: "Type", render: (stop) => stopTypeLabel(stop.stop_type) },
-    { key: "location", label: "Location", render: (stop) => <>{locationText(stop)}{stop.geocode_missing ? <span className="ml-1 inline-flex rounded-sm bg-[#f6e3df] px-1.5 py-0.5 text-xs font-medium text-[#93301f]">Geocode missing</span> : null}</> },
+    { key: "location", label: "Location", render: (stop) => <>{locationText(stop)}{stop.geocode_missing ? <span className="ml-1 inline-flex rounded-sm bg-[#F6E3DF] px-1.5 py-0.5 text-xs font-medium text-[#93301F]">Geocode missing</span> : null}</> },
     { key: "appointment", label: "Appt window", render: appointmentText },
     { key: "arrived_at", label: "Arrived", render: (stop) => fmtTs(stop.arrived_at), cellClass: "tabular-nums" },
     { key: "departed_at", label: "Departed", render: (stop) => fmtTs(stop.departed_at), cellClass: "tabular-nums" },
     { key: "dwell_minutes", label: "Dwell", render: (stop) => fmtDuration(stop.dwell_minutes), cellClass: "tabular-nums" },
-    { key: "detention_minutes", label: "Detention", render: (stop) => stop.detention_minutes > 0 ? <span className="text-[#93301f]">{fmtDuration(stop.detention_minutes)}</span> : DASH, cellClass: "tabular-nums" },
+    { key: "detention_minutes", label: "Detention", render: (stop) => stop.detention_minutes > 0 ? <span className="text-[#93301F]">{fmtDuration(stop.detention_minutes)}</span> : DASH, cellClass: "tabular-nums" },
     { key: "source", label: "Source" },
     { key: "doc_count", label: "Docs", render: (stop) => (
       // LDT-D shared read — BOL/POD chips from useLoadDocuments (same rows as
@@ -343,7 +343,7 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
 
       {missingAppointments.length > 0 ? (
         <div
-          className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#f6e3df] bg-[#f6e3df] px-2 py-1.5 text-xs text-[#93301f]"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#F6E3DF] bg-[#F6E3DF] px-2 py-1.5 text-xs text-[#93301F]"
           data-testid="stops-record-appointment-missing"
           role="alert"
         >
@@ -376,7 +376,7 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
       )}
 
       {geocodeMutation.isError ? (
-        <div className="rounded-sm border border-[#f6e3df] bg-[#f6e3df] px-2 py-1 text-xs text-[#93301f]">
+        <div className="rounded-sm border border-[#F6E3DF] bg-[#F6E3DF] px-2 py-1 text-xs text-[#93301F]">
           Geocode failed — {String((geocodeMutation.error as Error)?.message ?? "try again")}.
         </div>
       ) : null}

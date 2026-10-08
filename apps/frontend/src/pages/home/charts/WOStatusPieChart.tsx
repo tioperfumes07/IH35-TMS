@@ -7,12 +7,12 @@ import { formatWoStatusLabel } from "../../../lib/chartLegend";
 import { formatUsdCents } from "../../../lib/money";
 
 const STATUS_COLORS: Record<HomeWoStatusCount["status"], string> = {
-  draft: "#94a3b8",
+  draft: "#94A3B8",
   open: "#4B5563",
-  in_progress: "#f59e0b",
+  in_progress: "#F59E0B",
   awaiting_parts: "#64748B",
   completed: "#1A7A3C",
-  cancelled: "#dc2626",
+  cancelled: "#DC2626",
 };
 const UNKNOWN_STATUS_COLOR = "#64748B";
 
@@ -124,8 +124,8 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
             {data.map((entry) => (
               <Cell
                 key={`${entry.status}-${entry.count}`}
-                fill={total === 0 ? "#e2e8f0" : isKnownStatus(entry.status) ? STATUS_COLORS[entry.status] : UNKNOWN_STATUS_COLOR}
-                stroke="#fff"
+                fill={total === 0 ? "#E2E8F0" : isKnownStatus(entry.status) ? STATUS_COLORS[entry.status] : UNKNOWN_STATUS_COLOR}
+                stroke="#FFF"
                 strokeWidth={1}
               />
             ))}

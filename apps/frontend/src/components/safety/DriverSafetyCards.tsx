@@ -14,7 +14,7 @@
  * with a fixed 90/60/30/expired ladder; McLeod & Tenstreet DQ-file "standing at a glance"; FMCSA §391
  * DQ-file criticality (an expired CDL or medical card = cannot legally operate → top of the risk sort).
  *
- * Palette: §7 locked — navy/slate only; red (#dc2626) reserved here for critical-expiry (expired or
+ * Palette: §7 locked — navy/slate only; red (#DC2626) reserved here for critical-expiry (expired or
  * ≤14d) and open-incident emphasis. No amber/emerald/green/yellow status classes (§7 ratchet).
  *
  * The Safety layout's Activity-window + Status filter scope the safety-event rollup surfaced on each

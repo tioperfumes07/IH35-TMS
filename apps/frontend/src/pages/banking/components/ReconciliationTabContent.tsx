@@ -395,7 +395,7 @@ export function ReconciliationTabContent({
             <ul className="space-y-1 text-xs">
               <li className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1">
                 <span className="font-medium text-[#0F1219]">Matched</span>
-                <span className="rounded-sm bg-[#ecfdf3] px-1.5 py-0.5 text-xs font-semibold text-[#027A48]">
+                <span className="rounded-sm bg-[#ECFDF3] px-1.5 py-0.5 text-xs font-semibold text-[#027A48]">
                   matched
                 </span>
               </li>
@@ -410,7 +410,7 @@ export function ReconciliationTabContent({
                 data-c53-a27-pending="1"
               >
                 <span className="font-medium text-[#0F1219]">Matched with difference</span>
-                <span className="rounded-sm bg-[#fffaeb] px-1.5 py-0.5 text-xs font-semibold text-[#B54708]">
+                <span className="rounded-sm bg-[#FFFAEB] px-1.5 py-0.5 text-xs font-semibold text-[#B54708]">
                   matched-with-difference · A-27 pending
                 </span>
               </li>

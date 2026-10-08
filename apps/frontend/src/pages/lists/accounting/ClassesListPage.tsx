@@ -69,7 +69,7 @@ function ClassesBulkBar({
         type="button"
         disabled={busy || !parentId}
         onClick={() => run("reparent")}
-        className="rounded-sm bg-[#16A34A] px-2 py-1 text-xs font-semibold text-white hover:bg-[#15803d] disabled:opacity-50"
+        className="rounded-sm bg-[#16A34A] px-2 py-1 text-xs font-semibold text-white hover:bg-[#15803D] disabled:opacity-50"
       >
         Re-parent
       </button>

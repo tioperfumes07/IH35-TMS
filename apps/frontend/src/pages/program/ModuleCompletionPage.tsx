@@ -72,7 +72,7 @@ const MODULE_LABELS: Record<string, string> = {
 /** §7 navy — never blue. */
 const NAVY = "#1F2A44";
 const SLATE = "#64748B";
-const AMBER = "#92400e";
+const AMBER = "#92400E";
 
 function labelFor(id: string): string {
   if (MODULE_LABELS[id]) return MODULE_LABELS[id];
@@ -141,7 +141,7 @@ function ProofBadge({ proof }: { proof: ModuleRow["proof"] }) {
     return (
       <span
         className="inline-block rounded-sm border px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide"
-        style={{ borderColor: AMBER, color: AMBER, backgroundColor: "#fffbeb" }}
+        style={{ borderColor: AMBER, color: AMBER, backgroundColor: "#FFFBEB" }}
         title="Checklist PASS by code/CI — not yet live-proven on prod (prod_verified still false)"
       >
         Code-verified

@@ -72,7 +72,7 @@ export function LegalSignPage() {
     ctx.lineWidth = 2;
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
-    ctx.strokeStyle = "#0f172a";
+    ctx.strokeStyle = "#0F172A";
   }, []);
 
   const renderedHtml = useMemo(() => {

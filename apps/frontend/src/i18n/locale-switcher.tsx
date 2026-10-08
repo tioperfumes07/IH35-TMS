@@ -57,10 +57,10 @@ export function LocaleSwitcher() {
           });
         }}
       >
-        <option value="en" style={{ color: "#0f172a" }}>
+        <option value="en" style={{ color: "#0F172A" }}>
           {t("common.english", "English")}
         </option>
-        <option value="es" style={{ color: "#0f172a" }}>
+        <option value="es" style={{ color: "#0F172A" }}>
           {t("common.spanish", "Spanish")} (preview)
         </option>
       </SelectCombobox>

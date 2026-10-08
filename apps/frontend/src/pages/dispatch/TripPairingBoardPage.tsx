@@ -17,10 +17,10 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { SelectCombobox } from "../../components/Combobox";
 
 // §7 navy ruling (Jorge 2026-06-23): NB/TR/SB render in the navy family — no blue/purple/green pills.
-// Three distinguishable navy-family shades replace the old SB green (#16a34a) and any blue/purple.
+// Three distinguishable navy-family shades replace the old SB green (#16A34A) and any blue/purple.
 // TRIP-LOCAL-ENUM (owner order 2026-09-06): LOCAL (Laredo->Laredo) gets its own navy-family shade,
 // same rule — no blue/purple/green.
-const TRIP_COLOR: Record<"NB" | "TR" | "SB" | "LOCAL", string> = { NB: "#1F2A44", TR: "#64748B", SB: "#4B5563", LOCAL: "#0f172a" };
+const TRIP_COLOR: Record<"NB" | "TR" | "SB" | "LOCAL", string> = { NB: "#1F2A44", TR: "#64748B", SB: "#4B5563", LOCAL: "#0F172A" };
 
 type Segment = "All" | "NB" | "TR" | "SB" | "LOCAL" | "open" | "upnorth";
 // SORT-A1-FALSE-POSITIVE: named `text`, not `label` — this is a segment-toggle caption array, not
@@ -471,7 +471,7 @@ export function TripPairingBoardPage() {
                     <button
                       type="button"
                       onClick={() => setBookUnitId(u.unit_id)}
-                      className="mt-0.5 inline-flex w-fit items-center rounded-sm bg-[#1F2A44] px-2 py-0.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
+                      className="mt-0.5 inline-flex w-fit items-center rounded-sm bg-[#1F2A44] px-2 py-0.5 text-xs font-semibold text-white hover:bg-[#0F1729]"
                     >
                       + Book NB
                     </button>
@@ -508,7 +508,7 @@ export function TripPairingBoardPage() {
             <LegendSwatch color={TRIP_COLOR.SB} label="SB Southbound return" />
             <LegendSwatch color={TRIP_COLOR.LOCAL} label="LOCAL Laredo—Laredo" />
             <LegendSwatch dashed label="Open return" />
-            <LegendSwatch color="#b45309" label="Up north — settlement open" />
+            <LegendSwatch color="#B45309" label="Up north — settlement open" />
           </div>
 
           <p className="text-xs text-[#4B5563]">

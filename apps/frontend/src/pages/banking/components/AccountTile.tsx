@@ -19,7 +19,7 @@ function isRelayWalletTile(tile: BankingTile) {
 // (`text-xs text-gray-500` reading small next to the balance). Now a real visible chip, matching
 // the reference build's c-real/c-virt styling.
 function tileKindChipClass(tile: BankingTile) {
-  return String(tile.tile_kind) === "virtual" ? "bg-[#f1f4f7] text-[#5d6b7a]" : "bg-[#e7f0fb] text-[#1c5ba8]";
+  return String(tile.tile_kind) === "virtual" ? "bg-[#F1F4F7] text-[#5D6B7A]" : "bg-[#E7F0FB] text-[#1C5BA8]";
 }
 
 function badgeClass(tile: BankingTile) {

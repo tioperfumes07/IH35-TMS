@@ -139,7 +139,7 @@ const GRID_TEMPLATE_COLUMNS_NARROW =
   "minmax(48px,8vw) minmax(60px,9vw) minmax(76px,11vw) minmax(62px,9.5vw) minmax(62px,9.5vw) minmax(200px,1fr)";
 const FOLD_BREAKPOINT_PX = 860;
 const CAPTION_FOLD_BREAKPOINT_PX = 1180;
-const AVAILABLE_ROW_TINT = "color-mix(in srgb, #16A34A 4%, #fff)";
+const AVAILABLE_ROW_TINT = "color-mix(in srgb, #16A34A 4%, #FFF)";
 
 /** ROUND 255 — in-place status dropdown options (load status, not exception station). */
 const LOAD_STATUS_OPTIONS: { value: string; label: string }[] = [
@@ -200,7 +200,7 @@ function hasScheduleConflict(prev: TruckLineRow | null | undefined, curr: TruckL
 // identifiable at a glance without reading its text. No load (including the available-truck rows,
 // which never carry r.load) gets the neutral border color, never a semantic one.
 const ROW_SPINE_NO_LOAD = "#E5E7EB";
-const ROW_SPINE_BY_TRIP_TYPE: Record<string, string> = { NB: "#1f2a44", TR: "#b45309", SB: "#475569" };
+const ROW_SPINE_BY_TRIP_TYPE: Record<string, string> = { NB: "#1F2A44", TR: "#B45309", SB: "#475569" };
 function rowSpineColor(tripType: string | null | undefined): string {
   return (tripType && ROW_SPINE_BY_TRIP_TYPE[tripType]) || ROW_SPINE_NO_LOAD;
 }
@@ -625,9 +625,9 @@ function TruckLineTrack({
       data-testid={`truck-line-track-scale-${row.unit_id}`}
       data-timeline-width-pct="100.0"
     >
-      <WarehouseDockSvg roof="#1f2a44" />
+      <WarehouseDockSvg roof="#1F2A44" />
       <div className="absolute" style={{ left: `${pct(1)}%`, top: 2, transform: "translateX(-50%)" }}>
-        <WarehouseDockSvg roof="#1f2a44" />
+        <WarehouseDockSvg roof="#1F2A44" />
       </div>
       <div className="absolute" style={{ left: `${pct(5)}%`, top: 2, transform: "translateX(-50%)" }}>
         <WarehouseDockSvg roof="#475569" />
@@ -762,7 +762,7 @@ function TruckLineTrack({
                 width: 17,
                 height: 17,
                 transform: "translateX(-50%)",
-                background: isDone ? nodeColor : "#fff",
+                background: isDone ? nodeColor : "#FFF",
                 border: isCurrent ? `3px solid ${nodeColor}` : isNext ? `2px dashed ${GREEN}` : isDone ? `2px solid ${nodeColor}` : "2px dashed #D3DAE6",
                 cursor: isNext ? "pointer" : "default",
               }}
@@ -1239,7 +1239,7 @@ export function TruckLineBoard({
         .truck-line-ghost-rail {
           background-image: repeating-linear-gradient(to right, #D8DFE6 0 6px, transparent 6px 11px);
         }
-        .truck-line-ghost-node { background: #fff; border: 2px dashed #D8DFE6; }
+        .truck-line-ghost-node { background: #FFF; border: 2px dashed #D8DFE6; }
         .truck-line-speech-bubble {
           font-size: clamp(9px, 0.72vw, 11px);
           box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
@@ -1251,7 +1251,7 @@ export function TruckLineBoard({
           left: 14px;
           width: 10px;
           height: 10px;
-          background: #fff;
+          background: #FFF;
           border-right: 1.5px solid #16A34A;
           border-bottom: 1.5px solid #16A34A;
           transform: rotate(45deg);

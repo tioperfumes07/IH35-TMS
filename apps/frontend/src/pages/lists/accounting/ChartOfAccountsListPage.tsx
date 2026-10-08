@@ -512,7 +512,7 @@ export function ChartOfAccountsListPage() {
               trigger={({ toggle, triggerTestId, open }) => (
                 <button
                   type="button"
-                  className="inline-flex h-7 items-center rounded-l-none rounded-r-sm border border-l-0 border-[#1F2A44] bg-[#1F2A44] px-2 text-xs font-semibold text-white hover:bg-[#0f1729]"
+                  className="inline-flex h-7 items-center rounded-l-none rounded-r-sm border border-l-0 border-[#1F2A44] bg-[#1F2A44] px-2 text-xs font-semibold text-white hover:bg-[#0F1729]"
                   onClick={toggle}
                   aria-expanded={open}
                   aria-label="New account options"

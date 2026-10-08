@@ -225,7 +225,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
         <div className="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0F1729] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(statusBlockedReason) || contestMutation.isPending}
             title={statusBlockedReason ?? undefined}
             onClick={() => contestMutation.mutate({ fineId, operatingCompanyId, generation: scopeGenerationRef.current, notes })}
@@ -300,7 +300,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
         <div className="mt-2">
           <button
             type="button"
-            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0F1729] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={
               Boolean(reduceBlockedReason) ||
               reduceMutation.isPending ||
@@ -379,7 +379,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
         <div className="mt-2">
           <button
             type="button"
-            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0F1729] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={
               linkPaymentMutation.isPending ||
               !bankTransactionId ||

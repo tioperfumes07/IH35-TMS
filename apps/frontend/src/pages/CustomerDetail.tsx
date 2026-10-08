@@ -301,7 +301,7 @@ function CustomerFinancialOverviewSection(props: {
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v) => [`$${Number(v).toFixed(0)}`, "Revenue"]} />
-                <Bar dataKey="revenue" fill="#0f172a" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" fill="#0F172A" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

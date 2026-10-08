@@ -271,17 +271,17 @@ function rateConAccessorialRows(json: Record<string, unknown>): AccessorialRow[]
 }
 
 const BOOK_LOAD_CORRECT_DESIGN_CSS = `
-.blw-sec{background:#fff;border:1px solid #e3e6eb;border-radius:7px;overflow:hidden}
-.blw-sec-hd{display:flex;align-items:center;gap:9px;padding:7px 11px;background:#eef1f4;border-bottom:1px solid #e3e6eb}
-.blw-sec-chip{width:18px;height:18px;border-radius:4px;background:#1f2a44;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
-.blw-sec-name{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5b6472}
-.blw-sec-meta{margin-left:auto;font-size:12px;font-weight:600;color:#5b6472}
-.blw-sec-meta b{color:#1f2733}
-.blw-collapse{border:1px solid #e3e6eb;border-radius:5px;overflow:hidden}
-.blw-collapse-bar{display:flex;align-items:center;gap:8px;padding:8px 11px;cursor:pointer;background:#f7f8fa}
-.blw-collapse-bar:hover{background:#f0f2f5}
-.blw-collapse-plus{width:16px;height:16px;border-radius:3px;background:#1f2a44;color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none}
-.blw-note{font-size:12px;color:#8a93a1}
+.blw-sec{background:#FFF;border:1px solid #E3E6EB;border-radius:7px;overflow:hidden}
+.blw-sec-hd{display:flex;align-items:center;gap:9px;padding:7px 11px;background:#EEF1F4;border-bottom:1px solid #E3E6EB}
+.blw-sec-chip{width:18px;height:18px;border-radius:4px;background:#1F2A44;color:#FFF;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.blw-sec-name{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5B6472}
+.blw-sec-meta{margin-left:auto;font-size:12px;font-weight:600;color:#5B6472}
+.blw-sec-meta b{color:#1F2733}
+.blw-collapse{border:1px solid #E3E6EB;border-radius:5px;overflow:hidden}
+.blw-collapse-bar{display:flex;align-items:center;gap:8px;padding:8px 11px;cursor:pointer;background:#F7F8FA}
+.blw-collapse-bar:hover{background:#F0F2F5}
+.blw-collapse-plus{width:16px;height:16px;border-radius:3px;background:#1F2A44;color:#FFF;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none}
+.blw-note{font-size:12px;color:#8A93A1}
 /* Load Wizard V5 — compact density (visual only; gated by LOAD_WIZARD_V5). */
 [data-wizard-v5="on"] .blw-sec-hd{padding:4px 9px}
 [data-wizard-v5="on"] .blw-collapse-bar{padding:5px 9px}
@@ -1864,9 +1864,9 @@ export function BookLoadModalV4({
         style={{ width: "100%", resize: "both", minWidth: "440px", minHeight: "340px" }}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <header className="flex shrink-0 items-center justify-between border-b px-4 py-2.5 text-white" style={{ background: "#1f2a44" }}>
+        <header className="flex shrink-0 items-center justify-between border-b px-4 py-2.5 text-white" style={{ background: "#1F2A44" }}>
           <div>
-            <div className="text-xs" style={{ color: "#9aa6ba" }}>
+            <div className="text-xs" style={{ color: "#9AA6BA" }}>
               {isEditMode ? "Dispatch › Edit load" : "Dispatch › Book load"}
             </div>
             {/* Two literal headings (not a ternary string) so the locked-ui-surface guard still sees the
@@ -1888,12 +1888,12 @@ export function BookLoadModalV4({
               <div className="text-page-title font-bold">Book load</div>
             )}
           </div>
-          <div className="flex items-center gap-3 text-[11px]" style={{ color: "#9aa6ba" }}>
+          <div className="flex items-center gap-3 text-[11px]" style={{ color: "#9AA6BA" }}>
             <span>{headerTime}</span>
             <ModalCloseButton
               title={isEditMode ? "Edit load" : "Book load"}
               onClose={attemptBookLoadClose}
-              className="h-6 w-6 rounded-sm text-xs text-gray-200 hover:bg-[#2e3c5a]"
+              className="h-6 w-6 rounded-sm text-xs text-gray-200 hover:bg-[#2E3C5A]"
             />
           </div>
         </header>
@@ -1918,7 +1918,7 @@ export function BookLoadModalV4({
               Print / Continue) so the save is acknowledged where the operator is actually looking. */}
           {saveAck ? (
             <div
-              className="sticky top-0 z-20 border-b border-[#16A34A] bg-[#ecfdf3] px-3 py-2"
+              className="sticky top-0 z-20 border-b border-[#16A34A] bg-[#ECFDF3] px-3 py-2"
               data-testid="book-load-save-confirmation-banner"
               role="status"
               aria-live="polite"
@@ -2028,14 +2028,14 @@ export function BookLoadModalV4({
               NB/TR/SB in the navy family (navy / slate / slate-dk), no blue/green/purple. 46px two-line
               buttons (code over description) with directional icons; amber lifecycle note; TR/SB auto-join
               the unit's tour (tour_id derived server-side). */}
-          <div className="border-b border-gray-200 bg-[#f8fafc] px-3 py-2" data-testid="trip-type-banner">
+          <div className="border-b border-gray-200 bg-[#F8FAFC] px-3 py-2" data-testid="trip-type-banner">
             <span className="text-[11px] font-bold uppercase tracking-[0.4px] text-gray-600">
               Trip Type <span className="text-red-500">*</span>
             </span>
             <div className="mt-1 flex flex-wrap gap-2">
               {([
                 ["NB", "▲", "Northbound", "Border → US interior", "#1F2A44"],
-                ["TR", "▶", "Triangulation", "US interior → US interior", "#64748b"],
+                ["TR", "▶", "Triangulation", "US interior → US interior", "#64748B"],
                 ["SB", "▼", "Southbound", "US interior → Laredo border", "#334155"],
               ] as const).map(([code, icon, label, desc, color]) => {
                 const active = watchedTripType === code;
@@ -2049,7 +2049,7 @@ export function BookLoadModalV4({
                     }}
                     className="inline-flex h-7 shrink-0 items-center rounded-sm border px-2.5 text-left transition-colors"
                     title={desc}
-                    style={active ? { backgroundColor: color, borderColor: color, color: "white" } : { borderColor: "#cbd5e1", color: "#1f2733" }}
+                    style={active ? { backgroundColor: color, borderColor: color, color: "white" } : { borderColor: "#CBD5E1", color: "#1F2733" }}
                   >
                     <span className="whitespace-nowrap text-xs font-bold leading-tight">{icon} {code} · {label}</span>
                   </button>
@@ -2169,7 +2169,7 @@ export function BookLoadModalV4({
             </div>
           ) : null}
 
-          <div className="space-y-3 bg-[#e9ebef] px-4 py-3">
+          <div className="space-y-3 bg-[#E9EBEF] px-4 py-3">
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.05fr_1fr]">
               <section className="blw-sec">
                 <div className="blw-sec-hd">
@@ -2315,11 +2315,11 @@ export function BookLoadModalV4({
                     <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Broker / Direct
                       <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
-                        <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
+                        <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1F2A44] text-white" : "text-gray-700"}`}>
                           <input type="radio" value="broker" className="hidden" {...form.register("load_type")} />
                           Broker
                         </label>
-                        <label className={`flex cursor-pointer items-center border-l border-gray-300 px-3 ${loadType === "direct" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
+                        <label className={`flex cursor-pointer items-center border-l border-gray-300 px-3 ${loadType === "direct" ? "bg-[#1F2A44] text-white" : "text-gray-700"}`}>
                           <input type="radio" value="direct" className="hidden" {...form.register("load_type")} />
                           Direct
                         </label>
@@ -2470,7 +2470,7 @@ export function BookLoadModalV4({
                             <td className="px-2 py-1.5 text-right font-mono text-gray-800">{money.format(extraRatesCents / 100)}</td>
                           </tr>
                         ) : null}
-                        <tr className="bg-[#f7f8fa] font-semibold">
+                        <tr className="bg-[#F7F8FA] font-semibold">
                           <td className="px-2 py-1.5">Total customer invoice</td>
                           <td className="px-2 py-1.5 text-right">{money.format(customerInvoiceTotal / 100)}</td>
                         </tr>
@@ -2619,8 +2619,8 @@ export function BookLoadModalV4({
                   <div className={`blw-collapse ${showSpecialNotes ? "open" : ""}`}>
                     <button type="button" className="blw-collapse-bar w-full text-left" onClick={() => setShowSpecialNotes((openState) => !openState)}>
                       <span className="blw-collapse-plus">{showSpecialNotes ? "−" : "+"}</span>
-                      <span className="text-[11px] font-bold text-[#1f2733]">Special notes</span>
-                      <span className="ml-auto text-xs text-[#8a93a1]">optional — click to add</span>
+                      <span className="text-[11px] font-bold text-[#1F2733]">Special notes</span>
+                      <span className="ml-auto text-xs text-[#8A93A1]">optional — click to add</span>
                     </button>
                     {showSpecialNotes ? (
                       <div className="border-t border-gray-200 p-3">

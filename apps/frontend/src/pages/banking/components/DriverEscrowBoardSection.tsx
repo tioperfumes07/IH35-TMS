@@ -154,7 +154,7 @@ export function DriverEscrowBoardSection({ operatingCompanyId, driverEscrowBalan
       <div className="space-y-3 min-w-0">
         <div
           className="rounded-sm border border-[#E5E7EB] px-3 py-2 text-xs"
-          style={{ borderLeft: "3px solid #B54708", background: "#fffaeb" }}
+          style={{ borderLeft: "3px solid #B54708", background: "#FFFAEB" }}
           data-testid="banking-escrow-liability-honesty-banner"
         >
           <p className="font-semibold text-[#0F1219]">

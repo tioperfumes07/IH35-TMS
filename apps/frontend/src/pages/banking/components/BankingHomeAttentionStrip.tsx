@@ -144,7 +144,7 @@ export function BankingHomeAttentionStrip({
     >
       {visible.map((row) => {
         const border = row.tone === "bad" ? "#B42318" : row.tone === "warn" ? "#B54708" : "#027A48";
-        const bg = row.tone === "bad" ? "#fdecea" : row.tone === "warn" ? "#fffaeb" : "#ecfdf3";
+        const bg = row.tone === "bad" ? "#FDECEA" : row.tone === "warn" ? "#FFFAEB" : "#ECFDF3";
         return (
           <div
             key={row.id}

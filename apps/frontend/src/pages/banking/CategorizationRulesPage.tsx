@@ -206,7 +206,7 @@ export function CategorizationRulesPage() {
         <div
           role="alert"
           data-testid="unmatched-7d-alert"
-          className="rounded-sm border border-[#E5E7EB] bg-[#fdecea] px-3 py-2 text-xs text-[#0F1219]"
+          className="rounded-sm border border-[#E5E7EB] bg-[#FDECEA] px-3 py-2 text-xs text-[#0F1219]"
           style={{ borderLeft: "3px solid #B42318" }}
         >
           <p className="font-semibold">

@@ -2,7 +2,7 @@ export function ProgramBoardsExplainer({ active }: { active: "matrix" | "legacy"
   return (
     <div
       className="px-4 py-3 text-xs leading-snug"
-      style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#334155" }}
+      style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", color: "#334155" }}
       data-testid="program-boards-explainer"
     >
       {active === "matrix" ? (

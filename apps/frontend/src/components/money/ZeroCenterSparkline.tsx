@@ -4,7 +4,7 @@
  */
 export function ZeroCenterSparkline({
   points,
-  colorHex = "#2a78d6",
+  colorHex = "#2A78D6",
 }: {
   points: number[];
   colorHex?: string;

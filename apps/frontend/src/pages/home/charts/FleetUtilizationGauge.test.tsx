@@ -3,10 +3,10 @@ import { gaugeFillForUtilization } from "./FleetUtilizationGauge";
 
 describe("FleetUtilizationGauge thresholds", () => {
   it("uses red below 50%, gold through 75%, green above 75%", () => {
-    expect(gaugeFillForUtilization(40).active).toBe("#dc2626");
-    expect(gaugeFillForUtilization(60).active).toBe("#ca8a04");
+    expect(gaugeFillForUtilization(40).active).toBe("#DC2626");
+    expect(gaugeFillForUtilization(60).active).toBe("#CA8A04");
     expect(gaugeFillForUtilization(80).active).toBe("#1A7A3C");
-    expect(gaugeFillForUtilization(50).active).toBe("#ca8a04");
+    expect(gaugeFillForUtilization(50).active).toBe("#CA8A04");
     expect(gaugeFillForUtilization(76).active).toBe("#1A7A3C");
   });
 

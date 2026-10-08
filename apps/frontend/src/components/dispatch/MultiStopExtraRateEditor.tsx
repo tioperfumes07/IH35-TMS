@@ -21,7 +21,7 @@ export function MultiStopExtraRateEditor({ control, register, stopIndex }: Props
         <p className="text-xs font-semibold text-gray-700">Per-stop extra rates</p>
         <button
           type="button"
-          className="text-xs font-semibold text-[#1f2a44] hover:underline"
+          className="text-xs font-semibold text-[#1F2A44] hover:underline"
           onClick={() =>
             append({
               rate_type: "extra_stop_fee",

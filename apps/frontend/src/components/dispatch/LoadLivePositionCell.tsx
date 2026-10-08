@@ -25,7 +25,7 @@ export function LoadLivePositionCell({
         {position.lat.toFixed(4)}, {position.lng.toFixed(4)}
       </span>
       <span className="text-slate-500">{new Date(position.recorded_at).toLocaleTimeString()}</span>
-      <EntityLink kind="load_map" id={loadId} label="Map" className="text-[#1f2a44] underline" />
+      <EntityLink kind="load_map" id={loadId} label="Map" className="text-[#1F2A44] underline" />
     </div>
   );
 }

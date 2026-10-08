@@ -50,7 +50,7 @@ export function BorderCrossingCaptureField({ value, onSelect, error }: Props) {
   const mx = ports.filter((p) => p.country === "MX");
 
   return (
-    <div className="border-b border-gray-200 bg-[#fff7ed] px-3 py-2" data-testid="book-load-border-crossing-capture">
+    <div className="border-b border-gray-200 bg-[#FFF7ED] px-3 py-2" data-testid="book-load-border-crossing-capture">
       <span className="text-xs font-bold uppercase tracking-[0.4px] text-gray-600">
         Border crossing <span className="text-red-500">*</span>
       </span>
