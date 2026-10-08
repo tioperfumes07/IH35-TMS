@@ -43,10 +43,10 @@ function qualityBadge(customer: Customer) {
 }
 
 function relationshipTierBadge(tier: Customer["relationship_health_tier"] | null | undefined, unavailable = false) {
-  if (unavailable) return { label: "Unavailable", className: "bg-slate-100 text-slate-700" };
-  if (tier === "thriving") return { label: "Thriving", className: "bg-slate-100 text-slate-700" };
+  if (unavailable) return { label: "Unavailable", className: "bg-[#F7F8FA] text-[#4B5563]" };
+  if (tier === "thriving") return { label: "Thriving", className: "bg-[#F7F8FA] text-[#4B5563]" };
   if (tier === "healthy") return { label: "Healthy", className: "bg-teal-100 text-teal-800" };
-  if (tier === "watch") return { label: "Watch", className: "bg-slate-100 text-slate-700" };
+  if (tier === "watch") return { label: "Watch", className: "bg-[#F7F8FA] text-[#4B5563]" };
   if (tier === "at_risk") return { label: "At Risk", className: "bg-red-100 text-red-800" };
   return { label: "Unknown", className: "bg-gray-100 text-gray-700" };
 }
@@ -344,21 +344,21 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#4B5563]"
                 onClick={() => bulkMutation.mutate({ ids, action: "classify", payload: { classification: "avoid" } })}
               >
                 Tag Late-pay
               </button>
               <button
                 type="button"
-                className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#4B5563]"
                 onClick={() => bulkMutation.mutate({ ids, action: "classify", payload: { classification: "caution" } })}
               >
                 Tag Medium
               </button>
               <button
                 type="button"
-                className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#4B5563]"
                 onClick={() => bulkMutation.mutate({ ids, action: "classify", payload: { classification: "preferred" } })}
               >
                 Tag Active
@@ -379,7 +379,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
               </button>
               <button
                 type="button"
-                className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#4B5563]"
                 onClick={() => exportSelectedCsv(selected)}
               >
                 Export CSV
@@ -401,11 +401,11 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
                   id={row.id}
                   name={row.name}
                   noun="Customer"
-                  className="single-line-name text-slate-700 hover:underline"
+                  className="single-line-name text-[#4B5563] hover:underline"
                 />
                 <button
                   type="button"
-                  className="text-xs font-medium text-slate-500 underline hover:text-slate-700"
+                  className="text-xs font-medium text-[#6B7280] underline hover:text-[#4B5563]"
                   data-testid={`customer-quick-view-${row.id}`}
                   title="Quick view"
                   onClick={(e: { stopPropagation(): void }) => {
@@ -430,7 +430,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             render: (row) => {
               const active = row.status === "active";
               return (
-                <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${active ? "bg-slate-100 text-slate-700" : "bg-gray-200 text-gray-700"}`}>
+                <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${active ? "bg-[#F7F8FA] text-[#4B5563]" : "bg-gray-200 text-gray-700"}`}>
                   {row.status === "active" ? "Active" : row.status === "inactive" ? "Inactive" : row.status === "credit_hold" ? "Credit hold" : row.status === "blacklist" ? "Blacklist" : "—"}
                 </span>
               );
@@ -528,7 +528,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             sortable: true,
             render: (row) =>
               row.factored_label === "Yes" ? (
-                <span className="inline-flex rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Yes</span>
+                <span className="inline-flex rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]">Yes</span>
               ) : (
                 <span className="text-gray-400">No</span>
               ),
