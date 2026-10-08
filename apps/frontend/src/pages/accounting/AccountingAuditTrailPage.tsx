@@ -282,7 +282,7 @@ export function AccountingAuditTrailPage() {
         label: "Amount",
         sortable: true,
         render: (row) => (
-          <span className={row.debit_or_credit === "debit" ? "text-slate-700" : "text-red-700"}>
+          <span className={row.debit_or_credit === "debit" ? "text-[#1F2A44]" : "text-red-700"}>
             {row.debit_or_credit.toUpperCase()} {fmtMoneyCents(row.amount_cents)}
           </span>
         ),
@@ -362,10 +362,10 @@ export function AccountingAuditTrailPage() {
       dataAttributes={{ "data-audit-trail-filter-toolbar": "collapsed" }}
     >
       <div className="grid gap-3 w-full md:grid-cols-4">
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Source type
           <input
-            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
+            className="mt-1 block h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.sourceType}
             onChange={(e) => staged.setDraft({ ...staged.draft, sourceType: e.target.value })}
             placeholder="e.g. customer_payment, bill, invoice"
@@ -377,16 +377,16 @@ export function AccountingAuditTrailPage() {
             ))}
           </datalist>
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Source id
           <input
-            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
+            className="mt-1 block h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.sourceId}
             onChange={(e) => staged.setDraft({ ...staged.draft, sourceId: e.target.value })}
             placeholder="uuid or display id"
           />
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Account
           <MultiSelectDropdown
             label="Account"
@@ -421,14 +421,14 @@ export function AccountingAuditTrailPage() {
         renderExpanded={(row) => (
           <div className="grid gap-2 md:grid-cols-2">
             <div>
-              <div className="mb-1 text-section-header font-semibold uppercase text-slate-600">Before state</div>
-              <pre className="max-h-48 overflow-auto rounded-sm border border-slate-200 bg-white p-2 text-xs">
+              <div className="mb-1 text-section-header font-semibold uppercase text-[#4B5563]">Before state</div>
+              <pre className="max-h-48 overflow-auto rounded-sm border border-[#E5E7EB] bg-white p-2 text-xs">
                 {JSON.stringify(row.before_state_json ?? {}, null, 2)}
               </pre>
             </div>
             <div>
-              <div className="mb-1 text-section-header font-semibold uppercase text-slate-600">After state</div>
-              <pre className="max-h-48 overflow-auto rounded-sm border border-slate-200 bg-white p-2 text-xs">
+              <div className="mb-1 text-section-header font-semibold uppercase text-[#4B5563]">After state</div>
+              <pre className="max-h-48 overflow-auto rounded-sm border border-[#E5E7EB] bg-white p-2 text-xs">
                 {JSON.stringify(row.after_state_json ?? {}, null, 2)}
               </pre>
             </div>
@@ -437,7 +437,7 @@ export function AccountingAuditTrailPage() {
         emptyText="No audit events found."
       />
       {eventQuery.hasNextPage ? (
-        <div className="border-t border-slate-200 px-3 py-2">
+        <div className="border-t border-[#E5E7EB] px-3 py-2">
           <Button onClick={() => void eventQuery.fetchNextPage()} loading={eventQuery.isFetchingNextPage}>
             Load more
           </Button>
@@ -445,7 +445,7 @@ export function AccountingAuditTrailPage() {
       ) : null}
 
       {lineageKey ? (
-        <div className="rounded-sm border border-slate-200 bg-white p-3">
+        <div className="rounded-sm border border-[#E5E7EB] bg-white p-3">
           <div className="mb-2 text-xs font-semibold">
             Source lineage: {lineageKey.source_transaction_type} /{" "}
             <PostingEntityLink
@@ -458,7 +458,7 @@ export function AccountingAuditTrailPage() {
               )}
             />
           </div>
-          {lineageMut.isPending ? <div className="text-xs text-slate-500">Loading lineage…</div> : null}
+          {lineageMut.isPending ? <div className="text-xs text-[#6B7280]">Loading lineage…</div> : null}
           {lineageRows ? (
             <ParityTable
               columns={lineageColumns}
