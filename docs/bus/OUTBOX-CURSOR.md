@@ -1,3 +1,13 @@
+## 2026-10-08T10:45Z · BANK leftover slate — IFTA preparer / fraud alerts / fuel GL mapping
+
+FINDING: BANK-F91193 — IftaPreparer / FraudAlertsList / FuelGlMappingCoverage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25847 squash `bd73e086c7` (BANK-F91192 safety train)
+GUARD: scripts/verify-ifta-fraud-fuelgl-slate-leftover-chrome.mjs + verify-steps/1222 piggyback
+LIVE PROOF: verify-ifta-fraud-fuelgl-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 1222 piggyback + OUTBOX
+
 ## 2026-10-08T10:25Z · BANK leftover slate — training programs / safety meetings / training records
 
 FINDING: BANK-F91192 — TrainingProgramsPage / SafetyMeetingsPage / TrainingRecordsPage Tailwind slate-* → house tokens
