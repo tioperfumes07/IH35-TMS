@@ -39,6 +39,7 @@ import { printLetterHtml } from "../../lib/openPrintableDocument";
 const DEFAULT_MIN_REVENUE_CENTS = 100_000; // $1,000
 
 import { formatUsdCents } from "../../lib/money";
+import { colors } from "../../design/tokens";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -413,7 +414,7 @@ export function CustomerProfitabilityPage() {
                     }
                   />
                   <Legend />
-                  <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="#0d9488" />
+                  <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill={colors.success} />
                   <Line yAxisId="right" type="monotone" dataKey="marginPct" name="Margin %" stroke="#1F2A44" strokeWidth={2} dot />
                 </ComposedChart>
               </ResponsiveContainer>

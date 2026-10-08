@@ -187,3 +187,6 @@ DONE: PR #25880 · squash d5d6c73b37d587a2218765f355043351c32b8ae8 · money-pr-l
 
 ## 2026-10-08 — ROUND 441.22 Devin: aging-drill + sidebar + WO/categorize guard anchors
 DONE: PR #25882 · squash e0fb8c6e8b800d78bda4607e5a6433c4df10a040 · money-pr-local-gate exit 0 · hooks-ON push · all 3 guards + selftests exit 0
+
+## 2026-10-08 — ROUND 441.22 Devin: vendor/banking guard anchors
+DONE: PR #25883 · squash bb5c6c8a7521e94296e3a4660488cd8511e9f4bf · hooks-ON push · static sweep 5877 READY TO PUSH · selftests 9/9 + 5/5

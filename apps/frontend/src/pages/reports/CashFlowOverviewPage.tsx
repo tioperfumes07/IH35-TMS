@@ -30,6 +30,7 @@ const PAYROLL_ALERT_CENTS = 50_000_00;
 const DIP_ATTENTION_CENTS = 25_000_00;
 
 import { formatUsdCents } from "../../lib/money";
+import { colors } from "../../design/tokens";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -330,8 +331,8 @@ export function CashFlowOverviewPage() {
                       ) : null
                     }
                   />
-                  <Area type="monotone" dataKey="balanceHigh" stroke="none" fill="#93c5fd" fillOpacity={0.25} name="Upper band" />
-                  <Area type="monotone" dataKey="balanceLow" stroke="none" fill="#93c5fd" fillOpacity={0.25} name="Lower band" />
+                  <Area type="monotone" dataKey="balanceHigh" stroke="none" fill={colors.accent} fillOpacity={0.25} name="Upper band" />
+                  <Area type="monotone" dataKey="balanceLow" stroke="none" fill={colors.accent} fillOpacity={0.25} name="Lower band" />
                   <Line type="monotone" dataKey="balance" stroke="#1F2A44" name="Combined balance" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -348,7 +349,7 @@ export function CashFlowOverviewPage() {
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis tickFormatter={(v) => money(Number(v))} width={68} tick={{ fontSize: 11 }} />
                     <Tooltip formatter={(v) => money(Number(v))} />
-                    <Bar dataKey="v" fill="#0d9488" name="Amount" />
+                    <Bar dataKey="v" fill={colors.success} name="Amount" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

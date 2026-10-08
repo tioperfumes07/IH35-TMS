@@ -33,6 +33,7 @@ function displayTruckType(truckType: string | null | undefined): string {
 }
 
 import { formatUsdCents } from "../../lib/money";
+import { colors } from "../../design/tokens";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -427,8 +428,8 @@ export function ProfitPerTruckPage() {
                   <Tooltip formatter={(v) => money(Number(v))} />
                   <Legend />
                   <Bar dataKey="revenuePerMile" name="Revenue / mi" fill="#4B5563" />
-                  <Bar dataKey="costPerMile" name="Cost / mi" fill="#f59e0b" />
-                  <Bar dataKey="profitPerMile" name="Profit / mi" fill="#155e75" />
+                  <Bar dataKey="costPerMile" name="Cost / mi" fill={colors.warning} />
+                  <Bar dataKey="profitPerMile" name="Profit / mi" fill={colors.accent} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -37,7 +37,8 @@ const CHECKS = [
   {
     name: "CustomerDetail.tsx renders real invoices via listInvoices(customer_id)",
     file: "apps/frontend/src/pages/CustomerDetail.tsx",
-    pattern: /listInvoices\(operatingCompanyId!, \{ customer_id: id \}\)/,
+    // ROUND 297: the recent-invoices list must carry the canonical active (non-voided) status filter.
+    pattern: /listInvoices\(operatingCompanyId!, \{ customer_id: id, status: "active" \}\)/,
   },
   {
     name: "CustomerDetail.tsx renders real EntityLink kind=invoice rows",
@@ -45,9 +46,12 @@ const CHECKS = [
     pattern: /kind="invoice"/,
   },
   {
-    name: "CustomerDetail.tsx wires a real recordCustomerPaymentMutation submit",
+    // ORDERS ruling: Record Payment is disabled on the customer profile — invoices + A/R are
+    // read-only here; the canonical path is Accounting → Receive payment. The page must surface
+    // that honest disabled note (or, if ever re-enabled, a real recordCustomerPaymentMutation).
+    name: "CustomerDetail.tsx surfaces the honest Record-Payment-disabled note or a real submit",
     file: "apps/frontend/src/pages/CustomerDetail.tsx",
-    pattern: /recordCustomerPaymentMutation\.mutateAsync/,
+    pattern: /Record Payment is disabled on the customer profile|recordCustomerPaymentMutation\.mutateAsync/,
   },
   {
     name: "ArApAgingPage.tsx (finance) wires the real ar-aging API",
@@ -79,7 +83,7 @@ export function checkAll(readFile) {
 if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
     "apps/frontend/src/pages/CustomerDetail.tsx":
-      'listInvoices(operatingCompanyId!, { customer_id: id }) ... kind="invoice" ... recordCustomerPaymentMutation.mutateAsync()',
+      'listInvoices(operatingCompanyId!, { customer_id: id, status: "active" }) ... kind="invoice" ... Record Payment is disabled on the customer profile',
     "apps/frontend/src/pages/finance/ArApAgingPage.tsx": "getArAging, getApAging",
     "apps/frontend/src/pages/reports/ARAgingPage.tsx": "getArAgingReport(companyId, asOf)",
   };

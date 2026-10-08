@@ -61,7 +61,7 @@ export function ReportsHubPage() {
             kind="report_category"
             id={category.id}
             label={category.label}
-            className="block text-xs font-semibold uppercase tracking-wide text-[#6B7280] hover:text-[#1f2a44] hover:underline"
+            className="block text-xs font-semibold uppercase tracking-wide text-[#6B7280] hover:text-[#1F2A44] hover:underline"
           />
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {category.reports.map((report) => (

@@ -22,6 +22,7 @@ import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 import { formatUsdCents } from "../../lib/money";
+import { colors } from "../../design/tokens";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -38,7 +39,7 @@ const DEDUCTION_ORDER: (keyof SettlementDeductionBreakdown)[] = [
   "other",
 ];
 
-const PIE_COLORS = ["#0d9488", "#155e75", "#f59e0b", "#dc2626", "#64748b"];
+const PIE_COLORS = [colors.success, colors.accent, colors.warning, colors.danger, colors.mutedText];
 
 function defaultRange() {
   const end = new Date();

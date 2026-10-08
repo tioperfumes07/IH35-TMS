@@ -31,6 +31,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
 import { formatUsdCents } from "../../lib/money";
+import { colors } from "../../design/tokens";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -338,7 +339,7 @@ export function LaneProfitabilityPage() {
                     {chartData.map((entry) => (
                       <Cell
                         key={entry.name}
-                        fill={entry.margin >= 20 ? "#059669" : entry.margin >= 10 ? "#d97706" : "#e11d48"}
+                        fill={entry.margin >= 20 ? colors.success : entry.margin >= 10 ? colors.warning : colors.danger}
                       />
                     ))}
                   </Bar>

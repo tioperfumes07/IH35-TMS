@@ -114,7 +114,7 @@ export function CustomReportBuilder() {
                   draggable
                   onDragStart={(e) => e.dataTransfer.setData("text/plain", field.id)}
                   onClick={() => addField(field)}
-                  className="w-full rounded-sm border border-dashed border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-left text-xs font-semibold text-[#1F2A44] hover:border-[#1f2a44]"
+                  className="w-full rounded-sm border border-dashed border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-left text-xs font-semibold text-[#1F2A44] hover:border-[#1F2A44]"
                 >
                   {field.label}
                 </button>

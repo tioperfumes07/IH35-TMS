@@ -473,7 +473,7 @@ export function APAgingPage() {
           <div className="text-page-title font-semibold">{money(kpis.day31_60)}</div>
         </div>
         <div
-          className={`rounded-sm border bg-white px-3 py-2 ${kpis.day61p > 1_000_000 ? "border-2 border-[#dc2626]" : "border border-gray-200"}`}
+          className={`rounded-sm border bg-white px-3 py-2 ${kpis.day61p > 1_000_000 ? "border-2 border-red-600" : "border border-gray-200"}`}
         >
           <div className="text-section-header font-semibold uppercase text-gray-500">61+ days</div>
           <div className="text-page-title font-semibold">{money(kpis.day61p)}</div>
