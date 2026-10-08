@@ -295,11 +295,11 @@ export function DataImportPage() {
         <section className="space-y-4 rounded-sm border border-[#E5E7EB] bg-white p-4">
           <h2 className="text-page-title font-semibold text-[#0F1219]">3. Preview</h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-sm border border-emerald-100 bg-emerald-50 p-3 text-xs">
+            <div className="border-t border-emerald-100 bg-emerald-50 p-3 text-xs">
               <div className="font-semibold text-emerald-900">Valid rows</div>
               <div className="text-page-title font-bold text-emerald-800">{preview.valid_rows}</div>
             </div>
-            <div className="rounded-sm border border-amber-100 bg-amber-50 p-3 text-xs">
+            <div className="border-t border-amber-100 bg-amber-50 p-3 text-xs">
               <div className="font-semibold text-amber-900">Invalid rows</div>
               <div className="text-page-title font-bold text-amber-800">{preview.invalid_rows}</div>
             </div>
@@ -395,7 +395,7 @@ export function DataImportPage() {
                 </div>
               </div>
               {commitResult.errors.length ? (
-                <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-900">
+                <div className="border-t border-red-200 bg-red-50 p-3 text-xs text-red-900">
                   <div className="font-semibold">Errors</div>
                   <ul className="mt-2 list-disc pl-5">
                     {commitResult.errors.map((e, idx) => (
