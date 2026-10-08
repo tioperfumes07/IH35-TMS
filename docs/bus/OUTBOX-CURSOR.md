@@ -1,3 +1,13 @@
+## 2026-10-08T04:59Z · BANK leftover slate — drug / daily-tasks / legal-template
+
+FINDING: BANK-F91158 — DrugAlcoholTab / DailyTasksPage / LegalTemplateDetailPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25811 squash `17ce17f96c` (BANK-F91157 home QBO/pending/vendor-map)
+GUARD: scripts/verify-drug-daily-legal-slate-leftover-chrome.mjs + verify-steps/1084 piggyback
+LIVE PROOF: verify-drug-daily-legal-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; rg slate- = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 pages + refuse guard + 1084 piggyback + OUTBOX
+
 ## 2026-10-08T04:46Z · BANK leftover slate — home QBO / pending / vendor mapping
 
 FINDING: BANK leftover slate — QboSyncHealthCard / AccountingPendingApprovalsPanel / VendorMappingIntegrityCard still on Tailwind slate-* vs GLOBAL-TYPE-SIZE-BASELINE house tokens

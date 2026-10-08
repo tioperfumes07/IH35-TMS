@@ -77,17 +77,17 @@ function toDateTimeLocalValue(value: Date): string {
 }
 
 function statusBadge(status: DailyTask["status"]) {
-  if (status === "completed") return "bg-slate-100 text-slate-800";
-  if (status === "accepted") return "bg-slate-100 text-slate-700";
+  if (status === "completed") return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (status === "accepted") return "bg-[#F7F8FA] text-[#4B5563]";
   if (status === "cancelled") return "bg-zinc-200 text-zinc-700";
-  return "bg-slate-100 text-slate-700";
+  return "bg-[#F7F8FA] text-[#4B5563]";
 }
 
 function priorityBadge(priority: DailyTask["priority"]) {
   if (priority === "urgent") return "bg-red-100 text-red-800";
   if (priority === "high") return "bg-orange-100 text-orange-800";
-  if (priority === "low") return "bg-slate-100 text-slate-700";
-  return "bg-slate-100 text-slate-700";
+  if (priority === "low") return "bg-[#F7F8FA] text-[#4B5563]";
+  return "bg-[#F7F8FA] text-[#4B5563]";
 }
 
 export function DailyTasksPage() {
@@ -245,17 +245,17 @@ export function DailyTasksPage() {
         sortable: true,
         render: (task) => (
           <div className="flex items-start gap-2">
-            <ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+            <ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-[#6B7280]" />
             <div>
-              <button type="button" className="text-left font-semibold text-slate-900 hover:underline" onClick={() => setDetailTaskId(task.id)}>
+              <button type="button" className="text-left font-semibold text-[#0F1219] hover:underline" onClick={() => setDetailTaskId(task.id)}>
                 {task.title}
               </button>
-              {task.description ? <p className="mt-0.5 text-slate-600">{task.description}</p> : null}
+              {task.description ? <p className="mt-0.5 text-[#6B7280]">{task.description}</p> : null}
               <div className="mt-1 flex flex-wrap items-center gap-1">
                 <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${priorityBadge(task.priority)}`}>
                   {task.priority.toUpperCase()}
                 </span>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{STATUS_STEPS[task.status]}</span>
+                <span className="rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]">{STATUS_STEPS[task.status]}</span>
                 {task.is_overdue ? <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">Overdue</span> : null}
               </div>
             </div>
@@ -276,7 +276,7 @@ export function DailyTasksPage() {
         sortable: true,
         sortValue: (task) => entityLabel(task.assigned_to_email, task.assigned_to_user_id, "User"),
         render: (task) => (
-          <div className="inline-flex items-center gap-1 text-slate-700">
+          <div className="inline-flex items-center gap-1 text-[#4B5563]">
             <UserRound className="h-3.5 w-3.5" />
             <EntityLink kind="user" id={task.assigned_to_user_id} label={entityLabel(task.assigned_to_email, task.assigned_to_user_id, "User")} />
           </div>
@@ -288,7 +288,7 @@ export function DailyTasksPage() {
         label: "Timestamps",
         sortable: true,
         render: (task) => (
-          <div className="text-slate-700">
+          <div className="text-[#4B5563]">
             <div>Created: {formatDateTime(task.created_at)}</div>
             {task.accepted_at ? <div>Accepted: {formatDateTime(task.accepted_at)}</div> : null}
             {task.completed_at ? <div>Completed: {formatDateTime(task.completed_at)}</div> : null}
@@ -361,9 +361,9 @@ export function DailyTasksPage() {
         }
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
+      <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2">
         <div className="mb-2 flex items-center justify-between">
-          <div className="text-xs text-slate-600">View</div>
+          <div className="text-xs text-[#6B7280]">View</div>
           <div className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">
             <AlertTriangle className="h-3.5 w-3.5" />
             Alerts {overdueCount} overdue
@@ -376,11 +376,11 @@ export function DailyTasksPage() {
               type="button"
               onClick={() => setView(id)}
               className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold ${
-                view === id ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-slate-300 bg-[var(--surface-unselected)] text-slate-700 hover:bg-[var(--surface-hover)]"
+                view === id ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#4B5563] hover:bg-[var(--surface-hover)]"
               }`}
             >
               {VIEW_LABEL[id]}
-              <span className={`rounded-full px-1.5 py-0.5 text-xs ${view === id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-700"}`}>
+              <span className={`rounded-full px-1.5 py-0.5 text-xs ${view === id ? "bg-white/20 text-white" : "bg-[#F7F8FA] text-[#4B5563]"}`}>
                 {tabCounts[id]}
               </span>
               {id === "team" && overdueCount > 0 ? <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-xs text-white">{overdueCount}</span> : null}
@@ -390,11 +390,11 @@ export function DailyTasksPage() {
       </div>
 
       {!companyId ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs text-slate-700">Select an operating company first.</div>
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#4B5563]">Select an operating company first.</div>
       ) : null}
 
       {activeQuery?.isError ? (
-        <div className="rounded-sm border border-slate-200 bg-white">
+        <div className="rounded-sm border border-[#E5E7EB] bg-white">
           <ListErrorState
             title={`Couldn't load ${VIEW_LABEL[view].toLowerCase()}`}
             {...formatQueryErrorDetail(activeQuery.error)}
@@ -419,24 +419,24 @@ export function DailyTasksPage() {
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Quick Create Task">
         <div className="space-y-3 text-xs">
           <div>
-            <label htmlFor="daily-task-title" className="mb-1 block text-xs font-semibold uppercase text-slate-600">
+            <label htmlFor="daily-task-title" className="mb-1 block text-xs font-semibold uppercase text-[#6B7280]">
               Title
             </label>
             <input
               id="daily-task-title"
-              className="w-full rounded-sm border border-slate-300 px-2 py-1.5"
+              className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               placeholder="Call 40 drivers today"
             />
           </div>
           <div>
-            <label htmlFor="daily-task-description" className="mb-1 block text-xs font-semibold uppercase text-slate-600">
+            <label htmlFor="daily-task-description" className="mb-1 block text-xs font-semibold uppercase text-[#6B7280]">
               Description
             </label>
             <textarea
               id="daily-task-description"
-              className="min-h-[84px] w-full rounded-sm border border-slate-300 px-2 py-1.5"
+              className="min-h-[84px] w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="Include scope, dependencies, and expected output."
@@ -444,12 +444,12 @@ export function DailyTasksPage() {
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
-              <label htmlFor="daily-task-assignee" className="mb-1 block text-xs font-semibold uppercase text-slate-600">
+              <label htmlFor="daily-task-assignee" className="mb-1 block text-xs font-semibold uppercase text-[#6B7280]">
                 Assignee
               </label>
               <SelectCombobox
                 id="daily-task-assignee"
-                className="w-full rounded-sm border border-slate-300 px-2 py-1.5"
+                className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5"
                 value={assignedToUserId}
                 onChange={(event) => setAssignedToUserId(event.target.value)}
               >
@@ -462,12 +462,12 @@ export function DailyTasksPage() {
               </SelectCombobox>
             </div>
             <div>
-              <label htmlFor="daily-task-priority" className="mb-1 block text-xs font-semibold uppercase text-slate-600">
+              <label htmlFor="daily-task-priority" className="mb-1 block text-xs font-semibold uppercase text-[#6B7280]">
                 Priority
               </label>
               <SelectCombobox
                 id="daily-task-priority"
-                className="w-full rounded-sm border border-slate-300 px-2 py-1.5"
+                className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5"
                 value={priority}
                 onChange={(event) => setPriority(event.target.value as DailyTask["priority"])}
               >
@@ -480,7 +480,7 @@ export function DailyTasksPage() {
             </div>
           </div>
           <div>
-            <label htmlFor="daily-task-due" className="mb-1 block text-xs font-semibold uppercase text-slate-600">
+            <label htmlFor="daily-task-due" className="mb-1 block text-xs font-semibold uppercase text-[#6B7280]">
               Due Date / Time
             </label>
             <DateTimePicker
@@ -506,12 +506,12 @@ export function DailyTasksPage() {
       <Modal variant="drawer" open={cancelTaskId != null} onClose={() => setCancelTaskId(null)} title="Cancel Task">
         <div className="space-y-3 text-xs">
           <div>
-            <label htmlFor="daily-task-cancel-reason" className="mb-1 block text-xs font-semibold uppercase text-slate-600">
+            <label htmlFor="daily-task-cancel-reason" className="mb-1 block text-xs font-semibold uppercase text-[#6B7280]">
               Cancellation reason
             </label>
             <textarea
               id="daily-task-cancel-reason"
-              className="min-h-[84px] w-full rounded-sm border border-slate-300 px-2 py-1.5"
+              className="min-h-[84px] w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5"
               value={cancelReason}
               onChange={(event) => setCancelReason(event.target.value)}
               placeholder="Why is this task being cancelled?"
@@ -568,13 +568,13 @@ function TaskDetailDrawer({
   return (
     <ParityDrawer open title="Task Detail" onClose={onClose} size="regular">
         {!task ? (
-          <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">Loading task details…</div>
+          <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#6B7280]">Loading task details…</div>
         ) : (
           <div className="space-y-3 text-xs">
-            <div className="rounded-sm border border-slate-200 bg-slate-50 p-3">
-              <div className="text-xs font-semibold text-slate-900">{task.title}</div>
-              {task.description ? <p className="mt-1 text-slate-700">{task.description}</p> : null}
-              <div className="mt-2 grid grid-cols-1 gap-1 text-slate-700">
+            <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+              <div className="text-xs font-semibold text-[#0F1219]">{task.title}</div>
+              {task.description ? <p className="mt-1 text-[#4B5563]">{task.description}</p> : null}
+              <div className="mt-2 grid grid-cols-1 gap-1 text-[#4B5563]">
                 <div>Status: {task.status}</div>
                 <div>Progress: {STATUS_STEPS[task.status]}</div>
                 <div>Priority: {task.priority}</div>
@@ -586,7 +586,7 @@ function TaskDetailDrawer({
               </div>
             </div>
             <div>
-              <div className="mb-2 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <div className="mb-2 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
                 <Clock3 className="h-3.5 w-3.5" />
                 Activity Timeline
               </div>
@@ -594,22 +594,22 @@ function TaskDetailDrawer({
                 {eventsError ? (
                   <ListErrorState title="Couldn't load task activity" {...formatQueryErrorDetail(eventsError)} onRetry={onRetryEvents} />
                 ) : eventsLoading ? (
-                  <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-slate-600">Loading activity…</div>
+                  <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-[#6B7280]">Loading activity…</div>
                 ) : events.length === 0 ? (
-                  <div className="rounded-sm border border-slate-200 bg-white p-3 text-slate-500">No activity events yet.</div>
+                  <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-[#6B7280]">No activity events yet.</div>
                 ) : null}
                 {!eventsError && !eventsLoading ? events.map((event) => (
-                  <div key={event.id} className="rounded-sm border border-slate-200 bg-white p-3">
+                  <div key={event.id} className="rounded-sm border border-[#E5E7EB] bg-white p-3">
                     <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]">
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         {event.event_type}
                       </span>
-                      <span className="text-xs text-slate-500">{formatDateTime(event.created_at)}</span>
+                      <span className="text-xs text-[#6B7280]">{formatDateTime(event.created_at)}</span>
                     </div>
-                    <div className="text-xs text-slate-700">Actor: <EntityLink kind="user" id={event.actor_user_id} label={entityLabel(event.actor_name, event.actor_user_id, "User")} /></div>
+                    <div className="text-xs text-[#4B5563]">Actor: <EntityLink kind="user" id={event.actor_user_id} label={entityLabel(event.actor_name, event.actor_user_id, "User")} /></div>
                     {Object.keys(event.payload ?? {}).length > 0 ? (
-                      <pre className="mt-2 overflow-x-auto rounded-sm bg-slate-50 p-2 text-xs text-slate-600">
+                      <pre className="mt-2 overflow-x-auto rounded-sm bg-[#F7F8FA] p-2 text-xs text-[#6B7280]">
                         {JSON.stringify(event.payload, null, 2)}
                       </pre>
                     ) : null}

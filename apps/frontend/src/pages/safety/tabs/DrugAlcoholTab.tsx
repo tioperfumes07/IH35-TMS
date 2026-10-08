@@ -84,7 +84,7 @@ function stageLabel(stage: string) {
 }
 
 function eligibilityBadgeClass(eligible: boolean) {
-  return eligible ? "bg-slate-50 text-slate-700" : "bg-red-50 text-red-800";
+  return eligible ? "bg-[#F7F8FA] text-[#4B5563]" : "bg-red-50 text-red-800";
 }
 
 /** @matrix-built modules=safety cols=driver,connectivity,reverse_link */
@@ -291,7 +291,7 @@ export function DrugAlcoholTab() {
   }, [companyId, effectiveDriverId]);
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-[#6B7280]">Select an operating company.</div>;
   }
 
   const rtdCase = rtdCaseQ.data as RtdCase | null;
@@ -305,7 +305,7 @@ export function DrugAlcoholTab() {
 
       <div className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="flex flex-wrap items-end gap-3">
-          <label className="block min-w-[240px] text-xs text-slate-600">
+          <label className="block min-w-[240px] text-xs text-[#6B7280]">
             Driver
             <div className="mt-1">
               <EntityPicker
@@ -321,7 +321,7 @@ export function DrugAlcoholTab() {
             </div>
           </label>
           {effectiveDriverId ? (
-            <div className="text-xs text-slate-600">
+            <div className="text-xs text-[#6B7280]">
               Selected:{" "}
               <EntityLink
                 kind="driver"
@@ -339,22 +339,22 @@ export function DrugAlcoholTab() {
             ) : null}
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-sm border border-gray-100 p-3 text-xs">
-                <div className="font-medium text-slate-800">Drug status</div>
+                <div className="font-medium text-[#1F2A44]">Drug status</div>
                 <div className="mt-1">
                   {drugStatusQ.isError ? (
-                    <span className="text-slate-500">—</span>
+                    <span className="text-[#6B7280]">—</span>
                   ) : drugStatusQ.data?.is_blocked ? (
                     <span className="rounded-sm bg-red-50 px-2 py-0.5 text-red-800">Blocked ({drugStatusQ.data.block_reason})</span>
                   ) : (
-                    <span className="rounded-sm bg-slate-50 px-2 py-0.5 text-slate-700">Clear</span>
+                    <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-[#4B5563]">Clear</span>
                   )}
                 </div>
               </div>
               <div className="rounded-sm border border-gray-100 p-3 text-xs">
-                <div className="font-medium text-slate-800">Dispatch eligibility</div>
+                <div className="font-medium text-[#1F2A44]">Dispatch eligibility</div>
                 <div className="mt-1">
                   {eligibilityQ.isError ? (
-                    <span className="text-slate-500">—</span>
+                    <span className="text-[#6B7280]">—</span>
                   ) : (
                     <>
                       <span className={`rounded-sm px-2 py-0.5 ${eligibilityBadgeClass(Boolean(eligibilityQ.data?.eligible))}`}>
@@ -368,7 +368,7 @@ export function DrugAlcoholTab() {
                 </div>
               </div>
               <div className="rounded-sm border border-gray-100 p-3 text-xs">
-                <div className="font-medium text-slate-800">RTD case</div>
+                <div className="font-medium text-[#1F2A44]">RTD case</div>
                 <div className="mt-1">
                   {rtdCaseQ.isError ? "—" : rtdCase ? stageLabel(rtdCase.stage) : "None open"}
                 </div>
@@ -380,9 +380,9 @@ export function DrugAlcoholTab() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
-          <h2 className="text-xs font-semibold text-slate-900">Record drug / alcohol test</h2>
+          <h2 className="text-xs font-semibold text-[#0F1219]">Record drug / alcohol test</h2>
           <div className="grid gap-2 md:grid-cols-2">
-            <div className="text-xs text-slate-600">
+            <div className="text-xs text-[#6B7280]">
               <label htmlFor="record-test-type">Type</label>
               <Combobox
                 id="record-test-type"
@@ -393,7 +393,7 @@ export function DrugAlcoholTab() {
                 placeholder="Select test type"
               />
             </div>
-            <div className="text-xs text-slate-600">
+            <div className="text-xs text-[#6B7280]">
               <label htmlFor="record-test-result">Result</label>
               <Combobox
                 id="record-test-result"
@@ -404,14 +404,14 @@ export function DrugAlcoholTab() {
                 placeholder="Select result"
               />
             </div>
-            <div className="text-xs text-slate-600">
+            <div className="text-xs text-[#6B7280]">
               <label htmlFor="drug-alcohol-test-date">Test date</label>
               {/* DatePicker renders its own bordered control — passing border/padding here
                   produced a box-within-a-box. Layout-only className now. */}
               <DatePicker id="drug-alcohol-test-date" className="mt-1 w-full" value={testDate} onChange={(next) => setTestDate(next)} max={companyToday()} />
             </div>
           </div>
-          <label className="block text-xs text-slate-600">
+          <label className="block text-xs text-[#6B7280]">
             Lab result / chain-of-custody document
             <input
               type="file"
@@ -424,7 +424,7 @@ export function DrugAlcoholTab() {
           <button
             type="button"
             disabled={!effectiveDriverId || createTestMutation.isPending}
-            className="rounded-sm bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+            className="rounded-sm bg-[#0F1219] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
             onClick={() => createTestMutation.mutate({
               companyId,
               driverId: effectiveDriverId,
@@ -443,13 +443,13 @@ export function DrugAlcoholTab() {
         </div>
 
         <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
-          <h2 className="text-xs font-semibold text-slate-900">Return-to-duty workflow</h2>
+          <h2 className="text-xs font-semibold text-[#0F1219]">Return-to-duty workflow</h2>
           {!rtdCase ? (
             <>
               <button
                 type="button"
                 disabled={!effectiveDriverId || openRtdMutation.isPending}
-                className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 disabled:opacity-50"
+                className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-medium text-[#1F2A44] disabled:opacity-50"
                 onClick={() => openRtdMutation.mutate({ companyId, driverId: effectiveDriverId, generation: actionGenerationRef.current })}
               >
                 Open RTD case
@@ -470,7 +470,7 @@ export function DrugAlcoholTab() {
                     <span
                       key={stage}
                       className={`rounded px-2 py-0.5 text-xs uppercase tracking-wide ${
-                        active ? "bg-slate-100 text-slate-700" : completed ? "bg-slate-50 text-slate-700" : "bg-gray-100 text-gray-600"
+                        active ? "bg-[#F7F8FA] text-[#4B5563]" : completed ? "bg-[#F7F8FA] text-[#4B5563]" : "bg-gray-100 text-gray-600"
                       }`}
                     >
                       {stageLabel(stage)}
@@ -494,14 +494,14 @@ export function DrugAlcoholTab() {
                   Advance to {stageLabel(nextStage)}
                 </button>
               ) : (
-                <div className="text-xs text-slate-700">RTD case complete.</div>
+                <div className="text-xs text-[#4B5563]">RTD case complete.</div>
               )}
               {advanceRtdMutation.isError && advanceRtdMutation.variables?.generation === actionGenerationRef.current ? (
                 <p className="text-xs text-red-700" data-testid="drug-alcohol-advance-rtd-error">
                   {userFacingApiError(advanceRtdMutation.error, "Could not advance the return-to-duty case.")}
                 </p>
               ) : null}
-              <div className="text-xs text-slate-600">
+              <div className="text-xs text-[#6B7280]">
                 Follow-up tests: {rtdCase.follow_up_tests_completed}/{rtdCase.follow_up_tests_required ?? "—"}
               </div>
             </div>
@@ -510,14 +510,14 @@ export function DrugAlcoholTab() {
       </div>
 
       <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-xs font-semibold text-slate-900">Random pool enrollment (FMCSA consortium)</h2>
-        <p className="text-xs text-slate-600">
+        <h2 className="text-xs font-semibold text-[#0F1219]">Random pool enrollment (FMCSA consortium)</h2>
+        <p className="text-xs text-[#6B7280]">
           The random-testing pool is built from consortium enrollment (49 CFR 382.305). An empty pool
           means no drivers are enrolled — bulk-enroll every active CDL driver below so the quarterly
           random draw has a population to select from. Enrolling here populates the consortium pool.
         </p>
         <div className="flex flex-wrap items-end gap-3">
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#6B7280]">
             Consortium / C-TPA name
             <input
               type="text"
@@ -542,7 +542,7 @@ export function DrugAlcoholTab() {
           </button>
         </div>
         {bulkEnrollMutation.isSuccess && bulkEnrollMutation.variables?.generation === actionGenerationRef.current ? (
-          <div className="text-xs text-slate-700">
+          <div className="text-xs text-[#4B5563]">
             Enrolled {bulkEnrollMutation.data?.enrolled_count ?? 0} newly-added driver(s) into the pool.
           </div>
         ) : null}
@@ -555,9 +555,9 @@ export function DrugAlcoholTab() {
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-xs font-semibold text-slate-900">Drug test history</h2>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Drug test history</h2>
         <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="drug-alcohol-history-filters">
-          <div className="w-40 text-xs text-slate-600">
+          <div className="w-40 text-xs text-[#6B7280]">
             <label htmlFor="drug-history-type">Type</label>
             <Combobox
               id="drug-history-type"
@@ -569,7 +569,7 @@ export function DrugAlcoholTab() {
               allowClear
             />
           </div>
-          <div className="w-40 text-xs text-slate-600">
+          <div className="w-40 text-xs text-[#6B7280]">
             <label htmlFor="drug-history-result">Result</label>
             <Combobox
               id="drug-history-result"
@@ -581,7 +581,7 @@ export function DrugAlcoholTab() {
               allowClear
             />
           </div>
-          <div className="text-xs text-slate-600">
+          <div className="text-xs text-[#6B7280]">
             <label htmlFor="drug-alcohol-history-from">From</label>
             <DatePicker
               id="drug-alcohol-history-from"
@@ -591,7 +591,7 @@ export function DrugAlcoholTab() {
               placeholder="Any"
             />
           </div>
-          <div className="text-xs text-slate-600">
+          <div className="text-xs text-[#6B7280]">
             <label htmlFor="drug-alcohol-history-to">To</label>
             <DatePicker
               id="drug-alcohol-history-to"
@@ -645,7 +645,7 @@ export function DrugAlcoholTab() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-          <h3 className="text-xs font-semibold text-slate-900">Random pool roster</h3>
+          <h3 className="text-xs font-semibold text-[#0F1219]">Random pool roster</h3>
           {poolQ.isError ? (
             <div data-testid="drug-alcohol-pool-query-error"><ListErrorState status={0} message={userFacingApiError(poolQ.error, "Could not load the random pool roster.")} onRetry={() => void poolQ.refetch()} /></div>
           ) : (
@@ -664,7 +664,7 @@ export function DrugAlcoholTab() {
                   <span>{String(entry.status ?? "selected")}</span>
                 </li>
               ))}
-              {(poolQ.data?.entries ?? []).length === 0 ? <li className="text-slate-500">No pool entries.</li> : null}
+              {(poolQ.data?.entries ?? []).length === 0 ? <li className="text-[#6B7280]">No pool entries.</li> : null}
             </ul>
           )}
           {!poolQ.isError && (poolQ.data?.total_count ?? 0) > auxiliaryPageSize ? (
@@ -676,7 +676,7 @@ export function DrugAlcoholTab() {
           ) : null}
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-          <h3 className="text-xs font-semibold text-slate-900">Clearinghouse queries</h3>
+          <h3 className="text-xs font-semibold text-[#0F1219]">Clearinghouse queries</h3>
           {clearinghouseQ.isError ? (
             <div data-testid="drug-alcohol-clearinghouse-query-error"><ListErrorState status={0} message={userFacingApiError(clearinghouseQ.error, "Could not load clearinghouse queries.")} onRetry={() => void clearinghouseQ.refetch()} /></div>
           ) : (
@@ -695,7 +695,7 @@ export function DrugAlcoholTab() {
                   <span>{String(entry.query_status ?? "pending")}</span>
                 </li>
               ))}
-              {(clearinghouseQ.data?.queries ?? []).length === 0 ? <li className="text-slate-500">No queries logged.</li> : null}
+              {(clearinghouseQ.data?.queries ?? []).length === 0 ? <li className="text-[#6B7280]">No queries logged.</li> : null}
             </ul>
           )}
           {!clearinghouseQ.isError && (clearinghouseQ.data?.total_count ?? 0) > auxiliaryPageSize ? (
@@ -737,29 +737,29 @@ export function DrugAlcoholTab() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-          <h3 className="text-xs font-semibold text-slate-900">FMCSA test types (reference)</h3>
-          <p className="mt-1 text-slate-500">
+          <h3 className="text-xs font-semibold text-[#0F1219]">FMCSA test types (reference)</h3>
+          <p className="mt-1 text-[#6B7280]">
             Fixed by 49 CFR Part 40 / Part 382 — not an editable catalog.
           </p>
           <ul className="mt-2 space-y-1">
             {TEST_TYPE_REFERENCE.map((row) => (
               <li key={row.value} className="flex justify-between border-b border-gray-100 py-1">
-                <span className="text-slate-800">{stageLabel(row.value)}</span>
-                <span className="text-slate-500">{row.cite}</span>
+                <span className="text-[#1F2A44]">{stageLabel(row.value)}</span>
+                <span className="text-[#6B7280]">{row.cite}</span>
               </li>
             ))}
           </ul>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-          <h3 className="text-xs font-semibold text-slate-900">FMCSA results (reference)</h3>
-          <p className="mt-1 text-slate-500">
+          <h3 className="text-xs font-semibold text-[#0F1219]">FMCSA results (reference)</h3>
+          <p className="mt-1 text-[#6B7280]">
             Fixed by 49 CFR Part 40 — the Clearinghouse expects these verbatim.
           </p>
           <ul className="mt-2 space-y-1">
             {TEST_RESULT_REFERENCE.map((row) => (
               <li key={row.value} className="flex justify-between border-b border-gray-100 py-1">
-                <span className="text-slate-800">{row.value}</span>
-                <span className="text-slate-500">{row.cite}</span>
+                <span className="text-[#1F2A44]">{row.value}</span>
+                <span className="text-[#6B7280]">{row.cite}</span>
               </li>
             ))}
           </ul>
