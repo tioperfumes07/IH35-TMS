@@ -239,7 +239,7 @@ export function DOTInspectionsTab() {
       label: "Actions",
       render: (row) => (
         <>
-          <label className="mr-2 inline-flex cursor-pointer items-center text-slate-700 underline">
+          <label className="mr-2 inline-flex cursor-pointer items-center text-[#4B5563] underline">
             PDF
             <input
               type="file"
@@ -303,11 +303,11 @@ export function DOTInspectionsTab() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-semibold text-slate-900">DOT Inspections</h2>
+        <h2 className="text-xs font-semibold text-[#0F1219]">DOT Inspections</h2>
         <InspectionScoreBadge companyId={companyId} />
       </div>
       <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="dot-inspections-filters">
-        <label className="block min-w-[200px] text-xs text-slate-600">
+        <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Driver
           <div className="mt-1">
             <EntityPicker
@@ -322,7 +322,7 @@ export function DOTInspectionsTab() {
             />
           </div>
         </label>
-        <label className="block min-w-[200px] text-xs text-slate-600">
+        <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Unit
           <div className="mt-1">
             <EntityPicker
@@ -337,7 +337,7 @@ export function DOTInspectionsTab() {
             />
           </div>
         </label>
-        <label className="block min-w-[200px] text-xs text-slate-600">
+        <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Trailer
           <div className="mt-1">
             <EntityPicker
@@ -352,7 +352,7 @@ export function DOTInspectionsTab() {
             />
           </div>
         </label>
-        <label className="block min-w-[160px] text-xs text-slate-600">
+        <label className="block min-w-[160px] text-xs text-[#4B5563]">
           Outcome
           <SelectCombobox
             className={`${SAFETY_FIELD_CLASS} mt-1`}
@@ -438,7 +438,7 @@ export function DOTInspectionsTab() {
         </SelectCombobox>
         <input className={SAFETY_FIELD_CLASS} placeholder="Location" value={form.location} onChange={(e) => setForm((v) => ({ ...v, location: e.target.value }))} />
         <input className={SAFETY_FIELD_CLASS} type="number" min={0} placeholder="CSA pts" value={form.csa_points} onChange={(e) => setForm((v) => ({ ...v, csa_points: Number(e.target.value || 0) }))} />
-        <label className={`${SAFETY_FIELD_CLASS} flex cursor-pointer items-center justify-center text-slate-700`}>
+        <label className={`${SAFETY_FIELD_CLASS} flex cursor-pointer items-center justify-center text-[#4B5563]`}>
           {evidenceFile ? evidenceFile.name : "Inspection PDF"}
           <input type="file" accept="application/pdf" className="sr-only" onChange={(event) => setEvidenceFile(event.target.files?.[0] ?? null)} />
         </label>
@@ -520,7 +520,7 @@ export function DOTInspectionsTab() {
       ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <h3 className="mb-2 text-xs font-semibold text-slate-800">Open DOT Station Dwell Events (last captured)</h3>
+        <h3 className="mb-2 text-xs font-semibold text-[#1F2A44]">Open DOT Station Dwell Events (last captured)</h3>
         {openEventsQuery.isError ? (
           <div data-testid="dot-dwell-events-query-error">
             <ListErrorState
@@ -531,19 +531,19 @@ export function DOTInspectionsTab() {
             />
           </div>
         ) : (openEventsQuery.data?.events ?? []).length === 0 ? (
-          <p className="text-xs text-slate-500">No open DOT dwell follow-ups.</p>
+          <p className="text-xs text-[#6B7280]">No open DOT dwell follow-ups.</p>
         ) : (
           <div className="space-y-2">
             {(openEventsQuery.data?.events ?? []).map((row) => (
               <div key={String(row.id)} className="rounded-sm border border-gray-200 p-2 text-xs">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-slate-800">
+                  <span className="font-semibold text-[#1F2A44]">
                     {String(row.station_label ?? "DOT station")} · Unit{" "}
                     <EntityLinkOrTombstone kind="unit" id={row.unit_id as string | undefined} name={row.unit_number} noun="Unit" />
                   </span>
-                  <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700">{String(row.dwell_minutes ?? 0)} min</span>
+                  <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-[#4B5563]">{String(row.dwell_minutes ?? 0)} min</span>
                 </div>
-                <p className="mt-1 text-slate-600">
+                <p className="mt-1 text-[#4B5563]">
                   Driver:{" "}
                   <EntityLinkOrTombstone kind="driver" id={row.driver_id as string | undefined} name={row.driver_name} noun="Driver" />{" "}
                   · Departed: {String(row.departed_at ?? "n/a")}

@@ -62,7 +62,7 @@ export function AssignmentHistoryPage() {
   const rows = historyQ.data?.rows ?? [];
   const settlementReferences = useSettlementReferences(companyId, rows.map((row) => row.load_id));
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
   }
 
   type AssignmentHistoryRow = (typeof rows)[number];
@@ -74,10 +74,10 @@ export function AssignmentHistoryPage() {
       label: "Load",
       sortable: true,
 render: (row) => {
-        if (!row.load_id) return <span className="text-slate-400">—</span>;
+        if (!row.load_id) return <span className="text-[#6B7280]">—</span>;
         const label = entityLabel(row.load_number, row.load_id, "Load");
         if (isUnresolvedEntityTombstone(row.load_number, row.load_id, "Load")) {
-          return <span className="text-slate-600" data-testid="assignment-history-load-tombstone">{label}</span>;
+          return <span className="text-[#4B5563]" data-testid="assignment-history-load-tombstone">{label}</span>;
         }
         return <EntityLink kind="load" id={row.load_id} label={label} data-testid="assignment-history-load-link" />;
       },
@@ -88,10 +88,10 @@ render: (row) => {
       key: "previous_driver_name",
       label: "Previous driver",
 render: (row) => {
-        if (!row.previous_driver_id) return <span className="text-slate-400">—</span>;
+        if (!row.previous_driver_id) return <span className="text-[#6B7280]">—</span>;
         const label = entityLabel(row.previous_driver_name, row.previous_driver_id, "Driver");
         if (isUnresolvedEntityTombstone(row.previous_driver_name, row.previous_driver_id, "Driver")) {
-          return <span className="text-slate-600" data-testid="assignment-history-prev-driver-tombstone">{label}</span>;
+          return <span className="text-[#4B5563]" data-testid="assignment-history-prev-driver-tombstone">{label}</span>;
         }
         return <EntityLink kind="driver" id={row.previous_driver_id} label={label} data-testid="assignment-history-prev-driver-link" />;
       },
@@ -100,10 +100,10 @@ render: (row) => {
       key: "new_driver_name",
       label: "New driver",
 render: (row) => {
-        if (!row.new_driver_id) return <span className="text-slate-400">—</span>;
+        if (!row.new_driver_id) return <span className="text-[#6B7280]">—</span>;
         const label = entityLabel(row.new_driver_name, row.new_driver_id, "Driver");
         if (isUnresolvedEntityTombstone(row.new_driver_name, row.new_driver_id, "Driver")) {
-          return <span className="text-slate-600" data-testid="assignment-history-new-driver-tombstone">{label}</span>;
+          return <span className="text-[#4B5563]" data-testid="assignment-history-new-driver-tombstone">{label}</span>;
         }
         return <EntityLink kind="driver" id={row.new_driver_id} label={label} data-testid="assignment-history-new-driver-link" />;
       },
@@ -112,10 +112,10 @@ render: (row) => {
       key: "previous_unit_number",
       label: "Previous unit",
 render: (row) => {
-        if (!row.previous_unit_id) return <span className="text-slate-400">—</span>;
+        if (!row.previous_unit_id) return <span className="text-[#6B7280]">—</span>;
         const label = entityLabel(row.previous_unit_number, row.previous_unit_id, "Unit");
         if (isUnresolvedEntityTombstone(row.previous_unit_number, row.previous_unit_id, "Unit")) {
-          return <span className="text-slate-600" data-testid="assignment-history-prev-unit-tombstone">{label}</span>;
+          return <span className="text-[#4B5563]" data-testid="assignment-history-prev-unit-tombstone">{label}</span>;
         }
         return <EntityLink kind="unit" id={row.previous_unit_id} label={label} data-testid="assignment-history-prev-unit-link" />;
       },
@@ -124,10 +124,10 @@ render: (row) => {
       key: "new_unit_number",
       label: "New unit",
 render: (row) => {
-        if (!row.new_unit_id) return <span className="text-slate-400">—</span>;
+        if (!row.new_unit_id) return <span className="text-[#6B7280]">—</span>;
         const label = entityLabel(row.new_unit_number, row.new_unit_id, "Unit");
         if (isUnresolvedEntityTombstone(row.new_unit_number, row.new_unit_id, "Unit")) {
-          return <span className="text-slate-600" data-testid="assignment-history-new-unit-tombstone">{label}</span>;
+          return <span className="text-[#4B5563]" data-testid="assignment-history-new-unit-tombstone">{label}</span>;
         }
         return <EntityLink kind="unit" id={row.new_unit_id} label={label} data-testid="assignment-history-new-unit-link" />;
       },
@@ -196,7 +196,7 @@ render: (row) => {
             className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
           />
         </div>
-        <div className="md:col-span-4 flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-3">
+        <div className="md:col-span-4 flex flex-wrap items-center justify-end gap-2 border-t border-[#E5E7EB] pt-3">
           <Button
             type="button"
             size="sm"
