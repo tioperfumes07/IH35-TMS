@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — OwnerOverrideLog / LoadCreateModal / InTransitIssues
+
+FINDING: BANK-F91278 — OwnerOverrideLogPage / LoadCreateModal / InTransitIssuesPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25958 squash `e7a808810d` (BANK-F91277 DriverInstructions/QuickAssign/BookLoadStops)
+GUARD: scripts/verify-91278-disp-owner-create-transit-slate-leftover-chrome.mjs + verify-steps/3454 piggyback
+LIVE PROOF: verify-91278-disp-owner-create-transit-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3454 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — DriverInstructions / QuickAssign / BookLoadStops
 
 FINDING: BANK-F91277 — DriverInstructionsTextarea / QuickAssignModal / BookLoadStopsSection Tailwind slate-* → house tokens

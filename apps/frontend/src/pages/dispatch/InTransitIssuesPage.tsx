@@ -217,7 +217,7 @@ export function InTransitIssuesPage() {
   );
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
   }
 
   return (
@@ -238,7 +238,7 @@ export function InTransitIssuesPage() {
       />
 
       <div className="relative flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="intransit-issues-filters">
-        <label className="block min-w-[200px] text-xs text-slate-600">
+        <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Driver
           <div className="mt-1">
             <EntityPicker
@@ -253,7 +253,7 @@ export function InTransitIssuesPage() {
             />
           </div>
         </label>
-        <label className="block min-w-[200px] text-xs text-slate-600">
+        <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Load
           <div className="mt-1">
             <EntityPicker
@@ -268,7 +268,7 @@ export function InTransitIssuesPage() {
             />
           </div>
         </label>
-        <label className="block min-w-[200px] text-xs text-slate-600">
+        <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Unit
           <div className="mt-1">
             <EntityPicker

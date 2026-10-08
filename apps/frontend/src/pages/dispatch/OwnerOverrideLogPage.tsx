@@ -39,7 +39,7 @@ export function OwnerOverrideLogPage() {
   });
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
   }
 
   const rows = logQ.data?.overrides ?? [];
@@ -55,10 +55,10 @@ export function OwnerOverrideLogPage() {
       key: "driver_name",
       label: "Driver",
       render: (row) => {
-        if (!row.driver_id) return <span className="text-slate-400">—</span>;
+        if (!row.driver_id) return <span className="text-[#6B7280]">—</span>;
         const label = entityLabel(row.driver_name, row.driver_id, "Driver");
         if (isUnresolvedEntityTombstone(row.driver_name, row.driver_id, "Driver")) {
-          return <span className="text-slate-600" data-testid="owner-override-log-driver-tombstone">{label}</span>;
+          return <span className="text-[#4B5563]" data-testid="owner-override-log-driver-tombstone">{label}</span>;
         }
         return <EntityLink kind="driver" id={row.driver_id} label={label} data-testid="owner-override-log-driver-link" />;
       },
@@ -103,7 +103,7 @@ export function OwnerOverrideLogPage() {
         />
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600" data-testid="owner-override-log-server-pager">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#4B5563]" data-testid="owner-override-log-server-pager">
         <span>
           {logQ.isLoading
             ? "Loading overrides…"
