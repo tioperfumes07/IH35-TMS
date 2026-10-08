@@ -1,3 +1,13 @@
+## 2026-10-08T21:45Z · BANK leftover slate — Vendors / GenericCatalog / BatchActions
+
+FINDING: BANK-F91240 — Vendors / GenericCatalogPage / BatchActionsBar Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25915 squash `91797d026f` (BANK-F91239 BorderCrossing/InterchangeTrailer/PreDispatch)
+GUARD: scripts/verify-vendors-catalog-batch-slate-leftover-chrome.mjs + verify-steps/3612 piggyback
+LIVE PROOF: verify-vendors-catalog-batch-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3612 piggyback + OUTBOX
+
 ## 2026-10-08T21:35Z · BANK leftover slate — BorderCrossing / InterchangeTrailer / PreDispatch
 
 FINDING: BANK-F91239 — BorderCrossingWizardPage / InterchangeTrailerPicker / PreDispatchValidationPanel Tailwind slate-* → house tokens
