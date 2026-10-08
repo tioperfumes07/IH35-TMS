@@ -1,3 +1,13 @@
+## 2026-10-09T00:35Z · BANK leftover slate — vendorCategories / SummaryCards / CollapsibleProfileCard
+
+FINDING: BANK-F91266 — vendorCategories / SummaryCards / CollapsibleProfileCard Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25944 squash `b488d8699e` (BANK-F91265 Modal/FilterPopover/LicenseSection)
+GUARD: scripts/verify-vendor-summary-profile-slate-leftover-chrome.mjs + verify-steps/3496 piggyback
+LIVE PROOF: verify-vendor-summary-profile-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3496 piggyback + OUTBOX
+
 ## 2026-10-09T00:30Z · BANK leftover slate — Modal / FilterPopover / LicenseSection
 
 FINDING: BANK-F91265 — Modal / FilterPopover / LicenseSection Tailwind slate-* → house tokens
