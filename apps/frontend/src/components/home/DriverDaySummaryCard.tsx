@@ -8,6 +8,7 @@ import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
 import { CollapsedListFilters, useStagedListFilters } from "../table";
+import { SelectCombobox } from "../Combobox";
 
 type Props = {
   operatingCompanyId: string | null;
@@ -152,7 +153,7 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
               >
                 <label className="block text-xs font-semibold text-[#4B5563]">
                   Driver activity
-                  <select
+                  <SelectCombobox
                     aria-label="Driver activity filter"
                     className="mt-1 h-9 w-full rounded-sm border border-[#4B5563] bg-white px-2 text-xs"
                     value={stagedFilters.draft.activityFilter}
@@ -164,7 +165,7 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
                     <option value="active">Recorded activity</option>
                     <option value="late">Late arrival</option>
                     <option value="no_activity">No recorded activity</option>
-                  </select>
+                  </SelectCombobox>
                 </label>
               </CollapsedListFilters>
             }

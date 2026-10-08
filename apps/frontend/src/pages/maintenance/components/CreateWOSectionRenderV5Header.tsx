@@ -49,7 +49,7 @@ export function CreateWOSectionRenderV5Header({
       <div className="mb-1 font-semibold text-[#1F2A44]">Work order header</div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         <Cell label="Status">
-          {/* D25 — every wizard box is a combo dropdown (SelectCombobox), not a bare <select>. */}
+          {/* D25 — every wizard box is a combo dropdown (SelectCombobox), not a bare <SelectCombobox>. */}
           <SelectCombobox {...register("status")} className={INPUT} aria-label="Status">
             <option value="open">Open</option>
             <option value="in_progress">In progress</option>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SelectCombobox } from "../../components/Combobox";
 
 export type TeamInvite = {
   email: string;
@@ -54,7 +55,7 @@ export function Step5InviteTeam({ value, disabled, onChange }: Props) {
         </label>
         <label className="block text-xs">
           <span className="font-medium text-gray-700">Role</span>
-          <select
+          <SelectCombobox
             className="mt-1 rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={role}
             disabled={disabled}
@@ -65,7 +66,7 @@ export function Step5InviteTeam({ value, disabled, onChange }: Props) {
                 {r}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <button
           type="button"

@@ -21,6 +21,7 @@ import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../ListErrorState";
+import { SelectCombobox } from "../Combobox";
 
 type Props = {
   open: boolean;
@@ -324,19 +325,19 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={labelCls} htmlFor="create-task-category">Category</label>
-            <select id="create-task-category" className={inputCls} value={category} onChange={(e) => setCategory(e.target.value as TaskCategory)}>
+            <SelectCombobox id="create-task-category" className={inputCls} value={category} onChange={(e) => setCategory(e.target.value as TaskCategory)}>
               {CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
               ))}
-            </select>
+            </SelectCombobox>
           </div>
           <div>
             <label className={labelCls} htmlFor="create-task-priority">Priority</label>
-            <select id="create-task-priority" className={inputCls} value={priority} onChange={(e) => setPriority(Number(e.target.value))}>
+            <SelectCombobox id="create-task-priority" className={inputCls} value={priority} onChange={(e) => setPriority(Number(e.target.value))}>
               {PRIORITIES.map((p) => (
                 <option key={p.value} value={p.value}>{p.label}</option>
               ))}
-            </select>
+            </SelectCombobox>
           </div>
         </div>
 
@@ -345,7 +346,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls} htmlFor="create-task-entity-kind">Linked to</label>
-              <select
+              <SelectCombobox
                 id="create-task-entity-kind"
                 className={inputCls}
                 value={entityKind}
@@ -358,15 +359,15 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
                 {ENTITY_KINDS.map((k) => (
                   <option key={k.value} value={k.value}>{k.label}</option>
                 ))}
-              </select>
+              </SelectCombobox>
             </div>
             <div>
               <label className={labelCls} htmlFor="create-task-entity-id">Record</label>
               <div className="mt-0" data-testid="create-task-entity-picker">
                 {!entityKind ? (
-                  <select id="create-task-entity-id" className={inputCls} disabled value="">
+                  <SelectCombobox id="create-task-entity-id" className={inputCls} disabled value="">
                     <option value="">Pick a type first</option>
-                  </select>
+                  </SelectCombobox>
                 ) : (
                   <EntityPicker
                     kind={entityKind as "customer" | "vendor" | "driver" | "unit" | "load"}

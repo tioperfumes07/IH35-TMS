@@ -15,6 +15,7 @@ import { EntityLink, resolveEntityRoute, type EntityKind } from "../shared/Entit
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
 import { formatUsdCentsTable } from "../../lib/money";
+import { SelectCombobox } from "../Combobox";
 
 type HubRow = { id: string; name: string; status: string; phone: string | null; cdl: string | null; unit: string | null; basis: string | null; due_cents: number; due_count: number; on_load: boolean };
 type Hub = {
@@ -221,11 +222,11 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
             onChange={(e) => { const v = e.target.value; if (allUnits.includes(v) && !units.includes(v)) { setUnits([...units, v]); e.target.value = ""; } }} />
           <datalist id="pb-hub-units">{allUnits.map((u) => <option key={u} value={u} />)}</datalist>
         </div>
-        <select aria-label="Pay basis" className="pb-select" value={basis} onChange={(e) => setBasis(e.target.value)}>
+        <SelectCombobox aria-label="Pay basis" className="pb-select" value={basis} onChange={(e) => setBasis(e.target.value)}>
           <option value="all">All pay bases</option>
           {bases.map((b) => <option key={b} value={b}>{b}</option>)}
           <option value="none">No rate card</option>
-        </select>
+        </SelectCombobox>
         <label htmlFor="pb-dsearch" style={{ position: "absolute", left: -9999 }}>Search drivers</label>
         <input id="pb-dsearch" type="search" className="pb-search" placeholder="Search name, phone, CDL…" value={search} onChange={(e) => setSearch(e.target.value)} />
         <button type="button" className="pb-chip" aria-pressed>Master-detail</button>

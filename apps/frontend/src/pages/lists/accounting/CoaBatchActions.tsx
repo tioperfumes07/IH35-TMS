@@ -9,6 +9,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import type { CoaListRow } from "./coa-list-utils";
+import { SelectCombobox } from "../../../components/Combobox";
 
 type Props = {
   selectedIds: string[];
@@ -147,7 +148,7 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
           </p>
           <label className="block space-y-1">
             <span className="text-xs font-medium text-slate-700">Surviving account</span>
-            <select
+            <SelectCombobox
               className="h-9 w-full rounded-sm border border-gray-300 px-2"
               value={mergeTargetId}
               onChange={(event) => setMergeTargetId(event.target.value)}
@@ -158,7 +159,7 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
                   {row.number} · {row.name}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <label className="block space-y-1">
             <span className="text-xs font-medium text-slate-700">

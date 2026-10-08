@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchPortsOfEntry, type PortOfEntry } from "../../../../components/border-crossing/borderCrossingApi";
+import { SelectCombobox } from "../../../../components/Combobox";
 
 type Props = {
   /** Currently selected port-of-entry id (form-backed). */
@@ -13,7 +14,7 @@ type Props = {
 /**
  * Book Load border-crossing capture. Shown for cross-border (NB/SB) trips so the operator records
  * the port of entry — on submit this becomes a stop_type='border' stop, which is what makes
- * LoadDetailDrawer.loadHasCrossBorder() show the Customs tab. Native <select> (dismisses on its own —
+ * LoadDetailDrawer.loadHasCrossBorder() show the Customs tab. Native <SelectCombobox> (dismisses on its own —
  * not a trapping picker).
  */
 export function BorderCrossingCaptureField({ value, onSelect, error }: Props) {
@@ -57,7 +58,7 @@ export function BorderCrossingCaptureField({ value, onSelect, error }: Props) {
         This is a cross-border load. Record the port of entry where the freight crosses — the crossing
         stop and the Customs tab then appear on the load on their own.
       </p>
-      <select
+      <SelectCombobox
         data-testid="book-load-port-of-entry"
         aria-label="Border crossing port of entry"
         className="mt-1 h-8 w-full max-w-md rounded-sm border border-gray-300 px-2 text-xs"
@@ -88,7 +89,7 @@ export function BorderCrossingCaptureField({ value, onSelect, error }: Props) {
             ))}
           </optgroup>
         ) : null}
-      </select>
+      </SelectCombobox>
       {loadError ? (
         <p className="mt-1 text-xs text-red-600">Could not load ports of entry: {loadError}</p>
       ) : null}

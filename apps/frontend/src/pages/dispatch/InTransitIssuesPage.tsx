@@ -22,6 +22,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
+import { SelectCombobox } from "../../components/Combobox";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -363,7 +364,7 @@ export function InTransitIssuesPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Category</label>
-            <select
+            <SelectCombobox
               value={category}
               disabled={createMutation.isPending}
               onChange={(event) => setCategory(event.target.value)}
@@ -373,11 +374,11 @@ export function InTransitIssuesPage() {
               <option value="safety">Safety</option>
               <option value="cargo">Cargo</option>
               <option value="other">Other</option>
-            </select>
+            </SelectCombobox>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Severity</label>
-            <select
+            <SelectCombobox
               value={severity}
               disabled={createMutation.isPending}
               onChange={(event) => setSeverity(event.target.value as typeof severity)}
@@ -386,7 +387,7 @@ export function InTransitIssuesPage() {
               <option value="info">Info</option>
               <option value="warning">Warning</option>
               <option value="severe">Severe</option>
-            </select>
+            </SelectCombobox>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Description</label>

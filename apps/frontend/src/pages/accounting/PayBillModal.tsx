@@ -33,6 +33,7 @@ const METHOD_OPTIONS: Array<{ value: BillPaymentMethod; label: string }> = [
 ];
 
 import { formatUsdCents } from "../../lib/money";
+import { SelectCombobox } from "../../components/Combobox";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -207,7 +208,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
               </label>
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
                 Payment method
-                <select
+                <SelectCombobox
                   aria-label="Payment method"
                   value={paymentMethod}
                   onChange={(event) => setPaymentMethod(event.target.value as BillPaymentMethod)}
@@ -218,7 +219,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                       {method.label}
                     </option>
                   ))}
-                </select>
+                </SelectCombobox>
               </label>
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
                 Payment amount (USD)

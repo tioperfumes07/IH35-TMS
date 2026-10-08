@@ -8,6 +8,7 @@ import {
   type NotificationPreferences,
 } from "../../hooks/useNotifications";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { SelectCombobox } from "../../components/Combobox";
 
 const TYPE_OPTIONS = [
   "compliance_expiring",
@@ -107,15 +108,15 @@ export function NotificationCenterPage() {
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <section className="rounded-sm border border-gray-200 bg-white p-4">
           <div className="mb-3 flex flex-wrap gap-2">
-            <select className="rounded-sm border px-2 py-1 text-xs" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+            <SelectCombobox className="rounded-sm border px-2 py-1 text-xs" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
               <option value="">All types</option>
               {TYPE_OPTIONS.map((t) => (
                 <option key={t} value={t}>
                   {t}
                 </option>
               ))}
-            </select>
-            <select
+            </SelectCombobox>
+            <SelectCombobox
               className="rounded-sm border px-2 py-1 text-xs"
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
@@ -126,8 +127,8 @@ export function NotificationCenterPage() {
                   {s}
                 </option>
               ))}
-            </select>
-            <select
+            </SelectCombobox>
+            <SelectCombobox
               className="rounded-sm border px-2 py-1 text-xs"
               value={readFilter}
               onChange={(e) => setReadFilter(e.target.value as "all" | "unread" | "read")}
@@ -135,7 +136,7 @@ export function NotificationCenterPage() {
               <option value="all">All</option>
               <option value="unread">Unread</option>
               <option value="read">Read</option>
-            </select>
+            </SelectCombobox>
           </div>
 
           {loading ? <p className="text-xs text-gray-500">Loading notifications…</p> : null}

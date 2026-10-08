@@ -15,6 +15,7 @@ import { formatNumberTable, formatUsdCentsTable } from "../../lib/money";
 import { ListErrorState } from "../ListErrorState";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
+import { SelectCombobox } from "../Combobox";
 
 export type PartyKind = "customers" | "vendors";
 type Range = "ytd" | "12m" | "all";
@@ -328,13 +329,13 @@ export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string;
         <span className="pb-sep" />
         {isCustomers ? (
           <>
-            <select aria-label="Date range" className="pb-select" value={range} onChange={(e) => setRange(e.target.value as Range)}>
+            <SelectCombobox aria-label="Date range" className="pb-select" value={range} onChange={(e) => setRange(e.target.value as Range)}>
               <option value="ytd">This year</option><option value="12m">Last 12 months</option><option value="all">All time</option>
-            </select>
-            <select aria-label="Aging" className="pb-select" value={aging} onChange={(e) => setAging(e.target.value)}>
+            </SelectCombobox>
+            <SelectCombobox aria-label="Aging" className="pb-select" value={aging} onChange={(e) => setAging(e.target.value)}>
               <option value="all">All ages</option><option value="current">Current</option><option value="d1_30">1–30 days</option>
               <option value="d31_60">31–60 days</option><option value="d61_90">61–90 days</option><option value="d90_plus">Over 90 days</option>
-            </select>
+            </SelectCombobox>
           </>
         ) : (
           <>

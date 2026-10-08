@@ -12,6 +12,7 @@ import {
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { SelectCombobox } from "../../components/Combobox";
 
 // DOC-REQ-2 — per-carrier "Required Documents" config (decision #6). Additive section in the Compliance
 // dashboard; no sidebar change. Read for everyone in the company; warn⇄hard-block / add / deactivate are
@@ -258,14 +259,14 @@ function CreateRow({
         </label>
         <label className="flex flex-col text-xs text-[#6B7280]">
           Enforcement
-          <select
+          <SelectCombobox
             value={enforcement}
             onChange={(e) => setEnforcement(e.target.value as RequiredDocEnforcement)}
             className="mt-0.5 rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
           >
             <option value="warn">Warn</option>
             <option value="hard_block">Hard block</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="flex items-center gap-1 text-xs text-[#4B5563]">
           <input type="checkbox" checked={hasExpiry} onChange={(e) => setHasExpiry(e.target.checked)} />

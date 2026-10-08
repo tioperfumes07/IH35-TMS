@@ -24,6 +24,7 @@ import { EntityPicker } from "../../components/EntityPicker";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useSearchParams } from "react-router-dom";
+import { SelectCombobox } from "../../components/Combobox";
 
 type MountDraft = {
   position_code: string;
@@ -494,7 +495,7 @@ export function TireProgramPage() {
         <div className="space-y-3 text-xs">
           <label className="block text-xs">
             Position
-            <select
+            <SelectCombobox
               className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
               value={mountDraft.position_code}
               onChange={(e) => setMountDraft((d) => ({ ...d, position_code: e.target.value }))}
@@ -505,7 +506,7 @@ export function TireProgramPage() {
                   {p.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <label className="block text-xs">
             Brand
@@ -593,7 +594,7 @@ export function TireProgramPage() {
           <div className="space-y-3 text-xs">
             <label className="block text-xs">
               To position
-              <select
+              <SelectCombobox
                 className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={toPosition}
                 onChange={(e) => setToPosition(e.target.value)}
@@ -606,7 +607,7 @@ export function TireProgramPage() {
                       {p.label}
                     </option>
                   ))}
-              </select>
+              </SelectCombobox>
             </label>
             <Button
               type="button"

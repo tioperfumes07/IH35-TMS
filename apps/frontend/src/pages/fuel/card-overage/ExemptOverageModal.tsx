@@ -3,6 +3,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { closeUnlessPending } from "../../../components/shared/ConfirmModal";
+import { SelectCombobox } from "../../../components/Combobox";
 
 export type ExemptOverageInput = {
   reason: "repair" | "authorized_spend";
@@ -52,7 +53,7 @@ export function ExemptOverageModal({ open, companyId, summary, onClose, onConfir
         <div className="grid grid-cols-2 gap-3">
           <label className="text-xs text-slate-600">
             Reason
-            <select
+            <SelectCombobox
               className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={reason}
               onChange={(e) => setReason(e.target.value as ExemptOverageInput["reason"])}
@@ -60,7 +61,7 @@ export function ExemptOverageModal({ open, companyId, summary, onClose, onConfir
             >
               <option value="repair">Repair</option>
               <option value="authorized_spend">Authorized by a manager</option>
-            </select>
+            </SelectCombobox>
           </label>
           <label className="text-xs text-slate-600">
             Work order

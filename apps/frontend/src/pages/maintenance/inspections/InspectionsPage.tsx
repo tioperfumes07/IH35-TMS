@@ -23,6 +23,7 @@ import { Combobox } from "../../../components/Combobox";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { useSearchParams } from "react-router-dom";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { SelectCombobox } from "../../../components/Combobox";
 
 type InspectionDraft = {
   unit_id: string;
@@ -413,7 +414,7 @@ export function InspectionsPage() {
 
           <label className="block">
             <span className="text-xs text-gray-600">Inspection type</span>
-            <select
+            <SelectCombobox
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
               value={draft.inspection_type}
               onChange={(e) =>
@@ -429,7 +430,7 @@ export function InspectionsPage() {
                   {opt.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
 
           {(draft.inspection_type === "pre_trip" || draft.inspection_type === "post_trip") ? (
@@ -490,7 +491,7 @@ export function InspectionsPage() {
             </label>
             <label className="block">
               <span className="text-xs text-gray-600">Outcome</span>
-              <select
+              <SelectCombobox
                 className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={draft.outcome ?? ""}
                 onChange={(e) => setDraft((d) => ({ ...d, outcome: e.target.value as InspectionDraft["outcome"] }))}
@@ -499,7 +500,7 @@ export function InspectionsPage() {
                 <option value="pass">Pass</option>
                 <option value="fail">Fail</option>
                 <option value="pending">Pending</option>
-              </select>
+              </SelectCombobox>
             </label>
           </div>
 

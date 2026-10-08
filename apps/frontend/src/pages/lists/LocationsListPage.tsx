@@ -12,6 +12,7 @@ import { Modal } from "../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { SelectCombobox } from "../../components/Combobox";
 
 type TriFilter = "all" | "yes" | "no";
 type SourceFilter = "all" | "google" | "samsara" | "manual";
@@ -283,7 +284,7 @@ export function LocationsListPage() {
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Geocoded
-          <select
+          <SelectCombobox
             value={geocodedFilter}
             onChange={(e) => setGeocodedFilter(e.target.value as TriFilter)}
             className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
@@ -292,11 +293,11 @@ export function LocationsListPage() {
             <option value="all">All</option>
             <option value="yes">Yes</option>
             <option value="no">No</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Geofence
-          <select
+          <SelectCombobox
             value={geofenceFilter}
             onChange={(e) => setGeofenceFilter(e.target.value as TriFilter)}
             className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
@@ -305,11 +306,11 @@ export function LocationsListPage() {
             <option value="all">All</option>
             <option value="yes">Yes</option>
             <option value="no">No</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Source
-          <select
+          <SelectCombobox
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value as SourceFilter)}
             className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
@@ -319,7 +320,7 @@ export function LocationsListPage() {
             <option value="google">Google</option>
             <option value="samsara">Samsara</option>
             <option value="manual">Manual</option>
-          </select>
+          </SelectCombobox>
         </label>
       </div>
 

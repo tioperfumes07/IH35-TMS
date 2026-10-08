@@ -182,7 +182,7 @@ export function DeadheadReportPage() {
         </label>
         <label className="flex items-center gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold text-[#4B5563]">Group by</span>
-          <select
+          <SelectCombobox
             className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.groupBy}
             onChange={(e) => staged.setDraft((p) => ({ ...p, groupBy: e.target.value }))}
@@ -191,7 +191,7 @@ export function DeadheadReportPage() {
             <option value="day">Day</option>
             <option value="week">Week</option>
             <option value="month">Month</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="flex items-center gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold text-[#4B5563]">Min DH mi</span>

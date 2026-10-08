@@ -176,11 +176,11 @@ export function StatusChangeModal({
             </div>
             <label className="block">
               Entity *
-              <select className="mt-1 w-full border px-2 py-1" value={transferredTo} onChange={(e) => setTransferredTo(e.target.value as "TRK" | "TRANSP" | "USMCA")}>
+              <SelectCombobox className="mt-1 w-full border px-2 py-1" value={transferredTo} onChange={(e) => setTransferredTo(e.target.value as "TRK" | "TRANSP" | "USMCA")}>
                 <option value="TRK">TRK</option>
                 <option value="TRANSP">TRANSP</option>
                 <option value="USMCA">USMCA</option>
-              </select>
+              </SelectCombobox>
             </label>
           </>
         ) : null}

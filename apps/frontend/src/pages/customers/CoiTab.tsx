@@ -20,6 +20,7 @@ import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { SelectCombobox } from "../../components/Combobox";
 
 export type CoiTabVariant = "list-preview" | "full-page";
 
@@ -349,7 +350,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
           !isFullPage ? (
             <label className="text-xs font-semibold text-gray-600">
               Status filter
-              <select
+              <SelectCombobox
                 className="ml-2 rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={statusFilter}
                 onChange={(event) => setStatusFilter((event.target.value || "") as "" | CoiRequestStatus)}
@@ -360,7 +361,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
                     {statusLabel(status)}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
           ) : undefined
         }
@@ -479,7 +480,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
         <div className="mt-3 grid gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 md:grid-cols-2">
           <label className="block text-xs">
             Status
-            <select
+            <SelectCombobox
               className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={editStatus}
               onChange={(event) => setEditStatus(event.target.value as CoiRequestStatus)}
@@ -489,7 +490,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
                   {statusLabel(status)}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <label className="block text-xs">
             Expires At

@@ -5,6 +5,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import {
+import { SelectCombobox } from "../../../components/Combobox";
   applyUniversalDatePreset,
   QBO_DATE_PRESETS,
 } from "../../../components/table/UniversalListToolbar";
@@ -40,7 +41,7 @@ export function TrainingTable({ rows, hidePager = false }: Props) {
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-end gap-2">
-        <select
+        <SelectCombobox
           className="h-[34px] rounded-sm border border-[#E5E7EB] px-2 text-xs"
           value={preset}
           onChange={(e) => {
@@ -59,7 +60,7 @@ export function TrainingTable({ rows, hidePager = false }: Props) {
               {p.label}
             </option>
           ))}
-        </select>
+        </SelectCombobox>
         <DatePicker
           id="training-date-from"
           value={from}

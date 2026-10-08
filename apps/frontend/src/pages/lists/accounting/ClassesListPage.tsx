@@ -2,6 +2,7 @@ import { useState } from "react";
 import { bulkUpdateClasses, classesCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { useToast } from "../../../components/Toast";
 import { AccountingCatalogListPage } from "./AccountingCatalogListPage";
+import { SelectCombobox } from "../../../components/Combobox";
 
 // Block 7 — bulk-edit bar for Classes: deactivate or re-parent the selected rows.
 function ClassesBulkBar({
@@ -51,7 +52,7 @@ function ClassesBulkBar({
       >
         Deactivate selected
       </button>
-      <select
+      <SelectCombobox
         value={parentId}
         onChange={(e) => setParentId(e.target.value)}
         className="min-h-9 rounded-sm border border-gray-300 px-2 text-xs"
@@ -63,7 +64,7 @@ function ClassesBulkBar({
             {r.display_name}
           </option>
         ))}
-      </select>
+      </SelectCombobox>
       <button
         type="button"
         disabled={busy || !parentId}

@@ -17,6 +17,7 @@ import {
 } from "../../generated/module-completion";
 import { SIDEBAR_ITEM_IDS } from "../../components/layout/sidebar-config";
 import { U14ExclusiveStatusBanner } from "./U14ExclusiveStatusBanner";
+import { SelectCombobox } from "../../components/Combobox";
 
 type ProofFilter = "all" | ModuleCompletionProof | "undefined";
 
@@ -429,7 +430,7 @@ export function ModuleCompletionPage() {
       >
         <label className="text-xs font-semibold text-slate-600">
           Proof status
-          <select
+          <SelectCombobox
             className="mt-1 w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={staged.draft.proofFilter}
             onChange={(event) =>
@@ -442,7 +443,7 @@ export function ModuleCompletionPage() {
             <option value="code_verified">Code-verified</option>
             <option value="in_progress">In progress</option>
             <option value="undefined">Not yet defined</option>
-          </select>
+          </SelectCombobox>
         </label>
       </CollapsedListFilters>
 

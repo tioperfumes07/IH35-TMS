@@ -13,6 +13,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SelectCombobox } from "../../components/Combobox";
 
 const COVERAGE_OPTIONS: InsuranceCoverageType[] = [
   "auto_liability",
@@ -312,7 +313,7 @@ export function TypeCatalogAdmin() {
         <div className="mt-2 grid gap-2 md:grid-cols-5">
           <label className="text-xs font-semibold text-[#4B5563]">
             Code
-            <select
+            <SelectCombobox
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={newCode}
               onChange={(event) => setNewCode(event.target.value as InsuranceCoverageType)}
@@ -322,7 +323,7 @@ export function TypeCatalogAdmin() {
                   {code}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <label className="text-xs font-semibold text-[#4B5563] md:col-span-2">
             Name

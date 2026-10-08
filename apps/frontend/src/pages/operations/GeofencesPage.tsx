@@ -18,6 +18,7 @@ import {
   type GeofenceLocationKind,
 } from "../../api/geofencing";
 import { listLocations } from "../../api/mdata";
+import { SelectCombobox } from "../../components/Combobox";
 
 const LOCATION_KIND_OPTIONS: Array<{ id: GeofenceLocationKind; label: string }> = [
   { id: "customer_site", label: "Customer site" },
@@ -209,7 +210,7 @@ export function GeofencesPage() {
           </label>
           <label className="text-xs text-[#4B5563]">
             Location kind
-            <select
+            <SelectCombobox
               className="mt-1 block h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
               value={locationKind}
               onChange={(event) => setLocationKind(event.target.value as GeofenceLocationKind)}
@@ -219,7 +220,7 @@ export function GeofencesPage() {
                   {option.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <label className="text-xs text-[#4B5563] md:col-span-2">
             Link to existing location (optional)

@@ -14,6 +14,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
 import { filingQuarterLabel, recentQuarterOptions, toQuarterLabel } from "../ifta/quarter";
+import { SelectCombobox } from "../../../components/Combobox";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
@@ -111,7 +112,7 @@ export function IftaPreparer() {
         <div className="flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-xs font-semibold text-[#1F2A44]">
             Filing quarter
-            <select
+            <SelectCombobox
               aria-label="Filing quarter"
               value={quarter}
               onChange={(event) => setQuarter(event.target.value)}
@@ -126,7 +127,7 @@ export function IftaPreparer() {
                   </option>
                 );
               })}
-            </select>
+            </SelectCombobox>
           </label>
           <button
             type="button"

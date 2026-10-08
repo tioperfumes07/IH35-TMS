@@ -8,6 +8,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { SelectCombobox } from "../../../components/Combobox";
 
 type EdiMessage = {
   uuid: string;
@@ -95,7 +96,7 @@ export function EdiTransactionLog() {
       <div className="space-y-4 p-4">
         <div className="flex flex-wrap items-center gap-3">
           <label className="text-xs font-medium">Status</label>
-          <select
+          <SelectCombobox
             className="rounded-sm border px-3 py-2 text-xs"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -106,7 +107,7 @@ export function EdiTransactionLog() {
             <option value="processed">Processed</option>
             <option value="sent">Sent</option>
             <option value="failed">Failed</option>
-          </select>
+          </SelectCombobox>
         </div>
 
         {messagesQuery.isError ? (

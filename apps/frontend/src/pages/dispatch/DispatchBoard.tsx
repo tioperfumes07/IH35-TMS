@@ -108,6 +108,7 @@ import { QuickAssignModal } from "./components/QuickAssignModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { SelectCombobox } from "../../components/Combobox";
 
 export type DispatchBoardProps = Omit<DispatchListProps, "showEtaColumn"> & {
   operatingCompanyId?: string;
@@ -2163,7 +2164,7 @@ export function DispatchBoard({
         payloadFields={
           <label className="block text-xs text-gray-700">
             Transition
-            <select
+            <SelectCombobox
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={pendingTransition}
               onChange={(event) => setPendingTransition(event.target.value)}
@@ -2173,7 +2174,7 @@ export function DispatchBoard({
                   {option.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
         }
         onCancel={() => setStatusModalOpen(false)}

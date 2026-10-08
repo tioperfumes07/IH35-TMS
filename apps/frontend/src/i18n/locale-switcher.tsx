@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { getUserPreferences, patchUserPreferences } from "../api/safety";
 import i18n from "./index";
 import { useTranslation } from "../hooks/useTranslation";
+import { SelectCombobox } from "../components/Combobox";
 
 const SUPPORTED_LOCALES = ["en", "es"] as const;
 
@@ -44,7 +45,7 @@ export function LocaleSwitcher() {
       title="Office Spanish is a machine-translated preview pending review; driver-app Spanish is separately reviewed."
     >
       <span className="sr-only">{t("common.language", "Language")}</span>
-      <select
+      <SelectCombobox
         aria-label={t("common.language", "Language")}
         className="bg-transparent text-xs outline-hidden"
         value={currentLanguage}
@@ -62,7 +63,7 @@ export function LocaleSwitcher() {
         <option value="es" style={{ color: "#0f172a" }}>
           {t("common.spanish", "Spanish")} (preview)
         </option>
-      </select>
+      </SelectCombobox>
     </label>
   );
 }

@@ -63,6 +63,7 @@ import { NeedsCategorizingQueue, type NeedsCategorizingRow } from "./components/
 import { BankingReconHomeCard } from "./components/BankingReconHomeCard";
 import { FactoringSummaryCard } from "./components/FactoringSummaryCard";
 import { FactoringReservesSharedPanel } from "../../components/factoring/FactoringReservesSharedPanel";
+import { SelectCombobox } from "../../components/Combobox";
 
 
 type BankingTabId = BankingModuleTabId;
@@ -1239,7 +1240,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             </p>
             <label className="mb-2 block text-xs font-semibold text-gray-600">
               Bank account
-              <select
+              <SelectCombobox
                 className="mt-1 w-full max-w-md rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
                 value={selectedId ?? ""}
                 onChange={(e) => setSelectedAccountId(e.target.value || null)}
@@ -1250,7 +1251,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                     {row.displayName}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
             {selectedId ? (
               <StatementUpload

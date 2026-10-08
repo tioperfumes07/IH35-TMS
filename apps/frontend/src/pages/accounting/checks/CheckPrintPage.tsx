@@ -27,6 +27,7 @@ import { openPrintableDocument } from "../../../lib/openPrintableDocument";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { formatUsdCents } from "../../../lib/money";
+import { SelectCombobox } from "../../../components/Combobox";
 
 function formatMoneyCents(cents: number): string {
   return formatUsdCents(cents);
@@ -316,7 +317,7 @@ export function CheckPrintPage() {
             ) : null}
             <label className="text-xs font-semibold text-gray-700">
               Bank account
-              <select
+              <SelectCombobox
                 className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
                 value={bankAccountId}
                 onChange={(e) => {
@@ -336,7 +337,7 @@ export function CheckPrintPage() {
                     {a.account_class && a.account_class !== "depository" ? " — not a checking account" : ""}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
               {bankAccountId ? (
                 <EntityLink
                   kind="bank_account"
@@ -370,14 +371,14 @@ export function CheckPrintPage() {
 
             <label className="text-xs font-semibold text-gray-700">
               Check style
-              <select
+              <SelectCombobox
                 className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
                 value={checkType}
                 onChange={(e) => setCheckType(e.target.value as "voucher" | "standard")}
               >
                 <option value="voucher">Voucher</option>
                 <option value="standard">Standard</option>
-              </select>
+              </SelectCombobox>
               <div className="mt-2">
                 <Button
                   variant="tertiary"

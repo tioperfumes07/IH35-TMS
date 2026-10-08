@@ -14,6 +14,7 @@ import { DatePicker } from "../forms/DatePicker";
 import { useToast } from "../Toast";
 import { companyToday } from "../../lib/businessDate";
 import { addSettlementPayLine, listSettlements, type SettlementPayLineKind } from "../../api/driverFinance";
+import { SelectCombobox } from "../Combobox";
 
 const KINDS: Array<{ value: SettlementPayLineKind; label: string }> = [
   { value: "detention", label: "Detention" },
@@ -78,22 +79,22 @@ export function AddPayLineModal(props: { open: boolean; onClose: () => void; ope
         {openSettlements.length > 0 ? (
           <label className="block">
             <span className="mb-1 block font-semibold text-gray-700">Settlement</span>
-            <select className={fieldClass} value={chosen} onChange={(e) => setSettlementId(e.target.value)} aria-label="Settlement">
+            <SelectCombobox className={fieldClass} value={chosen} onChange={(e) => setSettlementId(e.target.value)} aria-label="Settlement">
               {openSettlements.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.display_id ?? "Open settlement"} · {s.period_start} – {s.period_end}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
         ) : null}
         <label className="block">
           <span className="mb-1 block font-semibold text-gray-700">Pay type</span>
-          <select className={fieldClass} value={kind} onChange={(e) => setKind(e.target.value as SettlementPayLineKind)} aria-label="Pay type">
+          <SelectCombobox className={fieldClass} value={kind} onChange={(e) => setKind(e.target.value as SettlementPayLineKind)} aria-label="Pay type">
             {KINDS.map((k) => (
               <option key={k.value} value={k.value}>{k.label}</option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <label className="block">
           <span className="mb-1 block font-semibold text-gray-700">Amount</span>

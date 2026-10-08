@@ -29,6 +29,7 @@ import { Link } from "react-router-dom";
 import { isExpenseAccount, isPaymentAccount } from "../../../lib/account-picker-scope";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import {
+import { SelectCombobox } from "../../../components/Combobox";
   batchTotals, dollarsToCents, duplicateRow, fillDown, isRowEmpty, newRow, parsePastedRows, validateRow,
   type BatchExpenseField, type BatchExpenseRow,
 } from "./batchExpenseRows";
@@ -194,10 +195,10 @@ export function BatchExpensesPage() {
                   <ReferenceSelect size="sm" value={r.paymentAccount || null} onChange={(next) => set(r.key, { paymentAccount: next ?? "" })} options={paymentOptions} createKind="account" operatingCompanyId={companyId} placeholder="Select…" disabled={r.status === "saved"} loading={accountsQ.isLoading} onOptionCreated={() => void accountsQ.refetch()} />
                 </td>
                 <td className="p-1">
-                  <select value={r.paymentMethod} onChange={(e) => set(r.key, { paymentMethod: e.target.value as BatchExpenseRow["paymentMethod"] })} className={cellCls(r, "paymentMethod")} title={title(r, "paymentMethod")} disabled={r.status === "saved"}>
+                  <SelectCombobox value={r.paymentMethod} onChange={(e) => set(r.key, { paymentMethod: e.target.value as BatchExpenseRow["paymentMethod"] })} className={cellCls(r, "paymentMethod")} title={title(r, "paymentMethod")} disabled={r.status === "saved"}>
                     <option value="">Select…</option>
                     {METHODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
-                  </select>
+                  </SelectCombobox>
                 </td>
                 <td className="p-1"><input value={r.refNo} onChange={(e) => set(r.key, { refNo: e.target.value })} className={cellCls(r, "refNo")} title={title(r, "refNo")} disabled={r.status === "saved"} /></td>
                 <td className="p-1" title={title(r, "amount")}><MoneyInput valueDollars={r.amount === "" ? null : Number(String(r.amount).replace(/[$,\s]/g, ""))} onChangeDollars={(next) => set(r.key, { amount: next == null ? "" : String(next) })} className={`${cellCls(r, "amount")} text-right tabular-nums`} disabled={r.status === "saved"} ariaLabel="Amount" /></td>
@@ -205,10 +206,10 @@ export function BatchExpensesPage() {
                   <ReferenceSelect size="sm" value={r.category || null} onChange={(next) => set(r.key, { category: next ?? "", categoryText: "" })} options={categoryOptions} createKind="account" operatingCompanyId={companyId} placeholder={r.categoryText ? `? ${r.categoryText}` : "Select…"} disabled={r.status === "saved"} loading={accountsQ.isLoading} onOptionCreated={() => void accountsQ.refetch()} />
                 </td>
                 <td className="p-1">
-                  <select value={r.classId} onChange={(e) => set(r.key, { classId: e.target.value, classText: "" })} className={cellCls(r, "classId")} title={title(r, "classId") || r.classText} disabled={r.status === "saved"}>
+                  <SelectCombobox value={r.classId} onChange={(e) => set(r.key, { classId: e.target.value, classText: "" })} className={cellCls(r, "classId")} title={title(r, "classId") || r.classText} disabled={r.status === "saved"}>
                     <option value="">{r.classText ? `? ${r.classText}` : "—"}</option>
                     {classes.map((c) => <option key={c.id} value={c.id}>{c.display_name || c.code}</option>)}
-                  </select>
+                  </SelectCombobox>
                 </td>
                 <td className="p-1"><input value={r.loadNumber} onChange={(e) => set(r.key, { loadNumber: e.target.value })} className={cellCls(r, "loadNumber")} disabled={r.status === "saved"} placeholder="13xxx" /></td>
                 <td className="p-1"><input value={r.memo} onChange={(e) => set(r.key, { memo: e.target.value })} className={cellCls(r, "memo")} disabled={r.status === "saved"} /></td>

@@ -36,6 +36,7 @@ import { PAID_WITH_KIND_LABEL, paidWithAccounts, paidWithKind } from "../load-co
 import { formatMoneyCents } from "./constants";
 import { formatDateUS } from "../../lib/formatDate";
 import { LoadUnitCostSplitPanel } from "./LoadUnitCostSplitPanel";
+import { SelectCombobox } from "../Combobox";
 
 // LDT-1 (owner order 2026-09-05 23:00Z, CURSOR-LOAD-DETAIL-TABS-BUILD § LDT-1; built by Claude Lead
 // 2026-09-06 on the owner's "you build all loads and finish all related"): the Costs tab is the
@@ -375,7 +376,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
                   : <LocalCombobox testId="load-cost-field-vendor" placeholder="Type a vendor…" value={row.vendorName} options={(vendors.data?.vendors ?? []).map((v) => ({ id: v.id, label: v.name }))} onSelect={(o) => update(row.id, { vendorId: o.id, vendorName: o.label })} createHref="/dispatch/vendors" />}
               </div>
               <div className="ldt-fld"><label>Category</label>
-                {row.kind === "advance" ? <select data-testid="load-cost-field-advance-category" value={row.advanceCategory} onChange={(e) => update(row.id, { advanceCategory: e.target.value as BrokerAdvanceCategory | "" })}><option value="">Select category</option>{BROKER_ADVANCE_CATEGORIES.map((c) => <option key={c} value={c}>{ADVANCE_CATEGORY_LABEL[c]}</option>)}</select>
+                {row.kind === "advance" ? <SelectCombobox data-testid="load-cost-field-advance-category" value={row.advanceCategory} onChange={(e) => update(row.id, { advanceCategory: e.target.value as BrokerAdvanceCategory | "" })}><option value="">Select category</option>{BROKER_ADVANCE_CATEGORIES.map((c) => <option key={c} value={c}>{ADVANCE_CATEGORY_LABEL[c]}</option>)}</SelectCombobox>
                   : row.kind === "fuel_advance" ? <div data-testid="load-cost-field-fuel-category" className="ldt-inp ro">{fuelAccount ? `${acctLabel(fuelAccount.account_number, fuelAccount.account_name)} (by role)` : "No Fuel expense account found"}</div>
                   : <LocalCombobox testId="load-cost-field-category" placeholder="Expense account…" value={row.categoryName} options={categories.map((a) => ({ id: a.id, label: acctLabel(a.account_number, a.account_name) }))} onSelect={(o) => {
                       // LOAD-COSTS-EXPENSE-CATEGORY-FUEL-ROW-ROOT-CAUSE fix 1 -- a fresh account pick
@@ -387,14 +388,14 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
                     }} createHref="/accounting/chart-of-accounts" />}
               </div>
               {row.kind === "expense" && categoryCodesForAccount(row.categoryId).length > 1 ? <div className="ldt-fld"><label>Category detail</label>
-                <select data-testid="load-cost-field-category-code" value={row.categoryCode} onChange={(e) => update(row.id, { categoryCode: e.target.value })}>
+                <SelectCombobox data-testid="load-cost-field-category-code" value={row.categoryCode} onChange={(e) => update(row.id, { categoryCode: e.target.value })}>
                   <option value="">Select…</option>
                   {categoryCodesForAccount(row.categoryId).map((c) => <option key={c.id} value={c.category_code}>{c.category_code}</option>)}
-                </select>
+                </SelectCombobox>
               </div> : null}
               {row.kind === "expense" ? <div className="ldt-fld"><label>Paid with</label>
                 {/* LOAD-COSTS-EXPENSE-CATEGORY-FUEL-ROW-ROOT-CAUSE fix 3 (owner 2026-09-07): "we are
-                    missing the + create account" -- Paid With was a bare <select> with no create
+                    missing the + create account" -- Paid With was a bare <SelectCombobox> with no create
                     affordance, unlike Category two fields above which already uses LocalCombobox +
                     createHref. Same component, same target, so a missing bank/card/fuel-card account
                     can be added inline instead of blocking the whole cost entry. */}
@@ -429,7 +430,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
               {row.kind === "advance" ? <>
                 <div className="ldt-fld"><label>Instrument type</label><input data-testid="load-cost-field-instrument-type" placeholder="Comchek / EFT / wire" value={row.instrumentType} onChange={(e) => update(row.id, { instrumentType: e.target.value })} /></div>
                 <div className="ldt-fld"><label>Instrument reference</label><input data-testid="load-cost-field-instrument-reference" placeholder="check / transaction no." value={row.instrumentReference} onChange={(e) => update(row.id, { instrumentReference: e.target.value })} /></div>
-                <div className="ldt-fld"><label>{row.advanceCategory === "driver_pay" ? "Deposited into (bank) — optional" : "Deposited into (bank)"}</label><select data-testid="load-cost-field-advance-bank" value={row.paymentAccountId} onChange={(e) => update(row.id, { paymentAccountId: e.target.value })}><option value="">{row.advanceCategory === "driver_pay" ? "No bank — broker paid the driver directly" : "Select bank account"}</option>{advanceBankAccountRows.map((a) => <option key={a.id} value={a.id}>{formatBankAccountPickerLabel(a)}</option>)}</select></div>
+                <div className="ldt-fld"><label>{row.advanceCategory === "driver_pay" ? "Deposited into (bank) — optional" : "Deposited into (bank)"}</label><SelectCombobox data-testid="load-cost-field-advance-bank" value={row.paymentAccountId} onChange={(e) => update(row.id, { paymentAccountId: e.target.value })}><option value="">{row.advanceCategory === "driver_pay" ? "No bank — broker paid the driver directly" : "Select bank account"}</option>{advanceBankAccountRows.map((a) => <option key={a.id} value={a.id}>{formatBankAccountPickerLabel(a)}</option>)}</SelectCombobox></div>
               </> : null}
               <div className="ldt-fld"><label>Amount</label><div data-testid="load-cost-field-amount"><MoneyInput className="ldt-inp mono right" valueCents={cents || null} onChangeCents={(c) => update(row.id, { amount: c == null ? "" : String(c / 100) })} /></div></div>
               {isVendorKind || row.kind === "fuel_advance" ? <div className="ldt-fld"><label>Receipt</label>

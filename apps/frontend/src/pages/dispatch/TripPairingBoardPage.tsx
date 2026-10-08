@@ -14,6 +14,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { companyToday } from "../../lib/businessDate";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { SelectCombobox } from "../../components/Combobox";
 
 // §7 navy ruling (Jorge 2026-06-23): NB/TR/SB render in the navy family — no blue/purple/green pills.
 // Three distinguishable navy-family shades replace the old SB green (#16a34a) and any blue/purple.
@@ -404,7 +405,7 @@ export function TripPairingBoardPage() {
             </button>
           ))}
         </div>
-        <select
+        <SelectCombobox
           disabled
           title="Trailer-type filtering lights up once trailer_type is on the board payload (C1b backend)."
           className="h-9 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 text-xs text-[#4B5563]"
@@ -413,7 +414,7 @@ export function TripPairingBoardPage() {
           <option>Reefer</option>
           <option>Dry Van</option>
           <option>Flatbed</option>
-        </select>
+        </SelectCombobox>
         <input
           className="h-9 w-56 rounded-sm border border-[#E5E7EB] px-2 text-xs"
           placeholder="Search unit or driver…"

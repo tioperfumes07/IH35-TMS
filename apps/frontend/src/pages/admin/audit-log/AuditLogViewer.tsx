@@ -13,6 +13,7 @@ import { SuperAdminNav } from "../../../components/admin/SuperAdminNav";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { SelectCombobox } from "../../../components/Combobox";
 
 const PAGE_SIZE = 100;
 
@@ -219,7 +220,7 @@ export function AuditLogViewer() {
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Severity
-            <select
+            <SelectCombobox
               className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal"
               value={severity}
               onChange={(e) => setSeverity(e.target.value)}
@@ -228,7 +229,7 @@ export function AuditLogViewer() {
               <option value="info">Info</option>
               <option value="warning">Warning</option>
               <option value="critical">Critical</option>
-            </select>
+            </SelectCombobox>
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             From

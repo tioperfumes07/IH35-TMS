@@ -14,6 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Combobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import {
+import { SelectCombobox } from "../../components/Combobox";
   SETTLEMENT_DISPUTE_CATEGORY_OPTIONS,
   type SettlementDisputeCategoryOption,
 } from "../driver-finance/settlementDisputeCategories";
@@ -162,7 +163,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
 
           <label className="block space-y-1">
             <span className="font-medium">Dispute type</span>
-            <select
+            <SelectCombobox
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={dispute_category}
               onChange={(e) => set_dispute_category(e.target.value as SettlementDisputeCategoryOption)}
@@ -173,7 +174,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
                   {option.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
 
           <label className="block space-y-1">

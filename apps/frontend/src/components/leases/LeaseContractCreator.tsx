@@ -13,6 +13,7 @@ import { ReferenceSelect, type ReferenceOption } from "../parity/ReferenceSelect
 import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
+import { SelectCombobox } from "../Combobox";
 
 /**
  * ROUND 316 — Truck Lease / Trailer Lease / Lease-to-Own creator. Owner-only (the API refuses everyone else).
@@ -132,16 +133,16 @@ export function LeaseContractCreator({ open, onClose, onCreated, defaultType = "
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <label className="flex flex-col gap-1 font-semibold text-gray-600">
             Lease type
-            <select className="rounded-sm border border-gray-300 px-2 py-1" value={leaseType} onChange={(e) => { setLeaseType(e.target.value as LeaseType); setPicked({}); }}>
+            <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={leaseType} onChange={(e) => { setLeaseType(e.target.value as LeaseType); setPicked({}); }}>
               {(Object.keys(TYPE_LABEL) as LeaseType[]).map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
-            </select>
+            </SelectCombobox>
           </label>
           <div className="flex flex-col gap-1 font-semibold text-gray-600">
             Lessor company (owns the equipment)
-            <select className="rounded-sm border border-gray-300 px-2 py-1" value={lessorCompanyId ?? ""} onChange={(e) => { setLessorCompanyId(e.target.value || null); setPicked({}); }}>
+            <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={lessorCompanyId ?? ""} onChange={(e) => { setLessorCompanyId(e.target.value || null); setPicked({}); }}>
               <option value="">Select…</option>
               {lessorOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            </SelectCombobox>
           </div>
           <div className="flex flex-col gap-1 font-semibold text-gray-600">
             Lessor vendor (bill is owed to)
@@ -171,22 +172,22 @@ export function LeaseContractCreator({ open, onClose, onCreated, defaultType = "
               <label className="flex flex-col gap-1 font-semibold text-gray-600">Discount rate % (annual)<input className="rounded-sm border border-gray-300 px-2 py-1" inputMode="decimal" value={ratePct} onChange={(e) => setRatePct(e.target.value)} placeholder="rate in the contract, e.g. 8" /></label>
               <label className="flex flex-col gap-1 font-semibold text-gray-600">
                 Purchase option
-                <select className="rounded-sm border border-gray-300 px-2 py-1" value={optKind} onChange={(e) => setOptKind(e.target.value as "" | "none" | "fmv" | "fixed")}>
+                <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={optKind} onChange={(e) => setOptKind(e.target.value as "" | "none" | "fmv" | "fixed")}>
                   <option value="">Choose…</option>
                   <option value="fmv">Fair market value at the end (operating lease)</option>
                   <option value="fixed">Fixed price (finance lease)</option>
                   <option value="none">No purchase option (operating lease)</option>
-                </select>
+                </SelectCombobox>
               </label>
               {optKind === "fixed" ? <label className="flex flex-col gap-1 font-semibold text-gray-600">Purchase price<MoneyInput valueCents={optPrice} onChangeCents={setOptPrice} /></label> : null}
             </>
           ) : null}
           <label className="flex flex-col gap-1 font-semibold text-gray-600">
             ASC 842 class
-            <select className="rounded-sm border border-gray-300 px-2 py-1" value={election} onChange={(e) => setElection(e.target.value as "operating" | "sales_type")}>
+            <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={election} onChange={(e) => setElection(e.target.value as "operating" | "sales_type")}>
               <option value="operating">Operating</option>
               <option value="sales_type">Sales-type / finance</option>
-            </select>
+            </SelectCombobox>
           </label>
           <div className="flex flex-col gap-1 font-semibold text-gray-600">
             Lease expense account

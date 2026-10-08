@@ -34,6 +34,7 @@ import { DeactivateFactorConfirmModal } from "../../components/factoring/Deactiv
 import { entityLabel } from "../../lib/entity-label";
 import { useListState } from "../../components/list-state";
 import { companyToday } from "../../lib/businessDate";
+import { SelectCombobox } from "../../components/Combobox";
 
 function formatPct(value: number) {
   return `${(Number(value || 0) * 100).toFixed(2)}%`;
@@ -658,7 +659,7 @@ export function FactorAdmin() {
               </label>
               <label className="block" data-testid="factor-admin-assign-factor-picker">
                 <div className="mb-1">Factor</div>
-                {/* LST-F149: bare <select> had no + Add new — operators left the assign flow to create a factor. */}
+                {/* LST-F149: bare <SelectCombobox> had no + Add new — operators left the assign flow to create a factor. */}
                 <Combobox
                   options={assignFactorOptions}
                   value={assignFactorId || null}

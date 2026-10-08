@@ -11,6 +11,7 @@ import type { EntityPickerOption } from "../parity/entityPickerRegistry";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
+import { SelectCombobox } from "../Combobox";
 
 type Props = {
   open: boolean;
@@ -331,7 +332,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           <label className="space-y-1">
             <span className="text-xs font-semibold text-[#4B5563]">Type *</span>
             {/*
-              LST-PICKER-01 (guard 1864): bare <select> had zero inline create — operators had to leave
+              LST-PICKER-01 (guard 1864): bare <SelectCombobox> had zero inline create — operators had to leave
               the policy form for TypeCatalogAdmin. ReferenceSelect createKind=insurance_coverage_type
               posts insurance.type_catalog (same table the list reads). Value is CODE (not UUID).
             */}
@@ -362,7 +363,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-[#4B5563]">Status</span>
-            <select
+            <SelectCombobox
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.status}
               onChange={(event) => updateField("status", event.target.value as InsurancePolicyStatus)}
@@ -371,7 +372,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
               <option value="active">Active</option>
               <option value="expired">Expired</option>
               <option value="cancelled">Cancelled</option>
-            </select>
+            </SelectCombobox>
           </label>
 
           <label className="space-y-1">

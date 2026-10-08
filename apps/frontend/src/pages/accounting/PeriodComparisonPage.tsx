@@ -15,6 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 import { formatUsdCents } from "../../lib/money";
+import { SelectCombobox } from "../../components/Combobox";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -111,17 +112,17 @@ export function PeriodComparisonPage() {
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         <label className="text-xs text-gray-600">
           Report type
-          <select value={type} onChange={(event) => setType(event.target.value as ComparisonReportType)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
+          <SelectCombobox value={type} onChange={(event) => setType(event.target.value as ComparisonReportType)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
             <option value="pl">P&L</option>
             <option value="bs">Balance Sheet</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-xs text-gray-600">
           Basis
-          <select value={basis} onChange={(event) => setBasis(event.target.value as ComparisonReportBasis)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
+          <SelectCombobox value={basis} onChange={(event) => setBasis(event.target.value as ComparisonReportBasis)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
             <option value="accrual">Accrual</option>
             <option value="cash">Cash</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-xs text-gray-600">
           Periods (comma-separated)

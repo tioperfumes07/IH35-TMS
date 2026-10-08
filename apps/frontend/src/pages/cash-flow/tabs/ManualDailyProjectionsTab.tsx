@@ -297,10 +297,10 @@ function ProjectionPanel({
               <input placeholder="Category" className="h-7 rounded-sm border border-gray-300 px-2" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
             ) : (
               <>
-                <select className="h-7 rounded-sm border border-gray-300 px-2" value={form.ref_kind} onChange={(e) => setForm({ ...form, ref_kind: e.target.value as RowForm["ref_kind"] })}>
+                <SelectCombobox className="h-7 rounded-sm border border-gray-300 px-2" value={form.ref_kind} onChange={(e) => setForm({ ...form, ref_kind: e.target.value as RowForm["ref_kind"] })}>
                   <option value="">Link (none)</option>
                   {REF_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
-                </select>
+                </SelectCombobox>
                 <input placeholder="Link label" className="h-7 rounded-sm border border-gray-300 px-2" value={form.ref_label} onChange={(e) => setForm({ ...form, ref_label: e.target.value })} />
               </>
             )}
@@ -617,7 +617,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         <label className="font-semibold text-gray-600">Projection date</label>
         <DatePicker value={projectionDate} onChange={setProjectionDate} className="w-40" placeholder="Pick a day" />
         <label className="font-semibold text-gray-600">History</label>
-        <select
+        <SelectCombobox
           className="h-8 rounded-sm border border-gray-300 px-2"
           value={historyDates.includes(projectionDate) ? projectionDate : ""}
           onChange={(e) => { if (e.target.value) setProjectionDate(e.target.value); }}
@@ -627,7 +627,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
           {historyDates.map((d) => (
             <option key={d} value={d}>{d}</option>
           ))}
-        </select>
+        </SelectCombobox>
         <span className="text-gray-400">— one day per entry; lines save to that date.</span>
         <button
           type="button"

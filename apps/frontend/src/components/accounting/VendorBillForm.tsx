@@ -22,6 +22,7 @@ import {
   type VendorBillFormLinePayload,
 } from "./vendorBillLines";
 import { dueDateFromBillTerms } from "./vendorBillDueDate";
+import { SelectCombobox } from "../Combobox";
 
 export type { VendorBillFormLinePayload };
 export { buildVendorBillLinePayloads };
@@ -481,7 +482,7 @@ export function VendorBillForm({
         </Field>
         <Field label="Terms">
           {/* Flat native select — SelectCombobox wraps Combobox with its own border (box-in-box). */}
-          <select
+          <SelectCombobox
             className="h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-xs"
             value={terms}
             onChange={(event) => setTerms(event.target.value)}
@@ -491,7 +492,7 @@ export function VendorBillForm({
             <option value="net_15">Net 15</option>
             <option value="net_7">Net 7</option>
             <option value="due_on_receipt">Due on receipt</option>
-          </select>
+          </SelectCombobox>
         </Field>
         <Field label="Due Date *">
           <DatePicker

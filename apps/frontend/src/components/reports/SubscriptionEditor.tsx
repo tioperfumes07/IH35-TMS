@@ -130,7 +130,7 @@ export function SubscriptionEditor({
 
           <label className="block">
             <span className="font-medium text-[#1F2A44]">Cadence</span>
-            <select
+            <SelectCombobox
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={cadence}
               onChange={(e) =>
@@ -142,13 +142,13 @@ export function SubscriptionEditor({
                   {c}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
 
           {cadence === "weekly" ? (
             <label className="block">
               <span className="font-medium text-[#1F2A44]">Day of week</span>
-              <select
+              <SelectCombobox
                 className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
                 value={dayOfWeek ?? 1}
                 onChange={(e) => setDayOfWeek(Number(e.target.value))}
@@ -158,7 +158,7 @@ export function SubscriptionEditor({
                     {d.label}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
           ) : null}
 
@@ -208,7 +208,7 @@ export function SubscriptionEditor({
 
           <label className="block">
             <span className="font-medium text-[#1F2A44]">Delivery format</span>
-            <select
+            <SelectCombobox
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={deliveryFormat}
               onChange={(e) =>
@@ -222,7 +222,7 @@ export function SubscriptionEditor({
                   {f.toUpperCase()}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
         </div>
 

@@ -4,6 +4,7 @@ import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
 import { formatUsdCentsTable } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { SelectCombobox } from "../Combobox";
 
 /**
  * ROUND 297 — possible duplicates the name-equality engine cannot see (variants: "S E Mares ..." / "Semares ...",
@@ -124,10 +125,10 @@ export function VariantDuplicatesPanel(props: { board: "customers" | "vendors"; 
                     <div data-testid="variant-merge-confirm" style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 260 }}>
                       <label className="pb-sub-sm">
                         Keep{" "}
-                        <select className="pb-select" value={survivor} onChange={(e) => setSurvivor(e.target.value as "a" | "b")}>
+                        <SelectCombobox className="pb-select" value={survivor} onChange={(e) => setSurvivor(e.target.value as "a" | "b")}>
                           <option value="a">{p.a.name}</option>
                           <option value="b">{p.b.name}</option>
-                        </select>
+                        </SelectCombobox>
                       </label>
                       <div className="pb-sub-sm">
                         {d.docs} {DOC_NOUN[d.kind]} ({formatUsdCentsTable(d.total_cents)}) move to {s.name}; {d.name} is removed (reversible). Totals are re-checked to the cent.

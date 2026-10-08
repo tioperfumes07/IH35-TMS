@@ -33,6 +33,7 @@ import { EntityPicker } from "../../../components/EntityPicker";
 import { Modal } from "../../../components/Modal";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { SelectCombobox } from "../../../components/Combobox";
 
 const ITEM_TYPES = [
   { value: "Service", label: "Service" },
@@ -303,7 +304,7 @@ export function ItemEditorModal({
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">Item type</span>
-            <select
+            <SelectCombobox
               className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={form.itemType}
               onChange={(e) => set("itemType", e.target.value)}
@@ -311,7 +312,7 @@ export function ItemEditorModal({
               {ITEM_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           {/* Category — Product & Service Categories (qbo_categories), NOT CoA.
               Repeatable inline "+ Add new category" via qboCategoriesCatalogClient.create. */}

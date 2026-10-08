@@ -5,6 +5,7 @@ import { MoneyInput } from "../forms/MoneyInput";
 import { Button } from "../Button";
 import { putTrailerStatus, type TrailerStatus } from "../../api/fleet-trailers";
 import { companyToday } from "../../lib/businessDate";
+import { SelectCombobox } from "../Combobox";
 
 const STATUS_OPTIONS: Array<{ value: TrailerStatus; label: string }> = [
   { value: "InService", label: "Active (In Service)" },
@@ -114,7 +115,7 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
         <p className="text-xs text-gray-500">Current status: {currentStatus}</p>
         <label className="block">
           New status *
-          <select
+          <SelectCombobox
             className="mt-1 w-full rounded-sm border px-2 py-1"
             value={targetStatus}
             onChange={(e) => setTargetStatus(e.target.value as TrailerStatus)}
@@ -124,7 +125,7 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
                 {o.label}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <label className="block">
           Reason *
@@ -167,11 +168,11 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
             </div>
             <label className="block">
               Entity *
-              <select className="mt-1 w-full border px-2 py-1" value={transferredTo} onChange={(e) => setTransferredTo(e.target.value as "TRK" | "TRANSP" | "USMCA")}>
+              <SelectCombobox className="mt-1 w-full border px-2 py-1" value={transferredTo} onChange={(e) => setTransferredTo(e.target.value as "TRK" | "TRANSP" | "USMCA")}>
                 <option value="TRK">TRK</option>
                 <option value="TRANSP">TRANSP</option>
                 <option value="USMCA">USMCA</option>
-              </select>
+              </SelectCombobox>
             </label>
           </>
         ) : null}

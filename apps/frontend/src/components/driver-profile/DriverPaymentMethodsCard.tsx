@@ -8,6 +8,7 @@ import {
 import { useAuth } from "../../auth/useAuth";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { SelectCombobox } from "../Combobox";
 
 function canManage(role: string | undefined) {
   return role === "Owner" || role === "Administrator";
@@ -164,14 +165,14 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
         <div className="mt-3 grid gap-2 border-t border-gray-100 pt-3 text-xs">
           <label className="grid gap-1">
             <span className="font-semibold text-gray-600">Method</span>
-            <select
+            <SelectCombobox
               className="h-10 rounded-sm border border-gray-300 px-2"
               value={form.method}
               onChange={(e) => setForm((p) => ({ ...p, method: e.target.value as DriverPaymentMethod["method"] }))}
             >
               <option value="ach">ACH direct deposit</option>
               <option value="check">Check</option>
-            </select>
+            </SelectCombobox>
           </label>
           <label className="grid gap-1">
             <span className="font-semibold text-gray-600">Account holder</span>

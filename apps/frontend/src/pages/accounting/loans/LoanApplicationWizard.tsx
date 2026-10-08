@@ -36,6 +36,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { SelectCombobox } from "../../../components/Combobox";
 
 type Props = {
   open: boolean;
@@ -244,18 +245,18 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
           {step === 0 && (
             <>
               <label className="block text-xs font-medium text-slate-700">Direction</label>
-              <select
+              <SelectCombobox
                 className={FORM_SELECT_CLASS}
                 value={form.direction}
                 onChange={(e) => set("direction", e.target.value as LoanDirection)}
               >
                 <option value="in">Loan to the company (liability)</option>
                 <option value="out">Loan from the company (receivable)</option>
-              </select>
+              </SelectCombobox>
               <p className="text-xs text-slate-500">{directionHelp}</p>
 
               <label className="block text-xs font-medium text-slate-700">Purpose / target type</label>
-              <select
+              <SelectCombobox
                 className={FORM_SELECT_CLASS}
                 value={form.target_type}
                 onChange={(e) => set("target_type", e.target.value as LoanTargetType)}
@@ -265,7 +266,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                     {t}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
 
               {/* PICKER-LAW: the funded document (bill / settlement / expense) needs a typed picker
                   per target_type, not a pasted UUID. Until that picker exists the field is NOT
@@ -277,7 +278,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
           {step === 1 && (
             <>
               <label className="block text-xs font-medium text-slate-700">Relationship</label>
-              <select
+              <SelectCombobox
                 className={FORM_SELECT_CLASS}
                 value={form.relationship}
                 onChange={(e) => set("relationship", e.target.value as LoanRelationship)}
@@ -287,10 +288,10 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                     {r}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
 
               <label className="block text-xs font-medium text-slate-700">Counterparty kind</label>
-              <select
+              <SelectCombobox
                 className={FORM_SELECT_CLASS}
                 value={form.counterparty_kind}
                 onChange={(e) => set("counterparty_kind", e.target.value as LoanCounterpartyKind)}
@@ -300,7 +301,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                     {k}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
 
               {/* PICKER-LAW: never ask an operator to paste a UUID. The counterparty is chosen with
                   the real picker for its kind — driver picker for drivers, ReferenceSelect (with
@@ -361,7 +362,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
               <label className="block text-xs font-medium text-slate-700">
                 Account {form.direction === "in" ? "(liability)" : "(receivable)"}
               </label>
-              {/* ReferenceSelect, not a plain <select> (verify:referenceselect-coverage-ratchet):
+              {/* ReferenceSelect, not a plain <SelectCombobox> (verify:referenceselect-coverage-ratchet):
                   every accounting-entity dropdown carries the QBO-parity inline "+ Add new ___"
                   create (§7.3) so the operator never has to leave the wizard to add an account. */}
               <ReferenceSelect
@@ -414,7 +415,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
               />
 
               <label className="block text-xs font-medium text-slate-700">Interest method</label>
-              <select
+              <SelectCombobox
                 className={FORM_SELECT_CLASS}
                 value={form.interest_method}
                 onChange={(e) => set("interest_method", e.target.value as LoanInterestMethod)}
@@ -424,10 +425,10 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                     {m}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
 
               <label className="block text-xs font-medium text-slate-700">Payment frequency</label>
-              <select
+              <SelectCombobox
                 className={FORM_SELECT_CLASS}
                 value={form.payment_frequency}
                 onChange={(e) => set("payment_frequency", e.target.value as LoanPaymentFrequency)}
@@ -437,7 +438,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                     {f}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
 
               <label className="block text-xs font-medium text-slate-700">Number of payments</label>
               <input

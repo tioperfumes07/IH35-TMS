@@ -21,6 +21,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { useStagedListFilters } from "../../components/table";
 import { useAutoDeductionPolicies, useAutoDeductionPolicyMutations } from "../../hooks/useAutoDeductionPolicies";
 import { formatUsdCents } from "../../lib/money";
+import { SelectCombobox } from "../../components/Combobox";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -373,7 +374,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
           */}
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600" data-testid="auto-deduction-recovery-rail-field">
             Recovery rail (always ask)
-            <select
+            <SelectCombobox
               className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               value={recoveryRail}
               onChange={(e) => setRecoveryRail(e.target.value)}
@@ -384,7 +385,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
                   {RAIL_LABELS[rail] ?? rail}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
             {selectedRecoveryMeta ? (
               <span className="text-xs font-normal text-slate-600" data-testid="auto-deduction-catalog-recovery-meta">
                 Catalog default: {RAIL_LABELS[selectedRecoveryMeta.default_recovery_rail] ?? selectedRecoveryMeta.default_recovery_rail}

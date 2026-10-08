@@ -12,6 +12,7 @@ import { type EntityKind } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { Link, useSearchParams } from "react-router-dom";
 import { useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/Combobox";
 
 const PAGE_SIZE = 100;
 
@@ -303,13 +304,13 @@ export function AuditTrailPage() {
         <div className="grid grid-cols-2 gap-3 border-b border-gray-200 bg-gray-50 p-4 md:grid-cols-4" data-testid="audit-trail-filters">
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Module
-            <select
+            <SelectCombobox
               className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal"
               value={draft.module}
               onChange={(e) => staged.setDraft((d) => ({ ...d, module: e.target.value }))}
             >
               {MODULE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            </SelectCombobox>
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Action / event type

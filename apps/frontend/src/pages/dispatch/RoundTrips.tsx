@@ -16,6 +16,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { RT_KANBAN_CARD_CLASS, RT_KANBAN_COL_MIN, RT_PAIRING_ACTIVE_STATUSES, NEEDS_RETURN_STATUSES, orderedLegsForUnit, pairOutboundReturn, resolvedTripType } from "./roundTripsLegs";
 import { RoundTripsTimeline, defaultTimelineRange } from "./RoundTripsTimeline";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
+import { SelectCombobox } from "../../components/Combobox";
 
 const SORT_KEY = "ih35.roundTrips.sort";
 const VIEW_KEY = "ih35.roundTrips.view";
@@ -580,7 +581,7 @@ export function RoundTrips({
         <span>Load board orders NB, then triangulation, then SB. TR sits between NB and SB.</span>
         <label className="ml-auto inline-flex items-center gap-1">
           Sort
-          <select
+          <SelectCombobox
             className="rounded-sm border border-gray-200 bg-white px-1 py-0.5"
             data-testid="round-trips-sort"
             value={sort}
@@ -593,7 +594,7 @@ export function RoundTrips({
             <option value="truck">by truck</option>
             <option value="date">by date</option>
             <option value="load">by load</option>
-          </select>
+          </SelectCombobox>
         </label>
         {viewToggle}
         {boardView === "timeline" ? (

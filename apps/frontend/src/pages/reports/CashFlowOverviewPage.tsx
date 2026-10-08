@@ -31,6 +31,7 @@ const DIP_ATTENTION_CENTS = 25_000_00;
 
 import { formatUsdCents } from "../../lib/money";
 import { colors } from "../../design/tokens";
+import { SelectCombobox } from "../../components/Combobox";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -253,7 +254,7 @@ export function CashFlowOverviewPage() {
       >
         <label className="flex items-center gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold text-[#4B5563]">Group by</span>
-          <select
+          <SelectCombobox
             className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.groupBy}
             onChange={(e) => staged.setDraft((p) => ({ ...p, groupBy: e.target.value }))}
@@ -262,7 +263,7 @@ export function CashFlowOverviewPage() {
             <option value="day">Day</option>
             <option value="week">Week</option>
             <option value="month">Month</option>
-          </select>
+          </SelectCombobox>
         </label>
       </ReportFilterBar>
 

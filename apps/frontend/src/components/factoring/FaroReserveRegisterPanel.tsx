@@ -27,6 +27,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
+import { SelectCombobox } from "../Combobox";
 
 const KIND_LABEL: Record<FaroEntryKind, string> = {
   escrow_held: "Escrow reserve held",
@@ -80,7 +81,7 @@ function ShortPayCustomerSide({ e, companyId, isOwner, onDone }: { e: FaroReserv
   return (
     <span className="inline-flex flex-wrap items-center gap-1">
       {e.short_pay_resolution === "kept_open" ? <span className="text-slate-600">Kept open ·</span> : null}
-      <select
+      <SelectCombobox
         value={reason}
         onChange={(ev) => setReason(ev.target.value)}
         className="h-[34px] rounded-sm border border-gray-300 px-1 text-xs"
@@ -93,7 +94,7 @@ function ShortPayCustomerSide({ e, companyId, isOwner, onDone }: { e: FaroReserv
             {o.label}
           </option>
         ))}
-      </select>
+      </SelectCombobox>
       <button type="button" className={ACTION} disabled={!reason || busy} onClick={() => act({ resolution: "written_down", reason })}>
         Write down
       </button>

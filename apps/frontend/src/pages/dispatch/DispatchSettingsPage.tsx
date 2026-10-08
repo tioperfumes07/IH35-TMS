@@ -11,6 +11,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
+import { SelectCombobox } from "../../components/Combobox";
   readDispatchLocalSettings,
   writeDispatchLocalSettings,
   type DispatchLocalSettings,
@@ -165,7 +166,7 @@ export function DispatchSettingsPage() {
         <section className="rounded-sm border p-4" data-testid="dispatch-settings-default-sort">
           <h2 className="mb-3 font-semibold">Default sort</h2>
           <p className="mb-3 text-xs text-[#4B5563]">Applied when opening the loads list until you change sort in the board.</p>
-          <select
+          <SelectCombobox
             className="w-full rounded-sm border px-2 py-1 text-xs"
             value={localSettings.default_sort}
             data-testid="dispatch-default-sort-select"
@@ -176,7 +177,7 @@ export function DispatchSettingsPage() {
                 {opt.label}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </section>
 
         <section className="rounded-sm border p-4" data-testid="dispatch-settings-alert-thresholds">

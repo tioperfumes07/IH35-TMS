@@ -11,6 +11,7 @@ import { formatPlannerDayLabel } from "../dispatch/planners/plannerDayLabel";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { useStagedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { SelectCombobox } from "../../components/Combobox";
 
 type DriverQualificationFilters = {
   includeInactive: boolean;
@@ -242,7 +243,7 @@ export function DriverQualificationReportPage() {
           >
             <label className="flex items-center gap-1 text-xs text-slate-600">
               <span className="font-semibold text-slate-600">Compliance</span>
-              <select
+              <SelectCombobox
                 value={staged.draft.complianceFilter}
                 onChange={(e) => staged.setDraft((p) => ({ ...p, complianceFilter: e.target.value }))}
                 className="h-7 rounded-sm border border-slate-300 bg-white px-2 text-xs"
@@ -252,11 +253,11 @@ export function DriverQualificationReportPage() {
                 <option value="attention">Needs attention</option>
                 <option value="non_compliant">Non-compliant</option>
                 <option value="empty">No DQF items</option>
-              </select>
+              </SelectCombobox>
             </label>
             <label className="flex items-center gap-1 text-xs text-slate-600">
               <span className="font-semibold text-slate-600">Sort by</span>
-              <select
+              <SelectCombobox
                 value={staged.draft.sortBy}
                 onChange={(e) => staged.setDraft((p) => ({ ...p, sortBy: e.target.value }))}
                 className="h-7 rounded-sm border border-slate-300 bg-white px-2 text-xs"
@@ -265,7 +266,7 @@ export function DriverQualificationReportPage() {
                 <option value="name">Name</option>
                 <option value="expiry">Expiry</option>
                 <option value="status">Status</option>
-              </select>
+              </SelectCombobox>
             </label>
           </ReportFilterBar>
         </div>

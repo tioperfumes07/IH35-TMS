@@ -296,14 +296,14 @@ export function FinanceScenariosPage() {
               </label>
               <label className="block">
                 <span className="text-xs font-medium text-[#6B7280]">Period basis</span>
-                <select
+                <SelectCombobox
                   value={periodBasis}
                   onChange={(e) => setPeriodBasis(e.target.value as PeriodBasis)}
                   className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs"
                 >
                   <option value="monthly">Monthly</option>
                   <option value="quarterly">Quarterly</option>
-                </select>
+                </SelectCombobox>
               </label>
               <label className="block">
                 <span className="text-xs font-medium text-[#6B7280]">First period starts *</span>
@@ -350,7 +350,7 @@ export function FinanceScenariosPage() {
                   <div key={line.key} className="grid grid-cols-2 gap-2 border-t border-[#E5E7EB] py-3 md:grid-cols-6">
                     <label className="block">
                       <span className="text-xs font-medium text-[#6B7280]">Kind</span>
-                      <select
+                      <SelectCombobox
                         value={line.category_kind}
                         onChange={(e) =>
                           setLines((ls) =>
@@ -361,7 +361,7 @@ export function FinanceScenariosPage() {
                       >
                         <option value="revenue">Revenue</option>
                         <option value="expense">Expense</option>
-                      </select>
+                      </SelectCombobox>
                     </label>
                     <label className="block md:col-span-1">
                       <span className="text-xs font-medium text-[#6B7280]">Category *</span>

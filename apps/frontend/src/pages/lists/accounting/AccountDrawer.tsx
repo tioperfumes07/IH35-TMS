@@ -24,6 +24,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { SelectCombobox } from "../../../components/Combobox";
 
 type Mode = "create" | "edit";
 
@@ -410,7 +411,7 @@ export function AccountDrawer({
 
             {/* Account Type — QBO finer types (Bank, A/R, …) from live account-type catalog */}
             <FieldLabel label="Account Type" required>
-              <select
+              <SelectCombobox
                 value={form.account_type}
                 disabled={readOnly}
                 data-testid="account-type-qbo-finer-select"
@@ -433,12 +434,12 @@ export function AccountDrawer({
                     ))}
                   </optgroup>
                 ))}
-              </select>
+              </SelectCombobox>
               <FieldError msg={errors.account_type} />
             </FieldLabel>
 
             {/* Detail Type (cascaded) — live catalogs.detail_types, one level down from Account
-                Type. LST-PICKER-01: was a raw <select> beside a sibling create link that navigated
+                Type. LST-PICKER-01: was a raw <SelectCombobox> beside a sibling create link that navigated
                 AWAY to the Detail Type catalog page, losing the in-progress account form
                 (QB-STD-3/4 violation). Now the governed inline "+ Add new" picker, scoped to the
                 already-selected Account Type via createExtras — never asked twice. */}

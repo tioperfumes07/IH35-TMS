@@ -270,7 +270,7 @@ export function VendorsPage() {
   );
   // LV-VENDORS-BY-CATEGORY-PICKER-LAW — this filter reads the same company-scoped catalog as
   // VendorCreateModal. Deriving options only from existing vendors made new catalog values
-  // impossible to select and left the leaf with a bare <select> and no inline creator.
+  // impossible to select and left the leaf with a bare <SelectCombobox> and no inline creator.
   const vendorTypesQuery = useCatalogQuery({
     catalogName: "vendors.vendor_types",
     companyId,

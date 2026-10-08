@@ -15,6 +15,7 @@ import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { useStagedListFilters } from "../../components/table";
 
 import { formatUsdCents } from "../../lib/money";
+import { SelectCombobox } from "../../components/Combobox";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -200,7 +201,7 @@ export function CancellationsReportPage() {
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Reason</span>
-          <select
+          <SelectCombobox
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
             value={staged.draft.reason}
             onChange={(e) => staged.setDraft((p) => ({ ...p, reason: e.target.value }))}
@@ -211,7 +212,7 @@ export function CancellationsReportPage() {
             <option value="carrier_cancel">Carrier cancel</option>
             <option value="weather">Weather</option>
             <option value="other">Other</option>
-          </select>
+          </SelectCombobox>
         </label>
       </ReportFilterBar>
 
