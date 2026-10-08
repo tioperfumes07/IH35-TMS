@@ -1,3 +1,16 @@
+## 2026-10-08T04:37Z · ROUND 441.21-B R1 COMPLETE — sep27 upserted=114
+
+FINDING: BANK-F441216 R1c — Sep 27→2026-10-08 paced probe completed; USMCA fills now through today.
+
+LIVE PROOF (Neon audit.audit_events):
+- `r44121b-sep27` 2026-09-27..2026-10-08 → **raw_rows=21378** pulled=116 upserted=114 skipped=2 windows=12 relay_calls=12
+- USMCA fills **233** · min 2026-08-03 · max **2026-10-08** · pre_floor=0
+- Prior: oneday raw_rows=1780 · w34/w38 raw_rows=12460 upserted=0 (empty weeks / fixed blob)
+
+R1 CLOSED — no Relay ticket (one-day answered under 180s). Note for Mykael/Ronan (no key): each dated call still returns ~1780-row blob; client date filter + floor do the real cut.
+
+Files Modified: OUTBOX only
+
 ## 2026-10-08T04:24Z · ROUND 441.21-B R1 ONE-DAY + PACED WEEKS
 
 FINDING: BANK-F441216 / BANK-F441217 — Relay one-day window answered under 180s; paced weeks 34/38 ran; Sep 27→today kicked.
