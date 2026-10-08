@@ -88,8 +88,8 @@ export function BookLoadCustomerSection({
   }, [customersQuery.data, watchedCustomerId, watchedCustomerName]);
 
   return (
-    <section className="rounded-sm border border-slate-200 bg-slate-100 p-3">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">A. Customer · Invoice · Charges</h3>
+    <section className="rounded-sm border border-[#E5E7EB] bg-[#E5E7EB] p-3">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">A. Customer · Invoice · Charges</h3>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <div className="space-y-1 md:col-span-2">
           <input type="hidden" {...register("customer_id", { required: "Select a customer from QuickBooks search results" })} />
@@ -120,7 +120,7 @@ export function BookLoadCustomerSection({
               }}
             />
           ) : (
-            <div className="rounded-sm border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700">Company context required for customer lookup.</div>
+            <div className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-2 text-xs text-[#1F2A44]">Company context required for customer lookup.</div>
           )}
           {customersQuery.isError ? (
             <ListErrorBanner message="Could not load customers." onRetry={() => void customersQuery.refetch()} />
@@ -128,7 +128,7 @@ export function BookLoadCustomerSection({
           {/* GO-21 A2: an empty or short result must say why — never a silent short list. Distinct
               from the loading/error states above and the truncation notice below. */}
           {!customersQuery.isError && !customersQuery.isLoading && customerSearch.trim() && (customersQuery.data ?? []).length === 0 ? (
-            <p className="text-[11px] text-slate-600" data-testid="book-load-customer-no-matches">
+            <p className="text-[11px] text-[#4B5563]" data-testid="book-load-customer-no-matches">
               No customers match “{customerSearch.trim()}”. Check the spelling, or{" "}
               <span className="font-semibold">+ Add new</span> if this is a new customer.
             </p>
@@ -142,13 +142,13 @@ export function BookLoadCustomerSection({
             shown={customersQuery.data?.length ?? 0}
             limit={AUTOCOMPLETE_LIMIT}
             hint="Keep typing to narrow — this search covers every customer, not just what's shown."
-            className="text-[11px] text-slate-600"
+            className="text-[11px] text-[#4B5563]"
           />
           {customerIdError ? <p className="text-[11px] text-red-600">{customerIdError}</p> : null}
           {/* Exact Leaves book_load:customer — ReferenceSelect alone left selected UUID non-navigable */}
           {watch("customer_id") ? (
             <div
-              className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600"
+              className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[#4B5563]"
               data-testid="book-load-customer-selected-entitylinks"
             >
               <span data-testid="book-load-customer-link">
@@ -248,7 +248,7 @@ export function BookLoadCustomerSection({
           <div className="mt-2">
             <label className="text-[11px] font-semibold text-gray-600">
               Driver instructions
-              <span className="ml-2 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">VISIBLE TO DRIVER</span>
+              <span className="ml-2 rounded-sm bg-[#E5E7EB] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">VISIBLE TO DRIVER</span>
             </label>
             <textarea {...register("driver_instructions_text")} rows={3} className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" />
           </div>

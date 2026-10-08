@@ -44,8 +44,8 @@ export function OcrDropZone({ operatingCompanyId, onPrefill }: Props) {
         onClick={() => inputRef.current?.click()}
         className={`cursor-pointer rounded border border-dashed px-3 py-4 text-center text-[11px] ${
           busy
-            ? "border-slate-400 bg-slate-100 text-slate-600"
-            : "border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100"
+            ? "border-[#6B7280] bg-[#E5E7EB] text-[#4B5563]"
+            : "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563] hover:bg-[#E5E7EB]"
         }`}
       >
         <input
@@ -67,17 +67,17 @@ export function OcrDropZone({ operatingCompanyId, onPrefill }: Props) {
         {phase === "done" ? <span>Rate con read — review the prefill below</span> : null}
       </div>
 
-      {error ? <p className="text-xs text-slate-700">{error}</p> : null}
+      {error ? <p className="text-xs text-[#1F2A44]">{error}</p> : null}
 
       {result ? (
         <div className="space-y-1 text-xs">
           {result.duplicate_of ? (
-            <p className="text-slate-700">This rate con was already used on a load — continue anyway, or cancel.</p>
+            <p className="text-[#1F2A44]">This rate con was already used on a load — continue anyway, or cancel.</p>
           ) : null}
           {!result.total_matches_components ? (
-            <p className="text-slate-700">The total doesn’t equal linehaul + fuel + accessorials — verify the rate before booking.</p>
+            <p className="text-[#1F2A44]">The total doesn’t equal linehaul + fuel + accessorials — verify the rate before booking.</p>
           ) : null}
-          <p className="text-slate-600">Extracted and prefilled. Review every field, especially any flagged low-confidence.</p>
+          <p className="text-[#4B5563]">Extracted and prefilled. Review every field, especially any flagged low-confidence.</p>
         </div>
       ) : null}
     </div>

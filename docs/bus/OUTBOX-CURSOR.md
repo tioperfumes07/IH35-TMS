@@ -1,3 +1,13 @@
+## 2026-10-08T15:05Z · BANK leftover slate — book-load equipment / customer / OCR drop zone
+
+FINDING: BANK-F91212 — BookLoadEquipmentSection / BookLoadCustomerSection / OcrDropZone Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25871 squash `307dd3fe18` (BANK-F91211 csa/dmg/fine)
+GUARD: scripts/verify-bookload-equip-cust-ocr-slate-leftover-chrome.mjs + verify-steps/3944 piggyback
+LIVE PROOF: verify-bookload-equip-cust-ocr-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3944 piggyback + OUTBOX
+
 ## 2026-10-08T14:40Z · BANK leftover slate — CSA score tab / damage report detail / internal fines
 
 FINDING: BANK-F91211 — CSAScoreTab / DamageReportDetail / InternalFinesPage Tailwind slate-* → house tokens
