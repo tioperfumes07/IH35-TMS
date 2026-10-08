@@ -301,8 +301,9 @@ describe("BankingTransactionsDesignView date formatting", () => {
       )
     );
 
-    expect(await screen.findByRole("button", { name: "All · 1" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "For review · 1" })).toBeInTheDocument();
+    // Owner 2026-10-08: All review tab removed — default is For review (QBO parity).
+    expect(screen.queryByRole("button", { name: /^All ·/ })).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "For review · 1" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Categorized · 0" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Excluded · 0" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Filter by description")).toBeInTheDocument();
@@ -435,8 +436,8 @@ describe("BankingTransactionsDesignView date formatting", () => {
       created_at: "2026-05-18T10:00:00.000Z",
     })).toEqual({ spent: 200000, received: 0 });
 
-    expect(await screen.findByRole("button", { name: "All · 2" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "For review · 2" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^All ·/ })).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "For review · 2" })).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("banking-amount-filter-received"));
     expect(screen.getByText("1-1 of 1")).toBeInTheDocument();
     // U26 — the tab badge counts what the filters leave, not the unfiltered set ("For review · 2" over a list of 1).
@@ -505,8 +506,8 @@ describe("BankingTransactionsDesignView date formatting", () => {
       )
     );
 
-    expect(await screen.findByRole("button", { name: "All · 620" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "For review · 620" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^All ·/ })).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "For review · 620" })).toBeInTheDocument();
     expect(screen.getByText("1-50 of 620")).toBeInTheDocument();
     expect(screen.getByText("Page 1 of 13")).toBeInTheDocument();
     expect(vi.mocked(bankingApi.getPlaidCompanyTransactions)).toHaveBeenCalledWith(
@@ -516,8 +517,8 @@ describe("BankingTransactionsDesignView date formatting", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Business Platinum Card/i }));
 
-    expect(await screen.findByRole("button", { name: "All · 1" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "For review · 1" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^All ·/ })).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "For review · 1" })).toBeInTheDocument();
     expect(screen.getByText("1-1 of 1")).toBeInTheDocument();
     expect(screen.getAllByText("Acct2 only row").length).toBeGreaterThan(0);
     await waitFor(() =>

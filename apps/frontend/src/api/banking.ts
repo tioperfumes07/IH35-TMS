@@ -937,7 +937,15 @@ export function bulkCategorizeBankTransactions(
  */
 export function categorizeTransactionsBulk(
   companyId: string,
-  body: { transaction_ids: string[]; category_kind: string; gl_account_id?: string }
+  body: {
+    transaction_ids: string[];
+    category_kind: string;
+    gl_account_id?: string;
+    /** BANK-FEED-BULK-QBO — one vendor (payee) applied to every selected for-review row. */
+    vendor_id?: string;
+    /** BANK-FEED-BULK-QBO — Products & Services item when categorizing by item instead of COA. */
+    item_id?: string;
+  }
 ) {
   return apiRequest<{ categorized_count: number; errors: Array<{ transaction_id: string; error: string }> }>(
     `/api/v1/banking/transactions/categorize-bulk`,

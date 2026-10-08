@@ -40,11 +40,44 @@ if (!/for \(const tx of scopedRows\.filter\(passesFilters\)\)/.test(src)) fails.
 if (/toISOString\(\)\.slice\(0, 10\)/.test(src)) fails.push("a date preset formats a UTC date (off by a day in the evening)");
 if (!/setSelectedTransactionTypes\(\[\]\);/.test(src)) fails.push("the KPI pre-filter can never clear back to all");
 
+// BANK-FEED-ALL-BULK-UNDO (owner 2026-10-08) — All review tab is gone; bulk categorize is
+// vendor + Category|Product/Service; Categorized action caret portals Undo (not clipped).
+const reviewTabsBlock = (src.match(/export const BANKING_REVIEW_TABS = \[[\s\S]*?\] as const/) ?? [""])[0];
+if (/\{\s*id:\s*"all"\s*,\s*label:/.test(reviewTabsBlock))
+  fails.push("BANKING_REVIEW_TABS still includes an All review tab — owner removed it (confusing)");
+if (!/id:\s*"for_review"/.test(reviewTabsBlock) || !/id:\s*"categorized"/.test(reviewTabsBlock) || !/id:\s*"excluded"/.test(reviewTabsBlock))
+  fails.push("BANKING_REVIEW_TABS must keep For review / Categorized / Excluded");
+if (!/data-testid="banking-bulk-categorize-modal"/.test(src))
+  fails.push("bulk categorize modal missing (For review multi-select → QBO categorize)");
+if (!/data-testid="banking-bulk-categorize-vendor"/.test(src))
+  fails.push("bulk categorize must require one vendor (payee) for all selected");
+if (!/data-testid=\{`banking-bulk-categorize-by-\$\{option\}`\}/.test(src) || !/\(\["category", "item"\] as const\)/.test(src))
+  fails.push("bulk categorize must offer Category OR Product/Service");
+if (!/vendor_id:\s*bulkCategorizeVendorId/.test(src))
+  fails.push("bulk categorize must send vendor_id to categorize-bulk");
+if (!/createPortal\(/.test(src) || !/data-testid=\{`banking-action-menu-undo-\$\{tx\.id\}`\}/.test(src))
+  fails.push("Categorized action ▾ must portal Undo (overflowVisible + createPortal)");
+if (!/overflowVisible:\s*true/.test(src))
+  fails.push("Action column must set overflowVisible so the caret menu is not clipped");
+
+const bulkBe = readFileSync("apps/backend/src/banking/categorization.routes.ts", "utf8");
+const bulkSchema = (bulkBe.match(/const bulkCategorizeBodySchema = z[\s\S]*?\.refine\([\s\S]*?\}\);/) ?? [""])[0];
+if (!/vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(bulkSchema))
+  fails.push("categorize-bulk schema must accept vendor_id");
+if (!/item_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(bulkSchema))
+  fails.push("categorize-bulk schema must accept item_id");
+if (!/gl_account_id_or_item_id_required/.test(bulkSchema))
+  fails.push("categorize-bulk must require gl_account_id OR item_id");
+if (!/categorization_vendor_id = COALESCE\(\$6, categorization_vendor_id\)/.test(bulkBe))
+  fails.push("categorize-bulk UPDATE must write categorization_vendor_id");
+if (!/categorization_item_id = COALESCE\(\$7, categorization_item_id\)/.test(bulkBe))
+  fails.push("categorize-bulk UPDATE must write categorization_item_id");
+
 if (fails.length) {
   console.error(`${LABEL}: FAIL\n  ${fails.join("\n  ")}`);
   process.exit(1);
 }
-console.log(`${LABEL}: PASS — description filter sticks, type filters read the line state, badges count after filters, local-day presets, pre-filter clears`);
+console.log(`${LABEL}: PASS — description filter sticks, type filters read the line state, badges count after filters, local-day presets, pre-filter clears, no All tab, bulk vendor+cat/item, Undo portal`);
 
 // --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one
 // that MUST fail (a throwaway tree missing this guard's inputs — proves it fails closed,
