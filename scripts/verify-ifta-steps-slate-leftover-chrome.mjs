@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// BANK leftover refuse — IFTA Step1MileageReview / Step2FuelReview / Step4FinalReview
+// BANK leftover refuse — IFTAStepCSVExport / IFTAStepMiles / IFTAStepGallons
 import { readFileSync } from "node:fs";
 
 const TARGETS = [
-  "apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx",
-  "apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx",
-  "apps/frontend/src/components/reports/ifta/Step4FinalReview.tsx",
+  "apps/frontend/src/pages/reports/ifta/IFTAStepCSVExport.tsx",
+  "apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx",
+  "apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx",
 ];
 const LABEL = "verify-ifta-steps-slate-leftover-chrome";
 
@@ -17,9 +17,14 @@ function leftoverHits(src) {
     src.includes("border-l-slate-") ||
     src.includes("bg-slate-") ||
     src.includes("hover:bg-slate-") ||
+    src.includes("hover:text-slate-") ||
     src.includes("divide-slate-") ||
+    src.includes("sm:divide-slate-") ||
     src.includes("ring-slate-") ||
-    src.includes("focus-visible:ring-slate-")
+    src.includes("decoration-slate-") ||
+    src.includes("focus:ring-slate-") ||
+    src.includes("focus-visible:ring-slate-") ||
+    src.includes("focus:border-slate-")
   ) {
     hits.push("leftover slate class");
   }

@@ -73,7 +73,7 @@ export function IFTAStepMiles({ operatingCompanyId, preparationId, quarter, year
         key: "source",
         label: "Source",
         sortable: true,
-        cellClass: "text-slate-600",
+        cellClass: "text-[#4B5563]",
         render: (row) => row.source,
       },
     ],
@@ -83,22 +83,22 @@ export function IFTAStepMiles({ operatingCompanyId, preparationId, quarter, year
   const total = rows.reduce((sum, row) => sum + row.miles, 0);
 
   return (
-    <section className="rounded-sm border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-900">Step 1 · State miles (Q{quarter} {year})</h3>
-        <p className="text-xs text-slate-800">Pulled from Samsara vehicle state miles with load-stop fallback.</p>
+    <section className="rounded-sm border border-[#E5E7EB] bg-white">
+      <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-[#0F1219]">Step 1 · State miles (Q{quarter} {year})</h3>
+        <p className="text-xs text-[#1F2A44]">Pulled from Samsara vehicle state miles with load-stop fallback.</p>
       </div>
       <div className="space-y-2 px-3 py-3 text-xs">
         <button
           type="button"
-          className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-1.5 font-semibold text-slate-900 disabled:opacity-50"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1.5 font-semibold text-[#0F1219] disabled:opacity-50"
           disabled={runMutation.isPending}
           onClick={() => void runMutation.mutateAsync()}
         >
           {runMutation.isPending ? "Aggregating…" : "Run Step 1 — aggregate miles"}
         </button>
         {prepQuery.data?.miles_aggregated_at ? (
-          <p className="text-slate-600">Last aggregated: {mmmDdTime(prepQuery.data.miles_aggregated_at)}</p>
+          <p className="text-[#4B5563]">Last aggregated: {mmmDdTime(prepQuery.data.miles_aggregated_at)}</p>
         ) : null}
         {prepQuery.isError ? (
           <ListErrorState
@@ -121,7 +121,7 @@ export function IFTAStepMiles({ operatingCompanyId, preparationId, quarter, year
           />
         )}
         {rows.length > 0 ? (
-          <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 font-semibold text-slate-900">
+          <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 font-semibold text-[#0F1219]">
             Total: {fmtNum(total)}
           </div>
         ) : null}
