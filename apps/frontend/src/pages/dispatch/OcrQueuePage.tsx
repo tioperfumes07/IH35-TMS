@@ -29,8 +29,8 @@ function formatMoney(cents: number): string {
 function ExtractedSummary({ item }: { item: OcrIntakeQueueItem }) {
   const f = item.extracted_fields ?? {};
   return (
-    <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-700">
-      <dt className="text-slate-500">Customer</dt>
+    <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-[#4B5563]">
+      <dt className="text-[#6B7280]">Customer</dt>
       <dd>
         {f.customer_id ? (
           <EntityLinkOrTombstone kind="customer" id={f.customer_id} name={f.customer_name_raw} noun="Customer" />
@@ -38,18 +38,18 @@ function ExtractedSummary({ item }: { item: OcrIntakeQueueItem }) {
           entityLabel(f.customer_name_raw, null, "Customer")
         )}
       </dd>
-      <dt className="text-slate-500">Lane</dt>
+      <dt className="text-[#6B7280]">Lane</dt>
       <dd>
         {[f.origin_city, f.origin_state].filter(Boolean).join(", ") || "—"} →{" "}
         {[f.destination_city, f.destination_state].filter(Boolean).join(", ") || "—"}
       </dd>
-      <dt className="text-slate-500">Pickup</dt>
+      <dt className="text-[#6B7280]">Pickup</dt>
       <dd>{formatDateUS(f.pickup_date) || "—"}</dd>
-      <dt className="text-slate-500">Delivery</dt>
+      <dt className="text-[#6B7280]">Delivery</dt>
       <dd>{formatDateUS(f.delivery_date) || "—"}</dd>
-      <dt className="text-slate-500">Rate</dt>
+      <dt className="text-[#6B7280]">Rate</dt>
       <dd>{f.rate_cents ? formatMoney(Number(f.rate_cents)) : "—"}</dd>
-      <dt className="text-slate-500">Confidence</dt>
+      <dt className="text-[#6B7280]">Confidence</dt>
       <dd>{item.confidence_score != null ? `${Math.round(Number(item.confidence_score) * 100)}%` : "—"}</dd>
     </dl>
   );
@@ -96,7 +96,7 @@ function RowActions({
       {item.status === "ready_review" ? (
         <button
           type="button"
-          className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs text-[#4B5563]"
           disabled={convertM.isPending || reprocessM.isPending}
           onClick={() => convertM.mutate({ itemId: item.id, companyId })}
           data-testid={`ocr-convert-${item.id}`}
@@ -107,7 +107,7 @@ function RowActions({
       {canReprocessOcrItem(item) ? (
         <button
           type="button"
-          className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#4B5563]"
           disabled={convertM.isPending || reprocessM.isPending}
           onClick={() => reprocessM.mutate({ itemId: item.id, companyId })}
           data-testid={`ocr-reprocess-${item.id}`}
@@ -144,7 +144,7 @@ export function OcrQueuePage() {
   });
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
   }
 
   const items = queueQ.data?.items ?? [];
@@ -168,7 +168,7 @@ export function OcrQueuePage() {
       render: (item) => (
         <>
           <div className="font-medium">{item.email_subject || item.attachment_filename || "Rate con PDF"}</div>
-          <div className="text-xs text-slate-500">{item.email_from ?? item.source}</div>
+          <div className="text-xs text-[#6B7280]">{item.email_from ?? item.source}</div>
         </>
       ),
     },
@@ -190,7 +190,7 @@ export function OcrQueuePage() {
         <>
           {item.status === "ready_review" ? <ExtractedSummary item={item} /> : null}
           {item.status === "pending_ocr" || item.status === "processing" ? (
-            <span className="text-xs text-slate-700">OCR processing…</span>
+            <span className="text-xs text-[#4B5563]">OCR processing…</span>
           ) : null}
         </>
       ),
@@ -224,7 +224,7 @@ export function OcrQueuePage() {
         }
       />
 
-      <p className="text-xs text-slate-600">
+      <p className="text-xs text-[#4B5563]">
         Forward rate confirmations to your company intake address. Items appear here after OCR; use{" "}
         <strong>Convert to load</strong> to open Book Load with extracted fields, or{" "}
         <strong>Reprocess OCR</strong> when extraction failed. ARCHIVE-not-DELETE: Book Load dropzone remains for ad-hoc

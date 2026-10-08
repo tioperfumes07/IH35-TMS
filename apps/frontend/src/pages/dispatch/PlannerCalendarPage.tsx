@@ -29,8 +29,8 @@ function plannerWeekStart(input?: string): string {
 
 function hosClass(status: PlannerDriverRow["hos_status"]): string {
   if (status === "violation") return "bg-red-100 text-red-700";
-  if (status === "warning_15min" || status === "warning_1hr") return "bg-slate-100 text-slate-700";
-  return "bg-slate-100 text-slate-700";
+  if (status === "warning_15min" || status === "warning_1hr") return "bg-[#F7F8FA] text-[#4B5563]";
+  return "bg-[#F7F8FA] text-[#4B5563]";
 }
 
 function PlannerLoadChip({ load, disabled }: { load: PlannerLoadEvent; disabled: boolean }) {
@@ -43,11 +43,11 @@ function PlannerLoadChip({ load, disabled }: { load: PlannerLoadEvent; disabled:
       {...listeners}
       {...attributes}
       data-testid={`planner-load-${load.load_number}`}
-      className={`mb-1 block w-full rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-xs text-slate-700 ${isDragging ? "opacity-60" : ""}`}
+      className={`mb-1 block w-full rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-left text-xs text-[#4B5563] ${isDragging ? "opacity-60" : ""}`}
       title={`${entityLabel(load.load_number, load.id, "Load")} · ${entityLabel(load.customer_name, load.customer_id, "Customer")} · ${load.pickup_city ?? ""}${load.pickup_state ? `, ${load.pickup_state}` : ""} — click to open detail`}
     >
       <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} className="font-semibold" data-testid="planner-calendar-load-link" />
-      <span className="block truncate text-xs text-slate-700">
+      <span className="block truncate text-xs text-[#4B5563]">
         <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" data-testid="planner-calendar-customer-link" />
       </span>
     </div>
@@ -83,12 +83,12 @@ function PlannerDayCell({
     <td
       ref={setNodeRef}
       data-testid={`planner-cell-${driverId}-${day}`}
-      className={`min-w-[120px] border-b border-r align-top p-1 ${isOver ? "bg-slate-100" : "bg-[var(--surface-unselected)]"}`}
+      className={`min-w-[120px] border-b border-r align-top p-1 ${isOver ? "bg-[#F7F8FA]" : "bg-[var(--surface-unselected)]"}`}
     >
       {showHosOverlay && dayBlackouts.length > 0 ? (
         <div
           data-testid={`planner-hos-overlay-${driverId}-${day}`}
-          className="mb-1 rounded-sm bg-slate-200/80 px-1 py-0.5 text-xs text-slate-600"
+          className="mb-1 rounded-sm bg-[#E5E7EB]/80 px-1 py-0.5 text-xs text-[#4B5563]"
           title={dayBlackouts.map((slot) => `${slot.reason} ${slot.start_at}`).join(" · ")}
         >
           HOS rest
@@ -192,7 +192,7 @@ export function PlannerCalendarPage() {
     return (
       <div
         data-testid="dispatch-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-slate-600"
+        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
       >
         Select an operating company to load the planner calendar.
       </div>
@@ -257,13 +257,13 @@ export function PlannerCalendarPage() {
 
       <section className="overflow-x-auto rounded-sm border bg-white">
         {weekQ.isLoading ? (
-          <div className="p-6 text-center text-xs text-slate-500">Loading planner week…</div>
+          <div className="p-6 text-center text-xs text-[#6B7280]">Loading planner week…</div>
         ) : weekQ.isError ? null : (
           <DndContext onDragEnd={handleDragEnd}>
             <table className="min-w-full text-xs">
-              <thead className="border-b bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="border-b bg-[#F7F8FA] text-left text-xs uppercase tracking-wide text-[#6B7280]">
                 <tr>
-                  <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2">Driver / Unit</th>
+                  <th className="sticky left-0 z-10 bg-[#F7F8FA] px-3 py-2">Driver / Unit</th>
                   {days.map((day) => (
                     <th key={day} className="px-3 py-2">
                       {new Date(`${day}T12:00:00.000Z`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
@@ -277,7 +277,7 @@ export function PlannerCalendarPage() {
                     <td
                       colSpan={8}
                       data-testid="dispatch-planner-honest-empty"
-                      className="px-3 py-6 text-center text-slate-500"
+                      className="px-3 py-6 text-center text-[#6B7280]"
                     >
                       No active drivers for this company this week. Assign drivers under Drivers / Lists, then
                       return here — load chips appear once loads have a start_at on a driver row.
@@ -288,7 +288,7 @@ export function PlannerCalendarPage() {
                     <tr key={driver.id}>
                       <td className="sticky left-0 z-10 border-b bg-white px-3 py-2">
                         <div className="font-medium"><EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} /></div>
-                        <div className="text-xs text-slate-500"><EntityLinkOrTombstone kind="unit" id={driver.unit_id ?? null} name={driver.unit_number} noun="Unit" /></div>
+                        <div className="text-xs text-[#6B7280]"><EntityLinkOrTombstone kind="unit" id={driver.unit_id ?? null} name={driver.unit_number} noun="Unit" /></div>
                         <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${hosClass(driver.hos_status)}`}>
                           {driver.hos_status === "violation" ? "HOS VIOL" : driver.hos_status === "ok" ? "HOS OK" : "HOS WARN"}
                         </span>
