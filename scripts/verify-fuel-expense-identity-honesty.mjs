@@ -38,7 +38,9 @@ export function audit(doc, surfaces) {
     failures.push("UploadLovesPricesModal must not invent load_id");
   }
   for (const [file, source] of Object.entries(surfaces)) {
-    if (/kind=["']expense["']|\bexpense_id\b|accounting\.expenses/.test(source)) {
+    // Fuel rows may READ their linked expense (432-CUR "Has expense" filter) but a fuel surface
+    // must never WRITE accounting.expenses or render an EntityLink kind="expense" identity.
+    if (/kind=["']expense["']|\bexpense_id\s*:|accounting\.expenses/.test(source)) {
       failures.push(`${file}: gained accounting expense identity; re-scope and guard it`);
     }
   }

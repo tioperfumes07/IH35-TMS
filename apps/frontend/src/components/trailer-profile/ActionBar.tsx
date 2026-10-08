@@ -37,7 +37,7 @@ export function ActionBar({
       </button>
       <Link
         className={linkClass}
-        to={`/maintenance?create_wo=1&equipment_id=${encodeURIComponent(equipmentId)}`}
+        to={`/maintenance/work-orders/new?equipment_id=${equipmentId}`}
         data-testid="tp-create-work-order"
       >
         + Create WO

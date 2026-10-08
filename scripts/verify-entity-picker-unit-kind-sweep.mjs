@@ -27,6 +27,9 @@ const ALLOWLIST = new Set([
   "apps/frontend/src/components/banking/TrailerAutocomplete.tsx",
   // Dispatch planner roster aggregation — display only, no unit field picker.
   "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
+  // Lease asset picker is a MULTI-select checkbox grid (unit+trailer, each with a monthly amount);
+  // EntityPicker is single-select only — same exception class as the insurance multi-selects.
+  "apps/frontend/src/components/leases/LeaseContractCreator.tsx",
 ]);
 
 function stripComments(src) {

@@ -13,7 +13,7 @@ const REQUIRED_FIELDS = [
 
 export function verify(source = fs.readFileSync(path.join(ROOT, DRIVER_DETAIL), "utf8")) {
   const errors = [];
-  if (!source.includes('data-testid="driver-profile-layout"') || !source.includes("max-w-[1440px]")) {
+  if (!source.includes('data-testid="driver-profile-layout"') || !/max-w-\[(1440px|90rem)\]/.test(source)) {
     errors.push("driver profile must use a bounded responsive layout");
   }
   if (!source.includes('data-testid={`driver-profile-${section.id}-section`}')) {
