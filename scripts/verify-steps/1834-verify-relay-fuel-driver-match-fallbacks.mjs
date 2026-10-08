@@ -5,5 +5,8 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-relay-fuel-driver-match-fallbacks.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-relay-fuel-driver-match-fallbacks.mjs"]);
+    // RELAY-F441 orphan-guard wiring (Devin-A batch-23)
+    await ctx.run("node", ["scripts/verify-relay-fuel-items-parsed.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-relay-fuel-items-parsed.mjs"]);
   },
 };

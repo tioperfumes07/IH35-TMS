@@ -7,5 +7,8 @@ export default {
   name: "verify-relay-deposits-sync-is-scheduled",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-relay-deposits-sync-is-scheduled.mjs"]);
+    // RELAY-F440 orphan-guard wiring (Devin-A batch-23)
+    await ctx.run("node", ["scripts/verify-relay-tick-completes.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-relay-tick-completes.mjs"]);
   },
 };
