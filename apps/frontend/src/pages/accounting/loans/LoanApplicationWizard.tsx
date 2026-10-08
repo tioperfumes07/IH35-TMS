@@ -210,8 +210,8 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-6">
-      <div className={`${PARITY_MODAL_WIDTH} rounded-sm border border-slate-200 bg-white shadow-lg`}>
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+      <div className={`${PARITY_MODAL_WIDTH} rounded-sm border border-[#E5E7EB] bg-white shadow-lg`}>
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] px-4 py-3">
           {/* GLOBAL-TYPE-SIZE-BASELINE.md (locked): column/section headers are 11px/700/UPPERCASE/
               #4B5563 -- same locked-header treatment already applied to ParityDrawer.tsx's title,
               transcribed here, not invented. */}
@@ -221,19 +221,19 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
           >
             Loan / Advance application
           </h2>
-          <button type="button" onClick={onClose} className="text-xs text-slate-500 hover:text-slate-900">
+          <button type="button" onClick={onClose} className="text-xs text-[#6B7280] hover:text-[#0F1219]">
             Close
           </button>
         </div>
 
-        <div className="flex gap-1 border-b border-slate-200 px-4 py-2">
+        <div className="flex gap-1 border-b border-[#E5E7EB] px-4 py-2">
           {STEPS.map((label, i) => (
             <button
               key={label}
               type="button"
               onClick={() => setStep(i)}
               className={`rounded-sm px-2 py-1 text-xs ${
-                i === step ? "bg-[#1F2A44] font-semibold text-white" : "text-slate-600 hover:bg-slate-100"
+                i === step ? "bg-[#1F2A44] font-semibold text-white" : "text-[#4B5563] hover:bg-[#F7F8FA]"
               }`}
             >
               {i + 1}. {label}
@@ -244,7 +244,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
         <div className="space-y-3 px-4 py-4">
           {step === 0 && (
             <>
-              <label className="block text-xs font-medium text-slate-700">Direction</label>
+              <label className="block text-xs font-medium text-[#1F2A44]">Direction</label>
               <SelectCombobox
                 className={FORM_SELECT_CLASS}
                 value={form.direction}
@@ -253,9 +253,9 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 <option value="in">Loan to the company (liability)</option>
                 <option value="out">Loan from the company (receivable)</option>
               </SelectCombobox>
-              <p className="text-xs text-slate-500">{directionHelp}</p>
+              <p className="text-xs text-[#6B7280]">{directionHelp}</p>
 
-              <label className="block text-xs font-medium text-slate-700">Purpose / target type</label>
+              <label className="block text-xs font-medium text-[#1F2A44]">Purpose / target type</label>
               <SelectCombobox
                 className={FORM_SELECT_CLASS}
                 value={form.target_type}
@@ -277,7 +277,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
 
           {step === 1 && (
             <>
-              <label className="block text-xs font-medium text-slate-700">Relationship</label>
+              <label className="block text-xs font-medium text-[#1F2A44]">Relationship</label>
               <SelectCombobox
                 className={FORM_SELECT_CLASS}
                 value={form.relationship}
@@ -290,7 +290,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 ))}
               </SelectCombobox>
 
-              <label className="block text-xs font-medium text-slate-700">Counterparty kind</label>
+              <label className="block text-xs font-medium text-[#1F2A44]">Counterparty kind</label>
               <SelectCombobox
                 className={FORM_SELECT_CLASS}
                 value={form.counterparty_kind}
@@ -309,7 +309,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                   identified by name only; the id stays empty rather than typed by hand. */}
               {form.counterparty_kind === "driver" && (
                 <>
-                  <label className="block text-xs font-medium text-slate-700">Driver</label>
+                  <label className="block text-xs font-medium text-[#1F2A44]">Driver</label>
                   <DriverPickerWithCreate
                     operatingCompanyId={operatingCompanyId}
                     value={form.counterparty_id || null}
@@ -320,7 +320,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
               )}
               {form.counterparty_kind === "vendor" && (
                 <>
-                  <label className="block text-xs font-medium text-slate-700">Vendor</label>
+                  <label className="block text-xs font-medium text-[#1F2A44]">Vendor</label>
                   <ReferenceSelect
                     value={form.counterparty_id || null}
                     onChange={(v) => set("counterparty_id", v ?? "")}
@@ -332,7 +332,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 </>
               )}
 
-              <label className="block text-xs font-medium text-slate-700">Counterparty name</label>
+              <label className="block text-xs font-medium text-[#1F2A44]">Counterparty name</label>
               <input
                 className={FORM_INPUT_CLASS}
                 value={form.counterparty_name}
@@ -344,7 +344,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
 
           {step === 2 && (
             <>
-              <label className="block text-xs font-medium text-slate-700">Principal (USD)</label>
+              <label className="block text-xs font-medium text-[#1F2A44]">Principal (USD)</label>
               {/* Money fields use the shared MoneyInput (verify:money-fields-use-moneyinput) — a raw
                   <input> for a currency amount is exactly how inconsistent parsing/rounding gets in. */}
               <MoneyInput
@@ -354,12 +354,12 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 ariaLabel="Principal in USD"
               />
 
-              <label className="block text-xs font-medium text-slate-700">Loan date</label>
+              <label className="block text-xs font-medium text-[#1F2A44]">Loan date</label>
               {/* Shared DatePicker, never a native <input type="date"> (verify:no-raw-date-input):
                   the native box is locale-dependent and does not match the locked US date grammar. */}
               <DatePicker value={form.entry_date} onChange={(v) => set("entry_date", v)} />
 
-              <label className="block text-xs font-medium text-slate-700">
+              <label className="block text-xs font-medium text-[#1F2A44]">
                 Account {form.direction === "in" ? "(liability)" : "(receivable)"}
               </label>
               {/* ReferenceSelect, not a plain <SelectCombobox> (verify:referenceselect-coverage-ratchet):
@@ -387,12 +387,12 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                   className="mt-1 block text-xs font-semibold text-[#1F2A44] underline"
                 />
               ) : null}
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#6B7280]">
                 No default is applied. The account must be chosen explicitly — an unmapped loan refuses rather
                 than posting to a guessed account.
               </p>
 
-              <label className="block text-xs font-medium text-slate-700">Funded from (note)</label>
+              <label className="block text-xs font-medium text-[#1F2A44]">Funded from (note)</label>
               <textarea
                 className={FORM_TEXTAREA_CLASS}
                 rows={2}
@@ -405,7 +405,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
 
           {step === 3 && (
             <>
-              <label className="block text-xs font-medium text-slate-700">Interest rate (APR %)</label>
+              <label className="block text-xs font-medium text-[#1F2A44]">Interest rate (APR %)</label>
               <input
                 className={FORM_INPUT_CLASS}
                 value={form.interest_rate_pct}
@@ -414,7 +414,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 placeholder="0"
               />
 
-              <label className="block text-xs font-medium text-slate-700">Interest method</label>
+              <label className="block text-xs font-medium text-[#1F2A44]">Interest method</label>
               <SelectCombobox
                 className={FORM_SELECT_CLASS}
                 value={form.interest_method}
@@ -427,7 +427,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 ))}
               </SelectCombobox>
 
-              <label className="block text-xs font-medium text-slate-700">Payment frequency</label>
+              <label className="block text-xs font-medium text-[#1F2A44]">Payment frequency</label>
               <SelectCombobox
                 className={FORM_SELECT_CLASS}
                 value={form.payment_frequency}
@@ -440,7 +440,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 ))}
               </SelectCombobox>
 
-              <label className="block text-xs font-medium text-slate-700">Number of payments</label>
+              <label className="block text-xs font-medium text-[#1F2A44]">Number of payments</label>
               <input
                 className={FORM_INPUT_CLASS}
                 value={form.payment_count}
@@ -449,7 +449,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 placeholder="12"
               />
 
-              <label className="block text-xs font-medium text-slate-700">First payment date</label>
+              <label className="block text-xs font-medium text-[#1F2A44]">First payment date</label>
               <DatePicker
                 value={form.first_payment_date}
                 onChange={(v) => set("first_payment_date", v)}
@@ -459,11 +459,11 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
 
           {step === 4 && (
             <>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-[#4B5563]">
                 This is the exact request body that will be sent. Every field rendered in the wizard appears
                 here — if something you filled in is missing, do not submit.
               </p>
-              <pre className="max-h-64 overflow-auto rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800">
+              <pre className="max-h-64 overflow-auto rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
                 {payload
                   ? JSON.stringify(payload, null, 2)
                   : "Incomplete — principal, interest rate and account are required."}
@@ -476,12 +476,12 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
           )}
         </div>
 
-        <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+        <div className="flex items-center justify-between border-t border-[#E5E7EB] px-4 py-3">
           <button
             type="button"
             onClick={() => setStep((s) => Math.max(0, s - 1))}
             disabled={step === 0}
-            className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs text-slate-700 disabled:opacity-40"
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs text-[#1F2A44] disabled:opacity-40"
           >
             Back
           </button>

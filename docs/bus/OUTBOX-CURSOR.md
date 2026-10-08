@@ -1,8 +1,19 @@
+## 2026-10-08 · BANK-F91054 — Reclassify / AP Aging / Loan wizard slate → house
+
+FINDING: BANK-F91054 — ReclassifyTransactions / AccountsPayableAging / LoanApplicationWizard Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25981 squash `688dff9f25` (BANK-F91298 MatchDrawer/BankingHome/TransfersListPage)
+GUARD: scripts/verify-91054-reclass-ap-loan-slate-leftover-chrome.mjs + verify-steps/3352 piggyback
+LIVE PROOF: verify-91054-reclass-ap-loan-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: ReclassifyTransactionsPage + AccountsPayableAgingPage + LoanApplicationWizard + refuse guard + 3352 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91298 — MatchDrawer / BankingHome / TransfersListPage slate → house
 
 FINDING: BANK-F91298 — MatchDrawer / BankingHome / TransfersListPage Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
 Prior tip merge: #25980 squash `3b8ce88600` (BANK-F91299 kill All tab; bulk categorize; Categorized Undo)
+Squash merge: #25981 `688dff9f25`
 GUARD: scripts/verify-91298-match-home-xfer-slate-leftover-chrome.mjs + verify-steps/3354 piggyback
 LIVE PROOF: verify-91298-match-home-xfer-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
 REMAINING: FE redeploy; densest remaining FE slate-* cluster

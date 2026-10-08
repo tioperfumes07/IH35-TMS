@@ -267,7 +267,7 @@ export function ReclassifyTransactionsPage() {
   const cell = (k: ColKey, l: ReclassifyLine, doc: ReturnType<typeof docTarget>): ReactNode => {
     switch (k) {
       case "date": return <EntityLink kind={doc.kind} id={doc.id} label={formatDateQboList(l.entry_date)} />;
-      case "type": return <>{(l.source_transaction_type ?? "journal entry").replace(/_/g, " ")}{l.already_reclassified_batch_id ? <span className="ml-1 rounded bg-slate-200 px-1 text-xs" title={`Reclassified in batch ${l.already_reclassified_batch_id}`}>reclassified</span> : null}{l.is_reversed ? <span className="ml-1 rounded bg-slate-200 px-1 text-xs">reversed</span> : null}{l.is_reversal ? <span className="ml-1 rounded bg-slate-200 px-1 text-xs">reversal</span> : null}{l.document_purged ? <span className="ml-1 rounded bg-slate-200 px-1 text-xs" title="The document was reversed, voided and purged; its number is from the audit trail and the link opens its journal entry.">purged</span> : null}</>;
+      case "type": return <>{(l.source_transaction_type ?? "journal entry").replace(/_/g, " ")}{l.already_reclassified_batch_id ? <span className="ml-1 rounded bg-[#E5E7EB] px-1 text-xs" title={`Reclassified in batch ${l.already_reclassified_batch_id}`}>reclassified</span> : null}{l.is_reversed ? <span className="ml-1 rounded bg-[#E5E7EB] px-1 text-xs">reversed</span> : null}{l.is_reversal ? <span className="ml-1 rounded bg-[#E5E7EB] px-1 text-xs">reversal</span> : null}{l.document_purged ? <span className="ml-1 rounded bg-[#E5E7EB] px-1 text-xs" title="The document was reversed, voided and purged; its number is from the audit trail and the link opens its journal entry.">purged</span> : null}</>;
       case "num": return <EntityLink kind={doc.kind} id={doc.id} label={l.document_number ?? (doc.kind === "journal_entry" ? "Journal entry" : (l.source_transaction_type ?? "").replace(/_/g, " "))} />;
       case "name": return l.entity_uuid && (l.entity_type === "vendor" || l.entity_type === "customer" || l.entity_type === "driver" || l.entity_type === "unit") ? <EntityLink kind={l.entity_type} id={l.entity_uuid} label={l.entity_name ?? "—"} /> : l.entity_name ?? "—";
       case "item": return l.item_id ? <EntityLink kind="catalog_item" id={l.item_id} label={l.item_name ?? "Item"} /> : "—";
@@ -298,41 +298,41 @@ export function ReclassifyTransactionsPage() {
             <div className="text-xs font-bold uppercase tracking-wide text-gray-600">Accounts · period balances</div>
             <div className="mt-2 inline-flex rounded border border-gray-300 text-xs" role="tablist" aria-label="Statement" data-testid="reclassify-side">
               {([["profit_and_loss", "Profit & Loss"], ["balance_sheet", "Balance Sheet"], ["statistical", "Statistical"]] as const).map(([k, label]) => (
-                <button key={k} type="button" role="tab" aria-selected={side === k} onClick={() => setSide(k)} className={`px-2 py-1 ${side === k ? "bg-slate-100 font-semibold" : ""}`} data-testid={`reclassify-side-${k}`}>
+                <button key={k} type="button" role="tab" aria-selected={side === k} onClick={() => setSide(k)} className={`px-2 py-1 ${side === k ? "bg-[#F7F8FA] font-semibold" : ""}`} data-testid={`reclassify-side-${k}`}>
                   {label} ({sideCounts[k]})
                 </button>
               ))}
             </div>
             {/* BANK-F91048 — ORDERS §B-5 left pane PERIOD BALANCES (From/To); same state as right filters. */}
             <div className="mt-2 grid grid-cols-2 gap-1" data-b5-period-from-to="1" data-testid="reclassify-period-from-to">
-              <label className="flex flex-col gap-0.5 text-xs font-semibold text-slate-600">
+              <label className="flex flex-col gap-0.5 text-xs font-semibold text-[#4B5563]">
                 From
                 <DatePicker value={fromDate} onChange={setFromDate} className="h-8" data-testid="reclassify-period-from" />
               </label>
-              <label className="flex flex-col gap-0.5 text-xs font-semibold text-slate-600">
+              <label className="flex flex-col gap-0.5 text-xs font-semibold text-[#4B5563]">
                 To
                 <DatePicker value={toDate} onChange={setToDate} className="h-8" data-testid="reclassify-period-to" />
               </label>
             </div>
             <input value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)} placeholder="Filter accounts" className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-xs" data-testid="reclassify-account-filter" />
-            <label className="mt-1 flex items-center gap-1 text-xs text-slate-600"><input type="checkbox" checked={showAccountNumbers} onChange={(e) => setShowAccountNumbers(e.target.checked)} /> Show account numbers</label>
-            <label className="mt-1 flex items-center gap-1 text-xs text-slate-600"><input type="checkbox" checked={includeInactive} onChange={(e) => setIncludeInactive(e.target.checked)} data-testid="reclassify-include-inactive" /> Include inactive accounts</label>
+            <label className="mt-1 flex items-center gap-1 text-xs text-[#4B5563]"><input type="checkbox" checked={showAccountNumbers} onChange={(e) => setShowAccountNumbers(e.target.checked)} /> Show account numbers</label>
+            <label className="mt-1 flex items-center gap-1 text-xs text-[#4B5563]"><input type="checkbox" checked={includeInactive} onChange={(e) => setIncludeInactive(e.target.checked)} data-testid="reclassify-include-inactive" /> Include inactive accounts</label>
             <div className="mt-1 flex justify-between text-xs font-semibold uppercase text-gray-600"><span>Account</span><span>Balance {formatDateQboList(toDate)}</span></div>
           </div>
-          {accountsQ.isLoading ? <div className="p-2 text-xs text-slate-600">Loading…</div> : null}
+          {accountsQ.isLoading ? <div className="p-2 text-xs text-[#4B5563]">Loading…</div> : null}
           {accountsQ.error ? <div className="p-2"><ListErrorState {...formatQueryErrorDetail(accountsQ.error)} onRetry={() => void accountsQ.refetch()} /></div> : null}
           <ul className="text-xs">
             <li>
-              <button type="button" onClick={() => openAccount(null)} aria-current={!applied || applied.accountIds.length === 0 ? "true" : undefined} className={`flex w-full items-center justify-between px-2 py-1 text-left hover:bg-slate-50 ${!applied || applied.accountIds.length === 0 ? "bg-slate-100 font-semibold" : ""}`} style={!applied || applied.accountIds.length === 0 ? { borderLeft: `3px solid ${colors.accent}` } : undefined}>
+              <button type="button" onClick={() => openAccount(null)} aria-current={!applied || applied.accountIds.length === 0 ? "true" : undefined} className={`flex w-full items-center justify-between px-2 py-1 text-left hover:bg-[#F7F8FA] ${!applied || applied.accountIds.length === 0 ? "bg-[#F7F8FA] font-semibold" : ""}`} style={!applied || applied.accountIds.length === 0 ? { borderLeft: `3px solid ${colors.accent}` } : undefined}>
                 <span>All accounts</span>
               </button>
             </li>
             {!accountsQ.isLoading && !accountsQ.error && tree.length === 0 ? (
-              <li className="p-2 text-slate-600" data-testid="reclassify-tree-empty">No {side === "profit_and_loss" ? "Profit & Loss" : side === "balance_sheet" ? "Balance Sheet" : "statistical"} accounts{accountFilter ? " match the filter" : ""}.</li>
+              <li className="p-2 text-[#4B5563]" data-testid="reclassify-tree-empty">No {side === "profit_and_loss" ? "Profit & Loss" : side === "balance_sheet" ? "Balance Sheet" : "statistical"} accounts{accountFilter ? " match the filter" : ""}.</li>
             ) : null}
             {tree.map(({ a, depth, rollupCents, hasChildren }) => (
               <li key={a.account_id}>
-                <button type="button" onClick={() => openAccount(a.account_id)} aria-current={applied?.accountIds.includes(a.account_id) ? "true" : undefined} title={`${a.account_type ?? ""}${a.detail_type_name ? ` · ${a.detail_type_name}` : ""}${a.is_active ? "" : " · inactive"} — opening ${formatCurrencyFromCents(naturalCentsForType(a.opening_cents, a.account_type))}, period ${formatCurrencyFromCents(naturalCentsForType(a.period_activity_cents, a.account_type))}`} className={`flex w-full items-center justify-between gap-2 py-1 pr-2 text-left hover:bg-slate-50 ${applied?.accountIds.includes(a.account_id) ? "bg-slate-100 font-semibold" : ""}`} style={{ paddingLeft: `${0.5 + depth * 1}rem`, ...(applied?.accountIds.includes(a.account_id) ? { borderLeft: `3px solid ${colors.accent}` } : {}) }} data-testid={`reclassify-account-${a.account_id}`}>
+                <button type="button" onClick={() => openAccount(a.account_id)} aria-current={applied?.accountIds.includes(a.account_id) ? "true" : undefined} title={`${a.account_type ?? ""}${a.detail_type_name ? ` · ${a.detail_type_name}` : ""}${a.is_active ? "" : " · inactive"} — opening ${formatCurrencyFromCents(naturalCentsForType(a.opening_cents, a.account_type))}, period ${formatCurrencyFromCents(naturalCentsForType(a.period_activity_cents, a.account_type))}`} className={`flex w-full items-center justify-between gap-2 py-1 pr-2 text-left hover:bg-[#F7F8FA] ${applied?.accountIds.includes(a.account_id) ? "bg-[#F7F8FA] font-semibold" : ""}`} style={{ paddingLeft: `${0.5 + depth * 1}rem`, ...(applied?.accountIds.includes(a.account_id) ? { borderLeft: `3px solid ${colors.accent}` } : {}) }} data-testid={`reclassify-account-${a.account_id}`}>
                   {/* showAccountNumbers gate — formatAccountDisplayLabel hides the number unless the toggle is on */}
                   <span className="min-w-0 whitespace-normal break-words">
                     <EntityLink
@@ -341,13 +341,13 @@ export function ReclassifyTransactionsPage() {
                       label={formatAccountDisplayLabel({ account_name: a.account_name, account_number: a.account_number }, { showNumber: showAccountNumbers })}
                       onClick={(event) => event.stopPropagation()}
                     />
-                    {a.is_active ? null : <span className="ml-1 rounded bg-slate-200 px-1 text-xs">inactive</span>}
+                    {a.is_active ? null : <span className="ml-1 rounded bg-[#E5E7EB] px-1 text-xs">inactive</span>}
                   </span>
                   <span className="shrink-0 text-right tabular-nums">
                     {/* ROUND 433.2 — the balance opens the account's register through the period end (same nested-link
                         pattern as the account name above; AmountLink stops the row button's click). */}
                     <AmountLink filter={{ target: "register", accountId: a.account_id, to: toDate }}>{formatCurrencyFromCents(naturalCentsForType(a.closing_balance_cents, a.account_type))}</AmountLink>
-                    {hasChildren ? <span className="block text-xs text-slate-600" title="This account plus its sub-accounts">Total {formatCurrencyFromCents(naturalCentsForType(rollupCents, a.account_type))}</span> : null}
+                    {hasChildren ? <span className="block text-xs text-[#4B5563]" title="This account plus its sub-accounts">Total {formatCurrencyFromCents(naturalCentsForType(rollupCents, a.account_type))}</span> : null}
                   </span>
                 </button>
               </li>
@@ -358,8 +358,8 @@ export function ReclassifyTransactionsPage() {
         {/* RIGHT PANE */}
         <section className="min-w-0 flex-1">
           <div className="flex flex-wrap items-end gap-2 rounded border border-gray-200 bg-white p-2" data-testid="reclassify-filters">
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">From<DatePicker value={fromDate} onChange={setFromDate} className="h-9" /></label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">To<DatePicker value={toDate} onChange={setToDate} className="h-9" /></label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">From<DatePicker value={fromDate} onChange={setFromDate} className="h-9" /></label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">To<DatePicker value={toDate} onChange={setToDate} className="h-9" /></label>
             {/* ROUND 370 (owner) — every column that can be shown filters, multi-select, the same component as the account and status filters. */}
             <MultiSelectDropdown label="Account" options={accountOptions} selected={f.accountIds} onChange={(v) => setFilter("accountIds", v)} allLabel="All accounts" searchable data-testid="reclassify-filter-account" />
             <MultiSelectDropdown label="Type" options={facetOptions("types")} selected={f.types} onChange={(v) => setFilter("types", v)} allLabel="All types" data-testid="reclassify-filter-type" />
@@ -370,7 +370,7 @@ export function ReclassifyTransactionsPage() {
             <MultiSelectDropdown label="Driver" options={facetOptions("drivers")} selected={f.driverIds} onChange={(v) => setFilter("driverIds", v)} allLabel="All drivers" searchable data-testid="reclassify-filter-driver" />
             <MultiSelectDropdown label="Trailer" options={facetOptions("trailers")} selected={f.trailerIds} onChange={(v) => setFilter("trailerIds", v)} allLabel="All trailers" searchable data-testid="reclassify-filter-trailer" />
             <MultiSelectDropdown label="Vendor" options={facetOptions("vendors")} selected={f.vendorIds} onChange={(v) => setFilter("vendorIds", v)} allLabel="All vendors" searchable data-testid="reclassify-filter-vendor" />
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Memo / description
+            <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">Memo / description
               <input value={f.search} onChange={(e) => setFilter("search", e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-xs" placeholder="e.g. Dreamline" data-testid="reclassify-search" />
             </label>
             <MultiSelectDropdown label="Columns" options={COLUMNS.map((c) => ({ value: c.key, label: c.optional ? `${c.label} (added)` : c.label }))} selected={visibleCols} onChange={chooseColumns} allLabel="All columns" data-testid="reclassify-columns" />
@@ -380,7 +380,7 @@ export function ReclassifyTransactionsPage() {
           {chips.length ? (
             <div className="mt-2 flex flex-wrap gap-1" data-testid="reclassify-chips">
               {chips.map((c) => (
-                <span key={c.label} className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-2 py-0.5 text-xs">
+                <span key={c.label} className="inline-flex items-center gap-1 rounded-full border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-0.5 text-xs">
                   {c.label}<button type="button" onClick={c.clear} aria-label={`Remove ${c.label}`} className="font-bold">×</button>
                 </span>
               ))}
@@ -388,7 +388,7 @@ export function ReclassifyTransactionsPage() {
           ) : null}
 
           {!applied ? (
-            <div className="mt-3 rounded border border-dashed border-gray-300 p-6 text-center text-xs text-slate-600" data-testid="reclassify-empty">
+            <div className="mt-3 rounded border border-dashed border-gray-300 p-6 text-center text-xs text-[#4B5563]" data-testid="reclassify-empty">
               Click any account on the left to open every transaction behind its balance — or set filters and Find. Then select lines and reclassify the account, class or vendor at once.
             </div>
           ) : (
@@ -399,12 +399,12 @@ export function ReclassifyTransactionsPage() {
                   <Button type="button" size="sm" disabled={selected.size === 0} onClick={() => setModalOpen(true)} data-testid="reclassify-open-modal">Reclassify</Button>
                   <span className="font-semibold" data-testid="reclassify-selection-count">{selected.size} transaction line{selected.size === 1 ? "" : "s"} selected: {formatCurrencyFromCents(selectedSum)}</span>
                 </div>
-                <span className="text-slate-600">{linesQ.data ? `${linesQ.data.total_lines} line(s) · ${linesQ.data.reclassifiable_lines} reclassifiable · net ${formatCurrencyFromCents(acctNatural(linesQ.data.total_net_amount_cents))}` : ""}</span>
+                <span className="text-[#4B5563]">{linesQ.data ? `${linesQ.data.total_lines} line(s) · ${linesQ.data.reclassifiable_lines} reclassifiable · net ${formatCurrencyFromCents(acctNatural(linesQ.data.total_net_amount_cents))}` : ""}</span>
               </div>
               {/* ROUND 370.3 — the listed rows ARE the balance; if they ever disagree the screen says so instead of showing both. */}
               {linesQ.data && activeAccount && onlyAccountFilter && applied.from === fromDate && applied.to === toDate ? (
                 linesQ.data.closing_balance_cents === activeAccount.closing_balance_cents && linesQ.data.total_net_amount_cents === activeAccount.period_activity_cents ? (
-                  <div className="mt-1 rounded border border-gray-200 bg-white px-2 py-1 text-xs text-slate-600" data-testid="reclassify-balance-check" data-r370-agree="1">
+                  <div className="mt-1 rounded border border-gray-200 bg-white px-2 py-1 text-xs text-[#4B5563]" data-testid="reclassify-balance-check" data-r370-agree="1">
                     Opening {formatCurrencyFromCents(acctNatural(linesQ.data.opening_cents))} + {linesQ.data.total_lines} listed line(s) {formatCurrencyFromCents(acctNatural(linesQ.data.total_net_amount_cents))} = balance {formatCurrencyFromCents(acctNatural(linesQ.data.closing_balance_cents))} — matches the account tree.
                   </div>
                 ) : (
@@ -420,7 +420,7 @@ export function ReclassifyTransactionsPage() {
                   const agree = linesQ.data.closing_balance_cents === treeClosing;
                   return (
                     <div
-                      className={agree ? "mt-1 rounded border border-gray-200 bg-white px-2 py-1 text-xs text-slate-600" : "mt-1 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700"}
+                      className={agree ? "mt-1 rounded border border-gray-200 bg-white px-2 py-1 text-xs text-[#4B5563]" : "mt-1 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700"}
                       role={agree ? undefined : "alert"}
                       data-testid="reclassify-total-check"
                       data-total-agree={agree ? "1" : "0"}
@@ -435,7 +435,7 @@ export function ReclassifyTransactionsPage() {
               {linesQ.error ? <ListErrorState {...formatQueryErrorDetail(linesQ.error)} onRetry={() => void linesQ.refetch()} /> : null}
               <div className="mt-1 overflow-x-auto rounded border border-gray-200 bg-white">
                 <table className="w-full text-xs" data-testid="reclassify-grid" data-b5-account-no-col="1">
-                  <thead className="bg-slate-50 text-center uppercase tracking-wide text-gray-600">
+                  <thead className="bg-[#F7F8FA] text-center uppercase tracking-wide text-gray-600">
                     <tr>
                       <th className="p-2 w-6"></th>
                       {shownCols.map((c) =>
@@ -452,15 +452,15 @@ export function ReclassifyTransactionsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {linesQ.isLoading ? <tr><td colSpan={shownCols.length + 1} className="p-3 text-slate-600">Finding…</td></tr> : null}
+                    {linesQ.isLoading ? <tr><td colSpan={shownCols.length + 1} className="p-3 text-[#4B5563]">Finding…</td></tr> : null}
                     {/* LAW 368.3 — "could not read" and "nothing here" are different sentences. */}
                     {linesQ.error ? <tr><td colSpan={shownCols.length + 1} className="p-3 font-semibold text-red-700" data-testid="reclassify-could-not-read">Could not read the transactions for this selection — the list below is not empty, it failed to load.</td></tr> : null}
-                    {!linesQ.isLoading && !linesQ.error && lines.length === 0 ? <tr><td colSpan={shownCols.length + 1} className="p-3 text-slate-600" data-testid="reclassify-genuinely-empty">No transactions in this period{oneAccountId ? " for this account" : ""} (from {formatDateQboList(applied!.from)} to {formatDateQboList(applied!.to)}).</td></tr> : null}
+                    {!linesQ.isLoading && !linesQ.error && lines.length === 0 ? <tr><td colSpan={shownCols.length + 1} className="p-3 text-[#4B5563]" data-testid="reclassify-genuinely-empty">No transactions in this period{oneAccountId ? " for this account" : ""} (from {formatDateQboList(applied!.from)} to {formatDateQboList(applied!.to)}).</td></tr> : null}
                     {lines.map((l) => {
                       const why = notReclassifiable(l);
                       const doc = docTarget(l);
                       return (
-                      <tr key={l.posting_id} className={`border-t border-gray-100 ${selected.has(l.posting_id) ? "bg-slate-100" : ""} ${why ? "text-slate-600" : ""}`} data-testid={`reclassify-line-${l.posting_id}`} title={why ?? undefined}>
+                      <tr key={l.posting_id} className={`border-t border-gray-100 ${selected.has(l.posting_id) ? "bg-[#F7F8FA]" : ""} ${why ? "text-[#4B5563]" : ""}`} data-testid={`reclassify-line-${l.posting_id}`} title={why ?? undefined}>
                         <td className="p-2"><input type="checkbox" checked={selected.has(l.posting_id)} onChange={() => toggle(l)} disabled={!!why} aria-label={why ? `Not reclassifiable: ${why}` : "Select line"} /></td>
                         {shownCols.map((c) =>
                           c.key === "account_no" ? (
@@ -475,11 +475,11 @@ export function ReclassifyTransactionsPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600" data-b5-goto-page="1" data-testid="reclassify-pager">
+              <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-[#4B5563]" data-b5-goto-page="1" data-testid="reclassify-pager">
                 <span>{linesQ.data ? `${Math.min(offset + 1, linesQ.data.total_lines)}–${Math.min(offset + PAGE, linesQ.data.total_lines)} of ${linesQ.data.total_lines}` : ""}</span>
                 <span className="flex flex-wrap items-center gap-1">
                   <Button type="button" size="sm" variant="tertiary" disabled={offset === 0} onClick={() => { const next = Math.max(0, offset - PAGE); setOffset(next); setGotoPageDraft(String(Math.floor(next / PAGE) + 1)); }}>Previous</Button>
-                  <label className="inline-flex items-center gap-1 font-semibold text-slate-600">
+                  <label className="inline-flex items-center gap-1 font-semibold text-[#4B5563]">
                     Go to page
                     <input
                       type="text"
@@ -506,14 +506,14 @@ export function ReclassifyTransactionsPage() {
           )}
 
           {lastResult ? (
-            <div className="mt-3 rounded border border-slate-200 bg-slate-100 p-2 text-xs" data-testid="reclassify-result">
+            <div className="mt-3 rounded border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs" data-testid="reclassify-result">
               <div className="font-semibold">
                 Reclassify complete: {lastResult.lines_applied} line(s) reclassified ({formatCurrencyFromCents(lastResult.amount_cents_moved)} moved), {lastResult.lines_refused} refused.
               </div>
               <ul className="mt-1 space-y-0.5">
                 {lastResult.documents.map((d, i) => (
                   <li key={i}>
-                    {d.document_number ?? d.source_transaction_id ?? "line"} ({d.source_transaction_type ?? "journal entry"}): {d.refusal_reason ? <span className="text-red-700">refused — {d.refusal_reason}</span> : <>{d.lines_applied} line(s) → JE {d.reclass_journal_entry_id ? <EntityLink kind="journal_entry" id={d.reclass_journal_entry_id} label={d.document_number ? `Reclass · ${d.document_number}` : entityLabel(null, d.reclass_journal_entry_id, "Journal entry")} /> : "—"}{d.document_updated ? " · document updated" : <span className="text-slate-700 font-semibold"> · document NOT updated: {d.document_update_note}</span>}</>}
+                    {d.document_number ?? d.source_transaction_id ?? "line"} ({d.source_transaction_type ?? "journal entry"}): {d.refusal_reason ? <span className="text-red-700">refused — {d.refusal_reason}</span> : <>{d.lines_applied} line(s) → JE {d.reclass_journal_entry_id ? <EntityLink kind="journal_entry" id={d.reclass_journal_entry_id} label={d.document_number ? `Reclass · ${d.document_number}` : entityLabel(null, d.reclass_journal_entry_id, "Journal entry")} /> : "—"}{d.document_updated ? " · document updated" : <span className="text-[#1F2A44] font-semibold"> · document NOT updated: {d.document_update_note}</span>}</>}
                   </li>
                 ))}
               </ul>
@@ -523,7 +523,7 @@ export function ReclassifyTransactionsPage() {
           <div className="mt-3 rounded border border-gray-200 bg-white" data-testid="reclassify-batches">
             <div className="border-b border-gray-200 px-2 py-1 text-xs font-bold uppercase tracking-wide text-gray-600">Reclassify batches</div>
             <table className="w-full text-xs">
-              <thead className="bg-slate-50 text-left"><tr><th className="p-2">When</th><th className="p-2">By</th><th className="p-2">Change</th><th className="p-2">Reason</th><th className="p-2 text-right">Lines</th><th className="p-2 text-right">Moved</th><th className="p-2">Status</th><th className="p-2"></th></tr></thead>
+              <thead className="bg-[#F7F8FA] text-left"><tr><th className="p-2">When</th><th className="p-2">By</th><th className="p-2">Change</th><th className="p-2">Reason</th><th className="p-2 text-right">Lines</th><th className="p-2 text-right">Moved</th><th className="p-2">Status</th><th className="p-2"></th></tr></thead>
               <tbody>
                 {(batchesQ.data?.batches ?? []).map((b) => (
                   <tr key={b.id} className="border-t border-gray-100">
@@ -533,7 +533,7 @@ export function ReclassifyTransactionsPage() {
                     <td className="p-2 max-w-[18rem] truncate" title={b.reason}>{b.reason}</td>
                     <td data-quantity className="p-2 text-right tabular-nums">{b.lines_applied}/{b.lines_requested}{b.lines_refused ? ` (${b.lines_refused} refused)` : ""}</td>
                     <td className="p-2"><MoneyCell cents={b.amount_cents_moved} format={formatCurrencyFromCents} drill={{ none: "Amount this batch moved — its reclassification entries show on each reclassified line (marked reclassified)" }} /></td>
-                    <td className="p-2">{b.status}{b.undone_at ? ` ${formatDateQboList(b.undone_at)}` : ""}{b.override_refusals ? <span className="ml-1 font-semibold text-slate-700" data-testid={`reclassify-batch-override-${b.id}`}>· owner override</span> : null}</td>
+                    <td className="p-2">{b.status}{b.undone_at ? ` ${formatDateQboList(b.undone_at)}` : ""}{b.override_refusals ? <span className="ml-1 font-semibold text-[#1F2A44]" data-testid={`reclassify-batch-override-${b.id}`}>· owner override</span> : null}</td>
                     <td className="p-2">
                       {b.status === "applied" && b.lines_applied > 0 ? (
                         undoTarget === b.id ? (
@@ -549,7 +549,7 @@ export function ReclassifyTransactionsPage() {
                     </td>
                   </tr>
                 ))}
-                {batchesQ.data && batchesQ.data.batches.length === 0 ? <tr><td colSpan={8} className="p-2 text-slate-600">No batches yet.</td></tr> : null}
+                {batchesQ.data && batchesQ.data.batches.length === 0 ? <tr><td colSpan={8} className="p-2 text-[#4B5563]">No batches yet.</td></tr> : null}
               </tbody>
             </table>
             {undoMut.error ? <div className="p-2"><ListErrorState {...formatQueryErrorDetail(undoMut.error)} onRetry={() => undoMut.reset()} /></div> : null}
@@ -561,27 +561,27 @@ export function ReclassifyTransactionsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" role="dialog" aria-modal="true" data-testid="reclassify-modal" data-b5-reclassify-modal="1">
           <div className="w-[32rem] rounded border border-gray-300 bg-white p-4 shadow-lg">
             <h2 className="text-xs font-bold uppercase tracking-wide">Reclassify {selected.size} transaction line{selected.size === 1 ? "" : "s"} · {formatCurrencyFromCents(selectedSum)}</h2>
-            <p className="mt-1 text-xs text-slate-600">You can now reclassify the vendor/customer name from this page. Leave a field blank to keep it unchanged. Each document gets its own linked RECLASSIFICATION journal entry; a bill's vendor is the A/P subledger and is not changed here.</p>
-            <div className="mt-3 flex flex-col gap-1 text-xs font-semibold text-slate-600">Change account to
+            <p className="mt-1 text-xs text-[#4B5563]">You can now reclassify the vendor/customer name from this page. Leave a field blank to keep it unchanged. Each document gets its own linked RECLASSIFICATION journal entry; a bill's vendor is the A/P subledger and is not changed here.</p>
+            <div className="mt-3 flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">Change account to
               {/* ReferenceSelect createKind="account" — canonical picker, showAccountNumbers gate via coaAccountReferenceOption */}
               <ReferenceSelect value={toAccount || null} onChange={(next) => setToAccount(next ?? "")} options={accountRefOptions} createKind="account" operatingCompanyId={companyId} placeholder="Select…" loading={coaQ.isLoading} onOptionCreated={() => void coaQ.refetch()} />
             </div>
             {/* BANK-F91056 — ORDERS §B-5 Change class named for Chrome / guard (parity with location + vendor). */}
-            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600" data-b5-change-class="1">Change class to
+            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-[#4B5563]" data-b5-change-class="1">Change class to
               <SelectCombobox value={toClass} onChange={(e) => setToClass(e.target.value)} data-testid="reclassify-to-class">
                 <option value="">Select…</option>
                 {(classesQ.data?.classes ?? []).map((c) => <option key={c.id} value={c.id}>{c.class_name}</option>)}
               </SelectCombobox>
             </label>
             {/* U24 (owner): by item — the account follows the item's own expense account unless one is chosen above. */}
-            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600" data-testid="reclassify-to-item">Change item to
+            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-[#4B5563]" data-testid="reclassify-to-item">Change item to
               <ReferenceSelect value={toItem || null} onChange={(next) => setToItem(next ?? "")} options={itemTargetOptions} createKind="item" operatingCompanyId={companyId} placeholder="Select…" loading={itemsTargetQ.isLoading} onSearch={setItemSearch} />
             </label>
             {/* U24 (owner): by load — the line moves to the load; the reclass entry's legs carry the old and the new load. */}
-            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600" data-testid="reclassify-to-load">Change load to
+            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-[#4B5563]" data-testid="reclassify-to-load">Change load to
               <EntityPicker kind="load" operatingCompanyId={companyId} value={toLoad} onChange={(v) => setToLoad(v)} allowCreate={false} allowClear ariaLabel="Change load to" />
             </label>
-            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600" data-b5-change-location="1">
+            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-[#4B5563]" data-b5-change-location="1">
               Change location to
               <div data-testid="reclassify-to-location">
                 <FuelStopLocationPicker
@@ -593,7 +593,7 @@ export function ReclassifyTransactionsPage() {
                 />
               </div>
             </label>
-            <div className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600" data-b5-change-vendor-customer="1">
+            <div className="mt-2 flex flex-col gap-1 text-xs font-semibold text-[#4B5563]" data-b5-change-vendor-customer="1">
               Change vendor/customer to
               <div className="flex gap-2">
                 <SelectCombobox
@@ -616,11 +616,11 @@ export function ReclassifyTransactionsPage() {
                 </div>
               </div>
             </div>
-            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600">Reason (required, audited on every document)
+            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">Reason (required, audited on every document)
               <input value={reason} onChange={(e) => setReason(e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-xs" placeholder="e.g. Zelle to Dreamline belongs on Relay/Dreamline payables" data-testid="reclassify-reason" />
             </label>
             {isOwner ? (
-              <label className="mt-2 flex items-start gap-2 text-xs text-slate-700" data-testid="reclassify-owner-override">
+              <label className="mt-2 flex items-start gap-2 text-xs text-[#1F2A44]" data-testid="reclassify-owner-override">
                 <input type="checkbox" checked={overrideRefusals} onChange={(e) => setOverrideRefusals(e.target.checked)} className="mt-0.5" />
                 <span><span className="font-semibold">Owner override</span> — also move lines normally refused (A/R, A/P, inventory, payroll, subledger control accounts). Bank and cash lines are never moved here. Each overridden line is recorded with the refusal it bypassed and audited.</span>
               </label>
