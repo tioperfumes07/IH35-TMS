@@ -16349,5 +16349,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-06",
     "purpose": "verify-driver-merge-engine"
+  },
+  "18360": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-08",
+    "purpose": "verify-bank-deposit-receives-several-invoices"
   }
 }
