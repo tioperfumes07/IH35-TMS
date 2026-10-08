@@ -364,19 +364,19 @@ export function AccountDrawer({
           {isLocked || isArchived ? (
             <div className="mb-3 flex items-center gap-2">
               {isLocked ? (
-                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">
                   LOCKED
                 </span>
               ) : null}
               {isArchived ? (
-                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]">
                   ARCHIVED
                 </span>
               ) : null}
             </div>
           ) : null}
           {isLocked ? (
-            <div className="mb-4 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+            <div className="mb-4 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
               This account is locked. It cannot be edited or archived. To unlock, contact an administrator.
             </div>
           ) : null}
@@ -390,7 +390,7 @@ export function AccountDrawer({
                 disabled={readOnly}
                 onChange={(e) => setField("account_name", e.target.value)}
                 placeholder="e.g. Fuel & Tolls"
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-xs focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-xs focus:border-[#4B5563] focus:outline-hidden focus:ring-1 focus:ring-[#4B5563] disabled:bg-[#F7F8FA] disabled:text-[#6B7280]"
               />
               <FieldError msg={errors.account_name} />
             </FieldLabel>
@@ -404,7 +404,7 @@ export function AccountDrawer({
                 disabled={readOnly}
                 onChange={(e) => setField("account_number", e.target.value)}
                 placeholder="e.g. 6000"
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-xs focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-xs focus:border-[#4B5563] focus:outline-hidden focus:ring-1 focus:ring-[#4B5563] disabled:bg-[#F7F8FA] disabled:text-[#6B7280]"
               />
               <FieldError msg={errors.account_number} />
             </FieldLabel>
@@ -422,7 +422,7 @@ export function AccountDrawer({
                   // A parent must share the new account_type group, so clear any stale selection.
                   setField("parent_account_id", "");
                 }}
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-xs focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-xs focus:border-[#4B5563] focus:outline-hidden focus:ring-1 focus:ring-[#4B5563] disabled:bg-[#F7F8FA] disabled:text-[#6B7280]"
               >
                 <option value="">Select type…</option>
                 {accountTypePickerGroups.map((group) => (
@@ -487,7 +487,7 @@ export function AccountDrawer({
                     setField("is_subaccount", checked);
                     if (!checked) setField("parent_account_id", "");
                   }}
-                  className="mt-0.5 h-4 w-4 rounded-sm border-gray-300 accent-slate-400 disabled:cursor-not-allowed"
+                  className="mt-0.5 h-4 w-4 rounded-sm border-gray-300 accent-[#4B5563] disabled:cursor-not-allowed"
                 />
                 <div>
                   <div className="text-xs font-semibold text-gray-800">Make this a subaccount</div>
@@ -535,14 +535,14 @@ export function AccountDrawer({
             {/* Live preview — sourced from catalogs.account_types (Block 2), never hardcoded. */}
             {previewEntry ? (
               <div
-                className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3"
+                className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-3"
                 data-testid="account-preview-pane"
               >
-                <div className="mb-2 text-section-header font-semibold uppercase tracking-wide text-slate-500">
+                <div className="mb-2 text-section-header font-semibold uppercase tracking-wide text-[#6B7280]">
                   Preview
                 </div>
-                <div className="space-y-1.5 text-xs text-slate-700">
-                  <div className="font-semibold text-slate-900" data-testid="preview-name">
+                <div className="space-y-1.5 text-xs text-[#1F2A44]">
+                  <div className="font-semibold text-[#0F1219]" data-testid="preview-name">
                     {mode === "edit" && account?.id ? (
                       <EntityLink kind="account" id={account.id} label={form.account_name.trim() || account.account_name || "Untitled account"} />
                     ) : (
@@ -551,7 +551,7 @@ export function AccountDrawer({
                   </div>
                   {form.parent_account_id ? (
                     <div className="flex justify-between gap-3">
-                      <span className="text-slate-500">Parent account</span>
+                      <span className="text-[#6B7280]">Parent account</span>
                       <EntityLink
                         kind="account"
                         id={form.parent_account_id}
@@ -563,7 +563,7 @@ export function AccountDrawer({
                     </div>
                   ) : null}
                   <div className="flex justify-between gap-3">
-                    <span className="text-slate-500">Classification</span>
+                    <span className="text-[#6B7280]">Classification</span>
                     <span className="text-right" data-testid="preview-classification">
                       {`${GROUP_LABELS[previewEntry.group] ?? previewEntry.group} › ${previewEntry.accountType} › ${
                         form.account_subtype || "—"
@@ -571,22 +571,22 @@ export function AccountDrawer({
                     </span>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <span className="text-slate-500">Statement</span>
+                    <span className="text-[#6B7280]">Statement</span>
                     <span data-testid="preview-statement">
                       {STATEMENT_LABELS[previewEntry.statement] ?? previewEntry.statement}
                     </span>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <span className="text-slate-500">Normal balance</span>
+                    <span className="text-[#6B7280]">Normal balance</span>
                     <span data-testid="preview-normal-balance">{previewEntry.normalBalance}</span>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <span className="text-slate-500">Opens as</span>
+                    <span className="text-[#6B7280]">Opens as</span>
                     <span data-testid="preview-opens-as">
                       {ACTION_LABELS[previewEntry.defaultAction] ?? previewEntry.defaultAction}
                     </span>
                   </div>
-                  <div className="pt-1 text-xs text-slate-500" data-testid="preview-description">
+                  <div className="pt-1 text-xs text-[#6B7280]" data-testid="preview-description">
                     {`Lands under ${GROUP_LABELS[previewEntry.group] ?? previewEntry.group} on your ${
                       STATEMENT_LABELS[previewEntry.statement] ?? previewEntry.statement
                     }${form.is_subaccount ? ", nested as a subaccount." : "."}`}
@@ -603,7 +603,7 @@ export function AccountDrawer({
                 onChange={(e) => setField("notes", e.target.value)}
                 placeholder="Optional notes about this account…"
                 rows={3}
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-2 text-xs focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-2 text-xs focus:border-[#4B5563] focus:outline-hidden focus:ring-1 focus:ring-[#4B5563] disabled:bg-[#F7F8FA] disabled:text-[#6B7280]"
               />
             </FieldLabel>
 
@@ -644,7 +644,7 @@ export function AccountDrawer({
                   checked={form.is_locked}
                   disabled={readOnly}
                   onChange={(e) => setField("is_locked", e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded-sm border-gray-300 accent-slate-400 disabled:cursor-not-allowed"
+                  className="mt-0.5 h-4 w-4 rounded-sm border-gray-300 accent-[#4B5563] disabled:cursor-not-allowed"
                 />
                 <div>
                   <div className="text-xs font-semibold text-gray-800">Lock Account</div>
