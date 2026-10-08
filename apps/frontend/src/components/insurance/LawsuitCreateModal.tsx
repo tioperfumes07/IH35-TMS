@@ -207,14 +207,14 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           </div>
         ) : null}
         {formError ? (
-          <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700" role="alert">
+          <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]" role="alert">
             {formError}
           </div>
         ) : null}
 
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Case Number *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Case Number *</span>
             <input
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.case_number}
@@ -224,7 +224,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Status</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Status</span>
             <select
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.status}
@@ -239,7 +239,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Plaintiff *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Plaintiff *</span>
             <input
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.plaintiff}
@@ -249,7 +249,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Defendant *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Defendant *</span>
             <input
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.defendant}
@@ -259,7 +259,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Court Name *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Court Name *</span>
             <input
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.court_name}
@@ -269,7 +269,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Filed Date *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Filed Date *</span>
             <DatePicker
               className="w-full"
               value={form.filed_date}
@@ -279,7 +279,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           </label>
 
           <div className="space-y-1" data-testid="lawsuit-create-claim-field">
-            <span className="text-xs font-semibold text-slate-700">Linked Claim</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Linked Claim</span>
             <EntityPicker
               kind="insurance_claim"
               operatingCompanyId={operatingCompanyId}
@@ -294,7 +294,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           </div>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Demand (USD)</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Demand (USD)</span>
             {/* M-1: dollars-mode QBO money entry; bridged so parseCurrencyToCents (×100) is byte-for-byte. */}
             <MoneyInput
               valueDollars={form.demand ? Number(form.demand) : null}
@@ -305,7 +305,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Settlement (USD)</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Settlement (USD)</span>
             <MoneyInput
               valueDollars={form.settlement ? Number(form.settlement) : null}
               onChangeDollars={(d) => updateField("settlement", d == null ? "" : String(d))}
@@ -315,7 +315,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Attorney Name</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Attorney Name</span>
             <input
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.attorney_name}
@@ -324,7 +324,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Attorney Email</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Attorney Email</span>
             <input
               type="email"
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
@@ -336,7 +336,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
         </div>
 
         <label className="space-y-1">
-          <span className="text-xs font-semibold text-slate-700">Notes</span>
+          <span className="text-xs font-semibold text-[#4B5563]">Notes</span>
           <textarea
             className="w-full rounded-sm border border-gray-300 px-2 py-1"
             rows={3}

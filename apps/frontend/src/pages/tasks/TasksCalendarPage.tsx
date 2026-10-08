@@ -9,7 +9,7 @@ import { addDaysIso, companyToday, monthBoundsIso } from "../../lib/businessDate
 import { TaskSubjectLink } from "../../components/tasks/TaskSubjectLink";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const PRIORITY_DOT = ["bg-slate-400", "bg-orange-500", "bg-red-600"];
+const PRIORITY_DOT = ["bg-[#6B7280]", "bg-orange-500", "bg-red-600"];
 
 function monthLabel(iso: string): string {
   const [y, m] = iso.split("-").map(Number);
@@ -76,11 +76,11 @@ export function TasksCalendarPage() {
 
       {/* Single section frame — month nav is a flat border-b row (no sibling bordered card). */}
       <section
-        className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+        className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white"
         data-testid="tasks-calendar-frame"
       >
-        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-2">
-          <button type="button" onClick={() => shiftMonth(-1)} className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700">
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+          <button type="button" onClick={() => shiftMonth(-1)} className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs text-[#4B5563]">
             ← Prev
           </button>
           <div className="text-xs font-semibold text-[#1f2a44]">{monthLabel(bounds.start)}</div>
@@ -92,37 +92,37 @@ export function TasksCalendarPage() {
             >
               Today
             </button>
-            <button type="button" onClick={() => shiftMonth(1)} className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700">
+            <button type="button" onClick={() => shiftMonth(1)} className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs text-[#4B5563]">
               Next →
             </button>
           </div>
         </div>
         <div className="p-2" data-testid="tasks-calendar-grid">
-          <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+          <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-[#6B7280]">
             {WEEKDAYS.map((d) => (
               <div key={d} className="py-1">{d}</div>
             ))}
           </div>
           <div className="grid grid-cols-7 gap-1">
             {cells.map((day, idx) => {
-              if (!day) return <div key={`blank-${idx}`} className="min-h-[84px] rounded-sm bg-slate-50" />;
+              if (!day) return <div key={`blank-${idx}`} className="min-h-[84px] rounded-sm bg-[#F7F8FA]" />;
               const dayTasks = tasksByDay.get(day) ?? [];
               const isToday = day === today;
               return (
                 <div
                   key={day}
-                  className={`min-h-[84px] rounded-sm border p-1 ${isToday ? "border-[#1f2a44] bg-slate-50" : "border-slate-100"}`}
+                  className={`min-h-[84px] rounded-sm border p-1 ${isToday ? "border-[#1f2a44] bg-[#F7F8FA]" : "border-[#E5E7EB]"}`}
                 >
-                  <div className={`text-xs ${isToday ? "font-bold text-[#1f2a44]" : "text-slate-500"}`}>{Number(day.slice(8, 10))}</div>
+                  <div className={`text-xs ${isToday ? "font-bold text-[#1f2a44]" : "text-[#6B7280]"}`}>{Number(day.slice(8, 10))}</div>
                   <div className="mt-0.5 space-y-0.5">
                     {dayTasks.slice(0, 3).map((t) => (
-                      <div key={t.task_id} className="flex items-center gap-1 truncate text-xs text-slate-700" title={t.title}>
+                      <div key={t.task_id} className="flex items-center gap-1 truncate text-xs text-[#4B5563]" title={t.title}>
                         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${PRIORITY_DOT[Math.min(2, Math.max(0, t.priority))]}`} />
-                        <span className={`truncate ${t.status === "completed" ? "text-slate-400 line-through" : ""}`}>{t.title}</span>
+                        <span className={`truncate ${t.status === "completed" ? "text-[#6B7280] line-through" : ""}`}>{t.title}</span>
                         {t.subject_id ? <TaskSubjectLink subjectType={t.subject_type} subjectId={t.subject_id} subjectLabel={t.subject_label} /> : null}
                       </div>
                     ))}
-                    {dayTasks.length > 3 ? <div className="text-xs text-slate-400">+{dayTasks.length - 3} more</div> : null}
+                    {dayTasks.length > 3 ? <div className="text-xs text-[#6B7280]">+{dayTasks.length - 3} more</div> : null}
                   </div>
                 </div>
               );
