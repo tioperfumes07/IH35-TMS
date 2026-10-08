@@ -24,6 +24,7 @@ import { registerBankTxCategorizationRoutes } from "../../apps/backend/src/banki
 import { withCompanyScope } from "../../apps/backend/src/accounting/shared.js";
 import { undoBankLineOnClient } from "../../apps/backend/src/banking/bank-line-state-machine.service.js";
 
+// Owner authorization gate: scripts/verify-owner-authorization.mjs must be satisfied before any --execute run that writes financial tables.
 const FINDING = "ROUND 441.24: CHAIN-05 categorize is a journal entry, not a document — deposit undone, line re-categorized";
 
 type PlanLine = {
