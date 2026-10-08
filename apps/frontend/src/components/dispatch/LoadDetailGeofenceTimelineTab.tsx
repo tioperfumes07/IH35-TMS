@@ -34,15 +34,15 @@ type Props = {
 };
 
 const SOURCE_BADGE: Record<StopSource, { label: string; className: string }> = {
-  geofence: { label: "Geofence auto", className: "bg-slate-100 text-slate-700" },
-  driver_pwa: { label: "Driver PWA", className: "bg-slate-100 text-slate-700" },
+  geofence: { label: "Geofence auto", className: "bg-[#F7F8FA] text-[#4B5563]" },
+  driver_pwa: { label: "Driver PWA", className: "bg-[#F7F8FA] text-[#4B5563]" },
   dispatcher_manual: { label: "Manual", className: "bg-gray-100 text-gray-600" },
 };
 
 const DETENTION_BADGE: Record<NonNullable<DetentionStatus>, { label: string; className: string }> = {
   accruing: { label: "Accruing", className: "bg-red-100 text-red-700" },
   closed: { label: "Closed", className: "bg-gray-200 text-gray-600" },
-  billed: { label: "Billed", className: "bg-slate-100 text-slate-700" },
+  billed: { label: "Billed", className: "bg-[#F7F8FA] text-[#4B5563]" },
 };
 
 function formatDuration(minutes: number | null): string {
@@ -83,7 +83,7 @@ function DwellBar({
     <div className="relative mt-1.5 h-3 w-full overflow-hidden rounded-full bg-gray-100">
       {/* dwell fill */}
       <div
-        className={`absolute left-0 top-0 h-full rounded-full ${overThreshold ? "bg-red-400" : "bg-slate-300"}`}
+        className={`absolute left-0 top-0 h-full rounded-full ${overThreshold ? "bg-red-400" : "bg-[#E5E7EB]"}`}
         style={{ width: `${dwellPct}%` }}
       />
       {/* free-time threshold marker */}
@@ -103,10 +103,10 @@ function StopCard({ stop }: { stop: GeofenceStop }) {
 
   return (
     <div
-      className={`relative rounded-sm border p-3 text-xs ${stop.is_layover ? "border-slate-200 bg-slate-100" : "border-gray-200 bg-[var(--surface-unselected)]"}`}
+      className={`relative rounded-sm border p-3 text-xs ${stop.is_layover ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-200 bg-[var(--surface-unselected)]"}`}
     >
       {stop.is_layover && (
-        <div className="mb-1 text-xs font-bold uppercase tracking-widest text-slate-700">
+        <div className="mb-1 text-xs font-bold uppercase tracking-widest text-[#4B5563]">
           Layover — dwell &gt; 8 hours
         </div>
       )}
@@ -179,7 +179,7 @@ export function LoadDetailGeofenceTimelineTab({ loadId, operatingCompanyId }: Pr
 
   if (query.error) {
     return (
-      <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700" role="alert" data-geofence-timeline-read-error>
+      <div className="space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#4B5563]" role="alert" data-geofence-timeline-read-error>
         <div>Failed to load geofence timeline.</div>
         <Button type="button" size="sm" variant="secondary" onClick={() => void query.refetch()}>
           Retry timeline
@@ -206,14 +206,14 @@ export function LoadDetailGeofenceTimelineTab({ loadId, operatingCompanyId }: Pr
   return (
     <div className="space-y-3">
       {!hasAnyDwell && (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#4B5563]">
           No arrival/departure timestamps yet — timeline will populate as the load progresses.
         </div>
       )}
 
       <div className="flex items-center gap-4 text-xs text-gray-500">
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-8 rounded-full bg-slate-300" /> Within free time
+          <span className="inline-block h-2 w-8 rounded-full bg-[#E5E7EB]" /> Within free time
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block h-2 w-8 rounded-full bg-red-400" /> Over free time

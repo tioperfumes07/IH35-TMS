@@ -1,9 +1,9 @@
-#!/usr/bin/env node
-import { spawnSync } from "node:child_process";
-
-const result = spawnSync(process.execPath, ["scripts/verify-home-attention-dismiss-visible-errors.mjs", ...process.argv.slice(2)], {
-  cwd: process.cwd(),
-  stdio: "inherit",
-});
-
-process.exit(result.status ?? 1);
+export default {
+  name: "verify-home-attention-dismiss-visible-errors",
+  async run(ctx) {
+    await ctx.run("node", ["scripts/verify-home-attention-dismiss-visible-errors.mjs"]);
+    // BANK leftover slate refuse piggyback (F91187)
+    await ctx.run("node", ["scripts/verify-geo-drvcomms-fleet-slate-leftover-chrome.mjs", "--selftest"]);
+    return ctx.run("node", ["scripts/verify-geo-drvcomms-fleet-slate-leftover-chrome.mjs"]);
+  },
+};
