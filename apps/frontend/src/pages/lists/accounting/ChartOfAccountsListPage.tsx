@@ -93,14 +93,14 @@ async function fetchAllCatalogRows(operatingCompanyId: string, includeInactive: 
 
 function statusPillClass(isActive: boolean) {
   return isActive
-    ? "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
-    : "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
+    ? "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]"
+    : "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
 }
 
 function syncBadgeClasses(badge: CoaListRow["syncBadge"]) {
-  if (badge === "synced") return "bg-slate-100 text-slate-700";
-  if (badge === "qbo-only") return "bg-slate-100 text-slate-700";
-  return "bg-slate-100 text-slate-600";
+  if (badge === "synced") return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (badge === "qbo-only") return "bg-[#F7F8FA] text-[#1F2A44]";
+  return "bg-[#F7F8FA] text-[#4B5563]";
 }
 
 function buildColumns(
@@ -159,7 +159,7 @@ function buildColumns(
           <span className="truncate">{row.acct_type}</span>
           {row.feed_connected ? (
             <span
-              className="inline-flex shrink-0 items-center gap-0.5 rounded-sm bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase tracking-wide text-slate-700"
+              className="inline-flex shrink-0 items-center gap-0.5 rounded-sm bg-[#F7F8FA] px-1 py-0.5 text-xs font-semibold uppercase tracking-wide text-[#1F2A44]"
               data-b1-coa-feed-badge="1"
               data-testid="b1-coa-feed-badge"
               title="Connected bank feed"
@@ -552,7 +552,7 @@ export function ChartOfAccountsListPage() {
       <CoaAsymmetryReportPanel enabled={showCoaAsymmetry} />
 
       {driftOnly ? (
-        <p className="text-xs text-slate-700">
+        <p className="text-xs text-[#1F2A44]">
           Showing drift filter active — reconcile or sync to heal unmatched CoA rows.
         </p>
       ) : null}
@@ -578,7 +578,7 @@ export function ChartOfAccountsListPage() {
             density="cozy"
             badgeSlot={(row) => (
               <>
-                <span className="ml-1 rounded-sm bg-slate-100 px-1 py-0.5 text-xs font-semibold text-slate-700">
+                <span className="ml-1 rounded-sm bg-[#F7F8FA] px-1 py-0.5 text-xs font-semibold text-[#1F2A44]">
                   {statementTag(row.statement as "BS" | "P&L")}
                 </span>
                 <span className={`ml-1 rounded-sm px-1 py-0.5 text-xs font-semibold ${syncBadgeClasses(row.syncBadge)}`}>
