@@ -97,7 +97,7 @@ const oosColumns: ParityColumn<OosUnitRow>[] = [
     sortable: true,
     sortValue: (row) => row.statusLabel,
     render: (row) => (
-      <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">
+      <span className="rounded-sm bg-[#E5E7EB] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">
         {row.statusLabel}
       </span>
     ),
@@ -253,11 +253,11 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
 
   return (
     <div
-      className="mt-3 rounded-sm border border-slate-200 bg-slate-100/95 shadow-xs"
+      className="mt-3 rounded-sm border border-[#E5E7EB] bg-[#E5E7EB]/95 shadow-xs"
       data-testid="dispatch-fleet-oos-strip"
     >
-      <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-1.5">
-        <span className="text-section-header font-semibold uppercase tracking-wide text-slate-700">
+      <div className="flex items-center justify-between gap-2 border-b border-[#E5E7EB] px-3 py-1.5">
+        <span className="text-section-header font-semibold uppercase tracking-wide text-[#1F2A44]">
           Fleet OOS / In shop ({unitsQuery.isLoading || severeQuery.isLoading ? "…" : fleetReadFailed ? "—" : rows.length})
         </span>
         {/*
@@ -268,7 +268,7 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
           claim happens to hold; it stops holding the moment the fleet outgrows the cap, and nothing
           would have surfaced that. The label now states what is actually known.
         */}
-        <span className="text-xs text-slate-700">
+        <span className="text-xs text-[#1F2A44]">
           {unitsCap.truncated ? capNotice(unitsCap, "units") : "Pinned — full fleet visibility"}
         </span>
       </div>
@@ -284,9 +284,9 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
           />
         </div>
       ) : unitsQuery.isLoading || severeQuery.isLoading ? (
-        <div className="px-3 py-2 text-xs text-slate-700">Loading out-of-service units…</div>
+        <div className="px-3 py-2 text-xs text-[#1F2A44]">Loading out-of-service units…</div>
       ) : rows.length === 0 ? (
-        <div className="px-3 py-2 text-xs text-slate-700">All units in service.</div>
+        <div className="px-3 py-2 text-xs text-[#1F2A44]">All units in service.</div>
       ) : (
         <div className="px-3 py-2" data-testid="dispatch-fleet-oos-table-wrap">
           <ParityTable<OosUnitRow> appearance="board"

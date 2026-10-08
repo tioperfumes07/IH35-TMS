@@ -1,3 +1,13 @@
+## 2026-10-08T16:50Z · BANK leftover slate — vehicle profile / bulk action bar / fleet OOS strip
+
+FINDING: BANK-F91219 — VehicleProfilePage / BulkActionBar / FleetOosStrip Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25881 squash `6d364904b2` (BANK-F91218 tasks mine/tab/link)
+GUARD: scripts/verify-fleet-profile-bulk-oos-slate-leftover-chrome.mjs + verify-steps/3456 piggyback
+LIVE PROOF: verify-fleet-profile-bulk-oos-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3456 piggyback + OUTBOX
+
 ## 2026-10-08T16:35Z · BANK leftover slate — tasks mine / tasks tab / task link picker
 
 FINDING: BANK-F91218 — TasksMinePage / TasksTab / TaskLinkPicker Tailwind slate-* → house tokens

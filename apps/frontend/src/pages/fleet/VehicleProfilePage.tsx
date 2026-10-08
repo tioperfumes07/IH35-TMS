@@ -295,7 +295,7 @@ export function VehicleProfilePage() {
         {unit ? <MissingRequiredChip operatingCompanyId={companyId} entityKind="unit" entityId={id} /> : null}
       </div>
       {companyLoading && !companyId ? (
-        <p className="text-xs text-slate-500">Loading company context…</p>
+        <p className="text-xs text-[#6B7280]">Loading company context…</p>
       ) : null}
       {!companyLoading && !companyId ? (
         <p className="text-xs text-red-600">Select an operating company to load this unit.</p>
@@ -309,10 +309,10 @@ export function VehicleProfilePage() {
         />
       ) : null}
       {canFetchProfile && profileQuery.isPending && !profileQuery.isError ? (
-        <p className="text-xs text-slate-500">Loading unit profile…</p>
+        <p className="text-xs text-[#6B7280]">Loading unit profile…</p>
       ) : null}
       {canFetchProfile && !profileQuery.isPending && !profileQuery.isError && !profile ? (
-        <p className="text-xs text-slate-500">Unit not found for the selected company.</p>
+        <p className="text-xs text-[#6B7280]">Unit not found for the selected company.</p>
       ) : null}
 
       {profile ? (
@@ -477,7 +477,7 @@ export function VehicleProfilePage() {
               kind="compliance_unit_overview"
               id={id}
               label="Open this unit in Fleet HOS →"
-              className="text-xs font-semibold text-slate-700 hover:underline"
+              className="text-xs font-semibold text-[#1F2A44] hover:underline"
             />
           </div>
           <div data-testid="vp-section-compliance-tax-filings-reverse">
@@ -569,12 +569,12 @@ export function VehicleProfilePage() {
           <div data-testid="vp-section-10m-tire-program">
             <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-linked-ops-report">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-xs font-semibold text-slate-900">Unit operations report</h3>
-                <button type="button" className="text-xs font-semibold text-slate-700 underline" onClick={() => window.print()}>
+                <h3 className="text-xs font-semibold text-[#0F1219]">Unit operations report</h3>
+                <button type="button" className="text-xs font-semibold text-[#1F2A44] underline" onClick={() => window.print()}>
                   Print this report
                 </button>
               </div>
-              <p className="mb-3 text-xs leading-snug text-slate-600">
+              <p className="mb-3 text-xs leading-snug text-[#4B5563]">
                 Mounted tires, severe repairs, and temporary driver coverage are each clickable into their live lists.
               </p>
               <div className="grid grid-cols-1 gap-3 text-xs md:grid-cols-3 md:items-stretch">
@@ -612,7 +612,7 @@ export function VehicleProfilePage() {
             />
           </div>
           <div data-testid="vp-section-12-audit-history" className="rounded-sm border border-gray-200 bg-white p-3 xl:col-span-2">
-            <h3 className="mb-2 text-xs font-semibold text-slate-900">Audit History</h3>
+            <h3 className="mb-2 text-xs font-semibold text-[#0F1219]">Audit History</h3>
             <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="unit" entityId={id} />
           </div>
         </div>
