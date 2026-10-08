@@ -16,9 +16,10 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { getCheck, voidCheckApi, unvoidCheckApi, type CheckDetailLine } from "../../../api/checks";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { MoreActionsMenu } from "../../../components/shared/MoreActionsMenu";
+import { formatUsdCents } from "../../../lib/money";
 
 function formatMoneyCents(cents: number): string {
-  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return formatUsdCents(cents);
 }
 
 export function CheckDetailPage() {

@@ -26,9 +26,10 @@ import { getCashGlMapping } from "../../../api/banking";
 import { openPrintableDocument } from "../../../lib/openPrintableDocument";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { formatUsdCents } from "../../../lib/money";
 
 function formatMoneyCents(cents: number): string {
-  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return formatUsdCents(cents);
 }
 
 function useDebounced<T>(value: T, ms: number): T {

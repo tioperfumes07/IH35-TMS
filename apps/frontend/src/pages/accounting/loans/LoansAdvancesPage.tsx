@@ -30,6 +30,7 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { FORM_SELECT_CLASS } from "../../../components/forms/inputClass";
 import { LoanApplicationWizard } from "./LoanApplicationWizard";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
+import { formatUsdCents } from "../../../lib/money";
 
 const DIRECTIONS: Array<{ value: "" | LoanDirection; label: string }> = [
   { value: "", label: "All directions" },
@@ -50,8 +51,7 @@ const TARGETS: Array<"" | LoanTargetType> = [
 ];
 
 function money(cents: number | null | undefined): string {
-  const n = Number(cents ?? 0) / 100;
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return formatUsdCents(cents);
 }
 
 export function LoansAdvancesPage() {
