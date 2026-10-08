@@ -25,11 +25,11 @@ function severityBadgeClass(severity: ComplaintSeverity | null) {
     case "critical":
       return "rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700";
     case "high":
-      return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-800";
+      return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#0F1219]";
     case "medium":
-      return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
+      return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]";
     default:
-      return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500";
+      return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#6B7280]";
   }
 }
 

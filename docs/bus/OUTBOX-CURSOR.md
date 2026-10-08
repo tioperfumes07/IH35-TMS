@@ -1,3 +1,13 @@
+## 2026-10-08T22:45Z · BANK leftover slate — Complaints / ComplaintTypes / DotViolationTypes
+
+FINDING: BANK-F91245 — ComplaintsPage / ComplaintTypesListPage / DotViolationTypesListPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25921 squash `494da561d4` (BANK-F91244 LegalReports/ModuleCompletion/ReportFlyout)
+GUARD: scripts/verify-complaints-types-dotviol-slate-leftover-chrome.mjs + verify-steps/3588 piggyback
+LIVE PROOF: verify-complaints-types-dotviol-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3588 piggyback + OUTBOX
+
 ## 2026-10-08T22:25Z · BANK leftover slate — LegalReports / ModuleCompletion / ReportFlyout
 
 FINDING: BANK-F91244 — LegalReportsLandingPage / ModuleCompletionPage / ReportFlyoutPanel Tailwind slate-* → house tokens

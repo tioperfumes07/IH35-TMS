@@ -116,7 +116,7 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
   const complaintPageCount = Math.max(1, Math.ceil(complaintTotal / pageSize));
 
   if (!canView) {
-    return <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">Complaints tab is restricted to Owner/Admin/Safety.</div>;
+    return <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">Complaints tab is restricted to Owner/Admin/Safety.</div>;
   }
 
   return (
@@ -172,7 +172,7 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
           rows={query.data?.complaints ?? []}
           rowKey={(row) => String(row.id)}
           rowClassName={(row) =>
-            deepLinkComplaintId && String(row.id) === deepLinkComplaintId ? "bg-slate-100 ring-1 ring-slate-400" : ""
+            deepLinkComplaintId && String(row.id) === deepLinkComplaintId ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]" : ""
           }
           loading={query.isLoading}
           emptyText="No complaints found."
@@ -184,7 +184,7 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
       {!query.isError && complaintTotal > pageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="complaints-page-server-pager">
           <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous complaints</Button>
-          <span className="text-slate-600">Page {page} of {complaintPageCount} · {complaintTotal} complaints</span>
+          <span className="text-[#4B5563]">Page {page} of {complaintPageCount} · {complaintTotal} complaints</span>
           <Button size="sm" variant="secondary" disabled={page >= complaintPageCount || query.isFetching} onClick={() => setPage((current) => Math.min(complaintPageCount, current + 1))}>Next complaints</Button>
         </div>
       ) : null}
