@@ -57,10 +57,10 @@ export function Step3JurisdictionCalc({ filing }: Props) {
   );
 
   return (
-    <section className="rounded-sm border border-slate-200 bg-white" data-ifta-step="3">
-      <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-900">Step 3 · Jurisdiction tax calc</h3>
-        <p className="text-xs text-slate-800">
+    <section className="rounded-sm border border-[#E5E7EB] bg-white" data-ifta-step="3">
+      <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-[#0F1219]">Step 3 · Jurisdiction tax calc</h3>
+        <p className="text-xs text-[#0F1219]">
           Rates from{" "}
           <a href={data.rates_source} className="underline" target="_blank" rel="noreferrer">
             IFTA tax matrix ({data.rates_quarter_key})
@@ -80,7 +80,7 @@ export function Step3JurisdictionCalc({ filing }: Props) {
           exportFilename="ifta-jurisdiction-tax"
         />
         {rows.length > 0 ? (
-          <div className="flex justify-end rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs font-semibold text-slate-900">
+          <div className="flex justify-end rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs font-semibold text-[#0F1219]">
             <span className="mr-4">Total net tax</span>
             <span>{fmtMoney(data.total_tax_owed ?? 0)}</span>
           </div>
