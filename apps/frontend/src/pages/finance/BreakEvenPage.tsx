@@ -152,7 +152,7 @@ export function BreakEvenPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <p className="text-xs text-slate-500">Loading…</p>
+        <p className="text-xs text-[#6B7280]">Loading…</p>
       </div>
     );
   }
@@ -162,7 +162,7 @@ export function BreakEvenPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#6B7280]">
           Break-Even Analysis is not yet enabled for this company. (Feature flag <code>{FINANCE_BREAK_EVEN_UI_FLAG}</code> is off.)
         </div>
         <BreakEvenWorkbookCreator operatingCompanyId={companyId} liveMiles={0} liveRevenueCents={0} />
@@ -199,11 +199,11 @@ export function BreakEvenPage() {
         onCancel={staged.cancel}
         applyDisabled={!staged.dirty}
         testIdPrefix="break-even"
-        className="mb-4 rounded-sm border border-slate-200 bg-white p-3"
+        className="mb-4 rounded-sm border border-[#E5E7EB] bg-white p-3"
         dataAttributes={{ "data-testid": "break-even-controls" }}
       >
         <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col text-xs font-medium text-slate-600">
+          <label className="flex flex-col text-xs font-medium text-[#6B7280]">
             From
             <DatePicker
               value={staged.draft.from}
@@ -212,7 +212,7 @@ export function BreakEvenPage() {
               className="mt-1"
             />
           </label>
-          <label className="flex flex-col text-xs font-medium text-slate-600">
+          <label className="flex flex-col text-xs font-medium text-[#6B7280]">
             To
             <DatePicker
               value={staged.draft.to}
@@ -222,7 +222,7 @@ export function BreakEvenPage() {
               className="mt-1"
             />
           </label>
-          <label className="flex flex-col text-xs font-medium text-slate-600">
+          <label className="flex flex-col text-xs font-medium text-[#6B7280]">
             Revenue basis
             <SelectCombobox
               value={staged.draft.revenueBasis}
@@ -235,7 +235,7 @@ export function BreakEvenPage() {
               <option value="loads">Loads gross rate</option>
             </SelectCombobox>
           </label>
-          <label className="flex flex-col text-xs font-medium text-slate-600">
+          <label className="flex flex-col text-xs font-medium text-[#6B7280]">
             Miles (override)
             <input
               type="number"
@@ -243,22 +243,22 @@ export function BreakEvenPage() {
               placeholder={data ? fmtInt(data.miles.total_miles) : "live"}
               value={staged.draft.milesOverride}
               onChange={(e) => staged.setDraft((p) => ({ ...p, milesOverride: e.target.value }))}
-              className="mt-1 w-32 rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-900"
+              className="mt-1 w-32 rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs text-[#0F1219]"
             />
           </label>
         </div>
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-[#6B7280]">
           Classification toggles below also stage until Apply. Cancel restores the last-applied model.
         </p>
       </CollapsedListFilters>
 
-      {inputsQuery.isLoading ? <p className="text-xs text-slate-500">Loading…</p> : null}
+      {inputsQuery.isLoading ? <p className="text-xs text-[#6B7280]">Loading…</p> : null}
       {inputsQuery.isError ? <p className="text-xs text-red-600">Could not load break-even inputs.</p> : null}
 
       {data && model ? (
         <>
           {model.miles <= 0 ? (
-            <p className="mb-4 border-l-4 border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+            <p className="mb-4 border-l-4 border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
               No miles recorded for this period ({data.miles.load_count} load{data.miles.load_count === 1 ? "" : "s"}). Per-mile
               figures require miles — enter a miles estimate above to model the break-even rate.
             </p>
@@ -300,11 +300,11 @@ export function BreakEvenPage() {
 
           {/* Expense classification — single section frame; live-inputs strip + table (no nested cards). */}
           <section
-            className="mt-4 overflow-hidden rounded-sm border border-slate-200 bg-white"
+            className="mt-4 overflow-hidden rounded-sm border border-[#E5E7EB] bg-white"
             data-testid="break-even-expense-frame"
           >
-            <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-              <span className="font-semibold text-slate-700">Live inputs:</span>{" "}
+            <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#6B7280]">
+              <span className="font-semibold text-[#4B5563]">Live inputs:</span>{" "}
               {fmtInt(data.miles.total_miles)} miles ({fmtInt(data.miles.loaded_miles)} loaded + {fmtInt(data.miles.deadhead_miles)} deadhead) across {fmtInt(data.miles.load_count)} loads ·
               GL revenue {fmtCents(data.revenue.gl_revenue_cents)} · loads gross {fmtCents(data.revenue.loads_gross_revenue_cents)}
             </div>
@@ -322,20 +322,20 @@ export function BreakEvenPage() {
                 {
                   key: "account_code",
                   label: "Account",
-                  cellClass: "tabular-nums text-slate-500",
+                  cellClass: "tabular-nums text-[#6B7280]",
                   render: (line) => line.account_code || "—",
                 },
                 {
                   key: "account_name",
                   label: "Name",
-                  cellClass: "text-slate-900",
+                  cellClass: "text-[#0F1219]",
                   render: (line) => line.account_name || "—",
                 },
                 {
                   key: "amount_cents",
                   label: "Amount",
                   className: "text-right",
-                  cellClass: "text-right tabular-nums text-slate-900",
+                  cellClass: "text-right tabular-nums text-[#0F1219]",
                   render: (line) => fmtCents(line.amount_cents),
                 },
                 {
@@ -350,8 +350,8 @@ export function BreakEvenPage() {
                         className={[
                           "rounded-sm border px-2 py-0.5 text-xs font-medium",
                           cls === "variable"
-                            ? "border-slate-400 bg-slate-100 text-slate-700"
-                            : "border-slate-300 bg-[var(--surface-unselected)] text-slate-600",
+                            ? "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]"
+                            : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#6B7280]",
                         ].join(" ")}
                         title="Toggle fixed / variable (what-if, not saved)"
                       >
@@ -362,7 +362,7 @@ export function BreakEvenPage() {
                 },
               ]}
             />
-            <div className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800">
+            <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs font-semibold text-[#1F2A44]">
               <div className="flex justify-between gap-4">
                 <span>Fixed cost</span>
                 <span className="tabular-nums">{fmtCents(model.fixed_cost_cents)}</span>
@@ -371,14 +371,14 @@ export function BreakEvenPage() {
                 <span>Variable cost</span>
                 <span className="tabular-nums">{fmtCents(model.variable_cost_cents)}</span>
               </div>
-              <div className="mt-1 flex justify-between gap-4 border-t border-slate-200 bg-slate-100 -mx-3 -mb-2 px-3 py-2 text-slate-900">
+              <div className="mt-1 flex justify-between gap-4 border-t border-[#E5E7EB] bg-[#F7F8FA] -mx-3 -mb-2 px-3 py-2 text-[#0F1219]">
                 <span>Total operating cost</span>
                 <span className="tabular-nums">{fmtCents(model.total_cost_cents)}</span>
               </div>
             </div>
           </section>
 
-          <p className="mt-4 text-xs text-slate-400">{data.disclaimer}</p>
+          <p className="mt-4 text-xs text-[#6B7280]">{data.disclaimer}</p>
         </>
       ) : null}
 
