@@ -1,3 +1,13 @@
+## 2026-10-08T11:35Z · BANK leftover slate — background checks / driver safety attributed / labor tracker
+
+FINDING: BANK-F91198 — BackgroundChecksSection / DriverProfileSafetyAttributedSection / LaborTracker Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25852 squash `6c3a16a7e6` (BANK-F91197 qbo/acc/csa)
+GUARD: scripts/verify-bgcheck-drvsafe-labor-slate-leftover-chrome.mjs + verify-steps/2316 piggyback
+LIVE PROOF: verify-bgcheck-drvsafe-labor-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 2316 piggyback + OUTBOX
+
 ## 2026-10-08T11:25Z · BANK leftover slate — QBO sync detail / accidents / CSA mitigation
 
 FINDING: BANK-F91197 — QboSyncDetailPage / AccidentsPage / CSAMitigationQueue Tailwind slate-* → house tokens

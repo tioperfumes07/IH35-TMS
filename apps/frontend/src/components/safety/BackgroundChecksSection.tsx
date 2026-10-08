@@ -109,14 +109,14 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
     { key: "checked_at", label: "Checked", sortable: true, render: (row) => formatDateUS(row.checked_at) },
     ...(driverId ? [] : [{ key: "driver_name", label: "Driver", render: (row: SafetyBackgroundCheckRow) => <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> }]),
     { key: "check_type", label: "Check", sortable: true, render: (row) => CHECK_TYPES.find((type) => type.value === row.check_type)?.label ?? row.check_type },
-    { key: "result", label: "Result", sortable: true, render: (row) => <span className={row.result === "pass" ? "text-slate-700" : "text-red-700"}>{row.result}</span> },
+    { key: "result", label: "Result", sortable: true, render: (row) => <span className={row.result === "pass" ? "text-[#1F2A44]" : "text-red-700"}>{row.result}</span> },
     { key: "expiry_date", label: "Expires", sortable: true, render: (row) => row.expiry_date ? formatDateUS(row.expiry_date) : "—" },
     {
       key: "document_count",
       label: "Document",
       render: (row) => (
         <div className="flex items-center gap-2">
-          <span className={row.document_count ? "text-slate-700" : "text-gray-400"}>{row.document_count ? `${row.document_count} file${row.document_count > 1 ? "s" : ""}` : "No file"}</span>
+          <span className={row.document_count ? "text-[#1F2A44]" : "text-gray-400"}>{row.document_count ? `${row.document_count} file${row.document_count > 1 ? "s" : ""}` : "No file"}</span>
           <Button size="sm" variant="secondary" onClick={() => setUploadCheckId(row.id)}>Upload</Button>
         </div>
       ),
@@ -127,8 +127,8 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="background-checks-section">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h2 className="text-xs font-semibold text-slate-900">Background & MVR checks</h2>
-          <p className="mt-1 text-xs text-slate-600">Company-scoped driver screening history and expirations.</p>
+          <h2 className="text-xs font-semibold text-[#0F1219]">Background & MVR checks</h2>
+          <p className="mt-1 text-xs text-[#4B5563]">Company-scoped driver screening history and expirations.</p>
         </div>
         <Button size="sm" onClick={() => { setSelectedDriverId(driverId ?? ""); setOpen(true); }}>+ Create check</Button>
       </div>
@@ -168,18 +168,18 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
             notes,
           });
         }}>
-          <label className="block text-xs text-slate-600">Driver
+          <label className="block text-xs text-[#4B5563]">Driver
             <div className="mt-1"><DriverPickerWithCreate operatingCompanyId={operatingCompanyId} value={selectedDriverId || null} onChange={(next) => setSelectedDriverId(next ?? "")} open={open} placeholder="Select driver" dataField="background-check-driver" /></div>
           </label>
-          <label className="block text-xs text-slate-600">Check type
+          <label className="block text-xs text-[#4B5563]">Check type
             <Combobox className="mt-1" options={CHECK_TYPES.map((item) => ({ ...item }))} value={checkType} onChange={(next) => next && setCheckType(next as SafetyBackgroundCheckRow["check_type"])} />
           </label>
-          <label className="block text-xs text-slate-600">Result
+          <label className="block text-xs text-[#4B5563]">Result
             <Combobox className="mt-1" options={[{ value: "pass", label: "Pass" }, { value: "fail", label: "Fail" }]} value={result} onChange={(next) => next && setResult(next as SafetyBackgroundCheckRow["result"])} />
           </label>
-          <div className="block text-xs text-slate-600"><label htmlFor="background-check-checked-date">Checked date</label><DatePicker id="background-check-checked-date" className="mt-1 w-full" value={checkedAt} onChange={setCheckedAt} /></div>
-          <div className="block text-xs text-slate-600"><label htmlFor="background-check-expiry-date">Expiry date (optional)</label><DatePicker id="background-check-expiry-date" className="mt-1 w-full" value={expiryDate} onChange={setExpiryDate} /></div>
-          <label className="block text-xs text-slate-600">Notes<textarea className="mt-1 min-h-16 w-full rounded-sm border border-gray-200 px-2 py-1 text-xs" value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
+          <div className="block text-xs text-[#4B5563]"><label htmlFor="background-check-checked-date">Checked date</label><DatePicker id="background-check-checked-date" className="mt-1 w-full" value={checkedAt} onChange={setCheckedAt} /></div>
+          <div className="block text-xs text-[#4B5563]"><label htmlFor="background-check-expiry-date">Expiry date (optional)</label><DatePicker id="background-check-expiry-date" className="mt-1 w-full" value={expiryDate} onChange={setExpiryDate} /></div>
+          <label className="block text-xs text-[#4B5563]">Notes<textarea className="mt-1 min-h-16 w-full rounded-sm border border-gray-200 px-2 py-1 text-xs" value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
           {createMutation.isError && createMutation.variables?.generation === companyGenerationRef.current ? <p className="text-xs text-red-700">The check could not be saved. Confirm the driver belongs to this company and try again.</p> : null}
           <div className="flex justify-end gap-2"><Button type="button" size="sm" variant="secondary" onClick={attemptClose} disabled={createMutation.isPending}>Cancel</Button><Button type="submit" size="sm" loading={createMutation.isPending} disabled={!selectedDriverId}>Save check</Button></div>
         </form>

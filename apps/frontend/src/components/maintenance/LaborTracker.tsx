@@ -251,13 +251,13 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
       data-testid="maint-labor-tracker"
     >
       <div className="border-b border-gray-200 bg-gray-50 px-3 py-2">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Mechanic labor</div>
-        <p className="mt-1 text-xs text-slate-600">Start/stop timers or add manual ranges. Rates drive computed labor cost.</p>
+        <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Mechanic labor</div>
+        <p className="mt-1 text-xs text-[#4B5563]">Start/stop timers or add manual ranges. Rates drive computed labor cost.</p>
       </div>
 
       <div className="space-y-3 p-3">
       <div className="grid gap-2 md:grid-cols-4">
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Actor kind
           <SelectCombobox
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -271,7 +271,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
             ))}
           </SelectCombobox>
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Labor code
           {/*
             LST-PICKER-01: ReferenceSelect first-row create → POST catalogs.maintenance_labor_codes
@@ -305,7 +305,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
             ) : null}
           </div>
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Labor rate (¢/hr)
           <input
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -314,7 +314,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
             placeholder="optional"
           />
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Notes
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>
@@ -341,13 +341,13 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
       </div>
 
       <div className="border-t border-gray-100 pt-3">
-        <div className="text-xs font-semibold text-slate-600">Book manual labor range</div>
+        <div className="text-xs font-semibold text-[#4B5563]">Book manual labor range</div>
         <div className="mt-2 grid gap-2 md:grid-cols-2">
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Started (ISO)
             <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={manualStart} onChange={(e) => setManualStart(e.target.value)} />
           </label>
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Ended (ISO)
             <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} />
           </label>
@@ -462,7 +462,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
         title="Update labor rate"
       >
         <div className="space-y-3">
-          <label className="block text-xs font-medium text-slate-700">
+          <label className="block text-xs font-medium text-[#1F2A44]">
             Labor rate per hour
             <MoneyInput
               valueCents={rateValueCents}
