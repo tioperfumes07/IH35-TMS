@@ -59,7 +59,7 @@ export function Permits({ operatingCompanyId }: Props) {
           <ListErrorState status={0} message={userFacingApiError(deadlineQ.error, "Could not load Form 2290 deadline.")} onRetry={() => void deadlineQ.refetch()} />
         </div>
       ) : (
-      <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
         <div className="font-semibold">
           {deadline ? `Form 2290 due ${deadline}` : "Form 2290 due date unavailable"}
         </div>
@@ -70,8 +70,8 @@ export function Permits({ operatingCompanyId }: Props) {
             are listed; July first use is already covered above. Without this the Safety Permits tab
             silently understated the obligation for every vehicle first used after July. */}
         {perUnit.length > 0 ? (
-          <div className="mt-2 border-t border-slate-200 pt-2">
-            <span className="font-semibold text-slate-900">
+          <div className="mt-2 border-t border-[#E5E7EB] pt-2">
+            <span className="font-semibold text-[#0F1219]">
               {perUnit.length} vehicle{perUnit.length === 1 ? "" : "s"} due on a different date
             </span>{" "}
             (first used outside July) ·{" "}
@@ -89,8 +89,8 @@ export function Permits({ operatingCompanyId }: Props) {
           </div>
         ) : null}
         {missingFirstUse.length > 0 ? (
-          <div className="mt-2 border-t border-slate-200 pt-2">
-            <span className="font-semibold text-slate-900">
+          <div className="mt-2 border-t border-[#E5E7EB] pt-2">
+            <span className="font-semibold text-[#0F1219]">
               {missingFirstUse.length} vehicle{missingFirstUse.length === 1 ? "" : "s"} missing a first-use date
             </span>{" "}
             — due date cannot be computed ·{" "}

@@ -93,7 +93,7 @@ export function DashcamViewerPage() {
         label: "Harsh event",
         render: (row) =>
           row.linked_harsh_event_id ? (
-            <Link to={`/safety/safety-events?event_id=${row.linked_harsh_event_id}`} className="underline text-slate-700">
+            <Link to={`/safety/safety-events?event_id=${row.linked_harsh_event_id}`} className="underline text-[#1F2A44]">
               Open
             </Link>
           ) : (
@@ -121,7 +121,7 @@ export function DashcamViewerPage() {
         subtitle="Samsara dashcam clips by unit — harsh-event and on-demand. Clips arrive when the harsh-events poll ticks."
       />
       <div className="flex flex-wrap gap-2 text-xs">
-        <Link to="/safety/safety-events" className="text-slate-700 underline">
+        <Link to="/safety/safety-events" className="text-[#1F2A44] underline">
           Safety events
         </Link>
       </div>
@@ -136,7 +136,7 @@ export function DashcamViewerPage() {
       ) : null}
 
       <div className="flex flex-wrap items-end gap-3" data-testid="dashcam-filters">
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Unit
           <EntityPicker
             kind="unit"
@@ -183,12 +183,12 @@ export function DashcamViewerPage() {
       {selected ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-2xl space-y-3 rounded-sm bg-white p-4 shadow-lg">
-            <h3 className="text-xs font-semibold text-slate-900">
+            <h3 className="text-xs font-semibold text-[#0F1219]">
               <EntityLinkOrTombstone kind="unit" id={selected.unit_id} name={selected.unit_number} noun="Unit" /> ·{" "}
               {selected.camera_facing}
             </h3>
             <video
-              className="w-full rounded-sm border border-slate-200"
+              className="w-full rounded-sm border border-[#E5E7EB]"
               controls
               preload="metadata"
               src={selected.samsara_clip_url}
