@@ -1,3 +1,13 @@
+## 2026-10-08T09:50Z · BANK leftover slate — driver detail / customers list / todays attention
+
+FINDING: BANK-F91186 — DriverDetail / CustomersListView / TodaysAttentionTop5 Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25840 squash `55bd19f3ac` (BANK-F91185 load completion/dispatch list/ETA)
+GUARD: scripts/verify-drv-cust-home-slate-leftover-chrome.mjs + verify-steps/3874 piggyback
+LIVE PROOF: verify-drv-cust-home-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3874 piggyback + OUTBOX
+
 ## 2026-10-08T09:40Z · BANK leftover slate — load completion / dispatch list / live ETA
 
 FINDING: BANK-F91185 — LoadCompletionPromptsCard / DispatchList / LiveEtaColumns Tailwind slate-* → house tokens
