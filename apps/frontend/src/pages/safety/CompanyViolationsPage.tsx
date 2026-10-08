@@ -121,13 +121,13 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
       render: (row) => {
         const ids = asIdList(row.related_driver_ids);
         const labels = asLabelMap(row.related_driver_labels);
-        if (ids.length === 0) return <span className="text-slate-400">—</span>;
+        if (ids.length === 0) return <span className="text-[#6B7280]">—</span>;
         return (
           <span className="flex flex-wrap gap-1">
             {ids.slice(0, 2).map((id) => (
               <EntityLink key={id} kind="driver" id={id} label={entityLabel(labels[id], id, "Driver")} />
             ))}
-            {ids.length > 2 ? <span className="text-slate-500">+{ids.length - 2}</span> : null}
+            {ids.length > 2 ? <span className="text-[#6B7280]">+{ids.length - 2}</span> : null}
           </span>
         );
       },
@@ -138,13 +138,13 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
       render: (row) => {
         const ids = asIdList(row.related_unit_ids);
         const labels = asLabelMap(row.related_unit_labels);
-        if (ids.length === 0) return <span className="text-slate-400">—</span>;
+        if (ids.length === 0) return <span className="text-[#6B7280]">—</span>;
         return (
           <span className="flex flex-wrap gap-1">
             {ids.slice(0, 2).map((id) => (
               <EntityLink key={id} kind="unit" id={id} label={entityLabel(labels[id], id, "Unit")} />
             ))}
-            {ids.length > 2 ? <span className="text-slate-500">+{ids.length - 2}</span> : null}
+            {ids.length > 2 ? <span className="text-[#6B7280]">+{ids.length - 2}</span> : null}
           </span>
         );
       },
@@ -155,7 +155,7 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
       key: "action",
       label: "Action",
       render: (row) => (
-        <button type="button" className="text-slate-700 underline" onClick={() => setSelected(row)}>
+        <button type="button" className="text-[#1F2A44] underline" onClick={() => setSelected(row)}>
           Open
         </button>
       ),
@@ -196,7 +196,7 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
           hidePager
           filterBar={
             <div className="relative flex flex-wrap items-end gap-2" data-testid="company-violations-filters">
-              <label className="text-xs text-slate-600">
+              <label className="text-xs text-[#4B5563]">
                 Driver
                 <EntityPicker
                   kind="driver"
@@ -209,7 +209,7 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
                   dataTestId="company-violations-filter-driver"
                 />
               </label>
-              <label className="text-xs text-slate-600">
+              <label className="text-xs text-[#4B5563]">
                 Unit
                 <EntityPicker
                   kind="unit"

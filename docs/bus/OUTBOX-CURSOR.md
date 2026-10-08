@@ -1,3 +1,13 @@
+## 2026-10-08T15:35Z · BANK leftover slate — Idvr / company violations / escrow forfeit
+
+FINDING: BANK-F91214 — IdvrPage / CompanyViolationsPage / EscrowForfeitModal Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25874 squash `a6bb49ab58` (BANK-F91213 ifta prep/tax/jurisdiction)
+GUARD: scripts/verify-idvr-coviol-escrow-slate-leftover-chrome.mjs + verify-steps/3976 piggyback
+LIVE PROOF: verify-idvr-coviol-escrow-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3976 piggyback + OUTBOX
+
 ## 2026-10-08T15:20Z · BANK leftover slate — IFTA preparer / step tax / jurisdiction calc
 
 FINDING: BANK-F91213 — IFTAPreparer / IFTAStepTax / Step3JurisdictionCalc Tailwind slate-* → house tokens

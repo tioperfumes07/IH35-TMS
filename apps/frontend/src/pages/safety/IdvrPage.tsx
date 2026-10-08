@@ -149,8 +149,8 @@ export function IdvrPage({ operatingCompanyId }: Props) {
   return (
     <div className="space-y-3" data-testid="idvr-page">
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-        <div className="text-xs font-semibold text-slate-800">Vehicle Inspections (iDVIR / DVIR)</div>
-        <div className="text-xs text-slate-500">
+        <div className="text-xs font-semibold text-[#0F1219]">Vehicle Inspections (iDVIR / DVIR)</div>
+        <div className="text-xs text-[#6B7280]">
           Office queue of driver PWA submissions. Major defects block dispatch until follow-up work orders close.
         </div>
       </div>
@@ -186,7 +186,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         }}
         filterBar={
           <div className="flex flex-wrap items-end gap-3" data-testid="idvr-filters">
-            <div className="text-xs text-slate-600">
+            <div className="text-xs text-[#4B5563]">
               <label htmlFor="idvr-filter-from">From</label>
               <DatePicker
                 id="idvr-filter-from"
@@ -196,7 +196,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
                 data-testid="idvr-filter-from"
               />
             </div>
-            <div className="text-xs text-slate-600">
+            <div className="text-xs text-[#4B5563]">
               <label htmlFor="idvr-filter-to">To</label>
               <DatePicker
                 id="idvr-filter-to"
@@ -208,7 +208,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
             </div>
             {/* C1 PICKER LAW: both were raw-UUID boxes. These are FILTERS, so allowCreate={false} —
                 a filter narrows existing DVIR rows and must not create a driver or a unit. */}
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Driver
               <EntityPicker
                 kind="driver"
@@ -222,7 +222,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
                 dataTestId="idvr-filter-driver"
               />
             </label>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Unit
               <EntityPicker
                 kind="unit"
@@ -236,7 +236,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
                 dataTestId="idvr-filter-unit"
               />
             </label>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Trailer
               <EntityPicker
                 kind="trailer"
@@ -280,7 +280,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
       {!listState.isError && totalCount > pageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="idvr-server-pager">
           <Button size="sm" variant="secondary" disabled={page <= 1 || listQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
-          <span className="text-slate-600">Page {page} of {pageCount} · {totalCount} submissions</span>
+          <span className="text-[#4B5563]">Page {page} of {pageCount} · {totalCount} submissions</span>
           <Button size="sm" variant="secondary" disabled={page >= pageCount || listQuery.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</Button>
         </div>
       ) : null}
