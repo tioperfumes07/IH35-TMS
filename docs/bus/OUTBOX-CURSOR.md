@@ -1,3 +1,13 @@
+## 2026-10-08T22:50Z · BANK leftover slate — InsuranceSummary / InsuranceClaims / InsuranceTab
+
+FINDING: BANK-F91246 — InsuranceSummarySection / InsuranceClaimsReverseSection / InsuranceTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25922 squash `6d321acd18` (BANK-F91245 Complaints/ComplaintTypes/DotViolationTypes)
+GUARD: scripts/verify-ins-summary-claims-tab-slate-leftover-chrome.mjs + verify-steps/3584 piggyback
+LIVE PROOF: verify-ins-summary-claims-tab-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3584 piggyback + OUTBOX
+
 ## 2026-10-08T22:45Z · BANK leftover slate — Complaints / ComplaintTypes / DotViolationTypes
 
 FINDING: BANK-F91245 — ComplaintsPage / ComplaintTypesListPage / DotViolationTypesListPage Tailwind slate-* → house tokens
