@@ -208,7 +208,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
         ) : null}
         <div className="space-y-2">
           {loadPendingRows.map((row) => (
-            <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs">
+            <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs">
               <div className="min-w-0 flex-1">
                 <div className="font-semibold text-[#4B5563]">{formatMoney(row.proposed_amount_cents)}</div>
                 <div className="truncate text-[#4B5563]" title={row.proposed_reason}>
@@ -250,7 +250,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
           {activeFinePolicies.map((policy) => {
             const { owed, deducted, pct, remaining } = policyProgress(policy);
             return (
-              <div key={policy.id} className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1.5 text-xs">
+              <div key={policy.id} className="border-b border-gray-100 bg-gray-50 px-2 py-1.5 text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-gray-900">{formatMoney(remaining)} remaining</span>
                   <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold uppercase text-[#4B5563]">{policy.status}</span>

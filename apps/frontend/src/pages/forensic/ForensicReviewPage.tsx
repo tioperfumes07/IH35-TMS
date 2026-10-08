@@ -228,7 +228,7 @@ export function ForensicReviewPage() {
             const expiresAt = status?.refresh_token_expires_at ? new Date(status.refresh_token_expires_at) : null;
             const expiresInDays = expiresAt ? Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : null;
             return (
-              <div key={company.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-100 p-2 text-xs">
+              <div key={company.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 p-2 text-xs">
                 <div>
                   <p className="font-semibold text-gray-900">{company.short_name ?? company.legal_name}</p>
                   <p className={connected ? "text-green-700" : needsReauth ? "text-amber-700" : "text-red-700"}>
@@ -282,7 +282,7 @@ export function ForensicReviewPage() {
           <p className="text-xs font-semibold text-gray-900">Import batches</p>
           <div className="mt-2 space-y-2">
             {(batchesQuery.data?.batches ?? []).map((batch) => (
-              <div key={batch.id} className="rounded-sm border border-gray-100 p-2 text-xs">
+              <div key={batch.id} className="border-t border-gray-100 p-2 text-xs">
                 {(() => {
                   const live = liveByBatch[batch.id];
                   const entities = live?.entities_imported ?? batch.entities_imported;
@@ -322,7 +322,7 @@ export function ForensicReviewPage() {
                   <div className="h-full bg-slate-1000" style={{ width: batch.status === "in_progress" ? `${pct}%` : batch.status === "completed" ? "100%" : "20%" }} />
                 </div>
                 {batch.status === "in_progress" && live?.recent_errors?.length ? (
-                  <details className="mt-2 rounded-sm border border-red-100 bg-red-50 p-2">
+                  <details className="mt-2 border-t border-red-100 bg-red-50 p-2">
                     <summary className="cursor-pointer text-xs font-semibold text-red-700">Recent errors ({live.recent_errors.length})</summary>
                     <div className="mt-1 space-y-1">
                       {live.recent_errors.map((item) => (
@@ -355,7 +355,7 @@ export function ForensicReviewPage() {
                   </ActionButton>
                 </div>
                 {expandedAuditBatchId === batch.id ? (
-                  <div className="mt-2 max-h-40 overflow-auto rounded-sm border border-gray-100 bg-gray-50 p-2">
+                  <div className="mt-2 max-h-40 overflow-auto bg-gray-50 p-2">
                     <CappedListNotice
                       shown={(auditLogQuery.data?.rows ?? []).length}
                       limit={FORENSIC_AUDIT_LOG_PAGE}

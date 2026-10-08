@@ -155,7 +155,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
             const preview = previewQuery.data;
             const timeline = (timelineQuery.data?.timeline ?? null) as Record<string, unknown> | null;
             return (
-              <div key={id} className="mb-[10px] rounded-sm border border-[#E5E7EB] bg-white px-[14px] py-3">
+              <div key={id} className="mb-[10px] border-t border-[#E5E7EB] bg-white px-[14px] py-3">
                 <button type="button" className="flex w-full items-start gap-[10px] text-left" onClick={() => setOpenId(open ? null : id)}>
                   <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#EEF0F4] text-xs font-semibold text-[#4A5170]">
                     {initials(name)}
@@ -175,7 +175,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                 </button>
 
                 {open ? (
-                  <div className="mt-[10px] rounded-sm border border-[#E5E7EB] bg-[#F8F8F4] px-[11px] py-[9px]">
+                  <div className="mt-[10px] border-t border-[#E5E7EB] bg-[#F8F8F4] px-[11px] py-[9px]">
                     <div className="mb-[7px] text-xs font-semibold uppercase tracking-[0.25px] text-[#6B7280]">
                       Linkage — what posts on approve
                     </div>

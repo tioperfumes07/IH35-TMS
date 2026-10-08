@@ -242,7 +242,7 @@ export function CollectionsPage() {
                 </div>
               </div>
 
-              <div className="grid gap-2 rounded-sm border border-gray-200 p-3 md:grid-cols-3">
+              <div className="grid gap-2 border-t border-gray-200 p-3 md:grid-cols-3">
                 <label className="text-xs text-gray-600">
                   Contact type
                   <SelectCombobox value={contactType} onChange={(event) => setContactType(event.target.value as CollectionContactType)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
@@ -267,7 +267,7 @@ export function CollectionsPage() {
                 </label>
               </div>
 
-              <div className="grid gap-2 rounded-sm border border-gray-200 p-3 md:grid-cols-3">
+              <div className="grid gap-2 border-t border-gray-200 p-3 md:grid-cols-3">
                 <label className="text-xs text-gray-600 md:col-span-2">
                   Resolution
                   <SelectCombobox value={resolution} onChange={(event) => setResolution(event.target.value as CollectionTaskResolution)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
@@ -287,7 +287,7 @@ export function CollectionsPage() {
                 <h3 className="mb-2 text-xs font-semibold">Contact timeline</h3>
                 <div className="space-y-2">
                   {(detailQuery.data?.contacts ?? []).map((contact) => (
-                    <article key={contact.id} className="rounded-sm border border-gray-200 p-2 text-xs">
+                    <article key={contact.id} className="border-t border-gray-200 p-2 text-xs">
                       <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
                         <span className="font-semibold uppercase">{contact.contact_type}</span>
                         <span>{new Date(contact.created_at).toLocaleString()}</span>

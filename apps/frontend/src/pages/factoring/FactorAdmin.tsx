@@ -455,7 +455,7 @@ export function FactorAdmin() {
           </div>
 
           {/* NOA config status */}
-          <div className="rounded-sm border border-gray-100 bg-gray-50 p-2 text-xs">
+          <div className="border-t border-gray-100 bg-gray-50 p-2 text-xs">
             <div className="mb-1 font-medium text-gray-700">NOA / Remit-To Config</div>
             {selectedFactor.noa_stamp_text || selectedFactor.noa_remit_to_name ? (
               <div className="space-y-0.5 text-gray-700">
@@ -471,7 +471,7 @@ export function FactorAdmin() {
 
           {/* LOR history */}
           {(lorQuery.data ?? []).length > 0 ? (
-            <div className="rounded-sm border border-gray-100 p-2 text-xs">
+            <div className="border-t border-gray-100 p-2 text-xs">
               <div className="mb-1 font-medium text-gray-700">Letters of Release</div>
               <div className="space-y-1">
                 {(lorQuery.data ?? []).slice(0, 5).map((lor) => (
@@ -510,7 +510,7 @@ export function FactorAdmin() {
 
           {detailCustomerId ? (
             <div className="grid gap-3 lg:grid-cols-2">
-              <div className="rounded-sm border border-gray-200 p-3">
+              <div className="border-t border-gray-200 p-3">
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                   Assignment History {selectedCustomer ? `- ${selectedCustomer.name}` : ""}
                 </div>
@@ -534,7 +534,7 @@ export function FactorAdmin() {
                 )}
               </div>
 
-              <div className="rounded-sm border border-gray-200 p-3">
+              <div className="border-t border-gray-200 p-3">
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">Batch History</div>
                 {batchesListState.isError ? (
                   <ListErrorState

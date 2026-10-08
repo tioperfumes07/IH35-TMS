@@ -50,15 +50,15 @@ export function HOSStatusSection({ hos, unavailable = false }: { hos: Record<str
         {String(hos.current_status ?? "—").replace(/_/g, " ")} · ELD {String(hos.eld_device_status ?? "—")}
       </p>
       <div className="grid gap-2 text-xs md:grid-cols-3">
-        <div className="rounded-sm border border-gray-100 bg-gray-50 px-3 py-2">
+        <div className="border-t border-gray-100 bg-gray-50 px-3 py-2">
           <div className="font-semibold">Drive remaining</div>
           <div>{fmtMin(drive)}</div>
         </div>
-        <div className="rounded-sm border border-gray-100 bg-gray-50 px-3 py-2">
+        <div className="border-t border-gray-100 bg-gray-50 px-3 py-2">
           <div className="font-semibold">On-duty window</div>
           <div>{fmtMin(onDuty)}</div>
         </div>
-        <div className="rounded-sm border border-gray-100 bg-gray-50 px-3 py-2">
+        <div className="border-t border-gray-100 bg-gray-50 px-3 py-2">
           <div className="font-semibold">Cycle remaining</div>
           <div>{fmtMin(cycle)}</div>
         </div>

@@ -1957,11 +1957,11 @@ export function BookLoadModalV4({
             </div>
           ) : null}
           {submitErrorMessage ? (
-            <div className="mx-3 mt-2 rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">{submitErrorMessage}</div>
+            <div className="mx-3 mt-2 border-t border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">{submitErrorMessage}</div>
           ) : null}
 
           {creditLimitBlock ? (
-            <div className="mx-3 mt-2 rounded-sm border-2 border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs">
+            <div className="mx-3 mt-2 border-y border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs">
               <p className="font-semibold text-[#4B5563]">Credit limit reached</p>
               <p className="mt-0.5 text-[#4B5563]">
                 Open exposure: {formatUsdCents(creditLimitBlock.exposure_cents)} &mdash;{" "}
@@ -1981,7 +1981,7 @@ export function BookLoadModalV4({
 
           {isEditMode ? (
             <div
-              className="mx-3 mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-[11px] text-[#4B5563]"
+              className="mx-3 mt-2 border-y border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-[11px] text-[#4B5563]"
               data-testid="book-load-edit-honesty"
             >
               Editing persisted load details. Only fields you change are saved (partial PATCH — untouched
@@ -2081,7 +2081,7 @@ export function BookLoadModalV4({
 
           {gateBanner ? (
             <div
-              className={`mx-3 mt-2 rounded border px-3 py-2 text-xs ${
+              className={`mx-3 mt-2 border-y px-3 py-2 text-xs ${
                 gateBanner.type === "advisory"
                   ? "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]"
                   : "border-red-300 bg-red-50 text-red-900"
@@ -2437,7 +2437,7 @@ export function BookLoadModalV4({
                         no operator control (duplicates Trailer type). Never written from create. */}
                     <input type="hidden" {...form.register("catalog_load_type_id")} />
 
-                  <div className="overflow-x-auto rounded-sm border border-gray-200">
+                  <div className="overflow-x-auto border-t border-b border-gray-200">
                     <table className="w-full border-collapse text-xs">
                       <tbody>
                         <tr className="border-b border-gray-100">
@@ -2520,7 +2520,7 @@ export function BookLoadModalV4({
                       <div data-testid="section-a-extra-rates" className="space-y-1">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Per-stop extra rates</p>
                         {stopsForExtraRates.map((stopRow, i) => (
-                          <div key={i} className="rounded-sm border border-gray-200 p-1">
+                          <div key={i} className="border-b border-gray-200 p-1">
                             <div className="text-xs font-semibold text-gray-600">
                               Stop {i + 1} · {stopRow?.stop_type === "delivery" ? "Delivery" : "Pickup"}
                             </div>
@@ -2543,7 +2543,7 @@ export function BookLoadModalV4({
                         <p className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Lumper responsibility</p>
                         {lumperProvidersQuery.isError ? <ListErrorBanner message="Could not load lumper providers." onRetry={() => void lumperProvidersQuery.refetch()} /> : null}
                         {withLumper.map(({ s, i }) => (
-                          <div key={i} className="grid grid-cols-1 items-end gap-2 rounded-sm border border-gray-200 p-1 md:grid-cols-4">
+                          <div key={i} className="grid grid-cols-1 items-end gap-2 border-b border-gray-200 p-1 md:grid-cols-4">
                             <div className="text-xs font-semibold text-gray-600">
                               Stop {i + 1} · {s?.stop_type === "delivery" ? "Delivery" : "Pickup"}
                             </div>
