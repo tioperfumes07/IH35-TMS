@@ -20,8 +20,8 @@ export function HOSStatusSection({ hos, unavailable = false }: { hos: Record<str
   if (!hos) {
     return (
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="mb-2 text-xs font-semibold text-slate-900">HOS status</h2>
-        <p className={`text-xs ${unavailable ? "text-red-700" : "text-slate-500"}`}>
+        <h2 className="mb-2 text-xs font-semibold text-[#0F1219]">HOS status</h2>
+        <p className={`text-xs ${unavailable ? "text-red-700" : "text-[#6B7280]"}`}>
           {unavailable ? "ELD / HOS data could not be loaded." : "ELD / HOS data not available for this driver."}
         </p>
       </section>
@@ -38,7 +38,7 @@ export function HOSStatusSection({ hos, unavailable = false }: { hos: Record<str
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-900">
+      <h2 className="mb-2 flex items-center gap-2 text-xs font-semibold text-[#0F1219]">
         HOS status
         {eld ? (
           <span className="rounded-sm bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-[0.3px] text-emerald-700">
@@ -46,7 +46,7 @@ export function HOSStatusSection({ hos, unavailable = false }: { hos: Record<str
           </span>
         ) : null}
       </h2>
-      <p className="mb-2 text-xs capitalize text-slate-700">
+      <p className="mb-2 text-xs capitalize text-[#1F2A44]">
         {String(hos.current_status ?? "—").replace(/_/g, " ")} · ELD {String(hos.eld_device_status ?? "—")}
       </p>
       <div className="grid gap-2 text-xs md:grid-cols-3">
@@ -64,9 +64,9 @@ export function HOSStatusSection({ hos, unavailable = false }: { hos: Record<str
         </div>
       </div>
       {eld?.polled_at ? (
-        <p className="mt-2 text-xs text-slate-500">Certified ELD polled {String(eld.polled_at)}</p>
+        <p className="mt-2 text-xs text-[#6B7280]">Certified ELD polled {String(eld.polled_at)}</p>
       ) : hos.last_log_update_at ? (
-        <p className="mt-2 text-xs text-slate-500">Last log {String(hos.last_log_update_at)}</p>
+        <p className="mt-2 text-xs text-[#6B7280]">Last log {String(hos.last_log_update_at)}</p>
       ) : null}
     </section>
   );

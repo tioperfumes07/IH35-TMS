@@ -24,20 +24,20 @@ export function DriverAssignmentHistorySection({
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="dp-section-assignment-history" data-dp-assignments="1">
-      <h2 className="mb-1 text-xs font-semibold text-slate-900">Assignment history</h2>
-      <p className="mb-2 text-xs text-slate-600">Units this driver held (telematics assignment window — unit at time).</p>
+      <h2 className="mb-1 text-xs font-semibold text-[#0F1219]">Assignment history</h2>
+      <p className="mb-2 text-xs text-[#4B5563]">Units this driver held (telematics assignment window — unit at time).</p>
       {q.isError ? (
         <ListErrorState title="Couldn't load assignment history" status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />
       ) : null}
-      {q.isLoading ? <p className="text-xs text-slate-500">Loading…</p> : null}
+      {q.isLoading ? <p className="text-xs text-[#6B7280]">Loading…</p> : null}
       {!q.isLoading && !q.isError && rows.length === 0 ? (
-        <p className="text-xs text-slate-500">No assignment history in the last 30 days.</p>
+        <p className="text-xs text-[#6B7280]">No assignment history in the last 30 days.</p>
       ) : null}
       <ul className="divide-y divide-gray-100">
         {rows.slice(0, 40).map((row) => (
-          <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-xs text-slate-700">
+          <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-xs text-[#1F2A44]">
             <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" />
-            <span className="text-slate-500">
+            <span className="text-[#6B7280]">
               {formatDateTimeUS(row.started_at)} → {row.ended_at ? formatDateTimeUS(row.ended_at) : "open"}
               {row.source ? ` · ${row.source}` : ""}
               {row.is_default ? " · default" : ""}

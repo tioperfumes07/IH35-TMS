@@ -25,12 +25,12 @@ export function CurrentAssignmentSection({
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="mb-2 text-xs font-semibold text-slate-900">
+      <h2 className="mb-2 text-xs font-semibold text-[#0F1219]">
         Current assignment
       </h2>
-      <div className="grid gap-3 text-xs text-slate-700 md:grid-cols-3">
+      <div className="grid gap-3 text-xs text-[#1F2A44] md:grid-cols-3">
         <div>
-          <div className="font-semibold text-slate-800">Default truck</div>
+          <div className="font-semibold text-[#0F1219]">Default truck</div>
           {def ? (
             <EntityLinkOrTombstone
               kind="unit"
@@ -43,7 +43,7 @@ export function CurrentAssignmentSection({
           )}
         </div>
         <div>
-          <div className="font-semibold text-slate-800">Currently driving</div>
+          <div className="font-semibold text-[#0F1219]">Currently driving</div>
           {cur ? (
             <>
               <EntityLinkOrTombstone
@@ -54,12 +54,12 @@ export function CurrentAssignmentSection({
                 data-testid="driver-profile-current-unit-link"
               />
               {cur.samsara_logged_in_at ? (
-                <div className="text-slate-500">
+                <div className="text-[#6B7280]">
                   Samsara {String(cur.samsara_logged_in_at)}
                 </div>
               ) : null}
               {cur.source === "dispatch_load" ? (
-                <div className="text-slate-500" data-testid="driver-profile-current-unit-dispatch-source">
+                <div className="text-[#6B7280]" data-testid="driver-profile-current-unit-dispatch-source">
                   Current dispatch assignment
                 </div>
               ) : null}
@@ -69,7 +69,7 @@ export function CurrentAssignmentSection({
           )}
         </div>
         <div>
-          <div className="font-semibold text-slate-800">Current load</div>
+          <div className="font-semibold text-[#0F1219]">Current load</div>
           {load ? (
             <>
               <EntityLinkOrTombstone
@@ -86,7 +86,7 @@ export function CurrentAssignmentSection({
         </div>
       </div>
       {onSetDefault ? (
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-[#6B7280]">
           Set default truck from fleet unit profile or POST default-truck for
           driver{" "}
           <EntityLinkOrTombstone
