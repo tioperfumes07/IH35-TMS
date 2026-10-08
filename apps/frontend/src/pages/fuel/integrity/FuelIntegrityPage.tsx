@@ -30,7 +30,7 @@ import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTo
 import { formatDateTimeUS, formatDateUS } from "../../../lib/formatDate";
 import { formatUsdCentsTable, formatNumberTable } from "../../../lib/money";
 
-const LINK = "text-slate-700 hover:underline";
+const LINK = "text-[#1F2A44] hover:underline";
 
 function fraudBadgeVariant(value: FraudClassification): "crit" | "warn" | "positive" | "neutral" {
   if (value === "finding") return "crit";
@@ -89,9 +89,9 @@ export function FuelIntegrityPage() {
       label: "Purchase?",
       render: (row) =>
         row.is_purchase ? (
-          <span className="text-slate-700">Yes</span>
+          <span className="text-[#1F2A44]">Yes</span>
         ) : (
-          <span className="text-slate-600" title={row.not_purchase_reason ?? undefined}>
+          <span className="text-[#4B5563]" title={row.not_purchase_reason ?? undefined}>
             No — {notPurchaseReasonLabel(row.not_purchase_reason)}
           </span>
         ),
@@ -142,7 +142,7 @@ export function FuelIntegrityPage() {
         row.card_unit_id ? (
           <EntityLinkOrTombstone kind="unit" id={row.card_unit_id} name={row.card_unit_number} noun="Unit" className={LINK} />
         ) : (
-          <span className="text-slate-600">{row.card_unit_number ?? "—"}</span>
+          <span className="text-[#4B5563]">{row.card_unit_number ?? "—"}</span>
         ),
     },
     {
@@ -157,8 +157,8 @@ export function FuelIntegrityPage() {
             {row.candidates.map((c, i) => (
               <span key={`${c.unit_id}-${c.at}`}>
                 <EntityLinkOrTombstone kind="unit" id={c.unit_id} name={c.unit_number} noun="Unit" className={LINK} />
-                <span className="text-slate-500">@{Math.round(c.metres)}m</span>
-                {i < row.candidates.length - 1 ? <span className="text-slate-400">, </span> : null}
+                <span className="text-[#6B7280]">@{Math.round(c.metres)}m</span>
+                {i < row.candidates.length - 1 ? <span className="text-[#6B7280]">, </span> : null}
               </span>
             ))}
           </span>
@@ -263,7 +263,7 @@ export function FuelIntegrityPage() {
             <ListErrorBanner onRetry={() => void derivationsQuery.refetch()} message="Derived pump time/state could not be loaded." />
           ) : (
             <>
-              <p className="mb-2 text-xs text-slate-600" data-testid="fuel-integrity-derivation-summary">
+              <p className="mb-2 text-xs text-[#4B5563]" data-testid="fuel-integrity-derivation-summary">
                 {derivations
                   ? `Of ${derivations.summary.date_only_rows} date-only row(s): ${derivations.summary.with_time} with a derived time, ` +
                     `${derivations.summary.with_state} with a derived state, ${derivations.summary.none} with neither. ` +
