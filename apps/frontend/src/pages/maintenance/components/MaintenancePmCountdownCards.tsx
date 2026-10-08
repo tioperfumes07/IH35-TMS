@@ -83,11 +83,11 @@ export function MaintenancePmCountdownCards({ rows, loading = false, compact = f
   if (compact) {
     return (
       <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
-        <div className="bg-gray-50 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+        <div className="bg-gray-50 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
           PM Countdown
         </div>
         {loading ? (
-          <div className="px-2 py-1.5 text-xs text-slate-500">Loading...</div>
+          <div className="px-2 py-1.5 text-xs text-[#6B7280]">Loading...</div>
         ) : (
           <div className="flex flex-col">
             {CARD_TYPES.map((card) => {
@@ -95,11 +95,11 @@ export function MaintenancePmCountdownCards({ rows, loading = false, compact = f
               return (
                 <div key={card.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0" data-testid={`pm-due-card-${card.id}`}>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs uppercase tracking-wide text-slate-500">{card.label}</span>
-                    <span className="text-xs font-semibold text-slate-900">{dueCount}</span>
+                    <span className="text-xs uppercase tracking-wide text-[#6B7280]">{card.label}</span>
+                    <span className="text-xs font-semibold text-[#0F1219]">{dueCount}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500" data-testid={`pm-due-source-${card.id}`}>{formatCountdown(nextRow)}</span>
+                    <span className="text-[#6B7280]" data-testid={`pm-due-source-${card.id}`}>{formatCountdown(nextRow)}</span>
                     {overdueCount > 0 ? <span className="text-red-600">{overdueCount} overdue</span> : null}
                   </div>
                 </div>
@@ -125,9 +125,9 @@ export function MaintenancePmCountdownCards({ rows, loading = false, compact = f
             const { dueCount, overdueCount, nextRow } = pmCardMetrics(rows, card);
             return (
                 <div key={card.id} className="border-t border-gray-100 px-3 py-2 first:border-t-0" data-testid={`pm-due-card-${card.id}`}>
-                <div className="text-xs uppercase tracking-wide text-slate-500">{card.label}</div>
-                <div className="mt-1 text-page-title font-semibold text-slate-900">{dueCount}</div>
-                <div className="text-xs text-slate-600" data-testid={`pm-due-source-${card.id}`}>{formatCountdown(nextRow)}</div>
+                <div className="text-xs uppercase tracking-wide text-[#6B7280]">{card.label}</div>
+                <div className="mt-1 text-page-title font-semibold text-[#0F1219]">{dueCount}</div>
+                <div className="text-xs text-[#4B5563]" data-testid={`pm-due-source-${card.id}`}>{formatCountdown(nextRow)}</div>
                 {overdueCount > 0 ? (
                   <div className="mt-1 text-xs text-red-600">{overdueCount} overdue</div>
                 ) : null}

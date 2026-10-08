@@ -1,3 +1,13 @@
+## 2026-10-08T16:20Z · BANK leftover slate — PM countdown / in-transit triage / fault drafts
+
+FINDING: BANK-F91217 — MaintenancePmCountdownCards / InTransitTriageBand / FaultDraftsPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25878 squash `9091aabfb0` (BANK-F91216 home fleet/drvday/kpi)
+GUARD: scripts/verify-maint-pm-transit-fault-slate-leftover-chrome.mjs + verify-steps/2020 piggyback
+LIVE PROOF: verify-maint-pm-transit-fault-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 2020 piggyback + OUTBOX
+
 ## 2026-10-08T16:05Z · BANK leftover slate — fleet snapshot / driver day summary / home KPI card
 
 FINDING: BANK-F91216 — FleetSnapshotPanel / DriverDaySummaryCard / HomeKpiCard Tailwind slate-* → house tokens
