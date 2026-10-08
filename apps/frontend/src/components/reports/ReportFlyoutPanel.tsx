@@ -10,19 +10,19 @@ type Props = {
 export function ReportFlyoutPanel({ title, items, onSelect, footer }: Props) {
   return (
     <div className="min-w-[260px]">
-      <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.04em] text-slate-500">{title}</div>
+      <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">{title}</div>
       {items.map((item) => (
         <button
           key={item.id}
           type="button"
-          className="block w-full border-l-[3px] border-l-transparent px-3 py-2 text-left hover:border-l-[#1F2A44] hover:bg-slate-50"
+          className="block w-full border-l-[3px] border-l-transparent px-3 py-2 text-left hover:border-l-[#1F2A44] hover:bg-[#F7F8FA]"
           onClick={() => onSelect(item.id)}
         >
-          <div className="text-xs font-semibold text-slate-700">{item.label}</div>
-          {item.hint ? <div className="text-xs text-slate-500">{item.hint}</div> : null}
+          <div className="text-xs font-semibold text-[#1F2A44]">{item.label}</div>
+          {item.hint ? <div className="text-xs text-[#6B7280]">{item.hint}</div> : null}
         </button>
       ))}
-      {footer ? <div className="border-t border-slate-200 px-3 py-2 text-xs text-slate-500">{footer}</div> : null}
+      {footer ? <div className="border-t border-[#E5E7EB] px-3 py-2 text-xs text-[#6B7280]">{footer}</div> : null}
     </div>
   );
 }

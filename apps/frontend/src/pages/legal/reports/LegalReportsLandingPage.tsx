@@ -24,8 +24,8 @@ function countOrNull(raw: unknown): number | null {
 // Locked palette (§7): no red/orange/yellow section bands — severity is distinguished by neutral
 // slate shade intensity only. Red stays reserved for delete/Accident.
 const SEVERITY_STYLES: Record<string, string> = {
-  critical: "bg-slate-800 text-white",
-  high: "bg-slate-300 text-[#0F1219]",
+  critical: "bg-[#0F1219] text-white",
+  high: "bg-[#E5E7EB] text-[#0F1219]",
   medium: "bg-[#E5E7EB] text-[#1F2A44]",
   low: "bg-[#F7F8FA] text-[#1F2A44]",
 };
