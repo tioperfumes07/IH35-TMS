@@ -1,3 +1,13 @@
+## 2026-10-08T06:10Z · BANK leftover slate — data import / observability / Samsara
+
+FINDING: BANK-F91168 — DataImportPage / ObservabilityPage / SamsaraIntegrationPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25821 squash `313bc9b0ed` (BANK-F91167 HOS/safety/fine)
+GUARD: scripts/verify-admin-import-obs-slate-leftover-chrome.mjs + verify-steps/1036 piggyback
+LIVE PROOF: verify-admin-import-obs-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 admin/integration surfaces + refuse guard + 1036 piggyback + OUTBOX
+
 ## 2026-10-08T06:02Z · BANK leftover slate — HOS viewer / driver safety cards / fine lifecycle
 
 FINDING: BANK-F91167 — HosViewerSection / DriverSafetyCards / FineLifecycleActions Tailwind slate-* → house tokens

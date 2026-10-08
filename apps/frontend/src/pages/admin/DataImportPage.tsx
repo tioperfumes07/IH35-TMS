@@ -164,20 +164,20 @@ export function DataImportPage() {
     <div className="space-y-6">
       <PageHeader title="Production data import" subtitle="Owner / Administrator — CSV wizard" />
 
-      <div className="flex flex-wrap gap-2 text-xs text-slate-600">
+      <div className="flex flex-wrap gap-2 text-xs text-[#4B5563]">
         {[1, 2, 3, 4, 5].map((n) => (
           <span
             key={n}
-            className={`rounded-full px-2 py-1 ${step === n ? "bg-slate-100 font-semibold text-slate-700" : "bg-slate-100"}`}
+            className={`rounded-full px-2 py-1 ${step === n ? "bg-[#F7F8FA] font-semibold text-[#4B5563]" : "bg-[#F7F8FA]"}`}
           >
             Step {n}
           </span>
         ))}
       </div>
 
-      <p className="text-xs text-slate-600">
+      <p className="text-xs text-[#4B5563]">
         Import curated production CSVs without shell access. Read the{" "}
-        <a className="text-slate-700 underline" href={helpUrlFromRel("docs/seed-real-data-guide.md")} target="_blank" rel="noreferrer">
+        <a className="text-[#4B5563] underline" href={helpUrlFromRel("docs/seed-real-data-guide.md")} target="_blank" rel="noreferrer">
           seed real data guide
         </a>{" "}
         for formatting rules. Uploads use the same validation as <span className="font-mono text-xs">npm run seed:from-csv</span>.
@@ -188,11 +188,11 @@ export function DataImportPage() {
       ) : null}
 
       {step === 1 ? (
-        <section className="space-y-3 rounded-sm border border-slate-200 bg-white p-4">
-          <h2 className="text-page-title font-semibold text-slate-900">1. Entity type</h2>
+        <section className="space-y-3 rounded-sm border border-[#E5E7EB] bg-white p-4">
+          <h2 className="text-page-title font-semibold text-[#0F1219]">1. Entity type</h2>
           <div className="space-y-3">
             {ENTITIES.map((opt) => (
-              <label key={opt.slug} className="flex cursor-pointer gap-3 rounded-sm border border-slate-100 p-3 hover:bg-slate-50">
+              <label key={opt.slug} className="flex cursor-pointer gap-3 rounded-sm border border-[#E5E7EB] p-3 hover:bg-[#F7F8FA]">
                 <input
                   type="radio"
                   className="mt-1"
@@ -201,8 +201,8 @@ export function DataImportPage() {
                   onChange={() => setEntity(opt.slug)}
                 />
                 <div>
-                  <div className="font-medium text-slate-900">{opt.title}</div>
-                  <div className="text-xs text-slate-600">{opt.description}</div>
+                  <div className="font-medium text-[#0F1219]">{opt.title}</div>
+                  <div className="text-xs text-[#4B5563]">{opt.description}</div>
                 </div>
               </label>
             ))}
@@ -218,13 +218,13 @@ export function DataImportPage() {
       ) : null}
 
       {step === 2 ? (
-        <section className="space-y-4 rounded-sm border border-slate-200 bg-white p-4">
-          <h2 className="text-page-title font-semibold text-slate-900">2. Upload CSV</h2>
+        <section className="space-y-4 rounded-sm border border-[#E5E7EB] bg-white p-4">
+          <h2 className="text-page-title font-semibold text-[#0F1219]">2. Upload CSV</h2>
           {selected.companyRequired ? (
             <label className="block text-xs">
-              <span className="font-medium text-slate-800">Operating company</span>
+              <span className="font-medium text-[#1F2A44]">Operating company</span>
               <SelectCombobox
-                className="mt-1 block w-full max-w-xs rounded-sm border border-slate-300 h-9 px-2 text-xs"
+                className="mt-1 block w-full max-w-xs rounded-sm border border-[#E5E7EB] h-9 px-2 text-xs"
                 value={companyCode}
                 onChange={(e) => setCompanyCode(e.target.value as "TRK" | "TRANSP")}
               >
@@ -233,14 +233,14 @@ export function DataImportPage() {
               </SelectCombobox>
             </label>
           ) : (
-            <div className="space-y-2 text-xs text-slate-600">
+            <div className="space-y-2 text-xs text-[#4B5563]">
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={applyCompanyFilter} onChange={(e) => setApplyCompanyFilter(e.target.checked)} />
                 Limit rows to a single operating company (optional query filter)
               </label>
               {applyCompanyFilter ? (
                 <SelectCombobox
-                  className="block max-w-xs rounded-sm border border-slate-300 h-9 px-2 text-xs"
+                  className="block max-w-xs rounded-sm border border-[#E5E7EB] h-9 px-2 text-xs"
                   value={companyCode}
                   onChange={(e) => setCompanyCode(e.target.value as "TRK" | "TRANSP")}
                 >
@@ -248,7 +248,7 @@ export function DataImportPage() {
                   <option value="TRANSP">TRANSP</option>
                 </SelectCombobox>
               ) : (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[#6B7280]">
                   Row-scoped CSVs carry <span className="font-mono">company_code</span> per line. Leave the box off to import every row in the file.
                 </p>
               )}
@@ -256,12 +256,12 @@ export function DataImportPage() {
           )}
 
           <div className="text-xs">
-            <a className="font-medium text-slate-700 underline" href={dataImportTemplateUrl(entity)} target="_blank" rel="noreferrer">
+            <a className="font-medium text-[#4B5563] underline" href={dataImportTemplateUrl(entity)} target="_blank" rel="noreferrer">
               Download CSV template ({entity})
             </a>
           </div>
 
-          <label className="flex min-h-[140px] cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-slate-300 bg-slate-50 p-6 text-center text-xs text-slate-600 hover:bg-slate-100">
+          <label className="flex min-h-[140px] cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-[#E5E7EB] bg-[#F7F8FA] p-6 text-center text-xs text-[#4B5563] hover:bg-[#F7F8FA]">
             <input
               type="file"
               accept=".csv,text/csv"
@@ -271,12 +271,12 @@ export function DataImportPage() {
                 setFile(f ?? null);
               }}
             />
-            <span className="font-medium text-slate-800">Drop a CSV here or click to browse</span>
-            {file ? <span className="mt-2 font-mono text-xs text-slate-700">{file.name}</span> : <span className="mt-2 text-xs">Required — UTF-8 CSV matching the template headers</span>}
+            <span className="font-medium text-[#1F2A44]">Drop a CSV here or click to browse</span>
+            {file ? <span className="mt-2 font-mono text-xs text-[#4B5563]">{file.name}</span> : <span className="mt-2 text-xs">Required — UTF-8 CSV matching the template headers</span>}
           </label>
 
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="rounded-sm border border-slate-300 px-3 py-2 text-xs" onClick={() => setStep(1)}>
+            <button type="button" className="rounded-sm border border-[#E5E7EB] px-3 py-2 text-xs" onClick={() => setStep(1)}>
               Back
             </button>
             <button
@@ -292,8 +292,8 @@ export function DataImportPage() {
       ) : null}
 
       {step === 3 && preview ? (
-        <section className="space-y-4 rounded-sm border border-slate-200 bg-white p-4">
-          <h2 className="text-page-title font-semibold text-slate-900">3. Preview</h2>
+        <section className="space-y-4 rounded-sm border border-[#E5E7EB] bg-white p-4">
+          <h2 className="text-page-title font-semibold text-[#0F1219]">3. Preview</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-sm border border-emerald-100 bg-emerald-50 p-3 text-xs">
               <div className="font-semibold text-emerald-900">Valid rows</div>
@@ -307,14 +307,14 @@ export function DataImportPage() {
 
           {preview.sample_valid.length ? (
             <div>
-              <h3 className="text-xs font-semibold text-slate-800">Sample valid rows</h3>
-              <pre className="mt-2 max-h-48 overflow-auto rounded-sm bg-slate-900 p-3 text-xs text-slate-100">{JSON.stringify(preview.sample_valid, null, 2)}</pre>
+              <h3 className="text-xs font-semibold text-[#1F2A44]">Sample valid rows</h3>
+              <pre className="mt-2 max-h-48 overflow-auto rounded-sm bg-[#0F1219] p-3 text-xs text-[#F7F8FA]">{JSON.stringify(preview.sample_valid, null, 2)}</pre>
             </div>
           ) : null}
 
           {preview.all_invalid.length ? (
             <div>
-              <h3 className="text-xs font-semibold text-slate-800">All invalid rows</h3>
+              <h3 className="text-xs font-semibold text-[#1F2A44]">All invalid rows</h3>
               <ul className="mt-2 max-h-56 list-disc space-y-1 overflow-auto pl-5 text-xs text-red-800">
                 {preview.all_invalid.map((row) => (
                   <li key={row.row}>
@@ -327,8 +327,8 @@ export function DataImportPage() {
 
           {preview.errors.length ? (
             <div>
-              <h3 className="text-xs font-semibold text-slate-800">Row messages</h3>
-              <ul className="mt-2 max-h-40 list-disc space-y-1 overflow-auto pl-5 text-xs text-slate-700">
+              <h3 className="text-xs font-semibold text-[#1F2A44]">Row messages</h3>
+              <ul className="mt-2 max-h-40 list-disc space-y-1 overflow-auto pl-5 text-xs text-[#4B5563]">
                 {preview.errors.slice(0, 50).map((e, i) => (
                   <li key={`${e.row}-${i}`}>
                     Row {e.row}: {e.message}
@@ -340,7 +340,7 @@ export function DataImportPage() {
           ) : null}
 
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="rounded-sm border border-slate-300 px-3 py-2 text-xs" onClick={() => setStep(2)}>
+            <button type="button" className="rounded-sm border border-[#E5E7EB] px-3 py-2 text-xs" onClick={() => setStep(2)}>
               Back
             </button>
             <button
@@ -364,7 +364,7 @@ export function DataImportPage() {
             review your CSV for idempotency before continuing.
           </p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="rounded-sm border border-slate-300 bg-white px-3 py-2 text-xs" onClick={() => setStep(3)}>
+            <button type="button" className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs" onClick={() => setStep(3)}>
               Back
             </button>
             <button
@@ -380,18 +380,18 @@ export function DataImportPage() {
       ) : null}
 
       {step === 5 ? (
-        <section className="space-y-4 rounded-sm border border-slate-200 bg-white p-4">
-          <h2 className="text-page-title font-semibold text-slate-900">5. Result</h2>
+        <section className="space-y-4 rounded-sm border border-[#E5E7EB] bg-white p-4">
+          <h2 className="text-page-title font-semibold text-[#0F1219]">5. Result</h2>
           {commitResult ? (
             <>
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-sm border border-slate-100 bg-slate-50 p-3 text-xs">
+                <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">
                   <div className="font-semibold">Inserted</div>
-                  <div className="text-page-title font-bold text-slate-900">{commitResult.inserted_rows}</div>
+                  <div className="text-page-title font-bold text-[#0F1219]">{commitResult.inserted_rows}</div>
                 </div>
-                <div className="rounded-sm border border-slate-100 bg-slate-50 p-3 text-xs">
+                <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">
                   <div className="font-semibold">Skipped</div>
-                  <div className="text-page-title font-bold text-slate-900">{commitResult.skipped_rows}</div>
+                  <div className="text-page-title font-bold text-[#0F1219]">{commitResult.skipped_rows}</div>
                 </div>
               </div>
               {commitResult.errors.length ? (
@@ -417,7 +417,7 @@ export function DataImportPage() {
             <Link className="rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1F2A44]" to={POST_IMPORT_LINKS[entity].to}>
               {POST_IMPORT_LINKS[entity].label}
             </Link>
-            <button type="button" className="rounded-sm border border-slate-300 px-3 py-2 text-xs" onClick={resetWizard}>
+            <button type="button" className="rounded-sm border border-[#E5E7EB] px-3 py-2 text-xs" onClick={resetWizard}>
               Start over
             </button>
           </div>
