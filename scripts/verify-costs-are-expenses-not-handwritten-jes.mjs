@@ -68,6 +68,10 @@ const DOCUMENT_ENGINE_EXEMPT_SOURCE_TYPES = new Set([
   // the moment any seat touches apps/backend/src/accounting/ (measured live 2026-10-01: 3 USMCA
   // bill JEs blocked money-pr-local-gate on a read-only WO linkage PR).
   "bill",
+  // ROUND 441.19 — a bank-feed CATEGORIZE line is a journal entry by design: CHAIN-05 row A (money OUT to an expense account
+  // → Dr expense / Cr bank, docs/specs/qbo-parity/CHAIN-05-BANK-FEED-POSTING-DESIGN.md §3, §10.2 "Categorize = new JE").
+  // The bank line is its source document. verify-bank-categorize-posts-chain05-matrix.mjs checks its shape.
+  "bank_categorization",
   // Interest earned on Finish is income (Dr bank / Cr income) — never debits 5xxx/6xxx, so it does
   // not hit invariant 1. Service charge MUST be an accounting.expenses document (Lead ruling
   // 2026-10-01 17:20Z); do NOT exempt bank_reconciliation — a bare cost JE from the old poster is
