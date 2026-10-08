@@ -116,7 +116,7 @@ export function RandomPoolDashboard({ companyId }: Props) {
         sortable: true,
         render: (draw) => (
           <>
-            {draw.drug_drawn_count} <span className="text-slate-400">({drugPct(draw)})</span>
+            {draw.drug_drawn_count} <span className="text-[#6B7280]">({drugPct(draw)})</span>
           </>
         ),
       },
@@ -126,7 +126,7 @@ export function RandomPoolDashboard({ companyId }: Props) {
         sortable: true,
         render: (draw) => (
           <>
-            {draw.alcohol_drawn_count} <span className="text-slate-400">({alcoholPct(draw)})</span>
+            {draw.alcohol_drawn_count} <span className="text-[#6B7280]">({alcoholPct(draw)})</span>
           </>
         ),
       },
@@ -135,7 +135,7 @@ export function RandomPoolDashboard({ companyId }: Props) {
         label: "FMCSA",
         render: (draw) =>
           meetsMinimums(draw) ? (
-            <span className="text-slate-700">✓</span>
+            <span className="text-[#4B5563]">✓</span>
           ) : (
             <span className="text-red-700">✗</span>
           ),
@@ -165,15 +165,15 @@ export function RandomPoolDashboard({ companyId }: Props) {
     <section className="rounded-lg border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xs font-semibold text-slate-900">Random Pool Draws</h2>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <h2 className="text-xs font-semibold text-[#0F1219]">Random Pool Draws</h2>
+          <p className="mt-0.5 text-xs text-[#6B7280]">
             FMCSA §382.305 — 10% drug / 10% alcohol quarterly minimum
           </p>
         </div>
         <button
           type="button"
           disabled={drawMutation.isPending}
-          className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-40"
+          className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA] disabled:opacity-40"
           onClick={() =>
             drawMutation.mutate({ companyId, generation: companyGenerationRef.current })
           }
@@ -191,35 +191,35 @@ export function RandomPoolDashboard({ companyId }: Props) {
 
       {drawMutation.isSuccess &&
       drawMutation.variables?.generation === companyGenerationRef.current ? (
-        <p className="mt-2 text-xs text-slate-700">Draw complete — test records created.</p>
+        <p className="mt-2 text-xs text-[#4B5563]">Draw complete — test records created.</p>
       ) : null}
 
       {/* ── Summary tile for most recent draw ──────────────────────────── */}
       {mostRecent ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-4">
           <div className="rounded-sm border border-gray-100 p-3 text-center">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Pool Size</div>
-            <div className="mt-1 text-page-title font-semibold text-slate-900">{mostRecent.pool_size}</div>
+            <div className="text-xs uppercase tracking-wide text-[#6B7280]">Pool Size</div>
+            <div className="mt-1 text-page-title font-semibold text-[#0F1219]">{mostRecent.pool_size}</div>
           </div>
           <div className="rounded-sm border border-gray-100 p-3 text-center">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Drug Selected</div>
-            <div className="mt-1 text-page-title font-semibold text-slate-900">
+            <div className="text-xs uppercase tracking-wide text-[#6B7280]">Drug Selected</div>
+            <div className="mt-1 text-page-title font-semibold text-[#0F1219]">
               {mostRecent.drug_drawn_count}
-              <span className="ml-1 text-xs font-normal text-slate-500">{drugPct(mostRecent)}</span>
+              <span className="ml-1 text-xs font-normal text-[#6B7280]">{drugPct(mostRecent)}</span>
             </div>
           </div>
           <div className="rounded-sm border border-gray-100 p-3 text-center">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Alcohol Selected</div>
-            <div className="mt-1 text-page-title font-semibold text-slate-900">
+            <div className="text-xs uppercase tracking-wide text-[#6B7280]">Alcohol Selected</div>
+            <div className="mt-1 text-page-title font-semibold text-[#0F1219]">
               {mostRecent.alcohol_drawn_count}
-              <span className="ml-1 text-xs font-normal text-slate-500">{alcoholPct(mostRecent)}</span>
+              <span className="ml-1 text-xs font-normal text-[#6B7280]">{alcoholPct(mostRecent)}</span>
             </div>
           </div>
           <div className="rounded-sm border border-gray-100 p-3 text-center">
-            <div className="text-xs uppercase tracking-wide text-slate-500">FMCSA Min.</div>
+            <div className="text-xs uppercase tracking-wide text-[#6B7280]">FMCSA Min.</div>
             <div className="mt-1">
               {meetsMinimums(mostRecent) ? (
-                <span className="rounded-sm bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700">Met</span>
+                <span className="rounded-sm bg-[#F7F8FA] px-2 py-1 text-xs font-medium text-[#4B5563]">Met</span>
               ) : (
                 <span className="rounded-sm bg-red-50 px-2 py-1 text-xs font-medium text-red-800">Below Min.</span>
               )}
@@ -230,7 +230,7 @@ export function RandomPoolDashboard({ companyId }: Props) {
 
       {/* ── Draw history table ────────────────────────────────────────────── */}
       <div className="mt-4">
-        <h3 className="mb-2 text-xs font-medium text-slate-700">Draw History</h3>
+        <h3 className="mb-2 text-xs font-medium text-[#4B5563]">Draw History</h3>
         {drawsQ.isError ? (
           <ListErrorState status={0} message="Failed to load draw history." onRetry={() => void drawsQ.refetch()} />
         ) : (

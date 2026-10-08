@@ -89,7 +89,7 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
     label: "Driver",
     sortable: true,
     render: (row) => (
-      <span className={row.driver_name ? "" : "text-slate-400 italic"}>
+      <span className={row.driver_name ? "" : "text-[#6B7280] italic"}>
         <EntityLink
           kind="driver"
           id={row.driver_id}
@@ -104,7 +104,7 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
     label: "City",
     sortable: true,
     render: (row) => (
-      <span className={row.city ? "" : "text-slate-400"} title={row.formatted_location ?? undefined}>
+      <span className={row.city ? "" : "text-[#6B7280]"} title={row.formatted_location ?? undefined}>
         {row.city ?? "—"}
       </span>
     ),
@@ -113,7 +113,7 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
     key: "state",
     label: "State",
     sortable: true,
-    render: (row) => <span className={row.state ? "" : "text-slate-400"}>{row.state ?? "—"}</span>,
+    render: (row) => <span className={row.state ? "" : "text-[#6B7280]"}>{row.state ?? "—"}</span>,
   },
   {
     key: "speed_mph",
@@ -145,10 +145,10 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
     sortable: true,
     sortValue: (row) => row.captured_at_utc,
     render: (row) => (
-      <span className={`whitespace-nowrap ${row.stale ? "font-semibold text-slate-700" : ""}`}>
+      <span className={`whitespace-nowrap ${row.stale ? "font-semibold text-[#4B5563]" : ""}`}>
         {row.captured_at_local ?? "—"}
         {row.minutes_since_fix != null ? (
-          <span className="ml-1 text-xs text-slate-400">({row.minutes_since_fix} min ago)</span>
+          <span className="ml-1 text-xs text-[#6B7280]">({row.minutes_since_fix} min ago)</span>
         ) : null}
       </span>
     ),
@@ -160,7 +160,7 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
     className: "text-right",
     cellClass: "text-right tabular-nums",
     render: (row) => (
-      <span className={row.drive_remaining_min != null && row.drive_remaining_min < HOS_WARN_MIN ? "font-semibold text-slate-700" : ""}>
+      <span className={row.drive_remaining_min != null && row.drive_remaining_min < HOS_WARN_MIN ? "font-semibold text-[#4B5563]" : ""}>
         {hmm(row.drive_remaining_min)}
       </span>
     ),
@@ -172,7 +172,7 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
     className: "text-right",
     cellClass: "text-right tabular-nums",
     render: (row) => (
-      <span className={row.window_remaining_min != null && row.window_remaining_min < HOS_WARN_MIN ? "font-semibold text-slate-700" : ""}>
+      <span className={row.window_remaining_min != null && row.window_remaining_min < HOS_WARN_MIN ? "font-semibold text-[#4B5563]" : ""}>
         {hmm(row.window_remaining_min)}
       </span>
     ),
@@ -198,7 +198,7 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
     label: "HOS",
     sortable: true,
     render: (row) => (
-      <span className={row.hos_status === "unavailable" ? "text-slate-400 italic" : ""}>
+      <span className={row.hos_status === "unavailable" ? "text-[#6B7280] italic" : ""}>
         {row.hos_status ?? "—"}
       </span>
     ),
@@ -209,7 +209,7 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
     render: (row) =>
       row.lat != null && row.lng != null ? (
         <a
-          className="text-slate-700 hover:underline"
+          className="text-[#4B5563] hover:underline"
           href={`https://www.google.com/maps?q=${row.lat},${row.lng}`}
           target="_blank"
           rel="noopener noreferrer"
@@ -233,12 +233,12 @@ const OFFLINE_FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
     label: "Last Update (Laredo)",
     sortable: true,
     sortValue: (row) => row.captured_at_utc,
-    cellClass: "font-semibold text-slate-700",
+    cellClass: "font-semibold text-[#4B5563]",
     render: (row) => (
       <span className="whitespace-nowrap">
         {row.captured_at_local ?? "Never reported"}
         {row.minutes_since_fix != null ? (
-          <span className="ml-1 text-xs font-normal text-slate-400">({row.minutes_since_fix} min ago)</span>
+          <span className="ml-1 text-xs font-normal text-[#6B7280]">({row.minutes_since_fix} min ago)</span>
         ) : null}
       </span>
     ),
@@ -327,8 +327,8 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
   return (
     <section data-testid="compliance-section-fleet-hos">
       <div className="mb-2">
-        <h2 className="text-xs font-semibold text-slate-900">Live Fleet — Location &amp; Hours of Service</h2>
-        <p className="text-xs text-slate-500">Every vehicle Samsara reports, its current driver, and HOS clocks (refreshes every 5 min).</p>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Live Fleet — Location &amp; Hours of Service</h2>
+        <p className="text-xs text-[#6B7280]">Every vehicle Samsara reports, its current driver, and HOS clocks (refreshes every 5 min).</p>
       </div>
 
       {query.isError ? (
@@ -345,7 +345,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
           rowKey={(row) => row.unit_id}
           loading={query.isLoading}
           onRowClick={(row) => navigate(`/fleet/units/${row.unit_id}`)}
-          rowClassName={(row) => (row.stale ? "bg-slate-100" : "")}
+          rowClassName={(row) => (row.stale ? "bg-[#F7F8FA]" : "")}
           storageKey="compliance-fleet-hos"
           emptyText="No reporting vehicles."
           initialPageSize={50}
@@ -391,8 +391,8 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
               >
                 Reset
               </Button>
-              <span className="text-xs text-slate-500">{liveRows.length} reporting</span>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-[#6B7280]">{liveRows.length} reporting</span>
+              <span className="text-xs text-[#6B7280]">
                 {query.data?.generated_at ? `as of ${formatClockTimeCT(query.data.generated_at)} CT` : ""}
               </span>
               <div className="ml-auto flex gap-2">
@@ -419,12 +419,12 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
           <button
             type="button"
             onClick={() => setShowOffline((v) => !v)}
-            className="flex w-full items-center gap-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
+            className="flex w-full items-center gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-left text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
             aria-expanded={showOffline}
           >
-            <span className="text-slate-400">{showOffline ? "▾" : "▸"}</span>
+            <span className="text-[#6B7280]">{showOffline ? "▾" : "▸"}</span>
             Offline / stale ({offlineRows.length})
-            <span className="ml-2 font-normal text-slate-500">
+            <span className="ml-2 font-normal text-[#6B7280]">
               no fix in the last {OFFLINE_STALE_THRESHOLD_DAYS} days — hidden from the live view
             </span>
           </button>
