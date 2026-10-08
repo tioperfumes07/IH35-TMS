@@ -32,7 +32,8 @@ const checks = [
   ["events", /searchParams\.get\("event_id"\)/, "safety-events destination consumes event_id"],
   ["driverFines", /kind="internal_fine"[\s\S]{0,120}id=\{id\}/, "driver reverse section drills to internal fines"],
   ["fines", /searchParams\.get\("fine_id"\)/, "internal-fines destination consumes fine_id"],
-  ["fines", /String\(row\.id \?\? ""\) === linkedFineId \? "bg-slate-100/, "linked internal fine is visibly highlighted"],
+  // Locked-palette update (owner ruling): bg-slate-100 → bg-[#E5E7EB] + ring — accept either highlight treatment.
+  ["fines", /String\(row\.id \?\? ""\) === linkedFineId \? "bg-(slate-100|\[#E5E7EB\])/, "linked internal fine is visibly highlighted"],
   ["entityLink", /case "safety_event":[\s\S]*?safety-events\?event_id=\$\{id\}/, "safety-event resolver carries event_id"],
   ["entityLink", /case "internal_fine":[\s\S]*?internal-fines\?fine_id=\$\{id\}/, "internal-fine resolver carries fine_id"],
   ["driverReports", /<ListErrorState[\s\S]{0,180}query\.refetch\(\)/, "driver reports failure retries exact query"],

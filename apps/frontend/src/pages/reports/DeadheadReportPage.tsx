@@ -56,6 +56,7 @@ type DeadheadReport = {
 };
 
 import { formatUsdCents } from "../../lib/money";
+import { colors } from "../../design/tokens";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -260,7 +261,7 @@ export function DeadheadReportPage() {
                     <XAxis dataKey="week_starting" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} unit="%" />
                     <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
-                    <Line type="monotone" dataKey="deadhead_pct" stroke="#dc2626" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="deadhead_pct" stroke={colors.danger} strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

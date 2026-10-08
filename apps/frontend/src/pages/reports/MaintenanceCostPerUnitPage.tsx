@@ -27,6 +27,7 @@ import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 import { formatUsdCents } from "../../lib/money";
+import { colors } from "../../design/tokens";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -51,7 +52,7 @@ const FLAG_META: Record<MaintenanceCostFlag, { label: string }> = {
   reliable: { label: MAINT_COST_FLAG_LABELS.reliable },
 };
 
-const PIE_COLORS = ["#0d9488", "#155e75", "#f59e0b", "#dc2626", "#64748b", "#1e293b"];
+const PIE_COLORS = [colors.success, colors.accent, colors.warning, colors.danger, colors.mutedText, colors.navy];
 
 type MaintenanceCostFilters = { start: string; end: string; unitFilter: string };
 

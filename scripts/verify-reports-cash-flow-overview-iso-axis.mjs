@@ -21,12 +21,13 @@ function read(rel) {
 function analyze() {
   const failures = [];
   const page = read(PAGE);
-  if (!/formatDateUS/.test(page) || !/from ["'].*lib\/formatDate["']/.test(page)) {
-    failures.push("CashFlowOverviewPage must import formatDateUS");
+  // GLB-08 (owner ruling) retired formatDateUS on report surfaces — the canonical axis
+  // formatter is now mmmDd from lib/formatDate.
+  if (!/mmmDd/.test(page) || !/from ["'].*lib\/formatDate["']/.test(page)) {
+    failures.push("CashFlowOverviewPage must import the GLB-08 mmmDd formatter");
   }
-  if (!/<XAxis[^>]*dataKey="date"[^>]*tickFormatter=\{[^}]*formatDateUS/.test(page)
-    && !/<XAxis dataKey="date"[^>]*tickFormatter=\{\(v\) => formatDateUS\(v\)/.test(page)) {
-    failures.push('projection XAxis dataKey="date" must use formatDateUS tickFormatter');
+  if (!/<XAxis[^>]*dataKey="date"[^>]*tickFormatter=\{[^}]*mmmDd/.test(page)) {
+    failures.push('projection XAxis dataKey="date" must use the GLB-08 mmmDd tickFormatter');
   }
   if (/<XAxis dataKey="date" tick=\{\{ fontSize: 10 \}\} \/>/.test(page)) {
     failures.push("bare XAxis dataKey=date without tickFormatter is forbidden");
@@ -44,8 +45,8 @@ function selftest() {
   const original = fs.readFileSync(pagePath, "utf8");
   try {
     const bad = original.replace(
-      /<XAxis dataKey="date" tick=\{\{ fontSize: 10 \}\} tickFormatter=\{\(v\) => formatDateUS\(v\) \|\| String\(v\)\} \/>/,
-      '<XAxis dataKey="date" tick={{ fontSize: 10 }} />',
+      /<XAxis dataKey="date" tickFormatter=\{\(v\) => mmmDd\(v\) \|\| String\(v\)\} \/>/,
+      '<XAxis dataKey="date" />',
     );
     if (bad === original) fail("selftest could not plant bare XAxis");
     SELFTEST_OVERLAY.set(PAGE, bad);
@@ -68,4 +69,4 @@ if (process.argv.includes("--selftest")) {
 
 const failures = analyze();
 if (failures.length) fail(failures.join("; "));
-console.log(`${LABEL} PASS — Cash Flow Overview projection X-axis uses formatDateUS`);
+console.log(`${LABEL} PASS — Cash Flow Overview projection X-axis uses the GLB-08 mmmDd formatter`);

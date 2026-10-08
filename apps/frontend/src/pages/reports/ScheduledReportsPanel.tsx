@@ -75,7 +75,7 @@ export function ScheduledReportsPanel() {
         <div className="flex gap-2">
           <button
             type="button"
-            className="text-xs font-semibold text-[#1f2a44] hover:underline"
+            className="text-xs font-semibold text-[#1F2A44] hover:underline"
             onClick={() => navigate("/reports/scheduled-custom")}
           >
             + Schedule new
@@ -139,7 +139,7 @@ export function ScheduledReportsPanel() {
                 </label>
                 <button
                   type="button"
-                  className="text-xs font-semibold text-[#1f2a44] hover:underline"
+                  className="text-xs font-semibold text-[#1F2A44] hover:underline"
                   onClick={() => sendNowMut.mutate(row.id)}
                 >
                   Send now
