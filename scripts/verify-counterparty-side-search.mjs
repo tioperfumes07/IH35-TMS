@@ -2,10 +2,12 @@
 /**
  * verify-counterparty-side-search.mjs
  *
- * Verifies the original SIDE SEARCH PANEL is restored on Customers + Vendors
- * list view landing — the sidebar (search input, sort dropdown, paginated list)
- * must be rendered in BOTH view modes (list and master-detail), not just
- * master-detail.
+ * Verifies the side search panel contract on Customers + Vendors. ROUND 18.1
+ * Item D (owner-directed, 2026-09-12) reversed the original "sidebar in both
+ * modes" ruling: mounting the master-detail rolodex sidebar inside List view
+ * rendered the same 1,218-row roster twice, unsynchronized, beside
+ * CustomersListView's ParityTable. The sidebar belongs to Master-detail only;
+ * List view mounts the full roster component instead.
  *
  * Static source check — no DB needed.
  */
@@ -47,11 +49,14 @@ if (customersSrc) {
   const listBranchMatch = customersSrc.match(/viewMode === "list"\s*\?([\s\S]*?)\n\s*\)\s*:\s*\(/);
   if (listBranchMatch) {
     const listBranch = listBranchMatch[1];
-    if (!/CustomerListSidebar/.test(listBranch)) {
-      fail("Customers.tsx: CustomerListSidebar NOT rendered in list view branch (only in master-detail)");
+    if (!/CustomersListView/.test(listBranch)) {
+      fail("Customers.tsx: list view branch must mount CustomersListView (the full ParityTable roster)");
+    }
+    if (/CustomerListSidebar/.test(listBranch)) {
+      fail("Customers.tsx: CustomerListSidebar must NOT mount inside list view — ROUND 18.1 removed the duplicate unsynchronized roster");
     }
   } else {
-    fail("Customers.tsx: could not extract list view branch to verify sidebar presence");
+    fail("Customers.tsx: could not extract list view branch to verify roster presence");
   }
 }
 
@@ -65,11 +70,14 @@ if (vendorsSrc) {
   const listBranchMatch = vendorsSrc.match(/viewMode === "list"\s*\?([\s\S]*?)\n\s*\)\s*:\s*\(/);
   if (listBranchMatch) {
     const listBranch = listBranchMatch[1];
-    if (!/VendorListSidebar/.test(listBranch)) {
-      fail("Vendors.tsx: VendorListSidebar NOT rendered in list view branch (only in master-detail)");
+    if (!/VendorsListView/.test(listBranch)) {
+      fail("Vendors.tsx: list view branch must mount VendorsListView (the full ParityTable roster)");
+    }
+    if (/VendorListSidebar/.test(listBranch)) {
+      fail("Vendors.tsx: VendorListSidebar must NOT mount inside list view — ROUND 18.1 removed the duplicate unsynchronized roster");
     }
   } else {
-    fail("Vendors.tsx: could not extract list view branch to verify sidebar presence");
+    fail("Vendors.tsx: could not extract list view branch to verify roster presence");
   }
 }
 
@@ -78,5 +86,5 @@ if (failures > 0) {
   process.exit(1);
 }
 
-console.log("[verify-counterparty-side-search] PASS — side search panel restored on Customers + Vendors list view");
+console.log("[verify-counterparty-side-search] PASS — list view mounts the roster; sidebars stay master-detail only");
 process.exit(0);

@@ -42,6 +42,7 @@ const PATHS = {
   billsTest: "apps/frontend/src/pages/accounting/__tests__/BillsPage.hasBalanceDeeplink.test.tsx",
   invoicesApi: "apps/frontend/src/api/accounting.ts",
   invoicesRoutes: "apps/backend/src/accounting/invoices.routes.ts",
+  openAr: "apps/backend/src/accounting/aging/open-ar.ts",
   invoicesHasBalanceTest: "apps/backend/src/accounting/__tests__/invoices-has-balance-filter.test.ts",
   manifest: "apps/frontend/src/routes/manifest.tsx",
 };
@@ -79,6 +80,7 @@ export function check(sources) {
     billsTest,
     invoicesApi,
     invoicesRoutes,
+    openAr,
     invoicesHasBalanceTest,
     manifest,
   } = sources;
@@ -107,13 +109,16 @@ export function check(sources) {
   }
 
   // ── Shared drill contracts (server has_balance — no client with_balance / unpaid-only) ──
-  if (!/has_balance:\s*["']true["']/.test(drill) || !/customer_id/.test(drill)) {
+  // ACCT-F410-B moved the literal query strings into AmountFilter objects resolved through
+  // resolveAmountRoute — accept either shape.
+  const drillHasBalance = /has_balance:\s*["']true["']|hasBalance:\s*true/.test(drill);
+  if (!drillHasBalance || !/customer_id|customerId/.test(drill)) {
     f.push(`${PATHS.drill}: A/R href must use customer_id + has_balance=true`);
   }
   if (/status:\s*["']with_balance["']/.test(drill)) {
     f.push(`${PATHS.drill}: client-only status=with_balance is forbidden for A/R drill`);
   }
-  if (!/has_balance:\s*["']true["']/.test(drill) || !/vendor_id/.test(drill)) {
+  if (!drillHasBalance || !/vendor_id|vendorId/.test(drill)) {
     f.push(`${PATHS.drill}: A/P href must use vendor_id + has_balance=true`);
   }
   if (/status:\s*["']unpaid["']/.test(drill)) {
@@ -133,11 +138,19 @@ export function check(sources) {
   if (!/has_balance/.test(invoicesRoutes)) {
     f.push(`${PATHS.invoicesRoutes}: list schema must accept has_balance`);
   }
-  if (!/COALESCE\(i\.amount_open_cents,\s*0\)\s*>\s*0/.test(invoicesRoutes)) {
-    f.push(`${PATHS.invoicesRoutes}: has_balance must filter amount_open_cents > 0`);
+  // ROUND 433.2 canonicalized the open-A/R conditions into aging/open-ar.ts — require the
+  // helper call in routes AND the real conditions in the helper.
+  if (!/openArInvoiceConditions\("i"\)/.test(invoicesRoutes) && !/COALESCE\(i\.amount_open_cents,\s*0\)\s*>\s*0/.test(invoicesRoutes)) {
+    f.push(`${PATHS.invoicesRoutes}: has_balance must filter amount_open_cents > 0 (direct or via openArInvoiceConditions)`);
   }
-  if (!/status NOT IN \('draft', 'void', 'voided', 'paid'\)/.test(invoicesRoutes)) {
+  if (!/openArInvoiceConditions\("i"\)/.test(invoicesRoutes) && !/status NOT IN \('draft', 'void', 'voided', 'paid'\)/.test(invoicesRoutes)) {
     f.push(`${PATHS.invoicesRoutes}: has_balance must exclude draft/voided/paid`);
+  }
+  if (!/amount_open_cents, 0\) > 0/.test(openAr)) {
+    f.push(`${PATHS.openAr}: canonical conditions must keep amount_open_cents > 0`);
+  }
+  if (!/"draft", "void", "voided", "paid"/.test(openAr)) {
+    f.push(`${PATHS.openAr}: OPEN_AR_STATUS_EXCLUDED must keep draft/void/voided/paid`);
   }
   if (!/SELECT COUNT\(\*\)::int AS total/.test(invoicesRoutes)) {
     f.push(`${PATHS.invoicesRoutes}: must COUNT with same WHERE for truthful total`);
@@ -350,6 +363,12 @@ function selftest() {
   good.bills = `has_balance listBills searchParams.get("has_balance")`;
   good.billsTest = `has_balance vendor_id`;
   good.invoicesApi = `export function listInvoices() { has_balance }`;
+  good.openAr = `
+    export const OPEN_AR_STATUS_EXCLUDED = ["draft", "void", "voided", "paid"] as const;
+    export function openArInvoiceConditions(alias) {
+      return ["COALESCE(" + alias + ".amount_open_cents, 0) > 0"];
+    }
+  `;
   good.invoicesRoutes = `
     has_balance: z.coerce.boolean().optional(),
     if (q.has_balance) {
