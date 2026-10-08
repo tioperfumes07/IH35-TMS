@@ -918,7 +918,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             return (
               <div
                 className="rounded-sm border border-[#C7D2DC] px-3 py-2 text-xs"
-                style={{ borderLeft: "4px solid #B42318", background: "#fdecea" }}
+                style={{ borderLeft: "4px solid #B42318", background: "#FDECEA" }}
                 data-testid="banking-accounts-cash-gl-unbound-banner"
               >
                 <p className="font-semibold" style={{ color: "#B42318" }}>

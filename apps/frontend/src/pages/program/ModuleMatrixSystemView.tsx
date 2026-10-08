@@ -133,7 +133,7 @@ const EMPTY_VERIFIER_ROLLUP: {
 
 export const VerifierRollupContext = createContext(EMPTY_VERIFIER_ROLLUP);
 
-const HEX = { red: "#dc2626", slate: "#334155", muted: "#94a3b8", warn: "#B45309" } as const;
+const HEX = { red: "#DC2626", slate: "#334155", muted: "#94A3B8", warn: "#B45309" } as const;
 
 function verifierColor(columnId: string, state: string): string {
   if (columnId === "proof_age") return state === "none" ? HEX.muted : Number(state) > 30 ? HEX.warn : HEX.slate;

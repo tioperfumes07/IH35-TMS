@@ -352,7 +352,7 @@ export function TasksChatPage() {
                       data-testid="tasks-chat-post"
                       className={[
                         "rounded-sm px-3 py-1.5 text-xs font-semibold text-white",
-                        canPost ? "bg-[#1F2A44] hover:bg-[#0f1729]" : "cursor-not-allowed bg-[#E5E7EB]",
+                        canPost ? "bg-[#1F2A44] hover:bg-[#0F1729]" : "cursor-not-allowed bg-[#E5E7EB]",
                       ].join(" ")}
                     >
                       {createMutation.isPending ? "Posting…" : "Post comment"}

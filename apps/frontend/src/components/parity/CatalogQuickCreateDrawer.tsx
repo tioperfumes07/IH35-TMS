@@ -161,7 +161,7 @@ export function CatalogQuickCreateDrawer({
           </button>
           <button
             type="submit"
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 font-medium text-white hover:bg-[#0f1729] disabled:opacity-60"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 font-medium text-white hover:bg-[#0F1729] disabled:opacity-60"
             disabled={saving}
             aria-label="Save catalog quick create"
           >

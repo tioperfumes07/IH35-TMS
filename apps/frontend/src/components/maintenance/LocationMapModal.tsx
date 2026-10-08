@@ -108,8 +108,8 @@ export function LocationMapModal({
     <Modal open={open} onClose={onClose} title="Location map">
       <div className="space-y-3 text-xs">
         <svg viewBox="0 0 380 140" className="h-[220px] w-full rounded-sm border border-gray-200 bg-white">
-          <rect x="12" y="50" width="150" height="56" rx="8" fill="#f8fafc" stroke="#4B5563" />
-          <rect x="210" y="50" width="158" height="56" rx="8" fill="#f8fafc" stroke="#4B5563" />
+          <rect x="12" y="50" width="150" height="56" rx="8" fill="#F8FAFC" stroke="#4B5563" />
+          <rect x="210" y="50" width="158" height="56" rx="8" fill="#F8FAFC" stroke="#4B5563" />
 
           <rect
             className="axle-group"
@@ -161,7 +161,7 @@ export function LocationMapModal({
                 onClick={() => toggleCode(point.code)}
               >
                 <circle cx={point.x} cy={point.y} r={6} fill={active ? "#1F2A44" : "#E5E7EB"} stroke={active ? "#1F2A44" : "#4B5563"} />
-                <text x={point.x + 8} y={point.y + 3} fontSize="7" fill="#0f172a">
+                <text x={point.x + 8} y={point.y + 3} fontSize="7" fill="#0F172A">
                   {point.code}
                 </text>
               </g>

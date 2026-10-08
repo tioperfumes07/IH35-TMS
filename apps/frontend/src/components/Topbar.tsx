@@ -258,7 +258,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
               type="button"
               aria-label={t("topbar.global_create", "+ Create")}
               className="flex h-7 items-center gap-1 rounded-sm border px-2 font-semibold hover:bg-white/10"
-              style={{ borderColor: "#16A34A", backgroundColor: "#16A34A", color: "#ffffff", fontSize: 12 }}
+              style={{ borderColor: "#16A34A", backgroundColor: "#16A34A", color: "#FFFFFF", fontSize: 12 }}
               onClick={() => setCreateOpen((v) => !v)}
             >
               <Plus className="h-3 w-3" />

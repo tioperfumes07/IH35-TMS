@@ -83,7 +83,7 @@ export function BankingHomeConnectionErrorStrip({
           <div
             key={a.id}
             className="rounded-sm border border-[#E5E7EB] px-2.5 py-2 text-xs"
-            style={{ borderLeft: "3px solid #B42318", background: "#fdecea" }}
+            style={{ borderLeft: "3px solid #B42318", background: "#FDECEA" }}
             data-testid="banking-connection-error-row"
             data-account-id={a.id}
             data-sync-status={a.sync_status}

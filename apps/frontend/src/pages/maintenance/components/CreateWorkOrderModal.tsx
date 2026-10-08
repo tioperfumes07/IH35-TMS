@@ -50,7 +50,7 @@ import { CreateWOSectionReconcile } from "./CreateWOSectionReconcile";
 import { EntityLink } from "../../../components/shared/EntityLink";
 
 // ---- render-v5 presentational helpers (match docs/approved-screens/maintenance-create-wo-render-v5.html) ----
-const FLD = "h-[30px] w-full rounded-[5px] border border-[#E5E7EB] bg-white px-2 text-xs text-sidebar-bg outline-hidden focus:border-[#1f2a44]";
+const FLD = "h-[30px] w-full rounded-[5px] border border-[#E5E7EB] bg-white px-2 text-xs text-sidebar-bg outline-hidden focus:border-[#1F2A44]";
 
 function SectionCard({ badge, title, right, testid, children }: { badge: string; title: string; right?: string; testid?: string; children: ReactNode }) {
   // D27 — section headers dark navy with light letters (NAVY-NOT-BLACK #14314F), not light grey bars.
@@ -78,14 +78,14 @@ function FieldV5({ label, children }: { label: string; children: ReactNode }) {
 function SegYesNo({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
     <div data-testid="wo-oos-seg" className="inline-flex h-[30px] overflow-hidden rounded-[5px] border border-[#E5E7EB]">
-      <button type="button" onClick={() => onChange(true)} className={`px-3 text-xs font-semibold ${value ? "bg-[#b91c1c] text-white" : "bg-[var(--surface-unselected)] text-inactive"}`}>Yes</button>
-      <button type="button" onClick={() => onChange(false)} className={`px-3 text-xs font-semibold ${!value ? "bg-[#1d2b45] text-white" : "bg-[var(--surface-unselected)] text-inactive"}`}>No</button>
+      <button type="button" onClick={() => onChange(true)} className={`px-3 text-xs font-semibold ${value ? "bg-[#B91C1C] text-white" : "bg-[var(--surface-unselected)] text-inactive"}`}>Yes</button>
+      <button type="button" onClick={() => onChange(false)} className={`px-3 text-xs font-semibold ${!value ? "bg-[#1D2B45] text-white" : "bg-[var(--surface-unselected)] text-inactive"}`}>No</button>
     </div>
   );
 }
 
 function CccRow({ tone, label, register, placeholder }: { tone: "cmp" | "cau" | "cor"; label: string; register: import("react-hook-form").UseFormRegisterReturn; placeholder?: string }) {
-  const bg = tone === "cmp" ? "bg-[#0891b2]" : tone === "cau" ? "bg-[#b45309]" : "bg-[#15803d]";
+  const bg = tone === "cmp" ? "bg-[#0891B2]" : tone === "cau" ? "bg-[#B45309]" : "bg-[#15803D]";
   return (
     <div className="mb-2 overflow-hidden rounded-md border border-[#E5E7EB] last:mb-0">
       <div className={`px-2 py-1 text-xs font-extrabold uppercase tracking-wide text-white ${bg}`}>{label}</div>
@@ -106,10 +106,10 @@ const LOC_CATS: Array<{ key: SerializedPart["part_type"]; label: string; positio
 function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: SerializedPart[]; onAdd: () => void; onChange: (i: number, patch: Partial<SerializedPart>) => void; onRemove: (i: number) => void }) {
   return (
     <div data-testid="wo-asset-location" className="mt-2 overflow-hidden rounded-lg border border-[#E5E7EB] bg-white">
-      <div className="flex items-center gap-2 bg-[#0f1a30] px-2.5 py-1.5 text-white">
+      <div className="flex items-center gap-2 bg-[#0F1A30] px-2.5 py-1.5 text-white">
         <span className="text-xs font-extrabold uppercase tracking-wide">Asset location &amp; serial</span>
         <span className="ml-auto text-xs text-[#4B5563]">tires · batteries · lamps · mirrors — where it sits + serial</span>
-        <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded-sm bg-[#1f2a44] px-2 py-0.5 text-xs font-semibold text-white">+ Create part</button>
+        <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded-sm bg-[#1F2A44] px-2 py-0.5 text-xs font-semibold text-white">+ Create part</button>
       </div>
       {parts.length === 0 ? (
         <div className="px-3 py-3 text-xs text-[#4B5563]">No serialized items placed. Add a tire/battery/lamp/mirror to capture its position + serial (chain-of-custody).</div>
@@ -122,22 +122,22 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
                 <div className="mb-1.5 flex flex-wrap gap-1">
                   {LOC_CATS.map((c) => (
                     <button type="button" key={c.key} onClick={() => onChange(i, { part_type: c.key, position_code: "" })}
-                      className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${c.key === sp.part_type ? "bg-[#1d2b45] text-white" : "bg-[#f8fafc] text-[#4B5563]"}`}>{c.label}</button>
+                      className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${c.key === sp.part_type ? "bg-[#1D2B45] text-white" : "bg-[#F8FAFC] text-[#4B5563]"}`}>{c.label}</button>
                   ))}
-                  <button type="button" onClick={() => onRemove(i)} className="ml-auto rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#b91c1c]">Remove</button>
+                  <button type="button" onClick={() => onRemove(i)} className="ml-auto rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#B91C1C]">Remove</button>
                 </div>
                 {/* truck silhouette — clickable wheel/position grid */}
-                <div className="rounded-md border border-[#E5E7EB] bg-[#f8fafc] p-2">
+                <div className="rounded-md border border-[#E5E7EB] bg-[#F8FAFC] p-2">
                   <svg viewBox="0 0 430 110" className="mb-1 h-16 w-full">
-                    <rect x="60" y="30" width="120" height="50" rx="8" fill="#eef2f7" stroke="#E5E7EB" />
-                    <rect x="185" y="42" width="210" height="34" rx="6" fill="#f1f5f9" stroke="#E5E7EB" />
+                    <rect x="60" y="30" width="120" height="50" rx="8" fill="#EEF2F7" stroke="#E5E7EB" />
+                    <rect x="185" y="42" width="210" height="34" rx="6" fill="#F1F5F9" stroke="#E5E7EB" />
                     <text x="120" y="60" fontSize="9" fill="#4B5563" textAnchor="middle">TRACTOR</text>
                     <text x="290" y="63" fontSize="9" fill="#4B5563" textAnchor="middle">TRAILER</text>
                   </svg>
                   <div className="flex flex-wrap gap-1">
                     {cat.positions.map((pos) => (
                       <button type="button" key={pos} onClick={() => onChange(i, { position_code: pos })}
-                        className={`rounded-sm border px-2 py-0.5 text-xs font-bold ${sp.position_code === pos ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#4B5563] bg-[var(--surface-unselected)] text-[#4B5563]"}`}>{pos}</button>
+                        className={`rounded-sm border px-2 py-0.5 text-xs font-bold ${sp.position_code === pos ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-[#4B5563] bg-[var(--surface-unselected)] text-[#4B5563]"}`}>{pos}</button>
                     ))}
                   </div>
                 </div>
@@ -876,17 +876,17 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     return (
       <Modal open={open} onClose={onClose} title="Edit Work Order" sizePreset="lg" wide>
         <div data-testid="edit-wo-modal" className="space-y-2.5 text-xs text-sidebar-bg">
-          <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-xs text-[#cdd6e6]">
+          <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-xs text-[#CDD6E6]">
             <span>WO #</span>
             <EntityLink
               kind="work_order"
               id={editWorkOrder.id}
               label={entityLabel(editWorkOrder.display_id, editWorkOrder.id, "Work order")}
-              className="rounded-sm border border-[#34466a] bg-[#0f1a30] px-2 py-0.5 font-semibold text-white hover:underline"
+              className="rounded-sm border border-[#34466A] bg-[#0F1A30] px-2 py-0.5 font-semibold text-white hover:underline"
             />
             <span>·</span>
             <span className="capitalize">{String(editWorkOrder.status ?? "—")}</span>
-            <span className="ml-auto text-[#8aa0c4]">All changes timestamped &amp; audited</span>
+            <span className="ml-auto text-[#8AA0C4]">All changes timestamped &amp; audited</span>
           </div>
 
           {editBlockMessage ? (
@@ -1087,7 +1087,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                         type="button"
                         data-testid={`edit-wo-remove-line-${row._idx}`}
                         onClick={() => removeEditLine(row._idx)}
-                        className="rounded-sm border border-[#E5E7EB] px-2 py-0.5 text-xs text-[#b91c1c]"
+                        className="rounded-sm border border-[#E5E7EB] px-2 py-0.5 text-xs text-[#B91C1C]"
                       >
                         Remove
                       </button>
@@ -1098,7 +1098,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             </div>
             <BooksTreatmentNotice totalDollars={editLinesTotal} />
             <div className="mt-2 flex items-center gap-2">
-              <button type="button" data-testid="edit-wo-add-line" onClick={addEditLine} className="rounded-sm bg-[#1f2a44] px-2.5 py-1 text-xs font-semibold text-white">+ Create line</button>
+              <button type="button" data-testid="edit-wo-add-line" onClick={addEditLine} className="rounded-sm bg-[#1F2A44] px-2.5 py-1 text-xs font-semibold text-white">+ Create line</button>
               <span className="ml-auto text-xs font-semibold text-sidebar-active">Total ${editLinesTotal.toFixed(2)}</span>
             </div>
           </SectionCard>
@@ -1117,7 +1117,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               // for that (verified before shipping: Button's variant classes render AFTER a plain
               // className append in DOM order, but Tailwind's generated CSS order depends on
               // first-discovery order across the whole app, not JSX/DOM order).
-              className="!rounded-md !border-[#15803d] !bg-[#16a34a] hover:!bg-[#15803d]"
+              className="!rounded-md !border-[#15803D] !bg-[#16A34A] hover:!bg-[#15803D]"
             >
               {savingEdit ? "Saving…" : "Save changes"}
             </Button>
@@ -1160,12 +1160,12 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     <Modal open={open} onClose={handleModalClose} title="Create Work Order" sizePreset="lg" wide>
       <div data-testid="create-wo-render-v5" className="min-w-0 space-y-2.5 overflow-x-hidden text-xs text-sidebar-bg">
         {/* Subbar — WO # · status · opened timestamp (render: .subbar) */}
-        <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-xs text-[#cdd6e6]">
+        <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-xs text-[#CDD6E6]">
           <span>WO #</span>
-          <span className="rounded-sm border border-[#34466a] bg-[#0f1a30] px-2 py-0.5 font-semibold text-white">new — auto on save</span>
+          <span className="rounded-sm border border-[#34466A] bg-[#0F1A30] px-2 py-0.5 font-semibold text-white">new — auto on save</span>
           <span>·</span>
           <span className="capitalize">{form.watch("status") || "draft"}</span>
-          <span className="ml-auto text-[#8aa0c4]">All changes timestamped</span>
+          <span className="ml-auto text-[#8AA0C4]">All changes timestamped</span>
         </div>
 
         {/* ===================== A — WORK ORDER ===================== */}
@@ -1215,8 +1215,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           <CreateWOSectionRenderV5Header register={form.register} watch={form.watch} setValue={form.setValue} />
           {/* Conditional Outside-vendor block (render: #vendorBlock, revealed when Repaired by = Outside vendor) */}
           {outsideVendor ? (
-            <div data-testid="wo-outside-vendor-block" className="mt-2 rounded-md border border-[#fed7aa] bg-[#fffdf8] p-2">
-              <div className="mb-1.5 text-xs font-bold uppercase tracking-wide text-[#b45309]">Outside vendor</div>
+            <div data-testid="wo-outside-vendor-block" className="mt-2 rounded-md border border-[#FED7AA] bg-[#FFFDF8] p-2">
+              <div className="mb-1.5 text-xs font-bold uppercase tracking-wide text-[#B45309]">Outside vendor</div>
               <input type="hidden" {...form.register("vendor_id")} />
               <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                 <FieldV5 label="Vendor (QuickBooks list)">
@@ -1321,7 +1321,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                   const on = paymentTiming === p.v;
                   return (
                     <button type="button" key={p.v} onClick={() => form.setValue("payment_timing", p.v)}
-                      className={`flex-1 rounded-md border p-1.5 text-center ${on ? "border-[#1d2b45] bg-[#1d2b45] text-white" : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-sidebar-active"}`}>
+                      className={`flex-1 rounded-md border p-1.5 text-center ${on ? "border-[#1D2B45] bg-[#1D2B45] text-white" : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-sidebar-active"}`}>
                       <div className="text-xs font-extrabold">{p.h}</div>
                       <div className="text-xs opacity-75">{p.s}</div>
                     </button>
@@ -1331,7 +1331,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               {paymentTiming === "paid_same_day" ? (
                 <>
                   <CreateWOSectionPaymentTiming register={form.register} watch={form.watch} setValue={form.setValue} />
-                  <div className="mt-1.5 rounded-md border border-[#E5E7EB] bg-[#f1f5f9] px-2 py-1.5 text-xs text-[#1f2a44]">Registers as an <b>Expense</b> in QuickBooks (money out now) against the payment account.</div>
+                  <div className="mt-1.5 rounded-md border border-[#E5E7EB] bg-[#F1F5F9] px-2 py-1.5 text-xs text-[#1F2A44]">Registers as an <b>Expense</b> in QuickBooks (money out now) against the payment account.</div>
                 </>
               ) : null}
               {paymentTiming === "vendor_invoice" ? (
@@ -1348,11 +1348,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                     </FieldV5>
                     <FieldV5 label="Due date (from terms)"><input {...form.register("due_date")} placeholder="auto from terms" className={FLD} /></FieldV5>
                   </div>
-                  <div className="mt-1.5 rounded-md border border-[#fed7aa] bg-[#fff7ed] px-2 py-1.5 text-xs text-[#92400e]">Registers as a <b>Bill</b> (A/P) — payable later, 1099-tracked.</div>
+                  <div className="mt-1.5 rounded-md border border-[#FED7AA] bg-[#FFF7ED] px-2 py-1.5 text-xs text-[#92400E]">Registers as a <b>Bill</b> (A/P) — payable later, 1099-tracked.</div>
                 </>
               ) : null}
               {paymentTiming === "in_house" ? (
-                <div className="rounded-md border border-[#E5E7EB] bg-[#f1f5f9] px-2 py-1.5 text-xs text-[#4B5563]">In-house — no vendor invoice. Parts drawn from inventory; labor costed internally.</div>
+                <div className="rounded-md border border-[#E5E7EB] bg-[#F1F5F9] px-2 py-1.5 text-xs text-[#4B5563]">In-house — no vendor invoice. Parts drawn from inventory; labor costed internally.</div>
               ) : null}
             </div>
           </div>
@@ -1384,7 +1384,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               !reconcileOk
             }
             onClick={() => void submit("full")}
-            className="!rounded-md !border-[#15803d] !bg-[#16a34a] hover:!bg-[#15803d]"
+            className="!rounded-md !border-[#15803D] !bg-[#16A34A] hover:!bg-[#15803D]"
           >
             {paymentTiming === "vendor_invoice" ? "Create work order & Bill" : paymentTiming === "paid_same_day" ? "Create work order & Expense" : "Create work order"}
           </Button>

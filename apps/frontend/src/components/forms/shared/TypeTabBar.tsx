@@ -42,8 +42,8 @@ export function TypeTabBar({ tabs, activeId, onChange }: Props) {
             onClick={() => onChange(tab.id)}
             className={`type-tab px-[14px] py-[9px] text-xs font-semibold ${active ? "active" : ""}`}
             style={{
-              color: isAccidentWorkOrder ? (active ? "#b91c1c" : "#ef4444") : active ? "#1f2a44" : "#4B5563",
-              borderBottom: active ? `2px solid ${isAccidentWorkOrder ? "#b91c1c" : "#1f2a44"}` : "2px solid transparent",
+              color: isAccidentWorkOrder ? (active ? "#B91C1C" : "#EF4444") : active ? "#1F2A44" : "#4B5563",
+              borderBottom: active ? `2px solid ${isAccidentWorkOrder ? "#B91C1C" : "#1F2A44"}` : "2px solid transparent",
               background: "transparent",
             }}
           >

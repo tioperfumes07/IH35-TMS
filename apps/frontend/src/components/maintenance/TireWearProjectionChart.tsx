@@ -75,8 +75,8 @@ export function TireWearProjectionChart({
             <YAxis domain={[0, "auto"]} tick={{ fontSize: 11 }} label={{ value: "32nds", angle: -90, position: "insideLeft", fontSize: 11 }} />
             <Tooltip />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <ReferenceLine y={threshold32nds} stroke="#dc2626" strokeDasharray="4 4" label={`DOT ${threshold32nds}/32"`} />
-            <Line type="monotone" dataKey="depth" name="Tread depth" stroke="#0284c7" strokeWidth={2} dot={{ r: 3 }} />
+            <ReferenceLine y={threshold32nds} stroke="#DC2626" strokeDasharray="4 4" label={`DOT ${threshold32nds}/32"`} />
+            <Line type="monotone" dataKey="depth" name="Tread depth" stroke="#0284C7" strokeWidth={2} dot={{ r: 3 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>

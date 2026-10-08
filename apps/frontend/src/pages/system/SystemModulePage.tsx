@@ -78,9 +78,9 @@ function activeTrackerCount(tracker: ProgramTracker): number {
 
 type PillTone = "ok" | "warn" | "off" | "neutral";
 const PILL_CLS: Record<PillTone, string> = {
-  ok: "bg-[#d1fae5] text-[#065f46]",
-  warn: "bg-[#fef3c7] text-[#B45309]",
-  off: "bg-[#fee2e2] text-red-600",
+  ok: "bg-[#D1FAE5] text-[#065F46]",
+  warn: "bg-[#FEF3C7] text-[#B45309]",
+  off: "bg-[#FEE2E2] text-red-600",
   neutral: "bg-[#F7F8FA] text-[#1F2A44]",
 };
 
@@ -399,7 +399,7 @@ function QboReconTab({ data }: { data: SystemData }) {
         pill={<Pill tone="neutral">TMS ↔ QBO</Pill>}
         sub="Daily tie-out of what the TMS posted against QuickBooks (system-of-record). This is not bank reconciliation — bank statement matching stays in Banking; the two are never combined in one table."
         footer={
-          <Link to="/banking" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0f1729]">
+          <Link to="/banking" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0F1729]">
             Open bank reconciliation
           </Link>
         }
@@ -545,7 +545,7 @@ const GAP = 26;
 function strokeForLink(state: TxHealthLink["state"]): { color: string; dash?: string } {
   // TXH_LINK_STATE_WIRED TXH_LINK_STATE_MISSING TXH_LINK_STATE_NA TXH_LINK_STATE_BLOCKED
   if (state === "wired") return { color: "#4B5563" };
-  if (state === "missing") return { color: "#dc2626", dash: "6 4" };
+  if (state === "missing") return { color: "#DC2626", dash: "6 4" };
   if (state === "not_applicable") return { color: "#4B5563", dash: "1 3" };
   if (state === "blocked_by_constraint") return { color: "#B45309", dash: "4 3" };
   return { color: "#4B5563" };
@@ -594,7 +594,7 @@ function TxHealthWiringMap({ links }: { links: TxHealthLink[] }) {
             />
             <circle cx={nodeX} cy={ny} r={4} fill={color} />
             {link.state === "missing" ? (
-              <text x={nodeX - 16} y={ny + 4} fill="#dc2626" fontSize="12">
+              <text x={nodeX - 16} y={ny + 4} fill="#DC2626" fontSize="12">
                 ✕
               </text>
             ) : null}
@@ -892,7 +892,7 @@ function ProgramTab({ data }: { data: SystemData }) {
         title="Program Tracker"
         sub="Live build status — derived from merges + deploys, not a static field. Full board opens in the Program Tracker module."
         footer={
-          <Link to="/program/matrix" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0f1729]">
+          <Link to="/program/matrix" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0F1729]">
             Open Program Matrix
           </Link>
         }
@@ -1068,13 +1068,13 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
           <button
             type="button"
             onClick={() => copy("launch")}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0f1729]"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0F1729]"
           >
             Launch Claude Code on my machine
           </button>
           <GhostButton onClick={() => copy("copy")}>Copy launch command</GhostButton>
           <span className="self-center font-mono text-xs text-[#4B5563]">{LAUNCH_COMMAND}</span>
-          {copied ? <span className="self-center text-xs text-[#065f46]">Copied — paste it in your terminal (nothing runs here).</span> : null}
+          {copied ? <span className="self-center text-xs text-[#065F46]">Copied — paste it in your terminal (nothing runs here).</span> : null}
         </div>
 
         <div className="mb-1.5 text-xs uppercase tracking-wide text-[#4B5563]">Build &amp; agent activity — read only</div>
@@ -1125,27 +1125,27 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
           below remains live.
         </p>
 
-        <div className="mt-3.5 overflow-auto rounded-[10px] bg-[#0f1729] px-4 py-3.5 font-mono text-xs leading-[1.7] text-[#cbd5e1]">
+        <div className="mt-3.5 overflow-auto rounded-[10px] bg-[#0F1729] px-4 py-3.5 font-mono text-xs leading-[1.7] text-[#CBD5E1]">
           <div><span className="text-[#4B5563]"># read-only mirror of the coder lane — no execution happens in this app</span></div>
           <div>
-            <span className="text-[#7dd3fc]">deploy</span> backend <span className="text-[#86efac]">{health.data?.version ?? "—"}</span>{" "}
+            <span className="text-[#7DD3FC]">deploy</span> backend <span className="text-[#86EFAC]">{health.data?.version ?? "—"}</span>{" "}
             <span className="text-[#4B5563]">(compare to main via CI)</span>
           </div>
           <div>
-            <span className="text-[#7dd3fc]">health</span>{" "}
+            <span className="text-[#7DD3FC]">health</span>{" "}
             {(["postgres.select1", "migrations.ledger", "redis.ping", "r2.head_bucket"] as const).map((n, i) => {
               const ok = health.data?.checks?.find((c) => c.name === n)?.ok;
               const short = n.split(".")[0];
               return (
                 <span key={n}>
                   {i > 0 ? " · " : ""}
-                  {short} <span className={ok ? "text-[#86efac]" : "text-red-600"}>{ok == null ? "—" : ok ? "ok" : "down"}</span>
+                  {short} <span className={ok ? "text-[#86EFAC]" : "text-red-600"}>{ok == null ? "—" : ok ? "ok" : "down"}</span>
                 </span>
               );
             })}
           </div>
           {qboAvailable ? <div>
-            <span className="text-[#7dd3fc]">qbo</span> A/P <span className="text-[#86efac]">{fmtUsd(apObj?.balance?.qbo_cents)}</span> → TMS{" "}
+            <span className="text-[#7DD3FC]">qbo</span> A/P <span className="text-[#86EFAC]">{fmtUsd(apObj?.balance?.qbo_cents)}</span> → TMS{" "}
             <span className="text-[#4B5563]">{apObj ? (apObj.balance?.in_sync ? "in sync" : "drift") : "pull pending"}</span>
           </div> : null}
         </div>
@@ -1201,7 +1201,7 @@ export function SystemModulePage() {
         {tab === "claude-coder" ? <ClaudeCoderTab data={data} qboAvailable={qboAvailable} /> : null}
       </div>
 
-      <div className="rounded-[10px] border border-gray-200 bg-[#eef2f7] px-3.5 py-3 text-xs text-[#4B5563]">
+      <div className="rounded-[10px] border border-gray-200 bg-[#EEF2F7] px-3.5 py-3 text-xs text-[#4B5563]">
         SYSTEM is Owner-only and is the single home for {qboAvailable ? "QuickBooks Reconciliation, QuickBooks Sync, Program Tracker, and Software/Build" : "Program Tracker and Software/Build"}. {qboAvailable ? "QuickBooks Reconciliation (TMS ↔ QBO tie-out) is deliberately separate from bank reconciliation, which stays in Banking — the two are never combined in one table. " : ""}The Claude Coder area is a launcher plus a read-only activity panel — no command execution occurs inside the production app (auditor/DOT-safe).
       </div>
     </div>

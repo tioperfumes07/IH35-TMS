@@ -56,11 +56,11 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
                     to={tab.route}
                     onClick={() => onTabChange?.(tab.id)}
                     className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-slate-600 hover:bg-gray-50 hover:text-[#1F2A44]"
-                    style={active ? { color: "#1F2A44", borderLeft: "3px solid #1F2A44", background: "#f8fafc", fontWeight: 600 } : { borderLeft: "3px solid transparent" }}
+                    style={active ? { color: "#1F2A44", borderLeft: "3px solid #1F2A44", background: "#F8FAFC", fontWeight: 600 } : { borderLeft: "3px solid transparent" }}
                   >
                     <span>{tab.label}</span>
                     {tab.badge === "new" ? (
-                      <span className="rounded-sm px-1.5 py-0.5 text-xs font-bold" style={{ background: "#d1fae5", color: "#065f46" }}>
+                      <span className="rounded-sm px-1.5 py-0.5 text-xs font-bold" style={{ background: "#D1FAE5", color: "#065F46" }}>
                         NEW
                       </span>
                     ) : tab.badge === "renamed" ? (

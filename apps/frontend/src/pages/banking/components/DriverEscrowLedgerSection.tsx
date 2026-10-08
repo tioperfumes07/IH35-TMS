@@ -340,7 +340,7 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
     <div className="space-y-3" data-c51-driver-escrow-ledger="1">
       <div
         className="rounded-sm border border-[#E5E7EB] px-3 py-2 text-xs"
-        style={{ borderLeft: "4px solid #B54708", background: "#fffaeb" }}
+        style={{ borderLeft: "4px solid #B54708", background: "#FFFAEB" }}
         data-testid="banking-escrow-liability-honesty-banner"
       >
         <p className="font-semibold text-[#0F1219]">

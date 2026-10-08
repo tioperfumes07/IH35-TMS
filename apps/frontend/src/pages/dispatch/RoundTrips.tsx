@@ -143,8 +143,8 @@ function TourRail({ legs, hasSb }: { legs: DispatchLoadRow[]; hasSb: boolean }) 
                 delivered
                   ? { backgroundColor: "#16A34A" }
                   : running
-                    ? { backgroundColor: "#2a78d6", boxShadow: "0 0 0 3px rgba(42,120,214,0.28)" }
-                    : { backgroundColor: "#fff", border: "1.5px solid #C7D2DC" }
+                    ? { backgroundColor: "#2A78D6", boxShadow: "0 0 0 3px rgba(42,120,214,0.28)" }
+                    : { backgroundColor: "#FFF", border: "1.5px solid #C7D2DC" }
               }
             >
               {delivered ? (
@@ -646,7 +646,7 @@ export function RoundTrips({
               >
                 <div
                   className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-1.5"
-                  style={{ background: "linear-gradient(180deg,#f6f9fc,#e9eff5)", borderBottom: "1px solid #C7D2DC" }}
+                  style={{ background: "linear-gradient(180deg,#F6F9FC,#E9EFF5)", borderBottom: "1px solid #C7D2DC" }}
                 >
                   <div className="flex flex-wrap items-center gap-x-1 text-xs font-semibold uppercase tracking-wide text-gray-600">
                     <EntityLinkOrTombstone

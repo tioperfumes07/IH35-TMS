@@ -143,7 +143,7 @@ const COLUMNS: Array<ParityColumn<SpineEvent>> = [
         return (
           <a
             href={link}
-            className="text-[#16A34A] underline hover:text-[#15803d]"
+            className="text-[#16A34A] underline hover:text-[#15803D]"
             onClick={(e) => e.stopPropagation()}
           >
             {row.source_table}
@@ -382,7 +382,7 @@ export function AuditTrailPage() {
             data-testid="audit-trail-filter-apply"
             onClick={staged.apply}
             disabled={!staged.dirty}
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0F1729] disabled:opacity-50"
           >
             Apply
           </button>

@@ -48,12 +48,12 @@ export function BookLoadValidationSection({ checks }: Props) {
               <span
                 className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-xs font-semibold ${
                   check.state === "blocked"
-                    ? "bg-[#b91c1c] text-white"
+                    ? "bg-[#B91C1C] text-white"
                     : check.state === "live"
-                      ? "bg-[#1c9d5b] text-white"
+                      ? "bg-[#1C9D5B] text-white"
                       : check.state === "pending"
                         ? "bg-slate-200 text-slate-700"
-                        : "bg-[#1f2733] text-white"
+                        : "bg-[#1F2733] text-white"
                 }`}
                 aria-label={
                   check.state === "blocked"
@@ -67,7 +67,7 @@ export function BookLoadValidationSection({ checks }: Props) {
               >
                 {check.state === "blocked" ? "✕" : check.state === "live" ? "✓" : check.state === "pending" ? "—" : "→"}
               </span>
-              <span className="flex-1" style={check.state === "blocked" ? { color: "#b91c1c", fontWeight: 600 } : undefined}>
+              <span className="flex-1" style={check.state === "blocked" ? { color: "#B91C1C", fontWeight: 600 } : undefined}>
                 {check.text}
               </span>
               <span className="rounded-sm border border-gray-200 bg-white px-1.5 py-0.5 font-mono text-xs" style={{ color: colors.mutedText }}>
@@ -88,7 +88,7 @@ export function BookLoadValidationSection({ checks }: Props) {
         </div>
         <div className="mt-2 border-t border-gray-100 pt-1.5 text-xs font-semibold" style={{ color: colors.bodyText }}>
           {blockedCount > 0 ? (
-            <span style={{ color: "#b91c1c" }}>{blockedCount} active blocker{blockedCount === 1 ? "" : "s"} · </span>
+            <span style={{ color: "#B91C1C" }}>{blockedCount} active blocker{blockedCount === 1 ? "" : "s"} · </span>
           ) : null}
           {liveCount} live gates · {pendingCount} not automated · {onSaveCount} run on save
         </div>

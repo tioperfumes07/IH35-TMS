@@ -1808,7 +1808,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               trigger={({ toggle, triggerTestId, open }) => (
                 <button
                   type="button"
-                  className="inline-flex h-7 items-center rounded-l-none rounded-r-sm border border-l-0 border-[#14314F] bg-[#14314F] px-2 text-xs font-semibold text-white hover:bg-[#1a3d63] disabled:opacity-50"
+                  className="inline-flex h-7 items-center rounded-l-none rounded-r-sm border border-l-0 border-[#14314F] bg-[#14314F] px-2 text-xs font-semibold text-white hover:bg-[#1A3D63] disabled:opacity-50"
                   onClick={toggle}
                   disabled={!canSave}
                   aria-expanded={open}

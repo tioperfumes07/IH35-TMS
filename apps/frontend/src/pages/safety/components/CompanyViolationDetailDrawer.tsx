@@ -295,7 +295,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           <div className="mt-2">
             <button
               type="button"
-              className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0F1729] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={actionPending || resolutionNotes.trim().length < 20}
               onClick={() => resolveMutation.mutate({
                 violationId: String(violation.id ?? ""),

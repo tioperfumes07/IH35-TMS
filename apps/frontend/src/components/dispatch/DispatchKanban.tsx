@@ -152,7 +152,7 @@ type KanbanDensity = "compact" | "standard" | "detailed";
 //   page      rgb(244,246,248)
 //   column    rgb(247,248,250)   <- LIGHTER than the page. A container must recede, not advance.
 //   lane body rgb(255,255,255)   <- WHITE
-//   card      #fff + border      <- WHITE CARD ON A WHITE LANE. The cards vanished.
+//   card      #FFF + border      <- WHITE CARD ON A WHITE LANE. The cards vanished.
 // I had the ladder upside down: I put the page tint on the COLUMN and the white surface on the
 // LANE, so the one element that must read as a liftable object (these cards are draggable) had
 // nothing behind it to lift off. That is the "feels weird" — there were no cards on screen, just
@@ -1199,7 +1199,7 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
           e.stopPropagation();
           onBook(load.id);
         }}
-        className="mt-1 w-full rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#2a3656]"
+        className="mt-1 w-full rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#2A3656]"
       >
         + Book load
       </button>

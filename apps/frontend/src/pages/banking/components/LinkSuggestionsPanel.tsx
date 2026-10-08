@@ -215,7 +215,7 @@ export function LinkSuggestionsPanel({ companyId }: { companyId: string }) {
   return (
     <div className="space-y-3" data-testid="banking-link-suggestions-panel">
       <div
-        className="rounded-[9px] border border-[#C7D2DC] bg-white px-3 py-2 text-xs text-[#5d6b7a]"
+        className="rounded-[9px] border border-[#C7D2DC] bg-white px-3 py-2 text-xs text-[#5D6B7A]"
         data-testid="banking-link-suggestions-summary"
       >
         <p className="font-semibold text-[#14314F]">

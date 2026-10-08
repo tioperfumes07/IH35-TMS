@@ -154,7 +154,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
               setShowAdd((s) => !s);
               setError(null);
             }}
-            className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#0f1729]"
+            className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#0F1729]"
           >
             {showAdd ? "Cancel" : "+ Create method"}
           </button>
@@ -232,7 +232,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
               type="button"
               disabled={!achValid || createMutation.isPending}
               onClick={() => createMutation.mutate()}
-              className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-3 py-1 font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
+              className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-3 py-1 font-semibold text-white hover:bg-[#0F1729] disabled:opacity-50"
             >
               Save method
             </button>

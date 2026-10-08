@@ -148,7 +148,7 @@ function OverviewWizardSection({ title, canEdit, onEdit, children }: { title: st
       <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-3 py-1.5">
         <span className="text-xs font-semibold text-gray-700">{title}</span>
         {canEdit ? (
-          <button type="button" onClick={onEdit} className="text-xs font-semibold text-[#1f2a44] hover:underline">
+          <button type="button" onClick={onEdit} className="text-xs font-semibold text-[#1F2A44] hover:underline">
             Edit ▸
           </button>
         ) : null}

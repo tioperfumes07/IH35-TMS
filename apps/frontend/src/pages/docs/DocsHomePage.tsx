@@ -328,7 +328,7 @@ export function DocsHomePage() {
               }
               setUploadOpen(true);
             }}
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0F1729]"
             data-testid="docs-home-upload-button"
           >
             + Upload Document

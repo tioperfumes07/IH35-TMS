@@ -1046,7 +1046,7 @@ export function ProgramBoardPage() {
 
 // ── AUDIT TRUTH — additive TRUE-state section (2026-07-10 MASTER-MANIFEST audit vs prod branch
 // br-fancy-credit-akjnd07a). Read-only, committed-JSON only, gated entirely on `board.audit` being
-// present. §7 palette only: navy/slate tokens; --red #dc2626 reserved for not-built/alert emphasis.
+// present. §7 palette only: navy/slate tokens; --red #DC2626 reserved for not-built/alert emphasis.
 function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
   const [moduleFilter, setModuleFilter] = useState<string>("all");
   const [verdictFilter, setVerdictFilter] = useState<string>("all");

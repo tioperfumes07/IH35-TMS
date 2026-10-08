@@ -176,10 +176,10 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
             <YAxis yAxisId="humidity" orientation="right" tick={{ fontSize: 11 }} label={{ value: "%", angle: 90, position: "insideRight", fontSize: 11 }} />
             <Tooltip />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <ReferenceLine yAxisId="temp" y={query.data.threshold.min_temp_c} stroke="#f59e0b" strokeDasharray="4 4" label="Min C" />
-            <ReferenceLine yAxisId="temp" y={query.data.threshold.max_temp_c} stroke="#f59e0b" strokeDasharray="4 4" label="Max C" />
-            <Line yAxisId="temp" type="monotone" dataKey="temp_celsius" name="Temp C" stroke="#0284c7" strokeWidth={2} dot={false} />
-            <Line yAxisId="humidity" type="monotone" dataKey="humidity_pct" name="Humidity %" stroke="#16a34a" strokeWidth={2} dot={false} />
+            <ReferenceLine yAxisId="temp" y={query.data.threshold.min_temp_c} stroke="#F59E0B" strokeDasharray="4 4" label="Min C" />
+            <ReferenceLine yAxisId="temp" y={query.data.threshold.max_temp_c} stroke="#F59E0B" strokeDasharray="4 4" label="Max C" />
+            <Line yAxisId="temp" type="monotone" dataKey="temp_celsius" name="Temp C" stroke="#0284C7" strokeWidth={2} dot={false} />
+            <Line yAxisId="humidity" type="monotone" dataKey="humidity_pct" name="Humidity %" stroke="#16A34A" strokeWidth={2} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>

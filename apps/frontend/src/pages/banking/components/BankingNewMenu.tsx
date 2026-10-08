@@ -43,7 +43,7 @@ export function BankingNewMenu({ groups }: { groups: BankingNewMenuGroup[] }) {
         aria-controls={menuId}
         onClick={() => setOpen((o) => !o)}
         data-testid="banking-new-menu-trigger"
-        className="inline-flex h-7 items-center gap-1 rounded-sm bg-[#14314F] px-2.5 text-xs font-bold text-white hover:bg-[#0f2540]"
+        className="inline-flex h-7 items-center gap-1 rounded-sm bg-[#14314F] px-2.5 text-xs font-bold text-white hover:bg-[#0F2540]"
       >
         + New
         <ChevronDown className="h-3.5 w-3.5" />
@@ -58,7 +58,7 @@ export function BankingNewMenu({ groups }: { groups: BankingNewMenuGroup[] }) {
           {visibleGroups.map((group, gi) => (
             <div key={group.heading}>
               {gi > 0 ? <div className="my-1 border-t border-gray-100" /> : null}
-              <div className="px-3 pb-1 pt-1.5 font-bold uppercase text-[#9aa7b4]" style={{ fontSize: "10.5px", letterSpacing: ".065em" }}>
+              <div className="px-3 pb-1 pt-1.5 font-bold uppercase text-[#9AA7B4]" style={{ fontSize: "10.5px", letterSpacing: ".065em" }}>
                 {group.heading}
               </div>
               {group.items.map((item) => (

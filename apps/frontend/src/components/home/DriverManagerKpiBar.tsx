@@ -16,7 +16,7 @@ type Props = {
 };
 
 const ACCENT = {
-  warning: "#d97706",
+  warning: "#D97706",
   neutral: undefined,
 } as const;
 

@@ -212,7 +212,7 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
           </button>
           <button
             type="button"
-            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729]"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0F1729]"
             disabled={actionPending}
             onClick={() => resolveMutation.mutate({ alertId: String(alert.id), companyId: operatingCompanyId, generation: actionGenerationRef.current })}
           >

@@ -9,7 +9,7 @@ type Props = {
 };
 
 function ReadyBadge({ label }: { label: string }) {
-  // §7 palette: the green pill (#d1fae5) is reserved for the Class field only — every other
+  // §7 palette: the green pill (#D1FAE5) is reserved for the Class field only — every other
   // status badge (including this "ready" state) uses the locked neutral navy/slate palette.
   const palette =
     label === "waiting for quarter close"

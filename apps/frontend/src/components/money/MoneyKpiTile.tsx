@@ -36,13 +36,13 @@ export function MoneyKpiTile({ label, value, tone, sub, sparkline, action, onCli
           `text-[Npx]` arbitrary-value class, so it renders exactly as specified without adding to
           verify-ui-design-system-ratchet's raw-bracket count (that ratchet targets ad hoc,
           uncoordinated sizes; this is one deliberate, named, non-repeating anatomy). */}
-      <div className="font-bold uppercase text-[#5d6b7a]" style={{ fontSize: "10.5px", letterSpacing: ".065em" }}>
+      <div className="font-bold uppercase text-[#5D6B7A]" style={{ fontSize: "10.5px", letterSpacing: ".065em" }}>
         {label}
       </div>
       <div className="mt-1 font-bold" style={{ fontSize: "27px", letterSpacing: "-1px", color: valueColor, fontVariantNumeric: "tabular-nums" }} title={value}>
         {value}
       </div>
-      <div className="mt-0.5 text-[#5d6b7a]" style={{ fontSize: "11.5px" }}>
+      <div className="mt-0.5 text-[#5D6B7A]" style={{ fontSize: "11.5px" }}>
         {sub}
       </div>
       {sparkline}

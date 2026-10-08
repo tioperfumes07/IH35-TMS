@@ -17,8 +17,8 @@ type Props = {
 // §7 severity styling — single red (severe), single amber (warning), slate (info).
 function severityChip(severity: string) {
   const s = severity.toLowerCase();
-  if (s === "severe" || s === "major") return "border-[#A32D2D] bg-[#fbeaea] text-[#A32D2D]";
-  if (s === "warning" || s === "minor") return "border-[#854F0B] bg-[#fdf3e6] text-[#854F0B]";
+  if (s === "severe" || s === "major") return "border-[#A32D2D] bg-[#FBEAEA] text-[#A32D2D]";
+  if (s === "warning" || s === "minor") return "border-[#854F0B] bg-[#FDF3E6] text-[#854F0B]";
   return "border-gray-300 bg-gray-100 text-gray-600";
 }
 

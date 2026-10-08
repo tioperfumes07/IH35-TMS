@@ -43,7 +43,7 @@ export function ActionsDropdown({ items, label = "Actions" }: { items: ActionsDr
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex h-7 items-center gap-1 rounded-sm bg-[#14314F] px-2 text-xs font-semibold text-white hover:bg-[#0f2540]"
+        className="inline-flex h-7 items-center gap-1 rounded-sm bg-[#14314F] px-2 text-xs font-semibold text-white hover:bg-[#0F2540]"
       >
         {label}
         <ChevronDown className="h-3.5 w-3.5" />

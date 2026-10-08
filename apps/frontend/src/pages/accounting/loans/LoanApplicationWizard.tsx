@@ -489,7 +489,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
             <button
               type="button"
               onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
-              className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
+              className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0F1729]"
             >
               Next
             </button>
@@ -498,7 +498,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
               type="button"
               onClick={() => void submit()}
               disabled={submitting || !payload}
-              className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-40"
+              className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0F1729] disabled:opacity-40"
             >
               {submitting ? "Creating…" : "+ Create"}
             </button>

@@ -20,7 +20,7 @@ function variantClasses(variant: ButtonVariant) {
   if (variant === "danger") {
     return "border-crit bg-crit text-white hover:bg-red-700";
   }
-  return "border-[#1F2A44] bg-[#1F2A44] text-white hover:bg-[#0f1729]";
+  return "border-[#1F2A44] bg-[#1F2A44] text-white hover:bg-[#0F1729]";
 }
 
 // UI CONTROL LAW (owner ruling 2026-09-01) — ONE height for every "md" button regardless of

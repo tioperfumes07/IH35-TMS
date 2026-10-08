@@ -21,8 +21,8 @@ const ACTIVE_LOAD = new Set<string>(RT_TIMELINE_STATUSES);
 
 const NB = "#1F2A44";
 const SB = "#475569";
-const TR = "#b45309";
-const LONG_LEG_OUTLINE = "#dc2626";
+const TR = "#B45309";
+const LONG_LEG_OUTLINE = "#DC2626";
 
 const COLOR: Record<TripKind, string> = { NB, SB, TR };
 

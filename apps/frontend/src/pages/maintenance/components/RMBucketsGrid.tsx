@@ -19,7 +19,7 @@ const COLUMNS: { key: ColumnKey; title: string; accent: string }[] = [
   { key: "open", title: "Open", accent: "#1F2A44" },
   { key: "in_progress", title: "In Progress", accent: "#64748B" },
   { key: "waiting_parts", title: "Awaiting Parts", accent: "#B45309" },
-  { key: "severe", title: "Severe / OOS", accent: "#dc2626" },
+  { key: "severe", title: "Severe / OOS", accent: "#DC2626" },
   { key: "complete", title: "Completed", accent: "#4B5563" },
 ];
 

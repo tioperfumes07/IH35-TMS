@@ -1,7 +1,7 @@
 import { MONEY_DATAVIZ_PALETTE } from "../../design/money-design-system";
 
 // ROUND-20.8 A6 — ONE SPARKLINE PER KPI WHERE A TREND EXISTS, on the validated dataviz palette
-// (#2a78d6 / #1baf7a / #eda100). No other series color is permitted here — this file is the only
+// (#2A78D6 / #1BAF7A / #EDA100). No other series color is permitted here — this file is the only
 // place a money-module tile is allowed to draw one, so the guard only needs to scan this one file
 // for stray hex values inside an <svg>.
 //

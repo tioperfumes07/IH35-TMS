@@ -9,7 +9,7 @@ type Props = { reason: NaReason; "data-testid"?: string };
 export function NotApplicable({ reason, "data-testid": testId }: Props) {
   return (
     <span
-      className="cursor-help border-b border-dotted border-[#c2ccd6] text-[#9aa7b4]"
+      className="cursor-help border-b border-dotted border-[#C2CCD6] text-[#9AA7B4]"
       title={NA_REASON_TITLE[reason]}
       data-testid={testId}
       data-na-reason={reason}

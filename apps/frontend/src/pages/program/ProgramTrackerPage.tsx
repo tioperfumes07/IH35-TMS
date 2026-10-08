@@ -33,7 +33,7 @@ const changedStamp = (r: TrackerBlockRow) => r.last_changed_ct || ctDateTime(r.l
 const doneStamp = (r: TrackerBlockRow) => r.completed_ct || ctDateTime(r.completed_at);
 
 const PILL: Record<TrackerPhase["status"], { label: string; cls: string }> = {
-  done: { label: "Done", cls: "bg-[#d1fae5] text-[#0F1219]" },
+  done: { label: "Done", cls: "bg-[#D1FAE5] text-[#0F1219]" },
   "in-progress": { label: "In progress", cls: "bg-[#F7F8FA] text-[#1F2A44]" },
   "awaiting-owner": { label: "Awaiting owner", cls: "border border-red-600 text-red-600" },
   queued: { label: "Queued", cls: "bg-[#F7F8FA] text-[#6B7280]" },
@@ -121,7 +121,7 @@ function BlockTable({ rows, kind, moved, extended = false }: { rows: TrackerBloc
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.id} className={`border-b border-gray-100 last:border-b-0 align-top ${moved.has(r.id) ? "bg-[#d1fae5]" : ""}`}>
+            <tr key={r.id} className={`border-b border-gray-100 last:border-b-0 align-top ${moved.has(r.id) ? "bg-[#D1FAE5]" : ""}`}>
               <td className="px-3 py-2 text-[#0F1219]">
                 {r.name}
                 {r.financial ? <span className="ml-1 rounded-sm bg-[#F7F8FA] px-1 text-xs text-[#6B7280]">FIN</span> : null}
