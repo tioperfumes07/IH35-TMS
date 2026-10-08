@@ -29,11 +29,11 @@ function formatDateTime(isoString: string): string {
 function actionBadgeClass(action: string) {
   switch (action) {
     case "installed":
-      return "bg-slate-100 text-slate-700";
+      return "bg-[#F7F8FA] text-[#1F2A44]";
     case "removed":
       return "bg-red-100 text-red-800";
     case "replaced":
-      return "bg-slate-100 text-slate-700";
+      return "bg-[#F7F8FA] text-[#1F2A44]";
     default:
       return "bg-gray-100 text-gray-800";
   }
