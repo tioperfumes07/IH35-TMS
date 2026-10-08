@@ -263,7 +263,7 @@ export function CreditMemosPage() {
     <div className="flex flex-wrap items-end gap-3" data-credit-memos-filter-toolbar="collapsed">
       <CollapsedListFilters activeFilterCount={(statusFilter.length === 1 && statusFilter[0] === "active" ? 0 : 1) + (customerFilter ? 1 : 0)} testIdPrefix="credit-memos" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <div className="flex flex-wrap gap-2">
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Customer
             <EntityPicker
               kind="customer"
@@ -393,7 +393,7 @@ export function CreditMemosPage() {
                 limit={1000}
                 total={customersQuery.data?.total ?? null}
                 hint="Type in the customer field to search the full roster."
-                className="mt-1 text-xs text-slate-600"
+                className="mt-1 text-xs text-[#4B5563]"
               />
             </div>
           </label>
@@ -472,7 +472,7 @@ export function CreditMemosPage() {
           </div>
         }
       >
-        {creditMemoDetailQuery.isLoading ? <p className="text-xs text-slate-500">Loading credit memo...</p> : null}
+        {creditMemoDetailQuery.isLoading ? <p className="text-xs text-[#6B7280]">Loading credit memo...</p> : null}
         {creditMemoDetailQuery.isError ? (
           <ListErrorState
             title="Couldn't load credit memo"
@@ -483,9 +483,9 @@ export function CreditMemosPage() {
         ) : null}
         {creditMemo ? (
           <div className="space-y-4 text-xs">
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
               <div>
-                <dt className="text-xs font-semibold text-slate-600">Customer</dt>
+                <dt className="text-xs font-semibold text-[#4B5563]">Customer</dt>
                 <dd className="mt-0.5">
                   <EntityLink
                     kind="customer"
@@ -495,32 +495,32 @@ export function CreditMemosPage() {
                 </dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold text-slate-600">Issue date</dt>
-                <dd className="mt-0.5 text-slate-900">{formatDateUS(creditMemo.issue_date)}</dd>
+                <dt className="text-xs font-semibold text-[#4B5563]">Issue date</dt>
+                <dd className="mt-0.5 text-[#0F1219]">{formatDateUS(creditMemo.issue_date)}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold text-slate-600">Credit amount</dt>
-                <dd className="mt-0.5 font-semibold text-slate-900">{money(creditMemo.amount_cents)}</dd>
+                <dt className="text-xs font-semibold text-[#4B5563]">Credit amount</dt>
+                <dd className="mt-0.5 font-semibold text-[#0F1219]">{money(creditMemo.amount_cents)}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold text-slate-600">Unapplied</dt>
-                <dd className="mt-0.5 font-semibold text-slate-900">{money(creditMemo.amount_unapplied_cents)}</dd>
+                <dt className="text-xs font-semibold text-[#4B5563]">Unapplied</dt>
+                <dd className="mt-0.5 font-semibold text-[#0F1219]">{money(creditMemo.amount_unapplied_cents)}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold text-slate-600">Reason</dt>
-                <dd className="mt-0.5 text-slate-900">
+                <dt className="text-xs font-semibold text-[#4B5563]">Reason</dt>
+                <dd className="mt-0.5 text-[#0F1219]">
                   {CREDIT_MEMO_REASONS.find((r) => r.value === creditMemo.reason)?.label ?? creditMemo.reason}
                 </dd>
               </div>
             </dl>
             {creditMemo.notes ? (
               <div>
-                <h3 className="text-xs font-semibold text-slate-600">Notes</h3>
-                <p className="mt-1 whitespace-pre-wrap text-slate-800">{creditMemo.notes}</p>
+                <h3 className="text-xs font-semibold text-[#4B5563]">Notes</h3>
+                <p className="mt-1 whitespace-pre-wrap text-[#0F1219]">{creditMemo.notes}</p>
               </div>
             ) : null}
             <div>
-              <h3 className="text-xs font-semibold text-slate-900">Applied invoices</h3>
+              <h3 className="text-xs font-semibold text-[#0F1219]">Applied invoices</h3>
               <CreditMemoApplications applications={creditMemoDetailQuery.data?.applications ?? []} />
             </div>
             <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="credit_memo" documentId={creditMemo.id} />
@@ -553,8 +553,8 @@ export function CreditMemosPage() {
         }
       >
         <div className="space-y-3 text-xs">
-          <p className="text-slate-600">
-            Available credit: <span className="font-semibold text-slate-900">{money(Number(creditMemo?.amount_unapplied_cents ?? 0))}</span>
+          <p className="text-[#4B5563]">
+            Available credit: <span className="font-semibold text-[#0F1219]">{money(Number(creditMemo?.amount_unapplied_cents ?? 0))}</span>
           </p>
           {openInvoicesQuery.isError ? (
             <ListErrorState
@@ -565,7 +565,7 @@ export function CreditMemosPage() {
             />
           ) : null}
           <label className="block">
-            <span className="text-xs font-medium text-slate-600">Open invoice *</span>
+            <span className="text-xs font-medium text-[#4B5563]">Open invoice *</span>
             <div className="mt-1">
               <SelectCombobox
                 value={applyInvoiceId ?? ""}
@@ -583,12 +583,12 @@ export function CreditMemosPage() {
             </div>
           </label>
           <label className="block">
-            <span className="text-xs font-medium text-slate-600">Apply amount *</span>
+            <span className="text-xs font-medium text-[#4B5563]">Apply amount *</span>
             <div className="mt-1">
               <MoneyInput valueCents={applyAmountCents} onChangeCents={setApplyAmountCents} ariaLabel="Credit memo apply amount" />
             </div>
           </label>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#6B7280]">
             The server verifies both the remaining credit and the selected invoice&apos;s remaining balance before recording the application.
           </p>
         </div>
@@ -615,15 +615,15 @@ export function CreditMemosPage() {
 
 function CreditMemoApplications({ applications }: { applications: CreditMemoApplication[] }) {
   if (applications.length === 0) {
-    return <p className="mt-1 text-xs text-slate-500">No invoices have been credited yet.</p>;
+    return <p className="mt-1 text-xs text-[#6B7280]">No invoices have been credited yet.</p>;
   }
   return (
     <div className="mt-2 space-y-2">
       {applications.map((application) => (
-        <div key={application.id} className="flex items-center justify-between gap-3 rounded-sm border border-slate-200 px-3 py-2">
+        <div key={application.id} className="flex items-center justify-between gap-3 rounded-sm border border-[#E5E7EB] px-3 py-2">
           <EntityLink kind="invoice" id={application.invoice_id} label={entityLabel(application.invoice_display_id, application.invoice_id, "Invoice")} />
-          <div className="text-right text-xs text-slate-600">
-            <div className="font-semibold text-slate-900">{money(application.applied_cents)}</div>
+          <div className="text-right text-xs text-[#4B5563]">
+            <div className="font-semibold text-[#0F1219]">{money(application.applied_cents)}</div>
             <div>{application.voided_at ? "Voided application" : `Applied ${formatDateUS(application.applied_at)}`}</div>
           </div>
         </div>

@@ -324,7 +324,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     <ParityDrawer open={open} onClose={onClose} title={title} size="wide">
       {createdInvoice ? (
         <div
-          className="flex flex-col items-start gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs"
+          className="flex flex-col items-start gap-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs"
           data-testid="invoice-type-modal-confirmation"
         >
           <p className="text-gray-700">
@@ -371,7 +371,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
         </div>
         <div className="grid gap-2 md:grid-cols-2">
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-600">Customer *</label>
+            <label className="text-xs font-semibold text-[#4B5563]">Customer *</label>
             <ReferenceSelect
               value={customerId}
               onChange={(next) => {
@@ -410,7 +410,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
           </div>
           {billToEntityType === "driver" || billToEntityType === "vendor" ? (
             <div className="space-y-1" data-testid="invoice-type-bill-to-picker">
-              <label className="text-xs font-semibold text-slate-600">
+              <label className="text-xs font-semibold text-[#4B5563]">
                 {billToEntityType === "driver" ? "Bill-to driver *" : "Bill-to vendor *"}
               </label>
               <EntityPicker
@@ -431,7 +431,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             </div>
           ) : null}
           <div className="space-y-1" data-testid="invoice-type-load-picker">
-            <label className="text-xs font-semibold text-slate-600">Load (optional)</label>
+            <label className="text-xs font-semibold text-[#4B5563]">Load (optional)</label>
             <EntityPicker
               kind="load"
               operatingCompanyId={operatingCompanyId}
@@ -459,9 +459,9 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
                 Insert customer reference into notes
               </Button>
             ) : (
-              <div className="space-y-1 rounded-sm border border-slate-200 bg-slate-50 p-2">
+              <div className="space-y-1 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-slate-600">Pick a customer to append to Notes</span>
+                  <span className="text-xs font-semibold text-[#4B5563]">Pick a customer to append to Notes</span>
                   <Button type="button" variant="tertiary" size="sm" onClick={() => setShowCustomerRefPicker(false)}>
                     Cancel
                   </Button>
@@ -489,7 +489,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
               </div>
             )}
           </div>
-          <label className="text-xs font-semibold text-slate-600">
+          <label className="text-xs font-semibold text-[#4B5563]">
             Invoice date
             <DatePicker
               data-testid="issue_date"
@@ -502,7 +502,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             />
             <FieldError id="issue_date" message={invoiceFieldErrors.issue_date} />
           </label>
-          <label className="text-xs font-semibold text-slate-600">
+          <label className="text-xs font-semibold text-[#4B5563]">
             Due date
             <DatePicker
               data-testid="due_date"
@@ -516,9 +516,9 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             <FieldError id="due_date" message={invoiceFieldErrors.due_date} />
           </label>
           <div className="space-y-1 md:col-span-2">
-            <label className="text-xs font-semibold text-slate-600">
+            <label className="text-xs font-semibold text-[#4B5563]">
               Income account *
-              <span className="ml-1 font-normal text-slate-400">(required when line amount is set)</span>
+              <span className="ml-1 font-normal text-[#6B7280]">(required when line amount is set)</span>
             </label>
             <ReferenceSelect
               value={incomeAccountId}
@@ -537,7 +537,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             />
             <FieldError id="income_account_id" message={invoiceFieldErrors.income_account_id} />
           </div>
-          <label className="text-xs font-semibold text-slate-600 md:col-span-2">
+          <label className="text-xs font-semibold text-[#4B5563] md:col-span-2">
             Line description
             <input
               data-field="line_description"
@@ -551,7 +551,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             />
             <FieldError id="line_description" message={invoiceFieldErrors.line_description} />
           </label>
-          <label className="text-xs font-semibold text-slate-600">
+          <label className="text-xs font-semibold text-[#4B5563]">
             Line amount (USD)
             <MoneyInput
               valueCents={lineAmountCents}
@@ -564,7 +564,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             />
             <FieldError id="line_amount_cents" message={invoiceFieldErrors.line_amount_cents} />
           </label>
-          <label className="text-xs font-semibold text-slate-600 md:col-span-2">
+          <label className="text-xs font-semibold text-[#4B5563] md:col-span-2">
             Notes
             <textarea
               data-field="notes"
@@ -587,12 +587,12 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
           title="Supporting Documents"
         />
         {creditLimitBlock ? (
-          <div className="rounded-sm border-2 border-slate-300 bg-slate-50 p-3 text-xs">
-            <p className="flex items-center gap-1.5 font-semibold text-slate-700">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-slate-500" />
+          <div className="rounded-sm border-2 border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">
+            <p className="flex items-center gap-1.5 font-semibold text-[#1F2A44]">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-[#6B7280]" />
               Credit limit reached
             </p>
-            <p className="mt-1 text-slate-600">
+            <p className="mt-1 text-[#4B5563]">
               Open exposure: ${((creditLimitBlock.exposure_cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })} &mdash;{" "}
               Limit: ${((creditLimitBlock.limit_cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
               {creditLimitBlock.credit_limit_source === "factor" ? " (Factor-set — FARO)" : ""}
@@ -604,10 +604,10 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
                   checked={overrideCreditLimit}
                   onChange={(e) => setOverrideCreditLimit(e.target.checked)}
                 />
-                <span className="text-slate-700">Override — I acknowledge this customer is over their credit limit</span>
+                <span className="text-[#1F2A44]">Override — I acknowledge this customer is over their credit limit</span>
               </label>
             ) : (
-              <p className="mt-1 text-slate-500">Contact an Owner or Manager to override.</p>
+              <p className="mt-1 text-[#6B7280]">Contact an Owner or Manager to override.</p>
             )}
           </div>
         ) : null}
