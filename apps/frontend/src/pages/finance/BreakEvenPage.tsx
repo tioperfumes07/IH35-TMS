@@ -17,6 +17,7 @@ import {
   type BreakEvenClassification,
 } from "../../api/financeBreakEven";
 import { BreakEvenWorkbookCreator } from "./BreakEvenWorkbookCreator";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 // F1 — Break-Even Analysis.
 // READ-ONLY analytics/estimate. A single GET pulls the cost-per-mile inputs (revenue, miles, per-account
@@ -329,7 +330,12 @@ export function BreakEvenPage() {
                   key: "account_name",
                   label: "Name",
                   cellClass: "text-[#0F1219]",
-                  render: (line) => line.account_name || "—",
+                  render: (line) =>
+                    line.account_id ? (
+                      <EntityLink kind="account" id={line.account_id} label={line.account_name || "—"} />
+                    ) : (
+                      line.account_name || "—"
+                    ),
                 },
                 {
                   key: "amount_cents",

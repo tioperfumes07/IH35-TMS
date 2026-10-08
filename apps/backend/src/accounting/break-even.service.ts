@@ -21,6 +21,7 @@ import { getProfitLossReport, type ProfitLossLine } from "./profit-loss.service.
 export type BreakEvenClassification = "fixed" | "variable";
 
 export type BreakEvenExpenseLine = {
+  account_id?: string;
   account_code: string;
   account_name: string;
   account_type: string;
@@ -165,6 +166,7 @@ export async function getBreakEvenInputs(input: {
   const expense_lines: BreakEvenExpenseLine[] = expenseSource
     .filter((l) => l.amount !== 0)
     .map((l) => ({
+      account_id: l.account_id,
       account_code: l.account_code,
       account_name: l.account_name,
       account_type: l.account_type,

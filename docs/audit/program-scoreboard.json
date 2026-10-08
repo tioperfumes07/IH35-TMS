@@ -1,10 +1,10 @@
 {
-  "healthzSha": "58f5b53",
-  "generated_at": "2026-10-08T10:08:02.971Z",
+  "healthzSha": "e55206e",
+  "generated_at": "2026-10-08T10:16:12.907Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "58f5b53",
+    "deployedSha": "e55206e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 25861,
+      "title": "FINDING: BANK-F91205 — leftover slate on driver late arrival / customer late arrival / arrival prompt house tokens",
+      "state": "merged",
+      "mergedAtCt": "10/08/2026, 05:14 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25861",
+      "sha": "374e7144f4",
+      "committedAtIso": "2026-10-08T05:14:59-05:00"
+    },
+    {
       "number": 25860,
       "title": "FINDING: RPT-441-22 — two report guards pinned stale anchors that no longer match the locked token/JSX layout",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25852",
       "sha": "6c3a16a7e6",
       "committedAtIso": "2026-10-08T04:02:50-05:00"
-    },
-    {
-      "number": 25851,
-      "title": "FINDING: BANK-F91196 — leftover slate on safety alerts reverse / asset safety reverse / filings due house tokens",
-      "state": "merged",
-      "mergedAtCt": "10/08/2026, 03:58 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25851",
-      "sha": "2632b8375e",
-      "committedAtIso": "2026-10-08T03:58:36-05:00"
     }
   ]
 }
