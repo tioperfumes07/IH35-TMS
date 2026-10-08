@@ -13,7 +13,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
 
-const LINK = "text-slate-700 hover:underline";
+const LINK = "text-[#1F2A44] hover:underline";
 
 export function DriverReportsQueuePage({
   highlightedReportId = "",
@@ -222,7 +222,7 @@ export function DriverReportsQueuePage({
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}
-        rowClassName={(row) => highlightedReportId && row.id === highlightedReportId ? "bg-slate-100 ring-1 ring-slate-400" : ""}
+        rowClassName={(row) => highlightedReportId && row.id === highlightedReportId ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]" : ""}
         loading={q.isLoading}
         emptyText="No driver reports found."
         storageKey="maint-damage-reports"
@@ -238,7 +238,7 @@ export function DriverReportsQueuePage({
               testIdPrefix="driver-reports"
             >
               <div className="flex flex-wrap items-end gap-3" data-testid="driver-reports-entity-filters">
-                <label className="text-xs text-slate-600">
+                <label className="text-xs text-[#4B5563]">
                   Driver
                   <EntityPicker
                     kind="driver"
@@ -251,7 +251,7 @@ export function DriverReportsQueuePage({
                     dataTestId="driver-reports-filter-driver"
                   />
                 </label>
-                <label className="text-xs text-slate-600">
+                <label className="text-xs text-[#4B5563]">
                   Load
                   <EntityPicker
                     kind="load"
@@ -284,7 +284,7 @@ export function DriverReportsQueuePage({
         }
       />
       {q.data && q.data.total_count > 0 ? (
-        <div className="flex items-center justify-end gap-2 text-xs text-slate-600" data-testid="driver-reports-server-pager">
+        <div className="flex items-center justify-end gap-2 text-xs text-[#4B5563]" data-testid="driver-reports-server-pager">
           <span>Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, q.data.total_count)} of {q.data.total_count}</span>
           <Button size="sm" variant="secondary" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
           <Button size="sm" variant="secondary" disabled={page * pageSize >= q.data.total_count} onClick={() => setPage((current) => current + 1)}>Next</Button>
