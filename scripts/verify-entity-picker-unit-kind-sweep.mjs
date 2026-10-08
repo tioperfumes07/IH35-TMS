@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["leases"],"cols":["picker_law"],"leafRe":"^leases\\.","task":"EP-UNIT-KIND-SWEEP","vertical":"class-sweep"} */
 /**
  * EP-UNIT-KIND-SWEEP — ONE generalized guard for silent listUnits unit pickers.
  * Delivery §9.0 item 17: every unit field picker must use EntityPicker kind="unit".
@@ -27,6 +28,9 @@ const ALLOWLIST = new Set([
   "apps/frontend/src/components/banking/TrailerAutocomplete.tsx",
   // Dispatch planner roster aggregation — display only, no unit field picker.
   "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
+  // Lease asset picker is a MULTI-select checkbox grid (unit+trailer, each with a monthly amount);
+  // EntityPicker is single-select only — same exception class as the insurance multi-selects.
+  "apps/frontend/src/components/leases/LeaseContractCreator.tsx",
 ]);
 
 function stripComments(src) {

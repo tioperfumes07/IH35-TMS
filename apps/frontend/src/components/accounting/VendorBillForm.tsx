@@ -481,7 +481,6 @@ export function VendorBillForm({
           <DatePicker className="w-full" value={billDate} onChange={setBillDate} />
         </Field>
         <Field label="Terms">
-          {/* Flat native select — SelectCombobox wraps Combobox with its own border (box-in-box). */}
           <SelectCombobox
             className="h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-xs"
             value={terms}

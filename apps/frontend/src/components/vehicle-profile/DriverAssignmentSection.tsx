@@ -58,7 +58,7 @@ export function DriverAssignmentSection({
       </div>
       {mismatch ? <p className="mt-1 text-xs text-amber-700">Default driver differs from currently driving (Samsara).</p> : null}
       <div className="mt-3 grid gap-3 md:grid-cols-2">
-        <div className="rounded-sm border border-gray-100 p-3">
+        <div className="border-t border-gray-100 p-3">
           <div className="text-xs font-semibold text-gray-500">Default driver</div>
           <div className="text-xs font-medium">
             {defaultDriver?.id ? (
@@ -92,7 +92,7 @@ export function DriverAssignmentSection({
             </p>
           ) : null}
         </div>
-        <div className="rounded-sm border border-gray-100 p-3">
+        <div className="border-t border-gray-100 p-3">
           <div className="text-xs font-semibold text-gray-500">Currently driving</div>
           <div className="text-xs font-medium">
             {currentDriver?.id ? (

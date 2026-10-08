@@ -90,7 +90,7 @@ export function ThreeMileCpmPanel({ operatingCompanyId }: { operatingCompanyId: 
       {fleet ? (
         <div className="grid grid-cols-1 gap-2 md:grid-cols-5" data-testid="three-mile-fleet">
           {fleet.cpm.map((c) => (
-            <div key={c.basis} className="rounded-sm border border-gray-200 p-2">
+            <div key={c.basis} className="border-b border-gray-200 p-2">
               <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Fleet CPM · {BASIS_SHORT[c.basis]}</div>
               <div className="text-xs font-semibold text-slate-900">{cpmText(c)}</div>
               <div className="text-section-header text-gray-500">
@@ -99,7 +99,7 @@ export function ThreeMileCpmPanel({ operatingCompanyId }: { operatingCompanyId: 
             </div>
           ))}
           {fleet.mpg.map((m) => (
-            <div key={m.basis} className="rounded-sm border border-gray-200 p-2">
+            <div key={m.basis} className="border-b border-gray-200 p-2">
               <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Fleet MPG · {BASIS_SHORT[m.basis]}</div>
               <div className="text-xs font-semibold text-slate-900">{mpgText(m)}</div>
               <div className="text-section-header text-gray-500">{m.mpg != null ? `${formatNumberTable(m.miles ?? 0, 1)} mi / ${formatNumberTable(m.gallons ?? 0, 1)} gal diesel` : m.reason}</div>

@@ -376,7 +376,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
       </div>
 
       <div
-        className={`rounded-sm border px-3 py-2 text-xs ${openEntry ? "border-amber-200 bg-amber-50 text-amber-900" : "border-gray-200 bg-gray-50 text-gray-700"}`}
+        className={`border-t px-3 py-2 text-xs `}
         data-testid="maint-labor-running-timer"
       >
         {runningLabel}

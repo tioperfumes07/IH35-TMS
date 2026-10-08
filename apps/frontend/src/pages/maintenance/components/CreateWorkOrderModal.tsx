@@ -118,7 +118,7 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
           {parts.map((sp, i) => {
             const cat = LOC_CATS.find((c) => c.key === sp.part_type) ?? LOC_CATS[0];
             return (
-              <div key={i} className="rounded-md border border-[#E5E7EB] p-2">
+              <div key={i} className="border-b border-[#E5E7EB] p-2">
                 <div className="mb-1.5 flex flex-wrap gap-1">
                   {LOC_CATS.map((c) => (
                     <button type="button" key={c.key} onClick={() => onChange(i, { part_type: c.key, position_code: "" })}
@@ -127,7 +127,7 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
                   <button type="button" onClick={() => onRemove(i)} className="ml-auto rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#B91C1C]">Remove</button>
                 </div>
                 {/* truck silhouette — clickable wheel/position grid */}
-                <div className="rounded-md border border-[#E5E7EB] bg-[#F8FAFC] p-2">
+                <div className="bg-[#F8FAFC] p-2">
                   <svg viewBox="0 0 430 110" className="mb-1 h-16 w-full">
                     <rect x="60" y="30" width="120" height="50" rx="8" fill="#EEF2F7" stroke="#E5E7EB" />
                     <rect x="185" y="42" width="210" height="34" rx="6" fill="#F1F5F9" stroke="#E5E7EB" />

@@ -101,7 +101,7 @@ function main() {
       [actionBar, "<SuspendConfirmModal", "<MissingSuspendConfirmModal"],
       [actionBar, "resolveApiUrl(", "relativePdfHref("],
       [profilePage, "onActionComplete={refreshDriver}", "onActionComplete={() => undefined}"],
-      [hoverNavCss, "overflow-x: auto", "overflow-x: visible"],
+      [hoverNavCss, "flex-wrap: wrap", "flex-wrap: nowrap"],
     ];
     for (const [source, needle, replacement] of mutations) {
       const broken = source.replace(needle, replacement);

@@ -490,7 +490,7 @@ export function EquipmentTypesPage() {
               </Button>
             </div>
             {addEquipmentForm.line_items.map((lineItem, index) => (
-              <div key={`${lineItem.code}-${index}`} className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 p-2 md:grid-cols-6">
+              <div key={`${lineItem.code}-${index}`} className="grid grid-cols-1 gap-2 border-b border-gray-200 p-2 md:grid-cols-6">
                 <input
                   value={lineItem.code}
                   onChange={(event) =>

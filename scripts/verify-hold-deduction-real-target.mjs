@@ -46,8 +46,10 @@ export function checkAll(readFile) {
   };
 
   const svc = read(FILES.deductionsService);
-  if (!/export const SETTLEMENT_DEDUCTION_SOURCE_TABLE/.test(svc)) {
-    failures.push(`${FILES.deductionsService}: must export SETTLEMENT_DEDUCTION_SOURCE_TABLE (shared writer/reader constant)`);
+  // The shared writer/reader constant was extracted to settlement-deduction-constants.ts; the
+  // contract is that deductions.service.ts carries it (declared or imported), never re-hardcodes.
+  if (!/(export const SETTLEMENT_DEDUCTION_SOURCE_TABLE|import \{[^}]*SETTLEMENT_DEDUCTION_SOURCE_TABLE[^}]*\} from "\.\/settlement-deduction-constants)/.test(svc)) {
+    failures.push(`${FILES.deductionsService}: must carry SETTLEMENT_DEDUCTION_SOURCE_TABLE (shared writer/reader constant)`);
   }
 
   const cap = read(FILES.capService);

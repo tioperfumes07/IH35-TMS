@@ -74,7 +74,7 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
         </div>
 
         <div className="space-y-2">
-          <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
+          <div className="border-t border-gray-200 bg-gray-50 p-2">
             <EntityLinkOrTombstone kind="unit" id={card.unit_id} name={card.unit_number} noun="Unit" /> ·{" "}
             <EntityLinkOrTombstone kind="driver" id={card.driver_id} name={card.driver_name} noun="Driver" /> ·{" "}
             <EntityLinkOrTombstone kind="load" id={card.load_id} name={card.load_display_id} noun="Load" />

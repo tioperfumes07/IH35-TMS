@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["safety"],"cols":["reverse_link","connectivity"],"leafRe":"^safety\\.panel\\.driver_safety_profile$","task":"SAF-F16-DRIVER-SAFETY-REVERSE-SECTION"} */
 /**
  * GUARD: the driver profile shows the driver's safety records (SAF-F16 / Law §9 reverse linkage).
  *
@@ -274,8 +275,8 @@ if (SELFTEST) {
     {
       ...live,
       [SECTION]: live[SECTION].replace(
-        /<EntityLink\n          kind=\{openKind\}\n          id=\{openId\}\n          label=\{linkLabel\}\n          className="text-xs font-semibold text-slate-700 underline"\n        \/>/,
-        '<Link className="text-xs font-semibold text-slate-700 underline" to={to ?? "#"}>{linkLabel}</Link>'
+        /<EntityLink\s+kind=\{openKind\}\s+id=\{openId\}\s+label=\{linkLabel\}[^/]*\/>/,
+        '<Link className="underline" to={to ?? "#"}>{linkLabel}</Link>'
       ),
     },
     "EntityLink-only"

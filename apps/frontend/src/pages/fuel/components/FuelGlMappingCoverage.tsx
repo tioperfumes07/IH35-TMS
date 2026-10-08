@@ -100,7 +100,7 @@ export function FuelGlMappingCoverage({ companyId }: { companyId: string }) {
 
           {unmappedCount > 0 ? (
             <div
-              className="mt-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
+              className="mt-3 border-t border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
               data-testid="fuel-gl-mapping-warning"
             >
               {unmappedCount} fuel {unmappedCount === 1 ? "category is" : "categories are"} not mapped to a

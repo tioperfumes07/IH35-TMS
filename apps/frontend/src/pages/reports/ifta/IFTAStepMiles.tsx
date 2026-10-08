@@ -121,7 +121,7 @@ export function IFTAStepMiles({ operatingCompanyId, preparationId, quarter, year
           />
         )}
         {rows.length > 0 ? (
-          <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 font-semibold text-[#0F1219]">
+          <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 font-semibold text-[#0F1219]">
             Total: {fmtNum(total)}
           </div>
         ) : null}

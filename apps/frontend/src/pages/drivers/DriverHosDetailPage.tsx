@@ -129,7 +129,7 @@ export function DriverHosDetailPage() {
             <h2 className="text-xs font-semibold text-gray-900">Last 8 days summary</h2>
             <div className="mt-2 space-y-1">
               {hosQuery.data.summary_8d.map((row) => (
-                <div key={`${row.service_day}-${row.duty_status}`} className="flex items-center justify-between rounded-sm border border-gray-100 bg-gray-50 px-2 py-1 text-xs">
+                <div key={`${row.service_day}-${row.duty_status}`} className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-2 py-1 text-xs">
                   <span>{row.service_day} · {row.duty_status}</span>
                   <span>{minutesToLabel(Number(row.total_minutes ?? 0))}</span>
                 </div>
@@ -148,7 +148,7 @@ export function DriverHosDetailPage() {
             ) : (
               <div className="mt-2 space-y-1">
                 {hosQuery.data.manual_edits.events.map((event) => (
-                  <div key={event.id} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#0F1219]">
+                  <div key={event.id} className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#0F1219]">
                     {formatDateTimeUS(event.started_at)} CT · {event.duty_status}
                   </div>
                 ))}

@@ -67,7 +67,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
   ];
   for (const [key, before, after] of mutations) {
     if (!source[key].includes(before)) throw new Error(`fixture missing: ${key}`);
-    if (!audit({ ...source, [key]: source[key].replace(before, after) }).length) throw new Error(`mutation survived: ${key}`);
+    if (!audit({ ...source, [key]: source[key].split(before).join(after) }).length) throw new Error(`mutation survived: ${key}`);
   }
   const feed = JSON.parse(source.feed);
   feed.entries.unshift({ task: "BROKEN", guard: GUARD, modules: ["maintenance"], cols: ["reverse_link"], leafRe: "^maintenance" });

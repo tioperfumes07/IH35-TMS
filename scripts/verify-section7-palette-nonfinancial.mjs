@@ -40,9 +40,8 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 480; // ROUND 292 (Lead, 2026-09-30): the prior 486 bump was wrong — this branch's
-// own diff does not add off-palette classes; live count is 480, matching main (#23302, Lead's own
-// amber-STAMP-badge fix). Reverted rather than raised.
+const BASELINE = 477; // LST-F202610126 (Devin-A, 2026-10-08): nested-box drain dropped 3 off-palette
+// classes vs the frozen 480; ratchet tightened to the live count.
 
 function walk(dir) {
   let out = [];

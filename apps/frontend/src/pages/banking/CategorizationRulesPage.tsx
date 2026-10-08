@@ -352,7 +352,7 @@ export function CategorizationRulesPage() {
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Preview (Last 50 Transactions)</p>
           <div className="space-y-2">
             {(previewQuery.data?.transactions ?? []).map((tx) => (
-              <div key={tx.id} className="rounded-sm border border-gray-100 px-2 py-1 text-xs">
+              <div key={tx.id} className="border-b border-gray-100 px-2 py-1 text-xs">
                 <p className="font-medium text-gray-900">{tx.description || "(No description)"}</p>
                 <p className="text-gray-600">{(tx.plaid_category ?? []).join(" / ") || "No Plaid category"}</p>
                 <p className={tx.coa_account_id ? "text-slate-700" : "text-slate-500"}>

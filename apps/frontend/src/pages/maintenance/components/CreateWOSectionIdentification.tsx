@@ -424,7 +424,7 @@ export function CreateWOSectionIdentification({
           </Field>
           <div className="md:col-span-4">
             <Field label="Roadside Location (min 10 chars) *">
-              <input {...register("roadside_location")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+              <input {...register("roadside_location")} className="h-8 w-full border-t border-gray-300 px-2 text-xs" />
             </Field>
           </div>
         </div>

@@ -459,7 +459,7 @@ export function RecordPaymentModal({
               const checked = applyByInvoice[invoice.id] !== undefined;
               const invoiceOpen = Number(invoice.amount_open_cents ?? 0);
               return (
-                <div key={invoice.id} className="rounded-sm border border-gray-200 bg-white p-2">
+                <div key={invoice.id} className="border-b border-gray-200 bg-white p-2">
                   <div className="flex items-center justify-between gap-2">
                     <label className="flex items-center gap-2 text-xs text-gray-800">
                       <input

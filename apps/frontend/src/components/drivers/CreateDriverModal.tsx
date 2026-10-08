@@ -1539,7 +1539,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
               </div>
               <div className="mt-2 max-h-40 space-y-1 overflow-auto rounded-sm bg-white/70 p-2 text-xs">
                 {returningDetection.matched_events.map((event) => (
-                  <div key={event.event_id} className="rounded-sm border border-gray-200 bg-white p-1.5">
+                  <div key={event.event_id} className="border-b border-gray-200 bg-white p-1.5">
                     <div className="flex items-center justify-between gap-2">
                       <span>{formatDateUS(event.event_date)}</span>
                       <StatusBadge status={event.severity} />
@@ -1560,7 +1560,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 <span>I have reviewed prior safety records and want to proceed with this hire</span>
               </label>
               {overrideReturningWarning && terminatedMatches.length > 0 ? (
-                <div className="mt-2 space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
+                <div className="mt-2 space-y-2 border-t border-[#E5E7EB] bg-[#F7F8FA] p-2">
                   <label className="flex items-center gap-2 text-xs">
                     <input
                       type="radio"

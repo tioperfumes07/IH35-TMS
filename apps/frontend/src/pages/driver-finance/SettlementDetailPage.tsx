@@ -799,7 +799,7 @@ export function SettlementDetailPage() {
             <SelectCombobox
               value={disputeCategory}
               onChange={(event) => setDisputeCategory(event.target.value)}
-              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1"
+              className="border-b border-[#E5E7EB] bg-white px-2 py-1"
               data-testid="settlement-detail-dispute-category"
             >
               {/* SETL-PICK-03: same options module as SettlementDisputeModal (DB CHECK). */}
@@ -879,7 +879,7 @@ export function SettlementDetailPage() {
               const driverId = typeof split.driver_id === "string" && split.driver_id ? split.driver_id : null;
               const driverName = typeof split.driver_name === "string" ? split.driver_name : null;
               return (
-                <div key={`${index}-${driverId ?? index}`} className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1">
+                <div key={`${index}-${driverId ?? index}`} className="border-b border-[#E5E7EB] bg-white px-2 py-1">
                   Driver{" "}
                   {driverId ? (
                     <EntityLink kind="driver" id={driverId} label={entityLabel(driverName, driverId, "Driver")} />

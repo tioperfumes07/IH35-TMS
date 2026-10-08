@@ -65,7 +65,7 @@ export function Step4FinalReview({ filing, isOwner, onOwnerApprove, onMarkFiled,
         <p className="text-xs text-[#1F2A44]">Owner-only confirmation required before filing submission.</p>
       </div>
       <div className="space-y-3 px-3 py-3 text-xs">
-        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+        <div className="border-y border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
           <div>
             <span className="font-semibold text-[#4B5563]">Quarter:</span> {filing.quarter}
           </div>
@@ -99,7 +99,7 @@ export function Step4FinalReview({ filing, isOwner, onOwnerApprove, onMarkFiled,
         ) : null}
 
         {isOwner && canMarkFiled ? (
-          <div className="space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+          <div className="space-y-2 border-y border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
             <p className="font-semibold text-[#0F1219]">Owner approved — record state filing confirmation</p>
             <label className="block text-[#0F1219]">
               Confirmation number

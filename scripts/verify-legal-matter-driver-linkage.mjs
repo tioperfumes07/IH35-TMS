@@ -42,7 +42,7 @@ if (process.argv.includes("--selftest")) {
     ["primary reverse error", "driver", /legalMattersForDriverQuery\.isError/, "false"],
     ["primary reverse retry", "driver", /legalMattersForDriverQuery\.refetch\(\)/, "Promise.resolve()"],
     ["primary reverse empty gate", "driver", /!legalMattersForDriverQuery\.isError\s*&&\s*legalMattersListState\.isEmpty/, "legalMattersListState.isEmpty"],
-    ["profile reverse", "profile", /filter=\{\{ related_driver_id: id \}\}/, "filter={{ unit_id: id }}"],
+    ["profile reverse", "profile", /filter=\{\{ related_driver_id: id \}\}/g, "filter={{ unit_id: id }}"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };

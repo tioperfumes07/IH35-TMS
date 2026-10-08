@@ -113,7 +113,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
       </svg>
 
       {hoveredId ? (
-        <div className="mt-2 rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
+        <div className="mt-2 border-t border-gray-200 bg-gray-50 p-2 text-xs">
           {String(
             stopPoints.find((stop) => stop.pointId === hoveredId)?.reasoning_json?.reason ??
               stopPoints.find((stop) => stop.pointId === hoveredId)?.reasoning_json?.why_this_stop ??

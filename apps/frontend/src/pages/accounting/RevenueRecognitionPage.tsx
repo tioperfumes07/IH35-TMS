@@ -139,10 +139,10 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
 
         <div className="mb-4">
           <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Recognized</span><span>{pct}%</span></div>
-          <div className="h-2 rounded-full bg-gray-200"><div className="h-2 rounded-full bg-slate-500 transition-all" style={{ width: `${Math.min(100, pct)}%` }} /></div>
+          <div className="h-2 bg-gray-200"><div className="h-2 rounded-full bg-slate-500 transition-all" style={{ width: `${Math.min(100, pct)}%` }} /></div>
         </div>
 
-        <div className="mb-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+        <div className="mb-3 border-t border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
           <p className="font-semibold mb-1">GL Posting (GATED — REVENUE_RECOGNITION_POST_ENABLED OFF)</p>
           <p>Deferral: Dr AR / Cr Deferred Revenue · Per-period: Dr Deferred Revenue / Cr Revenue</p>
         </div>

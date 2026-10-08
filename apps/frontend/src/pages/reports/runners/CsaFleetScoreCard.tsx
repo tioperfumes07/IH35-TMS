@@ -74,11 +74,11 @@ export function CsaFleetScoreCard({ value }: Props) {
         </div>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-        <div className="rounded-sm border border-[#E5E7EB] p-2">
+        <div className="border-t border-[#E5E7EB] p-2">
           <div className="text-[#6B7280]">Inspections</div>
           <div className="font-semibold text-[#0F1219]">{totalInspections == null ? "—" : totalInspections.toLocaleString()}</div>
         </div>
-        <div className="rounded-sm border border-[#E5E7EB] p-2">
+        <div className="border-t border-[#E5E7EB] p-2">
           <div className="text-[#6B7280]">Out of Service</div>
           <div className="font-semibold text-[#0F1219]">{totalOos == null ? "—" : totalOos.toLocaleString()}</div>
         </div>

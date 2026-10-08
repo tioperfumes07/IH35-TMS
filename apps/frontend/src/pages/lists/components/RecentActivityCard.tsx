@@ -30,7 +30,7 @@ export function RecentActivityCard({ rows }: Props) {
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Recent Catalog Activity</div>
       <div className="space-y-2 text-xs">
         {top.map((row, idx) => (
-          <div key={`${row.created_at}-${idx}`} className="rounded-sm border border-[#E5E7EB] px-2 py-1.5">
+          <div key={`${row.created_at}-${idx}`} className="border-t border-[#E5E7EB] px-2 py-1.5">
             <div className="text-[#6B7280]">{timeAgo(row.created_at)}</div>
             <div className="text-[#1F2A44]">
               {row.catalog_key} · {row.action} · {row.entity_name}

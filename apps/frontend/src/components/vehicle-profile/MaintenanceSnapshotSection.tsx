@@ -77,7 +77,7 @@ export function MaintenanceSnapshotSection({
           pmEntries.map(([key, val]) => {
             const row = val as Record<string, unknown>;
             return (
-              <div key={key} className="rounded-sm border border-gray-100 p-2 text-xs">
+              <div key={key} className="border-t border-gray-100 p-2 text-xs">
                 <div className="font-semibold capitalize">{key.replace(/_/g, " ")}</div>
                 <div>Miles remaining: {String(row.miles_remaining ?? "—")}</div>
                 <div>Due est: {String(row.due_date_est ?? "—")}</div>
@@ -116,7 +116,7 @@ export function MaintenanceSnapshotSection({
           )}
         </p>
       ) : null}
-      <Link to={`/maintenance?create_wo=1&unit_id=${encodeURIComponent(unitId)}`}>
+      <Link to={`/maintenance/work-orders/new?unit_id=${encodeURIComponent(unitId)}`}>
         <Button size="sm" variant="secondary" className="mt-2">
           Create work order
         </Button>

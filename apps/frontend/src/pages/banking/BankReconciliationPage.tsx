@@ -510,7 +510,7 @@ export function BankReconciliationPage() {
             <div className="mb-2 text-xs font-semibold text-gray-900">Variance-resolved entries (Q8)</div>
             <div className="max-h-[180px] space-y-1 overflow-auto">
               {(worklistQuery.data?.variance_resolved_entries ?? []).map((entry) => (
-                <div key={entry.journal_entry_id} className="rounded-sm border border-gray-100 px-2 py-1 text-xs text-gray-700">
+                <div key={entry.journal_entry_id} className="border-b border-gray-100 px-2 py-1 text-xs text-gray-700">
                   {formatDateUS(entry.entry_date)} · <EntityLink kind="journal_entry" id={entry.journal_entry_id} label={entityLabel(entry.reference_no, entry.journal_entry_id, "Journal entry")} /> · {money(entry.variance_cents)}
                 </div>
               ))}

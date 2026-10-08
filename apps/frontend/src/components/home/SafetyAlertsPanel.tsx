@@ -69,7 +69,7 @@ export function SafetyAlertsPanel({ alerts, loading, certDataStale, isError }: P
           alerts.map((alert) => (
             <article
               key={alert.alert_id}
-              className={`rounded-sm border px-3 py-2 ${SEVERITY_STYLES[alert.severity]}`}
+              className={`border-b border-[#E5E7EB] px-3 py-2 ${SEVERITY_STYLES[alert.severity]}`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div>

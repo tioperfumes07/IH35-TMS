@@ -34,7 +34,7 @@ export function HarshEventDetail({ harshEventId }: Props) {
         <div className="text-xs text-[#6B7280]">No linked clips for this harsh event.</div>
       ) : (
         (clipsQuery.data?.rows ?? []).map((clip) => (
-          <div key={String(clip.id)} className="space-y-1 rounded-sm border border-[#E5E7EB] p-2">
+          <div key={String(clip.id)} className="space-y-1 border-t border-[#E5E7EB] p-2">
             <div className="text-xs text-[#4B5563]">
               {String(clip.camera_facing ?? "both")} · {String(clip.trigger_kind ?? "harsh_event")}
             </div>

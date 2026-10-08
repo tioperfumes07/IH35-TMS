@@ -1176,7 +1176,7 @@ export function DriverDetailPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Has phone login</label>
-            <div className="rounded-sm border border-gray-300 px-2 text-xs py-2">{hasPhoneLogin ? "Yes" : "No"}</div>
+            <div className="border-b border-gray-200 px-2 text-xs py-2">{hasPhoneLogin ? "Yes" : "No"}</div>
           </div>
           <div className="flex items-end">
             {!hasPhoneLogin ? (

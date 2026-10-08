@@ -36,7 +36,7 @@ export function MultiStopExtraRateEditor({ control, register, stopIndex }: Props
       {fields.length === 0 ? <p className="text-xs text-gray-500">No extra rates for this stop.</p> : null}
       <div className="space-y-2">
         {fields.map((field, rowIndex) => (
-          <div key={field.id} className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-[1.2fr_1fr_2fr_auto]">
+          <div key={field.id} className="grid grid-cols-1 gap-2 border-t border-gray-200 bg-white p-2 md:grid-cols-[1.2fr_1fr_2fr_auto]">
             <SelectCombobox {...register(`stops.${stopIndex}.extra_rates.${rowIndex}.rate_type`)} className="h-12 text-xs">
               <option value="extra_stop_fee">Extra stop fee</option>
               <option value="lumper">Lumper</option>
