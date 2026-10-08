@@ -1,3 +1,13 @@
+## 2026-10-08T17:05Z · BANK leftover slate — HOS history / Form 2290 / unit tax filings
+
+FINDING: BANK-F91220 — HosHistorySection / Form2290Filings / UnitTaxFilingsReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25884 squash `b8ed7ca494` (BANK-F91219 fleet profile/bulk/oos)
+GUARD: scripts/verify-hos-form2290-unittax-slate-leftover-chrome.mjs + verify-steps/1196 piggyback
+LIVE PROOF: verify-hos-form2290-unittax-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 2132 piggyback + OUTBOX
+
 ## 2026-10-08T16:50Z · BANK leftover slate — vehicle profile / bulk action bar / fleet OOS strip
 
 FINDING: BANK-F91219 — VehicleProfilePage / BulkActionBar / FleetOosStrip Tailwind slate-* → house tokens

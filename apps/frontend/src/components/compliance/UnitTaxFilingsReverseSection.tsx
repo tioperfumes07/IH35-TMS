@@ -33,12 +33,12 @@ export function UnitTaxFilingsReverseSection({ operatingCompanyId, unitId }: { o
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-tax-filings-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">Tax filings</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">Tax filings</h3>
         <EntityLink
           kind="property_tax_unit"
           id={unitId}
           label="All property-tax renditions"
-          className="text-xs text-slate-700 hover:underline"
+          className="text-xs text-[#1F2A44] hover:underline"
         />
       </div>
       {propertyTaxQ.isError || form2290Q.isError ? (
@@ -50,29 +50,29 @@ export function UnitTaxFilingsReverseSection({ operatingCompanyId, unitId }: { o
         />
       ) : null}
       {!propertyTaxQ.isLoading && !form2290Q.isLoading && !propertyTaxQ.isError && !form2290Q.isError && renditions.length === 0 && filings.length === 0 ? (
-        <p className="mt-2 text-xs text-slate-500">No property-tax or Form 2290 filings reference this unit.</p>
+        <p className="mt-2 text-xs text-[#6B7280]">No property-tax or Form 2290 filings reference this unit.</p>
       ) : null}
       <div className="mt-2 space-y-1 text-xs">
         {renditions.map((rendition) => (
           <div key={`property-${rendition.id}`}>
             <EntityLink
-              className="font-medium text-slate-700 hover:underline"
+              className="font-medium text-[#1F2A44] hover:underline"
               kind="property_tax_rendition"
               id={rendition.id}
               label={`${rendition.tax_year} property-tax rendition — ${rendition.county}`}
             />{" "}
-            <span className="text-slate-500">({rendition.status})</span>
+            <span className="text-[#6B7280]">({rendition.status})</span>
           </div>
         ))}
         {filings.map((filing) => (
           <div key={`2290-${filing.id}`}>
             <EntityLink
-              className="font-medium text-slate-700 hover:underline"
+              className="font-medium text-[#1F2A44] hover:underline"
               kind="form_2290_filing"
               id={filing.id}
               label={`Form 2290 ${formatDateUS(filing.tax_period_start)}–${formatDateUS(filing.tax_period_end)}`}
             />{" "}
-            <span className="text-slate-500">({filing.filing_status})</span>
+            <span className="text-[#6B7280]">({filing.filing_status})</span>
           </div>
         ))}
       </div>
