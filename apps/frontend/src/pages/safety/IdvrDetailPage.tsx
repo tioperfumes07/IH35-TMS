@@ -49,7 +49,7 @@ export function IdvrDetailPage() {
   }
 
   if (detailQ.isLoading) {
-    return <div className="p-4 text-xs text-slate-500" data-testid="idvr-detail-loading">Loading DVIR…</div>;
+    return <div className="p-4 text-xs text-[#6B7280]" data-testid="idvr-detail-loading">Loading DVIR…</div>;
   }
 
   if (detailQ.isError || !submission) {
@@ -80,24 +80,24 @@ export function IdvrDetailPage() {
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-        <div className="text-xs font-semibold text-slate-800">DVIR detail</div>
-        <div className="text-xs text-slate-500">Office view of a driver PWA vehicle inspection submission.</div>
+        <div className="text-xs font-semibold text-[#1F2A44]">DVIR detail</div>
+        <div className="text-xs text-[#6B7280]">Office view of a driver PWA vehicle inspection submission.</div>
       </div>
 
       <dl className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs sm:grid-cols-2" data-testid="idvr-detail-summary">
         <div>
-          <dt className="text-slate-500">Submitted</dt>
-          <dd className="font-medium text-slate-800">
+          <dt className="text-[#6B7280]">Submitted</dt>
+          <dd className="font-medium text-[#1F2A44]">
             {String(submission.submitted_at ?? "").slice(0, 16).replace("T", " ") || "—"}
           </dd>
         </div>
         <div>
-          <dt className="text-slate-500">Type</dt>
-          <dd className="font-medium text-slate-800">{String(submission.type ?? "—").replace("_", " ")}</dd>
+          <dt className="text-[#6B7280]">Type</dt>
+          <dd className="font-medium text-[#1F2A44]">{String(submission.type ?? "—").replace("_", " ")}</dd>
         </div>
         <div>
-          <dt className="text-slate-500">Driver</dt>
-          <dd className="font-medium text-slate-800">
+          <dt className="text-[#6B7280]">Driver</dt>
+          <dd className="font-medium text-[#1F2A44]">
             <EntityLink
               kind="driver"
               id={submission.driver_id as string | undefined}
@@ -106,8 +106,8 @@ export function IdvrDetailPage() {
           </dd>
         </div>
         <div>
-          <dt className="text-slate-500">Unit</dt>
-          <dd className="font-medium text-slate-800">
+          <dt className="text-[#6B7280]">Unit</dt>
+          <dd className="font-medium text-[#1F2A44]">
             <EntityLink
               kind="unit"
               id={submission.unit_id as string | undefined}
@@ -116,12 +116,12 @@ export function IdvrDetailPage() {
           </dd>
         </div>
         <div>
-          <dt className="text-slate-500">Severity</dt>
-          <dd className="font-medium text-slate-800">{String(submission.defect_severity ?? "none")}</dd>
+          <dt className="text-[#6B7280]">Severity</dt>
+          <dd className="font-medium text-[#1F2A44]">{String(submission.defect_severity ?? "none")}</dd>
         </div>
         <div>
-          <dt className="text-slate-500">Follow-up WO</dt>
-          <dd className="font-medium text-slate-800">
+          <dt className="text-[#6B7280]">Follow-up WO</dt>
+          <dd className="font-medium text-[#1F2A44]">
             <EntityLink
               kind="work_order"
               id={submission.follow_up_wo_id as string | undefined}
@@ -132,7 +132,7 @@ export function IdvrDetailPage() {
       </dl>
 
       {correctedSubmission ? (
-        <div className="text-xs text-slate-700" data-testid="idvr-corrects-link">
+        <div className="text-xs text-[#4B5563]" data-testid="idvr-corrects-link">
           Corrects DVIR{" "}
           <EntityLink
             kind="dvir"
@@ -144,7 +144,7 @@ export function IdvrDetailPage() {
 
       {corrections.length > 0 ? (
         <section className="space-y-2" data-testid="idvr-corrections-history">
-          <h2 className="text-xs font-semibold text-slate-800">Corrections</h2>
+          <h2 className="text-xs font-semibold text-[#1F2A44]">Corrections</h2>
           {corrections.map((correction) => (
             <EntityLink
               key={String(correction.id)}

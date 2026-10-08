@@ -1,3 +1,13 @@
+## 2026-10-08T07:00Z · BANK leftover slate — permits / IDVR detail / complaints tab
+
+FINDING: BANK-F91176 — PermitsPage / IdvrDetailPage / ComplaintsTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25829 squash `f4481c94c4` (BANK-F91175 dispatcher home)
+GUARD: scripts/verify-permits-idvr-complaints-slate-leftover-chrome.mjs + verify-steps/4042 piggyback
+LIVE PROOF: verify-permits-idvr-complaints-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 safety surfaces + refuse guard + 4042 piggyback + OUTBOX
+
 ## 2026-10-08T06:55Z · BANK leftover slate — dispatcher active loads / home / pending actions
 
 FINDING: BANK-F91175 — DispatcherActiveLoadsPanel / DispatcherHome / DispatcherPendingActionsPanel Tailwind slate-* → house tokens
