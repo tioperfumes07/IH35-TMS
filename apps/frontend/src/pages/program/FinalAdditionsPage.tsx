@@ -53,23 +53,23 @@ function BlockRow({ b }: { b: ReconBlock }) {
         <StatusPill status={b.status} />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-xs font-medium text-slate-800" title={b.name || b.id}>
+        <div className="truncate text-xs font-medium text-[#1F2A44]" title={b.name || b.id}>
           {b.name || b.id}
         </div>
-        <div className="truncate text-[11px] text-slate-500">
+        <div className="truncate text-[11px] text-[#6B7280]">
           {b.id}
           {b.source ? ` · ${b.source}` : ""}
           {b.tier ? ` · ${b.tier}` : ""}
           {b.fin ? " · financial" : ""}
         </div>
       </div>
-      <div className="w-24 shrink-0 text-right text-[11px] text-slate-500">
+      <div className="w-24 shrink-0 text-right text-[11px] text-[#6B7280]">
         {b.pr ? (
           <a
             href={`https://github.com/tioperfumes07/IH35-TMS/pull/${b.pr}`}
             target="_blank"
             rel="noreferrer"
-            className="text-slate-600 underline decoration-slate-300 hover:text-slate-900"
+            className="text-[#4B5563] underline decoration-[#E5E7EB] hover:text-[#0F1219]"
           >
             #{b.pr}
           </a>
@@ -86,12 +86,12 @@ function ProgressBar({ done, total }: { done: number; total: number }) {
   return (
     <div className="space-y-1">
       <div className="flex items-baseline justify-between">
-        <span className="text-xs font-semibold text-slate-700">
+        <span className="text-xs font-semibold text-[#4B5563]">
           {done} of {total} shipped
         </span>
-        <span className="text-xs font-semibold text-slate-700">{pct}%</span>
+        <span className="text-xs font-semibold text-[#4B5563]">{pct}%</span>
       </div>
-      <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+      <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
         <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: "#1F2A44" }} />
       </div>
     </div>
@@ -151,7 +151,7 @@ export function FinalAdditionsPage() {
         subtitle="The launch punch-list — every remaining block, flipped to Done as it ships. Nothing is removed; shipped work stays, labelled Done."
       />
 
-      {isLoading ? <div className="py-8 text-center text-xs text-slate-500">Loading punch-list…</div> : null}
+      {isLoading ? <div className="py-8 text-center text-xs text-[#6B7280]">Loading punch-list…</div> : null}
       {isError ? (
         <div className="py-8 text-center text-xs text-red-600">Failed to load: {userFacingApiError(error, "error")}</div>
       ) : null}
@@ -166,13 +166,13 @@ export function FinalAdditionsPage() {
               <CountChip label="Done" value={counts.done} bg="#DCFCE7" fg="#166534" />
             </div>
             {counts.legacyGated > 0 ? (
-              <div className="mt-2 text-[11px] text-slate-600">
+              <div className="mt-2 text-[11px] text-[#4B5563]">
                 {counts.legacyGated} pending row{counts.legacyGated === 1 ? " carries" : "s carry"} a historical GATED tag.
                 The tag is retained as source history; no owner approval is required and these rows remain actionable.
               </div>
             ) : null}
             {data.live?.snapshot_age_days != null ? (
-              <div className="mt-2 text-[11px] text-slate-500">
+              <div className="mt-2 text-[11px] text-[#6B7280]">
                 Snapshot {data.live.snapshot_age_days === 0 ? "current" : `${data.live.snapshot_age_days} day(s) old`}
                 {data.data_as_of_ct ? ` · data as of ${data.data_as_of_ct}` : ""} — re-run reconcile to advance.
               </div>
@@ -181,12 +181,12 @@ export function FinalAdditionsPage() {
 
           <div className="rounded border border-gray-200 bg-white">
             <div className="flex items-center justify-between border-b border-gray-100 px-3 py-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">
                 Remaining to build ({remaining.length})
               </span>
             </div>
             {remaining.length === 0 ? (
-              <div className="px-3 py-6 text-center text-xs text-slate-500">Nothing left — all blocks shipped.</div>
+              <div className="px-3 py-6 text-center text-xs text-[#6B7280]">Nothing left — all blocks shipped.</div>
             ) : (
               remaining.map((b) => <BlockRow key={b.id} b={b} />)
             )}
@@ -194,11 +194,11 @@ export function FinalAdditionsPage() {
 
           <div className="rounded border border-gray-200 bg-white">
             <div className="flex items-center justify-between border-b border-gray-100 px-3 py-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">
                 Shipped — kept for the record ({counts.done})
               </span>
               {done.length > RECENT_DONE_LIMIT ? (
-                <span className="text-[11px] text-slate-400">showing {RECENT_DONE_LIMIT} most recent</span>
+                <span className="text-[11px] text-[#6B7280]">showing {RECENT_DONE_LIMIT} most recent</span>
               ) : null}
             </div>
             {done.slice(0, RECENT_DONE_LIMIT).map((b) => (
