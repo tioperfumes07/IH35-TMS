@@ -49,11 +49,11 @@ const STATUS_OPTIONS: Array<{ value: "all" | LegalContractStatus; label: string 
 ];
 
 function statusClass(status: LegalContractStatus) {
-  if (status === "signed_electronically") return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
-  if (status === "sent" || status === "viewed") return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
-  if (status === "expired") return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
-  if (status === "voided") return "rounded-sm bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-700";
-  return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
+  if (status === "signed_electronically") return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
+  if (status === "sent" || status === "viewed") return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
+  if (status === "expired") return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
+  if (status === "voided") return "rounded-sm bg-[#E5E7EB] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
+  return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
 }
 
 /** LV-LEGAL-CONTRACT-LIST-SIGNER-PLAIN-TEXT — list + detail share the same kind map. */
@@ -247,7 +247,7 @@ export function LegalContractInstancesPage() {
         render: (row) => (
           <button
             type="button"
-            className="text-xs font-semibold text-slate-700 underline"
+            className="text-xs font-semibold text-[#4B5563] underline"
             data-testid={`legal-contract-open-pdf-${row.id}`}
             onClick={(event) => {
               event.stopPropagation();
@@ -493,7 +493,7 @@ export function LegalContractInstancesPage() {
                 <div><span className="font-semibold">Signer:</span>{" "}{signerKind(detailQuery.data.signer_type) ? (
                   <EntityLink kind={signerKind(detailQuery.data.signer_type)!} id={detailQuery.data.signer_entity_id} label={detailQuery.data.signer_name} />
                 ) : detailQuery.data.signer_name}</div>
-                <div><span className="font-semibold">Template:</span>{" "}<EntityLink className="text-slate-700 underline" kind="legal_template" id={detailQuery.data.template_id} label={`${detailQuery.data.template_code} v${detailQuery.data.template_version}`} /></div>
+                <div><span className="font-semibold">Template:</span>{" "}<EntityLink className="text-[#4B5563] underline" kind="legal_template" id={detailQuery.data.template_id} label={`${detailQuery.data.template_code} v${detailQuery.data.template_version}`} /></div>
                 <div><span className="font-semibold">Status:</span> {detailQuery.data.status}</div>
                 <div><span className="font-semibold">Language:</span> {detailQuery.data.language}</div>
               </div>

@@ -1,3 +1,13 @@
+## 2026-10-08T10:20Z · BANK leftover slate — cancel reasons / dispatch catalog / legal contracts
+
+FINDING: BANK-F91191 — LoadCancellationReasonsListPage / DispatchCatalogListPage / LegalContractInstancesPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25845 squash `f268a5e880` (BANK-F91190 status/attn/escrow)
+GUARD: scripts/verify-cancel-dispatch-legal-slate-leftover-chrome.mjs + verify-steps/1106 piggyback
+LIVE PROOF: verify-cancel-dispatch-legal-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 1106 piggyback + OUTBOX
+
 ## 2026-10-08T10:15Z · BANK leftover slate — status suggestion / attention item / escrow record
 
 FINDING: BANK-F91190 — StatusSuggestionPrompt / AttentionItemCard / EscrowRecordTab Tailwind slate-* → house tokens
