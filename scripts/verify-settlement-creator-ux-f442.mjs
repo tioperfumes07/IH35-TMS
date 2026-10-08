@@ -50,12 +50,18 @@ function run(src) {
     out.push("RULE 4c: Empty miles must use DecimalNumberInput.");
   }
 
-  // Owner 2026-10-07 layout: Add under last item (not section header); Invoice Amt; load row groups; fuel auto-load.
+  // Owner 2026-10-07 layout: Add ON THE SIDE of the last item (never section header); Invoice Amt; load dividers; fuel auto-load.
   if (/function Section\([\s\S]{0,400}onAdd\?/.test(src)) {
-    out.push("RULE 7: Section must NOT take onAdd — + Add belongs under the last item via AddUnderButton.");
+    out.push("RULE 7: Section must NOT take onAdd — + Add belongs on the side of the last item via ItemSideRail.");
   }
-  if (!/function AddUnderButton/.test(src) || !/testId="sc-loads-add"/.test(src)) {
-    out.push("RULE 7b: Loads + Add must be AddUnderButton with testId sc-loads-add (under the last load).");
+  if (!/function ItemSideRail/.test(src) || !/function AddSideButton/.test(src)) {
+    out.push("RULE 7a: ItemSideRail + AddSideButton required — Add on the side, next row under previous.");
+  }
+  if (!/addTestId=\{idx === loads\.length - 1 \? "sc-loads-add"/.test(src) && !/testId="sc-loads-add"/.test(src)) {
+    out.push("RULE 7b: Loads + Add must use testId sc-loads-add on the side of the last load (not section top).");
+  }
+  if (!/sc-load-block-[\s\S]{0,80}border-b-2/.test(src) && !/border-b-2 border-\[#D1D5DB\]/.test(src)) {
+    out.push("RULE 7c: Load blocks must have a dividing line (border-b-2) between loads.");
   }
   if (!/label="Invoice Amt"/.test(src)) {
     out.push('RULE 8: Revenue label must be "Invoice Amt".');
@@ -65,6 +71,9 @@ function run(src) {
   }
   if (!/function fuelNeedsExplicitLoadNumber/.test(src) || !/function autoLoadNumberForExpenseDate/.test(src)) {
     out.push("RULE 10: Fuel load # auto-by-date; ask only on same-day PU+DEL+expense (fuelNeedsExplicitLoadNumber).");
+  }
+  if (!/Load No\. \/ Assign to/.test(src) || !/Load \(auto by date\)/.test(src)) {
+    out.push("RULE 10b: Fuel must show Assign-to only when ambiguous; otherwise read-only auto-by-date.");
   }
   if (!/sc-fuel-remove-/.test(src)) {
     out.push("RULE 11: Fuel lines must have a Remove (×) control.");
@@ -98,7 +107,8 @@ const fieldGridClass = "grid grid-cols-5 gap-2";
 const headerGridClass = "grid grid-cols-6 gap-2";
 <div className={headerGridClass} data-testid="sc-header-grid">
 function DecimalNumberInput() {}
-function AddUnderButton() {}
+function ItemSideRail() {}
+function AddSideButton() {}
 function fuelNeedsExplicitLoadNumber() {}
 function autoLoadNumberForExpenseDate() {}
 <DecimalNumberInput data-testid={\`sc-load-loaded-miles-\${idx}\`} />
@@ -111,7 +121,10 @@ dataTestId="sc-driver"
 </Field>
 label="Invoice Amt"
 sc-load-row1- sc-load-row2-dates- sc-load-miles-money-
-testId="sc-loads-add"
+addTestId={idx === loads.length - 1 ? "sc-loads-add" : undefined}
+border-b-2 border-[#D1D5DB]
+Load No. / Assign to
+Load (auto by date)
 sc-fuel-remove-
 Loads carried from company
 sc-drv-carry-load-
@@ -127,7 +140,7 @@ loaded_miles: e.target.value === "" ? null : Number(e.target.value),
 `;
   const cases = [
     ["fixed tree passes", good, 0],
-    ["catches old defects", bad, 16],
+    ["catches old defects", bad, 19],
   ];
   let ok = 0;
   for (const [label, src, expected] of cases) {
@@ -146,5 +159,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  `${NAME}: PASS — 5-col; header 6-col; no driver EntityLink; decimals; period→load; Add under items; Invoice Amt; fuel auto-load; drv carry.`,
+  `${NAME}: PASS — 5-col; header 6-col; side Add rail; load dividers; Invoice Amt; fuel auto-load; drv carry.`,
 );

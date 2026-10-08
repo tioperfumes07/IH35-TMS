@@ -413,8 +413,11 @@ function Field({ label, span = 1, children }: { label: string; span?: number; ch
   );
 }
 
-/** Under the last item (never the section header) — next click stacks another row below. */
-function AddUnderButton({
+/**
+ * Owner 2026-10-07: Add is ON THE SIDE of the item (never section-header / never top bar).
+ * Click → next item stacks UNDER the previous. Empty lists get the same side + alone.
+ */
+function AddSideButton({
   onClick,
   testId,
   label = "+ Add",
@@ -424,11 +427,18 @@ function AddUnderButton({
   label?: string;
 }) {
   return (
-    <div className="flex items-center justify-start border-t border-dashed border-[#E5E7EB] pt-2" data-testid={testId}>
-      <Button type="button" size="sm" variant="secondary" onClick={onClick} className="h-7 px-2 text-xs">
-        {label}
-      </Button>
-    </div>
+    <Button
+      type="button"
+      size="sm"
+      variant="secondary"
+      onClick={onClick}
+      className="h-7 w-7 shrink-0 px-0 text-xs font-bold"
+      aria-label={label}
+      title={label}
+      data-testid={testId}
+    >
+      +
+    </Button>
   );
 }
 
@@ -445,12 +455,62 @@ function RemoveLineButton({
     <button
       type="button"
       aria-label={label}
+      title={label}
       data-testid={testId}
-      className="h-7 shrink-0 px-1 text-xs font-bold text-[#6B7280] hover:text-[#B91C1C]"
+      className="flex h-7 w-7 shrink-0 items-center justify-center text-xs font-bold text-[#6B7280] hover:text-[#B91C1C]"
       onClick={onClick}
     >
       ×
     </button>
+  );
+}
+
+/** Right rail beside a line block: Remove (×) + Add (+) so Add is never on top of the section. */
+function ItemSideRail({
+  onAdd,
+  onRemove,
+  addTestId,
+  removeTestId,
+  addLabel,
+  removeLabel,
+}: {
+  onAdd?: () => void;
+  onRemove?: () => void;
+  addTestId?: string;
+  removeTestId?: string;
+  addLabel: string;
+  removeLabel?: string;
+}) {
+  if (!onAdd && !onRemove) return null;
+  return (
+    <div
+      className="flex w-8 shrink-0 flex-col items-center justify-start gap-1 self-stretch border-l border-[#E5E7EB] pl-1 pt-7"
+      data-testid={addTestId ? `${addTestId}-rail` : undefined}
+    >
+      {onRemove && removeLabel ? (
+        <RemoveLineButton onClick={onRemove} testId={removeTestId} label={removeLabel} />
+      ) : (
+        <span className="h-7 w-7" aria-hidden />
+      )}
+      {onAdd ? <AddSideButton onClick={onAdd} testId={addTestId} label={addLabel} /> : <span className="h-7 w-7" aria-hidden />}
+    </div>
+  );
+}
+
+/** Empty section: side + only (right-aligned) — never a header Add on top. */
+function EmptySideAdd({
+  onClick,
+  testId,
+  label,
+}: {
+  onClick: () => void;
+  testId?: string;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center justify-end border-t border-dashed border-[#E5E7EB] pt-2" data-testid={testId ? `${testId}-empty` : undefined}>
+      <AddSideButton onClick={onClick} testId={testId} label={label} />
+    </div>
   );
 }
 
@@ -1376,13 +1436,13 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               {loads.map((load, idx) => (
                 <div
                   key={idx}
-                  className="space-y-2 border-b border-[#E5E7EB] pb-2 pt-1"
+                  className="flex items-stretch gap-1 border-b-2 border-[#D1D5DB] pb-3 pt-1"
                   data-testid={`sc-load-block-${idx}`}
                 >
+                  <div className="min-w-0 flex-1 space-y-2">
                   {/* Row 1 — Load # / Customer / Trip type (owner 2026-10-07) */}
                   <div className={fieldGridClass} data-testid={`sc-load-row1-${idx}`}>
                     <Field label="Load No.">
-                      <div className="flex items-center gap-1">
                         <input
                           className={inputClass}
                           value={load.load_number}
@@ -1394,14 +1454,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                           title="Prefilled with the next free load number. Type over it to override — it must be a NEW number. (SETL-F437: no Edit button.)"
                           data-testid={`sc-load-number-${idx}`}
                         />
-                        {loads.length > 1 ? (
-                          <RemoveLineButton
-                            label="Remove load"
-                            testId={`sc-load-remove-${idx}`}
-                            onClick={() => setLoads(loads.filter((_, i) => i !== idx))}
-                          />
-                        ) : null}
-                      </div>
                     </Field>
                     <Field label="Customer" span={3}>
                       <EntityPicker
@@ -1847,22 +1899,44 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       />
                     </Field>
                   </div>
+                  </div>
+                  <ItemSideRail
+                    addLabel="+ Add load"
+                    addTestId={idx === loads.length - 1 ? "sc-loads-add" : undefined}
+                    onAdd={idx === loads.length - 1 ? addLoadRow : undefined}
+                    removeLabel="Remove load"
+                    removeTestId={`sc-load-remove-${idx}`}
+                    onRemove={loads.length > 1 ? () => setLoads(loads.filter((_, i) => i !== idx)) : undefined}
+                  />
                 </div>
               ))}
-              <AddUnderButton onClick={addLoadRow} testId="sc-loads-add" label="+ Add load" />
             </Section>
 
             <Section title="Fuel purchases" subtotalCents={fuelSubtotal}>
               {fuels.map((fuel, idx) => {
                 const needsLoad = fuelNeedsExplicitLoadNumber(fuel.date, loads);
+                const addFuelAfter = () => {
+                  const date = periodStart || emptyFuel().date;
+                  const auto = fuelNeedsExplicitLoadNumber(date, loads)
+                    ? ""
+                    : autoLoadNumberForExpenseDate(date, loads) || defaultLoadNumber;
+                  setFuels([
+                    ...fuels,
+                    {
+                      ...emptyFuel(),
+                      load_number: auto,
+                      date,
+                    },
+                  ]);
+                };
                 return (
                   <div
                     key={idx}
-                    className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`}
+                    className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2"
                     data-testid={`sc-fuel-block-${idx}`}
                   >
+                    <div className={`${fieldGridClass} min-w-0 flex-1`}>
                     <Field label="Date">
-                      <div className="flex items-center gap-1">
                         <DatePicker
                           className={inputClass}
                           value={fuel.date}
@@ -1875,12 +1949,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                             setFuels(next);
                           }}
                         />
-                        <RemoveLineButton
-                          label="Remove fuel"
-                          testId={`sc-fuel-remove-${idx}`}
-                          onClick={() => setFuels(fuels.filter((_, i) => i !== idx))}
-                        />
-                      </div>
                     </Field>
                     {needsLoad ? (
                       <Field label="Load No. / Assign to">
@@ -2085,35 +2153,61 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         setFuels(next);
                       }}
                     />
+                    </div>
+                    <ItemSideRail
+                      addLabel="+ Add fuel"
+                      addTestId={idx === fuels.length - 1 ? "sc-fuels-add" : undefined}
+                      onAdd={idx === fuels.length - 1 ? addFuelAfter : undefined}
+                      removeLabel="Remove fuel"
+                      removeTestId={`sc-fuel-remove-${idx}`}
+                      onRemove={() => setFuels(fuels.filter((_, i) => i !== idx))}
+                    />
                   </div>
                 );
               })}
-              <AddUnderButton
-                testId="sc-fuels-add"
-                label="+ Add fuel"
-                onClick={() => {
-                  const date = periodStart || emptyFuel().date;
-                  const auto = fuelNeedsExplicitLoadNumber(date, loads)
-                    ? ""
-                    : autoLoadNumberForExpenseDate(date, loads) || defaultLoadNumber;
-                  setFuels([
-                    ...fuels,
-                    {
-                      ...emptyFuel(),
-                      load_number: auto,
-                      date,
-                    },
-                  ]);
-                }}
-              />
+              {fuels.length === 0 ? (
+                <EmptySideAdd
+                  testId="sc-fuels-add"
+                  label="+ Add fuel"
+                  onClick={() => {
+                    const date = periodStart || emptyFuel().date;
+                    const auto = fuelNeedsExplicitLoadNumber(date, loads)
+                      ? ""
+                      : autoLoadNumberForExpenseDate(date, loads) || defaultLoadNumber;
+                    setFuels([
+                      {
+                        ...emptyFuel(),
+                        load_number: auto,
+                        date,
+                      },
+                    ]);
+                  }}
+                />
+              ) : null}
             </Section>
 
             <Section title="Company expenses" subtotalCents={compExpSubtotal}>
               <p className="text-center text-xs text-[#6B7280]">
                 PDF &quot;Comp.&quot; — credits the fuel card rail (never A/P)
               </p>
-              {companyExpenses.map((exp, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`} data-testid={`sc-comp-exp-block-${idx}`}>
+              {companyExpenses.map((exp, idx) => {
+                const addCompExp = () => {
+                  const date = periodStart || emptyCompExp().date;
+                  const auto = fuelNeedsExplicitLoadNumber(date, loads)
+                    ? ""
+                    : autoLoadNumberForExpenseDate(date, loads) || defaultLoadNumber;
+                  setCompanyExpenses([
+                    ...companyExpenses,
+                    {
+                      ...emptyCompExp(),
+                      load_number: auto,
+                      date,
+                    },
+                  ]);
+                };
+                return (
+                <div key={idx} className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2" data-testid={`sc-comp-exp-block-${idx}`}>
+                  <div className={`${fieldGridClass} min-w-0 flex-1`}>
                   <Field label="Date">
                     <DatePicker
                       className={inputClass}
@@ -2209,26 +2303,37 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       }}
                     />
                   </Field>
+                  </div>
+                  <ItemSideRail
+                    addLabel="+ Add expense"
+                    addTestId={idx === companyExpenses.length - 1 ? "sc-comp-exp-add" : undefined}
+                    onAdd={idx === companyExpenses.length - 1 ? addCompExp : undefined}
+                    removeLabel="Remove expense"
+                    removeTestId={`sc-comp-exp-remove-${idx}`}
+                    onRemove={() => setCompanyExpenses(companyExpenses.filter((_, i) => i !== idx))}
+                  />
                 </div>
-              ))}
-              <AddUnderButton
-                testId="sc-comp-exp-add"
-                label="+ Add expense"
-                onClick={() => {
-                  const date = periodStart || emptyCompExp().date;
-                  const auto = fuelNeedsExplicitLoadNumber(date, loads)
-                    ? ""
-                    : autoLoadNumberForExpenseDate(date, loads) || defaultLoadNumber;
-                  setCompanyExpenses([
-                    ...companyExpenses,
-                    {
-                      ...emptyCompExp(),
-                      load_number: auto,
-                      date,
-                    },
-                  ]);
-                }}
-              />
+              );
+              })}
+              {companyExpenses.length === 0 ? (
+                <EmptySideAdd
+                  testId="sc-comp-exp-add"
+                  label="+ Add expense"
+                  onClick={() => {
+                    const date = periodStart || emptyCompExp().date;
+                    const auto = fuelNeedsExplicitLoadNumber(date, loads)
+                      ? ""
+                      : autoLoadNumberForExpenseDate(date, loads) || defaultLoadNumber;
+                    setCompanyExpenses([
+                      {
+                        ...emptyCompExp(),
+                        load_number: auto,
+                        date,
+                      },
+                    ]);
+                  }}
+                />
+              ) : null}
             </Section>
 
             <Section title="Control totals · Company" pdfCents={pdfCompanyExpenses} subtotalCents={companySubtotal}>
@@ -2259,7 +2364,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               {loads.map((load, idx) => (
                 <div
                   key={idx}
-                  className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-1`}
+                  className={`${fieldGridClass} border-b-2 border-[#D1D5DB] pb-2 pt-1`}
                   data-testid={`sc-drv-carry-load-${idx}`}
                 >
                   <Field label="Load No.">
@@ -2301,8 +2406,19 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               <p className="text-center text-xs text-[#6B7280]">
                 PDF &quot;Drv&quot; — Cr 2175 Driver Reimbursements Payable (never 6890/5310)
               </p>
-              {drvReimbursements.map((exp, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`} data-testid={`sc-drv-reimb-block-${idx}`}>
+              {drvReimbursements.map((exp, idx) => {
+                const addDrvReimb = () =>
+                  setDrvReimbursements([
+                    ...drvReimbursements,
+                    {
+                      ...emptyDrvReimb(),
+                      load_number: defaultLoadNumber,
+                      date: periodStart || emptyDrvReimb().date,
+                    },
+                  ]);
+                return (
+                <div key={idx} className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2" data-testid={`sc-drv-reimb-block-${idx}`}>
+                  <div className={`${fieldGridClass} min-w-0 flex-1`}>
                   <Field label="Date">
                     <DatePicker
                       className={inputClass}
@@ -2382,28 +2498,39 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       }}
                     />
                   </Field>
+                  </div>
+                  <ItemSideRail
+                    addLabel="+ Add reimbursement"
+                    addTestId={idx === drvReimbursements.length - 1 ? "sc-drv-reimb-add" : undefined}
+                    onAdd={idx === drvReimbursements.length - 1 ? addDrvReimb : undefined}
+                    removeLabel="Remove reimbursement"
+                    removeTestId={`sc-drv-reimb-remove-${idx}`}
+                    onRemove={() => setDrvReimbursements(drvReimbursements.filter((_, i) => i !== idx))}
+                  />
                 </div>
-              ))}
-              <AddUnderButton
-                testId="sc-drv-reimb-add"
-                label="+ Add reimbursement"
-                onClick={() =>
-                  setDrvReimbursements([
-                    ...drvReimbursements,
-                    {
-                      ...emptyDrvReimb(),
-                      load_number: defaultLoadNumber,
-                      // Company→driver carry: period Start is the settlement date for new Drv lines.
-                      date: periodStart || emptyDrvReimb().date,
-                    },
-                  ])
-                }
-              />
+              );
+              })}
+              {drvReimbursements.length === 0 ? (
+                <EmptySideAdd
+                  testId="sc-drv-reimb-add"
+                  label="+ Add reimbursement"
+                  onClick={() =>
+                    setDrvReimbursements([
+                      {
+                        ...emptyDrvReimb(),
+                        load_number: defaultLoadNumber,
+                        date: periodStart || emptyDrvReimb().date,
+                      },
+                    ])
+                  }
+                />
+              ) : null}
             </Section>
 
             <Section title="Additional pay to driver" subtotalCents={addPaySubtotal}>
               {additionalPay.map((row, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`}>
+                <div key={idx} className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2">
+                  <div className={`${fieldGridClass} min-w-0 flex-1`}>
                   <Field label="Type">
                     <Combobox
                       options={[
@@ -2457,18 +2584,36 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       }}
                     />
                   </Field>
+                  </div>
+                  <ItemSideRail
+                    addLabel="+ Add pay"
+                    addTestId={idx === additionalPay.length - 1 ? "sc-add-pay-add" : undefined}
+                    onAdd={
+                      idx === additionalPay.length - 1
+                        ? () =>
+                            setAdditionalPay([
+                              ...additionalPay,
+                              { ...emptyMoney(), pay_kind: "detention", load_number: defaultLoadNumber },
+                            ])
+                        : undefined
+                    }
+                    removeLabel="Remove pay"
+                    removeTestId={`sc-add-pay-remove-${idx}`}
+                    onRemove={() => setAdditionalPay(additionalPay.filter((_, i) => i !== idx))}
+                  />
                 </div>
               ))}
-              <AddUnderButton
-                testId="sc-add-pay-add"
-                label="+ Add pay"
-                onClick={() =>
-                  setAdditionalPay([
-                    ...additionalPay,
-                    { ...emptyMoney(), pay_kind: "detention", load_number: defaultLoadNumber },
-                  ])
-                }
-              />
+              {additionalPay.length === 0 ? (
+                <EmptySideAdd
+                  testId="sc-add-pay-add"
+                  label="+ Add pay"
+                  onClick={() =>
+                    setAdditionalPay([
+                      { ...emptyMoney(), pay_kind: "detention", load_number: defaultLoadNumber },
+                    ])
+                  }
+                />
+              ) : null}
             </Section>
 
             <Section title="Deductions" subtotalCents={dedSubtotal + adminFeeCents}>
@@ -2483,7 +2628,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 </div>
               </Field>
               {deductions.map((row, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`}>
+                <div key={idx} className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2">
+                  <div className={`${fieldGridClass} min-w-0 flex-1`}>
                   <Field label="Description">
                     <input
                       className={inputClass}
@@ -2507,18 +2653,34 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       ariaLabel="Deduction"
                     />
                   </Field>
+                  </div>
+                  <ItemSideRail
+                    addLabel="+ Add deduction"
+                    addTestId={idx === deductions.length - 1 ? "sc-deductions-add" : undefined}
+                    onAdd={
+                      idx === deductions.length - 1
+                        ? () => setDeductions([...deductions, { ...emptyMoney(), load_number: defaultLoadNumber }])
+                        : undefined
+                    }
+                    removeLabel="Remove deduction"
+                    removeTestId={`sc-deductions-remove-${idx}`}
+                    onRemove={() => setDeductions(deductions.filter((_, i) => i !== idx))}
+                  />
                 </div>
               ))}
-              <AddUnderButton
-                testId="sc-deductions-add"
-                label="+ Add deduction"
-                onClick={() => setDeductions([...deductions, { ...emptyMoney(), load_number: defaultLoadNumber }])}
-              />
+              {deductions.length === 0 ? (
+                <EmptySideAdd
+                  testId="sc-deductions-add"
+                  label="+ Add deduction"
+                  onClick={() => setDeductions([{ ...emptyMoney(), load_number: defaultLoadNumber }])}
+                />
+              ) : null}
             </Section>
 
             <Section title="Cash advances" subtotalCents={advSubtotal}>
               {advances.map((row, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`}>
+                <div key={idx} className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2">
+                  <div className={`${fieldGridClass} min-w-0 flex-1`}>
                   <Field label="Description">
                     <input
                       className={inputClass}
@@ -2542,19 +2704,35 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       ariaLabel="Cash advance"
                     />
                   </Field>
+                  </div>
+                  <ItemSideRail
+                    addLabel="+ Add advance"
+                    addTestId={idx === advances.length - 1 ? "sc-advances-add" : undefined}
+                    onAdd={
+                      idx === advances.length - 1
+                        ? () => setAdvances([...advances, { ...emptyMoney(), load_number: defaultLoadNumber }])
+                        : undefined
+                    }
+                    removeLabel="Remove advance"
+                    removeTestId={`sc-advances-remove-${idx}`}
+                    onRemove={() => setAdvances(advances.filter((_, i) => i !== idx))}
+                  />
                 </div>
               ))}
-              <AddUnderButton
-                testId="sc-advances-add"
-                label="+ Add advance"
-                onClick={() => setAdvances([...advances, { ...emptyMoney(), load_number: defaultLoadNumber }])}
-              />
+              {advances.length === 0 ? (
+                <EmptySideAdd
+                  testId="sc-advances-add"
+                  label="+ Add advance"
+                  onClick={() => setAdvances([{ ...emptyMoney(), load_number: defaultLoadNumber }])}
+                />
+              ) : null}
             </Section>
 
             <Section title="Escrow" subtotalCents={escrowNet}>
               <p className="text-center text-xs text-[#6B7280]">Driver escrow · 2100-00-0NN · hold +, release/forfeit −</p>
               {escrow.map((row, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`}>
+                <div key={idx} className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2">
+                  <div className={`${fieldGridClass} min-w-0 flex-1`}>
                   <Field label="Type">
                     <Combobox
                       options={[
@@ -2596,7 +2774,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </Field>
                   <Field label="Load No.">
-                    <div className="flex items-center gap-1">
                       <input
                         className={inputClass}
                         value={row.load_number ?? ""}
@@ -2607,31 +2784,33 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                           setEscrow(next);
                         }}
                       />
-                      <button
-                        type="button"
-                        aria-label="Remove escrow line"
-                        data-testid={`sc-escrow-remove-${idx}`}
-                        className="px-1 text-xs font-bold text-[#6B7280] hover:text-[#B91C1C]"
-                        onClick={() => setEscrow(escrow.filter((_, i) => i !== idx))}
-                      >
-                        ×
-                      </button>
-                    </div>
                   </Field>
+                  </div>
+                  <ItemSideRail
+                    addLabel="+ Add escrow"
+                    addTestId={idx === escrow.length - 1 ? "sc-escrow-add" : undefined}
+                    onAdd={
+                      idx === escrow.length - 1
+                        ? () =>
+                            setEscrow([
+                              ...escrow,
+                              { ...emptyMoney(), escrow_type: "hold", load_number: defaultLoadNumber },
+                            ])
+                        : undefined
+                    }
+                    removeLabel="Remove escrow line"
+                    removeTestId={`sc-escrow-remove-${idx}`}
+                    onRemove={escrow.length > 1 ? () => setEscrow(escrow.filter((_, i) => i !== idx)) : undefined}
+                  />
                 </div>
               ))}
-              <AddUnderButton
-                testId="sc-escrow-add"
-                label="+ Add escrow"
-                onClick={() =>
-                  setEscrow([
-                    ...escrow,
-                    escrow.length
-                      ? { ...emptyMoney(), escrow_type: "hold", load_number: defaultLoadNumber }
-                      : { ...defaultEscrowLine(), load_number: defaultLoadNumber },
-                  ])
-                }
-              />
+              {escrow.length === 0 ? (
+                <EmptySideAdd
+                  testId="sc-escrow-add"
+                  label="+ Add escrow"
+                  onClick={() => setEscrow([{ ...defaultEscrowLine(), load_number: defaultLoadNumber }])}
+                />
+              ) : null}
             </Section>
 
             <Section title="Control totals · Driver" pdfCents={pdfDriverNet} subtotalCents={preview?.driver_net_cents ?? null}>
