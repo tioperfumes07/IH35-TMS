@@ -48,11 +48,11 @@ export const INVOICE_LINES_HONEST_EMPTY =
 
 function factoringPillClass(status: string | null | undefined) {
   const base = "rounded-sm px-2 py-0.5 text-section-header font-semibold uppercase tracking-wide";
-  if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
-  if (status === "reserve_held" || status === "collected") return `${base} bg-slate-50 text-slate-600 border border-slate-200`;
-  if (status === "released") return `${base} bg-slate-100 text-slate-700 border border-slate-200`;
+  if (status === "advanced") return `${base} bg-[#F7F8FA] text-[#1F2A44] border border-[#E5E7EB]`;
+  if (status === "reserve_held" || status === "collected") return `${base} bg-[#F7F8FA] text-[#4B5563] border border-[#E5E7EB]`;
+  if (status === "released") return `${base} bg-[#F7F8FA] text-[#1F2A44] border border-[#E5E7EB]`;
   if (status === "recourse_returned") return `${base} bg-red-50 text-red-700 border border-red-200`;
-  return `${base} bg-slate-50 text-slate-700 border border-slate-200`;
+  return `${base} bg-[#F7F8FA] text-[#1F2A44] border border-[#E5E7EB]`;
 }
 
 export function InvoiceDetailPage() {
@@ -251,7 +251,7 @@ export function InvoiceDetailPage() {
         return (
           <Link
             to={`/accounting/chart-of-accounts/register/${line.account_id}`}
-            className="text-slate-700 hover:underline"
+            className="text-[#1F2A44] hover:underline"
             onClick={(event) => event.stopPropagation()}
           >
             {label}
@@ -399,7 +399,7 @@ export function InvoiceDetailPage() {
       />
 
       {invoice.source_load_chargeback_requested ? (
-        <div className="rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-800">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
           <div className="font-semibold uppercase tracking-wide">Chargeback flag</div>
           <div>{invoice.source_load_chargeback_reason || "This invoice is tied to a load marked for customer chargeback review."}</div>
         </div>
@@ -573,7 +573,7 @@ export function InvoiceDetailPage() {
               <div>{invoice.customer_notes || "-"}</div>
             </div>
             <button
-              className="text-xs font-semibold text-slate-700 underline"
+              className="text-xs font-semibold text-[#1F2A44] underline"
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();

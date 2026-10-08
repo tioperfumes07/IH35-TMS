@@ -22,9 +22,9 @@ const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 const titleize = (s: string) => s.replace(/_/g, " ");
 
 const STATUS_COLOR: Record<string, string> = {
-  open: "bg-slate-100 text-slate-700",
-  closed: "bg-slate-100 text-slate-700",
-  locked: "bg-slate-100 text-slate-700",
+  open: "bg-[#F7F8FA] text-[#1F2A44]",
+  closed: "bg-[#F7F8FA] text-[#1F2A44]",
+  locked: "bg-[#F7F8FA] text-[#1F2A44]",
 };
 
 // Column order preserved 1:1 from the pre-migration hand-rolled table.
@@ -82,10 +82,10 @@ const PERIOD_COLUMNS: Array<ParityColumn<AccountingPeriod>> = [
           kind="journal_entry"
           id={p.closing_journal_entry_id}
           label="View closing entry →"
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
         />
       ) : p.status === "closed" || p.status === "locked" ? (
-        <Link to="/accounting/month-close" className="text-xs font-semibold text-slate-700 underline">
+        <Link to="/accounting/month-close" className="text-xs font-semibold text-[#1F2A44] underline">
           View closing entries →
         </Link>
       ) : (
@@ -167,7 +167,7 @@ export function MyAccountantPage() {
               href={buildStatementExportUrl(s.key, "pdf", operatingCompanyId)}
               target="_blank"
               rel="noopener noreferrer"
-              className="mr-3 text-slate-700 hover:underline"
+              className="mr-3 text-[#1F2A44] hover:underline"
             >
               PDF
             </a>
@@ -175,7 +175,7 @@ export function MyAccountantPage() {
               href={buildStatementExportUrl(s.key, "xlsx", operatingCompanyId)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-slate-700 hover:underline"
+              className="text-[#1F2A44] hover:underline"
             >
               XLSX
             </a>
@@ -220,9 +220,9 @@ export function MyAccountantPage() {
             <Link
               key={r.to}
               to={r.to}
-              className="rounded-sm border border-gray-200 px-3 py-2 transition-colors hover:border-slate-300 hover:bg-slate-50"
+              className="rounded-sm border border-gray-200 px-3 py-2 transition-colors hover:border-[#E5E7EB] hover:bg-[#F7F8FA]"
             >
-              <div className="text-xs font-medium text-slate-700">{r.label}</div>
+              <div className="text-xs font-medium text-[#1F2A44]">{r.label}</div>
               <div className="text-xs text-gray-500">{r.description}</div>
             </Link>
           ))}
@@ -244,8 +244,8 @@ export function MyAccountantPage() {
       </SectionCard>
 
       <SectionCard title="Invite your accountant" subtitle="Give your CPA read access to the books">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs text-slate-700">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+          <p className="text-xs text-[#1F2A44]">
             Inviting an accountant grants access and is managed under access control. This action is not available from this read-only workspace.
           </p>
           <button
