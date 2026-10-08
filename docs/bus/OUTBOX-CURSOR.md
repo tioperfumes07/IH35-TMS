@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — SafetyGroupNav / ComplianceTable / LoadHistory
+
+FINDING: BANK-F91284 — SafetyGroupNav / ComplianceTable / LoadHistoryTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25965 squash `a354d0508c` (BANK-F91283 LoadPosition/LiveLoadId/DrivenMiles)
+GUARD: scripts/verify-91284-safety-comp-loadhist-slate-leftover-chrome.mjs + verify-steps/3446 piggyback
+LIVE PROOF: verify-91284-safety-comp-loadhist-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3446 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — LoadPosition / LiveLoadId / DrivenMiles
 
 FINDING: BANK-F91283 — LoadLivePositionCell / LiveLoadIdBar / LoadRealDrivenMilesSection Tailwind slate-* → house tokens

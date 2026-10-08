@@ -270,8 +270,8 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
       <section className="space-y-3" data-testid="driver-assigned-loads">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
-            <h3 className="text-xs font-semibold text-slate-800">Assigned loads</h3>
-            <p className="text-xs text-slate-600">Loads where this driver is primary or co-driver (canonical reverse).</p>
+            <h3 className="text-xs font-semibold text-[#0F1219]">Assigned loads</h3>
+            <p className="text-xs text-[#4B5563]">Loads where this driver is primary or co-driver (canonical reverse).</p>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={exportCsv} className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50">Export CSV</button>
@@ -363,8 +363,8 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
 
       <section className="space-y-3" data-testid="driver-assignment-change-log">
         <div>
-          <h3 className="text-xs font-semibold text-slate-800">Assignment change log</h3>
-          <p className="text-xs text-slate-600">Dispatch reassignment events (who was moved on/off a load).</p>
+          <h3 className="text-xs font-semibold text-[#0F1219]">Assignment change log</h3>
+          <p className="text-xs text-[#4B5563]">Dispatch reassignment events (who was moved on/off a load).</p>
         </div>
         {historyQ.isError ? (
           <div data-testid="driver-load-history-error">

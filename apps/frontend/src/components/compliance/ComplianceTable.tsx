@@ -17,8 +17,8 @@ type Props = {
 
 const severityClass: Record<string, string> = {
   red: "text-red-700",
-  yellow: "text-slate-700",
-  green: "text-slate-700",
+  yellow: "text-[#1F2A44]",
+  green: "text-[#1F2A44]",
 };
 
 function ownerNoun(ownerType: string): string {
@@ -101,7 +101,7 @@ const COLUMNS: Array<ParityColumn<ComplianceCredential>> = [
     label: "Action",
     sortable: false,
     render: (row) => (
-      <Link className="text-slate-700 underline" to={row.action_link}>
+      <Link className="text-[#1F2A44] underline" to={row.action_link}>
         Open
       </Link>
     ),
@@ -162,7 +162,7 @@ export function ComplianceTable({
                 ))}
               </SelectCombobox>
             </label>
-            <button type="button" className="rounded-sm bg-slate-800 px-3 py-1 text-xs text-white" onClick={onExportCsv}>
+            <button type="button" className="rounded-sm bg-[#0F1219] px-3 py-1 text-xs text-white" onClick={onExportCsv}>
               Export CSV
             </button>
           </div>
