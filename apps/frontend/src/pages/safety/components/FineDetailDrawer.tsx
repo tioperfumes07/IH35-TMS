@@ -178,11 +178,11 @@ export function FineDetailDrawer({
         </div>
 
         {canConvert ? (
-          <div className="mt-4 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+          <div className="mt-4 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
             <p>Converting this fine creates a driver liability and locks violation/amount fields.</p>
             <button
               type="button"
-              className="mt-2 rounded-sm bg-slate-700 px-3 py-1 font-semibold text-white"
+              className="mt-2 rounded-sm bg-[#1F2A44] px-3 py-1 font-semibold text-white"
               onClick={() => setConfirmOpen(true)}
             >
               Convert to Driver Liability

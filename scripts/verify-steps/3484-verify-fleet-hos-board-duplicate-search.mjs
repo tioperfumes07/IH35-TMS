@@ -1,7 +1,8 @@
 export default {
   name: "verify-fleet-hos-board-duplicate-search",
-  run(ctx) {
-    ctx.run("node", ["scripts/verify-fleet-hos-board-duplicate-search.mjs"]);
-    ctx.run("node", ["scripts/verify-fleet-hos-board-duplicate-search.mjs", "--selftest"]);
+  async run(ctx) {
+    await ctx.run("node", ["scripts/verify-fleet-hos-board-duplicate-search.mjs"]);
+    // BANK leftover refuse — DrugAlcohol/FineDetail/PositionHistory house tokens
+    await ctx.run("node", ["scripts/verify-da-fine-poshist-slate-leftover-chrome.mjs"]);
   },
 };

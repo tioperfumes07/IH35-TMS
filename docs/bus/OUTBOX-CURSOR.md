@@ -1,3 +1,13 @@
+## 2026-10-09T00:55Z · BANK leftover slate — DrugAlcohol / FineDetail / PositionHistory
+
+FINDING: BANK-F91270 — DrugAlcoholProgramTab / FineDetailDrawer / PositionHistoryPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25948 squash `219c3642db` (BANK-F91269 CreateWOSectionValidation/BackhaulSuggestions/HosDriverMapPreview)
+GUARD: scripts/verify-da-fine-poshist-slate-leftover-chrome.mjs + verify-steps/3484 piggyback
+LIVE PROOF: verify-da-fine-poshist-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3484 piggyback + OUTBOX
+
 ## 2026-10-09T00:50Z · BANK leftover slate — CreateWOSectionValidation / BackhaulSuggestions / HosDriverMapPreview
 
 FINDING: BANK-F91269 — CreateWOSectionValidation / BackhaulSuggestionsWidget / HosDriverMapPreviewPage Tailwind slate-* → house tokens

@@ -142,7 +142,7 @@ export function DrugAlcoholProgramTab() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-500">
+      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-[#6B7280]">
         Select an operating company to view the Drug & Alcohol Program.
       </div>
     );
@@ -152,10 +152,10 @@ export function DrugAlcoholProgramTab() {
     <div className="space-y-6">
       {/* ── Consortium Enrollment Roster ─────────────────────────────────── */}
       <section className="rounded-lg border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 text-xs font-semibold text-slate-900">
+        <h2 className="mb-3 text-xs font-semibold text-[#0F1219]">
           Consortium Enrollments
           {enrollmentRows.length > 0 ? (
-            <span className="ml-2 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-600">
+            <span className="ml-2 rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-normal text-[#4B5563]">
               {enrollmentRows.length} active
             </span>
           ) : null}
