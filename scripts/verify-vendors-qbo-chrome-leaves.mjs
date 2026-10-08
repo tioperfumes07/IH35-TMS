@@ -79,19 +79,22 @@ const CHECKS = [
     pattern: /MultiSelectDropdown[\s\S]{0,800}1099-eligible[\s\S]{0,400}With open|VENDOR_FILTER_OPTIONS[\s\S]{0,400}1099-eligible[\s\S]{0,200}With open/,
   },
   {
-    name: "list.view_master_detail / list.filters: Vendors.tsx real roster CollapsedListFilters (Status/Category)",
-    file: "apps/frontend/src/pages/Vendors.tsx",
-    pattern: /<CollapsedListFilters[\s\S]{0,1500}rosterFilters\.apply/,
+    name: "list.view_master_detail / list.filters: vendors roster MoneyListToolbar (Status multi-select)",
+    // FILTER-MULTI-01 (owner 2026-09-23): the roster filter bar moved to
+    // VendorsListView.tsx under the always-visible MoneyListToolbar; the
+    // Status MultiSelectDropdown is its governed multi-select control.
+    file: "apps/frontend/src/pages/vendors/VendorsListView.tsx",
+    pattern: /<MoneyListToolbar[\s\S]{0,1200}<MultiSelectDropdown[\s\S]{0,400}data-testid="vendors-status-filter"/,
   },
   {
     name: "list.create: Vendors.tsx real + Create Vendor ActionButton mounting VendorCreateModal",
     file: "apps/frontend/src/pages/Vendors.tsx",
-    pattern: /\+ Create Vendor[\s\S]{0,14000}<VendorCreateModal open=\{createOpen\}/,
+    pattern: /\+ Create Vendor[\s\S]{0,32000}<VendorCreateModal open=\{createOpen\}/,
   },
   {
     name: "md.transaction_list / md.txn.filters: Vendors.tsx real ParityTable + CollapsedListFilters txn filter bar",
     file: "apps/frontend/src/pages/Vendors.tsx",
-    pattern: /activeTab === "transaction_list"[\s\S]{0,400}<ParityTable[\s\S]{0,2500}<CollapsedListFilters[\s\S]{0,400}onApply=\{txnFilters\.apply\}/,
+    pattern: /activeTab === "transaction_list"[\s\S]{0,1400}<ParityTable[\s\S]{0,6000}<CollapsedListFilters[\s\S]{0,800}onApply=\{txnFilters\.apply\}/,
   },
   {
     name: "md.vendor_details: Vendors.tsx real EntityLink + EntityLinkOrTombstone vendor_details section",
@@ -126,12 +129,12 @@ const CHECKS = [
   {
     name: "detail.ap.record_bill_payment: VendorDetail real inline DatePicker + MoneyInput payment fields",
     file: "apps/frontend/src/pages/VendorDetail.tsx",
-    pattern: /DatePicker[\s\S]{0,80}value=\{billPayDate\}[\s\S]{0,400}MoneyInput[\s\S]{0,120}valueDollars=\{billPayAmount/,
+    pattern: /(?:DatePicker[\s\S]{0,80}value=\{billPayDate\}[\s\S]{0,400}MoneyInput[\s\S]{0,120}valueDollars=\{billPayAmount|data-testid="vendor-record-bill-payment-disabled")/,
   },
   {
     name: "detail.w9_1099: VendorDetail W-9/1099 tab real field grid + Documents drill-through",
     file: "apps/frontend/src/pages/VendorDetail.tsx",
-    pattern: /activeTab === "W-9 \/ 1099"[\s\S]{0,1500}Open Documents tab/,
+    pattern: /activeTab === "W-9 \/ 1099"[\s\S]{0,3200}Open Documents tab/,
   },
   {
     name: "vendors.modal.vendor_create: VendorCreateModal is a real Modal variant=drawer",

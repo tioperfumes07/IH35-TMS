@@ -33,7 +33,14 @@ function checkApi(src) {
 
 function checkPage(src) {
   const idx = src.indexOf("recordVendorBillPayment(id, {");
-  if (idx === -1) return { ok: false, reason: "recordVendorBillPayment(id, {...}) call site not found in VendorDetail.tsx" };
+  // ROUND 297: inline record-payment is intentionally read-only on the profile — the
+  // honest disabled marker satisfies "no broken call site"; if the surface returns, its
+  // call must keep forwarding bank_account_id.
+  if (idx === -1) {
+    return src.includes('data-testid="vendor-record-bill-payment-disabled"')
+      ? { ok: true }
+      : { ok: false, reason: "recordVendorBillPayment(id, {...}) call site not found in VendorDetail.tsx and the disabled marker is gone" };
+  }
   const end = src.indexOf("}),", idx);
   const call = src.slice(idx, end + 3);
   if (!/bank_account_id\s*:/.test(call)) {

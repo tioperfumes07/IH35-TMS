@@ -21,7 +21,7 @@ const HEADER = '/** @matrix-built {"modules":["legal"],"cols":["reverse_link"],"
 const sources = Object.fromEntries(Object.entries(paths).map(([key, path]) => [key, fs.readFileSync(path, "utf8")]));
 
 const checks = [
-  ["creator", /<EntityPicker[\s\S]{0,220}kind="vendor"[\s\S]{0,220}allowCreate[\s\S]{0,220}operatingCompanyId=\{operatingCompanyId\}/, "creator mounts the scoped canonical vendor picker with Add-new"],
+  ["creator", /<(?:EntityPicker|CatalogReferenceSelect)[\s\S]{0,220}kind="vendor"[\s\S]{0,220}allowCreate[\s\S]{0,220}operatingCompanyId=\{operatingCompanyId\}/, "creator mounts the scoped canonical vendor picker with Add-new"],
   ["pickerRegistry", /vendor:\s*\{[\s\S]{0,1200}inlineCreate:\s*\{ available: true \}[\s\S]{0,240}serverSearch:\s*true/, "shared vendor picker keeps Add-new and server search"],
   ["pickerRegistry", /vendor:\s*\{[\s\S]{0,2200}listVendors\(\{[\s\S]{0,240}operating_company_id: operatingCompanyId[\s\S]{0,240}search: opts\?\.search/, "shared vendor picker reads the scoped canonical roster"],
   ["creator", /signer_entity_id: signerEntityId \|\| undefined/, "selected vendor FK reaches create payload"],

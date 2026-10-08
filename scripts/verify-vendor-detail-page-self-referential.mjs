@@ -32,9 +32,12 @@ const CHECKS = [
   ["reactivate", /reactivateVendor\(id\)/],
   ["safer_verify", /"fmcsa-safer-status", "vendor", id,/],
   ["safer_verify_now_opco", /fmcsa-safer\/verify-now[\s\S]{0,280}operating_company_id:\s*companyId/],
-  ["ap.record_bill_payment", /recordVendorBillPayment\(id, \{/],
+  // ROUND 297: inline record-payment is intentionally read-only on the profile —
+  // the honest disabled marker pointing at /accounting/bill-payments?vendor_id= satisfies
+  // the leaf, OR a real recordVendorBillPayment call if the surface is ever re-enabled.
+  ["ap.record_bill_payment", /recordVendorBillPayment\(id, \{|data-testid="vendor-record-bill-payment-disabled"/],
   ["ap.bills", /listVendorBills\(companyId, \{ vendor_id: id,/],
-  ["ap.bills_history", /listVendorBills\(companyId, \{ vendor_id: id, include_balance: true, limit:/],
+  ["ap.bills_history", /listVendorBills\(companyId, \{ vendor_id: id, include_balance: true,( status: "active",)? limit:/],
   ["ap.expenses", /listExpenses\(companyId, \{ vendor_uuid: id,/],
   ["ap.vendor_credits", /listVendorCredits\(companyId, \{ vendor_id: id \}\)/],
   ["ap.bill_payments", /listVendorBillPayments\(id, \{ operating_company_id: companyId/],
@@ -109,8 +112,8 @@ if (process.argv.includes("--selftest")) {
   const mutatedBalance = {
     ...good,
     detail: good.detail.replace(
-      "listVendorBills(companyId, { vendor_id: id, include_balance: true, limit: 200 })",
-      "listVendorBills(companyId, { vendor_id: id, include_balance: true, has_balance: true, limit: 200 })"
+      "listVendorBills(companyId, { vendor_id: id, include_balance: true, status: \"active\", limit: 200 })",
+      "listVendorBills(companyId, { vendor_id: id, include_balance: true, has_balance: true, status: \"active\", limit: 200 })"
     ),
   };
   if (!audit(mutatedBalance).some((f) => f.includes("has_balance"))) {

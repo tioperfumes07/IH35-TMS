@@ -54,9 +54,11 @@ const CHECKS = [
     pattern: /ParityTable/,
   },
   {
-    name: "FactoringListPage toolbar searchSlot",
+    name: "FactoringListPage toolbar search input",
     file: "apps/frontend/src/pages/accounting/FactoringListPage.tsx",
-    pattern: /searchSlot=[\s\S]*aria-label="Search factoring advances"/,
+    // FILTER-MULTI-01 (owner 2026-09-23): the always-visible MoneyListToolbar replaced
+    // the CollapsedListFilters popover + searchSlot prop on registered money lists.
+    pattern: /MoneyListToolbar[\s\S]*searchTestId="factoring-search-input"/,
   },
   {
     name: "FactoringListPage toolbar date range DatePicker",
@@ -64,9 +66,11 @@ const CHECKS = [
     pattern: /Date from[\s\S]*DatePicker[\s\S]*Date to[\s\S]*DatePicker/,
   },
   {
-    name: "FactoringListPage CollapsedListFilters Apply triad",
+    name: "FactoringListPage MoneyListToolbar clear-all wiring",
     file: "apps/frontend/src/pages/accounting/FactoringListPage.tsx",
-    pattern: /CollapsedListFilters[\s\S]*onApply=\{staged\.apply\}[\s\S]*onReset=\{staged\.reset\}[\s\S]*onCancel=\{staged\.cancel\}/,
+    // FILTER-MULTI-01: instant-apply toolbar — the honest reset control is onClearAll,
+    // which clears search + status + date range + the deep-link load filter.
+    pattern: /MoneyListToolbar[\s\S]*onClearAll=\{[\s\S]*setSearch\(""\)[\s\S]*setStatus\(\["active"\]\)[\s\S]*patchLoadFilter\(""\)/,
   },
   {
     name: "FactoringListPage ParityTable column gear storageKey",

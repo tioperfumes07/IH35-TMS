@@ -1018,7 +1018,7 @@ export function VendorDetailPage() {
                   label: "Bill #",
                   sortable: true,
                   sortValue: (b) => b.bill_number ?? b.id,
-                  render: (b) => <EntityLink kind="bill" id={b.id} label={visibleDocumentLabel(b.bill_number, b.id, "Record")} />,
+                  render: (b) => <EntityLink kind="bill" id={b.id} label={visibleDocumentLabel(b.bill_number, b.id, "Record")} data-testid="vendor-payment-bill-link" />,
                 },
                 { key: "bill_date", label: "Date", sortable: true, render: (b) => formatDateUS(b.bill_date) },
                 { key: "due_date", label: "Due", sortable: true, render: (b) => formatDateUS(b.due_date) || "—" },

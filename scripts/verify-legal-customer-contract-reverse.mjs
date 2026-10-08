@@ -12,10 +12,10 @@ const sources = {
   page: fs.readFileSync("apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx", "utf8"),
 };
 const checks = [
-  ["send", /<EntityPicker[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/, "send uses EntityPicker customer allowCreate"],
+  ["send", /<(?:EntityPicker|CatalogReferenceSelect)[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/, "send uses customer picker allowCreate"],
   ["send", /getCustomerDetail\(id, operatingCompanyId\)/, "send hydrates customer signer"],
   ["send", /signer_entity_id: signerEntityId \|\| undefined/, "send forwards customer FK"],
-  ["lease", /<EntityPicker[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/, "lease uses EntityPicker customer allowCreate"],
+  ["lease", /<(?:EntityPicker|CatalogReferenceSelect)[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/, "lease uses customer picker allowCreate"],
   ["lease", /getCustomerDetail\(id, operatingCompanyId\)/, "lease hydrates lessee customer"],
   ["lease", /signer_entity_id: lesseeCustomerId/, "lease forwards customer FK"],
   ["lease", /onSaved\(created\.id\)/, "lease returns persisted id"],

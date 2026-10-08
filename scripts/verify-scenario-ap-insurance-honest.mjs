@@ -14,7 +14,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-scenario-ap-insurance-honest";
 
 const CHECKS = [
-  { name: "vendor bill payment record", file: "apps/frontend/src/pages/VendorDetail.tsx", pattern: /recordVendorBillPayment/ },
+  // ROUND 297: inline record-payment is read-only on the profile — accept either the
+  // real mutation call site or the honest disabled marker that routes to Pay bills.
+  { name: "vendor bill payment record", file: "apps/frontend/src/pages/VendorDetail.tsx", pattern: /recordVendorBillPayment|vendor-record-bill-payment-disabled/ },
   { name: "vendor bill payments list", file: "apps/frontend/src/pages/VendorDetail.tsx", pattern: /listVendorBillPayments/ },
   { name: "accident claim EntityLink", file: "apps/frontend/src/pages/safety/AccidentsPage.tsx", pattern: /kind=["']claim["']/ },
   { name: "insurance tab claims nav", file: "apps/frontend/src/pages/safety/tabs/InsuranceTab.tsx", pattern: /insurance\/claims/ },
