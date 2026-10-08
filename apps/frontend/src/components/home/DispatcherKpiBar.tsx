@@ -26,17 +26,17 @@ export function DispatcherKpiBar({ activeLoads, lateLoads, todayPickups, todayDe
   return (
     <section
       data-testid="dispatcher-kpi-bar"
-      className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+      className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white"
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 sm:divide-x sm:divide-slate-100">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 sm:divide-x sm:divide-[#E5E7EB]">
         {cards.map((card) => (
           <Link
             key={card.label}
             to={card.to}
             aria-label={`${card.label} — view loads`}
-            className="block border-t border-slate-100 px-3 py-2 text-slate-900 transition hover:bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-slate-400"
+            className="block border-t border-[#E5E7EB] px-3 py-2 text-[#0F1219] transition hover:bg-[#F7F8FA] focus:outline-hidden focus:ring-2 focus:ring-[#6B7280]"
           >
-            <div className="text-section-header font-semibold uppercase tracking-wide text-slate-600">{card.label}</div>
+            <div className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">{card.label}</div>
             <div className="mt-1 text-page-title font-semibold">{card.value ?? "—"}</div>
           </Link>
         ))}
