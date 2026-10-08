@@ -19,7 +19,7 @@ import {
 // than the pairing engine's active set on purpose; the pairing board still uses RT_PAIRING_ACTIVE_STATUSES.
 const ACTIVE_LOAD = new Set<string>(RT_TIMELINE_STATUSES);
 
-const NB = "#1f2a44";
+const NB = "#1F2A44";
 const SB = "#475569";
 const TR = "#b45309";
 const LONG_LEG_OUTLINE = "#dc2626";

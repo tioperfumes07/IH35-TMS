@@ -39,7 +39,7 @@ export function PrintOrientationDialog({ open, title = "Print", onCancel, onConf
           <button
             type="button"
             className={`flex-1 rounded-sm border px-3 py-2 text-xs ${
-              orientation === "portrait" ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-gray-300 text-gray-800"
+              orientation === "portrait" ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 text-gray-800"
             }`}
             onClick={() => setOrientation("portrait")}
             data-testid="print-orientation-portrait"
@@ -49,7 +49,7 @@ export function PrintOrientationDialog({ open, title = "Print", onCancel, onConf
           <button
             type="button"
             className={`flex-1 rounded-sm border px-3 py-2 text-xs ${
-              orientation === "landscape" ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-gray-300 text-gray-800"
+              orientation === "landscape" ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 text-gray-800"
             }`}
             onClick={() => setOrientation("landscape")}
             data-testid="print-orientation-landscape"
@@ -67,7 +67,7 @@ export function PrintOrientationDialog({ open, title = "Print", onCancel, onConf
           </button>
           <button
             type="button"
-            className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-xs text-white"
+            className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-3 py-1.5 text-xs text-white"
             data-testid="print-orientation-confirm"
             onClick={() => onConfirm(orientation)}
           >

@@ -120,7 +120,7 @@ export function DrugAlcoholDashboard() {
         <button
           type="button"
           disabled={drawMutation.isPending}
-          className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-medium text-white disabled:opacity-50"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-medium text-white disabled:opacity-50"
           onClick={() =>
             drawMutation.mutate({
               companyId,

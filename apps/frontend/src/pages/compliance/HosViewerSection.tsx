@@ -171,7 +171,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
               key={d.date}
               type="button"
               onClick={() => setSelectedDate(d.date)}
-              className={`rounded-sm border px-2 py-1 text-center text-xs leading-tight ${selectedDate === d.date ? "border-[#0F1219] font-bold text-[#0F1219] shadow-[inset_0_-2px_0_#1f2a44]" : "border-[#E5E7EB] text-[#6B7280]"}`}
+              className={`rounded-sm border px-2 py-1 text-center text-xs leading-tight ${selectedDate === d.date ? "border-[#0F1219] font-bold text-[#0F1219] shadow-[inset_0_-2px_0_#1F2A44]" : "border-[#E5E7EB] text-[#6B7280]"}`}
             >
               {d.mon} {d.day}
               <span className="block text-xs text-[#6B7280]">{d.weekday}</span>

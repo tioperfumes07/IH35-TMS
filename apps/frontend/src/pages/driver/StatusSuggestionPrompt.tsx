@@ -80,7 +80,7 @@ export function StatusSuggestionPrompt() {
           </button>
           <button
             type="button"
-            className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
             onClick={() => void respondMutation.mutateAsync({ id: active.id, response: "confirmed" })}
           >
             Yes

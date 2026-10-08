@@ -23,7 +23,7 @@ export function ActionButton({
       onClick={onClick}
       disabled={disabled}
       data-testid={dataTestId}
-      className={`inline-flex items-center bg-transparent px-0 py-0 text-xs font-bold text-[#1f2a44] hover:underline disabled:cursor-not-allowed disabled:opacity-50 ${className}`.trim()}
+      className={`inline-flex items-center bg-transparent px-0 py-0 text-xs font-bold text-[#1F2A44] hover:underline disabled:cursor-not-allowed disabled:opacity-50 ${className}`.trim()}
     >
       {children}
     </button>

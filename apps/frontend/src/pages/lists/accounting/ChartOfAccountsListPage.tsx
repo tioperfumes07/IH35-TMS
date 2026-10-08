@@ -512,7 +512,7 @@ export function ChartOfAccountsListPage() {
               trigger={({ toggle, triggerTestId, open }) => (
                 <button
                   type="button"
-                  className="inline-flex h-7 items-center rounded-l-none rounded-r-sm border border-l-0 border-[#1f2a44] bg-[#1f2a44] px-2 text-xs font-semibold text-white hover:bg-[#0f1729]"
+                  className="inline-flex h-7 items-center rounded-l-none rounded-r-sm border border-l-0 border-[#1F2A44] bg-[#1F2A44] px-2 text-xs font-semibold text-white hover:bg-[#0f1729]"
                   onClick={toggle}
                   aria-expanded={open}
                   aria-label="New account options"
@@ -598,7 +598,7 @@ export function ChartOfAccountsListPage() {
                         setPage(1);
                       }}
                       className={`rounded px-2 py-1 capitalize ${
-                        statusFilter === value ? "bg-[#1f2a44] text-white" : "text-gray-700 hover:bg-gray-50"
+                        statusFilter === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"
                       }`}
                     >
                       {value}

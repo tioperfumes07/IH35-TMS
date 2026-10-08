@@ -12,7 +12,7 @@ import { SelectCombobox } from "../Combobox";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 
 // B6 — Driver Inbox (inside Driver Hub Home). Built to APPROVED-PREVIEW-driver-inbox.html.
-// Locked tokens: navy banner #1A1F36, white active-tab underline; cards #fff / #e5e7eb 4px;
+// Locked tokens: navy banner #1A1F36, white active-tab underline; cards #fff / #E5E7EB 4px;
 // labels 9px uppercase #6B7280; green #16A34A; text #1A1F36/#4A5170/#4B5563; base 12px.
 // Only "Cash advances" has a backend; other tabs are honest empty states (no fake data).
 // "Approve & post" calls the OFFICE endpoint = the B5 cascade.
@@ -114,7 +114,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
   const showCash = tab === "all" || tab === "cash_advance";
 
   return (
-    <div className="overflow-hidden rounded-sm border border-[#e5e7eb] bg-[#f8f8f4]">
+    <div className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-[#f8f8f4]">
       <div className="px-[18px] pt-[14px] pb-[10px]">
         <span className="text-page-title font-semibold text-[#1A1F36]">Inbox</span>
         <span className="ml-[10px] text-xs text-[#4B5563]">Driver Hub · requests from the driver app</span>
@@ -154,7 +154,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
             const preview = previewQuery.data;
             const timeline = (timelineQuery.data?.timeline ?? null) as Record<string, unknown> | null;
             return (
-              <div key={id} className="mb-[10px] rounded-sm border border-[#e5e7eb] bg-white px-[14px] py-3">
+              <div key={id} className="mb-[10px] rounded-sm border border-[#E5E7EB] bg-white px-[14px] py-3">
                 <button type="button" className="flex w-full items-start gap-[10px] text-left" onClick={() => setOpenId(open ? null : id)}>
                   <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#eef0f4] text-xs font-semibold text-[#4A5170]">
                     {initials(name)}
@@ -174,7 +174,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                 </button>
 
                 {open ? (
-                  <div className="mt-[10px] rounded-sm border border-[#e5e7eb] bg-[#f8f8f4] px-[11px] py-[9px]">
+                  <div className="mt-[10px] rounded-sm border border-[#E5E7EB] bg-[#f8f8f4] px-[11px] py-[9px]">
                     <div className="mb-[7px] text-xs font-semibold uppercase tracking-[0.25px] text-[#6B7280]">
                       Linkage — what posts on approve
                     </div>
@@ -209,7 +209,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                         <span>
                           <SelectCombobox
                             aria-label="Pay from account"
-                            className="h-[28px] w-full rounded-xs border border-[#e5e7eb] text-xs"
+                            className="h-[28px] w-full rounded-xs border border-[#E5E7EB] text-xs"
                             value={payFrom[id] ?? ""}
                             onChange={(e) => setPayFrom((p) => ({ ...p, [id]: e.target.value }))}
                           >
@@ -229,7 +229,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                     <div className="mt-[10px] flex justify-end gap-2">
                       <button
                         type="button"
-                        className="rounded-xs border border-[#e5e7eb] bg-white px-3 py-[5px] text-xs text-[#4A5170]"
+                        className="rounded-xs border border-[#E5E7EB] bg-white px-3 py-[5px] text-xs text-[#4A5170]"
                         onClick={() => setDenyForId(id)}
                       >
                         Deny
@@ -237,7 +237,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                       <button
                         type="button"
                         disabled={approveMut.isPending}
-                        className="rounded-xs border border-[#1f2a44] bg-[#1f2a44] px-[14px] py-[5px] text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-70"
+                        className="rounded-xs border border-[#1F2A44] bg-[#1F2A44] px-[14px] py-[5px] text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-70"
                         onClick={() => approveMut.mutate(id)}
                       >
                         Approve &amp; post
@@ -262,20 +262,20 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
             <h2 className="text-xs font-semibold text-[#1A1F36]">Deny request</h2>
             <p className="mt-1 text-xs text-[#4B5563]">Reason is recorded to the audit trail and shared with the driver.</p>
             <textarea
-              className="mt-3 w-full rounded-sm border border-[#e5e7eb] p-2 text-xs"
+              className="mt-3 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
               rows={4}
               value={denyReason}
               onChange={(e) => setDenyReason(e.target.value)}
               placeholder="Denial reason (required)"
             />
             <div className="mt-3 flex justify-end gap-2">
-              <button type="button" className="rounded-xs border border-[#e5e7eb] bg-white px-3 py-[5px] text-xs text-[#4A5170]" onClick={() => setDenyForId(null)}>
+              <button type="button" className="rounded-xs border border-[#E5E7EB] bg-white px-3 py-[5px] text-xs text-[#4A5170]" onClick={() => setDenyForId(null)}>
                 Cancel
               </button>
               <button
                 type="button"
                 disabled={denyReason.trim().length < 1 || denyMut.isPending}
-                className="rounded-xs border border-[#1f2a44] bg-[#1f2a44] px-[14px] py-[5px] text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-60"
+                className="rounded-xs border border-[#1F2A44] bg-[#1F2A44] px-[14px] py-[5px] text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-60"
                 onClick={() => void denyMut.mutate()}
               >
                 Confirm deny

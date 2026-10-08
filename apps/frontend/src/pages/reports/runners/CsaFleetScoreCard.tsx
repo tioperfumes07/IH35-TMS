@@ -101,7 +101,7 @@ export function CsaFleetScoreCard({ value }: Props) {
               </div>
               <div className="h-2 rounded-sm bg-[#F7F8FA]">
                 <div
-                  className="h-2 rounded-sm bg-[#1f2a44]"
+                  className="h-2 rounded-sm bg-[#1F2A44]"
                   data-testid={`csa-bar-${basic.key}`}
                   style={{ width }}
                 />

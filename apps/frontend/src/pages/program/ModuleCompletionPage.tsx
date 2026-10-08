@@ -69,8 +69,8 @@ const MODULE_LABELS: Record<string, string> = {
 };
 
 /** §7 navy — never blue. */
-const NAVY = "#1f2a44";
-const SLATE = "#64748b";
+const NAVY = "#1F2A44";
+const SLATE = "#64748B";
 const AMBER = "#92400e";
 
 function labelFor(id: string): string {
@@ -101,7 +101,7 @@ function buildRows(ids: readonly string[], modules: ModuleCompletion[]): ModuleR
 
 function U14HopBadge({ row }: { row: U14ExclusiveRow | undefined }) {
   if (!row) {
-    return <span className="text-xs text-[#64748b]">—</span>;
+    return <span className="text-xs text-[#64748B]">—</span>;
   }
   if (row.status === "CERTIFIED") {
     return (
@@ -123,7 +123,7 @@ function U14HopBadge({ row }: { row: U14ExclusiveRow | undefined }) {
 
 function ProofBadge({ proof }: { proof: ModuleRow["proof"] }) {
   if (proof === "undefined") {
-    return <span className="text-xs italic text-[#64748b]">not yet defined</span>;
+    return <span className="text-xs italic text-[#64748B]">not yet defined</span>;
   }
   if (proof === "certified") {
     return (
@@ -171,7 +171,7 @@ function ProgressBar({
     // An undefined module is NOT drawn as an empty bar. An empty bar reads as "0% built", which is a
     // different and false claim: these modules have working screens, they just have no agreed list of
     // what "complete" means, so no honest number exists to draw.
-    return <span className="text-xs italic text-[#64748b]">not yet defined</span>;
+    return <span className="text-xs italic text-[#64748B]">not yet defined</span>;
   }
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
   // Certified = solid navy fill. Code-verified = slate fill (never the same as certified navy solid).
@@ -188,7 +188,7 @@ function ProgressBar({
           {done} of {total}
         </span>
       </div>
-      <span className="tabular-nums text-xs text-[#64748b]">
+      <span className="tabular-nums text-xs text-[#64748B]">
         live-proven {prodVerifiedCount} of {total}
       </span>
     </div>
@@ -250,7 +250,7 @@ export function ModuleCompletionPage() {
         key: "label",
         label: "Module",
         sortable: true,
-        render: (row) => <span className="font-medium text-[#1f2a44]">{row.label}</span>,
+        render: (row) => <span className="font-medium text-[#1F2A44]">{row.label}</span>,
       },
       {
         key: "proof",
@@ -310,7 +310,7 @@ export function ModuleCompletionPage() {
           row.defined ? (
             <button
               type="button"
-              className="text-xs text-[#1f2a44] underline"
+              className="text-xs text-[#1F2A44] underline"
               onClick={() => setExpanded((cur) => (cur === row.id ? null : row.id))}
             >
               {expanded === row.id ? "Hide items" : "Show items"}
@@ -362,7 +362,7 @@ export function ModuleCompletionPage() {
         <button
           type="button"
           className={`rounded-sm px-2 py-1 text-xs font-semibold ${
-            scope === "first14" ? "bg-[#1f2a44] text-white" : "border border-gray-300 text-[#4B5563]"
+            scope === "first14" ? "bg-[#1F2A44] text-white" : "border border-gray-300 text-[#4B5563]"
           }`}
           onClick={() => setScope("first14")}
         >
@@ -371,7 +371,7 @@ export function ModuleCompletionPage() {
         <button
           type="button"
           className={`rounded-sm px-2 py-1 text-xs font-semibold ${
-            scope === "u14" ? "bg-[#1f2a44] text-white" : "border border-gray-300 text-[#4B5563]"
+            scope === "u14" ? "bg-[#1F2A44] text-white" : "border border-gray-300 text-[#4B5563]"
           }`}
           onClick={() => setScope("u14")}
           data-testid="program-modules-scope-u14"
@@ -381,7 +381,7 @@ export function ModuleCompletionPage() {
         <button
           type="button"
           className={`rounded-sm px-2 py-1 text-xs font-semibold ${
-            scope === "all" ? "bg-[#1f2a44] text-white" : "border border-gray-300 text-[#4B5563]"
+            scope === "all" ? "bg-[#1F2A44] text-white" : "border border-gray-300 text-[#4B5563]"
           }`}
           onClick={() => setScope("all")}
         >
@@ -390,13 +390,13 @@ export function ModuleCompletionPage() {
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-[#4B5563]">
-        <span className="font-semibold text-[#1f2a44]">
+        <span className="font-semibold text-[#1F2A44]">
           {totals.done} of {totals.total}
         </span>{" "}
         acceptance items passing across {defined.length} module
         {defined.length === 1 ? "" : "s"} with a defined scope.
         {" "}
-        <span className="font-semibold text-[#1f2a44]">{totals.prod} of {totals.total}</span>{" "}
+        <span className="font-semibold text-[#1F2A44]">{totals.prod} of {totals.total}</span>{" "}
         live-proven (<code className="text-xs">prod_verified</code>).
         {" "}
         <span className="font-semibold" style={{ color: NAVY }}>
@@ -409,7 +409,7 @@ export function ModuleCompletionPage() {
         {undefinedCount > 0 ? (
           <>
             {" "}
-            <span className="font-semibold text-[#dc2626]">{undefinedCount}</span> module
+            <span className="font-semibold text-red-600">{undefinedCount}</span> module
             {undefinedCount === 1 ? " has" : "s have"} no acceptance list yet — until one exists,
             &ldquo;complete&rdquo; has no definition for {undefinedCount === 1 ? "it" : "them"} and
             no honest percentage can be shown.
@@ -459,21 +459,21 @@ export function ModuleCompletionPage() {
 
       {boardReady && expandedRow && detailItems.length > 0 ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="mb-2 text-xs font-semibold text-[#1f2a44]">
+          <div className="mb-2 text-xs font-semibold text-[#1F2A44]">
             {expandedRow.label} — {detailItems.length} item
             {detailItems.length === 1 ? "" : "s"}
           </div>
           <ul className="space-y-1">
             {detailItems.map((item) => (
               <li key={item.id} className="flex flex-wrap gap-2 text-xs text-[#4B5563]">
-                <span className="w-28 shrink-0 font-mono text-[#64748b]">{item.id}</span>
+                <span className="w-28 shrink-0 font-mono text-[#64748B]">{item.id}</span>
                 <span
                   className={`w-24 shrink-0 font-semibold ${
                     item.status === "FAIL"
-                      ? "text-[#dc2626]"
+                      ? "text-red-600"
                       : item.status === "PASS"
-                        ? "text-[#1f2a44]"
-                        : "text-[#64748b]"
+                        ? "text-[#1F2A44]"
+                        : "text-[#64748B]"
                   }`}
                 >
                   {item.status}
@@ -495,7 +495,7 @@ export function ModuleCompletionPage() {
                     </span>
                   )
                 ) : (
-                  <span className="w-28 shrink-0 text-xs text-[#64748b]">—</span>
+                  <span className="w-28 shrink-0 text-xs text-[#64748B]">—</span>
                 )}
                 <span>{item.title}</span>
               </li>

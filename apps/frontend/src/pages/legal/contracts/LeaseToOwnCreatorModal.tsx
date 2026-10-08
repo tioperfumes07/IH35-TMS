@@ -255,7 +255,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         <div className="flex flex-wrap gap-2 text-xs">
           {STEPS.map((s, i) => (
             <button key={s} onClick={() => setStepIdx(i)}
-              className={`rounded-sm px-2 py-1 ${i === stepIdx ? "bg-[#1f2a44] text-white" : "bg-slate-100 text-slate-600"}`}>
+              className={`rounded-sm px-2 py-1 ${i === stepIdx ? "bg-[#1F2A44] text-white" : "bg-slate-100 text-slate-600"}`}>
               {i + 1}. {s}
             </button>
           ))}

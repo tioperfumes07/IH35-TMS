@@ -271,7 +271,7 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Vehicles ({vehicles.length})</h3>
                 <button type="button" onClick={() => setVehicles((p) => [...p, emptyVehicle(`v${Date.now()}`)])}
-                  className="text-xs text-[#1f2a44] hover:underline">+ Add new vehicle</button>
+                  className="text-xs text-[#1F2A44] hover:underline">+ Add new vehicle</button>
               </div>
               <div className="space-y-3">
                 {vehicles.map((v, i) => (

@@ -21,7 +21,7 @@ const STATUS_LABEL: Record<FilingStatus, string> = {
 
 const STATUS_CLASS: Record<FilingStatus, string> = {
   overdue: "font-semibold text-red-700",
-  due: "font-semibold text-[#1f2a44]",
+  due: "font-semibold text-[#1F2A44]",
   upcoming: "text-slate-600",
   not_yet_tracked: "italic text-slate-400",
 };
@@ -136,11 +136,11 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
             type="button"
             onClick={() => setStatusFilter((s) => (s === key ? "" : key))}
             className={`rounded-sm border px-3 py-2 text-left ${
-              statusFilter === key ? "border-[#1f2a44] ring-1 ring-[#1f2a44]" : "border-slate-200"
+              statusFilter === key ? "border-[#1F2A44] ring-1 ring-[#1F2A44]" : "border-slate-200"
             } ${key === "overdue" && counts.overdue > 0 ? "bg-red-50" : "bg-[var(--surface-unselected)]"}`}
             data-testid={`filings-tile-${key}`}
           >
-            <div className={`text-page-title font-semibold ${key === "overdue" ? "text-red-700" : "text-[#1f2a44]"}`}>
+            <div className={`text-page-title font-semibold ${key === "overdue" ? "text-red-700" : "text-[#1F2A44]"}`}>
               {counts[key]}
             </div>
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>

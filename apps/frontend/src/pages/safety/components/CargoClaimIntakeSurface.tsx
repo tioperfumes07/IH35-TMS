@@ -974,7 +974,7 @@ export function CargoClaimIntakeSurface({
               {detail && !detail.voided_at && !editMode ? (
                 <button
                   type="button"
-                  className="text-xs font-semibold text-[#1f2a44] underline"
+                  className="text-xs font-semibold text-[#1F2A44] underline"
                   data-testid={`${pageTestId}-edit-btn`}
                   onClick={beginEdit}
                 >
@@ -1173,7 +1173,7 @@ export function CargoClaimIntakeSurface({
                         type="button"
                         className={
                           statusTarget === next
-                            ? "rounded-sm border border-[#1f2a44] px-2 py-1 font-semibold text-[#1f2a44]"
+                            ? "rounded-sm border border-[#1F2A44] px-2 py-1 font-semibold text-[#1F2A44]"
                             : "rounded-sm border border-gray-300 px-2 py-1 text-[#4B5563]"
                         }
                         data-testid={`${pageTestId}-status-${next}`}
@@ -1220,7 +1220,7 @@ export function CargoClaimIntakeSurface({
                   <div className="space-y-1 pt-2">
                     <button
                       type="button"
-                      className="rounded-sm border border-gray-300 px-2 py-1 text-[#dc2626]"
+                      className="rounded-sm border border-gray-300 px-2 py-1 text-red-600"
                       data-testid={`${pageTestId}-void-btn`}
                       onClick={() => {
                         setVoidOpen((cur) => !cur);
@@ -1239,7 +1239,7 @@ export function CargoClaimIntakeSurface({
                           onChange={(e) => setVoidReason(e.target.value)}
                         />
                         {voidError ? (
-                          <div className="text-xs text-[#dc2626]" data-testid={`${pageTestId}-void-error`}>
+                          <div className="text-xs text-red-600" data-testid={`${pageTestId}-void-error`}>
                             {voidError}
                           </div>
                         ) : null}

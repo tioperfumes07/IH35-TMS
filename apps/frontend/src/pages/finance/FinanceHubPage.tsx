@@ -95,7 +95,7 @@ export function FinanceHubPage() {
             enable the Finance Hub for this company, or switch to a company where it’s already enabled.
           </p>
           <p className="mt-3">
-            <Link to="/finance/overview" className="font-medium text-[#1f2a44] underline underline-offset-2">
+            <Link to="/finance/overview" className="font-medium text-[#1F2A44] underline underline-offset-2">
               Back to Finance overview
             </Link>
           </p>

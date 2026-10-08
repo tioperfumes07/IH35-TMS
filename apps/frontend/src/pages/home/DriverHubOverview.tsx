@@ -145,7 +145,7 @@ export function DriverHubOverview({ companyId, canReview }: { companyId: string;
               key={card.title}
               to={card.to}
               data-testid={card.testId}
-              className="rounded-sm border border-[#e5e7eb] bg-white p-3 shadow-xs transition hover:border-slate-300 hover:shadow-sm"
+              className="rounded-sm border border-[#E5E7EB] bg-white p-3 shadow-xs transition hover:border-slate-300 hover:shadow-sm"
             >
               <div className="text-xs font-semibold uppercase tracking-[0.25px] text-[#6B7280]">{card.title}</div>
               <div className={`mt-1 text-page-title font-bold tabular-nums ${card.isError ? "text-red-700" : "text-[#1A1F36]"}`}>

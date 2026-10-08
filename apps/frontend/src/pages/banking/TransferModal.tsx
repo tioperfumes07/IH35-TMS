@@ -225,7 +225,7 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
                 setToAccountId("");
                 if (tab === "intra") setCounterpartyCompanyId("");
               }}
-              className={`rounded px-3 py-1 ${scope === tab ? "bg-[#1f2a44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+              className={`rounded px-3 py-1 ${scope === tab ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
             >
               {tab === "intra" ? "Same entity" : "Intercompany"}
             </button>

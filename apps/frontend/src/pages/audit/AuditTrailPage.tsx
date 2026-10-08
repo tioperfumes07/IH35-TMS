@@ -381,7 +381,7 @@ export function AuditTrailPage() {
             data-testid="audit-trail-filter-apply"
             onClick={staged.apply}
             disabled={!staged.dirty}
-            className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
           >
             Apply
           </button>

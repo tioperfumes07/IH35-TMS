@@ -55,7 +55,7 @@ function renderBody(body: string, mentionNames: string[]) {
     <>
       {parts.map((part, i) =>
         tokens.includes(part) ? (
-          <span key={i} className="rounded-sm bg-[#F7F8FA] px-1 font-semibold text-[#1f2a44]" data-testid="tasks-chat-mention">
+          <span key={i} className="rounded-sm bg-[#F7F8FA] px-1 font-semibold text-[#1F2A44]" data-testid="tasks-chat-mention">
             {part}
           </span>
         ) : (
@@ -233,7 +233,7 @@ export function TasksChatPage() {
                       data-testid="tasks-chat-picker-item"
                       className={[
                         "block w-full border-b border-[#E5E7EB] px-3 py-2 text-left text-xs",
-                        isActive ? "bg-[#F7F8FA] text-[#1f2a44]" : "text-[#4B5563] hover:bg-[#F7F8FA]",
+                        isActive ? "bg-[#F7F8FA] text-[#1F2A44]" : "text-[#4B5563] hover:bg-[#F7F8FA]",
                       ].join(" ")}
                     >
                       <div className="font-medium">{t.title}</div>
@@ -258,7 +258,7 @@ export function TasksChatPage() {
             <>
               <div className="rounded-sm border border-[#E5E7EB] bg-white">
                 <div className="border-b border-[#E5E7EB] px-4 py-2">
-                  <div className="text-xs font-semibold text-[#1f2a44]">{selectedTask?.title ?? "Task"}</div>
+                  <div className="text-xs font-semibold text-[#1F2A44]">{selectedTask?.title ?? "Task"}</div>
                   {selectedTask ? (
                     <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-[#6B7280]">
                       <span>{formatDateUS(selectedTask.scheduled_date)} · {taskStatusLabel(selectedTask.status)}</span>
@@ -292,7 +292,7 @@ export function TasksChatPage() {
                       return (
                         <div key={c.id} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2" data-testid="tasks-chat-comment">
                           <div className="flex items-baseline justify-between">
-                            <span className="text-xs font-semibold text-[#1f2a44]">{c.author_name ?? c.author_email ?? "Unknown"}</span>
+                            <span className="text-xs font-semibold text-[#1F2A44]">{c.author_name ?? c.author_email ?? "Unknown"}</span>
                             <span className="text-xs text-[#6B7280]">{formatCompanyTime(c.created_at)}</span>
                           </div>
                           <div className="mt-1 whitespace-pre-wrap text-xs text-[#4B5563]">{renderBody(c.body, mentionNames)}</div>
@@ -334,7 +334,7 @@ export function TasksChatPage() {
                             }}
                             className="block w-full px-2 py-1.5 text-left text-xs text-[#4B5563] hover:bg-[#F7F8FA]"
                           >
-                            <span className="font-medium text-[#1f2a44]">{emp.name}</span>
+                            <span className="font-medium text-[#1F2A44]">{emp.name}</span>
                             {emp.email ? <span className="ml-1 text-xs text-[#6B7280]">{emp.email}</span> : null}
                           </button>
                         </li>
@@ -352,7 +352,7 @@ export function TasksChatPage() {
                       data-testid="tasks-chat-post"
                       className={[
                         "rounded-sm px-3 py-1.5 text-xs font-semibold text-white",
-                        canPost ? "bg-[#1f2a44] hover:bg-[#0f1729]" : "cursor-not-allowed bg-[#E5E7EB]",
+                        canPost ? "bg-[#1F2A44] hover:bg-[#0f1729]" : "cursor-not-allowed bg-[#E5E7EB]",
                       ].join(" ")}
                     >
                       {createMutation.isPending ? "Posting…" : "Post comment"}
@@ -381,7 +381,7 @@ export function TasksChatPage() {
                       {activityQuery.data?.activity?.map((a: TaskActivity) => (
                         <li key={a.id} className="flex items-baseline justify-between text-xs" data-testid="tasks-chat-activity-item">
                           <span className="text-[#4B5563]">
-                            <span className="font-medium text-[#1f2a44]">{a.actor_name ?? "System"}</span>{" "}
+                            <span className="font-medium text-[#1F2A44]">{a.actor_name ?? "System"}</span>{" "}
                             {a.event_type === "comment"
                               ? "added a comment"
                               : a.event_type === "status_change"

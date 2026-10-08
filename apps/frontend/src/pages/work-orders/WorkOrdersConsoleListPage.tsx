@@ -324,7 +324,7 @@ export function WorkOrdersConsoleListPage() {
               kind="work_orders_console"
               id={id}
               label="View"
-              className="text-[#1f2a44] hover:underline"
+              className="text-[#1F2A44] hover:underline"
             />
           );
         },

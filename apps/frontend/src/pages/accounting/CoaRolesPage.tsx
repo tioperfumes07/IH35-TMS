@@ -267,7 +267,7 @@ export function CoaRolesPage() {
           </div>
           {/* Flat line, not an inner framed box — §7 forbids a nested frame (verify-no-nested-box). */}
           {(validateQuery.data?.posting_features_armed_but_blocked ?? 0) > 0 ? (
-            <p className="mb-1 font-semibold text-[#dc2626]">
+            <p className="mb-1 font-semibold text-red-600">
               {validateQuery.data?.posting_features_armed_but_blocked} feature(s) are turned ON with an
               unbound account role. Posting will fail the first time the feature is used. Bind the role
               below, or turn the feature off.
@@ -276,7 +276,7 @@ export function CoaRolesPage() {
           <ul className="space-y-0.5">
             {(validateQuery.data?.posting_feature_readiness ?? []).map((f) => (
               <li key={f.flag_key} className="flex flex-wrap items-baseline gap-x-2">
-                <span className={f.armed_but_blocked ? "font-semibold text-[#dc2626]" : "font-medium"}>{f.label}</span>
+                <span className={f.armed_but_blocked ? "font-semibold text-red-600" : "font-medium"}>{f.label}</span>
                 <span className="text-slate-500">
                   {f.ready
                     ? "ready"

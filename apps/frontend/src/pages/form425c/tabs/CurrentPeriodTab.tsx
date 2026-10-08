@@ -155,7 +155,7 @@ export function CurrentPeriodTab({
       </div>
 
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white">Part 1 — Questionnaire (Lines 1-18)</div>
+        <div className="border-b bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white">Part 1 — Questionnaire (Lines 1-18)</div>
         {QUESTIONNAIRE.map((q, i) => {
           const answer = String(form.answers[q.num] ?? "").trim().toLowerCase();
           const flagged = (q.expectYes && answer === "no") || (!q.expectYes && answer === "yes");
@@ -169,7 +169,7 @@ export function CurrentPeriodTab({
                 <span className="flex items-center gap-2">
                   {q.text}
                   {flagged ? (
-                    <span className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-xs font-semibold uppercase text-white">
+                    <span className="rounded-sm bg-[#1F2A44] px-1.5 py-0.5 text-xs font-semibold uppercase text-white">
                       Exhibit {letter} required
                     </span>
                   ) : null}
@@ -225,7 +225,7 @@ export function CurrentPeriodTab({
       </div>
 
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white">Part 2 — Summary of Cash Activity (Lines 19-23)</div>
+        <div className="border-b bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white">Part 2 — Summary of Cash Activity (Lines 19-23)</div>
         <p className="border-b bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
           Lines 19–21 are imported from Banking (DIP real accounts). Save Draft does not write them — edit here was a silent no-op on the court filing.
         </p>
@@ -279,7 +279,7 @@ export function CurrentPeriodTab({
       </div>
 
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white">Part 7 — Projections (Lines 32-37)</div>
+        <div className="border-b bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white">Part 7 — Projections (Lines 32-37)</div>
         {form.hasCarryForward ? (
           <div className="border-b bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
             Column A came from previous month carry-forward. Manual edits require reason (30+ chars).
@@ -332,7 +332,7 @@ export function CurrentPeriodTab({
       </div>
 
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white">Part 8 — Attachments</div>
+        <div className="border-b bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white">Part 8 — Attachments</div>
         {[
           ["att38", 38, "Bank statements"],
           ["att39", 39, "Bank reconciliation reports"],
@@ -375,7 +375,7 @@ export function CurrentPeriodTab({
         <button type="button" onClick={onSave} disabled={loading} className="rounded-sm bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white">
           Save Draft
         </button>
-        <button type="button" onClick={onGeneratePdf} disabled={loading} className="rounded-sm bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white">
+        <button type="button" onClick={onGeneratePdf} disabled={loading} className="rounded-sm bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white">
           Save & Generate Filing PDF
         </button>
         <button type="button" onClick={onMarkFiled} disabled={loading} className="rounded-sm bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white">

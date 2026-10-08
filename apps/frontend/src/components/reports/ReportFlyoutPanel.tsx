@@ -15,7 +15,7 @@ export function ReportFlyoutPanel({ title, items, onSelect, footer }: Props) {
         <button
           key={item.id}
           type="button"
-          className="block w-full border-l-[3px] border-l-transparent px-3 py-2 text-left hover:border-l-[#1f2a44] hover:bg-slate-50"
+          className="block w-full border-l-[3px] border-l-transparent px-3 py-2 text-left hover:border-l-[#1F2A44] hover:bg-slate-50"
           onClick={() => onSelect(item.id)}
         >
           <div className="text-xs font-semibold text-slate-700">{item.label}</div>

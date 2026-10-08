@@ -106,7 +106,7 @@ describe("TasksChatPage — deep link outside the picker window (GO-0044)", () =
     // "In-window task" appears twice (the picker sidebar list AND the selected header) -- scope
     // to the header specifically.
     await screen.findAllByText("In-window task");
-    expect(document.querySelector(".text-xs.font-semibold.text-\\[\\#1f2a44\\]")).toHaveTextContent("In-window task");
+    expect(document.querySelector(".text-xs.font-semibold.text-\\[\\#1F2A44\\]")).toHaveTextContent("In-window task");
     expect(fetchTask).not.toHaveBeenCalled();
   });
 });

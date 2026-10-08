@@ -16,7 +16,7 @@ export function DomainTab({ label, count, loading = false, unavailable = false, 
       onFocus={onMouseEnter}
       onClick={onClick}
       className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide ${
-        isActive ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "border-b-2 border-transparent text-slate-600 hover:text-slate-800"
+        isActive ? "border-b-2 border-[#1F2A44] text-[#1F2A44]" : "border-b-2 border-transparent text-slate-600 hover:text-slate-800"
       }`}
     >
       {label}{" "}

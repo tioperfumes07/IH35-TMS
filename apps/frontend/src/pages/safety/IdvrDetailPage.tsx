@@ -55,7 +55,7 @@ export function IdvrDetailPage() {
   if (detailQ.isError || !submission) {
     return (
       <div className="space-y-3 p-4" data-testid="idvr-detail-missing">
-        <button type="button" aria-label="Back" onClick={goBack} className="border-0 bg-transparent p-0 text-xs font-semibold text-[#1f2a44] underline">
+        <button type="button" aria-label="Back" onClick={goBack} className="border-0 bg-transparent p-0 text-xs font-semibold text-[#1F2A44] underline">
           ← Back to Vehicle Inspections
         </button>
         <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
@@ -73,7 +73,7 @@ export function IdvrDetailPage() {
           aria-label="Back"
           onClick={goBack}
           data-testid="idvr-detail-back"
-          className="border-0 bg-transparent p-0 text-xs font-semibold text-[#1f2a44] underline"
+          className="border-0 bg-transparent p-0 text-xs font-semibold text-[#1F2A44] underline"
         >
           ← Back to Vehicle Inspections
         </button>

@@ -351,7 +351,7 @@ export function OpeningBalanceRegisterPage() {
             type="button"
             disabled={commit.isPending || !operatingCompanyId}
             onClick={() => commit.mutate()}
-            className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-40"
+            className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-40"
           >
             {commit.isPending ? "Committing…" : "Commit opening balances"}
           </button>

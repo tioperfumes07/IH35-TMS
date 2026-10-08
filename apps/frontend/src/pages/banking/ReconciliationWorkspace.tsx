@@ -1042,7 +1042,7 @@ export function ReconciliationWorkspacePage() {
                     <button
                       key={key}
                       type="button"
-                      className={`inline-flex items-center gap-0.5 px-2 py-1 ${txnSort.key === key ? "bg-[#1f2a44] text-white" : "text-gray-700"} ${key !== "date" ? "border-l border-gray-300" : ""}`}
+                      className={`inline-flex items-center gap-0.5 px-2 py-1 ${txnSort.key === key ? "bg-[#1F2A44] text-white" : "text-gray-700"} ${key !== "date" ? "border-l border-gray-300" : ""}`}
                       onClick={() => toggleTxnSort(key)}
                     >
                       {label}

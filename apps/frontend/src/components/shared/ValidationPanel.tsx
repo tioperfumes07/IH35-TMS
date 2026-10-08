@@ -195,7 +195,7 @@ export function ValidationPanel({
                * hardcode navy on the <tr> itself, which sits on top of the global `thead { !important }`
                * light-gray rule (index.css GLB-02) since that rule targets the <thead> element's own
                * background, not a child <tr>'s explicit background -- a real loophole the design-system
-               * ratchet guard never checked for. Removed the override; the locked #eef2f6/#1f2937 11px
+               * ratchet guard never checked for. Removed the override; the locked #EEF2F6/#1F2937 11px
                * token now applies here exactly like every other table header in the app. */}
             <thead data-table-header="locked">
               <tr className="h-[26px] tracking-[0.5px]">

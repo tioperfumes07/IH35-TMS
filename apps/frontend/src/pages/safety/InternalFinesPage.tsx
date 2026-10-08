@@ -234,7 +234,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
       render: (row) => (
         <button
           type="button"
-          className="text-[#1f2a44] underline"
+          className="text-[#1F2A44] underline"
           data-testid={`internal-fine-open-${String(row.id ?? "")}`}
           onClick={() => setSelectedFine(row)}
         >
@@ -331,7 +331,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
             {canDispute && !isConverted ? (
               <button
                 type="button"
-                className="text-[#1f2a44] underline"
+                className="text-[#1F2A44] underline"
                 data-testid={`internal-fine-dispute-${String(row.id ?? "")}`}
                 onClick={() => setLifecycleTarget({ row, action: "dispute" })}
               >
@@ -341,7 +341,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
             {canVoid && !isConverted ? (
               <button
                 type="button"
-                className="text-[#dc2626] underline"
+                className="text-red-600 underline"
                 data-testid={`internal-fine-void-${String(row.id ?? "")}`}
                 onClick={() => setLifecycleTarget({ row, action: "void" })}
               >

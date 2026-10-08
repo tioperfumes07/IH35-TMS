@@ -95,7 +95,7 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
         </div>
         <Link
           to="/safety/hos-violations"
-          className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white"
         >
           Open Safety violations
         </Link>

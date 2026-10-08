@@ -147,7 +147,7 @@ function SegmentedControl<T extends string>({
           key={opt.value}
           type="button"
           className={`flex h-7 items-center px-2.5 ${i !== 0 ? "border-l border-[#E5E7EB]" : ""} ${
-            value === opt.value ? "bg-[#1f2a44] text-white" : "text-[#4B5563]"
+            value === opt.value ? "bg-[#1F2A44] text-white" : "text-[#4B5563]"
           }`}
           onClick={() => onChange(opt.value)}
         >
@@ -186,7 +186,7 @@ function TypeFilterDropdown({
             {selected.map((v) => {
               const label = options.find((o) => o.value === v)?.label ?? v;
               return (
-                <span key={v} className="inline-flex items-center gap-1 rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-xs text-white">
+                <span key={v} className="inline-flex items-center gap-1 rounded-sm bg-[#1F2A44] px-1.5 py-0.5 text-xs text-white">
                   {label}
                   <span
                     role="button"

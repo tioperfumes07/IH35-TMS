@@ -22,10 +22,10 @@ export function InventoryModuleTabs() {
               onClick={() => navigate(tab.to)}
               className={[
                 "whitespace-nowrap border-b-2 px-1 py-3 text-xs font-medium",
-                // §7 palette lock: active tab uses the locked --navy token (#1f2a44), matching the
+                // §7 palette lock: active tab uses the locked --navy token (#1F2A44), matching the
                 // FinanceModuleTabs/LegalModuleTabs sibling pattern — not an off-palette Tailwind slate shade.
                 isActive
-                  ? "border-[#1f2a44] text-[#1f2a44]"
+                  ? "border-[#1F2A44] text-[#1F2A44]"
                   : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
               ].join(" ")}
             >

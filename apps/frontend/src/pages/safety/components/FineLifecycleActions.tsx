@@ -225,7 +225,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
         <div className="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(statusBlockedReason) || contestMutation.isPending}
             title={statusBlockedReason ?? undefined}
             onClick={() => contestMutation.mutate({ fineId, operatingCompanyId, generation: scopeGenerationRef.current, notes })}
@@ -250,12 +250,12 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
           </p>
         ) : null}
         {contestMutation.isError ? (
-          <p className="mt-2 text-xs text-[#dc2626]" data-testid="fine-contest-error">
+          <p className="mt-2 text-xs text-red-600" data-testid="fine-contest-error">
             {apiErrorText(contestMutation.error)}
           </p>
         ) : null}
         {dismissMutation.isError ? (
-          <p className="mt-2 text-xs text-[#dc2626]" data-testid="fine-dismiss-error">
+          <p className="mt-2 text-xs text-red-600" data-testid="fine-dismiss-error">
             {apiErrorText(dismissMutation.error)}
           </p>
         ) : null}
@@ -300,7 +300,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
         <div className="mt-2">
           <button
             type="button"
-            className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={
               Boolean(reduceBlockedReason) ||
               reduceMutation.isPending ||
@@ -324,7 +324,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
           </button>
         </div>
         {reduceMutation.isError ? (
-          <p className="mt-2 text-xs text-[#dc2626]" data-testid="fine-reduce-error">
+          <p className="mt-2 text-xs text-red-600" data-testid="fine-reduce-error">
             {apiErrorText(reduceMutation.error)}
           </p>
         ) : null}
@@ -379,7 +379,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
         <div className="mt-2">
           <button
             type="button"
-            className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={
               linkPaymentMutation.isPending ||
               !bankTransactionId ||
@@ -403,11 +403,11 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
           </button>
         </div>
         {bankTxQuery.isError ? (
-          <p className="mt-2 flex items-center gap-2 text-xs text-[#dc2626]" data-testid="fine-payment-picker-error">
+          <p className="mt-2 flex items-center gap-2 text-xs text-red-600" data-testid="fine-payment-picker-error">
             <span>Couldn't load bank transactions: {apiErrorText(bankTxQuery.error)}</span>
             <button
               type="button"
-              className="shrink-0 rounded-sm border border-[#dc2626] px-2 py-0.5 font-semibold text-[#dc2626] hover:bg-red-50"
+              className="shrink-0 rounded-sm border border-red-600 px-2 py-0.5 font-semibold text-red-600 hover:bg-red-50"
               data-testid="fine-payment-picker-retry"
               onClick={() => void bankTxQuery.refetch()}
             >
@@ -416,7 +416,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
           </p>
         ) : null}
         {linkPaymentMutation.isError ? (
-          <p className="mt-2 text-xs text-[#dc2626]" data-testid="fine-link-payment-error">
+          <p className="mt-2 text-xs text-red-600" data-testid="fine-link-payment-error">
             {apiErrorText(linkPaymentMutation.error)}
           </p>
         ) : null}

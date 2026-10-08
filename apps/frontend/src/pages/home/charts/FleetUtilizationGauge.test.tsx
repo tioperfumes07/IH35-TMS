@@ -11,6 +11,6 @@ describe("FleetUtilizationGauge thresholds", () => {
   });
 
   it("uses neutral gray for the remainder slice (print-friendly base)", () => {
-    expect(gaugeFillForUtilization(33).rest).toBe("#e5e7eb");
+    expect(gaugeFillForUtilization(33).rest).toBe("#E5E7EB");
   });
 });

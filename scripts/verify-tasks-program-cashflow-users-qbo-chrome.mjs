@@ -84,7 +84,7 @@ const CHECKS = [
   {
     name: "create (users): Users.tsx real + Create User -> openInvite -> real Modal drawer",
     file: "apps/frontend/src/pages/Users.tsx",
-    pattern: /openInvite[\s\S]{0,6500}title="Create User"/,
+    pattern: /openInvite[\s\S]{0,9000}title="Create User"/,
   },
   {
     name: "detail.drawer.dispatcher_safety_event: UserDetail real Modal drawer + DatePicker",

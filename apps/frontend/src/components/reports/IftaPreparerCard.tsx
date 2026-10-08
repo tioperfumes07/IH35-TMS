@@ -13,10 +13,10 @@ function ReadyBadge({ label }: { label: string }) {
   // status badge (including this "ready" state) uses the locked neutral navy/slate palette.
   const palette =
     label === "waiting for quarter close"
-      ? { bg: "#f1f5f9", fg: "#4B5563" }
+      ? { bg: "#F1F5F9", fg: "#4B5563" }
       : label === "waiting for data"
         ? { bg: "#F7F8FA", fg: "#4B5563" }
-        : { bg: "#F7F8FA", fg: "#1f2a44" };
+        : { bg: "#F7F8FA", fg: "#1F2A44" };
   return (
     <span className="rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.04em]" style={{ background: palette.bg, color: palette.fg }}>
       {label}
@@ -33,7 +33,7 @@ export function IftaPreparerCard({ status }: Props) {
 
   return (
     <section className="rounded-sm border border-[#4B5563] border-l-[3px] bg-white">
-      <div className="flex items-center justify-between border-b border-[#4B5563] bg-[#f1f5f9] px-3 py-2">
+      <div className="flex items-center justify-between border-b border-[#4B5563] bg-[#F1F5F9] px-3 py-2">
         <h3 className="text-xs font-semibold uppercase tracking-[0.04em] text-[#4B5563]">IFTA Quarterly Preparer</h3>
         <div className="text-xs text-[#4B5563]">
           {status.currentQuarter} due {formatDateUS(status.nextDueAt)} ({status.daysUntilDue}d)
@@ -79,7 +79,7 @@ export function IftaPreparerCard({ status }: Props) {
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            className="inline-flex items-center gap-1 rounded-sm border border-[#4B5563] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-[#E5E7EB]"
+            className="inline-flex items-center gap-1 rounded-sm border border-[#4B5563] bg-[#F1F5F9] px-3 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-[#E5E7EB]"
           >
             Generate IFTA-ready CSV
           </button>
@@ -88,7 +88,7 @@ export function IftaPreparerCard({ status }: Props) {
 
       <div className="flex items-center justify-between border-t border-[#E5E7EB] px-3 py-2 text-xs text-[#4B5563]">
         <span>↑ Safety officer notified {status.daysUntilDue}d before due date · expense tracked + reminder</span>
-        <Link to="/reports/ifta-preparer" className="font-semibold text-[#1f2a44] hover:underline">
+        <Link to="/reports/ifta-preparer" className="font-semibold text-[#1F2A44] hover:underline">
           Open IFTA preparer →
         </Link>
       </div>
@@ -112,7 +112,7 @@ export function IftaPreparerCard({ status }: Props) {
             <button
               type="button"
               disabled={!canSubmit}
-              className="rounded-sm border border-[#4B5563] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#4B5563] disabled:opacity-50"
+              className="rounded-sm border border-[#4B5563] bg-[#F1F5F9] px-3 py-1.5 text-xs font-semibold text-[#4B5563] disabled:opacity-50"
               onClick={() => setConfirmOpen(false)}
             >
               Submit

@@ -10,11 +10,11 @@ const STATUS_COLORS: Record<HomeWoStatusCount["status"], string> = {
   draft: "#94a3b8",
   open: "#4B5563",
   in_progress: "#f59e0b",
-  awaiting_parts: "#64748b",
+  awaiting_parts: "#64748B",
   completed: "#1A7A3C",
   cancelled: "#dc2626",
 };
-const UNKNOWN_STATUS_COLOR = "#64748b";
+const UNKNOWN_STATUS_COLOR = "#64748B";
 
 function isKnownStatus(value: unknown): value is HomeWoStatusCount["status"] {
   return (

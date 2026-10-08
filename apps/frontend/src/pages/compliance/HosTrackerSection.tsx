@@ -244,7 +244,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
               key={d.date}
               type="button"
               onClick={() => setSelectedDate(d.date)}
-              className={`rounded-sm border px-2.5 py-1 text-center text-xs leading-tight ${selectedDate === d.date ? "border-[#1F2A44] font-bold text-[#0F1219] shadow-[inset_0_-2px_0_#1f2a44]" : "border-[#E5E7EB] text-[#4B5563]"}`}
+              className={`rounded-sm border px-2.5 py-1 text-center text-xs leading-tight ${selectedDate === d.date ? "border-[#1F2A44] font-bold text-[#0F1219] shadow-[inset_0_-2px_0_#1F2A44]" : "border-[#E5E7EB] text-[#4B5563]"}`}
             >
               {formatPlannerDayLabel(d.date)}
               <span className="block text-xs text-[#4B5563]">{d.weekday}</span>
@@ -366,7 +366,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
                         <div key={day.date} className="flex items-center gap-2">
                           <span className="w-16 shrink-0 text-xs text-[#4B5563]">{formatPlannerDayLabel(day.date)}</span>
                           <div className="h-3 flex-1 rounded-sm bg-[#F7F8FA]">
-                            <div className="h-3 rounded-sm bg-[#1f2a44]" style={{ width: `${pct}%` }} />
+                            <div className="h-3 rounded-sm bg-[#1F2A44]" style={{ width: `${pct}%` }} />
                           </div>
                           <span data-quantity className="w-12 shrink-0 text-right text-xs tabular-nums text-[#4B5563]">{hmm(day.on_duty_min)}</span>
                         </div>

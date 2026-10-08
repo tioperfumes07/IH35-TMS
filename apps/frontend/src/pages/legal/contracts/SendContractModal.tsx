@@ -137,7 +137,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
           {STEPS.map((label, idx) => (
             <span
               key={label}
-              className={`rounded-sm px-2 py-1 ${idx === stepIdx ? "bg-[#1f2a44] text-white" : "bg-gray-100 text-gray-600"}`}
+              className={`rounded-sm px-2 py-1 ${idx === stepIdx ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-600"}`}
             >
               {idx + 1}. {label}
             </span>

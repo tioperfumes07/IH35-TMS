@@ -57,7 +57,7 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
       <p className="mb-2 text-xs text-[#4B5563]">Invoice basis (GL posted available per-day on API)</p>
       <ResponsiveContainer width="100%" height={240}>
         <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
           <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#4B5563" />
           <YAxis
             tick={{ fontSize: 11 }}

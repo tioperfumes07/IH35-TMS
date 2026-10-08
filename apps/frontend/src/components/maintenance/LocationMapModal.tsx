@@ -160,7 +160,7 @@ export function LocationMapModal({
                 onMouseEnter={() => setInfoCode(point.code)}
                 onClick={() => toggleCode(point.code)}
               >
-                <circle cx={point.x} cy={point.y} r={6} fill={active ? "#1f2a44" : "#e5e7eb"} stroke={active ? "#1f2a44" : "#4B5563"} />
+                <circle cx={point.x} cy={point.y} r={6} fill={active ? "#1F2A44" : "#E5E7EB"} stroke={active ? "#1F2A44" : "#4B5563"} />
                 <text x={point.x + 8} y={point.y + 3} fontSize="7" fill="#0f172a">
                   {point.code}
                 </text>
@@ -171,7 +171,7 @@ export function LocationMapModal({
 
         <div
           className="map-info-panel rounded-sm px-3 py-2 text-xs text-[#1F2A44]"
-          style={{ backgroundColor: "white", border: "1px solid #E5E7EB", borderLeft: "3px solid #1f2a44" }}
+          style={{ backgroundColor: "white", border: "1px solid #E5E7EB", borderLeft: "3px solid #1F2A44" }}
         >
           <div className="font-semibold text-[#0F1219]">{infoCode}</div>
           <div>{info.name}</div>
@@ -193,7 +193,7 @@ export function LocationMapModal({
           <button type="button" onClick={onClose} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
             Cancel
           </button>
-          <button type="button" onClick={() => onApply(draft)} className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white">
+          <button type="button" onClick={() => onApply(draft)} className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white">
             Apply selection ({draft.length})
           </button>
         </div>

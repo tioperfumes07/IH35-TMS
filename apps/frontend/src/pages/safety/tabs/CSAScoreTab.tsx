@@ -120,7 +120,7 @@ export function CSAScoreTab() {
           <option value="rolling-24">Rolling 24-month</option>
           <option value="custom">Custom range</option>
         </SelectCombobox>
-        <button type="button" className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!isOwner || recomputeMutation.isPending} onClick={() => recomputeMutation.mutate({ companyId, generation: actionGenerationRef.current })}>
+        <button type="button" className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!isOwner || recomputeMutation.isPending} onClick={() => recomputeMutation.mutate({ companyId, generation: actionGenerationRef.current })}>
           Manual recompute
         </button>
         <button type="button" className="rounded-sm border border-gray-300 px-3 py-1 text-xs font-semibold text-[#1F2A44] disabled:opacity-60" disabled={saferMutation.isPending} onClick={() => saferMutation.mutate({ companyId, generation: actionGenerationRef.current })}>

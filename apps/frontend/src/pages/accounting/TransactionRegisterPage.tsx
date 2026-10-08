@@ -204,7 +204,7 @@ export function TransactionRegisterPage() {
             <button
               type="button"
               onClick={() => navigate(r.detail_path!)}
-              className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-[#1f2a44]"
+              className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-[#1F2A44]"
               aria-label="Open source record"
             >
               Open <ArrowRightCircle className="h-3.5 w-3.5" />

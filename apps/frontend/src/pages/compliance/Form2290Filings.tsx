@@ -54,7 +54,7 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
   const embeddedBackLink = !showModuleHeader ? (
     <Link
       to="/compliance/form-2290"
-      className="mb-1 inline-block text-xs font-semibold text-[#1f2a44] underline"
+      className="mb-1 inline-block text-xs font-semibold text-[#1F2A44] underline"
     >
       Form 2290 filings
     </Link>

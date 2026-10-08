@@ -78,8 +78,8 @@ function activeTrackerCount(tracker: ProgramTracker): number {
 type PillTone = "ok" | "warn" | "off" | "neutral";
 const PILL_CLS: Record<PillTone, string> = {
   ok: "bg-[#d1fae5] text-[#065f46]",
-  warn: "bg-[#fef3c7] text-[#b45309]",
-  off: "bg-[#fee2e2] text-[#dc2626]",
+  warn: "bg-[#fef3c7] text-[#B45309]",
+  off: "bg-[#fee2e2] text-red-600",
   neutral: "bg-[#F7F8FA] text-[#1F2A44]",
 };
 
@@ -97,7 +97,7 @@ function Card({ title, pill, sub, children, footer, full }: {
 }) {
   return (
     <div className={`rounded-xl border border-gray-200 bg-white px-[18px] py-4 ${full ? "sm:col-span-2" : ""}`}>
-      <h3 className="flex items-center gap-2 text-xs font-bold tracking-wide text-[#1f2a44]">
+      <h3 className="flex items-center gap-2 text-xs font-bold tracking-wide text-[#1F2A44]">
         {title}
         {pill}
       </h3>
@@ -120,7 +120,7 @@ function Row({ label, children }: { label: ReactNode; children: ReactNode }) {
 function Kpi({ n, u }: { n: ReactNode; u: string }) {
   return (
     <div className="my-0.5 flex items-baseline gap-2">
-      <span className="text-page-title font-bold text-[#1f2a44] tabular-nums">{n}</span>
+      <span className="text-page-title font-bold text-[#1F2A44] tabular-nums">{n}</span>
       <span className="text-xs text-[#4B5563]">{u}</span>
     </div>
   );
@@ -131,7 +131,7 @@ function GhostButton({ onClick, children }: { onClick: () => void; children: Rea
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-[#1f2a44] hover:bg-gray-50"
+      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-[#1F2A44] hover:bg-gray-50"
     >
       {children}
     </button>
@@ -398,7 +398,7 @@ function QboReconTab({ data }: { data: SystemData }) {
         pill={<Pill tone="neutral">TMS ↔ QBO</Pill>}
         sub="Daily tie-out of what the TMS posted against QuickBooks (system-of-record). This is not bank reconciliation — bank statement matching stays in Banking; the two are never combined in one table."
         footer={
-          <Link to="/banking" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0f1729]">
+          <Link to="/banking" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0f1729]">
             Open bank reconciliation
           </Link>
         }
@@ -546,7 +546,7 @@ function strokeForLink(state: TxHealthLink["state"]): { color: string; dash?: st
   if (state === "wired") return { color: "#4B5563" };
   if (state === "missing") return { color: "#dc2626", dash: "6 4" };
   if (state === "not_applicable") return { color: "#4B5563", dash: "1 3" };
-  if (state === "blocked_by_constraint") return { color: "#b45309", dash: "4 3" };
+  if (state === "blocked_by_constraint") return { color: "#B45309", dash: "4 3" };
   return { color: "#4B5563" };
 }
 
@@ -598,7 +598,7 @@ function TxHealthWiringMap({ links }: { links: TxHealthLink[] }) {
               </text>
             ) : null}
             {link.state === "blocked_by_constraint" ? (
-              <text x={nodeX - 16} y={ny + 4} fill="#b45309" fontSize="12">
+              <text x={nodeX - 16} y={ny + 4} fill="#B45309" fontSize="12">
                 !
               </text>
             ) : null}
@@ -752,7 +752,7 @@ function TransactionHealthTab() {
                   }
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#1f2a44] hover:bg-[#E5E7EB]"
+                  className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#1F2A44] hover:bg-[#E5E7EB]"
                 >
                   Open / Fix
                 </a>
@@ -762,7 +762,7 @@ function TransactionHealthTab() {
                     href={txHealthLinkPath(chip) ?? "#"}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#1f2a44] hover:bg-[#E5E7EB]"
+                    className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#1F2A44] hover:bg-[#E5E7EB]"
                   >
                     {chip.label}
                     {chip.target_label ? ` · ${chip.target_label}` : ""}
@@ -788,7 +788,7 @@ function TransactionHealthTab() {
                     className={`flex w-full items-center justify-between gap-2 px-1 py-2 text-left text-xs ${active ? "bg-[#F7F8FA]" : "hover:bg-[#E5E7EB]"}`}
                   >
                     <span className="min-w-0">
-                      <span className="block truncate font-semibold text-[#1f2a44]">{row.display_label}</span>
+                      <span className="block truncate font-semibold text-[#1F2A44]">{row.display_label}</span>
                       <span className="block truncate text-xs text-[#4B5563]">
                         {row.doc_type.replace(/_/g, " ")} · {row.entity_code} · {ctDateTime(row.event_at)}
                       </span>
@@ -891,7 +891,7 @@ function ProgramTab({ data }: { data: SystemData }) {
         title="Program Tracker"
         sub="Live build status — derived from merges + deploys, not a static field. Full board opens in the Program Tracker module."
         footer={
-          <Link to="/program/matrix" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0f1729]">
+          <Link to="/program/matrix" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0f1729]">
             Open Program Matrix
           </Link>
         }
@@ -1067,7 +1067,7 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
           <button
             type="button"
             onClick={() => copy("launch")}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0f1729]"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0f1729]"
           >
             Launch Claude Code on my machine
           </button>
@@ -1103,7 +1103,7 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
                   href={`https://github.com/tioperfumes07/IH35-TMS/pull/${p.number}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-semibold text-[#1F2A44] underline hover:text-[#1f2a44]"
+                  className="font-semibold text-[#1F2A44] underline hover:text-[#1F2A44]"
                 >
                   #{p.number}
                 </a>
@@ -1138,7 +1138,7 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
               return (
                 <span key={n}>
                   {i > 0 ? " · " : ""}
-                  {short} <span className={ok ? "text-[#86efac]" : "text-[#dc2626]"}>{ok == null ? "—" : ok ? "ok" : "down"}</span>
+                  {short} <span className={ok ? "text-[#86efac]" : "text-red-600"}>{ok == null ? "—" : ok ? "ok" : "down"}</span>
                 </span>
               );
             })}

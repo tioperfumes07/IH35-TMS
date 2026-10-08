@@ -598,7 +598,7 @@ export function Form425CHome() {
       <div className="px-4 pt-4">
         <PageHeader title="Form 425C" backHref="/425c" breadcrumb={["425C"]} />
       </div>
-      <div className="flex items-center justify-between gap-2 bg-[#1f2a44] px-5 py-3 text-white">
+      <div className="flex items-center justify-between gap-2 bg-[#1F2A44] px-5 py-3 text-white">
         <div>
           <div className="text-page-title font-extrabold">{profiles[activeCompany].name || "Form 425C"}</div>
           <div className="text-xs opacity-75">Official Form 425C — Monthly Operating Report System</div>

@@ -67,7 +67,7 @@ export function DamageReportDetail({ damageUuid, operatingCompanyId }: Props) {
             <button
               key={photo.id}
               type="button"
-              className="rounded-sm border border-[#E5E7EB] px-3 py-2 text-left text-xs hover:border-[#1f2a44]"
+              className="rounded-sm border border-[#E5E7EB] px-3 py-2 text-left text-xs hover:border-[#1F2A44]"
               onClick={() => {
                 setSelected(photo);
                 setViewerOpen(true);

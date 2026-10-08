@@ -237,7 +237,7 @@ export function AnomalyDetailDrawer({
                 </button>
                 <button
                   type="button"
-                  className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
+                  className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
                   onClick={() => resolveMutation.mutate({ anomalyId: String(anomalyId), companyId: operatingCompanyId, generation: actionGenerationRef.current, note })}
                   disabled={actionPending || note.trim().length === 0}
                 >

@@ -104,7 +104,7 @@ export function SafetyHomePage() {
     <div className="space-y-3">
       <PageHeader title="Safety" subtitle="Driver events, training, accidents, CSA" />
 
-      <div className="overflow-x-auto rounded-sm bg-[#1f2a44] px-2 py-1 text-xs text-white">
+      <div className="overflow-x-auto rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white">
         <div className="flex min-w-max gap-4">
           {safetyTabs.map((item) => (
             <button
