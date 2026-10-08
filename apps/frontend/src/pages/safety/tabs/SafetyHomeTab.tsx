@@ -47,15 +47,15 @@ function KpiTile({
 }) {
   const inner = (
     <>
-      <div className="text-xs uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-xs uppercase tracking-wide text-[#6B7280]">{label}</div>
       {isError ? (
         <div className="text-xs font-semibold text-red-600" data-testid="safety-home-kpi-error">
           Unavailable
         </div>
       ) : isLoading ? (
-        <div className="text-xs text-slate-400">Loading…</div>
+        <div className="text-xs text-[#6B7280]">Loading…</div>
       ) : (
-        <div className="text-page-title font-semibold text-slate-900">{value}</div>
+        <div className="text-page-title font-semibold text-[#0F1219]">{value}</div>
       )}
     </>
   );
@@ -68,7 +68,7 @@ function KpiTile({
       <Link
         to={to}
         data-testid="safety-home-kpi-link"
-        className="block rounded-sm border px-3 py-2 text-center transition hover:border-slate-300 hover:shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+        className="block rounded-sm border px-3 py-2 text-center transition hover:border-[#E5E7EB] hover:shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E5E7EB]"
         style={{ maxHeight: spacing.kpiTileMaxHeight, backgroundColor: colors.kpiTileBg, borderColor: colors.kpiTileBorder }}
       >
         {inner}
@@ -113,10 +113,10 @@ function DrillRow({ record }: { record: DrillRecord }) {
       className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-gray-100 py-1.5 text-xs last:border-b-0"
       data-testid="safety-home-drill-row"
     >
-      <span className="w-20 shrink-0 text-slate-500">{record.when || "—"}</span>
-      <span className="min-w-[8rem] flex-1 text-slate-700">{record.label}</span>
+      <span className="w-20 shrink-0 text-[#6B7280]">{record.when || "—"}</span>
+      <span className="min-w-[8rem] flex-1 text-[#4B5563]">{record.label}</span>
       <span className="flex items-center gap-2">
-        <span className="text-xs uppercase text-slate-400">Driver</span>
+        <span className="text-xs uppercase text-[#6B7280]">Driver</span>
         <EntityLink
           kind="driver"
           id={record.driverId}
@@ -125,7 +125,7 @@ function DrillRow({ record }: { record: DrillRecord }) {
         />
       </span>
       <span className="flex items-center gap-2">
-        <span className="text-xs uppercase text-slate-400">Unit</span>
+        <span className="text-xs uppercase text-[#6B7280]">Unit</span>
         <EntityLink
           kind="unit"
           id={record.unitId}
@@ -136,7 +136,7 @@ function DrillRow({ record }: { record: DrillRecord }) {
       {record.detailTo ? (
         <Link
           to={record.detailTo}
-          className="text-slate-700 underline hover:text-slate-900"
+          className="text-[#4B5563] underline hover:text-[#0F1219]"
           data-testid="safety-home-drill-record"
         >
           Open record
@@ -246,7 +246,7 @@ export function SafetyHomeTab() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-slate-600">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-[#6B7280]">
         Select an operating company to view the Safety dashboard.
       </div>
     );
@@ -255,8 +255,8 @@ export function SafetyHomeTab() {
   return (
     <div className="space-y-4" data-testid="safety-home">
       <div className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-xs font-semibold text-slate-900">Safety Overview</h3>
-        <p className="mt-1 text-xs text-slate-500">
+        <h3 className="text-xs font-semibold text-[#0F1219]">Safety Overview</h3>
+        <p className="mt-1 text-xs text-[#6B7280]">
           Company-wide aggregate across events, accidents, CSA, fines, and open liabilities. Tap a tile
           to open its list, or drill straight to a driver/unit below.
         </p>
@@ -265,7 +265,7 @@ export function SafetyHomeTab() {
             <span className="text-xs font-semibold text-red-600">Some Safety home numbers are unavailable.</span>
             <button
               type="button"
-              className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
               onClick={retryFailedDashboardQueries}
             >
               Retry
@@ -279,7 +279,7 @@ export function SafetyHomeTab() {
         data-testid="safety-home-active-drivers"
       >
         <div>
-          <div className="text-xs uppercase tracking-wide text-slate-500">
+          <div className="text-xs uppercase tracking-wide text-[#6B7280]">
             Active Drivers (Samsara GPS activity)
           </div>
           {activeDriversQuery.isError ? (
@@ -287,19 +287,19 @@ export function SafetyHomeTab() {
               Unavailable
             </div>
           ) : activeDriversQuery.isPending ? (
-            <div className="text-xs text-slate-400">Loading…</div>
+            <div className="text-xs text-[#6B7280]">Loading…</div>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="text-page-title font-semibold text-slate-900">
+              <span className="text-page-title font-semibold text-[#0F1219]">
                 {activeDriversQuery.data?.active_driver_uuids?.length ?? 0}
               </span>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-[#6B7280]">
                 of {activeDriversQuery.data?.total_driver_count ?? 0} drivers
               </span>
               {/* §7 LOCKED palette — no amber/yellow status bands; both states stay in the slate
                   family, distinguished by text only ("Cached" vs "Recomputed live"). */}
               <span
-                className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600"
+                className="rounded-full bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-medium text-[#6B7280]"
                 data-testid="safety-home-active-drivers-freshness"
                 title={
                   activeDriversQuery.data?.snapshot_at
@@ -312,7 +312,7 @@ export function SafetyHomeTab() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-600">
+        <div className="flex items-center gap-1.5 text-xs text-[#6B7280]">
           <label htmlFor="safety-home-active-drivers-window">Window</label>
           <Combobox
             id="safety-home-active-drivers-window"
@@ -392,10 +392,10 @@ export function SafetyHomeTab() {
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-4" data-testid="safety-home-drilldown">
-        <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
           Open events & recent accidents (30d)
         </h4>
-        <p className="mb-2 text-xs text-slate-400">
+        <p className="mb-2 text-xs text-[#6B7280]">
           Open safety events plus driver-/unit-linked accidents from the last 30 days (by accident date).
         </p>
         {drillError ? (
@@ -403,16 +403,16 @@ export function SafetyHomeTab() {
             <span className="text-xs font-semibold text-red-600">Unavailable</span>
             <button
               type="button"
-              className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
               onClick={retryFailedDashboardQueries}
             >
               Retry
             </button>
           </div>
         ) : drillLoading ? (
-          <div className="text-xs text-slate-400">Loading…</div>
+          <div className="text-xs text-[#6B7280]">Loading…</div>
         ) : drillRecords.length === 0 ? (
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-[#6B7280]">
             No open events or recent driver-/unit-linked accidents right now.
           </div>
         ) : (
@@ -425,13 +425,13 @@ export function SafetyHomeTab() {
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-4">
-        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Jump to a Safety area</h4>
+        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Jump to a Safety area</h4>
         <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
           {SAFETY_GROUPS.map((group) => (
             <Link
               key={group.id}
               to={group.tabs[0]?.route ?? "/safety/home"}
-              className="rounded-sm border border-gray-200 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-sm border border-gray-200 px-3 py-2 text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA]"
             >
               {group.label}
             </Link>
@@ -442,13 +442,13 @@ export function SafetyHomeTab() {
       {/* SAF-F22: alias surfaces (Training Programs/Records, ELD Audit Trail, 425C, Reports, Photo Comparison, Cert Expiry)
           were mounted with zero inbound nav — secondary Home quick-jumps so operators reach them without typing URLs. */}
       <div className="rounded-sm border border-gray-200 bg-white p-4" data-testid="safety-home-alias-quick-jumps">
-        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Compliance &amp; audit tools</h4>
+        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Compliance &amp; audit tools</h4>
         <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
           {SAFETY_ALIAS_TABS.map(({ tab }) => (
             <Link
               key={tab.id}
               to={tab.route}
-              className="rounded-sm border border-gray-200 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-sm border border-gray-200 px-3 py-2 text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA]"
               data-testid={`safety-home-alias-${tab.id}`}
             >
               {tab.label}

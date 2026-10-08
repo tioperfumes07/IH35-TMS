@@ -164,7 +164,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
         key: "action",
         label: "Action",
         render: (row) => (
-          <Link to={`/drivers/${row.driverId}/hos`} className="font-semibold text-slate-700 hover:underline">
+          <Link to={`/drivers/${row.driverId}/hos`} className="font-semibold text-[#4B5563] hover:underline">
             Drill-down
           </Link>
         ),
@@ -183,8 +183,8 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
     <div className="space-y-3" data-testid="safety-hos-dashboard-page">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
-          <div className="text-xs font-semibold text-slate-800">Hours of Service — Compliance</div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs font-semibold text-[#1F2A44]">Hours of Service — Compliance</div>
+          <div className="text-xs text-[#6B7280]">
             Fleet duty status and FMCSA clocks from recorded duty-status events. Driver self-view remains on Driver HOS detail.
           </div>
         </div>
@@ -200,31 +200,31 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
       </div>
 
       <div className="grid gap-2 md:grid-cols-3" data-testid="safety-hos-kpi-tiles">
-        <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-xs uppercase text-slate-700">Drivers on duty</div>
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+          <div className="text-xs uppercase text-[#4B5563]">Drivers on duty</div>
           <div className="text-page-title font-semibold text-emerald-900" data-testid="safety-hos-kpi-on-duty">
             {fleetQuery.isError || fleetIncomplete ? "—" : metrics.onDuty}
           </div>
         </div>
-        <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-xs uppercase text-slate-700">Drivers off duty</div>
-          <div className="text-page-title font-semibold text-slate-900" data-testid="safety-hos-kpi-off-duty">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+          <div className="text-xs uppercase text-[#4B5563]">Drivers off duty</div>
+          <div className="text-page-title font-semibold text-[#0F1219]" data-testid="safety-hos-kpi-off-duty">
             {fleetQuery.isError || fleetIncomplete ? "—" : metrics.offDuty}
           </div>
         </div>
-        <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-xs uppercase text-slate-700">Approaching 11h drive cap</div>
-          <div className="text-page-title font-semibold text-slate-700" data-testid="safety-hos-kpi-approaching-cap">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+          <div className="text-xs uppercase text-[#4B5563]">Approaching 11h drive cap</div>
+          <div className="text-page-title font-semibold text-[#4B5563]" data-testid="safety-hos-kpi-approaching-cap">
             {fleetQuery.isError || fleetIncomplete ? "—" : metrics.approachingCap}
           </div>
-          <div className="text-xs text-slate-700">Within {NEAR_CAP_MINUTES} min of {ELEVEN_HOUR_CAP_MIN / 60}h limit</div>
+          <div className="text-xs text-[#4B5563]">Within {NEAR_CAP_MINUTES} min of {ELEVEN_HOUR_CAP_MIN / 60}h limit</div>
         </div>
       </div>
 
       {!fleetQuery.isError && !fleetIncomplete && metrics.nearViolations.length > 0 ? (
-        <section className="rounded-sm border border-slate-300 bg-slate-50 p-3" data-testid="safety-hos-near-violations">
-          <h2 className="text-xs font-semibold uppercase text-slate-700">Near-violation alerts</h2>
-          <ul className="mt-2 space-y-1 text-xs text-slate-700">
+        <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3" data-testid="safety-hos-near-violations">
+          <h2 className="text-xs font-semibold uppercase text-[#4B5563]">Near-violation alerts</h2>
+          <ul className="mt-2 space-y-1 text-xs text-[#4B5563]">
             {metrics.nearViolations.map((row) => (
               <li key={row.driverId} className="flex flex-wrap items-center justify-between gap-2">
                 <span>
@@ -233,7 +233,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
                 </span>
                 <Link
                   to={`/drivers/${row.driverId}/hos`}
-                  className="font-semibold text-slate-700 underline"
+                  className="font-semibold text-[#4B5563] underline"
                   data-testid={`safety-hos-drilldown-${row.driverId}`}
                 >
                   View HOS
@@ -247,7 +247,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
       <div className="grid gap-3 lg:grid-cols-2">
         <section>
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-            <div className="text-xs font-semibold text-slate-800">Fleet duty status</div>
+            <div className="text-xs font-semibold text-[#1F2A44]">Fleet duty status</div>
             <input
               type="search"
               value={fleetSearch}
@@ -291,7 +291,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
           />
           )}
           {!fleetQuery.isError && !fleetIncomplete ? (
-            <p className="mt-1 text-xs text-slate-600" data-testid="safety-hos-complete-roster-count">
+            <p className="mt-1 text-xs text-[#6B7280]" data-testid="safety-hos-complete-roster-count">
               {rows.length} of {fleetTotal ?? rows.length} active drivers loaded
             </p>
           ) : null}
@@ -299,8 +299,8 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
 
         <section className="rounded-sm border border-gray-200 bg-white" data-testid="safety-hos-violations-panel">
           <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
-            <div className="text-xs font-semibold text-slate-800">HOS violations (read-only){violationTotal ? ` · ${violationTotal} total` : ""}</div>
-            <Link to="/safety/hos-violations" className="text-xs font-semibold text-slate-700 hover:underline">
+            <div className="text-xs font-semibold text-[#1F2A44]">HOS violations (read-only){violationTotal ? ` · ${violationTotal} total` : ""}</div>
+            <Link to="/safety/hos-violations" className="text-xs font-semibold text-[#4B5563] hover:underline">
               Open violations tab
             </Link>
           </div>
@@ -313,13 +313,13 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
                 onRetry={() => void violationsQuery.refetch()}
               />
             ) : violations.length === 0 ? (
-              <p className="text-xs text-slate-500">No open violations on file.</p>
+              <p className="text-xs text-[#6B7280]">No open violations on file.</p>
             ) : (
               <ul className="space-y-2 text-xs">
                 {violations.map((row) => (
                   <li key={String(row.id)} className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1">
                     <div className="font-semibold">{String(row.violation_type ?? "Violation")}</div>
-                    <div className="text-slate-600">
+                    <div className="text-[#6B7280]">
                       Driver{" "}
                       <EntityLink
                         kind="driver"
@@ -338,13 +338,13 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
               </ul>
             )}
           </div>
-          <div className="border-t border-gray-100 px-3 py-2 text-xs text-slate-500">
-            Log new HOS violations with <span className="font-semibold text-slate-700">+ Create</span> above, or manage the full list on{" "}
-            <Link to="/safety/hos-violations" className="font-semibold text-slate-700 hover:underline">
+          <div className="border-t border-gray-100 px-3 py-2 text-xs text-[#6B7280]">
+            Log new HOS violations with <span className="font-semibold text-[#4B5563]">+ Create</span> above, or manage the full list on{" "}
+            <Link to="/safety/hos-violations" className="font-semibold text-[#4B5563] hover:underline">
               /safety/hos-violations
             </Link>
             . Exception paperwork:{" "}
-            <Link to="/safety/hos/exceptions" className="font-semibold text-slate-700 hover:underline">
+            <Link to="/safety/hos/exceptions" className="font-semibold text-[#4B5563] hover:underline">
               HOS exceptions
             </Link>
             .
