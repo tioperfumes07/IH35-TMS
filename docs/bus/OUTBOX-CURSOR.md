@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — GeofenceRecon / Cancellations / MaintCPU
+
+FINDING: BANK-F91281 — GeofenceReconciliationReport / CancellationsReportPage / MaintenanceCostPerUnitPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25962 squash `26844ca2ce` (BANK-F91280 BulkDemo/CustomerListSidebar/AuditTrail)
+GUARD: scripts/verify-91281-rpt-geofence-cancel-cpu-slate-leftover-chrome.mjs + verify-steps/3452 piggyback
+LIVE PROOF: verify-91281-rpt-geofence-cancel-cpu-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3452 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — BulkDemo / CustomerListSidebar / AuditTrail
 
 FINDING: BANK-F91280 — BulkDemoPage / CustomerListSidebar / AuditTrailPage Tailwind slate-* → house tokens

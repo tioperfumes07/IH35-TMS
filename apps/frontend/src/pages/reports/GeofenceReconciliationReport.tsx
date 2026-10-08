@@ -39,7 +39,7 @@ const ANOMALY_LABELS: Record<string, string> = {
 const ANOMALY_COLORS: Record<string, string> = {
   orphan_entry: "bg-yellow-100 text-yellow-800",
   orphan_exit: "bg-orange-100 text-orange-800",
-  duplicate_fire: "bg-slate-100 text-slate-700",
+  duplicate_fire: "bg-[#F7F8FA] text-[#1F2A44]",
   expected_missing: "bg-red-100 text-red-800",
 };
 
@@ -102,7 +102,7 @@ export function GeofenceReconciliationReport() {
         label: "Class",
         sortable: true,
         render: (f) => (
-          <span className={`inline-block px-2 py-0.5 rounded-sm text-xs font-medium ${ANOMALY_COLORS[f.anomaly_class] ?? "bg-slate-100 text-slate-700"}`}>
+          <span className={`inline-block px-2 py-0.5 rounded-sm text-xs font-medium ${ANOMALY_COLORS[f.anomaly_class] ?? "bg-[#F7F8FA] text-[#1F2A44]"}`}>
             {ANOMALY_LABELS[f.anomaly_class] ?? f.anomaly_class}
           </span>
         ),
@@ -157,10 +157,10 @@ export function GeofenceReconciliationReport() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Kind</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Kind</span>
           <SelectCombobox
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.kindFilter}
             onChange={(e) => staged.setDraft((p) => ({ ...p, kindFilter: e.target.value }))}
             data-testid="reports-geofence-recon-kind"
