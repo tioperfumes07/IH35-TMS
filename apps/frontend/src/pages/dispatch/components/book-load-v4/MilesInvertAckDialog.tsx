@@ -43,19 +43,19 @@ export function MilesInvertAckDialog({ open, onAcknowledge, columnInverted, reve
       onMouseDown={(event) => event.stopPropagation()}
     >
       <div
-        className="w-full max-w-md rounded-sm border border-slate-200 bg-white shadow-xl"
+        className="w-full max-w-md rounded-sm border border-[#E5E7EB] bg-white shadow-xl"
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="miles-invert-ack-title"
         aria-describedby="miles-invert-ack-body"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="border-b border-slate-200 px-4 py-3">
-          <h2 id="miles-invert-ack-title" className="text-xs font-semibold uppercase tracking-wide text-slate-800">
+        <div className="border-b border-[#E5E7EB] px-4 py-3">
+          <h2 id="miles-invert-ack-title" className="text-xs font-semibold uppercase tracking-wide text-[#0F1219]">
             Check lane miles
           </h2>
         </div>
-        <div id="miles-invert-ack-body" className="space-y-2 px-4 py-3 text-xs text-slate-700">
+        <div id="miles-invert-ack-body" className="space-y-2 px-4 py-3 text-xs text-[#1F2A44]">
           {columnInverted ? (
             <p>
               History filled short miles higher than practical miles on this lane. Short miles pay the driver — verify
@@ -68,17 +68,17 @@ export function MilesInvertAckDialog({ open, onAcknowledge, columnInverted, reve
               have essentially the same loaded short miles — verify short miles before you book.
             </p>
           ) : null}
-          <p className="font-medium text-slate-800">
+          <p className="font-medium text-[#0F1219]">
             Driver pay uses short miles. Customer revenue per mile uses practical miles. Company cost uses practical plus
             empty miles.
           </p>
         </div>
-        <div className="flex justify-end border-t border-slate-200 px-4 py-3">
+        <div className="flex justify-end border-t border-[#E5E7EB] px-4 py-3">
           <button
             ref={okRef}
             type="button"
             data-testid="miles-invert-ack-ok"
-            className="rounded-sm bg-slate-800 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-900"
+            className="rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-semibold text-white hover:bg-[#0F1219]"
             onClick={onAcknowledge}
           >
             OK
