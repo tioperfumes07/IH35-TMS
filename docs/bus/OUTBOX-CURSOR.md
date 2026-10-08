@@ -1,3 +1,13 @@
+## 2026-10-08T19:15Z · BANK leftover slate — NotificationDropdown / ParityTable / ReconcilerExceptions
+
+FINDING: BANK-F91229 — NotificationDropdown / ParityTable / ReconcilerExceptionsPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25896 squash `d7e67d7038` (BANK-F91228 safety events/harsh)
+GUARD: scripts/verify-notif-parity-recon-slate-leftover-chrome.mjs + verify-steps/3668 piggyback
+LIVE PROOF: verify-notif-parity-recon-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3668 piggyback + OUTBOX
+
 ## 2026-10-08T19:05Z · BANK leftover slate — SafetyEvents / IntegrityAlert drawer / HarshEvent
 
 FINDING: BANK-F91228 — SafetyEventsPage / IntegrityAlertDetailDrawer / HarshEventDetail Tailwind slate-* → house tokens

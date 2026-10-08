@@ -53,7 +53,7 @@ export function ReconcilerExceptionsPage() {
 
   const columns = useMemo<ParityColumn<Row>[]>(
     () => [
-      { key: "rule", label: "Rule", sortable: true, cellClass: "text-slate-700" },
+      { key: "rule", label: "Rule", sortable: true, cellClass: "text-[#1F2A44]" },
       {
         key: "entity_label",
         label: "Record",
@@ -65,14 +65,14 @@ export function ReconcilerExceptionsPage() {
               {row.entity_label}
             </Link>
           ) : (
-            <span className="font-medium text-slate-800">{row.entity_label}</span>
+            <span className="font-medium text-[#0F1219]">{row.entity_label}</span>
           );
         },
       },
-      { key: "reason", label: "What is wrong", sortable: true, cellClass: "text-slate-700" },
-      { key: "since", label: "Since", sortable: true, render: (row) => row.since.slice(0, 10), cellClass: "text-slate-600" },
-      { key: "amount_cents", label: "Amount", sortable: true, render: (row) => dollars(row.amount_cents), cellClass: "whitespace-nowrap text-slate-700" },
-      { key: "repair_engine", label: "Repair", sortable: true, render: (row) => repairHint(row), cellClass: "text-slate-700" },
+      { key: "reason", label: "What is wrong", sortable: true, cellClass: "text-[#1F2A44]" },
+      { key: "since", label: "Since", sortable: true, render: (row) => row.since.slice(0, 10), cellClass: "text-[#4B5563]" },
+      { key: "amount_cents", label: "Amount", sortable: true, render: (row) => dollars(row.amount_cents), cellClass: "whitespace-nowrap text-[#1F2A44]" },
+      { key: "repair_engine", label: "Repair", sortable: true, render: (row) => repairHint(row), cellClass: "text-[#1F2A44]" },
     ],
     [],
   );
@@ -106,7 +106,7 @@ export function ReconcilerExceptionsPage() {
         <KpiCard label="Money at stake" number={query.data ? dollars(atStake) : "—"} onClick={scrollToQueue} />
       </div>
       {query.data ? (
-        <div className="text-xs text-slate-500" data-testid="reconciler-checked">
+        <div className="text-xs text-[#6B7280]" data-testid="reconciler-checked">
           {query.data.results.length} rules checked at {new Date(query.data.ran_at).toLocaleTimeString("en-US")}.
         </div>
       ) : null}
