@@ -21,7 +21,7 @@ function severityClass(severity: string, days: number) {
   if (days <= 0 || severity === "critical") return "text-red-700 bg-red-50";
   if (days <= 7) return "text-amber-800 bg-amber-50";
   if (days <= 30) return "text-amber-700 bg-amber-50/60";
-  return "text-slate-700 bg-slate-50";
+  return "text-[#1F2A44] bg-[#F7F8FA]";
 }
 
 function RuleEditor({
@@ -58,15 +58,15 @@ function RuleEditor({
     <div className="rounded-sm border border-gray-200 p-3" data-testid={`rule-editor-${rule.document_type}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="font-semibold text-slate-900">{rule.rule_name}</p>
-          <p className="text-xs text-slate-500">{rule.document_type}</p>
+          <p className="font-semibold text-[#0F1219]">{rule.rule_name}</p>
+          <p className="text-xs text-[#6B7280]">{rule.document_type}</p>
         </div>
         <label className="flex items-center gap-2 text-xs">
           <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
           Enabled
         </label>
       </div>
-      <label className="mt-2 block text-xs font-medium text-slate-600">
+      <label className="mt-2 block text-xs font-medium text-[#4B5563]">
         Days before expiry (comma-separated)
         <input
           className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -120,7 +120,7 @@ function InboxRow({
           </p>
         </div>
         <div className="flex gap-2">
-          <Link to={profileLink} className="text-xs font-medium text-slate-700 hover:underline">
+          <Link to={profileLink} className="text-xs font-medium text-[#1F2A44] hover:underline">
             Open
           </Link>
           <Button
@@ -222,14 +222,14 @@ export function DocumentAlertsPage() {
       <div className="mb-4 flex gap-2 border-b border-gray-200">
         <button
           type="button"
-          className={`px-3 py-2 text-xs font-medium ${tab === "inbox" ? "border-b-2 border-slate-300 text-slate-700" : "text-gray-600"}`}
+          className={`px-3 py-2 text-xs font-medium ${tab === "inbox" ? "border-b-2 border-[#4B5563] text-[#1F2A44]" : "text-gray-600"}`}
           onClick={() => setTab("inbox")}
         >
           Inbox ({pendingCount})
         </button>
         <button
           type="button"
-          className={`px-3 py-2 text-xs font-medium ${tab === "rules" ? "border-b-2 border-slate-300 text-slate-700" : "text-gray-600"}`}
+          className={`px-3 py-2 text-xs font-medium ${tab === "rules" ? "border-b-2 border-[#4B5563] text-[#1F2A44]" : "text-gray-600"}`}
           onClick={() => setTab("rules")}
         >
           Rules

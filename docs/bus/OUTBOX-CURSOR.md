@@ -1,3 +1,13 @@
+## 2026-10-08T15:50Z · BANK leftover slate — driver shell / document alerts / dispatch map
+
+FINDING: BANK-F91215 — DriverShell / DocumentAlertsPage / MapView Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25876 squash `6c6be177ad` (BANK-F91214 idvr/coviol/escrow)
+GUARD: scripts/verify-drvshell-docalerts-map-slate-leftover-chrome.mjs + verify-steps/968 piggyback
+LIVE PROOF: verify-drvshell-docalerts-map-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 968 piggyback + OUTBOX
+
 ## 2026-10-08T15:35Z · BANK leftover slate — Idvr / company violations / escrow forfeit
 
 FINDING: BANK-F91214 — IdvrPage / CompanyViolationsPage / EscrowForfeitModal Tailwind slate-* → house tokens
