@@ -29,4 +29,18 @@ describe("in-process startup catch-up windows", () => {
     expect(names).not.toMatch(/factoring_default_interest/);
     expect(names).not.toMatch(/loves_card_import/);
   });
+
+  it("runs retry_held and plaid before integrity so a hung integrity tick cannot starve them", () => {
+    const names = IN_PROCESS_CATCHUP_WINDOWS.map((j) => j.jobName);
+    const retryIdx = names.indexOf("accounting.retry_held_expense_postings");
+    const plaidIdx = names.indexOf("banking.plaid_daily_sync_cron");
+    const integrityIdx = names.indexOf("safety.integrity_alert_engine_cron");
+    expect(retryIdx).toBeGreaterThanOrEqual(0);
+    expect(plaidIdx).toBeGreaterThanOrEqual(0);
+    expect(integrityIdx).toBeGreaterThanOrEqual(0);
+    expect(retryIdx).toBeLessThan(integrityIdx);
+    expect(plaidIdx).toBeLessThan(integrityIdx);
+    const integrity = IN_PROCESS_CATCHUP_WINDOWS.find((j) => j.jobName === "safety.integrity_alert_engine_cron");
+    expect(integrity?.leaseSeconds).toBeGreaterThan(0);
+  });
 });

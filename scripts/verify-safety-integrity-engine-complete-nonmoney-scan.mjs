@@ -20,7 +20,12 @@ function problems(s = service, c = cron) {
     [gps.includes("operating_company_id = $1::uuid") && gps.includes("minutes_over_avg >= $2"), "GPS company/threshold scope"],
     [wo.includes("operating_company_id = $1::uuid") && wo.includes("z_score >= $2"), "WO company/threshold scope"],
     [s.includes("for (const match of matches)") && s.includes("upsertEventAndAlert"), "complete matches reach idempotent writer"],
-    [c.includes("runIntegrityAlertEngineForTenant(client, company.id)"), "cron invokes tenant engine"],
+    // USMCA-only (owner law) — one short txn; never loop all companies in one mega-txn.
+    [
+      /runIntegrityAlertEngineForTenant\(\s*client\s*,\s*(?:company\.id|USMCA_COMPANY_ID)\s*\)/.test(c),
+      "cron invokes tenant engine",
+    ],
+    [c.includes("USMCA_COMPANY_ID"), "cron scopes USMCA only"],
   ];
   return checks.filter(([ok]) => !ok).map(([, label]) => label);
 }
@@ -32,7 +37,8 @@ if (process.argv.includes("--selftest")) {
     [service.replace("AND z_score >= $2", "AND z_score >= $2\n        LIMIT 200"), cron],
     [service.replace("FROM safety.v_fuel_mpg_anomalies\n        WHERE operating_company_id = $1::uuid", "FROM safety.v_fuel_mpg_anomalies\n        WHERE TRUE"), cron],
     [service.replace("for (const match of matches)", "for (const match of matches.slice(0, 200))"), cron],
-    [service, cron.replace("runIntegrityAlertEngineForTenant(client, company.id)", "Promise.resolve()")],
+    [service, cron.replace(/runIntegrityAlertEngineForTenant\(\s*client\s*,\s*(?:company\.id|USMCA_COMPANY_ID)\s*\)/, "Promise.resolve()")],
+    [service, cron.replaceAll("USMCA_COMPANY_ID", "TRANSP_COMPANY_ID")],
   ];
   const escaped = mutations.map((mutation, index) => problems(...mutation).length === 0 ? index + 1 : null).filter(Boolean);
   if (escaped.length) throw new Error(`${escaped.length} planted defect(s) escaped: ${escaped.join(",")}`);

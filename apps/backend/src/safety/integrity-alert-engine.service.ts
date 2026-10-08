@@ -85,7 +85,10 @@ export async function evaluateIntegrityRulesForTenant(
       if (inserted.alert) alertsInserted += 1;
       if (inserted.alert && rule.rule_code === BANK_UNMATCHED_7D_RULE_CODE) {
         const metric = match.detection_metric as { unmatched_count?: number };
-        await notifyOwnersBankUnmatched7d({
+        // Fire-and-forget: notify opens its own withLuciaBypass. Awaiting it inside THIS
+        // bypass txn holds a pool client on ClientRead while notify borrows more clients
+        // (live 2026-10-08: dual catch-up → deadlock + /healthz ledger 8s timeouts).
+        void notifyOwnersBankUnmatched7d({
           operatingCompanyId,
           unmatchedCount: Number(metric.unmatched_count ?? 0),
           summary: match.detection_summary,
