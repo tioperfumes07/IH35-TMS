@@ -41,6 +41,8 @@ describe("in-process startup catch-up windows", () => {
     expect(retryIdx).toBeLessThan(integrityIdx);
     expect(plaidIdx).toBeLessThan(integrityIdx);
     const integrity = IN_PROCESS_CATCHUP_WINDOWS.find((j) => j.jobName === "safety.integrity_alert_engine_cron");
-    expect(integrity?.leaseSeconds).toBeGreaterThan(0);
+    // Catch-up lease must be short: a 600s JOB_LEASE_SECONDS held by a killed deploy
+    // instance left healthz LATE for 10m while every other instance skipped silently.
+    expect(integrity?.leaseSeconds).toBe(90);
   });
 });

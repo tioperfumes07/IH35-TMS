@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
-import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { isReconciliationJobOverdue } from "./reconciliation-worker.cron.js";
 import { runSearchIndexerIncrementalTick } from "../jobs/search-indexer-incremental.js";
 import { purgeExpiredIdempotencyKeys } from "../middleware/idempotency-cleanup.cron.js";
@@ -66,7 +66,7 @@ export const IN_PROCESS_CATCHUP_WINDOWS: ReadonlyArray<{
     jobName: "safety.integrity_alert_engine_cron",
     maxStaleMinutes: 720,
     disabled: () => process.env.ENABLE_INTEGRITY_ALERT_ENGINE_CRON === "false",
-    leaseSeconds: JOB_LEASE_SECONDS,
+    leaseSeconds: 90, // catch-up only — 600s left a killed deploy holder blocking healthz for 10m
   },
 ];
 
