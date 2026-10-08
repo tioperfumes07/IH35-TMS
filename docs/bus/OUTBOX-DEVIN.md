@@ -163,4 +163,4 @@ DONE: PR #25801 · squash 4a42a0d522be47400eec7833b2dd65c9b5629b4a · money-pr-l
 DONE: PR #25802 · squash d6f3ca09d8339d6c735bacf53a28901c82be3243 · money-pr-local-gate exit 0 · added data-list-status-filter="customers" and data-customers-roster-filter-toolbar="inline" markers around Customers.tsx roster SegmentedControl; verify-k9-landing-filter-bar passes · baseline-lines-added = 0
 
 ## 2026-10-08 — ROUND 441.22 Devin: RunnerFilters month_picker native input to searchable Combobox
-DONE: PR #25804 · squash pending · money-pr-local-gate exit 0 · replaced native <input type="month"> in RunnerFilters.tsx with a searchable Combobox of rolling 15 months; verify-runner-filters-entity-pickers rejects native month input · baseline-lines-added = 0
+DONE: PR #25805 · squash 2c2ad6b36a343a083d0f4a19922267528f9ac5a3 · money-pr-local-gate exit 0 · replaced native <input type="month"> in RunnerFilters.tsx with a searchable Combobox of rolling 15 months; verify-runner-filters-entity-pickers rejects native month input · baseline-lines-added = 0
