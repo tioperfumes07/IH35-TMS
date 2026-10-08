@@ -2,10 +2,10 @@
   "import_select_combobox": 0,
   "import_entity_picker": 0,
   "import_shared_combobox": 0,
-  "import_data_table": 21,
+  "import_data_table": 20,
   "import_resizable_table": 2,
   "import_mobile_optimized_table": 3,
-  "raw_table_outside_infra": 41,
+  "raw_table_outside_infra": 65,
   "raw_text_off_locked_scale": 0,
   "import_files": {
     "components/shared/SelectCombobox": [],
@@ -31,8 +31,7 @@
       "apps/frontend/src/pages/lists/safety/ComplaintTypesListPage.tsx",
       "apps/frontend/src/pages/lists/safety/DotViolationTypesListPage.tsx",
       "apps/frontend/src/pages/lists/safety/InternalFineReasonsListPage.tsx",
-      "apps/frontend/src/pages/safety/components/TrainingTable.tsx",
-      "apps/frontend/src/pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx"
+      "apps/frontend/src/pages/safety/components/TrainingTable.tsx"
     ],
     "components/shared/ResizableTable": [
       "apps/frontend/src/pages/customers/CustomerListSidebar.tsx",
