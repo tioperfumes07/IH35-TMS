@@ -87,7 +87,7 @@ export function LoginPage() {
         <p className="mt-2 text-xs text-gray-700">Use your Google account or email and password.</p>
 
         <div className="mt-5">
-          <a href={loginHref} className="block rounded-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
+          <a href={loginHref} className="block rounded-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280] focus-visible:ring-offset-2">
             <Button className="w-full">Sign in with Google</Button>
           </a>
         </div>
@@ -115,7 +115,7 @@ export function LoginPage() {
               onChange={(ev) => setEmail(ev.target.value)}
               aria-invalid={emailInvalid}
               aria-describedby={emailInvalid ? "office-email-err" : undefined}
-              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-xs text-gray-900 shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-xs text-gray-900 shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280]"
             />
             {emailInvalid ? (
               <p id="office-email-err" className="mt-1 text-xs text-red-700">
@@ -135,7 +135,7 @@ export function LoginPage() {
               value={password}
               onChange={(ev) => setPassword(ev.target.value)}
               aria-describedby="password-strength-help"
-              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-xs text-gray-900 shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-xs text-gray-900 shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280]"
             />
             <div id="password-strength-help" className="mt-2" aria-live="polite">
               <div
@@ -162,7 +162,7 @@ export function LoginPage() {
           <div className="flex justify-end">
             <Link
               to="/login/reset"
-              className="text-xs text-slate-700 underline-offset-2 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="text-xs text-[#1F2A44] underline-offset-2 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280]"
             >
               Forgot password?
             </Link>
