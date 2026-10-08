@@ -75,7 +75,7 @@ export function ReturnToDuty() {
   return (
     <div className="space-y-4">
       <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-        <h3 className="text-xs font-semibold text-slate-900">Open return-to-duty processes</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">Open return-to-duty processes</h3>
         {rtdQ.isError ? (
           <div data-testid="rtd-processes-query-error"><ListErrorState status={0} message={userFacingApiError(rtdQ.error, "Could not load return-to-duty processes.")} onRetry={() => void rtdQ.refetch()} /></div>
         ) : (
@@ -90,22 +90,22 @@ export function ReturnToDuty() {
                     label={entityLabel(proc.driver_name, proc.driver_id ? String(proc.driver_id) : undefined, "Driver")}
                   />
                 </div>
-                <div className="text-slate-600">Status: {String(proc.status)} · Started {formatDateUS(proc.started_at)}</div>
+                <div className="text-[#4B5563]">Status: {String(proc.status)} · Started {formatDateUS(proc.started_at)}</div>
               </li>
             ))}
-            {processes.length === 0 ? <li className="text-slate-500">No open RTD processes.</li> : null}
+            {processes.length === 0 ? <li className="text-[#6B7280]">No open RTD processes.</li> : null}
           </ul>
         )}
       </div>
 
-      <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs">
-        <h3 className="text-xs font-semibold text-slate-700">FMCSA Clearinghouse — pending positive reports</h3>
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs">
+        <h3 className="text-xs font-semibold text-[#1F2A44]">FMCSA Clearinghouse — pending positive reports</h3>
         {resultsQ.isError ? (
           <div data-testid="rtd-results-query-error"><ListErrorState status={0} message={userFacingApiError(resultsQ.error, "Could not load drug/alcohol results.")} onRetry={() => void resultsQ.refetch()} /></div>
         ) : (
           <ul className="mt-2 space-y-2">
             {positivePending.map((row) => (
-              <li key={String(row.id)} className="flex items-center justify-between rounded-sm border border-slate-100 bg-white p-2">
+              <li key={String(row.id)} className="flex items-center justify-between rounded-sm border border-[#E5E7EB] bg-white p-2">
                 <span>
                   Driver{" "}
                   <EntityLink
@@ -117,7 +117,7 @@ export function ReturnToDuty() {
                 </span>
                 <button
                   type="button"
-                  className="rounded-sm bg-slate-700 px-2 py-1 text-xs font-medium text-white disabled:opacity-50"
+                  className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-medium text-white disabled:opacity-50"
                   disabled={reportMutation.isPending}
                   onClick={() =>
                     reportMutation.mutate({
@@ -131,7 +131,7 @@ export function ReturnToDuty() {
                 </button>
               </li>
             ))}
-            {positivePending.length === 0 ? <li className="text-slate-700">All positives reported or none on file.</li> : null}
+            {positivePending.length === 0 ? <li className="text-[#1F2A44]">All positives reported or none on file.</li> : null}
           </ul>
         )}
         {reportMutation.isError &&
