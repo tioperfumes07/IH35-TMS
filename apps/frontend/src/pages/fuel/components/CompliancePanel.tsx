@@ -8,15 +8,15 @@ type Props = {
 
 export function CompliancePanel({ sourceAvailable, sentToDriverAt, fleetPct, fleetTotalRecommendations, driverPct }: Props) {
   return (
-    <div className="rounded-sm border border-slate-300 bg-white p-3 text-xs">
-      <div className="mb-2 text-xs font-semibold text-slate-700">Compliance Tracker</div>
+    <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs">
+      <div className="mb-2 text-xs font-semibold text-[#1F2A44]">Compliance Tracker</div>
       <Row label="Sent to driver app" value={sentToDriverAt ? new Date(sentToDriverAt).toLocaleString() : "Not sent"} />
       <Row label="Recommendations followed YTD (driver)" value={!sourceAvailable || driverPct === null ? "Not available" : `${driverPct.toFixed(1)}%`} />
       <Row label="Recommendations followed YTD (fleet)" value={!sourceAvailable || fleetPct === null ? "Not available" : `${fleetPct.toFixed(1)}%`} />
       <Row label="Fleet recommendations tracked" value={!sourceAvailable || fleetTotalRecommendations === null ? "Not available" : `${fleetTotalRecommendations}`} />
       <Row label="Last week non-compliance count" value="Not available" />
       <Row label="Top non-compliance reason" value="Not available" />
-      <div className="mt-2 rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-700">Relay match confidence: high when station+timestamp+unit align.</div>
+      <div className="mt-2 rounded-sm bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]">Relay match confidence: high when station+timestamp+unit align.</div>
     </div>
   );
 }

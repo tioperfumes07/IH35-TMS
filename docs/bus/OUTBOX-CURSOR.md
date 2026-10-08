@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — ExpensiveStatesMultiselect / CompliancePanel / AutoDeductionPolicies
+
+FINDING: BANK-F91276 — ExpensiveStatesMultiselect / CompliancePanel / AutoDeductionPolicies Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25955 squash `0048d350e7` (BANK-F91275 DriverTeams/MaintenanceServices/safety-shared)
+GUARD: scripts/verify-91276-fuel-states-comp-slate-leftover-chrome.mjs + verify-steps/3466 piggyback
+LIVE PROOF: verify-91276-fuel-states-comp-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3466 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — DriverTeamsPage / MaintenanceServicesCatalog / lists-safety-shared
 
 FINDING: BANK-F91275 — DriverTeamsPage / MaintenanceServicesCatalog / lists-safety-shared Tailwind slate-* → house tokens

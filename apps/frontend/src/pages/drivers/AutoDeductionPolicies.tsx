@@ -91,7 +91,7 @@ export function AutoDeductionPoliciesPanel() {
   return (
     <div className="space-y-3">
       <div className="relative flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="auto-deduction-policies-filters">
-        <label className="block min-w-[240px] text-xs text-slate-600">
+        <label className="block min-w-[240px] text-xs text-[#4B5563]">
           Driver
           <div className="mt-1">
             <EntityPicker
@@ -213,7 +213,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
             </div>
             <div className="text-xs text-gray-600">{typeLabel} · {money(deducted)} / {money(owed)}</div>
             {rail ? (
-              <div className="mt-0.5 text-xs text-slate-600" data-testid="auto-deduction-policy-recovery-meta">
+              <div className="mt-0.5 text-xs text-[#4B5563]" data-testid="auto-deduction-policy-recovery-meta">
                 Recovery: {RAIL_LABELS[rail] ?? rail}
                 {mayEscrow ? " · may draw escrow" : " · escrow blocked"}
               </div>
@@ -387,7 +387,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
               ))}
             </SelectCombobox>
             {selectedRecoveryMeta ? (
-              <span className="text-xs font-normal text-slate-600" data-testid="auto-deduction-catalog-recovery-meta">
+              <span className="text-xs font-normal text-[#4B5563]" data-testid="auto-deduction-catalog-recovery-meta">
                 Catalog default: {RAIL_LABELS[selectedRecoveryMeta.default_recovery_rail] ?? selectedRecoveryMeta.default_recovery_rail}
                 {" · "}
                 {selectedRecoveryMeta.may_draw_escrow ? "may draw escrow" : "escrow blocked"}
@@ -395,7 +395,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
                 {selectedRecoveryMeta.survives_separation ? "survives separation" : "ends at separation"}
               </span>
             ) : (
-              <span className="text-xs font-normal text-slate-500">Select a type to load catalog recovery policy.</span>
+              <span className="text-xs font-normal text-[#6B7280]">Select a type to load catalog recovery policy.</span>
             )}
           </label>
           <div className="grid grid-cols-2 gap-2">
