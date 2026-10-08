@@ -32,7 +32,7 @@ if (SELFTEST) {
   const srcs = read();
   const planted = { ...srcs };
   planted[FILES[2]] = planted[FILES[2]].replace(
-    /entityLabel\(null,\s*row\.id,\s*"Liability"\)/,
+    /entityLabel\(row\.type as string \| null,\s*row\.id,\s*"Liability"\)/,
     "String(row.id).slice(0, 8)",
   );
   if (!assertAll(planted).length) {

@@ -21,14 +21,14 @@ if (process.argv.includes("--selftest")) {
   const files = [routeFile, apiFile, componentFile];
   const base = Object.fromEntries(files.map((file) => [file, fs.readFileSync(file, "utf8")]));
   const mutations = [
-    (file, source) => file === routeFile ? source.replace("COUNT(*) OVER()::int AS total_count", "0::int AS total_count") : source,
-    (file, source) => file === routeFile ? source.replace("OFFSET $${offsetParam}", "OFFSET 0") : source,
-    (file, source) => file === routeFile ? source.replace("LIMIT $${limitParam}", "LIMIT 250") : source,
-    (file, source) => file === apiFile ? source.replace('query.set("offset", String(params.offset))', "") : source,
-    (file, source) => file === componentFile ? source.replace(", page]", "]") : source,
-    (file, source) => file === componentFile ? source.replace("unit-driver-history-server-pager", "removed-pager") : source,
-    (file, source) => file === componentFile ? source.replace("offset: page * pageSize", "offset: 0") : source,
-    (file, source) => file === componentFile ? source.replace("page > 0 && rows.length === 0", "false") : source,
+    (file, source) => file === routeFile ? source.replace(/COUNT\(\*\) OVER\(\)::int AS total_count/g, "0::int AS total_count") : source,
+    (file, source) => file === routeFile ? source.replace(/OFFSET \$\$\{offsetParam\}/g, "OFFSET 0") : source,
+    (file, source) => file === routeFile ? source.replace(/LIMIT \$\$\{limitParam\}/g, "LIMIT 250") : source,
+    (file, source) => file === apiFile ? source.replace(/query\.set\("offset", String\(params\.offset\)\)/g, "") : source,
+    (file, source) => file === componentFile ? source.replace(/, page\]/g, "]") : source,
+    (file, source) => file === componentFile ? source.replace(/unit-driver-history-server-pager/g, "removed-pager") : source,
+    (file, source) => file === componentFile ? source.replace(/offset: page \* pageSize/g, "offset: 0") : source,
+    (file, source) => file === componentFile ? source.replace(/page > 0 && rows\.length === 0/g, "false") : source,
   ];
   for (const mutate of mutations) if (findings((file) => mutate(file, base[file])).length === 0) throw new Error("planted regression escaped guard");
   console.log(`verify-vehicle-driver-history-exact-range selftest: PASS (${mutations.length}/${mutations.length})`); process.exit(0);
