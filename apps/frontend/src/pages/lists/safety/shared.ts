@@ -9,7 +9,7 @@ export const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
 ];
 
 export function statusPillClass(isActive: boolean) {
-  return isActive ? "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700" : "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
+  return isActive ? "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]" : "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
 }
 
 export function moneyFromCents(cents: number) {
