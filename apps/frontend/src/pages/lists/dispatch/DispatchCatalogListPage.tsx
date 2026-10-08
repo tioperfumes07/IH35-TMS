@@ -45,8 +45,8 @@ function parseCodeError(error: unknown) {
 
 function statusPill(isActive: boolean) {
   return isActive
-    ? "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
-    : "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
+    ? "inline-flex rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]"
+    : "inline-flex rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
 }
 
 // Column order preserved 1:1 from the former hand-rolled table: Code · Display Name · Desc · Order · Status.
@@ -55,26 +55,26 @@ const COLUMNS: Array<ParityColumn<DispatchCatalogRow>> = [
     key: "code",
     label: "Code",
     sortable: true,
-    render: (row) => <span className="font-semibold text-slate-800">{row.code}</span>,
+    render: (row) => <span className="font-semibold text-[#1F2A44]">{row.code}</span>,
   },
   {
     key: "display_name",
     label: "Display Name",
     sortable: true,
-    render: (row) => <span className="text-slate-800">{row.display_name}</span>,
+    render: (row) => <span className="text-[#1F2A44]">{row.display_name}</span>,
   },
   {
     key: "description",
     label: "Desc",
     sortable: true,
-    cellClass: "max-w-[320px] truncate text-slate-600",
+    cellClass: "max-w-[320px] truncate text-[#4B5563]",
     render: (row) => row.description ?? "—",
   },
   {
     key: "sort_order",
     label: "Order",
     sortable: true,
-    render: (row) => <span className="text-slate-700">{row.sort_order}</span>,
+    render: (row) => <span className="text-[#4B5563]">{row.sort_order}</span>,
   },
   {
     key: "is_active",
@@ -192,9 +192,9 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
         }
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">{description}</div>
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#4B5563]">{description}</div>
 
-      <div className="grid gap-2 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
+      <div className="grid gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3 md:grid-cols-[1fr_180px]">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search
           {/* LST-F3510: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
@@ -248,7 +248,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
         />
       )}
 
-      <div className="text-xs text-slate-500">Total rows: {total}</div>
+      <div className="text-xs text-[#6B7280]">Total rows: {total}</div>
 
       <CatalogEntryModal
         open={modalMode !== null}

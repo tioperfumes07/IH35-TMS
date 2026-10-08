@@ -40,8 +40,8 @@ const REASON_CODE_REGEX = /^[A-Z][A-Z0-9_]+$/;
 
 function statusPill(isActive: boolean) {
   return isActive
-    ? "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
-    : "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
+    ? "inline-flex rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]"
+    : "inline-flex rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
 }
 
 /** Export the visible cancellation reason rows as CSV. */
@@ -188,11 +188,11 @@ export function LoadCancellationReasonsListPage() {
 
   // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
   const columns = [
-    { key: "reason_code", label: "Code", sortable: true, render: (row: LoadCancellationReason) => <span className="font-semibold text-slate-800">{row.reason_code}</span> },
-    { key: "display_name", label: "Display Name", sortable: true, render: (row: LoadCancellationReason) => <span className="text-slate-800">{row.display_name}</span> },
-    { key: "category", label: "Category", sortable: true, render: (row: LoadCancellationReason) => <span className="text-slate-700">{CATEGORY_LABELS[row.category] ?? row.category}</span> },
-    { key: "description", label: "Desc", sortable: true, render: (row: LoadCancellationReason) => <span className="block max-w-[280px] truncate text-slate-600">{row.description ?? "—"}</span> },
-    { key: "sort_order", label: "Order", sortable: true, numeric: true, render: (row: LoadCancellationReason) => <span className="text-slate-700">{row.sort_order}</span> },
+    { key: "reason_code", label: "Code", sortable: true, render: (row: LoadCancellationReason) => <span className="font-semibold text-[#1F2A44]">{row.reason_code}</span> },
+    { key: "display_name", label: "Display Name", sortable: true, render: (row: LoadCancellationReason) => <span className="text-[#1F2A44]">{row.display_name}</span> },
+    { key: "category", label: "Category", sortable: true, render: (row: LoadCancellationReason) => <span className="text-[#4B5563]">{CATEGORY_LABELS[row.category] ?? row.category}</span> },
+    { key: "description", label: "Desc", sortable: true, render: (row: LoadCancellationReason) => <span className="block max-w-[280px] truncate text-[#4B5563]">{row.description ?? "—"}</span> },
+    { key: "sort_order", label: "Order", sortable: true, numeric: true, render: (row: LoadCancellationReason) => <span className="text-[#4B5563]">{row.sort_order}</span> },
     { key: "is_active", label: "Status", sortable: true, render: (row: LoadCancellationReason) => <span className={statusPill(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span> },
   ];
 
@@ -232,12 +232,12 @@ export function LoadCancellationReasonsListPage() {
         }
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#4B5563]">
         Cancellation root-cause reporting taxonomy. Codes here classify why a load was cancelled for
         dispatch reporting and analytics.
       </div>
 
-      <div className="flex items-end gap-2 rounded-sm border border-slate-200 bg-white p-3">
+      <div className="flex items-end gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Show
           <SelectCombobox
