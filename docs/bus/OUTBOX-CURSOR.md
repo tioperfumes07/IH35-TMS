@@ -1,3 +1,13 @@
+## 2026-10-08T06:50Z · BANK leftover slate — all catalogs map / locations list / names hub
+
+FINDING: BANK-F91174 — AllCatalogsMap / LocationsListPage / NamesMasterHub Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25827 squash `34296e696b` (BANK-F91173 fleet HOS/docs/pool)
+GUARD: scripts/verify-catalogs-lists-slate-leftover-chrome.mjs + verify-steps/10220 piggyback
+LIVE PROOF: verify-catalogs-lists-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 lists surfaces + refuse guard + 10220 piggyback + OUTBOX
+
 ## 2026-10-08T06:45Z · BANK leftover slate — fleet HOS / required docs / random pool
 
 FINDING: BANK-F91173 — FleetHosBoardSection / RequiredDocumentsSection / RandomPoolDashboard Tailwind slate-* → house tokens

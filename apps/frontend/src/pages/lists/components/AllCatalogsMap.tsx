@@ -42,7 +42,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     key: "dispatch",
     label: "Dispatch",
     sortable: true,
-    pillClass: "bg-slate-100 text-slate-700",
+    pillClass: "bg-[#F7F8FA] text-[#4B5563]",
     catalogs: [
       { name: "Dispatch Flag Colors", description: "Board flag colours and their severity order", live: true, catalogKey: "dispatch-flag-colors" },
       { name: "Load Trailer Equipment", description: "Trailer equipment required per load", live: true, catalogKey: "load-trailer-equipment" },
@@ -64,7 +64,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     key: "drivers",
     label: "Drivers",
     sortable: true,
-    pillClass: "bg-slate-100 text-slate-700",
+    pillClass: "bg-[#F7F8FA] text-[#4B5563]",
     catalogs: [
       { name: "Termination Reasons", description: "Driver separation reason codes", live: true, catalogKey: "termination-reasons" },
       { name: "Cash Advance Types", description: "Driver cash advance categories", live: true, catalogKey: "cash-advance-types" },
@@ -89,7 +89,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     key: "maintenance",
     label: "Maintenance",
     sortable: true,
-    pillClass: "bg-slate-100 text-slate-700",
+    pillClass: "bg-[#F7F8FA] text-[#4B5563]",
     catalogs: [
       { name: "Labor Rates", description: "Billable and internal labor rate codes", live: true, catalogKey: "labor-rates" },
       { name: "Part Locations", description: "Where parts are stored or fitted", live: true, catalogKey: "part-locations" },
@@ -120,7 +120,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     key: "fuel",
     label: "Fuel",
     sortable: true,
-    pillClass: "bg-slate-100 text-slate-700",
+    pillClass: "bg-[#F7F8FA] text-[#4B5563]",
     catalogs: [
       { name: "DEF Stations", description: "DEF fill locations", live: true, catalogKey: "def-stations" },
       { name: "Fuel Stations", description: "Fuel stop locations", live: true, catalogKey: "fuel-stations" },
@@ -144,7 +144,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     key: "fleet",
     label: "Fleet",
     sortable: true,
-    pillClass: "bg-slate-100 text-slate-700",
+    pillClass: "bg-[#F7F8FA] text-[#4B5563]",
     catalogs: [
       { name: "Tractor Statuses", description: "Lifecycle statuses for tractor units", live: true, catalogKey: "tractor-statuses" },
       { name: "Trailer Statuses", description: "Lifecycle statuses for trailer units", live: true, catalogKey: "trailer-statuses" },
@@ -162,7 +162,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     key: "accounting",
     label: "Accounting",
     sortable: true,
-    pillClass: "bg-slate-200 text-slate-800",
+    pillClass: "bg-[#E5E7EB] text-[#1F2A44]",
     catalogs: [
       { name: "Account Types", description: "Chart-of-accounts type lookup", live: true, catalogKey: "account-types-lookup" },
       { name: "Detail Types", description: "Chart-of-accounts detail-type lookup", live: true, catalogKey: "detail-types-lookup" },
@@ -193,7 +193,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     // rows on prod had nowhere to appear. Adding the domain is what makes it reachable.
     key: "customers",
     label: "Customers",
-    pillClass: "bg-slate-100 text-slate-700",
+    pillClass: "bg-[#F7F8FA] text-[#4B5563]",
     catalogs: [
       // C-01 — the Lists hub must enter the canonical customer roster, where +Create writes the
       // same mdata.customers rows consumed by customer pickers. Customer Types alone is not that
@@ -207,7 +207,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     key: "vendors",
     label: "Vendors",
     sortable: true,
-    pillClass: "bg-slate-100 text-slate-700",
+    pillClass: "bg-[#F7F8FA] text-[#4B5563]",
     catalogs: [
       // C-02 — enter the canonical vendor roster from Lists so +Create writes mdata.vendors rows
       // consumed by bill, expense, maintenance, and insurance vendor pickers.
@@ -237,7 +237,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     // invent a 57th US state, and QBO/NetSuite/McLeod all treat these as system reference too.
     key: "reference",
     label: "Reference",
-    pillClass: "bg-slate-100 text-slate-700",
+    pillClass: "bg-[#F7F8FA] text-[#4B5563]",
     catalogs: [
       { name: "US States", description: "US states and territories — view only", live: true, catalogKey: "us-states" },
       { name: "Mexico States", description: "Mexican states — view only", live: true, catalogKey: "mexico-states" },
@@ -398,14 +398,14 @@ export function DomainCatalogSection({ domain, onCatalogClick, onDomainClick }: 
   );
 
   return (
-    <div id={listsDomainSectionId(domain.key)} className="rounded-sm border border-slate-100 px-2 py-2 text-xs">
+    <div id={listsDomainSectionId(domain.key)} className="rounded-sm border border-[#E5E7EB] px-2 py-2 text-xs">
       <div className="mb-2 flex items-center justify-between gap-3">
         {onDomainClick ? (
           <button
             type="button"
             data-testid="domain-header-link"
             onClick={() => onDomainClick(domain.key)}
-            className={`rounded-sm px-2 py-0.5 font-semibold hover:underline focus:outline-hidden focus:ring-2 focus:ring-slate-400 ${domain.pillClass}`}
+            className={`rounded-sm px-2 py-0.5 font-semibold hover:underline focus:outline-hidden focus:ring-2 focus:ring-[#E5E7EB] ${domain.pillClass}`}
           >
             {domain.label}
           </button>
@@ -417,28 +417,28 @@ export function DomainCatalogSection({ domain, onCatalogClick, onDomainClick }: 
             <Link
               to={buildDomainModulePath(domain.key)!}
               data-testid={`lists-domain-open-module-${domain.key}`}
-              className="text-xs font-semibold text-slate-600 underline hover:text-slate-900"
+              className="text-xs font-semibold text-[#4B5563] underline hover:text-[#0F1219]"
             >
               Open {domain.label} module
             </Link>
           ) : null}
           {/* #P3 parity — live row count via the same useModuleCount source as the ribbon badge. */}
-          <DomainRowCountBadge domain={domain.key} className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600" />
+          <DomainRowCountBadge domain={domain.key} className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]" />
         </div>
       </div>
       <div className="grid gap-1.5 md:grid-cols-2">
         {catalogs.map((catalog) => (
-          <div key={`${domain.key}-${catalog.name}`} className="rounded-sm border border-slate-100 px-2 py-1.5">
+          <div key={`${domain.key}-${catalog.name}`} className="rounded-sm border border-[#E5E7EB] px-2 py-1.5">
             {catalog.live && catalog.catalogKey ? (
-              <button type="button" className="text-left font-semibold text-slate-700 hover:underline" onClick={() => onCatalogClick(domain.key, catalog.catalogKey ?? "")}>
+              <button type="button" className="text-left font-semibold text-[#4B5563] hover:underline" onClick={() => onCatalogClick(domain.key, catalog.catalogKey ?? "")}>
                 {catalog.name}
               </button>
             ) : (
-              <div className="font-semibold text-slate-500">
+              <div className="font-semibold text-[#6B7280]">
                 {catalog.name} <span className="text-section-header uppercase tracking-wide">({CATALOG_IN_PREPARATION})</span>
               </div>
             )}
-            <div className="text-xs text-slate-500">{catalog.description}</div>
+            <div className="text-xs text-[#6B7280]">{catalog.description}</div>
           </div>
         ))}
       </div>
@@ -454,8 +454,8 @@ type Props = {
 export function AllCatalogsMap({ onCatalogClick, onDomainClick }: Props) {
   const domains = sortDomainsForDisplay(DOMAIN_CONFIG);
   return (
-    <div className="rounded-sm border border-slate-200 bg-white p-3">
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">All Catalogs Domain Map</div>
+    <div className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">All Catalogs Domain Map</div>
       <div className="space-y-2">
         {domains.map((domain) => (
           <DomainCatalogSection key={domain.key} domain={domain} onCatalogClick={onCatalogClick} onDomainClick={onDomainClick} />
