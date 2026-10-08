@@ -20,6 +20,7 @@ import { useToast } from "../../components/Toast";
 import { TourPreSettlementTab } from "../../components/dispatch/TourPreSettlementTab";
 import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { tourLoadColumns } from "../../components/dispatch/TourLegsCell";
+import { formatUsdCents } from "../../lib/money";
 
 // SETL-MOD-01 (ROUND 9, owner "get to work on the real settlements module"): the SETTLEMENTS
 // module list reads the SAME readout as the Load-costs Pre-Settlement / Settlement tabs —
@@ -27,8 +28,7 @@ import { tourLoadColumns } from "../../components/dispatch/TourLegsCell";
 // per tour, expanded to the SAME TourPreSettlementTab / TourSettlementTab keyed by settlement_id.
 // Columns and palette (.ldt-*) mirror LoadCostsBoardPage's TourRegister so the two surfaces show one
 // truth; the Tour link routes to /driver-finance/settlements?settlement_id= so the existing detail view keeps working.
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const fmt = (c: number) => money.format(c / 100);
+const fmt = (c: number) => formatUsdCents(c);
 const DASH = "\u2014";
 
 const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonly TourListRow[]): ParityColumn<TourListRow>[] => [

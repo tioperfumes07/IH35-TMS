@@ -17,10 +17,10 @@ import { EntityLink } from "../shared/EntityLink";
 import { mmmDd } from "../../lib/formatDate";
 import { settlementLabel } from "../../lib/settlementNumber";
 import { legPillClass } from "./TourLegsCell";
+import { formatUsdCents } from "../../lib/money";
 
 const DASH = "—";
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const fmt = (c: number) => money.format(c / 100);
+const fmt = (c: number) => formatUsdCents(c);
 
 export type TourLoadRow = TourListRow & {
   /** `${settlement_id}:${load_id}` — unique per row; the tour's settlement_id stays on the row for expand/link. */

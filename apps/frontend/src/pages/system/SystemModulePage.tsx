@@ -24,6 +24,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
 import { companyToday, ctDateTime } from "../../lib/businessDate";
+import { formatUsdCents } from "../../lib/money";
 
 /**
  * SYSTEM — Owner-only module. Single home for QuickBooks Reconciliation (TMS↔QBO tie-out — NOT bank
@@ -65,7 +66,7 @@ const LAUNCH_COMMAND = "claude --project IH35-TMS";
 
 function fmtUsd(cents: number | null | undefined): string {
   if (cents == null || Number.isNaN(cents)) return "—";
-  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return formatUsdCents(cents);
 }
 
 function activeTrackerCount(tracker: ProgramTracker): number {

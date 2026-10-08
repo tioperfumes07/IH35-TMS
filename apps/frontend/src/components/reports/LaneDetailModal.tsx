@@ -6,9 +6,10 @@ import { Modal } from "../Modal";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink } from "../shared/EntityLink";
 import { SettlementRefCell } from "../shared/SettlementRefCell";
+import { formatUsdCents } from "../../lib/money";
 
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 function pct(n: number | null) {

@@ -37,6 +37,7 @@ import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { UserActivityTab } from "../components/users/UserActivityTab";
 import { ComplaintsReverseSection } from "../components/safety/ComplaintsReverseSection";
+import { formatUsd } from "../lib/money";
 
 type Tab = "profile" | "companies" | "safety" | "activity";
 
@@ -53,7 +54,7 @@ function eventTypeLabel(eventType: DispatcherErrorReason["event_type"]) {
 
 function money(value: number | null | undefined) {
   if (value === null || value === undefined) return "—";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+  return formatUsd(value);
 }
 
 const EVENT_TYPE_OPTIONS: ComboboxOption[] = [

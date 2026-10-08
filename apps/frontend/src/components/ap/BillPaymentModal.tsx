@@ -16,6 +16,7 @@ import { useToast } from "../Toast";
 import { MoneyInput } from "../forms/MoneyInput";
 import { DatePicker } from "../forms/DatePicker";
 import { companyToday } from "../../lib/businessDate";
+import { formatUsdCents } from "../../lib/money";
 
 export type BillPaymentRow = {
   bill_id: string;
@@ -47,7 +48,7 @@ function billOpenBalanceCents(b: VendorBill) {
 }
 
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+  return formatUsdCents(cents);
 }
 
 // M-1: amount stays a DOLLAR number → *_cents = round(amount*100) unchanged (byte-for-byte).

@@ -68,6 +68,7 @@ import { FuelFraudAlertsReverseSection } from "../components/fuel/FuelFraudAlert
 import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
 import { VendorProfileOverview } from "../components/vendors/VendorProfileOverview";
 import { CappedListNotice } from "../components/CappedListNotice";
+import { formatUsdCents } from "../lib/money";
 
 type SaferEntityStatus = {
   id: string;
@@ -103,7 +104,6 @@ function parseVendorDetailTab(raw: string | null): VendorTab {
   return VENDOR_DETAIL_TAB_FROM_QUERY[raw.trim().toLowerCase()] ?? "Profile";
 }
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 type VendorProfileForm = VendorProfileMeta & {
   name: string;
@@ -986,14 +986,14 @@ export function VendorDetailPage() {
                     ),
                   },
                   { key: "payment_date", label: "Date", sortable: true, render: (p) => formatDateUS(p.payment_date) },
-                  { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p) => money.format(p.amount_cents / 100) },
+                  { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p) => formatUsdCents(p.amount_cents) },
                   { key: "payment_method", label: "Method", sortable: true, render: (p) => p.payment_method ?? p.method ?? "—" },
                   {
                     key: "amount_applied_cents",
                     label: "Applied",
                     sortable: true,
                     cellClass: "text-right tabular-nums",
-                    render: (p) => (p.amount_applied_cents != null ? money.format(p.amount_applied_cents / 100) : "—"),
+                    render: (p) => (p.amount_applied_cents != null ? formatUsdCents(p.amount_applied_cents) : "—"),
                   },
                   { key: "reference", label: "Reference", sortable: true, render: (p) => p.reference ?? "—" },
                 ]}
@@ -1022,14 +1022,14 @@ export function VendorDetailPage() {
                 },
                 { key: "bill_date", label: "Date", sortable: true, render: (b) => formatDateUS(b.bill_date) },
                 { key: "due_date", label: "Due", sortable: true, render: (b) => formatDateUS(b.due_date) || "—" },
-                { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (b) => money.format(b.amount_cents / 100) },
+                { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (b) => formatUsdCents(b.amount_cents) },
                 {
                   key: "balance_cents",
                   label: "Balance",
                   sortable: true,
                   cellClass: "text-right tabular-nums",
                   sortValue: (b) => b.balance_cents ?? b.amount_cents - b.paid_cents,
-                  render: (b) => money.format((b.balance_cents ?? b.amount_cents - b.paid_cents) / 100),
+                  render: (b) => formatUsdCents(b.balance_cents ?? b.amount_cents - b.paid_cents),
                 },
                 { key: "status", label: "Status", sortable: true, render: (b) => b.status },
               ]}
@@ -1066,7 +1066,7 @@ export function VendorDetailPage() {
                     label: "Amount",
                     sortable: true,
                     cellClass: "text-right tabular-nums",
-                    render: (e) => money.format((Number(e.total_amount_cents) || 0) / 100),
+                    render: (e) => formatUsdCents(e.total_amount_cents),
                   },
                   { key: "status", label: "Status", sortable: true, render: (e) => e.status },
                   {
@@ -1116,7 +1116,7 @@ export function VendorDetailPage() {
                     label: "Unapplied",
                     sortable: true,
                     cellClass: "text-right tabular-nums font-semibold",
-                    render: (c) => money.format(c.amount_unapplied_cents / 100),
+                    render: (c) => formatUsdCents(c.amount_unapplied_cents),
                   },
                   { key: "status", label: "Status", sortable: true, render: (c) => c.status },
                 ]}

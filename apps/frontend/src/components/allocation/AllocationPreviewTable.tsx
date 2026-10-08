@@ -1,5 +1,6 @@
 import { ParityTable } from "../parity/ParityTable";
 import type { AllocationPreviewRow } from "./types";
+import { formatUsdCents } from "../../lib/money";
 
 type Props = {
   rows: AllocationPreviewRow[];
@@ -8,7 +9,7 @@ type Props = {
 };
 
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 export function AllocationPreviewTable({ rows, totalCents, isLoading }: Props) {

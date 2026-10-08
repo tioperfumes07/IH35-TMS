@@ -29,7 +29,7 @@ const checks = [
   ["reverse keeps honest error state", "reverse", /query\.isError[\s\S]{0,120}Cash projections unavailable/],
   ["reverse keeps honest empty state", "reverse", /No linked cash projections/],
   ["each returned entry drills by exact canonical ID", "reverse", /preview\.map\(\(entry\) =>[\s\S]{0,100}<li key=\{entry\.id\}>[\s\S]{0,120}kind="cash_forecast_entry"[\s\S]{0,80}id=\{entry\.id\}/],
-  ["each returned entry uses human date/money/direction label", "reverse", /label=\{`\$\{entry\.entry_date\} · \$\{\(entry\.amount_cents \/ 100\)\.toLocaleString[\s\S]{0,160}\$\{entry\.direction\}`\}/],
+  ["each returned entry uses human date/money/direction label", "reverse", /label=\{`\$\{entry\.entry_date\} · \$\{(?:formatUsdCents\(entry\.amount_cents\)|\(entry\.amount_cents \/ 100\)\.toLocaleString[\s\S]{0,120}?)\} · \$\{entry\.direction\}`\}/],
   ["panel reads exact entry deep link", "panel", /searchParams\.get\("entry_id"\)/],
   ["panel forwards exact entry filter", "panel", /entry_id: entryId/],
   ["driver profile mounts canonical driver filter", "driver", /<CashForecastReverseSection[\s\S]{0,180}party_ref_kind: "driver", party_ref_id: id/],

@@ -16,6 +16,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { ExemptOverageModal, type ExemptOverageInput } from "./ExemptOverageModal";
 import { VoidOverageModal } from "./VoidOverageModal";
+import { formatUsdCents } from "../../../lib/money";
 
 /**
  * BANK-F10 / FUEL-03 — operator queue for fuel-card overage approve-then-recover.
@@ -72,7 +73,7 @@ type ListResponse = {
 };
 
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+  return formatUsdCents(cents);
 }
 
 export async function listOverageEvents(

@@ -12,6 +12,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { formatUsdCents } from "../../../lib/money";
 
 type Props = {
   open: boolean;
@@ -38,7 +39,7 @@ function emptyVehicle(key: string): VehicleRow {
 
 function centDisplay(cents: number | null): string {
   if (!cents) return "$0.00";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+  return formatUsdCents(cents);
 }
 
 function parseDollars(s: string): number {

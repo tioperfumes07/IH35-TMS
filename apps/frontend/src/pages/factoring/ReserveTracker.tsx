@@ -40,11 +40,11 @@ import { ReserveDashboardAddFactorModal } from "./ReserveDashboardAddFactorModal
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatUsdCents } from "../../lib/money";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const fmtM = (cents: number) => money.format((Number(cents) || 0) / 100);
+const fmtM = (cents: number) => formatUsdCents(cents);
 const fmtD = (v: string | null | undefined) => formatDateUS(v);
 const fmtDt = (v: string | null | undefined) => formatDateUS(v);
 

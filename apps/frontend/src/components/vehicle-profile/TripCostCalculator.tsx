@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { Button } from "../Button";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { formatUsdCents } from "../../lib/money";
 
 type TripCostResult = {
   estimated_fuel_cost_cents: number;
@@ -14,7 +15,7 @@ type TripCostResult = {
 };
 
 function usd(cents: number) {
-  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return formatUsdCents(cents);
 }
 
 export function TripCostCalculator({

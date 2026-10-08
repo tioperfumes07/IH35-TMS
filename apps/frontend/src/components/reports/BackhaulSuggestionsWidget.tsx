@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { ListErrorState } from "../ListErrorState";
+import { formatUsdCents } from "../../lib/money";
 
 type BackhaulSuggestion = {
   origin_city: string;
@@ -20,7 +21,7 @@ type BackhaulResponse = {
 };
 
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 export function BackhaulSuggestionsWidget({

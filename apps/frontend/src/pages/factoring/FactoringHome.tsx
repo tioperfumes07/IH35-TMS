@@ -81,7 +81,7 @@ import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDoc
 import { NotApplicable } from "../../components/money/NotApplicable";
 import type { NaReason } from "../../design/money-design-system";
 import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
-import { formatUsdCents } from "../../lib/money";
+import { formatUsd, formatUsdCents } from "../../lib/money";
 import { listFactoringPurchases } from "../../api/factoring-purchases";
 
 // ROUND 315 / Lead B5 (2026-10-01): remove Account Summary + Request Debtor Credit Check from the
@@ -132,11 +132,10 @@ type FactoringHomeProps = {
   initialTab?: FactoringTabId;
 };
 
-const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 
 /** Dollar amounts already in dollars (views.factoring_summary / recourse dollar columns). */
 function fmtCurrency(value: unknown) {
-  return currency.format(Number(value ?? 0));
+  return formatUsd(Number(value ?? 0));
 }
 
 /** Integer cents → QBO "$1,234.56". ALWAYS use for *_cents fields (Debtor Receipts ×100 fix). */

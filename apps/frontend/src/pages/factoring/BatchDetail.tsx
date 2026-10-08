@@ -7,11 +7,11 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { titleize } from "../../lib/titleize";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsdCents } from "../../lib/money";
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 function asMoney(cents: number) {
-  return money.format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 type ReserveMovementRow = FactoringReserveMovement & {

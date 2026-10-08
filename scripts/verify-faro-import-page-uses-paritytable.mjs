@@ -18,11 +18,13 @@ const LABEL = "verify-faro-import-page-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/factoring/FaroImportPage.tsx";
 
 const COLUMN_LABELS = ["Invoice", "Customer", "Gross", "Advance", "Reserve", "Net"];
-const AMOUNT_RENDERS = [
-  "currency.format(row.gross_amount_cents / 100)",
-  "currency.format(row.advance_amount_cents / 100)",
-  "currency.format(row.reserve_amount_cents / 100)",
-  "currency.format(row.net_amount_cents / 100)",
+// Each amount column must render through a shared USD formatter — the canonical
+// lib/money formatUsdCents or the legacy exact cents/100 currency.format form.
+const AMOUNT_FIELDS = [
+  "gross_amount_cents",
+  "advance_amount_cents",
+  "reserve_amount_cents",
+  "net_amount_cents",
 ];
 
 function assertMigrated(src) {
@@ -44,10 +46,13 @@ function assertMigrated(src) {
       errors.push(`${PAGE}: missing column label: "${label}"`);
     }
   }
-  // Amount formatting must stay 1:1 (cents/100 through the shared USD formatter).
-  for (const render of AMOUNT_RENDERS) {
-    if (!src.includes(render)) {
-      errors.push(`${PAGE}: missing exact amount render: ${render}`);
+  // Amount formatting must stay 1:1 (integer cents through a shared USD formatter).
+  for (const field of AMOUNT_FIELDS) {
+    if (
+      !src.includes(`formatUsdCents(row.${field})`) &&
+      !src.includes(`currency.format(row.${field} / 100)`)
+    ) {
+      errors.push(`${PAGE}: missing shared-formatter amount render for ${field}`);
     }
   }
   if (!src.includes('storageKey="factoring-faro-import-preview"')) {

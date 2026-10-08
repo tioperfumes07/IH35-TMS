@@ -13,6 +13,7 @@ import {
   type AccessorialRow,
   type AccessorialSeedPreset,
 } from "./accessorial-editor-lib";
+import { formatUsdCents } from "../../lib/money";
 
 export type DetentionSeedPatch = {
   detention_expected_y_n: boolean;
@@ -191,7 +192,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         <span className="ml-auto text-xs font-semibold text-gray-600">
           Accessorial subtotal{" "}
           <span className="font-mono text-gray-900">
-            {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(accessorialSubtotal / 100)}
+            {formatUsdCents(accessorialSubtotal)}
           </span>
         </span>
       </div>
@@ -235,7 +236,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
           code: <span className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-600">Amounts total</span>,
           amount_cents: (visibleRows) => (
             <span data-testid="accessorial-amounts-column-total" className="text-gray-900">
-              {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(sumAccessorialCents(visibleRows) / 100)}
+              {formatUsdCents(sumAccessorialCents(visibleRows))}
             </span>
           ),
         }}

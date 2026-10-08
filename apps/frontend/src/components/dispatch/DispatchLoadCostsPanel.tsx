@@ -7,11 +7,11 @@ import { entityLabel } from "../../lib/entity-label";
 import "../../design/ih35-design-tokens.css";
 import "../../pages/dispatch/dispatch-board.css";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
+import { formatUsdCents } from "../../lib/money";
 
 type SortKey = "load" | "unit" | "line_haul" | "revenue" | "costs" | "driver" | "margin";
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const formatMoney = (cents: number) => money.format(cents / 100);
+const formatMoney = (cents: number) => formatUsdCents(cents);
 /** Honesty: never-recorded wizard charge → dash, not $0.00. */
 const formatDash = (cents: number | null | undefined) => (cents && cents > 0 ? formatMoney(cents) : "—");
 

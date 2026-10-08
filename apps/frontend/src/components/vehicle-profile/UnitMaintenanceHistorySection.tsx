@@ -6,6 +6,7 @@ import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { SettlementRefCell } from "../shared/SettlementRefCell";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ListErrorState } from "../ListErrorState";
+import { formatUsdCents } from "../../lib/money";
 
 type UnitWorkOrderHistoryRow = {
   id: string;
@@ -27,7 +28,7 @@ type UnitWorkOrderHistoryRow = {
 };
 
 function formatMoneyFromCents(value: number | string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value || 0) / 100);
+  return formatUsdCents(Number(value || 0));
 }
 
 function buildColumns(operatingCompanyId: string): Array<ParityColumn<UnitWorkOrderHistoryRow>> {

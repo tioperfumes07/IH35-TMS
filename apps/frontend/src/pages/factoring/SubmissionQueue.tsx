@@ -15,10 +15,10 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
+import { formatUsdCents } from "../../lib/money";
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 function asMoney(cents: number) {
-  return money.format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 const EMPTY_FILTERS = {

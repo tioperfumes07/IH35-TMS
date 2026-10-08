@@ -13,6 +13,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { StatusBadge } from "../../../components/layout/StatusBadge";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { formatUsdCents } from "../../../lib/money";
 
 type FraudAlertRow = {
   uuid: string;
@@ -54,7 +55,7 @@ function severityClass(severity: FraudAlertRow["severity"]) {
 }
 
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+  return formatUsdCents(cents);
 }
 
 function alertStatusBadge(status: string): { variant: BadgeVariant; label: string } {
