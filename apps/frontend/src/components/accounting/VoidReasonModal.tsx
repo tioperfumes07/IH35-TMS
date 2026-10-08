@@ -5,6 +5,7 @@ import { ParityDrawer } from "../parity/ParityDrawer";
 import { ApiError } from "../../api/client";
 import { listVoidCancelReasons, type VoidCancelReason } from "../../api/catalogs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SelectCombobox } from "../Combobox";
 
 function extractVoidError(err: unknown): string {
   if (err instanceof ApiError) {
@@ -140,7 +141,7 @@ export function VoidReasonModal({
             <label className="text-xs font-semibold text-gray-600" htmlFor="void-reason-code">
               Reason <span className="text-red-600">*</span>
             </label>
-            <select
+            <SelectCombobox
               id="void-reason-code"
               value={reasonId}
               onChange={(event) => setReasonId(event.target.value)}
@@ -153,7 +154,7 @@ export function VoidReasonModal({
                   {r.reason_label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </div>
         ) : null}
 

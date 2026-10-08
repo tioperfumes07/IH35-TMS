@@ -52,6 +52,7 @@ import {
 } from "../../api/checks";
 import { createAccountingRecurringExpenseTemplate } from "../../api/accountingRecurringTemplate";
 import { formatUsdCents } from "../../lib/money";
+import { SelectCombobox } from "../Combobox";
 
 const EMPTY_ADDRESS: CheckRemitToAddress = {
   address_line1: null,
@@ -703,7 +704,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
       // Account numbers stay hidden by default (verify-account-number-hidden-by-default.mjs) --
       // name/kind-code is enough to pick the right category.
       render: (line) => (
-        <select
+        <SelectCombobox
           className="h-8 w-full rounded border border-gray-300 px-1"
           value={line.categoryMapId ?? ""}
           onChange={(e) => updateLine(line.key, { categoryMapId: e.target.value || null })}
@@ -714,7 +715,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               {row.account_name ?? `${row.category_kind}/${row.category_code}`}
             </option>
           ))}
-        </select>
+        </SelectCombobox>
       ),
     },
     {
@@ -1181,7 +1182,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
 
           <label className="text-xs font-semibold text-gray-700">
             Payee type
-            <select
+            <SelectCombobox
               className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-xs"
               value={payeeKind}
               onChange={(e) => {
@@ -1193,7 +1194,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               <option value="driver">Driver</option>
               <option value="customer">Customer (refund)</option>
               <option value="employee">Employee</option>
-            </select>
+            </SelectCombobox>
           </label>
 
           <label className="text-xs font-semibold text-gray-700" data-b4-who-did-you-pay="1">
@@ -1497,7 +1498,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         <div className="grid grid-cols-3 gap-3">
           <label className="text-xs font-semibold text-gray-700">
             Bank account
-            <select
+            <SelectCombobox
               className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-xs"
               value={bankAccountId ?? ""}
               onChange={(e) => setBankAccountId(e.target.value || null)}
@@ -1510,7 +1511,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   {a.account_class && a.account_class !== "depository" ? " — not a checking account" : ""}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
             {bankAccountId ? (
               <div className="mt-1 text-xs text-gray-500">
                 {bankTilesQuery.isLoading ? "Balance: …" : selectedBankBalance != null ? `Balance: ${formatMoneyCents(selectedBankBalance)}` : "Balance: —"}
@@ -1868,7 +1869,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
             </p>
             <label className="mt-3 flex flex-col gap-1 text-xs font-semibold text-[#1F2A44]">
               Cadence
-              <select
+              <SelectCombobox
                 className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
                 value={recurringCadence}
                 onChange={(e) => setRecurringCadence(e.target.value as typeof recurringCadence)}
@@ -1879,7 +1880,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                 <option value="monthly">Monthly</option>
                 <option value="quarterly">Quarterly</option>
                 <option value="annually">Annually</option>
-              </select>
+              </SelectCombobox>
             </label>
             <div className="mt-4 flex justify-end gap-2">
               <Button type="button" variant="tertiary" size="sm" onClick={() => setRecurringOpen(false)} disabled={recurringSaving}>
