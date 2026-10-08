@@ -72,13 +72,13 @@ export function DriverManagerHome({ auth }: Props) {
       />
 
       {(roleHomeQuery.data?.cooling_drivers?.length ?? 0) > 0 ? (
-        <section className="rounded-sm border border-slate-200 bg-slate-100 p-3" data-testid="driver-manager-cooling-drivers">
-          <h3 className="text-xs font-semibold text-slate-700">Cooling drivers (14+ days idle)</h3>
-          <ul className="mt-2 space-y-1 text-xs text-slate-700">
+        <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3" data-testid="driver-manager-cooling-drivers">
+          <h3 className="text-xs font-semibold text-[#1F2A44]">Cooling drivers (14+ days idle)</h3>
+          <ul className="mt-2 space-y-1 text-xs text-[#1F2A44]">
             {roleHomeQuery.data!.cooling_drivers.map((row) => (
               <li key={row.driver_id}>
                 <EntityLink kind="driver" id={row.driver_id} label={row.driver_name} />
-                <span className="text-slate-600"> · {row.days_idle} days idle</span>
+                <span className="text-[#4B5563]"> · {row.days_idle} days idle</span>
               </li>
             ))}
           </ul>

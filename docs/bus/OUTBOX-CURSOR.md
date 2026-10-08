@@ -1,3 +1,13 @@
+## 2026-10-08T23:35Z · BANK leftover slate — QboStyleHome / DriverManagerHome / HomeKpiRange
+
+FINDING: BANK-F91254 — QboStyleHomePage / DriverManagerHome / HomeKpiRangeToggle Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25932 squash `ffad83b6b4` (BANK-F91253 ErrorBoundary/HelpArticle/EngineStatusBoard)
+GUARD: scripts/verify-home-qbo-drv-mgr-kpi-slate-leftover-chrome.mjs + verify-steps/3552 piggyback
+LIVE PROOF: verify-home-qbo-drv-mgr-kpi-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3552 piggyback + OUTBOX
+
 ## 2026-10-08T23:30Z · BANK leftover slate — ErrorBoundary / HelpArticle / EngineStatusBoard
 
 FINDING: BANK-F91253 — ErrorBoundary / HelpArticlePage / EngineStatusBoardPage Tailwind slate-* → house tokens
