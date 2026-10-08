@@ -63,7 +63,7 @@ export function ExpensiveStatesMultiselect({ companyId, value, onChange }: Props
     return (
       <div className="space-y-1 text-xs">
         <p className="text-red-700">Failed to load expensive states catalog.</p>
-        <button type="button" className="font-semibold text-slate-700 underline" onClick={() => void query.refetch()}>
+        <button type="button" className="font-semibold text-[#1F2A44] underline" onClick={() => void query.refetch()}>
           Retry
         </button>
       </div>
@@ -102,7 +102,7 @@ export function ExpensiveStatesMultiselect({ companyId, value, onChange }: Props
             <label
               key={row.id}
               className={`inline-flex cursor-pointer items-center gap-1.5 rounded-sm border px-2 py-1 text-xs ${
-                checked ? "border-slate-700 bg-slate-50" : "border-gray-300 bg-[var(--surface-unselected)]"
+                checked ? "border-[#1F2A44] bg-[#F7F8FA]" : "border-gray-300 bg-[var(--surface-unselected)]"
               }`}
             >
               <input type="checkbox" checked={checked} onChange={() => toggleCode(row.code)} />
@@ -114,7 +114,7 @@ export function ExpensiveStatesMultiselect({ companyId, value, onChange }: Props
       </div>
       {rows.length === 0 ? <p className="text-xs text-gray-500">No active expensive states in catalog.</p> : null}
       {orphanCodes.length > 0 ? (
-        <p className="text-xs text-slate-600">
+        <p className="text-xs text-[#4B5563]">
           Saved codes not in catalog (kept until removed): {orphanCodes.join(", ")}
         </p>
       ) : null}
