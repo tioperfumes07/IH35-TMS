@@ -120,12 +120,12 @@ export function BookLoadStopsSection({
           const isPickup = String(currentStops[index]?.stop_type ?? (index % 2 === 0 ? "pickup" : "delivery")) === "pickup";
           return (
             <div key={field.id} data-testid={`stop-card-${index}`} className="min-w-0 overflow-hidden rounded-sm border border-gray-200 bg-white">
-              <div className={`flex items-center gap-2 px-2 py-1 text-[11px] font-bold tracking-[0.03em] ${isPickup ? "bg-[#1F2A44] text-white" : "bg-slate-200 text-slate-800"}`}>
-                <span className={`rounded-sm px-1.5 py-0.5 text-[11px] font-semibold uppercase ${isPickup ? "bg-white/20 text-white" : "bg-slate-600 text-white"}`}>
+              <div className={`flex items-center gap-2 px-2 py-1 text-[11px] font-bold tracking-[0.03em] ${isPickup ? "bg-[#1F2A44] text-white" : "bg-[#E5E7EB] text-[#0F1219]"}`}>
+                <span className={`rounded-sm px-1.5 py-0.5 text-[11px] font-semibold uppercase ${isPickup ? "bg-white/20 text-white" : "bg-[#4B5563] text-white"}`}>
                   {isPickup ? "PICKUP" : "DELIVERY"}
                 </span>
                 <span>Stop {index + 1}</span>
-                <span className={`ml-auto truncate font-medium ${isPickup ? "text-white/80" : "text-slate-600"}`}>
+                <span className={`ml-auto truncate font-medium ${isPickup ? "text-white/80" : "text-[#4B5563]"}`}>
                   {`${currentStops[index]?.address_full || currentStops[index]?.address_line1 || (isPickup ? "first stop is always a pickup" : "auto-added because a pickup exists")}`}
                 </span>
                 {index >= 2 ? (

@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — DriverInstructions / QuickAssign / BookLoadStops
+
+FINDING: BANK-F91277 — DriverInstructionsTextarea / QuickAssignModal / BookLoadStopsSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25956 squash `af8a163b15` (BANK-F91276 ExpensiveStates/Compliance/AutoDeduction)
+GUARD: scripts/verify-91277-bookload-dispatch-slate-leftover-chrome.mjs + verify-steps/3460 piggyback
+LIVE PROOF: verify-91277-bookload-dispatch-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3460 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — ExpensiveStatesMultiselect / CompliancePanel / AutoDeductionPolicies
 
 FINDING: BANK-F91276 — ExpensiveStatesMultiselect / CompliancePanel / AutoDeductionPolicies Tailwind slate-* → house tokens
