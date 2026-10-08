@@ -1,3 +1,13 @@
+## 2026-10-08T11:15Z · BANK leftover slate — safety alerts reverse / asset safety reverse / filings due
+
+FINDING: BANK-F91196 — SafetyAlertsReverseSection / AssetSafetyReverseSection / ComplianceFilingsDueWidget Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25850 squash `8f365d6c09` (BANK-F91195 fuel/deadhead/sched)
+GUARD: scripts/verify-safety-rev-filings-slate-leftover-chrome.mjs + verify-steps/1332 piggyback
+LIVE PROOF: verify-safety-rev-filings-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 1332 piggyback + OUTBOX
+
 ## 2026-10-08T11:05Z · BANK leftover slate — fuel planner / deadhead report / scheduled reports
 
 FINDING: BANK-F91195 — FuelPlannerHome / DeadheadReportPage / ScheduledReportsPanel Tailwind slate-* → house tokens
