@@ -87,8 +87,8 @@ export function DriverFinesReverseSection({
       data-testid={testId}
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">Fines</h3>
-        <EntityLink kind="safety_fines_driver" id={driverId} label="Open Safety" className="text-xs font-semibold text-slate-700 underline" />
+        <h3 className="text-xs font-semibold text-[#0F1219]">Fines</h3>
+        <EntityLink kind="safety_fines_driver" id={driverId} label="Open Safety" className="text-xs font-semibold text-[#1F2A44] underline" />
       </div>
       <p className="text-xs text-gray-600">
         Civil citations and internal fines linked to this driver.
@@ -103,14 +103,14 @@ export function DriverFinesReverseSection({
 
       {civil.length > 0 ? (
         <div data-testid="driver-fines-civil">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Civil</h4>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Civil</h4>
           <ul className="mt-1 space-y-2">
             {civil.map((f: Record<string, unknown>) => {
               const id = String(f.id ?? "");
               const label = entityLabel(f.violation_code ?? f.jurisdiction, id, "Fine");
               return (
                 <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-                  <EntityLink kind="safety_fine" id={id} label={label} className="font-semibold text-slate-700" />
+                  <EntityLink kind="safety_fine" id={id} label={label} className="font-semibold text-[#1F2A44]" />
                   <span className="ml-2 text-gray-600">{String(f.status ?? "")}</span>
                 </li>
               );
@@ -121,21 +121,21 @@ export function DriverFinesReverseSection({
       {!civilQuery.isError && civilTotal > civilPageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-fines-civil-server-pager" onClick={(event) => event.stopPropagation()}>
           <Button size="sm" variant="secondary" disabled={civilPage <= 1 || civilQuery.isFetching} onClick={() => setCivilPage((current) => Math.max(1, current - 1))}>Previous civil fines</Button>
-          <span className="text-slate-600">Page {civilPage} of {civilPageCount} · {civilTotal} civil fines</span>
+          <span className="text-[#4B5563]">Page {civilPage} of {civilPageCount} · {civilTotal} civil fines</span>
           <Button size="sm" variant="secondary" disabled={civilPage >= civilPageCount || civilQuery.isFetching} onClick={() => setCivilPage((current) => Math.min(civilPageCount, current + 1))}>Next civil fines</Button>
         </div>
       ) : null}
 
       {internal.length > 0 ? (
         <div data-testid="driver-fines-internal">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Internal</h4>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Internal</h4>
           <ul className="mt-1 space-y-2">
             {internal.map((f: Record<string, unknown>) => {
               const id = String(f.id ?? "");
               const label = String(f.reason_name ?? entityLabel(f.reason_code, id, "Internal fine"));
               return (
                 <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-                  <EntityLink kind="internal_fine" id={id} label={label} className="font-semibold text-slate-700" />
+                  <EntityLink kind="internal_fine" id={id} label={label} className="font-semibold text-[#1F2A44]" />
                   <span className="ml-2 text-gray-600">{String(f.status ?? "")}</span>
                 </li>
               );
@@ -146,7 +146,7 @@ export function DriverFinesReverseSection({
       {!internalQuery.isError && internalTotal > internalPageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-fines-internal-server-pager" onClick={(event) => event.stopPropagation()}>
           <Button size="sm" variant="secondary" disabled={internalPage <= 1 || internalQuery.isFetching} onClick={() => setInternalPage((current) => Math.max(1, current - 1))}>Previous internal fines</Button>
-          <span className="text-slate-600">Page {internalPage} of {internalPageCount} · {internalTotal} internal fines</span>
+          <span className="text-[#4B5563]">Page {internalPage} of {internalPageCount} · {internalTotal} internal fines</span>
           <Button size="sm" variant="secondary" disabled={internalPage >= internalPageCount || internalQuery.isFetching} onClick={() => setInternalPage((current) => Math.min(internalPageCount, current + 1))}>Next internal fines</Button>
         </div>
       ) : null}
