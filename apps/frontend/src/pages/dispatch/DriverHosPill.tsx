@@ -15,8 +15,8 @@ function toClock(minutes: number) {
 
 function pillClass(status: "ok" | "warning_1hr" | "warning_15min" | "violation") {
   if (status === "violation") return "bg-red-100 text-red-700";
-  if (status === "warning_15min" || status === "warning_1hr") return "bg-slate-100 text-slate-700";
-  return "bg-slate-100 text-slate-700";
+  if (status === "warning_15min" || status === "warning_1hr") return "bg-[#F7F8FA] text-[#1F2A44]";
+  return "bg-[#F7F8FA] text-[#1F2A44]";
 }
 
 function label(status: "ok" | "warning_1hr" | "warning_15min" | "violation") {
@@ -43,7 +43,7 @@ export function DriverHosPill({ driverId, operatingCompanyId }: Props) {
       <button
         type="button"
         data-hos-pill-retry
-        className="rounded-sm border border-slate-200 bg-slate-100 px-1 text-xs font-medium text-slate-700"
+        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1 text-xs font-medium text-[#1F2A44]"
         title="Driver HOS unavailable — retry"
         onClick={(event) => {
           event.stopPropagation();

@@ -3,5 +3,6 @@ export default {
   name: "verify-driver-pay-types-tarp-seeded",
   run(ctx) {
     ctx.run("node", ["scripts/verify-driver-pay-types-tarp-seeded.mjs"]);
+    ctx.run("node", ["scripts/verify-hos-detail-clocks-pill-slate-leftover-chrome.mjs"]);
   },
 };
