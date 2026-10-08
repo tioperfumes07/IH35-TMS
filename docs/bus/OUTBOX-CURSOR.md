@@ -1,3 +1,13 @@
+## 2026-10-09T00:00Z · BANK leftover slate — QBOSync / CostBreakdown / statusPill
+
+FINDING: BANK-F91259 — QBOSyncStatusDashboardPage / CostBreakdownBox / statusPill Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25937 squash `117188c59d` (BANK-F91258 SafetyKpiBar/DriverManagerKpiBar/KpiStatCard)
+GUARD: scripts/verify-qbo-cost-pill-slate-leftover-chrome.mjs + verify-steps/3524 piggyback
+LIVE PROOF: verify-qbo-cost-pill-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3524 piggyback + OUTBOX
+
 ## 2026-10-08T23:55Z · BANK leftover slate — SafetyKpiBar / DriverManagerKpiBar / KpiStatCard
 
 FINDING: BANK-F91258 — SafetyKpiBar / DriverManagerKpiBar / KpiStatCard Tailwind slate-* → house tokens

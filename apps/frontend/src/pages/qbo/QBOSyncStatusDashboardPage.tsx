@@ -32,13 +32,13 @@ function withinHours(iso: string, hours: number) {
 function statusPill(status: QboSyncRunStatus) {
   const map: Record<QboSyncRunStatus, string> = {
     pending: "bg-amber-100 text-amber-900 border-amber-200",
-    running: "bg-slate-100 text-slate-700 border-slate-300",
+    running: "bg-[#F7F8FA] text-[#1F2A44] border-[#E5E7EB]",
     success: "bg-emerald-100 text-emerald-900 border-emerald-200",
     failed: "bg-amber-100 text-amber-900 border-amber-200",
     dead_letter: "bg-red-100 text-red-900 border-red-200",
-    cancelled: "bg-slate-100 text-slate-700 border-slate-200",
+    cancelled: "bg-[#F7F8FA] text-[#1F2A44] border-[#E5E7EB]",
   };
-  return map[status] ?? "bg-slate-100 text-slate-800 border-slate-200";
+  return map[status] ?? "bg-[#F7F8FA] text-[#0F1219] border-[#E5E7EB]";
 }
 
 function entityHref(kind: string | null | undefined, id: string | null | undefined) {
@@ -207,7 +207,7 @@ export function QBOSyncStatusDashboardPage() {
               </Button>
             )}
             {entityHref(r.entity_kind, r.entity_id) ? (
-              <Link to={entityHref(r.entity_kind, r.entity_id)!} className="text-slate-700 underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+              <Link to={entityHref(r.entity_kind, r.entity_id)!} className="text-[#1F2A44] underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                 View entity
               </Link>
             ) : null}
@@ -349,7 +349,7 @@ export function QBOSyncStatusDashboardPage() {
           shown={runs.length}
           limit={200}
           hint="Narrow filters or search for older QBO sync runs."
-          className="text-xs text-slate-600"
+          className="text-xs text-[#4B5563]"
         />
 
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
