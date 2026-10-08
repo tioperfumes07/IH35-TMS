@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — ServiceTimeline / StatusBarMobile / DriverHub
+
+FINDING: BANK-F91286 — ServiceTimeline / StatusBarMobile / DriverHubOverview Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25967 squash `02659be630` (BANK-F91285 LoginReset/ForensicReview/DomainTab)
+GUARD: scripts/verify-91286-svc-statusbar-drvhub-slate-leftover-chrome.mjs + verify-steps/3436 piggyback
+LIVE PROOF: verify-91286-svc-statusbar-drvhub-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3436 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — LoginReset / ForensicReview / DomainTab
 
 FINDING: BANK-F91285 — LoginResetConfirmPage / ForensicReviewPage / DomainTab Tailwind slate-* → house tokens
