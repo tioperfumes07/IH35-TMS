@@ -3,5 +3,6 @@ export default {
   name: "verify-settlement-lines-load-id-doc",
   run(ctx) {
     ctx.run("node", ["scripts/verify-settlement-lines-load-id-doc.mjs"]);
+    ctx.run("node", ["scripts/verify-drivers-team-samsara-slate-leftover-chrome.mjs"]);
   },
 };

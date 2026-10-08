@@ -756,7 +756,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
 
       <>
           {subnavTab === "roster" && activeTab === "roster" ? (
-          <p className="px-1 text-xs text-slate-600">
+          <p className="px-1 text-xs text-[#4B5563]">
             Active = movement in the last 15 days (Rule 49). Status chips live in the filter band above.
           </p>
           ) : null}
@@ -789,7 +789,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   <span className="text-xs text-gray-700">Settlement runs, acknowledgements, and payouts live in Driver Finance.</span>
                   <Link
                     to="/driver-finance/settlements"
-                    className="text-xs text-slate-700 underline"
+                    className="text-xs text-[#1F2A44] underline"
                     data-testid="drivers-settlements-link"
                   >
                     View all settlements →
@@ -845,10 +845,10 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           ) : null}
           {subnavTab === "cash_advance_requests" ? (
             <div className="space-y-2" data-testid="drivers-cash-advance-requests-panel">
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-[#4B5563]">
                 Office cash-advance request queue lives in Driver Finance.
               </p>
-              <Link to="/driver-finance/cash-advance-requests" className="text-xs font-semibold text-slate-700 underline">
+              <Link to="/driver-finance/cash-advance-requests" className="text-xs font-semibold text-[#1F2A44] underline">
                 Open cash advance requests →
               </Link>
             </div>
@@ -1191,7 +1191,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 ))
               )}
             </div>
-            <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs">
+            <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs">
               <p className="mb-1 font-semibold">Update Split</p>
               <div className="grid grid-cols-2 gap-2">
                 <DatePicker

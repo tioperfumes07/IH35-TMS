@@ -1,3 +1,13 @@
+## 2026-10-08T21:15Z · BANK leftover slate — Drivers / DriverTeamModal / SamsaraBanner
+
+FINDING: BANK-F91237 — Drivers / DriverTeamModal / DriverSamsaraDuplicateBanner Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25912 squash `08867db909` (BANK-F91236 planner/bookload/BOL)
+GUARD: scripts/verify-drivers-team-samsara-slate-leftover-chrome.mjs + verify-steps/3624 piggyback
+LIVE PROOF: verify-drivers-team-samsara-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3624 piggyback + OUTBOX
+
 ## 2026-10-08T21:05Z · BANK leftover slate — PlannerAxis / ExpectedAdjustments / LoadBOL
 
 FINDING: BANK-F91236 — PlannerAxisHead / ExpectedAdjustmentsCallout / LoadBolPanel Tailwind slate-* → house tokens
