@@ -96,7 +96,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
                     key={s}
                     type="button"
                     onClick={() => set({ pageSize: s })}
-                    className={`px-2 py-1 text-xs rounded-sm border ${draft.pageSize === s ? "bg-slate-1000 text-white border-slate-300" : "border-gray-300 hover:bg-gray-50"}`}
+                    className={`px-2 py-1 text-xs rounded-sm border ${draft.pageSize === s ? "bg-[#F7F8FA]0 text-white border-[#E5E7EB]" : "border-gray-300 hover:bg-gray-50"}`}
                   >
                     {s}
                   </button>
@@ -115,7 +115,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
                     key={value}
                     type="button"
                     onClick={() => set({ density: value })}
-                    className={`flex-1 py-1 ${draft.density === value ? "bg-slate-1000 text-white" : "bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"}`}
+                    className={`flex-1 py-1 ${draft.density === value ? "bg-[#F7F8FA]0 text-white" : "bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"}`}
                   >
                     {label}
                   </button>
@@ -143,7 +143,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
                     key={v}
                     type="button"
                     onClick={() => set({ statusFilter: v })}
-                    className={`flex-1 py-1 capitalize ${draft.statusFilter === v ? "bg-slate-1000 text-white" : "bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"}`}
+                    className={`flex-1 py-1 capitalize ${draft.statusFilter === v ? "bg-[#F7F8FA]0 text-white" : "bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"}`}
                   >
                     {v === "all" ? "All" : v === "active" ? "Active" : "Inactive"}
                   </button>

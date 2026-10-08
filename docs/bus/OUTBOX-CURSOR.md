@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — DriverCatalog / FuelCatalog / ListViewGear
+
+FINDING: BANK-F91291 — DriverCatalogListPage / FuelCatalogListPage / ListViewGear Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25972 squash `8745c22669` (BANK-F91290 MedicalCard/Loads/DrugProgram)
+GUARD: scripts/verify-91291-drv-fuel-listgear-slate-leftover-chrome.mjs + verify-steps/3404 piggyback
+LIVE PROOF: verify-91291-drv-fuel-listgear-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3404 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — MedicalCard / Loads / DrugProgram
 
 FINDING: BANK-F91290 — MedicalCardSection / LoadsSection / DrugProgramSection Tailwind slate-* → house tokens
