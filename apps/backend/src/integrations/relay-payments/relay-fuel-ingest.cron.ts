@@ -546,18 +546,27 @@ export function parseRelayBackfillOnce(raw: string | undefined): { runId: string
 }
 
 /**
- * ROUND 441.21-B R1 — ONE calendar day only. RELAY_FUEL_ONEDAY_PROBE = "<run_id>|<company>|<YYYY-MM-DD>".
- * Raises nothing else: pulls that single day, audits raw_rows / api_rows, ingests if Relay answers.
- * USMCA days before 2026-08-03 are refused (RELAY DATE LAW).
+ * ROUND 441.21-B R1 — one calendar day OR paced inclusive range.
+ * RELAY_FUEL_ONEDAY_PROBE =
+ *   "<run_id>|<company>|<YYYY-MM-DD>"                  — one day
+ *   "<run_id>|<company>|<YYYY-MM-DD>|<YYYY-MM-DD>"      — start|end (windowDays=1, built-in backoff)
+ * Audits raw_rows / api_rows. USMCA days before 2026-08-03 are refused (RELAY DATE LAW).
  */
-export function parseRelayOneDayProbe(raw: string | undefined): { runId: string; companyCode: string; day: string } | null {
+export function parseRelayOneDayProbe(
+  raw: string | undefined
+): { runId: string; companyCode: string; day: string; endDate: string } | null {
   const v = (raw ?? "").trim();
   if (!v) return null;
-  const [runId, companyCode, day] = v.split("|").map((x) => x.trim());
+  const parts = v.split("|").map((x) => x.trim());
+  const [runId, companyCode, day, endMaybe] = parts;
+  if (parts.length !== 3 && parts.length !== 4) return null;
   if (!runId || !/^[a-z0-9-]{6,64}$/.test(runId)) return null;
   if (!companyCode || !/^[A-Z0-9_]{2,20}$/.test(companyCode)) return null;
   if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
-  return { runId, companyCode, day };
+  const endDate = endMaybe && endMaybe.length > 0 ? endMaybe : day;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(endDate)) return null;
+  if (endDate < day) return null;
+  return { runId, companyCode, day, endDate };
 }
 
 export async function runRelayFuelOneDayProbeFromEnv(
@@ -567,7 +576,9 @@ export async function runRelayFuelOneDayProbeFromEnv(
   if (!raw?.trim()) return "none";
   const spec = parseRelayOneDayProbe(raw);
   if (!spec) {
-    app.log.warn("[RELAY_FUEL_ONEDAY_PROBE] malformed — expected run_id|COMPANY|YYYY-MM-DD; ignored");
+    app.log.warn(
+      "[RELAY_FUEL_ONEDAY_PROBE] malformed — expected run_id|COMPANY|YYYY-MM-DD[|YYYY-MM-DD]; ignored"
+    );
     return "invalid";
   }
   const claim = await withLuciaBypass(async (client) => {
@@ -585,7 +596,11 @@ export async function runRelayFuelOneDayProbeFromEnv(
     );
     const companyId = co.rows[0]?.id;
     if (!companyId) return { state: "company_not_found" as const };
+    const rangeStart = clampRelayRangeStartForCompany(companyId, spec.day);
     if (isUsmcaOperatingCompany(companyId) && isBeforeRelayUsmcaFloor(spec.day)) {
+      return { state: "pre_floor_day" as const, companyId };
+    }
+    if (rangeStart > spec.endDate) {
       return { state: "pre_floor_day" as const, companyId };
     }
     await client.query(`SELECT audit.append_event($1, 'info', $2::jsonb, NULL, $3)`, [
@@ -594,22 +609,36 @@ export async function runRelayFuelOneDayProbeFromEnv(
         run_id: spec.runId,
         operating_company_id: companyId,
         day: spec.day,
+        end_date: spec.endDate,
+        range_start: rangeStart,
         window_timeout_ms: Number.parseInt(process.env.RELAY_WINDOW_CALL_TIMEOUT_MS ?? "180000", 10) || 180_000,
         trigger: "RELAY_FUEL_ONEDAY_PROBE",
       }),
       RELAY_FUEL_INGEST_AUDIT_SOURCE,
     ]);
-    return { state: "started" as const, companyId };
+    return { state: "started" as const, companyId, rangeStart };
   });
   if (claim.state === "pre_floor_day") {
-    app.log.warn({ run_id: spec.runId, day: spec.day, floor: RELAY_USMCA_DATA_FLOOR }, "[RELAY_FUEL_ONEDAY_PROBE] pre-floor day refused");
+    app.log.warn(
+      { run_id: spec.runId, day: spec.day, end_date: spec.endDate, floor: RELAY_USMCA_DATA_FLOOR },
+      "[RELAY_FUEL_ONEDAY_PROBE] pre-floor day refused"
+    );
     return "pre_floor_day";
   }
   if (claim.state !== "started") {
     app.log.info({ run_id: spec.runId, state: claim.state }, "[RELAY_FUEL_ONEDAY_PROBE] nothing to do");
     return claim.state;
   }
-  app.log.info({ run_id: spec.runId, company: spec.companyCode, day: spec.day }, "[RELAY_FUEL_ONEDAY_PROBE] one-day pull started");
+  app.log.info(
+    {
+      run_id: spec.runId,
+      company: spec.companyCode,
+      day: spec.day,
+      end_date: spec.endDate,
+      range_start: claim.rangeStart,
+    },
+    "[RELAY_FUEL_ONEDAY_PROBE] paced range pull started"
+  );
   void (async () => {
     let rawRows = 0;
     let pulled = 0;
@@ -617,8 +646,8 @@ export async function runRelayFuelOneDayProbeFromEnv(
     let skipped = 0;
     try {
       const pull = await fetchRelayFuelTransactionsInWindows(spec.companyCode, {
-        startDate: spec.day,
-        endDate: spec.day,
+        startDate: claim.rangeStart,
+        endDate: spec.endDate,
         windowDays: 1,
         onWindow: async (w, apiRows, meta) => {
           rawRows += apiRows.length;
@@ -636,6 +665,8 @@ export async function runRelayFuelOneDayProbeFromEnv(
             {
               run_id: spec.runId,
               day: spec.day,
+              end_date: spec.endDate,
+              window: `${w.startDate}..${w.endDate}`,
               raw_rows: apiRows.length,
               pulled: stats.pulled,
               upserted: stats.upserted,
@@ -652,6 +683,8 @@ export async function runRelayFuelOneDayProbeFromEnv(
             run_id: spec.runId,
             operating_company_id: claim.companyId,
             day: spec.day,
+            end_date: spec.endDate,
+            range_start: claim.rangeStart,
             raw_rows: rawRows,
             api_rows: pull.rows,
             pulled,
@@ -664,11 +697,22 @@ export async function runRelayFuelOneDayProbeFromEnv(
         ])
       );
       app.log.info(
-        { run_id: spec.runId, day: spec.day, raw_rows: rawRows, pulled, upserted, skipped },
+        {
+          run_id: spec.runId,
+          day: spec.day,
+          end_date: spec.endDate,
+          raw_rows: rawRows,
+          pulled,
+          upserted,
+          skipped,
+        },
         "[RELAY_FUEL_ONEDAY_PROBE] completed"
       );
     } catch (err) {
-      app.log.error({ err, run_id: spec.runId, day: spec.day, raw_rows: rawRows }, "[RELAY_FUEL_ONEDAY_PROBE] failed");
+      app.log.error(
+        { err, run_id: spec.runId, day: spec.day, end_date: spec.endDate, raw_rows: rawRows },
+        "[RELAY_FUEL_ONEDAY_PROBE] failed"
+      );
       await withLuciaBypass((client) =>
         client.query(`SELECT audit.append_event($1, 'warning', $2::jsonb, NULL, $3)`, [
           "integrations.relay_fuel_oneday_probe_failed",
@@ -676,12 +720,15 @@ export async function runRelayFuelOneDayProbeFromEnv(
             run_id: spec.runId,
             operating_company_id: claim.companyId,
             day: spec.day,
+            end_date: spec.endDate,
             raw_rows: rawRows,
             error: String((err as Error)?.message ?? err),
           }),
           RELAY_FUEL_INGEST_AUDIT_SOURCE,
         ])
-      ).catch((auditErr) => app.log.error({ err: auditErr, run_id: spec.runId }, "[RELAY_FUEL_ONEDAY_PROBE] terminal audit failed"));
+      ).catch((auditErr) =>
+        app.log.error({ err: auditErr, run_id: spec.runId }, "[RELAY_FUEL_ONEDAY_PROBE] terminal audit failed")
+      );
     }
   })();
   return "started";
