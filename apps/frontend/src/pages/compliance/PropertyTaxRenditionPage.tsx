@@ -277,7 +277,7 @@ function RenditionListView({
         </div>
 
         {showAddDistrict ? (
-          <div className="mt-3 flex flex-wrap items-end gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
+          <div className="mt-3 flex flex-wrap items-end gap-2 border-t border-[#E5E7EB] bg-[#F7F8FA] p-2">
             <label className="text-xs">
               County
               <input value={newCounty} onChange={(e) => setNewCounty(e.target.value)} className="ml-1 rounded-sm border px-2 py-1" />

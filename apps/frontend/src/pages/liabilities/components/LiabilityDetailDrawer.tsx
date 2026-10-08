@@ -144,7 +144,7 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
           ) : null}
           <div className="space-y-1">
             {settlementHistory.map((row) => (
-              <div key={String(row.settlement_id ?? row.id)} className="rounded-sm border border-gray-100 px-2 py-1">
+              <div key={String(row.settlement_id ?? row.id)} className="border-t border-gray-100 px-2 py-1">
                 Settlement{" "}
                 <EntityLink
                   kind="settlement"

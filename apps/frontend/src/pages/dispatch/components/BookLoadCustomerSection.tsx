@@ -120,7 +120,7 @@ export function BookLoadCustomerSection({
               }}
             />
           ) : (
-            <div className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-2 text-xs text-[#1F2A44]">Company context required for customer lookup.</div>
+            <div className="bg-white px-2 py-2 text-xs text-[#1F2A44]">Company context required for customer lookup.</div>
           )}
           {customersQuery.isError ? (
             <ListErrorBanner message="Could not load customers." onRetry={() => void customersQuery.refetch()} />

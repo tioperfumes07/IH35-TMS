@@ -56,7 +56,7 @@ function SectionCard({ badge, title, right, testid, children }: { badge: string;
   // D27 — section headers dark navy with light letters (NAVY-NOT-BLACK #14314F), not light grey bars.
   return (
     <section data-testid={testid} className="rounded-sm border border-[#E5E7EB] bg-white">
-      <div className="flex items-center gap-2 rounded-t-sm border-b border-[#14314F] bg-[#14314F] px-2.5 py-1.5">
+      <div className="flex items-center gap-2 border-b border-[#14314F] bg-[#14314F] px-2.5 py-1.5">
         <span className="grid h-[18px] w-[18px] place-items-center rounded-sm bg-white/15 text-xs font-bold text-white">{badge}</span>
         <span className="text-xs font-bold uppercase tracking-wide text-white">{title}</span>
         {right ? <span className="ml-auto text-xs text-[#CDD6E6]">{right}</span> : null}

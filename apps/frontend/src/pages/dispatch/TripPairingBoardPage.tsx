@@ -463,7 +463,7 @@ export function TripPairingBoardPage() {
               </div>
               <div className="flex flex-wrap gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
                 {unbooked.map((u) => (
-                  <div key={u.unit_id} className="flex min-w-[180px] flex-col gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2.5 py-2 text-xs">
+                  <div key={u.unit_id} className="flex min-w-[180px] flex-col gap-1 border-[#E5E7EB] bg-white px-2.5 py-2 text-xs">
                     <EntityLinkOrTombstone kind="unit" id={u.unit_id} name={u.unit_number} noun="Unit" className="font-semibold text-[#1F2A44]" />
                     <span className="text-[#4B5563]"><EntityLinkOrTombstone kind="driver" id={u.driver_id} name={u.driver_name} noun="Driver" /></span>
                     {/* C1b: live location ("now: <city>") arrives with the backend payload — not fabricated. */}

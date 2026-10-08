@@ -258,7 +258,7 @@ export function EscrowDeductionsPendingTab() {
                 placeholder="Explain decision..."
               />
 
-              {errorMessage ? <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700">{errorMessage}</div> : null}
+              {errorMessage ? <div className="border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700">{errorMessage}</div> : null}
 
               <div className="flex items-center justify-end gap-2">
                 <Button

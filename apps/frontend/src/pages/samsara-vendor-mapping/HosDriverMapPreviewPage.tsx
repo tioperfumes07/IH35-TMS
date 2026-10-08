@@ -138,7 +138,7 @@ export function HosDriverMapPreviewPage() {
                 sub="samsara_drivers.local_driver_id"
                 to="/samsara/vendor-mapping-integrity"
               />
-              <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
+              <div className="border-t border-gray-200 bg-white px-3 py-2">
                 <div className="text-xs uppercase tracking-wide text-gray-500">Last HOS pull</div>
                 {d.downstream.last_hos_clocks_pull ? (
                   <>

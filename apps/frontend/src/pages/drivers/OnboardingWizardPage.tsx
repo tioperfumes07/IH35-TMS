@@ -372,7 +372,7 @@ export function OnboardingWizardPage() {
         ) : null}
 
         {showOverride && !completed ? (
-          <div className="mt-4 space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+          <div className="mt-4 space-y-2 border-t border-[#E5E7EB] bg-[#F7F8FA] p-3">
             <label className="block text-xs">
               <span className="font-medium">Override reason (required)</span>
               <textarea

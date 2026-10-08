@@ -1295,7 +1295,7 @@ export function SettlementDetailPage() {
                 <div className="space-y-1 border-t border-gray-100 pt-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Events</p>
                   {(paymentEventsQuery.data?.events ?? []).map((event) => (
-                    <div key={event.id} className="rounded-sm border border-gray-100 px-2 py-1 text-xs">
+                    <div key={event.id} className="border-t border-gray-100 px-2 py-1 text-xs">
                       <p className="font-semibold text-gray-800">{event.event_type}</p>
                       <p className="text-gray-500">{new Date(event.created_at).toLocaleString()}</p>
                     </div>
