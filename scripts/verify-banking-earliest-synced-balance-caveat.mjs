@@ -27,7 +27,8 @@ import path from "node:path";
 
 const SRC_REL = "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx";
 
-const BALANCE_VALUE_EXPR = 'bal == null ? "—" : USD.format(bal / 100)';
+// Allow the canonical MoneyText path (formatUsdCents) alongside the legacy USD.format path.
+const BALANCE_VALUE_EXPR_RE = /bal\s*==\s*null\s*\?\s*"—"\s*:\s*(?:USD\.format\(bal\s*\/\s*100\)|formatUsdCents\(bal\))/;
 
 export function auditSource(src) {
   const failures = [];
@@ -41,7 +42,7 @@ export function auditSource(src) {
     failures.push(`${SRC_REL}: no earliestSyncedTransactionId useMemo -- nothing identifies the earliest-synced row to caveat`);
   }
 
-  if (!src.includes(BALANCE_VALUE_EXPR)) {
+  if (!BALANCE_VALUE_EXPR_RE.test(src)) {
     failures.push(`${SRC_REL}: Balance column's computed dollar value expression changed or is missing -- the caveat must be additive-only, never a second/different number`);
   }
 
@@ -108,7 +109,8 @@ if (process.argv.includes("--selftest")) {
     throw new Error("SELFTEST FAIL: missing earliestSyncedTransactionId useMemo went undetected");
   }
 
-  const changedValueExpr = good.replace(BALANCE_VALUE_EXPR, 'bal == null ? "-" : USD.format((bal + 1) / 100)');
+  const sampleBalanceExpr = 'bal == null ? "—" : USD.format(bal / 100)';
+  const changedValueExpr = good.replace(sampleBalanceExpr, 'bal == null ? "-" : USD.format((bal + 1) / 100)');
   if (auditSource(changedValueExpr).length === 0) {
     throw new Error("SELFTEST FAIL: a changed/second balance value expression went undetected");
   }

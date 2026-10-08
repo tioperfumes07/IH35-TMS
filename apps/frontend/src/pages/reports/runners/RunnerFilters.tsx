@@ -109,26 +109,21 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
                 <div key={filter.key} className="md:col-span-2 xl:col-span-2">
                   <FilterLabel filter={filter} />
                   <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <select
-                      className="h-[34px] rounded-sm border border-[#E5E7EB] px-2 text-xs"
+                    <Combobox
+                      options={QBO_DATE_PRESETS.map((p) => ({ value: p.value, label: p.label }))}
                       value={String(draft.date_preset ?? "custom")}
-                      onChange={(e) => {
-                        const next = e.target.value;
-                        const bounds = applyUniversalDatePreset(next);
+                      onChange={(next) => {
+                        const bounds = applyUniversalDatePreset(next ?? "custom");
                         staged.setDraft({
                           ...draft,
-                          date_preset: next,
+                          date_preset: next ?? "custom",
                           ...(bounds ? { from: bounds.from, to: bounds.to } : {}),
                         });
                       }}
-                      data-testid="runner-date-preset"
-                    >
-                      {QBO_DATE_PRESETS.map((p) => (
-                        <option key={p.value} value={p.value}>
-                          {p.label}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Date range"
+                      className="h-[34px] w-48 text-xs"
+                      dataField="runner-date-preset"
+                    />
                     <DatePicker
                       className=""
                       value={String(draft.from ?? "")}
