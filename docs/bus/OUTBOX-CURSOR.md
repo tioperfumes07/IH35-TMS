@@ -1,3 +1,13 @@
+## 2026-10-08T10:15Z · BANK leftover slate — status suggestion / attention item / escrow record
+
+FINDING: BANK-F91190 — StatusSuggestionPrompt / AttentionItemCard / EscrowRecordTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25844 squash `1c01ec7841` (BANK-F91189 catalog/activity/planner)
+GUARD: scripts/verify-status-attn-escrow-slate-leftover-chrome.mjs + verify-steps/3998 piggyback
+LIVE PROOF: verify-status-attn-escrow-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3998 piggyback + OUTBOX
+
 ## 2026-10-08T10:05Z · BANK leftover slate — catalog index / recent activity / task planner
 
 FINDING: BANK-F91189 — CatalogIndex / RecentActivityCard / TaskPlannerGrid Tailwind slate-* → house tokens

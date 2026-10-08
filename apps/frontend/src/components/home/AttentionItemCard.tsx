@@ -54,9 +54,9 @@ const SEVERITY_CONFIG: Record<
   },
   info: {
     Icon: Info,
-    border: "border-slate-300",
-    bg: "bg-slate-100",
-    iconCls: "text-slate-700",
+    border: "border-[#E5E7EB]",
+    bg: "bg-[#F7F8FA]",
+    iconCls: "text-[#4B5563]",
     badge: "#dbeafe",
     badgeFg: "#1e3a8a",
   },
@@ -80,7 +80,7 @@ export function AttentionItemCard({ item, rank, onAction, onDismiss, dismissing 
       aria-label={`Attention item ${rank}: ${item.title}`}
     >
       {/* Rank badge */}
-      <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-slate-500 ring-1 ring-slate-200">
+      <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-[#6B7280] ring-1 ring-[#E5E7EB]">
         {rank}
       </div>
 
@@ -90,31 +90,31 @@ export function AttentionItemCard({ item, rank, onAction, onDismiss, dismissing 
       {/* Content */}
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-slate-900">{item.title}</span>
+          <span className="text-xs font-semibold text-[#0F1219]">{item.title}</span>
           <span
             className="rounded-full px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide"
             style={{ backgroundColor: cfg.badge, color: cfg.badgeFg }}
           >
             {item.severity}
           </span>
-          <span className="ml-auto text-xs font-medium text-slate-400">Score {item.score}</span>
+          <span className="ml-auto text-xs font-medium text-[#6B7280]">Score {item.score}</span>
         </div>
 
         {item.body ? (
-          <p className="mt-0.5 text-xs text-slate-600">{item.body}</p>
+          <p className="mt-0.5 text-xs text-[#4B5563]">{item.body}</p>
         ) : null}
 
         <div className="mt-2 flex items-center gap-2">
           <button
             type="button"
-            className="rounded-sm bg-slate-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-500"
+            className="rounded-sm bg-[#0F1219] px-2.5 py-1 text-xs font-medium text-white hover:bg-[#1F2A44] focus:outline-hidden focus:ring-2 focus:ring-[#6B7280]"
             onClick={() => onAction(item.action_url)}
           >
             {item.action_label}
           </button>
           <button
             type="button"
-            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 focus:outline-hidden"
+            className="flex items-center gap-1 text-xs text-[#6B7280] hover:text-[#4B5563] focus:outline-hidden"
             onClick={() => onDismiss(item.item_id)}
             disabled={dismissing}
             aria-label={`Dismiss: ${item.title}`}
