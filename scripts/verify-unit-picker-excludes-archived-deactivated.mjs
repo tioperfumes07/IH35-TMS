@@ -61,14 +61,14 @@ function main() {
   }
 
   if (selftest) {
-    // Mutation 1: remove the include_inactive gate — must fail.
-    const mutated1 = src.replace(/if\s*\(\s*!\s*include_inactive\s*\)\s*\{/, "if (false) {");
+    // Mutation 1: remove every include_inactive gate — must fail.
+    const mutated1 = src.replace(/if\s*\(\s*!\s*include_inactive\s*\)\s*\{/g, "if (false) {");
     if (audit(mutated1).length === 0) {
       console.error("SELFTEST FAIL: removing the include_inactive gate did not trip the guard");
       process.exit(1);
     }
-    // Mutation 2: drop the deactivated filter — must fail.
-    const mutated2 = src.replace(/filters\.push\(\s*["'`]deactivated_at IS NULL["'`]\s*\)/, "void 0");
+    // Mutation 2: drop all deactivated filters — must fail.
+    const mutated2 = src.replace(/filters\.push\(\s*["'`]deactivated_at IS NULL["'`]\s*\)/g, "void 0");
     if (audit(mutated2).length === 0) {
       console.error("SELFTEST FAIL: dropping the deactivated_at filter did not trip the guard");
       process.exit(1);
