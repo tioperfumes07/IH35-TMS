@@ -1,3 +1,13 @@
+## 2026-10-08T17:20Z · BANK leftover slate — current assignment / HOS status / assignment history
+
+FINDING: BANK-F91221 — CurrentAssignmentSection / HOSStatusSection / DriverAssignmentHistorySection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25885 squash `d1f2de9ca6` (BANK-F91220 hos/form2290/unittax)
+GUARD: scripts/verify-drv-assign-hos-hist-slate-leftover-chrome.mjs + verify-steps/3968 piggyback
+LIVE PROOF: verify-drv-assign-hos-hist-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3968 piggyback + OUTBOX
+
 ## 2026-10-08T17:05Z · BANK leftover slate — HOS history / Form 2290 / unit tax filings
 
 FINDING: BANK-F91220 — HosHistorySection / Form2290Filings / UnitTaxFilingsReverseSection Tailwind slate-* → house tokens
