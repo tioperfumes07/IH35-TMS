@@ -109,23 +109,23 @@ export function CustomerRelationshipScore({ score, loading = false, error = null
             <span className="pb-1 text-xs text-gray-500">/ 100</span>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1">
+            <div className="border-t border-gray-100 pt-1">
               <span className="text-gray-500">Engagement</span>
               <p className="font-semibold text-gray-900">{subscoreValue(score?.engagement_subscore)}</p>
             </div>
-            <div className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1">
+            <div className="border-t border-gray-100 pt-1">
               <span className="text-gray-500">Payment</span>
               <p className="font-semibold text-gray-900">{subscoreValue(score?.payment_behavior_subscore)}</p>
             </div>
-            <div className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1">
+            <div className="border-t border-gray-100 pt-1">
               <span className="text-gray-500">Service</span>
               <p className="font-semibold text-gray-900">{subscoreValue(score?.service_quality_subscore)}</p>
             </div>
-            <div className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1">
+            <div className="border-t border-gray-100 pt-1">
               <span className="text-gray-500">Margin Trend</span>
               <p className="font-semibold text-gray-900">{subscoreValue(score?.margin_trend_subscore)}</p>
             </div>
-            <div className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1 col-span-2">
+            <div className="border-t border-gray-100 pt-1 col-span-2">
               <span className="text-gray-500">Complaints</span>
               <p className="font-semibold text-gray-900">{subscoreValue(score?.complaint_subscore)}</p>
             </div>

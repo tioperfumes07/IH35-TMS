@@ -1412,7 +1412,7 @@ export function DriverDetailPage() {
               </Button>
             ) : null}
           </div>
-          <div className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
+          <div className="border-t border-gray-200 bg-gray-50 p-2 text-xs">
             <div>
               Current Vendor:{" "}
               {driver.qbo_vendor_local_id ? (
@@ -1434,7 +1434,7 @@ export function DriverDetailPage() {
           </div>
           <div>
             <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Linkage History</h3>
-            <div className="max-h-56 overflow-auto rounded-sm border border-gray-200">
+            <div className="max-h-56 overflow-auto">
               {(qboLinkageHistoryQuery.data?.rows ?? []).map((row, idx) => (
                 <div key={String(row.id ?? idx)} className="border-b border-gray-100 px-2 py-1.5 text-xs">
                   <div className="font-semibold text-gray-900">{String(row.action ?? "-")}</div>
@@ -1457,7 +1457,7 @@ export function DriverDetailPage() {
             {driver.prior_driver_id ? (
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Prior driver record</label>
-                <div className="rounded-sm border border-gray-300 bg-gray-50 px-2 text-xs py-2">
+                <div className="bg-gray-50 px-2 text-xs py-2">
                   <EntityLinkOrTombstone
                     kind="driver"
                     id={driver.prior_driver_id}
@@ -1471,7 +1471,7 @@ export function DriverDetailPage() {
             {driver.rehire_count > 0 ? (
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Rehire count</label>
-                <div className="rounded-sm border border-gray-300 bg-gray-50 px-2 text-xs py-2">{driver.rehire_count}</div>
+                <div className="bg-gray-50 px-2 text-xs py-2">{driver.rehire_count}</div>
               </div>
             ) : null}
             <div className="flex flex-col gap-1">

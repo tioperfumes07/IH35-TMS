@@ -160,7 +160,7 @@ export function UploadZone({
   }
 
   return (
-    <div className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+    <div className="space-y-2">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">{title}</h3>
         <Button type="button" size="sm" variant="secondary" onClick={pickFiles}>

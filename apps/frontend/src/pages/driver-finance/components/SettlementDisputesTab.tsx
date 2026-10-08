@@ -338,7 +338,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
           </div>
 
           <div className="grid gap-2 text-xs md:grid-cols-2">
-            <div className="rounded-sm border border-gray-100 p-2">
+            <div className="border-t border-gray-100 pt-2">
               <p className="font-semibold text-gray-700">Dispute</p>
               <p>Category: {titleize(detail.dispute_category)}</p>
               <p>Status: {titleize(detail.status)}</p>
@@ -351,7 +351,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
                 </p>
               ) : null}
             </div>
-            <div className="rounded-sm border border-gray-100 p-2">
+            <div className="border-t border-gray-100 pt-2">
               <p className="font-semibold text-gray-700">Settlement Breakdown</p>
               <p>
                 Period: {detail.period_start ? formatDateUS(detail.period_start) : "—"} to{" "}
@@ -363,7 +363,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             </div>
           </div>
 
-          <div className="mt-3 space-y-2 rounded-sm border border-gray-100 p-2">
+          <div className="mt-3 space-y-2 border-t border-gray-100 pt-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Action Panel</p>
             <div className="flex flex-wrap gap-2">
               <Button
