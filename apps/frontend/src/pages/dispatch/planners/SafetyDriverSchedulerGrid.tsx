@@ -150,7 +150,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
           exportFilename="driver-planner"
         />
         {query.data.pending_requests?.length ? (
-          <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
+          <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#1F2A44]">
             <div className="font-semibold">Pending in this window</div>
             <ul className="list-inside list-disc">
               {query.data.pending_requests.map((p) => (
@@ -191,8 +191,8 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
             // "why is/isn't a driver active" ask needs both the link into Safety AND the raw
             // last-activity timestamp visible on the row, not just a click-through.
             secondary: (
-              <span className="flex flex-col text-xs leading-tight text-slate-500" data-testid="planner-row-safety-secondary">
-                <EntityLink kind="driver_safety_profile" id={driverId} label="Safety profile" className="text-slate-600 hover:underline" />
+              <span className="flex flex-col text-xs leading-tight text-[#6B7280]" data-testid="planner-row-safety-secondary">
+                <EntityLink kind="driver_safety_profile" id={driverId} label="Safety profile" className="text-[#4B5563] hover:underline" />
                 <span data-testid="planner-row-last-dispatch-activity">{formatLastDispatchActivity(lastDispatchActivityAt)}</span>
               </span>
             ),
@@ -219,7 +219,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
       />
 
       {query.data.pending_requests?.length ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#1F2A44]">
           <div className="font-semibold">Pending in this window</div>
           <ul className="list-inside list-disc">
             {query.data.pending_requests.map((p) => (
