@@ -67,9 +67,9 @@ export function ScheduledReportsPanel() {
   const rows = listQuery.data?.rows ?? [];
 
   return (
-    <section className="rounded-sm border-2 border-slate-300 bg-white">
-      <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2">
-        <h3 className="text-xs font-semibold text-slate-900">
+    <section className="rounded-sm border-2 border-[#E5E7EB] bg-white">
+      <div className="flex items-center justify-between border-b border-[#E5E7EB] px-3 py-2">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           Custom scheduled reports
         </h3>
         <div className="flex gap-2">
@@ -82,7 +82,7 @@ export function ScheduledReportsPanel() {
           </button>
           <Link
             to="/reports/scheduled-custom"
-            className="text-xs font-semibold text-slate-600 hover:underline"
+            className="text-xs font-semibold text-[#4B5563] hover:underline"
           >
             Manage
           </Link>
@@ -105,27 +105,27 @@ export function ScheduledReportsPanel() {
             </button>
           </div>
         ) : rows.length === 0 ? (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#6B7280]">
             No custom schedules — add daily dispatch board or AR aging.
           </p>
         ) : null}
         {rows.map((row) => (
           <div
             key={row.id}
-            className="rounded-sm border border-slate-100 bg-slate-50 p-2"
+            className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2"
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <div className="text-xs font-semibold uppercase tracking-[0.04em] text-slate-500">
+                <div className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
                   {row.cadence_label}
                 </div>
-                <div className="mt-0.5 text-xs font-semibold text-slate-800">
+                <div className="mt-0.5 text-xs font-semibold text-[#0F1219]">
                   {row.name}
                 </div>
-                <div className="text-xs text-slate-600">{row.recipients}</div>
+                <div className="text-xs text-[#4B5563]">{row.recipients}</div>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <label className="flex items-center gap-1 text-xs text-slate-600">
+                <label className="flex items-center gap-1 text-xs text-[#4B5563]">
                   <input
                     type="checkbox"
                     checked={row.status === "active"}

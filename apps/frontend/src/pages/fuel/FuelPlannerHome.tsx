@@ -452,7 +452,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
           <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700">
             <h3 className="text-xs font-semibold text-gray-900">Expense mapping</h3>
             <p className="mt-2 text-xs text-gray-600">Map fuel card spend to GL expense categories for posting.</p>
-            <Link to="/accounting/settings/expense-category-map" className="mt-3 inline-block text-xs font-semibold text-slate-700 underline">
+            <Link to="/accounting/settings/expense-category-map" className="mt-3 inline-block text-xs font-semibold text-[#1F2A44] underline">
               Open expense category map →
             </Link>
           </section>
@@ -510,7 +510,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                   }}
                   data-testid="fuel-history-show-multiselect"
                 />
-                <label className="text-xs text-slate-600">
+                <label className="text-xs text-[#4B5563]">
                   Driver
                   <EntityPicker
                     kind="driver"
@@ -523,7 +523,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                     dataTestId="fuel-history-filter-driver"
                   />
                 </label>
-                <label className="text-xs text-slate-600">
+                <label className="text-xs text-[#4B5563]">
                   Unit
                   <EntityPicker
                     kind="unit"
@@ -536,7 +536,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                     dataTestId="fuel-history-filter-unit"
                   />
                 </label>
-                <label className="text-xs text-slate-600">
+                <label className="text-xs text-[#4B5563]">
                   Load
                   <EntityPicker
                     kind="load"
@@ -549,7 +549,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                     dataTestId="fuel-history-filter-load"
                   />
                 </label>
-                <label className="text-xs text-slate-600">
+                <label className="text-xs text-[#4B5563]">
                   Trailer
                   <EntityPicker
                     kind="trailer"
@@ -610,7 +610,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                     })}
                     operatingCompanyId={companyId}
                   />
-                  <div className="mt-2 flex items-center justify-end gap-2 text-xs text-slate-600" data-testid="fuel-history-server-pager">
+                  <div className="mt-2 flex items-center justify-end gap-2 text-xs text-[#4B5563]" data-testid="fuel-history-server-pager">
                     <ActionButton
                       disabled={fuelHistoryPage <= 1 || fuelTransactionsQuery.isFetching}
                       onClick={() => setFuelHistoryPage((page) => Math.max(1, page - 1))}
@@ -684,7 +684,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
           <FuelKpiRow dashboard={dashboardQuery.data} lovesSyncStatus={lovesSyncQuery.data} />
           <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="fuel-active-route-selector">
             <div className="flex flex-wrap items-end gap-2">
-              <label className="min-w-72 flex-1 text-xs font-semibold text-slate-700">
+              <label className="min-w-72 flex-1 text-xs font-semibold text-[#1F2A44]">
                 Active load plan
                 <Combobox
                   value={activeRoute?.id ?? null}
@@ -696,7 +696,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                   className="mt-1"
                 />
               </label>
-              <div className="flex items-center gap-2 text-xs text-slate-600">
+              <div className="flex items-center gap-2 text-xs text-[#4B5563]">
                 <ActionButton
                   disabled={!plannerSourceAvailable || activeRoutePage <= 1 || activeRoutesQuery.isFetching}
                   onClick={() => setActiveRoutePage((page) => Math.max(1, page - 1))}
@@ -754,7 +754,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                         <span className="font-semibold text-gray-900">
                           Stop {rec.sequence_number} · {rec.city ?? "Unknown"}, {rec.state ?? "NA"}
                         </span>
-                        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700">
+                        <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-[#1F2A44]">
                           {rec.reason === "low_fuel" ? "low fuel" : "10-hr reset"}
                         </span>
                       </div>
@@ -911,7 +911,7 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
               expensive_states: [...expensiveStates],
             },
           })}
-          className="rounded-sm bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+          className="rounded-sm bg-[#0F1219] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
         >
           {mutation.isPending ? "Saving…" : "Save settings"}
         </button>
