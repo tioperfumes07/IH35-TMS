@@ -35,9 +35,9 @@ export function UserProfileSettingsPage() {
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
       <PageHeader title="Your profile" subtitle={`Account preferences for ${u.email ?? "your account"}.`} backHref="/settings" />
 
-      <section className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-        <h2 className="text-xs font-semibold text-slate-800">Guided tour</h2>
-        <p className="mt-1 text-xs text-slate-600">
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-4 shadow-xs">
+        <h2 className="text-xs font-semibold text-[#0F1219]">Guided tour</h2>
+        <p className="mt-1 text-xs text-[#4B5563]">
           The product tour runs automatically once. Use restart to see it again after refreshing the page.
         </p>
         <div className="mt-3">
@@ -47,11 +47,11 @@ export function UserProfileSettingsPage() {
         </div>
       </section>
 
-      <section className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-        <h2 className="text-xs font-semibold text-slate-800">Notifications</h2>
-        <p className="mt-1 text-xs text-slate-600">Control email, SMS, WhatsApp, in-app, and quiet hours.</p>
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-4 shadow-xs">
+        <h2 className="text-xs font-semibold text-[#0F1219]">Notifications</h2>
+        <p className="mt-1 text-xs text-[#4B5563]">Control email, SMS, WhatsApp, in-app, and quiet hours.</p>
         <div className="mt-3">
-          <Link className="text-xs font-medium text-slate-700 hover:underline" to="/settings/notifications">
+          <Link className="text-xs font-medium text-[#1F2A44] hover:underline" to="/settings/notifications">
             Open notification preferences →
           </Link>
         </div>

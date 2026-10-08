@@ -103,7 +103,7 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
 
   if (query.isError) {
     return (
-      <section className="rounded-sm border border-slate-200 bg-white p-4" data-testid="photo-comparison-session-detail-error">
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-4" data-testid="photo-comparison-session-detail-error">
         <ListErrorState
           title="Couldn't load photo comparison session"
           status={query.error instanceof ApiError ? query.error.status : 0}
@@ -115,13 +115,13 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
   }
 
   return (
-    <section className="space-y-4 rounded-sm border border-slate-200 bg-white p-4" data-testid="photo-comparison-session-detail">
+    <section className="space-y-4 rounded-sm border border-[#E5E7EB] bg-white p-4" data-testid="photo-comparison-session-detail">
       <header>
-        <h2 className="text-xs font-semibold text-slate-900">Photo comparison session</h2>
-        <p className="text-xs text-slate-500">
+        <h2 className="text-xs font-semibold text-[#0F1219]">Photo comparison session</h2>
+        <p className="text-xs text-[#6B7280]">
           Status: <span className="font-semibold">{query.isLoading ? "loading" : (session?.diff_status ?? "not found")}</span>
         </p>
-        {session?.diff_summary ? <p className="mt-1 text-xs text-slate-700">{session.diff_summary}</p> : null}
+        {session?.diff_summary ? <p className="mt-1 text-xs text-[#1F2A44]">{session.diff_summary}</p> : null}
         {session ? (
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs" data-testid="photo-comparison-session-links">
             <EntityLink kind="driver" id={session.driver_uuid} label={entityLabel(session.driver_name, session.driver_uuid, "Driver")} />
@@ -129,12 +129,12 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
             {session.load_uuid ? (
               <EntityLink kind="load" id={session.load_uuid} label={entityLabel(session.load_number, session.load_uuid, "Load")} />
             ) : (
-              <span className="text-slate-500">No linked load</span>
+              <span className="text-[#6B7280]">No linked load</span>
             )}
           </div>
         ) : null}
         {session?.auto_damage_report_uuid ? (
-          <p className="mt-1 text-xs text-slate-700">
+          <p className="mt-1 text-xs text-[#1F2A44]">
             Auto damage report:{" "}
             <EntityLink kind="damage_report" id={session.auto_damage_report_uuid} label="Open damage report" />
           </p>
@@ -148,7 +148,7 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
               key={angle}
               type="button"
               className={`rounded border px-2 py-1 text-xs ${
-                selectedAngle === angle ? "border-[#1f2a44] bg-slate-100" : "border-slate-200"
+                selectedAngle === angle ? "border-[#1f2a44] bg-[#F7F8FA]" : "border-[#E5E7EB]"
               }`}
               onClick={() => setSelectedAngle(angle)}
             >
@@ -173,7 +173,7 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
       />
 
       <div>
-        <h3 className="mb-2 text-xs font-semibold text-slate-800">AI findings</h3>
+        <h3 className="mb-2 text-xs font-semibold text-[#0F1219]">AI findings</h3>
         {angleFindingsResult.invalid ? (
           <ListErrorState
             title="Photo comparison evidence has an invalid format"
