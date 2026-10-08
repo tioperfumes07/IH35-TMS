@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91065 — LiabilitiesTable / RecurringTemplate / AccountRegister slate → house
+
+FINDING: BANK-F91065 — LiabilitiesTable / AccountingRecurringTemplateDetailPage / AccountRegisterPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25998 squash `4b2cb40ab6` (BANK-F91064 RevenueRecognition/ExpensesList/CounterpartyStatement)
+GUARD: scripts/verify-91065-liab-recur-register-slate-leftover-chrome.mjs + verify-steps/3666 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: LiabilitiesTable + AccountingRecurringTemplateDetailPage + AccountRegisterPage + refuse guard + 3666 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91064 — RevenueRecognition / ExpensesList / CounterpartyStatement slate → house
 
 FINDING: BANK-F91064 — RevenueRecognitionPage / ExpensesListPage / CounterpartyStatementPage Tailwind slate-* → house tokens
