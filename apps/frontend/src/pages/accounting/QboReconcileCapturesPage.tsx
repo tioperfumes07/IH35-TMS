@@ -35,18 +35,18 @@ const errorStatus = (e: unknown) => (e instanceof ApiError ? e.status : 0);
 const errorMessage = (e: unknown) => (e instanceof Error ? e.message : undefined);
 
 const STATUS_PILL: Record<string, string> = {
-  applied: "bg-slate-100 text-slate-700",
+  applied: "bg-[#F7F8FA] text-[#1F2A44]",
   received: "bg-gray-100 text-gray-600",
   fetched: "bg-gray-100 text-gray-600",
-  conflict: "bg-slate-100 text-slate-700",
+  conflict: "bg-[#F7F8FA] text-[#1F2A44]",
   error: "bg-red-100 text-red-700",
   duplicate: "bg-gray-100 text-gray-500",
 };
 const SEVERITY_PILL: Record<string, string> = {
   low: "bg-gray-100 text-gray-600",
   info: "bg-gray-100 text-gray-600",
-  medium: "bg-slate-100 text-slate-700",
-  warn: "bg-slate-100 text-slate-700",
+  medium: "bg-[#F7F8FA] text-[#1F2A44]",
+  warn: "bg-[#F7F8FA] text-[#1F2A44]",
   high: "bg-red-100 text-red-700",
   critical: "bg-red-100 text-red-700",
 };
@@ -139,7 +139,7 @@ const HEALTH_COLUMNS: Array<ParityColumn<QboSyncHealthRow>> = [
     sortable: true,
     render: (row) => (
       <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${
-        row.drift === "drift" ? "bg-red-100 text-red-700" : row.drift === "in_sync" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-500"
+        row.drift === "drift" ? "bg-red-100 text-red-700" : row.drift === "in_sync" ? "bg-[#F7F8FA] text-[#1F2A44]" : "bg-gray-100 text-gray-500"
       }`}>{titleize(row.drift)}</span>
     ),
   },
@@ -170,22 +170,22 @@ function OverviewTab({ companyId }: { companyId: string }) {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-xs text-gray-500">Connection</div>
-          <div className="text-xs font-semibold text-slate-700">{c.connected ? "Connected" : "Not connected"}</div>
+          <div className="text-xs font-semibold text-[#1F2A44]">{c.connected ? "Connected" : "Not connected"}</div>
           <div className="mt-0.5 text-xs text-gray-400">Realm {c.realm_id ?? "—"}</div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-xs text-gray-500">Last QBO poll</div>
-          <div className="text-xs font-semibold text-slate-700">{fmtDt(data.last_polled_at)}</div>
+          <div className="text-xs font-semibold text-[#1F2A44]">{fmtDt(data.last_polled_at)}</div>
           <div className="mt-0.5 text-xs text-gray-400">Last used {fmtDt(c.last_used_at)}</div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-xs text-gray-500">Queue depth</div>
-          <div className="text-xs font-semibold text-slate-700">{data.queue_depth.toLocaleString()}</div>
+          <div className="text-xs font-semibold text-[#1F2A44]">{data.queue_depth.toLocaleString()}</div>
           <div className="mt-0.5 text-xs text-gray-400">Pending outbound</div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="text-xs text-gray-500">Entities drifting</div>
-          <div className={`text-xs font-semibold ${data.drift_count > 0 ? "text-red-700" : "text-slate-700"}`}>
+          <div className={`text-xs font-semibold ${data.drift_count > 0 ? "text-red-700" : "text-[#1F2A44]"}`}>
             {data.drift_count}
           </div>
           <div className="mt-0.5 text-xs text-gray-400">Local vs QBO count mismatch</div>
@@ -450,7 +450,7 @@ function ConflictsTab({ companyId }: { companyId: string }) {
       </label>
 
       <section>
-        <h3 className="mb-2 text-xs font-semibold text-slate-700">Sync Conflicts ({data.conflicts_total})</h3>
+        <h3 className="mb-2 text-xs font-semibold text-[#1F2A44]">Sync Conflicts ({data.conflicts_total})</h3>
         {data.conflicts.length === 0 ? (
           <p className="rounded-sm border border-gray-200 bg-white py-8 text-center text-xs text-gray-400">No conflicts.</p>
         ) : (
@@ -492,7 +492,7 @@ function ConflictsTab({ companyId }: { companyId: string }) {
       </section>
 
       <section>
-        <h3 className="mb-2 text-xs font-semibold text-slate-700">Reconciliation Alerts ({data.alerts.length})</h3>
+        <h3 className="mb-2 text-xs font-semibold text-[#1F2A44]">Reconciliation Alerts ({data.alerts.length})</h3>
         {data.alerts.length === 0 ? (
           <p className="rounded-sm border border-gray-200 bg-white py-8 text-center text-xs text-gray-400">No reconciliation alerts.</p>
         ) : (
@@ -725,7 +725,7 @@ export function QboReconcileCapturesPage() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`-mb-px border-b-2 px-3 py-2 text-xs font-medium ${
-              tab === t.id ? "border-slate-700 text-slate-800" : "border-transparent text-gray-500 hover:text-gray-700"
+              tab === t.id ? "border-[#1F2A44] text-[#1F2A44]" : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
             {t.label}

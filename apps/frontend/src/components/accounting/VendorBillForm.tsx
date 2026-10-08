@@ -371,13 +371,13 @@ export function VendorBillForm({
     <>
     <form className="space-y-3" onSubmit={handleSubmit}>
       {linkedWoId && linkedWoDisplayId ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]">
           Linked — <EntityLink kind="work_order" id={linkedWoId} label={entityLabel(linkedWoDisplayId, linkedWoId, "Work order")} />
         </div>
       ) : null}
       {linkedClaimId ? (
         <div
-          className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]"
           data-testid="vendor-bill-linked-claim"
         >
           Linked claim — <EntityLink kind="claim" id={linkedClaimId} label={entityLabel(null, linkedClaimId, "Claim")} />
@@ -385,7 +385,7 @@ export function VendorBillForm({
       ) : null}
       {linkedLegalMatterId ? (
         <div
-          className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]"
           data-testid="vendor-bill-linked-legal-matter"
         >
           Linked matter —{" "}
@@ -398,7 +398,7 @@ export function VendorBillForm({
       ) : null}
       {linkedLoadId ? (
         <div
-          className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]"
           data-testid="vendor-bill-linked-load"
         >
           Linked load —{" "}
@@ -430,13 +430,13 @@ export function VendorBillForm({
                 disabled={!operatingCompanyId}
               />
               {!operatingCompanyId ? (
-                <p className="mt-1 text-xs text-slate-600">Select an operating company to load vendors.</p>
+                <p className="mt-1 text-xs text-[#4B5563]">Select an operating company to load vendors.</p>
               ) : vendorsQuery.isLoading ? (
                 <p className="mt-1 text-xs text-gray-500">Loading vendors…</p>
               ) : vendorsQuery.isError ? (
                 <p className="mt-1 text-xs text-red-600">Couldn't load vendors. Refresh to try again.</p>
               ) : vendorOptions.length === 0 ? (
-                <p className="mt-1 text-xs text-slate-600">No vendors found for this company. Create a vendor first, or check the selected company.</p>
+                <p className="mt-1 text-xs text-[#4B5563]">No vendors found for this company. Create a vendor first, or check the selected company.</p>
               ) : null}
             </>
           </Field>
@@ -466,7 +466,7 @@ export function VendorBillForm({
 
       {/* CHROME-10: flat sections — no nested bordered panel inside the drawer */}
       <div className="space-y-1">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">Bill Details</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">Bill Details</div>
       </div>
 
       <div className="grid gap-2 md:grid-cols-6">
@@ -637,7 +637,7 @@ export function VendorBillForm({
         taxDisplayOnly
       />
 
-      <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
         Line amounts post together with the bill header as one transaction. Tax shown above is
         display-only until a tax expense line with a real CoA
         account is entered — the bill amount equals the sum of lines (no invented tax GL).
@@ -667,7 +667,7 @@ export function VendorBillForm({
           type="submit"
           data-testid={submitTestId}
           disabled={submitting || !operatingCompanyId || amountCents <= 0 || !vendorId.trim()}
-          className="rounded-sm bg-slate-800 px-4 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? "Saving…" : submitLabel}
         </button>

@@ -56,19 +56,19 @@ export function DetailTypesListPage() {
       label: "Account Type",
       sortable: true,
       sortValue: (row) => typeLabel.get(row.account_type_id) ?? "",
-      render: (row) => <span className="text-slate-700">{typeLabel.get(row.account_type_id) ?? "—"}</span>,
+      render: (row) => <span className="text-[#1F2A44]">{typeLabel.get(row.account_type_id) ?? "—"}</span>,
     },
     {
       key: "name",
       label: "Detail Type",
       sortable: true,
-      render: (row) => <span className="font-medium text-slate-800">{row.name}</span>,
+      render: (row) => <span className="font-medium text-[#1F2A44]">{row.name}</span>,
     },
     {
       key: "code",
       label: "Code",
       sortable: true,
-      render: (row) => <span className="text-xs text-slate-600">{row.code || "—"}</span>,
+      render: (row) => <span className="text-xs text-[#4B5563]">{row.code || "—"}</span>,
     },
     {
       key: "is_system",
@@ -76,7 +76,7 @@ export function DetailTypesListPage() {
       sortable: true,
       sortValue: (row) => (row.is_system ? "System (locked)" : "Custom"),
       render: (row) => (
-        <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${row.is_system ? "bg-slate-100 text-slate-600" : "bg-slate-200 text-slate-800"}`}>
+        <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${row.is_system ? "bg-[#F7F8FA] text-[#4B5563]" : "bg-[#E5E7EB] text-[#1F2A44]"}`}>
           {row.is_system ? "System (locked)" : "Custom"}
         </span>
       ),
@@ -85,7 +85,7 @@ export function DetailTypesListPage() {
       key: "sort_order",
       label: "Order",
       sortable: true,
-      render: (row) => <span className="text-slate-700">{row.sort_order}</span>,
+      render: (row) => <span className="text-[#1F2A44]">{row.sort_order}</span>,
     },
     {
       key: "is_active",
@@ -93,7 +93,7 @@ export function DetailTypesListPage() {
       sortable: true,
       sortValue: (row) => (row.is_active ? "Active" : "Inactive"),
       render: (row) => (
-        <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${row.is_active ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-600"}`}>
+        <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${row.is_active ? "bg-[#F7F8FA] text-[#1F2A44]" : "bg-[#F7F8FA] text-[#4B5563]"}`}>
           {row.is_active ? "Active" : "Inactive"}
         </span>
       ),
@@ -143,7 +143,7 @@ export function DetailTypesListPage() {
         }
       />
 
-      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
         Detail Types sub-classify each Account Type. The canonical set is system-locked and shared across
         entities; you can add your own custom detail types per entity. Account Type itself is a fixed
         reference taxonomy (read-only).
@@ -170,7 +170,7 @@ export function DetailTypesListPage() {
       </div>
 
       {!companyId ? (
-        <div className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-xs text-slate-600">Select a company to view detail types.</div>
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-xs text-[#4B5563]">Select a company to view detail types.</div>
       ) : listQuery.isError ? (
         <ListErrorState
           title="Couldn't load detail types"
@@ -186,7 +186,7 @@ export function DetailTypesListPage() {
             limit={DETAIL_TYPES_LIST_CAP}
             total={listQuery.data?.total ?? null}
             hint="Refine the account type or status filters to see the rest."
-            className="text-xs text-slate-600"
+            className="text-xs text-[#4B5563]"
           />
           <ParityTable
           columns={columns}
@@ -255,12 +255,12 @@ function DetailTypeModal({
             value={form.account_type_id}
             disabled={mode === "edit"}
             onChange={(e) => setForm((v) => ({ ...v, account_type_id: e.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-[#F7F8FA]"
           >
             <option value="">Select an account type…</option>
             {accountTypes.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </SelectCombobox>
-          {mode === "edit" ? <span className="mt-1 block text-xs font-normal text-slate-400">Account Type is fixed after create.</span> : null}
+          {mode === "edit" ? <span className="mt-1 block text-xs font-normal text-[#6B7280]">Account Type is fixed after create.</span> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
