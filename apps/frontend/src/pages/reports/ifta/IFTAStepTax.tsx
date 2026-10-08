@@ -112,22 +112,22 @@ export function IFTAStepTax({ operatingCompanyId, preparationId, quarter, year }
   );
 
   return (
-    <section className="rounded-sm border border-slate-300 bg-white">
-      <div className="border-b border-slate-300 bg-slate-100 px-3 py-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Step 3 · Tax owed (Q{quarter} {year})</h3>
-        <p className="text-xs text-slate-700">Per-state IFTA tax using official quarterly rates.</p>
+    <section className="rounded-sm border border-[#E5E7EB] bg-white">
+      <div className="border-b border-[#E5E7EB] bg-[#E5E7EB] px-3 py-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">Step 3 · Tax owed (Q{quarter} {year})</h3>
+        <p className="text-xs text-[#1F2A44]">Per-state IFTA tax using official quarterly rates.</p>
       </div>
       <div className="space-y-2 px-3 py-3 text-xs">
         <button
           type="button"
-          className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-1.5 font-semibold text-slate-700 disabled:opacity-50"
+          className="rounded-sm border border-[#E5E7EB] bg-[#E5E7EB] px-3 py-1.5 font-semibold text-[#1F2A44] disabled:opacity-50"
           disabled={runMutation.isPending}
           onClick={() => void runMutation.mutateAsync()}
         >
           {runMutation.isPending ? "Calculating…" : "Run Step 3 — calculate tax"}
         </button>
         {prepQuery.data?.tax_calculated_at ? (
-          <p className="text-slate-600">Last calculated: {mmmDdTime(prepQuery.data.tax_calculated_at)}</p>
+          <p className="text-[#4B5563]">Last calculated: {mmmDdTime(prepQuery.data.tax_calculated_at)}</p>
         ) : null}
         {prepQuery.isError ? (
           <ListErrorState
@@ -147,7 +147,7 @@ export function IFTAStepTax({ operatingCompanyId, preparationId, quarter, year }
           />
         )}
         {rows.length > 0 ? (
-          <p className="text-right font-semibold text-slate-700">
+          <p className="text-right font-semibold text-[#1F2A44]">
             Total net tax: {fmtMoney(totalOwed)}
           </p>
         ) : null}

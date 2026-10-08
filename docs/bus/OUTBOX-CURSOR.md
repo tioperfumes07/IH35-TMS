@@ -1,3 +1,13 @@
+## 2026-10-08T15:20Z · BANK leftover slate — IFTA preparer / step tax / jurisdiction calc
+
+FINDING: BANK-F91213 — IFTAPreparer / IFTAStepTax / Step3JurisdictionCalc Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25873 squash `dcf13e71c8` (BANK-F91212 bookload equip/cust/ocr)
+GUARD: scripts/verify-ifta-prep-tax-jurisdiction-slate-leftover-chrome.mjs + verify-steps/3708 piggyback
+LIVE PROOF: verify-ifta-prep-tax-jurisdiction-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3708 piggyback + OUTBOX
+
 ## 2026-10-08T15:05Z · BANK leftover slate — book-load equipment / customer / OCR drop zone
 
 FINDING: BANK-F91212 — BookLoadEquipmentSection / BookLoadCustomerSection / OcrDropZone Tailwind slate-* → house tokens

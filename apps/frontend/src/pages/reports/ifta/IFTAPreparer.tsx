@@ -37,7 +37,7 @@ export function IFTAPreparer() {
         title="IFTA Quarterly Preparer"
         subtitle={`Q${quarter} ${year} · Steps 1–4 (miles, gallons, tax, CSV)`}
         actions={
-          <Link to="/reports" className="text-xs font-semibold text-slate-700 hover:underline">
+          <Link to="/reports" className="text-xs font-semibold text-[#1F2A44] hover:underline">
             ← Reports
           </Link>
         }
@@ -45,21 +45,21 @@ export function IFTAPreparer() {
 
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
 
-      <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
         Tax filing prep only — no ledger posting. Accrual basis under the owner-locked reporting policy. Run Steps 1→4 in
         order; CSV uploads to secure storage with signed download.
       </p>
 
       {!prepReady ? (
         <div className="flex flex-wrap items-end gap-2">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700">
+          <label className="flex flex-col gap-1 text-xs font-semibold text-[#1F2A44]">
             Filing quarter
             <select
               aria-label="Filing quarter"
               value={selectedLabel}
               onChange={(event) => setSelectedLabel(event.target.value)}
               disabled={!companyId || createMutation.isPending}
-              className="rounded-sm border border-slate-300 px-2 py-1.5 text-xs font-normal text-slate-900 disabled:opacity-50"
+              className="rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs font-normal text-[#0F1219] disabled:opacity-50"
             >
               {quarterOptions.map((option) => {
                 const label = toQuarterLabel(option);
@@ -73,7 +73,7 @@ export function IFTAPreparer() {
           </label>
           <button
             type="button"
-            className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 disabled:opacity-50"
+            className="rounded-sm border border-[#6B7280] bg-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219] disabled:opacity-50"
             disabled={!companyId || createMutation.isPending}
             onClick={() => void createMutation.mutateAsync()}
           >
