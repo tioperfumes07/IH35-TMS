@@ -172,7 +172,7 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
           rows={query.data?.complaints ?? []}
           rowKey={(row) => String(row.id)}
           rowClassName={(row) =>
-            deepLinkComplaintId && String(row.id) === deepLinkComplaintId ? "bg-[#F7F8FA] ring-1 ring-slate-400" : ""
+            deepLinkComplaintId && String(row.id) === deepLinkComplaintId ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]" : ""
           }
           loading={query.isLoading}
           emptyText="No complaints found."
