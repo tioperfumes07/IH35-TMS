@@ -15,11 +15,11 @@ import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../.
 const STATUS_OPTIONS = ["draft", "pending_review", "approved", "active", "retired"] as const;
 
 function statusPillClass(status: string) {
-  if (status === "active") return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
-  if (status === "approved") return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
-  if (status === "pending_review") return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
-  if (status === "retired") return "rounded-sm bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-700";
-  return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
+  if (status === "active") return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]";
+  if (status === "approved") return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]";
+  if (status === "pending_review") return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]";
+  if (status === "retired") return "rounded-sm bg-[#E5E7EB] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]";
+  return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
 }
 
 export function LegalTemplatesListPage() {
