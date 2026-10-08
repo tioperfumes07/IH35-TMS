@@ -79,7 +79,7 @@ export function InTransitIssuesTable({ issues, totalCount, loading = false, onTr
   const rowActions = (issue: InTransitIssue) => (
     <button
       type="button"
-      className="rounded-sm border border-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+      className="rounded-sm border border-[#E5E7EB] px-2 py-0.5 text-xs font-semibold text-[#1F2A44] hover:bg-[#F7F8FA]"
       onClick={() => onTriage(issue)}
     >
       Triage
@@ -89,7 +89,7 @@ export function InTransitIssuesTable({ issues, totalCount, loading = false, onTr
   return (
     <div className="space-y-2">
     {totalCount > issues.length ? (
-      <p className="text-xs text-slate-500" data-testid="in-transit-issues-range">
+      <p className="text-xs text-[#6B7280]" data-testid="in-transit-issues-range">
         Showing {issues.length} of {totalCount} in-transit issues.
       </p>
     ) : null}

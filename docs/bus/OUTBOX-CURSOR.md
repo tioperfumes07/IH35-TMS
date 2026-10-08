@@ -1,3 +1,13 @@
+## 2026-10-09T01:05Z · BANK leftover slate — Inspections / DriversMasterData / InTransitIssues
+
+FINDING: BANK-F91272 — InspectionsPage / DriversMasterDataPage / InTransitIssuesTable Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25950 squash `7e8f9f9399` (BANK-F91271 DotInspections/VehiclesMasterData/PartsMasterData)
+GUARD: scripts/verify-insp-drv-transit-slate-leftover-chrome.mjs + verify-steps/3480 piggyback
+LIVE PROOF: verify-insp-drv-transit-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3480 piggyback + OUTBOX
+
 ## 2026-10-09T01:00Z · BANK leftover slate — DotInspections / VehiclesMasterData / PartsMasterData
 
 FINDING: BANK-F91271 — DotInspectionsPage / VehiclesMasterDataPage / PartsMasterDataPage Tailwind slate-* → house tokens

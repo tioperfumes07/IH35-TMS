@@ -298,7 +298,7 @@ export function InspectionsPage() {
         alwaysVisible: true,
         render: (row) => (
           <div className="space-x-2">
-            <button type="button" className="text-slate-700 underline" onClick={() => openEdit(row)}>
+            <button type="button" className="text-[#1F2A44] underline" onClick={() => openEdit(row)}>
               Edit
             </button>
             <button
@@ -346,7 +346,7 @@ export function InspectionsPage() {
           rows={rows}
           columns={columns}
           rowKey={(row) => String(row.id)}
-          rowClassName={(row) => deepLinkInspectionId === String(row.id) ? "bg-slate-100 ring-1 ring-slate-400" : ""}
+          rowClassName={(row) => deepLinkInspectionId === String(row.id) ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]" : ""}
           loading={listQ.isPending}
           storageKey="maintenance-inspections"
           emptyText="No inspections logged yet."
@@ -368,7 +368,7 @@ export function InspectionsPage() {
           pageSize={INSPECTIONS_PAGE_SIZE}
           hidePager
         />
-        <div className="mt-3 flex items-center justify-between text-xs text-slate-600" data-testid="maintenance-inspections-server-pager">
+        <div className="mt-3 flex items-center justify-between text-xs text-[#4B5563]" data-testid="maintenance-inspections-server-pager">
           <span>
             {totalCount === 0
               ? "0 of 0"
