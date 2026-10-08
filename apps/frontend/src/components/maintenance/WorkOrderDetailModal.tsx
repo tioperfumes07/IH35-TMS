@@ -45,7 +45,7 @@ function formatDuration(secondsValue: unknown) {
 function ModalSection({ title, children }: { title?: string; children: ReactNode }) {
   return (
     <section className="space-y-1 border-t border-gray-100 pt-3 first:border-t-0 first:pt-0">
-      {title ? <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">{title}</p> : null}
+      {title ? <p className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">{title}</p> : null}
       {children}
     </section>
   );
@@ -100,7 +100,7 @@ export function WorkOrderDetailModal({ open, workOrder, loading, readError, onRe
         {readError ? (
           <ListErrorBanner message={readError} onRetry={onRetry} />
         ) : (
-          <div className="py-8 text-center text-xs text-slate-600" aria-live="polite">
+          <div className="py-8 text-center text-xs text-[#4B5563]" aria-live="polite">
             {loading ? "Loading work order details…" : "Work order details are unavailable."}
           </div>
         )}
@@ -121,9 +121,9 @@ export function WorkOrderDetailModal({ open, workOrder, loading, readError, onRe
     roadsideResponse <= 0
       ? "text-gray-700"
       : roadsideResponse < 60
-        ? "text-slate-700"
+        ? "text-[#1F2A44]"
         : roadsideResponse <= 120
-          ? "text-slate-600"
+          ? "text-[#4B5563]"
           : "text-red-700";
 
   const displayId = entityLabel(workOrder.display_id, workOrder.id, "Work order");
@@ -197,7 +197,7 @@ export function WorkOrderDetailModal({ open, workOrder, loading, readError, onRe
           <ModalSection title="Source In-Transit Issue">
             <div>
               <Link
-                className="font-semibold text-slate-700 hover:underline"
+                className="font-semibold text-[#1F2A44] hover:underline"
                 to={`/dispatch/in-transit-issues?issue_id=${encodeURIComponent(String(workOrder.source_intransit_issue_id))}`}
               >
                 View source issue in Dispatch
@@ -234,7 +234,7 @@ export function WorkOrderDetailModal({ open, workOrder, loading, readError, onRe
         ) : (
           <ModalSection>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Parts Links (IS/IT)</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Parts Links (IS/IT)</p>
               {!["complete", "completed"].includes(status) ? (
                 <Button variant="secondary" size="sm" disabled={partsLinksQuery.isError} onClick={() => setAddPartsLinkOpen(true)}>
                   + Add parts link

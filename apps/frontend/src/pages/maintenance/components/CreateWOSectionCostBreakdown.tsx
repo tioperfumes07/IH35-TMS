@@ -49,11 +49,11 @@ export function CreateWOSectionCostBreakdown({ control, register, watch }: Props
   );
 
   return (
-    <section className="rounded-sm border border-slate-200 bg-slate-50 p-3">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">C. Cost Breakdown</h3>
+    <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">C. Cost Breakdown</h3>
       <div className="space-y-2">
         {fields.map((field, idx) => (
-          <div key={field.id} className="grid grid-cols-1 gap-2 rounded-sm border border-slate-200 bg-white p-2 md:grid-cols-7">
+          <div key={field.id} className="grid grid-cols-1 gap-2 rounded-sm border border-[#E5E7EB] bg-white p-2 md:grid-cols-7">
             <SelectCombobox {...register(`line_items.${idx}.line_type`)} className="h-8 rounded-sm border border-gray-300 px-2 text-xs">
               <option value="parts">Parts</option>
               <option value="labor">Labor</option>
@@ -90,12 +90,12 @@ export function CreateWOSectionCostBreakdown({ control, register, watch }: Props
           + Create line
         </Button>
       </div>
-      <div className="mt-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs">
+      <div className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs">
         Parts Subtotal: <span className="font-semibold">{formatUsd(totals.parts)}</span> · Labor Subtotal:{" "}
         <span className="font-semibold">{formatUsd(totals.labor)}</span> · Estimated Total:{" "}
         <span className="font-semibold">{formatUsd(totals.total)}</span>
       </div>
-      <div className="mt-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
+      <div className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]">
         On save: work order and accounting artifacts are created according to payment timing.
       </div>
     </section>

@@ -1,3 +1,13 @@
+## 2026-10-08T19:35Z · BANK leftover slate — WorkOrderDetailModal / CreateWO reconcile / cost breakdown
+
+FINDING: BANK-F91231 — WorkOrderDetailModal / CreateWOSectionReconcile / CreateWOSectionCostBreakdown Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25898 squash `231d3b2f55` (BANK-F91230 drv integrity/msg/onboard)
+GUARD: scripts/verify-wo-detail-create-slate-leftover-chrome.mjs + verify-steps/3656 piggyback
+LIVE PROOF: verify-wo-detail-create-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3656 piggyback + OUTBOX
+
 ## 2026-10-08T19:25Z · BANK leftover slate — DriverIntegrity / MessagesInbox / OnboardingWizard
 
 FINDING: BANK-F91230 — DriverIntegritySection / MessagesInboxPage / OnboardingWizardPage Tailwind slate-* → house tokens

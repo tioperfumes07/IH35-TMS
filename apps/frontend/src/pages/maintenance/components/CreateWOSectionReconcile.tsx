@@ -117,14 +117,14 @@ export function CreateWOSectionReconcile({
       key: "label",
       label: " ",
       alwaysVisible: true,
-      render: (row) => <span className="font-medium text-slate-700">{row.label}</span>,
+      render: (row) => <span className="font-medium text-[#1F2A44]">{row.label}</span>,
     },
     {
       key: "woTotalCents",
       label: "WO total",
       sortable: true,
       className: "text-right",
-      cellClass: "text-right tabular-nums text-slate-900",
+      cellClass: "text-right tabular-nums text-[#0F1219]",
       render: (row) => fmt(row.woTotalCents),
     },
     {
@@ -156,7 +156,7 @@ export function CreateWOSectionReconcile({
       className: "text-right",
       cellClass: "text-right tabular-nums font-semibold",
       render: (row) => (
-        <span className={row.isTied ? "text-slate-500" : "text-[#A32D2D]"}>
+        <span className={row.isTied ? "text-[#6B7280]" : "text-[#A32D2D]"}>
           {row.isTied ? "tie" : fmt(row.varianceCents)}
         </span>
       ),
@@ -164,7 +164,7 @@ export function CreateWOSectionReconcile({
   ];
 
   return (
-    <section data-testid="wo-vendor-invoice-reconcile" className="rounded-sm border border-slate-300 bg-slate-50 p-2 text-xs">
+    <section data-testid="wo-vendor-invoice-reconcile" className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs">
       <div className="mb-1 font-semibold text-[#1F2A44]">Vendor Invoice Reconcile</div>
       <div className="min-w-[360px] overflow-x-auto">
         <ParityTable<ReconcileRow>
@@ -180,7 +180,7 @@ export function CreateWOSectionReconcile({
         />
       </div>
       {tied ? (
-        <div data-testid="reconcile-status-ok" className="mt-1 text-xs font-semibold text-slate-600">
+        <div data-testid="reconcile-status-ok" className="mt-1 text-xs font-semibold text-[#4B5563]">
           Reconciled — WO parts &amp; labor tie to the vendor invoice.
         </div>
       ) : (
