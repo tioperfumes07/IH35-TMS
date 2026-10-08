@@ -1,3 +1,13 @@
+## 2026-10-08T12:35Z · BANK leftover slate — load exception reasons / termination reasons / domain flyout
+
+FINDING: BANK-F91204 — LoadExceptionReasonsListPage / TerminationReasonsListPage / DomainFlyout Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25858 squash `bb8d5a53d2` (BANK-F91203 legal/tos/privacy)
+GUARD: scripts/verify-lists-exc-term-slate-leftover-chrome.mjs + verify-steps/1354 piggyback
+LIVE PROOF: verify-lists-exc-term-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 1354 piggyback + OUTBOX
+
 ## 2026-10-08T12:25Z · BANK leftover slate — legal templates / terms of service / privacy policy
 
 FINDING: BANK-F91203 — LegalTemplatesListPage / TermsOfServicePage / PrivacyPolicyPage Tailwind slate-* → house tokens
