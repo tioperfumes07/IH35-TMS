@@ -287,12 +287,14 @@ function repoProblems() {
     if (!/ledgerInflight/.test(svc)) {
       problems.push("module-matrix must single-flight ledger parse (public-repo hang)");
     }
-    const devinLive = fs
-      .readFileSync(path.join(ROOT, "docs/bus/OUTBOX-DEVIN.md"), "utf8")
-      .split("\n")
-      .filter((l) => /LIVE PASS/i.test(l)).length;
+    // BUS-DIET-2026-08-31 rotated the hot OUTBOX to <=200 lines; history lives in docs/bus/archive/.
+    const devinLive = ["docs/bus/OUTBOX-DEVIN.md", "docs/bus/archive/OUTBOX-DEVIN-2026-08-31.md"]
+      .map((rel) => path.join(ROOT, rel))
+      .filter((p) => fs.existsSync(p))
+      .map((p) => fs.readFileSync(p, "utf8").split("\n").filter((l) => /LIVE PASS/i.test(l)).length)
+      .reduce((a, b) => a + b, 0);
     if (devinLive < 3000) {
-      problems.push(`OUTBOX-DEVIN.md must keep historical LIVE PASS lines (have ${devinLive}, need >=3000)`);
+      problems.push(`OUTBOX-DEVIN.md (+archive) must keep historical LIVE PASS lines (have ${devinLive}, need >=3000)`);
     }
     if (!/module=\(\[a-z0-9_-\]\+\)/.test(svc) && !svc.includes("module=([a-z0-9_-]+)")) {
       problems.push("module-matrix.service.ts must salvage Devin module= + leaf= LIVE PASS lines");

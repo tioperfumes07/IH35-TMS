@@ -59,7 +59,7 @@ export function checkBookLoad(text) {
   if (!/import\s*\{\s*properPersonOrPlaceName\s*\}\s*from\s*"\.\.\/\.\.\/\.\.\/lib\/properDisplayText"/.test(text)) {
     problems.push("BookLoadModalV4: properPersonOrPlaceName is not imported.");
   }
-  if (!/city:\s*stop\.city\?\.trim\(\)\s*\?\s*properPersonOrPlaceName\(stop\.city\)\s*:\s*""/.test(text)) {
+  if (!/city:\s*\w+\.city\??\.trim\(\)\s*\?\s*properPersonOrPlaceName\(\w+\.city\)\s*:\s*""/.test(text)) {
     problems.push("BookLoadModalV4: stop city is not wrapped in properPersonOrPlaceName().");
   }
   if (!/address_line1:\s*stop\.address_line1\?\.trim\(\)\s*\?\s*properPersonOrPlaceName\(stop\.address_line1\)\s*:\s*""/.test(text)) {
@@ -132,8 +132,8 @@ function selftest() {
   }
 
   const blOffender1 = bookLoadReal.replace(
-    'city: stop.city?.trim() ? properPersonOrPlaceName(stop.city) : "",',
-    "city: stop.city,"
+    'city: place.city.trim() ? properPersonOrPlaceName(place.city) : "",',
+    "city: place.city,"
   );
   const p5 = checkBookLoad(blOffender1);
   if (!p5.some((m) => m.includes("city"))) {

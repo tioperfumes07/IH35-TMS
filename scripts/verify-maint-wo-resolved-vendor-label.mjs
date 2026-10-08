@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["maintenance"],"cols":["connectivity","reverse_link"],"leafRe":"^maintenance\\.(modal\\.work_order_detail|panel\\.work_orders)$","task":"MAINT-WO-RESOLVED-VENDOR-LABEL"} */
 import fs from "node:fs";
 
 const LABEL = "verify-maint-wo-resolved-vendor-label";
@@ -44,7 +45,7 @@ if (process.argv.includes("--selftest")) {
     ["pdfRoute", "[resolvedVendorId, operatingCompanyId]", "[resolvedVendorId, query.data.operating_company_id]"],
   ];
   for (const [key, from, to] of mutations) {
-    const changed = { ...parts, [key]: parts[key].replace(from, to) };
+    const changed = { ...parts, [key]: parts[key].split(from).join(to) };
     if (changed[key] === parts[key] || audit(changed).length === 0) {
       console.error(`${LABEL} SELFTEST FAIL — mutation escaped: ${from}`);
       process.exit(1);
