@@ -242,7 +242,7 @@ export function OnboardingWizardPage() {
       />
 
       {completed ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-4 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#1F2A44]">
           Onboarding {session.admin_override ? "completed with admin override" : "completed"}.
           {session.admin_override_reason ? ` Reason: ${session.admin_override_reason}` : null}
         </div>
@@ -354,7 +354,7 @@ export function OnboardingWizardPage() {
             {activeStep === 6 ? (
               <button
                 type="button"
-                className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 disabled:opacity-50"
+                className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#1F2A44] disabled:opacity-50"
                 disabled={completeMut.isPending}
                 onClick={() => void completeMut.mutateAsync({ companyId, sessionId, generation: actionGenerationRef.current })}
               >
@@ -363,7 +363,7 @@ export function OnboardingWizardPage() {
             ) : null}
             <button
               type="button"
-              className="rounded-sm border px-3 py-1.5 text-xs text-slate-700"
+              className="rounded-sm border px-3 py-1.5 text-xs text-[#1F2A44]"
               onClick={() => setShowOverride((v) => !v)}
             >
               Admin override
@@ -372,7 +372,7 @@ export function OnboardingWizardPage() {
         ) : null}
 
         {showOverride && !completed ? (
-          <div className="mt-4 space-y-2 rounded-sm border border-slate-200 bg-slate-100 p-3">
+          <div className="mt-4 space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
             <label className="block text-xs">
               <span className="font-medium">Override reason (required)</span>
               <textarea
@@ -384,7 +384,7 @@ export function OnboardingWizardPage() {
             </label>
             <button
               type="button"
-              className="rounded-sm bg-slate-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+              className="rounded-sm bg-[#4B5563] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
               disabled={overrideReason.trim().length < 10 || overrideMut.isPending}
               onClick={() => void overrideMut.mutateAsync({ companyId, sessionId, generation: actionGenerationRef.current, reason: overrideReason.trim() })}
             >

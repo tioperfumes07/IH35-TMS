@@ -54,12 +54,12 @@ export function DriverIntegritySection({ driverId }: { driverId: string }) {
       {
         key: "arithmetic",
         label: "Arithmetic",
-        render: (row) => <span className="text-xs text-slate-700">{row.arithmetic || "—"}</span>,
+        render: (row) => <span className="text-xs text-[#1F2A44]">{row.arithmetic || "—"}</span>,
       },
       {
         key: "basis",
         label: "Basis",
-        render: (row) => <span className="text-xs text-slate-600">{row.basis || "—"}</span>,
+        render: (row) => <span className="text-xs text-[#4B5563]">{row.basis || "—"}</span>,
       },
       {
         key: "evidence",
@@ -82,13 +82,13 @@ export function DriverIntegritySection({ driverId }: { driverId: string }) {
     >
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h2 className="text-xs font-semibold text-slate-900">Integrity profile</h2>
-          <p className="text-xs text-slate-600">
+          <h2 className="text-xs font-semibold text-[#0F1219]">Integrity profile</h2>
+          <p className="text-xs text-[#4B5563]">
             Named components with arithmetic and evidence — no invented weighted score.
           </p>
         </div>
         {profile ? (
-          <p className="text-xs text-slate-700" data-testid="driver-integrity-score-line">
+          <p className="text-xs text-[#1F2A44]" data-testid="driver-integrity-score-line">
             <span className="tabular-nums font-semibold">{profile.score.findings}</span> findings ·{" "}
             <span className="tabular-nums font-semibold">{profile.score.suspicions}</span> suspicions ·{" "}
             <span className="tabular-nums font-semibold">{complaints}</span> complaints ·{" "}
@@ -96,7 +96,7 @@ export function DriverIntegritySection({ driverId }: { driverId: string }) {
               kind="complaints_driver"
               id={driverId}
               label="Open complaints →"
-              className="font-semibold text-slate-700 underline"
+              className="font-semibold text-[#1F2A44] underline"
             />
           </p>
         ) : null}
@@ -110,14 +110,14 @@ export function DriverIntegritySection({ driverId }: { driverId: string }) {
           onRetry={() => void q.refetch()}
         />
       ) : q.isLoading ? (
-        <p className="text-xs text-slate-500">Loading integrity…</p>
+        <p className="text-xs text-[#6B7280]">Loading integrity…</p>
       ) : !profile ? (
-        <p className="text-xs text-slate-500" data-testid="driver-integrity-empty">
+        <p className="text-xs text-[#6B7280]" data-testid="driver-integrity-empty">
           No integrity signals for this driver in the last 30 days.
         </p>
       ) : (
         <>
-          <p className="mb-2 text-xs text-slate-600" data-testid="driver-integrity-arithmetic">
+          <p className="mb-2 text-xs text-[#4B5563]" data-testid="driver-integrity-arithmetic">
             {profile.score.arithmetic}
           </p>
           <ParityTable

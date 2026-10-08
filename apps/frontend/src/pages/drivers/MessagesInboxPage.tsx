@@ -45,7 +45,7 @@ function ConversationList({
             type="button"
             data-testid={`inbox-conversation-${row.driver_id}`}
             className={`flex w-full flex-col gap-1 px-3 py-3 text-left hover:bg-gray-50 ${
-              selectedDriverId === row.driver_id ? "bg-slate-100" : ""
+              selectedDriverId === row.driver_id ? "bg-[#F7F8FA]" : ""
             }`}
             onClick={() => onSelect(row.driver_id)}
           >
@@ -100,7 +100,7 @@ function ThreadPane({
             kind="driver"
             id={driverId}
             label={entityLabel(driverName, driverId, "Driver")}
-            className="text-xs text-slate-700 hover:underline"
+            className="text-xs text-[#1F2A44] hover:underline"
             data-testid="messages-inbox-driver-profile-link"
           />
         </div>
@@ -122,8 +122,8 @@ function ThreadPane({
           <div
             key={msg.id}
             className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${
-              msg.sender_side === "office" ? "ml-auto bg-slate-100 text-slate-700" : "mr-auto bg-gray-100 text-gray-900"
-            } ${!msg.read_at && msg.sender_side === "driver" ? "ring-2 ring-slate-400" : ""}`}
+              msg.sender_side === "office" ? "ml-auto bg-[#F7F8FA] text-[#1F2A44]" : "mr-auto bg-gray-100 text-gray-900"
+            } ${!msg.read_at && msg.sender_side === "driver" ? "ring-2 ring-[#6B7280]" : ""}`}
           >
             <p>{msg.message}</p>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
@@ -131,7 +131,7 @@ function ThreadPane({
               <span>{msg.channel}</span>
               <span>{msg.delivery_status}</span>
               {!msg.read_at && msg.sender_side === "driver" ? (
-                <button type="button" className="font-semibold text-slate-700 underline" onClick={() => onMarkRead(msg.id)}>
+                <button type="button" className="font-semibold text-[#1F2A44] underline" onClick={() => onMarkRead(msg.id)}>
                   Mark read
                 </button>
               ) : null}
