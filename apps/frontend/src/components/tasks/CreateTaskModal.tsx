@@ -206,7 +206,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
   );
 
   const labelCls = "block text-xs font-semibold uppercase tracking-wide text-gray-600";
-  const inputCls = "mt-1 w-full rounded-sm border border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-800 focus:border-slate-300 focus:outline-hidden";
+  const inputCls = "mt-1 w-full rounded-sm border border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-800 focus:border-[#E5E7EB] focus:outline-hidden";
 
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title="Create task" modalKind="create-task" sizePreset="md">
@@ -232,7 +232,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
         </div>
 
         {presetLink ? (
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-[#4B5563]">
             Linked to <span className="font-semibold">{presetLink.label ?? `${presetLink.target_type}`}</span> — appears in its Tasks tab.
           </p>
         ) : null}
@@ -273,7 +273,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
               <button
                 type="button"
                 disabled={!newProfileName.trim() || addProfileMutation.isPending}
-                className="whitespace-nowrap rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+                className="whitespace-nowrap rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs font-semibold text-[#1F2A44] hover:bg-[#E5E7EB] disabled:opacity-50"
                 onClick={() => addProfileMutation.mutate()}
               >
                 {addProfileMutation.isPending ? "Adding…" : "Save"}
