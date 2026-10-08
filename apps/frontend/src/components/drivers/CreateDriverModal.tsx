@@ -211,8 +211,8 @@ type DriverCreateModalSnapshot = {
 function getDetectionSeverityClass(detection: ReturningDetectionResult | null) {
   if (!detection) return "border-gray-300 bg-gray-50 text-gray-800";
   if (detection.severity_summary.severe_count > 0) return "border-red-300 bg-red-50 text-red-900";
-  if (detection.severity_summary.warning_count > 0) return "border-slate-300 bg-slate-100 text-slate-800";
-  return "border-slate-300 bg-slate-100 text-slate-700";
+  if (detection.severity_summary.warning_count > 0) return "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]";
+  return "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]";
 }
 
 type CreateDriverModalProps = {
@@ -827,10 +827,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             <FormErrorBanner message={driverApiError} />
           </div>
           <div
-            className="col-span-full space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3"
+            className="col-span-full space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3"
             data-testid="driver-create-wizard"
           >
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            <div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
               Step {wizardStep} of {DRIVER_CREATE_WIZARD_STEPS.length}
             </div>
             <div className="flex flex-wrap gap-2" role="list" aria-label="Create driver steps">
@@ -842,8 +842,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                   data-active={wizardStep === step.id ? "true" : "false"}
                   className={
                     wizardStep === step.id
-                      ? "rounded-sm bg-slate-800 px-2 py-1 text-xs font-semibold text-white"
-                      : "rounded-sm bg-[var(--surface-unselected)] px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200"
+                      ? "rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white"
+                      : "rounded-sm bg-[var(--surface-unselected)] px-2 py-1 text-xs font-medium text-[#4B5563] ring-1 ring-[#E5E7EB]"
                   }
                 >
                   {`${step.id}. ${step.label}`}
@@ -861,7 +861,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 status={0}
                 message={companiesQuery.error instanceof Error ? companiesQuery.error.message : undefined}
                 onRetry={() => void companiesQuery.refetch()}
-                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+                className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] py-4"
               />
             ) : null}
             <Combobox
@@ -932,7 +932,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 status={0}
                 message={usStatesQuery.error instanceof Error ? usStatesQuery.error.message : undefined}
                 onRetry={() => void usStatesQuery.refetch()}
-                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+                className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] py-4"
               />
             ) : null}
             <Combobox
@@ -1168,7 +1168,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       status={0}
                       message={mexicoStatesQuery.error instanceof Error ? mexicoStatesQuery.error.message : undefined}
                       onRetry={() => void mexicoStatesQuery.refetch()}
-                      className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+                      className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] py-4"
                     />
                   ) : null}
                   <Combobox
@@ -1298,13 +1298,13 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           ) : null}
 
           {wizardStep === 4 ? (
-          <div className="col-span-full space-y-3 rounded-md border border-slate-200 p-3" data-testid="driver-create-dq-step">
+          <div className="col-span-full space-y-3 rounded-md border border-[#E5E7EB] p-3" data-testid="driver-create-dq-step">
             {/* DRV-03 — DQF CHECKLIST, live-catalog-driven (compliance.required_document_types,
                 entity_kind='driver'), rendered in the catalog's own sort_order. Never a second
                 hardcoded copy of this list — a code added/reordered/promoted to hard_block in the
                 catalog appears/blocks here automatically. */}
-            <div className="text-xs font-semibold text-slate-800">Driver Qualification File checklist</div>
-            <p className="text-xs text-slate-600">
+            <div className="text-xs font-semibold text-[#1F2A44]">Driver Qualification File checklist</div>
+            <p className="text-xs text-[#4B5563]">
               In hire order. Items this wizard can record now write the SAME record the driver's
               compliance chip reads — not just a form field. A row this wizard cannot capture yet is
               honestly shown as open, to complete on the driver's DQF profile right after Save.
@@ -1315,24 +1315,24 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 status={requiredDocTypesQuery.error instanceof ApiError ? requiredDocTypesQuery.error.status : 0}
                 message={userFacingApiError(requiredDocTypesQuery.error, "Required document types are unavailable")}
                 onRetry={() => void requiredDocTypesQuery.refetch()}
-                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+                className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] py-4"
               />
             ) : null}
             {requiredDocTypesQuery.isPending ? (
-              <p className="rounded-sm border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700" role="status">
+              <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#4B5563]" role="status">
                 Loading the DQF checklist…
               </p>
             ) : null}
             <div className="space-y-2">
               {driverDqfChecklist.map((item) => {
                 const captured = dqfItemCaptured(item.code);
-                // §7 locked palette: bg-slate-100 / text-slate-600|700 / border-slate-200 only —
+                // §7 locked palette: bg-[#F7F8FA] / text-[#4B5563]|700 / border-[#E5E7EB] only —
                 // status is carried by the LABEL TEXT, not a color, on this non-financial surface.
                 const statusPill = captured
-                  ? { text: "Will be on file", cls: "bg-slate-100 text-slate-700 border-slate-200" }
+                  ? { text: "Will be on file", cls: "bg-[#F7F8FA] text-[#4B5563] border-[#E5E7EB]" }
                   : item.enforcement === "hard_block"
-                    ? { text: "Required — missing", cls: "bg-slate-100 text-slate-700 border-slate-200 font-bold" }
-                    : { text: "Open — complete after Save", cls: "bg-slate-100 text-slate-600 border-slate-200" };
+                    ? { text: "Required — missing", cls: "bg-[#F7F8FA] text-[#4B5563] border-[#E5E7EB] font-bold" }
+                    : { text: "Open — complete after Save", cls: "bg-[#F7F8FA] text-[#4B5563] border-[#E5E7EB]" };
                 return (
                   <div key={item.id} className="p-2" data-testid={`driver-create-dqf-item-${item.code}`}>
                     <div className="flex items-center justify-between gap-2">
@@ -1387,9 +1387,9 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                                 return next;
                               });
                             }}
-                            className="rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-xs"
+                            className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1.5 text-xs"
                           />
-                          {pendingDocs.medical ? <span className="text-xs text-slate-600">{pendingDocs.medical.name}</span> : null}
+                          {pendingDocs.medical ? <span className="text-xs text-[#4B5563]">{pendingDocs.medical.name}</span> : null}
                         </div>
                       </div>
                     ) : null}
@@ -1449,9 +1449,9 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                               return next;
                             });
                           }}
-                          className="rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-xs"
+                          className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1.5 text-xs"
                         />
-                        {pendingDocs.tax_form ? <span className="text-xs text-slate-600">{pendingDocs.tax_form.name}</span> : null}
+                        {pendingDocs.tax_form ? <span className="text-xs text-[#4B5563]">{pendingDocs.tax_form.name}</span> : null}
                       </div>
                     ) : null}
                     {!DRIVER_CREATE_DQF_RESOLVABLE_CODES.has(item.code) ? (
@@ -1463,7 +1463,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 );
               })}
             </div>
-            <label className="flex items-start gap-2 text-xs text-slate-800">
+            <label className="flex items-start gap-2 text-xs text-[#1F2A44]">
               {/* C9-SUBMISSION-GATE: this transient acknowledgement gates Save and its value drives
                   the rendered saveDisabledReason; it is not represented as a stored driver fact. */}
               <input
@@ -1481,11 +1481,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 status={fileCategoriesQuery.error instanceof ApiError ? fileCategoriesQuery.error.status : 0}
                 message={userFacingApiError(fileCategoriesQuery.error, "Document categories are unavailable")}
                 onRetry={() => void fileCategoriesQuery.refetch()}
-                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+                className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] py-4"
               />
             ) : null}
             {hasPendingDocs && fileCategoriesQuery.isPending ? (
-              <p className="rounded-sm border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700" role="status">
+              <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#4B5563]" role="status">
                 Loading document categories before staged files can be saved…
               </p>
             ) : null}
@@ -1495,10 +1495,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 status={0}
                 message={`The ${DRIVER_CREATE_DOC_CATEGORY_CODES[missingPendingDocCategory[0]]} category is missing from the active catalog.`}
                 onRetry={() => void fileCategoriesQuery.refetch()}
-                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+                className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] py-4"
               />
             ) : null}
-            <div className="text-xs font-semibold text-slate-800 pt-1">Other documents (not part of the DQF catalog)</div>
+            <div className="text-xs font-semibold text-[#1F2A44] pt-1">Other documents (not part of the DQF catalog)</div>
             {(
               [
                 ["identity", "INE / voter ID"],
@@ -1521,10 +1521,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       return next;
                     });
                   }}
-                  className="rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-xs"
+                  className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1.5 text-xs"
                 />
                 {pendingDocs[key] ? (
-                  <span className="text-xs text-slate-600">{pendingDocs[key]?.name}</span>
+                  <span className="text-xs text-[#4B5563]">{pendingDocs[key]?.name}</span>
                 ) : null}
               </div>
             ))}
@@ -1560,7 +1560,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 <span>I have reviewed prior safety records and want to proceed with this hire</span>
               </label>
               {overrideReturningWarning && terminatedMatches.length > 0 ? (
-                <div className="mt-2 space-y-2 rounded-sm border border-slate-200 bg-slate-100 p-2">
+                <div className="mt-2 space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
                   <label className="flex items-center gap-2 text-xs">
                     <input
                       type="radio"
@@ -1599,7 +1599,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 status={returningCheckError instanceof ApiError ? returningCheckError.status : 0}
                 message={userFacingApiError(returningCheckError, "Returning-driver identity check failed")}
                 onRetry={() => setReturningCheckRetry((value) => value + 1)}
-                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+                className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] py-4"
               />
             </div>
           ) : null}
@@ -1696,7 +1696,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         </Button>
       </div>
       {createSummary?.linked_user_event_type === "existing_user" ? (
-        <p className="text-xs text-slate-700">
+        <p className="text-xs text-[#4B5563]">
           Phone {createSummary.phone} was already registered. Linked existing account.
         </p>
       ) : null}

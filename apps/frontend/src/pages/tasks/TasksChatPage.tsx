@@ -55,7 +55,7 @@ function renderBody(body: string, mentionNames: string[]) {
     <>
       {parts.map((part, i) =>
         tokens.includes(part) ? (
-          <span key={i} className="rounded-sm bg-slate-100 px-1 font-semibold text-[#1f2a44]" data-testid="tasks-chat-mention">
+          <span key={i} className="rounded-sm bg-[#F7F8FA] px-1 font-semibold text-[#1f2a44]" data-testid="tasks-chat-mention">
             {part}
           </span>
         ) : (
@@ -211,16 +211,16 @@ export function TasksChatPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
         {/* Task picker */}
-        <div className="rounded-sm border border-slate-200 bg-white" data-testid="tasks-chat-picker">
-          <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-500">Tasks</div>
+        <div className="rounded-sm border border-[#E5E7EB] bg-white" data-testid="tasks-chat-picker">
+          <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#6B7280]">Tasks</div>
           {tasksQuery.isError ? (
             <div className="p-4">
               <ListErrorBanner onRetry={() => void tasksQuery.refetch()} />
             </div>
           ) : tasksQuery.isLoading ? (
-            <div className="p-4 text-xs text-slate-500">Loading tasks…</div>
+            <div className="p-4 text-xs text-[#6B7280]">Loading tasks…</div>
           ) : tasks.length === 0 ? (
-            <div className="p-4 text-xs text-slate-500">No tasks in this window.</div>
+            <div className="p-4 text-xs text-[#6B7280]">No tasks in this window.</div>
           ) : (
             <ul className="max-h-[560px] overflow-y-auto">
               {tasks.map((t) => {
@@ -232,12 +232,12 @@ export function TasksChatPage() {
                       onClick={() => selectTask(t.task_id)}
                       data-testid="tasks-chat-picker-item"
                       className={[
-                        "block w-full border-b border-slate-100 px-3 py-2 text-left text-xs",
-                        isActive ? "bg-slate-100 text-[#1f2a44]" : "text-slate-700 hover:bg-slate-50",
+                        "block w-full border-b border-[#E5E7EB] px-3 py-2 text-left text-xs",
+                        isActive ? "bg-[#F7F8FA] text-[#1f2a44]" : "text-[#4B5563] hover:bg-[#F7F8FA]",
                       ].join(" ")}
                     >
                       <div className="font-medium">{t.title}</div>
-                      <div className="mt-0.5 text-xs text-slate-500">
+                      <div className="mt-0.5 text-xs text-[#6B7280]">
                         {formatDateUS(t.scheduled_date)} · {taskStatusLabel(t.status)}
                       </div>
                     </button>
@@ -251,16 +251,16 @@ export function TasksChatPage() {
         {/* Thread + composer + activity */}
         <div className="space-y-4">
           {!activeTaskId ? (
-            <div className="rounded-sm border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">
+            <div className="rounded-sm border border-[#E5E7EB] bg-white p-8 text-center text-xs text-[#6B7280]">
               Select a task to view its conversation.
             </div>
           ) : (
             <>
-              <div className="rounded-sm border border-slate-200 bg-white">
-                <div className="border-b border-slate-200 px-4 py-2">
+              <div className="rounded-sm border border-[#E5E7EB] bg-white">
+                <div className="border-b border-[#E5E7EB] px-4 py-2">
                   <div className="text-xs font-semibold text-[#1f2a44]">{selectedTask?.title ?? "Task"}</div>
                   {selectedTask ? (
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-[#6B7280]">
                       <span>{formatDateUS(selectedTask.scheduled_date)} · {taskStatusLabel(selectedTask.status)}</span>
                       <TaskSubjectLink
                         subjectType={selectedTask.subject_type}
@@ -279,23 +279,23 @@ export function TasksChatPage() {
                 {/* Comment thread */}
                 <div className="max-h-[380px] space-y-3 overflow-y-auto p-4" data-testid="tasks-chat-thread">
                   {commentsQuery.isLoading ? (
-                    <div className="text-xs text-slate-500">Loading comments…</div>
+                    <div className="text-xs text-[#6B7280]">Loading comments…</div>
                   ) : commentsQuery.isError ? (
                     <ListErrorBanner onRetry={() => void commentsQuery.refetch()} />
                   ) : (commentsQuery.data?.comments?.length ?? 0) === 0 ? (
-                    <div className="text-xs text-slate-500">No comments yet. Start the conversation.</div>
+                    <div className="text-xs text-[#6B7280]">No comments yet. Start the conversation.</div>
                   ) : (
                     commentsQuery.data?.comments?.map((c) => {
                       const mentionNames = c.mentions
                         .map((id) => employeeById.get(id)?.name)
                         .filter((n): n is string => Boolean(n));
                       return (
-                        <div key={c.id} className="rounded-sm border border-slate-100 bg-slate-50 p-2" data-testid="tasks-chat-comment">
+                        <div key={c.id} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2" data-testid="tasks-chat-comment">
                           <div className="flex items-baseline justify-between">
                             <span className="text-xs font-semibold text-[#1f2a44]">{c.author_name ?? c.author_email ?? "Unknown"}</span>
-                            <span className="text-xs text-slate-400">{formatCompanyTime(c.created_at)}</span>
+                            <span className="text-xs text-[#6B7280]">{formatCompanyTime(c.created_at)}</span>
                           </div>
-                          <div className="mt-1 whitespace-pre-wrap text-xs text-slate-700">{renderBody(c.body, mentionNames)}</div>
+                          <div className="mt-1 whitespace-pre-wrap text-xs text-[#4B5563]">{renderBody(c.body, mentionNames)}</div>
                         </div>
                       );
                     })
@@ -303,7 +303,7 @@ export function TasksChatPage() {
                 </div>
 
                 {/* Composer */}
-                <div className="relative border-t border-slate-200 p-3">
+                <div className="relative border-t border-[#E5E7EB] p-3">
                   {usersQuery.isError ? (
                     <div className="mb-2" data-testid="tasks-chat-users-error">
                       <ListErrorBanner onRetry={() => void usersQuery.refetch()} />
@@ -317,11 +317,11 @@ export function TasksChatPage() {
                     placeholder="Write a comment… use @ to mention a teammate"
                     rows={3}
                     data-testid="tasks-chat-composer"
-                    className="w-full resize-none rounded-sm border border-slate-300 px-2 py-1.5 text-xs text-slate-800 focus:border-slate-500 focus:outline-hidden"
+                    className="w-full resize-none rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs text-[#1F2A44] focus:border-[#1F2A44] focus:outline-hidden"
                   />
                   {mentionQuery !== null && mentionMatches.length > 0 ? (
                     <ul
-                      className="absolute bottom-16 left-3 z-10 max-h-48 w-64 overflow-y-auto rounded-sm border border-slate-300 bg-white shadow-sm"
+                      className="absolute bottom-16 left-3 z-10 max-h-48 w-64 overflow-y-auto rounded-sm border border-[#E5E7EB] bg-white shadow-sm"
                       data-testid="tasks-chat-mention-menu"
                     >
                       {mentionMatches.map((emp) => (
@@ -332,17 +332,17 @@ export function TasksChatPage() {
                               e.preventDefault();
                               pickMention(emp);
                             }}
-                            className="block w-full px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100"
+                            className="block w-full px-2 py-1.5 text-left text-xs text-[#4B5563] hover:bg-[#F7F8FA]"
                           >
                             <span className="font-medium text-[#1f2a44]">{emp.name}</span>
-                            {emp.email ? <span className="ml-1 text-xs text-slate-400">{emp.email}</span> : null}
+                            {emp.email ? <span className="ml-1 text-xs text-[#6B7280]">{emp.email}</span> : null}
                           </button>
                         </li>
                       ))}
                     </ul>
                   ) : null}
                   <div className="mt-2 flex items-center justify-between">
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-[#6B7280]">
                       {mentionIds.size > 0 ? `${mentionIds.size} mention${mentionIds.size === 1 ? "" : "s"}` : ""}
                     </span>
                     <button
@@ -352,7 +352,7 @@ export function TasksChatPage() {
                       data-testid="tasks-chat-post"
                       className={[
                         "rounded-sm px-3 py-1.5 text-xs font-semibold text-white",
-                        canPost ? "bg-[#1f2a44] hover:bg-[#0f1729]" : "cursor-not-allowed bg-slate-300",
+                        canPost ? "bg-[#1f2a44] hover:bg-[#0f1729]" : "cursor-not-allowed bg-[#E5E7EB]",
                       ].join(" ")}
                     >
                       {createMutation.isPending ? "Posting…" : "Post comment"}
@@ -365,22 +365,22 @@ export function TasksChatPage() {
               </div>
 
               {/* Activity feed */}
-              <div className="rounded-sm border border-slate-200 bg-white" data-testid="tasks-chat-activity">
-                <div className="border-b border-slate-200 px-4 py-2 text-xs font-semibold text-slate-500">Activity</div>
+              <div className="rounded-sm border border-[#E5E7EB] bg-white" data-testid="tasks-chat-activity">
+                <div className="border-b border-[#E5E7EB] px-4 py-2 text-xs font-semibold text-[#6B7280]">Activity</div>
                 <div className="max-h-[260px] overflow-y-auto p-4">
                   {activityQuery.isLoading ? (
-                    <div className="text-xs text-slate-500">Loading activity…</div>
+                    <div className="text-xs text-[#6B7280]">Loading activity…</div>
                   ) : activityQuery.isError ? (
                     <div data-testid="tasks-chat-activity-error">
                       <ListErrorBanner onRetry={() => void activityQuery.refetch()} />
                     </div>
                   ) : (activityQuery.data?.activity?.length ?? 0) === 0 ? (
-                    <div className="text-xs text-slate-500">No activity yet.</div>
+                    <div className="text-xs text-[#6B7280]">No activity yet.</div>
                   ) : (
                     <ul className="space-y-2">
                       {activityQuery.data?.activity?.map((a: TaskActivity) => (
                         <li key={a.id} className="flex items-baseline justify-between text-xs" data-testid="tasks-chat-activity-item">
-                          <span className="text-slate-700">
+                          <span className="text-[#4B5563]">
                             <span className="font-medium text-[#1f2a44]">{a.actor_name ?? "System"}</span>{" "}
                             {a.event_type === "comment"
                               ? "added a comment"
@@ -390,7 +390,7 @@ export function TasksChatPage() {
                                   ? "linked a record"
                                   : "changed the assignment"}
                           </span>
-                          <span className="text-xs text-slate-400">{formatCompanyTime(a.created_at)}</span>
+                          <span className="text-xs text-[#6B7280]">{formatCompanyTime(a.created_at)}</span>
                         </li>
                       ))}
                     </ul>
