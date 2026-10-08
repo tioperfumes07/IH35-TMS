@@ -85,7 +85,7 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
       }}
     >
       {settingsQuery.isLoading ? (
-        <p className="text-xs text-slate-500" data-testid="maintenance-settings-loading">
+        <p className="text-xs text-[#6B7280]" data-testid="maintenance-settings-loading">
           Loading maintenance settings…
         </p>
       ) : null}
@@ -93,25 +93,25 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
         <ListErrorState title="Couldn't load maintenance settings" status={0} message={(settingsQuery.error as Error)?.message} onRetry={() => void settingsQuery.refetch()} />
       ) : null}
       {!settingsQuery.isLoading && !settingsQuery.isError && !settings ? (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[#6B7280]">
           No maintenance settings row yet for this entity — save defaults below to create one.
         </p>
       ) : null}
       {!settingsQuery.isError ? <>
-      <section className="overflow-hidden rounded-sm border border-slate-300 bg-white">
-        <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Maintenance settings</h2>
+      <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+        <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Maintenance settings</h2>
         </div>
-        <div className="grid grid-cols-1 divide-y divide-slate-200 md:grid-cols-2 md:divide-x md:divide-y-0">
+        <div className="grid grid-cols-1 divide-y divide-[#E5E7EB] md:grid-cols-2 md:divide-x md:divide-y-0">
           <div className="px-3 py-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">PM Intervals</h3>
-            <label className="mt-2 block text-xs text-slate-600" htmlFor="maint-settings-pm-interval">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">PM Intervals</h3>
+            <label className="mt-2 block text-xs text-[#6B7280]" htmlFor="maint-settings-pm-interval">
               Default PM interval (days)
             </label>
             <input
               id="maint-settings-pm-interval"
               data-testid="maintenance-settings-pm-interval"
-              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs text-slate-900"
+              className="mt-1 h-8 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#0F1219]"
               type="number"
               min={1}
               max={365}
@@ -121,42 +121,42 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
           </div>
 
           <div className="px-3 py-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">Vendor Defaults</h3>
-            <label className="mt-2 block text-xs text-slate-600">Maintenance vendors available</label>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Vendor Defaults</h3>
+            <label className="mt-2 block text-xs text-[#6B7280]">Maintenance vendors available</label>
             <input
-              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs text-slate-900"
+              className="mt-1 h-8 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#0F1219]"
               value={String(settings?.maintenance_vendors ?? 0)}
               readOnly
             />
-            <label className="mt-2 block text-xs text-slate-600" htmlFor="maint-settings-shop-location">
+            <label className="mt-2 block text-xs text-[#6B7280]" htmlFor="maint-settings-shop-location">
               Default shop location
             </label>
             <input
               id="maint-settings-shop-location"
               data-testid="maintenance-settings-shop-location"
-              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs text-slate-900"
+              className="mt-1 h-8 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#0F1219]"
               value={defaultShopLocation}
               onChange={(event) => setDefaultShopLocation(event.target.value)}
             />
           </div>
 
-          <div className="border-t border-slate-200 px-3 py-3 md:border-t-0">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">Bay Assignments</h3>
-            <label className="mt-2 block text-xs text-slate-600" htmlFor="maint-settings-bay-policy">
+          <div className="border-t border-[#E5E7EB] px-3 py-3 md:border-t-0">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Bay Assignments</h3>
+            <label className="mt-2 block text-xs text-[#6B7280]" htmlFor="maint-settings-bay-policy">
               Bay assignment policy
             </label>
             <input
               id="maint-settings-bay-policy"
               data-testid="maintenance-settings-bay-policy"
-              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs text-slate-900"
+              className="mt-1 h-8 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#0F1219]"
               value={bayAssignmentPolicy}
               onChange={(event) => setBayAssignmentPolicy(event.target.value)}
             />
           </div>
 
-          <div className="border-t border-slate-200 px-3 py-3 md:border-t-0">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">Notifications</h3>
-            <label className="mt-2 flex items-center gap-2 text-xs text-slate-600">
+          <div className="border-t border-[#E5E7EB] px-3 py-3 md:border-t-0">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Notifications</h3>
+            <label className="mt-2 flex items-center gap-2 text-xs text-[#6B7280]">
               <input
                 type="checkbox"
                 data-testid="maintenance-settings-email-enabled"
@@ -165,9 +165,9 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
               />
               Email notifications enabled
             </label>
-            <label className="mt-2 block text-xs text-slate-600">PM schedules tracked</label>
+            <label className="mt-2 block text-xs text-[#6B7280]">PM schedules tracked</label>
             <input
-              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs text-slate-900"
+              className="mt-1 h-8 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#0F1219]"
               value={String(settings?.pm_schedules ?? 0)}
               readOnly
             />

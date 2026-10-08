@@ -740,7 +740,7 @@ export function WorkOrderDetailPage() {
   }
 
   if (!companyId) {
-    return <div className="p-4 text-xs text-slate-700">Select an operating company.</div>;
+    return <div className="p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
   }
 
   if (woQ.isLoading) {
@@ -760,7 +760,7 @@ export function WorkOrderDetailPage() {
   }
 
   if (!wo) {
-    return <div className="p-4 text-xs text-slate-700">Work order not found or unavailable for this operating company.</div>;
+    return <div className="p-4 text-xs text-[#4B5563]">Work order not found or unavailable for this operating company.</div>;
   }
 
   return (
@@ -777,22 +777,22 @@ export function WorkOrderDetailPage() {
 
       {/* ORDERS-2026-10-01 — three dates as first-class columns (reported / in shop / expected release). */}
       <div
-        className="grid grid-cols-3 gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-slate-800"
+        className="grid grid-cols-3 gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-[#1F2A44]"
         data-testid="wo-three-dates"
         data-c-maint-three-dates="true"
       >
         <div data-testid="wo-date-reported">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">Reported</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Reported</div>
           <div className="tabular-nums">{wo.opened_at ? formatDateUS(String(wo.opened_at)) || "—" : "—"}</div>
         </div>
         <div data-testid="wo-date-in-shop">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">In shop</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">In shop</div>
           <div className="tabular-nums">
             {wo.work_started_at ? formatDateUS(String(wo.work_started_at)) || "—" : "—"}
           </div>
         </div>
         <div data-testid="wo-date-expected-release">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">Expected release</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Expected release</div>
           <div className="tabular-nums">
             {wo.expected_release_at ? formatDateUS(String(wo.expected_release_at)) || "—" : "—"}
           </div>
@@ -911,17 +911,17 @@ export function WorkOrderDetailPage() {
       {reasonModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 shadow-xl">
-            <h2 className="text-xs font-semibold text-slate-900">
+            <h2 className="text-xs font-semibold text-[#0F1219]">
               {reasonModal.kind === "cancel" ? "Cancel work order" : "Void work order"}
             </h2>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="mt-1 text-xs text-[#6B7280]">
               {reasonModal.kind === "cancel"
                 ? "Pick a reason from catalogs.wo_cancellation_reasons. The work order is never deleted — it stays on record with your reason in the audit trail."
                 : "This voids the work order (incl. completed). It is never deleted — it stays on record with your reason in the audit trail."}
             </p>
             {reasonModal.kind === "cancel" ? (
               <>
-                <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-cancel-reason-code">
+                <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-cancel-reason-code">
                   Cancellation reason (required)
                 </label>
                 <Combobox
@@ -941,12 +941,12 @@ export function WorkOrderDetailPage() {
                     });
                   }}
                 />
-                <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-cancel-notes">
+                <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-cancel-notes">
                   Notes (optional)
                 </label>
                 <textarea
                   id="wo-cancel-notes"
-                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-xs"
+                  className="mt-1 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
                   rows={2}
                   value={cancelNotes}
                   onChange={(event) => setCancelNotes(event.target.value)}
@@ -955,12 +955,12 @@ export function WorkOrderDetailPage() {
               </>
             ) : (
               <>
-                <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-reason">
+                <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-reason">
                   Reason (required)
                 </label>
                 <textarea
                   id="wo-reason"
-                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-xs"
+                  className="mt-1 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
                   rows={3}
                   value={reasonText}
                   onChange={(event) => setReasonText(event.target.value)}
@@ -1022,34 +1022,34 @@ export function WorkOrderDetailPage() {
             className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700"
             data-testid="wo-detail-linkage-section"
           >
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Linkage (forward)</div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Linkage (forward)</div>
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               <div>
-                <div className="text-xs text-slate-500">Unit</div>
+                <div className="text-xs text-[#6B7280]">Unit</div>
                 <p>
                   <EntityLinkOrTombstone kind="unit" id={wo.unit_id as string | null} name={wo.unit_number} noun="Unit" />
                 </p>
               </div>
               <div>
-                <div className="text-xs text-slate-500">Load</div>
+                <div className="text-xs text-[#6B7280]">Load</div>
                 <p>
                   <EntityLinkOrTombstone kind="load" id={wo.load_id as string | null} name={wo.linked_load_number} noun="Load" />
                 </p>
               </div>
               <div>
-                <div className="text-xs text-slate-500">Roadside breakdown load</div>
+                <div className="text-xs text-[#6B7280]">Roadside breakdown load</div>
                 <p>
                   <EntityLinkOrTombstone kind="load" id={wo.roadside_breakdown_load_id as string | null} name={wo.roadside_breakdown_load_number} noun="Load" />
                 </p>
               </div>
               <div>
-                <div className="text-xs text-slate-500">Driver</div>
+                <div className="text-xs text-[#6B7280]">Driver</div>
                 <p>
                   <EntityLinkOrTombstone kind="driver" id={wo.driver_id as string | null} name={wo.driver_name} noun="Driver" />
                 </p>
               </div>
               <div>
-                <div className="text-xs text-slate-500">Customer</div>
+                <div className="text-xs text-[#6B7280]">Customer</div>
                 <p>
                   <EntityLinkOrTombstone
                     kind="customer"
@@ -1060,25 +1060,25 @@ export function WorkOrderDetailPage() {
                 </p>
               </div>
               <div>
-                <div className="text-xs text-slate-500">Trailer</div>
+                <div className="text-xs text-[#6B7280]">Trailer</div>
                 <p>
                   <EntityLinkOrTombstone kind="trailer" id={wo.equipment_id as string | null} name={wo.equipment_number} noun="Trailer" />
                 </p>
               </div>
               <div>
-                <div className="text-xs text-slate-500">Vendor</div>
+                <div className="text-xs text-[#6B7280]">Vendor</div>
                 <p>
                   <EntityLinkOrTombstone kind="vendor" id={wo.resolved_vendor_id as string | null} name={wo.resolved_vendor_name} noun="Vendor" />
                 </p>
               </div>
               <div>
-                <div className="text-xs text-slate-500">Service location</div>
-                <p className="text-xs text-slate-800">
+                <div className="text-xs text-[#6B7280]">Service location</div>
+                <p className="text-xs text-[#1F2A44]">
                   {[wo.service_location_type, wo.repair_location, wo.roadside_location].filter(Boolean).join(" · ") || "—"}
                 </p>
               </div>
               <div>
-                <div className="text-xs text-slate-500">Insurance claim</div>
+                <div className="text-xs text-[#6B7280]">Insurance claim</div>
                 <p>
                   <EntityLinkOrTombstone kind="claim" id={wo.insurance_claim_id as string | null} name={wo.insurance_claim_number} noun="Claim" />
                 </p>
@@ -1088,7 +1088,7 @@ export function WorkOrderDetailPage() {
               <div className="mt-3 rounded-sm border border-gray-200 bg-gray-50 p-3" data-testid="wo-source-intransit-issue">
                 <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Source In-Transit Issue</div>
                 <Link
-                  className="font-semibold text-slate-700 hover:underline"
+                  className="font-semibold text-[#4B5563] hover:underline"
                   to={`/dispatch/in-transit-issues?issue_id=${encodeURIComponent(String(wo.source_intransit_issue_id))}`}
                 >
                   View source issue in Dispatch
@@ -1128,7 +1128,7 @@ export function WorkOrderDetailPage() {
                 </div>
               </div>
             </div>
-            <div className="mt-3 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
+            <div className="mt-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#4B5563]">
               Use Edit to PATCH header fields (unit, load, vendor, complaint). Line persist uses POST
               /work-orders/:id/line-items — save from Edit when changing parts/labor.
             </div>
@@ -1146,7 +1146,7 @@ export function WorkOrderDetailPage() {
               onChange={setLineDraft}
               partsLaborMode="parts-and-labor"
             />
-            <div className="mt-2 text-xs text-slate-600">
+            <div className="mt-2 text-xs text-[#6B7280]">
               Preview drafts locally until you save via Edit (line-items endpoint). Linked bills/expenses
               on the right are live reverse drills.
             </div>
@@ -1157,22 +1157,22 @@ export function WorkOrderDetailPage() {
 
         <div className="space-y-3">
           <section
-            className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+            className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white"
             data-testid="wo-detail-posting-preview-section"
           >
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-900">
+            <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 text-xs font-semibold text-[#0F1219]">
               Posting Preview
             </div>
             {previewQ.isLoading ? (
-              <div className="px-4 py-2 text-xs text-slate-500">Loading posting preview...</div>
+              <div className="px-4 py-2 text-xs text-[#6B7280]">Loading posting preview...</div>
             ) : null}
             {previewQ.isError ? (
-              <div className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-800">
+              <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 text-xs text-[#1F2A44]">
                 Posting preview unavailable in this backend build. MAINT-11 contract fallback is active.
               </div>
             ) : null}
             {!previewQ.isLoading && !previewQ.isError && previewQ.data == null ? (
-              <div className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-800">
+              <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 text-xs text-[#1F2A44]">
                 Posting preview endpoint not deployed yet for this environment.
               </div>
             ) : null}
@@ -1181,7 +1181,7 @@ export function WorkOrderDetailPage() {
                 "unavailable" banner above renders SIMULTANEOUSLY with a stale cached total,
                 currency, line count, and DR/CR preview lines read as current GL. */}
             {!previewQ.isError && previewQ.data ? (
-              <div className="space-y-2 border-t border-slate-200 px-4 py-3 text-xs text-slate-700">
+              <div className="space-y-2 border-t border-[#E5E7EB] px-4 py-3 text-xs text-[#4B5563]">
                 <FlatFieldGrid
                   columns={3}
                   fields={[
@@ -1264,13 +1264,13 @@ export function WorkOrderDetailPage() {
       </details>
 
       <section
-        className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+        className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white"
         data-testid="wo-parts-invoice-links"
       >
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
           <div>
-            <div className="text-xs font-semibold text-slate-900">Parts invoices (linked both ways)</div>
-            <p className="text-xs text-slate-600">Parts invoices linked to this work order — vendor, unit, and inventory part both ways.</p>
+            <div className="text-xs font-semibold text-[#0F1219]">Parts invoices (linked both ways)</div>
+            <p className="text-xs text-[#6B7280]">Parts invoices linked to this work order — vendor, unit, and inventory part both ways.</p>
           </div>
           <Button type="button" variant="secondary" onClick={() => setAddPartsOpen(true)}>
             Link parts invoice
@@ -1290,20 +1290,20 @@ export function WorkOrderDetailPage() {
       </section>
 
       <section
-        className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+        className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white"
         data-testid="wo-linked-financials"
       >
-        <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-xs font-semibold text-slate-900">
+        <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+          <div className="text-xs font-semibold text-[#0F1219]">
             Linked bills · expenses · bill payments · invoices · receive payments · journal entries
           </div>
-          <p className="text-xs text-slate-600">Reverse drill from this work order — click through both ways (Law §9).</p>
+          <p className="text-xs text-[#6B7280]">Reverse drill from this work order — click through both ways (Law §9).</p>
         </div>
         {linkedFinancialsQ.isLoading ? (
-          <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">Loading linked bills &amp; expenses…</div>
+          <div className="border-t border-[#E5E7EB] px-3 py-2 text-xs text-[#6B7280]">Loading linked bills &amp; expenses…</div>
         ) : null}
         {linkedFinancialsQ.isError ? (
-          <div className="border-t border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+          <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
             Linked-financials lookup unavailable in this backend build.
           </div>
         ) : null}
@@ -1372,7 +1372,7 @@ export function WorkOrderDetailPage() {
         className="rounded-sm border border-gray-200 bg-white p-3"
         data-testid="wo-documents"
       >
-        <h3 className="mb-1 text-xs font-semibold text-slate-900">Documents</h3>
+        <h3 className="mb-1 text-xs font-semibold text-[#0F1219]">Documents</h3>
         {id && companyId ? (
           <DocumentsTab
             entityType="work_order"
@@ -1381,7 +1381,7 @@ export function WorkOrderDetailPage() {
             operatingCompanyId={companyId}
           />
         ) : (
-          <p className="text-xs text-slate-600">Select a work order to attach documents.</p>
+          <p className="text-xs text-[#6B7280]">Select a work order to attach documents.</p>
         )}
       </section>
 
@@ -1390,7 +1390,7 @@ export function WorkOrderDetailPage() {
       </section>
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
-        <h3 className="mb-2 text-xs font-semibold text-slate-900">Audit History</h3>
+        <h3 className="mb-2 text-xs font-semibold text-[#0F1219]">Audit History</h3>
         <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="work_order" entityId={id ?? ""} />
       </section>
 
