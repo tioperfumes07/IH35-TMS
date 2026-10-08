@@ -242,7 +242,7 @@ export function VendorsPage() {
           kind="maintenance_vendor"
           id={row.id}
           label={String(row.display_name ?? row.name ?? "—")}
-          className="font-semibold text-slate-700 hover:underline"
+          className="font-semibold text-[#1F2A44] hover:underline"
         />
       ),
     },
@@ -256,7 +256,7 @@ export function VendorsPage() {
             kind="vendor"
             id={row.mdata_vendor_id}
             label={entityLabel(row.mdata_vendor_name, row.mdata_vendor_id, "Vendor")}
-            className="text-slate-600 underline"
+            className="text-[#4B5563] underline"
             data-testid="maintenance-vendors-ap-vendor-link"
           />
         ) : (
@@ -270,7 +270,7 @@ export function VendorsPage() {
 
   const rowActions = (row: MaintenanceVendorRow) => (
     <div className="flex gap-2">
-      <button type="button" className="text-slate-600 underline" onClick={() => setEditing(row)}>
+      <button type="button" className="text-[#4B5563] underline" onClick={() => setEditing(row)}>
         Edit
       </button>
       <button
@@ -291,7 +291,7 @@ export function VendorsPage() {
           <h2 className="text-xs font-semibold text-gray-900">Maintenance Vendors</h2>
           <p className="text-xs text-gray-600">
             Canonical vendor master linked to{" "}
-            <Link className="text-slate-600 underline" to="/lists/maintenance/vendors">
+            <Link className="text-[#4B5563] underline" to="/lists/maintenance/vendors">
               Lists & Catalogs
             </Link>
             .
@@ -321,7 +321,7 @@ export function VendorsPage() {
           }}>
             CSV Import
           </Button>
-          <a className="text-xs text-slate-600 underline" href={getMaintenanceVendorsTemplateUrl(companyId)}>
+          <a className="text-xs text-[#4B5563] underline" href={getMaintenanceVendorsTemplateUrl(companyId)}>
             Download template
           </a>
         </div>
@@ -339,7 +339,7 @@ export function VendorsPage() {
           columns={columns}
           rows={rows}
           rowKey={(row) => String(row.id)}
-          rowClassName={(row) => highlightedVendorId && row.id === highlightedVendorId ? "bg-slate-100 ring-1 ring-slate-400" : ""}
+          rowClassName={(row) => highlightedVendorId && row.id === highlightedVendorId ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]" : ""}
           loading={listQ.isLoading}
           emptyText="No vendors available."
           storageKey="maint-master-data-vendors"
@@ -359,7 +359,7 @@ export function VendorsPage() {
             <label className="text-xs font-semibold text-gray-600">A/P vendor</label>
             {/* CLS-SILENT-CAP: say so when the picker is not showing every vendor. */}
             {apVendorCapNotice ? (
-              <p className="text-xs text-slate-700" data-testid="ap-vendor-cap-notice">
+              <p className="text-xs text-[#1F2A44]" data-testid="ap-vendor-cap-notice">
                 {apVendorCapNotice}
               </p>
             ) : null}
@@ -407,7 +407,7 @@ export function VendorsPage() {
               <label className="text-xs font-semibold text-gray-600">A/P vendor</label>
             {/* CLS-SILENT-CAP: say so when the picker is not showing every vendor. */}
             {apVendorCapNotice ? (
-              <p className="text-xs text-slate-700" data-testid="ap-vendor-cap-notice">
+              <p className="text-xs text-[#1F2A44]" data-testid="ap-vendor-cap-notice">
                 {apVendorCapNotice}
               </p>
             ) : null}

@@ -1,3 +1,13 @@
+## 2026-10-08T18:35Z · BANK leftover slate — VendorsPage / VendorsListView / VendorListSidebar
+
+FINDING: BANK-F91225 — VendorsPage / VendorsListView / VendorListSidebar Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25890 squash `986962af0b` (BANK-F91224 fines/tempcover)
+GUARD: scripts/verify-vendors-list-slate-leftover-chrome.mjs + verify-steps/3688 piggyback
+LIVE PROOF: verify-vendors-list-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3688 piggyback + OUTBOX
+
 ## 2026-10-08T18:25Z · BANK leftover slate — driver fines / temp cover / unit temp cover
 
 FINDING: BANK-F91224 — DriverFinesReverseSection / DriverTempCoverReverseSection / UnitTempCoverReverseSection Tailwind slate-* → house tokens

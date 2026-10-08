@@ -180,7 +180,7 @@ export function VendorListSidebar({
                       <UnclearedDocumentsNote docs={unclearedByVendorId?.get(vendor.id)?.uncleared_documents ?? []} />
                     </td>
                     <td style={{ width: widths.status }} className="px-2 py-1.5">
-                      <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${isInactive ? "bg-gray-200 text-gray-700" : "bg-slate-100 text-slate-700"}`}>
+                      <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${isInactive ? "bg-gray-200 text-gray-700" : "bg-[#F7F8FA] text-[#1F2A44]"}`}>
                         {isInactive ? "Inactive" : "Active"}
                       </span>
                     </td>
@@ -193,8 +193,8 @@ export function VendorListSidebar({
             </tbody>
           )}
         </ResizableTable>
-        {listState.isLoading ? <p className="px-1 py-2 text-xs text-slate-500">Loading vendors…</p> : null}
-        {listState.isEmpty ? <p className="px-1 py-2 text-xs text-slate-500">No vendors found.</p> : null}
+        {listState.isLoading ? <p className="px-1 py-2 text-xs text-[#6B7280]">Loading vendors…</p> : null}
+        {listState.isEmpty ? <p className="px-1 py-2 text-xs text-[#6B7280]">No vendors found.</p> : null}
       </div>
       <div className="mt-2">
         <SidebarPagination
