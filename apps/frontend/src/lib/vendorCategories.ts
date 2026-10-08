@@ -32,7 +32,7 @@ export function vendorCategoryLabel(code: string | null | undefined): string {
 export function vendorCategoryChipClasses(code: string | null | undefined): string {
   switch (code) {
     case "diesel":
-      return "bg-slate-100 text-slate-900 border-slate-200";
+      return "bg-[#F7F8FA] text-[#0F1219] border-[#E5E7EB]";
     case "def":
       return "bg-green-100 text-green-900 border-green-200";
     case "repairs_maintenance":
@@ -52,7 +52,7 @@ export function vendorCategoryChipClasses(code: string | null | undefined): stri
     case "tolls":
       return "bg-teal-100 text-teal-900 border-teal-200";
     case "parking":
-      return "bg-slate-200 text-slate-900 border-slate-300";
+      return "bg-[#E5E7EB] text-[#0F1219] border-[#E5E7EB]";
     case "permits":
       return "bg-yellow-100 text-yellow-950 border-yellow-200";
     case "taxes":

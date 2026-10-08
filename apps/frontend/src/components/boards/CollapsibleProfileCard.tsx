@@ -61,14 +61,14 @@ export function CollapsibleProfileCard({
         </div>
         <div className="flex items-center gap-2">
           {count != null ? (
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-slate-700" data-testid={`collapsible-card-count-${cardId}`}>
+            <span className="rounded-full bg-[#F7F8FA] px-2 py-0.5 text-[11px] font-semibold tabular-nums text-[#1F2A44]" data-testid={`collapsible-card-count-${cardId}`}>
               {count}
             </span>
           ) : null}
           {action}
           <button
             type="button"
-            className="h-6 w-6 rounded-sm text-[11px] text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            className="h-6 w-6 rounded-sm text-[11px] text-[#6B7280] hover:bg-[#F7F8FA] hover:text-[#0F1219]"
             aria-expanded={open}
             aria-label={open ? `Collapse ${title}` : `Expand ${title}`}
             onClick={toggle}
