@@ -51,7 +51,7 @@ export function FleetBulkControls({
   return (
     <>
       <div className="flex items-center gap-1">
-        <label htmlFor="fleet-bulk-status" className="text-slate-700">Change Status</label>
+        <label htmlFor="fleet-bulk-status" className="text-[#1F2A44]">Change Status</label>
         <Combobox
           id="fleet-bulk-status"
           className="w-36"
@@ -63,7 +63,7 @@ export function FleetBulkControls({
         />
       </div>
       <div className="flex items-center gap-1">
-        <label htmlFor="fleet-bulk-vehicle-type" className="text-slate-700">Change Type</label>
+        <label htmlFor="fleet-bulk-vehicle-type" className="text-[#1F2A44]">Change Type</label>
         <Combobox
           id="fleet-bulk-vehicle-type"
           className="w-36"
@@ -76,7 +76,7 @@ export function FleetBulkControls({
       </div>
       {showTrailerTypeCatalog ? (
         <div className="flex items-center gap-1">
-          <label htmlFor="fleet-bulk-trailer-type" className="text-slate-700">Trailer Type</label>
+          <label htmlFor="fleet-bulk-trailer-type" className="text-[#1F2A44]">Trailer Type</label>
           <Combobox
             id="fleet-bulk-trailer-type"
             className="w-36"
@@ -93,7 +93,7 @@ export function FleetBulkControls({
       ) : null}
       <button
         type="button"
-        className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+        className="rounded-sm border border-[#4B5563] bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44] disabled:opacity-50"
         disabled={applying || (!status && !vehicleType && !trailerType)}
         onClick={() => {
           const payload: BulkApplyPayload = {};
@@ -124,10 +124,10 @@ export function BulkActionBar({ selectedCount, vehicleTypes, onApply, onClear, a
   }
 
   return (
-    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 p-2 text-xs">
-      <span className="font-semibold text-slate-700">Selected: {selectedCount} units</span>
+    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-sm border border-[#4B5563] bg-[#E5E7EB] p-2 text-xs">
+      <span className="font-semibold text-[#1F2A44]">Selected: {selectedCount} units</span>
       <FleetBulkControls vehicleTypes={vehicleTypes} onApply={onApply} applying={applying} />
-      <button type="button" className="text-slate-700 underline" onClick={onClear}>
+      <button type="button" className="text-[#1F2A44] underline" onClick={onClear}>
         Clear selection
       </button>
     </div>
