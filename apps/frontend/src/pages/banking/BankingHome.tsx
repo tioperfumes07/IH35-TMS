@@ -892,7 +892,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           />
           {showVirtualTilesEmptyHonesty ? (
             <div
-              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+              className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
               data-testid="banking-virtual-tiles-empty-honesty-banner"
             >
               <p className="font-semibold">Banking account tiles are empty — not a silent healthy $0.</p>
@@ -904,7 +904,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <div className="mt-2 flex flex-wrap gap-2">
                 <ActionButton onClick={() => navigate("/factoring")}>Factoring entry</ActionButton>
                 <ActionButton onClick={() => setActiveTab("driver_escrow")}>Driver Escrow</ActionButton>
-                <Link to="/banking/cash-gl-setup" className="text-xs font-medium text-slate-800 underline">
+                <Link to="/banking/cash-gl-setup" className="text-xs font-medium text-[#1F2A44] underline">
                   Cash GL setup
                 </Link>
               </div>
@@ -924,7 +924,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 <p className="font-semibold" style={{ color: "#B42318" }}>
                   Cash GL unbound on {unbound} of {accts.length} bank account(s)
                 </p>
-                <p className="mt-1 text-slate-700">
+                <p className="mt-1 text-[#1F2A44]">
                   Bank Register and bank-feed posting need a Cash GL per account. Until it is mapped, that account
                   cannot post — do not treat Accounts home as posting-ready.
                 </p>
@@ -965,7 +965,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <span>Bank accounts</span>
                 <button
-                  className="text-slate-700 hover:underline"
+                  className="text-[#1F2A44] hover:underline"
                   type="button"
                   onClick={() => setManageOpen(true)}
                   aria-label="Manage bank accounts"
@@ -977,7 +977,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 {bankAccountsPanelRows.map((row, idx) => (
                   <div
                     key={row.id}
-                    className={`grid w-full grid-cols-[1fr_auto_auto] items-center border-b border-gray-100 px-3 py-1.5 text-xs ${selectedId === row.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
+                    className={`grid w-full grid-cols-[1fr_auto_auto] items-center border-b border-gray-100 px-3 py-1.5 text-xs ${selectedId === row.id ? "bg-[#F7F8FA]" : "hover:bg-gray-50"}`}
                   >
                     <EntityLink
                       kind="bank_account"
@@ -1024,8 +1024,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 Show disconnected history
               </label>
             </div>
-            <div className="rounded-sm border border-slate-300 bg-slate-100">
-              <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+            <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA]">
+              <div className="flex items-center justify-between border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">
                 <Link to="/factoring" className="hover:underline">
                   Factoring · virtual bank
                 </Link>
@@ -1049,7 +1049,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
                   <span>+30 aging fees</span>
                   <span
-                    className="text-slate-700"
+                    className="text-[#1F2A44]"
                     title="No aging_fees_30d field on factoring-virtual — open Chargebacks & Fees"
                   >
                     — (see Chargebacks & Fees)
@@ -1063,7 +1063,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                     <NotApplicable reason="not_applicable" />
                   )}
                 </div>
-                {factoringTile ? <div className="text-xs text-slate-700">{factoringTile.display_name}</div> : null}
+                {factoringTile ? <div className="text-xs text-[#1F2A44]">{factoringTile.display_name}</div> : null}
               </div>
             </div>
           </div>
@@ -1075,7 +1075,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         <div className="space-y-3">
           {uncategorizedCount > 0 ? (
             <div
-              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+              className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
               data-testid="banking-forreview-backlog-banner"
             >
               <p className="font-semibold">
@@ -1095,7 +1095,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 >
                   Focus uncategorized filter
                 </ActionButton>
-                <Link to="/banking/categorize" className="text-xs font-medium text-slate-800 underline">
+                <Link to="/banking/categorize" className="text-xs font-medium text-[#1F2A44] underline">
                   /banking/categorize deep link
                 </Link>
               </div>
@@ -1154,7 +1154,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           {/* BANK-SURF-05: identify wallets via is_relay_wallet / system_purpose — never .find(is_relay). */}
           {relayWalletTiles.length === 0 ? (
             <div
-              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+              className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
               data-testid="banking-relay-no-wallet-bound-notice"
             >
               <p className="font-semibold">No Relay fuel wallet is bound for this operating company.</p>
@@ -1217,7 +1217,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       {activeTab === "statement_import" ? (
         <div className="space-y-3">
           <div
-            className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+            className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
             data-testid="banking-statement-import-not-recon-proof-banner"
           >
             <p className="font-semibold">Statement Import is an input path — not reconciliation proof.</p>
@@ -1290,7 +1290,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       {activeTab === "settings" ? (
         <div className="space-y-3">
           <div
-            className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+            className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
             data-testid="banking-settings-not-ops-complete-banner"
           >
             <p className="font-semibold">Settings links configure Banking — they do not complete Match/Categorize or reconcile.</p>

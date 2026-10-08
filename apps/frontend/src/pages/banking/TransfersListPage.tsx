@@ -57,13 +57,13 @@ function TransferDetailModalBody({
     queryKey: ["banking", "transfer", companyId, transferId],
     queryFn: () => getTransfer(transferId, companyId),
   });
-  if (query.isPending) return <p className="text-xs text-slate-600">Loading transfer…</p>;
+  if (query.isPending) return <p className="text-xs text-[#4B5563]">Loading transfer…</p>;
   if (query.isError || !query.data) {
     return <p className="text-xs text-red-700">Could not load transfer.</p>;
   }
   const transfer = query.data.transfer;
   return (
-    <div className="space-y-2 text-xs text-slate-800">
+    <div className="space-y-2 text-xs text-[#1F2A44]">
       {transfer.matched_bank_transaction_id ? (
         <OnlineBankingMatchBanner
           companyId={companyId}
@@ -148,7 +148,7 @@ export function TransfersListPage() {
         setInfoModal({
           title: "Intercompany transfer group",
           body: detail.legs.length > 0 ? (
-            <div className="space-y-2 text-xs text-slate-800">
+            <div className="space-y-2 text-xs text-[#1F2A44]">
               {detail.legs.map((leg) => (
                 <div key={leg.id} className="flex flex-wrap items-center gap-2">
                   <span>{leg.intercompany_leg ?? "leg"}</span>
@@ -281,7 +281,7 @@ export function TransfersListPage() {
           row.journal_entry_id ? (
             <EntityLink kind="journal_entry" id={row.journal_entry_id} label={entityLabel(row.journal_entry_memo, row.journal_entry_id, "Journal entry")} />
           ) : (
-            <span className="text-xs text-slate-500">—</span>
+            <span className="text-xs text-[#6B7280]">—</span>
           ),
       },
       {
@@ -295,7 +295,7 @@ export function TransfersListPage() {
               label={entityLabel(row.matched_bank_transaction_label, row.matched_bank_transaction_id, "Bank transaction")}
             />
           ) : (
-            <span className="text-xs text-slate-500">—</span>
+            <span className="text-xs text-[#6B7280]">—</span>
           ),
       },
       {
@@ -305,7 +305,7 @@ export function TransfersListPage() {
           row.intercompany_transfer_group_id ? (
             <button
               type="button"
-              className="text-xs text-slate-800 underline"
+              className="text-xs text-[#1F2A44] underline"
               data-testid="transfer-intercompany-group-link"
               onClick={() => {
                 if (row.intercompany_transfer_group_id) openIntercompanyGroup(row.intercompany_transfer_group_id);
@@ -314,7 +314,7 @@ export function TransfersListPage() {
               {row.intercompany_leg ?? "group"} · {row.counterparty_code || "Intercompany"}
             </button>
           ) : (
-            <span className="text-xs text-slate-500">—</span>
+            <span className="text-xs text-[#6B7280]">—</span>
           ),
       },
       {
@@ -324,9 +324,9 @@ export function TransfersListPage() {
           row.revoked_at ? (
             <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-700">revoked</span>
           ) : row.qbo_journal_entry_id ? (
-            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">synced</span>
+            <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs text-[#1F2A44]">synced</span>
           ) : (
-            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">pending</span>
+            <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs text-[#1F2A44]">pending</span>
           ),
       },
       {
@@ -337,7 +337,7 @@ export function TransfersListPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="text-xs text-slate-700 hover:underline"
+              className="text-xs text-[#1F2A44] hover:underline"
               onClick={() => {
                 if (!companyId) return;
                 setInfoModal({
@@ -382,7 +382,7 @@ export function TransfersListPage() {
             >
               + Record Transfer
             </ActionButton>
-            <Link to="/banking" className="text-xs text-slate-700 hover:underline">
+            <Link to="/banking" className="text-xs text-[#1F2A44] hover:underline">
               Back to Banking Home
             </Link>
           </div>
@@ -391,7 +391,7 @@ export function TransfersListPage() {
       {transfersQuery.isError ? <ListErrorBanner onRetry={() => void transfersQuery.refetch()} /> : null}
       {transfersQuery.isSuccess ? (
         <div
-          className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          className="border-l-4 border-[#4B5563] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
           data-testid="banking-transfer-gl-posting-honesty-banner"
         >
           {transferGlFlag.loading || transferGlFlag.error ? (
@@ -438,7 +438,7 @@ export function TransfersListPage() {
       ) : null}
       {listState.isEmpty ? (
         <div
-          className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
           data-testid="banking-transfers-never-recorded-banner"
         >
           <p className="font-semibold">No bank transfers recorded for this company in the selected filters.</p>
@@ -451,13 +451,13 @@ export function TransfersListPage() {
           <div className="mt-2 flex flex-wrap gap-2">
             <button
               type="button"
-              className="text-xs font-medium text-slate-800 underline"
+              className="text-xs font-medium text-[#1F2A44] underline"
               data-testid="transfers-empty-record-transfer"
               onClick={() => setTransferModalOpen(true)}
             >
               + Record Transfer
             </button>
-            <Link to="/banking/transactions?type=uncategorized" className="text-xs font-medium text-slate-800 underline">
+            <Link to="/banking/transactions?type=uncategorized" className="text-xs font-medium text-[#1F2A44] underline">
               Open for-review queue
             </Link>
           </div>
@@ -532,7 +532,7 @@ export function TransfersListPage() {
         pageSizeOptions={[PAGE_SIZE]}
         hidePager
         rowClassName={(row) =>
-          deepLinkTransferId && row.id === deepLinkTransferId ? "bg-slate-100 ring-1 ring-slate-400" : ""
+          deepLinkTransferId && row.id === deepLinkTransferId ? "bg-[#F7F8FA] ring-1 ring-[#4B5563]" : ""
         }
         // Settled-only empty text (LIST-EMPTY-1): only supplied once listState resolves to "empty",
         // never mid-fetch, so ParityTable's own gate never flashes a false empty.
@@ -569,7 +569,7 @@ export function TransfersListPage() {
       />
       <Modal open={Boolean(infoModal)} onClose={() => setInfoModal(null)} title={infoModal?.title ?? "Detail"}>
         {typeof infoModal?.body === "string" ? (
-          <pre className="whitespace-pre-wrap text-xs text-slate-800">{infoModal.body}</pre>
+          <pre className="whitespace-pre-wrap text-xs text-[#1F2A44]">{infoModal.body}</pre>
         ) : infoModal?.body}
       </Modal>
       <VoidReasonModal
