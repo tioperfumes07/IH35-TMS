@@ -89,24 +89,24 @@ export function CalculatorPage() {
 
   // UI-BACK-BUTTON-MISSING-ENTIRELY: see LoanWizardPage.tsx sibling comment.
   const header = <PageHeader backHref="/finance/overview" title="Finance Calculator" subtitle="Model a financed purchase before committing. Pure calculation — nothing is saved or posted." />;
-  if (flagLoading) return <div className="p-6"><FinanceModuleTabs />{header}<p className="text-xs text-slate-500">Loading…</p></div>;
+  if (flagLoading) return <div className="p-6"><FinanceModuleTabs />{header}<p className="text-xs text-[#6B7280]">Loading…</p></div>;
   if (!enabled)
     return (
       <div className="p-6"><FinanceModuleTabs />{header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#4B5563]">
           The Finance Calculator is not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_CALCULATOR_FLAG}</code> is off.)
         </div>
       </div>
     );
 
   const field = (label: string, key: keyof typeof form, type: "text" | "number" = "text") => (
-    <label className="block"><span className="text-xs font-medium text-slate-600">{label}</span>
-      <input type={type} value={form[key]} onChange={set(key)} className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs" />
+    <label className="block"><span className="text-xs font-medium text-[#4B5563]">{label}</span>
+      <input type={type} value={form[key]} onChange={set(key)} className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs" />
     </label>
   );
   // ACCT-F5314: see LoanWizardPage — same dollars-string-in-form / MoneyInput DOLLARS-mode seam.
   const moneyField = (label: string, key: keyof typeof form) => (
-    <label className="block"><span className="text-xs font-medium text-slate-600">{label}</span>
+    <label className="block"><span className="text-xs font-medium text-[#4B5563]">{label}</span>
       <div className="mt-1">
         <MoneyInput
           valueDollars={form[key] === "" ? null : Number(form[key])}
@@ -119,11 +119,11 @@ export function CalculatorPage() {
 
   return (
     <div className="p-6"><FinanceModuleTabs />{header}
-      <div className="rounded-sm border border-slate-200 bg-white p-4">
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-4">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
           {moneyField("Price ($) *", "price")}{moneyField("Down payment ($)", "down")}
           <label className="block">
-            <span className="text-xs font-medium text-slate-600">First payment *</span>
+            <span className="text-xs font-medium text-[#4B5563]">First payment *</span>
             <DatePicker
               className="mt-1 w-full"
               value={form.firstPaymentDate}
@@ -133,7 +133,7 @@ export function CalculatorPage() {
           {field("Scenario A rate (%) *", "rateA", "number")}{field("Scenario A term (mo) *", "termA", "number")}
           {field("Scenario B rate (%) — optional", "rateB", "number")}{field("Scenario B term (mo)", "termB", "number")}
         </div>
-        <button onClick={onCompute} disabled={busy || !calcReady} title={!calcReady ? "Enter price, first payment date, Scenario A rate, and term before calculating." : undefined} className="mt-4 rounded-sm bg-slate-800 px-4 py-2 text-xs font-medium text-white disabled:opacity-50">
+        <button onClick={onCompute} disabled={busy || !calcReady} title={!calcReady ? "Enter price, first payment date, Scenario A rate, and term before calculating." : undefined} className="mt-4 rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-medium text-white disabled:opacity-50">
           {busy ? "Calculating…" : "Calculate"}
         </button>
         {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
@@ -142,11 +142,11 @@ export function CalculatorPage() {
       {scenarios.length > 0 && (
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
           {scenarios.map((s, i) => (
-            <div key={i} className="rounded-sm border border-slate-200 bg-white p-4">
-              <h2 className="text-xs font-semibold text-slate-700">{i === 0 ? "Scenario A" : "Scenario B"} — {s.annual_rate_pct}% × {s.term_months}mo</h2>
-              <dl className="mt-2 grid grid-cols-2 gap-1 text-xs text-slate-600">
+            <div key={i} className="rounded-sm border border-[#E5E7EB] bg-white p-4">
+              <h2 className="text-xs font-semibold text-[#1F2A44]">{i === 0 ? "Scenario A" : "Scenario B"} — {s.annual_rate_pct}% × {s.term_months}mo</h2>
+              <dl className="mt-2 grid grid-cols-2 gap-1 text-xs text-[#4B5563]">
                 <dt>Financed</dt><dd className="text-right">{dollars(s.financed_principal_cents)}</dd>
-                <dt>Monthly payment</dt><dd className="text-right font-medium text-slate-800">{dollars(s.monthly_payment_cents)}</dd>
+                <dt>Monthly payment</dt><dd className="text-right font-medium text-[#1F2A44]">{dollars(s.monthly_payment_cents)}</dd>
                 <dt>Total interest</dt><dd className="text-right">{dollars(s.total_interest_cents)}</dd>
                 <dt>Total paid</dt><dd className="text-right">{dollars(s.total_payments_cents)}</dd>
                 <dt>Payoff date</dt><dd className="text-right">{formatDateUS(s.payoff_date)}</dd>
@@ -178,7 +178,7 @@ export function CalculatorPage() {
                     annualRatePct: String(s.annual_rate_pct),
                     termMonths: String(s.term_months),
                   }}
-                  className="text-xs font-medium text-slate-700 underline"
+                  className="text-xs font-medium text-[#1F2A44] underline"
                 >
                   Use this scenario → create loan
                 </Link>

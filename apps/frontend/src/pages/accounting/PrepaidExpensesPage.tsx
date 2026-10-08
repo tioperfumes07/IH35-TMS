@@ -40,8 +40,8 @@ function accountHumanLabel(number: string | null | undefined, name: string | nul
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  active: "bg-slate-100 text-slate-700",
-  fully_amortized: "bg-slate-100 text-slate-700",
+  active: "bg-[#F7F8FA] text-[#1F2A44]",
+  fully_amortized: "bg-[#F7F8FA] text-[#1F2A44]",
   voided: "bg-red-100 text-red-700",
 };
 
@@ -59,7 +59,7 @@ const SCHEDULE_COLUMNS: ParityColumn<PrepaidAmortRow>[] = [
     sortValue: (row) => (row.posted ? 1 : 0),
     render: (row) =>
       row.posted
-        ? <span className="inline-block rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">Posted</span>
+        ? <span className="inline-block rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">Posted</span>
         : <span className="inline-block rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">Pending</span>,
   },
   {
@@ -100,11 +100,11 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
             <span>{pct}%</span>
           </div>
           <div className="h-2 bg-gray-200">
-            <div className="h-2 rounded-full bg-slate-500 transition-all" style={{ width: `${pct}%` }} />
+            <div className="h-2 rounded-full bg-[#6B7280] transition-all" style={{ width: `${pct}%` }} />
           </div>
         </div>
 
-        <div className="mb-4 grid grid-cols-1 gap-2 border-t border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 sm:grid-cols-2">
+        <div className="mb-4 grid grid-cols-1 gap-2 border-t border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44] sm:grid-cols-2">
           {detail.purchase_je_id ? (
             <p>
               Purchase JE:{" "}
@@ -161,7 +161,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
             columns={SCHEDULE_COLUMNS}
             rows={detail.schedule}
             rowKey={(row) => row.id}
-            rowClassName={(row) => (row.posted ? "bg-slate-50" : "hover:bg-gray-50")}
+            rowClassName={(row) => (row.posted ? "bg-[#F7F8FA]" : "hover:bg-gray-50")}
             storageKey="prepaid-expense-schedule"
             tableTestId="prepaid-expense-schedule-table"
             density="compact"
@@ -235,13 +235,13 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
         <div className="space-y-3 text-xs">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-0.5">Description *</label>
-            <input className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+            <input className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-[#6B7280]"
               value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="e.g. Annual insurance premium" />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-0.5">Asset Number</label>
-            <input className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+            <input className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-[#6B7280]"
               value={form.asset_number} onChange={(e) => setForm({ ...form, asset_number: e.target.value })} placeholder="Optional" />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -268,7 +268,7 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Periods (months) *</label>
               <input type="number" min="1" max="360"
-                className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+                className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-[#6B7280]"
                 value={form.periods} onChange={(e) => setForm({ ...form, periods: e.target.value })} />
             </div>
           </div>
@@ -326,7 +326,7 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
         <div className="flex justify-end gap-2 mt-5">
           <button onClick={onClose} className="rounded-sm border border-gray-300 px-4 py-1.5 text-xs text-gray-700 hover:bg-gray-50">Cancel</button>
           <button onClick={() => mutation.mutate()} disabled={!valid || mutation.isPending}
-            className="rounded-sm bg-slate-700 px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
+            className="rounded-sm bg-[#1F2A44] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#1F2A44] disabled:opacity-50">
             {mutation.isPending ? "Creating…" : "Create"}
           </button>
         </div>
@@ -393,7 +393,7 @@ export function PrepaidExpensesPage() {
         label: "Description",
         sortable: true,
         render: (row) => (
-          <button onClick={() => openDetail(row.id)} className="text-slate-700 hover:underline text-left font-medium">{row.description}</button>
+          <button onClick={() => openDetail(row.id)} className="text-[#1F2A44] hover:underline text-left font-medium">{row.description}</button>
         ),
       },
       { key: "purchase_date", label: "Purchase Date", sortable: true, render: (row) => fmtDate(row.purchase_date) },
@@ -404,7 +404,7 @@ export function PrepaidExpensesPage() {
         label: "Amortized",
         sortable: true,
         className: "text-right",
-        cellClass: "text-right tabular-nums text-slate-700",
+        cellClass: "text-right tabular-nums text-[#1F2A44]",
         render: (row) => fmtCents(row.amortized_cents),
       },
       {
@@ -432,7 +432,7 @@ export function PrepaidExpensesPage() {
         label: "Actions",
         alwaysVisible: true,
         render: (row) => (
-          <button onClick={() => openDetail(row.id)} className="text-xs text-slate-700 hover:underline">Schedule</button>
+          <button onClick={() => openDetail(row.id)} className="text-xs text-[#1F2A44] hover:underline">Schedule</button>
         ),
       },
     ],
@@ -463,7 +463,7 @@ export function PrepaidExpensesPage() {
       subtitle="Prepaid assets and amortization schedules"
       createControl={
         <button onClick={() => setShowCreate(true)}
-          className="rounded-sm bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800">
+          className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1F2A44]">
           + Create Prepaid
         </button>
       }
