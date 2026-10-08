@@ -1,3 +1,13 @@
+## 2026-10-08T19:25Z · BANK leftover slate — DriverIntegrity / MessagesInbox / OnboardingWizard
+
+FINDING: BANK-F91230 — DriverIntegritySection / MessagesInboxPage / OnboardingWizardPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25897 squash `606a5b6afb` (BANK-F91229 notif/parity/recon)
+GUARD: scripts/verify-drv-integrity-msg-onboard-slate-leftover-chrome.mjs + verify-steps/3660 piggyback
+LIVE PROOF: verify-drv-integrity-msg-onboard-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3660 piggyback + OUTBOX
+
 ## 2026-10-08T19:15Z · BANK leftover slate — NotificationDropdown / ParityTable / ReconcilerExceptions
 
 FINDING: BANK-F91229 — NotificationDropdown / ParityTable / ReconcilerExceptionsPage Tailwind slate-* → house tokens
