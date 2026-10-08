@@ -40,9 +40,17 @@ const LABEL = "verify-bills-open-status-spelling-complete";
 const LEAVES = [
   {
     file: "apps/backend/src/accounting/bills.service.ts",
-    // combined-clause shape used twice (listBillsByVendor + listAllBillsForCompany)
+    // combined-clause shape lives once in applyBillListStatusFilter (deduplicated helper);
+    // both list fns must still invoke it.
     pattern: /b\.status IN \('open','unpaid'\)[\s\S]{0,200}?b\.status IN \('partial','partially_paid'\)/g,
-    minOccurrences: 2,
+    minOccurrences: 1,
+    extra: [
+      {
+        pattern: /applyBillListStatusFilter\(where, options\.status\)/g,
+        minOccurrences: 2,
+        reason: "both listBillsByVendor and listAllBillsForCompany must call applyBillListStatusFilter",
+      },
+    ],
   },
   {
     file: "apps/backend/src/accounting/fin20-aging.service.ts",
@@ -80,12 +88,21 @@ export function checkLeaf(src, leaf) {
       reason: `expected ${need} occurrence(s) of the full-spelling status match, found ${count}`,
     };
   }
+  for (const extra of leaf.extra ?? []) {
+    const m = src.match(extra.pattern);
+    const c = m ? m.length : 0;
+    const n = extra.minOccurrences ?? 1;
+    if (c < n) {
+      return { ok: false, reason: `${extra.reason} (expected ${n}, found ${c})` };
+    }
+  }
   return { ok: true };
 }
 
 if (process.argv.includes("--selftest")) {
   const oneFn = "if (x) where.push(\"b.status IN ('open','unpaid')\"); if (y) where.push(\"b.status IN ('partial','partially_paid')\");";
-  const good = oneFn + "\n" + oneFn; // real file shape: same pair repeated in listBillsByVendor + listAllBillsForCompany
+  // real file shape: the pair once in the helper + the helper invoked by both list fns
+  const good = oneFn + "\napplyBillListStatusFilter(where, options.status);\napplyBillListStatusFilter(where, options.status);";
   const goodResult = checkLeaf(good, LEAVES[0]);
   if (!goodResult.ok) {
     console.error(`[${LABEL}] selftest FAIL: known-good bills.service.ts fixture should pass — ${goodResult.reason}`);

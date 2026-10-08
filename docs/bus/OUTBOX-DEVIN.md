@@ -175,3 +175,6 @@ DONE: PR #25865 · squash 61fcb330c51b9ddae038e6236edffbc70591c6e1 · money-pr-l
 
 ## 2026-10-08 — ROUND 441.22 Devin: six orphan guards wired into verify-steps
 DONE: PR #25868 · squash b35be7c829b2a61ba57e0c569f145ee1ac61c6d2 · money-pr-local-gate exit 0 · guard-wired census 6 -> 0 unaccounted; both registry-batch guards exit 0 · baseline-lines-added = 0
+
+## 2026-10-08 — ROUND 441.22 Devin: three stale filter-panel guard anchors (FILTER-MULTI-01)
+DONE: PR #25872 · squash 33e554ca46d96843295dfdeedb6c7d29e313b361 · money-pr-local-gate exit 0 · cancellations/booking-gap accept RPT-06 ReportFilterBar; filter-panels guard asserts MoneyListToolbar on the three FILTER-MULTI-01 pages · baseline-lines-added = 0
