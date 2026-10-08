@@ -31,17 +31,17 @@ function sourceBadgeClass(source: string): string {
   // §7 palette: slate tones only — no blue/green/purple section bands.
   switch (source) {
     case "bank":
-      return "bg-slate-100 text-slate-700 border-slate-300";
+      return "bg-[#F7F8FA] text-[#1F2A44] border-[#E5E7EB]";
     case "fuel":
-      return "bg-slate-50 text-slate-600 border-slate-200";
+      return "bg-[#F7F8FA] text-[#4B5563] border-[#E5E7EB]";
     case "invoice":
-      return "bg-slate-100 text-slate-800 border-slate-300";
+      return "bg-[#F7F8FA] text-[#1F2A44] border-[#E5E7EB]";
     case "bill":
-      return "bg-slate-50 text-slate-700 border-slate-200";
+      return "bg-[#F7F8FA] text-[#1F2A44] border-[#E5E7EB]";
     case "settlement":
-      return "bg-slate-100 text-slate-600 border-slate-300";
+      return "bg-[#F7F8FA] text-[#4B5563] border-[#E5E7EB]";
     default:
-      return "bg-slate-50 text-slate-600 border-slate-200";
+      return "bg-[#F7F8FA] text-[#4B5563] border-[#E5E7EB]";
   }
 }
 
@@ -136,7 +136,7 @@ export function TransactionRegisterPage() {
         label: "Date",
         sortable: true,
         sortValue: (r) => r.date ?? "",
-        cellClass: "whitespace-nowrap text-slate-700",
+        cellClass: "whitespace-nowrap text-[#1F2A44]",
         render: (r) => (r.date ? formatDateQboList(r.date) : "—"),
       },
       {
@@ -144,16 +144,16 @@ export function TransactionRegisterPage() {
         label: "Description",
         sortable: true,
         sortValue: (r) => r.description ?? "",
-        cellClass: "text-slate-800",
+        cellClass: "text-[#1F2A44]",
         render: (r) => r.description ?? "—",
       },
-      { key: "type", label: "Type", sortable: true, cellClass: "text-slate-600" },
+      { key: "type", label: "Type", sortable: true, cellClass: "text-[#4B5563]" },
       {
         key: "counterparty",
         label: "Customer / Vendor",
         sortable: true,
         sortValue: (r) => r.counterparty ?? "",
-        cellClass: "text-slate-700",
+        cellClass: "text-[#1F2A44]",
         render: (r) => r.counterparty ?? "—",
       },
       {
@@ -161,7 +161,7 @@ export function TransactionRegisterPage() {
         label: "In",
         sortable: true,
         className: "text-right",
-        cellClass: "text-right tabular-nums text-slate-800",
+        cellClass: "text-right tabular-nums text-[#1F2A44]",
         render: (r) => (r.amount_in_cents > 0 ? formatCurrencyFromCents(r.amount_in_cents) : "—"),
       },
       {
@@ -169,7 +169,7 @@ export function TransactionRegisterPage() {
         label: "Out",
         sortable: true,
         className: "text-right",
-        cellClass: "text-right tabular-nums text-slate-800",
+        cellClass: "text-right tabular-nums text-[#1F2A44]",
         render: (r) => (r.amount_out_cents > 0 ? formatCurrencyFromCents(r.amount_out_cents) : "—"),
       },
       {
@@ -177,7 +177,7 @@ export function TransactionRegisterPage() {
         label: "Status",
         sortable: true,
         sortValue: (r) => r.status ?? "",
-        cellClass: "text-slate-600",
+        cellClass: "text-[#4B5563]",
         render: (r) => r.status ?? "—",
       },
       {
@@ -187,7 +187,7 @@ export function TransactionRegisterPage() {
         // own comment on those UNION arms) rather than an invented one.
         key: "journal_entry",
         label: "GL / JE",
-        cellClass: "text-slate-700",
+        cellClass: "text-[#1F2A44]",
         render: (r) =>
           r.journal_entry_id ? (
             <EntityLink kind="journal_entry" id={r.journal_entry_id} label="View JE →" />
@@ -204,7 +204,7 @@ export function TransactionRegisterPage() {
             <button
               type="button"
               onClick={() => navigate(r.detail_path!)}
-              className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-[#1F2A44]"
+              className="inline-flex items-center gap-1 text-xs text-[#4B5563] hover:text-[#1F2A44]"
               aria-label="Open source record"
             >
               Open <ArrowRightCircle className="h-3.5 w-3.5" />
@@ -293,7 +293,7 @@ export function TransactionRegisterPage() {
             allLabel="All directions"
             data-testid="transaction-register-filter-direction"
           />
-          <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+          <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">
             Status
             <input
               value={status}
@@ -302,7 +302,7 @@ export function TransactionRegisterPage() {
                 setStatus(event.target.value);
               }}
               placeholder="e.g. paid, uncategorized"
-              className="h-9 rounded-sm border border-slate-300 px-2 text-xs"
+              className="h-9 rounded-sm border border-[#E5E7EB] px-2 text-xs"
               data-testid="transaction-register-filter-status"
             />
           </label>
@@ -318,7 +318,7 @@ export function TransactionRegisterPage() {
           />
         </MoneyListToolbar>
 
-        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-[#4B5563]">
           <span>{total.toLocaleString()} transactions</span>
           <span>In (page): {formatCurrencyFromCents(totals.inSum)}</span>
           <span>Out (page): {formatCurrencyFromCents(totals.outSum)}</span>
@@ -352,7 +352,7 @@ export function TransactionRegisterPage() {
         />
       )}
 
-      <div className="flex items-center justify-between text-xs text-slate-600">
+      <div className="flex items-center justify-between text-xs text-[#4B5563]">
         <span>
           {total === 0 ? "0" : `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, total)}`} of {total.toLocaleString()}
         </span>
@@ -361,7 +361,7 @@ export function TransactionRegisterPage() {
             type="button"
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="h-9 rounded-sm border border-slate-300 bg-white px-3 disabled:opacity-50"
+            className="h-9 rounded-sm border border-[#E5E7EB] bg-white px-3 disabled:opacity-50"
           >
             Previous
           </button>
@@ -372,7 +372,7 @@ export function TransactionRegisterPage() {
             type="button"
             onClick={() => setPage((p) => (p + 1 < pageCount ? p + 1 : p))}
             disabled={page + 1 >= pageCount}
-            className="h-9 rounded-sm border border-slate-300 bg-white px-3 disabled:opacity-50"
+            className="h-9 rounded-sm border border-[#E5E7EB] bg-white px-3 disabled:opacity-50"
           >
             Next
           </button>

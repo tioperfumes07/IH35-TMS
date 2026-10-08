@@ -41,12 +41,12 @@ function money(cents: number) {
 
 function statusPill(status: FactoringAdvanceDetail["status"]) {
   const base = "rounded-sm px-2 py-0.5 text-section-header font-semibold uppercase tracking-wide";
-  if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
-  if (status === "reserve_held" || status === "collected") return `${base} bg-slate-50 text-slate-600 border border-slate-200`;
-  if (status === "released") return `${base} bg-slate-100 text-slate-700 border border-slate-200`;
+  if (status === "advanced") return `${base} bg-[#F7F8FA] text-[#1F2A44] border border-[#E5E7EB]`;
+  if (status === "reserve_held" || status === "collected") return `${base} bg-[#F7F8FA] text-[#4B5563] border border-[#E5E7EB]`;
+  if (status === "released") return `${base} bg-[#F7F8FA] text-[#1F2A44] border border-[#E5E7EB]`;
   if (status === "recourse_returned") return `${base} bg-red-50 text-red-700 border border-red-200`;
-  if (status === "voided") return `${base} bg-slate-100 text-slate-500 border border-slate-200 line-through`;
-  return `${base} bg-slate-50 text-slate-700 border border-slate-200`;
+  if (status === "voided") return `${base} bg-[#F7F8FA] text-[#6B7280] border border-[#E5E7EB] line-through`;
+  return `${base} bg-[#F7F8FA] text-[#1F2A44] border border-[#E5E7EB]`;
 }
 
 type ActionKind = "advance" | "reserve_held" | "release" | "recourse" | "void";
@@ -213,7 +213,7 @@ export function FactoringDetailPage() {
             <span className={statusPill(detail.status)}>{detail.status.replaceAll("_", " ")}</span>
             <Link
               to="/banking"
-              className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
               data-testid="factoring-advance-banking-reverse-link"
               title="Banking home — the factoring virtual bank (ROUND-20.8 B3 retired /banking/factoring)"
             >
@@ -221,7 +221,7 @@ export function FactoringDetailPage() {
             </Link>
             <Link
               to="/factoring/statements"
-              className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
               data-testid="factoring-advance-statements-link"
             >
               Statement tie-out
@@ -272,7 +272,7 @@ export function FactoringDetailPage() {
                   label={entityLabel(detail.source_load_number, detail.source_load_id, "Load")}
                 />
               ) : (
-                <span className="text-slate-400">—</span>
+                <span className="text-[#6B7280]">—</span>
               )}
             </span>
           </DataPanelRow>
@@ -282,7 +282,7 @@ export function FactoringDetailPage() {
               {detail.matched_bank_transaction_id ? (
                 <span data-testid="factoring-matched-bank">Matched — Unmatch from the banner above</span>
               ) : (
-                <span className="text-slate-400">—</span>
+                <span className="text-[#6B7280]">—</span>
               )}
             </span>
           </DataPanelRow>
@@ -346,22 +346,22 @@ export function FactoringDetailPage() {
 
       <DataPanel title="Reserve movements & interest (JE reverse)">
         {packetQuery.isLoading ? (
-          <p className="text-xs text-slate-500">Loading advance packet…</p>
+          <p className="text-xs text-[#6B7280]">Loading advance packet…</p>
         ) : packetQuery.isError ? (
           <p className="text-xs text-red-700">Could not load advance packet for JE links.</p>
         ) : (
           <div className="space-y-3 text-xs">
             <div>
-              <p className="mb-1 text-xs font-semibold text-slate-600">Reserve movements</p>
+              <p className="mb-1 text-xs font-semibold text-[#4B5563]">Reserve movements</p>
               {(packetQuery.data?.reserve_movements ?? []).length === 0 ? (
-                <p className="text-xs text-slate-500">No reserve movements yet (honest empty).</p>
+                <p className="text-xs text-[#6B7280]">No reserve movements yet (honest empty).</p>
               ) : (
                 <ul className="space-y-1">
                   {(packetQuery.data?.reserve_movements ?? []).map((row) => (
-                    <li key={row.id} className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-1 text-xs">
+                    <li key={row.id} className="flex flex-wrap items-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs">
                       <span className="font-medium">{String(row.movement_type ?? "movement")}</span>
                       <span>{money(Number(row.amount_cents ?? 0))}</span>
-                      <span className="text-slate-500">{row.movement_date ? formatDateUS(String(row.movement_date)) : "—"}</span>
+                      <span className="text-[#6B7280]">{row.movement_date ? formatDateUS(String(row.movement_date)) : "—"}</span>
                       {row.journal_entry_id ? (
                         <EntityLink
                           kind="journal_entry"
@@ -373,7 +373,7 @@ export function FactoringDetailPage() {
                           }
                         />
                       ) : (
-                        <span className="text-slate-400">JE —</span>
+                        <span className="text-[#6B7280]">JE —</span>
                       )}
                     </li>
                   ))}
@@ -381,13 +381,13 @@ export function FactoringDetailPage() {
               )}
             </div>
             <div>
-              <p className="mb-1 text-xs font-semibold text-slate-600">Interest accruals</p>
+              <p className="mb-1 text-xs font-semibold text-[#4B5563]">Interest accruals</p>
               {(packetQuery.data?.interest_accruals ?? []).length === 0 ? (
-                <p className="text-xs text-slate-500">No interest accruals yet (honest empty).</p>
+                <p className="text-xs text-[#6B7280]">No interest accruals yet (honest empty).</p>
               ) : (
                 <ul className="space-y-1">
                   {(packetQuery.data?.interest_accruals ?? []).map((row) => (
-                    <li key={row.id} className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-1 text-xs">
+                    <li key={row.id} className="flex flex-wrap items-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs">
                       <span>{row.accrual_date ? formatDateUS(String(row.accrual_date)) : "—"}</span>
                       <span>{money(Number(row.interest_cents ?? 0))}</span>
                       {row.journal_entry_id ? (
@@ -401,7 +401,7 @@ export function FactoringDetailPage() {
                           }
                         />
                       ) : (
-                        <span className="text-slate-400">JE —</span>
+                        <span className="text-[#6B7280]">JE —</span>
                       )}
                     </li>
                   ))}
