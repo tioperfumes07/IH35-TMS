@@ -42,9 +42,9 @@ export function SafetyKpiBar({ kpis, loading }: Props) {
   if (loading) {
     return (
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="h-20 animate-pulse rounded-sm border border-slate-200 bg-slate-50" />
-        <div className="h-20 animate-pulse rounded-sm border border-slate-200 bg-slate-50" />
-        <div className="h-20 animate-pulse rounded-sm border border-slate-200 bg-slate-50" />
+        <div className="h-20 animate-pulse rounded-sm border border-[#E5E7EB] bg-[#F7F8FA]" />
+        <div className="h-20 animate-pulse rounded-sm border border-[#E5E7EB] bg-[#F7F8FA]" />
+        <div className="h-20 animate-pulse rounded-sm border border-[#E5E7EB] bg-[#F7F8FA]" />
       </div>
     );
   }

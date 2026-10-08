@@ -1,3 +1,13 @@
+## 2026-10-08T23:55Z · BANK leftover slate — SafetyKpiBar / DriverManagerKpiBar / KpiStatCard
+
+FINDING: BANK-F91258 — SafetyKpiBar / DriverManagerKpiBar / KpiStatCard Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25936 squash `5831f27d6e` (BANK-F91257 PhotoDiff/EldEditHistory/InspectionScore)
+GUARD: scripts/verify-home-kpi-bars-slate-leftover-chrome.mjs + verify-steps/3528 piggyback
+LIVE PROOF: verify-home-kpi-bars-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3528 piggyback + OUTBOX
+
 ## 2026-10-08T23:50Z · BANK leftover slate — PhotoDiff / EldEditHistory / InspectionScore
 
 FINDING: BANK-F91257 — PhotoDiffViewer / EldEditHistoryTimeline / InspectionScoreBadge Tailwind slate-* → house tokens
