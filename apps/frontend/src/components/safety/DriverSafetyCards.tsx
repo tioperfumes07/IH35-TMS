@@ -107,10 +107,10 @@ function credSeverity(days: number | null): CredSeverity {
 // §7 palette only: red for critical-expiry, slate weights for everything else (no amber/emerald).
 function countdownChipClass(sev: CredSeverity): string {
   if (sev === "critical") return "bg-red-50 text-red-700 border-red-200";
-  if (sev === "warn") return "bg-slate-100 text-slate-800 border-slate-300 font-semibold";
-  if (sev === "soon") return "bg-slate-50 text-slate-600 border-slate-200";
-  if (sev === "ok") return "bg-slate-50 text-slate-500 border-slate-100";
-  return "bg-white text-slate-400 border-slate-100";
+  if (sev === "warn") return "bg-[#F7F8FA] text-[#1F2A44] border-[#E5E7EB] font-semibold";
+  if (sev === "soon") return "bg-[#F7F8FA] text-[#4B5563] border-[#E5E7EB]";
+  if (sev === "ok") return "bg-[#F7F8FA] text-[#6B7280] border-[#E5E7EB]";
+  return "bg-white text-[#6B7280] border-[#E5E7EB]";
 }
 
 function countdownText(days: number | null): string {
@@ -124,9 +124,9 @@ function CredentialRow({ label, expiresAt, days }: { label: string; expiresAt: s
   const sev = credSeverity(days);
   return (
     <div className="flex items-center justify-between gap-2 py-0.5 text-xs">
-      <span className="shrink-0 text-slate-500">{label}</span>
+      <span className="shrink-0 text-[#6B7280]">{label}</span>
       <span className="flex min-w-0 items-center gap-1.5">
-        <span className="truncate text-slate-700">{fmtDate(expiresAt)}</span>
+        <span className="truncate text-[#4B5563]">{fmtDate(expiresAt)}</span>
         <span className={`shrink-0 rounded-sm border px-1.5 py-0.5 leading-none ${countdownChipClass(sev)}`}>
           {countdownText(days)}
         </span>
@@ -300,13 +300,13 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
     <section className="mb-4" aria-label="Driver safety cards" data-testid="driver-safety-cards">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="text-xs font-semibold text-slate-900">Driver Safety Cards</h3>
-          <p className="text-xs text-slate-500">
+          <h3 className="text-xs font-semibold text-[#0F1219]">Driver Safety Cards</h3>
+          <p className="text-xs text-[#6B7280]">
             Credential standing at a glance — CDL, visa, DOT medical, open incidents, D&amp;A pool.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center gap-1.5 text-xs text-slate-500">
+          <label className="flex items-center gap-1.5 text-xs text-[#6B7280]">
             Find driver
             <input
               type="search"
@@ -314,10 +314,10 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
               onChange={(e) => setRosterSearch(e.target.value)}
               placeholder="Name…"
               data-testid="driver-cards-search"
-              className="w-40 rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700"
+              className="w-40 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs text-[#4B5563]"
             />
           </label>
-          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+          <div className="flex items-center gap-1.5 text-xs text-[#6B7280]">
             <label htmlFor="driver-cards-sort">Sort</label>
             <Combobox
               id="driver-cards-sort"
@@ -346,7 +346,7 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
                   ? "border-[#1f2a44] bg-[#1f2a44] text-white"
                   : emphasize
                     ? "border-red-200 bg-red-50 text-red-700"
-                    : "border-slate-300 bg-[var(--surface-unselected)] text-slate-600"
+                    : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#4B5563]"
               }`}
             >
               {chip.label}
@@ -357,11 +357,11 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
       </div>
 
       {loading ? (
-        <div className="rounded-sm border border-slate-200 bg-white px-3 py-8 text-center text-xs text-slate-500">
+        <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-8 text-center text-xs text-[#6B7280]">
           Loading driver safety cards…
         </div>
       ) : cards.length === 0 ? (
-        <div className="rounded-sm border border-slate-200 bg-white px-3 py-8 text-center text-xs text-slate-500">
+        <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-8 text-center text-xs text-[#6B7280]">
           No drivers match this filter.
         </div>
       ) : (
@@ -374,36 +374,36 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
                 type="button"
                 data-testid={`driver-card-${card.driverId}`}
                 onClick={() => onOpenProfile?.(card.driverId)}
-                className={`flex flex-col rounded-sm border bg-white p-3 text-left transition-colors hover:border-slate-400 ${
-                  critical ? "border-l-2 border-l-red-500 border-slate-200" : "border-slate-200"
+                className={`flex flex-col rounded-sm border bg-white p-3 text-left transition-colors hover:border-[#E5E7EB] ${
+                  critical ? "border-l-2 border-l-red-500 border-[#E5E7EB]" : "border-[#E5E7EB]"
                 }`}
               >
                 <div className="mb-1.5 flex items-start justify-between gap-2">
-                  <span className="min-w-0 truncate text-xs font-semibold text-slate-900">{card.displayName}</span>
-                  <span className="shrink-0 rounded-sm border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500">
+                  <span className="min-w-0 truncate text-xs font-semibold text-[#0F1219]">{card.displayName}</span>
+                  <span className="shrink-0 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs text-[#6B7280]">
                     {card.status || "—"}
                   </span>
                 </div>
 
-                <div className="border-t border-slate-100 pt-1">
+                <div className="border-t border-[#E5E7EB] pt-1">
                   <CredentialRow label="CDL" expiresAt={card.cdlExpiresAt} days={card.cdlDays} />
                   <CredentialRow label={card.visaLabel} expiresAt={card.visaExpiresAt} days={card.visaDays} />
                   <CredentialRow label="DOT medical" expiresAt={card.medicalExpiresAt} days={card.medicalDays} />
                 </div>
 
-                <div className="mt-1.5 flex items-center justify-between border-t border-slate-100 pt-1.5 text-xs">
-                  <span className="text-slate-500">
+                <div className="mt-1.5 flex items-center justify-between border-t border-[#E5E7EB] pt-1.5 text-xs">
+                  <span className="text-[#6B7280]">
                     Open incidents{" "}
-                    <span className={card.openIncidents > 0 ? "font-semibold text-red-700" : "text-slate-700"}>
+                    <span className={card.openIncidents > 0 ? "font-semibold text-red-700" : "text-[#4B5563]"}>
                       {card.openIncidents}
                     </span>
                   </span>
                   <span
                     className={
                       enrollmentsUnavailable
-                        ? "text-slate-400"
+                        ? "text-[#6B7280]"
                         : card.daEnrolled
-                          ? "text-slate-600"
+                          ? "text-[#4B5563]"
                           : "font-semibold text-red-700"
                     }
                     title={card.daConsortium ?? undefined}
