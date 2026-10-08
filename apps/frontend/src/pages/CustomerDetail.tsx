@@ -2206,7 +2206,7 @@ export function CustomerDetailPage() {
                   <div>Cleared: {billingSummary?.cleared_open_cents == null ? "-" : formatCurrencyCents(billingSummary.cleared_open_cents)}</div>
                   <UnclearedDocumentsNote docs={billingSummary?.uncleared_documents ?? []} />
                   {(billingSummary?.uncleared_cents ?? 0) > 0 ? (
-                    <p className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
+                    <p className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F1F5F9] px-3 py-2 text-xs text-[#1F2A44]">
                       Applied payments that have not been matched or categorized in Banking are named not cleared.
                     </p>
                   ) : null}
