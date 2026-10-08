@@ -27,6 +27,7 @@ import {
   filterRelayFuelTransactionsByDateRange,
   listRelayFuelTransactions,
   parseRelayFuelTransactionRow,
+  relayTransactionCalendarDate,
   type RelayFuelTransaction,
   type RelayRejectedRow,
   RelayApiError,
@@ -35,6 +36,12 @@ import {
 import { upsertRelayFuelTransaction, type RelayIngestSource } from "./relay-fuel-ingest.service.js";
 import { computeRelayIngestWindow } from "./relay-fuel-ingest-window.js";
 import { fetchRelayFuelTransactionsInWindows } from "./relay-fuel-windowed-pull.js";
+import {
+  clampRelayRangeStartForCompany,
+  isBeforeRelayUsmcaFloor,
+  isUsmcaOperatingCompany,
+  RELAY_USMCA_DATA_FLOOR,
+} from "./relay-usmca-date-floor.js";
 
 const RELAY_SYNC_KIND = "relay_fuel_daily_pull";
 
@@ -259,6 +266,23 @@ export async function ingestForCompany(
       );
       continue;
     }
+    // RELAY DATE LAW — USMCA never stores a fill dated before 2026-08-03 (TRANSPORTATION on that key).
+    if (isUsmcaOperatingCompany(operatingCompanyId)) {
+      const day = relayTransactionCalendarDate(parsed.created_at);
+      if (isBeforeRelayUsmcaFloor(day)) {
+        skipped += 1;
+        app.log.info(
+          {
+            operating_company_id: operatingCompanyId,
+            transaction_id: parsed.transaction_id,
+            fill_day: day,
+            floor: RELAY_USMCA_DATA_FLOOR,
+          },
+          "[RELAY_FUEL_INGEST_CRON] skipped pre-USMCA-floor fill (TRANSPORTATION on shared key)"
+        );
+        continue;
+      }
+    }
     const result = await upsertRelayFuelTransaction(client, operatingCompanyId, parsed, opts?.source ?? "daily_pull");
     if (result.skipped_reason) {
       // One fill = one company: another company owns (or already holds) this fill — nothing written here.
@@ -349,26 +373,37 @@ export async function runRelayFuelIngestTick(
     }
     companiesPulled += 1;
 
-    const logId = await withLuciaBypass(async (client) => claimRelayTick(client, operatingCompanyId));
-    if (logId === null) {
-      app.log.info({ operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] tick already claimed by another instance — skipped");
-      continue;
-    }
-    // RELAY-F440 — everything after the claim runs inside the try, and the claim is closed exactly once in `finally`:
-    // success=true with the window, or success=false with the error. A tick that dies records that it died and why.
+    // RELAY-F440 / R3 (441.21-B) — claim INSIDE the try so a throw before/during claim never leaves an
+    // open row, and finally only finishes when logId was set. A claim outside try left abandoned ticks.
+    let logId: string | null = null;
     let lastEnd: string | null = null;
     let window: ReturnType<typeof computeRelayIngestWindow> | null = null;
     let outcome: { success: boolean; rowsAdded: number; error: string | null; payload: Record<string, unknown> } | null = null;
     try {
+      logId = await withLuciaBypass(async (client) => claimRelayTick(client, operatingCompanyId));
+      if (logId === null) {
+        app.log.info({ operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] tick already claimed by another instance — skipped");
+        continue;
+      }
       lastEnd = await withLuciaBypass(async (client) => lastCoveredEndDate(client, operatingCompanyId));
-      window = computeRelayIngestWindow(lastEnd, yesterday);
+      // RELAY DATE LAW — USMCA resume never opens before 2026-08-03 (TRANSPORTATION on the shared key).
+      let windowWatermark = lastEnd;
+      if (isUsmcaOperatingCompany(operatingCompanyId) && (lastEnd == null || lastEnd < RELAY_USMCA_DATA_FLOOR)) {
+        const d = new Date(`${RELAY_USMCA_DATA_FLOOR}T00:00:00Z`);
+        d.setUTCDate(d.getUTCDate() - 1);
+        windowWatermark = d.toISOString().slice(0, 10);
+      }
+      window = computeRelayIngestWindow(windowWatermark, yesterday);
+      if (isUsmcaOperatingCompany(operatingCompanyId) && window.startDate < RELAY_USMCA_DATA_FLOOR) {
+        window = { ...window, startDate: RELAY_USMCA_DATA_FLOOR };
+      }
       const tickWindow = window;
       let pulled = 0;
       let upserted = 0;
       let skipped = 0;
       const rejected: RelayRejectedRow[] = [];
       // Server-side date filter via dtstart/dtend, one paced call per window (>=10s apart, halved on a
-      // timeout) so a catch-up never becomes one long call. Client-side filter stays as the defensive fallback.
+      // timeout) so a resume never becomes one long call. Client-side filter stays as the defensive fallback.
       const pull = await fetchRelayFuelTransactionsInWindows(entityCode, {
         startDate: tickWindow.startDate,
         endDate: tickWindow.endDate,
@@ -456,18 +491,21 @@ export async function runRelayFuelIngestTick(
           });
       });
     } finally {
-      const final = outcome ?? {
-        success: false,
-        rowsAdded: 0,
-        error: "relay_tick_ended_without_an_outcome",
-        payload: { last_covered_end: lastEnd, entity_code: entityCode },
-      };
-      try {
-        await withLuciaBypass(async (client) => finishRelayTick(client, logId, final));
-      } catch (finishErr) {
-        // The claim could not be closed: that is itself a failure of this tick, never a log line only.
-        app.log.error({ err: finishErr, operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] sync-log finish failed");
-        failures.push({ operating_company_id: operatingCompanyId, error: finishErr });
+      // R3 — only finish when this instance claimed (logId set). A concurrent skip leaves logId null.
+      if (logId) {
+        const final = outcome ?? {
+          success: false,
+          rowsAdded: 0,
+          error: "relay_tick_ended_without_an_outcome",
+          payload: { last_covered_end: lastEnd, entity_code: entityCode },
+        };
+        try {
+          await withLuciaBypass(async (client) => finishRelayTick(client, logId!, final));
+        } catch (finishErr) {
+          // The claim could not be closed: that is itself a failure of this tick, never a log line only.
+          app.log.error({ err: finishErr, operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] sync-log finish failed");
+          failures.push({ operating_company_id: operatingCompanyId, error: finishErr });
+        }
       }
     }
   }
@@ -629,8 +667,16 @@ export async function runRelayFuelBackfill(
     try {
       // Server-side date filter via dtstart/dtend (Mike), one paced call per window. Network I/O stays outside
       // the DB transaction; each window's rows commit in their own withLuciaBypass.
-      const rangeStart = isoDateMonthsAgo(months);
+      // RELAY DATE LAW — USMCA backfill never asks Relay for a day before 2026-08-03.
+      const rangeStart = clampRelayRangeStartForCompany(operatingCompanyId, isoDateMonthsAgo(months));
       const rangeEnd = todayIsoDate();
+      if (rangeStart > rangeEnd) {
+        app.log.info(
+          { operating_company_id: operatingCompanyId, floor: RELAY_USMCA_DATA_FLOOR },
+          "[RELAY_FUEL_INGEST_BACKFILL] range empty after USMCA floor clamp — nothing to pull"
+        );
+        continue;
+      }
       const pull = await fetchRelayFuelTransactionsInWindows(entityCode, {
         startDate: rangeStart,
         endDate: rangeEnd,
