@@ -411,7 +411,7 @@ export function ForensicReviewPage() {
             ))}
           </div>
           {selectedAnomalyId ? (
-            <div className="mt-3 rounded-sm border border-gray-100 p-2">
+            <div className="mt-3 border-t border-gray-100 p-2">
               <p className="text-xs font-semibold text-gray-700">Review anomaly {selectedAnomalyId}</p>
               <SelectCombobox
                 value={reviewStatus}

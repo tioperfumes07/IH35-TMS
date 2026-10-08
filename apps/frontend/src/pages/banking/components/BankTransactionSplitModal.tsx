@@ -500,7 +500,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                   </button>
 
                   {expanded ? (
-                    <div className="mt-2 grid grid-cols-1 gap-2 rounded-sm border border-gray-100 bg-gray-50 p-2 md:grid-cols-4">
+                    <div className="mt-2 grid grid-cols-1 gap-2 border-t border-gray-100 bg-gray-50 p-2 md:grid-cols-4">
                       <div>
                         <span className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">Driver</span>
                         <DriverAutocomplete

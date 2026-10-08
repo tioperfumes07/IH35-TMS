@@ -92,7 +92,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
       ) : (
         <div className="space-y-2">
           {rows.map((row) => (
-            <div key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs">
+            <div key={row.id} className="border-t border-gray-200 p-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-gray-900">
                   <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Work order")} /> · Unit <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />

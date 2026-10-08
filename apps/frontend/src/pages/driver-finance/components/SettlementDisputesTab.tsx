@@ -401,7 +401,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             />
 
             {resolution === "in_favor" || resolution === "partial" ? (
-              <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
+              <div className="border-t border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
                 Corrective JE preview: debit and credit entries will be posted for {money(resolutionAmountPreviewCents)}.
               </div>
             ) : null}

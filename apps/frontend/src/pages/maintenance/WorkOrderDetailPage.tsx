@@ -1085,7 +1085,7 @@ export function WorkOrderDetailPage() {
               </div>
             </div>
             {wo.source_intransit_issue_id ? (
-              <div className="mt-3 rounded-sm border border-gray-200 bg-gray-50 p-3" data-testid="wo-source-intransit-issue">
+              <div className="mt-3 border-t border-gray-200 bg-gray-50 p-3" data-testid="wo-source-intransit-issue">
                 <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Source In-Transit Issue</div>
                 <Link
                   className="font-semibold text-[#4B5563] hover:underline"
@@ -1128,7 +1128,7 @@ export function WorkOrderDetailPage() {
                 </div>
               </div>
             </div>
-            <div className="mt-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#4B5563]">
+            <div className="mt-3 border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#4B5563]">
               Use Edit to PATCH header fields (unit, load, vendor, complaint). Line persist uses POST
               /work-orders/:id/line-items — save from Edit when changing parts/labor.
             </div>

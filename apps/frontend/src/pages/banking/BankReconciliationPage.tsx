@@ -313,7 +313,7 @@ export function BankReconciliationPage() {
         </SelectCombobox>
         <DatePicker value={periodStart} onChange={setPeriodStart} className="" />
         <DatePicker value={periodEnd} onChange={setPeriodEnd} className="" />
-        <div className="flex items-center rounded-sm border border-gray-200 px-2 text-xs text-gray-700">
+        <div className="flex items-center px-2 text-xs text-gray-700">
           Progress: {worklistQuery.data?.progress.percent ?? 0}% ({worklistQuery.data?.progress.matched_or_skipped_transactions ?? 0}/
           {worklistQuery.data?.progress.total_transactions ?? 0})
         </div>

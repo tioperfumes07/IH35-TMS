@@ -342,7 +342,7 @@ export function EquipmentTypesPage() {
                         <div
                           key={item.id}
                           id={`equipment-line-item-${item.id}`}
-                          className={`flex min-h-8 items-center justify-between gap-2 rounded border px-2 py-1 ${
+                          className={`flex min-h-8 items-center justify-between gap-2 border-t px-2 py-1 ${
                             highlightId === item.id ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-200"
                           }`}
                         >

@@ -535,7 +535,7 @@ export function DOTInspectionsTab() {
         ) : (
           <div className="space-y-2">
             {(openEventsQuery.data?.events ?? []).map((row) => (
-              <div key={String(row.id)} className="rounded-sm border border-gray-200 p-2 text-xs">
+              <div key={String(row.id)} className="border-t border-gray-200 p-2 text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-[#1F2A44]">
                     {String(row.station_label ?? "DOT station")} · Unit{" "}

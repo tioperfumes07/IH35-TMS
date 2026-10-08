@@ -446,7 +446,7 @@ export function VendorMappingResolutionPage() {
               </div>
             ) : null}
 
-            <div className="mb-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#4B5563]">
+            <div className="mb-3 border-t border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#4B5563]">
               <div className="font-semibold text-[#0F1219]">Before / after preview</div>
               <div className="mt-1">Before: {preview?.before}</div>
               <div className="mt-1">After: {preview?.after}</div>

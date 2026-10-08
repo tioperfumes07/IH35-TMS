@@ -224,7 +224,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           <div className="mb-1 font-semibold">Deduction Schedule</div>
           {schedule.length === 0 ? <div className="text-gray-500">No schedule rows.</div> : null}
           {schedule.map((row) => (
-            <div key={String(row.id)} className="rounded-sm border border-gray-100 px-2 py-1">
+            <div key={String(row.id)} className="border-t border-gray-100 px-2 py-1">
               {String(row.cadence ?? "weekly")} · {formatUsdTable(row.amount_per_period as number | string | null)} · periods {Number(row.total_periods ?? 0)}
             </div>
           ))}
@@ -240,7 +240,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           ) : null}
           {settlements.length === 0 ? <div className="text-gray-500">No settlement deductions yet.</div> : null}
           {settlements.map((row) => (
-            <div key={String(row.settlement_id ?? row.id)} className="rounded-sm border border-gray-100 px-2 py-1">
+            <div key={String(row.settlement_id ?? row.id)} className="border-t border-gray-100 px-2 py-1">
               Settlement{" "}
               <EntityLink
                 kind="settlement"

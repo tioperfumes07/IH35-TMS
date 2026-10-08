@@ -1610,7 +1610,7 @@ export function DriverDetailPage() {
                 </div>
                 <div className="mt-1.5 space-y-1.5">
                   {qualification.current_rates.map((line) => (
-                    <div key={line.line_item_template_id} className="rounded-sm border border-gray-100 bg-gray-50 p-1.5">
+                    <div key={line.line_item_template_id} className="border-t border-gray-100 bg-gray-50 p-1.5">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="text-xs font-medium text-gray-800">
                           {line.line_item_name} ({line.line_item_code})

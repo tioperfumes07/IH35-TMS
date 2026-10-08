@@ -447,7 +447,7 @@ export function CreateWOSectionIdentification({
         </div>
       </div>
       {suggestedLoad ? (
-        <div className="mt-2 rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
+        <div className="mt-2 border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
           Suggested load:{" "}
           <EntityLink kind="load" id={suggestedLoad.load_id} label={entityLabel(suggestedLoad.load_number, suggestedLoad.load_id, "Load")} className="font-semibold" />{" "}
           <span className="rounded-sm bg-emerald-100 px-1 py-0.5 uppercase">{suggestedLoad.confidence}</span>

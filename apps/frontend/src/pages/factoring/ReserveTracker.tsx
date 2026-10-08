@@ -267,7 +267,7 @@ export function ReserveTracker() {
         {/* Forecast windows */}
         <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {([7, 14, 30, 60] as const).map((days) => (
-            <div key={days} className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-center">
+            <div key={days} className="border-t border-gray-200 bg-gray-50 p-2 text-center">
               <div className="text-section-header uppercase tracking-wide text-gray-500">Next {days}d</div>
               <div className="mt-1 text-xs font-bold text-gray-900">
                 {fmtM(forecastByWindow[days])}

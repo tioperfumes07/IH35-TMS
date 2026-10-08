@@ -157,7 +157,7 @@ export function CSAScoreTab() {
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-2">
         {basics.map((basic) => (
-          <div key={basic.label} className="rounded-sm border border-gray-100 bg-gray-50 p-2">
+          <div key={basic.label} className="border-t border-gray-100 bg-gray-50 p-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-[#1F2A44]">{basic.label}</span>
               <span className="font-semibold text-[#1F2A44]">

@@ -22,7 +22,7 @@ export function PhotoDiffViewer({ pre, post, angleLabel }: Props) {
           {side.imageUrl ? (
             <img src={side.imageUrl} alt={side.label} className="max-h-64 w-full object-contain" />
           ) : (
-            <div className="flex h-48 items-center justify-center rounded-sm border border-dashed border-[#E5E7EB] text-xs text-[#6B7280]">
+            <div className="flex h-48 items-center justify-center text-xs text-[#6B7280]">
               No image
             </div>
           )}

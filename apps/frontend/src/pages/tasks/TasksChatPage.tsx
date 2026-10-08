@@ -290,7 +290,7 @@ export function TasksChatPage() {
                         .map((id) => employeeById.get(id)?.name)
                         .filter((n): n is string => Boolean(n));
                       return (
-                        <div key={c.id} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2" data-testid="tasks-chat-comment">
+                        <div key={c.id} className="border-t border-[#E5E7EB] bg-[#F7F8FA] p-2" data-testid="tasks-chat-comment">
                           <div className="flex items-baseline justify-between">
                             <span className="text-xs font-semibold text-[#1F2A44]">{c.author_name ?? c.author_email ?? "Unknown"}</span>
                             <span className="text-xs text-[#6B7280]">{formatCompanyTime(c.created_at)}</span>

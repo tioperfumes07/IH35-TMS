@@ -316,7 +316,7 @@ export function CashFlowOverviewPage() {
                   <Tooltip
                     content={({ active, payload, label }) =>
                       active && payload?.length ? (
-                        <div className="rounded-sm border border-gray-200 bg-white p-2 text-xs shadow-sm">
+                        <div className="border-t border-gray-200 bg-white p-2 text-xs shadow-sm">
                           <div className="font-semibold">{mmmDd(label) || String(label ?? "")}</div>
                           {payload.map((p) => (
                             <div key={String(p.dataKey)}>

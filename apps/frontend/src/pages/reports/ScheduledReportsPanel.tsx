@@ -112,7 +112,7 @@ export function ScheduledReportsPanel() {
         {rows.map((row) => (
           <div
             key={row.id}
-            className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2"
+            className="border-t border-[#E5E7EB] bg-[#F7F8FA] p-2"
           >
             <div className="flex items-start justify-between gap-2">
               <div>
