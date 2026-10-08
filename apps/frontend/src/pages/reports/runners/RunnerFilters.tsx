@@ -11,11 +11,15 @@ import {
   QBO_DATE_PRESETS,
 } from "../../../components/table/UniversalListToolbar";
 
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
 const MONTH_OPTIONS = Array.from({ length: 15 }, (_, i) => {
   const d = new Date();
   d.setMonth(d.getMonth() - 12 + i);
   const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  const label = new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long" }).format(d);
+  const label = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
   return { value, label };
 });
 

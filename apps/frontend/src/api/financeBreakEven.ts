@@ -11,6 +11,7 @@ export const FINANCE_BREAK_EVEN_UI_FLAG = "FINANCE_BREAK_EVEN_UI_ENABLED";
 export type BreakEvenClassification = "fixed" | "variable";
 
 export type BreakEvenExpenseLine = {
+  account_id?: string;
   account_code: string;
   account_name: string;
   account_type: string;

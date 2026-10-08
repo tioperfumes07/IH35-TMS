@@ -164,3 +164,6 @@ DONE: PR #25802 · squash d6f3ca09d8339d6c735bacf53a28901c82be3243 · money-pr-l
 
 ## 2026-10-08 — ROUND 441.22 Devin: RunnerFilters month_picker native input to searchable Combobox
 DONE: PR #25805 · squash 2c2ad6b36a343a083d0f4a19922267528f9ac5a3 · money-pr-local-gate exit 0 · replaced native <input type="month"> in RunnerFilters.tsx with a searchable Combobox of rolling 15 months; verify-runner-filters-entity-pickers rejects native month input · baseline-lines-added = 0
+
+## 2026-10-08 — ROUND 441.22 Devin: AP-aging bucket + ReportsHome box-in-box guard re-anchors
+DONE: PR #25860 · squash e55206e14a97e0ad007613aec726c98f21587397 · money-pr-local-gate exit 0 · verify-report-management-ap-aging sliced to APAgingSection field presence; verify-reports-home-no-box-in-box accepts locked #E5E7EB token or slate utilities · baseline-lines-added = 0
