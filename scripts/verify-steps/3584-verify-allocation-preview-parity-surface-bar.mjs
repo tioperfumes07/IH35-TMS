@@ -3,5 +3,6 @@ export default {
   name: "verify-allocation-preview-parity-surface-bar",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-allocation-preview-parity-surface-bar.mjs"]);
+    ctx.run("node", ["scripts/verify-ins-summary-claims-tab-slate-leftover-chrome.mjs"]);
   },
 };

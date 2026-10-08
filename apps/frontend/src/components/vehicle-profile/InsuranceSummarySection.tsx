@@ -100,13 +100,13 @@ export function InsuranceSummarySection({ insuranceSummary, unitId, onRetry }: {
       <h3 className="text-xs font-semibold text-gray-800">Insurance summary</h3>
       <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Unit insurance evidence status">
         {activeCoverageLabels.map((label) => (
-          <span key={label} className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+          <span key={label} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs font-semibold text-[#1F2A44]">
             {label} ON
           </span>
         ))}
         <span
           data-testid="vp-insurance-document-evidence"
-          className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs font-semibold text-[#1F2A44]"
         >
           {insuranceDocumentCount > 0 ? `EVIDENCED (${insuranceDocumentCount})` : "NOT EVIDENCED"}
         </span>
@@ -116,7 +116,7 @@ export function InsuranceSummarySection({ insuranceSummary, unitId, onRetry }: {
           kind="insurance_coverage_gaps"
           id={unitId}
           label="Check this unit’s coverage requirements →"
-          className="mt-1 inline-block text-xs text-slate-700 hover:underline"
+          className="mt-1 inline-block text-xs text-[#1F2A44] hover:underline"
         />
       ) : null}
       {linkedUnavailable ? (

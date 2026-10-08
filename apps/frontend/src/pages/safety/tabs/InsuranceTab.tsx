@@ -10,7 +10,7 @@ import { FleetCoveredPage } from "../../insurance/FleetCoveredPage";
 
 export function InsuranceTab() {
   const navClassName = ({ isActive }: { isActive: boolean }) =>
-    `rounded-sm px-3 py-1.5 text-xs font-medium ${isActive ? "bg-slate-100 text-slate-700" : "text-slate-600 hover:bg-slate-100"}`;
+    `rounded-sm px-3 py-1.5 text-xs font-medium ${isActive ? "bg-[#F7F8FA] text-[#1F2A44]" : "text-[#4B5563] hover:bg-[#F7F8FA]"}`;
 
   return (
     <div className="space-y-4">

@@ -84,7 +84,7 @@ function ClaimEconomics({ claim }: { claim: InsuranceClaim }) {
           id={claim.trailer_id}
           name={claim.trailer_display_id}
           noun="Trailer"
-          className="text-slate-700 hover:underline"
+          className="text-[#1F2A44] hover:underline"
           data-testid="claim-economics-trailer-link"
         />
       ),
@@ -102,7 +102,7 @@ function ClaimEconomics({ claim }: { claim: InsuranceClaim }) {
           data-testid={`claim-economics-${chip.key}`}
           className={
             chip.tone === "attention"
-              ? "rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700"
+              ? "rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]"
               : "rounded-sm border border-gray-200 px-1.5 py-0.5 text-xs text-gray-600"
           }
         >
@@ -176,8 +176,8 @@ export function InsuranceClaimsReverseSection({
       data-testid={testId}
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">Insurance Claims</h3>
-        <EntityLink kind={openKind} id={openId} label="Open Claims" className="text-xs font-semibold text-slate-700 underline" />
+        <h3 className="text-xs font-semibold text-[#0F1219]">Insurance Claims</h3>
+        <EntityLink kind={openKind} id={openId} label="Open Claims" className="text-xs font-semibold text-[#1F2A44] underline" />
       </div>
       <p className="text-xs text-gray-600">
         Insurance claims linked to {contextLabel} (Owner/Admin).
@@ -203,7 +203,7 @@ export function InsuranceClaimsReverseSection({
                 id={claim.id}
                 name={entityLabel(claim.claim_number, claim.id, "Claim")}
                 noun="Claim"
-                className="font-semibold text-slate-700"
+                className="font-semibold text-[#1F2A44]"
               />
               <span className="ml-2 text-gray-600">{claim.status}</span>
               <ClaimEconomics claim={claim} />
