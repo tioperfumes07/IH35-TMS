@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — PageHelpLink / StaleDeployBanner / RelatedModuleLinks
+
+FINDING: BANK-F91297 — PageHelpLink / StaleDeployBanner / RelatedModuleLinks Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25978 squash `cb2e1f382e` (BANK-F91296 BackButton/SecondaryNavTabs/DocsHome)
+GUARD: scripts/verify-91297-help-stale-related-slate-leftover-chrome.mjs + verify-steps/3380 piggyback
+LIVE PROOF: verify-91297-help-stale-related-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3380 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — BackButton / SecondaryNavTabs / DocsHome
 
 FINDING: BANK-F91296 — BackButton / SecondaryNavTabs / DocsHomePage Tailwind slate-* → house tokens
