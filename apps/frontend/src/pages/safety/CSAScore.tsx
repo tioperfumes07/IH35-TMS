@@ -74,13 +74,13 @@ function formatScore(value: number | null) {
 
 function bandClassName(band: BasicTile["risk_band"]) {
   if (band === "alert") return "text-red-700";
-  if (band === "watch") return "text-slate-700";
-  if (band === "ok") return "text-slate-700";
-  return "text-slate-500";
+  if (band === "watch") return "text-[#4B5563]";
+  if (band === "ok") return "text-[#4B5563]";
+  return "text-[#6B7280]";
 }
 
 function Sparkline({ points }: { points: number[] }) {
-  if (points.length < 2) return <div className="h-8 text-xs text-slate-400">No trend yet</div>;
+  if (points.length < 2) return <div className="h-8 text-xs text-[#6B7280]">No trend yet</div>;
   const min = Math.min(...points);
   const max = Math.max(...points);
   const span = max - min || 1;
@@ -93,7 +93,7 @@ function Sparkline({ points }: { points: number[] }) {
     .join(" ");
   return (
     <svg viewBox="0 0 100 100" className="h-8 w-full">
-      <polyline points={coordinates} fill="none" stroke="currentColor" strokeWidth="6" className="text-slate-500" />
+      <polyline points={coordinates} fill="none" stroke="currentColor" strokeWidth="6" className="text-[#6B7280]" />
     </svg>
   );
 }
@@ -174,29 +174,29 @@ export function CSAScorePage() {
       <PageHeader title="CSA / FMCSA Trend" breadcrumb={[{ label: "Safety" }, { label: "CSA / FMCSA Trend" }]} backHref="/safety" />
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="space-y-1">
-          <div className="text-xs font-semibold text-slate-800">FMCSA CSA source status</div>
-          <div className="text-slate-600">
+          <div className="text-xs font-semibold text-[#1F2A44]">FMCSA CSA source status</div>
+          <div className="text-[#4B5563]">
             Last successful public-source metric pull{" "}
             {currentQuery.data?.pulled_at ? new Date(currentQuery.data.pulled_at).toLocaleString() : "not available"}
             {typeof currentQuery.data?.pull_age_days === "number" ? ` (${currentQuery.data.pull_age_days} days ago)` : ""}
           </div>
-          <div className="text-slate-500">
+          <div className="text-[#6B7280]">
             Public SAFER is not authoritative for Hazmat or Crash Indicator BASIC percentiles. No authenticated scraping is performed.
           </div>
           {currentQuery.data?.is_stale ? (
-            <div className="font-semibold text-slate-700">CSA pull is stale (&gt;7 days). Run pull now and check cron.</div>
+            <div className="font-semibold text-[#4B5563]">CSA pull is stale (&gt;7 days). Run pull now and check cron.</div>
           ) : null}
         </div>
         <button
           type="button"
-          className="rounded-sm border border-slate-300 px-3 py-1 font-semibold text-slate-700 disabled:opacity-60"
+          className="rounded-sm border border-[#E5E7EB] px-3 py-1 font-semibold text-[#4B5563] disabled:opacity-60"
           onClick={() => pullMutation.mutate({ companyId, generation: lifecycleGenerationRef.current })}
           disabled={!companyId || pullMutation.isPending || !canPull}
         >
           Check public FMCSA source
         </button>
         {pullFailedForCurrentCompany ? (
-          <div className="w-full text-right text-slate-700">
+          <div className="w-full text-right text-[#4B5563]">
             No authoritative BASIC metrics were returned; freshness was not advanced.
           </div>
         ) : null}
@@ -219,21 +219,21 @@ export function CSAScorePage() {
             return (
               <div key={tile.basic_category} className="rounded-sm border border-gray-200 bg-white p-3">
                 <div className="flex items-center justify-between text-xs">
-                  <div className="font-semibold text-slate-700">{tile.label}</div>
+                  <div className="font-semibold text-[#4B5563]">{tile.label}</div>
                   <div className={`font-semibold ${bandClassName(tile.risk_band)}`}>{tile.risk_band.toUpperCase()}</div>
                 </div>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
+                <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-[#4B5563]">
                   <div>
                     <div>{tile.source.authoritative_for_percentile ? "SMS measure" : "Public-source measure"}</div>
-                    <div className="text-xs font-semibold text-slate-800">{formatScore(tile.latest_score)}</div>
+                    <div className="text-xs font-semibold text-[#1F2A44]">{formatScore(tile.latest_score)}</div>
                   </div>
                   <div>
                     <div>Percentile</div>
-                    <div className="text-xs font-semibold text-slate-800">{formatScore(tile.latest_percentile)}</div>
+                    <div className="text-xs font-semibold text-[#1F2A44]">{formatScore(tile.latest_percentile)}</div>
                   </div>
                   <div>
                     <div>Threshold</div>
-                    <div className="font-semibold text-slate-800">
+                    <div className="font-semibold text-[#1F2A44]">
                       {tile.availability === "available" ? tile.threshold.toFixed(0) : "-"}
                     </div>
                   </div>
@@ -244,14 +244,14 @@ export function CSAScorePage() {
                     </div>
                   </div>
                 </div>
-                <div className="mt-2 text-xs text-slate-500">
+                <div className="mt-2 text-xs text-[#6B7280]">
                   {tile.availability === "requires_authenticated_carrier_sms"
                     ? "Unavailable from public sources · authenticated carrier SMS required"
                     : tile.availability === "not_available_from_public_source"
                       ? "No metric available from the public source"
                       : `Alert status: ${tile.latest_alert_status} · Trending toward alert: ${tile.trending_toward_alert ? "yes" : "no"}`}
                 </div>
-                <div className="mt-2 rounded-sm bg-slate-50 p-1 text-slate-600">
+                <div className="mt-2 rounded-sm bg-[#F7F8FA] p-1 text-[#4B5563]">
                   {trendsQuery.isError ? (
                     <div className="h-8 text-xs text-red-700">Trend unavailable — fetch failed</div>
                   ) : (

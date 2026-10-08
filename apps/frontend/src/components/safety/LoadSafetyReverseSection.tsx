@@ -129,7 +129,7 @@ export function LoadSafetyReverseSection({
         data-testid="load-safety-reverse-accidents"
       >
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-xs font-semibold text-slate-900">
+          <h3 className="text-xs font-semibold text-[#0F1219]">
             Accidents
             {accidentTotal > 0 ? (
               <span className="ml-2 text-xs font-normal text-gray-600">
@@ -141,7 +141,7 @@ export function LoadSafetyReverseSection({
             kind="accidents_load"
             id={loadId}
             label="Open Accidents"
-            className="text-xs font-semibold text-slate-700 underline"
+            className="text-xs font-semibold text-[#4B5563] underline"
           />
         </div>
         {accidentsQ.isLoading ? (
@@ -165,7 +165,7 @@ export function LoadSafetyReverseSection({
               return (
                 <li
                   key={id}
-                  className="text-xs text-slate-700"
+                  className="text-xs text-[#4B5563]"
                   data-testid={`load-safety-accident-${id}`}
                 >
                   <EntityLink
@@ -216,7 +216,7 @@ export function LoadSafetyReverseSection({
         {!accidentsQ.isError && accidentTotal > accidentPageSize ? (
           <div className="flex items-center justify-end gap-2 text-xs" data-testid="load-safety-reverse-accidents-pager">
             <Button size="sm" variant="secondary" disabled={accidentPage <= 1 || accidentsQ.isFetching} onClick={() => setAccidentPage((current) => Math.max(1, current - 1))}>Previous accidents</Button>
-            <span className="text-slate-600">Page {accidentPage} of {accidentPageCount} · {accidentTotal} accidents</span>
+            <span className="text-[#4B5563]">Page {accidentPage} of {accidentPageCount} · {accidentTotal} accidents</span>
             <Button size="sm" variant="secondary" disabled={accidentPage >= accidentPageCount || accidentsQ.isFetching} onClick={() => setAccidentPage((current) => Math.min(accidentPageCount, current + 1))}>Next accidents</Button>
           </div>
         ) : null}
@@ -228,7 +228,7 @@ export function LoadSafetyReverseSection({
         data-testid="load-safety-reverse-hos-violations"
       >
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-xs font-semibold text-slate-900">
+          <h3 className="text-xs font-semibold text-[#0F1219]">
             HOS Violations
             {hosViolationTotal ? ` (${hosViolationTotal})` : ""}
           </h3>
@@ -236,7 +236,7 @@ export function LoadSafetyReverseSection({
             kind="hos_violations_load"
             id={loadId}
             label="Open HOS Violations"
-            className="text-xs font-semibold text-slate-700 underline"
+            className="text-xs font-semibold text-[#4B5563] underline"
           />
         </div>
         {hosViolationsQ.isLoading ? (
@@ -253,7 +253,7 @@ export function LoadSafetyReverseSection({
           </p>
         ) : null}
         {!hosViolationsQ.isError ? hosViolations.map((row) => (
-          <div key={s(row.id)} className="text-xs text-slate-700">
+          <div key={s(row.id)} className="text-xs text-[#4B5563]">
             <EntityLink
               kind="hos_violation"
               id={s(row.id)}
@@ -269,7 +269,7 @@ export function LoadSafetyReverseSection({
         {!hosViolationsQ.isError && hosViolationTotal > hosViolationPageSize ? (
           <div className="flex items-center justify-end gap-2 text-xs" data-testid="load-safety-reverse-hos-violations-pager">
             <Button size="sm" variant="secondary" disabled={hosViolationPage <= 1 || hosViolationsQ.isFetching} onClick={() => setHosViolationPage((current) => Math.max(1, current - 1))}>Previous violations</Button>
-            <span className="text-slate-600">Page {hosViolationPage} of {hosViolationPageCount} · {hosViolationTotal} violations</span>
+            <span className="text-[#4B5563]">Page {hosViolationPage} of {hosViolationPageCount} · {hosViolationTotal} violations</span>
             <Button size="sm" variant="secondary" disabled={hosViolationPage >= hosViolationPageCount || hosViolationsQ.isFetching} onClick={() => setHosViolationPage((current) => Math.min(hosViolationPageCount, current + 1))}>Next violations</Button>
           </div>
         ) : null}
@@ -284,7 +284,7 @@ export function LoadSafetyReverseSection({
         data-testid="load-safety-reverse-internal-fines"
       >
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-xs font-semibold text-slate-900">
+          <h3 className="text-xs font-semibold text-[#0F1219]">
             Internal Fines
             {internalFineTotal ? ` (${internalFineTotal})` : ""}
           </h3>
@@ -292,7 +292,7 @@ export function LoadSafetyReverseSection({
             kind="internal_fines_load"
             id={loadId}
             label="Open Internal Fines"
-            className="text-xs font-semibold text-slate-700 underline"
+            className="text-xs font-semibold text-[#4B5563] underline"
           />
         </div>
         {internalFinesQ.isLoading ? (
@@ -309,7 +309,7 @@ export function LoadSafetyReverseSection({
           </p>
         ) : null}
         {!internalFinesQ.isError ? internalFines.map((row) => (
-          <div key={s(row.id)} className="text-xs text-slate-700">
+          <div key={s(row.id)} className="text-xs text-[#4B5563]">
             <EntityLink
               kind="internal_fine"
               id={s(row.id)}
@@ -336,7 +336,7 @@ export function LoadSafetyReverseSection({
         {!internalFinesQ.isError && internalFineTotal > internalFinePageSize ? (
           <div className="flex items-center justify-end gap-2 text-xs" data-testid="load-safety-reverse-internal-fines-pager">
             <Button size="sm" variant="secondary" disabled={internalFinePage <= 1 || internalFinesQ.isFetching} onClick={() => setInternalFinePage((current) => Math.max(1, current - 1))}>Previous internal fines</Button>
-            <span className="text-slate-600">Page {internalFinePage} of {internalFinePageCount} · {internalFineTotal} internal fines</span>
+            <span className="text-[#4B5563]">Page {internalFinePage} of {internalFinePageCount} · {internalFineTotal} internal fines</span>
             <Button size="sm" variant="secondary" disabled={internalFinePage >= internalFinePageCount || internalFinesQ.isFetching} onClick={() => setInternalFinePage((current) => Math.min(internalFinePageCount, current + 1))}>Next internal fines</Button>
           </div>
         ) : null}
@@ -387,7 +387,7 @@ function LoadSafetyEventsBlock({
       data-testid="load-safety-reverse-safety-events"
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           Safety Events
           {rows.length > 0 ? (
             <span className="ml-2 text-xs font-normal text-gray-600">
@@ -399,7 +399,7 @@ function LoadSafetyEventsBlock({
           kind="safety_events_load"
           id={loadId}
           label="Open Safety Events"
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#4B5563] underline"
         />
       </div>
       {query.isLoading ? (
@@ -416,14 +416,14 @@ function LoadSafetyEventsBlock({
           {rows.map((row) => (
             <li
               key={row.id}
-              className="text-xs text-slate-700"
+              className="text-xs text-[#4B5563]"
               data-testid={`load-safety-event-${row.id}`}
             >
               <EntityLink
                 kind="safety_event"
                 id={row.id}
                 label={entityLabel(row.title || null, row.id, "Safety event")}
-                className="font-medium text-slate-900"
+                className="font-medium text-[#0F1219]"
               />
               <span className="ml-2 inline-flex flex-wrap items-center gap-1 text-xs text-gray-500">
                 {row.occurred_at
@@ -498,7 +498,7 @@ function LoadIncidentBlock({
       data-testid={`load-safety-reverse-${kind.type.replace(/_/g, "-")}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           {kind.title}
           {rows.length > 0 ? (
             <span className="ml-2 text-xs font-normal text-gray-600">
@@ -510,7 +510,7 @@ function LoadIncidentBlock({
           kind={kind.openKind}
           id={loadId}
           label={`Open ${kind.title}`}
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#4B5563] underline"
         />
       </div>
       {query.isLoading ? (
@@ -527,7 +527,7 @@ function LoadIncidentBlock({
           {rows.map((row) => {
             const id = s(row.id);
             return (
-              <li key={id} className="text-xs text-slate-700">
+              <li key={id} className="text-xs text-[#4B5563]">
                 <EntityLink
                   kind={kind.type}
                   id={id}
