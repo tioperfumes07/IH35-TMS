@@ -36,7 +36,7 @@ export function LateArrivalsPage() {
   });
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
   }
 
   const loads = useMemo(
@@ -59,7 +59,7 @@ export function LateArrivalsPage() {
         const label = entityLabel(load.load_number, load.id, "Load");
         // LV-DISPATCH-LATE-ARRIVALS-TOMBSTONE
         if (isUnresolvedEntityTombstone(load.load_number, load.id, "Load")) {
-          return <span className="font-medium text-slate-600" data-testid="late-arrival-load-tombstone">{label}</span>;
+          return <span className="font-medium text-[#4B5563]" data-testid="late-arrival-load-tombstone">{label}</span>;
         }
         return (
           <EntityLink
@@ -82,10 +82,10 @@ export function LateArrivalsPage() {
       label: "Customer",
       sortable: true,
       render: (load) => {
-        if (!load.customer_id) return <span className="text-slate-400">—</span>;
+        if (!load.customer_id) return <span className="text-[#6B7280]">—</span>;
         const label = entityLabel(load.customer_name, load.customer_id, "Customer");
         if (isUnresolvedEntityTombstone(load.customer_name, load.customer_id, "Customer")) {
-          return <span className="text-slate-600" data-testid="late-arrival-customer-tombstone">{label}</span>;
+          return <span className="text-[#4B5563]" data-testid="late-arrival-customer-tombstone">{label}</span>;
         }
         return <EntityLink kind="customer" id={load.customer_id} label={label} data-testid="late-arrival-customer-link" />;
       },
@@ -95,10 +95,10 @@ export function LateArrivalsPage() {
       label: "Driver",
       sortable: true,
       render: (load) => {
-        if (!load.driver_id) return <span className="text-slate-400">—</span>;
+        if (!load.driver_id) return <span className="text-[#6B7280]">—</span>;
         const label = entityLabel(load.driver_name, load.driver_id, "Driver");
         if (isUnresolvedEntityTombstone(load.driver_name, load.driver_id, "Driver")) {
-          return <span className="text-slate-600" data-testid="late-arrival-driver-tombstone">{label}</span>;
+          return <span className="text-[#4B5563]" data-testid="late-arrival-driver-tombstone">{label}</span>;
         }
         return <EntityLink kind="driver" id={load.driver_id} label={label} data-testid="late-arrival-driver-link" />;
       },
@@ -108,10 +108,10 @@ export function LateArrivalsPage() {
       label: "Unit",
       sortable: true,
       render: (load) => {
-        if (!load.unit_id) return <span className="text-slate-400">—</span>;
+        if (!load.unit_id) return <span className="text-[#6B7280]">—</span>;
         const label = entityLabel(load.unit_number, load.unit_id, "Unit");
         if (isUnresolvedEntityTombstone(load.unit_number, load.unit_id, "Unit")) {
-          return <span className="text-slate-600" data-testid="late-arrival-unit-tombstone">{label}</span>;
+          return <span className="text-[#4B5563]" data-testid="late-arrival-unit-tombstone">{label}</span>;
         }
         return <EntityLink kind="unit" id={load.unit_id} label={label} data-testid="late-arrival-unit-link" />;
       },
@@ -123,7 +123,7 @@ export function LateArrivalsPage() {
       render: (load) => (
         <>
           {[load.next_stop_city, load.next_stop_state].filter(Boolean).join(", ") || "—"}
-          {load.next_stop_type ? <span className="ml-1 text-xs text-slate-500">({load.next_stop_type})</span> : null}
+          {load.next_stop_type ? <span className="ml-1 text-xs text-[#6B7280]">({load.next_stop_type})</span> : null}
         </>
       ),
     },
@@ -140,7 +140,7 @@ export function LateArrivalsPage() {
       render: (load) => (
         <>
           <StatusBadge status={String(load.latest_eta_prediction?.confidence_class ?? "late")} />
-          <span className="ml-2 text-xs text-slate-600">{etaLabel(load.latest_eta_prediction)}</span>
+          <span className="ml-2 text-xs text-[#4B5563]">{etaLabel(load.latest_eta_prediction)}</span>
         </>
       ),
     },

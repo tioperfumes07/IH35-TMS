@@ -1,3 +1,13 @@
+## 2026-10-08T10:55Z · BANK leftover slate — driver import / late arrivals / expiry dashboard
+
+FINDING: BANK-F91194 — DriverImportModal / LateArrivalsPage / ExpiryDashboard Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25848 squash `8b098cbede` (BANK-F91193 ifta/fraud/fuelgl)
+GUARD: scripts/verify-drv-late-expir-slate-leftover-chrome.mjs + verify-steps/1079 piggyback
+LIVE PROOF: verify-drv-late-expir-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 1079 piggyback + OUTBOX
+
 ## 2026-10-08T10:45Z · BANK leftover slate — IFTA preparer / fraud alerts / fuel GL mapping
 
 FINDING: BANK-F91193 — IftaPreparer / FraudAlertsList / FuelGlMappingCoverage Tailwind slate-* → house tokens
