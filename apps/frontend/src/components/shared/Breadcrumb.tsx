@@ -15,21 +15,21 @@ type Props = {
 export function Breadcrumb({ items, skipClaim = false }: Props) {
   useClaimBreadcrumb(!skipClaim);
   return (
-    <nav aria-label="Breadcrumb" className="text-xs text-slate-500">
+    <nav aria-label="Breadcrumb" className="text-xs text-[#6B7280]">
       <ol className="flex flex-wrap items-center gap-1">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           return (
             <li key={`${item.label}-${index}`} className="flex items-center gap-1">
               {item.href && !isLast ? (
-                <Link to={item.href} className="text-slate-600 hover:text-slate-800 hover:underline">
+                <Link to={item.href} className="text-[#4B5563] hover:text-[#0F1219] hover:underline">
                   {item.label}
                 </Link>
               ) : (
-                <span className={isLast ? "font-semibold text-slate-800" : "text-slate-600"}>{item.label}</span>
+                <span className={isLast ? "font-semibold text-[#0F1219]" : "text-[#4B5563]"}>{item.label}</span>
               )}
               {/* ROUND 367.9 — LAW separator is › (Module › List › Record), not /. */}
-              {!isLast ? <span className="text-slate-400">›</span> : null}
+              {!isLast ? <span className="text-[#6B7280]">›</span> : null}
             </li>
           );
         })}

@@ -1,3 +1,13 @@
+## 2026-10-09T00:15Z · BANK leftover slate — Breadcrumb / SearchResultItem / ExhibitCard
+
+FINDING: BANK-F91262 — Breadcrumb / SearchResultItem / ExhibitCard Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25940 squash `860c7809bc` (BANK-F91261 EquipmentTypes/DriverLoadStatuses/DriverLayoverHistory)
+GUARD: scripts/verify-shared-crumb-search-exhibit-slate-leftover-chrome.mjs + verify-steps/3512 piggyback
+LIVE PROOF: verify-shared-crumb-search-exhibit-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3512 piggyback + OUTBOX
+
 ## 2026-10-09T00:10Z · BANK leftover slate — EquipmentTypes / DriverLoadStatuses / DriverLayoverHistory
 
 FINDING: BANK-F91261 — EquipmentTypesPage / DriverLoadStatusesPage / DriverLayoverHistoryPage Tailwind slate-* → house tokens

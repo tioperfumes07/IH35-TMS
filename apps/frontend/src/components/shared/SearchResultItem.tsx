@@ -16,10 +16,10 @@ type Props = {
 };
 
 const BADGE_COLORS: Record<string, string> = {
-  load: "bg-slate-100 text-slate-700",
+  load: "bg-[#F7F8FA] text-[#1F2A44]",
   driver: "bg-emerald-100 text-emerald-800",
   unit: "bg-amber-100 text-amber-800",
-  customer: "bg-slate-100 text-slate-700",
+  customer: "bg-[#F7F8FA] text-[#1F2A44]",
   invoice: "bg-rose-100 text-rose-800",
 };
 
@@ -31,7 +31,7 @@ export function SearchResultItem({ result, active, onSelect }: Props) {
       type="button"
       data-testid={`search-result-${result.entity_uuid}`}
       className={`flex w-full items-start gap-3 rounded px-3 py-2 text-left ${
-        active ? "bg-slate-100 ring-1 ring-slate-400" : "hover:bg-gray-50"
+        active ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]" : "hover:bg-gray-50"
       }`}
       onMouseDown={(event) => {
         event.preventDefault();
