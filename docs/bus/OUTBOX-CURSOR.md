@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — LoginReset / ForensicReview / DomainTab
+
+FINDING: BANK-F91285 — LoginResetConfirmPage / ForensicReviewPage / DomainTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25966 squash `d0d1a6f4a6` (BANK-F91284 SafetyGroupNav/ComplianceTable/LoadHistory)
+GUARD: scripts/verify-91285-login-forensic-domain-slate-leftover-chrome.mjs + verify-steps/3440 piggyback
+LIVE PROOF: verify-91285-login-forensic-domain-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3440 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — SafetyGroupNav / ComplianceTable / LoadHistory
 
 FINDING: BANK-F91284 — SafetyGroupNav / ComplianceTable / LoadHistoryTab Tailwind slate-* → house tokens

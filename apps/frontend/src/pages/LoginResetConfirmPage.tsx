@@ -49,7 +49,7 @@ export function LoginResetConfirmPage() {
             Invalid link
           </h1>
           <p className="mt-2 text-xs text-gray-700">Open the link from your email, or request a new reset.</p>
-          <Link to="/login/reset" className="mt-4 inline-block text-xs text-slate-700 hover:underline">
+          <Link to="/login/reset" className="mt-4 inline-block text-xs text-[#1F2A44] hover:underline">
             Request reset
           </Link>
         </div>
@@ -65,7 +65,7 @@ export function LoginResetConfirmPage() {
             Password updated
           </h1>
           <p className="mt-2 text-xs text-gray-700">You can sign in with your new password.</p>
-          <Link to="/login" className="mt-4 inline-block text-xs font-medium text-slate-700 hover:underline">
+          <Link to="/login" className="mt-4 inline-block text-xs font-medium text-[#1F2A44] hover:underline">
             Go to sign in
           </Link>
         </div>
@@ -92,7 +92,7 @@ export function LoginResetConfirmPage() {
               value={password}
               onChange={(ev) => setPassword(ev.target.value)}
               aria-describedby="new-password-meter"
-              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280]"
             />
             <div id="new-password-meter" className="mt-2" aria-live="polite">
               <div
@@ -123,7 +123,7 @@ export function LoginResetConfirmPage() {
           </Button>
         </form>
         <p className="mt-4 text-center text-xs">
-          <Link to="/login" className="text-slate-700 hover:underline">
+          <Link to="/login" className="text-[#1F2A44] hover:underline">
             Back to sign in
           </Link>
         </p>
