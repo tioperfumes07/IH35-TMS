@@ -65,10 +65,10 @@ function tierClass(
   noData = false,
   partial = false
 ) {
-  if (unavailable || noData || partial) return "bg-slate-100 text-slate-700";
-  if (tier === "thriving") return "bg-slate-100 text-slate-700";
+  if (unavailable || noData || partial) return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (tier === "thriving") return "bg-[#F7F8FA] text-[#1F2A44]";
   if (tier === "healthy") return "bg-teal-100 text-teal-800";
-  if (tier === "watch") return "bg-slate-100 text-slate-700";
+  if (tier === "watch") return "bg-[#F7F8FA] text-[#1F2A44]";
   if (tier === "at_risk") return "bg-red-100 text-red-800";
   return "bg-gray-100 text-gray-700";
 }
