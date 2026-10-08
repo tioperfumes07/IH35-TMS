@@ -13,7 +13,11 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TARGET = "apps/frontend/src/pages/reports/ReportsHome.tsx";
 const LABEL = "verify-reports-home-no-box-in-box";
-const NESTED_TILE_RE = /className="[^"]*rounded-sm border border-slate-200[^"]*"/g;
+// The divider/border color may be expressed as the slate utility OR the locked #E5E7EB
+// border-subtle token (GLOBAL-TYPE-SIZE-BASELINE border color) — both are the same value.
+const BORDER_FRAME = "(?:border-slate-200|border-\\[#E5E7EB\\])";
+const FRAME_RE = new RegExp(`<section className="overflow-hidden rounded-sm border ${BORDER_FRAME} bg-white">`, "g");
+const NESTED_TILE_RE = new RegExp(`className="[^"]*rounded-sm border ${BORDER_FRAME}[^"]*"`, "g");
 
 function stripComments(src) {
   return src
@@ -44,9 +48,7 @@ export function collectProblems(section) {
   if (!section.includes("Management reports")) {
     problems.push(`${TARGET}: missing Management reports section`);
   }
-  const frames = section.match(
-    /<section className="overflow-hidden rounded-sm border border-slate-200 bg-white">/g,
-  );
+  const frames = section.match(FRAME_RE);
   if (!frames || frames.length < 2) {
     problems.push(
       `${TARGET}: Accounting + Management must each use a single overflow-hidden section frame`,
@@ -54,7 +56,7 @@ export function collectProblems(section) {
   }
   const nested = section.match(NESTED_TILE_RE) ?? [];
   const innerNested = nested.filter(
-    (m) => !m.includes("overflow-hidden rounded-sm border border-slate-200 bg-white"),
+    (m) => !m.includes("overflow-hidden rounded-sm border") || !m.includes("bg-white"),
   );
   if (innerNested.length > 0) {
     problems.push(
@@ -64,10 +66,10 @@ export function collectProblems(section) {
   if (/gap-2 p-3/.test(section)) {
     problems.push(`${TARGET}: must not use gap-2 padded nested tile grids (box-in-box chrome)`);
   }
-  if (!/border-t border-slate-100/.test(section)) {
+  if (!/border-t (?:border-slate-100|border-\[#E5E7EB\])/.test(section)) {
     problems.push(`${TARGET}: report cells must flatten with border-t rows`);
   }
-  if (!/sm:divide-x sm:divide-slate-100/.test(section)) {
+  if (!/sm:divide-x sm:divide-(?:slate-100|\[#E5E7EB\])/.test(section)) {
     problems.push(`${TARGET}: report grids must flatten with sm:divide-x columns`);
   }
   return problems;
