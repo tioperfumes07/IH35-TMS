@@ -1,10 +1,10 @@
 {
-  "healthzSha": "515d969",
-  "generated_at": "2026-10-07T23:52:17.340Z",
+  "healthzSha": "58f5b53",
+  "generated_at": "2026-10-08T10:03:44.210Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "515d969",
+    "deployedSha": "58f5b53",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 25775,
-      "title": "FINDING: LST-F437 LANE: FINANCIAL — verify-trial-balance-and-balance-sheet took Math.abs() of liability/equity/income, so a liability with a debit balance (2410 today) failed an accounting equation that closes exactly; Other Income was left out",
+      "number": 25859,
+      "title": "FINDING: BANK-F91204 — leftover slate on load exception reasons / termination reasons / domain flyout house tokens",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 06:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25775",
-      "sha": "515d969169",
-      "committedAtIso": "2026-10-07T18:43:50-05:00"
+      "mergedAtCt": "10/08/2026, 04:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25859",
+      "sha": "58f5b53921",
+      "committedAtIso": "2026-10-08T04:57:31-05:00"
     },
     {
-      "number": 25774,
-      "title": "Cursor- classify 25 live-DB guards with REQUIRES_LIVE_DB",
+      "number": 25858,
+      "title": "FINDING: BANK-F91203 — leftover slate on legal templates / terms of service / privacy policy house tokens",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 06:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25774",
-      "sha": "21e6695899",
-      "committedAtIso": "2026-10-07T18:42:43-05:00"
+      "mergedAtCt": "10/08/2026, 04:53 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25858",
+      "sha": "bb8d5a53d2",
+      "committedAtIso": "2026-10-08T04:53:10-05:00"
     },
     {
-      "number": 25773,
-      "title": "FINDING: LST-F435 LANE: FINANCIAL — ROUND 441.15: the Relay backfill could only be started by an Owner session on the live app; a one-shot, server-side trigger (RELAY_FUEL_BACKFILL_ONCE) runs the same backfill exactly once so the Relay key never leaves the server",
+      "number": 25857,
+      "title": "FINDING: BANK-F91202 — leftover slate on upload zone / safety alerts / driver manager attention house tokens",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 06:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25773",
-      "sha": "78c2c96952",
-      "committedAtIso": "2026-10-07T18:35:58-05:00"
+      "mergedAtCt": "10/08/2026, 04:45 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25857",
+      "sha": "14ddbdd154",
+      "committedAtIso": "2026-10-08T04:45:52-05:00"
     },
     {
-      "number": 25772,
-      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615440510 for CC-1 ROUND 441.5 Phase 2 — re-keys my own unused 202615440600 claim into the cc-1 band HH 00–05; reservation-only commit, no code fix)",
+      "number": 25856,
+      "title": "FINDING: BANK-F91201 — leftover slate on safety reports / test scheduling / driver scoring house tokens",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 06:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25772",
-      "sha": "817c8b66fc",
-      "committedAtIso": "2026-10-07T18:31:28-05:00"
+      "mergedAtCt": "10/08/2026, 04:41 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25856",
+      "sha": "8518b22a56",
+      "committedAtIso": "2026-10-08T04:41:39-05:00"
     },
     {
-      "number": 25771,
-      "title": "FINDING: N/A — CC-2 OUTBOX: ROUND 441.13 done, stopped",
+      "number": 25855,
+      "title": "FINDING: BANK-F91200 — leftover slate on session detail / booking gap / user profile house tokens",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 06:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25771",
-      "sha": "7c05c4a1c8",
-      "committedAtIso": "2026-10-07T18:28:22-05:00"
+      "mergedAtCt": "10/08/2026, 04:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25855",
+      "sha": "11e3c2412e",
+      "committedAtIso": "2026-10-08T04:33:55-05:00"
     },
     {
-      "number": 25769,
-      "title": "FINDING: ENTITY-SCOPE-REASON LANE: FINANCIAL — written reason required (shrink-only @114)",
+      "number": 25854,
+      "title": "FINDING: BANK-F91199 — leftover slate on customer locations / company violation drawer / driver login house tokens",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 06:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25769",
-      "sha": "eaed00891b",
-      "committedAtIso": "2026-10-07T18:26:33-05:00"
+      "mergedAtCt": "10/08/2026, 04:15 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25854",
+      "sha": "a0d7ec8bf7",
+      "committedAtIso": "2026-10-08T04:15:37-05:00"
     },
     {
-      "number": 25768,
-      "title": "Cursor- fix(report): ACCT-F441 QBO date/time chrome and recurring-bill money formatter",
+      "number": 25853,
+      "title": "FINDING: BANK-F91198 — leftover slate on background checks / driver safety attributed / labor tracker house tokens",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 06:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25768",
-      "sha": "db4173053c",
-      "committedAtIso": "2026-10-07T18:24:10-05:00"
+      "mergedAtCt": "10/08/2026, 04:07 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25853",
+      "sha": "18166a02fc",
+      "committedAtIso": "2026-10-08T04:07:10-05:00"
     },
     {
-      "number": 25758,
-      "title": "FINDING: ACCT-F442 LANE: FINANCIAL — Relay sender_fee from fees[] wallet + Fuel Card Fee GL",
+      "number": 25852,
+      "title": "FINDING: BANK-F91197 — leftover slate on QBO sync detail / accidents / CSA mitigation house tokens",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 06:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25758",
-      "sha": "b7c1876cd6",
-      "committedAtIso": "2026-10-07T18:23:44-05:00"
+      "mergedAtCt": "10/08/2026, 04:02 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25852",
+      "sha": "6c3a16a7e6",
+      "committedAtIso": "2026-10-08T04:02:50-05:00"
     },
     {
-      "number": 25767,
-      "title": "FINDING: P0 LANE: FINANCIAL — feed-gate.checks.ts company filter (cross-tenant hole)",
+      "number": 25851,
+      "title": "FINDING: BANK-F91196 — leftover slate on safety alerts reverse / asset safety reverse / filings due house tokens",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 06:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25767",
-      "sha": "f773fac08b",
-      "committedAtIso": "2026-10-07T18:23:41-05:00"
+      "mergedAtCt": "10/08/2026, 03:58 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25851",
+      "sha": "2632b8375e",
+      "committedAtIso": "2026-10-08T03:58:36-05:00"
     },
     {
-      "number": 25766,
-      "title": "FINDING: LST-F433 LANE: FINANCIAL — ROUND 441.5: the 5 bare cost categorizations converted to expense documents on prod (net TB delta 0); conversion script records the fitting item for the fifth line; OUTBOX proof",
+      "number": 25850,
+      "title": "FINDING: BANK-F91195 — leftover slate on fuel planner / deadhead report / scheduled reports house tokens",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 06:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25766",
-      "sha": "defdede499",
-      "committedAtIso": "2026-10-07T18:18:09-05:00"
+      "mergedAtCt": "10/08/2026, 03:53 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25850",
+      "sha": "8f365d6c09",
+      "committedAtIso": "2026-10-08T03:53:49-05:00"
     }
   ]
 }

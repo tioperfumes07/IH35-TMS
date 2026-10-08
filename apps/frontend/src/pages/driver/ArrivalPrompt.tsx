@@ -48,7 +48,7 @@ export function ArrivalPrompt() {
         status={0}
         message={promptsQuery.error instanceof Error ? promptsQuery.error.message : undefined}
         onRetry={() => void promptsQuery.refetch()}
-        className="border-b border-slate-200 bg-slate-100"
+        className="border-b border-[#E5E7EB] bg-[#F7F8FA]"
       />
     );
   }
@@ -56,25 +56,25 @@ export function ArrivalPrompt() {
 
   return (
     <div className="fixed inset-0 z-60 flex items-end justify-center bg-black/35 p-3">
-      <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
-        <p className="text-xs font-semibold text-slate-900">Arrival check</p>
-        <p className="mt-1 text-xs text-slate-700">
+      <div className="w-full max-w-md rounded-lg border border-[#E5E7EB] bg-white p-4 shadow-xl">
+        <p className="text-xs font-semibold text-[#0F1219]">Arrival check</p>
+        <p className="mt-1 text-xs text-[#1F2A44]">
           You appear to be at <span className="font-semibold">{activePrompt.stop_name ?? "the stop"}</span>. Are you arrived?
         </p>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-[#6B7280]">
           Distance: {activePrompt.distance_at_trigger_ft} ft · Load{" "}
           <EntityLink
             kind="driver_app_load"
             id={activePrompt.load_id}
             label={entityLabel(activePrompt.load_number, activePrompt.load_id, "Load")}
-            className="font-semibold text-slate-700 hover:underline"
+            className="font-semibold text-[#1F2A44] hover:underline"
           />
         </p>
         {mutationError ? <p role="alert" className="mt-2 text-xs text-red-700">{mutationError}</p> : null}
         <div className="mt-3 flex items-center justify-end gap-2">
           <button
             type="button"
-            className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#1F2A44] hover:bg-[#F7F8FA]"
             onClick={() => {
               dismissMutation.mutate(activePrompt.id);
             }}
