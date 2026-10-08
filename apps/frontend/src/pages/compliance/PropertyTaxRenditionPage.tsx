@@ -185,7 +185,7 @@ function RenditionListView({
         label: "Open",
         alwaysVisible: true,
         render: (r) => (
-          <EntityLink className="text-slate-700 underline" kind="property_tax_rendition" id={r.id} label="Open" />
+          <EntityLink className="text-[#4B5563] underline" kind="property_tax_rendition" id={r.id} label="Open" />
         ),
       },
     ],
@@ -202,7 +202,7 @@ function RenditionListView({
       />
 
       <div className="relative flex flex-wrap items-end gap-3" data-testid="property-tax-filters">
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Unit
           <EntityPicker
             kind="unit"
@@ -227,8 +227,8 @@ function RenditionListView({
       </div>
 
       {/* + Create rendition */}
-      <section className="rounded-sm border border-slate-200 bg-white p-3">
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">+ Create Rendition</h2>
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">+ Create Rendition</h2>
         <div className="flex flex-wrap items-end gap-3">
           <label className="text-xs">
             Tax Year
@@ -275,7 +275,7 @@ function RenditionListView({
         </div>
 
         {showAddDistrict ? (
-          <div className="mt-3 flex flex-wrap items-end gap-2 rounded-sm border border-slate-200 bg-slate-50 p-2">
+          <div className="mt-3 flex flex-wrap items-end gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
             <label className="text-xs">
               County
               <input value={newCounty} onChange={(e) => setNewCounty(e.target.value)} className="ml-1 rounded-sm border px-2 py-1" />
@@ -292,7 +292,7 @@ function RenditionListView({
             >
               Save
             </button>
-            <button type="button" onClick={() => setShowAddDistrict(false)} className="px-2 py-1 text-xs text-slate-600">
+            <button type="button" onClick={() => setShowAddDistrict(false)} className="px-2 py-1 text-xs text-[#4B5563]">
               Cancel
             </button>
           </div>
@@ -404,7 +404,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
     );
   }
 
-  if (detailQ.isLoading) return <div className="p-4 text-xs text-slate-500">Loading…</div>;
+  if (detailQ.isLoading) return <div className="p-4 text-xs text-[#6B7280]">Loading…</div>;
   const detail = detailQ.data;
   if (!detail) return <div className="p-4 text-xs">Rendition not found.</div>;
 
@@ -447,9 +447,9 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
       />
 
       {/* Header controls */}
-      <section className="grid gap-3 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-3">
+      <section className="grid gap-3 rounded-sm border border-[#E5E7EB] bg-white p-3 md:grid-cols-3">
         <div>
-          <div className="text-xs uppercase tracking-wide text-slate-500">Status</div>
+          <div className="text-xs uppercase tracking-wide text-[#6B7280]">Status</div>
           <select
             value={rendition.status}
             onChange={(e) => statusM.mutate(e.target.value as RenditionStatus)}
@@ -463,7 +463,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
           </select>
         </div>
         <div>
-          <div className="text-xs uppercase tracking-wide text-slate-500">CAD-Assessed Tax (drives accrual)</div>
+          <div className="text-xs uppercase tracking-wide text-[#6B7280]">CAD-Assessed Tax (drives accrual)</div>
           <div className="mt-1 flex items-center gap-2">
             <MoneyInput
               valueDollars={assessedInput}
@@ -481,10 +481,10 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
               Save
             </button>
           </div>
-          <div className="mt-1 text-xs text-slate-500">Current: {centsToUSD(rendition.assessed_tax_cents)}</div>
+          <div className="mt-1 text-xs text-[#6B7280]">Current: {centsToUSD(rendition.assessed_tax_cents)}</div>
         </div>
         <div>
-          <div className="text-xs uppercase tracking-wide text-slate-500">Extension</div>
+          <div className="text-xs uppercase tracking-wide text-[#6B7280]">Extension</div>
           <label className="mt-1 flex items-center gap-2 text-xs">
             <input
               type="checkbox"
@@ -498,8 +498,8 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
 
       {/* CLS-CHROME-LAW-8: line-add button relabeled from "+ Add" (forbidden verb) to "+ Create
           Line", matching InvoiceDetailPage.tsx's identical add-a-row-to-a-list pattern. */}
-      <section className="rounded-sm border border-slate-200 bg-white p-3">
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">Taxable Assets Rendered</h2>
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Taxable Assets Rendered</h2>
         <div className="space-y-3">
           <div className="flex flex-wrap items-end gap-2">
             <div className="min-w-64 text-xs">
@@ -562,7 +562,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
                   key={`${asset.kind}:${asset.id}`}
                   type="button"
                   onClick={() => setSelectedAssets((current) => current.filter((row) => !(row.kind === asset.kind && row.id === asset.id)))}
-                  className="rounded-full border border-gray-300 bg-gray-50 px-2 py-1 text-xs text-slate-700"
+                  className="rounded-full border border-gray-300 bg-gray-50 px-2 py-1 text-xs text-[#4B5563]"
                   aria-label={`Remove ${asset.label}`}
                 >
                   {asset.label} ×
@@ -570,7 +570,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-500">Select one or more units/trailers for this {rendition.tax_year} rendition.</p>
+            <p className="text-xs text-[#6B7280]">Select one or more units/trailers for this {rendition.tax_year} rendition.</p>
           )}
         </div>
       </section>
@@ -625,7 +625,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
         tableTestId="property-tax-rendition-lines-table"
         filterBar={
           lines.length > 0 ? (
-            <div className="text-xs font-semibold text-slate-700" data-testid="property-tax-total-rendered">
+            <div className="text-xs font-semibold text-[#4B5563]" data-testid="property-tax-total-rendered">
               Total Rendered Value: {centsToUSD(rendition.total_rendered_value_cents)}
             </div>
           ) : null

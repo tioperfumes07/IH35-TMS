@@ -8,7 +8,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
 const SEVERITY_ICON: Record<HomeAttentionSeverity, { Icon: typeof Info; className: string }> = {
-  info: { Icon: Info, className: "text-slate-700" },
+  info: { Icon: Info, className: "text-[#4B5563]" },
   warning: { Icon: AlertTriangle, className: "text-amber-600" },
   error: { Icon: AlertCircle, className: "text-orange-700" },
   critical: { Icon: ShieldAlert, className: "text-red-600" },
@@ -53,15 +53,15 @@ export function AttentionList({ operatingCompanyId, maxVisibleWhenCollapsed = nu
   });
 
   if (!companyId) {
-    return <div className="py-3 text-xs text-slate-500">Select an operating company to load attention items.</div>;
+    return <div className="py-3 text-xs text-[#6B7280]">Select an operating company to load attention items.</div>;
   }
 
   if (query.isLoading) {
     return (
       <div className="space-y-2 py-2">
-        <div className="h-5 animate-pulse rounded-sm bg-slate-100" />
-        <div className="h-5 animate-pulse rounded-sm bg-slate-100" />
-        <div className="h-5 animate-pulse rounded-sm bg-slate-100" />
+        <div className="h-5 animate-pulse rounded-sm bg-[#F7F8FA]" />
+        <div className="h-5 animate-pulse rounded-sm bg-[#F7F8FA]" />
+        <div className="h-5 animate-pulse rounded-sm bg-[#F7F8FA]" />
       </div>
     );
   }
@@ -82,7 +82,7 @@ export function AttentionList({ operatingCompanyId, maxVisibleWhenCollapsed = nu
   const visible = (query.data?.items ?? []).filter((item) => item.count > 0);
 
   if (visible.length === 0) {
-    return <div className="py-3 text-xs text-slate-500">No attention items</div>;
+    return <div className="py-3 text-xs text-[#6B7280]">No attention items</div>;
   }
 
   const shouldCollapse = maxVisibleWhenCollapsed != null && !isLg && !expanded;
@@ -92,22 +92,22 @@ export function AttentionList({ operatingCompanyId, maxVisibleWhenCollapsed = nu
 
   return (
     <>
-      <ul className="divide-y divide-slate-100">
+      <ul className="divide-y divide-[#E5E7EB]">
         {shown.map((item: HomeAttentionListItem) => {
           const { Icon, className } = SEVERITY_ICON[item.severity] ?? SEVERITY_ICON.info;
           return (
             <li key={`${item.type}-${item.title}-${item.action_url}`}>
               <button
                 type="button"
-                className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-slate-50/80"
+                className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-[#F7F8FA]/80"
                 onClick={() => navigate(item.action_url)}
               >
                 <Icon className={`h-5 w-5 shrink-0 ${className}`} aria-hidden />
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-medium text-slate-900">{item.title}</div>
-                  <div className="mt-0.5 text-xs text-slate-600">
+                  <div className="text-xs font-medium text-[#0F1219]">{item.title}</div>
+                  <div className="mt-0.5 text-xs text-[#4B5563]">
                     Count {item.count}
-                    {item.action_label ? <span className="text-slate-500"> — {item.action_label}</span> : null}
+                    {item.action_label ? <span className="text-[#6B7280]"> — {item.action_label}</span> : null}
                   </div>
                 </div>
               </button>
@@ -116,14 +116,14 @@ export function AttentionList({ operatingCompanyId, maxVisibleWhenCollapsed = nu
         })}
       </ul>
       {maxVisibleWhenCollapsed != null && !isLg && collapsedCount > 0 && !expanded ? (
-        <div className="border-t border-slate-100 px-3 py-2">
+        <div className="border-t border-[#E5E7EB] px-3 py-2">
           <Button type="button" variant="secondary" size="sm" className="w-full" onClick={() => setExpanded(true)}>
             Show {collapsedCount} more
           </Button>
         </div>
       ) : null}
       {maxVisibleWhenCollapsed != null && !isLg && expanded && visible.length > maxVisibleWhenCollapsed ? (
-        <div className="border-t border-slate-100 px-3 py-2">
+        <div className="border-t border-[#E5E7EB] px-3 py-2">
           <Button type="button" variant="tertiary" size="sm" className="w-full" onClick={() => setExpanded(false)}>
             Show fewer
           </Button>

@@ -1,3 +1,13 @@
+## 2026-10-08T07:20Z · BANK leftover slate — vendor mapping / property tax / attention list
+
+FINDING: BANK-F91180 — VendorMappingResolutionPage / PropertyTaxRenditionPage / AttentionList Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25834 squash `6182975731` (BANK-F91179 loadhist/ocr/planner)
+GUARD: scripts/verify-vendor-map-proptax-attn-slate-leftover-chrome.mjs + verify-steps/3548 piggyback
+LIVE PROOF: verify-vendor-map-proptax-attn-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3548 piggyback + OUTBOX
+
 ## 2026-10-08T07:15Z · BANK leftover slate — load history / OCR queue / planner calendar
 
 FINDING: BANK-F91179 — LoadHistoryPage / OcrQueuePage / PlannerCalendarPage Tailwind slate-* → house tokens

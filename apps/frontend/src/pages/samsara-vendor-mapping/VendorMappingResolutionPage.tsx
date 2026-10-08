@@ -322,10 +322,10 @@ export function VendorMappingResolutionPage() {
         />
       ) : (
         <>
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">{totalsText(payload)}</div>
+          <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#4B5563]">{totalsText(payload)}</div>
 
-          <section className="rounded-sm border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Unmapped drivers</div>
+          <section className="rounded-sm border border-[#E5E7EB] bg-white">
+            <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]">Unmapped drivers</div>
             <div className="overflow-x-auto p-2">
               <ParityTable<UnmappedRow>
                 columns={unmappedColumns}
@@ -340,8 +340,8 @@ export function VendorMappingResolutionPage() {
             </div>
           </section>
 
-          <section className="rounded-sm border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Duplicate mappings</div>
+          <section className="rounded-sm border border-[#E5E7EB] bg-white">
+            <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]">Duplicate mappings</div>
             <div className="overflow-x-auto p-2">
               <ParityTable<DuplicateRow>
                 columns={duplicateColumns}
@@ -356,8 +356,8 @@ export function VendorMappingResolutionPage() {
             </div>
           </section>
 
-          <section className="rounded-sm border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Name mismatch</div>
+          <section className="rounded-sm border border-[#E5E7EB] bg-white">
+            <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]">Name mismatch</div>
             <div className="overflow-x-auto p-2">
               <ParityTable<MismatchRow>
                 columns={mismatchColumns}
@@ -376,11 +376,11 @@ export function VendorMappingResolutionPage() {
 
       {draft ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl rounded-sm border border-slate-200 bg-white p-4 shadow-xl">
-            <div className="mb-3 text-xs font-semibold text-slate-900">{draft.label}</div>
+          <div className="w-full max-w-2xl rounded-sm border border-[#E5E7EB] bg-white p-4 shadow-xl">
+            <div className="mb-3 text-xs font-semibold text-[#0F1219]">{draft.label}</div>
 
             {draft.type === "link" ? (
-              <div className="mb-3 text-xs text-slate-700">
+              <div className="mb-3 text-xs text-[#4B5563]">
                 Vendor
                 {/* P23-QBO-VENDOR-MAPPING-USES-MIRROR-ID: canonical mdata.vendors picker, never a
                     hand-typed QBO-mirror id. */}
@@ -410,7 +410,7 @@ export function VendorMappingResolutionPage() {
 
             {draft.type === "dedupe" ? (
               <div className="space-y-3">
-                <div className="text-xs text-slate-700">
+                <div className="text-xs text-[#4B5563]">
                   Canonical vendor
                   <ReferenceSelect
                     value={draft.canonical_vendor_id || null}
@@ -422,12 +422,12 @@ export function VendorMappingResolutionPage() {
                     loading={vendorsQuery.isLoading}
                   />
                 </div>
-                <label className="block text-xs text-slate-700">
+                <label className="block text-xs text-[#4B5563]">
                   Deprecated vendor ids (comma-separated)
                   <input
                     value={draft.deprecated_qbo_vendor_ids_csv}
                     onChange={(e) => setDraft({ ...draft, deprecated_qbo_vendor_ids_csv: e.target.value })}
-                    className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 text-xs"
+                    className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
                     placeholder="id-1,id-2"
                   />
                 </label>
@@ -435,19 +435,19 @@ export function VendorMappingResolutionPage() {
             ) : null}
 
             {draft.type === "confirm" ? (
-              <div className="mb-3 text-xs text-slate-700">
+              <div className="mb-3 text-xs text-[#4B5563]">
                 QBO vendor
                 {/* Read-only: this is the system-detected candidate the operator is confirming, not a
                     freeform field — editing it here would defeat the point of "confirm this match"
                     and (pre-fix) let a hand-typed mirror id slip past the picker law unnoticed. */}
-                <div className="mt-1 bg-slate-50 px-2 py-1 text-xs text-slate-900">
+                <div className="mt-1 bg-[#F7F8FA] px-2 py-1 text-xs text-[#0F1219]">
                   {draft.qbo_vendor_name}
                 </div>
               </div>
             ) : null}
 
-            <div className="mb-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
-              <div className="font-semibold text-slate-900">Before / after preview</div>
+            <div className="mb-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#4B5563]">
+              <div className="font-semibold text-[#0F1219]">Before / after preview</div>
               <div className="mt-1">Before: {preview?.before}</div>
               <div className="mt-1">After: {preview?.after}</div>
             </div>
