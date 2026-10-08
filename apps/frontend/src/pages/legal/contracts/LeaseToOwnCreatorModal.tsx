@@ -135,7 +135,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         key: "owner_label",
         label: "Owner",
         sortable: true,
-        render: (row) => <span className="rounded-sm bg-slate-100 px-1 text-xs">{row.owner_label ?? "—"}</span>,
+        render: (row) => <span className="rounded-sm bg-[#F7F8FA] px-1 text-xs">{row.owner_label ?? "—"}</span>,
       },
       { key: "status", label: "Status", sortable: true, render: (row) => <span className="text-xs">{row.status}</span> },
     ],
@@ -255,7 +255,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         <div className="flex flex-wrap gap-2 text-xs">
           {STEPS.map((s, i) => (
             <button key={s} onClick={() => setStepIdx(i)}
-              className={`rounded-sm px-2 py-1 ${i === stepIdx ? "bg-[#1F2A44] text-white" : "bg-slate-100 text-slate-600"}`}>
+              className={`rounded-sm px-2 py-1 ${i === stepIdx ? "bg-[#1F2A44] text-white" : "bg-[#F7F8FA] text-[#4B5563]"}`}>
               {i + 1}. {s}
             </button>
           ))}
@@ -266,8 +266,8 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         {/* Step 1 — Parties & Terms */}
         {stepIdx === 0 && (
           <div className="grid gap-3 md:grid-cols-2">
-            <div className="md:col-span-2 rounded-sm bg-slate-50 p-2 text-xs">
-              <strong>Seller:</strong> {seller ? seller.legal_name : "loading…"} <span className="text-slate-500">(equipment owner — TRK default)</span>
+            <div className="md:col-span-2 rounded-sm bg-[#F7F8FA] p-2 text-xs">
+              <strong>Seller:</strong> {seller ? seller.legal_name : "loading…"} <span className="text-[#6B7280]">(equipment owner — TRK default)</span>
             </div>
             <label className="flex flex-col gap-1 text-xs">Seller signer
               <input className="rounded-sm border px-2 py-1" value={sellerSigner.signer_name} onChange={(e) => setSellerSigner({ ...sellerSigner, signer_name: e.target.value })} />
@@ -357,7 +357,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         {/* Step 2 — Vehicles */}
         {stepIdx === 1 && (
           <div className="space-y-2">
-            <p className="text-xs text-slate-500">{selectedList.length} selected · {units.length} eligible</p>
+            <p className="text-xs text-[#6B7280]">{selectedList.length} selected · {units.length} eligible</p>
             {fleetQuery.isError ? (
               <ListErrorState title="Couldn't load eligible fleet" status={0} message={(fleetQuery.error as Error)?.message} onRetry={() => void fleetQuery.refetch()} />
             ) : (

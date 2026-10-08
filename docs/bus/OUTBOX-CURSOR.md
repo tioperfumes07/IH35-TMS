@@ -1,3 +1,13 @@
+## 2026-10-08T22:55Z · BANK leftover slate — LegalSign / LeaseToOwn / LegalDeadlineAlerts
+
+FINDING: BANK-F91247 — LegalSignPage / LeaseToOwnCreatorModal / LegalDeadlineAlertsPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25923 squash `d1dc9df860` (BANK-F91246 InsuranceSummary/InsuranceClaims/InsuranceTab)
+GUARD: scripts/verify-legal-sign-lease-deadline-slate-leftover-chrome.mjs + verify-steps/3580 piggyback
+LIVE PROOF: verify-legal-sign-lease-deadline-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3580 piggyback + OUTBOX
+
 ## 2026-10-08T22:50Z · BANK leftover slate — InsuranceSummary / InsuranceClaims / InsuranceTab
 
 FINDING: BANK-F91246 — InsuranceSummarySection / InsuranceClaimsReverseSection / InsuranceTab Tailwind slate-* → house tokens
