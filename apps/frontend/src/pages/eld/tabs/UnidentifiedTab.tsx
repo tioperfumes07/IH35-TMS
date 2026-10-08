@@ -35,7 +35,7 @@ export function UnidentifiedTab({ operatingCompanyId }: Props) {
             kind="unit"
             id={row.unit_id}
             label={entityLabel(row.unit_number, row.unit_id, "Unit")}
-            className="text-slate-700 hover:underline"
+            className="text-[#1F2A44] hover:underline"
             data-testid="eld-unidentified-unit-link"
           />
         ),
@@ -77,14 +77,14 @@ export function UnidentifiedTab({ operatingCompanyId }: Props) {
   );
 
   if (!operatingCompanyId) {
-    return <p className="text-xs text-slate-600">Select an operating company to load unidentified driving.</p>;
+    return <p className="text-xs text-[#4B5563]">Select an operating company to load unidentified driving.</p>;
   }
 
   return (
     <div className="space-y-3" data-testid="eld-unidentified-tab">
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-        <div className="text-xs font-semibold text-slate-800">Unidentified Driving</div>
-        <div className="text-xs text-slate-500">
+        <div className="text-xs font-semibold text-[#0F1219]">Unidentified Driving</div>
+        <div className="text-xs text-[#6B7280]">
           Units from <code className="text-xs">GET /api/v1/telematics/fleet-location-hos</code> that are moving or
           engine-active with no Samsara-assigned driver. Not a separate FMCSA unidentified-event ingest — honest
           proxy from live telematics until a dedicated feed exists.
