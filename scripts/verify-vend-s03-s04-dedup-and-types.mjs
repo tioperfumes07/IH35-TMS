@@ -134,16 +134,13 @@ if (SELFTEST) {
     process.exit(1);
   }
 
-  const rowCall = `const patchScopedCompanyId = await resolveVendorRowOperatingCompanyId(
-        authUser.uuid,
-        parsedParams.data.id
-      );`;
+  const rowCall = `await resolveVendorRowOperatingCompanyId(authUser.uuid, parsedParams.data.id)`;
   const twoArg = {
     ...files,
     [ROUTES]: files[ROUTES].replace(
       rowCall,
-      `const patchScopedCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
-        resolveOperatingCompanyId(client, authUser.uuid));`
+      `await withCurrentUser(authUser.uuid, async (client) =>
+        resolveOperatingCompanyId(client, authUser.uuid))`
     ),
   };
   const twoArgCaught = assert(twoArg);
@@ -156,8 +153,8 @@ if (SELFTEST) {
     ...files,
     [ROUTES]: files[ROUTES].replace(
       rowCall,
-      `const patchScopedCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
-        resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id));`
+      `await withCurrentUser(authUser.uuid, async (client) =>
+        resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id))`
     ),
   };
   const bodyCaught = assert(bodyArg);

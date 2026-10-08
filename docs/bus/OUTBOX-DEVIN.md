@@ -122,3 +122,6 @@ DONE: PR #25774 · squash 21e6695899a5d7a83d7c6adc7d55cc9714bd75e1 · money-pr-l
 
 ## 2026-10-08 — drain: shared-types import + master-data create guard re-anchor + scoreboard regeneration
 DONE: PR #25778 · squash d8978520b9dec8f88abf6854065a5d357afff6e1 · money-pr-local-gate exit 0 · fixed LoadDetailDrawer.tsx @ih35/shared-types type import; re-anchored verify-master-data-create-targets.mjs to accept NewCustomerDrawerForm delegation and invalidatePartsStockQueries reload; regenerated program-scoreboard artifacts · baseline-lines-added = 0
+
+## 2026-10-08 — drain: re-anchor 7 stale verify-* guards to current code shapes and selftests
+DONE: PR #25781 · squash ecee7935b0e78acd9ea41c253e145dd05a07a53b · money-pr-local-gate exit 0 · re-anchored accounting register search placeholder, cash-flow overview/ route selftest plants, complaint insert/linkage selftests, compliance notification/property-tax selftests · baseline-lines-added = 0

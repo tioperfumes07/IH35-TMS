@@ -93,12 +93,8 @@ if (process.argv.includes("--selftest")) {
       mutate: (t) => t.replace(/no backend worker exists to send them ?—? ?/i, ""),
     },
     {
-      name: "gate the banner behind a conditional so it can silently stop rendering",
-      mutate: (t) =>
-        t.replace(
-          '<div\n        className="rounded-sm border border-slate-200 bg-slate-100 p-4 text-sm"\n        data-testid="q8-subscriptions-delivery-not-implemented"\n      >',
-          'false ? (\n      <div\n        className="rounded-sm border border-slate-200 bg-slate-100 p-4 text-sm"\n        data-testid="q8-subscriptions-delivery-not-implemented"\n      >'
-        ),
+      name: "remove the honest delivery explanation paragraph",
+      mutate: (t) => t.replace(/no backend worker exists to send them[^]*?until\n\s*report delivery ships\./, "report delivery is active."),
     },
   ];
   let caught = 0;
