@@ -1,3 +1,24 @@
+## 2026-10-08 · BANK-F91298 — MatchDrawer / BankingHome / TransfersListPage slate → house
+
+FINDING: BANK-F91298 — MatchDrawer / BankingHome / TransfersListPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25980 squash `3b8ce88600` (BANK-F91299 kill All tab; bulk categorize; Categorized Undo)
+GUARD: scripts/verify-91298-match-home-xfer-slate-leftover-chrome.mjs + verify-steps/3354 piggyback
+LIVE PROOF: verify-91298-match-home-xfer-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: MatchDrawer + BankingHome + TransfersListPage + refuse guard + 3354 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91299 — kill All tab; bulk categorize; Categorized Undo portal
+
+FINDING: BANK-F91299 — Banking feed All tab removed; For-review bulk categorize = one vendor + Category|Product/Service; Categorized ▾ Undo via createPortal
+LANE: FINANCIAL (UI + additive categorize-bulk columns; no new GL math)
+Prior tip merge: #25979 squash `734dac99d7` (BANK-F91297 PageHelpLink/StaleDeployBanner/RelatedModuleLinks)
+Squash merge: #25980 `3b8ce88600`
+GUARD: scripts/verify-bank-feed-filters-read-the-line-state.mjs (verify-steps/12489 piggyback pins)
+LIVE PROOF: verify-bank-feed-filters-read-the-line-state exit 0 — PASS (no All tab, bulk vendor+cat/item, Undo portal); --selftest 2/2 PASS
+REMAINING: Live=UNVERIFIED until FE/BE deploy; Chrome For review multi-select Categorize + Categorized Undo
+Files Modified: DesignView + test + categorization.routes + banking.ts API + ParityTable overflowVisible + guard 12489
+
 ## 2026-10-09 · BANK leftover slate — PageHelpLink / StaleDeployBanner / RelatedModuleLinks
 
 FINDING: BANK-F91297 — PageHelpLink / StaleDeployBanner / RelatedModuleLinks Tailwind slate-* → house tokens

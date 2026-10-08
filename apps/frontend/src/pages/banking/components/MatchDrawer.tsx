@@ -146,7 +146,7 @@ function candidateDrillLabel(candidate: BankMatchCandidate) {
 
 /** Label-only chrome — EntityLink must stay inline at the call site (entity-link-adoption). */
 function kindBadgeClassName() {
-  return "inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-slate-700 hover:underline";
+  return "inline-flex items-center rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-[#1F2A44] hover:underline";
 }
 
 
@@ -423,7 +423,7 @@ export function MatchDrawer({
     <ParityDrawer open={open} title="Find other matches" onClose={onClose}>
       <div data-testid="match-drawer" data-b3-find-other-matches="1">
         {bankTransactionId ? (
-          <p className="mb-1 text-xs text-slate-600">
+          <p className="mb-1 text-xs text-[#4B5563]">
             Bank transaction:{" "}
             <EntityLink
               kind="bank_transaction"
@@ -464,7 +464,7 @@ export function MatchDrawer({
               ? "Custom search"
               : windowHeaderLabel(win?.step, win?.from ?? "", win?.to ?? "")}
         </p>
-        <p className="mb-3 text-xs text-slate-500">
+        <p className="mb-3 text-xs text-[#6B7280]">
           Exact-amount matches link and clear with no journal entry. A variance (partial) match requires a
           write-off / difference account below — that posts the balanced variance JE. Select 2+ exact
           documents whose amounts sum to the bank line for one-bank-line → many-documents. Bill
@@ -472,7 +472,7 @@ export function MatchDrawer({
         </p>
 
         <div className="mb-3 space-y-1" data-testid="match-drawer-writeoff-account">
-          <label className="block text-xs text-slate-600">
+          <label className="block text-xs text-[#4B5563]">
             Write-off / difference account (required for variance)
             <div className="mt-0.5">
               <ReferenceSelect
@@ -522,7 +522,7 @@ export function MatchDrawer({
               );
             })}
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#6B7280]">
             Named only: Reserve Deposit · Factoring Fees · Wire Fee · Chargeback · Quick-Pay Discount.
             Never a generic adjustment.
           </p>
@@ -552,7 +552,7 @@ export function MatchDrawer({
           </button>
           {resolveOpen ? (
             <div className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-2" data-testid="match-resolve-difference-grid">
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#6B7280]">
                 Add resolving line(s) so Selected + Resolved equals the bank amount. Lines persist as{" "}
                 <span className="font-medium">bank transaction splits</span> (payee, category, class/unit, location,
                 memo, amount). Match / Commit only at Difference $0.00.
@@ -767,10 +767,10 @@ export function MatchDrawer({
 
         {multiSelected.length >= 2 ? (
           <div
-            className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5"
+            className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5"
             data-testid="match-drawer-multi-bar"
           >
-            <p className="text-xs text-slate-700">
+            <p className="text-xs text-[#1F2A44]">
               {multiSelected.length} selected · sum {formatMoneyCents(multiSumCents)}
               {bankAmountCents > 0 ? ` / bank ${formatMoneyCents(bankAmountCents)}` : ""}
               {multiExact ? " · exact" : " · not exact yet"}
@@ -780,8 +780,8 @@ export function MatchDrawer({
               data-testid="match-multi-confirm"
               className={
                 multiExact
-                  ? "rounded-sm border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white hover:bg-slate-800 disabled:opacity-60"
-                  : "rounded-sm border border-slate-300 bg-[var(--surface-unselected)] px-2 py-1 text-xs text-slate-400"
+                  ? "rounded-sm border border-[#14314F] bg-[#14314F] px-2 py-1 text-xs text-white hover:bg-[#0F2540] disabled:opacity-60"
+                  : "rounded-sm border border-[#E5E7EB] bg-[var(--surface-unselected)] px-2 py-1 text-xs text-[#6B7280]"
               }
               disabled={!multiExact || multiConfirmMutation.isPending}
               onClick={() => multiExact && multiConfirmMutation.mutate(multiSelected)}
@@ -849,7 +849,7 @@ export function MatchDrawer({
             value={draftQ}
             onChange={(e) => setDraftQ(e.target.value)}
             placeholder="Search payee, memo, ref…"
-            className="min-h-11 min-w-[160px] flex-1 rounded-sm border border-slate-300 px-2 text-xs"
+            className="min-h-11 min-w-[160px] flex-1 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             data-testid="match-search-query"
             onKeyDown={(e) => {
               if (e.key === "Enter") setSearchQ(draftQ.trim());
@@ -858,7 +858,7 @@ export function MatchDrawer({
           <button
             type="button"
             data-testid="match-search-apply"
-            className="rounded-sm border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700"
+            className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1.5 text-xs text-[#1F2A44]"
             onClick={() => setSearchQ(draftQ.trim())}
           >
             Search
@@ -867,7 +867,7 @@ export function MatchDrawer({
             <button
               type="button"
               data-testid="match-search-7-days"
-              className="rounded-sm border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1.5 text-xs text-[#1F2A44]"
               onClick={() => setWindowStep(2)}
             >
               Search 7 days
@@ -876,7 +876,7 @@ export function MatchDrawer({
           {hasCustomFilters || windowStep === 2 ? (
             <button
               type="button"
-              className="rounded-sm border border-slate-300 px-2 py-1.5 text-xs text-slate-600"
+              className="rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs text-[#4B5563]"
               data-testid="match-window-reset"
               onClick={() => {
                 setWindowStep(undefined);
@@ -897,11 +897,11 @@ export function MatchDrawer({
 
         {showFromTo ? (
           <div className="mb-3 flex flex-wrap items-end gap-2" data-testid="match-from-to">
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               From
               <DatePicker data-testid="match-date-from" value={dateFrom} onChange={setDateFrom} className="mt-0.5 h-7" />
             </label>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               To
               <DatePicker data-testid="match-date-to" value={dateTo} onChange={setDateTo} className="mt-0.5 h-7" />
             </label>
@@ -909,7 +909,7 @@ export function MatchDrawer({
         ) : null}
 
         {candidatesQuery.isError ? <ListErrorBanner onRetry={() => void candidatesQuery.refetch()} /> : null}
-        {candidatesQuery.isLoading ? <p className="text-xs text-slate-600">Loading candidates…</p> : null}
+        {candidatesQuery.isLoading ? <p className="text-xs text-[#4B5563]">Loading candidates…</p> : null}
 
         <div className="space-y-2" data-testid="match-candidate-list">
           {candidates.map((c) => {
@@ -932,15 +932,15 @@ export function MatchDrawer({
                 data-testid="match-candidate-row"
                 onClick={() => setSelectedId(c.ledger_entry_id)}
                 className={`cursor-pointer rounded border px-3 py-2 ${
-                  isTopAuto ? "border-slate-400 bg-slate-50" : "border-slate-200 bg-[var(--surface-unselected)]"
-                } ${isSelected ? "ring-1 ring-slate-400" : ""}`}
+                  isTopAuto ? "border-[#4B5563] bg-[#F7F8FA]" : "border-[#E5E7EB] bg-[var(--surface-unselected)]"
+                } ${isSelected ? "ring-1 ring-[#4B5563]" : ""}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-2">
                     <input
                       type="checkbox"
                       data-testid="match-candidate-multi-select"
-                      className="accent-slate-700"
+                      className="accent-[#1F2A44]"
                       checked={isMultiChecked}
                       disabled={isBill}
                       title={isBill ? "Bills stay held (CHAIN-04)" : "Include in multi-document match"}
@@ -951,7 +951,7 @@ export function MatchDrawer({
                       type="radio"
                       name="match-candidate"
                       data-testid="match-candidate-select"
-                      className="accent-slate-700"
+                      className="accent-[#1F2A44]"
                       checked={isSelected}
                       onChange={() => setSelectedId(c.ledger_entry_id)}
                     />
@@ -971,22 +971,22 @@ export function MatchDrawer({
                     {isTopAuto ? (
                       <span
                         data-testid="match-candidate-top"
-                        className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white"
+                        className="inline-flex items-center rounded-sm bg-[#14314F] px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white"
                       >
                         Best match
                       </span>
                     ) : null}
                   </div>
-                  <span className="shrink-0 text-xs font-semibold text-slate-900" data-testid="match-candidate-amount">
+                  <span className="shrink-0 text-xs font-semibold text-[#0F1219]" data-testid="match-candidate-amount">
                     {formatMoneyCents(c.amount_cents)}
                   </span>
                 </div>
 
-                <div className="mt-1 truncate text-xs text-slate-700" title={c.memo}>
+                <div className="mt-1 truncate text-xs text-[#1F2A44]" title={c.memo}>
                   {c.memo?.trim() ? c.memo : "—"}
                 </div>
 
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500">
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[#6B7280]">
                   <span data-testid="match-candidate-date">Date: {String(c.event_date ?? "").slice(0, 10) || "—"}</span>
                   <span>Amount gap: {formatMoneyCents(c.amount_gap_cents)}</span>
                   <span>Date gap: {c.date_gap_days}d</span>
@@ -995,9 +995,9 @@ export function MatchDrawer({
 
                 <div className="mt-2 flex items-center justify-end gap-2">
                   {isBill ? (
-                    <span className="text-xs text-slate-400">Posting available after CHAIN-04</span>
+                    <span className="text-xs text-[#6B7280]">Posting available after CHAIN-04</span>
                   ) : !isExactMatch && !effectiveWriteOffId ? (
-                    <span className="text-xs text-slate-400" data-testid="match-candidate-variance-held">
+                    <span className="text-xs text-[#6B7280]" data-testid="match-candidate-variance-held">
                       {VARIANCE_NEEDS_WRITEOFF}
                     </span>
                   ) : null}
@@ -1006,8 +1006,8 @@ export function MatchDrawer({
                     data-testid="match-candidate-confirm"
                     className={
                       canConfirm
-                        ? "rounded-sm border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white hover:bg-slate-800 disabled:opacity-60"
-                        : "rounded-sm border border-slate-300 bg-[var(--surface-unselected)] px-2 py-1 text-xs text-slate-400"
+                        ? "rounded-sm border border-[#14314F] bg-[#14314F] px-2 py-1 text-xs text-white hover:bg-[#0F2540] disabled:opacity-60"
+                        : "rounded-sm border border-[#E5E7EB] bg-[var(--surface-unselected)] px-2 py-1 text-xs text-[#6B7280]"
                     }
                     disabled={!canConfirm || isConfirming}
                     title={
@@ -1028,7 +1028,7 @@ export function MatchDrawer({
             );
           })}
           {listState.isEmpty ? (
-            <p className="text-xs text-slate-600" data-testid="match-candidate-empty">
+            <p className="text-xs text-[#4B5563]" data-testid="match-candidate-empty">
               {showFromTo
                 ? "No matchable records in this window. Set From / To to search a custom range."
                 : "No matchable records found for this transaction."}
@@ -1038,15 +1038,15 @@ export function MatchDrawer({
 
         {/* §4 nested +Create — vendor + CoA category when no ledger match fits (QBO Find match → Categorize). */}
         <div
-          className="mt-4 space-y-2 border-t border-slate-200 pt-3"
+          className="mt-4 space-y-2 border-t border-[#E5E7EB] pt-3"
           data-testid="match-drawer-categorize-create"
         >
-          <p className="text-xs font-semibold text-slate-800">Or categorize instead</p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs font-semibold text-[#1F2A44]">Or categorize instead</p>
+          <p className="text-xs text-[#6B7280]">
             Nested <strong>+ Add new</strong> creates stay in this drawer (entity-scoped catalogs). Category is
             required; vendor is optional. Uses the same categorize API as the Transactions register.
           </p>
-          <label className="block text-xs text-slate-600">
+          <label className="block text-xs text-[#4B5563]">
             Payee (vendor)
             <div className="mt-0.5" data-testid="match-drawer-picker-vendor">
               <ReferenceSelect
@@ -1060,7 +1060,7 @@ export function MatchDrawer({
               />
             </div>
           </label>
-          <label className="block text-xs text-slate-600">
+          <label className="block text-xs text-[#4B5563]">
             Category (Chart of Accounts)
             <div className="mt-0.5" data-testid="match-drawer-picker-category">
               <ReferenceSelect
@@ -1081,7 +1081,7 @@ export function MatchDrawer({
           <button
             type="button"
             data-testid="match-drawer-categorize-submit"
-            className="rounded-sm border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-white hover:bg-slate-800 disabled:opacity-60"
+            className="rounded-sm border border-[#14314F] bg-[#14314F] px-2 py-1.5 text-xs text-white hover:bg-[#0F2540] disabled:opacity-60"
             disabled={!canCategorize}
             onClick={() => categorizeMutation.mutate()}
           >
