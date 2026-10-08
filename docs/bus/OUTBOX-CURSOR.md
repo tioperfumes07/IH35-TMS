@@ -1,3 +1,13 @@
+## 2026-10-08T10:00Z · BANK leftover slate — IFTA CSV / miles / gallons steps
+
+FINDING: BANK-F91188 — IFTAStepCSVExport / IFTAStepMiles / IFTAStepGallons Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25842 squash `98016c9c57` (BANK-F91187 geofence/comms/fleet)
+GUARD: scripts/verify-ifta-steps-slate-leftover-chrome.mjs + verify-steps/1060 piggyback
+LIVE PROOF: verify-ifta-steps-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 1060 piggyback + OUTBOX
+
 ## 2026-10-08T09:55Z · BANK leftover slate — load geofence timeline / driver comms / fleet restore
 
 FINDING: BANK-F91187 — LoadDetailGeofenceTimelineTab / DriverCommunicationsTab / HomeFleetRestoreCard Tailwind slate-* → house tokens
