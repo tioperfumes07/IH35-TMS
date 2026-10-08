@@ -59,7 +59,7 @@ export function TaskLinkPicker({ operatingCompanyId, targetType, targetId, label
     <>
       <button
         type="button"
-        className="rounded-sm border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+        className="rounded-sm border border-[#4B5563] bg-[#E5E7EB] px-2.5 py-1.5 text-xs font-semibold text-[#1F2A44] hover:bg-[#E5E7EB] disabled:opacity-50"
         onClick={() => setOpen(true)}
         disabled={!operatingCompanyId || !targetId}
       >
@@ -92,7 +92,7 @@ export function TaskLinkPicker({ operatingCompanyId, targetType, targetId, label
                     <>
                       {t.title}
                       {t.anticipated_category ? (
-                        <span className="ml-1 text-xs text-slate-500">({t.anticipated_category})</span>
+                        <span className="ml-1 text-xs text-[#6B7280]">({t.anticipated_category})</span>
                       ) : null}
                     </>
                   ),
@@ -116,7 +116,7 @@ export function TaskLinkPicker({ operatingCompanyId, targetType, targetId, label
                     <button
                       type="button"
                       disabled={linkMutation.isPending}
-                      className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+                      className="rounded-sm border border-[#4B5563] bg-[#E5E7EB] px-2 py-1 text-xs font-semibold text-[#1F2A44] hover:bg-[#E5E7EB] disabled:opacity-50"
                       onClick={() => linkMutation.mutate(t)}
                     >
                       Link & complete
@@ -131,7 +131,7 @@ export function TaskLinkPicker({ operatingCompanyId, targetType, targetId, label
             limit={200}
             total={tasksQuery.data?.total_count}
             hint="Only the first page of tasks is listed — narrow with filters on the Tasks module if needed."
-            className="text-xs text-slate-600"
+            className="text-xs text-[#4B5563]"
           />
         </div>
       </Modal>

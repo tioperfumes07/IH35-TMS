@@ -25,7 +25,7 @@ const STATUS_LABEL: Record<TaskStatus, string> = {
 // §7 palette — status pills stay on navy/slate (no traffic-light colors).
 function StatusPill({ status }: { status: TaskStatus }) {
   const done = status === "completed";
-  const cls = done ? "bg-slate-200 text-slate-600" : "bg-slate-100 text-slate-700";
+  const cls = done ? "bg-[#E5E7EB] text-[#4B5563]" : "bg-[#E5E7EB] text-[#1F2A44]";
   return <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${cls}`}>{STATUS_LABEL[status]}</span>;
 }
 
@@ -56,10 +56,10 @@ export function TasksTab({ operatingCompanyId, targetType, targetId, targetLabel
               kind="task"
               id={t.task_id}
               label={t.title}
-              className="font-semibold text-slate-700 hover:underline"
+              className="font-semibold text-[#1F2A44] hover:underline"
             />
             {t.anticipated_category ? (
-              <span className="ml-1 text-xs text-slate-500">({t.anticipated_category})</span>
+              <span className="ml-1 text-xs text-[#6B7280]">({t.anticipated_category})</span>
             ) : null}
           </>
         ),
@@ -93,10 +93,10 @@ export function TasksTab({ operatingCompanyId, targetType, targetId, targetLabel
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-slate-700">Tasks</h3>
+        <h3 className="text-xs font-semibold text-[#1F2A44]">Tasks</h3>
         <button
           type="button"
-          className="rounded-sm border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200"
+          className="rounded-sm border border-[#4B5563] bg-[#E5E7EB] px-2.5 py-1.5 text-xs font-semibold text-[#1F2A44] hover:bg-[#E5E7EB]"
           onClick={() => setShowCreate(true)}
           disabled={!operatingCompanyId}
         >

@@ -54,24 +54,24 @@ export function TasksMinePage() {
   // hand-rolled table. Preserves the overdue red-highlight on the Scheduled column.
   const columns = useMemo<ParityColumn<Task>[]>(
     () => [
-      { key: "title", label: "Task", sortable: true, cellClass: "font-medium text-slate-800" },
+      { key: "title", label: "Task", sortable: true, cellClass: "font-medium text-[#0F1219]" },
       {
         key: "subject_id",
         label: "About",
         render: (row) => <TaskSubjectLink subjectType={row.subject_type} subjectId={row.subject_id} subjectLabel={row.subject_label} />,
       },
-      { key: "category", label: "Category", sortable: true, cellClass: "capitalize text-slate-600" },
+      { key: "category", label: "Category", sortable: true, cellClass: "capitalize text-[#4B5563]" },
       {
         key: "scheduled_date",
         label: "Scheduled",
         sortable: true,
         render: (row) => (
-          <span className={isOpenTaskStatus(row.status) && row.scheduled_date < today ? "font-semibold text-red-700" : "text-slate-600"}>
+          <span className={isOpenTaskStatus(row.status) && row.scheduled_date < today ? "font-semibold text-red-700" : "text-[#4B5563]"}>
             {formatDateUS(row.scheduled_date)}
           </span>
         ),
       },
-      { key: "priority", label: "Priority", sortable: true, render: (row) => priorityLabel(row.priority), cellClass: "text-slate-600" },
+      { key: "priority", label: "Priority", sortable: true, render: (row) => priorityLabel(row.priority), cellClass: "text-[#4B5563]" },
       {
         key: "status",
         label: "Status",
@@ -80,7 +80,7 @@ export function TasksMinePage() {
           <span className={`rounded-sm border px-1.5 py-0.5 text-xs ${TASK_STATUS_BADGE[row.status]}`}>{taskStatusLabel(row.status)}</span>
         ),
       },
-      { key: "progress_pct", label: "Progress", sortable: true, render: (row) => `${row.progress_pct}%`, cellClass: "text-slate-600" },
+      { key: "progress_pct", label: "Progress", sortable: true, render: (row) => `${row.progress_pct}%`, cellClass: "text-[#4B5563]" },
     ],
     [today],
   );
@@ -108,9 +108,9 @@ export function TasksMinePage() {
           ["Overdue", overdue.length],
           ["Completed (window)", tasks.filter((t) => t.status === "completed").length],
         ] as Array<[string, number]>).map(([label, value]) => (
-          <div key={label} className="rounded-sm border border-slate-200 bg-white p-3">
-            <div className="text-xs font-semibold text-slate-500">{label}</div>
-            <div className="text-page-title font-bold text-slate-900">{value}</div>
+          <div key={label} className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+            <div className="text-xs font-semibold text-[#6B7280]">{label}</div>
+            <div className="text-page-title font-bold text-[#0F1219]">{value}</div>
           </div>
         ))}
       </div>
