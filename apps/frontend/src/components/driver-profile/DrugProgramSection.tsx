@@ -4,17 +4,17 @@ export function DrugProgramSection({ drug, unavailable = false }: { drug: Record
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="mb-2 text-xs font-semibold text-slate-900">Drug & alcohol program</h2>
+      <h2 className="mb-2 text-xs font-semibold text-[#0F1219]">Drug & alcohol program</h2>
       {unavailable ? <p className="mb-2 text-xs font-medium text-red-700">Drug program data could not be loaded.</p> : null}
-      <p className="text-xs text-slate-700">
+      <p className="text-xs text-[#1F2A44]">
         Random pool: <span className="font-medium">{inPool ? "Enrolled" : "Not enrolled"}</span>
       </p>
       {last ? (
-        <p className="mt-1 text-xs text-slate-600">
+        <p className="mt-1 text-xs text-[#4B5563]">
           Last test {String(last.date ?? "—")} · {String(last.type ?? "—")} · {String(last.result ?? "—")}
         </p>
       ) : (
-        <p className="mt-1 text-xs text-slate-500">No tests on file.</p>
+        <p className="mt-1 text-xs text-[#6B7280]">No tests on file.</p>
       )}
     </section>
   );

@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — MedicalCard / Loads / DrugProgram
+
+FINDING: BANK-F91290 — MedicalCardSection / LoadsSection / DrugProgramSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25971 squash `d7002e8d27` (BANK-F91289 SafetyGeneric/Maintenance/Fleet catalogs)
+GUARD: scripts/verify-91290-drv-med-loads-drug-slate-leftover-chrome.mjs + verify-steps/3412 piggyback
+LIVE PROOF: verify-91290-drv-med-loads-drug-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3412 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — SafetyGeneric / Maintenance / Fleet catalog lists
 
 FINDING: BANK-F91289 — SafetyGenericCatalogListPage / MaintenanceCatalogListPage / FleetCatalogListPage Tailwind slate-* → house tokens

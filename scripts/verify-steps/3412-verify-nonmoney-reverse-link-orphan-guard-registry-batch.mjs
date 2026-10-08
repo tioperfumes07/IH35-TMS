@@ -28,5 +28,7 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-border-crossing-broker-linkage.mjs", "--selftest"]);
     for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
+    // BANK leftover refuse — MedicalCard / Loads / DrugProgram house tokens
+    await ctx.run("node", ["scripts/verify-91290-drv-med-loads-drug-slate-leftover-chrome.mjs"]);
   },
 };

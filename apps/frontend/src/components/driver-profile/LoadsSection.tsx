@@ -45,7 +45,7 @@ function buildLoadColumns(operatingCompanyId: string): Array<ParityColumn<Dispat
       // LV-DRIVER-PROFILE-DEAD-CUSTOMER-TOMBSTONE-LINK
       if (isUnresolvedEntityTombstone(row.customer_name, row.customer_id, "Customer")) {
         return (
-          <span className="text-slate-800" data-testid="driver-profile-load-customer-tombstone">
+          <span className="text-[#0F1219]" data-testid="driver-profile-load-customer-tombstone">
             {label}
           </span>
         );
@@ -59,7 +59,7 @@ function buildLoadColumns(operatingCompanyId: string): Array<ParityColumn<Dispat
     sortable: true,
     sortValue: (row) => `${row.pickup_city ?? ""}, ${row.pickup_state ?? ""}`,
     render: (row) => (
-      <span className="text-xs text-slate-700">
+      <span className="text-xs text-[#1F2A44]">
         {row.pickup_city ?? "—"}
         {row.pickup_state ? `, ${row.pickup_state}` : ""}
       </span>
@@ -71,7 +71,7 @@ function buildLoadColumns(operatingCompanyId: string): Array<ParityColumn<Dispat
     sortable: true,
     sortValue: (row) => `${row.delivery_city ?? ""}, ${row.delivery_state ?? ""}`,
     render: (row) => (
-      <span className="text-xs text-slate-700">
+      <span className="text-xs text-[#1F2A44]">
         {row.delivery_city ?? "—"}
         {row.delivery_state ? `, ${row.delivery_state}` : ""}
       </span>
@@ -103,7 +103,7 @@ export function LoadsSection({ driverId, operatingCompanyId }: Props) {
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="dp-section-loads">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-xs font-semibold text-gray-800">Loads</h2>
-        <EntityLink kind="loads_driver_filter" id={driverId} label="Full load history" className="text-xs text-slate-700 underline" />
+        <EntityLink kind="loads_driver_filter" id={driverId} label="Full load history" className="text-xs text-[#1F2A44] underline" />
       </div>
       {query.isError ? (
         <div className="mt-3">
