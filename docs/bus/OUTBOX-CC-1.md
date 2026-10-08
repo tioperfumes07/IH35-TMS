@@ -1993,3 +1993,34 @@ Two throwaway Neon forks are alive for the owner/Lead to delete: br-shy-wildflow
 **Neon forks:** br-shy-wildflower-akncgc1a, br-red-meadow-aknhkedd and br-twilight-night-akmnrs5o are deleted.
 
 CI is down account-wide; local gates are the record. The Lead's gate for these PRs, backend tsc = 0, PASSED on each.
+
+## 2026-10-08 ~01:00Z — CC-1 final (ROUND 441.17–441.19): #25776 merged; categorize reverted to CHAIN-05; prod state; handoff
+**#25776** (SETL-F447, the only open PR) rebased; frontend `npm run -s build` exit 0; squash-merged → **1e8c37d40d**.
+
+**ROUND 441.19 — CHAIN-05 restored.** #25785 → **04a84e24f4**:
+- Categorize posts ONE `bank_categorization` journal entry per the §3 matrix and creates NO document; Match is unchanged.
+- Row **A‴** (money out to equity, Dr equity / Cr bank) is added to the doc.
+- A/R–A/P control accounts are refused with `account_is_ar_ap_control` (§10.3).
+- **Note for the Lead:** the doc already had **A″** (money out to a liability, Dr liability / Cr bank), so the 30 to 2410 were never outside the matrix. Equity was the only real gap.
+- New guard `verify-bank-categorize-posts-chain05-matrix`:
+  - RED on the Phase 1/2 tree (M1 + M4);
+  - selftest 8/8;
+  - live: all 30 USMCA categorization entries match their row.
+
+**Prod state (measured, read-only):**
+- **5 expenses, $203.14** (EXP-2026-00001…00005), from the ROUND 441.5 conversion — left as they are (Lead 441.18).
+- **23 deposits, $35,355.00** (DEP-2025-00001, DEP-2026-00001…00022), from the ROUND 441.5 money-in conversion. **It DID run**: 22 lines between 00:06 and 00:14Z, in a run the owner's interrupt did not stop in time. One line, 2026-06-24 $5,000.00, was stranded between Undo and re-record; I restored it at ~00:2xZ with its original account and payer.
+  - Trial balance across 1000 / 2410 / 3000 is exactly back to its pre-conversion values: 1000 −18,833.14, 2410 +22,130.00 debit, 3000 −3,500.00. Net delta 0.
+  - **RULING NEEDED:** leave the 23 deposits (balanced, linked both ways, undoable), or Undo + re-categorize each back to a row-B′ journal entry. CC-1 touched neither after the reversal order.
+- **30 money-out to 2410, $53,985.00:** CHAIN-05 row A″ journal entries, correct. Nothing converted. The F438 "every money-out is an expense" branch is NOT merged.
+- **2410's $22,130.00 DEBIT** = $53,985.00 paid out − $31,855.00 received. The list for the owner and Martin is in `docs/bus/2026-10-08-CC1-2410-LINES-FOR-OWNER.md`: all 50 lines with date, amount, description and document.
+  - One uncategorized candidate receipt: **2025-12-12 $2,775.00**, reversed by Martin on 10-06 21:24.
+  - The 2410-00-00x, 2500-00-00x and 2510 accounts have zero lines, as the Lead measured.
+
+**Handed to Cursor** (`docs/bus/2026-10-08-CC1-HANDOFF-TO-CURSOR-RELAY.md`):
+- Relay backfill: the new key reaches the real account, but a one-day window times out — the same as the TRANSP pull.
+- RELAY-F441 guard: branch pushed, not merged.
+- The matching engine.
+- Neon forks: **all deleted**.
+
+CI is down account-wide; local gates are the record.
