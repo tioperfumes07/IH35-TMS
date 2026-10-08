@@ -13,7 +13,7 @@ import { kpiTileClasses } from "../layout/kpiTileClasses";
 
 // KPI-TILE-COLOR LAW (owner ruling 2026-09-04, verbatim: "for all kpis i want different color not
 // just white background a light color to distinguish and darker border").
-// These tiles were `bg-white border-slate-200` — a white tile on a white page, which is the owner's
+// These tiles were `bg-white border-[#E5E7EB]` — a white tile on a white page, which is the owner's
 // standing complaint and a violation of his own month-old ruling. design/tokens.ts has carried
 // kpiTileBg / kpiTileBorder since that ruling and components/layout/DrillKpiCard.tsx already paints
 // from them; this panel never did. Same pattern, same tokens, so Banking and Factoring KPIs finally
@@ -155,7 +155,7 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
 
   if (kpis.isError) {
     return (
-      <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-700" data-testid={`${domain}-kpi-engine-error`}>
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#1F2A44]" data-testid={`${domain}-kpi-engine-error`}>
         {title} could not load.{" "}
         <button type="button" className="underline" onClick={() => void kpis.refetch()}>
           Retry
@@ -164,12 +164,12 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
     );
   }
   return (
-    <section className="rounded-sm border border-slate-200 bg-white p-3" data-testid={`${domain}-kpi-engine`}>
+    <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid={`${domain}-kpi-engine`}>
       <div className="mb-2 flex items-baseline justify-between text-xs">
-        <span className="font-semibold uppercase tracking-wide text-slate-600">{title}</span>
-        {kpis.data ? <span className="text-slate-600">{formatDateUS(kpis.data.range.from)} – {formatDateUS(kpis.data.range.to)}</span> : null}
+        <span className="font-semibold uppercase tracking-wide text-[#4B5563]">{title}</span>
+        {kpis.data ? <span className="text-[#4B5563]">{formatDateUS(kpis.data.range.from)} – {formatDateUS(kpis.data.range.to)}</span> : null}
       </div>
-      {kpis.isLoading ? <p className="text-xs text-slate-600">Loading…</p> : null}
+      {kpis.isLoading ? <p className="text-xs text-[#4B5563]">Loading…</p> : null}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         {(kpis.data?.kpis ?? []).map((k) => (
           <button
@@ -211,19 +211,19 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
       {drillKey ? (
         <Modal open onClose={() => setDrillKey(null)} title={drillKpi ? `${drillKpi.label} — ${drillKpi.row_count} row(s)` : "KPI rows"}>
           <div className="text-xs" data-testid={`${domain}-kpi-drill`}>
-            {drillKpi ? <p className="mb-2 text-slate-600">Source: {drillKpi.source}{drillKpi.gl_account ? ` · GL ${drillKpi.gl_account}` : ""}</p> : null}
+            {drillKpi ? <p className="mb-2 text-[#4B5563]">Source: {drillKpi.source}{drillKpi.gl_account ? ` · GL ${drillKpi.gl_account}` : ""}</p> : null}
             {/* BANK-F2026100303 — the breakdown lives HERE, not crammed into the tile. Full width,
                 every bucket, right-aligned tabular figures, and a total that ties so the owner can
                 check the tile's headline against the sum of its parts without leaving the modal. */}
             {drillKpi?.buckets?.length ? (
               <div className="mb-3" data-testid={`${domain}-kpi-drill-breakdown`}>
-                <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Breakdown</div>
+                <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Breakdown</div>
                 <table className="w-full tabular-nums">
                   <thead>
                     <tr>
-                      <th className="text-left font-semibold text-slate-600">bucket</th>
-                      <th className="text-right font-semibold text-slate-600">rows</th>
-                      {drillKpi.unit === "cents" ? <th className="text-right font-semibold text-slate-600">amount</th> : null}
+                      <th className="text-left font-semibold text-[#4B5563]">bucket</th>
+                      <th className="text-right font-semibold text-[#4B5563]">rows</th>
+                      {drillKpi.unit === "cents" ? <th className="text-right font-semibold text-[#4B5563]">amount</th> : null}
                     </tr>
                   </thead>
                   <tbody>
@@ -236,7 +236,7 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr className="border-t border-slate-200 font-semibold">
+                    <tr className="border-t border-[#E5E7EB] font-semibold">
                       <td className="text-left">Total</td>
                       <td className="text-right">{drillKpi.buckets.reduce((s, b) => s + b.count, 0)}</td>
                       {drillKpi.unit === "cents" ? (
@@ -248,11 +248,11 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
               </div>
             ) : null}
             {drill.isLoading ? <p>Loading rows…</p> : null}
-            {drill.data && !drill.data.rows.length ? <p className="text-slate-600">{drillKpi?.empty_reason ?? "No rows."}</p> : null}
+            {drill.data && !drill.data.rows.length ? <p className="text-[#4B5563]">{drillKpi?.empty_reason ?? "No rows."}</p> : null}
             {cols.length ? (
               <table className="w-full tabular-nums">
                 <thead>
-                  <tr>{cols.map((c) => <th key={c} className="text-left font-semibold text-slate-600">{c.replace(/_cents$/, "").replaceAll("_", " ")}</th>)}</tr>
+                  <tr>{cols.map((c) => <th key={c} className="text-left font-semibold text-[#4B5563]">{c.replace(/_cents$/, "").replaceAll("_", " ")}</th>)}</tr>
                 </thead>
                 <tbody>
                   {drill.data!.rows.map((r, i) => (

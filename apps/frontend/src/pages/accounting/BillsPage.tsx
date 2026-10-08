@@ -62,8 +62,8 @@ function money(cents: number) {
 }
 
 function statusBadgeClass(status: BillStatus) {
-  if (status === "paid") return "bg-slate-100 text-slate-700";
-  if (status === "partial") return "bg-slate-100 text-slate-800";
+  if (status === "paid") return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (status === "partial") return "bg-[#F7F8FA] text-[#0F1219]";
   if (status === "voided") return "bg-gray-200 text-gray-700";
   return "bg-red-50 text-red-800";
 }
@@ -73,7 +73,7 @@ function statusBadgeClass(status: BillStatus) {
 function ReconciledBadge({ isReconciled }: { isReconciled?: boolean }) {
   if (isReconciled) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-medium text-[#1F2A44]">
         <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.5 6.5l2.5 2.5 4.5-5" strokeLinecap="round" strokeLinejoin="round" /></svg> Matched
       </span>
     );
@@ -134,7 +134,7 @@ function BillDueBadge({ bill }: { bill: VendorBill }) {
     return <span className="ml-1 inline-flex rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-800">Overdue</span>;
   }
   if (s === "due_soon") {
-    return <span className="ml-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Due soon</span>;
+    return <span className="ml-1 inline-flex rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">Due soon</span>;
   }
   return null;
 }
@@ -153,7 +153,7 @@ function daysAgoIso(days: number) {
 // Callers must pass hasError so a failed fetch shows "—" / "Error loading", never a fabricated zero.
 function billKpiCard(label: string, value: string, sublabel: string, tone: "neutral" | "warn" | "danger" = "neutral") {
   const toneClass =
-    tone === "danger" ? "border-l-4 border-l-red-500" : tone === "warn" ? "border-l-4 border-l-slate-400" : "border-l-4 border-l-slate-300";
+    tone === "danger" ? "border-l-4 border-l-red-500" : tone === "warn" ? "border-l-4 border-l-[#6B7280]" : "border-l-4 border-l-[#E5E7EB]";
   return (
     <div className={`rounded-sm border border-gray-200 bg-white px-3 py-2 ${toneClass}`}>
       <p className="text-section-header font-semibold uppercase tracking-wide text-gray-500">{label}</p>
@@ -581,7 +581,7 @@ export function BillsPage() {
         sortable: true,
         render: (bill) => {
           const number = typeof bill.bill_number === "string" ? bill.bill_number.trim() : "";
-          return <span className="text-slate-800">{number !== "" ? number : "—"}</span>;
+          return <span className="text-[#0F1219]">{number !== "" ? number : "—"}</span>;
         },
       },
       { key: "linked_load_number", label: "Load Number", sortable: true, alwaysVisible: true,
@@ -615,7 +615,7 @@ export function BillsPage() {
         render: (bill) => {
           const variance = Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0) - Number(bill.balance_cents ?? billBalanceCents(bill));
           return (
-            <span className={`font-semibold ${variance !== 0 ? "text-red-700" : "text-slate-400"}`}>{money(variance)}</span>
+            <span className={`font-semibold ${variance !== 0 ? "text-red-700" : "text-[#6B7280]"}`}>{money(variance)}</span>
           );
         },
       },
@@ -775,7 +775,7 @@ export function BillsPage() {
               type="button"
               className={`rounded border px-2 py-0.5 text-xs font-medium ${
                 allocationBillId === bill.id
-                  ? "border-slate-300 bg-slate-100 text-slate-700"
+                  ? "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]"
                   : "border-gray-300 bg-[var(--surface-unselected)] text-gray-800 hover:bg-[var(--surface-hover)]"
               }`}
               onClick={() => setAllocationBillId((current) => (current === bill.id ? null : bill.id))}
@@ -845,7 +845,7 @@ export function BillsPage() {
             another status the list is NOT narrowed by it, and says so rather than quietly dropping
             or quietly keeping rows. */}
         {statusFilterNeedsServerNarrowing(statusFilter) ? (
-          <p className="text-xs text-slate-700" data-testid="bills-status-server-only-notice">
+          <p className="text-xs text-[#1F2A44]" data-testid="bills-status-server-only-notice">
             “Posted (GL)” narrows only when selected on its own — these results are not filtered by GL posting.
           </p>
         ) : null}
@@ -875,10 +875,10 @@ export function BillsPage() {
             limit={1000}
             total={vendorsQuery.data?.total ?? null}
             hint="Narrow by typing in the vendor field."
-            className="mt-1 text-xs text-slate-600"
+            className="mt-1 text-xs text-[#4B5563]"
           />
         </div>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Unit
           <EntityPicker
             kind="unit"
@@ -891,7 +891,7 @@ export function BillsPage() {
             dataTestId="bills-filter-unit"
           />
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Load
           <EntityPicker
             kind="load"
@@ -962,7 +962,7 @@ export function BillsPage() {
       {billsQuery.isError ? <ListErrorBanner onRetry={() => void billsQuery.refetch()} /> : null}
       {highlightedBillId ? (
         <p
-          className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
           data-testid="bills-deeplink-banner"
         >
           Deep-link bill <span className="font-mono font-semibold">{entityLabel(rows.find((r) => r.id === highlightedBillId)?.bill_number, highlightedBillId, "Bill")}</span>
@@ -998,7 +998,7 @@ export function BillsPage() {
             onClick={() => setBillType(tab.id)}
             className={`inline-flex h-[28px] items-center gap-1 rounded-sm border px-2 text-xs ${
               billType === tab.id
-                ? "border-slate-400 bg-slate-100 font-semibold text-[#0F1219]"
+                ? "border-[#6B7280] bg-[#F7F8FA] font-semibold text-[#0F1219]"
                 : "border-[#E5E7EB] bg-[var(--surface-unselected)] font-medium text-[#4B5563] hover:bg-[var(--surface-hover)]"
             }`}
           >
@@ -1040,7 +1040,7 @@ export function BillsPage() {
           next.set("bill_id", bill.id);
           void navigate(`/accounting/bills?${next.toString()}`, { replace: true });
         }}
-        rowClassName={(bill) => (highlightedBillId === bill.id ? "bg-slate-100" : "")}
+        rowClassName={(bill) => (highlightedBillId === bill.id ? "bg-[#F7F8FA]" : "")}
         batchActions={(selected) => (
           <>
             <Button
