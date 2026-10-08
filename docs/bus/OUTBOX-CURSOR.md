@@ -1,3 +1,13 @@
+## 2026-10-08T22:05Z · BANK leftover slate — MaintAlerts / EnginesStatus / ArrivingSoon
+
+FINDING: BANK-F91242 — MaintenanceAlertsCard / MaintEnginesStatusWidget / ArrivingSoonCard Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25918 squash `5b110d8ec5` (BANK-F91241 SafetyScheduler/CustomsTime/CargoTemp)
+GUARD: scripts/verify-maint-alerts-engines-arriving-slate-leftover-chrome.mjs + verify-steps/3604 piggyback
+LIVE PROOF: verify-maint-alerts-engines-arriving-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3604 piggyback + OUTBOX
+
 ## 2026-10-08T21:55Z · BANK leftover slate — SafetyScheduler / CustomsTime / CargoTemp
 
 FINDING: BANK-F91241 — SafetyDriverSchedulerGrid / CustomsTimePill / CargoTempBadge Tailwind slate-* → house tokens
