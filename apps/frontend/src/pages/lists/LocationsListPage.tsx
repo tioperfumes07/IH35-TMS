@@ -97,31 +97,31 @@ const COLUMNS: Array<ParityColumn<LocationRow>> = [
     key: "location_name",
     label: "Name",
     sortable: true,
-    render: (row) => <span className="font-semibold text-slate-800">{dash(row.location_name)}</span>,
+    render: (row) => <span className="font-semibold text-[#1F2A44]">{dash(row.location_name)}</span>,
   },
   {
     key: "address_line1",
     label: "Address",
     sortable: true,
-    render: (row) => <span className="text-slate-700">{dash(row.address_line1)}</span>,
+    render: (row) => <span className="text-[#4B5563]">{dash(row.address_line1)}</span>,
   },
   {
     key: "city",
     label: "City",
     sortable: true,
-    render: (row) => <span className="text-slate-700">{dash(row.city)}</span>,
+    render: (row) => <span className="text-[#4B5563]">{dash(row.city)}</span>,
   },
   {
     key: "state",
     label: "ST",
     sortable: true,
-    render: (row) => <span className="text-slate-700">{dash(row.state)}</span>,
+    render: (row) => <span className="text-[#4B5563]">{dash(row.state)}</span>,
   },
   {
     key: "postal_code",
     label: "ZIP",
     sortable: true,
-    render: (row) => <span className="text-slate-700">{dash(row.postal_code)}</span>,
+    render: (row) => <span className="text-[#4B5563]">{dash(row.postal_code)}</span>,
   },
   {
     key: "latitude",
@@ -129,10 +129,10 @@ const COLUMNS: Array<ParityColumn<LocationRow>> = [
     sortable: true,
     render: (row) => {
       if (row.latitude == null || row.longitude == null) {
-        return <span className="text-slate-500">not geocoded</span>;
+        return <span className="text-[#6B7280]">not geocoded</span>;
       }
       return (
-        <span className="text-slate-700">
+        <span className="text-[#4B5563]">
           {Number(row.latitude).toFixed(4)}, {Number(row.longitude).toFixed(4)}
         </span>
       );
@@ -144,9 +144,9 @@ const COLUMNS: Array<ParityColumn<LocationRow>> = [
     sortable: true,
     sortValue: (row) => row.geofence_count,
     render: (row) => {
-      if (row.geofence_count === 0) return <span className="text-slate-500">No</span>;
+      if (row.geofence_count === 0) return <span className="text-[#6B7280]">No</span>;
       const radius = row.geofence_radius_meters != null ? ` · ${row.geofence_radius_meters}m` : "";
-      return <span className="text-slate-700">Yes ({row.geofence_count}{radius})</span>;
+      return <span className="text-[#4B5563]">Yes ({row.geofence_count}{radius})</span>;
     },
   },
   {
@@ -154,7 +154,7 @@ const COLUMNS: Array<ParityColumn<LocationRow>> = [
     label: "Landmarks",
     sortable: true,
     sortValue: (row) => row.landmark_count,
-    render: (row) => <span className="text-slate-700">{row.landmark_count}</span>,
+    render: (row) => <span className="text-[#4B5563]">{row.landmark_count}</span>,
   },
   {
     key: "load_count",
@@ -167,11 +167,11 @@ const COLUMNS: Array<ParityColumn<LocationRow>> = [
           kind="load"
           id={row.id}
           label={String(row.load_count)}
-          className="text-slate-700 hover:underline"
+          className="text-[#4B5563] hover:underline"
           data-testid={`location-loads-link-${row.id}`}
         />
       ) : (
-        <span className="text-slate-700">0</span>
+        <span className="text-[#4B5563]">0</span>
       ),
   },
   {
@@ -179,14 +179,14 @@ const COLUMNS: Array<ParityColumn<LocationRow>> = [
     label: "Last Used",
     sortable: true,
     sortValue: (row) => row.last_used_at ?? "",
-    render: (row) => <span className="text-slate-700">{formatDate(row.last_used_at)}</span>,
+    render: (row) => <span className="text-[#4B5563]">{formatDate(row.last_used_at)}</span>,
   },
   {
     key: "geocoding_source",
     label: "Source",
     sortable: true,
     render: (row) => (
-      <span className="text-slate-700">{dash(row.geocoding_source ?? "manual")}</span>
+      <span className="text-[#4B5563]">{dash(row.geocoding_source ?? "manual")}</span>
     ),
   },
 ];
@@ -256,7 +256,7 @@ export function LocationsListPage() {
       />
 
       <div
-        className="grid gap-2 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[1fr_120px_120px_120px_140px]"
+        className="grid gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3 md:grid-cols-[1fr_120px_120px_120px_140px]"
         data-locations-list-filter-toolbar="inline"
       >
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -356,7 +356,7 @@ export function LocationsListPage() {
         />
       )}
 
-      <div className="text-xs text-slate-500">Total rows: {count}</div>
+      <div className="text-xs text-[#6B7280]">Total rows: {count}</div>
 
       <Modal
         variant="drawer"
@@ -412,7 +412,7 @@ function DetailField({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
       <span className="font-semibold text-gray-600">{label}</span>
-      <span className="text-slate-800">{value}</span>
+      <span className="text-[#1F2A44]">{value}</span>
     </div>
   );
 }

@@ -109,7 +109,7 @@ export function NamesMasterHub() {
           if (!kind || !canonicalRoute || isUnresolvedEntityTombstone(row.display_name, row.entity_id, noun)) {
             return (
               <span
-                className="font-medium text-slate-600"
+                className="font-medium text-[#4B5563]"
                 data-testid={canonicalRoute ? "names-master-record-tombstone" : "names-master-noncanonical-record"}
               >
                 {label}
@@ -151,11 +151,11 @@ export function NamesMasterHub() {
         alwaysVisible: true,
         render: (row) => (
           isUnresolvedEntityTombstone(row.display_name, row.entity_id, "Record") ? (
-            <span className="text-xs text-slate-500" data-testid="names-master-open-tombstone">Unavailable</span>
+            <span className="text-xs text-[#6B7280]" data-testid="names-master-open-tombstone">Unavailable</span>
           ) : (
             <button
               type="button"
-              className="rounded-sm border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50"
+              className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs font-semibold hover:bg-[#F7F8FA]"
               onClick={() => navigate(row.link_to_module_page)}
             >
               Open
@@ -182,11 +182,11 @@ export function NamesMasterHub() {
       />
 
       {/* LST-F3528: server-bound names search — keep; ParityTable toolbar Search suppressed */}
-      <form onSubmit={submitSearch} className="flex flex-wrap items-end gap-2 rounded-sm border border-slate-200 bg-white p-3">
-        <label className="flex min-w-[240px] flex-1 flex-col gap-1 text-xs font-medium text-slate-600">
+      <form onSubmit={submitSearch} className="flex flex-wrap items-end gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3">
+        <label className="flex min-w-[240px] flex-1 flex-col gap-1 text-xs font-medium text-[#4B5563]">
           Search
           <input
-            className="rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
+            className="rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs"
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Name, email, phone, CDL…"
@@ -203,7 +203,7 @@ export function NamesMasterHub() {
             key={chip.key}
             type="button"
             className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              type === chip.key ? "bg-orange-100 text-orange-800" : "bg-slate-100 text-slate-700"
+              type === chip.key ? "bg-orange-100 text-orange-800" : "bg-[#F7F8FA] text-[#4B5563]"
             }`}
             onClick={() => {
               setType(chip.key);
@@ -227,11 +227,11 @@ export function NamesMasterHub() {
 
       {counts ? (
         <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Customers</div><div className="text-page-title font-semibold">{counts.customers}</div></div>
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Vendors</div><div className="text-page-title font-semibold">{counts.vendors}</div></div>
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Drivers</div><div className="text-page-title font-semibold">{counts.drivers}</div></div>
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Contacts</div><div className="text-page-title font-semibold">{counts.contacts}</div></div>
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Total</div><div className="text-page-title font-semibold">{counts.total}</div></div>
+          <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs"><div className="text-[#6B7280]">Customers</div><div className="text-page-title font-semibold">{counts.customers}</div></div>
+          <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs"><div className="text-[#6B7280]">Vendors</div><div className="text-page-title font-semibold">{counts.vendors}</div></div>
+          <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs"><div className="text-[#6B7280]">Drivers</div><div className="text-page-title font-semibold">{counts.drivers}</div></div>
+          <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs"><div className="text-[#6B7280]">Contacts</div><div className="text-page-title font-semibold">{counts.contacts}</div></div>
+          <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs"><div className="text-[#6B7280]">Total</div><div className="text-page-title font-semibold">{counts.total}</div></div>
         </div>
       ) : null}
 
@@ -265,7 +265,7 @@ export function NamesMasterHub() {
         />
       )}
 
-      <div className="flex items-center justify-between text-xs text-slate-600">
+      <div className="flex items-center justify-between text-xs text-[#4B5563]">
         <span>
           Page {page + 1} of {pageCount} · {total} result{total === 1 ? "" : "s"}
         </span>
