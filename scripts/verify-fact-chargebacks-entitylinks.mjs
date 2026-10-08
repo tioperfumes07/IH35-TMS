@@ -60,9 +60,14 @@ export function assertChargebackSurface(rel, src) {
  */
 export function assertResolverAndRoute(entityLinkSrc, manifestSrc) {
   const failures = [];
-  if (!/case\s+["']factoring_advance["']\s*:\s*return\s+`\/accounting\/factoring\/\$\{id\}`/.test(entityLinkSrc)) {
+  // ROUND 313/319: canonical detail route is /factoring/advances/:id; the older
+  // /accounting/factoring/:id stays registered as a redirect alias (manifest keeps both).
+  if (
+    !/case\s+["']factoring_advance["'][\s\S]{0,220}?return\s+`\/factoring\/advances\/\$\{id\}`/.test(entityLinkSrc) &&
+    !/case\s+["']factoring_advance["']\s*:\s*return\s+`\/accounting\/factoring\/\$\{id\}`/.test(entityLinkSrc)
+  ) {
     failures.push(
-      `${ENTITY_LINK}: resolveEntityRoute(factoring_advance) must return /accounting/factoring/:id`,
+      `${ENTITY_LINK}: resolveEntityRoute(factoring_advance) must return /factoring/advances/:id (or the registered /accounting/factoring/:id alias)`,
     );
   }
   if (!/path\s*=\s*["']\/accounting\/factoring\/:id["']/.test(manifestSrc)) {
