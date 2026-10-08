@@ -44,20 +44,20 @@ export function DriverSamsaraDuplicateBanner({
       data-dp-samsara-duplicate={duplicate_warning ? "1" : "0"}
     >
       <div className="mb-1 flex items-center justify-between">
-        <h2 className="text-xs font-semibold text-slate-900">Samsara link</h2>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Samsara link</h2>
         {/* Owner law 2026-10-05: many Samsara users map into ONE driver profile (Samsara names never change). */}
         <Link
           to="/samsara/driver-mapping"
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
           data-testid="dp-samsara-open-mapping"
         >
           Map Samsara users
         </Link>
       </div>
       {samsara_accounts.length === 0 ? (
-        <p className="text-xs text-slate-500">No Samsara account mapped to this driver.</p>
+        <p className="text-xs text-[#6B7280]">No Samsara account mapped to this driver.</p>
       ) : (
-        <ul className="mb-2 space-y-1 text-xs text-slate-700">
+        <ul className="mb-2 space-y-1 text-xs text-[#1F2A44]">
           {samsara_accounts.map((a) => {
             const accountLabel = a.samsara_username?.trim()
               ? a.samsara_username
@@ -74,7 +74,7 @@ export function DriverSamsaraDuplicateBanner({
       )}
       {duplicate_warning ? (
         <div
-          className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1.5 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]"
           data-testid="dp-samsara-duplicate-warning"
           role="status"
         >

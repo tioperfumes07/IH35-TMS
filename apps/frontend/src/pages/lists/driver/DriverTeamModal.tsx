@@ -263,14 +263,14 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
         </label>
 
         {mode === "edit" && team ? (
-          <div className="rounded-sm border border-gray-200 bg-slate-50 p-2">
-            <div className="mb-1 text-xs font-semibold text-slate-700">Membership</div>
-            <p className="mb-2 text-xs text-slate-500">
+          <div className="rounded-sm border border-gray-200 bg-[#F7F8FA] p-2">
+            <div className="mb-1 text-xs font-semibold text-[#1F2A44]">Membership</div>
+            <p className="mb-2 text-xs text-[#6B7280]">
               Replacing a driver closes this team (effective today) and opens a new one with the same name — the old
               record is kept, never deleted.
             </p>
             {(["primary", "secondary"] as MdataDriverTeamSlot[]).map((slot) => (
-              <div key={slot} className="mb-1 flex flex-wrap items-center gap-2 text-xs text-slate-700">
+              <div key={slot} className="mb-1 flex flex-wrap items-center gap-2 text-xs text-[#1F2A44]">
                 <span className="w-20 shrink-0 capitalize">{slot}</span>
                 <span className="min-w-0 flex-1 truncate font-medium">{driverTeamMemberName(team, slot)}</span>
                 {readOnlyMembership ? null : (
@@ -291,7 +291,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
             ))}
             {replaceSlot ? (
               <div className="mt-2 space-y-2 border-t border-gray-200 pt-2">
-                <div className="text-xs font-semibold text-slate-600">Replacement for {replaceSlot} driver</div>
+                <div className="text-xs font-semibold text-[#4B5563]">Replacement for {replaceSlot} driver</div>
                 <DriverPickerWithCreate
                   operatingCompanyId={operatingCompanyId}
                   value={replacementDriverId}
