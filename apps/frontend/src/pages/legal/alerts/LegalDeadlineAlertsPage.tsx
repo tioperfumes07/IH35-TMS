@@ -17,9 +17,9 @@ import {
 } from "../../../components/table/UniversalListToolbar";
 
 const SEV: Record<string, string> = {
-  critical: "bg-slate-800 text-white",
-  warning: "bg-slate-300 text-slate-900",
-  info: "bg-slate-100 text-slate-700",
+  critical: "bg-[#0F1219] text-white",
+  warning: "bg-[#E5E7EB] text-[#0F1219]",
+  info: "bg-[#F7F8FA] text-[#1F2A44]",
 };
 
 function daysLabel(days: number): string {

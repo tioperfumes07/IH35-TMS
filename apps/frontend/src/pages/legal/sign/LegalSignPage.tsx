@@ -238,14 +238,14 @@ export function LegalSignPage() {
       </div>
 
       {!verificationPassed && (
-        <div className="mt-4 rounded-sm border border-slate-200 bg-slate-50 p-4">
-          <h2 className="text-page-title font-semibold text-slate-800">Identity Verification</h2>
-          <p className="mt-1 text-xs text-slate-700">
+        <div className="mt-4 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4">
+          <h2 className="text-page-title font-semibold text-[#0F1219]">Identity Verification</h2>
+          <p className="mt-1 text-xs text-[#1F2A44]">
             A verification code is required before signing.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
-              className="rounded-sm bg-[#4B5563] px-3 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="rounded-sm bg-[#4B5563] px-3 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-[#E5E7EB]"
               type="button"
               disabled={isStartingVerify}
               onClick={startVerification}
@@ -322,7 +322,7 @@ export function LegalSignPage() {
 
         <button
           type="button"
-          className="mt-4 rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="mt-4 rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-[#E5E7EB]"
           disabled={!verificationPassed || isSubmitting}
           onClick={submitSignature}
         >
