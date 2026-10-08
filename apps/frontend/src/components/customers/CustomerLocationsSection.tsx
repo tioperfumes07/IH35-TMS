@@ -68,8 +68,8 @@ export function CustomerLocationsSection({
       data-testid="customer-locations-section"
       data-cust-locations="1"
     >
-      <h2 className="mb-1 text-xs font-semibold text-slate-900">Locations</h2>
-      <p className="mb-2 text-xs text-slate-600">
+      <h2 className="mb-1 text-xs font-semibold text-[#0F1219]">Locations</h2>
+      <p className="mb-2 text-xs text-[#4B5563]">
         Stop places from this customer&apos;s loads, plus linked catalog locations. Locality precision is red — not a
         stop.
       </p>
@@ -81,16 +81,16 @@ export function CustomerLocationsSection({
           onRetry={() => void q.refetch()}
         />
       ) : null}
-      {q.isLoading ? <p className="text-xs text-slate-500">Loading…</p> : null}
+      {q.isLoading ? <p className="text-xs text-[#6B7280]">Loading…</p> : null}
 
       {!q.isLoading && !q.isError && linked.length > 0 ? (
         <div className="mb-3" data-testid="customer-linked-locations">
-          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-600">Linked catalog</h3>
+          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Linked catalog</h3>
           <ul className="divide-y divide-gray-100">
             {linked.map((row) => (
-              <li key={row.location_id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-xs text-slate-700">
+              <li key={row.location_id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-xs text-[#1F2A44]">
                 <span>
-                  <span className="font-medium text-slate-800">{row.name || "Location"}</span>
+                  <span className="font-medium text-[#0F1219]">{row.name || "Location"}</span>
                   {" · "}
                   {placeLabel({ ...row, name: null })}
                 </span>
@@ -103,19 +103,19 @@ export function CustomerLocationsSection({
 
       {!q.isLoading && !q.isError ? (
         <div data-testid="customer-stop-locations">
-          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-600">From loads</h3>
+          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">From loads</h3>
           {stops.length === 0 ? (
-            <p className="text-xs text-slate-500">No stop locations on loads for this customer yet.</p>
+            <p className="text-xs text-[#6B7280]">No stop locations on loads for this customer yet.</p>
           ) : (
             <ul className="divide-y divide-gray-100">
               {stops.map((row, i) => (
                 <li
                   key={`${row.city}-${row.state}-${row.address}-${row.geocode_precision}-${i}`}
-                  className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-xs text-slate-700"
+                  className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-xs text-[#1F2A44]"
                 >
                   <span>
                     {placeLabel(row)}
-                    <span className="text-slate-500">
+                    <span className="text-[#6B7280]">
                       {" "}
                       · {row.load_count} load{row.load_count === 1 ? "" : "s"} · {row.stop_count} stop
                       {row.stop_count === 1 ? "" : "s"}

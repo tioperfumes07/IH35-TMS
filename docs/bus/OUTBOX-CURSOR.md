@@ -1,3 +1,13 @@
+## 2026-10-08T11:45Z · BANK leftover slate — customer locations / company violation drawer / driver login
+
+FINDING: BANK-F91199 — CustomerLocationsSection / CompanyViolationDetailDrawer / DriverLoginPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25853 squash `18166a02fc` (BANK-F91198 bgcheck/drvsafe/labor)
+GUARD: scripts/verify-custloc-coviol-login-slate-leftover-chrome.mjs + verify-steps/1814 piggyback
+LIVE PROOF: verify-custloc-coviol-login-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 1814 piggyback + OUTBOX
+
 ## 2026-10-08T11:35Z · BANK leftover slate — background checks / driver safety attributed / labor tracker
 
 FINDING: BANK-F91198 — BackgroundChecksSection / DriverProfileSafetyAttributedSection / LaborTracker Tailwind slate-* → house tokens

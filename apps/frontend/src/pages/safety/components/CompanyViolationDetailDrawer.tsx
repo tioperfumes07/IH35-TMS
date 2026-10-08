@@ -178,7 +178,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
         confirmDiscardOnClose
         isDirty={outcome !== "warning" || Boolean(resolutionNotes.trim() || fineOverrideCents.trim()) || correctiveActionDirty}
         onRegisterAttemptClose={(next) => setAttemptClose(() => next)}
-        footer={<button type="button" className="rounded-sm border border-slate-300 px-3 py-1 text-xs font-semibold" disabled={actionPending} onClick={attemptClose}>Close</button>}
+        footer={<button type="button" className="rounded-sm border border-[#E5E7EB] px-3 py-1 text-xs font-semibold" disabled={actionPending} onClick={attemptClose}>Close</button>}
       >
         <div ref={panelRef} data-testid="company-violation-detail-drawer" className="space-y-2 text-xs">
           <div><strong>Status:</strong> {String(violation.status ?? "open")}</div>
@@ -220,7 +220,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
             disabled={actionPending}
             onClick={() => patchMutation.mutate({
               violationId: String(violation.id ?? ""),
@@ -233,7 +233,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           </button>
           <button
             type="button"
-            className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
             disabled={actionPending}
             onClick={() => escalateMutation.mutate({
               violationId: String(violation.id ?? ""),
@@ -253,13 +253,13 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           </p>
         ) : null}
 
-        <div className="mt-4 rounded-sm border border-slate-200 bg-slate-50 p-3">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">Resolve Violation</div>
+        <div className="mt-4 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Resolve Violation</div>
           <div className="mt-2 grid gap-2 md:grid-cols-2">
-            <label className="text-xs font-medium text-slate-700">
+            <label className="text-xs font-medium text-[#1F2A44]">
               Outcome
               <SelectCombobox
-                className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
+                className="mt-1 h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
                 value={outcome}
                 onChange={(event) => setOutcome(event.target.value as typeof outcome)}
               >
@@ -270,7 +270,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
                 <option value="dismissed">Dismissed</option>
               </SelectCombobox>
             </label>
-            <label className="text-xs font-medium text-slate-700">
+            <label className="text-xs font-medium text-[#1F2A44]">
               Fine Override (USD)
               {/* M-1: was raw "(cents)"; cents-mode MoneyInput; Number(fineOverrideCents) unchanged. */}
               <MoneyInput
@@ -282,10 +282,10 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
                 className="mt-1 w-full"
               />
             </label>
-            <label className="text-xs font-medium text-slate-700 md:col-span-2">
+            <label className="text-xs font-medium text-[#1F2A44] md:col-span-2">
               Resolution Notes (minimum 20 characters)
               <textarea
-                className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-2 text-xs"
+                className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-2 text-xs"
                 rows={3}
                 value={resolutionNotes}
                 onChange={(event) => setResolutionNotes(event.target.value)}
