@@ -3,5 +3,6 @@ export default {
   name: "verify-load-stops-save-wired",
   run(ctx) {
     ctx.run("node", ["scripts/verify-load-stops-save-wired.mjs"]);
+    ctx.run("node", ["scripts/verify-maint-alerts-engines-arriving-slate-leftover-chrome.mjs"]);
   },
 };

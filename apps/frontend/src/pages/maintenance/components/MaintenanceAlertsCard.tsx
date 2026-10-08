@@ -156,7 +156,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
               <div className="mt-2 flex items-center gap-2">
                 <button
                   type="button"
-                  className="rounded-sm border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs font-semibold text-[#1F2A44] hover:bg-[#F7F8FA]"
                   disabled={ackMutation.isPending}
                   onClick={() => void ackMutation.mutateAsync({
                     alertId: alert.id,
@@ -168,7 +168,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
                 </button>
                 <button
                   type="button"
-                  className="rounded-sm bg-slate-600 px-2 py-1 text-xs font-semibold text-white hover:bg-slate-700"
+                  className="rounded-sm bg-[#4B5563] px-2 py-1 text-xs font-semibold text-white hover:bg-[#1F2A44]"
                   disabled={scheduleMutation.isPending}
                   onClick={() => {
                     setSchedulingAlertId(alert.id);
@@ -179,7 +179,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
                 </button>
               </div>
               {schedulingAlertId === alert.id ? (
-                <div className="mt-2 bg-slate-50 p-2" data-testid={`pm-alert-wo-picker-${alert.id}`}>
+                <div className="mt-2 bg-[#F7F8FA] p-2" data-testid={`pm-alert-wo-picker-${alert.id}`}>
                   <label className="text-xs font-semibold text-gray-700">Work order</label>
                   <EntityPicker
                     kind="work_order"
@@ -203,7 +203,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
                     </button>
                     <button
                       type="button"
-                      className="rounded-sm bg-slate-700 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                      className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
                       disabled={!selectedWorkOrderId || scheduleMutation.isPending}
                       onClick={() => {
                         if (!selectedWorkOrderId) return;

@@ -61,11 +61,11 @@ export function MaintEnginesStatusWidget({ operatingCompanyId }: Props) {
     >
       <div className="mb-1 flex items-center justify-between gap-1">
         <h3 className="text-xs font-bold uppercase tracking-wide text-gray-600">Engines</h3>
-        <Link to="/system/engine-status" className="text-xs text-slate-700 underline" data-testid="maint-engines-full-board-link">
+        <Link to="/system/engine-status" className="text-xs text-[#1F2A44] underline" data-testid="maint-engines-full-board-link">
           Full board
         </Link>
       </div>
-      <p className="mb-1 text-xs text-slate-600" data-testid="maint-engines-red-count">
+      <p className="mb-1 text-xs text-[#4B5563]" data-testid="maint-engines-red-count">
         {q.isLoading ? "…" : `${redCount} red · ${rows.length} maintenance`}
       </p>
       <ul className="max-h-48 space-y-1 overflow-y-auto text-xs">
@@ -79,18 +79,18 @@ export function MaintEnginesStatusWidget({ operatingCompanyId }: Props) {
           >
             <Link
               to={`/system/engine-status#${row.id}`}
-              className="min-w-0 truncate text-slate-800 underline-offset-2 hover:underline"
+              className="min-w-0 truncate text-[#0F1219] underline-offset-2 hover:underline"
               data-testid={`maint-engine-link-${row.id}`}
             >
               {row.id} {row.name}
             </Link>
-            <span className={row.health === "red" ? "shrink-0 font-semibold text-slate-900" : "shrink-0 text-slate-600"}>
+            <span className={row.health === "red" ? "shrink-0 font-semibold text-[#0F1219]" : "shrink-0 text-[#4B5563]"}>
               {healthLabel(row)}
             </span>
           </li>
         ))}
         {!q.isLoading && rows.length === 0 ? (
-          <li className="text-slate-600">No maintenance engines in catalog.</li>
+          <li className="text-[#4B5563]">No maintenance engines in catalog.</li>
         ) : null}
       </ul>
     </section>

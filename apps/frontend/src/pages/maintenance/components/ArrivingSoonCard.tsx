@@ -9,7 +9,7 @@ type Props = {
 
 function severityClass(card: ArrivingSoonCardType) {
   if (card.severe_count > 0) return "border-l-4 border-l-red-500";
-  if (card.already_arrived) return "border-l-4 border-l-slate-500";
+  if (card.already_arrived) return "border-l-4 border-l-[#6B7280]";
   return "border-l-4 border-l-gray-300";
 }
 
@@ -34,7 +34,7 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
         {card.final_dest_is_yard
           ? `ETA: ${card.predicted_yard_arrival_at ? new Date(card.predicted_yard_arrival_at).toLocaleString() : "unscheduled"}`
           : "DEADHEAD-BACK PENDING · ETA unscheduled — confirm with dispatch"}
-        {card.already_arrived ? <span className="ml-2 rounded-sm bg-slate-100 px-1 py-0.5 text-slate-700">AT YARD</span> : null}
+        {card.already_arrived ? <span className="ml-2 rounded-sm bg-[#F7F8FA] px-1 py-0.5 text-[#1F2A44]">AT YARD</span> : null}
       </div>
 
       <div className="mt-2">
@@ -47,7 +47,7 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
           ))}
         </ul>
         {card.total_open_issues > card.issues.slice(0, 3).length ? (
-          <p className="mt-1 text-xs text-slate-500" data-testid="arriving-soon-issues-range">
+          <p className="mt-1 text-xs text-[#6B7280]" data-testid="arriving-soon-issues-range">
             Showing {card.issues.slice(0, 3).length} of {card.total_open_issues} open issues.
           </p>
         ) : null}
@@ -55,7 +55,7 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
 
       <div className="mt-3 flex flex-wrap gap-2 text-xs">
         {canConvert ? (
-          <button type="button" className="rounded-sm border border-slate-300 px-2 py-1 text-slate-700" onClick={() => onConvert(card)}>
+          <button type="button" className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-[#1F2A44]" onClick={() => onConvert(card)}>
             Convert to WO
           </button>
         ) : (
