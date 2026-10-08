@@ -57,6 +57,10 @@ export type ParityColumn<T> = {
    *  (a long description/reason/notes column) — it opts back into wrap-break-word. Default
    *  false/omitted = truncate, matching every existing column's actual data shape. */
   allowWrap?: boolean;
+  /** BANK-FEED-ACTION-MENU (owner 2026-10-08): action-column caret menus must not be clipped by
+   *  the default `overflow-hidden` body cell. Set true only for cells that render a dropdown /
+   *  popover that escapes the cell box. Default false keeps the truncate contract. */
+  overflowVisible?: boolean;
   /** Optional native tooltip on the header cell (ROUND 16.1) — lets a column explain itself
    *  (e.g. "Legs = the loads in this tour, in order …"). Additive: omit for no tooltip. */
   headerTitle?: string;
@@ -1409,7 +1413,7 @@ export function ParityTable<T>({
                 ? String((row as Record<string, unknown>)[String(column.key)] ?? "")
                 : undefined
             }
-            className={`overflow-hidden px-2 align-top text-gray-800 ${
+            className={`${column.overflowVisible ? "overflow-visible" : "overflow-hidden"} px-2 align-top text-gray-800 ${
               column.allowWrap ? "wrap-break-word" : "whitespace-nowrap text-ellipsis"
             } ${parityMergedCellClass(column)}`}
             style={{

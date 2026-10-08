@@ -114,12 +114,22 @@ const CATEGORIZE_FIELD_EXISTENCE_SQL: Partial<Record<keyof z.infer<typeof catego
   suggested_match_bill_id: `SELECT 1 FROM accounting.bills WHERE id = $1::uuid AND operating_company_id = $2::uuid AND revoked_at IS NULL`,
 };
 
-const bulkCategorizeBodySchema = z.object({
-  operating_company_id: z.string().uuid(),
-  transaction_ids: z.array(z.string().uuid()).min(1).max(500),
-  category_kind: z.string().trim().min(1).max(120),
-  gl_account_id: z.string().uuid().optional(),
-});
+// BANK-FEED-BULK-QBO (owner 2026-10-08): QBO For-review multi-select categorize applies ONE vendor
+// (payee) + ONE category (COA) OR ONE product/service (catalogs.items) to every selected row —
+// same columns the single-row Post already writes. Additive; no new GL math.
+const bulkCategorizeBodySchema = z
+  .object({
+    operating_company_id: z.string().uuid(),
+    transaction_ids: z.array(z.string().uuid()).min(1).max(500),
+    category_kind: z.string().trim().min(1).max(120),
+    gl_account_id: z.string().uuid().optional(),
+    vendor_id: z.string().uuid().optional(),
+    item_id: z.string().uuid().optional(),
+  })
+  .refine((d) => Boolean(d.gl_account_id || d.item_id), {
+    message: "gl_account_id_or_item_id_required",
+    path: ["gl_account_id"],
+  });
 
 // BANK-UNDO-01 — same shape as bulk-categorize, single-row Undo is just a one-element array.
 const undoCategorizationBodySchema = z.object({
@@ -823,6 +833,27 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       const errors: Array<{ transaction_id: string; error: string }> = [];
       const bankFeedGl: Array<{ bank_transaction_id: string; posted: boolean; reason?: string; message?: string }> = [];
 
+      // Shared payee / category / item — validate once for the whole batch (same existence map as single-row).
+      for (const [field, value] of [
+        ["vendor_id", body.data.vendor_id],
+        ["item_id", body.data.item_id],
+        ["gl_account_id", body.data.gl_account_id],
+      ] as const) {
+        if (!value) continue;
+        const sql = CATEGORIZE_FIELD_EXISTENCE_SQL[field];
+        if (!sql) continue;
+        const existsRes = await client.query(sql, [value, body.data.operating_company_id]);
+        if (!existsRes.rows[0]) {
+          return {
+            categorized_count: 0,
+            categorizedIds: [] as string[],
+            errors: [{ transaction_id: body.data.transaction_ids[0]!, error: `${field}_not_found` }],
+            bankFeedGl: [] as Array<{ bank_transaction_id: string; posted: boolean; reason?: string; message?: string }>,
+            linkError: `${field}_not_found` as const,
+          };
+        }
+      }
+
       for (const id of body.data.transaction_ids) {
         // OWNER LAW 2026-10-02 competing-engine audit: each row's categorization and its journal entry commit together.
         // A SAVEPOINT per row keeps one failed post from aborting the whole batch — that row rolls back, the rest commit.
@@ -833,6 +864,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           } catch (err) {
             if (err instanceof ReconciledSessionLockedError) {
               errors.push({ transaction_id: id, error: err.code });
+              await client.query("RELEASE SAVEPOINT bulk_categorize_row");
               continue;
             }
             throw err;
@@ -846,6 +878,8 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
                 category_kind = $2,
                 categorization_gl_account_id = COALESCE($3, categorization_gl_account_id),
                 coa_account_id = COALESCE($3, coa_account_id),
+                categorization_vendor_id = COALESCE($6, categorization_vendor_id),
+                categorization_item_id = COALESCE($7, categorization_item_id),
                 categorized_at = now(),
                 categorized_by_user_id = $5::uuid,
                 updated_at = now(),
@@ -856,7 +890,15 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
                 AND (status = 'pending_categorization' OR status = 'uncategorized')
               RETURNING id
             `,
-            [id, body.data.category_kind, body.data.gl_account_id ?? null, body.data.operating_company_id, user.uuid]
+            [
+              id,
+              body.data.category_kind,
+              body.data.gl_account_id ?? null,
+              body.data.operating_company_id,
+              user.uuid,
+              body.data.vendor_id ?? null,
+              body.data.item_id ?? null,
+            ]
           );
           if (!res.rows[0]) {
             errors.push({ transaction_id: id, error: "not_pending_or_missing" });
@@ -907,8 +949,12 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
         }
       }
 
-      return { categorized_count: categorized, categorizedIds, errors, bankFeedGl };
+      return { categorized_count: categorized, categorizedIds, errors, bankFeedGl, linkError: null as string | null };
     });
+
+    if (result.linkError) {
+      return reply.status(404).send({ error: result.linkError });
+    }
 
     // Spine-event parity with the single-row route: one transaction.categorized per affected ID.
     // Await so events.log_event cannot drop after the handler returns (BANK-F6411).

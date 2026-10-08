@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Download, MessageSquare, Paperclip, Printer } from "lucide-react";
@@ -400,7 +401,8 @@ function buildMatchCandidateColumns(
   ];
 }
 
-type ReviewTabId = "all" | "for_review" | "categorized" | "excluded";
+/** Owner 2026-10-08: "All" tab removed — showing every transaction confuses operators. Buckets only. */
+type ReviewTabId = "for_review" | "categorized" | "excluded";
 type AmountFilter = "all" | "spent" | "received";
 type CategorizeBy = "category" | "item";
 
@@ -575,7 +577,6 @@ type ViewSettings = {
 };
 
 export const BANKING_REVIEW_TABS = [
-  { id: "all", label: "All" },
   { id: "for_review", label: "For review" },
   { id: "categorized", label: "Categorized" },
   { id: "excluded", label: "Excluded" },
@@ -806,7 +807,7 @@ export function BankingTransactionsDesignView({
   // matchCandidatesQuery runs) and scrolls this pane into view, surfacing the ranked candidates that were
   // previously only reachable by manually expanding the row.
   const matchPaneRef = useRef<HTMLDivElement | null>(null);
-  const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabId>("all");
+  const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabId>("for_review");
   const [descriptionFilter, setDescriptionFilter] = useState("");
   const [amountFilter, setAmountFilter] = useState<AmountFilter>("all");
   // B.2 — multi-select: an empty array means "All transaction types" (no filter, same meaning the
@@ -886,7 +887,12 @@ export function BankingTransactionsDesignView({
   // chosen COA account IS the category, exactly like the single-row Post.
   const [bulkCategorizeOpen, setBulkCategorizeOpen] = useState(false);
   const [bulkCategorizeAccountId, setBulkCategorizeAccountId] = useState<string>("");
+  const [bulkCategorizeVendorId, setBulkCategorizeVendorId] = useState<string>("");
+  const [bulkCategorizeItemId, setBulkCategorizeItemId] = useState<string>("");
+  const [bulkCategorizeBy, setBulkCategorizeBy] = useState<CategorizeBy>("category");
   const [bulkCategorizeBusy, setBulkCategorizeBusy] = useState(false);
+  /** Fixed-position caret menu anchor so ParityTable overflow cannot clip QBO action options. */
+  const [actionMenuAnchor, setActionMenuAnchor] = useState<{ top: number; right: number } | null>(null);
 
   const [viewSettings, setViewSettings] = useState<ViewSettings>({
     // B2 BANK-REGISTER-COLUMNS: "Check No. and Vendor on by default" (owner CONSOLIDATED
@@ -1176,13 +1182,11 @@ export function BankingTransactionsDesignView({
   );
   const reviewTabBuckets = useMemo(() => {
     const out: Record<ReviewTabId, PlaidBankTransaction[]> = {
-      all: [],
       for_review: [],
       categorized: [],
       excluded: [],
     };
     for (const tx of scopedRows.filter(passesFilters)) {
-      out.all.push(tx);
       if (looksExcludedTx(tx)) {
         out.excluded.push(tx);
       } else if (looksCategorizedTx(tx)) {
@@ -1756,14 +1760,17 @@ export function BankingTransactionsDesignView({
     await undoCategorization(rows.map((tx) => tx.id));
   }
 
-  // Bulk categorize (H3): real multi-select categorize-to-account via POST /banking/transactions/
-  // categorize-bulk. Opens a picker instead of a fake toast; the chosen COA account IS the category.
+  // BANK-FEED-BULK-QBO (owner 2026-10-08): multi-select categorize like QuickBooks — one vendor
+  // (payee) + one Category (COA) OR one Product/Service (item) applied to every selected for-review row.
   function openBulkCategorize() {
     if (selectedTableRows().length === 0) {
       pushToast("Select transactions to categorize.", "error");
       return;
     }
     setBulkCategorizeAccountId("");
+    setBulkCategorizeVendorId("");
+    setBulkCategorizeItemId("");
+    setBulkCategorizeBy("category");
     setBulkCategorizeOpen(true);
   }
 
@@ -1773,20 +1780,38 @@ export function BankingTransactionsDesignView({
       pushToast("Select transactions to categorize.", "error");
       return;
     }
-    const account = (coaQuery.data?.accounts ?? []).find((a) => a.id === bulkCategorizeAccountId);
-    if (!account) {
-      pushToast("Choose an account to categorize the selected transactions.", "error");
+    if (!bulkCategorizeVendorId) {
+      pushToast("Choose one vendor (payee) for the selected transactions.", "error");
       return;
     }
-    const categoryKind =
-      (account.account_name ? String(account.account_name) : "") ||
-      "Uncategorized";
+    let categoryKind = "";
+    let glAccountId: string | undefined;
+    let itemId: string | undefined;
+    if (bulkCategorizeBy === "category") {
+      const account = (coaQuery.data?.accounts ?? []).find((a) => a.id === bulkCategorizeAccountId);
+      if (!account) {
+        pushToast("Choose one category (Chart of Accounts) for the selected transactions.", "error");
+        return;
+      }
+      categoryKind = (account.account_name ? String(account.account_name) : "") || "Uncategorized";
+      glAccountId = account.id;
+    } else {
+      const item = (itemsQuery.data ?? []).find((x) => x.id === bulkCategorizeItemId);
+      if (!item) {
+        pushToast("Choose one product/service for the selected transactions.", "error");
+        return;
+      }
+      categoryKind = String(item.display_name ?? "Item");
+      itemId = item.id;
+    }
     setBulkCategorizeBusy(true);
     try {
       const result = await categorizeTransactionsBulk(companyId, {
         transaction_ids: rows.map((tx) => tx.id),
         category_kind: categoryKind,
-        gl_account_id: account.id,
+        gl_account_id: glAccountId,
+        vendor_id: bulkCategorizeVendorId,
+        item_id: itemId,
       });
       const failed = result.errors?.length ?? 0;
       pushToast(
@@ -2348,21 +2373,20 @@ export function BankingTransactionsDesignView({
         label: "Action",
         sortable: true,
         className: REGISTER_COLUMN_HEADER_CLASS,
+        // BANK-FEED-ACTION-MENU — caret menu portals to body; overflowVisible so the cell never clips it.
+        overflowVisible: true,
         render: (tx) => {
           const menuOpen = actionMenuTxId === tx.id;
+          const undoEligible = isUndoEligible(tx);
+          const closeActionMenu = () => {
+            setActionMenuTxId(null);
+            setActionMenuAnchor(null);
+          };
           return (
             <div
-              // Table rows paint in document order. Without elevating the action cell's own
-              // stacking context, lower menu items can sit visually above a later row while that
-              // row still owns the hit target. Keep the open menu's parent above sibling rows so
-              // destructive/config actions receive the click the operator can see.
               className={`relative flex items-center justify-end gap-1 ${menuOpen ? "z-50" : ""}`}
               onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
             >
-              {/* B.1 — suggested match badge (exact cents, +-5d, expense/bill). Click opens the
-              same Match drawer "Accept match (reconcile)" already uses below — Accept never
-              happens here directly, only navigation to the existing accept flow.
-              BANK-F91061 — ORDERS §18: show candidate type/date/amount/payee inline beside the badge. */}
               {txnSuggestions[tx.id] && !hasPersistedMatch(tx) ? (
                 <div
                   className="flex max-w-[22rem] flex-col items-end gap-0.5"
@@ -2396,9 +2420,8 @@ export function BankingTransactionsDesignView({
                   </button>
                 </div>
               ) : null}
-              {/* BANK-UNDO-01 — QBO parity: row-level Undo on Categorized AND Excluded, releasing
-                  every match/categorization column (and reversing the GL if any) in one call. */}
-              {isUndoEligible(tx) ? (
+              {/* Owner 2026-10-08: Categorized/Excluded primary = Undo. For review primary = Match/Add. */}
+              {undoEligible ? (
                 <ActionButton
                   className="h-7 px-2 text-xs"
                   onClick={() => void undoCategorization([tx.id])}
@@ -2406,114 +2429,144 @@ export function BankingTransactionsDesignView({
                 >
                   Undo
                 </ActionButton>
-              ) : null}
-              {/* BANK-ACTION-QBO-01 (owner 2026-10-03): "in banking there are two actions, action
-                  type and action". QuickBooks has ONE Action column: the chosen action IS the
-                  primary button's label — Add · Match · Record transfer · Record as credit card
-                  payment — with a caret for the rest. We carried a separate "Action type" column
-                  whose only job was to print that same word in a pill one column to the left, while
-                  the button said the generic "Post". Two columns, one fact, and the word the
-                  operator acts on was not on the thing they click. The column is removed and its
-                  word moved onto the button. */}
-              <ActionButton
-                className="h-7 px-2 text-xs"
-                onClick={() => void postTransaction(tx)}
-                disabled={postingTxId === tx.id}
-                data-testid={`banking-action-primary-${tx.id}`}
-              >
-                {postingTxId === tx.id
-                  ? "Posting..."
-                  : suggestionIsAction()
-                    ? qboActionLabel(getDraft(tx).mode)
-                    : qboActionLabel(getDraft(tx).mode)}
-              </ActionButton>
+              ) : (
+                <ActionButton
+                  className="h-7 px-2 text-xs"
+                  onClick={() => void postTransaction(tx)}
+                  disabled={postingTxId === tx.id}
+                  data-testid={`banking-action-primary-${tx.id}`}
+                >
+                  {postingTxId === tx.id ? "Posting..." : qboActionLabel(getDraft(tx).mode)}
+                </ActionButton>
+              )}
               <button
                 type="button"
                 className="rounded-sm border border-gray-300 px-1.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
-                onClick={() => setActionMenuTxId((cur) => (cur === tx.id ? null : tx.id))}
+                aria-label="More actions"
+                data-testid={`banking-action-menu-${tx.id}`}
+                onClick={(e) => {
+                  const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                  if (actionMenuTxId === tx.id) {
+                    closeActionMenu();
+                    return;
+                  }
+                  setActionMenuAnchor({ top: rect.bottom + 2, right: window.innerWidth - rect.right });
+                  setActionMenuTxId(tx.id);
+                }}
               >
                 ▾
               </button>
-              {menuOpen ? (
-                <div className="absolute right-0 top-7 z-50 min-w-[220px] rounded-sm border border-gray-200 bg-white shadow-md">
-                  <button
-                    type="button"
-                    className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
-                    onClick={() => {
-                      setActionMenuTxId(null);
-                      setMatchDrawerTxId(tx.id);
-                    }}
-                  >
-                    {QBO_BANKING_ACTIONS.findOtherMatches}
-                  </button>
-                  <button
-                    type="button"
-                    className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
-                    onClick={() => {
-                      setActionMenuTxId(null);
-                      setSplitTx(tx);
-                    }}
-                  >
-                    Split
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="action-create-backdated-check"
-                    className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
-                    onClick={() => openBackdatedCheckFlow(tx)}
-                  >
-                    Create backdated check
-                  </button>
-                  <Link
-                    // GO-23 (owner FINISH LAW 2026-09-03) — "remember a merchant decision": carry this
-                    // row's merchant text over as a prefill so the rule editor doesn't need it retyped.
-                    // Trimmed to the merchant name alone (not the full description, which often carries
-                    // a one-off reference/confirmation number that would never match a future
-                    // transaction from the same merchant).
-                    to={`/banking/categorization-rules${
-                      (tx.merchant_name || tx.description || "").trim()
-                        ? `?merchant=${encodeURIComponent((tx.merchant_name || tx.description || "").trim())}`
-                        : ""
-                    }`}
-                    className="block border-b border-gray-100 px-3 py-2 text-xs hover:bg-gray-50"
-                    onClick={() => setActionMenuTxId(null)}
-                  >
-                    Create rule
-                  </Link>
-                  <button
-                    type="button"
-                    className="block w-full px-3 py-2 text-left text-xs text-red-700 hover:bg-red-50"
-                    onClick={() => {
-                      setActionMenuTxId(null);
-                      void excludeTransaction(tx);
-                    }}
-                    disabled={excludingTxId === tx.id}
-                  >
-                    {excludingTxId === tx.id ? "excluding..." : "Exclude"}
-                  </button>
-                  {tx.source === "plaid" && tx.pending ? (
-                    <button
-                      type="button"
-                      className="block w-full border-t border-gray-100 px-3 py-2 text-left text-xs text-red-700 hover:bg-red-50"
-                      onClick={() => {
-                        setActionMenuTxId(null);
-                        setSupersedePendingTx(tx);
-                      }}
+              {menuOpen && actionMenuAnchor
+                ? createPortal(
+                    <div
+                      className="fixed z-[240] min-w-[220px] rounded-sm border border-gray-200 bg-white shadow-md"
+                      style={{ top: actionMenuAnchor.top, right: actionMenuAnchor.right }}
+                      data-testid={`banking-action-menu-panel-${tx.id}`}
+                      role="menu"
                     >
-                      Supersede pending duplicate
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
+                      {undoEligible ? (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className="block w-full px-3 py-2 text-left text-xs font-semibold text-[#1F2A44] hover:bg-gray-50"
+                          data-testid={`banking-action-menu-undo-${tx.id}`}
+                          onClick={() => {
+                            closeActionMenu();
+                            void undoCategorization([tx.id]);
+                          }}
+                        >
+                          Undo
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
+                            onClick={() => {
+                              closeActionMenu();
+                              setMatchDrawerTxId(tx.id);
+                            }}
+                          >
+                            {QBO_BANKING_ACTIONS.findOtherMatches}
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
+                            onClick={() => {
+                              closeActionMenu();
+                              setSplitTx(tx);
+                            }}
+                          >
+                            Split
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            data-testid="action-create-backdated-check"
+                            className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
+                            onClick={() => {
+                              closeActionMenu();
+                              openBackdatedCheckFlow(tx);
+                            }}
+                          >
+                            Create backdated check
+                          </button>
+                          <Link
+                            to={`/banking/categorization-rules${
+                              (tx.merchant_name || tx.description || "").trim()
+                                ? `?merchant=${encodeURIComponent((tx.merchant_name || tx.description || "").trim())}`
+                                : ""
+                            }`}
+                            role="menuitem"
+                            className="block border-b border-gray-100 px-3 py-2 text-xs hover:bg-gray-50"
+                            onClick={() => closeActionMenu()}
+                          >
+                            Create rule
+                          </Link>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="block w-full px-3 py-2 text-left text-xs text-red-700 hover:bg-red-50"
+                            onClick={() => {
+                              closeActionMenu();
+                              void excludeTransaction(tx);
+                            }}
+                            disabled={excludingTxId === tx.id}
+                          >
+                            {excludingTxId === tx.id ? "excluding..." : "Exclude"}
+                          </button>
+                          {tx.source === "plaid" && tx.pending ? (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="block w-full border-t border-gray-100 px-3 py-2 text-left text-xs text-red-700 hover:bg-red-50"
+                              onClick={() => {
+                                closeActionMenu();
+                                setSupersedePendingTx(tx);
+                              }}
+                            >
+                              Supersede pending duplicate
+                            </button>
+                          ) : null}
+                        </>
+                      )}
+                    </div>,
+                    document.body,
+                  )
+                : null}
             </div>
           );
         },
       }
     );
 
+
     return cols;
   }, [
     actionMenuTxId,
+    actionMenuAnchor,
     companyId,
     excludingTxId,
     expandedTxId,
@@ -4330,50 +4383,104 @@ export function BankingTransactionsDesignView({
         onClose={() => setMatchDrawerTxId(null)}
         onAccepted={() => onDataChanged()}
       />
-      {/* Bulk categorize-to-account modal — real POST /banking/transactions/categorize-bulk (no new GL
-      math; the chosen COA account IS the category, same as the single-row Post). */}
+      {/* BANK-FEED-BULK-QBO — one vendor + one Category OR Product/Service for every selected row. */}
       {bulkCategorizeOpen ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Bulk categorize transactions"
+          data-testid="banking-bulk-categorize-modal"
         >
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-sm border border-[#E5E7EB] bg-white p-4 shadow-xl">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-xs font-semibold text-gray-900">
+              <h2 className="text-xs font-semibold text-[#0F1219]">
                 Categorize {bulkSelection.selectedIds.size} transaction(s)
               </h2>
               <button
                 type="button"
                 aria-label="Close"
-                className="rounded-sm px-2 py-1 text-gray-500 hover:bg-gray-100"
+                className="rounded-sm px-2 py-1 text-[#6B7280] hover:bg-[#F7F8FA]"
                 onClick={() => setBulkCategorizeOpen(false)}
               >
                 ✕
               </button>
             </div>
-            <label className="text-xs text-gray-600">
-              Category (Chart of Accounts)
-              <div className="mt-1">
+            <label className="block text-xs text-[#4B5563]">
+              Vendor (payee) — applies to all selected
+              <div className="mt-1" data-testid="banking-bulk-categorize-vendor">
                 <ReferenceSelect
-                  value={bulkCategorizeAccountId || null}
-                  onChange={(v) => setBulkCategorizeAccountId(v ?? "")}
-                  options={(coaQuery.data?.accounts ?? []).map((account) => ({
-                    value: account.id,
-                    label: account.account_name,
-                    type: account.account_type ? String(account.account_type) : undefined,
+                  value={bulkCategorizeVendorId || null}
+                  onChange={(v) => setBulkCategorizeVendorId(v ?? "")}
+                  options={(vendorsQuery.data?.vendors ?? []).map((v) => ({
+                    value: v.id,
+                    label: v.name,
                   }))}
-                  createKind="category"
+                  createKind="vendor"
                   operatingCompanyId={companyId}
-                  placeholder="Select category account"
-                  onOptionCreated={() => void coaQuery.refetch()}
+                  placeholder="Select vendor"
+                  loading={vendorsQuery.isFetching}
+                  onOptionCreated={() => void vendorsQuery.refetch()}
                 />
               </div>
             </label>
-            <p className="mt-2 text-xs text-gray-500">
-              Applies to for-review transactions only. GL posting stays governed by the accounting posting
-              flags — this only assigns the category account.
+            <div className="mt-3 flex gap-1" role="group" aria-label="Categorize by">
+              {(["category", "item"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={`h-7 rounded-sm border px-2 text-xs font-semibold ${
+                    bulkCategorizeBy === option
+                      ? "border-[#1F2A44] bg-[#1F2A44] text-white"
+                      : "border-[#E5E7EB] bg-white text-[#1F2A44]"
+                  }`}
+                  data-testid={`banking-bulk-categorize-by-${option}`}
+                  onClick={() => setBulkCategorizeBy(option)}
+                >
+                  {option === "category" ? "Category" : "Product/Service"}
+                </button>
+              ))}
+            </div>
+            {bulkCategorizeBy === "category" ? (
+              <label className="mt-3 block text-xs text-[#4B5563]">
+                Category (Chart of Accounts) — applies to all selected
+                <div className="mt-1" data-testid="banking-bulk-categorize-category">
+                  <ReferenceSelect
+                    value={bulkCategorizeAccountId || null}
+                    onChange={(v) => setBulkCategorizeAccountId(v ?? "")}
+                    options={(coaQuery.data?.accounts ?? []).map((account) => ({
+                      value: account.id,
+                      label: account.account_name,
+                      type: account.account_type ? String(account.account_type) : undefined,
+                    }))}
+                    createKind="category"
+                    operatingCompanyId={companyId}
+                    placeholder="Select category account"
+                    onOptionCreated={() => void coaQuery.refetch()}
+                  />
+                </div>
+              </label>
+            ) : (
+              <label className="mt-3 block text-xs text-[#4B5563]">
+                Product/Service — applies to all selected
+                <div className="mt-1" data-testid="banking-bulk-categorize-item">
+                  <ReferenceSelect
+                    value={bulkCategorizeItemId || null}
+                    onChange={(v) => setBulkCategorizeItemId(v ?? "")}
+                    options={(itemsQuery.data ?? []).map((item) => ({
+                      value: item.id,
+                      label: item.display_name,
+                    }))}
+                    createKind="service"
+                    operatingCompanyId={companyId}
+                    placeholder="Select product or service"
+                    onOptionCreated={() => void itemsQuery.refetch()}
+                  />
+                </div>
+              </label>
+            )}
+            <p className="mt-2 text-xs text-[#6B7280]">
+              Applies to for-review transactions only. Same vendor and category/item on every selected row.
             </p>
             <div className="mt-4 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setBulkCategorizeOpen(false)} disabled={bulkCategorizeBusy}>
@@ -4381,7 +4488,12 @@ export function BankingTransactionsDesignView({
               </Button>
               <Button
                 onClick={() => void confirmBulkCategorize()}
-                disabled={bulkCategorizeBusy || !bulkCategorizeAccountId}
+                disabled={
+                  bulkCategorizeBusy ||
+                  !bulkCategorizeVendorId ||
+                  (bulkCategorizeBy === "category" ? !bulkCategorizeAccountId : !bulkCategorizeItemId)
+                }
+                data-testid="banking-bulk-categorize-confirm"
               >
                 {bulkCategorizeBusy ? "Categorizing..." : "Categorize"}
               </Button>
