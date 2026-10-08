@@ -20,9 +20,9 @@ function periodBounds(preset: PeriodPreset): { from: string; to: string } {
 }
 
 function scoreClass(score: number | null) {
-  if (score == null) return "text-slate-500";
-  if (score >= 85) return "text-slate-700";
-  if (score >= 70) return "text-slate-700";
+  if (score == null) return "text-[#6B7280]";
+  if (score >= 85) return "text-[#1F2A44]";
+  if (score >= 70) return "text-[#1F2A44]";
   return "text-red-700";
 }
 
@@ -84,7 +84,7 @@ export function DriverScoringTab() {
         key: "trend",
         label: "Trend",
         render: (row) => (
-          <button type="button" className="text-slate-700 underline" onClick={() => setSelectedDriver(row)}>
+          <button type="button" className="text-[#1F2A44] underline" onClick={() => setSelectedDriver(row)}>
             View
           </button>
         ),
@@ -97,8 +97,8 @@ export function DriverScoringTab() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-3">
         <div>
-          <h3 className="text-xs font-semibold text-slate-900">Driver Safety Scoring</h3>
-          <p className="text-xs text-slate-500">
+          <h3 className="text-xs font-semibold text-[#0F1219]">Driver Safety Scoring</h3>
+          <p className="text-xs text-[#6B7280]">
             Composite score from harsh events and telematics miles (min 500 mi to rank).
           </p>
         </div>
@@ -124,13 +124,13 @@ export function DriverScoringTab() {
         exportFilename="driver-safety-scoring"
         filterBar={
           <div className="relative flex flex-wrap items-center gap-2">
-            <span className="text-slate-500">Period</span>
+            <span className="text-[#6B7280]">Period</span>
             {(["week", "month", "quarter"] as PeriodPreset[]).map((value) => (
               <button
                 key={value}
                 type="button"
                 onClick={() => setPreset(value)}
-                className={`rounded-sm px-2 py-1 capitalize ${preset === value ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+                className={`rounded-sm px-2 py-1 capitalize ${preset === value ? "bg-[#0F1219] text-white" : "bg-[#F7F8FA] text-[#1F2A44]"}`}
               >
                 {value}
               </button>
