@@ -69,7 +69,7 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
         key: "duty_status",
         label: "Duty status",
         render: (ev) => (
-          <span className="inline-flex items-center gap-1.5 font-medium text-slate-800">
+          <span className="inline-flex items-center gap-1.5 font-medium text-[#0F1219]">
             <span className="inline-block h-[8px] w-[8px] rounded-full" style={{ background: DUTY_COLOR[ev.duty_status] }} />
             {DUTY_LABEL[ev.duty_status]}
           </span>
@@ -112,9 +112,9 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
 
   return (
     <section data-testid="compliance-section-hos-history">
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white px-3 py-3">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-[#E5E7EB] bg-white px-3 py-3">
         <div className="min-w-[240px] flex-1" data-testid="hos-history-driver-picker">
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Driver</label>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-[#6B7280]">Driver</label>
           {/* Picker law: EntityPicker kind=driver — not Combobox over listDrivers page. */}
           <EntityPicker
             kind="driver"
@@ -136,7 +136,7 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
           ) : null}
         </div>
         <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">From</label>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-[#6B7280]">From</label>
           <DatePicker
             value={fromDate}
             max={toDate}
@@ -146,7 +146,7 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">To</label>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-[#6B7280]">To</label>
           <DatePicker
             value={toDate}
             min={fromDate}
@@ -171,9 +171,9 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
 
       <div className="mt-3">
         {!driverId ? (
-          <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
-            <div className="text-xs font-semibold text-slate-700">HOS History</div>
-            <div className="mt-1 text-xs text-slate-500">Pick a driver above to view their duty-status event history.</div>
+          <div className="rounded-sm border border-[#E5E7EB] bg-white px-4 py-12 text-center">
+            <div className="text-xs font-semibold text-[#1F2A44]">HOS History</div>
+            <div className="mt-1 text-xs text-[#6B7280]">Pick a driver above to view their duty-status event history.</div>
           </div>
         ) : (
           // COMP-F3538: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.

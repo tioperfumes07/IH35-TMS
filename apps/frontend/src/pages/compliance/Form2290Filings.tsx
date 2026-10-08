@@ -129,7 +129,7 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
 
   if (!companyId) {
     const empty = (
-      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">
+      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-[#4B5563]">
         Select an operating company.
       </div>
     );
@@ -170,7 +170,7 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
     <div className="space-y-4 rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-[#4B5563]">
             {/* No fabricated fallback. This previously rendered a hardcoded August-31 literal whenever
                 the endpoint had not answered — a regulatory date invented by the UI, indistinguishable
                 from a real one, and wrong for every vehicle not first used in July. Under Rule 15 an
@@ -185,8 +185,8 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
               it would bury the exceptions in noise. Without this the annual banner silently understated
               the obligation for every vehicle first used after July. */}
           {perUnit.length > 0 ? (
-            <p className="mt-1 text-xs text-slate-600">
-              <span className="font-semibold text-slate-900">
+            <p className="mt-1 text-xs text-[#4B5563]">
+              <span className="font-semibold text-[#0F1219]">
                 {perUnit.length} vehicle{perUnit.length === 1 ? "" : "s"} due on a different date
               </span>{" "}
               (first used outside July) ·{" "}
@@ -207,8 +207,8 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
               hidden behind a shorter list — an unknown obligation is a risk to raise, and silently
               omitting these units is how one goes unfiled. */}
           {missingFirstUse.length > 0 ? (
-            <p className="mt-1 text-xs text-slate-600">
-              <span className="font-semibold text-slate-900">
+            <p className="mt-1 text-xs text-[#4B5563]">
+              <span className="font-semibold text-[#0F1219]">
                 {missingFirstUse.length} vehicle{missingFirstUse.length === 1 ? "" : "s"} missing a first-use date
               </span>{" "}
               — due date cannot be computed ·{" "}
@@ -228,7 +228,7 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
         </div>
         <button
           type="button"
-          className="rounded-sm bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+          className="rounded-sm bg-[#0F1219] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
           disabled={generateMutation.isPending}
           onClick={() => generateMutation.mutate()}
         >
