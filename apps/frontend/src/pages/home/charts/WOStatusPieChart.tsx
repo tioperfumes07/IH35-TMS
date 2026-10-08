@@ -39,17 +39,17 @@ function LinkedEconomicsFooter({ linkedEconomics }: { linkedEconomics: HomeWoLin
   if (!linkedEconomics) return null;
   if (linkedEconomics.status === "unverifiable") {
     return (
-      <p className="mt-2 text-xs text-slate-400" title={linkedEconomics.unverifiable_reason}>
+      <p className="mt-2 text-xs text-[#6B7280]" title={linkedEconomics.unverifiable_reason}>
         WO → bill/expense linkage: unverifiable ({linkedEconomics.unverifiable_reason})
       </p>
     );
   }
   const { total_linked_bill_amount_cents, total_linked_expense_amount_cents, wo_with_expense_flow_count } = linkedEconomics;
   if (total_linked_bill_amount_cents === 0 && total_linked_expense_amount_cents === 0) {
-    return <p className="mt-2 text-xs text-slate-500">No linked bills or expenses yet for these work orders.</p>;
+    return <p className="mt-2 text-xs text-[#6B7280]">No linked bills or expenses yet for these work orders.</p>;
   }
   return (
-    <p className="mt-2 text-xs text-slate-600">
+    <p className="mt-2 text-xs text-[#4B5563]">
       Linked bills {formatUsdCents(total_linked_bill_amount_cents)} · linked expenses{" "}
       {formatUsdCents(total_linked_expense_amount_cents)} · {wo_with_expense_flow_count} WO
       {wo_with_expense_flow_count === 1 ? "" : "s"} with accounting activity
@@ -71,11 +71,11 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
   });
 
   if (!cid) {
-    return <div className="text-xs text-slate-500">Select a company to view work order status.</div>;
+    return <div className="text-xs text-[#6B7280]">Select a company to view work order status.</div>;
   }
 
   if (query.isLoading) {
-    return <div className="h-[260px] animate-pulse rounded-sm bg-slate-100" />;
+    return <div className="h-[260px] animate-pulse rounded-sm bg-[#E5E7EB]" />;
   }
 
   if (query.isError) {
@@ -90,8 +90,8 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
   if (total === 0) {
     return (
       <div className="home-recharts-print w-full">
-        <h3 className="mb-2 text-xs font-semibold text-slate-900">Work orders by status</h3>
-        <div className="flex h-[260px] items-center justify-center rounded-sm border border-dashed border-slate-200 text-xs text-slate-500">
+        <h3 className="mb-2 text-xs font-semibold text-[#0F1219]">Work orders by status</h3>
+        <div className="flex h-[260px] items-center justify-center rounded-sm border border-dashed border-[#E5E7EB] text-xs text-[#6B7280]">
           No open work orders.
         </div>
         <LinkedEconomicsFooter linkedEconomics={linkedEconomics} />
@@ -108,7 +108,7 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
 
   return (
     <div className="home-recharts-print w-full">
-      <h3 className="mb-2 text-xs font-semibold text-slate-900">Work orders by status</h3>
+      <h3 className="mb-2 text-xs font-semibold text-[#0F1219]">Work orders by status</h3>
       <ResponsiveContainer width="100%" height={260}>
         <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
           <Pie

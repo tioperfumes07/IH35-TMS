@@ -98,7 +98,7 @@ const DRIVER_REPORTING_COLUMNS: Array<ParityColumn<InboxReportingDriverRow>> = [
     label: "Approved",
     sortable: true,
     className: "text-right",
-    cellClass: "text-right text-slate-700",
+    cellClass: "text-right text-[#1F2A44]",
     render: (r) => r.approved,
   },
   {
@@ -165,7 +165,7 @@ const LOAD_REPORTING_COLUMNS: Array<ParityColumn<InboxReportingLoadRow>> = [
     label: "Approved",
     sortable: true,
     className: "text-right",
-    cellClass: "text-right text-slate-700",
+    cellClass: "text-right text-[#1F2A44]",
     render: (r) => r.approved,
   },
   {
@@ -225,7 +225,7 @@ export function DriverHubReportingPage() {
       ) : (
         <>
       <div className="flex justify-end rounded-sm border border-gray-200 bg-white p-3">
-        <Link to="/driver-hub" className="text-xs font-semibold text-slate-700 underline">
+        <Link to="/driver-hub" className="text-xs font-semibold text-[#1F2A44] underline">
           ← Back to Driver Inbox
         </Link>
       </div>
@@ -244,7 +244,7 @@ export function DriverHubReportingPage() {
         />
       ) : data && data.by_driver.length === 0 ? (
         <div
-          className="rounded-sm border border-slate-200 bg-white px-4 py-10 text-center text-xs text-slate-400"
+          className="rounded-sm border border-[#E5E7EB] bg-white px-4 py-10 text-center text-xs text-[#6B7280]"
           data-testid="driver-hub-reporting-honest-empty"
         >
           No requests in this period.
@@ -323,7 +323,7 @@ export function DriverHubReportingPage() {
           </div>
 
           {data.not_computed.length > 0 ? (
-            <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
+            <div className="rounded-sm border border-[#E5E7EB] bg-[#E5E7EB] p-2 text-xs text-[#1F2A44]">
               <span className="font-semibold">Not yet computed: </span>
               {data.not_computed.join(" ")}
             </div>

@@ -25,11 +25,11 @@ export function FleetUtilizationGauge({ operatingCompanyId }: Props) {
   });
 
   if (!cid) {
-    return <div className="text-xs text-slate-500">Select a company to view fleet utilization.</div>;
+    return <div className="text-xs text-[#6B7280]">Select a company to view fleet utilization.</div>;
   }
 
   if (query.isLoading) {
-    return <div className="h-[260px] animate-pulse rounded-sm bg-slate-100" />;
+    return <div className="h-[260px] animate-pulse rounded-sm bg-[#E5E7EB]" />;
   }
 
   if (query.isError) {
@@ -44,8 +44,8 @@ export function FleetUtilizationGauge({ operatingCompanyId }: Props) {
   if (Number(d.total_units) <= 0) {
     return (
       <div className="home-recharts-print w-full">
-        <h3 className="mb-2 text-xs font-semibold text-slate-900">Fleet utilization</h3>
-        <div className="flex h-[260px] items-center justify-center rounded-sm border border-dashed border-slate-200 text-xs text-slate-500">
+        <h3 className="mb-2 text-xs font-semibold text-[#0F1219]">Fleet utilization</h3>
+        <div className="flex h-[260px] items-center justify-center rounded-sm border border-dashed border-[#E5E7EB] text-xs text-[#6B7280]">
           No active units for this company.
         </div>
       </div>
@@ -62,7 +62,7 @@ export function FleetUtilizationGauge({ operatingCompanyId }: Props) {
 
   return (
     <div className="home-recharts-print relative w-full">
-      <h3 className="mb-2 text-xs font-semibold text-slate-900">Fleet utilization</h3>
+      <h3 className="mb-2 text-xs font-semibold text-[#0F1219]">Fleet utilization</h3>
       <ResponsiveContainer width="100%" height={260}>
         <PieChart>
           <Pie data={pieData} dataKey="value" cx="50%" cy="50%" innerRadius={68} outerRadius={92} startAngle={90} endAngle={-270} stroke="none">
@@ -73,8 +73,8 @@ export function FleetUtilizationGauge({ operatingCompanyId }: Props) {
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pt-7 text-center">
-        <div className="text-page-title font-bold tabular-nums text-slate-900">{pct.toFixed(1)}%</div>
-        <div className="text-xs text-slate-600">
+        <div className="text-page-title font-bold tabular-nums text-[#0F1219]">{pct.toFixed(1)}%</div>
+        <div className="text-xs text-[#4B5563]">
           {d.active_units} / {d.total_units} units
         </div>
       </div>
