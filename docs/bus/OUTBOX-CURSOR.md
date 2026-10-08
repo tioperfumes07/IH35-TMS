@@ -1,3 +1,13 @@
+## 2026-10-08T05:05Z · BANK leftover slate — CF rolling / projections / prediction
+
+FINDING: BANK-F91159 — RollingLedgerTab / ManualDailyProjectionsTab / DailyPredictionTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25812 squash `75e5ced987` (BANK-F91158 drug/daily/legal)
+GUARD: scripts/verify-cf-rolling-proj-slate-leftover-chrome.mjs + verify-steps/3664 piggyback
+LIVE PROOF: verify-cf-rolling-proj-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; rg slate- = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 cash-flow tabs + refuse guard + 3664 piggyback + OUTBOX
+
 ## 2026-10-08T04:59Z · BANK leftover slate — drug / daily-tasks / legal-template
 
 FINDING: BANK-F91158 — DrugAlcoholTab / DailyTasksPage / LegalTemplateDetailPage Tailwind slate-* → house tokens
