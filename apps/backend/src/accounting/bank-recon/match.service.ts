@@ -40,6 +40,8 @@ import {
   bankLineHasLiveDocumentPointer,
   bankLinePointerSelectSql,
 } from "../../banking/bank-line-match-pointer.js";
+import { RELAY_FUEL_WALLET_AMOUNT_SQL } from "./relay-bank-match.service.js";
+import { RELAY_USMCA_DATA_FLOOR } from "../../integrations/relay-payments/relay-usmca-date-floor.js";
 
 /**
  * ROUND 157-C / 156 MASTER SPEC — THIS FILE OWNS THE BANKING MATCH SURFACE.
@@ -747,6 +749,37 @@ async function fetchLedgerCandidates(
       );
       for (const row of expenses.rows) results.push(toCandidate("expense", row, "vendor"));
     }
+
+    // ROUND 441.21-B R5 — Relay fuel fills as Match-drawer candidates (wallet drawdown / F442).
+    // Floor 2026-08-03: never surface TRANSPORTATION-era fills into USMCA matching.
+    if (wants("relay_fuel")) {
+      const fills = await client.query<RawRow>(
+        `
+          SELECT r.id::text,
+                 ${RELAY_FUEL_WALLET_AMOUNT_SQL} AS amount_cents,
+                 COALESCE(r.relay_created_at, r.created_at)::date::text AS event_date,
+                 COALESCE(r.merchant_name, r.transaction_id)::text AS memo,
+                 NULL::text AS counterparty_id,
+                 COALESCE(r.merchant_name, 'Relay')::text AS counterparty_name,
+                 r.transaction_id::text AS reference,
+                 COALESCE(r.matched_unit_number, '')::text AS description,
+                 NULL::int AS open_balance_cents
+            FROM integrations.relay_fuel_transactions r
+           WHERE r.operating_company_id = $1::uuid
+             AND COALESCE(r.relay_created_at, r.created_at)::date
+                   BETWEEN GREATEST($2::date, $6::date) AND $3::date
+             AND r.voided_at IS NULL
+             AND ($4::text IS NULL OR lower(COALESCE(r.merchant_name, '') || ' ' || COALESCE(r.transaction_id, '') || ' ' || COALESCE(r.matched_unit_number, '')) LIKE $4)
+             AND NOT EXISTS (
+               SELECT 1 FROM banking.bank_transactions bt
+                WHERE bt.matched_relay_fuel_transaction_id = r.id AND bt.voided_at IS NULL
+             )
+           LIMIT $5
+        `,
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, RELAY_USMCA_DATA_FLOOR]
+      );
+      for (const row of fills.rows) results.push(toCandidate("relay_fuel", row, "vendor"));
+    }
   }
 
   const haystack = (r: RawLedgerCandidate) =>
@@ -872,12 +905,12 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
     return requireLedgerAmountRow(res, kind);
   }
   if (kind === "relay_fuel") {
-    // Source of truth: integrations.relay_fuel_transactions (ROUND 186). Discount already in
-    // total_amount_paid_cents — never re-derive from bank description.
+    // F442 / ROUND 441.21-B: wallet drawdown = total_amount_paid + sender_fee (fees[]).
+    // Paid alone is fuel-only and misses the $2 fee the bank line carries.
     const res = await client.query<{ amount_cents: number }>(
-      `SELECT ABS(COALESCE(total_amount_paid_cents, 0))::int AS amount_cents
-         FROM integrations.relay_fuel_transactions
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+      `SELECT ${RELAY_FUEL_WALLET_AMOUNT_SQL} AS amount_cents
+         FROM integrations.relay_fuel_transactions r
+        WHERE r.id = $1::uuid AND r.operating_company_id = $2::uuid AND r.voided_at IS NULL
         LIMIT 1`,
       [entryId, operatingCompanyId]
     );

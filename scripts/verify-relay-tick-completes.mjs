@@ -20,6 +20,8 @@
  *   R8 RELAY DATE LAW — USMCA floor 2026-08-03 hardcoded; ingest skips/clamps (lib/relay-usmca-date-floor-guard)
  *   R9 FORCE-RLS UPDATE class — app UPDATEs on INSERT/SELECT-only FORCE tables refused
  *      (lib/force-rls-update-has-policy); sync_log keeps UPDATE
+ *   R10 CHAIN-05 Relay↔bank Match engine — link-only, named refusals, F442 wallet, floor
+ *      (lib/relay-bank-match-engine-guard)
  * LIVE (with DATABASE_URL): no relay tick has finished_at IS NULL older than 2 hours;
  *   no USMCA relay_fuel fill dated before 2026-08-03.
  *
@@ -33,6 +35,7 @@ import {
   staticProblems as dateFloorStaticProblems,
 } from "./lib/relay-usmca-date-floor-guard.mjs";
 import { problems as forceRlsProblems } from "./lib/force-rls-update-has-policy.mjs";
+import { staticProblems as relayBankMatchStaticProblems } from "./lib/relay-bank-match-engine-guard.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-relay-tick-completes";
@@ -109,6 +112,10 @@ export function staticProblems(cronSrc, migrationsSql) {
   walk(path.join(ROOT, "apps/backend/src"));
   for (const x of forceRlsProblems(migrationsSql, backendSrc)) {
     p.push(`R9: ${x}`);
+  }
+  // R10 — CHAIN-05 Relay↔bank Match engine (441.21-B R5)
+  for (const x of relayBankMatchStaticProblems(ROOT)) {
+    p.push(`R10: ${x}`);
   }
   return p;
 }
