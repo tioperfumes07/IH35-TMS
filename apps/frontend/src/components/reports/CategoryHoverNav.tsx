@@ -225,7 +225,7 @@ export function CategoryHoverNav({ activeCategory, onCategoryChange }: Props) {
   // hid every HoverDropdown flyout below the fold with zero visible error. flex-wrap keeps
   // all 10 category tabs reachable without a scroll container that clips the dropdowns.
   return (
-    <div className="border-b border-slate-200 bg-white px-2 py-1">
+    <div className="border-b border-[#E5E7EB] bg-white px-2 py-1">
       <div className="flex flex-wrap gap-3">
         {CATEGORY_LABELS.map((category) => {
           const active = category.id === activeCategory;
@@ -237,7 +237,7 @@ export function CategoryHoverNav({ activeCategory, onCategoryChange }: Props) {
                   className={`inline-flex items-center border-b-2 px-1 py-1 text-xs font-semibold ${
                     active
                       ? "border-b-[#1F2A44] text-[#1F2A44]"
-                      : "border-b-transparent text-slate-500 hover:text-slate-700"
+                      : "border-b-transparent text-[#6B7280] hover:text-[#1F2A44]"
                   }`}
                 >
                   {category.label}

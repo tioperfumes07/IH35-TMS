@@ -12,11 +12,11 @@ export function ReportCard({ label, description, route, icon }: Props) {
   return (
     <Link
       to={route}
-      className="block rounded-sm border border-slate-200 bg-white px-3 py-2 text-left hover:border-[#1F2A44]"
+      className="block rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-left hover:border-[#1F2A44]"
       data-testid={`report-card-${icon ?? "report"}`}
     >
-      <div className="text-xs font-semibold text-slate-900">{label}</div>
-      <div className="mt-1 text-xs text-slate-500">{description}</div>
+      <div className="text-xs font-semibold text-[#0F1219]">{label}</div>
+      <div className="mt-1 text-xs text-[#6B7280]">{description}</div>
       <div className="mt-2 text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">Open →</div>
     </Link>
   );
