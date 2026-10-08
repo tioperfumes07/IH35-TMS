@@ -79,7 +79,7 @@ export function FeatureFlagsManager() {
               Per-entity only — enable via a tenant override. Global default / rollout do not apply.
             </span>
           ) : (
-            <span className={row.default_enabled ? "text-slate-700" : "text-gray-500"}>
+            <span className={row.default_enabled ? "text-[#1F2A44]" : "text-gray-500"}>
               {row.default_enabled ? "On" : "Off"}
             </span>
           ),
@@ -143,7 +143,7 @@ export function FeatureFlagsManager() {
     <div className="p-6 space-y-6" data-testid="feature-flags-manager">
       <PageHeader title="Feature Flags" subtitle="Read-only rollout and override status" />
 
-      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800" data-testid="feature-flags-read-only">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#0F1219]" data-testid="feature-flags-read-only">
         Display only. Flag changes are managed through the controlled release workflow.
       </div>
 

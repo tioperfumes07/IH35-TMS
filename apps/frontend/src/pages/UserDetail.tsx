@@ -410,7 +410,7 @@ export function UserDetailPage() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs">{formatDateUS(event.event_date)}</span>
-                    <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs capitalize">{eventTypeLabel(event.event_type)}</span>
+                    <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs capitalize">{eventTypeLabel(event.event_type)}</span>
                     <StatusBadge status={event.severity} />
                   </div>
                   <div className="font-semibold">{money(event.cost_amount)}</div>
@@ -420,7 +420,7 @@ export function UserDetailPage() {
                 <div className="mt-2 flex gap-2">
                   <button
                     type="button"
-                    className="text-xs text-slate-700 hover:underline"
+                    className="text-xs text-[#1F2A44] hover:underline"
                     onClick={() => setExpandedEventId((current) => (current === event.id ? null : event.id))}
                   >
                     {expandedEventId === event.id ? "Hide details" : "View details"}
@@ -429,7 +429,7 @@ export function UserDetailPage() {
                     <>
                       <button
                         type="button"
-                        className="text-xs text-slate-700 hover:underline"
+                        className="text-xs text-[#1F2A44] hover:underline"
                         onClick={() => {
                           setEditEventId(event.id);
                           setEditDetails(event.details ?? "");
@@ -678,7 +678,7 @@ export function UserDetailPage() {
                       limit={CUSTOMER_PICKER_LIMIT}
                       total={customersQuery.data?.total}
                       hint="Type to search the full customer catalog."
-                      className="mt-1 text-xs text-slate-600"
+                      className="mt-1 text-xs text-[#4B5563]"
                     />
                   </>
                 ) : customersQuery.isError ? (
