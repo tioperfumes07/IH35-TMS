@@ -13,8 +13,8 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Combobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
-import {
 import { SelectCombobox } from "../../components/Combobox";
+import {
   SETTLEMENT_DISPUTE_CATEGORY_OPTIONS,
   type SettlementDisputeCategoryOption,
 } from "../driver-finance/settlementDisputeCategories";

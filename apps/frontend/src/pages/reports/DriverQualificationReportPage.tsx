@@ -241,12 +241,12 @@ export function DriverQualificationReportPage() {
             onReset={staged.reset}
             applyDisabled={!staged.dirty}
           >
-            <label className="flex items-center gap-1 text-xs text-slate-600">
-              <span className="font-semibold text-slate-600">Compliance</span>
+            <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+              <span className="font-semibold text-[#4B5563]">Compliance</span>
               <SelectCombobox
                 value={staged.draft.complianceFilter}
                 onChange={(e) => staged.setDraft((p) => ({ ...p, complianceFilter: e.target.value }))}
-                className="h-7 rounded-sm border border-slate-300 bg-white px-2 text-xs"
+                className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs"
               >
                 <option value="">All compliance levels</option>
                 <option value="compliant">Compliant</option>
@@ -255,12 +255,12 @@ export function DriverQualificationReportPage() {
                 <option value="empty">No DQF items</option>
               </SelectCombobox>
             </label>
-            <label className="flex items-center gap-1 text-xs text-slate-600">
-              <span className="font-semibold text-slate-600">Sort by</span>
+            <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+              <span className="font-semibold text-[#4B5563]">Sort by</span>
               <SelectCombobox
                 value={staged.draft.sortBy}
                 onChange={(e) => staged.setDraft((p) => ({ ...p, sortBy: e.target.value }))}
-                className="h-7 rounded-sm border border-slate-300 bg-white px-2 text-xs"
+                className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs"
                 data-testid="driver-qualification-sort-by"
               >
                 <option value="name">Name</option>

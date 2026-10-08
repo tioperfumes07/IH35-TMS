@@ -28,8 +28,8 @@ import { createExpense } from "../../../api/accounting";
 import { Link } from "react-router-dom";
 import { isExpenseAccount, isPaymentAccount } from "../../../lib/account-picker-scope";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import {
 import { SelectCombobox } from "../../../components/Combobox";
+import {
   batchTotals, dollarsToCents, duplicateRow, fillDown, isRowEmpty, newRow, parsePastedRows, validateRow,
   type BatchExpenseField, type BatchExpenseRow,
 } from "./batchExpenseRows";
