@@ -63,11 +63,11 @@ export function BulkActionBar({
 
   return (
     <div
-      className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 p-2 text-xs"
+      className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs"
       role="toolbar"
       aria-label="Bulk actions"
     >
-      <span className="font-semibold text-slate-700" title={countLabel}>
+      <span className="font-semibold text-[#1F2A44]" title={countLabel}>
         {countLabel}
       </span>
       {children}
@@ -80,7 +80,7 @@ export function BulkActionBar({
             className={
               isDanger
                 ? "rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 disabled:opacity-50"
-                : "rounded-sm border border-slate-300 bg-[var(--surface-unselected)] px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+                : "rounded-sm border border-[#E5E7EB] bg-[var(--surface-unselected)] px-2 py-1 text-xs font-semibold text-[#1F2A44] disabled:opacity-50"
             }
             disabled={applying || action.disabled}
             title={action.title}
@@ -91,7 +91,7 @@ export function BulkActionBar({
           </button>
         );
       })}
-      <button type="button" className="text-slate-700 underline" onClick={onClear} disabled={applying}>
+      <button type="button" className="text-[#1F2A44] underline" onClick={onClear} disabled={applying}>
         Clear selection
       </button>
     </div>

@@ -1,3 +1,13 @@
+## 2026-10-09T00:05Z · BANK leftover slate — CreateTaskModal / taskDisplay / BulkActionBar
+
+FINDING: BANK-F91260 — CreateTaskModal / taskDisplay / BulkActionBar Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25938 squash `88a06bbbba` (BANK-F91259 QBOSync/CostBreakdown/statusPill)
+GUARD: scripts/verify-tasks-bulk-slate-leftover-chrome.mjs + verify-steps/3520 piggyback
+LIVE PROOF: verify-tasks-bulk-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3520 piggyback + OUTBOX
+
 ## 2026-10-09T00:00Z · BANK leftover slate — QBOSync / CostBreakdown / statusPill
 
 FINDING: BANK-F91259 — QBOSyncStatusDashboardPage / CostBreakdownBox / statusPill Tailwind slate-* → house tokens
