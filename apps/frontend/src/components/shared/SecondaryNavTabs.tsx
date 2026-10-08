@@ -22,7 +22,7 @@ export function SecondaryNavTabs({ tabs, activeId, onChange, className = "" }: P
               type="button"
               onClick={() => onChange(tab.id)}
               className={`relative z-10 pb-0.5 text-xs font-semibold ${
-                active ? "border-b-2 border-[#1F2A44] text-[#1F2A44]" : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
+                active ? "border-b-2 border-[#1F2A44] text-[#1F2A44]" : "border-b-2 border-transparent text-[#6B7280] hover:text-[#1F2A44]"
               }`}
             >
               {tab.label}

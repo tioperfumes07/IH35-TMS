@@ -17,7 +17,7 @@ export function BackButton({ label = "Back", fallbackTo }: Props) {
       onClick={() => {
         navigate(inModuleBackHref(pathname, fallbackTo));
       }}
-      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900 hover:underline"
+      className="inline-flex items-center gap-1 text-xs font-semibold text-[#1F2A44] hover:text-[#0F1219] hover:underline"
       aria-label={label}
     >
       <span aria-hidden="true">←</span>

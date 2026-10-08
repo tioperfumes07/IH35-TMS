@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — BackButton / SecondaryNavTabs / DocsHome
+
+FINDING: BANK-F91296 — BackButton / SecondaryNavTabs / DocsHomePage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25977 squash `78ea887047` (BANK-F91295 DatePicker/DateTimePicker/ListErrorState)
+GUARD: scripts/verify-91296-back-secnav-docs-slate-leftover-chrome.mjs + verify-steps/3384 piggyback
+LIVE PROOF: verify-91296-back-secnav-docs-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3384 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — DatePicker / DateTimePicker / ListErrorState
 
 FINDING: BANK-F91295 — DatePicker / DateTimePicker / ListErrorState Tailwind slate-* → house tokens
