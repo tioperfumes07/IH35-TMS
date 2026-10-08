@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — BulkDemo / CustomerListSidebar / AuditTrail
+
+FINDING: BANK-F91280 — BulkDemoPage / CustomerListSidebar / AuditTrailPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25960 squash `b2139f201b` (BANK-F91279 FeatureFlags/AdminPage/UserDetail)
+GUARD: scripts/verify-91280-bulk-cust-audit-slate-leftover-chrome.mjs + verify-steps/3462 piggyback
+LIVE PROOF: verify-91280-bulk-cust-audit-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3462 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — FeatureFlags / AdminPage / UserDetail
 
 FINDING: BANK-F91279 — FeatureFlagsManager / AdminPage / UserDetail Tailwind slate-* → house tokens

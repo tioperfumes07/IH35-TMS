@@ -90,7 +90,7 @@ export function BulkDemoPage() {
       </header>
 
       {capMessage ? (
-        <div className="rounded-sm border border-slate-300 bg-slate-50 p-2 text-xs text-slate-800" role="alert">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#0F1219]" role="alert">
           {capMessage}
           <button type="button" className="ml-2 underline" onClick={() => setCapMessage(null)}>
             Dismiss
@@ -115,7 +115,7 @@ export function BulkDemoPage() {
         batchActions={(selected) => (
           <button
             type="button"
-            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44]"
             onClick={() => {
               setPendingIds(selected.map((row) => row.id));
               setModalOpen(true);

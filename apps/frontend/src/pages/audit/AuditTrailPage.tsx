@@ -265,10 +265,10 @@ export function AuditTrailPage() {
       <PageHeader title="Audit Trail" subtitle="Universal spine event log — read-only" />
 
       {auditEventId ? (
-        <section className="rounded-sm border border-slate-300 bg-slate-50 p-3" data-testid="audit-trail-exact-event">
+        <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3" data-testid="audit-trail-exact-event">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-xs font-semibold text-slate-900">Selected audit event</h2>
-            <Link className="text-xs font-semibold text-slate-700 underline" to="/audit/trail">Clear event target</Link>
+            <h2 className="text-xs font-semibold text-[#0F1219]">Selected audit event</h2>
+            <Link className="text-xs font-semibold text-[#1F2A44] underline" to="/audit/trail">Clear event target</Link>
           </div>
           {exactAuditQuery.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading selected audit event…</p> : null}
           {exactAuditQuery.isError ? (
