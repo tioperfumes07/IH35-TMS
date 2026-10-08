@@ -196,3 +196,5 @@ DONE: PR #25886 · squash 179c0861b4ffa0677583f319d36b813ebc78cd2c · hooks-ON p
 
 ## 2026-10-08 — ROUND 441.22 Devin: palette case normalization (127 files)
 DONE: PR #25891 · squash 331ea0dfdc8fdc32216bdfec713a4b6e0e9c3ed6 · gate exit 0 · margin-pct + tasks-chrome selftests exit 0 · ambient main-rot documented
+
+- 2026-10-08 DEVIN-A: PR #25895 MERGED squash 3318209e1f0ca4c6b861f96b87aea6cb49733435 — LST-F44122c hand-rolled USD currency formatting drained to lib/money (43 sites, 38 files; ratchet 54→12); re-anchored verify-faro-import-page-uses-paritytable + verify-cash-forecast-profile-reverse to canonical formatters. ROUND 441.22.
