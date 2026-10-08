@@ -38,7 +38,7 @@ function migrationCreates(migrationSql, fqName) {
   return false;
 }
 
-export function checkDeclarations(file, readMigration) {
+export function checkDeclarations(file, readMigration, isHeld = () => false) {
   const failures = [];
   if (!file || typeof file !== "object") return ["scripts/canonical-ledger-declarations.json is missing or not an object"];
   const decls = file.declarations;
@@ -54,10 +54,22 @@ export function checkDeclarations(file, readMigration) {
       failures.push(`${where}: entry must be an object`);
       continue;
     }
-    for (const field of ["migration", "text", "why_not_in_migration", "applied_at_utc"]) {
+    for (const field of ["migration", "text", "why_not_in_migration"]) {
       if (typeof entry[field] !== "string" || entry[field].trim().length === 0) {
         failures.push(`${where}: missing '${field}' — a relocation with no ${field} is an unexplained bypass`);
       }
+    }
+    // A HELD migration (db/migrations/.held-migrations.json) is the explained case where no
+    // applied timestamp can exist yet: applied_at_utc stays null and applied_ledger says so.
+    if (isHeld(entry.migration)) {
+      if (entry.applied_at_utc !== null && typeof entry.applied_at_utc !== "string") {
+        failures.push(`${where}: held-migration 'applied_at_utc' must be null or a held explanation string`);
+      }
+      if (typeof entry.applied_ledger !== "string" || !/not applied|held/i.test(entry.applied_ledger)) {
+        failures.push(`${where}: held-migration 'applied_ledger' must state the migration is NOT APPLIED/HELD`);
+      }
+    } else if (typeof entry.applied_at_utc !== "string" || entry.applied_at_utc.trim().length === 0) {
+      failures.push(`${where}: missing 'applied_at_utc' — a relocation with no applied_at_utc is an unexplained bypass`);
     }
     if (typeof entry.text === "string" && !/--\s*CANONICAL-CHECK:/i.test(entry.text)) {
       failures.push(`${where}: 'text' must contain a real '-- CANONICAL-CHECK:' block`);
@@ -65,7 +77,7 @@ export function checkDeclarations(file, readMigration) {
     if (typeof entry.text === "string" && entry.text.trim().length < 200) {
       failures.push(`${where}: 'text' is too short to be a real reconciliation — a placeholder is worse than nothing`);
     }
-    if (typeof entry.applied_at_utc === "string" && !/^\d{4}-\d{2}-\d{2}T/.test(entry.applied_at_utc)) {
+    if (!isHeld(entry.migration) && typeof entry.applied_at_utc === "string" && !/^\d{4}-\d{2}-\d{2}T/.test(entry.applied_at_utc)) {
       failures.push(`${where}: 'applied_at_utc' must be the real applied timestamp from the migration ledger`);
     }
     if (typeof entry.migration === "string" && entry.migration.length > 0) {
@@ -86,6 +98,16 @@ const readMigrationFromDisk = (f) => {
   return fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
 };
 
+const heldSet = (() => {
+  try {
+    const reg = JSON.parse(fs.readFileSync(path.join(MIGRATIONS_DIR, ".held-migrations.json"), "utf8"));
+    return new Set((reg.held || []).map((h) => h.file));
+  } catch {
+    return new Set();
+  }
+})();
+const isHeldMigration = (f) => typeof f === "string" && heldSet.has(f);
+
 if (process.argv.includes("--selftest")) {
   const good = JSON.parse(fs.readFileSync(path.join(ROOT, DECL), "utf8"));
   const clone = () => JSON.parse(JSON.stringify(good));
@@ -103,7 +125,7 @@ if (process.argv.includes("--selftest")) {
 
   let ok = 0;
   for (const [label, obj, expectMin] of mut) {
-    const found = checkDeclarations(obj, readMigrationFromDisk).length;
+    const found = checkDeclarations(obj, readMigrationFromDisk, isHeldMigration).length;
     const pass = expectMin === 0 ? found === 0 : found >= expectMin;
     if (pass) ok += 1;
     else console.error(`  selftest MISS: ${label} -> ${found}, expected ${expectMin === 0 ? "0" : ">=1"}`);
@@ -119,7 +141,7 @@ if (parsed === null) {
   console.log(`${NAME} PASS — no relocated declarations file on disk (nothing to fence)`);
   process.exit(0);
 }
-const failures = checkDeclarations(parsed, readMigrationFromDisk);
+const failures = checkDeclarations(parsed, readMigrationFromDisk, isHeldMigration);
 if (failures.length > 0) {
   console.error(`${NAME} FAIL`);
   for (const f of failures) console.error(`  - ${f}`);

@@ -575,9 +575,11 @@ export async function rematchRelayBankMatch(
 
   if (bank.matched_journal_entry_id) {
     const src = await client.query<{ source_transaction_type: string | null; source_transaction_id: string | null }>(
-      `SELECT source_transaction_type::text, source_transaction_id::text
-         FROM accounting.journal_entries
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      `SELECT DISTINCT ON (source_transaction_type) source_transaction_type::text, source_transaction_id::text
+         FROM accounting.journal_entry_postings
+        WHERE journal_entry_uuid = $1::uuid AND operating_company_id = $2::uuid
+          AND source_transaction_type IS NOT NULL
+        ORDER BY source_transaction_type
         LIMIT 1`,
       [bank.matched_journal_entry_id, input.operating_company_id]
     );
