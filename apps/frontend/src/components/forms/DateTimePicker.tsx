@@ -391,7 +391,7 @@ export function DateTimePicker({
                       className={`rounded py-1 text-xs ${
                         outOfRange
                           ? "cursor-not-allowed text-gray-300"
-                          : `hover:bg-slate-100 ${selected ? "bg-slate-700 text-white hover:bg-slate-700" : ""}`
+                          : `hover:bg-[#F7F8FA] ${selected ? "bg-[#1F2A44] text-white hover:bg-[#1F2A44]" : ""}`
                       }`}
                       onClick={() => {
                         if (outOfRange) return;
