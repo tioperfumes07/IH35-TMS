@@ -15,8 +15,8 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 
 function statusPillClass(status: string) {
   return status === "active"
-    ? "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
-    : "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
+    ? "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]"
+    : "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
 }
 
 export function BrokersListPage() {
@@ -50,13 +50,13 @@ export function BrokersListPage() {
       const label = entityLabel(row.name, row.id, "Customer");
       // LV-LISTS-BROKERS-DEAD-TOMBSTONE-LINK
       if (isUnresolvedEntityTombstone(row.name, row.id, "Customer")) {
-        return <span className="font-medium text-slate-600" data-testid="brokers-list-name-tombstone">{label}</span>;
+        return <span className="font-medium text-[#4B5563]" data-testid="brokers-list-name-tombstone">{label}</span>;
       }
-      return <EntityLink kind="customer" id={row.id} label={label} className="font-medium text-slate-800" onClick={(event) => event.stopPropagation()} data-testid="brokers-list-name-link" />;
+      return <EntityLink kind="customer" id={row.id} label={label} className="font-medium text-[#0F1219]" onClick={(event) => event.stopPropagation()} data-testid="brokers-list-name-link" />;
     } },
     { key: "customer_code", label: "Code", sortable: true, render: (row: Customer) => <span className="text-xs tracking-normal [font-variant-ligatures:none]">{row.customer_code ?? "—"}</span> },
     { key: "mc_number", label: "MC #", sortable: true, render: (row: Customer) => row.mc_number ?? "—" },
-    { key: "email", label: "Email", sortable: true, render: (row: Customer) => <span className="text-slate-600">{row.email ?? "—"}</span> },
+    { key: "email", label: "Email", sortable: true, render: (row: Customer) => <span className="text-[#4B5563]">{row.email ?? "—"}</span> },
     { key: "status", label: "Status", sortable: true, render: (row: Customer) => <span className={statusPillClass(row.status)}>{row.status === "active" ? "Active" : row.status}</span> },
   ];
 
@@ -70,7 +70,7 @@ export function BrokersListPage() {
         actions={<Button onClick={() => setCreateOpen(true)}>+ Create broker</Button>}
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#4B5563]">
         Brokers are customers with the <strong>Broker</strong> type — a role on the customer record, not a
         separate master. This is a filtered directory; create or edit a broker from its customer record.
       </div>

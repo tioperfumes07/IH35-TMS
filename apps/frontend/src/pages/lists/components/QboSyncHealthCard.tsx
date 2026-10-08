@@ -9,10 +9,10 @@ type Props = {
 
 function driftClass(value: string) {
   const v = value.toLowerCase();
-  if (v === "0") return "text-slate-700";
-  if (v.includes("pend")) return "text-slate-700";
+  if (v === "0") return "text-[#1F2A44]";
+  if (v.includes("pend")) return "text-[#1F2A44]";
   if (v.includes("drift")) return "text-red-700";
-  return "text-slate-600";
+  return "text-[#4B5563]";
 }
 
 const COLUMNS: Array<ParityColumn<ListsQboSyncHealthRow>> = [
@@ -36,10 +36,10 @@ const COLUMNS: Array<ParityColumn<ListsQboSyncHealthRow>> = [
 
 export function QboSyncHealthCard({ rows, onForceSync, syncing }: Props) {
   return (
-    <div className="rounded-sm border border-slate-200 bg-white p-3">
+    <div className="rounded-sm border border-[#E5E7EB] bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">QBO Sync Health</div>
-        <button type="button" onClick={onForceSync} disabled={syncing} className="rounded-sm bg-slate-800 px-2.5 py-1 text-xs font-semibold text-white">
+        <div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">QBO Sync Health</div>
+        <button type="button" onClick={onForceSync} disabled={syncing} className="rounded-sm bg-[#1F2A44] px-2.5 py-1 text-xs font-semibold text-white">
           {syncing ? "Starting..." : "Force QBO Sync"}
         </button>
       </div>
