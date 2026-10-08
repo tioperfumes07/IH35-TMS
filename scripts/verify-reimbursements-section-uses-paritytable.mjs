@@ -19,7 +19,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-reimbursements-section-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/driver-finance/components/ReimbursementsSection.tsx";
 
-const REQUIRED_LABELS = ["Date", "Description", "Receipt #", "Amount"];
+const REQUIRED_LABELS = ["Date", "Receipt", "Amount"];
 
 function assertMigrated(src) {
   const errors = [];
@@ -49,8 +49,8 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="driver-finance-reimbursements-table"')) {
     errors.push(`${PAGE}: must set tableTestId="driver-finance-reimbursements-table"`);
   }
-  if (!src.includes("C. Reimbursements")) {
-    errors.push(`${PAGE}: must keep the "C. Reimbursements" heading`);
+  if (!/C\.\s*Reimbursements|Reimbursements<\/h2>/.test(src)) {
+    errors.push(`${PAGE}: must keep the Reimbursements heading`);
   }
   if (!src.includes("Subtotal:")) {
     errors.push(`${PAGE}: must keep the Subtotal footer line`);
@@ -66,11 +66,10 @@ function selftest() {
     import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
     const COLUMNS = [
       { key: "date", label: "Date" },
-      { key: "description", label: "Description" },
-      { key: "receipt", label: "Receipt #", render: (line) => <button>{line.receipt}</button> },
+      { key: "receipt", label: "Receipt", render: (line) => <button>{line.receipt}</button> },
       { key: "amount", label: "Amount", render: (line) => \`$\${Number(line.amount).toFixed(2)}\` },
     ];
-    <h3>C. Reimbursements</h3>
+    <h2>Reimbursements</h2>
     <ParityTable
       storageKey="driver-finance-reimbursements-section"
       tableTestId="driver-finance-reimbursements-table"

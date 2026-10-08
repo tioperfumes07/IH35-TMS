@@ -125,3 +125,6 @@ DONE: PR #25778 · squash d8978520b9dec8f88abf6854065a5d357afff6e1 · money-pr-l
 
 ## 2026-10-08 — drain: re-anchor 7 stale verify-* guards to current code shapes and selftests
 DONE: PR #25781 · squash ecee7935b0e78acd9ea41c253e145dd05a07a53b · money-pr-local-gate exit 0 · re-anchored accounting register search placeholder, cash-flow overview/ route selftest plants, complaint insert/linkage selftests, compliance notification/property-tax selftests · baseline-lines-added = 0
+
+## 2026-10-08 — drain: re-anchor 3 more stale verify-* guard selftests (Samsara sync errors, subscription banner, vendor S03/S04)
+DONE: PR #25782 · squash c74c026468651f9617fb1e574146d16e77961cf1 · money-pr-local-gate exit 0 · fixed selftest plant strings in verify-samsara-sync-errors-surfaced-in-log, verify-subscription-manager-delivery-banner, verify-vend-s03-s04-dedup-and-types · baseline-lines-added = 0
