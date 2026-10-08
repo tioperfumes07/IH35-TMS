@@ -1,3 +1,13 @@
+## 2026-10-08T14:40Z · BANK leftover slate — CSA score tab / damage report detail / internal fines
+
+FINDING: BANK-F91211 — CSAScoreTab / DamageReportDetail / InternalFinesPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25870 squash `022d3f6c2c` (BANK-F91210 abandon/rt/disp)
+GUARD: scripts/verify-safety-csa-dmg-fine-slate-leftover-chrome.mjs + verify-steps/4078 piggyback
+LIVE PROOF: verify-safety-csa-dmg-fine-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 4078 piggyback + OUTBOX
+
 ## 2026-10-08T14:25Z · BANK leftover slate — abandonment report / round trips / dispatch
 
 FINDING: BANK-F91210 — AbandonmentReportModal / RoundTrips / Dispatch Tailwind slate-* → house tokens

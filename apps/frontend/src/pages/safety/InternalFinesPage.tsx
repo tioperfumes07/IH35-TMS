@@ -325,7 +325,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
       render: (row) => {
         const isVoided = Boolean(row.voided_at) || String(row.status ?? "") === "voided";
         const isConverted = Boolean(row.driver_liability_id) || String(row.status ?? "") === "converted_to_liability";
-        if (isVoided) return <span className="text-slate-400">Voided</span>;
+        if (isVoided) return <span className="text-[#6B7280]">Voided</span>;
         return (
           <div className="flex items-center gap-2">
             {canDispute && !isConverted ? (
@@ -348,7 +348,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
                 Void
               </button>
             ) : null}
-            {isConverted ? <span className="text-slate-400">Converted — reverse the liability first</span> : null}
+            {isConverted ? <span className="text-[#6B7280]">Converted — reverse the liability first</span> : null}
           </div>
         );
       },
@@ -358,7 +358,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   return (
     <div className="space-y-3">
       <section className="space-y-2" data-testid="internal-fines-create">
-        <h3 className="text-xs font-semibold text-slate-900">+ Create Internal Fine</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">+ Create Internal Fine</h3>
         <div className="grid gap-2 md:grid-cols-6">
           <DriverPickerWithCreate
             operatingCompanyId={operatingCompanyId}
@@ -402,7 +402,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
             limit={200}
             total={reasonsQuery.data?.total}
             hint="Type to search the full internal-fine-reason catalog."
-            className="text-xs text-slate-600 md:col-span-6"
+            className="text-xs text-[#4B5563] md:col-span-6"
           />
           {/* M-1 (GUARD inline FAIL): inline-create fine AMOUNT (createInternalFine dollars; list uses formatUsd). */}
           <MoneyInput valueDollars={form.amount || null} onChangeDollars={(d) => setForm((v) => ({ ...v, amount: d ?? 0 }))} ariaLabel="Fine amount (USD)" placeholder="Amount (USD)" />
@@ -486,7 +486,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           hidePager
           filterBar={
             <div className="relative flex flex-wrap items-end gap-2" data-testid="internal-fines-filters">
-              <label className="text-xs text-slate-600">
+              <label className="text-xs text-[#4B5563]">
                 Driver
                 <EntityPicker
                   kind="driver"
@@ -499,7 +499,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
                   dataTestId="internal-fines-filter-driver"
                 />
               </label>
-              <label className="text-xs text-slate-600">
+              <label className="text-xs text-[#4B5563]">
                 Load
                 <EntityPicker
                   kind="load"
@@ -540,7 +540,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
               </Button>
             </div>
           }
-          rowClassName={(row) => String(row.id ?? "") === linkedFineId ? "bg-slate-100 ring-1 ring-inset ring-slate-300" : ""}
+          rowClassName={(row) => String(row.id ?? "") === linkedFineId ? "bg-[#E5E7EB] ring-1 ring-inset ring-[#E5E7EB]" : ""}
           rowTestId={(row) => String(row.id ?? "") === linkedFineId ? "linked-internal-fine" : `internal-fine-${String(row.id ?? "")}`}
         />
       )}
