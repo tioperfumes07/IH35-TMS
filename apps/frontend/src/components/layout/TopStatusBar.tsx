@@ -47,7 +47,7 @@ function topbarDotClass(dot: "gray" | "green" | "yellow" | "red"): string {
   if (dot === "green") return "bg-emerald-500";
   if (dot === "yellow") return "bg-amber-400";
   if (dot === "red") return "bg-red-500";
-  return "bg-slate-500";
+  return "bg-[#6B7280]";
 }
 
 export function TopStatusBar({
@@ -138,7 +138,7 @@ export function TopStatusBar({
           ) : (
             <button
               type="button"
-              className="ml-1 rounded-full border border-slate-400/70 px-2 py-0.5 text-xs font-semibold text-slate-100 hover:bg-slate-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+              className="ml-1 rounded-full border border-[#6B7280]/70 px-2 py-0.5 text-xs font-semibold text-[#F7F8FA] hover:bg-[#6B7280]/10 disabled:cursor-not-allowed disabled:opacity-60"
               data-testid="qbo-sync-now-button"
               disabled={syncNowPending || qboSyncPill.status === "syncing"}
               onClick={onSyncNow}

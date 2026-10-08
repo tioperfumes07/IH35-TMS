@@ -27,5 +27,7 @@ export default {
     for (const guard of guards) {
       await ctx.run("node", [`scripts/${guard}`]);
     }
+    // BANK leftover refuse — AtRiskDriver / TopStatusBar / UnitFaults house tokens
+    await ctx.run("node", ["scripts/verify-91293-atrisk-topbar-faults-slate-leftover-chrome.mjs"]);
   },
 };

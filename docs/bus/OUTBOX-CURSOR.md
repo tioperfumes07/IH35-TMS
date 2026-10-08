@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — AtRiskDriver / TopStatusBar / UnitFaults
+
+FINDING: BANK-F91293 — AtRiskDriverCard / TopStatusBar / UnitFaultsReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25974 squash `50dbc2cd07` (BANK-F91292 CivilFines/LoadDriverReports/DriverReports)
+GUARD: scripts/verify-91293-atrisk-topbar-faults-slate-leftover-chrome.mjs + verify-steps/3396 piggyback
+LIVE PROOF: verify-91293-atrisk-topbar-faults-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3396 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — CivilFines / LoadDriverReports / DriverReports
 
 FINDING: BANK-F91292 — CivilFinesReverseBlock / LoadDriverReportsReverseSection / DriverReportsReverseSection Tailwind slate-* → house tokens
