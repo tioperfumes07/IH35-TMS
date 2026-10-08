@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — ValidationPanel / ReportCard / CategoryHoverNav
+
+FINDING: BANK-F91287 — ValidationPanel / ReportCard / CategoryHoverNav Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25968 squash `6b07b26bce` (BANK-F91286 ServiceTimeline/StatusBarMobile/DriverHub)
+GUARD: scripts/verify-91287-valid-report-catnav-slate-leftover-chrome.mjs + verify-steps/3424 piggyback
+LIVE PROOF: verify-91287-valid-report-catnav-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3424 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — ServiceTimeline / StatusBarMobile / DriverHub
 
 FINDING: BANK-F91286 — ServiceTimeline / StatusBarMobile / DriverHubOverview Tailwind slate-* → house tokens

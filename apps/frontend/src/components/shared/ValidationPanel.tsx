@@ -54,10 +54,10 @@ const SEVERITY_STYLES: Record<ValidationSeverity, { bg: string; border: string; 
     label: "Warning",
   },
   info: {
-    bg: "bg-slate-100",
-    border: "border-slate-300",
+    bg: "bg-[#F7F8FA]",
+    border: "border-[#E5E7EB]",
     icon: "i",
-    iconBg: "bg-slate-500",
+    iconBg: "bg-[#6B7280]",
     label: "Info",
   },
 };
@@ -222,7 +222,7 @@ export function ValidationPanel({
                 const rec = blockOverrides[item.rule_id];
                 const reason = rowReasons[item.rule_id] ?? "";
                 return (
-                  <tr key={item.rule_id} className="h-[30px] border-b border-gray-200 even:bg-slate-50">
+                  <tr key={item.rule_id} className="h-[30px] border-b border-gray-200 even:bg-[#F7F8FA]">
                     <td className="border-r border-gray-200 px-2 font-mono">{ruleCodeLabel(item)}</td>
                     <td className="border-r border-gray-200 px-2">{subjectFromItem(item)}</td>
                     <td className="border-r border-gray-200 px-2">{missingFromItem(item)}</td>
