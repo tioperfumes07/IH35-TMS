@@ -156,15 +156,15 @@ export function FaultCodeAlertsPage() {
         subtitle="Samsara fault codes by unit and driver-at-the-time — open alerts, history, and linked auto work orders."
       />
       <div className="flex flex-wrap gap-2 text-xs">
-        <Link to="/maintenance" className="text-slate-700 underline">
+        <Link to="/maintenance" className="text-[#4B5563] underline">
           Maintenance home
         </Link>
         <span className="text-gray-400">·</span>
-        <Link to="/maintenance/fault-drafts" className="text-slate-700 underline">
+        <Link to="/maintenance/fault-drafts" className="text-[#4B5563] underline">
           Fault drafts
         </Link>
         <span className="text-gray-400">·</span>
-        <Link to="/maintenance/fault-rules" className="text-slate-700 underline">
+        <Link to="/maintenance/fault-rules" className="text-[#4B5563] underline">
           Fault rules
         </Link>
       </div>
@@ -179,7 +179,7 @@ export function FaultCodeAlertsPage() {
       ) : null}
 
       <div className="relative flex flex-wrap items-end gap-3" data-testid="fault-code-alerts-filters">
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#6B7280]">
           Unit
           <EntityPicker
             kind="unit"
@@ -198,7 +198,7 @@ export function FaultCodeAlertsPage() {
             dataTestId="fault-code-alerts-filter-unit"
           />
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#6B7280]">
           Driver
           <EntityPicker
             kind="driver"
@@ -246,7 +246,7 @@ export function FaultCodeAlertsPage() {
       </div>
 
       {deepLinkFaultId ? (
-        <p className="text-xs text-slate-600" data-testid="fault-code-alerts-deep-link-banner">
+        <p className="text-xs text-[#6B7280]" data-testid="fault-code-alerts-deep-link-banner">
           {deepLinkRow
             ? `Showing alert ${deepLinkRow.fault_code?.trim() || "Fault"} · unit `
             : `Alert not in this result set · `}
@@ -259,7 +259,7 @@ export function FaultCodeAlertsPage() {
       ) : null}
 
       {effectiveUnitId ? (
-        <p className="text-xs text-slate-600" data-testid="fault-code-alerts-unit-banner">
+        <p className="text-xs text-[#6B7280]" data-testid="fault-code-alerts-unit-banner">
           Forward by unit ·{" "}
           <EntityLinkOrTombstone
             kind="unit"
@@ -270,7 +270,7 @@ export function FaultCodeAlertsPage() {
         </p>
       ) : null}
       {effectiveDriverId ? (
-        <p className="text-xs text-slate-600" data-testid="fault-code-alerts-driver-banner">
+        <p className="text-xs text-[#6B7280]" data-testid="fault-code-alerts-driver-banner">
           Reverse by driver-at-the-time ·{" "}
           <EntityLinkOrTombstone
             kind="driver"
@@ -297,7 +297,7 @@ export function FaultCodeAlertsPage() {
           }
           exportFilename="fault-code-alerts"
           rowClassName={(row) =>
-            deepLinkFaultId && row.id === deepLinkFaultId ? "bg-slate-100 ring-1 ring-slate-300" : ""
+            deepLinkFaultId && row.id === deepLinkFaultId ? "bg-[#F7F8FA] ring-1 ring-[#E5E7EB]" : ""
           }
           rowTestId={(row) => `fault-alert-${row.id}`}
         />
