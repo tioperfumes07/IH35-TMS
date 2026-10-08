@@ -4,6 +4,16 @@
 
 ## 2026-10-08 · BANK-F91055 — CreditMemos / VendorCredits / InvoiceTypeModal slate → house
 
+## 2026-10-08 · BANK-F91056 — SubmitToFactor / FactoringTab / FactoringQueue slate → house
+
+FINDING: BANK-F91056 — SubmitToFactorTab / FactoringTab / FactoringQueuePage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25989 squash `441fb4c5cb` (BANK-F91055 CreditMemos/VendorCredits/InvoiceTypeModal)
+GUARD: scripts/verify-91056-factor-submit-tab-queue-slate-leftover-chrome.mjs + verify-steps/3630 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: SubmitToFactorTab + FactoringTab + FactoringQueuePage + refuse guard + 3630 piggyback + OUTBOX
+
 FINDING: BANK-F91055 — CreditMemos / VendorCredits / InvoiceTypeModalBase Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
 Prior tip merge: #25988 squash `6eace62b8a` (HEALTHZ #25987 dead-lease live ok=true)

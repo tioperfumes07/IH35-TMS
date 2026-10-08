@@ -78,7 +78,7 @@ export function lineFigures(r: PurchaseCandidate, actuals?: LineActuals) {
 function expectedCell(r: PurchaseCandidate, cents: number | null) {
   if (cents != null) return formatUsdCents(cents);
   return (
-    <span className="text-slate-700" title={r.rate_reason ?? "No factor agreement"}>
+    <span className="text-[#1F2A44]" title={r.rate_reason ?? "No factor agreement"}>
       — no factor agreement
     </span>
   );
@@ -418,7 +418,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
   return (
     <div className="space-y-3" data-testid="submit-to-factor-tab">
       {!isOwner ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700" data-testid="submit-factor-owner-only-note">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="submit-factor-owner-only-note">
           {OWNER_ONLY_MESSAGE} You can review the open invoices; Save is the Owner&apos;s.
         </div>
       ) : null}
@@ -460,7 +460,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
             }
           >
             <div className="flex flex-wrap items-end gap-3">
-              <label className="flex flex-col gap-1 text-xs text-slate-600">
+              <label className="flex flex-col gap-1 text-xs text-[#4B5563]">
                 Customer
                 <EntityPicker
                   kind="customer"
@@ -472,11 +472,11 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
                   dataTestId="submit-factor-filter-customer"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-xs text-slate-600">
+              <label className="flex flex-col gap-1 text-xs text-[#4B5563]">
                 Invoice date from
                 <DatePicker value={draft.from} onChange={(v) => setDraft((d) => ({ ...d, from: v }))} className="h-8" data-testid="submit-factor-filter-from" />
               </label>
-              <label className="flex flex-col gap-1 text-xs text-slate-600">
+              <label className="flex flex-col gap-1 text-xs text-[#4B5563]">
                 Invoice date to
                 <DatePicker value={draft.to} onChange={(v) => setDraft((d) => ({ ...d, to: v }))} className="h-8" data-testid="submit-factor-filter-to" />
               </label>
@@ -485,7 +485,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
         }
       />
       {candidatesQuery.data?.capped ? (
-        <div className="text-xs text-slate-600">Showing the first {candidatesQuery.data.limit} open invoices — narrow the filters to see the rest.</div>
+        <div className="text-xs text-[#4B5563]">Showing the first {candidatesQuery.data.limit} open invoices — narrow the filters to see the rest.</div>
       ) : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
@@ -543,7 +543,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
         {selectedRows.length ? (
           <DataPanel title="Selected invoices — Faro actuals">
             <div className="p-3 text-xs" data-testid="submit-factor-actuals">
-              <p className="mb-2 text-slate-600">
+              <p className="mb-2 text-[#4B5563]">
                 Faro holds one 1.5% Security Reserve per invoice — normally as escrow reserve, on some invoices as cash reserve instead. Enter
                 Faro's purchase-report figures here when they differ from the expected split.
               </p>
@@ -590,7 +590,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
                         <td className="py-1 pl-2 text-right">
                           <button
                             type="button"
-                            className="rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-slate-700"
+                            className="rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-[#1F2A44]"
                             onClick={() => setF({ cash_reserve_cents: f.cash_reserve_cents + f.escrow_reserve_cents, escrow_reserve_cents: 0 })}
                             disabled={f.escrow_reserve_cents === 0}
                             data-testid={`submit-factor-reserve-to-cash-${r.invoice_id}`}
@@ -610,7 +610,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
         {missingDocsRows.length ? (
           <DataPanel title="Override approval — missing documents">
             <div className="p-3 text-xs" data-testid="submit-factor-docs-override">
-              <p className="mb-2 text-slate-600">
+              <p className="mb-2 text-[#4B5563]">
                 {missingDocsRows.length} selected load(s) are missing BOL / POD / rate confirmation. The Owner may approve sending to the factor
                 anyway; the reason is stamped on the purchase and audited.
               </p>
@@ -632,27 +632,27 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
 
         <DataPanel title="Selection totals">
           <dl className="grid grid-cols-2 gap-x-4 gap-y-1 p-3 text-xs" data-testid="submit-factor-totals">
-            <dt className="text-slate-600">Invoices</dt>
+            <dt className="text-[#4B5563]">Invoices</dt>
             <dd className="text-right font-semibold" data-testid="submit-factor-total-count">{totals.count}</dd>
-            <dt className="text-slate-600">Gross</dt>
+            <dt className="text-[#4B5563]">Gross</dt>
             <dd className="text-right font-semibold" data-testid="submit-factor-total-gross">{formatUsdCents(totals.gross)}</dd>
-            <dt className="text-slate-600">Escrow reserve</dt>
+            <dt className="text-[#4B5563]">Escrow reserve</dt>
             <dd className="text-right" data-testid="submit-factor-total-escrow">{formatUsdCents(totals.escrow)}</dd>
-            <dt className="text-slate-600">Factoring fee</dt>
+            <dt className="text-[#4B5563]">Factoring fee</dt>
             <dd className="text-right" data-testid="submit-factor-total-fee">{formatUsdCents(totals.fee)}</dd>
-            <dt className="text-slate-600">Advance (gross − escrow − fee)</dt>
+            <dt className="text-[#4B5563]">Advance (gross − escrow − fee)</dt>
             <dd className="text-right font-semibold" data-testid="submit-factor-total-advance">{formatUsdCents(totals.advance)}</dd>
-            <dt className="text-slate-600">Cash reserve</dt>
+            <dt className="text-[#4B5563]">Cash reserve</dt>
             <dd className="text-right" data-testid="submit-factor-total-cash">{formatUsdCents(totals.cash)}</dd>
-            <dt className="text-slate-600">Wire fee</dt>
+            <dt className="text-[#4B5563]">Wire fee</dt>
             <dd className="text-right" data-testid="submit-factor-total-wire">{formatUsdCents(totals.wire)}</dd>
-            <dt className="font-semibold text-slate-800">Net to IH35</dt>
+            <dt className="font-semibold text-[#0F1219]">Net to IH35</dt>
             <dd className={`text-right font-semibold ${totals.net < 0 ? "text-red-700" : "text-[#16A34A]"}`} data-testid="submit-factor-total-net">
               {formatUsdCents(totals.net)}
             </dd>
           </dl>
           <div className="flex items-center justify-between gap-2 border-t border-gray-200 px-3 py-2">
-            <span className="text-xs text-slate-600">
+            <span className="text-xs text-[#4B5563]">
               {missingDocsRows.length
                 ? docsOverrideOk
                   ? `${missingDocsRows.length} invoice(s) missing docs — Owner override approved`
@@ -675,7 +675,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
       {saveError ? <SaveErrorPanel error={saveError} rows={byId} /> : null}
 
       {created ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700" data-testid="submit-factor-created">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="submit-factor-created">
           Purchase{" "}
           {created.purchase.factoring_advance_id ? (
             <EntityLink kind="factoring_advance" id={created.purchase.factoring_advance_id} label={created.purchase.display_id} data-testid="submit-factor-created-link" />
@@ -703,18 +703,18 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
       ) : null}
 
       <div className="text-xs">
-        <button type="button" className="text-slate-700 underline" onClick={() => setShowDirectPayList((v) => !v)} data-testid="submit-factor-direct-pay-toggle">
+        <button type="button" className="text-[#1F2A44] underline" onClick={() => setShowDirectPayList((v) => !v)} data-testid="submit-factor-direct-pay-toggle">
           {showDirectPayList ? "Hide" : "Show"} customer direct pay invoices
         </button>
         {showDirectPayList ? (
           <ul className="mt-2 space-y-1" data-testid="submit-factor-direct-pay-list">
-            {(directPayQuery.data ?? []).length === 0 ? <li className="text-slate-500">None marked.</li> : null}
+            {(directPayQuery.data ?? []).length === 0 ? <li className="text-[#6B7280]">None marked.</li> : null}
             {(directPayQuery.data ?? []).map((d) => (
               <li key={d.invoice_id} className="flex flex-wrap items-center gap-2">
                 <EntityLink kind="invoice" id={d.invoice_id} label={entityLabel(d.invoice_display_id, d.invoice_id, "Invoice")} />
                 <EntityLink kind="customer" id={d.customer_id} label={entityLabel(d.customer_name, d.customer_id, "Customer")} />
                 <span>{formatUsdCents(d.total_cents)}</span>
-                <span className="text-slate-500">{d.reason}</span>
+                <span className="text-[#6B7280]">{d.reason}</span>
                 <Button
                   type="button"
                   variant="tertiary"

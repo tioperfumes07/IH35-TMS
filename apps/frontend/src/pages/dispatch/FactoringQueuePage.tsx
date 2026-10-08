@@ -82,10 +82,10 @@ const STAGE_LABELS: Record<FactoringQueueRow["packet_stage"], string> = {
 
 const STAGE_PILL: Record<FactoringQueueRow["packet_stage"], string> = {
   NOT_FACTORED: "bg-gray-100 text-gray-600 border-gray-200",
-  PACKET_READY: "bg-slate-100 text-slate-700 border-slate-300",
-  SUBMITTED: "bg-slate-100 text-slate-700 border-slate-200",
-  ADVANCE_RECEIVED: "bg-slate-100 text-slate-700 border-slate-200",
-  RESERVE_RELEASED: "bg-slate-100 text-slate-700 border-slate-200",
+  PACKET_READY: "bg-[#F7F8FA] text-[#1F2A44] border-[#E5E7EB]",
+  SUBMITTED: "bg-[#F7F8FA] text-[#1F2A44] border-[#E5E7EB]",
+  ADVANCE_RECEIVED: "bg-[#F7F8FA] text-[#1F2A44] border-[#E5E7EB]",
+  RESERVE_RELEASED: "bg-[#F7F8FA] text-[#1F2A44] border-[#E5E7EB]",
   CHARGED_BACK: "bg-red-50 text-red-700 border-red-200",
 };
 
@@ -262,7 +262,7 @@ export function FactoringQueuePage() {
               {STAGE_LABELS[row.packet_stage]}
             </span>
             {row.packet_approved_at && row.packet_stage === "PACKET_READY" ? (
-              <div className="mt-0.5 text-xs text-slate-700">✓ Approved</div>
+              <div className="mt-0.5 text-xs text-[#1F2A44]">✓ Approved</div>
             ) : null}
           </>
         ),
@@ -272,9 +272,9 @@ export function FactoringQueuePage() {
         label: "Missing Docs",
         render: (row) =>
           row.missing_doc_types.length === 0 ? (
-            <span className="text-xs text-slate-700">✓ Complete</span>
+            <span className="text-xs text-[#1F2A44]">✓ Complete</span>
           ) : (
-            <span className="text-xs text-slate-700">
+            <span className="text-xs text-[#1F2A44]">
               Missing: {row.missing_doc_types.join(", ")}
             </span>
           ),
@@ -290,7 +290,7 @@ export function FactoringQueuePage() {
               label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")}
             />
           ) : (
-            <span className="text-slate-700">No invoice</span>
+            <span className="text-[#1F2A44]">No invoice</span>
           ),
       },
     ],
@@ -364,7 +364,7 @@ export function FactoringQueuePage() {
       ) : null}
 
       <div className="relative flex flex-wrap items-end gap-3" data-testid="factoring-dispatch-queue-filters">
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Customer
           <EntityPicker
             kind="customer"
@@ -377,7 +377,7 @@ export function FactoringQueuePage() {
             dataTestId="factoring-dispatch-filter-customer"
           />
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Load
           <EntityPicker
             kind="load"
