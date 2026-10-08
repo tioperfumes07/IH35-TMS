@@ -192,29 +192,29 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
 
   return (
     <div className="space-y-3" data-testid="drawer-fines-deductions-card">
-      <div className="rounded-sm border border-slate-200 bg-slate-50 p-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Fines &amp; Deductions</h3>
-        <p className="mt-1 text-xs text-slate-700">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Fines &amp; Deductions</h3>
+        <p className="mt-1 text-xs text-[#4B5563]">
           Fine auto-deduction policies apply per settlement (net-floor cap; over-cap rolls to next period). Confirm or defer
           pending escrow proposals before they post.
         </p>
       </div>
 
       {/* Pending — confirm / defer per settlement */}
-      <section className="rounded-sm border border-slate-200 bg-white p-3">
-        <h4 className="mb-2 text-xs font-semibold uppercase text-slate-700">Pending review (this load)</h4>
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+        <h4 className="mb-2 text-xs font-semibold uppercase text-[#4B5563]">Pending review (this load)</h4>
         {!canReviewEscrow && loadPendingRows.length > 0 ? (
-          <p className="mb-2 text-xs text-slate-700">Owner approval required to confirm or defer escrow deductions.</p>
+          <p className="mb-2 text-xs text-[#4B5563]">Owner approval required to confirm or defer escrow deductions.</p>
         ) : null}
         <div className="space-y-2">
           {loadPendingRows.map((row) => (
-            <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1.5 text-xs">
+            <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs">
               <div className="min-w-0 flex-1">
-                <div className="font-semibold text-slate-700">{formatMoney(row.proposed_amount_cents)}</div>
-                <div className="truncate text-slate-700" title={row.proposed_reason}>
+                <div className="font-semibold text-[#4B5563]">{formatMoney(row.proposed_amount_cents)}</div>
+                <div className="truncate text-[#4B5563]" title={row.proposed_reason}>
                   {row.proposed_reason}
                 </div>
-                <div className="text-xs text-slate-700">Proposed {formatDateTime(row.proposed_at)} · expires {formatDateTime(row.expires_at)}</div>
+                <div className="text-xs text-[#4B5563]">Proposed {formatDateTime(row.proposed_at)} · expires {formatDateTime(row.expires_at)}</div>
               </div>
               {canReviewEscrow ? (
                 <Button
@@ -229,7 +229,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
                   Review
                 </Button>
               ) : (
-                <span className="text-xs font-medium uppercase text-slate-700">Pending</span>
+                <span className="text-xs font-medium uppercase text-[#4B5563]">Pending</span>
               )}
             </div>
           ))}
@@ -253,7 +253,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
               <div key={policy.id} className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1.5 text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-gray-900">{formatMoney(remaining)} remaining</span>
-                  <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold uppercase text-slate-700">{policy.status}</span>
+                  <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold uppercase text-[#4B5563]">{policy.status}</span>
                 </div>
                 <div className="text-gray-600">
                   {formatMoney(deducted)} / {formatMoney(owed)} · max {formatMoney(policy.max_per_settlement_cents)} / settlement
@@ -301,7 +301,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
             )
           </h4>
           <div className="flex items-center justify-between text-xs">
-            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 font-semibold uppercase text-slate-700">
+            <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 font-semibold uppercase text-[#4B5563]">
               {resolvedSettlement.status}
             </span>
             <span className="font-semibold text-gray-900">Net {formatUsd(resolvedSettlement.net_pay)}</span>
@@ -315,7 +315,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
           <h4 className="mb-2 text-xs font-semibold uppercase text-gray-600">
             Open pre-settlement, no lines yet (<EntityLinkOrTombstone kind="settlement" id={preSettlementQ.data.settlement.id} name={settlementLabel(preSettlementQ.data.settlement)} noun="Record" />)
           </h4>
-          <p className="mb-2 text-xs text-slate-700">
+          <p className="mb-2 text-xs text-[#4B5563]">
             This is the driver's current open cycle — it does not necessarily mean this load is unpaid; check the
             load-settlement link above once it settles.
           </p>
@@ -409,7 +409,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
               </Button>
               <Button
                 size="sm"
-                className="border-slate-200! bg-slate-600! hover:bg-slate-600!"
+                className="border-[#E5E7EB]! bg-[#1F2A44]! hover:bg-[#1F2A44]!"
                 loading={approveMutation.isPending}
                 onClick={() => void approveMutation.mutateAsync()}
               >
