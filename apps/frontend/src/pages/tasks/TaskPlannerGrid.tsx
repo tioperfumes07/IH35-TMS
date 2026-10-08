@@ -27,10 +27,10 @@ import { TaskSubjectLink } from "../../components/tasks/TaskSubjectLink";
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
   pending:     "bg-gray-100 text-gray-700 border-gray-300",
-  in_progress: "bg-slate-100 text-slate-700 border-slate-300",
+  in_progress: "bg-[#F7F8FA] text-[#4B5563] border-[#E5E7EB]",
   blocked:     "bg-red-50 text-red-800 border-red-300",
-  review:      "bg-slate-100 text-slate-700 border-slate-300",
-  completed:   "bg-slate-100 text-slate-800 border-slate-300",
+  review:      "bg-[#F7F8FA] text-[#4B5563] border-[#E5E7EB]",
+  completed:   "bg-[#F7F8FA] text-[#1F2A44] border-[#E5E7EB]",
   cancelled:   "bg-gray-50 text-gray-400 border-gray-200 line-through",
 };
 
@@ -108,7 +108,7 @@ function ProgressBar({ pct }: { pct: number }) {
     <div className="mt-0.5 flex items-center gap-1">
       <div className="relative h-1.5 flex-1 rounded-full bg-gray-200 overflow-hidden">
         <div
-          className="h-full rounded-full bg-slate-600 transition-all"
+          className="h-full rounded-full bg-[#1F2A44] transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -159,7 +159,7 @@ function TaskDrawer({ task, onClose }: DrawerProps) {
           kind="task"
           id={task.task_id}
           label="Open task activity"
-          className="inline-flex text-xs font-semibold text-slate-700 hover:underline"
+          className="inline-flex text-xs font-semibold text-[#4B5563] hover:underline"
         />
       </div>
     </div>
@@ -280,7 +280,7 @@ export function TaskPlannerGrid() {
                   return (
                     <th
                       key={d}
-                      className={`border border-gray-200 px-1 py-1 text-center text-xs font-semibold ${isToday ? "bg-slate-100 text-slate-700" : "text-gray-600"}`}
+                      className={`border border-gray-200 px-1 py-1 text-center text-xs font-semibold ${isToday ? "bg-[#F7F8FA] text-[#4B5563]" : "text-gray-600"}`}
                     >
                       <div>{fmtDow(d)}</div>
                       <div className="text-xs font-normal opacity-70">{fmtMD(d)}</div>
