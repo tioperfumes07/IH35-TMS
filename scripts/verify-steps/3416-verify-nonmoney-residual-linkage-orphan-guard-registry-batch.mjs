@@ -13,5 +13,7 @@ export default {
   name: "verify-nonmoney-residual-linkage-orphan-guard-registry-batch",
   async run(ctx) {
     for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
+    // BANK leftover refuse — SafetyGeneric / Maintenance / Fleet catalog list house tokens
+    await ctx.run("node", ["scripts/verify-91289-safety-maint-fleet-cat-slate-leftover-chrome.mjs"]);
   },
 };
