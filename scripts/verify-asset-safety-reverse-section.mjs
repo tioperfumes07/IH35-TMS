@@ -410,8 +410,8 @@ if (SELFTEST) {
     {
       ...live,
       [SECTION]: live[SECTION].replace(
-        /<EntityLink\n          kind=\{openKind\}\n          id=\{openId\}\n          label=\{linkLabel\}\n          className="text-xs font-semibold text-slate-700 underline"\n        \/>/,
-        '<Link className="text-xs font-semibold text-slate-700 underline" to={to ?? "#"}>{linkLabel}</Link>'
+        /<EntityLink\n          kind=\{openKind\}\n          id=\{openId\}\n          label=\{linkLabel\}\n          className="text-xs font-semibold text-\[#1F2A44\] underline"\n        \/>/,
+        '<Link className="text-xs font-semibold text-[#1F2A44] underline" to={to ?? "#"}>{linkLabel}</Link>'
       ),
     },
     "EntityLink-only"

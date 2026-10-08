@@ -121,7 +121,7 @@ export function collectProblems(root = ROOT, overrides = null) {
     if ((routes.match(/WHERE id = \$\$\{idParameter\} AND operating_company_id = \$\$\{companyParameter\}/g) ?? []).length < 2) {
       problems.push(`${ROUTES}: update writes must bind id and company`);
     }
-    if (!/WHERE id = \$1 AND operating_company_id = \$2 LIMIT 1/.test(routes)) {
+    if (!/WHERE id = \$1 AND operating_company_id = \$2(?:::\w+)? LIMIT 1/.test(routes)) {
       problems.push(`${ROUTES}: line-item parent lookup must bind id and company`);
     }
   }
@@ -221,7 +221,7 @@ if (process.argv.includes("--selftest")) {
   expectCaught(
     "routes-parent-company-predicate-removed",
     ROUTES,
-    (s) => s.replace("WHERE id = $1 AND operating_company_id = $2 LIMIT 1", "WHERE id = $1 LIMIT 1"),
+    (s) => s.replace("WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", "WHERE id = $1 LIMIT 1"),
     "line-item parent lookup must bind id and company"
   );
 
