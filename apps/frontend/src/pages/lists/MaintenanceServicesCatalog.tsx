@@ -101,8 +101,8 @@ function intervalDisplay(svc: MaintenanceService) {
 // (e.g. TerminationReasonsListPage) — slate only, never green/amber/emerald for a status badge.
 function activeBadge(isActive: boolean) {
   return isActive
-    ? "rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700"
-    : "rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600";
+    ? "rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]"
+    : "rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs text-[#4B5563]";
 }
 
 function buildServicesColumns(onEdit: (svc: MaintenanceService) => void): Array<ParityColumn<MaintenanceService>> {

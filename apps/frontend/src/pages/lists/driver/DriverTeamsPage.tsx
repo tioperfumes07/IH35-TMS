@@ -41,7 +41,7 @@ function DriverTeamMemberCell({ row, slot }: { row: MdataDriverTeam; slot: "prim
   // LV-LISTS-DRIVER-TEAMS-DEAD-TOMBSTONE-LINK: unresolved / UUID-shaped names must not drill.
   if (!driverId || isUnresolvedEntityTombstone(rawName || null, driverId, "Driver")) {
     return (
-      <span className="text-xs text-slate-600" data-testid={`driver-teams-${slot}-tombstone`}>
+      <span className="text-xs text-[#4B5563]" data-testid={`driver-teams-${slot}-tombstone`}>
         {label}
       </span>
     );
@@ -58,7 +58,7 @@ function DriverTeamMemberCell({ row, slot }: { row: MdataDriverTeam; slot: "prim
 
 
 function statusPillClass() {
-  return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
+  return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]";
 }
 
 const TEAM_COLUMNS: Array<ParityColumn<MdataDriverTeam>> = [
@@ -188,7 +188,7 @@ export function DriverTeamsPage() {
 
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
       {!companyId ? (
-        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-slate-600">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-[#4B5563]">
           Select an operating company to view its driver teams.
         </div>
       ) : null}

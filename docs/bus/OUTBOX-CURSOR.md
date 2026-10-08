@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — DriverTeamsPage / MaintenanceServicesCatalog / lists-safety-shared
+
+FINDING: BANK-F91275 — DriverTeamsPage / MaintenanceServicesCatalog / lists-safety-shared Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: squash `af1df43ee3`
+GUARD: scripts/verify-91275-drv-teams-maint-slate-leftover-chrome.mjs + verify-steps/3468 piggyback
+LIVE PROOF: verify-91275-drv-teams-maint-slate-leftover-chrome.mjs exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3468 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — ScheduledReportsBackendPendingBanner / ReportBlockVPendingBanner / ReportBlockTPendingBanner
 
 FINDING: BANK-F91274 — ScheduledReportsBackendPendingBanner / ReportBlockVPendingBanner / ReportBlockTPendingBanner Tailwind slate-* → house tokens
