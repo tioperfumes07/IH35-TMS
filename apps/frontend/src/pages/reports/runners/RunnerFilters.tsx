@@ -3,6 +3,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import type { RunnerFilter } from "./runner-config";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EntityPicker } from "../../../components/EntityPicker";
+import { Combobox } from "../../../components/Combobox";
 
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import {
@@ -194,13 +195,14 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             return (
               <label key={filter.key} className="block">
                 <FilterLabel filter={filter} />
-                <select className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs" value={String(draft[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })}>
-                  {companies.map((company) => (
-                    <option key={company.id} value={company.id}>
-                      {company.legal_name}
-                    </option>
-                  ))}
-                </select>
+                <Combobox
+                  options={companies.map((company) => ({ value: company.id, label: company.legal_name }))}
+                  value={String(draft[filter.key] ?? selectedCompanyId ?? "") || null}
+                  onChange={(next) => staged.setDraft({ ...draft, [filter.key]: next ?? "" })}
+                  placeholder="Search company…"
+                  className="w-full text-xs"
+                  dataField={`runner-filter-${filter.key}`}
+                />
               </label>
             );
           })}
