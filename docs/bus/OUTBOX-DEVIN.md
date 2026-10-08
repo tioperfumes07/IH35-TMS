@@ -160,4 +160,4 @@ DONE: PR #25800 · squash 0c981f314f1251cc6512a4e3f0e88c98435e8450 · money-pr-l
 DONE: PR #25801 · squash 4a42a0d522be47400eec7833b2dd65c9b5629b4a · money-pr-local-gate exit 0 · CustomerDetail.tsx Credit Terms uncleared notice background changed from #F7F8FA to bg-[#F1F5F9]; verify-customer-billing-summary-fail-closed passes · baseline-lines-added = 0
 
 ## 2026-10-08 — ROUND 441.22 Devin: Customers landing K.9 inline filter-bar markers
-DONE: PR #25802 · squash pending · money-pr-local-gate exit 0 · added data-list-status-filter="customers" and data-customers-roster-filter-toolbar="inline" markers around Customers.tsx roster SegmentedControl; verify-k9-landing-filter-bar passes · baseline-lines-added = 0
+DONE: PR #25802 · squash d6f3ca09d8339d6c735bacf53a28901c82be3243 · money-pr-local-gate exit 0 · added data-list-status-filter="customers" and data-customers-roster-filter-toolbar="inline" markers around Customers.tsx roster SegmentedControl; verify-k9-landing-filter-bar passes · baseline-lines-added = 0
