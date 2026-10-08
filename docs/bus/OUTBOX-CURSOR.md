@@ -1,3 +1,27 @@
+## 2026-10-08T04:24Z · ROUND 441.21-B R1 ONE-DAY + PACED WEEKS
+
+FINDING: BANK-F441216 / BANK-F441217 — Relay one-day window answered under 180s; paced weeks 34/38 ran; Sep 27→today kicked.
+
+MERGED:
+- R1 #25807 squash `891cdfb6d2574fbf6e350a63e6f02569b32b95cf` — 180s timeout + ONEDAY_PROBE
+- R1c #25808 squash `e9d659ab895585d4bd3bea82348558577b1d80fd` — optional endDate paced range
+
+LIVE PROOF (Neon audit.audit_events, USMCA, CI down — local build is the record):
+- `r44121b-oneday-1` 2026-08-03 → **raw_rows=1780** pulled=1 upserted=1 windows=1 (NO timeout — no Relay ticket)
+- `r44121b-w34` 2026-08-17..08-23 → raw_rows=12460 (7×1780) pulled=0 upserted=0 windows=7 — Relay returns same ~1780 blob each day; client filter finds no fills that week (matches Neon week hist gap)
+- `r44121b-w38` 2026-09-14..09-20 → raw_rows=12460 pulled=0 upserted=0 windows=7 — same pattern
+- `r44121b-sep27` 2026-09-27..2026-10-08 env set + deploy in flight
+- USMCA fills 119 · min 2026-08-03 · max 2026-09-26 · pre_floor=0
+- healthz live `e9d659ab…`
+
+ALREADY DONE THIS ROUND (prior merges): R2 sync_log UPDATE policy · R3 claimRelayTick in try · date floor + guard · F441 · F442 · R5 CHAIN-05 match · R6 CC-1 drafts closed/merged
+
+REMAINING: paste sep27 raw_rows when probe completes · Relay note for Mykael/Ronan (no key): dtstart/dtend one-day answers but returns a fixed ~1780-row blob each call — upserts only when client date filter hits
+
+NEXT: sep27 completion proof · then R441.21-B close / slate if owner moves on
+
+Files Modified: OUTBOX only this PR; code already on tip via #25807/#25808
+
 ## 2026-10-07T23:20Z · RELAY-F442 SENDER FEE — PR #25758 OPEN
 
 FINDING: ACCT-F442 (RELAY-F442) — `total_amount_paid` is fuel-only; `sender_fee` ($2 on txn_4ypX8FQCRzHr5n) excluded from wallet + GL → $2/fill wallet drift vs Relay prepaid.
