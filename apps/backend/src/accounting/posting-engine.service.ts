@@ -1824,7 +1824,7 @@ async function buildBankDepositLines(client: DbClient, operatingCompanyId: strin
     display_id: string;
     deposit_date: string;
     bank_ledger_account_id: string;
-    undeposited_funds_account_id: string;
+    undeposited_funds_account_id: string | null;
     total_receipts_cents: number;
     cash_back_cents: number;
     amount_deposited_cents: number;
@@ -1881,13 +1881,45 @@ async function buildBankDepositLines(client: DbClient, operatingCompanyId: strin
       source_transaction_line_id: null,
     });
   }
-  lines.push({
-    account_id: dep.undeposited_funds_account_id,
-    debit_or_credit: "credit",
-    amount_cents: totalReceipts,
-    description: `${label} cleared from Undeposited Funds`,
-    source_transaction_line_id: null,
-  });
+  // ROUND 441.5 Phase 2 — "add funds" lines (line_type 'account', QBO's Add funds to this deposit) credit their own
+  // account: income, a liability (2410 related-party loan), equity (3000 owner's capital). Only the receipt remainder
+  // clears Undeposited Funds; a deposit with no receipt lines never touches it. Existing deposits (receipts only)
+  // post exactly as before.
+  const accountLinesRes = await client.query<{ id: string; account_id: string; amount_cents: string; description: string | null }>(
+    `SELECT id::text, account_id::text, amount_cents::bigint::text AS amount_cents, description
+       FROM accounting.deposit_lines
+      WHERE deposit_id = $1::uuid AND operating_company_id = $2::uuid AND line_type = 'account'
+      ORDER BY sort_order, id`,
+    [dep.id, operatingCompanyId]
+  );
+  let accountLinesTotal = 0;
+  for (const l of accountLinesRes.rows) {
+    const cents = Number(l.amount_cents);
+    accountLinesTotal += cents;
+    lines.push({
+      account_id: l.account_id,
+      debit_or_credit: "credit",
+      amount_cents: cents,
+      description: l.description ? `${label} — ${l.description}` : `${label} funds added`,
+      source_transaction_line_id: null,
+    });
+  }
+  const fromUndepositedFunds = totalReceipts - accountLinesTotal;
+  if (fromUndepositedFunds < 0) {
+    throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Bank deposit account lines exceed the deposit total");
+  }
+  if (fromUndepositedFunds > 0) {
+    if (!dep.undeposited_funds_account_id) {
+      throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Bank deposit has receipt lines but no Undeposited Funds account");
+    }
+    lines.push({
+      account_id: dep.undeposited_funds_account_id,
+      debit_or_credit: "credit",
+      amount_cents: fromUndepositedFunds,
+      description: `${label} cleared from Undeposited Funds`,
+      source_transaction_line_id: null,
+    });
+  }
 
   return {
     postingDate: dep.deposit_date,

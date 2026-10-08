@@ -25,6 +25,8 @@ export function check(engine) {
     ["bills", /FROM accounting\.bills\s+WHERE operating_company_id = \$1::uuid AND source_bank_transaction_id = \$2::uuid/],
     // ROUND 441.5 — the Expense a categorized money-out line created.
     ["expenses", /FROM accounting\.expenses\s+WHERE operating_company_id = \$1::uuid AND source_bank_transaction_id = \$2::uuid AND voided_at IS NULL`/],
+    // ROUND 441.5 Phase 2 — the Deposit a categorized money-in line created.
+    ["deposits", /FROM accounting\.deposits\s+WHERE operating_company_id = \$1::uuid AND source_bank_transaction_id = \$2::uuid AND voided_at IS NULL`[\s\S]{0,400}voidBankDepositOnClient\(/],
   ]) if (!re.test(engine)) f.push(`${ENGINE}: undo no longer voids the ${t} the line created`);
   // ROUND 441.5 — the entry is reversed here unless the line created an Expense, whose own void (above) reverses it.
   if (!/if \(line\.matched_journal_entry_id(?: && createdExpense\.rows\.length === 0)?\) \{\s*const r = await reverseOnceOnClient/.test(engine)) f.push(`${ENGINE}: undo of a categorize no longer reverses the entry it posted`);
@@ -42,6 +44,7 @@ if (process.argv.includes("--selftest")) {
   if (check(real).length) fails.push(`tree not clean: ${check(real).join("; ")}`);
   const plants = [
     ["bills no longer voided", real.replace(/FROM accounting\.bills\s+WHERE operating_company_id = \$1::uuid AND source_bank_transaction_id/, "FROM accounting.bills WHERE false AND source_bank_transaction_id")],
+    ["deposit no longer voided", real.replace("await voidBankDepositOnClient(", "await Promise.resolve(")],
     ["expense no longer voided", real.replace("SELECT 'expense', id::text FROM accounting.expenses", "SELECT 'expense', id::text FROM accounting.bills")],
     ["JE no longer reversed", real.replace("if (line.matched_journal_entry_id && createdExpense.rows.length === 0) {\n      const r = await reverseOnceOnClient", "if (false) {\n      const r = await reverseOnceOnClient")],
     ["any transfer revoked", real.replace("minted_from_bank_transaction_id === line.id", "minted_from_bank_transaction_id !== undefined")],
@@ -76,6 +79,13 @@ const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket }) => {
         WHERE table_schema = 'accounting' AND table_name = 'expenses' AND column_name = 'source_bank_transaction_id'`
     )
   ).rows.length > 0;
+  const hasDepositLink = (
+    await c.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'accounting' AND table_name = 'deposits' AND column_name = 'source_bank_transaction_id'`
+    )
+  ).rows.length > 0;
+  if (hasDepositLink) rows.push(await one("deposit", `SELECT d.id::text AS id, ${BUCKET_SQL(hasBucket)} AS bucket FROM accounting.deposits d JOIN banking.bank_transactions bt ON bt.id = d.source_bank_transaction_id WHERE d.voided_at IS NULL AND ${open}`));
   if (hasExpenseLink) rows.push(await one("expense", `SELECT d.id::text AS id, ${BUCKET_SQL(hasBucket)} AS bucket FROM accounting.expenses d JOIN banking.bank_transactions bt ON bt.id = d.source_bank_transaction_id WHERE d.voided_at IS NULL AND ${open}`));
   if (hasBucket) rows.push(await one("minted transfer", `SELECT t.id::text AS id, ${BUCKET_SQL(hasBucket)} AS bucket FROM banking.transfers t JOIN banking.bank_transactions bt ON bt.id = t.minted_from_bank_transaction_id WHERE t.revoked_at IS NULL AND ${open}`));
   const seen = (await c.query(`SELECT count(*)::int AS n FROM banking.bank_transactions bt WHERE ${open}`)).rows[0].n;

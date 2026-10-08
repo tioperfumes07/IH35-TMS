@@ -27,6 +27,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 import { POSTING_ENGINE_SUPPORTS_REPOST } from "../accounting/posting-engine.service.js";
 import { voidDocument } from "../accounting/void-document.service.js";
+import { voidBankDepositOnClient } from "../accounting/bank-deposits.service.js";
 import { unmatchBankTransactionOnClient } from "../accounting/bank-recon/unmatch-bank-transaction.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { assertBankTxnNotInReconciledSession } from "./closed-session-immutability.js";
@@ -46,7 +47,7 @@ export type BankLineUndoOutcome = {
   /** Journal entries that were already reversed or voided — GL untouched, link cleared (never a double reversal). */
   already_reversed_journal_entry_ids: string[];
   /** Documents the line CREATED, voided through the governed void path. */
-  voided_documents: Array<{ type: "bill" | "bill_payment" | "customer_payment" | "expense"; id: string }>;
+  voided_documents: Array<{ type: "bill" | "bill_payment" | "customer_payment" | "expense" | "deposit"; id: string }>;
   /** Pre-existing documents released back to the match pool (kind matched) — untouched. */
   released_documents: Array<{ kind: string; id: string }>;
   revoked_transfer_id: string | null;
@@ -172,6 +173,21 @@ async function voidDocumentsCreatedByLine(
       WHERE operating_company_id = $1::uuid AND source_bank_transaction_id = $2::uuid AND voided_at IS NULL`,
     [input.operatingCompanyId, input.bankTransactionId]
   );
+  // ROUND 441.5 Phase 2 — a Deposit this line created goes through the deposit's own governed void (reverse + release).
+  const createdDeposits = await client.query<{ id: string }>(
+    `SELECT id::text FROM accounting.deposits
+      WHERE operating_company_id = $1::uuid AND source_bank_transaction_id = $2::uuid AND voided_at IS NULL`,
+    [input.operatingCompanyId, input.bankTransactionId]
+  );
+  for (const dep of createdDeposits.rows) {
+    await voidBankDepositOnClient(client as never, {
+      operatingCompanyId: input.operatingCompanyId,
+      userId: input.actorUserId,
+      depositId: dep.id,
+      reason: input.reason,
+    });
+    outcome.voided_documents.push({ type: "deposit", id: dep.id });
+  }
   for (const doc of created.rows) {
     await voidDocument(client as never, {
       operatingCompanyId: input.operatingCompanyId,
@@ -388,11 +404,17 @@ export async function undoBankLineOnClient(
     // then void the documents it created (after the release, so no void cascade finds the line by its links).
     // ROUND 441.5 — when the line created an Expense, that entry is the EXPENSE's own posting: the expense's void (below,
     // voidDocumentsCreatedByLine) reverses it with the document, so it is not reversed here as a bare entry.
+    // ROUND 441.5 Phase 2 — the same for a Deposit the line created (QBO "Add funds to this deposit").
     const createdExpense = line.matched_journal_entry_id
       ? await client.query(
           `SELECT 1 FROM accounting.expenses
             WHERE operating_company_id = $1::uuid AND source_bank_transaction_id = $2::uuid
-              AND journal_entry_id = $3::uuid AND voided_at IS NULL LIMIT 1`,
+              AND journal_entry_id = $3::uuid AND voided_at IS NULL
+           UNION ALL
+           SELECT 1 FROM accounting.deposits
+            WHERE operating_company_id = $1::uuid AND source_bank_transaction_id = $2::uuid
+              AND journal_entry_id = $3::uuid AND voided_at IS NULL
+           LIMIT 1`,
           [input.operatingCompanyId, line.id, line.matched_journal_entry_id]
         )
       : { rows: [] };

@@ -11,6 +11,8 @@ const unmatchBankTransactionOnClient = vi.fn(async () => ({ released: [{ kind: "
 const revokeTransferInClient = vi.fn(async () => ({ released_bank_transaction_ids: ["line-1", "line-2"] }));
 
 vi.mock("../../accounting/void-document.service.js", () => ({ voidDocument }));
+const voidBankDepositOnClient = vi.fn(async () => ({ id: "dep-1" }));
+vi.mock("../../accounting/bank-deposits.service.js", () => ({ voidBankDepositOnClient }));
 vi.mock("../../accounting/journal-entries.service.js", () => ({ reverseJournalEntryNoFlip }));
 vi.mock("../../accounting/posting-engine.service.js", () => ({ POSTING_ENGINE_SUPPORTS_REPOST: true }));
 vi.mock("../../accounting/bank-recon/unmatch-bank-transaction.service.js", () => ({ unmatchBankTransactionOnClient }));
@@ -27,7 +29,7 @@ const ACTOR = "22222222-2222-4222-8222-222222222222";
 type Line = { review_bucket: string; resolution_kind: string | null; matched_journal_entry_id?: string | null; matched_transfer_id?: string | null };
 
 /** A client whose line starts as `line` and lands in `after` (For review unless a test says otherwise). */
-function client(line: Line, opts: { after?: { review_bucket: string; resolution_kind: string | null }; je?: { status: string; reversed_by_je_id: string | null } | null; created?: Array<{ type: string; id: string }>; transfer?: { id: string; revoked_at: string | null; minted_from_bank_transaction_id: string | null }; createdExpense?: boolean } = {}) {
+function client(line: Line, opts: { after?: { review_bucket: string; resolution_kind: string | null }; je?: { status: string; reversed_by_je_id: string | null } | null; created?: Array<{ type: string; id: string }>; transfer?: { id: string; revoked_at: string | null; minted_from_bank_transaction_id: string | null }; createdExpense?: boolean; createdDeposit?: boolean } = {}) {
   const sql: string[] = [];
   const q = vi.fn(async (text: string) => {
     sql.push(text);
@@ -36,6 +38,7 @@ function client(line: Line, opts: { after?: { review_bucket: string; resolution_
     if (/FROM accounting\.journal_entries\s+WHERE id = \$1::uuid/.test(text)) return { rows: opts.je === null ? [] : [opts.je ?? { status: "posted", reversed_by_je_id: null }] };
     if (/'bill_payment'::text AS type/.test(text)) return { rows: opts.created ?? [] };
     if (/FROM accounting\.expenses\s+WHERE operating_company_id = \$1::uuid AND source_bank_transaction_id/.test(text)) return { rows: opts.createdExpense ? [{ "?column?": 1 }] : [] };
+    if (/^SELECT id::text FROM accounting\.deposits/.test(text.trim())) return { rows: opts.createdDeposit ? [{ id: "dep-1" }] : [] };
     if (/FROM banking\.transfers/.test(text)) return { rows: opts.transfer ? [opts.transfer] : [] };
     return { rows: [] };
   });
@@ -126,5 +129,18 @@ describe("bank-line state machine — UNDO of a categorize that CREATED an expen
     const out = await run(c);
     expect(reverseJournalEntryNoFlip).toHaveBeenCalledTimes(1);
     expect(out.reversed_journal_entry_ids).toEqual(["je-1"]);
+  });
+});
+
+describe("bank-line state machine — UNDO of a categorize that CREATED a deposit (ROUND 441.5 Phase 2)", () => {
+  it("voids the deposit through its own governed void and does not reverse its entry a second time", async () => {
+    const { c } = client(
+      { review_bucket: "categorized", resolution_kind: "added", matched_journal_entry_id: "je-dep" },
+      { createdExpense: true, createdDeposit: true }
+    );
+    const out = await run(c);
+    expect(reverseJournalEntryNoFlip).not.toHaveBeenCalled();
+    expect(voidBankDepositOnClient).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ depositId: "dep-1", userId: ACTOR }));
+    expect(out.voided_documents).toEqual([{ type: "deposit", id: "dep-1" }]);
   });
 });

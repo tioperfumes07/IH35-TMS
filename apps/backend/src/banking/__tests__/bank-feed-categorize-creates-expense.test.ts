@@ -15,12 +15,19 @@ const createAndPostBankLineExpenseOnClient = vi.fn(async () => ({
   posting_batch_id: "batch-exp",
 }));
 const resolveExpenseItemForAccount = vi.fn(async () => "item-1");
+const createAndPostBankLineDepositOnClient = vi.fn(async () => ({
+  deposit_id: "dep-1",
+  display_id: "DEP-2026-00001",
+  journal_entry_id: "je-dep",
+  posting_batch_id: "batch-dep",
+}));
 
 vi.mock("../../accounting/posting-engine.service.js", () => ({ postSourceTransactionInClientTx }));
 vi.mock("../../accounting/bank-line-expense.service.js", () => ({
   createAndPostBankLineExpenseOnClient,
   resolveExpenseItemForAccount,
 }));
+vi.mock("../../accounting/bank-deposits.service.js", () => ({ createAndPostBankLineDepositOnClient }));
 vi.mock("../../lib/feature-flags/service.js", () => ({ isEnabled: vi.fn(async () => true) }));
 vi.mock("../../accounting/expense-category-map/resolver.service.js", () => ({
   resolveAccountForCategory: vi.fn(async () => ({ account_id: "advance-acct" })),
@@ -72,6 +79,9 @@ function client(txn: Record<string, unknown>, opts: { vendorActive?: boolean } =
   const query = vi.fn(async (text: string, values?: unknown[]) => {
     sql.push({ text, values });
     if (/bt\.status::text\s+AS status/.test(text)) return { rows: [txn] };
+    if (/bt\.bank_account_id::text AS bank_account_id/.test(text)) {
+      return { rows: [{ transaction_date: "2026-09-21", description: "TRANSFER FROM JORGE", categorization_memo: null, bank_account_id: "ba-bofa", vendor_id: "vendor-x", customer_id: null }] };
+    }
     if (/bt\.transaction_date::text AS transaction_date/.test(text)) {
       return {
         rows: [
@@ -91,7 +101,7 @@ function client(txn: Record<string, unknown>, opts: { vendorActive?: boolean } =
         ],
       };
     }
-    if (/FROM mdata\.vendors/.test(text)) return { rows: opts.vendorActive === false ? [] : [{ "?column?": 1 }] };
+    if (/FROM mdata\.(vendors|customers)/.test(text)) return { rows: opts.vendorActive === false ? [] : [{ "?column?": 1 }] };
     if (/COUNT\(DISTINCT je\.id\)/.test(text)) return { rows: [{ n: "0" }] };
     return { rows: [] };
   });
@@ -150,9 +160,46 @@ describe("categorize poster — money out to an expense account creates an Expen
   });
 });
 
-describe("categorize poster — everything else keeps the categorization entry until Phase 2", () => {
+describe("categorize poster — money IN creates a Deposit (ROUND 441.5 Phase 2)", () => {
   it.each([
-    ["money in to an expense account", { is_credit: true }],
+    ["a liability (2410 related-party loan)", "Liability"],
+    ["equity (3000 owner's capital)", "Equity"],
+    ["income", "Income"],
+    ["an expense account (a refund)", "Expense"],
+  ])("money in to %s is a Deposit crediting that account, linked both ways", async (_label, type) => {
+    const { c, sql } = client(txnRow({ is_credit: true, cat_account_type: type, categorization_gl_account_id: "acct-2410", cat_account_id: "acct-2410" }));
+    const out = await run(c);
+    expect(postSourceTransactionInClientTx).not.toHaveBeenCalled();
+    expect(createAndPostBankLineExpenseOnClient).not.toHaveBeenCalled();
+    const [, input, actor] = createAndPostBankLineDepositOnClient.mock.calls[0] as unknown as [unknown, Record<string, unknown>, { userId: string }];
+    expect(input).toMatchObject({
+      operatingCompanyId: CO,
+      depositDate: "2026-09-21",
+      amountCents: 1000,
+      bankAccountId: "ba-bofa",
+      bankLedgerAccountId: "acct-1000",
+      accountId: "acct-2410",
+      receivedFromVendorId: "vendor-x",
+      receivedFromCustomerId: null,
+      sourceBankTransactionId: BT,
+    });
+    expect(actor).toEqual({ userId: ACTOR });
+    const stamp = sql.find((x) => /SET matched_deposit_id = \$1::uuid/.test(x.text));
+    expect(stamp?.values).toEqual(["dep-1", "je-dep", BT, CO]);
+    expect(out).toMatchObject({ posted: true, deposit_id: "dep-1", journal_entry_id: "je-dep", direction: "money_in" });
+    createAndPostBankLineDepositOnClient.mockClear();
+  });
+
+  it("refuses a payer tag from another company", async () => {
+    const { c } = client(txnRow({ is_credit: true, cat_account_type: "Liability" }), { vendorActive: false });
+    const out = await run(c);
+    expect(out).toMatchObject({ posted: false, reason: "account_cross_entity" });
+    expect(createAndPostBankLineDepositOnClient).not.toHaveBeenCalled();
+  });
+});
+
+describe("categorize poster — money OUT to a non-expense account keeps the categorization entry", () => {
+  it.each([
     ["money out to a liability (2410)", { cat_account_type: "Liability" }],
     ["money out to equity", { cat_account_type: "Equity" }],
     ["money out to an asset", { cat_account_type: "Asset" }],
