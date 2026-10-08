@@ -21,6 +21,7 @@ const LABEL = "verify-vendor-credit-live-path";
 const SELFTEST = process.argv.includes("--selftest");
 
 const ROUTES = "apps/backend/src/accounting/vendor-credits.routes.ts";
+const SERVICE = "apps/backend/src/accounting/vendor-credits.service.ts";
 const BILLS_SERVICE = "apps/backend/src/accounting/bills.service.ts";
 const IDENTITY = "apps/backend/src/accounting/vendor-identity.ts";
 const INDEX = "apps/backend/src/index.ts";
@@ -36,7 +37,8 @@ const REQUIRED = [
   [ROUTES, "bill_vendor_mismatch", "apply must refuse another vendor's bill"],
   [ROUTES, "over_apply_refused", "apply must refuse more than the unapplied credit"],
   [ROUTES, "applied_cents_exceeds_bill_balance", "apply must refuse more than the bill balance"],
-  [ROUTES, "coa_account_id_not_persisted", "create must refuse a GL account it cannot persist"],
+  [SERVICE, "account_not_postable_for_company", "create must refuse a GL account it cannot persist (enforced in the extracted create service)"],
+  [ROUTES, "VendorCreditCreateError", "create route must surface the service refusal"],
   [ROUTES, "nextVendorCreditDisplayId", "create must use the canonical display-id generator"],
   [ROUTES, 'app.get("/api/v1/accounting/vendor-credits/next-number"', "create chrome must preview the same generator"],
   [INDEX, "registerVendorCreditsRoutes", "vendor credit routes must stay mounted"],

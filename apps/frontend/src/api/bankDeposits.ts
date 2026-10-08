@@ -38,6 +38,10 @@ export type BankDepositDetail = BankDepositSummary & {
     amount_cents?: number | string | null;
     source_payment_id?: string | null;
     source_factoring_advance_id?: string | null;
+    received_from_vendor_id?: string | null;
+    received_from_customer_id?: string | null;
+    received_from_vendor_name?: string | null;
+    received_from_customer_name?: string | null;
     payment_display_id?: string | null;
     customer_id?: string | null;
     customer_name?: string | null;

@@ -98,7 +98,7 @@ function ClusterCard({ cluster, companyId }: { cluster: DuplicateCluster; compan
       {previewed ? (
         <div className="mt-2 space-y-2" data-testid="dup-preview">
           {others.map((m) => (
-            <div key={m.id} className="rounded border border-[#E5E7EB] p-2">
+            <div key={m.id} className="border-t border-[#E5E7EB] py-2">
               <div className="mb-1 text-xs font-semibold">
                 {nameOf(m)} → {nameOf(members.find((x) => x.id === survivorId)!)}
               </div>
@@ -116,7 +116,7 @@ function ClusterCard({ cluster, companyId }: { cluster: DuplicateCluster; compan
             </div>
           ))}
           {blockers.length ? (
-            <div role="alert" className="rounded border border-red-300 bg-red-50 p-2 text-xs text-red-700">
+            <div role="alert" className="border border-red-300 bg-red-50 p-2 text-xs text-red-700">
               {blockers.map((b) => (
                 <div key={b}>{b}</div>
               ))}
