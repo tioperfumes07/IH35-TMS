@@ -1,3 +1,37 @@
+## 2026-10-08T05:16Z · BANK leftover slate — finance scenarios / break-even / statements
+
+FINDING: BANK-F91161 — FinanceScenariosPage / BreakEvenPage / FinancialStatementsPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25814 squash `3daa5b1bc6` (BANK-F91160 WO/maint/fault)
+GUARD: scripts/verify-fin-scenarios-slate-leftover-chrome.mjs + verify-steps/3676 piggyback
+LIVE PROOF: verify-fin-scenarios-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; rg slate- = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 finance pages + refuse guard + 3676 piggyback + OUTBOX
+
+## 2026-10-08T05:15Z · ROUND 441.21-B CLOSED — R1–R6 complete; relay timer unsubscribed
+
+FINDING: BANK-F44121B — ROUND 441.21-B complete on tip; continue = slate leftover drain only.
+
+CLOSED (squash on origin/main):
+- R2 sync_log UPDATE policy + class guard
+- R3 claimRelayTick inside try
+- Date floor 2026-08-03 + guard
+- F441 fuel breakdown · F442 sender_fee (#25758)
+- R5 CHAIN-05 Match engine (#25804 `6a707a89ce`)
+- R1 one-day raw_rows=1780 (#25807) · paced weeks (#25808) · sep27 upserted=114 (#25810 `fa2c997db7`)
+- USMCA fills 233 · min 2026-08-03 · max 2026-10-08 · pre_floor=0
+
+Timer `44121b-relay-continue` UNSUBSCRIBED. Active: `slate-drain-continue` only.
+Files Modified: OUTBOX only this tip block
+
+## 2026-10-08T05:11Z · BANK leftover slate — WO detail / maint settings / fault alerts (catch-up)
+
+FINDING: BANK-F91160 — WorkOrderDetailPage / MaintenanceSettingsPage / FaultCodeAlertsPage house tokens (merged #25814 `3daa5b1bc6`; OUTBOX tip missed in squash — logged here)
+LANE: NON-FINANCIAL
+GUARD: scripts/verify-wo-maint-settings-slate-leftover-chrome.mjs + verify-steps/3764 piggyback
+LIVE PROOF: already on tip via #25814
+Files Modified: OUTBOX catch-up only
+
 ## 2026-10-08T05:05Z · BANK leftover slate — CF rolling / projections / prediction
 
 FINDING: BANK-F91159 — RollingLedgerTab / ManualDailyProjectionsTab / DailyPredictionTab Tailwind slate-* → house tokens

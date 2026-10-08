@@ -30,8 +30,8 @@ import {
 // this page replace it. A scenario is versioned (draft/active/superseded), never deleted.
 
 const STATUS_BADGE: Record<Scenario["status"], string> = {
-  draft: "bg-slate-100 text-slate-700",
-  active: "bg-slate-200 text-slate-800",
+  draft: "bg-[#F7F8FA] text-[#4B5563]",
+  active: "bg-[#E5E7EB] text-[#1F2A44]",
   superseded: "bg-gray-100 text-gray-500",
 };
 
@@ -152,7 +152,7 @@ export function FinanceScenariosPage() {
         key: "name",
         label: "Name",
         render: (row) => (
-          <Link to={`/finance/scenarios/${row.id}`} className="font-medium text-slate-800 hover:underline">
+          <Link to={`/finance/scenarios/${row.id}`} className="font-medium text-[#1F2A44] hover:underline">
             {row.name}
           </Link>
         ),
@@ -175,12 +175,12 @@ export function FinanceScenariosPage() {
             <button
               onClick={() => activateMutation.mutate(row.id)}
               disabled={activateMutation.isPending}
-              className="rounded-sm border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA] disabled:opacity-50"
             >
               Activate
             </button>
           ) : row.superseded_by_scenario_id ? (
-            <span className="text-xs text-slate-400">superseded</span>
+            <span className="text-xs text-[#6B7280]">superseded</span>
           ) : null,
       },
     ],
@@ -189,8 +189,8 @@ export function FinanceScenariosPage() {
 
   const header = (
     <div className="mb-4">
-      <h1 className="text-page-title font-semibold text-slate-800">Scenarios</h1>
-      <p className="text-xs text-slate-500">
+      <h1 className="text-page-title font-semibold text-[#1F2A44]">Scenarios</h1>
+      <p className="text-xs text-[#6B7280]">
         Versioned forecast scenarios — activate one at a time to drive Overview and Projections. Nothing posts to the GL.
       </p>
     </div>
@@ -201,7 +201,7 @@ export function FinanceScenariosPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         <PageHeader title="Scenarios" />
-        <p className="text-xs text-slate-500">Loading…</p>
+        <p className="text-xs text-[#6B7280]">Loading…</p>
       </div>
     );
   }
@@ -211,7 +211,7 @@ export function FinanceScenariosPage() {
       <div className="p-6" data-testid="finance-scenarios-page">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600" data-testid="finance-scenarios-not-available">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#6B7280]" data-testid="finance-scenarios-not-available">
           Scenario planning is not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_SCENARIOS_FLAG}</code> is off.)
         </div>
       </div>
@@ -231,13 +231,13 @@ export function FinanceScenariosPage() {
           onCancel={staged.cancel}
           applyDisabled={!staged.dirty}
           testIdPrefix="finance-scenarios"
-          className="rounded-sm border border-slate-200 bg-white p-2"
+          className="rounded-sm border border-[#E5E7EB] bg-white p-2"
         >
           <div className="flex flex-wrap gap-3">
-            <label className="text-xs font-semibold text-slate-600">
+            <label className="text-xs font-semibold text-[#6B7280]">
               Status
               <SelectCombobox
-                className="mt-1 block w-full min-w-[10rem] rounded-sm border border-slate-300 px-2 py-1 text-xs"
+                className="mt-1 block w-full min-w-[10rem] rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
                 value={staged.draft.status}
                 onChange={(e) =>
                   staged.setDraft({ ...staged.draft, status: e.target.value as ScenarioListFilter["status"] })
@@ -250,10 +250,10 @@ export function FinanceScenariosPage() {
                 <option value="superseded">Superseded</option>
               </SelectCombobox>
             </label>
-            <label className="text-xs font-semibold text-slate-600">
+            <label className="text-xs font-semibold text-[#6B7280]">
               Period basis
               <SelectCombobox
-                className="mt-1 block w-full min-w-[10rem] rounded-sm border border-slate-300 px-2 py-1 text-xs"
+                className="mt-1 block w-full min-w-[10rem] rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
                 value={staged.draft.periodBasis}
                 onChange={(e) =>
                   staged.setDraft({
@@ -279,77 +279,77 @@ export function FinanceScenariosPage() {
       </div>
 
       {creatorOpen && (
-        <section className="mb-6 overflow-hidden rounded-sm border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">
+        <section className="mb-6 overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+          <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-3 text-xs font-semibold text-[#4B5563]">
             New scenario
           </div>
           <div className="space-y-4 px-4 py-4">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <label className="block">
-                <span className="text-xs font-medium text-slate-600">Name *</span>
+                <span className="text-xs font-medium text-[#6B7280]">Name *</span>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="FY27 Base Case"
-                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
+                  className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs"
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-slate-600">Period basis</span>
+                <span className="text-xs font-medium text-[#6B7280]">Period basis</span>
                 <select
                   value={periodBasis}
                   onChange={(e) => setPeriodBasis(e.target.value as PeriodBasis)}
-                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
+                  className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs"
                 >
                   <option value="monthly">Monthly</option>
                   <option value="quarterly">Quarterly</option>
                 </select>
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-slate-600">First period starts *</span>
+                <span className="text-xs font-medium text-[#6B7280]">First period starts *</span>
                 <div className="mt-1">
                   <DatePicker value={periodStart} onChange={setPeriodStart} />
                 </div>
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-slate-600">Number of periods *</span>
+                <span className="text-xs font-medium text-[#6B7280]">Number of periods *</span>
                 <input
                   type="number"
                   min={1}
                   max={60}
                   value={periodCount}
                   onChange={(e) => setPeriodCount(e.target.value)}
-                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
+                  className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs"
                 />
               </label>
             </div>
             <label className="block">
-              <span className="text-xs font-medium text-slate-600">Notes</span>
+              <span className="text-xs font-medium text-[#6B7280]">Notes</span>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
-                className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
+                className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs"
               />
             </label>
 
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
                   Line items (each applies the same monthly estimate to every period)
                 </span>
                 <button
                   onClick={() => setLines((ls) => [...ls, emptyLine()])}
-                  className="text-xs font-medium text-slate-700 underline"
+                  className="text-xs font-medium text-[#4B5563] underline"
                 >
                   + Add line
                 </button>
               </div>
               <div className="space-y-2">
                 {lines.map((line, idx) => (
-                  <div key={line.key} className="grid grid-cols-2 gap-2 border-t border-slate-100 py-3 md:grid-cols-6">
+                  <div key={line.key} className="grid grid-cols-2 gap-2 border-t border-[#E5E7EB] py-3 md:grid-cols-6">
                     <label className="block">
-                      <span className="text-xs font-medium text-slate-600">Kind</span>
+                      <span className="text-xs font-medium text-[#6B7280]">Kind</span>
                       <select
                         value={line.category_kind}
                         onChange={(e) =>
@@ -357,36 +357,36 @@ export function FinanceScenariosPage() {
                             ls.map((l, i) => (i === idx ? { ...l, category_kind: e.target.value as CategoryKind } : l))
                           )
                         }
-                        className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
+                        className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs"
                       >
                         <option value="revenue">Revenue</option>
                         <option value="expense">Expense</option>
                       </select>
                     </label>
                     <label className="block md:col-span-1">
-                      <span className="text-xs font-medium text-slate-600">Category *</span>
+                      <span className="text-xs font-medium text-[#6B7280]">Category *</span>
                       <input
                         value={line.category_label}
                         onChange={(e) =>
                           setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, category_label: e.target.value } : l)))
                         }
                         placeholder="Line-haul revenue"
-                        className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
+                        className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs"
                       />
                     </label>
                     <label className="block md:col-span-2">
-                      <span className="text-xs font-medium text-slate-600">Assumption *</span>
+                      <span className="text-xs font-medium text-[#6B7280]">Assumption *</span>
                       <input
                         value={line.assumption_note}
                         onChange={(e) =>
                           setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, assumption_note: e.target.value } : l)))
                         }
                         placeholder="5% growth over trailing 3mo avg"
-                        className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
+                        className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs"
                       />
                     </label>
                     <label className="block">
-                      <span className="text-xs font-medium text-slate-600">Monthly estimate ($)</span>
+                      <span className="text-xs font-medium text-[#6B7280]">Monthly estimate ($)</span>
                       <div className="mt-1">
                         <MoneyInput
                           valueCents={line.monthly_estimate_cents}
@@ -422,7 +422,7 @@ export function FinanceScenariosPage() {
               {createMutation.isPending ? "Creating…" : "Create scenario"}
             </button>
             {!canSubmit ? (
-              <p id="finance-scenario-submit-hint" className="text-xs text-slate-600">
+              <p id="finance-scenario-submit-hint" className="text-xs text-[#6B7280]">
                 {submitHint}
               </p>
             ) : null}

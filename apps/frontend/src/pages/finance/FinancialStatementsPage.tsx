@@ -122,7 +122,7 @@ function AccountCell({
             }
           : null
       }
-      className="text-slate-700 underline-offset-2 hover:underline"
+      className="text-[#4B5563] underline-offset-2 hover:underline"
       title="View ledger detail"
     >
       {display}
@@ -152,7 +152,7 @@ function statementColumns(
       key: "account_code",
       label: "Account #",
       sortable: true,
-      render: (line) => <span className="font-medium text-slate-900">{line.account_code || "—"}</span>,
+      render: (line) => <span className="font-medium text-[#0F1219]">{line.account_code || "—"}</span>,
     });
   }
   columns.push({
@@ -194,7 +194,7 @@ function trialBalanceColumns(
       key: "account_code",
       label: "Account #",
       sortable: true,
-      render: (row) => <span className="font-medium text-slate-900">{row.account_code || "—"}</span>,
+      render: (row) => <span className="font-medium text-[#0F1219]">{row.account_code || "—"}</span>,
     });
   }
   columns.push(
@@ -229,7 +229,7 @@ function trialBalanceColumns(
       sortable: true,
       className: "text-right",
       cellClass: "text-right",
-      render: (row) => <span className={row.net_balance < 0 ? "text-rose-700" : "text-slate-900"}>{money(row.net_balance)}</span>,
+      render: (row) => <span className={row.net_balance < 0 ? "text-rose-700" : "text-[#0F1219]"}>{money(row.net_balance)}</span>,
     },
   );
   return columns;
@@ -316,7 +316,7 @@ export function FinancialStatementsPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <p className="text-xs text-slate-500">Loading…</p>
+        <p className="text-xs text-[#6B7280]">Loading…</p>
       </div>
     );
   }
@@ -326,7 +326,7 @@ export function FinancialStatementsPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#6B7280]">
           Financial statements are not yet enabled for this company. (Feature flag <code>{FINANCE_STATEMENTS_UI_FLAG}</code> is off.)
         </div>
       </div>
@@ -581,7 +581,7 @@ export function FinancialStatementsPage() {
 
       {!companyId ? <p className="mb-3 text-xs text-red-600">Select an operating company.</p> : null}
 
-      <div className="no-print mb-4 flex flex-wrap items-center gap-2 border-b border-slate-200">
+      <div className="no-print mb-4 flex flex-wrap items-center gap-2 border-b border-[#E5E7EB]">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -589,7 +589,7 @@ export function FinancialStatementsPage() {
             onClick={() => setTab(t.id)}
             className={[
               "whitespace-nowrap border-b-2 px-1 py-2 text-xs font-medium",
-              tab === t.id ? "border-slate-800 text-slate-900" : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700",
+              tab === t.id ? "border-[#E5E7EB] text-[#0F1219]" : "border-transparent text-[#6B7280] hover:border-[#E5E7EB] hover:text-[#4B5563]",
             ].join(" ")}
             aria-pressed={tab === t.id}
           >
@@ -606,7 +606,7 @@ export function FinancialStatementsPage() {
           onCancel={staged.cancel}
           applyDisabled={!staged.dirty || draftInvalid}
           testIdPrefix="finance-statements"
-          className="min-w-[18rem] flex-1 rounded-sm border border-slate-200 bg-white p-2"
+          className="min-w-[18rem] flex-1 rounded-sm border border-[#E5E7EB] bg-white p-2"
         >
           <div className="flex flex-wrap items-end gap-3">
             <BasisSelector
@@ -615,7 +615,7 @@ export function FinancialStatementsPage() {
             />
             {usesRange ? (
               <>
-                <label className="text-xs text-slate-600">
+                <label className="text-xs text-[#6B7280]">
                   From
                   <DatePicker
                     className="mt-1 block h-9"
@@ -623,7 +623,7 @@ export function FinancialStatementsPage() {
                     onChange={(next) => staged.setDraft({ ...staged.draft, start: next })}
                   />
                 </label>
-                <label className="text-xs text-slate-600">
+                <label className="text-xs text-[#6B7280]">
                   To
                   <DatePicker
                     className="mt-1 block h-9"
@@ -633,7 +633,7 @@ export function FinancialStatementsPage() {
                 </label>
               </>
             ) : (
-              <label className="text-xs text-slate-600">
+              <label className="text-xs text-[#6B7280]">
                 As-of date
                 <DatePicker
                   className="mt-1 block h-9"
@@ -682,7 +682,7 @@ export function FinancialStatementsPage() {
               onRetry={() => void plQuery.refetch()}
             />
           ) : null}
-          {plQuery.isLoading ? <p className="text-xs text-slate-500">Loading…</p> : null}
+          {plQuery.isLoading ? <p className="text-xs text-[#6B7280]">Loading…</p> : null}
           {plQuery.data ? (
             <>
               <div className="grid gap-2 md:grid-cols-3">
@@ -713,10 +713,10 @@ export function FinancialStatementsPage() {
                   basis={basis}
                 />
               ))}
-              <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
+              <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
                 <div className="flex items-center justify-between px-3 py-2 text-xs font-semibold">
                   <span>Net income</span>
-                  <span className={plQuery.data.net_income < 0 ? "text-rose-700" : "text-slate-700"}>{money(plQuery.data.net_income)}</span>
+                  <span className={plQuery.data.net_income < 0 ? "text-rose-700" : "text-[#4B5563]"}>{money(plQuery.data.net_income)}</span>
                 </div>
               </section>
             </>
@@ -735,7 +735,7 @@ export function FinancialStatementsPage() {
               onRetry={() => void bsQuery.refetch()}
             />
           ) : null}
-          {bsQuery.isLoading ? <p className="text-xs text-slate-500">Loading…</p> : null}
+          {bsQuery.isLoading ? <p className="text-xs text-[#6B7280]">Loading…</p> : null}
           {bsQuery.data ? (
             <>
               <div className="grid gap-2 md:grid-cols-3">
@@ -812,8 +812,8 @@ export function FinancialStatementsPage() {
               />
             </div>
           ) : null}
-          <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800">Trial balance</div>
+          <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+            <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs font-semibold text-[#1F2A44]">Trial balance</div>
             <ParityTable
               embedded
               columns={trialBalanceColumns(applied.start, applied.end, basis, showCodes)}
@@ -826,7 +826,7 @@ export function FinancialStatementsPage() {
               initialPageSize={300}
             />
             {tbQuery.data?.summary ? (
-              <div className="flex items-center justify-end gap-6 border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+              <div className="flex items-center justify-end gap-6 border-t border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs font-semibold text-[#4B5563]">
                 <span>Grand total</span>
                 <span>Debits {money(tbQuery.data.summary.grand_total_debits)}</span>
                 <span>Credits {money(tbQuery.data.summary.grand_total_credits)}</span>
@@ -886,8 +886,8 @@ function StatementSection({
     [showType, fromDate, toDate, basis, showCodes],
   );
   return (
-    <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800">{title}</div>
+    <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+      <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs font-semibold text-[#1F2A44]">{title}</div>
       <ParityTable
         embedded
         columns={columns}
@@ -901,7 +901,7 @@ function StatementSection({
       {footerRows.map((row) => (
         <div
           key={row.label}
-          className="flex items-center justify-end gap-6 border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700"
+          className="flex items-center justify-end gap-6 border-t border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs font-semibold text-[#4B5563]"
         >
           <span>{row.label}</span>
           <span>{row.value}</span>
