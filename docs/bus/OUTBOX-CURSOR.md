@@ -1,3 +1,13 @@
+## 2026-10-09T01:10Z · BANK leftover slate — DtcAuto / CompanyViolationTypes / DriversReferenceCatalog
+
+FINDING: BANK-F91273 — DtcAutoWorkOrdersCard / CompanyViolationTypesListPage / DriversReferenceCatalogPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25951 squash `e4d8d45b47` (BANK-F91272 Inspections/DriversMasterData/InTransitIssues)
+GUARD: scripts/verify-dtc-coviol-drvref-slate-leftover-chrome.mjs + verify-steps/3474 piggyback
+LIVE PROOF: verify-dtc-coviol-drvref-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3474 piggyback + OUTBOX
+
 ## 2026-10-09T01:05Z · BANK leftover slate — Inspections / DriversMasterData / InTransitIssues
 
 FINDING: BANK-F91272 — InspectionsPage / DriversMasterDataPage / InTransitIssuesTable Tailwind slate-* → house tokens

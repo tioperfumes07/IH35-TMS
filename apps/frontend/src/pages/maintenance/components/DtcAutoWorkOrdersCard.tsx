@@ -27,7 +27,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
   const totalCount = query.data?.total_count ?? rows.length;
   const range = totalCount === 0 ? "0 of 0" : `${page * pageSize + 1}–${Math.min((page + 1) * pageSize, totalCount)} of ${totalCount}`;
   const pager = (testId: string) => totalCount > pageSize ? (
-    <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-2 py-1 text-xs text-slate-500" data-testid={testId}>
+    <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-2 py-1 text-xs text-[#6B7280]" data-testid={testId}>
       <span>{range}</span>
       <div className="flex gap-1">
         <button type="button" disabled={page === 0 || query.isFetching} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</button>
@@ -68,7 +68,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
                   </div>
                   <div className="truncate text-gray-500">{row.description ?? "DTC fault"}</div>
                   {onOpen ? (
-                    <button type="button" onClick={() => onOpen(row.id)} className="mt-1 font-semibold text-slate-700 hover:underline">Open work order</button>
+                    <button type="button" onClick={() => onOpen(row.id)} className="mt-1 font-semibold text-[#1F2A44] hover:underline">Open work order</button>
                   ) : <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Work order")} className="mt-1 inline-block font-semibold" />}
                 </li>
               );
@@ -85,7 +85,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-xs font-semibold text-gray-900">DTC Auto Work Orders</h3>
-        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{totalCount}</span>
+        <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs text-[#1F2A44]">{totalCount}</span>
       </div>
       {rows.length === 0 ? (
         <p className="text-xs text-gray-500">No open auto-created DTC work orders.</p>
