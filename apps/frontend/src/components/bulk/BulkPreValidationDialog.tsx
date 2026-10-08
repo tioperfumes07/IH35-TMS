@@ -29,14 +29,14 @@ export function BulkPreValidationDialog({
   return (
     <Modal open={open} onClose={onCancel} title={`${actionLabel} pre-check`}>
       <div className="space-y-4 text-xs">
-        <p className="text-slate-800" data-testid="bulk-prevalidation-summary">
+        <p className="text-[#0F1219]" data-testid="bulk-prevalidation-summary">
           <strong>{blocked.length}</strong> selected row{blocked.length === 1 ? "" : "s"} cannot be{" "}
           {actionLabel.toLowerCase()}ed. Deselect them or proceed with the{" "}
           <strong>{voidableCount}</strong> voidable row{voidableCount === 1 ? "" : "s"}.
         </p>
-        <div className="max-h-48 overflow-y-auto rounded-sm border border-slate-300 bg-slate-100 p-2">
-          <p className="mb-2 text-xs font-semibold uppercase text-slate-800">Blocked before submit</p>
-          <ul className="space-y-1 text-xs text-slate-900">
+        <div className="max-h-48 overflow-y-auto rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
+          <p className="mb-2 text-xs font-semibold uppercase text-[#0F1219]">Blocked before submit</p>
+          <ul className="space-y-1 text-xs text-[#0F1219]">
             {blocked.map((item) => {
               const display = item.label ?? item.id;
               return (
@@ -52,7 +52,7 @@ export function BulkPreValidationDialog({
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="button"
-            className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs text-slate-700"
+            className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs text-[#1F2A44]"
             onClick={onCancel}
           >
             Cancel

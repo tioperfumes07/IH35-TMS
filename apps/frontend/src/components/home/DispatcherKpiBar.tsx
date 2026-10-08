@@ -28,7 +28,7 @@ export function DispatcherKpiBar({ activeLoads, lateLoads, todayPickups, todayDe
       data-testid="dispatcher-kpi-bar"
       className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white"
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 sm:divide-x sm:divide-slate-100">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 sm:divide-x sm:divide-[#E5E7EB]">
         {cards.map((card) => (
           <Link
             key={card.label}
