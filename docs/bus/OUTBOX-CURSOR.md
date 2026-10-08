@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — Freshness / LoadTemplates / EntityLink
+
+FINDING: BANK-F91294 — FreshnessIndicator / CustomerLoadTemplatesReverseSection / EntityLink Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25975 squash `de5e764519` (BANK-F91293 AtRiskDriver/TopStatusBar/UnitFaults)
+GUARD: scripts/verify-91294-fresh-tmpl-elink-slate-leftover-chrome.mjs + verify-steps/3392 piggyback
+LIVE PROOF: verify-91294-fresh-tmpl-elink-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3392 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — AtRiskDriver / TopStatusBar / UnitFaults
 
 FINDING: BANK-F91293 — AtRiskDriverCard / TopStatusBar / UnitFaultsReverseSection Tailwind slate-* → house tokens

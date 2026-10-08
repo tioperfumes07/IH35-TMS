@@ -54,8 +54,8 @@ export function freshnessColor(
 }
 
 const COLOR_CLASS: Record<FreshnessColor, string> = {
-  green: "bg-slate-100 text-slate-700",
-  amber: "bg-slate-100 text-slate-700",
+  green: "bg-[#F7F8FA] text-[#1F2A44]",
+  amber: "bg-[#F7F8FA] text-[#1F2A44]",
   red: "bg-red-100 text-red-800",
 };
 

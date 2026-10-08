@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
  * places incorrectly — e.g. IntegrationTransactionsPage linking to a nonexistent
  * /accounting/bills/:id, and AuditTrailPage's sourceLink doing the same) across
  * AccountsPayableAgingPage, AccountRegisterPage, VendorsListView, CustomersListView,
- * DriversTable, and others: a react-router `<Link>` styled `text-slate-700 hover:underline`
+ * DriversTable, and others: a react-router `<Link>` styled `text-[#1F2A44] hover:underline`
  * (the locked §7 slate token, apps/frontend/src/design/tokens.ts).
  */
 
@@ -304,7 +304,7 @@ export interface EntityLinkProps {
 }
 
 const DEFAULT_LINK_CLASSNAME =
-  "text-slate-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1 rounded-sm";
+  "text-[#1F2A44] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6B7280] focus-visible:ring-offset-1 rounded-sm";
 
 /**
  * Resolves an entity kind + id to its real per-id detail route.
