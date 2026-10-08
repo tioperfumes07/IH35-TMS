@@ -66,14 +66,14 @@ function provenanceClass(fillConfidence?: LaneMileageFillConfidence | "operator"
   switch (fillConfidence) {
     case "check_zip":
       // §7 slate only (no amber). Weight + border make ZIP mismatch louder than a quiet History fill.
-      return "border-t border-slate-400 bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-900";
+      return "border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs font-semibold text-[#0F1219]";
     case "verify":
     case "reverse":
-      return "border-t border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600";
+      return "border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#4B5563]";
     case "operator":
-      return "border-t border-slate-200 px-2 py-1 text-xs text-slate-700";
+      return "border-t border-[#E5E7EB] px-2 py-1 text-xs text-[#4B5563]";
     default:
-      return "border-t border-slate-200 px-2 py-1 text-xs text-slate-600";
+      return "border-t border-[#E5E7EB] px-2 py-1 text-xs text-[#4B5563]";
   }
 }
 
@@ -105,29 +105,29 @@ export function MilesStrip({
   shortestProvenance,
 }: Props) {
   // fillConfidence drives chrome; provenance is the operator sentence.
-  const cell = "flex flex-1 flex-col items-center justify-center border-r border-slate-200 px-2 py-2 text-center last:border-r-0";
+  const cell = "flex flex-1 flex-col items-center justify-center border-r border-[#E5E7EB] px-2 py-2 text-center last:border-r-0";
   const editable = Boolean(onPracticalChange && onShortestChange);
   const laneState = newLane ? "new" : historyOffer ? "thin" : fillConfidence && fillConfidence !== "operator" ? "high" : null;
   return (
-    <div className="rounded-sm border border-slate-200 bg-white" data-testid="book-load-miles-strip">
+    <div className="rounded-sm border border-[#E5E7EB] bg-white" data-testid="book-load-miles-strip">
       {laneState === "high" ? (
-        <p className="border-b border-slate-200 px-2 py-1 text-xs text-slate-800" data-testid="book-load-miles-state-high">
+        <p className="border-b border-[#E5E7EB] px-2 py-1 text-xs text-[#1F2A44]" data-testid="book-load-miles-state-high">
           High — filled from history. Source shown under the boxes. You can still type over it.
         </p>
       ) : null}
       {laneState === "thin" ? (
-        <p className="border-b border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-800" data-testid="book-load-miles-state-thin">
+        <p className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]" data-testid="book-load-miles-state-thin">
           Thin — boxes stay empty. History (runs / median / spread) is below. Use only if you accept it.
         </p>
       ) : null}
       {laneState === "new" ? (
-        <p className="border-b border-slate-200 px-2 py-1 text-xs text-slate-800" data-testid="book-load-miles-state-new">
+        <p className="border-b border-[#E5E7EB] px-2 py-1 text-xs text-[#1F2A44]" data-testid="book-load-miles-state-new">
           New — no history. Type practical miles. Nothing is filled.
         </p>
       ) : null}
-      <div className="flex text-xs font-semibold tracking-wide text-slate-700">
+      <div className="flex text-xs font-semibold tracking-wide text-[#4B5563]">
         <div className={cell}>
-          <label className="text-slate-600" htmlFor="book-miles-practical">
+          <label className="text-[#4B5563]" htmlFor="book-miles-practical">
             Practical (long){practicalRequired ? " *" : ""}
           </label>
           {editable ? (
@@ -139,18 +139,18 @@ export function MilesStrip({
               step={0.1}
               required={practicalRequired}
               className={`mt-1 w-full max-w-[7rem] rounded-sm border px-1.5 py-1 font-mono text-xs ${
-                practicalRequired ? "border-slate-400 text-slate-900" : "border-slate-300 text-slate-900"
+                practicalRequired ? "border-[#E5E7EB] text-[#0F1219]" : "border-[#E5E7EB] text-[#0F1219]"
               }`}
               value={inputValue(practical)}
               onChange={(e) => onPracticalChange?.(numFromInput(e.target.value))}
             />
           ) : (
-            <div className="font-mono text-xs text-slate-900">{formatMiles(practical)}</div>
+            <div className="font-mono text-xs text-[#0F1219]">{formatMiles(practical)}</div>
           )}
-          <div className="text-xs font-normal text-slate-500">revenue per mile</div>
+          <div className="text-xs font-normal text-[#6B7280]">revenue per mile</div>
         </div>
-        <div className={`${cell} bg-slate-100`}>
-          <label className="text-slate-700" htmlFor="book-miles-shortest">
+        <div className={`${cell} bg-[#F7F8FA]`}>
+          <label className="text-[#4B5563]" htmlFor="book-miles-shortest">
             Shortest{shortestRequired ? " *" : ""}
           </label>
           {editable ? (
@@ -162,18 +162,18 @@ export function MilesStrip({
               step={0.1}
               required={shortestRequired}
               className={`mt-1 w-full max-w-[7rem] rounded-sm border px-1.5 py-1 font-mono text-xs ${
-                shortestRequired ? "border-slate-400 text-slate-900" : "border-slate-300 text-slate-900"
+                shortestRequired ? "border-[#E5E7EB] text-[#0F1219]" : "border-[#E5E7EB] text-[#0F1219]"
               }`}
               value={inputValue(shortest)}
               onChange={(e) => onShortestChange?.(numFromInput(e.target.value))}
             />
           ) : (
-            <div className="font-mono text-xs text-slate-700">{formatMiles(shortest)}</div>
+            <div className="font-mono text-xs text-[#4B5563]">{formatMiles(shortest)}</div>
           )}
-          <div className="text-xs font-normal text-slate-700">driver pay</div>
+          <div className="text-xs font-normal text-[#4B5563]">driver pay</div>
         </div>
         <div className={cell}>
-          <label className="text-slate-600" htmlFor="book-miles-deadhead">
+          <label className="text-[#4B5563]" htmlFor="book-miles-deadhead">
             Empty miles
           </label>
           {editable ? (
@@ -183,22 +183,22 @@ export function MilesStrip({
               type="number"
               min={0}
               step={0.1}
-              className="mt-1 w-full max-w-[7rem] rounded-sm border border-slate-300 px-1.5 py-1 font-mono text-xs text-slate-900"
+              className="mt-1 w-full max-w-[7rem] rounded-sm border border-[#E5E7EB] px-1.5 py-1 font-mono text-xs text-[#0F1219]"
               value={inputValue(deadhead)}
               onChange={(e) => onDeadheadChange?.(numFromInput(e.target.value))}
             />
           ) : (
-            <div className="font-mono text-xs text-slate-900">{formatMiles(deadhead)}</div>
+            <div className="font-mono text-xs text-[#0F1219]">{formatMiles(deadhead)}</div>
           )}
-          <div className="text-xs font-normal text-slate-500">deadhead to pickup</div>
+          <div className="text-xs font-normal text-[#6B7280]">deadhead to pickup</div>
         </div>
         <div className={cell}>
-          <div className="text-slate-600">Revenue per mile</div>
-          <div className="font-mono text-xs text-slate-900">{!(ratePerMile <= 0) ? `$${ratePerMile.toFixed(3)}` : ""}</div>
+          <div className="text-[#4B5563]">Revenue per mile</div>
+          <div className="font-mono text-xs text-[#0F1219]">{!(ratePerMile <= 0) ? `$${ratePerMile.toFixed(3)}` : ""}</div>
         </div>
       </div>
       {historyOffer ? (
-        <p className="border-t border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-800" data-testid="book-load-lane-history">
+        <p className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]" data-testid="book-load-lane-history">
           Seen {historyOffer.runs} times · median {historyOffer.median.toLocaleString(undefined, { maximumFractionDigits: 1 })} mi
           {historyOffer.spread != null
             ? ` · spread ${historyOffer.spread.toLocaleString(undefined, { maximumFractionDigits: 1 })}`
@@ -208,7 +208,7 @@ export function MilesStrip({
               type="button"
               data-testid="book-load-lane-history-use"
               onClick={onUseHistoryMiles}
-              className="ml-2 rounded-sm border border-slate-400 bg-white px-2 py-0.5 text-xs font-semibold"
+              className="ml-2 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5 text-xs font-semibold"
             >
               Use
             </button>
@@ -216,13 +216,13 @@ export function MilesStrip({
         </p>
       ) : null}
       {newLane ? (
-        <p className="border-t border-slate-200 px-2 py-1 text-xs text-slate-700" data-testid="book-load-lane-new">
+        <p className="border-t border-[#E5E7EB] px-2 py-1 text-xs text-[#4B5563]" data-testid="book-load-lane-new">
           New lane — not in the history table. Type practical miles.
         </p>
       ) : null}
       {milesColumnInverted || reverseLaneShortDiff ? (
         <p
-          className="border-t border-slate-400 bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-900"
+          className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs font-semibold text-[#0F1219]"
           data-testid="book-load-miles-invert-flag"
         >
           {milesColumnInverted && reverseLaneShortDiff
@@ -241,7 +241,7 @@ export function MilesStrip({
       ) : null}
       {shortestProvenance ? (
         <p
-          className="border-t border-slate-200 px-2 py-1 text-xs text-slate-600"
+          className="border-t border-[#E5E7EB] px-2 py-1 text-xs text-[#4B5563]"
           data-testid="book-load-shortest-provenance"
         >
           Shortest: {shortestProvenance}
@@ -249,7 +249,7 @@ export function MilesStrip({
       ) : null}
       {googleReferencePractical ? (
         <p
-          className="border-t border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-500"
+          className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#6B7280]"
           data-testid="book-load-google-reference-miles"
           title="Google car routing — reference only"
         >
@@ -259,7 +259,7 @@ export function MilesStrip({
       ) : null}
       {googleReferenceEmpty ? (
         <p
-          className="border-t border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-500"
+          className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#6B7280]"
           data-testid="book-load-google-reference-empty"
           title="Google car routing, yard to pickup — reference only"
         >

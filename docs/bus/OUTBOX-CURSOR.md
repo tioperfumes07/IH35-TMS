@@ -1,3 +1,13 @@
+## 2026-10-08T05:35Z · BANK leftover slate — miles strip / kanban / dispatch chat
+
+FINDING: BANK-F91163 — MilesStrip / DispatchKanban / DispatchChatPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25816 squash `5bdb790a7f` (BANK-F91162 safety home/score/HOS)
+GUARD: scripts/verify-dispatch-miles-kanban-slate-leftover-chrome.mjs + verify-steps/3956 piggyback
+LIVE PROOF: verify-dispatch-miles-kanban-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 dispatch surfaces + refuse guard + 3956 piggyback + OUTBOX
+
 ## 2026-10-08T05:29Z · BANK leftover slate — safety home / score / HOS
 
 FINDING: BANK-F91162 — SafetyHomeTab / DriverScoreDetail / HoursOfServicePage Tailwind slate-* → house tokens
