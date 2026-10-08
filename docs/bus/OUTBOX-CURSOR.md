@@ -1,3 +1,13 @@
+## 2026-10-08T12:05Z · BANK leftover slate — safety reports / test scheduling / driver scoring
+
+FINDING: BANK-F91201 — SafetyReportsPage / TestSchedulingPanel / DriverScoringTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25855 squash `11e3c2412e` (BANK-F91200 session/gap/profile)
+GUARD: scripts/verify-safety-rpt-score-slate-leftover-chrome.mjs + verify-steps/4002 piggyback
+LIVE PROOF: verify-safety-rpt-score-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 4002 piggyback + OUTBOX
+
 ## 2026-10-08T11:55Z · BANK leftover slate — session detail / booking gap / user profile
 
 FINDING: BANK-F91200 — SessionDetail / BookingGapReport / UserProfileSettingsPage Tailwind slate-* → house tokens

@@ -187,7 +187,7 @@ export default function SafetyReportsPage() {
       />
 
       {!enabled ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-700">
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-[#1F2A44]">
           Select an operating company to load its safety reports.
         </div>
       ) : null}
@@ -225,13 +225,13 @@ export default function SafetyReportsPage() {
         />
       </div>
 
-      <div className="rounded-sm border border-gray-200 bg-slate-50 p-3 text-xs text-slate-700">
+      <div className="rounded-sm border border-gray-200 bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
         Values are IH35 internal inspection-point rollups derived from recorded inspections and scoring history. They are not FMCSA BASIC measures or percentiles. A metric with no recorded
         source reads &quot;Not recorded&quot; and is never displayed as zero.
       </div>
 
       <section className="space-y-2">
-        <h2 className="text-xs font-semibold text-slate-900">CSA Period History</h2>
+        <h2 className="text-xs font-semibold text-[#0F1219]">CSA Period History</h2>
         {currentCsaQuery.isError ? (
           <ListErrorState
             title="Couldn't load the current CSA period"
@@ -274,7 +274,7 @@ export default function SafetyReportsPage() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-xs font-semibold text-slate-900">Recorded Safety Activity</h2>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Recorded Safety Activity</h2>
         {rollupQuery.isError ? (
           <ListErrorState
             title="Couldn't load the safety activity rollup"
@@ -296,19 +296,19 @@ export default function SafetyReportsPage() {
         )}
       </section>
 
-      <section className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-700">
-        <div className="font-semibold text-slate-900">Not yet available as a report</div>
+      <section className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-[#1F2A44]">
+        <div className="font-semibold text-[#0F1219]">Not yet available as a report</div>
         <ul className="mt-1 list-disc space-y-1 pl-4">
           <li>
             Crash rate per million miles: no reader exposes fleet mileage alongside crash counts. Accident records live on{" "}
-            <Link to="/safety/accidents" className="font-semibold text-slate-700 underline">
+            <Link to="/safety/accidents" className="font-semibold text-[#1F2A44] underline">
               Accidents &amp; Incidents
             </Link>
             .
           </li>
           <li>
             Training and credential reports: per-driver readers exist, but there is no company-wide report endpoint. See{" "}
-            <Link to="/safety/training/records" className="font-semibold text-slate-700 underline">
+            <Link to="/safety/training/records" className="font-semibold text-[#1F2A44] underline">
               Training Records
             </Link>
             .

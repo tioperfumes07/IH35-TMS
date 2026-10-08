@@ -99,13 +99,13 @@ export function TestSchedulingPanel({ companyId }: Props) {
 
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-4">
-      <h2 className="mb-3 text-xs font-semibold text-slate-900">Schedule Test</h2>
-      <p className="mb-3 text-xs text-slate-500">
+      <h2 className="mb-3 text-xs font-semibold text-[#0F1219]">Schedule Test</h2>
+      <p className="mb-3 text-xs text-[#6B7280]">
         FMCSA Part 382 — schedule a drug or alcohol test for an enrolled driver.
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="block text-xs text-slate-600">
+        <label className="block text-xs text-[#4B5563]">
           Driver
           {/* C1 PICKER LAW: was a raw-UUID box whose placeholder literally showed a uuid mask. An
               FMCSA Part 382 test scheduled against a mistyped id is a compliance record for the
@@ -120,7 +120,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
           />
         </label>
 
-        <div className="block text-xs text-slate-600">
+        <div className="block text-xs text-[#4B5563]">
           <label htmlFor="schedule-test-type">Test Type</label>
           <Combobox
             id="schedule-test-type"
@@ -132,7 +132,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
           />
         </div>
 
-        <div className="block text-xs text-slate-600">
+        <div className="block text-xs text-[#4B5563]">
           <label htmlFor="schedule-test-kind">Test Kind</label>
           <Combobox
             id="schedule-test-kind"
@@ -144,7 +144,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
           />
         </div>
 
-        <div className="block text-xs text-slate-600">
+        <div className="block text-xs text-[#4B5563]">
           <label htmlFor="drug-alcohol-scheduled-date">Scheduled Date (optional)</label>
           <DatePicker
             id="drug-alcohol-scheduled-date"
@@ -159,7 +159,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
         <button
           type="button"
           disabled={!canSubmit}
-          className="rounded-sm bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
+          className="rounded-sm bg-[#0F1219] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
           onClick={() => mutation.mutate({
             companyId,
             generation: lifecycleGenerationRef.current,
@@ -175,7 +175,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
         </button>
 
         {successMsg ? (
-          <span className="text-xs font-medium text-slate-700">{successMsg}</span>
+          <span className="text-xs font-medium text-[#1F2A44]">{successMsg}</span>
         ) : null}
 
         {mutation.isError && mutation.variables?.generation === lifecycleGenerationRef.current ? (
