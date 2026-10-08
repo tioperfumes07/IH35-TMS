@@ -66,8 +66,8 @@ export function plannerDayHeadClass(isoYmd: string, todayYmd: string): string {
   const today = isoYmd === todayYmd;
   return [
     "border-b px-0.5 py-0 text-center font-normal",
-    monthStart ? "border-l-2 border-l-slate-500" : "border-l border-l-slate-300",
-    today ? "bg-slate-800 text-white" : weekend ? "bg-slate-100 text-slate-500" : "bg-white text-gray-500",
+    monthStart ? "border-l-2 border-l-[#6B7280]" : "border-l border-l-[#E5E7EB]",
+    today ? "bg-[#0F1219] text-white" : weekend ? "bg-[#F7F8FA] text-[#6B7280]" : "bg-white text-gray-500",
   ].join(" ");
 }
 
@@ -77,9 +77,9 @@ export function plannerDayBodyClass(isoYmd: string, todayYmd: string, extra = ""
   const today = isoYmd === todayYmd;
   return [
     "h-[34px] px-0 py-0 text-center",
-    monthStart ? "border-l-2 border-l-slate-500" : "border-l border-l-slate-300",
+    monthStart ? "border-l-2 border-l-[#6B7280]" : "border-l border-l-[#E5E7EB]",
     today ? "shadow-[inset_3px_0_0_0_#4B5563]" : "",
-    weekend && !today ? "bg-slate-100" : "",
+    weekend && !today ? "bg-[#F7F8FA]" : "",
     extra,
   ]
     .filter(Boolean)
