@@ -1,3 +1,13 @@
+## 2026-10-08T12:15Z · BANK leftover slate — upload zone / safety alerts / driver manager attention
+
+FINDING: BANK-F91202 — UploadZone / SafetyAlertsPanel / DriverManagerAttentionPanel Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25856 squash `8518b22a56` (BANK-F91201 safety rpt/score)
+GUARD: scripts/verify-upload-alerts-attn-slate-leftover-chrome.mjs + verify-steps/1108 piggyback
+LIVE PROOF: verify-upload-alerts-attn-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 1108 piggyback + OUTBOX
+
 ## 2026-10-08T12:05Z · BANK leftover slate — safety reports / test scheduling / driver scoring
 
 FINDING: BANK-F91201 — SafetyReportsPage / TestSchedulingPanel / DriverScoringTab Tailwind slate-* → house tokens

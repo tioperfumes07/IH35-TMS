@@ -26,7 +26,7 @@ const SEVERITY_STYLES: Record<SafetyAlertItem["severity"], string> = {
   critical: "border-red-300 bg-red-50 text-red-900",
   error: "border-orange-300 bg-orange-50 text-orange-900",
   warning: "border-amber-300 bg-amber-50 text-amber-900",
-  info: "border-slate-300 bg-slate-100 text-slate-700",
+  info: "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]",
 };
 
 export function SafetyAlertsPanel({ alerts, loading, certDataStale, isError }: Props) {
@@ -34,20 +34,20 @@ export function SafetyAlertsPanel({ alerts, loading, certDataStale, isError }: P
 
   if (loading) {
     return (
-      <section className="rounded-sm border border-slate-200 bg-white p-3" aria-label="Safety alerts">
-        <div className="mb-2 h-4 w-40 animate-pulse rounded-sm bg-slate-100" />
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" aria-label="Safety alerts">
+        <div className="mb-2 h-4 w-40 animate-pulse rounded-sm bg-[#F7F8FA]" />
         <div className="space-y-2">
-          <div className="h-16 animate-pulse rounded-sm bg-slate-100" />
-          <div className="h-16 animate-pulse rounded-sm bg-slate-100" />
+          <div className="h-16 animate-pulse rounded-sm bg-[#F7F8FA]" />
+          <div className="h-16 animate-pulse rounded-sm bg-[#F7F8FA]" />
         </div>
       </section>
     );
   }
 
   return (
-    <section className="rounded-sm border border-slate-200 bg-white" aria-label="Safety alerts">
-      <div className="border-b border-slate-200 px-3 py-2">
-        <h2 className="text-section-header font-semibold uppercase tracking-wide text-slate-700">Safety Alerts</h2>
+    <section className="rounded-sm border border-[#E5E7EB] bg-white" aria-label="Safety alerts">
+      <div className="border-b border-[#E5E7EB] px-3 py-2">
+        <h2 className="text-section-header font-semibold uppercase tracking-wide text-[#1F2A44]">Safety Alerts</h2>
         {certDataStale ? (
           <p className="mt-1 text-xs text-amber-700">
             Driver cert data may be stale (last sync &gt; 7 days). Verify driver file sync before acting on expiry counts.
@@ -64,7 +64,7 @@ export function SafetyAlertsPanel({ alerts, loading, certDataStale, isError }: P
             Unable to load safety alerts. This does NOT mean compliance is clear — retry or check back.
           </p>
         ) : alerts.length === 0 ? (
-          <p className="text-xs text-slate-500">No safety alerts right now — fleet compliance looks clear.</p>
+          <p className="text-xs text-[#6B7280]">No safety alerts right now — fleet compliance looks clear.</p>
         ) : (
           alerts.map((alert) => (
             <article
