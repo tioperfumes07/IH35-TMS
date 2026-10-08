@@ -103,20 +103,20 @@ export function IftaPreparer() {
 
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
 
-      <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
         Tax filing prep only — no ledger posting. Rates sourced from the IFTA tax matrix catalog (annual updates).
       </p>
 
       {!filingUuid ? (
         <div className="flex flex-wrap items-end gap-2">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700">
+          <label className="flex flex-col gap-1 text-xs font-semibold text-[#1F2A44]">
             Filing quarter
             <select
               aria-label="Filing quarter"
               value={quarter}
               onChange={(event) => setQuarter(event.target.value)}
               disabled={!companyId || prepareMutation.isPending}
-              className="rounded-sm border border-slate-300 px-2 py-1.5 text-xs font-normal text-slate-900 disabled:opacity-50"
+              className="rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs font-normal text-[#0F1219] disabled:opacity-50"
             >
               {quarterOptions.map((option) => {
                 const label = toQuarterLabel(option);
@@ -130,7 +130,7 @@ export function IftaPreparer() {
           </label>
           <button
             type="button"
-            className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 disabled:opacity-50"
+            className="rounded-sm border border-[#6B7280] bg-[#F7F8FA] px-3 py-2 text-xs font-semibold text-[#0F1219] disabled:opacity-50"
             disabled={!companyId || prepareMutation.isPending}
             onClick={() => {
               // onError above already surfaces the toast; .catch() here only prevents an
@@ -145,14 +145,14 @@ export function IftaPreparer() {
       ) : null}
 
       {historyQuery.data?.filings?.length ? (
-        <div className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs">
-          <p className="mb-1 font-semibold text-slate-700">Filing history</p>
+        <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs">
+          <p className="mb-1 font-semibold text-[#1F2A44]">Filing history</p>
           <ul className="space-y-1">
             {historyQuery.data.filings.map((row) => (
               <li key={row.uuid}>
                 <button
                   type="button"
-                  className="text-left text-slate-700 underline"
+                  className="text-left text-[#1F2A44] underline"
                   onClick={() => setFilingUuid(row.uuid)}
                 >
                   {row.quarter} · {STATUS_LABELS[row.status] ?? row.status}
