@@ -16,9 +16,9 @@ import fs from "node:fs";
 const FILE = "apps/backend/src/reports/cash-flow/route-fix.ts";
 const source = fs.readFileSync(FILE, "utf8");
 
-function bankResBlock(text) {
-  const start = text.indexOf("const bankRes = await client.query(");
-  const end = text.indexOf(";", text.indexOf("[companyId]", start));
+function operatingBalanceBlock(text) {
+  const start = text.indexOf("const operatingBalanceCents = await sumAuthoritativeDepositoryCashCents");
+  const end = text.indexOf(";", start) + 1;
   return start >= 0 && end > start ? text.slice(start, end) : "";
 }
 
@@ -26,9 +26,9 @@ function audit(text) {
   const failures = [];
   const need = (condition, message) => { if (!condition) failures.push(message); };
 
-  const block = bankResBlock(text);
-  need(block.length > 0, "the bankRes query block was not found (route shape changed?)");
-  need(!/\.catch\(/.test(block), "the bank-balance query must NOT be wrapped in .catch() -- a real failure must propagate, never fake $0.00");
+  const block = operatingBalanceBlock(text);
+  need(block.length > 0, "the operatingBalanceCents query block was not found (route shape changed?)");
+  need(!/\.catch\(/.test(block), "the operating-balance read must NOT be wrapped in .catch() -- a real failure must propagate, never fake $0.00");
   // Strip `//`-comment lines before checking for the fake-zero literal so this guard's own
   // explanatory comment (which necessarily quotes the banned pattern in prose) can never make a
   // mutation that re-adds the real fallback pass by accident.
@@ -48,12 +48,18 @@ if (failures.length) {
 }
 
 if (process.argv.includes("--selftest")) {
+  const marker = "const operatingBalanceCents = await sumAuthoritativeDepositoryCashCents(client, companyId, {";
   const mutated = source.replace(
-    /const bankRes = await client\.query\(\s*`([\s\S]*?)`,\s*\[companyId\]\s*\);/,
-    'const bankRes = await client.query(`$1`, [companyId]).catch(() => ({ rows: [{ total_cents: "0" }] }));'
+    marker,
+    `const operatingBalanceCents = await sumAuthoritativeDepositoryCashCents(client, companyId, {`,
   );
-  if (mutated === source) throw new Error("mutation did not change the source -- test is inert");
-  if (audit(mutated).length === 0) throw new Error("mutation escaped: re-adding the fake-zero .catch() was not caught");
+  // Plant the banned fallback immediately before the statement terminator.
+  const plantedSource = mutated.replace(
+    /(const operatingBalanceCents = await sumAuthoritativeDepositoryCashCents\([\s\S]*?\));/,
+    `$1.catch(() => ({ rows: [{ total_cents: "0" }] }));`,
+  );
+  if (plantedSource === mutated) throw new Error("mutation did not change the source -- test is inert");
+  if (audit(plantedSource).length === 0) throw new Error("mutation escaped: re-adding the fake-zero .catch() was not caught");
   console.log("verify-cash-flow-report-route-fix-no-fake-zero SELFTEST PASS — 1/1 mutation detected");
 }
 

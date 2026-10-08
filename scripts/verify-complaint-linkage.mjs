@@ -54,7 +54,7 @@ if (process.argv.includes("--selftest")) {
     ["customer writer", "route", /AS customer_ok/, "AS client_ok"],
     ["user writer", "route", /AS respondent_user_ok/, "AS employee_ok"],
     ["type writer", "route", /AS complaint_type_ok/, "AS type_ok"],
-    ["rejection", "route", /linked_entity_not_in_operating_company/, "bad_link"],
+    ["rejection", "route", /linked_entity_not_in_operating_company/g, "bad_link"],
     ["customer filter", "route", /c\.complainant_customer_id = \$\$\{values\.length\}/, "TRUE"],
     ["user filter", "route", /c\.complainant_user_id = \$\$\{values\.length\}/, "FALSE"],
     ["api customer", "safetyApi", /qs\.set\("customer_id", params\.customer_id\)/, 'qs.set("driver_id", params.customer_id)'],

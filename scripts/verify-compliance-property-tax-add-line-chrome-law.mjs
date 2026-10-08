@@ -11,21 +11,16 @@ const FILE = "apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx";
 
 function audit(src) {
   const failures = [];
-  if (!/>\s*\+\s*Create Line\s*</.test(src)) failures.push("asset-line button must read '+ Create Line' (chrome law item 8)");
-  if (/>\s*\+\s*Add\s*</.test(src)) failures.push("asset-line button must not use the forbidden '+ Add' verb (chrome law item 8: never + New / + Add)");
+  if (!/>\s*\+\s*Create Line\b\s*(?:\{[^}]*\})?\s*</.test(src)) failures.push("asset-line button must read '+ Create Line' (chrome law item 8)");
+  if (/>\s*\+\s*Add\b/.test(src)) failures.push("asset-line button must not use the forbidden '+ Add' verb (chrome law item 8: never + New / + Add)");
   return failures;
 }
 
 if (process.argv.includes("--selftest")) {
   const src = fs.readFileSync(FILE, "utf8");
   const mutations = [
-    ["revert-to-add", (s) => s.replace(">\n            + Create Line\n          </button>", ">\n            + Add\n          </button>")],
-    // RE-ANCHOR (found stale 2026-08-29): a bare `.replace("+ Create Line", "Create Line")` hits the
-    // FIRST occurrence of that substring in the WHOLE FILE — which is inside a comment above (line
-    // ~341, "a failed \"+ Create Line\""), not the real button JSX at line ~509. The comment got
-    // mutated instead, the real button stayed untouched, and the guard correctly (but uselessly)
-    // still passed. Anchor on the same JSX-shaped context the sibling "revert-to-add" case uses.
-    ["drop-plus", (s) => s.replace(">\n            + Create Line\n          </button>", ">\n            Create Line\n          </button>")],
+    ["revert-to-add", (s) => s.replace('+ Create Line{selectedAssets.length === 1 ? "" : "s"}', '+ Add{selectedAssets.length === 1 ? "" : "s"}')],
+    ["drop-plus", (s) => s.replace('+ Create Line{selectedAssets.length === 1 ? "" : "s"}', 'Create Line{selectedAssets.length === 1 ? "" : "s"}')],
   ];
   for (const [name, mutate] of mutations) {
     const candidate = mutate(src);
