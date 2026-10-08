@@ -1,3 +1,13 @@
+## 2026-10-08T11:25Z · BANK leftover slate — QBO sync detail / accidents / CSA mitigation
+
+FINDING: BANK-F91197 — QboSyncDetailPage / AccidentsPage / CSAMitigationQueue Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25851 squash `2632b8375e` (BANK-F91196 safety rev/filings)
+GUARD: scripts/verify-qbo-acc-csa-slate-leftover-chrome.mjs + verify-steps/1114 piggyback
+LIVE PROOF: verify-qbo-acc-csa-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 1114 piggyback + OUTBOX
+
 ## 2026-10-08T11:15Z · BANK leftover slate — safety alerts reverse / asset safety reverse / filings due
 
 FINDING: BANK-F91196 — SafetyAlertsReverseSection / AssetSafetyReverseSection / ComplianceFilingsDueWidget Tailwind slate-* → house tokens

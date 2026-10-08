@@ -28,9 +28,9 @@ const SEVERITY_OPTIONS: Array<{ value: "all" | QboSyncEventSeverity; label: stri
 ];
 
 function kindPillClass(kind: QboSyncEventKind) {
-  if (kind === "run") return "border-slate-300 bg-slate-100 text-slate-700";
+  if (kind === "run") return "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]";
   if (kind === "alert") return "border-amber-200 bg-amber-50 text-amber-700";
-  return "border-slate-300 bg-slate-100 text-slate-700";
+  return "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]";
 }
 
 function severityPillClass(severity: QboSyncEventSeverity) {
@@ -81,7 +81,7 @@ export function QboSyncDetailPage() {
         label: "Timestamp",
         sortable: true,
         className: "whitespace-nowrap",
-        render: (row) => <span className="text-slate-700">{formatTimestamp(row.occurred_at)}</span>,
+        render: (row) => <span className="text-[#1F2A44]">{formatTimestamp(row.occurred_at)}</span>,
       },
       {
         key: "kind",
@@ -105,7 +105,7 @@ export function QboSyncDetailPage() {
         key: "summary",
         label: "Summary",
         sortable: true,
-        render: (row) => <span className="text-slate-800">{row.summary}</span>,
+        render: (row) => <span className="text-[#0F1219]">{row.summary}</span>,
       },
     ],
     [],
@@ -123,15 +123,15 @@ export function QboSyncDetailPage() {
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {eventLogQuery.isError ? <ReportBlockVPendingBanner error={eventLogQuery.error} onRetry={() => void eventLogQuery.refetch()} /> : null}
 
-      <div className="rounded-sm border border-slate-200 bg-white p-3">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Filter by kind</div>
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Filter by kind</div>
         <div className="flex flex-wrap gap-2">
           {KIND_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               type="button"
               className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                kind === opt.value ? "border-slate-300 bg-slate-100 text-slate-700" : "border-slate-200 bg-[var(--surface-unselected)] text-slate-600 hover:bg-[var(--surface-hover)]"
+                kind === opt.value ? "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]" : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#4B5563] hover:bg-[var(--surface-hover)]"
               }`}
               onClick={() => setKind(opt.value)}
             >
@@ -139,7 +139,7 @@ export function QboSyncDetailPage() {
             </button>
           ))}
         </div>
-        <div className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-slate-600">Filter by severity</div>
+        <div className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Filter by severity</div>
         <div className="flex flex-wrap gap-2">
           {SEVERITY_OPTIONS.map((opt) => (
             <button
@@ -147,8 +147,8 @@ export function QboSyncDetailPage() {
               type="button"
               className={`rounded-full border px-3 py-1 text-xs font-medium ${
                 severity === opt.value
-                  ? "border-slate-300 bg-slate-100 text-slate-700"
-                  : "border-slate-200 bg-[var(--surface-unselected)] text-slate-600 hover:bg-[var(--surface-hover)]"
+                  ? "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]"
+                  : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#4B5563] hover:bg-[var(--surface-hover)]"
               }`}
               onClick={() => setSeverity(opt.value)}
             >
@@ -159,7 +159,7 @@ export function QboSyncDetailPage() {
       </div>
 
       <div className="space-y-2">
-        <div className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+        <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs text-[#4B5563]">
           Showing {events.length} of about {totalEstimated} events
         </div>
 
@@ -175,8 +175,8 @@ export function QboSyncDetailPage() {
           emptyText={listState.isEmpty ? "No QBO sync events match the selected filters." : undefined}
           renderExpanded={(row) => (
             <div>
-              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-600">Detail</div>
-              <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-all rounded-sm border border-slate-200 bg-white p-2 text-xs text-slate-700">
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Detail</div>
+              <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-all rounded-sm border border-[#E5E7EB] bg-white p-2 text-xs text-[#1F2A44]">
                 {JSON.stringify(row.detail ?? {}, null, 2)}
               </pre>
             </div>
