@@ -46,21 +46,21 @@ export function DriverShell() {
   if (!ready) return <div className="p-4 text-xs text-gray-600">Loading…</div>;
 
   const tabClass = (path: string) =>
-    location.pathname.startsWith(path) ? "font-semibold text-slate-900" : "text-slate-600";
+    location.pathname.startsWith(path) ? "font-semibold text-[#0F1219]" : "text-[#4B5563]";
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-[#F7F8FA]">
       <DriverOnboardingTour />
       <ArrivalPrompt />
       <StatusSuggestionPrompt />
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white px-3 py-2">
+      <header className="sticky top-0 z-10 border-b border-[#E5E7EB] bg-white px-3 py-2">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-2">
           <span className="text-xs font-semibold">{t("driver.app_title")}</span>
           <div className="flex items-center gap-2 text-xs">
-            <PageHelpLink className="h-7 w-7 border-slate-300 text-slate-600 hover:bg-slate-100" />
+            <PageHelpLink className="h-7 w-7 border-[#4B5563] text-[#4B5563] hover:bg-[#E5E7EB]" />
             <button
               type="button"
-              className="rounded-sm border border-slate-300 px-2 py-0.5"
+              className="rounded-sm border border-[#4B5563] px-2 py-0.5"
               onClick={() => {
                 localStorage.setItem("ih35_driver_i18n_lang", "en");
                 void i18next.changeLanguage("en");
@@ -70,7 +70,7 @@ export function DriverShell() {
             </button>
             <button
               type="button"
-              className="rounded-sm border border-slate-300 px-2 py-0.5"
+              className="rounded-sm border border-[#4B5563] px-2 py-0.5"
               onClick={() => {
                 localStorage.setItem("ih35_driver_i18n_lang", "es");
                 void i18next.changeLanguage("es");
@@ -112,7 +112,7 @@ export function DriverShell() {
             under the new URL (URL changes but DOM content stays stale until hard reload). */}
         <Outlet key={location.pathname} />
         <footer className="mt-8 flex justify-end pb-6">
-          <FooterFaqLink className="text-slate-500 hover:text-slate-800" />
+          <FooterFaqLink className="text-[#6B7280] hover:text-[#0F1219]" />
         </footer>
       </main>
     </div>

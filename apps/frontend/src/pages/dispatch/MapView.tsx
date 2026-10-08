@@ -61,7 +61,7 @@ export function MapView() {
       <PageHeader title="Active Load Map" breadcrumb={[{ label: "Dispatch" }, { label: "Map" }]} backHref="/dispatch" />
       {!companyId ? (
         <p
-          className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+          className="rounded-sm border border-dashed border-[#4B5563] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
           data-testid="dispatch-map-need-company"
         >
           Select an operating company to load entity-scoped GPS positions for active loads.
@@ -74,7 +74,7 @@ export function MapView() {
         />
       ) : null}
       {hasFocus ? (
-        <p className="text-xs text-slate-600" data-testid="dispatch-map-focus">
+        <p className="text-xs text-[#4B5563]" data-testid="dispatch-map-focus">
           {focused.length > 0
             ? `${focused.length} matching position(s) from Samsara${mapConfigured ? "" : " — map plotting unavailable until a map provider is configured"}.`
             : "No GPS match for this driver/load/unit yet."}
@@ -86,7 +86,7 @@ export function MapView() {
           data-testid="dispatch-map-not-configured"
           data-dispatch-map-honest-empty="true"
         >
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E7EB] text-[#1F2A44]">
             <MapPin className="h-6 w-6" />
           </div>
           <h2 className="text-page-title font-semibold text-gray-900">Map provider not configured</h2>
@@ -102,7 +102,7 @@ export function MapView() {
           className="rounded-sm border border-gray-200 bg-white p-4"
           data-testid="dispatch-map-configured"
         >
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-[#4B5563]">
             Map provider is configured. Position list below is live from Samsara; geographic tiles land in a
             follow-up once the Mapbox surface is wired to these coordinates.
           </p>
@@ -114,7 +114,7 @@ export function MapView() {
           data-testid="dispatch-map-positions-list"
         >
           {listRows.map((p) => (
-            <li key={`${p.load_uuid}-${p.unit_uuid}`} className="flex flex-wrap gap-3 px-3 py-2 text-slate-700">
+            <li key={`${p.load_uuid}-${p.unit_uuid}`} className="flex flex-wrap gap-3 px-3 py-2 text-[#1F2A44]">
               <span>
                 Load{" "}
                 <EntityLinkOrTombstone
@@ -137,13 +137,13 @@ export function MapView() {
                 {p.lat.toFixed(4)}, {p.lng.toFixed(4)}
               </span>
               <span>{p.speed_mph != null ? `${p.speed_mph} mph` : "—"}</span>
-              {p.stale ? <span className="text-slate-600">stale</span> : null}
+              {p.stale ? <span className="text-[#4B5563]">stale</span> : null}
             </li>
           ))}
         </ul>
       ) : null}
       {companyId && !query.isError && !query.isLoading && positions.length === 0 ? (
-        <p className="text-xs text-slate-700" data-testid="dispatch-map-positions-honest-empty">
+        <p className="text-xs text-[#1F2A44]" data-testid="dispatch-map-positions-honest-empty">
           No in-transit loads with GPS for this company right now. Positions appear when Samsara reports an active
           load with coordinates.
         </p>
