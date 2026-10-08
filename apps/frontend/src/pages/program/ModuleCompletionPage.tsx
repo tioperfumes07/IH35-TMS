@@ -330,7 +330,7 @@ export function ModuleCompletionPage() {
       <Breadcrumb items={[{ label: "Program", href: "/program" }, { label: "Module Completion" }]} />
       <PageHeader title="Module Completion" />
       <p
-        className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
         data-testid="module-completion-honest-purpose"
       >
         This is Rule 24&apos;s <b>N of M</b> checklist from <code>docs/module-completion/*.json</code> — CI
@@ -351,7 +351,7 @@ export function ModuleCompletionPage() {
         />
       ) : null}
       {live.isPending && !live.isError ? (
-        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700" data-testid="module-completion-loading">
+        <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="module-completion-loading">
           Loading module completion from the API…
         </p>
       ) : null}
@@ -428,7 +428,7 @@ export function ModuleCompletionPage() {
         dataAttributes={{ "data-program-modules-filter-toolbar": "collapsed" }}
         className="rounded-sm border border-gray-200 bg-white p-2"
       >
-        <label className="text-xs font-semibold text-slate-600">
+        <label className="text-xs font-semibold text-[#4B5563]">
           Proof status
           <SelectCombobox
             className="mt-1 w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"
