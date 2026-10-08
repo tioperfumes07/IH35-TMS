@@ -158,7 +158,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
   const rowActions = (row: PartsInventoryRow) => (
     // whitespace-nowrap: the actions column is narrow, so "Adjust Qty" wrapped to two lines and the
     // second line was clipped by the table edge — the control rendered as "Adjus / Qty", cut off.
-    <button className="whitespace-nowrap text-slate-600 underline" onClick={() => setAdjustRow(row)} type="button">
+    <button className="whitespace-nowrap text-[#4B5563] underline" onClick={() => setAdjustRow(row)} type="button">
       Adjust Qty
     </button>
   );
@@ -174,7 +174,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
       every purchase create -- surface it honestly instead of discarding it. */}
       {lastGlPosting ? (
         <div
-          className="flex items-center justify-between bg-slate-50 px-3 py-2 text-xs"
+          className="flex items-center justify-between bg-[#F7F8FA] px-3 py-2 text-xs"
           data-testid="parts-purchase-gl-posting-result"
         >
           {lastGlPosting.posted && lastGlPosting.journal_entry_id ? (
@@ -184,7 +184,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
                 kind="journal_entry"
                 id={lastGlPosting.journal_entry_id}
                 label="View journal entry →"
-                className="font-semibold text-slate-700 underline"
+                className="font-semibold text-[#1F2A44] underline"
               />
             </>
           ) : (
@@ -210,7 +210,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}
-        rowClassName={(row) => highlightedRowId && row.id === highlightedRowId ? "bg-slate-100 ring-1 ring-slate-400" : ""}
+        rowClassName={(row) => highlightedRowId && row.id === highlightedRowId ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]" : ""}
         loading={loading}
         emptyText="No parts on hand. Click + Record Purchase to track daily purchases. Anti-theft pattern: minimal stock kept on hand."
         storageKey="maint-parts-inventory"

@@ -1,3 +1,13 @@
+## 2026-10-08T23:45Z · BANK leftover slate — PartsInventory / FleetCatalog / DriverHosDetail
+
+FINDING: BANK-F91256 — PartsInventoryTable / FleetCatalogModal / DriverHosDetailPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25934 squash `856d2c5e5e` (BANK-F91255 DriverSettings/DriverLoads/OnboardingDocUpload)
+GUARD: scripts/verify-parts-fleet-hos-slate-leftover-chrome.mjs + verify-steps/3540 piggyback
+LIVE PROOF: verify-parts-fleet-hos-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3540 piggyback + OUTBOX
+
 ## 2026-10-08T23:40Z · BANK leftover slate — DriverSettings / DriverLoads / OnboardingDocUpload
 
 FINDING: BANK-F91255 — DriverSettingsPage / DriverLoadsPage / OnboardingDocUploadField Tailwind slate-* → house tokens
