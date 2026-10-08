@@ -293,7 +293,7 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
     <Modal open={open} onClose={onClose} title="Load templates">
       <div className="max-h-[360px] space-y-2 overflow-y-auto text-xs">
         <div className="relative space-y-2" data-testid="load-template-library-filters">
-          <label className="block text-xs text-slate-600">
+          <label className="block text-xs text-[#4B5563]">
             Customer
             <EntityPicker
               kind="customer"
@@ -434,7 +434,7 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
 
         {(loadId || customerId) ? (
           <div
-            className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700"
+            className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]"
             data-testid="save-load-template-modal-entitylinks"
           >
             {loadId ? (
@@ -451,7 +451,7 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
             ) : null}
           </div>
         ) : null}
-        <label className="block text-xs text-slate-600">
+        <label className="block text-xs text-[#4B5563]">
           Template customer (editable — defaults to the source load's customer above; clear for a generic template)
           <EntityPicker
             kind="customer"

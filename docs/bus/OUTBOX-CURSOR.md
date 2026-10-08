@@ -1,3 +1,13 @@
+## 2026-10-09T00:40Z · BANK leftover slate — Login / HelpCenter / LoadTemplateLibrary
+
+FINDING: BANK-F91267 — Login / HelpCenterPage / LoadTemplateLibrary Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25945 squash `166a83a58d` (BANK-F91266 vendorCategories/SummaryCards/CollapsibleProfileCard)
+GUARD: scripts/verify-login-help-tmpl-slate-leftover-chrome.mjs + verify-steps/3494 piggyback
+LIVE PROOF: verify-login-help-tmpl-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3494 piggyback + OUTBOX
+
 ## 2026-10-09T00:35Z · BANK leftover slate — vendorCategories / SummaryCards / CollapsibleProfileCard
 
 FINDING: BANK-F91266 — vendorCategories / SummaryCards / CollapsibleProfileCard Tailwind slate-* → house tokens
