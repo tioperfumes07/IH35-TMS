@@ -12,11 +12,12 @@
  * The fetch AbortController must always be the one that fires; the breaker is the outer safety net.
  */
 
-/** Per-request Relay fetch timeout (AbortController). Env-tunable; default 120s — the live TRANSP
- *  full feed exceeded 30s, and history only grows until Relay ships real server-side filters. */
+/** Per-request Relay fetch timeout (AbortController). Env-tunable; default 180s — ROUND 441.21-B R1:
+ *  one-day windows on the Transportation key timed out at 15s/60s; window budget must not be clamped
+ *  below RELAY_WINDOW_CALL_TIMEOUT_MS (also 180s). */
 export function relayApiTimeoutMs(): number {
   const raw = Number(process.env.RELAY_API_TIMEOUT_MS);
-  return Number.isFinite(raw) && raw > 0 ? raw : 120_000;
+  return Number.isFinite(raw) && raw > 0 ? raw : 180_000;
 }
 
 /** Slack added on top of the fetch timeout for the circuit breaker so the abort always wins. */
