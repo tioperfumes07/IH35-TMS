@@ -84,7 +84,7 @@ function SectionShell({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           {title}
           {count > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({count})</span> : null}
         </h3>
@@ -92,7 +92,7 @@ function SectionShell({
           kind={openKind}
           id={openId}
           label={linkLabel}
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#4B5563] underline"
         />
       </div>
       {isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
@@ -245,7 +245,7 @@ export function DriverSafetyReverseSection({
             only by typing the URL. It is per-driver and parameterized, so it cannot be a nav entry
             like the other five orphans; the driver's own page is its natural entry point. */}
         <EntityLink
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#4B5563] underline"
           kind="driver_safety_profile"
           id={driverId}
           label="Open Safety Profile"
@@ -280,7 +280,7 @@ export function DriverSafetyReverseSection({
               kind="training_record"
               id={s(record.id)}
               label={entityLabel(record.training_name ?? record.training_type, record.id, "Training")}
-              className="font-semibold text-slate-700 underline"
+              className="font-semibold text-[#4B5563] underline"
             />
             <span className="ml-2 text-gray-600">{formatDateUS(record.completed_at)}</span>
           </li>
@@ -289,7 +289,7 @@ export function DriverSafetyReverseSection({
       {!trainingQuery.isError && trainingTotal > trainingPageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-safety-reverse-training-records-pager">
           <Button size="sm" variant="secondary" disabled={trainingPage <= 1 || trainingQuery.isFetching} onClick={() => setTrainingPage((current) => Math.max(1, current - 1))}>Previous training</Button>
-          <span className="text-slate-600">Page {trainingPage} of {trainingPageCount} · {trainingTotal} records</span>
+          <span className="text-[#4B5563]">Page {trainingPage} of {trainingPageCount} · {trainingTotal} records</span>
           <Button size="sm" variant="secondary" disabled={trainingPage >= trainingPageCount || trainingQuery.isFetching} onClick={() => setTrainingPage((current) => Math.min(trainingPageCount, current + 1))}>Next training</Button>
         </div>
       ) : null}
@@ -320,7 +320,7 @@ export function DriverSafetyReverseSection({
       {!accidentsQuery.isError && accidentTotal > accidentPageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-safety-reverse-accidents-pager">
           <Button size="sm" variant="secondary" disabled={accidentPage <= 1 || accidentsQuery.isFetching} onClick={() => setAccidentPage((current) => Math.max(1, current - 1))}>Previous accidents</Button>
-          <span className="text-slate-600">Page {accidentPage} of {accidentPageCount} · {accidentTotal} accidents</span>
+          <span className="text-[#4B5563]">Page {accidentPage} of {accidentPageCount} · {accidentTotal} accidents</span>
           <Button size="sm" variant="secondary" disabled={accidentPage >= accidentPageCount || accidentsQuery.isFetching} onClick={() => setAccidentPage((current) => Math.min(accidentPageCount, current + 1))}>Next accidents</Button>
         </div>
       ) : null}
@@ -344,7 +344,7 @@ export function DriverSafetyReverseSection({
               kind="hos_violation"
               id={s(violation.id) || null}
               label={s(violation.violation_type) || "HOS violation"}
-              className="font-semibold text-slate-700"
+              className="font-semibold text-[#4B5563]"
             />
             <span className="ml-2 text-gray-600">{s(violation.source) || "manual_office"}</span>
             <div className="mt-1 text-xs text-gray-600">
@@ -357,7 +357,7 @@ export function DriverSafetyReverseSection({
       {!hosViolationsQuery.isError && hosViolationTotal > hosViolationPageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-safety-reverse-hos-violations-pager">
           <Button size="sm" variant="secondary" disabled={hosViolationPage <= 1 || hosViolationsQuery.isFetching} onClick={() => setHosViolationPage((current) => Math.max(1, current - 1))}>Previous violations</Button>
-          <span className="text-slate-600">Page {hosViolationPage} of {hosViolationPageCount} · {hosViolationTotal} violations</span>
+          <span className="text-[#4B5563]">Page {hosViolationPage} of {hosViolationPageCount} · {hosViolationTotal} violations</span>
           <Button size="sm" variant="secondary" disabled={hosViolationPage >= hosViolationPageCount || hosViolationsQuery.isFetching} onClick={() => setHosViolationPage((current) => Math.min(hosViolationPageCount, current + 1))}>Next violations</Button>
         </div>
       ) : null}
@@ -381,7 +381,7 @@ export function DriverSafetyReverseSection({
               kind="dot_inspection"
               id={s(inspection.id) || null}
               label={`Level ${s(inspection.fmcsa_level) || "—"} · ${s(inspection.outcome) || "—"}`}
-              className="font-semibold text-slate-700"
+              className="font-semibold text-[#4B5563]"
             />
             <div className="mt-1 text-xs text-gray-600">
               {formatDateUS(s(inspection.inspection_date))}
@@ -394,7 +394,7 @@ export function DriverSafetyReverseSection({
       {!dotInspectionsQuery.isError && dotInspectionTotal > inspectionPageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-safety-reverse-dot-inspections-pager">
           <Button size="sm" variant="secondary" disabled={inspectionPage <= 1 || dotInspectionsQuery.isFetching} onClick={() => setInspectionPage((current) => Math.max(1, current - 1))}>Previous inspections</Button>
-          <span className="text-slate-600">Page {inspectionPage} of {dotInspectionPageCount} · {dotInspectionTotal} inspections</span>
+          <span className="text-[#4B5563]">Page {inspectionPage} of {dotInspectionPageCount} · {dotInspectionTotal} inspections</span>
           <Button size="sm" variant="secondary" disabled={inspectionPage >= dotInspectionPageCount || dotInspectionsQuery.isFetching} onClick={() => setInspectionPage((current) => Math.min(dotInspectionPageCount, current + 1))}>Next inspections</Button>
         </div>
       ) : null}
@@ -418,7 +418,7 @@ export function DriverSafetyReverseSection({
               kind="safety_fine"
               id={s(fine.id) || null}
               label={entityLabel(s(fine.violation_description) || s(fine.issued_by_authority) || null, s(fine.id), "Fine")}
-              className="font-semibold text-slate-700"
+              className="font-semibold text-[#4B5563]"
             />
             <span className="ml-2 text-gray-600">{s(fine.status) || "open"}</span>
             <div className="mt-1 text-xs text-gray-600">
@@ -431,7 +431,7 @@ export function DriverSafetyReverseSection({
       {!civilFinesQuery.isError && civilFineTotal > civilFinePageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-safety-reverse-civil-fines-pager">
           <Button size="sm" variant="secondary" disabled={civilFinePage <= 1 || civilFinesQuery.isFetching} onClick={() => setCivilFinePage((current) => Math.max(1, current - 1))}>Previous external fines</Button>
-          <span className="text-slate-600">Page {civilFinePage} of {civilFinePageCount} · {civilFineTotal} external fines</span>
+          <span className="text-[#4B5563]">Page {civilFinePage} of {civilFinePageCount} · {civilFineTotal} external fines</span>
           <Button size="sm" variant="secondary" disabled={civilFinePage >= civilFinePageCount || civilFinesQuery.isFetching} onClick={() => setCivilFinePage((current) => Math.min(civilFinePageCount, current + 1))}>Next external fines</Button>
         </div>
       ) : null}
@@ -455,7 +455,7 @@ export function DriverSafetyReverseSection({
               kind="internal_fine"
               id={s(fine.id) || null}
               label={entityLabel(s(fine.reason_name) || s(fine.reason_code), fine.id, "Internal fine")}
-              className="font-semibold text-slate-700"
+              className="font-semibold text-[#4B5563]"
             />
             <span className="ml-2 text-gray-600">{s(fine.status) || "pending"}</span>
             <div className="mt-1 text-xs text-gray-600">
@@ -469,7 +469,7 @@ export function DriverSafetyReverseSection({
                   kind="liability"
                   id={s(fine.driver_liability_id) || null}
                   label={entityLabel(null, s(fine.driver_liability_id), "Liability")}
-                  className="font-semibold text-slate-700"
+                  className="font-semibold text-[#4B5563]"
                 />
               </div>
             ) : null}
@@ -479,7 +479,7 @@ export function DriverSafetyReverseSection({
       {!internalFinesQuery.isError && internalFineTotal > internalFinePageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-safety-reverse-internal-fines-pager">
           <Button size="sm" variant="secondary" disabled={internalFinePage <= 1 || internalFinesQuery.isFetching} onClick={() => setInternalFinePage((current) => Math.max(1, current - 1))}>Previous internal fines</Button>
-          <span className="text-slate-600">Page {internalFinePage} of {internalFinePageCount} · {internalFineTotal} internal fines</span>
+          <span className="text-[#4B5563]">Page {internalFinePage} of {internalFinePageCount} · {internalFineTotal} internal fines</span>
           <Button size="sm" variant="secondary" disabled={internalFinePage >= internalFinePageCount || internalFinesQuery.isFetching} onClick={() => setInternalFinePage((current) => Math.min(internalFinePageCount, current + 1))}>Next internal fines</Button>
         </div>
       ) : null}
@@ -509,7 +509,7 @@ export function DriverSafetyReverseSection({
                   kind="complaint"
                   id={s(complaint.id) || null}
                   label={sideLabel}
-                  className="font-semibold text-slate-700"
+                  className="font-semibold text-[#4B5563]"
                 />
                 <span className="ml-2 text-gray-600">{s(complaint.status) || "open"}</span>
                 <div className="mt-1 text-xs text-gray-600">{formatDateUS(s(complaint.filed_at))}</div>
@@ -521,7 +521,7 @@ export function DriverSafetyReverseSection({
       {canViewComplaints && !complaintsQuery.isError && complaintTotal > complaintPageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-safety-reverse-complaints-pager">
           <Button size="sm" variant="secondary" disabled={complaintPage <= 1 || complaintsQuery.isFetching} onClick={() => setComplaintPage((current) => Math.max(1, current - 1))}>Previous complaints</Button>
-          <span className="text-slate-600">Page {complaintPage} of {complaintPageCount} · {complaintTotal} complaints</span>
+          <span className="text-[#4B5563]">Page {complaintPage} of {complaintPageCount} · {complaintTotal} complaints</span>
           <Button size="sm" variant="secondary" disabled={complaintPage >= complaintPageCount || complaintsQuery.isFetching} onClick={() => setComplaintPage((current) => Math.min(complaintPageCount, current + 1))}>Next complaints</Button>
         </div>
       ) : null}
@@ -541,7 +541,7 @@ export function DriverSafetyReverseSection({
       >
         {tests.map((test) => (
           <li key={s(test.uuid)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-            <span className="font-semibold text-slate-700">
+            <span className="font-semibold text-[#4B5563]">
               {s(test.test_type).replace(/_/g, " ") || "test"} · {s(test.test_kind) || "drug"}
             </span>
             <span className="ml-2 text-gray-600">{s(test.result) || "pending"}</span>
