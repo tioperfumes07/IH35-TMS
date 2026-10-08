@@ -1,3 +1,13 @@
+## 2026-10-08T17:35Z · BANK leftover slate — WO status pie / fleet utilization / driver hub reporting
+
+FINDING: BANK-F91222 — WOStatusPieChart / FleetUtilizationGauge / DriverHubReportingPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25887 squash `d4d49ed74e` (BANK-F91221 drv assign/hos/hist)
+GUARD: scripts/verify-home-charts-hub-rpt-slate-leftover-chrome.mjs + verify-steps/3696 piggyback
+LIVE PROOF: verify-home-charts-hub-rpt-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3696 piggyback + OUTBOX
+
 ## 2026-10-08T17:20Z · BANK leftover slate — current assignment / HOS status / assignment history
 
 FINDING: BANK-F91221 — CurrentAssignmentSection / HOSStatusSection / DriverAssignmentHistorySection Tailwind slate-* → house tokens
