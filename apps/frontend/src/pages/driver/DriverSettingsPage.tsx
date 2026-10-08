@@ -39,18 +39,18 @@ export function DriverSettingsPage() {
   return (
     <div className="space-y-3 text-xs">
       <h2 className="text-xs font-semibold">{t("driver.settings_title")}</h2>
-      <p className="text-xs text-slate-600">Use the header to switch {t("driver.language")} (EN/ES).</p>
-      <button type="button" className="rounded-sm bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50" disabled={pushPending} onClick={() => void enablePush()}>
+      <p className="text-xs text-[#4B5563]">Use the header to switch {t("driver.language")} (EN/ES).</p>
+      <button type="button" className="rounded-sm bg-[#0F1219] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50" disabled={pushPending} onClick={() => void enablePush()}>
         {pushPending ? "Enabling…" : t("driver.push_enable")}
       </button>
       <button
         type="button"
-        className="rounded-sm border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800"
+        className="rounded-sm border border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]"
         onClick={() => void restartTour.mutate()}
       >
         Restart guided tour
       </button>
-      {note ? <p role="status" className="text-xs text-slate-600">{note}</p> : null}
+      {note ? <p role="status" className="text-xs text-[#4B5563]">{note}</p> : null}
     </div>
   );
 }

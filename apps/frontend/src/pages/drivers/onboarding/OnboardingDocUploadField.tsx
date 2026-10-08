@@ -19,7 +19,7 @@ export function OnboardingDocUploadField({
 }: DocUploadStepProps) {
   return (
     <div data-testid={testId} className="space-y-2">
-      <label className="block text-xs font-medium text-slate-700">{label}</label>
+      <label className="block text-xs font-medium text-[#1F2A44]">{label}</label>
       <input
         type="file"
         accept="application/pdf,image/*"
@@ -30,13 +30,13 @@ export function OnboardingDocUploadField({
         }}
         className="block w-full text-xs"
       />
-      {uploading ? <p className="text-xs text-slate-500">Uploading via docs module…</p> : null}
+      {uploading ? <p className="text-xs text-[#6B7280]">Uploading via docs module…</p> : null}
       {fileId ? (
-        <p className="text-xs text-slate-700">
+        <p className="text-xs text-[#1F2A44]">
           Uploaded: {fileName || fileId}
         </p>
       ) : (
-        <p className="text-xs text-slate-500">Upload via docs module (presigned URL)</p>
+        <p className="text-xs text-[#6B7280]">Upload via docs module (presigned URL)</p>
       )}
     </div>
   );

@@ -1,3 +1,13 @@
+## 2026-10-08T23:40Z · BANK leftover slate — DriverSettings / DriverLoads / OnboardingDocUpload
+
+FINDING: BANK-F91255 — DriverSettingsPage / DriverLoadsPage / OnboardingDocUploadField Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25933 squash `7827082f25` (BANK-F91254 QboStyleHome/DriverManagerHome/HomeKpiRange)
+GUARD: scripts/verify-drv-settings-loads-onboard-slate-leftover-chrome.mjs + verify-steps/3544 piggyback
+LIVE PROOF: verify-drv-settings-loads-onboard-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3544 piggyback + OUTBOX
+
 ## 2026-10-08T23:35Z · BANK leftover slate — QboStyleHome / DriverManagerHome / HomeKpiRange
 
 FINDING: BANK-F91254 — QboStyleHomePage / DriverManagerHome / HomeKpiRangeToggle Tailwind slate-* → house tokens
