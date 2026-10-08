@@ -19,8 +19,8 @@ type CargoTimelineResponse = {
 
 function statusClass(status: "green" | "amber" | "red") {
   if (status === "red") return "bg-red-100 text-red-800";
-  if (status === "amber") return "bg-slate-100 text-slate-700";
-  return "bg-slate-100 text-slate-700";
+  if (status === "amber") return "bg-[#F7F8FA] text-[#1F2A44]";
+  return "bg-[#F7F8FA] text-[#1F2A44]";
 }
 
 function statusLabel(status: "green" | "amber" | "red") {
@@ -56,7 +56,7 @@ export function CargoTempBadge({ operatingCompanyId, loadId, reefer }: Props) {
     return (
       <button
         type="button"
-        className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-700"
+        className="rounded-full border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]"
         data-cargo-temp-retry={loadId}
         onClick={(event) => {
           event.stopPropagation();
