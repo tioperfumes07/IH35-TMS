@@ -250,11 +250,11 @@ export function SubscriptionManager() {
         real worker + 6 report generators, tracked in GUARD-WORKORDERS.md), but it stops the deception now.
       */}
       <div
-        className="rounded-sm border border-slate-200 bg-slate-100 p-4 text-xs"
+        className="rounded-sm border border-[#E5E7EB] bg-[#E5E7EB] p-4 text-xs"
         data-testid="q8-subscriptions-delivery-not-implemented"
       >
-        <p className="font-semibold text-slate-700">Email delivery is not implemented yet</p>
-        <p className="mt-1 text-slate-600">
+        <p className="font-semibold text-[#1F2A44]">Email delivery is not implemented yet</p>
+        <p className="mt-1 text-[#4B5563]">
           Subscriptions below save correctly, but no backend worker exists to send them — "Active" status
           does not mean emails are going out. Last sent / Next will stay empty for every subscription until
           report delivery ships.
@@ -314,7 +314,7 @@ export function SubscriptionManager() {
                 <span
                   className={`rounded border px-2 py-0.5 text-xs font-semibold ${
                     row.is_active
-                      ? "border-slate-200 bg-slate-100 text-slate-900"
+                      ? "border-[#E5E7EB] bg-[#E5E7EB] text-[#0F1219]"
                       : "border-gray-200 bg-gray-100 text-gray-700"
                   }`}
                 >
@@ -359,7 +359,7 @@ export function SubscriptionManager() {
       </div>
 
       <section className="space-y-2">
-        <h3 className="text-xs font-semibold text-slate-800">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           Delivery history
         </h3>
         <div className="rounded-sm border border-gray-200 bg-white p-2">

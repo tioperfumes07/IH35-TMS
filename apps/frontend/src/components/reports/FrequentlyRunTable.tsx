@@ -18,12 +18,12 @@ function ReportNameCell({
       <button
         type="button"
         onClick={() => onRun(row)}
-        className="text-left font-semibold text-slate-800 hover:text-[#1f2a44] hover:underline"
+        className="text-left font-semibold text-[#0F1219] hover:text-[#1f2a44] hover:underline"
       >
         {row.name}
       </button>
       {row.status === "stub" ? (
-        <span className="ml-2 rounded-sm border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-xs font-semibold text-slate-700">
+        <span className="ml-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">
           {row.id === "ar-aging" ? "P5" : "P4"}
         </span>
       ) : null}
@@ -43,22 +43,22 @@ export function FrequentlyRunTable({ rows, onRun }: Props) {
       key: "filters",
       label: "Filters",
       sortable: true,
-      cellClass: "text-slate-600",
+      cellClass: "text-[#4B5563]",
       render: (row) => row.filters,
     },
     {
       key: "runs",
       label: "Runs",
       sortable: true,
-      cellClass: "font-semibold text-slate-800 tabular-nums",
+      cellClass: "font-semibold text-[#0F1219] tabular-nums",
       render: (row) => row.runs,
     },
   ];
 
   return (
-    <section className="rounded-sm border border-slate-200 bg-white">
-      <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
-        <h3 className="text-xs font-semibold text-slate-900">Frequently run</h3>
+    <section className="rounded-sm border border-[#E5E7EB] bg-white">
+      <div className="flex items-center justify-between border-b border-[#E5E7EB] px-3 py-2">
+        <h3 className="text-xs font-semibold text-[#0F1219]">Frequently run</h3>
         {/* Removed dead "View all" href="#" link — this table already lives on the reports
             landing; there is no separate all-reports destination (QA-sweep). */}
       </div>

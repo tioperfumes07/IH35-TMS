@@ -1,3 +1,13 @@
+## 2026-10-08T13:55Z · BANK leftover slate — subscription editor / frequently run / subscription manager
+
+FINDING: BANK-F91208 — SubscriptionEditor / FrequentlyRunTable / SubscriptionManager Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25866 squash `c3d687de29` (BANK-F91207 fleet/road/inv)
+GUARD: scripts/verify-rpt-sub-slate-leftover-chrome.mjs + verify-steps/1028 piggyback
+LIVE PROOF: verify-rpt-sub-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 1028 piggyback + OUTBOX
+
 ## 2026-10-08T13:40Z · BANK leftover slate — fleet table / road service / inventory parts stock
 
 FINDING: BANK-F91207 — FleetTablePage / RoadServiceList / InventoryPartsStockPage Tailwind slate-* → house tokens

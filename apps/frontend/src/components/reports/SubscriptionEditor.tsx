@@ -107,12 +107,12 @@ export function SubscriptionEditor({
       data-testid="subscription-editor"
     >
       <div className="mx-auto w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-xl">
-        <h2 className="text-page-title font-semibold text-slate-900">
+        <h2 className="text-page-title font-semibold text-[#0F1219]">
           {mode === "edit" ? "Edit subscription" : "Add subscription"}
         </h2>
         <div className="mt-4 space-y-3 text-xs">
           <label className="block">
-            <span className="font-medium text-slate-700">Report</span>
+            <span className="font-medium text-[#1F2A44]">Report</span>
             <SelectCombobox
               aria-label="Report"
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
@@ -129,7 +129,7 @@ export function SubscriptionEditor({
           </label>
 
           <label className="block">
-            <span className="font-medium text-slate-700">Cadence</span>
+            <span className="font-medium text-[#1F2A44]">Cadence</span>
             <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={cadence}
@@ -147,7 +147,7 @@ export function SubscriptionEditor({
 
           {cadence === "weekly" ? (
             <label className="block">
-              <span className="font-medium text-slate-700">Day of week</span>
+              <span className="font-medium text-[#1F2A44]">Day of week</span>
               <select
                 className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
                 value={dayOfWeek ?? 1}
@@ -164,7 +164,7 @@ export function SubscriptionEditor({
 
           {cadence === "monthly" ? (
             <label className="block">
-              <span className="font-medium text-slate-700">Day of month</span>
+              <span className="font-medium text-[#1F2A44]">Day of month</span>
               <input
                 type="number"
                 min={1}
@@ -177,7 +177,7 @@ export function SubscriptionEditor({
           ) : null}
 
           <label className="block">
-            <span className="font-medium text-slate-700">Time (local)</span>
+            <span className="font-medium text-[#1F2A44]">Time (local)</span>
             <TimePicker
               className="mt-1 w-full"
               value={timeOfDay}
@@ -187,7 +187,7 @@ export function SubscriptionEditor({
           </label>
 
           <label className="block">
-            <span className="font-medium text-slate-700">Timezone</span>
+            <span className="font-medium text-[#1F2A44]">Timezone</span>
             <input
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={timezone}
@@ -196,7 +196,7 @@ export function SubscriptionEditor({
           </label>
 
           <label className="block">
-            <span className="font-medium text-slate-700">Recipients</span>
+            <span className="font-medium text-[#1F2A44]">Recipients</span>
             <textarea
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               rows={2}
@@ -207,7 +207,7 @@ export function SubscriptionEditor({
           </label>
 
           <label className="block">
-            <span className="font-medium text-slate-700">Delivery format</span>
+            <span className="font-medium text-[#1F2A44]">Delivery format</span>
             <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={deliveryFormat}
