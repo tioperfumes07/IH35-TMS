@@ -1,3 +1,13 @@
+## 2026-10-08T12:25Z · BANK leftover slate — legal templates / terms of service / privacy policy
+
+FINDING: BANK-F91203 — LegalTemplatesListPage / TermsOfServicePage / PrivacyPolicyPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25857 squash `14ddbdd154` (BANK-F91202 upload/alerts/attn)
+GUARD: scripts/verify-legal-tos-privacy-slate-leftover-chrome.mjs + verify-steps/3470 piggyback
+LIVE PROOF: verify-legal-tos-privacy-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3470 piggyback + OUTBOX
+
 ## 2026-10-08T12:15Z · BANK leftover slate — upload zone / safety alerts / driver manager attention
 
 FINDING: BANK-F91202 — UploadZone / SafetyAlertsPanel / DriverManagerAttentionPanel Tailwind slate-* → house tokens
