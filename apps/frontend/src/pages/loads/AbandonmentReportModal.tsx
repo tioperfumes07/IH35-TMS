@@ -57,11 +57,11 @@ export function AbandonmentReportModal({
 
   return (
     <Modal open title="Report load abandonment" onClose={onClose}>
-      <p className="mb-3 text-xs text-slate-500">Creates a chargeback line and marks the load abandoned.</p>
+      <p className="mb-3 text-xs text-[#6B7280]">Creates a chargeback line and marks the load abandoned.</p>
       {/* Exact Leaves dispatch.modal.abandonment_report:load|driver —
           loadId was API-only; driver was picker-only — expose EntityLinks. */}
       <div
-        className="mb-3 flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700"
+        className="mb-3 flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]"
         data-testid="abandonment-report-modal-entitylinks"
       >
         <span>
@@ -74,7 +74,7 @@ export function AbandonmentReportModal({
         ) : null}
       </div>
       <div className="space-y-3 text-xs">
-        <label className="block text-xs font-semibold text-slate-600">
+        <label className="block text-xs font-semibold text-[#4B5563]">
           Driver
           <DriverPickerWithCreate
             operatingCompanyId={operatingCompanyId}
@@ -88,25 +88,25 @@ export function AbandonmentReportModal({
             className="mt-1 w-full"
           />
         </label>
-        <label className="block text-xs font-semibold text-slate-600">
+        <label className="block text-xs font-semibold text-[#4B5563]">
           Abandonment time (local)
           <DateTimePicker className="mt-1 w-full" aria-label="Abandonment time (local)" value={abandonmentEventAt} onChange={setAbandonmentEventAt} />
         </label>
-        <label className="block text-xs font-semibold text-slate-600">
+        <label className="block text-xs font-semibold text-[#4B5563]">
           Location (optional)
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={location} onChange={(e) => setLocation(e.target.value)} />
         </label>
         <div className="grid grid-cols-2 gap-2">
-          <label className="block text-xs font-semibold text-slate-600">
+          <label className="block text-xs font-semibold text-[#4B5563]">
             Towing (¢ override)
             <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={towing} onChange={(e) => setTowing(e.target.value.replace(/[^\d]/g, ""))} />
           </label>
-          <label className="block text-xs font-semibold text-slate-600">
+          <label className="block text-xs font-semibold text-[#4B5563]">
             Deadhead miles
             <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={deadheadMiles} onChange={(e) => setDeadheadMiles(e.target.value)} />
           </label>
         </div>
-        <label className="block text-xs font-semibold text-slate-600">
+        <label className="block text-xs font-semibold text-[#4B5563]">
           Notes
           <textarea className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>
