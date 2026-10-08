@@ -6,6 +6,7 @@ import { MoneyInput } from "../forms/MoneyInput";
 import { DataPanel } from "../layout/DataPanel";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { SelectCombobox } from "../Combobox";
 
 type CustomerFreeTimeTerms = {
   customer_uuid: string;
@@ -183,7 +184,7 @@ export function FreeTimeDetentionEditor(props: {
             </label>
             <label className="block">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Currency</span>
-              <select
+              <SelectCombobox
                 value={detentionCurrency}
                 onChange={(event) => setDetentionCurrency(event.target.value as "USD" | "MXN" | "CAD")}
                 disabled={!props.canEdit}
@@ -192,7 +193,7 @@ export function FreeTimeDetentionEditor(props: {
                 <option value="USD">USD</option>
                 <option value="MXN">MXN</option>
                 <option value="CAD">CAD</option>
-              </select>
+              </SelectCombobox>
             </label>
             <label className="flex items-center gap-2 text-xs">
               <input

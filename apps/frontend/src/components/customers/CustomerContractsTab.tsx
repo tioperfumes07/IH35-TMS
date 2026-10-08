@@ -17,6 +17,7 @@ import { DataTable } from "../DataTable";
 import { legalContractsApi } from "../../api/legal-contracts";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
+import { SelectCombobox } from "../Combobox";
 
 type Props = {
   customerId: string;
@@ -259,7 +260,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
             )}
             <label className="block text-xs">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Contract type *</span>
-              <select
+              <SelectCombobox
                 value={meta.contract_type}
                 onChange={(e) => setMeta((m) => ({ ...m, contract_type: e.target.value as CustomerContract["contract_type"] }))}
                 className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
@@ -268,7 +269,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
                 {Object.entries(CONTRACT_TYPE_LABELS).map(([val, label]) => (
                   <option key={val} value={val}>{label}</option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
             <div className="grid grid-cols-2 gap-2">
               <div>
