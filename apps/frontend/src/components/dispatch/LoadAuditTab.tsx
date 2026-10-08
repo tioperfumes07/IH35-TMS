@@ -14,6 +14,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { DatePicker } from "../forms/DatePicker";
 import { formatMoneyCents } from "./constants";
 import { describeLoadAuditEvent, type LoadAuditContext } from "./loadAuditSentences";
+import { SelectCombobox } from "../Combobox";
 
 type Props = {
   load: LoadDetail;
@@ -125,7 +126,7 @@ export function LoadAuditTab({ load, operatingCompanyId }: Props) {
           </div>
           <div className="ldt-fld">
             <label>Type</label>
-            <select
+            <SelectCombobox
               className="ldt-inp"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
@@ -137,7 +138,7 @@ export function LoadAuditTab({ load, operatingCompanyId }: Props) {
                   {label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </div>
           <div className="ldt-fld">
             <label>Who</label>

@@ -6,6 +6,7 @@ import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { SelectCombobox } from "../Combobox";
 
 type Plate = {
   id: string;
@@ -143,10 +144,10 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
       ) : null}
       <Modal variant="drawer" open={open} title="Add plate" onClose={() => setOpen(false)}>
         <div className="space-y-2 text-xs">
-          <select className="w-full border px-2 py-1" value={country} onChange={(e) => setCountry(e.target.value as "US" | "MX")}>
+          <SelectCombobox className="w-full border px-2 py-1" value={country} onChange={(e) => setCountry(e.target.value as "US" | "MX")}>
             <option value="US">US</option>
             <option value="MX">MX</option>
-          </select>
+          </SelectCombobox>
           <input
             className="w-full border px-2 py-1"
             placeholder="Jurisdiction"

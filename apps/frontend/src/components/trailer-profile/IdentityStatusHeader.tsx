@@ -1,3 +1,4 @@
+import { SelectCombobox } from "../Combobox";
 const STATUS_LABELS: Record<string, string> = {
   InService: "Active",
   OutOfService: "OOS",
@@ -23,7 +24,7 @@ export function IdentityStatusHeader({
         <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium">{String(equipment.equipment_type ?? "—")}</span>
         <label className="text-xs text-gray-600">
           Status
-          <select
+          <SelectCombobox
             className="ml-1 rounded-sm border px-2 py-0.5 text-xs font-medium text-slate-700"
             value={status}
             onChange={(e) => onChangeStatus?.(e.target.value)}
@@ -31,7 +32,7 @@ export function IdentityStatusHeader({
           >
             <option value={status}>{STATUS_LABELS[status] ?? status}</option>
             <option value="__change__">Change status…</option>
-          </select>
+          </SelectCombobox>
         </label>
       </div>
       <p className="mt-2 text-xs text-gray-600">VIN: {String(equipment.vin ?? "—")} · Year: {String(equipment.year ?? "—")}</p>

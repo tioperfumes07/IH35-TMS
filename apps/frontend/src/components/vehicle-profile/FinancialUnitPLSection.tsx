@@ -5,6 +5,7 @@ import { TotalOwnershipCostMeter } from "./TotalOwnershipCostMeter";
 import { ComparableUnitsWidget } from "./ComparableUnitsWidget";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { formatUsdCents } from "../../lib/money";
+import { SelectCombobox } from "../Combobox";
 
 type Period = "YTD" | "quarter" | "month";
 
@@ -85,7 +86,7 @@ export function FinancialUnitPLSection({
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-xs font-semibold text-gray-800">Financial unit P&amp;L</h2>
-        <select
+        <SelectCombobox
           className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           value={period}
           onChange={(e) => setPeriod(e.target.value as Period)}
@@ -94,7 +95,7 @@ export function FinancialUnitPLSection({
           <option value="YTD">YTD</option>
           <option value="quarter">Last quarter</option>
           <option value="month">Last month</option>
-        </select>
+        </SelectCombobox>
       </div>
       <TotalOwnershipCostMeter ownership={ownership as Parameters<typeof TotalOwnershipCostMeter>[0]["ownership"]} />
       <div className="mt-3 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">

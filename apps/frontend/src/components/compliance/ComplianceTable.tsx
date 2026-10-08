@@ -4,6 +4,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink, type EntityKind } from "../shared/EntityLink";
+import { SelectCombobox } from "../Combobox";
 
 type Props = {
   rows: ComplianceCredential[];
@@ -137,18 +138,18 @@ export function ComplianceTable({
           <div className="flex flex-wrap items-center gap-3">
             <label className="text-xs">
               Type{" "}
-              <select className="ml-1 rounded-sm border px-2 py-1" value={typeFilter} onChange={(e) => onTypeFilter(e.target.value)}>
+              <SelectCombobox className="ml-1 rounded-sm border px-2 py-1" value={typeFilter} onChange={(e) => onTypeFilter(e.target.value)}>
                 <option value="">All</option>
                 {types.map((t) => (
                   <option key={t} value={t}>
                     {typeLabelByType.get(t) ?? t}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
             <label className="text-xs">
               Owner{" "}
-              <select
+              <SelectCombobox
                 className="ml-1 rounded-sm border px-2 py-1"
                 value={ownerTypeFilter}
                 onChange={(e) => onOwnerTypeFilter(e.target.value)}
@@ -159,7 +160,7 @@ export function ComplianceTable({
                     {ownerNoun(t)}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
             <button type="button" className="rounded-sm bg-slate-800 px-3 py-1 text-xs text-white" onClick={onExportCsv}>
               Export CSV

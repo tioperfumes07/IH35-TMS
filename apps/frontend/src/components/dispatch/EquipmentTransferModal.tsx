@@ -4,6 +4,7 @@ import { Modal } from "../Modal";
 import { EntityPicker } from "../EntityPicker";
 import type { EntityPickerOption } from "../parity/entityPickerRegistry";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { SelectCombobox } from "../Combobox";
 
 type Props = {
   open: boolean;
@@ -82,7 +83,7 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
   return (
     <Modal open={open} onClose={closeUnlessBusy} title="Initiate equipment transfer">
       <div data-testid="equipment-transfer-modal" className="grid gap-2">
-        <select
+        <SelectCombobox
           className="rounded-sm border px-2 py-1"
           value={kind}
           disabled={busy}
@@ -94,7 +95,7 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
         >
           <option value="trailer">Trailer</option>
           <option value="chassis">Chassis</option>
-        </select>
+        </SelectCombobox>
         <EntityPicker
           kind="trailer"
           equipmentKind={kind}
