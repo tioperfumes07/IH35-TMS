@@ -107,7 +107,7 @@ if (process.argv.includes("--selftest")) {
     [
       "input's own frame silently dropped",
       source.replace(
-        'className="h-7 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs"',
+        /className="h-7 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs[^"]*"/,
         'className="h-7 w-full pl-4 pr-2 text-left text-xs"'
       ),
       policySource,
