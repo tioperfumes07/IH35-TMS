@@ -51,19 +51,19 @@ export function LoadRealDrivenMilesSection({ operatingCompanyId, loadId }: Props
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               <div>
                 <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Practical (billed)</div>
-                <div className="text-xs font-semibold text-slate-900">{mi(c?.practical_miles)}</div>
+                <div className="text-xs font-semibold text-[#0F1219]">{mi(c?.practical_miles)}</div>
               </div>
               <div>
                 <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Short (paid)</div>
-                <div className="text-xs font-semibold text-slate-900">{mi(c?.short_miles)}</div>
+                <div className="text-xs font-semibold text-[#0F1219]">{mi(c?.short_miles)}</div>
               </div>
               <div>
                 <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Real driven (loaded)</div>
-                <div className="text-xs font-semibold text-slate-900" title={c?.real_driven_loaded_reason ?? undefined}>{mi(c?.real_driven_loaded_miles)}</div>
+                <div className="text-xs font-semibold text-[#0F1219]" title={c?.real_driven_loaded_reason ?? undefined}>{mi(c?.real_driven_loaded_miles)}</div>
               </div>
               <div>
                 <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Driven − billed</div>
-                <div className="text-xs font-semibold text-slate-900">{mi(c?.real_minus_practical_miles)}</div>
+                <div className="text-xs font-semibold text-[#0F1219]">{mi(c?.real_minus_practical_miles)}</div>
               </div>
             </div>
             {c?.real_driven_loaded_miles == null && c?.real_driven_loaded_reason ? (
