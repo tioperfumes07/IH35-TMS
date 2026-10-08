@@ -1,3 +1,13 @@
+## 2026-10-08T19:05Z · BANK leftover slate — SafetyEvents / IntegrityAlert drawer / HarshEvent
+
+FINDING: BANK-F91228 — SafetyEventsPage / IntegrityAlertDetailDrawer / HarshEventDetail Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25894 squash `bdf2252649` (BANK-F91227 eld liveduty/viol)
+GUARD: scripts/verify-safety-events-harsh-slate-leftover-chrome.mjs + verify-steps/3672 piggyback
+LIVE PROOF: verify-safety-events-harsh-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3672 piggyback + OUTBOX
+
 ## 2026-10-08T18:55Z · BANK leftover slate — LiveDuty / Violations / Unidentified ELD tabs
 
 FINDING: BANK-F91227 — LiveDutyTab / ViolationsTab / UnidentifiedTab Tailwind slate-* → house tokens
