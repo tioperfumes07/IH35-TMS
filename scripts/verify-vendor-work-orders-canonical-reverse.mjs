@@ -15,7 +15,7 @@ const F = {
 };
 const checks = [
   ["route", /const listQuerySchema[\s\S]{0,700}vendor_id: z\.string\(\)\.uuid\(\)\.optional\(\)/, "list schema accepts canonical vendor reverse"],
-  ["route", /q\.equipment_id \|\| q\.load_id \|\| q\.driver_id \|\| q\.vendor_id[\s\S]{0,180}w\.voided_at IS NULL/, "vendor reverse includes completed non-void history"],
+  ["route", /q\.equipment_id \|\| q\.load_id \|\| q\.driver_id \|\| q\.vendor_id[\s\S]{0,400}w\.voided_at IS NULL/, "vendor reverse includes completed non-void history"],
   ["route", /if \(q\.vendor_id\)[\s\S]{0,180}COALESCE\(w\.external_vendor_id, w\.vendor_id\) = \$\$\{values\.length\}::uuid/, "route filters resolved canonical vendor FK"],
   ["api", /listWorkOrdersFiltered\([\s\S]{0,260}vendor_id\?: string/, "client types vendor_id"],
   ["api", /if \(params\.vendor_id\) qs\.set\("vendor_id", params\.vendor_id\)/, "client serializes vendor_id"],

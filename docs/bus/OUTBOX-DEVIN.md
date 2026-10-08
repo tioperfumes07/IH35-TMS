@@ -184,3 +184,6 @@ DONE: PR #25875 · squash 1faf85b6adfdd6d6eacec25a35b969f881f1d02d · money-pr-l
 
 ## 2026-10-08 — ROUND 441.22 Devin: DriverDuplicates nested-box + vendor-credit anchors + deposit payer columns
 DONE: PR #25880 · squash d5d6c73b37d587a2218765f355043351c32b8ae8 · money-pr-local-gate exit 0 · verify-no-nested-box/v-credit-active/v-credit-live/no-dead-schema all exit 0 + selftests · baseline-lines-added = 0
+
+## 2026-10-08 — ROUND 441.22 Devin: aging-drill + sidebar + WO/categorize guard anchors
+DONE: PR #25882 · squash e0fb8c6e8b800d78bda4607e5a6433c4df10a040 · money-pr-local-gate exit 0 · hooks-ON push · all 3 guards + selftests exit 0
