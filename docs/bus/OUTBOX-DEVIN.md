@@ -134,3 +134,6 @@ DONE: PR #25784 · squash 4b5df714c1e3d69bc388255f9a6b1087cd21f65e · money-pr-l
 
 ## 2026-10-08 — drain: re-anchor 3 more verify-* guard selftests (reserve/safety labels, safety creator pickers, vehicle driver history range)
 DONE: PR #25787 · squash 37d3ae27cdb3359ff8d7b0b62ce62d4a9f9eeaa0 · money-pr-local-gate exit 0 · fixed selftest plant strings in verify-reserve-docs-liabilities-human-labels, verify-safety-creator-pickers, verify-vehicle-driver-history-exact-range · baseline-lines-added = 0
+
+## 2026-10-08 — ROUND 441.22 Devin: accounting module hand-rolled currency formatting converted to canonical formatters
+DONE: PR #25788 · squash pending · money-pr-local-gate exit 0 · defect register created at docs/audit/ROUND-441-22-defect-register.md; converted RecurringBillList, AccountsPayableAgingPage, LoansAdvancesPage, CheckPrintPage, CheckDetailPage to formatUsdCents/formatUsd; re-anchored verify-recurring-bill-list-uses-paritytable to accept canonical money formatters · baseline-lines-added = 0
