@@ -1,3 +1,13 @@
+## 2026-10-08T12:45Z · BANK leftover slate — driver late arrival / customer late arrival / arrival prompt
+
+FINDING: BANK-F91205 — DriverLateArrivalCard / CustomerLateArrivalCard / ArrivalPrompt Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25859 squash `58f5b53921` (BANK-F91204 lists exc/term)
+GUARD: scripts/verify-late-arrival-prompt-slate-leftover-chrome.mjs + verify-steps/3784 piggyback
+LIVE PROOF: verify-late-arrival-prompt-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3784 piggyback + OUTBOX
+
 ## 2026-10-08T12:35Z · BANK leftover slate — load exception reasons / termination reasons / domain flyout
 
 FINDING: BANK-F91204 — LoadExceptionReasonsListPage / TerminationReasonsListPage / DomainFlyout Tailwind slate-* → house tokens

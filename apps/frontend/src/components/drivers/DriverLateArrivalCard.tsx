@@ -51,7 +51,7 @@ export function DriverLateArrivalCard({ operatingCompanyId, driverId }: Props) {
 
   if (query.isLoading) {
     return (
-      <div data-testid="driver-late-arrival-card" className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-500">
+      <div data-testid="driver-late-arrival-card" className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#6B7280]">
         Loading late-arrival rate…
       </div>
     );
@@ -59,7 +59,7 @@ export function DriverLateArrivalCard({ operatingCompanyId, driverId }: Props) {
 
   if (query.isError) {
     return (
-      <div data-testid="driver-late-arrival-card" className="rounded-sm border border-slate-200 bg-white p-3">
+      <div data-testid="driver-late-arrival-card" className="rounded-sm border border-[#E5E7EB] bg-white p-3">
         <ListErrorState
           title="Couldn't load late-arrival rate"
           status={0}
@@ -72,7 +72,7 @@ export function DriverLateArrivalCard({ operatingCompanyId, driverId }: Props) {
 
   if (!query.data) {
     return (
-      <div data-testid="driver-late-arrival-card" className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-500">
+      <div data-testid="driver-late-arrival-card" className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#6B7280]">
         No late-arrival data for this period.
       </div>
     );
@@ -82,15 +82,15 @@ export function DriverLateArrivalCard({ operatingCompanyId, driverId }: Props) {
   return (
     <div
       data-testid="driver-late-arrival-card"
-      className={`rounded-sm border p-3 ${data.chronic_offender ? "border-slate-300 bg-slate-100" : "border-slate-200 bg-[var(--surface-unselected)]"}`}
+      className={`rounded-sm border p-3 ${data.chronic_offender ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-[#E5E7EB] bg-[var(--surface-unselected)]"}`}
     >
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Late arrival rate (30d)</div>
-      <div className="mt-1 text-page-title font-semibold text-slate-900">{pct(data.late_rate)}</div>
-      <div className="mt-1 text-xs text-slate-600">
+      <div className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">Late arrival rate (30d)</div>
+      <div className="mt-1 text-page-title font-semibold text-[#0F1219]">{pct(data.late_rate)}</div>
+      <div className="mt-1 text-xs text-[#4B5563]">
         {data.late_count} late of {data.total_count} stops · {data.grace_minutes}m grace
       </div>
       {data.chronic_offender ? (
-        <div className="mt-2 text-xs font-medium text-slate-700">Chronic offender (&gt;20% late)</div>
+        <div className="mt-2 text-xs font-medium text-[#1F2A44]">Chronic offender (&gt;20% late)</div>
       ) : null}
     </div>
   );
