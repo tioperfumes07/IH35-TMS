@@ -17,7 +17,11 @@
  *   R6 a migration gives integrations.integration_sync_log an UPDATE policy
  *   R7 claimRelayTick is called INSIDE the try (ROUND 441.21-B R3) — a throw between claim and try
  *      left finished_at NULL forever; finally only finishes when logId was set
- * LIVE (with DATABASE_URL): no relay tick has finished_at IS NULL older than 2 hours.
+ *   R8 RELAY DATE LAW — USMCA floor 2026-08-03 hardcoded; ingest skips/clamps (lib/relay-usmca-date-floor-guard)
+ *   R9 FORCE-RLS UPDATE class — app UPDATEs on INSERT/SELECT-only FORCE tables refused
+ *      (lib/force-rls-update-has-policy); sync_log keeps UPDATE
+ * LIVE (with DATABASE_URL): no relay tick has finished_at IS NULL older than 2 hours;
+ *   no USMCA relay_fuel fill dated before 2026-08-03.
  *
  * Run: node scripts/verify-relay-tick-completes.mjs [--selftest]
  */
@@ -25,6 +29,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import {
+  staticProblems as dateFloorStaticProblems,
+} from "./lib/relay-usmca-date-floor-guard.mjs";
+import { problems as forceRlsProblems } from "./lib/force-rls-update-has-policy.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-relay-tick-completes";
@@ -80,6 +88,28 @@ export function staticProblems(cronSrc, migrationsSql) {
   if (!finallyBlocks.some((b) => /if \(logId\)/.test(b))) {
     p.push("R7: finally finishes unconditionally — a concurrent skip (logId null) must not call finishRelayTick");
   }
+  // R8 — RELAY DATE LAW (441.21-B): USMCA floor 2026-08-03
+  const floorFile = path.join(ROOT, "apps/backend/src/integrations/relay-payments/relay-usmca-date-floor.ts");
+  const floorSrc = fs.existsSync(floorFile) ? fs.readFileSync(floorFile, "utf8") : "";
+  for (const x of dateFloorStaticProblems(floorSrc, cronSrc)) {
+    p.push(`R8: ${x}`);
+  }
+  // R9 — FORCE-RLS UPDATE class (441.21-B R2)
+  const backendSrc = [];
+  const walk = (dir) => {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fp = path.join(dir, ent.name);
+      if (ent.isDirectory()) {
+        if (ent.name !== "__tests__") walk(fp);
+      } else if (ent.name.endsWith(".ts") && !ent.name.endsWith(".test.ts")) {
+        backendSrc.push([fp, fs.readFileSync(fp, "utf8")]);
+      }
+    }
+  };
+  walk(path.join(ROOT, "apps/backend/src"));
+  for (const x of forceRlsProblems(migrationsSql, backendSrc)) {
+    p.push(`R9: ${x}`);
+  }
   return p;
 }
 
@@ -104,8 +134,23 @@ async function liveProblems(url) {
         WHERE integration = 'relay' AND finished_at IS NULL AND started_at < now() - interval '${OPEN_CLAIM_MAX_AGE}'
         ORDER BY started_at`
     );
+    const floor = await client.query(
+      `SELECT id::text, transaction_id,
+              COALESCE(relay_created_at, created_at)::date::text AS fill_day
+         FROM integrations.relay_fuel_transactions
+        WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'::uuid
+          AND voided_at IS NULL
+          AND COALESCE(relay_created_at, created_at)::date < '2026-08-03'::date
+        ORDER BY COALESCE(relay_created_at, created_at)
+        LIMIT 25`
+    );
     await client.query("ROLLBACK");
-    return r.rows.map((x) => `LIVE: relay tick ${x.id} (company ${x.operating_company_id}) started ${x.started_at} never recorded a finish`);
+    return [
+      ...r.rows.map((x) => `LIVE: relay tick ${x.id} (company ${x.operating_company_id}) started ${x.started_at} never recorded a finish`),
+      ...floor.rows.map(
+        (x) => `LIVE R8: USMCA fill ${x.transaction_id} (${x.id}) dated ${x.fill_day} is before floor 2026-08-03`
+      ),
+    ];
   } finally {
     await client.end();
   }
@@ -155,7 +200,7 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL — not caught: ${missed.join("; ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS — real tree clean; ${plants.length}/${plants.length} plants caught (R1–R7)`);
+  console.log(`${LABEL} --selftest PASS — real tree clean; ${plants.length}/${plants.length} plants caught (R1–R7) + R8/R9 live in staticProblems`);
   process.exit(0);
 }
 

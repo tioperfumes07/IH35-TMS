@@ -386,7 +386,7 @@ export async function runRelayFuelIngestTick(
         continue;
       }
       lastEnd = await withLuciaBypass(async (client) => lastCoveredEndDate(client, operatingCompanyId));
-      // RELAY DATE LAW — USMCA catch-up never opens before 2026-08-03 (TRANSPORTATION on the shared key).
+      // RELAY DATE LAW — USMCA resume never opens before 2026-08-03 (TRANSPORTATION on the shared key).
       let windowWatermark = lastEnd;
       if (isUsmcaOperatingCompany(operatingCompanyId) && (lastEnd == null || lastEnd < RELAY_USMCA_DATA_FLOOR)) {
         const d = new Date(`${RELAY_USMCA_DATA_FLOOR}T00:00:00Z`);
@@ -403,7 +403,7 @@ export async function runRelayFuelIngestTick(
       let skipped = 0;
       const rejected: RelayRejectedRow[] = [];
       // Server-side date filter via dtstart/dtend, one paced call per window (>=10s apart, halved on a
-      // timeout) so a catch-up never becomes one long call. Client-side filter stays as the defensive fallback.
+      // timeout) so a resume never becomes one long call. Client-side filter stays as the defensive fallback.
       const pull = await fetchRelayFuelTransactionsInWindows(entityCode, {
         startDate: tickWindow.startDate,
         endDate: tickWindow.endDate,

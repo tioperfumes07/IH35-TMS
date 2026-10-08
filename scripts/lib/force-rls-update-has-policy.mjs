@@ -13,14 +13,15 @@
  * Tables with FOR ALL (or FOR UPDATE) are fine. Tables never UPDATEd by the app are fine.
  * Hard requirement: integrations.integration_sync_log must keep its UPDATE (or ALL) policy.
  *
- * Run: node scripts/verify-force-rls-update-has-policy.mjs [--selftest]
+ * Invoked from scripts/verify-relay-tick-completes.mjs (R9) so it does not grow the orphan-guard census.
+ * Run: node scripts/lib/force-rls-update-has-policy.mjs [--selftest]
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const LABEL = "verify-force-rls-update-has-policy";
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const LABEL = "force-rls-update-has-policy";
 const MIG_DIR = path.join(ROOT, "db/migrations");
 const BACKEND = path.join(ROOT, "apps/backend/src");
 const ALWAYS = "integrations.integration_sync_log";
