@@ -148,4 +148,7 @@ DONE: PR #25795 · squash b466548ae02fee0c140d929daa357737656d290f · money-pr-l
 DONE: PR #25796 · squash d11da663559bf8fd6580bd013f3a4afaa7df6450 · money-pr-local-gate exit 0 · converted RunnerFilters.tsx company fallback from native <select> to searchable Combobox; narrowed verify-runner-filters-entity-pickers.mjs to permit Combobox for non-entity filters · baseline-lines-added = 0
 
 ## 2026-10-08 — ROUND 441.22 Devin: RunnerFilters date-preset select to searchable Combobox
-DONE: PR #25797 · squash pending · money-pr-local-gate exit 0 · converted RunnerFilters.tsx date_range preset dropdown from native <select> to searchable Combobox · baseline-lines-added = 0
+DONE: PR #25797 · squash e17f43b11a6cb80b5254cf784e19a418177b4755 · money-pr-local-gate exit 0 · converted RunnerFilters.tsx date_range preset dropdown from native <select> to searchable Combobox · baseline-lines-added = 0
+
+## 2026-10-08 — ROUND 441.22 Devin: banking transactions register tokenized caveat + guard re-anchor
+DONE: PR #25798 · squash pending · money-pr-local-gate exit 0 · replaced retired #9CA3AF with locked #6B7280 in BankingTransactionsDesignView.tsx; verify-banking-earliest-synced-balance-caveat.mjs now accepts canonical formatUsdCents · baseline-lines-added = 0

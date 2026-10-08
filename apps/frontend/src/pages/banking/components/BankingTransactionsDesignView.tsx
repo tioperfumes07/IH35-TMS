@@ -2154,7 +2154,7 @@ export function BankingTransactionsDesignView({
               data-testid={isEarliestSynced ? "banking-balance-earliest-synced-caveat" : undefined}
             >
               {bal == null ? "—" : formatUsdCents(bal)}
-              {isEarliestSynced && <sup className="ml-0.5 font-semibold text-[#9CA3AF]">†</sup>}
+              {isEarliestSynced && <sup className="ml-0.5 font-semibold text-[#6B7280]">†</sup>}
             </span>
           );
         },
@@ -3176,7 +3176,7 @@ export function BankingTransactionsDesignView({
           </div>
           {!tx.is_credit && draft.mode === "categorize" ? (
             <div
-              className="mt-2 border-t border-[#9CA3AF] pt-2"
+              className="mt-2 border-t border-[#6B7280] pt-2"
               data-testid="banking-driver-money-treatment"
             >
               <p className="text-xs font-semibold text-[#0F1219]">Driver expense treatment</p>
@@ -3571,7 +3571,7 @@ export function BankingTransactionsDesignView({
       {transactionsQuery.isSuccess ? (
         <>
           <div
-            className="border-l-4 border-[#9CA3AF] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
+            className="border-l-4 border-[#6B7280] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
             data-testid="banking-bank-feed-gl-posting-honesty-banner"
           >
             {/*
