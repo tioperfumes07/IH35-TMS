@@ -128,3 +128,6 @@ DONE: PR #25781 · squash ecee7935b0e78acd9ea41c253e145dd05a07a53b · money-pr-l
 
 ## 2026-10-08 — drain: re-anchor 3 more stale verify-* guard selftests (Samsara sync errors, subscription banner, vendor S03/S04)
 DONE: PR #25782 · squash c74c026468651f9617fb1e574146d16e77961cf1 · money-pr-local-gate exit 0 · fixed selftest plant strings in verify-samsara-sync-errors-surfaced-in-log, verify-subscription-manager-delivery-banner, verify-vend-s03-s04-dedup-and-types · baseline-lines-added = 0
+
+## 2026-10-08 — drain: re-anchor reimbursement/unit-picker guards + remove Combobox from RunnerFilters
+DONE: PR #25784 · squash 4b5df714c1e3d69bc388255f9a6b1087cd21f65e · money-pr-local-gate exit 0 · re-anchored verify-reimbursements-section-uses-paritytable to current ReimbursementsSection design; fixed verify-unit-picker-excludes-archived-deactivated selftest global mutations; replaced SelectCombobox with native <select> in RunnerFilters.tsx · baseline-lines-added = 0

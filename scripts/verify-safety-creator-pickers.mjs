@@ -127,8 +127,8 @@ if (SELFTEST) {
     {
       ...live,
       [target]: live[target].replace(
-        '<div data-testid="dot-inspection-driver-picker">',
-        '<input placeholder="driver_id" /><div data-testid="dot-inspection-driver-picker">'
+        /<div className=\{SAFETY_FIELD_CLASS\} data-testid="dot-inspection-driver-picker">/,
+        '<input placeholder="driver_id" /><div className={SAFETY_FIELD_CLASS} data-testid="dot-inspection-driver-picker">'
       ),
     },
     'placeholder="driver_id"'
@@ -154,8 +154,8 @@ if (SELFTEST) {
     {
       ...live,
       [target]: live[target].replace(
-        /(<EntityPicker[\s\S]*?kind="unit"[\s\S]*?)\ballowCreate\b/,
-        "$1allowCreate={false}"
+        /<div className=\{SAFETY_FIELD_CLASS\} data-testid="dot-inspection-unit-picker">[\s\S]*?\ballowCreate\b/,
+        '<div className={SAFETY_FIELD_CLASS} data-testid="dot-inspection-unit-picker">\n          <EntityPicker kind="unit" allowCreate={false}'
       ),
     },
     "unit EntityPicker must allow inline create"
