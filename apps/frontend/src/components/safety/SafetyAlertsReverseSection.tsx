@@ -71,7 +71,7 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`safety-alerts-reverse-${subjectKind}`}>
-      <h3 className="text-xs font-semibold text-slate-900">Safety alerts and violations</h3>
+      <h3 className="text-xs font-semibold text-[#0F1219]">Safety alerts and violations</h3>
       {failed ? (
         <ListErrorState
           status={0}
@@ -80,7 +80,7 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
         />
       ) : null}
       {!loading && !failed && violations.length + alerts.length + anomalies.length === 0 ? (
-        <p className="mt-2 text-xs text-slate-500">No safety alerts or company violations reference this record.</p>
+        <p className="mt-2 text-xs text-[#6B7280]">No safety alerts or company violations reference this record.</p>
       ) : null}
       <div className="mt-2 space-y-1 text-xs">
         {violations.map((row) => (
@@ -90,9 +90,9 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
               id={row.id == null ? null : String(row.id)}
               name={`Company violation · ${String(row.violation_type ?? "Violation")}`}
               noun="Company violation"
-              className="font-medium text-slate-700 hover:underline"
+              className="font-medium text-[#1F2A44] hover:underline"
             />{" "}
-            <span className="text-slate-500">{formatDateUS(row.reported_date)}</span>
+            <span className="text-[#6B7280]">{formatDateUS(row.reported_date)}</span>
           </div>
         ))}
         {alerts.map((row) => (
@@ -102,9 +102,9 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
               id={row.id == null ? null : String(row.id)}
               name={`Integrity alert · ${String(row.alert_category ?? "Alert")}`}
               noun="Integrity alert"
-              className="font-medium text-slate-700 hover:underline"
+              className="font-medium text-[#1F2A44] hover:underline"
             />{" "}
-            <span className="text-slate-500">{String(row.resolution_status ?? "unresolved")}</span>
+            <span className="text-[#6B7280]">{String(row.resolution_status ?? "unresolved")}</span>
           </div>
         ))}
         {anomalies.map((row) => (
@@ -113,30 +113,30 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
               kind="integrity_anomaly"
               id={row.id}
               label={`Anomaly · ${row.anomaly_type}`}
-              className="font-medium text-slate-700 hover:underline"
+              className="font-medium text-[#1F2A44] hover:underline"
             />{" "}
-            <span className="text-slate-500">{row.status}</span>
+            <span className="text-[#6B7280]">{row.status}</span>
           </div>
         ))}
       </div>
       {!failed && alertTotal > alertPageSize ? (
         <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid={`safety-alerts-reverse-pager-${subjectKind}`}>
           <Button size="sm" variant="secondary" disabled={alertPage <= 1 || integrityAlertQ.isFetching} onClick={() => setAlertPage((current) => Math.max(1, current - 1))}>Previous alerts</Button>
-          <span className="text-slate-600">Page {alertPage} of {alertPageCount} · {alertTotal} alerts</span>
+          <span className="text-[#4B5563]">Page {alertPage} of {alertPageCount} · {alertTotal} alerts</span>
           <Button size="sm" variant="secondary" disabled={alertPage >= alertPageCount || integrityAlertQ.isFetching} onClick={() => setAlertPage((current) => Math.min(alertPageCount, current + 1))}>Next alerts</Button>
         </div>
       ) : null}
       {!failed && violationTotal > violationPageSize ? (
         <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid={`safety-violations-reverse-pager-${subjectKind}`}>
           <Button size="sm" variant="secondary" disabled={violationPage <= 1 || companyViolationQ.isFetching} onClick={() => setViolationPage((current) => Math.max(1, current - 1))}>Previous violations</Button>
-          <span className="text-slate-600">Page {violationPage} of {violationPageCount} · {violationTotal} violations</span>
+          <span className="text-[#4B5563]">Page {violationPage} of {violationPageCount} · {violationTotal} violations</span>
           <Button size="sm" variant="secondary" disabled={violationPage >= violationPageCount || companyViolationQ.isFetching} onClick={() => setViolationPage((current) => Math.min(violationPageCount, current + 1))}>Next violations</Button>
         </div>
       ) : null}
       {!failed && anomalyTotal > anomalyPageSize ? (
         <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid={`safety-anomalies-reverse-pager-${subjectKind}`}>
           <Button size="sm" variant="secondary" disabled={anomalyPage <= 1 || anomalyQ.isFetching} onClick={() => setAnomalyPage((current) => Math.max(1, current - 1))}>Previous anomalies</Button>
-          <span className="text-slate-600">Page {anomalyPage} of {anomalyPageCount} · {anomalyTotal} anomalies</span>
+          <span className="text-[#4B5563]">Page {anomalyPage} of {anomalyPageCount} · {anomalyTotal} anomalies</span>
           <Button size="sm" variant="secondary" disabled={anomalyPage >= anomalyPageCount || anomalyQ.isFetching} onClick={() => setAnomalyPage((current) => Math.min(anomalyPageCount, current + 1))}>Next anomalies</Button>
         </div>
       ) : null}

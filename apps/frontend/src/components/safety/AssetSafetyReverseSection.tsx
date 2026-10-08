@@ -122,7 +122,7 @@ function SectionShell({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           {title}
           {count > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({count})</span> : null}
         </h3>
@@ -130,7 +130,7 @@ function SectionShell({
           kind={openKind}
           id={openId}
           label={linkLabel}
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
         />
       </div>
       {isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
@@ -301,7 +301,7 @@ export function AssetSafetyReverseSection({
               id={s(accident.id) || null}
               name={s(accident.description) || null}
               noun="Accident"
-              className="font-semibold text-slate-700"
+              className="font-semibold text-[#1F2A44]"
             />
             <div className="mt-1 text-xs text-gray-600">
               {formatDateUS(s(accident.accident_at))}
@@ -313,7 +313,7 @@ export function AssetSafetyReverseSection({
                     id={s(accident.driver_id) || null}
                     name={s(accident.driver_name) || null}
                     noun="Driver"
-                    className="font-semibold text-slate-700 underline"
+                    className="font-semibold text-[#1F2A44] underline"
                     data-testid="asset-safety-accident-driver-link"
                   />
                 </>
@@ -325,7 +325,7 @@ export function AssetSafetyReverseSection({
       {!accidentsQuery.isError && accidentTotal > accidentPageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="asset-safety-reverse-accidents-pager">
           <Button size="sm" variant="secondary" disabled={accidentPage <= 1 || accidentsQuery.isFetching} onClick={() => setAccidentPage((current) => Math.max(1, current - 1))}>Previous accidents</Button>
-          <span className="text-slate-600">Page {accidentPage} of {accidentPageCount} · {accidentTotal} accidents</span>
+          <span className="text-[#4B5563]">Page {accidentPage} of {accidentPageCount} · {accidentTotal} accidents</span>
           <Button size="sm" variant="secondary" disabled={accidentPage >= accidentPageCount || accidentsQuery.isFetching} onClick={() => setAccidentPage((current) => Math.min(accidentPageCount, current + 1))}>Next accidents</Button>
         </div>
       ) : null}
@@ -350,7 +350,7 @@ export function AssetSafetyReverseSection({
               id={s(inspection.id) || null}
               name={`Level ${s(inspection.inspection_level) || "—"} · ${s(inspection.outcome) || "—"}`}
               noun="DOT inspection"
-              className="font-semibold text-slate-700"
+              className="font-semibold text-[#1F2A44]"
             />
             <div className="mt-1 text-xs text-gray-600">
               {formatDateUS(s(inspection.inspection_date))}
@@ -363,7 +363,7 @@ export function AssetSafetyReverseSection({
       {!inspectionsQuery.isError && inspectionTotal > inspectionPageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="asset-safety-reverse-dot-inspections-pager">
           <Button size="sm" variant="secondary" disabled={inspectionPage <= 1 || inspectionsQuery.isFetching} onClick={() => setInspectionPage((current) => Math.max(1, current - 1))}>Previous inspections</Button>
-          <span className="text-slate-600">Page {inspectionPage} of {inspectionPageCount} · {inspectionTotal} inspections</span>
+          <span className="text-[#4B5563]">Page {inspectionPage} of {inspectionPageCount} · {inspectionTotal} inspections</span>
           <Button size="sm" variant="secondary" disabled={inspectionPage >= inspectionPageCount || inspectionsQuery.isFetching} onClick={() => setInspectionPage((current) => Math.min(inspectionPageCount, current + 1))}>Next inspections</Button>
         </div>
       ) : null}
@@ -388,7 +388,7 @@ export function AssetSafetyReverseSection({
               id={s(dvir.id) || null}
               name={`${s(dvir.type) || "DVIR"} · ${s(dvir.defect_severity) || "none"}`}
               noun="DVIR"
-              className="font-semibold text-slate-700"
+              className="font-semibold text-[#1F2A44]"
             />
             {dvir.driver_id || dvir.driver_name ? (
               <span className="ml-2 text-gray-600">
@@ -397,7 +397,7 @@ export function AssetSafetyReverseSection({
                   id={s(dvir.driver_id) || null}
                   name={s(dvir.driver_name) || null}
                   noun="Driver"
-                  className="font-semibold text-slate-700 underline"
+                  className="font-semibold text-[#1F2A44] underline"
                   data-testid="asset-safety-dvir-driver-link"
                 />
               </span>
@@ -413,7 +413,7 @@ export function AssetSafetyReverseSection({
                   id={s(dvir.follow_up_wo_id) || null}
                   name={entityLabel(dvir.follow_up_wo_display_id, s(dvir.follow_up_wo_id), "Work order")}
                   noun="Work order"
-                  className="font-semibold text-slate-700"
+                  className="font-semibold text-[#1F2A44]"
                 />
               </div>
             ) : null}
@@ -423,7 +423,7 @@ export function AssetSafetyReverseSection({
       {!dvirQuery.isError && dvirTotal > dvirPageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="asset-safety-reverse-dvir-pager">
           <Button size="sm" variant="secondary" disabled={dvirPage <= 1 || dvirQuery.isFetching} onClick={() => setDvirPage((current) => Math.max(1, current - 1))}>Previous DVIRs</Button>
-          <span className="text-slate-600">Page {dvirPage} of {dvirPageCount} · {dvirTotal} DVIRs</span>
+          <span className="text-[#4B5563]">Page {dvirPage} of {dvirPageCount} · {dvirTotal} DVIRs</span>
           <Button size="sm" variant="secondary" disabled={dvirPage >= dvirPageCount || dvirQuery.isFetching} onClick={() => setDvirPage((current) => Math.min(dvirPageCount, current + 1))}>Next DVIRs</Button>
         </div>
       ) : null}
