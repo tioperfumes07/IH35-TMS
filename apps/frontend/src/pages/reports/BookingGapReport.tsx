@@ -176,10 +176,10 @@ export function BookingGapReport() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Period</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Period</span>
           <SelectCombobox
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.period}
             onChange={(event) => staged.setDraft((p) => ({ ...p, period: event.target.value as Period }))}
             aria-label="Period"
@@ -192,10 +192,10 @@ export function BookingGapReport() {
             ))}
           </SelectCombobox>
         </label>
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Group by</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Group by</span>
           <SelectCombobox
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.groupBy}
             onChange={(event) => staged.setDraft((p) => ({ ...p, groupBy: event.target.value as GroupBy }))}
             aria-label="Group by"
@@ -208,12 +208,12 @@ export function BookingGapReport() {
             ))}
           </SelectCombobox>
         </label>
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Min loads</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Min loads</span>
           <input
             type="number"
             min={0}
-            className="h-7 w-20 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 w-20 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.minLoads}
             onChange={(e) => staged.setDraft((p) => ({ ...p, minLoads: e.target.value }))}
             aria-label="Min loads"

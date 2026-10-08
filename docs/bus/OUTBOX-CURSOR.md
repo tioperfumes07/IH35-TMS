@@ -1,3 +1,13 @@
+## 2026-10-08T11:55Z · BANK leftover slate — session detail / booking gap / user profile
+
+FINDING: BANK-F91200 — SessionDetail / BookingGapReport / UserProfileSettingsPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25854 squash `a0d7ec8bf7` (BANK-F91199 custloc/coviol/login)
+GUARD: scripts/verify-session-gap-profile-slate-leftover-chrome.mjs + verify-steps/3732 piggyback
+LIVE PROOF: verify-session-gap-profile-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3732 piggyback + OUTBOX
+
 ## 2026-10-08T11:45Z · BANK leftover slate — customer locations / company violation drawer / driver login
 
 FINDING: BANK-F91199 — CustomerLocationsSection / CompanyViolationDetailDrawer / DriverLoginPage Tailwind slate-* → house tokens
