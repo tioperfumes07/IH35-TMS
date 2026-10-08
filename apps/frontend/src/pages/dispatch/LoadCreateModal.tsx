@@ -51,7 +51,7 @@ export function LoadCreateModal({
   if (notFound) {
     return (
       <div
-        className="rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-800"
+        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#0F1219]"
         data-testid="book-load-driver-merged"
         role="status"
       >
@@ -118,7 +118,7 @@ export function LoadCreateModal({
         placeholder="Why is it safe to dispatch this unit with an open repair work order?"
       />
       {overrideApplied ? (
-        <div className="mt-1 font-semibold text-slate-700" data-testid="repair-block-override-recorded">
+        <div className="mt-1 font-semibold text-[#1F2A44]" data-testid="repair-block-override-recorded">
           Override recorded — this reason is saved with the booking.
         </div>
       ) : (
