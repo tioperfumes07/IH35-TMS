@@ -24,7 +24,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
             key={k}
             type="button"
             onClick={() => setActiveCompany(k)}
-            className={`rounded-sm px-3 py-2 text-xs font-semibold ${activeCompany === k ? "bg-slate-800 text-white" : "bg-[var(--surface-unselected)] text-slate-700 border"}`}
+            className={`rounded-sm px-3 py-2 text-xs font-semibold ${activeCompany === k ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-[#4B5563] border"}`}
           >
             {profiles[k].name || k}
           </button>
@@ -34,14 +34,14 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
           onClick={onSave}
           disabled={saving}
           aria-disabled={!canSave}
-          className="ml-auto rounded-sm bg-slate-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+          className="ml-auto rounded-sm bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
         >
           {saving ? "Saving..." : "Save Defaults"}
         </button>
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
+        <label className="block text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
           Petition Date
           <div className="mt-1 font-normal normal-case">
             <DatePicker
@@ -63,7 +63,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
           ["Line of Business", "lineOfBusiness"],
           ["NAICS", "naiscCode"],
         ].map(([label, key]) => (
-          <label key={key} className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
+          <label key={key} className="block text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
             {label}
             <input
               className="mt-1 w-full rounded-sm border px-2 py-1.5 text-xs font-normal normal-case"
@@ -76,10 +76,10 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
 
       <div className="rounded-sm border bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">Bank Accounts</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Bank Accounts</div>
           <button
             type="button"
-            className="rounded-sm bg-slate-800 px-2 py-1 text-xs font-semibold text-white"
+            className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white"
             onClick={() =>
               onChange(activeCompany, (draft) => ({
                 ...draft,
@@ -132,7 +132,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
               <button
                 type="button"
                 aria-label={`Remove bank account ${account.label || account.id || idx + 1}`}
-                className="rounded-sm border border-slate-300 px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                className="rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
                 onClick={() =>
                   onChange(activeCompany, (draft) => ({
                     ...draft,
@@ -153,8 +153,8 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
           const answer = profile.defaultAnswers[q.num];
           const flagged = (q.expectYes && answer === "no") || (!q.expectYes && answer === "yes");
           return (
-            <div key={q.num} className={`grid grid-cols-[24px_1fr_auto] items-center gap-2 border-b px-3 py-2 text-xs ${flagged ? "bg-slate-100" : ""}`}>
-              <span className="font-semibold text-slate-500">{q.num}.</span>
+            <div key={q.num} className={`grid grid-cols-[24px_1fr_auto] items-center gap-2 border-b px-3 py-2 text-xs ${flagged ? "bg-[#F7F8FA]" : ""}`}>
+              <span className="font-semibold text-[#6B7280]">{q.num}.</span>
               <span className="flex items-center gap-2">
                 {q.text}
                 {flagged ? (
@@ -168,7 +168,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
               </span>
               <div className="flex gap-2">
                 {(["yes", "no", "na"] as const).map((v) => (
-                  <label key={v} className="flex items-center gap-1 text-xs uppercase text-slate-600">
+                  <label key={v} className="flex items-center gap-1 text-xs uppercase text-[#4B5563]">
                     <input
                       type="radio"
                       checked={answer === v}

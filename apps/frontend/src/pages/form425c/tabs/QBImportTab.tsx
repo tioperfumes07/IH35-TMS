@@ -67,7 +67,7 @@ export function QBImportTab({
 
   // Excluded rows keep the original muted + line-through look; the span-level class is needed
   // because ParityTable's <td> sets its own text color that would otherwise win over the row class.
-  const mutedClass = (row: ParsedRow) => (row.include ? "" : "text-slate-400 line-through");
+  const mutedClass = (row: ParsedRow) => (row.include ? "" : "text-[#6B7280] line-through");
 
   const columns = useMemo<Array<ParityColumn<ParsedRow>>>(
     () => [
@@ -103,7 +103,7 @@ export function QBImportTab({
   return (
     <div className="space-y-4 p-4">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-        <label className="text-xs font-semibold uppercase text-slate-600">
+        <label className="text-xs font-semibold uppercase text-[#4B5563]">
           Company
           <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-xs normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
             {availableCompanies.map((k) => (
@@ -113,7 +113,7 @@ export function QBImportTab({
             ))}
           </SelectCombobox>
         </label>
-        <label className="text-xs font-semibold uppercase text-slate-600">
+        <label className="text-xs font-semibold uppercase text-[#4B5563]">
           Month
           <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-xs normal-case" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
             {MONTHS.map((m, i) => (
@@ -123,7 +123,7 @@ export function QBImportTab({
             ))}
           </SelectCombobox>
         </label>
-        <label className="text-xs font-semibold uppercase text-slate-600">
+        <label className="text-xs font-semibold uppercase text-[#4B5563]">
           Year
           <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-xs normal-case" value={year} onChange={(e) => setYear(Number(e.target.value))}>
             {YEARS.map((y) => (
@@ -133,7 +133,7 @@ export function QBImportTab({
             ))}
           </SelectCombobox>
         </label>
-        <div className="self-end text-xs text-slate-500">{profile.bankAccounts.length} configured account(s)</div>
+        <div className="self-end text-xs text-[#6B7280]">{profile.bankAccounts.length} configured account(s)</div>
       </div>
 
       <textarea
@@ -148,12 +148,12 @@ export function QBImportTab({
       />
 
       <div className="flex gap-2">
-        <button type="button" className="rounded-sm bg-slate-800 px-3 py-2 text-xs font-semibold text-white" onClick={parseIncomeDeposits}>
+        <button type="button" className="rounded-sm bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white" onClick={parseIncomeDeposits}>
           Parse Income Deposits
         </button>
         <button
           type="button"
-          className="rounded-sm bg-slate-600 px-3 py-2 text-xs font-semibold text-white"
+          className="rounded-sm bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white"
           onClick={() => {
             if (!parsed.length) {
               pushToast("Parse Income Deposits before applying to Line 20", "error");
@@ -180,10 +180,10 @@ export function QBImportTab({
           rowKey={(row) => `${row.date}-${row.idx}`}
           storageKey="form425c-qb-import-preview"
           tableTestId="qb-import-preview-table"
-          rowClassName={(row) => (row.include ? "" : "bg-slate-100")}
+          rowClassName={(row) => (row.include ? "" : "bg-[#F7F8FA]")}
         />
       ) : null}
-      <div className="text-xs text-slate-500">
+      <div className="text-xs text-[#6B7280]">
         Session-scoped preview only. Authoritative Form lines 19-23 remain backend Banking import values (DIP real accounts only; virtual factoring/escrow excluded).
       </div>
     </div>

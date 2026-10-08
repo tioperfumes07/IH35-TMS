@@ -92,7 +92,7 @@ export function CurrentPeriodTab({
   return (
     <div className="space-y-4 p-4">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
-        <label className="text-xs font-semibold uppercase text-slate-600">
+        <label className="text-xs font-semibold uppercase text-[#4B5563]">
           Company
           <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-xs normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
             {availableCompanies.map((k) => (
@@ -102,7 +102,7 @@ export function CurrentPeriodTab({
             ))}
           </SelectCombobox>
         </label>
-        <label className="text-xs font-semibold uppercase text-slate-600">
+        <label className="text-xs font-semibold uppercase text-[#4B5563]">
           Month
           <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-xs normal-case" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
             {MONTHS.map((m, i) => (
@@ -112,7 +112,7 @@ export function CurrentPeriodTab({
             ))}
           </SelectCombobox>
         </label>
-        <label className="text-xs font-semibold uppercase text-slate-600">
+        <label className="text-xs font-semibold uppercase text-[#4B5563]">
           Year
           <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-xs normal-case" value={year} onChange={(e) => setYear(Number(e.target.value))}>
             {YEARS.map((y) => (
@@ -122,26 +122,26 @@ export function CurrentPeriodTab({
             ))}
           </SelectCombobox>
         </label>
-        <button type="button" onClick={onCreateOrLoad} className="self-end rounded-sm bg-slate-800 px-3 py-2 text-xs font-semibold text-white">
+        <button type="button" onClick={onCreateOrLoad} className="self-end rounded-sm bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white">
           Create / Load Draft
         </button>
-        <button type="button" onClick={onImportBanking} className="self-end rounded-sm bg-slate-700 px-3 py-2 text-xs font-semibold text-white" disabled={loading}>
+        <button type="button" onClick={onImportBanking} className="self-end rounded-sm bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white" disabled={loading}>
           ⟳ Import from Banking
         </button>
-        <div className="self-end text-xs text-slate-500">{autoSaveLabel}</div>
+        <div className="self-end text-xs text-[#6B7280]">{autoSaveLabel}</div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 rounded-sm border bg-slate-50 p-3 text-xs text-slate-700 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 rounded-sm border bg-[#F7F8FA] p-3 text-xs text-[#4B5563] md:grid-cols-4">
         <div>
-          <div className="font-semibold uppercase tracking-wide text-slate-500">Debtor</div>
+          <div className="font-semibold uppercase tracking-wide text-[#6B7280]">Debtor</div>
           <div>{profiles[activeCompany].name}</div>
         </div>
         <div>
-          <div className="font-semibold uppercase tracking-wide text-slate-500">Case Number</div>
+          <div className="font-semibold uppercase tracking-wide text-[#6B7280]">Case Number</div>
           <div>{profiles[activeCompany].caseNumber || "—"}</div>
         </div>
         <div>
-          <div className="font-semibold uppercase tracking-wide text-slate-500">Court</div>
+          <div className="font-semibold uppercase tracking-wide text-[#6B7280]">Court</div>
           <div>
             {profiles[activeCompany].division?.trim() && profiles[activeCompany].district?.trim()
               ? `${profiles[activeCompany].division}, ${profiles[activeCompany].district}`
@@ -149,7 +149,7 @@ export function CurrentPeriodTab({
           </div>
         </div>
         <div>
-          <div className="font-semibold uppercase tracking-wide text-slate-500">Petition Date</div>
+          <div className="font-semibold uppercase tracking-wide text-[#6B7280]">Petition Date</div>
           <div>Managed by report creation</div>
         </div>
       </div>
@@ -163,9 +163,9 @@ export function CurrentPeriodTab({
           const saved = (q.num <= 9 ? exhibitA : exhibitB).filter((row) => Number(row.line_number) === q.num);
           return (
             <div key={q.num}>
-              {i === 9 ? <div className="border-b bg-slate-100 px-3 py-1 text-xs italic text-slate-600">Lines 10-18: if Yes, Exhibit B entry required.</div> : null}
-              <div className={`grid grid-cols-[24px_1fr_auto] items-center gap-2 border-b px-3 py-2 text-xs ${flagged ? "bg-slate-100" : ""}`}>
-                <span className="font-semibold text-slate-500">{q.num}.</span>
+              {i === 9 ? <div className="border-b bg-[#F7F8FA] px-3 py-1 text-xs italic text-[#4B5563]">Lines 10-18: if Yes, Exhibit B entry required.</div> : null}
+              <div className={`grid grid-cols-[24px_1fr_auto] items-center gap-2 border-b px-3 py-2 text-xs ${flagged ? "bg-[#F7F8FA]" : ""}`}>
+                <span className="font-semibold text-[#6B7280]">{q.num}.</span>
                 <span className="flex items-center gap-2">
                   {q.text}
                   {flagged ? (
@@ -176,7 +176,7 @@ export function CurrentPeriodTab({
                 </span>
                 <div className="flex gap-2">
                   {(["yes", "no", "na"] as const).map((v) => (
-                    <label key={v} className="flex items-center gap-1 text-xs uppercase text-slate-600">
+                    <label key={v} className="flex items-center gap-1 text-xs uppercase text-[#4B5563]">
                       <input
                         type="radio"
                         checked={answer === v}
@@ -193,15 +193,15 @@ export function CurrentPeriodTab({
                 </div>
               </div>
               {flagged ? (
-                <div className="space-y-2 border-b bg-slate-50 px-3 py-2" data-form425c-exhibit-line={q.num}>
+                <div className="space-y-2 border-b bg-[#F7F8FA] px-3 py-2" data-form425c-exhibit-line={q.num}>
                   {saved.length ? (
-                    <ul className="list-disc pl-5 text-xs text-slate-700">
+                    <ul className="list-disc pl-5 text-xs text-[#4B5563]">
                       {saved.map((row, idx) => (
                         <li key={String(row.id ?? idx)}>{String(row.explanation ?? "")}</li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-xs text-slate-600">No Exhibit {letter} explanation saved for line {q.num}.</p>
+                    <p className="text-xs text-[#4B5563]">No Exhibit {letter} explanation saved for line {q.num}.</p>
                   )}
                   <textarea
                     className="h-16 w-full rounded-sm border px-2 py-1.5 text-xs"
@@ -211,7 +211,7 @@ export function CurrentPeriodTab({
                   />
                   <button
                     type="button"
-                    className="rounded-sm bg-slate-800 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                    className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
                     disabled={savingExhibit}
                     onClick={() => onSaveExhibit(q.num, exhibitDrafts[q.num] ?? "")}
                   >
@@ -226,7 +226,7 @@ export function CurrentPeriodTab({
 
       <div className="rounded-sm border bg-white">
         <div className="border-b bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white">Part 2 — Summary of Cash Activity (Lines 19-23)</div>
-        <p className="border-b bg-slate-50 px-3 py-2 text-xs text-slate-600">
+        <p className="border-b bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
           Lines 19–21 are imported from Banking (DIP real accounts). Save Draft does not write them — edit here was a silent no-op on the court filing.
         </p>
         {[
@@ -239,18 +239,18 @@ export function CurrentPeriodTab({
               <strong>{line}.</strong> {label}
             </span>
             <input
-              className="rounded-sm border bg-slate-50 px-2 py-1.5 text-right"
+              className="rounded-sm border bg-[#F7F8FA] px-2 py-1.5 text-right"
               value={String((form as unknown as Record<string, string>)[key] ?? "")}
               readOnly
               aria-readonly="true"
             />
           </label>
         ))}
-        <div className="grid grid-cols-[1fr_220px] items-center gap-2 border-b bg-slate-50 px-3 py-2 text-xs font-semibold">
+        <div className="grid grid-cols-[1fr_220px] items-center gap-2 border-b bg-[#F7F8FA] px-3 py-2 text-xs font-semibold">
           <span>22. Net cash flow (20 - 21)</span>
           <span className="text-right">{netCashLabel}</span>
         </div>
-        <div className="grid grid-cols-[1fr_220px] items-center gap-2 bg-slate-50 px-3 py-2 text-xs font-semibold">
+        <div className="grid grid-cols-[1fr_220px] items-center gap-2 bg-[#F7F8FA] px-3 py-2 text-xs font-semibold">
           <span>23. Cash on hand at end of month (19 + 22)</span>
           <span className="text-right">{cashEndLabel}</span>
         </div>
@@ -281,11 +281,11 @@ export function CurrentPeriodTab({
       <div className="rounded-sm border bg-white">
         <div className="border-b bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white">Part 7 — Projections (Lines 32-37)</div>
         {form.hasCarryForward ? (
-          <div className="border-b bg-slate-100 px-3 py-2 text-xs text-slate-700">
+          <div className="border-b bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
             Column A came from previous month carry-forward. Manual edits require reason (30+ chars).
           </div>
         ) : null}
-        <div className="grid grid-cols-[1fr_170px_170px_170px] border-b bg-slate-100 px-3 py-2 text-xs font-semibold uppercase text-slate-600">
+        <div className="grid grid-cols-[1fr_170px_170px_170px] border-b bg-[#F7F8FA] px-3 py-2 text-xs font-semibold uppercase text-[#4B5563]">
           <span>Line</span>
           <span className="text-right">Column A Projected</span>
           <span className="text-right">Column B Actual</span>
@@ -303,7 +303,7 @@ export function CurrentPeriodTab({
           <span className="text-right">{moneyCell(form.totalDisbursements)}</span>
           <span className="text-right">{pDDLabel}</span>
         </div>
-        <div className="grid grid-cols-[1fr_170px_170px_170px] items-center border-b bg-slate-50 px-3 py-2 text-xs font-semibold">
+        <div className="grid grid-cols-[1fr_170px_170px_170px] items-center border-b bg-[#F7F8FA] px-3 py-2 text-xs font-semibold">
           <span>34. Net cash flow</span>
           <span className="text-right">{projNetPrevLabel}</span>
           <span className="text-right">{netCashLabel}</span>
@@ -317,11 +317,11 @@ export function CurrentPeriodTab({
           <span>36. Next month projected disbursements</span>
           <input className="rounded-sm border px-2 py-1.5 text-right" value={form.projDisbNext} onChange={(e) => setForm((prev) => ({ ...prev, projDisbNext: e.target.value }))} />
         </div>
-        <div className="grid grid-cols-[1fr_220px] items-center bg-slate-50 px-3 py-2 text-xs font-semibold">
+        <div className="grid grid-cols-[1fr_220px] items-center bg-[#F7F8FA] px-3 py-2 text-xs font-semibold">
           <span>37. Next month projected net cash flow</span>
           <span className="text-right">{projNetNextLabel}</span>
         </div>
-        <label className="block border-t px-3 py-2 text-xs font-semibold uppercase text-slate-600">
+        <label className="block border-t px-3 py-2 text-xs font-semibold uppercase text-[#4B5563]">
           Override Reason (required for carry-forward overrides)
           <textarea
             className="mt-1 h-20 w-full rounded-sm border px-2 py-1.5 text-xs normal-case"
@@ -350,9 +350,9 @@ export function CurrentPeriodTab({
                 <span>
                   {line}. {label}
                 </span>
-                {attached ? <span className="text-xs font-semibold text-slate-700">Attached</span> : null}
+                {attached ? <span className="text-xs font-semibold text-[#4B5563]">Attached</span> : null}
               </span>
-              <label htmlFor={inputId} className="rounded-sm border px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+              <label htmlFor={inputId} className="rounded-sm border px-2 py-1 text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]">
                 {attaching ? "Uploading…" : attached ? "Attach another" : "Attach file"}
                 <input
                   id={inputId}
@@ -372,13 +372,13 @@ export function CurrentPeriodTab({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={onSave} disabled={loading} className="rounded-sm bg-slate-800 px-3 py-2 text-xs font-semibold text-white">
+        <button type="button" onClick={onSave} disabled={loading} className="rounded-sm bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white">
           Save Draft
         </button>
         <button type="button" onClick={onGeneratePdf} disabled={loading} className="rounded-sm bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white">
           Save & Generate Filing PDF
         </button>
-        <button type="button" onClick={onMarkFiled} disabled={loading} className="rounded-sm bg-slate-700 px-3 py-2 text-xs font-semibold text-white">
+        <button type="button" onClick={onMarkFiled} disabled={loading} className="rounded-sm bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white">
           Mark Filed
         </button>
       </div>

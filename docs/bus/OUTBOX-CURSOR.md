@@ -1,3 +1,13 @@
+## 2026-10-08T05:55Z · BANK leftover slate — form425c current / profiles / QB import tabs
+
+FINDING: BANK-F91166 — CurrentPeriodTab / ProfilesTab / QBImportTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25819 squash `ac3f7cc4d9` (BANK-F91165 insurance policy/claim)
+GUARD: scripts/verify-form425c-tabs-slate-leftover-chrome.mjs + verify-steps/12358 piggyback
+LIVE PROOF: verify-form425c-tabs-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 form425c tabs + refuse guard + 12358 piggyback + OUTBOX
+
 ## 2026-10-08T05:48Z · BANK leftover slate — insurance policy / claim create
 
 FINDING: BANK-F91165 — PolicyCreateWizard / ClaimCreateModal / PolicyCreateModal Tailwind slate-* → house tokens
