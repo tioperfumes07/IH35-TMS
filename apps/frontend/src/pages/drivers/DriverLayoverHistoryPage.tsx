@@ -58,11 +58,11 @@ export function DriverLayoverHistoryPage() {
       ) : null}
 
       {!operatingCompanyId ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
           Select an operating company to view layovers.
         </div>
       ) : !driverId ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
           No driver selected.
         </div>
       ) : (

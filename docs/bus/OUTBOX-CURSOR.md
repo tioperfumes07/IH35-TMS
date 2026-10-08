@@ -1,3 +1,13 @@
+## 2026-10-09T00:10Z · BANK leftover slate — EquipmentTypes / DriverLoadStatuses / DriverLayoverHistory
+
+FINDING: BANK-F91261 — EquipmentTypesPage / DriverLoadStatusesPage / DriverLayoverHistoryPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25939 squash `7e1d6e576e` (BANK-F91260 CreateTaskModal/taskDisplay/BulkActionBar)
+GUARD: scripts/verify-equip-drv-status-slate-leftover-chrome.mjs + verify-steps/3516 piggyback
+LIVE PROOF: verify-equip-drv-status-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3516 piggyback + OUTBOX
+
 ## 2026-10-09T00:05Z · BANK leftover slate — CreateTaskModal / taskDisplay / BulkActionBar
 
 FINDING: BANK-F91260 — CreateTaskModal / taskDisplay / BulkActionBar Tailwind slate-* → house tokens

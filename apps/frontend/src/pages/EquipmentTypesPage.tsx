@@ -274,7 +274,7 @@ export function EquipmentTypesPage() {
               <div
                 key={typeRow.id}
                 id={`equipment-type-${typeRow.id}`}
-                className={`rounded-sm border bg-white ${highlightId === typeRow.id ? "border-slate-300 ring-1 ring-slate-400" : "border-gray-200"}`}
+                className={`rounded-sm border bg-white ${highlightId === typeRow.id ? "border-[#E5E7EB] ring-1 ring-[#6B7280]" : "border-gray-200"}`}
               >
                 <button
                   type="button"
@@ -343,7 +343,7 @@ export function EquipmentTypesPage() {
                           key={item.id}
                           id={`equipment-line-item-${item.id}`}
                           className={`flex min-h-8 items-center justify-between gap-2 rounded border px-2 py-1 ${
-                            highlightId === item.id ? "border-slate-300 bg-slate-100" : "border-gray-200"
+                            highlightId === item.id ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-200"
                           }`}
                         >
                           <div className="min-w-0">
@@ -351,7 +351,7 @@ export function EquipmentTypesPage() {
                               <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{item.code}</span>
                               <span className="text-xs text-gray-900">{item.name}</span>
                               {item.is_required ? (
-                                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Required</span>
+                                <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">Required</span>
                               ) : null}
                             </div>
                             <div className="mt-0.5 text-xs text-gray-500">
