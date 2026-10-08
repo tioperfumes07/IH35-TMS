@@ -194,7 +194,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
   if (!canMutate) {
     return (
       <div
-        className="mt-4 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600"
+        className="mt-4 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#4B5563]"
         data-testid="fine-lifecycle-actions-forbidden"
       >
         Contest, dismiss, reduce and payment-link are limited to Owner, Administrator and Safety roles.
@@ -205,16 +205,16 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
   return (
     <div className="mt-4 space-y-3" data-testid="fine-lifecycle-actions">
       {/* ── Contest / Dismiss ─────────────────────────────────────────────────────────────────── */}
-      <div className="rounded-sm border border-slate-200 bg-slate-50 p-3">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">Contest or Dismiss</div>
-        <p className="mt-1 text-xs text-slate-600">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+        <div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Contest or Dismiss</div>
+        <p className="mt-1 text-xs text-[#4B5563]">
           Contest records that this citation is being challenged with the issuing authority. Dismiss records
           that it was thrown out or withdrawn. Neither moves money.
         </p>
-        <label className="mt-2 block text-xs font-medium text-slate-700">
+        <label className="mt-2 block text-xs font-medium text-[#4B5563]">
           Notes (optional)
           <textarea
-            className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-2 text-xs"
+            className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-2 text-xs"
             rows={2}
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
@@ -235,7 +235,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
           </button>
           <button
             type="button"
-            className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white hover:bg-[#4B5563] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#4B5563] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(statusBlockedReason) || dismissMutation.isPending}
             title={statusBlockedReason ?? undefined}
             onClick={() => dismissMutation.mutate({ fineId, operatingCompanyId, generation: scopeGenerationRef.current, notes })}
@@ -245,7 +245,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
           </button>
         </div>
         {statusBlockedReason ? (
-          <p className="mt-2 text-xs text-slate-600" data-testid="fine-status-blocked-reason">
+          <p className="mt-2 text-xs text-[#4B5563]" data-testid="fine-status-blocked-reason">
             {statusBlockedReason}
           </p>
         ) : null}
@@ -262,19 +262,19 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
       </div>
 
       {/* ── Reduce ────────────────────────────────────────────────────────────────────────────── */}
-      <div className="rounded-sm border border-slate-200 bg-slate-50 p-3">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">Reduce Amount</div>
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+        <div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Reduce Amount</div>
         {reduceBlockedReason ? (
-          <p className="mt-1 text-xs text-slate-600" data-testid="fine-reduce-blocked-reason">
+          <p className="mt-1 text-xs text-[#4B5563]" data-testid="fine-reduce-blocked-reason">
             {reduceBlockedReason}
           </p>
         ) : (
-          <p className="mt-1 text-xs text-slate-600">
+          <p className="mt-1 text-xs text-[#4B5563]">
             Records a negotiated or court-ordered reduction. The reason is appended to the fine's notes.
           </p>
         )}
         <div className="mt-2 grid gap-2 md:grid-cols-2">
-          <label className="text-xs font-medium text-slate-700">
+          <label className="text-xs font-medium text-[#4B5563]">
             New Amount (USD)
             <MoneyInput
               valueCents={reduceAmountCents}
@@ -284,11 +284,11 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
               className="mt-1 w-full"
             />
           </label>
-          <label className="text-xs font-medium text-slate-700">
+          <label className="text-xs font-medium text-[#4B5563]">
             Reason (required)
             <input
               type="text"
-              className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
+              className="mt-1 h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
               value={reduceReason}
               onChange={(event) => setReduceReason(event.target.value)}
               disabled={Boolean(reduceBlockedReason)}
@@ -331,14 +331,14 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
       </div>
 
       {/* ── Link Bank Payment ─────────────────────────────────────────────────────────────────── */}
-      <div className="rounded-sm border border-slate-200 bg-slate-50 p-3">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">Link Bank Payment</div>
-        <p className="mt-1 text-xs text-slate-600">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+        <div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Link Bank Payment</div>
+        <p className="mt-1 text-xs text-[#4B5563]">
           Points this fine at the bank transaction that paid it and marks it paid. This records the linkage
           only — it posts no journal entry.
         </p>
         <div className="mt-2 grid gap-2 md:grid-cols-2">
-          <label className="text-xs font-medium text-slate-700 md:col-span-2">
+          <label className="text-xs font-medium text-[#4B5563] md:col-span-2">
             Bank Transaction
             <div className="mt-1" data-testid="fine-payment-bank-transaction-picker">
               <Combobox
@@ -353,10 +353,10 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
               shown={bankOptions.length}
               limit={100}
               hint="Type to search bank transactions beyond the first page."
-              className="mt-1 text-xs text-slate-600"
+              className="mt-1 text-xs text-[#4B5563]"
             />
           </label>
-          <div className="text-xs font-medium text-slate-700">
+          <div className="text-xs font-medium text-[#4B5563]">
             <label htmlFor="fine-payment-paid-date">Paid Date</label>
             <DatePicker
               id="fine-payment-paid-date"
@@ -366,7 +366,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
               data-testid="fine-payment-paid-date"
             />
           </div>
-          <label className="text-xs font-medium text-slate-700">
+          <label className="text-xs font-medium text-[#4B5563]">
             Paid Amount (USD)
             <MoneyInput
               valueCents={paidAmountCents}

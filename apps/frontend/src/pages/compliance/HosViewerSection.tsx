@@ -49,9 +49,9 @@ function clockTime(iso: string): string {
   return new Date(iso).toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "2-digit", minute: "2-digit", hour12: false });
 }
 const STATUS_VERDICT: Record<string, { label: string; cls: string }> = {
-  ok: { label: "OK", cls: "text-slate-700" },
-  warning_1hr: { label: "Low (<1h)", cls: "text-slate-700" },
-  warning_15min: { label: "Low (<15m)", cls: "text-slate-700" },
+  ok: { label: "OK", cls: "text-[#4B5563]" },
+  warning_1hr: { label: "Low (<1h)", cls: "text-[#4B5563]" },
+  warning_15min: { label: "Low (<15m)", cls: "text-[#4B5563]" },
   violation: { label: "Violation", cls: "text-red-700" },
 };
 const TOTAL_ORDER: HosDutyStatus[] = ["driving", "on_duty_not_driving", "sleeper", "off_duty", "personal_conveyance", "yard_moves"];
@@ -95,7 +95,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
         label: "Duty status",
         sortable: true,
         render: (segment) => (
-          <span className="inline-flex items-center gap-1.5 font-medium text-slate-800">
+          <span className="inline-flex items-center gap-1.5 font-medium text-[#1F2A44]">
             <span
               className="inline-block h-[8px] w-[8px] rounded-full"
               style={{ background: DUTY_COLOR[segment.duty_status] }}
@@ -132,9 +132,9 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
   return (
     <section data-testid="compliance-section-hos-viewer">
       {/* Picker + date controls */}
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white px-3 py-3">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-[#E5E7EB] bg-white px-3 py-3">
         <div className="min-w-[260px] flex-1" data-testid="hos-viewer-driver-picker">
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Driver</label>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-[#6B7280]">Driver</label>
           {/* Picker law: EntityPicker kind=driver — not Combobox over listDrivers page. */}
           <EntityPicker
             kind="driver"
@@ -156,7 +156,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
           ) : null}
         </div>
         <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Date</label>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-[#6B7280]">Date</label>
           <DatePicker
             value={selectedDate}
             max={today}
@@ -171,10 +171,10 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
               key={d.date}
               type="button"
               onClick={() => setSelectedDate(d.date)}
-              className={`rounded-sm border px-2 py-1 text-center text-xs leading-tight ${selectedDate === d.date ? "border-slate-800 font-bold text-slate-900 shadow-[inset_0_-2px_0_#1f2a44]" : "border-slate-200 text-slate-500"}`}
+              className={`rounded-sm border px-2 py-1 text-center text-xs leading-tight ${selectedDate === d.date ? "border-[#0F1219] font-bold text-[#0F1219] shadow-[inset_0_-2px_0_#1f2a44]" : "border-[#E5E7EB] text-[#6B7280]"}`}
             >
               {d.mon} {d.day}
-              <span className="block text-xs text-slate-400">{d.weekday}</span>
+              <span className="block text-xs text-[#6B7280]">{d.weekday}</span>
             </button>
           ))}
         </div>
@@ -197,16 +197,16 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
       {/* Body */}
       <div className="mt-3">
         {!driverId ? (
-          <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
-            <div className="text-xs font-semibold text-slate-700">HOS Viewer</div>
-            <div className="mt-1 text-xs text-slate-500">Pick a driver above to open their daily ELD log.</div>
+          <div className="rounded-sm border border-[#E5E7EB] bg-white px-4 py-12 text-center">
+            <div className="text-xs font-semibold text-[#4B5563]">HOS Viewer</div>
+            <div className="mt-1 text-xs text-[#6B7280]">Pick a driver above to open their daily ELD log.</div>
           </div>
         ) : dailyQ.isLoading ? (
-          <div className="space-y-1">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-[26px] animate-pulse rounded-sm bg-slate-100" />)}</div>
+          <div className="space-y-1">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-[26px] animate-pulse rounded-sm bg-[#F7F8FA]" />)}</div>
         ) : !daily || daily.available === false || (daily.segments?.length ?? 0) === 0 ? (
-          <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
-            <div className="text-xs font-semibold text-slate-700">No ELD data</div>
-            <div className="mt-1 text-xs text-slate-500">No HOS / ELD records for {selectedName} on {selectedDate}.</div>
+          <div className="rounded-sm border border-[#E5E7EB] bg-white px-4 py-12 text-center">
+            <div className="text-xs font-semibold text-[#4B5563]">No ELD data</div>
+            <div className="mt-1 text-xs text-[#6B7280]">No HOS / ELD records for {selectedName} on {selectedDate}.</div>
           </div>
         ) : (
           <div className="space-y-3">
@@ -218,13 +218,13 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
                 { label: "Break left", v: daily.clocks?.break_remaining_min },
                 { label: "Cycle (70h) left", v: daily.clocks?.cycle_remaining_min },
               ].map((k) => (
-                <div key={k.label} className="flex h-[34px] min-w-[130px] flex-1 items-center justify-between rounded-sm border border-slate-200 bg-white px-2.5">
-                  <span className="text-xs uppercase tracking-wider text-slate-500">{k.label}</span>
-                  <span className="text-xs font-semibold tabular-nums text-slate-900">{hmm(k.v)}</span>
+                <div key={k.label} className="flex h-[34px] min-w-[130px] flex-1 items-center justify-between rounded-sm border border-[#E5E7EB] bg-white px-2.5">
+                  <span className="text-xs uppercase tracking-wider text-[#6B7280]">{k.label}</span>
+                  <span className="text-xs font-semibold tabular-nums text-[#0F1219]">{hmm(k.v)}</span>
                 </div>
               ))}
               {verdict ? (
-                <div className="flex h-[34px] min-w-[110px] items-center justify-center rounded-sm border border-slate-200 bg-white px-3">
+                <div className="flex h-[34px] min-w-[110px] items-center justify-center rounded-sm border border-[#E5E7EB] bg-white px-3">
                   <span className={`text-xs font-bold ${verdict.cls}`}>{verdict.label}</span>
                 </div>
               ) : null}
@@ -245,17 +245,17 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
             {/* Per-status daily totals */}
             <div className="flex flex-wrap gap-2">
               {TOTAL_ORDER.map((st) => (
-                <div key={st} className="flex h-[28px] min-w-[120px] flex-1 items-center justify-between rounded-sm border border-slate-200 bg-white px-2.5">
-                  <span className="inline-flex items-center gap-1 text-xs uppercase tracking-wider text-slate-500">
+                <div key={st} className="flex h-[28px] min-w-[120px] flex-1 items-center justify-between rounded-sm border border-[#E5E7EB] bg-white px-2.5">
+                  <span className="inline-flex items-center gap-1 text-xs uppercase tracking-wider text-[#6B7280]">
                     <span className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: DUTY_COLOR[st] }} />
                     {DUTY_LABEL[st]}
                   </span>
-                  <span className="text-xs font-semibold tabular-nums text-slate-900">{hmm(daily.per_status_minutes?.[st] ?? 0)}</span>
+                  <span className="text-xs font-semibold tabular-nums text-[#0F1219]">{hmm(daily.per_status_minutes?.[st] ?? 0)}</span>
                 </div>
               ))}
             </div>
 
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#6B7280]">
               Timeline + totals are reconstructed from the ELD duty-status events (recompute). The remaining clocks above are the
               FMCSA-rule numbers and flip to Samsara's certified computed clocks once the verbatim reader (PR&nbsp;C2) ships. The full
               15-column FMCSA daily-log grid is HOS Tracker Block&nbsp;05.
