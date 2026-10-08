@@ -400,7 +400,7 @@ export function TireProgramPage() {
             <button
               key={kind}
               type="button"
-              className={`rounded-sm px-3 py-1 text-xs font-medium ${assetKind === kind ? "bg-slate-800 text-white" : "text-gray-600"}`}
+              className={`rounded-sm px-3 py-1 text-xs font-medium ${assetKind === kind ? "bg-[#0F1219] text-white" : "text-gray-600"}`}
               onClick={() => setAssetKind(kind)}
             >
               {kind === "unit" ? "Unit" : "Trailer"}
@@ -474,11 +474,11 @@ export function TireProgramPage() {
                   storageKey="maintenance-tire-events"
                   emptyText={`No tire events yet for this ${assetKind}.`}
                 />
-                <div className="mt-2 flex items-center justify-between text-xs text-slate-600" data-testid="maintenance-tire-event-pager">
+                <div className="mt-2 flex items-center justify-between text-xs text-[#4B5563]" data-testid="maintenance-tire-event-pager">
                   <span>{eventTotalCount === 0 ? "0 of 0" : `${eventPage * EVENT_PAGE_SIZE + 1}–${Math.min((eventPage + 1) * EVENT_PAGE_SIZE, eventTotalCount)} of ${eventTotalCount}`}</span>
                   <div className="flex gap-1">
-                    <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={eventPage === 0 || eventsQ.isFetching} onClick={() => setEventPage((page) => page - 1)}>Previous</button>
-                    <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={(eventPage + 1) * EVENT_PAGE_SIZE >= eventTotalCount || eventsQ.isFetching} onClick={() => setEventPage((page) => page + 1)}>Next</button>
+                    <button type="button" className="rounded border border-[#E5E7EB] px-2 py-1 disabled:opacity-50" disabled={eventPage === 0 || eventsQ.isFetching} onClick={() => setEventPage((page) => page - 1)}>Previous</button>
+                    <button type="button" className="rounded border border-[#E5E7EB] px-2 py-1 disabled:opacity-50" disabled={(eventPage + 1) * EVENT_PAGE_SIZE >= eventTotalCount || eventsQ.isFetching} onClick={() => setEventPage((page) => page + 1)}>Next</button>
                   </div>
                 </div>
               </>

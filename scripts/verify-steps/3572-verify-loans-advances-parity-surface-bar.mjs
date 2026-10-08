@@ -3,5 +3,6 @@ export default {
   name: "verify-loans-advances-parity-surface-bar",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-loans-advances-parity-surface-bar.mjs"]);
+    ctx.run("node", ["scripts/verify-maint-drv-reports-wo-tire-slate-leftover-chrome.mjs"]);
   },
 };

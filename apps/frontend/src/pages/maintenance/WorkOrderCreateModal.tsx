@@ -96,7 +96,7 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
 
   return (
     <div className="space-y-4 rounded-sm border border-gray-200 bg-white p-4">
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">WHERE &amp; HOW — DRIVES THE ACCOUNTING AUTO-POST</div>
+      <div className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">WHERE &amp; HOW — DRIVES THE ACCOUNTING AUTO-POST</div>
 
       <div className="flex gap-2">
         <button type="button" className="rounded-sm border px-3 py-1 text-xs" onClick={addCategoryLine}>
@@ -109,7 +109,7 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
 
       {activeLine?.section === "A" ? (
         <div className="space-y-2" data-testid="wo-create-category-picker">
-          <label className="text-xs font-medium text-slate-600">Category (expense CoA)</label>
+          <label className="text-xs font-medium text-[#4B5563]">Category (expense CoA)</label>
           {/*
             LST-PICKER-01 (1894): /accounting/categories returns catalogs.accounts (expense) —
             createKind=account (not createKind=category which writes qbo_categories).
@@ -136,7 +136,7 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
 
       {activeLine?.section === "B" ? (
         <div className="space-y-2" data-testid="wo-create-item-picker">
-          <label className="text-xs font-medium text-slate-600">Service item</label>
+          <label className="text-xs font-medium text-[#4B5563]">Service item</label>
           <ReferenceSelect
             value={activeLine.item_id ?? null}
             onChange={(next) => patchLine(activeLine.id, { item_id: next ?? undefined })}
@@ -158,7 +158,7 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
         </div>
       ) : null}
 
-      <ul className="space-y-1 text-xs text-slate-600">
+      <ul className="space-y-1 text-xs text-[#4B5563]">
         {lines.map((line) => (
           <li key={line.id}>
             {line.section === "A" ? "Category" : "Item"} line · category_id={line.category_id ?? "—"} · item_id=
