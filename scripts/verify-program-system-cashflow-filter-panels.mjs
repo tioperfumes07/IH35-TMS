@@ -95,10 +95,32 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
+// FILTER-MULTI-01 (owner ruling 2026-09-23, live-measured): the CollapsedListFilters "Filters (N)"
+// popover was itself the dead-on-click defect — these surfaces were retrofitted to the
+// always-visible MoneyListToolbar (instant-apply filters + Clear all), which satisfies
+// chrome.toolbar_filter without a staged Apply/Cancel/Reset panel.
+const MONEY_LIST_TOOLBAR_PAGES = new Set([
+  "apps/frontend/src/pages/vendors/VendorsListView.tsx",
+  "apps/frontend/src/pages/customers/CustomersListView.tsx",
+  "apps/frontend/src/pages/accounting/BillsPage.tsx",
+]);
+
 export function collectFailures(sources) {
   const failures = [];
   for (const surface of SURFACES) {
     const src = sources[surface.file] ?? "";
+    if (MONEY_LIST_TOOLBAR_PAGES.has(surface.file)) {
+      if (!src.includes("MoneyListToolbar")) {
+        failures.push(`${surface.id} (${surface.route}): must mount the FILTER-MULTI-01 MoneyListToolbar for chrome.toolbar_filter`);
+      }
+      if (!/MultiSelectDropdown|DateRangePresets|SelectCombobox/.test(src)) {
+        failures.push(`${surface.id}: MoneyListToolbar must carry at least one real filter control`);
+      }
+      if (!/<ParityTable[\s\S]*rows=\{/.test(src)) {
+        failures.push(`${surface.id}: must retain ParityTable consumer`);
+      }
+      continue;
+    }
     if (!src.includes("CollapsedListFilters")) {
       failures.push(`${surface.id} (${surface.route}): must mount CollapsedListFilters for chrome.toolbar_filter`);
     }
@@ -258,14 +280,8 @@ export function collectFailures(sources) {
   }
   const bills = sources["apps/frontend/src/pages/accounting/BillsPage.tsx"] ?? "";
   if (bills) {
-    if (!bills.includes("CollapsedListFilters")) {
-      failures.push("BillsPage.tsx: must mount CollapsedListFilters for chrome.toolbar_filter");
-    }
-    if (!/\bonApply=\{/.test(bills)) {
-      failures.push("BillsPage.tsx: CollapsedListFilters must wire onApply");
-    }
-    if (!bills.includes("useStagedListFilters")) {
-      failures.push("BillsPage.tsx: must stage via useStagedListFilters");
+    if (!bills.includes("CollapsedListFilters") && !bills.includes("MoneyListToolbar")) {
+      failures.push("BillsPage.tsx: must mount a governed filter toolbar (FILTER-MULTI-01 MoneyListToolbar or CollapsedListFilters) for chrome.toolbar_filter");
     }
     if (!/testIdPrefix="bills"/.test(bills) && !/data-bills-filter-toolbar/.test(bills)) {
       failures.push("accounting-bills: Filters panel must use bills testId/data attribute");
@@ -658,7 +674,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     }),
     () => ({
       ...sources,
-      [SURFACES[9].file]: sources[SURFACES[9].file].replaceAll("CollapsedListFilters", "BrokenFilters"),
+      [SURFACES[9].file]: sources[SURFACES[9].file].replaceAll("MoneyListToolbar", "BrokenToolbar"),
     }),
     () => ({
       ...sources,
@@ -668,7 +684,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     }),
     () => ({
       ...sources,
-      [SURFACES[10].file]: sources[SURFACES[10].file].replaceAll("CollapsedListFilters", "BrokenFilters"),
+      [SURFACES[10].file]: sources[SURFACES[10].file].replaceAll("MoneyListToolbar", "BrokenToolbar"),
     }),
     () => ({
       ...sources,
@@ -683,7 +699,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       ...sources,
       "apps/frontend/src/pages/accounting/BillsPage.tsx": sources[
         "apps/frontend/src/pages/accounting/BillsPage.tsx"
-      ].replaceAll("CollapsedListFilters", "BrokenFilters"),
+      ].replaceAll("MoneyListToolbar", "BrokenToolbar"),
     }),
     () => ({
       ...sources,

@@ -19,8 +19,8 @@ function read() {
 
 function analyze(src = read()) {
   const failures = [];
-  if (!/useStagedListFilters/.test(src) || !/CollapsedListFilters/.test(src)) {
-    failures.push("BookingGapReport must use CollapsedListFilters + useStagedListFilters");
+  if (!/useStagedListFilters/.test(src) || (!/CollapsedListFilters/.test(src) && !/ReportFilterBar/.test(src))) {
+    failures.push("BookingGapReport must use CollapsedListFilters (or the RPT-06 ReportFilterBar) + useStagedListFilters");
   }
   if (!/onApply=\{staged\.apply\}/.test(src) || !/onCancel=\{staged\.cancel\}/.test(src) || !/onReset=\{staged\.reset\}/.test(src)) {
     failures.push("BookingGapReport must wire Apply/Cancel/Reset to staged.*");

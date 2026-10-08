@@ -14,8 +14,8 @@ const TARGET = "apps/frontend/src/pages/reports/CancellationsReportPage.tsx";
 
 function assertPage(src) {
   const errors = [];
-  if (!src.includes("CollapsedListFilters") || !src.includes("useStagedListFilters")) {
-    errors.push("must use CollapsedListFilters + useStagedListFilters");
+  if (!src.includes("useStagedListFilters") || (!src.includes("CollapsedListFilters") && !src.includes("ReportFilterBar"))) {
+    errors.push("must use CollapsedListFilters (or the RPT-06 ReportFilterBar) + useStagedListFilters");
   }
   if (!/onCancel=\{staged\.cancel\}/.test(src) || !/onReset=\{staged\.reset\}/.test(src)) {
     errors.push("must wire Cancel + Reset");
