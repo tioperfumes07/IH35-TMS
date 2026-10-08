@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91061 — ObligationReconcile / InvoiceDetail / MyAccountant slate → house
+
+FINDING: BANK-F91061 — BankingObligationReconcilePage / InvoiceDetailPage / MyAccountantPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25994 squash `694c096fa5` (BANK-F91060 DetailTypes/VendorBill/QboReconcile)
+GUARD: scripts/verify-91061-obligation-invoice-acct-slate-leftover-chrome.mjs + verify-steps/3650 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: BankingObligationReconcilePage + InvoiceDetailPage + MyAccountantPage + refuse guard + 3650 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91060 — DetailTypes / VendorBillForm / QboReconcile slate → house
 
 FINDING: BANK-F91060 — DetailTypesListPage / VendorBillForm / QboReconcileCapturesPage Tailwind slate-* → house tokens

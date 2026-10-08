@@ -148,7 +148,7 @@ export function BankingObligationReconcilePage() {
       {txnsQuery.isSuccess && obligationsQuery.isSuccess && !txnsQuery.isError && !obligationsQuery.isError &&
       transactions.length === 0 && obligations.length === 0 ? (
         <div
-          className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
           data-testid="banking-reconcile-queue-empty-honesty-banner"
         >
           <p className="font-semibold">Reconcile queue has no unmatched rows and no open obligations in this view.</p>
@@ -156,7 +156,7 @@ export function BankingObligationReconcilePage() {
             That is not proof the company is caught up. Most feed activity still lands on Transactions → For review
             (Match/Categorize). Use that path when this queue is empty but uncategorized KPIs are non-zero.
           </p>
-          <Link to="/banking/transactions?type=uncategorized" className="mt-2 inline-block font-medium text-slate-800 underline">
+          <Link to="/banking/transactions?type=uncategorized" className="mt-2 inline-block font-medium text-[#1F2A44] underline">
             Open for-review Match/Categorize
           </Link>
         </div>
@@ -189,8 +189,8 @@ export function BankingObligationReconcilePage() {
         />
       </div>
       {hasSelected ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 px-3 py-2">
-          <span className="text-xs font-semibold text-slate-700">{selectedList.length} selected</span>
+        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+          <span className="text-xs font-semibold text-[#1F2A44]">{selectedList.length} selected</span>
           <ActionButton
             disabled={bulkMutation.isPending}
             onClick={() => bulkMutation.mutate({ bank_transaction_ids: selectedList, action: "mark_reviewed" })}
@@ -212,7 +212,7 @@ export function BankingObligationReconcilePage() {
           </ActionButton>
           <button
             type="button"
-            className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
+            className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs text-[#1F2A44] hover:bg-[#F7F8FA]"
             onClick={() => setSelectedTxnIds(new Set())}
           >
             Clear selection
@@ -221,7 +221,7 @@ export function BankingObligationReconcilePage() {
       ) : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <section className="rounded-sm border border-slate-200 bg-white p-2">
+        <section className="rounded-sm border border-[#E5E7EB] bg-white p-2">
           <h2 className="mb-2 text-xs font-semibold">Unmatched bank transactions</h2>
           <div className="max-h-[480px] space-y-1 overflow-y-auto text-xs">
             {transactions.map((row: UnmatchedBankTxnRow) => (
@@ -230,12 +230,12 @@ export function BankingObligationReconcilePage() {
                 draggable
                 onDragStart={() => setDragTxnId(row.id)}
                 onDragEnd={() => setDragTxnId(null)}
-                className="flex cursor-grab gap-2 px-2 py-1 hover:bg-slate-50"
+                className="flex cursor-grab gap-2 px-2 py-1 hover:bg-[#F7F8FA]"
               >
                 <input type="checkbox" checked={selectedTxnIds.has(row.id)} onChange={() => toggleSelect(row.id)} />
                 <div className="flex-1">
                   <div className="font-medium">{money(row.amount_cents)}</div>
-                  <div className="text-xs text-slate-600">
+                  <div className="text-xs text-[#4B5563]">
                     {formatDateUS(row.transaction_date)} · {row.description ?? row.merchant_name ?? "—"}
                   </div>
                   <EntityLink
@@ -266,13 +266,13 @@ export function BankingObligationReconcilePage() {
           </div>
         </section>
 
-        <section className="rounded-sm border border-slate-200 bg-white p-2">
+        <section className="rounded-sm border border-[#E5E7EB] bg-white p-2">
           <h2 className="mb-2 text-xs font-semibold">Unmatched obligations</h2>
           <div className="max-h-[480px] space-y-1 overflow-y-auto text-xs">
             {obligations.map((o) => (
               <div
                 key={`${o.obligation_type}-${o.obligation_id}`}
-                className={`w-full px-2 py-2 text-left ${dragTxnId ? "bg-slate-100/40" : ""}`}
+                className={`w-full px-2 py-2 text-left ${dragTxnId ? "bg-[#F7F8FA]/40" : ""}`}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
@@ -286,9 +286,9 @@ export function BankingObligationReconcilePage() {
                   setDragTxnId(null);
                 }}
               >
-                <div className="text-xs uppercase text-slate-500">{o.obligation_type.replace("_", " ")}</div>
+                <div className="text-xs uppercase text-[#6B7280]">{o.obligation_type.replace("_", " ")}</div>
                 <div className="font-medium">{money(o.amount_cents)}</div>
-                <div className="text-xs text-slate-600">{formatDateUS(o.event_date)}</div>
+                <div className="text-xs text-[#4B5563]">{formatDateUS(o.event_date)}</div>
                 <EntityLink
                   kind={OBLIGATION_ENTITY_KIND[o.obligation_type]}
                   id={o.obligation_id}
