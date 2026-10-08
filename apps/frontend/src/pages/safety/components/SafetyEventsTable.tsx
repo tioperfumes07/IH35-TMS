@@ -16,15 +16,15 @@ type Props = {
 
 function typePill(type: string) {
   if (type.includes("accident") || type.includes("hos")) return "bg-red-100 text-red-700";
-  if (type.includes("speed") || type.includes("brake")) return "bg-slate-100 text-slate-700";
-  if (type.includes("training")) return "bg-slate-100 text-slate-700";
-  if (type.includes("drug")) return "bg-slate-100 text-slate-700";
+  if (type.includes("speed") || type.includes("brake")) return "bg-[#E5E7EB] text-[#1F2A44]";
+  if (type.includes("training")) return "bg-[#E5E7EB] text-[#1F2A44]";
+  if (type.includes("drug")) return "bg-[#E5E7EB] text-[#1F2A44]";
   return "bg-gray-100 text-gray-700";
 }
 
 function severityPill(severity: string) {
   if (severity.toLowerCase() === "critical") return "bg-red-100 text-red-700";
-  if (severity.toLowerCase() === "major") return "bg-slate-100 text-slate-700";
+  if (severity.toLowerCase() === "major") return "bg-[#E5E7EB] text-[#1F2A44]";
   return "bg-gray-100 text-gray-700";
 }
 
@@ -106,7 +106,7 @@ export function SafetyEventsTable({ rows, onOpenAccident, loading }: Props) {
         render: (row) => {
           const type = String(row.event_type ?? "");
           return (
-            <button type="button" className="text-slate-700 underline" onClick={() => onOpenAccident(row)}>
+            <button type="button" className="text-[#1F2A44] underline" onClick={() => onOpenAccident(row)}>
               {type.toLowerCase().includes("accident") ? "Open accident" : "View"}
             </button>
           );
@@ -134,7 +134,7 @@ export function SafetyEventsTable({ rows, onOpenAccident, loading }: Props) {
         <>
           <button
             type="button"
-            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44]"
             onClick={() => {
               if (selected.length === 0) {
                 pushToast("Select at least one event to export.", "info");
@@ -149,7 +149,7 @@ export function SafetyEventsTable({ rows, onOpenAccident, loading }: Props) {
             type="button"
             disabled
             title="Bulk archive is not available yet — no backend endpoint."
-            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44] disabled:opacity-50"
             onClick={() => pushToast("Bulk archive is not available yet — no backend endpoint.", "info")}
           >
             Archive

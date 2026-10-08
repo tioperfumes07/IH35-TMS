@@ -1,3 +1,13 @@
+## 2026-10-08T13:20Z · BANK leftover slate — safety events table / drug-alcohol dashboard / return-to-duty
+
+FINDING: BANK-F91206 — SafetyEventsTable / DrugAlcoholDashboard / ReturnToDuty Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25861 squash `374e7144f4` (BANK-F91205 late arrival)
+GUARD: scripts/verify-safety-events-da-rtd-slate-leftover-chrome.mjs + verify-steps/1068 piggyback
+LIVE PROOF: verify-safety-events-da-rtd-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 1068 piggyback + OUTBOX
+
 ## 2026-10-08T12:45Z · BANK leftover slate — driver late arrival / customer late arrival / arrival prompt
 
 FINDING: BANK-F91205 — DriverLateArrivalCard / CustomerLateArrivalCard / ArrivalPrompt Tailwind slate-* → house tokens
