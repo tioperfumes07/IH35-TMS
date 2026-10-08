@@ -113,19 +113,19 @@ export function SettlementsSection({
         </Link>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <div className="rounded-sm border border-gray-100 p-2">
+        <div className="border-t border-gray-100 pt-2">
           <div className="text-xs uppercase text-gray-500">YTD gross</div>
           <div className="font-semibold">{cents(settlements.ytd_gross)}</div>
         </div>
-        <div className="rounded-sm border border-gray-100 p-2">
+        <div className="border-t border-gray-100 pt-2">
           <div className="text-xs uppercase text-gray-500">YTD deductions</div>
           <div className="font-semibold">{cents(settlements.ytd_deductions)}</div>
         </div>
-        <div className="rounded-sm border border-gray-100 p-2">
+        <div className="border-t border-gray-100 pt-2">
           <div className="text-xs uppercase text-gray-500">YTD net</div>
           <div className="font-semibold">{cents(settlements.ytd_net)}</div>
         </div>
-        <div className="rounded-sm border border-gray-100 p-2">
+        <div className="border-t border-gray-100 pt-2">
           <div className="text-xs uppercase text-gray-500">Lifetime net</div>
           <div className="font-semibold">{cents(settlements.lifetime_with_company)}</div>
         </div>
