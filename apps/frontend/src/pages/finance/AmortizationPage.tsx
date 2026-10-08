@@ -135,13 +135,13 @@ export function AmortizationPage() {
 
   // UI-BACK-BUTTON-MISSING-ENTIRELY: see LoanWizardPage.tsx sibling comment.
   const header = <PageHeader backHref="/finance/overview" title="Amortization" subtitle="Create a loan and generate its amortization schedule. Schedules are stored; posting is a separate step." />;
-  if (flagLoading) return <div className="p-6"><FinanceModuleTabs />{header}<p className="text-xs text-slate-500">Loading…</p></div>;
+  if (flagLoading) return <div className="p-6"><FinanceModuleTabs />{header}<p className="text-xs text-[#6B7280]">Loading…</p></div>;
   if (!enabled)
     return (
       <div className="p-6"><FinanceModuleTabs />{header}
-        <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-medium text-slate-700">Amortization unavailable</div>
-          <p className="px-4 py-3 text-xs text-slate-600">
+        <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+          <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-3 text-xs font-medium text-[#1F2A44]">Amortization unavailable</div>
+          <p className="px-4 py-3 text-xs text-[#4B5563]">
             Amortization is not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_AMORTIZATION_FLAG}</code> is off.)
           </p>
         </section>
@@ -154,13 +154,13 @@ export function AmortizationPage() {
   // literal-only match because the literal lived at the CALL SITE, not on the <input> tag itself).
   // The date field now has its own dedicated dateField() below, using the real shared DatePicker.
   const field = (label: string, key: keyof typeof form, type: "text" | "number" = "text") => (
-    <label className="block"><span className="text-xs font-medium text-slate-600">{label}</span>
-      <input type={type} value={form[key]} onChange={set(key)} className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs" />
+    <label className="block"><span className="text-xs font-medium text-[#4B5563]">{label}</span>
+      <input type={type} value={form[key]} onChange={set(key)} className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs" />
     </label>
   );
   // ACCT-F5314: see LoanWizardPage — same dollars-string-in-form / MoneyInput DOLLARS-mode seam.
   const moneyField = (label: string, key: keyof typeof form) => (
-    <label className="block"><span className="text-xs font-medium text-slate-600">{label}</span>
+    <label className="block"><span className="text-xs font-medium text-[#4B5563]">{label}</span>
       <div className="mt-1">
         <MoneyInput
           valueDollars={form[key] === "" ? null : Number(form[key])}
@@ -171,7 +171,7 @@ export function AmortizationPage() {
     </label>
   );
   const dateField = (label: string, key: keyof typeof form) => (
-    <label className="block"><span className="text-xs font-medium text-slate-600">{label}</span>
+    <label className="block"><span className="text-xs font-medium text-[#4B5563]">{label}</span>
       <div className="mt-1">
         <DatePicker
           value={form[key]}
@@ -184,10 +184,10 @@ export function AmortizationPage() {
 
   return (
     <div className="p-6"><FinanceModuleTabs />{header}
-      <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-        <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x lg:divide-slate-100">
+      <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+        <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x lg:divide-[#E5E7EB]">
           <div className="min-w-0">
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">New loan</div>
+            <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-3 text-xs font-semibold text-[#1F2A44]">New loan</div>
             <div className="px-4 py-3">
               <div className="grid grid-cols-2 gap-3">
                 {field("Name", "name")}{field("Lender", "lender")}
@@ -206,20 +206,20 @@ export function AmortizationPage() {
             </div>
           </div>
 
-          <div className="min-w-0 border-t border-slate-100 lg:border-t-0">
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">Loans</div>
+          <div className="min-w-0 border-t border-[#E5E7EB] lg:border-t-0">
+            <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-3 text-xs font-semibold text-[#1F2A44]">Loans</div>
             <div className="px-4 py-3">
               {loadError ? (
                 <p className="text-xs text-red-600" data-testid="amortization-load-error">{loadError}</p>
               ) : null}
-              {!loadError && loans.length === 0 ? <p className="text-xs text-slate-500">No loans yet.</p> : null}
+              {!loadError && loans.length === 0 ? <p className="text-xs text-[#6B7280]">No loans yet.</p> : null}
               {!loadError && loans.length > 0 ? (
                 <ul className="space-y-1 text-xs">
                   {loans.map((l) => (
                     <li key={l.id}>
-                      <button onClick={() => openSchedule(l.id)} className={`w-full text-left rounded-sm px-2 py-1 ${selected === l.id ? "bg-slate-100" : "hover:bg-slate-50"}`}>
-                        <span className="font-medium text-slate-700">{l.name}</span>
-                        <span className="block text-xs text-slate-500">{dollars(l.original_principal_cents)} @ {(l.interest_rate_bps / 100).toFixed(2)}% × {l.term_months}mo · {l.loan_type === "note_payable" ? "Note Payable" : "Loan Payable"}</span>
+                      <button onClick={() => openSchedule(l.id)} className={`w-full text-left rounded-sm px-2 py-1 ${selected === l.id ? "bg-[#F7F8FA]" : "hover:bg-[#F7F8FA]"}`}>
+                        <span className="font-medium text-[#1F2A44]">{l.name}</span>
+                        <span className="block text-xs text-[#6B7280]">{dollars(l.original_principal_cents)} @ {(l.interest_rate_bps / 100).toFixed(2)}% × {l.term_months}mo · {l.loan_type === "note_payable" ? "Note Payable" : "Loan Payable"}</span>
                       </button>
                     </li>
                   ))}
@@ -228,10 +228,10 @@ export function AmortizationPage() {
             </div>
           </div>
 
-          <div className="min-w-0 border-t border-slate-100 lg:border-t-0">
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">Schedule</div>
+          <div className="min-w-0 border-t border-[#E5E7EB] lg:border-t-0">
+            <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-3 text-xs font-semibold text-[#1F2A44]">Schedule</div>
             <div className="px-4 py-3">
-              {schedule.length === 0 ? <p className="text-xs text-slate-500">Select a loan to view its schedule.</p> : (
+              {schedule.length === 0 ? <p className="text-xs text-[#6B7280]">Select a loan to view its schedule.</p> : (
                 <ParityTable<AmortRow>
                   columns={SCHEDULE_COLUMNS}
                   rows={schedule}

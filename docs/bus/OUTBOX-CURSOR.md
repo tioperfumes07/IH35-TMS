@@ -1,8 +1,19 @@
+## 2026-10-08 · BANK-F91052 — FixedAssets / LoanWizard / Amortization slate → house
+
+FINDING: BANK-F91052 — FixedAssets / LoanWizard / Amortization Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25983 squash `03c96522c2` (BANK-F91053 AccountDrawer/TransactionRegister/FactoringDetail)
+GUARD: scripts/verify-91052-fixed-loan-amort-slate-leftover-chrome.mjs + verify-steps/3346 piggyback
+LIVE PROOF: verify-91052-fixed-loan-amort-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: FixedAssetsPage + LoanWizardPage + AmortizationPage + refuse guard + 3346 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91053 — AccountDrawer / TransactionRegister / FactoringDetail slate → house
 
 FINDING: BANK-F91053 — AccountDrawer / TransactionRegister / FactoringDetail Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
 Prior tip merge: #25982 squash `2660d459bb` (BANK-F91054 Reclassify/AP Aging/Loan wizard)
+Squash merge: #25983 `03c96522c2`
 GUARD: scripts/verify-91053-acctdrawer-txnreg-fact-slate-leftover-chrome.mjs + verify-steps/3350 piggyback
 LIVE PROOF: verify-91053-acctdrawer-txnreg-fact-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
