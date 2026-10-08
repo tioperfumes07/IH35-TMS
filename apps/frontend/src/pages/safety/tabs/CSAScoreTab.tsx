@@ -123,7 +123,7 @@ export function CSAScoreTab() {
         <button type="button" className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!isOwner || recomputeMutation.isPending} onClick={() => recomputeMutation.mutate({ companyId, generation: actionGenerationRef.current })}>
           Manual recompute
         </button>
-        <button type="button" className="rounded-sm border border-gray-300 px-3 py-1 text-xs font-semibold text-slate-700 disabled:opacity-60" disabled={saferMutation.isPending} onClick={() => saferMutation.mutate({ companyId, generation: actionGenerationRef.current })}>
+        <button type="button" className="rounded-sm border border-gray-300 px-3 py-1 text-xs font-semibold text-[#1F2A44] disabled:opacity-60" disabled={saferMutation.isPending} onClick={() => saferMutation.mutate({ companyId, generation: actionGenerationRef.current })}>
           Check public SAFER availability
         </button>
         {recomputeError ? (
@@ -132,16 +132,16 @@ export function CSAScoreTab() {
           </span>
         ) : null}
         {saferError ? (
-          <span className="text-xs text-slate-700">
+          <span className="text-xs text-[#1F2A44]">
             Public SAFER is not authoritative for Hazmat BASIC. Authenticated carrier SMS access is required.
           </span>
         ) : null}
-        <Link to="/safety/csa-fmcsa-trend" className="ml-auto text-xs font-semibold text-slate-700 underline">
+        <Link to="/safety/csa-fmcsa-trend" className="ml-auto text-xs font-semibold text-[#1F2A44] underline">
           View FMCSA live trend &amp; projections &rarr;
         </Link>
       </div>
 
-      <div className="rounded-sm border border-gray-200 bg-slate-50 p-3 text-xs text-slate-700">
+      <div className="rounded-sm border border-gray-200 bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
         Values below are IH35 internal inspection-point rollups derived from recorded inspection history. They are not
         FMCSA BASIC measures or percentiles. Missing values remain unavailable and are never displayed as zero.
       </div>
@@ -159,12 +159,12 @@ export function CSAScoreTab() {
         {basics.map((basic) => (
           <div key={basic.label} className="rounded-sm border border-gray-100 bg-gray-50 p-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-700">{basic.label}</span>
-              <span className="font-semibold text-slate-700">
+              <span className="font-semibold text-[#1F2A44]">{basic.label}</span>
+              <span className="font-semibold text-[#1F2A44]">
                 {currentQuery.isError ? "—" : basic.value == null ? "-" : Number(basic.value).toFixed(2)}
               </span>
             </div>
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="mt-1 text-xs text-[#6B7280]">
               {basic.availability === "authenticated_sms_required"
                 ? "Unavailable from public SAFER; authenticated carrier SMS required"
                 : "Internal inspection points · not an FMCSA percentile"}

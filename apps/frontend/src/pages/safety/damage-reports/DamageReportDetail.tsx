@@ -48,9 +48,9 @@ export function DamageReportDetail({ damageUuid, operatingCompanyId }: Props) {
   const selectedExif = useMemo(() => selected?.exif_metadata ?? {}, [selected]);
 
   return (
-    <section className="rounded-sm border border-slate-200 bg-white p-3" data-testid="damage-report-detail">
-      <h3 className="text-xs font-semibold text-slate-900">Photo evidence (EXIF chain-of-custody)</h3>
-      <p className="mb-2 text-xs text-slate-500">Unaltered originals with custody audit trail</p>
+    <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="damage-report-detail">
+      <h3 className="text-xs font-semibold text-[#0F1219]">Photo evidence (EXIF chain-of-custody)</h3>
+      <p className="mb-2 text-xs text-[#6B7280]">Unaltered originals with custody audit trail</p>
 
       {photosQuery.isError ? (
         <div data-testid="damage-report-photos-query-error">
@@ -67,23 +67,23 @@ export function DamageReportDetail({ damageUuid, operatingCompanyId }: Props) {
             <button
               key={photo.id}
               type="button"
-              className="rounded-sm border border-slate-200 px-3 py-2 text-left text-xs hover:border-[#1f2a44]"
+              className="rounded-sm border border-[#E5E7EB] px-3 py-2 text-left text-xs hover:border-[#1f2a44]"
               onClick={() => {
                 setSelected(photo);
                 setViewerOpen(true);
               }}
             >
-              <div className="font-semibold text-slate-800">Evidence {index + 1}</div>
-              <div className="font-mono text-xs text-slate-500">hash {photo.sha256_hash.slice(0, 12)}…</div>
+              <div className="font-semibold text-[#0F1219]">Evidence {index + 1}</div>
+              <div className="font-mono text-xs text-[#6B7280]">hash {photo.sha256_hash.slice(0, 12)}…</div>
             </button>
           ))}
-          {photos.length === 0 ? <p className="text-xs text-slate-500">No EXIF-verified photos attached.</p> : null}
+          {photos.length === 0 ? <p className="text-xs text-[#6B7280]">No EXIF-verified photos attached.</p> : null}
         </div>
       )}
 
       {selected ? (
         <div className="mt-3">
-          <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Custody chain</h4>
+          <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Custody chain</h4>
           <EvidenceChainAudit events={selected.custody_events} />
         </div>
       ) : null}
