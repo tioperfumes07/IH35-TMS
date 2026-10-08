@@ -215,11 +215,11 @@ export function OemPartsCatalog() {
         actions={<Button onClick={() => setModalOpen(true)}>+ Create</Button>}
       />
 
-      <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
         {total} OEM part templates · {brandCount} brands · {fleetCount} in your fleet
       </div>
 
-      <p className="text-xs text-slate-600">
+      <p className="text-xs text-[#4B5563]">
         Universal OEM part templates (world knowledge). This is not company parts inventory — use Maintenance Parts for stocked items.
       </p>
 
@@ -254,7 +254,7 @@ export function OemPartsCatalog() {
         </SelectCombobox>
       </div>
 
-      <label className="flex items-center gap-2 text-xs text-slate-700">
+      <label className="flex items-center gap-2 text-xs text-[#1F2A44]">
         <input type="checkbox" checked={fleetOnly} onChange={(event) => setFleetOnly(event.target.checked)} />
         Fleet brands only (from trucks, trailers, and reefers in your fleet)
       </label>

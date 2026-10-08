@@ -36,11 +36,11 @@ export function AnomalyAlertsPage() {
     <div className="space-y-3 p-4">
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
       <PageHeader title="Anomaly Alerts" breadcrumb={[{ label: "Safety" }, { label: "Anomaly Alerts" }]} backHref="/safety" />
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+      <div className="flex items-center gap-2 border-b border-[#E5E7EB] pb-2">
         <button
           type="button"
           onClick={() => setTab("alerts")}
-          className={`rounded px-3 py-1.5 text-xs font-medium ${tab === "alerts" ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-100"}`}
+          className={`rounded px-3 py-1.5 text-xs font-medium ${tab === "alerts" ? "bg-[#F7F8FA] text-[#1F2A44]" : "text-gray-700 hover:bg-gray-100"}`}
         >
           Alerts
         </button>
@@ -48,7 +48,7 @@ export function AnomalyAlertsPage() {
           <button
             type="button"
             onClick={() => setTab("rules")}
-            className={`rounded px-3 py-1.5 text-xs font-medium ${tab === "rules" ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-100"}`}
+            className={`rounded px-3 py-1.5 text-xs font-medium ${tab === "rules" ? "bg-[#F7F8FA] text-[#1F2A44]" : "text-gray-700 hover:bg-gray-100"}`}
           >
             Rules
           </button>

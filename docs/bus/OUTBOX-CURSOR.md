@@ -1,3 +1,13 @@
+## 2026-10-09T00:45Z · BANK leftover slate — AnomalyAlerts / OemParts / IFTA StepWizard
+
+FINDING: BANK-F91268 — AnomalyAlertsPage / OemPartsCatalog / IFTA StepWizard Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25946 squash `2ff102bcac` (BANK-F91267 Login/HelpCenter/LoadTemplateLibrary)
+GUARD: scripts/verify-anom-oem-ifta-slate-leftover-chrome.mjs + verify-steps/3490 piggyback
+LIVE PROOF: verify-anom-oem-ifta-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3490 piggyback + OUTBOX
+
 ## 2026-10-09T00:40Z · BANK leftover slate — Login / HelpCenter / LoadTemplateLibrary
 
 FINDING: BANK-F91267 — Login / HelpCenterPage / LoadTemplateLibrary Tailwind slate-* → house tokens
