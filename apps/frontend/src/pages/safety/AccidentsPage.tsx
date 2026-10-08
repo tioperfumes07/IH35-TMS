@@ -226,7 +226,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
       key: "action",
       label: "Action",
       render: (row) => (
-        <button type="button" className="text-slate-700 underline" onClick={() => openAccident(row)}>
+        <button type="button" className="text-[#1F2A44] underline" onClick={() => openAccident(row)}>
           Open accident
         </button>
       ),
@@ -237,8 +237,8 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
     <div className="space-y-3" data-testid="accidents-page">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
-          <div className="text-xs font-semibold text-slate-800">Accidents & Incidents</div>
-          <div className="text-xs text-slate-500">Live accident reports with damage details, photos, and maintenance WO spawn.</div>
+          <div className="text-xs font-semibold text-[#0F1219]">Accidents & Incidents</div>
+          <div className="text-xs text-[#6B7280]">Live accident reports with damage details, photos, and maintenance WO spawn.</div>
         </div>
         <Button
           size="sm"
@@ -279,7 +279,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         filterBar={
           <div className="flex flex-wrap items-center gap-2 text-xs" data-testid="accidents-filters">
             {/* SAF-F26: filters, not creators — allowCreate={false} (same law as IdvrPage). */}
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Driver
               <EntityPicker
                 kind="driver"
@@ -293,7 +293,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
                 dataTestId="accidents-driver-filter"
               />
             </label>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Unit
               <EntityPicker
                 kind="unit"
@@ -307,7 +307,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
                 dataTestId="accidents-unit-filter"
               />
             </label>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Trailer
               <EntityPicker
                 kind="trailer"
@@ -321,7 +321,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
                 dataTestId="accidents-trailer-filter"
               />
             </label>
-            <label htmlFor="accidents-from-date" className="font-semibold text-slate-500">From:</label>
+            <label htmlFor="accidents-from-date" className="font-semibold text-[#6B7280]">From:</label>
             <DatePicker
               id="accidents-from-date"
               value={draft.from}
@@ -330,7 +330,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
               max={draft.to || undefined}
               data-testid="accidents-from-date"
             />
-            <label htmlFor="accidents-to-date" className="font-semibold text-slate-500">To:</label>
+            <label htmlFor="accidents-to-date" className="font-semibold text-[#6B7280]">To:</label>
             <DatePicker
               id="accidents-to-date"
               value={draft.to}
@@ -365,7 +365,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
       {!accidentsQuery.isError && totalCount > pageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="accidents-server-pager">
           <Button size="sm" variant="secondary" disabled={page <= 1 || accidentsQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
-          <span className="text-slate-600">Page {page} of {pageCount} · {totalCount} accidents</span>
+          <span className="text-[#4B5563]">Page {page} of {pageCount} · {totalCount} accidents</span>
           <Button size="sm" variant="secondary" disabled={page >= pageCount || accidentsQuery.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</Button>
         </div>
       ) : null}

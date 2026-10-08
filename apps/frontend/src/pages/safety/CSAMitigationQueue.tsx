@@ -56,9 +56,9 @@ function plusDaysIso(days: number) {
 
 function riskClass(riskBand: QueueItem["category_risk_band"]) {
   if (riskBand === "alert") return "text-red-700";
-  if (riskBand === "watch") return "text-slate-700";
-  if (riskBand === "ok") return "text-slate-700";
-  return "text-slate-500";
+  if (riskBand === "watch") return "text-[#1F2A44]";
+  if (riskBand === "ok") return "text-[#1F2A44]";
+  return "text-[#6B7280]";
 }
 
 async function fetchQueue(companyId: string) {
@@ -149,8 +149,8 @@ export function CSAMitigationQueuePage() {
       label: "Action",
       render: (row) => (
         <>
-          <div className="font-semibold text-slate-800">{row.title}</div>
-          {row.description ? <div className="text-xs text-slate-500">{row.description}</div> : null}
+          <div className="font-semibold text-[#0F1219]">{row.title}</div>
+          {row.description ? <div className="text-xs text-[#6B7280]">{row.description}</div> : null}
         </>
       ),
     },
@@ -168,11 +168,11 @@ export function CSAMitigationQueuePage() {
       render: (row) => (
         <>
           {formatDateUS(row.due_date)}
-          <div className="text-xs text-slate-500">{row.days_until_due} days</div>
+          <div className="text-xs text-[#6B7280]">{row.days_until_due} days</div>
         </>
       ),
     },
-    { key: "urgency_score", label: "Urgency", sortable: true, cellClass: "font-semibold text-slate-700", render: (row) => row.urgency_score },
+    { key: "urgency_score", label: "Urgency", sortable: true, cellClass: "font-semibold text-[#1F2A44]", render: (row) => row.urgency_score },
     { key: "status", label: "Status", sortable: true, render: (row) => row.status },
     {
       key: "ops",
@@ -207,7 +207,7 @@ export function CSAMitigationQueuePage() {
       />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="mb-2 text-xs font-semibold text-slate-700">Add mitigation action</div>
+        <div className="mb-2 text-xs font-semibold text-[#1F2A44]">Add mitigation action</div>
         <div className="flex flex-wrap items-end gap-2 text-xs">
           <div className="flex flex-col gap-1">
             <label htmlFor="csa-mitigation-category">Category</label>
@@ -231,7 +231,7 @@ export function CSAMitigationQueuePage() {
           </div>
           <button
             type="button"
-            className="rounded-sm border border-slate-300 px-3 py-1 font-semibold text-slate-700 disabled:opacity-60"
+            className="rounded-sm border border-[#E5E7EB] px-3 py-1 font-semibold text-[#1F2A44] disabled:opacity-60"
             disabled={!companyId || !canMutate || createMutation.isPending}
             onClick={() =>
               createMutation.mutate({
