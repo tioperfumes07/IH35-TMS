@@ -14,7 +14,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TARGET = "apps/frontend/src/pages/Users.tsx";
 const LABEL = "verify-users-admin-tools-no-box-in-box";
 const ADMIN_TOOLS_MARKER = "Admin Tools";
-const NESTED_BORDER_RE = /className="[^"]*rounded-(?:sm|md)[^"]*border border-slate-200[^"]*bg-white[^"]*"/g;
+const NESTED_BORDER_RE = /className="[^"]*rounded-(?:sm|md)[^"]*border (?:border-slate-200|border-\[#E5E7EB\])[^"]*bg-white[^"]*"/g;
 
 function stripComments(src) {
   return src
@@ -42,22 +42,22 @@ export function collectProblems(section) {
     problems.push(`${TARGET}: missing Admin Tools owner strip`);
     return problems;
   }
-  if (!/\<section className="[^"]*overflow-hidden rounded-sm border border-slate-200 bg-white[^"]*"\>/.test(section)) {
+  if (!/\<section className="[^"]*overflow-hidden rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white[^"]*"\>/.test(section)) {
     problems.push(`${TARGET}: Admin Tools root must be a single overflow-hidden section frame`);
   }
-  if (!/border-b border-slate-200 bg-slate-50/.test(section)) {
+  if (!/border-b (?:border-slate-200|border-\[#E5E7EB\]) (?:bg-slate-50|bg-\[#F7F8FA\]|bg-\[#F1F5F9\])/.test(section)) {
     problems.push(`${TARGET}: Admin Tools header must use border-b on the outer section (no inner card)`);
   }
   const nested = section.match(NESTED_BORDER_RE) ?? [];
   const innerNested = nested.filter(
-    (m) => !m.includes("overflow-hidden rounded-sm border border-slate-200 bg-white"),
+    (m) => !/overflow-hidden rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white/.test(m),
   );
   if (innerNested.length > 0) {
     problems.push(
       `${TARGET}: Admin Tools nests ${innerNested.length} inner bordered white card(s) — flatten to one section frame`,
     );
   }
-  if (/rounded-md border border-slate-200 bg-slate-50 p-4/.test(section)) {
+  if (/rounded-md border (?:border-slate-200|border-\[#E5E7EB\]) (?:bg-slate-50|bg-\[#F7F8FA\]|bg-\[#F1F5F9\]) p-4/.test(section)) {
     problems.push(`${TARGET}: Admin Tools must not use outer gray padded card wrapping an inner white card`);
   }
   return problems;

@@ -19,7 +19,15 @@ const LABEL = "verify-finance-break-even-no-box-in-box";
 // governed-filters component spreads this object onto its own DOM node).
 const CONTROLS_MARKER_RE = /data-testid=["']break-even-controls["']|"data-testid":\s*"break-even-controls"/;
 const EXPENSE_MARKER = 'data-testid="break-even-expense-frame"';
-const NESTED_TILE_RE = /className="[^"]*rounded-sm border border-slate-200[^"]*"/g;
+// The border/strip color may be the slate utility OR the locked #E5E7EB border-subtle token
+// (GLOBAL-TYPE-SIZE-BASELINE) — same value; the header strip bg may be slate-50 or locked #F7F8FA.
+const BORDER_RE = "(?:border-slate-200|border-\\[#E5E7EB\\])";
+const NESTED_TILE_RE = new RegExp(`className="[^"]*rounded-sm border ${BORDER_RE}[^"]*"`, "g");
+const FRAME_RE = new RegExp(`overflow-hidden rounded-sm border ${BORDER_RE} bg-white`);
+const STRIP_B_RE = new RegExp(`border-b ${BORDER_RE}`);
+const STRIP_B_BG_RE = new RegExp(`border-b ${BORDER_RE} bg-(?:slate-50|\\[#F7F8FA\\])`);
+const NESTED_LIVE_TILE_RE = new RegExp(`mt-3 rounded-sm border ${BORDER_RE} bg-white`);
+const NESTED_TABLE_TILE_RE = new RegExp(`mt-4 overflow-x-auto rounded-sm border ${BORDER_RE} bg-white`);
 
 function stripComments(src) {
   return src
@@ -74,15 +82,15 @@ export function collectControlsProblems(section) {
   // no-nested-tile checks below are about a DIFFERENT, older always-visible-card pattern that does
   // not apply to the collapsed toggle+popover shape. Presence + Apply wiring is checked separately.
   if (/<CollapsedListFilters\b/.test(section)) return problems;
-  if (!/overflow-hidden rounded-sm border border-slate-200 bg-white/.test(section)) {
+  if (!FRAME_RE.test(section)) {
     problems.push(`${TARGET}: controls must use a single overflow-hidden section frame`);
   }
-  if (!/border-b border-slate-200/.test(section)) {
+  if (!STRIP_B_RE.test(section)) {
     problems.push(`${TARGET}: controls row must use border-b only (no separate filter card)`);
   }
   const nested = section.match(NESTED_TILE_RE) ?? [];
   const innerNested = nested.filter(
-    (m) => !m.includes("overflow-hidden rounded-sm border border-slate-200 bg-white"),
+    (m) => !FRAME_RE.test(m),
   );
   if (innerNested.length > 0) {
     problems.push(
@@ -99,25 +107,25 @@ export function collectExpenseProblems(section) {
     problems.push(`${TARGET}: missing break-even-expense-frame section wrapper`);
     return problems;
   }
-  if (!/overflow-hidden rounded-sm border border-slate-200 bg-white/.test(section)) {
+  if (!FRAME_RE.test(section)) {
     problems.push(`${TARGET}: expense table must use a single overflow-hidden section frame`);
   }
-  if (!/border-b border-slate-200 bg-slate-50/.test(section)) {
+  if (!STRIP_B_BG_RE.test(section)) {
     problems.push(`${TARGET}: live-inputs strip must use border-b header inside single frame`);
   }
   const nested = section.match(NESTED_TILE_RE) ?? [];
   const innerNested = nested.filter(
-    (m) => !m.includes("overflow-hidden rounded-sm border border-slate-200 bg-white"),
+    (m) => !FRAME_RE.test(m),
   );
   if (innerNested.length > 0) {
     problems.push(
       `${TARGET}: expense section nests ${innerNested.length} bordered tile(s) — use border-t strips only`,
     );
   }
-  if (/mt-3 rounded-sm border border-slate-200 bg-white/.test(section)) {
+  if (NESTED_LIVE_TILE_RE.test(section)) {
     problems.push(`${TARGET}: live inputs must not be a separate bordered tile (box-in-box)`);
   }
-  if (/mt-4 overflow-x-auto rounded-sm border border-slate-200 bg-white/.test(section)) {
+  if (NESTED_TABLE_TILE_RE.test(section)) {
     problems.push(`${TARGET}: expense table must not wrap table in nested bordered card`);
   }
   return problems;

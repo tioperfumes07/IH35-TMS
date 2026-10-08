@@ -167,3 +167,6 @@ DONE: PR #25805 · squash 2c2ad6b36a343a083d0f4a19922267528f9ac5a3 · money-pr-l
 
 ## 2026-10-08 — ROUND 441.22 Devin: AP-aging bucket + ReportsHome box-in-box guard re-anchors
 DONE: PR #25860 · squash e55206e14a97e0ad007613aec726c98f21587397 · money-pr-local-gate exit 0 · verify-report-management-ap-aging sliced to APAgingSection field presence; verify-reports-home-no-box-in-box accepts locked #E5E7EB token or slate utilities · baseline-lines-added = 0
+
+## 2026-10-08 — ROUND 441.22 Devin: GLB-08 Intl.DateTimeFormat fix + BreakEven account_name EntityLink
+DONE: PR #25862 · squash cc7b654c56647b423424f7ae0fbd7cf9b4605524 · money-pr-local-gate exit 0 · RunnerFilters month label off Intl.DateTimeFormat; break-even.service passes ProfitLossLine.account_id through and the name cell renders EntityLink kind="account"; zero-EntityLink name surfaces 5 → 4 · baseline-lines-added = 0

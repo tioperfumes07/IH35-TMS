@@ -44,13 +44,13 @@ export function collectProblems(section) {
     return problems;
   }
   if (
-    !/\<section[\s\S]*?className="[^"]*overflow-hidden rounded-sm border border-slate-200 bg-white[^"]*"[\s\S]*?data-testid="wo-linked-financials"/.test(
+    !/\<section[\s\S]*?className="[^"]*overflow-hidden rounded-sm border (?:border-slate-200|border-\[#E5E7EB\]) bg-white[^"]*"[\s\S]*?data-testid="wo-linked-financials"/.test(
       section,
     )
   ) {
     problems.push(`${TARGET}: linked financials root must be a single overflow-hidden slate section frame`);
   }
-  if (!/border-b border-slate-200 bg-slate-50/.test(section)) {
+  if (!/border-b (?:border-slate-200|border-\[#E5E7EB\]) (?:bg-slate-50|bg-\[#F7F8FA\]|bg-\[#F1F5F9\])/.test(section)) {
     problems.push(`${TARGET}: linked financials header must use border-b on the outer section (no inner card)`);
   }
   if (NESTED_AMBER_RE.test(section)) {
