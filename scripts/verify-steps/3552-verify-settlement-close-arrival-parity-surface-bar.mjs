@@ -3,5 +3,6 @@ export default {
   name: "verify-settlement-close-arrival-parity-surface-bar",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-settlement-close-arrival-parity-surface-bar.mjs"]);
+    ctx.run("node", ["scripts/verify-home-qbo-drv-mgr-kpi-slate-leftover-chrome.mjs"]);
   },
 };

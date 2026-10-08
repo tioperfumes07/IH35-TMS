@@ -213,7 +213,7 @@ export function QboStyleHomePage({ auth }: Props) {
                 </button>
                 <p className="pr-5 text-xs font-medium text-gray-800">{card.title}</p>
                 <p className="mt-1 text-xs text-gray-500">{card.body}</p>
-                <Link to={card.to} className="mt-2 inline-block text-xs font-semibold text-slate-700 hover:underline">
+                <Link to={card.to} className="mt-2 inline-block text-xs font-semibold text-[#1F2A44] hover:underline">
                   {card.cta} →
                 </Link>
               </div>
@@ -254,7 +254,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs md:col-span-2 xl:col-span-1">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Bank accounts</p>
-              <Link to="/banking" className="text-xs text-slate-700 hover:underline">Go to registers</Link>
+              <Link to="/banking" className="text-xs text-[#1F2A44] hover:underline">Go to registers</Link>
             </div>
             {bankTilesQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
@@ -268,7 +268,7 @@ export function QboStyleHomePage({ auth }: Props) {
                 </p>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+                  className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs font-medium text-[#0F1219] hover:bg-[#F7F8FA]"
                   onClick={() => void bankTilesQuery.refetch()}
                   data-testid="qbo-bank-tiles-retry"
                 >
@@ -279,7 +279,7 @@ export function QboStyleHomePage({ auth }: Props) {
             ) : (
               <>
                 <p className="text-page-title font-semibold text-gray-900">{fmt$(totalBankBalance * 100)}</p>
-                <p className="mb-3 text-xs text-slate-600">Total bank balance</p>
+                <p className="mb-3 text-xs text-[#4B5563]">Total bank balance</p>
                 <div className="space-y-2">
                   {tiles.slice(0, 5).map((tile) => (
                     <div key={tile.id} className="flex items-center justify-between text-xs">
@@ -287,18 +287,18 @@ export function QboStyleHomePage({ auth }: Props) {
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-900">{fmt$(tile.current_balance * 100)}</span>
                         {tile.uncategorized_count > 0 ? (
-                          <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">
+                          <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">
                             {tile.uncategorized_count} to review
                           </span>
                         ) : (
-                          <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">Reviewed</span>
+                          <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">Reviewed</span>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
                 {totalUncategorized > 0 && (
-                  <Link to="/banking" className="mt-3 block text-xs text-slate-700 hover:underline">
+                  <Link to="/banking" className="mt-3 block text-xs text-[#1F2A44] hover:underline">
                     {totalUncategorized} transactions need review
                   </Link>
                 )}
@@ -315,7 +315,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{revenueKpiLabel(kpiRange)}</p>
-              <Link to="/reports" className="text-xs text-slate-700 hover:underline">Analyze →</Link>
+              <Link to="/reports" className="text-xs text-[#1F2A44] hover:underline">Analyze →</Link>
             </div>
             {revenueDisplay.kind === "loading" ? (
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" data-testid="qbo-revenue-loading" />
@@ -325,10 +325,10 @@ export function QboStyleHomePage({ auth }: Props) {
                   <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                   {revenueDisplay.text}
                 </p>
-                <p className="text-xs text-slate-500">Request failed — not a schema linkage gap.</p>
+                <p className="text-xs text-[#6B7280]">Request failed — not a schema linkage gap.</p>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+                  className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs font-medium text-[#0F1219] hover:bg-[#F7F8FA]"
                   onClick={() => void revenueQuery.refetch()}
                   data-testid="qbo-revenue-retry"
                 >
@@ -339,7 +339,7 @@ export function QboStyleHomePage({ auth }: Props) {
             ) : revenueDisplay.kind === "unverifiable" ? (
               <div data-testid="qbo-revenue-unverifiable">
                 <p className="text-page-title font-semibold text-gray-900">{revenueDisplay.text}</p>
-                <p className="mt-1 text-xs text-slate-600">
+                <p className="mt-1 text-xs text-[#4B5563]">
                   Invoice↔GL linkage unverifiable
                   {revenueQuery.data?.unverifiable_reason
                     ? `: ${unverifiableReasonText(revenueQuery.data.unverifiable_reason)}`
@@ -351,13 +351,13 @@ export function QboStyleHomePage({ auth }: Props) {
                 <div className="flex items-end gap-2" data-testid="qbo-revenue-ok">
                   <p className="text-page-title font-semibold text-gray-900">{revenueDisplay.text}</p>
                   {deltaVsYesterday != null && (
-                    <span className={`mb-1 flex items-center gap-0.5 text-xs font-semibold ${deltaVsYesterday >= 0 ? "text-slate-600" : "text-red-600"}`}>
+                    <span className={`mb-1 flex items-center gap-0.5 text-xs font-semibold ${deltaVsYesterday >= 0 ? "text-[#4B5563]" : "text-red-600"}`}>
                       {deltaVsYesterday >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                       {fmtPct(deltaVsYesterday)}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-600">{revenueKpiLabel(kpiRange)} (invoice basis, pre-tax)</p>
+                <p className="text-xs text-[#4B5563]">{revenueKpiLabel(kpiRange)} (invoice basis, pre-tax)</p>
                 <div className="mt-3 space-y-1">
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-600">Income</span>
@@ -376,7 +376,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Expenses</p>
-              <Link to="/accounting/expenses/list" className="text-xs text-slate-700 hover:underline">View →</Link>
+              <Link to="/accounting/expenses/list" className="text-xs text-[#1F2A44] hover:underline">View →</Link>
             </div>
             {accountingQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
@@ -390,7 +390,7 @@ export function QboStyleHomePage({ auth }: Props) {
                 </p>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+                  className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs font-medium text-[#0F1219] hover:bg-[#F7F8FA]"
                   onClick={() => void accountingQuery.refetch()}
                   data-testid="qbo-expenses-retry"
                 >
@@ -401,15 +401,15 @@ export function QboStyleHomePage({ auth }: Props) {
             ) : (
               <>
                 <p className="text-page-title font-semibold text-gray-900">{fmt$(apTotal)}</p>
-                <p className="text-xs text-slate-600">Outstanding A/P</p>
-                <p className="mt-2 text-xs text-slate-600">Cleared {fmt$(apCleared)}</p>
+                <p className="text-xs text-[#4B5563]">Outstanding A/P</p>
+                <p className="mt-2 text-xs text-[#4B5563]">Cleared {fmt$(apCleared)}</p>
                 <UnclearedDocumentsNote docs={acct?.ap_aging.uncleared_documents ?? []} />
                 {(acct?.ap_aging.uncleared_cents ?? 0) > 0 ? (
-                  <p className="mt-2 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
+                  <p className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]">
                     Applied payments that have not been matched or categorized in Banking are named not cleared.
                   </p>
                 ) : null}
-                <p className="mt-3 text-xs text-slate-400">Category breakdown not yet available</p>
+                <p className="mt-3 text-xs text-[#6B7280]">Category breakdown not yet available</p>
               </>
             )}
           </div>
@@ -418,7 +418,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Invoices</p>
-              <Link to="/accounting/invoices" className="text-xs text-slate-700 hover:underline">View →</Link>
+              <Link to="/accounting/invoices" className="text-xs text-[#1F2A44] hover:underline">View →</Link>
             </div>
             {accountingQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
@@ -432,7 +432,7 @@ export function QboStyleHomePage({ auth }: Props) {
                 </p>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+                  className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs font-medium text-[#0F1219] hover:bg-[#F7F8FA]"
                   onClick={() => void accountingQuery.refetch()}
                   data-testid="qbo-invoices-retry"
                 >
@@ -443,11 +443,11 @@ export function QboStyleHomePage({ auth }: Props) {
             ) : (
               <>
                 <p className="text-page-title font-semibold text-gray-900">{fmt$(arTotal)}</p>
-                <p className="text-xs text-slate-600">Unpaid (last 365 days)</p>
-                <p className="mt-2 text-xs text-slate-600">Cleared {fmt$(arCleared)}</p>
+                <p className="text-xs text-[#4B5563]">Unpaid (last 365 days)</p>
+                <p className="mt-2 text-xs text-[#4B5563]">Cleared {fmt$(arCleared)}</p>
                 <UnclearedDocumentsNote docs={acct?.ar_aging.uncleared_documents ?? []} />
                 {(acct?.ar_aging.uncleared_cents ?? 0) > 0 ? (
-                  <p className="mt-2 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
+                  <p className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]">
                     Applied payments that have not been matched or categorized in Banking are named not cleared.
                   </p>
                 ) : null}
@@ -463,7 +463,7 @@ export function QboStyleHomePage({ auth }: Props) {
                     </span>
                   </div>
                 </div>
-                <Link to="/reports/ar-aging" className="mt-2 block text-xs text-slate-700 hover:underline">
+                <Link to="/reports/ar-aging" className="mt-2 block text-xs text-[#1F2A44] hover:underline">
                   View A/R aging →
                 </Link>
               </>
@@ -474,29 +474,29 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">My integrations</p>
-              <Link to="/accounting/qbo-sync" className="text-xs text-slate-700 hover:underline">View issues →</Link>
+              <Link to="/accounting/qbo-sync" className="text-xs text-[#1F2A44] hover:underline">View issues →</Link>
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center">
                 <p className="text-page-title font-semibold text-gray-900">{integrationTotal}</p>
-                <p className="text-xs text-slate-500">Total</p>
+                <p className="text-xs text-[#6B7280]">Total</p>
               </div>
               <div className="text-center">
-                <p className="text-page-title font-semibold text-slate-700">{integrationConnected}</p>
-                <p className="text-xs text-slate-500">Connected</p>
+                <p className="text-page-title font-semibold text-[#1F2A44]">{integrationConnected}</p>
+                <p className="text-xs text-[#6B7280]">Connected</p>
               </div>
               <div className="text-center">
                 <p className={`text-page-title font-semibold ${integrationIssues > 0 ? "text-red-600" : "text-gray-400"}`}>{integrationIssues}</p>
-                <p className="text-xs text-slate-500">Issues</p>
+                <p className="text-xs text-[#6B7280]">Issues</p>
               </div>
             </div>
             <div className="mt-3 space-y-1.5 text-xs text-gray-600">
               <div className="flex items-center gap-2">
-                {qboConnected ? <CheckCircle className="h-3.5 w-3.5 text-slate-600" /> : <AlertCircle className="h-3.5 w-3.5 text-red-500" />}
+                {qboConnected ? <CheckCircle className="h-3.5 w-3.5 text-[#4B5563]" /> : <AlertCircle className="h-3.5 w-3.5 text-red-500" />}
                 <span>QuickBooks Online {qboConnected ? "· Synced" : `· ${qboFailed} failed`}</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-3.5 w-3.5 text-slate-600" />
+                <CheckCircle className="h-3.5 w-3.5 text-[#4B5563]" />
                 <span>Samsara · Connected</span>
               </div>
               <div className="flex items-center gap-2">
@@ -505,7 +505,7 @@ export function QboStyleHomePage({ auth }: Props) {
               </div>
             </div>
             {qboOutbox > 0 && (
-              <p className="mt-2 text-xs text-slate-600">{qboOutbox} transactions pending sync</p>
+              <p className="mt-2 text-xs text-[#4B5563]">{qboOutbox} transactions pending sync</p>
             )}
           </div>
 
@@ -514,7 +514,7 @@ export function QboStyleHomePage({ auth }: Props) {
 
       {/* ── Cash Position footer ── */}
       {cashQuery.data && (
-        <div className="flex items-center gap-2 text-xs text-slate-500">
+        <div className="flex items-center gap-2 text-xs text-[#6B7280]">
           <DollarSign className="h-3.5 w-3.5" />
           <span>
             Cash position: <span className="font-medium text-gray-600">{fmt$(cashQuery.data.balance_cents ?? 0)}</span>
