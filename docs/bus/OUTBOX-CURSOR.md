@@ -1,3 +1,13 @@
+## 2026-10-09T00:20Z · BANK leftover slate — plannerTimeAxis / AssignDriver / AuditEvents
+
+FINDING: BANK-F91263 — plannerTimeAxis / AssignDriverDropdown / AuditEventsList Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25941 squash `252368f03f` (BANK-F91262 Breadcrumb/SearchResultItem/ExhibitCard)
+GUARD: scripts/verify-planner-assign-audit-slate-leftover-chrome.mjs + verify-steps/3508 piggyback
+LIVE PROOF: verify-planner-assign-audit-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3508 piggyback + OUTBOX
+
 ## 2026-10-09T00:15Z · BANK leftover slate — Breadcrumb / SearchResultItem / ExhibitCard
 
 FINDING: BANK-F91262 — Breadcrumb / SearchResultItem / ExhibitCard Tailwind slate-* → house tokens

@@ -180,7 +180,7 @@ export function AssignDriverDropdown({
           Combobox labels alone are not a reverse/forward EntityLink. When a driver is selected,
           expose a real profile hop (cancel-safe; no assign mutation from the link). */}
       {value ? (
-        <div className="text-xs text-slate-600" data-testid="assign-driver-selected-entitylink">
+        <div className="text-xs text-[#4B5563]" data-testid="assign-driver-selected-entitylink">
           Selected:{" "}
           <EntityLinkOrTombstone
             kind="driver"
@@ -191,13 +191,13 @@ export function AssignDriverDropdown({
         </div>
       ) : null}
       {pendingUnsafe ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#1F2A44]">
           <p className="font-semibold">Driver is out of hours today</p>
           <p className="mt-1">{pendingUnsafe.display_name} may not have enough on-duty time for this pickup.</p>
           <div className="mt-2 flex gap-2">
             <button
               type="button"
-              className="rounded-sm bg-slate-600 px-2 py-1 text-white"
+              className="rounded-sm bg-[#4B5563] px-2 py-1 text-white"
               onClick={() => {
                 onSelectedDriverLabelChange?.(pendingUnsafe.display_name);
                 onChange(pendingUnsafe.driver_id);
@@ -206,7 +206,7 @@ export function AssignDriverDropdown({
             >
               Assign anyway
             </button>
-            <button type="button" className="rounded-sm border border-slate-200 px-2 py-1" onClick={() => setPendingUnsafe(null)}>
+            <button type="button" className="rounded-sm border border-[#E5E7EB] px-2 py-1" onClick={() => setPendingUnsafe(null)}>
               Cancel
             </button>
           </div>

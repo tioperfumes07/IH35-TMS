@@ -87,7 +87,7 @@ export function AuditEventsList() {
           row.bulk_call_id ? (
             <button
               type="button"
-              className="font-mono text-slate-700 underline"
+              className="font-mono text-[#1F2A44] underline"
               title={row.bulk_call_id}
               onClick={(e) => {
                 e.stopPropagation();
@@ -137,7 +137,7 @@ export function AuditEventsList() {
           </label>
           <button
             type="button"
-            className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700"
+            className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1 text-xs font-semibold text-[#1F2A44]"
             onClick={() => setAppliedBulkCallId(bulkCallId.trim())}
           >
             Apply filter
@@ -145,7 +145,7 @@ export function AuditEventsList() {
           {appliedBulkCallId ? (
             <button
               type="button"
-              className="text-xs text-slate-700 underline"
+              className="text-xs text-[#1F2A44] underline"
               onClick={() => {
                 setBulkCallId("");
                 setAppliedBulkCallId("");
@@ -190,7 +190,7 @@ export function AuditEventsList() {
             limit={100}
             total={eventsQuery.data?.total_count}
             hint="Narrow filters or export for the full audit trail."
-            className="mt-2 text-xs text-slate-600"
+            className="mt-2 text-xs text-[#4B5563]"
           />
         </div>
       )}
