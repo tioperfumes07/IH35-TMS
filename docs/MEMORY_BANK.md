@@ -112,6 +112,26 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Active Architectural Decisions
 
+### Active Architectural Decisions — Bank Categorize = CoA Category like QBO (Cursor, Martin audit, 2026-10-09)
+
+- **Live audit (USMCA, last 3d categorized):** 66 bank_transactions status=categorized; **0 missing JE**;
+  **0 missing categorization_gl_account_id**; cat+bank register hits via `journal_entry_postings`;
+  direction from `is_credit` only (CHAIN-05). Martin's books are GL-correct under tip CHAIN-05.
+- **QBO law (researched):** Category = Chart of Accounts account (usable the moment it is created —
+  no second "map the account"). Product/Service = Item (maps to income/expense). Prefer Category on
+  bank feed; Item+Category needs Split. Match links existing docs; Categorize creates a new JE.
+- **IH35 tip:** Categorize posts bare JE via `buildBankCategorizationLines` against
+  `categorization_gl_account_id` + bank `ledger_account_id`. Does **not** use
+  `expense_category_account_map` (that map is for bills/checks/cash_advance/items). ROUND 441.5's
+  Expense-doc mint (forced Item) was anti-QBO for Category and was restored to CHAIN-05.
+- **Register parity shipped:** Account Register Type for `bank_categorization` = **Expense**
+  (money OUT) / **Deposit** (money IN) — never a third "Bank Categorization" chip. Expense /
+  Deposit filters include those rows by `banking.bank_transactions.is_credit`. Guard:
+  `scripts/verify-bank-feed-gl-posting.mjs` §5–§6.
+- Bookkeeper judgment (e.g. Equity 3000 vs related-party loan) is not a code defect — CoA choice
+  posts exactly where picked.
+
+
 ### Active Architectural Decisions — Back arrow stays in-module (Cursor, ROUND 435-CUR, 2026-10-06)
 
 - Owner: a back arrow NEVER crosses a module boundary. Never `navigate(-1)`. No parent inside the

@@ -78,4 +78,38 @@ for (const [name, src] of [
   }
 }
 
+// 5. QBO Category = CoA account (Martin / owner 2026-10-09). Bank Categorize posts the CoA id the
+// operator picked (categorization_gl_account_id) — NEVER through expense_category_account_map / Items.
+// Items/Products & Services keep their own income/expense map; Category does not need a second map.
+const builderBody = engine.slice(
+  engine.indexOf("function buildBankCategorizationLines"),
+  engine.indexOf("async function resolveTransferLegAccountId")
+);
+if (!/categorization_gl_account_id/.test(builderBody)) {
+  fail("buildBankCategorizationLines must post against categorization_gl_account_id (CoA Category = the account)");
+}
+if (/expense_category_account_map/.test(builderBody)) {
+  fail("bank Categorize must NOT resolve the category leg via expense_category_account_map (QBO: Category IS the CoA account)");
+}
+if (/catalogs\.items|default_expense_account|default_income_account/.test(builderBody)) {
+  fail("bank Categorize CoA path must not require catalogs.items / item default accounts");
+}
+
+// 6. Account Register QBO parity — bank_categorization surfaces as Expense (money OUT) or Deposit
+// (money IN), never a third "Bank Categorization" type. Expense/Deposit filters include those rows.
+const register = readFileSync(join(root, "apps/backend/src/accounting/account-register.service.ts"), "utf8");
+const registerFe = readFileSync(join(root, "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx"), "utf8");
+if (!/bank_is_credit === true[\s\S]*?"Deposit"[\s\S]*?"Expense"/.test(register) && !/bank_is_credit === true\s*\?\s*"Deposit"\s*:\s*"Expense"/.test(register)) {
+  fail("account-register must label bank_categorization as Deposit (is_credit) or Expense (money-out)");
+}
+if (!/source_transaction_type = 'bank_categorization'[\s\S]*is_credit IS NOT TRUE/.test(register)) {
+  fail("Expense type filter must include bank_categorization money-OUT (is_credit IS NOT TRUE)");
+}
+if (!/source_transaction_type = 'bank_categorization'[\s\S]*is_credit IS TRUE/.test(register)) {
+  fail("Deposit type filter must include bank_categorization money-IN (is_credit IS TRUE)");
+}
+if (/"Bank Categorization"/.test(registerFe)) {
+  fail("AccountRegisterPage must not expose a Bank Categorization chip — QBO uses Expense / Deposit only");
+}
+
 console.log("PASS verify-bank-feed-gl-posting");
