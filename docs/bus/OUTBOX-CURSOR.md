@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91156 — TripPlan / HosRules / FuelCards slate → house
+
+FINDING: BANK-F91156 — TripPlanSummaryBanner / HosRulesBox / FuelCardsPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26091 squash `7a77d7191f` (BANK-F91155 Predictive/Vendors/Ribbon)
+Files Modified: TripPlanSummaryBanner.tsx · HosRulesBox.tsx · FuelCardsPage.tsx · verify-91156-fuel-trip-hos-cards-slate-leftover-chrome.mjs · verify-steps/3224-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91156-fuel-trip-hos-cards-slate-leftover-chrome.mjs (piggy EVEN 3224)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91155 DONE (#26091 7a77d7191f)
+
 ## 2026-10-09 · BANK-F91155 — Predictive / Vendors / DomainRibbon slate → house
 
 FINDING: BANK-F91155 — PredictiveAlertsPage / MaintenanceVendorsListPage / DomainRibbon Tailwind slate-* → house tokens

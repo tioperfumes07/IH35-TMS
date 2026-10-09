@@ -32,7 +32,7 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { companyWallClockToIso, companyToday } from "../../../lib/businessDate";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
-const LINK = "text-slate-700 hover:underline";
+const LINK = "text-[#1F2A44] hover:underline";
 
 function statusBadge(row: FuelCardAssignment): { variant: "crit" | "positive" | "neutral"; label: string } {
   if (row.voided_at) return { variant: "crit", label: "Voided" };
