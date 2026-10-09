@@ -1414,7 +1414,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   </button>
                 </div>
                 {billPaymentCreditCents > 0 ? (
-                  <div className="border-t border-slate-200 bg-slate-100 px-2 py-1.5 text-xs text-slate-700" data-b4-credit-hint="1">
+                  <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]" data-b4-credit-hint="1">
                     Payment exceeds open balance by {formatMoneyCents(billPaymentCreditCents)}. On Save the excess becomes a
                     vendor credit (Dr A/P / Cr bank — same accounts as the bill payment).
                   </div>
@@ -1486,7 +1486,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
             ) : payeePreviewQuery.isLoading ? (
               <div className="text-xs text-gray-400">Loading open bills…</div>
             ) : (
-              <div className="text-xs text-slate-600" data-testid="check-open-bills-no-vendor">
+              <div className="text-xs text-[#4B5563]" data-testid="check-open-bills-no-vendor">
                 {payeeKind === "driver"
                   ? "This driver has no linked payable vendor, so their bills cannot be listed here. Link the driver's vendor to pay a bill by check."
                   : "This payee has no bills to pay (only vendors and drivers carry bills)."}
@@ -1544,7 +1544,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                 Advisory only -- the check_number_registry UNIQUE constraint is still the hard stop at
                 save. */}
             {duplicateCheckNumber ? (
-              <div className="mt-1 rounded border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+              <div className="mt-1 rounded border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs font-medium text-[#1F2A44]">
                 Check number {checkNumber.trim()} has already been used on this bank account.
               </div>
             ) : null}
