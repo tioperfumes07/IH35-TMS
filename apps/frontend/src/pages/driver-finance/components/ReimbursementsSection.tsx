@@ -102,7 +102,7 @@ function buildColumns(operatingCompanyId?: string): Array<ParityColumn<Line>> {
     sortValue: (line) => line.receipt_number ?? "",
     render: (line) =>
       line.receipt_number ? (
-        <button type="button" className="text-slate-700 underline">
+        <button type="button" className="text-[#1F2A44] underline">
           {line.receipt_number}
         </button>
       ) : (
@@ -124,8 +124,8 @@ export function ReimbursementsSection({ lines, isOpen, operatingCompanyId }: Pro
   return (
     <section className="rounded-sm border border-gray-200 bg-white">
       <header className="flex items-center border-b border-gray-200 px-2.5 py-1.5">
-        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-slate-600">Reimbursements</h2>
-        <span className="ml-2 text-xs text-slate-500">driver paid out of pocket · receipt required</span>
+        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Reimbursements</h2>
+        <span className="ml-2 text-xs text-[#6B7280]">driver paid out of pocket · receipt required</span>
         <div className="ml-auto">
           <Button size="sm" variant="secondary" disabled={!isOpen} title={!isOpen ? "Settlement locked" : undefined}>
             + Add reimbursement

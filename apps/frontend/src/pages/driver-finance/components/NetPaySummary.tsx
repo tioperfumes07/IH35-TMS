@@ -15,8 +15,8 @@ export function NetPaySummary({ earnings, deadheadPay, extraPay, reimbursements,
   const gross = earnings + deadheadPay + extraPay + reimbursements;
   const net = gross - deductions;
   return (
-    <div className="rounded-sm border border-slate-300 bg-white p-3 text-xs">
-      <div className="mb-1 text-xs font-semibold text-slate-700">Net Pay Summary</div>
+    <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs">
+      <div className="mb-1 text-xs font-semibold text-[#1F2A44]">Net Pay Summary</div>
       <div className="space-y-1">
         <Row label="Earnings" value={earnings} />
         {deadheadPay ? <Row label="Empty Miles" value={deadheadPay} /> : null}
@@ -27,7 +27,7 @@ export function NetPaySummary({ earnings, deadheadPay, extraPay, reimbursements,
         <Row label="Less: Deductions" value={-deductions} />
         <div className="text-xs text-gray-500">(Pending-ack deductions {formatUsdTable(pendingAckDeductions)} not yet applied)</div>
         <div className="border-t border-gray-200 pt-1" />
-        <div className="flex items-center justify-between font-bold text-slate-700">
+        <div className="flex items-center justify-between font-bold text-[#1F2A44]">
           <span>NET PAY</span>
           <span>{formatUsdTable(net)}</span>
         </div>

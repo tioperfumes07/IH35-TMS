@@ -101,7 +101,7 @@ export function SettlementHeader({
                   kind="load"
                   id={load.id}
                   label={entityLabel(load.number, load.id, "Load")}
-                  className="text-slate-700 hover:underline"
+                  className="text-[#1F2A44] hover:underline"
                 />
               ))}
             </div>
@@ -112,7 +112,7 @@ export function SettlementHeader({
         <div className="text-xs uppercase text-gray-500">Status</div>
         <div className="text-xs font-semibold">{status}</div>
         <div className="mt-1 text-xs text-gray-500">Recompute: {computedAt ? formatDateUS(computedAt) : "n/a"}</div>
-        <button type="button" className="mt-1 text-xs text-slate-700 underline" onClick={onRefresh}>Refresh</button>
+        <button type="button" className="mt-1 text-xs text-[#1F2A44] underline" onClick={onRefresh}>Refresh</button>
       </div>
     </div>
   );

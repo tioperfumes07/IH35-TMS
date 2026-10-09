@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91114 — Reimbursements / NetPay / SettlementHeader slate → house
+
+FINDING: BANK-F91114 — ReimbursementsSection / NetPaySummary / SettlementHeader Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26048 squash `8d89dec4b6` (BANK-F91113 CreateFuel/ExemptOverage/SavingsPanel)
+Files Modified: ReimbursementsSection.tsx · NetPaySummary.tsx · SettlementHeader.tsx · verify-91114-reimb-netpay-setlhdr-slate-leftover-chrome.mjs · verify-steps/3598-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91114-reimb-netpay-setlhdr-slate-leftover-chrome.mjs (piggy EVEN 3598)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91113 DONE (#26048 8d89dec4b6)
+
 ## 2026-10-08 · BANK-F91113 — CreateFuel / ExemptOverage / SavingsPanel slate → house
 
 FINDING: BANK-F91113 — CreateFuelTransactionModal / ExemptOverageModal / SavingsPanel Tailwind slate-* → house tokens
