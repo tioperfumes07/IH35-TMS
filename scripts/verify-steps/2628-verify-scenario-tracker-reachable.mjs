@@ -7,5 +7,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-scenario-tracker-reachable.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-scenario-tracker-reachable.mjs"]);
+    await ctx.run("node", ["scripts/verify-91205-drvposa-loudalert-hoscell-slate-leftover-chrome.mjs"]);
   },
 };

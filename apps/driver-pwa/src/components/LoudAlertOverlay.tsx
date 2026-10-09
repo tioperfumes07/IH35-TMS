@@ -24,11 +24,11 @@ export function LoudAlertOverlay({ visible, title, body, acknowledging, onAcknow
       data-testid="loud-alert-overlay"
       className="fixed inset-0 z-9999 flex flex-col items-center justify-center gap-6 overflow-y-auto bg-[#1f2a44] px-6 py-8 text-center"
     >
-      <div className="text-xs font-semibold uppercase tracking-widest text-slate-300">
+      <div className="text-xs font-semibold uppercase tracking-widest text-[#6B7280]">
         {t("loud_alert.tag", "Action required")}
       </div>
       <h1 className="max-w-md text-2xl font-bold text-white">{title}</h1>
-      <p className="max-w-md text-base text-slate-200">{body}</p>
+      <p className="max-w-md text-base text-[#E5E7EB]">{body}</p>
       <button
         type="button"
         data-testid="loud-alert-acknowledge"
@@ -38,7 +38,7 @@ export function LoudAlertOverlay({ visible, title, body, acknowledging, onAcknow
       >
         {acknowledging ? t("loud_alert.acknowledging", "Acknowledging…") : t("loud_alert.acknowledge", "Acknowledge")}
       </button>
-      <p className="max-w-xs text-xs text-slate-400">
+      <p className="max-w-xs text-xs text-[#6B7280]">
         {t("loud_alert.hint", "This alert stays until you acknowledge it.")}
       </p>
     </div>

@@ -1,3 +1,12 @@
+## 2026-10-09 · BANK-F91205 — MyPosition / LoudAlert / HosCell slate → house
+
+FINDING: BANK-F91205 — MyPosition / LoudAlertOverlay / HosCell Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26140 squash `fb9498d7b4` (BANK-F91204 paymentslist final frontend leftover)
+Files Modified: MyPosition.tsx · LoudAlertOverlay.tsx · HosCell.tsx · verify-91205-drvposa-loudalert-hoscell-slate-leftover-chrome.mjs · verify-steps/2628-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91205-drvposa-loudalert-hoscell-slate-leftover-chrome.mjs (piggy EVEN 2628)
+LIVE PROOF: leftover slate class = 0 on 3 targets; FE+PWA slate file count = 0; --selftest PASS
+
 ## 2026-10-09 · BANK-F91204 — PaymentsList slate → house (final leftover)
 
 FINDING: BANK-F91204 — PaymentsListPage Tailwind slate-* → house tokens (final leftover)

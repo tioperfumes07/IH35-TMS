@@ -7,7 +7,7 @@ type Props = {
 
 const toneMap: Record<Props["tone"], string> = {
   driving: "border-hos-driving/50 bg-hos-driving/10 text-hos-driving",
-  sleeper: "border-hos-sleeper/50 bg-hos-sleeper/10 text-slate-300",
+  sleeper: "border-hos-sleeper/50 bg-hos-sleeper/10 text-[#6B7280]",
   onduty_waiting: "border-hos-onduty_waiting/50 bg-hos-onduty_waiting/10 text-hos-onduty_waiting",
   offduty_reset: "border-hos-offduty_reset/50 bg-hos-offduty_reset/10 text-hos-offduty_reset",
   violation: "border-hos-violation/50 bg-hos-violation/10 text-hos-violation",
