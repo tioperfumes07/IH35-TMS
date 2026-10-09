@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91119 — VendorMerges / EquipLoans / PartsHistory slate → house
+
+FINDING: BANK-F91119 — VendorMergesReverseSection / VendorEquipmentLoansReverseSection / VendorPartsHistorySection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26053 squash `3e95aba8a8` (BANK-F91118 DrvMerges/TeamSplit/StopsMiles)
+Files Modified: VendorMergesReverseSection.tsx · VendorEquipmentLoansReverseSection.tsx · VendorPartsHistorySection.tsx · verify-91119-vendmerge-loan-parts-slate-leftover-chrome.mjs · verify-steps/3578-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91119-vendmerge-loan-parts-slate-leftover-chrome.mjs (piggy EVEN 3578)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91118 DONE (#26053 3e95aba8a8)
+
 ## 2026-10-08 · BANK-F91118 — DrvMerges / TeamSplit / StopsMiles slate → house
 
 FINDING: BANK-F91118 — DriverVendorMergesReverseSection / DriverTeamSplitConfigReverseSection / DriverProfileStopsMilesSection Tailwind slate-* → house tokens

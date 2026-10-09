@@ -20,12 +20,12 @@ export function VendorMergesReverseSection({ operatingCompanyId, vendorId }: { o
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="vendor-merges-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-xs font-semibold text-slate-900">Driver vendor merges</h2>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Driver vendor merges</h2>
         <EntityLink
           kind="factoring_vendor_merges_vendor"
           id={vendorId}
           label="Open queue"
-          className="text-xs font-semibold text-slate-700 hover:underline"
+          className="text-xs font-semibold text-[#1F2A44] hover:underline"
         />
       </div>
       {query.isError ? <p className="mt-2 text-xs text-red-700">Vendor merges unavailable.</p> : null}
@@ -41,7 +41,7 @@ export function VendorMergesReverseSection({ operatingCompanyId, vendorId }: { o
                 kind="factoring_vendor_merges_vendor"
                 id={vendorId}
                 label={`${entityLabel(m.from_vendor_name, m.from_qbo_vendor_id, "Vendor")} → ${entityLabel(m.to_vendor_name, m.to_qbo_vendor_id, "Vendor")} · ${formatDateUS(m.merged_at)}`}
-                className="text-xs font-semibold text-slate-700 hover:underline"
+                className="text-xs font-semibold text-[#1F2A44] hover:underline"
               />
             </li>
           ))}

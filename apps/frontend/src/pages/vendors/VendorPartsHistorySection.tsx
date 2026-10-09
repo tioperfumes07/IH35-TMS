@@ -48,13 +48,13 @@ export function VendorPartsHistorySection({ operatingCompanyId, vendorId }: Prop
       ) : (
         <div className="space-y-1" data-testid="vendor-parts-history-reverse">
           {totalCount ? (
-            <p className="text-xs text-slate-500" data-testid="vendor-parts-history-range">
+            <p className="text-xs text-[#6B7280]" data-testid="vendor-parts-history-range">
               {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount} parts invoices
             </p>
           ) : null}
           {rows.map((row) => (
             <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 px-2 py-1.5 text-xs">
-              <span className="flex items-center gap-1 font-semibold text-slate-700">
+              <span className="flex items-center gap-1 font-semibold text-[#1F2A44]">
                 <EntityLinkOrTombstone
                   kind="inventory_part"
                   id={row.parts_inventory_id}
