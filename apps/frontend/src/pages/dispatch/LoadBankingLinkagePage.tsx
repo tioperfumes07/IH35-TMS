@@ -30,7 +30,7 @@ export function LoadBankingLinkagePage() {
     return (
       <div className="p-4">
         <p className="text-xs text-gray-600">Missing load id.</p>
-        <Link to="/dispatch?view=loads" className="text-xs text-slate-700 underline">
+        <Link to="/dispatch?view=loads" className="text-xs text-[#1F2A44] underline">
           Open Dispatch loads
         </Link>
       </div>
@@ -48,7 +48,7 @@ export function LoadBankingLinkagePage() {
             id={id}
             name={loadNumber}
             noun="Load"
-            className="rounded-sm border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-50"
+            className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-medium text-[#0F1219] hover:bg-[#F7F8FA]"
           />
         }
       />
