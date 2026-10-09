@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91107 — DrvVendorMap / DriverSafety / FinePayBanner slate → house
+## 2026-10-08 · BANK-F91108 — TireWear / PreFlightDvir / ArrivingSoonFilter slate → house
+
+FINDING: BANK-F91108 — TireWearDashboard / PreFlightDvirQueue / ArrivingSoonFilterBar Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26042 squash `6e411d658e` (BANK-F91107 DrvMap/DrvSafety/FinePay)
+GUARD: scripts/verify-91108-tirewear-predvir-arrivefilt-slate-leftover-chrome.mjs + verify-steps/3718 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: TireWearDashboard + PreFlightDvirQueue + ArrivingSoonFilterBar + refuse guard + 3718 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91107 DONE — DrvVendorMap / DriverSafety / FinePayBanner slate → house #26042
 
 FINDING: BANK-F91107 — DriverVendorMappingTab / DriverSafetyProfilePage / FinePaymentLinkBanner Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26041 squash `2804930a25` (BANK-F91106 ExpRev/BillRev/VendPayMeth)
+MERGED: #26042 squash `6e411d658e`
 GUARD: scripts/verify-91107-drvmap-drvsafety-finepay-slate-leftover-chrome.mjs + verify-steps/3720 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: DriverVendorMappingTab + DriverSafetyProfilePage + FinePaymentLinkBanner + refuse guard + 3720 piggyback + OUTBOX
 

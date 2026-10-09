@@ -62,7 +62,7 @@ export function TireWearDashboard() {
         label: "Unit",
         sortable: true,
         render: (row) => (
-          <EntityLink kind="unit_tires_tab" id={row.unit_uuid} label={entityLabel(row.unit_number, row.unit_uuid, "Unit")} className="text-slate-700 hover:underline" />
+          <EntityLink kind="unit_tires_tab" id={row.unit_uuid} label={entityLabel(row.unit_number, row.unit_uuid, "Unit")} className="text-[#1F2A44] hover:underline" />
         ),
       },
       { key: "tire_position", label: "Position", sortable: true, render: (row) => row.tire_position },
@@ -99,7 +99,7 @@ export function TireWearDashboard() {
               type="button"
               onClick={() => setAxleGroup(group)}
               className={`rounded px-2.5 py-1.5 text-xs font-medium capitalize ${
-                axleGroup === group ? "bg-slate-100 text-slate-800" : "text-gray-700 hover:bg-gray-100"
+                axleGroup === group ? "bg-[#F7F8FA] text-[#0F1219]" : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               {group === "all" ? "All axles" : `${group}s`}

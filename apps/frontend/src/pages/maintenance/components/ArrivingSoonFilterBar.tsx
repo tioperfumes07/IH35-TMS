@@ -75,7 +75,7 @@ export function ArrivingSoonFilterBar({
           </label>
         </div>
       </CollapsedListFilters>
-      <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-900">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#0F1219]">
         {counts.total ?? 0} units arriving · {counts.severe ?? 0} severe · {counts.warning ?? 0} warning · {counts.already_arrived ?? 0} already at yard
       </div>
     </div>
