@@ -293,8 +293,8 @@ function countCleared(transactions: ReconGridRow[]) {
 
 function varianceClass(varianceCents: number) {
   const abs = Math.abs(varianceCents);
-  if (abs === 0) return "text-slate-700";
-  if (abs < 1000) return "text-slate-700";
+  if (abs === 0) return "text-[#1F2A44]";
+  if (abs < 1000) return "text-[#1F2A44]";
   return "text-red-700";
 }
 
@@ -1218,7 +1218,7 @@ export function ReconciliationWorkspacePage() {
                   <div
                     key={tx.id}
                     className={`w-full px-2 py-2 text-left ${
-                      selectedTransactionId === tx.id ? "bg-slate-100" : "bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
+                      selectedTransactionId === tx.id ? "bg-[#F7F8FA]" : "bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
                     } border-b border-gray-100`}
                     data-b2-recon-row-open={docHref ? "1" : "0"}
                   >
@@ -1387,7 +1387,7 @@ export function ReconciliationWorkspacePage() {
                   type="button"
                   onClick={() => setSelectedCandidateId(`${event.event_type}:${event.id}`)}
                   className={`w-full border-b border-gray-100 px-2 py-2 text-left ${
-                    selectedCandidateId === `${event.event_type}:${event.id}` ? "bg-slate-100" : "bg-[var(--surface-unselected)] hover:bg-gray-50"
+                    selectedCandidateId === `${event.event_type}:${event.id}` ? "bg-[#F7F8FA]" : "bg-[var(--surface-unselected)] hover:bg-gray-50"
                   }`}
                 >
                   <div className="text-xs uppercase tracking-wide text-gray-500">{event.event_type}</div>
