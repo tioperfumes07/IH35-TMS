@@ -1,3 +1,17 @@
+## 2026-10-08 · BANK-F91132 — TrialBalance / HistoryTab / FactorReserve slate → house
+
+FINDING: BANK-F91132 — TrialBalancePage / HistoryTab / FactorReserveCard Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26066 squash `ea3709e5e3` (BANK-F91131 FuelPurchases/EscrowHistory/LayoverHistory)
+Files Modified: TrialBalancePage.tsx · HistoryTab.tsx · FactorReserveCard.tsx · verify-91132-tb-hist-factor-slate-leftover-chrome.mjs · verify-steps/3478-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91132-tb-hist-factor-slate-leftover-chrome.mjs (piggy EVEN 3478)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91131 DONE (#26066 ea3709e5e3)
+
+## 2026-10-08 · BANK-F91131 DONE (#26066 ea3709e5e3)
+
 ## 2026-10-08 · BANK-F91131 — FuelPurchases / EscrowHistory / LayoverHistory slate → house
 
 FINDING: BANK-F91131 — FuelPurchasesSection / EscrowHistoryView / DriverLayoverHistory Tailwind slate-* → house tokens
