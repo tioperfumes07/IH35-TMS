@@ -233,7 +233,7 @@ export function NotifyPreferencesPage() {
               <PrefToggle label="Delayed" checked={prefs.notify_on_delayed} disabled={saveM.isPending || !prefs.opt_in} onChange={(v) => saveM.mutate({ companyId, customerId, patch: { notify_on_delayed: v } })} />
             </div>
           </div>
-          <div className="rounded-sm border p-4 text-xs text-slate-600">
+          <div className="rounded-sm border p-4 text-xs text-[#4B5563]">
             <p>Milestone events trigger template-based SMS (Twilio) and email (Resend) when opted in.</p>
             <p className="mt-2">Portal milestone templates are the starting point; near-arrival and delayed use dedicated templates.</p>
           </div>

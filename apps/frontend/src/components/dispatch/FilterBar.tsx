@@ -210,7 +210,7 @@ export function FilterBar({
                     limit={CUSTOMER_SEARCH_LIMIT}
                     total={customersQuery.data?.total}
                     hint="Narrow the search further to see the rest."
-                    className="text-xs text-slate-600"
+                    className="text-xs text-[#4B5563]"
                   />
                 ) : null}
               </>
