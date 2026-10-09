@@ -64,7 +64,7 @@ export function DriverTelematicsPanel({ part, driverId, operatingCompanyId }: { 
       {failed ? (
         <ListErrorState title="Couldn't load driver telematics" status={0} message={(failed.error as Error)?.message} onRetry={() => results.forEach((r) => void r.refetch())} />
       ) : results.some((r) => r.isLoading) ? (
-        <p className="text-xs text-slate-600">Loading…</p>
+        <p className="text-xs text-[#4B5563]">Loading…</p>
       ) : (
         SECTIONS[part].map((s) => {
           const data = results[endpoints.indexOf(s.from)]?.data;

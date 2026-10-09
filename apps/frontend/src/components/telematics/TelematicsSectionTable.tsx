@@ -7,7 +7,7 @@ export function SectionTable({ ownerKey, section, rows }: { ownerKey: string; se
       <h4 className="text-xs font-bold uppercase text-gray-600">
         {section.title} ({rows.length})
       </h4>
-      <p className="text-xs text-slate-600">{section.note}</p>
+      <p className="text-xs text-[#4B5563]">{section.note}</p>
       <ParityTable
         rows={rows}
         columns={section.columns}
