@@ -40,7 +40,7 @@ export function DataPanel({ title, titleHint, accentColor, viewAllHref, children
           {title}
         </span>
         {viewAllHref ? (
-          <Link to={viewAllHref} className="text-xs text-slate-700 hover:underline">
+          <Link to={viewAllHref} className="text-xs text-[#1F2A44] hover:underline">
             View all →
           </Link>
         ) : null}
