@@ -8,5 +8,5 @@ export function FieldError({ id, message }: { id: string; message?: string }) {
 }
 
 export function fieldErrorClassname(hasError: boolean, base: string): string {
-  return hasError ? `${base} border-red-500 ring-1 ring-red-500` : `${base} border-slate-300`;
+  return hasError ? `${base} border-red-500 ring-1 ring-red-500` : `${base} border-[#E5E7EB]`;
 }

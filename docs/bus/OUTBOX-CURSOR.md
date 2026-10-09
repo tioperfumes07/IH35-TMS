@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91182 — FieldError / FormField / QboCombobox slate → house
+
+FINDING: BANK-F91182 — FieldError / FormField / QboCombobox Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26117 squash `31eb871eef` (BANK-F91181 UnitPL/trailer/branding)
+Files Modified: FieldError.tsx · FormField.tsx · QboCombobox.tsx · verify-91182-forms-field-combobox-slate-leftover-chrome.mjs · verify-steps/2954-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91182-forms-field-combobox-slate-leftover-chrome.mjs (piggy EVEN 2954)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91181 — FinancialUnitPL / TrailerMaintSnapshot / company-branding slate → house
 
 FINDING: BANK-F91181 — FinancialUnitPLSection / MaintenanceSnapshotSection / company-branding Tailwind slate-* → house tokens
