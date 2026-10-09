@@ -9,7 +9,7 @@ export function DriverCatalogDeprecatedBanner({ displayName, canonicalPath }: Pr
   return (
     <div
       role="alert"
-      className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+      className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
     >
       This page is deprecated. Use{" "}
       <Link to={canonicalPath} className="font-semibold underline">

@@ -48,7 +48,7 @@ export function DomainCatalogHubPage() {
             <Link
               to={buildDomainModulePath(domain.key)!}
               data-testid={`lists-domain-hub-open-module-${domain.key}`}
-              className="rounded-sm border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-1 text-xs font-medium text-[#0F1219] hover:bg-[#F7F8FA]"
             >
               Open {domain.label} module
             </Link>
