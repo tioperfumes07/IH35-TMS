@@ -141,7 +141,7 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
         />
       )}
       {!q.isError && totalCount > pageSize ? (
-        <div className="flex items-center justify-between text-xs text-slate-600" data-testid="anomaly-alerts-server-pager">
+        <div className="flex items-center justify-between text-xs text-[#4B5563]" data-testid="anomaly-alerts-server-pager">
           <Button type="button" variant="secondary" disabled={page === 0 || q.isFetching} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</Button>
           <span>{page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalCount)} of {totalCount}</span>
           <Button type="button" variant="secondary" disabled={(page + 1) * pageSize >= totalCount || q.isFetching} onClick={() => setPage((value) => value + 1)}>Next</Button>

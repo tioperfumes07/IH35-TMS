@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91151 — InternalFine / Anomaly / CoViolCreate slate → house
+
+FINDING: BANK-F91151 — InternalFineDetailDrawer / AnomalyDashboard / CompanyViolationCreateModal Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26086 squash `f4570673c0` (BANK-F91150 Hos/Sched)
+Files Modified: InternalFineDetailDrawer.tsx · AnomalyDashboard.tsx · CompanyViolationCreateModal.tsx · verify-91151-safety-fine-anomaly-slate-leftover-chrome.mjs · verify-steps/3336-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91151-safety-fine-anomaly-slate-leftover-chrome.mjs (piggy EVEN 3336)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91150 DONE (#26086 f4570673c0)
+
 ## 2026-10-09 · BANK-F91150 — HosExceptions / DriverSchedulerRequest / DriverLeaveBalances slate → house
 
 FINDING: BANK-F91150 — HosExceptionsPage / DriverSchedulerRequestDetailPage / DriverLeaveBalancesPage Tailwind slate-* → house tokens

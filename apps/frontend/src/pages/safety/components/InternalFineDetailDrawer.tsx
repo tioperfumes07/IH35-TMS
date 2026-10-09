@@ -85,7 +85,7 @@ export function InternalFineDetailDrawer({ open, fine, onClose }: Props) {
         {fine.notes ? (
           <div><strong>Notes:</strong> {String(fine.notes)}</div>
         ) : null}
-        <div className="pt-2 text-xs text-slate-500">Record id: {fineId}</div>
+        <div className="pt-2 text-xs text-[#6B7280]">Record id: {fineId}</div>
       </div>
     </ParityDrawer>
   );

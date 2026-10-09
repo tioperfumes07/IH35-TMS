@@ -171,7 +171,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
               limit={200}
               total={typesQuery.data?.total}
               hint="Type to search the full company-violation-type catalog."
-              className="text-xs text-slate-600"
+              className="text-xs text-[#4B5563]"
             />
             <span className="text-xs text-gray-500">
               Required. Carries the catalogued default fine amount. Without it the amount cannot resolve.
