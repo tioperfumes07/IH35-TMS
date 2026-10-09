@@ -109,7 +109,7 @@ export function LocationPicker({ operatingCompanyId, value, onChange, disabled, 
       />
       {locationsQuery.isError ? <p className="text-xs text-red-600">Could not load locations.</p> : null}
       {showCreate ? (
-        <div className="space-y-1.5 rounded-sm border border-slate-200 bg-slate-50 p-2" data-testid="stop-location-create-panel">
+        <div className="space-y-1.5 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2" data-testid="stop-location-create-panel">
           <label className="block text-xs font-semibold text-gray-600">
             Location name
             <input

@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91174 — LocationPicker / BookLoadValidation / BorderHistory slate → house
+
+FINDING: BANK-F91174 — LocationPicker / BookLoadValidationSection / BorderCrossingHistoryPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26109 squash `e1e117ca0c89` (BANK-F91173 Vendor/Dvir/Catalog)
+Files Modified: LocationPicker.tsx · BookLoadValidationSection.tsx · BorderCrossingHistoryPage.tsx · verify-91174-bookload-border-slate-leftover-chrome.mjs · verify-steps/2972-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91174-bookload-border-slate-leftover-chrome.mjs (piggy EVEN 2972)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91173 DONE (#26109 e1e117ca0c89)
+
 ## 2026-10-09 · BANK-F91173 — VendorEdit / DvirSeverity / CatalogExcel slate → house
 
 FINDING: BANK-F91173 — VendorEditDrawer / DvirSeverityBadge / CatalogExcelUploadModal Tailwind slate-* → house tokens

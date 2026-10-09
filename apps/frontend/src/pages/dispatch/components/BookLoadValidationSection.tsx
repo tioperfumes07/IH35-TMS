@@ -52,7 +52,7 @@ export function BookLoadValidationSection({ checks }: Props) {
                     : check.state === "live"
                       ? "bg-[#1C9D5B] text-white"
                       : check.state === "pending"
-                        ? "bg-slate-200 text-slate-700"
+                        ? "bg-[#E5E7EB] text-[#1F2A44]"
                         : "bg-[#1F2733] text-white"
                 }`}
                 aria-label={

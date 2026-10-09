@@ -1,6 +1,7 @@
 export default {
   name: "2972-verify-setl-paid-lifecycle",
-  run(ctx) {
-    return ctx.run("node", ["scripts/verify-setl-paid-lifecycle.mjs"]);
+  async run(ctx) {
+    await ctx.run("node", ["scripts/verify-setl-paid-lifecycle.mjs"]);
+    await ctx.run("node", ["scripts/verify-91174-bookload-border-slate-leftover-chrome.mjs"]);
   },
 };
