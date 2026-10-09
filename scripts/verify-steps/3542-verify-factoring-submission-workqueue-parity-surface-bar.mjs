@@ -3,5 +3,7 @@ export default {
   name: "verify-factoring-submission-workqueue-parity-surface-bar",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-factoring-submission-workqueue-parity-surface-bar.mjs"]);
+    await ctx.run("node", ["scripts/verify-91121-legal-ins-reverse-slate-leftover-chrome.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-91121-legal-ins-reverse-slate-leftover-chrome.mjs"]);
   },
 };

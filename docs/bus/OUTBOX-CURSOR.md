@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91121 — LegalContracts / LegalMatters / InsPolicies reverse slate → house
+
+FINDING: BANK-F91121 — VendorLegalContractsReverseSection / LegalMattersReverseSection / VendorInsurancePoliciesReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26055 squash `e93a7b2606` (BANK-F91120 DrvRef/Onboard/FuelVerdicts)
+Files Modified: VendorLegalContractsReverseSection.tsx · LegalMattersReverseSection.tsx · VendorInsurancePoliciesReverseSection.tsx · verify-91121-legal-ins-reverse-slate-leftover-chrome.mjs · verify-steps/3542-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91121-legal-ins-reverse-slate-leftover-chrome.mjs (piggy EVEN 3542)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91120 DONE (#26055 e93a7b2606)
+
 ## 2026-10-08 · BANK-F91120 — DrvRef / OnboardVehicle / FuelVerdicts slate → house
 
 FINDING: BANK-F91120 — DriversReferenceCatalogModal / OnboardingStepVehicleAssignment / DriverProfileFuelVerdictsSection Tailwind slate-* → house tokens
