@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91120 — DrvRef / OnboardVehicle / FuelVerdicts slate → house
+
+FINDING: BANK-F91120 — DriversReferenceCatalogModal / OnboardingStepVehicleAssignment / DriverProfileFuelVerdictsSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26054 squash `41d5f97971` (BANK-F91119 VendorMerges/EquipLoans/PartsHistory)
+Files Modified: DriversReferenceCatalogModal.tsx · OnboardingStepVehicleAssignment.tsx · DriverProfileFuelVerdictsSection.tsx · verify-91120-drvref-onboard-fuel-slate-leftover-chrome.mjs · verify-steps/3546-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91120-drvref-onboard-fuel-slate-leftover-chrome.mjs (piggy EVEN 3546)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91119 DONE (#26054 41d5f97971)
+
 ## 2026-10-08 · BANK-F91119 — VendorMerges / EquipLoans / PartsHistory slate → house
 
 FINDING: BANK-F91119 — VendorMergesReverseSection / VendorEquipmentLoansReverseSection / VendorPartsHistorySection Tailwind slate-* → house tokens
