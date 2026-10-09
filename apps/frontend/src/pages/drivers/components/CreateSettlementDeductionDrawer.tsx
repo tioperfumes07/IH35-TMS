@@ -97,11 +97,11 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
     <ParityDrawer open={open} onClose={handleClose} title="+ Add deduction">
       <div className="space-y-3 text-xs text-gray-700" data-testid="create-settlement-deduction-drawer">
         <label className="block text-xs">
-          <span className="text-slate-600">Driver *</span>
+          <span className="text-[#4B5563]">Driver *</span>
           {presetDriverId ? (
             <div className="mt-1 rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5" data-testid="create-settlement-deduction-driver-preset">
               <EntityLink kind="driver" id={presetDriverId} label={presetDriverName ?? presetDriverId} />{" "}
-              <span className="text-slate-500">— this settlement's driver</span>
+              <span className="text-[#6B7280]">— this settlement's driver</span>
             </div>
           ) : (
             <EntityPicker
@@ -118,7 +118,7 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
         </label>
 
         <label className="block text-xs">
-          <span className="text-slate-600">Type *</span>
+          <span className="text-[#4B5563]">Type *</span>
           <div className="mt-1" data-testid="create-settlement-deduction-type">
             <SelectCombobox
               className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
@@ -136,7 +136,7 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
         </label>
 
         <label className="block text-xs">
-          <span className="text-slate-600">Amount *</span>
+          <span className="text-[#4B5563]">Amount *</span>
           <div data-testid="create-settlement-deduction-amount">
             <MoneyInput
               valueDollars={amountUsd}
@@ -148,7 +148,7 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
         </label>
 
         <label className="block text-xs">
-          <span className="text-slate-600">Load (optional)</span>
+          <span className="text-[#4B5563]">Load (optional)</span>
           <EntityPicker
             kind="load"
             operatingCompanyId={operatingCompanyId}
@@ -163,7 +163,7 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
         </label>
 
         <label className="block text-xs">
-          <span className="text-slate-600">Reason *</span>
+          <span className="text-[#4B5563]">Reason *</span>
           <textarea
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
             rows={3}
@@ -178,7 +178,7 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
         </label>
 
         <label className="block text-xs">
-          <span className="text-slate-600">Source doc (optional)</span>
+          <span className="text-[#4B5563]">Source doc (optional)</span>
           <div className="mt-1">
             <ReceiptAttach
               operatingCompanyId={operatingCompanyId}
