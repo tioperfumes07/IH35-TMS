@@ -11,7 +11,7 @@ type Props = {
 export function FinePaymentLinkBanner({ bankTransactionId, paidDate, paidAmountCents }: Props) {
   if (!bankTransactionId) return null;
   return (
-    <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+    <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
       Linked bank payment:{" "}
       <EntityLink
         kind="bank_transaction"

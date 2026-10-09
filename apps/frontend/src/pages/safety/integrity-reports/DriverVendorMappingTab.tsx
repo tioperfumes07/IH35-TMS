@@ -108,7 +108,7 @@ export function DriverVendorMappingTab() {
 
   return (
     <div className="space-y-3" data-testid="driver-vendor-mapping-tab">
-      <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
         Driver↔QBO vendor mapping drift detector (CAP-15). Review critical findings before settlement creation.
       </div>
       <button
