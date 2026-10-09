@@ -2804,3 +2804,11 @@ Deployed: healthz git_sha 2c9235efdc (ROUND 435) at read time; later merges belo
 **Committed but not pushed:** none. Every CC-3 worktree is clean, every branch is pushed, and every PR-less branch was checked against main.
 
 **Mid-way:** nothing. Next is the 4 Customers/Amortization reds above, unless the Lead assigns them elsewhere.
+
+## 2026-10-09: CC-3 FINDING: main's frontend test debt is 80 files / 168 tests, not 4
+
+- My 441.6 close-out listed 4 remaining reds on main. That was wrong: I had only run the directories I touched.
+- A full `npx vitest run` on origin/main 32e6d92203 gives 80 failing files and 168 failing tests.
+- Per-file list: docs/bus/2026-10-09-CC3-FE-VITEST-RED-ON-MAIN.md
+- Largest areas: pages/accounting 10, components/dispatch 8, pages/maintenance 5.
+- This is frontend, so it is CC-3's lane. Next: classify and fix file by file, real defect vs stale assertion, the same way as #25759. No baselining.
