@@ -1,6 +1,6 @@
 {
- "date": "2026-10-08",
- "generated_at_iso": "2026-10-08T18:39:59.930Z",
+ "date": "2026-10-09",
+ "generated_at_iso": "2026-10-09T01:13:34.225Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,276 @@
  ],
  "merged_prs": [
   {
+   "number": 26016,
+   "title": "Cursor- BANK-F91082 ManualJE/BankingReports/AttachNotes slate → house",
+   "mergedAt": "2026-10-09T01:12:47Z",
+   "branch": "cursor/bank-f91082-manualje-bankrpt-attachnotes-c89b"
+  },
+  {
+   "number": 26015,
+   "title": "Cursor- BANK-F91081 SettleDeduct/CashFlowPage/CreateAdvance slate → house",
+   "mergedAt": "2026-10-09T01:09:00Z",
+   "branch": "cursor/bank-f91081-settdeduct-cfpage-createadv-c89b"
+  },
+  {
+   "number": 26014,
+   "title": "Cursor- BANK-F91080 IntegrationTx/FaroReserve/CashFlowStatement slate → house",
+   "mergedAt": "2026-10-09T01:05:44Z",
+   "branch": "cursor/bank-f91080-inttx-faroreserve-cfstmt-c89b"
+  },
+  {
+   "number": 26013,
+   "title": "Cursor- BANK-F91079 CashAdvances/RecurringBill/VendorBalances slate → house",
+   "mergedAt": "2026-10-09T01:01:59Z",
+   "branch": "cursor/bank-f91079-cashadv-recurbill-vendbal-c89b"
+  },
+  {
+   "number": 26012,
+   "title": "Cursor- BANK-F91078 SettlementsTable/CloseTrip/EscrowPend slate → house",
+   "mergedAt": "2026-10-09T00:58:41Z",
+   "branch": "cursor/bank-f91078-settle-closetrip-escrowpend-c89b"
+  },
+  {
+   "number": 26011,
+   "title": "Cursor- BANK-F91077 BillPayments/DispatchMargin/SubmissionQueue slate → house",
+   "mergedAt": "2026-10-09T00:53:39Z",
+   "branch": "cursor/bank-f91077-billpay-dispatchmargin-submitq-c89b"
+  },
+  {
+   "number": 26010,
+   "title": "Cursor- BANK-F91076 QboRecon/PostingLineage/PeriodComparison slate → house",
+   "mergedAt": "2026-10-09T00:48:08Z",
+   "branch": "cursor/bank-f91076-qborecon-posting-period-c89b"
+  },
+  {
+   "number": 26009,
+   "title": "Cursor- BANK-F91075 SettlementDisputes/PayRunClose/BankRecon slate → house",
+   "mergedAt": "2026-10-09T00:43:43Z",
+   "branch": "cursor/bank-f91075-disputes-payrun-bankrecon-c89b"
+  },
+  {
+   "number": 26008,
+   "title": "Cursor- BANK-F91074 CashFlowHome/ActualVsProjected/Plaid slate → house",
+   "mergedAt": "2026-10-09T00:40:10Z",
+   "branch": "cursor/bank-f91074-cfhome-actualproj-plaid-c89b"
+  },
+  {
+   "number": 26007,
+   "title": "Cursor- BANK-F91073 CoaBatch/BatchExpenses/InvoicesList slate → house",
+   "mergedAt": "2026-10-09T00:36:47Z",
+   "branch": "cursor/bank-f91073-coabatch-batchxp-invoices-c89b"
+  },
+  {
+   "number": 26006,
+   "title": "Cursor- BANK-F91072 CoaAsymmetry/ScheduleRow/PreSettlement slate → house",
+   "mergedAt": "2026-10-09T00:29:36Z",
+   "branch": "cursor/bank-f91072-coaasym-schedrow-presettle-c89b"
+  },
+  {
+   "number": 26005,
+   "title": "Cursor- BANK-F91071 SubmissionWorkqueue/OpeningBalance/CoaRoles slate → house",
+   "mergedAt": "2026-10-09T00:26:29Z",
+   "branch": "cursor/bank-f91071-submission-opening-coaroles-c89b"
+  },
+  {
+   "number": 26004,
+   "title": "Cursor- BANK-F91070 Escrow/SettlementProfit/AcctCatalogList slate → house",
+   "mergedAt": "2026-10-09T00:22:13Z",
+   "branch": "cursor/bank-f91070-escrow-settleprofit-acctlist-c89b"
+  },
+  {
+   "number": 26003,
+   "title": "Cursor- BANK-F91069 BatchWizard/BankTxSplit/Receipts slate → house",
+   "mergedAt": "2026-10-09T00:18:57Z",
+   "branch": "cursor/bank-f91069-batch-banksplit-receipts-c89b"
+  },
+  {
+   "number": 26002,
+   "title": "Cursor- BANK-F91068 AccountTypeCatalog/VoidCancelReasons/CardOverage slate → house",
+   "mergedAt": "2026-10-09T00:15:33Z",
+   "branch": "cursor/bank-f91068-accttype-voidcancel-cardoverage-c89b"
+  },
+  {
+   "number": 26001,
+   "title": "Cursor- BANK-F91067 AccountTile/FinanceScenarioDetail/BankTxCategorization slate → house",
+   "mergedAt": "2026-10-09T00:10:15Z",
+   "branch": "cursor/bank-f91067-accttile-scenario-banktx-c89b"
+  },
+  {
+   "number": 26000,
+   "title": "Cursor-BANK-F91066 SettlementTab/FinanceHub/BillDetail slate → house tokens",
+   "mergedAt": "2026-10-09T00:05:46Z",
+   "branch": "cursor/bank-f91066-settle-finhub-billdet-c89b"
+  },
+  {
+   "number": 25999,
+   "title": "Cursor-BANK-F91065 Liabilities/RecurringTemplate/AccountRegister slate → house tokens",
+   "mergedAt": "2026-10-09T00:02:07Z",
+   "branch": "cursor/bank-f91065-liab-recur-register-c89b"
+  },
+  {
+   "number": 25998,
+   "title": "Cursor-BANK-F91064 RevenueRecognition/ExpensesList/CounterpartyStatement slate → house tokens",
+   "mergedAt": "2026-10-08T23:58:59Z",
+   "branch": "cursor/bank-f91064-rev-expenses-counter-c89b"
+  },
+  {
+   "number": 25997,
+   "title": "Cursor-BANK-F91063 CoA/FinanceProjections/BankVisibility slate → house tokens",
+   "mergedAt": "2026-10-08T23:55:46Z",
+   "branch": "cursor/bank-f91063-coa-proj-bankvis-c89b"
+  },
+  {
+   "number": 25996,
+   "title": "Cursor-BANK-F91062 FactoringList/DailyRecon/APAging slate → house tokens",
+   "mergedAt": "2026-10-08T23:52:50Z",
+   "branch": "cursor/bank-f91062-factor-daily-aging-c89b"
+  },
+  {
+   "number": 25995,
+   "title": "Cursor-BANK-F91061 Obligation/InvoiceDetail/MyAccountant slate → house tokens",
+   "mergedAt": "2026-10-08T23:47:27Z",
+   "branch": "cursor/bank-f91061-obligation-invoice-acct-c89b"
+  },
+  {
+   "number": 25994,
+   "title": "Cursor-BANK-F91060 DetailTypes/VendorBill/QboReconcile slate → house tokens",
+   "mergedAt": "2026-10-08T23:44:10Z",
+   "branch": "cursor/bank-f91060-detail-vendorbill-qbo-c89b"
+  },
+  {
+   "number": 25993,
+   "title": "Cursor-BANK-F91059 Prepaid/Calculator/AuditTrail slate → house tokens",
+   "mergedAt": "2026-10-08T23:41:01Z",
+   "branch": "cursor/bank-f91059-prepaid-calc-audit-c89b"
+  },
+  {
+   "number": 25992,
+   "title": "Cursor-BANK-F91058 Bills/LedgerKpi/FinanceOverview slate → house tokens",
+   "mergedAt": "2026-10-08T23:37:51Z",
+   "branch": "cursor/bank-f91058-bills-ledger-finance-c89b"
+  },
+  {
+   "number": 25991,
+   "title": "Cursor- BANK-F91057 CatalogProfile/BreakEven/DriverReimb slate → house",
+   "mergedAt": "2026-10-08T23:26:44Z",
+   "branch": "cursor/bank-f91057-acct-catalog-breakeven-reimb-c89b"
+  },
+  {
+   "number": 25990,
+   "title": "Cursor- BANK-F91056 SubmitToFactor/FactoringTab/Queue slate → house",
+   "mergedAt": "2026-10-08T23:20:31Z",
+   "branch": "cursor/bank-f91056-factor-submit-tab-queue-c89b"
+  },
+  {
+   "number": 25989,
+   "title": "Cursor- BANK-F91055 CreditMemos/VendorCredits/InvoiceTypeModal slate → house",
+   "mergedAt": "2026-10-08T23:16:13Z",
+   "branch": "cursor/bank-f91055-credits-invoice-slate-c89b"
+  },
+  {
+   "number": 25988,
+   "title": "Cursor- OUTBOX: #25987 healthz dead-lease live ok=true",
+   "mergedAt": "2026-10-08T23:07:10Z",
+   "branch": "cursor/outbox-healthz-25987-c89b"
+  },
+  {
+   "number": 25987,
+   "title": "Cursor- healthz: catch-up integrity lease 90s (dead-holder unblock)",
+   "mergedAt": "2026-10-08T23:02:18Z",
+   "branch": "cursor/healthz-integrity-dead-lease-c89b"
+  },
+  {
+   "number": 25986,
+   "title": "Cursor- fix(system): HEALTHZ-INTEGRITY-MEGA-TXN — unblock healthz + catch-up",
+   "mergedAt": "2026-10-08T22:33:02Z",
+   "branch": "cursor/healthz-integrity-catchup-unblock-c89b"
+  },
+  {
+   "number": 25985,
+   "title": "Cursor- healthz never_succeeded — retry_held membership + QBO USMCA dormancy + plaid email poison",
+   "mergedAt": "2026-10-08T21:55:46Z",
+   "branch": "cursor/healthz-never-succeeded-fix-c89b"
+  },
+  {
+   "number": 25984,
+   "title": "Cursor- BANK-F91052 — FixedAssets / LoanWizard / Amortization slate-* → house tokens",
+   "mergedAt": "2026-10-08T21:12:11Z",
+   "branch": "cursor/bank-f91052-fixed-loan-amort-slate-c89b"
+  },
+  {
+   "number": 25983,
+   "title": "Cursor- BANK-F91053 — AccountDrawer / TransactionRegister / FactoringDetail slate-* → house tokens",
+   "mergedAt": "2026-10-08T21:07:37Z",
+   "branch": "cursor/bank-f91053-credits-factor-slate-c89b"
+  },
+  {
+   "number": 25982,
+   "title": "Cursor- BANK-F91054 — Reclassify / AP Aging / Loan wizard slate-* → house tokens",
+   "mergedAt": "2026-10-08T21:00:16Z",
+   "branch": "cursor/bank-f91054-reclass-ap-loan-slate-c89b"
+  },
+  {
+   "number": 25981,
+   "title": "Cursor- BANK-F91298 — MatchDrawer / BankingHome / TransfersListPage slate-* → house tokens",
+   "mergedAt": "2026-10-08T20:54:08Z",
+   "branch": "cursor/bank-f91298-match-home-xfer-c89b"
+  },
+  {
+   "number": 25980,
+   "title": "Cursor- fix(banking): BANK-F91299 — kill All tab; bulk categorize vendor+Category|item; Categorized Undo portal",
+   "mergedAt": "2026-10-08T20:21:33Z",
+   "branch": "cursor/bank-feed-all-bulk-undo-c89b"
+  },
+  {
+   "number": 25979,
+   "title": "Cursor- BANK-F91297 PageHelpLink / StaleDeployBanner / RelatedModuleLinks slate → house tokens",
+   "mergedAt": "2026-10-08T19:17:24Z",
+   "branch": "cursor/bank-slate-91297-help-stale-related-c89b"
+  },
+  {
+   "number": 25978,
+   "title": "Cursor- BANK-F91296 BackButton / SecondaryNavTabs / DocsHome slate → house tokens",
+   "mergedAt": "2026-10-08T19:10:17Z",
+   "branch": "cursor/bank-slate-91296-back-secnav-docs-c89b"
+  },
+  {
+   "number": 25977,
+   "title": "Cursor- BANK-F91295 DatePicker / DateTimePicker / ListErrorState slate → house tokens",
+   "mergedAt": "2026-10-08T19:07:02Z",
+   "branch": "cursor/bank-slate-91295-datepicker-listerr-c89b"
+  },
+  {
+   "number": 25976,
+   "title": "Cursor- BANK-F91294 Freshness / LoadTemplates / EntityLink slate → house tokens",
+   "mergedAt": "2026-10-08T19:03:44Z",
+   "branch": "cursor/bank-slate-91294-fresh-tmpl-elink-c89b"
+  },
+  {
+   "number": 25975,
+   "title": "Cursor- BANK-F91293 AtRiskDriver / TopStatusBar / UnitFaults slate → house tokens",
+   "mergedAt": "2026-10-08T18:58:37Z",
+   "branch": "cursor/bank-slate-91293-atrisk-topbar-faults-c89b"
+  },
+  {
+   "number": 25974,
+   "title": "Cursor- BANK-F91292 CivilFines / LoadDriverReports / DriverReports slate → house tokens",
+   "mergedAt": "2026-10-08T18:51:44Z",
+   "branch": "cursor/bank-slate-91292-fines-drv-reports-c89b"
+  },
+  {
+   "number": 25973,
+   "title": "Cursor- BANK-F91291 DriverCatalog / FuelCatalog / ListViewGear slate → house tokens",
+   "mergedAt": "2026-10-08T18:47:52Z",
+   "branch": "cursor/bank-slate-91291-drv-fuel-listgear-c89b"
+  },
+  {
+   "number": 25972,
+   "title": "Cursor- BANK-F91290 MedicalCard / Loads / DrugProgram slate → house tokens",
+   "mergedAt": "2026-10-08T18:42:16Z",
+   "branch": "cursor/bank-slate-91290-drv-med-loads-drug-c89b"
+  },
+  {
    "number": 25971,
    "title": "Cursor- BANK-F91289 SafetyGeneric / Maintenance / Fleet catalog lists slate → house tokens",
    "mergedAt": "2026-10-08T18:38:40Z",
@@ -14570,6 +14840,12 @@
    "title": "Cursor- BANK-F91176 leftover slate on permits / IDVR detail / complaints tab house tokens",
    "mergedAt": "2026-10-08T06:55:23Z",
    "branch": "cursor/bank-slate-permits-idvr-complaints-c89b"
+  },
+  {
+   "number": 25830,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-08T19:52:11Z",
+   "branch": "chore/tracker-artifacts-sync"
   },
   {
    "number": 25829,
@@ -17060,282 +17336,6 @@
    "title": "Claude-3- AUTH-215 CONSUMED + OUTBOX",
    "mergedAt": "2026-10-04T21:11:20Z",
    "branch": "cc-3/auth-215-consumed"
-  },
-  {
-   "number": 25401,
-   "title": "CC-2- ACCT-F2026100416 tables 10+11 step 1: Faro reserve balances derived, statement balance kept for the 1230/1235 tie-out",
-   "mergedAt": "2026-10-04T21:08:44Z",
-   "branch": "cc-2/faro-reserve-balance-derived"
-  },
-  {
-   "number": 25400,
-   "title": "Claude-3- relay posted_to_gl is derived: writer removed, 75 stale flags cleared, stored true refused",
-   "mergedAt": "2026-10-04T21:08:30Z",
-   "branch": "cc-3/relay-posted-to-gl-derived"
-  },
-  {
-   "number": 25399,
-   "title": "Cursor- fix(factoring): BANK-F2026100403 — factoring liability is GL minus unmatched wires",
-   "mergedAt": "2026-10-04T21:06:46Z",
-   "branch": "cursor/bank-f363-fact-liab-cleared-c89b"
-  },
-  {
-   "number": 25398,
-   "title": "Claude-3- CLAIM migration 202615410940",
-   "mergedAt": "2026-10-04T20:57:15Z",
-   "branch": "chore/claim-migration-202615410940-relay-posted-flag"
-  },
-  {
-   "number": 25397,
-   "title": "Claude-3- AUTH-215 (DEF rows to signed source)",
-   "mergedAt": "2026-10-04T20:56:13Z",
-   "branch": "cc-3/auth-215"
-  },
-  {
-   "number": 25396,
-   "title": "Claude-3- fuel purchase key per product line (DEF on the diesel ticket) + feed document/location fixes",
-   "mergedAt": "2026-10-04T20:55:46Z",
-   "branch": "cc-3/fuel-provider-txn-per-product-line"
-  },
-  {
-   "number": 25395,
-   "title": "CC-2- ACCT-F2026100415 the five static reds on main, each fixed at its root (no baseline growth; ratchet 16->13)",
-   "mergedAt": "2026-10-04T20:54:28Z",
-   "branch": "cc-2/five-static-reds"
-  },
-  {
-   "number": 25394,
-   "title": "CC-2- ACCT-F2026100414 settlement-engine sums now exclude voided lines (void stamp), guard requires it",
-   "mergedAt": "2026-10-04T20:33:21Z",
-   "branch": "cc-2/settlement-sums-void-stamp"
-  },
-  {
-   "number": 25393,
-   "title": "Claude-3- CLAIM migration 202615410930",
-   "mergedAt": "2026-10-04T20:28:06Z",
-   "branch": "chore/claim-migration-202615410930-fuel-provider-txn-per-product"
-  },
-  {
-   "number": 25392,
-   "title": "CC-2- no-DB static sweep was querying production (ROUND 370 fallback) — isolation restored + OPTION 3 UNVERIFIABLE-here",
-   "mergedAt": "2026-10-04T20:25:59Z",
-   "branch": "cc-2/static-unverifiable-here"
-  },
-  {
-   "number": 25391,
-   "title": "Claude-3- feed: one purchase one cost (same receipt) + fuel GL failure fails closed",
-   "mergedAt": "2026-10-04T20:23:08Z",
-   "branch": "claude/feed-same-receipt-one-purchase"
-  },
-  {
-   "number": 25390,
-   "title": "Cursor- BANK-F2026100402 scrollable rail + Accounting More + uncleared In|Out",
-   "mergedAt": "2026-10-04T20:18:57Z",
-   "branch": "cursor/bank-nav-scroll-uncleared-c89b"
-  },
-  {
-   "number": 25389,
-   "title": "Claude-3- feed engines: expense load by proof + printed receipt (DEF on the wrong load)",
-   "mergedAt": "2026-10-04T20:17:51Z",
-   "branch": "claude/feed-expense-load-by-receipt"
-  },
-  {
-   "number": 25388,
-   "title": "Claude-1- ACCT-F9981 AUTH-400: escrow_postings + stop_arrivals admit the owner's listed-row purge (DELETE only)",
-   "mergedAt": "2026-10-04T20:14:36Z",
-   "branch": "cc-1/auth400-append-only-arm-l"
-  },
-  {
-   "number": 25387,
-   "title": "Claude-1- CLAIM-RESERVE verify-step (append-only purge arm)",
-   "mergedAt": "2026-10-04T20:13:40Z",
-   "branch": "claude/claim-reserve-append-only-arm-l"
-  },
-  {
-   "number": 25386,
-   "title": "Claude-1- CLAIM migration 202615410200 (AUTH-400 append-only ARM L)",
-   "mergedAt": "2026-10-04T20:12:26Z",
-   "branch": "chore/claim-migration-202615410200-append-only-auth-purge"
-  },
-  {
-   "number": 25385,
-   "title": "Claude-1- ACCT-F9980 AUTH-400 writer fix: every void reversal leg keeps its own source (mixed-source plant)",
-   "mergedAt": "2026-10-04T20:10:14Z",
-   "branch": "cc-1/void-reversal-keeps-line-source"
-  },
-  {
-   "number": 25384,
-   "title": "Claude-3- DEF dates: signed-source evidence for Lead ruling",
-   "mergedAt": "2026-10-04T20:05:16Z",
-   "branch": "cc-3/def-source-for-ruling"
-  },
-  {
-   "number": 25383,
-   "title": "Claude-3- escrow over-release closed: DEBT 3 -> 0, AUTH-213/214 consumed",
-   "mergedAt": "2026-10-04T20:03:41Z",
-   "branch": "cc-3/escrow-debt-3-to-0"
-  },
-  {
-   "number": 25382,
-   "title": "Claude-3- AUTH-213 + AUTH-214 (escrow unwind; DEF memos + Dreamline issuer)",
-   "mergedAt": "2026-10-04T19:59:32Z",
-   "branch": "cc-3/auth-213-214"
-  },
-  {
-   "number": 25381,
-   "title": "Claude-1- CLAIM-RESERVE verify-step (verify-void-reversal-keeps-line-source)",
-   "mergedAt": "2026-10-04T19:59:21Z",
-   "branch": "claude/claim-reserve-void-line-source"
-  },
-  {
-   "number": 25380,
-   "title": "CC-2- ROUND 389.2 wiring batch: 60 passing banking/factoring guards wired (steps 12083..12391)",
-   "mergedAt": "2026-10-04T19:53:49Z",
-   "branch": "cc-2/wire-389-2-banking-factoring"
-  },
-  {
-   "number": 25379,
-   "title": "Claude-3- ops script: escrow $225 unwind (dry run only until AUTH)",
-   "mergedAt": "2026-10-04T19:52:13Z",
-   "branch": "cc-3/escrow-unwind-225"
-  },
-  {
-   "number": 25378,
-   "title": "Claude-3- escrow release names its claim, repeats are no-ops, engine floor + per-settlement net floor",
-   "mergedAt": "2026-10-04T19:50:15Z",
-   "branch": "claude/escrow-release-floor-and-claim-idempotency"
-  },
-  {
-   "number": 25377,
-   "title": "Claude-1- BUS: 1150 writer named + orphan purge dry run",
-   "mergedAt": "2026-10-04T19:46:48Z",
-   "branch": "claude/cc1-bus-1150-writer-named"
-  },
-  {
-   "number": 25376,
-   "title": "Cursor- BANK-F2026100401 Banking home KPIs: two rows, wires beside expected, uncleared net, clickable drills",
-   "mergedAt": "2026-10-04T19:45:26Z",
-   "branch": "cursor/bank-kpi-home-now-c89b"
-  },
-  {
-   "number": 25375,
-   "title": "Claude-1- BUS: ROUND 390 a/b/c landed + orphan GL measured",
-   "mergedAt": "2026-10-04T19:12:21Z",
-   "branch": "claude/cc1-bus-r390-orphans"
-  },
-  {
-   "number": 25374,
-   "title": "Claude-1- ACCT-F9979 ROUND 390 a/b/c: no document removed out from under its GL (DB deferred trigger + engine + guard)",
-   "mergedAt": "2026-10-04T19:11:49Z",
-   "branch": "cc-1/r390-no-orphaned-gl"
-  },
-  {
-   "number": 25373,
-   "title": "Claude-1- CLAIM-RESERVE verify-step (verify-no-orphaned-gl)",
-   "mergedAt": "2026-10-04T19:11:05Z",
-   "branch": "claude/claim-reserve-no-orphaned-gl"
-  },
-  {
-   "number": 25372,
-   "title": "Claude-1- ROUND 389.2 wiring batch 16: 60 CC-1 guards as verify-steps",
-   "mergedAt": "2026-10-04T19:10:12Z",
-   "branch": "cc-1/r389-2-wire-batch-16"
-  },
-  {
-   "number": 25371,
-   "title": "Claude-1- CLAIM-RESERVE verify-steps (ROUND 389.2 wiring batch 16)",
-   "mergedAt": "2026-10-04T19:09:43Z",
-   "branch": "claude/claim-reserve-r389-2-wire-batch-16"
-  },
-  {
-   "number": 25370,
-   "title": "Claude-1- ROUND 389.2 wiring batch 15: 60 CC-1 guards as verify-steps",
-   "mergedAt": "2026-10-04T19:08:09Z",
-   "branch": "cc-1/r389-2-wire-batch-15"
-  },
-  {
-   "number": 25369,
-   "title": "Claude-1- CLAIM-RESERVE verify-steps (ROUND 389.2 wiring batch 15)",
-   "mergedAt": "2026-10-04T19:07:39Z",
-   "branch": "claude/claim-reserve-r389-2-wire-batch-15"
-  },
-  {
-   "number": 25368,
-   "title": "Claude-1- CLAIM migration 202615410100 (ROUND 390 no-orphaned-GL)",
-   "mergedAt": "2026-10-04T19:06:36Z",
-   "branch": "chore/claim-migration-202615410100-no-orphaned-gl"
-  },
-  {
-   "number": 25367,
-   "title": "Claude-1- ROUND 389.2 wiring batch 14: 60 CC-1 guards as verify-steps",
-   "mergedAt": "2026-10-04T19:06:05Z",
-   "branch": "cc-1/r389-2-wire-batch-14"
-  },
-  {
-   "number": 25366,
-   "title": "Claude-1- CLAIM-RESERVE verify-steps (ROUND 389.2 wiring batch 14)",
-   "mergedAt": "2026-10-04T19:05:34Z",
-   "branch": "claude/claim-reserve-r389-2-wire-batch-14"
-  },
-  {
-   "number": 25365,
-   "title": "Claude-1- ROUND 389.2 wiring batch 13: 58 CC-1 guards as verify-steps",
-   "mergedAt": "2026-10-04T19:04:03Z",
-   "branch": "cc-1/r389-2-wire-batch-13"
-  },
-  {
-   "number": 25364,
-   "title": "Claude-1- CLAIM-RESERVE verify-steps (ROUND 389.2 wiring batch 13)",
-   "mergedAt": "2026-10-04T19:03:28Z",
-   "branch": "claude/claim-reserve-r389-2-wire-batch-13"
-  },
-  {
-   "number": 25363,
-   "title": "Claude-1- ROUND 389.2 wiring batch 12: 60 CC-1 guards as verify-steps",
-   "mergedAt": "2026-10-04T19:01:58Z",
-   "branch": "cc-1/r389-2-wire-batch-12"
-  },
-  {
-   "number": 25362,
-   "title": "Claude-1- CLAIM-RESERVE verify-steps (ROUND 389.2 wiring batch 12)",
-   "mergedAt": "2026-10-04T19:01:33Z",
-   "branch": "claude/claim-reserve-r389-2-wire-batch-12"
-  },
-  {
-   "number": 25361,
-   "title": "Claude-1- BUS: AUTH-397-UNWIND dry run + ruling needed",
-   "mergedAt": "2026-10-04T19:01:14Z",
-   "branch": "claude/cc1-bus-auth397-finding"
-  },
-  {
-   "number": 25360,
-   "title": "Claude-1- ACCT-F9978 purge engine: reversal back-pointers are not ownership (AUTH-397-UNWIND dry run)",
-   "mergedAt": "2026-10-04T19:00:20Z",
-   "branch": "cc-1/unwind397-purge-scope"
-  },
-  {
-   "number": 25359,
-   "title": "Claude-1- ROUND 389.2 wiring batch 11: 58 CC-1 guards as verify-steps",
-   "mergedAt": "2026-10-04T18:59:33Z",
-   "branch": "cc-1/r389-2-wire-batch-11"
-  },
-  {
-   "number": 25358,
-   "title": "Claude-1- CLAIM-RESERVE verify-steps (ROUND 389.2 wiring batch 11)",
-   "mergedAt": "2026-10-04T18:58:47Z",
-   "branch": "claude/claim-reserve-r389-2-wire-batch-11"
-  },
-  {
-   "number": 25357,
-   "title": "Claude-1- ROUND 389.2 wiring batch 10: 59 CC-1 guards as verify-steps",
-   "mergedAt": "2026-10-04T18:56:38Z",
-   "branch": "cc-1/r389-2-wire-batch-10"
-  },
-  {
-   "number": 25356,
-   "title": "Claude-3- AUTH-212 CONSUMED + OUTBOX",
-   "mergedAt": "2026-10-04T18:56:28Z",
-   "branch": "cc-3/auth-212-consumed"
   }
  ],
  "merged_pr_total": 3000,
