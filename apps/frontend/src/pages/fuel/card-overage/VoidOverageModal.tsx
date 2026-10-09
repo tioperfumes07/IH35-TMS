@@ -35,7 +35,7 @@ export function VoidOverageModal({ open, summary, posted, onClose, onConfirm }: 
             ? "The driver receivable is reversed with a linked reversing entry; the original entry stays on the books."
             : "Nothing has posted yet; the event is kept as voided."}
         </p>
-        <label className="block text-xs text-slate-600">
+        <label className="block text-xs text-[#4B5563]">
           Reason
           <textarea
             className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
