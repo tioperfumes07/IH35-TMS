@@ -165,7 +165,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
           ) : null}
 
           {/* CHROME: flat sections — no nested bordered panel inside the drawer (box-in-box) */}
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">CC Bill Payment Details</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">CC Bill Payment Details</div>
 
           <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -226,7 +226,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
           </div>
 
           {CC_BILL_PAYMENT_GATED ? (
-            <div className="rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-800">
+            <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#0F1219]">
               <span className="font-semibold">CC bill payment gated.</span> Submit is disabled pending financial-cluster
               approval. Contact Jorge to enable.
             </div>
