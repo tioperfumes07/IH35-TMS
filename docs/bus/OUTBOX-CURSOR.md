@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91167 — CreateExpense / BillPayment / ApplyToBill forms slate → house
+
+FINDING: BANK-F91167 — CreateExpenseForm / BillPaymentForm / ApplyToBillForm Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26102 squash `c915fbb5ca59` (BANK-F91166 Cash advances)
+Files Modified: CreateExpenseForm.tsx · BillPaymentForm.tsx · ApplyToBillForm.tsx · verify-91167-bank-forms-slate-leftover-chrome.mjs · verify-steps/3000-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91167-bank-forms-slate-leftover-chrome.mjs (piggy EVEN 3000)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91166 DONE (#26102 c915fbb5ca59)
+
 ## 2026-10-09 · BANK-F91166 — CashAdvancesHome / AdvanceDetailDrawer / MarkDisbursed slate → house
 
 FINDING: BANK-F91166 — CashAdvancesHome / AdvanceDetailDrawer / MarkDisbursedModal Tailwind slate-* → house tokens

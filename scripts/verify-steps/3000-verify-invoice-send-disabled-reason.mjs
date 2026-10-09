@@ -3,5 +3,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-invoice-send-disabled-reason.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-invoice-send-disabled-reason.mjs"]);
+    await ctx.run("node", ["scripts/verify-91167-bank-forms-slate-leftover-chrome.mjs"]);
   },
 };
