@@ -221,7 +221,7 @@ export function CashFlowStatementPage() {
           error. Cash counts only journal entries that actually moved real cash, dated by when it
           moved — this basis reconciles to the literal cash-at-start/cash-at-end change by
           construction. */}
-      <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
         {applied.basis === "cash"
           ? "Cash basis: only journal entries that moved real cash, dated by when cash actually moved."
           : "Accrual basis: every incurred operating/investing/financing movement, dated by when it was recorded — may not tie to the period's actual cash change (that is expected, not an error)."}
@@ -278,9 +278,9 @@ export function CashFlowStatementPage() {
               (whose amber/green logic below is UNCHANGED from before this PR — see
               verify-cash-flow-statement-reconciled-badge-honest.mjs, which pins its exact text). */}
           {query.data.basis === "accrual" ? (
-            <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
+            <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2">
               <div className="text-section-header font-semibold uppercase text-gray-500">Reconciliation</div>
-              <div className="text-page-title font-semibold text-slate-700">N/A — accrual basis</div>
+              <div className="text-page-title font-semibold text-[#1F2A44]">N/A — accrual basis</div>
               <div className="text-xs text-gray-500">Accrual does not tie to the literal cash-balance change by design.</div>
             </div>
           ) : (
@@ -301,7 +301,7 @@ export function CashFlowStatementPage() {
                     ? "Reconciled — unclassified legs"
                     : "Reconciled"}
               </div>
-              <div className={query.data.unclassified_leg_count > 0 ? "text-xs font-semibold text-slate-700" : "text-xs text-gray-500"}>
+              <div className={query.data.unclassified_leg_count > 0 ? "text-xs font-semibold text-[#1F2A44]" : "text-xs text-gray-500"}>
                 Unclassified legs: {query.data.unclassified_leg_count}
                 {query.data.unclassified_leg_count > 0
                   ? " — bucketed into Operating by default, may not reflect the true Operating/Investing/Financing split"
@@ -358,7 +358,7 @@ export function CashFlowStatementPage() {
                       </tr>
                     ))
                   )}
-                  <tr className="bg-slate-50 font-semibold">
+                  <tr className="bg-[#F7F8FA] font-semibold">
                     <td colSpan={3} className="px-3 py-2 text-right">
                       Section total
                     </td>

@@ -38,7 +38,7 @@ const KIND_LABEL: Record<FaroEntryKind, string> = {
   client_payable: "Client payable",
 };
 const POSTABLE: FaroEntryKind[] = ["escrow_held", "escrow_to_cash", "schedule_fee", "short_pay", "client_payable"];
-const ACTION = "rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-slate-700 disabled:opacity-50";
+const ACTION = "rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-[#1F2A44] disabled:opacity-50";
 const REGISTER_PATH: Record<FaroRegister, string> = { escrow: "/factoring/escrow-account", cash: "/factoring/cash-reserve" };
 
 function postHint(e: FaroReserveEntry): string | null {
@@ -58,7 +58,7 @@ function ShortPayCustomerSide({ e, companyId, isOwner, onDone }: { e: FaroReserv
   const label = SHORT_PAY_REASON_OPTIONS.find((o) => o.value === e.short_pay_reason)?.label ?? e.short_pay_reason ?? "";
   if (e.short_pay_resolution === "written_down") {
     return (
-      <span className="text-slate-700">
+      <span className="text-[#1F2A44]">
         Written down — {label}
         {e.short_pay_resolution_journal_entry_id ? (
           <>
@@ -69,7 +69,7 @@ function ShortPayCustomerSide({ e, companyId, isOwner, onDone }: { e: FaroReserv
       </span>
     );
   }
-  if (!isOwner) return <span className="text-slate-600">{e.short_pay_resolution === "kept_open" ? "Kept open on the customer" : "Open on the customer — Owner decides"}</span>;
+  if (!isOwner) return <span className="text-[#4B5563]">{e.short_pay_resolution === "kept_open" ? "Kept open on the customer" : "Open on the customer — Owner decides"}</span>;
   const act = (body: { resolution: "written_down" | "kept_open"; reason?: string; note?: string }) => {
     setBusy(true);
     setErr(null);
@@ -80,7 +80,7 @@ function ShortPayCustomerSide({ e, companyId, isOwner, onDone }: { e: FaroReserv
   };
   return (
     <span className="inline-flex flex-wrap items-center gap-1">
-      {e.short_pay_resolution === "kept_open" ? <span className="text-slate-600">Kept open ·</span> : null}
+      {e.short_pay_resolution === "kept_open" ? <span className="text-[#4B5563]">Kept open ·</span> : null}
       <SelectCombobox
         value={reason}
         onChange={(ev) => setReason(ev.target.value)}
@@ -230,7 +230,7 @@ export function FaroReserveRegisterPanel({
           e.journal_entry_id ? (
             <EntityLink kind="journal_entry" id={e.journal_entry_id} label="Posted" />
           ) : postHint(e) ? (
-            <span className="text-slate-600">{postHint(e)}</span>
+            <span className="text-[#4B5563]">{postHint(e)}</span>
           ) : canPost && POSTABLE.includes(e.entry_kind) ? (
             <button
               type="button"
@@ -254,7 +254,7 @@ export function FaroReserveRegisterPanel({
               Post
             </button>
           ) : (
-            <span className="text-slate-600">Not posted</span>
+            <span className="text-[#4B5563]">Not posted</span>
           ),
       },
     ],
@@ -288,7 +288,7 @@ export function FaroReserveRegisterPanel({
           />
           {preview ? (
             <>
-              <span className="tabular-nums text-slate-700">
+              <span className="tabular-nums text-[#1F2A44]">
                 {preview.new_count} new · {preview.rows.length - preview.new_count} already imported · {preview.rejected.length} rejected ·
                 ending balance {preview.ending_balance_cents == null ? "—" : formatUsdCents(preview.ending_balance_cents)}
                 {preview.unresolved_invoice_count ? ` · ${preview.unresolved_invoice_count} with no purchase line for their Faro Inv yet` : ""}
@@ -325,7 +325,7 @@ export function FaroReserveRegisterPanel({
           ))}
         </ul>
       ) : null}
-      {message ? <p className="mb-2 text-xs text-slate-700">{message}</p> : null}
+      {message ? <p className="mb-2 text-xs text-[#1F2A44]">{message}</p> : null}
       {error ? <p className="mb-2 text-xs text-red-700" role="alert">{error}</p> : null}
       {entries.isError ? (
         <ListErrorState
