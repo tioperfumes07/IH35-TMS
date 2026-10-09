@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91191 — AwaitingBol / NeedsDeliveryAuth / PodReview slate → house
+
+FINDING: BANK-F91191 — AwaitingBolInvoicePage / NeedsDeliveryAuthorizationPage / PodReviewPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26126 squash `1b260de5f2` (BANK-F91190 dispatch empty-company)
+Files Modified: AwaitingBolInvoicePage.tsx · NeedsDeliveryAuthorizationPage.tsx · PodReviewPage.tsx · verify-91191-dispatch-bol-pod-auth-slate-leftover-chrome.mjs · verify-steps/2898-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91191-dispatch-bol-pod-auth-slate-leftover-chrome.mjs (piggy EVEN 2898)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91190 — LoadsWithoutDriverBill / LoadsWithoutTour / AtRiskQueue slate → house
 
 FINDING: BANK-F91190 — LoadsWithoutDriverBillPage / LoadsWithoutTourPage / AtRiskQueuePage Tailwind slate-* → house tokens

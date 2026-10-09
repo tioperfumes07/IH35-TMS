@@ -132,7 +132,7 @@ export function NeedsDeliveryAuthorizationPage() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">
+      <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">
         Select an operating company.
       </div>
     );
