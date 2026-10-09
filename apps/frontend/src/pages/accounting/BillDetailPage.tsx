@@ -112,7 +112,7 @@ export function BillDetailPage() {
   // isFetching, so a disabled query (selectedCompanyId not yet resolved on cold nav) reports
   // isLoading=false and falls through to "not found" for a real record. isPending is correct here —
   // see JournalEntryDetailPage.tsx for the full live-repro writeup. Do not revert to isLoading.
-  if (detailQuery.isPending) return <div className="p-4 text-xs text-slate-500">Loading bill…</div>;
+  if (detailQuery.isPending) return <div className="p-4 text-xs text-[#6B7280]">Loading bill…</div>;
   if (detailQuery.isError)
     return (
       <ListErrorState
@@ -153,7 +153,7 @@ export function BillDetailPage() {
         line.account_id ? (
           <Link
             to={`/accounting/chart-of-accounts/register/${line.account_id}`}
-            className="text-slate-700 hover:underline"
+            className="text-[#1F2A44] hover:underline"
             onClick={(event) => event.stopPropagation()}
           >
             {accountLabel(line.account_number, line.account_name, line.account_id)}
@@ -251,7 +251,7 @@ export function BillDetailPage() {
       key: "is_reconciled",
       label: "Reconciled",
       render: (pmt) =>
-        pmt.is_reconciled ? <span className="text-slate-600">✓ Matched</span> : <span className="text-slate-400">—</span>,
+        pmt.is_reconciled ? <span className="text-[#4B5563]">✓ Matched</span> : <span className="text-[#6B7280]">—</span>,
     },
   ];
 
@@ -285,7 +285,7 @@ export function BillDetailPage() {
               <StatusBadge variant="crit">held — {bill.posting_hold_reason.replace(/^post_failed:/, "post failed: ").replace(/_/g, " ")}</StatusBadge>
             ) : null}
             {bill.is_reconciled ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-medium text-[#1F2A44]">
                 <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M2.5 6.5l2.5 2.5 4.5-5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -447,7 +447,7 @@ export function BillDetailPage() {
           <Link
             to={`/accounting/allocations?bill_id=${bill.id}`}
             data-testid="bill-detail-allocations-link"
-            className="text-xs text-slate-700 hover:underline"
+            className="text-xs text-[#1F2A44] hover:underline"
           >
             Unit allocations for this bill
           </Link>
@@ -496,18 +496,18 @@ export function BillDetailPage() {
       <DataPanel title="Vendor credits">
         <div className="space-y-2" data-testid="bill-detail-vendor-credit-applications">
           {vendorCreditApplications.length === 0 ? (
-            <p className="text-xs text-slate-500">No vendor credits applied to this bill.</p>
+            <p className="text-xs text-[#6B7280]">No vendor credits applied to this bill.</p>
           ) : (
             vendorCreditApplications.map((application) => (
-              <div key={application.id} className="flex items-center justify-between gap-3 rounded-sm border border-slate-200 px-3 py-2">
+              <div key={application.id} className="flex items-center justify-between gap-3 rounded-sm border border-[#E5E7EB] px-3 py-2">
                 <Link
                   to={`/accounting/vendor-credits?credit_id=${encodeURIComponent(application.credit_id)}`}
-                  className="text-xs font-medium text-slate-800 hover:underline"
+                  className="text-xs font-medium text-[#1F2A44] hover:underline"
                 >
                   {entityLabel(application.display_id, application.credit_id, "Vendor credit")}
                 </Link>
-                <div className="text-right text-xs text-slate-600">
-                  <div className="font-semibold text-slate-900">{money(application.applied_cents)}</div>
+                <div className="text-right text-xs text-[#4B5563]">
+                  <div className="font-semibold text-[#0F1219]">{money(application.applied_cents)}</div>
                   <div>{application.voided_at ? "Voided application" : `Applied ${formatDateUS(application.applied_at)}`}</div>
                 </div>
               </div>
