@@ -3,5 +3,6 @@ export default {
   name: "verify-users-create-picker-applicability",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-users-create-picker-applicability.mjs"]);
+    await ctx.run("node", ["scripts/verify-91104-farocsv-drvdeduct-custfact-slate-leftover-chrome.mjs"]);
   },
 };

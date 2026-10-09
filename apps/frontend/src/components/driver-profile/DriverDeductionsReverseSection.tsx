@@ -44,10 +44,10 @@ export function DriverDeductionsReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">Deductions</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">Deductions</h3>
         <Link
           to={`/drivers/deductions?driver_id=${encodeURIComponent(driverId)}`}
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
           data-testid="driver-deductions-view-all"
         >
           View all
@@ -67,7 +67,7 @@ export function DriverDeductionsReverseSection({
             <li key={row.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
               <div className="flex items-center justify-between gap-2">
                 <span className="min-w-0">
-                  <span className="font-semibold text-slate-700">{row.reason?.trim() || row.deduction_type}</span>{" "}
+                  <span className="font-semibold text-[#1F2A44]">{row.reason?.trim() || row.deduction_type}</span>{" "}
                   <StatusBadge status={row.status} />
                   {row.load_id ? (
                     <>
@@ -86,7 +86,7 @@ export function DriverDeductionsReverseSection({
                     </>
                   ) : null}
                 </span>
-                <span className="shrink-0 font-semibold text-slate-900">
+                <span className="shrink-0 font-semibold text-[#0F1219]">
                   {formatUsdCents(row.remaining_balance_cents ?? row.amount_cents)}
                 </span>
               </div>
