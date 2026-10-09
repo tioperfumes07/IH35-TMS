@@ -129,7 +129,7 @@ export function CashAdvancesHomePage() {
       />
 
       <div className="relative flex flex-wrap items-end gap-3" data-testid="cash-advances-filters">
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Driver
           <EntityPicker
             kind="driver"

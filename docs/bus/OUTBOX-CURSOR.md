@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91166 — CashAdvancesHome / AdvanceDetailDrawer / MarkDisbursed slate → house
+
+FINDING: BANK-F91166 — CashAdvancesHome / AdvanceDetailDrawer / MarkDisbursedModal Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26101 squash `83865ecad1` (BANK-F91165 Dispatch planners)
+Files Modified: CashAdvancesHome.tsx · AdvanceDetailDrawer.tsx · MarkDisbursedModal.tsx · verify-91166-cash-advances-slate-leftover-chrome.mjs · verify-steps/3004-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91166-cash-advances-slate-leftover-chrome.mjs (piggy EVEN 3004)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91165 DONE (#26101 83865ecad1)
+
 ## 2026-10-09 · BANK-F91165 — UnifiedTimeline / PlannerRowActions / LoadsPlanner slate → house
 
 FINDING: BANK-F91165 — UnifiedTimelinePlanner / PlannerRowActions / LoadsPlanner Tailwind slate-* → house tokens
