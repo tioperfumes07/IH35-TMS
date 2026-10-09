@@ -1,7 +1,8 @@
 export default {
   name: "verify:load-detail-driver-pay-bills",
-  run(ctx) {
-    ctx.run("node", ["scripts/verify-load-detail-driver-pay-bills.mjs", "--selftest"]);
-    ctx.run("node", ["scripts/verify-load-detail-driver-pay-bills.mjs"]);
+  async run(ctx) {
+    await ctx.run("node", ["scripts/verify-load-detail-driver-pay-bills.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-load-detail-driver-pay-bills.mjs"]);
+    await ctx.run("node", ["scripts/verify-91183-factor-vend-alloc-slate-leftover-chrome.mjs"]);
   },
 };

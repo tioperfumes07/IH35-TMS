@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91183 — DuplicateVendorsBanner / VendorMergeDiff / AllocationMethodPicker slate → house
+
+FINDING: BANK-F91183 — DuplicateVendorsBanner / VendorMergeDiffPreview / AllocationMethodPicker Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26118 squash `e9431a2a62` (BANK-F91182 forms)
+Files Modified: DuplicateVendorsBanner.tsx · VendorMergeDiffPreview.tsx · AllocationMethodPicker.tsx · verify-91183-factor-vend-alloc-slate-leftover-chrome.mjs · verify-steps/2916-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91183-factor-vend-alloc-slate-leftover-chrome.mjs (piggy EVEN 2916)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91182 — FieldError / FormField / QboCombobox slate → house
 
 FINDING: BANK-F91182 — FieldError / FormField / QboCombobox Tailwind slate-* → house tokens

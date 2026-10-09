@@ -91,7 +91,7 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
 
   if (scanQuery.isError) {
     return (
-      <div className="rounded-sm border border-slate-200 bg-white p-3" data-duplicate-vendors-read-error>
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-duplicate-vendors-read-error>
         <ListErrorState
           status={0}
           message="Could not check for duplicate factoring vendors."
