@@ -31,10 +31,10 @@ export function MyPositionScreen() {
         <>
           <p className="text-sm">{position.lat.toFixed(5)}, {position.lng.toFixed(5)}</p>
           <p className="text-sm">Speed: {position.speed_mph?.toFixed(1) ?? "—"} mph</p>
-          <p className="text-xs text-slate-500">Updated {formatTime(position.recorded_at)}</p>
+          <p className="text-xs text-[#6B7280]">Updated {formatTime(position.recorded_at)}</p>
         </>
       ) : (
-        <p className="text-sm text-slate-500">Waiting for GPS…</p>
+        <p className="text-sm text-[#6B7280]">Waiting for GPS…</p>
       )}
     </div>
   );
