@@ -32,7 +32,7 @@ function AlertRow({ alert, companyId }: { alert: DriftAlert; companyId: string }
 
   const days = daysOpen(alert.detected_at);
   // §7 palette: red is reserved for delete/Accident — severity is conveyed with weight, not color.
-  const severityClass = alert.severity === "critical" ? "font-bold text-slate-700" : "font-semibold text-slate-600";
+  const severityClass = alert.severity === "critical" ? "font-bold text-[#1F2A44]" : "font-semibold text-[#4B5563]";
 
   const handleResolve = () => {
     if (!note.trim()) {
@@ -111,8 +111,8 @@ export function DriftAlertsPanel({ companyId }: { companyId: string }) {
   if (rows.length === 0) return null;
 
   return (
-    <div className="mb-3 rounded-sm border border-slate-200 bg-slate-100" data-testid="drift-alerts-panel">
-      <div className="border-b border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700">
+    <div className="mb-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA]" data-testid="drift-alerts-panel">
+      <div className="border-b border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#1F2A44]">
         {rows.length} open reconciliation drift alert{rows.length === 1 ? "" : "s"}
       </div>
       {rows.map((alert) => (

@@ -7,5 +7,7 @@ export default {
     // BANK leftover refuse — WorkOrderDetail / MaintenanceSettings / FaultCodeAlerts house tokens
     await ctx.run("node", ["scripts/verify-wo-maint-settings-slate-leftover-chrome.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-wo-maint-settings-slate-leftover-chrome.mjs"]);
+    // BANK-F91088 — FaroImport / DriftAlerts / PlaidItem slate leftover refuse
+    await ctx.run("node", ["scripts/verify-91088-faroimp-drift-plaid-slate-leftover-chrome.mjs"]);
   },
 };
