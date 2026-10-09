@@ -1,3 +1,17 @@
+## 2026-10-08 · BANK-F91130 — UnitPm / TrailerTires / RoadService reverse slate → house
+
+FINDING: BANK-F91130 — UnitPmSchedulesReverseSection / TrailerTiresReverseSection / RoadServiceReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26064 squash `e38b6b3d3d` (BANK-F91129 ExtraPay/Earnings/DeadheadPay)
+Files Modified: UnitPmSchedulesReverseSection.tsx · TrailerTiresReverseSection.tsx · RoadServiceReverseSection.tsx · verify-91130-maint-reverse-slate-leftover-chrome.mjs · verify-steps/3502-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91130-maint-reverse-slate-leftover-chrome.mjs (piggy EVEN 3502)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91129 DONE (#26064 e38b6b3d3d)
+
+## 2026-10-08 · BANK-F91129 DONE (#26064 e38b6b3d3d)
+
 ## 2026-10-08 · BANK-F91129 — ExtraPay / Earnings / DeadheadPay slate → house
 
 FINDING: BANK-F91129 — ExtraPaySection / EarningsSection / DeadheadPaySection Tailwind slate-* → house tokens

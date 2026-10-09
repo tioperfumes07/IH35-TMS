@@ -18,7 +18,7 @@ export function TrailerTiresReverseSection({ operatingCompanyId, equipmentId }: 
   return (
     <DataPanel title="Tires">
       <div className="mb-2 flex justify-end">
-        <EntityLink kind="tire_program_equipment" id={equipmentId} label="Open tire program" className="text-xs font-semibold text-slate-700 underline" />
+        <EntityLink kind="tire_program_equipment" id={equipmentId} label="Open tire program" className="text-xs font-semibold text-[#1F2A44] underline" />
       </div>
       {query.isError ? (
         <ListErrorBanner message={userFacingApiError(query.error, "Couldn't load trailer tires")} onRetry={() => void query.refetch()} />
@@ -36,7 +36,7 @@ export function TrailerTiresReverseSection({ operatingCompanyId, equipmentId }: 
               className="flex justify-between rounded-sm border border-gray-200 px-2 py-1.5 text-xs hover:bg-gray-50"
               label={
                 <>
-                  <span className="font-semibold text-slate-700">{row.position_label || row.position_code}</span>
+                  <span className="font-semibold text-[#1F2A44]">{row.position_label || row.position_code}</span>
                   <span className="text-gray-600">{row.brand_name || "Unknown brand"} · {row.tread_depth_32nds}/32</span>
                 </>
               }
