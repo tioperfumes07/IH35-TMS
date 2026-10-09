@@ -98,7 +98,7 @@ export function CashGlSetupPage() {
         title="Bank Account → Cash GL Account"
       />
       {!canEdit ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
           Read-only: only an Owner or Administrator can change a bank account's cash GL mapping.
         </div>
       ) : null}
@@ -107,7 +107,7 @@ export function CashGlSetupPage() {
       {/* Absence / coverage honesty only after a successful response — never invent "complete". Flat accent (UI-01). */}
       {query.isSuccess && banks.length > 0 && unboundCount > 0 ? (
         <div
-          className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          className="border-l-4 border-[#6B7280] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
           data-testid="banking-cash-gl-unbound-honesty-banner"
         >
           <p className="font-semibold">
@@ -122,7 +122,7 @@ export function CashGlSetupPage() {
         </div>
       ) : null}
       {query.isSuccess && banks.length > 0 && unboundCount === 0 ? (
-        <p className="text-xs text-slate-600" data-testid="banking-cash-gl-mapping-complete-note">
+        <p className="text-xs text-[#4B5563]" data-testid="banking-cash-gl-mapping-complete-note">
           All {banks.length} active bank account(s) have a Cash GL mapping for this company.
         </p>
       ) : null}

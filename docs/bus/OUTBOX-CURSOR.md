@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91082 — ManualJE / BankingReports / AttachNotes slate → house
+## 2026-10-08 · BANK-F91083 — ReconMatch / CatRules / CashGlSetup slate → house
+
+FINDING: BANK-F91083 — ReconMatchSuggestions / CategorizationRulesPage / CashGlSetupPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26016 squash `2b3b62c8e6` (BANK-F91082 ManualJE/BankingReports/AttachNotes)
+GUARD: scripts/verify-91083-reconmatch-catrules-cashgl-slate-leftover-chrome.mjs + verify-steps/3774 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: ReconMatchSuggestions + CategorizationRulesPage + CashGlSetupPage + refuse guard + 3774 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91082 DONE — ManualJE / BankingReports / AttachNotes slate → house #26016
 
 FINDING: BANK-F91082 — ManualJEModal / BankingReportsTabContent / BankTransactionAttachmentsNotesModal Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26015 squash `751d81d5b3` (BANK-F91081 SettleDeduct/CashFlowPage/CreateAdvance)
+MERGED: #26016 squash `2b3b62c8e6`
 GUARD: scripts/verify-91082-manualje-bankrpt-attachnotes-slate-leftover-chrome.mjs + verify-steps/3776 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: ManualJEModal + BankingReportsTabContent + BankTransactionAttachmentsNotesModal + refuse guard + 3776 piggyback + OUTBOX
 

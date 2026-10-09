@@ -65,7 +65,7 @@ export function ReconMatchSuggestions(props: {
         ) : (
           <div
             key={`${suggestion.obligation_id}-${suggestion.obligation_type}`}
-            className="flex items-center gap-1 rounded-sm bg-slate-100 px-1 text-xs text-slate-700"
+            className="flex items-center gap-1 rounded-sm bg-[#F7F8FA] px-1 text-xs text-[#1F2A44]"
           >
             <EntityLink
               kind={SUGGESTION_ENTITY_KIND[suggestion.obligation_type]}
@@ -78,7 +78,7 @@ export function ReconMatchSuggestions(props: {
               disabled={props.disabled}
               title="Apply this match"
               onClick={() => props.onAccept(suggestion.obligation_type as ObligationType, suggestion.obligation_id)}
-              className="rounded-sm bg-slate-200 px-1 text-xs enabled:hover:bg-slate-300 disabled:opacity-50"
+              className="rounded-sm bg-[#E5E7EB] px-1 text-xs enabled:hover:bg-[#E5E7EB] disabled:opacity-50"
             >
               Apply
             </button>
@@ -91,7 +91,7 @@ export function ReconMatchSuggestions(props: {
 
 function FactoringSuggestionChip(props: { suggestion: ReconcileSuggestion; disabled?: boolean; onApply: () => void }) {
   return (
-    <div className="flex items-center gap-1 rounded-sm border border-slate-300 bg-slate-100 px-1 py-px text-xs text-slate-700">
+    <div className="flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1 py-px text-xs text-[#1F2A44]">
       <EntityLink
         kind="factoring_batch"
         id={props.suggestion.obligation_id}
