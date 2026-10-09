@@ -45,17 +45,17 @@ export function RevenueDiscrepancyDrill({
 
   return (
     <section
-      className="mt-2 rounded-sm border border-amber-200 bg-amber-50/80 px-2 py-2 text-xs text-slate-800"
+      className="mt-2 rounded-sm border border-amber-200 bg-amber-50/80 px-2 py-2 text-xs text-[#0F1219]"
       aria-labelledby="revenue-discrepancy-heading"
       data-testid="revenue-discrepancy-drill"
     >
-      <h3 id="revenue-discrepancy-heading" className="text-section-header font-semibold uppercase tracking-wide text-slate-700">
+      <h3 id="revenue-discrepancy-heading" className="text-section-header font-semibold uppercase tracking-wide text-[#1F2A44]">
         Revenue discrepancies
         {discrepancyCount > 0 ? ` (${discrepancyCount}` : ""}
         {discrepancyCount > 0 && discrepancyCents > 0 ? ` · ${formatUsdFromCents(discrepancyCents)}` : ""}
         {discrepancyCount > 0 ? ")" : ""}
       </h3>
-      <p className="mt-1 text-xs text-slate-600">
+      <p className="mt-1 text-xs text-[#4B5563]">
         Open mismatched invoices or journal entries. Links use server-provided paths.
       </p>
       <ul className="mt-2 space-y-1" role="list">
