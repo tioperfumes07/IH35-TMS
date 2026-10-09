@@ -22,7 +22,7 @@ export function BankTieoutHeader({ companyId, bankAccountId }: { companyId: stri
   return (
     <section className="mb-3 space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="bank-tieout-header">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-slate-900">Bank tie-out · {STATUS_TEXT[t.status]}</span>
+        <span className="text-xs font-semibold text-[#0F1219]">Bank tie-out · {STATUS_TEXT[t.status]}</span>
         <span className="text-xs text-gray-600">
           Feed synced {t.feed_synced_at ? formatDateTimeUS(t.feed_synced_at) : "never"}
           {t.explained_by?.stale_feed ? " — feed is stale, its balance may be behind" : ""}
@@ -38,7 +38,7 @@ export function BankTieoutHeader({ companyId, bankAccountId }: { companyId: stri
         ].map(([k, v]) => (
           <div key={k}>
             <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{k}</div>
-            <div className="text-xs font-semibold text-slate-900">{v}</div>
+            <div className="text-xs font-semibold text-[#0F1219]">{v}</div>
           </div>
         ))}
       </div>

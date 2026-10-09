@@ -39,7 +39,7 @@ export function VendorWorkOrdersReverseSection({ operatingCompanyId, vendorId }:
                 id={workOrder.id}
                 name={workOrder.display_id}
                 noun="Work order"
-                className="font-semibold text-slate-700 hover:underline"
+                className="font-semibold text-[#1F2A44] hover:underline"
                 data-testid="vendor-work-order-reverse-link"
               />
               <span className="flex items-center gap-1 text-gray-600">
