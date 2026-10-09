@@ -161,7 +161,7 @@ export function NotificationCenterPage() {
                   </div>
                   <div className="flex shrink-0 gap-2">
                     {!item.read_at ? (
-                      <button type="button" className="text-xs text-slate-700 hover:underline" onClick={() => void markRead(item.id)}>
+                      <button type="button" className="text-xs text-[#1F2A44] hover:underline" onClick={() => void markRead(item.id)}>
                         Mark read
                       </button>
                     ) : null}

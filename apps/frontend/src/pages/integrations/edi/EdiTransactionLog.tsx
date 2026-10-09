@@ -131,7 +131,7 @@ export function EdiTransactionLog() {
                 tableTestId="edi-transaction-log-table"
                 rowTestId={(row) => `edi-transaction-log-row-${row.uuid}`}
                 onRowClick={(row) => setSelectedUuid(row.uuid)}
-                rowClassName={(row) => (row.uuid === selectedUuid ? "bg-slate-100" : "")}
+                rowClassName={(row) => (row.uuid === selectedUuid ? "bg-[#F7F8FA]" : "")}
               />
             </div>
 
