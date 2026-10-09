@@ -21,7 +21,7 @@ export function DvirMaintenanceInspectionsReverseSection({
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="dvir-maintenance-inspections-reverse">
-      <h2 className="text-xs font-semibold text-slate-900">
+      <h2 className="text-xs font-semibold text-[#0F1219]">
         Maintenance inspections
         {rows.length ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
       </h2>
@@ -40,7 +40,7 @@ export function DvirMaintenanceInspectionsReverseSection({
             kind="maintenance_inspection"
             id={inspection.id}
             label={humanizeEnumLabel(inspection.inspection_type_label ?? inspection.inspection_type)}
-            className="font-medium text-slate-700"
+            className="font-medium text-[#1F2A44]"
           />
           <span className="ml-2 text-xs text-gray-600">
             {formatDateUS(inspection.inspection_date ?? inspection.scheduled_date)} · {inspection.status}

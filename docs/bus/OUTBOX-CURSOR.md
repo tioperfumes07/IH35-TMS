@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91144 — DvirMaintenance / FuelCards / UnitDefaultDrivers reverse slate → house
+
+FINDING: BANK-F91144 — DvirMaintenanceInspectionsReverseSection / FuelCardsReverseSection / UnitDefaultDriversReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26078 squash `13122b3ccf` (BANK-F91143 USMCAActivation/TelematicsLinks/VendorLinkage)
+Files Modified: DvirMaintenanceInspectionsReverseSection.tsx · FuelCardsReverseSection.tsx · UnitDefaultDriversReverseSection.tsx · verify-91144-dvir-fuel-unitdrv-slate-leftover-chrome.mjs · verify-steps/3386-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91144-dvir-fuel-unitdrv-slate-leftover-chrome.mjs (piggy EVEN 3386)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91143 DONE (#26078 13122b3ccf)
+
 ## 2026-10-09 · BANK-F91143 — USMCAActivation / TelematicsLinks / VendorLinkage slate → house
 
 FINDING: BANK-F91143 — USMCAActivationPanel / TelematicsLinksPanel / VendorLinkageModal Tailwind slate-* → house tokens

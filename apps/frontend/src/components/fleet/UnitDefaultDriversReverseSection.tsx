@@ -13,7 +13,7 @@ export function UnitDefaultDriversReverseSection({ operatingCompanyId, unitId }:
   const rows = query.isError ? [] : (query.data?.drivers ?? []);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-default-drivers-reverse">
-      <h3 className="text-xs font-semibold text-slate-900">Default Drivers{rows.length ? ` (${rows.length})` : ""}</h3>
+      <h3 className="text-xs font-semibold text-[#0F1219]">Default Drivers{rows.length ? ` (${rows.length})` : ""}</h3>
       {query.isLoading ? <p className="text-xs text-gray-500">Loading default drivers…</p> : null}
       {query.isError ? (
         <ListErrorState
@@ -25,7 +25,7 @@ export function UnitDefaultDriversReverseSection({ operatingCompanyId, unitId }:
       ) : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-xs text-gray-500">No active default driver assigned to this unit.</p> : null}
       {rows.length ? <ul className="space-y-1">{rows.map((row) => (
-        <li key={row.driver_id} className="text-xs text-slate-700">
+        <li key={row.driver_id} className="text-xs text-[#1F2A44]">
           <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />
           <span className="text-xs text-gray-500"> · since {formatDateTimeUS(row.started_at)} · {row.source}</span>
         </li>
