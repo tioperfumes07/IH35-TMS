@@ -115,7 +115,7 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
                     ) : null}
                   </div>
                 </div>
-                <span className={`shrink-0 tabular-nums font-medium ${signed < 0 ? "text-red-700" : "text-slate-800"}`}>
+                <span className={`shrink-0 tabular-nums font-medium ${signed < 0 ? "text-red-700" : "text-[#0F1219]"}`}>
                   {formatUsdCents(signed)}
                 </span>
               </li>
@@ -143,7 +143,7 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
                     {row.result_journal_entry_id ? <EntityLink kind="journal_entry" id={row.result_journal_entry_id} label="Journal entry" /> : null}
                   </div>
                 </div>
-                <span className="shrink-0 tabular-nums font-medium text-slate-800">{formatUsdCents(Math.abs(Number(row.amount_cents ?? 0)))}</span>
+                <span className="shrink-0 tabular-nums font-medium text-[#0F1219]">{formatUsdCents(Math.abs(Number(row.amount_cents ?? 0)))}</span>
               </li>
             ))}
           </ul>

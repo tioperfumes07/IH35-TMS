@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91147 — AddressGeocode / BulkProgress / LinkedBank slate → house
+
+FINDING: BANK-F91147 — AddressGeocodeInput / BulkProgressDialog / LinkedBankTransactionsPanel Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26081 squash `4817a185f5` (BANK-F91146 Upload/Customs/DispatchAlert)
+Files Modified: AddressGeocodeInput.tsx · BulkProgressDialog.tsx · LinkedBankTransactionsPanel.tsx · verify-91147-geocode-bulk-bank-slate-leftover-chrome.mjs · verify-steps/3352-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91147-geocode-bulk-bank-slate-leftover-chrome.mjs (piggy EVEN 3352)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91146 DONE (#26081 4817a185f5)
+
 ## 2026-10-09 · BANK-F91146 — UploadModal / CustomsTab / DispatchAlertServerControls slate → house
 
 FINDING: BANK-F91146 — UploadModal / CustomsTab / DispatchAlertServerControls Tailwind slate-* → house tokens
