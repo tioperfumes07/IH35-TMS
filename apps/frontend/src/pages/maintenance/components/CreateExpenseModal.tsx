@@ -59,7 +59,7 @@ export function CreateExpenseModal({
     <ParityDrawer open={open} onClose={onClose} title="Create Expense" size="wide">
       {showLinkPickers ? (
         <div
-          className="mb-3 grid gap-2 rounded-sm border border-slate-200 bg-slate-50 p-2 md:grid-cols-2"
+          className="mb-3 grid gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 md:grid-cols-2"
           data-testid="maint-expense-wo-link-pickers"
         >
           <div className="flex flex-col gap-1">
@@ -97,7 +97,7 @@ export function CreateExpenseModal({
       ) : null}
       {createdExpenseId ? (
         <div
-          className="flex flex-col items-start gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs"
+          className="flex flex-col items-start gap-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs"
           data-testid="create-expense-modal-confirmation"
         >
           <p className="text-gray-700">
