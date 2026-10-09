@@ -57,7 +57,7 @@ const RESERVE_COLUMNS: Array<ParityColumn<ReserveMovementRow>> = [
     className: "text-right",
     sortValue: (row) => row.signed_amount_cents,
     render: (row) => (
-      <span className={row.signed_amount_cents >= 0 ? "text-slate-700" : "text-red-700"}>
+      <span className={row.signed_amount_cents >= 0 ? "text-[#1F2A44]" : "text-red-700"}>
         {row.signed_amount_cents >= 0 ? "+" : "-"}
         {asMoney(Math.abs(row.signed_amount_cents))}
       </span>
