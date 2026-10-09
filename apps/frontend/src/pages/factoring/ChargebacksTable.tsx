@@ -148,7 +148,7 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate, filterBar }: Prop
         <>
           <button
             type="button"
-            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44]"
             onClick={() => {
               if (selected.length === 0) {
                 pushToast("Select at least one row to export.", "info");
@@ -174,7 +174,7 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate, filterBar }: Prop
             type="button"
             disabled
             title="Bulk dispute is not available yet."
-            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44] disabled:opacity-50"
             onClick={() => pushToast("Bulk dispute is not available yet.", "info")}
           >
             Dispute

@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91126 — RecoursePipeline / Chargebacks / VendorApAging slate → house
+
+FINDING: BANK-F91126 — RecoursePipelineTable / ChargebacksTable / VendorApAgingSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26060 squash `35afe71f02` (BANK-F91125 LegalMatters/FuelHome)
+Files Modified: RecoursePipelineTable.tsx · ChargebacksTable.tsx · VendorApAgingSection.tsx · verify-91126-fact-vend-fuel-slate-leftover-chrome.mjs · verify-steps/3518-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91126-fact-vend-fuel-slate-leftover-chrome.mjs (piggy EVEN 3518)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91125 DONE (#26060 35afe71f02)
+
 ## 2026-10-08 · BANK-F91125 — LegalMattersList / LegalMatterDetail / FuelHome slate → house
 
 FINDING: BANK-F91125 — LegalMattersListPage / LegalMatterDetailPage / FuelHome Tailwind slate-* → house tokens
