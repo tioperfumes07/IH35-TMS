@@ -11,7 +11,7 @@ export type DvirSeverityValue = "major" | "minor" | "observation" | string;
 const STYLES: Record<string, { className: string; label: string }> = {
   major: { className: "bg-red-100 text-red-800 border-red-300", label: "Major" },
   minor: { className: "bg-amber-100 text-amber-800 border-amber-300", label: "Minor" },
-  observation: { className: "bg-slate-100 text-slate-700 border-slate-300", label: "Observation" },
+  observation: { className: "bg-[#F7F8FA] text-[#1F2A44] border-[#E5E7EB]", label: "Observation" },
 };
 
 export function DvirSeverityBadge({

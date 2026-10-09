@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91173 — VendorEdit / DvirSeverity / CatalogExcel slate → house
+
+FINDING: BANK-F91173 — VendorEditDrawer / DvirSeverityBadge / CatalogExcelUploadModal Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26108 squash `6826dc3a521d` (BANK-F91172 Dispatch stops)
+Files Modified: VendorEditDrawer.tsx · DvirSeverityBadge.tsx · CatalogExcelUploadModal.tsx · verify-91173-vendor-dvir-catalog-slate-leftover-chrome.mjs · verify-steps/2974-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91173-vendor-dvir-catalog-slate-leftover-chrome.mjs (piggy EVEN 2974)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91172 DONE (#26108 6826dc3a521d)
+
 ## 2026-10-09 · BANK-F91172 — MultiStopEditor / LoadStopsRecord / EquipTransfer slate → house
 
 FINDING: BANK-F91172 — MultiStopEditor / LoadStopsRecordTab / EquipmentTransferModal Tailwind slate-* → house tokens

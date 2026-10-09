@@ -289,7 +289,7 @@ export function VendorEditDrawer({ open, vendorId, vendorName, operatingCompanyI
               Suggested on new bills for this vendor. Never posted automatically.
             </p>
             {!values.defaultExpenseAccountId && (
-              <p className="mt-1 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700" data-testid="vendor-default-expense-account-prompt">
+              <p className="mt-1 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]" data-testid="vendor-default-expense-account-prompt">
                 This vendor has no default expense account. Set one now to pre-fill bills correctly.
               </p>
             )}
