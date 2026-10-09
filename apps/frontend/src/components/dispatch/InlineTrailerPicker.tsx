@@ -45,7 +45,7 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
             role="button"
             tabIndex={0}
             aria-label={`Assign trailer for load ${loadId}`}
-            className="code-cell min-w-0 flex-1 cursor-pointer text-slate-500 hover:underline"
+            className="code-cell min-w-0 flex-1 cursor-pointer text-[#6B7280] hover:underline"
             data-testid={`inline-trailer-picker-${loadId}`}
             onClick={startEdit}
             onKeyDown={(e) => {

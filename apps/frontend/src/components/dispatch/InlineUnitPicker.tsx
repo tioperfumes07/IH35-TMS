@@ -47,7 +47,7 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
             role="button"
             tabIndex={0}
             aria-label={`Assign unit for load ${loadId}`}
-            className="code-cell min-w-0 flex-1 cursor-pointer text-slate-500 hover:underline"
+            className="code-cell min-w-0 flex-1 cursor-pointer text-[#6B7280] hover:underline"
             data-testid={`inline-unit-picker-${loadId}`}
             onClick={startEdit}
             onKeyDown={(e) => {
