@@ -424,7 +424,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
                   label: "Action",
                   render: (request) =>
                     request.document_url ? (
-                      <a href={request.document_url} className="text-slate-700 underline" target="_blank" rel="noreferrer">
+                      <a href={request.document_url} className="text-[#1F2A44] underline" target="_blank" rel="noreferrer">
                         Open
                       </a>
                     ) : (
@@ -458,7 +458,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
                   label: "Document",
                   render: (request) =>
                     request.document_url ? (
-                      <a className="text-slate-700 underline" href={request.document_url} target="_blank" rel="noreferrer">
+                      <a className="text-[#1F2A44] underline" href={request.document_url} target="_blank" rel="noreferrer">
                         Open
                       </a>
                     ) : (

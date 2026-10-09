@@ -49,12 +49,12 @@ export function SplitTransactionModal({ open, amount, onClose, onSave }: Props) 
         ))}
         <button
           type="button"
-          className="text-slate-700 underline"
+          className="text-[#1F2A44] underline"
           onClick={() => setLines((prev) => [...prev, { category: "", amount: 0 }])}
         >
           + Create Split Line
         </button>
-        <div className={`${balanced ? "text-slate-700" : "text-red-700"}`}>
+        <div className={`${balanced ? "text-[#1F2A44]" : "text-red-700"}`}>
           Total: ${total.toFixed(2)} / Transaction: ${amount.toFixed(2)}
         </div>
         <div className="flex gap-2">

@@ -21,5 +21,7 @@ export default {
   name: "verify-unit-column-orphan-guard-registry-batch",
   async run(ctx) {
     for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
+    // BANK-F91140 piggy — TriSignal/CoiTab/SplitTransaction slate leftover refuse
+    await ctx.run("node", ["scripts/verify-91140-tri-coi-split-slate-leftover-chrome.mjs"]);
   },
 };

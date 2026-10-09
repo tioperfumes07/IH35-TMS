@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91140 — TriSignalHoverDetail / CoiTab / SplitTransactionModal slate → house
+
+FINDING: BANK-F91140 — TriSignalHoverDetail / CoiTab / SplitTransactionModal Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26074 squash `071d7ad8ff` (BANK-F91139 LoadStatus/InlineStatus/InlineDriver)
+Files Modified: TriSignalHoverDetail.tsx · CoiTab.tsx · SplitTransactionModal.tsx · verify-91140-tri-coi-split-slate-leftover-chrome.mjs · verify-steps/3402-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91140-tri-coi-split-slate-leftover-chrome.mjs (piggy EVEN 3402)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91139 DONE (#26074 071d7ad8ff)
+
 ## 2026-10-09 · BANK-F91139 — LoadStatusChanger / InlineStatusPicker / InlineDriverPicker slate → house
 
 FINDING: BANK-F91139 — LoadStatusChanger / InlineStatusPicker / InlineDriverPicker Tailwind slate-* → house tokens
