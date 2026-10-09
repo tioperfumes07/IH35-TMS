@@ -83,7 +83,7 @@ export function ExpenseDetailPage() {
   // isFetching, so a disabled query (selectedCompanyId not yet resolved on cold nav) reports
   // isLoading=false and falls through to "not found" for a real record. isPending is correct here —
   // see JournalEntryDetailPage.tsx for the full live-repro writeup. Do not revert to isLoading.
-  if (detailQuery.isPending) return <div className="p-4 text-xs text-slate-500">Loading expense…</div>;
+  if (detailQuery.isPending) return <div className="p-4 text-xs text-[#6B7280]">Loading expense…</div>;
   if (detailQuery.isError) {
     return (
       <ListErrorState
@@ -112,7 +112,7 @@ export function ExpenseDetailPage() {
         line.expense_account_uuid ? (
           <Link
             to={`/accounting/chart-of-accounts/register/${line.expense_account_uuid}`}
-            className="text-slate-700 hover:underline"
+            className="text-[#1F2A44] hover:underline"
             onClick={(event) => event.stopPropagation()}
           >
             {accountLabel(line.expense_account_number, line.expense_account_name, line.expense_account_uuid)}
@@ -332,7 +332,7 @@ export function ExpenseDetailPage() {
             <span className="text-xs font-semibold text-gray-600">Payment account</span>
             <Link
               to={`/accounting/chart-of-accounts/register/${expense.payment_account_uuid}`}
-              className="text-xs text-slate-700 hover:underline"
+              className="text-xs text-[#1F2A44] hover:underline"
             >
               {accountLabel(expense.payment_account_number, expense.payment_account_name, expense.payment_account_uuid)}
             </Link>
