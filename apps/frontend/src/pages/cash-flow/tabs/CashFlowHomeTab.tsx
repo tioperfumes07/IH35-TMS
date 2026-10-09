@@ -79,13 +79,13 @@ export function CashFlowHomeTab({
   return (
     <div className="space-y-4" data-testid="cash-flow-home-tab">
       {isError && (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-6 text-center text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-6 text-center text-xs text-[#1F2A44]">
           Failed to load today's cash position. Please try again.
         </div>
       )}
 
       {isLoading && !data && (
-        <div className="rounded-sm border border-slate-200 bg-white p-6 text-center text-xs text-slate-500">Loading…</div>
+        <div className="rounded-sm border border-[#E5E7EB] bg-white p-6 text-center text-xs text-[#6B7280]">Loading…</div>
       )}
 
       {kpis && <CashFlowKpiStrip kpis={kpis} testId="cash-flow-home-kpi-strip" />}
@@ -96,11 +96,11 @@ export function CashFlowHomeTab({
             key={card.id}
             type="button"
             onClick={() => onNavigateToTab(card.id)}
-            className="rounded-sm border border-slate-200 bg-white p-3 text-left transition hover:border-slate-400 hover:shadow-xs"
+            className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-left transition hover:border-[#6B7280] hover:shadow-xs"
             data-testid={`cash-flow-home-card-${card.id}`}
           >
-            <div className="text-xs font-bold uppercase tracking-wide text-slate-700">{card.label}</div>
-            <div className="mt-1 text-xs text-slate-500">{card.description}</div>
+            <div className="text-xs font-bold uppercase tracking-wide text-[#1F2A44]">{card.label}</div>
+            <div className="mt-1 text-xs text-[#6B7280]">{card.description}</div>
           </button>
         ))}
       </div>

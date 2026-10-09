@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91074 — CashFlowHome / ActualVsProjected / PlaidConnections slate → house
+
+FINDING: BANK-F91074 — CashFlowHomeTab / ActualVsProjectedTab / BankingPlaidConnectionsPanel Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26007 squash (BANK-F91073 CoaBatch/BatchExpenses/InvoicesList)
+GUARD: scripts/verify-91074-cfhome-actualproj-plaid-slate-leftover-chrome.mjs + verify-steps/3704 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: CashFlowHomeTab + ActualVsProjectedTab + BankingPlaidConnectionsPanel + refuse guard + 3704 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91073 — CoaBatchActions / BatchExpenses / InvoicesList slate → house
 
 FINDING: BANK-F91073 — CoaBatchActions / BatchExpensesPage / InvoicesListPage Tailwind slate-* → house tokens

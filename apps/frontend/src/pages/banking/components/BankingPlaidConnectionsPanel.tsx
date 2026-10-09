@@ -215,7 +215,7 @@ export function BankingPlaidConnectionsPanel({
                         <div
                           className={
                             reconnectHighlightItemId === itemId
-                              ? "rounded-sm p-0.5 ring-2 ring-slate-400 ring-offset-1"
+                              ? "rounded-sm p-0.5 ring-2 ring-[#6B7280] ring-offset-1"
                               : ""
                           }
                         >
@@ -231,7 +231,7 @@ export function BankingPlaidConnectionsPanel({
                       </div>
                       <ActionButton
                         type="button"
-                        className="border border-slate-300 bg-slate-100 text-slate-700 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+                        className="border border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280]"
                         disabled={syncingItemId === itemId}
                         onClick={() => void handleManualPlaidSync(itemId, institution)}
                       >
@@ -255,14 +255,14 @@ export function BankingPlaidConnectionsPanel({
                   Accounts:{" "}
                   {g.accounts.map((a) => (
                     <span key={a.id} className="mr-2 inline-block">
-                      <Link className="text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400" to={`/banking/accounts/${a.id}`}>
+                      <Link className="text-[#1F2A44] hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280]" to={`/banking/accounts/${a.id}`}>
                         {(a.account_name || "Account") + (a.account_mask ? ` ••••${a.account_mask}` : "")}
                       </Link>
                     </span>
                   ))}
                 </p>
                 {showReconnectCta && itemId ? (
-                  <p className="mt-1 text-section-header font-semibold uppercase text-slate-700">Reconnect needed</p>
+                  <p className="mt-1 text-section-header font-semibold uppercase text-[#1F2A44]">Reconnect needed</p>
                 ) : null}
               </div>
             </div>
@@ -413,7 +413,7 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search description"
           aria-label="Filter transactions by description"
-          className="min-w-48 flex-1 rounded-sm border border-gray-300 px-2 py-1 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="min-w-48 flex-1 rounded-sm border border-gray-300 px-2 py-1 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280]"
         />
         <MultiSelectDropdown
           label="Account"

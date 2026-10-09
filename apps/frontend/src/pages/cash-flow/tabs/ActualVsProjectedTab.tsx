@@ -64,7 +64,7 @@ function VarianceCell({ variance_cents, variance_pct }: { variance_cents: number
   const pos = variance_cents > 0;
   const zero = variance_cents === 0;
   return (
-    <div className={`flex flex-col items-end ${zero ? "text-gray-500" : pos ? "text-slate-700" : "text-red-700"}`}>
+    <div className={`flex flex-col items-end ${zero ? "text-gray-500" : pos ? "text-[#1F2A44]" : "text-red-700"}`}>
       <span className="font-semibold">{formatCents(variance_cents, { sign: true })}</span>
       <span className="text-xs">{formatPct(variance_pct)}</span>
     </div>
@@ -171,7 +171,7 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
       g.income.actual_unavailable || g.expenses.actual_unavailable ? (
         <span className="text-xs text-gray-400" title="Actual net depends on actual income/expenses, both unavailable">—</span>
       ) : (
-        <span className={`font-bold ${g.net.actual_cents >= 0 ? "text-slate-700" : "text-red-700"}`}>
+        <span className={`font-bold ${g.net.actual_cents >= 0 ? "text-[#1F2A44]" : "text-red-700"}`}>
           {formatCents(g.net.actual_cents, { sign: true })}
         </span>
       ),
@@ -255,7 +255,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
         className="rounded-sm border border-gray-200 bg-white p-2"
       >
         <div className="flex flex-wrap items-end gap-3">
-          <label className="text-xs font-semibold text-slate-600">
+          <label className="text-xs font-semibold text-[#4B5563]">
             From
             <DatePicker
               value={staged.draft.from}
@@ -263,7 +263,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
               className="mt-1"
             />
           </label>
-          <label className="text-xs font-semibold text-slate-600">
+          <label className="text-xs font-semibold text-[#4B5563]">
             To
             <DatePicker
               value={staged.draft.to}
@@ -271,7 +271,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
               className="mt-1"
             />
           </label>
-          <label className="text-xs font-semibold text-slate-600">
+          <label className="text-xs font-semibold text-[#4B5563]">
             Net variance
             <SelectCombobox
               className="mt-1 block w-full max-w-xs"
@@ -299,7 +299,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
       {/* CASH-FLOW-01 (owner order 2026-09-06): honest coverage banner -- a $0 actual on 0
           categorized bank lines is "actuals unavailable", not "confirmed zero cash moved". */}
       {!isLoading && data && data.bank_categorization_coverage.categorized_count === 0 ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
           {data.bank_categorization_coverage.categorized_count} of {data.bank_categorization_coverage.total_count} bank
           lines categorized — actuals unavailable, not zero. Categorize transactions in Banking to see real actuals here.
         </div>
@@ -347,7 +347,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                 {actualsUnavailable ? (
                   <p className="mt-1 text-xs text-gray-400">actuals unavailable</p>
                 ) : (
-                  <div className={`mt-1 flex items-center gap-1 text-xs font-bold ${pos ? "text-slate-700" : "text-red-700"}`}>
+                  <div className={`mt-1 flex items-center gap-1 text-xs font-bold ${pos ? "text-[#1F2A44]" : "text-red-700"}`}>
                     {pos ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                     {formatCents(varCents, { sign: true })}
                     <span className="ml-1 text-xs font-medium">{formatPct(card.pct)}</span>
