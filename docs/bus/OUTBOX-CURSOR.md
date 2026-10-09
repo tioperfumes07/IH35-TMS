@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91066 — SettlementTab / FinanceHub / BillDetail slate → house
+
+FINDING: BANK-F91066 — LoadDetailSettlementTab / FinanceHubPage / BillDetailPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25999 squash `0fc5afad41` (BANK-F91065 Liabilities/RecurringTemplate/AccountRegister)
+GUARD: scripts/verify-91066-settle-finhub-billdet-slate-leftover-chrome.mjs + verify-steps/3670 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: LoadDetailSettlementTab + FinanceHubPage + BillDetailPage + refuse guard + 3670 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91065 — LiabilitiesTable / RecurringTemplate / AccountRegister slate → house
 
 FINDING: BANK-F91065 — LiabilitiesTable / AccountingRecurringTemplateDetailPage / AccountRegisterPage Tailwind slate-* → house tokens

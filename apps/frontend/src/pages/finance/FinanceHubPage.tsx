@@ -30,14 +30,14 @@ function KpiCard({ kpi, to }: { kpi: FinanceHubKpi; to: string }) {
   return (
     <Link
       to={to}
-      className="flex flex-col justify-between rounded-sm border border-slate-200 bg-white p-4 transition hover:shadow-xs"
+      className="flex flex-col justify-between rounded-sm border border-[#E5E7EB] bg-white p-4 transition hover:shadow-xs"
     >
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{kpi.label}</div>
-        <div className="mt-1 text-page-title font-semibold tabular-nums text-slate-900">{kpiDisplay(kpi)}</div>
-        {kpi.secondary ? <div className="mt-1 text-xs text-slate-500">{kpi.secondary}</div> : null}
+        <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">{kpi.label}</div>
+        <div className="mt-1 text-page-title font-semibold tabular-nums text-[#0F1219]">{kpiDisplay(kpi)}</div>
+        {kpi.secondary ? <div className="mt-1 text-xs text-[#6B7280]">{kpi.secondary}</div> : null}
       </div>
-      <div className="mt-4 text-xs font-medium text-slate-700 underline-offset-2">{kpi.drill_label} →</div>
+      <div className="mt-4 text-xs font-medium text-[#1F2A44] underline-offset-2">{kpi.drill_label} →</div>
     </Link>
   );
 }
@@ -69,7 +69,7 @@ export function FinanceHubPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <p className="text-xs text-slate-500">Loading…</p>
+        <p className="text-xs text-[#6B7280]">Loading…</p>
       </div>
     );
   }
@@ -86,10 +86,10 @@ export function FinanceHubPage() {
         {header}
         <div
           data-testid="finance-hub-disabled"
-          className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#1F2A44]"
         >
-          <p className="font-medium text-slate-900">Finance Hub is not enabled for this entity.</p>
-          <p className="mt-1 text-slate-600">
+          <p className="font-medium text-[#0F1219]">Finance Hub is not enabled for this entity.</p>
+          <p className="mt-1 text-[#4B5563]">
             This read-only overview is turned on per operating company. It isn’t active for the company
             you have selected — this is expected, not an error. Contact the owner or an administrator to
             enable the Finance Hub for this company, or switch to a company where it’s already enabled.
@@ -111,7 +111,7 @@ export function FinanceHubPage() {
 
       {!companyId ? <p className="mb-3 text-xs text-red-600">Select an operating company.</p> : null}
 
-      {overviewQuery.isLoading ? <p className="text-xs text-slate-500">Loading…</p> : null}
+      {overviewQuery.isLoading ? <p className="text-xs text-[#6B7280]">Loading…</p> : null}
       {overviewQuery.isError ? (
         <ListErrorState
           title="Couldn't load Finance Hub overview"
@@ -127,7 +127,7 @@ export function FinanceHubPage() {
               <KpiCard key={kpi.key} kpi={kpi} to={kpi.drill_to} />
             ))}
           </div>
-          <p className="mt-4 text-xs text-slate-400">
+          <p className="mt-4 text-xs text-[#6B7280]">
             Read-only. Figures are aggregated from the existing finance and accounting screens — nothing is posted here.
           </p>
         </>
