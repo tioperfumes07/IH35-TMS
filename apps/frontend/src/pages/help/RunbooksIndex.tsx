@@ -29,7 +29,7 @@ export function RunbooksIndex() {
                     href={runbookUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs font-semibold text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+                    className="text-xs font-semibold text-[#1F2A44] hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280]"
                   >
                     {rb.title}
                   </a>
