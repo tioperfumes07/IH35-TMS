@@ -53,7 +53,7 @@ export function TrainingRecordsSection({
         <h2 className="text-xs font-semibold text-gray-800">Training records</h2>
         <button
           type="button"
-          className="text-xs text-slate-700 underline disabled:cursor-not-allowed disabled:text-gray-400"
+          className="text-xs text-[#1F2A44] underline disabled:cursor-not-allowed disabled:text-gray-400"
           data-testid="dp-add-training"
           onClick={onAddTraining}
           disabled={!onAddTraining}
@@ -73,7 +73,7 @@ export function TrainingRecordsSection({
         {totalCount > rows.length ? (
           <div className="mt-2 flex items-center justify-between text-xs" data-testid="driver-training-records-range-disclosure">
             <span className="text-gray-600">Showing {rows.length} of {totalCount} records.</span>
-            <Link className="font-medium text-slate-700 underline" to={`/safety/training-records?driver_id=${encodeURIComponent(driverId)}`}>
+            <Link className="font-medium text-[#1F2A44] underline" to={`/safety/training-records?driver_id=${encodeURIComponent(driverId)}`}>
               Open full training history
             </Link>
           </div>

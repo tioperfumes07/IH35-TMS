@@ -104,7 +104,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
         label: "Default",
         render: (m) =>
           m.is_default ? (
-            <span className="rounded-sm bg-slate-100 px-2 py-0.5 font-medium text-slate-700">Default</span>
+            <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 font-medium text-[#1F2A44]">Default</span>
           ) : (
             "—"
           ),
@@ -123,7 +123,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
                 type="button"
                 disabled={setDefaultMutation.isPending}
                 onClick={() => setDefaultMutation.mutate(m.id)}
-                className="text-slate-700 underline disabled:opacity-50"
+                className="text-[#1F2A44] underline disabled:opacity-50"
               >
                 Make default
               </button>
