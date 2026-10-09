@@ -534,7 +534,7 @@ export function ArApAgingPage() {
         Expand a row (▸) to drill into open {mode === "ar" ? "invoices" : "bills"}.
       </p>
       {unclearedCents > 0 ? (
-        <p className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+        <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
           Cleared {fmtCents(clearedCents)}. Applied payments that have not been matched or categorized in Banking are named not cleared beside each {mode === "ar" ? "customer" : "vendor"}.
         </p>
       ) : null}

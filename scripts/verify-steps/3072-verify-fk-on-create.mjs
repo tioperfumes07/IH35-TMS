@@ -4,5 +4,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-fk-on-create.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-fk-on-create.mjs"]);
+    await ctx.run("node", ["scripts/verify-91164-arap-liab-trailer-slate-leftover-chrome.mjs"]);
   },
 };
