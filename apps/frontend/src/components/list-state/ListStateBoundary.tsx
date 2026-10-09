@@ -4,7 +4,7 @@ import { listQueryStatus, resolveListState } from "./listState";
 
 /** Neutral, palette-safe message used for the loading and empty slots (slate, never red). */
 export function ListStateMessage({ children, className }: { children: ReactNode; className?: string }) {
-  return <p className={`px-1 py-2 text-xs text-slate-500 ${className ?? ""}`}>{children}</p>;
+  return <p className={`px-1 py-2 text-xs text-[#6B7280] ${className ?? ""}`}>{children}</p>;
 }
 
 type Props = {

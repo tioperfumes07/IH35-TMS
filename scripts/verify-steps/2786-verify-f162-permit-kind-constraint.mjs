@@ -1,8 +1,7 @@
-import { execFileSync } from "node:child_process";
-
 export default {
   name: "f162-permit-kind-constraint",
-  run: async () => {
-    execFileSync(process.execPath, ["scripts/verify-f162-permit-kind-constraint.mjs"], { stdio: "inherit" });
+  async run(ctx) {
+    await ctx.run("node", ["scripts/verify-f162-permit-kind-constraint.mjs"]);
+    await ctx.run("node", ["scripts/verify-91193-identity-sidebar-liststate-slate-leftover-chrome.mjs"]);
   },
 };

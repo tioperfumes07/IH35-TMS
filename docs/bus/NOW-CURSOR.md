@@ -1,7 +1,7 @@
-# NOW-CURSOR — 2026-10-09T10:20Z
+# NOW-CURSOR — 2026-10-09T10:25Z
 
-**NOW:** BANK-F91192 RecordTransfer / RecordCCPayment / EmailQueue slate → house. Next densest FE slate leftover.
+**NOW:** BANK-F91193 IdentityHeader / Sidebar / ListStateBoundary slate → house. Next densest FE slate leftover.
 
 **ARM:** 48h from this write.
 
-**LAST DONE:** BANK-F91191 #26127 `6265fe18ca` AwaitingBol / NeedsDeliveryAuth / PodReview slate.
+**LAST DONE:** BANK-F91192 #26128 `bac82622bc` RecordTransfer / CCPayment / EmailQueue slate.
