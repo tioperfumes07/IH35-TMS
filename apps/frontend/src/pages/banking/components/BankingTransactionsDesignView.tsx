@@ -35,7 +35,6 @@ import {
 import { PrintOrientationDialog } from "./PrintOrientationDialog";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
-import { ActionButton } from "../../../components/shared/ActionButton";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { humanMemo } from "../../accounting/ManualJEListPage";
@@ -376,10 +375,11 @@ function buildMatchCandidateColumns(
         const key = `${c.ledger_entry_kind}-${c.ledger_entry_id}`;
         const isConfirming = matchAction.confirmingKey === key;
         return (
-          <button
+          <Button
             type="button"
+            variant="primary"
+            size="md"
             data-testid="banking-match-candidate-confirm"
-            className="rounded-sm border border-[#1F2A44] bg-[#0F1219] px-2 py-1 text-xs text-white hover:bg-[#14314F] disabled:cursor-not-allowed disabled:opacity-40"
             disabled={!canConfirm || isConfirming}
             title={
               isBill
@@ -394,7 +394,7 @@ function buildMatchCandidateColumns(
             }}
           >
             {isConfirming ? "Matching…" : "Match"}
-          </button>
+          </Button>
         );
       },
     },
@@ -2420,28 +2420,34 @@ export function BankingTransactionsDesignView({
                   </button>
                 </div>
               ) : null}
-              {/* Owner 2026-10-08: Categorized/Excluded primary = Undo. For review primary = Match/Add. */}
+              {/* Owner 2026-10-08/09: Categorized/Excluded = Undo (secondary box). For review = Match/Add (primary filled). Never ActionButton text-link. */}
               {undoEligible ? (
-                <ActionButton
-                  className="h-7 px-2 text-xs"
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="md"
                   onClick={() => void undoCategorization([tx.id])}
                   data-testid={`banking-undo-${tx.id}`}
                 >
                   Undo
-                </ActionButton>
+                </Button>
               ) : (
-                <ActionButton
-                  className="h-7 px-2 text-xs"
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="md"
                   onClick={() => void postTransaction(tx)}
                   disabled={postingTxId === tx.id}
                   data-testid={`banking-action-primary-${tx.id}`}
                 >
                   {postingTxId === tx.id ? "Posting..." : qboActionLabel(getDraft(tx).mode)}
-                </ActionButton>
+                </Button>
               )}
-              <button
+              <Button
                 type="button"
-                className="rounded-sm border border-gray-300 px-1.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                variant="secondary"
+                size="sm"
+                className="px-1.5"
                 aria-label="More actions"
                 data-testid={`banking-action-menu-${tx.id}`}
                 onClick={(e) => {
@@ -2455,7 +2461,7 @@ export function BankingTransactionsDesignView({
                 }}
               >
                 ▾
-              </button>
+              </Button>
               {menuOpen && actionMenuAnchor
                 ? createPortal(
                     <div

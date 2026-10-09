@@ -10,17 +10,22 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean;
 };
 
+/**
+ * BUTTON-FEEL (owner 2026-10-09) — primary actions must read as filled clickable boxes, not
+ * text links. Primary fill is actionNavy #14314F (NAVY-NOT-BLACK / ACTION-NAVY). Press
+ * (active:), focus-visible ring, and cursor-pointer are required affordances on every variant.
+ */
 function variantClasses(variant: ButtonVariant) {
   if (variant === "tertiary") {
-    return "border-transparent bg-transparent text-[#1F2A44] hover:bg-[#F7F8FA]";
+    return "border-transparent bg-transparent text-[#14314F] hover:bg-[#F7F8FA] active:bg-[#EAECF1]";
   }
   if (variant === "secondary") {
-    return "border-gray-300 bg-white text-[#0F1219] hover:bg-gray-50";
+    return "border-gray-300 bg-white text-[#0F1219] hover:bg-gray-50 active:bg-[#EAECF1]";
   }
   if (variant === "danger") {
-    return "border-crit bg-crit text-white hover:bg-red-700";
+    return "border-crit bg-crit text-white hover:bg-red-700 active:bg-red-800";
   }
-  return "border-[#1F2A44] bg-[#1F2A44] text-white hover:bg-[#0F1729]";
+  return "border-[#14314F] bg-[#14314F] text-white hover:bg-[#0F1729] active:bg-[#0A1220]";
 }
 
 // UI CONTROL LAW (owner ruling 2026-09-01) — ONE height for every "md" button regardless of
@@ -38,7 +43,7 @@ export function Button({ variant = "primary", size = "md", loading = false, clas
     <button
       {...props}
       disabled={props.disabled || loading}
-      className={`inline-flex items-center justify-center gap-1 border font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${variantClasses(variant)} ${sizeClasses(variant, size)} ${className}`}
+      className={`inline-flex cursor-pointer items-center justify-center gap-1 border font-medium transition select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#14314F]/40 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-60 ${variantClasses(variant)} ${sizeClasses(variant, size)} ${className}`}
       style={{ borderRadius: spacing.radiusButton }}
     >
       {loading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" /> : null}

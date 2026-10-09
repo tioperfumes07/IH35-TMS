@@ -68,6 +68,18 @@ export function buttonUsesSharedScale(src) {
   return src.includes("BUTTON_MD_SIZE_CLASS") && src.includes("BUTTON_ICON_SM_SIZE_CLASS");
 }
 
+/** BUTTON-FEEL (owner 2026-10-09) — shared Button must feel clickable: filled primary actionNavy,
+ * cursor-pointer, active press, focus-visible ring. Text-link ActionButton chrome is not a Button. */
+export function buttonHasClickAffordance(src) {
+  const reasons = [];
+  if (!/cursor-pointer/.test(src)) reasons.push("missing cursor-pointer");
+  if (!/focus-visible:ring-2/.test(src)) reasons.push("missing focus-visible:ring-2");
+  if (!/\bactive:bg-/.test(src)) reasons.push("missing active: press fill");
+  if (!/bg-\[#14314F\]/.test(src)) reasons.push("primary fill must be actionNavy #14314F");
+  if (!/border-\[#14314F\]/.test(src)) reasons.push("primary border must be actionNavy #14314F");
+  return { ok: reasons.length === 0, reasons };
+}
+
 export function parityTableCheckboxesWrapped(src) {
   const rowCheckbox = src.match(/aria-label="Select row"[\s\S]{0,200}/);
   const allCheckbox = src.match(/aria-label="Select all on page"[\s\S]{0,200}/);
@@ -174,6 +186,20 @@ if (SELFTEST) {
       fn: () => buttonUsesSharedScale('return "h-8 px-3 text-[13px]";') === false,
     },
     {
+      name: "Button affordance (cursor + focus + active + actionNavy) passes",
+      fn: () =>
+        buttonHasClickAffordance(
+          'className="cursor-pointer focus-visible:ring-2 active:bg-[#0A1220] border-[#14314F] bg-[#14314F]"',
+        ).ok === true,
+    },
+    {
+      name: "Button without actionNavy primary fill fails affordance",
+      fn: () =>
+        buttonHasClickAffordance(
+          'className="cursor-pointer focus-visible:ring-2 active:bg-red-800 border-[#1F2A44] bg-[#1F2A44]"',
+        ).ok === false,
+    },
+    {
       name: "wrapped checkboxes pass",
       fn: () =>
         parityTableCheckboxesWrapped(
@@ -253,9 +279,20 @@ if (!fs.existsSync(tokensAbs) || !tokensExportButtonScale(fs.readFileSync(tokens
 }
 
 const buttonAbs = path.join(ROOT, BUTTON_PATH);
-if (!fs.existsSync(buttonAbs) || !buttonUsesSharedScale(fs.readFileSync(buttonAbs, "utf8"))) {
-  console.error(`${LABEL} FAIL — ${BUTTON_PATH} no longer references the shared button-scale constants.`);
+if (!fs.existsSync(buttonAbs)) {
+  console.error(`${LABEL} FAIL — ${BUTTON_PATH} missing.`);
   failed = true;
+} else {
+  const buttonSrc = fs.readFileSync(buttonAbs, "utf8");
+  if (!buttonUsesSharedScale(buttonSrc)) {
+    console.error(`${LABEL} FAIL — ${BUTTON_PATH} no longer references the shared button-scale constants.`);
+    failed = true;
+  }
+  const afford = buttonHasClickAffordance(buttonSrc);
+  if (!afford.ok) {
+    console.error(`${LABEL} FAIL — ${BUTTON_PATH} button-feel: ${afford.reasons.join("; ")}`);
+    failed = true;
+  }
 }
 
 const parityAbs = path.join(ROOT, PARITY_TABLE_PATH);

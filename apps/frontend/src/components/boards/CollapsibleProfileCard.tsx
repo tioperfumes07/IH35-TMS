@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { Button } from "../Button";
 
 function storageKey(scope: string, cardId: string) {
   return `ih35.card-collapse.${scope}.${cardId}`;
@@ -66,16 +67,18 @@ export function CollapsibleProfileCard({
             </span>
           ) : null}
           {action}
-          <button
+          <Button
             type="button"
-            className="h-6 w-6 rounded-sm text-[11px] text-[#6B7280] hover:bg-[#F7F8FA] hover:text-[#0F1219]"
+            variant="tertiary"
+            size="icon"
+            className="w-6 text-[#6B7280] hover:text-[#0F1219]"
             aria-expanded={open}
             aria-label={open ? `Collapse ${title}` : `Expand ${title}`}
             onClick={toggle}
             data-testid={`collapsible-card-chevron-${cardId}`}
           >
             {open ? "▾" : "▸"}
-          </button>
+          </Button>
         </div>
       </div>
       {open ? children : null}
