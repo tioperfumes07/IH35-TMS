@@ -339,15 +339,16 @@ describe("MatchDrawer — B-3 §19 Suggested + Record type chips", () => {
     expect(screen.queryByText("Other expense")).not.toBeInTheDocument();
   });
 
-  it("passes kinds when a Record type chip is pressed", async () => {
+  it("passes kinds when a Record type is multi-selected", async () => {
     vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({
       candidates: [candidate({ ledger_entry_kind: "payment", amount_gap_cents: 0 })],
       match_candidates_count: 1,
       bank_amount_cents: 15000,
     });
     render(wrap(<MatchDrawer open bankTransactionId={bankTxnId} operatingCompanyId={companyId} onClose={vi.fn()} />));
-    await screen.findByTestId("match-chip-record-payment");
-    await userEvent.click(screen.getByTestId("match-chip-record-payment"));
+    const typeFilter = await screen.findByTestId("match-drawer-record-type-dropdown");
+    await userEvent.click(typeFilter.querySelector("button") ?? typeFilter);
+    await userEvent.click(await screen.findByRole("button", { name: "Payment" }));
     await waitFor(() => {
       expect(bankingApi.getMatchCandidates).toHaveBeenCalledWith(
         bankTxnId,

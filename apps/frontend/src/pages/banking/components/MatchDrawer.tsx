@@ -18,6 +18,7 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
 import { DatePicker } from "../../../components/forms/DatePicker";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
 import { FuelStopLocationPicker } from "../../../components/locations/FuelStopLocationPicker";
@@ -208,8 +209,8 @@ export function MatchDrawer({
   const [resolvingSplit, setResolvingSplit] = useState(false);
   /** ORDERS §19 — Suggested chip (auto_match / high-confidence only). */
   const [suggestedOnly, setSuggestedOnly] = useState(false);
-  /** ORDERS §19 — Record type chip; null = all types. */
-  const [recordKind, setRecordKind] = useState<BankMatchCandidateKind | null>(null);
+  /** 432-CUR #1 — Record type is a multi-select; empty = all types. */
+  const [recordKinds, setRecordKinds] = useState<BankMatchCandidateKind[]>([]);
   const { pushToast } = useToast();
 
   const seedPlusMinus90 = () => {
@@ -236,7 +237,7 @@ export function MatchDrawer({
     setResolveOpen(false);
     setResolveRows([]);
     setSuggestedOnly(false);
-    setRecordKind(null);
+    setRecordKinds([]);
     // B-3 §19 — Find Other Matches default date range is ±90 d from the bank line (not 3/7 cascade).
     if (!seedPlusMinus90()) {
       setDateFrom("");
@@ -261,7 +262,7 @@ export function MatchDrawer({
       dateFrom,
       dateTo,
       searchQ,
-      recordKind ?? "all",
+      recordKinds,
     ],
     queryFn: () =>
       getMatchCandidates(String(bankTransactionId), operatingCompanyId, {
@@ -269,7 +270,7 @@ export function MatchDrawer({
         q: searchQ || undefined,
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
-        kinds: recordKind ? [recordKind] : undefined,
+        kinds: recordKinds.length ? recordKinds : undefined,
       }),
     enabled: open && Boolean(operatingCompanyId && bankTransactionId),
   });
@@ -817,30 +818,16 @@ export function MatchDrawer({
           >
             Suggested
           </button>
-          <button
-            type="button"
-            data-testid="match-chip-record-all"
-            aria-pressed={recordKind === null}
-            className={chipClassName(recordKind === null)}
-            onClick={() => setRecordKind(null)}
-          >
-            All types
-          </button>
-          {RECORD_TYPE_CHIPS.map((chip) => {
-            const selected = recordKind === chip.kind;
-            return (
-              <button
-                key={chip.kind}
-                type="button"
-                data-testid={`match-chip-record-${chip.kind}`}
-                aria-pressed={selected}
-                className={chipClassName(selected)}
-                onClick={() => setRecordKind(selected ? null : chip.kind)}
-              >
-                {chip.label}
-              </button>
-            );
-          })}
+          <div className="min-w-[180px]" data-testid="match-drawer-record-type-filter">
+            <MultiSelectDropdown
+              label="Record type"
+              options={RECORD_TYPE_CHIPS.map((chip) => ({ value: chip.kind, label: chip.label }))}
+              selected={recordKinds}
+              onChange={(next) => setRecordKinds(next as BankMatchCandidateKind[])}
+              allLabel="All types"
+              data-testid="match-drawer-record-type-dropdown"
+            />
+          </div>
         </div>
 
         <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="match-window-controls">
@@ -883,7 +870,7 @@ export function MatchDrawer({
                 setSearchQ("");
                 setDraftQ("");
                 setSuggestedOnly(false);
-                setRecordKind(null);
+                setRecordKinds([]);
                 if (!seedPlusMinus90()) {
                   setDateFrom("");
                   setDateTo("");
