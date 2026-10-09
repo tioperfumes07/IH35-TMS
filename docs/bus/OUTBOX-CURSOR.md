@@ -1,3 +1,13 @@
+## 2026-10-09 · 432-CUR #1 leftover single-select + Devin FAST-MERGE inbox
+
+FINDING: 432-CUR-MULTISELECT — register type + match-drawer record type were still single-select; named-surface coverage was not shrink-locked
+LANE: NON-FINANCIAL
+Files Modified: AccountRegisterPage.tsx · MatchDrawer.tsx · MatchDrawer.test.tsx · verify-b3-bank-feed-match.mjs · verify-money-list-toolbar-one-and-multiselect.mjs · verify-accounting-status-filters-are-multiselect.mjs · INBOX-DEVIN.md · OUTBOX-CURSOR.md
+GUARD: scripts/verify-money-list-toolbar-one-and-multiselect.mjs + scripts/verify-accounting-status-filters-are-multiselect.mjs (existing; no new verify-step)
+LIVE PROOF: verify-money-list-toolbar-one-and-multiselect PASS 14 registered + 8 named; verify-accounting-status-filters-are-multiselect PASS 157/19; verify-b3-bank-feed-match PASS; MatchDrawer.test 12/12; Devin orders at ~/Downloads/2026-10-09-DEVIN-FAST-MERGE-INSTRUCTIONS.md
+REMAINING: owner Chrome later today (Categorize/Match modal, B7, Bills tabs, Customers/Vendors back). No prod deploy (Rule 42).
+NEXT: FAST-MERGE this PR; Devin starts 434-DEV Actions minutes
+
 ## 2026-10-09 · RENDER-CI-AMBIENT #25927 FAST-MERGED
 
 FINDING: RENDER-CI-AMBIENT — purge EMPTY_BY_PURGE_EXIT (75) accepted in required-live + load-costs measured-empty

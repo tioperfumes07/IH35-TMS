@@ -273,7 +273,9 @@ export function AccountRegisterPage() {
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [typeLabel, setTypeLabel] = useState("");
+  // 432-CUR #1 — Transaction type is a multi-select (none = every type). One pick still
+  // goes to the register API; two-or-more filters the period rows client-side.
+  const [typeLabels, setTypeLabels] = useState<string[]>([]);
   // B-1 ORDERS filter chips: status (✓ blank/C/R) + payee — client-side on the period report.
   const [payeeFilter, setPayeeFilter] = useState("");
   // U12 (owner UI register 2026-10-03) — the ✓ status filter is a multi-select; none picked = every row.
@@ -323,7 +325,7 @@ export function AccountRegisterPage() {
   const registerQuery = useQuery({
     // ACCT-F410 — basis is part of the query identity. Without it, switching basis would show the
     // previous basis's cached payload: the same figures under a different header.
-    queryKey: ["account-register", companyId, accountId, fromDate, toDate, search, typeLabel, paramBasis],
+    queryKey: ["account-register", companyId, accountId, fromDate, toDate, search, typeLabels, paramBasis],
     queryFn: () =>
       getAccountRegister({
         operating_company_id: companyId,
@@ -331,7 +333,7 @@ export function AccountRegisterPage() {
         from_date: fromDate,
         to_date: toDate,
         search: search.trim() || undefined,
-        type: typeLabel ? TYPE_TO_SOURCE[typeLabel] : undefined,
+        type: typeLabels.length === 1 ? TYPE_TO_SOURCE[typeLabels[0]] : undefined,
         basis: paramBasis === "cash" ? "cash" : undefined,
       }),
     enabled: Boolean(companyId && accountId),
@@ -381,7 +383,7 @@ export function AccountRegisterPage() {
 
   const resetFilters = () => {
     setSearch("");
-    setTypeLabel("");
+    setTypeLabels([]);
     setPayeeFilter("");
     setStatusFilter([]);
     setFilterOpen(false);
@@ -389,25 +391,30 @@ export function AccountRegisterPage() {
 
   const activeChips = useMemo(() => {
     const chips: Array<{ key: string; label: string; clear: () => void }> = [];
-    if (typeLabel) chips.push({ key: "type", label: `Type: ${typeLabel}`, clear: () => setTypeLabel("") });
+    if (typeLabels.length) chips.push({ key: "type", label: `Type: ${typeLabels.join(", ")}`, clear: () => setTypeLabels([]) });
     if (search.trim()) chips.push({ key: "search", label: `Search: ${search.trim()}`, clear: () => setSearch("") });
     if (payeeFilter.trim()) chips.push({ key: "payee", label: `Payee: ${payeeFilter.trim()}`, clear: () => setPayeeFilter("") });
     if (statusFilter.length) chips.push({ key: "status", label: `✓: ${statusFilter.join(", ")}`, clear: () => setStatusFilter([]) });
     return chips;
-  }, [typeLabel, search, payeeFilter, statusFilter]);
+  }, [typeLabels, search, payeeFilter, statusFilter]);
 
   const filteredRows = useMemo(() => {
     const rows = report?.rows ?? [];
     const payeeQ = payeeFilter.trim().toLowerCase();
+    const wantedSources = new Set(typeLabels.map((label) => TYPE_TO_SOURCE[label]).filter(Boolean));
     return rows.filter((r) => {
       if (payeeQ && !(r.payee ?? "").toLowerCase().includes(payeeQ)) return false;
       if (statusFilter.length) {
         const rowStatus = r.reconcile_status === "C" || r.reconcile_status === "R" ? r.reconcile_status : "blank";
         if (!statusFilter.includes(rowStatus)) return false;
       }
+      if (typeLabels.length > 1) {
+        const source = r.source_transaction_type ?? "";
+        if (!typeLabels.includes(r.type) && !wantedSources.has(source)) return false;
+      }
       return true;
     });
-  }, [report?.rows, payeeFilter, statusFilter]);
+  }, [report?.rows, payeeFilter, statusFilter, typeLabels]);
 
   const exportCsv = () => {
     if (!report) return;
@@ -830,14 +837,14 @@ export function AccountRegisterPage() {
             <div className="absolute left-0 top-10 z-20 w-72 rounded-sm border border-gray-200 bg-white p-3 shadow-lg">
               <label className="mb-2 flex flex-col gap-1 text-xs font-semibold text-gray-600">
                 Transaction type
-                <SelectCombobox value={typeLabel} onChange={(e) => setTypeLabel(e.target.value)} className={inputCls}>
-                  <option value="">All types</option>
-                  {TRANSACTION_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </SelectCombobox>
+                <MultiSelectDropdown
+                  label="Transaction type"
+                  options={TRANSACTION_TYPES.map((t) => ({ value: t, label: t }))}
+                  selected={typeLabels}
+                  onChange={setTypeLabels}
+                  allLabel="All types"
+                  data-testid="b1-register-filter-type"
+                />
               </label>
               <label className="mb-2 flex flex-col gap-1 text-xs font-semibold text-gray-600">
                 Search memo / reference

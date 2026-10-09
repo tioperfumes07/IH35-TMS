@@ -59,14 +59,14 @@ function main() {
   assertIncludes(match, "saveBankTransactionSplitDraft", MATCH);
   assertIncludes(match, "commitBankTransactionSplit", MATCH);
   assertIncludes(match, "Resolved amount:", MATCH);
-  // B-3 §19 — Suggested + Record type chips (QBO Find Other Matches).
+  // B-3 §19 + 432-CUR #1 — Suggested chip stays; record type is MultiSelect (empty = all).
   assertIncludes(match, 'data-b3-suggested-record-type-chips="1"', MATCH);
   assertIncludes(match, 'data-testid="match-chip-suggested"', MATCH);
-  assertIncludes(match, 'data-testid="match-chip-record-all"', MATCH);
-  assertIncludes(match, "match-chip-record-${chip.kind}", MATCH);
+  assertIncludes(match, 'data-testid="match-drawer-record-type-dropdown"', MATCH);
+  assertIncludes(match, "MultiSelectDropdown", MATCH);
   assertIncludes(match, "RECORD_TYPE_CHIPS", MATCH);
   assertIncludes(match, "suggestedOnly", MATCH);
-  assertIncludes(match, "kinds: recordKind ? [recordKind] : undefined", MATCH);
+  assertIncludes(match, "kinds: recordKinds.length ? recordKinds : undefined", MATCH);
 
   assertIncludes(feed, "bankTransactionDate=", FEED);
   // BANK-F91058 — ORDERS §18 GEAR Groups · Turn off grouping (same turnOffGrouping as toolbar).

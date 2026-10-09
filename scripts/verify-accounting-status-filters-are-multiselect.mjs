@@ -50,6 +50,9 @@ const CONVERTED = {
   "apps/frontend/src/pages/banking/TransfersListPage.tsx": "transfers-status-filter",
   "apps/frontend/src/pages/accounting/QboReconcileCapturesPage.tsx": "qbo-captures-status-filter",
   "apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx": "invoice-create-load-status-filter",
+  "apps/frontend/src/pages/accounting/BillsPage.tsx": "bills-status-filter",
+  "apps/frontend/src/pages/accounting/ExpensesListPage.tsx": "expenses-status-filter",
+  "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx": "settlements-payment-state-filter",
 };
 for (const [f, testid] of Object.entries(CONVERTED)) {
   const src = read(f);

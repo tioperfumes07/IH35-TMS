@@ -31,6 +31,22 @@ const REGISTERED_PAGES = [
   "apps/frontend/src/pages/vendors/VendorsListView.tsx",
   "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
   "apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx",
+  "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx",
+  "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
+];
+
+// 432-CUR #1 (Claude Lead 2026-10-06) — named money surfaces. Each must keep a named
+// MultiSelectDropdown; dropping one is a regression. Shrink-only: this list only grows
+// when a new named surface is converted; it never loses a row.
+const CLAUDE_432_NAMED_SURFACES = [
+  { rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", testid: "banking-match-filter-kinds-dropdown", why: "banking transactions / match candidates" },
+  { rel: "apps/frontend/src/pages/banking/components/MatchDrawer.tsx", testid: "match-drawer-record-type-dropdown", why: "match candidates drawer" },
+  { rel: "apps/frontend/src/pages/accounting/BillsPage.tsx", testid: "bills-status-filter", why: "bills" },
+  { rel: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", testid: "expenses-status-filter", why: "expenses" },
+  { rel: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx", testid: "invoices-status-filter", why: "invoices" },
+  { rel: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx", testid: "settlements-payment-state-filter", why: "settlements" },
+  { rel: "apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx", testid: "transaction-register-filter-source", why: "transaction register" },
+  { rel: "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx", testid: "b1-register-filter-type", why: "account register type" },
 ];
 
 // Pages named in the packet but NOT yet retrofitted — tracked here so a reviewer can see the real
@@ -91,6 +107,20 @@ for (const rel of REGISTERED_PAGES) {
   }
 }
 
+for (const { rel, testid, why } of CLAUDE_432_NAMED_SURFACES) {
+  const source = read(rel);
+  if (source === null) {
+    violations.push(`${rel} (${why}) is a 432-CUR named surface but the file is gone — restore it or replace the row.`);
+    continue;
+  }
+  if (!/\bMultiSelectDropdown\b/.test(source)) {
+    violations.push(`${rel} (${why}) lost MultiSelectDropdown — 432-CUR named surfaces are shrink-only.`);
+  }
+  if (!new RegExp(`data-testid="${testid}"`).test(source)) {
+    violations.push(`${rel} (${why}) lost named MultiSelect data-testid="${testid}" — coverage cannot regress.`);
+  }
+}
+
 if (violations.length) {
   fail(`${violations.length} problem(s) on registered money list(s):\n` + violations.map((v) => `    ${v}`).join("\n"));
 }
@@ -101,6 +131,7 @@ if (process.argv.includes("--selftest")) {
 
 ok(
   `PASS — ${REGISTERED_PAGES.length} registered page(s) clean (no CollapsedListFilters, at least one ` +
-    `real multi-select each, no duplicate search/range). ${KNOWN_NOT_YET_DONE.length} page(s) not yet ` +
+    `real multi-select each, no duplicate search/range). ${CLAUDE_432_NAMED_SURFACES.length} 432-CUR ` +
+    `named surface(s) locked shrink-only. ${KNOWN_NOT_YET_DONE.length} page(s) not yet ` +
     `retrofitted, not yet registered, not yet enforced: ${KNOWN_NOT_YET_DONE.join(", ")}.`,
 );

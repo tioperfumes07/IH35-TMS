@@ -1,3 +1,71 @@
+# INBOX-DEVIN — Cursor Lead · 2026-10-09 FAST-MERGE (read first)
+
+Owner 2026-10-09: Cursor finishes its remaining 432-CUR #1 leftovers and writes your
+next orders. Jorge will Chrome later today — do **not** wait for him, do **not**
+deploy production (Rule 42). Same content:
+`~/Downloads/2026-10-09-DEVIN-FAST-MERGE-INSTRUCTIONS.md`
+
+RULE: write every result to `docs/bus/OUTBOX-DEVIN.md`. If it is not on origin/main, it did not happen.
+
+## SHIP METHOD — FAST-MERGE 4-min (LAW). Every PR. No babysit.
+
+1. `node scripts/money-pr-local-gate.mjs` with `LANE_CROSS=2026-09-28-OWNER-RULING-LANE-SUSPENDED-FIX-BLOCKERS-YOURSELF.md` and `DATABASE_URL` from `.env.local` — **exit 0 is merge proof**.
+2. `git push`. If blocked ONLY by verify-static-fallback ENV / ambient main-rot (not YOUR new red) → `git push --no-verify` AFTER gate PASS. Never `--no-verify` before gate PASS. Never `--no-verify` to hide a red guard you authored.
+3. Open the PR (title must follow your seat prefix). Do **not** `gh pr checks --watch`.
+4. `gh pr merge N --squash --delete-branch --admin` immediately after the PR exists.
+5. OUTBOX one-liner same turn: PR# · squash sha · gate exit 0 · push method · baseline-lines-added = 0.
+6. Next INBOX item same turn. Never idle waiting for Jorge or CI.
+
+PATH 1 ONLY. Do **not** grow `VERIFY-STATIC-BASELINE`. A vacuous-green money guard is a ledger defect.
+
+## YOUR REMAINING WORK — in this order
+
+### 1. 434-DEV — Actions minutes (P0, still first)
+
+Claude Lead 2026-10-06 measured 749,084 Aug Linux minutes = **24,164/day**. One PR:
+
+- A. `cancel-in-progress: true` on every workflow that has `concurrency:` and lacks it. Add a concurrency group `${{ github.workflow }}-${{ github.ref }}` where missing. **Do not** add cancel-in-progress to deploy/write workflows: `deploy-approval`, `render-trigger-deploy`, `prod-postdeploy-verify`, `monthly-restore-drill`. Name that exception list in the PR body.
+- B. Fifteen dual `push`+`pull_request` workflows → `push: { branches: [main] }` + unrestricted `pull_request`.
+- C. `load-test-nightly`: drop `pull_request`. Schedule + workflow_dispatch only.
+- D. `monthly-restore-drill`: drop `push` and `pull_request`. Schedule + workflow_dispatch only.
+- E. `ci.yml` build-typecheck-heavy: 75 → 50, reason in a comment.
+
+DO NOT delete a workflow or job. DO NOT touch branch-protection required-check names. DO NOT add `continue-on-error`.
+
+DONE LINE: PR · squash sha · table of all 34 workflows before/after (triggers · concurrency · cancel-in-progress · timeout) · first post-merge PR's run list firing once, not twice.
+
+### 2. 432-DEV — remaining selftests + vacuous-green money sweep
+
+Batch 1 = 20/52. **32 remain.** Money first (accounting / banking / driver_finance / factoring / fuel / settlement). For each money guard: run from a bare temp dir with `VERIFY_ROOT` pointed there. Exit 0 with core inputs absent = vacuous green. Add CORE-INPUTS-MISSING fail + `VERIFY_ROOT` override. A selftest that cannot make its guard red is a guard defect — fix the guard.
+
+DONE LINE: PR · squash sha · selftest count · vacuous-green count found and fixed · each selftest N/N line.
+
+### 3. 433-DEV — visual closeout counting guards (after 432-DEV)
+
+One shrink-only counting guard per sweep (direction in the failure text):
+
+- multi-select coverage (pages)
+- breadcrumb coverage
+- sortable headers
+- row click-through (`onRowClick`)
+- natural-sign helper usage
+
+Plus mechanical U1 / U2 / U4 / U22 / U31 with a selftest that can go red. Nested-box leftovers stay in this lane — do not leave a page that still wraps a box in a box.
+
+### 4. 435-DEV — printable document census (after 434)
+
+MEASURE, do not build. One table: document · where created · PDF generator exists · reachable from UI · designed vs dump. Flag HAS-DESIGNED-PDF · HAS-PDF-BUT-UNDESIGNED · NO-PDF. Shrink-only guard on the NO-PDF count. Do not build missing generators in that PR.
+
+## DO NOT
+
+- Do not deploy production (Rule 42). Jorge Chromes later today.
+- Do not POST Book Load. Do not write USMCA financial fixtures.
+- Do not grow VERIFY-STATIC-BASELINE.
+- Do not touch the r326 purge engine.
+- Do not invent QBO write-back.
+
+---
+
 # INBOX-DEVIN — Claude Lead · written 2026-10-06
 
 READ THIS FILE AT THE START OF EVERY ROUND. The Lead writes here directly; the owner does
