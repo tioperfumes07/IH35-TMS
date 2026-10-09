@@ -22,18 +22,18 @@ type Props = {
 };
 
 function typePill(type: string) {
-  if (type === "equipment_loss") return "bg-slate-100 text-slate-700";
+  if (type === "equipment_loss") return "bg-[#F7F8FA] text-[#1F2A44]";
   if (type === "civil_fine") return "bg-red-100 text-red-700";
-  if (type === "advance") return "bg-slate-100 text-slate-700";
-  if (type === "antidoping" || type === "fuel") return "bg-slate-100 text-slate-700";
+  if (type === "advance") return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (type === "antidoping" || type === "fuel") return "bg-[#F7F8FA] text-[#1F2A44]";
   return "bg-gray-100 text-gray-700";
 }
 
 function statusPill(status: string) {
-  if (status === "pending_ack") return "bg-slate-100 text-slate-700";
-  if (status === "held") return "bg-slate-100 text-slate-600";
+  if (status === "pending_ack") return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (status === "held") return "bg-[#F7F8FA] text-[#4B5563]";
   if (status === "paid_off") return "bg-gray-100 text-gray-700";
-  return "bg-slate-100 text-slate-700";
+  return "bg-[#F7F8FA] text-[#1F2A44]";
 }
 
 export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
@@ -140,9 +140,9 @@ export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
         const status = String(row.display_status ?? "active");
         return (
           <div className="flex gap-2">
-            <button type="button" className="text-slate-700 underline" onClick={() => onOpenDetail(row)}>View Detail</button>
+            <button type="button" className="text-[#1F2A44] underline" onClick={() => onOpenDetail(row)}>View Detail</button>
             {status === "pending_ack" ? (
-              <button type="button" className="text-slate-700 underline" onClick={() => onSendAck(row)}>Send Ack Request</button>
+              <button type="button" className="text-[#1F2A44] underline" onClick={() => onSendAck(row)}>Send Ack Request</button>
             ) : null}
           </div>
         );

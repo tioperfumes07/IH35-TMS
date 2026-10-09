@@ -230,7 +230,7 @@ function applyPreset(preset: string): { from: string; to: string } | null {
 
 function kpiCard(label: string, value: string, sublabel: string) {
   return (
-    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 border-l-4 border-l-slate-300">
+    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 border-l-4 border-l-[#E5E7EB]">
       <p className="text-section-header font-semibold uppercase tracking-wide text-gray-500">{label}</p>
       <p className="text-page-title font-semibold text-gray-900">{value}</p>
       <p className="text-xs text-gray-500">{sublabel}</p>
@@ -578,10 +578,10 @@ export function AccountRegisterPage() {
             }
             className={`min-w-[1.5rem] rounded-sm px-1 text-center tabular-nums ${
               status === "R"
-                ? "cursor-not-allowed font-semibold text-slate-800"
+                ? "cursor-not-allowed font-semibold text-[#1F2A44]"
                 : status === "C"
-                  ? "text-slate-700 hover:bg-slate-100"
-                  : "text-gray-400 hover:bg-slate-100 hover:text-slate-700"
+                  ? "text-[#1F2A44] hover:bg-[#F7F8FA]"
+                  : "text-gray-400 hover:bg-[#F7F8FA] hover:text-[#1F2A44]"
             }`}
             onClick={(e) => {
               e.stopPropagation();
@@ -756,7 +756,7 @@ export function AccountRegisterPage() {
           account and the decision behind the zeros, and offers the accrual view in one click. */}
       {report?.cash_basis_suppressed ? (
         <div
-          className="mb-3 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          className="mb-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
           data-testid="register-cash-basis-suppressed"
         >
           <span className="font-semibold">Cash basis — this account is not recognized.</span>{" "}
@@ -775,7 +775,7 @@ export function AccountRegisterPage() {
         </div>
       ) : paramBasis === "cash" ? (
         <div
-          className="mb-3 rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+          className="mb-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
           data-testid="register-cash-basis"
         >
           <span className="font-semibold">Cash basis.</span> This account is recognized identically
@@ -883,7 +883,7 @@ export function AccountRegisterPage() {
                 <button type="button" onClick={resetFilters} className="text-xs font-medium text-gray-500 underline">
                   Reset
                 </button>
-                <button type="button" onClick={() => setFilterOpen(false)} className="text-xs font-semibold text-slate-700">
+                <button type="button" onClick={() => setFilterOpen(false)} className="text-xs font-semibold text-[#1F2A44]">
                   Done
                 </button>
               </div>
@@ -916,7 +916,7 @@ export function AccountRegisterPage() {
             key={v}
             type="button"
             onClick={() => setView(v)}
-            className={`px-3 py-1.5 font-semibold ${view === v ? "border-b-2 border-slate-600 text-gray-900" : "text-gray-500"}`}
+            className={`px-3 py-1.5 font-semibold ${view === v ? "border-b-2 border-[#4B5563] text-gray-900" : "text-gray-500"}`}
           >
             {v === "register" ? "Register" : "Audit history"}
           </button>
