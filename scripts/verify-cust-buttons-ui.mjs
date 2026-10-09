@@ -2,7 +2,7 @@
 /**
  * CUST-buttons.ui / CUST-CHROME-01 — Customers header Edit must share Button chrome with
  * "New transaction" (secondary + primary), not ActionButton text-link. Primary uses navy §7
- * (#1f2a44 via Button component); no blue utility classes in the action row.
+ * (#14314F actionNavy via Button component); no blue utility classes in the action row.
  *
  *   node scripts/verify-cust-buttons-ui.mjs
  *   node scripts/verify-cust-buttons-ui.mjs --selftest
@@ -110,8 +110,8 @@ export function collectProblems(sources = { customers: read(CUSTOMERS), test: re
   if (!testSrc.includes('customer-header-edit')) {
     problems.push(`${TEST}: must assert customer-header-edit Button chrome`);
   }
-  if (!testSrc.includes("bg-[#1f2a44]")) {
-    problems.push(`${TEST}: must assert navy §7 primary token on New transaction`);
+  if (!/bg-\[#14314[Ff]\]/.test(testSrc) && !testSrc.toLowerCase().includes("bg-[#14314f]")) {
+    problems.push(`${TEST}: must assert actionNavy #14314F primary token on New transaction`);
   }
   if (!/toMatch\(\/border-gray-300\|bg-white\//.test(testSrc)) {
     problems.push(`${TEST}: must assert secondary Edit chrome (border-gray-300|bg-white)`);
