@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91188 — WarrantyClaims / UnitMaintInspections / CatalogTable slate → house
+
+FINDING: BANK-F91188 — WarrantyClaimsReverseSection / UnitMaintenanceInspectionsReverseSection / CatalogTable Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26123 squash `b88fd8f6b6` (BANK-F91187 layout DataPanel/Drill/SubTab)
+Files Modified: WarrantyClaimsReverseSection.tsx · UnitMaintenanceInspectionsReverseSection.tsx · CatalogTable.tsx · verify-91188-maint-reverse-catalog-slate-leftover-chrome.mjs · verify-steps/2904-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91188-maint-reverse-catalog-slate-leftover-chrome.mjs (piggy EVEN 2904)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91187 — DataPanel / DrillKpiCard / SubTabRow slate → house
 
 FINDING: BANK-F91187 — DataPanel / DrillKpiCard / SubTabRow Tailwind slate-* → house tokens

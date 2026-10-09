@@ -22,7 +22,7 @@ export function UnitMaintenanceInspectionsReverseSection({
   const rows = query.isError ? [] : (query.data?.rows ?? []);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
-      <h2 className="text-xs font-semibold text-slate-900">Maintenance inspections{rows.length ? ` (${rows.length})` : ""}</h2>
+      <h2 className="text-xs font-semibold text-[#0F1219]">Maintenance inspections{rows.length ? ` (${rows.length})` : ""}</h2>
       {query.isError ? <ListErrorBanner message="Couldn't load maintenance inspections for this unit." onRetry={() => void query.refetch()} /> : null}
       {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-xs text-gray-500">No maintenance inspections linked to this unit.</p> : null}
