@@ -44,7 +44,7 @@ export function IdentityHeader({
         {photoUrl ? (
           <img src={photoUrl} alt="" className="h-16 w-16 rounded-full object-cover" />
         ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 text-page-title font-semibold text-slate-600">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E5E7EB] text-page-title font-semibold text-[#4B5563]">
             {displayName.slice(0, 1)}
           </div>
         )}

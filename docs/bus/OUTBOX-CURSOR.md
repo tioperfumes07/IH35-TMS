@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91193 — IdentityHeader / Sidebar / ListStateBoundary slate → house
+
+FINDING: BANK-F91193 — IdentityHeader / Sidebar / ListStateBoundary Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26128 squash `bac82622bc` (BANK-F91192 bank xfer/cc/email)
+Files Modified: IdentityHeader.tsx · Sidebar.tsx · ListStateBoundary.tsx · verify-91193-identity-sidebar-liststate-slate-leftover-chrome.mjs · verify-steps/2786-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91193-identity-sidebar-liststate-slate-leftover-chrome.mjs (piggy EVEN 2786)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91192 — RecordTransfer / RecordCCPayment / EmailQueue slate → house
 
 FINDING: BANK-F91192 — RecordTransferModal / RecordCCPaymentModal / EmailQueuePage Tailwind slate-* → house tokens

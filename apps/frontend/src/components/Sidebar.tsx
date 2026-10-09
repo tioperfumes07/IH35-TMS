@@ -114,7 +114,7 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
                         ) : null}
                         {showDraftsBadge ? (
                           <span
-                            className="ml-1 rounded-full bg-slate-600 px-1.5 py-0.5 text-xs font-semibold leading-none text-white"
+                            className="ml-1 rounded-full bg-[#4B5563] px-1.5 py-0.5 text-xs font-semibold leading-none text-white"
                             data-testid="dispatch-nav-drafts-badge"
                           >
                             {draftsBadgeCount}
