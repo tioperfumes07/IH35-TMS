@@ -57,7 +57,7 @@ const FORECAST_COLUMNS: Array<ParityColumn<FactoringReserveReleaseForecastPoint>
     label: "Projected Amount",
     sortable: true,
     className: "text-right",
-    cellClass: "text-right font-medium text-slate-700",
+    cellClass: "text-right font-medium text-[#1F2A44]",
     render: (row) => fmtM(row.projected_release_cents),
   },
   {
@@ -77,7 +77,7 @@ const HISTORY_COLUMNS: Array<ParityColumn<FactoringReserveBalanceHistoryEntry>> 
     sortable: true,
     className: "text-right",
     render: (row) => (
-      <span className={`font-medium ${row.signed_amount_cents >= 0 ? "text-slate-700" : "text-red-700"}`}>
+      <span className={`font-medium ${row.signed_amount_cents >= 0 ? "text-[#1F2A44]" : "text-red-700"}`}>
         {fmtM(row.signed_amount_cents)}
       </span>
     ),
@@ -318,8 +318,8 @@ export function ReserveTracker() {
               key={bal.factor_id}
               className={`cursor-pointer rounded border p-3 text-xs transition-colors ${
                 selectedFactorId === bal.factor_id
-                  ? "border-slate-300 bg-slate-100"
-                  : "border-gray-200 bg-[var(--surface-unselected)] hover:border-slate-300"
+                  ? "border-[#E5E7EB] bg-[#F7F8FA]"
+                  : "border-gray-200 bg-[var(--surface-unselected)] hover:border-[#E5E7EB]"
               }`}
               onClick={() => setSelectedFactorId(bal.factor_id)}
             >

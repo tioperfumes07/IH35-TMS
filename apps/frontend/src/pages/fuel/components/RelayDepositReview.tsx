@@ -123,7 +123,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
           c.funding_card_last4 ? (
             <button
               type="button"
-              className="rounded-sm border border-slate-300 px-2 py-0.5 font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              className="rounded-sm border border-[#E5E7EB] px-2 py-0.5 font-semibold text-[#1F2A44] hover:bg-[#F7F8FA] disabled:opacity-50"
               disabled={addCardMutation.isPending}
               onClick={() => addCardMutation.mutate({
                 companyId,
@@ -247,7 +247,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
                 {c.label ? <span className="text-gray-500">{c.label}</span> : null}
                 <button
                   type="button"
-                  className="text-slate-500 hover:text-red-600 disabled:opacity-50"
+                  className="text-[#6B7280] hover:text-red-600 disabled:opacity-50"
                   title="Remove from company set"
                   disabled={deactivateMutation.isPending}
                   onClick={() => deactivateMutation.mutate({
@@ -290,7 +290,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
               label: newLabel || undefined,
               generation: lifecycleGenerationRef.current,
             })}
-            className="rounded-sm bg-slate-800 px-3 py-1.5 font-semibold text-white disabled:opacity-50"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 font-semibold text-white disabled:opacity-50"
           >
             + Add company card
           </button>

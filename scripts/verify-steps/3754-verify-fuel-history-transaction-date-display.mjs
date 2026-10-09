@@ -3,5 +3,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-fuel-history-transaction-date-display.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-fuel-history-transaction-date-display.mjs"]);
+    await ctx.run("node", ["scripts/verify-91092-fueloverage-relay-reserve-slate-leftover-chrome.mjs"]);
   },
 };
