@@ -31,7 +31,7 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
   if (isLoading || isError || (recourseInvoices.length === 0 && chargebacks.length === 0)) {
     return (
       <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-recourse-reverse">
-        <h2 className="text-xs font-semibold text-slate-900">Recourse & chargebacks</h2>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Recourse & chargebacks</h2>
         {isError ? (
           <ListErrorState
             status={0}
@@ -51,12 +51,12 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-recourse-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-xs font-semibold text-slate-900">Recourse & chargebacks</h2>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Recourse & chargebacks</h2>
         <EntityLink
           kind="factoring_recourse_customer"
           id={customerId}
           label="Open Recourse"
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
         />
       </div>
       {recourseInvoices.length > 0 ? (
@@ -65,7 +65,7 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
           <ul className="mt-1 space-y-1">
             {recourseInvoices.slice(0, 5).map((row) => (
               <li key={row.factoring_advance_id}>
-                <span className="text-xs font-semibold text-slate-700">
+                <span className="text-xs font-semibold text-[#1F2A44]">
                   <EntityLinkOrTombstone
                     kind="invoice"
                     id={row.invoice_id}
@@ -88,7 +88,7 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
               kind="factoring_chargebacks_customer"
               id={customerId}
               label="Open Chargebacks"
-              className="text-xs font-semibold text-slate-700 underline"
+              className="text-xs font-semibold text-[#1F2A44] underline"
             />
           </div>
           <ul className="mt-1 space-y-1">
@@ -98,7 +98,7 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
                   kind="factoring_chargebacks_customer"
                   id={customerId}
                   label={`${row.statement_month ?? "—"} · ${fmtDollars(row.chargeback_amount)}`}
-                  className="text-xs font-semibold text-slate-700 hover:underline"
+                  className="text-xs font-semibold text-[#1F2A44] hover:underline"
                 />
               </li>
             ))}

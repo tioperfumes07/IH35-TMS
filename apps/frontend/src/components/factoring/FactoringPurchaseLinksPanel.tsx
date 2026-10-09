@@ -29,10 +29,10 @@ export function FactoringPurchaseLinksPanel({ companyId, filter, emptyText = "No
   });
 
   if (!enabled) return null;
-  if (query.isLoading) return <p className="text-xs text-slate-600">Loading factoring purchases…</p>;
+  if (query.isLoading) return <p className="text-xs text-[#4B5563]">Loading factoring purchases…</p>;
   if (query.isError) {
     return (
-      <p className="text-xs text-slate-700" data-testid="factoring-purchase-links-error">
+      <p className="text-xs text-[#1F2A44]" data-testid="factoring-purchase-links-error">
         Could not load factoring purchases.{" "}
         <button type="button" className="underline" onClick={() => void query.refetch()}>
           Retry
@@ -43,7 +43,7 @@ export function FactoringPurchaseLinksPanel({ companyId, filter, emptyText = "No
   const rows = query.data ?? [];
   if (!rows.length) {
     return (
-      <p className="text-xs text-slate-600" data-testid="factoring-purchase-links-empty">
+      <p className="text-xs text-[#4B5563]" data-testid="factoring-purchase-links-empty">
         {emptyText}
       </p>
     );
@@ -51,7 +51,7 @@ export function FactoringPurchaseLinksPanel({ companyId, filter, emptyText = "No
   return (
     <table className="w-full text-xs tabular-nums" data-testid="factoring-purchase-links">
       <thead>
-        <tr className="text-slate-600">
+        <tr className="text-[#4B5563]">
           <th className="text-left font-semibold">Purchase</th>
           <th className="text-left font-semibold">Date</th>
           <th className="text-right font-semibold">Gross (this record)</th>
@@ -68,7 +68,7 @@ export function FactoringPurchaseLinksPanel({ companyId, filter, emptyText = "No
           <tr key={p.id} data-testid={`factoring-purchase-link-${p.id}`}>
             <td>
               <EntityLink kind="factoring_purchase" id={p.id} label={p.display_id} />
-              <span className="ml-1 text-slate-600">{p.status}</span>
+              <span className="ml-1 text-[#4B5563]">{p.status}</span>
             </td>
             <td>{p.purchase_date ? formatDateUS(p.purchase_date) : "—"}</td>
             <td className="text-right">{cents(p.line_gross_cents ?? p.gross_cents)}</td>
