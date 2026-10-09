@@ -75,8 +75,8 @@ export function LegalMattersReverseSection({
       data-testid={testId}
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">Legal Matters</h3>
-        <EntityLink kind={openKind} id={openId} label="Open Legal" className="text-xs font-semibold text-slate-700 underline" />
+        <h3 className="text-xs font-semibold text-[#0F1219]">Legal Matters</h3>
+        <EntityLink kind={openKind} id={openId} label="Open Legal" className="text-xs font-semibold text-[#1F2A44] underline" />
       </div>
       <p className="text-xs text-gray-600">
         Legal matters linked to {contextLabel} (Owner/Admin).
@@ -104,7 +104,7 @@ export function LegalMattersReverseSection({
                   id={id}
                   name={m.matter_number}
                   noun="Legal matter"
-                  className="font-semibold text-slate-700"
+                  className="font-semibold text-[#1F2A44]"
                   data-testid="legal-matters-reverse-matter-link"
                 />
                 <span className="ml-2 text-gray-600">{String(m.status ?? "")}</span>
