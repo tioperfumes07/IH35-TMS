@@ -29,7 +29,7 @@ export function DriverHosViolationsReverseSection({ operatingCompanyId, driverId
       </div>
       {!query.isError && total > pageSize ? <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid="driver-hos-violations-reverse-pager">
         <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous violations</Button>
-        <span className="text-slate-600">Page {page} of {pageCount} · {total} violations</span>
+        <span className="text-[#4B5563]">Page {page} of {pageCount} · {total} violations</span>
         <Button size="sm" variant="secondary" disabled={page >= pageCount || query.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next violations</Button>
       </div> : null}
     </section>
