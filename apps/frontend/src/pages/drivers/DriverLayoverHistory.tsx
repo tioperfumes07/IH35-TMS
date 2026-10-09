@@ -143,7 +143,7 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
                 generation: scopeGenerationRef.current,
               })
             }
-            className={`text-xs px-2 py-0.5 rounded-sm ${row.billable_to_customer ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-600"}`}
+            className={`text-xs px-2 py-0.5 rounded-sm ${row.billable_to_customer ? "bg-[#F7F8FA] text-[#1F2A44]" : "bg-gray-100 text-gray-600"}`}
           >
             {row.billable_to_customer ? "Billable" : "Not billable"}
           </button>
@@ -154,7 +154,7 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
         label: "Per Diem",
         sortable: true,
         render: (row) => (
-          <span className={`text-xs ${row.per_diem_eligible ? "text-slate-700" : "text-gray-400"}`}>
+          <span className={`text-xs ${row.per_diem_eligible ? "text-[#1F2A44]" : "text-gray-400"}`}>
             {row.per_diem_eligible ? "Eligible" : "Excluded"}
           </span>
         ),

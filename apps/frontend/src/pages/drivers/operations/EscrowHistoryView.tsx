@@ -14,7 +14,7 @@ export function EscrowHistoryView({ driverId, operatingCompanyId }: Props) {
       <Link
         to={`/banking/driver-escrow?driver_id=${driverId}`}
         data-testid="driver-escrow-history-view-in-banking"
-        className="inline-block text-xs font-medium text-slate-700 hover:underline"
+        className="inline-block text-xs font-medium text-[#1F2A44] hover:underline"
       >
         View in Banking → Driver Escrow
       </Link>
@@ -24,7 +24,7 @@ export function EscrowHistoryView({ driverId, operatingCompanyId }: Props) {
       <Link
         to={`/accounting/escrow?holder_id=${driverId}`}
         data-testid="driver-escrow-history-view-in-accounting"
-        className="inline-block text-xs font-medium text-slate-700 hover:underline"
+        className="inline-block text-xs font-medium text-[#1F2A44] hover:underline"
       >
         View in Accounting → Escrow
       </Link>
