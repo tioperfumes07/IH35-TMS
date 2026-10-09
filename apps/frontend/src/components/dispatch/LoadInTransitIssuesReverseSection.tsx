@@ -18,8 +18,8 @@ export function LoadInTransitIssuesReverseSection({ operatingCompanyId, loadId, 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">In-Transit Issues{rows.length ? ` (${rows.length})` : ""}</h3>
-        <EntityLink kind="intransit_issues_load" id={loadId} label="Open issue queue" className="text-xs font-semibold text-slate-700 underline" />
+        <h3 className="text-xs font-semibold text-[#0F1219]">In-Transit Issues{rows.length ? ` (${rows.length})` : ""}</h3>
+        <EntityLink kind="intransit_issues_load" id={loadId} label="Open issue queue" className="text-xs font-semibold text-[#1F2A44] underline" />
       </div>
       {query.isLoading ? <p className="text-xs text-gray-500">Loading in-transit issues…</p> : null}
       {query.isError ? (
@@ -33,7 +33,7 @@ export function LoadInTransitIssuesReverseSection({ operatingCompanyId, loadId, 
       {!query.isError && rows.length ? (
         <ul className="space-y-2">
           {rows.map((row) => (
-            <li key={row.id} className="text-xs text-slate-700">
+            <li key={row.id} className="text-xs text-[#1F2A44]">
               <span className="font-semibold">{row.issue_category}</span>
               <span className="text-gray-500"> · {row.severity} · {row.status} · {formatDateTimeUS(row.reported_at)}</span>
               <div className="text-xs text-gray-600">{row.issue_description}</div>

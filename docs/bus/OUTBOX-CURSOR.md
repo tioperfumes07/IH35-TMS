@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91116 — Unit/Load/Driver InTransit reverse slate → house
+
+FINDING: BANK-F91116 — UnitInTransitIssuesReverseSection / LoadInTransitIssuesReverseSection / DriverInTransitIssuesReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26050 squash `a8d3308d5d` (BANK-F91115 ReportIssue/DriverHos/Disputes)
+Files Modified: UnitInTransitIssuesReverseSection.tsx · LoadInTransitIssuesReverseSection.tsx · DriverInTransitIssuesReverseSection.tsx · verify-91116-unit-load-drv-transit-slate-leftover-chrome.mjs · verify-steps/3590-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91116-unit-load-drv-transit-slate-leftover-chrome.mjs (piggy EVEN 3590)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91115 DONE (#26050 a8d3308d5d)
+
 ## 2026-10-08 · BANK-F91115 — ReportIssue / DriverHos / Disputes slate → house
 
 FINDING: BANK-F91115 — ReportIssueModal / DriverHosPage / DisputesPage Tailwind slate-* → house tokens
