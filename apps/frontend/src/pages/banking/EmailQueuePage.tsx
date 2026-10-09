@@ -96,7 +96,7 @@ export function EmailQueuePage() {
           shown={(queueQuery.data?.items ?? []).length}
           limit={100}
           hint="Only the newest jobs are shown; older queue entries are not included in this view."
-          className="mt-3 text-xs text-slate-700"
+          className="mt-3 text-xs text-[#1F2A44]"
         />
       </div>
     </div>

@@ -359,7 +359,7 @@ export function RecordTransferModal({
           Memo
           <textarea className="mt-1 min-h-20 w-full rounded-sm border border-gray-300 px-2 py-1" value={memo} onChange={(e) => setMemo(e.target.value)} />
         </label>
-        {!valid ? <p className="text-xs text-slate-700">Select both accounts, use different accounts, and enter an amount greater than zero.</p> : null}
+        {!valid ? <p className="text-xs text-[#1F2A44]">Select both accounts, use different accounts, and enter an amount greater than zero.</p> : null}
       </div>
     </ParityDrawer>
   );
