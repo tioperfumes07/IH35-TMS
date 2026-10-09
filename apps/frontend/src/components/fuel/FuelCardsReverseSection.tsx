@@ -30,7 +30,7 @@ export function FuelCardsReverseSection({
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
-      <h2 className="text-xs font-semibold text-slate-900">Fuel cards{rows.length ? ` (${rows.length})` : ""}</h2>
+      <h2 className="text-xs font-semibold text-[#0F1219]">Fuel cards{rows.length ? ` (${rows.length})` : ""}</h2>
       {query.isError ? (
         <ListErrorBanner message={`Couldn't load fuel cards for ${contextLabel}.`} onRetry={() => void query.refetch()} />
       ) : null}
@@ -41,7 +41,7 @@ export function FuelCardsReverseSection({
       {rows.map((row) => (
         <div key={row.id} className="flex items-center justify-between gap-3 px-2 py-1.5 text-xs">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-700">Card …{row.card_last_digits}</span>
+            <span className="font-semibold text-[#1F2A44]">Card …{row.card_last_digits}</span>
             {"unit_id" in filter ? (
               <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />
             ) : (
