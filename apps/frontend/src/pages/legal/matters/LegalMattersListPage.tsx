@@ -180,7 +180,7 @@ export function LegalMattersListPage() {
           const sol = daysUntil(displayDate);
           const urgent = sol !== null && sol >= 0 && sol < 14;
           return urgent ? (
-            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">SOL {sol}d</span>
+            <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs text-[#1F2A44]">SOL {sol}d</span>
           ) : (
             <span className="text-xs text-gray-600">{displayDate ? formatDateUS(displayDate) : "—"}</span>
           );
@@ -214,7 +214,7 @@ export function LegalMattersListPage() {
         <>
         {/* CLS-SILENT-CAP — honest range + pager. The server's own `total` is authoritative; the
             label states "showing N of M" so a capped view can never read as "that is all there is". */}
-        <div className="mb-2 flex items-center justify-between text-xs text-slate-600">
+        <div className="mb-2 flex items-center justify-between text-xs text-[#4B5563]">
           <span data-testid="legal-matters-range">
             {total === 0 ? "No matters" : `Showing ${rangeStart}\u2013${rangeEnd} of ${total}`}
             {partyVendorId || partyCustomerId ? (

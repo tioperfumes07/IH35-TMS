@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91125 — LegalMattersList / LegalMatterDetail / FuelHome slate → house
+
+FINDING: BANK-F91125 — LegalMattersListPage / LegalMatterDetailPage / FuelHome Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26059 squash `74103628e9` (BANK-F91124 ServiceLocation/Integrity/FaultRules)
+Files Modified: LegalMattersListPage.tsx · LegalMatterDetailPage.tsx · FuelHome.tsx · verify-91125-legal-fuel-slate-leftover-chrome.mjs · verify-steps/3522-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91125-legal-fuel-slate-leftover-chrome.mjs (piggy EVEN 3522)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91124 DONE (#26059 74103628e9)
+
 ## 2026-10-08 · BANK-F91124 — ServiceLocation / IntegrityReport / FaultRules slate → house
 
 FINDING: BANK-F91124 — ServiceLocationPage / IntegrityReportPage / FaultRulesPage Tailwind slate-* → house tokens
