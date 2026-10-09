@@ -113,7 +113,7 @@ export function CollectionsPage() {
   return (
     <AccountingSubNavWrapper title="AR collections workflow" subtitle="Accrual-only overdue follow-up queue with contact history and next-action scheduling.">
 
-      {!companyId ? <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">Select an operating company before managing collections.</p> : null}
+      {!companyId ? <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">Select an operating company before managing collections.</p> : null}
 
       <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 lg:grid-cols-4">
         <label className="text-xs text-gray-600">
@@ -167,7 +167,7 @@ export function CollectionsPage() {
                     setSelectedTaskId(task.id);
                   }
                 }}
-                className={`w-full cursor-pointer border-b border-gray-100 px-3 py-2 text-left ${selectedTask === task.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
+                className={`w-full cursor-pointer border-b border-gray-100 px-3 py-2 text-left ${selectedTask === task.id ? "bg-[#F7F8FA]" : "hover:bg-gray-50"}`}
               >
                 <div className="text-xs font-medium text-gray-900">
                   <EntityLink

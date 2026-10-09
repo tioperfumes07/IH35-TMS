@@ -125,7 +125,7 @@ export function AccountingLeaseDetailPage() {
               ["Signed", l.signed_at ? formatDateTimeUS(String(l.signed_at)) : "Not signed"],
               ["Expense account", l.expense_account_name ?? "rent_expense role"],
             ].map(([k, v]) => (
-              <div key={k}><div className="text-section-header font-bold uppercase text-[#4B5563]">{k}</div><div className="font-semibold text-slate-900">{v}</div></div>
+              <div key={k}><div className="text-section-header font-bold uppercase text-[#4B5563]">{k}</div><div className="font-semibold text-[#0F1219]">{v}</div></div>
             ))}
             <div>
               <div className="text-section-header font-bold uppercase text-[#4B5563]">Lessor vendor</div>
@@ -187,7 +187,7 @@ export function AccountingLeaseDetailPage() {
             </section>
           ) : null}
           {l.lease_type === "lease_to_own" && query.data?.schedule_unavailable_reason ? (
-            <div className="rounded border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700" role="status" data-testid="lease-lessee-schedule-unavailable">{query.data.schedule_unavailable_reason}</div>
+            <div className="rounded border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" role="status" data-testid="lease-lessee-schedule-unavailable">{query.data.schedule_unavailable_reason}</div>
           ) : null}
           {(query.data?.schedule ?? []).length ? (
             <ParityTable embedded rows={query.data?.schedule ?? []} columns={scheduleColumns(assetLabels)} rowKey={(r) => r.id} storageKey="lease-lessee-schedule" exportFilename="lease-asc842-schedule" tableTestId="lease-lessee-schedule-table" emptyText="No ASC 842 schedule." />

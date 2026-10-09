@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91100 — CCPaymentModal / VendorBillCreate / ExpenseCreate slate → house
+## 2026-10-08 · BANK-F91101 — CreateMultipleBills / Collections / LeaseDetail slate → house
+
+FINDING: BANK-F91101 — CreateMultipleBillsPage / CollectionsPage / AccountingLeaseDetailPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26035 squash `9f664274d6` (BANK-F91100 CCPay/VendBill/ExpCreate)
+GUARD: scripts/verify-91101-multibill-collect-lease-slate-leftover-chrome.mjs + verify-steps/3734 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: CreateMultipleBillsPage + CollectionsPage + AccountingLeaseDetailPage + refuse guard + 3734 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91100 DONE — CCPaymentModal / VendorBillCreate / ExpenseCreate slate → house #26035
 
 FINDING: BANK-F91100 — CCPaymentModal / VendorBillCreatePage / ExpenseCreatePage Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26034 squash `c9086ed6fd` (BANK-F91099 TripProfit/LoadBank/CheckList)
+MERGED: #26035 squash `9f664274d6`
 GUARD: scripts/verify-91100-ccpay-vendbill-expcreate-slate-leftover-chrome.mjs + verify-steps/3736 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: CCPaymentModal + VendorBillCreatePage + ExpenseCreatePage + refuse guard + 3736 piggyback + OUTBOX
 
