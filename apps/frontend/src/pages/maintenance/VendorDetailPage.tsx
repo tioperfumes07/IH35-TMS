@@ -36,7 +36,7 @@ export function VendorDetailPage() {
   const woTotal = detail?.wo_total_count ?? 0;
   const invoiceTotal = detail?.invoice_total_count ?? 0;
   const pager = (page: number, total: number, setPage: (page: number) => void, testId: string) => (
-    <div className="mt-2 flex items-center justify-between text-xs text-slate-600" data-testid={testId}>
+    <div className="mt-2 flex items-center justify-between text-xs text-[#4B5563]" data-testid={testId}>
       <span>{total === 0 ? "0 of 0" : `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} of ${total}`}</span>
       <div className="flex gap-1">
         <button type="button" className="rounded border px-2 py-1 disabled:opacity-50" disabled={page === 1 || detailQ.isFetching} onClick={() => setPage(page - 1)}>Previous</button>
@@ -99,7 +99,7 @@ export function VendorDetailPage() {
                       kind="vendor"
                       id={vendor.mdata_vendor_id}
                       label={entityLabel(vendor.mdata_vendor_name, vendor.mdata_vendor_id, "Vendor")}
-                      className="text-slate-600 underline"
+                      className="text-[#4B5563] underline"
                       data-testid="maintenance-vendor-detail-ap-vendor-link"
                     />
                   ) : (
@@ -111,7 +111,7 @@ export function VendorDetailPage() {
             </dl>
             <p className="mt-2 text-xs text-gray-500">
               Catalog record in{" "}
-              <Link className="text-slate-600 underline" to="/lists/maintenance/vendors">
+              <Link className="text-[#4B5563] underline" to="/lists/maintenance/vendors">
                 Lists & Catalogs / Maintenance Vendors
               </Link>
               .

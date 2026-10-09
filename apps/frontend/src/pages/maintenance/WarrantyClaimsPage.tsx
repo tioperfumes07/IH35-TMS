@@ -234,7 +234,7 @@ export function WarrantyClaimsPage() {
             rows={claims}
             columns={columns}
             rowKey={(row) => row.id}
-            rowClassName={(row) => (row.id === highlightedClaimId ? "bg-slate-100 ring-1 ring-slate-400" : "")}
+            rowClassName={(row) => (row.id === highlightedClaimId ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]" : "")}
             loading={claimsQ.isPending}
             storageKey="maintenance-warranty-claims"
             emptyText="No warranty claims yet."
@@ -312,7 +312,7 @@ export function WarrantyClaimsPage() {
       >
         <div className="space-y-3 text-xs">
           <p className="text-xs text-gray-600">File warranty claim for {fileTarget?.part_description}.</p>
-          <div className="flex flex-wrap gap-3 text-xs text-slate-700">
+          <div className="flex flex-wrap gap-3 text-xs text-[#1F2A44]">
             <span>Vendor: <EntityLinkOrTombstone kind="vendor" id={fileTarget?.vendor_id} name={fileTarget?.vendor_name} noun="Vendor" /></span>
             <span>Work order: <EntityLinkOrTombstone kind="work_order" id={fileTarget?.work_order_id} name={fileTarget?.work_order_display_id} noun="Work order" /></span>
           </div>
