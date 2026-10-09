@@ -99,7 +99,7 @@ export function FactoringInterestAccrualPanel({ companyId, period }: { companyId
           tableTestId="month-close-faro-interest-table"
         />
       )}
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-700">
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[#1F2A44]">
         <span className="tabular-nums" data-testid="faro-interest-run-status">
           {live
             ? live.state === "posted"
@@ -115,7 +115,7 @@ export function FactoringInterestAccrualPanel({ companyId, period }: { companyId
           ) : null}
           {live?.state === "proposed" ? (
             live.proposed_by_user_id === user?.uuid ? (
-              <span className="text-slate-600">You proposed this run — a different person approves it.</span>
+              <span className="text-[#4B5563]">You proposed this run — a different person approves it.</span>
             ) : (
               <>
                 <Button size="sm" loading={busy} onClick={() => void act(() => decideInterestAccrual(companyId, live.id, "approve"))}>
@@ -130,8 +130,8 @@ export function FactoringInterestAccrualPanel({ companyId, period }: { companyId
         </span>
       </div>
       {pendingEvents.length ? (
-        <div className="mt-3 text-xs text-slate-700" data-testid="faro-interest-event-runs">
-          <div className="mb-1 font-semibold uppercase text-slate-600">Interest at collection / repurchase — awaiting approval</div>
+        <div className="mt-3 text-xs text-[#1F2A44]" data-testid="faro-interest-event-runs">
+          <div className="mb-1 font-semibold uppercase text-[#4B5563]">Interest at collection / repurchase — awaiting approval</div>
           <ul className="space-y-1">
             {pendingEvents.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 tabular-nums">
@@ -145,7 +145,7 @@ export function FactoringInterestAccrualPanel({ companyId, period }: { companyId
                   {formatUsdCents(r.total_cents)}
                 </span>
                 {r.proposed_by_user_id === user?.uuid ? (
-                  <span className="text-slate-600">You proposed this — a different person approves it.</span>
+                  <span className="text-[#4B5563]">You proposed this — a different person approves it.</span>
                 ) : (
                   <span className="inline-flex gap-2">
                     <Button size="sm" loading={busy} onClick={() => void act(() => decideInterestAccrual(companyId, r.id, "approve"))}>
