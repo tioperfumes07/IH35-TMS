@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91179 — FaroCashReserve / FactorRecon / LoansAdvances slate → house
+
+FINDING: BANK-F91179 — FaroCashReserveReclassPanel / FactorReconciliationPage / LoansAdvancesPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26114 squash `85ade02456` (BANK-F91178 banking chrome)
+Files Modified: FaroCashReserveReclassPanel.tsx · FactorReconciliationPage.tsx · LoansAdvancesPage.tsx · verify-91179-acct-faro-factor-loans-slate-leftover-chrome.mjs · verify-steps/2962-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91179-acct-faro-factor-loans-slate-leftover-chrome.mjs (piggy EVEN 2962)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91178 — LinkSuggestionsPanel / RegisterToolbar / AccountTilesRow slate → house
 
 FINDING: BANK-F91178 — LinkSuggestionsPanel / RegisterToolbar / AccountTilesRow Tailwind slate-* → house tokens

@@ -22,7 +22,7 @@ export function FaroCashReserveReclassPanel({ companyId, period }: { companyId: 
 
   return (
     <DataPanel title="Faro Cash Reserve deficit — presented as Due to Faro (DR 1235 / CR 2156)">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-700" data-testid="faro-cash-reserve-reclass">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#1F2A44]" data-testid="faro-cash-reserve-reclass">
         <span className="tabular-nums">
           1235 balance at {s.period_end}: {s.balance_cents == null ? "—" : formatUsdCents(s.balance_cents)} · deficit {formatUsdCents(s.deficit_cents)} ·{" "}
           {s.state === "reclassed"
