@@ -26,11 +26,11 @@ export function DispatchAlertServerControls({
 
   return (
     <div className="flex flex-wrap items-end gap-2 rounded-sm border bg-white p-3" data-testid="dispatch-alert-server-controls">
-      <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-700">
+      <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-[#1F2A44]">
         From
         <DatePicker box="filter" value={staged.draft.from} onChange={(from) => staged.setDraft((current) => ({ ...current, from }))} />
       </label>
-      <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-700">
+      <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-[#1F2A44]">
         To
         <DatePicker box="filter" value={staged.draft.to} onChange={(to) => staged.setDraft((current) => ({ ...current, to }))} />
       </label>

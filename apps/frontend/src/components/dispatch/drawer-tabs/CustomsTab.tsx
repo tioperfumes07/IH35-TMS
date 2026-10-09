@@ -33,7 +33,7 @@ export function CustomsTab({ loadId, operatingCompanyId }: Props) {
   const rows = query.isError ? [] : (query.data?.crossings ?? []);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-detail-border-crossings">
-      <h3 className="text-xs font-semibold text-slate-900">Customs &amp; border crossings{rows.length ? ` (${rows.length})` : ""}</h3>
+      <h3 className="text-xs font-semibold text-[#0F1219]">Customs &amp; border crossings{rows.length ? ` (${rows.length})` : ""}</h3>
       <div className="max-w-xs text-xs" data-testid="load-detail-customs-broker-filter">
         <label htmlFor="load-detail-customs-broker-filter-input" className="text-xs text-gray-500">
           Filter by customs broker
@@ -65,7 +65,7 @@ export function CustomsTab({ loadId, operatingCompanyId }: Props) {
             kind="border_crossing"
             id={row.id}
             label={entityLabel(row.port_of_entry, row.id, "Border crossing")}
-            className="font-semibold text-slate-700 underline"
+            className="font-semibold text-[#1F2A44] underline"
           />
           <span className="ml-2 text-xs text-gray-600">{row.direction} · {formatDateUS(row.planned_crossing_date ?? row.crossing_date)} · {row.emanifest_reference ?? "eManifest pending"}</span>
         </div>

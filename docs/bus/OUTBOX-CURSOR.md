@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91146 — UploadModal / CustomsTab / DispatchAlertServerControls slate → house
+
+FINDING: BANK-F91146 — UploadModal / CustomsTab / DispatchAlertServerControls Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26080 squash `78403ba15a` (BANK-F91145 Lease/TwoSection/KpiCard)
+Files Modified: UploadModal.tsx · CustomsTab.tsx · DispatchAlertServerControls.tsx · verify-91146-upload-customs-alert-slate-leftover-chrome.mjs · verify-steps/3378-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91146-upload-customs-alert-slate-leftover-chrome.mjs (piggy EVEN 3378)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91145 DONE (#26080 78403ba15a)
+
 ## 2026-10-09 · BANK-F91145 — LeaseContractCreator / TwoSectionLineEditor / KpiCard slate → house
 
 FINDING: BANK-F91145 — LeaseContractCreator / TwoSectionLineEditor / KpiCard Tailwind slate-* → house tokens
