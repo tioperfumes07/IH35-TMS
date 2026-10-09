@@ -37,7 +37,7 @@ export function BankingReportsTabContent() {
   return (
     <div className="space-y-3">
       <div
-        className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
         data-testid="banking-reports-not-recon-proof-banner"
       >
         <p className="font-semibold">Reports are drill-through surfaces — not bank reconciliation proof.</p>
@@ -46,10 +46,10 @@ export function BankingReportsTabContent() {
           matches. Until Match/Categorize and period reconcile are proven live, treat this tab as navigation only.
         </p>
         <div className="mt-2 flex flex-wrap gap-3">
-          <Link to="/banking/transactions?type=uncategorized" className="font-medium text-slate-800 underline">
+          <Link to="/banking/transactions?type=uncategorized" className="font-medium text-[#1F2A44] underline">
             For-review Match/Categorize
           </Link>
-          <Link to="/banking/reconciliation" className="font-medium text-slate-800 underline">
+          <Link to="/banking/reconciliation" className="font-medium text-[#1F2A44] underline">
             Reconciliation
           </Link>
         </div>
@@ -65,7 +65,7 @@ export function BankingReportsTabContent() {
           <Link
             key={report.id}
             to={report.href}
-            className="rounded-sm border border-gray-200 bg-white px-3 py-2 hover:border-slate-300 hover:bg-slate-100"
+            className="rounded-sm border border-gray-200 bg-white px-3 py-2 hover:border-[#E5E7EB] hover:bg-[#F7F8FA]"
           >
             <p className="text-xs font-semibold text-gray-900">{report.label}</p>
             <p className="mt-1 text-xs text-gray-600">{report.detail}</p>

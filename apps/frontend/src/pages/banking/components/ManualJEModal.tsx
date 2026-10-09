@@ -274,7 +274,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             </div>
             <button
               type="button"
-              className="text-slate-700 underline"
+              className="text-[#1F2A44] underline"
               onClick={() =>
                 setLines((prev) => [
                   ...prev,
@@ -284,7 +284,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             >
               + Create line
             </button>
-            <div className={balanced ? "rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-slate-700" : "rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-red-700"}>
+            <div className={balanced ? "rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-[#1F2A44]" : "rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-red-700"}>
               Debits {formatUsdCents(totalDebitCents)} / Credits {formatUsdCents(totalCreditCents)}{" "}
               {balanced ? "Balanced ✓" : "Not balanced"}
             </div>
@@ -299,7 +299,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
           </>
         ) : (
           <>
-            <div className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-2 text-xs text-slate-700">
+            <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-2 text-xs text-[#1F2A44]">
               ⚡ High-risk action. Posting this manual journal entry immediately affects financial reporting.
             </div>
             <div className="rounded-sm border border-gray-200 p-2 text-xs">
