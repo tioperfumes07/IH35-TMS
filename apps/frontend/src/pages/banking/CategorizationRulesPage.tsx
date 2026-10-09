@@ -92,7 +92,7 @@ export function CategorizationRulesPage() {
 
   if (!canAccess(auth.user?.role)) {
     return (
-      <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs text-slate-700">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
         Auto-categorization rules are available to Owner/Admin/Accountant roles.
       </div>
     );
@@ -246,7 +246,7 @@ export function CategorizationRulesPage() {
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={() => void onDropRule(rule.id)}
                 className={`w-full rounded border px-2 py-2 text-left text-xs ${
-                  selectedRuleId === rule.id ? "border-slate-300 bg-slate-100" : "border-gray-100 hover:bg-gray-50"
+                  selectedRuleId === rule.id ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-100 hover:bg-gray-50"
                 }`}
               >
                 <button
@@ -355,7 +355,7 @@ export function CategorizationRulesPage() {
               <div key={tx.id} className="border-b border-gray-100 px-2 py-1 text-xs">
                 <p className="font-medium text-gray-900">{tx.description || "(No description)"}</p>
                 <p className="text-gray-600">{(tx.plaid_category ?? []).join(" / ") || "No Plaid category"}</p>
-                <p className={tx.coa_account_id ? "text-slate-700" : "text-slate-500"}>
+                <p className={tx.coa_account_id ? "text-[#1F2A44]" : "text-[#6B7280]"}>
                   {tx.coa_account_id ? (
                     <>
                       Matched:{" "}
