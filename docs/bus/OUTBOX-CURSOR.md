@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91123 — LoadWO / CustNotify / RevDrill slate → house
+
+FINDING: BANK-F91123 — LoadWorkOrdersReverseSection / CustomerNotifyReverseSection / RevenueDiscrepancyDrill Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26057 squash `492e3a1811` (BANK-F91122 AcctHub/SafetyEvents/InsLawsuits)
+Files Modified: LoadWorkOrdersReverseSection.tsx · CustomerNotifyReverseSection.tsx · RevenueDiscrepancyDrill.tsx · verify-91123-loadwo-custnotif-revdrill-slate-leftover-chrome.mjs · verify-steps/3534-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91123-loadwo-custnotif-revdrill-slate-leftover-chrome.mjs (piggy EVEN 3534)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91122 DONE (#26057 492e3a1811)
+
 ## 2026-10-08 · BANK-F91122 — AcctHub / SafetyEvents / InsLawsuits slate → house
 
 FINDING: BANK-F91122 — AccountingHubPage / SafetyEventsReverseBlock / InsuranceLawsuitsReverseSection Tailwind slate-* → house tokens

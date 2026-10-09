@@ -58,7 +58,7 @@ export function LoadWorkOrdersReverseSection({
         data-testid="load-reverse-work-orders"
       >
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-xs font-semibold text-slate-900">
+          <h3 className="text-xs font-semibold text-[#0F1219]">
             Work Orders
             {rows.length > 0 ? (
               <span className="ml-2 text-xs font-normal text-gray-600">
@@ -70,7 +70,7 @@ export function LoadWorkOrdersReverseSection({
             kind="active_wos_load"
             id={loadId}
             label="Open Work Orders"
-            className="text-xs font-semibold text-slate-700 underline"
+            className="text-xs font-semibold text-[#1F2A44] underline"
           />
         </div>
         {query.isLoading ? (
@@ -89,7 +89,7 @@ export function LoadWorkOrdersReverseSection({
             {rows.map((row) => (
               <li
                 key={row.id}
-                className="text-xs text-slate-700"
+                className="text-xs text-[#1F2A44]"
                 data-testid={`load-work-order-${row.id}`}
               >
                 {/* The WO display_id is the human label (WO-{UNIT}-{TYPE}-{DATE}-{NNNN}-{V5}); fall
