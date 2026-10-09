@@ -13,8 +13,8 @@ export function UnitTireProgramReverseSection({ operatingCompanyId, unitId }: { 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-tire-program-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">Mounted Tires{mounted.length ? ` (${mounted.length})` : ""}</h3>
-        <EntityLink kind="tire_program_unit" id={unitId} label="Open Tire Program" className="text-xs font-semibold text-slate-700 underline" />
+        <h3 className="text-xs font-semibold text-[#0F1219]">Mounted Tires{mounted.length ? ` (${mounted.length})` : ""}</h3>
+        <EntityLink kind="tire_program_unit" id={unitId} label="Open Tire Program" className="text-xs font-semibold text-[#1F2A44] underline" />
       </div>
       {query.isLoading ? <p className="text-xs text-gray-500">Loading mounted tires…</p> : null}
       {query.isError ? <ListErrorState status={0} message="Could not load mounted tires for this unit." onRetry={() => void query.refetch()} /> : null}
@@ -22,7 +22,7 @@ export function UnitTireProgramReverseSection({ operatingCompanyId, unitId }: { 
       {mounted.length ? <ul className="grid gap-2 md:grid-cols-2">{mounted.map((position) => {
         const record = position.record!;
         return (
-          <li key={position.code} className="rounded-sm border border-gray-200 p-2 text-xs text-slate-700">
+          <li key={position.code} className="rounded-sm border border-gray-200 p-2 text-xs text-[#1F2A44]">
             <span className="font-semibold">{position.label}</span>
             <span> · {record.brand_name || "Unknown brand"}</span>
             <div className="text-gray-500">SN {record.serial_number || "—"} · {record.tread_depth_32nds}/32 tread</div>

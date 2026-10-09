@@ -13,14 +13,14 @@ export function UnitSevereRepairsReverseSection({ operatingCompanyId, unitId }: 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-severe-repairs-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">Open Severe Repairs{rows.length ? ` (${rows.length})` : ""}</h3>
-        <EntityLink kind="severe_repairs_unit" id={unitId} label="Open Severe Repairs" className="text-xs font-semibold text-slate-700 underline" />
+        <h3 className="text-xs font-semibold text-[#0F1219]">Open Severe Repairs{rows.length ? ` (${rows.length})` : ""}</h3>
+        <EntityLink kind="severe_repairs_unit" id={unitId} label="Open Severe Repairs" className="text-xs font-semibold text-[#1F2A44] underline" />
       </div>
       {query.isLoading ? <p className="text-xs text-gray-500">Loading severe repairs…</p> : null}
       {query.isError ? <ListErrorState status={0} message="Could not load severe repairs for this unit." onRetry={() => void query.refetch()} /> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-xs text-gray-500">No open severe repairs are linked to this unit.</p> : null}
       {rows.length ? <ul className="space-y-2">{rows.map((row) => (
-        <li key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs text-slate-700">
+        <li key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs text-[#1F2A44]">
           {row.trigger_wo_id ? (
             <EntityLink
               kind="work_order"
