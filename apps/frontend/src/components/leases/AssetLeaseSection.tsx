@@ -15,7 +15,7 @@ export function AssetLeaseSection({ operatingCompanyId, unitId, equipmentId }: {
   const bills = q.data?.bills ?? [];
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3 text-xs" data-testid="asset-lease-section">
-      <div className="font-semibold text-slate-900">Lease</div>
+      <div className="font-semibold text-[#0F1219]">Lease</div>
       {q.isError ? <p className="text-gray-600">Could not load the lease for this {unitId ? "unit" : "trailer"}.</p> : null}
       {!q.isLoading && !contracts.length ? <p className="text-gray-500">No lease contract covers this {unitId ? "unit" : "trailer"} yet.</p> : null}
       {contracts.map((c) => (

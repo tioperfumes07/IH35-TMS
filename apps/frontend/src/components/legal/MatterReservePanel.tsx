@@ -41,7 +41,7 @@ export function MatterReservePanel({ operatingCompanyId, matterId, reserveCents,
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3 text-xs" data-testid="matter-reserve-panel">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="font-semibold text-slate-900">Reserve</span>
+        <span className="font-semibold text-[#0F1219]">Reserve</span>
         <span className="text-gray-600">
           Posted {formatUsdCentsTable(postedCents ?? 0)}
           {reserveJournalEntryId ? <> · <EntityLink kind="journal_entry" id={reserveJournalEntryId} label="Journal entry" className="underline" /></> : null}

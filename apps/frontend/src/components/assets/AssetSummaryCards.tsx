@@ -5,7 +5,7 @@ type Props = {
 };
 
 const CARD_META: Array<{ key: keyof AssetSummary; label: string; tone: string }> = [
-  { key: "total_assets", label: "Total assets", tone: "border-slate-300" },
+  { key: "total_assets", label: "Total assets", tone: "border-[#E5E7EB]" },
   { key: "active_assets", label: "Active", tone: "border-emerald-400" },
   { key: "maintenance_assets", label: "Maintenance", tone: "border-amber-400" },
   { key: "out_of_service_assets", label: "Out of service", tone: "border-red-400" },

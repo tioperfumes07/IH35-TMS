@@ -1,3 +1,12 @@
+## 2026-10-09 · BANK-F91198 — AssetSummary / MatterReserve / AssetLease slate → house
+
+FINDING: BANK-F91198 — AssetSummaryCards / MatterReservePanel / AssetLeaseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26133 squash `9d96014dd6` (BANK-F91197 filter/reassign/notify)
+Files Modified: AssetSummaryCards.tsx · MatterReservePanel.tsx · AssetLeaseSection.tsx · verify-91198-asset-matter-lease-slate-leftover-chrome.mjs · verify-steps/2642-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91198-asset-matter-lease-slate-leftover-chrome.mjs (piggy EVEN 2642)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
 ## 2026-10-09 · BANK-F91197 — FilterBar / LoadReassign / NotifyPreferences slate → house
 
 FINDING: BANK-F91197 — FilterBar / LoadReassignModal / NotifyPreferencesPage Tailwind slate-* → house tokens

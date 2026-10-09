@@ -7,5 +7,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-test-provider-completeness.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-test-provider-completeness.mjs"]);
+    await ctx.run("node", ["scripts/verify-91198-asset-matter-lease-slate-leftover-chrome.mjs"]);
   },
 };
