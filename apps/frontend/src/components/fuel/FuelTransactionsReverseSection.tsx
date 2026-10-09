@@ -77,7 +77,7 @@ export function FuelTransactionsReverseSection({
       data-testid={testId}
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           Fuel transactions
           {/* ROUND 297 audit: the server's total, not the first page's length (capped at 50). */}
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({fuelQ.data?.total_count ?? rows.length})</span> : null}
@@ -86,7 +86,7 @@ export function FuelTransactionsReverseSection({
           kind={FUEL_HISTORY_KIND[filterKey]}
           id={filterValue}
           label="Open Fuel History"
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
         />
       </div>
       {fuelQ.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
@@ -104,8 +104,8 @@ export function FuelTransactionsReverseSection({
       {rows.length > 0 ? (
         <ul className="space-y-2">
           {rows.map((row) => (
-            <li key={row.id} className="text-xs text-slate-700" data-testid={`fuel-transaction-${row.id}`}>
-              <span className="font-medium text-slate-900">{row.station || "Fuel stop"}</span>
+            <li key={row.id} className="text-xs text-[#1F2A44]" data-testid={`fuel-transaction-${row.id}`}>
+              <span className="font-medium text-[#0F1219]">{row.station || "Fuel stop"}</span>
               <span className="ml-2 text-xs text-gray-500">
                 {formatDateUS(row.transaction_date)} · {row.gallons == null ? "Gallons unavailable" : `${row.gallons.toLocaleString()} gal`} · {formatMoneyCents(row.amount_cents, "USD")}
                 {filterKey !== "driver_id" && row.driver_id ? (
