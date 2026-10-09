@@ -146,7 +146,7 @@ export function FaroImportPage() {
       <PageHeader title="Faro CSV Import" subtitle="Upload Faro factoring statement CSV → invoice updates + reserve movements" />
 
       <div className="rounded-sm border border-[#2A3150] bg-[#12182B] p-4 space-y-3">
-        <label className="block text-xs text-slate-300">
+        <label className="block text-xs text-[#E5E7EB]">
           Statement date
           <DatePicker
             className="mt-1 block w-full max-w-xs bg-[#0B1020]"
@@ -155,12 +155,12 @@ export function FaroImportPage() {
           />
         </label>
 
-        <label className="block text-xs text-slate-300">
+        <label className="block text-xs text-[#E5E7EB]">
           Faro CSV file
           <input
             type="file"
             accept=".csv,text/csv"
-            className="mt-1 block w-full max-w-md text-xs text-slate-200"
+            className="mt-1 block w-full max-w-md text-xs text-[#E5E7EB]"
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
@@ -171,7 +171,7 @@ export function FaroImportPage() {
           />
         </label>
 
-        {fileName ? <p className="text-xs text-slate-400">Selected: {fileName}</p> : null}
+        {fileName ? <p className="text-xs text-[#6B7280]">Selected: {fileName}</p> : null}
 
         <div className="flex flex-wrap gap-2">
           <Button
@@ -183,12 +183,12 @@ export function FaroImportPage() {
           </Button>
           {/* OWNER LAW 2026-10-02 competing-engine audit: committing created Faro fundings, chargebacks and reserve
               movements outside the purchase engine. Faro's report is previewed and compared, never posted. */}
-          <span className="text-xs text-slate-600">Preview only — purchases are created on Factoring → Submit to Factor.</span>
+          <span className="text-xs text-[#4B5563]">Preview only — purchases are created on Factoring → Submit to Factor.</span>
         </div>
       </div>
 
       {preview ? (
-        <div className="rounded-sm border border-slate-300/40 bg-[#12182B] p-4">
+        <div className="rounded-sm border border-[#E5E7EB]/40 bg-[#12182B] p-4">
           <h3 className="mb-2 text-xs font-semibold text-white">
             Preview — {preview.line_count} line{preview.line_count === 1 ? "" : "s"}
           </h3>

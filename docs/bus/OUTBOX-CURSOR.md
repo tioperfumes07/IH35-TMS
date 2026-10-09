@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91087 — PostTmpl / QBOBulk / AbandonDefaults slate → house
+## 2026-10-08 · BANK-F91088 — FaroImport / DriftAlerts / PlaidItem slate → house
+
+FINDING: BANK-F91088 — FaroImportPage / DriftAlertsPanel / plaid-item-display Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26022 squash `729f539eff` (BANK-F91087 PostTmpl/QBOBulk/Abandon)
+GUARD: scripts/verify-91088-faroimp-drift-plaid-slate-leftover-chrome.mjs + verify-steps/3764 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: FaroImportPage + DriftAlertsPanel + plaid-item-display + refuse guard + 3764 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91087 DONE — PostTmpl / QBOBulk / AbandonDefaults slate → house #26022
 
 FINDING: BANK-F91087 — PostingTemplatesListPage / QBOBulkLinkPage / AbandonmentDefaultsPage Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26021 squash `9efd4236fd` (BANK-F91086 InvCreate/RecordExp/Basis)
+MERGED: #26022 squash `729f539eff`
 GUARD: scripts/verify-91087-posttmpl-qbobulk-abandon-slate-leftover-chrome.mjs + verify-steps/3766 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: PostingTemplatesListPage + QBOBulkLinkPage + AbandonmentDefaultsPage + refuse guard + 3766 piggyback + OUTBOX
 
