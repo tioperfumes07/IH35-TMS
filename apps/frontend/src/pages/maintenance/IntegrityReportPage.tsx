@@ -145,7 +145,7 @@ type DamageSummary = {
   by_unit_fleet_class: Record<string, number>;
 };
 
-const LINK = "text-slate-700 hover:underline";
+const LINK = "text-[#1F2A44] hover:underline";
 
 const STATUS_BADGE_VARIANT: Record<FuelIntegrityRow["status"], "crit" | "warn" | "positive" | "neutral"> = {
   finding: "crit",
@@ -293,7 +293,7 @@ export function IntegrityReportPage({ operatingCompanyId }: { operatingCompanyId
       label: "MPG",
       render: (row) =>
         row.mpg == null ? (
-          <span className="text-slate-500" title={row.mpg_reason ?? undefined}>
+          <span className="text-[#6B7280]" title={row.mpg_reason ?? undefined}>
             {row.mpg_reason === "odometer_gap" ? "— (odometer gap)" : "—"}
           </span>
         ) : (
