@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91160 — PayrollAggregate / ClassAllocation / Step5Invite slate → house
+
+FINDING: BANK-F91160 — PayrollAggregateTable / ClassAllocationView / Step5InviteTeam Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26095 squash `19f544818d` (BANK-F91159 Help/Runbooks/Parts)
+Files Modified: PayrollAggregateTable.tsx · ClassAllocationView.tsx · Step5InviteTeam.tsx · verify-91160-payroll-invite-slate-leftover-chrome.mjs · verify-steps/3132-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91160-payroll-invite-slate-leftover-chrome.mjs (piggy EVEN 3132)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91159 DONE (#26095 19f544818d)
+
 ## 2026-10-09 · BANK-F91159 — HelpPage / RunbooksIndex / MaintenancePartsCatalog slate → house
 
 FINDING: BANK-F91159 — HelpPage / RunbooksIndex / MaintenancePartsCatalog Tailwind slate-* → house tokens

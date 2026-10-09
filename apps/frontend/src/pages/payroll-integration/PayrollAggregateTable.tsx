@@ -21,7 +21,7 @@ const COLUMNS: Array<ParityColumn<PayrollPerson>> = [
     key: "pay_type",
     label: "Type",
     render: (p) => (
-      <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${p.pay_type === "W2" ? "bg-slate-100 text-slate-700" : "bg-green-50 text-green-700"}`}>
+      <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${p.pay_type === "W2" ? "bg-[#F7F8FA] text-[#1F2A44]" : "bg-green-50 text-green-700"}`}>
         {p.pay_type}
       </span>
     ),
