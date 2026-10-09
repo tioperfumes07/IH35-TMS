@@ -149,7 +149,7 @@ export function QboCombobox({
                 key={`${row.qbo_id}-${row.id}`}
                 type="button"
                 className={`flex w-full flex-col items-start px-2 py-2 text-left text-xs ${
-                  idx === highlightIndex ? "bg-slate-100" : "bg-[var(--surface-unselected)]"
+                  idx === highlightIndex ? "bg-[#F7F8FA]" : "bg-[var(--surface-unselected)]"
                 }`}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {

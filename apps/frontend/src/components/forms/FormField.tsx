@@ -16,7 +16,7 @@ export function FormField({ label, name, dirty = false, error, hint, ownerOnly =
       <span className="flex items-center gap-1 text-[11px] font-medium text-gray-700">
         {label}
         {ownerOnly ? <span className="text-xs text-amber-700">(Owner)</span> : null}
-        {dirty ? <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-400" title="Modified" aria-hidden /> : null}
+        {dirty ? <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#6B7280]" title="Modified" aria-hidden /> : null}
       </span>
       {children}
       {hint ? <span className="text-xs text-gray-500">{hint}</span> : null}
