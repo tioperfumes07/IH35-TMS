@@ -145,10 +145,10 @@ export function DispatchMarginPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Basis</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Basis</span>
           <SelectCombobox
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.basis}
             onChange={(e) => staged.setDraft((p) => ({ ...p, basis: e.target.value as "accrual" | "cash" }))}
           >
@@ -158,7 +158,7 @@ export function DispatchMarginPage() {
         </label>
       </ReportFilterBar>
 
-      {query.isLoading ? <div className="rounded-sm border bg-white p-4 text-xs text-slate-500">Loading…</div> : null}
+      {query.isLoading ? <div className="rounded-sm border bg-white p-4 text-xs text-[#6B7280]">Loading…</div> : null}
       {query.isError ? (
         <ListErrorState
           title="Couldn't load dispatch margin"
@@ -171,19 +171,19 @@ export function DispatchMarginPage() {
         <>
           <div className="grid gap-3 md:grid-cols-4">
             <div className="rounded-sm border bg-white p-3">
-              <div className="text-xs text-slate-500">Revenue</div>
+              <div className="text-xs text-[#6B7280]">Revenue</div>
               <div className="text-page-title font-semibold">{money(query.data.totals.revenue_cents)}</div>
             </div>
             <div className="rounded-sm border bg-white p-3">
-              <div className="text-xs text-slate-500">Direct cost</div>
+              <div className="text-xs text-[#6B7280]">Direct cost</div>
               <div className="text-page-title font-semibold">{money(query.data.totals.direct_cost_cents)}</div>
             </div>
             <div className="rounded-sm border bg-white p-3">
-              <div className="text-xs text-slate-500">Margin</div>
+              <div className="text-xs text-[#6B7280]">Margin</div>
               <div className="text-page-title font-semibold">{money(query.data.totals.margin_cents)}</div>
             </div>
             <div className="rounded-sm border bg-white p-3">
-              <div className="text-xs text-slate-500">Loads</div>
+              <div className="text-xs text-[#6B7280]">Loads</div>
               <div className="text-page-title font-semibold">{query.data.totals.load_count}</div>
             </div>
           </div>
