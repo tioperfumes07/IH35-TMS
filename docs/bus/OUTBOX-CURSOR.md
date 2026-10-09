@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91124 — ServiceLocation / IntegrityReport / FaultRules slate → house
+
+FINDING: BANK-F91124 — ServiceLocationPage / IntegrityReportPage / FaultRulesPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26058 squash `417f390555` (BANK-F91123 LoadWO/CustNotify/RevDrill)
+Files Modified: ServiceLocationPage.tsx · IntegrityReportPage.tsx · FaultRulesPage.tsx · verify-91124-maint-svc-integ-fault-slate-leftover-chrome.mjs · verify-steps/3530-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91124-maint-svc-integ-fault-slate-leftover-chrome.mjs (piggy EVEN 3530)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91123 DONE (#26058 417f390555)
+
 ## 2026-10-08 · BANK-F91123 — LoadWO / CustNotify / RevDrill slate → house
 
 FINDING: BANK-F91123 — LoadWorkOrdersReverseSection / CustomerNotifyReverseSection / RevenueDiscrepancyDrill Tailwind slate-* → house tokens

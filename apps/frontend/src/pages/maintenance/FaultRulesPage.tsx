@@ -141,11 +141,11 @@ export function FaultRulesPage() {
       />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-2 text-xs">
-          <Link to="/maintenance" className="text-slate-700 underline">
+          <Link to="/maintenance" className="text-[#1F2A44] underline">
             Maintenance home
           </Link>
           <span className="text-gray-400">·</span>
-          <Link to="/maintenance/fault-drafts" className="text-slate-700 underline">
+          <Link to="/maintenance/fault-drafts" className="text-[#1F2A44] underline">
             Fault-driven drafts
           </Link>
         </div>

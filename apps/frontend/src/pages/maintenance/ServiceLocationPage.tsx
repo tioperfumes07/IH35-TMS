@@ -73,7 +73,7 @@ export function ServiceLocationPage({ operatingCompanyId }: Props) {
       label: "Service Location",
       sortable: true,
       render: (row) => (
-        <Link to={drillTo(row)} className="text-slate-700 hover:underline">
+        <Link to={drillTo(row)} className="text-[#1F2A44] hover:underline">
           {serviceLocationLabel(row.service_location)}
         </Link>
       ),
@@ -84,7 +84,7 @@ export function ServiceLocationPage({ operatingCompanyId }: Props) {
       label: "Open Work Orders",
       sortable: true,
       render: (row) => (
-        <Link to={drillTo(row)} className="text-slate-700 hover:underline">
+        <Link to={drillTo(row)} className="text-[#1F2A44] hover:underline">
           {Number(row.open_work_orders ?? 0)}
         </Link>
       ),
