@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91118 — DrvMerges / TeamSplit / StopsMiles slate → house
+
+FINDING: BANK-F91118 — DriverVendorMergesReverseSection / DriverTeamSplitConfigReverseSection / DriverProfileStopsMilesSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26052 squash `3147462abe` (BANK-F91117 CustFact/FactorAdmin)
+Files Modified: DriverVendorMergesReverseSection.tsx · DriverTeamSplitConfigReverseSection.tsx · DriverProfileStopsMilesSection.tsx · verify-91118-drvmerges-teamsplit-stops-slate-leftover-chrome.mjs · verify-steps/3582-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91118-drvmerges-teamsplit-stops-slate-leftover-chrome.mjs (piggy EVEN 3582)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91117 DONE (#26052 3147462abe)
+
 ## 2026-10-08 · BANK-F91117 — CustFact queues / FactorAdmin slate → house
 
 FINDING: BANK-F91117 — CustomerFactoringSubmitQueueReverseSection / CustomerFactoringQueueReverseSection / FactorAdmin Tailwind slate-* → house tokens

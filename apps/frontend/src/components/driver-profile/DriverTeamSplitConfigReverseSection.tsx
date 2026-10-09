@@ -20,8 +20,8 @@ export function DriverTeamSplitConfigReverseSection({
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-team-split-config-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-xs font-semibold text-slate-900">Team split configurations</h2>
-        <EntityLink kind="driver_team_splits_filter" id={driverId} label="Open team splits" className="text-xs font-semibold text-slate-700 hover:underline" />
+        <h2 className="text-xs font-semibold text-[#0F1219]">Team split configurations</h2>
+        <EntityLink kind="driver_team_splits_filter" id={driverId} label="Open team splits" className="text-xs font-semibold text-[#1F2A44] hover:underline" />
       </div>
       {query.isError ? (
         <ListErrorState
@@ -40,7 +40,7 @@ export function DriverTeamSplitConfigReverseSection({
               kind="driver_team_split"
               id={config.id}
               label={`${Math.round(Number(config.primary_ratio) * 100)}% / ${Math.round(Number(config.secondary_ratio) * 100)}% · ${config.status}`}
-              className="text-xs font-semibold text-slate-700 hover:underline"
+              className="text-xs font-semibold text-[#1F2A44] hover:underline"
             />
           </li>
         ))}
