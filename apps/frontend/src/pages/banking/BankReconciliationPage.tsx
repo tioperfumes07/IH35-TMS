@@ -254,7 +254,7 @@ export function BankReconciliationPage() {
       (sessionsQuery.data?.open_sessions ?? []).length === 0 &&
       (sessionsQuery.data?.completed_sessions ?? []).length === 0 ? (
         <div
-          className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
           data-testid="banking-recon-matches-never-proven-banner"
         >
           <p className="font-semibold">No reconciliation sessions or matches proven live for this company.</p>
@@ -267,11 +267,11 @@ export function BankReconciliationPage() {
             <Link
               to="/banking/reconciliation-workspace"
               data-testid="banking-recon-start-session"
-              className="font-medium text-slate-800 underline"
+              className="font-medium text-[#1F2A44] underline"
             >
               Start reconciliation
             </Link>
-            <Link to="/banking/transactions?type=uncategorized" className="font-medium text-slate-800 underline">
+            <Link to="/banking/transactions?type=uncategorized" className="font-medium text-[#1F2A44] underline">
               For-review Match/Categorize
             </Link>
           </div>
@@ -380,7 +380,7 @@ export function BankReconciliationPage() {
                   }
                 }}
                 className={`w-full cursor-pointer rounded border px-2 py-2 text-left text-xs ${
-                  selectedTxId === row.id ? "border-slate-300 bg-slate-100" : "border-gray-100 bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
+                  selectedTxId === row.id ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-100 bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -399,11 +399,11 @@ export function BankReconciliationPage() {
                     kind="bank_transaction"
                     id={row.id}
                     label={row.merchant_name?.trim() || row.description?.trim() || "Bank transaction"}
-                    className="text-slate-700 hover:underline"
+                    className="text-[#1F2A44] hover:underline"
                     onClick={() => setSelectedTxId(row.id)}
                   />
                 </div>
-                {isAutoMatchCandidate(row) ? <div className="text-slate-700">Auto-match candidate: {row.ledger_entry_kind}</div> : <div className="text-gray-500">Unmatched</div>}
+                {isAutoMatchCandidate(row) ? <div className="text-[#1F2A44]">Auto-match candidate: {row.ledger_entry_kind}</div> : <div className="text-gray-500">Unmatched</div>}
               </div>
             ))}
           </div>
