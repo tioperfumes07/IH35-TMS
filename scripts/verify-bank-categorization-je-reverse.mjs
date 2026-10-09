@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting","banking"],"cols":["connectivity","reverse_link","qbo_chrome"],"leafRe":"^(accounting\\.parity\\.account_register|banking\\.bank_transactions)$","task":"BANK-F91152-CATEGORIZATION-JE-REVERSE","vertical":"column-wave"}
  * Rule-17 guard: bank categorization ↔ JE reverse drill (Law §9 / audit #3177 P-BANK P0).
  *
  * Locks:
@@ -54,8 +55,21 @@ function assertBankCategorizationJeReverse() {
   ) {
     errors.push("AccountRegisterPage: sourceRoute(bank_categorization) must deep-link bank txn");
   }
-  if (!/bank_categorization:\s*["']Bank Categorization["']/.test(registerService)) {
-    errors.push("account-register.service: must label bank_categorization rows");
+  // BANK-F91152 / QBO: bank_categorization surfaces as Expense (money OUT) or Deposit (money IN) —
+  // never a third "Bank Categorization" type. TYPE_LABELS default + buildRegisterRows direction both count.
+  if (
+    !/bank_categorization:\s*["']Expense["']/.test(registerService) &&
+    !/bank_categorization:\s*["']Deposit["']/.test(registerService) &&
+    !/bank_categorization:\s*["']Bank Categorization["']/.test(registerService)
+  ) {
+    errors.push("account-register.service: must label bank_categorization rows (Expense/Deposit or legacy)");
+  }
+  if (
+    !/bank_is_credit === true[\s\S]{0,80}?"Deposit"[\s\S]{0,80}?"Expense"/.test(registerService) &&
+    !/bank_is_credit === true\s*\?\s*"Deposit"\s*:\s*"Expense"/.test(registerService) &&
+    !/bank_categorization:\s*["']Bank Categorization["']/.test(registerService)
+  ) {
+    errors.push("account-register.service: bank_categorization must resolve Deposit (is_credit) or Expense (money-out)");
   }
   if (!/matched_journal_entry_id/.test(bankingApi)) {
     errors.push("banking.ts: PlaidBankTransaction must expose matched_journal_entry_id");

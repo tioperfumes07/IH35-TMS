@@ -21,6 +21,7 @@ function posting(over: Partial<RawPosting>): RawPosting {
     attachment_count: 0,
     location: null,
     expense_payment_type: null,
+    bank_is_credit: null,
     ...over,
   };
 }
@@ -69,6 +70,27 @@ describe("account register — running-balance math", () => {
     expect(rows[0].reference).toBe("INV-1");
     expect(rows[1].type).toBe("Journal Entry");
     expect(rows[2].type).toBe("Bill Payment");
+  });
+
+  it("QBO — bank_categorization money-out → Expense, money-in → Deposit", () => {
+    const { rows } = buildRegisterRows(0, "debit", [
+      posting({
+        source_transaction_type: "bank_categorization",
+        source_transaction_id: "bt-out",
+        bank_is_credit: false,
+        amount_cents: 1200,
+      }),
+      posting({
+        source_transaction_type: "bank_categorization",
+        source_transaction_id: "bt-in",
+        bank_is_credit: true,
+        amount_cents: 50000,
+      }),
+    ]);
+    expect(rows[0].type).toBe("Expense");
+    expect(rows[0].source_transaction_type).toBe("bank_categorization");
+    expect(rows[1].type).toBe("Deposit");
+    expect(rows[1].source_transaction_type).toBe("bank_categorization");
   });
 
   it("B-1 — expense with payment_type=check surfaces TYPE Check and carries payment_type", () => {

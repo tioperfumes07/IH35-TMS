@@ -157,7 +157,7 @@ const TRANSACTION_TYPES = [
   "Settlement",
   "Transfer",
   "Deposit",
-  "Bank Categorization",
+  // QBO: bank-feed Categorize surfaces as Expense (money OUT) or Deposit (money IN) — no third chip.
   "Cash Advance",
   "Driver Advance",
   "Factoring Advance",
@@ -182,8 +182,8 @@ const TYPE_TO_SOURCE: Record<string, string> = {
   // BANK-F91057 — live key is driver_settlement (BE also accepts settlement alias).
   Settlement: "driver_settlement",
   Transfer: "transfer",
+  // Deposit chip → bank_deposit OR bank_categorization money-IN (BE expands; QBO parity).
   Deposit: "bank_deposit",
-  "Bank Categorization": "bank_categorization",
   // BANK-F91057 — live key is driver_cash_advance (BE also accepts cash_advance alias).
   "Cash Advance": "driver_cash_advance",
   "Driver Advance": "driver_advance",

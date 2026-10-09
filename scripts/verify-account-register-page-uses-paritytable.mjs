@@ -8,7 +8,8 @@
  * the CHAIN-02 register error surface, the honest C/R reconciliation banner, the pinned
  * opening-balance summary row, the QBO column grammar, and the audit-view columns
  * (When/Action/Journal entry/Dr/Cr/Amount) must all be preserved. Audit-view outages surface
- * ListErrorState. This page posts nothing and must stay that way (no useMutation).
+ * ListErrorState. Ledger display stays mutation-light: the only allowed write is the B-1
+ * register cleared toggle (blank ↔ C). No create/void/post money mutations on this page.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -89,8 +90,15 @@ function assertMigrated(src) {
   if (!src.includes("Opening balance")) {
     errors.push(`${PAGE}: must keep the pinned opening-balance summary row`);
   }
+  // B-1 ORDERS: blank↔C cleared toggle is the one allowed mutation (toggleAccountRegisterCleared).
+  // Fail any other useMutation / money-create write that lands on this register page.
   if (src.includes("useMutation")) {
-    errors.push(`${PAGE}: display-only ledger surface — must not add mutations`);
+    const clearedOk =
+      src.includes("toggleAccountRegisterCleared") &&
+      (src.includes("toggleClearedMutation") || src.includes("reconcile_status"));
+    if (!clearedOk) {
+      errors.push(`${PAGE}: display-only ledger surface — must not add mutations (B-1 cleared toggle only)`);
+    }
   }
   // ACCT-F5066 — audit JE hop must use event memo, not null→UUID chrome.
   if (!/entityLabel\(\s*e\.memo\s*,\s*e\.journal_entry_id\s*,\s*["']Journal entry["']\s*\)/.test(src)) {

@@ -31,7 +31,10 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
   transfer: "Transfer",
   expense: "Expense",
   bank_deposit: "Deposit",
-  bank_categorization: "Bank Categorization",
+  // QBO bank-feed Categorize: money-out → Expense, money-in → Deposit (not a third "Bank Categorization"
+  // type). Direction comes from banking.bank_transactions.is_credit on the source row — see
+  // buildRegisterRows. The raw source_transaction_type stays bank_categorization for drill-through.
+  bank_categorization: "Expense",
   journal_entry: "Journal Entry",
   manual_je: "Journal Entry",
   factoring_advance: "Factoring Advance",
@@ -73,6 +76,11 @@ export type RawPosting = {
    * Check documents are expenses with payment_type='check'; Edit must hop to /accounting/checks/:id.
    */
   expense_payment_type: string | null;
+  /**
+   * QBO bank-feed Categorize direction (CHAIN-05). Only set when source_transaction_type =
+   * bank_categorization — true = money IN (Deposit), false = money OUT (Expense). Null otherwise.
+   */
+  bank_is_credit: boolean | null;
 };
 
 export type AccountRegisterRow = {
@@ -203,11 +211,19 @@ export function buildRegisterRows(
     const paymentType = p.expense_payment_type ?? null;
     const isCheck =
       p.source_transaction_type === "expense" && (paymentType ?? "").toLowerCase() === "check";
+    // QBO parity (Martin bank categorize): bank-feed Categorize lands in the account register as
+    // Expense (money OUT) or Deposit (money IN) — never a third type. CoA Category posts through
+    // CHAIN-05 without requiring an Item / expense_category_account_map row.
+    const isBankCat = p.source_transaction_type === "bank_categorization";
     const typeLabel = isCheck
       ? "Check"
-      : p.source_transaction_type
-        ? SOURCE_TYPE_LABELS[p.source_transaction_type] ?? p.source_transaction_type
-        : "Journal Entry";
+      : isBankCat
+        ? p.bank_is_credit === true
+          ? "Deposit"
+          : "Expense"
+        : p.source_transaction_type
+          ? SOURCE_TYPE_LABELS[p.source_transaction_type] ?? p.source_transaction_type
+          : "Journal Entry";
     return {
       posting_id: p.posting_id,
       // LV-REPORTS-BALANCE-SHEET-GL-JE-DRILL (ACCT-F5425): AccountRegisterPage.tsx's "Ref No."
@@ -374,13 +390,27 @@ export async function getAccountRegister(
       )`;
   } else if (input.type === "expense") {
     // B-1 / BANK-F91027 — Expense filter must not include Checks (payment_type='check').
-    params.push(input.type);
-    where += ` AND p.source_transaction_type = $${params.length}
-      AND NOT EXISTS (
-        SELECT 1 FROM accounting.expenses ex_non_chk
-         WHERE ex_non_chk.id::text = p.source_transaction_id
-           AND ex_non_chk.operating_company_id = p.operating_company_id
-           AND ex_non_chk.payment_type = 'check'
+    // QBO bank-feed Categorize money-OUT posts as bank_categorization but surfaces TYPE=Expense —
+    // include those rows so the Expense chip matches the register Type column (Martin / QBO parity).
+    where += ` AND (
+        (
+          p.source_transaction_type = 'expense'
+          AND NOT EXISTS (
+            SELECT 1 FROM accounting.expenses ex_non_chk
+             WHERE ex_non_chk.id::text = p.source_transaction_id
+               AND ex_non_chk.operating_company_id = p.operating_company_id
+               AND ex_non_chk.payment_type = 'check'
+          )
+        )
+        OR (
+          p.source_transaction_type = 'bank_categorization'
+          AND EXISTS (
+            SELECT 1 FROM banking.bank_transactions bt_exp
+             WHERE bt_exp.id::text = p.source_transaction_id
+               AND bt_exp.operating_company_id = p.operating_company_id
+               AND bt_exp.is_credit IS NOT TRUE
+          )
+        )
       )`;
   } else if (input.type) {
     // BANK-F91057 — live keys ≠ chip aliases. Settlement chip must hit driver_settlement
@@ -391,6 +421,20 @@ export async function getAccountRegister(
       where += ` AND p.source_transaction_type IN ('settlement', 'driver_settlement')`;
     } else if (input.type === "cash_advance" || input.type === "driver_cash_advance") {
       where += ` AND p.source_transaction_type IN ('cash_advance', 'driver_cash_advance')`;
+    } else if (input.type === "bank_deposit") {
+      // QBO: money-IN bank Categorize surfaces as Deposit beside bank_deposit documents.
+      where += ` AND (
+          p.source_transaction_type = 'bank_deposit'
+          OR (
+            p.source_transaction_type = 'bank_categorization'
+            AND EXISTS (
+              SELECT 1 FROM banking.bank_transactions bt_dep
+               WHERE bt_dep.id::text = p.source_transaction_id
+                 AND bt_dep.operating_company_id = p.operating_company_id
+                 AND bt_dep.is_credit IS TRUE
+            )
+          )
+        )`;
     } else {
       params.push(input.type);
       where += ` AND p.source_transaction_type = $${params.length}`;
@@ -424,6 +468,7 @@ export async function getAccountRegister(
             je.memo, p.description, p.debit_or_credit, p.amount_cents::bigint AS amount_cents,
             p.source_transaction_type, p.source_transaction_id,
             CASE WHEN p.source_transaction_type = 'expense' THEN ex.payment_type ELSE NULL END AS expense_payment_type,
+            btx_lbl.bank_is_credit AS bank_is_credit,
             cls.class_name,
             COALESCE(p.register_cleared, false) AS register_cleared,
             COALESCE(match_info.match_status, '') AS match_status,
@@ -508,7 +553,8 @@ export async function getAccountRegister(
          ON p.source_transaction_type = 'bank_deposit' AND dep.id::text = p.source_transaction_id
         AND dep.operating_company_id = p.operating_company_id
        LEFT JOIN LATERAL (
-         SELECT COALESCE(NULLIF(btrim(bt.merchant_name), ''), NULLIF(btrim(bt.description), '')) AS display_label
+         SELECT COALESCE(NULLIF(btrim(bt.merchant_name), ''), NULLIF(btrim(bt.description), '')) AS display_label,
+                bt.is_credit AS bank_is_credit
            FROM banking.bank_transactions bt
           WHERE p.source_transaction_type = 'bank_categorization'
             AND bt.id::text = p.source_transaction_id
@@ -623,6 +669,8 @@ export async function getAccountRegister(
     attachment_count: Number(r.attachment_count) || 0,
     location: r.location ?? null,
     expense_payment_type: r.expense_payment_type ?? null,
+    bank_is_credit:
+      r.bank_is_credit === true ? true : r.bank_is_credit === false ? false : null,
   }));
 
   // ACCT-F410 — apply the basis to the RAW POSTINGS, before the register is built, so the running
