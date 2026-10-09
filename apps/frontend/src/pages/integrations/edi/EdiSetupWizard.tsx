@@ -178,7 +178,7 @@ export function EdiSetupWizard() {
               {(partnersQuery.data ?? []).map((partner) => (
                 <li key={partner.uuid} className="flex items-center justify-between px-3 py-2 text-xs">
                   <span>{partner.partner_name} · {partner.connection_type.toUpperCase()}</span>
-                  <button type="button" className="text-slate-700 underline" onClick={() => testMutation.mutate(partner.uuid)}>
+                  <button type="button" className="text-[#1F2A44] underline" onClick={() => testMutation.mutate(partner.uuid)}>
                     Validate configuration
                   </button>
                 </li>

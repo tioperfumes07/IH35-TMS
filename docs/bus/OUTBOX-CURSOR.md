@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91161 — EdiSetup / EdiTxnLog / NotificationCenter slate → house
+
+FINDING: BANK-F91161 — EdiSetupWizard / EdiTransactionLog / NotificationCenterPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26096 squash `261bbb4ab8` (BANK-F91160 Payroll/Invite)
+Files Modified: EdiSetupWizard.tsx · EdiTransactionLog.tsx · NotificationCenterPage.tsx · verify-91161-edi-notif-slate-leftover-chrome.mjs · verify-steps/3128-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91161-edi-notif-slate-leftover-chrome.mjs (piggy EVEN 3128)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91160 DONE (#26096 261bbb4ab8)
+
 ## 2026-10-09 · BANK-F91160 — PayrollAggregate / ClassAllocation / Step5Invite slate → house
 
 FINDING: BANK-F91160 — PayrollAggregateTable / ClassAllocationView / Step5InviteTeam Tailwind slate-* → house tokens
