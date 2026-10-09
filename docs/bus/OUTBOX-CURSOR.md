@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91195 — KpiStatCard.test / EntityLink.test / Freshness usage slate → house
+
+FINDING: BANK-F91195 — KpiStatCard.test / EntityLink.test / FreshnessIndicator.usage.example Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26130 squash `c4b1ecace1` (BANK-F91194 uncleared/wo/jetype)
+Files Modified: KpiStatCard.test.tsx · EntityLink.test.tsx · FreshnessIndicator.usage.example.tsx · verify-91195-kpi-entitylink-freshness-slate-leftover-chrome.mjs · verify-steps/2648-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91195-kpi-entitylink-freshness-slate-leftover-chrome.mjs (piggy EVEN 2648)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91194 — UnclearedDocs / WorkOrderCopy / JeTypePicker slate → house
 
 FINDING: BANK-F91194 — UnclearedDocumentsNote / WorkOrderCopyLinks / JournalEntryTypePicker Tailwind slate-* → house tokens

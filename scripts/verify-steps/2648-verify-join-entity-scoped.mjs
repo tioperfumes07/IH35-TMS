@@ -12,5 +12,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-join-entity-scoped.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-join-entity-scoped.mjs"]);
+    await ctx.run("node", ["scripts/verify-91195-kpi-entitylink-freshness-slate-leftover-chrome.mjs"]);
   },
 };
