@@ -22,7 +22,7 @@ export function CustomerFactoringReverseSection({ operatingCompanyId, customerId
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-reverse">
-      <h2 className="text-xs font-semibold text-slate-900">Factoring</h2>
+      <h2 className="text-xs font-semibold text-[#0F1219]">Factoring</h2>
       {query.isError ? (
         <ListErrorState status={0} message="Factoring assignment unavailable." onRetry={() => void query.refetch()} />
       ) : null}
@@ -37,7 +37,7 @@ export function CustomerFactoringReverseSection({ operatingCompanyId, customerId
             kind="factor"
             id={factor.id}
             label={factor.name}
-            className="font-semibold text-slate-700 hover:underline"
+            className="font-semibold text-[#1F2A44] hover:underline"
           />{" "}
           · advance {(factor.advance_rate * 100).toFixed(1)}% · fee{" "}
           {(factor.fee_rate * 100).toFixed(1)}%
@@ -51,7 +51,7 @@ export function CustomerFactoringReverseSection({ operatingCompanyId, customerId
                 kind="factoring_batch"
                 id={batch.id}
                 label={`${batch.batch_number} · ${batch.status} · ${formatUsdCents(batch.total_face_cents)}`}
-                className="text-xs font-semibold text-slate-700 hover:underline"
+                className="text-xs font-semibold text-[#1F2A44] hover:underline"
               />
             </li>
           ))}
@@ -62,7 +62,7 @@ export function CustomerFactoringReverseSection({ operatingCompanyId, customerId
           kind="factoring_factors_customer"
           id={customerId}
           label="View full factoring detail →"
-          className="mt-2 inline-block text-xs font-medium text-slate-700 hover:underline"
+          className="mt-2 inline-block text-xs font-medium text-[#1F2A44] hover:underline"
         />
       ) : null}
     </section>

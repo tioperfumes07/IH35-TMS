@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91103 — FuelTx / FuelFraud / TotalsStack slate → house
+## 2026-10-08 · BANK-F91104 — FaroCSV / DriverDeductions / CustomerFactoring slate → house
+
+FINDING: BANK-F91104 — FaroCSVUploadWidget / DriverDeductionsReverseSection / CustomerFactoringReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26038 squash `0bd83d9a49` (BANK-F91103 FuelTx/FuelFraud/Totals)
+GUARD: scripts/verify-91104-farocsv-drvdeduct-custfact-slate-leftover-chrome.mjs + verify-steps/3726 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: FaroCSVUploadWidget + DriverDeductionsReverseSection + CustomerFactoringReverseSection + refuse guard + 3726 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91103 DONE — FuelTx / FuelFraud / TotalsStack slate → house #26038
 
 FINDING: BANK-F91103 — FuelTransactionsReverseSection / FuelFraudAlertsReverseSection / TotalsStack Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26037 squash `53d749a325` (BANK-F91102 QBODrift/PayMeth/MaintShop)
+MERGED: #26038 squash `0bd83d9a49`
 GUARD: scripts/verify-91103-fueltx-fuelfraud-totals-slate-leftover-chrome.mjs + verify-steps/3728 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: FuelTransactionsReverseSection + FuelFraudAlertsReverseSection + TotalsStack + refuse guard + 3728 piggyback + OUTBOX
 
