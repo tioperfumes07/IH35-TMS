@@ -211,7 +211,7 @@ export function AddressGeocodeInput({
               <button
                 type="button"
                 tabIndex={-1}
-                className={`block w-full truncate px-2 py-1 text-left hover:bg-slate-100 ${i === activeIndex ? "bg-slate-100" : ""}`}
+                className={`block w-full truncate px-2 py-1 text-left hover:bg-[#F7F8FA] ${i === activeIndex ? "bg-[#F7F8FA]" : ""}`}
                 onMouseEnter={() => setActiveIndex(i)}
                 onMouseDown={(e) => {
                   e.preventDefault();
@@ -221,7 +221,7 @@ export function AddressGeocodeInput({
                 {row.kind === "suggestion" ? (
                   <>
                     <span className="font-semibold">{row.s.mainText}</span>
-                    {row.s.secondaryText ? <span className="text-slate-600"> · {row.s.secondaryText}</span> : null}
+                    {row.s.secondaryText ? <span className="text-[#4B5563]"> · {row.s.secondaryText}</span> : null}
                   </>
                 ) : (
                   <>

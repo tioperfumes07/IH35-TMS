@@ -74,7 +74,7 @@ export function BulkProgressDialog({
               ) : null}
             </p>
             {!loading && succeeded === 0 && failedCount > 0 ? (
-              <p className="text-xs text-slate-700" data-testid="bulk-precheck-deselect-hint">
+              <p className="text-xs text-[#1F2A44]" data-testid="bulk-precheck-deselect-hint">
                 Nothing was changed. Deselect the blocked rows below, then retry the rest — bulk money
                 actions are atomic and will not partially apply.
               </p>
@@ -119,7 +119,7 @@ export function BulkProgressDialog({
           {!loading && failedCount > 0 && onRetryFailed ? (
             <button
               type="button"
-              className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs text-slate-700"
+              className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs text-[#1F2A44]"
               onClick={onRetryFailed}
             >
               Retry failed
