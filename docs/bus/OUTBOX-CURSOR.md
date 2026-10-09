@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91139 — LoadStatusChanger / InlineStatusPicker / InlineDriverPicker slate → house
+
+FINDING: BANK-F91139 — LoadStatusChanger / InlineStatusPicker / InlineDriverPicker Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26073 squash `9ee5f6a3c5` (BANK-F91138 LoadQuality/LoadDetention/EquipmentTransfers)
+Files Modified: LoadStatusChanger.tsx · InlineStatusPicker.tsx · InlineDriverPicker.tsx · verify-91139-inline-pick-slate-leftover-chrome.mjs · verify-steps/3406-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91139-inline-pick-slate-leftover-chrome.mjs (piggy EVEN 3406)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91138 DONE (#26073 9ee5f6a3c5)
+
 ## 2026-10-09 · BANK-F91138 — LoadQuality / LoadDetention / EquipmentTransfers reverse slate → house
 
 FINDING: BANK-F91138 — LoadQualityEventsReverseSection / LoadDetentionReverseSection / EquipmentTransfersReverseSection Tailwind slate-* → house tokens

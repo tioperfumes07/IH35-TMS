@@ -37,7 +37,7 @@ function statusPillClass(status: LoadStatus): string {
   ) {
     return "bg-red-100 text-red-700";
   }
-  return "bg-slate-100 text-slate-700";
+  return "bg-[#F7F8FA] text-[#1F2A44]";
 }
 
 type Props = {
@@ -106,7 +106,7 @@ export function InlineStatusPicker({ loadId, status, disabled, pending, onSelect
               role="option"
               aria-selected={false}
               data-testid={`inline-status-option-${loadId}-${t.target}`}
-              className="block w-full px-3 py-1 text-left text-xs text-gray-800 hover:bg-slate-100"
+              className="block w-full px-3 py-1 text-left text-xs text-gray-800 hover:bg-[#F7F8FA]"
               onClick={(event) => {
                 event.stopPropagation();
                 setOpen(false);

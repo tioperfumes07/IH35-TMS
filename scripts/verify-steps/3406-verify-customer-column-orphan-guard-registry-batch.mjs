@@ -11,5 +11,9 @@ const guards = [
 ];
 export default {
   name: "verify-customer-column-orphan-guard-registry-batch",
-  async run(ctx) { for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]); },
+  async run(ctx) {
+    for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
+    // BANK-F91139 piggy — LoadStatus/InlineStatus/InlineDriver slate leftover refuse
+    await ctx.run("node", ["scripts/verify-91139-inline-pick-slate-leftover-chrome.mjs"]);
+  },
 };

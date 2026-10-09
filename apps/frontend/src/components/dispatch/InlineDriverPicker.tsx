@@ -32,7 +32,7 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
             id={driverId}
             name={displayLabel}
             noun="Driver"
-            className="single-line-name min-w-0 flex-1 cursor-pointer text-slate-700 hover:underline"
+            className="single-line-name min-w-0 flex-1 cursor-pointer text-[#1F2A44] hover:underline"
             data-testid={`inline-driver-picker-${loadId}`}
             onClick={(event) => {
               event.preventDefault();
@@ -45,7 +45,7 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
             role="button"
             tabIndex={0}
             aria-label={`Assign driver for load ${loadId}`}
-            className="single-line-name min-w-0 flex-1 cursor-pointer text-slate-500 hover:underline"
+            className="single-line-name min-w-0 flex-1 cursor-pointer text-[#6B7280] hover:underline"
             data-testid={`inline-driver-picker-${loadId}`}
             onClick={startEdit}
             onKeyDown={(e) => {
