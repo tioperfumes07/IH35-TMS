@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91168 — DuplicateMasters / LegalAttorneyReview / Form425CHome slate → house
+
+FINDING: BANK-F91168 — DuplicateMastersReport / LegalAttorneyReviewPortalPage / Form425CHome Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26103 squash `a3822fcacebd` (BANK-F91167 Bank forms)
+Files Modified: DuplicateMastersReport.tsx · LegalAttorneyReviewPortalPage.tsx · Form425CHome.tsx · verify-91168-dup-legal-425c-slate-leftover-chrome.mjs · verify-steps/2996-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91168-dup-legal-425c-slate-leftover-chrome.mjs (piggy EVEN 2996)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91167 DONE (#26103 a3822fcacebd)
+
 ## 2026-10-09 · BANK-F91167 — CreateExpense / BillPayment / ApplyToBill forms slate → house
 
 FINDING: BANK-F91167 — CreateExpenseForm / BillPaymentForm / ApplyToBillForm Tailwind slate-* → house tokens
