@@ -117,8 +117,8 @@ export function FuelPurchasesSection({ rows }: Props) {
   return (
     <section className="rounded-sm border border-gray-200 bg-white" data-testid="fuel-purchases-section">
       <header className="flex items-center border-b border-gray-200 px-2.5 py-1.5">
-        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-slate-600">Fuel purchases</h2>
-        <span className="ml-2 text-xs text-slate-500">one line per purchase · qty x rate = amount · diesel and DEF are separate items</span>
+        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Fuel purchases</h2>
+        <span className="ml-2 text-xs text-[#6B7280]">one line per purchase · qty x rate = amount · diesel and DEF are separate items</span>
       </header>
       <ParityTable
         columns={COLUMNS}

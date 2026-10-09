@@ -1,3 +1,17 @@
+## 2026-10-08 · BANK-F91131 — FuelPurchases / EscrowHistory / LayoverHistory slate → house
+
+FINDING: BANK-F91131 — FuelPurchasesSection / EscrowHistoryView / DriverLayoverHistory Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26065 squash `052e886139` (BANK-F91130 UnitPm/TrailerTires/RoadService)
+Files Modified: FuelPurchasesSection.tsx · EscrowHistoryView.tsx · DriverLayoverHistory.tsx · verify-91131-fuel-escrow-layover-slate-leftover-chrome.mjs · verify-steps/3498-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91131-fuel-escrow-layover-slate-leftover-chrome.mjs (piggy EVEN 3498)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91130 DONE (#26065 052e886139)
+
+## 2026-10-08 · BANK-F91130 DONE (#26065 052e886139)
+
 ## 2026-10-08 · BANK-F91130 — UnitPm / TrailerTires / RoadService reverse slate → house
 
 FINDING: BANK-F91130 — UnitPmSchedulesReverseSection / TrailerTiresReverseSection / RoadServiceReverseSection Tailwind slate-* → house tokens
