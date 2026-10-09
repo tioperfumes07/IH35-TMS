@@ -192,7 +192,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
                 kind="bill_payment"
                 id={completedPaymentId}
                 label="View payment →"
-                className="text-xs font-semibold text-slate-700 underline"
+                className="text-xs font-semibold text-[#1F2A44] underline"
                 data-testid="bill-payment-modal-view-payment"
               />
               <TaskLinkPicker
