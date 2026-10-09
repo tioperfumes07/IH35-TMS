@@ -94,7 +94,7 @@ export function WizardReclassifyPanel({
       <div className="flex items-center justify-between">
         <div>
           <div className="font-semibold">{postedLabel}</div>
-          <div className="text-slate-600">
+          <div className="text-[#4B5563]">
             {intro}
           </div>
         </div>
@@ -106,11 +106,11 @@ export function WizardReclassifyPanel({
       {linesQ.isLoading ? <div>Loading the posted lines…</div> : null}
       {linesQ.isError ? <div className="text-red-700">Could not read the posted lines: {String((linesQ.error as Error)?.message ?? "")}</div> : null}
       {!linesQ.isLoading && !linesQ.isError && lines.length === 0 ? (
-        <div className="text-slate-600">No expense line posted to the general ledger yet (fuel posts when its card line is matched in Banking).</div>
+        <div className="text-[#4B5563]">No expense line posted to the general ledger yet (fuel posts when its card line is matched in Banking).</div>
       ) : null}
 
       {lines.length > 0 ? (
-        <p className="text-slate-600" data-testid="sc-reclassify-cap-count">
+        <p className="text-[#4B5563]" data-testid="sc-reclassify-cap-count">
           Showing {lines.length} of {totalAvailable} line{totalAvailable === 1 ? "" : "s"}
           {capped ? (
             <>
@@ -203,7 +203,7 @@ export function WizardReclassifyPanel({
       ) : null}
       {error ? <div className="text-red-700">{error}</div> : null}
       {result ? (
-        <div className="font-semibold text-slate-700">
+        <div className="font-semibold text-[#1F2A44]">
           Reclassified. Undo it from Accounting › Reclassify.
         </div>
       ) : null}
