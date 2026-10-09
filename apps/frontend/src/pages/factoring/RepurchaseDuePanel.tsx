@@ -21,7 +21,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 
-const ACTION = "rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-slate-700 disabled:opacity-50";
+const ACTION = "rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-[#1F2A44] disabled:opacity-50";
 
 export function RepurchaseDuePanel({ companyId, isOwner }: { companyId: string; isOwner: boolean }) {
   const queryClient = useQueryClient();
@@ -105,7 +105,7 @@ export function RepurchaseDuePanel({ companyId, isOwner }: { companyId: string; 
             </button>
           </span>
         ) : (
-          <span className="text-slate-600">Awaiting owner</span>
+          <span className="text-[#4B5563]">Awaiting owner</span>
         ),
     },
   ];
@@ -115,7 +115,7 @@ export function RepurchaseDuePanel({ companyId, isOwner }: { companyId: string; 
 
   return (
     <DataPanel title={`Repurchase deadline — ${rows.length} awaiting your decision`}>
-      <p className="mb-2 text-xs text-slate-700">
+      <p className="mb-2 text-xs text-[#1F2A44]">
         Faro's 95-day repurchase deadline has arrived for these invoices. Nothing posts until you decide.
       </p>
       {query.isError ? (
@@ -139,7 +139,7 @@ export function RepurchaseDuePanel({ companyId, isOwner }: { companyId: string; 
       {error ? <p className="mt-2 text-xs text-red-700" role="alert">{error}</p> : null}
       {extending ? (
         <Modal open onClose={() => setExtending(null)} title={`Extend — ${extending.invoice_display_id ?? "Invoice"}`}>
-          <label className="block text-xs font-medium text-slate-700">New repurchase date (after {formatDateUS(extending.due_date)})</label>
+          <label className="block text-xs font-medium text-[#1F2A44]">New repurchase date (after {formatDateUS(extending.due_date)})</label>
           <DatePicker value={extendTo} onChange={setExtendTo} />
           <div className="mt-3 flex justify-end gap-2">
             <button type="button" className={ACTION} onClick={() => setExtending(null)}>Cancel</button>

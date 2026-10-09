@@ -324,7 +324,7 @@ export function SettlementCloseArrivalPage() {
                 }}
               />
             </div>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="mt-1 text-xs text-[#4B5563]">
               Open pre-settlements only (names from open-by-driver join). Nested +Create driver stays
               wired for picker law; a new driver appears here after their first pre-settlement exists.
             </p>
@@ -428,11 +428,11 @@ export function SettlementCloseArrivalPage() {
                 </div>
                 <div className="mt-2">
                   <div className="h-2 w-full rounded-sm bg-gray-200">
-                    <div className="h-2 rounded-sm bg-slate-600" style={{ width: `${escrowCapPct}%` }} />
+                    <div className="h-2 rounded-sm bg-[#4B5563]" style={{ width: `${escrowCapPct}%` }} />
                   </div>
                   <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
                     <span>Current escrow balance: {formatUsd(currentEscrowTotal)}</span>
-                    <span className={escrowToCap === 0 ? "font-semibold text-slate-700" : ""}>
+                    <span className={escrowToCap === 0 ? "font-semibold text-[#1F2A44]" : ""}>
                       {escrowToCap === 0 ? "At cap" : `${formatUsd(escrowToCap)} to cap`}
                     </span>
                   </div>
@@ -535,7 +535,7 @@ export function SettlementCloseArrivalPage() {
               <div className="flex items-center justify-end gap-2 border-t border-gray-200 pt-3">
                 {!canClose ? <span className="text-xs text-gray-500">Your role cannot close settlements.</span> : null}
                 {isMaker ? (
-                  <span className="text-xs text-slate-700">You opened this settlement — a different approver must close it (maker ≠ checker).</span>
+                  <span className="text-xs text-[#1F2A44]">You opened this settlement — a different approver must close it (maker ≠ checker).</span>
                 ) : null}
                 <Button
                   disabled={!canSubmitClose || closeMut.isPending}

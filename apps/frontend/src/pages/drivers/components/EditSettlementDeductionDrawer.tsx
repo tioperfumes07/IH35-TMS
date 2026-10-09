@@ -94,13 +94,13 @@ export function EditSettlementDeductionDrawer({
     <ParityDrawer open={open} onClose={onClose} title="Edit deduction">
       <div className="space-y-3 text-xs text-gray-700" data-testid="edit-settlement-deduction-drawer">
         {loadNumber ? (
-          <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5 text-slate-600" data-testid="edit-settlement-deduction-load">
+          <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5 text-[#4B5563]" data-testid="edit-settlement-deduction-load">
             Load <span className="font-semibold">{loadNumber}</span> — this line only
           </div>
         ) : null}
 
         <label className="block text-xs">
-          <span className="text-slate-600">Type *</span>
+          <span className="text-[#4B5563]">Type *</span>
           <div className="mt-1" data-testid="edit-settlement-deduction-type">
             <SelectCombobox
               className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
@@ -118,7 +118,7 @@ export function EditSettlementDeductionDrawer({
         </label>
 
         <label className="block text-xs">
-          <span className="text-slate-600">Amount *</span>
+          <span className="text-[#4B5563]">Amount *</span>
           <div data-testid="edit-settlement-deduction-amount">
             <MoneyInput
               valueDollars={amountUsd}
@@ -130,7 +130,7 @@ export function EditSettlementDeductionDrawer({
         </label>
 
         <label className="block text-xs">
-          <span className="text-slate-600">Reason *</span>
+          <span className="text-[#4B5563]">Reason *</span>
           <textarea
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
             rows={3}
