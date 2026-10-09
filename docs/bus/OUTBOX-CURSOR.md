@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91157 — Onboarding Medical / Identity / DqfDocs slate → house
+
+FINDING: BANK-F91157 — OnboardingStepMedicalCard / OnboardingStepIdentity / OnboardingStepDqfDocs Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26092 squash `bfb38a25f3` (BANK-F91156 TripPlan/HosRules/FuelCards)
+Files Modified: OnboardingStepMedicalCard.tsx · OnboardingStepIdentity.tsx · OnboardingStepDqfDocs.tsx · verify-91157-drv-onboard-slate-leftover-chrome.mjs · verify-steps/3220-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91157-drv-onboard-slate-leftover-chrome.mjs (piggy EVEN 3220)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91156 DONE (#26092 bfb38a25f3)
+
 ## 2026-10-09 · BANK-F91156 — TripPlan / HosRules / FuelCards slate → house
 
 FINDING: BANK-F91156 — TripPlanSummaryBanner / HosRulesBox / FuelCardsPage Tailwind slate-* → house tokens
