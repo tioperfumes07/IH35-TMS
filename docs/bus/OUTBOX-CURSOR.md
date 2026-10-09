@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91117 — CustFact queues / FactorAdmin slate → house
+
+FINDING: BANK-F91117 — CustomerFactoringSubmitQueueReverseSection / CustomerFactoringQueueReverseSection / FactorAdmin Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26051 squash `8c042f790d` (BANK-F91116 Unit/Load/Driver InTransit)
+Files Modified: CustomerFactoringSubmitQueueReverseSection.tsx · CustomerFactoringQueueReverseSection.tsx · FactorAdmin.tsx · verify-91117-custfact-factoradmin-slate-leftover-chrome.mjs · verify-steps/3586-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91117-custfact-factoradmin-slate-leftover-chrome.mjs (piggy EVEN 3586)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91116 DONE (#26051 8c042f790d)
+
 ## 2026-10-08 · BANK-F91116 — Unit/Load/Driver InTransit reverse slate → house
 
 FINDING: BANK-F91116 — UnitInTransitIssuesReverseSection / LoadInTransitIssuesReverseSection / DriverInTransitIssuesReverseSection Tailwind slate-* → house tokens

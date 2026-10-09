@@ -19,12 +19,12 @@ export function CustomerFactoringSubmitQueueReverseSection({ operatingCompanyId,
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-submit-queue-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-xs font-semibold text-slate-900">Factoring submission queue</h2>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Factoring submission queue</h2>
         <EntityLink
           kind="factoring_submit_queue_customer"
           id={customerId}
           label="Open Submit Queue"
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
         />
       </div>
       {query.isError ? (
@@ -38,7 +38,7 @@ export function CustomerFactoringSubmitQueueReverseSection({ operatingCompanyId,
         <ul className="mt-2 space-y-1">
           {items.slice(0, 5).map((item) => (
             <li key={item.invoice_id}>
-              <span className="text-xs font-semibold text-slate-700">
+              <span className="text-xs font-semibold text-[#1F2A44]">
                 <EntityLinkOrTombstone
                   kind="invoice"
                   id={item.invoice_id}
