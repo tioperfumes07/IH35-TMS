@@ -31,7 +31,7 @@ const columns: Array<ParityColumn<ReserveByCustomerRow>> = [
       row.customer_id ? (
         <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
       ) : (
-        <span className="text-slate-600">{row.customer_name}</span>
+        <span className="text-[#4B5563]">{row.customer_name}</span>
       ),
   },
   { key: "invoices_purchased", label: "Invoices purchased", kind: "number", sortable: true, render: (row) => String(row.invoices_purchased) },
@@ -93,7 +93,7 @@ export function FactorReserveCard({ operatingCompanyId }: { operatingCompanyId: 
           />
         )}
         {query.data ? (
-          <p className="mt-2 text-xs tabular-nums text-slate-700" data-testid="factor-reserve-tie-out">
+          <p className="mt-2 text-xs tabular-nums text-[#1F2A44]" data-testid="factor-reserve-tie-out">
             Reserve now {money(query.data.total_reserve_now_cents)} · GL 1230 + 1235 {money(query.data.gl_balance_cents)} ·{" "}
             {query.data.ties_to_gl ? "ties to the cent" : "DOES NOT TIE — a reserve movement is missing its invoice stamp"}
           </p>

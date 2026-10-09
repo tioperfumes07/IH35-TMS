@@ -345,7 +345,7 @@ export function TrialBalancePage() {
                   <td className="px-3 py-2">
                     <AmountLink
                       filter={tbFilter(canDrill, row.account_id, applied)}
-                      className="text-slate-700 underline-offset-2 hover:underline"
+                      className="text-[#1F2A44] underline-offset-2 hover:underline"
                       data-testid={`tb-name-${row.account_id}`}
                     >
                       {row.account_name || "—"}
@@ -366,7 +366,7 @@ export function TrialBalancePage() {
                       {money(row.total_credits)}
                     </AmountLink>
                   </td>
-                  <td className={`px-3 py-2 text-right ${row.net_balance < 0 ? "text-rose-700" : "text-slate-900"} tabular-nums`}>
+                  <td className={`px-3 py-2 text-right ${row.net_balance < 0 ? "text-rose-700" : "text-[#0F1219]"} tabular-nums`}>
                     <AmountLink filter={tbFilter(canDrill, row.account_id, applied)} data-testid={`tb-net-${row.account_id}`}>
                       {money(row.net_balance)}
                     </AmountLink>

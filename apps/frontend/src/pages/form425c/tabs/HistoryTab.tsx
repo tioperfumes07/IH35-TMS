@@ -78,7 +78,7 @@ export function HistoryTab({ reports, loading, onOpen, onAmend, onPrint }: Props
               Print
             </button>
             {r.status === "filed" ? (
-              <button type="button" className="rounded-sm bg-slate-800 px-2 py-1 text-xs text-white" onClick={() => onAmend(r.id)}>
+              <button type="button" className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white" onClick={() => onAmend(r.id)}>
                 Amend
               </button>
             ) : null}
@@ -92,7 +92,7 @@ export function HistoryTab({ reports, loading, onOpen, onAmend, onPrint }: Props
   return (
     <div className="space-y-3 p-4">
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-slate-800 px-3 py-2 text-xs font-semibold text-white">Filing History</div>
+        <div className="border-b bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white">Filing History</div>
         <ParityTable
           rows={filtered}
           columns={columns}
