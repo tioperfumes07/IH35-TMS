@@ -168,7 +168,7 @@ export function PreFlightDvirQueue() {
             onClick={() => setTab(entry.key)}
             className={`-mb-px border-b-2 px-3 py-2 text-xs font-medium ${
               tab === entry.key
-                ? "border-slate-600 text-slate-700"
+                ? "border-[#4B5563] text-[#1F2A44]"
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
@@ -211,7 +211,7 @@ export function PreFlightDvirQueue() {
       {!q.isError && totalCount > pageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="pre-flight-dvir-server-pager">
           <Button size="sm" variant="secondary" disabled={page <= 1 || q.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
-          <span className="text-slate-600">Page {page} of {pageCount} · {totalCount} {tab} defects</span>
+          <span className="text-[#4B5563]">Page {page} of {pageCount} · {totalCount} {tab} defects</span>
           <Button size="sm" variant="secondary" disabled={page >= pageCount || q.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</Button>
         </div>
       ) : null}
