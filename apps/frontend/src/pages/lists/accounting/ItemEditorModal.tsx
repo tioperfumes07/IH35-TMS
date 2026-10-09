@@ -324,7 +324,7 @@ export function ItemEditorModal({
                 limit={CATALOG_PICKER_CAP}
                 total={categoriesQuery.data?.total ?? null}
                 hint="Type in the category field to search the full catalog."
-                className="mb-1 text-xs text-slate-600"
+                className="mb-1 text-xs text-[#4B5563]"
               />
               <Combobox
                 options={categoryOptions}
@@ -391,7 +391,7 @@ export function ItemEditorModal({
                 </div>
                 {errors.incomeAccountId ? <p className="mt-1 text-xs text-red-700">{errors.incomeAccountId}</p> : null}
                 {form.incomeAccountId ? (
-                  <p className="mt-1 text-xs text-slate-600">
+                  <p className="mt-1 text-xs text-[#4B5563]">
                     Open register:{" "}
                     <EntityLink
                       kind="account"
@@ -471,7 +471,7 @@ export function ItemEditorModal({
                 </div>
                 {errors.expenseAccountId ? <p className="mt-1 text-xs text-red-700">{errors.expenseAccountId}</p> : null}
                 {form.expenseAccountId ? (
-                  <p className="mt-1 text-xs text-slate-600">
+                  <p className="mt-1 text-xs text-[#4B5563]">
                     Open register:{" "}
                     <EntityLink
                       kind="account"
@@ -493,7 +493,7 @@ export function ItemEditorModal({
                 shown={classOptions.length}
                 limit={CATALOG_PICKER_CAP}
                 total={classesQuery.data?.total ?? null}
-                className="mb-1 text-xs text-slate-600"
+                className="mb-1 text-xs text-[#4B5563]"
               />
               <ReferenceSelect
                 value={form.classId}
