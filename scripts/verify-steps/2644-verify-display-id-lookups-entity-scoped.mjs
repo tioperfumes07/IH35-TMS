@@ -8,5 +8,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-display-id-lookups-entity-scoped.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-display-id-lookups-entity-scoped.mjs"]);
+    await ctx.run("node", ["scripts/verify-91197-filterbar-reassign-notify-slate-leftover-chrome.mjs"]);
   },
 };

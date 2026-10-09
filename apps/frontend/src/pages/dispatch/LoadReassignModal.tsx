@@ -82,7 +82,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
         }}
       >
         {/* Exact Leaves dispatch.modal.load_reassign:load — title used loadNumber text only. */}
-        <div className="text-xs text-slate-600" data-testid="load-reassign-modal-load-entitylink">
+        <div className="text-xs text-[#4B5563]" data-testid="load-reassign-modal-load-entitylink">
           Load:{" "}
           <EntityLink kind="load" id={loadId} label={entityLabel(loadNumber, loadId, "Load")} />
         </div>

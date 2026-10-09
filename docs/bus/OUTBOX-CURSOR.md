@@ -1,3 +1,22 @@
+## 2026-10-09 · BANK-F91197 — FilterBar / LoadReassign / NotifyPreferences slate → house
+
+FINDING: BANK-F91197 — FilterBar / LoadReassignModal / NotifyPreferencesPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26132 squash `d0dc8db2cc` (BANK-F91196 inline unit/trailer/accessorial)
+Files Modified: FilterBar.tsx · LoadReassignModal.tsx · NotifyPreferencesPage.tsx · verify-91197-filterbar-reassign-notify-slate-leftover-chrome.mjs · verify-steps/2644-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91197-filterbar-reassign-notify-slate-leftover-chrome.mjs (piggy EVEN 2644)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
+## 2026-10-09 · BANK-F91196 — InlineUnit / InlineTrailer / AccessorialEditor slate → house
+
+FINDING: BANK-F91196 — InlineUnitPicker / InlineTrailerPicker / AccessorialEditor Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26131 squash `a844a62439` (BANK-F91195 kpi/entitylink/freshness)
+Files Modified: InlineUnitPicker.tsx · InlineTrailerPicker.tsx · AccessorialEditor.tsx · verify-91196-inline-unit-trailer-accessorial-slate-leftover-chrome.mjs · verify-steps/2646-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91196-inline-unit-trailer-accessorial-slate-leftover-chrome.mjs (piggy EVEN 2646)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS (OUTBOX tip restored on F91197 — race lost on #26132)
+
 ## 2026-10-09 · BANK-F91195 — KpiStatCard.test / EntityLink.test / Freshness usage slate → house
 
 FINDING: BANK-F91195 — KpiStatCard.test / EntityLink.test / FreshnessIndicator.usage.example Tailwind slate-* → house tokens
