@@ -368,7 +368,7 @@ export function TwoSectionLineEditor({
           limit={200}
           total={expenseCategoriesQuery.data?.total ?? null}
           hint="Type to search for an expense category not listed."
-          className="text-xs text-slate-600"
+          className="text-xs text-[#4B5563]"
         />
       ) : null}
       <CappedListNotice
@@ -376,7 +376,7 @@ export function TwoSectionLineEditor({
         limit={500}
         total={tirePositionsQuery.data?.total ?? null}
         hint="Type to search for a tire position not listed."
-        className="text-xs text-slate-600"
+        className="text-xs text-[#4B5563]"
       />
       <PartLocationMapDialog
         open={Boolean(locationTarget)}

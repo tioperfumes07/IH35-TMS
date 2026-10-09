@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91145 — LeaseContractCreator / TwoSectionLineEditor / KpiCard slate → house
+
+FINDING: BANK-F91145 — LeaseContractCreator / TwoSectionLineEditor / KpiCard Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26079 squash `cf347221db` (BANK-F91144 Dvir/FuelCards/UnitDefaultDrivers)
+Files Modified: LeaseContractCreator.tsx · TwoSectionLineEditor.tsx · KpiCard.tsx · verify-91145-lease-twosec-kpi-slate-leftover-chrome.mjs · verify-steps/3382-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91145-lease-twosec-kpi-slate-leftover-chrome.mjs (piggy EVEN 3382)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91144 DONE (#26079 cf347221db)
+
 ## 2026-10-09 · BANK-F91144 — DvirMaintenance / FuelCards / UnitDefaultDrivers reverse slate → house
 
 FINDING: BANK-F91144 — DvirMaintenanceInspectionsReverseSection / FuelCardsReverseSection / UnitDefaultDriversReverseSection Tailwind slate-* → house tokens
