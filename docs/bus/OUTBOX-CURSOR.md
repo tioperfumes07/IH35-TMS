@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91067 — AccountTile / FinanceScenarioDetail / BankTxCategorization slate → house
+
+FINDING: BANK-F91067 — AccountTile / FinanceScenarioDetailPage / BankTxCategorizationPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26000 squash `59c3c32ad8` (BANK-F91066 SettlementTab/FinanceHub/BillDetail)
+GUARD: scripts/verify-91067-accttile-scenario-banktx-slate-leftover-chrome.mjs + verify-steps/3678 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: AccountTile + FinanceScenarioDetailPage + BankTxCategorizationPage + refuse guard + 3678 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91066 — SettlementTab / FinanceHub / BillDetail slate → house
 
 FINDING: BANK-F91066 — LoadDetailSettlementTab / FinanceHubPage / BillDetailPage Tailwind slate-* → house tokens
