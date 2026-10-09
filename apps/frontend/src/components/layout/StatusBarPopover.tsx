@@ -29,7 +29,7 @@ export function StatusBarPopover({ open, anchorRef, onClose, title, children }: 
   return (
     <div
       ref={panelRef}
-      className="absolute left-1/2 top-full z-40 mt-1 w-[min(280px,92vw)] -translate-x-1/2 rounded-lg border border-slate-600 bg-[#151A24] p-3 text-xs text-slate-100 shadow-lg"
+      className="absolute left-1/2 top-full z-40 mt-1 w-[min(280px,92vw)] -translate-x-1/2 rounded-lg border border-[#4B5563] bg-[#151A24] p-3 text-xs text-[#F7F8FA] shadow-lg"
       role="dialog"
       aria-label={title}
     >
