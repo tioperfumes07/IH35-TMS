@@ -176,12 +176,12 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             ) : null}
 
             {/* CHROME: flat sections — no nested bordered panel inside the drawer (box-in-box) */}
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">Bill Payment Details</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">Bill Payment Details</div>
 
             <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
               <div className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-1">
                 <span>Vendor</span>
-                <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs font-normal text-slate-800">
+                <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs font-normal text-[#0F1219]">
                   <EntityLink
                     kind="vendor"
                     id={billVendorDrillId(bill)}
@@ -191,7 +191,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
               </div>
               <div className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-1">
                 <span>Bill #</span>
-                <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs font-normal text-slate-800">
+                <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs font-normal text-[#0F1219]">
                   {/* ACCT-F6301-class: bill_number is nullable and null on 550/16,301 real bills
                       (live-confirmed) — this bill is already fully in view, so entityLabel's
                       "Bill — not visible" fallback would contradict the drawer it's sitting in. */}

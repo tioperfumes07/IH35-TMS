@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91112 — PayBill / ExpenseDetail / InvoicesReverse slate → house
+
+FINDING: BANK-F91112 — PayBillModal / ExpenseDetailPage / InvoicesReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26046 squash `8d0d233651` (BANK-F91111 TireProgram/SevereRepairs/DrvWO)
+Files Modified: PayBillModal.tsx · ExpenseDetailPage.tsx · InvoicesReverseSection.tsx · verify-91112-paybill-expdet-invrev-slate-leftover-chrome.mjs · verify-steps/3606-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91112-paybill-expdet-invrev-slate-leftover-chrome.mjs (piggy EVEN 3606)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91111 DONE (#26046 8d0d233651)
+
 ## 2026-10-08 · BANK-F91111 — TireProgram / SevereRepairs / DrvWO reverse slate → house
 
 FINDING: BANK-F91111 — UnitTireProgramReverseSection / UnitSevereRepairsReverseSection / DriverWorkOrdersReverseSection Tailwind slate-* → house tokens
