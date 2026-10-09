@@ -77,7 +77,7 @@ export function MaintenanceShopHubPage() {
         label: "Type",
         sortable: true,
         render: (row) => (
-          <span className="inline-block rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+          <span className="inline-block rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-medium text-[#1F2A44]">
             {KIND_LABEL[row.kind]}
           </span>
         ),
@@ -113,7 +113,7 @@ export function MaintenanceShopHubPage() {
         label: "Amount",
         sortable: true,
         className: "text-right",
-        cellClass: "text-right tabular-nums font-medium text-slate-700",
+        cellClass: "text-right tabular-nums font-medium text-[#1F2A44]",
         render: (row) => fmtCents(row.amount_cents),
       },
       {
@@ -137,7 +137,7 @@ export function MaintenanceShopHubPage() {
         <button
           onClick={clearFilter}
           data-testid="maintenance-shop-clear-filter"
-          className="rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-slate-700 hover:bg-gray-50"
+          className="rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-[#1F2A44] hover:bg-gray-50"
         >
           Clear work order filter
         </button>
