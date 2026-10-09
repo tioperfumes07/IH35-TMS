@@ -23,14 +23,14 @@ export function DriverHosPage() {
   return (
     <div className="space-y-2">
       <h2 className="text-xs font-semibold">{t("driver.hos_title")}</h2>
-      <p className="text-xs text-slate-600">
+      <p className="text-xs text-[#4B5563]">
         {t("driver.hos_synced")}: {formatDateTimeUS(snap.last_synced_at)} CT
       </p>
       <p className="text-xs">
         {t("driver.duty_status")}: <span className="font-semibold">{snap.duty_status}</span>
       </p>
-      <div className="rounded-sm border border-slate-200 bg-white p-2">
-        <p className="text-xs font-semibold text-slate-500">{t("driver.clocks")}</p>
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-2">
+        <p className="text-xs font-semibold text-[#6B7280]">{t("driver.clocks")}</p>
         <ul className="mt-1 space-y-1 text-xs">
           {snap.clocks.map((c: HosSnapshot["clocks"][number]) => (
             <li key={c.key}>
