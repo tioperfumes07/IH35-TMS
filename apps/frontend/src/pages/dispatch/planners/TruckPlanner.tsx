@@ -188,7 +188,7 @@ export function TruckPlanner() {
     return (
       <div
         data-testid="dispatch-truck-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-slate-600"
+        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
       >
         Select an operating company to load the truck planner.
       </div>
@@ -199,7 +199,7 @@ export function TruckPlanner() {
     <div data-testid="dispatch-truck-planner-page" className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {!isLoading && !isError && excludedUnitCount > 0 ? (
-          <span className="text-xs text-slate-500" data-testid="dispatch-truck-planner-excluded-count">
+          <span className="text-xs text-[#6B7280]" data-testid="dispatch-truck-planner-excluded-count">
             {excludedUnitCount} unit{excludedUnitCount === 1 ? "" : "s"} not shown (status outside In
             Service / In Maintenance / Out of Service, or a test fixture)
           </span>
