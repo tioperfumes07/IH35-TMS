@@ -178,7 +178,7 @@ export function RecurringBillCreate() {
               limit={1000}
               total={vendorsQuery.data?.total ?? null}
               hint="Type in the vendor field to search the full roster."
-              className="mt-1 text-xs text-slate-600"
+              className="mt-1 text-xs text-[#4B5563]"
             />
           </div>
           <div className="ml-auto w-56 shrink-0 text-right">
@@ -186,7 +186,7 @@ export function RecurringBillCreate() {
             <input
               type="text"
               aria-label="Template name"
-              className="w-full rounded-sm border border-gray-300 px-3 py-2 text-right text-xs focus:border-slate-300 focus:outline-hidden"
+              className="w-full rounded-sm border border-gray-300 px-3 py-2 text-right text-xs focus:border-[#E5E7EB] focus:outline-hidden"
               placeholder="e.g. Monthly Office Rent"
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
@@ -208,7 +208,7 @@ export function RecurringBillCreate() {
           <label className="mb-1 block text-xs font-medium text-gray-700">Memo</label>
           <input
             type="text"
-            className="w-full rounded-sm border border-gray-300 px-3 py-2 text-xs focus:border-slate-300 focus:outline-hidden"
+            className="w-full rounded-sm border border-gray-300 px-3 py-2 text-xs focus:border-[#E5E7EB] focus:outline-hidden"
             placeholder="Optional memo on generated bill"
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
@@ -270,7 +270,7 @@ export function RecurringBillCreate() {
             <button
               type="button"
               onClick={addLineItem}
-              className="flex items-center gap-1 text-xs font-medium text-slate-700 hover:underline"
+              className="flex items-center gap-1 text-xs font-medium text-[#1F2A44] hover:underline"
             >
               <Plus className="h-3 w-3" />
               Add line
@@ -294,7 +294,7 @@ export function RecurringBillCreate() {
             <div key={idx} className="mb-3 grid gap-2 md:grid-cols-[1fr_minmax(10rem,14rem)_7rem_auto]">
               <input
                 type="text"
-                className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs focus:border-slate-300 focus:outline-hidden"
+                className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs focus:border-[#E5E7EB] focus:outline-hidden"
                 placeholder="Description"
                 value={item.description}
                 onChange={(e) => updateLineItem(idx, "description", e.target.value)}
