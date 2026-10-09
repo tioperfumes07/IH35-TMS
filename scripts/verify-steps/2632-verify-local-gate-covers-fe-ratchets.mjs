@@ -7,5 +7,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-local-gate-covers-fe-ratchets.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-local-gate-covers-fe-ratchets.mjs"]);
+    await ctx.run("node", ["scripts/verify-91203-billpaydet-salestax-cashfcst-slate-leftover-chrome.mjs"]);
   },
 };

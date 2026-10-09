@@ -313,7 +313,7 @@ export function SalesTaxPage() {
           rows={returnsQuery.data?.returns ?? []}
           columns={returnColumns}
           rowKey={(row) => row.id}
-          rowClassName={(row) => (highlightReturnId && row.id === highlightReturnId ? "bg-slate-100" : "")}
+          rowClassName={(row) => (highlightReturnId && row.id === highlightReturnId ? "bg-[#F7F8FA]" : "")}
           loading={returnsQuery.isLoading}
           emptyText="No sales tax returns prepared yet."
           storageKey="accounting-sales-tax-returns"
