@@ -171,7 +171,7 @@ export function QBOBulkLinkPage() {
       <BackArrowHeader backTo="/lists" breadcrumb={["Lists", "Accounting", "QBO bulk-link"]} title="QBO vendor / class bulk-link" />
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {companyId && !qboAvailable ? (
-        <p className="rounded-sm border border-slate-200 bg-white p-4 text-xs text-slate-600" data-testid="qbo-bulk-link-transp-only">
+        <p className="rounded-sm border border-[#E5E7EB] bg-white p-4 text-xs text-[#4B5563]" data-testid="qbo-bulk-link-transp-only">
           QBO bulk-link is available for TRANSP only. USMCA and Trucking are TMS-native and do not use a QuickBooks vendor/class mirror.
         </p>
       ) : null}
@@ -255,9 +255,9 @@ export function QBOBulkLinkPage() {
                 </p>
               ) : null}
               {noMatches.length > 0 ? (
-                <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs">
-                  <div className="font-semibold text-slate-800">No automatic match</div>
-                  <ul className="mt-1 max-h-40 list-inside list-disc overflow-auto text-slate-700">
+                <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">
+                  <div className="font-semibold text-[#1F2A44]">No automatic match</div>
+                  <ul className="mt-1 max-h-40 list-inside list-disc overflow-auto text-[#1F2A44]">
                     {noMatches.map((r) => (
                       <li key={`${r.entity_kind}-${r.id}`}>
                         {r.name} ({r.entity_kind})

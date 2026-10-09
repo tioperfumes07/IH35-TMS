@@ -19,8 +19,8 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 
 function statusPillClass(isActive: boolean) {
   return isActive
-    ? "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
-    : "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
+    ? "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]"
+    : "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
 }
 
 export function PostingTemplatesListPage() {
@@ -92,7 +92,7 @@ export function PostingTemplatesListPage() {
           const debit = accountLabel.get(debitId) ?? "—";
           const credit = accountLabel.get(creditId) ?? "—";
           return (
-            <span className="text-xs text-slate-600">
+            <span className="text-xs text-[#4B5563]">
               {debitId ? <EntityLink kind="account" id={debitId} label={debit} /> : debit}
               {" → "}
               {creditId ? <EntityLink kind="account" id={creditId} label={credit} /> : credit}
@@ -104,7 +104,7 @@ export function PostingTemplatesListPage() {
         key: "details",
         label: "Details",
         sortable: true,
-        render: (row) => <span className="text-xs text-slate-600">{row.description || "Code-managed posting template"}</span>,
+        render: (row) => <span className="text-xs text-[#4B5563]">{row.description || "Code-managed posting template"}</span>,
       },
       {
         key: "is_active",

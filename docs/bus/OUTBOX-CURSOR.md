@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91086 — InvCreate / RecordExp / Basis slate → house
+## 2026-10-08 · BANK-F91087 — PostTmpl / QBOBulk / AbandonDefaults slate → house
+
+FINDING: BANK-F91087 — PostingTemplatesListPage / QBOBulkLinkPage / AbandonmentDefaultsPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26021 squash `9efd4236fd` (BANK-F91086 InvCreate/RecordExp/Basis)
+GUARD: scripts/verify-91087-posttmpl-qbobulk-abandon-slate-leftover-chrome.mjs + verify-steps/3766 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: PostingTemplatesListPage + QBOBulkLinkPage + AbandonmentDefaultsPage + refuse guard + 3766 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91086 DONE — InvCreate / RecordExp / Basis slate → house #26021
 
 FINDING: BANK-F91086 — InvoiceCreateModal / RecordExpenseForm / BasisSelector Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26020 squash `879edcf147` (BANK-F91085 DrvCashAdv/Escrow/SettleFin)
+MERGED: #26021 squash `9efd4236fd`
 GUARD: scripts/verify-91086-invcreate-recordexp-basis-slate-leftover-chrome.mjs + verify-steps/3768 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: InvoiceCreateModal + RecordExpenseForm + BasisSelector + refuse guard + 3768 piggyback + OUTBOX
 
