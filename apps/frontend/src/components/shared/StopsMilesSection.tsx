@@ -127,7 +127,7 @@ export function StopsMilesSection({
       data-testid="stops-miles-section"
     >
       <h3 className="text-xs font-semibold text-gray-800">Stops + miles (last {hours} h)</h3>
-      <p className="text-xs text-slate-600">
+      <p className="text-xs text-[#4B5563]">
         Every stop over 3 minutes with odometer and miles since the prior stop — from the stop-odometer engine. Never
         interpolated.
       </p>
