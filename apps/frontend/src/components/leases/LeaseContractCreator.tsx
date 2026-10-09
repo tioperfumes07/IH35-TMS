@@ -151,7 +151,7 @@ export function LeaseContractCreator({ open, onClose, onCreated, defaultType = "
         </div>
 
         <fieldset className="rounded-sm border border-gray-200 p-2" data-testid="lease-billing-mode">
-          <legend className="px-1 font-semibold text-slate-900">How should this lease be billed each month?</legend>
+          <legend className="px-1 font-semibold text-[#0F1219]">How should this lease be billed each month?</legend>
           <label className="mr-4 inline-flex items-center gap-1">
             <input type="radio" name="billing_mode" checked={billingMode === "one_bill_per_unit"} onChange={() => setBillingMode("one_bill_per_unit")} /> One bill for each unit
           </label>
@@ -197,7 +197,7 @@ export function LeaseContractCreator({ open, onClose, onCreated, defaultType = "
 
         <div className="rounded-sm border border-gray-200" data-testid="lease-asset-multiselect">
           <div className="flex items-center justify-between border-b border-gray-200 px-2 py-1">
-            <span className="font-semibold text-slate-900">{wantTrailers ? "Trailers" : "Trucks"} owned by the lessor — select and enter each monthly amount</span>
+            <span className="font-semibold text-[#0F1219]">{wantTrailers ? "Trailers" : "Trucks"} owned by the lessor — select and enter each monthly amount</span>
             <span className="text-gray-600">{selected.length} selected · monthly total {formatUsdCentsTable(monthlyTotal)}</span>
           </div>
           {!lessorCompanyId ? (
