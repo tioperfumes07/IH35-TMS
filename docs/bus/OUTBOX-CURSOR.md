@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91158 — DisputeList / Resolve / VoidOverage slate → house
+
+FINDING: BANK-F91158 — SettlementDisputeList / SettlementDisputeResolveModal / VoidOverageModal Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26093 squash `2fe8831a02` (BANK-F91157 Onboarding Medical/Identity/Dqf)
+Files Modified: SettlementDisputeList.tsx · SettlementDisputeResolveModal.tsx · VoidOverageModal.tsx · verify-91158-dispute-void-overage-slate-leftover-chrome.mjs · verify-steps/3140-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91158-dispute-void-overage-slate-leftover-chrome.mjs (piggy EVEN 3140)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91157 DONE (#26093 2fe8831a02)
+
 ## 2026-10-09 · BANK-F91157 — Onboarding Medical / Identity / DqfDocs slate → house
 
 FINDING: BANK-F91157 — OnboardingStepMedicalCard / OnboardingStepIdentity / OnboardingStepDqfDocs Tailwind slate-* → house tokens
