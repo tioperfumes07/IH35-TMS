@@ -522,7 +522,7 @@ export function LegalMatterDetailPage() {
             <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
               {admin ? (
                 <div className="space-y-2 border-b border-gray-100 pb-3" data-testid="legal-matter-timeline-note-creator">
-                  <p className="text-xs font-medium text-slate-600">Add note</p>
+                  <p className="text-xs font-medium text-[#4B5563]">Add note</p>
                   <textarea
                     className="w-full rounded-sm border border-gray-200 px-2 py-1 text-xs"
                     placeholder="Note"
@@ -546,7 +546,7 @@ export function LegalMatterDetailPage() {
                   <li key={String(ev.id ?? Math.random())} className="rounded-sm bg-gray-50 px-2 py-1">
                     <span className="font-semibold">{String(ev.event_type ?? "")}</span>{" "}
                     <span className="text-xs text-gray-500">{String(ev.created_at ?? "")}</span>
-                    <p className="mt-1 text-xs text-slate-700 whitespace-pre-wrap">{formatLegalMatterEventBody(ev)}</p>
+                    <p className="mt-1 text-xs text-[#1F2A44] whitespace-pre-wrap">{formatLegalMatterEventBody(ev)}</p>
                   </li>
                 ))}
               </ul>
