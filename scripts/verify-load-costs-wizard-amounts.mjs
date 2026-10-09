@@ -12,6 +12,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { exitIfMeasuredEmptyByPurge } from "./lib/purge-window.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-load-costs-wizard-amounts";
@@ -94,6 +95,8 @@ async function liveCheck() {
       [USMCA]
     );
     const n = loads.rows.length;
+    // Seeding freeze / post-purge: measured open_dispatch = 0 is EMPTY BY PURGE, not a broken pivot.
+    exitIfMeasuredEmptyByPurge("verify-load-costs-wizard-amounts", "USMCA open_dispatch loads", n);
     if (n < 1) throw new Error(`open_dispatch count ${n} — expected the canonical live set`);
     const ids = loads.rows.map((r) => r.id);
     const charges = await client.query(

@@ -37,7 +37,7 @@ export function staticViolations({ readScript, spec, state }) {
   // Lead ruling 2026-10-05: nine -> twelve (three measured-empty guards after AUTH-400).
   // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
   // LST-F423 (owner order 2026-10-06): thirteen -> seventeen — four more measured-empty guards.
-  if (PURGE_WINDOW_GUARDS.length !== 17) v.push(`the exemption lists ${PURGE_WINDOW_GUARDS.length} arms; exactly 17 are ruled (nine + four measured-empty, Lead 2026-10-05, + four measured-empty, owner 2026-10-06)`);
+  if (PURGE_WINDOW_GUARDS.length !== 18) v.push(`the exemption lists ${PURGE_WINDOW_GUARDS.length} arms; exactly 18 are ruled (nine + four measured-empty, Lead 2026-10-05, + four measured-empty, owner 2026-10-06, + load-costs measured-empty, Lead 2026-10-08)`);
   for (const arm of PURGE_WINDOW_GUARDS) {
     const src = readScript(arm);
     if (src == null) v.push(`${arm}: file missing`);

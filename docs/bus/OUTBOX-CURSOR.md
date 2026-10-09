@@ -2243,6 +2243,18 @@ LIVE PROOF: verify-complaints-types-dotviol-slate-leftover-chrome exit 0 — PAS
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: 3 FE surfaces + refuse guard + 3588 piggyback + OUTBOX
 
+## 2026-10-08T15:00Z · RENDER/CI ambient unblock — LeaseContractCreator + purge exit 75
+
+FINDING: RENDER-CI-AMBIENT — tip Render FE/BE live on 494da56 then 6d321ac; CI still red on entity-picker + required-live treating EMPTY_BY_PURGE_EXIT as fail
+LANE: NON-FINANCIAL
+LANE_CROSS: 2026-10-08-LEAD-RULING-CURSOR-LANE-CROSS-PURGE-LOAD-COSTS-CI.md
+ROOT CAUSE: (1) LeaseContractCreator multi-select listUnits tripped verify-entity-picker-unit-kind-sweep; (2) run-required-guards treated exit 75 as hard fail while money-pr accepts it; (3) verify-load-costs-wizard-amounts threw on open_dispatch=0 during seeding freeze
+FIX: allowlist LeaseContractCreator (multi-select + amounts); accept exit 75 for PURGE_WINDOW_GUARDS when window open; add load-costs to MEASURED_EMPTY_GUARDS (18 arms)
+GUARD: verify-entity-picker-unit-kind-sweep · verify-purge-window-exemption · run-required-guards.test · verify-load-costs-wizard-amounts --selftest
+LIVE PROOF: entity-picker OK; purge-window-exemption PASS (18 arms); run-required-guards.test 13/13; tip FE tsc -b exit 0; Render tip deploys triggered dep-db3quimgekts73frok9g / dep-db3quiqjnfac738f98q0
+REMAINING: merge + confirm tip Render live on 6d321ac; Production Post-Deploy neondb_owner SET ROLE ambient separate
+Files Modified: entity-picker allowlist · purge-window · load-costs guard · run-required-guards (+test) · purge count ratchets · Lead ruling · OUTBOX
+
 ## 2026-10-08T22:25Z · BANK leftover slate — LegalReports / ModuleCompletion / ReportFlyout
 
 FINDING: BANK-F91244 — LegalReportsLandingPage / ModuleCompletionPage / ReportFlyoutPanel Tailwind slate-* → house tokens

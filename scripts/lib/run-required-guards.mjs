@@ -1,6 +1,8 @@
 import { spawnSync } from 'node:child_process';
+import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { guardDbEnv } from './guard-db-url.mjs';
+import { EMPTY_BY_PURGE_EXIT, PURGE_WINDOW_GUARDS, purgeWindow } from './purge-window.mjs';
 
 export function formatLocalOutcomes(label, outcomes, deferredCount, exitCode) {
   return `${label}: LOCAL PHASE OUTCOMES passed=${outcomes.passed} failed=${outcomes.failed} skipped=${outcomes.skipped + deferredCount} gate_exit=${exitCode}; local skips are NOT live passes; required CI must execute them`;
@@ -14,6 +16,13 @@ export function reportedSkip(output) {
     /^\s*(?:\[[^\]]+\]\s*)?(?:[\w./-]+:\s*)?(?:SKIP(?:PED)?(?:[\s:—-]|$)|DEFERRED\b|EMPTY BY PURGE\b|STATIC ONLY\b|NO STATIC ASSERTION\b)/i.test(line) ||
     /\b[1-9]\d*\s+(?:(?:live\s+)?checks?(?:\(s\))?\s+)?skipped\b/i.test(line) ||
     /\bskipped["']?\s*[:=]\s*[1-9]\d*\b/i.test(line));
+}
+
+/** Match money-pr-local-gate: exit 75 is a named EMPTY BY PURGE pass only for allowlisted guards while the window is open. */
+export function acceptedAsEmptyByPurge(file, status) {
+  if (status !== EMPTY_BY_PURGE_EXIT) return false;
+  const guard = path.basename(String(file), '.mjs');
+  return PURGE_WINDOW_GUARDS.includes(guard) && purgeWindow().open;
 }
 
 // Run every check for a complete report; any failed, killed, or unstarted check
@@ -30,7 +39,10 @@ export function runRequiredGuards(files, spawn = spawnSync) {
       const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
       if (output) process.stdout.write(output);
       if (!result.error) summary.executed++;
-      if (result.error || result.signal || result.status !== 0) {
+      if (acceptedAsEmptyByPurge(file, result.status)) {
+        // Sanctioned EMPTY BY PURGE (exit 75) — same acceptance as money-pr-local-gate.
+        summary.passed++;
+      } else if (result.error || result.signal || result.status !== 0) {
         summary.failed++;
         failures.push({ file, status: result.status, signal: result.signal, error: result.error?.message });
       } else if (reportedSkip(output)) {

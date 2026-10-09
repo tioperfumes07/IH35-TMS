@@ -56,6 +56,9 @@ export const PURGE_WINDOW_GUARDS = Object.freeze([
   "verify-settlement-lines-have-accounts",
   "verify-no-future-dated-seed-expenses",
   "verify-settlement-tieout-01",
+  // Lead ruling 2026-10-08 (docs/bus/2026-10-08-LEAD-RULING-CURSOR-LANE-CROSS-PURGE-LOAD-COSTS-CI.md):
+  // open_dispatch count 0 during seeding freeze is measured empty, not a broken wizard-charge pivot.
+  "verify-load-costs-wizard-amounts",
 ]);
 
 /** The guards whose exemption is gated on a MEASURED live-row count (Lead ruling 2026-10-05). */
@@ -70,6 +73,8 @@ export const MEASURED_EMPTY_GUARDS = Object.freeze([
   "verify-settlement-lines-have-accounts",
   "verify-no-future-dated-seed-expenses",
   "verify-settlement-tieout-01",
+  // Lead ruling 2026-10-08 — measured open_dispatch live rows.
+  "verify-load-costs-wizard-amounts",
 ]);
 
 export const EXPECTED_ZERO_PATH = path.join(ROOT, "scripts/purge/usmca-purge-expected-zero.generated.json");

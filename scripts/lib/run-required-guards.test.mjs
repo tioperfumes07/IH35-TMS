@@ -4,8 +4,9 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { runRequiredGuards, reportedSkip, formatLocalOutcomes } from './run-required-guards.mjs';
+import { runRequiredGuards, reportedSkip, formatLocalOutcomes, acceptedAsEmptyByPurge } from './run-required-guards.mjs';
 import { CI_DATABASE_GUARDS, localDatabaseGuardArgs } from './local-db-guard-routing.mjs';
+import { EMPTY_BY_PURGE_EXIT } from './purge-window.mjs';
 import { classify as classifyStatic, STATIC_RESULT_CATEGORIES } from '../verify-static.mjs';
 import { runStep } from '../branch-precheck-push.mjs';
 
@@ -78,6 +79,21 @@ test('exit-zero skips fail required CI and are never counted as passes', () => {
   assert.equal(reportedSkip('passed=2 failed=0 skipped=0'), false);
   assert.equal(reportedSkip('guard: NO STATIC ASSERTION — required in CI'), true);
   assert.equal(reportedSkip('PASS — rejects a skip mutation'), false);
+});
+
+test('sanctioned EMPTY_BY_PURGE_EXIT (75) counts as pass for allowlisted guards while the window is open', () => {
+  // Unauthorized / non-allowlisted path still fails closed.
+  assert.equal(acceptedAsEmptyByPurge('scripts/verify-not-a-purge-guard.mjs', EMPTY_BY_PURGE_EXIT), false);
+  assert.equal(acceptedAsEmptyByPurge('scripts/verify-alwaystrack-parity.mjs', 1), false);
+  // Allowlisted + open window (purge_state.json seeding freeze is live on tip): exit 75 is a pass.
+  if (acceptedAsEmptyByPurge('scripts/verify-alwaystrack-parity.mjs', EMPTY_BY_PURGE_EXIT)) {
+    const result = runRequiredGuards(
+      ['scripts/verify-alwaystrack-parity.mjs', 'scripts/verify-control-totals.mjs'],
+      (_node, [file]) => ({ status: EMPTY_BY_PURGE_EXIT, stdout: `${path.basename(file, '.mjs')}: EMPTY BY PURGE` }),
+    );
+    assert.equal(result.length, 0);
+    assert.deepEqual(result.summary, { attempted: 2, executed: 2, passed: 2, failed: 0, skipped: 0 });
+  }
 });
 
 test('actual CLI rejects an exit-zero skip even with a database credential present', () => {
