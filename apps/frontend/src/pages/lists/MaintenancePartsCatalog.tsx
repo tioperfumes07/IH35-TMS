@@ -49,7 +49,7 @@ const COLUMNS: Array<ParityColumn<MaintPartRow>> = [
     label: "Category",
     sortable: true,
     render: (row) => (
-      <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs capitalize">{row.category.replace(/_/g, " ")}</span>
+      <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs capitalize">{row.category.replace(/_/g, " ")}</span>
     ),
   },
   {

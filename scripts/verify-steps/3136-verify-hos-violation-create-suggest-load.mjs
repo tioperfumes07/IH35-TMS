@@ -17,5 +17,6 @@ export default {
       );
     }
     await ctx.run("node", [SCRIPT]);
+    await ctx.run("node", ["scripts/verify-91159-help-runbooks-parts-slate-leftover-chrome.mjs"]);
   },
 };

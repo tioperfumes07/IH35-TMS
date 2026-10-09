@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91159 — HelpPage / RunbooksIndex / MaintenancePartsCatalog slate → house
+
+FINDING: BANK-F91159 — HelpPage / RunbooksIndex / MaintenancePartsCatalog Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26094 squash `c4dac44a33` (BANK-F91158 DisputeList/Resolve/VoidOverage)
+Files Modified: HelpPage.tsx · RunbooksIndex.tsx · MaintenancePartsCatalog.tsx · verify-91159-help-runbooks-parts-slate-leftover-chrome.mjs · verify-steps/3136-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91159-help-runbooks-parts-slate-leftover-chrome.mjs (piggy EVEN 3136)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91158 DONE (#26094 c4dac44a33)
+
 ## 2026-10-09 · BANK-F91158 — DisputeList / Resolve / VoidOverage slate → house
 
 FINDING: BANK-F91158 — SettlementDisputeList / SettlementDisputeResolveModal / VoidOverageModal Tailwind slate-* → house tokens
