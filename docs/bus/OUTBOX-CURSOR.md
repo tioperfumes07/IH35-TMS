@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91169 — WizardStep1 / WizardStep4 / WizardStep6 border slate → house
+
+FINDING: BANK-F91169 — WizardStep1 / WizardStep4 / WizardStep6 Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26104 squash `9f5c7b00384e` (BANK-F91168 Dup/Legal/425c)
+Files Modified: WizardStep1.tsx · WizardStep4.tsx · WizardStep6.tsx · verify-91169-border-wizard-steps-slate-leftover-chrome.mjs · verify-steps/2998-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91169-border-wizard-steps-slate-leftover-chrome.mjs (piggy EVEN 2998)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91168 DONE (#26104 9f5c7b00384e)
+
 ## 2026-10-09 · BANK-F91168 — DuplicateMasters / LegalAttorneyReview / Form425CHome slate → house
 
 FINDING: BANK-F91168 — DuplicateMastersReport / LegalAttorneyReviewPortalPage / Form425CHome Tailwind slate-* → house tokens
