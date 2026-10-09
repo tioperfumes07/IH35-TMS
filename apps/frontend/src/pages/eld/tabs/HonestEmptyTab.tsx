@@ -14,7 +14,7 @@ export function HonestEmptyTab({ title, body, testId }: Props) {
       data-testid={testId}
       data-eld-honest-empty="true"
     >
-      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#F7F8FA] text-[#1F2A44]">
         <Radio className="h-6 w-6" />
       </div>
       <h2 className="text-page-title font-semibold text-gray-900">{title}</h2>

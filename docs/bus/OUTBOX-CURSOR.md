@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91163 — BatchDetail / FactoringProfile / HonestEmptyTab slate → house
+
+FINDING: BANK-F91163 — BatchDetail / FactoringProfilePanel / HonestEmptyTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26098 squash `06ad829aa7` (BANK-F91162 PendingAck/CompanySettlements/Applicants)
+Files Modified: BatchDetail.tsx · FactoringProfilePanel.tsx · HonestEmptyTab.tsx · verify-91163-fact-eld-slate-leftover-chrome.mjs · verify-steps/3120-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91163-fact-eld-slate-leftover-chrome.mjs (piggy EVEN 3120)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91162 DONE (#26098 06ad829aa7)
+
 ## 2026-10-09 · BANK-F91162 — PendingAck / CompanySettlements / ApplicantsPipeline slate → house
 
 FINDING: BANK-F91162 — PendingAckNotice / CompanySettlementsPage / ApplicantsPipelinePage Tailwind slate-* → house tokens

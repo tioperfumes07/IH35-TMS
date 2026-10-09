@@ -5,5 +5,6 @@ export default {
   name: "verify-datepicker-classname-no-box-in-box",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-datepicker-classname-no-box-in-box.mjs"]);
+    await ctx.run("node", ["scripts/verify-91163-fact-eld-slate-leftover-chrome.mjs"]);
   },
 };

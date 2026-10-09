@@ -101,7 +101,7 @@ export function FactoringProfilePanel({ factor, saving, onSave, variant = "full"
         </div>
         <button
           type="button"
-          className="mt-2 text-xs font-medium text-slate-700 hover:underline"
+          className="mt-2 text-xs font-medium text-[#1F2A44] hover:underline"
           data-testid="factoring-profile-details-toggle"
           aria-expanded={detailsOpen}
           onClick={() => setDetailsOpen((v) => !v)}
