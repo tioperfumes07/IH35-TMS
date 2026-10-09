@@ -80,7 +80,7 @@ export function QboDocumentNumberField({
         autoComplete="off"
         spellCheck={false}
         inputMode="numeric"
-        className="h-7 w-full rounded-sm border border-gray-300 bg-white px-2 text-right text-xs font-mono text-slate-900 caret-slate-900 normal-case tracking-normal placeholder:text-gray-400"
+        className="h-7 w-full rounded-sm border border-gray-300 bg-white px-2 text-right text-xs font-mono text-[#0F1219] caret-[#0F1219] normal-case tracking-normal placeholder:text-gray-400"
         value={value}
         disabled={disabled || locked}
         placeholder=""

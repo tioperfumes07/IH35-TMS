@@ -12,7 +12,7 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 function variantClasses(variant: ButtonVariant) {
   if (variant === "tertiary") {
-    return "border-transparent bg-transparent text-slate-700 hover:bg-slate-100";
+    return "border-transparent bg-transparent text-[#1F2A44] hover:bg-[#F7F8FA]";
   }
   if (variant === "secondary") {
     return "border-gray-300 bg-white text-[#0F1219] hover:bg-gray-50";
