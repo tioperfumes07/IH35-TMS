@@ -53,9 +53,9 @@ export function formatBankTransactionSignedAmount(tx: Pick<PlaidBankTransaction,
 }
 
 function syncStatusClasses(status: string) {
-  if (status === "active") return "bg-slate-100 text-slate-700";
+  if (status === "active") return "bg-[#F7F8FA] text-[#1F2A44]";
   if (status === "pending") return "bg-gray-100 text-gray-700";
-  if (status === "needs_reauth") return "bg-slate-100 text-slate-700";
+  if (status === "needs_reauth") return "bg-[#F7F8FA] text-[#1F2A44]";
   if (status === "error") return "bg-red-100 text-red-700";
   if (status === "disconnected") return "bg-gray-200 text-gray-600 line-through";
   return "bg-gray-100 text-gray-700";
@@ -236,7 +236,7 @@ export function BankAccountDetailPage() {
         render: (s) => (
           <button
             type="button"
-            className="text-xs font-medium text-slate-700 hover:underline"
+            className="text-xs font-medium text-[#1F2A44] hover:underline"
             data-testid={`bank-account-detail-reconciliation-open-${s.id}`}
             onClick={() =>
               navigate(`/banking/reconciliation-workspace?session_id=${s.id}&bank_account_hint=${s.bank_account_id}`)

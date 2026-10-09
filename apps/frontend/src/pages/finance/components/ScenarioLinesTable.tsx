@@ -39,7 +39,7 @@ export function ScenarioLinesTable({ lines, operatingCompanyId, editable, invali
         label: "Kind",
         sortable: true,
         render: (row) => (
-          <span className={row.category_kind === "revenue" ? "font-medium text-slate-800" : "text-slate-600"}>
+          <span className={row.category_kind === "revenue" ? "font-medium text-[#1F2A44]" : "text-[#4B5563]"}>
             {row.category_kind}
           </span>
         ),
@@ -57,7 +57,7 @@ export function ScenarioLinesTable({ lines, operatingCompanyId, editable, invali
           ) : row.gl_account_id ? (
             <EntityLinkOrTombstone kind="account" id={row.gl_account_id} name={row.account_name} noun="Account" />
           ) : (
-            <span className="text-slate-400">—</span>
+            <span className="text-[#6B7280]">—</span>
           ),
       },
       {
@@ -85,7 +85,7 @@ export function ScenarioLinesTable({ lines, operatingCompanyId, editable, invali
           ) : row.actual_amount_cents != null ? (
             dollars(row.actual_amount_cents)
           ) : (
-            <span className="text-slate-400">not recorded</span>
+            <span className="text-[#6B7280]">not recorded</span>
           ),
       },
       {
@@ -94,10 +94,10 @@ export function ScenarioLinesTable({ lines, operatingCompanyId, editable, invali
         className: "text-right",
         cellClass: "text-right tabular-nums",
         render: (row) => {
-          if (row.actual_amount_cents == null) return <span className="text-slate-400">—</span>;
+          if (row.actual_amount_cents == null) return <span className="text-[#6B7280]">—</span>;
           const diff = row.actual_amount_cents - row.estimate_amount_cents;
           const favorable = row.category_kind === "revenue" ? diff >= 0 : diff <= 0;
-          return <span className={favorable ? "text-slate-700" : "text-red-600"}>{dollars(diff)}</span>;
+          return <span className={favorable ? "text-[#1F2A44]" : "text-red-600"}>{dollars(diff)}</span>;
         },
       },
     ],
