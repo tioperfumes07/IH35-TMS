@@ -1,6 +1,6 @@
 {
  "date": "2026-10-09",
- "generated_at_iso": "2026-10-09T12:44:11.529Z",
+ "generated_at_iso": "2026-10-09T18:38:14.094Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -3427,10 +3427,10 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #23096 merged 2026-09-29",
+   "evidence": "all 2 file(s) on main",
    "name": "B2: session-middleware IH35_TEST_AUTH_BYPASS NODE_ENV gate + boot assertion + freshness check GR-1 baseline filter fix",
    "registered_on": null,
-   "pr": 23096
+   "pr": 25931
   },
   {
    "id": "DISP-FACTORING-PACKET",
@@ -13738,6 +13738,54 @@
  ],
  "merged_prs": [
   {
+   "number": 26149,
+   "title": "Cursor- BANK-F91153 — bank feed buttons feel like buttons (filled Add/Match/Undo + Button affordance)",
+   "mergedAt": "2026-10-09T18:27:13Z",
+   "branch": "cursor/bank-button-feel-c89b"
+  },
+  {
+   "number": 26148,
+   "title": "Claude-3- OUTBOX: main frontend vitest debt is 80 files / 168 tests",
+   "mergedAt": "2026-10-09T17:29:31Z",
+   "branch": "cc-3/outbox-fe-test-debt"
+  },
+  {
+   "number": 26147,
+   "title": "Cursor- BANK-F91152 — Categorize CoA = QBO Category; register Expense/Deposit",
+   "mergedAt": "2026-10-09T17:24:59Z",
+   "branch": "cursor/bank-martin-categorize-qbo-parity-c89b"
+  },
+  {
+   "number": 26146,
+   "title": "Devin — ROUND 432 selftest census 52/52 and fail-closed tail",
+   "mergedAt": "2026-10-09T14:57:37Z",
+   "branch": "devin-a/432-selftests-tail"
+  },
+  {
+   "number": 26145,
+   "title": "Cursor- OUTBOX #26144 BANK-F432 FAST-MERGED + Devin inbox live",
+   "mergedAt": "2026-10-09T14:27:08Z",
+   "branch": "cursor/outbox-f432-merged-c89b"
+  },
+  {
+   "number": 26144,
+   "title": "Cursor- BANK-F432 leftover multi-select on register type + match-drawer record type",
+   "mergedAt": "2026-10-09T14:23:37Z",
+   "branch": "cursor/bank-f432-multiselect-money-c89b"
+  },
+  {
+   "number": 26143,
+   "title": "Cursor- OUTBOX — #25927 RENDER-CI-AMBIENT FAST-MERGED + 48h report pointer",
+   "mergedAt": "2026-10-09T13:56:16Z",
+   "branch": "cursor/outbox-25927-merged-c89b"
+  },
+  {
+   "number": 26142,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-09T12:44:59Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 26141,
    "title": "Cursor-BANK-F91205 MyPosition / LoudAlertOverlay / HosCell slate → house",
    "mergedAt": "2026-10-09T11:25:03Z",
@@ -15020,6 +15068,12 @@
    "title": "Cursor- BANK-F91250 PhotoComparison/RandomTestingPool/DriverScheduler slate leftover → house tokens",
    "mergedAt": "2026-10-08T15:18:48Z",
    "branch": "cursor/bank-slate-safety-photo-pool-sched-c89b"
+  },
+  {
+   "number": 25927,
+   "title": "Cursor- RENDER-CI-AMBIENT — purge exit 75 + load-costs measured-empty",
+   "mergedAt": "2026-10-09T13:45:53Z",
+   "branch": "cursor/render-ci-ambient-unblock-5721"
   },
   {
    "number": 25926,
@@ -17282,60 +17336,6 @@
    "title": "Claude-1- R433 palette: every unselected box + section7 maintenance/banking guards green",
    "mergedAt": "2026-10-06T14:03:30Z",
    "branch": "cc-1/r433-palette-unselected-everywhere"
-  },
-  {
-   "number": 25541,
-   "title": "Claude-1- R433 breadcrumb app-wide (U18)",
-   "mergedAt": "2026-10-06T14:00:43Z",
-   "branch": "cc-1/r433-breadcrumb-app-wide"
-  },
-  {
-   "number": 25540,
-   "title": "Claude-1- R433 palette tokens: warm page, unselected surfaces (owner 10-06)",
-   "mergedAt": "2026-10-06T14:00:31Z",
-   "branch": "cc-1/r433-palette-tokens"
-  },
-  {
-   "number": 25539,
-   "title": "Claude-1- CLAIM-RESERVE 18313 breadcrumb verify-step",
-   "mergedAt": "2026-10-06T13:58:56Z",
-   "branch": "claude/claim-reserve-breadcrumb"
-  },
-  {
-   "number": 25538,
-   "title": "Lead — BANK-F430 UNCATEGORIZED caption counts one population (989 of 989)",
-   "mergedAt": "2026-10-06T13:56:51Z",
-   "branch": "claude/bank-f430"
-  },
-  {
-   "number": 25537,
-   "title": "Devin — build order item 1 batch 3 (final 12): --selftest on every post-09-30 guard",
-   "mergedAt": "2026-10-06T13:56:55Z",
-   "branch": "claude/devin-guard-selftests-03"
-  },
-  {
-   "number": 25536,
-   "title": "Cursor- BANK-F91559 DriversList leftover slate + leftover refuse",
-   "mergedAt": "2026-10-06T13:55:28Z",
-   "branch": "cursor/bank-f91559-drv-list-slate-c89b"
-  },
-  {
-   "number": 25535,
-   "title": "Claude-3- ROUND 432-CC3: 2170 bill-payment ceiling 90->0 + Relay/posted_to_gl/367.7 report",
-   "mergedAt": "2026-10-06T13:54:15Z",
-   "branch": "cc-3/bill-payment-ceiling-zero"
-  },
-  {
-   "number": 25534,
-   "title": "Cursor- BANK-F91558 DriversTable leftover slate + leftover refuse",
-   "mergedAt": "2026-10-06T13:51:40Z",
-   "branch": "cursor/bank-f91558-drv-table-slate-c89b"
-  },
-  {
-   "number": 25533,
-   "title": "chore: claim-reserve verify-steps 18173 + 18174 (Lead, BANK-F430/F431)",
-   "mergedAt": "2026-10-06T13:49:44Z",
-   "branch": "chore/claim-reserve-18173-18174"
   }
  ],
  "merged_pr_total": 3000,
