@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91090 — Allocations / DisputesHub / RecurringBillCreate slate → house
+## 2026-10-08 · BANK-F91091 — BankAcctDetail / ReconTab / ScenarioLines slate → house
+
+FINDING: BANK-F91091 — BankAccountDetail / ReconciliationTabContent / ScenarioLinesTable Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26025 squash `e86eac0acd` (BANK-F91090 Alloc/Disputes/RecurBill)
+GUARD: scripts/verify-91091-bankacct-recon-scenario-slate-leftover-chrome.mjs + verify-steps/3756 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: BankAccountDetail + ReconciliationTabContent + ScenarioLinesTable + refuse guard + 3756 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91090 DONE — Allocations / DisputesHub / RecurringBillCreate slate → house #26025
 
 FINDING: BANK-F91090 — AllocationsPage / DisputesHubPage / RecurringBillCreate Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26024 squash `6bd36bba2d` (BANK-F91089 FactRecourse/PurchLinks/Interest)
+MERGED: #26025 squash `e86eac0acd`
 GUARD: scripts/verify-91090-alloc-disputes-recurbill-slate-leftover-chrome.mjs + verify-steps/3758 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: AllocationsPage + DisputesHubPage + RecurringBillCreate + refuse guard + 3758 piggyback + OUTBOX
 
