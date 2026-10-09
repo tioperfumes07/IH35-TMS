@@ -68,7 +68,7 @@ function ApplicantCard({
           kind="onboarding_session"
           id={row.onboarding_session_id}
           label="Open onboarding wizard"
-          className="block text-xs text-slate-700 hover:underline"
+          className="block text-xs text-[#1F2A44] hover:underline"
         />
       ) : null}
     </article>
