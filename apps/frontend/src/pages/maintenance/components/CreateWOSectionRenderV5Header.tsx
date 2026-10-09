@@ -16,7 +16,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 function Cell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="space-y-0.5">
-      <span className="font-semibold text-slate-600">{label}</span>
+      <span className="font-semibold text-[#4B5563]">{label}</span>
       {children}
     </label>
   );
@@ -45,7 +45,7 @@ export function CreateWOSectionRenderV5Header({
     u.name?.trim() || `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || u.email || "—";
 
   return (
-    <section data-testid="wo-renderv5-header" className="rounded-sm border border-slate-300 bg-white p-2 text-xs">
+    <section data-testid="wo-renderv5-header" className="rounded-sm border border-[#E5E7EB] bg-white p-2 text-xs">
       <div className="mb-1 font-semibold text-[#1F2A44]">Work order header</div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         <Cell label="Status">

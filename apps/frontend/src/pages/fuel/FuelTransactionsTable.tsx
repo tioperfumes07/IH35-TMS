@@ -106,7 +106,7 @@ export function FuelTransactionsTable({ rows, operatingCompanyId, suppressToolba
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44] disabled:opacity-50"
             onClick={() => {
               if (rows.length === 0) {
                 pushToast("No fuel transactions to export.", "info");
@@ -121,7 +121,7 @@ export function FuelTransactionsTable({ rows, operatingCompanyId, suppressToolba
             type="button"
             disabled
             title="Bulk categorize is not available yet."
-            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44] disabled:opacity-50"
             onClick={() => pushToast("Bulk categorize is not available yet.", "info")}
           >
             Categorize

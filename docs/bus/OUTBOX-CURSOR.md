@@ -1,3 +1,17 @@
+## 2026-10-08 · BANK-F91128 — IntegrationsStrip / CreateWOHeader / FuelTransactions slate → house
+
+FINDING: BANK-F91128 — IntegrationsStrip / CreateWOSectionRenderV5Header / FuelTransactionsTable Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26062 squash `e0639993a8` (BANK-F91127 TeamSplit/Retention/PendingDeductions)
+Files Modified: IntegrationsStrip.tsx · CreateWOSectionRenderV5Header.tsx · FuelTransactionsTable.tsx · verify-91128-maint-fuel-tb-slate-leftover-chrome.mjs · verify-steps/3510-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91128-maint-fuel-tb-slate-leftover-chrome.mjs (piggy EVEN 3510)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91127 DONE (#26062 e0639993a8)
+
+## 2026-10-08 · BANK-F91127 DONE (#26062 e0639993a8)
+
 ## 2026-10-08 · BANK-F91127 — TeamSplit / Retention / PendingDeductions slate → house
 
 FINDING: BANK-F91127 — TeamSplitConfig / RetentionDashboard / PendingSettlementDeductionsPanel Tailwind slate-* → house tokens
