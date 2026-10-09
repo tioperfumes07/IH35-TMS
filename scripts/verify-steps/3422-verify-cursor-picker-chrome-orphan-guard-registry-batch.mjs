@@ -20,5 +20,7 @@ export default {
   name: "verify-cursor-picker-chrome-orphan-guard-registry-batch",
   async run(ctx) {
     for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
+    // BANK-F91135 piggy — Vendor/Unit/Driver border reverse slate leftover refuse
+    await ctx.run("node", ["scripts/verify-91135-border-rev-slate-leftover-chrome.mjs"]);
   },
 };

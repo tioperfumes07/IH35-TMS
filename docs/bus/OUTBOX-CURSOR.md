@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91135 — Vendor/Unit/Driver BorderCrossings reverse slate → house
+
+FINDING: BANK-F91135 — VendorBorderCrossingsReverseSection / UnitBorderCrossingsReverseSection / DriverBorderCrossingsReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26069 squash `ec88d761fd` (BANK-F91134 UnitPartsHistory/CurrentLoad/ComparableUnits)
+Files Modified: VendorBorderCrossingsReverseSection.tsx · UnitBorderCrossingsReverseSection.tsx · DriverBorderCrossingsReverseSection.tsx · verify-91135-border-rev-slate-leftover-chrome.mjs · verify-steps/3422-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91135-border-rev-slate-leftover-chrome.mjs (piggy EVEN 3422)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91134 DONE (#26069 ec88d761fd)
+
 ## 2026-10-08 · BANK-F91134 — UnitPartsHistory / CurrentLoad / ComparableUnits slate → house
 
 FINDING: BANK-F91134 — UnitPartsHistorySection / CurrentLoadSection / ComparableUnitsWidget Tailwind slate-* → house tokens
