@@ -26,12 +26,12 @@ export function TotalsStack({
   return (
     <div className="totals-stack overflow-hidden rounded-sm border border-gray-300 bg-white text-xs" data-testid="totals-stack">
       <div className="totals-row flex items-center justify-end gap-6 px-[18px] py-[7px]">
-        <span className="font-semibold text-slate-600">Subtotal</span>
-        <span className="font-semibold text-slate-900">${subtotal.toFixed(2)}</span>
+        <span className="font-semibold text-[#4B5563]">Subtotal</span>
+        <span className="font-semibold text-[#0F1219]">${subtotal.toFixed(2)}</span>
       </div>
       <div className="totals-row flex items-center justify-end gap-6 border-t border-gray-200 px-[18px] py-[7px]">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-slate-600">{taxDisplayOnly ? "Tax % (display only)" : "Tax %"}</span>
+          <span className="font-semibold text-[#4B5563]">{taxDisplayOnly ? "Tax % (display only)" : "Tax %"}</span>
           <input
             className="tax-input w-[60px] rounded-sm border border-gray-300 px-[6px] py-[3px] text-right"
             type="number"
@@ -42,7 +42,7 @@ export function TotalsStack({
             aria-label={taxDisplayOnly ? "Tax percent display only" : "Tax percent"}
           />
         </div>
-        <span className="font-semibold text-slate-900" data-testid="totals-stack-tax-amount">
+        <span className="font-semibold text-[#0F1219]" data-testid="totals-stack-tax-amount">
           ${taxAmount.toFixed(2)}
         </span>
       </div>

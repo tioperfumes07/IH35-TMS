@@ -87,14 +87,14 @@ export function FuelFraudAlertsReverseSection({
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           Fuel fraud alerts
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
         {/* ROUND 297 audit (drill): land on the same record's alerts (the list page reads the scope param). */}
         <Link
           to={`/fuel/fraud-alerts?${new URLSearchParams(Object.entries(filter).filter(([, v]) => Boolean(v)) as Array<[string, string]>).toString()}`}
-          className="text-xs font-semibold text-slate-700 hover:underline"
+          className="text-xs font-semibold text-[#1F2A44] hover:underline"
         >
           Open Fraud Alerts
         </Link>
@@ -118,10 +118,10 @@ export function FuelFraudAlertsReverseSection({
             const severity = severityBadge(row.severity);
             const recovery = recoveryStatusBadge(row.recovery_status);
             return (
-              <li key={row.uuid} className="text-xs text-slate-700" data-testid={`fuel-fraud-alert-${row.uuid}`}>
+              <li key={row.uuid} className="text-xs text-[#1F2A44]" data-testid={`fuel-fraud-alert-${row.uuid}`}>
                 {/* rule_id is a fraud-rule code (e.g. VELOCITY_SPIKE), not a foreign key — there is
                     no rule detail page to drill to, so it renders as text, not an EntityLink. */}
-                <span className="font-mono font-medium text-slate-900">{`${row.rule_id}`}</span>
+                <span className="font-mono font-medium text-[#0F1219]">{`${row.rule_id}`}</span>
                 <span className="ml-2 inline-flex items-center gap-1">
                   <StatusBadge variant={severity.variant}>{severity.label}</StatusBadge>
                   <StatusBadge variant={status.variant}>{status.label}</StatusBadge>
