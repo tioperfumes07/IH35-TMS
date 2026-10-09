@@ -8,5 +8,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-loan-wizard-payload-complete.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-loan-wizard-payload-complete.mjs"]);
+    await ctx.run("node", ["scripts/verify-91204-paymentslist-slate-leftover-chrome.mjs"]);
   },
 };

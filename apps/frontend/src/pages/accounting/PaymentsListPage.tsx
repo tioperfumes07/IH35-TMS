@@ -217,7 +217,7 @@ export function PaymentsListPage() {
         render: (row) => {
           const variance = paymentVarianceCents(row);
           return (
-            <span className={`font-semibold ${variance !== 0 ? "text-red-700" : "text-slate-400"}`}>{money(variance)}</span>
+            <span className={`font-semibold ${variance !== 0 ? "text-red-700" : "text-[#6B7280]"}`}>{money(variance)}</span>
           );
         },
       },
