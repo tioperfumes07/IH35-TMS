@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91170 — UndepositedFunds / CoA Sync / BillAllocation slate → house
+
+FINDING: BANK-F91170 — UndepositedFundsPage / ChartOfAccountsSyncPanel / BillAllocationPanel Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26105 squash `0471416eaee4` (BANK-F91169 Border wizard)
+Files Modified: UndepositedFundsPage.tsx · ChartOfAccountsSyncPanel.tsx · BillAllocationPanel.tsx · verify-91170-acct-alloc-slate-leftover-chrome.mjs · verify-steps/2980-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91170-acct-alloc-slate-leftover-chrome.mjs (piggy EVEN 2980)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91169 DONE (#26105 0471416eaee4)
+
 ## 2026-10-09 · BANK-F91169 — WizardStep1 / WizardStep4 / WizardStep6 border slate → house
 
 FINDING: BANK-F91169 — WizardStep1 / WizardStep4 / WizardStep6 Tailwind slate-* → house tokens
