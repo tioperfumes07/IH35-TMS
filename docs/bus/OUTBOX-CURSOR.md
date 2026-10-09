@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91150 — HosExceptions / DriverSchedulerRequest / DriverLeaveBalances slate → house
+
+FINDING: BANK-F91150 — HosExceptionsPage / DriverSchedulerRequestDetailPage / DriverLeaveBalancesPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26085 squash `ed41fd44de` (BANK-F91149 Unit/Tasks)
+Files Modified: HosExceptionsPage.tsx · DriverSchedulerRequestDetailPage.tsx · DriverLeaveBalancesPage.tsx · verify-91150-hos-sched-slate-leftover-chrome.mjs · verify-steps/3340-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91150-hos-sched-slate-leftover-chrome.mjs (piggy EVEN 3340)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91149 DONE (#26085 ed41fd44de)
+
 ## 2026-10-09 · BANK-F91149 — UnitDriverHistory / UnitDetail / TasksModuleTabs slate → house
 
 FINDING: BANK-F91149 — UnitDriverHistoryStrip / UnitDetail / TasksModuleTabs Tailwind slate-* → house tokens

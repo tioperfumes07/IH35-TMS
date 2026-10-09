@@ -73,7 +73,7 @@ export function DriverSchedulerRequestDetailPage() {
     <div className="space-y-3">
       <PageHeader title="Leave request" subtitle={req ? String(req.request_number) : "…"} />
       <div className="mb-2">
-        <Link to="/safety/scheduler/pending-requests" className="text-xs text-slate-700 hover:underline">
+        <Link to="/safety/scheduler/pending-requests" className="text-xs text-[#1F2A44] hover:underline">
           ← Pending queue
         </Link>
       </div>
