@@ -55,12 +55,12 @@ export function DriverSettlementFinanceReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">Settlement disputes &amp; liabilities</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">Settlement disputes &amp; liabilities</h3>
         <EntityLink
           kind="settlement_disputes_driver"
           id={driverId}
           label="Open Disputes"
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
         />
       </div>
       <p className="text-xs text-gray-600">
@@ -80,7 +80,7 @@ export function DriverSettlementFinanceReverseSection({
 
       {disputes.length > 0 ? (
         <div data-testid="driver-settlement-disputes">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Disputes</h4>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Disputes</h4>
           <ul className="mt-1 space-y-2">
             {disputes.map((d) => (
               <li key={d.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
@@ -88,7 +88,7 @@ export function DriverSettlementFinanceReverseSection({
                   kind="settlement"
                   id={d.settlement_id}
                   label={entityLabel(d.settlement_display_id ?? null, d.settlement_id, "Settlement")}
-                  className="font-semibold text-slate-700"
+                  className="font-semibold text-[#1F2A44]"
                 />
                 {/* COL-06: period_start/period_end are already on this row (listSettlementDisputes
                     already selects s.period_start/s.period_end) -- just never rendered here. */}
@@ -109,7 +109,7 @@ export function DriverSettlementFinanceReverseSection({
                       kind="journal_entry"
                       id={d.resolution_journal_entry_id}
                       label="Corrective JE"
-                      className="text-xs font-semibold text-slate-700 underline"
+                      className="text-xs font-semibold text-[#1F2A44] underline"
                     />
                   </span>
                 ) : null}
@@ -121,7 +121,7 @@ export function DriverSettlementFinanceReverseSection({
 
       {liabilities.length > 0 ? (
         <div data-testid="driver-liabilities">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Liabilities</h4>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Liabilities</h4>
           <ul className="mt-1 space-y-2">
             {liabilities.map((l) => {
               const id = String(l.id ?? "");
@@ -131,7 +131,7 @@ export function DriverSettlementFinanceReverseSection({
                     kind="liability"
                     id={id}
                     label={entityLabel(l.type as string | null, id, "Liability")}
-                    className="font-semibold text-slate-700"
+                    className="font-semibold text-[#1F2A44]"
                   />
                   <span className="ml-2 text-gray-600">
                     {String(l.display_status ?? "active")} — $

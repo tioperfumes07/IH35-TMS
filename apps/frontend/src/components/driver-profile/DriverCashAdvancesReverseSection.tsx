@@ -60,10 +60,10 @@ export function DriverCashAdvancesReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">Cash advances</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">Cash advances</h3>
         <Link
           to={`/driver-finance/cash-advance-requests?driver_id=${encodeURIComponent(driverId)}`}
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
           data-testid="driver-cash-advances-view-requests"
         >
           Open Pending Requests
@@ -84,7 +84,7 @@ export function DriverCashAdvancesReverseSection({
 
       {pending.length > 0 ? (
         <div data-testid="driver-cash-advance-requests-pending">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending requests</h4>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Pending requests</h4>
           <ul className="mt-1 space-y-2">
             {pending.map((r) => {
               const id = String((r as Record<string, unknown>).id ?? "");
@@ -94,7 +94,7 @@ export function DriverCashAdvancesReverseSection({
                     kind="cash_advance_request"
                     id={id}
                     label={entityLabel((r as Record<string, unknown>).display_id as string | null, id, "Request")}
-                    className="font-semibold text-slate-700"
+                    className="font-semibold text-[#1F2A44]"
                   />
                   <span className="ml-2 text-gray-600">
                     {money((r as Record<string, unknown>).requested_amount_cents)} — {String((r as Record<string, unknown>).status ?? "pending")}
@@ -109,10 +109,10 @@ export function DriverCashAdvancesReverseSection({
       {advances.length > 0 ? (
         <div data-testid="driver-cash-advances-disbursed">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Advances</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Advances</h4>
             <Link
               to={`/cash-advances?driver_id=${encodeURIComponent(driverId)}`}
-              className="text-xs font-semibold text-slate-700 underline"
+              className="text-xs font-semibold text-[#1F2A44] underline"
               data-testid="driver-cash-advances-view-all"
             >
               View all
@@ -128,7 +128,7 @@ export function DriverCashAdvancesReverseSection({
                     kind="cash_advance"
                     id={id}
                     label={entityLabel(row.display_id as string | null, id, "Advance")}
-                    className="font-semibold text-slate-700"
+                    className="font-semibold text-[#1F2A44]"
                   />
                   <span className="ml-2 text-gray-600">
                     {money(row.amount)} — {String(row.disbursement_status ?? "pending_approval")}

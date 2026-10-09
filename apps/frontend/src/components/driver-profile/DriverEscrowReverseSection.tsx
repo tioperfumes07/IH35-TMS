@@ -41,9 +41,9 @@ export function DriverEscrowReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">Escrow</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">Escrow</h3>
         {!isLoading && !isError ? (
-          <span className="text-xs font-semibold text-slate-900" data-testid="driver-escrow-total-balance">
+          <span className="text-xs font-semibold text-[#0F1219]" data-testid="driver-escrow-total-balance">
             {formatUsdCents(totalBalanceCents)}
           </span>
         ) : null}
@@ -60,8 +60,8 @@ export function DriverEscrowReverseSection({
         <ul className="space-y-1" data-testid="driver-escrow-accounts">
           {accounts.map((a) => (
             <li key={a.id} className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1 text-xs">
-              <span className="text-slate-700">{a.purpose || "Escrow"}</span>
-              <span className="font-semibold text-slate-900">{formatUsdCents(a.balance_cents)}</span>
+              <span className="text-[#1F2A44]">{a.purpose || "Escrow"}</span>
+              <span className="font-semibold text-[#0F1219]">{formatUsdCents(a.balance_cents)}</span>
             </li>
           ))}
         </ul>
@@ -69,11 +69,11 @@ export function DriverEscrowReverseSection({
 
       {postings.length > 0 ? (
         <div data-testid="driver-escrow-postings">
-          <h4 className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Recent postings</h4>
+          <h4 className="mt-2 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Recent postings</h4>
           <ul className="mt-1 space-y-1">
             {postings.map((p) => (
               <li key={p.id} className="flex items-center justify-between gap-2 rounded-sm border border-gray-100 px-2 py-1 text-xs">
-                <span className="min-w-0 text-slate-700">
+                <span className="min-w-0 text-[#1F2A44]">
                   {p.posting_type} — {p.note?.trim() || p.source_type || "—"}
                   {p.linked_journal_entry_id ? (
                     <>
@@ -86,7 +86,7 @@ export function DriverEscrowReverseSection({
                     </>
                   ) : null}
                 </span>
-                <span className="shrink-0 font-semibold text-slate-900">{formatUsdCents(p.amount_cents)}</span>
+                <span className="shrink-0 font-semibold text-[#0F1219]">{formatUsdCents(p.amount_cents)}</span>
               </li>
             ))}
           </ul>
