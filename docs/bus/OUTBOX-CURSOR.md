@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91136 — TrainingRecords / DriverTeams / PaymentMethods slate → house
+
+FINDING: BANK-F91136 — TrainingRecordsSection / DriverTeamsReverseSection / DriverPaymentMethodsCard Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26070 squash `fb6a4707a6` (BANK-F91135 Vendor/Unit/Driver BorderCrossings reverse)
+Files Modified: TrainingRecordsSection.tsx · DriverTeamsReverseSection.tsx · DriverPaymentMethodsCard.tsx · verify-91136-drv-prof-slate-leftover-chrome.mjs · verify-steps/3418-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91136-drv-prof-slate-leftover-chrome.mjs (piggy EVEN 3418)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91135 DONE (#26070 fb6a4707a6)
+
 ## 2026-10-09 · BANK-F91135 — Vendor/Unit/Driver BorderCrossings reverse slate → house
 
 FINDING: BANK-F91135 — VendorBorderCrossingsReverseSection / UnitBorderCrossingsReverseSection / DriverBorderCrossingsReverseSection Tailwind slate-* → house tokens
