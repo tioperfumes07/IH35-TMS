@@ -124,7 +124,7 @@ export function LoadStatusChanger({
               type="button"
               role="menuitem"
               data-testid={`load-status-changer-option-${loadId}-${t.target}`}
-              className="block w-full px-3 py-1 text-left text-xs text-gray-800 hover:bg-slate-100"
+              className="block w-full px-3 py-1 text-left text-xs text-gray-800 hover:bg-[#F7F8FA]"
               onClick={(event) => {
                 event.stopPropagation();
                 setOpen(false);
@@ -139,7 +139,7 @@ export function LoadStatusChanger({
               type="button"
               role="menuitem"
               data-testid={`load-status-changer-option-${loadId}-invoiced`}
-              className="block w-full px-3 py-1 text-left text-xs text-gray-800 hover:bg-slate-100"
+              className="block w-full px-3 py-1 text-left text-xs text-gray-800 hover:bg-[#F7F8FA]"
               onClick={(event) => {
                 event.stopPropagation();
                 setOpen(false);
