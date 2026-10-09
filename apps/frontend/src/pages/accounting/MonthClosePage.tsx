@@ -181,7 +181,7 @@ export function MonthClosePage() {
       key: "complete",
       label: "Status",
       render: (row) => (
-        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+        <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">
           {row.complete ? "Complete" : row.reviewed ? "Reviewed" : "Pending"}
         </span>
       ),
@@ -192,7 +192,7 @@ export function MonthClosePage() {
       label: "Action",
       render: (row) => (
         <div className="flex flex-wrap items-center gap-2">
-          <Link to={row.href} className="text-xs font-medium text-slate-700 hover:underline">
+          <Link to={row.href} className="text-xs font-medium text-[#1F2A44] hover:underline">
             Open
           </Link>
           {row.canAcknowledge && row.ackItem ? (
@@ -214,11 +214,11 @@ export function MonthClosePage() {
     <AccountingSubNavWrapper title="Month close wizard" subtitle="Review month-end checklist and lock the period only when all required checks are green.">
 
       {!companyId ? (
-        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">Select an operating company before running month close.</p>
+        <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">Select an operating company before running month close.</p>
       ) : null}
 
       <div className="mb-3 flex flex-wrap items-center gap-3 text-xs">
-        <Link to="/reports/audit/period-close-history" className="font-medium text-slate-700 hover:underline">
+        <Link to="/reports/audit/period-close-history" className="font-medium text-[#1F2A44] hover:underline">
           Period close history
         </Link>
         <span className="text-gray-400">·</span>
