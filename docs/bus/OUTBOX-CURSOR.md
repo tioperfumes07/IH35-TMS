@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91175 — SubNavCounts / StatusBarPopover / AccountingKpiBar slate → house
+
+FINDING: BANK-F91175 — SubNavCounts / StatusBarPopover / AccountingKpiBar Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26110 squash `a214e2e72db8` (BANK-F91174 BookLoad/Border)
+Files Modified: SubNavCounts.tsx · StatusBarPopover.tsx · AccountingKpiBar.tsx · verify-91175-layout-home-slate-leftover-chrome.mjs · verify-steps/2970-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91175-layout-home-slate-leftover-chrome.mjs (piggy EVEN 2970)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91174 DONE (#26110 a214e2e72db8)
+
 ## 2026-10-09 · BANK-F91174 — LocationPicker / BookLoadValidation / BorderHistory slate → house
 
 FINDING: BANK-F91174 — LocationPicker / BookLoadValidationSection / BorderCrossingHistoryPage Tailwind slate-* → house tokens

@@ -17,7 +17,7 @@ export function AccountingKpiBar({ data, isLoading }: Props) {
     return (
       <section className="grid grid-cols-1 gap-2 md:grid-cols-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-[72px] animate-pulse rounded-sm border border-slate-200 bg-slate-50" />
+          <div key={i} className="h-[72px] animate-pulse rounded-sm border border-[#E5E7EB] bg-[#F7F8FA]" />
         ))}
       </section>
     );
