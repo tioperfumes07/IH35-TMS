@@ -108,7 +108,7 @@ export function UnitPartsHistorySection({ unitId, companyId }: Props) {
         <h2 className="text-xs font-semibold text-gray-800">Parts Used</h2>
         <Link
           to={`/inventory/assignments?unit_id=${encodeURIComponent(unitId)}`}
-          className="text-xs text-slate-700 hover:underline"
+          className="text-xs text-[#1F2A44] hover:underline"
         >
           View all assignments
         </Link>
@@ -131,7 +131,7 @@ export function UnitPartsHistorySection({ unitId, companyId }: Props) {
       ) : (
         <div className="mt-3">
           {totalCount ? (
-            <p className="mb-2 text-xs text-slate-500" data-testid="unit-parts-history-range">
+            <p className="mb-2 text-xs text-[#6B7280]" data-testid="unit-parts-history-range">
               {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount} parts assignments
             </p>
           ) : null}

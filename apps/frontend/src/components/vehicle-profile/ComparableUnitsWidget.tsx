@@ -72,7 +72,7 @@ export function ComparableUnitsWidget({
       ) : null}
       <p className="text-xs text-gray-800">
         Truck{" "}
-        <EntityLinkOrTombstone kind="unit" id={unitId} name={unitNumber} noun="Unit" className="font-medium text-slate-700 hover:underline" />{" "}
+        <EntityLinkOrTombstone kind="unit" id={unitId} name={unitNumber} noun="Unit" className="font-medium text-[#1F2A44] hover:underline" />{" "}
         is rank {comparable.rank_in_fleet ?? "—"} of {comparable.total_units_in_fleet ?? "—"} in fleet.
       </p>
       <p className="text-xs text-gray-600">
@@ -82,7 +82,7 @@ export function ComparableUnitsWidget({
       </p>
       <button
         type="button"
-        className="mt-2 text-xs text-slate-700 underline"
+        className="mt-2 text-xs text-[#1F2A44] underline"
         aria-expanded={open}
         aria-controls="fleet-unit-comparison-detail"
         onClick={() => setOpen(!open)}

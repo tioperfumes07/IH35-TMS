@@ -3,6 +3,8 @@ export default {
   name: "verify-selectcombobox-single-frame-vertical",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-selectcombobox-single-frame-vertical.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-91134-veh-profile-slate-leftover-chrome.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-91134-veh-profile-slate-leftover-chrome.mjs"]);
     return ctx.run("node", ["scripts/verify-selectcombobox-single-frame-vertical.mjs"]);
   },
 };
