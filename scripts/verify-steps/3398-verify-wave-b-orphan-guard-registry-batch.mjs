@@ -20,5 +20,7 @@ export default {
   name: "verify-wave-b-orphan-guard-registry-batch",
   async run(ctx) {
     for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
+    // BANK-F91141 piggy — PeriodClose/Abandonment/PostingGrid slate leftover refuse
+    await ctx.run("node", ["scripts/verify-91141-acct-queue-slate-leftover-chrome.mjs"]);
   },
 };

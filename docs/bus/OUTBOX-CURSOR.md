@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91141 — PeriodClose / AbandonmentQueue / PostingGrid slate → house
+
+FINDING: BANK-F91141 — AccountingPeriodCloseDetailPage / AbandonmentQueuePage / PostingGrid Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26075 squash `5e0943239e` (BANK-F91140 TriSignal/CoiTab/SplitTransaction)
+Files Modified: AccountingPeriodCloseDetailPage.tsx · AbandonmentQueuePage.tsx · PostingGrid.tsx · verify-91141-acct-queue-slate-leftover-chrome.mjs · verify-steps/3398-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91141-acct-queue-slate-leftover-chrome.mjs (piggy EVEN 3398)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91140 DONE (#26075 5e0943239e)
+
 ## 2026-10-09 · BANK-F91140 — TriSignalHoverDetail / CoiTab / SplitTransactionModal slate → house
 
 FINDING: BANK-F91140 — TriSignalHoverDetail / CoiTab / SplitTransactionModal Tailwind slate-* → house tokens
