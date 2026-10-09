@@ -14,7 +14,7 @@ export default function HosExceptionsPage() {
       </p>
       <div className="rounded-lg border border-gray-200 bg-white p-4 text-xs text-gray-700">
         <p className="mb-2">Use the compliance dashboard for duty status, KPI tiles, and drill-down to driver HOS detail.</p>
-        <Link to="/safety/hos" className="font-semibold text-slate-700 hover:underline" data-testid="hos-exceptions-dashboard-link">
+        <Link to="/safety/hos" className="font-semibold text-[#1F2A44] hover:underline" data-testid="hos-exceptions-dashboard-link">
           Open Hours of Service dashboard
         </Link>
       </div>

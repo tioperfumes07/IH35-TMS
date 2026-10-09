@@ -93,7 +93,7 @@ export function DriverLeaveBalancesPage() {
         subtitle={`Per-driver allocated / used / remaining for plan year ${year} (catalogs.driver_leave_balances)`}
       />
       <div className="mb-2">
-        <Link to="/safety/driver-scheduler" className="text-xs text-slate-700 hover:underline">
+        <Link to="/safety/driver-scheduler" className="text-xs text-[#1F2A44] hover:underline">
           ← Driver Scheduler grid
         </Link>
       </div>
