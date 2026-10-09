@@ -168,7 +168,7 @@ export function LegalAttorneyReviewPortalPage() {
         </div>
       </section>
 
-      <section className="space-y-3 rounded-sm border border-gray-200 bg-slate-50 p-4">
+      <section className="space-y-3 rounded-sm border border-gray-200 bg-[#F7F8FA] p-4">
         <h2 className="text-xs font-semibold text-gray-900">Your attestation</h2>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="block text-xs font-medium text-gray-700">

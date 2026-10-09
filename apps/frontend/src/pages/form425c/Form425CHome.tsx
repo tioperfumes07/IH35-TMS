@@ -594,7 +594,7 @@ export function Form425CHome() {
   const historyReports = (reportsQuery.data?.reports ?? []) as HistoryReportRow[];
 
   return (
-    <div className="min-h-screen bg-slate-100" data-form425c-page="true">
+    <div className="min-h-screen bg-[#F7F8FA]" data-form425c-page="true">
       <div className="px-4 pt-4">
         <PageHeader title="Form 425C" backHref="/425c" breadcrumb={["425C"]} />
       </div>

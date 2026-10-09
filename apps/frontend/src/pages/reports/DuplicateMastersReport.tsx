@@ -290,7 +290,7 @@ export function DuplicateMastersReport() {
                       key: "is_newest",
                       label: "Newest",
                       sortable: true,
-                      render: (r) => (r.is_newest ? <span className="font-medium text-slate-700">Yes</span> : "—"),
+                      render: (r) => (r.is_newest ? <span className="font-medium text-[#1F2A44]">Yes</span> : "—"),
                     },
                     {
                       key: "money",
