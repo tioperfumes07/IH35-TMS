@@ -9,5 +9,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-no-silent-list-caps.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-no-silent-list-caps.mjs"]);
+    await ctx.run("node", ["scripts/verify-91196-inline-unit-trailer-accessorial-slate-leftover-chrome.mjs"]);
   },
 };

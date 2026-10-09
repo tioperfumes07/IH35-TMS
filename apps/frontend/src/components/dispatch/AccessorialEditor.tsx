@@ -251,7 +251,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         limit={200}
         total={catalogQuery.data?.total ?? null}
         hint="Type to search for an accessorial code that is not listed."
-        className="text-xs text-slate-600"
+        className="text-xs text-[#4B5563]"
       />
     </div>
   );
