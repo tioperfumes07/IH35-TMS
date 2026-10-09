@@ -24,13 +24,13 @@ export function ReportCategoryHoverNav() {
 
   // CATEGORY-HOVER-FLYOUT-CLIPPED-BY-SCROLL-ANCESTOR: no overflow-x-auto -- see CategoryHoverNav.tsx
   return (
-    <div className="border-b border-slate-200 bg-white px-2 py-1" data-testid="report-category-hover-nav">
+    <div className="border-b border-[#E5E7EB] bg-white px-2 py-1" data-testid="report-category-hover-nav">
       <div className="flex flex-wrap gap-3">
         {categories.map((category) => (
           <HoverDropdown
             key={category.id}
             trigger={
-              <span className="inline-flex items-center border-b-2 border-b-transparent px-1 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900">
+              <span className="inline-flex items-center border-b-2 border-b-transparent px-1 py-1 text-xs font-semibold text-[#4B5563] hover:text-[#0F1219]">
                 {category.label}
               </span>
             }

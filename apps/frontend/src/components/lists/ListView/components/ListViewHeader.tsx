@@ -177,7 +177,7 @@ function ResizableTh({
     <th
       {...dragHandleProps}
       style={{ width, minWidth: width, maxWidth: width, position: isPinned ? "sticky" : undefined, left: isPinned ? 0 : undefined, zIndex: isPinned ? 11 : undefined }}
-      className={`relative select-none font-medium tracking-wide uppercase text-gray-500 bg-gray-50 ${textSize} ${isDragOver ? "bg-slate-100 border-l-2 border-slate-300" : ""}`}
+      className={`relative select-none font-medium tracking-wide uppercase text-gray-500 bg-gray-50 ${textSize} ${isDragOver ? "bg-[#F7F8FA] border-l-2 border-[#E5E7EB]" : ""}`}
       data-column-id={colId}
     >
       <div className="flex items-center gap-1 px-2 overflow-hidden">
@@ -189,7 +189,7 @@ function ResizableTh({
         >
           <span className="truncate">{children}</span>
           {isSorted && (
-            <span className="shrink-0 text-slate-700">{sortDir === "asc" ? "▲" : "▼"}</span>
+            <span className="shrink-0 text-[#1F2A44]">{sortDir === "asc" ? "▲" : "▼"}</span>
           )}
         </button>
       </div>
