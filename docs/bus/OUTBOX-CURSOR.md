@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91171 — AuditLogViewer / ErrorMonitor / ActivityLog slate → house
+
+FINDING: BANK-F91171 — AuditLogViewer / ErrorMonitor / ActivityLogPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26106 squash `dd01b8de1dde` (BANK-F91170 Acct/Alloc)
+Files Modified: AuditLogViewer.tsx · ErrorMonitor.tsx · ActivityLogPage.tsx · verify-91171-admin-audit-slate-leftover-chrome.mjs · verify-steps/2978-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91171-admin-audit-slate-leftover-chrome.mjs (piggy EVEN 2978)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91170 DONE (#26106 dd01b8de1dde)
+
 ## 2026-10-09 · BANK-F91170 — UndepositedFunds / CoA Sync / BillAllocation slate → house
 
 FINDING: BANK-F91170 — UndepositedFundsPage / ChartOfAccountsSyncPanel / BillAllocationPanel Tailwind slate-* → house tokens

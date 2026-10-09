@@ -47,7 +47,7 @@ const COLUMNS: Array<ParityColumn<ErrorRow>> = [
     render: (row) => (
       <span
         className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-          row.kind === "server" ? "bg-red-50 text-red-800" : "bg-slate-100 text-slate-700"
+          row.kind === "server" ? "bg-red-50 text-red-800" : "bg-[#F7F8FA] text-[#1F2A44]"
         }`}
       >
         {row.kind}
