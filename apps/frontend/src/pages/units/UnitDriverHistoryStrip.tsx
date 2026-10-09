@@ -174,7 +174,7 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
           {!historyQuery.isError && totalCount > pageSize ? (
             <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid="unit-driver-history-server-pager">
               <Button size="sm" variant="secondary" disabled={page <= 0 || historyQuery.isFetching} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</Button>
-              <span className="text-slate-600">Page {page + 1} of {pageCount} · {totalCount} assignments</span>
+              <span className="text-[#4B5563]">Page {page + 1} of {pageCount} · {totalCount} assignments</span>
               <Button size="sm" variant="secondary" disabled={page + 1 >= pageCount || historyQuery.isFetching} onClick={() => setPage((value) => Math.min(pageCount - 1, value + 1))}>Next</Button>
             </div>
           ) : null}

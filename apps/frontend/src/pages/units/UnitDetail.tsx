@@ -109,7 +109,7 @@ export function UnitDetail() {
             type="button"
             onClick={() => setActiveTab(tab)}
             className={`rounded px-2.5 py-1.5 text-xs font-medium capitalize ${
-              activeTab === tab ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-100"
+              activeTab === tab ? "bg-[#F7F8FA] text-[#1F2A44]" : "text-gray-700 hover:bg-gray-100"
             }`}
           >
             {tab === "toll-tags"

@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91149 — UnitDriverHistory / UnitDetail / TasksModuleTabs slate → house
+
+FINDING: BANK-F91149 — UnitDriverHistoryStrip / UnitDetail / TasksModuleTabs Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26084 squash `9b3b1d8ca0` (BANK-F91148 BankTieout/Vendor reverse)
+Files Modified: UnitDriverHistoryStrip.tsx · UnitDetail.tsx · TasksModuleTabs.tsx · verify-91149-unit-tasks-slate-leftover-chrome.mjs · verify-steps/3344-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91149-unit-tasks-slate-leftover-chrome.mjs (piggy EVEN 3344)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91148 DONE (#26084 9b3b1d8ca0)
+
 ## 2026-10-09 · BANK-F91148 — BankTieout / VendorWorkOrders / VendorFuelCards reverse slate → house
 
 FINDING: BANK-F91148 — BankTieoutHeader / VendorWorkOrdersReverseSection / VendorFuelCardsReverseSection Tailwind slate-* → house tokens

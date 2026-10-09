@@ -39,7 +39,7 @@ export function TasksModuleTabs() {
                 className={[
                   "whitespace-nowrap border-b-2 px-1 py-3 text-xs font-medium",
                   isActive
-                    ? "border-slate-800 text-slate-900"
+                    ? "border-[#0F1219] text-[#0F1219]"
                     : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
                 ].join(" ")}
               >
