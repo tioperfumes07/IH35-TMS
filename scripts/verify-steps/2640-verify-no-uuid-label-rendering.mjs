@@ -7,5 +7,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-no-uuid-label-rendering.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-no-uuid-label-rendering.mjs"]);
+    await ctx.run("node", ["scripts/verify-91199-custedit-newcust-billpay-slate-leftover-chrome.mjs"]);
   },
 };

@@ -1,3 +1,12 @@
+## 2026-10-09 · BANK-F91199 — CustomerEdit / NewCustomerDrawer / BillPayment slate → house
+
+FINDING: BANK-F91199 — CustomerEditModal / NewCustomerDrawerForm / BillPaymentModal Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26134 squash `45d57e5bab` (BANK-F91198 asset/matter/lease)
+Files Modified: CustomerEditModal.tsx · NewCustomerDrawerForm.tsx · BillPaymentModal.tsx · verify-91199-custedit-newcust-billpay-slate-leftover-chrome.mjs · verify-steps/2640-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91199-custedit-newcust-billpay-slate-leftover-chrome.mjs (piggy EVEN 2640)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
 ## 2026-10-09 · BANK-F91198 — AssetSummary / MatterReserve / AssetLease slate → house
 
 FINDING: BANK-F91198 — AssetSummaryCards / MatterReservePanel / AssetLeaseSection Tailwind slate-* → house tokens

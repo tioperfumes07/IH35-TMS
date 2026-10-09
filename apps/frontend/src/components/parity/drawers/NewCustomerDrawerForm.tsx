@@ -161,7 +161,7 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose, 
         total={customersQuery.data?.total}
         limit={PARENT_CUSTOMER_FETCH_LIMIT}
         hint="Parent customer dropdown shows the first page — use Customers list to find others."
-        className="text-xs text-slate-600"
+        className="text-xs text-[#4B5563]"
       />
       <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">
         <ActionButton type="button" onClick={onClose}>
