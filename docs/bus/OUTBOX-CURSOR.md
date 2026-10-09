@@ -1,3 +1,23 @@
+## 2026-10-09 · BANK-F91186 — TelematicsSectionTable / DriverTelematicsPanel / AnomalyAlertBadge slate → house
+
+FINDING: BANK-F91186 — TelematicsSectionTable / DriverTelematicsPanel / AnomalyAlertBadge Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26121 squash `81b44a10b3` (BANK-F91185 safety reverse/pager)
+Files Modified: TelematicsSectionTable.tsx · DriverTelematicsPanel.tsx · AnomalyAlertBadge.tsx · verify-91186-telematics-anomaly-slate-leftover-chrome.mjs · verify-steps/2908-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91186-telematics-anomaly-slate-leftover-chrome.mjs (piggy EVEN 2908)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
+## 2026-10-09 · BANK-F91185 — DriverIncidents / DriverHosViolations / CsaHistoryPager slate → house
+
+FINDING: BANK-F91185 — DriverIncidentsReverseSection / DriverHosViolationsReverseSection / CsaHistoryPager Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26120 squash `901f5fbf4d` (BANK-F91184 amount/settle-ref)
+Files Modified: DriverIncidentsReverseSection.tsx · DriverHosViolationsReverseSection.tsx · CsaHistoryPager.tsx · verify-91185-safety-reverse-pager-slate-leftover-chrome.mjs · verify-steps/2910-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91185-safety-reverse-pager-slate-leftover-chrome.mjs (piggy EVEN 2910)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91184 — AmountLink / SettlementRefCell / SettlementReferenceCell slate → house
 
 FINDING: BANK-F91184 — AmountLink / SettlementRefCell / SettlementReferenceCell Tailwind slate-* → house tokens
