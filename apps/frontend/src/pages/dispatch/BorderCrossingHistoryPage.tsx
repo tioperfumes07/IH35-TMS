@@ -155,7 +155,7 @@ export function BorderCrossingHistoryPage() {
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}
-          rowClassName={(row) => (row.id === deepLinkCrossingId ? "bg-slate-100 ring-1 ring-slate-400" : "")}
+          rowClassName={(row) => (row.id === deepLinkCrossingId ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]" : "")}
           loading={loading}
           emptyText="No completed crossings yet."
           onRowClick={(row) => setSelected(row)}
