@@ -58,17 +58,17 @@ export function BankTransactionAttachmentsNotesModal({ open, operatingCompanyId,
           entityId={tx.id}
           title="Attachments"
         />
-        <div className="rounded-sm border border-slate-200 bg-white p-3">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">Notes</h3>
+        <div className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">Notes</h3>
           {tx.notes ? (
-            <pre className="mb-2 whitespace-pre-wrap rounded-sm border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
+            <pre className="mb-2 whitespace-pre-wrap rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#1F2A44]">
               {tx.notes}
             </pre>
           ) : (
-            <p className="mb-2 text-xs text-slate-500">No notes yet.</p>
+            <p className="mb-2 text-xs text-[#6B7280]">No notes yet.</p>
           )}
           <textarea
-            className="w-full rounded-sm border border-slate-300 p-2 text-xs"
+            className="w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
             rows={3}
             placeholder="Add a note…"
             value={draftNote}

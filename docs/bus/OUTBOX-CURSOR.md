@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91081 — SettleDeduct / CashFlowPage / CreateAdvance slate → house
+## 2026-10-08 · BANK-F91082 — ManualJE / BankingReports / AttachNotes slate → house
+
+FINDING: BANK-F91082 — ManualJEModal / BankingReportsTabContent / BankTransactionAttachmentsNotesModal Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26015 squash `751d81d5b3` (BANK-F91081 SettleDeduct/CashFlowPage/CreateAdvance)
+GUARD: scripts/verify-91082-manualje-bankrpt-attachnotes-slate-leftover-chrome.mjs + verify-steps/3776 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: ManualJEModal + BankingReportsTabContent + BankTransactionAttachmentsNotesModal + refuse guard + 3776 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91081 DONE — SettleDeduct / CashFlowPage / CreateAdvance slate → house #26015
 
 FINDING: BANK-F91081 — CreateSettlementDeductionDrawer / CashFlowPage / CreateAdvanceModal Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26014 squash `36a80c44be` (BANK-F91080 IntegrationTx/FaroReserve/CashFlowStatement)
+MERGED: #26015 squash `751d81d5b3`
 GUARD: scripts/verify-91081-settdeduct-cfpage-createadv-slate-leftover-chrome.mjs + verify-steps/3778 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: CreateSettlementDeductionDrawer + CashFlowPage + CreateAdvanceModal + refuse guard + 3778 piggyback + OUTBOX
 
