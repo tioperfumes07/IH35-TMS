@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91154 — ListsBanner / DomainHub / ListsHub slate → house
+
+FINDING: BANK-F91154 — DriverCatalogDeprecatedBanner / DomainCatalogHubPage / ListsHubPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26089 squash `d9c70e1c1f` (BANK-F91153 RoadService/RecentActivity/CreateWO)
+Files Modified: DriverCatalogDeprecatedBanner.tsx · DomainCatalogHubPage.tsx · ListsHubPage.tsx · verify-91154-lists-banner-hub-slate-leftover-chrome.mjs · verify-steps/3304-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91154-lists-banner-hub-slate-leftover-chrome.mjs (piggy EVEN 3304)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91153 DONE (#26089 d9c70e1c1f)
+
 ## 2026-10-09 · BANK-F91153 — RoadService / RecentActivity / CreateWOTiming slate → house
 
 FINDING: BANK-F91153 — RoadServiceActivePanel / RecentActivityRow / CreateWOSectionPaymentTiming Tailwind slate-* → house tokens
