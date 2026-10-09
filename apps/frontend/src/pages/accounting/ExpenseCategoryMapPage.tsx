@@ -152,7 +152,7 @@ export function ExpenseCategoryMapPage() {
       render: (row) => (
         <Link
           to={`/admin/activity?action=expense_category_map_change&entity_id=${encodeURIComponent(row.id)}`}
-          className="text-slate-700 hover:underline"
+          className="text-[#1F2A44] hover:underline"
         >
           View audit
         </Link>
