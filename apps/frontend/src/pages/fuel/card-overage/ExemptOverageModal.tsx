@@ -51,7 +51,7 @@ export function ExemptOverageModal({ open, companyId, summary, onClose, onConfir
           Do not recover {summary}. The event is kept with your name, the reason and the time.
         </p>
         <div className="grid grid-cols-2 gap-3">
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Reason
             <SelectCombobox
               className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
@@ -63,7 +63,7 @@ export function ExemptOverageModal({ open, companyId, summary, onClose, onConfir
               <option value="authorized_spend">Authorized by a manager</option>
             </SelectCombobox>
           </label>
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Work order
             <EntityPicker
               kind="work_order"
@@ -77,7 +77,7 @@ export function ExemptOverageModal({ open, companyId, summary, onClose, onConfir
             />
           </label>
         </div>
-        <label className="block text-xs text-slate-600">
+        <label className="block text-xs text-[#4B5563]">
           Note
           <textarea
             className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"

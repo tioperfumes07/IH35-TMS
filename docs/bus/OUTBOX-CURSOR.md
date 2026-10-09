@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91113 — CreateFuel / ExemptOverage / SavingsPanel slate → house
+
+FINDING: BANK-F91113 — CreateFuelTransactionModal / ExemptOverageModal / SavingsPanel Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26047 squash `66375ba300` (BANK-F91112 PayBill/ExpenseDetail/InvoicesReverse)
+Files Modified: CreateFuelTransactionModal.tsx · ExemptOverageModal.tsx · SavingsPanel.tsx · verify-91113-fuelcreate-exempt-savings-slate-leftover-chrome.mjs · verify-steps/3602-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91113-fuelcreate-exempt-savings-slate-leftover-chrome.mjs (piggy EVEN 3602)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91112 DONE (#26047 66375ba300)
+
 ## 2026-10-08 · BANK-F91112 — PayBill / ExpenseDetail / InvoicesReverse slate → house
 
 FINDING: BANK-F91112 — PayBillModal / ExpenseDetailPage / InvoicesReverseSection Tailwind slate-* → house tokens

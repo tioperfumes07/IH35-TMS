@@ -306,7 +306,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
             />
           </div>
           {suggestionPinned && loadId && suggestionQuery.data?.data?.load_id === loadId ? (
-            <p className="mt-1 text-xs text-slate-600" data-testid="fuel-create-load-suggested">
+            <p className="mt-1 text-xs text-[#4B5563]" data-testid="fuel-create-load-suggested">
               Suggested from driver / unit / trailer + date
             </p>
           ) : null}
@@ -397,7 +397,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
             }}
           />
           {locationCity ? (
-            <p className="text-center text-xs text-slate-600" data-testid="fuel-create-location-label">
+            <p className="text-center text-xs text-[#4B5563]" data-testid="fuel-create-location-label">
               {locationCity}
               {locationState && !locationCity.includes(`, ${locationState}`) ? `, ${locationState}` : ""}
             </p>
@@ -426,7 +426,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
             onChange={(event) => setSourceDocFile(event.target.files?.[0] ?? null)}
           />
           {sourceDocFile ? (
-            <span className="text-xs text-slate-500" data-testid="fuel-create-source-doc-name">
+            <span className="text-xs text-[#6B7280]" data-testid="fuel-create-source-doc-name">
               {sourceDocFile.name} — filed under the driver, unit and load selected above.
             </span>
           ) : null}
