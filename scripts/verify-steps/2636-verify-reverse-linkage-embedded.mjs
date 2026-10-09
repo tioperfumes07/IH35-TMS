@@ -7,5 +7,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-reverse-linkage-embedded.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-reverse-linkage-embedded.mjs"]);
+    await ctx.run("node", ["scripts/verify-91201-apidoc-qbosync-compliance-slate-leftover-chrome.mjs"]);
   },
 };
