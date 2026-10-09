@@ -274,7 +274,7 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
 
   if (query.error) {
     return (
-      <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700" role="alert">
+      <div className="space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#1F2A44]" role="alert">
         <div>Couldn’t load the stops record.</div>
         <Button type="button" size="sm" variant="secondary" onClick={() => void query.refetch()}>
           Retry

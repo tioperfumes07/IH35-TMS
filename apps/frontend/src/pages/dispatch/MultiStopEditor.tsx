@@ -366,7 +366,7 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
   if (q.isLoading) return <div className="text-xs text-gray-500">Loading stops…</div>;
   if (q.isError) {
     return (
-      <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" role="alert" data-load-stops-read-error>
+      <div className="space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]" role="alert" data-load-stops-read-error>
         <div>Could not load stops.</div>
         <Button type="button" size="sm" variant="secondary" onClick={() => void q.refetch()}>
           Retry stops

@@ -137,7 +137,7 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
             pickers alone leave selected identities non-navigable; expose EntityLinks. */}
         {hasSelected ? (
           <div
-            className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"
+            className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1.5 text-xs text-[#1F2A44]"
             data-testid="equipment-transfer-modal-entitylinks"
           >
             {equipmentUuid ? (
