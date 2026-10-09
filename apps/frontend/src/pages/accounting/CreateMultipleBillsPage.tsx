@@ -303,7 +303,7 @@ export function CreateMultipleBillsPage() {
     <div className="space-y-3" data-testid="create-multiple-bills-page">
       <PageHeader title="Create multiple bills" subtitle="Bulk vendor bill drafting from selected bank transactions." />
       {!companyId ? (
-        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800">Select an operating company.</p>
+        <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#0F1219]">Select an operating company.</p>
       ) : null}
       {vendorsQuery.isError ? (
         <ListErrorBanner
@@ -567,7 +567,7 @@ export function CreateMultipleBillsPage() {
             <ul className="mt-1 space-y-1" data-testid="multi-bills-created-links">
               {lastResult.createdBillIds.map((id) => (
                 <li key={id}>
-                  <EntityLink kind="bill" id={id} label="View bill →" className="font-semibold text-slate-700 underline" />
+                  <EntityLink kind="bill" id={id} label="View bill →" className="font-semibold text-[#1F2A44] underline" />
                 </li>
               ))}
             </ul>
