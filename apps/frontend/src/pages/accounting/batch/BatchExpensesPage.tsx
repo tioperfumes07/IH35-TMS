@@ -133,14 +133,14 @@ export function BatchExpensesPage() {
 
   const cellCls = (r: BatchExpenseRow, f: BatchExpenseField) => {
     const errs = r.status === "saved" || isRowEmpty(r) ? {} : validateRow(r);
-    return `h-7 w-full rounded border px-1 text-xs ${errs[f] ? "border-red-500 bg-red-50" : "border-gray-300"} ${r.status === "saved" ? "bg-slate-50 text-slate-500" : ""}`;
+    return `h-7 w-full rounded border px-1 text-xs ${errs[f] ? "border-red-500 bg-red-50" : "border-gray-300"} ${r.status === "saved" ? "bg-[#F7F8FA] text-[#6B7280]" : ""}`;
   };
   const title = (r: BatchExpenseRow, f: BatchExpenseField) => (r.status === "saved" ? "Saved" : validateRow(r)[f]) ?? "";
 
   return (
     <AccountingSubNavWrapper title="Batch transactions — Expenses / Checks" subtitle="Enter or paste many expenses at once. Every row posts as its own real expense through the standard engine (expense → lines → journal entry); rows with errors stay unsaved with the reason.">
       <div className="mb-2 flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-2 text-xs" data-testid="batch-expenses-type" data-b5-batch-type="1">
-        <span className="font-semibold uppercase tracking-wide text-slate-600">Transaction type</span>
+        <span className="font-semibold uppercase tracking-wide text-[#4B5563]">Transaction type</span>
         <button type="button" className="h-7 rounded-sm border border-[#14314F] bg-[#14314F] px-2 text-white" data-b5-batch-type-expenses="1">
           Expenses / Checks
         </button>
@@ -177,16 +177,16 @@ export function BatchExpensesPage() {
         total={vendorsQ.data?.total}
         hint="Type in the payee column to search the full vendor roster."
       />
-      {lastBatch ? <div className="mb-2 rounded border border-slate-200 bg-slate-100 p-2 text-xs" data-testid="batch-expenses-result">Batch saved: {lastBatch.saved} expense(s) posted ({formatCurrencyFromCents(lastBatch.cents)}), {lastBatch.failed} kept unsaved with their reason.</div> : null}
+      {lastBatch ? <div className="mb-2 rounded border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs" data-testid="batch-expenses-result">Batch saved: {lastBatch.saved} expense(s) posted ({formatCurrencyFromCents(lastBatch.cents)}), {lastBatch.failed} kept unsaved with their reason.</div> : null}
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">
         <table className="w-full min-w-[80rem] text-xs" data-testid="batch-expenses-grid">
-          <thead className="bg-slate-50 text-left uppercase tracking-wide text-gray-600">
+          <thead className="bg-[#F7F8FA] text-left uppercase tracking-wide text-gray-600">
             <tr><th className="p-1 w-8">#</th><th className="p-1">Date</th><th className="p-1">Payee</th><th className="p-1">Paid from</th><th className="p-1">Method</th><th className="p-1">Ref / check no.</th><th className="p-1 text-right">Amount</th><th className="p-1">Category</th><th className="p-1">Class / unit</th><th className="p-1">Load</th><th className="p-1">Memo</th><th className="p-1">Status</th><th className="p-1"></th></tr>
           </thead>
           <tbody>
             {rows.map((r, i) => (
               <tr key={r.key} className="border-t border-gray-100" data-testid={`batch-expenses-row-${i}`}>
-                <td className="p-1 text-slate-500">{i + 1}</td>
+                <td className="p-1 text-[#6B7280]">{i + 1}</td>
                 <td className="p-1" title={title(r, "date")}><DatePicker value={r.date} onChange={(next) => set(r.key, { date: next })} className={cellCls(r, "date")} disabled={r.status === "saved"} /></td>
                 <td className="p-1 min-w-[12rem]" title={title(r, "payee") || r.payeeText}>
                   <ReferenceSelect size="sm" value={r.payee || null} onChange={(next) => set(r.key, { payee: next ?? "", payeeText: "" })} options={vendorOptions} createKind="vendor" operatingCompanyId={companyId} placeholder={r.payeeText ? `? ${r.payeeText}` : "— no payee —"} disabled={r.status === "saved"} loading={vendorsQ.isLoading} onSearch={setVendorSearch} onOptionCreated={() => void vendorsQ.refetch()} />
@@ -214,7 +214,7 @@ export function BatchExpensesPage() {
                 <td className="p-1"><input value={r.loadNumber} onChange={(e) => set(r.key, { loadNumber: e.target.value })} className={cellCls(r, "loadNumber")} disabled={r.status === "saved"} placeholder="13xxx" /></td>
                 <td className="p-1"><input value={r.memo} onChange={(e) => set(r.key, { memo: e.target.value })} className={cellCls(r, "memo")} disabled={r.status === "saved"} /></td>
                 <td className="p-1 whitespace-nowrap">
-                  {r.status === "saved" && r.expenseId ? <span className="inline-flex items-center gap-1"><EntityLink kind="expense" id={r.expenseId} label="Saved → open" />{r.feedGate ? <Link to={`/feed-gate/${r.feedGate.intake_id}`} className={`rounded px-1 text-xs ${r.feedGate.status === "passed" ? "bg-slate-800 text-white" : "bg-red-600 text-white"}`} data-testid="batch-expenses-feed-gate">{r.feedGate.status === "passed" ? "gate green" : `gate: ${r.feedGate.checks_failed} red`}</Link> : null}</span> : r.status === "error" ? <span className="text-red-700" title={r.error ?? ""}>Error: {r.error}</span> : r.status === "saving" ? "Saving…" : isRowEmpty(r) ? "" : Object.keys(validateRow(r)).length ? <span className="text-slate-700">Fix red cells</span> : "Ready"}
+                  {r.status === "saved" && r.expenseId ? <span className="inline-flex items-center gap-1"><EntityLink kind="expense" id={r.expenseId} label="Saved → open" />{r.feedGate ? <Link to={`/feed-gate/${r.feedGate.intake_id}`} className={`rounded px-1 text-xs ${r.feedGate.status === "passed" ? "bg-[#1F2A44] text-white" : "bg-red-600 text-white"}`} data-testid="batch-expenses-feed-gate">{r.feedGate.status === "passed" ? "gate green" : `gate: ${r.feedGate.checks_failed} red`}</Link> : null}</span> : r.status === "error" ? <span className="text-red-700" title={r.error ?? ""}>Error: {r.error}</span> : r.status === "saving" ? "Saving…" : isRowEmpty(r) ? "" : Object.keys(validateRow(r)).length ? <span className="text-[#1F2A44]">Fix red cells</span> : "Ready"}
                 </td>
                 <td className="p-1 whitespace-nowrap">
                   <button type="button" className="mr-1 underline" onClick={() => setRows((p) => duplicateRow(p, i))} title="Duplicate row">Dup</button>

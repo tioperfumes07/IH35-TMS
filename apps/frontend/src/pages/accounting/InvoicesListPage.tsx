@@ -126,7 +126,7 @@ export function invoiceFactoredBadge(row: Pick<Invoice, "factoring_status" | "fa
   return (
     <span className="inline-flex flex-col gap-0.5">
       <StatusBadge variant={variant}>{label}</StatusBadge>
-      {row.factor_profile_name ? <span className="text-xs text-slate-500">{row.factor_profile_name}</span> : null}
+      {row.factor_profile_name ? <span className="text-xs text-[#6B7280]">{row.factor_profile_name}</span> : null}
     </span>
   );
 }
@@ -450,7 +450,7 @@ export function InvoicesListPage() {
         render: (row) => (
           <span className="inline-flex items-center gap-1">
             <EntityLink kind="invoice" id={row.id} label={entityLabel(row.display_id, row.id, "Invoice")} />
-            {row.factoring_advance_id ? <ArrowRightCircle className="h-3.5 w-3.5 text-slate-600" /> : null}
+            {row.factoring_advance_id ? <ArrowRightCircle className="h-3.5 w-3.5 text-[#4B5563]" /> : null}
           </span>
         ),
       },
@@ -491,7 +491,7 @@ export function InvoicesListPage() {
         sortValue: (row) => (row.source_load_chargeback_requested ? 1 : 0),
         render: (row) =>
           row.source_load_chargeback_requested ? (
-            <span className="rounded-sm border border-slate-300 bg-slate-50 px-2 py-0.5 text-section-header font-semibold uppercase tracking-wide text-slate-700">
+            <span className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-0.5 text-section-header font-semibold uppercase tracking-wide text-[#1F2A44]">
               flagged
             </span>
           ) : (
@@ -526,7 +526,7 @@ export function InvoicesListPage() {
           const paid = isVoidInvoice(row) ? 0 : Number(row.amount_paid_cents ?? 0) || 0;
           const variance = total - paid - open;
           return (
-            <span className={`font-semibold ${variance !== 0 ? "text-red-700" : "text-slate-400"}`}>
+            <span className={`font-semibold ${variance !== 0 ? "text-red-700" : "text-[#6B7280]"}`}>
               {money(variance)}
             </span>
           );
@@ -608,7 +608,7 @@ export function InvoicesListPage() {
         activeFilterCount={invoicesActiveFilterCount}
         testIdPrefix="invoices"
       >
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Load
           <EntityPicker
             kind="load"
@@ -629,7 +629,7 @@ export function InvoicesListPage() {
           allLabel="All statuses (include voided)"
           data-testid="invoices-status-filter"
         />
-        <label className="flex items-center gap-1 text-xs text-slate-600">
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
           <input
             type="checkbox"
             checked={hasBalance}
@@ -638,7 +638,7 @@ export function InvoicesListPage() {
           />
           With balance
         </label>
-        <label className="flex items-center gap-1 text-xs text-slate-600">
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
           <input
             type="checkbox"
             checked={notSent}
