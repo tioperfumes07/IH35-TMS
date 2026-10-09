@@ -172,15 +172,15 @@ export function DriverProfileStopsMilesSection({
     >
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h2 className="text-xs font-semibold text-slate-900">Stops + miles (last 30 days)</h2>
-          <p className="text-xs text-slate-600">
+          <h2 className="text-xs font-semibold text-[#0F1219]">Stops + miles (last 30 days)</h2>
+          <p className="text-xs text-[#4B5563]">
             Every stop ≥ 3 minutes with odometer and miles since the prior stop — driver at time.{" "}
             {source ? sourceLabel(source) : ""}
           </p>
         </div>
         {!q.isLoading && !q.isError ? (
           <div className="rounded-sm bg-gray-50 px-2 py-1 text-center">
-            <p className="text-page-title font-bold text-slate-900">{readMiles.toFixed(1)}</p>
+            <p className="text-page-title font-bold text-[#0F1219]">{readMiles.toFixed(1)}</p>
             <p className="text-xs uppercase text-gray-500">Read miles</p>
           </div>
         ) : null}

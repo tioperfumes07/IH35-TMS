@@ -30,12 +30,12 @@ export function DriverVendorMergesReverseSection({
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid={dataTestId ?? "driver-vendor-merges-reverse"}>
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-xs font-semibold text-slate-900">Vendor merges</h2>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Vendor merges</h2>
         <EntityLink
           kind="factoring_vendor_merges_driver"
           id={driverId}
           label="Open queue"
-          className="text-xs font-semibold text-slate-700 hover:underline"
+          className="text-xs font-semibold text-[#1F2A44] hover:underline"
         />
       </div>
       {query.isError ? (
@@ -53,7 +53,7 @@ export function DriverVendorMergesReverseSection({
       {merges.length > 0 ? (
         <ul className="mt-2 space-y-1">
           {merges.slice(0, 5).map((m) => (
-            <li key={m.id} className="flex flex-wrap items-center gap-1 text-xs text-slate-700">
+            <li key={m.id} className="flex flex-wrap items-center gap-1 text-xs text-[#1F2A44]">
               <EntityLinkOrTombstone
                 kind="vendor"
                 id={m.from_vendor_id}
