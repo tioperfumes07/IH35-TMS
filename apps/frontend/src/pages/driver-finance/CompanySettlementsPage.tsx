@@ -197,7 +197,7 @@ export function CompanySettlementsPage() {
         rowKey={(r) => r.id}
         loading={listQuery.isPending && Boolean(companyId)}
         onRowClick={(r) => setSelected(r)}
-        rowClassName={(r) => (selected?.id === r.id ? "bg-slate-50" : "")}
+        rowClassName={(r) => (selected?.id === r.id ? "bg-[#F7F8FA]" : "")}
         emptyText={
           companyId ? "No company settlements yet." : "Select a company to view its settlements."
         }

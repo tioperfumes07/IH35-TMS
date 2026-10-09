@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91162 — PendingAck / CompanySettlements / ApplicantsPipeline slate → house
+
+FINDING: BANK-F91162 — PendingAckNotice / CompanySettlementsPage / ApplicantsPipelinePage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26097 squash `11549c7c04` (BANK-F91161 EDI/Notif)
+Files Modified: PendingAckNotice.tsx · CompanySettlementsPage.tsx · ApplicantsPipelinePage.tsx · verify-91162-drvfin-applicants-slate-leftover-chrome.mjs · verify-steps/3124-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91162-drvfin-applicants-slate-leftover-chrome.mjs (piggy EVEN 3124)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91161 DONE (#26097 11549c7c04)
+
 ## 2026-10-09 · BANK-F91161 — EdiSetup / EdiTxnLog / NotificationCenter slate → house
 
 FINDING: BANK-F91161 — EdiSetupWizard / EdiTransactionLog / NotificationCenterPage Tailwind slate-* → house tokens
