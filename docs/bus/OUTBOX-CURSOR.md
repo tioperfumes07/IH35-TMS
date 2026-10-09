@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91077 — BillPaymentsList / DispatchMargin / SubmissionQueue slate → house
+## 2026-10-08 · BANK-F91078 — SettlementsTable / CloseTripPanel / EscrowDeductionsPending slate → house
+
+FINDING: BANK-F91078 — SettlementsTable / CloseTripPanel / EscrowDeductionsPendingTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26011 squash `3e8dfcd814` (BANK-F91077 BillPayments/DispatchMargin/SubmissionQueue)
+GUARD: scripts/verify-91078-settle-closetrip-escrowpend-slate-leftover-chrome.mjs + verify-steps/3786 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: SettlementsTable + CloseTripPanel + EscrowDeductionsPendingTab + refuse guard + 3786 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91077 DONE — BillPaymentsList / DispatchMargin / SubmissionQueue slate → house #26011
 
 FINDING: BANK-F91077 — BillPaymentsListPage / DispatchMarginPage / SubmissionQueue Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26010 squash `a314773d10` (BANK-F91076 QboRecon/PostingLineage/PeriodComparison)
+MERGED: #26011 squash `3e8dfcd814`
 GUARD: scripts/verify-91077-billpay-dispatchmargin-submitq-slate-leftover-chrome.mjs + verify-steps/3790 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: BillPaymentsListPage + DispatchMarginPage + SubmissionQueue + refuse guard + 3790 piggyback + OUTBOX
 

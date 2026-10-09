@@ -72,11 +72,11 @@ export function CloseTripPanel({
   if (tripClosedAt) {
     return (
       <div
-        className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs"
+        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs"
         data-testid="close-trip-panel-recheck"
       >
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Trip closed</p>
-        <p className="mt-1 text-xs text-slate-600">
+        <p className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">Trip closed</p>
+        <p className="mt-1 text-xs text-[#4B5563]">
           Closed {new Date(tripClosedAt).toLocaleString()}. If a driver bill became payable after this
           settlement closed (a common gap this control exists to heal), re-check to re-apply it — safe to
           run any time, a no-op if there is nothing to attach.
@@ -99,11 +99,11 @@ export function CloseTripPanel({
 
   return (
     <div
-      className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs"
+      className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs"
       data-testid="close-trip-panel"
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Trip not closed</p>
-      <p className="mt-1 text-xs text-slate-600">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">Trip not closed</p>
+      <p className="mt-1 text-xs text-[#4B5563]">
         This load-bookended settlement has no trip close timestamp. Loads bookended by it stay locked for
         edit until the trip is closed. Use this when pay-run close succeeded but the load is already past
         delivered pending docs.

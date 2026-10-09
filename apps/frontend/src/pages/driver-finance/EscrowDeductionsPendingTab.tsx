@@ -174,7 +174,7 @@ export function EscrowDeductionsPendingTab() {
       <PageHeader title="Escrow Deductions Pending Review" subtitle="Auto-proposed abandonment deductions requiring Owner decision." />
 
       {!isOwner ? (
-        <div className="rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#0F1219]">
           Owner approval required.
         </div>
       ) : null}
@@ -233,7 +233,7 @@ export function EscrowDeductionsPendingTab() {
               <div><span className="font-semibold">Reason:</span> {selected.proposed_reason}</div>
               <div className="space-y-1">
                 <div className="font-semibold">Breakdown JSON</div>
-                <pre className="max-h-56 overflow-auto rounded-sm bg-slate-900 p-2 text-xs text-slate-100">
+                <pre className="max-h-56 overflow-auto rounded-sm bg-[#0F1219] p-2 text-xs text-[#F7F8FA]">
                   {JSON.stringify(selected.proposed_breakdown_json ?? {}, null, 2)}
                 </pre>
               </div>
@@ -272,7 +272,7 @@ export function EscrowDeductionsPendingTab() {
                 </Button>
                 <Button
                   size="sm"
-                  className="border-slate-700! bg-slate-700! hover:bg-slate-800!"
+                  className="border-[#1F2A44]! bg-[#1F2A44]! hover:bg-[#1F2A44]!"
                   disabled={!isOwner}
                   loading={approveMutation.isPending}
                   onClick={() => void approveMutation.mutateAsync()}

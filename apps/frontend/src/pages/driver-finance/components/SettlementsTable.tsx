@@ -24,9 +24,9 @@ type Props = {
 };
 
 function statusClass(status: SettlementListRow["status"]) {
-  if (status === "paid") return "bg-slate-100 text-slate-700";
-  if (status === "locked") return "bg-slate-100 text-slate-700";
-  if (status === "held") return "bg-slate-100 text-slate-700";
+  if (status === "paid") return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (status === "locked") return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (status === "held") return "bg-[#F7F8FA] text-[#1F2A44]";
   if (status === "cancelled") return "bg-red-100 text-red-700";
   return "bg-gray-100 text-gray-700";
 }
@@ -174,7 +174,7 @@ export function SettlementsTable({
         label: "Net Pay",
         sortable: true,
         sortValue: (row) => Number(row.net_pay ?? 0),
-        cellClass: `${QBO_MONEY_CELL_CLASS} font-semibold text-slate-700`,
+        cellClass: `${QBO_MONEY_CELL_CLASS} font-semibold text-[#1F2A44]`,
         render: (row) => formatUsdTable(row.net_pay),
       },
       {
@@ -223,7 +223,7 @@ export function SettlementsTable({
         render: (row) => (
           <button
             type="button"
-            className="inline-flex h-7 items-center rounded-sm px-2 text-xs text-slate-700 underline"
+            className="inline-flex h-7 items-center rounded-sm px-2 text-xs text-[#1F2A44] underline"
             onClick={() => onOpen(row.id)}
           >
             Open →
