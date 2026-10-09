@@ -196,6 +196,15 @@ function mapAccountConflict(constraint?: string): string {
   return "catalog_account_conflict";
 }
 
+// COA-F2: map catalogs.accounts CHECK constraint violations (23514) to human messages.
+// The raw constraint name must never reach the operator.
+function mapAccountCheckConstraint(constraint?: string): { error: string; message: string } {
+  if (constraint === "accounts_active_requires_account_number") {
+    return { error: "account_number_required", message: "Account Number is required for an active account." };
+  }
+  return { error: "account_check_constraint_violation", message: "A required field is missing or invalid — check all fields and try again." };
+}
+
 export async function registerAccountRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/accounts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -382,7 +391,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
       const constraint = (err as { constraint?: string }).constraint;
       if (code === "23505") return reply.code(409).send({ error: mapAccountConflict(constraint), field: constraint ?? null });
       if (code === "23503") return reply.code(400).send({ error: "invalid_parent_or_detail_type_fk" });
-      if (code === "23514") return reply.code(400).send({ error: "invalid_account_check_constraint" });
+      if (code === "23514") { const m = mapAccountCheckConstraint(constraint); return reply.code(400).send(m); }
       throw err;
     }
   });
@@ -541,7 +550,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
       const constraint = (err as { constraint?: string }).constraint;
       if (code === "23505") return reply.code(409).send({ error: mapAccountConflict(constraint), field: constraint ?? null });
       if (code === "23503") return reply.code(400).send({ error: "invalid_parent_account_id" });
-      if (code === "23514") return reply.code(400).send({ error: "invalid_account_check_constraint" });
+      if (code === "23514") { const m = mapAccountCheckConstraint(constraint); return reply.code(400).send(m); }
       throw err;
     }
   });

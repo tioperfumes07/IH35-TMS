@@ -142,6 +142,11 @@ type PostingLineDraft = {
    * so every other existing caller/source type is unaffected (defaults to NULL on insert).
    */
   class_id?: string | null;
+  /** BANK-F3 (ROUND 442.1): the vendor/customer on this line — carried to journal_entry_postings so the
+   * posting appears in vendor history, the vendor register and 1099 totals. Set only on the category leg
+   * of bank_categorization entries; the bank leg carries no entity. */
+  entity_uuid?: string | null;
+  entity_type?: string | null;
 };
 
 type PostingDraft = {
@@ -882,6 +887,8 @@ async function insertPostingLines(input: {
       idempotency_key: input.idempotencyKey,
       class_id: line.class_id ?? null,
       relationship_role: line.relationship_role ?? "source_transaction",
+      entity_uuid: line.entity_uuid ?? null,
+      entity_type: line.entity_type ?? null,
     }))
   );
 }
@@ -2741,6 +2748,7 @@ async function buildBankCategorizationLines(client: DbClient, operatingCompanyId
     categorization_gl_account_id: string | null;
     bank_ledger_account_id: string | null;
     description: string | null;
+    categorization_vendor_id: string | null;
   }>(
     `
       SELECT
@@ -2751,7 +2759,8 @@ async function buildBankCategorizationLines(client: DbClient, operatingCompanyId
         bt.transaction_date::text AS transaction_date,
         bt.categorization_gl_account_id::text AS categorization_gl_account_id,
         ba.ledger_account_id::text AS bank_ledger_account_id,
-        bt.description
+        bt.description,
+        bt.categorization_vendor_id::text AS categorization_vendor_id
       FROM banking.bank_transactions bt
       LEFT JOIN banking.bank_accounts ba
         ON ba.id = bt.bank_account_id
@@ -2798,12 +2807,17 @@ async function buildBankCategorizationLines(client: DbClient, operatingCompanyId
     ? `Bank categorization: ${txnDescription.slice(0, 80)}`
     : "Bank categorization";
   const moneyIn = txn.is_credit === true;
+  // BANK-F3 (ROUND 442.1): the categorize vendor travels onto the category leg so the posting appears in
+  // vendor history, the vendor register, and 1099 totals — same as a Bill payment. The bank leg carries no
+  // entity. Column already exists; no migration needed.
   const catLine: PostingLineDraft = {
     account_id: catAccountId,
     debit_or_credit: moneyIn ? "credit" : "debit",
     amount_cents: amountCents,
     description: `${label} category`,
     source_transaction_line_id: null,
+    entity_uuid: txn.categorization_vendor_id ?? null,
+    entity_type: txn.categorization_vendor_id ? "vendor" : null,
   };
   const bankLine: PostingLineDraft = {
     account_id: bankAccountId,
