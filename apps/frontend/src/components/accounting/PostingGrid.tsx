@@ -62,7 +62,7 @@ export function PostingGrid({ postings, storageKey }: { postings: PostingGridRow
       sortable: true,
       sortValue: (p) => p.account_name || "",
       render: (p) => (
-        <Link to={`/accounting/chart-of-accounts/register/${p.account_id}`} className="text-slate-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+        <Link to={`/accounting/chart-of-accounts/register/${p.account_id}`} className="text-[#1F2A44] hover:underline" onClick={(e) => e.stopPropagation()}>
           {entityLabel(p.account_name, p.account_id, "Account")}
         </Link>
       ),
@@ -165,7 +165,7 @@ export function JournalPostingsPanel({
         {groups.map((group) => (
           <div key={group.journal_entry_id} className="space-y-1">
             <div className="flex items-center gap-2 text-xs text-gray-600">
-              <Link to={`/accounting/journal-entries/${group.journal_entry_id}`} className="text-slate-700 hover:underline">
+              <Link to={`/accounting/journal-entries/${group.journal_entry_id}`} className="text-[#1F2A44] hover:underline">
                 JE {formatDateUS(group.entry_date)}
               </Link>
               {group.status === "voided" ? <StatusBadge variant="neutral">Voided</StatusBadge> : null}
