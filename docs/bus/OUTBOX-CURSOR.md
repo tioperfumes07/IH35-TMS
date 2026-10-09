@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91190 — LoadsWithoutDriverBill / LoadsWithoutTour / AtRiskQueue slate → house
+
+FINDING: BANK-F91190 — LoadsWithoutDriverBillPage / LoadsWithoutTourPage / AtRiskQueuePage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26125 squash `b103fa7520` (BANK-F91189 audit/plaid/stops)
+Files Modified: LoadsWithoutDriverBillPage.tsx · LoadsWithoutTourPage.tsx · AtRiskQueuePage.tsx · verify-91190-dispatch-empty-company-slate-leftover-chrome.mjs · verify-steps/2900-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91190-dispatch-empty-company-slate-leftover-chrome.mjs (piggy EVEN 2900)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91189 — AuditEventCard / PlaidReconnectButton / StopsMilesSection slate → house
 
 FINDING: BANK-F91189 — AuditEventCard / PlaidReconnectButton / StopsMilesSection Tailwind slate-* → house tokens
