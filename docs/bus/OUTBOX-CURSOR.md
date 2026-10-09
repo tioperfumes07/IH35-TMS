@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91122 — AcctHub / SafetyEvents / InsLawsuits slate → house
+
+FINDING: BANK-F91122 — AccountingHubPage / SafetyEventsReverseBlock / InsuranceLawsuitsReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26056 squash `3c4fb5b00d` (BANK-F91121 Legal/Ins reverse)
+Files Modified: AccountingHubPage.tsx · SafetyEventsReverseBlock.tsx · InsuranceLawsuitsReverseSection.tsx · verify-91122-acchub-safety-insuit-slate-leftover-chrome.mjs · verify-steps/3538-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91122-acchub-safety-insuit-slate-leftover-chrome.mjs (piggy EVEN 3538)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91121 DONE (#26056 3c4fb5b00d)
+
 ## 2026-10-08 · BANK-F91121 — LegalContracts / LegalMatters / InsPolicies reverse slate → house
 
 FINDING: BANK-F91121 — VendorLegalContractsReverseSection / LegalMattersReverseSection / VendorInsurancePoliciesReverseSection Tailwind slate-* → house tokens

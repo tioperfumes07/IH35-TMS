@@ -16,14 +16,14 @@ export function SafetyEventsReverseBlock({ companyId, subject, entityId }: { com
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={`${subject}-safety-events-reverse`}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           Safety events{rows.length ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
         <EntityLink
           kind={subject === "driver" ? "safety_events_driver" : "safety_events_unit"}
           id={entityId}
           label="Open Safety Events"
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
         />
       </div>
       {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
@@ -38,7 +38,7 @@ export function SafetyEventsReverseBlock({ companyId, subject, entityId }: { com
       {rows.length ? (
         <ul className="space-y-2">
           {rows.map((row) => (
-            <li key={row.id} className="text-xs text-slate-700">
+            <li key={row.id} className="text-xs text-[#1F2A44]">
               <EntityLink kind="safety_event" id={row.id} label={entityLabel(row.title, row.id, "Safety event")} />
               <span className="ml-2 text-xs text-gray-500">
                 {formatDateUS(row.occurred_at)} · {row.severity} · {row.status}

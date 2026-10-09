@@ -144,8 +144,8 @@ function kpiCard(label: string, value: string, sublabel: string, tone: "neutral"
     tone === "danger"
       ? "border-l-4 border-l-red-500"
       : tone === "warn"
-        ? "border-l-4 border-l-slate-400"
-        : "border-l-4 border-l-slate-300";
+        ? "border-l-4 border-l-[#6B7280]"
+        : "border-l-4 border-l-[#6B7280]";
   return (
     <div className={`rounded-sm border border-gray-200 bg-white px-3 py-2 ${toneClass}`}>
       <p className="text-section-header font-semibold uppercase tracking-wide text-gray-500">{label}</p>
@@ -161,7 +161,7 @@ function homePanel(title: string, rows: AmountRow[], empty: string, actionHref?:
       <header className="flex items-center justify-between border-b border-gray-200 px-3 py-1.5">
         <h3 className="text-section-header font-bold uppercase tracking-wide text-gray-700">{title}</h3>
         {actionHref && actionLabel ? (
-          <Link to={actionHref} className="text-xs font-semibold text-slate-700 hover:underline">
+          <Link to={actionHref} className="text-xs font-semibold text-[#1F2A44] hover:underline">
             {actionLabel}
           </Link>
         ) : null}
@@ -505,7 +505,7 @@ export function AccountingHubPage() {
         </Button>
       }
     >
-      {!companyId ? <p className="text-xs text-slate-700">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-[#1F2A44]">Select an operating company.</p> : null}
       <div className="grid gap-2 lg:grid-cols-3">
         {homePanel("Settlements", settlementsRows, settlementsQ.isLoading ? "Loading…" : "No settlements found.", "/driver-finance/settlements", "View all")}
         {homePanel(
