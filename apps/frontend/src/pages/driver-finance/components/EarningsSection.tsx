@@ -165,8 +165,8 @@ export function EarningsSection({ lines, isOpen: _isOpen, operatingCompanyId }: 
   return (
     <section className="rounded-sm border border-gray-200 bg-white">
       <header className="flex items-center border-b border-gray-200 px-2.5 py-1.5">
-        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-slate-600">Earnings — loaded miles</h2>
-        <span className="ml-2 text-xs text-slate-500">one line per load · from the driver bill · edit the bill, not the line</span>
+        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Earnings — loaded miles</h2>
+        <span className="ml-2 text-xs text-[#6B7280]">one line per load · from the driver bill · edit the bill, not the line</span>
       </header>
       <ParityTable
         columns={COLUMNS}

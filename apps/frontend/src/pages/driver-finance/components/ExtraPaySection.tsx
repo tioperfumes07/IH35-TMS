@@ -100,8 +100,8 @@ export function ExtraPaySection({ lines, isOpen, operatingCompanyId }: Props) {
   return (
     <section className="rounded-sm border border-gray-200 bg-white">
       <header className="flex items-center border-b border-gray-200 px-2.5 py-1.5">
-        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-slate-600">Additional pay</h2>
-        <span className="ml-2 text-xs text-slate-500">extra delivery / drop · layover · detention</span>
+        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Additional pay</h2>
+        <span className="ml-2 text-xs text-[#6B7280]">extra delivery / drop · layover · detention</span>
         <div className="ml-auto">
           <Button size="sm" variant="secondary" disabled={!isOpen} title={!isOpen ? "Settlement locked" : undefined}>
             + Add additional pay

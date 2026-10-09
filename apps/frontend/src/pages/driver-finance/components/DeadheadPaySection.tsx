@@ -163,8 +163,8 @@ export function DeadheadPaySection({ lines, isOpen: _isOpen, operatingCompanyId 
   return (
     <section className="rounded-sm border border-gray-200 bg-white" data-testid="deadhead-pay-section">
       <header className="flex items-center border-b border-gray-200 px-2.5 py-1.5">
-        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-slate-600">Empty miles</h2>
-        <span className="ml-2 text-xs text-slate-500">deadhead to the pickup · same rate today, never hardcoded</span>
+        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Empty miles</h2>
+        <span className="ml-2 text-xs text-[#6B7280]">deadhead to the pickup · same rate today, never hardcoded</span>
       </header>
       <ParityTable
         columns={COLUMNS}
