@@ -20,12 +20,12 @@ export function VendorEquipmentLoansReverseSection({ operatingCompanyId, vendorI
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="vendor-equipment-loans-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-xs font-semibold text-slate-900">Equipment loans (CCG){loans.length ? ` · ${loans.length}` : ""}</h2>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Equipment loans (CCG){loans.length ? ` · ${loans.length}` : ""}</h2>
         <EntityLink
           kind="equipment_loans_vendor"
           id={vendorId}
           label="Open Equipment Loans"
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
         />
       </div>
       {query.isError ? <p className="mt-2 text-xs text-red-700">Equipment loans unavailable.</p> : null}
@@ -41,7 +41,7 @@ export function VendorEquipmentLoansReverseSection({ operatingCompanyId, vendorI
                 kind="equipment_loan"
                 id={loan.id}
                 label={`${entityLabel(loan.equipment_number, loan.equipment_id, "Equipment")} · ${formatUsdCents(loan.outstanding_balance_cents ?? loan.principal_cents)} · ${loan.status}`}
-                className="text-xs font-semibold text-slate-700 hover:underline"
+                className="text-xs font-semibold text-[#1F2A44] hover:underline"
               />
             </li>
           ))}
