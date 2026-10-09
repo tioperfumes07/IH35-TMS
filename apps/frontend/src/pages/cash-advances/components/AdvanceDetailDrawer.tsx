@@ -156,7 +156,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           </div>
         </div>
 
-        <div className="mt-2 rounded-sm border border-slate-300 bg-slate-100 p-2">
+        <div className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
           <div className="font-semibold">Disbursement Timeline</div>
           <div>Created: {String(advance.created_at ?? "—")}</div>
           <div>Approved: {String(advance.approved_at ?? "—")}</div>

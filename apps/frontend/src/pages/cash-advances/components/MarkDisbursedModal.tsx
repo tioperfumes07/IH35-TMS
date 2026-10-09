@@ -138,7 +138,7 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
                 shown={bankOptions.length}
                 limit={100}
                 hint="Type to search bank transactions beyond the first page."
-                className="text-xs text-slate-600"
+                className="text-xs text-[#4B5563]"
               />
             </label>
           ) : null}
