@@ -113,7 +113,7 @@ function Table({
       <div className="border-b border-gray-200 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-gray-600">{title}</div>
       <div>
         {totalCount > rows.length ? (
-          <div className="border-b border-gray-100 px-2 py-1 text-xs text-slate-500" data-testid="maintenance-recent-activity-range">
+          <div className="border-b border-gray-100 px-2 py-1 text-xs text-[#6B7280]" data-testid="maintenance-recent-activity-range">
             {page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalCount)} of {totalCount} work orders.
           </div>
         ) : null}

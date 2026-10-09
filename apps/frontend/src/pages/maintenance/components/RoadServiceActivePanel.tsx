@@ -51,7 +51,7 @@ export function RoadServiceActivePanel({ roadside, onOpen }: Props) {
                   <button
                     type="button"
                     onClick={() => onOpen(wo.id)}
-                    className="mt-1 text-xs font-semibold text-slate-700 hover:underline"
+                    className="mt-1 text-xs font-semibold text-[#1F2A44] hover:underline"
                   >
                     Open work order
                   </button>

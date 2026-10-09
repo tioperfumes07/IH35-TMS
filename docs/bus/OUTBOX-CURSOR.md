@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91153 — RoadService / RecentActivity / CreateWOTiming slate → house
+
+FINDING: BANK-F91153 — RoadServiceActivePanel / RecentActivityRow / CreateWOSectionPaymentTiming Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26088 squash `086b1adc7f` (BANK-F91152 UnitTires/PmSchedule/Severe)
+Files Modified: RoadServiceActivePanel.tsx · RecentActivityRow.tsx · CreateWOSectionPaymentTiming.tsx · verify-91153-maint-road-activity-wo-slate-leftover-chrome.mjs · verify-steps/3328-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91153-maint-road-activity-wo-slate-leftover-chrome.mjs (piggy EVEN 3328)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91152 DONE (#26088 086b1adc7f)
+
 ## 2026-10-09 · BANK-F91152 — UnitTires / PmSchedule / SevereRepair slate → house
 
 FINDING: BANK-F91152 — UnitTiresTab / PmSchedulePage / SevereRepairOosTab Tailwind slate-* → house tokens
