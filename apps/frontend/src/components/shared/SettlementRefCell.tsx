@@ -62,7 +62,7 @@ export function SettlementRefCell({ loadId, operatingCompanyId, settlement }: Pr
         kind="settlement"
         id={resolved.presettlement_link_id}
         label="PENDING"
-        className="font-medium text-slate-700 hover:underline"
+        className="font-medium text-[#1F2A44] hover:underline"
         title="Tour still open — the settlement number is minted when AlwaysTrack settles it"
       />
     );

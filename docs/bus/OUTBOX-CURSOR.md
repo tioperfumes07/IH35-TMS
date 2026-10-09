@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91184 — AmountLink / SettlementRefCell / SettlementReferenceCell slate → house
+
+FINDING: BANK-F91184 — AmountLink / SettlementRefCell / SettlementReferenceCell Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26119 squash `cda1245eda` (BANK-F91183 factor/vend/alloc)
+Files Modified: AmountLink.tsx · SettlementRefCell.tsx · SettlementReferenceCell.tsx · verify-91184-amount-settle-ref-slate-leftover-chrome.mjs · verify-steps/2914-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91184-amount-settle-ref-slate-leftover-chrome.mjs (piggy EVEN 2914)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91183 — DuplicateVendorsBanner / VendorMergeDiff / AllocationMethodPicker slate → house
 
 FINDING: BANK-F91183 — DuplicateVendorsBanner / VendorMergeDiffPreview / AllocationMethodPicker Tailwind slate-* → house tokens

@@ -71,7 +71,7 @@ export function SettlementReferenceCell({ reference }: { reference?: SettlementR
   // Open tour / pre-settlement: PENDING, and it goes somewhere.
   return (
     <Link
-      className="font-medium text-slate-700 hover:underline"
+      className="font-medium text-[#1F2A44] hover:underline"
       data-testid="settlement-reference-cell"
       title="Tour still open — the settlement number is minted when AlwaysTrack settles it"
       to={to}

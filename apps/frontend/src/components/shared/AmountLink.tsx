@@ -42,7 +42,7 @@ import { Link } from "react-router-dom";
 export type AgingBucketId = "current" | "d1_30" | "d31_60" | "d61_90" | "d90_plus";
 
 /** Styled to match EntityLink exactly — the locked §7 slate token. */
-const DEFAULT_LINK_CLASSNAME = "text-slate-700 hover:underline";
+const DEFAULT_LINK_CLASSNAME = "text-[#1F2A44] hover:underline";
 
 /**
  * A money figure's filter. Every field is optional; the resolver picks the narrowest mounted route
