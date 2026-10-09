@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91152 — UnitTires / PmSchedule / SevereRepair slate → house
+
+FINDING: BANK-F91152 — UnitTiresTab / PmSchedulePage / SevereRepairOosTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26087 squash `7118a3368b` (BANK-F91151 InternalFine/Anomaly/CoViol)
+Files Modified: UnitTiresTab.tsx · PmSchedulePage.tsx · SevereRepairOosTab.tsx · verify-91152-maint-tires-pm-severe-slate-leftover-chrome.mjs · verify-steps/3332-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91152-maint-tires-pm-severe-slate-leftover-chrome.mjs (piggy EVEN 3332)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91151 DONE (#26087 7118a3368b)
+
 ## 2026-10-09 · BANK-F91151 — InternalFine / Anomaly / CoViolCreate slate → house
 
 FINDING: BANK-F91151 — InternalFineDetailDrawer / AnomalyDashboard / CompanyViolationCreateModal Tailwind slate-* → house tokens

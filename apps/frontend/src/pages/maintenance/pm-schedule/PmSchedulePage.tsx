@@ -222,7 +222,7 @@ export function PmSchedulePage() {
             rows={rows}
             columns={columns}
             rowKey={(row) => row.id}
-            rowClassName={(row) => (row.id === highlightedScheduleId ? "bg-slate-100 ring-1 ring-slate-400" : "")}
+            rowClassName={(row) => (row.id === highlightedScheduleId ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]" : "")}
             loading={listQ.isLoading}
             storageKey="maintenance-pm-schedule"
             emptyText="No PM schedules yet."
