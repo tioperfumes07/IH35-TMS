@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91095 — CreateExpense / CreateBill / ItemEditor slate → house
+## 2026-10-08 · BANK-F91096 — FinalizeBlock / EscrowVisualizer / DeductionsSection slate → house
+
+FINDING: BANK-F91096 — FinalizeBlock / EscrowVisualizer / DeductionsSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26030 squash `94b329286d` (BANK-F91095 CreateExp/Bill/ItemEditor)
+GUARD: scripts/verify-91096-drvfin-finalize-escrow-deduct-slate-leftover-chrome.mjs + verify-steps/3746 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: FinalizeBlock + EscrowVisualizer + DeductionsSection + refuse guard + 3746 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91095 DONE — CreateExpense / CreateBill / ItemEditor slate → house #26030
 
 FINDING: BANK-F91095 — CreateExpenseModal / CreateBillModal / ItemEditorModal Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26029 squash `b238294c65` (BANK-F91094 TOC/VendDup/WizReclass)
+MERGED: #26030 squash `94b329286d`
 GUARD: scripts/verify-91095-crexp-crbill-itemed-slate-leftover-chrome.mjs + verify-steps/3748 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: CreateExpenseModal + CreateBillModal + ItemEditorModal + refuse guard + 3748 piggyback + OUTBOX
 

@@ -142,7 +142,7 @@ function buildColumns(operatingCompanyId?: string): Array<ParityColumn<Deduction
           Hold
         </Button>
       ) : (
-        <span className="text-slate-400" title="No linked deduction record to hold">
+        <span className="text-[#6B7280]" title="No linked deduction record to hold">
           —
         </span>
       ),
@@ -199,7 +199,7 @@ export function DeductionsSection({ rows, onHold, onResume, isOpen, onAdd, onEdi
                 Hold
               </Button>
             ) : !canEdit ? (
-              <span className="text-slate-400" title="No linked deduction record to hold">
+              <span className="text-[#6B7280]" title="No linked deduction record to hold">
                 —
               </span>
             ) : null}
@@ -212,8 +212,8 @@ export function DeductionsSection({ rows, onHold, onResume, isOpen, onAdd, onEdi
   return (
     <section className="rounded-sm border border-gray-200 bg-white">
       <header className="flex items-center border-b border-gray-200 px-2.5 py-1.5">
-        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-slate-600">Deductions</h2>
-        <span className="ml-2 text-xs text-slate-500">escrow $25.00 per load only where printed · admin fee GAS · advances</span>
+        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Deductions</h2>
+        <span className="ml-2 text-xs text-[#6B7280]">escrow $25.00 per load only where printed · admin fee GAS · advances</span>
         <div className="ml-auto">
           <Button
             size="sm"
