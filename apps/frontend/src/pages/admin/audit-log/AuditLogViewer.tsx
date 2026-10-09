@@ -18,7 +18,7 @@ import { SelectCombobox } from "../../../components/Combobox";
 const PAGE_SIZE = 100;
 
 const SEVERITY_BADGE: Record<string, string> = {
-  info: "bg-slate-100 text-slate-700",
+  info: "bg-[#F7F8FA] text-[#1F2A44]",
   warning: "bg-amber-100 text-amber-700",
   critical: "bg-red-100 text-red-700",
 };
