@@ -303,7 +303,7 @@ export function JournalEntryDetailPage() {
             {entry.journal_entry_type_name || entry.journal_entry_type_code ? (
               <Link
                 to="/lists/accounting/journal-entry-types"
-                className="text-slate-700 hover:underline"
+                className="text-[#1F2A44] hover:underline"
                 data-testid="journal-entry-type-link"
               >
                 {entry.journal_entry_type_name ?? entry.journal_entry_type_code}

@@ -324,7 +324,7 @@ export function PaymentDetailPage() {
       <div>
         <button
           type="button"
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
           onClick={() =>
             navigate(
               `/accounting/audit-trail?source_type=customer_payment&source_id=${encodeURIComponent(payment.id)}`,

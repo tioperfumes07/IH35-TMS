@@ -1,3 +1,12 @@
+## 2026-10-09 · BANK-F91202 — PayDet / ExpMap / JEDet slate → house
+
+FINDING: BANK-F91202 — PaymentDetailPage / ExpenseCategoryMapPage / JournalEntryDetailPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26137 squash `c2e42cfcdc` (BANK-F91201 apidoc/qbosync/compliance)
+Files Modified: PaymentDetailPage.tsx · ExpenseCategoryMapPage.tsx · JournalEntryDetailPage.tsx · verify-91202-paydet-expmap-jedet-slate-leftover-chrome.mjs · verify-steps/2634-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91202-paydet-expmap-jedet-slate-leftover-chrome.mjs (piggy EVEN 2634)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
 ## 2026-10-09 · BANK-F91201 — ApiDoc / QboSync / ComplianceDash slate → house
 
 FINDING: BANK-F91201 — ApiDocumentPassthrough / QboSyncQueuePage / ComplianceDashboardPage Tailwind slate-* → house tokens

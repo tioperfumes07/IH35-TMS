@@ -10,5 +10,6 @@ export default {
     await ctx.run("node", ["scripts/verify-delivery-evidence-latch-wired.mjs"]);
     await ctx.run("node", ["scripts/verify-ar-tieout-delivery-latch-order.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-ar-tieout-delivery-latch-order.mjs"]);
+    await ctx.run("node", ["scripts/verify-91202-paydet-expmap-jedet-slate-leftover-chrome.mjs"]);
   },
 };
