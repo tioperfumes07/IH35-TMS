@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91096 — FinalizeBlock / EscrowVisualizer / DeductionsSection slate → house
+## 2026-10-08 · BANK-F91097 — RepurchaseDue / EditSettleDeduct / SettleCloseArrival slate → house
+
+FINDING: BANK-F91097 — RepurchaseDuePanel / EditSettlementDeductionDrawer / SettlementCloseArrivalPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26031 squash `efb12cea10` (BANK-F91096 Finalize/Escrow/Deductions)
+GUARD: scripts/verify-91097-repurchase-editdeduct-settleclose-slate-leftover-chrome.mjs + verify-steps/3742 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: RepurchaseDuePanel + EditSettlementDeductionDrawer + SettlementCloseArrivalPage + refuse guard + 3742 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91096 DONE — FinalizeBlock / EscrowVisualizer / DeductionsSection slate → house #26031
 
 FINDING: BANK-F91096 — FinalizeBlock / EscrowVisualizer / DeductionsSection Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26030 squash `94b329286d` (BANK-F91095 CreateExp/Bill/ItemEditor)
+MERGED: #26031 squash `efb12cea10`
 GUARD: scripts/verify-91096-drvfin-finalize-escrow-deduct-slate-leftover-chrome.mjs + verify-steps/3746 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: FinalizeBlock + EscrowVisualizer + DeductionsSection + refuse guard + 3746 piggyback + OUTBOX
 
