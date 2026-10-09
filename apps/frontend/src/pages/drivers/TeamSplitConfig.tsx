@@ -160,7 +160,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
         <div className="space-y-2">
           <h2 className="text-xs font-semibold text-gray-900">Team split configs</h2>
           <div className="flex flex-wrap items-end gap-2">
-            <label className="block min-w-[240px] text-xs text-slate-600">
+            <label className="block min-w-[240px] text-xs text-[#4B5563]">
               Driver
               <div className="mt-1">
                 <EntityPicker
@@ -208,7 +208,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
         </Button>
       </div>
       {teamId || driverId || staged.dirty ? (
-        <Link className="text-xs font-semibold text-slate-700 underline" to="/drivers/team-splits">
+        <Link className="text-xs font-semibold text-[#1F2A44] underline" to="/drivers/team-splits">
           Clear driver/config target
         </Link>
       ) : null}

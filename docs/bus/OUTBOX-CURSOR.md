@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91127 — TeamSplit / Retention / PendingDeductions slate → house
+
+FINDING: BANK-F91127 — TeamSplitConfig / RetentionDashboard / PendingSettlementDeductionsPanel Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26061 squash `841d370fb6` (BANK-F91126 Recourse/Chargebacks/VendorApAging)
+Files Modified: TeamSplitConfig.tsx · RetentionDashboard.tsx · PendingSettlementDeductionsPanel.tsx · verify-91127-drv-team-ret-deduct-slate-leftover-chrome.mjs · verify-steps/3514-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91127-drv-team-ret-deduct-slate-leftover-chrome.mjs (piggy EVEN 3514)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91126 DONE (#26061 841d370fb6)
+
 ## 2026-10-08 · BANK-F91126 — RecoursePipeline / Chargebacks / VendorApAging slate → house
 
 FINDING: BANK-F91126 — RecoursePipelineTable / ChargebacksTable / VendorApAgingSection Tailwind slate-* → house tokens
