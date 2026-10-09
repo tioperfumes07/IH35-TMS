@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91142 — ListViewHeader / TableHeaderCell / ReportCategoryHoverNav slate → house
+
+FINDING: BANK-F91142 — ListViewHeader / TableHeaderCell / ReportCategoryHoverNav Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26076 squash `4f789f3c0d` (BANK-F91141 PeriodClose/Abandonment/PostingGrid)
+Files Modified: ListViewHeader.tsx · TableHeaderCell.tsx · ReportCategoryHoverNav.tsx · verify-91142-list-nav-slate-leftover-chrome.mjs · verify-steps/3394-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91142-list-nav-slate-leftover-chrome.mjs (piggy EVEN 3394)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91141 DONE (#26076 4f789f3c0d)
+
 ## 2026-10-09 · BANK-F91141 — PeriodClose / AbandonmentQueue / PostingGrid slate → house
 
 FINDING: BANK-F91141 — AccountingPeriodCloseDetailPage / AbandonmentQueuePage / PostingGrid Tailwind slate-* → house tokens

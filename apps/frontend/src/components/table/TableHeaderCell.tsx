@@ -76,7 +76,7 @@ export function TableHeaderCell({
       data-table-header-cell="locked"
       ref={thRef}
       {...(draggable && dragHandleProps ? dragHandleProps : {})}
-      className={`relative px-2 py-1 ${a.textClass} ${a.numeric ? "tabular-nums" : ""} ${dragOver ? "bg-slate-100 border-l-2 border-slate-300" : ""} ${className}`}
+      className={`relative px-2 py-1 ${a.textClass} ${a.numeric ? "tabular-nums" : ""} ${dragOver ? "bg-[#F7F8FA] border-l-2 border-[#E5E7EB]" : ""} ${className}`}
       style={{
         ...(width ? { width } : {}),
         backgroundColor: colors.tableHeaderBg,
@@ -103,7 +103,7 @@ export function TableHeaderCell({
           aria-orientation="vertical"
           aria-label={`Resize ${label} column`}
           onMouseDown={startResize}
-          className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none hover:bg-slate-100"
+          className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none hover:bg-[#F7F8FA]"
         />
       ) : null}
     </th>
