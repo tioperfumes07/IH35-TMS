@@ -97,7 +97,7 @@ export function DefectDetailPage() {
           onClick={() => {
             navigate("/maintenance/defects");
           }}
-          className="border-0 bg-transparent p-0 text-slate-700 hover:underline"
+          className="border-0 bg-transparent p-0 text-[#1F2A44] hover:underline"
         >
           ← Defects inbox
         </button>
@@ -105,7 +105,7 @@ export function DefectDetailPage() {
 
       {q.isLoading ? <p className="text-xs text-gray-500">Loading defect…</p> : null}
       {q.isError || (!q.isLoading && !defect) ? (
-        <p className="text-xs text-slate-700" data-testid="maint-dvir-defect-empty">
+        <p className="text-xs text-[#1F2A44]" data-testid="maint-dvir-defect-empty">
           Defect not found for this entity — it may be missing, voided, or outside the active operating company.
         </p>
       ) : null}
@@ -169,7 +169,7 @@ export function DefectDetailPage() {
               {history.length === 0 ? <li className="text-gray-500">No triage events yet.</li> : null}
             </ul>
             {historyTotal > historyPageSize ? (
-              <div className="mt-3 flex items-center justify-between text-xs text-slate-600" data-testid="maint-dvir-defect-history-server-pager">
+              <div className="mt-3 flex items-center justify-between text-xs text-[#4B5563]" data-testid="maint-dvir-defect-history-server-pager">
                 <Button size="sm" variant="secondary" disabled={historyPage === 0 || q.isFetching} onClick={() => setHistoryPage((page) => Math.max(0, page - 1))}>Previous</Button>
                 <span>{historyPage * historyPageSize + 1}–{Math.min((historyPage + 1) * historyPageSize, historyTotal)} of {historyTotal}</span>
                 <Button size="sm" variant="secondary" disabled={(historyPage + 1) * historyPageSize >= historyTotal || q.isFetching} onClick={() => setHistoryPage((page) => page + 1)}>Next</Button>

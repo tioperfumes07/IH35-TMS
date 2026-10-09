@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91110 — VendorDetail / DefectDetail / WarrantyClaims slate → house
+
+FINDING: BANK-F91110 — VendorDetailPage / DefectDetailPage / WarrantyClaimsPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26044 squash `d7dedcf5f2` (BANK-F91109 U14/Payroll/Comp425C)
+Files Modified: VendorDetailPage.tsx · DefectDetailPage.tsx · WarrantyClaimsPage.tsx · verify-91110-venddet-defect-warranty-slate-leftover-chrome.mjs · verify-steps/3618-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91110-venddet-defect-warranty-slate-leftover-chrome.mjs (piggy EVEN 3618)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91109 DONE (#26044 d7dedcf5f2)
+
 ## 2026-10-08 · BANK-F91109 — U14Banner / Payroll / Compliance425C slate → house
 
 FINDING: BANK-F91109 — U14ExclusiveStatusBanner / PayrollIntegrationPage / Compliance425CPage Tailwind slate-* → house tokens
