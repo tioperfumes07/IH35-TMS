@@ -254,7 +254,7 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
               ))}
             </SelectCombobox>
             {pairsQuery.isFetched && (pairsQuery.data?.pairs ?? []).length === 0 ? (
-              <p className="mt-1 text-xs text-slate-600">
+              <p className="mt-1 text-xs text-[#4B5563]">
                 No active intercompany entity pairs for this company (honest empty — map pairs before posting).
               </p>
             ) : null}
@@ -316,13 +316,13 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
           <textarea className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1" value={memo} onChange={(e) => setMemo(e.target.value)} />
         </label>
         {scope === "intercompany" ? (
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-[#4B5563]">
             Posts two reciprocal legs (one per entity book) joined by intercompany_transfer_group_id. GL still flag-gated per entity.
           </p>
         ) : null}
-        {!dateOk ? <p className="text-xs text-slate-700">Transfer date must be within the last 90 days (not today-future).</p> : null}
+        {!dateOk ? <p className="text-xs text-[#1F2A44]">Transfer date must be within the last 90 days (not today-future).</p> : null}
         {!valid && dateOk ? (
-          <p className="text-xs text-slate-700">
+          <p className="text-xs text-[#1F2A44]">
             {scope === "intercompany"
               ? "Select counterparty, both bank accounts, and an amount greater than zero."
               : "Select two different accounts and enter an amount greater than zero."}

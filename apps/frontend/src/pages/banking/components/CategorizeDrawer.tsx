@@ -89,7 +89,7 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
                 <div className="truncate">{String(sugg.category ?? "categorized")} · ${Number(sugg.amount ?? 0).toFixed(2)}</div>
                 <button
                   type="button"
-                  className="text-slate-700 underline"
+                  className="text-[#1F2A44] underline"
                   onClick={() => {
                     void categorizeTransaction(txId, operatingCompanyId, {
                       action_type: String(sugg.category ?? "create_expense"),
@@ -117,7 +117,7 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
               <button
                 key={key}
                 type="button"
-                className={`rounded-sm border px-2 py-1 text-xs ${action === key ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-200 bg-[var(--surface-unselected)] text-gray-700"}`}
+                className={`rounded-sm border px-2 py-1 text-xs ${action === key ? "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]" : "border-gray-200 bg-[var(--surface-unselected)] text-gray-700"}`}
                 onClick={() => setAction(key)}
               >
                 {label}
