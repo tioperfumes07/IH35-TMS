@@ -27,20 +27,20 @@ function StatusPill({ status }: { status: string | null }) {
   const label = status ? (STATUS_LABEL[status] ?? status) : "—";
   const colorClass =
     status === "advanced" || status === "collected" || status === "released"
-      ? "bg-slate-100 text-slate-700"
+      ? "bg-[#F7F8FA] text-[#1F2A44]"
       : status === "recourse_returned" || status === "disputed"
         ? "bg-red-100 text-red-700"
-        : "bg-slate-100 text-slate-600";
+        : "bg-[#F7F8FA] text-[#4B5563]";
   return <span className={`rounded-sm px-1.5 py-0.5 text-xs font-semibold ${colorClass}`}>{label}</span>;
 }
 
 function RecourseRisk({ item }: { item: WorkqueueItem }) {
   const days = item.days_until_recourse_expiry;
-  if (days == null) return <span className="text-slate-300">—</span>;
+  if (days == null) return <span className="text-[#6B7280]">—</span>;
   if (days < 0) return <span className="font-semibold text-red-600">Expired</span>;
   if (days <= 14) return <span className="font-semibold text-red-500">{days}d</span>;
-  if (days <= 30) return <span className="font-semibold text-slate-600">{days}d</span>;
-  return <span className="text-slate-500">{days}d</span>;
+  if (days <= 30) return <span className="font-semibold text-[#4B5563]">{days}d</span>;
+  return <span className="text-[#6B7280]">{days}d</span>;
 }
 
 export function SubmissionWorkqueue() {
@@ -82,7 +82,7 @@ export function SubmissionWorkqueue() {
       {
         key: "batch_number",
         label: "Batch",
-        render: (item) => <span className="font-mono text-slate-500">{item.batch_number ?? "—"}</span>,
+        render: (item) => <span className="font-mono text-[#6B7280]">{item.batch_number ?? "—"}</span>,
       },
       {
         key: "submitted_at",
@@ -98,7 +98,7 @@ export function SubmissionWorkqueue() {
       {
         key: "factor_name",
         label: "Factor",
-        render: (item) => <span className="text-slate-500">{item.factor_name ?? "—"}</span>,
+        render: (item) => <span className="text-[#6B7280]">{item.factor_name ?? "—"}</span>,
       },
       {
         key: "total_cents",
@@ -131,7 +131,7 @@ export function SubmissionWorkqueue() {
           item.chargeback_cents > 0 ? (
             <span className="tabular-nums text-red-600">{asMoney(item.chargeback_cents)}</span>
           ) : (
-            <span className="text-slate-300">—</span>
+            <span className="text-[#6B7280]">—</span>
           ),
       },
       {

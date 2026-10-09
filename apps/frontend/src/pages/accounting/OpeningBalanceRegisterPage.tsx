@@ -229,7 +229,7 @@ export function OpeningBalanceRegisterPage() {
         label: "Source",
         sortable: true,
         render: (row) => (
-          <span className="inline-block rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+          <span className="inline-block rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-medium text-[#1F2A44]">
             {row.source === "qbo_import" ? "QBO import" : "Manual"}
           </span>
         ),
@@ -322,7 +322,7 @@ export function OpeningBalanceRegisterPage() {
               disabled={cloneAsIs.isPending || !operatingCompanyId}
               onClick={() => cloneAsIs.mutate()}
               title="Import the QBO/fixture snapshot AND commit it now, Adjustment 0 — no maker/checker pair required"
-              className="rounded-sm border border-slate-700 bg-slate-700 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
+              className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#1F2A44] disabled:opacity-40"
             >
               {cloneAsIs.isPending ? "Cloning…" : "Clone-as-is import + commit"}
             </button>
@@ -361,7 +361,7 @@ export function OpeningBalanceRegisterPage() {
       {banner ? (
         <p
           className={`rounded-sm border px-3 py-2 text-xs ${
-            banner.tone === "ok" ? "border-slate-200 bg-slate-100 text-slate-700" : "border-red-200 bg-red-50 text-red-700"
+            banner.tone === "ok" ? "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]" : "border-red-200 bg-red-50 text-red-700"
           }`}
         >
           {banner.text}
@@ -401,13 +401,13 @@ export function OpeningBalanceRegisterPage() {
           </div>
 
           {blockers.length > 0 ? (
-            <ul className="mt-3 space-y-1 border-t border-gray-100 pt-3 text-xs font-medium text-slate-700">
+            <ul className="mt-3 space-y-1 border-t border-gray-100 pt-3 text-xs font-medium text-[#1F2A44]">
               {blockers.map((b) => (
                 <li key={b}>· {BLOCKER_COPY[b]}</li>
               ))}
             </ul>
           ) : (
-            <p className="mt-3 border-t border-gray-100 pt-3 text-xs text-slate-600">
+            <p className="mt-3 border-t border-gray-100 pt-3 text-xs text-[#4B5563]">
               Nothing is blocking the commit. It will write {view.totals.staged_line_count} account
               {view.totals.staged_line_count === 1 ? "" : "s"} as of {view.as_of_date}.
             </p>

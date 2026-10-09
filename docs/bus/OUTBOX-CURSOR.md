@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91071 — SubmissionWorkqueue / OpeningBalanceRegister / CoaRoles slate → house
+
+FINDING: BANK-F91071 — SubmissionWorkqueue / OpeningBalanceRegisterPage / CoaRolesPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26004 squash `f9f4ce530f` (BANK-F91070 Escrow/SettlementProfit/AcctCatalogList)
+GUARD: scripts/verify-91071-submission-opening-coaroles-slate-leftover-chrome.mjs + verify-steps/3694 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: SubmissionWorkqueue + OpeningBalanceRegisterPage + CoaRolesPage + refuse guard + 3694 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91070 — EscrowPage / SettlementProfitabilityCard / AccountingCatalogListPage slate → house
 
 FINDING: BANK-F91070 — EscrowPage / SettlementProfitabilityCard / AccountingCatalogListPage Tailwind slate-* → house tokens
