@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91115 — ReportIssue / DriverHos / Disputes slate → house
+
+FINDING: BANK-F91115 — ReportIssueModal / DriverHosPage / DisputesPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26049 squash `29b0cb583b` (BANK-F91114 Reimbursements/NetPay/SettlementHeader)
+Files Modified: ReportIssueModal.tsx · DriverHosPage.tsx · DisputesPage.tsx · verify-91115-issue-hos-disputes-slate-leftover-chrome.mjs · verify-steps/3594-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91115-issue-hos-disputes-slate-leftover-chrome.mjs (piggy EVEN 3594)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91114 DONE (#26049 29b0cb583b)
+
 ## 2026-10-08 · BANK-F91114 — Reimbursements / NetPay / SettlementHeader slate → house
 
 FINDING: BANK-F91114 — ReimbursementsSection / NetPaySummary / SettlementHeader Tailwind slate-* → house tokens
