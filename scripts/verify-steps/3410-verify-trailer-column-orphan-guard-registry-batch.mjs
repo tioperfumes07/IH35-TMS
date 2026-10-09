@@ -7,4 +7,11 @@ const guards = [
   "verify-safety-trailer-incident-wiring.mjs", "verify-trailer-oem-reference-applicability.mjs",
   "verify-trailer-profile-page-self-referential.mjs", "verify-trailer-tire-program-linkage.mjs",
 ];
-export default { name: "verify-trailer-column-orphan-guard-registry-batch", async run(ctx) { for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]); } };
+export default {
+  name: "verify-trailer-column-orphan-guard-registry-batch",
+  async run(ctx) {
+    for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
+    // BANK-F91138 piggy — LoadQuality/LoadDetention/EquipmentTransfers reverse slate leftover refuse
+    await ctx.run("node", ["scripts/verify-91138-load-rev-slate-leftover-chrome.mjs"]);
+  },
+};
