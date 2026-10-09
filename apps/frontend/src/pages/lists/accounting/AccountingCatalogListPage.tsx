@@ -41,8 +41,8 @@ type Props = {
 
 function statusPillClass(isActive: boolean) {
   return isActive
-    ? "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
-    : "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
+    ? "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]"
+    : "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
 }
 
 export function AccountingCatalogListPage({
@@ -113,7 +113,7 @@ export function AccountingCatalogListPage({
         label: "Details",
         sortable: true,
         render: (row) => (
-          <span className="text-xs text-slate-600">{metadataSummary ? metadataSummary(row) : row.description || "—"}</span>
+          <span className="text-xs text-[#4B5563]">{metadataSummary ? metadataSummary(row) : row.description || "—"}</span>
         ),
         sortValue: (row) => (metadataSummary ? metadataSummary(row) : row.description ?? ""),
       },
@@ -150,9 +150,9 @@ export function AccountingCatalogListPage({
         }
       />
       {helperLink ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
           {helperLink.note ? <span className="mr-1">{helperLink.note}</span> : null}
-          <Link to={helperLink.to} className="font-semibold text-slate-700 underline focus:outline-hidden focus:ring-2 focus:ring-slate-400">
+          <Link to={helperLink.to} className="font-semibold text-[#1F2A44] underline focus:outline-hidden focus:ring-2 focus:ring-[#6B7280]">
             {helperLink.label}
           </Link>
         </div>

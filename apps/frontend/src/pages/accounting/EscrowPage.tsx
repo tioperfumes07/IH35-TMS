@@ -214,21 +214,21 @@ export function EscrowPage() {
           <div className="flex flex-wrap gap-2 text-xs">
             <Link
               to="/driver-finance/settlements"
-              className="rounded-sm border border-slate-300 bg-white px-2 py-1 font-medium text-slate-800 hover:bg-slate-50"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
               data-testid="escrow-settlements-cross-link"
             >
               Settlements
             </Link>
             <Link
               to="/accounting/factoring"
-              className="rounded-sm border border-slate-300 bg-white px-2 py-1 font-medium text-slate-800 hover:bg-slate-50"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
               data-testid="escrow-factoring-cross-link"
             >
               Factoring
             </Link>
             <Link
               to="/banking/driver-escrow"
-              className="rounded-sm border border-slate-300 bg-white px-2 py-1 font-medium text-slate-800 hover:bg-slate-50"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
               data-testid="escrow-banking-virtual-bank-link"
             >
               Banking · Driver Escrow
@@ -259,7 +259,7 @@ export function EscrowPage() {
           {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
 
           {accountsQuery.isError ? (
-            <div className="rounded-sm border border-slate-200 bg-white">
+            <div className="rounded-sm border border-[#E5E7EB] bg-white">
               <ListErrorState
                 title="Couldn't load escrow accounts"
                 status={0}
@@ -277,7 +277,7 @@ export function EscrowPage() {
                 setSelectedAccountId(row.id);
                 postingsQuery.mutate(row.id);
               }}
-              rowClassName={(row) => (selectedAccountId === row.id ? "bg-slate-100" : "")}
+              rowClassName={(row) => (selectedAccountId === row.id ? "bg-[#F7F8FA]" : "")}
               storageKey="escrow-accounts"
               sortKey={sortKey}
               sortDirection={sortDirection}
