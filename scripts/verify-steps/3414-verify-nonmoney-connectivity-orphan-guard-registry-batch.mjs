@@ -26,5 +26,7 @@ export default {
   name: "verify-nonmoney-connectivity-orphan-guard-registry-batch",
   async run(ctx) {
     for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
+    // BANK-F91137 piggy — DispatcherSafety/Complaints/UnitPermits reverse slate leftover refuse
+    await ctx.run("node", ["scripts/verify-91137-safety-rev-slate-leftover-chrome.mjs"]);
   },
 };

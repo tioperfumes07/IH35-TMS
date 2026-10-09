@@ -55,7 +55,7 @@ export function ComplaintsReverseSection({
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
-      <h2 className="text-xs font-semibold text-slate-900">Complaints{total ? ` (${total})` : ""}</h2>
+      <h2 className="text-xs font-semibold text-[#0F1219]">Complaints{total ? ` (${total})` : ""}</h2>
       {query.isError ? (
         <ListErrorBanner message={`Couldn't load complaints for ${contextLabel}.`} onRetry={() => void query.refetch()} />
       ) : null}
@@ -79,7 +79,7 @@ export function ComplaintsReverseSection({
       {!query.isError && total > pageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="complaints-reverse-server-pager">
           <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous complaints</Button>
-          <span className="text-slate-600">Page {page} of {pageCount} · {total} complaints</span>
+          <span className="text-[#4B5563]">Page {page} of {pageCount} · {total} complaints</span>
           <Button size="sm" variant="secondary" disabled={page >= pageCount || query.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next complaints</Button>
         </div>
       ) : null}

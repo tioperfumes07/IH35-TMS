@@ -44,7 +44,7 @@ export function DispatcherSafetyEventsReverseBlock({
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
-      <h3 className="text-xs font-semibold text-slate-900">
+      <h3 className="text-xs font-semibold text-[#0F1219]">
         Dispatcher safety events
         {totalCount ? <span className="ml-2 text-xs font-normal text-gray-600">({totalCount})</span> : null}
       </h3>
@@ -53,7 +53,7 @@ export function DispatcherSafetyEventsReverseBlock({
       {!query.isLoading && !query.isError && events.length === 0 ? <p className="text-xs text-gray-500">None linked.</p> : null}
       {events.map((event) => (
         <article key={event.id} className="px-2 py-1.5 text-xs">
-          <div className="font-medium text-slate-900">{event.summary}</div>
+          <div className="font-medium text-[#0F1219]">{event.summary}</div>
           <div className="text-xs text-gray-600">
             {formatDateUS(event.event_date)} · {event.severity} · Dispatcher{" "}
             <EntityLink

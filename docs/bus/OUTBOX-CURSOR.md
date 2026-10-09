@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91137 — DispatcherSafety / Complaints / UnitPermits reverse slate → house
+
+FINDING: BANK-F91137 — DispatcherSafetyEventsReverseBlock / ComplaintsReverseSection / UnitPermitsReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26071 squash `a69495ac06` (BANK-F91136 Training/Teams/PaymentMethods)
+Files Modified: DispatcherSafetyEventsReverseBlock.tsx · ComplaintsReverseSection.tsx · UnitPermitsReverseSection.tsx · verify-91137-safety-rev-slate-leftover-chrome.mjs · verify-steps/3414-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91137-safety-rev-slate-leftover-chrome.mjs (piggy EVEN 3414)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91136 DONE (#26071 a69495ac06)
+
 ## 2026-10-09 · BANK-F91136 — TrainingRecords / DriverTeams / PaymentMethods slate → house
 
 FINDING: BANK-F91136 — TrainingRecordsSection / DriverTeamsReverseSection / DriverPaymentMethodsCard Tailwind slate-* → house tokens
