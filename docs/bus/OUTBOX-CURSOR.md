@@ -1,3 +1,14 @@
+## 2026-10-09 · BANK-F432 #26144 FAST-MERGED + Devin inbox live
+
+FINDING: BANK-F432-MERGED — leftover register type + match-drawer record type now MultiSelect; Devin FAST-MERGE orders on main
+LANE: NON-FINANCIAL
+MERGED: #26144 squash `ba1c9c4183` (worktree fatal /private/tmp/main-check ignorable; GitHub state=MERGED)
+Files Modified: none this tip — OUTBOX proof only
+GUARD: money-pr-local-gate PASS on feature commit 2d048c699c; verify-money-list-toolbar-one-and-multiselect 14+8; verify-accounting-status-filters-are-multiselect 157/19; verify-b3-bank-feed-match PASS; MatchDrawer.test 12/12
+LIVE PROOF: gh pr view 26144 state=MERGED mergeCommit=ba1c9c4183; origin/main tip ba1c9c4183; INBOX-DEVIN first heading is 2026-10-09 Cursor Lead FAST-MERGE
+REMAINING: owner Chrome later today. No prod deploy (Rule 42).
+NEXT: Devin 434-DEV Actions minutes first
+
 ## 2026-10-09 · 432-CUR #1 leftover single-select + Devin FAST-MERGE inbox
 
 FINDING: 432-CUR-MULTISELECT — register type + match-drawer record type were still single-select; named-surface coverage was not shrink-locked
