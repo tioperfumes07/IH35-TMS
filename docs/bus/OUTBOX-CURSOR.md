@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91070 — EscrowPage / SettlementProfitabilityCard / AccountingCatalogListPage slate → house
+
+FINDING: BANK-F91070 — EscrowPage / SettlementProfitabilityCard / AccountingCatalogListPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26003 squash `e3845ff1ea` (BANK-F91069 BatchWizard/BankTxSplit/Receipts)
+GUARD: scripts/verify-91070-escrow-settleprofit-acctlist-slate-leftover-chrome.mjs + verify-steps/3690 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: EscrowPage + SettlementProfitabilityCard + AccountingCatalogListPage + refuse guard + 3690 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91069 — BatchWizard / BankTransactionSplitModal / ReceiptsPage slate → house
 
 FINDING: BANK-F91069 — BatchWizard / BankTransactionSplitModal / ReceiptsPage Tailwind slate-* → house tokens
