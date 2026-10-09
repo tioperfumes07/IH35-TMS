@@ -43,7 +43,7 @@ export function VendorDuplicateExpensesSection({ operatingCompanyId, vendorId }:
           {groups.map((group) => (
             <div
               key={`${group.vendor_uuid}:${group.transaction_date}:${group.total_amount_cents}`}
-              className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700"
+              className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold">
@@ -57,7 +57,7 @@ export function VendorDuplicateExpensesSection({ operatingCompanyId, vendorId }:
                     kind="expense"
                     id={m.id}
                     label={entityLabel(m.expense_number, m.id, "Expense")}
-                    className="text-slate-700 hover:underline"
+                    className="text-[#1F2A44] hover:underline"
                   />
                 ))}
               </div>

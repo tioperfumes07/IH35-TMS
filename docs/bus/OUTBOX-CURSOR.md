@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91093 — ItemsList / PostingTemplateModal / FinanceModuleTabs slate → house
+## 2026-10-08 · BANK-F91094 — TotalOwnershipCost / VendorDupExpenses / WizardReclassify slate → house
+
+FINDING: BANK-F91094 — TotalOwnershipCostMeter / VendorDuplicateExpensesSection / WizardReclassifyPanel Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26028 squash `2fa583a136` (BANK-F91093 Items/PostTmpl/FinModTabs)
+GUARD: scripts/verify-91094-toc-venddup-wizreclass-slate-leftover-chrome.mjs + verify-steps/3750 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: TotalOwnershipCostMeter + VendorDuplicateExpensesSection + WizardReclassifyPanel + refuse guard + 3750 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91093 DONE — ItemsList / PostingTemplateModal / FinanceModuleTabs slate → house #26028
 
 FINDING: BANK-F91093 — ItemsListPage / PostingTemplateModal / FinanceModuleTabs Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26027 squash `835482dbe1` (BANK-F91092 FuelOverage/Relay/Reserve)
+MERGED: #26028 squash `2fa583a136`
 GUARD: scripts/verify-91093-items-posttmpl-finmodtabs-slate-leftover-chrome.mjs + verify-steps/3752 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: ItemsListPage + PostingTemplateModal + FinanceModuleTabs + refuse guard + 3752 piggyback + OUTBOX
 
