@@ -25,7 +25,7 @@ export function CurrentLoadSection({
       <p className="mt-1 text-xs">
         Load{" "}
         {currentLoad.load_id ? (
-          <EntityLinkOrTombstone kind="load" id={String(currentLoad.load_id)} name={currentLoad.load_number} noun="Load" className="font-semibold text-slate-700 underline" data-testid="vp-current-load-link" />
+          <EntityLinkOrTombstone kind="load" id={String(currentLoad.load_id)} name={currentLoad.load_number} noun="Load" className="font-semibold text-[#1F2A44] underline" data-testid="vp-current-load-link" />
         ) : (
           String(currentLoad.load_number)
         )}{" "}
@@ -34,7 +34,7 @@ export function CurrentLoadSection({
       <p className="text-xs text-gray-600">
         Customer:{" "}
         {customerId ? (
-          <EntityLinkOrTombstone kind="customer" id={customerId} name={customerName} noun="Customer" className="font-semibold text-slate-700 underline" data-testid="vp-current-load-customer-link" />
+          <EntityLinkOrTombstone kind="customer" id={customerId} name={customerName} noun="Customer" className="font-semibold text-[#1F2A44] underline" data-testid="vp-current-load-customer-link" />
         ) : (
           customerName
         )}{" "}

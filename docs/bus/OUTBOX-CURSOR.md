@@ -1,3 +1,17 @@
+## 2026-10-08 · BANK-F91134 — UnitPartsHistory / CurrentLoad / ComparableUnits slate → house
+
+FINDING: BANK-F91134 — UnitPartsHistorySection / CurrentLoadSection / ComparableUnitsWidget Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26068 squash `1d33a0d434` (BANK-F91133 TruckPlanner/DriverPlanner/UnitsWithoutLoad)
+Files Modified: UnitPartsHistorySection.tsx · CurrentLoadSection.tsx · ComparableUnitsWidget.tsx · verify-91134-veh-profile-slate-leftover-chrome.mjs · verify-steps/3434-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91134-veh-profile-slate-leftover-chrome.mjs (piggy EVEN 3434)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91133 DONE (#26068 1d33a0d434)
+
+## 2026-10-08 · BANK-F91133 DONE (#26068 1d33a0d434)
+
 ## 2026-10-08 · BANK-F91133 — TruckPlanner / DriverPlanner / UnitsWithoutLoad slate → house
 
 FINDING: BANK-F91133 — TruckPlanner / DriverPlanner / UnitsWithoutLoadTable Tailwind slate-* → house tokens
