@@ -418,7 +418,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
               />
               {purposeMeta ? <p className="text-xs text-gray-500">{purposeMeta.hint}</p> : null}
               {advanceTypesQuery.isError ? (
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-[#4B5563]">
                   Could not load cash advance types — using built-in purposes until the catalog is reachable.
                 </p>
               ) : null}
@@ -427,7 +427,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                 limit={200}
                 total={advanceTypesQuery.data?.total}
                 hint="Cash advance type catalog is paginated — contact admin if a type is missing."
-                className="text-xs text-slate-600"
+                className="text-xs text-[#4B5563]"
               />
               {/* UI-only taxonomy until WAVE-V-SETTLE adds cash_advance_type_id FK. */}
               <span className="sr-only" data-testid="advance-type-code">
@@ -468,7 +468,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                   ))}
                 </SelectCombobox>
                 {bankAccountsQuery.isError ? (
-                  <p className="text-xs text-slate-600">
+                  <p className="text-xs text-[#4B5563]">
                     Could not load bank accounts — retry before selecting, this list is not empty.
                   </p>
                 ) : null}
@@ -587,7 +587,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                     ))}
                   </SelectCombobox>
                   {billsQuery.isError ? (
-                    <p className="text-xs text-slate-600">
+                    <p className="text-xs text-[#4B5563]">
                       Could not load unpaid bills — retry before linking, this list is not empty.
                     </p>
                   ) : null}
@@ -694,7 +694,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           ) : null}
 
           {abovePolicyWarn ? (
-            <div className="rounded-sm border border-slate-300 bg-slate-50 p-2 text-slate-800">{abovePolicyWarn}</div>
+            <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-[#1F2A44]">{abovePolicyWarn}</div>
           ) : null}
         </div>
       </ParityDrawer>

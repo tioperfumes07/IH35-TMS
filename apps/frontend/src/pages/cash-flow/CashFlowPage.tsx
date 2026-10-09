@@ -79,23 +79,23 @@ export function CashFlowPage() {
       />
       <nav
         aria-label="Cash flow related modules"
-        className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs"
+        className="flex flex-wrap items-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs"
         data-testid="cash-flow-cross-module-links"
       >
-        <span className="font-semibold text-slate-500">Related:</span>
-        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/banking">
+        <span className="font-semibold text-[#6B7280]">Related:</span>
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/banking">
           Banking
         </Link>
-        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/reports/cash-flow-statement">
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/reports/cash-flow-statement">
           Cash flow statement
         </Link>
-        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/reports/cash-flow">
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/reports/cash-flow">
           Cash flow report
         </Link>
-        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/reports/cash-flow-overview">
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/reports/cash-flow-overview">
           Cash flow overview
         </Link>
-        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/cash-advances">
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/cash-advances">
           Cash advances
         </Link>
       </nav>
