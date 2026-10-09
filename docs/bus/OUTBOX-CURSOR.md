@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91194 — UnclearedDocs / WorkOrderCopy / JeTypePicker slate → house
+
+FINDING: BANK-F91194 — UnclearedDocumentsNote / WorkOrderCopyLinks / JournalEntryTypePicker Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26129 squash `e970e9e493` (BANK-F91193 identity/sidebar/liststate)
+Files Modified: UnclearedDocumentsNote.tsx · WorkOrderCopyLinks.tsx · JournalEntryTypePicker.tsx · verify-91194-acct-uncleared-wo-jetype-slate-leftover-chrome.mjs · verify-steps/2746-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91194-acct-uncleared-wo-jetype-slate-leftover-chrome.mjs (piggy EVEN 2746)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91193 — IdentityHeader / Sidebar / ListStateBoundary slate → house
 
 FINDING: BANK-F91193 — IdentityHeader / Sidebar / ListStateBoundary Tailwind slate-* → house tokens
