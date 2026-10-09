@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91143 — USMCAActivation / TelematicsLinks / VendorLinkage slate → house
+
+FINDING: BANK-F91143 — USMCAActivationPanel / TelematicsLinksPanel / VendorLinkageModal Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26077 squash `d317fc683b` (BANK-F91142 ListViewHeader/TableHeaderCell/ReportCategoryHoverNav)
+Files Modified: USMCAActivationPanel.tsx · TelematicsLinksPanel.tsx · VendorLinkageModal.tsx · verify-91143-usmca-telematics-vendor-slate-leftover-chrome.mjs · verify-steps/3390-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91143-usmca-telematics-vendor-slate-leftover-chrome.mjs (piggy EVEN 3390)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91142 DONE (#26077 d317fc683b)
+
 ## 2026-10-09 · BANK-F91142 — ListViewHeader / TableHeaderCell / ReportCategoryHoverNav slate → house
 
 FINDING: BANK-F91142 — ListViewHeader / TableHeaderCell / ReportCategoryHoverNav Tailwind slate-* → house tokens

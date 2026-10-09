@@ -97,7 +97,7 @@ export function TelematicsLinksPanel({
         {kind === "load" ? "Telematics for this load" : `Telematics for this truck (last ${days} days)`}
       </h3>
       {kind === "unit" && head ? (
-        <p className="text-xs text-slate-700" data-testid="telematics-links-unit-now">
+        <p className="text-xs text-[#1F2A44]" data-testid="telematics-links-unit-now">
           Now on load{" "}
           <EntityLinkOrTombstone kind="load" id={head.load_now as string | null} name={head.load_now_number} noun="Load" />
           {" · "}driver{" "}
@@ -107,7 +107,7 @@ export function TelematicsLinksPanel({
       {q.isError ? (
         <ListErrorState title="Couldn't load telematics" status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />
       ) : q.isLoading ? (
-        <p className="text-xs text-slate-600">Loading…</p>
+        <p className="text-xs text-[#4B5563]">Loading…</p>
       ) : (
         sections.map((s) => (
           <SectionTable key={s.key} ownerKey={`${kind}-${id}`} section={s} rows={(q.data?.[s.key] as Row[] | undefined) ?? []} />

@@ -23,7 +23,7 @@ type ActivationData = {
 const STATE_BADGE: Record<ActivationState, string> = {
   hidden: "bg-gray-100 text-gray-700",
   soft_launch: "bg-yellow-100 text-yellow-800",
-  pilot_drivers: "bg-slate-100 text-slate-700",
+  pilot_drivers: "bg-[#F7F8FA] text-[#1F2A44]",
   full_active: "bg-green-100 text-green-800",
   rollback: "bg-red-100 text-red-800",
 };
@@ -114,7 +114,7 @@ export function USMCAActivationPanel() {
                 type="checkbox"
                 checked={item.completed}
                 onChange={(e) => checklistMutation.mutate({ item_id: item.id, completed: e.target.checked })}
-                className="h-4 w-4 rounded-sm border-gray-300 text-slate-700"
+                className="h-4 w-4 rounded-sm border-gray-300 text-[#1F2A44]"
               />
               <span className={item.completed ? "text-gray-400 line-through" : "text-gray-800"}>{item.label}</span>
               <span className="ml-auto text-xs text-gray-400">→ {item.required_for.replace(/_/g, " ")}</span>
