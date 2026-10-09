@@ -163,7 +163,7 @@ export function CoaRolesPage() {
               onOptionCreated={() => void accountsQuery.refetch()}
             />
             {value ? (
-              <p className="mt-1 text-xs text-slate-600">
+              <p className="mt-1 text-xs text-[#4B5563]">
                 Open: <EntityLink kind="account" id={value} label={selectedLabel ?? row.account_name ?? "Account"} />
               </p>
             ) : null}
@@ -241,7 +241,7 @@ export function CoaRolesPage() {
       ) : null}
 
       {!validateQuery.isLoading && !validateQuery.isError ? (
-        <div className={`rounded-sm border px-3 py-2 text-xs ${validateQuery.data?.valid ? "border-slate-200 bg-slate-100 text-slate-700" : "border-slate-200 bg-slate-50 text-slate-800"}`}>
+        <div className={`rounded-sm border px-3 py-2 text-xs ${validateQuery.data?.valid ? "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]" : "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]"}`}>
           {validateQuery.data?.valid
             ? "All required roles have active mappings."
             : `Missing role mappings: ${(validateQuery.data?.missing_roles ?? []).join(", ") || "unknown"}`}
@@ -258,7 +258,7 @@ export function CoaRolesPage() {
         so the two are read together.
       */}
       {!validateQuery.isLoading && !validateQuery.isError && (validateQuery.data?.posting_feature_readiness?.length ?? 0) > 0 ? (
-        <div className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800">
+        <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs text-[#1F2A44]">
           <div className="mb-1 font-semibold">
             Posting features
             {(validateQuery.data?.posting_features_blocked ?? 0) > 0
@@ -277,7 +277,7 @@ export function CoaRolesPage() {
             {(validateQuery.data?.posting_feature_readiness ?? []).map((f) => (
               <li key={f.flag_key} className="flex flex-wrap items-baseline gap-x-2">
                 <span className={f.armed_but_blocked ? "font-semibold text-red-600" : "font-medium"}>{f.label}</span>
-                <span className="text-slate-500">
+                <span className="text-[#6B7280]">
                   {f.ready
                     ? "ready"
                     : `needs ${f.missing_roles.join(", ")}${f.flag_enabled ? " — currently ON" : " — currently off"}`}
