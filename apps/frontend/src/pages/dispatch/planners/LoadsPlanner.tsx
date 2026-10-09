@@ -88,7 +88,7 @@ export function LoadsPlanner() {
     return (
       <div
         data-testid="dispatch-loads-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-slate-600"
+        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
       >
         Select an operating company to load the loads planner.
       </div>

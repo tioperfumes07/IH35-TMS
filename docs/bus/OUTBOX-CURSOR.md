@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91165 — UnifiedTimeline / PlannerRowActions / LoadsPlanner slate → house
+
+FINDING: BANK-F91165 — UnifiedTimelinePlanner / PlannerRowActions / LoadsPlanner Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26100 squash `f5a741802f` (BANK-F91164 ArAp/Liab/Trailer)
+Files Modified: UnifiedTimelinePlanner.tsx · PlannerRowActions.tsx · LoadsPlanner.tsx · verify-91165-dispatch-planners-slate-leftover-chrome.mjs · verify-steps/3008-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91165-dispatch-planners-slate-leftover-chrome.mjs (piggy EVEN 3008)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91164 DONE (#26100 f5a741802f)
+
 ## 2026-10-09 · BANK-F91164 — ArApAging / LiabilitiesHome / TrailerProfile slate → house
 
 FINDING: BANK-F91164 — ArApAgingPage / LiabilitiesHome / TrailerProfilePage Tailwind slate-* → house tokens
