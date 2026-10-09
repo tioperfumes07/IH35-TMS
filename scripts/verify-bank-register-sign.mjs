@@ -36,8 +36,12 @@ const viewSrc = readFileSync(join(root, "apps/frontend/src/pages/banking/compone
 if (/tx\.is_credit \|\| Number\(tx\.amount_cents/.test(viewSrc)) {
   fail("spentReceived/from-to must not treat negative amount_cents as money-in (BofA outflows are negative)");
 }
-if (!/\{ id: "all", label: "All" \}/.test(viewSrc) || !/useState<ReviewTabId>\("all"\)/.test(viewSrc)) {
-  fail("register default must be All so categorized rows (e.g. 12/08 $100) stay on the statement walk");
+// Owner banned the All review tab (confusing vs For review / Categorized / Excluded).
+// Default is For review; Categorized holds the statement-walk categorized rows.
+if (!/\{ id: "for_review", label: "For review" \}/.test(viewSrc) ||
+    !/\{ id: "categorized", label: "Categorized" \}/.test(viewSrc) ||
+    !/useState<ReviewTabId>\("for_review"\)/.test(viewSrc)) {
+  fail("register review tabs must be For review / Categorized / Excluded with default for_review (All review tab banned)");
 }
 if (!/key: "date"[\s\S]{0,220}cellClass: "whitespace-nowrap"/.test(viewSrc)) {
   fail("Date column must whitespace-nowrap so 09/09/2026 is not ellipsized to 09/09...");

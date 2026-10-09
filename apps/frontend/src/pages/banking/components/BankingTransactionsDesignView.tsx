@@ -2440,7 +2440,11 @@ export function BankingTransactionsDesignView({
                   disabled={postingTxId === tx.id}
                   data-testid={`banking-action-primary-${tx.id}`}
                 >
-                  {postingTxId === tx.id ? "Posting..." : qboActionLabel(getDraft(tx).mode)}
+                  {postingTxId === tx.id
+                    ? "Posting..."
+                    : suggestionIsAction()
+                      ? qboActionLabel(getDraft(tx).mode)
+                      : "Add"}
                 </Button>
               )}
               <Button
@@ -4438,7 +4442,7 @@ export function BankingTransactionsDesignView({
                   className={`h-7 rounded-sm border px-2 text-xs font-semibold ${
                     bulkCategorizeBy === option
                       ? "border-[#1F2A44] bg-[#1F2A44] text-white"
-                      : "border-[#E5E7EB] bg-white text-[#1F2A44]"
+                      : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"
                   }`}
                   data-testid={`banking-bulk-categorize-by-${option}`}
                   onClick={() => setBulkCategorizeBy(option)}
