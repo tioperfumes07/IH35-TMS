@@ -90,9 +90,9 @@ export function PayrollIntegrationPage() {
       {/* 4 KPI cards */}
       <div className="grid gap-3 md:grid-cols-4">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className={`rounded-sm border p-4 ${kpi.highlight ? "border-slate-300 bg-slate-100" : "border-gray-200 bg-[var(--surface-unselected)]"}`}>
+          <div key={kpi.label} className={`rounded-sm border p-4 ${kpi.highlight ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-200 bg-[var(--surface-unselected)]"}`}>
             <div className="text-xs font-medium uppercase tracking-wide text-gray-500">{kpi.label}</div>
-            <div className={`mt-1 text-page-title font-bold tabular-nums ${kpi.highlight ? "text-slate-700" : "text-gray-900"}`}>
+            <div className={`mt-1 text-page-title font-bold tabular-nums ${kpi.highlight ? "text-[#1F2A44]" : "text-gray-900"}`}>
               {aggregateQuery.isLoading ? "…" : kpi.value}
             </div>
             <div className="mt-0.5 text-xs text-gray-400">{kpi.sub}</div>

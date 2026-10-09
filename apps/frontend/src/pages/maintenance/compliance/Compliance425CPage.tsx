@@ -68,11 +68,11 @@ export function Compliance425CPage() {
               storageKey="maintenance-compliance-425c"
               emptyText="No 425C-linked events found."
             />
-            <div className="mt-2 flex items-center justify-between text-xs text-slate-600" data-testid="maintenance-compliance-425c-pager">
+            <div className="mt-2 flex items-center justify-between text-xs text-[#4B5563]" data-testid="maintenance-compliance-425c-pager">
               <span>{totalCount === 0 ? "0 of 0" : `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalCount)} of ${totalCount}`}</span>
               <div className="flex gap-1">
-                <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={page === 0 || listQ.isFetching} onClick={() => setPage((value) => value - 1)}>Previous</button>
-                <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={(page + 1) * PAGE_SIZE >= totalCount || listQ.isFetching} onClick={() => setPage((value) => value + 1)}>Next</button>
+                <button type="button" className="rounded border border-[#E5E7EB] px-2 py-1 disabled:opacity-50" disabled={page === 0 || listQ.isFetching} onClick={() => setPage((value) => value - 1)}>Previous</button>
+                <button type="button" className="rounded border border-[#E5E7EB] px-2 py-1 disabled:opacity-50" disabled={(page + 1) * PAGE_SIZE >= totalCount || listQ.isFetching} onClick={() => setPage((value) => value + 1)}>Next</button>
               </div>
             </div>
           </>
