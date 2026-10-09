@@ -21,7 +21,7 @@ const EXAMPLES: { label: string; lastFetchedAt: string | null; cacheTier: Freshn
 export function FreshnessIndicatorUsageExample() {
   return (
     <div className="space-y-2 p-4">
-      <h3 className="text-xs font-semibold text-slate-900">Samsara freshness pill — tiers &amp; colors</h3>
+      <h3 className="text-xs font-semibold text-[#0F1219]">Samsara freshness pill — tiers &amp; colors</h3>
       <div className="overflow-x-auto">
         <table className="text-xs">
           <tbody>
@@ -30,7 +30,7 @@ export function FreshnessIndicatorUsageExample() {
                 <td className="py-1 pr-4">
                   <FreshnessIndicator lastFetchedAt={ex.lastFetchedAt} cacheTier={ex.cacheTier} />
                 </td>
-                <td className="py-1 text-slate-600">{ex.label}</td>
+                <td className="py-1 text-[#4B5563]">{ex.label}</td>
               </tr>
             ))}
           </tbody>

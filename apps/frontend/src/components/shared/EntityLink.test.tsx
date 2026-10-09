@@ -58,7 +58,7 @@ describe("EntityLink", () => {
     );
     const link = screen.getByRole("link", { name: "John Doe" });
     expect(link).toHaveAttribute("href", "/drivers/drv-1");
-    expect(link.className).toContain("text-slate-700");
+    expect(link.className).toContain("text-[#1F2A44]");
   });
 
   it("renders claim, lawsuit, and matter deep-links", () => {

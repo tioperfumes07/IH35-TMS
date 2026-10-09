@@ -41,7 +41,7 @@ describe("KpiStatCard", () => {
 
   it("attention tone applies the slate tint Banking uses for virtual/needs-review tiles", () => {
     render(<KpiStatCard label="Escrow feed" value="$0.00" tone="attention" onClick={() => {}} />);
-    expect(screen.getByRole("button").className).toMatch(/border-slate-300/);
-    expect(screen.getByRole("button").className).toMatch(/bg-slate-100/);
+    expect(screen.getByRole("button").className).toMatch(/border-\[#E5E7EB]/);
+    expect(screen.getByRole("button").className).toMatch(/bg-\[#F7F8FA]/);
   });
 });
