@@ -11,8 +11,8 @@ const money = (value: number | null) => value === null ? "Not available" : `$${v
 
 export function SavingsPanel({ sourceAvailable, driverSavings, fleetSavings, lostSavings, topDriverName, topDriverAmount }: Props) {
   return (
-    <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs">
-      <div className="mb-2 text-xs font-semibold text-slate-700">Savings Tracker</div>
+    <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs">
+      <div className="mb-2 text-xs font-semibold text-[#1F2A44]">Savings Tracker</div>
       <Row label="Savings YTD (driver)" value={sourceAvailable ? money(driverSavings) : "Not available"} />
       <Row label="Savings YTD (fleet)" value={sourceAvailable ? money(fleetSavings) : "Not available"} />
       <Row label="Highest-saver driver" value={sourceAvailable && topDriverName && topDriverAmount !== null ? `${topDriverName} (${money(topDriverAmount)})` : "Not available"} />
