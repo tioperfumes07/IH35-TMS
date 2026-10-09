@@ -101,10 +101,11 @@ function contractErrors(src) {
     }
   }
   // B-1: reverse drill moved from onRowClick to inline-expand Edit (renderExpanded) — still must
-  // call sourceRoute with the raw source_transaction_id UUID.
+  // call sourceRoute with the raw source_transaction_id UUID. Real JSX is multiline and may pass
+  // journal_entry_id / expense_payment_type after the UUID (Check vs Expense hop).
   if (
     !src.accountRegister.includes("sourceRoute") ||
-    !/navigate\(sourceRoute\(r\.source_transaction_type,\s*r\.source_transaction_id\)\)/.test(src.accountRegister)
+    !/navigate\(\s*sourceRoute\(\s*r\.source_transaction_type,\s*r\.source_transaction_id/.test(src.accountRegister)
   ) {
     errors.push("VERIFY-4: AccountRegisterPage must navigate(sourceRoute(..., source_transaction_id)) for reverse drill");
   }
@@ -189,7 +190,7 @@ function selftest() {
       "`/banking/transactions?txn_id=${reference}`",
       "settlement_id=${reference}",
       'if (t === "transfer") return "/banking/transfers"',
-      "navigate(sourceRoute(r.source_transaction_type, r.source_transaction_id))",
+      "navigate(\n                  sourceRoute(\n                    r.source_transaction_type,\n                    r.source_transaction_id",
       "renderExpanded",
       '<EntityLink\n  kind="journal_entry"',
       "getAccountRegister",
