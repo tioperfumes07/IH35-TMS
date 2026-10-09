@@ -233,13 +233,13 @@ export function PayRunClosePanel({
 
   return (
     <div
-      className="rounded-sm border border-slate-300 bg-white p-3 text-xs"
+      className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs"
       data-testid="payrun-close-panel"
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Pay-run GL close</p>
         {!postable ? (
-          <span className="text-xs text-slate-600">Finalize/lock settlement before close</span>
+          <span className="text-xs text-[#4B5563]">Finalize/lock settlement before close</span>
         ) : null}
       </div>
       <p className="mb-2 text-xs text-gray-700" data-testid="payrun-settlement-link">
@@ -259,14 +259,14 @@ export function PayRunClosePanel({
               kind="load"
               id={load.id}
               label={entityLabel(load.number, load.id, "Load")}
-              className="text-slate-700 hover:underline"
+              className="text-[#1F2A44] hover:underline"
             />
           ))}
         </p>
       ) : null}
       <p className="mb-2 text-xs text-gray-600">
         Preview computes balanced JE legs. Close posts only when{" "}
-        <code className="rounded bg-slate-100 px-1">SETTLEMENT_GL_POSTING_ENABLED</code> is ON for this
+        <code className="rounded bg-[#F7F8FA] px-1">SETTLEMENT_GL_POSTING_ENABLED</code> is ON for this
         entity. CoA roles must already be designated — this panel never invents bindings.
       </p>
 
@@ -318,7 +318,7 @@ export function PayRunClosePanel({
         </Button>
         <Link
           to={COA_ROLES_HREF}
-          className="inline-flex items-center text-xs text-slate-700 underline"
+          className="inline-flex items-center text-xs text-[#1F2A44] underline"
           data-testid="payrun-coa-roles-link"
         >
           CoA Roles
@@ -353,8 +353,8 @@ export function PayRunClosePanel({
             <span
               className={`rounded-sm px-2 py-0.5 font-semibold ${
                 result.result === "posted"
-                  ? "bg-slate-100 text-slate-700"
-                  : "bg-slate-100 text-slate-600"
+                  ? "bg-[#F7F8FA] text-[#1F2A44]"
+                  : "bg-[#F7F8FA] text-[#4B5563]"
               }`}
               data-testid="payrun-result-badge"
             >

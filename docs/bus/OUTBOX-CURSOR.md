@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91075 — SettlementDisputes / PayRunClose / BankReconciliation slate → house
+
+FINDING: BANK-F91075 — SettlementDisputesTab / PayRunClosePanel / BankReconciliationPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26008 squash `36a337e1e7` (BANK-F91074 CashFlowHome/ActualVsProjected/Plaid)
+GUARD: scripts/verify-91075-disputes-payrun-bankrecon-slate-leftover-chrome.mjs + verify-steps/3706 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: SettlementDisputesTab + PayRunClosePanel + BankReconciliationPage + refuse guard + 3706 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91074 — CashFlowHome / ActualVsProjected / PlaidConnections slate → house
 
 FINDING: BANK-F91074 — CashFlowHomeTab / ActualVsProjectedTab / BankingPlaidConnectionsPanel Tailwind slate-* → house tokens
