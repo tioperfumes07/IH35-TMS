@@ -280,7 +280,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
               </div>
               <div className="text-gray-600">{transaction.is_credit ? "Money in" : "Money out"} · Total {formatUsdCents(totalCents)}</div>
             </div>
-            <div className={`rounded-sm px-2 py-1 text-xs font-semibold ${remainingCents === 0 ? "bg-slate-100 text-slate-700" : "bg-red-50 text-red-700"}`}>
+            <div className={`rounded-sm px-2 py-1 text-xs font-semibold ${remainingCents === 0 ? "bg-[#F7F8FA] text-[#1F2A44]" : "bg-red-50 text-red-700"}`}>
               Remaining: {formatUsdCents(remainingCents)}
             </div>
           </div>
@@ -289,14 +289,14 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
             <span className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">Mode</span>
             <button
               type="button"
-              className={`rounded-sm border px-2 py-1 text-xs ${mode === "single_vendor_multi_category" ? "border-slate-400 bg-slate-100 text-slate-800" : "border-gray-300 text-gray-600"}`}
+              className={`rounded-sm border px-2 py-1 text-xs ${mode === "single_vendor_multi_category" ? "border-[#6B7280] bg-[#F7F8FA] text-[#1F2A44]" : "border-gray-300 text-gray-600"}`}
               onClick={() => setMode("single_vendor_multi_category")}
             >
               One vendor, multiple categories
             </button>
             <button
               type="button"
-              className={`rounded-sm border px-2 py-1 text-xs ${mode === "multi_vendor" ? "border-slate-400 bg-slate-100 text-slate-800" : "border-gray-300 text-gray-600"}`}
+              className={`rounded-sm border px-2 py-1 text-xs ${mode === "multi_vendor" ? "border-[#6B7280] bg-[#F7F8FA] text-[#1F2A44]" : "border-gray-300 text-gray-600"}`}
               onClick={() => setMode("multi_vendor")}
             >
               Multiple vendors
@@ -332,7 +332,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                     <span className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">Line {idx + 1}</span>
                     <button
                       type="button"
-                      className="text-slate-600 underline disabled:text-gray-300"
+                      className="text-[#4B5563] underline disabled:text-gray-300"
                       disabled={lines.length <= 2}
                       onClick={() => removeLine(line._key)}
                     >
@@ -439,7 +439,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                   </div>
 
                   {result ? (
-                    <div className={`mt-1 text-xs ${result.posted ? "text-slate-700" : "text-gray-500"}`}>
+                    <div className={`mt-1 text-xs ${result.posted ? "text-[#1F2A44]" : "text-gray-500"}`}>
                       {result.posted ? (
                         <>
                           Posted
@@ -493,7 +493,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                   the primary row breathes, per owner feedback. */}
                   <button
                     type="button"
-                    className="mt-2 text-xs font-medium text-slate-600 underline"
+                    className="mt-2 text-xs font-medium text-[#4B5563] underline"
                     onClick={() => toggleLinks(line._key)}
                   >
                     {expanded ? "− Hide detail/links" : `+ Add detail/links${linkCount > 0 ? ` (${linkCount})` : ""}`}

@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91069 — BatchWizard / BankTransactionSplitModal / ReceiptsPage slate → house
+
+FINDING: BANK-F91069 — BatchWizard / BankTransactionSplitModal / ReceiptsPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26002 squash `ef75893e98` (BANK-F91068 AccountTypeCatalog/VoidCancelReasons/CardOverage)
+GUARD: scripts/verify-91069-batch-banksplit-receipts-slate-leftover-chrome.mjs + verify-steps/3686 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: BatchWizard + BankTransactionSplitModal + ReceiptsPage + refuse guard + 3686 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91068 — AccountTypeCatalog / VoidCancelReasons / CardOverageQueue slate → house
 
 FINDING: BANK-F91068 — AccountTypeCatalogPage / VoidCancelReasonsListPage / CardOverageQueuePage Tailwind slate-* → house tokens
