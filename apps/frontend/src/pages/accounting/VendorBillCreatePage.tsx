@@ -39,7 +39,7 @@ export function VendorBillCreatePage() {
       {!companyId ? <div className="text-xs text-red-600">Select an operating company in the shell header.</div> : null}
       <p className="text-xs text-gray-600">
         Creating a vendor bill in the side panel.{" "}
-        <button type="button" className="text-slate-700 underline" onClick={() => navigate("/accounting/bills")}>
+        <button type="button" className="text-[#1F2A44] underline" onClick={() => navigate("/accounting/bills")}>
           Open bills list
         </button>
       </p>
@@ -53,8 +53,8 @@ export function VendorBillCreatePage() {
         {companyId ? (
           <div className="space-y-4">
             {loadId ? (
-              <p className="text-xs text-slate-600" data-testid="vendor-bill-create-load-context">
-                Load-scoped: <EntityLink kind="load" id={loadId} label={loadNumber ?? "this load"} className="font-semibold text-slate-700 underline" />
+              <p className="text-xs text-[#4B5563]" data-testid="vendor-bill-create-load-context">
+                Load-scoped: <EntityLink kind="load" id={loadId} label={loadNumber ?? "this load"} className="font-semibold text-[#1F2A44] underline" />
               </p>
             ) : null}
             {/* ACCT-MONEY-F6508-DIRECT-CREATORS-RETAIN-CROSS-COMPANY-DRAFT — VendorBillForm
@@ -101,7 +101,7 @@ export function VendorBillCreatePage() {
                     kind="bill"
                     id={lastBillId}
                     label="View bill →"
-                    className="text-xs font-semibold text-slate-700 underline"
+                    className="text-xs font-semibold text-[#1F2A44] underline"
                     data-testid="vendor-bill-create-view-bill"
                   />
                 </div>

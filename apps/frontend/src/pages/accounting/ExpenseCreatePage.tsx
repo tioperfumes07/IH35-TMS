@@ -35,7 +35,7 @@ export function ExpenseCreatePage() {
         Recording an expense in the side panel.{" "}
         <button
           type="button"
-          className="text-slate-700 underline"
+          className="text-[#1F2A44] underline"
           onClick={() => navigate("/accounting/expenses/list")}
         >
           Open expenses list
@@ -51,8 +51,8 @@ export function ExpenseCreatePage() {
         {companyId ? (
           <div className="space-y-4">
             {loadId ? (
-              <p className="text-xs text-slate-600" data-testid="expense-create-load-context">
-                Load-scoped: <EntityLink kind="load" id={loadId} label={loadNumber ?? "this load"} className="font-semibold text-slate-700 underline" />
+              <p className="text-xs text-[#4B5563]" data-testid="expense-create-load-context">
+                Load-scoped: <EntityLink kind="load" id={loadId} label={loadNumber ?? "this load"} className="font-semibold text-[#1F2A44] underline" />
               </p>
             ) : null}
             {/* ACCT-MONEY-F6508-DIRECT-CREATORS-RETAIN-CROSS-COMPANY-DRAFT — RecordExpenseForm
@@ -82,7 +82,7 @@ export function ExpenseCreatePage() {
                     kind="expense"
                     id={lastExpenseId}
                     label="View expense →"
-                    className="text-xs font-semibold text-slate-700 underline"
+                    className="text-xs font-semibold text-[#1F2A44] underline"
                     data-testid="expense-create-view-expense"
                   />
                 </div>
