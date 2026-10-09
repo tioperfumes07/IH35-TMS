@@ -28,7 +28,7 @@ const EMPTY_FILTERS = {
 
 function DocGateBadge({ item }: { item: SubmissionQueueItem }) {
   if (item.is_submittable) {
-    return <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">Docs OK</span>;
+    return <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">Docs OK</span>;
   }
   return (
     <span className="rounded-sm bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-700" title={item.missing_docs.join(", ")}>
@@ -200,7 +200,7 @@ export function SubmissionQueue() {
         key: "expected_reserve_cents",
         label: "Expected Reserve",
         render: (item) => (
-          <span className="tabular-nums text-slate-600">
+          <span className="tabular-nums text-[#4B5563]">
             {item.expected_reserve_cents != null ? asMoney(item.expected_reserve_cents) : "—"}
           </span>
         ),
@@ -208,7 +208,7 @@ export function SubmissionQueue() {
       {
         key: "factor_name",
         label: "Factor",
-        render: (item) => <span className="text-slate-500">{item.factor_name ?? "—"}</span>,
+        render: (item) => <span className="text-[#6B7280]">{item.factor_name ?? "—"}</span>,
       },
       {
         key: "docs",
@@ -238,7 +238,7 @@ export function SubmissionQueue() {
       <PageHeader title="Submit to Factor" subtitle="Eligible invoices ready for factor submission" />
 
       <div className="relative flex flex-wrap items-end gap-3" data-testid="factoring-submit-filters">
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Customer
           <EntityPicker
             kind="customer"
@@ -251,7 +251,7 @@ export function SubmissionQueue() {
             dataTestId="factoring-submit-filter-customer"
           />
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Load
           <EntityPicker
             kind="load"
@@ -297,7 +297,7 @@ export function SubmissionQueue() {
       ) : (
         <>
           <div className="mb-2 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 text-xs text-slate-500">
+            <div className="flex items-center gap-3 text-xs text-[#6B7280]">
               <span>
                 {submittable.length} of {items.length} invoice{items.length !== 1 ? "s" : ""} ready to submit
               </span>
@@ -313,7 +313,7 @@ export function SubmissionQueue() {
             </div>
             {selected.length > 0 && (
               <div className="flex items-center gap-3">
-                <span className="text-xs text-slate-500" data-testid="factoring-submit-expected-reserve">
+                <span className="text-xs text-[#6B7280]" data-testid="factoring-submit-expected-reserve">
                   Expected reserve: {asMoney(selectedExpectedReserve)}
                 </span>
                 <Button type="button" disabled={submitMutation.isPending} onClick={() => submitMutation.mutate()}>
