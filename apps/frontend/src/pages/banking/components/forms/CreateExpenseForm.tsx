@@ -93,7 +93,7 @@ export function CreateExpenseForm({ value, onChange, operatingCompanyId }: Props
 
   return (
     <div className="space-y-2 text-xs">
-      <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">
         Expense Details
       </div>
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
