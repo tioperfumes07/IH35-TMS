@@ -1,3 +1,12 @@
+## 2026-10-09 · BANK-F91204 — PaymentsList slate → house (final leftover)
+
+FINDING: BANK-F91204 — PaymentsListPage Tailwind slate-* → house tokens (final leftover)
+LANE: NON-FINANCIAL
+Prior tip merge: #26139 squash `5e6d5fdd20` (BANK-F91203 billpaydet/salestax/cashfcst)
+Files Modified: PaymentsListPage.tsx · verify-91204-paymentslist-slate-leftover-chrome.mjs · verify-steps/2630-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91204-paymentslist-slate-leftover-chrome.mjs (piggy EVEN 2630)
+LIVE PROOF: leftover slate class = 0 on 1 target; FE slate file count = 0; --selftest PASS
+
 ## 2026-10-09 · BANK-F91203 — BillPayDet / SalesTax / CashFcst slate → house
 
 FINDING: BANK-F91203 — BillPaymentDetailPage / SalesTaxPage / CashForecastPage Tailwind slate-* → house tokens
