@@ -69,7 +69,7 @@ export function BillsReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           Bills
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
@@ -79,7 +79,7 @@ export function BillsReverseSection({
               create path — mirrors ExpensesReverseSection's own load_id-only restriction. */}
           {filterKey === "load_id" ? (
             <Link
-              className="text-xs font-semibold text-slate-700 underline"
+              className="text-xs font-semibold text-[#1F2A44] underline"
               to={`/accounting/bills/vendor?load_id=${encodeURIComponent(filterValue)}${createLoadNumber ? `&load_number=${encodeURIComponent(createLoadNumber)}` : ""}`}
               data-testid="bills-reverse-add-bill"
             >
@@ -87,7 +87,7 @@ export function BillsReverseSection({
             </Link>
           ) : null}
           <Link
-            className="text-xs font-semibold text-slate-700 underline"
+            className="text-xs font-semibold text-[#1F2A44] underline"
             to={`/accounting/bills?${filterKey}=${encodeURIComponent(filterValue)}`}
           >
             Open Bills
@@ -102,7 +102,7 @@ export function BillsReverseSection({
       {rows.length > 0 ? (
         <ul className="space-y-2">
           {rows.map((row) => (
-            <li key={row.id} className="text-xs text-slate-700" data-testid={`bill-reverse-${row.id}`}>
+            <li key={row.id} className="text-xs text-[#1F2A44]" data-testid={`bill-reverse-${row.id}`}>
               {/* ACCT-F6299-class: 550/16,301 real accounting.bills rows carry bill_number=NULL
                   (live-confirmed, Neon prod) — entityLabel's "Bill — not visible" fallback wrongly
                   claimed a genuinely-visible, correctly-linked bill was unresolved. Same fix as

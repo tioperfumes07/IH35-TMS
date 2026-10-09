@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91105 — CashForecast / ManualJE / LegalMatterCosts slate → house
+## 2026-10-08 · BANK-F91106 — ExpensesReverse / BillsReverse / VendorPayMethods slate → house
+
+FINDING: BANK-F91106 — ExpensesReverseSection / BillsReverseSection / VendorPaymentMethodsSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26040 squash `1d2d212169` (BANK-F91105 CashFcst/ManualJE/LegalCost)
+GUARD: scripts/verify-91106-exprev-billrev-vendpaymeth-slate-leftover-chrome.mjs + verify-steps/3722 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: ExpensesReverseSection + BillsReverseSection + VendorPaymentMethodsSection + refuse guard + 3722 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91105 DONE — CashForecast / ManualJE / LegalMatterCosts slate → house #26040
 
 FINDING: BANK-F91105 — CashForecastReverseSection / ManualJEModal / LegalMatterCostsReverseSection Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26039 squash `bfce846b2b` (BANK-F91104 FaroCSV/DrvDeduct/CustFact)
+MERGED: #26040 squash `1d2d212169`
 GUARD: scripts/verify-91105-cashfcst-manualje-legalcost-slate-leftover-chrome.mjs + verify-steps/3724 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: CashForecastReverseSection + ManualJEModal + LegalMatterCostsReverseSection + refuse guard + 3724 piggyback + OUTBOX
 

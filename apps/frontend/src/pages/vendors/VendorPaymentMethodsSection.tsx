@@ -201,11 +201,11 @@ export function VendorPaymentMethodsSection({ operatingCompanyId, vendorId, canW
               className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 px-2 py-1.5 text-xs"
             >
               <span className="flex items-center gap-2">
-                <span className="font-semibold text-slate-700">{methodTypeLabel(method.method_type)}</span>
+                <span className="font-semibold text-[#1F2A44]">{methodTypeLabel(method.method_type)}</span>
                 {method.bank_name ? <span className="text-gray-600">{method.bank_name}</span> : null}
                 {method.account_mask ? <span className="text-gray-500">••{method.account_mask}</span> : null}
                 {method.is_primary ? (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                  <span className="rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">
                     Primary
                   </span>
                 ) : null}
