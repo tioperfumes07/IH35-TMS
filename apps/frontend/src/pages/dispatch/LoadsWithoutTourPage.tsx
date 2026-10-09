@@ -64,7 +64,7 @@ export function LoadsWithoutTourPage() {
   );
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
   }
 
   return (
