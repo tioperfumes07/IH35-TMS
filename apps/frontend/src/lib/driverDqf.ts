@@ -81,7 +81,7 @@ export function dqfComplianceChipClass(level: DqfComplianceLevel) {
   if (level === "attention") return "bg-amber-50 text-amber-900 border-amber-200";
   if (level === "non_compliant") return "bg-red-50 text-red-800 border-red-200";
   if (level === "empty") return "bg-gray-50 text-gray-600 border-gray-200";
-  return "bg-slate-50 text-slate-600 border-slate-200";
+  return "bg-[#F7F8FA] text-[#6B7280] border-[#E5E7EB]";
 }
 
 export function dqfItemStatusClass(status: DriverQualificationFileItem["status"]) {

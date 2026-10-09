@@ -4,7 +4,7 @@ import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
-const DRIVER_LINK = "text-slate-700 hover:underline";
+const DRIVER_LINK = "text-[#1F2A44] hover:underline";
 
 export function DriverAssignmentSection({
   unitId,

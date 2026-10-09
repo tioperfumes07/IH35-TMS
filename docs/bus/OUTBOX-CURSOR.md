@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91180 — driverDqf / CarrierBootstrap / DriverAssignmentSection slate → house
+
+FINDING: BANK-F91180 — driverDqf / CarrierBootstrap / DriverAssignmentSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26115 squash `4b72c73798` (BANK-F91179 Faro/Factor/Loans)
+Files Modified: driverDqf.ts · CarrierBootstrap.tsx · DriverAssignmentSection.tsx · verify-91180-dqf-carrier-drvassign-slate-leftover-chrome.mjs · verify-steps/2960-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91180-dqf-carrier-drvassign-slate-leftover-chrome.mjs (piggy EVEN 2960)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91179 — FaroCashReserve / FactorRecon / LoansAdvances slate → house
 
 FINDING: BANK-F91179 — FaroCashReserveReclassPanel / FactorReconciliationPage / LoansAdvancesPage Tailwind slate-* → house tokens
