@@ -1,3 +1,17 @@
+## 2026-10-08 · BANK-F91129 — ExtraPay / Earnings / DeadheadPay slate → house
+
+FINDING: BANK-F91129 — ExtraPaySection / EarningsSection / DeadheadPaySection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26063 squash `07c952b5f8` (BANK-F91128 IntegrationsStrip/CreateWOHeader/FuelTx)
+Files Modified: ExtraPaySection.tsx · EarningsSection.tsx · DeadheadPaySection.tsx · verify-91129-drvfin-pay-sections-slate-leftover-chrome.mjs · verify-steps/3506-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91129-drvfin-pay-sections-slate-leftover-chrome.mjs (piggy EVEN 3506)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91128 DONE (#26063 07c952b5f8)
+
+## 2026-10-08 · BANK-F91128 DONE (#26063 07c952b5f8)
+
 ## 2026-10-08 · BANK-F91128 — IntegrationsStrip / CreateWOHeader / FuelTransactions slate → house
 
 FINDING: BANK-F91128 — IntegrationsStrip / CreateWOSectionRenderV5Header / FuelTransactionsTable Tailwind slate-* → house tokens
