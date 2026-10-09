@@ -44,7 +44,7 @@ export function WorkOrderCopyLinks({
           <button
             key={c.id}
             type="button"
-            className="text-xs text-slate-700 underline"
+            className="text-xs text-[#1F2A44] underline"
             title={`The work order as it was when this ${kind} was linked`}
             onClick={() =>
               openPrintableDocument(

@@ -9,5 +9,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-orphan-surface-drill.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-orphan-surface-drill.mjs"]);
+    await ctx.run("node", ["scripts/verify-91194-acct-uncleared-wo-jetype-slate-leftover-chrome.mjs"]);
   },
 };

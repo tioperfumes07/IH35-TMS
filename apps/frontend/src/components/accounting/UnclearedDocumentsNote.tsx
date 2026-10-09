@@ -12,7 +12,7 @@ export type UnclearedDocumentNote = {
 export function UnclearedDocumentsNote({ docs }: { docs: UnclearedDocumentNote[] }) {
   if (!docs.length) return null;
   return (
-    <ul className="text-xs text-slate-600">
+    <ul className="text-xs text-[#4B5563]">
       {docs.map((d) => (
         <li key={`${d.document_type}-${d.document_number}-${d.document_date}-${d.amount_cents}`}>
           {d.document_type} {d.document_number} {d.document_date ? mmmDd(d.document_date) : "—"}{" "}
