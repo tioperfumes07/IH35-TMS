@@ -13,7 +13,7 @@ function dotClass(dot: "gray" | "green" | "yellow" | "red"): string {
   if (dot === "green") return "bg-emerald-500";
   if (dot === "yellow") return "bg-amber-400";
   if (dot === "red") return "bg-red-500";
-  return "bg-slate-400";
+  return "bg-[#6B7280]";
 }
 
 export function IntegrationsStrip({ pendingQboCount }: Props) {
@@ -104,7 +104,7 @@ export function IntegrationsStrip({ pendingQboCount }: Props) {
           <span className="text-gray-300">·</span>
           <span>{pendingQboCount} pending QBO sync</span>
           <span className="text-gray-300">·</span>
-          <button type="button" className="text-slate-700 underline">
+          <button type="button" className="text-[#1F2A44] underline">
             View sync log →
           </button>
         </>
