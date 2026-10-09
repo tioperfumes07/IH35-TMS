@@ -36,7 +36,7 @@ export function TriSignalPill({ signal, loading, unavailable }: Props) {
       className={`group relative inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${pillClass(signal.signal)}`}
     >
       {pillLabel(signal.signal)}
-      <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden min-w-[220px] rounded-sm border border-slate-200 bg-white p-2 text-left shadow-lg group-hover:block">
+      <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden min-w-[220px] rounded-sm border border-[#E5E7EB] bg-white p-2 text-left shadow-lg group-hover:block">
         <TriSignalHoverDetail signal={signal} />
       </span>
     </span>
