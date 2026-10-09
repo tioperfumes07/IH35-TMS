@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91148 — BankTieout / VendorWorkOrders / VendorFuelCards reverse slate → house
+
+FINDING: BANK-F91148 — BankTieoutHeader / VendorWorkOrdersReverseSection / VendorFuelCardsReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26083 squash `a45f4c9c0c` (BANK-F91147 Geocode/Bulk/LinkedBank)
+Files Modified: BankTieoutHeader.tsx · VendorWorkOrdersReverseSection.tsx · VendorFuelCardsReverseSection.tsx · verify-91148-tieout-vend-reverse-slate-leftover-chrome.mjs · verify-steps/3348-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91148-tieout-vend-reverse-slate-leftover-chrome.mjs (piggy EVEN 3348)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91147 DONE (#26083 a45f4c9c0c)
+
 ## 2026-10-09 · BANK-F91147 — AddressGeocode / BulkProgress / LinkedBank slate → house
 
 FINDING: BANK-F91147 — AddressGeocodeInput / BulkProgressDialog / LinkedBankTransactionsPanel Tailwind slate-* → house tokens

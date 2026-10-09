@@ -37,7 +37,7 @@ export function VendorFuelCardsReverseSection({ operatingCompanyId, vendorId }: 
               <span className="font-semibold text-gray-900">{t.display_name}</span>
               <Link
                 to={`/fuel/cards?vendor_id=${encodeURIComponent(vendorId)}`}
-                className="text-slate-700 hover:underline"
+                className="text-[#1F2A44] hover:underline"
                 data-testid={`vendor-fuel-cards-open-${t.code}`}
               >
                 {t.active_card_count} card{t.active_card_count === 1 ? "" : "s"} on the Fuel Cards registry
