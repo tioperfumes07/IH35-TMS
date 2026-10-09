@@ -343,7 +343,7 @@ export function ComplianceDashboardPage() {
             createRuleM.mutate({ companyId, generation: ruleGenerationRef.current, credentialType });
           }}
         >
-          <label className="block text-xs font-medium text-slate-700" htmlFor="compliance-rule-credential-type">
+          <label className="block text-xs font-medium text-[#1F2A44]" htmlFor="compliance-rule-credential-type">
             Credential type
           </label>
           <input

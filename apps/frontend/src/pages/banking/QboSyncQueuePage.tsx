@@ -130,7 +130,7 @@ export function QboSyncQueuePage() {
           shown={(queueQuery.data?.items ?? []).length}
           limit={100}
           hint="Only the newest sync jobs are shown; use filters or admin tools for the full queue."
-          className="mt-3 text-xs text-slate-700"
+          className="mt-3 text-xs text-[#1F2A44]"
         />
       </div>
     </div>

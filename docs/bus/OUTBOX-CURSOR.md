@@ -1,3 +1,12 @@
+## 2026-10-09 · BANK-F91201 — ApiDoc / QboSync / ComplianceDash slate → house
+
+FINDING: BANK-F91201 — ApiDocumentPassthrough / QboSyncQueuePage / ComplianceDashboardPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26136 squash `9f1f495d87` (BANK-F91200 listrow/trisignal/recexp)
+Files Modified: ApiDocumentPassthrough.tsx · QboSyncQueuePage.tsx · ComplianceDashboardPage.tsx · verify-91201-apidoc-qbosync-compliance-slate-leftover-chrome.mjs · verify-steps/2636-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91201-apidoc-qbosync-compliance-slate-leftover-chrome.mjs (piggy EVEN 2636)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
 ## 2026-10-09 · BANK-F91200 — ListViewRow / TriSignalPill / RecordExpense slate → house
 
 FINDING: BANK-F91200 — ListViewRow / TriSignalPill / RecordExpenseModal Tailwind slate-* → house tokens
