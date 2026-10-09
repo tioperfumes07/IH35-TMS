@@ -1,3 +1,12 @@
+## 2026-10-09 · BANK-F91203 — BillPayDet / SalesTax / CashFcst slate → house
+
+FINDING: BANK-F91203 — BillPaymentDetailPage / SalesTaxPage / CashForecastPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26138 squash `4f0fd85f5f` (BANK-F91202 paydet/expmap/jedet)
+Files Modified: BillPaymentDetailPage.tsx · SalesTaxPage.tsx · CashForecastPage.tsx · verify-91203-billpaydet-salestax-cashfcst-slate-leftover-chrome.mjs · verify-steps/2632-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91203-billpaydet-salestax-cashfcst-slate-leftover-chrome.mjs (piggy EVEN 2632)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
 ## 2026-10-09 · BANK-F91202 — PayDet / ExpMap / JEDet slate → house
 
 FINDING: BANK-F91202 — PaymentDetailPage / ExpenseCategoryMapPage / JournalEntryDetailPage Tailwind slate-* → house tokens

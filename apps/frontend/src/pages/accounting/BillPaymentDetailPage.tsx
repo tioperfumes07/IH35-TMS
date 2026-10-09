@@ -61,7 +61,7 @@ export function BillPaymentDetailPage() {
   // isFetching, so a disabled query (selectedCompanyId not yet resolved on cold nav) reports
   // isLoading=false and falls through to "not found" for a real record. isPending is correct here —
   // see JournalEntryDetailPage.tsx for the full live-repro writeup. Do not revert to isLoading.
-  if (detailQuery.isPending) return <div className="p-4 text-xs text-slate-500">Loading bill payment…</div>;
+  if (detailQuery.isPending) return <div className="p-4 text-xs text-[#6B7280]">Loading bill payment…</div>;
   if (detailQuery.isError) {
     return (
       <ListErrorState
