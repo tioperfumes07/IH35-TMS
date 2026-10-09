@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91072 — CoaAsymmetry / ScheduleRowDetail / PreSettlement slate → house
+
+FINDING: BANK-F91072 — CoaAsymmetryReportPanel / AccountingScheduleRowDetailPage / PreSettlementPanel Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26005 squash `cd9ad8fd3b` (BANK-F91071 SubmissionWorkqueue/OpeningBalance/CoaRoles)
+GUARD: scripts/verify-91072-coaasym-schedrow-presettle-slate-leftover-chrome.mjs + verify-steps/3698 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: CoaAsymmetryReportPanel + AccountingScheduleRowDetailPage + PreSettlementPanel + refuse guard + 3698 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91071 — SubmissionWorkqueue / OpeningBalanceRegister / CoaRoles slate → house
 
 FINDING: BANK-F91071 — SubmissionWorkqueue / OpeningBalanceRegisterPage / CoaRolesPage Tailwind slate-* → house tokens

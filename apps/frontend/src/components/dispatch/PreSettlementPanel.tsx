@@ -107,7 +107,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
             <EntityLinkOrTombstone kind="settlement" id={settlement.id} name={settlementLabel(settlement)} noun="Record" />
           </div>
           {/* Exact Leaves secondary.pre_settlements:driver / reverse — panel was scoped by driverId but never drilled */}
-          <div className="mt-0.5 text-xs text-slate-600" data-testid="pre-settlement-panel-driver-entitylink">
+          <div className="mt-0.5 text-xs text-[#4B5563]" data-testid="pre-settlement-panel-driver-entitylink">
             Driver:{" "}
             <EntityLinkOrTombstone
               kind="driver"
@@ -127,8 +127,8 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
         <span
           className={`rounded-full px-2 py-1 text-xs font-semibold ${
             settlement.trip_closed_at
-              ? "bg-slate-100 text-slate-700"
-              : "bg-slate-100 text-slate-700"
+              ? "bg-[#F7F8FA] text-[#1F2A44]"
+              : "bg-[#F7F8FA] text-[#1F2A44]"
           }`}
         >
           {settlement.trip_closed_at ? "Driver returned" : "Trip in progress"}
@@ -145,8 +145,8 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
         <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Linked Trips</div>
         {linkedTripRows.length > 0 ? (
           linkedTripRows.map((row) => (
-            <div key={row.loadId} className="flex items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5">
-              <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-bold uppercase text-slate-700">
+            <div key={row.loadId} className="flex items-center gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5">
+              <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-bold uppercase text-[#1F2A44]">
                 {row.tripType}
               </span>
               <EntityLinkOrTombstone
@@ -154,7 +154,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
                 id={row.loadId}
                 name={row.loadNumber}
                 noun="Load"
-                className="font-mono text-xs font-semibold text-slate-700"
+                className="font-mono text-xs font-semibold text-[#1F2A44]"
               />
             </div>
           ))

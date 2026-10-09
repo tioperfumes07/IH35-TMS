@@ -21,23 +21,23 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
 
   return (
     <section
-      className="mb-4 rounded-sm border border-slate-200 bg-slate-100 p-4"
+      className="mb-4 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4"
       data-testid="coa-asymmetry-report-panel"
     >
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-xs font-semibold text-slate-900">Entity CoA asymmetry (read-only)</h2>
-        <span className="text-xs font-medium uppercase tracking-wide text-slate-700">Owner-eyes · change nothing</span>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Entity CoA asymmetry (read-only)</h2>
+        <span className="text-xs font-medium uppercase tracking-wide text-[#1F2A44]">Owner-eyes · change nothing</span>
       </div>
-      <p className="mb-3 text-xs text-slate-700">
+      <p className="mb-3 text-xs text-[#1F2A44]">
         Grouped diff across TRK / TRANSP / USMCA postable charts. Reserve / holdback / retainage accounts are
         owner-manual only (Rule 19) — this panel does not create, merge, or deactivate any account.
       </p>
 
       {isError ? <ListErrorBanner onRetry={() => refetch()} /> : null}
-      {isLoading ? <p className="text-xs text-slate-600">Loading grouped diff…</p> : null}
+      {isLoading ? <p className="text-xs text-[#4B5563]">Loading grouped diff…</p> : null}
 
       {data ? (
-        <div className="space-y-4 text-xs text-slate-800">
+        <div className="space-y-4 text-xs text-[#1F2A44]">
           {/* ACCT-F3574: ParityTable owns Search+Range+gear on postable-by-entity summary leaf. */}
           <ParityTable<(typeof data.postable_by_entity)[number]>
             rows={data.postable_by_entity}
@@ -78,7 +78,7 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
 
           {data.trk_only_postable_by_type.length ? (
             <div>
-              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
                 TRK-only postable by account type
               </h3>
               <ul className="grid gap-1 sm:grid-cols-2">
@@ -93,7 +93,7 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
 
           {data.sample_trk_only_postable.length ? (
             <div>
-              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
                 Sample TRK-only postable (first 15)
               </h3>
               <ul className="space-y-1 text-xs">
@@ -113,7 +113,7 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
             </div>
           ) : null}
 
-          <p className="text-xs text-slate-600">{data.disclaimer}</p>
+          <p className="text-xs text-[#4B5563]">{data.disclaimer}</p>
         </div>
       ) : null}
     </section>
