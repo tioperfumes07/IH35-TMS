@@ -35,7 +35,7 @@ function severityBadgeClass(severity: string) {
   return "bg-amber-100 text-amber-800 border-amber-300";
 }
 
-const LINK = "text-slate-700 hover:underline";
+const LINK = "text-[#1F2A44] hover:underline";
 
 export function SevereRepairOosTab({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
