@@ -1,3 +1,12 @@
+## 2026-10-09 · BANK-F91200 — ListViewRow / TriSignalPill / RecordExpense slate → house
+
+FINDING: BANK-F91200 — ListViewRow / TriSignalPill / RecordExpenseModal Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26135 squash `cabf34edf8` (BANK-F91199 custedit/newcust/billpay)
+Files Modified: ListViewRow.tsx · TriSignalPill.tsx · RecordExpenseModal.tsx · verify-91200-listrow-trisignal-recexp-slate-leftover-chrome.mjs · verify-steps/2638-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91200-listrow-trisignal-recexp-slate-leftover-chrome.mjs (piggy EVEN 2638)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
 ## 2026-10-09 · BANK-F91199 — CustomerEdit / NewCustomerDrawer / BillPayment slate → house
 
 FINDING: BANK-F91199 — CustomerEditModal / NewCustomerDrawerForm / BillPaymentModal Tailwind slate-* → house tokens

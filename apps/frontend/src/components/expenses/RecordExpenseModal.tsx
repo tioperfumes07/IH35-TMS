@@ -55,7 +55,7 @@ export function RecordExpenseModal({
           }}
         />
         <p className="text-xs text-gray-600">
-          <Link className="text-slate-700 underline" to="/accounting/expenses/list">
+          <Link className="text-[#1F2A44] underline" to="/accounting/expenses/list">
             View all expenses
           </Link>
         </p>

@@ -8,5 +8,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-hooks-before-return.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-hooks-before-return.mjs"]);
+    await ctx.run("node", ["scripts/verify-91200-listrow-trisignal-recexp-slate-leftover-chrome.mjs"]);
   },
 };

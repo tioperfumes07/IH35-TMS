@@ -41,7 +41,7 @@ export function ListViewRow<T>({
 
   return (
     <tr
-      className={`${rowHeight} border-b border-gray-100 hover:bg-gray-50 transition-colors ${isSelected ? "bg-slate-100" : ""}`}
+      className={`${rowHeight} border-b border-gray-100 hover:bg-gray-50 transition-colors ${isSelected ? "bg-[#F7F8FA]" : ""}`}
       data-row-key={rowKey}
     >
       <td className="w-8 px-2 py-0">
