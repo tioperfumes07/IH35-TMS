@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91076 — QboReconciliation / PostingLineage / PeriodComparison slate → house
+
+FINDING: BANK-F91076 — QboReconciliationPage / PostingLineagePage / PeriodComparisonPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26009 squash `a25c400e79` (BANK-F91075 SettlementDisputes/PayRunClose/BankRecon)
+GUARD: scripts/verify-91076-qborecon-posting-period-slate-leftover-chrome.mjs + verify-steps/3714 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: QboReconciliationPage + PostingLineagePage + PeriodComparisonPage + refuse guard + 3714 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91075 — SettlementDisputes / PayRunClose / BankReconciliation slate → house
 
 FINDING: BANK-F91075 — SettlementDisputesTab / PayRunClosePanel / BankReconciliationPage Tailwind slate-* → house tokens

@@ -71,7 +71,7 @@ export function PeriodComparisonPage() {
         label: "Variance",
         sortable: true,
         render: (row) => (
-          <span className={`font-semibold ${row.variance_cents < 0 ? "text-red-700" : "text-slate-700"}`}>
+          <span className={`font-semibold ${row.variance_cents < 0 ? "text-red-700" : "text-[#1F2A44]"}`}>
             {money(row.variance_cents)}
           </span>
         ),
@@ -81,7 +81,7 @@ export function PeriodComparisonPage() {
         label: "Variance %",
         sortable: true,
         render: (row) => (
-          <span className={`font-semibold ${row.variance_pct != null && row.variance_pct < 0 ? "text-red-700" : "text-slate-700"}`}>
+          <span className={`font-semibold ${row.variance_pct != null && row.variance_pct < 0 ? "text-red-700" : "text-[#1F2A44]"}`}>
             {row.variance_pct == null ? "n/a" : `${row.variance_pct.toFixed(2)}%`}
           </span>
         ),
@@ -92,7 +92,7 @@ export function PeriodComparisonPage() {
         render: (row) => (
           <Link
             to={`/accounting/posting-lineage?source_transaction_type=account&source_transaction_id=${encodeURIComponent(row.account_id ?? row.row_key)}`}
-            className="text-xs font-medium text-slate-700 hover:underline"
+            className="text-xs font-medium text-[#1F2A44] hover:underline"
           >
             Open lineage
           </Link>
@@ -106,7 +106,7 @@ export function PeriodComparisonPage() {
     <AccountingSubNavWrapper title="Period comparison" subtitle="Side-by-side period variance for P&L or balance sheet with accrual/cash basis selection.">
 
       {!companyId ? (
-        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">Select an operating company before running comparison.</p>
+        <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">Select an operating company before running comparison.</p>
       ) : null}
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
@@ -179,13 +179,13 @@ function ClassCostCenterVariancePanel({ companyId, periods }: { companyId: strin
           row.class_id ? (
             <Link
               to={`/lists/accounting/classes?class_id=${encodeURIComponent(row.class_id)}`}
-              className="text-xs font-medium text-slate-700 hover:underline"
+              className="text-xs font-medium text-[#1F2A44] hover:underline"
             >
               {row.class_name}
               {row.class_code ? ` (${row.class_code})` : ""}
             </Link>
           ) : (
-            <span className="text-slate-700">{row.class_name}</span>
+            <span className="text-[#1F2A44]">{row.class_name}</span>
           ),
       },
       {
@@ -205,7 +205,7 @@ function ClassCostCenterVariancePanel({ companyId, periods }: { companyId: strin
         label: "Variance",
         sortable: true,
         render: (row) => (
-          <span className={`font-semibold ${row.variance_cents < 0 ? "text-red-700" : "text-slate-700"}`}>
+          <span className={`font-semibold ${row.variance_cents < 0 ? "text-red-700" : "text-[#1F2A44]"}`}>
             {money(row.variance_cents)}
           </span>
         ),

@@ -18,7 +18,7 @@ const titleize = (s: string) => s.replace(/_/g, " ");
 
 function SyncPill({ inSync }: { inSync: boolean }) {
   return inSync ? (
-    <span className="inline-flex items-center rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+    <span className="inline-flex items-center rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">
       In sync
     </span>
   ) : (
@@ -30,7 +30,7 @@ function SyncPill({ inSync }: { inSync: boolean }) {
 
 const SEVERITY_CLASS: Record<string, string> = {
   critical: "bg-red-50 text-red-700",
-  important: "bg-slate-100 text-slate-700",
+  important: "bg-[#F7F8FA] text-[#1F2A44]",
   cleanup: "bg-gray-100 text-gray-600",
 };
 
@@ -110,7 +110,7 @@ export function QboReconciliationPage() {
         render: (o) => (
           <button
             onClick={() => setSelectedObject(selectedObject === o.object ? null : o.object)}
-            className="text-xs text-slate-600 hover:underline"
+            className="text-xs text-[#4B5563] hover:underline"
           >
             {selectedObject === o.object ? "Clear" : "Findings"}
           </button>
@@ -247,7 +247,7 @@ export function QboReconciliationPage() {
             <div>
               <span className="text-gray-400">Overall: </span>
               {allInSync ? (
-                <span className="font-semibold text-slate-700">All objects in sync</span>
+                <span className="font-semibold text-[#1F2A44]">All objects in sync</span>
               ) : (
                 <span className="font-semibold text-red-700">Drift detected</span>
               )}
@@ -270,7 +270,7 @@ export function QboReconciliationPage() {
             </div>
             <div>
               <span className="text-gray-400">Open findings: </span>
-              <span className={`font-semibold ${(data?.open_findings_count ?? 0) > 0 ? "text-red-700" : "text-slate-700"}`}>
+              <span className={`font-semibold ${(data?.open_findings_count ?? 0) > 0 ? "text-red-700" : "text-[#1F2A44]"}`}>
                 {data?.open_findings_count ?? 0}
               </span>
             </div>
@@ -286,7 +286,7 @@ export function QboReconciliationPage() {
               emptyText="No reconciliation data available."
               storageKey="qbo-recon-object-counts"
               tableTestId="qbo-recon-object-counts-table"
-              rowClassName={(o) => `hover:bg-gray-50 ${selectedObject === o.object ? "bg-slate-50" : ""}`}
+              rowClassName={(o) => `hover:bg-gray-50 ${selectedObject === o.object ? "bg-[#F7F8FA]" : ""}`}
             />
             <p className="mt-1 text-xs text-gray-400">
               Δ compares TMS against the authoritative QBO remote-API count when collected, otherwise the local QBO mirror.
@@ -315,7 +315,7 @@ export function QboReconciliationPage() {
                 Reconciliation findings{selectedObject ? ` · ${selectedObject}` : ""}
               </h2>
               {selectedObject && (
-                <button onClick={() => setSelectedObject(null)} className="text-xs text-slate-600 hover:underline">
+                <button onClick={() => setSelectedObject(null)} className="text-xs text-[#4B5563] hover:underline">
                   show all
                 </button>
               )}

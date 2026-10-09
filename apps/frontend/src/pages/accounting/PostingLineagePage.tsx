@@ -272,7 +272,7 @@ export function PostingLineagePage() {
       {lineageQuery.isError ? <ReportBlockVPendingBanner error={lineageQuery.error} onRetry={() => void lineageQuery.reset()} /> : null}
 
       <form
-        className="grid gap-3 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[220px_1fr_auto]"
+        className="grid gap-3 rounded-sm border border-[#E5E7EB] bg-white p-3 md:grid-cols-[220px_1fr_auto]"
         onSubmit={(e) => {
           e.preventDefault();
           const next = {
@@ -287,10 +287,10 @@ export function PostingLineagePage() {
           lineageQuery.mutate(next);
         }}
       >
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Source type
           <input
-            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
+            className="mt-1 block h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={sourceType}
             onChange={(e) => setSourceType(e.target.value)}
             placeholder="e.g. customer_payment, bill, invoice"
@@ -302,10 +302,10 @@ export function PostingLineagePage() {
             ))}
           </datalist>
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Source transaction id
           <input
-            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
+            className="mt-1 block h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={sourceId}
             onChange={(e) => setSourceId(e.target.value)}
             placeholder="source_transaction_id"
@@ -331,8 +331,8 @@ export function PostingLineagePage() {
       </form>
 
       {submitted ? (
-        <div className="rounded-sm border border-slate-200 bg-white p-3">
-          <div className="text-xs font-semibold text-slate-800">
+        <div className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+          <div className="text-xs font-semibold text-[#1F2A44]">
             Source: {submitted.sourceType} /{" "}
             <PostingEntityLink
               type={submitted.sourceType}
@@ -344,9 +344,9 @@ export function PostingLineagePage() {
               )}
             />
           </div>
-          <div className="mt-1 text-xs text-slate-600">
+          <div className="mt-1 text-xs text-[#4B5563]">
             Debit {formatMoney(totals.debit)} · Credit {formatMoney(totals.credit)} ·{" "}
-            <span className={totals.balanced ? "text-slate-700" : "text-red-700"}>
+            <span className={totals.balanced ? "text-[#1F2A44]" : "text-red-700"}>
               {totals.balanced ? "Balanced" : "Out of balance"}
             </span>
           </div>
