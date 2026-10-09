@@ -184,7 +184,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title={mode === "create" ? "New Posting Template" : "Edit Posting Template"}>
       <div className="space-y-3">
-        <p className="text-xs text-slate-600">
+        <p className="text-xs text-[#4B5563]">
           Template code must match a posting consumer (<code className="font-mono">invoice</code>, <code className="font-mono">bill</code>,{" "}
           <code className="font-mono">fuel_event</code>, etc.) so the next batch stamps <code className="font-mono">posting_template_id</code>.
         </p>
@@ -195,7 +195,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
             value={form.code}
             disabled={mode === "edit"}
             onChange={(event) => setForm((v) => ({ ...v, code: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-[#F7F8FA]"
           >
             <option value="">Select source type…</option>
             {POSTING_TEMPLATE_SOURCE_CODES.map((opt) => (
@@ -241,7 +241,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
           </div>
           {errors.debitAccount ? <div className="mt-1 text-xs text-red-700">{errors.debitAccount}</div> : null}
           {form.debitAccountId ? (
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="mt-1 text-xs text-[#4B5563]">
               Open register:{" "}
               <EntityLink
                 kind="account"
@@ -266,7 +266,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
           </div>
           {errors.creditAccount ? <div className="mt-1 text-xs text-red-700">{errors.creditAccount}</div> : null}
           {form.creditAccountId ? (
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="mt-1 text-xs text-[#4B5563]">
               Open register:{" "}
               <EntityLink
                 kind="account"
@@ -288,7 +288,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
               shown={classOptions.length}
               limit={CLASS_PICKER_CAP}
               total={classesQuery.data?.total ?? null}
-              className="mb-1 text-xs text-slate-600"
+              className="mb-1 text-xs text-[#4B5563]"
             />
             <ReferenceSelect
               createKind="class"

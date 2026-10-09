@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91092 — FuelCardOverage / RelayDeposit / ReserveTracker slate → house
+## 2026-10-08 · BANK-F91093 — ItemsList / PostingTemplateModal / FinanceModuleTabs slate → house
+
+FINDING: BANK-F91093 — ItemsListPage / PostingTemplateModal / FinanceModuleTabs Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26027 squash `835482dbe1` (BANK-F91092 FuelOverage/Relay/Reserve)
+GUARD: scripts/verify-91093-items-posttmpl-finmodtabs-slate-leftover-chrome.mjs + verify-steps/3752 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: ItemsListPage + PostingTemplateModal + FinanceModuleTabs + refuse guard + 3752 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91092 DONE — FuelCardOverage / RelayDeposit / ReserveTracker slate → house #26027
 
 FINDING: BANK-F91092 — FuelCardOverageReverseSection / RelayDepositReview / ReserveTracker Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26026 squash `049798b0e0` (BANK-F91091 BankAcct/Recon/ScenarioLines)
+MERGED: #26027 squash `835482dbe1`
 GUARD: scripts/verify-91092-fueloverage-relay-reserve-slate-leftover-chrome.mjs + verify-steps/3754 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: FuelCardOverageReverseSection + RelayDepositReview + ReserveTracker + refuse guard + 3754 piggyback + OUTBOX
 

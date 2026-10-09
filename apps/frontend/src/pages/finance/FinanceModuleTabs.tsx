@@ -46,17 +46,17 @@ export function FinanceModuleTabs() {
         className="flex flex-wrap items-center gap-3 pb-2 text-xs"
         data-testid="finance-cross-module-links"
       >
-        <span className="font-semibold text-slate-500">Related:</span>
-        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/accounting">
+        <span className="font-semibold text-[#6B7280]">Related:</span>
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/accounting">
           Accounting
         </Link>
-        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/dispatch/load-costs">
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/dispatch/load-costs">
           Load costs
         </Link>
-        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/cash-flow">
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/cash-flow">
           Cash Flow
         </Link>
-        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/reports/profit-loss">
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/reports/profit-loss">
           Profit &amp; Loss
         </Link>
       </nav>
