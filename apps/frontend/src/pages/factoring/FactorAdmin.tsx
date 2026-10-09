@@ -410,7 +410,7 @@ export function FactorAdmin() {
           rowKey={(factor) => factor.id}
           loading={factorsListState.isLoading}
           onRowClick={(factor) => selectFactor(factor)}
-          rowClassName={(factor) => (selectedFactor?.id === factor.id ? "bg-slate-100" : "")}
+          rowClassName={(factor) => (selectedFactor?.id === factor.id ? "bg-[#F7F8FA]" : "")}
           // Settled-only empty text (LIST-EMPTY-1): supplied once the query resolves to "empty".
           emptyText={factorsListState.isEmpty ? "No factors configured yet." : undefined}
           storageKey="factor-admin-factors"
@@ -503,7 +503,7 @@ export function FactorAdmin() {
                 limit={CUSTOMER_PICKER_LIMIT}
                 total={customersQuery.data?.total}
                 hint="Type to search the full customer catalog."
-                className="mt-1 text-xs text-slate-600"
+                className="mt-1 text-xs text-[#4B5563]"
               />
             </div>
           </div>
@@ -653,7 +653,7 @@ export function FactorAdmin() {
                   limit={CUSTOMER_PICKER_LIMIT}
                   total={customersQuery.data?.total}
                   hint="Type to search the full customer catalog."
-                  className="mt-1 text-xs text-slate-600"
+                  className="mt-1 text-xs text-[#4B5563]"
                 />
               </label>
               <label className="block" data-testid="factor-admin-assign-factor-picker">

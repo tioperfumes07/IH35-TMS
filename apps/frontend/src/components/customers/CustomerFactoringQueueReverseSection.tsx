@@ -22,7 +22,7 @@ export function CustomerFactoringQueueReverseSection({ operatingCompanyId, custo
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-queue-reverse">
-      <h2 className="text-xs font-semibold text-slate-900">Dispatch factoring queue</h2>
+      <h2 className="text-xs font-semibold text-[#0F1219]">Dispatch factoring queue</h2>
       {query.isError ? (
         <ListErrorState status={0} message="Factoring queue unavailable." onRetry={() => void query.refetch()} />
       ) : null}
@@ -38,7 +38,7 @@ export function CustomerFactoringQueueReverseSection({ operatingCompanyId, custo
                 kind="factoring_queue_load"
                 id={row.load_id}
                 label={`${row.load_number} · ${row.packet_stage} · ${formatUsdCents(row.rate_total_cents)}`}
-                className="text-xs font-semibold text-slate-700 hover:underline"
+                className="text-xs font-semibold text-[#1F2A44] hover:underline"
               />
             </li>
           ))}
@@ -49,7 +49,7 @@ export function CustomerFactoringQueueReverseSection({ operatingCompanyId, custo
           kind="factoring_queue_customer"
           id={customerId}
           label="View full queue →"
-          className="mt-2 inline-block text-xs font-medium text-slate-700 hover:underline"
+          className="mt-2 inline-block text-xs font-medium text-[#1F2A44] hover:underline"
         />
       ) : null}
     </section>
