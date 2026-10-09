@@ -31,12 +31,12 @@ export function DriverWorkOrdersReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">Work orders</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">Work orders</h3>
         <EntityLink
           kind="active_wos_driver"
           id={driverId}
           label="Open Maintenance"
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
         />
       </div>
       <p className="text-xs text-gray-600">Repair / tire / accident work orders linked to this driver.</p>
@@ -82,7 +82,7 @@ export function DriverWorkOrdersReverseSection({
                     noun="Load"
                   />
                 ) : null}
-                <span className="text-xs text-slate-500">{String(wo.status ?? "")}</span>
+                <span className="text-xs text-[#6B7280]">{String(wo.status ?? "")}</span>
               </li>
             );
           })}

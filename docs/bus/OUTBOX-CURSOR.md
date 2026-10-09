@@ -1,3 +1,15 @@
+## 2026-10-08 · BANK-F91111 — TireProgram / SevereRepairs / DrvWO reverse slate → house
+
+FINDING: BANK-F91111 — UnitTireProgramReverseSection / UnitSevereRepairsReverseSection / DriverWorkOrdersReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26045 squash `e0744c8b20` (BANK-F91110 VendorDetail/DefectDetail/WarrantyClaims)
+Files Modified: UnitTireProgramReverseSection.tsx · UnitSevereRepairsReverseSection.tsx · DriverWorkOrdersReverseSection.tsx · verify-91111-tire-severe-drvwo-slate-leftover-chrome.mjs · verify-steps/3614-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91111-tire-severe-drvwo-slate-leftover-chrome.mjs (piggy EVEN 3614)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91110 DONE (#26045 e0744c8b20)
+
 ## 2026-10-08 · BANK-F91110 — VendorDetail / DefectDetail / WarrantyClaims slate → house
 
 FINDING: BANK-F91110 — VendorDetailPage / DefectDetailPage / WarrantyClaimsPage Tailwind slate-* → house tokens
