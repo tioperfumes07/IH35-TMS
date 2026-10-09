@@ -1,3 +1,14 @@
+## 2026-10-09 · RENDER-CI-AMBIENT #25927 FAST-MERGED
+
+FINDING: RENDER-CI-AMBIENT — purge EMPTY_BY_PURGE_EXIT (75) accepted in required-live + load-costs measured-empty
+LANE: NON-FINANCIAL
+MERGED: #25927 squash `48177f95ad` onto tip (was CONFLICTING; rebase kept tip entity-picker leases matrix)
+Files Modified: run-required-guards.mjs (+test) · purge-window.mjs · verify-load-costs-wizard-amounts.mjs · verify-purge-window-*.mjs · LEAD-RULING purge/load-costs · OUTBOX
+GUARD: money-pr-local-gate PASS gate_exit=0 passed=235; run-required-guards.test 13/13
+LIVE PROOF: gh pr view 25927 state=MERGED mergeCommit=48177f95ad; origin/main tip 48177f95ad
+REPORT: ~/Downloads/2026-10-09-CURSOR-DEVIN-48H-PROGRESS-AND-CLAUDE-PENDING.md
+NEXT: owner Chrome B7/Bills/Categorize; multi-select money sweep 432-CUR #1; FE/BE deploy past 264572f
+
 ## 2026-10-09 · BANK-F91205 — MyPosition / LoudAlert / HosCell slate → house
 
 FINDING: BANK-F91205 — MyPosition / LoudAlertOverlay / HosCell Tailwind slate-* → house tokens
