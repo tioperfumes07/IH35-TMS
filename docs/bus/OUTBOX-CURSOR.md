@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91138 — LoadQuality / LoadDetention / EquipmentTransfers reverse slate → house
+
+FINDING: BANK-F91138 — LoadQualityEventsReverseSection / LoadDetentionReverseSection / EquipmentTransfersReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26072 squash `ef3f6a7fad` (BANK-F91137 DispatcherSafety/Complaints/UnitPermits)
+Files Modified: LoadQualityEventsReverseSection.tsx · LoadDetentionReverseSection.tsx · EquipmentTransfersReverseSection.tsx · verify-91138-load-rev-slate-leftover-chrome.mjs · verify-steps/3410-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91138-load-rev-slate-leftover-chrome.mjs (piggy EVEN 3410)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91137 DONE (#26072 ef3f6a7fad)
+
 ## 2026-10-09 · BANK-F91137 — DispatcherSafety / Complaints / UnitPermits reverse slate → house
 
 FINDING: BANK-F91137 — DispatcherSafetyEventsReverseBlock / ComplaintsReverseSection / UnitPermitsReverseSection Tailwind slate-* → house tokens

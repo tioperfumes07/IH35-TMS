@@ -47,7 +47,7 @@ export function LoadQualityEventsReverseSection({
       <div className="text-xs font-semibold text-gray-600">Customer quality events on this load</div>
 
       <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-reverse-quality-events">
-        <h3 className="text-xs font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           Quality Events
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
@@ -61,7 +61,7 @@ export function LoadQualityEventsReverseSection({
         {!query.isError && rows.length > 0 ? (
           <ul className="space-y-2">
             {rows.map((event) => (
-              <li key={event.id} className="text-xs text-slate-700" data-testid={`load-quality-event-${event.id}`}>
+              <li key={event.id} className="text-xs text-[#1F2A44]" data-testid={`load-quality-event-${event.id}`}>
                 <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs">{formatDateUS(event.event_date)}</span>{" "}
                 <StatusBadge variant={event.severity === "severe" ? "crit" : event.severity === "warning" ? "warn" : "info"}>
                   {event.severity}
