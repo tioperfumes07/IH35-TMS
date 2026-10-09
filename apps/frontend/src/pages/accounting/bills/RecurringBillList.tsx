@@ -27,7 +27,7 @@ function frequencyLabel(f: string) {
 
 function statusBadge(isActive: boolean) {
   return isActive ? (
-    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">Active</span>
+    <span className="rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-medium text-[#1F2A44]">Active</span>
   ) : (
     <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">Inactive</span>
   );
@@ -126,7 +126,7 @@ export function RecurringBillList() {
         cellClass: "text-center",
         render: (tmpl) =>
           tmpl.auto_post ? (
-            <span className="text-xs font-medium text-slate-700">Yes</span>
+            <span className="text-xs font-medium text-[#1F2A44]">Yes</span>
           ) : (
             <span className="text-xs text-gray-400">No</span>
           ),
@@ -152,7 +152,7 @@ export function RecurringBillList() {
                   title="Generate bill now"
                   disabled={generateNowMutation.isPending}
                   onClick={() => generateNowMutation.mutate(tmpl.uuid)}
-                  className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-slate-700 disabled:opacity-50"
+                  className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-[#1F2A44] disabled:opacity-50"
                 >
                   <Zap className="h-3.5 w-3.5" />
                 </button>
@@ -186,7 +186,7 @@ export function RecurringBillList() {
 
       {lastGeneratedBillId ? (
         <div
-          className="flex items-center justify-between rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+          className="flex items-center justify-between rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
           data-testid="recurring-bill-generated-banner"
         >
           <span>
@@ -245,7 +245,7 @@ export function RecurringBillList() {
           <p className="text-xs text-gray-500">No recurring bill templates yet.</p>
           <button
             onClick={() => navigate("/accounting/bills/recurring/create")}
-            className="mt-3 text-xs font-medium text-slate-700 hover:underline"
+            className="mt-3 text-xs font-medium text-[#1F2A44] hover:underline"
           >
             Create your first template →
           </button>
