@@ -94,9 +94,9 @@ export function PaymentMethodsCatalogPage() {
         label: "Status",
         render: (row) =>
           row.is_active ? (
-            <span className="inline-flex rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">Active</span>
+            <span className="inline-flex rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-medium text-[#1F2A44]">Active</span>
           ) : (
-            <span className="inline-flex rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-900">Inactive / Voided</span>
+            <span className="inline-flex rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs text-[#0F1219]">Inactive / Voided</span>
           ),
       },
     ],

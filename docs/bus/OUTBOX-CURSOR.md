@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91101 — CreateMultipleBills / Collections / LeaseDetail slate → house
+## 2026-10-08 · BANK-F91102 — QBOSyncDrift / PaymentMethods / MaintenanceShopHub slate → house
+
+FINDING: BANK-F91102 — QBOSyncDriftDashboard / PaymentMethodsCatalogPage / MaintenanceShopHubPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26036 squash `8cdfcca1ea` (BANK-F91101 MultiBill/Collections/Lease)
+GUARD: scripts/verify-91102-qbodrift-paymeth-maintshop-slate-leftover-chrome.mjs + verify-steps/3730 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: QBOSyncDriftDashboard + PaymentMethodsCatalogPage + MaintenanceShopHubPage + refuse guard + 3730 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91101 DONE — CreateMultipleBills / Collections / LeaseDetail slate → house #26036
 
 FINDING: BANK-F91101 — CreateMultipleBillsPage / CollectionsPage / AccountingLeaseDetailPage Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26035 squash `9f664274d6` (BANK-F91100 CCPay/VendBill/ExpCreate)
+MERGED: #26036 squash `8cdfcca1ea`
 GUARD: scripts/verify-91101-multibill-collect-lease-slate-leftover-chrome.mjs + verify-steps/3734 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: CreateMultipleBillsPage + CollectionsPage + AccountingLeaseDetailPage + refuse guard + 3734 piggyback + OUTBOX
 
