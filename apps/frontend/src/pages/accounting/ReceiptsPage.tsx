@@ -22,9 +22,9 @@ const fmtBytes = (n: number) =>
   n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(1)} MB`;
 
 const STATUS_COLOR: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-700", posted: "bg-slate-100 text-slate-700",
-  void: "bg-red-100 text-red-700", approved: "bg-slate-100 text-slate-700",
-  pending_approval: "bg-slate-100 text-slate-700",
+  draft: "bg-gray-100 text-gray-700", posted: "bg-[#F7F8FA] text-[#1F2A44]",
+  void: "bg-red-100 text-red-700", approved: "bg-[#F7F8FA] text-[#1F2A44]",
+  pending_approval: "bg-[#F7F8FA] text-[#1F2A44]",
 };
 
 /**
@@ -86,7 +86,7 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
             <div className="flex gap-2"><span className="text-gray-500 w-28 shrink-0">Date</span><span>{fmtDate(data.source.date)}</span></div>
             <hr />
             <a href={data.download_url} target="_blank" rel="noreferrer"
-              className="inline-block rounded-sm bg-slate-700 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800">
+              className="inline-block rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1F2A44]">
               Download Receipt ↗
             </a>
           </div>
@@ -135,7 +135,7 @@ export function ReceiptsPage() {
         label: "Filename",
         sortable: true,
         render: (row) => (
-          <button onClick={() => setDetailId(row.id)} className="text-slate-700 hover:underline text-left truncate max-w-full" title={row.filename}>
+          <button onClick={() => setDetailId(row.id)} className="text-[#1F2A44] hover:underline text-left truncate max-w-full" title={row.filename}>
             {row.filename}
           </button>
         ),
@@ -185,7 +185,7 @@ export function ReceiptsPage() {
         label: "Actions",
         alwaysVisible: true,
         render: (row) => (
-          <button onClick={() => setDetailId(row.id)} className="text-xs text-slate-700 hover:underline">View</button>
+          <button onClick={() => setDetailId(row.id)} className="text-xs text-[#1F2A44] hover:underline">View</button>
         ),
       },
     ],
@@ -208,7 +208,7 @@ export function ReceiptsPage() {
               setSearch(e.target.value);
               setOffset(0);
             }}
-            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-3 text-xs focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-3 text-xs focus:outline-hidden focus:ring-1 focus:ring-[#6B7280]"
           />
         }
       >

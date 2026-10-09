@@ -178,7 +178,7 @@ export function BatchWizard() {
         ].map((item) => (
           <span
             key={item.id}
-            className={`rounded-sm px-2 py-1 ${step === item.id ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-600"}`}
+            className={`rounded-sm px-2 py-1 ${step === item.id ? "bg-[#F7F8FA] text-[#1F2A44]" : "bg-gray-100 text-gray-600"}`}
           >
             {item.id}. {item.label}
           </span>
@@ -200,7 +200,7 @@ export function BatchWizard() {
             />
           ) : !candidatesQuery.isLoading && (candidatesQuery.data ?? []).length === 0 ? (
             <div
-              className="border-y border-slate-200 bg-slate-50 px-4 py-10 text-center text-xs text-slate-500"
+              className="border-y border-[#E5E7EB] bg-[#F7F8FA] px-4 py-10 text-center text-xs text-[#6B7280]"
               data-testid="factoring-batches-honest-empty"
             >
               No paid-ready invoices available for a new batch.
@@ -274,7 +274,7 @@ export function BatchWizard() {
       {step === 3 && draftBatch ? (
         <div className="space-y-3">
           <div className="text-xs text-gray-700">Step 3: confirm and submit the factoring batch.</div>
-          <div className="border-t border-slate-200 bg-slate-100 p-3 text-xs text-slate-700">
+          <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
             Submitting this batch moves status from <code>draft</code> to <code>submitted</code>.
           </div>
           <div className="flex justify-end gap-2">
@@ -290,7 +290,7 @@ export function BatchWizard() {
 
       {step === 4 ? (
         <div className="space-y-3">
-          <div className="border-t border-slate-200 bg-slate-100 p-3 text-xs text-slate-700">
+          <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
             Step 4 complete. Batch submitted successfully.
           </div>
           {submittedBatchId && companyId ? <BatchDetail batchId={submittedBatchId} companyId={companyId} /> : null}
