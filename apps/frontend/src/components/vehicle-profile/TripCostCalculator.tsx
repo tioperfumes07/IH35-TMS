@@ -72,7 +72,7 @@ export function TripCostCalculator({
           id={unitId}
           name={unitNumber}
           noun="Unit"
-          className="font-semibold text-slate-700 underline"
+          className="font-semibold text-[#1F2A44] underline"
           data-testid="vp-trip-cost-unit-link"
         />
         . ZIP-only estimator — not a load quote writer.
