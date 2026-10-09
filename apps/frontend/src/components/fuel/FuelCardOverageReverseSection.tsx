@@ -25,11 +25,11 @@ export function FuelCardOverageReverseSection({ operatingCompanyId, filter }: Pr
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="fuel-card-overage-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-xs font-semibold text-slate-900">Fuel card overages</h2>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Fuel card overages</h2>
         {"driver_id" in filter ? (
-          <EntityLink kind="fuel_card_overage_driver" id={filter.driver_id} label="Open queue" className="text-xs font-semibold text-slate-700 hover:underline" />
+          <EntityLink kind="fuel_card_overage_driver" id={filter.driver_id} label="Open queue" className="text-xs font-semibold text-[#1F2A44] hover:underline" />
         ) : (
-          <EntityLink kind="fuel_card_overage_unit" id={filter.unit_id} label="Open queue" className="text-xs font-semibold text-slate-700 hover:underline" />
+          <EntityLink kind="fuel_card_overage_unit" id={filter.unit_id} label="Open queue" className="text-xs font-semibold text-[#1F2A44] hover:underline" />
         )}
       </div>
       {query.isError ? (
@@ -45,7 +45,7 @@ export function FuelCardOverageReverseSection({ operatingCompanyId, filter }: Pr
       {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && events.length === 0 ? <p className="mt-2 text-xs text-gray-500">No fuel card overages.</p> : null}
       {totalCount > visibleEvents.length ? (
-        <p className="mt-2 text-xs text-slate-500" data-testid="fuel-card-overage-reverse-range">
+        <p className="mt-2 text-xs text-[#6B7280]" data-testid="fuel-card-overage-reverse-range">
           Showing {visibleEvents.length} of {totalCount}. Open queue to view all.
         </p>
       ) : null}
@@ -56,7 +56,7 @@ export function FuelCardOverageReverseSection({ operatingCompanyId, filter }: Pr
               kind="fuel_card_overage_event"
               id={event.id}
               label={`${new Date(event.created_at).toLocaleDateString()} · ${formatUsdCents(event.overage_cents)}`}
-              className="text-xs font-semibold text-slate-700 hover:underline"
+              className="text-xs font-semibold text-[#1F2A44] hover:underline"
             />
           </li>
         ))}

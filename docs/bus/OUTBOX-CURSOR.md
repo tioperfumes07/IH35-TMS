@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91091 — BankAcctDetail / ReconTab / ScenarioLines slate → house
+## 2026-10-08 · BANK-F91092 — FuelCardOverage / RelayDeposit / ReserveTracker slate → house
+
+FINDING: BANK-F91092 — FuelCardOverageReverseSection / RelayDepositReview / ReserveTracker Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26026 squash `049798b0e0` (BANK-F91091 BankAcct/Recon/ScenarioLines)
+GUARD: scripts/verify-91092-fueloverage-relay-reserve-slate-leftover-chrome.mjs + verify-steps/3754 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets; healthz ok=true
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: FuelCardOverageReverseSection + RelayDepositReview + ReserveTracker + refuse guard + 3754 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91091 DONE — BankAcctDetail / ReconTab / ScenarioLines slate → house #26026
 
 FINDING: BANK-F91091 — BankAccountDetail / ReconciliationTabContent / ScenarioLinesTable Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26025 squash `e86eac0acd` (BANK-F91090 Alloc/Disputes/RecurBill)
+MERGED: #26026 squash `049798b0e0`
 GUARD: scripts/verify-91091-bankacct-recon-scenario-slate-leftover-chrome.mjs + verify-steps/3756 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: BankAccountDetail + ReconciliationTabContent + ScenarioLinesTable + refuse guard + 3756 piggyback + OUTBOX
 

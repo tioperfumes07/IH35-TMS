@@ -1,10 +1,10 @@
 {
-  "healthzSha": "166a83a",
-  "generated_at": "2026-10-08T16:46:10.763Z",
+  "healthzSha": "049798b",
+  "generated_at": "2026-10-09T02:07:25.605Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "166a83a",
+    "deployedSha": "049798b",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 25946,
-      "title": "FINDING: BANK-F91267 — Login / HelpCenter / LoadTemplateLibrary slate-* → house tokens",
+      "number": 26026,
+      "title": "FINDING: BANK-F91091 — BankAccountDetail / ReconciliationTabContent / ScenarioLinesTable Tailwind slate-* → house tokens",
       "state": "merged",
-      "mergedAtCt": "10/08/2026, 11:44 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25946",
-      "sha": "2ff102bcac",
-      "committedAtIso": "2026-10-08T11:44:40-05:00"
+      "mergedAtCt": "10/08/2026, 09:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26026",
+      "sha": "049798b0e0",
+      "committedAtIso": "2026-10-08T21:01:00-05:00"
     },
     {
-      "number": 25945,
-      "title": "FINDING: BANK-F91266 — vendorCategories / SummaryCards / CollapsibleProfileCard slate-* → house tokens",
+      "number": 26025,
+      "title": "FINDING: BANK-F91090 — AllocationsPage / DisputesHubPage / RecurringBillCreate Tailwind slate-* → house tokens",
       "state": "merged",
-      "mergedAtCt": "10/08/2026, 11:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25945",
-      "sha": "166a83a58d",
-      "committedAtIso": "2026-10-08T11:39:59-05:00"
+      "mergedAtCt": "10/08/2026, 08:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26025",
+      "sha": "e86eac0acd",
+      "committedAtIso": "2026-10-08T20:56:44-05:00"
     },
     {
-      "number": 25944,
-      "title": "FINDING: BANK-F91265 — Modal / FilterPopover / LicenseSection slate-* → house tokens",
+      "number": 26024,
+      "title": "FINDING: BANK-F91089 — CustomerFactoringRecourseReverseSection / FactoringPurchaseLinksPanel / FactoringInterestAccrualPanel Tailwind slate-* → house tokens",
       "state": "merged",
-      "mergedAtCt": "10/08/2026, 11:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25944",
-      "sha": "b488d8699e",
-      "committedAtIso": "2026-10-08T11:33:15-05:00"
+      "mergedAtCt": "10/08/2026, 08:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26024",
+      "sha": "6bd36bba2d",
+      "committedAtIso": "2026-10-08T20:52:23-05:00"
     },
     {
-      "number": 25943,
-      "title": "FINDING: BANK-F91264 — AuthGatePanel / DispatchSubnav / DispatchAlertsPage slate-* → house tokens",
+      "number": 26023,
+      "title": "FINDING: BANK-F91088 — FaroImportPage / DriftAlertsPanel / plaid-item-display Tailwind slate-* → house tokens",
       "state": "merged",
-      "mergedAtCt": "10/08/2026, 11:29 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25943",
-      "sha": "b0f20856c1",
-      "committedAtIso": "2026-10-08T11:29:31-05:00"
+      "mergedAtCt": "10/08/2026, 08:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26023",
+      "sha": "2a58b4ba5a",
+      "committedAtIso": "2026-10-08T20:44:23-05:00"
     },
     {
-      "number": 25942,
-      "title": "FINDING: BANK-F91263 — plannerTimeAxis / AssignDriverDropdown / AuditEventsList slate-* → house tokens",
+      "number": 26022,
+      "title": "FINDING: BANK-F91087 — PostingTemplatesListPage / QBOBulkLinkPage / AbandonmentDefaultsPage Tailwind slate-* → house tokens",
       "state": "merged",
-      "mergedAtCt": "10/08/2026, 11:22 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25942",
-      "sha": "c3d635121b",
-      "committedAtIso": "2026-10-08T11:22:15-05:00"
+      "mergedAtCt": "10/08/2026, 08:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26022",
+      "sha": "729f539eff",
+      "committedAtIso": "2026-10-08T20:40:05-05:00"
     },
     {
-      "number": 25941,
-      "title": "FINDING: BANK-F91262 — Breadcrumb / SearchResultItem / ExhibitCard slate-* → house tokens",
+      "number": 26021,
+      "title": "FINDING: BANK-F91086 — InvoiceCreateModal / RecordExpenseForm / BasisSelector Tailwind slate-* → house tokens",
       "state": "merged",
-      "mergedAtCt": "10/08/2026, 11:18 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25941",
-      "sha": "252368f03f",
-      "committedAtIso": "2026-10-08T11:18:18-05:00"
+      "mergedAtCt": "10/08/2026, 08:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26021",
+      "sha": "9efd4236fd",
+      "committedAtIso": "2026-10-08T20:35:29-05:00"
     },
     {
-      "number": 25940,
-      "title": "FINDING: BANK-F91261 — EquipmentTypesPage / DriverLoadStatusesPage / DriverLayoverHistoryPage slate-* → house tokens",
+      "number": 26020,
+      "title": "FINDING: BANK-F91085 — DriverCashAdvancesReverseSection / DriverEscrowReverseSection / DriverSettlementFinanceReverseSection Tailwind slate-* → house tokens",
       "state": "merged",
-      "mergedAtCt": "10/08/2026, 11:14 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25940",
-      "sha": "860c7809bc",
-      "committedAtIso": "2026-10-08T11:14:19-05:00"
+      "mergedAtCt": "10/08/2026, 08:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26020",
+      "sha": "879edcf147",
+      "committedAtIso": "2026-10-08T20:31:19-05:00"
     },
     {
-      "number": 25939,
-      "title": "FINDING: BANK-F91260 — CreateTaskModal / taskDisplay / BulkActionBar slate-* → house tokens",
+      "number": 26019,
+      "title": "FINDING: BANK-F91084 — MonthClosePage / MoneyProofTrailPanel / WriteCheckForm Tailwind slate-* → house tokens",
       "state": "merged",
-      "mergedAtCt": "10/08/2026, 11:09 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25939",
-      "sha": "7e1d6e576e",
-      "committedAtIso": "2026-10-08T11:09:56-05:00"
+      "mergedAtCt": "10/08/2026, 08:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26019",
+      "sha": "df4bf0d2da",
+      "committedAtIso": "2026-10-08T20:27:42-05:00"
     },
     {
-      "number": 25938,
-      "title": "FINDING: BANK-F91259 — QBOSyncStatusDashboardPage / CostBreakdownBox / statusPill slate-* → house tokens",
+      "number": 26018,
+      "title": "FINDING: BANK-F91083 — ReconMatchSuggestions / CategorizationRulesPage / CashGlSetupPage Tailwind slate-* → house tokens",
       "state": "merged",
-      "mergedAtCt": "10/08/2026, 11:03 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25938",
-      "sha": "88a06bbbba",
-      "committedAtIso": "2026-10-08T11:03:51-05:00"
+      "mergedAtCt": "10/08/2026, 08:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26018",
+      "sha": "f3707ab8b1",
+      "committedAtIso": "2026-10-08T20:24:11-05:00"
     },
     {
-      "number": 25937,
-      "title": "FINDING: BANK-F91258 — SafetyKpiBar / DriverManagerKpiBar / KpiStatCard slate-* → house tokens",
+      "number": 26017,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "10/08/2026, 10:59 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25937",
-      "sha": "117188c59d",
-      "committedAtIso": "2026-10-08T10:59:07-05:00"
+      "mergedAtCt": "10/08/2026, 08:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26017",
+      "sha": "1da8829676",
+      "committedAtIso": "2026-10-09T01:14:16Z"
     }
   ]
 }
