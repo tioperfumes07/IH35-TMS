@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91189 — AuditEventCard / PlaidReconnectButton / StopsMilesSection slate → house
+
+FINDING: BANK-F91189 — AuditEventCard / PlaidReconnectButton / StopsMilesSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26124 squash `42a285104a` (BANK-F91188 maint reverse/catalog)
+Files Modified: AuditEventCard.tsx · PlaidReconnectButton.tsx · StopsMilesSection.tsx · verify-91189-audit-plaid-stops-slate-leftover-chrome.mjs · verify-steps/2902-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91189-audit-plaid-stops-slate-leftover-chrome.mjs (piggy EVEN 2902)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91188 — WarrantyClaims / UnitMaintInspections / CatalogTable slate → house
 
 FINDING: BANK-F91188 — WarrantyClaimsReverseSection / UnitMaintenanceInspectionsReverseSection / CatalogTable Tailwind slate-* → house tokens

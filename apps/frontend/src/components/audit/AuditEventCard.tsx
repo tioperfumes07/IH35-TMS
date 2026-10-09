@@ -4,7 +4,7 @@ import { humanizeAuditEventType } from "../../lib/humanizeAuditEventType";
 import { EntityLink } from "../shared/EntityLink";
 
 const SEVERITY_COLORS: Record<string, string> = {
-  info: "bg-slate-100 text-slate-700",
+  info: "bg-[#F7F8FA] text-[#1F2A44]",
   warning: "bg-amber-100 text-amber-800",
   critical: "bg-red-100 text-red-800",
 };
