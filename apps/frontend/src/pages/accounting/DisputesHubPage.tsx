@@ -93,7 +93,7 @@ function DecideFaultModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" data-testid="decide-fault-modal">
       <div className="w-[420px] rounded-sm border border-gray-300 bg-white p-4 shadow-lg">
-        <h3 className="text-xs font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           Decide fault — invoice{" "}
           <EntityLink
             kind="invoice"
@@ -150,7 +150,7 @@ function DecideFaultModal({
           </button>
           <button
             type="button"
-            className="rounded-sm bg-slate-800 px-3 py-1 text-xs font-semibold text-white disabled:opacity-40"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-40"
             disabled={!canSubmit || mutation.isPending}
             data-testid="fault-decision-confirm"
             onClick={() => mutation.mutate()}
@@ -243,7 +243,7 @@ function InvoiceDisputesSection({ companyId }: { companyId: string }) {
               <EntityLink kind="driver" id={row.driver_id} label={entityLabel(null, row.driver_id, "Driver")} />
             </span>
           ) : (
-            <span className={row.fault_party === "unassigned" ? "text-slate-500" : "text-slate-700"}>
+            <span className={row.fault_party === "unassigned" ? "text-[#6B7280]" : "text-[#1F2A44]"}>
               {faultPartyLabel(row.fault_party)}
             </span>
           ),
@@ -255,7 +255,7 @@ function InvoiceDisputesSection({ companyId }: { companyId: string }) {
         render: (row) => (
           <button
             type="button"
-            className="text-xs font-semibold text-slate-700 underline"
+            className="text-xs font-semibold text-[#1F2A44] underline"
             data-testid={`decide-fault-${row.id}`}
             onClick={() => setFaultTarget(row)}
           >

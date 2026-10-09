@@ -169,7 +169,7 @@ export function AllocationsPage() {
         label: "Method",
         sortable: true,
         render: (row) => (
-          <span className="inline-block rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+          <span className="inline-block rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-medium text-[#1F2A44]">
             {METHOD_LABEL[row.allocation_method] ?? row.allocation_method}
           </span>
         ),
@@ -187,7 +187,7 @@ export function AllocationsPage() {
         label: "Allocated",
         sortable: true,
         className: "text-right",
-        cellClass: "text-right tabular-nums font-medium text-slate-700",
+        cellClass: "text-right tabular-nums font-medium text-[#1F2A44]",
         render: (row) => fmtCents(row.allocated_amount_cents),
       },
       {
@@ -203,7 +203,7 @@ export function AllocationsPage() {
         label: "Actions",
         alwaysVisible: true,
         render: (row) => (
-          <button onClick={() => setReallocateRow(row)} className="text-xs text-slate-700 hover:underline">
+          <button onClick={() => setReallocateRow(row)} className="text-xs text-[#1F2A44] hover:underline">
             Re-allocate
           </button>
         ),
@@ -223,7 +223,7 @@ export function AllocationsPage() {
         <button
           onClick={clearFilter}
           data-testid="allocations-clear-filter"
-          className="rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-slate-700 hover:bg-gray-50"
+          className="rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-[#1F2A44] hover:bg-gray-50"
         >
           Clear {billIdFilter ? "bill" : "unit"} filter
         </button>
