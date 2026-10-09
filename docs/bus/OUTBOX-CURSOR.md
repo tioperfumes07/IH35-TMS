@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91155 — Predictive / Vendors / DomainRibbon slate → house
+
+FINDING: BANK-F91155 — PredictiveAlertsPage / MaintenanceVendorsListPage / DomainRibbon Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26090 squash `6bc0237c64` (BANK-F91154 ListsBanner/DomainHub/ListsHub)
+Files Modified: PredictiveAlertsPage.tsx · MaintenanceVendorsListPage.tsx · DomainRibbon.tsx · verify-91155-pred-vend-ribbon-slate-leftover-chrome.mjs · verify-steps/3300-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91155-pred-vend-ribbon-slate-leftover-chrome.mjs (piggy EVEN 3300)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91154 DONE (#26090 6bc0237c64)
+
 ## 2026-10-09 · BANK-F91154 — ListsBanner / DomainHub / ListsHub slate → house
 
 FINDING: BANK-F91154 — DriverCatalogDeprecatedBanner / DomainCatalogHubPage / ListsHubPage Tailwind slate-* → house tokens
