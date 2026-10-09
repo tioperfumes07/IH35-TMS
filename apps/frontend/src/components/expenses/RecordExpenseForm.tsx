@@ -295,7 +295,7 @@ export function RecordExpenseForm({
   return (
     <form className="space-y-3" onSubmit={onSubmit} data-testid="record-expense-form">
       {workOrderId && linkedWoDisplayId ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]">
           Linked — <EntityLink kind="work_order" id={workOrderId} label={entityLabel(linkedWoDisplayId, workOrderId, "Work order")} />
         </div>
       ) : null}
@@ -334,7 +334,7 @@ export function RecordExpenseForm({
             limit={RECORD_EXPENSE_VENDOR_LIST_CAP}
             total={vendorsQuery.data?.total ?? null}
             hint="Type in the vendor field to search, or narrow with filters on the Vendors list."
-            className="mt-1 text-xs text-slate-600"
+            className="mt-1 text-xs text-[#4B5563]"
           />
         </div>
       </label>
@@ -394,7 +394,7 @@ export function RecordExpenseForm({
             }}
           />
           {values.locationLabel ? (
-            <p className="mt-1 text-center text-xs text-slate-600" data-testid="record-expense-location-label">
+            <p className="mt-1 text-center text-xs text-[#4B5563]" data-testid="record-expense-location-label">
               {values.locationLabel}
             </p>
           ) : null}
@@ -580,7 +580,7 @@ export function RecordExpenseForm({
             allowClear
           />
           {suggestionPinned && values.loadId && suggestionQuery.data?.data?.load_id === values.loadId ? (
-            <p className="mt-1 text-xs text-slate-600" data-testid="record-expense-load-suggested">
+            <p className="mt-1 text-xs text-[#4B5563]" data-testid="record-expense-load-suggested">
               Auto-filled from active trip for this driver/unit on the payment date (same as work orders).
             </p>
           ) : null}
