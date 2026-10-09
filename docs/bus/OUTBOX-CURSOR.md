@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91187 — DataPanel / DrillKpiCard / SubTabRow slate → house
+
+FINDING: BANK-F91187 — DataPanel / DrillKpiCard / SubTabRow Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26122 squash `4eb0447ffe` (BANK-F91186 telematics/anomaly)
+Files Modified: DataPanel.tsx · DrillKpiCard.tsx · SubTabRow.tsx · verify-91187-layout-datapane-drill-subtab-slate-leftover-chrome.mjs · verify-steps/2906-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91187-layout-datapane-drill-subtab-slate-leftover-chrome.mjs (piggy EVEN 2906)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91186 — TelematicsSectionTable / DriverTelematicsPanel / AnomalyAlertBadge slate → house
 
 FINDING: BANK-F91186 — TelematicsSectionTable / DriverTelematicsPanel / AnomalyAlertBadge Tailwind slate-* → house tokens

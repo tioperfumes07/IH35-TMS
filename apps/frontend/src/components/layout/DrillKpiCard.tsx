@@ -182,7 +182,7 @@ export function DrillKpiCard({
   }
 
   const interactive =
-    "transition hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-slate-400";
+    "transition hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-[#6B7280]";
 
   if (to) {
     return (
