@@ -47,7 +47,7 @@ export function UndepositedFundsPage() {
   return (
     <AccountingSubNavWrapper title="Undeposited Funds" subtitle="Customer payments awaiting bank deposit">
       {/* §7 palette: no yellow/amber bands in financial UI — slate tokens only. */}
-      <div className="rounded-sm border border-slate-200 bg-slate-100 px-4 py-3 text-xs text-slate-700">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-4 py-3 text-xs text-[#1F2A44]">
         No undeposited funds account is designated for this entity. Map the{" "}
         <strong>undeposited_funds</strong> role under Accounting → More → CoA roles, then return here.
       </div>
