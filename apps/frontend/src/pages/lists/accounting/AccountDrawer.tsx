@@ -252,6 +252,9 @@ export function AccountDrawer({
   function validate(): boolean {
     const next: Partial<Record<keyof FormState, string>> = {};
     if (!form.account_name.trim()) next.account_name = "Account Name is required.";
+    // COA-F1: active accounts require a number (DB CONSTRAINT accounts_active_requires_account_number).
+    // handleSave always creates/updates to an active state; handleArchive is the separate deactivation path.
+    if (!form.account_number.trim()) next.account_number = "Account Number is required.";
     if (!form.account_type) next.account_type = "Account Type is required.";
     if (form.opening_balance_cents.trim() && Number.isNaN(parseFloat(form.opening_balance_cents))) {
       next.opening_balance_cents = "Enter a valid dollar amount.";
@@ -317,6 +320,9 @@ export function AccountDrawer({
         setSubmitError("This account is locked and cannot be edited.");
       } else if (errCode === "catalog_account_conflict_account_number") {
         setErrors((prev) => ({ ...prev, account_number: "Account number already in use." }));
+      } else if (errCode === "account_number_required") {
+        // COA-F2: server-side constraint fallback if client validation was bypassed.
+        setErrors((prev) => ({ ...prev, account_number: "Account Number is required for an active account." }));
       } else {
         setSubmitError(userFacingApiError(err, "Failed to save account"));
       }
@@ -395,9 +401,8 @@ export function AccountDrawer({
               <FieldError msg={errors.account_name} />
             </FieldLabel>
 
-            {/* Account Number (optional) */}
-            <FieldLabel label="Account Number">
-              <span className="ml-1 font-normal text-gray-400">(optional)</span>
+            {/* Account Number — required for all active accounts (CONSTRAINT accounts_active_requires_account_number) */}
+            <FieldLabel label="Account Number" required>
               <input
                 type="text"
                 value={form.account_number}
