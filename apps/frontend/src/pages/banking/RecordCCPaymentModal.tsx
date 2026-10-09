@@ -230,7 +230,7 @@ export function RecordCCPaymentModal({
               shown={vendorOptions.length}
               limit={200}
               hint="Vendor search returns at most 200 matches — refine your search if the card vendor is missing."
-              className="mt-1 text-xs text-slate-600"
+              className="mt-1 text-xs text-[#4B5563]"
             />
           </div>
         </label>

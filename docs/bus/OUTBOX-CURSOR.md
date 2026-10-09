@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91192 — RecordTransfer / RecordCCPayment / EmailQueue slate → house
+
+FINDING: BANK-F91192 — RecordTransferModal / RecordCCPaymentModal / EmailQueuePage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26127 squash `6265fe18ca` (BANK-F91191 bol/pod/auth)
+Files Modified: RecordTransferModal.tsx · RecordCCPaymentModal.tsx · EmailQueuePage.tsx · verify-91192-bank-xfer-cc-email-slate-leftover-chrome.mjs · verify-steps/2842-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91192-bank-xfer-cc-email-slate-leftover-chrome.mjs (piggy EVEN 2842)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91191 — AwaitingBol / NeedsDeliveryAuth / PodReview slate → house
 
 FINDING: BANK-F91191 — AwaitingBolInvoicePage / NeedsDeliveryAuthorizationPage / PodReviewPage Tailwind slate-* → house tokens
