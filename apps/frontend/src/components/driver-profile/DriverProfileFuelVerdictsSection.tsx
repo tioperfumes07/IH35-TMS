@@ -78,7 +78,7 @@ export function DriverProfileFuelVerdictsSection({
         key: "verdict",
         label: "E-21 / E-22",
         sortable: false,
-        render: (row) => <span className="text-left text-xs text-slate-700">{verdictLabel(row)}</span>,
+        render: (row) => <span className="text-left text-xs text-[#1F2A44]">{verdictLabel(row)}</span>,
       },
       {
         key: "load_number",
@@ -98,8 +98,8 @@ export function DriverProfileFuelVerdictsSection({
   return (
     <section className="space-y-2" data-testid="dp-section-fuel-verdicts" data-dp-fuel-verdicts="1">
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <h2 className="mb-1 text-xs font-semibold text-slate-900">Fuel (driver at fill time)</h2>
-        <p className="mb-2 text-xs text-slate-600">
+        <h2 className="mb-1 text-xs font-semibold text-[#0F1219]">Fuel (driver at fill time)</h2>
+        <p className="mb-2 text-xs text-[#4B5563]">
           Fills on units this driver held when the pump ran. Verdicts composed from CC-2 E-21 fraud alerts and
           E-22 GPS matches — read only.
         </p>

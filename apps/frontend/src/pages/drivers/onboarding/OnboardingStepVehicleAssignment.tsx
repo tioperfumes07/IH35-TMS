@@ -16,9 +16,9 @@ export function OnboardingStepVehicleAssignment({
 }: VehicleAssignmentStepProps) {
   return (
     <div data-testid="onboarding-step-vehicle-assignment" className="space-y-3">
-      <p className="text-xs text-slate-600">Assign primary unit (optional — can be set later on driver profile).</p>
+      <p className="text-xs text-[#4B5563]">Assign primary unit (optional — can be set later on driver profile).</p>
       <label className="block text-xs">
-        <span className="mb-1 block font-medium text-slate-700">Unit</span>
+        <span className="mb-1 block font-medium text-[#1F2A44]">Unit</span>
         {/* Picker law: EntityPicker server-searches units — no silent static roster select. */}
         <EntityPicker
           kind="unit"
@@ -37,7 +37,7 @@ export function OnboardingStepVehicleAssignment({
           shown={unitId ? 1 : 0}
           limit={500}
           hint="Type in the unit picker to search the full fleet catalog."
-          className="mt-1 text-xs text-slate-600"
+          className="mt-1 text-xs text-[#4B5563]"
         />
       </label>
     </div>

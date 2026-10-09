@@ -54,15 +54,15 @@ export function DriversReferenceCatalogModal({ open, displayName, client, onClos
     <Modal variant="drawer" open={open} title={`Create ${displayName}`} onClose={onClose}>
       <div className="space-y-3">
         <label className="block text-xs">
-          <span className="mb-1 block text-xs font-medium text-slate-600">Code</span>
+          <span className="mb-1 block text-xs font-medium text-[#4B5563]">Code</span>
           <input value={code} onChange={(event) => setCode(event.target.value)} className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
         </label>
         <label className="block text-xs">
-          <span className="mb-1 block text-xs font-medium text-slate-600">Label</span>
+          <span className="mb-1 block text-xs font-medium text-[#4B5563]">Label</span>
           <input value={label} onChange={(event) => setLabel(event.target.value)} className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
         </label>
         <label className="block text-xs">
-          <span className="mb-1 block text-xs font-medium text-slate-600">Sort order</span>
+          <span className="mb-1 block text-xs font-medium text-[#4B5563]">Sort order</span>
           <input value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} type="number" className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
         </label>
         {error ? <p className="text-xs text-red-600">{error}</p> : null}
