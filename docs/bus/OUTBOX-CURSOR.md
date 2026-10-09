@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91172 — MultiStopEditor / LoadStopsRecord / EquipTransfer slate → house
+
+FINDING: BANK-F91172 — MultiStopEditor / LoadStopsRecordTab / EquipmentTransferModal Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26107 squash `fea11c3c70b5` (BANK-F91171 Admin audit)
+Files Modified: MultiStopEditor.tsx · LoadStopsRecordTab.tsx · EquipmentTransferModal.tsx · verify-91172-dispatch-stops-xfer-slate-leftover-chrome.mjs · verify-steps/2976-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91172-dispatch-stops-xfer-slate-leftover-chrome.mjs (piggy EVEN 2976)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91171 DONE (#26107 fea11c3c70b5)
+
 ## 2026-10-09 · BANK-F91171 — AuditLogViewer / ErrorMonitor / ActivityLog slate → house
 
 FINDING: BANK-F91171 — AuditLogViewer / ErrorMonitor / ActivityLogPage Tailwind slate-* → house tokens
