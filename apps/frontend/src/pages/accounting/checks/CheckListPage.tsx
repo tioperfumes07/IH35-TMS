@@ -108,15 +108,15 @@ export function CheckListPage() {
       ) : (
         <div className="space-y-2">
           <div className="flex flex-wrap items-end gap-2 rounded border border-gray-200 bg-white p-2" data-testid="checks-filters">
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">From<DatePicker value={dateFrom} onChange={setDateFrom} /></label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">To<DatePicker value={dateTo} onChange={setDateTo} /></label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">From<DatePicker value={dateFrom} onChange={setDateFrom} /></label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">To<DatePicker value={dateTo} onChange={setDateTo} /></label>
             <MultiSelectDropdown label="Type" options={Object.entries(KIND_LABEL).map(([value, label]) => ({ value, label }))} selected={kinds} onChange={setKinds} allLabel="All types" data-testid="checks-filter-kind" />
             <MultiSelectDropdown label="Status" options={statusOptions} selected={statuses} onChange={setStatuses} allLabel="All statuses" data-testid="checks-filter-status" />
             <MultiSelectDropdown label="Bank account" options={bankOptions} selected={banks} onChange={setBanks} allLabel="All bank accounts" searchable data-testid="checks-filter-bank" />
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Payee / number / memo
+            <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">Payee / number / memo
               <input value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 rounded border border-gray-300 px-2 text-xs" data-testid="checks-search" />
             </label>
-            <span className="ml-auto text-xs text-slate-600" data-testid="checks-count">{rows.length} of {all.length} check{all.length === 1 ? "" : "s"}</span>
+            <span className="ml-auto text-xs text-[#4B5563]" data-testid="checks-count">{rows.length} of {all.length} check{all.length === 1 ? "" : "s"}</span>
           </div>
           <div className="rounded border border-gray-200">
             <ParityTable<AllChecksRow>

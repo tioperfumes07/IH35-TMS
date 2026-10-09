@@ -37,7 +37,7 @@ function currentQuarterRange() {
 
 function marginClass(pct: number) {
   if (pct < 0) return "text-red-600 font-semibold";
-  if (pct < 10) return "text-slate-700";
+  if (pct < 10) return "text-[#1F2A44]";
   return "text-green-700";
 }
 
@@ -92,7 +92,7 @@ export function TripProfitability() {
       sortValue: (row) => row.load_links.length,
       render: (row) => (
         <span className="flex flex-wrap gap-1 font-mono text-xs">
-          {row.load_links.length === 0 ? <span className="text-slate-500">No linked loads</span> : row.load_links.map((load) => (
+          {row.load_links.length === 0 ? <span className="text-[#6B7280]">No linked loads</span> : row.load_links.map((load) => (
             <EntityLinkOrTombstone key={load.id} kind="load" id={load.id} name={load.label} noun="Load" />
           ))}
         </span>
@@ -243,8 +243,8 @@ export function TripProfitability() {
             },
           ].map(({ label, value, highlight }) => (
             <div key={label} className="rounded-sm border bg-white p-3">
-              <div className="text-xs text-slate-500">{label}</div>
-              <div className={`text-page-title font-semibold ${highlight ?? "text-slate-900"}`}>{value}</div>
+              <div className="text-xs text-[#6B7280]">{label}</div>
+              <div className={`text-page-title font-semibold ${highlight ?? "text-[#0F1219]"}`}>{value}</div>
             </div>
           ))}
         </div>
