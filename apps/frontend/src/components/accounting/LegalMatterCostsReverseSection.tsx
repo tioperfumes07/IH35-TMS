@@ -43,7 +43,7 @@ export function LegalMatterCostsReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           Linked costs (matter cost)
           {rowCount > 0 ? (
             <span className="ml-2 text-xs font-normal text-gray-600">
@@ -52,7 +52,7 @@ export function LegalMatterCostsReverseSection({
           ) : null}
         </h3>
         <Link
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
           to={`/accounting/bills?legal_matter_id=${encodeURIComponent(legalMatterId)}`}
           data-testid="legal-matter-open-bills"
         >
@@ -70,7 +70,7 @@ export function LegalMatterCostsReverseSection({
       {bills.length > 0 ? (
         <ul className="space-y-2">
           {bills.map((row) => (
-            <li key={row.id} className="text-xs text-slate-700" data-testid={`legal-matter-bill-${row.id}`}>
+            <li key={row.id} className="text-xs text-[#1F2A44]" data-testid={`legal-matter-bill-${row.id}`}>
               {/* ACCT-F6299-class: 550/16,301 real accounting.bills rows carry bill_number=NULL
                   (live-confirmed, Neon prod) — entityLabel's "Bill — not visible" fallback wrongly
                   claimed a genuinely-visible, correctly-linked bill was unresolved. Same fix as
@@ -92,7 +92,7 @@ export function LegalMatterCostsReverseSection({
       {expenses.length > 0 ? (
         <ul className="space-y-2">
           {expenses.map((row) => (
-            <li key={row.id} className="text-xs text-slate-700" data-testid={`legal-matter-expense-${row.id}`}>
+            <li key={row.id} className="text-xs text-[#1F2A44]" data-testid={`legal-matter-expense-${row.id}`}>
               <EntityLink
                 kind="expense"
                 id={row.id}
