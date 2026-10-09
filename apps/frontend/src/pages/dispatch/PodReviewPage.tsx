@@ -67,7 +67,7 @@ function PodRowActions({
   };
 
   if (doc.status !== "pending_review") {
-    return <span className="text-xs text-slate-500">{doc.review_notes ?? "Reviewed"}</span>;
+    return <span className="text-xs text-[#6B7280]">{doc.review_notes ?? "Reviewed"}</span>;
   }
 
   return (
