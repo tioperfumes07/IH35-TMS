@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91181 — FinancialUnitPL / TrailerMaintSnapshot / company-branding slate → house
+
+FINDING: BANK-F91181 — FinancialUnitPLSection / MaintenanceSnapshotSection / company-branding Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26116 squash `7309e8aa2a` (BANK-F91180 dqf/carrier/drvassign)
+Files Modified: FinancialUnitPLSection.tsx · MaintenanceSnapshotSection.tsx · company-branding.ts · verify-91181-unitpl-trailer-branding-slate-leftover-chrome.mjs · verify-steps/2956-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91181-unitpl-trailer-branding-slate-leftover-chrome.mjs (piggy EVEN 2956)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91180 — driverDqf / CarrierBootstrap / DriverAssignmentSection slate → house
 
 FINDING: BANK-F91180 — driverDqf / CarrierBootstrap / DriverAssignmentSection Tailwind slate-* → house tokens
