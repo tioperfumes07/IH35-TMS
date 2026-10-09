@@ -25,15 +25,15 @@ export function BasisSelector({ value, onChange, disabled = false }: BasisSelect
 
   return (
     <div className="inline-flex items-center gap-2">
-      <span id={groupId} className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+      <span id={groupId} className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
         Basis
       </span>
-      <div role="group" aria-labelledby={groupId} className="inline-flex rounded-sm border border-slate-300 bg-[var(--surface-unselected)] p-0.5" onKeyDown={onKeyDown}>
+      <div role="group" aria-labelledby={groupId} className="inline-flex rounded-sm border border-[#E5E7EB] bg-[var(--surface-unselected)] p-0.5" onKeyDown={onKeyDown}>
         <button
           type="button"
           aria-pressed={value === "accrual"}
           disabled={disabled}
-          className={`rounded-sm px-2.5 py-1 text-xs font-semibold ${value === "accrual" ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-[var(--surface-hover)]"} disabled:opacity-60`}
+          className={`rounded-sm px-2.5 py-1 text-xs font-semibold ${value === "accrual" ? "bg-[#0F1219] text-white" : "text-[#1F2A44] hover:bg-[var(--surface-hover)]"} disabled:opacity-60`}
           onClick={() => onChange("accrual")}
         >
           Accrual
@@ -42,7 +42,7 @@ export function BasisSelector({ value, onChange, disabled = false }: BasisSelect
           type="button"
           aria-pressed={value === "cash"}
           disabled={disabled}
-          className={`rounded-sm px-2.5 py-1 text-xs font-semibold ${value === "cash" ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-[var(--surface-hover)]"} disabled:opacity-60`}
+          className={`rounded-sm px-2.5 py-1 text-xs font-semibold ${value === "cash" ? "bg-[#0F1219] text-white" : "text-[#1F2A44] hover:bg-[var(--surface-hover)]"} disabled:opacity-60`}
           onClick={() => onChange("cash")}
         >
           Cash

@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91085 — DrvCashAdv / Escrow / SettleFin reverse slate → house
+## 2026-10-08 · BANK-F91086 — InvCreate / RecordExp / Basis slate → house
+
+FINDING: BANK-F91086 — InvoiceCreateModal / RecordExpenseForm / BasisSelector Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26020 squash `879edcf147` (BANK-F91085 DrvCashAdv/Escrow/SettleFin)
+GUARD: scripts/verify-91086-invcreate-recordexp-basis-slate-leftover-chrome.mjs + verify-steps/3768 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: InvoiceCreateModal + RecordExpenseForm + BasisSelector + refuse guard + 3768 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91085 DONE — DrvCashAdv / Escrow / SettleFin reverse slate → house #26020
 
 FINDING: BANK-F91085 — DriverCashAdvancesReverseSection / DriverEscrowReverseSection / DriverSettlementFinanceReverseSection Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26019 squash `df4bf0d2da` (BANK-F91084 MonthClose/MoneyProof/WriteCheck)
+MERGED: #26020 squash `879edcf147`
 GUARD: scripts/verify-91085-drv-cashadv-escrow-settlefin-slate-leftover-chrome.mjs + verify-steps/3770 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: DriverCashAdvancesReverseSection + DriverEscrowReverseSection + DriverSettlementFinanceReverseSection + refuse guard + 3770 piggyback + OUTBOX
 

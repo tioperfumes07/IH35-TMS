@@ -71,7 +71,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
           <div className="grid gap-2">
             <button
               type="button"
-              className="rounded-sm border border-gray-200 px-3 py-3 text-left hover:border-slate-300 hover:bg-slate-100"
+              className="rounded-sm border border-gray-200 px-3 py-3 text-left hover:border-[#E5E7EB] hover:bg-[#F7F8FA]"
               onClick={() => setStep("from_load")}
             >
               <div className="text-xs font-semibold text-gray-900">From an existing load</div>
@@ -79,7 +79,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
             </button>
             <button
               type="button"
-              className="rounded-sm border border-gray-200 px-3 py-3 text-left hover:border-slate-300 hover:bg-slate-100"
+              className="rounded-sm border border-gray-200 px-3 py-3 text-left hover:border-[#E5E7EB] hover:bg-[#F7F8FA]"
               onClick={() => setStep("blank")}
             >
               <div className="text-xs font-semibold text-gray-900">Blank invoice (no load)</div>
@@ -96,7 +96,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
 
         {step === "from_load" && createdFromLoad ? (
           <div
-            className="flex flex-col items-start gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs"
+            className="flex flex-col items-start gap-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs"
             data-testid="invoice-create-from-load-confirmation"
           >
             <p className="text-gray-700">
