@@ -302,7 +302,7 @@ export function TrailerProfilePage() {
         />
       </div>
       <section data-testid="tp-section-audit-history" className="rounded-sm border border-gray-200 bg-white p-3">
-        <h3 className="mb-2 text-xs font-semibold text-slate-900">Audit History</h3>
+        <h3 className="mb-2 text-xs font-semibold text-[#0F1219]">Audit History</h3>
         <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="equipment" entityId={id} />
       </section>
       {/* DUALPATH-07 fix (2026-07-22): the old tp-section-9-activity TrailerRecentActivitySection

@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91164 — ArApAging / LiabilitiesHome / TrailerProfile slate → house
+
+FINDING: BANK-F91164 — ArApAgingPage / LiabilitiesHome / TrailerProfilePage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26099 squash `c56e509c00` (BANK-F91163 BatchDetail/FactoringProfile/HonestEmpty)
+Files Modified: ArApAgingPage.tsx · LiabilitiesHome.tsx · TrailerProfilePage.tsx · verify-91164-arap-liab-trailer-slate-leftover-chrome.mjs · verify-steps/3072-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91164-arap-liab-trailer-slate-leftover-chrome.mjs (piggy EVEN 3072)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91163 DONE (#26099 c56e509c00)
+
 ## 2026-10-09 · BANK-F91163 — BatchDetail / FactoringProfile / HonestEmptyTab slate → house
 
 FINDING: BANK-F91163 — BatchDetail / FactoringProfilePanel / HonestEmptyTab Tailwind slate-* → house tokens
