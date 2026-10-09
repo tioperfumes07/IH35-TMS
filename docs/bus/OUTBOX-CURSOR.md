@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK-F91177 — MaintenanceAlertsBanner / TripCostCalculator / PlatesTable slate → house
+
+FINDING: BANK-F91177 — MaintenanceAlertsBanner / TripCostCalculator / PlatesTable Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26112 squash `505ffd5db7` (BANK-F91176 Button/PostingPill/QboDoc)
+Files Modified: MaintenanceAlertsBanner.tsx · TripCostCalculator.tsx · PlatesTable.tsx · verify-91177-vehicle-profile-slate-leftover-chrome.mjs · verify-steps/2966-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91177-vehicle-profile-slate-leftover-chrome.mjs (piggy EVEN 2966)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+
+
 ## 2026-10-09 · BANK-F91176 — Button / PostingPill / QboDocumentNumberField slate → house
 
 FINDING: BANK-F91176 — Button / PostingPill / QboDocumentNumberField Tailwind slate-* → house tokens

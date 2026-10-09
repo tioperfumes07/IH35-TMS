@@ -33,7 +33,7 @@ export function MaintenanceAlertsBanner({ alerts, unitId }: { alerts: Alert[]; u
         <div
           key={`${alert.severity}-${alert.message}`}
           className={`flex items-center justify-between rounded px-3 py-2 text-xs ${
-            alert.severity === "high" ? "bg-red-100 text-red-900" : alert.severity === "medium" ? "bg-yellow-100 text-yellow-900" : "bg-slate-100 text-slate-800"
+            alert.severity === "high" ? "bg-red-100 text-red-900" : alert.severity === "medium" ? "bg-yellow-100 text-yellow-900" : "bg-[#F7F8FA] text-[#0F1219]"
           }`}
         >
           <span>{alert.message}</span>

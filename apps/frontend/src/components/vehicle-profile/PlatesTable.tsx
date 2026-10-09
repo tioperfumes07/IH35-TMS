@@ -129,7 +129,7 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
         rowActions={(row) => (
           <button
             type="button"
-            className="text-slate-700 underline"
+            className="text-[#1F2A44] underline"
             onClick={() => archiveMutation.mutate({ plateId: row.id, unitId, companyId, generation: actionGenerationRef.current })}
             disabled={archiveMutation.isPending}
           >
