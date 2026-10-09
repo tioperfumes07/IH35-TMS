@@ -1,3 +1,17 @@
+## 2026-10-08 · BANK-F91133 — TruckPlanner / DriverPlanner / UnitsWithoutLoad slate → house
+
+FINDING: BANK-F91133 — TruckPlanner / DriverPlanner / UnitsWithoutLoadTable Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26067 squash `4d0e54823d` (BANK-F91132 TrialBalance/HistoryTab/FactorReserve)
+Files Modified: TruckPlanner.tsx · DriverPlanner.tsx · UnitsWithoutLoadTable.tsx · verify-91133-dispatch-planners-slate-leftover-chrome.mjs · verify-steps/3426-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91133-dispatch-planners-slate-leftover-chrome.mjs (piggy EVEN 3426)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-08 · BANK-F91132 DONE (#26067 4d0e54823d)
+
+## 2026-10-08 · BANK-F91132 DONE (#26067 4d0e54823d)
+
 ## 2026-10-08 · BANK-F91132 — TrialBalance / HistoryTab / FactorReserve slate → house
 
 FINDING: BANK-F91132 — TrialBalancePage / HistoryTab / FactorReserveCard Tailwind slate-* → house tokens

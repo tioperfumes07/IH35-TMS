@@ -15,7 +15,7 @@ export function DriverPlanner() {
     return (
       <div
         data-testid="dispatch-driver-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-slate-600"
+        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
       >
         Select an operating company to load the driver planner.
       </div>
@@ -31,7 +31,7 @@ export function DriverPlanner() {
               (the only creating route, POST /api/v1/driver/scheduler/request, is driver-app-only).
               Label matches the destination page's own title ("Leave Requests"); dropped the "+"
               prefix this app reserves for real creators. */}
-          <Link to="/safety/scheduler/pending-requests" className="rounded-sm border border-gray-200 bg-white px-2 py-1 font-medium text-slate-700 hover:bg-gray-50">
+          <Link to="/safety/scheduler/pending-requests" className="rounded-sm border border-gray-200 bg-white px-2 py-1 font-medium text-[#1F2A44] hover:bg-gray-50">
             Leave Requests
           </Link>
           <Link to="/safety/leave-balances" className="rounded-sm border border-gray-200 bg-white px-2 py-1 font-medium text-gray-700 hover:bg-gray-50">
