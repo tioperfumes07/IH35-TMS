@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91073 — CoaBatchActions / BatchExpenses / InvoicesList slate → house
+
+FINDING: BANK-F91073 — CoaBatchActions / BatchExpensesPage / InvoicesListPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26006 squash `ef75ad6bcb` (BANK-F91072 CoaAsymmetry/ScheduleRow/PreSettlement)
+GUARD: scripts/verify-91073-coabatch-batchxp-invoices-slate-leftover-chrome.mjs + verify-steps/3702 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: CoaBatchActions + BatchExpensesPage + InvoicesListPage + refuse guard + 3702 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91072 — CoaAsymmetry / ScheduleRowDetail / PreSettlement slate → house
 
 FINDING: BANK-F91072 — CoaAsymmetryReportPanel / AccountingScheduleRowDetailPage / PreSettlementPanel Tailwind slate-* → house tokens

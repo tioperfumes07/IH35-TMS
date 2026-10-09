@@ -123,7 +123,7 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
         >
           Merge accounts
         </Button>
-        {error ? <span className="text-xs text-slate-700">{error}</span> : null}
+        {error ? <span className="text-xs text-[#1F2A44]">{error}</span> : null}
       </div>
 
       <Modal
@@ -135,19 +135,19 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
         }}
       >
         <div className="space-y-3 text-xs">
-          <p className="text-slate-600">
+          <p className="text-[#4B5563]">
             Choose the surviving account. Sub-accounts of the merged accounts are reparented onto it, and every
             place that designates a merged account for future postings — item default accounts, account role
             bindings, expense category mappings, banking rules — is repointed to it.
           </p>
-          <p className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+          <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
             <strong>Posted history stays where it is.</strong> Journal entries, bills, invoices and expenses already
             posted to a merged account keep pointing at that account, so prior-period reports do not change. The
             merged accounts are archived — never deleted — and stop accepting new postings. Merging is Owner-only
             and is recorded permanently in the account merge log.
           </p>
           <label className="block space-y-1">
-            <span className="text-xs font-medium text-slate-700">Surviving account</span>
+            <span className="text-xs font-medium text-[#1F2A44]">Surviving account</span>
             <SelectCombobox
               className="h-9 w-full rounded-sm border border-gray-300 px-2"
               value={mergeTargetId}
@@ -162,7 +162,7 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
             </SelectCombobox>
           </label>
           <label className="block space-y-1">
-            <span className="text-xs font-medium text-slate-700">
+            <span className="text-xs font-medium text-[#1F2A44]">
               Reason (required, at least {COA_MERGE_REASON_MIN_LENGTH} characters)
             </span>
             <textarea
@@ -175,12 +175,12 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
             />
           </label>
           {mergeTargetId && reasonTooShort ? (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#6B7280]">
               {Math.max(0, COA_MERGE_REASON_MIN_LENGTH - mergeReason.trim().length)} more character(s) needed.
             </p>
           ) : null}
           {mismatchedTypes.length > 0 ? (
-            <p className="text-xs text-slate-700">
+            <p className="text-xs text-[#1F2A44]">
               Accounts of a different type cannot be merged: {mismatchedTypes.map((row) => row.number).join(", ")} are
               not {targetRow?.acct_type}.
             </p>
