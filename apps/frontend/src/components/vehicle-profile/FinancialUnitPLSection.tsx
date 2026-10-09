@@ -145,7 +145,7 @@ function ContributingLoadsList({
                 id={load.id}
                 name={load.load_number}
                 noun="Load"
-                className="font-medium text-slate-700"
+                className="font-medium text-[#1F2A44]"
                 data-testid="vp-financial-contributing-load-link"
               />
               <span className="text-gray-600">

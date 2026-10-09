@@ -17,7 +17,7 @@ export function MaintenanceSnapshotSection({ maintenance }: { maintenance: Recor
                 id={wo.wo_id == null ? null : String(wo.wo_id)}
                 name={wo.display_id}
                 noun="Work order"
-                className="text-slate-700 hover:underline"
+                className="text-[#1F2A44] hover:underline"
                 data-testid="trailer-maint-snapshot-wo-link"
               />
               <span className="text-gray-500"> · {String(wo.status ?? "open")}</span>
