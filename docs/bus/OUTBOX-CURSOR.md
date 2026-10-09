@@ -1,10 +1,20 @@
-## 2026-10-08 · BANK-F91078 — SettlementsTable / CloseTripPanel / EscrowDeductionsPending slate → house
+## 2026-10-08 · BANK-F91079 — CashAdvancesTable / RecurringBillList / VendorBalances slate → house
+
+FINDING: BANK-F91079 — CashAdvancesTable / RecurringBillList / VendorBalancesPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26012 squash `54a8097863` (BANK-F91078 SettlementsTable/CloseTrip/EscrowPend)
+GUARD: scripts/verify-91079-cashadv-recurbill-vendbal-slate-leftover-chrome.mjs + verify-steps/3782 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: CashAdvancesTable + RecurringBillList + VendorBalancesPage + refuse guard + 3782 piggyback + OUTBOX
+
+## 2026-10-08 · BANK-F91078 DONE — SettlementsTable / CloseTripPanel / EscrowDeductionsPending slate → house #26012
 
 FINDING: BANK-F91078 — SettlementsTable / CloseTripPanel / EscrowDeductionsPendingTab Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
-Prior tip merge: #26011 squash `3e8dfcd814` (BANK-F91077 BillPayments/DispatchMargin/SubmissionQueue)
+MERGED: #26012 squash `54a8097863`
 GUARD: scripts/verify-91078-settle-closetrip-escrowpend-slate-leftover-chrome.mjs + verify-steps/3786 piggyback
-LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+LIVE PROOF: leftover slate class = 0 on 3 targets; healthz ok=true
 REMAINING: FE redeploy; densest remaining FE slate-* cluster
 Files Modified: SettlementsTable + CloseTripPanel + EscrowDeductionsPendingTab + refuse guard + 3786 piggyback + OUTBOX
 

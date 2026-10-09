@@ -14,9 +14,9 @@ type Props = {
 };
 
 function statusPill(status: string) {
-  if (status === "pending_approval") return "bg-slate-100 text-slate-700";
-  if (status === "approved") return "bg-slate-100 text-slate-700";
-  if (status === "disbursed") return "bg-slate-100 text-slate-700";
+  if (status === "pending_approval") return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (status === "approved") return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (status === "disbursed") return "bg-[#F7F8FA] text-[#1F2A44]";
   if (status === "failed") return "bg-red-100 text-red-700";
   if (status === "reversed") return "bg-gray-100 text-gray-700";
   return "bg-gray-100 text-gray-700";
@@ -96,11 +96,11 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoadi
           const status = String(row.disbursement_status ?? "pending_approval");
           return (
             <div className="flex gap-2">
-              <button type="button" className="text-slate-700 underline" onClick={() => onOpenDetail(row)}>
+              <button type="button" className="text-[#1F2A44] underline" onClick={() => onOpenDetail(row)}>
                 View Detail
               </button>
               {status !== "disbursed" && status !== "reversed" ? (
-                <button type="button" className="text-slate-700 underline" onClick={() => onMarkDisbursed(row)}>
+                <button type="button" className="text-[#1F2A44] underline" onClick={() => onMarkDisbursed(row)}>
                   Mark Disbursed
                 </button>
               ) : null}

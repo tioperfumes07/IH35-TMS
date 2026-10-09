@@ -108,10 +108,10 @@ export function VendorBalancesPage() {
       {balancesQuery.isError ? <ListErrorBanner onRetry={() => void balancesQuery.refetch()} /> : null}
       <div className="text-xs text-gray-600">
         Total outstanding: <span className="font-semibold text-red-700">{money(totalOutstanding)}</span>
-        {" · "}Cleared <span className="font-semibold text-slate-900">{money(totalCleared)}</span>
+        {" · "}Cleared <span className="font-semibold text-[#0F1219]">{money(totalCleared)}</span>
       </div>
       {totalUncleared > 0 ? (
-        <p className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+        <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
           Cleared {money(totalCleared)}. Applied payments that have not been matched or categorized in Banking are named not cleared beside each vendor.
         </p>
       ) : null}
@@ -125,7 +125,7 @@ export function VendorBalancesPage() {
             {(balancesQuery.data?.rows ?? []).map((row) => (
               <div
                 key={row.vendor_id}
-                className={`border-b border-gray-100 px-3 py-2 ${selectedVendorId === row.vendor_id ? "bg-slate-100" : ""}`}
+                className={`border-b border-gray-100 px-3 py-2 ${selectedVendorId === row.vendor_id ? "bg-[#F7F8FA]" : ""}`}
               >
                 <div className="truncate text-xs font-semibold text-gray-900">
                   <EntityLink
@@ -148,7 +148,7 @@ export function VendorBalancesPage() {
                     <span>{row.open_bill_count} open bills</span>
                     <span className="font-semibold text-red-700">{money(row.balance_cents)}</span>
                   </div>
-                  <div className="mt-0.5 text-xs text-slate-600">
+                  <div className="mt-0.5 text-xs text-[#4B5563]">
                     Cleared {money(row.balance_cents + (unclearedByVendorId.get(row.vendor_id)?.uncleared_cents ?? 0))}
                   </div>
                   <UnclearedDocumentsNote docs={unclearedByVendorId.get(row.vendor_id)?.uncleared_documents ?? []} />
@@ -191,9 +191,9 @@ export function VendorBalancesPage() {
               const remaining = Math.max(0, Number(bill.amount_cents) - Number(bill.paid_cents));
               const dueDelta = bill.due_date ? daysUntil(bill.due_date) : null;
               const dueTone =
-                dueDelta === null ? "text-gray-500" : dueDelta < 0 ? "text-red-600" : dueDelta <= 7 ? "text-slate-600" : "text-gray-600";
+                dueDelta === null ? "text-gray-500" : dueDelta < 0 ? "text-red-600" : dueDelta <= 7 ? "text-[#4B5563]" : "text-gray-600";
               return (
-                <div key={bill.id} className={`border-b border-gray-100 px-3 py-2 ${selectedBillId === bill.id ? "bg-slate-100" : ""}`}>
+                <div key={bill.id} className={`border-b border-gray-100 px-3 py-2 ${selectedBillId === bill.id ? "bg-[#F7F8FA]" : ""}`}>
                   <button type="button" className="w-full text-left" onClick={() => setSelectedBillId(bill.id)}>
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-xs font-semibold text-gray-900">{visibleDocumentLabel(bill.bill_number, bill.id, "Bill")}</div>
