@@ -7,9 +7,12 @@
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
+import { runGuard, runGuardInFixture, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
 
-const ROOT = fileURLToPath(new URL("..", import.meta.url));
+const ROOT = process.env.VERIFY_ROOT || fileURLToPath(new URL("..", import.meta.url));
 const LABEL = "verify-auto-invoice-on-bol-wired";
+
+if (process.argv.includes("--selftest")) selftest();
 
 function mustContain(rel, needles) {
   const abs = join(ROOT, rel);
@@ -89,3 +92,13 @@ mustContain("apps/frontend/src/components/dispatch/DispatchSubnav.tsx", [
 
 console.log(`${LABEL} OK`);
 process.exit(0);
+
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const missing = runGuardInFixture(me, {}, [], { VERIFY_ROOT: "." });
+  reportSelftest(LABEL, [
+    { name: "real repo tree passes", pass: statusOf(real) === 0, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-400) },
+    { name: "guard fails closed when core inputs are absent", pass: statusOf(missing) !== 0 },
+  ]);
+}
