@@ -4,7 +4,7 @@ export function PlannerAction({ to, label }: { to: string; label: string }) {
   return (
     <Link
       to={to}
-      className="inline-flex h-7 items-center rounded-sm border border-gray-300 bg-white px-2 text-xs font-medium text-slate-700 hover:bg-gray-50"
+      className="inline-flex h-7 items-center rounded-sm border border-gray-300 bg-white px-2 text-xs font-medium text-[#1F2A44] hover:bg-gray-50"
     >
       {label}
     </Link>
