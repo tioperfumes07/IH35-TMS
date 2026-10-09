@@ -286,10 +286,10 @@ export function BankTxCategorizationPage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Bank transaction categorization" subtitle="Uncategorized Plaid activity · daily ops" />
-      {!companyId ? <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs text-slate-700">Select an operating company.</div> : null}
+      {!companyId ? <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">Select an operating company.</div> : null}
 
       {backendPending ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-slate-300 bg-slate-100 p-3 text-xs text-slate-700">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
           <span>
             Backend pending — file <strong>P6-T11204</strong> ticket. Uncategorized transaction endpoints are not available yet.
           </span>
@@ -393,7 +393,7 @@ export function BankTxCategorizationPage() {
             <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-xs text-red-800">Could not load uncategorized transactions.</div>
           ) : null}
           {bulkIds.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 p-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs">
               <span className="font-semibold">{bulkIds.length} selected</span>
               <Button size="sm" variant="secondary" onClick={() => void applyBulkSuggestions()}>
                 Apply suggestion to all selected
@@ -416,7 +416,7 @@ export function BankTxCategorizationPage() {
               >
                 Categorize all selected
               </Button>
-              <button type="button" className="text-slate-700 underline" onClick={() => setBulkSelected({})}>
+              <button type="button" className="text-[#1F2A44] underline" onClick={() => setBulkSelected({})}>
                 Clear selection
               </button>
             </div>
@@ -461,7 +461,7 @@ export function BankTxCategorizationPage() {
                   tx.possible_duplicate === true ? (
                     <span className="inline-flex items-center gap-1">
                       <span
-                        className="rounded-sm border border-slate-200 bg-slate-100 px-1 font-semibold text-slate-700"
+                        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1 font-semibold text-[#1F2A44]"
                         title="Another line on this account has the same date, amount, direction and description. Both are kept — decide when you match."
                         data-testid={`bank-tx-possible-duplicate-${String(tx.id ?? "")}`}
                       >

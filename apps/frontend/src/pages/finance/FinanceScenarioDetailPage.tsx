@@ -37,12 +37,12 @@ export function FinanceScenarioDetailPage() {
     <div className="p-6">
       <FinanceModuleTabs />
       <PageHeader title="Scenario" />
-      <Link to="/finance/scenarios" className="text-xs font-medium text-slate-600 underline">
+      <Link to="/finance/scenarios" className="text-xs font-medium text-[#4B5563] underline">
         ← All scenarios
       </Link>
 
       {detailQuery.isLoading ? (
-        <p className="mt-4 text-xs text-slate-500">Loading…</p>
+        <p className="mt-4 text-xs text-[#6B7280]">Loading…</p>
       ) : detailQuery.isError ? (
         // GO-0028: "Scenario not found." on a genuine fetch failure is factually wrong -- the
         // scenario may exist and the fetch simply failed. Both branches render red text, so this
@@ -59,27 +59,27 @@ export function FinanceScenarioDetailPage() {
         <p className="mt-4 text-xs text-red-600">Scenario not found.</p>
       ) : (
         <div className="mt-4 space-y-4">
-          <div className="rounded-sm border border-slate-200 bg-white p-4">
+          <div className="rounded-sm border border-[#E5E7EB] bg-white p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xs font-semibold text-slate-800">{detailQuery.data.scenario.name}</h2>
-                <p className="text-xs text-slate-500">
+                <h2 className="text-xs font-semibold text-[#1F2A44]">{detailQuery.data.scenario.name}</h2>
+                <p className="text-xs text-[#6B7280]">
                   {detailQuery.data.scenario.period_basis} · {detailQuery.data.scenario.period_count} periods · starts{" "}
                   {detailQuery.data.scenario.period_start}
                 </p>
                 {detailQuery.data.scenario.notes && (
-                  <p className="mt-1 text-xs text-slate-500">{detailQuery.data.scenario.notes}</p>
+                  <p className="mt-1 text-xs text-[#6B7280]">{detailQuery.data.scenario.notes}</p>
                 )}
               </div>
               <div className="text-right">
-                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-medium text-[#1F2A44]">
                   {detailQuery.data.scenario.status}
                 </span>
                 {detailQuery.data.scenario.status === "draft" && (
                   <button
                     onClick={() => activateMutation.mutate()}
                     disabled={activateMutation.isPending}
-                    className="mt-2 block rounded-sm border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    className="mt-2 block rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA] disabled:opacity-50"
                   >
                     Activate
                   </button>
@@ -87,7 +87,7 @@ export function FinanceScenarioDetailPage() {
                 {detailQuery.data.scenario.superseded_by_scenario_id && (
                   <Link
                     to={`/finance/scenarios/${detailQuery.data.scenario.superseded_by_scenario_id}`}
-                    className="mt-2 block text-xs font-medium text-slate-600 underline"
+                    className="mt-2 block text-xs font-medium text-[#4B5563] underline"
                   >
                     View replacement →
                   </Link>
