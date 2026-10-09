@@ -116,7 +116,7 @@ export function PredictiveAlertsPage() {
         // §7 palette: red is allowed only for delete/Accident-class UI — critical here still uses
         // the neutral slate scale (bold + darker), not red, to stay on-palette.
         render: (row) => (
-          <span className={row.severity === "critical" ? "font-semibold text-slate-900" : "text-slate-600"} data-testid={`predictive-alert-severity-${row.id}`}>
+          <span className={row.severity === "critical" ? "font-semibold text-[#0F1219]" : "text-[#4B5563]"} data-testid={`predictive-alert-severity-${row.id}`}>
             {row.severity}
           </span>
         ),
