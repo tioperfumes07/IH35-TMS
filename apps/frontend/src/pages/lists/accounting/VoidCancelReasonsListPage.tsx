@@ -28,8 +28,8 @@ const REASON_CODE_REGEX = /^[a-z][a-z0-9_]*$/;
 
 function statusPill(isActive: boolean) {
   return isActive
-    ? "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
-    : "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500";
+    ? "inline-flex rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]"
+    : "inline-flex rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#6B7280]";
 }
 
 function parseConflict(error: unknown): string | null {
@@ -132,10 +132,10 @@ export function VoidCancelReasonsListPage() {
   const breadcrumb = useMemo(() => ["Lists & Catalogs", "Accounting", "Void/Cancel Reasons"], []);
 
   const columns = [
-    { key: "reason_code", label: "Code", sortable: true, render: (row: VoidCancelReason) => <span className="font-semibold text-slate-800">{row.reason_code}</span> },
-    { key: "reason_label", label: "Label", sortable: true, render: (row: VoidCancelReason) => <span className="text-slate-800">{row.reason_label}</span> },
-    { key: "requires_note", label: "Note Required", sortable: true, render: (row: VoidCancelReason) => <span className="text-slate-700">{row.requires_note ? "Yes" : "No"}</span> },
-    { key: "sort_order", label: "Order", sortable: true, numeric: true, render: (row: VoidCancelReason) => <span className="text-slate-700">{row.sort_order}</span> },
+    { key: "reason_code", label: "Code", sortable: true, render: (row: VoidCancelReason) => <span className="font-semibold text-[#1F2A44]">{row.reason_code}</span> },
+    { key: "reason_label", label: "Label", sortable: true, render: (row: VoidCancelReason) => <span className="text-[#1F2A44]">{row.reason_label}</span> },
+    { key: "requires_note", label: "Note Required", sortable: true, render: (row: VoidCancelReason) => <span className="text-[#1F2A44]">{row.requires_note ? "Yes" : "No"}</span> },
+    { key: "sort_order", label: "Order", sortable: true, numeric: true, render: (row: VoidCancelReason) => <span className="text-[#1F2A44]">{row.sort_order}</span> },
     { key: "is_active", label: "Status", sortable: true, render: (row: VoidCancelReason) => <span className={statusPill(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span> },
   ];
 
@@ -159,12 +159,12 @@ export function VoidCancelReasonsListPage() {
         }
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#4B5563]">
         Controlled reasons for FINANCIAL void/cancel actions (invoices, bills, payments, journal entries,
         settlements, work-order voids). Per entity. A reason marked "Note Required" forces a note when chosen.
       </div>
 
-      <div className="flex items-end gap-2 rounded-sm border border-slate-200 bg-white p-3">
+      <div className="flex items-end gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Show
           <SelectCombobox

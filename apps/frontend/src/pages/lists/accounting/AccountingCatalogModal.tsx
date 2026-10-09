@@ -185,10 +185,10 @@ export function AccountingCatalogModal({
           value={form.code}
           disabled={readOnly || mode === "edit"}
           onChange={(event) => setForm((value) => ({ ...value, code: event.target.value.toUpperCase() }))}
-          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
+          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-[#F7F8FA]"
         />
         {mode === "edit" ? (
-          <span className="mt-1 block text-xs font-normal text-slate-400">Stable identifier — immutable after create.</span>
+          <span className="mt-1 block text-xs font-normal text-[#6B7280]">Stable identifier — immutable after create.</span>
         ) : null}
         {errors.code ? <div className="mt-1 text-xs text-red-700">{errors.code}</div> : null}
       </label>
@@ -201,7 +201,7 @@ export function AccountingCatalogModal({
             value={form.display_name}
             disabled={readOnly}
             onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-[#F7F8FA]"
           />
           {errors.display_name ? <div className="mt-1 text-xs text-red-700">{errors.display_name}</div> : null}
         </label>
@@ -217,7 +217,7 @@ export function AccountingCatalogModal({
                 value={String(value ?? "")}
                 disabled={readOnly}
                 onChange={(event) => setForm((current) => ({ ...current, metadata: { ...current.metadata, [field.key]: event.target.value } }))}
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-[#F7F8FA]"
               >
                 <option value="">Select...</option>
                 {(field.options ?? []).map((option) => (
@@ -246,7 +246,7 @@ export function AccountingCatalogModal({
                   },
                 }))
               }
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-[#F7F8FA]"
             />
             {errors[`metadata.${field.key}`] ? <div className="mt-1 text-xs text-red-700">{errors[`metadata.${field.key}`]}</div> : null}
           </label>
@@ -260,7 +260,7 @@ export function AccountingCatalogModal({
           disabled={readOnly}
           onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))}
           rows={3}
-          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:bg-slate-100"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:bg-[#F7F8FA]"
         />
       </label>
 
@@ -271,9 +271,9 @@ export function AccountingCatalogModal({
           value={form.sort_order}
           disabled={readOnly}
           onChange={(event) => setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))}
-          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
+          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-[#F7F8FA]"
         />
-        <span className="mt-1 block text-xs font-normal text-slate-400">Dropdown display order (lower = earlier). Defaults to next available.</span>
+        <span className="mt-1 block text-xs font-normal text-[#6B7280]">Dropdown display order (lower = earlier). Defaults to next available.</span>
       </label>
 
       <label className="flex items-center gap-2 text-xs text-gray-700">
@@ -287,7 +287,7 @@ export function AccountingCatalogModal({
       </label>
 
       {mode === "edit" && row ? (
-        <div className="border-t border-gray-100 pt-2 text-xs text-slate-400">
+        <div className="border-t border-gray-100 pt-2 text-xs text-[#6B7280]">
           Created {new Date(row.created_at).toLocaleString()} · Updated {new Date(row.updated_at).toLocaleString()}
         </div>
       ) : null}

@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91068 — AccountTypeCatalog / VoidCancelReasons / CardOverageQueue slate → house
+
+FINDING: BANK-F91068 — AccountTypeCatalogPage / VoidCancelReasonsListPage / CardOverageQueuePage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26001 squash `fee17197e9` (BANK-F91067 AccountTile/FinanceScenarioDetail/BankTxCategorization)
+GUARD: scripts/verify-91068-accttype-voidcancel-cardoverage-slate-leftover-chrome.mjs + verify-steps/3682 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: AccountTypeCatalogPage + VoidCancelReasonsListPage + CardOverageQueuePage + AccountingCatalogModal + refuse guard + 3682 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91067 — AccountTile / FinanceScenarioDetail / BankTxCategorization slate → house
 
 FINDING: BANK-F91067 — AccountTile / FinanceScenarioDetailPage / BankTxCategorizationPage Tailwind slate-* → house tokens

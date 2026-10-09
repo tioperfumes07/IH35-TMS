@@ -11,9 +11,9 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 const STATEMENT_COLOR: Record<string, string> = {
-  "Balance Sheet": "bg-slate-100 text-slate-700",
-  "Profit and Loss": "bg-slate-200 text-slate-800",
-  "Profit & Loss": "bg-slate-200 text-slate-800",
+  "Balance Sheet": "bg-[#F7F8FA] text-[#1F2A44]",
+  "Profit and Loss": "bg-[#E5E7EB] text-[#1F2A44]",
+  "Profit & Loss": "bg-[#E5E7EB] text-[#1F2A44]",
 };
 
 function groupBy(entries: AccountTypeCatalogEntry[]): [string, AccountTypeCatalogEntry[]][] {
@@ -114,13 +114,13 @@ export function AccountTypeCatalogPage() {
       <Link
         to="/lists"
         aria-label="Back to Lists & Catalogs"
-        className="mb-3 inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:underline"
+        className="mb-3 inline-flex items-center gap-1 text-xs font-medium text-[#4B5563] hover:underline"
       >
         ← Lists &amp; Catalogs / Accounting
       </Link>
-      <div className="mb-3 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+      <div className="mb-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
         Account types are a fixed read-only taxonomy. To add or edit custom detail types, open{" "}
-        <Link to="/lists/accounting/detail-types" className="font-semibold text-slate-800 underline">
+        <Link to="/lists/accounting/detail-types" className="font-semibold text-[#1F2A44] underline">
           Lists → Detail Type
         </Link>
         .
@@ -130,7 +130,7 @@ export function AccountTypeCatalogPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search type or detail type…"
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs focus:outline-hidden focus:ring-1 focus:ring-slate-400"
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs focus:outline-hidden focus:ring-1 focus:ring-[#6B7280]"
         />
         {!isLoading && !isError && (
           <span className="text-xs text-gray-500">
