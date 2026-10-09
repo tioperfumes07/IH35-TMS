@@ -18,9 +18,9 @@ const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 
 const STATUS_COLOR: Record<string, string> = {
-  synced: "bg-slate-100 text-slate-700",
-  pending: "bg-slate-100 text-slate-700",
-  in_flight: "bg-slate-100 text-slate-700",
+  synced: "bg-[#F7F8FA] text-[#1F2A44]",
+  pending: "bg-[#F7F8FA] text-[#1F2A44]",
+  in_flight: "bg-[#F7F8FA] text-[#1F2A44]",
   failed: "bg-red-100 text-red-800",
   blocked: "bg-gray-100 text-gray-700",
 };
@@ -143,7 +143,7 @@ export function IntegrationTransactionsPage() {
         const bt = row.bank_transaction;
         if (!bt) return <span className="whitespace-nowrap">—</span>;
         return (
-          <span className={`whitespace-nowrap ${bt.is_credit ? "text-slate-700" : "text-gray-800"}`}>
+          <span className={`whitespace-nowrap ${bt.is_credit ? "text-[#1F2A44]" : "text-gray-800"}`}>
             {bt.is_credit ? "+" : "-"}{fmtCents(bt.amount_cents)}
           </span>
         );
@@ -232,7 +232,7 @@ export function IntegrationTransactionsPage() {
             placeholder="Search description, QBO ID…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-3 text-xs focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-3 text-xs focus:outline-hidden focus:ring-1 focus:ring-[#6B7280]"
           />
         }
       >
