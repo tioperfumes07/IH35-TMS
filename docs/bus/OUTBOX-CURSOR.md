@@ -1,3 +1,15 @@
+## 2026-10-09 · BANK-F91176 — Button / PostingPill / QboDocumentNumberField slate → house
+
+FINDING: BANK-F91176 — Button / PostingPill / QboDocumentNumberField Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #26111 squash `a4664e18f542` (BANK-F91175 Layout/Home)
+Files Modified: Button.tsx · PostingPill.tsx · QboDocumentNumberField.tsx · verify-91176-shared-chrome-slate-leftover-chrome.mjs · verify-steps/2968-*.mjs · OUTBOX-CURSOR.md
+GUARD: scripts/verify-91176-shared-chrome-slate-leftover-chrome.mjs (piggy EVEN 2968)
+LIVE PROOF: leftover slate class = 0 on 3 targets; --selftest PASS
+STATUS: READY-TO-MERGE
+
+## 2026-10-09 · BANK-F91175 DONE (#26111 a4664e18f542)
+
 ## 2026-10-09 · BANK-F91175 — SubNavCounts / StatusBarPopover / AccountingKpiBar slate → house
 
 FINDING: BANK-F91175 — SubNavCounts / StatusBarPopover / AccountingKpiBar Tailwind slate-* → house tokens

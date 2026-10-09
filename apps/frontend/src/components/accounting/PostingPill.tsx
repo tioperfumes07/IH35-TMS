@@ -26,7 +26,7 @@ export function PostingPill({ posted, holdReason }: { posted: boolean; holdReaso
     );
   }
   if (posted) {
-    return <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">posted</span>;
+    return <span className="inline-flex rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">posted</span>;
   }
   return <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">unposted</span>;
 }
