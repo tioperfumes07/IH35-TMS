@@ -152,7 +152,7 @@ export function PendingSettlementDeductionsPanel() {
           </Button>
         </div>
         <div className="relative mb-2 flex flex-wrap items-end gap-2 px-2" data-testid="settlement-deductions-filters">
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Driver
             <EntityPicker
               kind="driver"
@@ -219,7 +219,7 @@ export function PendingSettlementDeductionsPanel() {
           shown={rows.length}
           limit={200}
           hint="This queue shows pending recoveries only — narrow with the driver filter if the list is truncated."
-          className="px-2 py-1 text-xs text-slate-600"
+          className="px-2 py-1 text-xs text-[#4B5563]"
         />
       </DataPanel>
       <CreateSettlementDeductionDrawer

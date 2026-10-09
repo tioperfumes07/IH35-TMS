@@ -73,7 +73,7 @@ export function RetentionDashboard() {
                 tier={row.retention_tier}
                 topFactors={factors}
               />
-              <p className="text-xs text-slate-700" data-testid="driver-retention-late-arrival-rate">
+              <p className="text-xs text-[#1F2A44]" data-testid="driver-retention-late-arrival-rate">
                 <EntityLink
                   kind="driver"
                   id={row.driver_uuid}
@@ -82,7 +82,7 @@ export function RetentionDashboard() {
                 />
                 Late arrival rate (30d): {lateArrivalRate == null ? "Unavailable" : `${(lateArrivalRate * 100).toFixed(1)}%`}
               </p>
-              {row.features_missing.length > 0 ? <p className="text-xs text-slate-700">Score missing: {row.features_missing.map((key) => key.replace(/_/g, " ")).join(", ")}</p> : null}
+              {row.features_missing.length > 0 ? <p className="text-xs text-[#1F2A44]">Score missing: {row.features_missing.map((key) => key.replace(/_/g, " ")).join(", ")}</p> : null}
             </div>
           );
         })}
