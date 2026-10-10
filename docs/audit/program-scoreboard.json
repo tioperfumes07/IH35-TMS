@@ -1,10 +1,10 @@
 {
-  "healthzSha": "86c5155",
-  "generated_at": "2026-10-10T22:01:45.387Z",
+  "healthzSha": "3f6eb1e",
+  "generated_at": "2026-10-10T22:14:02.038Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "86c5155",
+    "deployedSha": "3f6eb1e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,51 @@
   },
   "recentActivity": [
     {
+      "number": 26197,
+      "title": "FINDING: N/A (CLAIM-RESERVE 18373 -- reservation-only commit, no code fix)",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26197",
+      "sha": "f12de0403a",
+      "committedAtIso": "2026-10-10T17:10:06-05:00"
+    },
+    {
+      "number": 26190,
+      "title": "FINDING: ACCT-F2026100637 LANE: claude — ROUND 443.15: the Relay ingest stored the same fill under TRANSP and USMCA (172 fills, 53 new on 10-08); a fill is now stored once, under USMCA only",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26190",
+      "sha": "1b6acac9a4",
+      "committedAtIso": "2026-10-10T17:08:12-05:00"
+    },
+    {
+      "number": 26196,
+      "title": "CC-2-FIX main undeployable: #26193 nested export in expenses.routes.ts + 2 reds it left",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26196",
+      "sha": "3f6eb1e6c9",
+      "committedAtIso": "2026-10-10T17:07:53-05:00"
+    },
+    {
+      "number": 26195,
+      "title": "FINDING: N/A (CC-1 ROUND 443.20) — renumber 202610100100→202610100200 collision repair",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26195",
+      "sha": "1cf09aeba1",
+      "committedAtIso": "2026-10-10T17:04:24-05:00"
+    },
+    {
+      "number": 26194,
+      "title": "docs(bus): Lead rulings (443.15 option c, 443.20 migration collision) + ROUND 443.21 to CC-2 (Relay webhook lands in USMCA)",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26194",
+      "sha": "af913c4779",
+      "committedAtIso": "2026-10-10T17:02:50-05:00"
+    },
+    {
       "number": 26193,
       "title": "FINDING: ACCT-F443-13 (CC-1) — bill loadId/vendorDocumentNumber, createExpenseInClientTx export, 443.12 guard correction",
       "state": "merged",
@@ -2166,51 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26188",
       "sha": "c7e89840ac",
       "committedAtIso": "2026-10-10T16:41:33-05:00"
-    },
-    {
-      "number": 26187,
-      "title": "FINDING: ACCT-F2026100636 LANE: claude — ROUND 443.14: Book Load could only book in its own committed transaction, so a refused settlement post stranded its loads; bookLoadOnClient now books on the caller's client and bookLoad is a thin wrapper",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 04:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26187",
-      "sha": "b833e281d5",
-      "committedAtIso": "2026-10-10T16:39:51-05:00"
-    },
-    {
-      "number": 26186,
-      "title": "FINDING: N/A (CLAIM-RESERVE 12423 -- reservation-only commit, no code fix)",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 04:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26186",
-      "sha": "0533197118",
-      "committedAtIso": "2026-10-10T16:35:15-05:00"
-    },
-    {
-      "number": 26185,
-      "title": "FINDING: ROUND-443.7 LANE: FINANCIAL -- (part b) the Settlement Creator answered ok: true even when the after-commit factor submit or billing sync failed (failures only logged); every post now reports documents / ledger / factoring / billing in plain English, ok only when all succeeded, failures stored and retryable from the drawer",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 04:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26185",
-      "sha": "534038fdd8",
-      "committedAtIso": "2026-10-10T16:33:38-05:00"
-    },
-    {
-      "number": 26184,
-      "title": "docs(bus): owner rulings 4:30 PM CT + ROUND 443.13 (CC-1), 443.14 and 443.15 (CC-2), Lead rulings to CC-3",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 04:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26184",
-      "sha": "e8325d051e",
-      "committedAtIso": "2026-10-10T16:32:22-05:00"
-    },
-    {
-      "number": 26183,
-      "title": "FINDING: ROUND-443.6 LANE: FINANCIAL -- a Settlement Creator company expense silently credited the Relay wallet when no payment source was given, carried no vendor / unit / trailer / vendor document number, flattened gallons to 1 each, fell back to a generic account with no item, and a ledger refusal was swallowed (document without a journal entry); all fixed, and an owed expense never credits a card",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 04:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26183",
-      "sha": "c691115e87",
-      "committedAtIso": "2026-10-10T16:24:21-05:00"
     }
   ]
 }

@@ -24,6 +24,7 @@
 import { linkRelayFillToSettlementFuelRows } from "../../fuel/relay-fill-link.service.js";
 import { relayMoneyField, type RelayFuelTransaction } from "./relay-client.js";
 import type { DbClient } from "./db-client.type.js";
+import { isUsmcaOperatingCompany } from "./relay-usmca-date-floor.js";
 import { resolveRelayDriverMatch, type RelayDriverUnresolvedReason } from "./relay-fuel-driver-match.js";
 import { relayFillFeeCents, relayWalletDrawdownCents } from "./relay-sender-fee-cents.js";
 import { upsertRelayWalletBankFeedRow } from "./relay-wallet-bank-feed.service.js";
@@ -57,7 +58,7 @@ export type RelayIngestResult = {
    *   owned_by_other_company        the fill's unit is operated by another company
    *   already_held_by_other_company  the unit is unresolved and another company already holds the fill
    */
-  skipped_reason: "owned_by_other_company" | "already_held_by_other_company" | null;
+  skipped_reason: "not_usmca_relay_company" | "owned_by_other_company" | "already_held_by_other_company" | null;
 };
 
 /**
@@ -151,9 +152,18 @@ export async function upsertRelayFuelTransaction(
     gl_post_candidate: null,
     skipped_reason: reason,
   });
+  // ROUND 443.15 (owner, 2026-10-10): USMCA runs on the IH 35 Transportation Relay key and is the ONLY company
+  // whose Relay fills are stored. Measured: the RELAY_FUEL_INGEST_ENABLED override was ON for TRANSP (10-01) and
+  // USMCA (09-08); both pulls returned the same fills (one Relay org), so any non-USMCA pull can only duplicate.
+  // Refused here, at the one writer every path (daily pull, backfill, webhook, CSV) goes through.
+  if (!isUsmcaOperatingCompany(operatingCompanyId)) return skipped("not_usmca_relay_company");
   const ownerCompanyId = await resolveRelayFillOwnerCompany(client, truckNumber);
   if (ownerCompanyId && ownerCompanyId !== operatingCompanyId) return skipped("owned_by_other_company");
-  if (!ownerCompanyId) {
+  // ROUND 443.15: this check used to run ONLY when the unit was unresolved. Measured: on 2026-10-08 the USMCA pull
+  // stored 53 fills whose unit resolved to USMCA but which TRANSP already held -- 53 new cross-company duplicates
+  // (119 -> 172). A fill already stored under another company is never stored a second time, resolved unit or not.
+  // The existing copy is left exactly where it is: moving or voiding a Relay row needs the owner's word.
+  {
     const heldElsewhere = await client.query<{ ok: boolean }>(
       `SELECT EXISTS (
          SELECT 1 FROM integrations.relay_fuel_transactions
