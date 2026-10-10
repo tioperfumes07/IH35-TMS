@@ -7385,8 +7385,12 @@ issued_at: 2026-10-10T20:09:00Z
 scope: production Neon project tiny-field-89581227, branch br-fancy-credit-akjnd07a, USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) ONLY. Rows whose parent load / invoice / settlement / driver bill / fuel transaction / expense no longer exists, in the tables of scripts/purge/usmca-purge-classification.json ORPHANS. Banking never: journal entries, postings, bank transactions, expenses must be unchanged or the run rolls back.
 action: OWNER_AUTH_ID=AUTH-403 DATABASE_URL=<prod owner> npx tsx scripts/purge/purge-orphans-of-purged-documents.mts --commit (after migration 202615450900 is applied)
 expires_at: 2026-10-11T08:30:00Z
-status: ISSUED
+status: CONSUMED
 owner_words: "there should be nothing from before that is why we deleted and purged" and "delete anything related to the purge. Not any banking transactions." (2026-10-10, relayed by the Lead in ROUND 443.9, docs/bus/2026-10-10-LEAD-ROUND-443-ORDERS.md)
 why: the AUTH-400 purge left rows pointing at purged documents — the generator censused 9 schemas (reports, pwa never seen), never classified the feed-gate tables, and feed_intake_checks' WORM trigger had no listed-row arm.
 expected_row_counts (dry run on prod 2026-10-10 20:15Z, rolled back): feed_intake_checks 24, feed_intakes 2, lane_profitability_cache 2,891, deadhead_cache 22, driver_notifications 273 (1 kept), docs.file_links 382 (422 kept), docs.files 12 (484 kept: owner uploads and files linked to live drivers / customers / units stay), fuel_gps_matches 0 (85 kept — they point at kept bank transactions), tank_events 0 (1 kept), load_stops 0. Total 3,606.
+consumed_at: 2026-10-10T23:11:44Z
+consumed_by: CC-3
+row_counts: removed 3,606 — feed_intake_checks 24, feed_intakes 2, lane_profitability_cache 2,891, deadhead_cache 22, driver_notifications 273 (1 kept), docs.file_links 382 (422 kept), docs.files 12 (484 kept), fuel_gps_matches 0 (85 kept), tank_events 0 (1 kept), load_stops 0; audit.record_deletions 3,606 rows (auth_id AUTH-403). Banking before = after: journal entries 280, postings 560, bank transactions 1,291, expenses 5.
+proof_query: node scripts/verify-no-orphan-of-purged-documents.mjs (prod) -> OK, every ORPHANS predicate 0. Ran as neondb_owner (session role forced to neondb_owner; the login's default role ih35_app cannot list purge rows), migration 202615450900 live.
 rehearsed: throwaway fork br-wild-grass-akimpgdv (deleted): migration applied twice; --commit removed exactly 3,606 rows, 3,606 audit.record_deletions rows, every orphan count 0, banking 280 / 560 / 1,291 / 5 unchanged.
