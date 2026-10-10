@@ -14,5 +14,7 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-no-quickpay-on-factored.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-invoice-number-and-zero-invoice.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-invoice-number-and-zero-invoice.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-driver-pay-independent-of-invoice.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-driver-pay-independent-of-invoice.mjs"]);
   },
 };
