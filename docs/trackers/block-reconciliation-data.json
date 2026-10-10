@@ -1,6 +1,6 @@
 {
  "date": "2026-10-10",
- "generated_at_iso": "2026-10-10T12:40:55.027Z",
+ "generated_at_iso": "2026-10-10T18:36:49.101Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,30 @@
  ],
  "merged_prs": [
   {
+   "number": 26159,
+   "title": "Cursor- fix(settlements): SETL-CREATOR-FIX-PACK — under-Add; short miles; salary/QuickPay; deduction catalog",
+   "mergedAt": "2026-10-10T17:59:36Z",
+   "branch": "cursor/setl-creator-fix-pack-c89b"
+  },
+  {
+   "number": 26158,
+   "title": "Cursor- UI-F91155 date digits auto-slash MM/DD/YYYY all calendars",
+   "mergedAt": "2026-10-10T16:07:45Z",
+   "branch": "cursor/date-auto-slash-c89b"
+  },
+  {
+   "number": 26157,
+   "title": "Claude-1- ROUND 442.1 deploy fix — WORM trigger: allow entity_uuid/entity_type fill from NULL",
+   "mergedAt": "2026-10-10T15:17:19Z",
+   "branch": "cc-1/r4421-worm-entity-fill-from-null"
+  },
+  {
+   "number": 26156,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-10T12:41:41Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 26155,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-10T06:47:36Z",
@@ -17312,30 +17336,6 @@
    "title": "Claude-3- Cash Flow Statement drills: one line per account with account_id (money cells 89->88, ROUND 433.3)",
    "mergedAt": "2026-10-06T14:18:09Z",
    "branch": "cc-3/cash-flow-account-id"
-  },
-  {
-   "number": 25549,
-   "title": "Claude-1- 365.6 closed: 31/31 live guards green; migration ledger snapshot refreshed (0 checksum mismatches)",
-   "mergedAt": "2026-10-06T14:14:10Z",
-   "branch": "cc-1/r365-6-ledger-snapshot-refresh"
-  },
-  {
-   "number": 25548,
-   "title": "CC-2- ROUND 389.2: verdicts for CC-2's 10 failing guards (3 guard fixes, 3 fake greens made honest)",
-   "mergedAt": "2026-10-06T14:13:31Z",
-   "branch": "cc-2/guard-verdicts"
-  },
-  {
-   "number": 25547,
-   "title": "Claude-3- U27 natural sign from the account type + card tie-out/drift compared raw (ROUND 433.1)",
-   "mergedAt": "2026-10-06T14:09:32Z",
-   "branch": "claude/natural-sign-u27"
-  },
-  {
-   "number": 25546,
-   "title": "Lead — BANK-F431 one canonical bank-line deletion authority (+ bulk-void scanner reads its fixtures)",
-   "mergedAt": "2026-10-06T14:05:36Z",
-   "branch": "fix/bank-f431"
   }
  ],
  "merged_pr_total": 3000,
