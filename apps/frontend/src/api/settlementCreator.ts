@@ -2,6 +2,8 @@ import { apiRequest } from "./client";
 
 export type SettlementCreatorFactorOption = "faro_usmca" | "faro_transportation" | "direct";
 export type SettlementCreatorFuelCard = "dreamline" | "relay";
+/** ROUND 443.6 — how a company expense was paid: a card (paid now) or owed to the vendor (A/P bill). Required. */
+export type SettlementCreatorExpensePaymentSource = "dreamline" | "relay" | "owed";
 
 export type SettlementCreatorDraft = {
   operating_company_id: string;
@@ -86,7 +88,12 @@ export type SettlementCreatorDraft = {
     load_number?: string | null;
     is_company_expense: boolean;
     is_reimbursable: boolean;
-    card?: SettlementCreatorFuelCard | null;
+    card?: SettlementCreatorExpensePaymentSource | null;
+    /** ROUND 443.6 — vendor, the vendor's own document number, and the source quantity / unit (gallons of DEF). */
+    vendor_name?: string | null;
+    vendor_document_number?: string | null;
+    quantity?: number | null;
+    unit_of_measure?: string | null;
     /** ROUND 363-CC2-D — picked at creation; the account wins over the item's default, load_id over load_number. */
     item_id?: string | null;
     account_id?: string | null;
@@ -168,9 +175,26 @@ export async function previewSettlementCreator(draft: SettlementCreatorDraft) {
   );
 }
 
+/** ROUND 443.7 b — each stage of a post, in plain English; ok only when every required stage succeeded. */
+export type SettlementCreatorStage = { ok: boolean; status: string; message: string };
+export type SettlementCreatorStages = {
+  documents: SettlementCreatorStage;
+  ledger: SettlementCreatorStage;
+  factoring: SettlementCreatorStage;
+  billing: SettlementCreatorStage;
+};
+
+export async function retrySettlementCreatorAfterCommit(operatingCompanyId: string, settlementId: string) {
+  return apiRequest<{ ok: boolean; stages: Pick<SettlementCreatorStages, "factoring" | "billing"> }>(
+    `/api/v1/driver-finance/settlement-creator/${encodeURIComponent(settlementId)}/retry-after-commit`,
+    { method: "POST", body: { operating_company_id: operatingCompanyId } },
+  );
+}
+
 export async function postSettlementCreator(draft: SettlementCreatorDraft) {
   return apiRequest<{
-    ok: true;
+    ok: boolean;
+    stages?: SettlementCreatorStages;
     settlement_id: string;
     source_document_ref: string;
     display_id: string;

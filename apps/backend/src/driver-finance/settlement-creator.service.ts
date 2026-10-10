@@ -30,12 +30,17 @@ import { resolveRoleAccountOptional, type CoaRole } from "../accounting/coa-role
 import { resolveDriverReimbursementParentAccount } from "../accounting/driver-subaccount-provision.service.js";
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
-import { creatorEmptyPayCents, creatorEmptyRateCents } from "./settlement-creator-empty-pay.js";
+import { creatorEmptyPayCents, creatorEmptyRateCents, creatorLoadedPayCents, creatorPayMiles } from "./settlement-creator-empty-pay.js";
+import { resolveDriverPayItems } from "./settlement-creator-pay-item.js";
+import { milesTimesRateCents } from "./deadhead-rule.js";
 import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
+import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.service.js";
+import { fromMdataStatus } from "../dispatch/load-state-machine.js";
 import { DuplicateDocumentNumberError } from "../lib/qbo-custom-document-number.js";
 import { assertCreatorDraftAdmissible } from "./settlement-creator-admission.js";
+import { attributeFuelLoadNumber } from "./settlement-creator-line-load.js";
 import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { voidDocument } from "../accounting/void-document.service.js";
@@ -76,31 +81,6 @@ async function accountByRole(
       LIMIT 1
     `,
     [id, opco],
-  );
-  return res.rows[0] ?? null;
-}
-
-// settlement_lines_item_qty_rate_amount_check (live, verified via pg_constraint) requires
-// item_id NOT NULL whenever quantity/rate_cents/unit_of_measure are set -- discovered live
-// (23514 check-constraint violation) when the earnings/deadhead_pay quantity fix above first ran
-// without it. Matches settlement 5812's own live rows exactly: item_name "Driver Pay-CDL-Loaded
-// Miles" / "Driver Pay-CDL-Empty Miles", company-scoped catalogs.items rows already seeded from
-// the live QBO company file (notes: "source=LIVE QBO COMPANY FILE") -- never created here.
-async function itemByName(
-  client: DbClient,
-  opco: string,
-  itemName: string,
-): Promise<{ id: string } | null> {
-  const res = await client.query<{ id: string }>(
-    `
-      SELECT id::text
-      FROM catalogs.items
-      WHERE operating_company_id = $1::uuid
-        AND item_name = $2
-        AND deactivated_at IS NULL
-      LIMIT 1
-    `,
-    [opco, itemName],
   );
   return res.rows[0] ?? null;
 }
@@ -173,6 +153,7 @@ async function stampDeliveryStopActuals(
   client: DbClient,
   loadId: string,
   deliveryDate: string | null | undefined,
+  pickupDate?: string | null,
 ): Promise<void> {
   const at = deliveryDate ? `${deliveryDate}T18:00:00.000Z` : new Date().toISOString();
   await client.query(
@@ -187,6 +168,60 @@ async function stampDeliveryStopActuals(
     `,
     [loadId, at],
   );
+  // ROUND 443.3 (prod-fork e2e): a delivered load needs EVERY stop stamped (feed gate load.stops_stamped); the pickup
+  // happened on the signed settlement's pickup date. Never overwrites a stamp already there.
+  const pickedAt = pickupDate ? `${pickupDate}T14:00:00.000Z` : at;
+  await client.query(
+    `
+      UPDATE mdata.load_stops
+         SET actual_arrival_at = COALESCE(actual_arrival_at, $2::timestamptz),
+             actual_departure_at = COALESCE(actual_departure_at, $2::timestamptz),
+             updated_at = now()
+       WHERE load_id = $1::uuid
+         AND stop_type = 'pickup'
+         AND soft_deleted_at IS NULL
+    `,
+    [loadId, pickedAt],
+  );
+}
+
+/** The forward path from a dispatched load to delivered in dispatch's state machine (load-state-machine.ts forwardTransitions). */
+const CREATOR_DELIVERY_PATH = ["dispatched", "in_transit", "delivered_pending_docs"] as const;
+const ALREADY_DELIVERED = new Set(["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced", "paid", "closed"]);
+
+export async function deliverLoadThroughDispatch(
+  client: DbClient,
+  actorUserId: string,
+  operatingCompanyId: string,
+  loadId: string,
+  deliveryDate: string | null | undefined,
+  transition: typeof transitionDispatchLoadInClientTx = transitionDispatchLoadInClientTx,
+): Promise<void> {
+  const deliveredAt = deliveryDate ? `${deliveryDate}T18:00:00.000Z` : null;
+  for (let guard = 0; guard < CREATOR_DELIVERY_PATH.length; guard++) {
+    const cur = String(
+      (await client.query<{ status: string }>(
+        `SELECT status::text AS status FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [loadId, operatingCompanyId],
+      )).rows[0]?.status ?? "",
+    );
+    if (ALREADY_DELIVERED.has(cur)) return;
+    const bucket = fromMdataStatus(cur);
+    if (bucket === "delivered_pending_docs" || bucket === "completed_docs_received") return;
+    const at = CREATOR_DELIVERY_PATH.indexOf(bucket as (typeof CREATOR_DELIVERY_PATH)[number]);
+    if (at < 0) {
+      throw new SettlementCreatorError("load_not_deliverable", `Load ${loadId}: status '${cur}' cannot be moved to delivered.`);
+    }
+    const next = CREATOR_DELIVERY_PATH[at + 1]!;
+    const result = (await transition(client as never, actorUserId, operatingCompanyId, loadId, {
+      new_status: next as never,
+      reason: "Settlement Creator: delivered per the signed settlement",
+      delivered_at: next === "delivered_pending_docs" ? deliveredAt : null,
+    })) as { error?: string } | null | undefined;
+    if (!result || result.error) {
+      throw new SettlementCreatorError("load_delivery_refused", `Load ${loadId}: dispatch refused ${cur} -> ${next}: ${result?.error ?? "load not found"}`);
+    }
+  }
 }
 
 type PriorCreatorPostPayload = {
@@ -478,8 +513,13 @@ export async function previewSettlementCreator(
     if (exp.amount_cents <= 0) continue;
     if (exp.is_company_expense) {
       companyExpensesCents += exp.amount_cents;
-      const card = exp.card ?? "relay";
-      const rail = await accountByRole(client, draft.operating_company_id, cardRailRole(card));
+      // ROUND 443.6 — paid now (relay / dreamline): Cr the card rail; owed: Cr Accounts Payable (a bill). No default.
+      const card = exp.card ?? null;
+      const rail = card === "owed"
+        ? await accountByRole(client, draft.operating_company_id, "ap_control")
+        : card
+          ? await accountByRole(client, draft.operating_company_id, cardRailRole(card))
+          : null;
       const itemAcct = await previewExpenseLineAccount(client, draft.operating_company_id, exp, blockers);
       const reeferRefusal = await reeferFuelExpenseRefusal(client, draft.operating_company_id, exp, (itemAcct as { item_id?: string | null } | null)?.item_id ?? null);
       if (reeferRefusal) blockers.push(reeferRefusal);
@@ -498,10 +538,11 @@ export async function previewSettlementCreator(
         account_name: rail?.account_name ?? "Card rail",
         debit_cents: 0,
         credit_cents: exp.amount_cents,
-        memo: `Comp. Exp. Cr card (never A/P)`,
+        memo: card === "owed" ? `Comp. Exp. owed to ${exp.vendor_name ?? "vendor"} — bill (A/P)` : `Comp. Exp. Cr card`,
         section: "expense",
       });
-      if (!rail) blockers.push(`Expense card rail role '${cardRailRole(card)}' is not bound — bind it on the CoA Roles page.`);
+      if (!card) blockers.push(`Company expense "${exp.item_name}": choose how it was paid — Relay, Dreamline, or Owed to the vendor.`);
+      else if (!rail) blockers.push(card === "owed" ? "No A/P control account (ap_control) is bound." : `Expense card rail role '${cardRailRole(card)}' is not bound — bind it on the CoA Roles page.`);
     }
   }
 
@@ -544,8 +585,8 @@ export async function previewSettlementCreator(
   // --- Mileage pay (driver bill) — short miles × rate (company practical ≠ driver pay miles) ---
   let mileagePayCents = 0;
   for (const load of draft.loads ?? []) {
-    const payMiles = Number(load.miles_shortest ?? load.loaded_miles ?? 0);
-    const loaded = Math.round(payMiles * Number(load.line_haul_rate_cents || 0));
+    // ROUND 443.4 — the same formula the post writes (pay rate x short miles); never the invoice amount.
+    const loaded = creatorLoadedPayCents(load) ?? 0;
     // Empty miles × the empty rate, else the loaded per-mile rate (queue item 7, owner MILES SPEC).
     const empty = creatorEmptyPayCents(load);
     const pay = loaded + empty;
@@ -1100,7 +1141,9 @@ export async function postSettlementCreatorInClientTx(
     const { netCents, feeCents } = fuelPurchaseNetAndFeeCents(fuel);
     if (netCents + feeCents <= 0) continue;
 
-    const loadId = await resolveLineLoadId(client, draft.operating_company_id, fuel);
+    // ROUND 443.5 — a fill with no load typed belongs to the single load of this settlement whose dates cover it.
+    const fuelLoadNumber = attributeFuelLoadNumber(draft.loads, fuel);
+    const loadId = await resolveLineLoadId(client, draft.operating_company_id, { ...fuel, load_number: fuelLoadNumber ?? fuel.load_number });
 
     // Vendor: match by name or leave null → createExpenseFromFuelTransaction refuses without vendor.
     const vendor = fuel.vendor_name
@@ -1212,11 +1255,11 @@ export async function postSettlementCreatorInClientTx(
           },
           { userId: actorUserId },
         );
-        if (posted.journal_entry_id) journalEntryIds.push(posted.journal_entry_id);
+        if (!posted.journal_entry_id) throw new Error("posting engine returned no journal entry");
+        journalEntryIds.push(posted.journal_entry_id);
       } catch (err) {
-        // Flag-off / not eligible → document stays; do not invent GL math.
-        const msg = err instanceof Error ? err.message : String(err);
-        if (!/EXPENSE_POST_GL_REFUSED|not posting-eligible|FLAG/i.test(msg)) throw err;
+        // ROUND 443.6 f — a posting refusal fails the whole post: never a fuel expense without its ledger entry.
+        throw new SettlementCreatorError("fuel_expense_post_refused", `Fuel line ${fuel.date}: the ledger refused it — ${err instanceof Error ? err.message : String(err)}. Nothing was posted.`);
       }
     }
   }
@@ -1259,47 +1302,74 @@ export async function postSettlementCreatorInClientTx(
     advanceIds.push(created.advanceId);
   }
 
+  // ROUND 443.6 — COMPANY EXPENSE: real payment source, full stamp, bill when owed (owner 2026-10-10: "create bills,
+  // bill expenses stamp"). Law doc §3: paid now = Dr expense / Cr bank-card; owed = Dr expense / Cr A/P via a bill.
   for (const exp of draft.expenses ?? []) {
     if (!exp.is_company_expense || exp.amount_cents <= 0) continue;
-    const card = exp.card ?? "relay";
-    const preference = card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet";
-    const { account_id: paymentAccountId } = await resolveCompanyDirectCreditAccount(
-      client as never,
-      draft.operating_company_id,
-      preference,
-    );
+    const card = exp.card ?? null;
+    if (!card) {
+      throw new SettlementCreatorError("expense_payment_source_required", `Company expense "${exp.item_name}": choose how it was paid — Relay, Dreamline, or Owed to the vendor.`);
+    }
+    const vendor = exp.vendor_name?.trim()
+      ? (
+          await client.query<{ id: string }>(
+            `SELECT id::text FROM mdata.vendors
+              WHERE operating_company_id = $1::uuid AND lower(trim(vendor_name)) = lower(trim($2))
+                AND COALESCE(is_sample_data, false) IS NOT TRUE
+              LIMIT 1`,
+            [draft.operating_company_id, exp.vendor_name],
+          )
+        ).rows[0]
+      : null;
+    if (!vendor) {
+      throw new SettlementCreatorError("expense_vendor_required", `Company expense "${exp.item_name}": map vendor "${exp.vendor_name ?? ""}" in Vendors first.`);
+    }
     const itemAcct = await resolveExpenseLineAccount(client, draft.operating_company_id, exp);
-    if (!itemAcct) {
-      throw new SettlementCreatorError("expense_account_missing", `No expense account for Comp. Exp. "${exp.item_name}".`);
+    if (!itemAcct?.item_id) {
+      throw new SettlementCreatorError("expense_item_unresolved", `Company expense "${exp.item_name}": pick the item it posts to.`);
     }
     const reeferRefusal = await reeferFuelExpenseRefusal(client, draft.operating_company_id, exp, itemAcct.item_id);
     if (reeferRefusal) throw new SettlementCreatorError("reefer_fuel_needs_gallons", reeferRefusal);
-    const loadId = await resolveLineLoadId(client, draft.operating_company_id, exp);
-    const expenseNumber = await nextExpenseDisplayId(
-      client as never,
-      draft.operating_company_id,
-      new Date(`${exp.date}T12:00:00.000Z`),
-    );
+    // Every settlement item belongs to a load (443.5): typed, else the one load whose dates cover the expense date.
+    const expLoadNumber = attributeFuelLoadNumber(draft.loads, { date: exp.date, load_number: exp.load_number, load_id: exp.load_id, vendor_name: exp.vendor_name, invoice: exp.vendor_document_number });
+    const loadId = await resolveLineLoadId(client, draft.operating_company_id, { ...exp, load_number: expLoadNumber ?? exp.load_number });
+    if (!loadId) {
+      throw new SettlementCreatorError("expense_load_required", `Company expense "${exp.item_name}": load ${expLoadNumber ?? exp.load_number ?? ""} is not a load of this company.`);
+    }
+    // Quantity / unit / rate as the source gave them (gallons of DEF); a flat charge is 1 each.
+    const qty = exp.quantity != null && exp.quantity > 0 ? Number(exp.quantity) : 1;
+    const uom = exp.quantity != null && exp.quantity > 0 ? (exp.unit_of_measure?.trim() || "each") : "each";
+    const rateCents = qty === 1 ? exp.amount_cents : Number((exp.amount_cents / qty).toFixed(4));
+    if (milesTimesRateCents(qty, rateCents) !== exp.amount_cents) {
+      throw new SettlementCreatorError("expense_quantity_rate_mismatch", `Company expense "${exp.item_name}": ${qty} ${uom} does not price to ${dollarsFromCents(exp.amount_cents)}.`);
+    }
+    if (card === "owed") {
+      // Owed -> a BILL in Accounts Payable. The bill engine (createBillInClientTx) does not yet carry the load, the
+      // line quantity / unit or the vendor document number (posted to the Lead as a CC-1 blocker, ROUND 443.6), so an
+      // owed expense refuses rather than create a bill that drops its load and gallons.
+      throw new SettlementCreatorError(
+        "expense_owed_bill_unavailable",
+        `Company expense "${exp.item_name}" is owed to ${exp.vendor_name}: it becomes an A/P bill, and the bill engine cannot yet record its load and quantity. Nothing was written.`,
+      );
+    }
+    const preference = card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet";
+    const { account_id: paymentAccountId } = await resolveCompanyDirectCreditAccount(client as never, draft.operating_company_id, preference);
+    const expenseNumber = await nextExpenseDisplayId(client as never, draft.operating_company_id, new Date(`${exp.date}T12:00:00.000Z`));
     const memo = `[SC ${draft.settlement_no}] ${exp.description ?? exp.item_name}`.slice(0, 500);
     const inserted = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.expenses (
           operating_company_id, status, transaction_date, total_amount_cents,
           memo, expense_number, load_id, is_sample_data, payment_account_uuid,
-          is_company_expense, driver_uuid
+          is_company_expense, driver_uuid, vendor_uuid, unit_id, trailer_id, vendor_document_number
         )
-        VALUES ($1::uuid, 'draft', $2::date, $3::bigint, $4, $5, $6::uuid, false, $7::uuid, true, $8::uuid)
+        VALUES ($1::uuid, 'draft', $2::date, $3::bigint, $4, $5, $6::uuid, false, $7::uuid, true, $8::uuid,
+                $9::uuid, $10::uuid, $11::uuid, $12)
         RETURNING id::text
       `,
       [
-        draft.operating_company_id,
-        exp.date,
-        exp.amount_cents,
-        memo,
-        expenseNumber,
-        loadId,
-        paymentAccountId,
-        draft.driver_id,
+        draft.operating_company_id, exp.date, exp.amount_cents, memo, expenseNumber, loadId, paymentAccountId,
+        draft.driver_id, vendor.id, draft.unit_id ?? null, draft.trailer_id ?? null, exp.vendor_document_number?.trim() || null,
       ],
     );
     const expenseId = inserted.rows[0]!.id;
@@ -1307,37 +1377,29 @@ export async function postSettlementCreatorInClientTx(
       `
         INSERT INTO accounting.expense_lines (
           operating_company_id, expense_id, line_sequence, amount, amount_cents, description,
-          load_id, load_required, expense_account_uuid, quantity, rate_cents, unit_of_measure, item_id
+          load_id, load_required, expense_account_uuid, quantity, rate_cents, unit_of_measure, item_id,
+          driver_id, unit_id, trailer_id
         )
-        VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, $7, $8::uuid, 1, $4::bigint, 'each', $9::uuid)
+        VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, true, $7::uuid, $8, $9, $10, $11::uuid,
+                $12::uuid, $13::uuid, $14::uuid)
       `,
       [
-        draft.operating_company_id,
-        expenseId,
-        exp.amount_cents / 100,
-        exp.amount_cents,
-        memo,
-        loadId,
-        Boolean(loadId),
-        itemAcct.id,
-        itemAcct.item_id,
+        draft.operating_company_id, expenseId, exp.amount_cents / 100, exp.amount_cents, memo, loadId, itemAcct.id,
+        qty, rateCents, uom, itemAcct.item_id, draft.driver_id, draft.unit_id ?? null, draft.trailer_id ?? null,
       ],
     );
     expenseIds.push(expenseId);
+    // ROUND 443.6 f — a posting refusal fails the whole post: never a document without its ledger entry.
     try {
       const posted = await postSourceTransactionInClientTx(
         client as never,
-        {
-          operating_company_id: draft.operating_company_id,
-          source_transaction_type: "expense",
-          source_transaction_id: expenseId,
-        },
+        { operating_company_id: draft.operating_company_id, source_transaction_type: "expense", source_transaction_id: expenseId },
         { userId: actorUserId },
       );
-      if (posted.journal_entry_id) journalEntryIds.push(posted.journal_entry_id);
+      if (!posted.journal_entry_id) throw new Error("posting engine returned no journal entry");
+      journalEntryIds.push(posted.journal_entry_id);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (!/EXPENSE_POST_GL_REFUSED|not posting-eligible|FLAG/i.test(msg)) throw err;
+      throw new SettlementCreatorError("expense_post_refused", `Company expense "${exp.item_name}": the ledger refused it — ${err instanceof Error ? err.message : String(err)}. Nothing was posted.`);
     }
   }
 
@@ -1442,8 +1504,16 @@ export async function postSettlementCreatorInClientTx(
   }
 
   // Deductions + admin fee → createSettlementDeduction (other → 7200 on close) + apply to this settlement.
-  async function applyDeduction(amountCents: number, reason: string, sourceType: "other" | "fine" | "toll" = "other") {
+  async function applyDeduction(amountCents: number, reason: string, loadNumber: string | null | undefined, sourceType: "other" | "fine" | "toll" = "other") {
     if (amountCents <= 0) return;
+    // ROUND 443.5 — a deduction belongs to its load; missing or unknown refuses (never settlement-only).
+    const loadId = loadNumber?.trim() ? await resolveLoadIdByNumber(loadNumber.trim()) : null;
+    if (!loadId) {
+      throw new SettlementCreatorError(
+        "deduction_load_required",
+        `Deduction "${reason}": ${loadNumber?.trim() ? `load ${loadNumber.trim()} is not a load of this company` : "needs its load number"}.`,
+      );
+    }
     const created = await createSettlementDeduction(client as never, {
       operatingCompanyId: draft.operating_company_id,
       driverId: draft.driver_id,
@@ -1451,6 +1521,7 @@ export async function postSettlementCreatorInClientTx(
       reason,
       sourceType,
       createdByUserId: actorUserId,
+      loadId,
     });
     await client.query(
       `
@@ -1466,23 +1537,17 @@ export async function postSettlementCreatorInClientTx(
     if (d.amount_cents <= 0) continue;
     const reason = d.description?.trim() || `Settlement ${draft.settlement_no} deduction`;
     const isAdmin = /admin\s*fee/i.test(reason);
-    await applyDeduction(d.amount_cents, reason, "other");
-    if (isAdmin) {
-      // Already routed via other → 7200; no second row.
-    }
-  }
-  const adminFeePost = Math.max(0, Math.round(Number(draft.admin_fee_cents || 0)));
-  if (adminFeePost > 0) {
-    await applyDeduction(
-      adminFeePost,
-      `AlwaysTrack settl ${draft.settlement_no || sourceDocumentRef || displayId}: Admin fee`,
-      "other",
-    );
+    // The admin fee arrives as a deduction line with its load (other -> 7200 on close); a separate
+    // admin_fee_cents is refused at admission (ROUND 443.5).
+    void isAdmin;
+    await applyDeduction(d.amount_cents, reason, d.load_number, "other");
   }
 
   // Invoice mint + send (existing engines only). Delivered loads only — not_yet_delivered skips.
   // historical_backfill: closed settlement_lines.load_id OR stamped stop departure = evidence.
   // Faro auto-submit runs AFTER COMMIT (own connection) — see settlement-creator.routes.ts.
+  // ROUND 443.4 b — the pay item comes from the driver's pay card; unresolved refuses (never a CDL default).
+  const payItems = await resolveDriverPayItems(client, draft.operating_company_id, draft.driver_id);
   const invoiceIds: string[] = [];
   for (let i = 0; i < draft.loads.length; i++) {
     const load = draft.loads[i]!;
@@ -1495,45 +1560,26 @@ export async function postSettlementCreatorInClientTx(
       );
     }
 
-    await stampDeliveryStopActuals(client, loadId, load.delivery_date);
+    await stampDeliveryStopActuals(client, loadId, load.delivery_date, load.pickup_date);
 
-    // Closed-settlement evidence for historical_backfill (AT path status=closed).
-    const accessorialCents = (load.accessorials ?? []).reduce(
-      (s, a) => s + Math.max(0, Math.round(Number(a.amount_cents || 0))),
-      0,
-    );
-    // Driver pay miles = short (miles_shortest); company practical stays on loaded_miles.
-    const payMiles = load.miles_shortest ?? load.loaded_miles ?? null;
-    const earningsCents =
-      (load.line_haul_amount_cents ??
-        (load.line_haul_rate_cents != null && payMiles != null
-          ? Math.round(Number(load.line_haul_rate_cents) * Number(payMiles))
-          : 0)) + accessorialCents;
-    // Loaded-miles quantity/rate: ROUND 157-B — every settlement_lines row for a mileage-driven
-    // line carries quantity/rate_cents/unit_of_measure='mi' (matches the live 5812 precedent:
-    // "Load 13588 — Loaded Miles 1,855.1 @ $0.45"), not just the dollar total. Only set when the
-    // PDF actually gave miles+rate; an accessorial-only or flat line_haul_amount_cents load has no
-    // per-mile quantity to report and stays NULL, same as before.
-    const hasLoadedMileage =
-      load.line_haul_rate_cents != null && payMiles != null && accessorialCents === 0;
-    const loadedItem = hasLoadedMileage
-      ? await itemByName(client, draft.operating_company_id, "Driver Pay-CDL-Loaded Miles")
-      : null;
-    // settlement_lines_item_qty_rate_amount_check requires round(quantity*rate_cents) ===
-    // round(amount*100) whenever quantity is set -- an accessorial folded into earningsCents
-    // would break that identity, so quantity/rate/item_id/unit_of_measure only populate on a
-    // pure mileage line (accessorialCents === 0); an accessorial-bearing load keeps the old
-    // dollar-only line rather than fail the check constraint or misreport its quantity.
-    const loadedDesc = hasLoadedMileage
-      ? `Load ${load.load_number} — Loaded Miles ${Number(payMiles).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.line_haul_rate_cents) / 100).toFixed(2)}`
-      : `Load ${load.load_number} line haul`;
+    // ROUND 443.4 — driver pay = pay rate x short miles (loaded line) + empty rate x empty miles (empty line).
+    // The customer's invoice amount and accessorials are never read here: they feed the invoice only.
+    const payMiles = creatorPayMiles(load);
+    const loadedCents = creatorLoadedPayCents(load);
+    if (payMiles == null || loadedCents == null) {
+      throw new SettlementCreatorError(
+        "driver_pay_rate_missing",
+        `Load ${load.load_number}: driver pay needs the short miles and the driver's pay rate per mile.`,
+      );
+    }
+    const loadedDesc = `Load ${load.load_number} — Loaded Miles ${payMiles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.line_haul_rate_cents) / 100).toFixed(2)}`;
     await client.query(
       `
         INSERT INTO driver_finance.settlement_lines (
           settlement_id, operating_company_id, line_type, description, amount, load_id,
           quantity, rate_cents, unit_of_measure, item_id, is_active, is_sample_data
         )
-        SELECT $1::uuid, $2::uuid, 'earnings', $3, $4, $5::uuid, $6, $7, $8, $9::uuid, true, false
+        SELECT $1::uuid, $2::uuid, 'earnings', $3, $4, $5::uuid, $6, $7, 'mi', $8::uuid, true, false
         WHERE NOT EXISTS (
           SELECT 1 FROM driver_finance.settlement_lines sl
            WHERE sl.settlement_id = $1::uuid
@@ -1542,34 +1588,12 @@ export async function postSettlementCreatorInClientTx(
              AND sl.voided_at IS NULL
         )
       `,
-      [
-        settlementId,
-        draft.operating_company_id,
-        loadedDesc,
-        dollarsFromCents(Math.max(0, earningsCents)),
-        loadId,
-        hasLoadedMileage ? Number(payMiles) : null,
-        hasLoadedMileage ? Number(load.line_haul_rate_cents) : null,
-        hasLoadedMileage ? "mi" : null,
-        hasLoadedMileage ? (loadedItem?.id ?? null) : null,
-      ],
+      [settlementId, draft.operating_company_id, loadedDesc, dollarsFromCents(loadedCents), loadId, payMiles, Number(load.line_haul_rate_cents), payItems.loaded.id],
     );
 
-    // Empty (deadhead) miles → its own settlement_lines row, same mileage-quantity convention.
-    // Previously MISSING entirely from this engine — empty-mile pay only ever reached the JE
-    // preview (mileage pay section above), never a settlement_lines row a driver's settlement
-    // screen can display or a quantity a mileage audit can check. Zero amount when rate/miles
-    // absent (matches the "empty contributes $0" comment on the JE side), never invented.
-    // Queue item 7: the empty rate falls back to the loaded per-mile rate (creatorEmptyRateCents) — a missing or
-    // 0 empty rate no longer writes a $0.00 Empty Miles line for real empty miles.
+    // Empty (deadhead) miles: empty rate when set, else the loaded rate (one deadhead rule, deadhead-rule.ts).
     const emptyRateCents = creatorEmptyRateCents(load);
-    const hasEmptyMileage = emptyRateCents != null && Number(load.empty_miles ?? 0) > 0;
-    if (hasEmptyMileage) {
-      const emptyItem = await itemByName(client, draft.operating_company_id, "Driver Pay-CDL-Empty Miles");
-      // Same all-four-or-none rule as the loaded-miles line above: without a resolved item_id the
-      // check constraint requires quantity/rate_cents/unit_of_measure to ALSO be NULL, not a
-      // partial set.
-      const hasEmptyItem = Boolean(emptyItem);
+    if (emptyRateCents != null && Number(load.empty_miles ?? 0) > 0) {
       const emptyCents = creatorEmptyPayCents(load);
       const emptyDesc = `Load ${load.load_number} — Empty Miles ${Number(load.empty_miles).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(emptyRateCents / 100).toFixed(2)}`;
       await client.query(
@@ -1578,7 +1602,7 @@ export async function postSettlementCreatorInClientTx(
             settlement_id, operating_company_id, line_type, description, amount, load_id,
             quantity, rate_cents, unit_of_measure, item_id, is_active, is_sample_data
           )
-          SELECT $1::uuid, $2::uuid, 'deadhead_pay', $3, $4, $5::uuid, $6, $7, $8, $9::uuid, true, false
+          SELECT $1::uuid, $2::uuid, 'deadhead_pay', $3, $4, $5::uuid, $6, $7, 'mi', $8::uuid, true, false
           WHERE NOT EXISTS (
             SELECT 1 FROM driver_finance.settlement_lines sl
              WHERE sl.settlement_id = $1::uuid
@@ -1587,22 +1611,18 @@ export async function postSettlementCreatorInClientTx(
                AND sl.voided_at IS NULL
           )
         `,
-        [
-          settlementId,
-          draft.operating_company_id,
-          emptyDesc,
-          dollarsFromCents(Math.max(0, emptyCents)),
-          loadId,
-          hasEmptyItem ? Number(load.empty_miles) : null,
-          hasEmptyItem ? emptyRateCents : null,
-          hasEmptyItem ? "mi" : null,
-          hasEmptyItem ? emptyItem!.id : null,
-        ],
+        [settlementId, draft.operating_company_id, emptyDesc, dollarsFromCents(emptyCents), loadId, Number(load.empty_miles), emptyRateCents, payItems.empty.id],
       );
     }
 
     // Invoices do not change driver pay; a dry run (rolled back) never mints or sends one.
     if (opts.dryRun) continue;
+    // The load is delivered per the signed settlement: move it there through dispatch's ONE transition engine (graph
+    // check, departure stamp, driver-bill mint, revenue latch), never a status UPDATE. Real posts only: a dry run
+    // rolls back, and dispatch queues its revenue latch after commit. Invoice send refuses an
+    // invoice on a load that is still 'dispatched' (invoice_on_rolling_load_needs_authorization, since 09-30), so
+    // without this no Creator invoice could be issued.
+    await deliverLoadThroughDispatch(client, actorUserId, draft.operating_company_id, loadId, load.delivery_date);
     let built;
     try {
       built = await buildInvoiceFromLoad(client, {
@@ -1860,8 +1880,8 @@ async function resolveLineLoadId(
 
 /**
  * ROUND 363-CC2-D — the account an expense / reimbursement line posts to: the item or account the user picked
- * (resolveLineItemAndAccount — the one resolver), else the documented default 6100 / other_operating_expense.
- * A pick that does not resolve is refused, never silently replaced by the default.
+ * (resolveLineItemAndAccount — the one resolver). Nothing picked, or a pick that does not resolve, is refused —
+ * never silently replaced by a default account (ROUND 443.6 e).
  */
 async function resolveExpenseLineAccount(
   client: DbClient,
@@ -1871,9 +1891,8 @@ async function resolveExpenseLineAccount(
   const picked = await resolveLineItemAndAccount(client as never, operatingCompanyId, line);
   if (picked && "refused" in picked) throw new SettlementCreatorError("line_account_refused", `"${line.item_name}": ${picked.refused}`);
   if (picked) return pickedAccount(picked);
-  const fallback =
-    await accountByRole(client, operatingCompanyId, "other_operating_expense");
-  return fallback ? { id: fallback.id, account_number: fallback.account_number ?? null, account_name: fallback.account_name ?? null, item_id: null } : null;
+  // ROUND 443.6 e — an unresolved item or account refuses; never a fallback "other operating expense" with no item.
+  throw new SettlementCreatorError("expense_item_unresolved", `"${line.item_name}": pick the item (or account) this line posts to.`);
 }
 
 /** Preview: same resolver as the post; a refused pick is a blocker on the preview, not a thrown error. */

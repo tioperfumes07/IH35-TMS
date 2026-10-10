@@ -219,7 +219,8 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
     input.operatingCompanyId,
     new Date(),
     input.requestedDisplayId,
-    loadNumber
+    undefined,
+    { loadNumber, authorizedZeroRevenue: input.authorizedZeroRevenue }
   );
   // CASH-FLOW-01 (owner order 2026-09-06, ROUND 14): "due = invoice_date (delivery/conversion
   // date) + customer terms." issue_date/delivery_date previously stamped `new Date()` (whenever

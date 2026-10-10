@@ -306,6 +306,8 @@ const createDispatchLoadBodySchema = z.object({
   // Historical imports deliberately do not widen the live active-driver picker. The existing inactive
   // driver is supplied by UUID with an attributed reason and validated again inside bookLoad().
   historical_import_driver_id: z.string().uuid().optional(),
+  // ROUND 443.10: owner-authorized $0 Transportation load (Creator, faro_transportation at $0 only).
+  authorizedZeroRevenue: z.boolean().optional(),
   historical_import_reason: z.string().trim().min(10).max(1000).optional(),
   // ROUND 326: an imported load names its source company; book-load rejects a missing / mismatched one.
   inbound_source: z.object({

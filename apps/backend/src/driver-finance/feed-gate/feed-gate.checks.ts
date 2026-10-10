@@ -98,11 +98,16 @@ function loadChecks(loadSet: string): FeedCheckDef[] {
              CASE WHEN i.factoring_status = 'advanced' AND fa.id IS NULL THEN 'invoice says advanced but no factoring advance is linked' WHEN i.factoring_status = 'advanced' AND fa.source_load_id IS DISTINCT FROM l.id THEN 'linked advance points at a different load' END,
              '/factoring', jsonb_build_object('factoring_status', i.factoring_status, 'advance', fa.display_id, 'faro_purchase_date', fa.faro_purchase_date)
         FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id` },
+    // ROUND 443.4 c — a per-mile driver's load ends with EXACTLY ONE live, priced driver bill. A driver with no per-mile
+    // pay card (salaried, owner 2026-09-28) has no per-load bill and that is correct: the check reads the pay basis first.
     { key: "driver_bill.exists_not_void", group: "driver_pay", sql: `${L}
-      SELECT 'mdata.loads', l.id, 'Load ' || l.load_number, db.id IS NOT NULL,
-             CASE WHEN db.id IS NULL THEN 'no live driver bill for this load' END,
-             '/driver-finance/driver-bills', jsonb_build_object('bill', db.bill_number, 'gross_cents', db.gross_amount_cents, 'miles_basis', db.miles_basis_type)
-        FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid LEFT JOIN LATERAL (SELECT * FROM driver_finance.driver_bills b WHERE b.load_id = l.id AND b.revoked_at IS NULL AND b.voided_at IS NULL ORDER BY b.created_at DESC LIMIT 1) db ON true` },
+      SELECT 'mdata.loads', l.id, 'Load ' || l.load_number,
+             CASE WHEN NOT EXISTS (SELECT 1 FROM driver_finance.driver_pay_rates r WHERE r.operating_company_id = l.operating_company_id AND r.driver_id = l.assigned_primary_driver_id AND r.is_active AND r.effective_to IS NULL AND r.basis_type = 'per_mile_pay') THEN NULL ELSE (b.live = 1 AND b.gross > 0) END,
+             CASE WHEN NOT EXISTS (SELECT 1 FROM driver_finance.driver_pay_rates r WHERE r.operating_company_id = l.operating_company_id AND r.driver_id = l.assigned_primary_driver_id AND r.is_active AND r.effective_to IS NULL AND r.basis_type = 'per_mile_pay') THEN NULL WHEN b.live = 0 THEN 'no live driver bill for this load' WHEN b.live > 1 THEN b.live || ' live driver bills for one load' WHEN b.gross <= 0 THEN 'driver bill is not priced ($0)' END,
+             '/driver-finance/driver-bills', jsonb_build_object('live_bills', b.live, 'gross_cents', b.gross, 'bill', b.bill_number)
+        FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid
+        CROSS JOIN LATERAL (SELECT count(*)::int live, coalesce(sum(db.gross_amount_cents), 0)::bigint gross, min(db.bill_number) bill_number
+                              FROM driver_finance.driver_bills db WHERE db.load_id = l.id AND db.voided_at IS NULL) b` },
     { key: "costs.expenses_linked_and_posted", group: "costs", sql: `${L}
       SELECT 'accounting.expenses', e.id, 'Expense ' || coalesce(e.expense_number, left(e.id::text, 8)),
              (e.vendor_uuid IS NOT NULL AND e.payment_account_uuid IS NOT NULL AND e.posting_status = 'posted' AND e.journal_entry_id IS NOT NULL
@@ -130,6 +135,13 @@ const SETTLEMENT_CHECKS: FeedCheckDef[] = [
              '/driver-finance/settlements/' || s.id::text AS fix_link,
              jsonb_build_object('driver', d.first_name || ' ' || d.last_name, 'period', s.period_start || ' → ' || s.period_end, 'model', s.settlement_model, 'pay_method', s.pay_method) AS measured
         FROM driver_finance.driver_settlements s LEFT JOIN mdata.drivers d ON d.id = s.driver_id WHERE s.operating_company_id = $1::uuid AND s.id = $2::uuid` },
+  // ROUND 443.4 c — every per-mile load of this settlement has its live driver bill linked to THIS settlement.
+  { key: "settlement.driver_bills_linked", group: "driver_pay", sql: `WITH loads AS (${SETTLEMENT_LOADS})
+      SELECT 'mdata.loads', l.id, 'Load ' || l.load_number,
+             CASE WHEN NOT EXISTS (SELECT 1 FROM driver_finance.driver_pay_rates r WHERE r.operating_company_id = l.operating_company_id AND r.driver_id = l.assigned_primary_driver_id AND r.is_active AND r.effective_to IS NULL AND r.basis_type = 'per_mile_pay') THEN NULL ELSE EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id AND db.voided_at IS NULL AND db.settled_in_settlement_id = $2::uuid) END,
+             CASE WHEN EXISTS (SELECT 1 FROM driver_finance.driver_pay_rates r WHERE r.operating_company_id = l.operating_company_id AND r.driver_id = l.assigned_primary_driver_id AND r.is_active AND r.effective_to IS NULL AND r.basis_type = 'per_mile_pay') AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id AND db.voided_at IS NULL AND db.settled_in_settlement_id = $2::uuid) THEN 'driver bill not linked to this settlement' END,
+             '/driver-finance/settlements/' || $2::text, '{}'::jsonb
+        FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid` },
   { key: "settlement.has_loads", group: "driver_pay", sql: `
       WITH loads AS (${SETTLEMENT_LOADS})
       SELECT 'driver_finance.driver_settlements', s.id, 'Settlement ' || s.display_id, (SELECT count(*) FROM loads) > 0,
@@ -151,10 +163,10 @@ const SETTLEMENT_CHECKS: FeedCheckDef[] = [
         FROM driver_finance.driver_settlement_deductions dd WHERE dd.operating_company_id = $1::uuid AND dd.applied_to_settlement_id = $2::uuid AND dd.voided_at IS NULL` },
   { key: "settlement.gross_equals_driver_bills", group: "driver_pay", sql: `
       SELECT 'driver_finance.driver_settlements', s.id, 'Settlement ' || s.display_id,
-             round(s.gross_pay * 100)::bigint = coalesce((SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.revoked_at IS NULL AND b.voided_at IS NULL), 0),
-             CASE WHEN round(s.gross_pay * 100)::bigint <> coalesce((SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.revoked_at IS NULL AND b.voided_at IS NULL), 0)
-                  THEN 'gross_pay ' || round(s.gross_pay * 100)::bigint || 'c ≠ Σ driver bills ' || coalesce((SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.revoked_at IS NULL AND b.voided_at IS NULL), 0) || 'c' END,
-             '/driver-finance/settlements/' || s.id::text, jsonb_build_object('gross_pay', s.gross_pay, 'bills_cents', (SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.revoked_at IS NULL AND b.voided_at IS NULL))
+             round(s.gross_pay * 100)::bigint = coalesce((SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.voided_at IS NULL), 0),
+             CASE WHEN round(s.gross_pay * 100)::bigint <> coalesce((SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.voided_at IS NULL), 0)
+                  THEN 'gross_pay ' || round(s.gross_pay * 100)::bigint || 'c ≠ Σ driver bills ' || coalesce((SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.voided_at IS NULL), 0) || 'c' END,
+             '/driver-finance/settlements/' || s.id::text, jsonb_build_object('gross_pay', s.gross_pay, 'bills_cents', (SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.voided_at IS NULL))
         FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1::uuid AND s.id = $2::uuid` },
   { key: "settlement.net_math", group: "driver_pay", sql: `
       SELECT 'driver_finance.driver_settlements', s.id, 'Settlement ' || s.display_id,
@@ -162,13 +174,20 @@ const SETTLEMENT_CHECKS: FeedCheckDef[] = [
              CASE WHEN round(s.net_pay * 100) <> round((coalesce(s.gross_pay, 0) - coalesce(s.deductions_total, 0) + coalesce(s.reimbursements_total, 0)) * 100) THEN 'net ' || s.net_pay || ' ≠ gross ' || s.gross_pay || ' − deductions ' || s.deductions_total || ' + reimbursements ' || s.reimbursements_total END,
              '/driver-finance/settlements/' || s.id::text, jsonb_build_object('gross', s.gross_pay, 'deductions', s.deductions_total, 'reimbursements', s.reimbursements_total, 'net', s.net_pay)
         FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1::uuid AND s.id = $2::uuid` },
+  // ROUND 443 (prod-fork e2e): the close posts ONE A/P bill PER LOAD (owner ruling 2026-10-02: driver bills are per load)
+  // through settlement-ap-chain -> driver_finance.driver_settlement_gl_bills; nothing sets the legacy single
+  // driver_settlements.accounting_bill_id, so the old check failed every closed settlement. Closed = posted_at stamped AND
+  // every live driver bill of the settlement has its accounting bill with a posted journal entry.
   { key: "settlement.posted_to_ledger", group: "controls", sql: `
       SELECT 'driver_finance.driver_settlements', s.id, 'Settlement ' || s.display_id,
-             CASE WHEN s.status = 'closed' THEN (s.posted_at IS NOT NULL AND s.accounting_bill_id IS NOT NULL
-               AND EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'driver_settlement' AND p.source_transaction_id = s.id::text AND je.status = 'posted')) ELSE NULL END,
-             CASE WHEN s.status = 'closed' AND (s.posted_at IS NULL OR s.accounting_bill_id IS NULL) THEN 'closed settlement has no posted_at / accounting bill'
-                  WHEN s.status = 'closed' AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'driver_settlement' AND p.source_transaction_id = s.id::text AND je.status = 'posted') THEN 'no posted driver_settlement journal entry' END,
-             '/driver-finance/settlements/' || s.id::text, jsonb_build_object('status', s.status, 'posted_at', s.posted_at, 'accounting_bill_id', s.accounting_bill_id)
+             CASE WHEN s.status = 'closed' THEN (s.posted_at IS NOT NULL
+               AND EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.settled_in_settlement_id = s.id AND db.voided_at IS NULL)
+               AND (SELECT count(*) FROM driver_finance.driver_bills db WHERE db.settled_in_settlement_id = s.id AND db.voided_at IS NULL AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_bills g JOIN accounting.journal_entries je ON je.id = g.bill_journal_entry_id WHERE g.settlement_id = s.id AND g.driver_bill_id = db.id AND g.accounting_bill_id IS NOT NULL AND je.status = 'posted')) = 0) ELSE NULL END,
+             CASE WHEN s.status = 'closed' AND s.posted_at IS NULL THEN 'closed settlement has no posted_at'
+                  WHEN s.status = 'closed' AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.settled_in_settlement_id = s.id AND db.voided_at IS NULL) THEN 'closed settlement carries no driver bill'
+                  WHEN s.status = 'closed' AND (SELECT count(*) FROM driver_finance.driver_bills db WHERE db.settled_in_settlement_id = s.id AND db.voided_at IS NULL AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_bills g JOIN accounting.journal_entries je ON je.id = g.bill_journal_entry_id WHERE g.settlement_id = s.id AND g.driver_bill_id = db.id AND g.accounting_bill_id IS NOT NULL AND je.status = 'posted')) > 0 THEN (SELECT count(*) FROM driver_finance.driver_bills db WHERE db.settled_in_settlement_id = s.id AND db.voided_at IS NULL AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_bills g JOIN accounting.journal_entries je ON je.id = g.bill_journal_entry_id WHERE g.settlement_id = s.id AND g.driver_bill_id = db.id AND g.accounting_bill_id IS NOT NULL AND je.status = 'posted')) || ' driver bill(s) without a posted accounting bill' END,
+             '/driver-finance/settlements/' || s.id::text, jsonb_build_object('status', s.status, 'posted_at', s.posted_at,
+               'gl_bills', (SELECT count(*) FROM driver_finance.driver_settlement_gl_bills g WHERE g.settlement_id = s.id))
         FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1::uuid AND s.id = $2::uuid` },
   { key: "settlement.payment_linked_to_bank", group: "controls", sql: `
       SELECT 'driver_finance.driver_settlements', s.id, 'Settlement ' || s.display_id,
@@ -350,7 +369,7 @@ const DEPOSIT_CHECKS: FeedCheckDef[] = [
 const BILL_PAYMENT_CHECKS: FeedCheckDef[] = [
   { key: "bill_payment.header_complete", group: "costs", sql: `
       SELECT 'accounting.bill_payments', bp.id, 'Bill payment ' || coalesce(bp.reference_number, bp.check_number, left(bp.id::text, 8)) || ' ' || bp.amount_cents || 'c',
-             (bp.bill_id IS NOT NULL AND b.id IS NOT NULL AND b.revoked_at IS NULL AND b.voided_at IS NULL AND bp.vendor_id IS NOT NULL AND v.id IS NOT NULL AND bp.payment_date IS NOT NULL AND coalesce(bp.amount_cents, 0) > 0 AND (bp.from_bank_account_id IS NOT NULL OR bp.cc_account_id IS NOT NULL OR bp.settlement_deduction_noncash = true)),
+             (bp.bill_id IS NOT NULL AND b.id IS NOT NULL AND b.voided_at IS NULL AND bp.vendor_id IS NOT NULL AND v.id IS NOT NULL AND bp.payment_date IS NOT NULL AND coalesce(bp.amount_cents, 0) > 0 AND (bp.from_bank_account_id IS NOT NULL OR bp.cc_account_id IS NOT NULL OR bp.settlement_deduction_noncash = true)),
              concat_ws('; ', CASE WHEN bp.bill_id IS NULL OR b.id IS NULL THEN 'no bill' END, CASE WHEN b.voided_at IS NOT NULL OR b.revoked_at IS NOT NULL THEN 'bill is voided' END, CASE WHEN bp.vendor_id IS NULL OR v.id IS NULL THEN 'no vendor' END, CASE WHEN bp.payment_date IS NULL THEN 'no payment date' END,
                              CASE WHEN coalesce(bp.amount_cents, 0) <= 0 THEN 'amount is zero' END, CASE WHEN bp.from_bank_account_id IS NULL AND bp.cc_account_id IS NULL AND coalesce(bp.settlement_deduction_noncash, false) = false THEN 'no paid-from bank / credit card account' END),
              '/accounting/bills/' || coalesce(bp.bill_id::text, ''), jsonb_build_object('vendor', v.vendor_name, 'bill', coalesce(b.display_id, b.bill_number), 'date', bp.payment_date, 'cents', bp.amount_cents, 'method', bp.payment_method)

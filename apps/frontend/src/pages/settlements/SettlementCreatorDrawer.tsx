@@ -39,9 +39,12 @@ import {
   previewSettlementCreator,
   postSettlementCreator,
   peekNextSettlementNumber,
+  retrySettlementCreatorAfterCommit,
+  type SettlementCreatorStages,
   type SettlementCreatorDraft,
   type SettlementCreatorPreview,
   type SettlementCreatorFuelCard,
+  type SettlementCreatorExpensePaymentSource,
   type SettlementCreatorFactorOption,
 } from "../../api/settlementCreator";
 import type { ReactNode } from "react";
@@ -266,7 +269,12 @@ function emptyCompExp(): ExpDraft {
     load_number: "",
     is_company_expense: true,
     is_reimbursable: false,
-    card: "relay",
+    // ROUND 443.6 — no default payment source; the owner chooses Relay, Dreamline or Owed to the vendor.
+    card: null,
+    vendor_name: "",
+    vendor_document_number: "",
+    quantity: null,
+    unit_of_measure: "",
     location: "",
     location_id: null,
   };
@@ -673,6 +681,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   // the driver — never Faro / factoring / reserves). The X removes it; + Add puts another back.
   const [escrow, setEscrow] = useState<MoneyDraft[]>(() => [defaultEscrowLine()]);
   const [adminFeeCents, setAdminFeeCents] = useState(0);
+  // ROUND 443.5 — the admin fee belongs to a load like every settlement item; it is sent as a deduction line.
+  const [adminFeeLoadNumber, setAdminFeeLoadNumber] = useState("");
   const [pdfCompanyExpenses, setPdfCompanyExpenses] = useState(0);
   const [pdfDriverNet, setPdfDriverNet] = useState(0);
   const [itemSearch, setItemSearch] = useState("");
@@ -1206,13 +1216,18 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         ...exp,
         description: [location?.trim(), exp.description?.trim()].filter(Boolean).join(" · ") || exp.description,
       })),
-      deductions: deductions.map((d) => ({
-        description: d.description || "Deduction",
-        amount_cents: d.amount_cents,
-        load_number: d.load_number,
-        item_id: d.item_id ?? null,
-        quantity: d.quantity ?? null,
-      })),
+      deductions: [
+        ...deductions.map((d) => ({
+          description: d.description || "Deduction",
+          amount_cents: d.amount_cents,
+          load_number: d.load_number,
+          item_id: d.item_id ?? null,
+          quantity: d.quantity ?? null,
+        })),
+        ...(adminFeeCents > 0
+          ? [{ description: "Admin fee", amount_cents: adminFeeCents, load_number: adminFeeLoadNumber.trim() || null, item_id: null, quantity: null }]
+          : []),
+      ],
       reimbursements: [],
       additional_pay: additionalPayForApi,
       escrow: escrowForApi,
@@ -1221,7 +1236,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         amount_cents: a.amount_cents,
         load_number: a.load_number,
       })),
-      admin_fee_cents: adminFeeCents > 0 ? adminFeeCents : null,
+      admin_fee_cents: null,
       seed_dispatched_loads: true,
       pdf_company_expenses_cents: pdfCompanyExpenses,
       pdf_driver_net_cents: pdfDriverNet,
@@ -1243,6 +1258,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     escrowForApi,
     advances,
     adminFeeCents,
+    adminFeeLoadNumber,
     pdfCompanyExpenses,
     pdfDriverNet,
   ]);
@@ -1321,6 +1337,22 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   }
 
   const [posted, setPosted] = useState<{ label: string; documentIds: string[] } | null>(null);
+  // ROUND 443.7 b — what each stage of the post did; a failed after-commit stage can be retried here.
+  const [postStages, setPostStages] = useState<{ settlementId: string; ok: boolean; stages: SettlementCreatorStages } | null>(null);
+
+  async function retryAfterCommit() {
+    if (!postStages || !companyId) return;
+    setBusy(true);
+    try {
+      const r = await retrySettlementCreatorAfterCommit(companyId, postStages.settlementId);
+      const stages = { ...postStages.stages, ...r.stages };
+      setPostStages({ ...postStages, ok: Object.values(stages).every((x) => x.ok), stages });
+    } catch (e) {
+      setError(String((e as Error).message || "Retry failed"));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function onPost() {
     if (!allowPost || !draft || !preview?.can_post) return;
@@ -1328,7 +1360,13 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     setError(null);
     try {
       const res = await postSettlementCreator(draft);
-      pushToast(`Settlement ${res.source_document_ref || res.display_id} posted`, "success");
+      if (res.stages) setPostStages({ settlementId: res.settlement_id, ok: res.ok, stages: res.stages });
+      pushToast(
+        res.ok
+          ? `Settlement ${res.source_document_ref || res.display_id} posted`
+          : `Settlement ${res.source_document_ref || res.display_id} saved — a follow-up step failed (see below)`,
+        res.ok ? "success" : "error",
+      );
       // ROUND 363-CC2-D — stay open on the posted lines so a wrong account is reclassified here, not after a hunt.
       setPosted({ label: `Settlement ${res.source_document_ref || res.display_id} posted`, documentIds: [...(res.expense_ids ?? [])] });
     } catch (e) {
@@ -1407,6 +1445,25 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               onClose();
             }}
           />
+        ) : null}
+        {postStages ? (
+          <section className="rounded-sm border border-[#E5E7EB] bg-white p-2" data-testid="sc-post-stages">
+            <h3 className="text-center text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Post result</h3>
+            <ul className="mt-1 space-y-0.5">
+              {(["documents", "ledger", "factoring", "billing"] as const).map((k) => (
+                <li key={k} data-testid={`sc-post-stage-${k}`} className={postStages.stages[k].ok ? "text-[#16A34A]" : "text-red-600"}>
+                  {postStages.stages[k].ok ? "✓" : "✗"} {postStages.stages[k].message}
+                </li>
+              ))}
+            </ul>
+            {!postStages.ok && (!postStages.stages.factoring.ok || !postStages.stages.billing.ok) ? (
+              <div className="mt-1 text-center">
+                <Button size="sm" variant="secondary" loading={busy} onClick={() => void retryAfterCommit()} data-testid="sc-post-retry">
+                  Retry the failed step
+                </Button>
+              </div>
+            ) : null}
+          </section>
         ) : null}
         {wrongEntity ? (
           <p className="text-xs text-red-600" data-testid="settlement-creator-usmca-only">
@@ -2297,7 +2354,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
 
             <Section title="Company expenses" subtotalCents={compExpSubtotal}>
               <p className="text-center text-xs text-[#6B7280]">
-                PDF &quot;Comp.&quot; — credits the fuel card rail (never A/P)
+                PDF &quot;Comp.&quot; — paid by card credits the card rail; owed to the vendor becomes an A/P bill
               </p>
               {companyExpenses.map((exp, idx) => {
                 const addCompExp = () => {
@@ -2368,20 +2425,73 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       ariaLabel="Company expense amount"
                     />
                   </Field>
-                  <Field label="Card">
+                  <Field label="Paid by">
                     <Combobox
                       options={[
                         { value: "dreamline", label: "Dreamline" },
                         { value: "relay", label: "Relay" },
+                        { value: "owed", label: "Owed to vendor (bill)" },
                       ]}
-                      value={exp.card ?? "relay"}
+                      value={exp.card ?? ""}
                       onChange={(v) => {
                         const next = [...companyExpenses];
-                        next[idx] = { ...exp, card: (v ?? "") as SettlementCreatorFuelCard };
+                        next[idx] = { ...exp, card: (v || null) as SettlementCreatorExpensePaymentSource | null };
                         setCompanyExpenses(next);
                       }}
+                      placeholder="Choose…"
                       size="sm"
                       searchIsValue
+                    />
+                  </Field>
+                  <Field label="Vendor">
+                    <input
+                      className={inputClass}
+                      value={exp.vendor_name ?? ""}
+                      onChange={(e) => {
+                        const next = [...companyExpenses];
+                        next[idx] = { ...exp, vendor_name: e.target.value };
+                        setCompanyExpenses(next);
+                      }}
+                      data-testid={`sc-comp-exp-vendor-${idx}`}
+                    />
+                  </Field>
+                  <Field label="Vendor invoice #">
+                    <input
+                      className={inputClass}
+                      value={exp.vendor_document_number ?? ""}
+                      onChange={(e) => {
+                        const next = [...companyExpenses];
+                        next[idx] = { ...exp, vendor_document_number: e.target.value };
+                        setCompanyExpenses(next);
+                      }}
+                      data-testid={`sc-comp-exp-doc-${idx}`}
+                    />
+                  </Field>
+                  <Field label="Qty">
+                    <input
+                      className={inputClass}
+                      inputMode="decimal"
+                      value={exp.quantity ?? ""}
+                      onChange={(e) => {
+                        const v = e.target.value.trim();
+                        const next = [...companyExpenses];
+                        next[idx] = { ...exp, quantity: v === "" || !Number.isFinite(Number(v)) ? null : Number(v) };
+                        setCompanyExpenses(next);
+                      }}
+                      data-testid={`sc-comp-exp-qty-${idx}`}
+                    />
+                  </Field>
+                  <Field label="Unit">
+                    <input
+                      className={inputClass}
+                      value={exp.unit_of_measure ?? ""}
+                      onChange={(e) => {
+                        const next = [...companyExpenses];
+                        next[idx] = { ...exp, unit_of_measure: e.target.value.toLowerCase().replace(/[^a-z_]/g, "") };
+                        setCompanyExpenses(next);
+                      }}
+                      placeholder="gal"
+                      data-testid={`sc-comp-exp-uom-${idx}`}
                     />
                   </Field>
                   <LineCoding
@@ -2796,6 +2906,16 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     ariaLabel="Admin fee"
                   />
                 </div>
+              </Field>
+              <Field label="Admin fee load No.">
+                <input
+                  className={inputClass}
+                  value={adminFeeLoadNumber}
+                  onChange={(e) => setAdminFeeLoadNumber(e.target.value)}
+                  placeholder="Load #"
+                  title="Every settlement item belongs to a load — the load this admin fee is charged on."
+                  data-testid="sc-admin-fee-load"
+                />
               </Field>
               {deductions.map((row, idx) => (
                 <div key={idx} className="border-b border-[#D1D5DB] pb-2 pt-2" data-testid={`sc-deduction-block-${idx}`}>

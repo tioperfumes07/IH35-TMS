@@ -20,8 +20,7 @@ import {
 import { peekNextSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
 import { assertCreatorDraftAdmissible } from "./settlement-creator-admission.js";
-import { autoSubmitDeliveredLoadToFactor } from "../factoring/auto-submit-on-delivery.service.js";
-import { syncSettlementLoadsToBilling } from "../dispatch/load-billing-lifecycle.service.js";
+import { loadLastAfterCommit, overallOk, recordAfterCommit, runCreatorAfterCommit, type CreatorStages } from "./settlement-creator-after-commit.js";
 
 const AUTHORITY_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
 const WRITE_RL = { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } };
@@ -135,7 +134,12 @@ const draftSchema = z.object({
         item_id: z.string().uuid().nullable().optional(),
         account_id: z.string().uuid().nullable().optional(),
         load_id: z.string().uuid().nullable().optional(),
-        card: z.enum(["dreamline", "relay"]).nullable().optional(),
+        // ROUND 443.6 — payment source (owed = A/P bill), vendor, vendor document number, quantity / unit.
+        card: z.enum(["dreamline", "relay", "owed"]).nullable().optional(),
+        vendor_name: z.string().trim().max(200).nullable().optional(),
+        vendor_document_number: z.string().trim().max(60).nullable().optional(),
+        quantity: z.number().positive().nullable().optional(),
+        unit_of_measure: z.string().trim().toLowerCase().regex(/^[a-z][a-z_]*$/).max(20).nullable().optional(),
       }),
     )
     .default([]),
@@ -269,86 +273,34 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
         return postSettlementCreatorInClientTx(client, user.uuid, draft);
       });
 
-      // AFTER COMMIT — Faro auto-submit + billing sync use own connections (never share Creator tx).
-      // FACT-DELIVERED-AUTO: faro_usmca only (USMCA factor). faro_transportation / direct = no-op.
-      const factoringAdvanceIds: string[] = [];
-      for (let i = 0; i < draft.loads.length; i++) {
-        const load = draft.loads[i]!;
-        const loadId = result.load_ids[i];
-        if (!loadId) continue;
-        if (load.factoring !== "faro_usmca") continue;
-        // Not-delivered: no invoice yet → autoSubmit no-ops on no_invoice; skip the call.
-        if (load.not_yet_delivered !== false && !load.delivery_date) continue;
-        try {
-          const submitted = await autoSubmitDeliveredLoadToFactor({
-            operatingCompanyId: draft.operating_company_id,
-            loadId,
-            actorUserId: user.uuid,
-          });
-          if (submitted.submitted && submitted.advanceId) {
-            factoringAdvanceIds.push(submitted.advanceId);
-            // ROUND 180 — stamp purchase/submitted date from AT "Date sent to factoring"
-            // when provided (funding JE still posts at actual Faro funding — never invent cash).
-            if (load.date_sent_to_factoring) {
-              try {
-                await withCurrentUser(user.uuid, async (client) => {
-        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
-                  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
-                    draft.operating_company_id,
-                  ]);
-                  await client.query(
-                    `
-                      UPDATE accounting.factoring_advances
-                         SET submitted_at = $2::timestamptz
-                       WHERE id = $1::uuid
-                         AND operating_company_id = $3::uuid
-                    `,
-                    [
-                      submitted.advanceId,
-                      `${load.date_sent_to_factoring}T12:00:00.000Z`,
-                      draft.operating_company_id,
-                    ],
-                  );
-                });
-              } catch (stampErr) {
-                console.warn(
-                  { err: stampErr, advance_id: submitted.advanceId },
-                  "settlement_creator_faro_date_stamp_failed",
-                );
-              }
-            }
-          } else if (!submitted.submitted) {
-            console.warn(
-              {
-                load_id: loadId,
-                load_number: load.load_number,
-                reason: submitted.reason,
-              },
-              "settlement_creator_faro_auto_submit_noop",
-            );
-          }
-        } catch (err) {
-          console.warn(
-            { err, load_id: loadId, load_number: load.load_number },
-            "settlement_creator_faro_auto_submit_failed",
-          );
-        }
-      }
-
-      try {
-        await syncSettlementLoadsToBilling({
-          operatingCompanyId: draft.operating_company_id,
-          loadIds: result.load_ids,
-          actorUserId: user.uuid,
-        });
-      } catch (err) {
-        console.warn({ err, settlement_id: result.settlement_id }, "settlement_creator_billing_sync_failed");
-      }
-
+      // AFTER COMMIT — factoring submit + billing sync on their own connections (never the Creator tx). ROUND 443.7 b:
+      // every stage is reported; ok is true only when all required stages succeeded; a failure is stored + retryable.
+      const afterInput = {
+        operating_company_id: draft.operating_company_id,
+        settlement_id: result.settlement_id,
+        loads: draft.loads
+          .map((load, i) => ({
+            load_id: result.load_ids[i] ?? "",
+            load_number: load.load_number,
+            factoring: load.factoring,
+            delivered: !(load.not_yet_delivered !== false && !load.delivery_date),
+          }))
+          .filter((l) => l.load_id),
+      };
+      const after = await runCreatorAfterCommit(user.uuid, afterInput);
+      const stages: CreatorStages = {
+        documents: { ok: true, status: "committed", message: `Settlement ${result.source_document_ref || result.display_id} and its documents are saved.` },
+        ledger: result.journal_entry_ids.length > 0
+          ? { ok: true, status: "posted", message: `${result.journal_entry_ids.length} journal entr${result.journal_entry_ids.length === 1 ? "y" : "ies"} posted.` }
+          : { ok: false, status: "not_posted", message: "Nothing was posted to the ledger for this settlement." },
+        ...after,
+      };
+      await recordAfterCommit(user.uuid, afterInput, after);
       return reply.code(200).send({
-        ok: true,
+        ok: overallOk(stages),
+        stages,
         ...result,
-        factoring_advance_ids: factoringAdvanceIds,
+        factoring_advance_ids: [],
       });
     } catch (err) {
       if (err instanceof FeedGateError) {
@@ -369,5 +321,24 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       }
       throw err;
     }
+  });
+
+  // ROUND 443.7 b — re-run a stored after-commit stage (factoring submit / billing sync) for a posted settlement.
+  app.post("/api/v1/driver-finance/settlement-creator/:settlementId/retry-after-commit", WRITE_RL, async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    if (!AUTHORITY_ROLES.has(user.role)) {
+      return reply.code(403).send({ error: "forbidden", message: "Owner/Administrator/Accountant only" });
+    }
+    const params = z.object({ settlementId: z.string().uuid() }).safeParse(req.params ?? {});
+    const body = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.body ?? {});
+    if (!params.success || !body.success) return reply.code(400).send({ error: "validation_error" });
+    if (body.data.operating_company_id !== USMCA) return reply.code(400).send({ error: "usmca_only" });
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+    const last = await loadLastAfterCommit(user.uuid, body.data.operating_company_id, params.data.settlementId);
+    if (!last) return reply.code(404).send({ error: "no_after_commit_record", message: "This settlement has no stored after-commit run." });
+    const after = await runCreatorAfterCommit(user.uuid, last.retry);
+    await recordAfterCommit(user.uuid, last.retry, after);
+    return reply.code(200).send({ ok: after.factoring.ok && after.billing.ok, stages: after });
   });
 }

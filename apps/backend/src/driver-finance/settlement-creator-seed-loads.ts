@@ -302,6 +302,9 @@ export async function ensureDispatchedLoadsForCreator(
         },
       ],
       charges: buildCharges(load, chargeCatalog),
+      // ROUND 443.3 b + CC-2 443.10 — the owner-authorized $0 Transportation load passes bookLoad's zero-dollar
+      // dispatch gate (one exception row, reason owner_authorized_zero_revenue); every other load keeps the gate.
+      authorizedZeroRevenue: isAuthorizedZeroRevenueLoad(load) || undefined,
       stops: buildStops(load),
       notes: `Settlement Creator R-186.1 seed · load ${load.load_number}`,
     };
