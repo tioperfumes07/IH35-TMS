@@ -176,6 +176,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Payments", to: "/accounting/payments" },
         { label: "Factoring", to: "/accounting/factoring" },
         { label: "Factoring Queue", to: "/dispatch/factoring-queue" },
+        { label: "Disputes", to: "/accounting/disputes" },
       ];
     case "maintenance":
       return MAINTENANCE_MODULE_NAV_LINKS.map((item) => ({ label: item.label, to: item.path }));
