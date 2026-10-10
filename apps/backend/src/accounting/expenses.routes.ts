@@ -471,264 +471,6 @@ export async function queryExpensesList(
   return res.rows;
 }
 
-export async function registerExpenseRoutes(app: FastifyInstance) {
-  // GAP-EXPENSES browse side (READ-ONLY). Paginated list of accounting.expenses for the Expenses
-  // list screen. STRICTLY read-only — SELECT only, no INSERT/UPDATE/DELETE. Mirrors the read-only
-  // reconciliation-status precedent of PR #1755 (Bills/Bill-Payments lists): a Bank Match is derived
-  // via an EXISTS against banking.reconciliation_matches (ledger_entry_kind='expense', added by
-  // 202607011600_bank_recon_expense_match_part2a.sql), never a hardcoded value. Entity-scoped through
-  // withCompanyScope (SET app.operating_company_id → RLS) + an explicit operating_company_id filter.
-  // Only real columns from 202606151300_expenses_header_phase1_foundation.sql are read.
-  app.get("/api/v1/expenses", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
-    if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-
-    const parsed = listExpensesQuerySchema.safeParse(req.query ?? {});
-    if (!parsed.success) return validationError(reply, parsed.error);
-    const q = parsed.data;
-
-    const result = await withCompanyScope(String(user.uuid), q.operating_company_id, async (client) => {
-      // Guard like the create handler: if the header table isn't present (fresh/partial schema),
-      // return an empty browse rather than 500 — read-only, non-breaking.
-      if (!(await relationExists(client, "accounting.expenses"))) {
-        return { unavailable: true as const };
-      }
-
-      const rows = await queryExpensesList(client, q.operating_company_id, {
-        status: q.status,
-        dateFrom: q.date_from,
-        dateTo: q.date_to,
-        loadId: q.load_id,
-        driverId: q.driver_id,
-        vendorUuid: q.vendor_uuid,
-        trailerId: q.trailer_id,
-        unitId: q.unit_id,
-        workOrderId: q.work_order_id,
-        insuranceClaimId: q.insurance_claim_id,
-        search: q.search,
-        limit: q.limit,
-        offset: q.offset,
-      });
-      // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides is the
-      // same class of defect as a badge that never renders"). Company-wide voided count, same
-      // simple scope as the packet's own example ("81 live, 38 voided") — discloses what
-      // "Active (hide voided)" is hiding.
-      const voidedCountRes = await client.query(
-        `SELECT COUNT(*)::int AS n FROM accounting.expenses WHERE operating_company_id = $1::uuid AND (voided_at IS NOT NULL OR status = 'void')`,
-        [q.operating_company_id]
-      );
-      const voidedCount = Number((voidedCountRes.rows[0] as { n?: number } | undefined)?.n ?? 0);
-      return { rows, voidedCount };
-    });
-
-    if ("unavailable" in result) return reply.code(200).send({ rows: [], voided_count: 0 });
-    return reply.code(200).send({ rows: result.rows, voided_count: result.voidedCount });
-  });
-
-  // ACCT-R-17 — duplicate expense fingerprint groups (READ-ONLY). Must register before /:id.
-  app.get(
-    "/api/v1/expenses/duplicates",
-    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
-    async (req: FastifyRequest, reply: FastifyReply) => {
-      const user = currentAuthUser(req, reply);
-      if (!user) return;
-      if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-
-      const parsed = companyQuerySchema
-        .extend({ limit: z.coerce.number().int().min(1).max(200).default(50), vendor_id: z.string().uuid().optional() })
-        .safeParse(req.query ?? {});
-      if (!parsed.success) return validationError(reply, parsed.error);
-
-      return withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
-        if (!(await relationExists(client, "accounting.expenses"))) {
-          return { group_count: 0, expense_count: 0, groups: [] };
-        }
-        return listExpenseDuplicateGroups(client, parsed.data.operating_company_id, parsed.data.limit, parsed.data.vendor_id);
-      });
-    },
-  );
-
-  app.get("/api/v1/expenses/next-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
-    if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-    const parsed = companyQuerySchema.extend({ check: z.string().trim().max(40).optional() }).safeParse(req.query ?? {});
-    if (!parsed.success) return validationError(reply, parsed.error);
-    const payload = await withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
-      if (!(await relationExists(client, "accounting.expenses"))) return null;
-      if (!(await columnExists(client, "accounting", "expenses", "expense_number"))) return null;
-      const base = await suggestFromLastSaved(
-        client,
-        {
-          text: `
-            SELECT expense_number AS last_number
-              FROM accounting.expenses
-             WHERE operating_company_id = $1::uuid
-               AND COALESCE(expense_number, '') <> ''
-             ORDER BY created_at DESC NULLS LAST
-             LIMIT 1
-          `,
-          values: [parsed.data.operating_company_id],
-        },
-        () => nextExpenseDisplayId(client, parsed.data.operating_company_id)
-      );
-      if (!parsed.data.check) return base;
-      const check = parseOperatorDocumentNumber(parsed.data.check);
-      if (!check) return { ...base, taken: false };
-      const taken = await client.query(
-        `SELECT 1 FROM accounting.expenses WHERE operating_company_id = $1::uuid AND expense_number = $2 LIMIT 1`,
-        [parsed.data.operating_company_id, check]
-      );
-      return { ...base, taken: Boolean(taken.rows[0]) };
-    });
-    if (!payload) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
-    return payload;
-  });
-
-  // Law §9 reverse drill-through: expense detail (header + lines + vendor/JE/load/unit/GL ids).
-  // Entity-scoped via withCompanyScope + explicit operating_company_id filter. SELECT only.
-  app.get("/api/v1/expenses/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
-    if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-
-    const params = expenseIdParamSchema.safeParse(req.params ?? {});
-    if (!params.success) return validationError(reply, params.error);
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
-    if (!parsed.success) return validationError(reply, parsed.error);
-    const q = parsed.data;
-
-    const result = await withCompanyScope(String(user.uuid), q.operating_company_id, async (client) => {
-      if (!(await relationExists(client, "accounting.expenses"))) return { unavailable: true as const };
-
-      const hasUnitId = await columnExists(client, "accounting", "expenses", "unit_id");
-      const hasTrailerId = await columnExists(client, "accounting", "expenses", "trailer_id");
-      const hasWorkOrderId = await columnExists(client, "accounting", "expenses", "linked_work_order_uuid");
-      const hasPaymentAccount = await columnExists(client, "accounting", "expenses", "payment_account_uuid");
-      const hasExpenseAccount = await columnExists(client, "accounting", "expense_lines", "expense_account_uuid");
-      const hasAmountCents = await columnExists(client, "accounting", "expense_lines", "amount_cents");
-      const hasItemId = await columnExists(client, "accounting", "expense_lines", "item_id");
-      const hasQuantity = await columnExists(client, "accounting", "expense_lines", "quantity");
-      const hasRateCents = await columnExists(client, "accounting", "expense_lines", "rate_cents");
-      const hasUnitOfMeasure = await columnExists(client, "accounting", "expense_lines", "unit_of_measure");
-
-      const headerRes = await client.query(
-        `
-          SELECT
-            e.id::text                                   AS id,
-            e.expense_number                             AS expense_number,
-            e.vendor_document_number                     AS vendor_document_number,
-            e.transaction_date                           AS transaction_date,
-            e.total_amount_cents::text                   AS total_amount_cents,
-            e.status                                     AS status,
-            e.posting_status                             AS posting_status,
-            e.posting_hold_reason                        AS posting_hold_reason,
-            e.memo                                       AS memo,
-            e.merchant_address                           AS merchant_address,
-            e.source_settlement_ref                      AS source_settlement_ref,
-            -- VIS-01: the DETAIL payload never exposed voided_at/void_reason at all (list-page callers
-            -- can infer void from status='void' alone, but the detail page needs the date + reason for
-            -- the top-of-page VoidedBanner -- same fields invoices.routes.ts already returns).
-            e.voided_at::text                            AS voided_at,
-            e.void_reason                                AS void_reason,
-            e.voided_by_user_id::text                    AS voided_by_user_id,
-            e.load_id::text                              AS load_id,
-            e.vendor_uuid::text                          AS vendor_uuid,
-            e.driver_uuid::text                          AS driver_uuid,
-            e.journal_entry_id::text                     AS journal_entry_id,
-            e.reversed_by_je_id::text                    AS reversed_by_je_id,
-            e.posted_at::text                            AS posted_at,
-            e.created_at::text                           AS created_at,
-            ${hasPaymentAccount ? "e.payment_account_uuid::text" : "NULL::text"} AS payment_account_uuid,
-            ${hasUnitId ? "e.unit_id::text" : "NULL::text"} AS unit_id,
-            ${hasTrailerId ? "e.trailer_id::text" : "NULL::text"} AS trailer_id,
-            ${hasWorkOrderId ? "e.linked_work_order_uuid::text" : "NULL::text"} AS linked_work_order_uuid,
-            -- ACCT-EXPENSES-VENDOR-DEACTIVATED-TOMBSTONE: mdata.vendors' RLS policy hard-excludes any
-        -- row with deactivated_at IS NOT NULL for a non-bypass reader, so a plain join silently
-        -- returns NULL for vendor_name even when e.vendor_uuid is a perfectly valid FK — the vendor
-        -- just went inactive since. Same class already fixed for invoices/ap-aging/parts-inventory
-        -- (mdata.resolve_vendor_label_same_company, migration 202612780000) — this surface was the
-        -- swept gap (confirmed absent from verify-deactivated-counterparty-resolver-coverage.mjs's
-        -- own coverage list).
-        COALESCE(v.vendor_name, mdata.resolve_vendor_label_same_company(e.vendor_uuid, e.operating_company_id)) AS vendor_name,
-            dr.first_name                                AS driver_first_name,
-            dr.last_name                                 AS driver_last_name,
-            l.load_number                                AS load_number,
-            ${hasUnitId ? "u.unit_number" : "NULL::text"}  AS unit_display_id,
-            ${hasTrailerId ? "tr.equipment_number" : "NULL::text"} AS trailer_display_id,
-            ${hasWorkOrderId ? "wo.display_id" : "NULL::text"} AS work_order_display_id,
-            pay_acct.account_number                      AS payment_account_number,
-            pay_acct.account_name                        AS payment_account_name,
-            ${EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL}   AS matched_bank_transaction_id,
-            je.entry_date                                  AS journal_entry_date,
-            je.memo                                        AS journal_entry_memo,
-            -- ACCT-F5072: matched bank date/description are the EntityLink human labels (never UUID chrome).
-            bt.transaction_date                            AS matched_bank_transaction_date,
-            bt.description                                 AS matched_bank_transaction_description,
-            bt.amount_cents::text                          AS matched_bank_transaction_amount_cents,
-            -- Linkage law §8 back-link: a fuel expense document drills to the purchase it was made from,
-            -- and says so when that purchase has since been voided (FUEL-SOURCE-VOIDED-UNDER-LIVE-EXPENSE).
-            e.source_fuel_transaction_id::text             AS source_fuel_transaction_id,
-            (SELECT ft.voided_at::text FROM fuel.fuel_transactions ft
-              WHERE ft.id = e.source_fuel_transaction_id AND ft.operating_company_id = e.operating_company_id) AS source_fuel_voided_at
-          FROM accounting.expenses e
-          LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
-          LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid AND dr.operating_company_id = e.operating_company_id
-          LEFT JOIN mdata.loads l ON l.id = e.load_id AND l.operating_company_id = e.operating_company_id
-          LEFT JOIN accounting.journal_entries je ON je.id = e.journal_entry_id AND je.operating_company_id = e.operating_company_id
-          LEFT JOIN banking.bank_transactions bt ON bt.matched_expense_id = e.id AND bt.operating_company_id = e.operating_company_id
-          ${hasUnitId ? "LEFT JOIN mdata.units u ON u.id = e.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id" : ""}
-          ${hasTrailerId ? "LEFT JOIN mdata.equipment tr ON tr.id = e.trailer_id AND COALESCE(tr.currently_leased_to_company_id, tr.owner_company_id) = e.operating_company_id" : ""}
-          ${hasWorkOrderId ? "LEFT JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid AND wo.operating_company_id = e.operating_company_id" : ""}
-          ${hasPaymentAccount ? "LEFT JOIN catalogs.accounts pay_acct ON pay_acct.id = e.payment_account_uuid AND pay_acct.operating_company_id = e.operating_company_id" : "LEFT JOIN catalogs.accounts pay_acct ON false"}
-          WHERE e.id = $1::uuid
-            AND e.operating_company_id = $2::uuid
-          LIMIT 1
-        `,
-        [params.data.id, q.operating_company_id]
-      );
-      const expense = headerRes.rows[0] as Record<string, unknown> | undefined;
-      if (!expense) return { notFound: true as const };
-
-      const linesRes = await client.query(
-        `
-          SELECT
-            el.id::text                                  AS id,
-            el.line_sequence                             AS line_sequence,
-            ${hasAmountCents ? "el.amount_cents::text" : "NULL::text"} AS amount_cents,
-            el.description                               AS description,
-            ${hasItemId ? "el.item_id::text" : "NULL::text"} AS item_id,
-            ${hasQuantity ? "el.quantity::text" : "NULL::text"} AS quantity,
-            ${hasRateCents ? "el.rate_cents::text" : "NULL::text"} AS rate_cents,
-            ${hasUnitOfMeasure ? "el.unit_of_measure" : "NULL::text"} AS unit_of_measure,
-            ${hasItemId ? "item.item_name" : "NULL::text"} AS item_name,
-            ${hasExpenseAccount ? "el.expense_account_uuid::text" : "NULL::text"} AS expense_account_uuid,
-            acct.account_number                          AS expense_account_number,
-            acct.account_name                            AS expense_account_name
-          FROM accounting.expense_lines el
-          ${hasItemId ? "LEFT JOIN catalogs.items item ON item.id = el.item_id" : ""}
-          ${hasExpenseAccount
-            ? "LEFT JOIN catalogs.accounts acct ON acct.id = el.expense_account_uuid AND acct.operating_company_id = $2::uuid"
-            : "LEFT JOIN catalogs.accounts acct ON acct.operating_company_id = $2::uuid AND false"}
-          WHERE el.expense_id = $1::uuid
-          ORDER BY el.line_sequence ASC
-        `,
-        [params.data.id, q.operating_company_id]
-      );
-
-      return { expense, lines: linesRes.rows };
-    });
-
-    if ("unavailable" in result) return reply.code(404).send({ error: "expenses_unavailable" });
-    if ("notFound" in result) return reply.code(404).send({ error: "expense_not_found" });
-    return reply.code(200).send(result);
-  });
-
-  // Pre-existing gap surfaced by verify-new-auth-routes-rate-limited when this file changed: the
-  // expense CREATE route authorized but carried no rateLimit (CodeQL js/missing-rate-limiting), while
-  // its sibling GET/PATCH routes here already do. Matched to the mutating-route budget used at :334.
-
 /** ROUND 443.13 (CC-1) — transactional expense creation extracted from POST /api/v1/expenses so
  * programmatic callers (Settlement Creator, seed scripts) can reuse the full stampings without
  * an HTTP round-trip. The route handler calls this inside `withCompanyScope`.
@@ -1347,6 +1089,266 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
 }
 
 export type CreateExpenseBody = import("zod").infer<typeof createExpenseBodySchema>;
+
+export async function registerExpenseRoutes(app: FastifyInstance) {
+  // GAP-EXPENSES browse side (READ-ONLY). Paginated list of accounting.expenses for the Expenses
+  // list screen. STRICTLY read-only — SELECT only, no INSERT/UPDATE/DELETE. Mirrors the read-only
+  // reconciliation-status precedent of PR #1755 (Bills/Bill-Payments lists): a Bank Match is derived
+  // via an EXISTS against banking.reconciliation_matches (ledger_entry_kind='expense', added by
+  // 202607011600_bank_recon_expense_match_part2a.sql), never a hardcoded value. Entity-scoped through
+  // withCompanyScope (SET app.operating_company_id → RLS) + an explicit operating_company_id filter.
+  // Only real columns from 202606151300_expenses_header_phase1_foundation.sql are read.
+  app.get("/api/v1/expenses", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+
+    const parsed = listExpensesQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const q = parsed.data;
+
+    const result = await withCompanyScope(String(user.uuid), q.operating_company_id, async (client) => {
+      // Guard like the create handler: if the header table isn't present (fresh/partial schema),
+      // return an empty browse rather than 500 — read-only, non-breaking.
+      if (!(await relationExists(client, "accounting.expenses"))) {
+        return { unavailable: true as const };
+      }
+
+      const rows = await queryExpensesList(client, q.operating_company_id, {
+        status: q.status,
+        dateFrom: q.date_from,
+        dateTo: q.date_to,
+        loadId: q.load_id,
+        driverId: q.driver_id,
+        vendorUuid: q.vendor_uuid,
+        trailerId: q.trailer_id,
+        unitId: q.unit_id,
+        workOrderId: q.work_order_id,
+        insuranceClaimId: q.insurance_claim_id,
+        search: q.search,
+        limit: q.limit,
+        offset: q.offset,
+      });
+      // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides is the
+      // same class of defect as a badge that never renders"). Company-wide voided count, same
+      // simple scope as the packet's own example ("81 live, 38 voided") — discloses what
+      // "Active (hide voided)" is hiding.
+      const voidedCountRes = await client.query(
+        `SELECT COUNT(*)::int AS n FROM accounting.expenses WHERE operating_company_id = $1::uuid AND (voided_at IS NOT NULL OR status = 'void')`,
+        [q.operating_company_id]
+      );
+      const voidedCount = Number((voidedCountRes.rows[0] as { n?: number } | undefined)?.n ?? 0);
+      return { rows, voidedCount };
+    });
+
+    if ("unavailable" in result) return reply.code(200).send({ rows: [], voided_count: 0 });
+    return reply.code(200).send({ rows: result.rows, voided_count: result.voidedCount });
+  });
+
+  // ACCT-R-17 — duplicate expense fingerprint groups (READ-ONLY). Must register before /:id.
+  app.get(
+    "/api/v1/expenses/duplicates",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+
+      const parsed = companyQuerySchema
+        .extend({ limit: z.coerce.number().int().min(1).max(200).default(50), vendor_id: z.string().uuid().optional() })
+        .safeParse(req.query ?? {});
+      if (!parsed.success) return validationError(reply, parsed.error);
+
+      return withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
+        if (!(await relationExists(client, "accounting.expenses"))) {
+          return { group_count: 0, expense_count: 0, groups: [] };
+        }
+        return listExpenseDuplicateGroups(client, parsed.data.operating_company_id, parsed.data.limit, parsed.data.vendor_id);
+      });
+    },
+  );
+
+  app.get("/api/v1/expenses/next-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const parsed = companyQuerySchema.extend({ check: z.string().trim().max(40).optional() }).safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const payload = await withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
+      if (!(await relationExists(client, "accounting.expenses"))) return null;
+      if (!(await columnExists(client, "accounting", "expenses", "expense_number"))) return null;
+      const base = await suggestFromLastSaved(
+        client,
+        {
+          text: `
+            SELECT expense_number AS last_number
+              FROM accounting.expenses
+             WHERE operating_company_id = $1::uuid
+               AND COALESCE(expense_number, '') <> ''
+             ORDER BY created_at DESC NULLS LAST
+             LIMIT 1
+          `,
+          values: [parsed.data.operating_company_id],
+        },
+        () => nextExpenseDisplayId(client, parsed.data.operating_company_id)
+      );
+      if (!parsed.data.check) return base;
+      const check = parseOperatorDocumentNumber(parsed.data.check);
+      if (!check) return { ...base, taken: false };
+      const taken = await client.query(
+        `SELECT 1 FROM accounting.expenses WHERE operating_company_id = $1::uuid AND expense_number = $2 LIMIT 1`,
+        [parsed.data.operating_company_id, check]
+      );
+      return { ...base, taken: Boolean(taken.rows[0]) };
+    });
+    if (!payload) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
+    return payload;
+  });
+
+  // Law §9 reverse drill-through: expense detail (header + lines + vendor/JE/load/unit/GL ids).
+  // Entity-scoped via withCompanyScope + explicit operating_company_id filter. SELECT only.
+  app.get("/api/v1/expenses/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+
+    const params = expenseIdParamSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const q = parsed.data;
+
+    const result = await withCompanyScope(String(user.uuid), q.operating_company_id, async (client) => {
+      if (!(await relationExists(client, "accounting.expenses"))) return { unavailable: true as const };
+
+      const hasUnitId = await columnExists(client, "accounting", "expenses", "unit_id");
+      const hasTrailerId = await columnExists(client, "accounting", "expenses", "trailer_id");
+      const hasWorkOrderId = await columnExists(client, "accounting", "expenses", "linked_work_order_uuid");
+      const hasPaymentAccount = await columnExists(client, "accounting", "expenses", "payment_account_uuid");
+      const hasExpenseAccount = await columnExists(client, "accounting", "expense_lines", "expense_account_uuid");
+      const hasAmountCents = await columnExists(client, "accounting", "expense_lines", "amount_cents");
+      const hasItemId = await columnExists(client, "accounting", "expense_lines", "item_id");
+      const hasQuantity = await columnExists(client, "accounting", "expense_lines", "quantity");
+      const hasRateCents = await columnExists(client, "accounting", "expense_lines", "rate_cents");
+      const hasUnitOfMeasure = await columnExists(client, "accounting", "expense_lines", "unit_of_measure");
+
+      const headerRes = await client.query(
+        `
+          SELECT
+            e.id::text                                   AS id,
+            e.expense_number                             AS expense_number,
+            e.vendor_document_number                     AS vendor_document_number,
+            e.transaction_date                           AS transaction_date,
+            e.total_amount_cents::text                   AS total_amount_cents,
+            e.status                                     AS status,
+            e.posting_status                             AS posting_status,
+            e.posting_hold_reason                        AS posting_hold_reason,
+            e.memo                                       AS memo,
+            e.merchant_address                           AS merchant_address,
+            e.source_settlement_ref                      AS source_settlement_ref,
+            -- VIS-01: the DETAIL payload never exposed voided_at/void_reason at all (list-page callers
+            -- can infer void from status='void' alone, but the detail page needs the date + reason for
+            -- the top-of-page VoidedBanner -- same fields invoices.routes.ts already returns).
+            e.voided_at::text                            AS voided_at,
+            e.void_reason                                AS void_reason,
+            e.voided_by_user_id::text                    AS voided_by_user_id,
+            e.load_id::text                              AS load_id,
+            e.vendor_uuid::text                          AS vendor_uuid,
+            e.driver_uuid::text                          AS driver_uuid,
+            e.journal_entry_id::text                     AS journal_entry_id,
+            e.reversed_by_je_id::text                    AS reversed_by_je_id,
+            e.posted_at::text                            AS posted_at,
+            e.created_at::text                           AS created_at,
+            ${hasPaymentAccount ? "e.payment_account_uuid::text" : "NULL::text"} AS payment_account_uuid,
+            ${hasUnitId ? "e.unit_id::text" : "NULL::text"} AS unit_id,
+            ${hasTrailerId ? "e.trailer_id::text" : "NULL::text"} AS trailer_id,
+            ${hasWorkOrderId ? "e.linked_work_order_uuid::text" : "NULL::text"} AS linked_work_order_uuid,
+            -- ACCT-EXPENSES-VENDOR-DEACTIVATED-TOMBSTONE: mdata.vendors' RLS policy hard-excludes any
+        -- row with deactivated_at IS NOT NULL for a non-bypass reader, so a plain join silently
+        -- returns NULL for vendor_name even when e.vendor_uuid is a perfectly valid FK — the vendor
+        -- just went inactive since. Same class already fixed for invoices/ap-aging/parts-inventory
+        -- (mdata.resolve_vendor_label_same_company, migration 202612780000) — this surface was the
+        -- swept gap (confirmed absent from verify-deactivated-counterparty-resolver-coverage.mjs's
+        -- own coverage list).
+        COALESCE(v.vendor_name, mdata.resolve_vendor_label_same_company(e.vendor_uuid, e.operating_company_id)) AS vendor_name,
+            dr.first_name                                AS driver_first_name,
+            dr.last_name                                 AS driver_last_name,
+            l.load_number                                AS load_number,
+            ${hasUnitId ? "u.unit_number" : "NULL::text"}  AS unit_display_id,
+            ${hasTrailerId ? "tr.equipment_number" : "NULL::text"} AS trailer_display_id,
+            ${hasWorkOrderId ? "wo.display_id" : "NULL::text"} AS work_order_display_id,
+            pay_acct.account_number                      AS payment_account_number,
+            pay_acct.account_name                        AS payment_account_name,
+            ${EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL}   AS matched_bank_transaction_id,
+            je.entry_date                                  AS journal_entry_date,
+            je.memo                                        AS journal_entry_memo,
+            -- ACCT-F5072: matched bank date/description are the EntityLink human labels (never UUID chrome).
+            bt.transaction_date                            AS matched_bank_transaction_date,
+            bt.description                                 AS matched_bank_transaction_description,
+            bt.amount_cents::text                          AS matched_bank_transaction_amount_cents,
+            -- Linkage law §8 back-link: a fuel expense document drills to the purchase it was made from,
+            -- and says so when that purchase has since been voided (FUEL-SOURCE-VOIDED-UNDER-LIVE-EXPENSE).
+            e.source_fuel_transaction_id::text             AS source_fuel_transaction_id,
+            (SELECT ft.voided_at::text FROM fuel.fuel_transactions ft
+              WHERE ft.id = e.source_fuel_transaction_id AND ft.operating_company_id = e.operating_company_id) AS source_fuel_voided_at
+          FROM accounting.expenses e
+          LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
+          LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid AND dr.operating_company_id = e.operating_company_id
+          LEFT JOIN mdata.loads l ON l.id = e.load_id AND l.operating_company_id = e.operating_company_id
+          LEFT JOIN accounting.journal_entries je ON je.id = e.journal_entry_id AND je.operating_company_id = e.operating_company_id
+          LEFT JOIN banking.bank_transactions bt ON bt.matched_expense_id = e.id AND bt.operating_company_id = e.operating_company_id
+          ${hasUnitId ? "LEFT JOIN mdata.units u ON u.id = e.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id" : ""}
+          ${hasTrailerId ? "LEFT JOIN mdata.equipment tr ON tr.id = e.trailer_id AND COALESCE(tr.currently_leased_to_company_id, tr.owner_company_id) = e.operating_company_id" : ""}
+          ${hasWorkOrderId ? "LEFT JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid AND wo.operating_company_id = e.operating_company_id" : ""}
+          ${hasPaymentAccount ? "LEFT JOIN catalogs.accounts pay_acct ON pay_acct.id = e.payment_account_uuid AND pay_acct.operating_company_id = e.operating_company_id" : "LEFT JOIN catalogs.accounts pay_acct ON false"}
+          WHERE e.id = $1::uuid
+            AND e.operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [params.data.id, q.operating_company_id]
+      );
+      const expense = headerRes.rows[0] as Record<string, unknown> | undefined;
+      if (!expense) return { notFound: true as const };
+
+      const linesRes = await client.query(
+        `
+          SELECT
+            el.id::text                                  AS id,
+            el.line_sequence                             AS line_sequence,
+            ${hasAmountCents ? "el.amount_cents::text" : "NULL::text"} AS amount_cents,
+            el.description                               AS description,
+            ${hasItemId ? "el.item_id::text" : "NULL::text"} AS item_id,
+            ${hasQuantity ? "el.quantity::text" : "NULL::text"} AS quantity,
+            ${hasRateCents ? "el.rate_cents::text" : "NULL::text"} AS rate_cents,
+            ${hasUnitOfMeasure ? "el.unit_of_measure" : "NULL::text"} AS unit_of_measure,
+            ${hasItemId ? "item.item_name" : "NULL::text"} AS item_name,
+            ${hasExpenseAccount ? "el.expense_account_uuid::text" : "NULL::text"} AS expense_account_uuid,
+            acct.account_number                          AS expense_account_number,
+            acct.account_name                            AS expense_account_name
+          FROM accounting.expense_lines el
+          ${hasItemId ? "LEFT JOIN catalogs.items item ON item.id = el.item_id" : ""}
+          ${hasExpenseAccount
+            ? "LEFT JOIN catalogs.accounts acct ON acct.id = el.expense_account_uuid AND acct.operating_company_id = $2::uuid"
+            : "LEFT JOIN catalogs.accounts acct ON acct.operating_company_id = $2::uuid AND false"}
+          WHERE el.expense_id = $1::uuid
+          ORDER BY el.line_sequence ASC
+        `,
+        [params.data.id, q.operating_company_id]
+      );
+
+      return { expense, lines: linesRes.rows };
+    });
+
+    if ("unavailable" in result) return reply.code(404).send({ error: "expenses_unavailable" });
+    if ("notFound" in result) return reply.code(404).send({ error: "expense_not_found" });
+    return reply.code(200).send(result);
+  });
+
+  // Pre-existing gap surfaced by verify-new-auth-routes-rate-limited when this file changed: the
+  // expense CREATE route authorized but carried no rateLimit (CodeQL js/missing-rate-limiting), while
+  // its sibling GET/PATCH routes here already do. Matched to the mutating-route budget used at :334.
+
+
 
   app.post("/api/v1/expenses", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);

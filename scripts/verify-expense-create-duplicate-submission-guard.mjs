@@ -30,7 +30,18 @@ export function run(root = process.cwd()) {
   // Scope the search to this one handler, not the whole file (other routes may have unrelated
   // duplicate-ish text) — bounded by the next top-level app.<verb>( registration after it.
   const nextRouteIdx = routes.indexOf("\n  app.", postIdx + 1);
-  const handler = routes.slice(postIdx, nextRouteIdx > 0 ? nextRouteIdx : undefined);
+  let handler = routes.slice(postIdx, nextRouteIdx > 0 ? nextRouteIdx : undefined);
+  // ROUND 443.13 extracted the create body into createExpenseInClientTx (shared by the route and the Settlement
+  // Creator); when the handler delegates to it, the dedup must live in that function — it is searched as the handler.
+  if (/createExpenseInClientTx\(/.test(handler)) {
+    const fnIdx = routes.indexOf("export async function createExpenseInClientTx(");
+    if (fnIdx < 0) {
+      failures.push("handler calls createExpenseInClientTx but the function is not in expenses.routes.ts");
+      return failures;
+    }
+    const fnEnd = routes.indexOf("\n}\n", fnIdx);
+    handler = routes.slice(fnIdx, fnEnd > 0 ? fnEnd : undefined);
+  }
 
   if (!handler.includes("duplicateSubmission")) failures.push("handler missing duplicateSubmission branch");
   if (!handler.includes("interval '2 minutes'")) failures.push("handler missing the 2-minute dedup window");
