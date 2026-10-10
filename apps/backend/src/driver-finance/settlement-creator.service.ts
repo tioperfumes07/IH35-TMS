@@ -36,10 +36,13 @@ import { milesTimesRateCents } from "./deadhead-rule.js";
 import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
-import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.service.js";
-import { fromMdataStatus } from "../dispatch/load-state-machine.js";
+import { deliverLoadThroughDispatch, stampDeliveryStopActuals } from "./settlement-creator-deliver.js";
+import { afterCommitMark, afterCommitRollbackTo } from "../lib/after-commit.js";
+export { deliverLoadThroughDispatch } from "./settlement-creator-deliver.js";
 import { DuplicateDocumentNumberError } from "../lib/qbo-custom-document-number.js";
 import { assertCreatorDraftAdmissible } from "./settlement-creator-admission.js";
+import { ensureDispatchedLoadsForCreator } from "./settlement-creator-seed-loads.js";
+import { setSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
 import { attributeFuelLoadNumber } from "./settlement-creator-line-load.js";
 import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
@@ -150,80 +153,52 @@ function isDeliveredCreatorLoad(load: SettlementCreatorLoadBlock): boolean {
  * Stamp stop actuals so sendDraftInvoice can evidence delivery (live stop departure OR
  * historical_backfill via closed settlement_lines.load_id). Never invent GL math.
  */
-async function stampDeliveryStopActuals(
-  client: DbClient,
-  loadId: string,
-  deliveryDate: string | null | undefined,
-  pickupDate?: string | null,
-): Promise<void> {
-  const at = deliveryDate ? `${deliveryDate}T18:00:00.000Z` : new Date().toISOString();
-  await client.query(
-    `
-      UPDATE mdata.load_stops
-         SET actual_arrival_at = COALESCE(actual_arrival_at, $2::timestamptz),
-             actual_departure_at = COALESCE(actual_departure_at, $2::timestamptz),
-             updated_at = now()
-       WHERE load_id = $1::uuid
-         AND stop_type = 'delivery'
-         AND soft_deleted_at IS NULL
-    `,
-    [loadId, at],
-  );
-  // ROUND 443.3 (prod-fork e2e): a delivered load needs EVERY stop stamped (feed gate load.stops_stamped); the pickup
-  // happened on the signed settlement's pickup date. Never overwrites a stamp already there.
-  const pickedAt = pickupDate ? `${pickupDate}T14:00:00.000Z` : at;
-  await client.query(
-    `
-      UPDATE mdata.load_stops
-         SET actual_arrival_at = COALESCE(actual_arrival_at, $2::timestamptz),
-             actual_departure_at = COALESCE(actual_departure_at, $2::timestamptz),
-             updated_at = now()
-       WHERE load_id = $1::uuid
-         AND stop_type = 'pickup'
-         AND soft_deleted_at IS NULL
-    `,
-    [loadId, pickedAt],
-  );
-}
 
-/** The forward path from a dispatched load to delivered in dispatch's state machine (load-state-machine.ts forwardTransitions). */
-const CREATOR_DELIVERY_PATH = ["dispatched", "in_transit", "delivered_pending_docs"] as const;
-const ALREADY_DELIVERED = new Set(["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced", "paid", "closed"]);
-
-export async function deliverLoadThroughDispatch(
+/**
+ * LEAD RULING ROUND 443.7 (Option A) — write a load's driver-pay line on the adopted tour settlement. Booking already
+ * wrote the same pay (unitemized) when the load joined the tour; that line is UPGRADED to the itemized Driver Pay item
+ * (quantity, rate, unit, item) when the amounts agree, and the post refuses pay_mismatch when they do not — a second
+ * line for the same pay is never written.
+ */
+async function writeDriverPayLine(
   client: DbClient,
-  actorUserId: string,
-  operatingCompanyId: string,
-  loadId: string,
-  deliveryDate: string | null | undefined,
-  transition: typeof transitionDispatchLoadInClientTx = transitionDispatchLoadInClientTx,
+  input: {
+    settlementId: string; companyId: string; loadId: string; loadNumber: string;
+    lineType: "earnings" | "deadhead_pay"; description: string; cents: number; quantity: number; rateCents: number; itemId: string;
+  },
 ): Promise<void> {
-  const deliveredAt = deliveryDate ? `${deliveryDate}T18:00:00.000Z` : null;
-  for (let guard = 0; guard < CREATOR_DELIVERY_PATH.length; guard++) {
-    const cur = String(
-      (await client.query<{ status: string }>(
-        `SELECT status::text AS status FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-        [loadId, operatingCompanyId],
-      )).rows[0]?.status ?? "",
+  const existing = (
+    await client.query<{ id: string; cents: string }>(
+      `SELECT id::text, round(amount * 100)::bigint::text AS cents FROM driver_finance.settlement_lines
+        WHERE settlement_id = $1::uuid AND load_id = $2::uuid AND line_type = $3 AND voided_at IS NULL
+        ORDER BY created_at LIMIT 1`,
+      [input.settlementId, input.loadId, input.lineType],
+    )
+  ).rows[0];
+  if (existing) {
+    if (Number(existing.cents) !== input.cents) {
+      throw new SettlementCreatorError(
+        "pay_mismatch",
+        `Load ${input.loadNumber}: booking priced ${input.lineType === "earnings" ? "loaded" : "empty"} pay at ${dollarsFromCents(Number(existing.cents))} but the settlement says ${dollarsFromCents(input.cents)} — check the pay rate and miles.`,
+      );
+    }
+    await client.query(
+      `UPDATE driver_finance.settlement_lines
+          SET description = $2, quantity = $3, rate_cents = $4, unit_of_measure = 'mi', item_id = $5::uuid
+        WHERE id = $1::uuid`,
+      [existing.id, input.description, input.quantity, input.rateCents, input.itemId],
     );
-    if (ALREADY_DELIVERED.has(cur)) return;
-    const bucket = fromMdataStatus(cur);
-    if (bucket === "delivered_pending_docs" || bucket === "completed_docs_received") return;
-    const at = CREATOR_DELIVERY_PATH.indexOf(bucket as (typeof CREATOR_DELIVERY_PATH)[number]);
-    if (at < 0) {
-      throw new SettlementCreatorError("load_not_deliverable", `Load ${loadId}: status '${cur}' cannot be moved to delivered.`);
-    }
-    const next = CREATOR_DELIVERY_PATH[at + 1]!;
-    const result = (await transition(client as never, actorUserId, operatingCompanyId, loadId, {
-      new_status: next as never,
-      reason: "Settlement Creator: delivered per the signed settlement",
-      delivered_at: next === "delivered_pending_docs" ? deliveredAt : null,
-    })) as { error?: string } | null | undefined;
-    if (!result || result.error) {
-      throw new SettlementCreatorError("load_delivery_refused", `Load ${loadId}: dispatch refused ${cur} -> ${next}: ${result?.error ?? "load not found"}`);
-    }
+    return;
   }
+  await client.query(
+    `INSERT INTO driver_finance.settlement_lines (
+       settlement_id, operating_company_id, line_type, description, amount, load_id,
+       quantity, rate_cents, unit_of_measure, item_id, is_active, is_sample_data)
+     VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6::uuid, $7, $8, 'mi', $9::uuid, true, false)`,
+    [input.settlementId, input.companyId, input.lineType, input.description, dollarsFromCents(input.cents), input.loadId, input.quantity, input.rateCents, input.itemId],
+  );
 }
+
 
 type PriorCreatorPostPayload = {
   expense_ids?: string[];
@@ -901,6 +876,9 @@ export async function postSettlementCreatorInClientTx(
   draft: SettlementCreatorDraft,
   opts: { dryRun?: boolean } = {},
 ): Promise<SettlementCreatorPostResult> {
+  // ROUND 443.7 a (Option A) — the Creator closes the settlement itself through the pay-run close; the load-bookended
+  // settlement ping (open on in_transit, close on delivery) steps aside for the rest of this transaction.
+  await client.query(`SELECT set_config('app.settlement_creator_post', 'on', true)`);
   const preview = await previewSettlementCreator(client, draft);
   // A dry run (previewSettlementCreatorThroughClose) writes the settlement inside a savepoint the caller rolls
   // back, so the posting engine can compute the totals the owner checks — it never refuses on the preview.
@@ -1026,18 +1004,60 @@ export async function postSettlementCreatorInClientTx(
         `Settlement No. must be AlwaysTrack digits or P-NNNN (got "${typedNo}").`,
       );
     }
-    const bare = await createBareSettlementForDocument(client, {
-      operating_company_id: draft.operating_company_id,
-      driver_id: draft.driver_id,
-      period_start: draft.period_start,
-      period_end: draft.period_end,
-      source_document_ref: atRef,
-      actor_user_id: actorUserId,
-      is_sample_data: isSampleData,
-      status: "closed",
-    });
-    settlementId = bare.settlement_id;
-    displayId = bare.display_id;
+    // LEAD RULING ROUND 443.7 (Option A): booking these loads in THIS post joined them to their tour settlement
+    // (SET-01, owner 2026-09-03: "the instant a load is CREATED it joins a pre-settlement"). The Creator adopts that
+    // shell — stamped with the AlwaysTrack number and period, closed by the pay-run close below — instead of opening a
+    // second settlement for the same pay. Never a settlement from an earlier tour: only one born in this transaction.
+    const shells = (
+      await client.query<{ id: string; display_id: string }>(
+        `SELECT DISTINCT s.id::text, s.display_id
+           FROM mdata.loads l
+           JOIN driver_finance.driver_settlements s ON s.id = l.presettlement_link_id
+          WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[]) AND l.soft_deleted_at IS NULL
+            AND s.operating_company_id = $1::uuid AND s.driver_id = $3::uuid AND s.voided_at IS NULL
+            AND s.posted_at IS NULL AND s.created_at = now()`,
+        [draft.operating_company_id, draft.loads.map((l) => l.load_number.trim()), draft.driver_id],
+      )
+    ).rows;
+    if (shells.length > 1) {
+      throw new SettlementCreatorError(
+        "loads_on_two_tours",
+        `These loads joined ${shells.length} different tour settlements (${shells.map((x) => x.display_id).join(", ")}) when booked — one AlwaysTrack settlement covers one tour.`,
+      );
+    }
+    if (shells.length === 1) {
+      settlementId = shells[0]!.id;
+      displayId = shells[0]!.display_id;
+      await client.query(
+        // The tour is complete per the signed settlement: close its trip exactly as createBareSettlementForDocument
+        // creates an AlwaysTrack settlement (status 'closed', trip_closed_at = period end); the pay-run close posts it.
+        `UPDATE driver_finance.driver_settlements
+            SET period_start = $2::date, period_end = $3::date, status = 'closed',
+                trip_closed_at = COALESCE(trip_closed_at, $3::date), updated_at = now()
+          WHERE id = $1::uuid`,
+        [settlementId, draft.period_start, draft.period_end],
+      );
+      const ref = await setSettlementSourceDocumentRef(client as never, {
+        operatingCompanyId: draft.operating_company_id,
+        settlementId,
+        sourceDocumentRef: atRef,
+        actorUserId,
+      });
+      if (!ref) throw new SettlementCreatorError("source_document_ref_set_failed", `Could not stamp ${atRef} on ${displayId}.`);
+    } else {
+      const bare = await createBareSettlementForDocument(client, {
+        operating_company_id: draft.operating_company_id,
+        driver_id: draft.driver_id,
+        period_start: draft.period_start,
+        period_end: draft.period_end,
+        source_document_ref: atRef,
+        actor_user_id: actorUserId,
+        is_sample_data: isSampleData,
+        status: "closed",
+      });
+      settlementId = bare.settlement_id;
+      displayId = bare.display_id;
+    }
     sourceDocumentRef = atRef;
   }
 
@@ -1355,6 +1375,10 @@ export async function postSettlementCreatorInClientTx(
           vendorId: vendor.id,
           vendorDocumentNumber: exp.vendor_document_number?.trim() || undefined,
           loadId,
+          // ROUND 443.6 c — every bill carries the driver, unit and trailer of the settlement it came from.
+          driverId: draft.driver_id,
+          unitId: draft.unit_id ?? null,
+          trailerId: draft.trailer_id ?? null,
           billDate: exp.date,
           amountCents: exp.amount_cents,
           memo: billMemo,
@@ -1596,46 +1620,20 @@ export async function postSettlementCreatorInClientTx(
       );
     }
     const loadedDesc = `Load ${load.load_number} — Loaded Miles ${payMiles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.line_haul_rate_cents) / 100).toFixed(2)}`;
-    await client.query(
-      `
-        INSERT INTO driver_finance.settlement_lines (
-          settlement_id, operating_company_id, line_type, description, amount, load_id,
-          quantity, rate_cents, unit_of_measure, item_id, is_active, is_sample_data
-        )
-        SELECT $1::uuid, $2::uuid, 'earnings', $3, $4, $5::uuid, $6, $7, 'mi', $8::uuid, true, false
-        WHERE NOT EXISTS (
-          SELECT 1 FROM driver_finance.settlement_lines sl
-           WHERE sl.settlement_id = $1::uuid
-             AND sl.load_id = $5::uuid
-             AND sl.line_type = 'earnings'
-             AND sl.voided_at IS NULL
-        )
-      `,
-      [settlementId, draft.operating_company_id, loadedDesc, dollarsFromCents(loadedCents), loadId, payMiles, Number(load.line_haul_rate_cents), payItems.loaded.id],
-    );
+    await writeDriverPayLine(client, {
+      settlementId, companyId: draft.operating_company_id, loadId, loadNumber: load.load_number, lineType: "earnings",
+      description: loadedDesc, cents: loadedCents, quantity: payMiles, rateCents: Number(load.line_haul_rate_cents), itemId: payItems.loaded.id,
+    });
 
     // Empty (deadhead) miles: empty rate when set, else the loaded rate (one deadhead rule, deadhead-rule.ts).
     const emptyRateCents = creatorEmptyRateCents(load);
     if (emptyRateCents != null && Number(load.empty_miles ?? 0) > 0) {
       const emptyCents = creatorEmptyPayCents(load);
       const emptyDesc = `Load ${load.load_number} — Empty Miles ${Number(load.empty_miles).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(emptyRateCents / 100).toFixed(2)}`;
-      await client.query(
-        `
-          INSERT INTO driver_finance.settlement_lines (
-            settlement_id, operating_company_id, line_type, description, amount, load_id,
-            quantity, rate_cents, unit_of_measure, item_id, is_active, is_sample_data
-          )
-          SELECT $1::uuid, $2::uuid, 'deadhead_pay', $3, $4, $5::uuid, $6, $7, 'mi', $8::uuid, true, false
-          WHERE NOT EXISTS (
-            SELECT 1 FROM driver_finance.settlement_lines sl
-             WHERE sl.settlement_id = $1::uuid
-               AND sl.load_id = $5::uuid
-               AND sl.line_type = 'deadhead_pay'
-               AND sl.voided_at IS NULL
-          )
-        `,
-        [settlementId, draft.operating_company_id, emptyDesc, dollarsFromCents(emptyCents), loadId, Number(load.empty_miles), emptyRateCents, payItems.empty.id],
-      );
+      await writeDriverPayLine(client, {
+        settlementId, companyId: draft.operating_company_id, loadId, loadNumber: load.load_number, lineType: "deadhead_pay",
+        description: emptyDesc, cents: emptyCents, quantity: Number(load.empty_miles), rateCents: emptyRateCents, itemId: payItems.empty.id,
+      });
     }
 
     // Invoices do not change driver pay; a dry run (rolled back) never mints or sends one.
@@ -1846,12 +1844,20 @@ export async function previewSettlementCreatorThroughClose(
   client: DbClient,
   actorUserId: string,
   draft: SettlementCreatorDraft,
+  actorRole = "Owner",
 ): Promise<SettlementCreatorPreview> {
   const preview = await previewSettlementCreator(client, draft);
+  // The dry run books and delivers loads; dispatch queues money side effects (revenue latch) for after COMMIT. They
+  // are discarded with the savepoint so a preview never fires anything for loads it rolled back.
+  const afterCommitMarkAt = afterCommitMark(client);
   await client.query("SAVEPOINT settlement_creator_dry_run");
   let closeTotals: SettlementCreatorCloseTotals | null = null;
   let refusal: string | null = null;
   try {
+    // ROUND 443.7 a — the dry run books the draft's loads exactly as the post does (bookLoadOnClient, same checks),
+    // inside this savepoint, which is rolled back: before this the preview looked up loads that did not exist yet,
+    // so a new settlement could never show can_post. Nothing here survives; no after-book extra runs.
+    await ensureDispatchedLoadsForCreator(client, { uuid: actorUserId, role: actorRole }, draft);
     const dry = await postSettlementCreatorInClientTx(client, actorUserId, draft, { dryRun: true });
     closeTotals = dry.close_totals ?? null;
   } catch (err) {
@@ -1859,6 +1865,7 @@ export async function previewSettlementCreatorThroughClose(
   } finally {
     await client.query("ROLLBACK TO SAVEPOINT settlement_creator_dry_run");
     await client.query("RELEASE SAVEPOINT settlement_creator_dry_run");
+    afterCommitRollbackTo(client, afterCommitMarkAt);
   }
   const blockers = [...preview.blockers];
   if (refusal) blockers.push(`Posting engine: ${refusal}`);

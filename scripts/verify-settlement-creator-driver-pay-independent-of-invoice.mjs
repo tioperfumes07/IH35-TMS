@@ -59,7 +59,7 @@ function selftest() {
   const bad = [];
   if (problems(good).length) bad.push(`real tree flagged: ${problems(good).join("; ")}`);
   if (!problems(m("svc", "const loadedCents = creatorLoadedPayCents(load);", "const loadedCents = load.line_haul_amount_cents ?? creatorLoadedPayCents(load);")).some((x) => /invoice amount/.test(x))) bad.push("invoice amount in earnings passed");
-  if (!problems(m("svc", "payItems.loaded.id]", '(await itemByName(client, co, "Driver Pay-CDL-Loaded Miles"))?.id]')).some((x) => /CDL/.test(x))) bad.push("a CDL literal passed");
+  if (!problems(m("svc", "itemId: payItems.loaded.id,", 'itemId: (await itemByName(client, co, "Driver Pay-CDL-Loaded Miles"))!.id,')).some((x) => /CDL/.test(x))) bad.push("a CDL literal passed");
   if (!problems(m("item", 'flag === false ? "cdl" : null;', 'flag === false ? "cdl" : "cdl";')).some((x) => /has_b1_visa/.test(x))) bad.push("a CDL default passed");
   if (!problems(m("gate", "driver_finance.driver_bills db WHERE db.load_id = l.id AND db.voided_at IS NULL", "driver_finance.driver_bills db WHERE db.load_id = l.id AND db.revoked_at IS NULL AND db.voided_at IS NULL")).some((x) => /revoked_at/.test(x))) bad.push("revoked_at passed");
   if (!problems(m("rule", "toFixed(6)", "toFixed(0)")).some((x) => /numeric/.test(x))) bad.push("float rounding passed");

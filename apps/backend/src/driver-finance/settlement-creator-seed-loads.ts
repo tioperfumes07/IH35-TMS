@@ -2,9 +2,10 @@
  * R-186.1 — seed not-yet-delivered loads through bookLoad (app path), never ops SQL.
  * Automatic Owner override for medical/HOS/CDL with the owner-mandated reason.
  */
-import { bookLoad, type BookLoadInput } from "../dispatch/book-load.service.js";
+import { bookLoadOnClient, type BookLoadInput } from "../dispatch/book-load.service.js";
 import type { SettlementCreatorDraft, SettlementCreatorLoadBlock } from "./settlement-creator.types.js";
 import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
+import { deliverLoadThroughDispatch, stampDeliveryStopActuals } from "./settlement-creator-deliver.js";
 
 export const SETTLEMENT_CREATOR_QUAL_OVERRIDE_REASON =
   "entered from the AlwaysTrack settlement / load history (Settlement Creator)";
@@ -206,15 +207,20 @@ export function buildCharges(load: SettlementCreatorLoadBlock, catalog: CatalogC
 }
 
 /**
- * Book every missing load via bookLoad (same engine as Dispatch Book Load).
- * Runs OUTSIDE the settlement Creator transaction (bookLoad owns its own withCurrentUser tx).
+ * Book every missing load via bookLoadOnClient (same checks and engine as Dispatch Book Load) on the CALLER's
+ * transaction — ROUND 443.7: the loads, the settlement and every document are one transaction, so a refused post
+ * leaves zero rows and a retry of the same draft succeeds. Returns the after-book extras (geofences, geocode backfill,
+ * reference miles) for the caller to run ONLY after its COMMIT succeeds.
  */
 export async function ensureDispatchedLoadsForCreator(
   client: DbClient,
   actor: { uuid: string; role: string },
   draft: SettlementCreatorDraft,
-): Promise<{ created_load_numbers: string[] }> {
+): Promise<{ created_load_numbers: string[]; afterCommit: Array<() => void> }> {
   const created: string[] = [];
+  const afterCommit: Array<() => void> = [];
+  // LEAD RULING ROUND 443.7 (Option A): the Creator owns the tour settlement's close for this whole transaction.
+  await client.query(`SELECT set_config('app.settlement_creator_post', 'on', true)`);
   const seed = draft.seed_dispatched_loads !== false; // default ON for R-186.1 critical path
 
   const chargeCatalog = (
@@ -309,15 +315,25 @@ export async function ensureDispatchedLoadsForCreator(
       notes: `Settlement Creator R-186.1 seed · load ${load.load_number}`,
     };
 
-    const result = await bookLoad(input);
+    const booked = await bookLoadOnClient(client as never, input);
+    const result = booked.result;
     if (result.kind !== "ok") {
       throw new SettlementCreatorSeedError(
         "book_load_failed",
         `Load ${load.load_number}: bookLoad failed — ${JSON.stringify(result.payload)}`,
       );
     }
+    afterCommit.push(booked.afterCommit);
     created.push(load.load_number.trim());
+    // A delivered load is delivered NOW, before the next load of the tour is booked on the same truck (bookLoad refuses
+    // a unit still active on an undelivered load — measured on a prod fork, ROUND 443.7).
+    const delivered = !(load.not_yet_delivered !== false && !load.delivery_date);
+    const bookedId = String((result as { row?: { id?: unknown } }).row?.id ?? "");
+    if (delivered && bookedId) {
+      await stampDeliveryStopActuals(client, bookedId, load.delivery_date, load.pickup_date);
+      await deliverLoadThroughDispatch(client, actor.uuid, draft.operating_company_id, bookedId, load.delivery_date);
+    }
   }
 
-  return { created_load_numbers: created };
+  return { created_load_numbers: created, afterCommit };
 }
