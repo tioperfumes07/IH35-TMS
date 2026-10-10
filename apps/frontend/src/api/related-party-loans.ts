@@ -25,7 +25,9 @@ export type LoanTargetType =
   | "repayment"
   | "intercompany"
   | "bank_funding"
-  | "bank_repayment";
+  | "bank_repayment"
+  /** ROUND 443.22-2e — personal pay to vendor; no company bank line. */
+  | "paid_direct_vendor";
 export type LoanStatus = "draft" | "open" | "paid" | "reversed";
 export type LoanInterestMethod = "simple" | "amortized" | "none";
 export type LoanPaymentFrequency =
@@ -58,6 +60,10 @@ export type CreateRelatedPartyLoanRequest = {
   funding_source_note?: string;
   /** ROUND 443.22-2a — bank Loan action stamps reverse pointer on the bank line. */
   bank_transaction_id?: string | null;
+  /** ROUND 443.22-2e — debit account for paid_direct_vendor (e.g. Relay Fuel Wallet). */
+  funding_account_id?: string | null;
+  /** ROUND 443.22-2e — optional intermediary who paid from a personal account. */
+  intermediary_name?: string;
 };
 
 export type RelatedPartyLoanRow = {
@@ -85,6 +91,11 @@ export type RelatedPartyLoanRow = {
   note_file_id?: string | null;
   has_note?: boolean | null;
   funding_source_note?: string | null;
+  /** ROUND 443.22-2e — debit CoA for paid-direct advances. */
+  funding_account_id?: string | null;
+  funding_account_number?: string | null;
+  funding_account_name?: string | null;
+  intermediary_name?: string | null;
   created_at?: string | null;
 };
 
