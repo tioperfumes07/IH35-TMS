@@ -7379,3 +7379,14 @@ consumed_at: 2026-10-05T16:15:00Z
 consumed_by: CC-2
 row_counts: 0 table rows. 1 role created (ih35_guard_reader) on br-fancy-credit-akjnd07a; 1 role grant (pg_read_all_data); 1 role setting (default_transaction_read_only=on).
 proof_query: SELECT rolname, rolconfig, member_of FROM pg_roles ... WHERE rolname IN ('ih35_guard_reader','ih35_ci_readonly') on br-fancy-credit-akjnd07a -> ih35_guard_reader {default_transaction_read_only=on} member_of {pg_read_all_data}. Logged in as it: 12,521 bank lines readable across companies; INSERT refused ("cannot execute INSERT in a read-only transaction"); with READ WRITE forced, refused ("permission denied for table journal_entries"). The gate credential on this machine (~/.ih35-gate.env) now connects as ih35_guard_reader; the previous file is kept as ~/.ih35-gate.env.ih35_ci_readonly.bak. Live guards under it: no-row-escapes, vendor-balances, spine-link, void-releases-bank-lines, qbo-flags-blocked, no-test-markers, void-is-whole PASS; draft-load EMPTY BY PURGE.
+
+## AUTH-403
+issued_at: 2026-10-10T20:09:00Z
+scope: production Neon project tiny-field-89581227, branch br-fancy-credit-akjnd07a, USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) ONLY. Rows whose parent load / invoice / settlement / driver bill / fuel transaction / expense no longer exists, in the tables of scripts/purge/usmca-purge-classification.json ORPHANS. Banking never: journal entries, postings, bank transactions, expenses must be unchanged or the run rolls back.
+action: OWNER_AUTH_ID=AUTH-403 DATABASE_URL=<prod owner> npx tsx scripts/purge/purge-orphans-of-purged-documents.mts --commit (after migration 202615450900 is applied)
+expires_at: 2026-10-11T08:30:00Z
+status: ISSUED
+owner_words: "there should be nothing from before that is why we deleted and purged" and "delete anything related to the purge. Not any banking transactions." (2026-10-10, relayed by the Lead in ROUND 443.9, docs/bus/2026-10-10-LEAD-ROUND-443-ORDERS.md)
+why: the AUTH-400 purge left rows pointing at purged documents — the generator censused 9 schemas (reports, pwa never seen), never classified the feed-gate tables, and feed_intake_checks' WORM trigger had no listed-row arm.
+expected_row_counts (dry run on prod 2026-10-10 20:15Z, rolled back): feed_intake_checks 24, feed_intakes 2, lane_profitability_cache 2,891, deadhead_cache 22, driver_notifications 273 (1 kept), docs.file_links 382 (422 kept), docs.files 12 (484 kept: owner uploads and files linked to live drivers / customers / units stay), fuel_gps_matches 0 (85 kept — they point at kept bank transactions), tank_events 0 (1 kept), load_stops 0. Total 3,606.
+rehearsed: throwaway fork br-wild-grass-akimpgdv (deleted): migration applied twice; --commit removed exactly 3,606 rows, 3,606 audit.record_deletions rows, every orphan count 0, banking 280 / 560 / 1,291 / 5 unchanged.

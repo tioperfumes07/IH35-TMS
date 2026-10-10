@@ -193,6 +193,9 @@ export const TABLE_REGISTRY = {
   "accounting.recurring_bill_templates": { status: "NOT_TRANSACTIONAL", reason: "template config" },
   "accounting.recurring_templates": { status: "NOT_TRANSACTIONAL", reason: "template config" },
   "accounting.related_party_loan_entries": { status: "OUT_OF_SCOPE", reason: "financing" },
+  // ROUND 443.22-1: Option 1 LOC facility header (migration 202615441200). Money lives on
+  // related_party_loan_entries (+ their JE); the facility is the running-balance register per person.
+  "accounting.related_party_loan_facilities": { status: "NOT_TRANSACTIONAL", reason: "Option 1 related-party LOC facility header per lender; entries carry the money and the bank pointer" },
   "accounting.related_party_loan_schedule": { status: "OUT_OF_SCOPE" },
   "accounting.revenue_contracts": { status: "OUT_OF_SCOPE", reason: "AR" },
   "accounting.revenue_obligations": { status: "OUT_OF_SCOPE" },

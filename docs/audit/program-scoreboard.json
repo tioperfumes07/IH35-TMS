@@ -1,10 +1,10 @@
 {
-  "healthzSha": "9510ccf",
-  "generated_at": "2026-10-10T22:31:46.535Z",
+  "healthzSha": "fa9c10e",
+  "generated_at": "2026-10-10T23:01:32.929Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "9510ccf",
+    "deployedSha": "fa9c10e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,69 @@
   },
   "recentActivity": [
     {
+      "number": 26209,
+      "title": "FINDING: ROUND-443.9 LANE: FINANCIAL -- the AUTH-400 purge left 3,606 USMCA rows pointing at purged documents (feed intakes/checks, lane + deadhead caches, driver notifications, file links, generated dispatch files) because the generator never saw reports/pwa, never classified the feed-gate tables, and feed_intake_checks' WORM had no listed-row arm; the purge engine now knows them",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 06:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26209",
+      "sha": "53b3f4c9dd",
+      "committedAtIso": "2026-10-10T18:00:33-05:00"
+    },
+    {
+      "number": 26208,
+      "title": "Cursor- ROUND-443.22-MIG: land migration 202615441200 on main (collision unblock)",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26208",
+      "sha": "51c255f57b",
+      "committedAtIso": "2026-10-10T17:59:43-05:00"
+    },
+    {
+      "number": 26207,
+      "title": "docs(bus): Lead — QuickBooks invoice->load map (001-143) + exceptions for the 443.19 pre-flight",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26207",
+      "sha": "fa9c10ee4c",
+      "committedAtIso": "2026-10-10T17:56:48-05:00"
+    },
+    {
+      "number": 26206,
+      "title": "FINDING: ACCT-F2026101006 FINDING: ACCT-F2026101007 LANE: FINANCIAL — fix DisputesHubPage EntityLink + MoneyInput reds + 443.18 Disputes tab in Driver Finance sidebar",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26206",
+      "sha": "60500127c4",
+      "committedAtIso": "2026-10-10T22:39:23Z"
+    },
+    {
+      "number": 26205,
+      "title": "FINDING: ROUND-443.22-1 LANE: FINANCIAL — accounting.related_party_loan_facilities was live on Neon (migration 202615441200) but unclassified in verify-transaction-linkage-law TABLE_REGISTRY, so every seat's money gate went red",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26205",
+      "sha": "094c0d5afa",
+      "committedAtIso": "2026-10-10T17:36:43-05:00"
+    },
+    {
+      "number": 26204,
+      "title": "docs(bus): ROUND 443.22 Lead order to Cursor (related-party loans from bank Categorize) + rulings to CC-1/CC-2/CC-3 + NOW-CURSOR pointer",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26204",
+      "sha": "1ef894eaf2",
+      "committedAtIso": "2026-10-10T17:35:57-05:00"
+    },
+    {
+      "number": 26202,
+      "title": "FINDING: ACCT-F2026100640 LANE: FINANCIAL — ROUND 443.21: the Relay webhook stored a fill under the ?entity company; the only account in use posts to ?entity=TRANSP, so USMCA never got its fuel by webhook (and after 443.15 it would be refused); a verified TRANSP or USMCA delivery is now stored once, under USMCA",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26202",
+      "sha": "51ce8937a3",
+      "committedAtIso": "2026-10-10T17:32:12-05:00"
+    },
+    {
       "number": 26203,
       "title": "chore(claim): restore 202615450900 (CC-3 443.9, dropped by #26173 merge) + reserve 202615460900 (CC-3 443.16)",
       "state": "merged",
@@ -2148,69 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26200",
       "sha": "cb0ac0022f",
       "committedAtIso": "2026-10-10T17:15:11-05:00"
-    },
-    {
-      "number": 26199,
-      "title": "FINDING: N/A (CLAIM-RESERVE 12431 -- reservation-only commit, no code fix)",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26199",
-      "sha": "ec8e52c64b",
-      "committedAtIso": "2026-10-10T17:14:17-05:00"
-    },
-    {
-      "number": 26197,
-      "title": "FINDING: N/A (CLAIM-RESERVE 18373 -- reservation-only commit, no code fix)",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26197",
-      "sha": "f12de0403a",
-      "committedAtIso": "2026-10-10T17:10:06-05:00"
-    },
-    {
-      "number": 26190,
-      "title": "FINDING: ACCT-F2026100637 LANE: claude — ROUND 443.15: the Relay ingest stored the same fill under TRANSP and USMCA (172 fills, 53 new on 10-08); a fill is now stored once, under USMCA only",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26190",
-      "sha": "1b6acac9a4",
-      "committedAtIso": "2026-10-10T17:08:12-05:00"
-    },
-    {
-      "number": 26196,
-      "title": "CC-2-FIX main undeployable: #26193 nested export in expenses.routes.ts + 2 reds it left",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26196",
-      "sha": "3f6eb1e6c9",
-      "committedAtIso": "2026-10-10T17:07:53-05:00"
-    },
-    {
-      "number": 26195,
-      "title": "FINDING: N/A (CC-1 ROUND 443.20) — renumber 202610100100→202610100200 collision repair",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26195",
-      "sha": "1cf09aeba1",
-      "committedAtIso": "2026-10-10T17:04:24-05:00"
-    },
-    {
-      "number": 26194,
-      "title": "docs(bus): Lead rulings (443.15 option c, 443.20 migration collision) + ROUND 443.21 to CC-2 (Relay webhook lands in USMCA)",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26194",
-      "sha": "af913c4779",
-      "committedAtIso": "2026-10-10T17:02:50-05:00"
-    },
-    {
-      "number": 26193,
-      "title": "FINDING: ACCT-F443-13 (CC-1) — bill loadId/vendorDocumentNumber, createExpenseInClientTx export, 443.12 guard correction",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 04:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26193",
-      "sha": "b16e2ba96b",
-      "committedAtIso": "2026-10-10T16:56:57-05:00"
     }
   ]
 }

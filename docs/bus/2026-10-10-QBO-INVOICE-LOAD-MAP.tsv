@@ -1,0 +1,146 @@
+qbo_invoice_number	date	customer	amount	line_description
+001	2026-08-10	Rehmann Transportation Corp.	3600.0	Load Number - 001 
+002	2026-08-10	Impact Bulk Logistics	3000.0	Load Number - 002 
+003	2026-08-10	NCC Logistics	2500.0	Load Number - 003 
+004	2026-08-12	Watco Supply Chain Services LLC DBA Watco Logistics	1700.0	Load Number - 004
+005	2026-08-13	Magna Transport Solutions LLC	2700.0	Load Number - 005 
+006	2026-08-13	BV Logistics Inc	2600.0	Load Number - 006
+007	2026-08-13	ITS Logistics LLC	350.0	Load Number - 007 
+008	2026-08-13	FLS TRANSPORTATION SERVICES LIMITED	525.0	LOAD NUMBER - 008 
+009	2026-08-13	FLS TRANSPORTATION SERVICES LIMITED	525.0	LOAD NUMBER - 009
+010	2026-08-13	SUPPLY CHAIN MANAGEMENT	4000.0	Load Number - 010 
+011	2026-08-14	Sethmar Transportation	700.0	Load Number - 011 - Line Haul 
+012	2026-08-14	CTS EXPRESS LLC	4000.0	Load Number - 012 - Line Haul 
+013	2026-08-14	Semares Forwarding Services	4900.0	Load Number - 013 - Line Haul 
+014	2026-08-17	CORE LOGISTICS BROKERAGE	3500.0	load Number - 014 - 13521
+015	2026-08-17	DLS Dardini Logistics Services	3600.0	Load Number - 015 - 13523
+016	2026-08-18	MPH CARRIER SERVICES, INC	3800.0	Line Haul
+017	2026-08-19	Sajacks Freigth	3100.0	Load Number - 017- 13528
+018	2026-08-19	DLS Dardini Logistics Services	3900.0	Load Number - 018 - 13529
+019	2026-08-19	JRAYL TRANSPORT	3500.0	LOAD NUMBER - 019 - 13526 
+020	2026-08-21	Del-Can Logistics LLC	1000.0	Load Number--020-13532
+021	2026-08-24	OSTT LOGISTICS LLC	3300.0	Load Number - 021 - 13537 
+022	2026-08-21	Del-Can Logistics LLC	3100.0	Load Number-022-13534
+023	2026-08-21	Semares Forwarding Services	4900.0	Load Number-023-13535
+024	2026-08-21	PRODIGEE LOGISTICS LLC	4000.0	Load Number-024-13536
+025	2026-08-24	Jericho freight LLC	800.0	Load Number - 025 - 13538 
+026	2026-08-25	IM Specialized Logistics, LLC.	3120.0	Load Number -026 
+027	2026-08-26	PFL Logistics CO.	2500.0	LOAD NUMBER - 027 - 13543
+028	2026-08-26	Hawkeye Transportation Services, Inc.	600.0	Load Number - 028 -  13544
+029	2026-08-28	Silo Simple Logistics	4000.0	Load Number - 029 - 13542
+030	2026-08-28	John J. Jerue Truck Broker, Inc	4800.0	Load Number - 030 -13545
+031	2026-08-28	John J. Jerue Truck Broker, Inc	1100.0	Load Number - 031 - 13546 
+032	2026-08-28	John J. Jerue Truck Broker, Inc	4800.0	Load Number - 032 - 13547 
+033	2026-08-28	MPH CARRIER SERVICES, INC	2300.0	Load Number - 033 - 13548
+034	2026-08-28	R2X LLC	1000.0	Load Number - 034 - 13549 
+035	2026-08-28	Semares Forwarding Services	4900.0	Load Number - 035 - 13550 
+036	2026-08-28	Hummingbird Logistix, LLC.	4000.0	Load Number - 036 - 13556 
+037	2026-08-31	Armstrong Transport GR	3000.0	Load Number - 037 - 13551
+038	2026-08-31	Del-Can Logistics LLC	3000.0	Load Number - 038 - 13552 
+039	2026-08-31	Big G Logistics	3500.0	Load Number - 039 - 13554 
+040	2026-08-31	DGL Freight Broker	3900.0	Load Number - 040 - 13557 
+041	2026-08-31	ABGL	3500.0	Load Number - 041 - 13558
+042	2026-08-31	SFL Companies	3800.0	Load Number - 042 - 13559
+043	2026-08-31	Sheer Logistics	4400.0	Load Number - 043 - 13560
+044	2026-08-31	Refrigerx Transportation LLC	3450.0	Load Number - 044 - 13561
+045	2026-09-03	Armstrong Transport GR	3000.0	Load Number - 045 - 13564
+046	2026-09-02	Hawkeye Transportation Services, Inc.	600.0	Load Number - 046 - 13541
+047	2026-09-02	PREMIUM EXPRESS	1000.0	Load Number - 047 - 13562
+048	2026-09-03	BROCK TRANSPORTATION	1100.0	Load Number - 048 - 13566
+049	2026-09-03	ABGL	2100.0	Load Number - 049 - 13567
+050	2026-09-03	ABGL	4000.0	Load Number - 050 - 13568 
+051	2026-09-03	Armstrong Transport GR	3000.0	Load Number - 051 - 13569
+052	2026-09-04	XPR Logistics	6115.0	Load Number - 052 - 13570  / Warehouse-Lumper Fee - Load Number - 052 - 13570 
+053	2026-09-04	Semares Forwarding Services	4900.0	Load Number - 053 - 13571  
+054	2026-09-04	Armstrong Transport GR	2300.0	Load Number - 054 - 13573 
+055-13555	2026-09-08	2 EMS Transportation	3180.0	Load Number - 055 - 13555
+056-13574	2026-09-08	ES Logistics	4400.0	Load Number - 056 - 13574
+057-13575	2026-09-08	ES Logistics	2200.0	Load Number - 057-13575
+058-13576	2026-09-08	Refrigerx Transportation LLC	3700.0	Load Number - 058-13576
+059-13577	2026-09-08	Armstrong Transport GR	3500.0	Load Number - 059-13577
+059-13578	2026-09-08	Refrigerx Transportation LLC	5210.0	Load Number - 059-13578
+060-13579	2026-09-08	Semares Forwarding Services	4900.0	Load Number - 060-13579
+061-13585	2026-09-10	Direct Connect Logistix	2100.0	Invoice Number - 061-13585
+062-13584	2026-09-10	Tennessee Steel Haulers LLC	1000.0	Load Number - 062-13584
+063-13580	2026-09-11	Triple T Transport, INC	3300.0	Load Number - 063-13580
+064-13581	2026-09-11	Semares Forwarding Services	4900.0	Load Number - 064-13581
+065-13583	2026-09-17	Hawkeye Transportation Services, Inc.	6850.0	Load Number - 065-13583
+066-13586	2026-09-11	Mode Transportation LLC	3600.0	Load Number - 066-13586
+067-13582	2026-09-11	Semares Forwarding Services	4900.0	Load Number - 064-13582
+068-13588	2026-09-11	Refrigerx Transportation LLC	5700.0	Load Number - 068-13588
+069-13589	2026-09-11	Kirsch Transportation Services INC	4150.0	Load Number - 069-13589
+070-13587	2026-09-14	KEY GLOBAL LOGISTICS	4120.0	Load Number - 070-13587
+071-13590	2026-09-14	AB Global Logistics , Inc	5500.0	Load Number - 071-13590
+072-13591	2026-09-14	ROAR LOGISTICS	3700.0	Load Number - 072-13591
+073-13592	2026-09-14	ES Logistics	4400.0	Load Number - 073-13592
+074-13593	2026-09-14	Aligator	4800.0	Load Number - 074-13593
+075-13594	2026-09-14	Daffinson Logistics	3250.0	Load Number - 075-13594
+076-13596	2026-09-14	Semares Forwarding Services	4900.0	Load Number - 076-13596
+077-13597	2026-09-14	Semares Forwarding Services	4900.0	Load Number - 077-13597
+078-13598	2026-09-17	Sunteck Transport Co., LLC	4000.0	Load Number - 078-13598
+079-13601	2026-09-17	Armstrong Transport GR	3600.0	Load Number - Load Number - 078-13598
+080-13599	2026-09-18	WHITEHORSE FREIGHT	4400.0	load Number - 080-13599
+080-13605	2026-09-17	Refrigerx Transportation LLC	3700.0	Load Number - 080-13605
+081-13600	2026-09-18	RLS LOGISTICS	4900.0	Load Number - 081-13600
+082-13602	2026-09-18	Semares Forwarding Services	4900.0	Load Number - 082-13602
+083-13603	2026-09-18	PLS LOGISTICS SERVICES	4400.0	Load Number - 083-13603
+084-13605	2026-09-18	Refrigerx Transportation LLC	3700.0	Load Number - 084-13605
+085-13606	2026-09-18	Fuze Logistics Services USA	1100.0	Load Number - Load Number - 084-13605
+086-13604	2026-09-18	Semares Forwarding Services	4900.0	Load Number - 086-13604
+087-13612	2026-09-21	Semares Forwarding Services	4900.0	Load Number. - 087-13612
+088-13607	2026-09-21	CIRCLE LOGISTICS, INC	5217.0	Load Number - 088-13607
+089-13608	2026-09-21	ES Logistics International LLC	4400.0	Load number - 089-13608
+090-13610	2026-09-21	Refrigerx Transportation LLC	5900.0	Load Number - 090-13610
+091-13611	2026-09-21	Refrigerx Transportation LLC	3200.0	Load Number - 091-13611
+092-13613	2026-09-21	Refrigerx Transportation LLC	5700.0	Load Number - 092-13613
+093-13614	2026-09-21	Refrigerx Transportation LLC	3450.0	Load Number - 093-13614
+094- 13613	2026-09-25	TTS, LLC	2200.0	Load Number - 094- 13613
+095- 13615	2026-09-25	Semares Forwarding Services	4900.0	Load Number- 095- 13615
+096- 13617	2026-09-25	Greatwide Dallas Mavis, LLC	4019.72	Load Number - 096- 13617
+097- 13618	2026-09-25	Refrigerx Transportation LLC	3700.0	Load Number - 097- 13618
+098- 13619	2026-09-25	ONPOINT LOGISTICS	4400.0	Load Number- 098- 13619
+099-13609	2026-09-25	Steam Logistics, LLC	2400.0	Load Number - 099-13609 
+100-13616	2026-09-25	Refrigerx Transportation LLC	5700.0	Load Number - 100-13616
+101-13620	2026-09-25	ACE DORAN	4300.0	Load Number - 101-13620
+102-13621	2026-09-25	Semares Forwarding Services	4900.0	Load Number - 102-13621
+103-13625	2026-09-25	Logistimax, LLC	6250.0	Load Number - 103-13625
+104-13626	2026-09-25	FLS TRANSPORTATION SERVICES LIMITED	3400.0	Load Number - 104-13626
+105- 13624	2026-09-28	WESTGATE GLOBAL LOGISTICS	5200.0	Load Number - 105- 13624
+105- 13627	2026-09-25	EGRO TRANSPORT LLC	3200.0	Load number - 105- 13627
+106- 13629	2026-09-28	GLT LOGISTICS	3200.0	Load Number - 106- 13629
+107- 13628	2026-09-28	Armstrong Transport GR	4875.0	Load Number - 107- 13628
+108- 13631	2026-09-28	CENTRAL FREIGHT MANAGEMENT, LLC	3200.0	Load Number -  108- 13631
+109- 13632	2026-09-28	Rite Way Logistics, Inc	4000.0	Load Number - 109- 13632
+110- 13633	2026-09-28	ACE DORAN	4300.0	Load Number - 110- 13633
+111- 13636	2026-09-28	WESTGATE GLOBAL LOGISTICS	5200.0	Load Number - 111- 13636
+112- 13638	2026-09-28	Semares Forwarding Services	4900.0	Load Number - 112- 13638
+113- 13639	2026-09-28	Refrigerx Transportation LLC	5700.0	Load Number. - 113- 13639
+114- 13623	2026-09-29	EGRO TRANSPORT LLC	3200.0	Load Number - 114- 13623
+115- 13630	2026-09-30	Refrigerx Transportation LLC	3200.0	Load Number - 115- 13630
+116- 13637	2026-09-29	WESTGATE GLOBAL LOGISTICS	5200.0	Load Number - 116- 13637
+117 - 13640	2026-09-30	Del-Can Logistics LLC	1120.0	Load Number - 117 - 13640
+118 - 13643	2026-09-30	Refrigerx Transportation LLC	3900.0	Load Number - 118 - 13643
+119	2026-10-01	Refrigerx Transportation LLC	3900.0	Load Number - 119 
+120	2026-10-01	Semares Forwarding Services	4900.0	Load Number - 120 
+121-13641	2026-10-02	ACE DORAN	5200.0	Load Number - 121-13641 
+122-13642	2026-10-02	Refrigerx Transportation LLC	3900.0	Load Number - 122-13642
+123-13644	2026-10-02	Armstrong Transport GR	4000.0	Load Number - 123-13644
+124-13646	2026-10-02	AB Global Logistics , Inc	3500.0	Load Number - 124-13646
+125-13647	2026-10-05	Arm Strong Transport Group	4250.0	Load Number - 125-13647
+126-13648	2026-10-05	Del-Can Logistics LLC	4000.0	Load Number - 126-13648
+127-13649	2026-10-05	TRIDENT  TRANSPORT,LLC	4100.0	Load Number - 127-13649
+128-13650	2026-10-05	ABGL	5000.0	Load Number - 128-13650
+130-13653	2026-10-05	Refrigerx Transportation LLC	3200.0	Load Number - 130-13653
+131-13654	2026-10-05	Refrigerx Transportation LLC	3200.0	Load Number - 131-13654 
+132-13655	2026-10-05	Simple Logistics LLC	4000.0	Load Number - 132-13655
+133-13656	2026-10-05	Refrigerx Transportation LLC	5700.0	Load Number - 133-13656
+134-13652	2026-10-05	Semares Forwarding Services	4900.0	Load Number - 134-13652 
+135-13660	2026-10-07	Refrigerx Transportation LLC	3200.0	Load Number 135-13660
+136-13659	2026-10-08	Armstrong Transport GR	4000.0	Load Number - 135-13659 
+137-13663	2026-10-08	Jear Logistics, LLC	3300.0	Load Number - 137-13663
+138-13658	2026-10-09	ACE DORAN	4450.0	Load Number - 138-13658
+139-13661	2026-10-09	Refrigerx Transportation LLC	6200.0	Load Number - 139-13661
+140-13662	2026-10-09	Refrigerx Transportation LLC	5700.0	Load Number - 140-13662
+141-13664	2026-10-09	New Era Logistics	5300.0	Load Number - 141-13664
+142-13665	2026-10-09	GAMPAC LOGISTICS	5000.0	Load Number - 142-13665 
+143-13667	2026-10-09	New Era Logistics	5300.0	Load Number - 143-13667
