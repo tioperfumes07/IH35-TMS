@@ -2296,6 +2296,11 @@
       "claimed_at": "2026-10-07",
       "claimed_by": "CC-1",
       "purpose": "ROUND 441.5 Phase 2: a money-in bank line categorized to any account creates a DEPOSIT document (QBO Add funds to this deposit) \u2014 deposit_lines line_type 'account' with account_id + received-from, deposits.source_bank_transaction_id, undeposited_funds_account_id optional when no receipts"
+    },
+    "202615441200": {
+      "claimed_at": "2026-10-10",
+      "claimed_by": "cursor",
+      "purpose": "Option 1 related-party LOC: accounting.related_party_loan_facilities + entry facility_id/bank_transaction_id/display_id/document_kind; bank_transactions.matched_related_party_loan_id — every 2410-family categorize funding creates a loan document"
     }
   }
 }
