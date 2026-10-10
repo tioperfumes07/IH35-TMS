@@ -116,9 +116,12 @@ function runChecks() {
   assert(/isDeliveredCreatorLoad|not_yet_delivered/.test(service),
     "Invoice mint must skip not-yet-delivered loads", failures);
   const routes = read(path.join(ROOT, "apps/backend/src/driver-finance/settlement-creator.routes.ts"));
-  assert(/autoSubmitDeliveredLoadToFactor/.test(routes) && /faro_usmca/.test(routes),
+  // ROUND 443.7 b: the after-commit stages moved into settlement-creator-after-commit.ts (reported + retryable);
+  // the route runs them after COMMIT via runCreatorAfterCommit.
+  const afterCommit = read(path.join(ROOT, "apps/backend/src/driver-finance/settlement-creator-after-commit.ts"));
+  assert(/runCreatorAfterCommit\(/.test(routes) && /autoSubmitDeliveredLoadToFactor/.test(afterCommit) && /faro_usmca/.test(afterCommit),
     "Post route must Faro-auto-submit faro_usmca loads AFTER COMMIT", failures);
-  assert(/syncSettlementLoadsToBilling/.test(routes),
+  assert(/syncSettlementLoadsToBilling/.test(afterCommit),
     "Post route must syncSettlementLoadsToBilling after commit", failures);
 
   // ROUND 180 §14 — Edit = void and repost (existing engines only).

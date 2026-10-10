@@ -39,6 +39,8 @@ import {
   previewSettlementCreator,
   postSettlementCreator,
   peekNextSettlementNumber,
+  retrySettlementCreatorAfterCommit,
+  type SettlementCreatorStages,
   type SettlementCreatorDraft,
   type SettlementCreatorPreview,
   type SettlementCreatorFuelCard,
@@ -1335,6 +1337,22 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   }
 
   const [posted, setPosted] = useState<{ label: string; documentIds: string[] } | null>(null);
+  // ROUND 443.7 b — what each stage of the post did; a failed after-commit stage can be retried here.
+  const [postStages, setPostStages] = useState<{ settlementId: string; ok: boolean; stages: SettlementCreatorStages } | null>(null);
+
+  async function retryAfterCommit() {
+    if (!postStages || !companyId) return;
+    setBusy(true);
+    try {
+      const r = await retrySettlementCreatorAfterCommit(companyId, postStages.settlementId);
+      const stages = { ...postStages.stages, ...r.stages };
+      setPostStages({ ...postStages, ok: Object.values(stages).every((x) => x.ok), stages });
+    } catch (e) {
+      setError(String((e as Error).message || "Retry failed"));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function onPost() {
     if (!allowPost || !draft || !preview?.can_post) return;
@@ -1342,7 +1360,13 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     setError(null);
     try {
       const res = await postSettlementCreator(draft);
-      pushToast(`Settlement ${res.source_document_ref || res.display_id} posted`, "success");
+      if (res.stages) setPostStages({ settlementId: res.settlement_id, ok: res.ok, stages: res.stages });
+      pushToast(
+        res.ok
+          ? `Settlement ${res.source_document_ref || res.display_id} posted`
+          : `Settlement ${res.source_document_ref || res.display_id} saved — a follow-up step failed (see below)`,
+        res.ok ? "success" : "error",
+      );
       // ROUND 363-CC2-D — stay open on the posted lines so a wrong account is reclassified here, not after a hunt.
       setPosted({ label: `Settlement ${res.source_document_ref || res.display_id} posted`, documentIds: [...(res.expense_ids ?? [])] });
     } catch (e) {
@@ -1421,6 +1445,25 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               onClose();
             }}
           />
+        ) : null}
+        {postStages ? (
+          <section className="rounded-sm border border-[#E5E7EB] bg-white p-2" data-testid="sc-post-stages">
+            <h3 className="text-center text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Post result</h3>
+            <ul className="mt-1 space-y-0.5">
+              {(["documents", "ledger", "factoring", "billing"] as const).map((k) => (
+                <li key={k} data-testid={`sc-post-stage-${k}`} className={postStages.stages[k].ok ? "text-[#16A34A]" : "text-red-600"}>
+                  {postStages.stages[k].ok ? "✓" : "✗"} {postStages.stages[k].message}
+                </li>
+              ))}
+            </ul>
+            {!postStages.ok && (!postStages.stages.factoring.ok || !postStages.stages.billing.ok) ? (
+              <div className="mt-1 text-center">
+                <Button size="sm" variant="secondary" loading={busy} onClick={() => void retryAfterCommit()} data-testid="sc-post-retry">
+                  Retry the failed step
+                </Button>
+              </div>
+            ) : null}
+          </section>
         ) : null}
         {wrongEntity ? (
           <p className="text-xs text-red-600" data-testid="settlement-creator-usmca-only">

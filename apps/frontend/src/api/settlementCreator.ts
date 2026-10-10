@@ -175,9 +175,26 @@ export async function previewSettlementCreator(draft: SettlementCreatorDraft) {
   );
 }
 
+/** ROUND 443.7 b — each stage of a post, in plain English; ok only when every required stage succeeded. */
+export type SettlementCreatorStage = { ok: boolean; status: string; message: string };
+export type SettlementCreatorStages = {
+  documents: SettlementCreatorStage;
+  ledger: SettlementCreatorStage;
+  factoring: SettlementCreatorStage;
+  billing: SettlementCreatorStage;
+};
+
+export async function retrySettlementCreatorAfterCommit(operatingCompanyId: string, settlementId: string) {
+  return apiRequest<{ ok: boolean; stages: Pick<SettlementCreatorStages, "factoring" | "billing"> }>(
+    `/api/v1/driver-finance/settlement-creator/${encodeURIComponent(settlementId)}/retry-after-commit`,
+    { method: "POST", body: { operating_company_id: operatingCompanyId } },
+  );
+}
+
 export async function postSettlementCreator(draft: SettlementCreatorDraft) {
   return apiRequest<{
-    ok: true;
+    ok: boolean;
+    stages?: SettlementCreatorStages;
     settlement_id: string;
     source_document_ref: string;
     display_id: string;
