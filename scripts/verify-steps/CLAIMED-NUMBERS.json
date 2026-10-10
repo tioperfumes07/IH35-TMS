@@ -16364,5 +16364,10 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1063
+  "total_claimed": 1063,
+  "12419": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-10",
+    "purpose": "verify-book-load-zero-dollar-gate-authorized-only"
+  }
 }
