@@ -211,7 +211,7 @@ function OpenDisputeModal({
       return openInvoiceDispute(selectedInvoice.id, {
         operating_company_id: companyId,
         disputed_amount_cents: disputedCents,
-        expected_amount_cents: expectedCents,
+        expected_amount_cents: expectedCents ?? undefined,
         reason_code: reasonCode,
         reason_text: reasonText.trim() || undefined,
       });
