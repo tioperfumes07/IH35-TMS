@@ -81,6 +81,9 @@ export type RelatedPartyLoanRow = {
   facility_id?: string | null;
   display_id?: string | null;
   document_kind?: LoanDocumentKind | null;
+  /** ROUND 443.22-2c — docs.files id of the minted advance note (funding IN only). */
+  note_file_id?: string | null;
+  has_note?: boolean | null;
   funding_source_note?: string | null;
   created_at?: string | null;
 };

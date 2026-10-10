@@ -65,6 +65,17 @@ const ENTITY_LABEL_SQL: Record<string, { table: string; labelSelect: string; sco
     labelSelect: "NULLIF(TRIM(d.display_id), '')",
     scopePredicate: "d.operating_company_id = $1::uuid AND d.voided_at IS NULL AND d.cancelled_at IS NULL",
   },
+  // ROUND 443.22-2c — advance note + facility (migration 202615461200).
+  related_party_loan: {
+    table: "accounting.related_party_loan_entries",
+    labelSelect: "NULLIF(TRIM(d.display_id), '')",
+    scopePredicate: "d.operating_company_id = $1::uuid AND d.reversed_at IS NULL",
+  },
+  related_party_loan_facility: {
+    table: "accounting.related_party_loan_facilities",
+    labelSelect: "NULLIF(TRIM(d.counterparty_name), '')",
+    scopePredicate: "d.operating_company_id = $1::uuid",
+  },
 };
 
 /** Hydrate document links from canonical records in the same operating company. */

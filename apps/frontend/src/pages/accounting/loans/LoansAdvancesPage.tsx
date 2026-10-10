@@ -313,6 +313,18 @@ export function LoansAdvancesPage() {
                 render: (r) => r.document_kind ?? r.target_type,
               },
               {
+                key: "note",
+                label: "Note",
+                render: (r) =>
+                  r.note_file_id || r.has_note ? (
+                    <EntityLink kind="document" id={r.note_file_id ?? r.id} label="Advance note" />
+                  ) : r.direction === "in" && r.document_kind !== "repayment" ? (
+                    "Missing"
+                  ) : (
+                    "—"
+                  ),
+              },
+              {
                 key: "account",
                 label: "Account",
                 render: (r) => (
