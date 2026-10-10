@@ -18,6 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import {
   createRelatedPartyLoan,
+  listRelatedPartyLoanFacilities,
   type CreateRelatedPartyLoanRequest,
   type LoanCounterpartyKind,
   type LoanDirection,
@@ -39,6 +40,12 @@ import { entityLabel } from "../../../lib/entity-label";
 import { SelectCombobox } from "../../../components/Combobox";
 import { formatAccountDisplayLabel } from "../../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../../lib/useShowAccountNumbers";
+import { formatUsdCents } from "../../../lib/money";
+
+/** ROUND 443.22-2d — repayment / bank_repayment applies cash against a person facility. */
+export function isLoanRepaymentTarget(targetType: LoanTargetType | string | null | undefined): boolean {
+  return targetType === "repayment" || targetType === "bank_repayment";
+}
 
 /** ROUND 443.22-2a — bank Loan action seeds the wizard; user still confirms rate/person every time. */
 export type LoanApplicationPrefill = {
@@ -215,13 +222,34 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
+  const isRepayment = isLoanRepaymentTarget(form.target_type);
+
   const accountsQuery = useQuery({
     queryKey: ["related-party-loans", "accounts", operatingCompanyId],
     queryFn: () => listCatalogAccounts({ operating_company_id: operatingCompanyId, postable_only: true }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
+  // ROUND 443.22-2d — load facilities so Apply repayment can show open balance and STOP overpay.
+  const facilitiesQuery = useQuery({
+    queryKey: ["related-party-loans", "facilities", operatingCompanyId],
+    queryFn: () => listRelatedPartyLoanFacilities(operatingCompanyId),
+    enabled: open && Boolean(operatingCompanyId) && isRepayment,
+  });
+
   const accounts = accountsQuery.data?.accounts ?? [];
+  const facilities = facilitiesQuery.data?.facilities ?? [];
+  const matchedFacility = useMemo(() => {
+    if (!isRepayment || !form.account_id) return null;
+    return facilities.find((f) => f.account_id === form.account_id) ?? null;
+  }, [facilities, form.account_id, isRepayment]);
+  const facilityOpenBalanceCents = matchedFacility?.open_balance_cents ?? null;
+  const overpayBlocked =
+    isRepayment &&
+    facilityOpenBalanceCents != null &&
+    form.principal_cents != null &&
+    form.principal_cents > facilityOpenBalanceCents;
+
   const accountOptions = useMemo(
     () =>
       accounts.map((a) => ({
@@ -241,14 +269,21 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
 
   if (!open) return null;
 
-  const directionHelp =
-    form.direction === "in"
+  const directionHelp = isRepayment
+    ? "Apply repayment — cash leaves the company against the person's open facility balance. Pick the same liability (or receivable) account as the facility. Overpay is refused."
+    : form.direction === "in"
       ? "Loan TO the company — someone funds a company obligation. A liability rises; pick the liability account."
       : "Loan FROM the company — the company lends out. A receivable asset rises; pick the receivable account.";
 
   const submit = async () => {
     if (!payload) {
       setError("Principal, interest rate and account are required before submitting.");
+      return;
+    }
+    if (overpayBlocked) {
+      setError(
+        `Repayment exceeds facility open balance of ${formatUsdCents(facilityOpenBalanceCents)}. Stop — do not overpay.`,
+      );
       return;
     }
     setSubmitting(true);
@@ -277,8 +312,9 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
           <h2
             className="uppercase"
             style={{ fontSize: typography.panelHeader, color: colors.columnHeader, letterSpacing: typography.tightUpper, fontWeight: 700 }}
+            data-testid="loan-wizard-title"
           >
-            Loan / Advance application
+            {isRepayment ? "Apply loan repayment" : "Loan / Advance application"}
           </h2>
           <button type="button" onClick={onClose} className="text-[12px] text-[#6B7280] hover:text-[#0F1219]">
             Close
@@ -289,8 +325,9 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
             className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 text-[12px] text-[#1F2A44]"
             data-testid="loan-wizard-bank-prefill-banner"
           >
-            Seeded from a bank line at {form.interest_rate_pct || BANK_LOAN_DEFAULT_INTEREST_PCT}% APR.
-            Confirm the person, account, and rate — nothing posts until you submit.
+            {isRepayment
+              ? "Seeded from a bank money-out line as Apply repayment. Confirm the person, facility account, and amount — overpay is refused."
+              : `Seeded from a bank line at ${form.interest_rate_pct || BANK_LOAN_DEFAULT_INTEREST_PCT}% APR. Confirm the person, account, and rate — nothing posts until you submit.`}
           </div>
         ) : null}
 
@@ -428,7 +465,12 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
               <DatePicker value={form.entry_date} onChange={(v) => set("entry_date", v)} />
 
               <label className="block text-xs font-medium text-[#1F2A44]">
-                Account {form.direction === "in" ? "(liability)" : "(receivable)"}
+                Account{" "}
+                {isRepayment
+                  ? "(facility being repaid)"
+                  : form.direction === "in"
+                    ? "(liability)"
+                    : "(receivable)"}
               </label>
               {/* ReferenceSelect, not a plain <SelectCombobox> (verify:referenceselect-coverage-ratchet):
                   every accounting-entity dropdown carries the QBO-parity inline "+ Add new ___"
@@ -454,6 +496,29 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                   )}
                   className="mt-1 block text-xs font-semibold text-[#1F2A44] underline"
                 />
+              ) : null}
+              {isRepayment ? (
+                <div
+                  className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-[12px] text-[#1F2A44]"
+                  data-testid="loan-wizard-facility-open-balance"
+                >
+                  {facilitiesQuery.isLoading
+                    ? "Loading facility open balance…"
+                    : facilityOpenBalanceCents == null
+                      ? form.account_id
+                        ? "No open facility for this account yet — repayment of a zero balance is refused."
+                        : "Pick the facility account to see open balance."
+                      : `Facility open balance: ${formatUsdCents(facilityOpenBalanceCents)}${
+                          matchedFacility?.counterparty_name
+                            ? ` · ${matchedFacility.counterparty_name}`
+                            : ""
+                        }`}
+                  {overpayBlocked ? (
+                    <p className="mt-1 font-semibold text-red-700" data-testid="loan-wizard-overpay-stop">
+                      Repayment exceeds open balance. Stop — do not overpay.
+                    </p>
+                  ) : null}
+                </div>
               ) : null}
               <p className="text-xs text-[#6B7280]">
                 No default is applied. The account must be chosen explicitly — an unmapped loan refuses rather
@@ -569,10 +634,11 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
             <button
               type="button"
               onClick={() => void submit()}
-              disabled={submitting || !payload}
+              disabled={submitting || !payload || overpayBlocked}
               className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0F1729] disabled:opacity-40"
+              data-testid="loan-wizard-submit"
             >
-              {submitting ? "Creating…" : "+ Create"}
+              {submitting ? "Creating…" : isRepayment ? "Apply repayment" : "+ Create"}
             </button>
           )}
         </div>

@@ -29,6 +29,7 @@ import { statusListCondition, statusListParam } from "../../lib/status-list.js";
 import {
   allocateRelatedPartyLoanDisplayId,
   ensureRelatedPartyLoanFacility,
+  getFacilityOpenBalanceCents,
   listRelatedPartyLoanFacilities,
 } from "./facility.service.js";
 import {
@@ -412,6 +413,24 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
               ? "funding"
               : "manual";
 
+        // ROUND 443.22-2d — Apply repayment must STOP if principal > facility open balance.
+        if (documentKind === "repayment") {
+          const openBalanceCents = await getFacilityOpenBalanceCents(
+            client,
+            b.operating_company_id,
+            facilityId
+          );
+          if (b.principal_cents > openBalanceCents) {
+            return {
+              error: "repayment_exceeds_facility_open_balance" as const,
+              open_balance_cents: openBalanceCents,
+              principal_cents: b.principal_cents,
+              facility_id: facilityId,
+              message: `Repayment of ${(b.principal_cents / 100).toFixed(2)} exceeds facility open balance of ${(openBalanceCents / 100).toFixed(2)}. Stop — do not overpay.`,
+            };
+          }
+        }
+
         if (b.bank_transaction_id) {
           // banking.bank_transactions uses voided_at (WORM), not deleted_at — measured Neon USMCA.
           const bankRow = (await client.query(
@@ -564,7 +583,18 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
         };
       });
 
-      if ("error" in result) return reply.code(400).send({ error: result.error });
+      if ("error" in result) {
+        if (result.error === "repayment_exceeds_facility_open_balance") {
+          return reply.code(400).send({
+            error: result.error,
+            open_balance_cents: result.open_balance_cents,
+            principal_cents: result.principal_cents,
+            facility_id: result.facility_id,
+            message: result.message,
+          });
+        }
+        return reply.code(400).send({ error: result.error });
+      }
       return reply.code(201).send(result);
     }
   );
