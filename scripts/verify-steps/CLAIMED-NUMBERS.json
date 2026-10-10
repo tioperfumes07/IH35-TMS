@@ -9478,6 +9478,11 @@
     "lane": "CC-1",
     "round": "443.1"
   },
+  "18365": {
+    "description": "invoice-number-is-invoice-dash-load",
+    "lane": "CC-1",
+    "round": "443.8"
+  },
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
