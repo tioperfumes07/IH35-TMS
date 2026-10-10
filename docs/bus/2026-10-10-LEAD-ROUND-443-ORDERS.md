@@ -483,3 +483,57 @@ DONE: CC-2 | 443.10 DONE | <sha> | <live sha> | flag absent + $0 -> E_LOAD_DISPA
 flag true + $0 -> load booked, 1 audit exception row reason owner_authorized_zero_revenue (test) |
 flag true + rated -> refused (test) | guard PASS + selftest | NEXT none — tell cc3
 ```
+
+**CC-3 — ROUND 443.11 — ENTER THE FIRST 10 SETTLEMENTS THROUGH THE CREATOR ENGINE (NOT BEFORE THE LEAD'S GO) — posted 3:21 PM CT (20:21 UTC)**
+
+```
+CC-3 — ROUND 443.11 — FIRST 10 SETTLEMENTS, THROUGH THE SETTLEMENT CREATOR ROUTE, ONE AT A TIME
+Owner 2026-10-10 3:18-3:20 PM CT: "for right now I told you only seed the first 10, audit and verify all
+expenses documents bills etc all the cycle is correct created and applied and tables and stamps" ·
+"A coder or you seed them instantly [no] time and tokens on chrome etc or if there is an import engine use
+that" · "Engine must be correct".
+This is the ONE owner-ordered exception to "nobody seeds data": these 10 settlements, this route, nothing else.
+
+DO NOT START until the Lead writes "GO 443.11" in this file. The Lead writes it only after 443.1, 443.3,
+443.4, 443.5, 443.6, 443.7, 443.8 and 443.10 are merged, live (healthz git_sha) and re-measured by the Lead.
+An engine step still open = no settlement is entered.
+
+SOURCE (the only one): ~/IH35-LEAD-CHANNEL/Company and Driver Settlements - Zero Invoice Loads.xlsx, sheet
+SETTLEMENTS (the owner's workbook, saved 2026-10-10 1:46 PM CT). The repo JSON
+data/alwaystrack/settlements-truth-2026-09-13.json is NOT a source (it still carries $3,800 on load 13498).
+ROUTE (the only one): POST /api/v1/driver-finance/settlement-creator/preview, then /post, on the deployed
+backend — the same engine the screen calls. No Chrome. NOT /api/v1/feed/settlement-document/run, NOT a
+script that calls services or SQL directly, NOT a direct insert. If you have no way to call the deployed
+route as an authorized user, STOP and report it — do not find another door.
+
+THE 10, IN THIS ORDER, WITH THE INVOICE NUMBER TO TYPE (from the owner's Faro / QuickBooks reconciliation):
+ 5769  13498 Transportation $0 (blank -> 0-13498) · 13508 invoice 3
+ 5771  13504 Transportation $0 · 13510 invoice 2
+ 5772  13502 Transportation $0 · 13507 Transportation $0 · 13512 invoice 4 · 13513 invoice 8
+ 5773  13497 Transportation $0 · 13511 invoice 1
+ 5774  13517 Transportation $0 · 13518 invoice 12
+ 5775  13506 Transportation $0 · 13514 invoice 5 · 13516 invoice 11
+ 5776  13505 Transportation $0 · 13515 invoice 9 (not factored: direct) · 13520 invoice 6
+ 5777  13519 invoice 13 · 13521 invoice 14
+ 5780  13530 Transportation $0 · 13532 invoice 20
+ 5778  13524 invoice 16 — HOLD: workbook says $4,200, Faro and QuickBooks say $3,800. Owner ruling pending.
+ 5779 is NOT entered: it carries load 13527, which the owner is checking ("Skip them").
+Transportation loads: factoring faro_transportation, line haul $0, Invoice no. blank. USMCA Faro loads:
+faro_usmca. No quick pay anywhere — the workbook's QUICK PAY rows are ignored (owner: "there is no quickpay").
+Driver pay, fuel, DEF, escrow, admin fee, dates, stops, truck, trailer: exactly as the workbook.
+Anything the workbook marks NEEDS REVIEW, or any value you would have to guess (payment source of an
+expense, a vendor, a stop address): STOP on that settlement and post the question. Never guess.
+
+PER SETTLEMENT — in this order, then wait for the Lead before the next one
+1 preview: paste gross, deductions, escrow, net. Net must equal the workbook TOTAL DUE to the cent
+  (5769: gross $1,155.52, deductions $10.00, escrow $50.00, net $1,095.52).
+2 post once. Paste the route's stage-by-stage result.
+3 one line in SEATS-TO-LEAD: settlement number, load ids, invoice numbers, driver bill numbers, expense and
+  fuel ids, journal entry ids. The Lead audits every table and stamp on Neon and writes NEXT or STOP.
+A refused post leaves zero rows (443.7). Fix the cause in the engine, not in the data.
+BANKING: nothing. No bank row, no match, no deposit, no factoring purchase closed or matched — the owner
+matches in banking himself.
+DEADLINE: first settlement within 30 minutes of "GO 443.11". SURRENDER: the Lead enters them through the same route.
+DONE: CC-3 | 443.11 DONE | live sha | 9 settlements posted (5769, 5771-5777, 5780), 5778 held, 5779 not entered |
+each: net = workbook TOTAL DUE | Lead audit line per settlement | NEXT none
+```
