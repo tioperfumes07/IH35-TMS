@@ -166,6 +166,14 @@ export type BookLoadInput = {
   requestingUserRole: string;
   /** Derived at the authenticated route boundary; never trust the public override flag here. */
   creditLimitOverrideAuthorized?: boolean;
+  /**
+   * ROUND 443.10 (owner, 2026-10-10): the owner-authorized $0 Transportation load -- the Creator
+   * passes it ONLY for a faro_transportation load at $0, so USMCA holds the load and its settlement
+   * without a customer charge. Default false. true + $0 -> the zero-dollar dispatch gate records an
+   * exception (reason owner_authorized_zero_revenue) and proceeds; true + any charge -> refused
+   * (zero_revenue_flag_on_rated_load). Absent/false -> the gate is unchanged.
+   */
+  authorizedZeroRevenue?: boolean;
   operating_company_id: string;
   customer_id: string;
   status: DispatchStatus;
@@ -1595,6 +1603,11 @@ export async function createLoadWithFullSideEffects(
   opts: { source: LoadCreateSource }
 ): Promise<BookLoadResult> {
   const source = opts.source;
+  // ROUND 443.10: the zero-revenue flag is only ever honest on a $0 load. On a rated load it is a
+  // contradiction -- refuse before anything is written, never silently ignore it.
+  if (input.authorizedZeroRevenue === true && input.charges.reduce((sum, c) => sum + c.amount_cents, 0) !== 0) {
+    return { kind: "error", status: 422, payload: { error: "zero_revenue_flag_on_rated_load" } };
+  }
   // B6 — resolve the uploaded rate confirmation inside the SAME transaction that creates the load.
     // Never trust a browser-supplied R2 key as document identity, and never return 201 unless the
     // completed, entity-scoped docs.files row can also be linked to the created load.
@@ -2816,7 +2829,28 @@ export async function createLoadWithFullSideEffects(
     //   undeclared source   -> fail-closed live_feed (LoadCreateSource's own default) -> BLOCK.
     if (load.status === "dispatched") {
       const totalChargeCents = input.charges.reduce((sum, c) => sum + c.amount_cents, 0);
-      if (totalChargeCents === 0) {
+      // ROUND 443.10: the owner-authorized $0 Transportation load files the SAME exception row the
+      // historical_backfill case files below (reason owner_authorized_zero_revenue) and proceeds.
+      // Flag absent/false falls through to the gate below, unchanged.
+      if (totalChargeCents === 0 && input.authorizedZeroRevenue === true) {
+        await appendCrudAudit(
+          client,
+          input.requestingUserUuid,
+          "dispatch.historical_backfill_gate_exception",
+          {
+            operating_company_id: input.operating_company_id,
+            gate: "zero_dollar_charge_lines_at_dispatch",
+            reason: "owner_authorized_zero_revenue",
+            load_id: load.id,
+            load_number: load.load_number,
+            authorized_zero_revenue: true,
+            would_have_blocked_with: `E_LOAD_DISPATCHED_NO_CHARGE_LINES:Load ${String(load.load_number ?? load.id)} is dispatching with $0.00 in charge lines -- the customer would never be billed.`,
+          },
+          "warning",
+          "FEED-PARITY-ZERO-CHARGE-GATE"
+        );
+      }
+      if (totalChargeCents === 0 && input.authorizedZeroRevenue !== true) {
         const zeroChargeMessage = `E_LOAD_DISPATCHED_NO_CHARGE_LINES:Load ${String(load.load_number ?? load.id)} is dispatching with $0.00 in charge lines -- the customer would never be billed.`;
         if (source !== "historical_backfill") {
           throw new Error(zeroChargeMessage);
