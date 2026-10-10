@@ -687,3 +687,74 @@ Lead reading (stated to the owner): load 13526 is USMCA's — invoice 19, $3,500
 Order of entry: 5769, 5771, 5772, 5773, 5774, 5775, 5776, 5777, 5778, 5779. 5780 is NOT part of the first 10.
 Driver pay, fuel, expenses and deductions on 5779 exactly as the workbook. Still gated on "GO 443.11".
 ```
+
+**CC-3 — ROUND 443.16 / 443.18 / 443.19 — posted 4:55 PM CT (21:55 UTC)**
+
+```
+CC-3 — ROUND 443.16 STOP STAMPS FROM TRACKING · 443.18 DISPUTES ON TOP FOR DRIVERS · 443.19 THE REST IN ONE RUN
+Owner 2026-10-10 4:53 PM CT: "get them working completing and fully done the engines so the first 10
+settlements can be fully created ... verifying all accounts, tables, etc all full connectivity linkage and je,
+gl ... if everything is done correctly we then instantly seed the rest of the data. not one by one ... when
+seeding etc, we also already have the tracking data, geofences, locations, etc." · "for drivers, it [disputes]
+should also show on top."
+
+==== 443.16 — STOP ARRIVAL / DEPARTURE COME FROM THE TRACKING DATA — deadline 2026-10-11 00:30 UTC — BEFORE GO 443.11 ====
+MEASURED (Neon prod, USMCA): telematics.unit_stop_events holds real stops per truck — started_at, ended_at,
+dwell_minutes, lat, lng, city, state, odometer_mi, geofence_id, load_id_at_time. Rows per truck in the first
+10 settlements: T152 43 · T156 15 · T163 102 · T164 43 · T171 68 · T175 48 · T177 64.
+telematics.vehicle_locations 788,804 USMCA rows (captured_at, lat, lng, odometer_mi). geo.geofences 1,018.
+settlement-creator.service.ts stampDeliveryStopActuals writes <delivery date>T18:00:00Z into BOTH
+actual_arrival_at and actual_departure_at — an invented time, on the delivery stop only.
+REQUIRED: for every stop of a load the Creator books (pickup, delivery, extra stops): find the load's truck's
+stop event at that stop's coordinates on the stop's date (within the geofence / stop radius the engine
+already uses). Found -> actual_arrival_at = started_at, actual_departure_at = ended_at, and the stop event's
+load_id_at_time, odometer and geofence are linked to the load and stop. Not found -> keep the document date,
+mark the stamp as date-only (never T18:00 presented as a measured time), and list it in the post result.
+More than one candidate -> the one nearest the stop, and say so in the result. No GPS row is created, edited
+or deleted. Guard + selftest. DONE line: 5769 on a fork — each of its 5 stops shows tracked or date-only with
+the stop-event id.
+
+==== 443.18 — "DISPUTES" ON THE DRIVER FINANCE TOP TABS — deadline 2026-10-11 01:00 UTC ====
+MEASURED: the Settlement Disputes register exists only as a button inside /driver-finance/settlements
+(SettlementsPage.tsx:378-387, tab=disputes). REQUIRED: one top tab "Disputes" in the Driver Finance module
+tabs (sidebar-config.ts) opening that same register. Nothing else on the page changes. Guard asserts the tab.
+
+==== 443.19 — THE REMAINING SETTLEMENTS IN ONE RUN — NOT BEFORE THE LEAD WRITES "GO 443.19" ====
+The owner's workbook holds 69 settlements, 5769 to 5838 (5770 absent). After the first 10 (443.11) and the
+Lead's audit of them, the other 59 (5780 to 5838) go through the same deployed Creator route in ONE run,
+in order, no pause between settlements, stopping at the first refusal.
+PRE-FLIGHT (do it now, read-only, paste as a file in ~/IH35-LEAD-CHANNEL/443-19-PREFLIGHT.md): one row per
+load for all 59 — settlement, load, customer, workbook amount, Faro / QuickBooks invoice number and amount
+(from ~/IH35-LEAD-CHANNEL/10-1-26-Usmca-Faro-Always-Reconciliation-2.xlsx, tab QBO-FARO-Allways), factoring
+(faro_usmca / faro_transportation / direct), and a FLAG where: the two amounts differ; the load has no
+invoice number in the reconciliation; the reconciliation marks it Transportation, Cancelled or Not-Factored;
+the QuickBooks load number and the AlwaysTrack load number differ; the truck is not leased to USMCA; a value
+would have to be guessed. The Lead and the owner clear every flag before GO. Nothing is entered from a
+flagged row.
+KNOWN RULE FOR AMOUNT DIFFERENCES (owner: "those are invoice disputes"): the invoice is entered at the Faro /
+QuickBooks amount and an invoice dispute is opened for the difference against the settlement-file amount
+(accounting invoice disputes: invoiced vs expected). Known so far: 13570, 13578, 13587, 13589, 13611.
+BANKING: nothing. Same rules as 443.11.
+```
+
+**CC-1 — ROUND 443.17 — "DISPUTES" TAB IN ACCOUNTING — posted 4:55 PM CT (21:55 UTC)**
+
+```
+CC-1 — ROUND 443.17 — THE INVOICE DISPUTES PAGE EXISTS AND NOTHING OPENS IT (after 443.13)
+Owner 2026-10-10 4:53 PM CT: "i need a disputes tab in accounting or in factoring up top ... yes those are
+invoice disputes."
+MEASURED on main: apps/frontend/src/pages/accounting/DisputesHubPage.tsx and api/invoice-disputes.ts exist;
+backend routes GET /api/v1/accounting/invoice-disputes, POST .../:id/resolve, POST .../:id/cancel exist;
+accounting.invoice_disputes carries invoice_id, load_id, invoiced_amount_cents, expected_amount_cents,
+disputed_amount_cents, status. No file imports DisputesHubPage (grep: 0 references) and the Accounting top
+tabs (sidebar-config.ts) are Hub, Invoices, Payments, Factoring, Factoring Queue ... — no Disputes.
+REQUIRED — ONE PR: route the page and add ONE top tab "Disputes" to the Accounting module tabs. The page lists
+open invoice disputes for USMCA with invoice number, load, customer, invoiced, expected, difference, status.
+A dispute can be OPENED from the tab against an existing invoice (invoice, expected amount, reason) through
+a POST on the same service — add the create route if the service has none. No other tab moves.
+LANE: accounting pages + accounting/** only. USMCA only. NOBODY SEEDS DATA. FAST-MERGE loop.
+GUARD: verify-accounting-disputes-tab-routed.mjs + selftest.
+DEADLINE: 2026-10-11 01:30 UTC. SURRENDER: CC-2.
+DONE: CC-1 | 443.17 DONE | <sha> | <live FE sha> | /accounting/disputes renders, tab present (test) | open a
+dispute on a fork invoice -> row with invoiced / expected / difference (test) | guard PASS | NEXT none
+```
