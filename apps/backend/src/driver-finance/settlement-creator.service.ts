@@ -30,7 +30,8 @@ import { resolveRoleAccountOptional, type CoaRole } from "../accounting/coa-role
 import { resolveDriverReimbursementParentAccount } from "../accounting/driver-subaccount-provision.service.js";
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
-import { creatorEmptyPayCents, creatorEmptyRateCents } from "./settlement-creator-empty-pay.js";
+import { creatorEmptyPayCents, creatorEmptyRateCents, creatorLoadedPayCents, creatorPayMiles } from "./settlement-creator-empty-pay.js";
+import { resolveDriverPayItems } from "./settlement-creator-pay-item.js";
 import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
@@ -76,31 +77,6 @@ async function accountByRole(
       LIMIT 1
     `,
     [id, opco],
-  );
-  return res.rows[0] ?? null;
-}
-
-// settlement_lines_item_qty_rate_amount_check (live, verified via pg_constraint) requires
-// item_id NOT NULL whenever quantity/rate_cents/unit_of_measure are set -- discovered live
-// (23514 check-constraint violation) when the earnings/deadhead_pay quantity fix above first ran
-// without it. Matches settlement 5812's own live rows exactly: item_name "Driver Pay-CDL-Loaded
-// Miles" / "Driver Pay-CDL-Empty Miles", company-scoped catalogs.items rows already seeded from
-// the live QBO company file (notes: "source=LIVE QBO COMPANY FILE") -- never created here.
-async function itemByName(
-  client: DbClient,
-  opco: string,
-  itemName: string,
-): Promise<{ id: string } | null> {
-  const res = await client.query<{ id: string }>(
-    `
-      SELECT id::text
-      FROM catalogs.items
-      WHERE operating_company_id = $1::uuid
-        AND item_name = $2
-        AND deactivated_at IS NULL
-      LIMIT 1
-    `,
-    [opco, itemName],
   );
   return res.rows[0] ?? null;
 }
@@ -544,8 +520,8 @@ export async function previewSettlementCreator(
   // --- Mileage pay (driver bill) — short miles × rate (company practical ≠ driver pay miles) ---
   let mileagePayCents = 0;
   for (const load of draft.loads ?? []) {
-    const payMiles = Number(load.miles_shortest ?? load.loaded_miles ?? 0);
-    const loaded = Math.round(payMiles * Number(load.line_haul_rate_cents || 0));
+    // ROUND 443.4 — the same formula the post writes (pay rate x short miles); never the invoice amount.
+    const loaded = creatorLoadedPayCents(load) ?? 0;
     // Empty miles × the empty rate, else the loaded per-mile rate (queue item 7, owner MILES SPEC).
     const empty = creatorEmptyPayCents(load);
     const pay = loaded + empty;
@@ -1483,6 +1459,8 @@ export async function postSettlementCreatorInClientTx(
   // Invoice mint + send (existing engines only). Delivered loads only — not_yet_delivered skips.
   // historical_backfill: closed settlement_lines.load_id OR stamped stop departure = evidence.
   // Faro auto-submit runs AFTER COMMIT (own connection) — see settlement-creator.routes.ts.
+  // ROUND 443.4 b — the pay item comes from the driver's pay card; unresolved refuses (never a CDL default).
+  const payItems = await resolveDriverPayItems(client, draft.operating_company_id, draft.driver_id);
   const invoiceIds: string[] = [];
   for (let i = 0; i < draft.loads.length; i++) {
     const load = draft.loads[i]!;
@@ -1497,43 +1475,24 @@ export async function postSettlementCreatorInClientTx(
 
     await stampDeliveryStopActuals(client, loadId, load.delivery_date);
 
-    // Closed-settlement evidence for historical_backfill (AT path status=closed).
-    const accessorialCents = (load.accessorials ?? []).reduce(
-      (s, a) => s + Math.max(0, Math.round(Number(a.amount_cents || 0))),
-      0,
-    );
-    // Driver pay miles = short (miles_shortest); company practical stays on loaded_miles.
-    const payMiles = load.miles_shortest ?? load.loaded_miles ?? null;
-    const earningsCents =
-      (load.line_haul_amount_cents ??
-        (load.line_haul_rate_cents != null && payMiles != null
-          ? Math.round(Number(load.line_haul_rate_cents) * Number(payMiles))
-          : 0)) + accessorialCents;
-    // Loaded-miles quantity/rate: ROUND 157-B — every settlement_lines row for a mileage-driven
-    // line carries quantity/rate_cents/unit_of_measure='mi' (matches the live 5812 precedent:
-    // "Load 13588 — Loaded Miles 1,855.1 @ $0.45"), not just the dollar total. Only set when the
-    // PDF actually gave miles+rate; an accessorial-only or flat line_haul_amount_cents load has no
-    // per-mile quantity to report and stays NULL, same as before.
-    const hasLoadedMileage =
-      load.line_haul_rate_cents != null && payMiles != null && accessorialCents === 0;
-    const loadedItem = hasLoadedMileage
-      ? await itemByName(client, draft.operating_company_id, "Driver Pay-CDL-Loaded Miles")
-      : null;
-    // settlement_lines_item_qty_rate_amount_check requires round(quantity*rate_cents) ===
-    // round(amount*100) whenever quantity is set -- an accessorial folded into earningsCents
-    // would break that identity, so quantity/rate/item_id/unit_of_measure only populate on a
-    // pure mileage line (accessorialCents === 0); an accessorial-bearing load keeps the old
-    // dollar-only line rather than fail the check constraint or misreport its quantity.
-    const loadedDesc = hasLoadedMileage
-      ? `Load ${load.load_number} — Loaded Miles ${Number(payMiles).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.line_haul_rate_cents) / 100).toFixed(2)}`
-      : `Load ${load.load_number} line haul`;
+    // ROUND 443.4 — driver pay = pay rate x short miles (loaded line) + empty rate x empty miles (empty line).
+    // The customer's invoice amount and accessorials are never read here: they feed the invoice only.
+    const payMiles = creatorPayMiles(load);
+    const loadedCents = creatorLoadedPayCents(load);
+    if (payMiles == null || loadedCents == null) {
+      throw new SettlementCreatorError(
+        "driver_pay_rate_missing",
+        `Load ${load.load_number}: driver pay needs the short miles and the driver's pay rate per mile.`,
+      );
+    }
+    const loadedDesc = `Load ${load.load_number} — Loaded Miles ${payMiles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.line_haul_rate_cents) / 100).toFixed(2)}`;
     await client.query(
       `
         INSERT INTO driver_finance.settlement_lines (
           settlement_id, operating_company_id, line_type, description, amount, load_id,
           quantity, rate_cents, unit_of_measure, item_id, is_active, is_sample_data
         )
-        SELECT $1::uuid, $2::uuid, 'earnings', $3, $4, $5::uuid, $6, $7, $8, $9::uuid, true, false
+        SELECT $1::uuid, $2::uuid, 'earnings', $3, $4, $5::uuid, $6, $7, 'mi', $8::uuid, true, false
         WHERE NOT EXISTS (
           SELECT 1 FROM driver_finance.settlement_lines sl
            WHERE sl.settlement_id = $1::uuid
@@ -1542,34 +1501,12 @@ export async function postSettlementCreatorInClientTx(
              AND sl.voided_at IS NULL
         )
       `,
-      [
-        settlementId,
-        draft.operating_company_id,
-        loadedDesc,
-        dollarsFromCents(Math.max(0, earningsCents)),
-        loadId,
-        hasLoadedMileage ? Number(payMiles) : null,
-        hasLoadedMileage ? Number(load.line_haul_rate_cents) : null,
-        hasLoadedMileage ? "mi" : null,
-        hasLoadedMileage ? (loadedItem?.id ?? null) : null,
-      ],
+      [settlementId, draft.operating_company_id, loadedDesc, dollarsFromCents(loadedCents), loadId, payMiles, Number(load.line_haul_rate_cents), payItems.loaded.id],
     );
 
-    // Empty (deadhead) miles → its own settlement_lines row, same mileage-quantity convention.
-    // Previously MISSING entirely from this engine — empty-mile pay only ever reached the JE
-    // preview (mileage pay section above), never a settlement_lines row a driver's settlement
-    // screen can display or a quantity a mileage audit can check. Zero amount when rate/miles
-    // absent (matches the "empty contributes $0" comment on the JE side), never invented.
-    // Queue item 7: the empty rate falls back to the loaded per-mile rate (creatorEmptyRateCents) — a missing or
-    // 0 empty rate no longer writes a $0.00 Empty Miles line for real empty miles.
+    // Empty (deadhead) miles: empty rate when set, else the loaded rate (one deadhead rule, deadhead-rule.ts).
     const emptyRateCents = creatorEmptyRateCents(load);
-    const hasEmptyMileage = emptyRateCents != null && Number(load.empty_miles ?? 0) > 0;
-    if (hasEmptyMileage) {
-      const emptyItem = await itemByName(client, draft.operating_company_id, "Driver Pay-CDL-Empty Miles");
-      // Same all-four-or-none rule as the loaded-miles line above: without a resolved item_id the
-      // check constraint requires quantity/rate_cents/unit_of_measure to ALSO be NULL, not a
-      // partial set.
-      const hasEmptyItem = Boolean(emptyItem);
+    if (emptyRateCents != null && Number(load.empty_miles ?? 0) > 0) {
       const emptyCents = creatorEmptyPayCents(load);
       const emptyDesc = `Load ${load.load_number} — Empty Miles ${Number(load.empty_miles).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(emptyRateCents / 100).toFixed(2)}`;
       await client.query(
@@ -1578,7 +1515,7 @@ export async function postSettlementCreatorInClientTx(
             settlement_id, operating_company_id, line_type, description, amount, load_id,
             quantity, rate_cents, unit_of_measure, item_id, is_active, is_sample_data
           )
-          SELECT $1::uuid, $2::uuid, 'deadhead_pay', $3, $4, $5::uuid, $6, $7, $8, $9::uuid, true, false
+          SELECT $1::uuid, $2::uuid, 'deadhead_pay', $3, $4, $5::uuid, $6, $7, 'mi', $8::uuid, true, false
           WHERE NOT EXISTS (
             SELECT 1 FROM driver_finance.settlement_lines sl
              WHERE sl.settlement_id = $1::uuid
@@ -1587,17 +1524,7 @@ export async function postSettlementCreatorInClientTx(
                AND sl.voided_at IS NULL
           )
         `,
-        [
-          settlementId,
-          draft.operating_company_id,
-          emptyDesc,
-          dollarsFromCents(Math.max(0, emptyCents)),
-          loadId,
-          hasEmptyItem ? Number(load.empty_miles) : null,
-          hasEmptyItem ? emptyRateCents : null,
-          hasEmptyItem ? "mi" : null,
-          hasEmptyItem ? emptyItem!.id : null,
-        ],
+        [settlementId, draft.operating_company_id, emptyDesc, dollarsFromCents(emptyCents), loadId, Number(load.empty_miles), emptyRateCents, payItems.empty.id],
       );
     }
 
