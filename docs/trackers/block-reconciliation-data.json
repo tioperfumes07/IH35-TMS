@@ -1,6 +1,6 @@
 {
  "date": "2026-10-10",
- "generated_at_iso": "2026-10-10T06:46:58.115Z",
+ "generated_at_iso": "2026-10-10T12:40:55.027Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 26155,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-10T06:47:36Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 26154,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-10T01:12:16Z",
@@ -17330,12 +17336,6 @@
    "title": "Lead — BANK-F431 one canonical bank-line deletion authority (+ bulk-void scanner reads its fixtures)",
    "mergedAt": "2026-10-06T14:05:36Z",
    "branch": "fix/bank-f431"
-  },
-  {
-   "number": 25545,
-   "title": "Devin — build order item 1 batch 2: --selftest on 20 more post-09-30 guards",
-   "mergedAt": "2026-10-06T14:04:20Z",
-   "branch": "claude/devin-guard-selftests-02"
   }
  ],
  "merged_pr_total": 3000,
