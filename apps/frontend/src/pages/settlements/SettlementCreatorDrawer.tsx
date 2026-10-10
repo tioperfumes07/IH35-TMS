@@ -1621,7 +1621,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         data-testid={`sc-load-po-${idx}`}
                       />
                     </Field>
-                    {/* ROUND 443.3 — law doc §5: empty, editable; typed wins verbatim; blank = the load number. */}
+                    {/* ROUND 443.3 — law doc §5: empty, editable digits; the invoice becomes <invoice>-<load>, blank = next number. */}
                     <Field label="Invoice no.">
                       <input
                         className={inputClass}
@@ -1632,8 +1632,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                           next[idx] = { ...load, invoice_number: e.target.value.replace(/[^0-9]/g, "").slice(0, 12) };
                           setLoads(next);
                         }}
-                        placeholder={load.load_number.trim() || "Load #"}
-                        title="The invoice number presented to Faro / QBO. Blank = the load number."
+                        placeholder="Next no."
+                        title="The invoice number presented to Faro / QBO. The invoice is numbered <invoice>-<load>; blank = the next invoice number."
                         aria-label="Invoice number"
                         data-testid={`sc-load-invoice-no-${idx}`}
                       />

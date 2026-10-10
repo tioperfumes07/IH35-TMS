@@ -12,8 +12,9 @@
  *   2. the mint passes requestedDisplayId from load.invoice_number and maps DuplicateDocumentNumberError to
  *      invoice_number_taken
  *   3. the route runs assertCreatorDraftAdmissible BEFORE ensureDispatchedLoadsForCreator (zero rows on refusal)
- *   4. admission refuses full_transportation_settlement with the owner's message, duplicate numbers in the draft, and
- *      a number already on another load's invoice (company-scoped); preview reports the same refusals as blockers
+ *   4. admission refuses full_transportation_settlement with the owner's message and <typed>-<load> already on
+ *      another load's invoice (company-scoped); the same typed number on two loads is legal (amended 443.3 a,
+ *      CC-1 443.8 builds <invoice>-<load>); preview reports the same refusals as blockers
  *   5. the drawer has the "Invoice no." box and sends invoice_number
  *   6. the factor auto-submit stays faro_usmca-only (faro_transportation never submitted)
  * PART b / d (CC-1 443.1 merged #26163)
@@ -55,7 +56,8 @@ export function problems(src) {
     p.push("preview does not report admission refusals as blockers");
   if (!/every\(\(l\) => l\.factoring === "faro_transportation"\)/.test(src.admission) || !/"full_transportation_settlement"/.test(src.admission)) p.push("an all-Transportation settlement is not refused");
   if (!/Every load in this settlement is Transportation — it is not entered in USMCA\./.test(src.admission)) p.push("the owner's full-Transportation message changed");
-  if (!/"invoice_number_duplicate"/.test(src.admission) || !/"invoice_number_taken"/.test(src.admission)) p.push("admission does not refuse duplicate / taken numbers");
+  if (!/"invoice_number_taken"/.test(src.admission) || !/return typed \? `\$\{typed\}-\$\{String\(load\.load_number\)\.trim\(\)\}` : null/.test(src.admission)) p.push("admission must check <typed>-<load> (CC-1 443.8) for numbers already taken");
+  if (/"invoice_number_duplicate"/.test(src.admission)) p.push("the same typed number on two loads is legal (59-13577, 59-13578) — no in-draft duplicate-number refusal");
   if (!/i\.operating_company_id = \$1::uuid AND i\.display_id = ANY/.test(src.admission)) p.push("the taken-number check must be company-scoped");
   if (!/<Field label="Invoice no\.">/.test(src.drawer) || !/invoice_number: \(l\.invoice_number \?\? ""\)\.trim\(\) \|\| null/.test(src.drawer)) p.push("the drawer has no Invoice no. box or does not send invoice_number");
   if (!/if \(load\.factoring !== "faro_usmca"\) continue;/.test(src.routes)) p.push("factor auto-submit must stay faro_usmca-only");
@@ -84,12 +86,13 @@ function selftest() {
   if (!problems(m("zero", 'load.factoring !== "faro_transportation") return false', 'false) return false')).some((x) => /faro_transportation-only/.test(x))) bad.push("a non-Transportation $0 authorization passed");
   if (!problems(m("seed", 'code: "linehaul",\n      description: amount', 'code: "LH",\n      description: amount')).some((x) => /linehaul/.test(x))) bad.push("the LH code passed");
   if (!problems(m("gate", /\$\{ZR_I\}/g, "false")).some((x) => /authorized \$0 shape/.test(x))) bad.push("a feed gate without the authorized shape passed");
+  if (!problems(m("admission", "  const seen = new Set<string>();", '  if (false) return new SettlementCreatorError("invoice_number_duplicate", "x");\n  const seen = new Set<string>();')).some((x) => /two loads is legal/.test(x))) bad.push("an in-draft duplicate-number refusal passed");
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }
-  console.log(`${LABEL} SELFTEST OK — 10/10 (real tree passes; dropped number, late admission, some() rule, unscoped read, Transportation submit, missing box, non-Transportation $0, LH code, gate without authorized shape each caught)`);
+  console.log(`${LABEL} SELFTEST OK — 11/11 (real tree passes; dropped number, late admission, some() rule, unscoped read, Transportation submit, missing box, non-Transportation $0, LH code, gate without authorized shape, in-draft duplicate-number refusal each caught)`);
   process.exit(0);
 }
 if (process.argv.includes("--selftest")) selftest();
 const src = Object.fromEntries(Object.entries(F).map(([k, rel]) => [k, fs.readFileSync(path.join(ROOT, rel), "utf8")]));
 const p = problems(src);
 if (p.length) { console.error(`${LABEL} FAIL\n  - ${p.join("\n  - ")}`); process.exit(1); }
-console.log(`${LABEL} OK — Invoice no. box (typed wins, blank = load number), duplicates refused before any write, all-Transportation settlement refused, $0 only for a Transportation load, seeder speaks bookLoad's charge codes.`);
+console.log(`${LABEL} OK — Invoice no. box (typed digits -> <invoice>-<load>, blank -> service assigns), a taken <invoice>-<load> refused before any write, all-Transportation settlement refused, $0 only for a Transportation load, seeder speaks bookLoad's charge codes.`);
