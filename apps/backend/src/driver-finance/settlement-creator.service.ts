@@ -36,6 +36,7 @@ import { createSettlementDeduction } from "./deductions.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { DuplicateDocumentNumberError } from "../lib/qbo-custom-document-number.js";
 import { assertCreatorDraftAdmissible, effectiveInvoiceNumber } from "./settlement-creator-admission.js";
+import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { voidDocument } from "../accounting/void-document.service.js";
 import {
@@ -1610,6 +1611,8 @@ export async function postSettlementCreatorInClientTx(
         loadId,
         // ROUND 443.3 — typed Invoice no. wins verbatim; blank -> the load number (from-load fallback).
         requestedDisplayId: String(load.invoice_number ?? "").trim() || null,
+        // ROUND 443.3 b — the owner-authorized $0 invoice: this load, and only this load (faro_transportation, no revenue).
+        authorizedZeroRevenue: isAuthorizedZeroRevenueLoad(load),
       });
     } catch (err) {
       if (err instanceof DuplicateDocumentNumberError) {

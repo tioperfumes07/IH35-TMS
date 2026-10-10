@@ -4,6 +4,7 @@
  */
 import { bookLoad, type BookLoadInput } from "../dispatch/book-load.service.js";
 import type { SettlementCreatorDraft, SettlementCreatorLoadBlock } from "./settlement-creator.types.js";
+import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
 
 export const SETTLEMENT_CREATOR_QUAL_OVERRIDE_REASON =
   "entered from the AlwaysTrack settlement / load history (Settlement Creator)";
@@ -158,25 +159,47 @@ function buildStops(load: SettlementCreatorLoadBlock): BookLoadInput["stops"] {
   ];
 }
 
-function buildCharges(load: SettlementCreatorLoadBlock): Array<{ code: string; description?: string; amount_cents: number }> {
+type CatalogCharge = { id: string; code: string; display_name: string };
+type SeedCharge = { code: string; description?: string; amount_cents: number; additional_charge_id?: string };
+
+/**
+ * bookLoad (P44, #5931) accepts only the system codes "linehaul" / "fuel_surcharge" without a catalog id; every other
+ * charge must name its catalogs.additional_charges row. The seeder sent "LH" and "ACC", so every Creator post died
+ * in bookLoad with additional_charge_id_required (measured on a prod fork, ROUND 443.3). Line haul is "linehaul";
+ * each accessorial resolves to its catalog charge by code or display name — no match refuses, never a MISC default.
+ */
+export function buildCharges(load: SettlementCreatorLoadBlock, catalog: CatalogCharge[]): SeedCharge[] {
+  // ROUND 443.3 b — a Transportation load's customer revenue is $0 in USMCA; never fall back to a computed rate.
+  if (isAuthorizedZeroRevenueLoad(load)) {
+    return [{ code: "linehaul", description: "Line haul — Transportation load, $0 in USMCA", amount_cents: 0 }];
+  }
   const amount =
     load.line_haul_amount_cents ??
     (load.line_haul_rate_cents != null && load.loaded_miles != null
       ? Math.round(load.line_haul_rate_cents * Number(load.loaded_miles))
       : 0);
-  const charges: Array<{ code: string; description?: string; amount_cents: number }> = [
+  const charges: SeedCharge[] = [
     {
-      code: "LH",
+      code: "linehaul",
       description: amount > 0 ? "Line haul" : "Line haul (seeded — rate pending)",
       amount_cents: Math.max(0, amount),
     },
   ];
   for (const acc of load.accessorials ?? []) {
     if (acc.amount_cents <= 0) continue;
+    const key = acc.item_name.trim().toLowerCase();
+    const hit = catalog.find((c) => c.code.toLowerCase() === key || c.display_name.trim().toLowerCase() === key);
+    if (!hit) {
+      throw new SettlementCreatorSeedError(
+        "accessorial_charge_unresolved",
+        `Load ${load.load_number}: accessorial "${acc.item_name}" is not an additional charge in the catalog (${catalog.map((c) => c.display_name).join(", ") || "none"}).`,
+      );
+    }
     charges.push({
-      code: "ACC",
+      code: hit.code,
       description: acc.description?.trim() || acc.item_name,
       amount_cents: acc.amount_cents,
+      additional_charge_id: hit.id,
     });
   }
   return charges;
@@ -194,6 +217,13 @@ export async function ensureDispatchedLoadsForCreator(
   const created: string[] = [];
   const seed = draft.seed_dispatched_loads !== false; // default ON for R-186.1 critical path
 
+  const chargeCatalog = (
+    await client.query(
+      `SELECT id::text, code, display_name FROM catalogs.additional_charges
+        WHERE operating_company_id = $1::uuid AND is_active = true`,
+      [draft.operating_company_id],
+    )
+  ).rows as CatalogCharge[];
   for (const load of draft.loads) {
     const existing = await client.query<{ id: string }>(
       `SELECT id::text FROM mdata.loads
@@ -271,7 +301,7 @@ export async function ensureDispatchedLoadsForCreator(
           reason: SETTLEMENT_CREATOR_QUAL_OVERRIDE_REASON,
         },
       ],
-      charges: buildCharges(load),
+      charges: buildCharges(load, chargeCatalog),
       stops: buildStops(load),
       notes: `Settlement Creator R-186.1 seed · load ${load.load_number}`,
     };
