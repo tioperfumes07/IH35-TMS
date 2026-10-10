@@ -29,6 +29,19 @@ describe("DatePicker", () => {
     expect(onChange).toHaveBeenCalledWith("2027-08-01");
   });
 
+  it("auto-inserts slashes while typing digits only (08052026 → 08/05/2026)", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<DatePicker value="" onChange={onChange} aria-label="Policy expiry" />);
+
+    const dateInput = screen.getByLabelText("Policy expiry");
+    await user.click(dateInput);
+    await user.type(dateInput, "08052026");
+    expect(dateInput).toHaveValue("08/05/2026");
+    await user.tab();
+    expect(onChange).toHaveBeenCalledWith("2026-08-05");
+  });
+
   it("opens a dialog and closes on Escape without bubbling to parent handlers", async () => {
     const parentEscape = vi.fn();
     const user = userEvent.setup();
