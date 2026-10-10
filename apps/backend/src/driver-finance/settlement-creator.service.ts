@@ -531,10 +531,11 @@ export async function previewSettlementCreator(
     if (amount > 0) companyExpensesCents += amount;
   }
 
-  // --- Mileage pay (driver bill) ---
+  // --- Mileage pay (driver bill) — short miles × rate (company practical ≠ driver pay miles) ---
   let mileagePayCents = 0;
   for (const load of draft.loads ?? []) {
-    const loaded = Math.round(Number(load.loaded_miles || 0) * Number(load.line_haul_rate_cents || 0));
+    const payMiles = Number(load.miles_shortest ?? load.loaded_miles ?? 0);
+    const loaded = Math.round(payMiles * Number(load.line_haul_rate_cents || 0));
     // Empty miles × the empty rate, else the loaded per-mile rate (queue item 7, owner MILES SPEC).
     const empty = creatorEmptyPayCents(load);
     const pay = loaded + empty;
@@ -1210,29 +1211,6 @@ export async function postSettlementCreatorInClientTx(
     }
   }
 
-  // Advances → createDriverCashAdvanceCore (bill-payment / loan overflow handled inside core)
-  for (const adv of draft.advances ?? []) {
-    if (adv.amount_cents <= 0) continue;
-    const created = await createDriverCashAdvanceCore(client as never, actorUserId, draft.operating_company_id, {
-      driver_id: draft.driver_id,
-      amount: dollarsFromCents(adv.amount_cents),
-      purpose: "other",
-      disbursement_method: "historical_backfill",
-      recipient_info: {
-        recipient_type: "driver",
-        notes: adv.description ?? `Settlement ${draft.settlement_no} advance`,
-      },
-      linked_driver_bill_id: adv.linked_driver_bill_id ?? null,
-      load_id: null,
-      unit_id: draft.unit_id ?? null,
-      liability_type: "advance",
-    });
-    if (!created.ok) {
-      throw new SettlementCreatorError("advance_failed", created.message ?? created.error);
-    }
-    advanceIds.push(created.advanceId);
-  }
-
   // Comp. Exp. (Y) → accounting.expenses + Cr card rail (2510/1295), NEVER A/P — same engines as fuel.
   async function resolveLoadIdByNumber(loadNumber: string | null | undefined): Promise<string | null> {
     if (!loadNumber?.trim()) return null;
@@ -1243,6 +1221,32 @@ export async function postSettlementCreatorInClientTx(
       [draft.operating_company_id, loadNumber.trim()],
     );
     return found.rows[0]?.id ?? null;
+  }
+
+  // Advances → createDriverCashAdvanceCore (bill-payment / loan overflow handled inside core).
+  // Owner 2026-10-10: resolve load_id from load_number so the engine ties the driver bill payment to that load.
+  for (const adv of draft.advances ?? []) {
+    if (adv.amount_cents <= 0) continue;
+    const advanceLoadId =
+      adv.load_id ?? (await resolveLoadIdByNumber(adv.load_number)) ?? null;
+    const created = await createDriverCashAdvanceCore(client as never, actorUserId, draft.operating_company_id, {
+      driver_id: draft.driver_id,
+      amount: dollarsFromCents(adv.amount_cents),
+      purpose: "other",
+      disbursement_method: "historical_backfill",
+      recipient_info: {
+        recipient_type: "driver",
+        notes: adv.description ?? `Settlement ${draft.settlement_no} advance`,
+      },
+      linked_driver_bill_id: adv.linked_driver_bill_id ?? null,
+      load_id: advanceLoadId,
+      unit_id: draft.unit_id ?? null,
+      liability_type: "advance",
+    });
+    if (!created.ok) {
+      throw new SettlementCreatorError("advance_failed", created.message ?? created.error);
+    }
+    advanceIds.push(created.advanceId);
   }
 
   for (const exp of draft.expenses ?? []) {
@@ -1488,10 +1492,12 @@ export async function postSettlementCreatorInClientTx(
       (s, a) => s + Math.max(0, Math.round(Number(a.amount_cents || 0))),
       0,
     );
+    // Driver pay miles = short (miles_shortest); company practical stays on loaded_miles.
+    const payMiles = load.miles_shortest ?? load.loaded_miles ?? null;
     const earningsCents =
       (load.line_haul_amount_cents ??
-        (load.line_haul_rate_cents != null && load.loaded_miles != null
-          ? Math.round(Number(load.line_haul_rate_cents) * Number(load.loaded_miles))
+        (load.line_haul_rate_cents != null && payMiles != null
+          ? Math.round(Number(load.line_haul_rate_cents) * Number(payMiles))
           : 0)) + accessorialCents;
     // Loaded-miles quantity/rate: ROUND 157-B — every settlement_lines row for a mileage-driven
     // line carries quantity/rate_cents/unit_of_measure='mi' (matches the live 5812 precedent:
@@ -1499,7 +1505,7 @@ export async function postSettlementCreatorInClientTx(
     // PDF actually gave miles+rate; an accessorial-only or flat line_haul_amount_cents load has no
     // per-mile quantity to report and stays NULL, same as before.
     const hasLoadedMileage =
-      load.line_haul_rate_cents != null && load.loaded_miles != null && accessorialCents === 0;
+      load.line_haul_rate_cents != null && payMiles != null && accessorialCents === 0;
     const loadedItem = hasLoadedMileage
       ? await itemByName(client, draft.operating_company_id, "Driver Pay-CDL-Loaded Miles")
       : null;
@@ -1509,7 +1515,7 @@ export async function postSettlementCreatorInClientTx(
     // pure mileage line (accessorialCents === 0); an accessorial-bearing load keeps the old
     // dollar-only line rather than fail the check constraint or misreport its quantity.
     const loadedDesc = hasLoadedMileage
-      ? `Load ${load.load_number} — Loaded Miles ${Number(load.loaded_miles).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.line_haul_rate_cents) / 100).toFixed(2)}`
+      ? `Load ${load.load_number} — Loaded Miles ${Number(payMiles).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.line_haul_rate_cents) / 100).toFixed(2)}`
       : `Load ${load.load_number} line haul`;
     await client.query(
       `
@@ -1532,7 +1538,7 @@ export async function postSettlementCreatorInClientTx(
         loadedDesc,
         dollarsFromCents(Math.max(0, earningsCents)),
         loadId,
-        hasLoadedMileage ? Number(load.loaded_miles) : null,
+        hasLoadedMileage ? Number(payMiles) : null,
         hasLoadedMileage ? Number(load.line_haul_rate_cents) : null,
         hasLoadedMileage ? "mi" : null,
         hasLoadedMileage ? (loadedItem?.id ?? null) : null,

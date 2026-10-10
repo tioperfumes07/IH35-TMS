@@ -50,15 +50,27 @@ function run(src) {
     out.push("RULE 4c: Empty miles must use DecimalNumberInput.");
   }
 
-  // Owner 2026-10-07 layout: Add ON THE SIDE of the last item (never section header); Invoice Amt; load dividers; fuel auto-load.
+  // Owner 2026-10-10: Add UNDER the last load / fuel row (never side rail — side +/× stole date width).
   if (/function Section\([\s\S]{0,400}onAdd\?/.test(src)) {
-    out.push("RULE 7: Section must NOT take onAdd — + Add belongs on the side of the last item via ItemSideRail.");
+    out.push("RULE 7: Section must NOT take onAdd — + Add belongs UNDER the last item via ItemUnderRail.");
   }
-  if (!/function ItemSideRail/.test(src) || !/function AddSideButton/.test(src)) {
-    out.push("RULE 7a: ItemSideRail + AddSideButton required — Add on the side, next row under previous.");
+  if (!/function ItemUnderRail/.test(src) || !/function AddUnderButton/.test(src)) {
+    out.push("RULE 7a: ItemUnderRail + AddUnderButton required — Add under the last row (not a side rail).");
   }
   if (!/addTestId=\{idx === loads\.length - 1 \? "sc-loads-add"/.test(src) && !/testId="sc-loads-add"/.test(src)) {
-    out.push("RULE 7b: Loads + Add must use testId sc-loads-add on the side of the last load (not section top).");
+    out.push("RULE 7b: Loads + Add must use testId sc-loads-add under the last load (not section top).");
+  }
+  if (!/miles_shortest/.test(src) || !/sc-load-short-miles-/.test(src)) {
+    out.push("RULE 7d: Company short miles (miles_shortest / sc-load-short-miles) required — driver pay ≠ company practical.");
+  }
+  if (!/sc-driver-salary/.test(src) || !/sc-quickpay-expense/.test(src)) {
+    out.push("RULE 7e: Company Control totals must show Driver salary + QuickPay expense.");
+  }
+  if (!/sc-drv-short-miles-/.test(src) || !/sc-drv-empty-miles-/.test(src)) {
+    out.push("RULE 7f: Driver carry must expose editable short + empty miles.");
+  }
+  if (!/sc-deduction-block-/.test(src) || !/sc-deduction-qty-/.test(src)) {
+    out.push("RULE 7g: Deductions must use item catalog + quantity (sc-deduction-block / sc-deduction-qty).");
   }
   if (!/sc-load-block-[\s\S]{0,80}border-b-2/.test(src) && !/border-b-2 border-\[#D1D5DB\]/.test(src)) {
     out.push("RULE 7c: Load blocks must have a dividing line (border-b-2) between loads.");
@@ -107,12 +119,20 @@ const fieldGridClass = "grid grid-cols-5 gap-2";
 const headerGridClass = "grid grid-cols-6 gap-2";
 <div className={headerGridClass} data-testid="sc-header-grid">
 function DecimalNumberInput() {}
-function ItemSideRail() {}
-function AddSideButton() {}
+function ItemUnderRail() {}
+function AddUnderButton() {}
 function fuelNeedsExplicitLoadNumber() {}
 function autoLoadNumberForExpenseDate() {}
 <DecimalNumberInput data-testid={\`sc-load-loaded-miles-\${idx}\`} />
 <DecimalNumberInput data-testid={\`sc-load-empty-miles-\${idx}\`} />
+miles_shortest
+sc-load-short-miles-
+sc-driver-salary
+sc-quickpay-expense
+sc-drv-short-miles-
+sc-drv-empty-miles-
+sc-deduction-block-
+sc-deduction-qty-
 pickup_date: periodStart
 delivery_date: periodEnd
 date: periodStart || emptyDrvReimb().date
@@ -140,7 +160,7 @@ loaded_miles: e.target.value === "" ? null : Number(e.target.value),
 `;
   const cases = [
     ["fixed tree passes", good, 0],
-    ["catches old defects", bad, 19],
+    ["catches old defects", bad, 23],
   ];
   let ok = 0;
   for (const [label, src, expected] of cases) {
@@ -159,5 +179,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  `${NAME}: PASS — 5-col; header 6-col; side Add rail; load dividers; Invoice Amt; fuel auto-load; drv carry.`,
+  `${NAME}: PASS — 5-col; header 6-col; under-Add; short miles; salary/QuickPay; Invoice Amt; fuel auto-load; drv carry.`,
 );

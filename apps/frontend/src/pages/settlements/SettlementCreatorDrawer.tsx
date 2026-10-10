@@ -132,6 +132,9 @@ type MoneyDraft = {
   escrow_type?: "hold" | "release" | "forfeit";
   /** additional pay category */
   pay_kind?: "detention" | "layover" | "bonus" | "stop_pay" | "other";
+  /** Product/service catalog id (deductions + additional pay). */
+  item_id?: string | null;
+  quantity?: number | null;
 };
 
 function emptyLoad(loadNumber = ""): LoadDraft {
@@ -158,6 +161,8 @@ function emptyLoad(loadNumber = ""): LoadDraft {
     factoring: "faro_usmca",
     date_sent_to_factoring: "",
     loaded_miles: null,
+    /** Driver pay miles (short) — company loaded_miles are practical / different. */
+    miles_shortest: null,
     empty_miles: null,
     empty_rate_cents: null,
     accessorials: [],
@@ -414,10 +419,10 @@ function Field({ label, span = 1, children }: { label: string; span?: number; ch
 }
 
 /**
- * Owner 2026-10-07: Add is ON THE SIDE of the item (never section-header / never top bar).
- * Click → next item stacks UNDER the previous. Empty lists get the same side + alone.
+ * Owner 2026-10-10: Add sits UNDER the last load / fuel / money row — never a side rail.
+ * Side + and × stole column width from PU/DEL dates. Compact × is inline on the block footer.
  */
-function AddSideButton({
+function AddUnderButton({
   onClick,
   testId,
   label = "+ Add",
@@ -432,12 +437,12 @@ function AddSideButton({
       size="sm"
       variant="secondary"
       onClick={onClick}
-      className="h-7 w-7 shrink-0 px-0 text-xs font-bold"
+      className="h-7 shrink-0 px-2 text-xs font-bold"
       aria-label={label}
       title={label}
       data-testid={testId}
     >
-      +
+      {label.startsWith("+") ? label : `+ ${label}`}
     </Button>
   );
 }
@@ -465,8 +470,8 @@ function RemoveLineButton({
   );
 }
 
-/** Right rail beside a line block: Remove (×) + Add (+) so Add is never on top of the section. */
-function ItemSideRail({
+/** Footer under a line block: optional × + under-row Add on the last item only. */
+function ItemUnderRail({
   onAdd,
   onRemove,
   addTestId,
@@ -484,21 +489,21 @@ function ItemSideRail({
   if (!onAdd && !onRemove) return null;
   return (
     <div
-      className="flex w-8 shrink-0 flex-col items-center justify-start gap-1 self-stretch border-l border-[#E5E7EB] pl-1 pt-7"
-      data-testid={addTestId ? `${addTestId}-rail` : undefined}
+      className="mt-1 flex items-center justify-between gap-2 border-t border-dashed border-[#E5E7EB] pt-1"
+      data-testid={addTestId ? `${addTestId}-under` : undefined}
     >
       {onRemove && removeLabel ? (
         <RemoveLineButton onClick={onRemove} testId={removeTestId} label={removeLabel} />
       ) : (
-        <span className="h-7 w-7" aria-hidden />
+        <span aria-hidden />
       )}
-      {onAdd ? <AddSideButton onClick={onAdd} testId={addTestId} label={addLabel} /> : <span className="h-7 w-7" aria-hidden />}
+      {onAdd ? <AddUnderButton onClick={onAdd} testId={addTestId} label={addLabel} /> : <span aria-hidden />}
     </div>
   );
 }
 
-/** Empty section: side + only (right-aligned) — never a header Add on top. */
-function EmptySideAdd({
+/** Empty section: under-row + only — never a header Add on top, never a side rail. */
+function EmptyUnderAdd({
   onClick,
   testId,
   label,
@@ -508,8 +513,8 @@ function EmptySideAdd({
   label: string;
 }) {
   return (
-    <div className="flex items-center justify-end border-t border-dashed border-[#E5E7EB] pt-2" data-testid={testId ? `${testId}-empty` : undefined}>
-      <AddSideButton onClick={onClick} testId={testId} label={label} />
+    <div className="flex items-center justify-start border-t border-dashed border-[#E5E7EB] pt-2" data-testid={testId ? `${testId}-empty` : undefined}>
+      <AddUnderButton onClick={onClick} testId={testId} label={label} />
     </div>
   );
 }
@@ -563,6 +568,7 @@ function LineCoding({
   item,
   testIdPrefix,
   showLoad = true,
+  itemSpan = 1,
 }: {
   companyId: string;
   line: LineCodingFields;
@@ -573,11 +579,13 @@ function LineCoding({
   testIdPrefix: string;
   /** false when load # is auto-from-date (fuel) or shown elsewhere. */
   showLoad?: boolean;
+  /** Fuel: Item wider (span 2) so Account sits in the next cell without overlap. */
+  itemSpan?: number;
 }) {
   return (
     <>
       {item ? (
-        <Field label="Item">
+        <Field label="Item" span={itemSpan}>
           <ReferenceSelect
             value={line.item_id ?? null}
             onChange={(id) => onPatch({ item_id: id })}
@@ -729,26 +737,37 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadDateWindowKey, fuelDatesKey, compExpDatesKey]);
 
-  // Company → driver: escrow lines inherit the first company load # (and stay tied when it changes).
+  // Owner 2026-10-10: escrow auto for BOTH loads — one $25 hold per load number.
   useEffect(() => {
-    if (!defaultLoadNumber) return;
+    const loadNums = loads
+      .map((l) => String(l.load_number ?? "").trim())
+      .filter((n) => Boolean(n));
+    if (!loadNums.length) return;
     setEscrow((prev) => {
-      if (!prev.length) return prev;
-      let changed = false;
-      const next = prev.map((row, i) => {
-        if (i === 0 && (!row.load_number || row.load_number !== defaultLoadNumber)) {
-          changed = true;
-          return { ...row, load_number: defaultLoadNumber };
-        }
-        if (!row.load_number) {
-          changed = true;
-          return { ...row, load_number: defaultLoadNumber };
-        }
-        return row;
+      const holds = prev.filter((e) => (e.escrow_type ?? "hold") === "hold");
+      const nonHolds = prev.filter((e) => (e.escrow_type ?? "hold") !== "hold");
+      const byLoad = new Map(holds.map((h) => [String(h.load_number ?? "").trim(), h]));
+      const nextHolds: MoneyDraft[] = loadNums.map((num) => {
+        const existing = byLoad.get(num);
+        if (existing) return { ...existing, load_number: num, escrow_type: "hold" as const };
+        return {
+          ...defaultEscrowLine(),
+          load_number: num,
+          description: `Driver escrow · load ${num}`,
+        };
       });
-      return changed ? next : prev;
+      const same =
+        nextHolds.length === holds.length &&
+        nextHolds.every(
+          (h, i) =>
+            h.load_number === holds[i]?.load_number &&
+            h.amount_cents === holds[i]?.amount_cents &&
+            h.description === holds[i]?.description,
+        );
+      if (same && nonHolds.length === prev.length - holds.length) return prev;
+      return [...nextHolds, ...nonHolds];
     });
-  }, [defaultLoadNumber]);
+  }, [loads.map((l) => String(l.load_number ?? "").trim()).join("|")]);
 
   const registerAttemptClose = useCallback((next: () => void) => {
     setAttemptClose(() => next);
@@ -832,24 +851,27 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     staleTime: 60_000,
   });
 
+  // Owner 2026-10-10: driver rate must appear automatically on Company + Driver sides.
+  // Apply whenever the card has a per-mile rate (do not gate only on basis_type string).
   useEffect(() => {
     const card = driverPayCardQuery.data;
     if (!card?.has_rate || ratesTouchedRef.current) return;
-    if (card.basis_type !== "per_mile_pay") return;
+    const loadedRate = card.rate_per_mile_cents != null && card.rate_per_mile_cents > 0 ? card.rate_per_mile_cents : null;
+    const emptyRate =
+      card.rate_empty_per_mile_cents != null && card.rate_empty_per_mile_cents > 0
+        ? card.rate_empty_per_mile_cents
+        : loadedRate;
+    if (loadedRate == null) return;
     setLoads((prev) =>
       prev.map((l) => ({
         ...l,
         line_haul_rate_cents:
-          l.line_haul_rate_cents != null && l.line_haul_rate_cents > 0
-            ? l.line_haul_rate_cents
-            : card.rate_per_mile_cents,
+          l.line_haul_rate_cents != null && l.line_haul_rate_cents > 0 ? l.line_haul_rate_cents : loadedRate,
         empty_rate_cents:
-          l.empty_rate_cents != null && l.empty_rate_cents > 0
-            ? l.empty_rate_cents
-            : card.rate_empty_per_mile_cents,
+          l.empty_rate_cents != null && l.empty_rate_cents > 0 ? l.empty_rate_cents : emptyRate,
       })),
     );
-  }, [driverPayCardQuery.data]);
+  }, [driverPayCardQuery.data, driverId]);
 
   // SETL-F440/F441 — lane history + chain deadhead + route-engine fallback, PER load row.
   // Hand-typed city/state (no Places pick) has no lat/lng — geocodeSearch fills coords so the
@@ -1037,6 +1059,23 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
           row = { ...row, loaded_miles: loaded, line_haul_miles: loaded };
           changed = true;
         }
+        // Driver pay miles = short (company practical stays on loaded_miles).
+        const laneShort =
+          lane &&
+          lane.short_miles != null &&
+          Number(lane.short_miles) > 0 &&
+          !lane.short_miles_untrustworthy
+            ? Number(lane.short_miles)
+            : null;
+        const routeShort =
+          route && "shortest_miles" in route && route.shortest_miles != null && Number(route.shortest_miles) > 0
+            ? Number(route.shortest_miles)
+            : null;
+        const short = laneShort ?? routeShort;
+        if (short != null && !(row.miles_shortest != null && row.miles_shortest > 0)) {
+          row = { ...row, miles_shortest: short };
+          changed = true;
+        }
         const dh = chainDeadheadQueries[idx]?.data;
         if (
           dh &&
@@ -1122,6 +1161,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
           amount_cents: a.amount_cents,
           load_number: a.load_number,
           pay_kind: a.pay_kind ?? "other",
+          item_id: a.item_id ?? null,
+          quantity: a.quantity ?? null,
         })),
     [additionalPay],
   );
@@ -1163,7 +1204,13 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         ...exp,
         description: [location?.trim(), exp.description?.trim()].filter(Boolean).join(" · ") || exp.description,
       })),
-      deductions: deductions.map((d) => ({ ...d, description: d.description || "Deduction" })),
+      deductions: deductions.map((d) => ({
+        description: d.description || "Deduction",
+        amount_cents: d.amount_cents,
+        load_number: d.load_number,
+        item_id: d.item_id ?? null,
+        quantity: d.quantity ?? null,
+      })),
       reimbursements: [],
       additional_pay: additionalPayForApi,
       escrow: escrowForApi,
@@ -1223,6 +1270,25 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     const accessorial = (l.accessorials ?? []).reduce((a, row) => a + Math.max(0, Number(row.amount_cents ?? 0)), 0);
     return s + revenue + accessorial;
   }, 0);
+  /** Company-side driver salary (mileage pay) — short miles × rate + empty × empty rate. */
+  const driverSalaryCents = loads.reduce((s, l) => {
+    const payMiles = Number(l.miles_shortest ?? l.loaded_miles ?? 0);
+    const rate = Number(l.line_haul_rate_cents ?? 0);
+    const loadedPay = Math.round(payMiles * rate);
+    const emptyMi = Number(l.empty_miles ?? 0);
+    const emptyRate = Number(
+      l.empty_rate_cents != null && l.empty_rate_cents > 0 ? l.empty_rate_cents : l.line_haul_rate_cents ?? 0,
+    );
+    const emptyPay = Math.round(emptyMi * emptyRate);
+    return s + loadedPay + emptyPay;
+  }, 0);
+  /** QuickPay / factoring fee ≈ 0.50% of invoice amt on Faro-factored loads (waterfall display). */
+  const quickPayExpenseCents = loads.reduce((s, l) => {
+    if (l.factoring !== "faro_usmca" && l.factoring !== "faro_transportation") return s;
+    const inv = Math.max(0, Number(l.line_haul_amount_cents ?? 0));
+    const accessorial = (l.accessorials ?? []).reduce((a, row) => a + Math.max(0, Number(row.amount_cents ?? 0)), 0);
+    return s + Math.round((inv + accessorial) * 0.005);
+  }, 0);
   const compExpSubtotal = companyExpenses.reduce((s, e) => s + (e.amount_cents > 0 ? e.amount_cents : 0), 0);
   const companySubtotal = fuelSubtotal + compExpSubtotal;
   const drvReimbSubtotal = drvReimbursements.reduce((s, e) => s + (e.amount_cents > 0 ? e.amount_cents : 0), 0);
@@ -1233,6 +1299,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     const a = Math.abs(e.amount_cents);
     return s + (e.escrow_type === "release" || e.escrow_type === "forfeit" ? -a : a);
   }, 0);
+  /** Live driver net — appears automatically without waiting on Preview. */
+  const liveDriverNetCents =
+    driverSalaryCents + addPaySubtotal + drvReimbSubtotal - dedSubtotal - adminFeeCents - advSubtotal - escrowNet;
 
   async function onPreview() {
     if (!draft) {
@@ -1436,10 +1505,10 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               {loads.map((load, idx) => (
                 <div
                   key={idx}
-                  className="flex items-stretch gap-1 border-b-2 border-[#D1D5DB] pb-3 pt-1"
+                  className="border-b-2 border-[#D1D5DB] pb-3 pt-1"
                   data-testid={`sc-load-block-${idx}`}
                 >
-                  <div className="min-w-0 flex-1 space-y-2">
+                  <div className="min-w-0 space-y-2">
                   {/* Row 1 — Load # / Customer / Trip type (owner 2026-10-07) */}
                   <div className={fieldGridClass} data-testid={`sc-load-row1-${idx}`}>
                     <Field label="Load No.">
@@ -1501,9 +1570,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     </Field>
                   </div>
 
-                  {/* Row 2 — PU date + DEL date ONLY */}
+                  {/* Row 2 — PU/DEL dates wider (last digit visible); Customer PO smaller */}
                   <div className={fieldGridClass} data-testid={`sc-load-row2-dates-${idx}`}>
-                    <Field label="Pickup date">
+                    <Field label="Pickup date" span={2}>
                       <DatePicker
                         className={inputClass}
                         value={load.pickup_date ?? ""}
@@ -1514,7 +1583,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         }}
                       />
                     </Field>
-                    <Field label="Delivery date">
+                    <Field label="Delivery date" span={2}>
                       <DatePicker
                         className={inputClass}
                         value={load.delivery_date ?? ""}
@@ -1542,7 +1611,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       />
                       Not delivered
                     </label>
-                    <Field label="Customer PO #" span={2}>
+                  </div>
+                  <div className={fieldGridClass} data-testid={`sc-load-row2b-po-${idx}`}>
+                    <Field label="Customer PO #">
                       <input
                         className={inputClass}
                         value={load.customer_po_number ?? ""}
@@ -1755,9 +1826,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     <span />
                   </div>
 
-                  {/* Compact money/miles row — same row, small boxes; Revenue → Invoice Amt */}
+                  {/* Company miles = practical; Short mi = driver pay (different). Rate autofills from driver card. */}
                   <div className={fieldGridClass} data-testid={`sc-load-miles-money-${idx}`}>
-                    <Field label="Loaded miles">
+                    <Field label="Loaded mi (co)">
                       <DecimalNumberInput
                         className={inputClass}
                         value={load.loaded_miles}
@@ -1776,13 +1847,32 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                             ? "Looking up loaded miles…"
                             : !load.pickup_city || !load.pickup_state || !load.delivery_city || !load.delivery_state
                               ? "Set pickup + delivery city and state — miles fill from lane DB, else route engine"
-                              : "Filled from lane history (our DB), else route engine once city/state geocode"
+                              : "Company practical miles — different from driver short pay miles"
                         }
                         data-testid={`sc-load-loaded-miles-${idx}`}
-                        ariaLabel="Loaded miles"
+                        ariaLabel="Company loaded miles"
                       />
                     </Field>
-                    <Field label="Empty miles">
+                    <Field label="Short mi (pay)">
+                      <DecimalNumberInput
+                        className={inputClass}
+                        value={load.miles_shortest}
+                        onChange={(n) => {
+                          milesTouchedRef.current[idx] = true;
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = { ...cur, miles_shortest: n };
+                            return next;
+                          });
+                        }}
+                        title="Driver pay miles (short) — company practical miles stay on Loaded mi"
+                        data-testid={`sc-load-short-miles-${idx}`}
+                        ariaLabel="Driver short miles"
+                      />
+                    </Field>
+                    <Field label="Empty mi">
                       <DecimalNumberInput
                         className={inputClass}
                         value={load.empty_miles}
@@ -1809,20 +1899,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         ariaLabel="Empty miles"
                       />
                     </Field>
-                    <Field label="Empty $/mi">
-                      <MoneyInput
-                        className={moneyInputClass}
-                        valueCents={load.empty_rate_cents}
-                        onChangeCents={(cents) => {
-                          ratesTouchedRef.current = true;
-                          const next = [...loads];
-                          next[idx] = { ...load, empty_rate_cents: cents };
-                          setLoads(next);
-                        }}
-                        ariaLabel="Empty miles rate"
-                      />
-                    </Field>
-                    <Field label="Rate $/mi">
+                    <Field label="Pay $/mi">
                       <MoneyInput
                         className={moneyInputClass}
                         valueCents={load.line_haul_rate_cents}
@@ -1832,7 +1909,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                           next[idx] = { ...load, line_haul_rate_cents: cents };
                           setLoads(next);
                         }}
-                        ariaLabel="Rate per mile"
+                        ariaLabel="Driver pay rate per mile"
                       />
                     </Field>
                     <Field label="Invoice Amt">
@@ -1847,6 +1924,25 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         ariaLabel="Invoice amount"
                       />
                     </Field>
+                  </div>
+                  <div className={fieldGridClass} data-testid={`sc-load-empty-rate-${idx}`}>
+                    <Field label="Empty $/mi">
+                      <MoneyInput
+                        className={moneyInputClass}
+                        valueCents={load.empty_rate_cents}
+                        onChangeCents={(cents) => {
+                          ratesTouchedRef.current = true;
+                          const next = [...loads];
+                          next[idx] = { ...load, empty_rate_cents: cents };
+                          setLoads(next);
+                        }}
+                        ariaLabel="Empty miles rate"
+                      />
+                    </Field>
+                    <span />
+                    <span />
+                    <span />
+                    <span />
                   </div>
 
                   <div className={fieldGridClass}>
@@ -1900,7 +1996,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     </Field>
                   </div>
                   </div>
-                  <ItemSideRail
+                  <ItemUnderRail
                     addLabel="+ Add load"
                     addTestId={idx === loads.length - 1 ? "sc-loads-add" : undefined}
                     onAdd={idx === loads.length - 1 ? addLoadRow : undefined}
@@ -1932,10 +2028,10 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 return (
                   <div
                     key={idx}
-                    className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2"
+                    className="border-b border-[#D1D5DB] pb-2 pt-2"
                     data-testid={`sc-fuel-block-${idx}`}
                   >
-                    <div className={`${fieldGridClass} min-w-0 flex-1`}>
+                    <div className={`${fieldGridClass} min-w-0`}>
                     <Field label="Date">
                         <DatePicker
                           className={inputClass}
@@ -2141,6 +2237,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       accountOptions={accountOptions}
                       accountsLoading={accountTreeQuery.isLoading}
                       showLoad={false}
+                      itemSpan={2}
                       item={{
                         options: itemOptions,
                         loading: itemsQuery.isLoading,
@@ -2154,7 +2251,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       }}
                     />
                     </div>
-                    <ItemSideRail
+                    <ItemUnderRail
                       addLabel="+ Add fuel"
                       addTestId={idx === fuels.length - 1 ? "sc-fuels-add" : undefined}
                       onAdd={idx === fuels.length - 1 ? addFuelAfter : undefined}
@@ -2166,7 +2263,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 );
               })}
               {fuels.length === 0 ? (
-                <EmptySideAdd
+                <EmptyUnderAdd
                   testId="sc-fuels-add"
                   label="+ Add fuel"
                   onClick={() => {
@@ -2206,8 +2303,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   ]);
                 };
                 return (
-                <div key={idx} className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2" data-testid={`sc-comp-exp-block-${idx}`}>
-                  <div className={`${fieldGridClass} min-w-0 flex-1`}>
+                <div key={idx} className="border-b border-[#D1D5DB] pb-2 pt-2" data-testid={`sc-comp-exp-block-${idx}`}>
+                  <div className={`${fieldGridClass} min-w-0`}>
                   <Field label="Date">
                     <DatePicker
                       className={inputClass}
@@ -2304,7 +2401,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </Field>
                   </div>
-                  <ItemSideRail
+                  <ItemUnderRail
                     addLabel="+ Add expense"
                     addTestId={idx === companyExpenses.length - 1 ? "sc-comp-exp-add" : undefined}
                     onAdd={idx === companyExpenses.length - 1 ? addCompExp : undefined}
@@ -2316,7 +2413,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               );
               })}
               {companyExpenses.length === 0 ? (
-                <EmptySideAdd
+                <EmptyUnderAdd
                   testId="sc-comp-exp-add"
                   label="+ Add expense"
                   onClick={() => {
@@ -2337,6 +2434,31 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             </Section>
 
             <Section title="Control totals · Company" pdfCents={pdfCompanyExpenses} subtotalCents={companySubtotal}>
+              <div className={fieldGridClass} data-testid="sc-company-pay-summary">
+                <Field label="Driver salary" span={2}>
+                  <div data-testid="sc-driver-salary">
+                    <MoneyInput
+                      className={moneyInputClass}
+                      valueCents={driverSalaryCents || null}
+                      onChangeCents={() => undefined}
+                      ariaLabel="Driver salary (short miles × rate)"
+                      disabled
+                    />
+                  </div>
+                </Field>
+                <Field label="QuickPay expense" span={2}>
+                  <div data-testid="sc-quickpay-expense">
+                    <MoneyInput
+                      className={moneyInputClass}
+                      valueCents={quickPayExpenseCents || null}
+                      onChangeCents={() => undefined}
+                      ariaLabel="QuickPay / Faro fee 0.50 percent"
+                      disabled
+                    />
+                  </div>
+                </Field>
+                <span />
+              </div>
               <Field label="PDF company EXPENSES total">
                 <div data-testid="sc-pdf-company">
                   <MoneyInput
@@ -2356,10 +2478,10 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               Driver Settlement
             </h2>
 
-            {/* Company → driver carry (owner 2026-10-07): load #, PU, miles, rates, escrow load — read-only mirror */}
-            <Section title="Loads carried from company">
+            {/* Driver pay miles (short) + empty + rate — editable; company practical miles stay on Company side. */}
+            <Section title="Loads carried from company" subtotalCents={driverSalaryCents}>
               <p className="text-center text-xs text-[#6B7280]">
-                PU dates · load # · loaded / empty miles · pay $/mi — from Company Settlement (no re-type)
+                Short / empty miles + pay $/mi are editable here (driver short miles ≠ company practical)
               </p>
               {loads.map((load, idx) => (
                 <div
@@ -2373,30 +2495,61 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   <Field label="Pickup date">
                     <input className={`${inputClass} bg-[#F7F8FA]`} value={load.pickup_date || "—"} readOnly />
                   </Field>
-                  <Field label="Loaded mi">
-                    <input
-                      className={`${inputClass} bg-[#F7F8FA]`}
-                      value={load.loaded_miles != null ? String(load.loaded_miles) : "—"}
-                      readOnly
+                  <Field label="Short mi (pay)">
+                    <DecimalNumberInput
+                      className={inputClass}
+                      value={load.miles_shortest}
+                      onChange={(n) => {
+                        milesTouchedRef.current[idx] = true;
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = { ...cur, miles_shortest: n };
+                          return next;
+                        });
+                      }}
+                      title="Driver pay miles (short) — edit here; company Loaded mi stays on Company Settlement"
+                      data-testid={`sc-drv-short-miles-${idx}`}
+                      ariaLabel="Driver short miles"
                     />
                   </Field>
                   <Field label="Empty mi">
-                    <input
-                      className={`${inputClass} bg-[#F7F8FA]`}
-                      value={load.empty_miles != null ? String(load.empty_miles) : "—"}
-                      readOnly
+                    <DecimalNumberInput
+                      className={inputClass}
+                      value={load.empty_miles}
+                      onChange={(n) => {
+                        milesTouchedRef.current[idx] = true;
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = { ...cur, empty_miles: n };
+                          return next;
+                        });
+                      }}
+                      data-testid={`sc-drv-empty-miles-${idx}`}
+                      ariaLabel="Driver empty miles"
                     />
                   </Field>
                   <Field label="Pay $/mi">
-                    <input
-                      className={`${inputClass} bg-[#F7F8FA]`}
-                      value={
-                        load.line_haul_rate_cents != null
-                          ? `$${(load.line_haul_rate_cents / 100).toFixed(2)}`
-                          : "—"
-                      }
-                      readOnly
-                    />
+                    <div data-testid={`sc-drv-pay-rate-${idx}`}>
+                      <MoneyInput
+                        className={moneyInputClass}
+                        valueCents={load.line_haul_rate_cents}
+                        onChangeCents={(cents) => {
+                          ratesTouchedRef.current = true;
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = { ...cur, line_haul_rate_cents: cents };
+                            return next;
+                          });
+                        }}
+                        ariaLabel="Driver pay rate"
+                      />
+                    </div>
                   </Field>
                 </div>
               ))}
@@ -2417,8 +2570,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     },
                   ]);
                 return (
-                <div key={idx} className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2" data-testid={`sc-drv-reimb-block-${idx}`}>
-                  <div className={`${fieldGridClass} min-w-0 flex-1`}>
+                <div key={idx} className="border-b border-[#D1D5DB] pb-2 pt-2" data-testid={`sc-drv-reimb-block-${idx}`}>
+                  <div className={`${fieldGridClass} min-w-0`}>
                   <Field label="Date">
                     <DatePicker
                       className={inputClass}
@@ -2499,7 +2652,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </Field>
                   </div>
-                  <ItemSideRail
+                  <ItemUnderRail
                     addLabel="+ Add reimbursement"
                     addTestId={idx === drvReimbursements.length - 1 ? "sc-drv-reimb-add" : undefined}
                     onAdd={idx === drvReimbursements.length - 1 ? addDrvReimb : undefined}
@@ -2511,7 +2664,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               );
               })}
               {drvReimbursements.length === 0 ? (
-                <EmptySideAdd
+                <EmptyUnderAdd
                   testId="sc-drv-reimb-add"
                   label="+ Add reimbursement"
                   onClick={() =>
@@ -2528,37 +2681,52 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             </Section>
 
             <Section title="Additional pay to driver" subtotalCents={addPaySubtotal}>
+              <p className="text-center text-xs text-[#6B7280]">
+                Item from the real product/service catalog (detention, layover, bonus, stop pay…)
+              </p>
               {additionalPay.map((row, idx) => (
-                <div key={idx} className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2">
-                  <div className={`${fieldGridClass} min-w-0 flex-1`}>
-                  <Field label="Type">
-                    <Combobox
-                      options={[
-                        { value: "detention", label: "Detention" },
-                        { value: "layover", label: "Layover" },
-                        { value: "bonus", label: "Bonus" },
-                        { value: "stop_pay", label: "Stop pay" },
-                        { value: "other", label: "Other" },
-                      ]}
-                      value={row.pay_kind ?? "other"}
-                      onChange={(v) => {
+                <div key={idx} className="border-b border-[#D1D5DB] pb-2 pt-2" data-testid={`sc-add-pay-block-${idx}`}>
+                  <div className={`${fieldGridClass} min-w-0`}>
+                  <Field label="Item / product" span={2}>
+                    <ReferenceSelect
+                      value={row.item_id ?? null}
+                      onChange={(id) => {
+                        const opt = drvItemOptions.find((o) => o.value === id);
                         const next = [...additionalPay];
-                        next[idx] = { ...row, pay_kind: (v ?? "") as MoneyDraft["pay_kind"] };
+                        next[idx] = {
+                          ...row,
+                          item_id: id,
+                          description: opt?.label ?? (id ? row.description : row.description),
+                          pay_kind: row.pay_kind ?? "other",
+                        };
                         setAdditionalPay(next);
                       }}
-                      size="sm"
-                      searchIsValue
+                      options={drvItemOptions}
+                      createKind="item"
+                      operatingCompanyId={companyId}
+                      placeholder={drvItemsQuery.isLoading ? "Loading items…" : "Search additional pay item…"}
+                      loading={drvItemsQuery.isLoading}
+                      addNewLabel="+ Add new item"
+                      onSearch={(q) => setDrvItemSearch(q)}
+                      onOptionCreated={(opt) => {
+                        const next = [...additionalPay];
+                        next[idx] = { ...row, item_id: opt.value, description: opt.label, pay_kind: "other" };
+                        setAdditionalPay(next);
+                        void drvItemsQuery.refetch();
+                      }}
                     />
                   </Field>
-                  <Field label="Description">
-                    <input
+                  <Field label="Qty">
+                    <DecimalNumberInput
                       className={inputClass}
-                      value={row.description}
-                      onChange={(e) => {
+                      value={row.quantity ?? null}
+                      onChange={(n) => {
                         const next = [...additionalPay];
-                        next[idx] = { ...row, description: e.target.value };
+                        next[idx] = { ...row, quantity: n };
                         setAdditionalPay(next);
                       }}
+                      ariaLabel="Additional pay quantity"
+                      data-testid={`sc-add-pay-qty-${idx}`}
                     />
                   </Field>
                   <Field label="Amount">
@@ -2585,7 +2753,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </Field>
                   </div>
-                  <ItemSideRail
+                  <ItemUnderRail
                     addLabel="+ Add pay"
                     addTestId={idx === additionalPay.length - 1 ? "sc-add-pay-add" : undefined}
                     onAdd={
@@ -2593,7 +2761,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         ? () =>
                             setAdditionalPay([
                               ...additionalPay,
-                              { ...emptyMoney(), pay_kind: "detention", load_number: defaultLoadNumber },
+                              { ...emptyMoney(), pay_kind: "other", load_number: defaultLoadNumber, quantity: 1 },
                             ])
                         : undefined
                     }
@@ -2604,12 +2772,12 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 </div>
               ))}
               {additionalPay.length === 0 ? (
-                <EmptySideAdd
+                <EmptyUnderAdd
                   testId="sc-add-pay-add"
                   label="+ Add pay"
                   onClick={() =>
                     setAdditionalPay([
-                      { ...emptyMoney(), pay_kind: "detention", load_number: defaultLoadNumber },
+                      { ...emptyMoney(), pay_kind: "other", load_number: defaultLoadNumber, quantity: 1 },
                     ])
                   }
                 />
@@ -2628,17 +2796,47 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 </div>
               </Field>
               {deductions.map((row, idx) => (
-                <div key={idx} className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2">
-                  <div className={`${fieldGridClass} min-w-0 flex-1`}>
-                  <Field label="Description">
-                    <input
-                      className={inputClass}
-                      value={row.description}
-                      onChange={(e) => {
+                <div key={idx} className="border-b border-[#D1D5DB] pb-2 pt-2" data-testid={`sc-deduction-block-${idx}`}>
+                  <div className={`${fieldGridClass} min-w-0`}>
+                  <Field label="Item / product" span={2}>
+                    <ReferenceSelect
+                      value={row.item_id ?? null}
+                      onChange={(id) => {
+                        const opt = drvItemOptions.find((o) => o.value === id);
                         const next = [...deductions];
-                        next[idx] = { ...row, description: e.target.value };
+                        next[idx] = {
+                          ...row,
+                          item_id: id,
+                          description: opt?.label ?? (id ? row.description : row.description),
+                        };
                         setDeductions(next);
                       }}
+                      options={drvItemOptions}
+                      createKind="item"
+                      operatingCompanyId={companyId}
+                      placeholder={drvItemsQuery.isLoading ? "Loading items…" : "Search deduction item…"}
+                      loading={drvItemsQuery.isLoading}
+                      addNewLabel="+ Add new item"
+                      onSearch={(q) => setDrvItemSearch(q)}
+                      onOptionCreated={(opt) => {
+                        const next = [...deductions];
+                        next[idx] = { ...row, item_id: opt.value, description: opt.label };
+                        setDeductions(next);
+                        void drvItemsQuery.refetch();
+                      }}
+                    />
+                  </Field>
+                  <Field label="Qty">
+                    <DecimalNumberInput
+                      className={inputClass}
+                      value={row.quantity ?? null}
+                      onChange={(n) => {
+                        const next = [...deductions];
+                        next[idx] = { ...row, quantity: n };
+                        setDeductions(next);
+                      }}
+                      ariaLabel="Deduction quantity"
+                      data-testid={`sc-deduction-qty-${idx}`}
                     />
                   </Field>
                   <Field label="Amount">
@@ -2653,13 +2851,29 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       ariaLabel="Deduction"
                     />
                   </Field>
+                  <Field label="Load No.">
+                    <input
+                      className={inputClass}
+                      value={row.load_number ?? ""}
+                      onChange={(e) => {
+                        const next = [...deductions];
+                        next[idx] = { ...row, load_number: e.target.value };
+                        setDeductions(next);
+                      }}
+                      data-testid={`sc-deduction-load-${idx}`}
+                    />
+                  </Field>
                   </div>
-                  <ItemSideRail
+                  <ItemUnderRail
                     addLabel="+ Add deduction"
                     addTestId={idx === deductions.length - 1 ? "sc-deductions-add" : undefined}
                     onAdd={
                       idx === deductions.length - 1
-                        ? () => setDeductions([...deductions, { ...emptyMoney(), load_number: defaultLoadNumber }])
+                        ? () =>
+                            setDeductions([
+                              ...deductions,
+                              { ...emptyMoney(), load_number: defaultLoadNumber, quantity: 1 },
+                            ])
                         : undefined
                     }
                     removeLabel="Remove deduction"
@@ -2669,19 +2883,24 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 </div>
               ))}
               {deductions.length === 0 ? (
-                <EmptySideAdd
+                <EmptyUnderAdd
                   testId="sc-deductions-add"
                   label="+ Add deduction"
-                  onClick={() => setDeductions([{ ...emptyMoney(), load_number: defaultLoadNumber }])}
+                  onClick={() =>
+                    setDeductions([{ ...emptyMoney(), load_number: defaultLoadNumber, quantity: 1 }])
+                  }
                 />
               ) : null}
             </Section>
 
             <Section title="Cash advances" subtotalCents={advSubtotal}>
+              <p className="text-center text-xs text-[#6B7280]">
+                Creates a driver bill payment tied to the load (engine path — load # required)
+              </p>
               {advances.map((row, idx) => (
-                <div key={idx} className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2">
-                  <div className={`${fieldGridClass} min-w-0 flex-1`}>
-                  <Field label="Description">
+                <div key={idx} className="border-b border-[#D1D5DB] pb-2 pt-2" data-testid={`sc-advance-block-${idx}`}>
+                  <div className={`${fieldGridClass} min-w-0`}>
+                  <Field label="Description" span={2}>
                     <input
                       className={inputClass}
                       value={row.description}
@@ -2704,8 +2923,21 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       ariaLabel="Cash advance"
                     />
                   </Field>
+                  <Field label="Load No." span={2}>
+                    <input
+                      className={inputClass}
+                      value={row.load_number ?? ""}
+                      placeholder="Load for bill payment"
+                      onChange={(e) => {
+                        const next = [...advances];
+                        next[idx] = { ...row, load_number: e.target.value };
+                        setAdvances(next);
+                      }}
+                      data-testid={`sc-advance-load-${idx}`}
+                    />
+                  </Field>
                   </div>
-                  <ItemSideRail
+                  <ItemUnderRail
                     addLabel="+ Add advance"
                     addTestId={idx === advances.length - 1 ? "sc-advances-add" : undefined}
                     onAdd={
@@ -2720,7 +2952,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 </div>
               ))}
               {advances.length === 0 ? (
-                <EmptySideAdd
+                <EmptyUnderAdd
                   testId="sc-advances-add"
                   label="+ Add advance"
                   onClick={() => setAdvances([{ ...emptyMoney(), load_number: defaultLoadNumber }])}
@@ -2731,8 +2963,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             <Section title="Escrow" subtotalCents={escrowNet}>
               <p className="text-center text-xs text-[#6B7280]">Driver escrow · 2100-00-0NN · hold +, release/forfeit −</p>
               {escrow.map((row, idx) => (
-                <div key={idx} className="flex items-stretch gap-1 border-b border-[#D1D5DB] pb-2 pt-2">
-                  <div className={`${fieldGridClass} min-w-0 flex-1`}>
+                <div key={idx} className="border-b border-[#D1D5DB] pb-2 pt-2">
+                  <div className={`${fieldGridClass} min-w-0`}>
                   <Field label="Type">
                     <Combobox
                       options={[
@@ -2786,7 +3018,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       />
                   </Field>
                   </div>
-                  <ItemSideRail
+                  <ItemUnderRail
                     addLabel="+ Add escrow"
                     addTestId={idx === escrow.length - 1 ? "sc-escrow-add" : undefined}
                     onAdd={
@@ -2805,7 +3037,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 </div>
               ))}
               {escrow.length === 0 ? (
-                <EmptySideAdd
+                <EmptyUnderAdd
                   testId="sc-escrow-add"
                   label="+ Add escrow"
                   onClick={() => setEscrow([{ ...defaultEscrowLine(), load_number: defaultLoadNumber }])}
@@ -2813,7 +3045,36 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               ) : null}
             </Section>
 
-            <Section title="Control totals · Driver" pdfCents={pdfDriverNet} subtotalCents={preview?.driver_net_cents ?? null}>
+            <Section
+              title="Control totals · Driver"
+              pdfCents={pdfDriverNet}
+              subtotalCents={liveDriverNetCents}
+            >
+              <div className={fieldGridClass} data-testid="sc-driver-live-totals">
+                <Field label="Driver salary" span={2}>
+                  <div data-testid="sc-drv-salary-live">
+                    <MoneyInput
+                      className={moneyInputClass}
+                      valueCents={driverSalaryCents || null}
+                      onChangeCents={() => undefined}
+                      ariaLabel="Live driver salary"
+                      disabled
+                    />
+                  </div>
+                </Field>
+                <Field label="Driver net (live)" span={2}>
+                  <div data-testid="sc-drv-net-live">
+                    <MoneyInput
+                      className={moneyInputClass}
+                      valueCents={liveDriverNetCents || null}
+                      onChangeCents={() => undefined}
+                      ariaLabel="Live driver net"
+                      disabled
+                    />
+                  </div>
+                </Field>
+                <span />
+              </div>
               <Field label="PDF TOTAL DUE">
                 <div data-testid="sc-pdf-driver">
                   <MoneyInput
@@ -2853,6 +3114,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               <TotalRow label="Invoice / line haul" cents={loadsSubtotal} />
               <TotalRow label="Fuel purchases" cents={fuelSubtotal} />
               <TotalRow label="Company expenses" cents={compExpSubtotal} />
+              <TotalRow label="Driver salary" cents={driverSalaryCents} />
+              <TotalRow label="QuickPay expense" cents={quickPayExpenseCents} />
               <TotalRow label="Company total" cents={companySubtotal} strong />
               {pdfCompanyExpenses != null ? (
                 <TotalRow
@@ -2863,6 +3126,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               ) : null}
             </div>
             <div>
+              <TotalRow label="Driver salary (pay)" cents={driverSalaryCents} />
               <TotalRow label="Driver reimbursements" cents={drvReimbSubtotal} />
               <TotalRow label="Additional pay" cents={addPaySubtotal} />
               <TotalRow label="Deductions" cents={dedSubtotal + adminFeeCents} />
@@ -2870,12 +3134,12 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               <TotalRow label="Escrow" cents={escrowNet} />
               <TotalRow
                 label="Driver net pay"
-                cents={preview?.driver_net_cents ?? null}
+                cents={preview?.driver_net_cents ?? liveDriverNetCents}
                 strong
                 double
                 tied={
-                  pdfDriverNet != null && preview?.driver_net_cents != null
-                    ? Math.round(preview.driver_net_cents) === Math.round(pdfDriverNet)
+                  pdfDriverNet != null
+                    ? Math.round(preview?.driver_net_cents ?? liveDriverNetCents) === Math.round(pdfDriverNet)
                     : undefined
                 }
               />

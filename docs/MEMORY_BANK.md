@@ -1734,3 +1734,17 @@ Owner artifact `DriverDetail.dc.html`: one profile, nine tabs, URL-synced, modul
 - **Not extra tabs:** Rule 14 reverse mounts that the design does not name stay on Overview. They are linkage, not a second tab list.
 - **Module nav:** Home (`/drivers`) + Roster (`/drivers/roster`) + 8 peers = 10. `DRIVERS_CANONICAL_SUBNAV_COUNT = 10`. Filters are `SegmentedControl`, never a second `NavyPageSubNav`.
 - **Guard:** `scripts/verify-driver-profile-matches-approved-tabs.mjs` (unnumbered — Rule 37; claim EVEN after merge).
+
+## Active Architectural Decisions — Settlement Creator fix pack (Cursor, 2026-10-10)
+
+Owner: Add/+ under last load / under next fuel row — not a side rail (side + × stole PU/DEL space). Company practical miles ≠ driver short pay miles. Salary + QuickPay on company Control. Deductions/additional pay from real item catalog. Cash advances go through `createDriverCashAdvanceCore` with load resolved by number.
+
+- **Under-Add:** `ItemUnderRail` / `AddUnderButton` / `EmptyUnderAdd` (aliases keep Side names). Guard F442 RULE 7a/7b.
+- **Miles:** company `loaded_miles` (practical) + `miles_shortest` (driver pay). BE earnings/salary use `payMiles = miles_shortest ?? loaded_miles`. Driver carry editable short + empty + rate.
+- **Rate autofill:** `getDriverPayCard` → `line_haul_rate_cents` / empty rate on loads when blank (no `basis_type` gate).
+- **Company Control:** live `driverSalaryCents` + QuickPay (0.50% Faro) via `sc-driver-salary` / `sc-quickpay-expense`.
+- **Escrow:** one $25 hold per distinct load number (sync effect).
+- **Deductions / add-pay:** `item_id` + `quantity` + amount; `ReferenceSelect` on accounting items / driver additional-pay catalog.
+- **Advances:** FE sends `load_number`; BE `resolveLoadIdByNumber` then `createDriverCashAdvanceCore` (bill payment / loan overflow inside core).
+- **Fuel Location:** capped-list helper text removed from `FuelStopLocationPicker`.
+- **Guard:** `scripts/verify-settlement-creator-ux-f442.mjs` RULE 7d–7g + selftest bad count 23.

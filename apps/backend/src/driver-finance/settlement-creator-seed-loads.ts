@@ -257,8 +257,8 @@ export async function ensureDispatchedLoadsForCreator(
       assigned_unit_id: draft.unit_id ?? undefined,
       assigned_trailer_unit_id: draft.trailer_id ?? undefined,
       miles_practical: load.loaded_miles ?? load.line_haul_miles ?? null,
-      // P1 driver-bill mint requires miles_shortest > 0 — AT loaded miles are the shortest basis.
-      miles_shortest: load.loaded_miles ?? load.line_haul_miles ?? null,
+      // Driver pay = short miles (company practical stays on miles_practical). Fall back to loaded when short omitted.
+      miles_shortest: load.miles_shortest ?? load.loaded_miles ?? load.line_haul_miles ?? null,
       miles_deadhead: load.empty_miles ?? null,
       save_mode: "book_dispatch",
       addToOpenPresettlement: true,
