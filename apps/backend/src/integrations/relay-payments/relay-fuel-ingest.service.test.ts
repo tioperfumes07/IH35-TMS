@@ -132,3 +132,27 @@ describe("upsertRelayFuelTransaction — one fill, one company, USMCA only (443.
     expect(res.relay_fuel_transaction_id).toBe("rft-9");
   });
 });
+
+// ROUND 443.21: the same fill arriving by webhook (?entity=TRANSP, stored under USMCA) and by the cron pull (USMCA)
+// writes the same (operating_company_id, transaction_id) key with ON CONFLICT -- one row, never two.
+describe("upsertRelayFuelTransaction — webhook + cron of one fill = one key (443.21)", () => {
+  it("both sources upsert the identical (USMCA, transaction_id) key under ON CONFLICT", async () => {
+    const keys: unknown[][] = [];
+    const { client, sql } = recordingClient();
+    (client.query as ReturnType<typeof vi.fn>).mockImplementation(async (text: string, params: unknown[] = []) => {
+      sql.push(text);
+      if (text.includes("EXISTS")) return { rows: [{ ok: false }] };
+      if (text.includes("INSERT INTO integrations.relay_fuel_transactions")) {
+        expect(text).toMatch(/ON CONFLICT \(operating_company_id, transaction_id\)/);
+        keys.push([params[0], params[1]]);
+        return { rows: [{ id: "rft-1" }] };
+      }
+      return { rows: [] };
+    });
+    const a = await upsertRelayFuelTransaction(client, USMCA, tx({ transaction_id: "tx-both" }), "webhook");
+    const b = await upsertRelayFuelTransaction(client, USMCA, tx({ transaction_id: "tx-both" }), "daily_pull");
+    expect(a.skipped_reason).toBeNull();
+    expect(b.skipped_reason).toBeNull();
+    expect(keys).toEqual([[USMCA, "tx-both"], [USMCA, "tx-both"]]);
+  });
+});
