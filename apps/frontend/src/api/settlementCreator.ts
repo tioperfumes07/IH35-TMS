@@ -43,7 +43,7 @@ export type SettlementCreatorDraft = {
       amount_cents: number;
     }>;
     factoring: SettlementCreatorFactorOption;
-    /** ROUND 443.3 — Invoice no. (Faro / QuickBooks number, digits). Blank = the load number. */
+    /** ROUND 443.3 — Invoice no. (Faro / QuickBooks number, digits). Invoice = <invoice>-<load>; blank = next number. */
     invoice_number?: string | null;
     date_sent_to_factoring?: string | null;
     loaded_miles?: number | null;

@@ -50,7 +50,7 @@ export type SettlementCreatorLoadBlock = {
   factoring: SettlementCreatorFactorOption;
   /**
    * ROUND 443.3 — the "Invoice no." box (law doc §5): the owner's Faro / QuickBooks invoice number (USMCA 1..118),
-   * digits only. Typed wins verbatim; blank = the load number (existing fallback).
+   * digits only. The invoice service builds <invoice>-<load>; blank -> <next>-<load> (CC-1 ROUND 443.8).
    */
   invoice_number?: string | null;
   date_sent_to_factoring?: string | null;

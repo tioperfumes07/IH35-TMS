@@ -35,7 +35,7 @@ import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escr
 import { createSettlementDeduction } from "./deductions.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { DuplicateDocumentNumberError } from "../lib/qbo-custom-document-number.js";
-import { assertCreatorDraftAdmissible, effectiveInvoiceNumber } from "./settlement-creator-admission.js";
+import { assertCreatorDraftAdmissible } from "./settlement-creator-admission.js";
 import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { voidDocument } from "../accounting/void-document.service.js";
@@ -1609,7 +1609,7 @@ export async function postSettlementCreatorInClientTx(
         userId: actorUserId,
         operatingCompanyId: draft.operating_company_id,
         loadId,
-        // ROUND 443.3 — typed Invoice no. wins verbatim; blank -> the load number (from-load fallback).
+        // ROUND 443.3 a — the typed digits; the invoice service (CC-1 443.8) builds <invoice>-<load>, blank -> <next>-<load>.
         requestedDisplayId: String(load.invoice_number ?? "").trim() || null,
         // ROUND 443.3 b — the owner-authorized $0 invoice: this load, and only this load (faro_transportation, no revenue).
         authorizedZeroRevenue: isAuthorizedZeroRevenueLoad(load),
@@ -1618,7 +1618,7 @@ export async function postSettlementCreatorInClientTx(
       if (err instanceof DuplicateDocumentNumberError) {
         throw new SettlementCreatorError(
           "invoice_number_taken",
-          `Load ${load.load_number}: Invoice no. ${effectiveInvoiceNumber(load)} is already used. Nothing was written.`,
+          `Load ${load.load_number}: invoice number ${String(load.invoice_number ?? "").trim() || "(assigned)"} is already used on this load. Nothing was written.`,
         );
       }
       const code = err && typeof err === "object" && "code" in err ? String((err as { code: unknown }).code) : "";
