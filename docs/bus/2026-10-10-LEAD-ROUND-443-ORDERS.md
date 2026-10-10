@@ -549,3 +549,47 @@ Order of entry: 5769, 5771, 5772, 5773, 5774, 5775, 5776, 5777, 5778, 5780. 5779
 Still gated on the Lead's "GO 443.11".
 DONE line now reads: 10 settlements posted (5769, 5771-5778, 5780), 5779 not entered.
 ```
+
+**CC-1 — ROUND 443.12 — THE $0 INVOICE CANNOT BE SENT: 443.1 PART b IS NOT DONE — posted 3:59 PM CT (20:59 UTC)**
+
+```
+CC-1 — ROUND 443.12 — sendDraftInvoice REFUSES THE AUTHORIZED $0 INVOICE (accounting/** only)
+ROUND 443.1 part b required: "a $0 invoice sends ... It must not throw." It throws. 443.1 is NOT done.
+MEASURED on main 0ae1dab
+- apps/backend/src/accounting/invoice-send.service.ts:235 assertInvoiceHasRevenueLines(...) runs FIRST and
+  refuses with invoice_has_no_revenue_lines ("1 line(s) and none of them are revenue-bearing").
+- The zero branch you added returns zero_revenue_no_posting at :475 — 240 lines later, never reached.
+- CC-3 reproduced it end to end on a prod fork: settlement 5769 stops at the send of invoice 0-13498.
+REQUIRED — ONE PR
+- An invoice minted with authorizedZeroRevenue (total_cents = 0, exactly one linehaul line quantity 1 unit 0,
+  income account set) passes the send: stamped sent_at / issue_date / due_date, status sent, 0 journal
+  entries, reason zero_revenue_no_posting. The three line assertions at :235-:240 keep refusing every other
+  invoice exactly as today — an invoice with no lines, or a $0 invoice that was NOT minted through the
+  authorized path, is still refused. Recognise the authorized case from the invoice's own stored shape plus
+  the mint marker you write at creation, never from a caller-supplied boolean at send time.
+- One end-to-end test: build (authorizedZeroRevenue) -> send -> assert status sent, 0 postings.
+LANE: accounting/** only. USMCA only. NOBODY SEEDS DATA. Banking never touched.
+GUARD: extend verify-zero-revenue-invoice-authorized-only (step 18361) with the send assertion + selftest.
+FAST-MERGE loop. DEADLINE: 2026-10-10 22:15 UTC. SURRENDER: CC-3 under SURFACE-BREACH-AUTHORIZED.
+DONE: CC-1 | 443.12 DONE | <sha> | <live sha> | authorized $0 build+send -> status sent, 0 journal entries,
+reason zero_revenue_no_posting (test name) | unauthorized $0 and no-line invoice -> still refused (tests) |
+guard PASS + selftest | NEXT tell cc3 by tmux
+```
+
+**CC-3 — LEAD RULING ON 443.4 b (PAY ITEM) AND ON 443.9 (RELAY GATE) — posted 3:59 PM CT (20:59 UTC)**
+
+```
+CC-3 — LEAD RULING — 443.4 b PAY ITEM: NO NEW COLUMN, NO MIGRATION · 443.9: WAIT, DO NOT TOUCH RELAY
+443.4 b — your recommendation (new pay_item_family column) is NOT approved: the owner asked for no new field.
+MEASURED: mdata.drivers already carries has_b1_visa (boolean), visa_b1_status, visa_type. USMCA items exist for
+both families: "Driver Pay-Mexico-B1 Driver-Loaded Miles" / "-Empty Miles" and "Driver Pay-CDL-Loaded Miles" /
+"-Empty Miles".
+RULE: the Creator and bookLoad resolve the pay item from mdata.drivers.has_b1_visa on the load's driver:
+true -> the Mexico-B1 items · false -> the CDL items · NULL -> refuse driver_pay_item_unresolved naming the
+driver. Read it, never default it. Do NOT write has_b1_visa on any driver — which drivers are B1 is the
+owner's fact; the Lead has asked him. One formula, shared by preview and post. Guard in the same PR.
+443.9 — the relay-fill gate (verify-relay-fill-one-company: 172 > ceiling 119) is an owner question; Relay
+data is not yours or mine to change and the ceiling is not raised. Keep the 443.9 branch ready, do not push
+past the red gate, do not void or move any Relay row. Continue 443.5, 443.6, 443.7. If one of those needs a
+migration and hits the same gate, post it in SEATS-TO-LEAD at once.
+```
