@@ -11,6 +11,24 @@
  */
 export type FeedCheckDef = { key: string; group: string; sql: string };
 
+/**
+ * ROUND 443.3 d — the owner-authorized $0 invoice (a faro_transportation load in a mixed USMCA settlement; CC-1 443.1
+ * authorizedZeroRevenue). Recognised by its exact shape: total 0, exactly one live line of quantity 1 at unit 0, and no
+ * journal-entry posting at all. Only buildInvoiceFromLoad({ authorizedZeroRevenue }) can mint that shape (every other
+ * $0 load refuses load_has_no_rate; guard 18361), and the Settlement Creator passes the flag only for a
+ * faro_transportation load with no revenue (guard verify-settlement-creator-invoice-number-and-zero-invoice).
+ * `alias` is the accounting.invoices alias in the calling query.
+ */
+export function authorizedZeroRevenueInvoiceSql(alias: string): string {
+  return `(coalesce(${alias}.total_cents, 0) = 0
+     AND (SELECT count(*) FROM accounting.invoice_lines zl WHERE zl.invoice_id = ${alias}.id AND zl.soft_deleted_at IS NULL) = 1
+     AND EXISTS (SELECT 1 FROM accounting.invoice_lines zl WHERE zl.invoice_id = ${alias}.id AND zl.soft_deleted_at IS NULL
+                  AND zl.quantity = 1 AND coalesce(zl.unit_amount_cents, 0) = 0 AND zl.line_total_cents = 0)
+     AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings zp
+                      WHERE zp.source_transaction_type = 'invoice' AND zp.source_transaction_id = ${alias}.id::text))`;
+}
+const ZR_I = authorizedZeroRevenueInvoiceSql("i");
+
 // Loads attached to a settlement: through settlement_lines.load_id or driver_bills.settled_in_settlement_id.
 const SETTLEMENT_LOADS = `
   SELECT DISTINCT l.id, l.load_number
@@ -65,8 +83,8 @@ function loadChecks(loadSet: string): FeedCheckDef[] {
         FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL` },
     { key: "invoice.ar_je_posted", group: "controls", sql: `${L}
       SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id,
-             CASE WHEN i.status IN ('sent','partial','paid') THEN EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text AND je.status = 'posted') ELSE NULL END,
-             CASE WHEN i.status IN ('sent','partial','paid') AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text AND je.status = 'posted') THEN 'invoice is ' || i.status || ' but no posted A/R journal entry exists' END,
+             CASE WHEN ${ZR_I} THEN true WHEN i.status IN ('sent','partial','paid') THEN EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text AND je.status = 'posted') ELSE NULL END,
+             CASE WHEN ${ZR_I} THEN NULL WHEN i.status IN ('sent','partial','paid') AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text AND je.status = 'posted') THEN 'invoice is ' || i.status || ' but no posted A/R journal entry exists' END,
              '/accounting/invoices/' || i.id::text, jsonb_build_object('status', i.status, 'sent_at', i.sent_at)
         FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL` },
     { key: "invoice.sent_stamped", group: "stamps", sql: `${L}
@@ -178,17 +196,17 @@ const INVOICE_LOAD = `
 const INVOICE_CHECKS: FeedCheckDef[] = [
   { key: "invoice.header_complete", group: "revenue", sql: `
       SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id,
-             (i.customer_id IS NOT NULL AND c.id IS NOT NULL AND c.deactivated_at IS NULL AND i.issue_date IS NOT NULL AND i.due_date IS NOT NULL AND coalesce(i.total_cents, 0) > 0),
+             (i.customer_id IS NOT NULL AND c.id IS NOT NULL AND c.deactivated_at IS NULL AND i.issue_date IS NOT NULL AND i.due_date IS NOT NULL AND (coalesce(i.total_cents, 0) > 0 OR ${ZR_I})),
              concat_ws('; ', CASE WHEN i.customer_id IS NULL OR c.id IS NULL THEN 'no customer' END, CASE WHEN c.deactivated_at IS NOT NULL THEN 'customer deactivated' END,
-                             CASE WHEN i.issue_date IS NULL THEN 'no issue date' END, CASE WHEN i.due_date IS NULL THEN 'no due date' END, CASE WHEN coalesce(i.total_cents, 0) <= 0 THEN 'total is zero' END),
+                             CASE WHEN i.issue_date IS NULL THEN 'no issue date' END, CASE WHEN i.due_date IS NULL THEN 'no due date' END, CASE WHEN coalesce(i.total_cents, 0) <= 0 AND NOT ${ZR_I} THEN 'total is zero' END),
              '/accounting/invoices/' || i.id::text, jsonb_build_object('customer', c.customer_name, 'total_cents', i.total_cents, 'status', i.status)
         FROM accounting.invoices i LEFT JOIN mdata.customers c ON c.id = i.customer_id WHERE i.operating_company_id = $1::uuid AND i.id = $2::uuid` },
   { key: "invoice.lines_carry_income_account", group: "revenue", sql: `
       SELECT 'accounting.invoice_lines', il.id, 'Line ' || coalesce(il.line_type, '?') || ' ' || il.line_total_cents || 'c',
-             (il.account_id IS NOT NULL AND a.id IS NOT NULL AND a.deactivated_at IS NULL AND il.line_total_cents <> 0),
-             concat_ws('; ', CASE WHEN il.account_id IS NULL THEN 'no income account' END, CASE WHEN il.account_id IS NOT NULL AND a.id IS NULL THEN 'account id points at no account' END, CASE WHEN a.deactivated_at IS NOT NULL THEN 'account deactivated' END, CASE WHEN il.line_total_cents = 0 THEN 'zero line' END),
+             (il.account_id IS NOT NULL AND a.id IS NOT NULL AND a.deactivated_at IS NULL AND (il.line_total_cents <> 0 OR ${ZR_I})),
+             concat_ws('; ', CASE WHEN il.account_id IS NULL THEN 'no income account' END, CASE WHEN il.account_id IS NOT NULL AND a.id IS NULL THEN 'account id points at no account' END, CASE WHEN a.deactivated_at IS NOT NULL THEN 'account deactivated' END, CASE WHEN il.line_total_cents = 0 AND NOT ${ZR_I} THEN 'zero line' END),
              '/accounting/invoices/' || il.invoice_id::text, jsonb_build_object('account', a.account_name, 'cents', il.line_total_cents)
-        FROM accounting.invoice_lines il LEFT JOIN catalogs.accounts a ON a.id = il.account_id WHERE il.operating_company_id = $1::uuid AND il.invoice_id = $2::uuid AND il.soft_deleted_at IS NULL` },
+        FROM accounting.invoice_lines il JOIN accounting.invoices i ON i.id = il.invoice_id LEFT JOIN catalogs.accounts a ON a.id = il.account_id WHERE il.operating_company_id = $1::uuid AND il.invoice_id = $2::uuid AND il.soft_deleted_at IS NULL` },
   { key: "invoice.has_live_line", group: "revenue", sql: `
       SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id, EXISTS (SELECT 1 FROM accounting.invoice_lines il WHERE il.invoice_id = i.id AND il.soft_deleted_at IS NULL),
              CASE WHEN NOT EXISTS (SELECT 1 FROM accounting.invoice_lines il WHERE il.invoice_id = i.id AND il.soft_deleted_at IS NULL) THEN 'invoice has no live line' END,

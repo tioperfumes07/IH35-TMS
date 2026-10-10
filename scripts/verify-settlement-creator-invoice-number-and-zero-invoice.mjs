@@ -16,8 +16,13 @@
  *      a number already on another load's invoice (company-scoped); preview reports the same refusals as blockers
  *   5. the drawer has the "Invoice no." box and sends invoice_number
  *   6. the factor auto-submit stays faro_usmca-only (faro_transportation never submitted)
- * Part b / d ($0 Transportation invoice, feed-gate authorized case) need CC-1 ROUND 443.1 (authorizedZeroRevenue);
- * this guard is extended in that PR.
+ * PART b / d (CC-1 443.1 merged #26163)
+ *   7. the mint passes authorizedZeroRevenue: isAuthorizedZeroRevenueLoad(load) — faro_transportation AND no revenue
+ *      only; the seeder books that load at $0 and never falls back to a computed rate
+ *   8. the feed gate's header / line / A/R-JE checks pass the authorized shape only (total 0, one line qty 1 unit 0,
+ *      no journal posting); every other invoice is unchanged
+ * SEEDER (measured on a prod fork): line haul is bookLoad's system code "linehaul" (not "LH"); accessorials carry
+ *   their catalogs.additional_charges id, unresolved refuses.
  * Run: node scripts/verify-settlement-creator-invoice-number-and-zero-invoice.mjs [--selftest]
  */
 import fs from "node:fs";
@@ -32,6 +37,9 @@ const F = {
   admission: "apps/backend/src/driver-finance/settlement-creator-admission.ts",
   test: "apps/backend/src/driver-finance/__tests__/settlement-creator-admission.test.ts",
   drawer: "apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx",
+  zero: "apps/backend/src/driver-finance/settlement-creator-zero-revenue.ts",
+  seed: "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts",
+  gate: "apps/backend/src/driver-finance/feed-gate/feed-gate.checks.ts",
 };
 
 export function problems(src) {
@@ -52,6 +60,12 @@ export function problems(src) {
   if (!/<Field label="Invoice no\.">/.test(src.drawer) || !/invoice_number: \(l\.invoice_number \?\? ""\)\.trim\(\) \|\| null/.test(src.drawer)) p.push("the drawer has no Invoice no. box or does not send invoice_number");
   if (!/if \(load\.factoring !== "faro_usmca"\) continue;/.test(src.routes)) p.push("factor auto-submit must stay faro_usmca-only");
   if (!/invoice_number_taken/.test(src.test) || !/full_transportation_settlement/.test(src.test)) p.push("admission unit tests missing");
+  if (!/authorizedZeroRevenue: isAuthorizedZeroRevenueLoad\(load\)/.test(src.service)) p.push("the mint must pass authorizedZeroRevenue from isAuthorizedZeroRevenueLoad only");
+  if (!/load\.factoring !== "faro_transportation"\) return false/.test(src.zero)) p.push("isAuthorizedZeroRevenueLoad must be faro_transportation-only");
+  if (!/if \(isAuthorizedZeroRevenueLoad\(load\)\) \{\s*return \[\{ code: "linehaul"[^\]]*amount_cents: 0 \}\]/.test(src.seed)) p.push("the seeder must book an authorized Transportation load at $0");
+  if (/code: "LH"|code: "ACC"/.test(src.seed) || !/additional_charge_id: hit\.id/.test(src.seed)) p.push("seeder charge codes must be bookLoad's (linehaul + catalog id)");
+  const zr = (src.gate.match(/\$\{ZR_I\}/g) ?? []).length;
+  if (!/export function authorizedZeroRevenueInvoiceSql/.test(src.gate) || zr < 6) p.push("feed-gate header / line / A/R-JE checks must recognise the authorized $0 shape");
   return p;
 }
 
@@ -67,12 +81,15 @@ function selftest() {
   if (!problems(m("admission", "i.operating_company_id = $1::uuid AND ", "")).some((x) => /company-scoped/.test(x))) bad.push("an unscoped taken-number read passed");
   if (!problems(m("routes", 'if (load.factoring !== "faro_usmca") continue;', "")).some((x) => /faro_usmca-only/.test(x))) bad.push("a Transportation factor submit passed");
   if (!problems(m("drawer", '<Field label="Invoice no.">', '<Field label="Load #">')).some((x) => /Invoice no/.test(x))) bad.push("a missing Invoice no. box passed");
+  if (!problems(m("zero", 'load.factoring !== "faro_transportation") return false', 'false) return false')).some((x) => /faro_transportation-only/.test(x))) bad.push("a non-Transportation $0 authorization passed");
+  if (!problems(m("seed", 'code: "linehaul",\n      description: amount', 'code: "LH",\n      description: amount')).some((x) => /linehaul/.test(x))) bad.push("the LH code passed");
+  if (!problems(m("gate", /\$\{ZR_I\}/g, "false")).some((x) => /authorized \$0 shape/.test(x))) bad.push("a feed gate without the authorized shape passed");
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }
-  console.log(`${LABEL} SELFTEST OK — 7/7 (real tree passes; dropped number, late admission, some() rule, unscoped read, Transportation submit, missing box each caught)`);
+  console.log(`${LABEL} SELFTEST OK — 10/10 (real tree passes; dropped number, late admission, some() rule, unscoped read, Transportation submit, missing box, non-Transportation $0, LH code, gate without authorized shape each caught)`);
   process.exit(0);
 }
 if (process.argv.includes("--selftest")) selftest();
 const src = Object.fromEntries(Object.entries(F).map(([k, rel]) => [k, fs.readFileSync(path.join(ROOT, rel), "utf8")]));
 const p = problems(src);
 if (p.length) { console.error(`${LABEL} FAIL\n  - ${p.join("\n  - ")}`); process.exit(1); }
-console.log(`${LABEL} OK — Invoice no. box (typed wins, blank = load number), duplicates refused before any write, all-Transportation settlement refused.`);
+console.log(`${LABEL} OK — Invoice no. box (typed wins, blank = load number), duplicates refused before any write, all-Transportation settlement refused, $0 only for a Transportation load, seeder speaks bookLoad's charge codes.`);
