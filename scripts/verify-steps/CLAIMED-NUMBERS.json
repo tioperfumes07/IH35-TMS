@@ -16386,5 +16386,10 @@
     ]
   },
   "total_claimed": 1063,
-  "18373": "CC-1 ROUND 443.17 verify-accounting-disputes-tab-routed"
+  "18373": "CC-1 ROUND 443.17 verify-accounting-disputes-tab-routed",
+  "12431": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-10",
+    "purpose": "verify-relay-webhook-stores-under-usmca"
+  }
 }
