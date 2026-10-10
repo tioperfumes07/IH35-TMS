@@ -24,6 +24,14 @@ type BuildInvoiceInput = {
    */
   asProforma?: boolean;
   requestedDisplayId?: string | null;
+  /**
+   * ROUND 443.1 — owner ruling: a mixed-settlement Transportation load may carry a $0 rate
+   * so expenses stay attributable. When true AND rate_total_cents === 0, mints one linehaul line
+   * with quantity=1, unit_amount_cents=0, line_total_cents=0 and skips accessorial lines (the
+   * invoice is $0 by design). When true AND rate_total_cents > 0, refuses: the flag is only valid
+   * on a genuinely zero-rate load. When absent/false, existing behavior is unchanged.
+   */
+  authorizedZeroRevenue?: boolean;
 };
 
 type BuildInvoiceResult = {
@@ -180,7 +188,15 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
   // CC-2's #4989 guards the Load drawer — the USER action. This is the SERVICE, which every other
   // caller reaches; guarding one without the other leaves the door open.
   const rateCents = Number(load.rate_total_cents ?? 0);
-  if (!Number.isFinite(rateCents) || rateCents <= 0) {
+  if (input.authorizedZeroRevenue) {
+    if (!Number.isFinite(rateCents) || rateCents > 0) {
+      throw Object.assign(new Error("zero_revenue_flag_on_rated_load"), {
+        code: "zero_revenue_flag_on_rated_load",
+        load_id: String(load.id),
+        rate_total_cents: rateCents,
+      });
+    }
+  } else if (!Number.isFinite(rateCents) || rateCents <= 0) {
     throw Object.assign(new Error("load_has_no_rate"), {
       code: "load_has_no_rate",
       load_id: String(load.id),
@@ -375,7 +391,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
       throw err;
     });
 
-  if (stopExtraRatesRes.rows.length > 0) {
+  if (stopExtraRatesRes.rows.length > 0 && !input.authorizedZeroRevenue) {
     const accessorialResolution = await resolveInvoiceLineRevenueAccountId(input.operatingCompanyId, {
       line_type: "accessorial",
     });

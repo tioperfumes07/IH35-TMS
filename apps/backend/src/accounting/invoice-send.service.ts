@@ -63,7 +63,7 @@ type SendClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
 
-export type SendDraftInvoiceOk = { ok: true };
+export type SendDraftInvoiceOk = { ok: true; reason?: string };
 export type SendDraftInvoiceErr = {
   ok: false;
   code: 404 | 409 | 422;
@@ -466,6 +466,14 @@ export async function sendDraftInvoice(
     `,
     [input.invoiceId, input.userId, input.operatingCompanyId]
   );
+
+  // ROUND 443.1 — a $0 invoice (authorizedZeroRevenue=true mint) is a records-only document.
+  // It is stamped sent above (the document IS issued), but writes no GL entry, no receivable, and
+  // no revrec latch entry — there is nothing to recognize. Return an explicit reason so callers
+  // can distinguish "sent with no posting" from a posting failure.
+  if (Number(current.total_cents ?? 0) === 0) {
+    return { ok: true, reason: "zero_revenue_no_posting" };
+  }
 
   // OWNER DECISION B (2026-08-27 23:00 CT,
   // docs/lockdown/OWNER-DECISION-ACCT-F5692-OPTION-B-2026-08-27.md) — invoice ISSUANCE fires revrec
