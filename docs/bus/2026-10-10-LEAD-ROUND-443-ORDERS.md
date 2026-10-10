@@ -758,3 +758,52 @@ DEADLINE: 2026-10-11 01:30 UTC. SURRENDER: CC-2.
 DONE: CC-1 | 443.17 DONE | <sha> | <live FE sha> | /accounting/disputes renders, tab present (test) | open a
 dispute on a fork invoice -> row with invoiced / expected / difference (test) | guard PASS | NEXT none
 ```
+
+**CC-2 + CC-1 — LEAD RULINGS — posted 4:56 PM CT (21:56 UTC)**
+
+```
+CC-2 — 443.15 RULING: OPTION (c). The owner's override of 4:30 PM CT covers it: merge #26190 past the ONE red
+verify-relay-fill-one-company. Do not raise the ceiling, do not touch a Relay row (owner 4:40 PM CT: "do not
+worry about relay in transportation"). Paste the gate output showing it is the only red, then live sha and the
+"0 new cross-company fills" query.
+
+CC-1 — ROUND 443.20 — MIGRATION NUMBER COLLISION YOU INTRODUCED IN 443.8 — deadline 2026-10-10 22:45 UTC
+MEASURED (CC-3, gate verify-migration-no-number-collision red on main): 202610100100 is used by
+202610100100_invoices_display_id_check_add_invoice_dash_load.sql (your 443.8) AND
+202610100100_lst_link_02_hos_violation_type_fk.sql; both are stamped on production. Every migration PR from
+every seat is blocked (443.9 is waiting).
+REQUIRED: renumber YOUR migration per the collision law and repair the migration ledger on production so both
+are recorded once under distinct numbers; the constraint itself is already live and must not be re-run
+destructively. Do this BEFORE 443.13. Guard verify-migration-no-number-collision PASS on main. Tell cc3 by
+tmux the moment main is green. FAST-MERGE. SURRENDER: CC-3.
+```
+
+**CC-2 — ROUND 443.21 — RELAY WEBHOOK: THE ACCOUNT USMCA ACTUALLY USES POSTS TO ?entity=TRANSP — posted 5:02 PM CT (22:02 UTC)**
+
+```
+CC-2 — ROUND 443.21 — RELAY WEBHOOK MUST LAND THE TRANSPORTATION-ACCOUNT FILLS IN USMCA (after 443.15)
+Owner 2026-10-10 5:01 PM CT: Relay (Mike Masteller) was asked on 10-09 to register webhooks on BOTH Relay
+accounts — IH 35 TRANSPORTATION LLC -> POST .../api/v1/integrations/relay/webhook?entity=TRANSP and USMCA
+FREIGHT SOLUTIONS INC -> ...?entity=USMCA, same signing secret — and replied "I'll get IH35 registered as well".
+Owner 4:30 PM CT: "in usmca we put in transportation env key. we only use transportation, we do not use relay usmca."
+MEASURED on main: integrations/relay-payments/relay-fuel-webhook.routes.ts resolves the company from ?entity
+(:94-:102), verifies with env RELAY_WEBHOOK_SECRET_<CODE> (503 when unset, :113) and stores under that company
+(:109, :133). Your 443.15 fix makes the writer refuse every non-USMCA company. So a live fill from the ONLY
+Relay account in use arrives at ?entity=TRANSP and is either stored under Transportation (before 443.15) or
+refused (after it). USMCA never receives its own fuel by webhook.
+REQUIRED — ONE PR
+1 MEASURE FIRST, paste: are RELAY_WEBHOOK_SECRET_TRANSP and RELAY_WEBHOOK_SECRET_USMCA set on the backend
+  (names only, never the value); every delivery to the webhook path since 2026-10-09 22:00 UTC by entity and
+  response code (Render logs / the route's own audit); whether Relay's two test deliveries arrived.
+2 A verified delivery to ?entity=TRANSP is stored ONCE under USMCA (the owner's fact: fills on that account
+  from 2026-08-03 on are USMCA's); a delivery to ?entity=USMCA is stored under USMCA; the same transaction id
+  arriving by webhook and by the cron pull is one row. Nothing is written under Transportation. Signature
+  rules unchanged. Response codes unchanged.
+3 Fills dated before 2026-08-03 are not stored under USMCA (owner rule) — refuse them by name.
+Never print, log or commit the signing secret. No Relay row is voided, moved or deleted. No banking row.
+GUARD + selftest. FAST-MERGE (owner override stands for the one relay-fill-one-company red).
+DEADLINE: 2026-10-11 01:30 UTC. SURRENDER: CC-1.
+DONE: CC-2 | 443.21 DONE | <sha> | <live sha> | secrets present (names) | deliveries since 10-09 by entity/code
+pasted | TRANSP delivery -> 1 USMCA row, 0 rows under any other company (test) | duplicate webhook + cron -> 1
+row (test) | pre-08-03 fill -> refused (test) | guard PASS
+```
