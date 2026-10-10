@@ -262,17 +262,21 @@ function OpenDisputeModal({
             data-testid="open-dispute-invoice-list"
           >
             {invoices.map((inv) => (
-              <li key={inv.id}>
+              <li key={inv.id} className="flex items-center gap-2 px-2 py-1 hover:bg-[#F7F8FA]">
+                <EntityLink kind="invoice" id={inv.id} label={entityLabel(inv.display_id, inv.id, "Invoice")} className="font-semibold" />
+                <span className="flex-1 text-[#4B5563]">
+                  {inv.customer_name ?? "—"} — {money(inv.total_cents)}
+                </span>
                 <button
                   type="button"
-                  className="w-full px-2 py-1 text-left hover:bg-[#F7F8FA]"
+                  className="rounded-sm border border-[#E5E7EB] px-2 py-0.5 text-xs hover:bg-white"
                   onClick={() => {
                     setSelectedInvoice(inv);
                     setSearch(inv.display_id);
                   }}
                   data-testid={`open-dispute-pick-${inv.id}`}
                 >
-                  {inv.display_id} — {inv.customer_name ?? "—"} — {money(inv.total_cents)}
+                  Select
                 </button>
               </li>
             ))}
@@ -281,7 +285,7 @@ function OpenDisputeModal({
 
         {selectedInvoice ? (
           <div className="mt-2 rounded-sm bg-[#F7F8FA] p-2 text-xs text-[#1F2A44]" data-testid="open-dispute-selected-invoice">
-            <span className="font-semibold">{selectedInvoice.display_id}</span>
+            <EntityLink kind="invoice" id={selectedInvoice.id} label={entityLabel(selectedInvoice.display_id, selectedInvoice.id, "Invoice")} className="font-semibold" />
             {" · "}{selectedInvoice.customer_name ?? "—"}
             {" · invoiced: "}<span className="font-semibold">{money(selectedInvoice.total_cents)}</span>
           </div>
