@@ -23,7 +23,9 @@ export type LoanTargetType =
   | "expense"
   | "loan_out"
   | "repayment"
-  | "intercompany";
+  | "intercompany"
+  | "bank_funding"
+  | "bank_repayment";
 export type LoanStatus = "draft" | "open" | "paid" | "reversed";
 export type LoanInterestMethod = "simple" | "amortized" | "none";
 export type LoanPaymentFrequency =
@@ -33,6 +35,7 @@ export type LoanPaymentFrequency =
   | "monthly"
   | "per_settlement"
   | "lump_sum";
+export type LoanDocumentKind = "funding" | "repayment" | "manual";
 
 /** Mirrors backend `createBodySchema`. Optional here === optional there — nothing invented. */
 export type CreateRelatedPartyLoanRequest = {
@@ -73,7 +76,29 @@ export type RelatedPartyLoanRow = {
   interest_rate_bps?: number | null;
   status?: LoanStatus | null;
   je_id?: string | null;
+  facility_id?: string | null;
+  display_id?: string | null;
+  document_kind?: LoanDocumentKind | null;
   funding_source_note?: string | null;
+  created_at?: string | null;
+};
+
+/** Option 1 LOC header — one running facility per related-party CoA account / person. */
+export type RelatedPartyLoanFacilityRow = {
+  id: string;
+  operating_company_id: string;
+  account_id: string;
+  account_number?: string | null;
+  account_name?: string | null;
+  counterparty_name?: string | null;
+  relationship: LoanRelationship | string;
+  status: string;
+  principal_advanced_cents: number;
+  principal_repaid_cents: number;
+  open_balance_cents: number;
+  accrued_interest_cents: number;
+  advance_count: number;
+  repayment_count: number;
   created_at?: string | null;
 };
 
@@ -81,6 +106,7 @@ export type ListRelatedPartyLoansQuery = {
   operating_company_id: string;
   direction?: LoanDirection;
   target_type?: LoanTargetType;
+  facility_id?: string;
   counterparty_id?: string;
   status?: LoanStatus | ReadonlyArray<LoanStatus>;
   from?: string;
@@ -90,20 +116,31 @@ export type ListRelatedPartyLoansQuery = {
 };
 
 export type ListRelatedPartyLoansResponse = {
+  /** Live list route returns `{ loans, total_count, has_more }` (related-party-loan-posting/routes.ts). */
+  loans?: RelatedPartyLoanRow[];
   rows?: RelatedPartyLoanRow[];
   items?: RelatedPartyLoanRow[];
+  total_count?: number;
   total?: number;
+  has_more?: boolean;
   limit?: number;
   offset?: number;
 };
 
+export type ListRelatedPartyLoanFacilitiesResponse = {
+  facilities: RelatedPartyLoanFacilityRow[];
+  total_count?: number;
+};
+
 const BASE = "/api/v1/accounting/related-party-loans";
+const FACILITIES_BASE = "/api/v1/accounting/related-party-loan-facilities";
 
 export function listRelatedPartyLoansUrl(q: ListRelatedPartyLoansQuery): string {
   const p = new URLSearchParams();
   p.set("operating_company_id", q.operating_company_id);
   if (q.direction) p.set("direction", q.direction);
   if (q.target_type) p.set("target_type", q.target_type);
+  if (q.facility_id) p.set("facility_id", q.facility_id);
   if (q.counterparty_id) p.set("counterparty_id", q.counterparty_id);
   appendStatusList(p, "status", q.status);
   if (q.from) p.set("from", q.from);
@@ -118,6 +155,17 @@ export async function listRelatedPartyLoans(
   signal?: AbortSignal,
 ): Promise<ListRelatedPartyLoansResponse> {
   return apiRequest<ListRelatedPartyLoansResponse>(listRelatedPartyLoansUrl(q), { method: "GET", signal });
+}
+
+export async function listRelatedPartyLoanFacilities(
+  operatingCompanyId: string,
+  signal?: AbortSignal,
+): Promise<ListRelatedPartyLoanFacilitiesResponse> {
+  const p = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<ListRelatedPartyLoanFacilitiesResponse>(`${FACILITIES_BASE}?${p.toString()}`, {
+    method: "GET",
+    signal,
+  });
 }
 
 export async function getRelatedPartyLoan(id: string, signal?: AbortSignal): Promise<RelatedPartyLoanRow> {
@@ -139,8 +187,8 @@ export async function createRelatedPartyLoan(
   return apiRequest<RelatedPartyLoanRow>(BASE, { method: "POST", body });
 }
 
-/** Rows come back under `rows` or `items` depending on the list shape; normalise once, here. */
+/** Rows come back under `loans` (live), or legacy `rows` / `items`; normalise once, here. */
 export function loanRowsOf(res: ListRelatedPartyLoansResponse | undefined): RelatedPartyLoanRow[] {
   if (!res) return [];
-  return res.rows ?? res.items ?? [];
+  return res.loans ?? res.rows ?? res.items ?? [];
 }

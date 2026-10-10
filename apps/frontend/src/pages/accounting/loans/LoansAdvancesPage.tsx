@@ -1,23 +1,20 @@
 /**
- * Loans & Advances register — the missing UI over an already-shipped backend.
+ * Loans & Advances register — Option 1 related-party LOC (ROUND 443.22-2b).
  *
- * VERIFIED BEFORE BUILDING (prod br-fancy-credit-akjnd07a, 2026-08-05): the data model
- * (accounting.related_party_loan_entries + related_party_loan_schedule, migrations 202611230000 /
- * 202611260000) is APPLIED, the routes are registered (registerRelatedPartyLoanRoutes in index.ts),
- * and posting / auto-deduct / reminder workers exist. Zero frontend files referenced any of it —
- * the feature was reachable only by calling the API by hand. This page is that door.
- *
- * Entity-scoped: every read passes operating_company_id from CompanyContext, so TRANSP / TRK /
- * USMCA never blend. No GL math here — the backend poster owns the journal entry.
+ * One facility per person (CoA 2410-family sub-account). Advances and repayments hang under the
+ * facility. The wizard still creates documents through POST /related-party-loans; this page never
+ * computes GL.
  */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  listRelatedPartyLoanFacilities,
   listRelatedPartyLoans,
   loanRowsOf,
   type LoanDirection,
   type LoanStatus,
   type LoanTargetType,
+  type RelatedPartyLoanFacilityRow,
   type RelatedPartyLoanRow,
 } from "../../../api/related-party-loans";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -49,6 +46,8 @@ const TARGETS: Array<"" | LoanTargetType> = [
   "loan_out",
   "repayment",
   "intercompany",
+  "bank_funding",
+  "bank_repayment",
 ];
 
 function money(cents: number | null | undefined): string {
@@ -63,22 +62,40 @@ export function LoansAdvancesPage() {
   const [status, setStatus] = useState<LoanStatus[]>([]);
   const [targetType, setTargetType] = useState<"" | LoanTargetType>("");
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [expandedFacilityId, setExpandedFacilityId] = useState<string | null>(null);
+
+  const facilitiesQuery = useQuery({
+    queryKey: ["related-party-loan-facilities", companyId],
+    queryFn: () => listRelatedPartyLoanFacilities(companyId),
+    enabled: Boolean(companyId),
+    refetchInterval: 30_000,
+  });
 
   const listQuery = useQuery({
-    queryKey: ["related-party-loans", companyId, direction, status, targetType],
+    queryKey: ["related-party-loans", companyId, direction, status, targetType, expandedFacilityId],
     queryFn: () =>
       listRelatedPartyLoans({
         operating_company_id: companyId,
         ...(direction ? { direction } : {}),
         ...(status.length ? { status } : {}),
         ...(targetType ? { target_type: targetType } : {}),
+        ...(expandedFacilityId ? { facility_id: expandedFacilityId } : {}),
         limit: 100,
       }),
     enabled: Boolean(companyId),
     refetchInterval: 30_000,
   });
 
+  const facilities: RelatedPartyLoanFacilityRow[] = useMemo(
+    () => facilitiesQuery.data?.facilities ?? [],
+    [facilitiesQuery.data],
+  );
   const rows: RelatedPartyLoanRow[] = useMemo(() => loanRowsOf(listQuery.data), [listQuery.data]);
+
+  const refetchAll = () => {
+    void facilitiesQuery.refetch();
+    void listQuery.refetch();
+  };
 
   return (
     <div className="p-4">
@@ -86,13 +103,13 @@ export function LoansAdvancesPage() {
         backHref="/accounting"
         breadcrumb={["Accounting", "Loans & Advances"]}
         title="Loans & Advances"
-        subtitle="Loans to the company (liability) and loans from the company (receivable), with terms and interest."
+        subtitle="One running facility per related party. Advances and repayments hang under the person."
         actions={
           <button
             type="button"
             onClick={() => setWizardOpen(true)}
             disabled={!companyId}
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0F1729] disabled:opacity-40"
+            className="h-7 rounded-sm bg-[#14314F] px-2 text-[12px] font-semibold text-white hover:bg-[#0F1729] disabled:opacity-40"
           >
             + Create
           </button>
@@ -135,29 +152,122 @@ export function LoansAdvancesPage() {
       </div>
 
       {!companyId && (
-        <div className="mt-4 rounded-sm border border-[#E5E7EB] bg-white p-4 text-xs text-[#6B7280]">
+        <div className="mt-4 rounded-sm border border-[#E5E7EB] bg-white p-4 text-[12px] text-[#6B7280]">
           Select an operating company to load its loans and advances.
         </div>
       )}
 
-      {listQuery.isError && (
+      {(facilitiesQuery.isError || listQuery.isError) && (
         <div className="mt-4">
           <ListErrorState
             title="Couldn't load loans & advances"
             status={
-              typeof (listQuery.error as { status?: number } | null)?.status === "number"
-                ? ((listQuery.error as { status?: number }).status as number)
+              typeof ((facilitiesQuery.error ?? listQuery.error) as { status?: number } | null)?.status ===
+              "number"
+                ? (((facilitiesQuery.error ?? listQuery.error) as { status?: number }).status as number)
                 : 0
             }
-            message={listQuery.error instanceof Error ? listQuery.error.message : undefined}
-            onRetry={() => void listQuery.refetch()}
+            message={
+              facilitiesQuery.error instanceof Error
+                ? facilitiesQuery.error.message
+                : listQuery.error instanceof Error
+                  ? listQuery.error.message
+                  : undefined
+            }
+            onRetry={() => refetchAll()}
           />
         </div>
       )}
 
+      {companyId && !facilitiesQuery.isError && (
+        <div className="mt-4" data-testid="related-party-loan-facilities-register">
+          <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+            Facilities (one per person)
+          </div>
+          <ParityTable<RelatedPartyLoanFacilityRow>
+            rows={facilities}
+            rowKey={(r) => r.id}
+            storageKey="loans-advances-facilities"
+            exportFilename="loan-facilities"
+            tableTestId="loans-advances-facilities-table"
+            emptyText={
+              facilitiesQuery.isLoading
+                ? "Loading…"
+                : "No related-party facilities yet. Creating an advance opens the person's facility."
+            }
+            onRowClick={(r) => setExpandedFacilityId((cur) => (cur === r.id ? null : r.id))}
+            columns={[
+              {
+                key: "person",
+                label: "Person",
+                render: (r) =>
+                  entityLabel(r.counterparty_name ?? r.account_name, r.account_id, "Related party"),
+              },
+              { key: "relationship", label: "Relationship", render: (r) => r.relationship },
+              {
+                key: "account",
+                label: "Account",
+                render: (r) => (
+                  <EntityLink
+                    kind="account"
+                    id={r.account_id}
+                    label={entityLabel(
+                      r.account_number ? `${r.account_number} ${r.account_name ?? ""}`.trim() : r.account_name,
+                      r.account_id,
+                      "Account",
+                    )}
+                  />
+                ),
+              },
+              {
+                key: "advanced",
+                label: "Advanced",
+                className: "text-right",
+                cellClass: "text-right whitespace-nowrap",
+                render: (r) => money(r.principal_advanced_cents),
+              },
+              {
+                key: "repaid",
+                label: "Repaid",
+                className: "text-right",
+                cellClass: "text-right whitespace-nowrap",
+                render: (r) => money(r.principal_repaid_cents),
+              },
+              {
+                key: "open",
+                label: "Open balance",
+                className: "text-right",
+                cellClass: "text-right whitespace-nowrap",
+                render: (r) => money(r.open_balance_cents),
+              },
+              {
+                key: "interest",
+                label: "Accrued interest",
+                className: "text-right",
+                cellClass: "text-right whitespace-nowrap",
+                render: (r) => money(r.accrued_interest_cents),
+              },
+              {
+                key: "docs",
+                label: "Docs",
+                render: (r) => `${r.advance_count} adv / ${r.repayment_count} repay`,
+              },
+              { key: "status", label: "Status", render: (r) => r.status },
+            ]}
+          />
+          {expandedFacilityId && (
+            <div className="mt-2 text-[12px] text-[#6B7280]">
+              Showing advances and repayments for the selected facility. Click the row again to clear.
+            </div>
+          )}
+        </div>
+      )}
+
       {companyId && !listQuery.isError && (
-        <div className="mt-4">
-          {/* ACCT-F3572: ParityTable owns Search+Range+gear on the loans register leaf. */}
+        <div className="mt-6">
+          <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+            {expandedFacilityId ? "Advances & repayments (selected facility)" : "All advances & repayments"}
+          </div>
           <ParityTable<RelatedPartyLoanRow>
             rows={rows}
             rowKey={(r) => r.id}
@@ -171,10 +281,13 @@ export function LoansAdvancesPage() {
             }
             columns={[
               {
+                key: "display_id",
+                label: "Document",
+                render: (r) => r.display_id ?? "—",
+              },
+              {
                 key: "entry_date",
                 label: "Date",
-                // US date grammar via formatDateUS — bare ISO in JSX is locale-ambiguous
-                // (verify:no-native-datetime-input C3).
                 render: (r) => formatDateUS(r.entry_date),
               },
               {
@@ -188,11 +301,14 @@ export function LoansAdvancesPage() {
                 render: (r) => entityLabel(r.counterparty_name, r.counterparty_id, "Counterparty"),
               },
               { key: "relationship", label: "Relationship", render: (r) => r.relationship },
-              { key: "target_type", label: "Target", render: (r) => r.target_type },
+              {
+                key: "kind",
+                label: "Kind",
+                render: (r) => r.document_kind ?? r.target_type,
+              },
               {
                 key: "account",
                 label: "Account",
-                // Linkage: account + JE drill through — never raw uuid text.
                 render: (r) => (
                   <EntityLink kind="account" id={r.account_id} label={entityLabel(r.account_name, r.account_id, "Account")} />
                 ),
@@ -201,7 +317,7 @@ export function LoansAdvancesPage() {
                 key: "principal",
                 label: "Principal",
                 className: "text-right",
-                cellClass: "text-right",
+                cellClass: "text-right whitespace-nowrap",
                 render: (r) => money(r.principal_cents ?? r.amount_cents),
               },
               { key: "status", label: "Status", render: (r) => r.status ?? "—" },
@@ -224,7 +340,7 @@ export function LoansAdvancesPage() {
         open={wizardOpen}
         operatingCompanyId={companyId}
         onClose={() => setWizardOpen(false)}
-        onCreated={() => void listQuery.refetch()}
+        onCreated={() => refetchAll()}
       />
     </div>
   );

@@ -26,13 +26,29 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { buildLoanSchedule } from "./schedule.service.js";
 import { prepareInterestAccrual } from "./interest-accrual.service.js";
 import { statusListCondition, statusListParam } from "../../lib/status-list.js";
+import {
+  allocateRelatedPartyLoanDisplayId,
+  ensureRelatedPartyLoanFacility,
+  listRelatedPartyLoanFacilities,
+} from "./facility.service.js";
+
+const TARGET_TYPES = [
+  "bill",
+  "settlement",
+  "cash_advance",
+  "expense",
+  "loan_out",
+  "repayment",
+  "intercompany",
+  "bank_funding",
+  "bank_repayment",
+] as const;
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   direction: z.enum(["in", "out"]).optional(),
-  target_type: z
-    .enum(["bill", "settlement", "cash_advance", "expense", "loan_out", "repayment", "intercompany"])
-    .optional(),
+  target_type: z.enum(TARGET_TYPES).optional(),
+  facility_id: z.string().uuid().optional(),
   counterparty_id: z.string().uuid().optional(),
   // U12 — multi-select: ?status=a&status=b (one value still accepted).
   status: statusListParam(["draft", "open", "paid", "reversed"] as const),
@@ -50,15 +66,7 @@ const createBodySchema = z.object({
   counterparty_id: z.string().uuid().nullable().optional(),
   counterparty_name: z.string().trim().max(200).optional(),
   account_id: z.string().uuid(),
-  target_type: z.enum([
-    "bill",
-    "settlement",
-    "cash_advance",
-    "expense",
-    "loan_out",
-    "repayment",
-    "intercompany",
-  ]),
+  target_type: z.enum(TARGET_TYPES),
   target_id: z.string().uuid().nullable().optional(),
   principal_cents: z.number().int().positive(),
   entry_date: z.string().date(),
@@ -75,6 +83,23 @@ const createBodySchema = z.object({
 const idParamSchema = z.object({ id: z.string().uuid() });
 
 export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
+  // ── FACILITIES — Option 1: one running LOC per person (ROUND 443.22-2b). ─────────────────────────
+  app.get(
+    "/api/v1/accounting/related-party-loan-facilities",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const parsed = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+      if (!parsed.success) return validationError(reply, parsed.error);
+
+      const facilities = await withCompanyScope(authUser.uuid, parsed.data.operating_company_id, async (client) =>
+        listRelatedPartyLoanFacilities(client, parsed.data.operating_company_id)
+      );
+      return { facilities, total_count: facilities.length };
+    }
+  );
+
   // ── LIST — the register. Every filter is applied in SQL, entity-scoped. ──────────────────────────
   app.get(
     "/api/v1/accounting/related-party-loans",
@@ -99,6 +124,10 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
         if (q.target_type) {
           values.push(q.target_type);
           filters.push(`e.target_type = $${values.length}`);
+        }
+        if (q.facility_id) {
+          values.push(q.facility_id);
+          filters.push(`e.facility_id = $${values.length}::uuid`);
         }
         if (q.counterparty_id) {
           values.push(q.counterparty_id);
@@ -146,6 +175,9 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
                    e.first_payment_date::text,
                    e.status,
                    e.je_id::text,
+                   e.facility_id::text,
+                   e.display_id,
+                   e.document_kind,
                    -- Reversal + related-party state belong in the REGISTER, not just the detail page:
                    -- a row that has been reversed must never read as live, and ASC 850 related-party
                    -- disclosure depends on the tag being visible where the balances are reviewed.
@@ -356,14 +388,26 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
         )) as { rows: Array<{ id: string }> };
         if (!acct.rows[0]) return { error: "account_not_found_for_company" as const };
 
+        // Option 1: every advance hangs off the person's running facility (one per CoA account).
+        const facilityId = await ensureRelatedPartyLoanFacility(client, {
+          companyId: b.operating_company_id,
+          accountId: b.account_id,
+          counterpartyName: b.counterparty_name,
+          relationship: b.relationship,
+          actorUserUuid: authUser.uuid,
+        });
+        const displayId = await allocateRelatedPartyLoanDisplayId(client, b.operating_company_id);
+        const documentKind =
+          b.target_type === "repayment" || b.target_type === "bank_repayment" ? "repayment" : "manual";
+
         const inserted = (await client.query(
           `INSERT INTO accounting.related_party_loan_entries
              (operating_company_id, direction, relationship, counterparty_kind, counterparty_id,
               counterparty_name, account_id, target_type, target_id, principal_cents, entry_date,
               interest_rate_bps, interest_method, payment_frequency, payment_count, first_payment_date,
-              funding_source_note, status, created_by_user_id)
-           VALUES ($1::uuid,$2,$3,$4,$5::uuid,$6,$7::uuid,$8,$9::uuid,$10,$11::date,$12,$13,$14,$15,$16::date,$17,'open',$18::uuid)
-           RETURNING id::text, direction, principal_cents, entry_date::text`,
+              funding_source_note, status, facility_id, display_id, document_kind, created_by_user_id)
+           VALUES ($1::uuid,$2,$3,$4,$5::uuid,$6,$7::uuid,$8,$9::uuid,$10,$11::date,$12,$13,$14,$15,$16::date,$17,'open',$18::uuid,$19,$20,$21::uuid)
+           RETURNING id::text, direction, principal_cents, entry_date::text, facility_id::text, display_id`,
           [
             b.operating_company_id,
             b.direction,
@@ -382,9 +426,12 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
             b.payment_count ?? null,
             b.first_payment_date ?? null,
             b.funding_source_note ?? null,
+            facilityId,
+            displayId,
+            documentKind,
             authUser.uuid,
           ]
-        )) as { rows: Array<{ id: string }> };
+        )) as { rows: Array<{ id: string; facility_id: string; display_id: string }> };
         const loanId = inserted.rows[0].id;
 
         // Schedule in the SAME transaction — a loan without one is a loan nobody gets reminded about.
@@ -430,13 +477,22 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
             direction: b.direction,
             principal_cents: b.principal_cents,
             account_id: b.account_id,
+            facility_id: facilityId,
+            display_id: displayId,
+            document_kind: documentKind,
             schedule_rows: scheduleRows,
           },
           "info",
           "LOAN-05"
         );
 
-        return { id: loanId, schedule_rows: scheduleRows };
+        return {
+          id: loanId,
+          facility_id: facilityId,
+          display_id: displayId,
+          document_kind: documentKind,
+          schedule_rows: scheduleRows,
+        };
       });
 
       if ("error" in result) return reply.code(400).send({ error: result.error });
