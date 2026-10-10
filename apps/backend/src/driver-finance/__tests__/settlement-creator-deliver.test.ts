@@ -16,7 +16,8 @@ describe("ROUND 443.3 — the Creator delivers a load through dispatch's one tra
     const t = client("dispatched");
     await deliverLoadThroughDispatch(t.c as never, "u", "co", "l", "2026-08-07", t.transition as never);
     expect(t.transition.mock.calls.map((x) => x[4].new_status)).toEqual(["in_transit", "delivered_pending_docs"]);
-    expect(t.transition.mock.calls[1][4].delivered_at).toBe("2026-08-07T18:00:00.000Z");
+    // ROUND 443.16: no stamped departure in this fake -> the delivery date's local day start, never an invented 18:00.
+    expect(t.transition.mock.calls[1][4].delivered_at).toBe("2026-08-07T05:00:00.000Z");
     expect(t.status).toBe("delivered_pending_docs");
   });
   it("an already-delivered load is left alone", async () => {

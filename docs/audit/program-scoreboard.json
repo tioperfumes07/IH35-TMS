@@ -1,10 +1,10 @@
 {
-  "healthzSha": "3f6eb1e",
-  "generated_at": "2026-10-10T22:14:02.038Z",
+  "healthzSha": "9510ccf",
+  "generated_at": "2026-10-10T22:31:46.535Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "3f6eb1e",
+    "deployedSha": "9510ccf",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 26203,
+      "title": "chore(claim): restore 202615450900 (CC-3 443.9, dropped by #26173 merge) + reserve 202615460900 (CC-3 443.16)",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26203",
+      "sha": "9510ccf1f0",
+      "committedAtIso": "2026-10-10T17:24:35-05:00"
+    },
+    {
+      "number": 26201,
+      "title": "Claude-3- ROUND 443.7 a: Settlement Creator post is one transaction (zero rows on refusal), one settlement per post (Option A), tours on one truck book, preview works for new loads",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26201",
+      "sha": "757da599f7",
+      "committedAtIso": "2026-10-10T17:18:30-05:00"
+    },
+    {
+      "number": 26200,
+      "title": "FINDING: ACCT-F443-17 (CC-1) — Disputes tab in Accounting module + open-dispute form",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26200",
+      "sha": "cb0ac0022f",
+      "committedAtIso": "2026-10-10T17:15:11-05:00"
+    },
+    {
+      "number": 26199,
+      "title": "FINDING: N/A (CLAIM-RESERVE 12431 -- reservation-only commit, no code fix)",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26199",
+      "sha": "ec8e52c64b",
+      "committedAtIso": "2026-10-10T17:14:17-05:00"
+    },
+    {
       "number": 26197,
       "title": "FINDING: N/A (CLAIM-RESERVE 18373 -- reservation-only commit, no code fix)",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26193",
       "sha": "b16e2ba96b",
       "committedAtIso": "2026-10-10T16:56:57-05:00"
-    },
-    {
-      "number": 26192,
-      "title": "docs(bus): ROUND 443.16 / 443.18 / 443.19 (CC-3) and 443.17 (CC-1) — tracking stop stamps, Disputes tabs, the rest in one run",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 04:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26192",
-      "sha": "0c24a308de",
-      "committedAtIso": "2026-10-10T16:55:46-05:00"
-    },
-    {
-      "number": 26191,
-      "title": "FINDING: N/A (CLAIM-RESERVE 18362 + migration 202615441200 -- reservation-only commit, no code fix)",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 04:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26191",
-      "sha": "86c5155c9a",
-      "committedAtIso": "2026-10-10T16:53:38-05:00"
-    },
-    {
-      "number": 26189,
-      "title": "FINDING: N/A (CLAIM-RESERVE 12427 -- reservation-only commit, no code fix)",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 04:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26189",
-      "sha": "df3b4936d4",
-      "committedAtIso": "2026-10-10T16:41:48-05:00"
-    },
-    {
-      "number": 26188,
-      "title": "docs(bus): ROUND 443.11 amendment — settlement 5779 entered (13526 USMCA, 13527 Transportation at $0); first 10 = 5769, 5771-5779",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 04:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26188",
-      "sha": "c7e89840ac",
-      "committedAtIso": "2026-10-10T16:41:33-05:00"
     }
   ]
 }

@@ -8806,6 +8806,8 @@
       "actual_arrival_source",
       "actual_departure_at",
       "actual_departure_source",
+      "actual_stamp_precision",
+      "actual_stop_event_id",
       "address_line1",
       "appointment_end_at",
       "appointment_start_at",

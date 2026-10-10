@@ -257,6 +257,7 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       // ROUND 443.7 a — ONE transaction: admission, booking the loads (bookLoadOnClient), every document, the ledger
       // and the settlement close. Any refusal rolls ALL of it back (zero rows); the same draft can be posted again.
       let afterBook: Array<() => void> = [];
+      let stopStamps: unknown[] = [];
       const result = await withCurrentUser(user.uuid, async (client) => {
         // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
@@ -265,6 +266,7 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
         await assertCreatorDraftAdmissible(client, draft);
         const seeded = await ensureDispatchedLoadsForCreator(client, { uuid: user.uuid, role: user.role }, draft);
         afterBook = seeded.afterCommit;
+        stopStamps = seeded.stop_stamps;
         return postSettlementCreatorInClientTx(client, user.uuid, draft);
       });
       // COMMITTED — only now the after-book extras (never after a rollback).
@@ -296,6 +298,8 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       return reply.code(200).send({
         ok: overallOk(stages),
         stages,
+        // ROUND 443.16 — every stop: tracked (stop event id, nearest when several) or date only, with the reason.
+        stop_stamps: stopStamps,
         ...result,
         factoring_advance_ids: [],
       });
