@@ -2,9 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { isFactoredLoad } from "../../../api/settlementCreator";
 
-// ROUND 443.2 (owner 2026-10-10): "there is no quickpay that should render if confirmed those are factored."
+// ROUND 443.2 as amended (owner 2026-10-10): "there is no quickpay do not worry." Quick pay does not exist in the Creator.
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "5c854333-6ea5-4faa-af31-67cb272fef80" }),
 }));
@@ -24,15 +23,8 @@ function renderDrawer() {
   );
 }
 
-describe("Settlement Creator quick pay (443.2)", () => {
-  it("only Faro-factored loads count as factored", () => {
-    expect(isFactoredLoad("faro_usmca")).toBe(true);
-    expect(isFactoredLoad("faro_transportation")).toBe(true);
-    expect(isFactoredLoad("direct")).toBe(false);
-    expect(isFactoredLoad(null)).toBe(false);
-  });
-
-  it("a factored-only draft renders no QuickPay field and no QuickPay row in the settlement totals", async () => {
+describe("Settlement Creator has no quick pay (443.2)", () => {
+  it("the drawer renders no QuickPay field and no QuickPay row in the settlement totals", async () => {
     renderDrawer();
     // The default draft is one load factored to faro_usmca.
     const totals = await screen.findByTestId("sc-settlement-totals");

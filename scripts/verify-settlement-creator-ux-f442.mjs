@@ -63,8 +63,10 @@ function run(src) {
   if (!/miles_shortest/.test(src) || !/sc-load-short-miles-/.test(src)) {
     out.push("RULE 7d: Company short miles (miles_shortest / sc-load-short-miles) required — driver pay ≠ company practical.");
   }
-  if (!/sc-driver-salary/.test(src) || !/sc-quickpay-expense/.test(src)) {
-    out.push("RULE 7e: Company Control totals must show Driver salary + QuickPay expense.");
+  // RULE 7e amended by ROUND 443.2 (owner 2026-10-10: "there is no quickpay do not worry") — Driver salary only;
+  // quick pay does not exist in the Creator (verify-settlement-creator-no-quickpay-on-factored).
+  if (!/sc-driver-salary/.test(src)) {
+    out.push("RULE 7e: Company Control totals must show Driver salary.");
   }
   if (!/sc-drv-short-miles-/.test(src) || !/sc-drv-empty-miles-/.test(src)) {
     out.push("RULE 7f: Driver carry must expose editable short + empty miles.");
@@ -128,7 +130,6 @@ function autoLoadNumberForExpenseDate() {}
 miles_shortest
 sc-load-short-miles-
 sc-driver-salary
-sc-quickpay-expense
 sc-drv-short-miles-
 sc-drv-empty-miles-
 sc-deduction-block-
