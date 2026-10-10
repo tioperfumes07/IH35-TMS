@@ -16369,5 +16369,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-10",
     "purpose": "verify-book-load-zero-dollar-gate-authorized-only"
+  },
+  "12423": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-10",
+    "purpose": "verify-book-load-on-client-caller-transaction"
   }
 }
