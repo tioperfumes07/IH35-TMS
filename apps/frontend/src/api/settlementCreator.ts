@@ -48,6 +48,8 @@ export type SettlementCreatorDraft = {
       amount_cents: number;
     }>;
     factoring: SettlementCreatorFactorOption;
+    /** ROUND 443.3 — Invoice no. (Faro / QuickBooks number, digits). Blank = the load number. */
+    invoice_number?: string | null;
     date_sent_to_factoring?: string | null;
     loaded_miles?: number | null;
     /** Driver pay miles (short) — company loaded_miles are practical / different. */

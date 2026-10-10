@@ -19,6 +19,7 @@ import {
 } from "./settlement-creator-seed-loads.js";
 import { peekNextSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
+import { assertCreatorDraftAdmissible } from "./settlement-creator-admission.js";
 import { autoSubmitDeliveredLoadToFactor } from "../factoring/auto-submit-on-delivery.service.js";
 import { syncSettlementLoadsToBilling } from "../dispatch/load-billing-lifecycle.service.js";
 
@@ -79,6 +80,10 @@ const draftSchema = z.object({
           )
           .optional(),
         factoring: z.enum(["faro_usmca", "faro_transportation", "direct"]),
+        // ROUND 443.3 — Invoice no. box: digits; blank -> null (the load number is used).
+        invoice_number: z
+          .preprocess((v) => (typeof v === "string" && v.trim() === "" ? null : v), z.string().trim().regex(/^[0-9]{1,12}$/).nullable())
+          .optional(),
         date_sent_to_factoring: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
         loaded_miles: z.number().nullable().optional(),
         miles_shortest: z.number().nullable().optional(),
@@ -251,6 +256,8 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
           draft.operating_company_id,
         ]);
+        // ROUND 443.3 — refusals that must leave zero rows run before any load is booked.
+        await assertCreatorDraftAdmissible(client, draft);
         await ensureDispatchedLoadsForCreator(client, { uuid: user.uuid, role: user.role }, draft);
       });
 
