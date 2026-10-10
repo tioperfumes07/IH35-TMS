@@ -13,7 +13,7 @@
  * V1 chrome: PARITY_MODAL_WIDTH (760px) centered modal, FORM_INPUT_CLASS inputs (h-9 / 13px /
  * rounded-sm / border-gray-300), locked palette, no emojis.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import {
@@ -37,12 +37,29 @@ import { DriverPickerWithCreate } from "../../../components/drivers/DriverPicker
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { SelectCombobox } from "../../../components/Combobox";
+import { formatAccountDisplayLabel } from "../../../lib/show-account-numbers";
+import { useShowAccountNumbers } from "../../../lib/useShowAccountNumbers";
+
+/** ROUND 443.22-2a — bank Loan action seeds the wizard; user still confirms rate/person every time. */
+export type LoanApplicationPrefill = {
+  principal_cents?: number;
+  entry_date?: string;
+  counterparty_name?: string;
+  direction?: LoanDirection;
+  funding_source_note?: string;
+  bank_transaction_id?: string;
+  /** Default 4.00% APR when opened from bank (editable). */
+  interest_rate_pct?: string;
+  interest_method?: LoanInterestMethod;
+  target_type?: LoanTargetType;
+};
 
 type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
   onCreated: () => void;
+  prefill?: LoanApplicationPrefill | null;
 };
 
 type FormState = {
@@ -76,7 +93,12 @@ const TARGET_TYPES: LoanTargetType[] = [
   "loan_out",
   "repayment",
   "intercompany",
+  "bank_funding",
+  "bank_repayment",
 ];
+
+/** Owner / ROUND 443.22 default annual rate when seeding from bank Categorize → Loan. */
+export const BANK_LOAN_DEFAULT_INTEREST_PCT = "4";
 const FREQUENCIES: LoanPaymentFrequency[] = [
   "weekly",
   "biweekly",
@@ -124,7 +146,11 @@ export function pctToBps(input: string): number | null {
 }
 
 /** Serialise the form into the backend contract. Optional fields are omitted, never sent empty. */
-export function buildPayload(form: FormState, operatingCompanyId: string): CreateRelatedPartyLoanRequest | null {
+export function buildPayload(
+  form: FormState,
+  operatingCompanyId: string,
+  bankTransactionId?: string | null,
+): CreateRelatedPartyLoanRequest | null {
   // MoneyInput already parsed dollars -> integer cents (parseToCents); no second parser here.
   const principal_cents = form.principal_cents;
   const interest_rate_bps = pctToBps(form.interest_rate_pct);
@@ -151,14 +177,40 @@ export function buildPayload(form: FormState, operatingCompanyId: string): Creat
   if (form.payment_count.trim()) payload.payment_count = Number(form.payment_count.trim());
   if (form.first_payment_date) payload.first_payment_date = form.first_payment_date;
   if (form.funding_source_note.trim()) payload.funding_source_note = form.funding_source_note.trim();
+  if (bankTransactionId?.trim()) payload.bank_transaction_id = bankTransactionId.trim();
   return payload;
 }
 
-export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCreated }: Props) {
+function formFromPrefill(prefill: LoanApplicationPrefill | null | undefined): FormState {
+  if (!prefill) return { ...EMPTY, entry_date: todayIso() };
+  return {
+    ...EMPTY,
+    direction: prefill.direction ?? "in",
+    counterparty_name: prefill.counterparty_name?.trim() ?? "",
+    principal_cents: typeof prefill.principal_cents === "number" ? prefill.principal_cents : null,
+    entry_date: prefill.entry_date?.slice(0, 10) || todayIso(),
+    interest_rate_pct: prefill.interest_rate_pct ?? BANK_LOAN_DEFAULT_INTEREST_PCT,
+    interest_method: prefill.interest_method ?? "simple",
+    target_type: prefill.target_type ?? (prefill.bank_transaction_id ? "bank_funding" : "bill"),
+    funding_source_note: prefill.funding_source_note?.trim() ?? "",
+  };
+}
+
+export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCreated, prefill }: Props) {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState<FormState>(EMPTY);
+  const [form, setForm] = useState<FormState>(() => formFromPrefill(prefill));
+  const [bankTransactionId, setBankTransactionId] = useState<string | null>(prefill?.bank_transaction_id ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showAccountNumbers] = useShowAccountNumbers();
+
+  useEffect(() => {
+    if (!open) return;
+    setForm(formFromPrefill(prefill));
+    setBankTransactionId(prefill?.bank_transaction_id ?? null);
+    setStep(0);
+    setError(null);
+  }, [open, prefill]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -174,12 +226,18 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
     () =>
       accounts.map((a) => ({
         value: a.id,
-        label: a.account_number ? `${a.account_number} · ${a.account_name}` : a.account_name,
+        label: formatAccountDisplayLabel(
+          { account_name: a.account_name, account_number: a.account_number },
+          { showNumber: showAccountNumbers },
+        ),
         type: a.account_type ?? undefined,
       })),
-    [accounts]
+    [accounts, showAccountNumbers]
   );
-  const payload = useMemo(() => buildPayload(form, operatingCompanyId), [form, operatingCompanyId]);
+  const payload = useMemo(
+    () => buildPayload(form, operatingCompanyId, bankTransactionId),
+    [form, operatingCompanyId, bankTransactionId],
+  );
 
   if (!open) return null;
 
@@ -197,7 +255,8 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
     setError(null);
     try {
       await createRelatedPartyLoan(payload);
-      setForm(EMPTY);
+      setForm({ ...EMPTY, entry_date: todayIso() });
+      setBankTransactionId(null);
       setStep(0);
       onCreated();
       onClose();
@@ -221,10 +280,19 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
           >
             Loan / Advance application
           </h2>
-          <button type="button" onClick={onClose} className="text-xs text-[#6B7280] hover:text-[#0F1219]">
+          <button type="button" onClick={onClose} className="text-[12px] text-[#6B7280] hover:text-[#0F1219]">
             Close
           </button>
         </div>
+        {bankTransactionId ? (
+          <div
+            className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 text-[12px] text-[#1F2A44]"
+            data-testid="loan-wizard-bank-prefill-banner"
+          >
+            Seeded from a bank line at {form.interest_rate_pct || BANK_LOAN_DEFAULT_INTEREST_PCT}% APR.
+            Confirm the person, account, and rate — nothing posts until you submit.
+          </div>
+        ) : null}
 
         <div className="flex gap-1 border-b border-[#E5E7EB] px-4 py-2">
           {STEPS.map((label, i) => (
@@ -411,8 +479,12 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 value={form.interest_rate_pct}
                 onChange={(e) => set("interest_rate_pct", e.target.value)}
                 inputMode="decimal"
-                placeholder="0"
+                placeholder={BANK_LOAN_DEFAULT_INTEREST_PCT}
+                data-testid="loan-wizard-interest-rate"
               />
+              <p className="text-[12px] text-[#6B7280]">
+                Default {BANK_LOAN_DEFAULT_INTEREST_PCT}.00% when opened from Bank → Loan; change it before submit if needed.
+              </p>
 
               <label className="block text-xs font-medium text-[#1F2A44]">Interest method</label>
               <SelectCombobox

@@ -56,6 +56,8 @@ export type CreateRelatedPartyLoanRequest = {
   payment_count?: number | null;
   first_payment_date?: string;
   funding_source_note?: string;
+  /** ROUND 443.22-2a — bank Loan action stamps reverse pointer on the bank line. */
+  bank_transaction_id?: string | null;
 };
 
 export type RelatedPartyLoanRow = {

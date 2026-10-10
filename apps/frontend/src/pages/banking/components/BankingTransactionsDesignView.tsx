@@ -58,6 +58,10 @@ import { MatchDrawer } from "./MatchDrawer";
 import { buildBankingTransactionsXlsx } from "./banking-transactions-xlsx";
 import { RecordTransferModal } from "../RecordTransferModal";
 import { RecordCCPaymentModal } from "../RecordCCPaymentModal";
+import {
+  BANK_LOAN_DEFAULT_INTEREST_PCT,
+  LoanApplicationWizard,
+} from "../../accounting/loans/LoanApplicationWizard";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import {
@@ -103,7 +107,7 @@ type Props = {
 };
 
 type RowDetailDraft = {
-  mode: "match" | "categorize" | "transfer" | "cc_payment";
+  mode: "match" | "categorize" | "transfer" | "cc_payment" | "loan";
   transactionType: string;
   fromTo: string;
   /** QBO Transfer: explicit From bank account id (inline picker). */
@@ -152,10 +156,13 @@ type RowDetailDraft = {
  * "Action type" column printing the same word beside it. `categorize` maps to QBO's "Add", which is
  * what QuickBooks calls categorizing a line into an account.
  */
-export function qboActionLabel(mode: "match" | "categorize" | "transfer" | "cc_payment"): string {
+export function qboActionLabel(
+  mode: "match" | "categorize" | "transfer" | "cc_payment" | "loan",
+): string {
   if (mode === "match") return QBO_BANKING_ACTIONS.match;
   if (mode === "transfer") return QBO_BANKING_ACTIONS.recordTransfer;
   if (mode === "cc_payment") return QBO_BANKING_ACTIONS.recordCcPayment;
+  if (mode === "loan") return QBO_BANKING_ACTIONS.loan;
   return QBO_BANKING_ACTIONS.add;
 }
 
@@ -877,6 +884,8 @@ export function BankingTransactionsDesignView({
   const [confirmingMatchKey, setConfirmingMatchKey] = useState<string | null>(null);
   const [transferModalTx, setTransferModalTx] = useState<PlaidBankTransaction | null>(null);
   const [ccPaymentModalTx, setCcPaymentModalTx] = useState<PlaidBankTransaction | null>(null);
+  // ROUND 443.22-2a — Loan radio opens the EXISTING LoanApplicationWizard (4% default); never silent-mint.
+  const [loanModalTx, setLoanModalTx] = useState<PlaidBankTransaction | null>(null);
   // ACCT-F5621 — the transaction whose attachments/notes drawer is currently open. Replaces the two
   // permanently-disabled paperclip/note icons now that bank_transaction is an attachable entity_type
   // and a real notes PATCH route exists (see BankTransactionAttachmentsNotesModal.tsx).
@@ -2764,6 +2773,7 @@ export function BankingTransactionsDesignView({
                 ["match", QBO_BANKING_ACTIONS.match],
                 ["transfer", QBO_BANKING_ACTIONS.recordAsTransfer],
                 ["cc_payment", QBO_BANKING_ACTIONS.recordCcPayment],
+                ["loan", QBO_BANKING_ACTIONS.loan],
               ] as const
             ).map(([modeId, label]) => (
               <label
@@ -2797,13 +2807,16 @@ export function BankingTransactionsDesignView({
                           ? "Transfer"
                           : modeId === "cc_payment"
                             ? "CC Payment"
-                            : tx.is_credit
-                              ? "Money in"
-                              : "Money out",
+                            : modeId === "loan"
+                              ? QBO_BANKING_ACTIONS.loan
+                              : tx.is_credit
+                                ? "Money in"
+                                : "Money out",
                     });
                     setExpandedTxId(tx.id);
                     if (modeId === "transfer") setTransferModalTx(tx);
                     if (modeId === "cc_payment") setCcPaymentModalTx(tx);
+                    if (modeId === "loan") setLoanModalTx(tx);
                   }}
                 />
                 {label}
@@ -4544,6 +4557,34 @@ export function BankingTransactionsDesignView({
         onClose={() => setCcPaymentModalTx(null)}
         onSaved={() => {
           setCcPaymentModalTx(null);
+          onDataChanged();
+        }}
+      />
+      {/* ROUND 443.22-2a — ONE WRITER: existing LoanApplicationWizard; rate defaults to 4% APR, confirm every time. */}
+      <LoanApplicationWizard
+        open={Boolean(loanModalTx)}
+        operatingCompanyId={companyId}
+        prefill={
+          loanModalTx
+            ? {
+                principal_cents: Math.abs(Number(loanModalTx.amount_cents ?? 0)),
+                entry_date: loanModalTx.transaction_date?.slice(0, 10),
+                counterparty_name:
+                  loanModalTx.merchant_name?.trim() ||
+                  loanModalTx.description?.trim() ||
+                  undefined,
+                direction: loanModalTx.is_credit ? "in" : "out",
+                funding_source_note: `Bank line ${transactionLabel(loanModalTx)}`,
+                bank_transaction_id: loanModalTx.id,
+                interest_rate_pct: BANK_LOAN_DEFAULT_INTEREST_PCT,
+                interest_method: "simple",
+                target_type: "bank_funding",
+              }
+            : null
+        }
+        onClose={() => setLoanModalTx(null)}
+        onCreated={() => {
+          setLoanModalTx(null);
           onDataChanged();
         }}
       />

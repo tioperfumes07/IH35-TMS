@@ -78,6 +78,8 @@ const createBodySchema = z.object({
   payment_count: z.number().int().positive().nullable().optional(),
   first_payment_date: z.string().date().optional(),
   funding_source_note: z.string().trim().max(500).optional(),
+  /** ROUND 443.22-2a — optional bank line that opened the Loan wizard (reverse pointer). */
+  bank_transaction_id: z.string().uuid().nullable().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -398,15 +400,34 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
         });
         const displayId = await allocateRelatedPartyLoanDisplayId(client, b.operating_company_id);
         const documentKind =
-          b.target_type === "repayment" || b.target_type === "bank_repayment" ? "repayment" : "manual";
+          b.target_type === "repayment" || b.target_type === "bank_repayment"
+            ? "repayment"
+            : b.target_type === "bank_funding" || b.bank_transaction_id
+              ? "funding"
+              : "manual";
+
+        if (b.bank_transaction_id) {
+          // banking.bank_transactions uses voided_at (WORM), not deleted_at — measured Neon USMCA.
+          const bankRow = (await client.query(
+            `SELECT id::text
+               FROM banking.bank_transactions
+              WHERE id = $1::uuid
+                AND operating_company_id = $2::uuid
+                AND voided_at IS NULL
+              LIMIT 1`,
+            [b.bank_transaction_id, b.operating_company_id]
+          )) as { rows: Array<{ id: string }> };
+          if (!bankRow.rows[0]) return { error: "bank_transaction_not_found_for_company" as const };
+        }
 
         const inserted = (await client.query(
           `INSERT INTO accounting.related_party_loan_entries
              (operating_company_id, direction, relationship, counterparty_kind, counterparty_id,
               counterparty_name, account_id, target_type, target_id, principal_cents, entry_date,
               interest_rate_bps, interest_method, payment_frequency, payment_count, first_payment_date,
-              funding_source_note, status, facility_id, display_id, document_kind, created_by_user_id)
-           VALUES ($1::uuid,$2,$3,$4,$5::uuid,$6,$7::uuid,$8,$9::uuid,$10,$11::date,$12,$13,$14,$15,$16::date,$17,'open',$18::uuid,$19,$20,$21::uuid)
+              funding_source_note, status, facility_id, display_id, document_kind, bank_transaction_id,
+              created_by_user_id)
+           VALUES ($1::uuid,$2,$3,$4,$5::uuid,$6,$7::uuid,$8,$9::uuid,$10,$11::date,$12,$13,$14,$15,$16::date,$17,'open',$18::uuid,$19,$20,$21::uuid,$22::uuid)
            RETURNING id::text, direction, principal_cents, entry_date::text, facility_id::text, display_id`,
           [
             b.operating_company_id,
@@ -429,10 +450,24 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
             facilityId,
             displayId,
             documentKind,
+            b.bank_transaction_id ?? null,
             authUser.uuid,
           ]
         )) as { rows: Array<{ id: string; facility_id: string; display_id: string }> };
         const loanId = inserted.rows[0].id;
+
+        // Reverse pointer — bank line leaves For review via matched_related_party_loan_id (migration 202615441200).
+        if (b.bank_transaction_id) {
+          await client.query(
+            `UPDATE banking.bank_transactions
+                SET matched_related_party_loan_id = $1::uuid,
+                    updated_at = now()
+              WHERE id = $2::uuid
+                AND operating_company_id = $3::uuid
+                AND voided_at IS NULL`,
+            [loanId, b.bank_transaction_id, b.operating_company_id]
+          );
+        }
 
         // Schedule in the SAME transaction — a loan without one is a loan nobody gets reminded about.
         let scheduleRows = 0;
