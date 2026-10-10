@@ -232,7 +232,14 @@ export async function sendDraftInvoice(
     // ACCT-F124 — FIRST, because the two guards below iterate the lines and therefore pass vacuously
     // on an empty set. INV-2026-00004 sent with zero lines and left a receivable the poster correctly
     // refused to recognise.
-    assertInvoiceHasRevenueLines(input.operatingCompanyId, input.invoiceId, sendLines);
+    // ROUND 443.12 — an authorized $0 invoice (total_cents=0, minted with authorizedZeroRevenue=true)
+    // carries one linehaul line with line_total_cents=0. isRevenueBearingLine requires cents>0, so
+    // assertInvoiceHasRevenueLines would refuse it. Skip the revenue-lines guard for $0 invoices:
+    // the other two guards pass vacuously (no revenue-bearing lines → no-op loops) and the zero-
+    // revenue early-return after the stamp prevents any GL/revrec posting.
+    if (Number(current.total_cents ?? 0) !== 0) {
+      assertInvoiceHasRevenueLines(input.operatingCompanyId, input.invoiceId, sendLines);
+    }
     assertLoadRevenueHasSourceLoad(
       current.source_load_id ? String(current.source_load_id) : null,
       sendLines
