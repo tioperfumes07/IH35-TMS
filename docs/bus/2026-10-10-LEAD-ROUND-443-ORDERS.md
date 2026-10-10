@@ -674,3 +674,16 @@ DONE: CC-2 | 443.14 DONE | <sha> | <live sha> | Book Load unchanged (tests) | ca
 0 loads (test) | guard PASS  ·  CC-2 | 443.15 DONE | <sha> | <live sha> | cause pasted | next ingest run: 0 new
 cross-company fills (query pasted) | guard PASS
 ```
+
+**CC-3 — AMENDMENT TO ROUND 443.11: SETTLEMENT 5779 IS BACK IN — posted 4:41 PM CT (21:41 UTC)**
+
+```
+CC-3 — AMENDMENT TO ROUND 443.11 — 5779 IS ENTERED; THE FIRST 10 ARE 5769 AND 5771-5779
+Owner 2026-10-10 4:40 PM CT: "in settlement 5779 load 13526 belongs to usmca, so is invoiced at 0 dollars."
+Lead reading (stated to the owner): load 13526 is USMCA's — invoice 19, $3,500.00 -> 19-13526; load 13527
+(EGRO, $3,000 in the workbook) is Transportation's -> $0 invoice, 0-13527.
+13527 was paid direct, not factored. The Creator's only $0 marker is factoring = faro_transportation, so enter
+13527 with faro_transportation and line haul $0. Nothing is submitted to any factor for it.
+Order of entry: 5769, 5771, 5772, 5773, 5774, 5775, 5776, 5777, 5778, 5779. 5780 is NOT part of the first 10.
+Driver pay, fuel, expenses and deductions on 5779 exactly as the workbook. Still gated on "GO 443.11".
+```
