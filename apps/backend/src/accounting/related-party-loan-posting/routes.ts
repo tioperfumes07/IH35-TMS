@@ -31,6 +31,10 @@ import {
   ensureRelatedPartyLoanFacility,
   listRelatedPartyLoanFacilities,
 } from "./facility.service.js";
+import {
+  advanceRequiresNote,
+  mintRelatedPartyLoanAdvanceNote,
+} from "./advance-note.service.js";
 
 const TARGET_TYPES = [
   "bill",
@@ -180,6 +184,8 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
                    e.facility_id::text,
                    e.display_id,
                    e.document_kind,
+                   e.note_file_id::text,
+                   CASE WHEN e.note_html IS NOT NULL AND length(e.note_html) > 0 THEN true ELSE false END AS has_note,
                    -- Reversal + related-party state belong in the REGISTER, not just the detail page:
                    -- a row that has been reversed must never read as live, and ASC 850 related-party
                    -- disclosure depends on the tag being visible where the balances are reviewed.
@@ -501,6 +507,32 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
           scheduleRows = rows.length;
         }
 
+        // ROUND 443.22-2c — every funding advance (money IN) mints a numbered note document.
+        let noteFileId: string | null = null;
+        if (
+          advanceRequiresNote({
+            direction: b.direction,
+            documentKind,
+          })
+        ) {
+          const note = await mintRelatedPartyLoanAdvanceNote(client, {
+            operatingCompanyId: b.operating_company_id,
+            loanId,
+            facilityId,
+            displayId,
+            direction: b.direction,
+            documentKind,
+            counterpartyName: b.counterparty_name,
+            relationship: b.relationship,
+            principalCents: b.principal_cents,
+            entryDate: b.entry_date,
+            interestRateBps: b.interest_rate_bps,
+            accountId: b.account_id,
+            actorUserId: authUser.uuid,
+          });
+          noteFileId = note.fileId;
+        }
+
         await appendCrudAudit(
           client,
           authUser.uuid,
@@ -516,6 +548,7 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
             display_id: displayId,
             document_kind: documentKind,
             schedule_rows: scheduleRows,
+            note_file_id: noteFileId,
           },
           "info",
           "LOAN-05"
@@ -527,6 +560,7 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
           display_id: displayId,
           document_kind: documentKind,
           schedule_rows: scheduleRows,
+          note_file_id: noteFileId,
         };
       });
 

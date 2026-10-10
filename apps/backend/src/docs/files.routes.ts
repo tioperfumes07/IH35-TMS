@@ -60,6 +60,9 @@ const SUPPORTED_LINK_ENTITY_TYPES = [
   "cash_advance",
   // ORDERS-2026-10-01 MAINTENANCE — WO documents (migration 202610011200).
   "work_order",
+  // ROUND 443.22-2c — related-party loan advance note + facility register (migration 202615461200).
+  "related_party_loan",
+  "related_party_loan_facility",
 ] as const;
 
 const idParamSchema = z.object({ file_id: z.string().uuid() });
@@ -85,6 +88,8 @@ const entityTypeSchema = z.enum([
   "bill",
   "cash_advance",
   "work_order",
+  "related_party_loan",
+  "related_party_loan_facility",
 ]);
 
 function optionalQueryString() {
@@ -341,6 +346,25 @@ async function ensureLinkEntityExists(
       `SELECT id FROM maintenance.work_orders
        WHERE id = $1 AND operating_company_id = $2::uuid
          AND voided_at IS NULL AND cancelled_at IS NULL
+       LIMIT 1`,
+      [entityId, operatingCompanyId]
+    );
+    return res.rows.length > 0;
+  }
+  if (entityType === "related_party_loan") {
+    // ROUND 443.22-2c — advance note target; exclude reversed advances.
+    const res = await client.query(
+      `SELECT id FROM accounting.related_party_loan_entries
+       WHERE id = $1 AND operating_company_id = $2::uuid AND reversed_at IS NULL
+       LIMIT 1`,
+      [entityId, operatingCompanyId]
+    );
+    return res.rows.length > 0;
+  }
+  if (entityType === "related_party_loan_facility") {
+    const res = await client.query(
+      `SELECT id FROM accounting.related_party_loan_facilities
+       WHERE id = $1 AND operating_company_id = $2::uuid
        LIMIT 1`,
       [entityId, operatingCompanyId]
     );
