@@ -2278,6 +2278,11 @@
     "claimed_at": "2026-10-06",
     "purpose": "FARO-F435 (Lead patch, applied by CC-2): views.factoring_repurchase_obligation — one row per factoring purchase line; day-35 default interest, repurchase deadline from the owner-decision due event, partial payment leaves it open. Unblocks three Faro guards that exited on the missing view."
   },
+  "202615450900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-10",
+    "purpose": "ROUND 443.9 purge remnants: driver_finance.fn_feed_intake_checks_worm gains the listed-row purge arm (ARM L, _system.purge_authorized_rows + app.purge_auth_id) every other WORM table has; UPDATE stays refused"
+  },
   "202615440900": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-06",
