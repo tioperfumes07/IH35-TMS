@@ -7,9 +7,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   decideDisputeFault,
   listInvoiceDisputeQueue,
+  openInvoiceDispute,
   type FaultParty,
+  type InvoiceDisputeReason,
   type InvoiceDisputeRow,
 } from "../../api/invoice-disputes";
+import { listInvoices, type Invoice } from "../../api/accounting";
 import { listDisputeQueue, type SettlementDisputeQueueRow } from "../../api/disputes";
 import { ApiError } from "../../api/client";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -163,6 +166,196 @@ function DecideFaultModal({
   );
 }
 
+const DISPUTE_REASON_OPTIONS: Array<{ value: InvoiceDisputeReason; label: string }> = [
+  { value: "short_pay", label: "Short pay" },
+  { value: "mis_entry", label: "Mis-entry" },
+  { value: "customer_discount", label: "Customer discount" },
+  { value: "under_billing", label: "Under-billing" },
+  { value: "over_payment", label: "Over-payment" },
+  { value: "late_fine", label: "Late fine" },
+  { value: "chargeback", label: "Chargeback" },
+  { value: "driver_no_answer", label: "Driver no answer" },
+  { value: "other", label: "Other" },
+];
+
+function OpenDisputeModal({
+  companyId,
+  onClose,
+}: {
+  companyId: string;
+  onClose: () => void;
+}) {
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [reasonCode, setReasonCode] = useState<InvoiceDisputeReason>("short_pay");
+  const [reasonText, setReasonText] = useState("");
+  const [expectedDollars, setExpectedDollars] = useState("");
+
+  const invoicesQuery = useQuery({
+    queryKey: ["invoice-search-for-dispute", companyId, search],
+    queryFn: () =>
+      listInvoices(companyId, { search: search.trim() || undefined, status: ["invoiced", "sent", "posted"], limit: 20 }),
+    enabled: Boolean(companyId),
+  });
+  const invoices = invoicesQuery.data?.invoices ?? [];
+
+  const expectedCents = Math.round(parseFloat(expectedDollars || "0") * 100);
+  const invoicedCents = selectedInvoice?.total_cents ?? 0;
+  const disputedCents = invoicedCents - expectedCents;
+
+  const mutation = useMutation({
+    mutationFn: () => {
+      if (!selectedInvoice) throw new Error("No invoice selected");
+      return openInvoiceDispute(selectedInvoice.id, {
+        operating_company_id: companyId,
+        disputed_amount_cents: disputedCents,
+        expected_amount_cents: expectedCents,
+        reason_code: reasonCode,
+        reason_text: reasonText.trim() || undefined,
+      });
+    },
+    onSuccess: () => {
+      pushToast("Dispute opened", "success");
+      void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice-disputes", "hub", companyId] });
+      onClose();
+    },
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to open dispute"), "error"),
+  });
+
+  const canSubmit =
+    Boolean(selectedInvoice) &&
+    disputedCents > 0 &&
+    expectedCents >= 0 &&
+    !isNaN(parseFloat(expectedDollars));
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+      data-testid="open-dispute-modal"
+    >
+      <div className="w-[460px] rounded-sm border border-gray-300 bg-white p-4 shadow-lg">
+        <h3 className="text-xs font-semibold text-[#0F1219]">Open invoice dispute</h3>
+        <p className="mt-1 text-xs text-gray-500">
+          Select an invoiced invoice, enter the expected amount, and the difference becomes the disputed amount.
+        </p>
+
+        <label className="mt-3 block text-xs">
+          <div className="mb-1 text-gray-500">Search invoices</div>
+          <input
+            type="text"
+            className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
+            placeholder="Invoice # or customer…"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setSelectedInvoice(null);
+            }}
+            data-testid="open-dispute-invoice-search"
+          />
+        </label>
+
+        {invoices.length > 0 && !selectedInvoice ? (
+          <ul
+            className="mt-1 max-h-40 overflow-y-auto rounded-sm border border-[#E5E7EB] bg-white text-xs"
+            data-testid="open-dispute-invoice-list"
+          >
+            {invoices.map((inv) => (
+              <li key={inv.id}>
+                <button
+                  type="button"
+                  className="w-full px-2 py-1 text-left hover:bg-[#F7F8FA]"
+                  onClick={() => {
+                    setSelectedInvoice(inv);
+                    setSearch(inv.display_id);
+                  }}
+                  data-testid={`open-dispute-pick-${inv.id}`}
+                >
+                  {inv.display_id} — {inv.customer_name ?? "—"} — {money(inv.total_cents)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {selectedInvoice ? (
+          <div className="mt-2 rounded-sm bg-[#F7F8FA] p-2 text-xs text-[#1F2A44]" data-testid="open-dispute-selected-invoice">
+            <span className="font-semibold">{selectedInvoice.display_id}</span>
+            {" · "}{selectedInvoice.customer_name ?? "—"}
+            {" · invoiced: "}<span className="font-semibold">{money(selectedInvoice.total_cents)}</span>
+          </div>
+        ) : null}
+
+        <label className="mt-3 block text-xs">
+          <div className="mb-1 text-gray-500">Expected amount (USD)</div>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
+            placeholder="0.00"
+            value={expectedDollars}
+            onChange={(e) => setExpectedDollars(e.target.value)}
+            data-testid="open-dispute-expected-amount"
+          />
+          {selectedInvoice && expectedDollars ? (
+            <div className="mt-1 text-[#6B7280]">
+              Difference (disputed): {disputedCents > 0 ? money(disputedCents) : <span className="text-red-500">Expected exceeds invoiced</span>}
+            </div>
+          ) : null}
+        </label>
+
+        <label className="mt-3 block text-xs">
+          <div className="mb-1 text-gray-500">Reason</div>
+          <SelectCombobox
+            value={reasonCode}
+            onChange={(e) => setReasonCode(e.target.value as InvoiceDisputeReason)}
+            data-testid="open-dispute-reason-select"
+          >
+            {DISPUTE_REASON_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </SelectCombobox>
+        </label>
+
+        <label className="mt-2 block text-xs">
+          <div className="mb-1 text-gray-500">Notes (optional)</div>
+          <textarea
+            className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
+            rows={2}
+            value={reasonText}
+            onChange={(e) => setReasonText(e.target.value)}
+            data-testid="open-dispute-notes"
+          />
+        </label>
+
+        <div className="mt-3 flex justify-end gap-2">
+          <button
+            type="button"
+            className="rounded-sm border border-[#E5E7EB] px-3 py-1 text-xs"
+            onClick={onClose}
+            data-testid="open-dispute-cancel"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-40"
+            disabled={!canSubmit || mutation.isPending}
+            onClick={() => mutation.mutate()}
+            data-testid="open-dispute-submit"
+          >
+            Open dispute
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function InvoiceDisputesSection({ companyId }: { companyId: string }) {
   const query = useQuery({
     queryKey: ["accounting", "invoice-disputes", "hub", companyId],
@@ -171,6 +364,7 @@ function InvoiceDisputesSection({ companyId }: { companyId: string }) {
   });
   const rows = query.data?.disputes ?? [];
   const [faultTarget, setFaultTarget] = useState<InvoiceDisputeRow | null>(null);
+  const [openingDispute, setOpeningDispute] = useState(false);
 
   const columns = useMemo<ParityColumn<InvoiceDisputeRow>[]>(
     () => [
@@ -280,6 +474,16 @@ function InvoiceDisputesSection({ companyId }: { companyId: string }) {
 
   return (
     <>
+      <div className="flex justify-end" data-testid="invoice-disputes-toolbar">
+        <button
+          type="button"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
+          onClick={() => setOpeningDispute(true)}
+          data-testid="open-dispute-btn"
+        >
+          Open dispute
+        </button>
+      </div>
       <ParityTable
         columns={columns}
         rows={rows}
@@ -292,6 +496,9 @@ function InvoiceDisputesSection({ companyId }: { companyId: string }) {
       />
       {faultTarget ? (
         <DecideFaultModal dispute={faultTarget} companyId={companyId} onClose={() => setFaultTarget(null)} />
+      ) : null}
+      {openingDispute ? (
+        <OpenDisputeModal companyId={companyId} onClose={() => setOpeningDispute(false)} />
       ) : null}
     </>
   );
