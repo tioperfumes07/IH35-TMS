@@ -22,5 +22,7 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-expense-stamped-and-sourced.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-atomic-post.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-atomic-post.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-stop-stamps-from-tracking.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-stop-stamps-from-tracking.mjs"]);
   },
 };

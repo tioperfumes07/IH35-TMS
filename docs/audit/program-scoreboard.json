@@ -1,10 +1,10 @@
 {
-  "healthzSha": "1ef894e",
-  "generated_at": "2026-10-10T22:44:54.494Z",
+  "healthzSha": "fa9c10e",
+  "generated_at": "2026-10-10T23:01:32.929Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "1ef894e",
+    "deployedSha": "fa9c10e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 26209,
+      "title": "FINDING: ROUND-443.9 LANE: FINANCIAL -- the AUTH-400 purge left 3,606 USMCA rows pointing at purged documents (feed intakes/checks, lane + deadhead caches, driver notifications, file links, generated dispatch files) because the generator never saw reports/pwa, never classified the feed-gate tables, and feed_intake_checks' WORM had no listed-row arm; the purge engine now knows them",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 06:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26209",
+      "sha": "53b3f4c9dd",
+      "committedAtIso": "2026-10-10T18:00:33-05:00"
+    },
+    {
+      "number": 26208,
+      "title": "Cursor- ROUND-443.22-MIG: land migration 202615441200 on main (collision unblock)",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26208",
+      "sha": "51c255f57b",
+      "committedAtIso": "2026-10-10T17:59:43-05:00"
+    },
+    {
+      "number": 26207,
+      "title": "docs(bus): Lead — QuickBooks invoice->load map (001-143) + exceptions for the 443.19 pre-flight",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26207",
+      "sha": "fa9c10ee4c",
+      "committedAtIso": "2026-10-10T17:56:48-05:00"
+    },
+    {
       "number": 26206,
       "title": "FINDING: ACCT-F2026101006 FINDING: ACCT-F2026101007 LANE: FINANCIAL — fix DisputesHubPage EntityLink + MoneyInput reds + 443.18 Disputes tab in Driver Finance sidebar",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26200",
       "sha": "cb0ac0022f",
       "committedAtIso": "2026-10-10T17:15:11-05:00"
-    },
-    {
-      "number": 26199,
-      "title": "FINDING: N/A (CLAIM-RESERVE 12431 -- reservation-only commit, no code fix)",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26199",
-      "sha": "ec8e52c64b",
-      "committedAtIso": "2026-10-10T17:14:17-05:00"
-    },
-    {
-      "number": 26197,
-      "title": "FINDING: N/A (CLAIM-RESERVE 18373 -- reservation-only commit, no code fix)",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26197",
-      "sha": "f12de0403a",
-      "committedAtIso": "2026-10-10T17:10:06-05:00"
-    },
-    {
-      "number": 26190,
-      "title": "FINDING: ACCT-F2026100637 LANE: claude — ROUND 443.15: the Relay ingest stored the same fill under TRANSP and USMCA (172 fills, 53 new on 10-08); a fill is now stored once, under USMCA only",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26190",
-      "sha": "1b6acac9a4",
-      "committedAtIso": "2026-10-10T17:08:12-05:00"
     }
   ]
 }

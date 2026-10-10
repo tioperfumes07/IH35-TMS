@@ -73,7 +73,7 @@ export function problems(src) {
     const del = src.service.indexOf("await deliverLoadThroughDispatch(client, actorUserId");
     if (dry < 0 || del < 0 || del < dry) p.push("the Creator must deliver each load through dispatch's transition engine, on real posts only (after the dry-run skip)");
     if (/UPDATE mdata\.loads\s+SET status/i.test(src.service)) p.push("the Creator must never UPDATE a load's status directly");
-    if (!/stop_type = 'pickup'/.test(src.deliver)) p.push("the Creator must stamp the pickup stop of a delivered load");
+    if (!/FROM mdata\.load_stops WHERE load_id = \$1::uuid AND soft_deleted_at IS NULL ORDER BY sequence_number/.test(src.deliver)) p.push("the Creator must stamp every stop (pickup included) of a delivered load");
   }
   if (/code: "LH"|code: "ACC"/.test(src.seed) || !/additional_charge_id: hit\.id/.test(src.seed)) p.push("seeder charge codes must be bookLoad's (linehaul + catalog id)");
   const zr = (src.gate.match(/\$\{ZR_I\}/g) ?? []).length;

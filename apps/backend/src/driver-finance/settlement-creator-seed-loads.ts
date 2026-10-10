@@ -5,7 +5,7 @@
 import { bookLoadOnClient, type BookLoadInput } from "../dispatch/book-load.service.js";
 import type { SettlementCreatorDraft, SettlementCreatorLoadBlock } from "./settlement-creator.types.js";
 import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
-import { deliverLoadThroughDispatch, stampDeliveryStopActuals } from "./settlement-creator-deliver.js";
+import { deliverLoadThroughDispatch, localDayStartIso, stampStopsFromTracking, type StopStamp } from "./settlement-creator-deliver.js";
 
 export const SETTLEMENT_CREATOR_QUAL_OVERRIDE_REASON =
   "entered from the AlwaysTrack settlement / load history (Settlement Creator)";
@@ -89,12 +89,10 @@ async function resolveTourIdForSb(
  * not entered is refused by name, and the operator supplies it.
  */
 function buildStops(load: SettlementCreatorLoadBlock): BookLoadInput["stops"] {
-  const pickupAt = load.pickup_date
-    ? `${load.pickup_date}T12:00:00.000Z`
-    : new Date().toISOString();
-  const deliveryAt = load.delivery_date
-    ? `${load.delivery_date}T18:00:00.000Z`
-    : pickupAt;
+  // ROUND 443.16 — the settlement gives dates, not clock times: appointments are the day's start in USMCA's timezone,
+  // never an invented hour (the measured times come from the truck's stop events — stampStopsFromTracking).
+  const pickupAt = load.pickup_date ? localDayStartIso(load.pickup_date) : new Date().toISOString();
+  const deliveryAt = load.delivery_date ? localDayStartIso(load.delivery_date) : pickupAt;
 
   const pickupCity = load.pickup_city?.trim();
   const pickupState = load.pickup_state?.trim().toUpperCase();
@@ -216,9 +214,10 @@ export async function ensureDispatchedLoadsForCreator(
   client: DbClient,
   actor: { uuid: string; role: string },
   draft: SettlementCreatorDraft,
-): Promise<{ created_load_numbers: string[]; afterCommit: Array<() => void> }> {
+): Promise<{ created_load_numbers: string[]; afterCommit: Array<() => void>; stop_stamps: StopStamp[] }> {
   const created: string[] = [];
   const afterCommit: Array<() => void> = [];
+  const stopStamps: StopStamp[] = [];
   // LEAD RULING ROUND 443.7 (Option A): the Creator owns the tour settlement's close for this whole transaction.
   await client.query(`SELECT set_config('app.settlement_creator_post', 'on', true)`);
   const seed = draft.seed_dispatched_loads !== false; // default ON for R-186.1 critical path
@@ -330,10 +329,10 @@ export async function ensureDispatchedLoadsForCreator(
     const delivered = !(load.not_yet_delivered !== false && !load.delivery_date);
     const bookedId = String((result as { row?: { id?: unknown } }).row?.id ?? "");
     if (delivered && bookedId) {
-      await stampDeliveryStopActuals(client, bookedId, load.delivery_date, load.pickup_date);
+      stopStamps.push(...(await stampStopsFromTracking(client, bookedId, { pickupDate: load.pickup_date, deliveryDate: load.delivery_date })));
       await deliverLoadThroughDispatch(client, actor.uuid, draft.operating_company_id, bookedId, load.delivery_date);
     }
   }
 
-  return { created_load_numbers: created, afterCommit };
+  return { created_load_numbers: created, afterCommit, stop_stamps: stopStamps };
 }

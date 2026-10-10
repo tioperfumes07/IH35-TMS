@@ -36,7 +36,7 @@ import { milesTimesRateCents } from "./deadhead-rule.js";
 import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
-import { deliverLoadThroughDispatch, stampDeliveryStopActuals } from "./settlement-creator-deliver.js";
+import { deliverLoadThroughDispatch, stampStopsFromTracking } from "./settlement-creator-deliver.js";
 import { afterCommitMark, afterCommitRollbackTo } from "../lib/after-commit.js";
 export { deliverLoadThroughDispatch } from "./settlement-creator-deliver.js";
 import { DuplicateDocumentNumberError } from "../lib/qbo-custom-document-number.js";
@@ -1607,7 +1607,9 @@ export async function postSettlementCreatorInClientTx(
       );
     }
 
-    await stampDeliveryStopActuals(client, loadId, load.delivery_date, load.pickup_date);
+    // ROUND 443.16 — tracked stop times (date only when no stop event matches); loads booked by this post were stamped
+    // when the seeder delivered them, so a stop already stamped is left as it is.
+    await stampStopsFromTracking(client, loadId, { pickupDate: load.pickup_date, deliveryDate: load.delivery_date });
 
     // ROUND 443.4 — driver pay = pay rate x short miles (loaded line) + empty rate x empty miles (empty line).
     // The customer's invoice amount and accessorials are never read here: they feed the invoice only.
