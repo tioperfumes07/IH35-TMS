@@ -14376,6 +14376,11 @@
     "claimed_at": "2026-10-10",
     "purpose": "verify-related-party-loan-facility-bank-categorize-document"
   },
+  "18364": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-10",
+    "purpose": "verify-related-party-loan-bank-loan-action-wizard"
+  },
   "18365": {
     "description": "invoice-number-is-invoice-dash-load",
     "lane": "CC-1",
