@@ -30,6 +30,8 @@ const moneyLine = z.object({
   description: z.string().trim().min(1).max(500),
   amount_cents: z.number().int(),
   load_number: z.string().trim().max(40).nullable().optional(),
+  item_id: z.string().uuid().nullable().optional(),
+  quantity: z.number().nullable().optional(),
 });
 
 const draftSchema = z.object({
@@ -79,6 +81,7 @@ const draftSchema = z.object({
         factoring: z.enum(["faro_usmca", "faro_transportation", "direct"]),
         date_sent_to_factoring: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
         loaded_miles: z.number().nullable().optional(),
+        miles_shortest: z.number().nullable().optional(),
         empty_miles: z.number().nullable().optional(),
         empty_rate_cents: z.number().int().nullable().optional(),
         picks: z.number().nullable().optional(),
@@ -140,6 +143,8 @@ const draftSchema = z.object({
         amount_cents: z.number().int(),
         load_number: z.string().trim().max(40).nullable().optional(),
         pay_kind: z.enum(["detention", "layover", "bonus", "stop_pay", "other"]).optional(),
+        item_id: z.string().uuid().nullable().optional(),
+        quantity: z.number().nullable().optional(),
       }),
     )
     .default([]),
@@ -151,6 +156,7 @@ const draftSchema = z.object({
         amount_cents: z.number().int(),
         load_number: z.string().trim().max(40).nullable().optional(),
         linked_driver_bill_id: z.string().uuid().nullable().optional(),
+        load_id: z.string().uuid().nullable().optional(),
       }),
     )
     .default([]),

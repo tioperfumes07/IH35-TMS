@@ -50,6 +50,11 @@ export type SettlementCreatorLoadBlock = {
   factoring: SettlementCreatorFactorOption;
   date_sent_to_factoring?: string | null;
   loaded_miles?: number | null;
+  /**
+   * Driver pay miles (short). Company practical miles stay on loaded_miles — they differ.
+   * When set, earnings / driver-bill mint use this; otherwise fall back to loaded_miles.
+   */
+  miles_shortest?: number | null;
   empty_miles?: number | null;
   /** Driver empty-miles rate ($/mi). When null, empty miles contribute $0 (operator types extras). */
   empty_rate_cents?: number | null;
@@ -113,6 +118,9 @@ export type SettlementCreatorMoneyLine = {
   description: string;
   amount_cents: number;
   load_number?: string | null;
+  /** Product/service catalog id (deductions). */
+  item_id?: string | null;
+  quantity?: number | null;
 };
 
 export type SettlementCreatorAdvanceLine = {
@@ -121,6 +129,8 @@ export type SettlementCreatorAdvanceLine = {
   load_number?: string | null;
   /** When set, advance links as a bill payment against that load's driver bill. */
   linked_driver_bill_id?: string | null;
+  /** Resolved from load_number when omitted — ties the advance bill payment to the load. */
+  load_id?: string | null;
 };
 
 export type SettlementCreatorAdditionalPayLine = {
@@ -128,6 +138,9 @@ export type SettlementCreatorAdditionalPayLine = {
   amount_cents: number;
   load_number?: string | null;
   pay_kind?: "detention" | "layover" | "bonus" | "stop_pay" | "other";
+  /** Product/service catalog id (additional driver pay). */
+  item_id?: string | null;
+  quantity?: number | null;
 };
 
 export type SettlementCreatorDraft = {

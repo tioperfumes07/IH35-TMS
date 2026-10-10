@@ -45,6 +45,8 @@ export type SettlementCreatorDraft = {
     factoring: SettlementCreatorFactorOption;
     date_sent_to_factoring?: string | null;
     loaded_miles?: number | null;
+    /** Driver pay miles (short) — company loaded_miles are practical / different. */
+    miles_shortest?: number | null;
     empty_miles?: number | null;
     empty_rate_cents?: number | null;
     picks?: number | null;
@@ -88,13 +90,21 @@ export type SettlementCreatorDraft = {
     account_id?: string | null;
     load_id?: string | null;
   }>;
-  deductions: Array<{ description: string; amount_cents: number; load_number?: string | null }>;
+  deductions: Array<{
+    description: string;
+    amount_cents: number;
+    load_number?: string | null;
+    item_id?: string | null;
+    quantity?: number | null;
+  }>;
   reimbursements: Array<{ description: string; amount_cents: number; load_number?: string | null }>;
   additional_pay?: Array<{
     description: string;
     amount_cents: number;
     load_number?: string | null;
     pay_kind?: "detention" | "layover" | "bonus" | "stop_pay" | "other";
+    item_id?: string | null;
+    quantity?: number | null;
   }>;
   escrow: Array<{ description: string; amount_cents: number; load_number?: string | null }>;
   advances: Array<{

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listLocations, type MdataLocation } from "../../api/mdata";
 import { Combobox } from "../Combobox";
-import { CappedListNotice } from "../CappedListNotice";
 import {
   formatFuelStopLocationLabel,
   formatFuelStopLocationSublabel,
@@ -84,11 +83,7 @@ export function FuelStopLocationPicker({
         dataTestId={dataTestId}
         size="sm"
       />
-      <CappedListNotice
-        shown={rows.length}
-        limit={LIST_LIMIT}
-        hint="Type store #, city, or street to search all fuel stops."
-      />
+      {/* Owner 2026-10-10: no "first 200 / type store / search all" helper under Location. */}
       {locationsQuery.isError ? (
         <p className="text-xs text-red-600">Could not load fuel stop locations.</p>
       ) : null}
