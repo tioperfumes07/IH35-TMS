@@ -39,6 +39,7 @@ import {
   previewSettlementCreator,
   postSettlementCreator,
   peekNextSettlementNumber,
+  isFactoredLoad,
   type SettlementCreatorDraft,
   type SettlementCreatorPreview,
   type SettlementCreatorFuelCard,
@@ -1282,13 +1283,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     const emptyPay = Math.round(emptyMi * emptyRate);
     return s + loadedPay + emptyPay;
   }, 0);
-  /** QuickPay / factoring fee ≈ 0.50% of invoice amt on Faro-factored loads (waterfall display). */
-  const quickPayExpenseCents = loads.reduce((s, l) => {
-    if (l.factoring !== "faro_usmca" && l.factoring !== "faro_transportation") return s;
-    const inv = Math.max(0, Number(l.line_haul_amount_cents ?? 0));
-    const accessorial = (l.accessorials ?? []).reduce((a, row) => a + Math.max(0, Number(row.amount_cents ?? 0)), 0);
-    return s + Math.round((inv + accessorial) * 0.005);
-  }, 0);
+  /** ROUND 443.2 (owner 2026-10-10): "there is no quickpay that should render if confirmed those are factored."
+   *  A factored load (faro_usmca / faro_transportation) never carries quick pay, and no percentage is assumed for a
+   *  direct load: where a direct customer's charged quick pay comes from is an OPEN OWNER QUESTION, so nothing is
+   *  computed. The field only renders while the settlement has a direct load to hold that answer. */
+  const quickPayApplies = loads.some((l) => !isFactoredLoad(l.factoring));
   const compExpSubtotal = companyExpenses.reduce((s, e) => s + (e.amount_cents > 0 ? e.amount_cents : 0), 0);
   const companySubtotal = fuelSubtotal + compExpSubtotal;
   const drvReimbSubtotal = drvReimbursements.reduce((s, e) => s + (e.amount_cents > 0 ? e.amount_cents : 0), 0);
@@ -2446,17 +2445,21 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </div>
                 </Field>
-                <Field label="QuickPay expense" span={2}>
-                  <div data-testid="sc-quickpay-expense">
-                    <MoneyInput
-                      className={moneyInputClass}
-                      valueCents={quickPayExpenseCents || null}
-                      onChangeCents={() => undefined}
-                      ariaLabel="QuickPay / Faro fee 0.50 percent"
-                      disabled
-                    />
-                  </div>
-                </Field>
+                {quickPayApplies ? (
+                  <Field label="QuickPay expense" span={2}>
+                    <div data-testid="sc-quickpay-expense" title="Direct loads only — amount source pending the owner's ruling">
+                      <MoneyInput
+                        className={moneyInputClass}
+                        valueCents={null}
+                        onChangeCents={() => undefined}
+                        ariaLabel="QuickPay expense (direct loads only)"
+                        disabled
+                      />
+                    </div>
+                  </Field>
+                ) : (
+                  <span />
+                )}
                 <span />
               </div>
               <Field label="PDF company EXPENSES total">
@@ -3115,7 +3118,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               <TotalRow label="Fuel purchases" cents={fuelSubtotal} />
               <TotalRow label="Company expenses" cents={compExpSubtotal} />
               <TotalRow label="Driver salary" cents={driverSalaryCents} />
-              <TotalRow label="QuickPay expense" cents={quickPayExpenseCents} />
               <TotalRow label="Company total" cents={companySubtotal} strong />
               {pdfCompanyExpenses != null ? (
                 <TotalRow
