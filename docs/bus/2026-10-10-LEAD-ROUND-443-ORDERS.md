@@ -449,3 +449,37 @@ DONE: CC-3 | 443.9 DONE | <sha> | <live sha> | before/after count per table past
 feed_intake_checks 24 -> 0, each candidate: orphans N -> 0, kept M) | banking counts unchanged: journal
 entries 280, postings 560, bank_transactions 1,291, expenses 5 | guard PASS + selftest | NEXT 443.4
 ```
+
+**CC-2 — ROUND 443.10 — DISPATCH GATE BLOCKS THE OWNER'S $0 TRANSPORTATION LOAD — posted 3:11 PM CT (20:11 UTC)**
+
+```
+CC-2 — ROUND 443.10 — bookLoad ZERO-DOLLAR DISPATCH GATE: ALLOW THE OWNER-AUTHORIZED $0 LOAD (dispatch/** only)
+Owner 2026-10-10 2:56 PM CT: "Yes I want them invoices in usmca for 0 dollars, so we can have control of
+the loads and settlements." USMCA only (5c854333-6ea5-4faa-af31-67cb272fef80).
+
+MEASURED on main 76004b2
+- apps/backend/src/dispatch/book-load.service.ts:2820 throws
+  E_LOAD_DISPATCHED_NO_CHARGE_LINES "Load N is dispatching with $0.00 in charge lines -- the customer would
+  never be billed" for source live_feed (and for an undeclared source). historical_backfill records an
+  exception and proceeds (comment block ending :1590).
+- CC-3 reports (SEATS-TO-LEAD 20:1xZ, proved on a deleted prod fork): the Settlement Creator's bookLoad call
+  is refused by this gate for the authorized $0 Transportation load, before the invoice step. CC-1 ROUND
+  443.1 (merged de1b616, #26163) already lets the invoice service mint that $0 invoice.
+REQUIRED — ONE PR
+- BookLoadInput gains authorizedZeroRevenue?: boolean (default false). When true AND the charge-line total
+  is 0: the gate at :2820 does not throw; it files the same audit exception row the historical_backfill
+  case files, with gate=zero_dollar_charge_lines_at_dispatch and reason owner_authorized_zero_revenue.
+  When false or absent: the gate is unchanged, byte for byte. When true AND total > 0: refuse with
+  zero_revenue_flag_on_rated_load.
+- No other gate in bookLoad changes. CC-3 passes the flag from the Creator only for a faro_transportation
+  load at $0 (their 443.3 b).
+LANE: apps/backend/src/dispatch/** only. NOBODY SEEDS DATA — prove on tests and a throwaway Neon branch.
+TRANSPORTATION and TRUCKING: never read, write or count.
+GUARD: verify-book-load-zero-dollar-gate-authorized-only.mjs + --selftest.
+FAST-MERGE (docs/bus/FAST-MERGE-4MIN-LAW.md): gate exit 0 -> push -> PR -> squash-merge by API in the same
+15 seconds -> Neon proof -> one NOW line. The moment it is merged and live, tell cc3 by tmux line.
+DEADLINE: 2026-10-10 22:30 UTC. SURRENDER: CC-3 under SURFACE-BREACH-AUTHORIZED.
+DONE: CC-2 | 443.10 DONE | <sha> | <live sha> | flag absent + $0 -> E_LOAD_DISPATCHED_NO_CHARGE_LINES (test) |
+flag true + $0 -> load booked, 1 audit exception row reason owner_authorized_zero_revenue (test) |
+flag true + rated -> refused (test) | guard PASS + selftest | NEXT none — tell cc3
+```
