@@ -65,6 +65,14 @@ export function problems(src) {
   if (!/authorizedZeroRevenue: isAuthorizedZeroRevenueLoad\(load\)/.test(src.service)) p.push("the mint must pass authorizedZeroRevenue from isAuthorizedZeroRevenueLoad only");
   if (!/load\.factoring !== "faro_transportation"\) return false/.test(src.zero)) p.push("isAuthorizedZeroRevenueLoad must be faro_transportation-only");
   if (!/if \(isAuthorizedZeroRevenueLoad\(load\)\) \{\s*return \[\{ code: "linehaul"[^\]]*amount_cents: 0 \}\]/.test(src.seed)) p.push("the seeder must book an authorized Transportation load at $0");
+  if (!/authorizedZeroRevenue: isAuthorizedZeroRevenueLoad\(load\) \|\| undefined/.test(src.seed)) p.push("the seeder must pass authorizedZeroRevenue to bookLoad for the authorized $0 load only (CC-2 443.10)");
+  {
+    const dry = src.service.indexOf("if (opts.dryRun) continue;");
+    const del = src.service.indexOf("await deliverLoadThroughDispatch(client, actorUserId");
+    if (dry < 0 || del < 0 || del < dry) p.push("the Creator must deliver each load through dispatch's transition engine, on real posts only (after the dry-run skip)");
+    if (/UPDATE mdata\.loads\s+SET status/i.test(src.service)) p.push("the Creator must never UPDATE a load's status directly");
+    if (!/stop_type = 'pickup'/.test(src.service)) p.push("the Creator must stamp the pickup stop of a delivered load");
+  }
   if (/code: "LH"|code: "ACC"/.test(src.seed) || !/additional_charge_id: hit\.id/.test(src.seed)) p.push("seeder charge codes must be bookLoad's (linehaul + catalog id)");
   const zr = (src.gate.match(/\$\{ZR_I\}/g) ?? []).length;
   if (!/export function authorizedZeroRevenueInvoiceSql/.test(src.gate) || zr < 6) p.push("feed-gate header / line / A/R-JE checks must recognise the authorized $0 shape");
@@ -86,9 +94,10 @@ function selftest() {
   if (!problems(m("zero", 'load.factoring !== "faro_transportation") return false', 'false) return false')).some((x) => /faro_transportation-only/.test(x))) bad.push("a non-Transportation $0 authorization passed");
   if (!problems(m("seed", 'code: "linehaul",\n      description: amount', 'code: "LH",\n      description: amount')).some((x) => /linehaul/.test(x))) bad.push("the LH code passed");
   if (!problems(m("gate", /\$\{ZR_I\}/g, "false")).some((x) => /authorized \$0 shape/.test(x))) bad.push("a feed gate without the authorized shape passed");
+  if (!problems(m("service", "    await deliverLoadThroughDispatch(client, actorUserId", "    void (client, actorUserId")).some((x) => /transition engine/.test(x))) bad.push("a Creator that never delivers the load passed");
   if (!problems(m("admission", "  const seen = new Set<string>();", '  if (false) return new SettlementCreatorError("invoice_number_duplicate", "x");\n  const seen = new Set<string>();')).some((x) => /two loads is legal/.test(x))) bad.push("an in-draft duplicate-number refusal passed");
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }
-  console.log(`${LABEL} SELFTEST OK — 11/11 (real tree passes; dropped number, late admission, some() rule, unscoped read, Transportation submit, missing box, non-Transportation $0, LH code, gate without authorized shape, in-draft duplicate-number refusal each caught)`);
+  console.log(`${LABEL} SELFTEST OK — 12/12 (real tree passes; dropped number, late admission, some() rule, unscoped read, Transportation submit, missing box, non-Transportation $0, LH code, gate without authorized shape, in-draft duplicate-number refusal, undelivered load each caught)`);
   process.exit(0);
 }
 if (process.argv.includes("--selftest")) selftest();

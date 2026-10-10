@@ -35,6 +35,8 @@ import { resolveDriverPayItems } from "./settlement-creator-pay-item.js";
 import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
+import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.service.js";
+import { fromMdataStatus } from "../dispatch/load-state-machine.js";
 import { DuplicateDocumentNumberError } from "../lib/qbo-custom-document-number.js";
 import { assertCreatorDraftAdmissible } from "./settlement-creator-admission.js";
 import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
@@ -149,6 +151,7 @@ async function stampDeliveryStopActuals(
   client: DbClient,
   loadId: string,
   deliveryDate: string | null | undefined,
+  pickupDate?: string | null,
 ): Promise<void> {
   const at = deliveryDate ? `${deliveryDate}T18:00:00.000Z` : new Date().toISOString();
   await client.query(
@@ -163,6 +166,60 @@ async function stampDeliveryStopActuals(
     `,
     [loadId, at],
   );
+  // ROUND 443.3 (prod-fork e2e): a delivered load needs EVERY stop stamped (feed gate load.stops_stamped); the pickup
+  // happened on the signed settlement's pickup date. Never overwrites a stamp already there.
+  const pickedAt = pickupDate ? `${pickupDate}T14:00:00.000Z` : at;
+  await client.query(
+    `
+      UPDATE mdata.load_stops
+         SET actual_arrival_at = COALESCE(actual_arrival_at, $2::timestamptz),
+             actual_departure_at = COALESCE(actual_departure_at, $2::timestamptz),
+             updated_at = now()
+       WHERE load_id = $1::uuid
+         AND stop_type = 'pickup'
+         AND soft_deleted_at IS NULL
+    `,
+    [loadId, pickedAt],
+  );
+}
+
+/** The forward path from a dispatched load to delivered in dispatch's state machine (load-state-machine.ts forwardTransitions). */
+const CREATOR_DELIVERY_PATH = ["dispatched", "in_transit", "delivered_pending_docs"] as const;
+const ALREADY_DELIVERED = new Set(["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced", "paid", "closed"]);
+
+export async function deliverLoadThroughDispatch(
+  client: DbClient,
+  actorUserId: string,
+  operatingCompanyId: string,
+  loadId: string,
+  deliveryDate: string | null | undefined,
+  transition: typeof transitionDispatchLoadInClientTx = transitionDispatchLoadInClientTx,
+): Promise<void> {
+  const deliveredAt = deliveryDate ? `${deliveryDate}T18:00:00.000Z` : null;
+  for (let guard = 0; guard < CREATOR_DELIVERY_PATH.length; guard++) {
+    const cur = String(
+      (await client.query<{ status: string }>(
+        `SELECT status::text AS status FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [loadId, operatingCompanyId],
+      )).rows[0]?.status ?? "",
+    );
+    if (ALREADY_DELIVERED.has(cur)) return;
+    const bucket = fromMdataStatus(cur);
+    if (bucket === "delivered_pending_docs" || bucket === "completed_docs_received") return;
+    const at = CREATOR_DELIVERY_PATH.indexOf(bucket as (typeof CREATOR_DELIVERY_PATH)[number]);
+    if (at < 0) {
+      throw new SettlementCreatorError("load_not_deliverable", `Load ${loadId}: status '${cur}' cannot be moved to delivered.`);
+    }
+    const next = CREATOR_DELIVERY_PATH[at + 1]!;
+    const result = (await transition(client as never, actorUserId, operatingCompanyId, loadId, {
+      new_status: next as never,
+      reason: "Settlement Creator: delivered per the signed settlement",
+      delivered_at: next === "delivered_pending_docs" ? deliveredAt : null,
+    })) as { error?: string } | null | undefined;
+    if (!result || result.error) {
+      throw new SettlementCreatorError("load_delivery_refused", `Load ${loadId}: dispatch refused ${cur} -> ${next}: ${result?.error ?? "load not found"}`);
+    }
+  }
 }
 
 type PriorCreatorPostPayload = {
@@ -1473,7 +1530,7 @@ export async function postSettlementCreatorInClientTx(
       );
     }
 
-    await stampDeliveryStopActuals(client, loadId, load.delivery_date);
+    await stampDeliveryStopActuals(client, loadId, load.delivery_date, load.pickup_date);
 
     // ROUND 443.4 — driver pay = pay rate x short miles (loaded line) + empty rate x empty miles (empty line).
     // The customer's invoice amount and accessorials are never read here: they feed the invoice only.
@@ -1530,6 +1587,12 @@ export async function postSettlementCreatorInClientTx(
 
     // Invoices do not change driver pay; a dry run (rolled back) never mints or sends one.
     if (opts.dryRun) continue;
+    // The load is delivered per the signed settlement: move it there through dispatch's ONE transition engine (graph
+    // check, departure stamp, driver-bill mint, revenue latch), never a status UPDATE. Real posts only: a dry run
+    // rolls back, and dispatch queues its revenue latch after commit. Invoice send refuses an
+    // invoice on a load that is still 'dispatched' (invoice_on_rolling_load_needs_authorization, since 09-30), so
+    // without this no Creator invoice could be issued.
+    await deliverLoadThroughDispatch(client, actorUserId, draft.operating_company_id, loadId, load.delivery_date);
     let built;
     try {
       built = await buildInvoiceFromLoad(client, {
