@@ -227,6 +227,9 @@ async function handleInvoiceBulk(ctx: BulkPerEntityContext<InvoiceBulkPayload>):
     if (String(oldRow.factoring_status ?? "not_factored") !== "not_factored") {
       return { ok: false, code: "E_ALREADY_FACTORED", message: "Invoice is already factored" };
     }
+    if (Number(oldRow.total_cents ?? 0) === 0) {
+      return { ok: false, code: "zero_revenue_invoice_not_factorable", message: "A $0 invoice cannot be submitted to factoring" };
+    }
 
     const advanceRes = await client.query(
       `
