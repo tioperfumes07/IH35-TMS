@@ -59,6 +59,7 @@ import type {
   SettlementCreatorPreview,
 } from "./settlement-creator.types.js";
 import { isReeferFuelItemName } from "../fuel/reefer-fuel.service.js";
+import { createBillInClientTx } from "../accounting/bills.service.js";
 
 export type { DbClient };
 
@@ -1344,13 +1345,35 @@ export async function postSettlementCreatorInClientTx(
       throw new SettlementCreatorError("expense_quantity_rate_mismatch", `Company expense "${exp.item_name}": ${qty} ${uom} does not price to ${dollarsFromCents(exp.amount_cents)}.`);
     }
     if (card === "owed") {
-      // Owed -> a BILL in Accounts Payable. The bill engine (createBillInClientTx) does not yet carry the load, the
-      // line quantity / unit or the vendor document number (posted to the Lead as a CC-1 blocker, ROUND 443.6), so an
-      // owed expense refuses rather than create a bill that drops its load and gallons.
-      throw new SettlementCreatorError(
-        "expense_owed_bill_unavailable",
-        `Company expense "${exp.item_name}" is owed to ${exp.vendor_name}: it becomes an A/P bill, and the bill engine cannot yet record its load and quantity. Nothing was written.`,
+      // Owed -> a BILL in Accounts Payable. ROUND 443.13 (CC-1) — createBillInClientTx now carries
+      // loadId + vendorDocumentNumber + lines (item/qty/UoM/rate), so we can create the bill.
+      const billMemo = `[SC ${draft.settlement_no}] ${exp.description ?? exp.item_name}`.slice(0, 500);
+      await createBillInClientTx(
+        client as never,
+        {
+          operatingCompanyId: draft.operating_company_id,
+          vendorId: vendor.id,
+          vendorDocumentNumber: exp.vendor_document_number?.trim() || undefined,
+          loadId,
+          billDate: exp.date,
+          amountCents: exp.amount_cents,
+          memo: billMemo,
+          lines: [
+            {
+              amountCents: exp.amount_cents,
+              itemId: itemAcct.item_id ?? undefined,
+              quantity: qty,
+              rateCents,
+              unitOfMeasure: uom,
+              loadId,
+              description: exp.description ?? exp.item_name ?? undefined,
+              accountId: itemAcct.id,
+            },
+          ],
+        },
+        actorUserId,
       );
+      continue;
     }
     const preference = card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet";
     const { account_id: paymentAccountId } = await resolveCompanyDirectCreditAccount(client as never, draft.operating_company_id, preference);
