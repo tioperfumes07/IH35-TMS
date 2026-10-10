@@ -42,6 +42,7 @@ import {
   type SettlementCreatorDraft,
   type SettlementCreatorPreview,
   type SettlementCreatorFuelCard,
+  type SettlementCreatorExpensePaymentSource,
   type SettlementCreatorFactorOption,
 } from "../../api/settlementCreator";
 import type { ReactNode } from "react";
@@ -266,7 +267,12 @@ function emptyCompExp(): ExpDraft {
     load_number: "",
     is_company_expense: true,
     is_reimbursable: false,
-    card: "relay",
+    // ROUND 443.6 — no default payment source; the owner chooses Relay, Dreamline or Owed to the vendor.
+    card: null,
+    vendor_name: "",
+    vendor_document_number: "",
+    quantity: null,
+    unit_of_measure: "",
     location: "",
     location_id: null,
   };
@@ -2305,7 +2311,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
 
             <Section title="Company expenses" subtotalCents={compExpSubtotal}>
               <p className="text-center text-xs text-[#6B7280]">
-                PDF &quot;Comp.&quot; — credits the fuel card rail (never A/P)
+                PDF &quot;Comp.&quot; — paid by card credits the card rail; owed to the vendor becomes an A/P bill
               </p>
               {companyExpenses.map((exp, idx) => {
                 const addCompExp = () => {
@@ -2376,20 +2382,73 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       ariaLabel="Company expense amount"
                     />
                   </Field>
-                  <Field label="Card">
+                  <Field label="Paid by">
                     <Combobox
                       options={[
                         { value: "dreamline", label: "Dreamline" },
                         { value: "relay", label: "Relay" },
+                        { value: "owed", label: "Owed to vendor (bill)" },
                       ]}
-                      value={exp.card ?? "relay"}
+                      value={exp.card ?? ""}
                       onChange={(v) => {
                         const next = [...companyExpenses];
-                        next[idx] = { ...exp, card: (v ?? "") as SettlementCreatorFuelCard };
+                        next[idx] = { ...exp, card: (v || null) as SettlementCreatorExpensePaymentSource | null };
                         setCompanyExpenses(next);
                       }}
+                      placeholder="Choose…"
                       size="sm"
                       searchIsValue
+                    />
+                  </Field>
+                  <Field label="Vendor">
+                    <input
+                      className={inputClass}
+                      value={exp.vendor_name ?? ""}
+                      onChange={(e) => {
+                        const next = [...companyExpenses];
+                        next[idx] = { ...exp, vendor_name: e.target.value };
+                        setCompanyExpenses(next);
+                      }}
+                      data-testid={`sc-comp-exp-vendor-${idx}`}
+                    />
+                  </Field>
+                  <Field label="Vendor invoice #">
+                    <input
+                      className={inputClass}
+                      value={exp.vendor_document_number ?? ""}
+                      onChange={(e) => {
+                        const next = [...companyExpenses];
+                        next[idx] = { ...exp, vendor_document_number: e.target.value };
+                        setCompanyExpenses(next);
+                      }}
+                      data-testid={`sc-comp-exp-doc-${idx}`}
+                    />
+                  </Field>
+                  <Field label="Qty">
+                    <input
+                      className={inputClass}
+                      inputMode="decimal"
+                      value={exp.quantity ?? ""}
+                      onChange={(e) => {
+                        const v = e.target.value.trim();
+                        const next = [...companyExpenses];
+                        next[idx] = { ...exp, quantity: v === "" || !Number.isFinite(Number(v)) ? null : Number(v) };
+                        setCompanyExpenses(next);
+                      }}
+                      data-testid={`sc-comp-exp-qty-${idx}`}
+                    />
+                  </Field>
+                  <Field label="Unit">
+                    <input
+                      className={inputClass}
+                      value={exp.unit_of_measure ?? ""}
+                      onChange={(e) => {
+                        const next = [...companyExpenses];
+                        next[idx] = { ...exp, unit_of_measure: e.target.value.toLowerCase().replace(/[^a-z_]/g, "") };
+                        setCompanyExpenses(next);
+                      }}
+                      placeholder="gal"
+                      data-testid={`sc-comp-exp-uom-${idx}`}
                     />
                   </Field>
                   <LineCoding
