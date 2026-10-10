@@ -1,3 +1,13 @@
+## 2026-10-10 · ROUND 443.22-MIG MERGED (#26208) + 2b shipping
+
+FINDING: ROUND-443.22-MIG — migration 202615441200 on main at 51c255f57b; collision guard green (maxLedger=maxRepo=202615441200). 2b facility register shipping next.
+LANE: FINANCIAL
+Files Modified (2b): facility.service.ts · related-party-loan-posting/routes.ts · related-party-loans.ts · LoansAdvancesPage.tsx · verify-related-party-loan-facility-bank-categorize-document.mjs · 18362 step · OUTBOX
+GUARD: verify-related-party-loan-facility-bank-categorize-document (18362) selftest+static PASS; verify-migration-no-number-collision OK
+LIVE PROOF: #26208 squash 51c255f57b; collision live maxLedger=202615441200 maxRepo=202615441200; no USMCA seed
+REMAINING: FAST-MERGE 2b then 443.22-2a Loan bank action → wizard @ 4%; 2c note; 2d repay; 2e paid-direct; 2f read-only backfill proposal
+NEXT: squash-merge 2b
+
 ## 2026-10-09 · BANK-F432 #26144 FAST-MERGED + Devin inbox live
 
 FINDING: BANK-F432-MERGED — leftover register type + match-drawer record type now MultiSelect; Devin FAST-MERGE orders on main
