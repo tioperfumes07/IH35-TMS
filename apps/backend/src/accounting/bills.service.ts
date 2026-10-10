@@ -151,6 +151,13 @@ type CreateBillInput = {
    * Never invent GL accounts — accountId must be caller-supplied or left null for poster tiers.
    */
   lines?: CreateBillLineInput[];
+  /** ROUND 443.13 (CC-1) — explicit bill→load header link from the Settlement Creator. Applied
+   * before the auto-derive UPDATE so the auto-derive's `WHERE load_id IS NULL` skips rows the
+   * caller already stamped. The auto-derive still runs and sets this from lines when not provided. */
+  loadId?: string | null;
+  /** ROUND 443.13 (CC-1) — the vendor's own document/invoice reference number. Semantic alias for
+   * `billNumber` for programmatic callers (Settlement Creator); takes precedence when both are set. */
+  vendorDocumentNumber?: string | null;
 };
 
 type PayBillInput = {
@@ -2582,7 +2589,7 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
   // WARN, DO NOT HARD-BLOCK (QBO/McLeod behaviour): carriers legitimately reuse invoice numbers
   // across vendors, and a hard block would make a real bill unenterable. Voided bills never
   // collide -- a voided duplicate is precisely what a re-entry is meant to replace.
-  const billNumber = input.billNumber?.trim();
+  const billNumber = (input.vendorDocumentNumber ?? input.billNumber)?.trim();
   if (billNumber) {
     const dup = await client.query<{ id: string }>(
       `
@@ -3146,6 +3153,15 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
     draftId: input.attachmentDraftId,
     newId: created.id,
   });
+  // ROUND 443.13 (CC-1) — explicit load→bill header stamp. Applied before the auto-derive so the
+  // auto-derive's `WHERE b.load_id IS NULL` leaves caller-supplied values in place.
+  if (insertedId && input.loadId) {
+    await client.query(
+      `UPDATE accounting.bills SET load_id = $3::uuid WHERE id = $1::uuid AND operating_company_id = $2::uuid AND load_id IS NULL`,
+      [insertedId, input.operatingCompanyId, input.loadId]
+    );
+    (created as { load_id?: string | null }).load_id = input.loadId;
+  }
   // ROUND 363-CC1-A follow-through (LAW 363.2 — the posting carries its load): a bill whose every line names the
   // SAME single load is that load's bill, so its header carries the load too. That is the document's own data, never
   // an allocation: a bill with lines on two loads, or a line with no load, keeps a NULL header and each line keeps
