@@ -593,3 +593,84 @@ data is not yours or mine to change and the ceiling is not raised. Keep the 443.
 past the red gate, do not void or move any Relay row. Continue 443.5, 443.6, 443.7. If one of those needs a
 migration and hits the same gate, post it in SEATS-TO-LEAD at once.
 ```
+
+**ALL SEATS — OWNER RULINGS 4:30 PM CT + LEAD RULINGS — posted 4:32 PM CT (21:32 UTC)**
+
+```
+CC-1 · CC-2 · CC-3 — OWNER RULINGS 2026-10-10 4:30 PM CT, AND WHAT EACH CHANGES
+Owner: "all drivers are b1 drivers all are from mexico." · On Relay: "they are from transportation, in usmca we
+put in transportation env key. we only use transprotation, we do not use relay usmca" · "override. lets go"
+
+1 DRIVERS ARE ALL MEXICO B1. The Lead set mdata.drivers.has_b1_visa = true on every USMCA driver on the
+  owner's word: 169 rows updated, now 170 of 170 true (Neon prod, 21:32 UTC). The 443.4 b rule stands unchanged
+  (true -> Mexico-B1 items, false -> CDL, NULL -> refuse). Every settlement line must now carry
+  "Driver Pay-Mexico-B1 Driver-Loaded Miles" / "-Empty Miles".
+2 RELAY GATE — OWNER OVERRIDE. verify-relay-fill-one-company (172 > ceiling 119) is not caused by ROUND 443.
+  A ROUND 443 PR may ship past THAT ONE guard and no other: paste the gate output showing it is the only red,
+  name this ruling in the PR body. The ceiling constant is NOT edited. No Relay row is voided, moved or deleted
+  by anyone. CC-3: ship 443.9 now.
+3 TWO SETTLEMENTS PER POST (CC-3 443.7 question) — LEAD RULING: OPTION A. The Creator adopts the tour
+  settlement its own loads joined at booking in this same post, stamps it with the AlwaysTrack number and
+  period, upgrades the booking's pay lines to the itemized Driver Pay items (same amounts, else refuse
+  pay_mismatch), and closes it through the pay-run close. One settlement per post. Never a settlement from
+  an earlier tour. The delivery ping must not close it mid-post.
+4 UNITS — CC-3's "USMCA has no active owned/leased unit" is FALSE on production. Measured 21:32 UTC:
+  43 units have currently_leased_to_company_id = USMCA; 16 are InService and not deactivated, including
+  T152, T156, T163, T164, T171, T175, T177 (T168, T173, T176 too). T144 is InService but NOT leased to USMCA.
+  CC-3: find what invalid_unit_for_company actually reads (fork state, a lease table, a date window) and
+  post the file:line and the query. Do not change any unit row.
+```
+
+**CC-1 — ROUND 443.13 + CORRECTION TO 443.12 — posted 4:32 PM CT (21:32 UTC)**
+
+```
+CC-1 — ROUND 443.13 — BILL AND EXPENSE SERVICES MUST CARRY THE FULL STAMP (accounting/** only) + 443.12 CORRECTION
+Owner: "create bills, bill expenses stamp."
+MEASURED (CC-3, confirmed by reading main c691115)
+- accounting/bills.service.ts createBillInClientTx (:3206, CreateBillInput :78) accepts no loadId, no lines
+  (item, quantity, unit of measure, rate) and no vendor document number, although accounting.bills.load_id and
+  bill_lines.item_id / quantity / rate_cents / unit_of_measure / load_id exist.
+- There is no reusable expense-create service: the general path lives inside accounting/expenses.routes.ts, so
+  the Settlement Creator still writes its company expense with a direct INSERT.
+REQUIRED — ONE PR
+a createBillInClientTx gains loadId, vendorDocumentNumber and lines[{itemId, accountId, quantity,
+  unitOfMeasure, rateCents, amountCents, loadId}]; existing callers unchanged.
+b Export createExpenseInClientTx(client, input) extracted from expenses.routes.ts — vendor, load, driver, unit,
+  trailer, vendor_document_number, payment account, lines with quantity / unit of measure / rate — and make the
+  route call it. One writer for a company expense. No behaviour change for the Expenses screen.
+c 443.12 CORRECTION: b5fd184 skips the revenue-lines guard for ANY invoice with total_cents = 0. The order was
+  the authorized $0 invoice only. An invoice with zero lines, or a $0 invoice not minted through
+  authorizedZeroRevenue, must still be refused at send. Recognise the authorized one from what the mint stored.
+LANE: accounting/** only. USMCA only. NOBODY SEEDS DATA. Banking never touched. FAST-MERGE loop.
+GUARD: verify-bill-and-expense-services-carry-stamp.mjs + selftest; extend 18361 for part c.
+DEADLINE: 2026-10-10 23:45 UTC. SURRENDER: CC-3 under SURFACE-BREACH-AUTHORIZED. Tell cc3 by tmux when live.
+DONE: CC-1 | 443.13 DONE | <sha> | <live sha> | bill with load + DEF line 12.5 gal + vendor doc 2870483 persisted
+(test) | expense via createExpenseInClientTx carries vendor/load/driver/unit/trailer/doc number (test) |
+zero-line $0 invoice send -> refused; authorized $0 -> sent, 0 journal entries (tests) | guards PASS | NEXT none
+```
+
+**CC-2 — ROUND 443.14 + 443.15 — posted 4:32 PM CT (21:32 UTC)**
+
+```
+CC-2 — ROUND 443.14 — EXPORT bookLoadOnClient · ROUND 443.15 — RELAY INGEST: ONE FILL, ONE COMPANY (USMCA)
+443.14 (deadline 2026-10-10 23:15 UTC) — MEASURED: dispatch/book-load.service.ts bookLoad runs
+bookLoadInTransaction in its OWN transaction, so the Settlement Creator can only book loads in a separate
+committed transaction; a refused settlement post strands the loads and the retry dies on load_already_exists.
+REQUIRED: export bookLoadOnClient(client, input): the same inline checks + setScopedCompanyContext +
+createLoadWithFullSideEffects on the CALLER's client (no own transaction), the three after-book extras
+(geofences, geocode backfill, reference miles) queued after the caller's commit. bookLoad() becomes a thin
+wrapper around it. No behaviour change for Book Load. Guard + selftest. Tell cc3 by tmux when live.
+443.15 (deadline 2026-10-11 01:00 UTC) — Owner: USMCA runs on the IH 35 Transportation Relay key; the USMCA
+Relay account is not used. MEASURED: verify-relay-fill-one-company is red on production — 172 fills held by
+more than one company, ceiling 119; USMCA rows in integrations.relay_fuel_transactions by created date:
+114 on 10-08, 9 on 10-09, 10 on 10-10.
+REQUIRED: first MEASURE and paste: which companies the Relay ingest runs for, with which key, and why the
+same transaction_id is stored under two companies. Then fix the ingest so a fill is stored once, under USMCA
+only. Do NOT void, move or delete any existing Relay row — that needs the owner's word, which he has not
+given. Guard: no NEW cross-company fill after the fix (the existing count does not grow).
+LANE: dispatch/** for 443.14; the Relay ingest for 443.15. USMCA only. NOBODY SEEDS DATA. FAST-MERGE loop.
+SURRENDER: CC-3 for 443.14; CC-1 for 443.15.
+DONE: CC-2 | 443.14 DONE | <sha> | <live sha> | Book Load unchanged (tests) | caller-transaction rollback leaves
+0 loads (test) | guard PASS  ·  CC-2 | 443.15 DONE | <sha> | <live sha> | cause pasted | next ingest run: 0 new
+cross-company fills (query pasted) | guard PASS
+```
