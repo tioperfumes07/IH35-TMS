@@ -1,10 +1,10 @@
 {
-  "healthzSha": "9510ccf",
-  "generated_at": "2026-10-10T22:35:16.051Z",
+  "healthzSha": "1ef894e",
+  "generated_at": "2026-10-10T22:44:54.494Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "9510ccf",
+    "deployedSha": "1ef894e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 26206,
+      "title": "FINDING: ACCT-F2026101006 FINDING: ACCT-F2026101007 LANE: FINANCIAL — fix DisputesHubPage EntityLink + MoneyInput reds + 443.18 Disputes tab in Driver Finance sidebar",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26206",
+      "sha": "60500127c4",
+      "committedAtIso": "2026-10-10T22:39:23Z"
+    },
+    {
+      "number": 26205,
+      "title": "FINDING: ROUND-443.22-1 LANE: FINANCIAL — accounting.related_party_loan_facilities was live on Neon (migration 202615441200) but unclassified in verify-transaction-linkage-law TABLE_REGISTRY, so every seat's money gate went red",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26205",
+      "sha": "094c0d5afa",
+      "committedAtIso": "2026-10-10T17:36:43-05:00"
+    },
+    {
+      "number": 26204,
+      "title": "docs(bus): ROUND 443.22 Lead order to Cursor (related-party loans from bank Categorize) + rulings to CC-1/CC-2/CC-3 + NOW-CURSOR pointer",
+      "state": "merged",
+      "mergedAtCt": "10/10/2026, 05:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26204",
+      "sha": "1ef894eaf2",
+      "committedAtIso": "2026-10-10T17:35:57-05:00"
+    },
+    {
       "number": 26202,
       "title": "FINDING: ACCT-F2026100640 LANE: FINANCIAL — ROUND 443.21: the Relay webhook stored a fill under the ?entity company; the only account in use posts to ?entity=TRANSP, so USMCA never got its fuel by webhook (and after 443.15 it would be refused); a verified TRANSP or USMCA delivery is now stored once, under USMCA",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26190",
       "sha": "1b6acac9a4",
       "committedAtIso": "2026-10-10T17:08:12-05:00"
-    },
-    {
-      "number": 26196,
-      "title": "CC-2-FIX main undeployable: #26193 nested export in expenses.routes.ts + 2 reds it left",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26196",
-      "sha": "3f6eb1e6c9",
-      "committedAtIso": "2026-10-10T17:07:53-05:00"
-    },
-    {
-      "number": 26195,
-      "title": "FINDING: N/A (CC-1 ROUND 443.20) — renumber 202610100100→202610100200 collision repair",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26195",
-      "sha": "1cf09aeba1",
-      "committedAtIso": "2026-10-10T17:04:24-05:00"
-    },
-    {
-      "number": 26194,
-      "title": "docs(bus): Lead rulings (443.15 option c, 443.20 migration collision) + ROUND 443.21 to CC-2 (Relay webhook lands in USMCA)",
-      "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26194",
-      "sha": "af913c4779",
-      "committedAtIso": "2026-10-10T17:02:50-05:00"
     }
   ]
 }

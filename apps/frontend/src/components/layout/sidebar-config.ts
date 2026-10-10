@@ -331,6 +331,10 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Assignments", to: "/inventory/assignments" },
         { label: "Purchase History", to: "/inventory/purchases" },
       ];
+    case "settlements":
+      return [
+        { label: "Disputes", to: "/driver-finance/settlements?tab=disputes" },
+      ];
     case "driver-hub":
       return [
         { label: "Driver Hub Home", to: "/driver-hub" },

@@ -807,3 +807,107 @@ DONE: CC-2 | 443.21 DONE | <sha> | <live sha> | secrets present (names) | delive
 pasted | TRANSP delivery -> 1 USMCA row, 0 rows under any other company (test) | duplicate webhook + cron -> 1
 row (test) | pre-08-03 fill -> refused (test) | guard PASS
 ```
+
+**CC-2 · CC-1 · CC-3 — LEAD RULINGS 5:25–5:35 PM CT — posted 5:35 PM CT (22:35 UTC)**
+
+```
+CC-2 — 443.21: merge #26202 past exactly verify-entity-link-adoption, verify-money-fields-use-moneyinput and
+verify-transaction-linkage-law (not your reds). Paste the gate output naming them, then the live sha.
+CC-1 — fix YOUR two reds on main in one commit, deadline 22:55 UTC: DisputesHubPage (#26200) raw invoice ids ->
+EntityLink; open-dispute money field -> MoneyInput. The third red (related_party_loan_facilities) is Cursor's —
+do not touch it; the related-party loan work is Cursor's by owner order and the Lead's stop on it is withdrawn.
+Then the 443.19 pre-flight file and 443.18. Run backend tsc before every merge.
+CC-3 — option (b): drop your link-only fix. Merge 443.9 and 443.16 now past exactly the reds that are not yours
+(the two CC-1 reds, Cursor's linkage red, the owner-overridden relay red). Run the 443.9 purge once on prod,
+orphans only, banking untouched, paste before/after counts, post READY.
+```
+
+**CURSOR — ROUND 443.22 — posted 5:35 PM CT (22:35 UTC)**
+
+```
+CURSOR — ROUND 443.22 — OWNER / RELATED-PARTY LOANS: BANK "LOAN" ACTION, RUNNING FACILITY PER PERSON, A DOCUMENT ON EVERY ADVANCE
+Issued 2026-10-10 5:35 PM CT (22:35 UTC) by Claude Lead, on the owner's order. USMCA only (5c854333-6ea5-4faa-af31-67cb272fef80).
+TRANSPORTATION and TRUCKING are frozen: never read, write, count or report on them.
+
+OWNER, 2026-10-10: "We should also have a loan box ... that automatically creates the loan, not just send the
+transaction to that account. That creates the legal document ... at a annual interest rate of 4 percent ...
+if the money is withdrawn it should recognize the account person etc and recommend a loan repayment."
+"i think option 1 is the best, but everytime we loan to the company it should create a document."
+"sometimes we cannot use the usmca card to pay for diesel, so laura transfers to her account and then pays
+relay from there. or she sends to albertos account or my account to send to relay."
+
+MEASURED 5:33 PM CT, Neon tiny-field-89581227 / br-fancy-credit-akjnd07a, bypass_rls='lucia', USMCA
+- accounting.related_party_loan_entries: 0 rows. accounting.related_party_loan_schedule: 0 rows.
+  accounting.related_party_loan_facilities: the table exists (your migration is applied).
+- "Owner / Related-Party Loan Payable" (2410): 182 ledger postings, net balance $0.00.
+  "Jorge Pablo Guadalupe Muñoz Gonzalez — Related-Party Loan" (2410-00-001): 14 postings, DEBIT balance $4,530.00.
+  "Scentsx — Related-Party Loan" (2410-00-002): 9 postings, credit balance $11,450.00.
+  "Tio Perfumes 2 — Related-Party Loan" (2410-00-003): 4 postings, DEBIT balance $3,030.00.
+  "Laura Muñoz — Related-Party Loan" (2410-00-004): 0 postings.
+  "Loans to Related Parties" (1270): 0 postings. "Relay Fuel Wallet" (1295): 0 postings.
+  So 209 postings sit on the loan accounts and the loan register is empty: Finance -> Loans shows nothing.
+  Two liability sub-accounts carry a DEBIT balance (the company has paid Jorge and Tio Perfumes 2 more than
+  the ledger says they lent).
+- main: verify-transaction-linkage-law is RED for every seat — accounting.related_party_loan_facilities
+  (your reservation #26191, migration 202615441200) is not classified. It is blocking other seats' gates.
+
+STEP 1 — CLEAR YOUR RED FIRST — deadline 2026-10-10 23:15 UTC
+Classify accounting.related_party_loan_facilities for verify-transaction-linkage-law. One PR. Main green on
+that guard. Nothing else in the PR.
+
+STEP 2 — THE ENGINE — deadline 2026-10-11 03:00 UTC — one PR per lettered item, each with its guard
+a ONE WRITER. Bank Categorize gains a "Loan" action that opens the EXISTING related-party loan creator
+  (LoanApplicationWizard, POST /api/v1/accounting/related-party-loans) prefilled from the bank line: amount,
+  date, counterparty from the payee when known. Banking computes no loan math and writes no loan row itself.
+  Rate defaults to 4.00% annual, editable. Counterparty and rate are confirmed by the user every time; a loan
+  is never created silently.
+b ONE RUNNING FACILITY PER PERSON (owner: option 1). Money IN from Jorge, Laura, Scentsx or Tio Perfumes 2
+  adds an ADVANCE to that person's facility and posts to that person's own sub-account (never the parent
+  "Owner / Related-Party Loan Payable"). Finance -> Loans & Advances lists one facility per person with
+  principal advanced, repaid, open balance, accrued interest, and every advance and repayment under it.
+c A DOCUMENT ON EVERY ADVANCE. Each advance mints a numbered loan advance note: lender, borrower (USMCA
+  Freight Solutions), principal, date, 4.00% (or the rate entered), the facility it belongs to, signature
+  blocks. Stored through the normal docs.files path and linked on the advance and the facility. A facility
+  with an advance and no note is a defect the guard catches. Give the owner the template to read before it
+  is final — the wording is his decision, not yours.
+d MONEY OUT RECOGNISES THE PERSON. A bank outflow to a known lender offers "Apply to <person>'s loan" with
+  the open balance and accrued interest, and records a REPAYMENT against the facility — never another loose
+  entry on the parent account. If the payment exceeds what the facility shows as owed, do NOT guess: stop
+  and show the difference for the owner to rule (repayment, a loan to that person on "Loans to Related
+  Parties", or something else).
+e ADVANCES THAT NEVER TOUCH THE COMPANY BANK. When Laura, Alberto or Jorge pays Relay (or any vendor) from a
+  personal account there is no company bank line, so the Categorize action never appears. The loan creator
+  gets "Paid directly to a vendor": it adds an advance to that person's facility and debits what was paid
+  for — the "Relay Fuel Wallet" when Relay was funded — in one document, with the same note as (c). The
+  owner names who paid; an intermediary's account (Alberto) is recorded on the advance, the lender is who
+  the owner says it is.
+f NOTHING ALREADY POSTED IS REWRITTEN. The 209 existing postings and the owner's bank categorizations of
+  10-06 to 10-09 stay exactly as they are in this round. Deliver a READ-ONLY proposal only
+  (docs/bus/OUTBOX-CURSOR.md + a file the owner can open): each existing line, the person, IN or OUT, and
+  which facility advance or repayment it would become, plus the two debit-balance sub-accounts explained
+  line by line. The backfill runs only on the owner's word, through this same engine, never by editing a
+  journal entry.
+
+LANE BOUNDARY
+Yours: banking pages and backend, the related-party loan files in accounting, Finance -> Loans & Advances.
+NOT yours — ROUND 443 is in flight there, do not touch: apps/backend/src/driver-finance/**, dispatch/**,
+accounting/from-load.ts, accounting/invoice-send.service.ts, accounting/display-id.ts, the Settlement
+Creator frontend, integrations/relay-payments/** (CC-2). Do not create a second loan engine. Do not use the
+FH-2 equipment loan wizard for this.
+NOBODY SEEDS DATA: no loan, advance, note or bank row is written to USMCA production for proof. Prove on
+tests and a throwaway Neon branch you ask the owner to delete.
+
+FAST-MERGE (docs/bus/FAST-MERGE-4MIN-LAW.md): gate exit 0 -> push -> PR -> squash-merge by API in the same
+15 seconds -> Neon proof for migrations -> one line in your NOW file. Run backend tsc before every merge.
+SURRENDER: silence past a deadline -> CC-1 takes the accounting half; you keep banking.
+Blocked = quote the blocker and name who unblocks it, in writing, before the deadline.
+
+DONE LINES (re-measurable; the Lead re-measures on Neon and main before marking done)
+CURSOR | 443.22-1 DONE | <sha> | verify-transaction-linkage-law PASS on main
+CURSOR | 443.22-2 DONE | <sha> | <live sha> | bank IN $2,000 from Laura on a fork -> 1 facility "Laura Muñoz",
+1 advance $2,000.00 at 4.00%, 1 note file linked, posting on "Laura Muñoz — Related-Party Loan", 0 postings on
+the parent account (test) | bank OUT $800 to Laura -> repayment, open balance $1,200.00 (test) | OUT larger
+than owed -> stops, no posting (test) | paid-directly-to-vendor $500 to Relay -> advance + "Relay Fuel Wallet"
+debit, 0 bank rows (test) | existing 209 postings unchanged (count pasted) | read-only backfill proposal
+delivered | guards PASS + selftest
+```

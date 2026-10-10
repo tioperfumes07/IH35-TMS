@@ -28,6 +28,7 @@ import { statusPill } from "../../components/shared/statusPill";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { SegmentedControl } from "../../components/SegmentedControl";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { formatUsdCents, TABLE_MISSING } from "../../utils/qboFormat";
 
 function money(cents: number | null | undefined) {
@@ -191,7 +192,7 @@ function OpenDisputeModal({
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [reasonCode, setReasonCode] = useState<InvoiceDisputeReason>("short_pay");
   const [reasonText, setReasonText] = useState("");
-  const [expectedDollars, setExpectedDollars] = useState("");
+  const [expectedCents, setExpectedCents] = useState<number | null>(null);
 
   const invoicesQuery = useQuery({
     queryKey: ["invoice-search-for-dispute", companyId, search],
@@ -201,9 +202,8 @@ function OpenDisputeModal({
   });
   const invoices = invoicesQuery.data?.invoices ?? [];
 
-  const expectedCents = Math.round(parseFloat(expectedDollars || "0") * 100);
   const invoicedCents = selectedInvoice?.total_cents ?? 0;
-  const disputedCents = invoicedCents - expectedCents;
+  const disputedCents = invoicedCents - (expectedCents ?? 0);
 
   const mutation = useMutation({
     mutationFn: () => {
@@ -226,9 +226,9 @@ function OpenDisputeModal({
 
   const canSubmit =
     Boolean(selectedInvoice) &&
-    disputedCents > 0 &&
+    expectedCents !== null &&
     expectedCents >= 0 &&
-    !isNaN(parseFloat(expectedDollars));
+    disputedCents > 0;
 
   return (
     <div
@@ -262,17 +262,18 @@ function OpenDisputeModal({
             data-testid="open-dispute-invoice-list"
           >
             {invoices.map((inv) => (
-              <li key={inv.id}>
+              <li key={inv.id} className="flex items-center gap-2 px-2 py-1 hover:bg-[#F7F8FA]">
+                <EntityLink kind="invoice" id={inv.id} label={entityLabel(inv.display_id, inv.id, "Invoice")} />
                 <button
                   type="button"
-                  className="w-full px-2 py-1 text-left hover:bg-[#F7F8FA]"
+                  className="flex-1 text-left"
                   onClick={() => {
                     setSelectedInvoice(inv);
                     setSearch(inv.display_id);
                   }}
                   data-testid={`open-dispute-pick-${inv.id}`}
                 >
-                  {inv.display_id} — {inv.customer_name ?? "—"} — {money(inv.total_cents)}
+                  {inv.customer_name ?? "—"} — {money(inv.total_cents)}
                 </button>
               </li>
             ))}
@@ -281,30 +282,31 @@ function OpenDisputeModal({
 
         {selectedInvoice ? (
           <div className="mt-2 rounded-sm bg-[#F7F8FA] p-2 text-xs text-[#1F2A44]" data-testid="open-dispute-selected-invoice">
-            <span className="font-semibold">{selectedInvoice.display_id}</span>
+            <EntityLink
+              kind="invoice"
+              id={selectedInvoice.id}
+              label={entityLabel(selectedInvoice.display_id, selectedInvoice.id, "Invoice")}
+              className="font-semibold"
+            />
             {" · "}{selectedInvoice.customer_name ?? "—"}
             {" · invoiced: "}<span className="font-semibold">{money(selectedInvoice.total_cents)}</span>
           </div>
         ) : null}
 
-        <label className="mt-3 block text-xs">
-          <div className="mb-1 text-gray-500">Expected amount (USD)</div>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
+        <div className="mt-3" data-testid="open-dispute-expected-amount">
+          <div className="mb-1 text-xs text-gray-500">Expected amount (USD)</div>
+          <MoneyInput
+            valueCents={expectedCents}
+            onChangeCents={setExpectedCents}
             placeholder="0.00"
-            value={expectedDollars}
-            onChange={(e) => setExpectedDollars(e.target.value)}
-            data-testid="open-dispute-expected-amount"
+            ariaLabel="Expected amount in USD"
           />
-          {selectedInvoice && expectedDollars ? (
-            <div className="mt-1 text-[#6B7280]">
+          {selectedInvoice && expectedCents !== null ? (
+            <div className="mt-1 text-xs text-[#6B7280]">
               Difference (disputed): {disputedCents > 0 ? money(disputedCents) : <span className="text-red-500">Expected exceeds invoiced</span>}
             </div>
           ) : null}
-        </label>
+        </div>
 
         <label className="mt-3 block text-xs">
           <div className="mb-1 text-gray-500">Reason</div>
