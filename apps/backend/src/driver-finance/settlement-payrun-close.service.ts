@@ -1298,10 +1298,14 @@ export async function closeSettlementPayRun(
     // claim above already prevents a double-post; this only protects against overwriting a real
     // timestamp if this branch is ever reached twice for the same run).
     await client.query(
+      // ROUND 443 (prod-fork e2e): record HOW the net was paid — nothing ever wrote pay_method, so the feed gate's
+      // settlement.header_complete failed every closed settlement. Owner ROUND 326: net pay is a bill payment from a
+      // real bank — the chosen payment method's bank, else the operating bank; no method chosen is not a refusal.
       `UPDATE driver_finance.driver_settlements
-          SET posted_at = COALESCE(posted_at, now()), posted_by_user_id = COALESCE(posted_by_user_id, $3::uuid)
+          SET posted_at = COALESCE(posted_at, now()), posted_by_user_id = COALESCE(posted_by_user_id, $3::uuid),
+              pay_method = COALESCE(pay_method, $4)
         WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-      [settlementId, opco, actor.userId]
+      [settlementId, opco, actor.userId, paymentMethod?.name ?? (netCents > 0 ? "bank_bill_payment" : "no_net_pay")]
     );
 
     // Lead ROUND 330.6 ruling 1: a settlement re-posted against loads of a REVERSED settlement links to it both ways

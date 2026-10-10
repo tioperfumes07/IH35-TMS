@@ -11,7 +11,7 @@
  * STATIC
  *   1. the post's earnings use creatorLoadedPayCents / creatorPayMiles; the earnings block never reads
  *      line_haul_amount_cents or accessorials; the preview uses the same creatorLoadedPayCents
- *   2. the pay item comes from resolveDriverPayItems (pay card); no "Driver Pay-CDL-" literal in the service
+ *   2. the pay item comes from resolveDriverPayItems (mdata.drivers.has_b1_visa, Lead ruling c890d88); no "Driver Pay-CDL-" literal in the service
  *   3. miles x rate rounds like Postgres numeric (milesTimesRateCents)
  *   4. feed gate: one live priced driver bill per per-mile load; bills linked to the settlement; no driver_bills.revoked_at
  * Run: node scripts/verify-settlement-creator-driver-pay-independent-of-invoice.mjs [--selftest]
@@ -44,6 +44,7 @@ export function problems(src) {
   if (/Driver Pay-CDL-/.test(s)) p.push('a "Driver Pay-CDL-" literal remains in the service');
   if (!/const payItems = await resolveDriverPayItems\(/.test(s) || !/payItems\.loaded\.id/.test(block) || !/payItems\.empty\.id/.test(block)) p.push("the pay item must come from resolveDriverPayItems (the pay card)");
   if (!/"driver_pay_item_unresolved"/.test(src.item) || /\?\?\s*"cdl"|default:\s*"cdl"/.test(src.item)) p.push("an unresolved pay item must refuse, never default to CDL");
+  if (!/flag === true \? "mexico_b1" : flag === false \? "cdl" : null/.test(src.item) || /UPDATE mdata\.drivers/i.test(src.item)) p.push("pay item family = has_b1_visa (true B1 / false CDL / NULL refuse), never written by the Creator (Lead ruling c890d88)");
   if (!/return milesTimesRateCents\(miles, rate\)/.test(src.pay) || !/toFixed\(6\)/.test(src.rule)) p.push("miles x rate must round like Postgres numeric");
   if (/driver_bills (db|b) WHERE[^`]*revoked_at/.test(src.gate)) p.push("feed gate reads driver_bills.revoked_at (no such column)");
   if (!/key: "settlement\.driver_bills_linked"/.test(src.gate) || !/b\.live = 1 AND b\.gross > 0/.test(src.gate)) p.push("feed gate must require one priced driver bill per per-mile load, linked to the settlement");
@@ -59,7 +60,7 @@ function selftest() {
   if (problems(good).length) bad.push(`real tree flagged: ${problems(good).join("; ")}`);
   if (!problems(m("svc", "const loadedCents = creatorLoadedPayCents(load);", "const loadedCents = load.line_haul_amount_cents ?? creatorLoadedPayCents(load);")).some((x) => /invoice amount/.test(x))) bad.push("invoice amount in earnings passed");
   if (!problems(m("svc", "payItems.loaded.id]", '(await itemByName(client, co, "Driver Pay-CDL-Loaded Miles"))?.id]')).some((x) => /CDL/.test(x))) bad.push("a CDL literal passed");
-  if (!problems(m("item", 'if (!family || !(family in PAY_ITEM_FAMILIES)) {', 'family = family ?? "cdl";\n  if (!family || !(family in PAY_ITEM_FAMILIES)) {')).some((x) => /default to CDL/.test(x))) bad.push("a CDL default passed");
+  if (!problems(m("item", 'flag === false ? "cdl" : null;', 'flag === false ? "cdl" : "cdl";')).some((x) => /has_b1_visa/.test(x))) bad.push("a CDL default passed");
   if (!problems(m("gate", "driver_finance.driver_bills db WHERE db.load_id = l.id AND db.voided_at IS NULL", "driver_finance.driver_bills db WHERE db.load_id = l.id AND db.revoked_at IS NULL AND db.voided_at IS NULL")).some((x) => /revoked_at/.test(x))) bad.push("revoked_at passed");
   if (!problems(m("rule", "toFixed(6)", "toFixed(0)")).some((x) => /numeric/.test(x))) bad.push("float rounding passed");
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }
@@ -70,4 +71,4 @@ if (process.argv.includes("--selftest")) selftest();
 const src = Object.fromEntries(Object.entries(F).map(([k, rel]) => [k, fs.readFileSync(path.join(ROOT, rel), "utf8")]));
 const p = problems(src);
 if (p.length) { console.error(`${LABEL} FAIL\n  - ${p.join("\n  - ")}`); process.exit(1); }
-console.log(`${LABEL} OK — driver pay = pay rate x short miles + empty rate x empty miles; the invoice never feeds it; pay item from the pay card; one priced driver bill per load, linked to the settlement.`);
+console.log(`${LABEL} OK — driver pay = pay rate x short miles + empty rate x empty miles; the invoice never feeds it; pay item from has_b1_visa (NULL refuses); one priced driver bill per load, linked to the settlement.`);

@@ -24,12 +24,11 @@ describe("ROUND 443.4 — driver pay never reads customer revenue", () => {
 });
 
 type Row = Record<string, unknown>;
-function fakeClient(opts: { hasColumn: boolean; family: string | null }) {
+function fakeClient(b1: boolean | null) {
   return {
     query: vi.fn(async (sql: string): Promise<{ rows: Row[] }> => {
-      if (/FROM mdata\.drivers/.test(sql)) return { rows: [{ name: "JOSE ANTONIO VICENTE MARTINEZ" }] };
-      if (/information_schema\.columns/.test(sql)) return { rows: opts.hasColumn ? [{}] : [] };
-      if (/pay_item_family AS f/.test(sql)) return { rows: [{ f: opts.family }] };
+      if (/trim\(concat_ws/.test(sql)) return { rows: [{ name: "JOSE ANTONIO VICENTE MARTINEZ" }] };
+      if (/has_b1_visa AS b1/.test(sql)) return { rows: [{ b1 }] };
       if (/FROM catalogs\.items/.test(sql))
         return { rows: [
           { id: "b1-l", item_name: "Driver Pay-Mexico-B1 Driver-Loaded Miles" }, { id: "b1-e", item_name: "Driver Pay-Mexico-B1 Driver-Empty Miles" },
@@ -40,21 +39,20 @@ function fakeClient(opts: { hasColumn: boolean; family: string | null }) {
   };
 }
 
-describe("ROUND 443.4 b — the pay item comes from the pay card", () => {
-  it("no pay type on the pay card refuses, naming the driver — never a CDL default", async () => {
-    await expect(resolveDriverPayItems(fakeClient({ hasColumn: false, family: null }) as never, "co", "d")).rejects.toMatchObject({
+describe("ROUND 443.4 b — the pay item comes from has_b1_visa (Lead ruling c890d88)", () => {
+  it("has_b1_visa NULL refuses, naming the driver — never a CDL default", async () => {
+    await expect(resolveDriverPayItems(fakeClient(null) as never, "co", "d")).rejects.toMatchObject({
       code: "driver_pay_item_unresolved",
       message: expect.stringContaining("JOSE ANTONIO VICENTE MARTINEZ"),
     });
-    await expect(resolveDriverPayItems(fakeClient({ hasColumn: true, family: null }) as never, "co", "d")).rejects.toMatchObject({ code: "driver_pay_item_unresolved" });
   });
-  it("a B1 pay card maps to the Mexico-B1 items", async () => {
-    const r = await resolveDriverPayItems(fakeClient({ hasColumn: true, family: "mexico_b1" }) as never, "co", "d");
+  it("has_b1_visa true -> the Mexico-B1 items", async () => {
+    const r = await resolveDriverPayItems(fakeClient(true) as never, "co", "d");
     expect(r.loaded.name).toBe("Driver Pay-Mexico-B1 Driver-Loaded Miles");
     expect(r.empty.id).toBe("b1-e");
   });
-  it("a CDL pay card maps to the CDL items", async () => {
-    const r = await resolveDriverPayItems(fakeClient({ hasColumn: true, family: "cdl" }) as never, "co", "d");
+  it("has_b1_visa false -> the CDL items", async () => {
+    const r = await resolveDriverPayItems(fakeClient(false) as never, "co", "d");
     expect(r.loaded.id).toBe("cdl-l");
   });
 });
