@@ -673,6 +673,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   // the driver — never Faro / factoring / reserves). The X removes it; + Add puts another back.
   const [escrow, setEscrow] = useState<MoneyDraft[]>(() => [defaultEscrowLine()]);
   const [adminFeeCents, setAdminFeeCents] = useState(0);
+  // ROUND 443.5 — the admin fee belongs to a load like every settlement item; it is sent as a deduction line.
+  const [adminFeeLoadNumber, setAdminFeeLoadNumber] = useState("");
   const [pdfCompanyExpenses, setPdfCompanyExpenses] = useState(0);
   const [pdfDriverNet, setPdfDriverNet] = useState(0);
   const [itemSearch, setItemSearch] = useState("");
@@ -1206,13 +1208,18 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         ...exp,
         description: [location?.trim(), exp.description?.trim()].filter(Boolean).join(" · ") || exp.description,
       })),
-      deductions: deductions.map((d) => ({
-        description: d.description || "Deduction",
-        amount_cents: d.amount_cents,
-        load_number: d.load_number,
-        item_id: d.item_id ?? null,
-        quantity: d.quantity ?? null,
-      })),
+      deductions: [
+        ...deductions.map((d) => ({
+          description: d.description || "Deduction",
+          amount_cents: d.amount_cents,
+          load_number: d.load_number,
+          item_id: d.item_id ?? null,
+          quantity: d.quantity ?? null,
+        })),
+        ...(adminFeeCents > 0
+          ? [{ description: "Admin fee", amount_cents: adminFeeCents, load_number: adminFeeLoadNumber.trim() || null, item_id: null, quantity: null }]
+          : []),
+      ],
       reimbursements: [],
       additional_pay: additionalPayForApi,
       escrow: escrowForApi,
@@ -1221,7 +1228,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         amount_cents: a.amount_cents,
         load_number: a.load_number,
       })),
-      admin_fee_cents: adminFeeCents > 0 ? adminFeeCents : null,
+      admin_fee_cents: null,
       seed_dispatched_loads: true,
       pdf_company_expenses_cents: pdfCompanyExpenses,
       pdf_driver_net_cents: pdfDriverNet,
@@ -1243,6 +1250,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     escrowForApi,
     advances,
     adminFeeCents,
+    adminFeeLoadNumber,
     pdfCompanyExpenses,
     pdfDriverNet,
   ]);
@@ -2796,6 +2804,16 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     ariaLabel="Admin fee"
                   />
                 </div>
+              </Field>
+              <Field label="Admin fee load No.">
+                <input
+                  className={inputClass}
+                  value={adminFeeLoadNumber}
+                  onChange={(e) => setAdminFeeLoadNumber(e.target.value)}
+                  placeholder="Load #"
+                  title="Every settlement item belongs to a load — the load this admin fee is charged on."
+                  data-testid="sc-admin-fee-load"
+                />
               </Field>
               {deductions.map((row, idx) => (
                 <div key={idx} className="border-b border-[#D1D5DB] pb-2 pt-2" data-testid={`sc-deduction-block-${idx}`}>

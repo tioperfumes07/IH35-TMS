@@ -44,7 +44,9 @@ export function problems(src) {
   if (!/"totals_differ_from_posting_engine"/.test(post)) p.push("the creator must refuse when the posting engine's NET differs from the AlwaysTrack TOTAL DUE");
   if (/createHistoricalEscrowHold\(/.test(c)) p.push("the creator writes the escrow ledger itself (createHistoricalEscrowHold) — escrow is an escrow_contribution line the close engine posts once");
   if (!/'escrow_contribution'/.test(post)) p.push("the creator must write escrow as an escrow_contribution settlement line");
-  if (!/if \(opts\.dryRun\) continue;\s*let built;/.test(post)) p.push("the dry run must skip invoice mint / send");
+  // ROUND 443.3 (#26178): the load is delivered through dispatch's transition engine on real posts only, between the
+  // dry-run skip and the mint — the dry run still skips delivery, mint and send.
+  if (!/if \(opts\.dryRun\) continue;\s*(?:\/\/[^\n]*\n\s*)*(?:await deliverLoadThroughDispatch\([^;]*\);\s*)?let built;/.test(post)) p.push("the dry run must skip invoice mint / send");
   if (!/onlyAdvanceIds:\s*advanceIds/.test(post)) p.push("the creator must recover only the advances it booked (onlyAdvanceIds)");
   const dry = c.slice(c.indexOf("export async function previewSettlementCreatorThroughClose"));
   if (!/SAVEPOINT settlement_creator_dry_run/.test(dry) || !/ROLLBACK TO SAVEPOINT settlement_creator_dry_run/.test(dry) || !/dryRun:\s*true/.test(dry)) p.push("previewSettlementCreatorThroughClose must dry-run Post inside a savepoint it rolls back");

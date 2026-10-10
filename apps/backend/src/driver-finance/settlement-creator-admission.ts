@@ -14,6 +14,7 @@
  */
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
 import { SettlementCreatorError } from "./settlement-creator.service.js";
+import { lineLoadRefusal } from "./settlement-creator-line-load.js";
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> };
 
@@ -27,7 +28,9 @@ export function typedInvoiceDisplayId(load: { load_number: string; invoice_numbe
 }
 
 /** Pure checks (no database). Returns the first refusal or null. */
-export function draftAdmissionRefusal(draft: Pick<SettlementCreatorDraft, "loads">): SettlementCreatorError | null {
+export function draftAdmissionRefusal(
+  draft: Pick<SettlementCreatorDraft, "loads"> & Partial<Pick<SettlementCreatorDraft, "deductions" | "admin_fee_cents" | "fuel_purchases">>,
+): SettlementCreatorError | null {
   const loads = draft.loads ?? [];
   if (loads.length > 0 && loads.every((l) => l.factoring === "faro_transportation")) {
     return new SettlementCreatorError("full_transportation_settlement", FULL_TRANSPORTATION_MESSAGE);
@@ -44,6 +47,9 @@ export function draftAdmissionRefusal(draft: Pick<SettlementCreatorDraft, "loads
     if (seen.has(key)) return new SettlementCreatorError("load_number_duplicate", `Load ${key} appears twice in this settlement.`);
     seen.add(key);
   }
+  // ROUND 443.5 — every deduction, admin fee and fuel line carries its load.
+  const lineRefusal = lineLoadRefusal({ loads, deductions: draft.deductions, admin_fee_cents: draft.admin_fee_cents, fuel_purchases: draft.fuel_purchases });
+  if (lineRefusal) return lineRefusal;
   return null;
 }
 

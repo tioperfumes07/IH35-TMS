@@ -39,6 +39,7 @@ import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.se
 import { fromMdataStatus } from "../dispatch/load-state-machine.js";
 import { DuplicateDocumentNumberError } from "../lib/qbo-custom-document-number.js";
 import { assertCreatorDraftAdmissible } from "./settlement-creator-admission.js";
+import { attributeFuelLoadNumber } from "./settlement-creator-line-load.js";
 import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { voidDocument } from "../accounting/void-document.service.js";
@@ -1133,7 +1134,9 @@ export async function postSettlementCreatorInClientTx(
     const { netCents, feeCents } = fuelPurchaseNetAndFeeCents(fuel);
     if (netCents + feeCents <= 0) continue;
 
-    const loadId = await resolveLineLoadId(client, draft.operating_company_id, fuel);
+    // ROUND 443.5 — a fill with no load typed belongs to the single load of this settlement whose dates cover it.
+    const fuelLoadNumber = attributeFuelLoadNumber(draft.loads, fuel);
+    const loadId = await resolveLineLoadId(client, draft.operating_company_id, { ...fuel, load_number: fuelLoadNumber ?? fuel.load_number });
 
     // Vendor: match by name or leave null → createExpenseFromFuelTransaction refuses without vendor.
     const vendor = fuel.vendor_name
@@ -1475,8 +1478,16 @@ export async function postSettlementCreatorInClientTx(
   }
 
   // Deductions + admin fee → createSettlementDeduction (other → 7200 on close) + apply to this settlement.
-  async function applyDeduction(amountCents: number, reason: string, sourceType: "other" | "fine" | "toll" = "other") {
+  async function applyDeduction(amountCents: number, reason: string, loadNumber: string | null | undefined, sourceType: "other" | "fine" | "toll" = "other") {
     if (amountCents <= 0) return;
+    // ROUND 443.5 — a deduction belongs to its load; missing or unknown refuses (never settlement-only).
+    const loadId = loadNumber?.trim() ? await resolveLoadIdByNumber(loadNumber.trim()) : null;
+    if (!loadId) {
+      throw new SettlementCreatorError(
+        "deduction_load_required",
+        `Deduction "${reason}": ${loadNumber?.trim() ? `load ${loadNumber.trim()} is not a load of this company` : "needs its load number"}.`,
+      );
+    }
     const created = await createSettlementDeduction(client as never, {
       operatingCompanyId: draft.operating_company_id,
       driverId: draft.driver_id,
@@ -1484,6 +1495,7 @@ export async function postSettlementCreatorInClientTx(
       reason,
       sourceType,
       createdByUserId: actorUserId,
+      loadId,
     });
     await client.query(
       `
@@ -1499,18 +1511,10 @@ export async function postSettlementCreatorInClientTx(
     if (d.amount_cents <= 0) continue;
     const reason = d.description?.trim() || `Settlement ${draft.settlement_no} deduction`;
     const isAdmin = /admin\s*fee/i.test(reason);
-    await applyDeduction(d.amount_cents, reason, "other");
-    if (isAdmin) {
-      // Already routed via other → 7200; no second row.
-    }
-  }
-  const adminFeePost = Math.max(0, Math.round(Number(draft.admin_fee_cents || 0)));
-  if (adminFeePost > 0) {
-    await applyDeduction(
-      adminFeePost,
-      `AlwaysTrack settl ${draft.settlement_no || sourceDocumentRef || displayId}: Admin fee`,
-      "other",
-    );
+    // The admin fee arrives as a deduction line with its load (other -> 7200 on close); a separate
+    // admin_fee_cents is refused at admission (ROUND 443.5).
+    void isAdmin;
+    await applyDeduction(d.amount_cents, reason, d.load_number, "other");
   }
 
   // Invoice mint + send (existing engines only). Delivered loads only — not_yet_delivered skips.

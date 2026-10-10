@@ -16,5 +16,7 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-invoice-number-and-zero-invoice.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-driver-pay-independent-of-invoice.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-driver-pay-independent-of-invoice.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-every-line-has-load.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-every-line-has-load.mjs"]);
   },
 };
