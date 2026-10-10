@@ -11,10 +11,10 @@
 | bucket | n | meaning |
 |---|---:|---|
 | **create** (collection POST) | 337 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 274 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
+| **nested create** (child POST) | 275 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 251 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 72 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 934 | |
+| **TOTAL POST endpoints** | 935 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -80,9 +80,9 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/escrow/open` | `apps/backend/src/accounting/escrow/routes.ts:42` | — | — | — |
 | create | `/api/v1/accounting/expense-category-map` | `apps/backend/src/accounting/expense-category-map/routes.ts:222` | — | — | — |
 | create | `/api/v1/accounting/factoring-advances` | `apps/backend/src/accounting/factoring-advances.routes.ts:426` | — | — | — |
-| nested | `/api/v1/accounting/factoring-advances/:id/advance` | `apps/backend/src/accounting/factoring-advances.routes.ts:758` | — | — | — |
-| nested | `/api/v1/accounting/factoring-advances/:id/recourse-return` | `apps/backend/src/accounting/factoring-advances.routes.ts:1114` | — | — | — |
-| nested | `/api/v1/accounting/factoring-advances/:id/reserve-held` | `apps/backend/src/accounting/factoring-advances.routes.ts:870` | — | — | — |
+| nested | `/api/v1/accounting/factoring-advances/:id/advance` | `apps/backend/src/accounting/factoring-advances.routes.ts:759` | — | — | — |
+| nested | `/api/v1/accounting/factoring-advances/:id/recourse-return` | `apps/backend/src/accounting/factoring-advances.routes.ts:1115` | — | — | — |
+| nested | `/api/v1/accounting/factoring-advances/:id/reserve-held` | `apps/backend/src/accounting/factoring-advances.routes.ts:871` | — | — | — |
 | create | `/api/v1/accounting/fixed-assets/dispose` | `apps/backend/src/accounting/amortization-posting/amortization-posting.routes.ts:104` | — | — | — |
 | create | `/api/v1/accounting/fixed-assets/register-trk-units` | `apps/backend/src/accounting/fixed-assets.routes.ts:415` | — | — | — |
 | create | `/api/v1/accounting/fixed-assets/register-unit` | `apps/backend/src/accounting/fixed-assets.routes.ts:381` | — | — | — |
@@ -368,18 +368,18 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/dispatch/equipment-transfers/initiate` | `apps/backend/src/dispatch/equipment-transfer/routes.ts:29` | — | — | — |
 | create | `/api/v1/dispatch/intransit-issues` | `apps/backend/src/dispatch/intransit-issues.routes.ts:61` | — | — | — |
 | create | `/api/v1/dispatch/intransit-issues/office` | `apps/backend/src/dispatch/arch-tabs.routes.ts:93` | — | — | — |
-| create | `/api/v1/dispatch/loads` | `apps/backend/src/dispatch/loads.routes.ts:1681` | — | — | — |
+| create | `/api/v1/dispatch/loads` | `apps/backend/src/dispatch/loads.routes.ts:1683` | — | — | — |
 | nested | `/api/v1/dispatch/loads/:id/complete-quicksave-draft` | `apps/backend/src/dispatch/quicksave.routes.ts:129` | — | — | — |
-| nested | `/api/v1/dispatch/loads/:id/distribute-instructions` | `apps/backend/src/dispatch/loads.routes.ts:1384` | — | — | — |
-| nested | `/api/v1/dispatch/loads/:id/geocode-stops` | `apps/backend/src/dispatch/loads.routes.ts:2392` | — | — | — |
+| nested | `/api/v1/dispatch/loads/:id/distribute-instructions` | `apps/backend/src/dispatch/loads.routes.ts:1386` | — | — | — |
+| nested | `/api/v1/dispatch/loads/:id/geocode-stops` | `apps/backend/src/dispatch/loads.routes.ts:2394` | — | — | — |
 | nested | `/api/v1/dispatch/loads/:id/quick-assign` | `apps/backend/src/dispatch/quicksave.routes.ts:109` | — | — | — |
 | nested | `/api/v1/dispatch/loads/:load_id/confirm-predicted-delivery` | `apps/backend/src/dispatch/predicted-delivery.routes.ts:35` | — | — | — |
 | nested | `/api/v1/dispatch/loads/:load_uuid/stops/:stop_uuid/extra-rates` | `apps/backend/src/dispatch/loads/multi-stop/extra-rate.routes.ts:46` | — | — | — |
 | nested | `/api/v1/dispatch/loads/:loadId/completion-prompts/late-penalty` | `apps/backend/src/dispatch/completion-prompts.routes.ts:276` | — | — | — |
 | nested | `/api/v1/dispatch/loads/:loadId/completion-prompts/lumper` | `apps/backend/src/dispatch/completion-prompts.routes.ts:214` | — | — | — |
 | nested | `/api/v1/dispatch/loads/:loadId/manual-delivery-authorization` | `apps/backend/src/dispatch/manual-delivery-authorization.routes.ts:73` | — | — | — |
-| create | `/api/v1/dispatch/loads/ocr-upload` | `apps/backend/src/dispatch/loads.routes.ts:892` | — | — | — |
-| create | `/api/v1/dispatch/loads/reserve-id` | `apps/backend/src/dispatch/loads.routes.ts:778` | — | — | — |
+| create | `/api/v1/dispatch/loads/ocr-upload` | `apps/backend/src/dispatch/loads.routes.ts:894` | — | — | — |
+| create | `/api/v1/dispatch/loads/reserve-id` | `apps/backend/src/dispatch/loads.routes.ts:780` | — | — | — |
 | create | `/api/v1/dispatch/non-owned-trailers` | `apps/backend/src/dispatch/trailer-interchange.routes.ts:128` | — | — | — |
 | nested | `/api/v1/dispatch/ocr-intake/items/:id/convert` | `apps/backend/src/dispatch/ocr-intake.routes.ts:83` | — | — | — |
 | nested | `/api/v1/dispatch/ocr-intake/items/:id/finalize` | `apps/backend/src/dispatch/ocr-intake.routes.ts:99` | — | — | — |
@@ -453,7 +453,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/legal/templates/:id/retire` | `apps/backend/src/legal/templates.routes.ts:332` | — | — | — |
 | create | `/api/v1/legal/templates/library/ensure` | `apps/backend/src/legal/templates.routes.ts:196` | — | — | — |
 
-### driver-finance — 20 create-surface(s)
+### driver-finance — 21 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
@@ -467,6 +467,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/driver-finance/pre-settlements/:id/close-tour` | `apps/backend/src/driver-finance/tour-readout.routes.ts:616` | — | — | — |
 | nested | `/api/v1/driver-finance/pre-settlements/:id/settle` | `apps/backend/src/driver-finance/pre-settlement.routes.ts:423` | — | — | — |
 | nested | `/api/v1/driver-finance/presettlement-suggestions/:id/confirm` | `apps/backend/src/dispatch/presettlement-link.routes.ts:71` | — | — | — |
+| nested | `/api/v1/driver-finance/settlement-creator/:settlementId/retry-after-commit` | `apps/backend/src/driver-finance/settlement-creator.routes.ts:327` | — | — | — |
 | create | `/api/v1/driver-finance/settlement-deductions` | `apps/backend/src/driver-finance/deductions.routes.ts:195` | — | — | — |
 | create | `/api/v1/driver-finance/settlement-disputes` | `apps/backend/src/driver-finance/settlement-dispute.routes.ts:87` | — | — | — |
 | nested | `/api/v1/driver-finance/settlement-disputes/:id/disburse` | `apps/backend/src/driver-finance/settlement-dispute.routes.ts:234` | — | — | — |

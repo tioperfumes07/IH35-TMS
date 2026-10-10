@@ -41,6 +41,7 @@ const F = {
   zero: "apps/backend/src/driver-finance/settlement-creator-zero-revenue.ts",
   seed: "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts",
   gate: "apps/backend/src/driver-finance/feed-gate/feed-gate.checks.ts",
+  after: "apps/backend/src/driver-finance/settlement-creator-after-commit.ts",
 };
 
 export function problems(src) {
@@ -60,7 +61,7 @@ export function problems(src) {
   if (/"invoice_number_duplicate"/.test(src.admission)) p.push("the same typed number on two loads is legal (59-13577, 59-13578) — no in-draft duplicate-number refusal");
   if (!/i\.operating_company_id = \$1::uuid AND i\.display_id = ANY/.test(src.admission)) p.push("the taken-number check must be company-scoped");
   if (!/<Field label="Invoice no\.">/.test(src.drawer) || !/invoice_number: \(l\.invoice_number \?\? ""\)\.trim\(\) \|\| null/.test(src.drawer)) p.push("the drawer has no Invoice no. box or does not send invoice_number");
-  if (!/if \(load\.factoring !== "faro_usmca"\) continue;/.test(src.routes)) p.push("factor auto-submit must stay faro_usmca-only");
+  if (!/if \(l\.factoring !== "faro_usmca"\) \{ perLoad\.push/.test(src.after)) p.push("factor auto-submit must stay faro_usmca-only");
   if (!/invoice_number_taken/.test(src.test) || !/full_transportation_settlement/.test(src.test)) p.push("admission unit tests missing");
   if (!/authorizedZeroRevenue: isAuthorizedZeroRevenueLoad\(load\)/.test(src.service)) p.push("the mint must pass authorizedZeroRevenue from isAuthorizedZeroRevenueLoad only");
   if (!/load\.factoring !== "faro_transportation"\) return false/.test(src.zero)) p.push("isAuthorizedZeroRevenueLoad must be faro_transportation-only");
@@ -89,7 +90,7 @@ function selftest() {
   if (!problems(m("routes", "await assertCreatorDraftAdmissible(client, draft);\n", "")).some((x) => /before any load/.test(x))) bad.push("admission after seeding passed");
   if (!problems(m("admission", 'every((l) => l.factoring === "faro_transportation")', 'some((l) => l.factoring === "faro_transportation")')).some((x) => /all-Transportation/.test(x))) bad.push("a some() Transportation rule passed");
   if (!problems(m("admission", "i.operating_company_id = $1::uuid AND ", "")).some((x) => /company-scoped/.test(x))) bad.push("an unscoped taken-number read passed");
-  if (!problems(m("routes", 'if (load.factoring !== "faro_usmca") continue;', "")).some((x) => /faro_usmca-only/.test(x))) bad.push("a Transportation factor submit passed");
+  if (!problems(m("after", 'if (l.factoring !== "faro_usmca") { perLoad.push', 'if (false) { perLoad.push')).some((x) => /faro_usmca-only/.test(x))) bad.push("a Transportation factor submit passed");
   if (!problems(m("drawer", '<Field label="Invoice no.">', '<Field label="Load #">')).some((x) => /Invoice no/.test(x))) bad.push("a missing Invoice no. box passed");
   if (!problems(m("zero", 'load.factoring !== "faro_transportation") return false', 'false) return false')).some((x) => /faro_transportation-only/.test(x))) bad.push("a non-Transportation $0 authorization passed");
   if (!problems(m("seed", 'code: "linehaul",\n      description: amount', 'code: "LH",\n      description: amount')).some((x) => /linehaul/.test(x))) bad.push("the LH code passed");
