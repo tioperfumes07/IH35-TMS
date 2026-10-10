@@ -39,7 +39,6 @@ import {
   previewSettlementCreator,
   postSettlementCreator,
   peekNextSettlementNumber,
-  isFactoredLoad,
   type SettlementCreatorDraft,
   type SettlementCreatorPreview,
   type SettlementCreatorFuelCard,
@@ -410,7 +409,7 @@ function Field({ label, span = 1, children }: { label: string; span?: number; ch
     <label className={`${SPAN_CLASS[span] ?? "col-span-1"} flex min-w-0 flex-col gap-1 text-section-header font-semibold uppercase text-[var(--text-muted,#4B5563)]`}>
       {/* SETL-F437 (owner 2026-10-06): "THE HEADERS ARENT ALIGNED, THE BOXES ARENT ALIGNED, IN
           HEIGHT NOT THE SAME." A centred label over a centred box shares no left edge, and a label
-          that wrapped to two lines pushed its own box down. QuickBooks reads LEFT, and a FIXED label
+          that wrapped to two lines pushed its own box down. QBO reads LEFT, and a FIXED label
           height keeps one-line and two-line labels on the same baseline. */}
       <span className="flex h-7 items-end truncate text-left leading-tight" title={label}>
         {label}
@@ -1285,11 +1284,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     const emptyPay = Math.round(emptyMi * emptyRate);
     return s + loadedPay + emptyPay;
   }, 0);
-  /** ROUND 443.2 (owner 2026-10-10): "there is no quickpay that should render if confirmed those are factored."
-   *  A factored load (faro_usmca / faro_transportation) never carries quick pay, and no percentage is assumed for a
-   *  direct load: where a direct customer's charged quick pay comes from is an OPEN OWNER QUESTION, so nothing is
-   *  computed. The field only renders while the settlement has a direct load to hold that answer. */
-  const quickPayApplies = loads.some((l) => !isFactoredLoad(l.factoring));
   const compExpSubtotal = companyExpenses.reduce((s, e) => s + (e.amount_cents > 0 ? e.amount_cents : 0), 0);
   const companySubtotal = fuelSubtotal + compExpSubtotal;
   const drvReimbSubtotal = drvReimbursements.reduce((s, e) => s + (e.amount_cents > 0 ? e.amount_cents : 0), 0);
@@ -1639,7 +1633,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                           setLoads(next);
                         }}
                         placeholder={load.load_number.trim() || "Load #"}
-                        title="The invoice number presented to Faro / QuickBooks. Blank = the load number."
+                        title="The invoice number presented to Faro / QBO. Blank = the load number."
                         aria-label="Invoice number"
                         data-testid={`sc-load-invoice-no-${idx}`}
                       />
@@ -2464,21 +2458,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </div>
                 </Field>
-                {quickPayApplies ? (
-                  <Field label="QuickPay expense" span={2}>
-                    <div data-testid="sc-quickpay-expense" title="Direct loads only — amount source pending the owner's ruling">
-                      <MoneyInput
-                        className={moneyInputClass}
-                        valueCents={null}
-                        onChangeCents={() => undefined}
-                        ariaLabel="QuickPay expense (direct loads only)"
-                        disabled
-                      />
-                    </div>
-                  </Field>
-                ) : (
-                  <span />
-                )}
+                <span />
                 <span />
               </div>
               <Field label="PDF company EXPENSES total">
@@ -3121,7 +3101,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
           scrolling and reading nine different places. This is ONE QBO-style summary at the bottom:
           label left, amount in a fixed 120px right-aligned lining-figure column so every decimal
           point stacks, company side and driver side separated, and the driver net on a double rule
-          the way QuickBooks closes a statement. It computes nothing new — every figure is the SAME
+          the way QBO closes a statement. It computes nothing new — every figure is the SAME
           value its section shows, so the summary can never disagree with the section above it.
         */}
         <section
@@ -3170,7 +3150,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             </div>
           </div>
           {/*
-            ROUND 326 item 18 — the QuickBooks subtotal chain from the POSTING engine: the preview writes this
+            ROUND 326 item 18 — the QBO subtotal chain from the POSTING engine: the preview writes this
             settlement inside a rolled-back savepoint and asks the close engine (the one calculator Post uses) for
             its figures. Deductions, escrow and advances read as negatives. The NET here is the number Post writes;
             Post refuses when it differs from the AlwaysTrack TOTAL DUE.

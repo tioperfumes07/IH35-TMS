@@ -1,11 +1,6 @@
 import { apiRequest } from "./client";
 
 export type SettlementCreatorFactorOption = "faro_usmca" | "faro_transportation" | "direct";
-
-/** A load factored to Faro (USMCA or Transportation) never carries quick pay — ROUND 443.2. */
-export function isFactoredLoad(factoring: string | null | undefined): boolean {
-  return factoring === "faro_usmca" || factoring === "faro_transportation";
-}
 export type SettlementCreatorFuelCard = "dreamline" | "relay";
 
 export type SettlementCreatorDraft = {
