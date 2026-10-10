@@ -232,7 +232,7 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
         draft.operating_company_id,
       ]);
-      return previewSettlementCreatorThroughClose(client, user.uuid, draft);
+      return previewSettlementCreatorThroughClose(client, user.uuid, draft, user.role);
     });
     return reply.code(200).send({ preview });
   });
@@ -254,24 +254,21 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
     await assertCompanyMembership(user.uuid, draft.operating_company_id);
 
     try {
-      // R-186.1 — book missing dispatched loads via bookLoad (own tx) BEFORE settlement post.
-      await withCurrentUser(user.uuid, async (client) => {
-        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
-        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
-          draft.operating_company_id,
-        ]);
-        // ROUND 443.3 — refusals that must leave zero rows run before any load is booked.
-        await assertCreatorDraftAdmissible(client, draft);
-        await ensureDispatchedLoadsForCreator(client, { uuid: user.uuid, role: user.role }, draft);
-      });
-
+      // ROUND 443.7 a — ONE transaction: admission, booking the loads (bookLoadOnClient), every document, the ledger
+      // and the settlement close. Any refusal rolls ALL of it back (zero rows); the same draft can be posted again.
+      let afterBook: Array<() => void> = [];
       const result = await withCurrentUser(user.uuid, async (client) => {
         // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
           draft.operating_company_id,
         ]);
+        await assertCreatorDraftAdmissible(client, draft);
+        const seeded = await ensureDispatchedLoadsForCreator(client, { uuid: user.uuid, role: user.role }, draft);
+        afterBook = seeded.afterCommit;
         return postSettlementCreatorInClientTx(client, user.uuid, draft);
       });
+      // COMMITTED — only now the after-book extras (never after a rollback).
+      for (const run of afterBook) run();
 
       // AFTER COMMIT — factoring submit + billing sync on their own connections (never the Creator tx). ROUND 443.7 b:
       // every stage is reported; ok is true only when all required stages succeeded; a failure is stored + retryable.

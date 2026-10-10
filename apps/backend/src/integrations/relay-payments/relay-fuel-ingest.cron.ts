@@ -362,6 +362,10 @@ export async function runRelayFuelIngestTick(
   let companiesPulled = 0;
 
   for (const { id: operatingCompanyId, code: entityCode } of companyIds) {
+    // ROUND 443.15 (owner, 2026-10-10): only USMCA's Relay fills are stored -- it runs on the IH 35 Transportation key,
+    // and a second company's pull of the same Relay org can only duplicate fills. upsertRelayFuelTransaction refuses
+    // non-USMCA too; this skip keeps a non-USMCA company from calling Relay or opening a sync-log row at all.
+    if (!isUsmcaOperatingCompany(operatingCompanyId)) continue;
     if (opts?.operatingCompanyIds && !opts.operatingCompanyIds.includes(operatingCompanyId)) continue;
     const flagOn = await withLuciaBypass(async (client) =>
       isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: operatingCompanyId })
@@ -842,6 +846,10 @@ export async function runRelayFuelBackfill(
   let companiesPulled = 0;
 
   for (const { id: operatingCompanyId, code: entityCode } of companyIds) {
+    // ROUND 443.15 (owner, 2026-10-10): only USMCA's Relay fills are stored -- it runs on the IH 35 Transportation key,
+    // and a second company's pull of the same Relay org can only duplicate fills. upsertRelayFuelTransaction refuses
+    // non-USMCA too; this skip keeps a non-USMCA company from calling Relay or opening a sync-log row at all.
+    if (!isUsmcaOperatingCompany(operatingCompanyId)) continue;
     const flagOn = await withLuciaBypass(async (client) =>
       isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: operatingCompanyId })
     );

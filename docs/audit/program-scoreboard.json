@@ -1,10 +1,10 @@
 {
-  "healthzSha": "6826dc3",
-  "generated_at": "2026-10-09T08:49:05.626Z",
+  "healthzSha": "ec8e52c",
+  "generated_at": "2026-10-10T22:18:55.650Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "6826dc3",
+    "deployedSha": "ec8e52c",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 26108,
-      "title": "FINDING: BANK-F91172 — MultiStopEditor / LoadStopsRecordTab / EquipmentTransferModal Tailwind slate-* → house tokens",
+      "number": 26201,
+      "title": "Claude-3- ROUND 443.7 a: Settlement Creator post is one transaction (zero rows on refusal), one settlement per post (Option A), tours on one truck book, preview works for new loads",
       "state": "merged",
-      "mergedAtCt": "10/09/2026, 03:44 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26108",
-      "sha": "6826dc3a52",
-      "committedAtIso": "2026-10-09T03:44:15-05:00"
+      "mergedAtCt": "10/10/2026, 05:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26201",
+      "sha": "757da599f7",
+      "committedAtIso": "2026-10-10T17:18:30-05:00"
     },
     {
-      "number": 26107,
-      "title": "FINDING: BANK-F91171 — AuditLogViewer / ErrorMonitor / ActivityLogPage Tailwind slate-* → house tokens",
+      "number": 26200,
+      "title": "FINDING: ACCT-F443-17 (CC-1) — Disputes tab in Accounting module + open-dispute form",
       "state": "merged",
-      "mergedAtCt": "10/09/2026, 03:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26107",
-      "sha": "fea11c3c70",
-      "committedAtIso": "2026-10-09T03:39:07-05:00"
+      "mergedAtCt": "10/10/2026, 05:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26200",
+      "sha": "cb0ac0022f",
+      "committedAtIso": "2026-10-10T17:15:11-05:00"
     },
     {
-      "number": 26106,
-      "title": "FINDING: BANK-F91170 — UndepositedFundsPage / ChartOfAccountsSyncPanel / BillAllocationPanel Tailwind slate-* → house tokens",
+      "number": 26199,
+      "title": "FINDING: N/A (CLAIM-RESERVE 12431 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/09/2026, 03:35 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26106",
-      "sha": "dd01b8de1d",
-      "committedAtIso": "2026-10-09T03:35:38-05:00"
+      "mergedAtCt": "10/10/2026, 05:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26199",
+      "sha": "ec8e52c64b",
+      "committedAtIso": "2026-10-10T17:14:17-05:00"
     },
     {
-      "number": 26105,
-      "title": "FINDING: BANK-F91169 — WizardStep1 / WizardStep4 / WizardStep6 Tailwind slate-* → house tokens",
+      "number": 26197,
+      "title": "FINDING: N/A (CLAIM-RESERVE 18373 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/09/2026, 03:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26105",
-      "sha": "0471416eae",
-      "committedAtIso": "2026-10-09T03:32:00-05:00"
+      "mergedAtCt": "10/10/2026, 05:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26197",
+      "sha": "f12de0403a",
+      "committedAtIso": "2026-10-10T17:10:06-05:00"
     },
     {
-      "number": 26104,
-      "title": "FINDING: BANK-F91168 — DuplicateMastersReport / LegalAttorneyReviewPortalPage / Form425CHome Tailwind slate-* → house tokens",
+      "number": 26190,
+      "title": "FINDING: ACCT-F2026100637 LANE: claude — ROUND 443.15: the Relay ingest stored the same fill under TRANSP and USMCA (172 fills, 53 new on 10-08); a fill is now stored once, under USMCA only",
       "state": "merged",
-      "mergedAtCt": "10/09/2026, 03:28 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26104",
-      "sha": "9f5c7b0038",
-      "committedAtIso": "2026-10-09T03:28:11-05:00"
+      "mergedAtCt": "10/10/2026, 05:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26190",
+      "sha": "1b6acac9a4",
+      "committedAtIso": "2026-10-10T17:08:12-05:00"
     },
     {
-      "number": 26103,
-      "title": "FINDING: BANK-F91167 — CreateExpenseForm / BillPaymentForm / ApplyToBillForm Tailwind slate-* → house tokens",
+      "number": 26196,
+      "title": "CC-2-FIX main undeployable: #26193 nested export in expenses.routes.ts + 2 reds it left",
       "state": "merged",
-      "mergedAtCt": "10/09/2026, 03:24 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26103",
-      "sha": "a3822fcace",
-      "committedAtIso": "2026-10-09T03:24:52-05:00"
+      "mergedAtCt": "10/10/2026, 05:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26196",
+      "sha": "3f6eb1e6c9",
+      "committedAtIso": "2026-10-10T17:07:53-05:00"
     },
     {
-      "number": 26102,
-      "title": "FINDING: BANK-F91166 — CashAdvancesHome / AdvanceDetailDrawer / MarkDisbursedModal Tailwind slate-* → house tokens",
+      "number": 26195,
+      "title": "FINDING: N/A (CC-1 ROUND 443.20) — renumber 202610100100→202610100200 collision repair",
       "state": "merged",
-      "mergedAtCt": "10/09/2026, 03:21 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26102",
-      "sha": "c915fbb5ca",
-      "committedAtIso": "2026-10-09T03:21:37-05:00"
+      "mergedAtCt": "10/10/2026, 05:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26195",
+      "sha": "1cf09aeba1",
+      "committedAtIso": "2026-10-10T17:04:24-05:00"
     },
     {
-      "number": 26101,
-      "title": "FINDING: BANK-F91165 — UnifiedTimelinePlanner / PlannerRowActions / LoadsPlanner Tailwind slate-* → house tokens",
+      "number": 26194,
+      "title": "docs(bus): Lead rulings (443.15 option c, 443.20 migration collision) + ROUND 443.21 to CC-2 (Relay webhook lands in USMCA)",
       "state": "merged",
-      "mergedAtCt": "10/09/2026, 03:18 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26101",
-      "sha": "83865ecad1",
-      "committedAtIso": "2026-10-09T03:18:09-05:00"
+      "mergedAtCt": "10/10/2026, 05:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26194",
+      "sha": "af913c4779",
+      "committedAtIso": "2026-10-10T17:02:50-05:00"
     },
     {
-      "number": 26100,
-      "title": "FINDING: BANK-F91164 — ArApAgingPage / LiabilitiesHome / TrailerProfilePage Tailwind slate-* → house tokens",
+      "number": 26193,
+      "title": "FINDING: ACCT-F443-13 (CC-1) — bill loadId/vendorDocumentNumber, createExpenseInClientTx export, 443.12 guard correction",
       "state": "merged",
-      "mergedAtCt": "10/09/2026, 03:10 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26100",
-      "sha": "f5a741802f",
-      "committedAtIso": "2026-10-09T03:10:28-05:00"
+      "mergedAtCt": "10/10/2026, 04:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26193",
+      "sha": "b16e2ba96b",
+      "committedAtIso": "2026-10-10T16:56:57-05:00"
     },
     {
-      "number": 26099,
-      "title": "FINDING: BANK-F91163 — BatchDetail / FactoringProfilePanel / HonestEmptyTab Tailwind slate-* → house tokens",
+      "number": 26192,
+      "title": "docs(bus): ROUND 443.16 / 443.18 / 443.19 (CC-3) and 443.17 (CC-1) — tracking stop stamps, Disputes tabs, the rest in one run",
       "state": "merged",
-      "mergedAtCt": "10/09/2026, 03:07 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26099",
-      "sha": "c56e509c00",
-      "committedAtIso": "2026-10-09T03:07:14-05:00"
+      "mergedAtCt": "10/10/2026, 04:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26192",
+      "sha": "0c24a308de",
+      "committedAtIso": "2026-10-10T16:55:46-05:00"
     }
   ]
 }

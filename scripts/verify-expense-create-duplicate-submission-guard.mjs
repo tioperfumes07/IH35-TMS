@@ -30,7 +30,20 @@ export function run(root = process.cwd()) {
   // Scope the search to this one handler, not the whole file (other routes may have unrelated
   // duplicate-ish text) — bounded by the next top-level app.<verb>( registration after it.
   const nextRouteIdx = routes.indexOf("\n  app.", postIdx + 1);
-  const handler = routes.slice(postIdx, nextRouteIdx > 0 ? nextRouteIdx : undefined);
+  const routeHandler = routes.slice(postIdx, nextRouteIdx > 0 ? nextRouteIdx : undefined);
+  // ROUND 443.13 extracted the create body into createExpenseInClientTx (module level) so the Settlement
+  // Creator can reuse it; the route now delegates. When it does, the SAME checks run on that function's
+  // body -- the place the dedup query and the INSERT now live -- never a looser check.
+  let handler = routeHandler;
+  if (routeHandler.includes("createExpenseInClientTx(")) {
+    const fnIdx = routes.indexOf("export async function createExpenseInClientTx(");
+    if (fnIdx < 0) {
+      failures.push("route delegates to createExpenseInClientTx but the function is not found");
+      return failures;
+    }
+    const fnEnd = routes.indexOf("\n}\n", fnIdx);
+    handler = routes.slice(fnIdx, fnEnd > 0 ? fnEnd : undefined);
+  }
 
   if (!handler.includes("duplicateSubmission")) failures.push("handler missing duplicateSubmission branch");
   if (!handler.includes("interval '2 minutes'")) failures.push("handler missing the 2-minute dedup window");
@@ -114,6 +127,23 @@ if (process.argv.includes("--selftest")) {
   // Mutation 3: response mapping downgraded from 409.
   fs.writeFileSync(`${dir}/expenses.routes.ts`, good.replace("reply.code(409)", "reply.code(200)"));
   if (!run(tmp).length) throw new Error("FAIL fail: non-409 response mapping should have been caught");
+
+  // Delegated shape (ROUND 443.13): the route calls createExpenseInClientTx, which holds the dedup + INSERT.
+  const fnBody = good.match(/if \(hasMemo[\s\S]*?return \{ expense_id: "x" \};/)[0];
+  const delegated =
+    `export async function createExpenseInClientTx(client, body, userId) {\n  ${fnBody}\n}\n` +
+    good.replace(fnBody, "return createExpenseInClientTx(client, body, user.uuid);");
+  fs.writeFileSync(`${dir}/expenses.routes.ts`, delegated);
+  const delegatedFailures = run(tmp);
+  if (delegatedFailures.length) throw new Error("PASS fail (delegated): " + JSON.stringify(delegatedFailures));
+  // Mutation 4: delegated, dedup removed from the extracted function.
+  fs.writeFileSync(`${dir}/expenses.routes.ts`, delegated.replace("interval '2 minutes'", "interval '0 minutes'"));
+  if (!run(tmp).length) throw new Error("FAIL fail: dedup window removed from createExpenseInClientTx should have been caught");
+  // Mutation 5: delegated, dedup after the INSERT inside the extracted function.
+  const dupInFn = fnBody.match(/if \(hasMemo[\s\S]*?\n        }\n/)[0];
+  const fnReordered = fnBody.replace(dupInFn, "").replace('return { expense_id: "x" };', `${dupInFn}\n        return { expense_id: "x" };`);
+  fs.writeFileSync(`${dir}/expenses.routes.ts`, delegated.replace(fnBody, fnReordered));
+  if (!run(tmp).length) throw new Error("FAIL fail: dedup after INSERT inside createExpenseInClientTx should have been caught");
 
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-expense-create-duplicate-submission-guard --selftest OK");

@@ -1440,7 +1440,12 @@ export async function assertClosedLoadHasPricedDriverBill(
   };
 }
 
-export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
+/**
+ * ROUND 443.14: Book Load's inline input checks, as ONE pure function (no database access), so the
+ * HTTP path (bookLoad) and the caller's-transaction path (bookLoadOnClient) refuse exactly the same
+ * inputs with exactly the same errors. null = every check passed.
+ */
+function bookLoadInputPrecheck(input: BookLoadInput): BookLoadResult | null {
   if (input.assigned_primary_driver_id && input.team_id) {
     return { kind: "error", status: 400, payload: { error: "solo_or_team_assignment_required_not_both" } };
   }
@@ -1503,8 +1508,55 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       return { kind: "error", status: 400, payload: { error: "trip_type_required_when_driver_assigned" } };
     }
   }
+  return null;
+}
 
-  const result = await bookLoadInTransaction(input);
+/** What bookLoadOnClient returns: the booking result plus the after-book extras, NOT yet run. */
+export type BookLoadOnClientResult = { result: BookLoadResult; afterCommit: () => void };
+
+/**
+ * ROUND 443.14 (Lead, 2026-10-10): Book Load on the CALLER's client, inside the CALLER's
+ * transaction -- the same inline checks, setScopedCompanyContext and createLoadWithFullSideEffects
+ * that bookLoad() runs, but no transaction of its own. Measured: bookLoad() always booked in its own
+ * committed transaction, so the Settlement Creator could only book loads separately from its post; a
+ * refused post stranded the loads and the retry died on load_already_exists. A caller that books
+ * here and then rolls back leaves no load behind.
+ *
+ * The three after-book extras (geofences, stop-geocode backfill, Google reference miles) run in their
+ * OWN transactions and read the committed load, so they are NOT run here: they are returned as
+ * afterCommit, which the caller invokes only AFTER its own COMMIT succeeds (never on rollback --
+ * a rolled-back load has nothing to geofence). afterCommit is a no-op for a refused booking.
+ */
+export async function bookLoadOnClient(client: DbClient, input: BookLoadInput): Promise<BookLoadOnClientResult> {
+  const refused = bookLoadInputPrecheck(input);
+  if (refused) return { result: refused, afterCommit: () => {} };
+  await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);
+  // Book Load is always the "running now" case -- every gate below blocks, unchanged from
+  // before this function existed. See createLoadWithFullSideEffects's own header.
+  const result = await createLoadWithFullSideEffects(client, input, { source: "live_feed" });
+  return { result, afterCommit: () => queueAfterBookExtras(input, result) };
+}
+
+/**
+ * Book Load in its own transaction (the HTTP route and every other single-load caller). A thin
+ * wrapper since ROUND 443.14: the input checks still run before any database access, then
+ * bookLoadOnClient inside one withCurrentUser transaction, then the after-book extras once that
+ * transaction has committed -- the same order and the same results as before.
+ */
+export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
+  const refused = bookLoadInputPrecheck(input);
+  if (refused) return refused;
+  let afterCommit: () => void = () => {};
+  const result = await withCurrentUser(input.requestingUserUuid, async (client) => {
+    const booked = await bookLoadOnClient(client, input);
+    afterCommit = booked.afterCommit;
+    return booked.result;
+  });
+  afterCommit();
+  return result;
+}
+
+function queueAfterBookExtras(input: BookLoadInput, result: BookLoadResult): void {
 
   // Inv #40 (owner order 2026-09-05, SAMSARA-CAPABILITIES-AND-INTEGRATION-PLAN-2026-09-05.md §4):
   // this hook used to fire ONLY from the HTTP route (dispatch/loads.routes.ts), so any OTHER
@@ -1547,17 +1599,6 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       });
     }
   }
-
-  return result;
-}
-
-async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResult> {
-  return withCurrentUser(input.requestingUserUuid, async (client) => {
-    await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);
-    // Book Load is always the "running now" case -- every gate below blocks, unchanged from
-    // before this function existed. See createLoadWithFullSideEffects's own header.
-    return createLoadWithFullSideEffects(client, input, { source: "live_feed" });
-  });
 }
 
 /**

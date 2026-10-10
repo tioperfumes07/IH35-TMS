@@ -674,3 +674,136 @@ DONE: CC-2 | 443.14 DONE | <sha> | <live sha> | Book Load unchanged (tests) | ca
 0 loads (test) | guard PASS  ·  CC-2 | 443.15 DONE | <sha> | <live sha> | cause pasted | next ingest run: 0 new
 cross-company fills (query pasted) | guard PASS
 ```
+
+**CC-3 — AMENDMENT TO ROUND 443.11: SETTLEMENT 5779 IS BACK IN — posted 4:41 PM CT (21:41 UTC)**
+
+```
+CC-3 — AMENDMENT TO ROUND 443.11 — 5779 IS ENTERED; THE FIRST 10 ARE 5769 AND 5771-5779
+Owner 2026-10-10 4:40 PM CT: "in settlement 5779 load 13526 belongs to usmca, so is invoiced at 0 dollars."
+Lead reading (stated to the owner): load 13526 is USMCA's — invoice 19, $3,500.00 -> 19-13526; load 13527
+(EGRO, $3,000 in the workbook) is Transportation's -> $0 invoice, 0-13527.
+13527 was paid direct, not factored. The Creator's only $0 marker is factoring = faro_transportation, so enter
+13527 with faro_transportation and line haul $0. Nothing is submitted to any factor for it.
+Order of entry: 5769, 5771, 5772, 5773, 5774, 5775, 5776, 5777, 5778, 5779. 5780 is NOT part of the first 10.
+Driver pay, fuel, expenses and deductions on 5779 exactly as the workbook. Still gated on "GO 443.11".
+```
+
+**CC-3 — ROUND 443.16 / 443.18 / 443.19 — posted 4:55 PM CT (21:55 UTC)**
+
+```
+CC-3 — ROUND 443.16 STOP STAMPS FROM TRACKING · 443.18 DISPUTES ON TOP FOR DRIVERS · 443.19 THE REST IN ONE RUN
+Owner 2026-10-10 4:53 PM CT: "get them working completing and fully done the engines so the first 10
+settlements can be fully created ... verifying all accounts, tables, etc all full connectivity linkage and je,
+gl ... if everything is done correctly we then instantly seed the rest of the data. not one by one ... when
+seeding etc, we also already have the tracking data, geofences, locations, etc." · "for drivers, it [disputes]
+should also show on top."
+
+==== 443.16 — STOP ARRIVAL / DEPARTURE COME FROM THE TRACKING DATA — deadline 2026-10-11 00:30 UTC — BEFORE GO 443.11 ====
+MEASURED (Neon prod, USMCA): telematics.unit_stop_events holds real stops per truck — started_at, ended_at,
+dwell_minutes, lat, lng, city, state, odometer_mi, geofence_id, load_id_at_time. Rows per truck in the first
+10 settlements: T152 43 · T156 15 · T163 102 · T164 43 · T171 68 · T175 48 · T177 64.
+telematics.vehicle_locations 788,804 USMCA rows (captured_at, lat, lng, odometer_mi). geo.geofences 1,018.
+settlement-creator.service.ts stampDeliveryStopActuals writes <delivery date>T18:00:00Z into BOTH
+actual_arrival_at and actual_departure_at — an invented time, on the delivery stop only.
+REQUIRED: for every stop of a load the Creator books (pickup, delivery, extra stops): find the load's truck's
+stop event at that stop's coordinates on the stop's date (within the geofence / stop radius the engine
+already uses). Found -> actual_arrival_at = started_at, actual_departure_at = ended_at, and the stop event's
+load_id_at_time, odometer and geofence are linked to the load and stop. Not found -> keep the document date,
+mark the stamp as date-only (never T18:00 presented as a measured time), and list it in the post result.
+More than one candidate -> the one nearest the stop, and say so in the result. No GPS row is created, edited
+or deleted. Guard + selftest. DONE line: 5769 on a fork — each of its 5 stops shows tracked or date-only with
+the stop-event id.
+
+==== 443.18 — "DISPUTES" ON THE DRIVER FINANCE TOP TABS — deadline 2026-10-11 01:00 UTC ====
+MEASURED: the Settlement Disputes register exists only as a button inside /driver-finance/settlements
+(SettlementsPage.tsx:378-387, tab=disputes). REQUIRED: one top tab "Disputes" in the Driver Finance module
+tabs (sidebar-config.ts) opening that same register. Nothing else on the page changes. Guard asserts the tab.
+
+==== 443.19 — THE REMAINING SETTLEMENTS IN ONE RUN — NOT BEFORE THE LEAD WRITES "GO 443.19" ====
+The owner's workbook holds 69 settlements, 5769 to 5838 (5770 absent). After the first 10 (443.11) and the
+Lead's audit of them, the other 59 (5780 to 5838) go through the same deployed Creator route in ONE run,
+in order, no pause between settlements, stopping at the first refusal.
+PRE-FLIGHT (do it now, read-only, paste as a file in ~/IH35-LEAD-CHANNEL/443-19-PREFLIGHT.md): one row per
+load for all 59 — settlement, load, customer, workbook amount, Faro / QuickBooks invoice number and amount
+(from ~/IH35-LEAD-CHANNEL/10-1-26-Usmca-Faro-Always-Reconciliation-2.xlsx, tab QBO-FARO-Allways), factoring
+(faro_usmca / faro_transportation / direct), and a FLAG where: the two amounts differ; the load has no
+invoice number in the reconciliation; the reconciliation marks it Transportation, Cancelled or Not-Factored;
+the QuickBooks load number and the AlwaysTrack load number differ; the truck is not leased to USMCA; a value
+would have to be guessed. The Lead and the owner clear every flag before GO. Nothing is entered from a
+flagged row.
+KNOWN RULE FOR AMOUNT DIFFERENCES (owner: "those are invoice disputes"): the invoice is entered at the Faro /
+QuickBooks amount and an invoice dispute is opened for the difference against the settlement-file amount
+(accounting invoice disputes: invoiced vs expected). Known so far: 13570, 13578, 13587, 13589, 13611.
+BANKING: nothing. Same rules as 443.11.
+```
+
+**CC-1 — ROUND 443.17 — "DISPUTES" TAB IN ACCOUNTING — posted 4:55 PM CT (21:55 UTC)**
+
+```
+CC-1 — ROUND 443.17 — THE INVOICE DISPUTES PAGE EXISTS AND NOTHING OPENS IT (after 443.13)
+Owner 2026-10-10 4:53 PM CT: "i need a disputes tab in accounting or in factoring up top ... yes those are
+invoice disputes."
+MEASURED on main: apps/frontend/src/pages/accounting/DisputesHubPage.tsx and api/invoice-disputes.ts exist;
+backend routes GET /api/v1/accounting/invoice-disputes, POST .../:id/resolve, POST .../:id/cancel exist;
+accounting.invoice_disputes carries invoice_id, load_id, invoiced_amount_cents, expected_amount_cents,
+disputed_amount_cents, status. No file imports DisputesHubPage (grep: 0 references) and the Accounting top
+tabs (sidebar-config.ts) are Hub, Invoices, Payments, Factoring, Factoring Queue ... — no Disputes.
+REQUIRED — ONE PR: route the page and add ONE top tab "Disputes" to the Accounting module tabs. The page lists
+open invoice disputes for USMCA with invoice number, load, customer, invoiced, expected, difference, status.
+A dispute can be OPENED from the tab against an existing invoice (invoice, expected amount, reason) through
+a POST on the same service — add the create route if the service has none. No other tab moves.
+LANE: accounting pages + accounting/** only. USMCA only. NOBODY SEEDS DATA. FAST-MERGE loop.
+GUARD: verify-accounting-disputes-tab-routed.mjs + selftest.
+DEADLINE: 2026-10-11 01:30 UTC. SURRENDER: CC-2.
+DONE: CC-1 | 443.17 DONE | <sha> | <live FE sha> | /accounting/disputes renders, tab present (test) | open a
+dispute on a fork invoice -> row with invoiced / expected / difference (test) | guard PASS | NEXT none
+```
+
+**CC-2 + CC-1 — LEAD RULINGS — posted 4:56 PM CT (21:56 UTC)**
+
+```
+CC-2 — 443.15 RULING: OPTION (c). The owner's override of 4:30 PM CT covers it: merge #26190 past the ONE red
+verify-relay-fill-one-company. Do not raise the ceiling, do not touch a Relay row (owner 4:40 PM CT: "do not
+worry about relay in transportation"). Paste the gate output showing it is the only red, then live sha and the
+"0 new cross-company fills" query.
+
+CC-1 — ROUND 443.20 — MIGRATION NUMBER COLLISION YOU INTRODUCED IN 443.8 — deadline 2026-10-10 22:45 UTC
+MEASURED (CC-3, gate verify-migration-no-number-collision red on main): 202610100100 is used by
+202610100100_invoices_display_id_check_add_invoice_dash_load.sql (your 443.8) AND
+202610100100_lst_link_02_hos_violation_type_fk.sql; both are stamped on production. Every migration PR from
+every seat is blocked (443.9 is waiting).
+REQUIRED: renumber YOUR migration per the collision law and repair the migration ledger on production so both
+are recorded once under distinct numbers; the constraint itself is already live and must not be re-run
+destructively. Do this BEFORE 443.13. Guard verify-migration-no-number-collision PASS on main. Tell cc3 by
+tmux the moment main is green. FAST-MERGE. SURRENDER: CC-3.
+```
+
+**CC-2 — ROUND 443.21 — RELAY WEBHOOK: THE ACCOUNT USMCA ACTUALLY USES POSTS TO ?entity=TRANSP — posted 5:02 PM CT (22:02 UTC)**
+
+```
+CC-2 — ROUND 443.21 — RELAY WEBHOOK MUST LAND THE TRANSPORTATION-ACCOUNT FILLS IN USMCA (after 443.15)
+Owner 2026-10-10 5:01 PM CT: Relay (Mike Masteller) was asked on 10-09 to register webhooks on BOTH Relay
+accounts — IH 35 TRANSPORTATION LLC -> POST .../api/v1/integrations/relay/webhook?entity=TRANSP and USMCA
+FREIGHT SOLUTIONS INC -> ...?entity=USMCA, same signing secret — and replied "I'll get IH35 registered as well".
+Owner 4:30 PM CT: "in usmca we put in transportation env key. we only use transportation, we do not use relay usmca."
+MEASURED on main: integrations/relay-payments/relay-fuel-webhook.routes.ts resolves the company from ?entity
+(:94-:102), verifies with env RELAY_WEBHOOK_SECRET_<CODE> (503 when unset, :113) and stores under that company
+(:109, :133). Your 443.15 fix makes the writer refuse every non-USMCA company. So a live fill from the ONLY
+Relay account in use arrives at ?entity=TRANSP and is either stored under Transportation (before 443.15) or
+refused (after it). USMCA never receives its own fuel by webhook.
+REQUIRED — ONE PR
+1 MEASURE FIRST, paste: are RELAY_WEBHOOK_SECRET_TRANSP and RELAY_WEBHOOK_SECRET_USMCA set on the backend
+  (names only, never the value); every delivery to the webhook path since 2026-10-09 22:00 UTC by entity and
+  response code (Render logs / the route's own audit); whether Relay's two test deliveries arrived.
+2 A verified delivery to ?entity=TRANSP is stored ONCE under USMCA (the owner's fact: fills on that account
+  from 2026-08-03 on are USMCA's); a delivery to ?entity=USMCA is stored under USMCA; the same transaction id
+  arriving by webhook and by the cron pull is one row. Nothing is written under Transportation. Signature
+  rules unchanged. Response codes unchanged.
+3 Fills dated before 2026-08-03 are not stored under USMCA (owner rule) — refuse them by name.
+Never print, log or commit the signing secret. No Relay row is voided, moved or deleted. No banking row.
+GUARD + selftest. FAST-MERGE (owner override stands for the one relay-fill-one-company red).
+DEADLINE: 2026-10-11 01:30 UTC. SURRENDER: CC-1.
+DONE: CC-2 | 443.21 DONE | <sha> | <live sha> | secrets present (names) | deliveries since 10-09 by entity/code
+pasted | TRANSP delivery -> 1 USMCA row, 0 rows under any other company (test) | duplicate webhook + cron -> 1
+row (test) | pre-08-03 fill -> refused (test) | guard PASS
+```
