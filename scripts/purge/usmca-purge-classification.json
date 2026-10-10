@@ -2,7 +2,6 @@
   "_law": "Every table that carries a USMCA row must appear in exactly one of PURGE / KEEP / KEEP_BANKING. A table that appears in neither is an ERROR, not a default. The generator exits 1 rather than guess. Owner scope: purge all USMCA transaction data, banking excluded.",
   "_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80",
   "_measured_live": "2026-09-23 on tiny-field-89581227 / br-fancy-credit-akjnd07a, SET LOCAL app.bypass_rls = 'lucia'",
-
   "PURGE": [
     "accounting.transaction_source_links",
     "accounting.journal_entry_postings",
@@ -61,7 +60,6 @@
     "banking.reconciliation_matches",
     "banking.reconciliation_drift_alerts"
   ],
-
   "_purge_notes": {
     "banking.reconciliation_matches": "A match row points a bank transaction at a document this purge deletes. The bank transaction itself is KEPT and is left unmatched. Deleting the match is not deleting bank data.",
     "banking.reconciliation_drift_alerts": "Same reason. An alert about a deleted document is not a bank fact.",
@@ -69,7 +67,6 @@
     "accounting.posting_batches": "1,874 rows. Missing from the 2026-09-22 purge SQL entirely. A batch whose postings are gone is an orphan header.",
     "driver_finance.escrow_balances": "17 rows. Missing from the 2026-09-22 purge SQL. If left, every driver's escrow DOUBLES when the feed re-creates holds."
   },
-
   "KEEP": [
     "mdata.customers",
     "mdata.vendors",
@@ -103,16 +100,58 @@
     "fuel.fuel_planner_settings",
     "banking.intercompany_entity_pairs"
   ],
-
   "KEEP_BANKING": [
     "banking.bank_transactions",
     "banking.bank_accounts",
     "banking.transaction_categories"
   ],
-
   "DOCS_FILES": {
     "_rule": "docs.files is NOT purged wholesale. The 2026-09-22 SQL deleted all 475 USMCA rows; only the app-generated artifacts of purged documents may go. Owner-uploaded source documents are evidence and are KEPT.",
     "purge_predicate": "rows whose only linkage is to a purged document (docs.file_links -> a purged parent) AND source <> 'owner_upload'",
     "keep_predicate": "every row an owner uploaded, and every row linked to a KEPT entity (driver, unit, customer, vendor, insurance, compliance)"
+  },
+  "ORPHANS": {
+    "_rule": "ROUND 443.9 (owner 2026-10-10: 'there should be nothing from before' / 'delete anything related to the purge. Not any banking transactions'). A row here is deleted ONLY when the load / invoice / settlement / driver bill / fuel transaction / expense it points at no longer exists; a row whose parent still exists stays. Each predicate selects rows of `t` for company $1. Every table's orphan ids are snapshotted BEFORE any delete (a file is recognised by its dead links), then deleted in this order — links before files, checks before intakes. Executor: scripts/purge/purge-orphans-of-purged-documents.mts (lists each row in _system.purge_authorized_rows for the AUTH, deletes through accounting._purge_rows_cascade, which records audit.record_deletions). Guard: scripts/verify-no-orphan-of-purged-documents.mjs (every predicate counts 0). Banking is never in this list.",
+    "driver_finance.feed_intake_checks": {
+      "parent": "feed intake of a purged document",
+      "where": "t.operating_company_id = $1::uuid AND (NOT EXISTS (SELECT 1 FROM driver_finance.feed_intakes i WHERE i.id = t.intake_id) OR EXISTS (SELECT 1 FROM driver_finance.feed_intakes i WHERE i.id = t.intake_id AND ((i.subject_table = 'accounting.invoices' AND NOT EXISTS (SELECT 1 FROM accounting.invoices x WHERE x.id = i.subject_id)) OR (i.subject_table = 'mdata.loads' AND NOT EXISTS (SELECT 1 FROM mdata.loads x WHERE x.id = i.subject_id)) OR (i.subject_table = 'driver_finance.driver_settlements' AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlements x WHERE x.id = i.subject_id)) OR (i.subject_table = 'driver_finance.driver_bills' AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_bills x WHERE x.id = i.subject_id)) OR (i.subject_table = 'fuel.fuel_transactions' AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions x WHERE x.id = i.subject_id)))))"
+    },
+    "driver_finance.feed_intakes": {
+      "parent": "invoice / load / settlement / driver bill / fuel transaction",
+      "where": "t.operating_company_id = $1::uuid AND EXISTS (SELECT 1 FROM driver_finance.feed_intakes i WHERE i.id = t.id AND ((i.subject_table = 'accounting.invoices' AND NOT EXISTS (SELECT 1 FROM accounting.invoices x WHERE x.id = i.subject_id)) OR (i.subject_table = 'mdata.loads' AND NOT EXISTS (SELECT 1 FROM mdata.loads x WHERE x.id = i.subject_id)) OR (i.subject_table = 'driver_finance.driver_settlements' AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlements x WHERE x.id = i.subject_id)) OR (i.subject_table = 'driver_finance.driver_bills' AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_bills x WHERE x.id = i.subject_id)) OR (i.subject_table = 'fuel.fuel_transactions' AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions x WHERE x.id = i.subject_id))))"
+    },
+    "reports.lane_profitability_cache": {
+      "parent": "loads on the lane (derived cache)",
+      "where": "t.operating_company_id = $1::uuid AND NOT EXISTS (SELECT 1 FROM mdata.loads l JOIN mdata.load_stops s ON s.load_id = l.id WHERE l.operating_company_id = t.operating_company_id AND upper(s.city) = upper(t.origin_city) AND upper(s.state) = upper(t.origin_state))"
+    },
+    "reports.deadhead_cache": {
+      "parent": "loads of the unit (derived cache)",
+      "where": "t.operating_company_id = $1::uuid AND NOT EXISTS (SELECT 1 FROM mdata.loads l WHERE l.operating_company_id = t.operating_company_id AND l.assigned_unit_id = t.unit_id)"
+    },
+    "pwa.driver_notifications": {
+      "parent": "load named in payload.load_id",
+      "where": "t.operating_company_id = $1::uuid AND jsonb_typeof(t.payload) = 'object' AND t.payload ? 'load_id' AND NOT EXISTS (SELECT 1 FROM mdata.loads l WHERE l.id::text = t.payload ->> 'load_id')"
+    },
+    "docs.file_links": {
+      "parent": "the linked load / settlement / invoice / bill / expense / fuel transaction",
+      "scope": "EXISTS (SELECT 1 FROM docs.files f WHERE f.id = t.file_id AND f.operating_company_id = $1::uuid)",
+      "where": "EXISTS (SELECT 1 FROM docs.files f WHERE f.id = t.file_id AND f.operating_company_id = $1::uuid) AND EXISTS (SELECT 1 FROM docs.file_links fl WHERE fl.id = t.id AND ((fl.entity_type = 'load' AND NOT EXISTS (SELECT 1 FROM mdata.loads x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'settlement' AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlements x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'invoice' AND NOT EXISTS (SELECT 1 FROM accounting.invoices x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'bill' AND NOT EXISTS (SELECT 1 FROM accounting.bills x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'expense' AND NOT EXISTS (SELECT 1 FROM accounting.expenses x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'fuel_transaction' AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions x WHERE x.id = fl.entity_id))))"
+    },
+    "docs.files": {
+      "parent": "the purged load / settlement it was generated for: app-generated (dispatch_generated_at) artifacts whose every link points at a purged document. Owner uploads are evidence and are KEPT (DOCS_FILES rule); a file still linked to a live driver / customer / unit / contract stays.",
+      "where": "t.operating_company_id = $1::uuid AND t.dispatch_generated_at IS NOT NULL AND EXISTS (SELECT 1 FROM docs.file_links fl WHERE fl.file_id = t.id AND ((fl.entity_type = 'load' AND NOT EXISTS (SELECT 1 FROM mdata.loads x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'settlement' AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlements x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'invoice' AND NOT EXISTS (SELECT 1 FROM accounting.invoices x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'bill' AND NOT EXISTS (SELECT 1 FROM accounting.bills x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'expense' AND NOT EXISTS (SELECT 1 FROM accounting.expenses x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'fuel_transaction' AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions x WHERE x.id = fl.entity_id)))) AND NOT EXISTS (SELECT 1 FROM docs.file_links fl WHERE fl.file_id = t.id AND NOT ((fl.entity_type = 'load' AND NOT EXISTS (SELECT 1 FROM mdata.loads x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'settlement' AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlements x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'invoice' AND NOT EXISTS (SELECT 1 FROM accounting.invoices x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'bill' AND NOT EXISTS (SELECT 1 FROM accounting.bills x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'expense' AND NOT EXISTS (SELECT 1 FROM accounting.expenses x WHERE x.id = fl.entity_id)) OR (fl.entity_type = 'fuel_transaction' AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions x WHERE x.id = fl.entity_id))))"
+    },
+    "safety.fuel_gps_matches": {
+      "parent": "bank transaction (fuel_txn_id -> banking.bank_transactions, KEPT) — measured 0 orphans; listed so a future purge can never strand one",
+      "where": "t.operating_company_id = $1::uuid AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions b WHERE b.id = t.fuel_txn_id)"
+    },
+    "fuel.tank_events": {
+      "parent": "load / fuel transaction / expense",
+      "where": "t.operating_company_id = $1::uuid AND ((t.load_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM mdata.loads l WHERE l.id = t.load_id)) OR (t.fuel_transaction_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions f WHERE f.id = t.fuel_transaction_id)) OR (t.expense_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.id = t.expense_id)))"
+    },
+    "mdata.load_stops": {
+      "parent": "load",
+      "where": "t.operating_company_id = $1::uuid AND NOT EXISTS (SELECT 1 FROM mdata.loads l WHERE l.id = t.load_id)"
+    }
   }
 }
