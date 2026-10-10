@@ -174,13 +174,20 @@ const SETTLEMENT_CHECKS: FeedCheckDef[] = [
              CASE WHEN round(s.net_pay * 100) <> round((coalesce(s.gross_pay, 0) - coalesce(s.deductions_total, 0) + coalesce(s.reimbursements_total, 0)) * 100) THEN 'net ' || s.net_pay || ' ≠ gross ' || s.gross_pay || ' − deductions ' || s.deductions_total || ' + reimbursements ' || s.reimbursements_total END,
              '/driver-finance/settlements/' || s.id::text, jsonb_build_object('gross', s.gross_pay, 'deductions', s.deductions_total, 'reimbursements', s.reimbursements_total, 'net', s.net_pay)
         FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1::uuid AND s.id = $2::uuid` },
+  // ROUND 443 (prod-fork e2e): the close posts ONE A/P bill PER LOAD (owner ruling 2026-10-02: driver bills are per load)
+  // through settlement-ap-chain -> driver_finance.driver_settlement_gl_bills; nothing sets the legacy single
+  // driver_settlements.accounting_bill_id, so the old check failed every closed settlement. Closed = posted_at stamped AND
+  // every live driver bill of the settlement has its accounting bill with a posted journal entry.
   { key: "settlement.posted_to_ledger", group: "controls", sql: `
       SELECT 'driver_finance.driver_settlements', s.id, 'Settlement ' || s.display_id,
-             CASE WHEN s.status = 'closed' THEN (s.posted_at IS NOT NULL AND s.accounting_bill_id IS NOT NULL
-               AND EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'driver_settlement' AND p.source_transaction_id = s.id::text AND je.status = 'posted')) ELSE NULL END,
-             CASE WHEN s.status = 'closed' AND (s.posted_at IS NULL OR s.accounting_bill_id IS NULL) THEN 'closed settlement has no posted_at / accounting bill'
-                  WHEN s.status = 'closed' AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'driver_settlement' AND p.source_transaction_id = s.id::text AND je.status = 'posted') THEN 'no posted driver_settlement journal entry' END,
-             '/driver-finance/settlements/' || s.id::text, jsonb_build_object('status', s.status, 'posted_at', s.posted_at, 'accounting_bill_id', s.accounting_bill_id)
+             CASE WHEN s.status = 'closed' THEN (s.posted_at IS NOT NULL
+               AND EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.settled_in_settlement_id = s.id AND db.voided_at IS NULL)
+               AND (SELECT count(*) FROM driver_finance.driver_bills db WHERE db.settled_in_settlement_id = s.id AND db.voided_at IS NULL AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_bills g JOIN accounting.journal_entries je ON je.id = g.bill_journal_entry_id WHERE g.settlement_id = s.id AND g.driver_bill_id = db.id AND g.accounting_bill_id IS NOT NULL AND je.status = 'posted')) = 0) ELSE NULL END,
+             CASE WHEN s.status = 'closed' AND s.posted_at IS NULL THEN 'closed settlement has no posted_at'
+                  WHEN s.status = 'closed' AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.settled_in_settlement_id = s.id AND db.voided_at IS NULL) THEN 'closed settlement carries no driver bill'
+                  WHEN s.status = 'closed' AND (SELECT count(*) FROM driver_finance.driver_bills db WHERE db.settled_in_settlement_id = s.id AND db.voided_at IS NULL AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_bills g JOIN accounting.journal_entries je ON je.id = g.bill_journal_entry_id WHERE g.settlement_id = s.id AND g.driver_bill_id = db.id AND g.accounting_bill_id IS NOT NULL AND je.status = 'posted')) > 0 THEN (SELECT count(*) FROM driver_finance.driver_bills db WHERE db.settled_in_settlement_id = s.id AND db.voided_at IS NULL AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_bills g JOIN accounting.journal_entries je ON je.id = g.bill_journal_entry_id WHERE g.settlement_id = s.id AND g.driver_bill_id = db.id AND g.accounting_bill_id IS NOT NULL AND je.status = 'posted')) || ' driver bill(s) without a posted accounting bill' END,
+             '/driver-finance/settlements/' || s.id::text, jsonb_build_object('status', s.status, 'posted_at', s.posted_at,
+               'gl_bills', (SELECT count(*) FROM driver_finance.driver_settlement_gl_bills g WHERE g.settlement_id = s.id))
         FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1::uuid AND s.id = $2::uuid` },
   { key: "settlement.payment_linked_to_bank", group: "controls", sql: `
       SELECT 'driver_finance.driver_settlements', s.id, 'Settlement ' || s.display_id,

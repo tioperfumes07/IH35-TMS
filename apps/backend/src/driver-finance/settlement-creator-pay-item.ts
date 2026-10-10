@@ -1,11 +1,10 @@
 /**
- * ROUND 443.4 b — the driver-pay ITEM comes from the driver's pay card, never a string literal.
+ * ROUND 443.4 b — the driver-pay ITEM, never a string literal in the engine.
  *
  * catalogs.items carries one family per pay type: "Driver Pay-CDL-Loaded Miles" / "-Empty Miles" and
- * "Driver Pay-Mexico-B1 Driver-Loaded Miles" / "-Empty Miles". The pay card (driver_finance.driver_pay_rates, the row
- * getDriverPayCard reads) names the family in pay_item_family. MEASURED 2026-10-10: the pay card has no such column
- * yet and no other field tells a B1 driver from a CDL driver (has_b1_visa false on all 12 active USMCA drivers), so
- * this refuses driver_pay_item_unresolved naming the driver — it never defaults to CDL. Posted to the Lead as a blocker.
+ * "Driver Pay-Mexico-B1 Driver-Loaded Miles" / "-Empty Miles". LEAD RULING (bus c890d88, 2026-10-10): no new column —
+ * the family comes from mdata.drivers.has_b1_visa: true -> Mexico-B1, false -> CDL, NULL -> refuse
+ * driver_pay_item_unresolved naming the driver. The Creator never writes the flag; the owner supplies who is B1.
  */
 import type { DbClient } from "../dispatch/presettlement-link.service.js";
 import { SettlementCreatorError } from "./settlement-creator.service.js";
@@ -24,29 +23,20 @@ export async function resolveDriverPayItems(client: DbClient, companyId: string,
       [driverId, companyId],
     )
   ).rows[0]?.name || driverId;
-  const hasColumn = (
-    await client.query(
-      `SELECT 1 FROM information_schema.columns WHERE table_schema = 'driver_finance' AND table_name = 'driver_pay_rates' AND column_name = 'pay_item_family'`,
+  const flag = (
+    await client.query<{ b1: boolean | null }>(
+      `SELECT has_b1_visa AS b1 FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [driverId, companyId],
     )
-  ).rows.length > 0;
-  let family: string | null = null;
-  if (hasColumn) {
-    family = (
-      await client.query<{ f: string | null }>(
-        `SELECT pay_item_family AS f FROM driver_finance.driver_pay_rates
-          WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid AND is_active AND effective_to IS NULL
-          ORDER BY effective_from DESC LIMIT 1`,
-        [companyId, driverId],
-      )
-    ).rows[0]?.f ?? null;
-  }
-  if (!family || !(family in PAY_ITEM_FAMILIES)) {
+  ).rows[0]?.b1;
+  const family: PayItemFamily | null = flag === true ? "mexico_b1" : flag === false ? "cdl" : null;
+  if (!family) {
     throw new SettlementCreatorError(
       "driver_pay_item_unresolved",
-      `Driver ${who}: the pay card does not say whether this driver is paid as CDL or Mexico B1, so the driver-pay item cannot be chosen. Set it on the driver's pay card.`,
+      `Driver ${who}: the driver profile does not say whether this driver holds a B1 visa (has_b1_visa is not set), so the driver-pay item (CDL or Mexico B1) cannot be chosen.`,
     );
   }
-  const names = PAY_ITEM_FAMILIES[family as PayItemFamily];
+  const names = PAY_ITEM_FAMILIES[family];
   const rows = (
     await client.query<{ id: string; item_name: string }>(
       `SELECT id::text, item_name FROM catalogs.items WHERE operating_company_id = $1::uuid AND item_name = ANY($2::text[]) AND deactivated_at IS NULL`,
@@ -58,5 +48,5 @@ export async function resolveDriverPayItems(client: DbClient, companyId: string,
   if (!loaded || !empty) {
     throw new SettlementCreatorError("driver_pay_item_unresolved", `Driver ${who}: catalog item "${!loaded ? names.loaded : names.empty}" is missing.`);
   }
-  return { family: family as PayItemFamily, loaded: { id: loaded.id, name: loaded.item_name }, empty: { id: empty.id, name: empty.item_name } };
+  return { family, loaded: { id: loaded.id, name: loaded.item_name }, empty: { id: empty.id, name: empty.item_name } };
 }
