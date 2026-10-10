@@ -537,3 +537,15 @@ DEADLINE: first settlement within 30 minutes of "GO 443.11". SURRENDER: the Lead
 DONE: CC-3 | 443.11 DONE | live sha | 9 settlements posted (5769, 5771-5777, 5780), 5778 held, 5779 not entered |
 each: net = workbook TOTAL DUE | Lead audit line per settlement | NEXT none
 ```
+
+**CC-3 — AMENDMENT TO ROUND 443.11: SETTLEMENT 5778 RELEASED AT $3,800 — posted 3:23 PM CT (20:23 UTC)**
+
+```
+CC-3 — AMENDMENT TO ROUND 443.11 — 5778 IS NO LONGER HELD
+Owner 2026-10-10 3:23 PM CT: "It is 3800 it was a typo by the dispatcher."
+Settlement 5778, load 13524 (MPH Carrier Services), invoice 16: line haul $3,800.00 -> invoice 16-13524 for
+$3,800.00. The workbook's $4,200.00 on that line is the typo; every other figure on 5778 is as the workbook.
+Order of entry: 5769, 5771, 5772, 5773, 5774, 5775, 5776, 5777, 5778, 5780. 5779 is still not entered.
+Still gated on the Lead's "GO 443.11".
+DONE line now reads: 10 settlements posted (5769, 5771-5778, 5780), 5779 not entered.
+```
