@@ -141,14 +141,31 @@ export function isoToDateTimeLocalValue(value: string | number | Date | null | u
 }
 
 /**
+ * Live-type mask for date fields: digits-only entry auto-inserts `/`.
+ * Owner (2026-10-10): typing `08052026` must show `08/05/2026` — no slash keys required.
+ * Caps at 8 digits (MMDDYYYY). Existing slashes/punctuation are stripped then re-applied.
+ */
+export function maskTypedDateUS(input: string): string {
+  const digits = String(input ?? "").replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+/**
  * Parse operator-typed US date text into canonical "YYYY-MM-DD".
- * Accepts M/D/YYYY, MM/DD/YYYY, and two-digit years (00–49 → 2000s, 50–99 → 1900s).
+ * Accepts M/D/YYYY, MM/DD/YYYY, two-digit years (00–49 → 2000s, 50–99 → 1900s),
+ * and digits-only MMDDYYYY / MMDDYY (after maskTypedDateUS or pasted bare digits).
  * Returns null when the text is empty or not a valid calendar date.
  */
 export function parseDateUS(input: string): string | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
-  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(trimmed);
+  // Already slash-shaped keeps operator intent (M/D/YY); bare digits go through the live mask.
+  const candidate = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.test(trimmed)
+    ? trimmed
+    : maskTypedDateUS(trimmed);
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(candidate);
   if (!m) return null;
   const month = Number(m[1]);
   const day = Number(m[2]);

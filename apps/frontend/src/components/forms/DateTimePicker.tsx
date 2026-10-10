@@ -5,6 +5,7 @@ import {
   formatDateTimeLocalUS,
   formatDateUS,
   parseDateUS,
+  maskTypedDateUS,
   DATETIME_PLACEHOLDER_US,
   DATE_PLACEHOLDER_US,
 } from "../../lib/formatDate";
@@ -283,7 +284,7 @@ export function DateTimePicker({
             setEditingDate(true);
             setDateDraft(valueDate ? formatDateUS(valueDate) : "");
           }}
-          onChange={(e) => setDateDraft(e.target.value)}
+          onChange={(e) => setDateDraft(maskTypedDateUS(e.target.value))}
           onBlur={commitDateDraft}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
