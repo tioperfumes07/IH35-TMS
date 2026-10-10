@@ -29,7 +29,7 @@ export function typedInvoiceDisplayId(load: { load_number: string; invoice_numbe
 
 /** Pure checks (no database). Returns the first refusal or null. */
 export function draftAdmissionRefusal(
-  draft: Pick<SettlementCreatorDraft, "loads"> & Partial<Pick<SettlementCreatorDraft, "deductions" | "admin_fee_cents" | "fuel_purchases">>,
+  draft: Pick<SettlementCreatorDraft, "loads"> & Partial<Pick<SettlementCreatorDraft, "deductions" | "admin_fee_cents" | "fuel_purchases" | "expenses">>,
 ): SettlementCreatorError | null {
   const loads = draft.loads ?? [];
   if (loads.length > 0 && loads.every((l) => l.factoring === "faro_transportation")) {
@@ -48,7 +48,7 @@ export function draftAdmissionRefusal(
     seen.add(key);
   }
   // ROUND 443.5 — every deduction, admin fee and fuel line carries its load.
-  const lineRefusal = lineLoadRefusal({ loads, deductions: draft.deductions, admin_fee_cents: draft.admin_fee_cents, fuel_purchases: draft.fuel_purchases });
+  const lineRefusal = lineLoadRefusal({ loads, deductions: draft.deductions, admin_fee_cents: draft.admin_fee_cents, fuel_purchases: draft.fuel_purchases, expenses: draft.expenses });
   if (lineRefusal) return lineRefusal;
   return null;
 }

@@ -4,6 +4,7 @@
  */
 
 export type SettlementCreatorFactorOption = "faro_usmca" | "faro_transportation" | "direct";
+export type SettlementCreatorExpensePaymentSource = "relay" | "dreamline" | "owed";
 
 export type SettlementCreatorFuelCard = "dreamline" | "relay";
 
@@ -112,7 +113,17 @@ export type SettlementCreatorExpenseLine = {
   is_company_expense: boolean;
   /** PDF flag Reimb. (Drv) — paid back on driver settlement; never Cr 1000 cash. */
   is_reimbursable: boolean;
-  card?: SettlementCreatorFuelCard | null;
+  /**
+   * ROUND 443.6 — how a company expense was paid: relay / dreamline (card rail, paid now) or owed (A/P bill to the
+   * vendor). Required on every company expense; no default (law doc §3: a record with no payment account is an orphan).
+   */
+  card?: SettlementCreatorExpensePaymentSource | null;
+  /** ROUND 443.6 — the vendor (by name, as the fuel lines), the vendor's own document number (settlement INVOICE
+   *  column, e.g. 2870483), and the source quantity / unit (gallons of DEF). */
+  vendor_name?: string | null;
+  vendor_document_number?: string | null;
+  quantity?: number | null;
+  unit_of_measure?: string | null;
   /** ROUND 363-CC2-D — picked at creation. The account wins over the item's default; load_id wins over load_number. */
   item_id?: string | null;
   account_id?: string | null;

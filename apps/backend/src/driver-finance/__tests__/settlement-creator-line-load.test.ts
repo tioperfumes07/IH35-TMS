@@ -32,3 +32,26 @@ describe("ROUND 443.5 — every deduction, admin fee and fuel line carries its l
     expect(lineLoadRefusal({ loads, admin_fee_cents: 1000, deductions: [{ description: "Admin fee", amount_cents: 1000, load_number: "13508" }] })?.message).toMatch(/entered twice/);
   });
 });
+
+import { companyExpenseRefusal } from "../settlement-creator-line-load.js";
+import { milesTimesRateCents } from "../deadhead-rule.js";
+describe("ROUND 443.6 — a company expense names how it was paid and its vendor", () => {
+  const def = { item_name: "DEF", amount_cents: 6784, is_company_expense: true, vendor_name: "Loves" };
+  it("no payment source -> refused (no Relay default)", () => {
+    expect(companyExpenseRefusal([{ ...def, card: null }])?.code).toBe("expense_payment_source_required");
+  });
+  it("no vendor -> refused", () => {
+    expect(companyExpenseRefusal([{ ...def, card: "relay", vendor_name: "" }])?.code).toBe("expense_vendor_required");
+  });
+  it("relay / dreamline / owed with a vendor pass admission", () => {
+    for (const card of ["relay", "dreamline", "owed"]) expect(companyExpenseRefusal([{ ...def, card }])).toBeNull();
+  });
+  it("a driver reimbursement is not a company expense", () => {
+    expect(companyExpenseRefusal([{ ...def, is_company_expense: false, card: null }])).toBeNull();
+  });
+  it("5769 DEF $67.84 in gallons prices exactly (rate to 4 decimals, Postgres numeric rounding)", () => {
+    const qty = 15.432;
+    const rate = Number((6784 / qty).toFixed(4));
+    expect(milesTimesRateCents(qty, rate)).toBe(6784);
+  });
+});

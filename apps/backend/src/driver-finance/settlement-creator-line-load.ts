@@ -49,12 +49,31 @@ export function attributeFuelLoadNumber(loads: readonly LoadSpan[], fuel: FuelLi
   );
 }
 
+type ExpenseLine = { item_name: string; amount_cents: number; is_company_expense: boolean; card?: string | null; vendor_name?: string | null };
+
+/** ROUND 443.6 — a company expense names how it was paid (relay / dreamline / owed) and its vendor. No default. */
+export function companyExpenseRefusal(expenses: readonly ExpenseLine[] | null | undefined): SettlementCreatorError | null {
+  for (const e of expenses ?? []) {
+    if (!e.is_company_expense || e.amount_cents <= 0) continue;
+    if (!e.card) {
+      return new SettlementCreatorError("expense_payment_source_required", `Company expense "${e.item_name}": choose how it was paid — Relay, Dreamline, or Owed to the vendor.`);
+    }
+    if (!e.vendor_name?.trim()) {
+      return new SettlementCreatorError("expense_vendor_required", `Company expense "${e.item_name}": name the vendor.`);
+    }
+  }
+  return null;
+}
+
 export function lineLoadRefusal(draft: {
   loads: readonly LoadSpan[];
   deductions?: readonly MoneyLine[] | null;
   admin_fee_cents?: number | null;
   fuel_purchases?: readonly FuelLine[] | null;
+  expenses?: readonly ExpenseLine[] | null;
 }): SettlementCreatorError | null {
+  const exp = companyExpenseRefusal(draft.expenses);
+  if (exp) return exp;
   for (const d of draft.deductions ?? []) {
     if (d.amount_cents > 0 && !d.load_number?.trim()) {
       return new SettlementCreatorError("deduction_load_required", `Deduction "${d.description || "deduction"}" needs its load number.`);

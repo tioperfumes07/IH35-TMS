@@ -135,7 +135,12 @@ const draftSchema = z.object({
         item_id: z.string().uuid().nullable().optional(),
         account_id: z.string().uuid().nullable().optional(),
         load_id: z.string().uuid().nullable().optional(),
-        card: z.enum(["dreamline", "relay"]).nullable().optional(),
+        // ROUND 443.6 — payment source (owed = A/P bill), vendor, vendor document number, quantity / unit.
+        card: z.enum(["dreamline", "relay", "owed"]).nullable().optional(),
+        vendor_name: z.string().trim().max(200).nullable().optional(),
+        vendor_document_number: z.string().trim().max(60).nullable().optional(),
+        quantity: z.number().positive().nullable().optional(),
+        unit_of_measure: z.string().trim().toLowerCase().regex(/^[a-z][a-z_]*$/).max(20).nullable().optional(),
       }),
     )
     .default([]),

@@ -18,5 +18,7 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-driver-pay-independent-of-invoice.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-every-line-has-load.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-every-line-has-load.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-expense-stamped-and-sourced.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-expense-stamped-and-sourced.mjs"]);
   },
 };

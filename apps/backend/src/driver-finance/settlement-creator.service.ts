@@ -32,6 +32,7 @@ import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/po
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { creatorEmptyPayCents, creatorEmptyRateCents, creatorLoadedPayCents, creatorPayMiles } from "./settlement-creator-empty-pay.js";
 import { resolveDriverPayItems } from "./settlement-creator-pay-item.js";
+import { milesTimesRateCents } from "./deadhead-rule.js";
 import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
@@ -512,8 +513,13 @@ export async function previewSettlementCreator(
     if (exp.amount_cents <= 0) continue;
     if (exp.is_company_expense) {
       companyExpensesCents += exp.amount_cents;
-      const card = exp.card ?? "relay";
-      const rail = await accountByRole(client, draft.operating_company_id, cardRailRole(card));
+      // ROUND 443.6 — paid now (relay / dreamline): Cr the card rail; owed: Cr Accounts Payable (a bill). No default.
+      const card = exp.card ?? null;
+      const rail = card === "owed"
+        ? await accountByRole(client, draft.operating_company_id, "ap_control")
+        : card
+          ? await accountByRole(client, draft.operating_company_id, cardRailRole(card))
+          : null;
       const itemAcct = await previewExpenseLineAccount(client, draft.operating_company_id, exp, blockers);
       const reeferRefusal = await reeferFuelExpenseRefusal(client, draft.operating_company_id, exp, (itemAcct as { item_id?: string | null } | null)?.item_id ?? null);
       if (reeferRefusal) blockers.push(reeferRefusal);
@@ -532,10 +538,11 @@ export async function previewSettlementCreator(
         account_name: rail?.account_name ?? "Card rail",
         debit_cents: 0,
         credit_cents: exp.amount_cents,
-        memo: `Comp. Exp. Cr card (never A/P)`,
+        memo: card === "owed" ? `Comp. Exp. owed to ${exp.vendor_name ?? "vendor"} — bill (A/P)` : `Comp. Exp. Cr card`,
         section: "expense",
       });
-      if (!rail) blockers.push(`Expense card rail role '${cardRailRole(card)}' is not bound — bind it on the CoA Roles page.`);
+      if (!card) blockers.push(`Company expense "${exp.item_name}": choose how it was paid — Relay, Dreamline, or Owed to the vendor.`);
+      else if (!rail) blockers.push(card === "owed" ? "No A/P control account (ap_control) is bound." : `Expense card rail role '${cardRailRole(card)}' is not bound — bind it on the CoA Roles page.`);
     }
   }
 
@@ -1248,11 +1255,11 @@ export async function postSettlementCreatorInClientTx(
           },
           { userId: actorUserId },
         );
-        if (posted.journal_entry_id) journalEntryIds.push(posted.journal_entry_id);
+        if (!posted.journal_entry_id) throw new Error("posting engine returned no journal entry");
+        journalEntryIds.push(posted.journal_entry_id);
       } catch (err) {
-        // Flag-off / not eligible → document stays; do not invent GL math.
-        const msg = err instanceof Error ? err.message : String(err);
-        if (!/EXPENSE_POST_GL_REFUSED|not posting-eligible|FLAG/i.test(msg)) throw err;
+        // ROUND 443.6 f — a posting refusal fails the whole post: never a fuel expense without its ledger entry.
+        throw new SettlementCreatorError("fuel_expense_post_refused", `Fuel line ${fuel.date}: the ledger refused it — ${err instanceof Error ? err.message : String(err)}. Nothing was posted.`);
       }
     }
   }
@@ -1295,47 +1302,74 @@ export async function postSettlementCreatorInClientTx(
     advanceIds.push(created.advanceId);
   }
 
+  // ROUND 443.6 — COMPANY EXPENSE: real payment source, full stamp, bill when owed (owner 2026-10-10: "create bills,
+  // bill expenses stamp"). Law doc §3: paid now = Dr expense / Cr bank-card; owed = Dr expense / Cr A/P via a bill.
   for (const exp of draft.expenses ?? []) {
     if (!exp.is_company_expense || exp.amount_cents <= 0) continue;
-    const card = exp.card ?? "relay";
-    const preference = card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet";
-    const { account_id: paymentAccountId } = await resolveCompanyDirectCreditAccount(
-      client as never,
-      draft.operating_company_id,
-      preference,
-    );
+    const card = exp.card ?? null;
+    if (!card) {
+      throw new SettlementCreatorError("expense_payment_source_required", `Company expense "${exp.item_name}": choose how it was paid — Relay, Dreamline, or Owed to the vendor.`);
+    }
+    const vendor = exp.vendor_name?.trim()
+      ? (
+          await client.query<{ id: string }>(
+            `SELECT id::text FROM mdata.vendors
+              WHERE operating_company_id = $1::uuid AND lower(trim(vendor_name)) = lower(trim($2))
+                AND COALESCE(is_sample_data, false) IS NOT TRUE
+              LIMIT 1`,
+            [draft.operating_company_id, exp.vendor_name],
+          )
+        ).rows[0]
+      : null;
+    if (!vendor) {
+      throw new SettlementCreatorError("expense_vendor_required", `Company expense "${exp.item_name}": map vendor "${exp.vendor_name ?? ""}" in Vendors first.`);
+    }
     const itemAcct = await resolveExpenseLineAccount(client, draft.operating_company_id, exp);
-    if (!itemAcct) {
-      throw new SettlementCreatorError("expense_account_missing", `No expense account for Comp. Exp. "${exp.item_name}".`);
+    if (!itemAcct?.item_id) {
+      throw new SettlementCreatorError("expense_item_unresolved", `Company expense "${exp.item_name}": pick the item it posts to.`);
     }
     const reeferRefusal = await reeferFuelExpenseRefusal(client, draft.operating_company_id, exp, itemAcct.item_id);
     if (reeferRefusal) throw new SettlementCreatorError("reefer_fuel_needs_gallons", reeferRefusal);
-    const loadId = await resolveLineLoadId(client, draft.operating_company_id, exp);
-    const expenseNumber = await nextExpenseDisplayId(
-      client as never,
-      draft.operating_company_id,
-      new Date(`${exp.date}T12:00:00.000Z`),
-    );
+    // Every settlement item belongs to a load (443.5): typed, else the one load whose dates cover the expense date.
+    const expLoadNumber = attributeFuelLoadNumber(draft.loads, { date: exp.date, load_number: exp.load_number, load_id: exp.load_id, vendor_name: exp.vendor_name, invoice: exp.vendor_document_number });
+    const loadId = await resolveLineLoadId(client, draft.operating_company_id, { ...exp, load_number: expLoadNumber ?? exp.load_number });
+    if (!loadId) {
+      throw new SettlementCreatorError("expense_load_required", `Company expense "${exp.item_name}": load ${expLoadNumber ?? exp.load_number ?? ""} is not a load of this company.`);
+    }
+    // Quantity / unit / rate as the source gave them (gallons of DEF); a flat charge is 1 each.
+    const qty = exp.quantity != null && exp.quantity > 0 ? Number(exp.quantity) : 1;
+    const uom = exp.quantity != null && exp.quantity > 0 ? (exp.unit_of_measure?.trim() || "each") : "each";
+    const rateCents = qty === 1 ? exp.amount_cents : Number((exp.amount_cents / qty).toFixed(4));
+    if (milesTimesRateCents(qty, rateCents) !== exp.amount_cents) {
+      throw new SettlementCreatorError("expense_quantity_rate_mismatch", `Company expense "${exp.item_name}": ${qty} ${uom} does not price to ${dollarsFromCents(exp.amount_cents)}.`);
+    }
+    if (card === "owed") {
+      // Owed -> a BILL in Accounts Payable. The bill engine (createBillInClientTx) does not yet carry the load, the
+      // line quantity / unit or the vendor document number (posted to the Lead as a CC-1 blocker, ROUND 443.6), so an
+      // owed expense refuses rather than create a bill that drops its load and gallons.
+      throw new SettlementCreatorError(
+        "expense_owed_bill_unavailable",
+        `Company expense "${exp.item_name}" is owed to ${exp.vendor_name}: it becomes an A/P bill, and the bill engine cannot yet record its load and quantity. Nothing was written.`,
+      );
+    }
+    const preference = card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet";
+    const { account_id: paymentAccountId } = await resolveCompanyDirectCreditAccount(client as never, draft.operating_company_id, preference);
+    const expenseNumber = await nextExpenseDisplayId(client as never, draft.operating_company_id, new Date(`${exp.date}T12:00:00.000Z`));
     const memo = `[SC ${draft.settlement_no}] ${exp.description ?? exp.item_name}`.slice(0, 500);
     const inserted = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.expenses (
           operating_company_id, status, transaction_date, total_amount_cents,
           memo, expense_number, load_id, is_sample_data, payment_account_uuid,
-          is_company_expense, driver_uuid
+          is_company_expense, driver_uuid, vendor_uuid, unit_id, trailer_id, vendor_document_number
         )
-        VALUES ($1::uuid, 'draft', $2::date, $3::bigint, $4, $5, $6::uuid, false, $7::uuid, true, $8::uuid)
+        VALUES ($1::uuid, 'draft', $2::date, $3::bigint, $4, $5, $6::uuid, false, $7::uuid, true, $8::uuid,
+                $9::uuid, $10::uuid, $11::uuid, $12)
         RETURNING id::text
       `,
       [
-        draft.operating_company_id,
-        exp.date,
-        exp.amount_cents,
-        memo,
-        expenseNumber,
-        loadId,
-        paymentAccountId,
-        draft.driver_id,
+        draft.operating_company_id, exp.date, exp.amount_cents, memo, expenseNumber, loadId, paymentAccountId,
+        draft.driver_id, vendor.id, draft.unit_id ?? null, draft.trailer_id ?? null, exp.vendor_document_number?.trim() || null,
       ],
     );
     const expenseId = inserted.rows[0]!.id;
@@ -1343,37 +1377,29 @@ export async function postSettlementCreatorInClientTx(
       `
         INSERT INTO accounting.expense_lines (
           operating_company_id, expense_id, line_sequence, amount, amount_cents, description,
-          load_id, load_required, expense_account_uuid, quantity, rate_cents, unit_of_measure, item_id
+          load_id, load_required, expense_account_uuid, quantity, rate_cents, unit_of_measure, item_id,
+          driver_id, unit_id, trailer_id
         )
-        VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, $7, $8::uuid, 1, $4::bigint, 'each', $9::uuid)
+        VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, true, $7::uuid, $8, $9, $10, $11::uuid,
+                $12::uuid, $13::uuid, $14::uuid)
       `,
       [
-        draft.operating_company_id,
-        expenseId,
-        exp.amount_cents / 100,
-        exp.amount_cents,
-        memo,
-        loadId,
-        Boolean(loadId),
-        itemAcct.id,
-        itemAcct.item_id,
+        draft.operating_company_id, expenseId, exp.amount_cents / 100, exp.amount_cents, memo, loadId, itemAcct.id,
+        qty, rateCents, uom, itemAcct.item_id, draft.driver_id, draft.unit_id ?? null, draft.trailer_id ?? null,
       ],
     );
     expenseIds.push(expenseId);
+    // ROUND 443.6 f — a posting refusal fails the whole post: never a document without its ledger entry.
     try {
       const posted = await postSourceTransactionInClientTx(
         client as never,
-        {
-          operating_company_id: draft.operating_company_id,
-          source_transaction_type: "expense",
-          source_transaction_id: expenseId,
-        },
+        { operating_company_id: draft.operating_company_id, source_transaction_type: "expense", source_transaction_id: expenseId },
         { userId: actorUserId },
       );
-      if (posted.journal_entry_id) journalEntryIds.push(posted.journal_entry_id);
+      if (!posted.journal_entry_id) throw new Error("posting engine returned no journal entry");
+      journalEntryIds.push(posted.journal_entry_id);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (!/EXPENSE_POST_GL_REFUSED|not posting-eligible|FLAG/i.test(msg)) throw err;
+      throw new SettlementCreatorError("expense_post_refused", `Company expense "${exp.item_name}": the ledger refused it — ${err instanceof Error ? err.message : String(err)}. Nothing was posted.`);
     }
   }
 
@@ -1854,8 +1880,8 @@ async function resolveLineLoadId(
 
 /**
  * ROUND 363-CC2-D — the account an expense / reimbursement line posts to: the item or account the user picked
- * (resolveLineItemAndAccount — the one resolver), else the documented default 6100 / other_operating_expense.
- * A pick that does not resolve is refused, never silently replaced by the default.
+ * (resolveLineItemAndAccount — the one resolver). Nothing picked, or a pick that does not resolve, is refused —
+ * never silently replaced by a default account (ROUND 443.6 e).
  */
 async function resolveExpenseLineAccount(
   client: DbClient,
@@ -1865,9 +1891,8 @@ async function resolveExpenseLineAccount(
   const picked = await resolveLineItemAndAccount(client as never, operatingCompanyId, line);
   if (picked && "refused" in picked) throw new SettlementCreatorError("line_account_refused", `"${line.item_name}": ${picked.refused}`);
   if (picked) return pickedAccount(picked);
-  const fallback =
-    await accountByRole(client, operatingCompanyId, "other_operating_expense");
-  return fallback ? { id: fallback.id, account_number: fallback.account_number ?? null, account_name: fallback.account_name ?? null, item_id: null } : null;
+  // ROUND 443.6 e — an unresolved item or account refuses; never a fallback "other operating expense" with no item.
+  throw new SettlementCreatorError("expense_item_unresolved", `"${line.item_name}": pick the item (or account) this line posts to.`);
 }
 
 /** Preview: same resolver as the post; a refused pick is a blocker on the preview, not a thrown error. */
