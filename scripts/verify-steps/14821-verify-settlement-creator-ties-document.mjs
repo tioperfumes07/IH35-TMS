@@ -12,5 +12,7 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-ux-f442.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-no-quickpay-on-factored.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-no-quickpay-on-factored.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-invoice-number-and-zero-invoice.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-invoice-number-and-zero-invoice.mjs"]);
   },
 };

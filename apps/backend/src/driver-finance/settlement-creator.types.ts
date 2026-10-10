@@ -48,6 +48,11 @@ export type SettlementCreatorLoadBlock = {
   line_haul_amount_cents?: number | null;
   accessorials?: SettlementCreatorAccessorialLine[];
   factoring: SettlementCreatorFactorOption;
+  /**
+   * ROUND 443.3 — the "Invoice no." box (law doc §5): the owner's Faro / QuickBooks invoice number (USMCA 1..118),
+   * digits only. Typed wins verbatim; blank = the load number (existing fallback).
+   */
+  invoice_number?: string | null;
   date_sent_to_factoring?: string | null;
   loaded_miles?: number | null;
   /**

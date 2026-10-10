@@ -160,6 +160,7 @@ function emptyLoad(loadNumber = ""): LoadDraft {
     line_haul_rate_cents: null,
     line_haul_amount_cents: null,
     factoring: "faro_usmca",
+    invoice_number: "",
     date_sent_to_factoring: "",
     loaded_miles: null,
     /** Driver pay miles (short) — company loaded_miles are practical / different. */
@@ -1198,6 +1199,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         pickup_date: l.pickup_date || null,
         delivery_date: l.delivery_date || null,
         date_sent_to_factoring: l.date_sent_to_factoring || null,
+        invoice_number: (l.invoice_number ?? "").trim() || null,
         join_outbound_load_number: l.join_outbound_load_number || null,
       })),
       fuel_purchases: fuels.map(({ location_id: _lid, vendor_id: _vid, ...fuel }) => fuel),
@@ -1623,6 +1625,23 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         }}
                         title="REQUIRED — bookLoad refuses a load with no PO or W/O, and Faro matches the invoice on it"
                         data-testid={`sc-load-po-${idx}`}
+                      />
+                    </Field>
+                    {/* ROUND 443.3 — law doc §5: empty, editable; typed wins verbatim; blank = the load number. */}
+                    <Field label="Invoice no.">
+                      <input
+                        className={inputClass}
+                        inputMode="numeric"
+                        value={load.invoice_number ?? ""}
+                        onChange={(e) => {
+                          const next = [...loads];
+                          next[idx] = { ...load, invoice_number: e.target.value.replace(/[^0-9]/g, "").slice(0, 12) };
+                          setLoads(next);
+                        }}
+                        placeholder={load.load_number.trim() || "Load #"}
+                        title="The invoice number presented to Faro / QuickBooks. Blank = the load number."
+                        aria-label="Invoice number"
+                        data-testid={`sc-load-invoice-no-${idx}`}
                       />
                     </Field>
                   </div>

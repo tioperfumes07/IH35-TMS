@@ -34,6 +34,8 @@ import { creatorEmptyPayCents, creatorEmptyRateCents } from "./settlement-creato
 import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
+import { DuplicateDocumentNumberError } from "../lib/qbo-custom-document-number.js";
+import { assertCreatorDraftAdmissible, effectiveInvoiceNumber } from "./settlement-creator-admission.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { voidDocument } from "../accounting/void-document.service.js";
 import {
@@ -387,6 +389,13 @@ export async function previewSettlementCreator(
     blockers.push("Start and end dates are required (YYYY-MM-DD).");
   }
   if (!draft.loads?.length) blockers.push("At least one load block is required.");
+  // ROUND 443.3 — full-Transportation settlement, Invoice no. shape / duplicates / already taken.
+  try {
+    await assertCreatorDraftAdmissible(client, draft);
+  } catch (err) {
+    if (err instanceof SettlementCreatorError) blockers.push(err.message);
+    else throw err;
+  }
 
   // ROUND 190/191 (2026-09-28) — the 09-25/09-24 fuel-feed gap root cause: this engine DOES seed
   // fuel.fuel_transactions from draft.fuel_purchases (below), but nothing ever verified the
@@ -1599,8 +1608,16 @@ export async function postSettlementCreatorInClientTx(
         userId: actorUserId,
         operatingCompanyId: draft.operating_company_id,
         loadId,
+        // ROUND 443.3 — typed Invoice no. wins verbatim; blank -> the load number (from-load fallback).
+        requestedDisplayId: String(load.invoice_number ?? "").trim() || null,
       });
     } catch (err) {
+      if (err instanceof DuplicateDocumentNumberError) {
+        throw new SettlementCreatorError(
+          "invoice_number_taken",
+          `Load ${load.load_number}: Invoice no. ${effectiveInvoiceNumber(load)} is already used. Nothing was written.`,
+        );
+      }
       const code = err && typeof err === "object" && "code" in err ? String((err as { code: unknown }).code) : "";
       const msg = err instanceof Error ? err.message : String(err);
       if (code === "load_has_no_rate" || /load_has_no_rate/i.test(msg)) {
