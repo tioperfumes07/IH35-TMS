@@ -24,6 +24,7 @@ import { flushFuelGlPostsAfterCommit, type FuelTxnGlPostCandidate } from "../../
 import { flushFuelCardOverageAfterCommit } from "../../fuel/fuel-card-overage.service.js";
 import { ingestForCompany } from "./relay-fuel-ingest.cron.js";
 import type { RelayFuelTransaction } from "./relay-client.js";
+import { RELAY_USMCA_DATA_FLOOR, USMCA_OPERATING_COMPANY_ID } from "./relay-usmca-date-floor.js";
 
 export const RELAY_WEBHOOK_PATH = "/api/v1/integrations/relay/webhook";
 const AUDIT_SOURCE = "RELAY-FUEL-WEBHOOK";
@@ -65,6 +66,44 @@ export function extractRelayWebhookRows(payload: unknown): Record<string, unknow
     return [o];
   }
   return [];
+}
+
+/**
+ * ROUND 443.21 (owner, 2026-10-10): "in usmca we put in transportation env key. we only use transportation, we do not
+ * use relay usmca." Relay registers one webhook per Relay ACCOUNT -- ?entity=TRANSP for IH 35 TRANSPORTATION LLC (the
+ * only account in use) and ?entity=USMCA -- and every fill on that account from 2026-08-03 on is USMCA's. The entity
+ * selects which secret verifies the request (unchanged); THIS decides where a verified fill is stored. Both accounts
+ * store under USMCA -- the only company whose Relay fills are stored (ROUND 443.15) -- so a fill that also arrives by
+ * the cron pull is the same (operating_company_id, transaction_id) row, never a second one. Any other entity maps to
+ * itself and the writer refuses it.
+ */
+export const RELAY_WEBHOOK_ACCOUNT_STORAGE: Readonly<Record<string, string>> = Object.freeze({
+  TRANSP: USMCA_OPERATING_COMPANY_ID,
+  USMCA: USMCA_OPERATING_COMPANY_ID,
+});
+
+/** Pure: the company a verified delivery to ?entity=<code> is stored under. */
+export function relayWebhookStorageCompanyId(entityCode: string, entityCompanyId: string): string {
+  return RELAY_WEBHOOK_ACCOUNT_STORAGE[entityCode.toUpperCase()] ?? entityCompanyId;
+}
+
+/** Pure: split rows into those USMCA may store and those dated before the USMCA Relay floor (refused by name). */
+export function splitRelayRowsAtUsmcaFloor(
+  rows: Record<string, unknown>[],
+  storageCompanyId: string
+): { keep: Record<string, unknown>[]; beforeFloor: { transaction_id: string; fill_day: string }[] } {
+  if (storageCompanyId !== USMCA_OPERATING_COMPANY_ID) return { keep: rows, beforeFloor: [] };
+  const keep: Record<string, unknown>[] = [];
+  const beforeFloor: { transaction_id: string; fill_day: string }[] = [];
+  for (const r of rows) {
+    const day = String(r.created_at ?? r.createdAt ?? "").slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(day) && day < RELAY_USMCA_DATA_FLOOR) {
+      beforeFloor.push({ transaction_id: String(r.transaction_id ?? r.id ?? ""), fill_day: day });
+    } else {
+      keep.push(r);
+    }
+  }
+  return { keep, beforeFloor };
 }
 
 function companySecret(code: string): string | null {
@@ -120,20 +159,45 @@ async function handleRelayWebhook(req: FastifyRequest, reply: FastifyReply) {
   } catch {
     return reply.code(400).send({ error: "invalid_json" });
   }
-  const rows = extractRelayWebhookRows(payload);
-  if (rows.length === 0) return reply.code(400).send({ error: "no_transactions" });
-  if (rows.length > MAX_ROWS) return reply.code(413).send({ error: "too_many_transactions", max: MAX_ROWS });
+  const allRows = extractRelayWebhookRows(payload);
+  if (allRows.length === 0) return reply.code(400).send({ error: "no_transactions" });
+  if (allRows.length > MAX_ROWS) return reply.code(413).send({ error: "too_many_transactions", max: MAX_ROWS });
+
+  // ROUND 443.21: verified with the ENTITY's secret above; stored under the company that owns that Relay account's fills.
+  const storageCompanyId = relayWebhookStorageCompanyId(company.code, company.id);
+  const storageCode = storageCompanyId === USMCA_OPERATING_COMPANY_ID ? "USMCA" : company.code;
 
   const flagOn = await withLuciaBypass((client) =>
-    isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: company.id })
+    isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: storageCompanyId })
   );
   if (!flagOn) {
     // Same gate as the pull: a company not ingesting Relay does not ingest by push either. 200 so Relay does not retry.
-    await audit(company.id, "integrations.relay_fuel_webhook_ignored_flag_off", "info", {
-      operating_company_id: company.id,
-      received: rows.length,
+    await audit(storageCompanyId, "integrations.relay_fuel_webhook_ignored_flag_off", "info", {
+      operating_company_id: storageCompanyId,
+      received_entity: company.code,
+      received: allRows.length,
     });
-    return reply.code(200).send({ ok: true, status: "ignored_flag_off", received: rows.length, arrived_at: arrivedAt });
+    return reply.code(200).send({ ok: true, status: "ignored_flag_off", received: allRows.length, arrived_at: arrivedAt });
+  }
+
+  // RELAY DATE LAW (owner): a fill dated before 2026-08-03 is TRANSPORTATION's history on the shared key and is never
+  // stored under USMCA -- refused by name here (response + audit), never silently counted as "skipped".
+  const { keep: rows, beforeFloor } = splitRelayRowsAtUsmcaFloor(allRows, storageCompanyId);
+  await audit(storageCompanyId, "integrations.relay_fuel_webhook_received", "info", {
+    operating_company_id: storageCompanyId,
+    received_entity: company.code,
+    received: allRows.length,
+    refused_before_usmca_floor: beforeFloor,
+  });
+  if (rows.length === 0) {
+    return reply.code(200).send({
+      ok: true,
+      status: "refused_before_usmca_floor",
+      received: allRows.length,
+      upserted: 0,
+      refused_before_usmca_floor: beforeFloor,
+      arrived_at: arrivedAt,
+    });
   }
 
   const dates = rows
@@ -142,7 +206,7 @@ async function handleRelayWebhook(req: FastifyRequest, reply: FastifyReply) {
     .sort();
   const today = arrivedAt.slice(0, 10);
   const stats = await withLuciaBypass((client) =>
-    ingestForCompany(client, req, company.id, dates[0] ?? today, dates[dates.length - 1] ?? today, company.code, {
+    ingestForCompany(client, req, storageCompanyId, dates[0] ?? today, dates[dates.length - 1] ?? today, storageCode, {
       // ingestForCompany parses every row itself (parseRelayFuelTransactionRow): it skips a row with no id/timestamp
       // and REJECTS (named reason, audited, nothing stored) a row whose money field is not a dollar string.
       preloaded: rows as unknown as RelayFuelTransaction[],
@@ -157,11 +221,12 @@ async function handleRelayWebhook(req: FastifyRequest, reply: FastifyReply) {
   return reply.code(200).send({
     ok: true,
     status: stats.rejected.length > 0 ? "ingested_with_rejected_rows" : "ingested",
-    received: rows.length,
+    received: allRows.length,
     upserted: stats.upserted,
     skipped: stats.skipped,
     rejected: stats.rejected.length,
     rejected_rows: stats.rejected.slice(0, 50),
+    refused_before_usmca_floor: beforeFloor,
     arrived_at: arrivedAt,
   });
 }
