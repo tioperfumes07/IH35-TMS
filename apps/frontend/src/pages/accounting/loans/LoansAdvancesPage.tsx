@@ -29,6 +29,8 @@ import { LoanApplicationWizard } from "./LoanApplicationWizard";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { formatUsdCents } from "../../../lib/money";
 import { SelectCombobox } from "../../../components/Combobox";
+import { formatAccountDisplayLabel } from "../../../lib/show-account-numbers";
+import { useShowAccountNumbers } from "../../../lib/useShowAccountNumbers";
 
 const DIRECTIONS: Array<{ value: "" | LoanDirection; label: string }> = [
   { value: "", label: "All directions" },
@@ -57,6 +59,7 @@ function money(cents: number | null | undefined): string {
 export function LoansAdvancesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [showAccountNumbers] = useShowAccountNumbers();
   const [direction, setDirection] = useState<"" | LoanDirection>("");
   // U12 (owner UI register 2026-10-03) — status is a multi-select; none picked = every live status (reversed hidden).
   const [status, setStatus] = useState<LoanStatus[]>([]);
@@ -212,7 +215,10 @@ export function LoansAdvancesPage() {
                     kind="account"
                     id={r.account_id}
                     label={entityLabel(
-                      r.account_number ? `${r.account_number} ${r.account_name ?? ""}`.trim() : r.account_name,
+                      formatAccountDisplayLabel(
+                        { account_name: r.account_name, account_number: r.account_number },
+                        { showNumber: showAccountNumbers },
+                      ),
                       r.account_id,
                       "Account",
                     )}

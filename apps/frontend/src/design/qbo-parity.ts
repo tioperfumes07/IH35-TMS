@@ -99,5 +99,7 @@ export const QBO_BANKING_ACTIONS = {
   /** B-3 §20 expand radio — QBO full wording. */
   recordAsTransfer: "Record as transfer",
   recordCcPayment: "Record as credit card payment",
+  /** ROUND 443.22-2a — opens LoanApplicationWizard (never silent-mints). */
+  loan: "Loan",
   findOtherMatches: "Find other matches",
 } as const;

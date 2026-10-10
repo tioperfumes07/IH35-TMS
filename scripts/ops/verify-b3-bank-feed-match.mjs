@@ -88,14 +88,16 @@ function main() {
   assertIncludes(feed, '["match", QBO_BANKING_ACTIONS.match]', FEED);
   assertIncludes(feed, '["transfer", QBO_BANKING_ACTIONS.recordAsTransfer]', FEED);
   assertIncludes(feed, '["cc_payment", QBO_BANKING_ACTIONS.recordCcPayment]', FEED);
+  assertIncludes(feed, '["loan", QBO_BANKING_ACTIONS.loan]', FEED);
   assertIncludes(feed, "QBO_BANKING_ACTIONS.findOtherMatches", FEED);
   assertIncludes(feed, "1 match found", FEED);
-  assertIncludes(feed, 'mode: "match" | "categorize" | "transfer" | "cc_payment"', FEED);
+  assertIncludes(feed, 'mode: "match" | "categorize" | "transfer" | "cc_payment" | "loan"', FEED);
 
   assertIncludes(tokens, 'categorize: "Categorize"', TOKENS);
   assertIncludes(tokens, 'recordTransfer: "Record transfer"', TOKENS);
   assertIncludes(tokens, 'recordAsTransfer: "Record as transfer"', TOKENS);
   assertIncludes(tokens, 'recordCcPayment: "Record as credit card payment"', TOKENS);
+  assertIncludes(tokens, 'loan: "Loan"', TOKENS);
   assertIncludes(tokens, 'findOtherMatches: "Find other matches"', TOKENS);
 
   // BANK-F91064 — MatchDrawer body/actions use locked text-xs (12px), not off-scale text-[11px].

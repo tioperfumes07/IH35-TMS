@@ -26,9 +26,6 @@
     "pages/accounting/PrepaidExpensesPage.tsx": {
       "count": 1
     },
-    "pages/accounting/loans/LoanApplicationWizard.tsx": {
-      "count": 1
-    },
     "pages/banking/CategorizationRulesPage.tsx": {
       "count": 2
     },
