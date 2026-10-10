@@ -2773,7 +2773,11 @@ export function BankingTransactionsDesignView({
                 ["match", QBO_BANKING_ACTIONS.match],
                 ["transfer", QBO_BANKING_ACTIONS.recordAsTransfer],
                 ["cc_payment", QBO_BANKING_ACTIONS.recordCcPayment],
-                ["loan", QBO_BANKING_ACTIONS.loan],
+                // ROUND 443.22-2d — money OUT = Apply repayment; money IN = Loan funding.
+                [
+                  "loan",
+                  tx.is_credit ? QBO_BANKING_ACTIONS.loan : QBO_BANKING_ACTIONS.applyRepayment,
+                ],
               ] as const
             ).map(([modeId, label]) => (
               <label
@@ -2808,7 +2812,9 @@ export function BankingTransactionsDesignView({
                           : modeId === "cc_payment"
                             ? "CC Payment"
                             : modeId === "loan"
-                              ? QBO_BANKING_ACTIONS.loan
+                              ? tx.is_credit
+                                ? QBO_BANKING_ACTIONS.loan
+                                : QBO_BANKING_ACTIONS.applyRepayment
                               : tx.is_credit
                                 ? "Money in"
                                 : "Money out",
@@ -4560,7 +4566,7 @@ export function BankingTransactionsDesignView({
           onDataChanged();
         }}
       />
-      {/* ROUND 443.22-2a — ONE WRITER: existing LoanApplicationWizard; rate defaults to 4% APR, confirm every time. */}
+      {/* ROUND 443.22-2a/2d — ONE WRITER: credit → bank_funding Loan; debit → bank_repayment Apply (overpay stop). */}
       <LoanApplicationWizard
         open={Boolean(loanModalTx)}
         operatingCompanyId={companyId}
@@ -4578,7 +4584,8 @@ export function BankingTransactionsDesignView({
                 bank_transaction_id: loanModalTx.id,
                 interest_rate_pct: BANK_LOAN_DEFAULT_INTEREST_PCT,
                 interest_method: "simple",
-                target_type: "bank_funding",
+                // Credit = person funds company; debit = company pays person back (never bank_funding out).
+                target_type: loanModalTx.is_credit ? "bank_funding" : "bank_repayment",
               }
             : null
         }

@@ -43,8 +43,11 @@ export function staticProblems(srcs) {
     errors.push('F1: qbo-parity missing QBO_BANKING_ACTIONS.loan = "Loan"');
   }
 
-  // F2 — DesignView Loan radio + wizard mount
-  if (!designView.includes('["loan", QBO_BANKING_ACTIONS.loan]')) {
+  // F2 — DesignView Loan radio + wizard mount (2d: debit labels Apply repayment via same modeId)
+  if (
+    !designView.includes('["loan", QBO_BANKING_ACTIONS.loan]') &&
+    !(designView.includes('"loan"') && designView.includes("QBO_BANKING_ACTIONS.loan") && designView.includes("QBO_BANKING_ACTIONS.applyRepayment"))
+  ) {
     errors.push("F2: BankingTransactionsDesignView must expose Loan expand radio");
   }
   if (!designView.includes("banking-expand-mode-${modeId}") || !designView.includes('modeId === "loan"')) {
@@ -53,8 +56,18 @@ export function staticProblems(srcs) {
   if (!designView.includes("LoanApplicationWizard") || !designView.includes("setLoanModalTx")) {
     errors.push("F2: DesignView must mount LoanApplicationWizard via loanModalTx");
   }
-  if (!designView.includes("BANK_LOAN_DEFAULT_INTEREST_PCT") || !designView.includes('target_type: "bank_funding"')) {
-    errors.push("F2: Loan prefill must seed 4% default + bank_funding target");
+  if (!designView.includes("BANK_LOAN_DEFAULT_INTEREST_PCT")) {
+    errors.push("F2: Loan prefill must seed 4% default interest");
+  }
+  // ROUND 443.22-2d: credit → bank_funding; debit → bank_repayment (still requires bank_funding on credit).
+  if (
+    !designView.includes('"bank_funding"') ||
+    !(
+      designView.includes('target_type: "bank_funding"') ||
+      designView.includes('is_credit ? "bank_funding" : "bank_repayment"')
+    )
+  ) {
+    errors.push("F2: Loan prefill must seed bank_funding on credit (debit may be bank_repayment)");
   }
   if (!designView.includes("bank_transaction_id: loanModalTx.id")) {
     errors.push("F2: Loan prefill must pass bank_transaction_id for reverse pointer");

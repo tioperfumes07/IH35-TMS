@@ -81,6 +81,49 @@ export async function allocateRelatedPartyLoanDisplayId(
 }
 
 /**
+ * ROUND 443.22-2d — open principal on a facility (advanced − repaid). Used to STOP overpay on
+ * bank_repayment / repayment creates. Never invents balance — same rollup math as the register.
+ */
+export async function getFacilityOpenBalanceCents(
+  client: PgClient,
+  companyId: string,
+  facilityId: string
+): Promise<number> {
+  const res = await client.query(
+    `SELECT
+       COALESCE(SUM(
+         CASE
+           WHEN e.status = 'reversed' OR e.deleted_at IS NOT NULL THEN 0
+           WHEN e.document_kind = 'repayment' OR e.target_type IN ('repayment', 'bank_repayment')
+             THEN 0
+           ELSE e.principal_cents
+         END
+       ), 0)::bigint AS principal_advanced_cents,
+       COALESCE(SUM(
+         CASE
+           WHEN e.status = 'reversed' OR e.deleted_at IS NOT NULL THEN 0
+           WHEN e.document_kind = 'repayment' OR e.target_type IN ('repayment', 'bank_repayment')
+             THEN e.principal_cents
+           ELSE 0
+         END
+       ), 0)::bigint AS principal_repaid_cents
+       FROM accounting.related_party_loan_facilities f
+       LEFT JOIN accounting.related_party_loan_entries e
+         ON e.facility_id = f.id AND e.operating_company_id = f.operating_company_id
+      WHERE f.id = $1::uuid
+        AND f.operating_company_id = $2::uuid
+        AND f.deleted_at IS NULL
+        AND f.is_active
+      GROUP BY f.id`,
+    [facilityId, companyId]
+  );
+  if (!res.rows[0]) return 0;
+  const advanced = Number(res.rows[0].principal_advanced_cents ?? 0);
+  const repaid = Number(res.rows[0].principal_repaid_cents ?? 0);
+  return advanced - repaid;
+}
+
+/**
  * Finance → Loans & Advances facility register: one row per person with advanced / repaid / open /
  * accrued interest, entity-scoped.
  */

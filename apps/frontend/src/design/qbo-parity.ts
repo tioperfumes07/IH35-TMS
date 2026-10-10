@@ -99,7 +99,9 @@ export const QBO_BANKING_ACTIONS = {
   /** B-3 §20 expand radio — QBO full wording. */
   recordAsTransfer: "Record as transfer",
   recordCcPayment: "Record as credit card payment",
-  /** ROUND 443.22-2a — opens LoanApplicationWizard (never silent-mints). */
+  /** ROUND 443.22-2a — opens LoanApplicationWizard (never silent-mints). Credit / money-in. */
   loan: "Loan",
+  /** ROUND 443.22-2d — debit / money-out Apply repayment against the person facility (stop if overpay). */
+  applyRepayment: "Apply repayment",
   findOtherMatches: "Find other matches",
 } as const;
