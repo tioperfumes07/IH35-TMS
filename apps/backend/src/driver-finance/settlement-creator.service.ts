@@ -1375,6 +1375,10 @@ export async function postSettlementCreatorInClientTx(
           vendorId: vendor.id,
           vendorDocumentNumber: exp.vendor_document_number?.trim() || undefined,
           loadId,
+          // ROUND 443.6 c — every bill carries the driver, unit and trailer of the settlement it came from.
+          driverId: draft.driver_id,
+          unitId: draft.unit_id ?? null,
+          trailerId: draft.trailer_id ?? null,
           billDate: exp.date,
           amountCents: exp.amount_cents,
           memo: billMemo,
