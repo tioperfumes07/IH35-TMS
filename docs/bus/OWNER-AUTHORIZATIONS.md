@@ -7418,4 +7418,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — load ~/IH35-LEAD-CH
 action: OWNER_AUTH_ID=AUTH-405 DATABASE_URL=<prod> npx tsx apps/backend/scripts/auth405-relay-csv-import.mts --branch=br-fancy-credit-akjnd07a --file=<Relay-All-Transactions-2026-10-10.csv>
 rehearsal: same command on throwaway Neon branch br-delicate-unit-ak8o63r7 (COMMITTED, deleted after): HTTP 200, 259 fuel rows imported, 0 rejected, 126 deposits stored, 26 settled deposits posted, 16 held (2 Jorge personal 0210, 14 card owner not named), 0 refused; 1295 end of day 08-03 1,200.00 · 08-04 2,200.00 · 08-06..08-10 2,600.00
 expires_at: 2026-10-12T04:50:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T05:10:00Z
+consumed_by: CC-2
+row_counts: route HTTP 200 — 259 fuel rows imported, 0 rejected, 126 deposits stored (42 settled): 26 posted as 26 journal entries (Dr 1295 83,800.00 + Dr 5005 2,723.50 = Cr 1000 63,808.50 [17, card 0680] + Cr 2500-00-001 10,118.50 [5, card 5007] + Cr 8000 12,596.50 [4, cards 1354/9708]), 16 HELD (2 Jorge personal 0210 = 7,227.50; 14 card owner not named — cards 1993 0275 3088 7180 9830 1222), 0 refused, 0 held as already-categorized (17 0680 charges have BofA lines in window, none categorized). Identical to the rehearsal.
+proof_query: SELECT account_number, debit_or_credit, count(*), sum(amount_cents) FROM accounting.journal_entry_postings JOIN catalogs.accounts ... WHERE source_transaction_type='relay_deposit' AND operating_company_id=USMCA -> 26 JEs, balanced; 1295 end of day 08-03 1,200.00 · 08-04 2,200.00 · 08-05 2,200.00 · 08-06..08-10 2,600.00
