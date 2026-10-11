@@ -72,6 +72,10 @@ const DOCUMENT_ENGINE_EXEMPT_SOURCE_TYPES = new Set([
   // → Dr expense / Cr bank, docs/specs/qbo-parity/CHAIN-05-BANK-FEED-POSTING-DESIGN.md §3, §10.2 "Categorize = new JE").
   // The bank line is its source document. verify-bank-categorize-posts-chain05-matrix.mjs checks its shape.
   "bank_categorization",
+  // Lead 443.29 b + owner 7:19 PM CT 2026-10-10 ("that is the correct account"): a Relay wallet DEPOSIT is a journal entry
+  // by design (Dr 1295 Relay Fuel Wallet + Dr 5005 Fuel Card Fees for Relay's 3.25% / Cr the funding source). Its source
+  // document is the integrations.relay_deposits row, as the bank line is for bank_categorization (CC-2 AUTH-405).
+  "relay_deposit",
   // Interest earned on Finish is income (Dr bank / Cr income) — never debits 5xxx/6xxx, so it does
   // not hit invariant 1. Service charge MUST be an accounting.expenses document (Lead ruling
   // 2026-10-01 17:20Z); do NOT exempt bank_reconciliation — a bare cost JE from the old poster is
@@ -438,6 +442,19 @@ function runClassifierSelftest() {
     // R-153.7 SCOPE — RED: a fuel_event cost debit with no expense row is STILL caught. The
     // exemption is by source_transaction_type on the posting alone; fuel_event is not in the
     // exempt set, so this must keep failing exactly as before the scope change.
+    {
+      name: "relay_deposit: Dr 1295 + Dr 5005 fee / Cr funding, no expense row — exempt (Lead 443.29 b)",
+      row: {
+        je_id: "test-relay-deposit", memo: "Relay wallet deposit txn_x",
+        postings: [
+          { account_number: "1295", account_type: "Asset", debit_or_credit: "debit", amount_cents: "100000", source_transaction_type: "relay_deposit" },
+          { account_number: "5005", account_type: "Expense", debit_or_credit: "debit", amount_cents: "3250", source_transaction_type: "relay_deposit" },
+          { account_number: "2400", account_type: "Liability", debit_or_credit: "credit", amount_cents: "103250", source_transaction_type: "relay_deposit" },
+        ],
+        has_expense_row: false,
+      },
+      expect: null,
+    },
     {
       name: "fuel_event cost debit, no expense row — NOT exempt, still fails",
       row: {
