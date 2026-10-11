@@ -280,6 +280,12 @@ const createStopBodySchema = z.object({
   stop_type: stopTypeSchema,
   location_id: z.string().uuid().optional(),
   address_line1: z.string().trim().max(300).optional(),
+  // Lead 443.43 (CC-3): a stop added after booking carries what booking writes — the facility as the owner names it and
+  // its zip — so the Samsara address resolver (443.38) can place it. Coordinates when the caller already has them.
+  facility_name: z.string().trim().max(240).optional(),
+  postal_code: z.string().trim().max(20).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
   city: z.string().trim().max(120).optional(),
   state: z.string().trim().max(120).optional(),
   country: z.string().trim().max(120).optional(),
@@ -2015,11 +2021,13 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             INSERT INTO mdata.load_stops (
               load_id, sequence_number, stop_type, location_id, address_line1, city, state, country,
               scheduled_arrival_at, scheduled_departure_at, actual_arrival_at, actual_departure_at,
-              actual_arrival_source, actual_departure_source, status, notes
+              actual_arrival_source, actual_departure_source, status, notes,
+              facility_name, postal_code, latitude, longitude
             ) VALUES (
               $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
               CASE WHEN $11::timestamptz IS NULL THEN NULL ELSE 'manual' END,
-              CASE WHEN $12::timestamptz IS NULL THEN NULL ELSE 'manual' END,$13,$14
+              CASE WHEN $12::timestamptz IS NULL THEN NULL ELSE 'manual' END,$13,$14,
+              $15,$16,$17,$18
             )
             RETURNING
               id, load_id, sequence_number, stop_type, location_id, address_line1, city, state, country,
@@ -2040,6 +2048,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             b.actual_departure_at ?? null,
             b.status,
             b.notes ?? null,
+            b.facility_name ?? null,
+            b.postal_code ?? null,
+            b.latitude ?? null,
+            b.longitude ?? null,
           ]
         );
         const row = res.rows[0];

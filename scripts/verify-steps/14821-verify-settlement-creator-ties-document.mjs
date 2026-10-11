@@ -50,5 +50,7 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-no.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-multistop.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-multistop.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-stop-add-carries-facility.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-stop-add-carries-facility.mjs"]);
   },
 };
