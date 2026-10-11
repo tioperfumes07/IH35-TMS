@@ -224,7 +224,7 @@ export type SettlementCreatorJeLine = {
   debit_cents: number;
   credit_cents: number;
   memo: string;
-  section: "fuel" | "expense" | "mileage" | "accessorial" | "advance" | "escrow" | "deduction" | "reimbursement" | "invoice" | "factoring" | "admin_fee" | "other";
+  section: "fuel" | "expense" | "mileage" | "accessorial" | "advance" | "escrow" | "deduction" | "reimbursement" | "invoice" | "factoring" | "admin_fee" | "other" | "posted";
 };
 
 /** ROUND 326 item 18 — the close engine's figures for this settlement (the ONE calculator Post writes with). */

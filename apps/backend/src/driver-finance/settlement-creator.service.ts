@@ -892,7 +892,9 @@ export async function postSettlementCreatorInClientTx(
   client: DbClient,
   actorUserId: string,
   draft: SettlementCreatorDraft,
-  opts: { dryRun?: boolean } = {},
+  /** R14 — rehearsal: the preview runs THIS post (no other code path) in a savepoint it rolls back. Only the up-front
+   *  can_post refusal is skipped, so every engine refusal is reached and reported. */
+  opts: { rehearsal?: boolean } = {},
 ): Promise<SettlementCreatorPostResult> {
   // ROUND 443.7 a (Option A) — the Creator closes the settlement itself through the pay-run close; the load-bookended
   // settlement ping (open on in_transit, close on delivery) steps aside for the rest of this transaction.
@@ -900,7 +902,7 @@ export async function postSettlementCreatorInClientTx(
   const preview = await previewSettlementCreator(client, draft);
   // A dry run (previewSettlementCreatorThroughClose) writes the settlement inside a savepoint the caller rolls
   // back, so the posting engine can compute the totals the owner checks — it never refuses on the preview.
-  if (!preview.can_post && !opts.dryRun) {
+  if (!preview.can_post && !opts.rehearsal) {
     throw new SettlementCreatorError("preview_blocked", preview.blockers.join(" · ") || "Post blocked");
   }
 
@@ -1707,7 +1709,6 @@ export async function postSettlementCreatorInClientTx(
     }
 
     // Invoices do not change driver pay; a dry run (rolled back) never mints or sends one.
-    if (opts.dryRun) continue;
     // The load is delivered per the signed settlement: move it there through dispatch's ONE transition engine (graph
     // check, departure stamp, driver-bill mint, revenue latch), never a status UPDATE. Real posts only: a dry run
     // rolls back, and dispatch queues its revenue latch after commit. Invoice send refuses an
@@ -1791,9 +1792,6 @@ export async function postSettlementCreatorInClientTx(
       throw err;
     }
     closeTotals = toCreatorCloseTotals(closePreview);
-    if (opts.dryRun) {
-      return dryRunResult(settlementId, displayId, sourceDocumentRef, preview, closeTotals);
-    }
     const draftNet = Math.round(Number(draft.pdf_driver_net_cents));
     if (closeTotals.net_cents !== draftNet || closeTotals.net_cents !== preview.driver_net_cents) {
       throw new SettlementCreatorError(
@@ -1814,8 +1812,6 @@ export async function postSettlementCreatorInClientTx(
       throw err;
     }
     if (closed.journal_entry_id) journalEntryIds.push(closed.journal_entry_id);
-  } else if (opts.dryRun) {
-    return dryRunResult(settlementId, displayId, sourceDocumentRef, preview, null);
   }
 
   await appendCrudAudit(
@@ -1883,31 +1879,9 @@ function toCreatorCloseTotals(r: SettlementPayRunResult): SettlementCreatorClose
   };
 }
 
-function dryRunResult(
-  settlementId: string,
-  displayId: string,
-  sourceDocumentRef: string | null,
-  preview: SettlementCreatorPreview,
-  closeTotals: SettlementCreatorCloseTotals | null,
-): SettlementCreatorPostResult {
-  return {
-    settlement_id: settlementId,
-    source_document_ref: sourceDocumentRef ?? displayId,
-    display_id: displayId,
-    load_ids: [],
-    expense_ids: [],
-    fuel_transaction_ids: [],
-    advance_ids: [],
-    journal_entry_ids: [],
-    invoice_ids: [],
-    preview,
-    close_totals: closeTotals,
-  };
-}
-
 /**
  * ROUND 326 item 18 — the creator's preview, with its totals computed by the POSTING engine. Writes the settlement
- * exactly as Post would (same function, dryRun) inside a savepoint, asks the close engine for the breakdown, then
+ * exactly as Post would (R14: the SAME post, rehearsal) inside a savepoint, asks the close engine for the breakdown, then
  * rolls the savepoint back: nothing persists, and the numbers the owner checks against AlwaysTrack are the numbers
  * Post writes. A refusal by either path comes back as a named blocker.
  */
@@ -1924,13 +1898,40 @@ export async function previewSettlementCreatorThroughClose(
   await client.query("SAVEPOINT settlement_creator_dry_run");
   let closeTotals: SettlementCreatorCloseTotals | null = null;
   let refusal: string | null = null;
+  let postedLines: SettlementCreatorJeLine[] | null = null;
+  // R14 — the rehearsal runs the real post, invoice send included; its customer email is queued on this transaction
+  // only when the transaction is scoped to the company (invoice-send.service.ts), so refuse to rehearse otherwise.
+  const scope = (await client.query<{ c: string | null }>(`SELECT current_setting('app.operating_company_id', true) AS c`)).rows[0]?.c;
+  if (scope !== draft.operating_company_id) {
+    return { ...preview, blockers: [...preview.blockers, "Preview is not scoped to this company — the rehearsal did not run."], can_post: false };
+  }
   try {
     // ROUND 443.7 a — the dry run books the draft's loads exactly as the post does (bookLoadOnClient, same checks),
     // inside this savepoint, which is rolled back: before this the preview looked up loads that did not exist yet,
     // so a new settlement could never show can_post. Nothing here survives; no after-book extra runs.
     await ensureDispatchedLoadsForCreator(client, { uuid: actorUserId, role: actorRole }, draft);
-    const dry = await postSettlementCreatorInClientTx(client, actorUserId, draft, { dryRun: true });
-    closeTotals = dry.close_totals ?? null;
+    const posted = await postSettlementCreatorInClientTx(client, actorUserId, draft, { rehearsal: true });
+    closeTotals = posted.close_totals ?? null;
+    // R14 — report exactly what the post wrote: every journal line created in this transaction for the company,
+    // by account, read back before the rollback (never a projection that can drift from the post).
+    const written = await client.query<{ je: string; memo: string | null; account_number: string | null; account_name: string; debit_or_credit: string; amount_cents: string }>(
+      `SELECT je.id::text AS je, je.memo, a.account_number, a.account_name, p.debit_or_credit, p.amount_cents::text
+         FROM accounting.journal_entry_postings p
+         JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+         JOIN catalogs.accounts a ON a.id = p.account_id
+        WHERE je.operating_company_id = $1::uuid AND je.created_at = now()
+        ORDER BY je.created_at, je.id, p.debit_or_credit DESC`,
+      [draft.operating_company_id],
+    );
+    postedLines = written.rows.map((r) => ({
+      load_number: null,
+      account_number: r.account_number,
+      account_name: r.account_name,
+      debit_cents: r.debit_or_credit === "debit" ? Number(r.amount_cents) : 0,
+      credit_cents: r.debit_or_credit === "credit" ? Number(r.amount_cents) : 0,
+      memo: r.memo ?? "",
+      section: "posted",
+    }));
   } catch (err) {
     refusal = err instanceof Error ? err.message : String(err);
   } finally {
@@ -1949,7 +1950,20 @@ export async function previewSettlementCreatorThroughClose(
       blockers.push(`Posting engine NET ${dollarsFromCents(closeTotals.net_cents)} ≠ the creator's sections ${dollarsFromCents(preview.driver_net_cents)}.`);
     }
   }
-  return { ...preview, close_totals: closeTotals, blockers, can_post: preview.can_post && blockers.length === preview.blockers.length };
+  const lines = postedLines ?? preview.je_lines;
+  const debit = lines.reduce((n, l) => n + l.debit_cents, 0);
+  const credit = lines.reduce((n, l) => n + l.credit_cents, 0);
+  if (postedLines && debit !== credit) blockers.push(`Posting engine wrote unbalanced lines (Dr ${debit} ≠ Cr ${credit}).`);
+  return {
+    ...preview,
+    je_lines: lines,
+    debit_total_cents: debit,
+    credit_total_cents: credit,
+    balanced: debit === credit,
+    close_totals: closeTotals,
+    blockers,
+    can_post: preview.can_post && blockers.length === preview.blockers.length,
+  };
 }
 
 /**
