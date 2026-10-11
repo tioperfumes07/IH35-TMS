@@ -367,5 +367,12 @@ export async function searchAddress(query: string, maxResults = 5): Promise<Addr
   const usable = viaPlaces.filter((r) => r.address_line1 || r.zip);
   if (usable.length > 0) return usable.slice(0, maxResults);
   const viaGeocode = await geocode(query, maxResults, cfg.apiKey);
-  return viaGeocode.filter((r) => r.address_line1 || r.zip);
+  const geoUsable = viaGeocode.filter((r) => r.address_line1 || r.zip);
+  if (geoUsable.length > 0) return geoUsable;
+  // 443.62 #5: a typed CITY ("Laredo, TX") resolves to the locality itself — no street, no zip — and the two filters
+  // above returned [] for every city. When nothing street- or zip-level exists, return the city / state rows (the
+  // dispatcher typed a city). Street-only callers (the stop resolver's place step) still require a house-numbered street.
+  const city = (rows: AddressResult[]) => rows.filter((r) => r.city && r.state && r.lat != null && r.lon != null);
+  const cities = city(viaGeocode).length > 0 ? city(viaGeocode) : city(viaPlaces);
+  return cities.slice(0, maxResults);
 }
