@@ -112,6 +112,26 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Active Architectural Decisions
 
+### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
+
+- **Option 2 (owner):** backfill papers an RPL facility from existing bank categorizations via
+  `createRelatedPartyLoanEntry` only — document + reverse bank pointer. **No JE rewrite.** GL stays
+  on the bank cats. Interest 400 bps (4.00%).
+- **Scentsx LIVE:** facility `161616ff-f570-4327-9e01-7f81d8cff0e0` / CoA `2410-00-002`
+  (`7e755038-8385-4453-8934-fef604656471`). 9 entries (8 bank_funding + 1 bank_repayment 07-22
+  $2,000). Open = advanced $13,450 − repaid $2,000 = **$11,450.00**. 9 bank
+  `matched_related_party_loan_id` links. Ops:
+  `scripts/ops/r44322-2f-scentsx-option2-backfill.ts` (Rule 53 one txn; `--execute` + `--expect-host`).
+  Guard 18374.
+- **HOLD:** Jorge `2410-00-001` and Tio Perfumes 2 `2410-00-003` until debit-balance ruling + CC-2
+  Relay `paid_direct_vendor` deposits. Laura `2410-00-004` = 0 live lines.
+- **CC-2 callable writer (merged #26257):** `createPaidDirectVendorAdvance` in
+  `apps/backend/src/accounting/related-party-loan-posting/create-entry.service.ts`. Cards **0210 /
+  6248** (Jorge personal) and **9855** (Tio) → this writer. Card **5007 Amex Scentsx is NOT a loan**
+  — credits Amex Credit Card Payable `2500-00-001`. Never pass a company `bank_transaction_id` into
+  paid_direct (fail closed).
+- Card map (owner): 0680=USMCA BoA; 9708/1354/4823=Laura Transportation → 8000 (not USMCA RPL).
+
 ### Active Architectural Decisions — Bank Categorize = CoA Category like QBO (Cursor, Martin audit, 2026-10-09)
 
 - **Live audit (USMCA, last 3d categorized):** 66 bank_transactions status=categorized; **0 missing JE**;
