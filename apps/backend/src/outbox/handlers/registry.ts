@@ -25,6 +25,7 @@ import { AuthEmailVerificationHandler } from "./auth-email-verification.handler.
 import { IdentityUserPasswordSetupHandler } from "./identity-user-password-setup.handler.js";
 import { OnboardingTeamInviteHandler } from "./onboarding-team-invite.handler.js";
 import { IdentityPasswordResetEmailHandler } from "./identity-password-reset-email.handler.js";
+import { DispatchRelearnLoadMilesHandler } from "./dispatch-relearn-load-miles.handler.js";
 import { LegalAttorneyDecisionEmailHandler } from "./legal-attorney-decision-email.handler.js";
 import { LegalContractSignEmailHandler } from "./legal-contract-sign-email.handler.js";
 import { LegalContractVerificationEmailHandler } from "./legal-contract-verification-email.handler.js";
@@ -134,6 +135,7 @@ export function buildOutboxHandlerRegistry() {
     new SamsaraMasterDataPushHandler(),
     new SamsaraCreateGeofenceHandler(),
     new SamsaraUpdateGeofenceHandler(),
+    new DispatchRelearnLoadMilesHandler(),
     new FmcsaCustomerVerifyHandler(),
     new DispatchOverrideNoticeHandler(),
     new DispatchDistributionFailureHandler(),
