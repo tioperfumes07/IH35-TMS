@@ -114,6 +114,7 @@ const TARGET_TYPES: LoanTargetType[] = [
   "bank_funding",
   "bank_repayment",
   "paid_direct_vendor",
+  "party_transfer_out",
 ];
 
 /** Human labels for purpose — operators never see underscores (00-IH35-LAW plain English). */
@@ -128,6 +129,7 @@ const TARGET_TYPE_LABELS: Record<LoanTargetType, string> = {
   bank_funding: "Bank funding",
   bank_repayment: "Bank repayment",
   paid_direct_vendor: "Paid directly to a vendor",
+  party_transfer_out: "Party transfer out",
 };
 
 /** Owner / ROUND 443.22 default annual rate when seeding from bank Categorize → Loan. */
