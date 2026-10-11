@@ -4,6 +4,7 @@
 // is itself a settlement-scoped LINE item — the settlement HEADER posts the one aggregate balanced
 // JE at finalize via settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry) -- CORRECTED 2026-09-02: postSettlementToGl was RETIRED (SET-01, 2026-07-26), never live in prod (verified 2026-09-02, C6).
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { milesTimesRateCents } from "./deadhead-rule.js";
 import { validateLoadStatusTransition } from "../dispatch/load-state-machine.js";
 import { resolveSettlementMinNet } from "./settlement-deduction-cap.service.js";
 import { forfeitDriverEscrowOnClient } from "./escrow-forfeit.service.js";
@@ -128,7 +129,7 @@ export function computeAbandonmentChargeback(input: {
   const deadheadCost =
     input.deadhead_cost_cents !== undefined && input.deadhead_cost_cents !== null
       ? Math.max(0, Math.round(Number(input.deadhead_cost_cents) || 0))
-      : Math.round(miles * deadheadRate);
+      : milesTimesRateCents(miles, deadheadRate); // ROUND 443.33: the one money rule
 
   const premiumPct = Number(input.defaults.default_replacement_premium_pct ?? FALLBACK_ABANDONMENT_DEFAULTS.default_replacement_premium_pct) || 0;
   const rateTotal = Math.max(0, Math.round(Number(input.rate_total_cents) || 0));
