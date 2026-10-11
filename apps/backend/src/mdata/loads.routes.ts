@@ -36,6 +36,22 @@ import {
 import { planCreateStatus, type WideLoadStatus } from "./loads-create-status.js";
 import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
 import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
+import { geocodeStopsWithClient } from "../telematics/stops-geocode-backfill.service.js";
+import { relearnLoadStopLegs } from "../dispatch/load-lane-learning.service.js";
+
+/**
+ * Lead 443.43 (CC-3, with CC-2 #26313): a stop added or moved after booking changes the load's legs. In the SAME
+ * transaction: resolve the load's stops to their Samsara address / coordinates (443.38, reresolve), then recompute every
+ * non-first leg (relearnLoadStopLegs — keeps owner-typed legs and the first-stop deadhead, never re-counts a lane).
+ */
+async function relearnStopsAfterEdit(client: PoolClient, actorUserId: string, operatingCompanyId: string, loadId: string) {
+  const geocode = await geocodeStopsWithClient(client as never, actorUserId, operatingCompanyId, loadId, { reresolve: true });
+  const legs = await relearnLoadStopLegs(client as never, { operatingCompanyId, loadId, actorUserId });
+  return { geocode, legs };
+}
+
+/** A PATCH that moves a stop or changes where it is re-derives the legs; a status / note / time edit does not. */
+const STOP_LEG_FIELDS = ["sequence_number", "stop_type", "address_line1", "facility_name", "city", "state", "postal_code", "latitude", "longitude", "location_id"];
 import {
   ACTIVE_UNIT_STATUSES,
   UnitAlreadyActiveOnLoadError,
@@ -2070,6 +2086,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           "info",
           "BT-3-LOADS-SCHEMA"
         );
+        const stopLegs = await relearnStopsAfterEdit(client as PoolClient, authUser.uuid, scopedCompanyId, String(row.load_id));
         const pickupMint = await mintProformaInvoiceOnFirstPickup(client, {
           operatingCompanyId: scopedCompanyId,
           loadId: String(row.load_id),
@@ -2080,7 +2097,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           pickupMint.outcome === "minted" || pickupMint.outcome === "idempotent"
             ? pickupMint.invoice
             : null;
-        return { ...row, proforma_invoice: proformaInvoice };
+        return { ...row, proforma_invoice: proformaInvoice, stop_legs: stopLegs };
       });
 
       if (!created) return reply.code(404).send({ error: "mdata_load_not_found" });
@@ -2221,6 +2238,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           );
         }
 
+        const stopLegs = STOP_LEG_FIELDS.some((f) => f in (b as Record<string, unknown>))
+          ? await relearnStopsAfterEdit(client as PoolClient, authUser.uuid, scopedCompanyId, String(row.load_id))
+          : null;
+
         const pickupMint = await mintProformaInvoiceOnFirstPickup(client, {
           operatingCompanyId: scopedCompanyId,
           loadId: String(row.load_id),
@@ -2232,7 +2253,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             ? pickupMint.invoice
             : null;
 
-        return { ...row, proforma_invoice: proformaInvoice };
+        return { ...row, proforma_invoice: proformaInvoice, stop_legs: stopLegs };
       });
 
       if (!updated) return reply.code(404).send({ error: "mdata_load_stop_not_found" });
