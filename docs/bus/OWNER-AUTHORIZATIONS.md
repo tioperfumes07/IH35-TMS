@@ -7500,3 +7500,13 @@ action: OWNER_AUTH_ID=AUTH-411 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-1
 rehearsal: throwaway br-ancient-sea-akm9yugn (COMMITTED, deleted): 65 Relay-fill entries, 65 documents created, 0 refused; JEs 1,054 / postings 2,597 / trial balance 0 unchanged; verify-costs-are-expenses-not-handwritten-jes LIVE PASS (0 violations); 5000 GL vs expense lines gap 33,026.28 -> 30.00 (the 30.00 = three driver bills 13597 / 13579 / 13582 with a $10 fuel line on 5000 — bills, not Relay)
 expires_at: 2026-10-12T06:40:11Z
 status: OPEN
+
+## AUTH-410
+issued_at: 2026-10-11T06:00:00Z
+issued_by: Lead ruling 443.40: "put entity = vendor Relay on the 1295 and 5005 lines in D6". Recorded by CC-2 in the PR that ships the script, as with AUTH-404..409
+owner_quotes: "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — accounting.journal_entry_postings with source_transaction_type 'relay_deposit' on the Relay Fuel Wallet (role fuel_wallet_relay) and 5005 Fuel Card Fees: entity_uuid / entity_type filled ONCE where NULL with the one active vendor named Relay ("Relay Purchases"). Funding legs untouched. No amount / account / side / JE change; trial balance + count asserted. No DELETE.
+action: OWNER_AUTH_ID=AUTH-410 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-40-relay-deposit-entity.ts --apply
+rehearsal: throwaway br-tiny-darkness-ak6eitry (COMMITTED, deleted): 52 filled (1295: 26, 5005: 26), trial balance 0 across 1,026 postings unchanged
+expires_at: 2026-10-12T06:00:00Z
+status: OPEN
