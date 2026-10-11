@@ -666,7 +666,9 @@ export async function createDriverCashAdvanceCore(
 
   // LEAD RULING (OPTION 1) on owner 9:44 / 9:46 PM CT 2026-10-10: a HISTORICAL advance applied to its load's driver bill
   // (B5) is disbursed in the ledger at Creator post — Dr the driver's own advance sub-account / Cr the company's existing
-  // cash-clearing role account (1090 "Undeposited Funds" in USMCA): not a bank, not A/P. The owner's manual Banking match of
+  // driver NET-PAY CLEARING role account (2170 "Driver Net-Pay Clearing" in USMCA, a liability): not a bank, not A/P.
+  // NOT 1090 Undeposited Funds: an asset may not hold a credit balance (deferred guard, measured by CC-3 on prod HEAD:
+  // "1090 would hold a credit balance of -148.00"). 2170 is where driver pay waits for its bank payment already. The owner's manual Banking match of
   // the wire / check clears it to the bank. Without this posting v_driver_advance_balances reads the advance as 0
   // outstanding and the close cannot recover it (measured: 5775 net 1,334.40 vs TOTAL DUE 1,186.40). The one driver_advance
   // builder posts it (credit override), behind DRIVER_ADVANCE_GL_POSTING_ENABLED like a live disbursement.
@@ -679,7 +681,7 @@ export async function createDriverCashAdvanceCore(
       [companyId, advanceId, body.historical_posting_date ?? null]
     );
     if (await isEnabled(client as never, "DRIVER_ADVANCE_GL_POSTING_ENABLED", { operating_company_id: companyId, user_uuid: actorUserUuid })) {
-      const clearing = await resolveRoleAccount(client as never, companyId, "cash_clearing");
+      const clearing = await resolveRoleAccount(client as never, companyId, "driver_payroll_clearing");
       await postSourceTransactionInClientTx(
         client as never,
         { operating_company_id: companyId, source_transaction_type: "driver_advance", source_transaction_id: advanceId, credit_account_id: clearing },
