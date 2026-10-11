@@ -7431,5 +7431,13 @@ owner_quotes: owner order 2026-10-11 00:25 CT (stop addresses + miles saved for 
 scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — loads booked since 2026-10-11T00:00Z with a stop whose leg_miles is NULL, through learnLoadLanes (apps/backend/src/dispatch/load-lane-learning.service.ts, the booking engine's own module): mdata.load_stops.leg_miles filled once where NULL; catalogs.lane_mileage running stats on the load's lane (update or create); catalogs.point_mileage (engine load_document, ON CONFLICT DO NOTHING); mdata.customer_lanes created when missing (load with a rate). No DELETE. No money. TRANSPORTATION / TRUCKING not touched.
 action: OWNER_AUTH_ID=AUTH-408 DATABASE_URL=<prod> npx tsx apps/backend/scripts/auth408-backfill-load-lanes.mts --branch=br-fancy-credit-akjnd07a --apply
 rehearsal: throwaway br-sparkling-grass-aktgy39p (COMMITTED, deleted): 24 loads, 38 legs filled (24 delivery legs + 14 known deadheads), stops after the first with leg_miles NULL 24 -> 0, 10 first stops stay NULL (deadhead unknown, never 0); lane_mileage 23 updated + 1 created; point_mileage 23; customer_lanes 14 created, 10 listed (load has no rate); re-run = no-op; verify-booked-loads-save-miles PASS
+
+## AUTH-406
+issued_at: 2026-10-11T05:36:00Z
+issued_by: Lead ruling 443.35 (D6): "(a) fill-once — set entity + load on the 221 postings where NULL, no reclassification. Do it now." Recorded by CC-2 in the PR that ships the script, as with AUTH-404 / AUTH-405
+owner_quotes: "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — accounting.journal_entry_postings of the Settlement Creator documents (invoice, bill, bill_payment, expense, driver_settlement, driver_advance) created since 2026-10-11T00:50Z: entity_uuid/entity_type filled ONCE where NULL through resolvePostingSourceEntity (the writer's own rule), load_id filled ONCE where NULL through accounting.posting_source_load_id. No amount, account, side or JE changes; trial balance and posting count asserted unchanged before COMMIT. No DELETE. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-406 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-d6-backfill-posting-entity.ts --apply
+rehearsal: throwaway br-weathered-block-akkbl55d (COMMITTED, deleted): 317 in scope (221 of the ruling + Creator posts before #26269 went live at 05:00Z), 317 entity filled, 0 unresolved, 0 loads fillable (74 settlement-level aggregates have no single load), trial balance 0 across 1,026 postings unchanged; audit on the 7: ENTITY-ON-POSTINGS PASS on all 7
 expires_at: 2026-10-12T05:36:00Z
 status: OPEN
