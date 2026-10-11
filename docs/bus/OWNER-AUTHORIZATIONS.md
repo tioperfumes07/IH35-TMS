@@ -7684,7 +7684,11 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — #3 executeDriverMer
 action: OWNER_AUTH_ID=AUTH-427 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-53-driver-merges-owner-escrow.ts --apply
 rehearsal: throwaway br-blue-lake-akak6jwm (COMMITTED, deleted): both merged profiles Inactive with merged_into = survivor; repointed incl. mdata.driver_samsara_accounts + integrations.samsara_drivers (each survivor 2 Samsara users, 1 escrow, 1 advance); left on merged ids only history_kept / kept_on_survivor rows; owner 2100-00-011 + 1245-00-011 (0 postings, 0 balance) retired, USMCA links active after 0
 expires_at: 2026-10-12T14:47:07Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T14:45:00Z
+consumed_by: CC-2 (443.53 #3 driver merges + #4 owner sub-accounts)
+row_counts: prod identical to the rehearsal — e6933af3 -> 3e138476 and fc5c88b5 -> a32a35c8 merged (Inactive, merged_into set; Samsara users, fuel reports, vendors, DVIRs repointed); each survivor 2 Samsara users / 1 escrow / 1 advance; owner 2100-00-011 + 1245-00-011 retired (0 postings, 0 balance); owner USMCA active escrow/advance links 0
+proof_query: SELECT merged_into_driver_id FROM mdata.drivers WHERE id IN ('e6933af3-8362-4dae-805c-31ca7b2ca091','fc5c88b5-2f56-409f-a634-adfd507bc659') -> survivors
 
 ## AUTH-429
 issued_at: 2026-10-11T14:58:29Z
