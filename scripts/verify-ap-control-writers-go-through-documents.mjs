@@ -42,6 +42,8 @@ export const READERS = new Set([
   "apps/backend/src/accounting/subledger-gl-control-rec.service.ts",
   "apps/backend/src/accounting/trial-balance.routes.ts",
   "apps/backend/src/driver-finance/driver-bills.routes.ts", // preview of the settlement bill's lines; writes nothing
+  "apps/backend/src/driver-finance/settlement-creator.service.ts", // binds ap_control for expense-card rail validation; posts via settlement AP chain
+  "apps/backend/src/driver-finance/settlement-payrun-close.service.ts", // resolves ap_control before pay-run close; postings are bill payments
   "apps/backend/src/health/ledger-financial-health.checks.ts",
   "apps/backend/src/home/scenario-registry.ts", // scenario JE contracts (text), no writer
   "apps/backend/src/insurance/policy-cancel.service.ts", // audit payload names the intended role; the refund is a vendor credit
