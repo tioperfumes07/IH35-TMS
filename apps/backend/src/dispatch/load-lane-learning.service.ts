@@ -24,8 +24,11 @@
  * FIRST-STOP DEADHEAD (Lead 443.41 G(2)): when the load's document carries no deadhead, stop 1's leg_miles = the miles from the
  * SAME unit's previous load's last stop (the unit's load whose last stop arrived latest strictly BEFORE this load's first stop —
  * by stop dates, never created_at; Creator loads are booked out of order) to this first stop: the mileage engine first
- * (resolvePointMileage — point_mileage cache, then the configured routing provider), else the owner-ruled chain-deadhead
- * method (GO-23: haversine over the two stops' coordinates, chain-deadhead.service.ts) — never written to the routing cache.
+ * (resolvePointMileage — point_mileage cache, then the configured routing provider), then Google routing (driving distance
+ * between the two real points, cached in catalogs.point_mileage with engine 'google'), then the historical lane average
+ * (catalogs.lane_mileage practical miles for the city/state pair) — else NULL with a reason. 443.53 #2 (owner 2026-10-11:
+ * "we are supposed to be using estimates from google, and from estimates ... based on averages"): straight-line (haversine)
+ * miles are never written. Driver PAY miles are not these fields and are never touched (pay = the signed settlement).
  * NULL only when the unit has no previous load (or a stop has no coordinates). load_stops has no leg-miles source column and
  * loads.deadhead_miles_calculation_method's CHECK has no 'computed' value (CC-2 cannot author migrations), so the source
  * ('computed', method, prior load) is recorded on an audit row (dispatch.load_stop.leg_miles_computed). Out of order: after a
@@ -37,7 +40,7 @@
  * NULL leg_miles on that load in the same call — a re-run finds nothing NULL and counts nothing twice.
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { haversineMiles } from "./deadhead/optimizer.service.js";
+import { computeRouteReference, type RouteReferenceResult } from "../integrations/google/routes-api-client.js";
 import { resolvePointMileage } from "./mileage/mileage.service.js";
 import type { MileageProvider } from "./mileage/mileage-provider.js";
 import { OsrmProvider } from "./mileage/osrm.provider.js";
@@ -59,7 +62,10 @@ export type LaneLearningResult = {
   successor_first_stop?: { load_number: string; miles: number | null; reason?: string };
 };
 
-export type DeadheadMethod = "point_mileage_cache" | "routing_provider" | "haversine_chain";
+export type DeadheadMethod = "point_mileage_cache" | "routing_provider" | "google" | "lane_average";
+/** The Google routing call (injectable for tests). Returns null when Google has no route / is not configured. */
+export type RouteFn = (from: { lat: number; lng: number }, to: { lat: number; lng: number }) => Promise<RouteReferenceResult | null>;
+type Place = { city: string | null; state: string | null };
 /** Audit classes that mark a leg as written by this module (so relearnLoadStopLegs may recompute it). */
 export const LEG_LEARNED_EVENT = "dispatch.load_stop.leg_miles_learned";
 export const LEG_COMPUTED_EVENT = "dispatch.load_stop.leg_miles_computed";
@@ -145,25 +151,60 @@ export function nextLaneStats(
   };
 }
 
-/** Engine answer first; the owner-ruled chain-deadhead haversine only when the engine has none. Pure — unit-tested. */
-export function chooseDeadheadMiles(
-  engine: { practical_miles: number | null; source: string; reason?: string },
-  from: { lat: number; lng: number },
-  to: { lat: number; lng: number }
-): { miles: number; method: DeadheadMethod; engine_reason?: string } {
-  if (engine.practical_miles != null) return { miles: round1(engine.practical_miles), method: engine.source === "cache" ? "point_mileage_cache" : "routing_provider" };
-  return { miles: round1(haversineMiles(from.lat, from.lng, to.lat, to.lng)), method: "haversine_chain", engine_reason: engine.reason };
+/**
+ * 443.53 #2 — the miles between two real points, in this order: the mileage engine (point_mileage cache, then the configured
+ * routing provider); Google routing (driving distance), cached into catalogs.point_mileage with engine 'google'; the historical
+ * lane average (catalogs.lane_mileage practical miles, this company, from-city/state -> to-city/state, else the reverse pair);
+ * else NULL with the reasons. Never a straight line.
+ */
+export async function chooseLegMiles(
+  client: Queryable,
+  args: { operatingCompanyId: string; from: { lat: number; lng: number }; to: { lat: number; lng: number }; fromPlace?: Place; toPlace?: Place },
+  provider: MileageProvider = new OsrmProvider(),
+  route: RouteFn = computeRouteReference
+): Promise<{ miles: number; method: DeadheadMethod; engine_reason?: string } | { miles: null; reason: string }> {
+  const engine = await resolvePointMileage(client, provider, args.from, args.to);
+  if (engine.practical_miles != null)
+    return { miles: round1(engine.practical_miles), method: engine.source === "cache" ? "point_mileage_cache" : "routing_provider" };
+  const google = await route(args.from, args.to);
+  if (google && Number.isFinite(google.miles) && google.miles > 0) {
+    await client.query(
+      `INSERT INTO catalogs.point_mileage (origin_lat, origin_lng, dest_lat, dest_lng, practical_miles, shortest_miles, engine, engine_version)
+       VALUES ($1::numeric, $2::numeric, $3::numeric, $4::numeric, $5::numeric, NULL, 'google', 'routes-v2-drive')
+       ON CONFLICT (origin_lat, origin_lng, dest_lat, dest_lng) DO NOTHING`,
+      [round4(args.from.lat), round4(args.from.lng), round4(args.to.lat), round4(args.to.lng), round1(google.miles)]
+    );
+    return { miles: round1(google.miles), method: "google", engine_reason: engine.reason };
+  }
+  const lane = await laneAverageMiles(client, args.operatingCompanyId, args.fromPlace, args.toPlace);
+  if (lane != null) return { miles: round1(lane), method: "lane_average", engine_reason: engine.reason };
+  return { miles: null, reason: `no_google_route_and_no_lane_average${engine.reason ? `:${engine.reason}` : ""}` };
+}
+
+/** The historical lane average (catalogs.lane_mileage, this company) for a city/state pair, either direction. */
+async function laneAverageMiles(client: Queryable, companyId: string, a?: Place, b?: Place): Promise<number | null> {
+  if (!a?.city || !a.state || !b?.city || !b.state) return null;
+  const r = await client.query<{ m: string }>(
+    `SELECT practical_miles::text AS m FROM catalogs.lane_mileage
+      WHERE operating_company_id = $1::uuid AND practical_miles > 0
+        AND ((lower(origin_city) = lower($2) AND upper(origin_state) = upper($3) AND lower(dest_city) = lower($4) AND upper(dest_state) = upper($5))
+          OR (lower(origin_city) = lower($4) AND upper(origin_state) = upper($5) AND lower(dest_city) = lower($2) AND upper(dest_state) = upper($3)))
+      ORDER BY (lower(origin_city) = lower($2)) DESC, n_practical DESC NULLS LAST LIMIT 1`,
+    [companyId, a.city.trim(), a.state.trim(), b.city.trim(), b.state.trim()]
+  );
+  return pos(r.rows[0]?.m);
 }
 
 /** First-stop deadhead for one load from the same unit's previous load (see header). Reads only; the caller writes. */
 export async function computeFirstStopDeadhead(
   client: Queryable,
   args: { operatingCompanyId: string; loadId: string },
-  provider: MileageProvider = new OsrmProvider()
+  provider: MileageProvider = new OsrmProvider(),
+  route: RouteFn = computeRouteReference
 ): Promise<FirstStopDeadhead> {
   const first = (
-    await client.query<{ stop_id: string; unit_id: string | null; lat: number | null; lng: number | null; at: string | null }>(
-      `SELECT s.id::text AS stop_id, l.assigned_unit_id::text AS unit_id, s.latitude::float8 AS lat, s.longitude::float8 AS lng,
+    await client.query<{ stop_id: string; unit_id: string | null; lat: number | null; lng: number | null; at: string | null; city: string | null; state: string | null }>(
+      `SELECT s.id::text AS stop_id, l.assigned_unit_id::text AS unit_id, s.latitude::float8 AS lat, s.longitude::float8 AS lng, s.city, s.state,
               COALESCE(s.actual_arrival_at, s.scheduled_arrival_at, s.appointment_start_at)::text AS at
          FROM mdata.loads l
          JOIN mdata.load_stops s ON s.load_id = l.id AND s.soft_deleted_at IS NULL
@@ -176,11 +217,11 @@ export async function computeFirstStopDeadhead(
   if (!first.unit_id) return { miles: null, reason: "load_has_no_unit", stop_id: first.stop_id };
   if (!first.at) return { miles: null, reason: "first_stop_has_no_date", stop_id: first.stop_id };
   const prior = (
-    await client.query<{ id: string; load_number: string | null; lat: number | null; lng: number | null }>(
-      `SELECT l.id::text, l.load_number::text, ls.latitude::float8 AS lat, ls.longitude::float8 AS lng
+    await client.query<{ id: string; load_number: string | null; lat: number | null; lng: number | null; city: string | null; state: string | null }>(
+      `SELECT l.id::text, l.load_number::text, ls.latitude::float8 AS lat, ls.longitude::float8 AS lng, ls.city, ls.state
          FROM mdata.loads l
          JOIN LATERAL (
-           SELECT x.latitude, x.longitude, COALESCE(x.actual_arrival_at, x.scheduled_arrival_at, x.appointment_start_at) AS at
+           SELECT x.latitude, x.longitude, x.city, x.state, COALESCE(x.actual_arrival_at, x.scheduled_arrival_at, x.appointment_start_at) AS at
              FROM mdata.load_stops x WHERE x.load_id = l.id AND x.soft_deleted_at IS NULL
             ORDER BY x.sequence_number DESC LIMIT 1
          ) ls ON true
@@ -197,8 +238,14 @@ export async function computeFirstStopDeadhead(
     return { miles: null, reason: "previous_last_stop_or_first_stop_not_located", stop_id: first.stop_id, prior_load_id: prior.id };
   const from = { lat: Number(prior.lat), lng: Number(prior.lng) };
   const to = { lat: Number(first.lat), lng: Number(first.lng) };
-  const engine = await resolvePointMileage(client, provider, from, to);
-  return { ...chooseDeadheadMiles(engine, from, to), stop_id: first.stop_id, prior_load_id: prior.id, prior_load_number: prior.load_number };
+  const chosen = await chooseLegMiles(
+    client,
+    { operatingCompanyId: args.operatingCompanyId, from, to, fromPlace: { city: prior.city, state: prior.state }, toPlace: { city: first.city, state: first.state } },
+    provider,
+    route
+  );
+  if (chosen.miles == null) return { miles: null, reason: chosen.reason, stop_id: first.stop_id, prior_load_id: prior.id };
+  return { ...chosen, stop_id: first.stop_id, prior_load_id: prior.id, prior_load_number: prior.load_number };
 }
 
 /** Writes a computed first-stop deadhead where leg_miles is still NULL, with its audit row. Returns the miles written or null. */
@@ -229,6 +276,50 @@ async function fillFirstStopDeadhead(
       "LEAD-443.41-G2"
     );
   return { ...dh, written };
+}
+
+/**
+ * 443.53 #2 — recompute stop 1's first-stop deadhead for one load and OVERWRITE it when the stop's current leg is NULL or was
+ * itself computed by this module (it carries a LEG_COMPUTED_EVENT audit row — e.g. an old straight-line deadhead). A deadhead
+ * the source document printed (no computed audit row) is never overwritten. Planning leg miles only — no pay / settlement
+ * table is read or written. Each overwrite is audited with the old value and the method.
+ */
+export async function recomputeFirstStopDeadhead(
+  client: Queryable,
+  args: { operatingCompanyId: string; loadId: string; actorUserId: string },
+  provider?: MileageProvider,
+  route?: RouteFn
+): Promise<{ stop_id?: string; old: number | null; miles: number | null; method?: DeadheadMethod; written: boolean; reason?: string }> {
+  const dh = await computeFirstStopDeadhead(client, args, provider, route);
+  if (!dh.stop_id) return { old: null, miles: null, written: false, reason: dh.miles == null ? dh.reason : "no_first_stop" };
+  const cur = (
+    await client.query<{ leg: string | null; computed: boolean }>(
+      `SELECT s.leg_miles::text AS leg,
+              EXISTS (SELECT 1 FROM audit.audit_events e WHERE e.event_class = $3 AND e.payload->>'stop_id' = s.id::text) AS computed
+         FROM mdata.load_stops s WHERE s.id = $1::uuid AND s.operating_company_id = $2::uuid`,
+      [dh.stop_id, args.operatingCompanyId, LEG_COMPUTED_EVENT]
+    )
+  ).rows[0];
+  const old = num(cur?.leg);
+  if (dh.miles == null) return { stop_id: dh.stop_id, old, miles: null, written: false, reason: dh.reason };
+  if (old != null && !cur?.computed) return { stop_id: dh.stop_id, old, miles: dh.miles, method: dh.method, written: false, reason: "document_deadhead_kept" };
+  if (old != null && Math.abs(old - dh.miles) < 0.05) return { stop_id: dh.stop_id, old, miles: dh.miles, method: dh.method, written: false, reason: "unchanged" };
+  await client.query(
+    `UPDATE mdata.load_stops SET leg_miles = $1::numeric, updated_at = now() WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
+    [dh.miles, dh.stop_id, args.operatingCompanyId]
+  );
+  await appendCrudAudit(
+    client as never,
+    args.actorUserId,
+    LEG_COMPUTED_EVENT,
+    {
+      operating_company_id: args.operatingCompanyId, load_id: args.loadId, stop_id: dh.stop_id, old_leg_miles: old, leg_miles: dh.miles,
+      source: "computed", method: dh.method, engine_reason: dh.engine_reason ?? null, prior_load_id: dh.prior_load_id, prior_load_number: dh.prior_load_number,
+    },
+    "info",
+    "LEAD-443.53-2"
+  );
+  return { stop_id: dh.stop_id, old, miles: dh.miles, method: dh.method, written: true };
 }
 
 export async function learnLoadLanes(
@@ -526,7 +617,7 @@ export function isModuleOwnedLeg(
 /**
  * Lead 443.43 #3 (multi-stop repair): after stops are added / resequenced on a load, recompute every NON-first stop's leg
  * from the previous stop's coordinates to its own — mileage engine first (resolvePointMileage: point_mileage cache, then the
- * routing provider), else the owner-ruled chain-deadhead haversine (chooseDeadheadMiles); a 2-stop load keeps the module's
+ * routing provider), then Google routing, then the historical lane average (chooseLegMiles) — never a straight line; a 2-stop load keeps the module's
  * rule (delivery leg = the load's loaded miles). Overwrites ONLY legs this module wrote (isModuleOwnedLeg) and NULL legs;
  * never an owner / document leg; never the first-stop deadhead; never lane_mileage / customer_lanes counts. Each change is
  * audited (old -> new, method). Runs on the caller's client (same transaction).
@@ -534,7 +625,8 @@ export function isModuleOwnedLeg(
 export async function relearnLoadStopLegs(
   client: Queryable,
   args: { operatingCompanyId: string; loadId: string; actorUserId: string },
-  provider: MileageProvider = new OsrmProvider()
+  provider: MileageProvider = new OsrmProvider(),
+  route: RouteFn = computeRouteReference
 ): Promise<RelearnLoadStopLegsResult> {
   const out: RelearnLoadStopLegsResult = { changed: [], kept_owner_legs: 0, unresolved: [] };
   const load = (
@@ -590,8 +682,16 @@ export async function relearnLoadStopLegs(
     else if (located) {
       const from = { lat: Number(a.latitude), lng: Number(a.longitude) };
       const to = { lat: Number(b.latitude), lng: Number(b.longitude) };
-      const engine = await resolvePointMileage(client, provider, from, to);
-      const chosen = chooseDeadheadMiles(engine, from, to);
+      const chosen = await chooseLegMiles(
+        client,
+        { operatingCompanyId: args.operatingCompanyId, from, to, fromPlace: { city: a.city, state: a.state }, toPlace: { city: b.city, state: b.state } },
+        provider,
+        route
+      );
+      if (chosen.miles == null) {
+        out.unresolved.push({ stop_id: b.id, reason: chosen.reason });
+        continue;
+      }
       next = { miles: chosen.miles, method: chosen.method };
     }
     if (!next) {

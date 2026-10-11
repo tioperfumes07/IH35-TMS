@@ -1072,6 +1072,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-booked-loads-save-miles",
     ["apps/backend/src/dispatch/", "apps/backend/src/driver-finance/", "scripts/verify-booked-loads-save-miles.mjs"],
   ],
+  // Lead 443.53 #2 (CC-2) — leg miles / first-stop deadhead from Google routing + lane averages; never a straight line.
+  [
+    "verify-no-haversine-leg-miles",
+    ["apps/backend/src/dispatch/", "scripts/verify-no-haversine-leg-miles.mjs"],
+  ],
   // Lead 443.51 #3 (CC-2) — a load at delivered or later has no stop still 'pending'.
   [
     "verify-delivered-load-stops-terminal",
