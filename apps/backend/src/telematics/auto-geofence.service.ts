@@ -1,6 +1,7 @@
 /**
  * ENGINE: auto geofence on book — creates a customer_site square fence per load stop that has no fence yet and queues the Samsara create
  * SCHEDULE: on demand — dispatch/book-load.service.ts (fire-and-forget after a booked load commits)
+ * NEVER (443.41): a fence around a stop with no street address (zip / city center); historical_backfill bookings do not call it
  * WRITES: geo.geofences, outbox.events (samsara.create_geofence), audit (appendCrudAudit); external: geocode provider via stop-geocode-fallback.service.ts:geocodeAddress
  * IDEMPOTENCY: NONE — read-then-write (DEFECT): findExistingGeofence SELECT, then a plain INSERT with no unique key; only the outbox row is keyed (dedupe_key samsara.create_geofence:<id>)
  * OVERLAP: two calls for one load both miss each other and insert twin fences, each with its own Samsara push; the concurrent post-book geocodeStopsBackfill can add a second, 'custom' fence for the same stop
@@ -166,6 +167,20 @@ export async function autoCreateGeofencesForLoadWithClient(
   let skippedMissingCoordinates = 0;
 
   for (const stop of stops) {
+    // 443.38 / 443.41 (owner 2026-10-11): never a fence around a zip / city center — only a stop with a street address
+    // gets a customer-site fence (and its Samsara push). Street-less stops resolve through stops-geocode-backfill.
+    if (!/^\s*\d+[a-z]?\s+\S/i.test(String(stop.address_line1 ?? ""))) {
+      skippedMissingCoordinates += 1;
+      await appendCrudAudit(
+        client as never,
+        actorUserId,
+        "telematics.auto_geofence.geocode_skipped",
+        { operating_company_id: input.operating_company_id, load_id: input.load_id, stop_id: stop.stop_id, reason: "no_street_address" },
+        "info",
+        "443.41"
+      );
+      continue;
+    }
     const normalizedAddress = normalizeAddressKey(stop);
     const existing = await findExistingGeofence(client, input, stop.customer_id, normalizedAddress);
     if (existing) {

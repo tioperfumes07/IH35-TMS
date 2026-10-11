@@ -1639,7 +1639,7 @@ export async function bookLoadOnClient(
   // live_feed (fail-closed). See createLoadWithFullSideEffects's own header.
   const source: LoadCreateSource = opts?.source === "historical_backfill" ? "historical_backfill" : "live_feed";
   const result = await createLoadWithFullSideEffects(client, input, { source });
-  return { result, afterCommit: () => queueAfterBookExtras(input, result) };
+  return { result, afterCommit: () => queueAfterBookExtras(input, result, source) };
 }
 
 /**
@@ -1661,7 +1661,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
   return result;
 }
 
-function queueAfterBookExtras(input: BookLoadInput, result: BookLoadResult): void {
+function queueAfterBookExtras(input: BookLoadInput, result: BookLoadResult, source: LoadCreateSource = "live_feed"): void {
 
   // Inv #40 (owner order 2026-09-05, SAMSARA-CAPABILITIES-AND-INTEGRATION-PLAN-2026-09-05.md §4):
   // this hook used to fire ONLY from the HTTP route (dispatch/loads.routes.ts), so any OTHER
@@ -1682,12 +1682,17 @@ function queueAfterBookExtras(input: BookLoadInput, result: BookLoadResult): voi
   if (result.kind === "ok") {
     const createdLoadId = String(result.row.id ?? "");
     if (createdLoadId) {
-      void autoCreateGeofencesForLoad(input.requestingUserUuid, {
-        operating_company_id: input.operating_company_id,
-        load_id: createdLoadId,
-      }).catch((err) => {
-        console.error("auto_geofence_post_book_failed", { err, load_id: createdLoadId });
-      });
+      // 443.41: a load that already ran (historical_backfill) draws no customer-site fence and pushes nothing to
+      // Samsara — its stops resolve to the owner's Samsara address through geocodeStopsBackfill below, or stay at a
+      // listed zip / city center with no fence (443.38). Live loads keep the hook.
+      if (source !== "historical_backfill") {
+        void autoCreateGeofencesForLoad(input.requestingUserUuid, {
+          operating_company_id: input.operating_company_id,
+          load_id: createdLoadId,
+        }).catch((err) => {
+          console.error("auto_geofence_post_book_failed", { err, load_id: createdLoadId });
+        });
+      }
       void geocodeStopsBackfill(input.requestingUserUuid, input.operating_company_id, createdLoadId).catch((err) => {
         console.error("stops_geocode_backfill_post_book_failed", { err, load_id: createdLoadId });
       });
@@ -3500,7 +3505,18 @@ export async function createLoadWithFullSideEffects(
       // This is the head of the driver-notification chain: the handler calls
       // distributeLoadInstructions(), which enqueues the WhatsApp message to the driver. Both links
       // pointed at the orphaned outbox table, so no driver has ever received a dispatch message.
-      await enqueueOutboxEvent(
+      // 443.41: a load that already ran (historical_backfill — the Settlement Creator recording a signed
+      // AlwaysTrack settlement) is not dispatched now: no driver packet, no email, no driver-app notice. Audited.
+      if (source === "historical_backfill") {
+        await appendCrudAudit(
+          client,
+          input.requestingUserUuid,
+          "dispatch.historical_backfill_distribution_skipped",
+          { operating_company_id: load.operating_company_id, load_id: load.id, load_number: load.load_number },
+          "info",
+          "443.41"
+        );
+      } else await enqueueOutboxEvent(
         client,
         "dispatch.load.dispatched",
         // `load` is a loosely-typed row here, so coerce rather than assert — the aggregate id is

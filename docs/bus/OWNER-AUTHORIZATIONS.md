@@ -7478,3 +7478,13 @@ consumed_at: 2026-10-11T06:46:30Z
 consumed_by: CC-2 (443.41 G2 deadhead backfill)
 row_counts: prod, two idempotent runs — first-stop leg_miles NULL 60 -> 13 (47 computed) then 14 -> 13 (1 more: load 13588 booked by CC-3 between run 1 and the deploy); 48 computed in total, all haversine_chain (routing provider osrm_not_configured); 13 NULL = no previous load for the unit: 13497 13498 13502 13504 13505 13506 13517 13525 13527 13551 13565 13569 13625
 proof_query: node scripts/verify-booked-loads-save-miles.mjs (prod) -> PASS over 135 loads (RULE 4 first-stop deadhead included)
+
+## AUTH-413
+issued_at: 2026-10-11T06:41:07Z
+issued_by: Lead 443.41 / 443.38 item 2 ("deactivate zip-center geofences, do not delete history"), owner order 2026-10-11 00:30 CT. Recorded by CC-2 in the PR that ships the script, as with AUTH-404..410
+owner_quotes: "This must be fixed and done automatically for the next seedings, none should ever fail." (2026-10-11 00:30 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — geo.geofences with source 'auto_dispatch', location_kind 'customer_site', created since 2026-10-11T00:00Z, ACTIVE, whose label has no street: is_active=false (history kept). Nothing deleted. Their copies in the owner's Samsara account are NOT touched by this AUTH.
+action: OWNER_AUTH_ID=AUTH-413 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-41-retire-auto-zip-fences.ts --apply
+rehearsal: throwaway br-rapid-boat-akfob38g (COMMITTED, deleted): 57 retired, all 57 had been pushed to Samsara; verify-stops-resolve-samsara-no-zip-fence PASS after
+expires_at: 2026-10-12T06:41:07Z
+status: OPEN
