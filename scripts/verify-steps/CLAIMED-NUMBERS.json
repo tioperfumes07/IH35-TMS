@@ -16461,5 +16461,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-11",
     "purpose": "verify-driver-pay-rounding-one-rule"
+  },
+  "12451": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-11",
+    "purpose": "verify-creator-advance-is-bill-payment-on-its-load"
   }
 }
