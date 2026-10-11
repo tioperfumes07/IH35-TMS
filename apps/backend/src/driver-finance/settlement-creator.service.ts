@@ -37,6 +37,7 @@ import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escr
 import { createSettlementDeduction } from "./deductions.service.js";
 import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./settlement-deduction-constants.js";
 import { resolveDeductionPostingAccount } from "./settlement-lines-materialize.service.js";
+import { stampCreatorExpenseSettlementNo } from "./settlement-creator-expense-settlement-no.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { deliverLoadThroughDispatch, stampStopsFromTracking } from "./settlement-creator-deliver.js";
 import { afterCommitMark, afterCommitRollbackTo } from "../lib/after-commit.js";
@@ -1906,6 +1907,11 @@ export async function postSettlementCreatorInClientTx(
     }
     if (closed.journal_entry_id) journalEntryIds.push(closed.journal_entry_id);
   }
+
+  // Lead order 2026-10-11 — every expense of this post names its AlwaysTrack settlement (accounting.expenses.settlement_no).
+  await stampCreatorExpenseSettlementNo(client as never, {
+    operatingCompanyId: draft.operating_company_id, settlementId, settlementNo: sourceDocumentRef ?? displayId, expenseIds, actorUserId,
+  });
 
   await appendCrudAudit(
     client as never,
