@@ -51,9 +51,15 @@ async function withClient(fn) {
   const client = new pg.Client(buildPgClientConfig(dbUrl, { connectionTimeoutMillis: 30000 }));
   await client.connect();
   try {
-    await client.query(`SET app.bypass_rls = 'lucia'`);
-    await client.query(`SET search_path TO public`);
-    return await fn(client);
+    await client.query(`BEGIN`);
+    await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);
+    await client.query(`SET LOCAL search_path TO public`);
+    const result = await fn(client);
+    await client.query(`COMMIT`);
+    return result;
+  } catch (e) {
+    await client.query(`ROLLBACK`).catch(() => {});
+    throw e;
   } finally {
     await client.end();
   }
