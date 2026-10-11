@@ -209,6 +209,7 @@ export async function geocodeStopsWithClient(
    */
   async function geocodeOneStop(stop: StopRow): Promise<void> {
     let placeOutcome: { ok: true; latitude: number; longitude: number; source: string; confidence: number; precision: "rooftop" } | null = null;
+    const placeTried = isGooglePlacesEnabled() && isGooglePlacesConfigured();
     if (!(stop.location_id && stop.location_has_street && stop.location_latitude != null && stop.location_longitude != null)) {
       const match = await matchSamsaraAddressForStop(client, companyId, {
         facility_name: stop.facility_name ?? (looksLikeStreet(stop.address_line1) ? null : stop.address_line1),
@@ -274,8 +275,11 @@ export async function geocodeStopsWithClient(
         }
         const updated = await client.query<{ id: string }>(`
           UPDATE mdata.load_stops SET latitude=$2, longitude=$3, geocode_source=$4, geocode_confidence=0.5,
-            geocode_precision='locality', geocode_attempted_at=now(), geocode_failure_reason=NULL, location_id=NULL, updated_at=now()
-          WHERE id=$1::uuid RETURNING id::text`, [stop.stop_id, lat, lng, source]);
+            geocode_precision='locality', geocode_attempted_at=now(),
+            -- 443.44: say WHY the stop has no street, and whether the server-side place step has looked yet (the sweep picks
+            -- 'no_street_source' stops it has not tried; a place-key-less run records 'no_street_source_place_untried').
+            geocode_failure_reason=$5, location_id=NULL, updated_at=now()
+          WHERE id=$1::uuid RETURNING id::text`, [stop.stop_id, lat, lng, source, placeTried ? "no_street_source" : "no_street_source_place_untried"]);
         if (updated.rows[0]) {
           geocoded += 1; locality += 1;
           listed.push({ stop_id: stop.stop_id, load_id: stop.load_id, city: stop.city, state: stop.state, postal_code: stop.postal_code, reason: "no_owner_street_no_samsara_address" });

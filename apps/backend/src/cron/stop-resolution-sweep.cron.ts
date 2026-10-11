@@ -42,7 +42,10 @@ export async function runStopResolutionSweepTick(limit = 200) {
             WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL AND l.status <> 'cancelled'
               AND s.soft_deleted_at IS NULL AND s.facility_name IS NOT NULL
               AND s.geocode_source IN ('zip_center', 'city_center')
-              AND (s.geocode_attempted_at IS NULL OR s.geocode_attempted_at < now() - interval '5 hours')
+              -- 443.44: a stop the place step has not tried yet (resolved off-server / before the step existed) is picked now;
+              -- one it has tried is retried every 5 h (new Samsara addresses / locations can resolve it later).
+              AND (s.geocode_failure_reason IS DISTINCT FROM 'no_street_source'
+                   OR s.geocode_attempted_at IS NULL OR s.geocode_attempted_at < now() - interval '5 hours')
             LIMIT $2`,
           [operatingCompanyId, limit]
         )
