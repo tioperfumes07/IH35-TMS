@@ -1,12 +1,12 @@
-## 2026-10-11 · ROUND 443.29 B — Relay deposit bank match (merge conflict cleanup)
+## 2026-10-11 · ROUND 443.29 B — Relay deposit bank match (push gate)
 
 FINDING: BANK-F44329 — Relay wallet/card outflows → `integrations.relay_deposits` match candidate; wallet + 3.25% fee split; read-only legacy ~1,291 hints.
 LANE: FINANCIAL
-Files Modified: migration `202615441301` + ledger stub `202610101430` · match engine + MatchDrawer + RelayDepositCategorizedMatchHintsPanel · verify-relay-deposit-is-a-bank-match-candidate.mjs (3996) · merge-conflict resolution in money-pr-local-gate + OUTBOX · OUTBOX
-GUARD: `scripts/verify-relay-deposit-is-a-bank-match-candidate.mjs --selftest` PASS after conflict-marker fix
-LIVE PROOF: UNVERIFIED — resolving stash/upstream merge; push + Chrome after green pre-push
-REMAINING: finish merge commit → push with `ROUND_443_OWNER_RELAY_DEPOSIT_GATE=1` → **Cursor-** PR → merge/migrate `202615441301` → owner Chrome `match-relay-deposit-split`
-NEXT: push branch; 443.22 idle on main
+Files Modified: `cursor/bank-44329-relay-deposit-match-7fe0` @ `ca866d9fa4` (tip) · `verify-ap-control-writers-go-through-documents.mjs` (+2 READERS) · rebased onto `origin/main` (`202615540900` on disk) · OUTBOX
+GUARD: `verify-relay-deposit-is-a-bank-match-candidate.mjs --selftest` PASS; `verify-no-migration-is-neither-applied-nor-held` OK — 2 pending (`202615441301`, `202615441302`)
+LIVE PROOF: `money-pr-local-gate` gate_exit=0 (passed=386 failed=5 skipped=102, env `/tmp/ih35-gate-env.sh`); `branch:precheck-push` FAIL verify-static-fallback — ~21 gated fails NOT in VERIFY-STATIC-BASELINE + `verify-relay-tick-completes.mjs` ETIMEDOUT (ambient main rot, not branch diff)
+REMAINING: drain/baseline ambient static rot OR scoped block-ready DB → `git push -u origin cursor/bank-44329-relay-deposit-match-7fe0` → **Cursor-** PR → migrate `202615441301` → owner Chrome relay deposit match
+NEXT: static rot triage (lead); INBOX 435/432/433 unchanged behind 443.29-B
 
 ## 2026-10-11 · ROUND 443.22-2f OPTION 2 + paid_direct EXPORT MERGED
 
