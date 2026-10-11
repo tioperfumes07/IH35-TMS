@@ -38,7 +38,7 @@ import {
   canOwnerOverrideQualification,
   ensureDriverBillArtifactsForLoad,
   type DriverBillMintOutcome,
-  loadedMilesFor,
+  loadedMilesFor, mileageSourceFor,
 } from "./book-load.service.js";
 import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
 import {
@@ -830,6 +830,11 @@ export async function updateDispatchLoad(
     const effShortest = "miles_shortest" in fields ? fields.miles_shortest : old.miles_shortest;
     const effPractical = "miles_practical" in fields ? fields.miles_practical : old.miles_practical;
     add("loaded_miles", loadedMilesFor(effShortest, effPractical));
+  }
+  // 443.60 #2: a miles edit on a load with no recorded mileage_source records who typed it.
+  if (("miles_shortest" in fields || "miles_practical" in fields || "miles_deadhead" in fields) && !old.mileage_source) {
+    const src = mileageSourceFor(null, fields.miles_practical ?? old.miles_practical, fields.miles_shortest ?? old.miles_shortest, fields.miles_deadhead ?? old.miles_deadhead);
+    if (src) add("mileage_source", src);
   }
   // Charges -> rate_total_cents (single source of truth; there is no separate charge table).
   let rateChanged = false;

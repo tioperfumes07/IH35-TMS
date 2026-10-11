@@ -72,6 +72,15 @@ export function loadedMilesFor(shortest: unknown, practical: unknown): number | 
   return practical == null ? null : Number(practical);
 }
 
+/**
+ * 443.60 #2 — every miles write carries its source (verify-mileage-g1-g5-live G4). A caller that sends miles with no source
+ * typed them: "Operator entered". A source the caller named is kept; no miles = no source.
+ */
+export function mileageSourceFor(source: string | null | undefined, ...miles: unknown[]): string | null {
+  if (source) return source;
+  return miles.some((m) => m != null && m !== "" && Number.isFinite(Number(m))) ? "Operator entered" : null;
+}
+
 export type LoadCreateSource = "live_feed" | "historical_backfill";
 
 /**
@@ -2880,7 +2889,7 @@ export async function createLoadWithFullSideEffects(
         // (the schema allows "" through max(120), the column should not store it as a real value).
         input.commodity?.trim() || null,
         input.weight_lbs ?? null,
-        input.mileage_source ?? null,
+        mileageSourceFor(input.mileage_source, input.miles_practical, input.miles_shortest, input.miles_deadhead),
         input.stop_count ?? (Array.isArray(input.stops) ? String(input.stops.length) : null),
         // REEFER-LUMPER-CONFIRMATION follow-up (live-caught 2026-09-09 booking a real reefer load
         // end to end): trailer_type was declared on this input interface and driven the frontend's

@@ -7704,8 +7704,28 @@ status: OPEN
 issued_at: 2026-10-11T15:00:41Z
 issued_by: Lead 443.53 #2 on the owner's ruling 2026-10-11 09:23 CT (14:23 UTC). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..427
 owner_quotes: "Yes we can calculate we are supposed to be using estimates from google, and from estimates another Claude agent created basted on averages etc for all the loads historically moved ... the payment to any driver is the payment that is in the settlements" (2026-10-11 09:23 CT)
-scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — one outbox event dispatch.relearn_load_miles per USMCA load created since 2026-10-11 (not cancelled; 148): the server handler re-derives planning leg miles (relearnLoadStopLegs) + first-stop deadhead (recomputeFirstStopDeadhead) through chooseLegMiles (point_mileage cache -> Google routing -> lane_mileage average -> NULL; never haversine). The script writes only outbox rows. 443.55 pass (--record-sources, dedupe key ...:443.55-sources): the same handler also records source 'document' (the settlement's own miles) on every miles field that has a value and no recorded source, with both recommendations at that moment, via recordDocumentMilesSources — never changes a value. No pay / settlement table, no money, no DELETE.
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — one outbox event dispatch.relearn_load_miles per USMCA load created since 2026-10-11 (not cancelled; 148): the server handler first resolves the load's stops through geocodeStopsWithClient (reresolve: Samsara address > existing street location > Google place in the stop's city/state, 443.53 #1 > recorded Google no-result), then re-derives planning leg miles (relearnLoadStopLegs) + first-stop deadhead (recomputeFirstStopDeadhead) through chooseLegMiles (point_mileage cache -> Google routing -> lane_mileage average -> NULL; never haversine). The script writes only outbox rows. 443.55 pass (--record-sources, dedupe key ...:443.55-sources): the same handler also records source 'document' (the settlement's own miles) on every miles field that has a value and no recorded source, with both recommendations at that moment, via recordDocumentMilesSources — never changes a value. No pay / settlement table, no money, no DELETE.
 action: OWNER_AUTH_ID=AUTH-428 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-53-relearn-creator-miles.ts --apply   (then once more with --record-sources after 202615550300 is live)
 rehearsal: throwaway br-red-hat-ak392uy0 (COMMITTED, deleted): 148 loads, 148 events enqueued; re-run 0 enqueued / 148 already queued
 expires_at: 2026-10-12T15:00:41Z
+status: OPEN
+
+## AUTH-430
+issued_at: 2026-10-11T15:35:52Z
+issued_by: Lead 443.60 #2 ("every miles write carries its source; fix writer + row, G4 green"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..429
+owner_quotes: "Make sure the engines are updated and fixed correctly so these issues never occur again." (owner, 443.55, 2026-10-11 09:33 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — every USMCA load with miles and mileage_source NULL (measured: 13498 a113130e, 13508 f3745414, both booked by the Settlement Creator at 01:04Z before the writer named its source) gets mileage_source "Operator entered" through recordMissingMileageSource (audited "dispatch.load.mileage_source_recorded"). Only mileage_source is written; no miles value, pay, settlement or money. No DELETE.
+action: OWNER_AUTH_ID=AUTH-430 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-60-mileage-source.ts --apply
+rehearsal: throwaway br-flat-bonus-akaoi28p (COMMITTED, deleted): recorded 2 (13498, 13508 -> Operator entered); loads with miles_practical and no source after 0; re-run recorded 0
+expires_at: 2026-10-12T15:35:52Z
+status: OPEN
+
+## AUTH-431
+issued_at: 2026-10-11T15:41:27Z
+issued_by: Lead 443.53 #1 ("one location + one fence per facility at the real point (pushed to Samsara once, ih35Site id)") on the owner's ruling 2026-10-11 09:23 CT and 443.49 ("We keep them and we need the real address geo fences."). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..430
+owner_quotes: "We have google in our app, get the addresses from there and fix the engine to parse the warehouse name, street address so this does not occur anymore." (2026-10-11 09:23 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the AUTH-422 passes again over the Creator stops now that 443.53 gave them Google streets: item 1 moves an auto zip-center fence whose stop now has a real address and updates its EXISTING Samsara copy in place by id; item 3 keeps ONE active fence per real-address location and pushes it to Samsara once (outbox samsara.create_geofence, externalIds ih35Site only) — formattedAddress = the street address (not the "Facility — street" label). No Samsara delete, no DELETE.
+action: OWNER_AUTH_ID=AUTH-431 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-53-push-facility-fences.ts --apply
+rehearsal: throwaway br-muddy-recipe-ak14cfys (COMMITTED, deleted): item 1 moved 3 (Samsara update enqueued); item 3 192 real-address locations = 27 owner import + 60 already in Samsara + 105 pushed; duplicates retired 0; re-run 0 moved / 0 pushed
+expires_at: 2026-10-12T15:41:27Z
 status: OPEN
