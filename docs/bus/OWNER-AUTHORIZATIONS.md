@@ -7460,7 +7460,11 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — loads created since
 action: OWNER_AUTH_ID=AUTH-409 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-38-reresolve-creator-stops.ts --apply
 rehearsal: throwaway br-morning-king-ak5hyvy8 (COMMITTED, deleted): 24 loads / 48 stops; 6 on a Samsara address (street + facility + its own fence), 42 zip / city center listed, 0 failed; false rooftop 48 -> 0; zip-center fences active 33 -> 0 (retired); 33 street-less locations deactivated; Samsara-linked fences active 1 -> 6
 expires_at: 2026-10-12T05:42:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T06:20:41Z
+consumed_by: CC-2 (443.38 stop re-resolution)
+row_counts: prod run 1 (06:20Z) identical to the rehearsal — 24 loads / 48 stops; 6 on a Samsara address, 42 zip / city center listed, 0 failed; false rooftop 48 -> 0; 33 location-linked zip-center fences retired; 33 street-less locations deactivated. Run 2 (06:5xZ, idempotent, 130 loads): 0 changes.
+proof_query: node scripts/verify-stops-resolve-samsara-no-zip-fence.mjs (prod) -> PASS
 
 ## AUTH-412
 issued_at: 2026-10-11T06:41:12Z
@@ -7489,7 +7493,11 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — geo.geofences with 
 action: OWNER_AUTH_ID=AUTH-413 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-41-retire-auto-zip-fences.ts --apply
 rehearsal: throwaway br-rapid-boat-akfob38g (COMMITTED, deleted): 57 retired, all 57 had been pushed to Samsara; verify-stops-resolve-samsara-no-zip-fence PASS after
 expires_at: 2026-10-12T06:41:07Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T06:52:33Z
+consumed_by: CC-2 (443.41 zip-center fence retirement)
+row_counts: prod run 1: 63 auto-dispatch customer-site zip-center fences retired (is_active=false), all 63 had been pushed to the owner's Samsara (copies untouched; list ~/IH35-LEAD-CHANNEL/2026-10-11-CC2-AUTH-413-retired-zip-fences-pushed-to-samsara.txt). Run 2 after 6f84ffa6bf went live (06:51Z): 0.
+proof_query: node scripts/verify-stops-resolve-samsara-no-zip-fence.mjs (prod) RULE 8 -> PASS
 
 ## AUTH-411
 issued_at: 2026-10-11T06:40:11Z
@@ -7509,4 +7517,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — accounting.journal_
 action: OWNER_AUTH_ID=AUTH-410 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-40-relay-deposit-entity.ts --apply
 rehearsal: throwaway br-tiny-darkness-ak6eitry (COMMITTED, deleted): 52 filled (1295: 26, 5005: 26), trial balance 0 across 1,026 postings unchanged
 expires_at: 2026-10-12T06:00:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T07:02:19Z
+consumed_by: CC-2 (443.40 Relay vendor on deposit legs)
+row_counts: prod identical to the rehearsal — 52 relay_deposit lines filled with vendor Relay Purchases (1295: 26, 5005: 26); trial balance 0 across 3,233 postings unchanged
+proof_query: SELECT count(*) FROM accounting.journal_entry_postings WHERE source_transaction_type='relay_deposit' AND entity_uuid IS NULL AND account in (1295, 5005) -> 0
