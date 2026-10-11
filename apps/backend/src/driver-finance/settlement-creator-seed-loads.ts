@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 /**
  * R-186.1 — seed not-yet-delivered loads through bookLoad (app path), never ops SQL.
  * Automatic Owner override for medical/HOS/CDL with the owner-mandated reason.
@@ -212,6 +213,23 @@ export function buildCharges(load: SettlementCreatorLoadBlock, catalog: CatalogC
  * leaves zero rows and a retry of the same draft succeeds. Returns the after-book extras (geofences, geocode backfill,
  * reference miles) for the caller to run ONLY after its COMMIT succeeds.
  */
+/** Option 1 (5769 repair) — the load belongs to the Creator settlement this Edit replaces: same AlwaysTrack number, same
+ *  driver, the load on that settlement's lines or driver bills. */
+export async function isPriorCreatorSettlementLoad(client: DbClient, draft: SettlementCreatorDraft, loadId: string): Promise<boolean> {
+  const no = String(draft.settlement_no ?? "").trim();
+  if (!no) return false;
+  const r = await client.query<{ ok: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM driver_finance.driver_settlements s
+        WHERE s.operating_company_id = $1::uuid AND s.source_document_ref = $2 AND s.driver_id = $3::uuid
+          AND (EXISTS (SELECT 1 FROM driver_finance.settlement_lines sl WHERE sl.settlement_id = s.id AND sl.load_id = $4::uuid)
+            OR EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_bills g WHERE g.settlement_id = s.id AND g.load_id = $4::uuid))
+     ) AS ok`,
+    [draft.operating_company_id, no, draft.driver_id, loadId],
+  );
+  return r.rows[0]?.ok === true;
+}
+
 export async function ensureDispatchedLoadsForCreator(
   client: DbClient,
   actor: { uuid: string; role: string },
@@ -240,6 +258,12 @@ export async function ensureDispatchedLoadsForCreator(
         LIMIT 1`,
       [draft.operating_company_id, load.load_number.trim()],
     );
+    if (existing.rows[0] && draft.edit_void_repost && (await isPriorCreatorSettlementLoad(client, draft, existing.rows[0].id))) {
+      // LEAD RULING 2026-10-11 (5769 repair, Option 1): Edit = void and repost ADOPTS the replaced settlement's own load —
+      // same load number, same driver, on the Creator settlement with this AlwaysTrack number — never re-booked; its
+      // sent invoice is kept. Any other existing load still refuses below.
+      continue;
+    }
     if (existing.rows[0]) {
       // Owner 2026-09-26: Creator creates NEW loads only — never attach a prior load by typing
       // its number. Auto sequence + Edit override must land on a free number.
@@ -271,10 +295,16 @@ export async function ensureDispatchedLoadsForCreator(
 
     const customerId = await resolveCustomerId(client, draft.operating_company_id, load);
     const tripType = load.trip_type ?? (load.join_outbound_load_number ? "SB" : "NB");
+    // 5777 fork rehearsal (2026-10-11): an NB booked with no tour_id inherits the unit's previous tour, so the same
+    // truck's next AlwaysTrack settlement was suggested INTO the prior, already-posted settlement as a REG-040
+    // continuation and refused. One signed AlwaysTrack settlement is one tour: its NB starts a NEW tour; its TR / SB legs
+    // join that tour through join_outbound_load_number.
     const tourId =
       tripType === "SB" || tripType === "TR"
         ? await resolveTourIdForSb(client, draft.operating_company_id, load.join_outbound_load_number)
-        : null;
+        : tripType === "NB"
+          ? randomUUID()
+          : null;
 
     const notDelivered = load.not_yet_delivered !== false && !load.delivery_date;
 
