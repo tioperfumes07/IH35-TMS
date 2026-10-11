@@ -7750,7 +7750,11 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — one dispatch.relear
 action: OWNER_AUTH_ID=AUTH-432 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-53-relearn-creator-miles.ts --apply --record-sources --pass=443.53-same-point
 rehearsal: throwaway br-rapid-recipe-ak79l7zq (COMMITTED, deleted): 148 enqueued; re-run 0 enqueued / 148 already queued
 expires_at: 2026-10-12T16:29:47Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T16:51:00Z
+consumed_by: CC-2 (443.53 #2 same-point re-run)
+row_counts: 148 events delivered, 0 errored; verify-no-haversine-leg-miles live 0; Creator loads with a recorded source per field 148 of 148
+proof_query: node scripts/verify-no-haversine-leg-miles.mjs (live 0)
 
 ## AUTH-433
 issued_at: 2026-10-11T16:44:13Z
@@ -7760,4 +7764,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — (1) stop city 13506
 action: OWNER_AUTH_ID=AUTH-433 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-62-stop-fixes.ts --apply
 rehearsal: throwaway br-long-truth-ak872891 (step 2b, COMMITTED, deleted): 2 stops street -> "290 Chambers Road" / "100 Dartmouth Drive", re-run 0; earlier throwaway br-little-mountain-aku4iotq (COMMITTED, deleted): 2 cities corrected; both locations street clean; 4 relearn events enqueued; re-run 0 city changes, locations unchanged, 4 already queued
 expires_at: 2026-10-12T16:44:13Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T17:01:30Z
+consumed_by: CC-2 (443.62 #6 stop fixes)
+row_counts: 2 cities (13506 Laredo, 13543 Albertville); 2 locations re-imported clean; 2 stops street from location (13545, 13599); 4 relearn events delivered, 0 errored
+proof_query: node scripts/verify-stops-resolve-samsara-no-zip-fence.mjs -> PASS
