@@ -35,6 +35,8 @@ export const LINK_ONCE = new Set(["source_transaction_type", "source_transaction
 // 202610090200_allow_entity_uuid_entity_type_fill_from_null.sql). Statically the statement itself must carry
 // `entity_uuid IS NULL`; the trigger refuses any repoint or clear at runtime.
 export const ENTITY_FILL_ONCE = new Set(["entity_uuid", "entity_type"]);
+// 443.37 — settlement_id on bill JE postings: fill once from NULL in the same transaction as initial_post (settlement-ap-chain).
+export const SETTLEMENT_FILL_ONCE = new Set(["settlement_id"]);
 
 const UPDATE_RE = /UPDATE\s+accounting\.journal_entry_postings\b(?:\s+(?:AS\s+)?(?!SET\b)([a-z_][a-z0-9_]*))?\s+SET\s+([\s\S]*?)(?:\bWHERE\b|\bFROM\b|\bRETURNING\b|`|"|$)/gi;
 
@@ -61,7 +63,14 @@ export function fileFailures(rel, src) {
     const cols = setColumns(m[2]);
     const statement = src.slice(m.index, m.index + m[0].length + 600);
     const fillsEntityOnce = /\bentity_uuid\s+IS\s+NULL\b/i.test(statement);
-    const bad = cols.filter((c) => !BOOKKEEPING.has(c) && !LINK_ONCE.has(c) && !(ENTITY_FILL_ONCE.has(c) && fillsEntityOnce));
+    const fillsSettlementOnce = /\bsettlement_id\s+IS\s+NULL\b/i.test(statement);
+    const bad = cols.filter(
+      (c) =>
+        !BOOKKEEPING.has(c) &&
+        !LINK_ONCE.has(c) &&
+        !(ENTITY_FILL_ONCE.has(c) && fillsEntityOnce) &&
+        !(SETTLEMENT_FILL_ONCE.has(c) && fillsSettlementOnce)
+    );
     if (bad.length) out.push(`RULE 1 ${rel}:${line} moves a posting in place (SET ${bad.join(", ")}) — restate the document (reclassify engine / void-and-reissue)`);
     if (/accounting\/reclassify\//.test(rel)) out.push(`RULE 2 ${rel}:${line} the reclassify engine UPDATEs a posting — it must post a reclassification entry`);
   }
@@ -131,6 +140,7 @@ if (isMain) {
       ["a link fill passes", ok("`UPDATE accounting.journal_entry_postings SET source_transaction_type = 'bill', source_transaction_id = $1 WHERE id = $2`").length === 0],
       ["an aliased idempotency clear passes", ok("`UPDATE accounting.journal_entry_postings jep SET idempotency_key = NULL, updated_at = now() FROM x WHERE jep.id = x.id`").length === 0],
       ["an entity fill-once from NULL passes", ok("`UPDATE accounting.journal_entry_postings SET entity_uuid = $1::uuid, entity_type = $2\n WHERE id = $3::uuid AND entity_uuid IS NULL`").length === 0],
+      ["a settlement_id fill-once from NULL passes", ok("`UPDATE accounting.journal_entry_postings SET settlement_id = $1::uuid WHERE journal_entry_uuid = $2::uuid AND settlement_id IS NULL`").length === 0],
       ["an entity repoint (no IS NULL) fails", ok("`UPDATE accounting.journal_entry_postings SET entity_uuid = $1::uuid WHERE id = $2::uuid`").some((x) => x.includes("entity_uuid"))],
       ["moving the account fails", ok("`UPDATE accounting.journal_entry_postings SET account_id = $2 WHERE id = $1`").some((x) => x.startsWith("RULE 1"))],
       ["moving the amount behind a bookkeeping column fails", ok("`UPDATE accounting.journal_entry_postings SET updated_at = now(), amount_cents = $2 WHERE id = $1`").some((x) => x.includes("amount_cents"))],

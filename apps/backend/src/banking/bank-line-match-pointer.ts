@@ -19,6 +19,7 @@ export const BANK_LINE_DOCUMENT_POINTER_COLUMNS = [
   "matched_load_id",
   "matched_payment_id",
   "matched_relay_fuel_transaction_id",
+  "matched_relay_deposit_id",
   "matched_settlement_id",
   "matched_transfer_id",
 ] as const;

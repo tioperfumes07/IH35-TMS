@@ -9,7 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { BUCKET_SQL, LINKED_SQL, NOT_FROZEN_SQL, report, withUnscopedReadOnly } from "./lib/bank-feed-state-machine.mjs";
+import { BUCKET_SQL, linkedSql, NOT_FROZEN_SQL, report, withUnscopedReadOnly } from "./lib/bank-feed-state-machine.mjs";
 export const REQUIRES_LIVE_DB = "every categorized bank line, unscoped, points at a live document";
 
 const LABEL = "verify-categorized-has-a-document";
@@ -51,11 +51,11 @@ if (process.argv.includes("--selftest")) {
 
 const statik = check(fs.readFileSync(path.join(ROOT, MIG), "utf8"));
 if (statik.length) report(LABEL, statik, "");
-const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket }) => {
-  const cat = `${BUCKET_SQL(hasBucket)} = 'categorized' AND bt.voided_at IS NULL AND ${NOT_FROZEN_SQL()}`;
+const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket, linkColumns }) => {
+  const cat = `${BUCKET_SQL(hasBucket, "bt", linkColumns)} = 'categorized' AND bt.voided_at IS NULL AND ${NOT_FROZEN_SQL()}`;
   const categorized = Number((await c.query(`SELECT count(*) AS n FROM banking.bank_transactions bt WHERE ${cat}`)).rows[0].n);
   const noKind = hasBucket ? Number((await c.query(`SELECT count(*) AS n FROM banking.bank_transactions bt WHERE ${cat} AND bt.resolution_kind IS NULL`)).rows[0].n) : 0;
-  const noLink = Number((await c.query(`SELECT count(*) AS n FROM banking.bank_transactions bt WHERE ${cat} AND NOT ${LINKED_SQL()}`)).rows[0].n);
+  const noLink = Number((await c.query(`SELECT count(*) AS n FROM banking.bank_transactions bt WHERE ${cat} AND NOT ${linkedSql("bt", linkColumns)}`)).rows[0].n);
   const dead = [];
   let live = 0;
   for (const [kind, col, liveSql] of DOCS) {

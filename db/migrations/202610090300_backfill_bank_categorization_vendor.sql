@@ -4,6 +4,10 @@
 -- (the leg on categorization_gl_account_id, not the bank leg) so those 66 postings appear in vendor
 -- history, the vendor register, and 1099 totals. No DDL; column exists since ROUND 393.3.
 -- Idempotent: WHERE entity_uuid IS NULL means a re-run is a no-op.
+-- Filename sort applies this before 202612670000 adds entity_type; ensure column exists.
+
+ALTER TABLE accounting.journal_entry_postings
+  ADD COLUMN IF NOT EXISTS entity_type text;
 
 UPDATE accounting.journal_entry_postings p
 SET entity_uuid      = bt.categorization_vendor_id,

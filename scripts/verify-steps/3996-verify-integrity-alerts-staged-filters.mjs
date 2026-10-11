@@ -9,5 +9,11 @@ export default {
     await ctx.run("node", ["scripts/verify-unmatched-7d-is-an-alert.mjs"]);
     await ctx.run("node", ["scripts/verify-bank-match-is-a-document-pointer.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-bank-match-is-a-document-pointer.mjs"]);
+    await ctx.run("node", ["scripts/verify-relay-deposit-is-a-bank-match-candidate.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-relay-deposit-is-a-bank-match-candidate.mjs"]);
+    // BANK-F44329 — wire orphan banking / relay guards (registry census ratchet <= 3).
+    await ctx.run("node", ["scripts/verify-bank-feed-action-buttons.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-bank-feed-action-buttons.mjs"]);
+    await ctx.run("node", ["scripts/verify-creator-relay-row-posts-through-its-fill.mjs"]);
   },
 };

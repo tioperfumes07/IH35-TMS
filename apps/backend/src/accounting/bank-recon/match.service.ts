@@ -41,6 +41,7 @@ import {
   bankLinePointerSelectSql,
 } from "../../banking/bank-line-match-pointer.js";
 import { RELAY_FUEL_WALLET_AMOUNT_SQL } from "./relay-bank-match.service.js";
+import { RELAY_DEPOSIT_CHARGED_AMOUNT_SQL } from "./relay-deposit-match-math.js";
 import { RELAY_USMCA_DATA_FLOOR } from "../../integrations/relay-payments/relay-usmca-date-floor.js";
 
 /**
@@ -65,7 +66,9 @@ export type LedgerEntryKind =
   | "settlement"
   // ROUND 373.4 — a Deposit document (accounting.deposits): the bank deposit line matches the deposit that already
   // posted (Dr bank / Cr Undeposited Funds) when it was made. The match links; it posts nothing.
-  | "deposit";
+  | "deposit"
+  // ROUND 443.29-B — settled Relay company wallet funding (wallet + 3.25% fee = bank/card outflow).
+  | "relay_deposit";
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
 
 // banking.reconciliation_matches.ledger_entry_kind has a CHECK constraint. Migration
@@ -88,6 +91,7 @@ export const PERSISTABLE_MATCH_KINDS: ReadonlySet<LedgerEntryKind> = new Set<Led
   // the bulk runner, not findCandidates (settlement-born candidate universe stays bill_payment/bill).
   "settlement",
   "deposit",
+  "relay_deposit",
 ]);
 
 // Denormalized convenience FK on banking.bank_transactions (migration 0182 + Part 2a's
@@ -106,6 +110,7 @@ const MATCHED_COLUMN_BY_KIND: Partial<Record<LedgerEntryKind, string>> = {
   fuel_transaction: "matched_fuel_transaction_id",
   relay_fuel: "matched_relay_fuel_transaction_id",
   deposit: "matched_deposit_id",
+  relay_deposit: "matched_relay_deposit_id",
 };
 
 // ROUND 141.4 — A kind that findCandidates can RETURN but that cannot be accepted
@@ -169,6 +174,10 @@ export type MatchCandidate = {
    * badge it, and used as the PRIMARY sort key so an exact amount can never rank below a near one.
    */
   exact_amount: boolean;
+  /** ROUND 443.29-B — Relay deposit wallet leg (total_amount_cents) when kind = relay_deposit. */
+  relay_deposit_wallet_cents?: number;
+  /** ROUND 443.29-B — Relay deposit 3.25% fee leg when kind = relay_deposit. */
+  relay_deposit_fee_cents?: number;
 };
 
 export type ResolveDifferenceInput = {
@@ -423,6 +432,8 @@ type RawLedgerCandidate = {
   reference: string | null;
   description: string | null;
   open_balance_cents: number | null;
+  relay_deposit_wallet_cents?: number;
+  relay_deposit_fee_cents?: number;
 };
 
 type RawRow = {
@@ -435,6 +446,8 @@ type RawRow = {
   reference?: string | null;
   description?: string | null;
   open_balance_cents?: number | null;
+  relay_deposit_wallet_cents?: number | null;
+  relay_deposit_fee_cents?: number | null;
 };
 
 function toCandidate(kind: LedgerEntryKind, row: RawRow, counterpartyKind: MatchCounterpartyKind): RawLedgerCandidate {
@@ -454,6 +467,12 @@ function toCandidate(kind: LedgerEntryKind, row: RawRow, counterpartyKind: Match
     reference: row.reference ?? null,
     description: descriptionRaw || null,
     open_balance_cents: row.open_balance_cents == null ? null : Math.abs(Number(row.open_balance_cents)),
+    ...(row.relay_deposit_wallet_cents != null
+      ? { relay_deposit_wallet_cents: Math.abs(Number(row.relay_deposit_wallet_cents)) }
+      : {}),
+    ...(row.relay_deposit_fee_cents != null
+      ? { relay_deposit_fee_cents: Math.abs(Number(row.relay_deposit_fee_cents)) }
+      : {}),
   };
 }
 
@@ -780,6 +799,42 @@ async function fetchLedgerCandidates(
       );
       for (const row of fills.rows) results.push(toCandidate("relay_fuel", row, "vendor"));
     }
+
+    // ROUND 443.29-B — Relay wallet funding deposits (company, settled): match amount = wallet + 3.25% fee.
+    if (wants("relay_deposit")) {
+      const deposits = await client.query<RawRow>(
+        `
+          SELECT rd.id::text,
+                 ${RELAY_DEPOSIT_CHARGED_AMOUNT_SQL} AS amount_cents,
+                 COALESCE(rd.relay_created_at, rd.created_at)::date::text AS event_date,
+                 COALESCE(rd.note_raw, rd.deposit_id)::text AS memo,
+                 NULL::text AS counterparty_id,
+                 'Relay'::text AS counterparty_name,
+                 rd.deposit_id::text AS reference,
+                 COALESCE(rd.classification, '')::text AS description,
+                 NULL::int AS open_balance_cents,
+                 rd.total_amount_cents::int AS relay_deposit_wallet_cents,
+                 ((rd.total_amount_cents * 325 + 5000) / 10000)::int AS relay_deposit_fee_cents
+            FROM integrations.relay_deposits rd
+           WHERE rd.operating_company_id = $1::uuid
+             AND rd.status = 'settled'
+             AND rd.classification = 'company'
+             AND rd.voided_at IS NULL
+             AND COALESCE(rd.is_active, true) = true
+             AND COALESCE(rd.relay_created_at, rd.created_at)::date
+                   BETWEEN GREATEST($2::date, $6::date) AND $3::date
+             AND ($4::text IS NULL OR lower(COALESCE(rd.note_raw, '') || ' ' || COALESCE(rd.deposit_id, '')) LIKE $4)
+             AND rd.matched_bank_transaction_id IS NULL
+             AND NOT EXISTS (
+               SELECT 1 FROM banking.bank_transactions bt
+                WHERE bt.matched_relay_deposit_id = rd.id AND bt.voided_at IS NULL
+             )
+           LIMIT $5
+        `,
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, RELAY_USMCA_DATA_FLOOR]
+      );
+      for (const row of deposits.rows) results.push(toCandidate("relay_deposit", row, "vendor"));
+    }
   }
 
   const haystack = (r: RawLedgerCandidate) =>
@@ -924,6 +979,20 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
          FROM accounting.deposits
         WHERE id = $1::uuid AND operating_company_id = $2::uuid
           AND voided_at IS NULL AND posting_status = 'posted'
+        LIMIT 1`,
+      [entryId, operatingCompanyId]
+    );
+    return requireLedgerAmountRow(res, kind);
+  }
+  if (kind === "relay_deposit") {
+    const res = await client.query<{ amount_cents: number }>(
+      `SELECT ${RELAY_DEPOSIT_CHARGED_AMOUNT_SQL} AS amount_cents
+         FROM integrations.relay_deposits rd
+        WHERE rd.id = $1::uuid
+          AND rd.operating_company_id = $2::uuid
+          AND rd.status = 'settled'
+          AND rd.classification = 'company'
+          AND rd.voided_at IS NULL
         LIMIT 1`,
       [entryId, operatingCompanyId]
     );
@@ -1435,6 +1504,17 @@ async function stampReverseBankPointerOnAccept(
     await client.query(
       `UPDATE driver_finance.driver_settlements
           SET paid_via_bank_txn_id = COALESCE(paid_via_bank_txn_id, $1::uuid),
+              updated_at = now()
+        WHERE id = $2::uuid
+          AND operating_company_id = $3::uuid`,
+      [args.bankTransactionId, args.ledgerEntryId, args.operatingCompanyId]
+    );
+    return;
+  }
+  if (args.kind === "relay_deposit") {
+    await client.query(
+      `UPDATE integrations.relay_deposits
+          SET matched_bank_transaction_id = COALESCE(matched_bank_transaction_id, $1::uuid),
               updated_at = now()
         WHERE id = $2::uuid
           AND operating_company_id = $3::uuid`,
@@ -2033,7 +2113,11 @@ export async function acceptExactMultiDocumentMatch(input: {
     }
 
     for (const entry of input.entries) {
-      if (entry.ledger_entry_kind === "fuel_transaction" || entry.ledger_entry_kind === "relay_fuel") {
+      if (
+        entry.ledger_entry_kind === "fuel_transaction" ||
+        entry.ledger_entry_kind === "relay_fuel" ||
+        entry.ledger_entry_kind === "relay_deposit"
+      ) {
         throw new Error("multi_match_fuel_not_supported:match_fuel_fills_one_at_a_time");
       }
     }

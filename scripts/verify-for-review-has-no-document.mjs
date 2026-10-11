@@ -9,7 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { LINKED_SQL, NOT_FROZEN_SQL, report, withUnscopedReadOnly } from "./lib/bank-feed-state-machine.mjs";
+import { linkedSql, NOT_FROZEN_SQL, report, withUnscopedReadOnly } from "./lib/bank-feed-state-machine.mjs";
 export const REQUIRES_LIVE_DB = "every For-review bank line, unscoped, carries no document";
 
 const LABEL = "verify-for-review-has-no-document";
@@ -37,9 +37,9 @@ if (process.argv.includes("--selftest")) {
 
 const statik = check(fs.readFileSync(path.join(ROOT, ENGINE), "utf8"));
 if (statik.length) report(LABEL, statik, "");
-const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket }) => {
+const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket, linkColumns }) => {
   if (!hasBucket) {
-    const pre = (await c.query(`SELECT count(*)::int AS n FROM banking.bank_transactions bt WHERE bt.review_state = 'for_review' AND bt.voided_at IS NULL AND ${NOT_FROZEN_SQL()} AND ${LINKED_SQL()}`)).rows[0].n;
+    const pre = (await c.query(`SELECT count(*)::int AS n FROM banking.bank_transactions bt WHERE bt.review_state = 'for_review' AND bt.voided_at IS NULL AND ${NOT_FROZEN_SQL()} AND ${linkedSql("bt", linkColumns)}`)).rows[0].n;
     const reviewed = (await c.query(`SELECT count(*)::int AS n FROM banking.bank_transactions bt WHERE bt.review_state = 'for_review' AND bt.voided_at IS NULL AND ${NOT_FROZEN_SQL()}`)).rows[0].n;
     return { bad: [], pre, reviewed };
   }
@@ -47,7 +47,7 @@ const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket }) => {
     SELECT (SELECT code FROM org.companies WHERE id = bt.operating_company_id) AS co, bt.review_bucket, count(*)::int AS n,
            (array_agg(bt.id::text))[1:3] AS ids
       FROM banking.bank_transactions bt
-     WHERE ${NOT_FROZEN_SQL()} AND bt.review_bucket IN ('for_review', 'excluded') AND (bt.resolution_kind IS NOT NULL OR ${LINKED_SQL()})
+     WHERE ${NOT_FROZEN_SQL()} AND bt.review_bucket IN ('for_review', 'excluded') AND (bt.resolution_kind IS NOT NULL OR ${linkedSql("bt", linkColumns)})
      GROUP BY 1, 2`)).rows;
   const reviewed = (await c.query(`SELECT count(*)::int AS n FROM banking.bank_transactions bt WHERE bt.review_bucket = 'for_review' AND bt.voided_at IS NULL AND ${NOT_FROZEN_SQL()}`)).rows[0].n;
   return { bad, reviewed };

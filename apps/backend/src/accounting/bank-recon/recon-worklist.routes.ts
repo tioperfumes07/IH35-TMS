@@ -5,6 +5,7 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "../shared.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { ReconciledSessionLockedError } from "../../banking/closed-session-immutability.js";
+import { bankMatchAcceptKindSchema } from "./match-api-kinds.js";
 import { type LedgerEntryKind, acceptExactMultiDocumentMatch } from "./match.service.js";
 import { acceptReconMatch, closeReconPeriod, getReconWorklist, rejectReconMatch, unmatchBankTransaction } from "./recon-worklist.service.js";
 
@@ -17,7 +18,7 @@ const worklistQuerySchema = companyQuerySchema.extend({
 const acceptBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   bank_transaction_id: z.string().uuid(),
-  ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
+  ledger_entry_kind: bankMatchAcceptKindSchema,
   ledger_entry_id: z.string().uuid(),
   variance_account_id: z.string().uuid().optional(),
 });
@@ -25,7 +26,7 @@ const acceptBodySchema = z.object({
 const rejectBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   bank_transaction_id: z.string().uuid(),
-  ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
+  ledger_entry_kind: bankMatchAcceptKindSchema,
   ledger_entry_id: z.string().uuid(),
 });
 
@@ -37,7 +38,7 @@ const unmatchBodySchema = z.object({
 const manualBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   bank_transaction_id: z.string().uuid(),
-  ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
+  ledger_entry_kind: bankMatchAcceptKindSchema,
   ledger_entry_id: z.string().uuid(),
   variance_account_id: z.string().uuid().optional(),
 });
@@ -48,7 +49,7 @@ const multiAcceptBodySchema = z.object({
   entries: z
     .array(
       z.object({
-        ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
+        ledger_entry_kind: bankMatchAcceptKindSchema,
         ledger_entry_id: z.string().uuid(),
       })
     )

@@ -595,7 +595,7 @@ export async function rematchRelayBankMatch(
           source_transaction_id: sid,
         },
         { userId: input.actor_user_uuid },
-        new Date().toISOString().slice(0, 10)
+        bank.transaction_date
       );
     }
   }

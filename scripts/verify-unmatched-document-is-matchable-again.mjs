@@ -16,7 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { LINKED_SQL, NOT_FROZEN_SQL, report, withUnscopedReadOnly } from "./lib/bank-feed-state-machine.mjs";
+import { linkedSql, NOT_FROZEN_SQL, report, withUnscopedReadOnly } from "./lib/bank-feed-state-machine.mjs";
 export const REQUIRES_LIVE_DB = "no released document is still flagged as matched on its own row, unscoped";
 
 const LABEL = "verify-unmatched-document-is-matchable-again";
@@ -63,13 +63,13 @@ if (process.argv.includes("--selftest")) {
 
 const statik = check({ unmatch: fs.readFileSync(path.join(ROOT, UNMATCH), "utf8"), match: fs.readFileSync(path.join(ROOT, MATCH), "utf8") });
 if (statik.length) report(LABEL, statik, "");
-const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket }) => {
+const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket, linkColumns }) => {
   const stale = (await c.query(`
     SELECT m.ledger_entry_kind AS kind, count(*)::int AS n, (array_agg(m.ledger_entry_id::text))[1:3] AS ids
       FROM banking.reconciliation_matches m
       JOIN banking.bank_transactions bt ON bt.id = m.bank_transaction_id
      WHERE m.voided_at IS NULL AND m.match_state IN ('auto_matched', 'user_matched') AND ${NOT_FROZEN_SQL("m.operating_company_id")}
-       AND (bt.voided_at IS NOT NULL OR NOT ${LINKED_SQL()})
+       AND (bt.voided_at IS NOT NULL OR NOT ${linkedSql("bt", linkColumns)})
      GROUP BY 1`)).rows;
   const liveRows = (await c.query(`SELECT count(*)::int AS n FROM banking.reconciliation_matches m WHERE m.voided_at IS NULL AND m.match_state IN ('auto_matched', 'user_matched') AND ${NOT_FROZEN_SQL("m.operating_company_id")}`)).rows[0].n;
   const strayBp = (await c.query(`

@@ -1,4 +1,12 @@
-## 2026-10-11 · ROUND 443.22-2f OPTION 2 SCENTSX BACKFILL LIVE + SHIP
+## 2026-10-11 · ROUND 443.29 B — Relay deposit bank match (push gate)
+
+FINDING: BANK-F44329 — Relay wallet/card outflows → `integrations.relay_deposits` match candidate; wallet + 3.25% fee split; read-only legacy ~1,291 hints.
+LANE: FINANCIAL
+Files Modified: `cursor/bank-44329-relay-deposit-match-7fe0` @ `0897f98840` · OUTBOX (GO-20 hook census)
+GUARD: `verify-relay-deposit-is-a-bank-match-candidate.mjs --selftest` PASS; local `verify:db:reset` APPLY `202615441301` + `202615441302` on `ih35_verify`
+LIVE PROOF: `git pull --ff-only origin/main` Already up to date; `money-pr-local-gate` gate_exit=0 (passed=386 failed=5 skipped=102, `unset DATABASE_URL` + `/tmp/ih35-gate-env.sh`); `branch:precheck-push` money+build+migration-replay PASS then FAIL `verify-static-fallback` — 20 guards NOT in VERIFY-STATIC-BASELINE (incl. `verify-related-party-loan-bank-loan-action-wizard` / `verify-related-party-loan-bank-repay-overpay-stop` F4 static FAIL on tip; `verify-banking-tx-register-uses-paritytable` OK alone); do not export `DATABASE_URL=127.0.0.1:54329` during precheck (breaks money gate SSL)
+REMAINING: wire RPL bank loan/repay F4 OR drop `202615441302` from this PR; main static rot batch (CC-3/Codex) OR block-ready manifest lane → `git push -u origin cursor/bank-44329-relay-deposit-match-7fe0` → **Cursor-** PR → migrate `202615441301` → owner Chrome
+NEXT: 443.29-B push unblock; INBOX 435/432/433 unchanged behind 443.29-B
 
 ## 2026-10-11 · ROUND 443.22-2f OPTION 2 + paid_direct EXPORT MERGED
 
@@ -10,14 +18,6 @@ GUARD: verify-related-party-loan-scentsx-option2-backfill (18374); createPaidDir
 LIVE PROOF: gh pr view 26259 state=MERGED mergeCommit=98832809f3; Neon facility 161616ff… / 2410-00-002 open=1145000 entries=9 bank_links=9; CC-2 callable `createPaidDirectVendorAdvance` for cards 0210/6248/9855; card 5007 Amex → 2500-00-001 NOT loan
 REMAINING: Chrome Loans/Advances after deploy (Rule 42); CC-2 Relay deposit poster wires `createPaidDirectVendorAdvance` then re-measure Jorge/Tio
 NEXT: idle on 443.22 until CC-2 paid_direct deposits land
-
-FINDING: ACCT-F44322-2f-OPT2 — owner chose Option 2; Scentsx-only RPL facility papers 9 bank cats via `createRelatedPartyLoanEntry` (no JE rewrite). Jorge/Tio HOLD until CC-2 paid_direct Relay deposits.
-LANE: FINANCIAL
-Files Modified: scripts/ops/r44322-2f-scentsx-option2-backfill.ts · verify-related-party-loan-scentsx-option2-backfill.mjs · verify-steps/18374-… · OUTBOX · MEMORY_BANK
-GUARD: verify-related-party-loan-scentsx-option2-backfill (18374) selftest+static PASS
-LIVE PROOF: Neon `br-fancy-credit-akjnd07a` bypass_rls=lucia USMCA — facility `161616ff-f570-4327-9e01-7f81d8cff0e0` account 2410-00-002; entries=9; advanced=1345000 repaid=200000 open=1145000; bank_links=9; only 2410-00-002 has RPL entries (Jorge/Tio 0). Idempotent re-run skips 9. Actor Owner `d7bcbf8a-66cb-4561-acab-aed40e1a88ef`. rewrite_journal=false. Claim #26258@`9cccb067ee`. Prior paid_direct export #26257@`3a7635261d` (`createPaidDirectVendorAdvance` for CC-2 cards 0210/6248/9855; 5007 Amex ≠ loan → 2500-00-001).
-REMAINING: FAST-MERGE this PR; Chrome Loans/Advances after deploy (Rule 42); CC-2 Relay deposit poster calls `createPaidDirectVendorAdvance` for 0210/6248/9855 then re-measure Jorge/Tio.
-NEXT: merge Option 2 → OUTBOX DONE sha → wait CC-2 paid_direct deposits
 
 ## 2026-10-11 · ROUND 443.22-2f BACKFILL PROPOSAL (READ-ONLY) MERGED (#26225)
 

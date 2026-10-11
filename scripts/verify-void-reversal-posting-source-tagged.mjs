@@ -9,10 +9,10 @@
  * correct. Live-reproduced 2026-08-12: every reversal posting on prod (WHERE je.reverses_je_id IS NOT
  * NULL) had source_transaction_type/id NULL, 100%.
  *
- * INVARIANT (static — no database, runs in every CI context including fresh-DB): the reversal-posting
- * INSERT in void.service.ts's postVoidReversal must populate source_transaction_type and
- * source_transaction_id (bound to the same params.entityType / params.entityId the reversal itself
- * reverses) — not leave them unbound/NULL.
+ * INVARIANT (static — no database, runs in every CI context including fresh-DB): postVoidReversal must
+ * stamp reversal postings with source_transaction_type/id — either the legacy inline INSERT bound to
+ * params.entityType/params.entityId, or (ROUND 393.3+) insertPostingLineWithSpineIfNew spreading
+ * reversalLineSource(line, trueType, trueId) after resolveTrueReversalSource.
  *
  * Self-test: node scripts/verify-void-reversal-posting-source-tagged.mjs --selftest
  */
@@ -32,37 +32,57 @@ function stripComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 }
 
+function postVoidReversalBody(code) {
+  const fnAnchor = /export async function postVoidReversal/;
+  const fnMatch = fnAnchor.exec(code);
+  if (!fnMatch) return null;
+  const tail = code.slice(fnMatch.index);
+  const nextExport = tail.slice(1).search(/\nexport (async )?function /);
+  return nextExport === -1 ? tail : tail.slice(0, nextExport + 1);
+}
+
 /**
- * Isolates the INSERT INTO accounting.journal_entry_postings block inside postVoidReversal (anchored
- * on the function name, since this file has only one such INSERT) and checks the column list carries
- * source_transaction_type + source_transaction_id, AND that the bound values are params.entityType /
- * params.entityId (not a literal, not omitted).
+ * Legacy path: inline INSERT into journal_entry_postings with params.entityType/params.entityId.
+ * Writer path (ROUND 393.3): insertPostingLineWithSpineIfNew + reversalLineSource(line, trueType, trueId).
  */
 export function checkReversalPostingSourceTag(src) {
   const code = stripComments(src);
-
-  const fnAnchor = /export async function postVoidReversal/;
-  const fnMatch = fnAnchor.exec(code);
-  if (!fnMatch) return { ok: false, reason: "postVoidReversal function not found" };
+  const body = postVoidReversalBody(code);
+  if (!body) return { ok: false, reason: "postVoidReversal function not found" };
 
   const insertAnchor = /INSERT INTO accounting\.journal_entry_postings/;
-  const insertMatch = insertAnchor.exec(code.slice(fnMatch.index));
-  if (!insertMatch) return { ok: false, reason: "INSERT INTO accounting.journal_entry_postings not found inside postVoidReversal" };
-
-  const block = code.slice(fnMatch.index + insertMatch.index, fnMatch.index + insertMatch.index + 1200);
-
-  const hasColumns = /source_transaction_type/.test(block) && /source_transaction_id/.test(block);
-  if (!hasColumns) {
-    return { ok: false, reason: "the reversal-posting INSERT's column list does not include source_transaction_type/source_transaction_id" };
+  const insertMatch = insertAnchor.exec(body);
+  if (insertMatch) {
+    const block = body.slice(insertMatch.index, insertMatch.index + 1200);
+    const hasColumns = /source_transaction_type/.test(block) && /source_transaction_id/.test(block);
+    if (!hasColumns) {
+      return {
+        ok: false,
+        reason: "the reversal-posting INSERT's column list does not include source_transaction_type/source_transaction_id",
+      };
+    }
+    const hasBoundValues = /params\.entityType/.test(block) && /params\.entityId/.test(block);
+    if (!hasBoundValues) {
+      return {
+        ok: false,
+        reason: "source_transaction_type/id columns are listed but not bound to params.entityType/params.entityId — likely NULL or a stray literal",
+      };
+    }
+    return { ok: true };
   }
-  const hasBoundValues = /params\.entityType/.test(block) && /params\.entityId/.test(block);
-  if (!hasBoundValues) {
-    return {
-      ok: false,
-      reason: "source_transaction_type/id columns are listed but not bound to params.entityType/params.entityId — likely NULL or a stray literal",
-    };
+
+  const usesWriter = /insertPostingLineWithSpineIfNew/.test(body);
+  const usesLineSource = /reversalLineSource\s*\(\s*line\s*,\s*trueType\s*,\s*trueId\s*\)/.test(body);
+  const resolvesTrueSource = /resolveTrueReversalSource/.test(body);
+  if (usesWriter && usesLineSource && resolvesTrueSource) return { ok: true };
+
+  if (!usesWriter) {
+    return { ok: false, reason: "postVoidReversal has no reversal posting writer (expected insertPostingLineWithSpineIfNew or inline INSERT)" };
   }
-  return { ok: true };
+  if (!resolvesTrueSource) {
+    return { ok: false, reason: "postVoidReversal uses insertPostingLineWithSpineIfNew but not resolveTrueReversalSource for trueType/trueId" };
+  }
+  return { ok: false, reason: "postVoidReversal must spread reversalLineSource(line, trueType, trueId) into insertPostingLineWithSpineIfNew" };
 }
 
 const isEntryPoint = import.meta.url === `file://${process.argv[1]}`;
@@ -87,6 +107,21 @@ if (isEntryPoint && process.argv.includes("--selftest")) {
   `;
   const goodResult = checkReversalPostingSourceTag(good);
   if (!goodResult.ok) fail(`selftest: known-good fixture should pass — ${goodResult.reason}`);
+
+  const goodWriter = `
+    export async function postVoidReversal(client, params, actor) {
+      const { trueType, trueId } = await resolveTrueReversalSource(client, params.operatingCompanyId, params.entityType, params.entityId);
+      for (const line of reversalLines) {
+        await insertPostingLineWithSpineIfNew(client, {
+          operating_company_id: params.operatingCompanyId,
+          idempotency_key: \`void:\${params.entityType}:\${params.entityId}\`,
+          ...reversalLineSource(line, trueType, trueId),
+        });
+      }
+    }
+  `;
+  const goodWriterResult = checkReversalPostingSourceTag(goodWriter);
+  if (!goodWriterResult.ok) fail(`selftest: ROUND 393.3 writer fixture should pass — ${goodWriterResult.reason}`);
 
   const regressedNoColumns = `
     export async function postVoidReversal(client, params, actor) {

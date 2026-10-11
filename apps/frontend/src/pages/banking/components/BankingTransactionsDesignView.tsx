@@ -55,6 +55,7 @@ import { classesCatalogClient, itemsCatalogClient, type AccountingCatalogRow } f
 import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
 import { BankTransactionAttachmentsNotesModal } from "./BankTransactionAttachmentsNotesModal";
 import { MatchDrawer } from "./MatchDrawer";
+import { RelayDepositCategorizedMatchHintsPanel } from "./RelayDepositCategorizedMatchHintsPanel";
 import { buildBankingTransactionsXlsx } from "./banking-transactions-xlsx";
 import { RecordTransferModal } from "../RecordTransferModal";
 import { RecordCCPaymentModal } from "../RecordCCPaymentModal";
@@ -195,6 +196,8 @@ const MATCH_CANDIDATE_KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   bill: "Bill",
   expense: "Expense",
   deposit: "Deposit",
+  relay_fuel: "Relay fuel",
+  relay_deposit: "Relay deposit",
 };
 
 // Match candidates — EntityLink for every kind with a real detail route (Law §9).
@@ -206,6 +209,8 @@ const MATCH_CANDIDATE_ENTITY_KIND: Record<BankMatchCandidateKind, EntityKind> = 
   bill: "bill",
   expense: "expense",
   deposit: "deposit",
+  relay_fuel: "expense",
+  relay_deposit: "deposit",
 };
 
 // ROUND 433-CUR B3 (owner 2026-10-06): match candidates ARE filterable by transaction type
@@ -218,6 +223,8 @@ const MATCH_KIND_FILTER_OPTIONS: ReadonlyArray<{ value: BankMatchCandidateKind; 
   { value: "transfer", label: "Transfer" },
   { value: "je", label: "Journal Entry" },
   { value: "deposit", label: "Deposit" },
+  { value: "relay_deposit", label: "Relay deposit" },
+  { value: "relay_fuel", label: "Relay fuel" },
 ];
 const SETTLEMENT_BORN_MATCH_NOTE =
   "Settlement-born documents by default — narrow by transaction type with the multi-selector.";
@@ -258,6 +265,7 @@ function buildMatchCandidateColumns(
     {
       key: "event_date",
       label: "Date",
+      sortable: true,
       testId: "banking-match-candidate-date",
       sortValue: (c) => String(c.event_date ?? ""),
       cellClass: "ldt-k",
@@ -266,6 +274,7 @@ function buildMatchCandidateColumns(
     {
       key: "ledger_entry_kind",
       label: "Type",
+      sortable: true,
       sortValue: (c) => MATCH_CANDIDATE_KIND_LABELS[c.ledger_entry_kind] ?? "",
       render: (c) => (
         <EntityLink
@@ -279,6 +288,7 @@ function buildMatchCandidateColumns(
     {
       key: "reference",
       label: "Ref no.",
+      sortable: true,
       sortValue: (c) => c.reference ?? "",
       cellClass: "ldt-k",
       render: (c) => <span title={c.reference ?? undefined}>{c.reference?.trim() ? c.reference : "—"}</span>,
@@ -286,6 +296,7 @@ function buildMatchCandidateColumns(
     {
       key: "counterparty_name",
       label: "Payee",
+      sortable: true,
       testId: "banking-match-candidate-payee-header",
       sortValue: (c) => c.counterparty_name ?? "",
       render: (c) => (
@@ -297,6 +308,7 @@ function buildMatchCandidateColumns(
     {
       key: "description",
       label: "Description",
+      sortable: true,
       sortValue: (c) => c.description ?? c.memo ?? "",
       render: (c) => {
         // B7 — never paint a session uuid / bare id that slipped into a memo (humanMemo strips UUIDs).
@@ -308,6 +320,7 @@ function buildMatchCandidateColumns(
     {
       key: "open_balance_cents",
       label: "Open balance",
+      sortable: true,
       cellClass: "ldt-m",
       sortValue: (c) => Number(c.open_balance_cents ?? 0),
       render: (c) => (c.open_balance_cents == null ? "—" : formatUsdCents(Math.abs(Number(c.open_balance_cents)))),
@@ -315,6 +328,7 @@ function buildMatchCandidateColumns(
     {
       key: "amount_cents",
       label: "Amount",
+      sortable: true,
       cellClass: "ldt-m",
       sortValue: (c) => Math.abs(Number(c.amount_cents ?? 0)),
       render: (c) => formatUsdCents(Math.abs(Number(c.amount_cents ?? 0))),
@@ -322,6 +336,7 @@ function buildMatchCandidateColumns(
     {
       key: "difference",
       label: "Difference",
+      sortable: true,
       testId: "banking-match-candidate-difference-header",
       cellClass: "ldt-m",
       sortValue: (c) => Math.abs(matchDifferenceCents(tx.amount_cents, c.amount_cents)),
@@ -347,6 +362,7 @@ function buildMatchCandidateColumns(
     {
       key: "days_off",
       label: "Days off",
+      sortable: true,
       testId: "banking-match-candidate-days-off-header",
       cellClass: "ldt-k",
       sortValue: (c) => matchDaysOff(c.event_date, tx.transaction_date) ?? 0,
@@ -4108,6 +4124,8 @@ export function BankingTransactionsDesignView({
           </div>
         </div>
       </div>
+
+      <RelayDepositCategorizedMatchHintsPanel companyId={companyId} />
 
       <BulkActionBar
         {...bulkSelection.bulkActionBarProps([
