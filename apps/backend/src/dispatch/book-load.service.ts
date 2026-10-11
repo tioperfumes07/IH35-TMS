@@ -1,7 +1,7 @@
 /**
  * ENGINE: Book Load — creates the load with its stops, charges, assignment, driver bill, pre-settlement link, geofences and dispatch events
  * SCHEDULE: on demand — POST /api/v1/dispatch/loads (dispatch/loads.routes.ts), POST /api/v1/mdata/loads (mdata/loads.routes.ts), EDI 204 (inbound-204.handler.ts), seed/csv-seed-import.ts, feed/seed-settlement-document.service.ts, driver-finance/settlement-creator-seed-loads.ts
- * WRITES: mdata.loads, mdata.load_stops, dispatch.load_charge_lines, dispatch.load_assignment_history, dispatch.load_id_reservations, lib.trace_counters, docs.files, docs.file_links, driver_finance.driver_bills, driver_finance.settlement_lines, driver_finance.driver_settlements + presettlement_link_suggestions, geo.geofences, outbox.events, audit.audit_events
+ * WRITES: mdata.loads, mdata.load_stops, dispatch.load_charge_lines, dispatch.load_assignment_history, dispatch.load_id_reservations, lib.trace_counters, docs.files, docs.file_links, driver_finance.driver_bills, driver_finance.settlement_lines, driver_finance.driver_settlements + presettlement_link_suggestions, geo.geofences, outbox.events, audit.audit_events + (443.35, load-lane-learning.service.ts) mdata.load_stops.leg_miles, catalogs.lane_mileage, catalogs.point_mileage, mdata.customer_lanes
  * IDEMPOTENCY: UNIQUE(operating_company_id, load_number) loads_operating_company_id_load_number_key — INSERT under SAVEPOINT, 23505 becomes a 409 (no ON CONFLICT); driver bill mint under ADVISORY LOCK hashtextextended(load id); a booking with no typed number mints a new load each call
  * OVERLAP: two bookings with the same number — the second gets 409 duplicate_load_number; two with no number each get their own number and create two loads
  * REVERSE: dispatch/cancellation.service.ts:cancelLoad
@@ -9,6 +9,7 @@
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
+import { learnLoadLanes } from "./load-lane-learning.service.js";
 import { randomUUID } from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -3274,6 +3275,30 @@ export async function createLoadWithFullSideEffects(
           actualArrivalAt ? "manual" : null,
           actualDepartureAt ? "manual" : null,
         ]
+      );
+    }
+
+    // ROUND 443.35: every booked load, any source, saves its miles for the next estimate -- per-stop leg_miles,
+    // catalogs.lane_mileage, catalogs.point_mileage, mdata.customer_lanes (load-lane-learning.service.ts). Inside a
+    // savepoint: a learning failure is audited and left for verify-booked-loads-save-miles to catch, never a refused booking.
+    await client.query("SAVEPOINT load_lane_learning");
+    try {
+      await learnLoadLanes(client, {
+        operatingCompanyId: input.operating_company_id,
+        loadId: String(load.id),
+        fresh: true,
+        actorUserId: input.requestingUserUuid,
+      });
+      await client.query("RELEASE SAVEPOINT load_lane_learning");
+    } catch (laneError) {
+      await client.query("ROLLBACK TO SAVEPOINT load_lane_learning");
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "dispatch.load.lane_learning_failed",
+        { load_uuid: load.id, operating_company_id: input.operating_company_id, error: String((laneError as Error)?.message ?? laneError) },
+        "warning",
+        "443.35"
       );
     }
 

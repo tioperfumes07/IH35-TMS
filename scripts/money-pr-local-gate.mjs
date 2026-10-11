@@ -1067,6 +1067,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-samsara-history-is-never-an-operational-path-into-a-frozen-company",
     ["apps/backend/src/", "scripts/verify-samsara-history-is-never-an-operational-path-into-a-frozen-company.mjs"],
   ],
+  // ROUND 443.35 (CC-2) — every booked load, any source, saves leg_miles + its lane_mileage for the next estimate.
+  [
+    "verify-booked-loads-save-miles",
+    ["apps/backend/src/dispatch/", "apps/backend/src/driver-finance/", "scripts/verify-booked-loads-save-miles.mjs"],
+  ],
   // ROUND 363-CC1-D (CC-1) — no writer moves a posted line in place; the database refuses it.
   [
     "verify-no-posting-update-outside-document-edit",
