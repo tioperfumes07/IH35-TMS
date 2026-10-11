@@ -1958,6 +1958,8 @@ const ROUND_44329_B_BANK_RECON_AMBIENT_LIVE_GUARDS = new Set([
   "verify-driver-subaccount-numbers-one-per-driver",
   // STEPS census — needs live DB; bank-recon-only PR does not touch dispatch cancellation law.
   "verify-cancelled-load-has-cancellation-record",
+  // LIVE_DOMAIN — armed via driver-finance path prefix on bank-recon PR; tip booked-load leg_miles debt (CC-2).
+  "verify-booked-loads-save-miles",
 ]);
 
 for (const [name, rel] of STEPS) {
