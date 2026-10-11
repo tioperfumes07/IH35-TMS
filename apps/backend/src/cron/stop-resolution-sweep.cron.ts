@@ -21,7 +21,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { listSamsaraIngestionTenantIds } from "../integrations/samsara/ingestion-tenants.service.js";
-import { geocodeStopsWithClient } from "../telematics/stops-geocode-backfill.service.js";
+import { geocodeStopsWithClient, NO_STREET_SOURCE_TRIED } from "../telematics/stops-geocode-backfill.service.js";
 import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 import { relearnLoadStopLegs } from "../dispatch/load-lane-learning.service.js";
 
@@ -45,10 +45,10 @@ export async function runStopResolutionSweepTick(limit = 200) {
               AND s.geocode_source IN ('zip_center', 'city_center')
               -- 443.44: a stop the place step has not tried yet (resolved off-server / before the step existed) is picked now;
               -- one it has tried is retried every 5 h (new Samsara addresses / locations can resolve it later).
-              AND (s.geocode_failure_reason IS DISTINCT FROM 'no_street_source'
+              AND (s.geocode_failure_reason IS DISTINCT FROM $3
                    OR s.geocode_attempted_at IS NULL OR s.geocode_attempted_at < now() - interval '5 hours')
             LIMIT $2`,
-          [operatingCompanyId, limit]
+          [operatingCompanyId, limit, NO_STREET_SOURCE_TRIED]
         )
       ).rows;
       let resolved = 0, still = 0;
