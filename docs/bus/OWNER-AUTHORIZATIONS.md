@@ -7545,3 +7545,13 @@ action: OWNER_AUTH_ID=AUTH-415 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-1
 rehearsal: throwaway br-square-hat-akj1365j (COMMITTED, deleted): 141 matched (81 at the 443.41 measure + later Creator posts before 6f84ffa6bf went live), 141 hidden, 0 still visible
 expires_at: 2026-10-12T07:11:23Z
 status: OPEN
+
+## AUTH-416
+issued_at: 2026-10-11T07:13:37Z
+issued_by: Lead 443.42 #5 ("CC-2: run it through the stop-resolution engine (Samsara match first, then street geocode), fences only where a street exists"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..415
+owner_quotes: "This must be fixed and done automatically for the next seedings, none should ever fail." (2026-10-11 00:30 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the loads in ~/IH35-LEAD-CHANNEL/443-42-stop-addresses.json (CC-3, from the owner's settlements workbook): mdata.load_stops.facility_name filled ONCE where NULL with the owner's value (stop order + type must match, else the load is listed and untouched); every stop of those loads re-resolved by geocodeStopsWithClient(reresolve) (Samsara by name, else zip / city center, no fence). No street invented (the workbook has none). No DELETE.
+action: OWNER_AUTH_ID=AUTH-416 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-42-stop-addresses-from-workbook.ts --file=<443-42-stop-addresses.json> --apply
+rehearsal: throwaway br-polished-pine-ako72hz1 (COMMITTED, deleted): 141 loads / 282 stops; facility_name NULL 42 -> 0; on a Samsara address 60 -> 66; no street 222 -> 216; 10 loads listed whose workbook has more stops than were booked (13528 13537 13538 13570 13576 13583 13589 13599 13600 13628)
+expires_at: 2026-10-12T07:13:37Z
+status: OPEN
