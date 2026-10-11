@@ -118,6 +118,10 @@ export async function resolveCounterAccount(
   fundingAccountId: string | null
 ): Promise<{ ok: true; accountId: string } | { ok: false; missingRole: string }> {
   if (direction === "out") {
+    // 443.59: party_transfer_out supplies the specific bank account as the counter (not cash_clearing).
+    // DR 2410-00-xxx (relatedPartyAccountId) / CR bank (fundingAccountId). The fundingAccountId was
+    // persisted on the entry so this path is idempotent across retries.
+    if (fundingAccountId) return { ok: true, accountId: fundingAccountId };
     try {
       const id = await resolveRoleAccount(client, operatingCompanyId, "cash_clearing");
       return { ok: true, accountId: id };

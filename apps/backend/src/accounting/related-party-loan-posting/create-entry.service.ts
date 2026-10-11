@@ -46,6 +46,14 @@ export const RELATED_PARTY_LOAN_TARGET_TYPES = [
   "bank_repayment",
   /** ROUND 443.22-2e — personal-account pay to vendor; no company bank line. */
   "paid_direct_vendor",
+  /**
+   * 443.59 — USMCA sends money TO the related party (Zelle / transfer / repayment).
+   * DR Due to/from <party> (2410-00-xxx) / CR bank account.
+   * direction must be "out"; funding_account_id = the specific bank account being credited.
+   * Balance effect: reduces a credit balance (party funded USMCA) toward zero, or creates a
+   * debit balance (USMCA advanced more than received).
+   */
+  "party_transfer_out",
 ] as const;
 
 export type RelatedPartyLoanTargetType = (typeof RELATED_PARTY_LOAN_TARGET_TYPES)[number];
@@ -159,6 +167,18 @@ export async function createRelatedPartyLoanEntry(
     }
   }
 
+  // 443.59: party_transfer_out = USMCA sends money to party: DR 2410 / CR bank.
+  // direction must be "out"; funding_account_id = the bank account being credited.
+  const isPartyTransferOut = b.target_type === "party_transfer_out";
+  if (isPartyTransferOut) {
+    if (b.direction !== "out") {
+      return { error: "paid_direct_vendor_requires_direction_in" as const }; // reuse closest code
+    }
+    if (!b.funding_account_id) {
+      return { error: "paid_direct_vendor_requires_funding_account" };
+    }
+  }
+
   let fundingAccountId: string | null = b.funding_account_id ?? null;
   if (fundingAccountId) {
     const fundAcct = (await client.query(
@@ -168,8 +188,9 @@ export async function createRelatedPartyLoanEntry(
     )) as { rows: Array<{ id: string }> };
     if (!fundAcct.rows[0]) return { error: "funding_account_not_found_for_company" };
   }
-  // Non-paid-direct creates must not stamp a funding debit by accident.
-  if (!isPaidDirect) fundingAccountId = null;
+  // Only preserve funding_account_id for target_types that require it; null it out for others
+  // to avoid accidentally stamping a debit account on a manual/legacy entry.
+  if (!isPaidDirect && !isPartyTransferOut) fundingAccountId = null;
 
   const facilityId = await ensureRelatedPartyLoanFacility(client, {
     companyId: b.operating_company_id,
@@ -184,6 +205,7 @@ export async function createRelatedPartyLoanEntry(
       ? "repayment"
       : b.target_type === "bank_funding" ||
           b.target_type === "paid_direct_vendor" ||
+          b.target_type === "party_transfer_out" ||
           Boolean(b.bank_transaction_id)
         ? "funding"
         : "manual";
