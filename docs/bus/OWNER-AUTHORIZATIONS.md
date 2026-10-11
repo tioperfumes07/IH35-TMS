@@ -7708,7 +7708,11 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — one outbox event di
 action: OWNER_AUTH_ID=AUTH-428 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-53-relearn-creator-miles.ts --apply   (then once more with --record-sources after 202615550300 is live)
 rehearsal: throwaway br-red-hat-ak392uy0 (COMMITTED, deleted): 148 loads, 148 events enqueued; re-run 0 enqueued / 148 already queued
 expires_at: 2026-10-12T15:00:41Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T16:21:47Z
+consumed_by: CC-2 (443.53 #2 + 443.55 per-field sources)
+row_counts: passes 443.53 / 443.55-sources / 443.53-null-sources / 443.53-rls, 148 events each, all delivered, 0 errored (the first three ran without RLS context — fixed #26387 — and the last one carried the work); 309 Creator stops latest figure: document / load miles 215, google 74, point_mileage cache 3, lane average 1, NULL 16, haversine 0; Creator loads with a recorded source per field 148 of 148
+proof_query: node scripts/verify-no-haversine-leg-miles.mjs (live 0) + node scripts/verify-load-miles-source-recorded.mjs (live 148 of 148, unsourced 0)
 
 ## AUTH-430
 issued_at: 2026-10-11T15:35:52Z
@@ -7718,7 +7722,11 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — every USMCA load wi
 action: OWNER_AUTH_ID=AUTH-430 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-60-mileage-source.ts --apply
 rehearsal: throwaway br-flat-bonus-akaoi28p (COMMITTED, deleted): recorded 2 (13498, 13508 -> Operator entered); loads with miles_practical and no source after 0; re-run recorded 0
 expires_at: 2026-10-12T15:35:52Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T15:51:30Z
+consumed_by: CC-2 (443.60 #2 mileage source)
+row_counts: recorded 2 (13498, 13508 -> Operator entered); USMCA loads with miles_practical and no mileage_source after 0
+proof_query: node scripts/verify-mileage-g1-g5-live.mjs -> OK (G4 0)
 
 ## AUTH-431
 issued_at: 2026-10-11T15:41:27Z
@@ -7728,4 +7736,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the AUTH-422 passes
 action: OWNER_AUTH_ID=AUTH-431 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-53-push-facility-fences.ts --apply
 rehearsal: throwaway br-muddy-recipe-ak14cfys (COMMITTED, deleted): item 1 moved 3 (Samsara update enqueued); item 3 192 real-address locations = 27 owner import + 60 already in Samsara + 105 pushed; duplicates retired 0; re-run 0 moved / 0 pushed
 expires_at: 2026-10-12T15:41:27Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T15:52:10Z
+consumed_by: CC-2 (443.53 #1 facility fences to Samsara)
+row_counts: item 1 moved 3 (Samsara copy updated in place); item 3 192 real-address locations = 27 owner import + 60 already in Samsara + 105 pushed; 118 Samsara events delivered, 0 errored; 191 of 191 street locations of Creator stops have one active fence with a Samsara id
+proof_query: SELECT count(*) FILTER (WHERE delivered_at IS NOT NULL), count(*) FILTER (WHERE last_error IS NOT NULL) FROM outbox.events WHERE event_type IN ('samsara.create_geofence','samsara.update_geofence') AND created_at > '2026-10-11 15:50' -> 118, 0
