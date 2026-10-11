@@ -2,7 +2,7 @@
 
 FINDING: BANK-F44329 — Relay wallet/card outflows → `integrations.relay_deposits` match candidate; wallet + 3.25% fee split; read-only legacy ~1,291 hints.
 LANE: FINANCIAL
-Files Modified: migrations 202615441301 + 202610090150 (replay order) · match engine + MatchDrawer + RelayDepositCategorizedMatchHintsPanel · verify-relay-deposit-is-a-bank-match-candidate.mjs (3996) · CLAIMED · OUTBOX
+Files Modified: migrations 202615441301 + 202610090200 entity_type shim (replay order) · match engine + MatchDrawer + RelayDepositCategorizedMatchHintsPanel · verify-relay-deposit-is-a-bank-match-candidate.mjs (3996) · CLAIMED · OUTBOX
 GUARD: verify-relay-deposit-is-a-bank-match-candidate OK; verify:db:reset PASS (APPLY 202615441301); cursor-ship-preflight pending push
 LIVE PROOF: relay-deposit-match-math wallet 12110000 → fee 393575 charged 12503575; verify-no-bank-line-is-matched-to-nothing live 1208 lines; Chrome Live=UNVERIFIED until deploy/migration
 REMAINING: push `cursor/bank-44329-relay-deposit-match-7fe0` → **Cursor-** PR → merge → Render deploy + migration → owner Chrome `match-relay-deposit-split`
