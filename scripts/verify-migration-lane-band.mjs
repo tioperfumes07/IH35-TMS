@@ -96,6 +96,13 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-2/advance-once-5785",
     new Set(["db/migrations/202615500300_driver_advance_balances_one_row_per_posting.sql"]),
   ],
+  // Lead 443.55 (owner 2026-10-11 09:33 CT "In loads it should show both recommendations historical and google ..."; owner
+  // 2026-10-01 "fully complete and build their own engine, no handing off"): CC-2's mileage engine stores the per-field
+  // choice. Claimed #(202615550300) in #26372.
+  [
+    "cc-2/443-55-miles-choice",
+    new Set(["db/migrations/202615550300_loads_miles_choice.sql"]),
+  ],
   // ROUND 443.29 a (owner 2026-10-10 7:15/7:19 PM CT): the "Fuel Card Fee" item the Relay fill poster resolves its fee leg
   // by did not exist in any company, so no Relay fill could post. Claimed #(202615490300).
   [

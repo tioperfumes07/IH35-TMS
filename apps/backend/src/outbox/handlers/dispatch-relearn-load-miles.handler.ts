@@ -3,6 +3,7 @@
 // mileage cache, Google routing, historical lane average, else NULL. Never a straight line. Never a pay / settlement table:
 // driver pay miles are the signed settlement. Idempotent: a second delivery recomputes the same values from the cache.
 import { recomputeFirstStopDeadhead, relearnLoadStopLegs } from "../../dispatch/load-lane-learning.service.js";
+import { recordDocumentMilesSources } from "../../dispatch/mileage/miles-recommendations.service.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./outbox-handler.types.js";
 
 function requireUuid(value: unknown, field: string): string {
@@ -28,8 +29,11 @@ export class DispatchRelearnLoadMilesHandler implements OutboxEventHandler {
     await ctx.client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const legs = await relearnLoadStopLegs(ctx.client as never, { operatingCompanyId, loadId, actorUserId });
     const deadhead = await recomputeFirstStopDeadhead(ctx.client as never, { operatingCompanyId, loadId, actorUserId });
+    // 443.55: record_sources = also record 'document' as the source of every miles field that has a value and no recorded
+    // source (with both recommendations at this moment). Never changes a value.
+    const sources = payload.record_sources === true ? await recordDocumentMilesSources(ctx.client as never, { operatingCompanyId, loadId, actorUserId }) : null;
     return {
-      message: `relearned:${legs.changed.length}:unresolved:${legs.unresolved.length}:deadhead:${deadhead.written ? deadhead.method ?? "written" : deadhead.reason ?? "kept"}`,
+      message: `relearned:${legs.changed.length}:unresolved:${legs.unresolved.length}:deadhead:${deadhead.written ? deadhead.method ?? "written" : deadhead.reason ?? "kept"}${sources ? `:sources:${sources.recorded.join("+") || "none"}` : ""}`,
     };
   }
 }

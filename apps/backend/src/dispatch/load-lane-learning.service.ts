@@ -181,6 +181,38 @@ export async function chooseLegMiles(
   return { miles: null, reason: `no_google_route_and_no_lane_average${engine.reason ? `:${engine.reason}` : ""}` };
 }
 
+/**
+ * 443.55 — Google's driving distance between two real points ONLY (the "Google" recommendation on the Load screen): the
+ * engine's own Google cache rows first (point_mileage engine 'google'), else one Routes call cached the same way as
+ * chooseLegMiles. NULL when Google has no route. This module stays the only writer of catalogs.point_mileage.
+ */
+export async function googleLegMiles(
+  client: Queryable,
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number },
+  route: RouteFn = computeRouteReference
+): Promise<{ miles: number; fetched_at: string } | null> {
+  const key = [round4(from.lat), round4(from.lng), round4(to.lat), round4(to.lng)];
+  const hit = (
+    await client.query<{ m: string; at: string }>(
+      `SELECT practical_miles::text AS m, computed_at::text AS at FROM catalogs.point_mileage
+        WHERE engine = 'google' AND origin_lat = $1::numeric AND origin_lng = $2::numeric AND dest_lat = $3::numeric AND dest_lng = $4::numeric
+        LIMIT 1`,
+      key
+    )
+  ).rows[0];
+  if (hit && pos(hit.m) != null) return { miles: round1(Number(hit.m)), fetched_at: hit.at };
+  const google = await route(from, to);
+  if (!google || !Number.isFinite(google.miles) || google.miles <= 0) return null;
+  await client.query(
+    `INSERT INTO catalogs.point_mileage (origin_lat, origin_lng, dest_lat, dest_lng, practical_miles, shortest_miles, engine, engine_version)
+     VALUES ($1::numeric, $2::numeric, $3::numeric, $4::numeric, $5::numeric, NULL, 'google', 'routes-v2-drive')
+     ON CONFLICT (origin_lat, origin_lng, dest_lat, dest_lng) DO NOTHING`,
+    [...key, round1(google.miles)]
+  );
+  return { miles: round1(google.miles), fetched_at: new Date().toISOString() };
+}
+
 /** The historical lane average (catalogs.lane_mileage, this company) for a city/state pair, either direction. */
 async function laneAverageMiles(client: Queryable, companyId: string, a?: Place, b?: Place): Promise<number | null> {
   if (!a?.city || !a.state || !b?.city || !b.state) return null;

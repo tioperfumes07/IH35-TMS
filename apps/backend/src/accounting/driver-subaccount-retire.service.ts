@@ -26,7 +26,7 @@ export async function retireDriverSubAccountsWithoutPostings(
   input: { companyId: string; driverId: string; actorUserId: string }
 ): Promise<DriverSubAccountRetireRow[]> {
   const links = (
-    await client.query<{ kind: "escrow" | "advance"; link_id: string; account_id: string; account_number: string | null; account_name: string | null; deactivated_at: string | null; is_locked: boolean | null; postings: number; balance_cents: number }>(
+    await client.query<{ kind: "escrow" | "advance"; link_id: string; account_id: string; account_number: string | null; account_name: string | null; deactivated_at: string | null; is_locked: boolean | null; postings: number; gl_net_cents: number }>(
       `WITH l AS (
          SELECT 'escrow'::text kind, e.id::text link_id, e.coa_account_id FROM accounting.escrow_accounts e
           WHERE e.operating_company_id = $1::uuid AND e.holder_type = 'driver' AND e.holder_id = $2::uuid
@@ -36,7 +36,7 @@ export async function retireDriverSubAccountsWithoutPostings(
        SELECT l.kind, l.link_id, a.id::text account_id, a.account_number, a.account_name, a.deactivated_at, a.is_locked,
               (SELECT count(*) FROM accounting.journal_entry_postings p WHERE p.account_id = a.id)::int postings,
               (SELECT coalesce(sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)
-                 FROM accounting.journal_entry_postings p WHERE p.account_id = a.id)::bigint::float8 balance_cents
+                 FROM accounting.journal_entry_postings p WHERE p.account_id = a.id)::bigint::float8 gl_net_cents
          FROM l JOIN catalogs.accounts a ON a.id = l.coa_account_id AND a.operating_company_id = $1::uuid
         ORDER BY l.kind, a.account_number`,
       [input.companyId, input.driverId]
@@ -45,7 +45,7 @@ export async function retireDriverSubAccountsWithoutPostings(
 
   const out: DriverSubAccountRetireRow[] = [];
   for (const r of links) {
-    const base = { kind: r.kind, account_id: r.account_id, account_number: r.account_number, account_name: r.account_name, postings: r.postings, balance_cents: r.balance_cents };
+    const base = { kind: r.kind, account_id: r.account_id, account_number: r.account_number, account_name: r.account_name, postings: r.postings, balance_cents: r.gl_net_cents };
     if (r.postings > 0) { out.push({ ...base, outcome: "kept_has_postings" }); continue; }
     if (r.is_locked === true) { out.push({ ...base, outcome: "kept_locked" }); continue; }
     const wasAlreadyDeactivated = r.deactivated_at !== null;

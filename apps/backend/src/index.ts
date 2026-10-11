@@ -598,6 +598,7 @@ import { registerRelatedPartyLoanRoutes } from "./accounting/related-party-loan-
 import { registerCashForecastManualRoutes } from "./forecast/cash-forecast-manual.routes.js";
 import { registerGeocodingRoutes } from "./integrations/trimble/geocoding.routes.js";
 import { registerRouteReferenceRoutes } from "./integrations/google/route-reference.routes.js";
+import { registerMilesRecommendationsRoutes } from "./dispatch/mileage/miles-recommendations.routes.js";
 import { registerGooglePlacesRoutes } from "./integrations/google/places.routes.js";
 import { registerSafetyOfficerRoleHomeRoutes } from "./safety-officer/role-views/routes.js";
 import { registerDriverManagerRoleHomeRoutes } from "./driver-manager/role-views/routes.js";
@@ -886,6 +887,7 @@ async function main() {
   // (registration must NOT depend on an env var — that 404'd the forecast routes). Key stays server-side.
   await registerGeocodingRoutes(app);
   await registerRouteReferenceRoutes(app);
+  await registerMilesRecommendationsRoutes(app);
   // Google address-autocomplete proxy (RULING 3, 2026-09-02) — address field only, never miles.
   // Same always-mounts / gate-inside-handler shape as the Trimble route above.
   await registerGooglePlacesRoutes(app);
