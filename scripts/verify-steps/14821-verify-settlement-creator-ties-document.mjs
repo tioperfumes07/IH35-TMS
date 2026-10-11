@@ -36,5 +36,7 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-preview-is-the-post.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-gate-gross-includes-extra-pay.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-gate-gross-includes-extra-pay.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-mileage-source.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-mileage-source.mjs"]);
   },
 };

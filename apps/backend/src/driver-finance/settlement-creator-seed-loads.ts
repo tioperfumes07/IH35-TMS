@@ -308,6 +308,9 @@ export async function ensureDispatchedLoadsForCreator(
       assigned_unit_id: draft.unit_id ?? undefined,
       assigned_trailer_unit_id: draft.trailer_id ?? undefined,
       miles_practical: load.loaded_miles ?? load.line_haul_miles ?? null,
+      // CC-2 finding 2026-10-11 (verify-mileage-g1-g5-live G4 on 5769's 13498 / 13508): miles carry their source. The
+      // Creator's miles are typed from the signed settlement / AlwaysTrack record by the operator.
+      mileage_source: (load.loaded_miles ?? load.line_haul_miles) != null ? "Operator entered" : undefined,
       // Driver pay = short miles (company practical stays on miles_practical). Fall back to loaded when short omitted.
       miles_shortest: load.miles_shortest ?? load.loaded_miles ?? load.line_haul_miles ?? null,
       miles_deadhead: load.empty_miles ?? null,
