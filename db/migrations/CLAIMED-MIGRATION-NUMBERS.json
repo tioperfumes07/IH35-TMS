@@ -2317,5 +2317,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-10",
     "purpose": "ROUND 443.28 same-entity FK for 443.16: UNIQUE (operating_company_id, id) on telematics.unit_stop_events + composite FK mdata.load_stops (operating_company_id, actual_stop_event_id) -> unit_stop_events (verify-money-lines-same-entity-fks red on main) — additive, no data written"
+  },
+  "202615490300": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-11",
+    "purpose": "ROUND 443.29 a: seed the \"Fuel Card Fee\" item (-> 5005 Fuel Card Fees) for USMCA; the Relay fill poster resolves its fee leg by that item name and no company has it, so no Relay fill with a fee can post"
   }
 }
