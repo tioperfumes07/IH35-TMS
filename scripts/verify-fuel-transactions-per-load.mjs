@@ -47,7 +47,7 @@ export const baseInvoice = (ref) => String(ref ?? "").replace(/-1[0-9]{4}$/, "")
  * live: active rows [{id, load_number, ref, cents, date, relay_id}]; purged: [{ref, cents, auth_id}];
  * relayTotals: Map(relay_id -> {paid_cents, dead}); creatorIds: Set(fuel id named by a Creator posted event).
  */
-export function compareFuel({ documents, corrections = [], live, purged = [], relayTotals = new Map(), creatorIds = new Set() }) {
+export function compareFuel({ documents, corrections = [], documentDuplicates = [], live, purged = [], relayTotals = new Map(), creatorIds = new Set() }) {
   const failures = [];
   const notes = [];
   const fix = new Map(corrections.map((c) => [`${c.load_number}|${c.invoice}|${c.receipt_cents}`, c]));
@@ -96,6 +96,13 @@ export function compareFuel({ documents, corrections = [], live, purged = [], re
         (!line.fuel_type || !r.fuel_type || r.fuel_type === line.fuel_type));
       if (elsewhere) {
         notes.push(`already on load ${elsewhere.load_number}: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} — one receipt, one expense`);
+        continue;
+      }
+      // A document line proven to be a second entry of a receipt kept on another load (source extract document_duplicates,
+      // each with its evidence quoted) is shown, not missing — and only while the kept line is still live.
+      const dup = documentDuplicates.find((x) => String(x.load_number) === load && String(x.invoice) === String(line.invoice) && x.receipt_cents === line.receipt_cents);
+      if (dup && live.some((r) => r.load_number === String(dup.kept_on_load) && baseInvoice(r.ref) === baseInvoice(dup.kept_invoice) && (!dup.fuel_type || r.fuel_type === dup.fuel_type))) {
+        notes.push(`second entry of receipt ${dup.kept_invoice}: settlement ${doc.settlement_no} load ${load} ${money(line.receipt_cents)} — the receipt is on load ${dup.kept_on_load}`);
         continue;
       }
       failures.push(`missing: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} ${line.date} has no live fuel row`);
@@ -153,6 +160,10 @@ function selftest() {
       { documents: [{ settlement_no: "1", fuel_purchases: [L()] }, { settlement_no: "2", fuel_purchases: [L({ load_number: "200" })] }], live: [R()] }, 0],
     ["the second document prints the suffixed number <invoice>-<load>: still already on load N",
       { documents: [{ settlement_no: "1", fuel_purchases: [L()] }, { settlement_no: "2", fuel_purchases: [L({ load_number: "13621", invoice: "A1-13621" })] }], live: [R()] }, 0],
+    ["a listed second entry with a different amount is shown while the kept line is live",
+      { documents: [{ settlement_no: "2", fuel_purchases: [L({ load_number: "13535", invoice: "A1-13535", receipt_cents: 4135, fuel_type: "def" })] }],
+        documentDuplicates: [{ load_number: "13535", invoice: "A1-13535", receipt_cents: 4135, fuel_type: "def", kept_on_load: "100", kept_invoice: "A1" }],
+        live: [R({ fuel_type: "def" })] }, 1],
     ["receipt printed on two documents, live on neither load fails twice",
       { documents: [{ settlement_no: "1", fuel_purchases: [L()] }, { settlement_no: "2", fuel_purchases: [L({ load_number: "200" })] }], live: [] }, 2],
   ];
@@ -214,6 +225,7 @@ async function live() {
     const result = compareFuel({
       documents: source.documents,
       corrections: source.date_corrections || [],
+      documentDuplicates: source.document_duplicates || [],
       live: liveRows,
       purged: purgedRes.rows.map((r) => ({ ...r, cents: Number(r.cents) })),
       relayTotals: new Map(relayRes.rows.map((r) => [r.id, { paid_cents: Number(r.paid), dead: r.dead }])),

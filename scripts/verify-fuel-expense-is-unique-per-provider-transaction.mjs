@@ -27,10 +27,8 @@ export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USM
 // empty leg (T152 at Love's #471 Natalia 2026-08-26 16:10Z, after the Temple delivery), the owner's words name 13547 (443.74 #4).
 // 99448116 (USMCA DEF, 13519 $47.45 / 13535 "99448116-13535" $41.35): same receipt number, DIFFERENT amounts — surfaced by the
 // base-invoice key 2026-10-11; not a proven duplicate, listed for the Lead / owner, no write.
-const AWAITING_OWNER_AUTH = new Map([
-  ["1848853", "443.74 #4: GPS says 13543, the owner said 13547"],
-  ["99448116", "same receipt, different amounts on 13519 / 13535 — listed, not ruled"],
-]);
+// 1848853 and 99448116 resolved 2026-10-11 by AUTH-440 (GPS + one transaction number = one purchase): 13547 and 13535 copies voided.
+const AWAITING_OWNER_AUTH = new Map([]);
 
 const out = await withUnscopedReadOnly(LABEL, async (c) => {
   const dup = await c.query(

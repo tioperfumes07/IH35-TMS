@@ -7716,5 +7716,17 @@
    "evidence": "Company_Settlement_5789.pdf (Start Date 2026-08-26, End Date 2026-09-01, page footer printed 2026-09-25) prints '2026-09-27 LOVES 10465LONESOME 99460605 Fuel-DEF-Diesel Exhaust Fluid Y 42.38'. The printed date is after the document was printed and outside its own period; load 13550 ran Laredo TX 2026-08-26 -> Edison NJ 2026-08-28 through Lonesome Pine Trail, TN. The diesel line on the SAME invoice 99460605 prints '2026-08-27 LOVES 10465LONESOME PINE 99460605 148.502 5.759 855.22' -> one receipt, one date, 2026-08-27.",
    "status": "OPEN \u2014 live fuel row 89bd8842, expense 13550-4 (8878481c) and its JE carry 2026-09-27; same reissue"
   }
+ ],
+ "document_duplicates": [
+  {
+   "settlement_no": "5783",
+   "load_number": "13535",
+   "invoice": "99448116-13535",
+   "fuel_type": "def",
+   "receipt_cents": 4135,
+   "kept_on_load": "13519",
+   "kept_invoice": "99448116",
+   "evidence": "One transaction number is one purchase (Lead 443.77 #3, AUTH-440): receipt 99448116 (T177, Love's 10465 Lonesome Pine Trail TN, 2026-08-13) carries diesel 179.306 gal $1,020.07 and DEF 9.741 gal $47.45 on load 13519; this document line is a second, hand-typed DEF entry of the same transaction ('10465LONESMOE PINE', 8.489 gal $41.35) \u2014 voided under AUTH-440, the receipt stays on 13519."
+  }
  ]
 }
