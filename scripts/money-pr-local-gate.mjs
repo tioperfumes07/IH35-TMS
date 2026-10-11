@@ -1956,6 +1956,24 @@ function acceptedOwnerRound443RelayFillOnly(name, code) {
   return true;
 }
 
+/**
+ * LEAD RULING 443.69 #1 (2026-10-11 21:02 UTC) — NAMED RED: verify-fuel-transactions-per-load. After CC-2's root fix (dab9ddb8)
+ * its only failures are the 2 fuel dates on settlement 5789 the document proves (13557 inv 99462408, 13550 inv 99460605) —
+ * CC-2's data correction (443.69 #2c). Narrow: only with LEAD_443_69_FUEL_NAMED_RED=1 and only while the failure lines are
+ * exactly those two plus the summary line "LIVE FAIL — 2 failure(s)". Anything else stays red. No baseline.
+ */
+function acceptedLead44369FuelNamedRed(name, rel, code) {
+  if (code === 0 || name !== "verify-fuel-transactions-per-load") return false;
+  if (process.env.LEAD_443_69_FUEL_NAMED_RED !== "1") return false;
+  const r = spawnSync(process.execPath, [path.join(ROOT, rel)], { env: process.env, encoding: "utf8" });
+  const lines = `${r.stdout ?? ""}${r.stderr ?? ""}`.split("\n");
+  const crosses = lines.filter((l) => /^\s*✗/.test(l));
+  const fails = lines.filter((l) => /LIVE FAIL|: FAIL/.test(l) && !/SSL|libpq/i.test(l));
+  const known = [/date: settlement 5789 load 13557 invoice 99462408 /, /date: settlement 5789 load 13550 invoice 99460605 /];
+  return crosses.length === 2 && crosses.every((l) => known.some((k) => k.test(l)))
+    && fails.length === 1 && /LIVE FAIL — 2 failure\(s\)\./.test(fails[0]);
+}
+
 /** LIVE_DOMAIN guards armed only via DATA_WRITE migrations on bank-recon-only PRs — ambient tip debt, not introduced here. */
 const ROUND_44329_B_BANK_RECON_AMBIENT_LIVE_GUARDS = new Set([
   "verify-factoring-banking-kpis-tie-to-ledger",
@@ -2593,6 +2611,11 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
       ? runNode(rel, { DATABASE_URL: CALLER_WRITER_DATABASE_URL })
       : runNode(rel);
     if (code !== 0 && !acceptedAsEmptyByPurge(rel, code)) {
+      if (acceptedLead44369FuelNamedRed(name, rel, code)) {
+        console.log(`[${LABEL}] ACCEPTED — NAMED RED verify-fuel-transactions-per-load (LEAD RULING 443.69 #1; exactly the 2 settlement-5789 fuel dates CC-2 corrects); no baseline.`);
+        skippedLiveChecks.push(`${rel} — ACCEPTED named red, LEAD RULING 443.69 #1`);
+        continue;
+      }
       if (acceptedOwnerRound443RelayFillOnly(name, code)) {
         console.log(
           `[${LABEL}] ACCEPTED — verify-relay-fill-one-company ambient drift (owner ROUND 443 item 2, ` +
