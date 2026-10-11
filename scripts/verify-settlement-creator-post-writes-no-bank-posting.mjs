@@ -38,7 +38,7 @@ export function problems(s) {
   if (!/const hasDeadheadLine = bill\.loaded_pay_cents !== null && bill\.loaded_pay_cents !== undefined && deadheadCents > 0;/.test(s.engine)) p.push("D7: a $0 Empty Miles line is still written");
   // Fork rehearsal (2026-10-11): a posted Creator expense is stamped posted; extra pay carries its item.
   if ((s.creator.match(/await stampExpensePosted\(client, draft\.operating_company_id, /g) ?? []).length !== 2) p.push("a Creator expense (fuel or company) is posted but not stamped posted");
-  if (!/SET posting_status = 'posted', posted_at = COALESCE\(posted_at, now\(\)\), journal_entry_id = \$3::uuid/.test(s.creator)) p.push("stampExpensePosted no longer stamps posting_status + journal_entry_id");
+  if (!/SET posting_status = 'posted',(?: status = 'posted',)? posted_at = COALESCE\(posted_at, now\(\)\), journal_entry_id = \$3::uuid/.test(s.creator)) p.push("stampExpensePosted no longer stamps posting_status + journal_entry_id");
   if (!/extra_pay_item_required/.test(s.creator) || !/item_id, quantity, rate_cents,\s*unit_of_measure, is_active, is_sample_data/.test(s.creator)) p.push("extra pay is written without its item");
   return p;
 }

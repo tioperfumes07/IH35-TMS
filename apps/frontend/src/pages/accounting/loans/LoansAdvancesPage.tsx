@@ -260,6 +260,7 @@ export function LoansAdvancesPage() {
               {
                 key: "person",
                 label: "Person",
+                sortable: true,
                 render: (r) =>
                   entityLabel(r.counterparty_name ?? r.account_name, r.account_id, "Related party"),
               },
@@ -267,6 +268,7 @@ export function LoansAdvancesPage() {
               {
                 key: "account",
                 label: "Account",
+                sortable: true,
                 render: (r) => (
                   <EntityLink
                     kind="account"
@@ -285,6 +287,7 @@ export function LoansAdvancesPage() {
               {
                 key: "advanced",
                 label: "Advanced",
+                sortable: true,
                 className: "text-right",
                 cellClass: "text-right whitespace-nowrap",
                 render: (r) => money(r.principal_advanced_cents),
@@ -292,6 +295,7 @@ export function LoansAdvancesPage() {
               {
                 key: "repaid",
                 label: "Repaid",
+                sortable: true,
                 className: "text-right",
                 cellClass: "text-right whitespace-nowrap",
                 render: (r) => money(r.principal_repaid_cents),
@@ -299,6 +303,7 @@ export function LoansAdvancesPage() {
               {
                 key: "open",
                 label: "Open balance",
+                sortable: true,
                 className: "text-right",
                 cellClass: "text-right whitespace-nowrap",
                 render: (r) => money(r.open_balance_cents),
@@ -306,6 +311,7 @@ export function LoansAdvancesPage() {
               {
                 key: "interest",
                 label: "Accrued interest",
+                sortable: true,
                 className: "text-right",
                 cellClass: "text-right whitespace-nowrap",
                 render: (r) => money(r.accrued_interest_cents),
@@ -313,12 +319,14 @@ export function LoansAdvancesPage() {
               {
                 key: "docs",
                 label: "Docs",
+                sortable: true,
                 render: (r) => `${r.advance_count} adv / ${r.repayment_count} repay`,
               },
               { key: "status", label: "Status", render: (r) => r.status },
               {
                 key: "balance_label",
                 label: "Balance direction",
+                sortable: true,
                 render: (r) => {
                   const b = r.open_balance_cents;
                   if (b === 0) return <span className="text-[#6B7280]">Settled</span>;
@@ -329,6 +337,7 @@ export function LoansAdvancesPage() {
               {
                 key: "ledger_link",
                 label: "Ledger",
+                sortable: true,
                 render: (r) => (
                   <button
                     type="button"
@@ -474,32 +483,38 @@ export function LoansAdvancesPage() {
               {
                 key: "display_id",
                 label: "Document",
+                sortable: true,
                 render: (r) => r.display_id ?? "—",
               },
               {
                 key: "entry_date",
                 label: "Date",
+                sortable: true,
                 render: (r) => formatDateUS(r.entry_date),
               },
               {
                 key: "direction",
                 label: "Direction",
+                sortable: true,
                 render: (r) => (r.direction === "in" ? "To company" : "From company"),
               },
               {
                 key: "counterparty",
                 label: "Counterparty",
+                sortable: true,
                 render: (r) => entityLabel(r.counterparty_name, r.counterparty_id, "Counterparty"),
               },
               { key: "relationship", label: "Relationship", render: (r) => r.relationship },
               {
                 key: "kind",
                 label: "Kind",
+                sortable: true,
                 render: (r) => r.document_kind ?? r.target_type,
               },
               {
                 key: "note",
                 label: "Note",
+                sortable: true,
                 render: (r) =>
                   r.note_file_id || r.has_note ? (
                     <EntityLink kind="document" id={r.note_file_id ?? r.id} label="Advance note" />
@@ -512,6 +527,7 @@ export function LoansAdvancesPage() {
               {
                 key: "account",
                 label: "Account",
+                sortable: true,
                 render: (r) => (
                   <EntityLink kind="account" id={r.account_id} label={entityLabel(r.account_name, r.account_id, "Account")} />
                 ),
@@ -519,6 +535,7 @@ export function LoansAdvancesPage() {
               {
                 key: "principal",
                 label: "Principal",
+                sortable: true,
                 className: "text-right",
                 cellClass: "text-right whitespace-nowrap",
                 render: (r) => money(r.principal_cents ?? r.amount_cents),
@@ -527,6 +544,7 @@ export function LoansAdvancesPage() {
               {
                 key: "je",
                 label: "JE",
+                sortable: true,
                 render: (r) =>
                   r.je_id ? (
                     <EntityLink kind="journal_entry" id={r.je_id} label={entityLabel(null, r.je_id, "Journal entry")} />
