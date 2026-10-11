@@ -7534,7 +7534,10 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — accounting.journal_
 action: OWNER_AUTH_ID=AUTH-414 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-42-d6-entity-load-fill.ts --apply
 rehearsal: throwaway br-little-boat-ak3f0ftu (COMMITTED, deleted): 2,673 postings; entity NULL 487 -> 0; load NULL 899 -> 183 (78 Relay deposit legs = wallet funding, 105 settlement credits spread over several load bills — both legitimately load-less); trial balance 0 across 3,233 postings unchanged
 expires_at: 2026-10-12T07:13:44Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T07:24:18Z
+consumed_by: CC-2 (443.42 #6 D6 entity + load fill)
+row_counts: prod (2,714 postings since 00:50Z at apply): entity NULL 507 -> 0; load NULL 921 -> 183 (78 Relay deposit legs = wallet funding, 105 settlement credits already spread over several load bills — legitimately load-less); trial balance 0 across 3,274 postings unchanged. First attempt refused itself (concurrent CC-3 posts changed the company row count mid-transaction) and rolled back; the retry committed.
 
 ## AUTH-415
 issued_at: 2026-10-11T07:11:23Z
