@@ -1923,18 +1923,18 @@ async function buildBankDepositLines(client: DbClient, operatingCompanyId: strin
       source_transaction_line_id: null,
     });
   }
-  const fromUndepositedFunds = totalReceipts - accountLinesTotal;
-  if (fromUndepositedFunds < 0) {
+  const undepositedClearanceCents = totalReceipts - accountLinesTotal;
+  if (undepositedClearanceCents < 0) {
     throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Bank deposit account lines exceed the deposit total");
   }
-  if (fromUndepositedFunds > 0) {
+  if (undepositedClearanceCents > 0) {
     if (!dep.undeposited_funds_account_id) {
       throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Bank deposit has receipt lines but no Undeposited Funds account");
     }
     lines.push({
       account_id: dep.undeposited_funds_account_id,
       debit_or_credit: "credit",
-      amount_cents: fromUndepositedFunds,
+      amount_cents: undepositedClearanceCents,
       description: `${label} cleared from Undeposited Funds`,
       source_transaction_line_id: null,
     });

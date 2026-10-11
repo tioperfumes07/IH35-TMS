@@ -358,37 +358,36 @@ export function LoansAdvancesPage() {
           <div className="mb-2 text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
             Party ledgers — Due to / from
           </div>
-          <table className="w-full text-xs" data-testid="party-accounts-table">
-            <thead>
-              <tr className="border-b border-[#E5E7EB] bg-[#EEF2F6] text-section-header font-bold uppercase text-[#1F2937]">
-                <th className="px-2 py-1 text-center">Account</th>
-                <th className="px-2 py-1 text-center">Party</th>
-                <th className="px-2 py-1 text-center">Movements</th>
-                <th className="px-2 py-1 text-center">Balance</th>
-                <th className="px-2 py-1 text-center">Ledger</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(partiesQuery.data?.parties ?? []).map((p: PartyAccount) => (
-                <tr key={p.account_id} className="border-b border-[#F3F4F6]">
-                  <td className="px-2 py-1">{p.account_number}</td>
-                  <td className="px-2 py-1">{p.party_name}</td>
-                  <td className="px-2 py-1 text-right">{p.movement_count}</td>
-                  <td className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>{balanceText(p.balance_cents)}</td>
-                  <td className="px-2 py-1 text-center">
-                    <button
-                      type="button"
-                      onClick={() => setLedgerAccountId((cur) => (cur === p.account_id ? null : p.account_id))}
-                      className="text-xs font-semibold text-[#14314F] underline hover:text-[#0F1729]"
-                      data-testid={`party-account-ledger-btn-${p.account_number}`}
-                    >
-                      {ledgerAccountId === p.account_id ? "Close" : "View"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="w-full text-xs" data-testid="party-accounts-table">
+            <div className="grid grid-cols-[minmax(80px,1fr)_minmax(0,1.4fr)_80px_minmax(120px,1.2fr)_72px] gap-x-2 border-b border-[#E5E7EB] bg-[#EEF2F6] text-section-header font-bold uppercase text-[#1F2937]">
+              <div className="px-2 py-1 text-center">Account</div>
+              <div className="px-2 py-1 text-center">Party</div>
+              <div className="px-2 py-1 text-center">Movements</div>
+              <div className="px-2 py-1 text-center">Balance</div>
+              <div className="px-2 py-1 text-center">Ledger</div>
+            </div>
+            {(partiesQuery.data?.parties ?? []).map((p: PartyAccount) => (
+              <div
+                key={p.account_id}
+                className="grid grid-cols-[minmax(80px,1fr)_minmax(0,1.4fr)_80px_minmax(120px,1.2fr)_72px] gap-x-2 border-b border-[#F3F4F6]"
+              >
+                <div className="px-2 py-1">{p.account_number}</div>
+                <div className="px-2 py-1">{p.party_name}</div>
+                <div className="px-2 py-1 text-right">{p.movement_count}</div>
+                <div className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>{balanceText(p.balance_cents)}</div>
+                <div className="px-2 py-1 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setLedgerAccountId((cur) => (cur === p.account_id ? null : p.account_id))}
+                    className="text-xs font-semibold text-[#14314F] underline hover:text-[#0F1729]"
+                    data-testid={`party-account-ledger-btn-${p.account_number}`}
+                  >
+                    {ledgerAccountId === p.account_id ? "Close" : "View"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -410,48 +409,47 @@ export function LoansAdvancesPage() {
             <div className="text-xs text-[#6B7280]">No movements on this account yet.</div>
           )}
           {ledgerQuery.data && ledgerQuery.data.lines.length > 0 && (
-            <table className="mt-2 w-full text-xs" data-testid="party-ledger-table">
-              <thead>
-                <tr className="border-b border-[#E5E7EB] bg-[#EEF2F6] text-section-header font-bold uppercase text-[#1F2937]">
-                  <th className="px-2 py-1 text-center">Date</th>
-                  <th className="px-2 py-1 text-center">Document</th>
-                  <th className="px-2 py-1 text-center">Bank line</th>
-                  <th className="px-2 py-1 text-center">Debit</th>
-                  <th className="px-2 py-1 text-center">Credit</th>
-                  <th className="px-2 py-1 text-center">Running balance</th>
-                  <th className="px-2 py-1 text-center">Pair</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ledgerQuery.data.lines.map((line: PartyLedgerLine) => (
-                  <tr key={line.posting_id} className="border-b border-[#F3F4F6]">
-                    <td className="px-2 py-1 whitespace-nowrap">{formatDateUS(line.date)}</td>
-                    <td className="px-2 py-1 whitespace-nowrap">{line.document}</td>
-                    <td className="px-2 py-1 max-w-[280px] truncate" title={line.bank_line_description ?? ""}>
-                      {line.bank_transaction_id
-                        ? `${formatDateUS(line.bank_line_date ?? "")} · ${line.bank_line_description ?? ""}`
+            <div className="mt-2 w-full text-xs" data-testid="party-ledger-table">
+              <div className="grid grid-cols-[80px_minmax(80px,1fr)_minmax(0,1.4fr)_100px_100px_120px_100px] gap-x-2 border-b border-[#E5E7EB] bg-[#EEF2F6] text-section-header font-bold uppercase text-[#1F2937]">
+                <div className="px-2 py-1 text-center">Date</div>
+                <div className="px-2 py-1 text-center">Document</div>
+                <div className="px-2 py-1 text-center">Bank line</div>
+                <div className="px-2 py-1 text-center">Debit</div>
+                <div className="px-2 py-1 text-center">Credit</div>
+                <div className="px-2 py-1 text-center">Running balance</div>
+                <div className="px-2 py-1 text-center">Pair</div>
+              </div>
+              {ledgerQuery.data.lines.map((line: PartyLedgerLine) => (
+                <div
+                  key={line.posting_id}
+                  className="grid grid-cols-[80px_minmax(80px,1fr)_minmax(0,1.4fr)_100px_100px_120px_100px] gap-x-2 border-b border-[#F3F4F6]"
+                >
+                  <div className="px-2 py-1 whitespace-nowrap">{formatDateUS(line.date)}</div>
+                  <div className="px-2 py-1 whitespace-nowrap">{line.document}</div>
+                  <div className="px-2 py-1 max-w-[280px] truncate" title={line.bank_line_description ?? ""}>
+                    {line.bank_transaction_id
+                      ? `${formatDateUS(line.bank_line_date ?? "")} · ${line.bank_line_description ?? ""}`
+                      : "—"}
+                  </div>
+                  <div className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
+                    {line.debit_or_credit === "debit" ? money(line.amount_cents) : ""}
+                  </div>
+                  <div className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
+                    {line.debit_or_credit === "credit" ? money(line.amount_cents) : ""}
+                  </div>
+                  <div className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS} font-semibold`}>
+                    {balanceText(line.running_balance_cents)}
+                  </div>
+                  <div className="px-2 py-1 whitespace-nowrap" data-testid="party-ledger-pair">
+                    {line.pair_status === "paired"
+                      ? `Paired · ${line.pair_document ?? ""}`
+                      : line.pair_status === "unpaired"
+                        ? "Unpaired"
                         : "—"}
-                    </td>
-                    <td className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
-                      {line.debit_or_credit === "debit" ? money(line.amount_cents) : ""}
-                    </td>
-                    <td className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
-                      {line.debit_or_credit === "credit" ? money(line.amount_cents) : ""}
-                    </td>
-                    <td className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS} font-semibold`}>
-                      {balanceText(line.running_balance_cents)}
-                    </td>
-                    <td className="px-2 py-1 whitespace-nowrap" data-testid="party-ledger-pair">
-                      {line.pair_status === "paired"
-                        ? `Paired · ${line.pair_document ?? ""}`
-                        : line.pair_status === "unpaired"
-                          ? "Unpaired"
-                          : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}
