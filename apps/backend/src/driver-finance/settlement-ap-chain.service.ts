@@ -230,7 +230,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
       lines: ls.map((l) => ({ accountId: l.accountId, amountCents: l.amountCents, description: l.description, loadId: b.loadId })),
     } as never, input.actorUserId);
     const billId = String((bill as { id: string }).id);
-    const p = await postSourceTransactionInClientTx(client as never, { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: billId, posting_purpose: "initial_post" } as never, { userId: input.actorUserId } as never);
+    const p = await postSourceTransactionInClientTx(client as never, { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: billId, posting_purpose: "initial_post", settlement_id: input.settlementId } as never, { userId: input.actorUserId } as never);
     const billJeId = (p as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
     // AUTH-400 rehearsal (2026-10-04): 90 settlement GL-bill rows with NO bill_journal_entry_id made 45 settlements
     // unvoidable ("missing its original journal-entry linkage") — the reversal engine reverses exactly what this row names.
@@ -238,13 +238,6 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
     if (!billJeId) {
       throw new SettlementApChainError("BILL_JOURNAL_ENTRY_MISSING", `${input.label}: load ${b.loadNumber}'s A/P bill posted no journal entry — the settlement could never be reversed`, { load_number: b.loadNumber, bill_id: billId });
     }
-    // 443.37 audit gap: stamp settlement_id on the bill's JE posting lines so the forward drill
-    // (settlement → JE lines) is a single column join, not a 4-hop join through driver_settlement_gl_bills.
-    // The UPDATE is in the same client transaction — rolls back with the rest if anything fails.
-    await (client as { query: (sql: string, params: unknown[]) => Promise<unknown> }).query(
-      `UPDATE accounting.journal_entry_postings SET settlement_id = $1::uuid WHERE journal_entry_uuid = $2::uuid AND settlement_id IS NULL`,
-      [input.settlementId, billJeId]
-    );
     posted.push({ b, billId, billJeId, total });
   }
 

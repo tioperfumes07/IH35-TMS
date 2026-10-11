@@ -80,6 +80,8 @@ export type PostingLineWrite = {
    * from the source document only when given; omitted, the load is resolved exactly as before.
    */
   load_id?: string | null;
+  /** 443.37 — the settlement this line belongs to; fill-once at INSERT (settlement-ap-chain only). */
+  settlement_id?: string | null;
 };
 
 /** ROUND 390.1 — refused: the line named in reversal_of_line_id is itself a reversal (a reversal is terminal). */
@@ -261,6 +263,7 @@ async function writeLine(
         location_id,
         entity_type,
         load_id,
+        settlement_id,
         created_at,
         updated_at
       )
@@ -269,7 +272,8 @@ async function writeLine(
       -- carries the load of the line it reverses (its document may already be gone).
       VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9, $10, $11::uuid, $12, $13::uuid, $14::uuid, $15::uuid,
               $16::uuid, $17,
-              COALESCE($18::uuid, accounting.posting_source_load_id($8::text, $9::text, $10::text, $15::uuid)), now(), now())
+              COALESCE($18::uuid, accounting.posting_source_load_id($8::text, $9::text, $10::text, $15::uuid)),
+              $19::uuid, now(), now())
       ${opts.skipOnIdempotencyConflict
         ? "ON CONFLICT (operating_company_id, idempotency_key, line_sequence) WHERE idempotency_key IS NOT NULL DO NOTHING"
         : ""}
@@ -294,6 +298,7 @@ async function writeLine(
       line.location_id ?? null,
       line.entity_type ?? null,
       line.load_id ?? null,
+      line.settlement_id ?? null,
     ]
   );
 
