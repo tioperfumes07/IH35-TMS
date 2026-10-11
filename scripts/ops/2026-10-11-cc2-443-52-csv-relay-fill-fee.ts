@@ -22,6 +22,10 @@
  * the 64.00 fee recognition (Dr 5005 / Cr 1295). No posted settlement, fuel transaction or driver deduction
  * is touched.
  *
+ * Scope (prod, 2026-10-11 12:00Z): the daily API pull re-upserted 2 of the 32 (txn_98q9aUDkZVySTP, txn_82euxQHjeGFBgK)
+ * as ingest_source 'daily_pull' with the API's correct paid; their JEs are still fee-less. Scope is therefore every
+ * csv_import / daily_pull fill with a Relay fee whose one live JE has no 5005 leg — still exactly 32.
+ *
  * Modes: (default) dry run, rolled back · --fork-commit (refused on production) · --apply (OWNER_AUTH_ID).
  */
 import { execFileSync } from "node:child_process";
@@ -93,17 +97,18 @@ async function main() {
     const businessDate = (await client.query<{ d: string }>(`SELECT (now() AT TIME ZONE 'America/Chicago')::date::text AS d`)).rows[0]!.d;
 
     // Scope: every csv_import fill whose ONE live fuel_event JE carries no fee leg while Relay reported a fee.
-    const scope = await client.query<{ fill_id: string; transaction_id: string; je_id: string; entry_date: string; credit_1295: string; expense_id: string | null; settlement_no: string | null; source_fuel_transaction_id: string | null }>(
+    const scope = await client.query<{ fill_id: string; transaction_id: string; ingest_source: string; je_id: string; entry_date: string; credit_1295: string; expense_id: string | null; settlement_no: string | null; source_fuel_transaction_id: string | null }>(
       `WITH f AS (
          SELECT r.id, r.transaction_id FROM integrations.relay_fuel_transactions r
-          WHERE r.operating_company_id = $1::uuid AND r.ingest_source = 'csv_import'),
+          WHERE r.operating_company_id = $1::uuid AND r.ingest_source IN ('csv_import', 'daily_pull')
+            AND jsonb_typeof(r.fees) = 'array' AND jsonb_array_length(r.fees) > 0),
        j AS (
          SELECT DISTINCT f.id AS fill_id, f.transaction_id, p.journal_entry_uuid AS je_id, je.entry_date
            FROM f
            JOIN accounting.journal_entry_postings p ON p.operating_company_id = $1::uuid
             AND p.source_transaction_type = 'fuel_event' AND p.source_transaction_id = f.id::text
            JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND ${LIVE_JE})
-       SELECT j.fill_id::text, j.transaction_id, j.je_id::text, j.entry_date::text,
+       SELECT j.fill_id::text, j.transaction_id, (SELECT ingest_source FROM integrations.relay_fuel_transactions WHERE id = j.fill_id) AS ingest_source, j.je_id::text, j.entry_date::text,
               (SELECT sum(p.amount_cents) FROM accounting.journal_entry_postings p JOIN catalogs.accounts a ON a.id = p.account_id
                 WHERE p.journal_entry_uuid = j.je_id AND p.debit_or_credit = 'credit' AND a.account_number = '1295')::text AS credit_1295,
               e.id::text AS expense_id, e.settlement_no, e.source_fuel_transaction_id::text
@@ -116,11 +121,11 @@ async function main() {
       [USMCA_ID]
     );
     const fills = scope.rows;
-    if (fills.length !== EXPECTED_FILLS) throw new Error(`scope: expected ${EXPECTED_FILLS} fee-less csv_import fills, found ${fills.length}`);
+    if (fills.length !== EXPECTED_FILLS) throw new Error(`scope: expected ${EXPECTED_FILLS} fee-less Relay fills, found ${fills.length}`);
     if (new Set(fills.map((f) => f.fill_id)).size !== fills.length) throw new Error("scope: a fill has more than one live JE -- STOP");
     for (const f of fills) {
       if (!f.expense_id) throw new Error(`scope: fill ${f.transaction_id} has no live expense document -- STOP`);
-      if (!csvById.has(f.transaction_id)) throw new Error(`scope: fill ${f.transaction_id} is not in ${CSV_PATH}`);
+      if (f.ingest_source === "csv_import" && !csvById.has(f.transaction_id)) throw new Error(`scope: fill ${f.transaction_id} is not in ${CSV_PATH}`);
     }
     const before1295 = fills.reduce((s, f) => s + Number(f.credit_1295), 0);
     console.log(`SCOPE OK: ${fills.length} fills, 1295 credit on their live JEs = ${before1295} cents`);
@@ -144,12 +149,15 @@ async function main() {
       await voidDocument(client as never, { operatingCompanyId: USMCA_ID, type: "expense", id: f.expense_id!, reason, actor: { userId: OWNER_USER_ID, role: "Owner" }, currentBusinessDate: businessDate });
       // b. the ledger.
       const rev = await postVoidReversal(client as never, { operatingCompanyId: USMCA_ID, entityType: "fuel_event", entityId: f.fill_id, originalDate: f.entry_date, memo: reason, currentDate: businessDate }, { userId: OWNER_USER_ID });
-      // c. the Relay row, through the ingest upsert with the fixed mapping.
-      const raw = csvRowToApiShape(getter(csvById.get(f.transaction_id)!), { defAveragePricePerGallon: defAverage });
-      const tx = raw ? parseRelayFuelTransactionRow(raw) : null;
-      if (!tx) throw new Error(`fill ${f.transaction_id}: CSV row did not parse`);
-      const up = await upsertRelayFuelTransaction(client as never, USMCA_ID, tx, "csv_import");
-      if (up.relay_fuel_transaction_id !== f.fill_id) throw new Error(`fill ${f.transaction_id}: upsert landed on ${up.relay_fuel_transaction_id}, not ${f.fill_id}`);
+      // c. the Relay row, through the ingest upsert with the fixed mapping. A row the daily API pull has since
+      //    re-upserted (ingest_source 'daily_pull') already carries Relay's own paid-excluding-fee; it is left as is.
+      if (f.ingest_source === "csv_import") {
+        const raw = csvRowToApiShape(getter(csvById.get(f.transaction_id)!), { defAveragePricePerGallon: defAverage });
+        const tx = raw ? parseRelayFuelTransactionRow(raw) : null;
+        if (!tx) throw new Error(`fill ${f.transaction_id}: CSV row did not parse`);
+        const up = await upsertRelayFuelTransaction(client as never, USMCA_ID, tx, "csv_import");
+        if (up.relay_fuel_transaction_id !== f.fill_id) throw new Error(`fill ${f.transaction_id}: upsert landed on ${up.relay_fuel_transaction_id}, not ${f.fill_id}`);
+      }
       // d. the post, exactly as the Creator posts a Relay fill.
       const relay = (await client.query<{ fees: unknown[] | null; paid: string }>(
         `SELECT fees, total_amount_paid_cents::text AS paid FROM integrations.relay_fuel_transactions WHERE id = $1::uuid`, [f.fill_id])).rows[0]!;
