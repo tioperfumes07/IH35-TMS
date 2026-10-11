@@ -2328,6 +2328,11 @@
     "claimed_at": "2026-10-11",
     "purpose": "5785 advance recovered 4x: driver_finance.v_driver_advance_balances multiplies every 1245 sub-account posting by the number of active bridge rows on that account (a merged-away profile still bridged to the survivor's sub-account) -- dedupe sub per account, owner resolved through merged_into_driver_id"
   },
+  "202615510300": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-11",
+    "purpose": "443.37 audit gap: settlement_id column on accounting.journal_entry_postings so per-load bill JE lines carry a direct settlement link"
+  },
   "202615520300": {
     "seat": "CC-1",
     "claimed": "2026-10-11",
