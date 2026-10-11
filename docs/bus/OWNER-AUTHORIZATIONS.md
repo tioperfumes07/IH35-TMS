@@ -7490,3 +7490,13 @@ action: OWNER_AUTH_ID=AUTH-413 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-1
 rehearsal: throwaway br-rapid-boat-akfob38g (COMMITTED, deleted): 57 retired, all 57 had been pushed to Samsara; verify-stops-resolve-samsara-no-zip-fence PASS after
 expires_at: 2026-10-12T06:41:07Z
 status: OPEN
+
+## AUTH-411
+issued_at: 2026-10-11T06:40:11Z
+issued_by: Lead ruling 443.41 A: "A Relay fill gets an accounting.expenses DOCUMENT (fuel line(s) + 'Fuel Card Fee' $2.00 line, vendor Relay Purchases f87771ce, paid from 1295 Relay Fuel Wallet), linked to the SAME JE the fill already posts — one JE, never two ... CC-2 writer + backfill through the engine of every Relay fill already posted (5772's 3 + whatever the 59 post). Fork-proven first." Recorded by CC-2 in the PR that ships the script, as with AUTH-404..410
+owner_quotes: "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — every live journal entry whose postings carry source_transaction_type 'fuel_event' + an integrations.relay_fuel_transactions id and that has no live accounting.expenses document: one posted document written through adoptRelayFillExpenseDocument (vendor Relay, payment account = the entry's own credit leg, lines = the entry's own debit legs, journal_entry_id = that entry). No new JE, no posting change, trial balance + posting + JE counts asserted unchanged. No DELETE. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-411 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-41a-relay-fill-expense-docs.ts --apply
+rehearsal: throwaway br-ancient-sea-akm9yugn (COMMITTED, deleted): 65 Relay-fill entries, 65 documents created, 0 refused; JEs 1,054 / postings 2,597 / trial balance 0 unchanged; verify-costs-are-expenses-not-handwritten-jes LIVE PASS (0 violations); 5000 GL vs expense lines gap 33,026.28 -> 30.00 (the 30.00 = three driver bills 13597 / 13579 / 13582 with a $10 fuel line on 5000 — bills, not Relay)
+expires_at: 2026-10-12T06:40:11Z
+status: OPEN

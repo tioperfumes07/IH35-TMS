@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockPost } = vi.hoisted(() => ({ mockPost: vi.fn(async () => ({ result: "posted", journal_entry_id: "je-1" })) }));
 vi.mock("../../fuel-posting/poster.service.js", () => ({ postFuelExpenseOnClient: mockPost }));
+// Lead 443.41 A: after the fill posts, its expense document adopts that SAME entry (asserted below).
+const { mockAdopt } = vi.hoisted(() => ({ mockAdopt: vi.fn(async () => ({ outcome: "created", expense_id: "exp-1", expense_number: "1", journal_entry_id: "je-1", amount_cents: 0 })) }));
+vi.mock("../../../fuel/fuel-expense-document.service.js", () => ({ adoptRelayFillExpenseDocument: mockAdopt }));
 
 import { FuelMatchPostError, postFuelFillOnBankMatch } from "../bank-match-fuel-post.service.js";
 
@@ -77,6 +80,8 @@ describe("Relay fill posting — one leg per product", () => {
       { fuel_kind: "def", amount_cents: 3000 },
       { fuel_kind: "reefer", amount_cents: 7000 },
     ]);
+    // Lead 443.41 A: the fill's expense document adopts the SAME journal entry the poster returned.
+    expect(mockAdopt).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ journal_entry_id: "je-1" }));
   });
 
   it("RELAY-F442 — sender_fee is its own fee_amount_cents; wallet amount = paid + fee", async () => {

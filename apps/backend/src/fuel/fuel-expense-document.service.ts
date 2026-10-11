@@ -623,3 +623,150 @@ export async function createExpenseFromFuelTransaction(
     adopted_journal_entry_id: adoptedJeId,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// Lead ruling 443.41 A (2026-10-11): a RELAY FILL gets its accounting.expenses DOCUMENT — fuel line(s) + the "Fuel Card
+// Fee" line, vendor Relay, paid from the Relay Fuel Wallet — linked to the SAME journal entry the fill already posted.
+// One JE, never two: nothing posts here. The owner's change-vendor / Dreamline<->Relay route
+// (POST /expenses/:id/change-payment-source) and the audit read expenses; a fill with no document can be neither.
+// The document's lines are the entry's own debit legs (account + amount), so the document and its posting can never
+// disagree; the payment account is the entry's own credit leg (1295).
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+export type RelayFillDocumentOutcome =
+  | { outcome: "created"; expense_id: string; expense_number: string; journal_entry_id: string; amount_cents: number }
+  | { outcome: "already_exists"; expense_id: string; journal_entry_id: string }
+  | { outcome: "refused"; reason: string };
+
+/** Fuel types whose catalog item may name a Relay fill's product account (the poster's kinds). */
+const RELAY_FILL_FUEL_TYPES = ["diesel", "def", "reefer_diesel"] as const;
+
+export async function adoptRelayFillExpenseDocument(
+  client: QueryableClient,
+  input: { operating_company_id: string; relay_fill_id: string; journal_entry_id: string; requesting_user_uuid?: string | null },
+): Promise<RelayFillDocumentOutcome> {
+  const company = input.operating_company_id;
+  const existing = await client.query<{ id: string }>(
+    `SELECT id::text FROM accounting.expenses
+      WHERE operating_company_id = $1::uuid AND journal_entry_id = $2::uuid AND voided_at IS NULL LIMIT 1`,
+    [company, input.journal_entry_id],
+  );
+  if (existing.rows[0]) return { outcome: "already_exists", expense_id: existing.rows[0].id, journal_entry_id: input.journal_entry_id };
+
+  // The entry must be this fill's live posting.
+  const legs = await client.query<{ account_id: string; debit_or_credit: string; amount_cents: string; load_id: string | null; entry_date: string }>(
+    `SELECT p.account_id::text, p.debit_or_credit, p.amount_cents::text, p.load_id::text, je.entry_date::text
+       FROM accounting.journal_entry_postings p
+       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+      WHERE p.journal_entry_uuid = $1::uuid AND p.operating_company_id = $2::uuid
+        AND p.source_transaction_type = 'fuel_event' AND p.source_transaction_id::text = $3
+        AND je.status = 'posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
+      ORDER BY p.line_sequence`,
+    [input.journal_entry_id, company, input.relay_fill_id],
+  );
+  const debits = legs.rows.filter((l) => l.debit_or_credit === "debit");
+  const credits = legs.rows.filter((l) => l.debit_or_credit === "credit");
+  if (!debits.length || credits.length !== 1) {
+    return { outcome: "refused", reason: `journal entry ${input.journal_entry_id} is not one live Relay-fill posting of fill ${input.relay_fill_id} (debits ${debits.length}, credits ${credits.length})` };
+  }
+  const totalCents = debits.reduce((t, l) => t + Math.round(Number(l.amount_cents)), 0);
+  if (totalCents !== Math.round(Number(credits[0]!.amount_cents))) {
+    return { outcome: "refused", reason: `journal entry ${input.journal_entry_id} does not foot (debits ${totalCents} != credit ${credits[0]!.amount_cents})` };
+  }
+
+  const relay = await client.query<{ id: string }>(
+    `SELECT id::text FROM mdata.vendors
+      WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL AND vendor_name ~* '^relay( |$)' LIMIT 2`,
+    [company],
+  );
+  if (relay.rows.length !== 1) return { outcome: "refused", reason: `expected exactly one active Relay vendor, found ${relay.rows.length}` };
+
+  // The fill's own purchase record(s): the attribution (load / driver / unit) and the fuel-transaction pointer.
+  const fills = await client.query<{ id: string; load_id: string | null; driver_id: string | null; unit_id: string | null; trailer_id: string | null; total_cost: string | null; txn_date: string | null; taken: boolean }>(
+    `SELECT ft.id::text, ft.load_id::text, ft.driver_id::text, ft.unit_id::text, ft.trailer_id::text, ft.total_cost::text,
+            coalesce(ft.purchased_at, ft.transaction_at)::date::text AS txn_date,
+            EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = ft.id AND e.voided_at IS NULL) AS taken
+       FROM fuel.fuel_transactions ft
+      WHERE ft.operating_company_id = $1::uuid AND ft.relay_fuel_transaction_id::text = $2 AND ft.archived_at IS NULL
+      ORDER BY ft.total_cost DESC NULLS LAST, ft.id`,
+    [company, input.relay_fill_id],
+  );
+  const relayRow = await client.query<{ matched_driver_id: string | null; matched_unit_id: string | null }>(
+    `SELECT matched_driver_id::text, matched_unit_id::text FROM integrations.relay_fuel_transactions
+      WHERE id::text = $1 AND operating_company_id = $2::uuid`,
+    [input.relay_fill_id, company],
+  );
+  const primary = fills.rows.find((f) => !f.taken) ?? null;
+  const loadId = primary?.load_id ?? fills.rows[0]?.load_id ?? debits.find((d) => d.load_id)?.load_id ?? null;
+  const driverId = primary?.driver_id ?? fills.rows[0]?.driver_id ?? relayRow.rows[0]?.matched_driver_id ?? null;
+  const unitId = primary?.unit_id ?? fills.rows[0]?.unit_id ?? relayRow.rows[0]?.matched_unit_id ?? null;
+  const txnDate = primary?.txn_date ?? fills.rows[0]?.txn_date ?? legs.rows[0]!.entry_date;
+
+  // Line items: the fee leg is the "Fuel Card Fee" item; a fuel leg is the fuel-type item whose account it is.
+  const fee = await resolveFeeItem(client, company);
+  const itemByAccount = new Map<string, string>();
+  if (!("refused" in fee)) itemByAccount.set(fee.expenseAccountId, fee.itemId);
+  for (const t of RELAY_FILL_FUEL_TYPES) {
+    const r = await resolveFuelItem(client as never, company, t);
+    if (r && !("refused" in r) && !itemByAccount.has(r.expenseAccountId)) itemByAccount.set(r.expenseAccountId, r.itemId);
+  }
+
+  let expenseNumber: string;
+  let loadAttribution: { number: string; seq: number; loadNumber: string } | null = null;
+  if (loadId) {
+    loadAttribution = await generateExpenseNumber(client as never, loadId, company);
+    expenseNumber = loadAttribution.number;
+  } else {
+    expenseNumber = await nextExpenseDisplayId(client as never, company, new Date(`${txnDate}T00:00:00.000Z`));
+  }
+  const memo = `Relay fuel fill ${input.relay_fill_id} — document for journal entry ${input.journal_entry_id} (Lead 443.41 A: one JE, the document adopts it)`;
+  const inserted = await client.query<{ id: string }>(
+    `INSERT INTO accounting.expenses (
+       operating_company_id, vendor_uuid, status, transaction_date, total_amount_cents, memo, expense_number,
+       source_fuel_transaction_id, load_id, is_sample_data, journal_entry_id, posted_at, payment_account_uuid,
+       driver_uuid, unit_id, trailer_id, posting_status)
+     VALUES ($1::uuid, $2::uuid, 'posted', $3::date, $4::bigint, $5, $6, $7::uuid, $8::uuid, false, $9::uuid, now(),
+             $10::uuid, $11::uuid, $12::uuid, $13::uuid, 'posted')
+     RETURNING id::text`,
+    [company, relay.rows[0]!.id, txnDate, totalCents, memo, expenseNumber, primary?.id ?? null, loadId,
+      input.journal_entry_id, credits[0]!.account_id, driverId, unitId, primary?.trailer_id ?? null],
+  );
+  const expenseId = inserted.rows[0]!.id;
+  let seq = 0;
+  for (const d of debits) {
+    seq += 1;
+    const cents = Math.round(Number(d.amount_cents));
+    const itemId = itemByAccount.get(d.account_id) ?? null;
+    await client.query(
+      `INSERT INTO accounting.expense_lines (
+         operating_company_id, expense_id, line_sequence, amount, amount_cents, description, load_id, load_required,
+         expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure)
+       VALUES ($1::uuid, $2::uuid, $3, $4, $5::bigint, $6, $7::uuid, $8, $9::uuid, $10::uuid,
+               CASE WHEN $10::uuid IS NULL THEN NULL ELSE 1 END, CASE WHEN $10::uuid IS NULL THEN NULL ELSE $5::bigint END,
+               CASE WHEN $10::uuid IS NULL THEN NULL ELSE 'each' END)`,
+      [company, expenseId, seq, cents / 100, cents, `Relay fill ${input.relay_fill_id} — line ${seq}`, d.load_id ?? loadId,
+        Boolean(d.load_id ?? loadId), d.account_id, itemId],
+    );
+  }
+  if (loadAttribution && loadId) {
+    await client.query(
+      `INSERT INTO expense_attribution.expense_load_links (
+         operating_company_id, expense_id, expense_source, load_id, load_number, expense_seq, expense_number,
+         attribution_method, attribution_confidence, attribution_reason, attributed_by_user_id)
+       VALUES ($1::uuid, $2::uuid, 'accounting', $3::uuid, $4, $5, $6, 'auto_timestamp', 'high', $7, $8::uuid)`,
+      [company, expenseId, loadId, loadAttribution.loadNumber, loadAttribution.seq, expenseNumber,
+        "Relay fill — load carried on its posting", input.requesting_user_uuid ?? null],
+    );
+  }
+  await appendCrudAudit(
+    client,
+    input.requesting_user_uuid ?? FUEL_EXPENSE_SYSTEM_ACTOR,
+    "accounting.expense.created_for_relay_fill",
+    { expense_id: expenseId, expense_number: expenseNumber, operating_company_id: company, relay_fill_id: input.relay_fill_id,
+      journal_entry_id: input.journal_entry_id, fuel_transaction_id: primary?.id ?? null, vendor_id: relay.rows[0]!.id,
+      amount_cents: totalCents, lines: debits.length },
+    "info",
+    "LEAD-443.41-A",
+  );
+  return { outcome: "created", expense_id: expenseId, expense_number: expenseNumber, journal_entry_id: input.journal_entry_id, amount_cents: totalCents };
+}
