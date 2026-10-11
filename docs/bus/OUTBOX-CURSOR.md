@@ -1,3 +1,9 @@
+## 2026-10-11 · MONEY-CELLS PARTY LEDGER — PR #26414 OPEN (pushed 43faa66861)
+
+FINDING: ACCT-F433-PARTY-LEDGER — same as below; branch pushed with LANE_CROSS ruling; pre-push verify-static 6171/6171 OK.
+PR: https://github.com/tioperfumes07/IH35-TMS/pull/26414 · head `43faa66861` · base main `2976364474`
+NEXT: merge on CI green → owner Chrome Party Ledger; then INBOX 435-CUR
+
 ## 2026-10-11 · MONEY-CELLS PARTY LEDGER — SHIP + TIP UNBLOCK (rebased on 443.65)
 
 FINDING: ACCT-F433-PARTY-LEDGER — tip `verify-money-cells-click-through` FAIL after 443.65 due-to/from engine: shrink-only=4 (party-accounts Balance + party-ledger Debit/Credit/Running). Push also blocked by tip alwaysRun: loans raw `<table>`, RPL guards asserting create in routes.ts, deleted_at BASELINE 15, geofence stale token, MilesRecommendations unselected `bg-white`, and alwaysRun `verify-creator-relay-row-posts-through-its-fill` ETIMEDOUT under noDbEnv (legacy HOME file read bypassed ROUND 370 IH35_NO_GATE_CREDENTIAL_FALLBACK).
