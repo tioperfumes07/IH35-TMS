@@ -57,3 +57,21 @@ describe("pickSamsaraMatch (443.38)", () => {
     expect(pickSamsaraMatch(s, [addr({ distance_m: 1_600 })])).toBeNull();
   });
 });
+
+import { pickPlaceForFacility } from "./stops-geocode-backfill.service.js";
+
+describe("pickPlaceForFacility (443.43 iii)", () => {
+  const place = (over: Record<string, unknown>) => ({ formatted: "", address_line1: "572 Newton Rd", city: "Coldwater", state: "MI", country: "US", zip: "49036", lat: 41.97, lon: -84.96, name: "Clemens Food Group", ...over });
+  const stop = { city: "Coldwater", state: "MI" };
+  it("accepts a place whose name matches the facility and whose city / state match", () => {
+    expect(pickPlaceForFacility("Clemens", stop, [place({})])).toMatchObject({ result: { address_line1: "572 Newton Rd" }, confidence: 0.75 });
+  });
+  it("refuses a name mismatch, a city mismatch, or a result with no street", () => {
+    expect(pickPlaceForFacility("Clemens", stop, [place({ name: "Walmart Supercenter" })])).toBeNull();
+    expect(pickPlaceForFacility("Clemens", stop, [place({ city: "Hatfield" })])).toBeNull();
+    expect(pickPlaceForFacility("Clemens", stop, [place({ address_line1: "" })])).toBeNull();
+  });
+  it("two different matching addresses = ambiguous = none", () => {
+    expect(pickPlaceForFacility("Clemens", stop, [place({}), place({ address_line1: "9 Other Rd" })])).toBeNull();
+  });
+});

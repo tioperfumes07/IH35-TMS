@@ -495,6 +495,7 @@ import { initializeUnitStopEventsCron } from "./cron/unit-stop-events.cron.js";
 import { initializeGeofenceAutoDeliveryCron } from "./cron/geofence-auto-delivery.cron.js";
 import { initializeSamsaraFuelReportsCron } from "./cron/samsara-fuel-reports.cron.js";
 import { initializeSamsaraAddressesMirrorCron } from "./cron/samsara-addresses-mirror.cron.js";
+import { initializeStopResolutionSweepCron } from "./cron/stop-resolution-sweep.cron.js";
 import { initializeSamsaraDriverRepliesCron } from "./cron/samsara-driver-replies.cron.js";
 import { initializeSamsaraDocumentsCron } from "./cron/samsara-documents.cron.js";
 import { initializeTelematicsPreservationCron } from "./cron/telematics-preservation.cron.js";
@@ -1633,6 +1634,7 @@ async function main() {
       initializeGeofenceAutoDeliveryCron(app);
       initializeSamsaraFuelReportsCron(app);
       initializeSamsaraAddressesMirrorCron(app);
+      initializeStopResolutionSweepCron(app);
       initializeSamsaraDriverRepliesCron(app);
       initializeSamsaraDocumentsCron(app);
       initializeTelematicsPreservationCron(app);
