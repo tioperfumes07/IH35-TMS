@@ -26,9 +26,9 @@ const CHECKS = [
     pattern: /WARNING_HORIZON_DAYS = 14[\s\S]{0,80}CRITICAL_HORIZON_DAYS = 7/,
   },
   {
-    name: "worker: relationExists-guards on maintenance.predictive_alerts before writing",
+    name: "worker: requireRelation-guards on maintenance.predictive_alerts before writing",
     file: "apps/backend/src/jobs/predictive-alerts-worker.ts",
-    pattern: /relationExists\(client, "maintenance\.predictive_alerts"\)/,
+    pattern: /requireRelation\(client, "maintenance\.predictive_alerts"\)/,
   },
   {
     name: "worker: auto-closes alerts when linked work order completes",
@@ -91,14 +91,14 @@ const CHECKS = [
     pattern: /predictive_alerts:\s*"\/maintenance\/predictive-alerts"/,
   },
   {
-    name: "MaintenanceHome: SUBNAV carries an At Risk entry",
+    name: "MaintenanceHome: At Risk section folded inline into Home (C-36)",
     file: "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    pattern: /\{ id: "predictive_alerts", label: "At Risk" \}/,
+    pattern: /data-testid="maintenance-predictive-alerts-tab"[\s\S]{0,200}At Risk[\s\S]{0,200}PredictiveAlertsPage/,
   },
   {
-    name: "MaintenanceHome: renders PredictiveAlertsPage for the tab",
+    name: "MaintenanceHome: renders PredictiveAlertsPage for the tab (retired nav path)",
     file: "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    pattern: /tab === "predictive_alerts"[\s\S]{0,120}<PredictiveAlertsPage \/>/,
+    pattern: /tab === "predictive_alerts" && !isHomeTab[\s\S]{0,200}PredictiveAlertsPage/,
   },
   {
     name: "routes/manifest: predictive-alerts route registered",
@@ -128,7 +128,7 @@ if (process.argv.includes("--selftest")) {
       export function initializePredictiveAlertsWorker
       export const WARNING_HORIZON_DAYS = 14;
       export const CRITICAL_HORIZON_DAYS = 7;
-      relationExists(client, "maintenance.predictive_alerts")
+      requireRelation(client, "maintenance.predictive_alerts")
       closeAlertsForCompletedWorkOrders
     `,
     "apps/backend/src/maintenance/predictive-alerts.routes.ts": `
@@ -154,12 +154,11 @@ if (process.argv.includes("--selftest")) {
     `,
     "apps/frontend/src/router/route-manifest.ts": `predictive_alerts: "/maintenance/predictive-alerts",`,
     "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx": `
-      { id: "predictive_alerts", label: "At Risk" },
-      tab === "predictive_alerts" ? (
-        <div>
-          <PredictiveAlertsPage />
-        </div>
-      ) : null}
+      data-testid="maintenance-predictive-alerts-tab"
+      At Risk
+      <PredictiveAlertsPage />
+      tab === "predictive_alerts" && !isHomeTab
+      <PredictiveAlertsPage />
     `,
     "apps/frontend/src/routes/manifest.tsx": `
       path="/maintenance/predictive-alerts"
