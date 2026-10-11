@@ -7606,8 +7606,6 @@ consumed_by: CC-2 (443.45 #3 finish driver merges)
 row_counts: prod identical to the rehearsal — 6e908ee1 and fba21d80 Active -> Inactive, active advance links 1 -> 0 each; repointed Genaro 6 refs (samsara.hos_snapshots 17,275, docs 12, retention 10, insurance 3, DQ 2, leave 1), Angel 5 refs (hos_snapshots 15,655, docs 10, retention 10, insurance 1, leave 1); left only append-only history + kept-on-survivor duplicates
 proof_query: verify-driver-subaccount-numbers-one-per-driver OK; verify-driver-advance-posts-to-drivers-own-subaccount OK
 
-status: OPEN
-
 ## AUTH-421
 issued_at: 2026-10-11T09:01:37Z
 issued_by: Lead 443.45 #4 ("resolve them now (do not wait 6 h for the sweep), relearn those loads"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..418
@@ -7616,4 +7614,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — every load created 
 action: OWNER_AUTH_ID=AUTH-421 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-45-relearn-creator-loads.ts --apply
 rehearsal: throwaway br-autumn-wildflower-akplgu31 (COMMITTED, deleted): 146 loads, 7 legs changed (13570: NULL->159.4, 266.3->150.2; 13589: NULL->1373.7, 1588.7->11.6; 13599: NULL->33.6, NULL->50.9, 1617.3->1351.1), 0 owner legs, 0 unresolved; non-first legs NULL 4 -> 0; verify-booked-loads-save-miles PASS over 146
 expires_at: 2026-10-12T09:01:37Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T09:21:52Z
+consumed_by: CC-2 (443.45 #4 relearn Creator loads)
+row_counts: prod identical to the rehearsal — 146 loads, 7 legs changed (13570: NULL->159.4, 266.3->150.2; 13589: NULL->1373.7, 1588.7->11.6; 13599: NULL->33.6, NULL->50.9, 1617.3->1351.1), 0 owner legs touched; non-first legs NULL 4 -> 0
+proof_query: node scripts/verify-booked-loads-save-miles.mjs (prod) -> PASS over 146 loads
