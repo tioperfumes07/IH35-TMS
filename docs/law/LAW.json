@@ -971,5 +971,6 @@
     "source_file": "docs/bus/10-03-2026-CURSOR-ROUND-363-CLEARED-UNCLEARED-EVERYWHERE-AND-THE-CLICK-THROUGH-SWEEP.md",
     "guard": "scripts/verify-record-naming-cells-are-click-through.mjs",
     "type": "enforced"
-  }
+  },
+  {"id": "LAW-2026-10-11-EXPENSE-SETTLEMENT-NUMBER-REQUIRES-LOAD", "title": "OWNER RULING Lead 443.52 B — an expense with a settlement number must have a load number; refused at write time by CHECK expenses_settlement_no_requires_load (202615540900), measured live over ALL USMCA expenses", "source_file": "docs/bus/2026-10-10-CC3-ROUND-443-SETTLEMENT-CREATOR-LANE-CROSS.md", "guard": "scripts/verify-settlement-creator-expense-settlement-has-load.mjs", "type": "enforced"}
 ]

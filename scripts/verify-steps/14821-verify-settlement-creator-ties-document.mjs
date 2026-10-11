@@ -50,6 +50,8 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-no.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-multistop.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-multistop.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-has-load.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-has-load.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-travel-off-driver-pay.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-travel-off-driver-pay.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-ap-tieout-counts-chain-bills.mjs", "--selftest"]);

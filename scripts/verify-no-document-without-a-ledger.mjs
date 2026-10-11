@@ -33,7 +33,7 @@ const GAP_RATCHET = {
   "accounting.bill_payments": 32,
   "accounting.invoices": 26,
   "fuel.fuel_transactions": 0,
-  "driver_finance.driver_settlements": 2,
+  "driver_finance.driver_settlements": 0,
 };
 //
 // Self-test: node scripts/verify-no-document-without-a-ledger.mjs --selftest
@@ -165,6 +165,15 @@ const DOCUMENT_CLASSES = [
   },
   {
     table: "driver_finance.driver_settlements", voidCol: "voided_at", sourceType: "driver_settlement", expectedToPost: true,
+    // CC-3 2026-10-11: a settlement closed through settlement-ap-chain posts its pay as per-load A/P bills; one with no
+    // deduction / escrow / advance (5786, 5819) or a salaried week (5780, Lead 443.45) has NO driver_settlement-typed entry.
+    // It is on the ledger through its own POSTED GL run whose live, non-superseded bills each name a live posted bill entry.
+    coveredSql: `(${livePostingSql(["driver_settlement"], "d.id")} OR EXISTS (SELECT 1
+       FROM driver_finance.driver_settlement_gl_runs sr
+       JOIN driver_finance.driver_settlement_gl_bills sb ON sb.run_id = sr.id AND sb.superseded_at IS NULL
+       JOIN accounting.journal_entries sje ON sje.id = sb.bill_journal_entry_id
+      WHERE sr.settlement_id = d.id AND sr.status = 'posted'
+        AND sje.voided_at IS NULL AND sje.reversed_by_je_id IS NULL AND sje.status = 'posted'))`,
     zeroSql: `d.status = 'closed' AND ${SETTLEMENT_LINES_TOTAL("d.id")} = 0`,
     pendingSql: `d.status::text = ANY(ARRAY[${SETTLEMENT_NOT_YET_POSTABLE.map((s) => `'${s}'`).join(",")}]::text[])`,
   },
@@ -381,6 +390,7 @@ function runSelftest() {
     ["an expense resolves through its OWN live journal entry (443.41 Relay fill documents)", /oje\.id = d\.journal_entry_id AND oje\.voided_at IS NULL/.test(byTable["accounting.expenses"]?.coveredSql ?? "")],
     ["a Relay product row resolves through its fill's fuel_event entry (443.41)", /relay_fuel_transaction_id IS NOT NULL AND/.test(byTable["fuel.fuel_transactions"]?.coveredSql ?? "") && /source_transaction_id = \(d\.relay_fuel_transaction_id\)::text/.test(byTable["fuel.fuel_transactions"]?.coveredSql ?? "")],
     ["fuel resolves through its expense", /source_fuel_transaction_id/.test(byTable["fuel.fuel_transactions"]?.coveredSql ?? "") && /'expense'/.test(byTable["fuel.fuel_transactions"]?.coveredSql ?? "")],
+    ["a settlement resolves through its own posted A/P-chain run (gl_runs -> gl_bills -> live bill JE)", /driver_settlement_gl_runs sr/.test(byTable["driver_finance.driver_settlements"]?.coveredSql ?? "") && /sr\.settlement_id = d\.id AND sr\.status = 'posted'/.test(byTable["driver_finance.driver_settlements"]?.coveredSql ?? "")],
     ["a driver bill resolves through its own live A/P-chain bill (gl_bills -> live bill JE)", /driver_settlement_gl_bills gb/.test(byTable["driver_finance.driver_bills"]?.coveredSql ?? "") && /gb\.driver_bill_id = d\.id AND gb\.superseded_at IS NULL/.test(byTable["driver_finance.driver_bills"]?.coveredSql ?? "")],
     ["driver bills resolve through the closed settlement JE", /'driver_settlement'/.test(byTable["driver_finance.driver_bills"]?.coveredSql ?? "") && /status = 'closed'/.test(byTable["driver_finance.driver_bills"]?.coveredSql ?? "")],
     ["bill_payments resolve through direct posting OR the adopted (load+driver) closed settlement JE, ROUND 251 item 1",
