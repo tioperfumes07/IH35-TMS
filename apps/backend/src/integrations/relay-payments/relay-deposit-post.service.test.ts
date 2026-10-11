@@ -11,6 +11,7 @@ function fake(dep: Record<string, unknown> | null, opts: { posted?: boolean; boo
     if (/FROM integrations\.relay_deposits/.test(sql)) return { rows: dep ? [dep] : [] };
     if (/source_transaction_type = 'relay_deposit'/.test(sql)) return { rows: opts.posted ? [{ id: "je-old" }] : [] };
     if (/FROM banking\.bank_transactions/.test(sql)) return { rows: opts.bookedBankLine ? [{ id: "bt-1" }] : [] };
+    if (/FROM mdata\.vendors/.test(sql)) return { rows: [{ id: "vendor-relay" }] };
     if (/FROM catalogs\.accounts/.test(sql)) { const id = ACCTS[String(values[1])]; return { rows: id ? [{ id, account_number: String(values[1]) }] : [] }; }
     throw new Error(`unhandled: ${sql}`);
   });
@@ -31,6 +32,14 @@ describe("postRelayDeposit (443.29 b)", () => {
     expect(input.source_transaction_type).toBe("relay_deposit");
     expect(input.postings.map((p) => [p.account_id, p.debit_or_credit, p.amount_cents])).toEqual([
       ["acct-1295", "debit", 700000], ["acct-5005", "debit", 22750], ["acct-1000", "credit", 722750],
+    ]);
+  });
+  it("443.40: the wallet and fee legs name the vendor Relay; the funding leg does not", async () => {
+    const createJournalEntryOnClient = vi.fn(async () => ({ id: "je-1" }));
+    await postRelayDeposit(fake(dep()), args, { createJournalEntryOnClient });
+    const input = createJournalEntryOnClient.mock.calls[0]![1] as { postings: Array<{ account_id: string; entity_uuid?: string; entity_type?: string }> };
+    expect(input.postings.map((p) => [p.account_id, p.entity_uuid ?? null, p.entity_type ?? null])).toEqual([
+      ["acct-1295", "vendor-relay", "vendor"], ["acct-5005", "vendor-relay", "vendor"], ["acct-1000", null, null],
     ]);
   });
   it("a Transportation Wells Fargo card credits Inter-company 8000", async () => {

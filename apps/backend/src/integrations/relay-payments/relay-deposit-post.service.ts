@@ -151,11 +151,21 @@ export async function postRelayDeposit(
       bank_transaction_id: bookedLine.id,
     };
 
+  // Lead ruling 443.40: the wallet (1295) and Relay's fee (5005) legs name the vendor Relay; the funding leg keeps its own rule.
+  const relay = (
+    await client.query<{ id: string }>(
+      `SELECT id::text FROM mdata.vendors
+        WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL AND vendor_name ~* '^relay( |$)' LIMIT 2`,
+      [args.operatingCompanyId]
+    )
+  ).rows;
+  if (relay.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: "relay_vendor_not_exactly_one" };
+  const relayEntity = { entity_uuid: relay[0]!.id, entity_type: "vendor" };
   const src = { source_transaction_type: "relay_deposit", source_transaction_id: d.id };
   const card = d.funding_card_last4 ?? "?";
   const postings = [
-    { account_id: wallet[0]!.id, debit_or_credit: "debit", amount_cents: amount, description: `Relay deposit ${d.deposit_id} — wallet funded`, ...src },
-    ...(fee > 0 ? [{ account_id: feeAcct[0]!.id, debit_or_credit: "debit", amount_cents: fee, description: `Relay deposit ${d.deposit_id} — 3.25% deposit fee`, ...src }] : []),
+    { account_id: wallet[0]!.id, debit_or_credit: "debit", amount_cents: amount, description: `Relay deposit ${d.deposit_id} — wallet funded`, ...src, ...relayEntity },
+    ...(fee > 0 ? [{ account_id: feeAcct[0]!.id, debit_or_credit: "debit", amount_cents: fee, description: `Relay deposit ${d.deposit_id} — 3.25% deposit fee`, ...src, ...relayEntity }] : []),
     { account_id: fund[0]!.id, debit_or_credit: "credit", amount_cents: total, description: `Relay deposit ${d.deposit_id} — charged to card ${card} (${funding.label})`, ...src },
   ];
   const je = await deps.createJournalEntryOnClient(
