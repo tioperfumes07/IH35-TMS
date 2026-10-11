@@ -7628,7 +7628,11 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — geo.geofences: the 
 action: OWNER_AUTH_ID=AUTH-422 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-49-real-address-fences.ts --apply
 rehearsal: throwaway br-holy-heart-ak6dqkfe (COMMITTED, deleted): 64 auto fences — 3 moved (Samsara update enqueued: 2000000762878, 2000000762880, 2000000762885), 5 on an owner Samsara address (Indiana Packers local copy retired), 17 real address never in Samsara, 39 still no street; 83 real-address locations: 25 owner Samsara-import, 3 already in Samsara, 55 pushed once; 2 active zip-center fences retired; re-run = 0 changes; verify-stops-resolve-samsara-no-zip-fence PASS after
 expires_at: 2026-10-12T10:52:41Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T12:34:46Z
+consumed_by: CC-2 (443.49 real-address fences; final run re-sent the 11 creates Samsara refused)
+row_counts: final --apply 12:34:46Z — 84 real-address locations: 25 owner Samsara-import, 48 already in Samsara, 11 re-sent after samsara_http_400 ("Duplicate external id value already exists: <load id>" — fixed in #26359 / #26360); 0 moved, 0 retired. Measured 12:34:58Z: 11 of 11 delivered, 0 errored, 11 fences with a distinct Samsara id (2000000762949..762959); active fences sharing a Samsara id 0
+proof_query: SELECT count(*) FILTER (WHERE delivered_at IS NOT NULL), count(*) FILTER (WHERE last_error IS NOT NULL) FROM outbox.events WHERE dedupe_key LIKE 'samsara.create_geofence:%:443.49-retry-extid' -> 11, 0
 
 ## AUTH-424
 issued_at: 2026-10-11T11:01:43Z
