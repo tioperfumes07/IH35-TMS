@@ -25,6 +25,8 @@ const FILES = {
   ingest: "apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts",
   backfill: "apps/backend/src/integrations/relay-payments/relay-wallet-bank-feed.service.ts",
   migration: "db/migrations/202615490300_usmca_fuel_card_fee_item.sql",
+  deposit: "apps/backend/src/integrations/relay-payments/relay-deposit-post.service.ts",
+  importRoute: "apps/backend/src/integrations/relay-payments/relay-fuel-csv-import.routes.ts",
 };
 
 export function check(src) {
@@ -36,6 +38,23 @@ export function check(src) {
   if (/fee_amount_cents, 0\)\)[\s\S]{0,200}AS fee_cents/.test(src.backfill ?? "")) f.push(`${FILES.backfill}: wallet backfill sums line fees only again`);
   if (!/relay_fill_lines_do_not_foot/.test(src.poster ?? "")) f.push(`${FILES.poster}: product lines must foot to Relay's paid amount (refuse, never plug)`);
   if (!/'Fuel Card Fee'/.test(src.migration ?? "") || !/account_number = '5005'/.test(src.migration ?? "")) f.push(`${FILES.migration}: must seed "Fuel Card Fee" -> 5005`);
+  // ROUND 443.29 b — deposits.
+  const dep = src.deposit ?? "";
+  if (!/amount \+ fee !== total \|\| total !== stored/.test(dep)) f.push(`${FILES.deposit}: a deposit must refuse unless amount + fee = charged = stored`);
+  if (!/if \(String\(d\.status\)\.toLowerCase\(\) !== "settled"\) return \{ outcome: "not_settled"/.test(dep)) f.push(`${FILES.deposit}: only a settled deposit may post`);
+  if (!/reason: "card_owner_not_named"/.test(dep)) f.push(`${FILES.deposit}: an unnamed card must be held, never guessed`);
+  if (!/"relay_fuel_wallet"[\s\S]{0,200}"5005"/.test(dep)) f.push(`${FILES.deposit}: deposit must debit 1295 and the fee on 5005`);
+  if (!/postRelayDeposit\(/.test(src.importRoute ?? "")) f.push(`${FILES.importRoute}: settled deposits must post on import`);
+  return f;
+}
+
+/** deposits: [{ deposit_id, charged_cents, dr_1295, dr_5005, cr_total }] for posted deposits */
+export function judgeDeposits(rows) {
+  const f = [];
+  for (const r of rows) {
+    if (r.dr_1295 + r.dr_5005 !== r.cr_total) f.push(`deposit ${r.deposit_id}: debits ${r.dr_1295}+${r.dr_5005} != credit ${r.cr_total}`);
+    if (r.cr_total !== r.charged_cents) f.push(`deposit ${r.deposit_id}: credit ${r.cr_total} != amount charged ${r.charged_cents}`);
+  }
   return f;
 }
 
@@ -62,6 +81,10 @@ if (process.argv.includes("--selftest")) {
     ["poster plugs the difference", { ...real, poster: real.poster.replace(/relay_fill_lines_do_not_foot/g, "relay_fill_ok") }],
     ["ingest fee constant", { ...real, ingest: real.ingest.replace(/relayFillFeeCents\(\{/g, "constantFee({") }],
     ["migration missing", { ...real, migration: "" }],
+    ["deposit plugs a mismatch", { ...real, deposit: real.deposit.replace("amount + fee !== total || total !== stored", "false") }],
+    ["deposit guesses unnamed cards", { ...real, deposit: real.deposit.replace(/reason: "card_owner_not_named"/g, 'reason: "guessed"') }],
+    ["canceled deposit posts", { ...real, deposit: real.deposit.replace('if (String(d.status).toLowerCase() !== "settled") return { outcome: "not_settled"', 'if (false) return { outcome: "not_settled"') }],
+    ["import does not post", { ...real, importRoute: real.importRoute.replace(/postRelayDeposit\(/g, "noop(") }],
   ];
   for (const [name, s] of plants) if (check(s).length === 0) fails.push(`plant escaped: ${name}`);
   const ok = { account_number: "5005" };
@@ -73,7 +96,9 @@ if (process.argv.includes("--selftest")) {
     ["fee line missing", ok, [{ fill_id: "a", paid_cents: 61616, fee_cents: 200, credit_1295_cents: 61816, fee_line_cents: 0 }]],
   ];
   for (const [name, item, rows] of livePlants) if (judgeLive(item, rows).length === 0) fails.push(`live plant escaped: ${name}`);
-  const n = plants.length + livePlants.length + 1;
+  if (judgeDeposits([{ deposit_id: "d", charged_cents: 722750, dr_1295: 700000, dr_5005: 22750, cr_total: 722750 }]).length) fails.push("a tied deposit flagged");
+  if (judgeDeposits([{ deposit_id: "d", charged_cents: 722750, dr_1295: 700000, dr_5005: 0, cr_total: 700000 }]).length === 0) fails.push("deposit without its fee escaped");
+  const n = plants.length + livePlants.length + 3;
   if (fails.length) { console.error(`${LABEL} --selftest FAIL: ${fails.join("; ")}`); process.exit(1); }
   console.log(`${LABEL} --selftest PASS ${n}/${n}`);
   process.exit(0);
@@ -107,10 +132,21 @@ try {
             posted.credit_1295_cents, posted.fee_line_cents
        FROM posted JOIN integrations.relay_fuel_transactions r ON r.id::text = posted.fill_id`, [USMCA])).rows
     .map((r) => ({ ...r, paid_cents: Number(r.paid_cents), fee_cents: Number(r.fee_cents), credit_1295_cents: Number(r.credit_1295_cents), fee_line_cents: Number(r.fee_line_cents) }));
+  const deps = (await c.query(
+    `SELECT d.deposit_id, d.total_amount_cents::bigint AS charged_cents,
+            sum(CASE WHEN a.account_number = '1295' AND p.debit_or_credit = 'debit' THEN p.amount_cents ELSE 0 END)::bigint AS dr_1295,
+            sum(CASE WHEN a.account_number = '5005' AND p.debit_or_credit = 'debit' THEN p.amount_cents ELSE 0 END)::bigint AS dr_5005,
+            sum(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE 0 END)::bigint AS cr_total
+       FROM accounting.journal_entry_postings p
+       JOIN catalogs.accounts a ON a.id = p.account_id
+       JOIN integrations.relay_deposits d ON d.id::text = p.source_transaction_id
+      WHERE p.operating_company_id = $1::uuid AND p.source_transaction_type = 'relay_deposit'
+        AND p.reversed_by_line_id IS NULL AND p.reversal_of_line_id IS NULL
+      GROUP BY 1, 2`, [USMCA])).rows.map((r) => ({ deposit_id: r.deposit_id, charged_cents: Number(r.charged_cents), dr_1295: Number(r.dr_1295), dr_5005: Number(r.dr_5005), cr_total: Number(r.cr_total) }));
   await c.query("ROLLBACK");
-  const bad = judgeLive(item, rows);
+  const bad = [...judgeLive(item, rows), ...judgeDeposits(deps)];
   if (bad.length) { console.error(`${LABEL}: FAIL (${bad.length})\n  ${bad.slice(0, 30).join("\n  ")}`); process.exit(1); }
-  console.log(`${LABEL}: PASS — "Fuel Card Fee" -> 5005; ${rows.length} posted Relay fill(s) each credit 1295 = paid + fee and carry the fee line`);
+  console.log(`${LABEL}: PASS — "Fuel Card Fee" -> 5005; ${rows.length} posted Relay fill(s) each credit 1295 = paid + fee and carry the fee line; ${deps.length} posted deposit(s) each Dr 1295 + Dr 5005 fee = Cr = amount charged`);
 } catch (err) {
   console.error(`${LABEL}: FAIL — live check could not run: ${err.message}`);
   process.exit(1);

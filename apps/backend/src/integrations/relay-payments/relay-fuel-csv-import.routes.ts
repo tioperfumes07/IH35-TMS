@@ -16,6 +16,8 @@ import { withLuciaBypass } from "../../auth/db.js";
 import { parseRelayFuelTransactionRow, RelayRowRejectedError, type RelayRejectedRow } from "./relay-client.js";
 import { upsertRelayFuelTransaction } from "./relay-fuel-ingest.service.js";
 import { loadCompanyCardSet, upsertRelayDeposit } from "./relay-deposit-classifier.service.js";
+import { postRelayDeposit, type DepositPostOutcome } from "./relay-deposit-post.service.js";
+import { createJournalEntryOnClient } from "../../accounting/journal-entries.service.js";
 import {
   flushFuelGlPostsAfterCommit,
   type FuelTxnGlPostCandidate,
@@ -136,6 +138,8 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
     const idx = new Map(header.map((h, i) => [h, i]));
 
     let imported = 0, skipped = 0, lines = 0, deposits = 0, depositCompany = 0, depositUnclassified = 0;
+    // ROUND 443.29 b: a settled deposit posts (Dr 1295 + Dr 5005 fee / Cr funding account) or is HELD by name.
+    const depositOutcomes: DepositPostOutcome[] = [];
     const rejected: RelayRejectedRow[] = [];
     const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
     const actorUserId = String((req.user as { uuid?: string } | undefined)?.uuid ?? "");
@@ -168,6 +172,15 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
           deposits++;
           if (dres.classification === "company") depositCompany++;
           else if (dres.classification === "unclassified") depositUnclassified++;
+          if (String(g("status") ?? "").trim().toLowerCase() === "settled") {
+            depositOutcomes.push(
+              await postRelayDeposit(
+                client,
+                { operatingCompanyId: opco, relayDepositId: dres.relay_deposit_id, actorUserId, actorRole: role },
+                { createJournalEntryOnClient: createJournalEntryOnClient as never }
+              )
+            );
+          }
           continue;
         }
 
@@ -208,6 +221,9 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
       deposits,
       depositCompany,
       depositUnclassified,
+      deposits_posted: depositOutcomes.filter((o) => o.outcome === "posted").length,
+      deposits_held: depositOutcomes.filter((o) => o.outcome === "held"),
+      deposits_refused: depositOutcomes.filter((o) => o.outcome === "refused"),
     });
   });
 }
