@@ -7591,3 +7591,13 @@ consumed_at: 2026-10-11T08:24:09Z
 consumed_by: CC-2 (correction of AUTH-417)
 row_counts: prod identical to the rehearsal — e3ac0879 advance 1245-00-042 renamed in place to 1245-00-043 (0 postings); escrow 2100-00-043 (5829 / P-0068, 2 postings) untouched
 proof_query: node scripts/verify-driver-subaccount-numbers-one-per-driver.mjs (prod) -> OK, 58 sub-accounts, one nnn per driver
+
+## AUTH-420
+issued_at: 2026-10-11T08:52:17Z
+issued_by: Lead 443.45 #3 ("merge each pair through the driver-merge engine (survivor = the profile the settlements posted on), nothing left pointing at the merged-away id"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..418
+owner_quotes: "all drivers must have only one profile and escrow and liability account" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — finish two 2026-09-28 merges through executeDriverMerge(resume): GENARO GUERRERO CHAVEZ 6e908ee1 -> 6edcb351 and ANGEL ALFONSO SOSA fba21d80 -> 52037e93 (survivors carry all 12 settlements): merged profile's duplicate advance link retired (is_active=false), every discovered reference repointed by repointAll, merged profile Inactive. Append-only history kept. No DELETE, no money (escrow already on the survivor; no JE).
+action: OWNER_AUTH_ID=AUTH-420 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-45-finish-driver-merges.ts --apply
+rehearsal: throwaway br-quiet-flower-akqk6rvo (COMMITTED, deleted): both pairs Active/1 active advance link -> Inactive/0; repointed Genaro 6 refs (incl. samsara.hos_snapshots 17,275, docs 12), Angel 5 refs (hos_snapshots 15,655, docs 10); remaining only history_kept (HOS / telematics / geofence events) + kept_on_survivor duplicates; verify-driver-subaccount-numbers-one-per-driver OK, verify-driver-advance-posts-to-drivers-own-subaccount OK
+expires_at: 2026-10-12T08:52:17Z
+status: OPEN
