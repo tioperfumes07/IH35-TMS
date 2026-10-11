@@ -89,6 +89,13 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // 5785 (CC-3 report 2026-10-11; owner 2026-10-01 "fully complete and build their own engine, no handing off"): the
+  // advance-balance view counted a posting once per bridge row, so the Creator close recovered a $301.99 advance 4x.
+  // CC-2's advance path; claimed #(202615500300) in #26277.
+  [
+    "cc-2/advance-once-5785",
+    new Set(["db/migrations/202615500300_driver_advance_balances_one_row_per_posting.sql"]),
+  ],
   // ROUND 443.29 a (owner 2026-10-10 7:15/7:19 PM CT): the "Fuel Card Fee" item the Relay fill poster resolves its fee leg
   // by did not exist in any company, so no Relay fill could post. Claimed #(202615490300).
   [

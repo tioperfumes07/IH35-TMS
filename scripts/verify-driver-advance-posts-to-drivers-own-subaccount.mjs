@@ -28,6 +28,10 @@
  *   RULE 8 — while driver_advances.outstanding_balance still exists, the view's outstanding equals it on every
  *            USMCA advance (the readers read the same number they read before; 202615380500 then drops it).
  *   Reported, not failed: drivers with an advance but no bound sub-account (creation refuses them).
+ *   RULE 9 — (5785, 2026-10-11) one posting counts once: the newest view definition (202615500300) takes each posting
+ *            on a bridged sub-account ONCE (account IN sub), never once per bridge row — a merged-away profile still
+ *            bridged to the survivor's account multiplied a $301.99 advance into a $1,207.96 recovery. LIVE: no
+ *            advance's GL-derived disbursed_cents exceeds the advance's own amount.
  * --selftest exercises every rule.
  */
 import { existsSync, readFileSync } from "node:fs";
@@ -46,6 +50,7 @@ export const FILES = {
   create: `${SRC}/cash-advances/cash-advance-create.ts`,
 };
 export const VIEW_MIG = "db/migrations/202615380400_driver_advance_balance_derived_from_gl.sql";
+export const VIEW_ONCE_MIG = "db/migrations/202615500300_driver_advance_balances_one_row_per_posting.sql";
 export const VIEW_READERS = [
   `${SRC}/driver-finance/settlement-payrun-close.service.ts`,
   `${SRC}/accounting/fuel-posting/poster.service.ts`,
@@ -98,11 +103,16 @@ export function staticProblems(read) {
   for (const f of VIEW_READERS) {
     if (!/driver_finance\.v_driver_advance_balances/.test(read(f) ?? "")) out.push(`RULE 7 ${f} does not read the GL-derived advance balance`);
   }
+  const once = read(VIEW_ONCE_MIG);
+  if (!once) out.push(`RULE 9 ${VIEW_ONCE_MIG} is missing`);
+  else if (!/WHERE p\.account_id IN \(SELECT sub\.account_id FROM sub\)/.test(once) || /JOIN sub ON sub\.account_id = p\.account_id/.test(once))
+    out.push("RULE 9 v_driver_advance_balances counts a posting once per bridge row — take each posting once (account IN sub)");
   return out;
 }
 
 export function liveProblems(m) {
   const out = [];
+  if (m.overDisbursed > 0) out.push(`RULE 9 ${m.overDisbursed} USMCA advance(s) whose GL-derived disbursed_cents exceeds the advance's own amount — a posting is counted more than once`);
   if (m.parentSince > 0) out.push(`RULE 5 ${m.parentSince} posting(s) on the shared advance_recovery parent since ${SINCE} that are not reversals`);
   if (m.mismatch > 0) out.push(`RULE 8 ${m.mismatch} USMCA advance(s) whose GL-derived outstanding differs from the stored outstanding_balance`);
   return out;
@@ -122,6 +132,7 @@ if (isMain) {
       [FILES.create]: "await ensureDriverAdvanceSubAccount(client, { driverId }); catch (err) { if (err instanceof DriverAdvanceAccountError) }",
       [VIEW_MIG]: "CREATE OR REPLACE VIEW driver_finance.v_driver_advance_balances AS SELECT 1 WHERE r.role = 'advance_recovery';\nCREATE OR REPLACE FUNCTION driver_finance.recompute_driver_debt() x driver_finance.v_driver_advance_balances;\nCREATE OR REPLACE VIEW views.banking_account_tiles AS x driver_finance.v_driver_advance_balances;\nCREATE OR REPLACE VIEW views.cash_advances_with_context AS x driver_finance.v_driver_advance_balances;",
     };
+    good[VIEW_ONCE_MIG] = "own AS (SELECT p.id FROM accounting.journal_entry_postings p\n  WHERE p.account_id IN (SELECT sub.account_id FROM sub))";
     for (const f of VIEW_READERS) if (!(f in good)) good[f] = "FROM driver_finance.v_driver_advance_balances vb";
     if (!good[FILES.payrun].includes("v_driver_advance_balances")) good[FILES.payrun] += " FROM driver_finance.v_driver_advance_balances";
     const reader = (over) => (f) => (over[f] ?? good[f]);
@@ -138,6 +149,8 @@ if (isMain) {
       ["the debt function left on the stored balance fails", has({ [VIEW_MIG]: good[VIEW_MIG].replace("recompute_driver_debt() x driver_finance.v_driver_advance_balances", "recompute_driver_debt() x l.current_balance") }, "RULE 6")],
       ["a reader back on the stored balance fails", has({ [VIEW_READERS[1]]: "l.current_balance" }, "RULE 7")],
       ["live clean passes", liveProblems({ parentSince: 0, mismatch: 0 }).length === 0],
+      ["an advance disbursed more than its amount fails", liveProblems({ parentSince: 0, mismatch: 0, overDisbursed: 1 }).some((x) => x.startsWith("RULE 9"))],
+      ["a view that joins postings per bridge row fails", has({ [VIEW_ONCE_MIG]: "FROM accounting.journal_entry_postings p JOIN sub ON sub.account_id = p.account_id" }, "RULE 9")],
       ["a derived/stored mismatch fails", liveProblems({ parentSince: 0, mismatch: 1 }).some((x) => x.startsWith("RULE 8"))],
       ["a new posting on the shared parent fails", liveProblems({ parentSince: 1, mismatch: 0 }).some((x) => x.startsWith("RULE 5"))],
     ];
@@ -177,8 +190,12 @@ if (isMain) {
       ? (await client.query(`SELECT count(*)::int n FROM driver_finance.v_driver_advance_balances v JOIN driver_finance.driver_advances a ON a.id = v.advance_id
             WHERE a.operating_company_id = (SELECT id FROM org.companies WHERE code = 'USMCA') AND v.outstanding_cents <> round(COALESCE(a.outstanding_balance, 0) * 100)`)).rows[0].n
       : 0;
+    const overDisbursed = hasView
+      ? (await client.query(`SELECT count(*)::int n FROM driver_finance.v_driver_advance_balances v JOIN driver_finance.driver_advances a ON a.id = v.advance_id
+            WHERE a.operating_company_id = (SELECT id FROM org.companies WHERE code = 'USMCA') AND v.disbursed_cents > round(COALESCE(a.amount, 0) * 100)`)).rows[0].n
+      : 0;
     await client.query("ROLLBACK");
-    problems.push(...liveProblems({ parentSince, mismatch }));
+    problems.push(...liveProblems({ parentSince, mismatch, overDisbursed }));
     if (problems.length) { console.error(`${LABEL}: FAIL\n  ${problems.join("\n  ")}`); process.exitCode = 1; }
     else console.log(`${LABEL}: OK — static rules 1-4, 6-7 hold; 0 postings on the shared advance_recovery parent since ${SINCE}; ${hasView ? (hasColumn ? "derived outstanding = stored outstanding_balance on every USMCA advance" : "outstanding_balance dropped — the GL is the only balance") : "202615380400 not applied on this database yet"}. Drivers with an advance and no bound own sub-account (creation refuses them): ${unbound}.`);
   } finally {

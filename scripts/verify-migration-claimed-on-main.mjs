@@ -102,6 +102,12 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
       "db/migrations/202615110000_fuel_transaction_derivations.sql",
     ]),
   ],
+  // Same owner order (2026-10-01, no handoff): CC-2's advance path — 5785's advance recovered 4x by
+  // v_driver_advance_balances. Claimed first (#26277) under claimed_by CC-2. Same exact-branch + exact-file shape.
+  [
+    "cc-2/advance-once-5785",
+    new Set(["db/migrations/202615500300_driver_advance_balances_one_row_per_posting.sql"]),
+  ],
 ]);
 
 function isOwnerAuthorizedOneOff(branch, files) {
