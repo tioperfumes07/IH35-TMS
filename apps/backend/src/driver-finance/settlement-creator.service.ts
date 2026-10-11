@@ -28,7 +28,7 @@ import { allocateNextSettlementSourceDocumentRef } from "./settlement-source-doc
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { resolveRoleAccountOptional, type CoaRole } from "../accounting/coa-roles/resolver.service.js";
 import { resolveDriverReimbursementParentAccount } from "../accounting/driver-subaccount-provision.service.js";
-import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
+import { resolveCompanyDirectCreditAccount, postFuelExpenseOnClient, type FuelCategoryCode } from "../accounting/fuel-posting/poster.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { creatorEmptyPayCents, creatorEmptyRateCents, creatorLoadedPayCents, creatorPayMiles } from "./settlement-creator-empty-pay.js";
 import { resolveDriverPayItems } from "./settlement-creator-pay-item.js";
@@ -1301,9 +1301,63 @@ export async function postSettlementCreatorInClientTx(
     if (doc.outcome === "refused") {
       throw new SettlementCreatorError("fuel_expense_refused", doc.reason);
     }
-    // ACCT-F403: outcome "relay_link" — a Relay-rail fill posts from its wallet line, so this row gets no document and no
-    // posting here; it LINKS to its Relay fill (one rule, fuel/relay-fill-link.service.ts) when exactly one proves it.
-    if (doc.outcome === "relay_link") await linkSettlementFuelRowToRelayFill(client as never, draft.operating_company_id, fuelId);
+    // ACCT-F44335 (Lead ruling 2026-10-10): a relay-matched settlement fuel row posts THROUGH its
+    // Relay fill as source (Dr fuel per product + Dr Fuel Card Fees / Cr Relay Fuel Wallet = relay
+    // total). trg_relay_wallet_consumed_only_by_relay_fill accepts source_transaction_type='fuel_event'
+    // + the relay fill UUID; the fill can never post twice.
+    if (doc.outcome === "relay_link") {
+      const link = await linkSettlementFuelRowToRelayFill(client as never, draft.operating_company_id, fuelId);
+      if (link.linked) {
+        const relayFillId = link.linked;
+        const linesRows = await client.query<{
+          fuel_type: string | null;
+          fuel_product_code: string | null;
+          fuel_type_description: string | null;
+          total_discounted_price_cents: string | null;
+          fee_amount_cents: string | null;
+          fee_type: string | null;
+        }>(
+          `SELECT fuel_type, fuel_product_code, fuel_type_description,
+                  total_discounted_price_cents, fee_amount_cents, fee_type
+             FROM integrations.relay_fuel_transaction_lines
+            WHERE relay_fuel_transaction_id = $1::uuid AND voided_at IS NULL
+            ORDER BY line_index`,
+          [relayFillId]
+        );
+        const { relayLineKind } = await import("../fuel/relay-product-kind.js");
+        const productLines = linesRows.rows.filter(l => !l.fee_type);
+        const feeLines = linesRows.rows.filter(l => !!l.fee_type);
+        const costLines: Array<{ fuel_kind: FuelCategoryCode; amount_cents: number }> = productLines.map(l => {
+          const k = relayLineKind(l);
+          return { fuel_kind: (k === "other" ? "misc" : k) as FuelCategoryCode, amount_cents: Math.round(Number(l.total_discounted_price_cents ?? 0)) };
+        });
+        const feeCents = feeLines.reduce((s, l) => s + Math.round(Number(l.fee_amount_cents ?? 0)), 0);
+        const totalCents = costLines.reduce((s, l) => s + l.amount_cents, 0) + feeCents;
+        if (totalCents <= 0) throw new SettlementCreatorError("relay_fill_no_amount", `Fuel line: relay fill ${relayFillId} has zero charge`);
+        const txnRow = await client.query<{ unit_id: string | null; driver_id: string | null; transaction_at: string; fuel_type: string | null }>(
+          `SELECT unit_id::text, driver_id::text, transaction_at::text, fuel_type FROM fuel.fuel_transactions WHERE id = $1::uuid`,
+          [fuelId]
+        );
+        const txn = txnRow.rows[0];
+        const primaryKind: FuelCategoryCode = txn?.fuel_type === "def" ? "def" : txn?.fuel_type === "reefer_diesel" ? "reefer" : "diesel";
+        const fillPosted = await postFuelExpenseOnClient(client as never, {
+          operating_company_id: draft.operating_company_id,
+          actor_user_id: actorUserId,
+          fuel_event_id: relayFillId,
+          fuel_kind: primaryKind,
+          posted_at: txn?.transaction_at ?? new Date().toISOString(),
+          amount_cents: totalCents,
+          posting_path: "company_direct",
+          company_direct_credit: "relay_fuel_wallet",
+          cost_lines: costLines.length > 0 ? costLines : undefined,
+          fee_amount_cents: feeCents > 0 ? feeCents : null,
+          unit_id: txn?.unit_id ?? null,
+          driver_id: txn?.driver_id ?? null,
+        });
+        if (!fillPosted.journal_entry_id) throw new SettlementCreatorError("relay_fill_post_refused", `Fuel line: relay fill posting returned no journal entry`);
+        journalEntryIds.push(fillPosted.journal_entry_id);
+      }
+    }
     if (doc.outcome === "created" || doc.outcome === "already_exists") {
       expenseIds.push(doc.expense_id);
       // Stamp Comp. Exp. card rail already set by fuel writer; post through existing engine.
