@@ -2357,5 +2357,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-11",
     "purpose": "OWNER RULING Lead 443.52 B: accounting.expenses CHECK (a settlement number requires a load) -- write-time refusal for every writer; prod measured 0 violations over 647 USMCA expenses; additive, NOT VALID then VALIDATE"
+  },
+  "202615550300": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-11",
+    "purpose": "OWNER ORDER Lead 443.55: mdata.loads.miles_choice jsonb -- per miles field (practical / short / empty) the value, the source chosen (historical | google | manual | document), both recommended values at the time, manual reason, who chose and when; additive, nullable, no data written"
   }
 }
