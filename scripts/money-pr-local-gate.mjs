@@ -1072,6 +1072,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-booked-loads-save-miles",
     ["apps/backend/src/dispatch/", "apps/backend/src/driver-finance/", "scripts/verify-booked-loads-save-miles.mjs"],
   ],
+  // ROUND 443.38 (CC-2) — stops resolve to the owner's Samsara address; no false rooftop; no fence around a zip center.
+  [
+    "verify-stops-resolve-samsara-no-zip-fence",
+    ["apps/backend/src/telematics/", "apps/backend/src/integrations/samsara/", "apps/backend/src/dispatch/", "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts", "scripts/verify-stops-resolve-samsara-no-zip-fence.mjs"],
+  ],
   // ROUND 363-CC1-D (CC-1) — no writer moves a posted line in place; the database refuses it.
   [
     "verify-no-posting-update-outside-document-edit",

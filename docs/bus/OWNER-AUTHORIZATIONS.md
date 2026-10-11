@@ -7446,4 +7446,18 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — accounting.journal_
 action: OWNER_AUTH_ID=AUTH-406 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-d6-backfill-posting-entity.ts --apply
 rehearsal: throwaway br-weathered-block-akkbl55d (COMMITTED, deleted): 317 in scope (221 of the ruling + Creator posts before #26269 went live at 05:00Z), 317 entity filled, 0 unresolved, 0 loads fillable (74 settlement-level aggregates have no single load), trial balance 0 across 1,026 postings unchanged; audit on the 7: ENTITY-ON-POSTINGS PASS on all 7
 expires_at: 2026-10-12T05:36:00Z
+status: CONSUMED
+consumed_at: 2026-10-11T06:00:00Z
+consumed_by: CC-2
+row_counts: prod — 317 Creator postings filled ONCE (entity: invoice -> customer, driver bills / bill payments / settlement / advance -> driver, expense + 2510 -> vendor), 0 unresolved, 0 loads fillable (74 settlement-level aggregates have no single load); trial balance 0 across 1,026 postings unchanged; identical to the rehearsal
+proof_query: prod since 05:00Z every new Creator posting carries its entity; scope query entity NULL after fill = 0
+
+## AUTH-409
+issued_at: 2026-10-11T05:42:00Z
+issued_by: Lead orders 443.35 item 3/4 ("Correct the 40 existing stops through the engine", "backfill the 20 loads ... through the same engine path") and 443.38 item 2 ("Correct through the engine the 34 locations and the 51 geofences created today ... deactivate zip-center geofences, do not delete history"), on the owner's orders 2026-10-11 00:25 / 00:30 CT. Recorded by CC-2 in the PR that ships the script, as with AUTH-404..406
+owner_quotes: "This must be fixed and done automatically for the next seedings, none should ever fail." (2026-10-11 00:30 CT) · "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — loads created since 2026-10-11T00:00Z: every stop re-resolved by geocodeStopsWithClient(reresolve) (Samsara address > owner street > zip center, no fence); active non-Samsara geofences created since then on a location with no street RETIRED (is_active=false); street-less locations created since then that no stop or active fence uses DEACTIVATED. No DELETE. No money. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-409 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-38-reresolve-creator-stops.ts --apply
+rehearsal: throwaway br-morning-king-ak5hyvy8 (COMMITTED, deleted): 24 loads / 48 stops; 6 on a Samsara address (street + facility + its own fence), 42 zip / city center listed, 0 failed; false rooftop 48 -> 0; zip-center fences active 33 -> 0 (retired); 33 street-less locations deactivated; Samsara-linked fences active 1 -> 6
+expires_at: 2026-10-12T05:42:00Z
 status: OPEN
