@@ -4,14 +4,14 @@
  * differently, the seeder books through the EXISTING GO-21 B5 reason-carrying override (driver_pay_rate_per_mile +
  * driver_pay_rate_override_reason >= 10 chars, audited by bookLoad); the rate card is never written; no override when the
  * card already pays the signed rate.
- * Run: node scripts/verify-creator-books-signed-settlement-rate.mjs [--selftest]
+ * Run: node scripts/verify-settlement-creator-books-signed-settlement-rate.mjs [--selftest]
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const LABEL = "verify-creator-books-signed-settlement-rate";
+const LABEL = "verify-settlement-creator-books-signed-settlement-rate";
 const F = {
   helper: "apps/backend/src/driver-finance/settlement-creator-signed-rate.ts",
   seed: "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts",

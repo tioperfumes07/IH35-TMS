@@ -141,6 +141,8 @@ export type ApChainInput = {
   shortfallAccountId?: string | null;
   payoutBankAccountId: string | null;
   paymentReference?: string | null;
+  /** LEAD RULING R12 — no net-pay bill payment and no bank: each bill keeps its remaining balance open on A/P. */
+  leaveNetOpen?: boolean;
 };
 
 export type ApChainResult = {
@@ -305,13 +307,13 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
   if (netTotal !== input.netCents) {
     throw new SettlementApChainError("NET_DOES_NOT_TIE", `${input.label}: the load bills leave ${netTotal}c to pay but the pay-run net is ${input.netCents}c`, { bills_net_cents: netTotal, payrun_net_cents: input.netCents });
   }
-  if (netTotal > 0 && !input.payoutBankAccountId) throw new SettlementApChainError("PAYOUT_BANK_MISSING", `${input.label} pays ${netTotal}c and has no bank account to pay from`);
+  if (netTotal > 0 && !input.leaveNetOpen && !input.payoutBankAccountId) throw new SettlementApChainError("PAYOUT_BANK_MISSING", `${input.label} pays ${netTotal}c and has no bank account to pay from`);
   const out: ApChainResult["bills"] = [];
   for (const x of posted) {
     const cash = remaining.get(x.billId) ?? 0;
     let cashBpId: string | null = null;
     let cashJeId: string | null = null;
-    if (cash > 0) {
+    if (cash > 0 && !input.leaveNetOpen) {
       const bp = await payBillInClientTx(client, {
         operatingCompanyId: opco, billId: x.billId, paymentDate: input.billDate, amountCents: cash, paymentMethod: "ach",
         fromBankAccountId: input.payoutBankAccountId!, referenceNumber: input.paymentReference ?? undefined,
@@ -329,9 +331,10 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
       }
     }
     await client.query(
-      `UPDATE driver_finance.driver_bills SET settled_in_settlement_id = $2::uuid, status = 'paid', updated_at = now()
+      `UPDATE driver_finance.driver_bills SET settled_in_settlement_id = $2::uuid, status = $4, updated_at = now()
         WHERE id = $1::uuid AND operating_company_id = $3::uuid AND status <> 'void'`,
-      [x.b.driverBillId, input.settlementId, opco]
+      // R12 — a bill whose net is left open on A/P is approved, not paid.
+      [x.b.driverBillId, input.settlementId, opco, input.leaveNetOpen && cash > 0 ? "approved" : "paid"]
     );
     await client.query(
       `INSERT INTO driver_finance.driver_settlement_gl_bills
@@ -339,7 +342,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
           cash_bill_payment_id, cash_journal_entry_id, deduction_bill_payment_id, gross_cents, deduction_cents, cash_cents)
        VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6,$7::uuid,$8::uuid,$9::uuid,$10::uuid,$11::uuid,$12,$13,$14)`,
       [opco, runId, input.settlementId, x.b.driverBillId, x.b.loadId, x.b.loadNumber, x.billId, x.billJeId, cashBpId, cashJeId,
-        firstNoncashBp.get(x.billId) ?? null, x.total, applied.get(x.billId) ?? 0, cash]
+        firstNoncashBp.get(x.billId) ?? null, x.total, applied.get(x.billId) ?? 0, input.leaveNetOpen ? 0 : cash]
     );
     out.push({ load_number: x.b.loadNumber, accounting_bill_id: x.billId, bill_journal_entry_id: x.billJeId, cash_bill_payment_id: cashBpId, cash_journal_entry_id: cashJeId, total_cents: x.total, applied_cents: applied.get(x.billId) ?? 0, cash_cents: cash });
   }

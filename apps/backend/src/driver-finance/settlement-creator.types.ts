@@ -97,6 +97,8 @@ export type SettlementCreatorFuelLine = {
   card: SettlementCreatorFuelCard;
   load_number?: string | null;
   fuel_type?: "diesel" | "def" | "reefer_diesel";
+  /** D2 — a note stored on the fuel row (e.g. gallons estimated at average price). */
+  notes?: string | null;
   /** ROUND 363-CC2-D — picked at creation. The account wins over the item's default; load_id wins over load_number. */
   item_id?: string | null;
   account_id?: string | null;
