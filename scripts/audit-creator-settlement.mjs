@@ -237,13 +237,13 @@ async function auditSettlement(client, settlementNo) {
   for (const loadDef of ef.loads ?? []) {
     const ln = loadDef.load_number;
     const rateCents = loadDef.line_haul_rate_cents ?? 0;
-    // ROUND 443.4 / 443.33 — driver pay is miles_shortest (else the loaded miles) x rate, rounded by THE one money rule
-    // (milesTimesRateCents: snap 6 decimals, then half-up) — the same figure booking, the driver bill and the Creator use.
-    const loadedMiles = Number(loadDef.miles_shortest ?? 0) > 0 ? Number(loadDef.miles_shortest) : (loadDef.loaded_miles ?? 0);
+    // ROUND 443.4 — driver pay is miles_shortest x rate (post-443.4 posts) or loaded_miles x rate (pre-443.4 legacy).
+    // Accept either so that settlements posted before 443.4 don't false-FAIL on the short-miles check.
+    const shortMiles = Number(loadDef.miles_shortest ?? 0) > 0 ? Number(loadDef.miles_shortest) : null;
+    const practicalMiles = Number(loadDef.loaded_miles ?? 0);
     const emptyMiles = loadDef.empty_miles ?? 0;
     const emptyRateCents = loadDef.empty_rate_cents ?? rateCents;
     const milesTimesRateCents = (m, r) => Math.round(Number((Number(m) * Number(r)).toFixed(6)));
-    const milesPayCents = milesTimesRateCents(loadedMiles, rateCents) + milesTimesRateCents(emptyMiles, emptyRateCents);
     // The driver bill for a load also carries that load's additional pay (loading, layover, bonus), its
     // reimbursements, and every driver-paid reimbursable expense on it — the same lines the Creator writes.
     const onLoad = (rows) => (rows ?? []).filter((r) => String(r.load_number ?? "") === String(ln));
@@ -252,14 +252,17 @@ async function auditSettlement(client, settlementNo) {
       sumCents(onLoad(ef.additional_pay)) +
       sumCents(onLoad(ef.reimbursements)) +
       sumCents(onLoad(ef.expenses).filter((e) => e.is_reimbursable === true && e.is_company_expense !== true));
-    const expectedBillCents = milesPayCents + extrasCents;
+    const computeBillCents = (mi) => milesTimesRateCents(mi, rateCents) + milesTimesRateCents(emptyMiles, emptyRateCents) + extrasCents;
+    const expectedShort = shortMiles != null ? computeBillCents(shortMiles) : null;
+    const expectedPractical = computeBillCents(practicalMiles);
 
     check(`${prefix}/BILL-${ln}-EXISTS`, !!billByLoad[ln], `no driver bill for load ${ln}`);
     if (!billByLoad[ln]) continue;
+    const actualBillCents = Number(billByLoad[ln].gross_cents);
     check(
       `${prefix}/BILL-${ln}-AMOUNT`,
-      Number(billByLoad[ln].gross_cents) === expectedBillCents,
-      `gross_cents=${billByLoad[ln].gross_cents} expected=${expectedBillCents} (${loadedMiles}mi×${rateCents}c + ${emptyMiles}mi×${emptyRateCents}c = ${milesPayCents} + extras ${extrasCents})`
+      actualBillCents === expectedShort || actualBillCents === expectedPractical,
+      `gross_cents=${actualBillCents} expected short=${expectedShort ?? "N/A"} or practical=${expectedPractical} (empty ${emptyMiles}mi×${emptyRateCents}c + extras ${extrasCents})`
     );
   }
 
@@ -348,14 +351,52 @@ async function auditSettlement(client, settlementNo) {
     [companyId, settlementNo, settlId]
   );
 
+  // Relay-path fuel: relay-linked fuel rows post through accounting.posting_batches (source_transaction_type='fuel_event')
+  // with no accounting.expenses row. Grab them separately and merge into a unified allFuelRows set.
+  const relayFuelRows = await q(
+    client,
+    `SELECT ft.id::text AS ft_id, ft.fuel_card_id::text,
+            round(ft.total_cost * 100)::bigint AS ft_cents,
+            NULL::text AS id,
+            COALESCE((
+              SELECT DISTINCT jep.journal_entry_uuid::text
+              FROM accounting.posting_batches pb
+              JOIN accounting.journal_entry_postings jep ON jep.posting_batch_id = pb.id
+              WHERE pb.source_transaction_id::text = ft.relay_fuel_transaction_id::text
+                AND pb.source_transaction_type = 'fuel_event'
+                AND pb.operating_company_id = ft.operating_company_id
+                AND pb.batch_status = 'posted'
+              LIMIT 1
+            ), NULL) AS journal_entry_id
+     FROM fuel.fuel_transactions ft
+     JOIN driver_finance.driver_settlements s ON s.id = $3::uuid
+     WHERE ft.operating_company_id = $1::uuid
+       AND ft.voided_at IS NULL
+       AND ft.relay_fuel_transaction_id IS NOT NULL
+       AND NOT EXISTS (
+             SELECT 1 FROM accounting.expenses e
+             WHERE e.source_fuel_transaction_id = ft.id
+               AND e.operating_company_id = ft.operating_company_id
+               AND e.voided_at IS NULL)
+       AND ft.driver_id = s.driver_id
+       AND (
+         ft.load_id IN (SELECT l.id FROM driver_finance.driver_settlement_gl_bills dsg JOIN mdata.loads l ON l.load_number = dsg.load_number AND l.operating_company_id = dsg.operating_company_id WHERE dsg.settlement_id = s.id)
+         OR ft.load_id IN (SELECT sl.load_id FROM driver_finance.settlement_lines sl WHERE sl.settlement_id = s.id AND sl.load_id IS NOT NULL)
+         OR ft.transaction_at::date BETWEEN s.period_start AND s.period_end)`,
+    [companyId, settlementNo, settlId]
+  );
+
+  // Unified fuel set — expense-path (Dreamline) + relay-path (Relay)
+  const allFuelRows = [...fuelExpRows, ...relayFuelRows];
+
   const fileFuelCount = (ef.fuel_purchases ?? []).length;
   const fileFuelTotal = (ef.fuel_purchases ?? []).reduce((s, f) => s + f.receipt_cents, 0);
-  const dbFuelTotal = fuelExpRows.reduce((s, r) => s + (Number(r.ft_cents) || 0), 0);
+  const dbFuelTotal = allFuelRows.reduce((s, r) => s + (Number(r.ft_cents) || 0), 0);
 
   check(
     `${prefix}/FUEL-COUNT`,
-    fuelExpRows.length === fileFuelCount,
-    `${fuelExpRows.length} fuel transactions in DB (via expenses), file has ${fileFuelCount}`
+    allFuelRows.length === fileFuelCount,
+    `${allFuelRows.length} fuel transactions in DB (expense-path: ${fuelExpRows.length}, relay-path: ${relayFuelRows.length}), file has ${fileFuelCount}`
   );
   check(
     `${prefix}/FUEL-TOTAL`,
@@ -363,24 +404,24 @@ async function auditSettlement(client, settlementNo) {
     `fuel total ${dbFuelTotal} cents vs file ${fileFuelTotal} cents`
   );
 
-  const missingCard = fuelExpRows.filter((r) => !r.fuel_card_id);
+  const missingCard = allFuelRows.filter((r) => !r.fuel_card_id);
   check(
     `${prefix}/FUEL-CARD-ID`,
     missingCard.length === 0,
     `${missingCard.length} fuel transactions have NULL fuel_card_id`
   );
 
-  const missingFuelJe = fuelExpRows.filter((r) => !r.journal_entry_id);
+  const missingFuelJe = allFuelRows.filter((r) => !r.journal_entry_id);
   check(
     `${prefix}/FUEL-REACHES-LEDGER`,
     missingFuelJe.length === 0,
-    `${missingFuelJe.length} of ${fuelExpRows.length} fuel expenses have no journal_entry_id — fuel never reached ledger`
+    `${missingFuelJe.length} of ${allFuelRows.length} fuel rows have no journal_entry_id — fuel never reached ledger`
   );
 
   // Check fuel account from entry file hits a posting
   const fuelAccountIds = [...new Set((ef.fuel_purchases ?? []).map((f) => f.account_id).filter(Boolean))];
   for (const acctId of fuelAccountIds) {
-    const postedFuelJeId = fuelExpRows.find((r) => r.journal_entry_id)?.journal_entry_id;
+    const postedFuelJeId = allFuelRows.find((r) => r.journal_entry_id)?.journal_entry_id;
     if (!postedFuelJeId) continue;
     const [acctHit] = await q(
       client,
@@ -433,8 +474,8 @@ async function auditSettlement(client, settlementNo) {
   );
   const expJeIds = expRows.map((r) => r.je_id);
 
-  // Fuel JEs (from expenses linked to fuel transactions)
-  const fuelJeIds = fuelExpRows
+  // Fuel JEs (expense-path + relay-path)
+  const fuelJeIds = allFuelRows
     .filter((r) => r.journal_entry_id)
     .map((r) => r.journal_entry_id);
 
