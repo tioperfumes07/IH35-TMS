@@ -7431,6 +7431,12 @@ owner_quotes: owner order 2026-10-11 00:25 CT (stop addresses + miles saved for 
 scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — loads booked since 2026-10-11T00:00Z with a stop whose leg_miles is NULL, through learnLoadLanes (apps/backend/src/dispatch/load-lane-learning.service.ts, the booking engine's own module): mdata.load_stops.leg_miles filled once where NULL; catalogs.lane_mileage running stats on the load's lane (update or create); catalogs.point_mileage (engine load_document, ON CONFLICT DO NOTHING); mdata.customer_lanes created when missing (load with a rate). No DELETE. No money. TRANSPORTATION / TRUCKING not touched.
 action: OWNER_AUTH_ID=AUTH-408 DATABASE_URL=<prod> npx tsx apps/backend/scripts/auth408-backfill-load-lanes.mts --branch=br-fancy-credit-akjnd07a --apply
 rehearsal: throwaway br-sparkling-grass-aktgy39p (COMMITTED, deleted): 24 loads, 38 legs filled (24 delivery legs + 14 known deadheads), stops after the first with leg_miles NULL 24 -> 0, 10 first stops stay NULL (deadhead unknown, never 0); lane_mileage 23 updated + 1 created; point_mileage 23; customer_lanes 14 created, 10 listed (load has no rate); re-run = no-op; verify-booked-loads-save-miles PASS
+expires_at: 2026-10-12T05:36:01Z
+status: CONSUMED
+consumed_at: 2026-10-11T05:55:00Z
+consumed_by: CC-2
+row_counts: prod, identical to the rehearsal — 24 loads, 38 leg_miles filled; stops after the first with leg_miles NULL 24 -> 0 (all stops NULL 48 -> 10: first stops whose deadhead is unknown, never 0); catalogs.lane_mileage 23 rows updated + 1 created; catalogs.point_mileage 23 (engine load_document); mdata.customer_lanes 0 -> 14 (10 loads listed, no rate on the load: 13497 13498 13502 13504 13505 13506 13507 13517 13525 13527). NOTE: this block's own expires_at/status lines were collapsed into AUTH-406's identical lines by the bus union merge; restored here (expires_at made distinct so a union merge cannot collapse it again).
+proof_query: node scripts/verify-booked-loads-save-miles.mjs (prod) -> PASS, 24 loads, exit 0
 
 ## AUTH-406
 issued_at: 2026-10-11T05:36:00Z
