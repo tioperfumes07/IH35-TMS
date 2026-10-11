@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getRelayDepositMatchReview, type RelayDepositMatchReviewRow } from "../../../api/banking";
 import { CappedListNotice } from "../../../components/CappedListNotice";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { formatDateUS } from "../../../lib/formatDate";
-import { formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../../utils/qboFormat";
 
 type Props = {
   companyId: string;
@@ -87,21 +87,38 @@ export function RelayDepositCategorizedMatchHintsPanel({ companyId }: Props) {
                         <td className="px-2 py-1 text-center whitespace-nowrap">
                           {r.transaction_date ? formatDateUS(r.transaction_date) : "—"}
                         </td>
-                        <td className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>{formatUsdCents(r.amount_cents)}</td>
-                        <td className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
-                          {r.wallet_cents != null ? formatUsdCents(r.wallet_cents) : "—"}
+                        <td className="px-2 py-1">
+                          <MoneyCell
+                            cents={r.amount_cents}
+                            drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
+                          />
                         </td>
-                        <td className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
-                          {r.fee_cents != null ? formatUsdCents(r.fee_cents) : "—"}
+                        <td className="px-2 py-1">
+                          <MoneyCell
+                            cents={r.wallet_cents}
+                            drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
+                          />
                         </td>
-                        <td className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
-                          {r.charged_cents != null ? formatUsdCents(r.charged_cents) : "—"}
+                        <td className="px-2 py-1">
+                          <MoneyCell
+                            cents={r.fee_cents}
+                            drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
+                          />
+                        </td>
+                        <td className="px-2 py-1">
+                          <MoneyCell
+                            cents={r.charged_cents}
+                            drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
+                          />
                         </td>
                         <td className="px-2 py-1 text-center whitespace-nowrap">
                           {r.relay_deposit_id ?? r.suggested_relay_deposit_id ?? "—"}
                         </td>
-                        <td className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
-                          {r.amount_gap_cents != null ? formatUsdCents(r.amount_gap_cents) : "—"}
+                        <td className="px-2 py-1">
+                          <MoneyCell
+                            cents={r.amount_gap_cents}
+                            drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
+                          />
                         </td>
                       </tr>
                     ))}
