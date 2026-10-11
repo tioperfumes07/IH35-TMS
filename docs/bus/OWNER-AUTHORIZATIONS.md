@@ -7652,4 +7652,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — Relay-fill accounti
 action: OWNER_AUTH_ID=AUTH-425 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-51-relay-fill-expense-settlement-ref.ts --apply
 rehearsal: throwaway br-spring-flower-akal6c4b (COMMITTED, deleted): 152 Relay-fill documents; settlement_no NULL 141 -> 0, source_settlement_ref NULL 152 -> 0; 0 listed; verify-relay-fill-expense-settlement-ref PASS at ceiling 0
 expires_at: 2026-10-12T11:03:47Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T11:16:02Z
+consumed_by: CC-2 (443.51 #5 Relay-fill expense settlement reference)
+row_counts: prod identical to the rehearsal — 152 Relay-fill documents; settlement_no NULL 141 -> 0, source_settlement_ref NULL 152 -> 0, 0 listed; settlement_no set with load_id NULL = 0 (owner law 443.52 B)
+proof_query: node scripts/verify-relay-fill-expense-settlement-ref.mjs (prod) -> PASS, 0 (ceiling lowered 141 -> 0)
