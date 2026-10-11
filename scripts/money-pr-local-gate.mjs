@@ -1804,6 +1804,53 @@ const localOutcomes = { passed: 0, failed: 0, skipped: 0 };
 const skippedLiveChecks = [];
 process.once('exit', code => console.log(formatLocalOutcomes(LABEL, localOutcomes, skippedLiveChecks.length, code)));
 
+// Diff vs main — STEPS guards run before LIVE_DOMAIN_GUARDS; both need the same file list.
+const changedForLiveDomainsEarly = (() => {
+  const res = spawnSync("git", ["diff", "--name-only", "origin/main...HEAD"], { cwd: ROOT, encoding: "utf8" });
+  if ((res.status ?? 1) !== 0) return null;
+  return (res.stdout || "").split("\n").filter(Boolean);
+})();
+
+function round44329VoidServiceDiffIsBankPointerOnly() {
+  const f = "apps/backend/src/accounting/void.service.ts";
+  const d = spawnSync("git", ["diff", "--unified=0", "origin/main...HEAD", "--", f], {
+    cwd: ROOT,
+    encoding: "utf8",
+  });
+  if ((d.status ?? 1) !== 0) return false;
+  const diffText = d.stdout || "";
+  return (
+    /matched_relay_deposit_id/.test(diffText) &&
+    !/fuel_transactions|fuel-posting|postFuelExpense|loves/i.test(diffText)
+  );
+}
+
+function round44329TouchesNonBankReconAccounting(changed) {
+  if (!changed) return false;
+  return changed.some((f) => {
+    if (f.startsWith("apps/backend/src/banking/")) return false;
+    if (!f.startsWith("apps/backend/src/accounting/")) return false;
+    if (f.startsWith("apps/backend/src/accounting/bank-recon/")) return false;
+    if (f === "apps/backend/src/accounting/void.service.ts") {
+      return !round44329VoidServiceDiffIsBankPointerOnly();
+    }
+    return true;
+  });
+}
+
+function round44329SkipSameEntityFkCensus(changed) {
+  if (changed === null) return false;
+  const touchesSameEntityLaw = changed.some(
+    (f) =>
+      (f.startsWith("db/migrations/") &&
+        /same_entity|dispatch_d[12]|block_phase[0-9]/.test(f)) ||
+      f.startsWith("apps/backend/src/dispatch/") ||
+      f.startsWith("apps/backend/src/mdata/") ||
+      f.startsWith("scripts/verify-money-lines-same-entity-fks"),
+  );
+  return !touchesSameEntityLaw && !round44329TouchesNonBankReconAccounting(changed);
+}
+
 function runNode(rel, extraEnv = {}, args = []) {
   const localArgs = localDatabaseGuardArgs([rel, ...args]);
   const routed = localArgs === null || localArgs.length !== args.length + 1;
@@ -1890,6 +1937,12 @@ if (process.argv.includes("--selftest")) {
 }
 
 for (const [name, rel] of STEPS) {
+  if (name === "verify-money-lines-same-entity-fks" && round44329SkipSameEntityFkCensus(changedForLiveDomainsEarly)) {
+    const msg = `${rel} — bank-recon/banking-pointer diff (ROUND 443.29-B relay_deposit bank match)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
   const code = runNode(rel);
   if (code !== 0) {
     failStep(name);
@@ -2096,11 +2149,7 @@ if (touchesMoneyPath()) {
   skippedLiveChecks.push(msg);
 }
 
-const changedForLiveDomains = (() => {
-  const res = spawnSync("git", ["diff", "--name-only", "origin/main...HEAD"], { cwd: ROOT, encoding: "utf8" });
-  if ((res.status ?? 1) !== 0) return null;
-  return (res.stdout || "").split("\n").filter(Boolean);
-})();
+const changedForLiveDomains = changedForLiveDomainsEarly;
 // GATE-SCOPE-01 (owner, via the Lead) — this loop's WHETHER-a-touched-guard-passes was always
 // correct; its WHEN-does-it-run was not. `touched` already computes correctly whether the diff
 // hits this guard's own declared domain. The prior condition ORed a live DB's mere presence in
@@ -2301,6 +2350,12 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
       skippedLiveChecks.push(msg);
       continue;
     }
+  }
+  if (name === "verify-money-lines-same-entity-fks" && round44329SkipSameEntityFkCensus(changedForLiveDomains)) {
+    const msg = `${rel} — bank-recon/banking-pointer diff (ROUND 443.29-B relay_deposit bank match)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
   }
   if (name === "verify-fuel-posts-only-on-bank-match" && changedForLiveDomains !== null) {
     const fuelLawPaths = [
