@@ -4,7 +4,7 @@
  */
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { enqueueEmail } from "../email/queue.service.js";
+import { enqueueEmail, enqueueEmailWithClient } from "../email/queue.service.js";
 import { postInvoiceGlIfEnabled } from "./invoice-gl.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import {
@@ -646,7 +646,12 @@ export async function sendDraftInvoice(
   if (customerEmail && notify) {
     const total = (Number(notify.total_cents ?? 0) / 100).toFixed(2);
     try {
-      await enqueueEmail({
+      // R14 (Lead ruling 2026-10-11, CC-3 authorized for this one call): the customer email is queued on the SAME
+      // transaction as the send whenever this transaction is scoped to the invoice's company (the queue's RLS), so a
+      // rolled-back send (a Settlement Creator preview, any refused post) never emails the customer. A caller without
+      // that scope keeps the separate-connection enqueue it had.
+      const scoped = (await client.query<{ c: string | null }>(`SELECT current_setting('app.operating_company_id', true) AS c`))?.rows?.[0]?.c === input.operatingCompanyId;
+      await (scoped ? (x: Parameters<typeof enqueueEmail>[0]) => enqueueEmailWithClient(client as never, x) : enqueueEmail)({
         operatingCompanyId: input.operatingCompanyId,
         toAddresses: [customerEmail],
         subject: `Invoice ${notify.display_id} — IH 35 TMS`,

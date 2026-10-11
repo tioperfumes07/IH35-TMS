@@ -32,5 +32,7 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-deduction-has-settlement-line.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-post-writes-no-bank-posting.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-post-writes-no-bank-posting.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-preview-is-the-post.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-preview-is-the-post.mjs"]);
   },
 };
