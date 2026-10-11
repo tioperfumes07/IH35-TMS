@@ -12,7 +12,7 @@ export async function recordMissingMileageSource(
 ): Promise<Array<{ load_id: string; load_number: string; source: string }>> {
   const rows = (
     await client.query<{ id: string; load_number: string; mp: string | null; ms: string | null; md: string | null }>(
-      `SELECT id::text, load_number::text, miles_practical::text mp, miles_shortest::text ms, miles_deadhead::text md
+      `SELECT id::text, load_number::text, miles_practical::text AS mp, miles_shortest::text AS ms, miles_deadhead::text AS md
          FROM mdata.loads
         WHERE operating_company_id = $1::uuid AND soft_deleted_at IS NULL AND mileage_source IS NULL
           AND (miles_practical IS NOT NULL OR miles_shortest IS NOT NULL OR miles_deadhead IS NOT NULL)
