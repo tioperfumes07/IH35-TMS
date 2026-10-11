@@ -2,11 +2,11 @@
 
 FINDING: BANK-F44329 — Relay wallet/card outflows → `integrations.relay_deposits` match candidate; wallet + 3.25% fee split; read-only legacy ~1,291 hints.
 LANE: FINANCIAL
-Files Modified: `cursor/bank-44329-relay-deposit-match-7fe0` @ `ca866d9fa4` (tip) · `verify-ap-control-writers-go-through-documents.mjs` (+2 READERS) · rebased onto `origin/main` (`202615540900` on disk) · OUTBOX
-GUARD: `verify-relay-deposit-is-a-bank-match-candidate.mjs --selftest` PASS; `verify-no-migration-is-neither-applied-nor-held` OK — 2 pending (`202615441301`, `202615441302`)
-LIVE PROOF: `money-pr-local-gate` gate_exit=0 (passed=386 failed=5 skipped=102, env `/tmp/ih35-gate-env.sh`); `branch:precheck-push` FAIL verify-static-fallback — ~21 gated fails NOT in VERIFY-STATIC-BASELINE + `verify-relay-tick-completes.mjs` ETIMEDOUT (ambient main rot, not branch diff)
-REMAINING: drain/baseline ambient static rot OR scoped block-ready DB → `git push -u origin cursor/bank-44329-relay-deposit-match-7fe0` → **Cursor-** PR → migrate `202615441301` → owner Chrome relay deposit match
-NEXT: static rot triage (lead); INBOX 435/432/433 unchanged behind 443.29-B
+Files Modified: `cursor/bank-44329-relay-deposit-match-7fe0` @ `0897f98840` · OUTBOX (GO-20 hook census)
+GUARD: `verify-relay-deposit-is-a-bank-match-candidate.mjs --selftest` PASS; local `verify:db:reset` APPLY `202615441301` + `202615441302` on `ih35_verify`
+LIVE PROOF: `git pull --ff-only origin/main` Already up to date; `money-pr-local-gate` gate_exit=0 (passed=386 failed=5 skipped=102, `unset DATABASE_URL` + `/tmp/ih35-gate-env.sh`); `branch:precheck-push` money+build+migration-replay PASS then FAIL `verify-static-fallback` — 20 guards NOT in VERIFY-STATIC-BASELINE (incl. `verify-related-party-loan-bank-loan-action-wizard` / `verify-related-party-loan-bank-repay-overpay-stop` F4 static FAIL on tip; `verify-banking-tx-register-uses-paritytable` OK alone); do not export `DATABASE_URL=127.0.0.1:54329` during precheck (breaks money gate SSL)
+REMAINING: wire RPL bank loan/repay F4 OR drop `202615441302` from this PR; main static rot batch (CC-3/Codex) OR block-ready manifest lane → `git push -u origin cursor/bank-44329-relay-deposit-match-7fe0` → **Cursor-** PR → migrate `202615441301` → owner Chrome
+NEXT: 443.29-B push unblock; INBOX 435/432/433 unchanged behind 443.29-B
 
 ## 2026-10-11 · ROUND 443.22-2f OPTION 2 + paid_direct EXPORT MERGED
 
