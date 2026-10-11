@@ -1,10 +1,10 @@
 {
-  "healthzSha": "6f84ffa",
-  "generated_at": "2026-10-11T06:53:39.786Z",
+  "healthzSha": "ba10d97",
+  "generated_at": "2026-10-11T08:15:42.003Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "6f84ffa",
+    "deployedSha": "ba10d97",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 26296,
-      "title": "docs(bus): AUTH-412 re-consumed after the tail run (first-stop NULL 13 = no previous unit load; guard PASS over 141)",
+      "number": 26317,
+      "title": "FINDING: SETL-F44346 LANE: FINANCIAL -- a salaried load got a per-load driver bill from the delivery path: its load re-read dropped driver_pay_rate_override_reason (5780 preview)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 01:49 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26296",
-      "sha": "adfddfee06",
-      "committedAtIso": "2026-10-11T01:49:47-05:00"
+      "mergedAtCt": "10/11/2026, 03:11 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26317",
+      "sha": "ba10d975d1",
+      "committedAtIso": "2026-10-11T03:11:32-05:00"
     },
     {
-      "number": 26295,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 26316,
+      "title": "docs(bus): AUTH-415 / 416 / 417 CONSUMED — driver notices hidden, workbook facility names, e3ac0879 escrow 2100-00-043",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 01:49 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26295",
-      "sha": "bbacd55246",
-      "committedAtIso": "2026-10-11T06:49:37Z"
+      "mergedAtCt": "10/11/2026, 02:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26316",
+      "sha": "37a5d7e6bd",
+      "committedAtIso": "2026-10-11T02:57:54-05:00"
     },
     {
-      "number": 26293,
-      "title": "FINDING: ACCT-F2026100665 LANE: FINANCIAL — 443.41: a Settlement Creator (historical_backfill) booking fired live dispatch side effects — driver packets, internal emails, driver-app notices, and zip-center fences pushed into the owner's Samsara",
+      "number": 26315,
+      "title": "FINDING: ACCT-F2026100673 LANE: FINANCIAL — 443.43 #4: stop resolution adds an existing location with a street (facility + city) and the geocoder's PLACE lookup (name + city/state must match, source geocoder_place), run server-side by a sweep where the Places key lives",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 01:47 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26293",
-      "sha": "6f84ffa6bf",
-      "committedAtIso": "2026-10-11T01:47:28-05:00"
+      "mergedAtCt": "10/11/2026, 02:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26315",
+      "sha": "78c4c5b412",
+      "committedAtIso": "2026-10-11T02:56:29-05:00"
     },
     {
-      "number": 26294,
-      "title": "docs(bus): AUTH-412 reopened for the tail run (loads booked between the 06:46Z run and the deploy)",
+      "number": 26314,
+      "title": "FINDING: ACCT-F2026100672 LANE: FINANCIAL — 443.43 #1: settlement 5829 blocked — driver e3ac0879 never got his escrow sub-account; provisioned through the per-hire provisioners (CC-2 takes it per the Lead's 07:55 rule)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 01:47 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26294",
-      "sha": "9af8d5fd69",
-      "committedAtIso": "2026-10-11T01:47:22-05:00"
+      "mergedAtCt": "10/11/2026, 02:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26314",
+      "sha": "b8a662ff08",
+      "committedAtIso": "2026-10-11T02:56:19-05:00"
     },
     {
-      "number": 26292,
-      "title": "docs(bus): AUTH-412 CONSUMED — first-stop deadhead computed for 48 USMCA loads, 13 with no previous unit load left NULL",
+      "number": 26313,
+      "title": "FINDING: ACCT-F2026100671 LANE: FINANCIAL — 443.43 #3: a stop add / resequence recomputes the module's legs (relearnLoadStopLegs) without re-counting a lane or touching an owner leg",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 01:46 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26292",
-      "sha": "f47a7fdc79",
-      "committedAtIso": "2026-10-11T01:46:36-05:00"
+      "mergedAtCt": "10/11/2026, 02:55 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26313",
+      "sha": "1af8509351",
+      "committedAtIso": "2026-10-11T02:55:20-05:00"
     },
     {
-      "number": 26291,
-      "title": "FINDING: ACCT-F2026100664 LANE: FINANCIAL — 443.41 G(2): a booked load's first-stop leg_miles is the computed deadhead from the same unit's previous load, NULL only when there is none",
+      "number": 26312,
+      "title": "FINDING: SETL-F44347 LANE: FINANCIAL -- the mdata add-stop route could not carry a stop's facility, zip or coordinates, so the 11 multi-stop loads could not be repaired through it (Lead 443.43)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 01:43 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26291",
-      "sha": "bb78b509f6",
-      "committedAtIso": "2026-10-11T01:43:59-05:00"
+      "mergedAtCt": "10/11/2026, 02:43 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26312",
+      "sha": "b9fc884140",
+      "committedAtIso": "2026-10-11T02:43:33-05:00"
     },
     {
-      "number": 26287,
-      "title": "FINDING: ACCT-F44340 LANE: FINANCIAL -- LEAD RULING 443.40: verify-costs-are-expenses-not-handwritten-jes exempts source relay_deposit ONLY when the line resolves to its integrations.relay_deposits row",
+      "number": 26311,
+      "title": "docs(bus): AUTH-414 CONSUMED — D6 entity NULL 507 -> 0, load NULL 921 -> 183 (all legitimately load-less)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 01:41 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26287",
-      "sha": "40f637698a",
-      "committedAtIso": "2026-10-11T01:41:15-05:00"
+      "mergedAtCt": "10/11/2026, 02:40 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26311",
+      "sha": "1c7805922b",
+      "committedAtIso": "2026-10-11T02:40:59-05:00"
     },
     {
-      "number": 26288,
-      "title": "CC-2-443.38: stops resolve to the owner's Samsara address; no zip-center fence; no false rooftop",
+      "number": 26310,
+      "title": "FINDING: ACCT-F2026100670 LANE: FINANCIAL — 443.42 #5: the owner's workbook stop names run through the stop-resolution engine — facility on every stop, Samsara address where the owner has one, no street invented",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 01:13 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26288",
-      "sha": "d7cf157c64",
-      "committedAtIso": "2026-10-11T01:13:54-05:00"
+      "mergedAtCt": "10/11/2026, 02:39 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26310",
+      "sha": "98be1e4339",
+      "committedAtIso": "2026-10-11T02:39:31-05:00"
     },
     {
-      "number": 26286,
-      "title": "FINDING: ACCT-F2026100656 LANE: FINANCIAL — 5785: one $301.99 advance was recovered 4x at the Creator close because the advance-balance view counted each posting once per bridge row (a merged-away profile still bridged to the survivor's 1245 sub-account)",
+      "number": 26309,
+      "title": "FINDING: ACCT-F2026100669 LANE: FINANCIAL — 443.42 #7: driver-app \"Load N dispatched\" notices fired for loads that already ran are hidden through the notifications engine (kept in history)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 01:11 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26286",
-      "sha": "bfa69a7583",
-      "committedAtIso": "2026-10-11T01:11:57-05:00"
+      "mergedAtCt": "10/11/2026, 02:39 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26309",
+      "sha": "6013affea1",
+      "committedAtIso": "2026-10-11T02:39:18-05:00"
     },
     {
-      "number": 26285,
-      "title": "docs(bus): AUTH-408 CONSUMED — 24 USMCA loads: non-first leg_miles NULL 24 -> 0, lane_mileage 24, point_mileage 23, customer_lanes 14; restore its status lines lost to the union merge",
+      "number": 26308,
+      "title": "FINDING: SETL-F44345 LANE: FINANCIAL -- the Settlement Creator booked every load as pickup + delivery only; 10 multi-stop loads lost their middle stops (CC-2 finding)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 01:08 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26285",
-      "sha": "85a0a6fe5f",
-      "committedAtIso": "2026-10-11T01:08:47-05:00"
+      "mergedAtCt": "10/11/2026, 02:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26308",
+      "sha": "d4085e3e9f",
+      "committedAtIso": "2026-10-11T02:33:50-05:00"
     }
   ]
 }
