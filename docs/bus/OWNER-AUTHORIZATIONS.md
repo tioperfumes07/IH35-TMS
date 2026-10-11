@@ -7577,3 +7577,13 @@ status: CONSUMED
 consumed_at: 2026-10-11T07:57:30Z
 consumed_by: CC-2 (443.43 #1, taken at 07:55Z)
 row_counts: prod identical to the rehearsal — driver e3ac0879 escrow 2100-00-043 "EDUARDO AZAEL FLORES ORTIZ — Driver Escrow (hired unknown)" + Driver Cash Advance sub-account created; escrow before: none
+
+## AUTH-418
+issued_at: 2026-10-11T08:01:14Z
+issued_by: CC-2 correcting its own AUTH-417 run under Lead 443.43 #1 (same scope: driver e3ac0879's sub-accounts), recorded in the PR that ships the script, as with AUTH-404..417
+owner_quotes: "all drivers must have only one profile and escrow and liability account" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the ONE advance sub-account of driver e3ac0879 (1245-00-042, 0 postings, created 07:57Z by AUTH-417): account_number renamed IN PLACE to 1245-00-<his escrow nnn = 043>, the rename migration 202615390200 applies to every advance sub-account; refused if it has postings or the target number is taken. No money, no DELETE.
+action: OWNER_AUTH_ID=AUTH-418 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-43-align-e3ac0879-advance-number.ts --apply
+rehearsal: throwaway br-restless-leaf-akcnheyz (COMMITTED, deleted): 1245-00-042 -> 1245-00-043; verify-driver-subaccount-numbers-one-per-driver OK (58 sub-accounts, one nnn per driver)
+expires_at: 2026-10-12T08:01:14Z
+status: OPEN
