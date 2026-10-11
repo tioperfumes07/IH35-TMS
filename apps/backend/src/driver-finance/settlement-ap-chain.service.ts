@@ -238,6 +238,13 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
     if (!billJeId) {
       throw new SettlementApChainError("BILL_JOURNAL_ENTRY_MISSING", `${input.label}: load ${b.loadNumber}'s A/P bill posted no journal entry — the settlement could never be reversed`, { load_number: b.loadNumber, bill_id: billId });
     }
+    // 443.37 audit gap: stamp settlement_id on the bill's JE posting lines so the forward drill
+    // (settlement → JE lines) is a single column join, not a 4-hop join through driver_settlement_gl_bills.
+    // The UPDATE is in the same client transaction — rolls back with the rest if anything fails.
+    await (client as { query: (sql: string, params: unknown[]) => Promise<unknown> }).query(
+      `UPDATE accounting.journal_entry_postings SET settlement_id = $1::uuid WHERE journal_entry_uuid = $2::uuid AND settlement_id IS NULL`,
+      [input.settlementId, billJeId]
+    );
     posted.push({ b, billId, billJeId, total });
   }
 
