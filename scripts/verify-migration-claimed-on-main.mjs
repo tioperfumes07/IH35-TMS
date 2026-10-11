@@ -119,6 +119,15 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-3/443-59-expense-settlement-needs-load",
     new Set(["db/migrations/202615540900_expenses_settlement_no_requires_load.sql"]),
   ],
+  // RULING 443.62 #3/#4/#7 (Lead 16:35 UTC): 2410-00-001..004 "Due to / from <party>" rename (taken from CC-1 #26377) +
+  // google_place_id on stop / location for CC-2. Claimed first on main (#26389); exact branch + exact files.
+  [
+    "cc-3/443-62-due-to-from-and-place-id",
+    new Set([
+      "db/migrations/202615560900_due_to_from_related_party_accounts.sql",
+      "db/migrations/202615570900_stop_and_location_google_place_id.sql",
+    ]),
+  ],
 ]);
 
 function isOwnerAuthorizedOneOff(branch, files) {
