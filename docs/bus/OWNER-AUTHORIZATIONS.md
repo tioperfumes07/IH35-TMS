@@ -7423,3 +7423,13 @@ consumed_at: 2026-10-11T05:10:00Z
 consumed_by: CC-2
 row_counts: route HTTP 200 — 259 fuel rows imported, 0 rejected, 126 deposits stored (42 settled): 26 posted as 26 journal entries (Dr 1295 83,800.00 + Dr 5005 2,723.50 = Cr 1000 63,808.50 [17, card 0680] + Cr 2500-00-001 10,118.50 [5, card 5007] + Cr 8000 12,596.50 [4, cards 1354/9708]), 16 HELD (2 Jorge personal 0210 = 7,227.50; 14 card owner not named — cards 1993 0275 3088 7180 9830 1222), 0 refused, 0 held as already-categorized (17 0680 charges have BofA lines in window, none categorized). Identical to the rehearsal.
 proof_query: SELECT account_number, debit_or_credit, count(*), sum(amount_cents) FROM accounting.journal_entry_postings JOIN catalogs.accounts ... WHERE source_transaction_type='relay_deposit' AND operating_company_id=USMCA -> 26 JEs, balanced; 1295 end of day 08-03 1,200.00 · 08-04 2,200.00 · 08-05 2,200.00 · 08-06..08-10 2,600.00
+
+## AUTH-408
+issued_at: 2026-10-11T05:36:00Z
+issued_by: Lead order 443.35 item 4 ("Backfill the 20 loads already on prod through the same engine path (no hand SQL)"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404 / AUTH-405
+owner_quotes: owner order 2026-10-11 00:25 CT (stop addresses + miles saved for estimates) · "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — loads booked since 2026-10-11T00:00Z with a stop whose leg_miles is NULL, through learnLoadLanes (apps/backend/src/dispatch/load-lane-learning.service.ts, the booking engine's own module): mdata.load_stops.leg_miles filled once where NULL; catalogs.lane_mileage running stats on the load's lane (update or create); catalogs.point_mileage (engine load_document, ON CONFLICT DO NOTHING); mdata.customer_lanes created when missing (load with a rate). No DELETE. No money. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-408 DATABASE_URL=<prod> npx tsx apps/backend/scripts/auth408-backfill-load-lanes.mts --branch=br-fancy-credit-akjnd07a --apply
+rehearsal: throwaway br-sparkling-grass-aktgy39p (COMMITTED, deleted): 24 loads, 38 legs filled (24 delivery legs + 14 known deadheads), stops after the first with leg_miles NULL 24 -> 0, 10 first stops stay NULL (deadhead unknown, never 0); lane_mileage 23 updated + 1 created; point_mileage 23; customer_lanes 14 created, 10 listed (load has no rate); re-run = no-op; verify-booked-loads-save-miles PASS
+expires_at: 2026-10-12T05:36:00Z
+status: OPEN
