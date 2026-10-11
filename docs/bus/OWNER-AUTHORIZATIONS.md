@@ -7824,4 +7824,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the stops on locati
 action: OWNER_AUTH_ID=AUTH-437 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-64-13587-point.ts --apply
 rehearsal: throwaway br-still-math-akgk9nis (COMMITTED, deleted): 1 stop moved (5402f34c), relearn enqueued; re-run 0
 expires_at: 2026-10-12T18:48:31Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T18:55:30Z
+consumed_by: CC-2 (443.64 3b 13587 point)
+row_counts: 1 stop (13587 #2, 5402f34c) moved to its location's point; relearn delivered 18:55Z; Creator street stops on their fence's point 297 of 297, Samsara read-back on the point 297 of 297
+proof_query: fence-on-point + Samsara read-back count over Creator street stops -> 297 / 297
