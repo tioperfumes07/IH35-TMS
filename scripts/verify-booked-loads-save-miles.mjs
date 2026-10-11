@@ -14,6 +14,8 @@
  *                     load (last stop arriving strictly before this first stop) FAILS — the deadhead is computed, NULL only
  *                     when there is no previous load.
  *   RULE 5 (static) — learnLoadLanes computes the first-stop deadhead (computeFirstStopDeadhead).
+ *   RULE 6 (static, Lead 443.43 #3) — relearnLoadStopLegs is exported, protects owner legs (isModuleOwnedLeg) and never
+ *            touches lane_mileage / customer_lanes.
  * --selftest exercises every rule.
  */
 import { readFileSync } from "node:fs";
@@ -37,6 +39,16 @@ export function staticFailures(bookSrc, moduleSrc) {
   if (!/fillFirstStopDeadhead\(client, args/.test(moduleSrc) || !/export async function computeFirstStopDeadhead/.test(moduleSrc))
     out.push("RULE 5 load-lane-learning.service.ts no longer computes the first-stop deadhead from the unit's previous load");
   if (!/import \{ learnLoadLanes \} from "\.\/load-lane-learning\.service\.js"/.test(bookSrc)) out.push("RULE 1 book-load.service.ts does not import learnLoadLanes");
+  // RULE 6 (Lead 443.43 #3): a stop add / resequence recomputes the module's legs through relearnLoadStopLegs, which keeps
+  // owner legs and never re-counts a lane.
+  const relearnAt = moduleSrc.indexOf("export async function relearnLoadStopLegs(");
+  if (relearnAt < 0) out.push("RULE 6 load-lane-learning.service.ts no longer exports relearnLoadStopLegs (stop add / resequence leaves stale legs)");
+  else {
+    const body = moduleSrc.slice(relearnAt);
+    if (/catalogs\.lane_mileage|mdata\.customer_lanes/.test(body.slice(0, body.indexOf("\n}\n") > 0 ? body.indexOf("\n}\n") : body.length)))
+      out.push("RULE 6 relearnLoadStopLegs touches lane_mileage / customer_lanes — a stop edit must never re-count a lane");
+    if (!/isModuleOwnedLeg\(/.test(body)) out.push("RULE 6 relearnLoadStopLegs no longer protects owner / document legs (isModuleOwnedLeg)");
+  }
   for (const t of ["UPDATE mdata.load_stops SET leg_miles", "catalogs.lane_mileage", "INSERT INTO catalogs.point_mileage", "INSERT INTO mdata.customer_lanes"])
     if (!moduleSrc.includes(t)) out.push(`RULE 1 load-lane-learning.service.ts no longer writes ${t}`);
   return out;
@@ -109,9 +121,13 @@ const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(imp
 if (isMain) {
   if (process.argv.includes("--selftest")) {
     const book = 'import { learnLoadLanes } from "./load-lane-learning.service.js";\n INSERT INTO mdata.load_stops (...)\n await learnLoadLanes(client, {';
-    const mod = "UPDATE mdata.load_stops SET leg_miles catalogs.lane_mileage INSERT INTO catalogs.point_mileage INSERT INTO mdata.customer_lanes export async function computeFirstStopDeadhead fillFirstStopDeadhead(client, args";
+    const relearn = "\nexport async function relearnLoadStopLegs(client) {\n  if (!isModuleOwnedLeg(x)) {}\n}\n";
+    const mod = "UPDATE mdata.load_stops SET leg_miles catalogs.lane_mileage INSERT INTO catalogs.point_mileage INSERT INTO mdata.customer_lanes export async function computeFirstStopDeadhead fillFirstStopDeadhead(client, args" + relearn;
     const cases = [
       ["wired clean passes", staticFailures(book, mod).length === 0],
+      ["a module without relearnLoadStopLegs fails", staticFailures(book, mod.replace("export async function relearnLoadStopLegs(", "async function x(")).some((x) => x.startsWith("RULE 6"))],
+      ["relearn without owner-leg protection fails", staticFailures(book, mod.replace("isModuleOwnedLeg(x)", "true")).some((x) => x.includes("owner"))],
+      ["relearn that re-counts a lane fails", staticFailures(book, mod.replace("if (!isModuleOwnedLeg(x)) {}", "if (!isModuleOwnedLeg(x)) {} catalogs.lane_mileage")).some((x) => x.includes("re-count"))],
       ["no call fails", staticFailures(book.replace("await learnLoadLanes(client", ""), mod).some((x) => x.startsWith("RULE 1"))],
       ["call before the stop INSERT fails", staticFailures('import { learnLoadLanes } from "./load-lane-learning.service.js";\n await learnLoadLanes(client, {\n INSERT INTO mdata.load_stops', mod).some((x) => x.includes("after the stop INSERT"))],
       ["module dropping customer_lanes fails", staticFailures(book, mod.replace("INSERT INTO mdata.customer_lanes", "")).some((x) => x.includes("customer_lanes"))],
