@@ -319,6 +319,12 @@ const updateStopBodySchema = z
     stop_type: stopTypeSchema.optional(),
     location_id: z.string().uuid().nullable().optional(),
     address_line1: z.string().trim().max(300).nullable().optional(),
+    // Lead 443.43 follow-up (CC-3): correct a stop's facility / zip / coordinates in place (13628, 13576 were booked with
+    // another pickup's facility). Same fields the add-stop route takes; null clears a wrongly resolved coordinate.
+    facility_name: z.string().trim().max(240).nullable().optional(),
+    postal_code: z.string().trim().max(20).nullable().optional(),
+    latitude: z.number().min(-90).max(90).nullable().optional(),
+    longitude: z.number().min(-180).max(180).nullable().optional(),
     city: z.string().trim().max(120).nullable().optional(),
     state: z.string().trim().max(120).nullable().optional(),
     country: z.string().trim().max(120).nullable().optional(),
@@ -2131,6 +2137,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if ("stop_type" in b) add("stop_type", b.stop_type);
     if ("location_id" in b) add("location_id", b.location_id ?? null);
     if ("address_line1" in b) add("address_line1", b.address_line1 ?? null);
+    if ("facility_name" in b) add("facility_name", b.facility_name ?? null);
+    if ("postal_code" in b) add("postal_code", b.postal_code ?? null);
+    if ("latitude" in b) add("latitude", b.latitude ?? null);
+    if ("longitude" in b) add("longitude", b.longitude ?? null);
     if ("city" in b) add("city", b.city ?? null);
     if ("state" in b) add("state", b.state ?? null);
     if ("country" in b) add("country", b.country ?? null);
