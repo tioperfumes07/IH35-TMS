@@ -350,7 +350,15 @@ async function auditSettlement(client, settlementNo) {
                JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
               WHERE ft.relay_fuel_transaction_id IS NOT NULL AND p.source_transaction_type = 'fuel_event'
                 AND p.source_transaction_id = ft.relay_fuel_transaction_id::text
-                AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL LIMIT 1) AS fill_je
+                AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL LIMIT 1) AS fill_je,
+            -- Aligned 443.64 (CC-3): a corrected Relay fill is reversed and re-posted (12:12 UTC 10-11: 06:48 fill JE ->
+            -- its reversal + a re-post). Each is the fill's own fuel_event entry; LIMIT 1 above picked the reversal and
+            -- left the re-post's wallet credit unexcused. Every live fuel_event entry of the fill is a Relay fill entry.
+            (SELECT array_agg(DISTINCT p.journal_entry_uuid::text) FROM accounting.journal_entry_postings p
+               JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+              WHERE ft.relay_fuel_transaction_id IS NOT NULL AND p.source_transaction_type = 'fuel_event'
+                AND p.source_transaction_id = ft.relay_fuel_transaction_id::text
+                AND je.voided_at IS NULL) AS fill_jes
      FROM fuel.fuel_transactions ft
      JOIN mdata.loads l ON l.id = ft.load_id
      WHERE ft.operating_company_id = $1::uuid AND ft.voided_at IS NULL
@@ -444,7 +452,7 @@ async function auditSettlement(client, settlementNo) {
 
   // Fuel JEs (from expenses linked to fuel transactions)
   const fuelJeIds = settlementFuelJeIds;
-  const relayFillJeIds = [...new Set(fuelRows.map((r) => r.fill_je).filter(Boolean))];
+  const relayFillJeIds = [...new Set(fuelRows.flatMap((r) => r.fill_jes ?? []).filter(Boolean))];
 
   const allJeIds = [...new Set([...invoiceJeIds, ...billJeIds, ...expJeIds, ...fuelJeIds])];
 
@@ -532,7 +540,9 @@ async function auditSettlement(client, settlementNo) {
   // ── CHECK 12: email_queue unchanged since posted ──
   const [emailRow] = await q(
     client,
-    `SELECT COUNT(*) AS cnt FROM email.email_queue WHERE created_at > $1`,
+    // Aligned 443.64 (CC-3): the scheduled daily reports (template report-cadence — Dispatch Board, Cash Position +
+    // AR Aging, 15:11 UTC every day) are not caused by a settlement post; every other row since the post still fails.
+    `SELECT COUNT(*) AS cnt FROM email.email_queue WHERE created_at > $1 AND template_key IS DISTINCT FROM 'report-cadence'`,
     [postedAt]
   );
   check(
@@ -561,7 +571,8 @@ async function auditSettlement(client, settlementNo) {
 
 async function main() {
   console.log(`audit-creator-settlement — ${settlementNos.join(", ")}`);
-  console.log(`db: ${dbUrl.replace(/:[^:@]+@/, ":***@")}`);
+  // 443.64: never print a connection string, masked or not (Lead 443.62) — the host and role alone are enough to target.
+  console.log("db: [connection string not printed]");
 
   await withClient(async (client) => {
     for (const no of settlementNos) {
