@@ -12,8 +12,9 @@
 /**
  * Lead 443.43 #4 (owner 2026-10-11): a stop that carries a facility name but still sits at a zip / city center is re-resolved
  * on the server — where the app geocoder's Places key lives — through the same resolution order every booking uses:
- * Samsara address by facility + city > existing location with a street > the geocoder's PLACE lookup (name + city/state must
- * match, source 'geocoder_place') > left at the zip center, listed. New Samsara addresses or locations resolve old stops too.
+ * Samsara address by facility + city > existing location with a street > Google Places (443.53: the top result in the stop's
+ * city / state, name need not match, source 'google_place') > left at the zip center with the recorded Google no-result
+ * (NO_STREET_SOURCE_TRIED), listed. New Samsara addresses or locations resolve old stops too.
  */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
