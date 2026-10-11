@@ -1978,6 +1978,24 @@ function acceptedLead44368ArQboNamedRed(name, rel, code) {
   return fails.length === 1 && /mismatched count grew: 12 > baseline 6$/.test(fails[0].trim());
 }
 
+/**
+ * LEAD RULING 443.69 #1 (2026-10-11 21:02 UTC) — SECOND NAMED RED: verify-fuel-transactions-per-load (38 missing = AUTH-400 purge
+ * the guard never reads; ratchet 321 / 172,553.14 frozen before the Creator's 68 settlements; one date). CC-2 fixes it at root.
+ * Narrow: only with LEAD_443_69_FUEL_NAMED_RED=1 and only while a re-run's failure lines are exactly these three, nothing else.
+ */
+function acceptedLead44369FuelNamedRed(name, rel, code) {
+  if (code === 0 || name !== "verify-fuel-transactions-per-load") return false;
+  if (process.env.LEAD_443_69_FUEL_NAMED_RED !== "1") return false;
+  const r = spawnSync(process.execPath, [path.join(ROOT, rel)], { env: process.env, encoding: "utf8" });
+  const fails = `${r.stdout ?? ""}${r.stderr ?? ""}`.split("\n").filter((l) => /LIVE FAIL|: FAIL/.test(l) && !/SSL|libpq/i.test(l));
+  const known = [
+    /LIVE FAIL — 38 of 171 expected fuel_purchases rows have NO matching/,
+    /LIVE FAIL — live \(654 rows \/ \$248315\.91\) diverges from the reconciled baseline/,
+    /LIVE FAIL — date-corrected receipt load 13557 invoice 99462408/,
+  ];
+  return fails.length === known.length && fails.every((l) => known.some((k) => k.test(l)));
+}
+
 /** LIVE_DOMAIN guards armed only via DATA_WRITE migrations on bank-recon-only PRs — ambient tip debt, not introduced here. */
 const ROUND_44329_B_BANK_RECON_AMBIENT_LIVE_GUARDS = new Set([
   "verify-factoring-banking-kpis-tie-to-ledger",
@@ -2632,6 +2650,11 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
       ? runNode(rel, { DATABASE_URL: CALLER_WRITER_DATABASE_URL })
       : runNode(rel);
     if (code !== 0 && !acceptedAsEmptyByPurge(rel, code)) {
+      if (acceptedLead44369FuelNamedRed(name, rel, code)) {
+        console.log(`[${LABEL}] ACCEPTED — NAMED RED verify-fuel-transactions-per-load (LEAD RULING 443.69 #1; exactly the 3 known failures); baseline unchanged; CC-2 fixes at root.`);
+        skippedLiveChecks.push(`${rel} — ACCEPTED named red, LEAD RULING 443.69 #1`);
+        continue;
+      }
       if (acceptedLead44368ArQboNamedRed(name, rel, code)) {
         console.log(`[${LABEL}] ACCEPTED — NAMED RED verify-ar-ties-to-qbo-invoice-list 12 > baseline 6 (LEAD RULING 443.68 #1); baseline unchanged; name this ruling in the PR body.`);
         skippedLiveChecks.push(`${rel} — ACCEPTED named red, LEAD RULING 443.68 #1`);
