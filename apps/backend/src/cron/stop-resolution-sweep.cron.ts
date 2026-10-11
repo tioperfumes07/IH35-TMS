@@ -1,8 +1,8 @@
 /**
  * ENGINE: stop resolution sweep
  * SCHEDULE: 15 *\/6 * * * (+ once ~3 min after boot)
- * WRITES: mdata.load_stops (street / coordinates / geocode_* / location_id), mdata.locations, geo.geofences — only through
- *         geocodeStopsWithClient (telematics/stops-geocode-backfill.service.ts); external: Google Places text search
+ * WRITES: mdata.load_stops (street / coordinates / geocode_* / location_id / leg_miles), mdata.locations, geo.geofences — only
+ *         through geocodeStopsWithClient + relearnLoadStopLegs; external: Google Places text search
  * IDEMPOTENCY: ADVISORY LOCK (geocodeStopsWithClient locks <company>|<address> per location and geo.location_fence|<company>|<location>
  *              per fence, SAME-STATEMENT WHERE NOT EXISTS an active fence) + DETERMINISTIC OVERWRITE of the stop's own geocode columns;
  *              a stop already on a street is never re-picked
@@ -23,6 +23,7 @@ import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { listSamsaraIngestionTenantIds } from "../integrations/samsara/ingestion-tenants.service.js";
 import { geocodeStopsWithClient } from "../telematics/stops-geocode-backfill.service.js";
 import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
+import { relearnLoadStopLegs } from "../dispatch/load-lane-learning.service.js";
 
 const CRON_NAME = "dispatch.stop_resolution_sweep";
 const SYSTEM_ACTOR = SYSTEM_ACTOR_USER_ID;
@@ -53,7 +54,19 @@ export async function runStopResolutionSweepTick(limit = 200) {
       let resolved = 0, still = 0;
       for (const { load_id } of loads) {
         const r = await geocodeStopsWithClient(client as never, SYSTEM_ACTOR, operatingCompanyId, load_id, { reresolve: true });
-        resolved += r.samsara_matched + (r.street_from_location ?? 0) + (r.street_from_place ?? 0);
+        const placed = r.samsara_matched + (r.street_from_location ?? 0) + (r.street_from_place ?? 0);
+        resolved += placed;
+        // 443.44 (CC-3): a stop that just got real coordinates changes its legs — recompute the module's legs for the load
+        // (never an owner leg, never a lane count). A failure here is logged in the result, never the sweep's death.
+        if (placed > 0) {
+          await client.query("SAVEPOINT relearn_legs");
+          try {
+            await relearnLoadStopLegs(client as never, { operatingCompanyId, loadId: load_id, actorUserId: SYSTEM_ACTOR });
+            await client.query("RELEASE SAVEPOINT relearn_legs");
+          } catch {
+            await client.query("ROLLBACK TO SAVEPOINT relearn_legs");
+          }
+        }
         still += r.zip_center_listed.length;
       }
       out.push({ operating_company_id: operatingCompanyId, loads: loads.length, resolved, still_zip_center: still });
