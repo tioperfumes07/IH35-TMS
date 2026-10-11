@@ -53,6 +53,8 @@ export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
         `SELECT id::text, title, message, payload, read_at::text, created_at::text
            FROM pwa.driver_notifications
           WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid
+            -- Lead 443.42 #7: a hidden notice stays in history but never shows in the driver's inbox.
+            AND coalesce(payload->>'hidden', 'false') <> 'true'
           ORDER BY created_at DESC
           LIMIT 20`,
         [operatingCompanyId, driver.id]
