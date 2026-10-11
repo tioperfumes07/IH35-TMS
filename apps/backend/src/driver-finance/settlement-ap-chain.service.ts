@@ -30,7 +30,16 @@ export class SettlementApChainError extends Error {
   }
 }
 
-export type ApChainLoadBill = { driverBillId: string; loadId: string; loadNumber: string; grossCents: number; spanStart: string | null; spanEnd: string | null };
+/**
+ * One load the chain bills. driverBillId is the load's per-load driver bill — or NULL for a SALARIED week (LEAD RULING
+ * 443.45 Ask C): a salaried load has no per-load driver bill (Lead 443.36 #2), so its salary pay line is billed on the
+ * load's own A/P bill with payBasis 'salaried' (driver_settlement_gl_bills.pay_basis; the CHECK allows a NULL driver bill
+ * only then).
+ */
+export type ApChainLoadBill = { driverBillId: string | null; loadId: string; loadNumber: string; grossCents: number; spanStart: string | null; spanEnd: string | null; payBasis?: "per_load_driver_bill" | "salaried" };
+
+/** The key a load's lines / bill are tracked under: its driver bill, or (salaried) the load itself. */
+export const apChainBillKey = (b: ApChainLoadBill): string => b.driverBillId ?? `salaried-load:${b.loadId}`;
 export type ApChainPayItem = { kind: "pay" | "reimbursement" | "detention_pay"; cents: number; accountId: string; loadId: string | null; date: string | null; description: string };
 export type ApChainApplication = { kind: "advance" | "deduction" | "chargeback" | "escrow"; cents: number; accountId: string; description: string; advanceId?: string; preferredLoadId?: string | null; /** ROUND 389.3 R1 — the driver a per-driver receivable credit belongs to (1257 recovery). */ entityDriverId?: string | null };
 
@@ -103,6 +112,30 @@ export async function loadSettlementLoadBills(client: pg.PoolClient, opco: strin
   return r.rows.map((x) => ({ driverBillId: x.id, loadId: x.load_id, loadNumber: String(x.load_number ?? x.load_id), grossCents: Number(x.gross), spanStart: x.span_start, spanEnd: x.span_end }));
 }
 
+/**
+ * LEAD RULING 443.45 Ask C — a settlement with NO per-load driver bills whose loads carry the 0-rate "Salaried" override
+ * (rate exactly 0 AND reason starting "Salaried", the same test as isSalariedZeroRateOverride): the settlement's own loads,
+ * in stop order, each billed with no driver bill. A settlement whose loads are not salaried returns nothing here, so it is
+ * still refused NO_LOAD_BILLS exactly as before.
+ */
+export async function loadSalariedSettlementLoads(client: pg.PoolClient, opco: string, settlementId: string): Promise<ApChainLoadBill[]> {
+  const r = await client.query<{ load_id: string; load_number: string; span_start: string | null; span_end: string | null }>(
+    `SELECT l.id::text AS load_id, l.load_number,
+            (SELECT min(COALESCE(st.actual_arrival_at, st.appointment_start_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = l.id AND st.soft_deleted_at IS NULL) AS span_start,
+            (SELECT max(COALESCE(st.actual_departure_at, st.actual_arrival_at, st.appointment_end_at, st.scheduled_departure_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = l.id AND st.soft_deleted_at IS NULL) AS span_end
+       FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL
+        AND (l.presettlement_link_id = $2::uuid
+             OR l.id IN (SELECT sl.load_id FROM driver_finance.settlement_lines sl WHERE sl.settlement_id = $2::uuid AND sl.is_active AND sl.load_id IS NOT NULL))
+        AND l.driver_pay_rate_per_mile = 0
+        AND length(btrim(COALESCE(l.driver_pay_rate_override_reason, ''))) >= 10
+        AND l.driver_pay_rate_override_reason ~* '^\\s*salaried'
+      ORDER BY span_start NULLS LAST, l.load_number`,
+    [opco, settlementId]
+  );
+  return r.rows.map((x) => ({ driverBillId: null, loadId: x.load_id, loadNumber: x.load_number, grossCents: 0, spanStart: x.span_start, spanEnd: x.span_end, payBasis: "salaried" as const }));
+}
+
 /** The bank a payment posts from: the payment method's bank, else the entity's operating bank (owner: BofA). Never a holding account. */
 export async function resolvePayoutBankAccountId(client: pg.PoolClient, opco: string, paymentMethodGlAccountId: string | null): Promise<string> {
   if (paymentMethodGlAccountId) {
@@ -163,14 +196,16 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
   const apAccount = await resolveRoleAccountOptional(client as never, opco, "ap_control");
   if (!apAccount) throw new SettlementApChainError("AP_ACCOUNT_MISSING", "No A/P control account (ap_control) designated");
 
-  const bills = await loadSettlementLoadBills(client, opco, input.settlementId, input.driverId);
+  let bills = await loadSettlementLoadBills(client, opco, input.settlementId, input.driverId);
+  // LEAD RULING 443.45 Ask C — a salaried week has no per-load driver bills: bill its own salaried loads instead.
+  if (!bills.length) bills = await loadSalariedSettlementLoads(client, opco, input.settlementId);
   if (!bills.length) throw new SettlementApChainError("NO_LOAD_BILLS", `${input.label} has no per-load driver bills — a settlement pays loads`);
 
   // Lines per load, from the settlement's own pay lines (the same rows the header gross sums — earnings, extra pay,
   // deadhead, team splits — so a team load bills each driver's share, never the whole load twice), plus
   // reimbursements and detention. A line names its load; one that does not goes to the load whose dates cover it.
   const lines = new Map<string, Array<{ accountId: string; amountCents: number; description: string }>>();
-  for (const b of bills) lines.set(b.driverBillId, []);
+  for (const b of bills) lines.set(apChainBillKey(b), []);
   let payCents = 0;
   for (const item of input.payItems) {
     if (item.cents <= 0) continue;
@@ -179,7 +214,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
     }
     const target = (item.loadId && bills.find((b) => b.loadId === item.loadId)) || attributeToLoad(bills, item.date);
     if (!target) throw new SettlementApChainError("PAY_ITEM_HAS_NO_LOAD", `${item.description} could not be tied to a load of ${input.label}`);
-    lines.get(target.driverBillId)!.push({ accountId: item.accountId, amountCents: item.cents, description: `Load ${target.loadNumber} — ${item.description}` });
+    lines.get(apChainBillKey(target))!.push({ accountId: item.accountId, amountCents: item.cents, description: `Load ${target.loadNumber} — ${item.description}` });
     if (item.kind === "pay") payCents += item.cents;
   }
   const billsGross = payCents;
@@ -203,7 +238,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
   // 1. One A/P bill per load, GL posted in this transaction.
   const posted: Array<{ b: ApChainLoadBill; billId: string; billJeId: string; total: number }> = [];
   for (const b of bills) {
-    const ls = lines.get(b.driverBillId)!;
+    const ls = lines.get(apChainBillKey(b))!;
     const total = ls.reduce((s, l) => s + l.amountCents, 0);
     if (total <= 0) continue;
     const dup = await client.query(
@@ -225,7 +260,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
       autoDisplayId: spent.rows.length > 0,
       billDate: input.billDate,
       amountCents: total,
-      memo: `${input.label} — driver pay, load ${b.loadNumber}`,
+      memo: `${input.label} — ${b.payBasis === "salaried" ? "salary" : "driver pay"}, load ${b.loadNumber}`,
       coaAccountId: input.driverPayAccountId,
       lines: ls.map((l) => ({ accountId: l.accountId, amountCents: l.amountCents, description: l.description, loadId: b.loadId })),
     } as never, input.actorUserId);
@@ -342,19 +377,22 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
         throw new SettlementApChainError("CASH_PAYMENT_JOURNAL_ENTRY_MISSING", `${input.label}: load ${x.b.loadNumber}'s net-pay payment posted no journal entry — the settlement could never be reversed`, { load_number: x.b.loadNumber, bill_payment_id: cashBpId });
       }
     }
-    await client.query(
-      `UPDATE driver_finance.driver_bills SET settled_in_settlement_id = $2::uuid, status = $4, updated_at = now()
-        WHERE id = $1::uuid AND operating_company_id = $3::uuid AND status <> 'void'`,
-      // R12 — a bill whose net is left open on A/P is approved, not paid.
-      [x.b.driverBillId, input.settlementId, opco, input.leaveNetOpen && cash > 0 ? "approved" : "paid"]
-    );
+    // A salaried load has no driver bill to settle (443.45 Ask C).
+    if (x.b.driverBillId) {
+      await client.query(
+        `UPDATE driver_finance.driver_bills SET settled_in_settlement_id = $2::uuid, status = $4, updated_at = now()
+          WHERE id = $1::uuid AND operating_company_id = $3::uuid AND status <> 'void'`,
+        // R12 — a bill whose net is left open on A/P is approved, not paid.
+        [x.b.driverBillId, input.settlementId, opco, input.leaveNetOpen && cash > 0 ? "approved" : "paid"]
+      );
+    }
     await client.query(
       `INSERT INTO driver_finance.driver_settlement_gl_bills
          (operating_company_id, run_id, settlement_id, driver_bill_id, load_id, load_number, accounting_bill_id, bill_journal_entry_id,
-          cash_bill_payment_id, cash_journal_entry_id, deduction_bill_payment_id, gross_cents, deduction_cents, cash_cents)
-       VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6,$7::uuid,$8::uuid,$9::uuid,$10::uuid,$11::uuid,$12,$13,$14)`,
+          cash_bill_payment_id, cash_journal_entry_id, deduction_bill_payment_id, gross_cents, deduction_cents, cash_cents, pay_basis)
+       VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6,$7::uuid,$8::uuid,$9::uuid,$10::uuid,$11::uuid,$12,$13,$14,$15)`,
       [opco, runId, input.settlementId, x.b.driverBillId, x.b.loadId, x.b.loadNumber, x.billId, x.billJeId, cashBpId, cashJeId,
-        firstNoncashBp.get(x.billId) ?? null, x.total, applied.get(x.billId) ?? 0, input.leaveNetOpen ? 0 : cash]
+        firstNoncashBp.get(x.billId) ?? null, x.total, applied.get(x.billId) ?? 0, input.leaveNetOpen ? 0 : cash, x.b.payBasis ?? "per_load_driver_bill"]
     );
     out.push({ load_number: x.b.loadNumber, accounting_bill_id: x.billId, bill_journal_entry_id: x.billJeId, cash_bill_payment_id: cashBpId, cash_journal_entry_id: cashJeId, total_cents: x.total, applied_cents: applied.get(x.billId) ?? 0, cash_cents: cash });
   }
