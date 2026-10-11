@@ -190,7 +190,9 @@ export async function geocodeStopsWithClient(
       await client.query("RELEASE SAVEPOINT geocode_stop");
     } catch (error) {
       await client.query("ROLLBACK TO SAVEPOINT geocode_stop");
-      const reason = `unexpected:${stableProviderFailureReason(error)}`;
+      // 443.44: keep the real cause as durable evidence (a bare "provider_unknown_error" hid a server-only throw).
+      const detail = String((error as { message?: unknown })?.message ?? error).replace(/\s+/g, " ").slice(0, 160);
+      const reason = `unexpected:${stableProviderFailureReason(error)}:${detail}`;
       await client.query(`UPDATE mdata.load_stops SET geocode_attempted_at=now(), geocode_failure_reason=$2, updated_at=now() WHERE id=$1::uuid`, [stop.stop_id, reason]);
       failures.push({ stop_id: stop.stop_id, load_id: stop.load_id, reason });
       await client.query("RELEASE SAVEPOINT geocode_stop");
@@ -259,7 +261,8 @@ export async function geocodeStopsWithClient(
           streetFromPlace += 1;
         }
       }
-      if (!placeOutcome && !looksLikeStreet(stop.address_line1) && !(stop.geocode_source && stop.geocode_source !== "picker")) {
+      const zipStamped = !stop.geocode_source || ["picker", "zip_center", "city_center"].includes(stop.geocode_source);
+      if (!placeOutcome && !looksLikeStreet(stop.address_line1) && zipStamped) {
         // (d) no street, no Samsara address: the zip / city center, honestly labelled, and nothing drawn around it.
         let lat = stop.latitude, lng = stop.longitude, source = stop.postal_code ? "zip_center" : "city_center";
         if (lat == null || lng == null) {
