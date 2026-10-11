@@ -7403,4 +7403,9 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — mdata.drivers merge
 action: OWNER_AUTH_ID=AUTH-404 MERGE_CONCURRENCY=8 DATABASE_URL=<prod direct> npx tsx apps/backend/scripts/auth404-merge-duplicate-drivers.mts --branch=br-fancy-credit-akjnd07a --apply --report=<local report.json>
 rehearsal: same command on throwaway Neon branch br-damp-hall-aknn9itq (deleted after); counts in the PR and SEATS-TO-LEAD
 expires_at: 2026-10-12T00:05:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T00:43:00Z
+consumed_by: CC-2
+row_counts: 67 merges through executeDriverMerge, 0 failed (59 clusters). USMCA unmerged drivers 159 -> 92; Samsara accounts 95 -> 95; distinct Samsara ids 95 -> 95; active escrow accounts 29 -> 29 (every merged profile's escrow balance was $0). 6 test/dummy profiles listed, not merged; 9 near-but-different pairs listed for the owner.
+proof_query: node scripts/verify-one-profile-per-driver.mjs (prod) -> zero same-name unmerged pairs, every Samsara id on one survivor; ONE item left, outside AUTH-404: driver 49427973 (owner's own profile) holds 2 active escrow accounts, 2100-00-011 and QBO-1150040187-00-001, both 0 postings / $0 — rule 4 deactivation needs its own authorization.
+rehearsed: throwaway br-damp-hall-aknn9itq (deleted): same 67 merges, 0 failed, identical counts.
