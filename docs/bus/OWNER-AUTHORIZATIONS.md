@@ -7600,4 +7600,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — finish two 2026-09-
 action: OWNER_AUTH_ID=AUTH-420 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-45-finish-driver-merges.ts --apply
 rehearsal: throwaway br-quiet-flower-akqk6rvo (COMMITTED, deleted): both pairs Active/1 active advance link -> Inactive/0; repointed Genaro 6 refs (incl. samsara.hos_snapshots 17,275, docs 12), Angel 5 refs (hos_snapshots 15,655, docs 10); remaining only history_kept (HOS / telematics / geofence events) + kept_on_survivor duplicates; verify-driver-subaccount-numbers-one-per-driver OK, verify-driver-advance-posts-to-drivers-own-subaccount OK
 expires_at: 2026-10-12T08:52:17Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T08:58:44Z
+consumed_by: CC-2 (443.45 #3 finish driver merges)
+row_counts: prod identical to the rehearsal — 6e908ee1 and fba21d80 Active -> Inactive, active advance links 1 -> 0 each; repointed Genaro 6 refs (samsara.hos_snapshots 17,275, docs 12, retention 10, insurance 3, DQ 2, leave 1), Angel 5 refs (hos_snapshots 15,655, docs 10, retention 10, insurance 1, leave 1); left only append-only history + kept-on-survivor duplicates
+proof_query: verify-driver-subaccount-numbers-one-per-driver OK; verify-driver-advance-posts-to-drivers-own-subaccount OK
