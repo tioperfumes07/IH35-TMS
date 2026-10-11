@@ -12,3 +12,13 @@ The order also says: "One PR + one named guard per step, guard wired in scripts/
 - No CC-1 guard's rule is weakened.
 
 **CC-1:** nothing to do. This note is the record of the crossing for every 443.x PR.
+
+## 443.59 / 443.65 #2 — "Due to / from <party>" engine (CC-3 takes it from CC-1, Lead 2026-10-11 19:28 UTC)
+- One running GL account per related party, "Due to / from <party>" (2410-00-001..004, renamed by 202615560900), either sign.
+- Entries: a / e party_transfer_out (Dr Due to / from / Cr bank); b = CC-2's Relay deposit poster (Dr 1295 + Dr 5005 / Cr
+  Due to / from, kind "party") — no second Relay path; c / d party_paid_vendor (Dr 2510 or the expense / Cr Due to / from),
+  party vendor + source document required. 202615590900 admits both types in related_party_loan_entries_target_type_check.
+- Party ledger read from the GL account (every movement), with document, bank line, running balance, pair / "unpaired";
+  pairs are recorded by the owner (party_transfer_out.target_id = the funding it answers), never guessed.
+- Guards: verify-party-ledger-sums-to-gl-account (ledger = GL per party; no party posting without its entity — refused at
+  the posting-line writer); verify-relay-deposit-no-party-refused (CC-1, 443.59).

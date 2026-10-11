@@ -130,6 +130,7 @@ const TARGET_TYPE_LABELS: Record<LoanTargetType, string> = {
   bank_repayment: "Bank repayment",
   paid_direct_vendor: "Paid directly to a vendor",
   party_transfer_out: "Party transfer out",
+  party_paid_vendor: "Party paid a vendor for the company",
 };
 
 /** Owner / ROUND 443.22 default annual rate when seeding from bank Categorize → Loan. */

@@ -29,7 +29,9 @@ export type LoanTargetType =
   /** ROUND 443.22-2e — personal pay to vendor; no company bank line. */
   | "paid_direct_vendor"
   /** 443.59 — USMCA sends money TO party (debit 2410, credit bank). */
-  | "party_transfer_out";
+  | "party_transfer_out"
+  /** RULING 443.65 — the party pays a USMCA vendor / expense directly (Dr what was paid / Cr Due to / from). */
+  | "party_paid_vendor";
 export type LoanStatus = "draft" | "open" | "paid" | "reversed";
 export type LoanInterestMethod = "simple" | "amortized" | "none";
 export type LoanPaymentFrequency =
@@ -213,38 +215,52 @@ export function loanRowsOf(res: ListRelatedPartyLoansResponse | undefined): Rela
 
 // ── 443.59 — Per-facility party ledger ─────────────────────────────────────────────────────────
 
+/** RULING 443.65 #2c — one movement on a party's "Due to / from" GL account. */
 export type PartyLedgerLine = {
-  id: string;
+  posting_id: string;
+  journal_entry_id: string;
   date: string;
-  memo?: string | null;
   debit_or_credit: "debit" | "credit";
   amount_cents: number;
-  /** Positive = USMCA owes party (net credit on 2410). Negative = party owes USMCA. */
+  description: string | null;
+  document: string;
+  source_transaction_type: string;
+  loan_id: string | null;
+  target_type: string | null;
+  relay_deposit_id: string | null;
+  bank_transaction_id: string | null;
+  bank_line_date: string | null;
+  bank_line_description: string | null;
+  bank_line_amount_cents: number | null;
+  pair_status: "paired" | "unpaired" | null;
+  pair_document: string | null;
+  /** Credit-positive: > 0 USMCA owes the party ("Due to"), < 0 the party owes USMCA ("Due from"). */
   running_balance_cents: number;
-  loan_display_id?: string | null;
-  target_type?: string | null;
-  direction?: string | null;
-  counterparty_name?: string | null;
 };
 
-export type GetPartyLedgerResponse = {
-  facility_id: string;
+export type PartyAccount = {
   account_id: string;
-  account_name?: string | null;
-  account_number?: string | null;
-  counterparty_name?: string | null;
-  net_balance_cents: number;
+  account_number: string;
+  account_name: string;
+  party_name: string;
+  party_vendor_id: string | null;
+  balance_cents: number;
+  movement_count: number;
+};
+
+export type PartyLedger = {
+  account: PartyAccount;
+  balance_cents: number;
+  balance_label: "due_to" | "due_from" | "square";
   lines: PartyLedgerLine[];
 };
 
-export async function getPartyLedger(
-  facilityId: string,
-  operatingCompanyId: string,
-  signal?: AbortSignal,
-): Promise<GetPartyLedgerResponse> {
+export async function listPartyAccounts(operatingCompanyId: string, signal?: AbortSignal): Promise<{ parties: PartyAccount[] }> {
   const p = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  return apiRequest<GetPartyLedgerResponse>(
-    `${BASE}/ledger/${facilityId}?${p.toString()}`,
-    { method: "GET", signal },
-  );
+  return apiRequest<{ parties: PartyAccount[] }>(`${BASE}/parties?${p.toString()}`, { method: "GET", signal });
+}
+
+export async function getPartyLedger(accountId: string, operatingCompanyId: string, signal?: AbortSignal): Promise<PartyLedger> {
+  const p = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<PartyLedger>(`${BASE}/party-ledger/${accountId}?${p.toString()}`, { method: "GET", signal });
 }
