@@ -36,6 +36,7 @@ apps/backend/src/maintenance/pm-auto-engine.cron.ts
 apps/backend/src/maintenance/__tests__/pm-auto-engine-e14.test.ts
 apps/backend/src/system/engine-status.catalog.ts
 scripts/db-migrate.mjs
+scripts/audit-creator-settlement.mjs
 # ROUND 372.1 (Lead, 2026-10-03) — files no seat owned are CC-1's from now on:
 apps/backend/src/health/health.routes.ts
 apps/backend/src/integrations/samsara/fuel-purchase-push.service.ts
