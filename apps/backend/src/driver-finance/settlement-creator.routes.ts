@@ -22,6 +22,17 @@ import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
 import { assertCreatorDraftAdmissible } from "./settlement-creator-admission.js";
 import { loadLastAfterCommit, overallOk, recordAfterCommit, runCreatorAfterCommit, type CreatorStages } from "./settlement-creator-after-commit.js";
 
+/** Lead 443.57 — one miles field's source for the LOAD's saved operating miles (CC-2's engine). Manual needs a value + reason. */
+const milesFieldChoiceSchema = z
+  .object({
+    source: z.enum(["document", "historical", "google", "manual"]),
+    manual_value: z.number().nonnegative().nullable().optional(),
+    reason: z.string().max(500).nullable().optional(),
+  })
+  .refine((c) => c.source !== "manual" || (c.manual_value != null && Boolean(c.reason?.trim())), {
+    message: "manual miles need a value and a reason",
+  });
+
 const AUTHORITY_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
 const WRITE_RL = { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } };
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -103,6 +114,11 @@ const draftSchema = z.object({
         loaded_miles: z.number().nullable().optional(),
         miles_shortest: z.number().nullable().optional(),
         empty_miles: z.number().nullable().optional(),
+        // Lead 443.57 — per-field source of the LOAD's saved operating miles (CC-2's mileage engine); pay never reads it.
+        miles_choice: z
+          .object({ practical: milesFieldChoiceSchema.optional(), short: milesFieldChoiceSchema.optional(), empty: milesFieldChoiceSchema.optional() })
+          .nullable()
+          .optional(),
         empty_rate_cents: z.number().int().nullable().optional(),
         picks: z.number().nullable().optional(),
         drops: z.number().nullable().optional(),

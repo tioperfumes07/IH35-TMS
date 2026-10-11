@@ -63,6 +63,8 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-has-load.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-card-rate-is-settlement-rate.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-card-rate-is-settlement-rate.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-miles-choice.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-miles-choice.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-travel-off-driver-pay.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-travel-off-driver-pay.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-ap-tieout-counts-chain-bills.mjs", "--selftest"]);

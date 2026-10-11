@@ -80,6 +80,13 @@ export type SettlementCreatorLoadBlock = {
    */
   miles_shortest?: number | null;
   empty_miles?: number | null;
+  /**
+   * Lead 443.57 (owner) — the LOAD's saved operating miles, per field: which source the owner chose next to the settlement's
+   * own miles (Document | Historical | Google | Manual with a reason). Applied through CC-2's mileage engine
+   * (setMilesChoice) after the settlement is posted, so driver pay — rate × the settlement's miles — never moves with it.
+   * Omitted field = 'document'.
+   */
+  miles_choice?: SettlementCreatorMilesChoice | null;
   /** Driver empty-miles rate ($/mi). When null, empty miles contribute $0 (operator types extras). */
   empty_rate_cents?: number | null;
   picks?: number | null;
@@ -269,6 +276,8 @@ export type SettlementCreatorCloseTotals = {
 export type SettlementCreatorPreview = {
   /** Present when the preview ran through the posting engine (previewSettlementCreatorThroughClose). */
   close_totals?: SettlementCreatorCloseTotals | null;
+  /** Lead 443.57 — the rehearsal's per-load miles (value + source + Historical/Google), read before the rollback. */
+  miles_choices?: SettlementCreatorPostResult["miles_choices"] | null;
   je_lines: SettlementCreatorJeLine[];
   debit_total_cents: number;
   credit_total_cents: number;
@@ -298,4 +307,14 @@ export type SettlementCreatorPostResult = {
   factoring_advance_ids?: string[];
   preview: SettlementCreatorPreview;
   close_totals?: SettlementCreatorCloseTotals | null;
+  /** Lead 443.57 — per load, each miles field's saved value + source + both recommendations (CC-2's engine). */
+  miles_choices?: Array<{ load_id: string; load_number: string; fields: Record<"practical" | "short" | "empty", { value: number | null; source: string | null; historical: number | null; google: number | null }> }>;
 };
+
+/** Lead 443.57 — per-field miles choice on a Creator load (see SettlementCreatorLoadDraft.miles_choice). */
+export type SettlementCreatorMilesFieldChoice = {
+  source: "document" | "historical" | "google" | "manual";
+  manual_value?: number | null;
+  reason?: string | null;
+};
+export type SettlementCreatorMilesChoice = Partial<Record<"practical" | "short" | "empty", SettlementCreatorMilesFieldChoice>>;

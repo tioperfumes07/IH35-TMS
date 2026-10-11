@@ -67,6 +67,7 @@ import type {
 } from "./settlement-creator.types.js";
 import { isReeferFuelItemName } from "../fuel/reefer-fuel.service.js";
 import { createBillInClientTx } from "../accounting/bills.service.js";
+import { applyCreatorMilesChoices, CreatorMilesChoiceError } from "./settlement-creator-miles-choice.js";
 
 export type { DbClient };
 
@@ -1974,6 +1975,20 @@ export async function postSettlementCreatorInClientTx(
     operatingCompanyId: draft.operating_company_id, settlementId, settlementNo: sourceDocumentRef ?? displayId, expenseIds, actorUserId,
   });
 
+  // Lead 443.57 — the LOAD's saved operating miles per field (Document | Historical | Google | Manual), through CC-2's mileage
+  // engine only. Last, after delivery + driver bills + A/P chain + close: pay (rate × the settlement's miles) is already written.
+  let milesChoices;
+  try {
+    milesChoices = await applyCreatorMilesChoices(client as never, {
+      operatingCompanyId: draft.operating_company_id,
+      actorUserId,
+      loads: draft.loads.map((l, i) => ({ loadId: loadIds[i]!, loadNumber: String(l.load_number), choice: l.miles_choice })),
+    });
+  } catch (err) {
+    if (err instanceof CreatorMilesChoiceError) throw new SettlementCreatorError(`miles_choice_${err.code}`, err.message);
+    throw err;
+  }
+
   await appendCrudAudit(
     client as never,
     actorUserId,
@@ -1992,6 +2007,7 @@ export async function postSettlementCreatorInClientTx(
       company_expenses_cents: preview.company_expenses_cents,
       driver_net_cents: preview.driver_net_cents,
       close_totals: closeTotals,
+      miles_choices: milesChoices,
     },
     "info",
     AUDIT_TAG,
@@ -2018,6 +2034,7 @@ export async function postSettlementCreatorInClientTx(
     invoice_ids: invoiceIds,
     preview,
     close_totals: closeTotals,
+    miles_choices: milesChoices,
     feed_gate: { intake_id: gate.intake.id, status: gate.intake.status, checks_total: gate.intake.checks_total, checks_failed: gate.intake.checks_failed },
   };
 }
@@ -2057,6 +2074,7 @@ export async function previewSettlementCreatorThroughClose(
   const afterCommitMarkAt = afterCommitMark(client);
   await client.query("SAVEPOINT settlement_creator_dry_run");
   let closeTotals: SettlementCreatorCloseTotals | null = null;
+  let milesChoices: SettlementCreatorPostResult["miles_choices"] | null = null;
   let refusal: string | null = null;
   let postedLines: SettlementCreatorJeLine[] | null = null;
   // R14 — the rehearsal runs the real post, invoice send included; its customer email is queued on this transaction
@@ -2072,6 +2090,7 @@ export async function previewSettlementCreatorThroughClose(
     await ensureDispatchedLoadsForCreator(client, { uuid: actorUserId, role: actorRole }, draft);
     const posted = await postSettlementCreatorInClientTx(client, actorUserId, draft, { rehearsal: true });
     closeTotals = posted.close_totals ?? null;
+    milesChoices = posted.miles_choices ?? null;
     // R14 — report exactly what the post wrote: every journal line created in this transaction for the company,
     // by account, read back before the rollback (never a projection that can drift from the post).
     const written = await client.query<{ je: string; memo: string | null; account_number: string | null; account_name: string; debit_or_credit: string; amount_cents: string }>(
@@ -2121,6 +2140,7 @@ export async function previewSettlementCreatorThroughClose(
     credit_total_cents: credit,
     balanced: debit === credit,
     close_totals: closeTotals,
+    miles_choices: milesChoices,
     blockers,
     can_post: preview.can_post && blockers.length === preview.blockers.length,
   };
