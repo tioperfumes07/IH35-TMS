@@ -7558,3 +7558,13 @@ action: OWNER_AUTH_ID=AUTH-416 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-1
 rehearsal: throwaway br-polished-pine-ako72hz1 (COMMITTED, deleted): 141 loads / 282 stops; facility_name NULL 42 -> 0; on a Samsara address 60 -> 66; no street 222 -> 216; 10 loads listed whose workbook has more stops than were booked (13528 13537 13538 13570 13576 13583 13589 13599 13600 13628)
 expires_at: 2026-10-12T07:13:37Z
 status: OPEN
+
+## AUTH-417
+issued_at: 2026-10-11T07:48:51Z
+issued_by: Lead 443.43 #1 ("If not written by 07:55 UTC, CC-2 takes it" — provision the Damage-Claim escrow sub-account for driver e3ac0879, settlement 5829). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..416
+owner_quotes: "all drivers must have only one profile and escrow and liability account" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — driver e3ac0879-8558-4c01-922f-0cc2d94b937b (EDUARDO AZAEL FLORES ORTIZ): escrow sub-account (and advance sub-account if missing) through provisionDriverEscrowSubAccount / provisionDriverAdvanceSubAccount + link upserts. Idempotent. No money moves. No DELETE.
+action: OWNER_AUTH_ID=AUTH-417 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-43-provision-escrow-e3ac0879.ts --apply
+rehearsal: throwaway br-old-sea-ak9we4lm (COMMITTED, deleted): escrow 2100-00-043 "EDUARDO AZAEL FLORES ORTIZ — Driver Escrow (hired unknown)" + advance sub-account created; escrow before NULL
+expires_at: 2026-10-12T07:48:51Z
+status: OPEN
