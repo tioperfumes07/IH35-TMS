@@ -135,10 +135,24 @@ function dollarsFromCents(cents: number): number {
  * journal_entry_id and the feed gate refused ("Expense 13508: not posted"). Same stamp the other expense posters write
  * (checks/check-create.service.ts, bank-line-expense.service.ts) — only on an unposted, unvoided expense of this company.
  */
+/** RULING 443.66 D5 — the settlement's trailer by its equipment number: this company's (owned or leased), exactly one. */
+export async function resolveCreatorTrailerId(client: DbClient, companyId: string, equipmentNumber: string | null | undefined): Promise<string | null> {
+  const n = equipmentNumber?.trim();
+  if (!n) return null;
+  const r = await client.query<{ id: string }>(
+    `SELECT id::text FROM mdata.equipment
+      WHERE equipment_number = $2 AND (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
+      LIMIT 2`,
+    [companyId, n],
+  );
+  return r.rows.length === 1 ? r.rows[0]!.id : null;
+}
+
+// RULING 443.66 D4 — one status vocabulary: a posted expense reads status 'posted' AND posting_status 'posted'.
 async function stampExpensePosted(client: DbClient, companyId: string, expenseId: string, journalEntryId: string): Promise<void> {
   const r = await client.query(
     `UPDATE accounting.expenses
-        SET posting_status = 'posted', posted_at = COALESCE(posted_at, now()), journal_entry_id = $3::uuid, updated_at = now()
+        SET posting_status = 'posted', status = 'posted', posted_at = COALESCE(posted_at, now()), journal_entry_id = $3::uuid, updated_at = now()
       WHERE id = $2::uuid AND operating_company_id = $1::uuid AND voided_at IS NULL AND posting_status <> 'reversed'`,
     [companyId, expenseId, journalEntryId],
   );
@@ -870,6 +884,10 @@ export async function postSettlementCreatorInClientTx(
   // ROUND 443.7 a (Option A) — the Creator closes the settlement itself through the pay-run close; the load-bookended
   // settlement ping (open on in_transit, close on delivery) steps aside for the rest of this transaction.
   await client.query(`SELECT set_config('app.settlement_creator_post', 'on', true)`);
+  // RULING 443.66 D5 — the trailer the settlement document names. A draft carrying only trailer_equipment_number (all
+  // 68 posted on 2026-10-10/11) left every expense header and line with no trailer; resolve it once here to this
+  // company's equipment (owned or leased to it, exactly one) so every document below carries it.
+  draft = { ...draft, trailer_id: draft.trailer_id ?? (await resolveCreatorTrailerId(client, draft.operating_company_id, draft.trailer_equipment_number)) };
   const preview = await previewSettlementCreator(client, draft);
   // A dry run (previewSettlementCreatorThroughClose) writes the settlement inside a savepoint the caller rolls
   // back, so the posting engine can compute the totals the owner checks — it never refuses on the preview.
@@ -1307,6 +1325,7 @@ export async function postSettlementCreatorInClientTx(
       // with creator_manual_entry on a Relay row the expense credited 1295 and the post was refused.
       company_direct_credit: fuel.card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet",
       creator_manual_entry: fuel.card !== "relay",
+      trailer_id: draft.trailer_id ?? null,
     });
     if (doc.outcome === "refused") {
       throw new SettlementCreatorError("fuel_expense_refused", doc.reason);
@@ -1393,6 +1412,7 @@ export async function postSettlementCreatorInClientTx(
           requesting_user_uuid: actorUserId,
           // Lead 443.51 #5: the document names this settlement at adoption (settlement_no + source_settlement_ref).
           settlement_no: sourceDocumentRef ?? displayId,
+          trailer_id: draft.trailer_id ?? null,
         });
         if (fillDoc.outcome === "refused") throw new SettlementCreatorError("relay_fill_document_refused", `Fuel line: ${fillDoc.reason}`);
         expenseIds.push(fillDoc.expense_id);
@@ -1615,20 +1635,35 @@ export async function postSettlementCreatorInClientTx(
   }
 
   // Reimbursable expenses + explicit reimbursements → settlement_lines (driver net; no cash Cr).
+  // RULING 443.66 D1 — a reimbursement line carries its item (this company's), 1 x amount 'each', so the per-load A/P
+  // bill line the close engine builds from it names the item too. No item on the document -> the line stays item-less.
+  const companyItem = async (itemId: string | null | undefined): Promise<string | null> =>
+    itemId
+      ? (await client.query<{ id: string }>(
+          `SELECT id::text FROM catalogs.items WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+          [itemId, draft.operating_company_id],
+        )).rows[0]?.id ?? null
+      : null;
   for (const r of draft.reimbursements ?? []) {
     if (r.amount_cents <= 0) continue;
+    const rItem = await companyItem(r.item_id);
     await client.query(
       `
         INSERT INTO driver_finance.settlement_lines (
-          settlement_id, operating_company_id, line_type, description, amount, is_active, is_sample_data
+          settlement_id, operating_company_id, line_type, description, amount, is_active, is_sample_data,
+          item_id, quantity, rate_cents, unit_of_measure
         )
-        VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false)
+        VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false,
+                $5::uuid, CASE WHEN $5::uuid IS NULL THEN NULL ELSE 1 END, CASE WHEN $5::uuid IS NULL THEN NULL ELSE $6::bigint END,
+                CASE WHEN $5::uuid IS NULL THEN NULL ELSE 'each' END)
       `,
       [
         settlementId,
         draft.operating_company_id,
         r.description || `Settlement ${draft.settlement_no} reimbursement`,
         dollarsFromCents(r.amount_cents),
+        rItem,
+        r.amount_cents,
       ],
     );
   }
@@ -1640,13 +1675,16 @@ export async function postSettlementCreatorInClientTx(
     const acct = await resolveExpenseLineAccount(client, draft.operating_company_id, exp);
     if (!acct) throw new SettlementCreatorError("expense_account_missing", `No expense account for reimbursement "${exp.item_name}".`);
     const lineLoadId = await resolveLineLoadId(client, draft.operating_company_id, exp);
+    const expItem = await companyItem(exp.item_id);
     await client.query(
       `
         INSERT INTO driver_finance.settlement_lines (
           settlement_id, operating_company_id, line_type, description, amount, is_active, is_sample_data,
-          load_id, posting_account_id
+          load_id, posting_account_id, item_id, quantity, rate_cents, unit_of_measure
         )
-        VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false, $5::uuid, $6::uuid)
+        VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false, $5::uuid, $6::uuid,
+                $7::uuid, CASE WHEN $7::uuid IS NULL THEN NULL ELSE 1 END, CASE WHEN $7::uuid IS NULL THEN NULL ELSE $8::bigint END,
+                CASE WHEN $7::uuid IS NULL THEN NULL ELSE 'each' END)
       `,
       [
         settlementId,
@@ -1655,6 +1693,8 @@ export async function postSettlementCreatorInClientTx(
         dollarsFromCents(exp.amount_cents),
         lineLoadId,
         acct.id,
+        expItem,
+        exp.amount_cents,
       ],
     );
   }

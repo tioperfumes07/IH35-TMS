@@ -2,6 +2,9 @@ export default {
   name: "verify:settlement-creator-ties-document",
   run(ctx) {
     ctx.run("node", ["scripts/verify-settlement-creator-ties-document.mjs"]);
+    // RULING 443.66 — every Creator-born line has its item on the item's account; status = posting_status; driver/unit/trailer.
+    ctx.run("node", ["scripts/verify-creator-documents-categorized.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-creator-documents-categorized.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-decimals-f443.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-decimals-f443.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-google-address-wiring.mjs", "--selftest"]);
