@@ -18,8 +18,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-creator-salaried-stray-bill-void";
 const SVC = "apps/backend/src/driver-finance/void-stray-salaried-driver-bill.service.ts";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
-/** Shrink-only: 5816's bill (load 13595, $169.65), minted 2026-10-11 07:31 UTC by the delivery-path bug. */
-export const KNOWN_STRAY = new Set(["2d48d11e-4288-4fb1-aaad-b112c54c1f0b"]);
+/** Shrink-only. Was {2d48d11e} (5816 / load 13595, $169.65) — voided on prod 2026-10-11 through the Ask B route. */
+export const KNOWN_STRAY = new Set([]);
 
 export function staticProblems(src) {
   const p = [];
@@ -57,7 +57,7 @@ function selftest() {
     if (pl === good) bad.push(`plant did not apply: ${f.toString().slice(0, 70)}`);
     else if (!staticProblems(pl).length) bad.push(`plant passed: ${f.toString().slice(0, 70)}`);
   }
-  if (liveProblems([{ id: "2d48d11e-4288-4fb1-aaad-b112c54c1f0b", cents: 16965, load_number: "13595" }]).length) bad.push("the named stray bill fails");
+  if (!liveProblems([{ id: "2d48d11e-4288-4fb1-aaad-b112c54c1f0b", cents: 16965, load_number: "13595" }]).length) bad.push("a voided-and-removed stray bill coming back live passes");
   if (!liveProblems([{ id: "00000000-0000-0000-0000-000000000001", cents: 100, load_number: "1" }]).length) bad.push("a new stray bill passes");
   if (bad.length) { console.error(`${LABEL} selftest FAIL\n- ${bad.join("\n- ")}`); process.exit(1); }
   console.log(`${LABEL} selftest PASS (${plants.length} plants + 2 live fixtures)`);

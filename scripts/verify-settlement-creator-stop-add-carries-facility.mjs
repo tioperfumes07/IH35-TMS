@@ -39,6 +39,13 @@ export function problems(src) {
   const patch = pr < 0 ? "" : src.slice(pr, src.indexOf("app.delete(", pr));
   if (!/STOP_LEG_FIELDS\.some\(\(f\) => f in \(b as Record<string, unknown>\)\)\s*\? await relearnStopsAfterEdit\(/.test(patch)) p.push("the stop PATCH does not re-derive the legs when a stop moves");
   if (!/"sequence_number"/.test(src.slice(src.indexOf("const STOP_LEG_FIELDS"), src.indexOf("const STOP_LEG_FIELDS") + 300))) p.push("a sequence change no longer re-derives the legs");
+  // 443.43 follow-up: the stop PATCH corrects facility / zip / coordinates in place.
+  const u = src.indexOf("const updateStopBodySchema = z");
+  const uschema = u < 0 ? "" : src.slice(u, src.indexOf("});", u));
+  for (const f of ["facility_name", "postal_code", "latitude", "longitude"]) {
+    if (!new RegExp(`\\b${f}: z\\.`).test(uschema)) p.push(`the stop PATCH body drops ${f}`);
+    if (!new RegExp(`if \\("${f}" in b\\) add\\("${f}", b\\.${f} \\?\\? null\\);`).test(patch)) p.push(`the stop PATCH does not write ${f}`);
+  }
   return p;
 }
 
@@ -55,6 +62,7 @@ function selftest() {
     (s) => s.replace("STOP_LEG_FIELDS.some((f) => f in (b as Record<string, unknown>))", "false"),
     (s) => s.replace("{ reresolve: true }", "{}"),
     (s) => s.replace('const STOP_LEG_FIELDS = ["sequence_number", ', "const STOP_LEG_FIELDS = ["),
+    (s) => s.replace('    if ("facility_name" in b) add("facility_name", b.facility_name ?? null);\n', ""),
   ];
   for (const f of plants) {
     const planted = f(good);
