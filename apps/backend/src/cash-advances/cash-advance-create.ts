@@ -7,6 +7,9 @@
 // this exemption; neither was assumed — GO-23 C6, 2026-09-02.
 import { releaseBankLinesNamingDocument } from "../accounting/void.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 import { voidSettlementDeduction } from "../driver-finance/settlement-deduction-void.service.js";
 import { nextCashAdvanceDisplayId } from "./display-id.js";
 import { DriverAdvanceAccountError, ensureDriverAdvanceSubAccount } from "../driver-finance/driver-advance-account-resolver.js";
@@ -57,6 +60,8 @@ export type CreateDriverCashAdvanceCoreInput = {
   // B5 (additive): the driver_finance.driver_bills the advance is applied against (cascade
   // branches 1/2). NULL for the loan branch. Recorded on driver_advances for settlement netting.
   linked_driver_bill_id?: string | null;
+  // The advance's book date (the wire / check date on the signed settlement); the Banking match posts on it.
+  historical_posting_date?: string | null;
   // Wizard-depth 2026-07-22 — ops + recovery + purpose→economics (parity with Book Load / requests).
   load_id?: string | null;
   unit_id?: string | null;
@@ -107,6 +112,15 @@ export type CreateDriverCashAdvanceCoreResult =
 // an explicit caller override requests. Enforced HERE, at the service boundary, not in a React
 // dropdown -- a rule only the UI enforces is not enforced (owner's own words).
 import { USMCA_COMPANY_ID } from "../org/company-ids.js";
+
+/** OWNER 9:44 / 9:46 PM CT 2026-10-10: an advance linked to a driver bill is a bill payment on that load (driver debt the
+ *  settlement recovers); every other advance follows resolveEconomicRouting (USMCA load_expense, LST-F25011). */
+export function advanceEconomicRouting(
+  body: Pick<CreateDriverCashAdvanceCoreInput, "purpose" | "economic_routing" | "linked_driver_bill_id">,
+  companyId: string
+): CashAdvanceEconomicRouting {
+  return body.linked_driver_bill_id ? "driver_settlement" : resolveEconomicRouting(body.purpose, body.economic_routing, companyId);
+}
 
 export function resolveEconomicRouting(
   purpose: CashAdvancePurpose,
@@ -252,7 +266,11 @@ export async function createDriverCashAdvanceCore(
     }
   }
 
-  const economicRouting = resolveEconomicRouting(body.purpose, body.economic_routing, companyId);
+  // OWNER 9:44 / 9:46 PM CT 2026-10-10: an advance LINKED TO A DRIVER BILL is a bill payment on that load (B5 above) —
+  // money the settlement recovers from what it owes the driver, not a company load expense. It routes driver_settlement
+  // so it stays outstanding until the close nets it (loadRecoverableAdvances); the USMCA load_expense rule (LST-F25011)
+  // still governs every advance NOT applied to a driver bill.
+  const economicRouting = advanceEconomicRouting(body, companyId);
   const isLoadExpense = economicRouting === "load_expense";
 
   if (isLoadExpense && !body.load_id) {
@@ -638,6 +656,37 @@ export async function createDriverCashAdvanceCore(
     "info",
     "WIZARD-CASH-ADVANCE-CREATE-DEPTH"
   );
+
+  if (body.historical_posting_date) {
+    await client.query(
+      `UPDATE driver_finance.driver_advances SET posting_date = $3::date, updated_at = now() WHERE operating_company_id = $1::uuid AND id = $2::uuid`,
+      [companyId, advanceId, body.historical_posting_date]
+    );
+  }
+
+  // LEAD RULING (OPTION 1) on owner 9:44 / 9:46 PM CT 2026-10-10: a HISTORICAL advance applied to its load's driver bill
+  // (B5) is disbursed in the ledger at Creator post — Dr the driver's own advance sub-account / Cr the company's existing
+  // cash-clearing role account (1090 "Undeposited Funds" in USMCA): not a bank, not A/P. The owner's manual Banking match of
+  // the wire / check clears it to the bank. Without this posting v_driver_advance_balances reads the advance as 0
+  // outstanding and the close cannot recover it (measured: 5775 net 1,334.40 vs TOTAL DUE 1,186.40). The one driver_advance
+  // builder posts it (credit override), behind DRIVER_ADVANCE_GL_POSTING_ENABLED like a live disbursement.
+  if (body.disbursement_method === "historical_backfill" && body.linked_driver_bill_id && !isLoadExpense) {
+    await client.query(
+      `UPDATE driver_finance.driver_advances
+          SET disbursement_status = 'disbursed', disbursed_at = now(),
+              posting_date = COALESCE(posting_date, $3::date, CURRENT_DATE), updated_at = now()
+        WHERE operating_company_id = $1::uuid AND id = $2::uuid`,
+      [companyId, advanceId, body.historical_posting_date ?? null]
+    );
+    if (await isEnabled(client as never, "DRIVER_ADVANCE_GL_POSTING_ENABLED", { operating_company_id: companyId, user_uuid: actorUserUuid })) {
+      const clearing = await resolveRoleAccount(client as never, companyId, "cash_clearing");
+      await postSourceTransactionInClientTx(
+        client as never,
+        { operating_company_id: companyId, source_transaction_type: "driver_advance", source_transaction_id: advanceId, credit_account_id: clearing },
+        { userId: actorUserUuid }
+      );
+    }
+  }
 
   const detailRes = await client
     .query(

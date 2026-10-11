@@ -149,6 +149,8 @@ export type SettlementCreatorAdvanceLine = {
   linked_driver_bill_id?: string | null;
   /** Resolved from load_number when omitted — ties the advance bill payment to the load. */
   load_id?: string | null;
+  /** The advance date (YYYY-MM-DD). Owner 9:46 PM CT 2026-10-10: the advance pays the bill of the load the driver was on THAT DAY. */
+  date?: string | null;
 };
 
 export type SettlementCreatorAdditionalPayLine = {
