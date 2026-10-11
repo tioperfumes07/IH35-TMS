@@ -1256,6 +1256,9 @@ export async function postSettlementCreatorInClientTx(
       requesting_user_uuid: actorUserId,
       item_id: fuel.item_id ?? null,
       account_id: fuel.account_id ?? null,
+      // R13: Creator knows the card rail from the PDF; post immediately (Dr fuel / Cr rail).
+      company_direct_credit: fuel.card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet",
+      creator_manual_entry: true,
     });
     if (doc.outcome === "refused") {
       throw new SettlementCreatorError("fuel_expense_refused", doc.reason);

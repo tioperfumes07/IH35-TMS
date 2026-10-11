@@ -76,6 +76,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import {
+  CompanyDirectCredit,
   loadFuelTxnCreditSignals,
   RelayFillLinksNotPostsError,
   resolveCompanyDirectCreditPreference,
@@ -104,6 +105,16 @@ export type FuelExpenseDocumentInput = {
   /** ROUND 363-CC2-D — the item / account picked on the wizard line; absent = the fuel-type item map. */
   item_id?: string | null;
   account_id?: string | null;
+  /**
+   * R13 — Settlement Creator passes the card rail it knows from the PDF (dreamline_card_payable |
+   * relay_fuel_wallet). Forwarded to resolveCompanyDirectCreditPreference as an explicit override.
+   */
+  company_direct_credit?: CompanyDirectCredit | null;
+  /**
+   * R13 — when true, the relay_fuel_wallet throw in resolveCompanyDirectCreditPreference is
+   * suppressed so Creator fuel posts immediately instead of deferring to a Banking match.
+   */
+  creator_manual_entry?: boolean;
 };
 
 // The fuel-type -> item -> account rule lives in accounting/fuel-posting/fuel-item-account.ts, shared with the fuel
@@ -426,6 +437,8 @@ export async function createExpenseFromFuelTransaction(
       fuel_type: fuel.fuel_type ?? "diesel",
       transaction_at: fuel.transaction_at ?? fuel.purchased_at ?? txnDate,
       amount_cents: amountCents,
+      company_direct_credit: input.company_direct_credit ?? undefined,
+      creator_manual_entry: input.creator_manual_entry ?? false,
     },
       creditSignals,
     );
