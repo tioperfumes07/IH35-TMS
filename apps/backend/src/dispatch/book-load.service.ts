@@ -1406,11 +1406,14 @@ export async function ensureDriverBillArtifactsForLoad(
   // held — the same class of "column exists on the row but this caller's SELECT drops it" bug as
   // SETL-45 (driver_pay_rate_per_mile) above. createDriverBillArtifacts() itself never had this
   // gap; only the loadRes projection here did.
+  // CC-3 2026-10-11 (5780 preview, Lead 443.42): the same class again — this SELECT carried driver_pay_rate_per_mile but not
+  // driver_pay_rate_override_reason, so isSalariedZeroRateOverride() read a 0 rate with no reason as "no override" and the
+  // 48c card minted a $169.92 bill (354 mi) on a salaried week's load. The reason travels with the rate.
   const loadRes = await client.query<Record<string, unknown>>(
     `SELECT id, operating_company_id, load_number, customer_id, status,
             assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
             requires_tarps, miles_shortest, miles_practical, driver_pay_rate_per_mile,
-            miles_deadhead
+            driver_pay_rate_override_reason, miles_deadhead
        FROM mdata.loads
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
