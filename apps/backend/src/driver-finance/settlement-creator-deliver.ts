@@ -53,10 +53,29 @@ export function localDayStartIso(day: string, timeZone = STOP_DAY_TIMEZONE): str
   return new Date(`${day}T00:00:00${offset}`).toISOString();
 }
 
+/**
+ * Lead 443.51 #3 — a stop the truck has left is 'departed' (mdata.stop_status_enum: pending, arrived, departed, cancelled),
+ * exactly as the live engine writes it with the stamp (dispatch/stop-stamp.service.ts stampStopArrival 'arrived',
+ * stampStopDeparture 'departed'). Every stop of the load that carries a departure stamp and still reads 'pending' or
+ * 'arrived' moves to 'departed'; a stop with no departure stamp is left as it is (never a status without its evidence).
+ */
+export async function settleStampedStopStatuses(client: DbClient, loadId: string): Promise<number> {
+  const r = await client.query<{ id: string }>(
+    `UPDATE mdata.load_stops
+        SET status = 'departed'::mdata.stop_status_enum, updated_at = now()
+      WHERE load_id = $1::uuid AND soft_deleted_at IS NULL
+        AND actual_departure_at IS NOT NULL
+        AND status::text IN ('pending', 'arrived')
+      RETURNING id::text`,
+    [loadId],
+  );
+  return r.rows.length;
+}
+
 export async function stampStopsFromTracking(
   client: DbClient,
   loadId: string,
-  dates: { pickupDate?: string | null; deliveryDate?: string | null },
+  dates: { pickupDate?: string | null; deliveryDate?: string | null; stopDates?: Record<string, string> },
 ): Promise<StopStamp[]> {
   const load = (
     await client.query<{ load_number: string; unit_id: string | null; company_id: string }>(
@@ -76,8 +95,10 @@ export async function stampStopsFromTracking(
   ).rows;
   const out: StopStamp[] = [];
   for (const st of stops) {
+    // Lead 443.51 #4: a stop's own document date (e.g. the workbook date of a stop added to a multi-stop load) wins.
     const day =
-      st.stop_type === "pickup" ? dates.pickupDate || st.sched_day
+      dates.stopDates?.[st.id] ? dates.stopDates[st.id]!
+      : st.stop_type === "pickup" ? dates.pickupDate || st.sched_day
       : st.stop_type === "delivery" ? dates.deliveryDate || st.sched_day
       : st.sched_day || dates.deliveryDate || null;
     const base = { load_number: load.load_number, stop_id: st.id, sequence: st.sequence_number, stop_type: st.stop_type };
@@ -141,6 +162,7 @@ export async function stampStopsFromTracking(
       out.push({ ...base, precision: "date_only", stop_event_id: null, arrival_at: day, departure_at: day, note: `date only — ${reason}` });
     }
   }
+  await settleStampedStopStatuses(client, loadId);
   return out;
 }
 
