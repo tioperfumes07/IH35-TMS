@@ -1,3 +1,14 @@
+## 2026-10-11 · ROUND 443.29 Neon 301+302 APPLIED — OUTBOX DONE
+
+FINDING: BANK-F44329-NEON — Relay match DDL + facilities WORM now on USMCA Neon; refuse-delete proven.
+LANE: FINANCIAL (DDL only; no money rewrite)
+MERGED: code already on main via #26363@96ce637c3d; OUTBOX merge census #26364@885be48062
+Files Modified: none this tip — Neon apply + OUTBOX proof
+GUARD: N/A (apply-only); refuse_financial_row_delete on related_party_loan_facilities live
+LIVE PROOF: non-pooled neondb_owner @ ep-broad-block-akykk7bw (br-fancy-credit-akjnd07a); ledger has 202610101430 + 202615441301 + 202615441302; trg_worm_refuse_delete BEFORE DELETE; DELETE of live facility row → `is WORM: DELETE is refused for every role`; matched_relay_deposit_id EXISTS
+REMAINING: owner Chrome Match drawer (wallet + 3.25% fee) after FE deploy (Rule 42); CC-2 wires createPaidDirectVendorAdvance for Relay cards 0210/6248/9855 (5007 Amex ≠ loan)
+NEXT: INBOX 435-CUR back-arrow / 432-CUR / 433-CUR; do not re-open 443.29-B feature PR; stale remote `cursor/bank-44329-relay-deposit-match-7fe0` deleted
+
 ## 2026-10-11 · ROUND 443.29 B MERGED (#26363) — OUTBOX DONE
 
 FINDING: BANK-F44329-MERGED — Relay deposit bank match on main; no duplicate PR from stale feature branch.
