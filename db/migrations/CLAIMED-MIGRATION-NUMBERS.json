@@ -2311,8 +2311,13 @@
       "claimed_at": "2026-10-10",
       "claimed_by": "cursor",
       "purpose": "ROUND 443.29 Part B: bank_transactions.matched_relay_deposit_id + reconciliation_matches relay_deposit kind; bank-line functions restated (renumbered from 202610101430 — must run after accounting.deposits / 202615441200 loan LOC)"
-    }
-  },
+    },
+  "202615441302": {
+    "claimed_at": "2026-10-11",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 443.29-B: WORM delete-refusal on accounting.related_party_loan_facilities (from 202615441200); lowers worm unprotected 90->89"
+  }
+},
   "202610100200": {
     "desc": "invoices_display_id_check add invoice-dash-load alternative (renumbered from 202610100100 per 443.20 collision repair)",
     "lane": "CC-1",
