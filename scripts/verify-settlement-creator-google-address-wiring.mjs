@@ -47,7 +47,9 @@ function run({ drawer, seed, routes }) {
     out.push("RULE 1b: AddressGeocodeInput is imported but never resolves a pick into city/state/zip/lat.");
   }
 
-  if (!/address_line1:\s*load\.(pickup|delivery)_address/.test(seed)) {
+  // 443.38 (443.60 guard review): the address now goes through streetOrFacility (a street -> address_line1, a facility ->
+  // facility_name) for both endpoints and every listed stop.
+  if (!/address_line1:\s*load\.(pickup|delivery)_address/.test(seed) && !/\.\.\.streetOrFacility\(load\.(pickup|delivery)_address\)/.test(seed)) {
     out.push("RULE 3: buildStops never writes address_line1 from the Creator draft — Book Load stops stay address-blank.");
   }
   if (!/postal_code:\s*load\.(pickup|delivery)_zip/.test(seed)) {
@@ -124,7 +126,7 @@ function run({ drawer, seed, routes }) {
   if (!/stop_city_state_required/.test(seed)) {
     out.push("RULE 12: seed must refuse missing city/state by name (stop_city_state_required).");
   }
-  if (!/address_line1:\s*load\.pickup_address\?\.trim\(\)\s*\|\|\s*undefined/.test(seed)) {
+  if (!/address_line1:\s*load\.pickup_address\?\.trim\(\)\s*\|\|\s*undefined/.test(seed) && !/const v = raw\?\.trim\(\);\s*if \(!v\) return \{\};/.test(seed)) {
     out.push("RULE 12b: pickup address_line1 must stay optional (|| undefined) — hand seed requires city+state only.");
   }
 

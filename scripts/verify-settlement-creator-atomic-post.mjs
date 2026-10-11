@@ -69,7 +69,7 @@ function selftest() {
   if (!problems(m("routes", "await recordAfterCommit(user.uuid, afterInput, after);", "")).some((x) => /stored/.test(x))) bad.push("an unstored failure passed");
   if (!problems(m("after", 'results[i]?.reason === "error"', "false")).some((x) => /billing/.test(x))) bad.push("a swallowed billing error passed");
   if (!problems(m("drawer", 'data-testid="sc-post-stages"', 'data-testid="x"')).some((x) => /drawer/.test(x))) bad.push("a hidden result passed");
-  if (!problems(m("seed", "bookLoadOnClient(client as never, input)", "bookLoad(input)")).some((x) => /bookLoadOnClient/.test(x))) bad.push("a separate-transaction booking passed");
+  if (!problems(m("seed", "bookLoadOnClient(client as never, input, { source: \"historical_backfill\" })", "bookLoad(input)")).some((x) => /bookLoadOnClient/.test(x))) bad.push("a separate-transaction booking passed");
   if (!problems(m("svc", "s.created_at = now()", "true")).some((x) => /Option A/.test(x))) bad.push("adopting an earlier tour passed");
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }
   console.log(`${LABEL} SELFTEST OK — 7/7 (real tree passes; literal ok, unstored failure, swallowed billing error, hidden result, separate-transaction booking, earlier-tour adoption each caught)`);

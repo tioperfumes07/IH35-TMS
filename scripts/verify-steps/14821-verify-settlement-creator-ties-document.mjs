@@ -50,6 +50,15 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-no.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-multistop.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-multistop.mjs"]);
+    // 443.60 guard review: lane guards that existed but were never wired into this step.
+    ctx.run("node", ["scripts/verify-settlement-creator-posts-through-close.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-posts-through-close.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-books-with-po-and-real-stop-state.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-books-with-po-and-real-stop-state.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-fuel-gate.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-fuel-gate.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-preflight-all-refusals.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-preflight-all-refusals.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-has-load.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-has-load.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-travel-off-driver-pay.mjs", "--selftest"]);

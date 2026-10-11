@@ -24,7 +24,8 @@ export function problems(src) {
   if (!/if \(cardPaysSigned\) return null;/.test(src.helper)) p.push("an override is written even when the card already pays the signed rate");
   if (!/if \(!Number\.isFinite\(signed\) \|\| signed <= 0\) return null;/.test(src.helper)) p.push("a missing signed rate is not left alone");
   if (/INSERT INTO driver_finance\.driver_pay_rates|UPDATE driver_finance\.driver_pay_rates/i.test(src.seed + src.helper)) p.push("the Creator writes the rate card");
-  if (!/const payOverride = signedRateOverride\(draft\.settlement_no, load, card\);/.test(src.seed)) p.push("the seeder does not compute the signed-rate override");
+  // Lead 443.36 (443.60 guard review): a salaried draft takes the 0-rate Salaried override; every other draft still the signed rate.
+  if (!/const payOverride = (?:draft\.salaried\s*\?[\s\S]{0,200}?:\s*)?signedRateOverride\(draft\.settlement_no, load, card\);/.test(src.seed)) p.push("the seeder does not compute the signed-rate override");
   if (!/\.\.\.\(payOverride \?\? \{\}\),/.test(src.seed)) p.push("the seeder does not pass the override into bookLoad");
   if (!/Signed settlement 5769: driver paid \$0\.45\/mi/.test(src.test) || !/toBeNull\(\)/.test(src.test)) p.push("unit test for the 5769 override / no-override case is missing");
   return p;

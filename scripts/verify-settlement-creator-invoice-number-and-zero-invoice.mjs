@@ -69,9 +69,10 @@ export function problems(src) {
   if (!/if \(isAuthorizedZeroRevenueLoad\(load\)\) \{\s*return \[\{ code: "linehaul"[^\]]*amount_cents: 0 \}\]/.test(src.seed)) p.push("the seeder must book an authorized Transportation load at $0");
   if (!/authorizedZeroRevenue: isAuthorizedZeroRevenueLoad\(load\) \|\| undefined/.test(src.seed)) p.push("the seeder must pass authorizedZeroRevenue to bookLoad for the authorized $0 load only (CC-2 443.10)");
   {
-    const dry = src.service.indexOf("if (opts.dryRun) continue;");
+    // R14 (443.60 guard review): the preview is the real post rolled back, so there is no dry-run skip to order against;
+    // the rule that remains is that every load is delivered through dispatch's transition engine.
     const del = src.service.indexOf("await deliverLoadThroughDispatch(client, actorUserId");
-    if (dry < 0 || del < 0 || del < dry) p.push("the Creator must deliver each load through dispatch's transition engine, on real posts only (after the dry-run skip)");
+    if (del < 0) p.push("the Creator must deliver each load through dispatch's transition engine");
     if (/UPDATE mdata\.loads\s+SET status/i.test(src.service)) p.push("the Creator must never UPDATE a load's status directly");
     if (!/FROM mdata\.load_stops WHERE load_id = \$1::uuid AND soft_deleted_at IS NULL ORDER BY sequence_number/.test(src.deliver)) p.push("the Creator must stamp every stop (pickup included) of a delivered load");
   }
