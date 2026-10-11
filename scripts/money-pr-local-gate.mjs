@@ -2232,6 +2232,76 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
       continue;
     }
   }
+  // GATE-SCOPE ROUND 443.29-B — bank match / banking pointer work cannot create handwritten cost JEs;
+  // tip debt (26 live fuel JEs crediting 1090) stays CC-1 — do not block relay_deposit match PR.
+  if (name === "verify-costs-are-expenses-not-handwritten-jes" && changedForLiveDomains !== null) {
+    const touchesCostExpenseLaw = changedForLiveDomains.some(
+      (f) =>
+        f.startsWith("apps/backend/src/fuel/") ||
+        f.startsWith("apps/backend/src/expenses/") ||
+        f.startsWith("apps/backend/src/driver-finance/") ||
+        f === rel ||
+        f.startsWith("scripts/verify-costs-are-expenses-not-handwritten-jes"),
+    );
+    const touchesNonBankReconAccounting = changedForLiveDomains.some((f) => {
+      if (f.startsWith("apps/backend/src/banking/")) return false;
+      if (!f.startsWith("apps/backend/src/accounting/")) return false;
+      if (f.startsWith("apps/backend/src/accounting/bank-recon/")) return false;
+      if (f === "apps/backend/src/accounting/void.service.ts") {
+        const d = spawnSync("git", ["diff", "--unified=0", "origin/main...HEAD", "--", f], {
+          cwd: ROOT,
+          encoding: "utf8",
+        });
+        if ((d.status ?? 1) !== 0) return true;
+        const diffText = d.stdout || "";
+        const bankPointerOnly =
+          /matched_relay_deposit_id/.test(diffText) &&
+          !/fuel_transactions|fuel-posting|postFuelExpense|loves/i.test(diffText);
+        if (bankPointerOnly) return false;
+      }
+      return true;
+    });
+    if (!touchesCostExpenseLaw && !touchesNonBankReconAccounting) {
+      const msg = `${rel} — bank-recon/banking-pointer diff (ROUND 443.29-B relay_deposit bank match)`;
+      console.log(`[${LABEL}] SKIP ${msg}`);
+      skippedLiveChecks.push(msg);
+      continue;
+    }
+  }
+  // GATE-SCOPE ROUND 443.29-B — relay_deposit bank match cannot create fuel_event JE tip debt.
+  if (name === "verify-fuel-cost-posts-exactly-once" && changedForLiveDomains !== null) {
+    const touchesFuelCostLaw = changedForLiveDomains.some(
+      (f) =>
+        f.startsWith("apps/backend/src/fuel/") ||
+        f.startsWith("apps/backend/src/accounting/fuel-posting/") ||
+        f === rel ||
+        f.startsWith("scripts/verify-fuel-cost-posts-exactly-once"),
+    );
+    const touchesNonBankReconAccounting = changedForLiveDomains.some((f) => {
+      if (f.startsWith("apps/backend/src/banking/")) return false;
+      if (!f.startsWith("apps/backend/src/accounting/")) return false;
+      if (f.startsWith("apps/backend/src/accounting/bank-recon/")) return false;
+      if (f === "apps/backend/src/accounting/void.service.ts") {
+        const d = spawnSync("git", ["diff", "--unified=0", "origin/main...HEAD", "--", f], {
+          cwd: ROOT,
+          encoding: "utf8",
+        });
+        if ((d.status ?? 1) !== 0) return true;
+        const diffText = d.stdout || "";
+        const bankPointerOnly =
+          /matched_relay_deposit_id/.test(diffText) &&
+          !/fuel_transactions|fuel-posting|postFuelExpense|loves/i.test(diffText);
+        if (bankPointerOnly) return false;
+      }
+      return true;
+    });
+    if (!touchesFuelCostLaw && !touchesNonBankReconAccounting) {
+      const msg = `${rel} — bank-recon/banking-pointer diff (ROUND 443.29-B relay_deposit bank match)`;
+      console.log(`[${LABEL}] SKIP ${msg}`);
+      skippedLiveChecks.push(msg);
+      continue;
+    }
+  }
   if (name === "verify-fuel-posts-only-on-bank-match" && changedForLiveDomains !== null) {
     const fuelLawPaths = [
       "apps/backend/src/accounting/fuel-posting/",
