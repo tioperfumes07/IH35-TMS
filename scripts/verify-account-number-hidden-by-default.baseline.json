@@ -52,6 +52,11 @@
     },
     "pages/system/SystemModulePage.tsx": {
       "count": 1
+    },
+    "pages/accounting/loans/LoansAdvancesPage.tsx": {
+      "count": 2,
+      "established": "2026-10-11",
+      "note": "pre-existing in origin/main; Cursor PR #26414 pending fix"
     }
   },
   "measured_at": "2026-09-24T00:30:00Z"

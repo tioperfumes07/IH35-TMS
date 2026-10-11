@@ -1,10 +1,10 @@
 {
-  "healthzSha": "ba10d97",
-  "generated_at": "2026-10-11T08:15:42.003Z",
+  "healthzSha": "dab9ddb",
+  "generated_at": "2026-10-11T21:30:58.202Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "ba10d97",
+    "deployedSha": "dab9ddb",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 26317,
-      "title": "FINDING: SETL-F44346 LANE: FINANCIAL -- a salaried load got a per-load driver bill from the delivery path: its load re-read dropped driver_pay_rate_override_reason (5780 preview)",
+      "number": 26415,
+      "title": "FINDING: ACCT-F2026101103 LANE: FINANCIAL — 443.69 #2: verify-fuel-transactions-per-load rebuilt at root — expected fuel set derived from the 69 settlement documents row by row (no frozen count), governed purges read from audit.record_deletions, Relay tied to the Relay file; it now names exactly the two misprinted receipt dates on settlement 5789 (13557 99462408, 13550 99460605 DEF)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 03:11 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26317",
-      "sha": "ba10d975d1",
-      "committedAtIso": "2026-10-11T03:11:32-05:00"
+      "mergedAtCt": "10/11/2026, 04:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26415",
+      "sha": "dab9ddb8a4",
+      "committedAtIso": "2026-10-11T16:09:17-05:00"
     },
     {
-      "number": 26316,
-      "title": "docs(bus): AUTH-415 / 416 / 417 CONSUMED — driver notices hidden, workbook facility names, e3ac0879 escrow 2100-00-043",
+      "number": 26413,
+      "title": "FINDING: ACCT-F2026100710 LANE: FINANCIAL — 443.67 #2: live Book Load THROWS for every driver whose last settlement is posted (all 17 Creator drivers), an unknown status books a CANCELLED load, and Google's place id is born NULL on every Book Load stop",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 02:57 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26316",
-      "sha": "37a5d7e6bd",
-      "committedAtIso": "2026-10-11T02:57:54-05:00"
+      "mergedAtCt": "10/11/2026, 03:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26413",
+      "sha": "4bccc7ad4e",
+      "committedAtIso": "2026-10-11T15:49:40-05:00"
     },
     {
-      "number": 26315,
-      "title": "FINDING: ACCT-F2026100673 LANE: FINANCIAL — 443.43 #4: stop resolution adds an existing location with a street (facility + city) and the geocoder's PLACE lookup (name + city/state must match, source geocoder_place), run server-side by a sweep where the Places key lives",
+      "number": 26412,
+      "title": "FINDING: ACCT-F44365 LANE: FINANCIAL -- 443.65 #2 (443.64 #1 taken from CC-1): \"Due to / from <party>\" engine — party entries a/c/d/e post through one poster (b stays CC-2's Relay poster), party ledger read from the GL account, related-party posting without its party refused, ledger-sums-to-GL guard",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 02:56 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26315",
-      "sha": "78c4c5b412",
-      "committedAtIso": "2026-10-11T02:56:29-05:00"
+      "mergedAtCt": "10/11/2026, 02:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26412",
+      "sha": "2976364474",
+      "committedAtIso": "2026-10-11T14:40:07-05:00"
     },
     {
-      "number": 26314,
-      "title": "FINDING: ACCT-F2026100672 LANE: FINANCIAL — 443.43 #1: settlement 5829 blocked — driver e3ac0879 never got his escrow sub-account; provisioned through the per-hire provisioners (CC-2 takes it per the Lead's 07:55 rule)",
+      "number": 26411,
+      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615590900 — reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 02:56 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26314",
-      "sha": "b8a662ff08",
-      "committedAtIso": "2026-10-11T02:56:19-05:00"
+      "mergedAtCt": "10/11/2026, 02:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26411",
+      "sha": "98c6e5adc9",
+      "committedAtIso": "2026-10-11T14:27:33-05:00"
     },
     {
-      "number": 26313,
-      "title": "FINDING: ACCT-F2026100671 LANE: FINANCIAL — 443.43 #3: a stop add / resequence recomputes the module's legs (relearnLoadStopLegs) without re-counting a lane or touching an owner leg",
+      "number": 26410,
+      "title": "docs(bus): AUTH-437 CONSUMED",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 02:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26313",
-      "sha": "1af8509351",
-      "committedAtIso": "2026-10-11T02:55:20-05:00"
+      "mergedAtCt": "10/11/2026, 01:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26410",
+      "sha": "9b683ecd08",
+      "committedAtIso": "2026-10-11T13:56:24-05:00"
     },
     {
-      "number": 26312,
-      "title": "FINDING: SETL-F44347 LANE: FINANCIAL -- the mdata add-stop route could not carry a stop's facility, zip or coordinates, so the 11 multi-stop loads could not be repaired through it (Lead 443.43)",
+      "number": 26409,
+      "title": "FINDING: ACCT-F2026100709 LANE: FINANCIAL — 443.64 3b: 13587 #2 Grupo MS kept its own geocoder point 345 m from the 822 Union Pacific location + fence that AUTH-435 moved to Google's rooftop (the resolver keeps a stop's stamped coordinates)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 02:43 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26312",
-      "sha": "b9fc884140",
-      "committedAtIso": "2026-10-11T02:43:33-05:00"
+      "mergedAtCt": "10/11/2026, 01:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26409",
+      "sha": "1940ffa7f6",
+      "committedAtIso": "2026-10-11T13:55:03-05:00"
     },
     {
-      "number": 26311,
-      "title": "docs(bus): AUTH-414 CONSUMED — D6 entity NULL 507 -> 0, load NULL 921 -> 183 (all legitimately load-less)",
+      "number": 26408,
+      "title": "FINDING: ACCT-F2026100708 LANE: FINANCIAL — 443.64 3b: 37 active TMS-drawn fences sit on a zip / city center with no Samsara copy (all drawn 2026-09-09..28), and 13587's Grupo MS stop still points at the old 822 Union Pacific location point",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 02:40 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26311",
-      "sha": "1c7805922b",
-      "committedAtIso": "2026-10-11T02:40:59-05:00"
+      "mergedAtCt": "10/11/2026, 01:45 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26408",
+      "sha": "4f82886311",
+      "committedAtIso": "2026-10-11T13:45:54-05:00"
     },
     {
-      "number": 26310,
-      "title": "FINDING: ACCT-F2026100670 LANE: FINANCIAL — 443.42 #5: the owner's workbook stop names run through the stop-resolution engine — facility on every stop, Samsara address where the owner has one, no street invented",
+      "number": 26407,
+      "title": "FINDING: ACCT-F44354 LANE: FINANCIAL — TMS WEB build_failed: LoanApplicationWizard TARGET_TYPE_LABELS missing party_transfer_out (TS2741)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 02:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26310",
-      "sha": "98be1e4339",
-      "committedAtIso": "2026-10-11T02:39:31-05:00"
+      "mergedAtCt": "10/11/2026, 01:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26407",
+      "sha": "b50c7890a7",
+      "committedAtIso": "2026-10-11T13:41:16-05:00"
     },
     {
-      "number": 26309,
-      "title": "FINDING: ACCT-F2026100669 LANE: FINANCIAL — 443.42 #7: driver-app \"Load N dispatched\" notices fired for loads that already ran are hidden through the notifications engine (kept in history)",
+      "number": 26406,
+      "title": "FINDING: ACCT-F2026100707 LANE: FINANCIAL — 443.64 3b: of 297 Creator street stops, 1 fence had no Samsara copy (13543 AMERICOLD, drawn after the city fix) and 2 stops sat on a fence 345 m from their Google point (822 Union Pacific Blvd)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 02:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26309",
-      "sha": "6013affea1",
-      "committedAtIso": "2026-10-11T02:39:18-05:00"
+      "mergedAtCt": "10/11/2026, 01:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26406",
+      "sha": "383b9c4b79",
+      "committedAtIso": "2026-10-11T13:39:09-05:00"
     },
     {
-      "number": 26308,
-      "title": "FINDING: SETL-F44345 LANE: FINANCIAL -- the Settlement Creator booked every load as pickup + delivery only; 10 multi-stop loads lost their middle stops (CC-2 finding)",
+      "number": 26404,
+      "title": "FINDING: ACCT-F44364 LANE: FINANCIAL -- Production Post-Deploy Verify red on verify-load-settlement-linkage (6 vs baseline 2): it counted VOIDED lines of the cancelled settlement e1cdb1b9 as misattached money; reads live lines only, baselines shrink to 0",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 02:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26308",
-      "sha": "d4085e3e9f",
-      "committedAtIso": "2026-10-11T02:33:50-05:00"
+      "mergedAtCt": "10/11/2026, 01:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26404",
+      "sha": "3d2233b580",
+      "committedAtIso": "2026-10-11T13:35:22-05:00"
     }
   ]
 }
