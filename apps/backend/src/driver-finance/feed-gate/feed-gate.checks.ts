@@ -312,10 +312,33 @@ const FUEL_CHECKS: FeedCheckDef[] = [
         FROM fuel.fuel_transactions f WHERE f.operating_company_id = $1::uuid AND f.id = $2::uuid AND f.voided_at IS NULL` },
   { key: "fuel.expense_posted", group: "controls", sql: `
       SELECT 'fuel.fuel_transactions', f.id, 'Fuel ' || to_char(f.transaction_at, 'YYYY-MM-DD') || ' $' || round(coalesce(f.total_cost, 0), 2),
-             EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL AND e.posting_status = 'posted' AND e.journal_entry_id IS NOT NULL),
-             CASE WHEN NOT EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL) THEN 'no expense document for this fuel purchase'
-                  WHEN NOT EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL AND e.posting_status = 'posted') THEN 'fuel expense exists but is not posted' END,
-             '/fuel/transactions/' || f.id::text, (SELECT jsonb_build_object('expense', e.expense_number, 'posting_status', e.posting_status, 'journal_entry_id', e.journal_entry_id) FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL ORDER BY e.created_at DESC LIMIT 1)
+             (
+               EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL AND e.posting_status = 'posted' AND e.journal_entry_id IS NOT NULL)
+               OR (f.relay_fuel_transaction_id IS NOT NULL AND EXISTS (
+                     SELECT 1 FROM accounting.posting_batches pb
+                      WHERE pb.operating_company_id = f.operating_company_id
+                        AND pb.source_transaction_type = 'fuel_event'
+                        AND pb.source_transaction_id::text = f.relay_fuel_transaction_id::text
+                        AND pb.batch_status = 'posted'))
+             ),
+             CASE
+               WHEN f.relay_fuel_transaction_id IS NOT NULL THEN
+                 CASE WHEN NOT EXISTS (
+                        SELECT 1 FROM accounting.posting_batches pb
+                         WHERE pb.operating_company_id = f.operating_company_id
+                           AND pb.source_transaction_type = 'fuel_event'
+                           AND pb.source_transaction_id::text = f.relay_fuel_transaction_id::text
+                           AND pb.batch_status = 'posted')
+                      THEN 'relay-linked row: fill ' || left(f.relay_fuel_transaction_id::text, 8) || ' not yet posted through its fuel_event path'
+                 END
+               WHEN NOT EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL) THEN 'no expense document for this fuel purchase'
+               WHEN NOT EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL AND e.posting_status = 'posted') THEN 'fuel expense exists but is not posted'
+             END,
+             '/fuel/transactions/' || f.id::text,
+             COALESCE(
+               (SELECT jsonb_build_object('expense', e.expense_number, 'posting_status', e.posting_status, 'journal_entry_id', e.journal_entry_id) FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL ORDER BY e.created_at DESC LIMIT 1),
+               CASE WHEN f.relay_fuel_transaction_id IS NOT NULL THEN jsonb_build_object('relay_fill_id', f.relay_fuel_transaction_id, 'via', 'posting_batch_fuel_event') END
+             )
         FROM fuel.fuel_transactions f WHERE f.operating_company_id = $1::uuid AND f.id = $2::uuid AND f.voided_at IS NULL` },
   // An assignment names its card by LAST DIGITS (fuel_card_assignments has no fuel_card_id); this is the same match
   // resolveUnitByCard (fuel/fuel-card-assignments.service.ts) uses: digit tail, live, effective at the fill.
