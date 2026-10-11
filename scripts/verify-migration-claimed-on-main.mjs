@@ -108,6 +108,12 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-2/advance-once-5785",
     new Set(["db/migrations/202615500300_driver_advance_balances_one_row_per_posting.sql"]),
   ],
+  // LEAD RULING 443.45 Ask C (CC-3): the A/P chain bills a salaried week with no per-load driver bill (5780). Claimed first
+  // (#26330, d7e60ead0c) under claimed_by CC-3, inside the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/443-51-salaried-ap-chain",
+    new Set(["db/migrations/202615530900_driver_settlement_gl_bills_pay_basis_salaried.sql"]),
+  ],
 ]);
 
 function isOwnerAuthorizedOneOff(branch, files) {

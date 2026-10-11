@@ -5062,6 +5062,7 @@
       "load_id",
       "load_number",
       "operating_company_id",
+      "pay_basis",
       "run_id",
       "settlement_id",
       "superseded_at"
