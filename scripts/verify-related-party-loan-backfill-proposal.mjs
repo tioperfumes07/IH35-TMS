@@ -96,10 +96,12 @@ export function staticProblems(srcs) {
   if (json.operating_company_id !== "5c854333-6ea5-4faa-af31-67cb272fef80") {
     errors.push("F3: proposal JSON must be USMCA-scoped");
   }
+  // STALE-LITERAL-OK: 443.22-2f measured USMCA packet lock (Neon 2026-10-11) — 27 live / 182 reversed; not a purge window
   if (json.total_live_candidates !== 27 || json.total_reversed_leave_alone !== 182) {
     errors.push("F3: total_live_candidates / total_reversed_leave_alone must be 27 / 182");
   }
   const live = Array.isArray(json.live_candidates) ? json.live_candidates : [];
+  // STALE-LITERAL-OK: structural assertion — live_candidates length must equal measured_live_non_reversed (27)
   if (live.length !== 27) {
     errors.push(`F3: live_candidates array length must be 27 (got ${live.length})`);
   }
