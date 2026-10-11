@@ -54,7 +54,18 @@ export const RELATED_PARTY_LOAN_TARGET_TYPES = [
    * debit balance (USMCA advanced more than received).
    */
   "party_transfer_out",
+  /**
+   * RULING 443.65 #2b — the party pays a USMCA vendor or expense directly (443.59 entries c and d).
+   * DR funding_account_id (what was paid: 2510 "Dreamline Diesel Card Payable", or the expense account) / CR account_id
+   * (the party's "Due to / from" account). direction "in"; no company bank line; the party entity (counterparty_id, a
+   * vendor of this company) and a source document (target_id = a docs.files row of this company) are required.
+   * A party card paying Relay is NOT this type: that is CC-2's Relay deposit poster (paid_direct_vendor, 1295 + 5005).
+   */
+  "party_paid_vendor",
 ] as const;
+
+/** The two party entry types the party-entry poster posts (443.59 a / c / d / e). */
+export const PARTY_ENTRY_TARGET_TYPES = ["party_transfer_out", "party_paid_vendor"] as const;
 
 export type RelatedPartyLoanTargetType = (typeof RELATED_PARTY_LOAN_TARGET_TYPES)[number];
 
@@ -105,6 +116,10 @@ export type CreateRelatedPartyLoanEntryErr =
   | { error: "paid_direct_vendor_requires_direction_in" }
   | { error: "paid_direct_vendor_forbids_bank_transaction" }
   | { error: "paid_direct_vendor_requires_funding_account" }
+  | { error: "party_transfer_out_requires_direction_out" }
+  | { error: "party_entry_requires_party_vendor" }
+  | { error: "party_paid_vendor_requires_source_document" }
+  | { error: "party_transfer_out_pair_must_be_party_funding" }
   | {
       error: "repayment_exceeds_facility_open_balance";
       open_balance_cents: number;
@@ -154,7 +169,7 @@ export async function createRelatedPartyLoanEntry(
   )) as { rows: Array<{ id: string }> };
   if (!acct.rows[0]) return { error: "account_not_found_for_company" };
 
-  const isPaidDirect = b.target_type === "paid_direct_vendor";
+  const isPaidDirect = b.target_type === "paid_direct_vendor" || b.target_type === "party_paid_vendor";
   if (isPaidDirect) {
     if (b.direction !== "in") {
       return { error: "paid_direct_vendor_requires_direction_in" };
@@ -172,11 +187,44 @@ export async function createRelatedPartyLoanEntry(
   const isPartyTransferOut = b.target_type === "party_transfer_out";
   if (isPartyTransferOut) {
     if (b.direction !== "out") {
-      return { error: "paid_direct_vendor_requires_direction_in" as const }; // reuse closest code
+      return { error: "party_transfer_out_requires_direction_out" };
     }
     if (!b.funding_account_id) {
       return { error: "paid_direct_vendor_requires_funding_account" };
     }
+  }
+
+  // RULING 443.65 #2b/#2d — a party entry names its party (the vendor it is owed to / by): a related-party posting
+  // without the party entity is refused. party_paid_vendor also carries its source document (target_id = docs.files).
+  // party_transfer_out may name, in target_id, the party funding it answers (the pair, 443.59 item 4/5).
+  const isPartyEntry = b.target_type === "party_transfer_out" || b.target_type === "party_paid_vendor";
+  if (isPartyEntry) {
+    if (b.counterparty_kind !== "vendor" || !b.counterparty_id) return { error: "party_entry_requires_party_vendor" };
+    const party = (await client.query(
+      `SELECT id::text FROM mdata.vendors
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
+      [b.counterparty_id, b.operating_company_id]
+    )) as { rows: Array<{ id: string }> };
+    if (!party.rows[0]) return { error: "party_entry_requires_party_vendor" };
+  }
+  if (b.target_type === "party_paid_vendor") {
+    if (!b.target_id) return { error: "party_paid_vendor_requires_source_document" };
+    const doc = (await client.query(
+      `SELECT id::text FROM docs.files
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deleted_at IS NULL LIMIT 1`,
+      [b.target_id, b.operating_company_id]
+    )) as { rows: Array<{ id: string }> };
+    if (!doc.rows[0]) return { error: "party_paid_vendor_requires_source_document" };
+  }
+  if (b.target_type === "party_transfer_out" && b.target_id) {
+    const funding = (await client.query(
+      `SELECT id::text FROM accounting.related_party_loan_entries
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND account_id = $3::uuid
+          AND target_type IN ('paid_direct_vendor', 'party_paid_vendor') AND deleted_at IS NULL AND reversed_at IS NULL
+        LIMIT 1`,
+      [b.target_id, b.operating_company_id, b.account_id]
+    )) as { rows: Array<{ id: string }> };
+    if (!funding.rows[0]) return { error: "party_transfer_out_pair_must_be_party_funding" };
   }
 
   let fundingAccountId: string | null = b.funding_account_id ?? null;
@@ -205,6 +253,7 @@ export async function createRelatedPartyLoanEntry(
       ? "repayment"
       : b.target_type === "bank_funding" ||
           b.target_type === "paid_direct_vendor" ||
+          b.target_type === "party_paid_vendor" ||
           b.target_type === "party_transfer_out" ||
           Boolean(b.bank_transaction_id)
         ? "funding"

@@ -29,6 +29,9 @@ import {
   RELATED_PARTY_LOAN_TARGET_TYPES,
   createRelatedPartyLoanEntry,
 } from "./create-entry.service.js";
+import { getPartyLedger, listPartyAccounts } from "./party-ledger.service.js";
+import { pairPartyTransfer, postPartyEntry } from "./party-entry-post.service.js";
+import { createJournalEntryOnClient } from "../journal-entries.service.js";
 
 const TARGET_TYPES = RELATED_PARTY_LOAN_TARGET_TYPES; // includes party_transfer_out (443.59)
 
@@ -405,10 +408,43 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
     }
   );
 
-  // ── PARTY LEDGER (443.59) — running account for one facility / party. ────────────────────────────
-  // Returns every JE line that posted to the party's 2410 sub-account, with running balance,
-  // plus the balance sign ("due_to" = liability = party funded USMCA; "due_from" = asset = USMCA
-  // advanced more than received). Owner reads this as "Do I owe them?" vs "Do they owe me?".
+  // ── PARTY LEDGER (443.59 item 4 / RULING 443.65 #2c) — read from the party's GL account. ─────────────────
+  // Every "Due to / from <party>" account, with its GL balance (credit-positive).
+  app.get(
+    "/api/v1/accounting/related-party-loans/parties",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+      if (!q.success) return validationError(reply, q.error);
+      const parties = await withCompanyScope(authUser.uuid, q.data.operating_company_id, (client) =>
+        listPartyAccounts(client as never, q.data.operating_company_id)
+      );
+      return { parties };
+    }
+  );
+
+  // Every movement on one party account: date, document, bank line, running balance, pair / "unpaired".
+  app.get(
+    "/api/v1/accounting/related-party-loans/party-ledger/:accountId",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const params = z.object({ accountId: z.string().uuid() }).safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+      if (!q.success) return validationError(reply, q.error);
+      const ledger = await withCompanyScope(authUser.uuid, q.data.operating_company_id, (client) =>
+        getPartyLedger(client as never, q.data.operating_company_id, params.data.accountId)
+      );
+      if (!ledger) return reply.code(404).send({ error: "party_account_not_found" });
+      return ledger;
+    }
+  );
+
+  // Facility shortcut (443.59 #26377): the facility's account, same ledger.
   app.get(
     "/api/v1/accounting/related-party-loans/ledger/:facilityId",
     { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
@@ -419,58 +455,66 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
       if (!params.success) return validationError(reply, params.error);
       const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
       if (!q.success) return validationError(reply, q.error);
-
-      const result = await withCompanyScope(authUser.uuid, q.data.operating_company_id, async (client) => {
+      const ledger = await withCompanyScope(authUser.uuid, q.data.operating_company_id, async (client) => {
         const fac = (await client.query(
-          `SELECT f.id::text, f.account_id::text, a.account_number, a.account_name,
-                  f.counterparty_name, f.relationship
-             FROM accounting.related_party_loan_facilities f
-             LEFT JOIN catalogs.accounts a ON a.id = f.account_id
-            WHERE f.id = $1::uuid AND f.operating_company_id = $2::uuid AND f.deleted_at IS NULL
-            LIMIT 1`,
+          `SELECT account_id::text FROM accounting.related_party_loan_facilities
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deleted_at IS NULL LIMIT 1`,
           [params.data.facilityId, q.data.operating_company_id]
-        )) as { rows: Array<Record<string, string>> };
-        if (!fac.rows[0]) return { notFound: true as const };
-        const facility = fac.rows[0];
-
-        // All posted JE lines for the party's 2410 account, ordered chronologically.
-        // A credit to 2410 = party funded USMCA (running credit balance = USMCA owes party).
-        // A debit to 2410 = USMCA sent money to party (reduces credit or creates debit balance).
-        const lines = (await client.query(
-          `SELECT jep.id::text,
-                  je.entry_date::text AS date,
-                  je.memo,
-                  jep.debit_or_credit,
-                  jep.amount_cents,
-                  e.display_id AS loan_display_id,
-                  e.target_type,
-                  e.direction,
-                  e.counterparty_name,
-                  SUM(
-                    CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents
-                         ELSE -jep.amount_cents END
-                  ) OVER (ORDER BY je.entry_date, je.created_at, jep.id) AS running_balance_cents
-             FROM accounting.journal_entry_postings jep
-             JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-               AND je.voided_at IS NULL AND je.status = 'posted'
-               AND je.operating_company_id = $2::uuid
-             LEFT JOIN accounting.related_party_loan_entries e
-               ON e.je_id = je.id AND e.operating_company_id = $2::uuid
-            WHERE jep.account_id = $1::uuid
-            ORDER BY je.entry_date, je.created_at, jep.id`,
-          [facility.account_id, q.data.operating_company_id]
-        )) as { rows: Array<Record<string, unknown>> };
-
-        const balanceCents = (lines.rows[lines.rows.length - 1] as { running_balance_cents?: number } | undefined)
-          ?.running_balance_cents ?? 0;
-        // credit balance = USMCA owes party = "Due to <party>" (liability)
-        // debit balance = party owes USMCA = "Due from <party>" (asset)
-        const balanceSign = balanceCents >= 0 ? "due_to" : "due_from";
-
-        return { facility, lines: lines.rows, balance_cents: balanceCents, balance_sign: balanceSign };
+        )) as { rows: Array<{ account_id: string }> };
+        if (!fac.rows[0]) return null;
+        return getPartyLedger(client as never, q.data.operating_company_id, fac.rows[0].account_id);
       });
+      if (!ledger) return reply.code(404).send({ error: "facility_not_found" });
+      return ledger;
+    }
+  );
 
-      if ("notFound" in result) return reply.code(404).send({ error: "facility_not_found" });
+  // ── POST one party entry (443.59 a / c / d / e) through the shared JE writer. ──────────────────────────
+  app.post(
+    "/api/v1/accounting/related-party-loans/:id/post",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const params = idParamSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.body ?? {});
+      if (!q.success) return validationError(reply, q.error);
+      const role = String((authUser as { role?: string }).role ?? "");
+      const result = await withCompanyScope(authUser.uuid, q.data.operating_company_id, (client) =>
+        postPartyEntry(
+          client as never,
+          { operatingCompanyId: q.data.operating_company_id, entryId: params.data.id, actorUserId: authUser.uuid, actorRole: role },
+          { createJournalEntryOnClient: createJournalEntryOnClient as never }
+        )
+      );
+      if (result.outcome === "refused") return reply.code(400).send({ error: result.reason });
+      return result;
+    }
+  );
+
+  // ── PAIR (443.59 item 5) — the owner confirms which party funding a money-out answers. Posts nothing. ──────
+  app.post(
+    "/api/v1/accounting/related-party-loans/:id/pair",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const params = idParamSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const b = z
+        .object({ operating_company_id: z.string().uuid(), funding_entry_id: z.string().uuid() })
+        .safeParse(req.body ?? {});
+      if (!b.success) return validationError(reply, b.error);
+      const result = await withCompanyScope(authUser.uuid, b.data.operating_company_id, (client) =>
+        pairPartyTransfer(client as never, {
+          operatingCompanyId: b.data.operating_company_id,
+          transferEntryId: params.data.id,
+          fundingEntryId: b.data.funding_entry_id,
+          actorUserId: authUser.uuid,
+        })
+      );
+      if (!result.ok) return reply.code(400).send({ error: result.reason });
       return result;
     }
   );

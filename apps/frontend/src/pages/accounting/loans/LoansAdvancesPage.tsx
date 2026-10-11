@@ -11,12 +11,14 @@ import {
   listRelatedPartyLoanFacilities,
   listRelatedPartyLoans,
   getPartyLedger,
+  listPartyAccounts,
   loanRowsOf,
   type LoanDirection,
   type LoanStatus,
   type LoanTargetType,
   type RelatedPartyLoanFacilityRow,
   type RelatedPartyLoanRow,
+  type PartyAccount,
   type PartyLedgerLine,
 } from "../../../api/related-party-loans";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -57,10 +59,17 @@ const TARGETS: Array<"" | LoanTargetType> = [
   "bank_repayment",
   "paid_direct_vendor",
   "party_transfer_out",
+  "party_paid_vendor",
 ];
 
 function money(cents: number | null | undefined): string {
   return formatUsdCents(cents);
+}
+
+/** Credit-positive party balance: Cr = USMCA owes the party ("Due to"), Dr = the party owes USMCA ("Due from"). */
+function balanceText(cents: number): string {
+  if (cents === 0) return "Square";
+  return cents > 0 ? `Cr ${money(cents)} · Due to` : `Dr ${money(Math.abs(cents))} · Due from`;
 }
 
 export function LoansAdvancesPage() {
@@ -74,7 +83,8 @@ export function LoansAdvancesPage() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardPrefill, setWizardPrefill] = useState<LoanApplicationPrefill | null>(null);
   const [expandedFacilityId, setExpandedFacilityId] = useState<string | null>(null);
-  const [ledgerFacilityId, setLedgerFacilityId] = useState<string | null>(null);
+  // RULING 443.65 #2c — the party ledger is keyed by the party's "Due to / from" GL account (every movement on it).
+  const [ledgerAccountId, setLedgerAccountId] = useState<string | null>(null);
 
   const facilitiesQuery = useQuery({
     queryKey: ["related-party-loan-facilities", companyId],
@@ -98,10 +108,17 @@ export function LoansAdvancesPage() {
     refetchInterval: 30_000,
   });
 
+  const partiesQuery = useQuery({
+    queryKey: ["related-party-accounts", companyId],
+    queryFn: () => listPartyAccounts(companyId),
+    enabled: Boolean(companyId),
+    refetchInterval: 30_000,
+  });
+
   const ledgerQuery = useQuery({
-    queryKey: ["party-ledger", companyId, ledgerFacilityId],
-    queryFn: () => getPartyLedger(ledgerFacilityId!, companyId),
-    enabled: Boolean(companyId) && Boolean(ledgerFacilityId),
+    queryKey: ["party-ledger", companyId, ledgerAccountId],
+    queryFn: () => getPartyLedger(ledgerAccountId!, companyId),
+    enabled: Boolean(companyId) && Boolean(ledgerAccountId),
     refetchInterval: 30_000,
   });
 
@@ -114,7 +131,8 @@ export function LoansAdvancesPage() {
   const refetchAll = () => {
     void facilitiesQuery.refetch();
     void listQuery.refetch();
-    if (ledgerFacilityId) void ledgerQuery.refetch();
+    void partiesQuery.refetch();
+    if (ledgerAccountId) void ledgerQuery.refetch();
   };
 
   return (
@@ -316,12 +334,12 @@ export function LoansAdvancesPage() {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setLedgerFacilityId((cur) => (cur === r.id ? null : r.id));
+                      setLedgerAccountId((cur) => (cur === r.account_id ? null : r.account_id));
                     }}
                     className="text-xs font-semibold text-[#14314F] underline hover:text-[#0F1729]"
                     data-testid={`party-ledger-btn-${r.id}`}
                   >
-                    {ledgerFacilityId === r.id ? "Close" : "View"}
+                    {ledgerAccountId === r.account_id ? "Close" : "View"}
                   </button>
                 ),
               },
@@ -335,81 +353,100 @@ export function LoansAdvancesPage() {
         </div>
       )}
 
-      {companyId && ledgerFacilityId && (
+      {companyId && (
+        <div className="mt-4" data-testid="party-accounts-section">
+          <div className="mb-2 text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
+            Party ledgers — Due to / from
+          </div>
+          <table className="w-full text-xs" data-testid="party-accounts-table">
+            <thead>
+              <tr className="border-b border-[#E5E7EB] bg-[#EEF2F6] text-section-header font-bold uppercase text-[#1F2937]">
+                <th className="px-2 py-1 text-center">Account</th>
+                <th className="px-2 py-1 text-center">Party</th>
+                <th className="px-2 py-1 text-center">Movements</th>
+                <th className="px-2 py-1 text-center">Balance</th>
+                <th className="px-2 py-1 text-center">Ledger</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(partiesQuery.data?.parties ?? []).map((p: PartyAccount) => (
+                <tr key={p.account_id} className="border-b border-[#F3F4F6]">
+                  <td className="px-2 py-1">{p.account_number}</td>
+                  <td className="px-2 py-1">{p.party_name}</td>
+                  <td className="px-2 py-1 text-right">{p.movement_count}</td>
+                  <td className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>{balanceText(p.balance_cents)}</td>
+                  <td className="px-2 py-1 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setLedgerAccountId((cur) => (cur === p.account_id ? null : p.account_id))}
+                      className="text-xs font-semibold text-[#14314F] underline hover:text-[#0F1729]"
+                      data-testid={`party-account-ledger-btn-${p.account_number}`}
+                    >
+                      {ledgerAccountId === p.account_id ? "Close" : "View"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {companyId && ledgerAccountId && (
         <div className="mt-4 rounded-sm border border-[#E5E7EB] bg-white p-4" data-testid="party-ledger-panel">
           <div className="mb-2 flex items-center justify-between">
             <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
-              Party Ledger —{" "}
-              {ledgerQuery.data?.account_name ?? ledgerQuery.data?.counterparty_name ?? "Loading…"}
+              Party Ledger — {ledgerQuery.data?.account.account_name ?? "Loading…"}
             </div>
             {ledgerQuery.data && (
-              <div className="text-xs font-semibold">
-                Net:{" "}
-                <span
-                  className={
-                    ledgerQuery.data.net_balance_cents > 0
-                      ? "text-[#B91C1C]"
-                      : ledgerQuery.data.net_balance_cents < 0
-                        ? "text-[#16A34A]"
-                        : "text-[#6B7280]"
-                  }
-                >
-                  {ledgerQuery.data.net_balance_cents > 0
-                    ? `Due to party ${money(ledgerQuery.data.net_balance_cents)}`
-                    : ledgerQuery.data.net_balance_cents < 0
-                      ? `Due from party ${money(Math.abs(ledgerQuery.data.net_balance_cents))}`
-                      : "Settled"}
-                </span>
+              <div className="text-xs font-semibold" data-testid="party-ledger-balance">
+                Balance: {balanceText(ledgerQuery.data.balance_cents)}
               </div>
             )}
           </div>
-          {ledgerQuery.isLoading && (
-            <div className="text-xs text-[#6B7280]">Loading ledger…</div>
-          )}
-          {ledgerQuery.isError && (
-            <div className="text-xs text-[#B91C1C]">Failed to load ledger.</div>
-          )}
+          {ledgerQuery.isLoading && <div className="text-xs text-[#6B7280]">Loading ledger…</div>}
+          {ledgerQuery.isError && <div className="text-xs text-[#B91C1C]">Failed to load ledger.</div>}
           {ledgerQuery.data && ledgerQuery.data.lines.length === 0 && (
-            <div className="text-xs text-[#6B7280]">No posted JE lines for this account yet.</div>
+            <div className="text-xs text-[#6B7280]">No movements on this account yet.</div>
           )}
           {ledgerQuery.data && ledgerQuery.data.lines.length > 0 && (
             <table className="mt-2 w-full text-xs" data-testid="party-ledger-table">
               <thead>
-                <tr className="border-b border-[#E5E7EB] text-xs font-bold uppercase text-[#4B5563]">
-                  <th className="py-1 text-left">Date</th>
-                  <th className="py-1 text-left">Memo</th>
-                  <th className="py-1 text-left">Doc</th>
-                  <th className="py-1 text-right">Debit</th>
-                  <th className="py-1 text-right">Credit</th>
-                  <th className="py-1 text-right">Running balance</th>
+                <tr className="border-b border-[#E5E7EB] bg-[#EEF2F6] text-section-header font-bold uppercase text-[#1F2937]">
+                  <th className="px-2 py-1 text-center">Date</th>
+                  <th className="px-2 py-1 text-center">Document</th>
+                  <th className="px-2 py-1 text-center">Bank line</th>
+                  <th className="px-2 py-1 text-center">Debit</th>
+                  <th className="px-2 py-1 text-center">Credit</th>
+                  <th className="px-2 py-1 text-center">Running balance</th>
+                  <th className="px-2 py-1 text-center">Pair</th>
                 </tr>
               </thead>
               <tbody>
                 {ledgerQuery.data.lines.map((line: PartyLedgerLine) => (
-                  <tr key={line.id} className="border-b border-[#F3F4F6]">
-                    <td className="py-1">{formatDateUS(line.date)}</td>
-                    <td className="py-1 max-w-[200px] truncate">{line.memo ?? "—"}</td>
-                    <td className="py-1">{line.loan_display_id ?? "—"}</td>
-                    <td className={`py-1 ${QBO_MONEY_CELL_CLASS}`}>
+                  <tr key={line.posting_id} className="border-b border-[#F3F4F6]">
+                    <td className="px-2 py-1 whitespace-nowrap">{formatDateUS(line.date)}</td>
+                    <td className="px-2 py-1 whitespace-nowrap">{line.document}</td>
+                    <td className="px-2 py-1 max-w-[280px] truncate" title={line.bank_line_description ?? ""}>
+                      {line.bank_transaction_id
+                        ? `${formatDateUS(line.bank_line_date ?? "")} · ${line.bank_line_description ?? ""}`
+                        : "—"}
+                    </td>
+                    <td className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
                       {line.debit_or_credit === "debit" ? money(line.amount_cents) : ""}
                     </td>
-                    <td className={`py-1 ${QBO_MONEY_CELL_CLASS}`}>
+                    <td className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
                       {line.debit_or_credit === "credit" ? money(line.amount_cents) : ""}
                     </td>
-                    <td
-                      className={`py-1 ${QBO_MONEY_CELL_CLASS} font-semibold ${
-                        line.running_balance_cents > 0
-                          ? "text-[#B91C1C]"
-                          : line.running_balance_cents < 0
-                            ? "text-[#16A34A]"
-                            : "text-[#6B7280]"
-                      }`}
-                    >
-                      {line.running_balance_cents === 0
-                        ? "—"
-                        : line.running_balance_cents > 0
-                          ? `Due to ${money(line.running_balance_cents)}`
-                          : `Due from ${money(Math.abs(line.running_balance_cents))}`}
+                    <td className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS} font-semibold`}>
+                      {balanceText(line.running_balance_cents)}
+                    </td>
+                    <td className="px-2 py-1 whitespace-nowrap" data-testid="party-ledger-pair">
+                      {line.pair_status === "paired"
+                        ? `Paired · ${line.pair_document ?? ""}`
+                        : line.pair_status === "unpaired"
+                          ? "Unpaired"
+                          : "—"}
                     </td>
                   </tr>
                 ))}

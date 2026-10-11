@@ -99,6 +99,18 @@ export class PostingLineIsAlreadyAReversalError extends Error {
  * reclassify's out-leg named expense line 8314452b without stamping its reversed_by_line_id, so the line read as live
  * and the expense void reversed it a second time).
  */
+/**
+ * RULING 443.65 #2d (443.59 item 8) — a posting on a related party's "Due to / from <party>" account (202615560900) must
+ * name its party: without an entity nobody can say whose balance the line moves. Refused here, the one writer every
+ * posting goes through, after the entity is derived from the source document.
+ */
+export class RelatedPartyPostingWithoutPartyError extends Error {
+  constructor(accountId: string, journalEntryUuid: string) {
+    super(`related_party_posting_without_party: journal_entry ${journalEntryUuid} posts to "Due to / from" account ${accountId} with no party entity`);
+    this.name = "RelatedPartyPostingWithoutPartyError";
+  }
+}
+
 export class PostingLineAlreadyReversedError extends Error {
   readonly code = "posting_line_already_reversed";
   constructor(readonly targetLineId: string) {
@@ -235,6 +247,14 @@ async function writeLine(
   if (!line.entity_uuid) {
     const derived = await resolvePostingSourceEntity(client, line);
     if (derived) line = { ...line, entity_uuid: derived.entity_uuid, entity_type: derived.entity_type };
+  }
+  // RULING 443.65 #2d — a line on a "Due to / from <party>" account names its party, or it is refused.
+  if (!line.entity_uuid) {
+    const party = await client.query<{ hit: number }>(
+      `SELECT 1 AS hit FROM catalogs.accounts WHERE id = $1::uuid AND account_name LIKE 'Due to / from %' LIMIT 1`,
+      [line.account_id]
+    );
+    if (party.rows[0]) throw new RelatedPartyPostingWithoutPartyError(String(line.account_id), String(line.journal_entry_uuid));
   }
   // 443.42 #6 — a Relay fill posting carries its fill's load (posting_source_load_id cannot reach it).
   if (!line.load_id) {
