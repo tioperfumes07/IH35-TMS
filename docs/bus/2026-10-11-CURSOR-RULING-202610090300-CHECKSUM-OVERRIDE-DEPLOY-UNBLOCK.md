@@ -42,3 +42,15 @@ Do **not** rewrite the applied SQL. Do **not** drop the IF NOT EXISTS shim (fres
 1. BE redeploy of tip that includes this override.
 2. Render log: `SKIP 202610090300_backfill_bank_categorization_vendor.sql (checksum override accepted)`.
 3. `GET https://ih35-tms.onrender.com/api/v1/healthz/shallow` → `git_sha` equals the squash-merge commit.
+
+## Follow-up — 202610101430 stub (same deploy unblock)
+
+After `202610090300` SKIP accepted, the next fail was:
+
+```
+Migration 202610101430_relay_deposit_is_a_bank_match_target.sql was modified after apply
+(ledger checksum 1647065777c2a211accaafaca3aebc36d7ec318dac437ece133c89e40c54458e,
+ disk checksum 7cf5f4c4d97ebdca948be698cbd32fb04cef3d2abbf88513eebe8c0d779fd7a4).
+```
+
+Prod applied the full DDL at 02:12Z (#26337). Tip replaced the file with a ledger stub; substantive DDL lives in `202615441301` (applied 14:17Z, ledger==disk). Override records the stub pair under this same ruling.
