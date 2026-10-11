@@ -9,7 +9,8 @@ import { attributeExpenseToLoad } from "../expense-attribution/attribute.service
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { resolveExpenseCategoryId } from "./expense-category-catalog.js";
-import { postSourceTransaction, postSourceTransactionInClientTx, reversePostedSourceTransactionInClientTx, PostingEngineError } from "./posting-engine.service.js";
+import { postSourceTransaction, postSourceTransactionInClientTx, reversePostedSourceTransactionInClientTx, PostingEngineError, ensureOpenPeriod } from "./posting-engine.service.js";
+import { createJournalEntryOnClient } from "./journal-entries.service.js";
 import { openAndRunIntake } from "../driver-finance/feed-gate/feed-gate.service.js";
 
 /** OWNER LAW 2026-10-01: an expense created in the app always posts; a poster failure refuses the create (transaction rolls back). */
@@ -2027,6 +2028,121 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         return reply.code(409).send({ error: "expense_has_lines", detail: "expense already carries line items; not editable via this route" });
       }
       return reply.code(200).send({ expense_id: expenseId, status: "draft", ...result.after });
+    } catch (err) {
+      if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: "period_locked" });
+      throw err;
+    }
+  });
+
+  // 443.28 — QuickBooks-style payment-source reclassification for a POSTED expense.
+  // Creates a 2-line JE (Dr old_payment_account / Cr new_payment_account) without voiding the document.
+  // Refused when: bank-matched, period closed, or moving to Relay without a relay_txn_id.
+  const changePaymentSourceBodySchema = z.object({
+    operating_company_id: z.string().uuid(),
+    new_payment_account_uuid: z.string().uuid(),
+    relay_txn_id: z.string().trim().optional(),
+    reason: z.string().trim().min(1),
+  });
+  app.post("/api/v1/expenses/:expenseId/change-payment-source", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const params = z.object({ expenseId: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error" });
+    const body = changePaymentSourceBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    const oci = body.data.operating_company_id;
+    const expenseId = params.data.expenseId;
+
+    try {
+      const result = await withCompanyScope(user.uuid, oci, async (client) => {
+        const r = await client.query(
+          `SELECT e.posting_status, e.status, e.payment_account_uuid::text,
+                  e.total_amount_cents::text, e.transaction_date::text, e.is_sample_data,
+                  ${EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_txn_id
+             FROM accounting.expenses e
+            WHERE e.id = $1::uuid AND e.operating_company_id = $2::uuid LIMIT 1`,
+          [expenseId, oci]
+        );
+        const exp = r.rows[0] as { posting_status: string; status: string; payment_account_uuid: string | null; total_amount_cents: string; transaction_date: string; is_sample_data: boolean; matched_bank_txn_id: string | null } | undefined;
+        if (!exp) return { kind: "not_found" as const };
+        if (exp.status === "void") return { kind: "is_void" as const };
+        if (exp.posting_status !== "posted") return { kind: "not_posted" as const, posting_status: exp.posting_status };
+        if (exp.matched_bank_txn_id) return { kind: "bank_matched" as const, bank_txn_id: exp.matched_bank_txn_id };
+        const oldPaymentAccountUuid = exp.payment_account_uuid;
+        if (!oldPaymentAccountUuid) return { kind: "no_payment_account" as const };
+        if (oldPaymentAccountUuid === body.data.new_payment_account_uuid) return { kind: "same_account" as const };
+
+        // period must be open — createJournalEntryOnClient also checks, but this surfaces the error early
+        await ensureOpenPeriod(client, oci, exp.transaction_date);
+
+        // Relay-wallet rule: if new account = fuel_wallet_relay role, relay_txn_id is required
+        const relayRoleRow = await client.query(
+          `SELECT account_id::text FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1::uuid AND role_name = 'fuel_wallet_relay' LIMIT 1`,
+          [oci]
+        );
+        const relayAccountId = (relayRoleRow.rows[0] as { account_id: string } | undefined)?.account_id;
+        if (relayAccountId && body.data.new_payment_account_uuid === relayAccountId && !body.data.relay_txn_id) {
+          return { kind: "relay_txn_required" as const };
+        }
+
+        // Verify new account exists in this company's CoA
+        const newAcctRow = await client.query(
+          `SELECT id::text FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+          [body.data.new_payment_account_uuid, oci]
+        );
+        if (!newAcctRow.rows[0]) return { kind: "account_not_found" as const };
+
+        // Reclassification JE: Dr old_payment_account / Cr new_payment_account
+        const totalCents = Math.round(Number(exp.total_amount_cents));
+        const je = await createJournalEntryOnClient(
+          client,
+          {
+            operating_company_id: oci,
+            entry_date: exp.transaction_date,
+            memo: `Payment source reclassification — ${body.data.reason}`,
+            source: "auto",
+            source_transaction_type: "expense",
+            source_transaction_id: expenseId,
+            is_sample_data: exp.is_sample_data ?? false,
+            postings: [
+              { account_id: oldPaymentAccountUuid, debit_or_credit: "debit", amount_cents: totalCents, source_transaction_type: "expense", source_transaction_id: expenseId },
+              { account_id: body.data.new_payment_account_uuid, debit_or_credit: "credit", amount_cents: totalCents, source_transaction_type: "expense", source_transaction_id: expenseId },
+            ],
+          },
+          { userId: String(user.uuid), role: String(user.role ?? "") }
+        );
+
+        await client.query(
+          `UPDATE accounting.expenses SET payment_account_uuid = $1::uuid, updated_at = now() WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
+          [body.data.new_payment_account_uuid, expenseId, oci]
+        );
+        await appendCrudAudit(client, user.uuid, "expense.payment_source_changed", {
+          expense_id: expenseId,
+          old_payment_account_uuid: oldPaymentAccountUuid,
+          new_payment_account_uuid: body.data.new_payment_account_uuid,
+          reclassification_je_id: je.id,
+          relay_txn_id: body.data.relay_txn_id ?? null,
+          reason: body.data.reason,
+        }, "info");
+
+        return { kind: "ok" as const, reclassification_je_id: je.id, old_payment_account_uuid: oldPaymentAccountUuid, new_payment_account_uuid: body.data.new_payment_account_uuid };
+      });
+
+      if (result.kind === "not_found") return reply.code(404).send({ error: "expense_not_found" });
+      if (result.kind === "is_void") return reply.code(409).send({ error: "expense_is_void" });
+      if (result.kind === "not_posted") return reply.code(409).send({ error: "expense_not_posted", detail: `posting_status=${result.posting_status}` });
+      if (result.kind === "bank_matched") return reply.code(409).send({ error: "expense_bank_matched", detail: `bank_transaction_id=${result.bank_txn_id} must be unmatched first` });
+      if (result.kind === "no_payment_account") return reply.code(409).send({ error: "expense_no_payment_account" });
+      if (result.kind === "same_account") return reply.code(409).send({ error: "same_payment_account" });
+      if (result.kind === "relay_txn_required") return reply.code(422).send({ error: "relay_txn_id_required", detail: "moving to the Relay Fuel Wallet requires relay_txn_id" });
+      if (result.kind === "account_not_found") return reply.code(404).send({ error: "payment_account_not_found" });
+      return reply.code(200).send({
+        expense_id: expenseId,
+        reclassification_journal_entry_id: result.reclassification_je_id,
+        old_payment_account_uuid: result.old_payment_account_uuid,
+        new_payment_account_uuid: result.new_payment_account_uuid,
+      });
     } catch (err) {
       if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: "period_locked" });
       throw err;
