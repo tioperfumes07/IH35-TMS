@@ -888,6 +888,17 @@ export async function previewSettlementCreator(
  * a free AT number or optional P-NNNN. R-186.1 (no AT mint on Book Load open) is unchanged —
  * Creator Post allocate is the authorized mint path.
  */
+/** Owner 9:46 PM CT 2026-10-10: the load the driver was on THE DAY OF THE ADVANCE — the one load of this settlement whose
+ *  pickup..delivery covers the day (an undelivered load runs open-ended). None or several -> null (the row's own load). */
+export function loadNumberOnAdvanceDay(
+  loads: Array<{ load_number: string; pickup_date?: string | null; delivery_date?: string | null }>,
+  day: string | null | undefined
+): string | null {
+  if (!day) return null;
+  const hits = loads.filter((l) => l.pickup_date && l.pickup_date <= day && (!l.delivery_date || day <= l.delivery_date));
+  return hits.length === 1 ? hits[0]!.load_number : null;
+}
+
 export async function postSettlementCreatorInClientTx(
   client: DbClient,
   actorUserId: string,
@@ -1333,10 +1344,36 @@ export async function postSettlementCreatorInClientTx(
 
   // Advances → createDriverCashAdvanceCore (bill-payment / loan overflow handled inside core).
   // Owner 2026-10-10: resolve load_id from load_number so the engine ties the driver bill payment to that load.
+  // OWNER 9:44 / 9:46 PM CT 2026-10-10: "A CASH ADVANCE IS A BILL PAYMENT TO THAT LOAD" — "we already have the design in
+  // place". One driver bill per load; the advance is a payment applied to the bill of the load the driver was on THE DAY
+  // OF THE ADVANCE, a document he matches manually in Banking. The existing design is B5 in createDriverCashAdvanceCore
+  // (cash-advances/cash-advance-create.ts: linked_driver_bill_id — the amount clears that bill, overflow becomes a loan),
+  // recovered by the close engine (settlement-payrun-close.service.ts loadRecoverableAdvances). The Creator used to pass
+  // NO linked bill, so the advance was never a payment on any bill.
+  const loadOnAdvanceDay = (day: string | null | undefined) => loadNumberOnAdvanceDay(draft.loads ?? [], day);
   for (const adv of draft.advances ?? []) {
     if (adv.amount_cents <= 0) continue;
+    const advanceLoadNumber = loadOnAdvanceDay(adv.date) ?? adv.load_number ?? null;
     const advanceLoadId =
-      adv.load_id ?? (await resolveLoadIdByNumber(adv.load_number)) ?? null;
+      (advanceLoadNumber === adv.load_number ? adv.load_id : null) ?? (await resolveLoadIdByNumber(advanceLoadNumber)) ?? null;
+    let advanceBillId = adv.linked_driver_bill_id ?? null;
+    if (!advanceBillId && advanceLoadId) {
+      const bills = (
+        await client.query<{ id: string }>(
+          `SELECT id::text FROM driver_finance.driver_bills
+            WHERE operating_company_id = $1::uuid AND load_id = $2::uuid AND driver_id = $3::uuid AND voided_at IS NULL
+            LIMIT 2`,
+          [draft.operating_company_id, advanceLoadId, draft.driver_id],
+        )
+      ).rows;
+      if (bills.length !== 1) {
+        throw new SettlementCreatorError(
+          "advance_bill_not_found",
+          `Advance ${dollarsFromCents(adv.amount_cents)} on ${adv.date ?? "?"}: load ${advanceLoadNumber ?? "?"} has ${bills.length} driver bills for this driver — one is required.`,
+        );
+      }
+      advanceBillId = bills[0]!.id;
+    }
     const created = await createDriverCashAdvanceCore(client as never, actorUserId, draft.operating_company_id, {
       driver_id: draft.driver_id,
       amount: dollarsFromCents(adv.amount_cents),
@@ -1346,8 +1383,9 @@ export async function postSettlementCreatorInClientTx(
         recipient_type: "driver",
         notes: adv.description ?? `Settlement ${draft.settlement_no} advance`,
       },
-      linked_driver_bill_id: adv.linked_driver_bill_id ?? null,
+      linked_driver_bill_id: advanceBillId,
       load_id: advanceLoadId,
+      historical_posting_date: adv.date ?? null,
       unit_id: draft.unit_id ?? null,
       liability_type: "advance",
     });
