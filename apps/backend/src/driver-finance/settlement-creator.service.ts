@@ -10,7 +10,7 @@
 import { linkSettlementFuelRowToRelayFill } from "../fuel/relay-fill-link.service.js";
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { createExpenseFromFuelTransaction, resolveFuelLineAccount } from "../fuel/fuel-expense-document.service.js";
+import { createExpenseFromFuelTransaction, resolveFuelLineAccount, adoptRelayFillExpenseDocument } from "../fuel/fuel-expense-document.service.js";
 import { enteredFuelRowHash, FuelProviderTransactionDuplicateError, refuseDuplicateProviderTransaction } from "../fuel/fuel-provider-reference.js";
 import { resolveLineItemAndAccount, type ResolvedLineAccount } from "../accounting/line-item-account.js";
 import {
@@ -1373,6 +1373,15 @@ export async function postSettlementCreatorInClientTx(
         });
         if (!fillPosted.journal_entry_id) throw new SettlementCreatorError("relay_fill_post_refused", `Fuel line: relay fill posting returned no journal entry`);
         journalEntryIds.push(fillPosted.journal_entry_id);
+        // Lead 443.41 A: the fill gets its expense DOCUMENT, adopting the SAME journal entry (one JE, never two).
+        const fillDoc = await adoptRelayFillExpenseDocument(client as never, {
+          operating_company_id: draft.operating_company_id,
+          relay_fill_id: relayFillId,
+          journal_entry_id: fillPosted.journal_entry_id,
+          requesting_user_uuid: actorUserId,
+        });
+        if (fillDoc.outcome === "refused") throw new SettlementCreatorError("relay_fill_document_refused", `Fuel line: ${fillDoc.reason}`);
+        expenseIds.push(fillDoc.expense_id);
       }
     }
     if (doc.outcome === "created" || doc.outcome === "already_exists") {

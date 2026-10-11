@@ -7460,4 +7460,68 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — loads created since
 action: OWNER_AUTH_ID=AUTH-409 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-38-reresolve-creator-stops.ts --apply
 rehearsal: throwaway br-morning-king-ak5hyvy8 (COMMITTED, deleted): 24 loads / 48 stops; 6 on a Samsara address (street + facility + its own fence), 42 zip / city center listed, 0 failed; false rooftop 48 -> 0; zip-center fences active 33 -> 0 (retired); 33 street-less locations deactivated; Samsara-linked fences active 1 -> 6
 expires_at: 2026-10-12T05:42:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T06:20:41Z
+consumed_by: CC-2 (443.38 stop re-resolution)
+row_counts: prod run 1 (06:20Z) identical to the rehearsal — 24 loads / 48 stops; 6 on a Samsara address, 42 zip / city center listed, 0 failed; false rooftop 48 -> 0; 33 location-linked zip-center fences retired; 33 street-less locations deactivated. Run 2 (06:5xZ, idempotent, 130 loads): 0 changes.
+proof_query: node scripts/verify-stops-resolve-samsara-no-zip-fence.mjs (prod) -> PASS
+
+## AUTH-412
+issued_at: 2026-10-11T06:41:12Z
+issued_by: Lead ruling 443.41 G(2): "first-stop deadhead = miles from the same unit's previous load's last stop, from the mileage engine, source 'computed'; NULL only when no previous load." Recorded by CC-2 in the PR that ships the script, as with AUTH-404..410
+owner_quotes: "This must be fixed and done automatically for the next seedings, none should ever fail." (2026-10-11 00:30 CT) · "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — mdata.load_stops.leg_miles of the FIRST stop of loads booked since 2026-10-11T00:00Z, filled ONCE where NULL through learnLoadLanes -> computeFirstStopDeadhead (point_mileage cache / routing provider, else the owner-ruled chain-deadhead haversine), each fill with its audit row dispatch.load_stop.leg_miles_computed (source 'computed'). No money. No DELETE. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-412 DATABASE_URL=<prod> npx tsx apps/backend/scripts/auth412-backfill-first-stop-deadhead.mts --branch=br-fancy-credit-akjnd07a --apply
+rehearsal: throwaway br-wild-rice-akq8fxt9 (COMMITTED, deleted): first-stop leg_miles NULL 48 -> 12; 36 computed (haversine_chain — routing provider osrm_not_configured, 0 osrm rows ever in point_mileage); 12 NULL = no previous load for the unit; verify-booked-loads-save-miles PASS over 107 loads
+expires_at: 2026-10-12T06:41:12Z
+status: CONSUMED
+reconsumed_at: 2026-10-11T06:48:40Z
+tail_row_counts: tail runs after 06:46Z — 13627, 13657 and one more booked mid-rollover filled (3 computed, haversine_chain); first-stop NULL ends at 13 = no previous unit load; verify-booked-loads-save-miles PASS over 141 loads; bb78b509f6 live 06:47:47Z
+reopened_at: 2026-10-11T06:50:10Z
+reopened_reason: tail run — load 13627 (and any other) booked by CC-3 after the 06:46Z run and before bb78b509f6 went live; same scope, same command, unexpired (coordinator order)
+previous_status: CONSUMED
+consumed_at: 2026-10-11T06:46:30Z
+consumed_by: CC-2 (443.41 G2 deadhead backfill)
+row_counts: prod, two idempotent runs — first-stop leg_miles NULL 60 -> 13 (47 computed) then 14 -> 13 (1 more: load 13588 booked by CC-3 between run 1 and the deploy); 48 computed in total, all haversine_chain (routing provider osrm_not_configured); 13 NULL = no previous load for the unit: 13497 13498 13502 13504 13505 13506 13517 13525 13527 13551 13565 13569 13625
+proof_query: node scripts/verify-booked-loads-save-miles.mjs (prod) -> PASS over 135 loads (RULE 4 first-stop deadhead included)
+
+## AUTH-413
+issued_at: 2026-10-11T06:41:07Z
+issued_by: Lead 443.41 / 443.38 item 2 ("deactivate zip-center geofences, do not delete history"), owner order 2026-10-11 00:30 CT. Recorded by CC-2 in the PR that ships the script, as with AUTH-404..410
+owner_quotes: "This must be fixed and done automatically for the next seedings, none should ever fail." (2026-10-11 00:30 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — geo.geofences with source 'auto_dispatch', location_kind 'customer_site', created since 2026-10-11T00:00Z, ACTIVE, whose label has no street: is_active=false (history kept). Nothing deleted. Their copies in the owner's Samsara account are NOT touched by this AUTH.
+action: OWNER_AUTH_ID=AUTH-413 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-41-retire-auto-zip-fences.ts --apply
+rehearsal: throwaway br-rapid-boat-akfob38g (COMMITTED, deleted): 57 retired, all 57 had been pushed to Samsara; verify-stops-resolve-samsara-no-zip-fence PASS after
+expires_at: 2026-10-12T06:41:07Z
+status: CONSUMED
+consumed_at: 2026-10-11T06:52:33Z
+consumed_by: CC-2 (443.41 zip-center fence retirement)
+row_counts: prod run 1: 63 auto-dispatch customer-site zip-center fences retired (is_active=false), all 63 had been pushed to the owner's Samsara (copies untouched; list ~/IH35-LEAD-CHANNEL/2026-10-11-CC2-AUTH-413-retired-zip-fences-pushed-to-samsara.txt). Run 2 after 6f84ffa6bf went live (06:51Z): 0.
+proof_query: node scripts/verify-stops-resolve-samsara-no-zip-fence.mjs (prod) RULE 8 -> PASS
+
+## AUTH-411
+issued_at: 2026-10-11T06:40:11Z
+issued_by: Lead ruling 443.41 A: "A Relay fill gets an accounting.expenses DOCUMENT (fuel line(s) + 'Fuel Card Fee' $2.00 line, vendor Relay Purchases f87771ce, paid from 1295 Relay Fuel Wallet), linked to the SAME JE the fill already posts — one JE, never two ... CC-2 writer + backfill through the engine of every Relay fill already posted (5772's 3 + whatever the 59 post). Fork-proven first." Recorded by CC-2 in the PR that ships the script, as with AUTH-404..410
+owner_quotes: "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — every live journal entry whose postings carry source_transaction_type 'fuel_event' + an integrations.relay_fuel_transactions id and that has no live accounting.expenses document: one posted document written through adoptRelayFillExpenseDocument (vendor Relay, payment account = the entry's own credit leg, lines = the entry's own debit legs, journal_entry_id = that entry). No new JE, no posting change, trial balance + posting + JE counts asserted unchanged. No DELETE. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-411 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-41a-relay-fill-expense-docs.ts --apply
+rehearsal: throwaway br-ancient-sea-akm9yugn (COMMITTED, deleted): 65 Relay-fill entries, 65 documents created, 0 refused; JEs 1,054 / postings 2,597 / trial balance 0 unchanged; verify-costs-are-expenses-not-handwritten-jes LIVE PASS (0 violations); 5000 GL vs expense lines gap 33,026.28 -> 30.00 (the 30.00 = three driver bills 13597 / 13579 / 13582 with a $10 fuel line on 5000 — bills, not Relay)
+expires_at: 2026-10-12T06:40:11Z
+status: CONSUMED
+consumed_at: 2026-10-11T07:00:41Z
+consumed_by: CC-2 (443.41 A)
+row_counts: prod — 141 live Relay-fill journal entries, 141 expense documents written through adoptRelayFillExpenseDocument, 0 refused; JEs 1,276 / postings 3,233 / trial balance 0 unchanged; verify-costs-are-expenses-not-handwritten-jes LIVE PASS (141 -> 0 violations); 5000 GL vs expense-line gap 69,488.85 -> 47.00 (driver-bill fuel lines on 5000, not Relay)
+
+## AUTH-410
+issued_at: 2026-10-11T06:00:00Z
+issued_by: Lead ruling 443.40: "put entity = vendor Relay on the 1295 and 5005 lines in D6". Recorded by CC-2 in the PR that ships the script, as with AUTH-404..409
+owner_quotes: "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — accounting.journal_entry_postings with source_transaction_type 'relay_deposit' on the Relay Fuel Wallet (role fuel_wallet_relay) and 5005 Fuel Card Fees: entity_uuid / entity_type filled ONCE where NULL with the one active vendor named Relay ("Relay Purchases"). Funding legs untouched. No amount / account / side / JE change; trial balance + count asserted. No DELETE.
+action: OWNER_AUTH_ID=AUTH-410 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-40-relay-deposit-entity.ts --apply
+rehearsal: throwaway br-tiny-darkness-ak6eitry (COMMITTED, deleted): 52 filled (1295: 26, 5005: 26), trial balance 0 across 1,026 postings unchanged
+expires_at: 2026-10-12T06:00:00Z
+status: CONSUMED
+consumed_at: 2026-10-11T07:02:19Z
+consumed_by: CC-2 (443.40 Relay vendor on deposit legs)
+row_counts: prod identical to the rehearsal — 52 relay_deposit lines filled with vendor Relay Purchases (1295: 26, 5005: 26); trial balance 0 across 3,233 postings unchanged
+proof_query: SELECT count(*) FROM accounting.journal_entry_postings WHERE source_transaction_type='relay_deposit' AND entity_uuid IS NULL AND account in (1295, 5005) -> 0

@@ -53,7 +53,11 @@ const BATCH_LOAD_NUMBERS = [
 ];
 // Pinned regression values, per the Lead's own order.
 const PINNED_DATES = {
-  "13630": "2026-09-30",
+  // CC-3 2026-10-11 (Lead 443.x settlement entry): 13630 was re-booked through the Settlement Creator and re-invoiced from
+  // its 09-30 delivery. Its customer, Refrigerx Transportation LLC (684f5776), has NO payment terms on file
+  // (payment_terms_id NULL), so the owner's 2026-10-01 rule (same as 13637 below) makes it Net-30: due 10-30. Measured live:
+  // all 24 of Refrigerx's live invoices (08-10 .. 10-07) are Net-30. The old 09-30 pin was the pre-rule zero-terms reading.
+  "13630": "2026-10-30",
   "13634": "2026-09-30",
   "13635": "2026-10-01",
   // Owner 2026-10-01 (in chat to CC-2): "CUSTOMERS WITH NO PAYMENT TERMS 30 DAYS" -- 13637 (Westgate, no terms on file) is
