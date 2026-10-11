@@ -1,10 +1,10 @@
 {
-  "healthzSha": "fa9c10e",
-  "generated_at": "2026-10-10T23:01:32.929Z",
+  "healthzSha": "6f84ffa",
+  "generated_at": "2026-10-11T06:53:39.786Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "fa9c10e",
+    "deployedSha": "6f84ffa",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 26209,
-      "title": "FINDING: ROUND-443.9 LANE: FINANCIAL -- the AUTH-400 purge left 3,606 USMCA rows pointing at purged documents (feed intakes/checks, lane + deadhead caches, driver notifications, file links, generated dispatch files) because the generator never saw reports/pwa, never classified the feed-gate tables, and feed_intake_checks' WORM had no listed-row arm; the purge engine now knows them",
+      "number": 26296,
+      "title": "docs(bus): AUTH-412 re-consumed after the tail run (first-stop NULL 13 = no previous unit load; guard PASS over 141)",
       "state": "merged",
-      "mergedAtCt": "10/10/2026, 06:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26209",
-      "sha": "53b3f4c9dd",
-      "committedAtIso": "2026-10-10T18:00:33-05:00"
+      "mergedAtCt": "10/11/2026, 01:49 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26296",
+      "sha": "adfddfee06",
+      "committedAtIso": "2026-10-11T01:49:47-05:00"
     },
     {
-      "number": 26208,
-      "title": "Cursor- ROUND-443.22-MIG: land migration 202615441200 on main (collision unblock)",
+      "number": 26295,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26208",
-      "sha": "51c255f57b",
-      "committedAtIso": "2026-10-10T17:59:43-05:00"
+      "mergedAtCt": "10/11/2026, 01:49 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26295",
+      "sha": "bbacd55246",
+      "committedAtIso": "2026-10-11T06:49:37Z"
     },
     {
-      "number": 26207,
-      "title": "docs(bus): Lead — QuickBooks invoice->load map (001-143) + exceptions for the 443.19 pre-flight",
+      "number": 26293,
+      "title": "FINDING: ACCT-F2026100665 LANE: FINANCIAL — 443.41: a Settlement Creator (historical_backfill) booking fired live dispatch side effects — driver packets, internal emails, driver-app notices, and zip-center fences pushed into the owner's Samsara",
       "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26207",
-      "sha": "fa9c10ee4c",
-      "committedAtIso": "2026-10-10T17:56:48-05:00"
+      "mergedAtCt": "10/11/2026, 01:47 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26293",
+      "sha": "6f84ffa6bf",
+      "committedAtIso": "2026-10-11T01:47:28-05:00"
     },
     {
-      "number": 26206,
-      "title": "FINDING: ACCT-F2026101006 FINDING: ACCT-F2026101007 LANE: FINANCIAL — fix DisputesHubPage EntityLink + MoneyInput reds + 443.18 Disputes tab in Driver Finance sidebar",
+      "number": 26294,
+      "title": "docs(bus): AUTH-412 reopened for the tail run (loads booked between the 06:46Z run and the deploy)",
       "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26206",
-      "sha": "60500127c4",
-      "committedAtIso": "2026-10-10T22:39:23Z"
+      "mergedAtCt": "10/11/2026, 01:47 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26294",
+      "sha": "9af8d5fd69",
+      "committedAtIso": "2026-10-11T01:47:22-05:00"
     },
     {
-      "number": 26205,
-      "title": "FINDING: ROUND-443.22-1 LANE: FINANCIAL — accounting.related_party_loan_facilities was live on Neon (migration 202615441200) but unclassified in verify-transaction-linkage-law TABLE_REGISTRY, so every seat's money gate went red",
+      "number": 26292,
+      "title": "docs(bus): AUTH-412 CONSUMED — first-stop deadhead computed for 48 USMCA loads, 13 with no previous unit load left NULL",
       "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26205",
-      "sha": "094c0d5afa",
-      "committedAtIso": "2026-10-10T17:36:43-05:00"
+      "mergedAtCt": "10/11/2026, 01:46 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26292",
+      "sha": "f47a7fdc79",
+      "committedAtIso": "2026-10-11T01:46:36-05:00"
     },
     {
-      "number": 26204,
-      "title": "docs(bus): ROUND 443.22 Lead order to Cursor (related-party loans from bank Categorize) + rulings to CC-1/CC-2/CC-3 + NOW-CURSOR pointer",
+      "number": 26291,
+      "title": "FINDING: ACCT-F2026100664 LANE: FINANCIAL — 443.41 G(2): a booked load's first-stop leg_miles is the computed deadhead from the same unit's previous load, NULL only when there is none",
       "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26204",
-      "sha": "1ef894eaf2",
-      "committedAtIso": "2026-10-10T17:35:57-05:00"
+      "mergedAtCt": "10/11/2026, 01:43 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26291",
+      "sha": "bb78b509f6",
+      "committedAtIso": "2026-10-11T01:43:59-05:00"
     },
     {
-      "number": 26202,
-      "title": "FINDING: ACCT-F2026100640 LANE: FINANCIAL — ROUND 443.21: the Relay webhook stored a fill under the ?entity company; the only account in use posts to ?entity=TRANSP, so USMCA never got its fuel by webhook (and after 443.15 it would be refused); a verified TRANSP or USMCA delivery is now stored once, under USMCA",
+      "number": 26287,
+      "title": "FINDING: ACCT-F44340 LANE: FINANCIAL -- LEAD RULING 443.40: verify-costs-are-expenses-not-handwritten-jes exempts source relay_deposit ONLY when the line resolves to its integrations.relay_deposits row",
       "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26202",
-      "sha": "51ce8937a3",
-      "committedAtIso": "2026-10-10T17:32:12-05:00"
+      "mergedAtCt": "10/11/2026, 01:41 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26287",
+      "sha": "40f637698a",
+      "committedAtIso": "2026-10-11T01:41:15-05:00"
     },
     {
-      "number": 26203,
-      "title": "chore(claim): restore 202615450900 (CC-3 443.9, dropped by #26173 merge) + reserve 202615460900 (CC-3 443.16)",
+      "number": 26288,
+      "title": "CC-2-443.38: stops resolve to the owner's Samsara address; no zip-center fence; no false rooftop",
       "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26203",
-      "sha": "9510ccf1f0",
-      "committedAtIso": "2026-10-10T17:24:35-05:00"
+      "mergedAtCt": "10/11/2026, 01:13 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26288",
+      "sha": "d7cf157c64",
+      "committedAtIso": "2026-10-11T01:13:54-05:00"
     },
     {
-      "number": 26201,
-      "title": "Claude-3- ROUND 443.7 a: Settlement Creator post is one transaction (zero rows on refusal), one settlement per post (Option A), tours on one truck book, preview works for new loads",
+      "number": 26286,
+      "title": "FINDING: ACCT-F2026100656 LANE: FINANCIAL — 5785: one $301.99 advance was recovered 4x at the Creator close because the advance-balance view counted each posting once per bridge row (a merged-away profile still bridged to the survivor's 1245 sub-account)",
       "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26201",
-      "sha": "757da599f7",
-      "committedAtIso": "2026-10-10T17:18:30-05:00"
+      "mergedAtCt": "10/11/2026, 01:11 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26286",
+      "sha": "bfa69a7583",
+      "committedAtIso": "2026-10-11T01:11:57-05:00"
     },
     {
-      "number": 26200,
-      "title": "FINDING: ACCT-F443-17 (CC-1) — Disputes tab in Accounting module + open-dispute form",
+      "number": 26285,
+      "title": "docs(bus): AUTH-408 CONSUMED — 24 USMCA loads: non-first leg_miles NULL 24 -> 0, lane_mileage 24, point_mileage 23, customer_lanes 14; restore its status lines lost to the union merge",
       "state": "merged",
-      "mergedAtCt": "10/10/2026, 05:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26200",
-      "sha": "cb0ac0022f",
-      "committedAtIso": "2026-10-10T17:15:11-05:00"
+      "mergedAtCt": "10/11/2026, 01:08 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26285",
+      "sha": "85a0a6fe5f",
+      "committedAtIso": "2026-10-11T01:08:47-05:00"
     }
   ]
 }
