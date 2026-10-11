@@ -12,7 +12,8 @@
  *                                                           to a Transportation book
  *   0210, 6248         Jorge personal                    -> HELD: a related-party loan advance "paid directly to a vendor";
  *   9855               Tio Perfumes 2                       the loan engine (Cursor 443.22-2e) is the one writer, and its
- *   5007               Amex Scentsx                         paid-direct writer is not callable as a service yet
+ *                                                           paid-direct writer is not callable as a service yet
+ *   5007               Amex Scentsx                      -> "Amex Credit Card Payable" (2500-00-001) (Lead ruling 2026-10-11)
  *   anything else      card owner not named              -> HELD, listed for the owner
  *
  * The deposit row keeps Relay's own row as raw_payload (amount / fee / total). The poster refuses unless amount + fee = total
@@ -33,7 +34,8 @@ export const RELAY_DEPOSIT_FUNDING: Readonly<Record<string, DepositFunding>> = O
   "0210": { kind: "held", reason: "loan_engine_paid_direct", label: "Jorge personal card" },
   "6248": { kind: "held", reason: "loan_engine_paid_direct", label: "Jorge personal Bank of America debit" },
   "9855": { kind: "held", reason: "loan_engine_paid_direct", label: "Tio Perfumes 2" },
-  "5007": { kind: "held", reason: "loan_engine_paid_direct", label: "Amex Scentsx" },
+  // Lead ruling 2026-10-11 (after 443.29 b): 5007 credits "Amex Credit Card Payable" (2500-00-001), not the loan engine.
+  "5007": { kind: "account", account_number: "2500-00-001", system_purpose: null, label: "Amex Scentsx (Amex Credit Card Payable)" },
 });
 
 export function fundingForCard(last4: string | null): DepositFunding {

@@ -54,7 +54,7 @@ function toIso(v: string | undefined, fallbackDate: string | undefined): string 
 }
 
 /** Map one CSV row (by header name) to the raw Relay API transaction shape parseRelayFuelTransactionRow expects. */
-function csvRowToApiShape(g: (name: string) => string | undefined): Record<string, unknown> | null {
+export function csvRowToApiShape(g: (name: string) => string | undefined): Record<string, unknown> | null {
   const id = S(g("id"));
   if (!id) return null;
   // CRITICAL (verified 2026-07-12): the Relay CSV mixes type=code (fuel PURCHASED at the pump) with

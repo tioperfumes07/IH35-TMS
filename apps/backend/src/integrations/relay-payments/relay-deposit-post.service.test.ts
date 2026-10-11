@@ -61,7 +61,8 @@ describe("postRelayDeposit (443.29 b)", () => {
   it("the owner's map: 0680 -> 1000, Transportation cards -> 8000, personal/Tio/Scentsx -> loan engine", () => {
     expect(fundingForCard("0680")).toMatchObject({ kind: "account", account_number: "1000" });
     for (const c of ["9708", "1354", "4823"]) expect(fundingForCard(c)).toMatchObject({ kind: "account", system_purpose: "intercompany_ih35" });
-    for (const c of ["0210", "6248", "9855", "5007"]) expect(fundingForCard(c)).toMatchObject({ kind: "held", reason: "loan_engine_paid_direct" });
+    for (const c of ["0210", "6248", "9855"]) expect(fundingForCard(c)).toMatchObject({ kind: "held", reason: "loan_engine_paid_direct" });
+    expect(fundingForCard("5007")).toMatchObject({ kind: "account", account_number: "2500-00-001" });
     expect(Object.keys(RELAY_DEPOSIT_FUNDING).length).toBe(8);
   });
 });

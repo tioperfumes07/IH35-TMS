@@ -27,6 +27,7 @@ const FILES = {
   migration: "db/migrations/202615490300_usmca_fuel_card_fee_item.sql",
   deposit: "apps/backend/src/integrations/relay-payments/relay-deposit-post.service.ts",
   importRoute: "apps/backend/src/integrations/relay-payments/relay-fuel-csv-import.routes.ts",
+  rollForward: "apps/backend/src/integrations/relay-payments/relay-wallet-roll-forward.service.ts",
 };
 
 export function check(src) {
@@ -45,6 +46,10 @@ export function check(src) {
   if (!/reason: "card_owner_not_named"/.test(dep)) f.push(`${FILES.deposit}: an unnamed card must be held, never guessed`);
   if (!/"relay_fuel_wallet"[\s\S]{0,200}"5005"/.test(dep)) f.push(`${FILES.deposit}: deposit must debit 1295 and the fee on 5005`);
   if (!/postRelayDeposit\(/.test(src.importRoute ?? "")) f.push(`${FILES.importRoute}: settled deposits must post on import`);
+  // ROUND 443.29 c — roll-forward.
+  const rfw = src.rollForward ?? "";
+  if (!/relayFillFeeCents\(\{/.test(rfw)) f.push(`${FILES.rollForward}: fill fees must come from relayFillFeeCents`);
+  if (!/bal \+= x\.deposits_cents - x\.fills_cents - x\.fill_fees_cents - x\.lumper_cents;/.test(rfw)) f.push(`${FILES.rollForward}: balance must be deposits − fills − fill fees − lumper (the deposit fee is charged to the card, never the wallet)`);
   return f;
 }
 
@@ -85,6 +90,8 @@ if (process.argv.includes("--selftest")) {
     ["deposit guesses unnamed cards", { ...real, deposit: real.deposit.replace(/reason: "card_owner_not_named"/g, 'reason: "guessed"') }],
     ["canceled deposit posts", { ...real, deposit: real.deposit.replace('if (String(d.status).toLowerCase() !== "settled") return { outcome: "not_settled"', 'if (false) return { outcome: "not_settled"') }],
     ["import does not post", { ...real, importRoute: real.importRoute.replace(/postRelayDeposit\(/g, "noop(") }],
+    ["deposit fee taken from the wallet", { ...real, rollForward: real.rollForward.replace("bal += x.deposits_cents - x.fills_cents", "bal += x.deposits_cents - x.deposit_fees_cents - x.fills_cents") }],
+    ["roll-forward fee constant", { ...real, rollForward: real.rollForward.replace("relayFillFeeCents({", "constantFee({") }],
   ];
   for (const [name, s] of plants) if (check(s).length === 0) fails.push(`plant escaped: ${name}`);
   const ok = { account_number: "5005" };
