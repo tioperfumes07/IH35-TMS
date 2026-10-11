@@ -14,6 +14,8 @@ import { deliverLoadThroughDispatch, localDayStartIso, stampStopsFromTracking, t
 export const SETTLEMENT_CREATOR_QUAL_OVERRIDE_REASON =
   "entered from the AlwaysTrack settlement / load history (Settlement Creator)";
 
+export const SALARIED_OVERRIDE_REASON = "Salaried (owner ruling): weekly salary on the settlement, no per-load driver pay";
+
 export class SettlementCreatorSeedError extends Error {
   code: string;
   constructor(code: string, message: string) {
@@ -331,7 +333,11 @@ export async function ensureDispatchedLoadsForCreator(
         [draft.operating_company_id, draft.driver_id],
       )
     ).rows[0] ?? null;
-    const payOverride = signedRateOverride(draft.settlement_no, load, card);
+    // Lead 443.36 — a salaried driver's load is booked with the 0-rate "Salaried" override (CC-2 #26276): no per-load
+    // driver bill, the per-mile card is neither read nor ended.
+    const payOverride = draft.salaried
+      ? { driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: SALARIED_OVERRIDE_REASON }
+      : signedRateOverride(draft.settlement_no, load, card);
 
     const input: BookLoadInput = {
       ...(payOverride ?? {}),

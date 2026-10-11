@@ -1791,12 +1791,18 @@ export async function postSettlementCreatorInClientTx(
     // The customer's invoice amount and accessorials are never read here: they feed the invoice only.
     const payMiles = creatorPayMiles(load);
     const loadedCents = creatorLoadedPayCents(load);
-    if (payMiles == null || loadedCents == null) {
+    // Lead 443.36 — a salaried driver's load carries no per-load pay line (the salary is the settlement's own line).
+    if (draft.salaried) {
+      if (Number(load.line_haul_rate_cents ?? 0) > 0) {
+        throw new SettlementCreatorError("salaried_load_has_pay_rate", `Load ${load.load_number}: a salaried settlement carries no per-load pay rate.`);
+      }
+    } else if (payMiles == null || loadedCents == null) {
       throw new SettlementCreatorError(
         "driver_pay_rate_missing",
         `Load ${load.load_number}: driver pay needs the short miles and the driver's pay rate per mile.`,
       );
     }
+    if (!draft.salaried && payMiles != null && loadedCents != null) {
     const loadedDesc = `Load ${load.load_number} — Loaded Miles ${payMiles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.line_haul_rate_cents) / 100).toFixed(2)}`;
     await writeDriverPayLine(client, {
       settlementId, companyId: draft.operating_company_id, loadId, loadNumber: load.load_number, lineType: "earnings",
@@ -1812,6 +1818,7 @@ export async function postSettlementCreatorInClientTx(
         settlementId, companyId: draft.operating_company_id, loadId, loadNumber: load.load_number, lineType: "deadhead_pay",
         description: emptyDesc, cents: emptyCents, quantity: Number(load.empty_miles), rateCents: emptyRateCents, itemId: payItems.empty.id,
       });
+    }
     }
 
     // Invoices do not change driver pay; a dry run (rolled back) never mints or sends one.
@@ -1887,7 +1894,23 @@ export async function postSettlementCreatorInClientTx(
   // settlement calculator and poster — on this same transaction. Its NET is the figure checked against the
   // AlwaysTrack TOTAL DUE; a difference refuses the post and names every term, never a silent second number.
   let closeTotals: SettlementCreatorCloseTotals | null = null;
-  if (postsThroughClose) {
+  // Lead 443.36 — a SALARIED settlement with no pay at all (5816: $0, no pay lines, no deductions / escrow / advances)
+  // has nothing for the pay run to post; it is closed as a $0 settlement (no journal entry, no A/P bill), never a refusal.
+  const salariedZero = draft.salaried === true && Math.round(Number(draft.pdf_driver_net_cents)) === 0
+    && !(draft.additional_pay ?? []).some((p) => p.amount_cents > 0) && !(draft.deductions ?? []).some((d) => d.amount_cents > 0)
+    && !(draft.escrow ?? []).some((e) => e.amount_cents > 0) && !(draft.advances ?? []).some((a) => a.amount_cents > 0)
+    && !(draft.expenses ?? []).some((e) => e.is_reimbursable && e.amount_cents > 0);
+  if (postsThroughClose && salariedZero) {
+    await recomputeSettlementHeader(client as never, settlementId, draft.operating_company_id);
+    await client.query(
+      `UPDATE driver_finance.driver_settlements
+          SET status = 'closed', gross_pay = 0, deductions_total = 0, reimbursements_total = 0, net_pay = 0,
+              pay_method = COALESCE(pay_method, 'no_net_pay'), posted_at = COALESCE(posted_at, now()),
+              posted_by_user_id = COALESCE(posted_by_user_id, $3::uuid), updated_at = now()
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [settlementId, draft.operating_company_id, actorUserId],
+    );
+  } else if (postsThroughClose) {
     await recomputeSettlementHeader(client as never, settlementId, draft.operating_company_id);
     // R12 — the Creator never pays: the net stays open on A/P until the owner matches a bank line in Banking.
     const closeInput = { operatingCompanyId: draft.operating_company_id, settlementId, onlyAdvanceIds: advanceIds, leaveNetOpen: true };
