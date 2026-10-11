@@ -1561,13 +1561,20 @@ export type BookLoadOnClientResult = { result: BookLoadResult; afterCommit: () =
  * afterCommit, which the caller invokes only AFTER its own COMMIT succeeds (never on rollback --
  * a rolled-back load has nothing to geofence). afterCommit is a no-op for a refused booking.
  */
-export async function bookLoadOnClient(client: DbClient, input: BookLoadInput): Promise<BookLoadOnClientResult> {
+export async function bookLoadOnClient(
+  client: DbClient,
+  input: BookLoadInput,
+  opts?: { source?: LoadCreateSource }
+): Promise<BookLoadOnClientResult> {
   const refused = bookLoadInputPrecheck(input);
   if (refused) return { result: refused, afterCommit: () => {} };
   await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);
-  // Book Load is always the "running now" case -- every gate below blocks, unchanged from
-  // before this function existed. See createLoadWithFullSideEffects's own header.
-  const result = await createLoadWithFullSideEffects(client, input, { source: "live_feed" });
+  // Book Load is the "running now" case -- every gate below blocks. A caller recording a load that
+  // already ran (the Settlement Creator: a signed AlwaysTrack settlement) declares historical_backfill,
+  // where each gate is still evaluated and its outcome audited as an exception. Anything else is
+  // live_feed (fail-closed). See createLoadWithFullSideEffects's own header.
+  const source: LoadCreateSource = opts?.source === "historical_backfill" ? "historical_backfill" : "live_feed";
+  const result = await createLoadWithFullSideEffects(client, input, { source });
   return { result, afterCommit: () => queueAfterBookExtras(input, result) };
 }
 

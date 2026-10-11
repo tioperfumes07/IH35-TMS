@@ -44,5 +44,10 @@ describe("bookLoadOnClient() — same inline checks as bookLoad() (443.14)", () 
       expect(onClient.result).toEqual(viaWrapper);
       expect(() => onClient.afterCommit()).not.toThrow();
     });
+    it(`refuses ${error} identically under historical_backfill — a declared source never skips an input refusal`, async () => {
+      const viaWrapper = await bookLoad(baseInput(overrides));
+      const backfill = await bookLoadOnClient(untouchable, baseInput(overrides), { source: "historical_backfill" });
+      expect(backfill.result).toEqual(viaWrapper);
+    });
   }
 });
