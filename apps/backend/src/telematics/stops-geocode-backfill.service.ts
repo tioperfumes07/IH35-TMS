@@ -24,6 +24,7 @@ type StopRow = {
   state: string | null; postal_code: string | null; country: string | null;
   latitude: number | null; longitude: number | null; geocode_precision: string | null; geocode_source: string | null;
   location_latitude: number | null; location_longitude: number | null; location_has_street: boolean | null;
+  customer_name?: string | null;
 };
 /** A stop with no owner street and no Samsara address: placed at its zip / city center, NO location, NO fence — listed for the owner. */
 export type StopListedForOwner = { stop_id: string; load_id: string; city: string | null; state: string | null; postal_code: string | null; reason: string };
@@ -57,6 +58,12 @@ export function pickPlaceForFacility(
   const r = distinct[0]!;
   return { result: r, confidence: normName(r.name ?? "") === want ? 0.9 : 0.75 };
 }
+
+/**
+ * The marker a stop gets when EVERY current resolution step has looked and none gave a street (443.49: v2 = the place lookup also
+ * tried the customer-name query). The sweep re-picks any stop not carrying the current marker, so adding a step re-runs it once.
+ */
+export const NO_STREET_SOURCE_TRIED = "no_street_source_v2";
 
 /** A street starts with a house number ("514 Nafta Blvd"); a facility name ("Aldi Salisbury") is not a street. */
 export const looksLikeStreet = (v: string | null | undefined) => /^\s*\d+[a-z]?\s+\S/i.test(String(v ?? ""));
@@ -103,7 +110,8 @@ async function candidateStops(client: DbClient, companyId: string, loadId?: stri
            s.location_id::text, s.address_line1, s.facility_name, s.city, s.state, s.postal_code, s.country,
            s.latitude::double precision, s.longitude::double precision, s.geocode_precision, s.geocode_source,
            loc.latitude::double precision location_latitude, loc.longitude::double precision location_longitude,
-           (nullif(trim(loc.address_line1), '') IS NOT NULL) location_has_street
+           (nullif(trim(loc.address_line1), '') IS NOT NULL) location_has_street,
+           (SELECT c.customer_name FROM mdata.customers c WHERE c.id = l.customer_id) AS customer_name
       FROM mdata.load_stops s
       JOIN mdata.loads l ON l.id = s.load_id
       LEFT JOIN mdata.locations loc ON loc.id=s.location_id AND loc.operating_company_id=$1::uuid AND loc.deactivated_at IS NULL
@@ -174,7 +182,16 @@ export async function geocodeStopsWithClient(
       return null;
     }
     const pick = pickPlaceForFacility(facility, stop, results);
-    return pick;
+    if (pick || !stop.customer_name?.trim()) return pick;
+    // 443.49 (d): a second, no-guess query with the load's CUSTOMER name added (a shipper / consignee is often listed under
+    // the customer's account). Same acceptance: the place's name must match the FACILITY and its city + state the stop's.
+    lastProviderAt = await paceProviderCalls(lastProviderAt);
+    try {
+      results = await searchAddress([facility, stop.customer_name.trim(), stop.city, [stop.state, stop.postal_code].filter(Boolean).join(" ")].join(", "), 5);
+    } catch {
+      return null;
+    }
+    return pickPlaceForFacility(facility, stop, results);
   }
   // Lead 2026-10-01 (measured on load 13593, stops c83ba2a2/886d3f7f: booked 2026-09-30 05:13Z with
   // city/state only, latitude NULL, geocode_attempted_at NULL, geocode_failure_reason NULL — zero
@@ -282,7 +299,7 @@ export async function geocodeStopsWithClient(
             -- 443.44: say WHY the stop has no street, and whether the server-side place step has looked yet (the sweep picks
             -- 'no_street_source' stops it has not tried; a place-key-less run records 'no_street_source_place_untried').
             geocode_failure_reason=$5, location_id=NULL, updated_at=now()
-          WHERE id=$1::uuid RETURNING id::text`, [stop.stop_id, lat, lng, source, placeTried ? "no_street_source" : "no_street_source_place_untried"]);
+          WHERE id=$1::uuid RETURNING id::text`, [stop.stop_id, lat, lng, source, placeTried ? NO_STREET_SOURCE_TRIED : "no_street_source_place_untried"]);
         if (updated.rows[0]) {
           geocoded += 1; locality += 1;
           listed.push({ stop_id: stop.stop_id, load_id: stop.load_id, city: stop.city, state: stop.state, postal_code: stop.postal_code, reason: "no_owner_street_no_samsara_address" });

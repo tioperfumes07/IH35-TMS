@@ -75,3 +75,14 @@ describe("pickPlaceForFacility (443.43 iii)", () => {
     expect(pickPlaceForFacility("Clemens", stop, [place({}), place({ address_line1: "9 Other Rd" })])).toBeNull();
   });
 });
+
+describe("443.49 (d): the customer-name query never accepts the customer's own place", () => {
+  const stop = { city: "Laredo", state: "TX" };
+  const place = (over: Record<string, unknown>) => ({ formatted: "", address_line1: "514 Nafta Blvd", city: "Laredo", state: "TX", country: "US", zip: "78045", lat: 27.6, lon: -99.5, name: "GDC Logistics", ...over });
+  it("a result named after the customer (not the facility) is refused", () => {
+    expect(pickPlaceForFacility("Allura Warehouse", stop, [place({ name: "Value Logistics LLC" })])).toBeNull();
+  });
+  it("a result named after the facility in the stop's city is accepted", () => {
+    expect(pickPlaceForFacility("Allura Warehouse", stop, [place({ name: "Allura Warehouse" })])?.confidence).toBe(0.9);
+  });
+});
