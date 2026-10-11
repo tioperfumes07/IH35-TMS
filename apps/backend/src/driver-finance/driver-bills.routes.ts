@@ -4,6 +4,9 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { canAccessDriverLoadBills } from "./driver-bills-access.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
+import { StraySalariedBillVoidRefusedError, voidStraySalariedDriverBill } from "./void-stray-salaried-driver-bill.service.js";
+
+const VOID_STRAY_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
 
 const querySchema = companyQuerySchema.extend({
   load_id: z.string().uuid(),
@@ -473,5 +476,33 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
         items: payload.bills,
       },
     };
+  });
+
+  /**
+   * LEAD RULING 443.44 Ask B — void ONE stray per-load driver bill on a Salaried-override load (open, never settled, no live
+   * settlement line, no A/P-chain run, no journal posting). Fail-closed; void-not-delete; audited. See
+   * void-stray-salaried-driver-bill.service.ts. Nothing is minted or posted.
+   */
+  app.post("/api/v1/driver-finance/driver-bills/:id/void-stray-salaried", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!VOID_STRAY_ROLES.has(user.role)) return reply.code(403).send({ error: "forbidden", message: "Owner/Administrator/Accountant only" });
+    const params = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const body = z.object({ operating_company_id: z.string().uuid(), reason: z.string().trim().min(20).max(1000) }).safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    try {
+      const result = await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
+        voidStraySalariedDriverBill(
+          client,
+          { operatingCompanyId: body.data.operating_company_id, driverBillId: params.data.id, reason: body.data.reason, actorUserId: user.uuid },
+          (eventClass, payload) => appendCrudAudit(client, user.uuid, eventClass, payload, "warning", "LEAD-443.44-B"),
+        ),
+      );
+      return reply.code(200).send(result);
+    } catch (e) {
+      if (e instanceof StraySalariedBillVoidRefusedError) return reply.code(409).send({ error: e.code, message: e.message });
+      throw e;
+    }
   });
 }
