@@ -7638,7 +7638,11 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the stops of every 
 action: OWNER_AUTH_ID=AUTH-424 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-51-creator-stop-status.ts --file=<443-42-stop-addresses.json> --apply
 rehearsal: throwaway br-red-lake-akjfnqlx (COMMITTED, deleted): 148 loads / 309 stops — pending 309 -> 0, departed 0 -> 309; stamped 296 -> 309 (13 date_only from the workbook, 0 tracked matches); verify-delivered-load-stops-terminal PASS after
 expires_at: 2026-10-12T11:01:43Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T11:12:06Z
+consumed_by: CC-2 (443.51 #3/#4 Creator stop status + stamps)
+row_counts: prod identical to the rehearsal — 148 loads / 309 stops: pending 309 -> 0, departed 0 -> 309; stamped 296 -> 309 (13 date_only from the workbook dates, 0 tracked)
+proof_query: node scripts/verify-delivered-load-stops-terminal.mjs (prod) -> PASS
 
 ## AUTH-425
 issued_at: 2026-10-11T11:03:47Z
