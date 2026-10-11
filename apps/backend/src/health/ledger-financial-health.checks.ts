@@ -111,6 +111,8 @@ export async function assertArTieout(): Promise<void> {
  * those bills is currently fully paid. Excluded here via driver_finance.driver_settlement_gl_bills
  * (a stable, purpose-built link, not the now-cleared posting_hold_reason) so a FUTURE open
  * driver-settlement bill can't reproduce this same false variance.
+ * LEAD 443.51 (CC-3): narrowed — only a settlement bill whose own bill posting does NOT credit ap_control is excluded;
+ * the A/P-chain bills (credit 2000, net open on A/P) are counted.
  */
 export async function assertApTieout(): Promise<void> {
   await withHealthOpco(async (client) => {
@@ -136,12 +138,26 @@ export async function assertApTieout(): Promise<void> {
            AND b.revoked_at IS NULL
            AND b.status <> 'draft'
            AND COALESCE(b.is_sample_data, false) = false
-           AND NOT EXISTS (
-             SELECT 1 FROM driver_finance.driver_settlement_gl_bills g
-              WHERE g.operating_company_id = b.operating_company_id AND g.accounting_bill_id = b.id
+           -- LEAD 443.51 (CC-3): a driver-settlement bill is excluded ONLY when its own bill posting does NOT credit
+           -- ap_control (the ROUND 148 adopted bills, which credit 2170 Driver Net-Pay Clearing). Today's settlement A/P-chain
+           -- bills credit 2000 and leave the net open (R12, open_ap_unpaid), so they ARE the subledger 2000 holds — dropping
+           -- them made the check report a 103,919.26 variance that was exactly their open balance (146 bills, 2026-10-11).
+           AND NOT (
+             EXISTS (
+               SELECT 1 FROM driver_finance.driver_settlement_gl_bills g
+                WHERE g.operating_company_id = b.operating_company_id AND g.accounting_bill_id = b.id
+             )
+             AND NOT EXISTS (
+               SELECT 1 FROM accounting.journal_entry_postings bp
+                 JOIN accounting.journal_entries bje ON bje.id = bp.journal_entry_uuid
+                WHERE bp.operating_company_id = b.operating_company_id
+                  AND bp.source_transaction_type = 'bill' AND bp.source_transaction_id = b.id::text
+                  AND bp.account_id = $2::uuid AND bp.debit_or_credit = 'credit'
+                  AND bje.status <> 'voided'
+             )
            )
       `,
-      [HEALTH_LEDGER_OPCO]
+      [HEALTH_LEDGER_OPCO, apAccountId]
     );
     const glCents = Number(glRes.rows[0]?.cents ?? 0);
     const subCents = Number(subRes.rows[0]?.cents ?? 0);
