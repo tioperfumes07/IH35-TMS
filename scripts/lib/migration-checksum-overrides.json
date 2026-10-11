@@ -523,5 +523,14 @@
     "ruling": "docs/bus/2026-10-11-CURSOR-RULING-202610090300-CHECKSUM-OVERRIDE-DEPLOY-UNBLOCK.md",
     "added_at": "2026-10-11",
     "added_in_pr": "cursor/deploy-checksum-090300-c89b"
+  },
+  {
+    "filename": "202610101430_relay_deposit_is_a_bank_match_target.sql",
+    "ledger_checksum": "1647065777c2a211accaafaca3aebc36d7ec318dac437ece133c89e40c54458e",
+    "disk_checksum": "7cf5f4c4d97ebdca948be698cbd32fb04cef3d2abbf88513eebe8c0d779fd7a4",
+    "reason": "ROUND 443.29-B renumbered substantive relay_deposit match DDL to 202615441301 (after 202615441200) and left 202610101430 as an idempotent BEGIN/COMMIT stub so verify-migration-no-number-collision keeps the prod-applied filename. Prod applied the full DDL bytes at 2026-10-11T02:12:44Z (ledger 1647065777\u2026 = tip of #26337 f6f3965008); stub disk is 7cf5f4c4\u2026. Substantive DDL was re-applied idempotently via 202615441301 (ledger==disk db9f9ee1\u2026 at 14:17Z). Without this override BE migrate fails immediately after 202610090300 SKIP (dep-db5pubp5efls73at492g).",
+    "ruling": "docs/bus/2026-10-11-CURSOR-RULING-202610090300-CHECKSUM-OVERRIDE-DEPLOY-UNBLOCK.md",
+    "added_at": "2026-10-11",
+    "added_in_pr": "cursor/deploy-checksum-101430-c89b"
   }
 ]
