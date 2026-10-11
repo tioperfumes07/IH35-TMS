@@ -28,13 +28,9 @@ import { uploadSourceDocumentFromFile } from "../../api/docs";
 import { WizardReclassifyPanel } from "./WizardReclassifyPanel";
 import { FuelStopLocationPicker } from "../../components/locations/FuelStopLocationPicker";
 import { formatFuelStopLocationLabel } from "../../lib/fuelStopLocationLabel";
-import {
-  peekNextLoadNumber,
-  getLaneMileage,
-  getChainDeadhead,
-  getDriverPayCard,
-  getRouteMileage,
-} from "../../api/dispatch";
+import { peekNextLoadNumber, getDriverPayCard } from "../../api/dispatch";
+import { postMilesRecommendations, type MilesField, type MilesRecommendations } from "../../api/milesRecommendations";
+import { CreatorMilesChoicePanel } from "./CreatorMilesChoicePanel";
 import {
   previewSettlementCreator,
   postSettlementCreator,
@@ -955,146 +951,53 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityGeocodeQueries.map((q) => q.dataUpdatedAt).join(",")]);
 
-  const laneMileageQueries = useQueries({
+  // Lead 443.57 — ONE mileage engine (CC-2 443.55, POST /api/v1/mdata/miles-recommendations): per load, Historical (lane
+  // average) and Google (driving distance) for Practical / Short / Empty. The Creator has no other mileage lookup.
+  const milesRecQueries = useQueries({
     queries: loads.map((load, idx) => {
-      const originCity = String(load.pickup_city ?? "").trim();
-      const originState = String(load.pickup_state ?? "").trim();
-      const destCity = String(load.delivery_city ?? "").trim();
-      const destState = String(load.delivery_state ?? "").trim();
+      const stops = [
+        { latitude: load.pickup_lat ?? null, longitude: load.pickup_lng ?? null, city: load.pickup_city ?? null, state: load.pickup_state ?? null, postal_code: load.pickup_zip ?? null },
+        { latitude: load.delivery_lat ?? null, longitude: load.delivery_lng ?? null, city: load.delivery_city ?? null, state: load.delivery_state ?? null, postal_code: load.delivery_zip ?? null },
+      ];
+      const hasLane = Boolean(load.pickup_city && load.pickup_state && load.delivery_city && load.delivery_state);
       return {
-        queryKey: [
-          "sc-lane-mileage",
-          companyId,
-          idx,
-          originCity,
-          originState,
-          load.pickup_zip,
-          destCity,
-          destState,
-          load.delivery_zip,
-        ],
-        queryFn: () =>
-          getLaneMileage({
-            operating_company_id: companyId,
-            origin_city: originCity,
-            origin_state: originState,
-            origin_postal_code: load.pickup_zip || undefined,
-            dest_city: destCity,
-            dest_state: destState,
-            dest_postal_code: load.delivery_zip || undefined,
-          }),
-        enabled:
-          open &&
-          Boolean(companyId) &&
-          !wrongEntity &&
-          Boolean(originCity && originState && destCity && destState),
-        staleTime: 30_000,
-      };
-    }),
-  });
-
-  const routeMileageQueries = useQueries({
-    queries: loads.map((load, idx) => {
-      const oLat = load.pickup_lat;
-      const oLng = load.pickup_lng;
-      const dLat = load.delivery_lat;
-      const dLng = load.delivery_lng;
-      const hasCoords =
-        hasFiniteCoord(oLat) && hasFiniteCoord(oLng) && hasFiniteCoord(dLat) && hasFiniteCoord(dLng);
-      return {
-        queryKey: ["sc-route-mileage", companyId, idx, oLat, oLng, dLat, dLng],
-        queryFn: () =>
-          getRouteMileage({
-            operating_company_id: companyId,
-            origin_lat: oLat as number,
-            origin_lng: oLng as number,
-            dest_lat: dLat as number,
-            dest_lng: dLng as number,
-          }),
-        enabled: open && Boolean(companyId) && !wrongEntity && hasCoords,
+        queryKey: ["sc-miles-recommendations", companyId, unitId, idx, JSON.stringify(stops)],
+        queryFn: () => postMilesRecommendations({ operating_company_id: companyId, unit_id: unitId ?? null, stops }),
+        enabled: open && Boolean(companyId) && !wrongEntity && hasLane,
         staleTime: 5 * 60 * 1000,
       };
     }),
   });
 
-  const chainDeadheadQueries = useQueries({
-    queries: loads.map((load, idx) => {
-      const pickupCity = String(load.pickup_city ?? "").trim();
-      const pickupState = String(load.pickup_state ?? "").trim();
-      return {
-        queryKey: ["sc-chain-deadhead", companyId, unitId, idx, pickupCity, pickupState],
-        queryFn: () =>
-          getChainDeadhead({
-            operating_company_id: companyId,
-            unit_uuid: unitId!,
-            pickup_city: pickupCity,
-            pickup_state: pickupState,
-            pickup_latitude: load.pickup_lat ?? undefined,
-            pickup_longitude: load.pickup_lng ?? undefined,
-          }),
-        enabled:
-          open &&
-          Boolean(companyId) &&
-          Boolean(unitId) &&
-          !wrongEntity &&
-          Boolean(pickupCity && pickupState),
-        staleTime: 30_000,
-      };
-    }),
-  });
-
+  // A field the settlement left empty takes the engine's recommended value (Historical when its confidence allows autofill,
+  // else Google) — the same default as the Load screen. A typed value is never overwritten.
   useEffect(() => {
     setLoads((prev) => {
       let changed = false;
       const next = prev.map((cur, idx) => {
         if (milesTouchedRef.current[idx]) return cur;
+        const rec = milesRecQueries[idx]?.data as MilesRecommendations | undefined;
+        if (!rec) return cur;
+        const pick = (f: MilesField): number | null => {
+          const r = rec.fields[f];
+          if (r.default_source === "historical") return r.historical?.value ?? null;
+          if (r.default_source === "google") return r.google?.value ?? null;
+          return null;
+        };
         let row = cur;
-        const lane = laneMileageQueries[idx]?.data;
-        const route = routeMileageQueries[idx]?.data;
-        // Prefer lane DB (fills covers Thin/ZIP/reverse). Route-engine practical is coords fallback.
-        const laneMiles =
-          lane &&
-          lane.fills &&
-          lane.practical_miles != null &&
-          Number(lane.practical_miles) > 0
-            ? Number(lane.practical_miles)
-            : lane && lane.practical_miles != null && Number(lane.practical_miles) > 0
-              ? Number(lane.practical_miles)
-              : null;
-        const routeMiles =
-          route && "practical_miles" in route && route.practical_miles != null && Number(route.practical_miles) > 0
-            ? Number(route.practical_miles)
-            : null;
-        const loaded = laneMiles ?? routeMiles;
-        if (loaded != null && !(row.loaded_miles != null && row.loaded_miles > 0)) {
-          row = { ...row, loaded_miles: loaded, line_haul_miles: loaded };
+        const practical = pick("practical");
+        if (practical != null && !(row.loaded_miles != null && row.loaded_miles > 0)) {
+          row = { ...row, loaded_miles: practical, line_haul_miles: practical };
           changed = true;
         }
-        // Driver pay miles = short (company practical stays on loaded_miles).
-        const laneShort =
-          lane &&
-          lane.short_miles != null &&
-          Number(lane.short_miles) > 0 &&
-          !lane.short_miles_untrustworthy
-            ? Number(lane.short_miles)
-            : null;
-        const routeShort =
-          route && "shortest_miles" in route && route.shortest_miles != null && Number(route.shortest_miles) > 0
-            ? Number(route.shortest_miles)
-            : null;
-        const short = laneShort ?? routeShort;
+        const short = pick("short");
         if (short != null && !(row.miles_shortest != null && row.miles_shortest > 0)) {
           row = { ...row, miles_shortest: short };
           changed = true;
         }
-        const dh = chainDeadheadQueries[idx]?.data;
-        if (
-          dh &&
-          dh.source === "chain" &&
-          dh.deadhead_miles != null &&
-          !(row.empty_miles != null && row.empty_miles > 0)
-        ) {
-          row = { ...row, empty_miles: dh.deadhead_miles };
+        const empty = pick("empty");
+        if (empty != null && !(row.empty_miles != null && row.empty_miles > 0)) {
+          row = { ...row, empty_miles: empty };
           changed = true;
         }
         return row;
@@ -1102,16 +1005,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
       return changed ? next : prev;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- data refs change per query result
-  }, [
-    laneMileageQueries.map((q) => `${q.dataUpdatedAt}:${q.status}`).join(","),
-    routeMileageQueries.map((q) => `${q.dataUpdatedAt}:${q.status}`).join(","),
-    chainDeadheadQueries.map((q) => `${q.dataUpdatedAt}:${q.status}`).join(","),
-    loads.map((l) => `${l.pickup_city}|${l.pickup_state}|${l.delivery_city}|${l.delivery_state}|${l.pickup_lat}|${l.delivery_lat}`).join(";"),
-  ]);
+  }, [milesRecQueries.map((q) => `${q.dataUpdatedAt}:${q.status}`).join(",")]);
 
-  const laneMileageFetching = laneMileageQueries.some((q) => q.isFetching);
-  const routeMileageFetching = routeMileageQueries.some((q) => q.isFetching);
-  const chainDeadheadFetching = chainDeadheadQueries.some((q) => q.isFetching);
+  const milesRecFetching = milesRecQueries.some((q) => q.isFetching);
   const cityGeocodeFetching = cityGeocodeQueries.some((q) => q.isFetching);
 
   function addLoadRow() {
@@ -1912,11 +1808,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                           });
                         }}
                         title={
-                          laneMileageFetching || routeMileageFetching || cityGeocodeFetching
+                          milesRecFetching || cityGeocodeFetching
                             ? "Looking up loaded miles…"
                             : !load.pickup_city || !load.pickup_state || !load.delivery_city || !load.delivery_state
-                              ? "Set pickup + delivery city and state — miles fill from lane DB, else route engine"
-                              : "Company practical miles — different from driver short pay miles"
+                              ? "Set pickup + delivery city and state — the mileage engine recommends Historical / Google miles"
+                              : "Settlement's practical miles (Document) — the Historical / Google recommendations are in Load miles below"
                         }
                         data-testid={`sc-load-loaded-miles-${idx}`}
                         ariaLabel="Company loaded miles"
@@ -1960,9 +1856,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                             ? "Pick a unit — empty miles fill from that truck's last delivery → this pickup"
                             : !load.pickup_city || !load.pickup_state
                               ? "Set pickup city + state — empty miles use this truck's last delivery → pickup"
-                              : chainDeadheadFetching
+                              : milesRecFetching
                                 ? "Looking up this unit's last delivery…"
-                                : "Filled from this truck's last delivery → this pickup (chain deadhead)"
+                                : "Settlement's empty miles (Document) — the engine's deadhead from this truck's last stop is in Load miles below"
                         }
                         data-testid={`sc-load-empty-miles-${idx}`}
                         ariaLabel="Empty miles"
@@ -2013,6 +1909,26 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     <span />
                     <span />
                   </div>
+
+                  {/* Lead 443.57 — the load's saved operating miles per field: Document | Historical | Google | Manual (CC-2's engine). */}
+                  <CreatorMilesChoicePanel
+                    idx={idx}
+                    rec={milesRecQueries[idx]?.data as MilesRecommendations | undefined}
+                    loading={Boolean(milesRecQueries[idx]?.isFetching)}
+                    error={milesRecQueries[idx]?.error ? String((milesRecQueries[idx]?.error as Error).message ?? milesRecQueries[idx]?.error) : null}
+                    documentValues={{ practical: load.loaded_miles, short: load.miles_shortest, empty: load.empty_miles }}
+                    choice={load.miles_choice}
+                    saved={preview?.miles_choices?.find((m) => m.load_number === String(load.load_number))?.fields ?? null}
+                    onChange={(next) =>
+                      setLoads((prev) => {
+                        const cur = prev[idx];
+                        if (!cur) return prev;
+                        const out = [...prev];
+                        out[idx] = { ...cur, miles_choice: next };
+                        return out;
+                      })
+                    }
+                  />
 
                   <div className={fieldGridClass}>
                     <Field label="Accessorial item" span={2}>

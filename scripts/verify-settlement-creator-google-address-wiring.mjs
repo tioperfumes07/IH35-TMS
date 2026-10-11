@@ -13,12 +13,15 @@
  *  3. buildStops passes address_line1 + postal_code + lat/lng from the draft (Book Load stop shape).
  *  4. Customer EntityPicker carries selectedOption so the label is the name, not a UUID.
  *  5. Cancel goes through attemptClose / onRegisterAttemptClose (dirty discard).
- *  6. getLaneMileage + getDriverPayCard + getChainDeadhead are wired (miles + $/mi like Book Load).
+ *  6. CC-2's mileage engine (postMilesRecommendations) + getDriverPayCard are wired (miles + $/mi like Book Load); the
+ *     per-field miles selector (CreatorMilesChoicePanel) is rendered. Lead 443.57 replaced the lane / route / chain-deadhead
+ *     lookups with that ONE engine.
  *  7. Loads subtotal uses line_haul_amount_cents (invoice total), not the $/mi rate.
  *  8. Route schema accepts pickup_address / delivery_address (Zod otherwise strips them).
  *  9. company→driver load carry (defaultLoadNumber).
  * 10. SETL-F440 — onChange after a Places pick uses functional setLoads so city/state are not wiped.
- * 11. SETL-F440 — getRouteMileage is the coords fallback for loaded miles (lane DB first).
+ * 11. Lead 443.57 — the engine is the only mileage path: postMilesRecommendations runs per load row (useQueries) and the
+ *     drawer calls no getLaneMileage / getRouteMileage / getChainDeadhead.
  * 12. SETL-F440 — seed requires city+state; address_line1 stays optional (|| undefined).
  * 13. SETL-F441 — geocodeSearch + cityGeocodeQueries so hand-typed city/state still get coords → route miles.
  * 14. SETL-F441 — MoneyInput uses moneyInputClass (not bordered inputClass) so leading $ is QBO-correct.
@@ -67,14 +70,14 @@ function run({ drawer, seed, routes }) {
     out.push("RULE 5: Cancel / Escape does not use ParityDrawer attemptClose — dirty discard is bypassed.");
   }
 
-  if (!/getLaneMileage/.test(drawer)) {
-    out.push("RULE 6: getLaneMileage is not wired — loaded miles never autofill from lane history.");
+  if (!/postMilesRecommendations/.test(drawer)) {
+    out.push("RULE 6: CC-2's mileage engine (postMilesRecommendations) is not wired — miles never get the Historical / Google recommendations.");
   }
   if (!/getDriverPayCard/.test(drawer)) {
     out.push("RULE 6b: getDriverPayCard is not wired — Rate $/mi never fills from the driver card.");
   }
-  if (!/getChainDeadhead/.test(drawer)) {
-    out.push("RULE 6c: getChainDeadhead is not wired — empty miles never fill from this truck's last delivery.");
+  if (!/<CreatorMilesChoicePanel\b/.test(drawer)) {
+    out.push("RULE 6c: the per-field miles selector (CreatorMilesChoicePanel: Document | Historical | Google | Manual) is not rendered.");
   }
 
   if (/line_haul_rate_cents \?\? 0\)\) \+ Math\.max\(0, Number\(l\.empty_rate_cents/.test(drawer)) {
@@ -116,8 +119,8 @@ function run({ drawer, seed, routes }) {
     );
   }
 
-  if (!/getRouteMileage/.test(drawer)) {
-    out.push("RULE 11: getRouteMileage is not wired — loaded miles have no route-engine fallback when lane history is empty.");
+  if (!/queryFn: \(\) => postMilesRecommendations\(/.test(drawer) || /getLaneMileage\(|getRouteMileage\(|getChainDeadhead\(/.test(drawer)) {
+    out.push("RULE 11: the mileage engine is not the only mileage path (postMilesRecommendations per load row; no lane / route / chain-deadhead lookup).");
   }
   if (!/useQueries/.test(drawer)) {
     out.push("RULE 11b: useQueries must fill miles per load row — a single primary-load query leaves later loads blank.");
@@ -149,7 +152,8 @@ if (process.argv.includes("--selftest")) {
 import { AddressGeocodeInput } from "...";
 import { StateSelect } from "...";
 import { useQueries } from "@tanstack/react-query";
-import { getLaneMileage, getChainDeadhead, getDriverPayCard, getRouteMileage } from "...";
+import { getDriverPayCard } from "...";
+import { postMilesRecommendations } from "...";
 import { geocodeSearch } from "...";
 const defaultLoadNumber = loads[0]?.load_number;
 const moneyInputClass = "w-full";
@@ -160,7 +164,9 @@ onResolve={(r) => { setLoads((prev) => { const cur = prev[idx]; next[idx] = appl
 onChange={(v) => { setLoads((prev) => { next[idx] = { ...cur, pickup_address: v }; }); }}
 const ignoreGeocodeFormattedRef = useRef({});
 const loadsSubtotal = loads.reduce((s, l) => s + Number(l.line_haul_amount_cents ?? 0), 0);
-getLaneMileage({...}); getDriverPayCard({...}); getChainDeadhead({...}); getRouteMileage({...});
+getDriverPayCard({...});
+const milesRecQueries = useQueries({ queries: loads.map((load) => ({ queryFn: () => postMilesRecommendations({...}) })) });
+<CreatorMilesChoicePanel idx={idx} />
 const cityGeocodeQueries = useQueries({ queries: loads.flatMap(...) });
 useQueries({ queries: loads.map(...) });
 <MoneyInput className={moneyInputClass} valueCents={...} />
@@ -211,5 +217,5 @@ if (failures.length > 0) {
 }
 console.log(
   `${NAME}: PASS — Settlement Creator Places pick fills city/state (functional setLoads); ` +
-    `lane + route-engine loaded miles; chain empty miles; address optional; city+state required.`,
+    `Historical + Google miles from the one mileage engine with a per-field selector; address optional; city+state required.`,
 );

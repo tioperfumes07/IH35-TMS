@@ -58,6 +58,8 @@ export type SettlementCreatorDraft = {
     trip_type?: "NB" | "TR" | "SB" | "LOCAL" | null;
     join_outbound_load_number?: string | null;
     not_yet_delivered?: boolean | null;
+    /** Lead 443.57 — per-field source of the LOAD's saved operating miles (CC-2's engine). Omitted = document. Pay never reads it. */
+    miles_choice?: Partial<Record<"practical" | "short" | "empty", { source: "document" | "historical" | "google" | "manual"; manual_value?: number | null; reason?: string | null }>> | null;
   }>;
   seed_dispatched_loads?: boolean;
   fuel_purchases: Array<{
@@ -156,6 +158,8 @@ export type SettlementCreatorCloseTotals = {
 
 export type SettlementCreatorPreview = {
   close_totals?: SettlementCreatorCloseTotals | null;
+  /** Lead 443.57 — what the rehearsal saved on each load's miles (value + source + both recommendations). */
+  miles_choices?: Array<{ load_id: string; load_number: string; fields: Record<"practical" | "short" | "empty", { value: number | null; source: string | null; historical: number | null; google: number | null }> }> | null;
   je_lines: SettlementCreatorJeLine[];
   debit_total_cents: number;
   credit_total_cents: number;
