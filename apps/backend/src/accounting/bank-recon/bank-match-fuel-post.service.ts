@@ -7,6 +7,7 @@
  *
  * Fail-closed: null unit_id or null load_id is an ENGINE defect (owner), not a data soft-skip.
  */
+import { adoptRelayFillExpenseDocument } from "../../fuel/fuel-expense-document.service.js";
 import { loadAtTimeSql } from "../../maintenance/driver-attribution.js";
 import { relayLineIsGallonsSql, relayLineKindSql } from "../../fuel/relay-product-kind.js";
 import {
@@ -26,7 +27,7 @@ export class FuelMatchPostError extends Error {
   constructor(
     public code:
       | "fuel_fill_not_found" | "fuel_fill_missing_unit" | "fuel_fill_missing_load" | "fuel_fill_zero_amount"
-      | "relay_fill_unknown_product" | "relay_fill_has_no_fuel_lines" | "relay_fill_lines_do_not_foot",
+      | "relay_fill_unknown_product" | "relay_fill_has_no_fuel_lines" | "relay_fill_lines_do_not_foot" | "relay_fill_document_refused",
     message: string
   ) {
     super(message);
@@ -285,7 +286,7 @@ async function postRelayFuelFill(
   const amountCents = relayWalletDrawdownCents(paidCents, feeCents);
   const primary = [...costLines].sort((a, b) => b.amount_cents - a.amount_cents)[0]!.fuel_kind;
 
-  return postFuelExpenseOnClient(client, {
+  const posted = await postFuelExpenseOnClient(client, {
     operating_company_id: input.operating_company_id,
     actor_user_id: input.actor_user_uuid,
     fuel_event_id: input.fill_id,
@@ -308,6 +309,17 @@ async function postRelayFuelFill(
       fuel_card_code: "RELAY",
     }),
   });
+  // Lead 443.41 A: the Relay fill gets its expense DOCUMENT, adopting the SAME journal entry (one JE, never two).
+  if (posted.journal_entry_id) {
+    const doc = await adoptRelayFillExpenseDocument(client as never, {
+      operating_company_id: input.operating_company_id,
+      relay_fill_id: input.fill_id,
+      journal_entry_id: posted.journal_entry_id,
+      requesting_user_uuid: input.actor_user_uuid,
+    });
+    if (doc.outcome === "refused") throw new FuelMatchPostError("relay_fill_document_refused", doc.reason);
+  }
+  return posted;
 }
 
 /**
