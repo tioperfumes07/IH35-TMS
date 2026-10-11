@@ -1,17 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
+const createPaidDirectVendorAdvance = vi.fn();
+vi.mock("../../accounting/related-party-loan-posting/create-entry.service.js", () => ({
+  createPaidDirectVendorAdvance: (...a: unknown[]) => createPaidDirectVendorAdvance(...a),
+}));
 import { fundingForCard, postRelayDeposit, RELAY_DEPOSIT_FUNDING } from "./relay-deposit-post.service.js";
 
 // ROUND 443.29 b: a settled Relay deposit posts Dr 1295 amount + Dr 5005 Relay's fee / Cr the funding account (charged);
 // a canceled one posts nothing; an unnamed or loan-engine card is HELD by name, never guessed.
 
-const ACCTS: Record<string, string> = { relay_fuel_wallet: "acct-1295", "5005": "acct-5005", "1000": "acct-1000", intercompany_ih35: "acct-8000" };
+const ACCTS: Record<string, string> = { relay_fuel_wallet: "acct-1295", "5005": "acct-5005", "1000": "acct-1000", intercompany_ih35: "acct-8000", "2410-00-001": "acct-2410" };
 
 function fake(dep: Record<string, unknown> | null, opts: { posted?: boolean; bookedBankLine?: boolean } = {}) {
   const query = vi.fn(async (sql: string, values: unknown[] = []) => {
     if (/FROM integrations\.relay_deposits/.test(sql)) return { rows: dep ? [dep] : [] };
     if (/source_transaction_type = 'relay_deposit'/.test(sql)) return { rows: opts.posted ? [{ id: "je-old" }] : [] };
     if (/FROM banking\.bank_transactions/.test(sql)) return { rows: opts.bookedBankLine ? [{ id: "bt-1" }] : [] };
-    if (/FROM mdata\.vendors/.test(sql)) return { rows: [{ id: "vendor-relay" }] };
+    if (/FROM mdata\.vendors/.test(sql)) return { rows: [{ id: /vendor_name = \$2/.test(sql) ? "vendor-jorge" : "vendor-relay" }] };
+    if (/FROM accounting\.related_party_loan_entries/.test(sql)) return { rows: [] };
+    if (/UPDATE accounting\.related_party_loan_entries/.test(sql)) return { rows: [] };
     if (/FROM catalogs\.accounts/.test(sql)) { const id = ACCTS[String(values[1])]; return { rows: id ? [{ id, account_number: String(values[1]) }] : [] }; }
     throw new Error(`unhandled: ${sql}`);
   });
@@ -56,7 +62,7 @@ describe("postRelayDeposit (443.29 b)", () => {
   it("an unnamed card is HELD by name, never guessed; a personal card is HELD for the loan engine", async () => {
     const createJournalEntryOnClient = vi.fn();
     expect(await postRelayDeposit(fake(dep({ funding_card_last4: "1222" })), args, { createJournalEntryOnClient })).toMatchObject({ outcome: "held", reason: "card_owner_not_named" });
-    expect(await postRelayDeposit(fake(dep({ funding_card_last4: "0210" })), args, { createJournalEntryOnClient })).toMatchObject({ outcome: "held", reason: "loan_engine_paid_direct" });
+    expect(await postRelayDeposit(fake(dep({ funding_card_last4: "6248" })), args, { createJournalEntryOnClient })).toMatchObject({ outcome: "held", reason: "loan_engine_paid_direct" });
     expect(createJournalEntryOnClient).not.toHaveBeenCalled();
   });
   it("amount + fee must equal the amount charged, to the cent", async () => {
@@ -77,8 +83,28 @@ describe("postRelayDeposit (443.29 b)", () => {
   it("the owner's map: 0680 -> 1000, Transportation cards -> 8000, personal/Tio/Scentsx -> loan engine", () => {
     expect(fundingForCard("0680")).toMatchObject({ kind: "account", account_number: "1000" });
     for (const c of ["9708", "1354", "4823"]) expect(fundingForCard(c)).toMatchObject({ kind: "account", system_purpose: "intercompany_ih35" });
-    for (const c of ["0210", "6248", "9855"]) expect(fundingForCard(c)).toMatchObject({ kind: "held", reason: "loan_engine_paid_direct" });
+    for (const c of ["6248", "9855"]) expect(fundingForCard(c)).toMatchObject({ kind: "held", reason: "loan_engine_paid_direct" });
+    expect(fundingForCard("0210")).toMatchObject({ kind: "loan", liability_account_number: "2410-00-001" });
     expect(fundingForCard("5007")).toMatchObject({ kind: "account", account_number: "2500-00-001" });
     expect(Object.keys(RELAY_DEPOSIT_FUNDING).length).toBe(8);
+  });
+
+  it("0210 (443.58): loan document through the loan engine, then Dr 1295 + Dr 5005 / Cr 2410-00-001 naming the lender, linked both ways", async () => {
+    createPaidDirectVendorAdvance.mockResolvedValue({ id: "loan-1", display_id: "RPL-2026-0003" });
+    const createJournalEntryOnClient = vi.fn(async () => ({ id: "je-loan" }));
+    const db = fake(dep({ funding_card_last4: "0210", raw_payload: { amount: "5000.00", fee: "162.50", total: "5162.50" }, total_amount_cents: "516250" }));
+    const out = await postRelayDeposit(db, args, { createJournalEntryOnClient });
+    expect(out).toMatchObject({ outcome: "posted", journal_entry_id: "je-loan", loan_entry_id: "loan-1", loan_display_id: "RPL-2026-0003", charged_cents: 516250 });
+    expect(createPaidDirectVendorAdvance).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      account_id: "acct-2410", funding_account_id: "acct-1295", principal_cents: 516250, entry_date: "2026-09-01",
+      relationship: "owner", counterparty_kind: "vendor", counterparty_id: "vendor-jorge", target_id: "dep-1",
+    }), "u");
+    const je = (createJournalEntryOnClient.mock.calls[0] as unknown as [unknown, { postings: Array<Record<string, unknown>> }])[1];
+    expect(je.postings).toEqual([
+      expect.objectContaining({ account_id: "acct-1295", debit_or_credit: "debit", amount_cents: 500000, entity_uuid: "vendor-relay" }),
+      expect.objectContaining({ account_id: "acct-5005", debit_or_credit: "debit", amount_cents: 16250, entity_uuid: "vendor-relay" }),
+      expect.objectContaining({ account_id: "acct-2410", debit_or_credit: "credit", amount_cents: 516250, entity_uuid: "vendor-jorge", entity_type: "vendor" }),
+    ]);
+    expect(db.query.mock.calls.some((c) => /UPDATE accounting\.related_party_loan_entries SET je_id/.test(String(c[0])) && (c[1] as unknown[])[1] === "je-loan")).toBe(true);
   });
 });

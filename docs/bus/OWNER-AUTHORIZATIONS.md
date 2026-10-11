@@ -7685,3 +7685,13 @@ action: OWNER_AUTH_ID=AUTH-427 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-1
 rehearsal: throwaway br-blue-lake-akak6jwm (COMMITTED, deleted): both merged profiles Inactive with merged_into = survivor; repointed incl. mdata.driver_samsara_accounts + integrations.samsara_drivers (each survivor 2 Samsara users, 1 escrow, 1 advance); left on merged ids only history_kept / kept_on_survivor rows; owner 2100-00-011 + 1245-00-011 (0 postings, 0 balance) retired, USMCA links active after 0
 expires_at: 2026-10-12T14:47:07Z
 status: OPEN
+
+## AUTH-429
+issued_at: 2026-10-11T14:58:29Z
+issued_by: Lead 443.58 on the owner's order 2026-10-11 09:43 CT (14:43 UTC). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..427
+owner_quotes: "Ok I'll send later today, the others get them done create the docs etc." (2026-10-11 09:43 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — exactly two settled Relay deposits on the owner's personal card 0210: txn_5upWmFMZU9S6H4 (2026-10-02, 5,162.50 = 5,000.00 + 162.50) and txn_AVWoStcXbLRGbq (2026-10-08, 2,065.00 = 2,000.00 + 65.00). Each through postRelayDeposit's loan path: related-party loan document via createPaidDirectVendorAdvance (lender Jorge, paid direct to Relay, amount = charged, date = deposit date, target = the deposit), then Dr 1295 Relay Fuel Wallet + Dr 5005 Fuel Card Fees (vendor Relay) / Cr 2410-00-001 Jorge Related-Party Loan (vendor Jorge), loan.je_id = the JE. The 14 unnamed-card deposits are not touched. No DELETE.
+action: OWNER_AUTH_ID=AUTH-429 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-58-relay-0210-loan-deposits.ts --apply
+rehearsal: throwaway br-long-frost-akhyfbz4 (COMMITTED, deleted): 2 posted (loan RPL-2026-0010 / RPL-2026-0011 on the fork); 2410-00-001 credit +722750, 1295 +700000, 5005 +22750; held deposits 16 -> 14; trial balance 0 -> 0; re-run = already_posted x2, deltas 0
+expires_at: 2026-10-12T14:58:29Z
+status: OPEN
