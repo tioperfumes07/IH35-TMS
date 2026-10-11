@@ -217,6 +217,8 @@ export type SettlementCreatorDraft = {
    * Creator settlement + companion docs then repost. FE confirms; never silent.
    */
   edit_void_repost?: boolean;
+  /** Lead 443.36 — salaried driver: loads carry no per-load pay; the salary is an additional_pay line. */
+  salaried?: boolean;
   /** Optional uploaded AT PDF (docs.files id). */
   source_pdf_file_id?: string | null;
 };

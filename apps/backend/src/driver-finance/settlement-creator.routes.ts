@@ -177,6 +177,11 @@ const draftSchema = z.object({
   pdf_driver_net_cents: z.number().int(),
   pdf_company_expenses_cents: z.number().int(),
   edit_void_repost: z.boolean().optional().default(false),
+  // Lead 443.36 (owner closed ruling): a SALARIED driver's settlement — loads booked with the 0-rate "Salaried" override
+  // (no per-load driver bill, card untouched); pay is the settlement's own salary line (additional_pay).
+  salaried: z.boolean().optional().default(false),
+  // The signed settlement shows NO card fuel (5796 / 5816): the operator confirms it so the fuel-frontier check passes.
+  confirmed_zero_fuel_purchases: z.boolean().optional().default(false),
   source_pdf_file_id: z.string().uuid().nullable().optional(),
 });
 

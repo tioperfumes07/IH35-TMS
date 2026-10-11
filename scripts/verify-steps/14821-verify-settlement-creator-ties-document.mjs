@@ -44,6 +44,8 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-relay-row-fill-path.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-books-historical.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-books-historical.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-salaried.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-salaried.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-no.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-no.mjs"]);
   },
