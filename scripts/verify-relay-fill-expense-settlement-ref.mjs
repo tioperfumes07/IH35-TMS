@@ -22,7 +22,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CREATOR = "apps/backend/src/driver-finance/settlement-creator.service.ts";
 const DOC = "apps/backend/src/fuel/fuel-expense-document.service.ts";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
-export const CEILING = 141;
+export const CEILING = 0; // AUTH-425 applied 2026-10-11: 141 -> 0
 
 export function check(creator, doc) {
   const f = [];
