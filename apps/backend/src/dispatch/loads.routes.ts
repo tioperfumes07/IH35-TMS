@@ -379,6 +379,8 @@ const createDispatchLoadBodySchema = z.object({
         postal_code: z.string().trim().max(20).optional(),
         latitude: z.number().finite().gte(-90).lte(90).optional(),
         longitude: z.number().finite().gte(-180).lte(180).optional(),
+        // 443.67: Google's place id from the address picker (stored on the stop; the resolver shares it with the location).
+        google_place_id: z.string().trim().min(1).max(255).optional(),
       })
     ),
   // ROUND 24.3 (owner, 2026-09-14): ">=2 stops, each with a real city" is correct to BOOK a load,
@@ -527,6 +529,8 @@ const updateDispatchLoadBodySchema = z.object({
         postal_code: z.string().trim().max(20).optional(),
         latitude: z.number().finite().gte(-90).lte(90).optional(),
         longitude: z.number().finite().gte(-180).lte(180).optional(),
+        // 443.67: Google's place id from the address picker (stored on the stop; the resolver shares it with the location).
+        google_place_id: z.string().trim().min(1).max(255).optional(),
       })
     )
     .min(2)

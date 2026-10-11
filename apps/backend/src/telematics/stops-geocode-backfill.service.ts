@@ -217,6 +217,24 @@ export async function geocodeStopsWithClient(
       await client.query("RELEASE SAVEPOINT geocode_stop");
     }
   }
+  // 443.67: every stop this pass touched shares Google's place id with its location, whatever step resolved it (Samsara
+  // address, existing location, Google place, or the Book Load picker's id) — the picker's id fills an empty location, and a
+  // location that already knows its id fills the stop.
+  const touched = stops.map((st) => st.stop_id);
+  if (touched.length) {
+    await client.query(
+      `UPDATE mdata.locations lo SET google_place_id = s.google_place_id, updated_at = now()
+         FROM mdata.load_stops s
+        WHERE s.id = ANY($1::uuid[]) AND lo.id = s.location_id AND lo.operating_company_id = $2::uuid
+          AND lo.google_place_id IS NULL AND s.google_place_id IS NOT NULL`,
+      [touched, companyId]);
+    await client.query(
+      `UPDATE mdata.load_stops s SET google_place_id = lo.google_place_id
+         FROM mdata.locations lo
+        WHERE s.id = ANY($1::uuid[]) AND lo.id = s.location_id AND lo.operating_company_id = $2::uuid
+          AND s.google_place_id IS NULL AND lo.google_place_id IS NOT NULL`,
+      [touched, companyId]);
+  }
   return { stops_checked: stops.length, stops_geocoded: geocoded, locations_linked: locations, geofences_created: fences, rooftop, locality, failures, samsara_matched: samsara, zip_center_listed: listed, street_from_location: streetFromLocation, street_from_place: streetFromPlace };
 
   /**

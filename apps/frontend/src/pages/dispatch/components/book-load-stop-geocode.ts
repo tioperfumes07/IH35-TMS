@@ -27,5 +27,7 @@ export function stopGeocodePatches(index: number, r: GeocodeResult): StopFieldPa
   };
   addCoord("latitude", r.lat);
   addCoord("longitude", r.lon);
+  // 443.67: Google's place id rides with the picked address (stored on the stop + its location).
+  add("google_place_id", r.place_id);
   return patches;
 }

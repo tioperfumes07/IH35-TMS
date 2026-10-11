@@ -22,9 +22,13 @@ const MARKER = "no_street_source_v3_google";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
-const sources = { service: read(SERVICE), google: read(GOOGLE) };
+const BOOK = "apps/backend/src/dispatch/book-load.service.ts";
+const ROUTE = "apps/backend/src/dispatch/loads.routes.ts";
+const PICKER = "apps/frontend/src/pages/dispatch/components/book-load-stop-geocode.ts";
+const sources = { service: read(SERVICE), google: read(GOOGLE), book: read(BOOK), route: read(ROUTE), picker: read(PICKER) };
 
-export function audit({ service, google }) {
+export function audit(src) {
+  const { service, google } = src;
   const out = [];
   const fn = (service.match(/export function pickPlaceForFacility\([\s\S]*?\n}\n/) || [])[0] ?? "";
   if (!fn) out.push(`${SERVICE}: pickPlaceForFacility missing`);
@@ -41,6 +45,11 @@ export function audit({ service, google }) {
   // 443.63: the column is live (202615570900) — the stop and its location store it.
   if (!/google_place_id=\$5/.test(service)) out.push(`${SERVICE}: the Google place step must write mdata.load_stops.google_place_id`);
   if (!/UPDATE mdata\.locations SET google_place_id = coalesce\(google_place_id/.test(service)) out.push(`${SERVICE}: the stop's location must take Google's place_id`);
+  // 443.67: live Book Load carries the picker's place id end to end, and every resolved stop shares it with its location.
+  if (!/actual_departure_source, google_place_id/.test(src.book ?? "")) out.push(`${BOOK}: Book Load must INSERT the stop's google_place_id`);
+  if (!/google_place_id: z\.string\(\)/.test(src.route ?? "")) out.push(`${ROUTE}: the Book Load stop schema must accept google_place_id`);
+  if (!/add\("google_place_id", r\.place_id\)/.test(src.picker ?? "")) out.push(`${PICKER}: the address picker must carry Google's place id into the stop`);
+  if (!/s\.id = ANY\(\$1::uuid\[\]\) AND lo\.id = s\.location_id[\s\S]*s\.google_place_id IS NULL AND lo\.google_place_id IS NOT NULL/.test(service)) out.push(`${SERVICE}: every touched stop must share the place id with its location`);
   if (!/place_id\?: string;\s*provider\?:/.test(google) || !/places\.id/.test(google)) out.push(`${GOOGLE}: AddressResult must carry Google's place_id (Text Search field mask places.id)`);
   return out;
 }
@@ -58,6 +67,10 @@ if (process.argv.includes("--selftest")) {
     { ...sources, service: sources.service.replace("google_place_id: place.result.place_id", "google_place_id: null") },
     { ...sources, google: sources.google.replace("place_id?: string", "placeid?: string") },
     { ...sources, service: sources.service.replace("google_place_id=$5", "x=$5") },
+    { ...sources, book: sources.book.replace("actual_departure_source, google_place_id", "actual_departure_source") },
+    { ...sources, route: sources.route.replace(/google_place_id: z\.string\(\)/g, "x: z.string()") },
+    { ...sources, picker: sources.picker.replace('add("google_place_id", r.place_id)', "") },
+    { ...sources, service: sources.service.replace("s.google_place_id IS NULL AND lo.google_place_id IS NOT NULL", "false") },
     { ...sources, service: sources.service.replace("UPDATE mdata.locations SET google_place_id = coalesce(google_place_id", "UPDATE mdata.locations SET x = coalesce(x") },
   ];
   const escaped = mutations.filter((m) => audit(m).length === 0).length;

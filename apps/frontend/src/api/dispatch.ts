@@ -240,6 +240,7 @@ export type DispatchBookLoadPayload = {
     postal_code?: string;
     latitude?: number;
     longitude?: number;
+    google_place_id?: string;
     geocode_precision?: "rooftop" | "range" | "locality" | null;
   }>;
   save_mode: "draft" | "book_dispatch";
