@@ -1513,6 +1513,39 @@ export class SamsaraClient {
     return { id };
   }
 
+  /**
+   * Lead 443.49 (owner 2026-10-11: "We keep them and we need the real address geo fences"): move an EXISTING Samsara address
+   * (one this TMS created) to the facility's real point — PATCH /addresses/{id}, same id; nothing is created or deleted.
+   */
+  async updateAddress(
+    addressId: string,
+    input: { name: string; formattedAddress: string; latitude: number; longitude: number; radiusMeters: number }
+  ): Promise<{ id: string }> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_not_configured", null, null, false);
+    const id = String(addressId ?? "").trim();
+    if (!id) throw new SamsaraApiError("samsara_address_id_missing", null, null, false);
+    const url = new URL(`${SAMSARA_API_BASE}/addresses/${encodeURIComponent(id)}`);
+    const body = {
+      name: input.name.slice(0, 255),
+      formattedAddress: input.formattedAddress.slice(0, 1024),
+      latitude: input.latitude,
+      longitude: input.longitude,
+      geofence: { circle: { latitude: input.latitude, longitude: input.longitude, radiusMeters: Math.round(input.radiusMeters) } },
+    };
+    let res: Response;
+    try {
+      res = await withCircuitBreaker("samsara", () =>
+        samsaraFetch(url, { method: "PATCH", headers: { ...bearerHeaders(token), "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      );
+    } catch (error) {
+      throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+    }
+    const json = await readJsonResponse(res);
+    if (!res.ok) throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+    return { id };
+  }
+
   /** E-31 read-back: GET /fleet/routes/{id} (raw `data`; probed 2026-10-01 on route 4446734085 -> 200). */
   async getRoute(routeId: string): Promise<Record<string, unknown> | null> {
     const token = this._token();

@@ -19,6 +19,11 @@
  *   RULE 7 — auto-geofence.service.ts skips (never fences / never pushes to Samsara) a stop with no street address.
  * LIVE (443.41):
  *   RULE 8 — no ACTIVE auto_dispatch customer_site fence created at/after AUTO_FENCE_CUTOFF whose label has no street.
+ * LIVE (443.49 #4, owner 2026-10-11 "we need the real address geo fences"):
+ *   RULE 9 — no ACTIVE fence the TMS drew from a stop (source auto_dispatch; imported Samsara / Love's / city fences carry their
+ *            own real coordinates) whose center is a zip / city center: it hangs on a location with no street, or on a
+ *            customer (customer_site) whose drawing stop is still a zip / city center.
+ *   RULE 10 — every location with a street that a Creator stop (loads created since 2026-10-11) uses has an ACTIVE fence.
  * --selftest exercises every rule.
  */
 import { readFileSync } from "node:fs";
@@ -61,9 +66,11 @@ export function sideEffectFailures(bookLoad, autoFence) {
   return out;
 }
 
-export function liveFailures({ zipFences, falseRooftops, autoZipFences = [] }) {
+export function liveFailures({ zipFences, falseRooftops, autoZipFences = [], zipCenterFences = [], streetNoFence = [] }) {
   const out = [];
   for (const f of zipFences) out.push(`RULE 4 geofence ${f.id} (${f.label ?? "?"}) is active on location ${f.location_id} which has no street`);
+  for (const f of zipCenterFences) out.push(`RULE 9 active fence ${f.id} (${f.label ?? "?"}) is centered on a zip / city center`);
+  for (const l of streetNoFence) out.push(`RULE 10 location ${l.id} (${l.location_name ?? "?"}) has a street but no active fence`);
   for (const f of autoZipFences) out.push(`RULE 8 customer-site fence ${f.id} (${f.label ?? "?"}) is active with no street (auto_dispatch, zip / city center)`);
   for (const s of falseRooftops) out.push(`RULE 5 stop ${s.id} on load ${s.load_number} is 'rooftop' with no street (address_line1 ${JSON.stringify(s.address_line1)})`);
   return out;
@@ -90,8 +97,23 @@ async function measure(url) {
       `SELECT id::text, label FROM geo.geofences
         WHERE operating_company_id = $1::uuid AND is_active AND source = 'auto_dispatch' AND location_kind = 'customer_site'
           AND created_at >= $2::timestamptz AND coalesce(label,'') !~ '^\\s*[0-9]+[A-Za-z]?\\s+\\S'`, [USMCA, AUTO_FENCE_CUTOFF])).rows;
+    const zipCenterFences = (await client.query(
+      `SELECT g.id::text, g.label FROM geo.geofences g
+         LEFT JOIN mdata.locations lo ON lo.id = g.location_ref_id
+        WHERE g.operating_company_id = $1::uuid AND g.is_active AND g.source = 'auto_dispatch'
+          AND ((lo.id IS NOT NULL AND nullif(trim(lo.address_line1),'') IS NULL)
+            OR (g.location_kind = 'customer_site' AND EXISTS (
+                  SELECT 1 FROM outbox.events e JOIN mdata.load_stops s ON s.id = (e.payload->>'stop_id')::uuid
+                   WHERE e.event_type = 'samsara.create_geofence' AND e.dedupe_key = 'samsara.create_geofence:' || g.id::text
+                     AND s.geocode_source IN ('zip_center','city_center'))))`, [USMCA])).rows;
+    const streetNoFence = (await client.query(
+      `SELECT DISTINCT lo.id::text, lo.location_name FROM mdata.load_stops s JOIN mdata.loads l ON l.id = s.load_id
+         JOIN mdata.locations lo ON lo.id = s.location_id
+        WHERE l.operating_company_id = $1::uuid AND l.created_at >= '2026-10-11' AND l.status <> 'cancelled' AND s.soft_deleted_at IS NULL
+          AND lo.deactivated_at IS NULL AND lo.address_line1 ~ '^\\s*[0-9]+[A-Za-z]?\\s+\\S'
+          AND NOT EXISTS (SELECT 1 FROM geo.geofences g WHERE g.location_ref_id = lo.id AND g.is_active)`, [USMCA])).rows;
     await client.query("ROLLBACK");
-    return { zipFences, falseRooftops, autoZipFences };
+    return { zipFences, falseRooftops, autoZipFences, zipCenterFences, streetNoFence };
   } finally {
     await client.end();
   }
@@ -113,6 +135,8 @@ if (isMain) {
       ["an unconditional auto-fence hook fails", sideEffectFailures(bookLoad.replace('if (source !== "historical_backfill") {', "{"), autoFence).some((x) => x.startsWith("RULE 6"))],
       ["an auto-fence without the street check fails", sideEffectFailures(bookLoad, autoFence.replace('reason: "no_street_address"', 'reason: "x"')).some((x) => x.startsWith("RULE 7"))],
       ["an active zip-center customer-site fence fails", liveFailures({ zipFences: [], falseRooftops: [], autoZipFences: [{ id: "g", label: "Laredo, TX, US" }] }).some((x) => x.startsWith("RULE 8"))],
+      ["an active fence on a zip center fails", liveFailures({ zipFences: [], falseRooftops: [], zipCenterFences: [{ id: "g", label: "Laredo, TX" }] }).some((x) => x.startsWith("RULE 9"))],
+      ["a location with a street and no fence fails", liveFailures({ zipFences: [], falseRooftops: [], streetNoFence: [{ id: "l", location_name: "Clemens" }] }).some((x) => x.startsWith("RULE 10"))],
       ["live clean passes", liveFailures({ zipFences: [], falseRooftops: [] }).length === 0],
       ["a zip-center fence fails", liveFailures({ zipFences: [{ id: "g", label: "Laredo", location_id: "l" }], falseRooftops: [] }).some((x) => x.startsWith("RULE 4"))],
       ["a false rooftop fails", liveFailures({ zipFences: [], falseRooftops: [{ id: "s", load_number: "1", address_line1: null }] }).some((x) => x.startsWith("RULE 5"))],
