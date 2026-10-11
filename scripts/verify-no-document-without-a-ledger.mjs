@@ -28,12 +28,16 @@
 // Verified zero behavior change today: 100% of the current population was already inside the old
 // 7-day window (553/90/129/174/64 for expenses/bills/invoices/fuel/settlements, measured both ways,
 // byte-identical).
+// 443.52-C (CC-1, 2026-10-11): ratchets tightened to live-measured values.
+// bill_payments 32→0: BILL_PAYMENT_ADOPTED_SETTLEMENT now covers all adopted bills.
+// invoices 26→20: 6 invoices were linked/paid since last ratchet set.
+// driver_settlements 2→0: gl_bills coveredSql path added (P-0017, P-0069, P-0046 covered).
 const GAP_RATCHET = {
   "accounting.expenses": 0,
-  "accounting.bill_payments": 32,
-  "accounting.invoices": 26,
+  "accounting.bill_payments": 0,
+  "accounting.invoices": 20,
   "fuel.fuel_transactions": 0,
-  "driver_finance.driver_settlements": 2,
+  "driver_finance.driver_settlements": 0,
 };
 //
 // Self-test: node scripts/verify-no-document-without-a-ledger.mjs --selftest
@@ -165,6 +169,15 @@ const DOCUMENT_CLASSES = [
   },
   {
     table: "driver_finance.driver_settlements", voidCol: "voided_at", sourceType: "driver_settlement", expectedToPost: true,
+    // 443.52-C (CC-1, 2026-10-11): settlements closed via settlement-ap-chain (P-0017, P-0069, P-0046)
+    // have NO direct driver_settlement posting; their JEs are wired through driver_settlement_gl_runs
+    // + driver_settlement_gl_bills instead. Both paths must be accepted to reach gap=0.
+    coveredSql: `(${livePostingSql(["driver_settlement"], "d.id")} OR EXISTS (SELECT 1
+      FROM driver_finance.driver_settlement_gl_runs gr
+      JOIN driver_finance.driver_settlement_gl_bills gb ON gb.run_id = gr.id
+      JOIN accounting.journal_entries bje ON bje.id = gb.bill_journal_entry_id
+     WHERE gr.settlement_id = d.id AND gr.status = 'posted' AND gb.superseded_at IS NULL
+       AND bje.voided_at IS NULL AND bje.reversed_by_je_id IS NULL AND bje.status = 'posted'))`,
     zeroSql: `d.status = 'closed' AND ${SETTLEMENT_LINES_TOTAL("d.id")} = 0`,
     pendingSql: `d.status::text = ANY(ARRAY[${SETTLEMENT_NOT_YET_POSTABLE.map((s) => `'${s}'`).join(",")}]::text[])`,
   },

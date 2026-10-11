@@ -38,31 +38,12 @@
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 import { exitIfEmptyByPurge } from "./lib/purge-window.mjs";
 
-// SCOPED EXCLUSION (Lead ruling 09-28 07:00Z, same class as
-// docs/bus/09-28-2026-LEAD-RULING-BILL-LINE-2822f791-CC1-ADOPTION-DEBRIS.md): these 6 driver_bills
-// are CC-1's own ROUND 189 A/P-adoption loads (13609, 13616, 13617, 13618, 13620, 13621), the exact
-// set named in AUTH-073/076/077 -- live, in-flight work on the same seat's own tables. Owned by
-// CC-1, not a CC-2/check-engine defect. Named and expiring, not a baseline regeneration.
-const KNOWN_UNLINKED_EXCLUSIONS = [
-  { id: "7602dfcd-7d31-4121-9882-027066334613", load_number: "13609", owner: "CC-1", expires_at: "2026-10-05T00:00:00.000Z" },
-  { id: "7a96466a-54f9-4fdf-bd6c-3d7ca25a7564", load_number: "13621", owner: "CC-1", expires_at: "2026-10-05T00:00:00.000Z" },
-  { id: "cd8bbeec-3d85-4490-a2ae-ab68dae7163e", load_number: "13616", owner: "CC-1", expires_at: "2026-10-05T00:00:00.000Z" },
-  { id: "0d0698ec-a94b-4f7f-85b3-2b63b9c8a930", load_number: "13620", owner: "CC-1", expires_at: "2026-10-05T00:00:00.000Z" },
-  { id: "b57003d4-3250-4b9c-bc69-55a470a00c05", load_number: "13618", owner: "CC-1", expires_at: "2026-10-05T00:00:00.000Z" },
-  { id: "00107622-b064-49f1-bbc0-517fd17dc1ed", load_number: "13617", owner: "CC-1", expires_at: "2026-10-05T00:00:00.000Z" },
-  // Added 2026-09-28 (CC-3, live-verified before adding, not assumed): 4 NEW driver_bills rows,
-  // none of them the same row ids already excluded above -- CC-1's own re-mint/mint work landed
-  // since those were filed. Confirmed live: gross_amount_cents on each matches CC-1's own
-  // NOW-CC-1.md reports exactly -- 13618 $647.04 (AUTH-097 void-and-remint), 13621 $940.27
-  // (AUTH-097 void-and-remint), 13631 $644.64 and 13634 $656.64 (AUTH-090 mint). All four are
-  // settled_in_settlement_id IS NULL because the underlying loads have not been through a
-  // settlement cycle yet (same root cause CC-1's own NOW-CC-1.md tracks as blocked on 155.20 JOB
-  // 2 / the stamp-writer fix) -- a real, already-tracked, temporary gap, not a guess.
-  { id: "4a8b0f90-2a5a-43c8-9dfb-3fdd16d3792e", load_number: "13631", owner: "CC-1", expires_at: "2026-10-05T00:00:00.000Z" },
-  { id: "0a5aba1d-8802-4e9c-ab67-9df803b6570f", load_number: "13621", owner: "CC-1", expires_at: "2026-10-05T00:00:00.000Z" },
-  { id: "6e8fbe14-f068-4be4-8c49-c7d61eb7bc22", load_number: "13634", owner: "CC-1", expires_at: "2026-10-05T00:00:00.000Z" },
-  { id: "4e5633e5-08c1-4a43-895c-cd6161e93476", load_number: "13618", owner: "CC-1", expires_at: "2026-10-05T00:00:00.000Z" },
-];
+// 443.52-C (CC-1, 2026-10-11): all 10 KNOWN_UNLINKED_EXCLUSIONS had expires_at 2026-10-05 and are
+// now past their deadline. Verified live: prod gap = 0 (no bills on closed settlements with NULL
+// settled_in_settlement_id). Removing the dead entries; activeExcludedIds() already returned []
+// for all of them. An empty array still causes the guard to function correctly (no IN() exclusion
+// is added to the SQL when the list is empty).
+const KNOWN_UNLINKED_EXCLUSIONS = [];
 function activeExcludedIds(now = new Date()) {
   return KNOWN_UNLINKED_EXCLUSIONS.filter((r) => now.getTime() < new Date(r.expires_at).getTime()).map((r) => r.id);
 }

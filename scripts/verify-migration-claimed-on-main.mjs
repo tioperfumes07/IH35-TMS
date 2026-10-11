@@ -38,6 +38,15 @@ function laneForHour(hour) {
   return null;
 }
 
+/**
+ * 443.52-C: CC-1/CC-2/CC-3 seats all use HH00-11 (the "claude" band).
+ * Normalize their claimed_by values so the band check accepts them.
+ */
+function normalizeClaimedBy(claimedBy) {
+  if (claimedBy === "cc-1" || claimedBy === "cc-2" || claimedBy === "cc-3" || claimedBy === "cc-4") return "claude";
+  return claimedBy;
+}
+
 function loadRegistry() {
   const text = readFileSync(REGISTRY_PATH, "utf8");
   return JSON.parse(text);
@@ -45,7 +54,8 @@ function loadRegistry() {
 
 function branchLane(branch) {
   const lower = branch.toLowerCase();
-  if (lower.startsWith("claude/")) return "claude";
+  // cc-1/, cc-2/, cc-3/ are the seated CC variants of the claude/ lane (443.52-C)
+  if (lower.startsWith("claude/") || lower.startsWith("cc-1/") || lower.startsWith("cc-2/") || lower.startsWith("cc-3/") || lower.startsWith("cc-4/")) return "claude";
   if (lower.startsWith("cursor/") || lower.startsWith("cursoragent/") || lower.startsWith("chore/") || lower.startsWith("feat/") || lower.startsWith("fix/")) return "cursor";
   return null;
 }
@@ -155,6 +165,8 @@ export function run() {
     return { ok: false, message: `verify-migration-claimed-on-main FAIL — cannot read registry ${REGISTRY_PATH}: ${error.message}` };
   }
 
+  // 443.52-C: new claim PRs add entries as TOP-LEVEL keys in the JSON (not inside "claimed").
+  // Support both shapes: registry.claimed[ts] (old nested) and registry[ts] (new top-level).
   const claimed = registry.claimed || {};
   const lane = branchLane(branch);
   const problems = [];
@@ -165,7 +177,7 @@ export function run() {
       problems.push(`${f} does not begin with a YYYYMMDDHHMM timestamp; cannot claim it.`);
       continue;
     }
-    const entry = claimed[ts];
+    const entry = claimed[ts] ?? registry[ts]; // nested (old) or top-level (new claim PRs)
     if (!entry) {
       problems.push(
         `${f} (timestamp ${ts}) is NOT CLAIMED in db/migrations/CLAIMED-MIGRATION-NUMBERS.json. ` +
@@ -175,7 +187,8 @@ export function run() {
     }
     const hour = Number(ts.slice(8, 10));
     const expectedLane = laneForHour(hour);
-    const claimedBy = (typeof entry === "string" ? entry : entry.claimed_by || "").toLowerCase();
+    const rawClaimedBy = (typeof entry === "string" ? entry : (entry.claimed_by || entry.seat || "")).toLowerCase();
+    const claimedBy = normalizeClaimedBy(rawClaimedBy);
     if (expectedLane && claimedBy && claimedBy !== expectedLane) {
       problems.push(
         `${f} timestamp ${ts} is in the ${expectedLane} hour band but claimed_by='${claimedBy}'. ` +
@@ -206,6 +219,13 @@ function selftest() {
   if (laneForHour(Number(ts.slice(8, 10))) !== "cursor") throw new Error("selftest hour band failed");
   if (branchLane("cursor/fix-thing") !== "cursor") throw new Error("selftest cursor branch failed");
   if (branchLane("claude/fix-thing") !== "claude") throw new Error("selftest claude branch failed");
+  // 443.52-C: cc-1/cc-2/cc-3 are seated CC variants — must map to the "claude" lane
+  if (branchLane("cc-1/fix-thing") !== "claude") throw new Error("selftest cc-1 branch failed");
+  if (branchLane("cc-2/fix-thing") !== "claude") throw new Error("selftest cc-2 branch failed");
+  if (branchLane("cc-3/fix-thing") !== "claude") throw new Error("selftest cc-3 branch failed");
+  if (normalizeClaimedBy("cc-1") !== "claude") throw new Error("selftest normalizeClaimedBy cc-1 failed");
+  if (normalizeClaimedBy("cc-2") !== "claude") throw new Error("selftest normalizeClaimedBy cc-2 failed");
+  if (normalizeClaimedBy("cursor") !== "cursor") throw new Error("selftest normalizeClaimedBy cursor failed");
   if (timestampOf("db/migrations/202610101200_thing.sql") !== "202610101200") throw new Error("selftest timestampOf failed");
   return true;
 }
