@@ -168,6 +168,8 @@ function main() {
     if (!existsSync(join(ROOT, rel))) fail([`missing file (${k}): ${rel}`]);
   }
   const srcs = Object.fromEntries(Object.entries(FILES).map(([k, rel]) => [k, read(rel)]));
+  // 443.75: the create writer moved to create-entry.service.ts (443.22-2e); the route delegates to it.
+  srcs.routes = `${srcs.routes}\n${read("apps/backend/src/accounting/related-party-loan-posting/create-entry.service.ts")}`;
   const errors = staticProblems(srcs);
   if (errors.length) fail(errors);
   console.log(`${LABEL} PASS`);
