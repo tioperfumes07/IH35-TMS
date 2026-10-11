@@ -376,3 +376,75 @@ export async function searchAddress(query: string, maxResults = 5): Promise<Addr
   const cities = city(viaGeocode).length > 0 ? city(viaGeocode) : city(viaPlaces);
   return cities.slice(0, maxResults);
 }
+
+/**
+ * 443.74 (owner: "Probably the gps is source of truth or verification") — the facility at a GPS dwell point.
+ * Places Nearby (New), ranked by distance within `radiusM`, fuel stops / truck stops / rest areas excluded (a fuel stop is
+ * never a pickup or delivery); falls back to the Geocoding API's street address at the point (no facility name). Server
+ * side only; throws on config / HTTP errors like the other calls here. Returns null when Google has nothing street-level.
+ */
+const NOT_A_SHIPPER = new Set(["gas_station", "truck_stop", "rest_stop", "electric_vehicle_charging_station", "parking", "lodging", "restaurant", "fast_food_restaurant", "convenience_store"]);
+export async function facilityAtPoint(lat: number, lng: number, radiusM = 250, preferName?: string | null): Promise<(AddressResult & { distance_m: number | null; truck_stop?: boolean }) | null> {
+  const cfg = loadConfig();
+  if (!cfg) throw new Error("google_places_not_configured");
+  const res = await fetchGoogle("https://places.googleapis.com/v1/places:searchNearby", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": cfg.apiKey,
+      "X-Goog-FieldMask": `${PLACES_FIELD_MASK},places.primaryType`,
+    },
+    body: JSON.stringify({
+      maxResultCount: 10,
+      rankPreference: "DISTANCE",
+      languageCode: "en",
+      locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius: radiusM } },
+    }),
+  }, "google_places_nearby");
+  const data = (await res.json()) as { places?: Array<PlacesNewPlace & { types?: string[]; primaryType?: string }> };
+  const dist = (a: number | null, b: number | null) =>
+    a == null || b == null ? null
+      : Math.round(2 * 6371000 * Math.asin(Math.sqrt(Math.sin(((a - lat) * Math.PI) / 360) ** 2 +
+          Math.cos((lat * Math.PI) / 180) * Math.cos((a * Math.PI) / 180) * Math.sin(((b - lng) * Math.PI) / 360) ** 2)));
+  // The document's own facility name breaks the tie: a dock is often a few lots from the nearest business pin.
+  // A dwell whose NEAREST place (within 150 m) is a truck stop / fuel / scale is a driver's rest, never a pickup or delivery.
+  const nearest = (Array.isArray(data.places) ? data.places : [])[0];
+  if (nearest) {
+    const nTypes = [nearest.primaryType, ...(nearest.types ?? [])].filter(Boolean) as string[];
+    const nDist = dist(typeof nearest.location?.latitude === "number" ? nearest.location.latitude : null, typeof nearest.location?.longitude === "number" ? nearest.location.longitude : null);
+    if ((nDist == null || nDist <= 150) && (nTypes.some((t) => NOT_A_SHIPPER.has(t)) || /\b(love'?s|pilot|flying j|petro|ta travel|travel ?center|truck ?stop|cat scale|scale)\b/i.test(nearest.displayName?.text ?? ""))) {
+      return { formatted: "", address_line1: "", city: "", state: "", country: "", zip: "", lat: null, lon: null, distance_m: nDist, truck_stop: true };
+    }
+  }
+  const words = (v: string | null | undefined) => new Set(String(v ?? "").toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !["inc", "llc", "corp", "company", "the"].includes(w)));
+  const want = words(preferName);
+  const places = (Array.isArray(data.places) ? data.places : []).slice();
+  if (want.size) places.sort((a, b) => {
+    const score = (pl: (typeof places)[number]) => [...words(pl.displayName?.text)].filter((w) => want.has(w)).length;
+    return score(b) - score(a);
+  });
+  for (const pl of places) {
+    const types = [pl.primaryType, ...(pl.types ?? [])].filter(Boolean) as string[];
+    if (types.some((t) => NOT_A_SHIPPER.has(t))) continue;
+    if (/\b(love'?s|pilot|flying j|petro|ta travel|travel ?center|truck ?stop|cat scale|scale|coinme|cinnabon|baskin|subway|wendy'?s|mcdonald'?s)\b/i.test(pl.displayName?.text ?? "")) continue;
+    const comps: GoogleAddressComponent[] = (pl.addressComponents ?? []).map((c) => ({
+      long_name: c.longText ?? "", short_name: c.shortText ?? c.longText ?? "", types: c.types ?? [],
+    }));
+    const pLat = typeof pl.location?.latitude === "number" ? pl.location.latitude : null;
+    const pLng = typeof pl.location?.longitude === "number" ? pl.location.longitude : null;
+    const mapped = fromComponents(comps, pl.formattedAddress ?? "", pLat, pLng, pl.displayName?.text?.trim() || undefined);
+    if (!mapped.address_line1) continue;
+    return { ...mapped, ...(pl.id ? { place_id: pl.id } : {}), provider: "google_places" as const, distance_m: dist(pLat, pLng) };
+  }
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&result_type=street_address|premise&key=${encodeURIComponent(cfg.apiKey)}`;
+  const g = await fetchGoogle(url, undefined, "google_geocoding");
+  const gd = (await g.json()) as { status?: string; results?: GoogleGeocodeResult[] };
+  if (gd.status && gd.status !== "OK" && gd.status !== "ZERO_RESULTS") throw new Error(`google_places_status_${gd.status}`);
+  const r = gd.results?.[0];
+  if (!r) return null;
+  const rLat = typeof r.geometry?.location?.lat === "number" ? r.geometry.location.lat : null;
+  const rLng = typeof r.geometry?.location?.lng === "number" ? r.geometry.location.lng : null;
+  const mapped = fromComponents(r.address_components ?? [], r.formatted_address ?? "", rLat, rLng);
+  if (!mapped.address_line1) return null;
+  return { ...mapped, ...(r.place_id ? { place_id: r.place_id } : {}), provider: "google_geocoding" as const, distance_m: dist(rLat, rLng) };
+}

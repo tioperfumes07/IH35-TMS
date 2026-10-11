@@ -7870,3 +7870,13 @@ action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-11-cc2-443-77-
 rehearsal: throwaway br-raspy-cell-akj7dzk2 (full path, rolled back; deleted): 3 voided, 65614 cents, TB 0 -> 0
 expires_at: 2026-10-12T23:12:58Z
 status: OPEN
+
+## AUTH-441
+issued_at: 2026-10-11T23:33:07Z
+issued_by: Lead 443.74 items 1-3 + 443.77 ("finish 443.74 and apply it"). Recorded by CC-2 in the PR that ships the engine and its runner, as with AUTH-404..440
+owner_quotes: "Probably the gps is source of truth or verification" (2026-10-11 16:57 CT); "Use logic, get this done now. I need closed immediately." (18:07 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the stop GPS verification engine (apps/backend/src/telematics/stop-gps-verification.service.ts) applied over every USMCA load; it moves ONLY a stop whose truck dwell lies elsewhere AND whose dwell facility carries the document's own distinctive name (confirmed). Measured 23:30Z over 148 loads / 309 pickup-delivery stops: verified 186, GPS disagrees 40 (confirmed 3, unconfirmed 37 listed for the owner), truck elsewhere on the document's dates listed separately, no qualifying dwell 18. The 3 moves: 13660 #1 US COLD STORAGE WARSAW NC 240 Bruce Costin Rd -> United States Cold Storage 2901 Kenny Biggs Rd Lumberton NC (96.2 km); 13530 #1 Mexus Cold Storage 1601 Justo Penn St -> Mexus Cold Storage 1214 Beltway Pkwy Laredo (15.4 km); 13559 #2 WAL MART LANCASTER 150 N I-35 E -> Walmart Distribution Center 8348, 940 E Pleasant Run Rd Lancaster (7.4 km). Each: the stop takes the facility (street, point, place id, geocode_source gps_dwell_google), an audit row keeps the document address + distance, the stop resolver draws its location + ONE fence and queues it to Samsara (outbox), dispatch.relearn_load_miles re-learns legs + deadhead. Pay miles, amounts, rates untouched. Nothing deleted.
+action: DATABASE_URL=<prod> GOOGLE_PLACES_*=<server key> node --import tsx scripts/ops/2026-10-11-cc2-443-74-stop-gps-verification.mts --apply --auth AUTH-441
+rehearsal: throwaway br-young-mode-akzqje1f (COMMITTED, deleted): 3 moved; re-measure 5 of 6 stops verified on the 3 loads (the 6th listed); found and fixed: the resolver's re-resolve pulled 13530 #1 back by name to the owner's older Samsara address — a gps_dwell_* stop now keeps its own point
+expires_at: 2026-10-12T23:33:07Z
+status: OPEN
