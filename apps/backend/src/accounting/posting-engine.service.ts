@@ -172,6 +172,8 @@ type PostSourceInput = {
   // company-default cash-like account is used (same fallback as bill_payment). B5's approve
   // path passes the operator-chosen source account here. Ignored by other source types.
   credit_account_id?: string | null;
+  /** 443.37 — the settlement this bill posting belongs to; stamped at INSERT via the writer (bill source only). */
+  settlement_id?: string | null;
 };
 
 type ReverseBatchInput = {
@@ -864,6 +866,7 @@ async function insertPostingLines(input: {
   sourceType: PostingSourceType;
   sourceId: string;
   lines: PostingLineDraft[];
+  settlement_id?: string | null;
 }) {
   // ROUND 391 — the posting insert and its transaction_source_links row used to live here, inline.
   // Eight OTHER services also INSERT INTO accounting.journal_entry_postings directly, and only one of
@@ -889,6 +892,7 @@ async function insertPostingLines(input: {
       relationship_role: line.relationship_role ?? "source_transaction",
       entity_uuid: line.entity_uuid ?? null,
       entity_type: line.entity_type ?? null,
+      settlement_id: input.settlement_id ?? null,
     }))
   );
 }
@@ -3209,6 +3213,7 @@ async function executePostingOnClient(client: DbClient, ctx: PostingExecCtx): Pr
     sourceType,
     sourceId,
     lines: draft.lines,
+    settlement_id: input.settlement_id ?? null,
   });
 
   await client.query(
