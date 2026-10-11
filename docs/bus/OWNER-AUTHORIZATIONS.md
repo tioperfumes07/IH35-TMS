@@ -7535,3 +7535,13 @@ action: OWNER_AUTH_ID=AUTH-414 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-1
 rehearsal: throwaway br-little-boat-ak3f0ftu (COMMITTED, deleted): 2,673 postings; entity NULL 487 -> 0; load NULL 899 -> 183 (78 Relay deposit legs = wallet funding, 105 settlement credits spread over several load bills — both legitimately load-less); trial balance 0 across 3,233 postings unchanged
 expires_at: 2026-10-12T07:13:44Z
 status: OPEN
+
+## AUTH-415
+issued_at: 2026-10-11T07:11:23Z
+issued_by: Lead 443.42 #7 ("the 81 driver-app notices for August loads — hide/dismiss them through the notifications engine (kept in history)"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..413
+owner_quotes: "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — pwa.driver_notifications titled "Load N dispatched" created 2026-10-11 for a load that already ran (first stop due before the notice) and belongs to a driver settlement: hidden through hideDriverPwaNotifications (payload.hidden + read_at; row kept; audit pwa.driver_notification.hidden per row). No DELETE.
+action: OWNER_AUTH_ID=AUTH-415 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-42-hide-historical-dispatch-notices.ts --apply
+rehearsal: throwaway br-square-hat-akj1365j (COMMITTED, deleted): 141 matched (81 at the 443.41 measure + later Creator posts before 6f84ffa6bf went live), 141 hidden, 0 still visible
+expires_at: 2026-10-12T07:11:23Z
+status: OPEN
