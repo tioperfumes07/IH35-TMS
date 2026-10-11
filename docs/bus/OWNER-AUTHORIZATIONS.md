@@ -7394,3 +7394,13 @@ consumed_by: CC-3
 row_counts: removed 3,606 — feed_intake_checks 24, feed_intakes 2, lane_profitability_cache 2,891, deadhead_cache 22, driver_notifications 273 (1 kept), docs.file_links 382 (422 kept), docs.files 12 (484 kept), fuel_gps_matches 0 (85 kept), tank_events 0 (1 kept), load_stops 0; audit.record_deletions 3,606 rows (auth_id AUTH-403). Banking before = after: journal entries 280, postings 560, bank transactions 1,291, expenses 5.
 proof_query: node scripts/verify-no-orphan-of-purged-documents.mjs (prod) -> OK, every ORPHANS predicate 0. Ran as neondb_owner (session role forced to neondb_owner; the login's default role ih35_app cannot list purge rows), migration 202615450900 live.
 rehearsed: throwaway fork br-wild-grass-akimpgdv (deleted): migration applied twice; --commit removed exactly 3,606 rows, 3,606 audit.record_deletions rows, every orphan count 0, banking 280 / 560 / 1,291 / 5 unchanged.
+
+## AUTH-404
+issued_at: 2026-10-11T00:05:00Z
+issued_by: Lead, on the owner's order (ROUND 443.26), recorded by CC-2 in the PR that ships the script, as the Lead instructed
+owner_quotes: "all drivers must have only one profile and escrow and liability account. they can have multiple users in samsara. those should already be mapped." (6:58 PM CT 2026-10-10) · "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10) · near-duplicates, 7:02 PM CT: "that is obvious they are the same person"
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — mdata.drivers merges through executeDriverMerge (apps/backend/src/mdata/driver-merge.service.ts:231) only, one transaction per merge, and the references that engine repoints. No other write. No DELETE. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-404 MERGE_CONCURRENCY=8 DATABASE_URL=<prod direct> npx tsx apps/backend/scripts/auth404-merge-duplicate-drivers.mts --branch=br-fancy-credit-akjnd07a --apply --report=<local report.json>
+rehearsal: same command on throwaway Neon branch br-damp-hall-aknn9itq (deleted after); counts in the PR and SEATS-TO-LEAD
+expires_at: 2026-10-12T00:05:00Z
+status: OPEN
