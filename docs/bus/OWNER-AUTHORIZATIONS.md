@@ -7860,3 +7860,13 @@ consumed_at: 2026-10-11T22:19:00Z
 consumed_by: CC-2 (443.73 #6 / 443.74 #4)
 row_counts: 7 duplicate receipt lines voided through executeVoidCancel (expense + fuel row, reversing JE each), 229142 cents — 99794138 diesel + DEF on 13571, 99530579 on 13533, 99416535 DEF + 99477699 DEF on 13615, 99549122 diesel + DEF on 13621; TB 0 -> 0. 1848853 not touched (GPS contradicts the recorded ruling, listed for the owner).
 proof_query: verify-fuel-transactions-per-load on prod LIVE PASS (647 live rows, 6 second-document lines 'already on load N', 1848853 disclosed OPEN); verify-fuel-expense-is-unique-per-provider-transaction PASS with 2 named pairs (1848853, 99448116)
+
+## AUTH-440
+issued_at: 2026-10-11T23:12:58Z
+issued_by: Lead 443.77 item 3 ("1848853 … DECIDED BY GPS … stays on 13543; remove the copy on 13547 through the engine (fork first) … 99448116: same test, decide, do not ask"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..439
+owner_quotes: "Probably the gps is source of truth or verification" (2026-10-11 16:57 CT); "Use logic, get this done now. I need closed immediately." and "Any comment by me made before the seed for the previous seed is irrelevant, use your logic" (2026-10-11 18:07 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — governed void (executeVoidCancel expense + fuel_transaction) of EXACTLY 3 duplicate receipt lines, $656.14: 1848853 diesel $585.36 + DEF $29.43 on 13547 (fuel efb9ccba / b6095998, expenses 13547 / 13547-3; T152 fueled at Love's #471 Natalia 2026-08-26 16:10Z on 13543's printed empty leg home — 13543 keeps them); 99448116 DEF $41.35 on 13535 (fuel f542a157, expense 13535-2; one transaction number = one purchase, its diesel + DEF lines are on 13519, which keeps them). Each refuses unless as measured and the kept copy is live and posted. TB 0.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-11-cc2-443-77-void-last-double-cost.mts --apply --auth AUTH-440
+rehearsal: throwaway br-raspy-cell-akj7dzk2 (full path, rolled back; deleted): 3 voided, 65614 cents, TB 0 -> 0
+expires_at: 2026-10-12T23:12:58Z
+status: OPEN
