@@ -135,7 +135,7 @@ function dollarsFromCents(cents: number): number {
  * journal_entry_id and the feed gate refused ("Expense 13508: not posted"). Same stamp the other expense posters write
  * (checks/check-create.service.ts, bank-line-expense.service.ts) — only on an unposted, unvoided expense of this company.
  */
-async function stampExpensePosted(client: DbClient, companyId: string, expenseId: string, journalEntryId: string): Promise<void> {
+export async function stampExpensePosted(client: DbClient, companyId: string, expenseId: string, journalEntryId: string): Promise<void> {
   const r = await client.query(
     `UPDATE accounting.expenses
         SET posting_status = 'posted', posted_at = COALESCE(posted_at, now()), journal_entry_id = $3::uuid, updated_at = now()

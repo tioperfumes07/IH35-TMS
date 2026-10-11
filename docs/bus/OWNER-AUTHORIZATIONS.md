@@ -7829,3 +7829,14 @@ consumed_at: 2026-10-11T18:55:30Z
 consumed_by: CC-2 (443.64 3b 13587 point)
 row_counts: 1 stop (13587 #2, 5402f34c) moved to its location's point; relearn delivered 18:55Z; Creator street stops on their fence's point 297 of 297, Samsara read-back on the point 297 of 297
 proof_query: fence-on-point + Samsara read-back count over Creator street stops -> 297 / 297
+
+## AUTH-438
+issued_at: 2026-10-11T21:30:32Z
+issued_by: Lead 443.72 item 3 ("GO on the two fuel dates … through the existing engine path, fork-rehearsed"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..437
+owner_quotes: "Do not drift your job is to fix the engines and create perfect engines that follow the process correctly." (2026-10-11 16:07 CT, via Lead 443.72)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — exactly two Dreamline receipts on settlement 5789: load 13557 invoice 99462408 diesel $840.00 (fuel 40ea84c2, expense 13557) 2026-09-29 -> 2026-08-29; load 13550 invoice 99460605 DEF $42.38 (fuel 89bd8842, expense 13550-4) 2026-09-27 -> 2026-08-27. Per receipt: governed void of the expense (reversing JE on its original date) + correctFuelTransactionDate on the source row (one transaction), then createExpenseFromFuelTransaction -> postSourceTransactionInClientTx -> stampExpensePosted (the Creator's own sequence). Amounts, accounts (Dr 5000 / 5010, Cr 2510), item, load, unit, driver, vendor unchanged. $882.38 moves September -> August. TB 0. No DELETE, nothing in Samsara.
+evidence: Company_Settlement_5789.pdf (printed 2026-09-25, period 2026-08-26..2026-09-01) prints "2026-09-29 LOVES 10465LONESOME PINE 99462408 146.879 5.719 840.00" and "2026-09-27 LOVES 10465LONESOME 99460605 Fuel-DEF-Diesel Exhaust Fluid Y 42.38", while the diesel line of the same invoice prints "2026-08-27 LOVES 10465LONESOME PINE 99460605 148.502 5.759 855.22".
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-11-cc2-443-72-fuel-date-reissue.mts --apply --auth AUTH-438
+rehearsal: throwaway br-red-tree-akt27jdd (COMMITTED, deleted): 13557 -> 13557-3 and 13550-4 -> 13550-5, fuel row + document + JE on the true dates, legs unchanged, reversals on the original September dates, TB 0 before and after, verify-fuel-transactions-per-load LIVE PASS (654/654, 142/142); a re-run refuses (already voided). Rehearsals 1-2 (deleted) found: void-and-recreate is refused by fuel_tx_source_row_hash_uk, and the document engine leaves a draft unposted — hence the date-correction engine and the Creator's post+stamp step.
+expires_at: 2026-10-12T21:30:32Z
+status: OPEN
