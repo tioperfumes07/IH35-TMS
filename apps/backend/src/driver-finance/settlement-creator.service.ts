@@ -1379,6 +1379,8 @@ export async function postSettlementCreatorInClientTx(
           relay_fill_id: relayFillId,
           journal_entry_id: fillPosted.journal_entry_id,
           requesting_user_uuid: actorUserId,
+          // Lead 443.51 #5: the document names this settlement at adoption (settlement_no + source_settlement_ref).
+          settlement_no: sourceDocumentRef ?? displayId,
         });
         if (fillDoc.outcome === "refused") throw new SettlementCreatorError("relay_fill_document_refused", `Fuel line: ${fillDoc.reason}`);
         expenseIds.push(fillDoc.expense_id);
