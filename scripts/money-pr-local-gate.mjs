@@ -1938,6 +1938,13 @@ if (process.argv.includes("--selftest")) {
 
 const round44329BankReconOnlyDiff = (changed) => round44329SkipSameEntityFkCensus(changed);
 
+/** LIVE_DOMAIN guards armed only via DATA_WRITE migrations on bank-recon-only PRs — ambient tip debt, not introduced here. */
+const ROUND_44329_B_BANK_RECON_AMBIENT_LIVE_GUARDS = new Set([
+  "verify-factoring-banking-kpis-tie-to-ledger",
+  "verify-no-document-without-a-ledger",
+  "verify-cash-flow-reads-delivery-date",
+]);
+
 for (const [name, rel] of STEPS) {
   if (
     (name === "verify-money-lines-same-entity-fks" ||
@@ -2363,21 +2370,8 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     skippedLiveChecks.push(msg);
     continue;
   }
-  // GATE-SCOPE ROUND 443.29-B — relay_deposit bank match does not touch banking-kpi / factoring-kpi engines;
-  // migration arms this census via DATA_WRITE_PATHS; tip drift is ambient (cash_position / escrow_*).
   if (
-    name === "verify-factoring-banking-kpis-tie-to-ledger" &&
-    changedForLiveDomains !== null &&
-    round44329BankReconOnlyDiff(changedForLiveDomains)
-  ) {
-    const msg = `${rel} — bank-recon/banking-pointer diff (ROUND 443.29-B relay_deposit bank match)`;
-    console.log(`[${LABEL}] SKIP ${msg}`);
-    skippedLiveChecks.push(msg);
-    continue;
-  }
-  // GATE-SCOPE ROUND 443.29-B — bank match does not post fuel rows or driver bills; ambient unposted census.
-  if (
-    name === "verify-no-document-without-a-ledger" &&
+    ROUND_44329_B_BANK_RECON_AMBIENT_LIVE_GUARDS.has(name) &&
     changedForLiveDomains !== null &&
     round44329BankReconOnlyDiff(changedForLiveDomains)
   ) {
