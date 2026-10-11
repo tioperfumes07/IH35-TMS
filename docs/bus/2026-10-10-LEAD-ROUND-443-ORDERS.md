@@ -911,3 +911,285 @@ than owed -> stops, no posting (test) | paid-directly-to-vendor $500 to Relay ->
 debit, 0 bank rows (test) | existing 209 postings unchanged (count pasted) | read-only backfill proposal
 delivered | guards PASS + selftest
 ```
+
+---
+ROUND 443.23 — CC-1 — BANKING MATCH-CANDIDATE AUDIT (read-only) — issued 2026-10-10 6:06 PM CT (23:06 UTC) — deadline 23:45 UTC
+For each document the Settlement Creator posts (invoice incl. $0, driver bill, vendor bill from an owed expense, paid expense,
+fuel transaction, escrow/deduction, settlement): the exact banking match-candidate query (file:line), the filter it must pass,
+and whether a Creator-posted row passes. One table in SEATS-TO-LEAD.md. Any NO = finding + one-line fix + owning seat
+(banking/** = Cursor). Also the test name proving only an AUTHORIZED $0 invoice skips assertInvoiceHasRevenueLines.
+No production write, no code change. Surrender: silence past deadline -> CC-2 takes it.
+DONE: CC-1 | 443.23 DONE | <n> documents | <n> pass | <n> fail (list)
+
+---
+ROUND 443.24 — CC-2 — DISPATCH SURFACES + RELAY FUEL DEDUPE FOR CREATOR-BOOKED LOADS (read-only) — issued 2026-10-10 6:10 PM CT (23:10 UTC) — deadline 23:50 UTC
+(A) For a load booked by the Creator through bookLoadOnClient: every dispatch surface that must show it (loads list, load detail,
+stops, tour/pre-settlement, dispatch board, driver and unit history, customer loads) — query file:line, filters, passes yes/no for a
+delivered Aug-2026 load. (B) Fuel: when the Relay cron/webhook later ingests the SAME fill the Creator already wrote — dedupe key
+file:line, one row or two, which keeps the load link. Any NO / double row = finding + one-line fix. Table in SEATS-TO-LEAD.md.
+No production write, no code change. Surrender: silence past deadline -> CC-1.
+DONE: CC-2 | 443.24 DONE | A <n> surfaces <n> pass <n> fail | B one-row yes/no (key)
+
+OWNER RULINGS 6:05 PM CT (pre-flight 443.19): 119 and 120 saved as 119-<load>, 120-<load>. Duplicated QuickBooks numbers
+(059, 080/084, 092/094, 105) kept exactly as number-load, no flag. EGRO is never factored: EGRO loads 13623, 13627 -> $0 invoice.
+
+---
+GO 443.11 — STEP 1 OF 2 — issued 2026-10-10 06:20 PM CT (23:20 UTC) by Claude Lead, on the owner's order ("lets seed the 10 loads")
+Measured: live backend ef918d86 (healthz 23:20 UTC) contains 443.7 a, 443.9, 443.16; purge AUTH-403 consumed; migration 202615460900 on prod;
+443.12 correction verified invoice-send.service.ts:239-245.
+CC-3: enter settlement 5769 ONLY, through POST /api/v1/driver-finance/settlement-creator/preview then /post (never the feed run route, never SQL).
+Loads: 13498 Transportation $0 (0-13498) and 13508 invoice 3-13508 NCC Logistics $2,500.00. Expected: gross $1,155.52, deductions $10.00,
+escrow $50.00, net $1,095.52. If preview differs from these by one cent, do NOT post: paste the preview and stop.
+After the post paste: the post response (ids, stop_stamps), and nothing else. Then STOP and wait. The Lead audits 5769 on Neon and writes
+NEXT (5771-5779 in one run) or STOP. Do not touch banking. Deadline for 5769: 23:45 UTC.
+
+
+---
+LEAD RULINGS + ROUTE FOR 443.11 — 06:28 PM CT — answers CC-3's STOP on 5769
+ROUTE: the Lead posts through the deployed route from the owner's own logged-in app session. CC-3 does not need a token.
+CC-3: write the exact request body the Creator route accepts (draftSchema, settlement-creator.routes.ts:37) for 5769 to
+~/IH35-LEAD-CHANNEL/443-11/5769.json — one file, valid JSON, operating_company_id USMCA, nothing invented, every value from the workbook.
+Then one line in SEATS-TO-LEAD.md: '5769.json READY'. Deadline 23:50 UTC. The same file is used for preview and post.
+RULINGS (apply to all 10, and to the 59):
+(a) Escrow: through the Creator's escrow path to the DRIVER'S OWN sub-account under "Driver Escrow" (2100-00) — for 5769
+    "ANGEL ALFONSO SOSA — Driver Escrow" (2100-00-024). Never "Driver Admin Fee & Chargeback Income" (7200). No load on escrow
+    (owner 10-10: "escrow with no load number yes").
+(b) $0 Picks / Drops lines: not entered. They carry no money; the stops carry the pickup and delivery.
+(c) DEF 13508 $67.84 (LOVES, 08-07): entered as a company fuel expense on "DEF (Diesel Exhaust Fluid)" (5010) — the account is live
+    in the USMCA chart (measured 06:28 PM CT). Load 13508, truck T156, vendor Loves, paid from Relay.
+(d) Quick Pay -114.00: not entered (owner 10-10: "there is no quickpay").
+If the route refuses any of these, paste the refusal — do not work around it.
+
+
+---
+LEAD — 5769 PREVIEW RESULT + ORDER TO CC-3 — 06:42 PM CT
+Preview of your 5769.json through the deployed route (owner session, HTTP 200): 16 journal lines, debits 2,561.58 = credits 2,561.58,
+driver net 1,095.52 matches, company expenses 1,346.06 matches, escrow on "ANGEL ALFONSO SOSA — Driver Escrow" (2100-00-024), fuel and DEF
+credit "Relay Fuel Wallet" (1295). can_post = FALSE, one blocker:
+  "Load 13498: the customer's PO number (or W/O number) is required at load creation".
+The PO / W.O. is in the owner's reconciliation workbook (~/IH35-LEAD-CHANNEL/10-1-26-Usmca-Faro-Always-Reconciliation-2.xlsx, tab
+QBO-FARO-Allways, columns Faro 'PO' and Allways 'W.O.'): 13498 = 1007701, 13508 = 138458.
+CC-3, now, no production write:
+1. Add customer_po_number to every load in 5769.json from that tab (W.O. column; Faro PO where both exist they must agree — if they differ, flag it).
+2. Write the other nine files the same way, same rulings a-d: 5771.json ... 5779.json in ~/IH35-LEAD-CHANNEL/443-11/. 5778: 13524 at $3,800.00.
+   5779: 13526 invoice 19 $3,500.00 USMCA; 13527 EGRO faro_transportation $0.
+3. One table in SEATS-TO-LEAD.md: settlement | loads | gross | deductions | escrow | net | company expenses | any flag. Deadline 00:15 UTC.
+Posting stays with the Lead/owner session. Do not post.
+
+
+---
+ROUND 443.25 — CC-3 — SETTLEMENT CREATOR: IMPORT ENTRY FILES (the owner posts with one click) — issued 06:58 PM CT (23:58 UTC) — deadline 00:45 UTC
+WHY: the Lead cannot post from the owner's browser session (blocked on the Lead's side) and CC-3 has no login. Owner 10-10: "A coder or
+you seed them instantly ... or if there is an import engine use that" / "Engine must be correct". So the Creator gets its own import.
+MEASURED: POST /settlement-creator/preview with 5769.json returns 200, balanced 2,561.58, driver net 1,095.52, company expenses 1,346.06,
+can_post false only for the missing PO (13498=1007701, 13508=138458).
+BUILD — ONE PR, frontend only unless you prove a backend gap:
+1. SettlementCreatorDrawer.tsx (or the settlements page header): button "Import entry files". Accepts 1..N .json files, each one the exact
+   draftSchema body. No new backend route: for each file, in settlement_no order, call the EXISTING /preview.
+2. One row per file: settlement no | loads | gross | deductions | escrow | driver net | company expenses | balanced | can_post | blockers.
+   Nothing is posted by importing.
+3. Button "Post all that pass": posts in settlement_no order through the EXISTING /post, one at a time; STOPS at the first refusal or the
+   first file whose can_post is false and shows it. Each posted row shows the settlement link (EntityLink) and the post result.
+4. A second button "Post first only" (posts the lowest settlement number and stops) — the Lead audits 5769 before the rest.
+5. Amounts through the existing money formatters; no raw ids on screen; company must be USMCA or the import refuses.
+GUARD (same PR): scripts/verify-settlement-creator-import-uses-creator-routes.mjs + --selftest — asserts the import calls only
+/settlement-creator/preview and /post, never the feed run route, never a new write route, and posts sequentially with stop-on-refusal.
+ALSO, before the PR: finish 5769.json (PO added) and 5771..5779.json in ~/IH35-LEAD-CHANNEL/443-11/ — the owner selects those 10 files.
+FAST-MERGE law. Run frontend tsc -b before merging (main's web build broke today on a type error). No production write by you.
+SURRENDER: silence past 00:45 UTC -> CC-1 takes the frontend import.
+DONE: CC-3 | 443.25 DONE | <sha> | web deploy live <deploy id> | 10 files in 443-11/ | guard PASS + selftest | tsc -b 0
+
+
+---
+ROUND 443.26 — CC-2 — ONE PROFILE PER DRIVER (USMCA) — issued 06:59 PM CT (23:59 UTC) — deadline part A 00:40 UTC, part B 02:00 UTC
+OWNER 10-10 6:58 PM CT: "all drivers must have only one profile and escrow and liability account. they can have multiple users in
+samsara. those should already be mapped."
+MEASURED 06:59 PM CT, Neon br-fancy-credit-akjnd07a, bypass_rls='lucia', USMCA mdata.drivers: 170 rows, 11 already merged
+(merged_into_driver_id set), 159 unmerged. Among the 159: 94 distinct exact names (case/accent/space-normalized first+last),
+61 names held by 2+ profiles, 65 surplus profiles. 12 Active. 93 carry a samsara_driver_id. Near-duplicates exist that exact
+matching misses — e.g. "ANGEL ALFONSO SOSA" 2ee70f40 (Inactive, unmerged) vs "Angel Alfonso Sosa Perez" 52037e93 (Probation, Samsara
+55857614, escrow "ANGEL ALFONSO SOSA — Driver Escrow" 2100-00-024). USMCA holds 0 loads / 0 settlements / 0 driver bills, so
+this is the cheapest moment there will ever be.
+PART A (00:40 UTC) — the drivers of settlements 5769, 5771-5779 only: for each driver named in ~/IH35-LEAD-CHANNEL/443-11/*.json (ask
+CC-3 for the list) name the ONE surviving profile and merge the others into it. Post the list driver -> surviving id to
+SEATS-TO-LEAD.md so CC-3 uses those ids. The first 10 are not posted until this list exists.
+PART B (02:00 UTC) — all 61 exact-name groups.
+RULES
+1. Use the EXISTING merge engine that sets merged_into_driver_id (name the service file:line in your report). No DELETE, no raw SQL
+   UPDATE of mdata.drivers outside it. If the engine lacks something below, fix the engine in the same PR.
+2. Survivor = the profile with the Samsara id + active escrow binding + most complete record; ties -> the Active/Probation one.
+3. Every Samsara id of a merged profile lands in mdata.driver_samsara_accounts on the survivor (multiple Samsara users per driver is
+   correct). No Samsara id is lost: count before = count after.
+4. One "<NAME> — Driver Escrow" sub-account (2100-00-NNN) and one advance/liability account per surviving driver. A second escrow
+   sub-account for the same person with 0 postings is deactivated and repointed, never deleted; with postings -> STOP and list it.
+5. Near-duplicates (different spelling, same person?) are NOT auto-merged: list them for the owner with both names, status, Samsara id.
+6. Test/dummy profiles ("DRIVER DUMMY", "Safety —", CODEX/TEST names): list them, do not merge into a real driver.
+GUARD (same PR): scripts/verify-one-profile-per-driver.mjs + --selftest — on USMCA, zero pairs of unmerged drivers with the same
+normalized name; every unmerged driver has at most one active escrow sub-account; every samsara id maps to exactly one survivor.
+FAST-MERGE law; backend tsc before merge. TRANSPORTATION and TRUCKING frozen — not read, not written.
+SURRENDER: silence past a deadline -> CC-1.
+DONE: CC-2 | 443.26 A DONE | 10-settlement drivers: <n> survivors, <n> merged | list posted
+DONE: CC-2 | 443.26 B DONE | <sha> | unmerged 159 -> <n> | exact-name dupes 61 -> 0 | samsara ids <n> = <n> | near-dupes listed <n> | guard PASS + selftest
+
+
+---
+ROUND 443.25 REPLACED — CC-3 POSTS THROUGH ITS OWN DEBUG BROWSER — issued 07:00 PM CT (00:00 UTC) — deadline for 5769: 00:40 UTC
+OWNER 6:59 PM CT: "i dont want to click. have cc3 open its own debugged mcp browser, assign it a port or however you want to do it."
+OWNER 6:58 PM CT: "you and all codres have full permission and authorizations, to use the app etc."
+So: STOP the 'Import entry files' UI (do not merge it; park the branch). CC-3 is authorized by the owner to use the live app.
+HOW
+1. Open your own Chrome with remote debugging on a port you choose (dedicated --user-data-dir, e.g. ~/.ih35-cc3-chrome, port 9333) and
+   drive it (CDP / your browser MCP). Open https://app.ih35dispatch.com, company USMCA.
+2. Session: the app authenticates by cookie against https://api.ih35dispatch.com (measured: no token in localStorage; fetch with
+   credentials:'include' returned 200 on /settlement-creator/preview from the owner's tab). You never type, read, copy or store the
+   owner's password, and you never copy cookie files out of his Chrome profile. If your window needs a one-time sign-in, post ONE line
+   'CC-3 needs the owner to sign in once in the window on port <n>' and wait — that is the only thing the owner does.
+3. From that page context, POST the entry files to the EXISTING routes only:
+   /api/v1/driver-finance/settlement-creator/preview then /post. Never the feed run route, never SQL, never a new route.
+ORDER OF WORK
+a. 5769.json with customer_po_number (13498=1007701, 13508=138458) and CC-2's surviving driver id (ROUND 443.26 part A). Preview must
+   show: balanced, driver net 1,095.52, company expenses 1,346.06, can_post true. Any other value: do not post, paste the preview.
+b. Post 5769. Paste the full post response to SEATS-TO-LEAD.md. STOP.
+c. The Lead audits 5769 on Neon and writes NEXT. Only then 5771..5779, one at a time, stop at the first refusal or mismatch.
+You touch nothing in banking. Record every request/response pair in ~/IH35-LEAD-CHANNEL/443-11/log/<settlement>.json.
+DONE: CC-3 | 443.11 5769 POSTED | settlement id | load ids | invoice numbers 0-13498, 3-13508 | driver bill | journal entry ids | stop_stamps
+
+
+---
+OWNER RULINGS 07:02 PM CT: near-duplicate drivers that are the same name with an extra surname / different case / accents ARE the same person — merge (443.26 rule 5 amended). Owner: "logged in already" — CC-3 proceeds with 5769.
+
+---
+LEAD RULINGS + ORDERS — 07:03 PM CT (00:03 UTC) — answers to CC-3, CC-2; new round for CC-1
+== CC-3 — DEF RULING (replaces ruling c) — deadline 00:50 UTC
+The ledger is right and my ruling (c) was wrong in form: DEF bought on the Relay card IS a Relay fill (same Loves ticket 2870483 as the
+diesel). It is entered in fuel_purchases with fuel_type "def", card relay, item Fuel-DEF, account "DEF (Diesel Exhaust Fluid)" (5010),
+receipt_cents 6784, load 13508 — NOT in expenses.
+Gallons are not in the workbook and are NEVER invented. Engine fix, one PR + guard, driver-finance/** only:
+  fuel_purchases[].gallons and cpg_cents become nullable when receipt_cents is present (routes.ts:108-109 today z.number()); stored NULL,
+  not 0; money uses receipt_cents; the statistical gallons accounts get no line for a NULL-gallons fill; the fill is listed in the post
+  result as 'gallons not recorded' so the Relay ingest (same ticket + fuel type) can complete it later without a second row.
+  Guard: verify-creator-fuel-fill-unknown-gallons-not-invented.mjs + selftest (NULL stays NULL; 0 is refused as a stand-in).
+Then 5769: preview (balanced, net 1,095.52, company expenses 1,346.06, can_post true) -> post -> paste -> STOP.
+Your 13498 practical miles 1315 from the AlwaysTrack column: accepted (source value).
+Your other flags on 5771-5779: I rule on them after 5769 is audited; keep them listed, do not guess.
+== CC-2 — 443.26
+Part A accepted. Angel near-duplicate: owner 7:02 PM CT "that is obvious they are the same person" -> merge 2ee70f40 into 52037e93.
+Rule 5 amended: same name with an extra surname / case / accents = same person, merge; list only pairs whose first name or first
+surname differ.
+AUTH-404 — ISSUED by the Lead on the owner's order of 6:58 PM CT ("all drivers must have only one profile and escrow and liability
+account") and 6:58 PM CT ("you and all codres have full permission and authorizations"). Scope: USMCA mdata.drivers merges through
+executeDriverMerge (driver-merge.service.ts:231) only, one transaction per merge, the exact command you post with the plan; rehearsed
+on a throwaway Neon branch first; before/after counts pasted; CONSUMED when done. No other write. Record it in OWNER-AUTHORIZATIONS.md
+in your PR with these two quotes.
+== CC-1 — ROUND 443.27 — LOAD FACTS TABLE FOR ALL 69 SETTLEMENTS (read-only) — deadline 00:50 UTC
+Source: ~/IH35-LEAD-CHANNEL/10-1-26-Usmca-Faro-Always-Reconciliation-2.xlsx (tab QBO-FARO-Allways: Faro 'PO', Allways 'W.O.', St. Miles,
+Customer, Invoice) + docs/bus/2026-10-10-QBO-INVOICE-LOAD-MAP.tsv + the settlements workbook. Output ~/IH35-LEAD-CHANNEL/443-LOAD-FACTS.tsv,
+one row per load of settlements 5769-5838: settlement | load | customer (workbook) | USMCA customer id (exact one, or DUPLICATE CUSTOMER
+with the candidate ids) | invoice number-load | amount | PO | W.O. | practical miles (St. Miles) | Transportation $0 yes/no | flags.
+The Creator refuses a load without PO/W.O. and without practical miles, so every blank is a flag (13497 has no PO/W.O. — say what the
+files do show). Also count USMCA customers that are the same company under two names (e.g. "NCC Logistics" ed3543fc vs "NCC Logistics
+México" 8a39ccca): list, do not merge. No production write, no code change. Surrender: silence -> CC-2.
+DONE: CC-1 | 443.27 DONE | <n> loads | <n> missing PO | <n> missing miles | <n> duplicate customers | file path
+
+
+---
+LEAD — OWNER'S RELAY FILE + FUEL CARD RULE — 07:06 PM CT (00:06 UTC) — CC-3 STOP: DO NOT POST 5769 YET
+File: ~/IH35-LEAD-CHANNEL/Relay-All-Transactions-2026-10-10.csv (owner upload; 385 rows; fills 2026-08-03..2026-10-10).
+MEASURED BY THE LEAD
+- 258 settled fuel transactions: amount $117,370.99 + fee $513.00 = $117,883.99. Fee is $2.00 per fill (252), $1.50 per Cat Scale (6).
+  1 lumper $260.00 + $5.00 fee. Per product: diesel 19,789.587 gal $105,225.38 (discount $14,327.26); DEF 735.351 gal $3,581.99;
+  reefer 1,567.344 gal $8,443.68; Cat Scales $81.50.
+- 42 settled deposits: $121,100.00 loaded + $3,935.76 fee (3.25% card fee) = $125,035.76 charged. 84 canceled deposits = nothing.
+  Loaded 121,100.00 - spent 118,148.99 = 2,951.01 left on the wallet (if it started at 0 on 08-03).
+- Every fill carries: ticket (external_id), Relay id (txn_...), truck, driver, Note with the load (232 of 259), gallons + price + total per
+  product (diesel / def / reefer), fee.
+- THE 5769 FUEL IS NOT IN THIS FILE: Loves Palestine AR 08-06 ticket 1073769 and 08-07 ticket 2870483 (diesel + DEF) do not appear;
+  truck T156 has no Relay row before 08-29. August has only 23 Relay fills and none between 08-07 and 08-28 except one Cat Scale.
+  Of the first-10 loads only 13502 (T152, 08-04, Malvern AR, $533.48) is in the file. So 'card: relay' in 5769.json is NOT proven.
+RULE (all 69 settlements)
+1. A fuel line is card 'relay' ONLY when its ticket is in the Relay file (match external_id; else date + truck + amount to the cent).
+   Then take from the file, never from the workbook: gallons and price per product, the DEF/reefer split as separate fuel rows
+   (fuel_type def / reefer_diesel — reefer is its own account and item, gallons always recorded), fee as fees_cents on
+   "Fuel Card Fees" (5005), and the Relay txn id as the document id so the ingest never makes a second row.
+2. A fuel line NOT in the Relay file is not Relay. The only other provider is Dreamline, but that is an inference until the owner
+   confirms or a Dreamline statement shows the ticket. Mark it NOT-IN-RELAY and wait.
+3. The DEF engine PR (nullable gallons) is still wanted for a non-Relay DEF line with no gallons; Relay DEF always has gallons.
+== CC-1 — add to ROUND 443.27 (deadline now 01:10 UTC): ~/IH35-LEAD-CHANNEL/443-FUEL-FACTS.tsv — every fuel/DEF/reefer/scale line of
+settlements 5769-5838 from the workbook, matched to the Relay file: settlement | load | date | vendor/city | ticket | workbook amount |
+RELAY MATCH (txn id) or NOT-IN-RELAY | relay gallons diesel/def/reefer | relay amount per product | fee | difference to the cent.
+Also the reverse: Relay fills 08-03..10-10 that no settlement line claims. No write, no code.
+== CC-3: 5769 waits for the fuel card answer. Keep building the nullable-gallons PR and the other nine files; mark each fuel line
+relay / NOT-IN-RELAY from the file yourself for the first 10 so CC-1's table can be cross-checked.
+
+
+---
+OWNER RULINGS 7:10 PM CT + ORDERS — written 07:10 PM CT (00:10 UTC)
+OWNER: "then use logic, dates out o forder, correct, if there is. a dispute invoice for 4200 will dispute qhen sent to factoring. 10 admin
+fee for 5778 gas fee put it its not much doesnt matter, the 38.8.44 just classify as def on average price so you get gallons. , then
+truck 156 was not using relay or it was not working or it was in the shop. yes, we use dreamline and relay when we have cash. ,
+remember like in quickbooks we can click on a transaction and change the vendor or change from dreamline to relay or vife versa."
+RULINGS (all 69 settlements)
+R1 FUEL CARD: a fuel line whose ticket is in the Relay file = relay. A fuel line NOT in the Relay file = DREAMLINE (owner: "we use
+   dreamline and relay"; T156 was not on Relay in early August). No more NOT-IN-RELAY waiting.
+R2 5769: both diesel lines card dreamline; DEF $67.84 is a Dreamline fill, fuel_type def (gallons not recorded -> the nullable PR).
+   Company expenses stay 1,346.06. Then preview -> post if exact -> paste -> STOP for the Lead audit.
+R3 DATES OUT OF ORDER (5779 period end before start, and any other): correct them by logic — period = earliest pickup to latest
+   delivery of the settlement's loads. Say what you changed in the post note.
+R4 5778 / load 13524: invoice 16-13524 at $3,800.00 (owner 10-10: "It is 3800 it was a typo by the dispatcher"). The $4,200 is not
+   entered; if a difference appears when it is sent to factoring it goes to the Disputes screen then.
+R5 5778 'Admin fee -' $10: enter it as Admin fee - GAS on "Driver Admin Fee & Chargeback Income" (7200).
+R6 RELAY FILL 2026-09-26 RaceTrac #2663 Texarkana TX, T170, txn_8LZfDKWFvFv1oD, amount $38.89, products 'DEF, DEF', file shows only
+   0.112 gal / $0.45: the other $38.44 is DEF at the file's average DEF price $4.8711/gal (3,581.99 / 735.351) = 7.891 gal.
+   Whole fill = DEF 8.003 gal, $38.89. Mark it 'gallons estimated at average price (owner 10-10)'.
+R7 Everything else flagged NEEDS REVIEW on 5771-5779: decide by the same logic from the owner's files; list what you decided, one line
+   each; stop only where two source files contradict each other on money.
+== ROUND 443.28 — CC-1 (after 443.27; deadline 02:30 UTC) — CHANGE VENDOR / FUEL CARD ON A POSTED TRANSACTION, QuickBooks-style
+On a posted fuel transaction, expense or bill: the user opens it and changes the vendor, or the payment source Dreamline <-> Relay
+(and the other sources the Creator knows). Engine, not a field edit: one transaction reverses the original credit line and posts the
+new one ("Relay Fuel Wallet" (1295) <-> Dreamline payable), same amount, same date, same load/truck/driver links, a reason required,
+old and new kept in the audit trail, the document number unchanged. Refused when the line is already matched to a bank/statement line
+(unmatch first) or the period is closed. The relay-wallet rule stays: a line moved TO relay must carry a Relay txn id.
+Measure first and post: where fuel transactions/expenses are edited today (file:line) and whether any path edits vendor or source
+without a journal entry. One PR per surface, one guard: verify-payment-source-change-is-a-reversal-not-an-edit.mjs + selftest.
+Frontend: the edit lives on the transaction detail, EntityLink + money formatters, no raw ids. No production data written for proof.
+Surrender: silence past deadline -> CC-2.
+DONE: CC-1 | 443.28 DONE | <sha> | live | relay->dreamline on a test fork: 2 journal lines reversed + 2 posted, balance unchanged,
+audit row | matched line -> refused | guard PASS + selftest
+
+
+---
+ROUND 443.29 — RELAY: FILL + FEE DOCUMENTS TIE TO RELAY'S TOTALS, DEPOSITS POST AND MATCH IN BANKING — issued 07:16 PM CT (00:16 UTC)
+OWNER 7:15 PM CT: "we need to be able to parse in the amtching in banknig the relay transactoins, that the engine be correctly built.
+when creating fule transactions from relay in a load, we must be able to create the 2 dollar fee they charge so we can match taht
+transaction-document expense, the fuel document-expense etc and have it give the same totals."
+MEASURED (origin/main 8388397, owner Relay file ~/IH35-LEAD-CHANNEL/Relay-All-Transactions-2026-10-10.csv)
+- settlement-creator.service.ts:134/:438 — the Creator already posts a "Fuel Card Fees" line when fees_cents > 0. Nothing sets it from Relay.
+- relay-deposit-classifier.service.ts:2-15 — deposits are stored and classified only; 'Nothing here posts. posted_to_gl stays false.'
+- Relay file: 258 fills $117,370.99 + fees $513.00 (252 x $2.00, 6 x $1.50 scales) = $117,883.99; lumper $260.00 + $5.00;
+  42 settled deposits $121,100.00 + $3,935.76 (3.25%) = $125,035.76; 84 canceled; wallet left $2,951.01.
+== PART A — CC-2 (integrations/relay-payments/**, after 443.26 part B; deadline 03:30 UTC) — one PR + guard per lettered item
+a FILL = DOCUMENTS THAT SUM TO RELAY'S TOTAL. One Relay fill produces: one fuel document line per product (diesel -> "Fuel & Diesel"
+  (5000); DEF -> "DEF (Diesel Exhaust Fluid)" (5010); reefer -> its own reefer account and item, gallons always kept) + ONE fee
+  document line on "Fuel Card Fees" (5005) for Relay's fee ($2.00 fill, $1.50 scale, $5.00 lumper — the value Relay reports, never
+  a constant). Credit "Relay Fuel Wallet" (1295) = Relay 'total' to the cent. Load, truck, driver, vendor, ticket and Relay txn id on
+  every line. Same result whether the fill arrives by webhook, cron, CSV import or is typed in the Settlement Creator (the Creator
+  line carries the Relay txn id + fees_cents; the ingest completes it, never a second row).
+b DEPOSIT = POSTED. A settled deposit posts: Dr "Relay Fuel Wallet" (1295) amount; Dr the 3.25% fee to "Fuel Card Fees" (5005)
+  unless the owner names another account (ask once, in your report); Cr the funding card/bank account resolved from the last-4 in
+  the Note. A canceled deposit posts nothing. An unknown last-4 does not guess: it lists the deposit for the owner.
+  HOLD-FOR-JORGE in the classifier header is lifted by the owner order quoted above.
+c WALLET ROLL-FORWARD the owner can open: deposits - fills - fees = balance, by day, each number a link to its documents.
+  Acceptance on a fork loaded with the owner's file: 121,100.00 / 3,935.76 / 117,370.99 / 513.00 / 265.00 / balance 2,951.01.
+d R6 applied: txn_8LZfDKWFvFv1oD ($38.89) = DEF 8.003 gal, flagged estimated.
+GUARD: verify-relay-fill-documents-sum-to-relay-total.mjs + selftest (fuel lines + fee line = total; no fill without its fee line when
+Relay reports a fee; deposit amount + fee = charged). No production write for proof; rehearse on a throwaway Neon branch.
+== PART B — CURSOR (banking/**; deadline 03:30 UTC) — one PR + guard
+Banking match screen: a bank or card line paid to Relay offers the Relay DEPOSIT document as its match candidate (amount charged =
+deposit + fee), shows the split wallet / fee before the user confirms, and after matching the line is 'matched', not re-categorized.
+The 1,291 existing bank transactions and the owner's categorizations are not rewritten: lines he already categorized to the Relay
+wallet are LISTED with the deposit each would match, read-only, for his word. Guard: verify-relay-deposit-is-a-bank-match-candidate.mjs.
+Lane: you do not touch integrations/relay-payments/** (CC-2) or driver-finance/** (CC-3).
+FAST-MERGE law, tsc before merge. TRANSPORTATION / TRUCKING frozen. SURRENDER: CC-2 silent -> CC-1; Cursor silent -> CC-1.
+DONE: CC-2 | 443.29 A DONE | <sha> | fork totals 121,100.00 / 3,935.76 / 117,370.99 / 513.00 / 2,951.01 | guard PASS + selftest
+DONE: CURSOR | 443.29 B DONE | <sha> | live | Relay bank line -> deposit candidate + split (test) | existing 1,291 unchanged | guard PASS
+
