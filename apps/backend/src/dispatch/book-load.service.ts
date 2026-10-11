@@ -250,6 +250,8 @@ export type BookLoadInput = {
   miles_practical?: number | null;
   miles_shortest?: number | null;
   miles_deadhead?: number | null;
+  /** 443.55 — per miles field the source chosen on Book Load (+ both recommendations, manual reason). */
+  miles_choice?: Partial<Record<"practical" | "short" | "empty", { source: string; value?: number | null; historical?: number | null; google?: number | null; reason?: string | null }>>;
   // P0 (owner 2026-09-14, "BOOK LOAD 500s") — a controlled vocabulary of exactly the 4 literals
   // loads_mileage_source_english_check allows (NULL, History, Manual, Routing engine,
   // Operator entered). Do not add a confidence-qualified variant here again — display concerns
@@ -2937,6 +2939,15 @@ export async function createLoadWithFullSideEffects(
       };
     }
     const load = loadRes.rows[0] as Record<string, unknown>;
+
+    // 443.55: the per-field miles source the dispatcher chose (Historical | Google | Manual + reason), who and when.
+    if (input.miles_choice && Object.keys(input.miles_choice).length > 0) {
+      const at = new Date().toISOString();
+      const choice = Object.fromEntries(
+        Object.entries(input.miles_choice).map(([f, c]) => [f, { ...c, reason: c?.reason?.trim() || null, chosen_by: (load.booked_by_user_id as string | null | undefined) ?? null, chosen_at: at }])
+      );
+      await client.query(`UPDATE mdata.loads SET miles_choice = $2::jsonb WHERE id = $1::uuid`, [load.id, JSON.stringify(choice)]);
+    }
 
     if (rateConfirmationFile) {
       await client.query(

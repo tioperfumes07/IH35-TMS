@@ -7,6 +7,10 @@
  * runs relearnLoadStopLegs + recomputeFirstStopDeadhead through chooseLegMiles (cache -> Google -> lane average -> NULL; never
  * a straight line). This script writes ONLY outbox rows. Driver pay miles are never touched (pay = the signed settlement).
  *
+ * 443.55 (--record-sources): the same event with record_sources=true also records 'document' as the source of every miles field
+ * that carries a value and no recorded source (the settlement's own miles), with both recommendations at that moment; under a
+ * separate dedupe key so it runs once more after the 443.53 pass.
+ *
  * Usage:
  *   DATABASE_URL=<fork> npx tsx scripts/ops/2026-10-11-cc2-443-53-relearn-creator-miles.ts --fork-commit
  *   DATABASE_URL=<prod> OWNER_AUTH_ID=AUTH-428 npx tsx scripts/ops/2026-10-11-cc2-443-53-relearn-creator-miles.ts --apply
@@ -25,6 +29,7 @@ const PROD_HOST_HINT = "ep-broad-block-akykk7bw";
 const LABEL = "2026-10-11-cc2-443-53-relearn-creator-miles.ts";
 const apply = process.argv.includes("--apply");
 const forkCommit = !apply && process.argv.includes("--fork-commit");
+const recordSources = process.argv.includes("--record-sources");
 const url = process.env.DATABASE_URL ?? "";
 if (!url) throw new Error("DATABASE_URL required");
 if (!apply && !forkCommit) throw new Error("pass --fork-commit (throwaway fork) or --apply (prod, AUTH-428)");
@@ -50,7 +55,8 @@ try {
   let enqueued = 0, deduped = 0;
   for (const l of loads) {
     const r = await enqueueOutboxEvent(client as never, "dispatch.relearn_load_miles", { aggregate_type: "mdata.loads", aggregate_id: l.id },
-      { operating_company_id: USMCA, load_id: l.id, actor_user_id: OWNER }, `dispatch.relearn_load_miles:${l.id}:443.53`);
+      { operating_company_id: USMCA, load_id: l.id, actor_user_id: OWNER, ...(recordSources ? { record_sources: true } : {}) },
+      `dispatch.relearn_load_miles:${l.id}:${recordSources ? "443.55-sources" : "443.53"}`);
     if (r.enqueued) enqueued++; else deduped++;
   }
   console.log(`Creator loads ${loads.length}: relearn events enqueued ${enqueued}, already queued ${deduped}.`);

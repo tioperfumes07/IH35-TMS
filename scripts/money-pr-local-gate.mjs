@@ -1077,6 +1077,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-no-haversine-leg-miles",
     ["apps/backend/src/dispatch/", "scripts/verify-no-haversine-leg-miles.mjs"],
   ],
+  // Lead 443.55 (CC-2) — per miles field the chosen source + both recommendations + who/when; one point_mileage writer.
+  [
+    "verify-load-miles-source-recorded",
+    ["apps/backend/src/dispatch/", "apps/backend/src/outbox/handlers/dispatch-relearn-load-miles.handler.ts", "scripts/verify-load-miles-source-recorded.mjs"],
+  ],
   // Lead 443.51 #3 (CC-2) — a load at delivered or later has no stop still 'pending'.
   [
     "verify-delivered-load-stops-terminal",

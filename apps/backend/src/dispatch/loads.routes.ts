@@ -273,6 +273,19 @@ const createDispatchLoadBodySchema = z.object({
   miles_practical: z.number().min(0).multipleOf(0.1).optional(),
   miles_shortest: z.number().min(0).multipleOf(0.1).optional(),
   miles_deadhead: z.number().min(0).multipleOf(0.1).optional(),
+  // 443.55 — per miles field, which recommendation the dispatcher chose on Book Load (historical | google | manual + reason).
+  miles_choice: z
+    .record(
+      z.enum(["practical", "short", "empty"]),
+      z.object({
+        source: z.enum(["historical", "google", "manual", "document"]),
+        value: z.number().min(0).nullable().optional(),
+        historical: z.number().nullable().optional(),
+        google: z.number().nullable().optional(),
+        reason: z.string().max(500).nullable().optional(),
+      })
+    )
+    .optional(),
   // P0 (owner 2026-09-14, "BOOK LOAD 500s") — this schema used to accept 2 literals
   // ("History — verify", "History — ZIP mismatch, verify") that the DB's own
   // loads_mileage_source_english_check CHECK constraint has never allowed (its em-dash confidence
