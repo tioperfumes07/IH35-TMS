@@ -7,6 +7,7 @@
 // Submit to Factor tab.
 import { useQuery } from "@tanstack/react-query";
 import { listFactoringPurchases, type ListFactoringPurchasesFilters } from "../../api/factoring-purchases";
+import { ParityTable } from "../parity/ParityTable";
 import { EntityLink } from "../shared/EntityLink";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
@@ -17,6 +18,8 @@ type Props = {
   /** Shown when nothing is factored (e.g. "This invoice has not been sold to the factor."). */
   emptyText?: string;
 };
+
+type PurchaseRow = Awaited<ReturnType<typeof listFactoringPurchases>>["purchases"][number];
 
 const cents = (v: number | string | null | undefined) => formatUsdCents(Number(v ?? 0));
 
@@ -49,38 +52,79 @@ export function FactoringPurchaseLinksPanel({ companyId, filter, emptyText = "No
     );
   }
   return (
-    <table className="w-full text-xs tabular-nums" data-testid="factoring-purchase-links">
-      <thead>
-        <tr className="text-[#4B5563]">
-          <th className="text-left font-semibold">Purchase</th>
-          <th className="text-left font-semibold">Date</th>
-          <th className="text-right font-semibold">Gross (this record)</th>
-          <th className="text-right font-semibold">Escrow</th>
-          <th className="text-right font-semibold">Cash reserve</th>
-          <th className="text-right font-semibold">Fee</th>
-          <th className="text-right font-semibold">Wire net to IH35</th>
-          <th className="text-left font-semibold">Journal entry</th>
-          <th className="text-left font-semibold">Bank deposit</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((p) => (
-          <tr key={p.id} data-testid={`factoring-purchase-link-${p.id}`}>
-            <td>
+    <ParityTable<PurchaseRow>
+      tableTestId="factoring-purchase-links"
+      rows={rows}
+      rowKey={(p) => p.id}
+      density="compact"
+      columns={[
+        {
+          key: "display_id",
+          label: "Purchase",
+          render: (p) => (
+            <span data-testid={`factoring-purchase-link-${p.id}`}>
               <EntityLink kind="factoring_purchase" id={p.id} label={p.display_id} />
               <span className="ml-1 text-[#4B5563]">{p.status}</span>
-            </td>
-            <td>{p.purchase_date ? formatDateUS(p.purchase_date) : "—"}</td>
-            <td className="text-right">{cents(p.line_gross_cents ?? p.gross_cents)}</td>
-            <td className="text-right">{cents(p.line_escrow_reserve_cents ?? p.escrow_reserve_cents)}</td>
-            <td className="text-right">{cents(p.line_cash_reserve_cents ?? p.cash_reserve_cents)}</td>
-            <td className="text-right">{cents(p.line_fee_cents ?? p.fee_cents)}</td>
-            <td className="text-right">{cents(p.net_to_company_cents)}</td>
-            <td>{p.journal_entry_id ? <EntityLink kind="journal_entry" id={p.journal_entry_id} label="Funding JE" /> : "—"}</td>
-            <td>{p.bank_transaction_id ? <EntityLink kind="bank_transaction" id={p.bank_transaction_id} label="Matched deposit" /> : "Not matched"}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+            </span>
+          ),
+        },
+        {
+          key: "purchase_date",
+          label: "Date",
+          render: (p) => (p.purchase_date ? formatDateUS(p.purchase_date) : "—"),
+        },
+        {
+          key: "line_gross_cents",
+          label: "Gross (this record)",
+          className: "text-right",
+          cellClass: "text-right",
+          render: (p) => cents(p.line_gross_cents ?? p.gross_cents),
+        },
+        {
+          key: "line_escrow_reserve_cents",
+          label: "Escrow",
+          className: "text-right",
+          cellClass: "text-right",
+          render: (p) => cents(p.line_escrow_reserve_cents ?? p.escrow_reserve_cents),
+        },
+        {
+          key: "line_cash_reserve_cents",
+          label: "Cash reserve",
+          className: "text-right",
+          cellClass: "text-right",
+          render: (p) => cents(p.line_cash_reserve_cents ?? p.cash_reserve_cents),
+        },
+        {
+          key: "line_fee_cents",
+          label: "Fee",
+          className: "text-right",
+          cellClass: "text-right",
+          render: (p) => cents(p.line_fee_cents ?? p.fee_cents),
+        },
+        {
+          key: "net_to_company_cents",
+          label: "Wire net to IH35",
+          className: "text-right",
+          cellClass: "text-right",
+          render: (p) => cents(p.net_to_company_cents),
+        },
+        {
+          key: "journal_entry_id",
+          label: "Journal entry",
+          render: (p) =>
+            p.journal_entry_id ? <EntityLink kind="journal_entry" id={p.journal_entry_id} label="Funding JE" /> : "—",
+        },
+        {
+          key: "bank_transaction_id",
+          label: "Bank deposit",
+          render: (p) =>
+            p.bank_transaction_id ? (
+              <EntityLink kind="bank_transaction" id={p.bank_transaction_id} label="Matched deposit" />
+            ) : (
+              "Not matched"
+            ),
+        },
+      ]}
+    />
   );
 }
