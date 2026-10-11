@@ -516,6 +516,20 @@
       ]
     },
     {
+      "id": "banking.panel.relay_deposit_categorized_match_hints",
+      "tab": "Panels",
+      "sub": "Panel: Relay Deposit Categorized Match Hints",
+      "route_hint": "surface://pages/banking/components/RelayDepositCategorizedMatchHintsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/banking/components/RelayDepositCategorizedMatchHintsPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome",
+        "bank",
+        "reverse_link"
+      ]
+    },
+    {
       "id": "banking.panel.plaid_sync_status",
       "tab": "Panels",
       "sub": "Panel: Plaid Sync Status Panel",

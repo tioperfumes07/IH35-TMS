@@ -265,6 +265,7 @@ function buildMatchCandidateColumns(
     {
       key: "event_date",
       label: "Date",
+      sortable: true,
       testId: "banking-match-candidate-date",
       sortValue: (c) => String(c.event_date ?? ""),
       cellClass: "ldt-k",
@@ -273,6 +274,7 @@ function buildMatchCandidateColumns(
     {
       key: "ledger_entry_kind",
       label: "Type",
+      sortable: true,
       sortValue: (c) => MATCH_CANDIDATE_KIND_LABELS[c.ledger_entry_kind] ?? "",
       render: (c) => (
         <EntityLink
@@ -286,6 +288,7 @@ function buildMatchCandidateColumns(
     {
       key: "reference",
       label: "Ref no.",
+      sortable: true,
       sortValue: (c) => c.reference ?? "",
       cellClass: "ldt-k",
       render: (c) => <span title={c.reference ?? undefined}>{c.reference?.trim() ? c.reference : "—"}</span>,
@@ -293,6 +296,7 @@ function buildMatchCandidateColumns(
     {
       key: "counterparty_name",
       label: "Payee",
+      sortable: true,
       testId: "banking-match-candidate-payee-header",
       sortValue: (c) => c.counterparty_name ?? "",
       render: (c) => (
@@ -304,6 +308,7 @@ function buildMatchCandidateColumns(
     {
       key: "description",
       label: "Description",
+      sortable: true,
       sortValue: (c) => c.description ?? c.memo ?? "",
       render: (c) => {
         // B7 — never paint a session uuid / bare id that slipped into a memo (humanMemo strips UUIDs).
@@ -315,6 +320,7 @@ function buildMatchCandidateColumns(
     {
       key: "open_balance_cents",
       label: "Open balance",
+      sortable: true,
       cellClass: "ldt-m",
       sortValue: (c) => Number(c.open_balance_cents ?? 0),
       render: (c) => (c.open_balance_cents == null ? "—" : formatUsdCents(Math.abs(Number(c.open_balance_cents)))),
@@ -322,6 +328,7 @@ function buildMatchCandidateColumns(
     {
       key: "amount_cents",
       label: "Amount",
+      sortable: true,
       cellClass: "ldt-m",
       sortValue: (c) => Math.abs(Number(c.amount_cents ?? 0)),
       render: (c) => formatUsdCents(Math.abs(Number(c.amount_cents ?? 0))),
@@ -329,6 +336,7 @@ function buildMatchCandidateColumns(
     {
       key: "difference",
       label: "Difference",
+      sortable: true,
       testId: "banking-match-candidate-difference-header",
       cellClass: "ldt-m",
       sortValue: (c) => Math.abs(matchDifferenceCents(tx.amount_cents, c.amount_cents)),
@@ -354,6 +362,7 @@ function buildMatchCandidateColumns(
     {
       key: "days_off",
       label: "Days off",
+      sortable: true,
       testId: "banking-match-candidate-days-off-header",
       cellClass: "ldt-k",
       sortValue: (c) => matchDaysOff(c.event_date, tx.transaction_date) ?? 0,

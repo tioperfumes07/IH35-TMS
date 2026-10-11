@@ -4,7 +4,7 @@ import { deliverLoadThroughDispatch } from "../settlement-creator.service.js";
 function client(start: string) {
   let status = start;
   const c = { query: vi.fn(async (sql: string) => (/SELECT status::text/.test(sql) ? { rows: [{ status }] } : { rows: [] })) };
-  const transition = vi.fn(async (_c: unknown, _a: string, _co: string, _l: string, input: { new_status: string }) => {
+  const transition = vi.fn(async (_c: unknown, _a: string, _co: string, _l: string, input: { new_status: string; delivered_at?: string }) => {
     status = input.new_status;
     return { ok: true };
   });
