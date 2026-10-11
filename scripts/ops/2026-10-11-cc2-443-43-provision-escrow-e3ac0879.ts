@@ -21,6 +21,7 @@ import {
   upsertDriverAdvanceAccountLink,
   upsertDriverEscrowAccountLink,
 } from "../../apps/backend/src/accounting/driver-subaccount-provision.service.js";
+import { allocateDriverSubAccountNnn } from "../../apps/backend/src/accounting/driver-subaccount-number.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -59,7 +60,10 @@ async function measure(label: string) {
 await measure("BEFORE");
 const report = await withCurrentUser(OWNER, async (client) => {
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [USMCA]);
-  const args = { operatingCompanyId: USMCA, driverId: DRIVER.driverId, driverName: DRIVER.driverName, actorUserId: OWNER };
+  // RULE 2 of verify-driver-subaccount-numbers-one-per-driver: ONE nnn, passed to both provisioners (AUTH-417's first run
+  // omitted this and got 2100-00-043 / 1245-00-042; aligned by AUTH-418).
+  const nnn = await allocateDriverSubAccountNnn(client as never, USMCA, DRIVER.driverId);
+  const args = { operatingCompanyId: USMCA, driverId: DRIVER.driverId, driverName: DRIVER.driverName, actorUserId: OWNER, nnn };
   const adv = await provisionDriverAdvanceSubAccount(client as never, args);
   const esc = await provisionDriverEscrowSubAccount(client as never, { ...args, hireDate: DRIVER.hireDate });
   if ("accountId" in adv && adv.accountId)
