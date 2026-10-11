@@ -495,7 +495,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           authUser.uuid,
           b.source_doc_id ?? null,
           // NOT NULL since 202614220000; this INSERT never set it, so every manual fuel entry failed with 23502.
-          enteredFuelRowHash(b.operating_company_id, b.vendor_id ?? null, b.transaction_reference),
+          enteredFuelRowHash(b.operating_company_id, b.vendor_id ?? null, b.transaction_reference, b.fuel_type),
         ]
       )) as { rows: Array<{ id: string }> };
       const fuelTransactionId = insertRes.rows[0]?.id;
