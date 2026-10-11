@@ -1,4 +1,5 @@
 import { assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
+import { payComponentOfLine, resolvePayComponentItem } from "./pay-component-items.js";
 import { claimSettlementPayRunInClientTx } from "./settlement-payrun-claim.service.js";
 // SETTLEMENT PAY-RUN CLOSE — net + escrow-cap + advance-recovery + records-only disbursement (Phase 2b).
 // TIER-1 FINANCIAL, BUILD-AND-HOLD. Flag SETTLEMENT_GL_POSTING_ENABLED (default OFF) => PREVIEW ONLY,
@@ -426,7 +427,15 @@ async function loadSettlementPayItems(
         AND sl.line_type = ANY($3::text[])`,
     [operatingCompanyId, settlementId, [...SETTLEMENT_EARNINGS_LINE_TYPES]]
   );
-  for (const r of earn.rows) items.push({ kind: "pay", cents: dollarsToCents(r.amount), accountId: accounts.driverPay, loadId: r.load_id, date: r.d, description: r.description || r.line_type.replace(/_/g, " "), itemId: r.item_id });
+  // RULING 443.67 #1e — a pay line with no item of its own takes its component's item from THE ONE MAP (pay-component-items.ts).
+  const componentItem = new Map<string, string | null>();
+  const itemOf = async (lineType: string, description: string | null): Promise<string | null> => {
+    const c = payComponentOfLine(lineType, description);
+    if (!c) return null;
+    if (!componentItem.has(c)) componentItem.set(c, await resolvePayComponentItem(client as never, operatingCompanyId, c));
+    return componentItem.get(c) ?? null;
+  };
+  for (const r of earn.rows) items.push({ kind: "pay", cents: dollarsToCents(r.amount), accountId: accounts.driverPay, loadId: r.load_id, date: r.d, description: r.description || r.line_type.replace(/_/g, " "), itemId: r.item_id ?? (await itemOf(r.line_type, r.description)) });
   const reimb = await client.query<{ amount: string; reimbursement_type: string | null; posting_account_id: string | null; load_id: string | null; d: string | null; item_id: string | null }>(
     `SELECT ABS(sl.amount)::text AS amount, dr.reimbursement_type, sl.posting_account_id::text AS posting_account_id, COALESCE(sl.load_id, dr.load_id)::text AS load_id,
             sl.item_id::text AS item_id,

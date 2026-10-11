@@ -9,6 +9,8 @@
  *       A/P bill line (per-load bill)   <- the item of the settlement line it was built from (same load, same amount,
  *                                          same description / reimbursement account), exactly one item among candidates
  *   D3  invoice linehaul line           <- this company's "Line Haul" item whose income account IS the line's account
+ *   (443.79 #1) expenses = the settlement's own (settlement_no) AND the Creator-era documents on its loads with no settlement
+ *       number (a fuel document re-issued from its fuel transaction, e.g. 13557-3 / 13550-5).
  *   D4  expense status 'draft'          -> 'posted' only where posting_status = 'posted' AND a journal entry exists
  *   D5  expense line driver / unit      <- its header's; header trailer <- the settlement document's trailer number
  *                                          (this company's equipment, exactly one); line trailer <- header
@@ -183,7 +185,9 @@ export async function categorizeCreatorSettlement(
     // ---- D4: a posted expense reads posted -------------------------------------------------------------------
     const d4 = await client.query(
       `UPDATE accounting.expenses SET status = 'posted', updated_at = now()
-        WHERE operating_company_id = $1::uuid AND settlement_no = $2 AND voided_at IS NULL
+        WHERE operating_company_id = $1::uuid AND (settlement_no = $2 OR (settlement_no IS NULL AND load_id IN (SELECT sl.load_id FROM driver_finance.settlement_lines sl
+               JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+              WHERE ds.operating_company_id = $1::uuid AND ds.voided_at IS NULL AND ds.source_document_ref = $2 AND sl.load_id IS NOT NULL))) AND voided_at IS NULL
           AND status = 'draft' AND posting_status = 'posted' AND journal_entry_id IS NOT NULL`,
       [co, input.settlementNo]
     );
@@ -195,7 +199,9 @@ export async function categorizeCreatorSettlement(
     if (trailerId) {
       const h = await client.query(
         `UPDATE accounting.expenses SET trailer_id = $3::uuid, updated_at = now()
-          WHERE operating_company_id = $1::uuid AND settlement_no = $2 AND voided_at IS NULL AND trailer_id IS NULL`,
+          WHERE operating_company_id = $1::uuid AND (settlement_no = $2 OR (settlement_no IS NULL AND load_id IN (SELECT sl.load_id FROM driver_finance.settlement_lines sl
+               JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+              WHERE ds.operating_company_id = $1::uuid AND ds.voided_at IS NULL AND ds.source_document_ref = $2 AND sl.load_id IS NOT NULL))) AND voided_at IS NULL AND trailer_id IS NULL`,
         [co, input.settlementNo, trailerId]
       );
       out.d5_headers_trailer = h.rowCount ?? 0;
@@ -203,7 +209,9 @@ export async function categorizeCreatorSettlement(
     const du = await client.query(
       `UPDATE accounting.expense_lines el SET driver_id = COALESCE(el.driver_id, e.driver_uuid), unit_id = COALESCE(el.unit_id, e.unit_id)
          FROM accounting.expenses e
-        WHERE e.id = el.expense_id AND e.operating_company_id = $1::uuid AND e.settlement_no = $2 AND e.voided_at IS NULL
+        WHERE e.id = el.expense_id AND e.operating_company_id = $1::uuid AND (e.settlement_no = $2 OR (e.settlement_no IS NULL AND e.load_id IN (SELECT sl.load_id FROM driver_finance.settlement_lines sl
+               JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+              WHERE ds.operating_company_id = $1::uuid AND ds.voided_at IS NULL AND ds.source_document_ref = $2 AND sl.load_id IS NOT NULL))) AND e.voided_at IS NULL
           AND ((el.driver_id IS NULL AND e.driver_uuid IS NOT NULL) OR (el.unit_id IS NULL AND e.unit_id IS NOT NULL))`,
       [co, input.settlementNo]
     );
@@ -211,7 +219,9 @@ export async function categorizeCreatorSettlement(
     const dt = await client.query(
       `UPDATE accounting.expense_lines el SET trailer_id = e.trailer_id
          FROM accounting.expenses e
-        WHERE e.id = el.expense_id AND e.operating_company_id = $1::uuid AND e.settlement_no = $2 AND e.voided_at IS NULL
+        WHERE e.id = el.expense_id AND e.operating_company_id = $1::uuid AND (e.settlement_no = $2 OR (e.settlement_no IS NULL AND e.load_id IN (SELECT sl.load_id FROM driver_finance.settlement_lines sl
+               JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+              WHERE ds.operating_company_id = $1::uuid AND ds.voided_at IS NULL AND ds.source_document_ref = $2 AND sl.load_id IS NOT NULL))) AND e.voided_at IS NULL
           AND el.trailer_id IS NULL AND e.trailer_id IS NOT NULL`,
       [co, input.settlementNo]
     );
