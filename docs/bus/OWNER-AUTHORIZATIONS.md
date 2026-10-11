@@ -7666,4 +7666,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the 32 csv_import R
 action: OWNER_AUTH_ID=AUTH-426 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-52-csv-relay-fill-fee.ts --apply
 rehearsal: throwaway br-patient-sky-akreb5dd and br-icy-mud-ak7qchl9 (both COMMITTED, deleted): CORRECTED 32 of 32; 1295 credit on the fills 1600131 -> 1606531; TB net 0 -> 0; 1295 net 596780 -> 590380, 5005 296350 -> 302750; fuel_transactions 51 / 16001.31 unchanged; verify-relay-fill-documents-sum-to-relay-total PASS. Scope widened after the 12:00Z daily pull re-sourced 2 of the 32 to daily_pull (still fee-less, still 32).
 expires_at: 2026-10-12T11:35:17Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T12:18:18Z
+consumed_by: CC-2 (443.52 C CSV Relay fill fee correction)
+row_counts: prod identical to the rehearsal — CORRECTED 32 of 32; 1295 credit on the fills 1600131 -> 1606531 (+6400); TB net 0 -> 0; 1295 net 596780 -> 590380, 5005 296350 -> 302750; fuel_transactions 51 / 16001.31 unchanged; no settlement touched
+proof_query: node scripts/verify-relay-fill-documents-sum-to-relay-total.mjs (prod) -> PASS (152 fills)
