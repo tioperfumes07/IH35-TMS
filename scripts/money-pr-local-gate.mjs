@@ -1943,6 +1943,10 @@ const ROUND_44329_B_BANK_RECON_AMBIENT_LIVE_GUARDS = new Set([
   "verify-factoring-banking-kpis-tie-to-ledger",
   "verify-no-document-without-a-ledger",
   "verify-cash-flow-reads-delivery-date",
+  // DATA_WRITE migrations (relay_deposit + worm infra) arm these censuses; tip debt is CC-1 / load-born stamp class.
+  "verify-driver-bill-settlement-link",
+  "verify-every-load-born-posting-carries-its-load",
+  "verify-no-empty-zero-settlement",
 ]);
 
 for (const [name, rel] of STEPS) {
