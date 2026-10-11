@@ -12,10 +12,16 @@ import crypto from "node:crypto";
 // purchases (99530579, 1848853, 99794138) were recorded and posted twice. The database refusal is migration
 // 202615370600; this helper is the writers' side of it, so a duplicate is refused with its name before the INSERT.
 
-/** The provider's transaction ID, or null when the reference is not one (blank, placeholder, parse fragment). */
+/**
+ * The provider's transaction ID, or null when the reference is not one (blank, placeholder, parse fragment).
+ * 443.73 #6(d): a re-feed wrote the second copy of a receipt as "<invoice>-<load>" (99794138-13571, 1848853-13547 …); that
+ * reference was "no provider key", so the second expense of the same purchase was never refused — 9 lines / $2,906.21
+ * were posted twice. The load suffix is not part of the receipt: "<digits>-1NNNN" is the provider ID <digits>.
+ */
 export function providerTransactionId(reference: string | null | undefined): string | null {
   const ref = (reference ?? "").trim();
-  return /^[0-9]+$/.test(ref) ? ref : null;
+  const m = /^([0-9]+)(?:-1[0-9]{4})?$/.exec(ref);
+  return m ? m[1]! : null;
 }
 
 /**
@@ -73,7 +79,7 @@ export async function findLiveFuelByProviderTransactionId(
        LEFT JOIN mdata.loads l ON l.id = f.load_id
       WHERE f.operating_company_id = $1::uuid
         AND f.vendor_id IS NOT DISTINCT FROM $2::uuid
-        AND btrim(f.transaction_reference) = $3
+        AND regexp_replace(btrim(f.transaction_reference), '-1[0-9]{4}$', '') = $3
         AND f.fuel_type::text IS NOT DISTINCT FROM $4::text
         AND f.voided_at IS NULL
       ORDER BY f.created_at

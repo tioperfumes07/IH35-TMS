@@ -59,4 +59,21 @@ describe("refuseDuplicateProviderTransaction", () => {
     expect(enteredFuelRowHash(CO, VENDOR, "2870483", "def")).not.toBe(enteredFuelRowHash(CO, VENDOR, "2870483", "diesel"));
     expect(enteredFuelRowHash(CO, VENDOR, "2870483", "def")).toBe(enteredFuelRowHash(CO, VENDOR, " 2870483", "def"));
   });
+
+  // 443.73 #6(d): the load suffix a re-feed hung on a receipt is not part of it — the second copy is refused.
+  it("reads <invoice>-<load> as the receipt's own number, so the second copy of a purchase collides", () => {
+    expect(providerTransactionId("99794138-13571")).toBe("99794138");
+    expect(enteredFuelRowHash(CO, VENDOR, "99794138-13571")).toBe(enteredFuelRowHash(CO, VENDOR, "99794138"));
+    expect(providerTransactionId("DEF-13571-1")).toBeNull();
+    expect(providerTransactionId("99794138-2")).toBeNull();
+  });
+  it("finds a live copy stored under the suffixed reference (base compared to base)", async () => {
+    const client = { query: vi.fn(async () => ({ rows: [{ id: "f1", load_id: "l1", load_number: "13557" }] })) };
+    await expect(refuseDuplicateProviderTransaction(client, { operatingCompanyId: CO, vendorId: VENDOR, reference: "99794138-13571", fuelType: "diesel" })).rejects.toBeInstanceOf(
+      FuelProviderTransactionDuplicateError
+    );
+    const [sql, values] = client.query.mock.calls[0] as unknown as [string, unknown[]];
+    expect(sql).toMatch(/regexp_replace\(btrim\(f\.transaction_reference\), '-1\[0-9\]\{4\}\$', ''\) = \$3/);
+    expect(values[2]).toBe("99794138");
+  });
 });
