@@ -25,6 +25,8 @@ No money rewrite. No Book Load. No JE invent. Create-entry.service posting logic
 - `scripts/verify-no-new-deleted-at-columns.mjs` (BASELINE=16)
 - `scripts/verify-no-geofence-around-unresolved-point.mjs` (token)
 - `docs/bus/OUTBOX-CURSOR.md`
+- `scripts/verify-creator-relay-row-posts-through-its-fill.mjs` (ROUND 370 noDbEnv honor)
+
 
 ## Cite
 
