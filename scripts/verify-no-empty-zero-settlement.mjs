@@ -74,6 +74,15 @@ const EMPTY_SQL = `
        SELECT 1 FROM driver_finance.settlement_lines sl
         WHERE sl.settlement_id = s.id AND sl.voided_at IS NULL
      )
+     -- Lead 443.36 (CC-3): a CLOSED salaried week with $0 pay correctly has NO lines — every linked load carries the
+     -- 0-rate "Salaried" override (no per-load pay) and there is no salary line to write (5816). Same predicate as the
+     -- feed gate's settlement.posted_to_ledger. A salaried settlement that should pay (gross > 0) is not excused.
+     AND NOT (
+       s.status::text = 'closed' AND coalesce(s.gross_pay, 0) = 0
+       AND EXISTS (SELECT 1 FROM mdata.loads l WHERE l.presettlement_link_id = s.id)
+       AND NOT EXISTS (SELECT 1 FROM mdata.loads l WHERE l.presettlement_link_id = s.id
+                        AND NOT (l.driver_pay_rate_per_mile = 0 AND l.driver_pay_rate_override_reason ILIKE 'Salaried%'))
+     )
      -- ROUND 176: an OPEN settlement with at least one load still in flight (not yet
      -- delivered-or-later) is still legitimately being built — only require lines once the
      -- settlement has closed, or every one of its linked loads has delivered. A settlement with
