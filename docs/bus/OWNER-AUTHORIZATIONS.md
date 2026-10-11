@@ -7409,3 +7409,13 @@ consumed_by: CC-2
 row_counts: 67 merges through executeDriverMerge, 0 failed (59 clusters). USMCA unmerged drivers 159 -> 92; Samsara accounts 95 -> 95; distinct Samsara ids 95 -> 95; active escrow accounts 29 -> 29 (every merged profile's escrow balance was $0). 6 test/dummy profiles listed, not merged; 9 near-but-different pairs listed for the owner.
 proof_query: node scripts/verify-one-profile-per-driver.mjs (prod) -> zero same-name unmerged pairs, every Samsara id on one survivor; ONE item left, outside AUTH-404: driver 49427973 (owner's own profile) holds 2 active escrow accounts, 2100-00-011 and QBO-1150040187-00-001, both 0 postings / $0 — rule 4 deactivation needs its own authorization.
 rehearsed: throwaway br-damp-hall-aknn9itq (deleted): same 67 merges, 0 failed, identical counts.
+
+## AUTH-405
+issued_at: 2026-10-11T04:50:00Z
+issued_by: Lead, on the owner's orders (ROUND 443.29 / 5772), recorded by CC-2 in the PR that ships the script, as with AUTH-404
+owner_quotes: "the engine be correctly built ... parse the relay transactions" (7:15 PM CT 2026-10-10) · "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10) · card map 7:26-7:30 PM CT 2026-10-10
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — load ~/IH35-LEAD-CHANNEL/Relay-All-Transactions-2026-10-10.csv through the EXISTING route POST /api/integrations/relay/fuel/import-csv (registerRelayFuelCsvImportRoute, mounted by the script, one transaction) and post each SETTLED deposit with postRelayDeposit (443.29 b): 0680 -> 1000; 9708/1354/4823 -> 8000; 5007 -> 2500-00-001; personal + unnamed cards HELD; a deposit whose card charge is already categorized on the funding account's bank feed (same amount, +/- 3 days) HELD. Canceled deposits post nothing. No DELETE. No other write. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-405 DATABASE_URL=<prod> npx tsx apps/backend/scripts/auth405-relay-csv-import.mts --branch=br-fancy-credit-akjnd07a --file=<Relay-All-Transactions-2026-10-10.csv>
+rehearsal: same command on throwaway Neon branch br-delicate-unit-ak8o63r7 (COMMITTED, deleted after): HTTP 200, 259 fuel rows imported, 0 rejected, 126 deposits stored, 26 settled deposits posted, 16 held (2 Jorge personal 0210, 14 card owner not named), 0 refused; 1295 end of day 08-03 1,200.00 · 08-04 2,200.00 · 08-06..08-10 2,600.00
+expires_at: 2026-10-12T04:50:00Z
+status: OPEN
