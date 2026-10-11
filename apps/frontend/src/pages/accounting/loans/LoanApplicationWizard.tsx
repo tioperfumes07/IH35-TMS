@@ -368,13 +368,13 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 ? "Paid directly to a vendor"
                 : "Loan / Advance application"}
           </h2>
-          <button type="button" onClick={onClose} className="text-[12px] text-[#6B7280] hover:text-[#0F1219]">
+          <button type="button" onClick={onClose} className="text-xs text-[#6B7280] hover:text-[#0F1219]">
             Close
           </button>
         </div>
         {bankTransactionId && !isPaidDirect ? (
           <div
-            className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 text-[12px] text-[#1F2A44]"
+            className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 text-xs text-[#1F2A44]"
             data-testid="loan-wizard-bank-prefill-banner"
           >
             {isRepayment
@@ -384,7 +384,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
         ) : null}
         {isPaidDirect ? (
           <div
-            className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 text-[12px] text-[#1F2A44]"
+            className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 text-xs text-[#1F2A44]"
             data-testid="loan-wizard-paid-direct-banner"
           >
             No company bank line. Name the lender (facility), debit what was paid for, and optionally record who paid as intermediary. Same advance note as a normal funding.
@@ -613,7 +613,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
               ) : null}
               {isRepayment ? (
                 <div
-                  className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-[12px] text-[#1F2A44]"
+                  className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
                   data-testid="loan-wizard-facility-open-balance"
                 >
                   {facilitiesQuery.isLoading
@@ -661,7 +661,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 placeholder={BANK_LOAN_DEFAULT_INTEREST_PCT}
                 data-testid="loan-wizard-interest-rate"
               />
-              <p className="text-[12px] text-[#6B7280]">
+              <p className="text-xs text-[#6B7280]">
                 Default {BANK_LOAN_DEFAULT_INTEREST_PCT}.00% when opened from Bank → Loan; change it before submit if needed.
               </p>
 
