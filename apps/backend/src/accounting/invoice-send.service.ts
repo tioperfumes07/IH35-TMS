@@ -643,7 +643,12 @@ export async function sendDraftInvoice(
   // The invoice legitimately stays 'sent' — it IS issued and posted to A/R. What was missing is a
   // truthful record that the transmission never happened; changing the invoice status vocabulary
   // needs a migration and an owner decision, and is not smuggled in here.
-  if (customerEmail && notify) {
+  // Lead ruling 2026-10-10 (CC-1 ACCT-F44334): Settlement Creator always passes
+  // mode='historical_backfill'. Emailing a customer about a historical invoice entry is
+  // never correct — the post is a ledger repair, not a live transmission. 5769's zero
+  // email_queue rows were luck (customer had no email on file), not a rule. This guard
+  // makes it a rule: historical_backfill posts skip enqueue unconditionally.
+  if (customerEmail && notify && mode !== "historical_backfill") {
     const total = (Number(notify.total_cents ?? 0) / 100).toFixed(2);
     try {
       // R14 (Lead ruling 2026-10-11, CC-3 authorized for this one call): the customer email is queued on the SAME
