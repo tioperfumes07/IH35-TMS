@@ -6,10 +6,11 @@ import { fundingForCard, postRelayDeposit, RELAY_DEPOSIT_FUNDING } from "./relay
 
 const ACCTS: Record<string, string> = { relay_fuel_wallet: "acct-1295", "5005": "acct-5005", "1000": "acct-1000", intercompany_ih35: "acct-8000" };
 
-function fake(dep: Record<string, unknown> | null, opts: { posted?: boolean } = {}) {
+function fake(dep: Record<string, unknown> | null, opts: { posted?: boolean; bookedBankLine?: boolean } = {}) {
   const query = vi.fn(async (sql: string, values: unknown[] = []) => {
     if (/FROM integrations\.relay_deposits/.test(sql)) return { rows: dep ? [dep] : [] };
     if (/source_transaction_type = 'relay_deposit'/.test(sql)) return { rows: opts.posted ? [{ id: "je-old" }] : [] };
+    if (/FROM banking\.bank_transactions/.test(sql)) return { rows: opts.bookedBankLine ? [{ id: "bt-1" }] : [] };
     if (/FROM catalogs\.accounts/.test(sql)) { const id = ACCTS[String(values[1])]; return { rows: id ? [{ id, account_number: String(values[1]) }] : [] }; }
     throw new Error(`unhandled: ${sql}`);
   });
@@ -52,6 +53,12 @@ describe("postRelayDeposit (443.29 b)", () => {
   it("amount + fee must equal the amount charged, to the cent", async () => {
     const out = await postRelayDeposit(fake(dep({ raw_payload: { amount: "7000.00", fee: "227.49", total: "7227.50" } })), args, { createJournalEntryOnClient: vi.fn() });
     expect(out.outcome).toBe("refused");
+  });
+  it("AUTH-405: a charge line already categorized on the funding account's feed HOLDS the deposit (no double count)", async () => {
+    const createJournalEntryOnClient = vi.fn();
+    const out = await postRelayDeposit(fake(dep(), { bookedBankLine: true }), args, { createJournalEntryOnClient });
+    expect(out).toMatchObject({ outcome: "held", reason: "bank_line_already_categorized", bank_transaction_id: "bt-1", charged_cents: 722750 });
+    expect(createJournalEntryOnClient).not.toHaveBeenCalled();
   });
   it("posts once: an existing entry returns already_posted", async () => {
     const createJournalEntryOnClient = vi.fn();

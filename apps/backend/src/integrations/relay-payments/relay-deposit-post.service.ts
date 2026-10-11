@@ -53,7 +53,7 @@ const cents = (v: unknown): number | null => {
 export type DepositPostOutcome =
   | { outcome: "posted"; deposit_id: string; journal_entry_id: string; amount_cents: number; fee_cents: number; charged_cents: number; funding: string }
   | { outcome: "already_posted"; deposit_id: string; journal_entry_id: string }
-  | { outcome: "held"; deposit_id: string; reason: string; card: string | null; charged_cents: number; label: string }
+  | { outcome: "held"; deposit_id: string; reason: string; card: string | null; charged_cents: number; label: string; bank_transaction_id?: string }
   | { outcome: "not_settled"; deposit_id: string; status: string }
   | { outcome: "refused"; deposit_id: string; reason: string };
 
@@ -118,6 +118,38 @@ export async function postRelayDeposit(
   if (wallet.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: "relay_fuel_wallet_account_not_exactly_one" };
   if (feeAcct.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: "fuel_card_fees_5005_not_exactly_one" };
   if (fund.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: `funding_account_not_exactly_one (${funding.label})` };
+
+  // Lead AUTH-405 (no double count): the card charge for this deposit may already be on the funding account's own bank feed.
+  // A charge line (same amount, deposit date +/- 3 days) that ALREADY has its own journal entry means the money is booked —
+  // the owner's categorization is never rewritten, so the deposit is HELD and listed instead of posting a second time.
+  const bookedLine = (
+    await client.query<{ id: string }>(
+      `SELECT t.id::text
+         FROM banking.bank_transactions t
+         JOIN banking.bank_accounts ba ON ba.id = t.bank_account_id
+        WHERE ba.ledger_account_id = $1::uuid
+          AND t.operating_company_id = $2::uuid
+          AND t.amount_cents = -($3::bigint)
+          AND t.transaction_date BETWEEN $4::date - 3 AND $4::date + 3
+          AND (t.categorized_at IS NOT NULL OR t.matched_journal_entry_id IS NOT NULL
+               OR EXISTS (SELECT 1 FROM accounting.journal_entry_postings p
+                           WHERE p.operating_company_id = t.operating_company_id
+                             AND p.source_transaction_id = t.id::text AND p.reversed_by_line_id IS NULL))
+        ORDER BY abs(t.transaction_date - $4::date), t.id
+        LIMIT 1`,
+      [fund[0]!.id, args.operatingCompanyId, total, d.entry_date]
+    )
+  ).rows[0];
+  if (bookedLine)
+    return {
+      outcome: "held",
+      deposit_id: d.deposit_id,
+      reason: "bank_line_already_categorized",
+      card: d.funding_card_last4,
+      charged_cents: total,
+      label: funding.label,
+      bank_transaction_id: bookedLine.id,
+    };
 
   const src = { source_transaction_type: "relay_deposit", source_transaction_id: d.id };
   const card = d.funding_card_last4 ?? "?";
