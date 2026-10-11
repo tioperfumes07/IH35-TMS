@@ -67,4 +67,20 @@ describe("geofence detector — the one stop-arrival detector", () => {
     expect(res.stop_arrivals_stamped).toBe(0);
     expect(notifyDriver).not.toHaveBeenCalled();
   });
+
+  // 443.70 S3 (acceptance run, load 13660): the fence event must move the STOP, not only its time — before this the stop
+  // stayed 'pending' with an eld_geofence arrival and departure stamped on it.
+  it("an entry moves a pending stop to arrived in the same write as the arrival time", async () => {
+    const c = clientFor(null, true);
+    await processGeofenceDetectionsForGpsPoint(c, point(true), {});
+    const upd = c.query.mock.calls.map((x) => String(x[0])).find((q) => q.includes("UPDATE mdata.load_stops") && q.includes("actual_arrival_at"));
+    expect(upd).toMatch(/status = CASE WHEN ls\.status IS NULL OR ls\.status = 'pending' THEN 'arrived'::mdata\.stop_status_enum ELSE ls\.status END/);
+  });
+
+  it("an exit moves the stop to departed (a cancelled stop keeps its state)", async () => {
+    const c = clientFor("entered", true);
+    await processGeofenceDetectionsForGpsPoint(c, point(false), {});
+    const upd = c.query.mock.calls.map((x) => String(x[0])).find((q) => q.includes("UPDATE mdata.load_stops") && q.includes("actual_departure_at"));
+    expect(upd).toMatch(/status = CASE WHEN ls\.status = 'cancelled' THEN ls\.status ELSE 'departed'::mdata\.stop_status_enum END/);
+  });
 });
