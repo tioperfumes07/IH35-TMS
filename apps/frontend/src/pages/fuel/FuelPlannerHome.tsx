@@ -45,6 +45,7 @@ import { FuelHomePage } from "./FuelHome";
 import { FuelIntegrityPage } from "./integrity/FuelIntegrityPage";
 import { FuelCardsPage } from "./cards/FuelCardsPage";
 import { RelayUnmatchedPage } from "./relay-unmatched/RelayUnmatchedPage";
+import { RelayWalletRollForwardPage } from "./relay-wallet/RelayWalletRollForwardPage";
 import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -653,6 +654,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       {tab === "cards" ? <FuelCardsPage /> : null}
 
       {tab === "relay_unmatched" ? <RelayUnmatchedPage /> : null}
+      {tab === "relay_wallet" ? <RelayWalletRollForwardPage /> : null}
 
       {tab === "compliance" ? (
         complianceQuery.isError ? (
