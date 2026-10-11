@@ -284,7 +284,11 @@ export async function geocodeStopsWithClient(
     // 443.63: Google's place_id is stored on the stop and its location (google_place_id, migration 202615570900).
     let googlePlaceId: string | null = null;
     const placeTried = isGooglePlacesEnabled() && isGooglePlacesConfigured();
-    if (!(stop.location_id && stop.location_has_street && stop.location_latitude != null && stop.location_longitude != null)) {
+    // 443.74: a stop the GPS engine corrected (geocode_source gps_dwell_*) is authoritative — the truck was THERE. No name
+    // match may pull it back to the document's facility elsewhere (measured on a fork: 13530 #1 was moved back 15 km to the
+    // owner's older Samsara "Mexus" address by name). Its own point builds the location + fence below.
+    const gpsVerified = String(stop.geocode_source ?? "").startsWith("gps_dwell") && stop.latitude != null && stop.longitude != null;
+    if (!gpsVerified && !(stop.location_id && stop.location_has_street && stop.location_latitude != null && stop.location_longitude != null)) {
       const match = await matchSamsaraAddressForStop(client, companyId, {
         facility_name: stop.facility_name ?? (looksLikeStreet(stop.address_line1) ? null : stop.address_line1),
         city: stop.city, state: stop.state,
