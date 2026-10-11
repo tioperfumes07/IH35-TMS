@@ -1147,6 +1147,8 @@ export async function postSettlementCreatorInClientTx(
 
   // Fuel → fuel.fuel_transactions → createExpenseFromFuelTransaction → post expense
   // RELAY-F442: total_cost = fuel net; fee_amount = card fee (own expense line via createExpenseFromFuelTransaction).
+  // Relay fills posted through their own fill by this post (one posting per fill, however many rows link to it).
+  const postedRelayFills = new Set<string>();
   for (const fuel of draft.fuel_purchases ?? []) {
     const { netCents, feeCents } = fuelPurchaseNetAndFeeCents(fuel);
     if (netCents + feeCents <= 0) continue;
@@ -1295,9 +1297,12 @@ export async function postSettlementCreatorInClientTx(
       requesting_user_uuid: actorUserId,
       item_id: fuel.item_id ?? null,
       account_id: fuel.account_id ?? null,
-      // R13: Creator knows the card rail from the PDF; post immediately (Dr fuel / Cr rail).
+      // R13: Creator knows the card rail from the PDF; post immediately (Dr fuel / Cr rail). A Relay fill (Lead option a,
+      // 2026-10-11) is NOT posted as an expense against the wallet — trg_relay_wallet_consumed_only_by_relay_fill refuses
+      // that — it takes the relay_link outcome and posts THROUGH its linked Relay fill as source, below. 5772 fork:
+      // with creator_manual_entry on a Relay row the expense credited 1295 and the post was refused.
       company_direct_credit: fuel.card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet",
-      creator_manual_entry: true,
+      creator_manual_entry: fuel.card !== "relay",
     });
     if (doc.outcome === "refused") {
       throw new SettlementCreatorError("fuel_expense_refused", doc.reason);
@@ -1308,8 +1313,13 @@ export async function postSettlementCreatorInClientTx(
     // + the relay fill UUID; the fill can never post twice.
     if (doc.outcome === "relay_link") {
       const link = await linkSettlementFuelRowToRelayFill(client as never, draft.operating_company_id, fuelId);
-      if (link.linked) {
-        const relayFillId = link.linked;
+      // 5772 fork (2026-10-11): the Creator links a Relay row to its fill at insert (relay_transaction_id), so the link
+      // function finds nothing left to link and returned null — the fill never posted. Use the fill this row is linked to;
+      // a fill that carries two products (diesel + DEF on one ticket) posts ONCE for the settlement.
+      const linkedFill = link.linked ?? relayFillId;
+      if (linkedFill && !postedRelayFills.has(linkedFill)) {
+        postedRelayFills.add(linkedFill);
+        const relayFillId = linkedFill;
         const linesRows = await client.query<{
           fuel_type: string | null;
           fuel_product_code: string | null;
@@ -1326,8 +1336,11 @@ export async function postSettlementCreatorInClientTx(
           [relayFillId]
         );
         const { relayLineKind } = await import("../fuel/relay-product-kind.js");
-        const productLines = linesRows.rows.filter(l => !l.fee_type);
-        const feeLines = linesRows.rows.filter(l => !!l.fee_type);
+        // 5772 fork (2026-10-11): a Relay line carries its product amount AND its fee on the same row (txn_8ZrcFQqRVKG5Kd:
+        // one line, diesel 533.48 + sender_fee 2.00). Splitting lines by fee_type dropped the product and posted the fee alone
+        // (fuel_posting_fee_exceeds_total). Cost = every line's product amount; fee = every line's fee.
+        const productLines = linesRows.rows.filter(l => Number(l.total_discounted_price_cents ?? 0) > 0);
+        const feeLines = linesRows.rows.filter(l => Number(l.fee_amount_cents ?? 0) > 0);
         const costLines: Array<{ fuel_kind: FuelCategoryCode; amount_cents: number }> = productLines.map(l => {
           const k = relayLineKind(l);
           return { fuel_kind: (k === "other" ? "misc" : k) as FuelCategoryCode, amount_cents: Math.round(Number(l.total_discounted_price_cents ?? 0)) };
