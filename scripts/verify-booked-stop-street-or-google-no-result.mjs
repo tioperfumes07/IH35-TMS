@@ -38,6 +38,9 @@ export function audit({ service, google }) {
   if (!service.includes(`NO_STREET_SOURCE_TRIED = "${MARKER}"`)) out.push(`${SERVICE}: the no-street marker must be "${MARKER}" (the recorded Google no-result)`);
   if (!/source: "google_place"/.test(service)) out.push(`${SERVICE}: a street taken from Google must be stored as geocode_source 'google_place'`);
   if (!/google_place_id: place\.result\.place_id/.test(service)) out.push(`${SERVICE}: Google's place_id must be recorded on the audit row`);
+  // 443.63: the column is live (202615570900) — the stop and its location store it.
+  if (!/google_place_id=\$5/.test(service)) out.push(`${SERVICE}: the Google place step must write mdata.load_stops.google_place_id`);
+  if (!/UPDATE mdata\.locations SET google_place_id = coalesce\(google_place_id/.test(service)) out.push(`${SERVICE}: the stop's location must take Google's place_id`);
   if (!/place_id\?: string;\s*provider\?:/.test(google) || !/places\.id/.test(google)) out.push(`${GOOGLE}: AddressResult must carry Google's place_id (Text Search field mask places.id)`);
   return out;
 }
@@ -54,6 +57,8 @@ if (process.argv.includes("--selftest")) {
     { ...sources, service: sources.service.replace('source: "google_place"', 'source: "geocoder_place"') },
     { ...sources, service: sources.service.replace("google_place_id: place.result.place_id", "google_place_id: null") },
     { ...sources, google: sources.google.replace("place_id?: string", "placeid?: string") },
+    { ...sources, service: sources.service.replace("google_place_id=$5", "x=$5") },
+    { ...sources, service: sources.service.replace("UPDATE mdata.locations SET google_place_id = coalesce(google_place_id", "UPDATE mdata.locations SET x = coalesce(x") },
   ];
   const escaped = mutations.filter((m) => audit(m).length === 0).length;
   if (escaped) fail([`${escaped} planted mutation(s) escaped`]);

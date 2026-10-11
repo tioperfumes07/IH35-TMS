@@ -230,6 +230,8 @@ export async function geocodeStopsWithClient(
    */
   async function geocodeOneStop(stop: StopRow): Promise<void> {
     let placeOutcome: { ok: true; latitude: number; longitude: number; source: string; confidence: number; precision: "rooftop" } | null = null;
+    // 443.63: Google's place_id is stored on the stop and its location (google_place_id, migration 202615570900).
+    let googlePlaceId: string | null = null;
     const placeTried = isGooglePlacesEnabled() && isGooglePlacesConfigured();
     if (!(stop.location_id && stop.location_has_street && stop.location_latitude != null && stop.location_longitude != null)) {
       const match = await matchSamsaraAddressForStop(client, companyId, {
@@ -270,12 +272,13 @@ export async function geocodeStopsWithClient(
         }
         // 443.53: Google Places by facility name + city / state / zip — the top result in the stop's city + state (or zip) with a
         // street is taken (name need not match word for word); stored as 'google_place', precision rooftop. The stop keeps OUR
-        // facility name; Google's place_id is recorded on the audit row (mdata.load_stops has no place_id column).
+        // facility name; Google's place_id goes on the stop (google_place_id) and on the audit row.
         const place = await placeLookup(facility, stop);
         if (place) {
           await client.query(
-            `UPDATE mdata.load_stops SET address_line1=$2, postal_code=coalesce(postal_code, $3), facility_name=coalesce(facility_name, $4), updated_at=now() WHERE id=$1::uuid`,
-            [stop.stop_id, place.result.address_line1, place.result.zip || null, facility]);
+            `UPDATE mdata.load_stops SET address_line1=$2, postal_code=coalesce(postal_code, $3), facility_name=coalesce(facility_name, $4), google_place_id=$5, updated_at=now() WHERE id=$1::uuid`,
+            [stop.stop_id, place.result.address_line1, place.result.zip || null, facility, place.result.place_id ?? null]);
+          googlePlaceId = place.result.place_id ?? null;
           stop = { ...stop, address_line1: place.result.address_line1, postal_code: stop.postal_code ?? (place.result.zip || null), location_id: null };
           placeOutcome = { ok: true, latitude: place.result.lat!, longitude: place.result.lon!, source: "google_place", confidence: place.confidence, precision: "rooftop" };
           streetFromPlace += 1;
@@ -354,6 +357,10 @@ export async function geocodeStopsWithClient(
         geocode_source=$5, geocode_confidence=$6, geocode_precision=$7, geocode_attempted_at=now(), geocode_failure_reason=NULL, updated_at=now()
       WHERE id=$1::uuid RETURNING id::text`, [stop.stop_id, locationId, outcome.latitude, outcome.longitude, outcome.source, outcome.confidence, outcome.precision]);
     if (!updated.rows[0]) return;
+    if (googlePlaceId && locationId) {
+      await client.query(`UPDATE mdata.locations SET google_place_id = coalesce(google_place_id, $3), updated_at = now() WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [locationId, companyId, googlePlaceId]);
+    }
     geocoded += 1; locations += 1; rooftop += 1;
     // ROUND 329: geo.geofences has no unique key on location_ref_id, and findOrCreateLocation's lock is only taken for
     // a NEW location — lock the location itself so the NOT EXISTS below cannot race a twin fence in.
