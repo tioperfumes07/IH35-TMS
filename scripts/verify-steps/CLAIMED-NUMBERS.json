@@ -16411,5 +16411,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-10-10",
     "purpose": "verify-related-party-loan-paid-direct-vendor"
+  },
+  "18372": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-11",
+    "purpose": "verify-related-party-loan-backfill-proposal"
   }
 }
