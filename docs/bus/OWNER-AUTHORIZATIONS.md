@@ -7657,3 +7657,12 @@ consumed_at: 2026-10-11T11:16:02Z
 consumed_by: CC-2 (443.51 #5 Relay-fill expense settlement reference)
 row_counts: prod identical to the rehearsal — 152 Relay-fill documents; settlement_no NULL 141 -> 0, source_settlement_ref NULL 152 -> 0, 0 listed; settlement_no set with load_id NULL = 0 (owner law 443.52 B)
 proof_query: node scripts/verify-relay-fill-expense-settlement-ref.mjs (prod) -> PASS, 0 (ceiling lowered 141 -> 0)
+
+## AUTH-426
+issued_at: 2026-10-11T11:35:17Z
+issued_by: CC-2 directive 443.52 C ("32 Relay fills from the AUTH-405 CSV import were posted without their $2.00 fee line ... ENGINE CORRECTION of the 32 posted fills — through the posting engine ... Ops runner AUTH-426"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..425
+owner_quotes: "Find the root cause of the red and permanently fix" (owner, 443.51) · 443.52 C audit red verify-relay-fill-documents-sum-to-relay-total
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the 32 csv_import Relay fills whose one live fuel_event JE carries no 5005 fee leg: per fill voidDocument('expense') on its document, postVoidReversal('fuel_event', fill), re-upsert the Relay row from the owner CSV through upsertRelayFuelTransaction (fixed mapping: total_amount_paid = amount excluding fee), postFuelExpenseOnClient as the Creator posts a Relay fill (correction_revision 1), adoptRelayFillExpenseDocument keeping settlement_no. Net GL: Dr 5005 / Cr 1295 32 x 2.00 = 64.00. No settlement, fuel transaction or driver deduction touched. No DELETE.
+action: OWNER_AUTH_ID=AUTH-426 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-52-csv-relay-fill-fee.ts --apply
+expires_at: 2026-10-12T11:35:17Z
+status: OPEN

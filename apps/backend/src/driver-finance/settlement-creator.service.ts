@@ -1348,7 +1348,18 @@ export async function postSettlementCreatorInClientTx(
           const k = relayLineKind(l);
           return { fuel_kind: (k === "other" ? "misc" : k) as FuelCategoryCode, amount_cents: Math.round(Number(l.total_discounted_price_cents ?? 0)) };
         });
-        const feeCents = feeLines.reduce((s, l) => s + Math.round(Number(l.fee_amount_cents ?? 0)), 0);
+        // 443.52 C (CC-2): THE one fee rule (relayFillFeeCents — Relay's fees[] first, line fees only when empty). A CSV-imported
+        // fill carries its fee in fees[] only (no per-line fee), so reading lines alone posted 32 fills with no fee leg.
+        const fillFees = await client.query<{ fees: unknown[] | null; transaction_id: string }>(
+          `SELECT fees, transaction_id FROM integrations.relay_fuel_transactions WHERE id = $1::uuid`,
+          [relayFillId]
+        );
+        const { relayFillFeeCents } = await import("../integrations/relay-payments/relay-sender-fee-cents.js");
+        const feeCents = relayFillFeeCents({
+          transaction_id: fillFees.rows[0]?.transaction_id ?? relayFillId,
+          fees: fillFees.rows[0]?.fees ?? null,
+          line_fee_amount_cents: feeLines.map((l) => Number(l.fee_amount_cents ?? 0)),
+        });
         const totalCents = costLines.reduce((s, l) => s + l.amount_cents, 0) + feeCents;
         if (totalCents <= 0) throw new SettlementCreatorError("relay_fill_no_amount", `Fuel line: relay fill ${relayFillId} has zero charge`);
         const txnRow = await client.query<{ unit_id: string | null; driver_id: string | null; transaction_at: string; fuel_type: string | null }>(
