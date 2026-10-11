@@ -5,6 +5,7 @@
 import { bookLoadOnClient, type BookLoadInput } from "../dispatch/book-load.service.js";
 import type { SettlementCreatorDraft, SettlementCreatorLoadBlock } from "./settlement-creator.types.js";
 import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
+import { milesTimesRateCents } from "./deadhead-rule.js";
 import { signedRateOverride } from "./settlement-creator-signed-rate.js";
 import { deliverLoadThroughDispatch, localDayStartIso, stampStopsFromTracking, type StopStamp } from "./settlement-creator-deliver.js";
 
@@ -176,7 +177,7 @@ export function buildCharges(load: SettlementCreatorLoadBlock, catalog: CatalogC
   const amount =
     load.line_haul_amount_cents ??
     (load.line_haul_rate_cents != null && load.loaded_miles != null
-      ? Math.round(load.line_haul_rate_cents * Number(load.loaded_miles))
+      ? milesTimesRateCents(Number(load.loaded_miles), load.line_haul_rate_cents) // ROUND 443.33: the one money rule
       : 0);
   const charges: SeedCharge[] = [
     {

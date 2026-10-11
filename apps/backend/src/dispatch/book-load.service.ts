@@ -45,7 +45,7 @@ import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.
 import { computeAndPersistGoogleReferenceMilesForLoad } from "./google-reference-miles.service.js";
 import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "./unit-active-load-guard.js";
 import { resolveInboundLoadEntity, type InboundSource } from "./inbound-load-entity.js";
-import { deadheadPayCents, deadheadRateCents } from "../driver-finance/deadhead-rule.js";
+import { deadheadPayCents, deadheadRateCents, milesTimesRateCents } from "../driver-finance/deadhead-rule.js";
 
 // FEED PARITY (docs/manuals/04-RULING-FEED-PARITY-THE-VERIFIED-SIDE-EFFECT-LIST.md, 2026-09-22).
 // Minimal client shape (same pattern as presettlement-link.service.ts's DbClient) so
@@ -671,7 +671,10 @@ async function resolveDriverBasePayCents(
           ? Number(load.miles_practical ?? Number.NaN)
           : Number(load.miles_shortest ?? Number.NaN);
       const perMile = Number(rate.rate_per_mile_cents ?? 0);
-      cardCents = Number.isFinite(miles) && miles > 0 && Number.isFinite(perMile) && perMile > 0 ? Math.round(perMile * miles) : null;
+      // ROUND 443.33: THE one money rule (driver-finance/deadhead-rule.ts milesTimesRateCents — integer cents, half-up, float
+      // noise removed). A raw Math.round(perMile * miles) priced 1303.1 mi x 45c as 58639 (float 58639.4999…) while the
+      // settlement, on the shared rule, said 58640 — 1 cent off on 5778 / 5779.
+      cardCents = Number.isFinite(miles) && miles > 0 && Number.isFinite(perMile) && perMile > 0 ? milesTimesRateCents(miles, perMile) : null;
     }
   }
 
@@ -741,7 +744,7 @@ async function resolveDriverBasePayCents(
   }
 
   if (hasValidOverride) {
-    const overrideCents = Math.round(perLoadRateDollars * 100 * perLoadMiles);
+    const overrideCents = milesTimesRateCents(perLoadMiles, perLoadRateDollars * 100);
     if (actorUserId) {
       await appendCrudAudit(
         client as Parameters<typeof appendCrudAudit>[0],
