@@ -7470,4 +7470,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — mdata.load_stops.le
 action: OWNER_AUTH_ID=AUTH-412 DATABASE_URL=<prod> npx tsx apps/backend/scripts/auth412-backfill-first-stop-deadhead.mts --branch=br-fancy-credit-akjnd07a --apply
 rehearsal: throwaway br-wild-rice-akq8fxt9 (COMMITTED, deleted): first-stop leg_miles NULL 48 -> 12; 36 computed (haversine_chain — routing provider osrm_not_configured, 0 osrm rows ever in point_mileage); 12 NULL = no previous load for the unit; verify-booked-loads-save-miles PASS over 107 loads
 expires_at: 2026-10-12T06:41:12Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T06:46:30Z
+consumed_by: CC-2 (443.41 G2 deadhead backfill)
+row_counts: prod, two idempotent runs — first-stop leg_miles NULL 60 -> 13 (47 computed) then 14 -> 13 (1 more: load 13588 booked by CC-3 between run 1 and the deploy); 48 computed in total, all haversine_chain (routing provider osrm_not_configured); 13 NULL = no previous load for the unit: 13497 13498 13502 13504 13505 13506 13517 13525 13527 13551 13565 13569 13625
+proof_query: node scripts/verify-booked-loads-save-miles.mjs (prod) -> PASS over 135 loads (RULE 4 first-stop deadhead included)
