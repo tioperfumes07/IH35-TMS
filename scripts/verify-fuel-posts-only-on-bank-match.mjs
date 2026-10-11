@@ -13,6 +13,11 @@
 //      database door (202615410950: only a Relay fill or a reversal may credit the fuel_wallet_relay account) is gone.
 //   5. ACCT-F403 link: a creation point of either side does not call the one linker (fuel/relay-fill-link.service.ts) — the
 //      Settlement Creator, the app settlement seeder, the Relay ingest — so a Relay-rail settlement row never links.
+//   6. LEAD RULING 443.47 (CC-3, guard scope): the ONE sanctioned fuel post outside the bank match is the Settlement
+//      Creator posting a historical Relay FILL through that fill (ACCT-F44335 #26266; R9: a Relay line carries product +
+//      fee; guarded by verify-creator-relay-row-posts-through-its-fill). Exactly that call shape is allowed — it posts the
+//      fill itself (fuel_event_id: relayFillId) to the Relay wallet (company_direct_credit: "relay_fuel_wallet"). Any other
+//      fuel post in the Creator still fails.
 // Static, <1s. --selftest plants each regression.
 import fs from "node:fs";
 import path from "node:path";
@@ -28,6 +33,9 @@ const FILLS = "apps/backend/src/fuel/relay-fills.routes.ts";
 const FEED = "apps/backend/src/feed/seed-settlement-document.service.ts";
 const DOC = "apps/backend/src/fuel/fuel-expense-document.service.ts";
 const DOOR = "db/migrations/202615410950_relay_wallet_consumed_only_by_relay_fill.sql";
+const CREATOR = "apps/backend/src/driver-finance/settlement-creator.service.ts";
+/** Rule 6: the Creator's one sanctioned call — posts the Relay fill itself to the Relay wallet. */
+const CREATOR_RELAY_FILL_POST = /postFuelExpenseOnClient\(client as never, \{(?:(?!postFuelExpense)[\s\S]){0,500}?fuel_event_id: relayFillId,(?:(?!postFuelExpense)[\s\S]){0,500}?company_direct_credit: "relay_fuel_wallet",/g;
 const LINK_SITES = {
   "apps/backend/src/driver-finance/settlement-creator.service.ts": /linkSettlementFuelRowToRelayFill\(/,
   "apps/backend/src/feed/seed-settlement-document.service.ts": /linkSettlementFuelRowToRelayFill\(/,
@@ -62,7 +70,8 @@ export function check(files) {
   for (const [f, src] of Object.entries(files)) {
     if (!f.startsWith("apps/backend/src/") || /\.test\.ts$|__tests__/.test(f)) continue;
     if (f === POSTER || f === MAYBE || f === MATCH || f === "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts") continue;
-    if (/\bpostFuelExpense(FromEvent|OnClient)\(/.test(src)) problems.push(`${f}: posts fuel expense outside the bank match`);
+    const scanned = f === CREATOR ? src.replace(CREATOR_RELAY_FILL_POST, "/* rule 6: Relay fill posted through its fill */") : src;
+    if (/\bpostFuelExpense(FromEvent|OnClient)\(/.test(scanned)) problems.push(`${f}: posts fuel expense outside the bank match`);
     if (/SET\s+posted_to_gl\s*=\s*true/i.test(src)) problems.push(`${f}: sets relay posted_to_gl by hand`);
   }
   if (/\br\.posted_to_gl\b/.test(files[FILLS] ?? "")) problems.push(`${FILLS}: reads the stored posted_to_gl flag instead of deriving it from a journal entry`);
@@ -114,6 +123,8 @@ if (process.argv.includes("--selftest")) {
     ["poster cash default", { ...real, [POSTER]: real[POSTER].replace('credit ?? "cash"', 'input.company_direct_credit ?? "cash"') }],
     ["document posts Relay", { ...real, [DOC]: real[DOC].replace('if (err instanceof RelayFillLinksNotPostsError) return { outcome: "relay_link"', "if (false) return { outcome: \"relay_link\"") }],
     ["database door gone", { ...real, [DOOR]: "" }],
+    ["creator posts a non-Relay fuel row", { ...real, [CREATOR]: real[CREATOR] + "\nawait postFuelExpenseOnClient(client as never, { fuel_event_id: fuelId, company_direct_credit: \"cash\" });" }],
+    ["creator's relay-fill post credits another rail", { ...real, [CREATOR]: real[CREATOR].replace('company_direct_credit: "relay_fuel_wallet",', 'company_direct_credit: "cash",') }],
     ["creator never links", { ...real, ["apps/backend/src/driver-finance/settlement-creator.service.ts"]: real["apps/backend/src/driver-finance/settlement-creator.service.ts"].replaceAll("linkSettlementFuelRowToRelayFill(", "noop(") }],
     ["ingest never links", { ...real, ["apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts"]: real["apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts"].replaceAll("linkRelayFillToSettlementFuelRows(", "noop(") }],
   ];
