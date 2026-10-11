@@ -39,6 +39,8 @@ const cents = (v) => Math.round(Number(v) * 100);
 const money = (c) => `$${(c / 100).toFixed(2)}`;
 /** A copy re-booked on a second load carries "<invoice>-<load>" (AUTH-209/398 pattern). */
 const baseRef = (ref, load) => String(ref ?? "").replace(new RegExp(`-${load}$`), "");
+/** 443.73 #6(e): the receipt's own number, whatever load suffix a re-feed hung on it. */
+export const baseInvoice = (ref) => String(ref ?? "").replace(/-1[0-9]{4}$/, "");
 
 /**
  * Pure comparator. documents: [{settlement_no, fuel_purchases:[{load_number, invoice, date, receipt_cents, card}]}]
@@ -86,6 +88,14 @@ export function compareFuel({ documents, corrections = [], live, purged = [], re
       if (p >= 0) {
         notes.push(`purged, not missing: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} — deleted under ${purgedLeft[p].auth_id} (audit.record_deletions)`);
         purgedLeft.splice(p, 1);
+        continue;
+      }
+      // 443.73 #6(d): a receipt printed on two settlement documents is posted ONCE; the second document SHOWS it as already
+      // on the load that carries it — not missing, and never a second expense.
+      const elsewhere = live.find((r) => r.load_number !== load && baseInvoice(r.ref) === baseInvoice(line.invoice) && r.cents === line.receipt_cents &&
+        (!line.fuel_type || !r.fuel_type || r.fuel_type === line.fuel_type));
+      if (elsewhere) {
+        notes.push(`already on load ${elsewhere.load_number}: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} — one receipt, one expense`);
         continue;
       }
       failures.push(`missing: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} ${line.date} has no live fuel row`);
@@ -139,6 +149,12 @@ function selftest() {
     ["relay sum differs fails", { documents: doc([L({ card: "relay" })]), live: [R({ relay_id: "r1" })], relayTotals: new Map([["r1", { paid_cents: 4000, dead: false }]]) }, 1],
     ["relay txn voided fails", { documents: doc([L({ card: "relay" })]), live: [R({ relay_id: "r1" })], relayTotals: new Map([["r1", { paid_cents: 5000, dead: true }]]) }, 1],
     ["relay txn absent fails", { documents: doc([L({ card: "relay" })]), live: [R({ relay_id: "r1" })] }, 1],
+    ["receipt printed on two documents, live once on the other load = already on load N",
+      { documents: [{ settlement_no: "1", fuel_purchases: [L()] }, { settlement_no: "2", fuel_purchases: [L({ load_number: "200" })] }], live: [R()] }, 0],
+    ["the second document prints the suffixed number <invoice>-<load>: still already on load N",
+      { documents: [{ settlement_no: "1", fuel_purchases: [L()] }, { settlement_no: "2", fuel_purchases: [L({ load_number: "13621", invoice: "A1-13621" })] }], live: [R()] }, 0],
+    ["receipt printed on two documents, live on neither load fails twice",
+      { documents: [{ settlement_no: "1", fuel_purchases: [L()] }, { settlement_no: "2", fuel_purchases: [L({ load_number: "200" })] }], live: [] }, 2],
   ];
   let bad = 0;
   for (const [name, input, want] of cases) {
@@ -252,10 +268,11 @@ async function live() {
     // must equal the disclosed cross_load_duplicate_receipts list exactly (a new pair fails; a resolved pair still listed fails).
     const loadsByReceipt = new Map();
     for (const r of liveRows) {
-      // Keyed on the raw reference, as before 443.69: a copy re-booked as "<invoice>-<load>" is a disclosed,
-      // owner-ruled second booking printed on both settlements (it matches a document line above), not a new pair.
-      if (!r.load_number || !/^\d{5,}$/.test(String(r.ref ?? ""))) continue;
-      const k = `${r.ref}|${r.cents}`;
+      // 443.73 #6(e) — RULE REPLACED. Old (443.69): keyed on the raw reference, so a copy re-booked as "<invoice>-<load>" was
+      // never seen as a pair. New: keyed on the BASE invoice + cents + product — the suffix cannot hide a second expense of the
+      // same purchase. Why: 9 lines / $2,906.21 were expensed twice under that suffix (443.72 #4).
+      if (!r.load_number || !/^\d{5,}$/.test(baseInvoice(r.ref))) continue;
+      const k = `${baseInvoice(r.ref)}|${r.cents}|${r.fuel_type}`;
       if (!loadsByReceipt.has(k)) loadsByReceipt.set(k, new Set());
       loadsByReceipt.get(k).add(r.load_number);
     }
