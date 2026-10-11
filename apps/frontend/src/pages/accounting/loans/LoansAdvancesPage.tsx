@@ -121,7 +121,7 @@ export function LoansAdvancesPage() {
                 setWizardOpen(true);
               }}
               disabled={!companyId}
-              className="h-7 rounded-sm bg-[#14314F] px-2 text-[12px] font-semibold text-white hover:bg-[#0F1729] disabled:opacity-40"
+              className="h-7 rounded-sm bg-[#14314F] px-2 text-xs font-semibold text-white hover:bg-[#0F1729] disabled:opacity-40"
             >
               + Create
             </button>
@@ -137,7 +137,7 @@ export function LoansAdvancesPage() {
                 setWizardOpen(true);
               }}
               disabled={!companyId}
-              className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-2 text-[12px] font-semibold text-[#14314F] hover:bg-[#F7F8FA] disabled:opacity-40"
+              className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs font-semibold text-[#14314F] hover:bg-[#F7F8FA] disabled:opacity-40"
               data-testid="loans-paid-direct-vendor-btn"
             >
               Paid directly to a vendor
@@ -182,7 +182,7 @@ export function LoansAdvancesPage() {
       </div>
 
       {!companyId && (
-        <div className="mt-4 rounded-sm border border-[#E5E7EB] bg-white p-4 text-[12px] text-[#6B7280]">
+        <div className="mt-4 rounded-sm border border-[#E5E7EB] bg-white p-4 text-xs text-[#6B7280]">
           Select an operating company to load its loans and advances.
         </div>
       )}
@@ -211,7 +211,7 @@ export function LoansAdvancesPage() {
 
       {companyId && !facilitiesQuery.isError && (
         <div className="mt-4" data-testid="related-party-loan-facilities-register">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+          <div className="mb-2 text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
             Facilities (one per person)
           </div>
           <ParityTable<RelatedPartyLoanFacilityRow>
@@ -289,7 +289,7 @@ export function LoansAdvancesPage() {
             ]}
           />
           {expandedFacilityId && (
-            <div className="mt-2 text-[12px] text-[#6B7280]">
+            <div className="mt-2 text-xs text-[#6B7280]">
               Showing advances and repayments for the selected facility. Click the row again to clear.
             </div>
           )}
@@ -298,7 +298,7 @@ export function LoansAdvancesPage() {
 
       {companyId && !listQuery.isError && (
         <div className="mt-6">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+          <div className="mb-2 text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
             {expandedFacilityId ? "Advances & repayments (selected facility)" : "All advances & repayments"}
           </div>
           <ParityTable<RelatedPartyLoanRow>
