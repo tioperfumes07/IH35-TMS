@@ -17,7 +17,7 @@ const FILES = {
   routes: "apps/backend/src/banking/p7-wave2.routes.ts",
   accept: "apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts",
   hints: "apps/backend/src/accounting/bank-recon/relay-deposit-categorized-match-hints.service.ts",
-  migration: "db/migrations/202610101430_relay_deposit_is_a_bank_match_target.sql",
+  migration: "db/migrations/202615441301_relay_deposit_is_a_bank_match_target.sql",
   pointer: "apps/backend/src/banking/bank-line-match-pointer.ts",
   fe: "apps/frontend/src/api/banking.ts",
   drawer: "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
