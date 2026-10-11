@@ -1270,6 +1270,7 @@
       "register_cleared_by_user_id",
       "reversal_of_line_id",
       "reversed_by_line_id",
+      "settlement_id",
       "source_trace_key",
       "source_transaction_id",
       "source_transaction_line_id",

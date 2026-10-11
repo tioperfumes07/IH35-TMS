@@ -2337,5 +2337,10 @@
     "seat": "CC-1",
     "claimed": "2026-10-11",
     "purpose": "443.45-2 posting_source_load_id fuel_event relay fill fallback"
+  },
+  "202615530900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-11",
+    "purpose": "LEAD RULING 443.45 Ask C: driver_finance.driver_settlement_gl_bills.pay_basis ('per_load_driver_bill' | 'salaried') + CHECK (driver_bill_id IS NOT NULL OR pay_basis = 'salaried') -- the A/P chain bills a salaried week's pay line per load with no driver bill (5780); additive, no data written"
   }
 }
