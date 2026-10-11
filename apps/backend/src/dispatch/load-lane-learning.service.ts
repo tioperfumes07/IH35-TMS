@@ -39,6 +39,7 @@
  * Idempotency: a booking counts its lane once (fresh: true). A backfill counts a load's lane only when it filled at least one
  * NULL leg_miles on that load in the same call — a re-run finds nothing NULL and counts nothing twice.
  */
+import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { computeRouteReference, type RouteReferenceResult } from "../integrations/google/routes-api-client.js";
 import { resolvePointMileage } from "./mileage/mileage.service.js";
@@ -310,6 +311,27 @@ async function fillFirstStopDeadhead(
   return { ...dh, written };
 }
 
+/** 443.53 #2 — a module-owned leg the engine cannot source becomes NULL (audited with the reason), never a kept straight line. */
+async function clearModuleLeg(
+  client: Queryable,
+  args: { operatingCompanyId: string; loadId: string; actorUserId?: string | null },
+  stopId: string,
+  current: number | null,
+  reason: string,
+  eventClass: string
+): Promise<void> {
+  if (current == null) return;
+  await client.query(`UPDATE mdata.load_stops SET leg_miles = NULL, updated_at = now() WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [stopId, args.operatingCompanyId]);
+  await appendCrudAudit(
+    client as never,
+    args.actorUserId ?? SYSTEM_ACTOR_USER_ID,
+    eventClass,
+    { operating_company_id: args.operatingCompanyId, load_id: args.loadId, stop_id: stopId, old_leg_miles: current, leg_miles: null, method: null, reason },
+    "info",
+    "LEAD-443.53-2"
+  );
+}
+
 /**
  * 443.53 #2 — recompute stop 1's first-stop deadhead for one load and OVERWRITE it when the stop's current leg is NULL or was
  * itself computed by this module (it carries a LEG_COMPUTED_EVENT audit row — e.g. an old straight-line deadhead). A deadhead
@@ -333,7 +355,15 @@ export async function recomputeFirstStopDeadhead(
     )
   ).rows[0];
   const old = num(cur?.leg);
-  if (dh.miles == null) return { stop_id: dh.stop_id, old, miles: null, written: false, reason: dh.reason };
+  if (dh.miles == null) {
+    // 443.53 #2: a module-computed deadhead the engine can no longer source (no Google route, no lane average) is NULL, never a
+    // stale straight line; a document deadhead (no computed audit row) is kept.
+    if (old != null && cur?.computed && dh.stop_id) {
+      await clearModuleLeg(client, args, dh.stop_id, old, dh.reason, LEG_COMPUTED_EVENT);
+      return { stop_id: dh.stop_id, old, miles: null, written: true, reason: dh.reason };
+    }
+    return { stop_id: dh.stop_id, old, miles: null, written: false, reason: dh.reason };
+  }
   if (old != null && !cur?.computed) return { stop_id: dh.stop_id, old, miles: dh.miles, method: dh.method, written: false, reason: "document_deadhead_kept" };
   if (old != null && Math.abs(old - dh.miles) < 0.05) return { stop_id: dh.stop_id, old, miles: dh.miles, method: dh.method, written: false, reason: "unchanged" };
   await client.query(
@@ -722,12 +752,14 @@ export async function relearnLoadStopLegs(
       );
       if (chosen.miles == null) {
         out.unresolved.push({ stop_id: b.id, reason: chosen.reason });
+        await clearModuleLeg(client, args, b.id, current, chosen.reason, LEG_RELEARNED_EVENT);
         continue;
       }
       next = { miles: chosen.miles, method: chosen.method };
     }
     if (!next) {
       out.unresolved.push({ stop_id: b.id, reason: "previous_or_this_stop_not_located" });
+      await clearModuleLeg(client, args, b.id, current, "previous_or_this_stop_not_located", LEG_RELEARNED_EVENT);
       continue;
     }
     if (current != null && Math.abs(current - next.miles) < 0.05) continue;

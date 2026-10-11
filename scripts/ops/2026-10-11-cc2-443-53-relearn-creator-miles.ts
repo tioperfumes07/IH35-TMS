@@ -30,6 +30,8 @@ const LABEL = "2026-10-11-cc2-443-53-relearn-creator-miles.ts";
 const apply = process.argv.includes("--apply");
 const forkCommit = !apply && process.argv.includes("--fork-commit");
 const recordSources = process.argv.includes("--record-sources");
+// 443.53 #2 follow-up: --pass=<name> re-runs the same event under a fresh dedupe key (e.g. after the engine NULLs unsourced legs).
+const passName = process.argv.find((a) => a.startsWith("--pass="))?.slice(7).replace(/[^a-z0-9.-]/gi, "") || null;
 const url = process.env.DATABASE_URL ?? "";
 if (!url) throw new Error("DATABASE_URL required");
 if (!apply && !forkCommit) throw new Error("pass --fork-commit (throwaway fork) or --apply (prod, AUTH-428)");
@@ -56,7 +58,7 @@ try {
   for (const l of loads) {
     const r = await enqueueOutboxEvent(client as never, "dispatch.relearn_load_miles", { aggregate_type: "mdata.loads", aggregate_id: l.id },
       { operating_company_id: USMCA, load_id: l.id, actor_user_id: OWNER, ...(recordSources ? { record_sources: true } : {}) },
-      `dispatch.relearn_load_miles:${l.id}:${recordSources ? "443.55-sources" : "443.53"}`);
+      `dispatch.relearn_load_miles:${l.id}:${passName ?? (recordSources ? "443.55-sources" : "443.53")}`);
     if (r.enqueued) enqueued++; else deduped++;
   }
   console.log(`Creator loads ${loads.length}: relearn events enqueued ${enqueued}, already queued ${deduped}.`);
