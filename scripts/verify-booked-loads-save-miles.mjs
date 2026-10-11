@@ -10,6 +10,10 @@
  *                     lacking leg_miles FAILS.
  *   RULE 3 (live, read-only) — such a load whose lane (first pickup city/state -> last delivery city/state, or the ZIP
  *                     pair) has no catalogs.lane_mileage row touched at/after the load was booked FAILS.
+ *   RULE 4 (live, read-only) — Lead 443.41 G(2): such a load whose FIRST stop lacks leg_miles while its unit has a previous
+ *                     load (last stop arriving strictly before this first stop) FAILS — the deadhead is computed, NULL only
+ *                     when there is no previous load.
+ *   RULE 5 (static) — learnLoadLanes computes the first-stop deadhead (computeFirstStopDeadhead).
  * --selftest exercises every rule.
  */
 import { readFileSync } from "node:fs";
@@ -30,6 +34,8 @@ export function staticFailures(bookSrc, moduleSrc) {
   const callAt = bookSrc.indexOf("await learnLoadLanes(client");
   if (callAt < 0) out.push("RULE 1 book-load.service.ts never calls learnLoadLanes — a booked load saves no miles");
   else if (insertAt < 0 || callAt < insertAt) out.push("RULE 1 learnLoadLanes must run after the stop INSERT in createLoadWithFullSideEffects");
+  if (!/fillFirstStopDeadhead\(client, args/.test(moduleSrc) || !/export async function computeFirstStopDeadhead/.test(moduleSrc))
+    out.push("RULE 5 load-lane-learning.service.ts no longer computes the first-stop deadhead from the unit's previous load");
   if (!/import \{ learnLoadLanes \} from "\.\/load-lane-learning\.service\.js"/.test(bookSrc)) out.push("RULE 1 book-load.service.ts does not import learnLoadLanes");
   for (const t of ["UPDATE mdata.load_stops SET leg_miles", "catalogs.lane_mileage", "INSERT INTO catalogs.point_mileage", "INSERT INTO mdata.customer_lanes"])
     if (!moduleSrc.includes(t)) out.push(`RULE 1 load-lane-learning.service.ts no longer writes ${t}`);
@@ -42,6 +48,8 @@ export function liveFailures(rows) {
     if (Number(r.non_first_stops_without_leg) > 0)
       out.push(`RULE 2 load ${r.load_number}: ${r.non_first_stops_without_leg} stop(s) after the first lack leg_miles`);
     if (!r.lane_touched) out.push(`RULE 3 load ${r.load_number}: lane ${r.lane} has no lane_mileage row touched since it was booked`);
+    if (r.first_stop_missing_deadhead)
+      out.push(`RULE 4 load ${r.load_number}: first stop has no leg_miles but unit's previous load ${r.prior_load_number ?? "?"} exists — compute the deadhead`);
   }
   return out;
 }
@@ -68,7 +76,8 @@ const LIVE_SQL = `
      WHERE st.load_id IN (SELECT id FROM l) AND st.soft_deleted_at IS NULL
      GROUP BY st.load_id
   )
-  SELECT l.load_number, s.non_first_stops_without_leg,
+  SELECT l.load_number, s.non_first_stops_without_leg, fp.prior_load_number,
+         (fp.first_leg IS NULL AND fp.prior_load_number IS NOT NULL) AS first_stop_missing_deadhead,
          concat_ws(' -> ', s.o_city || ', ' || s.o_state, s.d_city || ', ' || s.d_state) AS lane,
          EXISTS (
            SELECT 1 FROM catalogs.lane_mileage lm
@@ -79,13 +88,28 @@ const LIVE_SQL = `
                        AND lower(lm.dest_city) = lower(s.d_city) AND lower(lm.dest_state) = lower(s.d_state)))
          ) AS lane_touched
     FROM l JOIN s ON s.load_id = l.id
+    LEFT JOIN LATERAL (
+      SELECT f.leg_miles AS first_leg,
+             (SELECT p.load_number::text FROM mdata.loads p
+                JOIN LATERAL (SELECT COALESCE(y.actual_arrival_at, y.scheduled_arrival_at, y.appointment_start_at) AS at
+                                FROM mdata.load_stops y WHERE y.load_id = p.id AND y.soft_deleted_at IS NULL
+                               ORDER BY y.sequence_number DESC LIMIT 1) pl ON true
+               WHERE p.assigned_unit_id = lo.assigned_unit_id AND p.operating_company_id = lo.operating_company_id AND p.id <> lo.id
+                 AND p.voided_at IS NULL AND p.soft_deleted_at IS NULL AND p.status::text NOT IN ('cancelled','canceled','void','voided')
+                 AND pl.at IS NOT NULL AND pl.at < COALESCE(f.actual_arrival_at, f.scheduled_arrival_at, f.appointment_start_at)
+               ORDER BY pl.at DESC LIMIT 1) AS prior_load_number
+        FROM mdata.loads lo
+        JOIN LATERAL (SELECT z.* FROM mdata.load_stops z WHERE z.load_id = lo.id AND z.soft_deleted_at IS NULL
+                       ORDER BY z.sequence_number LIMIT 1) f ON true
+       WHERE lo.id = l.id AND lo.assigned_unit_id IS NOT NULL
+    ) fp ON true
    ORDER BY l.load_number`;
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   if (process.argv.includes("--selftest")) {
     const book = 'import { learnLoadLanes } from "./load-lane-learning.service.js";\n INSERT INTO mdata.load_stops (...)\n await learnLoadLanes(client, {';
-    const mod = "UPDATE mdata.load_stops SET leg_miles catalogs.lane_mileage INSERT INTO catalogs.point_mileage INSERT INTO mdata.customer_lanes";
+    const mod = "UPDATE mdata.load_stops SET leg_miles catalogs.lane_mileage INSERT INTO catalogs.point_mileage INSERT INTO mdata.customer_lanes export async function computeFirstStopDeadhead fillFirstStopDeadhead(client, args";
     const cases = [
       ["wired clean passes", staticFailures(book, mod).length === 0],
       ["no call fails", staticFailures(book.replace("await learnLoadLanes(client", ""), mod).some((x) => x.startsWith("RULE 1"))],
@@ -93,6 +117,9 @@ if (isMain) {
       ["module dropping customer_lanes fails", staticFailures(book, mod.replace("INSERT INTO mdata.customer_lanes", "")).some((x) => x.includes("customer_lanes"))],
       ["live clean passes", liveFailures([{ load_number: "1", non_first_stops_without_leg: 0, lane_touched: true, lane: "A -> B" }]).length === 0],
       ["a stop without leg_miles fails", liveFailures([{ load_number: "1", non_first_stops_without_leg: 1, lane_touched: true, lane: "A -> B" }]).some((x) => x.startsWith("RULE 2"))],
+      ["a module without the deadhead computation fails", staticFailures(book, mod.replace("fillFirstStopDeadhead(client, args", "")).some((x) => x.startsWith("RULE 5"))],
+      ["a first stop missing its computable deadhead fails", liveFailures([{ load_number: "1", non_first_stops_without_leg: 0, lane_touched: true, lane: "A -> B", first_stop_missing_deadhead: true, prior_load_number: "0" }]).some((x) => x.startsWith("RULE 4"))],
+      ["a first stop with no previous load passes", liveFailures([{ load_number: "1", non_first_stops_without_leg: 0, lane_touched: true, lane: "A -> B", first_stop_missing_deadhead: false, prior_load_number: null }]).length === 0],
       ["an untouched lane fails", liveFailures([{ load_number: "1", non_first_stops_without_leg: 0, lane_touched: false, lane: "A -> B" }]).some((x) => x.startsWith("RULE 3"))],
     ];
     for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);

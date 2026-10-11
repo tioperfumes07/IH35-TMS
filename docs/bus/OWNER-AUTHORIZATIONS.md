@@ -7461,3 +7461,13 @@ action: OWNER_AUTH_ID=AUTH-409 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-1
 rehearsal: throwaway br-morning-king-ak5hyvy8 (COMMITTED, deleted): 24 loads / 48 stops; 6 on a Samsara address (street + facility + its own fence), 42 zip / city center listed, 0 failed; false rooftop 48 -> 0; zip-center fences active 33 -> 0 (retired); 33 street-less locations deactivated; Samsara-linked fences active 1 -> 6
 expires_at: 2026-10-12T05:42:00Z
 status: OPEN
+
+## AUTH-412
+issued_at: 2026-10-11T06:41:12Z
+issued_by: Lead ruling 443.41 G(2): "first-stop deadhead = miles from the same unit's previous load's last stop, from the mileage engine, source 'computed'; NULL only when no previous load." Recorded by CC-2 in the PR that ships the script, as with AUTH-404..410
+owner_quotes: "This must be fixed and done automatically for the next seedings, none should ever fail." (2026-10-11 00:30 CT) · "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — mdata.load_stops.leg_miles of the FIRST stop of loads booked since 2026-10-11T00:00Z, filled ONCE where NULL through learnLoadLanes -> computeFirstStopDeadhead (point_mileage cache / routing provider, else the owner-ruled chain-deadhead haversine), each fill with its audit row dispatch.load_stop.leg_miles_computed (source 'computed'). No money. No DELETE. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-412 DATABASE_URL=<prod> npx tsx apps/backend/scripts/auth412-backfill-first-stop-deadhead.mts --branch=br-fancy-credit-akjnd07a --apply
+rehearsal: throwaway br-wild-rice-akq8fxt9 (COMMITTED, deleted): first-stop leg_miles NULL 48 -> 12; 36 computed (haversine_chain — routing provider osrm_not_configured, 0 osrm rows ever in point_mileage); 12 NULL = no previous load for the unit; verify-booked-loads-save-miles PASS over 107 loads
+expires_at: 2026-10-12T06:41:12Z
+status: OPEN

@@ -21,10 +21,27 @@
  *                                 typical_miles and base_rate_cents = the load's rate_total_cents; an existing lane keeps
  *                                 its owner-set rate (only a missing typical_miles is filled). A load with no rate is listed.
  *
+ * FIRST-STOP DEADHEAD (Lead 443.41 G(2)): when the load's document carries no deadhead, stop 1's leg_miles = the miles from the
+ * SAME unit's previous load's last stop (the unit's load whose last stop arrived latest strictly BEFORE this load's first stop —
+ * by stop dates, never created_at; Creator loads are booked out of order) to this first stop: the mileage engine first
+ * (resolvePointMileage — point_mileage cache, then the configured routing provider), else the owner-ruled chain-deadhead
+ * method (GO-23: haversine over the two stops' coordinates, chain-deadhead.service.ts) — never written to the routing cache.
+ * NULL only when the unit has no previous load (or a stop has no coordinates). load_stops has no leg-miles source column and
+ * loads.deadhead_miles_calculation_method's CHECK has no 'computed' value (CC-2 cannot author migrations), so the source
+ * ('computed', method, prior load) is recorded on an audit row (dispatch.load_stop.leg_miles_computed). Out of order: after a
+ * booking, the unit's NEXT load's first stop is filled too when still NULL; a next load already filled from an older
+ * predecessor is never overwritten (a filled leg is never moved) — re-derive it by clearing nothing, it is listed instead.
+ *
  * DB-driven (reads the load and its stops by id), so the booking hook and the backfill run the identical code.
  * Idempotency: a booking counts its lane once (fresh: true). A backfill counts a load's lane only when it filled at least one
  * NULL leg_miles on that load in the same call — a re-run finds nothing NULL and counts nothing twice.
  */
+import { appendCrudAudit } from "../audit/crud-audit.js";
+import { haversineMiles } from "./deadhead/optimizer.service.js";
+import { resolvePointMileage } from "./mileage/mileage.service.js";
+import type { MileageProvider } from "./mileage/mileage-provider.js";
+import { OsrmProvider } from "./mileage/osrm.provider.js";
+
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number | null }>;
 };
@@ -38,7 +55,14 @@ export type LaneLearningResult = {
   point_mileage: "inserted" | "exists" | "skipped";
   customer_lane: "created" | "existing" | "typical_miles_filled" | "skipped";
   customer_lane_skip_reason?: string;
+  first_stop_deadhead?: { miles: number; method: DeadheadMethod; prior_load_number: string | null } | { miles: null; reason: string };
+  successor_first_stop?: { load_number: string; miles: number | null; reason?: string };
 };
+
+export type DeadheadMethod = "point_mileage_cache" | "routing_provider" | "haversine_chain";
+export type FirstStopDeadhead =
+  | { miles: number; method: DeadheadMethod; engine_reason?: string; stop_id: string; prior_load_id: string; prior_load_number: string | null }
+  | { miles: null; reason: string; stop_id?: string; prior_load_id?: string };
 
 type StopRow = {
   id: string;
@@ -117,9 +141,96 @@ export function nextLaneStats(
   };
 }
 
+/** Engine answer first; the owner-ruled chain-deadhead haversine only when the engine has none. Pure — unit-tested. */
+export function chooseDeadheadMiles(
+  engine: { practical_miles: number | null; source: string; reason?: string },
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number }
+): { miles: number; method: DeadheadMethod; engine_reason?: string } {
+  if (engine.practical_miles != null) return { miles: round1(engine.practical_miles), method: engine.source === "cache" ? "point_mileage_cache" : "routing_provider" };
+  return { miles: round1(haversineMiles(from.lat, from.lng, to.lat, to.lng)), method: "haversine_chain", engine_reason: engine.reason };
+}
+
+/** First-stop deadhead for one load from the same unit's previous load (see header). Reads only; the caller writes. */
+export async function computeFirstStopDeadhead(
+  client: Queryable,
+  args: { operatingCompanyId: string; loadId: string },
+  provider: MileageProvider = new OsrmProvider()
+): Promise<FirstStopDeadhead> {
+  const first = (
+    await client.query<{ stop_id: string; unit_id: string | null; lat: number | null; lng: number | null; at: string | null }>(
+      `SELECT s.id::text AS stop_id, l.assigned_unit_id::text AS unit_id, s.latitude::float8 AS lat, s.longitude::float8 AS lng,
+              COALESCE(s.actual_arrival_at, s.scheduled_arrival_at, s.appointment_start_at)::text AS at
+         FROM mdata.loads l
+         JOIN mdata.load_stops s ON s.load_id = l.id AND s.soft_deleted_at IS NULL
+        WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid
+        ORDER BY s.sequence_number LIMIT 1`,
+      [args.loadId, args.operatingCompanyId]
+    )
+  ).rows[0];
+  if (!first) return { miles: null, reason: "load_has_no_stops" };
+  if (!first.unit_id) return { miles: null, reason: "load_has_no_unit", stop_id: first.stop_id };
+  if (!first.at) return { miles: null, reason: "first_stop_has_no_date", stop_id: first.stop_id };
+  const prior = (
+    await client.query<{ id: string; load_number: string | null; lat: number | null; lng: number | null }>(
+      `SELECT l.id::text, l.load_number::text, ls.latitude::float8 AS lat, ls.longitude::float8 AS lng
+         FROM mdata.loads l
+         JOIN LATERAL (
+           SELECT x.latitude, x.longitude, COALESCE(x.actual_arrival_at, x.scheduled_arrival_at, x.appointment_start_at) AS at
+             FROM mdata.load_stops x WHERE x.load_id = l.id AND x.soft_deleted_at IS NULL
+            ORDER BY x.sequence_number DESC LIMIT 1
+         ) ls ON true
+        WHERE l.assigned_unit_id = $1::uuid AND l.operating_company_id = $2::uuid AND l.id <> $3::uuid
+          AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL
+          AND l.status::text NOT IN ('cancelled', 'canceled', 'void', 'voided')
+          AND ls.at IS NOT NULL AND ls.at < $4::timestamptz
+        ORDER BY ls.at DESC, l.load_number DESC LIMIT 1`,
+      [first.unit_id, args.operatingCompanyId, args.loadId, first.at]
+    )
+  ).rows[0];
+  if (!prior) return { miles: null, reason: "no_previous_load_for_unit", stop_id: first.stop_id };
+  if (prior.lat == null || prior.lng == null || first.lat == null || first.lng == null)
+    return { miles: null, reason: "previous_last_stop_or_first_stop_not_located", stop_id: first.stop_id, prior_load_id: prior.id };
+  const from = { lat: Number(prior.lat), lng: Number(prior.lng) };
+  const to = { lat: Number(first.lat), lng: Number(first.lng) };
+  const engine = await resolvePointMileage(client, provider, from, to);
+  return { ...chooseDeadheadMiles(engine, from, to), stop_id: first.stop_id, prior_load_id: prior.id, prior_load_number: prior.load_number };
+}
+
+/** Writes a computed first-stop deadhead where leg_miles is still NULL, with its audit row. Returns the miles written or null. */
+async function fillFirstStopDeadhead(
+  client: Queryable,
+  args: { operatingCompanyId: string; loadId: string; actorUserId?: string | null },
+  provider?: MileageProvider
+): Promise<FirstStopDeadhead & { written: boolean }> {
+  const dh = await computeFirstStopDeadhead(client, args, provider);
+  if (dh.miles == null) return { ...dh, written: false };
+  const r = await client.query(
+    `UPDATE mdata.load_stops SET leg_miles = $1::numeric, updated_at = now()
+      WHERE id = $2::uuid AND operating_company_id = $3::uuid AND leg_miles IS NULL`,
+    [dh.miles, dh.stop_id, args.operatingCompanyId]
+  );
+  const written = (r.rowCount ?? 0) > 0;
+  if (written)
+    await appendCrudAudit(
+      client as never,
+      args.actorUserId ?? null as never,
+      "dispatch.load_stop.leg_miles_computed",
+      {
+        operating_company_id: args.operatingCompanyId, load_id: args.loadId, stop_id: dh.stop_id, leg_miles: dh.miles,
+        source: "computed", method: dh.method, engine_reason: dh.engine_reason ?? null,
+        prior_load_id: dh.prior_load_id, prior_load_number: dh.prior_load_number,
+      },
+      "info",
+      "LEAD-443.41-G2"
+    );
+  return { ...dh, written };
+}
+
 export async function learnLoadLanes(
   client: Queryable,
-  args: { operatingCompanyId: string; loadId: string; fresh: boolean; actorUserId?: string | null }
+  args: { operatingCompanyId: string; loadId: string; fresh: boolean; actorUserId?: string | null },
+  provider?: MileageProvider
 ): Promise<LaneLearningResult> {
   const load = (
     await client.query<{
@@ -201,6 +312,38 @@ export async function learnLoadLanes(
       [m, s.id, args.operatingCompanyId]
     );
     out.legs_filled += r.rowCount ?? 0;
+  }
+
+  // ── first-stop deadhead from the unit's previous load (443.41 G(2)) — does not count toward legs_filled, so a backfill that
+  //    only computes deadheads never re-counts a lane ──
+  if (stops[0]!.leg_miles == null && planned[0] == null) {
+    const dh = await fillFirstStopDeadhead(client, args, provider);
+    out.first_stop_deadhead = dh.miles != null ? { miles: dh.miles, method: dh.method, prior_load_number: dh.prior_load_number } : { miles: null, reason: dh.reason };
+  }
+  if (args.fresh) {
+    // Out of order: this load may now be the previous load of the unit's next one — fill that first stop if still NULL.
+    const next = (
+      await client.query<{ id: string; load_number: string }>(
+        `WITH me AS (
+           SELECT l.assigned_unit_id AS unit_id,
+                  (SELECT COALESCE(x.actual_arrival_at, x.scheduled_arrival_at, x.appointment_start_at) FROM mdata.load_stops x
+                    WHERE x.load_id = l.id AND x.soft_deleted_at IS NULL ORDER BY x.sequence_number DESC LIMIT 1) AS last_at
+             FROM mdata.loads l WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid)
+         SELECT n.id::text, n.load_number::text
+           FROM me JOIN mdata.loads n ON n.assigned_unit_id = me.unit_id AND n.operating_company_id = $2::uuid AND n.id <> $1::uuid
+           JOIN LATERAL (SELECT y.leg_miles, COALESCE(y.actual_arrival_at, y.scheduled_arrival_at, y.appointment_start_at) AS at
+                           FROM mdata.load_stops y WHERE y.load_id = n.id AND y.soft_deleted_at IS NULL
+                          ORDER BY y.sequence_number LIMIT 1) f ON true
+          WHERE me.unit_id IS NOT NULL AND me.last_at IS NOT NULL AND f.at > me.last_at
+            AND n.voided_at IS NULL AND n.soft_deleted_at IS NULL AND n.status::text NOT IN ('cancelled', 'canceled', 'void', 'voided')
+          ORDER BY f.at LIMIT 1`,
+        [args.loadId, args.operatingCompanyId]
+      )
+    ).rows[0];
+    if (next) {
+      const nxt = await fillFirstStopDeadhead(client, { ...args, loadId: next.id }, provider);
+      out.successor_first_stop = { load_number: next.load_number, miles: nxt.written ? nxt.miles : null, ...(nxt.miles == null ? { reason: nxt.reason } : nxt.written ? {} : { reason: "already_filled" }) };
+    }
   }
 
   // A backfill re-run must not count the same load twice.
