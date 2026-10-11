@@ -10,12 +10,14 @@ import { useQuery } from "@tanstack/react-query";
 import {
   listRelatedPartyLoanFacilities,
   listRelatedPartyLoans,
+  getPartyLedger,
   loanRowsOf,
   type LoanDirection,
   type LoanStatus,
   type LoanTargetType,
   type RelatedPartyLoanFacilityRow,
   type RelatedPartyLoanRow,
+  type PartyLedgerLine,
 } from "../../../api/related-party-loans";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
@@ -30,7 +32,7 @@ import {
   type LoanApplicationPrefill,
 } from "./LoanApplicationWizard";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
-import { formatUsdCents } from "../../../lib/money";
+import { formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../../lib/money";
 import { SelectCombobox } from "../../../components/Combobox";
 import { formatAccountDisplayLabel } from "../../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../../lib/useShowAccountNumbers";
@@ -54,6 +56,7 @@ const TARGETS: Array<"" | LoanTargetType> = [
   "bank_funding",
   "bank_repayment",
   "paid_direct_vendor",
+  "party_transfer_out",
 ];
 
 function money(cents: number | null | undefined): string {
@@ -71,6 +74,7 @@ export function LoansAdvancesPage() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardPrefill, setWizardPrefill] = useState<LoanApplicationPrefill | null>(null);
   const [expandedFacilityId, setExpandedFacilityId] = useState<string | null>(null);
+  const [ledgerFacilityId, setLedgerFacilityId] = useState<string | null>(null);
 
   const facilitiesQuery = useQuery({
     queryKey: ["related-party-loan-facilities", companyId],
@@ -94,6 +98,13 @@ export function LoansAdvancesPage() {
     refetchInterval: 30_000,
   });
 
+  const ledgerQuery = useQuery({
+    queryKey: ["party-ledger", companyId, ledgerFacilityId],
+    queryFn: () => getPartyLedger(ledgerFacilityId!, companyId),
+    enabled: Boolean(companyId) && Boolean(ledgerFacilityId),
+    refetchInterval: 30_000,
+  });
+
   const facilities: RelatedPartyLoanFacilityRow[] = useMemo(
     () => facilitiesQuery.data?.facilities ?? [],
     [facilitiesQuery.data],
@@ -103,6 +114,7 @@ export function LoansAdvancesPage() {
   const refetchAll = () => {
     void facilitiesQuery.refetch();
     void listQuery.refetch();
+    if (ledgerFacilityId) void ledgerQuery.refetch();
   };
 
   return (
@@ -286,12 +298,123 @@ export function LoansAdvancesPage() {
                 render: (r) => `${r.advance_count} adv / ${r.repayment_count} repay`,
               },
               { key: "status", label: "Status", render: (r) => r.status },
+              {
+                key: "balance_label",
+                label: "Balance direction",
+                render: (r) => {
+                  const b = r.open_balance_cents;
+                  if (b === 0) return <span className="text-[#6B7280]">Settled</span>;
+                  if (b > 0) return <span className="text-[#B91C1C]">Due to {r.counterparty_name ?? "party"}</span>;
+                  return <span className="text-[#16A34A]">Due from {r.counterparty_name ?? "party"}</span>;
+                },
+              },
+              {
+                key: "ledger_link",
+                label: "Ledger",
+                render: (r) => (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLedgerFacilityId((cur) => (cur === r.id ? null : r.id));
+                    }}
+                    className="text-xs font-semibold text-[#14314F] underline hover:text-[#0F1729]"
+                    data-testid={`party-ledger-btn-${r.id}`}
+                  >
+                    {ledgerFacilityId === r.id ? "Close" : "View"}
+                  </button>
+                ),
+              },
             ]}
           />
           {expandedFacilityId && (
             <div className="mt-2 text-xs text-[#6B7280]">
               Showing advances and repayments for the selected facility. Click the row again to clear.
             </div>
+          )}
+        </div>
+      )}
+
+      {companyId && ledgerFacilityId && (
+        <div className="mt-4 rounded-sm border border-[#E5E7EB] bg-white p-4" data-testid="party-ledger-panel">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
+              Party Ledger —{" "}
+              {ledgerQuery.data?.account_name ?? ledgerQuery.data?.counterparty_name ?? "Loading…"}
+            </div>
+            {ledgerQuery.data && (
+              <div className="text-xs font-semibold">
+                Net:{" "}
+                <span
+                  className={
+                    ledgerQuery.data.net_balance_cents > 0
+                      ? "text-[#B91C1C]"
+                      : ledgerQuery.data.net_balance_cents < 0
+                        ? "text-[#16A34A]"
+                        : "text-[#6B7280]"
+                  }
+                >
+                  {ledgerQuery.data.net_balance_cents > 0
+                    ? `Due to party ${money(ledgerQuery.data.net_balance_cents)}`
+                    : ledgerQuery.data.net_balance_cents < 0
+                      ? `Due from party ${money(Math.abs(ledgerQuery.data.net_balance_cents))}`
+                      : "Settled"}
+                </span>
+              </div>
+            )}
+          </div>
+          {ledgerQuery.isLoading && (
+            <div className="text-xs text-[#6B7280]">Loading ledger…</div>
+          )}
+          {ledgerQuery.isError && (
+            <div className="text-xs text-[#B91C1C]">Failed to load ledger.</div>
+          )}
+          {ledgerQuery.data && ledgerQuery.data.lines.length === 0 && (
+            <div className="text-xs text-[#6B7280]">No posted JE lines for this account yet.</div>
+          )}
+          {ledgerQuery.data && ledgerQuery.data.lines.length > 0 && (
+            <table className="mt-2 w-full text-xs" data-testid="party-ledger-table">
+              <thead>
+                <tr className="border-b border-[#E5E7EB] text-xs font-bold uppercase text-[#4B5563]">
+                  <th className="py-1 text-left">Date</th>
+                  <th className="py-1 text-left">Memo</th>
+                  <th className="py-1 text-left">Doc</th>
+                  <th className="py-1 text-right">Debit</th>
+                  <th className="py-1 text-right">Credit</th>
+                  <th className="py-1 text-right">Running balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ledgerQuery.data.lines.map((line: PartyLedgerLine) => (
+                  <tr key={line.id} className="border-b border-[#F3F4F6]">
+                    <td className="py-1">{formatDateUS(line.date)}</td>
+                    <td className="py-1 max-w-[200px] truncate">{line.memo ?? "—"}</td>
+                    <td className="py-1">{line.loan_display_id ?? "—"}</td>
+                    <td className={`py-1 ${QBO_MONEY_CELL_CLASS}`}>
+                      {line.debit_or_credit === "debit" ? money(line.amount_cents) : ""}
+                    </td>
+                    <td className={`py-1 ${QBO_MONEY_CELL_CLASS}`}>
+                      {line.debit_or_credit === "credit" ? money(line.amount_cents) : ""}
+                    </td>
+                    <td
+                      className={`py-1 ${QBO_MONEY_CELL_CLASS} font-semibold ${
+                        line.running_balance_cents > 0
+                          ? "text-[#B91C1C]"
+                          : line.running_balance_cents < 0
+                            ? "text-[#16A34A]"
+                            : "text-[#6B7280]"
+                      }`}
+                    >
+                      {line.running_balance_cents === 0
+                        ? "—"
+                        : line.running_balance_cents > 0
+                          ? `Due to ${money(line.running_balance_cents)}`
+                          : `Due from ${money(Math.abs(line.running_balance_cents))}`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       )}

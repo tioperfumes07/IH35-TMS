@@ -27,7 +27,9 @@ export type LoanTargetType =
   | "bank_funding"
   | "bank_repayment"
   /** ROUND 443.22-2e — personal pay to vendor; no company bank line. */
-  | "paid_direct_vendor";
+  | "paid_direct_vendor"
+  /** 443.59 — USMCA sends money TO party (debit 2410, credit bank). */
+  | "party_transfer_out";
 export type LoanStatus = "draft" | "open" | "paid" | "reversed";
 export type LoanInterestMethod = "simple" | "amortized" | "none";
 export type LoanPaymentFrequency =
@@ -207,4 +209,42 @@ export async function createRelatedPartyLoan(
 export function loanRowsOf(res: ListRelatedPartyLoansResponse | undefined): RelatedPartyLoanRow[] {
   if (!res) return [];
   return res.loans ?? res.rows ?? res.items ?? [];
+}
+
+// ── 443.59 — Per-facility party ledger ─────────────────────────────────────────────────────────
+
+export type PartyLedgerLine = {
+  id: string;
+  date: string;
+  memo?: string | null;
+  debit_or_credit: "debit" | "credit";
+  amount_cents: number;
+  /** Positive = USMCA owes party (net credit on 2410). Negative = party owes USMCA. */
+  running_balance_cents: number;
+  loan_display_id?: string | null;
+  target_type?: string | null;
+  direction?: string | null;
+  counterparty_name?: string | null;
+};
+
+export type GetPartyLedgerResponse = {
+  facility_id: string;
+  account_id: string;
+  account_name?: string | null;
+  account_number?: string | null;
+  counterparty_name?: string | null;
+  net_balance_cents: number;
+  lines: PartyLedgerLine[];
+};
+
+export async function getPartyLedger(
+  facilityId: string,
+  operatingCompanyId: string,
+  signal?: AbortSignal,
+): Promise<GetPartyLedgerResponse> {
+  const p = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<GetPartyLedgerResponse>(
+    `${BASE}/ledger/${facilityId}?${p.toString()}`,
+    { method: "GET", signal },
+  );
 }
