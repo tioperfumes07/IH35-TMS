@@ -7675,3 +7675,13 @@ consumed_at: 2026-10-11T12:18:18Z
 consumed_by: CC-2 (443.52 C CSV Relay fill fee correction)
 row_counts: prod identical to the rehearsal — CORRECTED 32 of 32; 1295 credit on the fills 1600131 -> 1606531 (+6400); TB net 0 -> 0; 1295 net 596780 -> 590380, 5005 296350 -> 302750; fuel_transactions 51 / 16001.31 unchanged; no settlement touched
 proof_query: node scripts/verify-relay-fill-documents-sum-to-relay-total.mjs (prod) -> PASS (152 fills)
+
+## AUTH-427
+issued_at: 2026-10-11T14:47:07Z
+issued_by: Lead 443.53 #3 + #4 on the owner's ruling 2026-10-11 09:23 CT (14:23 UTC). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..426
+owner_quotes: "Corona are the same person, Neftali are the same person, my escrow accounts should be Tests only I've never driven. Merge all" (2026-10-11 09:23 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — #3 executeDriverMerge (the driver-merge engine; survivor = the profile the settlements posted on): LUIS CORONA e6933af3 -> Jorge Luis Infante Corona 3e138476 (9 settlements); NEFTALI URBANO CORONADO fc5c88b5 -> Neftali Coronado Urbano a32a35c8 (6 settlements). #4 retireDriverSubAccountsWithoutPostings on owner profile 49427973: each USMCA escrow / advance sub-account with 0 postings deactivated + link closed (history kept); any posted account listed, untouched. The two QBO- accounts on that profile belong to another company (91e0bf0a) and are out of scope. No DELETE, no money.
+action: OWNER_AUTH_ID=AUTH-427 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-53-driver-merges-owner-escrow.ts --apply
+rehearsal: throwaway br-blue-lake-akak6jwm (COMMITTED, deleted): both merged profiles Inactive with merged_into = survivor; repointed incl. mdata.driver_samsara_accounts + integrations.samsara_drivers (each survivor 2 Samsara users, 1 escrow, 1 advance); left on merged ids only history_kept / kept_on_survivor rows; owner 2100-00-011 + 1245-00-011 (0 postings, 0 balance) retired, USMCA links active after 0
+expires_at: 2026-10-12T14:47:07Z
+status: OPEN
