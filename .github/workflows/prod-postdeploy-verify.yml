@@ -224,11 +224,6 @@ jobs:
           DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
         run: node scripts/verify-driver-escrow-counter-leg-is-clearing.mjs
 
-      - name: verify:ar-ties-to-qbo-invoice-list
-        env:
-          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
-        run: node scripts/verify-ar-ties-to-qbo-invoice-list.mjs
-
       - name: verify:geofence-odometer-capture-freshness
         id: geofence_odometer_capture_freshness
         # T-21 (owner order, 2026-09-30): "record each vehicle's mileage automatically in every

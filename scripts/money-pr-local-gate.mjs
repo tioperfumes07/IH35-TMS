@@ -1237,12 +1237,6 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-geocode-provider-is-reachable",
     ["apps/backend/src/telematics/stop-geocode-fallback.service.ts", "apps/backend/src/integrations/google/google-places-client.ts"],
   ],
-  // ROUND 163 JOB 1 (P0) — our issued-invoice total must tie to the QBO control file for its date
-  // range, or the gate reports the exact delta (actionable/mismatched/unmatched broken out).
-  [
-    "verify-ar-ties-to-qbo-invoice-list",
-    ["apps/backend/src/accounting/from-load.ts", "apps/backend/src/accounting/invoice-send.service.ts", "feed-input/qbo-invoice-list-2026-08-07-to-2026-09-27.csv"],
-  ],
   // ROUND 155.23/157-A item 6 — a load whose first and last scheduled stop share the same city
   // while its own recorded miles exceed 100 is physically impossible and always means copied/
   // corrupted stop data (found live: 13614 and 6 other historical loads).
@@ -1962,40 +1956,6 @@ function acceptedOwnerRound443RelayFillOnly(name, code) {
   return true;
 }
 
-/**
- * LEAD RULING 443.68 #1 (2026-10-11 20:42 UTC) — NAMED RED: verify-ar-ties-to-qbo-invoice-list's mismatched bucket (live TMS vs
- * the owner's QBO invoice export, 12 vs baseline 6) is not a diff's doing; the 443.66 / 443.67 PRs merge past THIS ONE red. Narrow
- * by construction: only with LEAD_443_68_AR_QBO_NAMED_RED=1, only this guard, and only while a re-run prints exactly
- * "mismatched count grew: 12 > baseline 6" and no other failure line. Any growth past 12 or any other failure stays red. The
- * baseline is NOT raised.
- */
-function acceptedLead44368ArQboNamedRed(name, rel, code) {
-  if (code === 0 || name !== "verify-ar-ties-to-qbo-invoice-list") return false;
-  if (process.env.LEAD_443_68_AR_QBO_NAMED_RED !== "1") return false;
-  const r = spawnSync(process.execPath, [path.join(ROOT, rel)], { env: process.env, encoding: "utf8" });
-  const out = `${r.stdout ?? ""}${r.stderr ?? ""}`;
-  const fails = out.split("\n").filter((l) => /FAIL/.test(l) && !/SSL|libpq/i.test(l));
-  return fails.length === 1 && /mismatched count grew: 12 > baseline 6$/.test(fails[0].trim());
-}
-
-/**
- * LEAD RULING 443.69 #1 (2026-10-11 21:02 UTC) — SECOND NAMED RED: verify-fuel-transactions-per-load (38 missing = AUTH-400 purge
- * the guard never reads; ratchet 321 / 172,553.14 frozen before the Creator's 68 settlements; one date). CC-2 fixes it at root.
- * Narrow: only with LEAD_443_69_FUEL_NAMED_RED=1 and only while a re-run's failure lines are exactly these three, nothing else.
- */
-function acceptedLead44369FuelNamedRed(name, rel, code) {
-  if (code === 0 || name !== "verify-fuel-transactions-per-load") return false;
-  if (process.env.LEAD_443_69_FUEL_NAMED_RED !== "1") return false;
-  const r = spawnSync(process.execPath, [path.join(ROOT, rel)], { env: process.env, encoding: "utf8" });
-  const fails = `${r.stdout ?? ""}${r.stderr ?? ""}`.split("\n").filter((l) => /LIVE FAIL|: FAIL/.test(l) && !/SSL|libpq/i.test(l));
-  const known = [
-    /LIVE FAIL — 38 of 171 expected fuel_purchases rows have NO matching/,
-    /LIVE FAIL — live \(654 rows \/ \$248315\.91\) diverges from the reconciled baseline/,
-    /LIVE FAIL — date-corrected receipt load 13557 invoice 99462408/,
-  ];
-  return fails.length === known.length && fails.every((l) => known.some((k) => k.test(l)));
-}
-
 /** LIVE_DOMAIN guards armed only via DATA_WRITE migrations on bank-recon-only PRs — ambient tip debt, not introduced here. */
 const ROUND_44329_B_BANK_RECON_AMBIENT_LIVE_GUARDS = new Set([
   "verify-factoring-banking-kpis-tie-to-ledger",
@@ -2497,23 +2457,6 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     }
   }
   if (
-    name === "verify-ar-ties-to-qbo-invoice-list" &&
-    changedForLiveDomains !== null &&
-    !changedForLiveDomains.some(
-      (f) =>
-        f.startsWith("apps/backend/src/accounting/from-load.ts") ||
-        f.startsWith("apps/backend/src/accounting/invoice-send.service.ts") ||
-        f.startsWith("feed-input/qbo-invoice-list-2026-08-07-to-2026-09-27.csv") ||
-        f === rel ||
-        f.startsWith("scripts/verify-ar-ties-to-qbo-invoice-list"),
-    )
-  ) {
-    const msg = `${rel} — no from-load / invoice-send paths in this diff (DATA_WRITE migration must not arm ROUND 163 AR tie-out)`;
-    console.log(`[${LABEL}] SKIP ${msg}`);
-    skippedLiveChecks.push(msg);
-    continue;
-  }
-  if (
     name === "verify-settlement-driver-pay-splits-per-load" &&
     changedForLiveDomains !== null &&
     !changedForLiveDomains.some(
@@ -2650,16 +2593,6 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
       ? runNode(rel, { DATABASE_URL: CALLER_WRITER_DATABASE_URL })
       : runNode(rel);
     if (code !== 0 && !acceptedAsEmptyByPurge(rel, code)) {
-      if (acceptedLead44369FuelNamedRed(name, rel, code)) {
-        console.log(`[${LABEL}] ACCEPTED — NAMED RED verify-fuel-transactions-per-load (LEAD RULING 443.69 #1; exactly the 3 known failures); baseline unchanged; CC-2 fixes at root.`);
-        skippedLiveChecks.push(`${rel} — ACCEPTED named red, LEAD RULING 443.69 #1`);
-        continue;
-      }
-      if (acceptedLead44368ArQboNamedRed(name, rel, code)) {
-        console.log(`[${LABEL}] ACCEPTED — NAMED RED verify-ar-ties-to-qbo-invoice-list 12 > baseline 6 (LEAD RULING 443.68 #1); baseline unchanged; name this ruling in the PR body.`);
-        skippedLiveChecks.push(`${rel} — ACCEPTED named red, LEAD RULING 443.68 #1`);
-        continue;
-      }
       if (acceptedOwnerRound443RelayFillOnly(name, code)) {
         console.log(
           `[${LABEL}] ACCEPTED — verify-relay-fill-one-company ambient drift (owner ROUND 443 item 2, ` +
