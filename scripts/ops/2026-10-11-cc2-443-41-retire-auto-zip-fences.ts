@@ -14,6 +14,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import pg from "pg";
+import { assertIsIntendedProduction, assertNotProduction } from "../lib/assert-not-production.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -31,6 +32,9 @@ if (apply) {
 }
 const client = new pg.Client({ connectionString: url });
 await client.connect();
+// verify-ops-scripts-assert-not-production: name the target before any write (443.52 C).
+if (apply) await assertIsIntendedProduction(client, { label: "2026-10-11-cc2-443-41-retire-auto-zip-fences.ts" });
+else if (forkCommit) await assertNotProduction(client, { label: "2026-10-11-cc2-443-41-retire-auto-zip-fences.ts" });
 try {
   await client.query("BEGIN");
   await client.query("SELECT set_config('app.bypass_rls','lucia',true)");

@@ -26,6 +26,7 @@ import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import pg from "pg";
 import { resolvePostingSourceEntity } from "../../apps/backend/src/accounting/posting-line-writer.js";
+import { assertIsIntendedProduction, assertNotProduction } from "../lib/assert-not-production.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -61,6 +62,9 @@ type Row = {
 async function main() {
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
+  // verify-ops-scripts-assert-not-production: name the target before any write (443.52 C).
+  if (apply) await assertIsIntendedProduction(client, { label: "2026-10-11-cc2-d6-backfill-posting-entity.ts" });
+  else if (rehearse) await assertNotProduction(client, { label: "2026-10-11-cc2-d6-backfill-posting-entity.ts" });
   await client.query("BEGIN");
   await client.query(`SELECT set_config('app.bypass_rls','lucia', true)`);
 

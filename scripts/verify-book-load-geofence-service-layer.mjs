@@ -59,7 +59,10 @@ export function collectProblems(root = ROOT) {
   // Must fire only on success (kind === "ok"), never unconditionally (a failed booking has no
   // load to geofence) and never inside the booking transaction itself (a Samsara/geocoding
   // failure must never roll back or delay the load booking response).
-  if (!/result\.kind === "ok"[\s\S]{0,300}autoCreateGeofencesForLoad/.test(service)) {
+  // 443.52 C (CC-2): the window was 300 chars; 443.41 added a historical_backfill gate + its comment INSIDE the ok-gate
+  // (a Settlement Creator load that already ran draws no fence), which pushed the call past 300 chars. The law is unchanged:
+  // the call must sit inside the result.kind === "ok" block.
+  if (!/result\.kind === "ok"[\s\S]{0,1200}autoCreateGeofencesForLoad/.test(service)) {
     problems.push(`${SERVICE}: autoCreateGeofencesForLoad must be gated on a successful booking (result.kind === "ok")`);
   }
 
