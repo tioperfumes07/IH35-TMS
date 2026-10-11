@@ -554,6 +554,11 @@ async function collectAssignedDriverIdsForDrugGate(
  */
 /** Set by resolveDriverBasePayCents so the created bill can label a §7 placeholder rate. */
 let lastResolvedRateWasTestData = false;
+/**
+ * ROUND 443.31: set by resolveDriverBasePayCents when it refuses to price a load by name — the skipped_no_pay_rate
+ * audit carries this reason instead of the generic one. null when the load priced (or was not refused for a card).
+ */
+let lastRateCardRefusal: { reason: "no_pickup_date" | "no_rate_card_effective_on_pickup_date"; pickup_date: string | null } | null = null;
 
 /**
  * MILES SPEC FOR DISPATCH, FINAL (owner direct instruction, 2026-09-02): "DRIVER PAY =
@@ -587,7 +592,25 @@ async function resolveDriverBasePayCents(
   load: Record<string, unknown>,
   actorUserId?: string
 ): Promise<DriverPayResolution | null> {
+  lastRateCardRefusal = null;
   if (!driverId) return null;
+
+  // ROUND 443.31 (Lead, 2026-10-10): the card that prices a load is the one EFFECTIVE ON ITS PICKUP DATE — never the
+  // newest card. Measured: Angel 52037e93's only card (48c) starts 2026-08-07, yet load 13498 picked up 2026-08-03 was
+  // priced with it (606.67). Pickup date = the first pickup stop's actual arrival, else appointment, else scheduled
+  // (stops are inserted before the bill is minted). effective_to is INCLUSIVE (measured: a card closed 08-30, the next
+  // starts 08-31). A superseded card is is_active=false with an effective_to — it still governs its own dates, so the
+  // filter is (is_active OR effective_to IS NOT NULL); a deactivated card with no end date never prices anything.
+  // No pickup date, or no card on that date -> refused by name (lastRateCardRefusal), never the newest card.
+  const pickupRes = await client.query<{ d: string | null }>(
+    `SELECT COALESCE(actual_arrival_at, appointment_start_at, scheduled_arrival_at)::date::text AS d
+       FROM mdata.load_stops
+      WHERE load_id = $1::uuid AND stop_type = 'pickup' AND soft_deleted_at IS NULL
+      ORDER BY sequence_number ASC
+      LIMIT 1`,
+    [String(load.id ?? "")]
+  );
+  const pickupDate = pickupRes.rows[0]?.d ?? null;
 
   const rateRes = await client.query<{
     basis_type: string;
@@ -603,14 +626,21 @@ async function resolveDriverBasePayCents(
         FROM driver_finance.driver_pay_rates
        WHERE operating_company_id = $1::uuid
          AND driver_id = $2::uuid
-         AND is_active
-         AND effective_to IS NULL
+         AND (is_active OR effective_to IS NOT NULL)
+         AND $3::date IS NOT NULL
+         AND effective_from <= $3::date
+         AND (effective_to IS NULL OR effective_to >= $3::date)
        ORDER BY effective_from DESC
        LIMIT 1
     `,
-    [operatingCompanyId, driverId]
+    [operatingCompanyId, driverId, pickupDate]
   );
   const rate = rateRes.rows[0];
+  if (!rate) {
+    lastRateCardRefusal = pickupDate
+      ? { reason: "no_rate_card_effective_on_pickup_date", pickup_date: pickupDate }
+      : { reason: "no_pickup_date", pickup_date: null };
+  }
 
   let cardCents: number | null = null;
   let cardIsTestData = false;
@@ -955,7 +985,8 @@ export async function createDriverBillArtifacts(
           load_id: String(load.id),
           load_number: String(load.load_number ?? loadNumber),
           operating_company_id: input.operating_company_id,
-          reason: skipReason,
+          reason: lastRateCardRefusal?.reason ?? skipReason,
+          rate_card_refusal: lastRateCardRefusal,
           driver_id: primaryDriverForPay,
           miles_shortest: load.miles_shortest ?? null,
           extra_stop_bonus_cents: extraStopBonusCents,
