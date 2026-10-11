@@ -2220,7 +2220,7 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         const diffText = d.stdout || "";
         const bankPointerOnly =
           /matched_relay_deposit_id/.test(diffText) &&
-          !/\bfuel\b|fuel_transactions|loves/i.test(diffText);
+          !/fuel_transactions|fuel-posting|postFuelExpense|loves/i.test(diffText);
         if (bankPointerOnly) return false;
       }
       return true;
