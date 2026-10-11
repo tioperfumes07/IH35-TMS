@@ -34,15 +34,26 @@ describe("pickSamsaraMatch (443.38)", () => {
     expect(pickSamsaraMatch(stop, [addr({ formatted_address: "1 Main St, Edison, NJ 08817, USA", distance_m: 2_500_000 })])).toBeNull();
   });
   it("two same-name sites equally near: ambiguous, no guess", () => {
-    expect(pickSamsaraMatch(stop, [addr({ samsara_address_id: "1", distance_m: 3_000 }), addr({ samsara_address_id: "2", distance_m: 4_000 })])).toBeNull();
+    expect(pickSamsaraMatch(stop, [addr({ samsara_address_id: "1", distance_m: 3_000 }), addr({ samsara_address_id: "2", formatted_address: "77 Mines Rd, Laredo, TX 78045, USA", distance_m: 4_000 })])).toBeNull();
   });
   it("two same-name sites, one clearly nearest: the nearest", () => {
     expect(pickSamsaraMatch(stop, [addr({ samsara_address_id: "1", distance_m: 1_000 }), addr({ samsara_address_id: "2", distance_m: 30_000 })])?.address.samsara_address_id).toBe("1");
   });
+  it("duplicate Samsara rows for one address are one place, not ambiguity (lowest id kept)", () => {
+    const s = { facility_name: "Clemens", city: "Coldwater", state: "MI" };
+    const dup = (id: string) => addr({ samsara_address_id: id, name: "Clemens Coldwater Plan", formatted_address: "572 Newton Rd, Coldwater, MI 49036, USA", lat: 41.9744, lng: -84.9667, distance_m: 100 });
+    expect(pickSamsaraMatch(s, [dup("300"), dup("100"), dup("200")])).toMatchObject({ how: "name", address: { samsara_address_id: "100" } });
+  });
+  it("same name at two different addresses stays ambiguous", () => {
+    const s = { facility_name: "Clemens", city: "Coldwater", state: "MI" };
+    const a = addr({ samsara_address_id: "1", name: "Clemens Coldwater Plan", formatted_address: "572 Newton Rd, Coldwater, MI 49036, USA", distance_m: 100 });
+    const b = addr({ samsara_address_id: "2", name: "Clemens Coldwater Plan", formatted_address: "9 Other Rd, Coldwater, MI 49036, USA", distance_m: 150 });
+    expect(pickSamsaraMatch(s, [a, b])).toBeNull();
+  });
   it("no name: the ONE address within 1 km in the same city", () => {
     const s = { facility_name: null, city: "Laredo", state: "TX" };
     expect(pickSamsaraMatch(s, [addr({ distance_m: 600 })])).toMatchObject({ how: "proximity" });
-    expect(pickSamsaraMatch(s, [addr({ distance_m: 600 }), addr({ samsara_address_id: "2", distance_m: 900 })])).toBeNull();
+    expect(pickSamsaraMatch(s, [addr({ distance_m: 600 }), addr({ samsara_address_id: "2", formatted_address: "77 Mines Rd, Laredo, TX 78045, USA", distance_m: 900 })])).toBeNull();
     expect(pickSamsaraMatch(s, [addr({ distance_m: 1_600 })])).toBeNull();
   });
 });
