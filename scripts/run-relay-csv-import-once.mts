@@ -103,7 +103,13 @@ function csvRowToApiShape(g: (name: string) => string | undefined): Record<strin
     .filter((p) => p.value != null) as { label: string; value: string }[];
   const relayDriverId = S(g("relay driver id"));
   const name = (S(g("driver")) ?? "").split(/\s+/);
-  const total = S(g("total"));
+  // 443.52 C: API definition — paid EXCLUDES Relay's fee (the CSV `total` includes it; the fee stays in fees[]).
+  const amountCol = S(g("amount"));
+  const totalCol = S(g("total"));
+  const feeCol = S(g("fee"));
+  const total = amountCol != null && Number.isFinite(Number(amountCol))
+    ? amountCol
+    : totalCol == null ? null : ((Math.round(Number(totalCol) * 100) - Math.round(Number(feeCol ?? 0) * 100)) / 100).toFixed(2);
   return {
     transaction_id: id, created_at, relay_fuel_code: S(g("relay code")),
     // Same mapping as relay-fuel-csv-import.routes.ts: a missing total is rejected by the parser, not stored as $0.00,

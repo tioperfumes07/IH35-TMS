@@ -24,7 +24,7 @@ import {
 } from "../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 
 // RFC-4180-ish CSV parser: quoted fields, embedded commas/quotes/newlines.
-function parseCsv(text: string): string[][] {
+export function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [], field = "", inQ = false;
   for (let i = 0; i < text.length; i++) {
@@ -136,11 +136,14 @@ export function csvRowToApiShape(
     .filter((p) => p.value != null) as { label: string; value: string }[];
   const relayDriverId = S(g("relay driver id"));
   const name = (S(g("driver")) ?? "").split(/\s+/);
-  const total = S(g("total"));
+  // 443.52 C (CC-2): the API's total_amount_paid EXCLUDES Relay's fee (the fee travels in fees[]); the CSV's `total` INCLUDES
+  // it (amount + fee). Mapping `total` stored the fee twice for 32 CSV fills — once in the paid amount, once in fees[] — and
+  // a poster reading lines saw no fee. A CSV fill must equal the API fill of the same transaction: paid = `amount`, else
+  // `total` − `fee`; neither present stays missing (parseRelayFuelTransactionRow rejects the row by name, never $0.00).
+  const paid = csvPaidExcludingFee(S(g("amount")), S(g("total")), S(g("fee")));
   return {
     transaction_id: id, created_at, relay_fuel_code: S(g("relay code")),
-    // A missing `total` stays missing — parseRelayFuelTransactionRow rejects the row by name instead of storing $0.00.
-    total_amount_paid: total, total_retail_price: hasRetail ? String(retailSum) : total,
+    total_amount_paid: paid, total_retail_price: hasRetail ? String(retailSum) : paid,
     currency_code: "USD", is_direct_bill: false, cash_advance: false, fuel_code_type: S(g("sub-type")),
     linked_org: { name: S(g("organization")) },
     // integration_id is NOT taken from "relay driver id": Relay has not confirmed driver.integration_id == driver.id,
@@ -155,6 +158,14 @@ export function csvRowToApiShape(
     fees: S(g("fee")) && Number(g("fee")) > 0 ? [{ type: "relay_fee", amount: S(g("fee")) }] : [],
     products: S(g("products")) ? [{ name: S(g("products")) }] : [],
   };
+}
+
+/** The API definition of total_amount_paid from a CSV row: `amount` (fuel, fee excluded), else `total` − `fee`. */
+export function csvPaidExcludingFee(amount: string | null, total: string | null, fee: string | null): string | null {
+  if (amount != null && Number.isFinite(Number(amount))) return amount;
+  if (total == null || !Number.isFinite(Number(total))) return null;
+  const feeCents = fee != null && Number.isFinite(Number(fee)) ? Math.round(Number(fee) * 100) : 0;
+  return ((Math.round(Number(total) * 100) - feeCents) / 100).toFixed(2);
 }
 
 export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {

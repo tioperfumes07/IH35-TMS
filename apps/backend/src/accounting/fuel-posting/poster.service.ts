@@ -64,6 +64,8 @@ export type FuelPostingInput = {
    * "Fuel Card Fee" item. amount_cents must equal sum(cost_lines) + fee_amount_cents. Never fold into a fuel leg.
    */
   fee_amount_cents?: number | null;
+  /** 443.52 C: > 0 only for a correction re-post after the original fill entry was reversed (separate idempotency batch). */
+  correction_revision?: number | null;
 };
 
 export type FuelPostingResult = {
@@ -92,8 +94,13 @@ function normalizeFuelKind(input: string): FuelCategoryCode {
   throw new Error(`Unsupported fuel kind for posting: ${input}`);
 }
 
-function buildFuelIdempotencyKey(input: Pick<FuelPostingInput, "operating_company_id" | "fuel_event_id" | "posting_path">) {
-  return ["ih35:fuel-posting:v1", input.operating_company_id.toLowerCase(), input.fuel_event_id, input.posting_path].join(":");
+function buildFuelIdempotencyKey(input: Pick<FuelPostingInput, "operating_company_id" | "fuel_event_id" | "posting_path" | "correction_revision">) {
+  const base = ["ih35:fuel-posting:v1", input.operating_company_id.toLowerCase(), input.fuel_event_id, input.posting_path];
+  // 443.52 C: a correction re-post — the original entry already reversed through postVoidReversal('fuel_event') — gets its
+  // own batch (uq_posting_batches_company_idempotency_key would otherwise return / refuse the reversed original). Revision 0
+  // / absent keeps every existing key byte-identical.
+  const rev = Math.trunc(Number(input.correction_revision ?? 0));
+  return (rev > 0 ? [...base, `r${rev}`] : base).join(":");
 }
 
 // ROUND 365.1 — the driver_advance path's credit account. This used to take ANY liability whose NAME matched
