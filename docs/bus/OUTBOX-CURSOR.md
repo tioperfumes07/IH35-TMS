@@ -1,12 +1,12 @@
-## 2026-10-11 · ROUND 443.29 B — Relay deposit bank match (push pending)
+## 2026-10-11 · ROUND 443.29 B — Relay deposit bank match (push blocked: verify-static new-rot)
 
 FINDING: BANK-F44329 — Relay wallet/card outflows → `integrations.relay_deposits` match candidate; wallet + 3.25% fee split; read-only legacy ~1,291 hints.
 LANE: FINANCIAL
-Files Modified: migrations 202615441301 + 202610090200 entity_type shim (replay order) · match engine + MatchDrawer + RelayDepositCategorizedMatchHintsPanel · verify-relay-deposit-is-a-bank-match-candidate.mjs (3996) · CLAIMED · OUTBOX
-GUARD: verify-relay-deposit-is-a-bank-match-candidate OK; verify:db:reset PASS (APPLY 202615441301); cursor-ship-preflight pending push
-LIVE PROOF: relay-deposit-match-math wallet 12110000 → fee 393575 charged 12503575; verify-no-bank-line-is-matched-to-nothing live 1208 lines; Chrome Live=UNVERIFIED until deploy/migration
-REMAINING: push `cursor/bank-44329-relay-deposit-match-7fe0` → **Cursor-** PR → merge → Render deploy + migration → owner Chrome `match-relay-deposit-split`
-NEXT: DONE line 443.29 B per orders; 443.22 idle (2f merged on main)
+Files Modified: tip `1cc2690817` on `cursor/bank-44329-relay-deposit-match-7fe0` (+ rematch uses `bank.transaction_date` not UTC today) · OUTBOX
+GUARD: `money-pr-local-gate` PASS gate_exit=0 passed=383 skipped=103 (needs `DATABASE_URL_READONLY` or master-keys file on push host); `verify-acct-posting-business-date` PASS after 1cc2690817
+LIVE PROOF: UNVERIFIED — pre-push fails `branch:precheck-push` step `verify-static-fallback` with **9** gated fails NOT in VERIFY-STATIC-BASELINE (was 11; fixed acct-posting-business-date); sample: verify-creator-relay-row-posts-through-its-fill ETIMEDOUT, verify-fuel-posts-only-on-bank-match, verify-dispatch-reads-live-loads-view; remote branch **not** on origin yet
+REMAINING: clear verify-static new-rot on diff (or re-scope branch) → push with readonly cred → **Cursor-** PR + ship preflight → merge/migrate `202615441301` → owner Chrome
+NEXT: drain static rot on 443.29-B lane; 443.22 idle on main
 
 ## 2026-10-11 · ROUND 443.22-2f OPTION 2 + paid_direct EXPORT MERGED
 
