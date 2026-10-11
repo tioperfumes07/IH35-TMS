@@ -38,6 +38,60 @@ export type Posting = {
   description: string;
 };
 
+/**
+ * 443.64 — parse fee metadata stored in funding_source_note for party_relay_funded entries.
+ * Format: {"fee_cents":N,"fee_account_id":"uuid"} as JSON prefix, optionally followed by "|note".
+ */
+export function parseRelayFeeNote(note: string | null): { fee_cents: number; fee_account_id: string } | null {
+  if (!note) return null;
+  const raw = note.startsWith("{") ? note.split("|")[0] : null;
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as { fee_cents?: number; fee_account_id?: string };
+    if (parsed.fee_cents && parsed.fee_account_id) {
+      return { fee_cents: parsed.fee_cents, fee_account_id: parsed.fee_account_id };
+    }
+  } catch {
+    // not fee JSON
+  }
+  return null;
+}
+
+/**
+ * 443.64 — build 3-leg JE for party_relay_funded:
+ * DR funding_account (1295) principal / DR fee_account (5005) fee / CR party_account (2410-sub) total.
+ */
+export function buildPartyRelayFundedPostings(
+  partyAccountId: string,
+  fundingAccountId: string,
+  feeAccountId: string,
+  principalCents: number,
+  feeCents: number,
+  memo: string
+): Posting[] {
+  const totalCents = principalCents + feeCents;
+  return [
+    {
+      account_id: fundingAccountId,
+      debit_or_credit: "debit",
+      amount_cents: principalCents,
+      description: `${memo} — Relay Fuel Wallet funded by party`,
+    },
+    {
+      account_id: feeAccountId,
+      debit_or_credit: "debit",
+      amount_cents: feeCents,
+      description: `${memo} — Relay 3.25% fee`,
+    },
+    {
+      account_id: partyAccountId,
+      debit_or_credit: "credit",
+      amount_cents: totalCents,
+      description: `${memo} — due to/from party (Relay funded)`,
+    },
+  ];
+}
+
 export type RelatedPartyLoanPostResult = {
   posted: boolean;
   reason?:

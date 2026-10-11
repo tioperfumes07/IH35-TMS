@@ -75,6 +75,10 @@ const createBodySchema = z.object({
   funding_account_id: z.string().uuid().nullable().optional(),
   /** ROUND 443.22-2e — optional intermediary who paid from a personal account (Alberto). */
   intermediary_name: z.string().trim().max(200).optional(),
+  /** 443.64 — party_relay_funded: fee amount in cents (e.g. 16250 for $162.50). */
+  fee_cents: z.number().int().positive().nullable().optional(),
+  /** 443.64 — party_relay_funded: CoA account id for the fee (e.g. 5005 Fuel Card Fees). */
+  fee_account_id: z.string().uuid().nullable().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -436,16 +440,39 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
         // All posted JE lines for the party's 2410 account, ordered chronologically.
         // A credit to 2410 = party funded USMCA (running credit balance = USMCA owes party).
         // A debit to 2410 = USMCA sent money to party (reduces credit or creates debit balance).
+        // bank_line: the matched bank transaction (description, date, amount) for context.
+        // pair_status: 'paired' when a party_relay_funded entry has a party_transfer_out
+        //   on the same facility within 5 days; 'unpaired' otherwise (order item 4 / 443.64).
         const lines = (await client.query(
           `SELECT jep.id::text,
                   je.entry_date::text AS date,
                   je.memo,
                   jep.debit_or_credit,
                   jep.amount_cents,
+                  e.id::text AS loan_id,
                   e.display_id AS loan_display_id,
                   e.target_type,
                   e.direction,
                   e.counterparty_name,
+                  bt.description AS bank_line_description,
+                  bt.transaction_date::text AS bank_line_date,
+                  bt.amount_cents AS bank_line_amount_cents,
+                  bt.id::text AS bank_line_id,
+                  CASE
+                    WHEN e.target_type IN ('party_relay_funded', 'paid_direct_vendor', 'party_paid_vendor')
+                      AND EXISTS (
+                        SELECT 1 FROM accounting.related_party_loan_entries e2
+                         JOIN accounting.related_party_loan_facilities f2
+                           ON f2.id = e2.facility_id
+                        WHERE f2.account_id = $1::uuid
+                          AND e2.target_type = 'party_transfer_out'
+                          AND ABS(e2.entry_date::date - e.entry_date::date) <= 5
+                          AND e2.principal_cents = jep.amount_cents
+                      ) THEN 'paired'
+                    WHEN e.target_type IN ('party_relay_funded', 'paid_direct_vendor', 'party_paid_vendor')
+                      THEN 'unpaired'
+                    ELSE NULL
+                  END AS pair_status,
                   SUM(
                     CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents
                          ELSE -jep.amount_cents END
@@ -456,6 +483,8 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
                AND je.operating_company_id = $2::uuid
              LEFT JOIN accounting.related_party_loan_entries e
                ON e.je_id = je.id AND e.operating_company_id = $2::uuid
+             LEFT JOIN banking.bank_transactions bt
+               ON bt.id = e.bank_transaction_id AND bt.operating_company_id = $2::uuid
             WHERE jep.account_id = $1::uuid
             ORDER BY je.entry_date, je.created_at, jep.id`,
           [facility.account_id, q.data.operating_company_id]

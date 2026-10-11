@@ -54,6 +54,22 @@ export const RELATED_PARTY_LOAN_TARGET_TYPES = [
    * debit balance (USMCA advanced more than received).
    */
   "party_transfer_out",
+  /**
+   * 443.64 — Party's card pays Relay (or similar vendor) for USMCA.
+   * DR funding_account_id (1295 Relay Fuel Wallet) principal_cents
+   * DR fee_account_id     (5005 Fuel Card Fees)     fee_cents
+   * CR account_id         (2410-00-xxx Due to/from) principal_cents + fee_cents
+   * direction must be "in"; fee_cents + fee_account_id required.
+   * This is the 3-leg variant of paid_direct_vendor used when a fee must split to its own account.
+   */
+  "party_relay_funded",
+  /**
+   * 443.64 — Party pays a USMCA vendor directly (c: Dreamline; d: any expense/bank).
+   * DR funding_account_id (e.g. 2510 Dreamline, or an expense account) / CR account_id (2410-sub).
+   * direction must be "in"; funding_account_id required; bank_transaction_id must be null.
+   * Identical to paid_direct_vendor except semantically named for the party-paying-vendor case.
+   */
+  "party_paid_vendor",
 ] as const;
 
 export type RelatedPartyLoanTargetType = (typeof RELATED_PARTY_LOAN_TARGET_TYPES)[number];
@@ -80,11 +96,23 @@ export type CreateRelatedPartyLoanEntryInput = {
   bank_transaction_id?: string | null;
   /**
    * ROUND 443.22-2e — CoA debit for paid_direct_vendor (what was paid for).
-   * Required when target_type is paid_direct_vendor.
+   * Required when target_type is paid_direct_vendor, party_relay_funded, or party_paid_vendor.
    */
   funding_account_id?: string | null;
   /** ROUND 443.22-2e — optional intermediary who paid from a personal account. */
   intermediary_name?: string;
+  /**
+   * 443.64 — party_relay_funded only: the fee leg in cents (e.g. 16250 for a $162.50 Relay fee).
+   * Stored in funding_source_note as JSON since no DB column exists (db/migrations closed to CC-1).
+   * The credit side = principal_cents + fee_cents.
+   */
+  fee_cents?: number | null;
+  /**
+   * 443.64 — party_relay_funded only: CoA account id for the fee (e.g. 5005 Fuel Card Fees).
+   * Stored in funding_source_note JSON alongside fee_cents.
+   * Required when fee_cents > 0.
+   */
+  fee_account_id?: string | null;
 };
 
 export type CreateRelatedPartyLoanEntryOk = {
@@ -95,16 +123,20 @@ export type CreateRelatedPartyLoanEntryOk = {
   schedule_rows: number;
   note_file_id: string | null;
   funding_account_id: string | null;
+  fee_account_id: string | null;
+  fee_cents: number | null;
   intermediary_name: string | null;
 };
 
 export type CreateRelatedPartyLoanEntryErr =
   | { error: "account_not_found_for_company" }
   | { error: "funding_account_not_found_for_company" }
+  | { error: "fee_account_not_found_for_company" }
   | { error: "bank_transaction_not_found_for_company" }
   | { error: "paid_direct_vendor_requires_direction_in" }
   | { error: "paid_direct_vendor_forbids_bank_transaction" }
   | { error: "paid_direct_vendor_requires_funding_account" }
+  | { error: "party_relay_funded_requires_fee_cents_and_fee_account" }
   | {
       error: "repayment_exceeds_facility_open_balance";
       open_balance_cents: number;
@@ -154,7 +186,7 @@ export async function createRelatedPartyLoanEntry(
   )) as { rows: Array<{ id: string }> };
   if (!acct.rows[0]) return { error: "account_not_found_for_company" };
 
-  const isPaidDirect = b.target_type === "paid_direct_vendor";
+  const isPaidDirect = b.target_type === "paid_direct_vendor" || b.target_type === "party_paid_vendor";
   if (isPaidDirect) {
     if (b.direction !== "in") {
       return { error: "paid_direct_vendor_requires_direction_in" };
@@ -179,6 +211,24 @@ export async function createRelatedPartyLoanEntry(
     }
   }
 
+  // 443.64: party_relay_funded = party's card pays Relay for USMCA (3-leg JE with fee split).
+  // DR funding_account principal + DR fee_account fee / CR party_account total.
+  const isPartyRelayFunded = b.target_type === "party_relay_funded";
+  if (isPartyRelayFunded) {
+    if (b.direction !== "in") {
+      return { error: "paid_direct_vendor_requires_direction_in" };
+    }
+    if (b.bank_transaction_id) {
+      return { error: "paid_direct_vendor_forbids_bank_transaction" };
+    }
+    if (!b.funding_account_id) {
+      return { error: "paid_direct_vendor_requires_funding_account" };
+    }
+    if (!b.fee_cents || !b.fee_account_id) {
+      return { error: "party_relay_funded_requires_fee_cents_and_fee_account" };
+    }
+  }
+
   let fundingAccountId: string | null = b.funding_account_id ?? null;
   if (fundingAccountId) {
     const fundAcct = (await client.query(
@@ -188,9 +238,23 @@ export async function createRelatedPartyLoanEntry(
     )) as { rows: Array<{ id: string }> };
     if (!fundAcct.rows[0]) return { error: "funding_account_not_found_for_company" };
   }
+
+  // 443.64: validate fee_account_id when present (party_relay_funded).
+  let feeAccountId: string | null = b.fee_account_id ?? null;
+  if (feeAccountId) {
+    const feeAcct = (await client.query(
+      `SELECT id::text FROM catalogs.accounts
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
+      [feeAccountId, b.operating_company_id]
+    )) as { rows: Array<{ id: string }> };
+    if (!feeAcct.rows[0]) return { error: "fee_account_not_found_for_company" };
+  } else {
+    feeAccountId = null;
+  }
+
   // Only preserve funding_account_id for target_types that require it; null it out for others
   // to avoid accidentally stamping a debit account on a manual/legacy entry.
-  if (!isPaidDirect && !isPartyTransferOut) fundingAccountId = null;
+  if (!isPaidDirect && !isPartyTransferOut && !isPartyRelayFunded) fundingAccountId = null;
 
   const facilityId = await ensureRelatedPartyLoanFacility(client, {
     companyId: b.operating_company_id,
@@ -205,6 +269,8 @@ export async function createRelatedPartyLoanEntry(
       ? "repayment"
       : b.target_type === "bank_funding" ||
           b.target_type === "paid_direct_vendor" ||
+          b.target_type === "party_paid_vendor" ||
+          b.target_type === "party_relay_funded" ||
           b.target_type === "party_transfer_out" ||
           Boolean(b.bank_transaction_id)
         ? "funding"
@@ -266,7 +332,13 @@ export async function createRelatedPartyLoanEntry(
       b.payment_frequency ?? null,
       b.payment_count ?? null,
       b.first_payment_date ?? null,
-      b.funding_source_note ?? null,
+      // party_relay_funded: encode fee metadata in funding_source_note as JSON prefix so the
+      // poster can rebuild the 3-leg JE. Format: {"fee_cents":N,"fee_account_id":"uuid"}.
+      // TODO(CC-3): once fee_cents + fee_account_id columns land, read from columns instead.
+      isPartyRelayFunded && b.fee_cents && feeAccountId
+        ? JSON.stringify({ fee_cents: b.fee_cents, fee_account_id: feeAccountId }) +
+          (b.funding_source_note ? `|${b.funding_source_note}` : "")
+        : (b.funding_source_note ?? null),
       facilityId,
       displayId,
       documentKind,
@@ -378,6 +450,8 @@ export async function createRelatedPartyLoanEntry(
     schedule_rows: scheduleRows,
     note_file_id: noteFileId,
     funding_account_id: fundingAccountId,
+    fee_account_id: isPartyRelayFunded ? feeAccountId : null,
+    fee_cents: isPartyRelayFunded ? (b.fee_cents ?? null) : null,
     intermediary_name: b.intermediary_name?.trim() || null,
   };
 }
