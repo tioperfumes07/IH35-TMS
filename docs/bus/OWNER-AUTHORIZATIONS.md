@@ -7507,7 +7507,10 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — every live journal 
 action: OWNER_AUTH_ID=AUTH-411 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-41a-relay-fill-expense-docs.ts --apply
 rehearsal: throwaway br-ancient-sea-akm9yugn (COMMITTED, deleted): 65 Relay-fill entries, 65 documents created, 0 refused; JEs 1,054 / postings 2,597 / trial balance 0 unchanged; verify-costs-are-expenses-not-handwritten-jes LIVE PASS (0 violations); 5000 GL vs expense lines gap 33,026.28 -> 30.00 (the 30.00 = three driver bills 13597 / 13579 / 13582 with a $10 fuel line on 5000 — bills, not Relay)
 expires_at: 2026-10-12T06:40:11Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T07:00:41Z
+consumed_by: CC-2 (443.41 A)
+row_counts: prod — 141 live Relay-fill journal entries, 141 expense documents written through adoptRelayFillExpenseDocument, 0 refused; JEs 1,276 / postings 3,233 / trial balance 0 unchanged; verify-costs-are-expenses-not-handwritten-jes LIVE PASS (141 -> 0 violations); 5000 GL vs expense-line gap 69,488.85 -> 47.00 (driver-bill fuel lines on 5000, not Relay)
 
 ## AUTH-410
 issued_at: 2026-10-11T06:00:00Z
