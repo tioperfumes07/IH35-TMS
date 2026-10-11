@@ -66,6 +66,15 @@ async function findLocationMatches(
   return matches.rows.map((match) => ({ id: String(match.id), location_type: String(match.location_type) }));
 }
 
+/** "514 Nafta Blvd, Laredo, TX 78045, USA" -> street / city / state / zip. Anything that does not parse stays whole in street. */
+export function parseFormattedAddress(formatted: string | null): { street: string | null; city: string | null; state: string | null; zip: string | null } {
+  const parts = String(formatted ?? "").split(",").map((p) => p.trim()).filter(Boolean);
+  if (parts.length && /^(usa|us|united states)$/i.test(parts[parts.length - 1]!)) parts.pop();
+  const stateZip = parts.length >= 3 ? parts[parts.length - 1]!.match(/^([A-Z]{2})\s+(\d{5})(?:-\d{4})?$/) : null;
+  if (!stateZip) return { street: formatted?.trim() || null, city: null, state: null, zip: null };
+  return { street: parts.slice(0, parts.length - 2).join(", ") || null, city: parts[parts.length - 2]!, state: stateZip[1]!, zip: stateZip[2]! };
+}
+
 function geofenceKind(locationType: string | null): "customer_site" | "vendor_site" | "yard" | "custom" {
   if (locationType === "yard") return "yard";
   if (["mechanic_shop", "tire_shop", "wash_facility", "fuel_stop", "truck_stop"].includes(locationType ?? "")) {
@@ -137,6 +146,12 @@ async function projectOne(
   await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [
     `${operatingCompanyId}:samsara-address:${row.samsaraAddressId}`,
   ]);
+  await mirrorAddress(client, operatingCompanyId, row);
+  const projected = await projectLocationAndFence(client, operatingCompanyId, row, matches);
+  return projected.writes;
+}
+
+async function mirrorAddress(client: PgClient, operatingCompanyId: string, row: AddressProjection): Promise<void> {
   await client.query(
     `INSERT INTO integrations.samsara_addresses (
        operating_company_id, samsara_address_id, name, formatted_address, lat, lng,
@@ -150,7 +165,15 @@ async function projectOne(
     [operatingCompanyId, row.samsaraAddressId, row.name, row.formattedAddress, row.latitude,
       row.longitude, JSON.stringify(row.geofenceJson), JSON.stringify(row.tags), row.notes, JSON.stringify(row.raw)]
   );
+}
 
+/** The mdata.locations row + Samsara-linked geo.geofences fence for one address. Caller holds the per-address lock. */
+async function projectLocationAndFence(
+  client: PgClient,
+  operatingCompanyId: string,
+  row: AddressProjection,
+  matches: LocationMatch[]
+): Promise<{ writes: number; locationId: string }> {
   const existing = await client.query(
     `SELECT location_ref_id::text AS location_id
        FROM geo.geofences
@@ -158,20 +181,21 @@ async function projectOne(
       LIMIT 1`,
     [operatingCompanyId, row.samsaraAddressId]
   );
+  const parsed = parseFormattedAddress(row.formattedAddress);
   let locationId = existing.rows[0]?.location_id ? String(existing.rows[0].location_id) : matches.length === 1 ? matches[0].id : null;
   let locationType = matches.length === 1 ? matches[0].location_type : null;
   if (!locationId) {
     const inserted = await client.query(
       `INSERT INTO mdata.locations (
          operating_company_id, location_name, location_type, address_line1, country,
-         latitude, longitude, geocoded_at, geocoding_source, notes
+         latitude, longitude, geocoded_at, geocoding_source, notes, city, state, postal_code
        ) VALUES ($1::uuid,$2,'other',$3,'US',$4,$5,
                  CASE WHEN $4::numeric IS NOT NULL AND $5::numeric IS NOT NULL THEN now() ELSE NULL END,
                  CASE WHEN $4::numeric IS NOT NULL AND $5::numeric IS NOT NULL THEN 'samsara_import' ELSE NULL END,
-                 $6)
+                 $6, $7, $8, $9)
        RETURNING id::text`,
-      [operatingCompanyId, row.name, row.formattedAddress, row.latitude, row.longitude,
-        `Samsara address ${row.samsaraAddressId}`]
+      [operatingCompanyId, row.name, parsed.street, row.latitude, row.longitude,
+        `Samsara address ${row.samsaraAddressId}`, parsed.city, parsed.state, parsed.zip]
     );
     if (!inserted.rows[0]?.id) throw new Error("samsara_address_import_location_insert_returned_no_id");
     locationId = String(inserted.rows[0].id);
@@ -179,16 +203,17 @@ async function projectOne(
   } else {
     await client.query(
       `UPDATE mdata.locations SET location_name=$3, address_line1=$4,
+         city=COALESCE($7, city), state=COALESCE($8, state), postal_code=COALESCE($9, postal_code),
          latitude=$5, longitude=$6, geocoded_at=CASE WHEN $5::numeric IS NOT NULL AND $6::numeric IS NOT NULL THEN now() ELSE geocoded_at END,
          geocoding_source=CASE WHEN $5::numeric IS NOT NULL AND $6::numeric IS NOT NULL THEN 'samsara_import' ELSE geocoding_source END,
          updated_at=now()
        WHERE id=$2::uuid AND operating_company_id=$1::uuid`,
-      [operatingCompanyId, locationId, row.name, row.formattedAddress, row.latitude, row.longitude]
+      [operatingCompanyId, locationId, row.name, parsed.street, row.latitude, row.longitude, parsed.city, parsed.state, parsed.zip]
     );
   }
 
   // No recognizable geometry means raw mirror + location only. Never draw a fence around a guess.
-  if (!row.vertices) return 2;
+  if (!row.vertices) return { writes: 2, locationId };
   await client.query(
     `INSERT INTO geo.geofences (
        operating_company_id, label, location_kind, location_ref_id, vertices_json, is_active,
@@ -203,7 +228,47 @@ async function projectOne(
     [operatingCompanyId, row.name, locationId, JSON.stringify(row.vertices), row.samsaraAddressId,
       row.latitude, row.longitude, row.radiusMeters, geofenceKind(locationType)]
   );
-  return 3;
+  return { writes: 3, locationId };
+}
+
+/** One mirrored integrations.samsara_addresses row (what the sync stored) — the stop resolver's input. */
+export type SamsaraAddressMirrorRow = {
+  samsara_address_id: string;
+  name: string | null;
+  formatted_address: string | null;
+  lat: number | null;
+  lng: number | null;
+  geofence_json: unknown;
+  raw_json: Record<string, unknown> | null;
+};
+
+/**
+ * 443.38: a booked stop that resolves to a Samsara address uses THAT address — its street, its coordinates and its own
+ * geofence polygon (geo.geofences.samsara_address_id set) — projected from the mirror the sync keeps, one address at a
+ * time (never the bulk import, never a re-mirror: synced_at stays the sync's). Returns the location the stop links to.
+ */
+export async function ensureSamsaraAddressLocation(
+  client: PgClient,
+  operatingCompanyId: string,
+  mirror: SamsaraAddressMirrorRow
+): Promise<string> {
+  await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [
+    `${operatingCompanyId}:samsara-address:${mirror.samsara_address_id}`,
+  ]);
+  const raw = { ...(mirror.raw_json ?? {}) } as Record<string, unknown>;
+  const row = projectSamsaraAddress({
+    id: mirror.samsara_address_id,
+    raw: {
+      ...raw,
+      name: mirror.name ?? raw.name,
+      formattedAddress: mirror.formatted_address ?? raw.formattedAddress,
+      latitude: mirror.lat ?? raw.latitude,
+      longitude: mirror.lng ?? raw.longitude,
+      geofence: mirror.geofence_json ?? raw.geofence,
+    },
+  } as SamsaraAddress);
+  const matches = await findLocationMatches(client, operatingCompanyId, row);
+  return (await projectLocationAndFence(client, operatingCompanyId, row, matches.length === 1 ? matches : [])).locationId;
 }
 
 export async function importSamsaraAddresses(options: {

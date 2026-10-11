@@ -5,27 +5,36 @@
  * IDEMPOTENCY: ADVISORY LOCK <company>|<normalized address> (location) and geo.location_fence|<company>|<location> + SAME-STATEMENT WHERE NOT EXISTS an active fence for that location
  * OVERLAP: the second caller waits on the lock, then finds the location / fence and inserts nothing; stop updates rewrite the same values
  * REVERSE: NOT-A-DOCUMENT — geocode enrichment; a fence is retired through telematics/geofences.routes.ts PATCH /api/v1/telematics/geofences/:id
- * NEVER: must never accept 0,0 coordinates and never create a location or fence from a locality-only geocode
+ * NEVER: must never accept 0,0 coordinates and never create a location or fence from a locality-only geocode; never draw a fence
+ *        around a zip / city center; unstamped coordinates are never a rooftop pin (443.38)
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { squareVerticesFromCenter } from "./auto-geofence.service.js";
 import { stableProviderFailureReason, geocodeAddressWithEvidence } from "./stop-geocode-fallback.service.js";
+import { matchSamsaraAddressForStop } from "./samsara-stop-match.js";
+import { ensureSamsaraAddressLocation, parseFormattedAddress } from "../integrations/samsara/geofences/address-import.service.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 type StopRow = {
   stop_id: string; load_id: string; sequence_number: number; stop_type: string;
-  location_id: string | null; address_line1: string | null; city: string | null;
+  location_id: string | null; address_line1: string | null; facility_name: string | null; city: string | null;
   state: string | null; postal_code: string | null; country: string | null;
   latitude: number | null; longitude: number | null; geocode_precision: string | null; geocode_source: string | null;
-  location_latitude: number | null; location_longitude: number | null;
+  location_latitude: number | null; location_longitude: number | null; location_has_street: boolean | null;
 };
+/** A stop with no owner street and no Samsara address: placed at its zip / city center, NO location, NO fence — listed for the owner. */
+export type StopListedForOwner = { stop_id: string; load_id: string; city: string | null; state: string | null; postal_code: string | null; reason: string };
 export type StopGeocodeFailure = { stop_id: string; load_id: string; reason: string };
 export type StopsGeocodeBackfillResult = {
   stops_checked: number; stops_geocoded: number; locations_linked: number;
   geofences_created: number; rooftop: number; locality: number; failures: StopGeocodeFailure[];
+  samsara_matched: number; zip_center_listed: StopListedForOwner[];
 };
+
+/** A street starts with a house number ("514 Nafta Blvd"); a facility name ("Aldi Salisbury") is not a street. */
+export const looksLikeStreet = (v: string | null | undefined) => /^\s*\d+[a-z]?\s+\S/i.test(String(v ?? ""));
 
 const ENTER_RADIUS_M = 402; // 0.25 miles
 const EXIT_RADIUS_M = 805; // 0.50 miles
@@ -43,22 +52,15 @@ function labelOf(stop: StopRow) {
     .map((v) => String(v ?? "").trim()).filter(Boolean).join(", ");
 }
 
-async function candidateStops(client: DbClient, companyId: string, loadId?: string): Promise<StopRow[]> {
+async function candidateStops(client: DbClient, companyId: string, loadId?: string, reresolve = false): Promise<StopRow[]> {
   const values: unknown[] = [companyId];
   const loadClause = loadId ? "AND l.id = $2::uuid" : "";
   if (loadId) values.push(loadId);
-  return (await client.query<StopRow>(`
-    SELECT s.id::text stop_id, s.load_id::text load_id, s.sequence_number, s.stop_type::text,
-           s.location_id::text, s.address_line1, s.city, s.state, s.postal_code, s.country,
-           s.latitude::double precision, s.longitude::double precision, s.geocode_precision, s.geocode_source,
-           loc.latitude::double precision location_latitude, loc.longitude::double precision location_longitude
-      FROM mdata.load_stops s
-      JOIN mdata.loads l ON l.id = s.load_id
-      LEFT JOIN mdata.locations loc ON loc.id=s.location_id AND loc.operating_company_id=$1::uuid AND loc.deactivated_at IS NULL
-     WHERE l.operating_company_id = $1::uuid
-       AND l.soft_deleted_at IS NULL AND l.status NOT IN ('cancelled','delivered')
-       AND s.soft_deleted_at IS NULL ${loadClause}
-       AND (
+  // 443.38: a NAMED load is always resolved, whatever its status (the Settlement Creator books loads that already ran and
+  // are delivered in the same transaction); the open sweep keeps skipping delivered / cancelled. reresolve (owner
+  // correction) re-runs the resolution order on every stop of the named load.
+  const statusClause = loadId ? "AND l.status <> 'cancelled'" : "AND l.status NOT IN ('cancelled','delivered')";
+  const pickClause = reresolve && loadId ? "" : `AND (
          s.latitude IS NULL OR s.longitude IS NULL
          OR (
            s.latitude IS NOT NULL AND s.longitude IS NOT NULL
@@ -70,7 +72,20 @@ async function candidateStops(client: DbClient, companyId: string, loadId?: stri
                 AND g.is_active
            )
          )
-       )
+       )`;
+  return (await client.query<StopRow>(`
+    SELECT s.id::text stop_id, s.load_id::text load_id, s.sequence_number, s.stop_type::text,
+           s.location_id::text, s.address_line1, s.facility_name, s.city, s.state, s.postal_code, s.country,
+           s.latitude::double precision, s.longitude::double precision, s.geocode_precision, s.geocode_source,
+           loc.latitude::double precision location_latitude, loc.longitude::double precision location_longitude,
+           (nullif(trim(loc.address_line1), '') IS NOT NULL) location_has_street
+      FROM mdata.load_stops s
+      JOIN mdata.loads l ON l.id = s.load_id
+      LEFT JOIN mdata.locations loc ON loc.id=s.location_id AND loc.operating_company_id=$1::uuid AND loc.deactivated_at IS NULL
+     WHERE l.operating_company_id = $1::uuid
+       AND l.soft_deleted_at IS NULL ${statusClause}
+       AND s.soft_deleted_at IS NULL ${loadClause}
+       ${pickClause}
      ORDER BY l.load_number, s.sequence_number`, values)).rows;
 }
 
@@ -97,10 +112,17 @@ async function findOrCreateLocation(client: DbClient, companyId: string, actorId
   return inserted.rows[0]!.id;
 }
 
-export async function geocodeStopsWithClient(client: DbClient, actorId: string, companyId: string, loadId?: string): Promise<StopsGeocodeBackfillResult> {
-  const stops = await candidateStops(client, companyId, loadId);
+export async function geocodeStopsWithClient(
+  client: DbClient,
+  actorId: string,
+  companyId: string,
+  loadId?: string,
+  opts: { reresolve?: boolean } = {}
+): Promise<StopsGeocodeBackfillResult> {
+  const stops = await candidateStops(client, companyId, loadId, opts.reresolve === true);
   const failures: StopGeocodeFailure[] = [];
-  let geocoded = 0, locations = 0, fences = 0, rooftop = 0, locality = 0, lastProviderAt = 0;
+  const listed: StopListedForOwner[] = [];
+  let geocoded = 0, locations = 0, fences = 0, rooftop = 0, locality = 0, samsara = 0, lastProviderAt = 0;
   // Lead 2026-10-01 (measured on load 13593, stops c83ba2a2/886d3f7f: booked 2026-09-30 05:13Z with
   // city/state only, latitude NULL, geocode_attempted_at NULL, geocode_failure_reason NULL — zero
   // evidence a geocode was ever tried). The whole sweep ran as ONE transaction, so any throw after
@@ -121,17 +143,77 @@ export async function geocodeStopsWithClient(client: DbClient, actorId: string, 
       await client.query("RELEASE SAVEPOINT geocode_stop");
     }
   }
-  return { stops_checked: stops.length, stops_geocoded: geocoded, locations_linked: locations, geofences_created: fences, rooftop, locality, failures };
+  return { stops_checked: stops.length, stops_geocoded: geocoded, locations_linked: locations, geofences_created: fences, rooftop, locality, failures, samsara_matched: samsara, zip_center_listed: listed };
 
+  /**
+   * 443.38 RESOLUTION ORDER (every booking, every source):
+   *   (a) the stop's existing mdata.locations row, when that location has a street;
+   *   (b) the owner's Samsara address (samsara-stop-match.ts) — its street, coordinates and its own geofence polygon
+   *       (geo.geofences.samsara_address_id) via ensureSamsaraAddressLocation;
+   *   (c) the street from the owner's files on the stop, geocoded (the provider's precision; rooftop only from a street);
+   *   (d) zip / city center: precision 'locality', geocode_source zip_center / city_center, NO location, NO fence —
+   *       listed for the owner. Never a fence around a zip center.
+   */
   async function geocodeOneStop(stop: StopRow): Promise<void> {
-    const hasPickerCoordinates = stop.latitude != null && stop.longitude != null;
+    if (!(stop.location_id && stop.location_has_street && stop.location_latitude != null && stop.location_longitude != null)) {
+      const match = await matchSamsaraAddressForStop(client, companyId, {
+        facility_name: stop.facility_name ?? (looksLikeStreet(stop.address_line1) ? null : stop.address_line1),
+        city: stop.city, state: stop.state,
+        latitude: stop.latitude ?? stop.location_latitude, longitude: stop.longitude ?? stop.location_longitude,
+      });
+      if (match) {
+        const locationId = await ensureSamsaraAddressLocation(client as never, companyId, match.address);
+        const where = parseFormattedAddress(match.address.formatted_address);
+        const updated = await client.query<{ id: string }>(`
+          UPDATE mdata.load_stops SET location_id=$2::uuid, latitude=$3, longitude=$4,
+            address_line1 = CASE WHEN address_line1 ~ '^\s*[0-9]+[A-Za-z]?\s+\S' THEN address_line1 ELSE coalesce($5, address_line1) END,
+            facility_name = coalesce(facility_name, CASE WHEN address_line1 !~ '^\s*[0-9]+[A-Za-z]?\s+\S' THEN address_line1 END, $6),
+            postal_code = coalesce(postal_code, $7),
+            geocode_source=$8, geocode_confidence=1, geocode_precision='rooftop', geocode_attempted_at=now(),
+            geocode_failure_reason=NULL, updated_at=now()
+          WHERE id=$1::uuid RETURNING id::text`,
+          [stop.stop_id, locationId, match.address.lat, match.address.lng, where.street, match.address.name, where.zip,
+            match.how === "name" ? "samsara_address" : "samsara_address_proximity"]);
+        if (updated.rows[0]) { geocoded += 1; locations += 1; rooftop += 1; samsara += 1; }
+        return;
+      }
+      if (!looksLikeStreet(stop.address_line1) && !(stop.geocode_source && stop.geocode_source !== "picker")) {
+        // (d) no street, no Samsara address: the zip / city center, honestly labelled, and nothing drawn around it.
+        let lat = stop.latitude, lng = stop.longitude, source = stop.postal_code ? "zip_center" : "city_center";
+        if (lat == null || lng == null) {
+          lastProviderAt = await paceProviderCalls(lastProviderAt);
+          const centre = await geocodeAddressWithEvidence({ ...stop, address_line1: null });
+          if (!centre.ok || (centre.latitude === 0 && centre.longitude === 0)) {
+            const reason = centre.ok ? "zero_coordinates_rejected" : centre.reason;
+            await client.query(`UPDATE mdata.load_stops SET geocode_attempted_at=now(), geocode_failure_reason=$2, updated_at=now() WHERE id=$1::uuid`, [stop.stop_id, reason]);
+            failures.push({ stop_id: stop.stop_id, load_id: stop.load_id, reason });
+            return;
+          }
+          lat = centre.latitude; lng = centre.longitude;
+        }
+        const updated = await client.query<{ id: string }>(`
+          UPDATE mdata.load_stops SET latitude=$2, longitude=$3, geocode_source=$4, geocode_confidence=0.5,
+            geocode_precision='locality', geocode_attempted_at=now(), geocode_failure_reason=NULL, location_id=NULL, updated_at=now()
+          WHERE id=$1::uuid RETURNING id::text`, [stop.stop_id, lat, lng, source]);
+        if (updated.rows[0]) {
+          geocoded += 1; locality += 1;
+          listed.push({ stop_id: stop.stop_id, load_id: stop.load_id, city: stop.city, state: stop.state, postal_code: stop.postal_code, reason: "no_owner_street_no_samsara_address" });
+        }
+        return;
+      }
+      if (looksLikeStreet(stop.address_line1) && !(stop.geocode_source && stop.geocode_source !== "picker")) {
+        // (c) the owner's street: geocode the street itself, never trust unstamped coordinates as a rooftop pin.
+        stop = { ...stop, location_id: null, latitude: null, longitude: null, location_latitude: null, location_longitude: null };
+      }
+    }
+    const hasPickerCoordinates = stop.latitude != null && stop.longitude != null && !!stop.geocode_source && stop.geocode_source !== "picker";
     const hasCanonicalCoordinates = stop.location_latitude != null && stop.location_longitude != null;
     if (!hasPickerCoordinates && !hasCanonicalCoordinates) lastProviderAt = await paceProviderCalls(lastProviderAt);
     const outcome = hasPickerCoordinates
       // Lead 2026-10-01: coordinates already on the stop keep the precision they were stamped with
       // (13508's pickup carried GEOMETRIC_CENTER from Google; relabelling it 'rooftop' here would
       // lie to E-25's radius rule). Only a stop with no stamped precision is treated as a picker pin.
-      ? { ok: true as const, latitude: stop.latitude!, longitude: stop.longitude!, ...(stop.geocode_source ? { source: stop.geocode_source } : { source: "picker" }), confidence: 1, precision: (stop.geocode_precision ?? "rooftop") as "rooftop" }
+      ? { ok: true as const, latitude: stop.latitude!, longitude: stop.longitude!, source: stop.geocode_source!, confidence: 1, precision: (stop.geocode_precision ?? "range") as "rooftop" }
       : hasCanonicalCoordinates
       ? { ok: true as const, latitude: stop.location_latitude!, longitude: stop.location_longitude!, source: "location_existing", confidence: 1, precision: "range" as const }
       : await geocodeAddressWithEvidence(stop);
@@ -171,9 +253,9 @@ export async function geocodeStopsWithClient(client: DbClient, actorId: string, 
   }
 }
 
-export async function geocodeStopsBackfill(actorId: string, companyId: string, loadId?: string) {
+export async function geocodeStopsBackfill(actorId: string, companyId: string, loadId?: string, opts: { reresolve?: boolean } = {}) {
   return withCurrentUser(actorId, async (client) => {
     await setScopedCompanyContext(client, actorId, companyId);
-    return geocodeStopsWithClient(client as DbClient, actorId, companyId, loadId);
+    return geocodeStopsWithClient(client as DbClient, actorId, companyId, loadId, opts);
   });
 }

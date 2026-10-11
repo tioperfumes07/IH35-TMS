@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { looksLikeStreet } from "../telematics/stops-geocode-backfill.service.js";
 /**
  * R-186.1 — seed not-yet-delivered loads through bookLoad (app path), never ops SQL.
  * Automatic Owner override for medical/HOS/CDL with the owner-mandated reason.
@@ -91,6 +92,13 @@ async function resolveTourIdForSb(
  * Nothing is guessed and nothing is defaulted: a load whose origin or destination the operator has
  * not entered is refused by name, and the operator supplies it.
  */
+/** A house-numbered value is a street; anything else in the entry file's address field is a facility name. */
+function streetOrFacility(raw: string | null | undefined): { address_line1?: string; facility_name?: string } {
+  const v = raw?.trim();
+  if (!v) return {};
+  return looksLikeStreet(v) ? { address_line1: v } : { facility_name: v };
+}
+
 function buildStops(load: SettlementCreatorLoadBlock): BookLoadInput["stops"] {
   // ROUND 443.16 — the settlement gives dates, not clock times: appointments are the day's start in USMCA's timezone,
   // never an invented hour (the measured times come from the truck's stop events — stampStopsFromTracking).
@@ -127,7 +135,9 @@ function buildStops(load: SettlementCreatorLoadBlock): BookLoadInput["stops"] {
     {
       sequence_number: 1,
       stop_type: "pickup",
-      address_line1: load.pickup_address?.trim() || undefined,
+      // 443.38: the entry files carry either a street ("514 Nafta Blvd") or a facility name ("Aldi Salisbury") here —
+      // a street goes to address_line1, a name to facility_name; the booking resolver then finds the Samsara address.
+      ...streetOrFacility(load.pickup_address),
       city: pickupCity,
       state: pickupState,
       postal_code: load.pickup_zip?.trim() || undefined,
@@ -144,7 +154,9 @@ function buildStops(load: SettlementCreatorLoadBlock): BookLoadInput["stops"] {
     {
       sequence_number: 2,
       stop_type: "delivery",
-      address_line1: load.delivery_address?.trim() || undefined,
+      // 443.38: the entry files carry either a street ("514 Nafta Blvd") or a facility name ("Aldi Salisbury") here —
+      // a street goes to address_line1, a name to facility_name; the booking resolver then finds the Samsara address.
+      ...streetOrFacility(load.delivery_address),
       city: deliveryCity,
       state: deliveryState,
       postal_code: load.delivery_zip?.trim() || undefined,
