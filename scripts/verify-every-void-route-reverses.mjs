@@ -115,6 +115,7 @@ const EXEMPT_ROUTES = [
   { pattern: /\/daily-tasks\/.*\/cancel/, reason: "task cancellation" },
   { pattern: /\/safety\/scheduler\/temp-assignments\/.*\/cancel/, reason: "temp assignment cancellation" },
   { pattern: /\/maintenance\/parts\/.*\/void/, reason: "part record void — no GL" },
+  { pattern: /\/driver-finance\/driver-bills\/:id\/void-stray-salaried$/, reason: "LEAD 443.44 B — voids ONLY an unposted, unsettled, unlinked per-load bill on a Salaried week; the service REFUSES any bill with a journal posting, settlement line or A/P-chain run (enforced by verify-settlement-creator-salaried-stray-bill-void RULE 1), so there is no ledger to reverse" },
   { pattern: /\/maintenance\/vehicles\/.*\/void/, reason: "vehicle record void — no GL" },
   { pattern: /\/maintenance\/drivers\/.*\/void/, reason: "driver record void — no GL" },
   { pattern: /\/maintenance\/vendors\/.*\/void/, reason: "vendor record void — no GL" },
