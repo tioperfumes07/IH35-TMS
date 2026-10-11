@@ -1,3 +1,5 @@
+-- HELD — DO NOT RUN ON PROD until Jorge hand-applies on Neon and ledger-backfills (prod newest applied
+-- 202615520300_posting_source_load_id_relay_fill_path.sql; this file sorts earlier and was never stamped).
 -- 443.37 audit gap: per-load bill JE postings carry no direct settlement link.
 -- Root cause: settlement-ap-chain.service.ts:233 posts with source_transaction_type='bill'
 -- and no settlement context; the table has no settlement_id column.
