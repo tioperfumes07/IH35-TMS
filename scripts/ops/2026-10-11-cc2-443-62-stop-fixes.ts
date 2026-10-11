@@ -79,6 +79,22 @@ try {
     }
     if (!mirrors.length) console.log(`LOCATION ${loc}: no Samsara mirror row linked`);
   }
+  // 4. (443.62 follow-up) the resolver's existing-location step reuses the location's point but never rewrites the stop's own
+  //    street text: a stop whose address_line1 is the "Facility — street" label takes its location's clean street (audited).
+  const labelled = (await client.query<{ id: string; load_id: string; old: string; street: string }>(
+    `UPDATE mdata.load_stops s SET address_line1 = lo.address_line1, updated_at = now()
+       FROM mdata.locations lo, mdata.loads l
+      WHERE lo.id = s.location_id AND l.id = s.load_id AND l.operating_company_id = $1::uuid AND s.soft_deleted_at IS NULL
+        AND s.address_line1 ~ ' [—–-] \\d' AND lo.address_line1 ~ '^\\s*\\d+[A-Za-z]?\\s+\\S' AND lo.address_line1 !~ ' [—–-] '
+        AND lo.id = ANY($2::uuid[])
+      RETURNING s.id::text, s.load_id::text, (SELECT x.address_line1 FROM mdata.load_stops x WHERE x.id = s.id) AS old, lo.address_line1 AS street`,
+    [USMCA, LABEL_LOCATIONS])).rows;
+  for (const r of labelled) {
+    await appendCrudAudit(client as never, OWNER, "mdata.load_stops.updated",
+      { resource_id: r.id, resource_type: "mdata.load_stops", load_id: r.load_id, changes: { address_line1: { to: r.street } }, reason: "443.62 #6 street from its location (label removed)" }, "info", "BT-3-LOADS-SCHEMA");
+    console.log(`STREET stop ${r.id}: -> "${r.street}"`);
+  }
+  if (!labelled.length) console.log("STREET: no labelled stop left");
   for (const n of LOADS) {
     const id = (await client.query<{ id: string }>(`SELECT id::text FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number::text = $2`, [USMCA, n])).rows[0]?.id;
     if (!id) throw new Error(`load ${n} not found`);
