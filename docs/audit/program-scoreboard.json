@@ -1,10 +1,10 @@
 {
-  "healthzSha": "cd25767",
-  "generated_at": "2026-10-11T22:20:49.721Z",
+  "healthzSha": "1239d3d",
+  "generated_at": "2026-10-11T22:31:57.498Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "cd25767",
+    "deployedSha": "1239d3d",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 26426,
+      "title": "FINDING: ACCT-F2026101113 LANE: FINANCIAL — 443.73 #6(d): every fuel writer let a second expense of the same purchase through when the reference carried a \"<invoice>-<load>\" suffix — providerTransactionId read it as \"no provider key\"; the suffix is now stripped, so the writers and the hash index refuse the second copy",
+      "state": "merged",
+      "mergedAtCt": "10/11/2026, 05:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26426",
+      "sha": "e9cebac40c",
+      "committedAtIso": "2026-10-11T17:29:02-05:00"
+    },
+    {
+      "number": 26425,
+      "title": "FINDING: ACCT-F2026101112 LANE: FINANCIAL — 443.73 #6(e): verify-fuel-transactions-per-load never saw a receipt expensed twice under a \"<invoice>-<load>\" suffix (9 lines / $2,906.21); it now keys duplicates on the base invoice + cents + product, and a receipt printed on two settlement documents is shown on the second as \"already on load N\" (posted once)",
+      "state": "merged",
+      "mergedAtCt": "10/11/2026, 05:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26425",
+      "sha": "1239d3d10f",
+      "committedAtIso": "2026-10-11T17:23:05-05:00"
+    },
+    {
       "number": 26420,
       "title": "Claude-1-443.72: register 8 unaccounted guards (census 8→0, budget ≤3)",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26417",
       "sha": "88316e1050",
       "committedAtIso": "2026-10-11T16:40:58-05:00"
-    },
-    {
-      "number": 26416,
-      "title": "FINDING: ACCT-F2026101104 LANE: FINANCIAL — 443.72 #3: a misdated fuel receipt could not be corrected by any engine (no edit path; void-and-recreate refused by fuel_tx_source_row_hash_uk) — correctFuelTransactionDate engine + AUTH-438 runner re-date 13557/99462408 and 13550/99460605 to the dates settlement 5789 proves",
-      "state": "merged",
-      "mergedAtCt": "10/11/2026, 04:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26416",
-      "sha": "ee7cbd5e08",
-      "committedAtIso": "2026-10-11T16:34:56-05:00"
-    },
-    {
-      "number": 26415,
-      "title": "FINDING: ACCT-F2026101103 LANE: FINANCIAL — 443.69 #2: verify-fuel-transactions-per-load rebuilt at root — expected fuel set derived from the 69 settlement documents row by row (no frozen count), governed purges read from audit.record_deletions, Relay tied to the Relay file; it now names exactly the two misprinted receipt dates on settlement 5789 (13557 99462408, 13550 99460605 DEF)",
-      "state": "merged",
-      "mergedAtCt": "10/11/2026, 04:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26415",
-      "sha": "dab9ddb8a4",
-      "committedAtIso": "2026-10-11T16:09:17-05:00"
     }
   ]
 }
