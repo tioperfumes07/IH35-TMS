@@ -363,7 +363,10 @@ export async function ensureDispatchedLoadsForCreator(
       notes: `Settlement Creator R-186.1 seed · load ${load.load_number}`,
     };
 
-    const booked = await bookLoadOnClient(client as never, input);
+    // 5780 fork rehearsal (2026-10-11): a Creator load already RAN (a signed AlwaysTrack settlement). Booking it as
+    // live_feed judged it on the driver's CURRENT hours ("E_DRIVER_HOS_VIOLATION"); historical_backfill records the
+    // two-case gates as exceptions instead of blocking (book-load FEED PARITY). Every input precheck still applies.
+    const booked = await bookLoadOnClient(client as never, input, { source: "historical_backfill" });
     const result = booked.result;
     if (result.kind !== "ok") {
       throw new SettlementCreatorSeedError(
