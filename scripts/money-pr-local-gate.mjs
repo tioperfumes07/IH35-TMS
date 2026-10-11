@@ -1082,6 +1082,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-stops-resolve-samsara-no-zip-fence",
     ["apps/backend/src/telematics/", "apps/backend/src/integrations/samsara/", "apps/backend/src/dispatch/", "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts", "scripts/verify-stops-resolve-samsara-no-zip-fence.mjs"],
   ],
+  // Lead 443.51 #5 (CC-2) — a Relay-fill expense document names the settlement that posted the fill.
+  [
+    "verify-relay-fill-expense-settlement-ref",
+    ["apps/backend/src/fuel/", "apps/backend/src/driver-finance/settlement-creator.service.ts", "scripts/verify-relay-fill-expense-settlement-ref.mjs"],
+  ],
   // ROUND 363-CC1-D (CC-1) — no writer moves a posted line in place; the database refuses it.
   [
     "verify-no-posting-update-outside-document-edit",

@@ -641,9 +641,43 @@ export type RelayFillDocumentOutcome =
 /** Fuel types whose catalog item may name a Relay fill's product account (the poster's kinds). */
 const RELAY_FILL_FUEL_TYPES = ["diesel", "def", "reefer_diesel"] as const;
 
+/**
+ * Lead 443.51 #5: a Relay-fill expense document names the settlement that posted the fill — settlement_no (the Creator's
+ * convention, stampCreatorExpenseSettlementNo) and source_settlement_ref (the parsed settlement number,
+ * expense-parse-backfill.service.ts). Fill-once: a column already carrying a value is never overwritten. Audited.
+ */
+export async function fillRelayFillExpenseSettlementRef(
+  client: QueryableClient,
+  input: { operating_company_id: string; expense_id: string; settlement_no: string; actor_user_uuid?: string | null },
+): Promise<boolean> {
+  const no = String(input.settlement_no ?? "").trim();
+  if (!no) return false;
+  const r = await client.query<{ id: string }>(
+    `UPDATE accounting.expenses
+        SET settlement_no = coalesce(settlement_no, $3), source_settlement_ref = coalesce(source_settlement_ref, $3), updated_at = now()
+      WHERE operating_company_id = $1::uuid AND id = $2::uuid AND voided_at IS NULL
+        AND (settlement_no IS NULL OR source_settlement_ref IS NULL)
+        -- owner law 443.52 B: an expense that carries a settlement number must carry its load.
+        AND load_id IS NOT NULL
+      RETURNING id::text`,
+    [input.operating_company_id, input.expense_id, no],
+  );
+  if (r.rows[0] && input.actor_user_uuid) {
+    await appendCrudAudit(
+      client as never,
+      input.actor_user_uuid,
+      "accounting.expense.relay_fill_settlement_ref_filled",
+      { resource_type: "accounting.expenses", resource_id: input.expense_id, operating_company_id: input.operating_company_id, settlement_no: no },
+      "info",
+      "443.51",
+    );
+  }
+  return Boolean(r.rows[0]);
+}
+
 export async function adoptRelayFillExpenseDocument(
   client: QueryableClient,
-  input: { operating_company_id: string; relay_fill_id: string; journal_entry_id: string; requesting_user_uuid?: string | null },
+  input: { operating_company_id: string; relay_fill_id: string; journal_entry_id: string; requesting_user_uuid?: string | null; settlement_no?: string | null },
 ): Promise<RelayFillDocumentOutcome> {
   const company = input.operating_company_id;
   const existing = await client.query<{ id: string }>(
@@ -651,7 +685,12 @@ export async function adoptRelayFillExpenseDocument(
       WHERE operating_company_id = $1::uuid AND journal_entry_id = $2::uuid AND voided_at IS NULL LIMIT 1`,
     [company, input.journal_entry_id],
   );
-  if (existing.rows[0]) return { outcome: "already_exists", expense_id: existing.rows[0].id, journal_entry_id: input.journal_entry_id };
+  if (existing.rows[0]) {
+    if (input.settlement_no) {
+      await fillRelayFillExpenseSettlementRef(client, { operating_company_id: company, expense_id: existing.rows[0].id, settlement_no: input.settlement_no, actor_user_uuid: input.requesting_user_uuid ?? null });
+    }
+    return { outcome: "already_exists", expense_id: existing.rows[0].id, journal_entry_id: input.journal_entry_id };
+  }
 
   // The entry must be this fill's live posting.
   const legs = await client.query<{ account_id: string; debit_or_credit: string; amount_cents: string; load_id: string | null; entry_date: string }>(
@@ -732,6 +771,9 @@ export async function adoptRelayFillExpenseDocument(
       input.journal_entry_id, credits[0]!.account_id, driverId, unitId, primary?.trailer_id ?? null],
   );
   const expenseId = inserted.rows[0]!.id;
+  if (input.settlement_no) {
+    await fillRelayFillExpenseSettlementRef(client, { operating_company_id: company, expense_id: expenseId, settlement_no: input.settlement_no, actor_user_uuid: input.requesting_user_uuid ?? null });
+  }
   let seq = 0;
   for (const d of debits) {
     seq += 1;

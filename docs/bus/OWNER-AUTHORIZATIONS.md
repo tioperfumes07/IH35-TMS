@@ -7639,3 +7639,13 @@ action: OWNER_AUTH_ID=AUTH-424 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-1
 rehearsal: throwaway br-red-lake-akjfnqlx (COMMITTED, deleted): 148 loads / 309 stops — pending 309 -> 0, departed 0 -> 309; stamped 296 -> 309 (13 date_only from the workbook, 0 tracked matches); verify-delivered-load-stops-terminal PASS after
 expires_at: 2026-10-12T11:01:43Z
 status: OPEN
+
+## AUTH-425
+issued_at: 2026-10-11T11:03:47Z
+issued_by: Lead 443.51 #5 ("141 Relay-fill expense documents have no settlement reference ... Fill from the fill's settlement at adoption time + engine backfill"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..423
+owner_quotes: "Were all the documents created correctly? ... Find the root cause of the red and permanently fix" (2026-10-11) · owner law 443.52 B "All expense records if they have a settlement number must have a load number."
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — Relay-fill accounting.expenses documents (vendor Relay, adopting a fuel_event journal entry) with settlement_no or source_settlement_ref NULL: both filled ONCE through fillRelayFillExpenseSettlementRef with the ONE live settlement that holds the document's load (source_document_ref, else display_id); a document with no load, or a load held by 0 / 2+ live settlements, is listed and untouched. No money, no DELETE.
+action: OWNER_AUTH_ID=AUTH-425 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-51-relay-fill-expense-settlement-ref.ts --apply
+rehearsal: throwaway br-spring-flower-akal6c4b (COMMITTED, deleted): 152 Relay-fill documents; settlement_no NULL 141 -> 0, source_settlement_ref NULL 152 -> 0; 0 listed; verify-relay-fill-expense-settlement-ref PASS at ceiling 0
+expires_at: 2026-10-12T11:03:47Z
+status: OPEN
