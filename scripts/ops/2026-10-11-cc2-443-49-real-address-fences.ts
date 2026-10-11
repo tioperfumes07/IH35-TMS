@@ -140,7 +140,7 @@ try {
       WHERE l.operating_company_id = $1::uuid AND l.created_at >= '2026-10-11' AND l.status <> 'cancelled' AND s.soft_deleted_at IS NULL
         AND s.location_id IS NOT NULL AND s.latitude IS NOT NULL AND s.address_line1 ~ $2
       ORDER BY s.location_id, l.load_number, s.sequence_number`, [USMCA, STREET])).rows;
-  let pushed = 0, repushed = 0, ownerImport = 0, dupRetired = 0, noFence = 0, alreadyInSamsara = 0;
+  let pushed = 0, repushed = 0, ownerImport = 0, dupRetired = 0, noFence = 0, alreadyInSamsara = 0, resentRefused = 0;
   for (const L of locs) {
     const fs_ = (await client.query<{ id: string; source: string; samsara_address_id: string | null }>(
       `SELECT id::text, source, samsara_address_id FROM geo.geofences
@@ -161,11 +161,18 @@ try {
     const falselyDelivered = (await client.query(
       `SELECT 1 FROM outbox.events WHERE event_type = 'samsara.create_geofence' AND dedupe_key = $1 AND delivered_at IS NOT NULL`,
       [`samsara.create_geofence:${keep.id}`])).rows.length > 0;
+    // A create Samsara REFUSED (samsara_http_4xx — the payload re-used the load's ih35Load value, which Samsara keeps unique per
+    // key; the handler now correlates ih35Site only) is re-sent once under a fresh key instead of waiting hours for its backoff.
+    const refused = !falselyDelivered && (await client.query(
+      `SELECT 1 FROM outbox.events WHERE event_type = 'samsara.create_geofence' AND dedupe_key = $1 AND delivered_at IS NULL AND last_error LIKE 'samsara_http_4%'`,
+      [`samsara.create_geofence:${keep.id}`])).rows.length > 0;
+    const key = falselyDelivered ? `samsara.create_geofence:${keep.id}:443.49-retry`
+      : refused ? `samsara.create_geofence:${keep.id}:443.49-retry-extid` : `samsara.create_geofence:${keep.id}`;
     const r = await enqueueOutboxEvent(client as never, "samsara.create_geofence", { aggregate_type: "geo.geofences", aggregate_id: keep.id }, {
       operating_company_id: USMCA, geofence_id: keep.id, load_id: L.load_id, stop_id: L.stop_id, latitude: L.lat, longitude: L.lng,
       formatted_address: name, label: name, actor_user_id: OWNER,
-    }, falselyDelivered ? `samsara.create_geofence:${keep.id}:443.49-retry` : `samsara.create_geofence:${keep.id}`);
-    if (r.enqueued) { pushed++; if (falselyDelivered) repushed++; }
+    }, key);
+    if (r.enqueued) { pushed++; if (falselyDelivered) repushed++; if (refused) { resentRefused++; lines.push(`RESENT_AFTER_SAMSARA_400\tfence ${keep.id} ${name}`); } }
   }
 
   // 443.49 #4: no ACTIVE fence the TMS drew from a stop may sit on a zip / city center (the guard's RULE 9 predicate) — retire them
@@ -182,7 +189,7 @@ try {
   for (const z of zipRetired) lines.push(`ZIP_CENTER_FENCE_RETIRED (local only)\tfence ${z.id} ${z.label ?? ""}`);
 
   console.log(`Item 1 — ${fences.length} auto zip-center fences: moved to a real address ${moved} (Samsara copy update enqueued), already moved ${alreadyMoved}, stop on an owner Samsara address ${linkedSamsara} (untouched), real address but never in Samsara ${realNoCopy}, still no street ${noStreet}.`);
-  console.log(`Item 3 — ${locs.length} real-address locations of Creator stops: owner Samsara-import fence ${ownerImport}, already in Samsara ${alreadyInSamsara}, pushed now ${pushed} (re-pushed after a false "delivered" ${repushed}), duplicate fences retired ${dupRetired}, location with a street but no fence ${noFence}. Active zip-center fences retired ${zipRetired.length}.`);
+  console.log(`Item 3 — ${locs.length} real-address locations of Creator stops: owner Samsara-import fence ${ownerImport}, already in Samsara ${alreadyInSamsara}, pushed now ${pushed} (re-pushed after a false "delivered" ${repushed}, re-sent after a Samsara 400 ${resentRefused}), duplicate fences retired ${dupRetired}, location with a street but no fence ${noFence}. Active zip-center fences retired ${zipRetired.length}.`);
   for (const l of lines) console.log(`  ${l}`);
   if (apply || forkCommit) { await client.query("COMMIT"); console.log("COMMITTED."); }
   else { await client.query("ROLLBACK"); }

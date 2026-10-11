@@ -53,6 +53,16 @@ export class SamsaraCreateGeofenceHandler implements OutboxEventHandler {
       return { message: "samsara_not_configured" };
     }
 
+    // Idempotent: a fence that already has its Samsara address is never created twice (an older queued event for the same
+    // fence — e.g. one refused before a fix and still backing off — must not add a duplicate address in the owner's account).
+    const existing = await ctx.client.query<{ samsara_address_id: string | null }>(
+      `SELECT samsara_address_id FROM geo.geofences WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [geofenceId, operatingCompanyId]
+    );
+    if (existing.rows[0]?.samsara_address_id) {
+      return { message: "already_in_samsara", samsara_address_id: existing.rows[0].samsara_address_id };
+    }
+
     const api = new SamsaraClient({
       apiToken: token,
       samsaraOrgId: config?.samsara_org_id ? String(config.samsara_org_id) : null,
@@ -66,9 +76,11 @@ export class SamsaraCreateGeofenceHandler implements OutboxEventHandler {
         longitude,
         radiusMeters: SAMSARA_GEOFENCE_RADIUS_METERS,
         geofenceId,
+        // 443.49: Samsara keeps an external-id VALUE unique per key across all addresses. A fence is a FACILITY (one location +
+        // one fence for every load that stops there), so a load / stop id is not its identity — the second facility of a load
+        // was refused samsara_http_400 (11 creates on 2026-10-11, each ih35Load already held by the load's other facility).
+        // The fence's own id is the one unique key; the load / stop stay in the TMS (geo.geofences ↔ load_stops).
         externalIds: {
-          ih35Load: loadId,
-          ih35Stop: stopId,
           ih35Site: geofenceId,
         },
       });
