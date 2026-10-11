@@ -16,8 +16,9 @@ export function check(creator, core) {
   if (!/linked_driver_bill_id: advanceBillId,/.test(creator)) f.push(`${CREATOR}: the advance must be applied to that load's driver bill`);
   if (!/FROM driver_finance\.driver_bills[\s\S]{0,200}load_id = \$2::uuid AND driver_id = \$3::uuid/.test(creator)) f.push(`${CREATOR}: the driver bill must be resolved by load + driver`);
   if (!/return body\.linked_driver_bill_id \? "driver_settlement"/.test(core)) f.push(`${CORE}: a bill-linked advance must be recoverable driver debt`);
-  if (!/resolveRoleAccount\(client as never, companyId, "cash_clearing"\)/.test(core)) f.push(`${CORE}: a historical bill-payment advance must credit the cash-clearing role account`);
+  if (!/resolveRoleAccount\(client as never, companyId, "driver_payroll_clearing"\)/.test(core)) f.push(`${CORE}: a historical bill-payment advance must credit the driver net-pay clearing role account (a liability; never 1090, never a bank, never A/P)`);
   if (/companyId, "ap_control"\)/.test(core)) f.push(`${CORE}: the advance must never credit A/P`);
+  if (/companyId, "cash_clearing"\)/.test(core)) f.push(`${CORE}: the advance must never credit an asset clearing account (1090 cannot hold a credit)`);
   return f;
 }
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
@@ -28,7 +29,8 @@ if (process.argv.includes("--selftest")) {
     ["no bill link", c.replace("linked_driver_bill_id: advanceBillId,", "linked_driver_bill_id: null,"), k],
     ["load from row", c.replace("loadNumberOnAdvanceDay(draft.loads ?? [], day)", "null"), k],
     ["load_expense routing", c, k.replace('return body.linked_driver_bill_id ? "driver_settlement"', 'return false ? "driver_settlement"')],
-    ["credits A/P", c, k.replace('resolveRoleAccount(client as never, companyId, "cash_clearing")', 'resolveRoleAccount(client as never, companyId, "ap_control")')],
+    ["credits A/P", c, k.replace('resolveRoleAccount(client as never, companyId, "driver_payroll_clearing")', 'resolveRoleAccount(client as never, companyId, "ap_control")')],
+    ["credits an asset clearing (1090)", c, k.replace('resolveRoleAccount(client as never, companyId, "driver_payroll_clearing")', 'resolveRoleAccount(client as never, companyId, "cash_clearing")')],
   ];
   for (const [n, a, b] of plants) if (check(a, b).length === 0) fails.push(`plant escaped: ${n}`);
   if (fails.length) { console.error(`${LABEL} --selftest FAIL: ${fails.join("; ")}`); process.exit(1); }
@@ -36,4 +38,4 @@ if (process.argv.includes("--selftest")) {
 }
 const fails = check(read(CREATOR), read(CORE));
 if (fails.length) { console.error(`${LABEL}: FAIL\n  ${fails.join("\n  ")}`); process.exit(1); }
-console.log(`${LABEL}: PASS — advance = bill payment on the load of its day; disbursed Dr driver advance / Cr cash clearing; never A/P, never a bank at post`);
+console.log(`${LABEL}: PASS — advance = bill payment on the load of its day; disbursed Dr driver advance / Cr driver net-pay clearing; never A/P, never a bank at post`);
