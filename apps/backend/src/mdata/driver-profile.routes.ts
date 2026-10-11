@@ -143,24 +143,32 @@ async function syncDriverFinancePayRateFromQualificationRate(
           updated_by_user_id = $3,
           updated_at = now()
       WHERE driver_id = $2::uuid
+        AND operating_company_id = $4::uuid
         AND effective_to IS NULL
         AND effective_from < $1::date
     `,
-    [input.effectiveFrom, input.driverId, input.actorUserId]
+    [input.effectiveFrom, input.driverId, input.actorUserId, input.operatingCompanyId]
   );
   // A same-day correction (effective_from equal to an already-open row's own effective_from) would
   // violate driver_pay_rates_effective_range (effective_to >= effective_from) if closed via the
   // clause above -- deactivate those instead, mirroring mdata.driver_pay_rates' own sameDayCorrection
   // branch in the sibling rates/change route.
+  // Lead 443.53 #6 (owner: "the payment to any driver is the payment that is in the settlements"): a card
+  // corrected back to an EARLIER date than the open row's own start (Angel Alfonso Sosa: 45c from his first
+  // settlement load 2026-08-03, over the 48c fleet default open from 2026-08-07) supersedes that row too.
+  // Left open, it would win resolveDriverBasePayCents' `ORDER BY effective_from DESC` from 08-07 on and keep
+  // pricing 48c. Deactivated, never deleted: the row stays as history. Both UPDATEs name the company explicitly: the
+  // same driver carries cards in other companies (TRANSP rows, frozen), and RLS must not be the only fence.
   await client.query(
     `
       UPDATE driver_finance.driver_pay_rates
       SET is_active = false, updated_by_user_id = $3, updated_at = now()
       WHERE driver_id = $2::uuid
+        AND operating_company_id = $4::uuid
         AND effective_to IS NULL
-        AND effective_from = $1::date
+        AND effective_from >= $1::date
     `,
-    [input.effectiveFrom, input.driverId, input.actorUserId]
+    [input.effectiveFrom, input.driverId, input.actorUserId, input.operatingCompanyId]
   );
 
   await client.query(
@@ -773,9 +781,12 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
               ? String(previousEffectiveFromRaw).slice(0, 10)
               : null;
         const sameDayCorrection = Boolean(previousEffectiveFrom && previousEffectiveFrom === effectiveFrom);
+        // Lead 443.53 #6: a rate backdated before the open rate's own start supersedes it whole (closing it at
+        // effectiveFrom - 1 would end it before it began).
+        const backdatedCorrection = Boolean(previousEffectiveFrom && previousEffectiveFrom > effectiveFrom);
 
         if (previousRateId) {
-          if (sameDayCorrection) {
+          if (sameDayCorrection || backdatedCorrection) {
             await client.query(
               `
                 UPDATE mdata.driver_pay_rates
@@ -839,6 +850,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             to_amount: parsedBody.data.amount,
             change_reason: parsedBody.data.change_reason,
             same_day_correction: sameDayCorrection,
+            backdated_correction: backdatedCorrection,
           },
           "info",
           "BT-1-DRIVER-PROFILE-EXPANSION"

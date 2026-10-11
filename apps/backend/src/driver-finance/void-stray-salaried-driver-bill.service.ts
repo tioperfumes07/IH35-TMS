@@ -57,7 +57,7 @@ export async function voidStraySalariedDriverBill(
   if (!bill) throw new StraySalariedBillVoidRefusedError("driver bill not found for this company");
   if (bill.voided_at || bill.status !== "open") throw new StraySalariedBillVoidRefusedError(`bill is ${bill.voided_at ? "already void" : `status '${bill.status}'`} — only an OPEN bill`);
   if (bill.settled_in_settlement_id) throw new StraySalariedBillVoidRefusedError("bill was settled in a settlement — not a stray bill");
-  const salaried = bill.rate != null && Number(bill.rate) === 0 && /^salaried/i.test((bill.override_reason ?? "").trim()) && (bill.override_reason ?? "").trim().length >= 10;
+  const salaried = bill.rate != null && Number(bill.rate) === 0 && /^(salaried|local driver — weekly salary)/i.test((bill.override_reason ?? "").trim()) && (bill.override_reason ?? "").trim().length >= 10;
   if (!salaried) throw new StraySalariedBillVoidRefusedError("the bill's load is not a Salaried 0-rate override load");
 
   const links = (

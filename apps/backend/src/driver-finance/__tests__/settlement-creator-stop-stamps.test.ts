@@ -47,7 +47,9 @@ describe("ROUND 443.16 — stop stamps come from the tracking data", () => {
     const { client, updates } = fake([{ ...pickup, stamped: true }], []);
     const r = await stampStopsFromTracking(client as never, "l", { pickupDate: "2026-08-06" });
     expect(r[0]!.precision).toBe("already_stamped");
-    expect(updates).toHaveLength(0);
+    // #26343 settles stamped stops' status afterwards (settleStampedStopStatuses); that UPDATE writes status only.
+    // The rule here is the stamp itself: no UPDATE writes an actual arrival/departure time.
+    expect(updates.filter((u) => /actual_(arrival|departure)_at\s*=/.test(u.sql))).toHaveLength(0);
   });
 });
 

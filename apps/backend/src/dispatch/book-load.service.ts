@@ -597,7 +597,7 @@ export function isSalariedZeroRateOverride(load: Record<string, unknown>): boole
   const reason = typeof load.driver_pay_rate_override_reason === "string" ? load.driver_pay_rate_override_reason.trim() : "";
   const raw = load.driver_pay_rate_per_mile;
   if (raw === null || raw === undefined || String(raw).trim() === "") return false;
-  return Number(raw) === 0 && reason.length >= 10 && /^salaried/i.test(reason);
+  return Number(raw) === 0 && reason.length >= 10 && /^(salaried|local driver — weekly salary)/i.test(reason);
 }
 
 async function resolveDriverBasePayCents(

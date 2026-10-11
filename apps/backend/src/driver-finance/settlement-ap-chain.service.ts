@@ -129,7 +129,7 @@ export async function loadSalariedSettlementLoads(client: pg.PoolClient, opco: s
              OR l.id IN (SELECT sl.load_id FROM driver_finance.settlement_lines sl WHERE sl.settlement_id = $2::uuid AND sl.is_active AND sl.load_id IS NOT NULL))
         AND l.driver_pay_rate_per_mile = 0
         AND length(btrim(COALESCE(l.driver_pay_rate_override_reason, ''))) >= 10
-        AND l.driver_pay_rate_override_reason ~* '^\\s*salaried'
+        AND l.driver_pay_rate_override_reason ~* '^\\s*(salaried|local driver — weekly salary)'
       ORDER BY span_start NULLS LAST, l.load_number`,
     [opco, settlementId]
   );

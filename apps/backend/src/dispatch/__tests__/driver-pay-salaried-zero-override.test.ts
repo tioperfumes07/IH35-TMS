@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createDriverBillArtifacts, isSalariedZeroRateOverride, type BookLoadInput, type BookLoadStop } from "../book-load.service.js";
+import { SALARIED_OVERRIDE_REASON } from "../../driver-finance/settlement-creator-seed-loads.js";
 
 // Lead 443.36 #2 (Rafael 5780 / 5816; owner ruling: a LOCAL driver on WEEKLY SALARY has NO per-load driver bill): a signed
 // rate of 0 counts only as a GO-21-B5 override whose reason starts "Salaried" (>= 10 chars). Then no driver bill is minted,
@@ -100,5 +101,12 @@ describe("salaried week: rate 0 + reason 'Salaried…' (Lead 443.36 #2)", () => 
     expect(isSalariedZeroRateOverride({ driver_pay_rate_override_reason: SALARIED })).toBe(false);
     expect(isSalariedZeroRateOverride({ driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: "Salaried" })).toBe(false);
     expect(isSalariedZeroRateOverride({ driver_pay_rate_per_mile: 0.45, driver_pay_rate_override_reason: SALARIED })).toBe(false);
+  });
+
+  it("Lead 443.53 #7: the 'Local driver — weekly salary' marker the Creator now writes is the same salaried override", () => {
+    expect(SALARIED_OVERRIDE_REASON.startsWith("Local driver — weekly salary")).toBe(true);
+    expect(isSalariedZeroRateOverride({ driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: SALARIED_OVERRIDE_REASON })).toBe(true);
+    expect(isSalariedZeroRateOverride({ driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: "local driver — weekly salary, owner ruling" })).toBe(true);
+    expect(isSalariedZeroRateOverride({ driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: "Local driver run, flat" })).toBe(false);
   });
 });

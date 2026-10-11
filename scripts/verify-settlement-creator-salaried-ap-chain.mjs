@@ -26,7 +26,7 @@ export function staticProblems(chain, mig) {
   if (!/if \(!bills\.length\) bills = await loadSalariedSettlementLoads\(client, opco, input\.settlementId\);/.test(chain)) p.push("RULE 1 the chain does not fall back to the settlement's salaried loads (only) when it has no driver bills");
   const f = chain.indexOf("export async function loadSalariedSettlementLoads(");
   const body = f < 0 ? "" : chain.slice(f, chain.indexOf("\n}\n", f));
-  if (!/l\.driver_pay_rate_per_mile = 0/.test(body) || !/driver_pay_rate_override_reason ~\* '\^\\\\s\*salaried'/.test(body) || !/>= 10/.test(body)) p.push("RULE 1 the salaried loader does not require the 0-rate Salaried override");
+  if (!/l\.driver_pay_rate_per_mile = 0/.test(body) || !body.includes("driver_pay_rate_override_reason ~* '^\\\\s*(salaried|local driver — weekly salary)'") || !/>= 10/.test(body)) p.push("RULE 1 the salaried loader does not require the 0-rate Salaried override");
   if (!/driverBillId: null, [^}]*payBasis: "salaried"/.test(body)) p.push("RULE 1 a salaried load is not billed with no driver bill and payBasis 'salaried'");
   if (!/if \(x\.b\.driverBillId\) \{\s*await client\.query\(\s*`UPDATE driver_finance\.driver_bills SET settled_in_settlement_id/.test(chain)) p.push("RULE 1 the driver-bill settle UPDATE is not skipped for a salaried load");
   if (!/deduction_cents, cash_cents, pay_basis\)/.test(chain) || !/x\.b\.payBasis \?\? "per_load_driver_bill"/.test(chain)) p.push("RULE 1 the run row does not record pay_basis");
@@ -73,10 +73,10 @@ else {
     else {
       const rows = (await client.query(
         `SELECT gb.id::text, gb.load_number, gb.pay_basis,
-                (l.driver_pay_rate_per_mile = 0 AND l.driver_pay_rate_override_reason ILIKE 'Salaried%') AS salaried
+                (l.driver_pay_rate_per_mile = 0 AND l.driver_pay_rate_override_reason ~* '^(salaried|local driver — weekly salary)') AS salaried
            FROM driver_finance.driver_settlement_gl_bills gb LEFT JOIN mdata.loads l ON l.id = gb.load_id
           WHERE gb.driver_bill_id IS NULL AND gb.superseded_at IS NULL
-            AND NOT (gb.pay_basis = 'salaried' AND COALESCE(l.driver_pay_rate_per_mile = 0 AND l.driver_pay_rate_override_reason ILIKE 'Salaried%', false))`)).rows;
+            AND NOT (gb.pay_basis = 'salaried' AND COALESCE(l.driver_pay_rate_per_mile = 0 AND l.driver_pay_rate_override_reason ~* '^(salaried|local driver — weekly salary)', false))`)).rows;
       p.push(...liveProblems(rows));
     }
     await client.query("ROLLBACK");
