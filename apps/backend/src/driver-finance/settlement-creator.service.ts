@@ -38,6 +38,7 @@ import { createSettlementDeduction } from "./deductions.service.js";
 import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./settlement-deduction-constants.js";
 import { resolveDeductionPostingAccount } from "./settlement-lines-materialize.service.js";
 import { stampCreatorExpenseSettlementNo } from "./settlement-creator-expense-settlement-no.js";
+import { creatorPreflightRefusals } from "./settlement-creator-preflight.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { deliverLoadThroughDispatch, stampStopsFromTracking } from "./settlement-creator-deliver.js";
 import { afterCommitMark, afterCommitRollbackTo } from "../lib/after-commit.js";
@@ -382,6 +383,8 @@ export async function previewSettlementCreator(
     if (err instanceof SettlementCreatorError) blockers.push(err.message);
     else throw err;
   }
+  // Lead 443.38/443.39 — every known refusal of the draft, all in one pass (read-only), before the rehearsal post.
+  blockers.push(...(await creatorPreflightRefusals(client as never, draft)));
 
   // ROUND 190/191 (2026-09-28) — the 09-25/09-24 fuel-feed gap root cause: this engine DOES seed
   // fuel.fuel_transactions from draft.fuel_purchases (below), but nothing ever verified the
