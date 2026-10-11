@@ -40,5 +40,7 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-mileage-source.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-edit-adopts-prior-loads.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-edit-adopts-prior-loads.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-no.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-no.mjs"]);
   },
 };
