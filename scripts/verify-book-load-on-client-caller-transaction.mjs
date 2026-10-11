@@ -8,7 +8,7 @@
  *      COMMIT / ROLLBACK) — the caller's rollback must undo the load;
  *   3. bookLoadOnClient runs an after-book extra directly instead of returning it as afterCommit;
  *   4. bookLoadOnClient skips the shared input checks, setScopedCompanyContext, or books through
- *      anything but createLoadWithFullSideEffects(..., { source: "live_feed" });
+ *      anything but createLoadWithFullSideEffects(..., { source }) with source fail-closed to "live_feed" (443.52 C);
  *   5. bookLoad() is not the thin wrapper: checks before any DB access, bookLoadOnClient inside one
  *      withCurrentUser, afterCommit() only after that transaction returns;
  *   6. a second booking body (the old bookLoadInTransaction) reappears;
@@ -40,17 +40,23 @@ const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$
 
 export function check(src) {
   const errors = [];
-  const onClient = functionBody(src, "export async function bookLoadOnClient(client: DbClient, input: BookLoadInput)");
+  // 443.52 C (CC-2): since #26271 (443.24, CC-3's historical_backfill ask) the signature is
+  // bookLoadOnClient(client, input, opts?: { source?: LoadCreateSource }) — the old literal header never matched again.
+  // The law is unchanged, plus: the source is fail-closed (only "historical_backfill" is honoured, anything else is live_feed).
+  const onClient = functionBody(src, "export async function bookLoadOnClient(");
   if (onClient == null) {
-    errors.push("bookLoadOnClient(client, input) is not exported");
+    errors.push("bookLoadOnClient(client, input, opts?) is not exported");
+  } else if (!/opts\?\.source === "historical_backfill" \? "historical_backfill" : "live_feed"/.test(onClient)) {
+    errors.push("bookLoadOnClient must default the load source to live_feed (only \"historical_backfill\" is honoured)");
   } else {
     const code = stripComments(onClient);
     if (/withCurrentUser|withLuciaBypass|\bBEGIN\b|\bCOMMIT\b|\bROLLBACK\b/.test(code)) errors.push("bookLoadOnClient opens or ends a transaction of its own");
     for (const e of EXTRAS) if (code.includes(e)) errors.push(`bookLoadOnClient runs ${e.slice(0, -1)} directly — it must be returned as afterCommit`);
-    if (!/afterCommit: \(\) => queueAfterBookExtras\(input, result\)/.test(code)) errors.push("bookLoadOnClient does not return the extras as afterCommit");
+    // 443.52 C: the extras now receive the booking's source (a historical_backfill load fences/dispatches nothing — 443.41).
+    if (!/afterCommit: \(\) => queueAfterBookExtras\(input, result, source\)/.test(code)) errors.push("bookLoadOnClient does not return the extras as afterCommit (with its source)");
     if (!code.includes("bookLoadInputPrecheck(input)")) errors.push("bookLoadOnClient skips the shared input checks");
     if (!code.includes("setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id)")) errors.push("bookLoadOnClient skips setScopedCompanyContext");
-    if (!code.includes('createLoadWithFullSideEffects(client, input, { source: "live_feed" })')) errors.push("bookLoadOnClient does not book through createLoadWithFullSideEffects live_feed");
+    if (!code.includes("createLoadWithFullSideEffects(client, input, { source })")) errors.push("bookLoadOnClient does not book through createLoadWithFullSideEffects with its (fail-closed) source");
   }
   const wrapper = functionBody(src, "export async function bookLoad(input: BookLoadInput)");
   if (wrapper == null) {
@@ -79,13 +85,14 @@ function selftest() {
   const plant = (from, to) => good.replace(from, to);
   const cases = [
     ["own transaction in bookLoadOnClient", plant("  await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);\n  // Book Load", "  await client.query(\"BEGIN\");\n  await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);\n  // Book Load")],
-    ["extras run eagerly", plant("return { result, afterCommit: () => queueAfterBookExtras(input, result) };", "queueAfterBookExtras(input, result);\n  return { result, afterCommit: () => {} };")],
+    ["extras run eagerly", plant("return { result, afterCommit: () => queueAfterBookExtras(input, result, source) };", "queueAfterBookExtras(input, result, source);\n  return { result, afterCommit: () => {} };")],
     ["checks skipped", plant("  const refused = bookLoadInputPrecheck(input);\n  if (refused) return { result: refused", "  const refused = null as BookLoadResult | null;\n  if (refused) return { result: refused")],
     ["wrapper books directly", plant("const booked = await bookLoadOnClient(client, input);", "const booked = { result: await createLoadWithFullSideEffects(client, input, { source: \"live_feed\" }), afterCommit: () => {} };")],
     ["afterCommit dropped", plant("  afterCommit();\n  return result;", "  return result;")],
     ["second body back", good + "\nasync function bookLoadInTransaction() {}\n"],
     ["extra called elsewhere", good + "\nfunction x() { void geocodeStopsBackfill(\"a\", \"b\", \"c\"); }\n"],
     ["not exported", plant("export async function bookLoadOnClient(", "async function bookLoadOnClient(")],
+    ["source not fail-closed", plant('opts?.source === "historical_backfill" ? "historical_backfill" : "live_feed"', '(opts?.source ?? "historical_backfill")')],
   ];
   let ok = check(good).length === 0;
   if (!ok) console.error("selftest: the real service must pass", check(good));
