@@ -89,6 +89,12 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // ROUND 443.29 a (owner 2026-10-10 7:15/7:19 PM CT): the "Fuel Card Fee" item the Relay fill poster resolves its fee leg
+  // by did not exist in any company, so no Relay fill could post. Claimed #(202615490300).
+  [
+    "cc-2/relay-fuel-card-fee-item",
+    new Set(["db/migrations/202615490300_usmca_fuel_card_fee_item.sql"]),
+  ],
   // FARO-F435: the Lead authored it (read-only credential), the owner ordered "SO YOU BUILD THE FARO VIEWS", CC-2
   // applies it as the reserving seat (#25569).
   [

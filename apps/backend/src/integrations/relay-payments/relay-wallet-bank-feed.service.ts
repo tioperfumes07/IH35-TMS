@@ -17,6 +17,7 @@
 import { createHash } from "node:crypto";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import type { DbClient } from "./db-client.type.js";
+import { relayFillFeeCents, relayWalletDrawdownCents } from "./relay-sender-fee-cents.js";
 import { normalizeBankTransactionDescription } from "../../banking/transaction-ingestion.js";
 
 export const RELAY_WALLET_SOURCE_REF_PREFIX = "relay_fuel:";
@@ -479,7 +480,8 @@ export async function backfillRelayWalletBankFeedForCompany(
     transaction_id: string;
     relay_created_at: string;
     total_amount_paid_cents: string;
-    fee_cents: string;
+    fees: unknown[] | null;
+    line_fee_cents: Array<string | null> | null;
     merchant_name: string | null;
     location_city: string | null;
     location_state: string | null;
@@ -494,13 +496,12 @@ export async function backfillRelayWalletBankFeedForCompany(
         r.transaction_id,
         r.relay_created_at::text AS relay_created_at,
         r.total_amount_paid_cents::text AS total_amount_paid_cents,
-        coalesce((
-          SELECT sum(coalesce(l.fee_amount_cents, 0))
-            FROM integrations.relay_fuel_transaction_lines l
-           WHERE l.relay_fuel_transaction_id = r.id
-             AND l.voided_at IS NULL
-             AND l.is_active = true
-        ), 0)::bigint::text AS fee_cents,
+        r.fees,
+        (SELECT array_agg(l.fee_amount_cents::text)
+           FROM integrations.relay_fuel_transaction_lines l
+          WHERE l.relay_fuel_transaction_id = r.id
+            AND l.voided_at IS NULL
+            AND l.is_active = true) AS line_fee_cents,
         r.merchant_name,
         r.location_city,
         r.location_state,
@@ -537,7 +538,17 @@ export async function backfillRelayWalletBankFeedForCompany(
         operating_company_id: operatingCompanyId,
         transaction_id: row.transaction_id,
         relay_created_at: row.relay_created_at,
-        amount_cents: Math.round(Number(row.total_amount_paid_cents)) + Math.round(Number(row.fee_cents ?? 0)),
+        // ROUND 443.29 a: the ONE fee rule (relayFillFeeCents — Relay's reported fees[] first, line fees only when that is
+        // empty) and the ONE drawdown rule, the same pair ingest and the bank-match poster use. This backfill used to sum
+        // line fees only, so a fill whose fee lives in fees[] mirrored a wallet line $2.00 short of its posting.
+        amount_cents: relayWalletDrawdownCents(
+          Math.round(Number(row.total_amount_paid_cents)),
+          relayFillFeeCents({
+            transaction_id: row.transaction_id,
+            fees: Array.isArray(row.fees) ? row.fees : null,
+            line_fee_amount_cents: (row.line_fee_cents ?? []).map((c) => (c == null ? null : Number(c))),
+          })
+        ),
         merchant_name: row.merchant_name,
         location_city: row.location_city,
         location_state: row.location_state,
