@@ -163,16 +163,17 @@ try {
       [`samsara.create_geofence:${keep.id}`])).rows.length > 0;
     // A create Samsara REFUSED (samsara_http_4xx — the payload re-used the load's ih35Load value, which Samsara keeps unique per
     // key; the handler now correlates ih35Site only) is re-sent once under a fresh key instead of waiting hours for its backoff.
-    const refused = !falselyDelivered && (await client.query(
-      `SELECT 1 FROM outbox.events WHERE event_type = 'samsara.create_geofence' AND dedupe_key = $1 AND delivered_at IS NULL AND last_error LIKE 'samsara_http_4%'`,
-      [`samsara.create_geofence:${keep.id}`])).rows.length > 0;
-    const key = falselyDelivered ? `samsara.create_geofence:${keep.id}:443.49-retry`
-      : refused ? `samsara.create_geofence:${keep.id}:443.49-retry-extid` : `samsara.create_geofence:${keep.id}`;
+    // Any key of this fence counts — 10 of the 11 refused creates were themselves the :443.49-retry re-push.
+    const refused = (await client.query(
+      `SELECT 1 FROM outbox.events WHERE event_type = 'samsara.create_geofence' AND dedupe_key LIKE $1 AND delivered_at IS NULL AND last_error LIKE 'samsara_http_4%'`,
+      [`samsara.create_geofence:${keep.id}%`])).rows.length > 0;
+    const key = refused ? `samsara.create_geofence:${keep.id}:443.49-retry-extid`
+      : falselyDelivered ? `samsara.create_geofence:${keep.id}:443.49-retry` : `samsara.create_geofence:${keep.id}`;
     const r = await enqueueOutboxEvent(client as never, "samsara.create_geofence", { aggregate_type: "geo.geofences", aggregate_id: keep.id }, {
       operating_company_id: USMCA, geofence_id: keep.id, load_id: L.load_id, stop_id: L.stop_id, latitude: L.lat, longitude: L.lng,
       formatted_address: name, label: name, actor_user_id: OWNER,
     }, key);
-    if (r.enqueued) { pushed++; if (falselyDelivered) repushed++; if (refused) { resentRefused++; lines.push(`RESENT_AFTER_SAMSARA_400\tfence ${keep.id} ${name}`); } }
+    if (r.enqueued) { pushed++; if (falselyDelivered && !refused) repushed++; if (refused) { resentRefused++; lines.push(`RESENT_AFTER_SAMSARA_400\tfence ${keep.id} ${name}`); } }
   }
 
   // 443.49 #4: no ACTIVE fence the TMS drew from a stop may sit on a zip / city center (the guard's RULE 9 predicate) — retire them
