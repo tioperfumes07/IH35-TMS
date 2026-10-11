@@ -54,7 +54,10 @@ export function toMdataStatus(status: DispatchStatus): string {
   if (status === "abandoned") return "abandoned";
   if (status === "driver_walkoff") return "driver_walkoff";
   if (status === "driver_no_show") return "driver_no_show";
-  return "cancelled";
+  if (status === "cancelled") return "cancelled";
+  // 443.67: an unknown status used to fall through to "cancelled" — a caller outside the route's zod schema (Creator, EDI 204,
+  // seeds) booking with a typo minted a CANCELLED load (only the DB cancel trigger caught it at COMMIT). Fail closed.
+  throw new Error(`unknown_dispatch_status:${String(status)}`);
 }
 
 // Forward edges — the lifecycle's natural progression.

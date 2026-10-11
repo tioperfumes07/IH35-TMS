@@ -162,6 +162,8 @@ export type BookLoadStop = {
   postal_code?: string;
   latitude?: number;
   longitude?: number;
+  /** 443.67: Google's place id from the Book Load address picker. */
+  google_place_id?: string;
 };
 
 type BookLoadCharge = {
@@ -3265,9 +3267,9 @@ export async function createLoadWithFullSideEffects(
             load_id, sequence_number, stop_type, location_id, facility_name, address_line1, city, state, country, scheduled_arrival_at, status,
             time_window_type, pickup_time_type_id, appointment_start_at, appointment_end_at, lumper_required, lumper_provider_id, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
             site_contact_name, site_contact_phone, gate_dock_text, postal_code, latitude, longitude, leg_miles,
-            actual_arrival_at, actual_departure_at, actual_arrival_source, actual_departure_source
+            actual_arrival_at, actual_departure_at, actual_arrival_source, actual_departure_source, google_place_id
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33)
         `,
         [
           load.id,
@@ -3302,6 +3304,7 @@ export async function createLoadWithFullSideEffects(
           actualDepartureAt,
           actualArrivalAt ? "manual" : null,
           actualDepartureAt ? "manual" : null,
+          stop.google_place_id?.trim() || null,
         ]
       );
     }

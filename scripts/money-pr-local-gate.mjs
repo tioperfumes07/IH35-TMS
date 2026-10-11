@@ -1095,7 +1095,7 @@ const LIVE_DOMAIN_GUARDS = [
   // Lead 443.53 #1 (CC-2) — a booked stop with a facility + city gets Google's street in its city / state, or the recorded Google no-result.
   [
     "verify-booked-stop-street-or-google-no-result",
-    ["apps/backend/src/telematics/", "apps/backend/src/integrations/google/", "apps/backend/src/cron/stop-resolution-sweep.cron.ts", "scripts/verify-booked-stop-street-or-google-no-result.mjs"],
+    ["apps/backend/src/telematics/", "apps/backend/src/integrations/google/", "apps/backend/src/cron/stop-resolution-sweep.cron.ts", "apps/backend/src/dispatch/book-load.service.ts", "apps/backend/src/dispatch/loads.routes.ts", "apps/frontend/src/pages/dispatch/components/book-load-stop-geocode.ts", "scripts/verify-booked-stop-street-or-google-no-result.mjs"],
   ],
   // Lead 443.51 #5 (CC-2) — a Relay-fill expense document names the settlement that posted the fill.
   [

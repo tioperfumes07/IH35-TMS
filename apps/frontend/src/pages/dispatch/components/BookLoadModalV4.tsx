@@ -199,6 +199,7 @@ type FormValues = BookLoadFormValues & {
     postal_code?: string;
     latitude?: string;
     longitude?: string;
+    google_place_id?: string;
     scheduled_arrival_at: string;
     time_window_type?: "appointment" | "open_window" | "select_hours" | "refused";
     pickup_time_type_id?: string;
@@ -1666,6 +1667,7 @@ export function BookLoadModalV4({
           postal_code: stop.postal_code || undefined,
           latitude: numOrUndef(stop.latitude),
           longitude: numOrUndef(stop.longitude),
+          google_place_id: stop.google_place_id?.trim() || undefined,
           country: stop.country,
           address_line1: stop.address_line1?.trim() ? properPersonOrPlaceName(stop.address_line1) : "",
           scheduled_arrival_at: stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toISOString() : undefined,

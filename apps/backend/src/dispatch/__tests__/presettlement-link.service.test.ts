@@ -459,6 +459,9 @@ describe("NB tour separation and REG-040 closed continuation", () => {
     expect(params).toEqual([OPCO, DRIVER_ID, unitId]);
     expect(sql).toContain("s.tour_id IS NOT NULL");
     expect(sql).toContain("s.voided_at IS NULL AND s.status IN ('open', 'closed'");
+    // 443.67: a posted settlement's tour is never inherited (REG-040 refuses to reopen posted pay — Book Load threw).
+    expect(sql).toContain("s.posted_at IS NULL");
+    expect(sql).toMatch(/NOT EXISTS \(SELECT 1 FROM driver_finance\.driver_settlement_gl_runs gr[\s\S]*gr\.status = 'posted'\)/);
     expect(sql).toContain("l.operating_company_id = s.operating_company_id");
     expect(sql).toContain("l.assigned_unit_id = $3::uuid AND l.tour_id = s.tour_id");
   });

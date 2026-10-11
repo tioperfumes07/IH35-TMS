@@ -145,7 +145,8 @@ export function AddressGeocodeInput({
       const d = await geocodePlace(row.s.placeId, sessionRef.current);
       sessionRef.current = newSession();
       skipNextLookupRef.current = true;
-      onResolve(d.result);
+      // 443.67: the picked suggestion's Google place id travels with the address.
+      onResolve({ ...d.result, place_id: d.result.place_id ?? row.s.placeId });
       onChange(d.result.formatted || row.s.text);
     } catch {
       // Keep what the user typed; let them retry or keep typing.

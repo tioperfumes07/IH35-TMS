@@ -67,6 +67,13 @@ export async function findOpenPresettlementTourForUnit(
     WHERE s.operating_company_id = $1::uuid AND s.driver_id = $2::uuid
       AND s.tour_id IS NOT NULL
       AND s.voided_at IS NULL AND s.status IN ('open', 'closed', 'locked', 'approved', 'paid', 'final')
+      -- 443.67: never inherit the tour of a settlement whose pay already POSTED. REG-040 continuation reopens a closed
+      -- settlement only through the pay-run reversal and refuses one with a posted GL run ("requires the bill-payment reversal
+      -- workflow") — inheriting it made live Book Load throw for every driver whose last settlement is posted (all 17 Creator
+      -- drivers). A posted settlement's tour is history; the fresh NB starts a new tour.
+      AND s.posted_at IS NULL
+      AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_runs gr
+                       WHERE gr.settlement_id = s.id AND gr.operating_company_id = s.operating_company_id AND gr.status = 'posted')
       AND EXISTS (
         SELECT 1 FROM mdata.loads l
         WHERE l.operating_company_id = s.operating_company_id

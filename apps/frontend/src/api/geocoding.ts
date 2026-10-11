@@ -13,6 +13,8 @@ export type GeocodeResult = {
   lon: number | null;
   name?: string;
   landmarks?: string[];
+  /** Google's place id (backend returns it for Google results). */
+  place_id?: string;
 };
 
 export type AddressSuggestion = {
