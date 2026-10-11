@@ -418,7 +418,7 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
       const params = z.object({ facilityId: z.string().uuid() }).safeParse(req.params ?? {});
       if (!params.success) return validationError(reply, params.error);
       const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
-      if (!q.success) return validationError(reply, q.data);
+      if (!q.success) return validationError(reply, q.error);
 
       const result = await withCompanyScope(authUser.uuid, q.data.operating_company_id, async (client) => {
         const fac = (await client.query(
