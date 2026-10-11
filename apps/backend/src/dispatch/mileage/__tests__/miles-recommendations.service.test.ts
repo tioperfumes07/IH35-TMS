@@ -21,6 +21,7 @@ function db(opts: { lane?: boolean; choice?: Record<string, unknown> | null } = 
   const query = vi.fn(async (sql: string, values: unknown[] = []) => {
     if (/FROM catalogs\.lane_mileage/.test(sql)) return { rows: opts.lane === false ? [] : [LANE] };
     if (/FROM catalogs\.point_mileage/.test(sql)) return { rows: [] };
+    if (/FROM identity\.users/.test(sql)) return { rows: [{ id: ACTOR, name: "Jorge Munoz" }] };
     if (/INSERT INTO catalogs\.point_mileage/.test(sql)) return { rows: [] };
     if (/FROM mdata\.loads l\s+JOIN LATERAL/.test(sql)) return { rows: [{ latitude: 27.4, longitude: -99.4, city: "Laredo", state: "TX", postal_code: "78041", at: "2026-09-30T10:00:00Z" }] };
     if (/FROM mdata\.load_stops s WHERE s\.load_id/.test(sql)) return { rows: STOPS };
@@ -82,5 +83,17 @@ describe("miles recommendations (443.55)", () => {
     expect(out.recorded).toEqual(["practical", "short", "empty"]);
     expect([d.state.miles_practical, d.state.miles_shortest, d.state.miles_deadhead]).toEqual(["505", "471", "38"]);
     expect(d.state.miles_choice!.practical).toMatchObject({ source: "document", value: 505 });
+  });
+
+  it("shows who chose by name and never offers a 0 empty-miles average", async () => {
+    const { milesRecommendationsForLoad } = await import("../miles-recommendations.service.js");
+    const d = db({ choice: { practical: { source: "document", value: 505, chosen_by: ACTOR, chosen_at: "2026-10-11T00:00:00Z" } } });
+    const r = await milesRecommendationsForLoad(d as never, { operatingCompanyId: CO, loadId: LOAD }, route as never);
+    expect(r!.fields.practical.current?.chosen_by).toBe("Jorge Munoz");
+    LANE.empty_miles = "0";
+    const z = await milesRecommendationsForLoad(db() as never, { operatingCompanyId: CO, loadId: LOAD }, route as never);
+    LANE.empty_miles = "40.0";
+    expect(z!.fields.empty.historical).toBeNull();
+    expect(z!.fields.empty.historical_missing_reason).toBe("no empty-miles history for this lane");
   });
 });
