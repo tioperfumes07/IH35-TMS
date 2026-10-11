@@ -7783,3 +7783,13 @@ consumed_at: 2026-10-11T17:33:40Z
 consumed_by: CC-2 (443.63 google_place_id + 13543 lane)
 row_counts: 150 stops + 111 locations given google_place_id (150 of 150 google_place stops); 13543 lane Albertville, AL -> Temple, TX created; typo lane ALBERTIVILLE kept (n 2)
 proof_query: node scripts/verify-booked-loads-save-miles.mjs -> PASS
+
+## AUTH-435
+issued_at: 2026-10-11T18:32:19Z
+issued_by: Lead 443.64 3b ("We keep them and we need the real address geo fences" — measure and finish). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..434
+owner_quotes: "We keep them and we need the real address geo fences." (2026-10-11 05:39 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — exactly two fences: (A) 13543 AMERICOLD fence 4937a83d adopts the existing Samsara address 2000000762879 already at its point (no duplicate) and one samsara.update_geofence renames it in place to "AMERICOLD — 1355 Railroad Avenue, Albertville, AL 35951"; (B) the 822 Union Pacific Boulevard fence (Samsara 2000000762951; stops 13540 #2, 13568 #2) and its location move 345 m to the Google rooftop point both stops resolved to, radius kept, and one samsara.update_geofence moves the Samsara copy in place by id. Each step refuses unless its precondition still holds. Nothing created or deleted in Samsara; no DELETE; no money.
+action: OWNER_AUTH_ID=AUTH-435 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-64-fence-finish.ts --apply
+rehearsal: throwaway br-weathered-shadow-aks5emk5 (COMMITTED, deleted): A adopted (0 m), rename enqueued; B moved 345 m, update enqueued; re-run: both skipped
+expires_at: 2026-10-12T18:32:19Z
+status: OPEN
