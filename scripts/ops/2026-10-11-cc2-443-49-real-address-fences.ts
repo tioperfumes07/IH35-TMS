@@ -71,7 +71,9 @@ try {
        LEFT JOIN outbox.events e ON e.event_type = 'samsara.create_geofence' AND e.dedupe_key = 'samsara.create_geofence:' || g.id::text
        LEFT JOIN mdata.load_stops s ON s.id = (e.payload->>'stop_id')::uuid
        LEFT JOIN mdata.loads l ON l.id = s.load_id
-      WHERE g.operating_company_id = $1::uuid AND g.source = 'auto_dispatch' AND g.location_kind = 'customer_site'
+      WHERE g.operating_company_id = $1::uuid AND g.source = 'auto_dispatch'
+        -- a moved fence becomes location_kind 'custom'; it is still one of these fences (its own create event names its stop)
+        AND (g.location_kind = 'customer_site' OR e.id IS NOT NULL)
         AND g.created_at >= '2026-10-11T00:00:00Z'
       ORDER BY l.load_number NULLS LAST, g.id`, [USMCA])).rows;
 
