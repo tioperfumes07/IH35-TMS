@@ -7810,4 +7810,18 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — (1) retire on our s
 action: OWNER_AUTH_ID=AUTH-436 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-64-zip-fences-13587.ts --apply
 rehearsal: throwaway br-bitter-mouse-ak1amx3c (COMMITTED, deleted): retired 37, kept 2 ("100 Warehouse Dr, Laredo", "200 Cold Storage Rd, San Antonio"), 13587 enqueued; re-run 0 / already queued
 expires_at: 2026-10-12T18:44:58Z
+status: CONSUMED
+consumed_at: 2026-10-11T18:46:10Z
+consumed_by: CC-2 (443.64 3b zip fences + 13587)
+row_counts: retired 37 zip / city-center fences (history kept); kept + listed 2 street-label fences; 13587 relearn delivered 18:46Z (stop kept its stamped point — finished under AUTH-437); active TMS fences on a zip / city center with no Samsara copy after: 0
+proof_query: active auto_dispatch fences, no Samsara copy, no street in place or label -> 0
+
+## AUTH-437
+issued_at: 2026-10-11T18:48:31Z
+issued_by: Lead 443.64 3b (fences on the real point N of N). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..436
+owner_quotes: "We keep them and we need the real address geo fences." (2026-10-11 05:39 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the stops on location 8cbff6c3 (822 Union Pacific Boulevard, Laredo) not at that location's point take it (geocode_source location_existing, audited) and get one dispatch.relearn_load_miles each; measured: 1 stop (13587 #2 Grupo MS, 345 m off). No money, no DELETE, nothing in Samsara.
+action: OWNER_AUTH_ID=AUTH-437 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-64-13587-point.ts --apply
+rehearsal: throwaway br-still-math-akgk9nis (COMMITTED, deleted): 1 stop moved (5402f34c), relearn enqueued; re-run 0
+expires_at: 2026-10-12T18:48:31Z
 status: OPEN
