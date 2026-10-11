@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withCurrentUser, withSavepoint } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { computeRelayWalletBalanceControl } from "./relay-wallet-balance-control.service.js";
+import { computeRelayWalletRollForward } from "./relay-wallet-roll-forward.service.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { relayApiBase, relayApiKey } from "./relay-client.js";
 
@@ -182,6 +183,27 @@ export async function registerRelayHealthRoutes(app: FastifyInstance) {
         return computeRelayWalletBalanceControl(client, oc);
       });
       return reply.code(200).send(control);
+    }
+  );
+
+  // ROUND 443.29 c — the wallet roll-forward the owner opens: deposits − fills − fees = balance, by day, each number with
+  // the documents behind it (deposit / fill ids + Relay refs). Read-only.
+  app.get(
+    "/api/integrations/relay/wallet-roll-forward",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentOfficeUser(req, reply);
+      if (!user) return;
+      const parsed = companyQuerySchema.safeParse(req.query ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+      }
+      const oc = parsed.data.operating_company_id;
+      const rollForward = await withCurrentUser(user.uuid, async (client) => {
+        await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
+        return computeRelayWalletRollForward(client, oc);
+      });
+      return reply.code(200).send(rollForward);
     }
   );
 
