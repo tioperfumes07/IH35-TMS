@@ -8945,6 +8945,7 @@
       "lumper_will_invoice_customer",
       "mileage_source",
       "mileage_variance_flag",
+      "miles_choice",
       "miles_deadhead",
       "miles_driven_actual",
       "miles_driven_actual_computed_at",

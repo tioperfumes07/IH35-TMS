@@ -2362,5 +2362,15 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-11",
     "purpose": "OWNER ORDER Lead 443.55: mdata.loads.miles_choice jsonb -- per miles field (practical / short / empty) the value, the source chosen (historical | google | manual | document), both recommended values at the time, manual reason, who chose and when; additive, nullable, no data written"
+  },
+  "202615560900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-11",
+    "purpose": "OWNER DECISION Lead 443.59 / RULING 443.62 #3-4 (taken from CC-1 #26377, whose 202610110100 sorted before the newest applied): rename USMCA 2410-00-001..004 to 'Due to / from <party>' (one running ledger account per related party, either sign); account_name only, ids / numbers / postings unchanged; apply-twice safe"
+  },
+  "202615570900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-11",
+    "purpose": "RULING 443.62 #7 (for CC-2): google_place_id text on mdata.load_stops and mdata.locations so the Google place id lives on the stop / location row, not only on the audit trail; additive, nullable, no data written"
   }
 }
