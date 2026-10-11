@@ -158,6 +158,14 @@ export class SamsaraApiError extends Error {
   }
 }
 
+/** Samsara's own error text from a non-2xx body, as ":<reason>" (≤ 200 chars), or "" when there is none. */
+export function samsaraReason(json: unknown): string {
+  const o = json && typeof json === "object" ? (json as Record<string, unknown>) : null;
+  const raw = o?.message ?? o?.error ?? (o?.errors ? JSON.stringify(o.errors) : null);
+  const text = typeof raw === "string" ? raw : raw != null ? JSON.stringify(raw) : "";
+  return text.trim() ? `:${text.replace(/\s+/g, " ").trim().slice(0, 200)}` : "";
+}
+
 const SAMSARA_API_BASE = "https://api.samsara.com";
 
 // Timeout-bounded fetch. A bare fetch() has NO timeout — a stalled Samsara socket hangs forever, and the
@@ -1502,7 +1510,9 @@ export class SamsaraClient {
     const json = await readJsonResponse(res);
     if (!res.ok) {
       const retryable = res.status === 429 || res.status >= 500;
-      throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, json, retryable);
+      // 443.49: keep Samsara's own reason (same shape as routes-integration.service.ts) — a bare "samsara_http_400" hid
+      // why 11 address creates were refused.
+      throw new SamsaraApiError(`samsara_http_${res.status}${samsaraReason(json)}`, res.status, json, retryable);
     }
     const nested = asObject(json.data);
     const idRaw = json.id ?? nested?.id;
@@ -1542,7 +1552,7 @@ export class SamsaraClient {
       throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
     }
     const json = await readJsonResponse(res);
-    if (!res.ok) throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+    if (!res.ok) throw new SamsaraApiError(`samsara_http_${res.status}${samsaraReason(json)}`, res.status, json, res.status === 429 || res.status >= 500);
     return { id };
   }
 
