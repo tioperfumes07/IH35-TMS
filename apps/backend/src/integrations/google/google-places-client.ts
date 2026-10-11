@@ -48,6 +48,9 @@ export type AddressResult = {
   name?: string;
   /** Address descriptor landmarks from Place Details (New) when Google returns them — e.g. "Love's Travel Stop (across the road, 120 m)". */
   landmarks?: string[];
+  /** 443.53: Google's own id for the place (Places `id` / Geocoding `place_id`) and which Google API answered. */
+  place_id?: string;
+  provider?: "google_places" | "google_geocoding";
 };
 
 /** One Autocomplete (New) prediction. `placeId` resolves through placeDetails(). */
@@ -61,6 +64,7 @@ export type AddressSuggestion = {
 
 type GoogleAddressComponent = { long_name: string; short_name: string; types: string[] };
 type GoogleGeocodeResult = {
+  place_id?: string;
   formatted_address?: string;
   address_components?: GoogleAddressComponent[];
   geometry?: { location?: { lat?: number; lng?: number }; location_type?: string };
@@ -300,7 +304,7 @@ async function textSearch(query: string, maxResults: number, apiKey: string): Pr
     const formatted = pl.formattedAddress ?? "";
     // A bare street address comes back with displayName == the address; only keep name when it adds information.
     const keepName = name && formatted && !formatted.toLowerCase().startsWith(name.toLowerCase()) ? name : undefined;
-    return fromComponents(comps, formatted, lat, lon, keepName);
+    return { ...fromComponents(comps, formatted, lat, lon, keepName), ...(pl.id ? { place_id: pl.id } : {}), provider: "google_places" as const };
   });
 }
 
@@ -316,14 +320,16 @@ async function geocode(query: string, maxResults: number, apiKey: string): Promi
     throw new Error(`google_places_status_${data.status}`);
   }
   const results = Array.isArray(data.results) ? data.results.slice(0, maxResults) : [];
-  return results.map((r) =>
-    fromComponents(
+  return results.map((r) => ({
+    ...fromComponents(
       r.address_components ?? [],
       r.formatted_address ?? "",
       typeof r.geometry?.location?.lat === "number" ? r.geometry.location.lat : null,
       typeof r.geometry?.location?.lng === "number" ? r.geometry.location.lng : null,
     ),
-  );
+    ...(r.place_id ? { place_id: r.place_id } : {}),
+    provider: "google_geocoding" as const,
+  }));
 }
 
 /** Geocoding API only. Used for city/state[/zip] stop rows so Places Text Search can never

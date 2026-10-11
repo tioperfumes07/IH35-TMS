@@ -1082,6 +1082,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-stops-resolve-samsara-no-zip-fence",
     ["apps/backend/src/telematics/", "apps/backend/src/integrations/samsara/", "apps/backend/src/dispatch/", "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts", "scripts/verify-stops-resolve-samsara-no-zip-fence.mjs"],
   ],
+  // Lead 443.53 #1 (CC-2) — a booked stop with a facility + city gets Google's street in its city / state, or the recorded Google no-result.
+  [
+    "verify-booked-stop-street-or-google-no-result",
+    ["apps/backend/src/telematics/", "apps/backend/src/integrations/google/", "apps/backend/src/cron/stop-resolution-sweep.cron.ts", "scripts/verify-booked-stop-street-or-google-no-result.mjs"],
+  ],
   // Lead 443.51 #5 (CC-2) — a Relay-fill expense document names the settlement that posted the fill.
   [
     "verify-relay-fill-expense-settlement-ref",

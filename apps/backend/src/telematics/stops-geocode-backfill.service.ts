@@ -10,6 +10,7 @@
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { squareVerticesFromCenter } from "./auto-geofence.service.js";
 import { stableProviderFailureReason, geocodeAddressWithEvidence } from "./stop-geocode-fallback.service.js";
@@ -37,33 +38,34 @@ export type StopsGeocodeBackfillResult = {
 };
 
 /**
- * 443.43 (iii) — pure: the one place result that IS this facility: its name matches the facility (one contains the other,
- * normalized), its city and state equal the stop's, and it has a street. Confidence 0.9 on an exact name, 0.75 otherwise.
- * Several distinct matching addresses = ambiguous = none (never guessed).
+ * 443.53 (owner 2026-10-11 09:23 CT: "We have google in our app, get the addresses from there") — pure: the TOP Google result
+ * (provider order) that sits in the stop's own city + state (or its zip) and carries a house-numbered street with coordinates.
+ * The place's name does NOT have to match the facility word for word — the same city / state is the acceptance test.
+ * Confidence 0.9 when the names also match, 0.75 otherwise. (Was 443.43 iii: name must match + one distinct address only.)
  */
 export function pickPlaceForFacility(
   facility: string,
-  stop: { city: string | null; state: string | null },
+  stop: { city: string | null; state: string | null; postal_code?: string | null },
   results: AddressResult[]
 ): { result: AddressResult; confidence: number } | null {
   const want = normName(facility);
   const eq = (a: unknown, b: unknown) => String(a ?? "").trim().toLowerCase() === String(b ?? "").trim().toLowerCase() && String(a ?? "").trim() !== "";
-  const hits = results.filter((r) => {
-    const have = normName(r.name ?? "");
-    return have.length >= 4 && (have === want || have.includes(want) || want.includes(have))
-      && eq(r.city, stop.city) && eq(r.state, stop.state) && looksLikeStreet(r.address_line1) && r.lat != null && r.lon != null;
-  });
-  const distinct = [...new Map(hits.map((h) => [normName(h.address_line1), h])).values()];
-  if (distinct.length !== 1) return null;
-  const r = distinct[0]!;
-  return { result: r, confidence: normName(r.name ?? "") === want ? 0.9 : 0.75 };
+  const zip5 = (v: unknown) => String(v ?? "").trim().slice(0, 5);
+  const r = results.find((x) =>
+    ((eq(x.city, stop.city) && eq(x.state, stop.state)) || (zip5(stop.postal_code) !== "" && zip5(x.zip) === zip5(stop.postal_code)))
+    && looksLikeStreet(x.address_line1) && x.lat != null && x.lon != null);
+  if (!r) return null;
+  const have = normName(r.name ?? "");
+  const named = have.length >= 4 && (have === want || have.includes(want) || want.includes(have));
+  return { result: r, confidence: named ? 0.9 : 0.75 };
 }
 
 /**
  * The marker a stop gets when EVERY current resolution step has looked and none gave a street (443.49: v2 = the place lookup also
- * tried the customer-name query). The sweep re-picks any stop not carrying the current marker, so adding a step re-runs it once.
+ * tried the customer-name query; 443.53: v3 = Google answered no result in the stop's city / state for either query — the
+ * recorded Google "no result"). The sweep re-picks any stop not carrying the current marker, so adding a step re-runs it once.
  */
-export const NO_STREET_SOURCE_TRIED = "no_street_source_v2";
+export const NO_STREET_SOURCE_TRIED = "no_street_source_v3_google";
 
 /** A street starts with a house number ("514 Nafta Blvd"); a facility name ("Aldi Salisbury") is not a street. */
 export const looksLikeStreet = (v: string | null | undefined) => /^\s*\d+[a-z]?\s+\S/i.test(String(v ?? ""));
@@ -183,8 +185,8 @@ export async function geocodeStopsWithClient(
     }
     const pick = pickPlaceForFacility(facility, stop, results);
     if (pick || !stop.customer_name?.trim()) return pick;
-    // 443.49 (d): a second, no-guess query with the load's CUSTOMER name added (a shipper / consignee is often listed under
-    // the customer's account). Same acceptance: the place's name must match the FACILITY and its city + state the stop's.
+    // 443.49 (d): a second query with the load's CUSTOMER name added (a shipper / consignee is often listed under the
+    // customer's account). Same acceptance (443.53): the top result in the stop's city + state (or zip) with a street.
     lastProviderAt = await paceProviderCalls(lastProviderAt);
     try {
       results = await searchAddress([facility, stop.customer_name.trim(), stop.city, [stop.state, stop.postal_code].filter(Boolean).join(" ")].join(", "), 5);
@@ -266,16 +268,23 @@ export async function geocodeStopsWithClient(
           if (updated.rows[0]) { geocoded += 1; locations += 1; rooftop += 1; streetFromLocation += 1; }
           return;
         }
-        // 443.43 (iii): the app geocoder's PLACE lookup by facility name + city / state / zip — accepted only when the place's
-        // name matches the facility AND its city and state match the stop; stored as 'geocoder_place' with its confidence.
+        // 443.53: Google Places by facility name + city / state / zip — the top result in the stop's city + state (or zip) with a
+        // street is taken (name need not match word for word); stored as 'google_place', precision rooftop. The stop keeps OUR
+        // facility name; Google's place_id is recorded on the audit row (mdata.load_stops has no place_id column).
         const place = await placeLookup(facility, stop);
         if (place) {
           await client.query(
             `UPDATE mdata.load_stops SET address_line1=$2, postal_code=coalesce(postal_code, $3), facility_name=coalesce(facility_name, $4), updated_at=now() WHERE id=$1::uuid`,
             [stop.stop_id, place.result.address_line1, place.result.zip || null, facility]);
           stop = { ...stop, address_line1: place.result.address_line1, postal_code: stop.postal_code ?? (place.result.zip || null), location_id: null };
-          placeOutcome = { ok: true, latitude: place.result.lat!, longitude: place.result.lon!, source: "geocoder_place", confidence: place.confidence, precision: "rooftop" };
+          placeOutcome = { ok: true, latitude: place.result.lat!, longitude: place.result.lon!, source: "google_place", confidence: place.confidence, precision: "rooftop" };
           streetFromPlace += 1;
+          await appendCrudAudit(client as never, actorId, "dispatch.load_stop.street_from_google_place", {
+            resource_type: "mdata.load_stops", resource_id: stop.stop_id, load_id: stop.load_id, facility_name: facility,
+            google_place_id: place.result.place_id ?? null, google_provider: place.result.provider ?? null, google_name: place.result.name ?? null,
+            address_line1: place.result.address_line1, city: place.result.city, state: place.result.state, postal_code: place.result.zip || null,
+            latitude: place.result.lat, longitude: place.result.lon, confidence: place.confidence,
+          }, "info", "443.53");
         }
       }
       const zipStamped = !stop.geocode_source || ["picker", "zip_center", "city_center"].includes(stop.geocode_source);

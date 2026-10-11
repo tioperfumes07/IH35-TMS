@@ -60,29 +60,24 @@ describe("pickSamsaraMatch (443.38)", () => {
 
 import { pickPlaceForFacility } from "./stops-geocode-backfill.service.js";
 
-describe("pickPlaceForFacility (443.43 iii)", () => {
+describe("pickPlaceForFacility (443.53 — Google's top result in the stop's city / state)", () => {
   const place = (over: Record<string, unknown>) => ({ formatted: "", address_line1: "572 Newton Rd", city: "Coldwater", state: "MI", country: "US", zip: "49036", lat: 41.97, lon: -84.96, name: "Clemens Food Group", ...over });
   const stop = { city: "Coldwater", state: "MI" };
-  it("accepts a place whose name matches the facility and whose city / state match", () => {
-    expect(pickPlaceForFacility("Clemens", stop, [place({})])).toMatchObject({ result: { address_line1: "572 Newton Rd" }, confidence: 0.75 });
+  it("accepts a place in the stop's city / state; confidence 0.9 when the name also matches", () => {
+    expect(pickPlaceForFacility("Clemens", stop, [place({})])).toMatchObject({ result: { address_line1: "572 Newton Rd" }, confidence: 0.9 });
   });
-  it("refuses a name mismatch, a city mismatch, or a result with no street", () => {
-    expect(pickPlaceForFacility("Clemens", stop, [place({ name: "Walmart Supercenter" })])).toBeNull();
-    expect(pickPlaceForFacility("Clemens", stop, [place({ city: "Hatfield" })])).toBeNull();
+  it("the name does not have to match — same city / state is the acceptance test (confidence 0.75)", () => {
+    expect(pickPlaceForFacility("Clemens", stop, [place({ name: "Walmart Supercenter" })])).toMatchObject({ confidence: 0.75 });
+  });
+  it("refuses a city mismatch, a result with no street, or no coordinates", () => {
+    expect(pickPlaceForFacility("Clemens", stop, [place({ city: "Hatfield", zip: "19440" })])).toBeNull();
     expect(pickPlaceForFacility("Clemens", stop, [place({ address_line1: "" })])).toBeNull();
+    expect(pickPlaceForFacility("Clemens", stop, [place({ lat: null })])).toBeNull();
   });
-  it("two different matching addresses = ambiguous = none", () => {
-    expect(pickPlaceForFacility("Clemens", stop, [place({}), place({ address_line1: "9 Other Rd" })])).toBeNull();
+  it("takes the TOP qualifying result in provider order", () => {
+    expect(pickPlaceForFacility("Clemens", stop, [place({ city: "Hatfield", zip: "19440" }), place({ address_line1: "9 Other Rd" }), place({})])?.result.address_line1).toBe("9 Other Rd");
   });
-});
-
-describe("443.49 (d): the customer-name query never accepts the customer's own place", () => {
-  const stop = { city: "Laredo", state: "TX" };
-  const place = (over: Record<string, unknown>) => ({ formatted: "", address_line1: "514 Nafta Blvd", city: "Laredo", state: "TX", country: "US", zip: "78045", lat: 27.6, lon: -99.5, name: "GDC Logistics", ...over });
-  it("a result named after the customer (not the facility) is refused", () => {
-    expect(pickPlaceForFacility("Allura Warehouse", stop, [place({ name: "Value Logistics LLC" })])).toBeNull();
-  });
-  it("a result named after the facility in the stop's city is accepted", () => {
-    expect(pickPlaceForFacility("Allura Warehouse", stop, [place({ name: "Allura Warehouse" })])?.confidence).toBe(0.9);
+  it("a matching zip is accepted when the city spelling differs", () => {
+    expect(pickPlaceForFacility("Clemens", { city: "Coldwater Twp", state: "MI", postal_code: "49036" }, [place({})])).not.toBeNull();
   });
 });
