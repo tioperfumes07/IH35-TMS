@@ -1241,7 +1241,7 @@ export async function postSettlementCreatorInClientTx(
         Boolean(loadId),
         loadId ? null : "Settlement Creator fuel line with no load number on the PDF row.",
         actorUserId,
-        enteredFuelRowHash(draft.operating_company_id, vendor.id, fuel.invoice),
+        enteredFuelRowHash(draft.operating_company_id, vendor.id, fuel.invoice, fuel.fuel_type ?? "diesel"),
         fuelType === "reefer_diesel" ? draft.trailer_id ?? null : null,
         // SETL-F444 — the receipt image, uploaded and confirmed before Post; null when none.
         fuel.source_doc_id ?? null,

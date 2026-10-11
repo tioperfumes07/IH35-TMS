@@ -23,10 +23,19 @@ export function providerTransactionId(reference: string | null | undefined): str
  * 202614220000; both writers omitted it, so every hand-entered fuel line failed with 23502. Keyed on the provider ID when
  * there is one (the unique index then refuses a second copy too); a line with no provider key gets its own hash.
  */
-export function enteredFuelRowHash(operatingCompanyId: string, vendorId: string | null, reference: string | null | undefined): string {
+export function enteredFuelRowHash(
+  operatingCompanyId: string,
+  vendorId: string | null,
+  reference: string | null | undefined,
+  fuelType?: string | null,
+): string {
   const providerId = providerTransactionId(reference);
+  // ROUND 443.28 — one ticket can carry several products (diesel + DEF on Loves 2870483); the live duplicate index is
+  // per (vendor, reference, fuel_type). Diesel keeps its original hash (existing rows unchanged); another product
+  // appends its type so the DEF line of the same ticket is its own row, and a second copy of it is still refused.
+  const product = fuelType && fuelType !== "diesel" ? `:${fuelType}` : "";
   return providerId
-    ? `provider:${operatingCompanyId}:${vendorId ?? "no-vendor"}:${providerId}`
+    ? `provider:${operatingCompanyId}:${vendorId ?? "no-vendor"}:${providerId}${product}`
     : `entered:${crypto.randomUUID()}`;
 }
 

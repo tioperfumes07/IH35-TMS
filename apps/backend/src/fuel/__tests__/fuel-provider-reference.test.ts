@@ -54,4 +54,9 @@ describe("refuseDuplicateProviderTransaction", () => {
     expect(sql).toMatch(/f\.fuel_type::text IS NOT DISTINCT FROM \$4::text/);
     expect(values[3]).toBe("def");
   });
+  it("ROUND 443.28: a second product on the same ticket is its own row; diesel keeps its hash", () => {
+    expect(enteredFuelRowHash(CO, VENDOR, "2870483", "diesel")).toBe(enteredFuelRowHash(CO, VENDOR, "2870483"));
+    expect(enteredFuelRowHash(CO, VENDOR, "2870483", "def")).not.toBe(enteredFuelRowHash(CO, VENDOR, "2870483", "diesel"));
+    expect(enteredFuelRowHash(CO, VENDOR, "2870483", "def")).toBe(enteredFuelRowHash(CO, VENDOR, " 2870483", "def"));
+  });
 });
