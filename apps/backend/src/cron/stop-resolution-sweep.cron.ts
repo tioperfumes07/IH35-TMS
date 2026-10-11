@@ -32,7 +32,7 @@ let initialized = false;
 /** One sweep: every load of every ingestion tenant with a named stop still at a zip / city center, re-resolved. */
 export async function runStopResolutionSweepTick(limit = 200) {
   return withLuciaBypass(async (client) => {
-    const out: Array<{ operating_company_id: string; loads: number; resolved: number; still_zip_center: number }> = [];
+    const out: Array<{ operating_company_id: string; loads: number; resolved: number; still_zip_center: number; relearn_failures: Array<{ load_id: string; error: string }> }> = [];
     for (const operatingCompanyId of await listSamsaraIngestionTenantIds(client)) {
       assertTenantContext(operatingCompanyId, CRON_NAME);
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
@@ -52,6 +52,7 @@ export async function runStopResolutionSweepTick(limit = 200) {
         )
       ).rows;
       let resolved = 0, still = 0;
+      const relearnFailures: Array<{ load_id: string; error: string }> = [];
       for (const { load_id } of loads) {
         const r = await geocodeStopsWithClient(client as never, SYSTEM_ACTOR, operatingCompanyId, load_id, { reresolve: true });
         const placed = r.samsara_matched + (r.street_from_location ?? 0) + (r.street_from_place ?? 0);
@@ -63,13 +64,15 @@ export async function runStopResolutionSweepTick(limit = 200) {
           try {
             await relearnLoadStopLegs(client as never, { operatingCompanyId, loadId: load_id, actorUserId: SYSTEM_ACTOR });
             await client.query("RELEASE SAVEPOINT relearn_legs");
-          } catch {
+          } catch (error) {
             await client.query("ROLLBACK TO SAVEPOINT relearn_legs");
+            // 443.45: never silent — a failed relearn is named in the tick result (logged by the cron).
+            relearnFailures.push({ load_id, error: String((error as { message?: unknown })?.message ?? error).slice(0, 200) });
           }
         }
         still += r.zip_center_listed.length;
       }
-      out.push({ operating_company_id: operatingCompanyId, loads: loads.length, resolved, still_zip_center: still });
+      out.push({ operating_company_id: operatingCompanyId, loads: loads.length, resolved, still_zip_center: still, relearn_failures: relearnFailures });
     }
     return out;
   });
