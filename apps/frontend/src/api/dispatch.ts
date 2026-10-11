@@ -271,6 +271,8 @@ export type DispatchBookLoadPayload = {
   // Operator entered). Do not add a confidence-qualified variant here again — display concerns
   // (ZIP mismatch, verify, etc.) belong in the lane-mileage response's own provenance field.
   mileage_source?: "History" | "Manual" | "Routing engine" | "Operator entered";
+  /** 443.55 — per miles field, the source the dispatcher chose (historical | google | manual) and its value; manual needs a reason. */
+  miles_choice?: Partial<Record<"practical" | "short" | "empty", { source: "historical" | "google" | "manual" | "document"; value: number; reason?: string }>>;
   stop_count?: string;
   pickup_number?: string;
   border_routing?: string;

@@ -14,6 +14,8 @@ import { createPortal } from "react-dom";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad, createTrailerInterchange, distributeLoadInstructions, getLaneMileage, getChainDeadhead, getRouteMileage } from "../../../api/dispatch";
+import { previewMilesRecommendations, valueForSource, type MilesChoicePayload } from "../../../api/milesRecommendations";
+import { MilesRecommendationsPanel } from "../../../components/loads/MilesRecommendationsPanel";
 import { resolveStopPlace } from "./book-load-city-state";
 import { geocodeRouteReference } from "../../../api/geocoding";
 import { historicalImportReasonsCatalogClient, listAllDispatchCatalogRows, loadCommoditiesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
@@ -658,6 +660,29 @@ export function BookLoadModalV4({
   const originPlace = resolveStopPlace(originCity, originState);
   const destPlace = resolveStopPlace(destCity, destState);
   const milesOperatorTouched = useRef(false);
+
+  // 443.55 — BOTH mileage recommendations (Historical lane averages + Google driving distance) for the stops as typed, and
+  // the dispatcher's per-field choice. A choice fills the form field AND travels in the payload as miles_choice (source,
+  // value, reason) so the server records the source per field.
+  const [milesChoice, setMilesChoice] = useState<MilesChoicePayload>({});
+  const coord = (v: unknown) => {
+    const t = String(v ?? "").trim();
+    return t && Number.isFinite(Number(t)) ? Number(t) : null;
+  };
+  const milesRecStops = (stops ?? []).map((s) => ({
+    latitude: coord(s.latitude),
+    longitude: coord(s.longitude),
+    city: String(s.city ?? "").trim() || null,
+    state: String(s.state ?? "").trim() || null,
+    postal_code: String(s.postal_code ?? "").trim() || null,
+  }));
+  const milesRecReady = milesRecStops.length >= 2 && milesRecStops.every((s) => Boolean(s.city && s.state) || (s.latitude != null && s.longitude != null));
+  const milesRecsQuery = useQuery({
+    queryKey: ["dispatch", "miles-recommendations", operatingCompanyId, assignedUnitId || null, JSON.stringify(milesRecStops)],
+    queryFn: () => previewMilesRecommendations({ operating_company_id: operatingCompanyId as string, unit_id: assignedUnitId || null, stops: milesRecStops }),
+    enabled: Boolean(operatingCompanyId && milesRecReady),
+    staleTime: 5 * 60_000,
+  });
 
   // DSP-48 / LDT-1 (owner ruling 2026-09-05, "Google distance = REFERENCE ONLY", LAW §2): once the
   // picked pickup/delivery carry coordinates, quote two Google Routes legs — the linehaul
@@ -1571,6 +1596,7 @@ export function BookLoadModalV4({
         miles_shortest: numOrUndef(values.miles_shortest),
         miles_deadhead: numOrUndef(values.miles_deadhead),
         mileage_source: values.mileage_source || undefined,
+        miles_choice: Object.keys(milesChoice).length ? milesChoice : undefined,
         stop_count: String((submitStops ?? []).length),
         pickup_number: values.pickup_number || undefined,
         border_routing: values.border_routing || undefined,
@@ -2724,6 +2750,27 @@ export function BookLoadModalV4({
                     form.setValue("miles_deadhead", n, { shouldDirty: true, shouldValidate: true });
                   }}
                 />
+                <div data-testid="book-load-miles-recommendations" className="mt-2">
+                  {milesRecReady ? (
+                    <MilesRecommendationsPanel
+                      data={milesRecsQuery.data}
+                      isLoading={milesRecsQuery.isLoading}
+                      error={milesRecsQuery.error ? userFacingApiError(milesRecsQuery.error, "could not load") : null}
+                      pending={milesChoice}
+                      onChoose={(input) => {
+                        const rec = milesRecsQuery.data?.fields[input.field];
+                        const value = input.source === "manual" ? input.manual_value ?? null : rec ? valueForSource(rec, input.source) : null;
+                        if (value == null) return;
+                        milesOperatorTouched.current = true;
+                        setMilesChoice((prev) => ({ ...prev, [input.field]: { source: input.source, value, ...(input.reason ? { reason: input.reason } : {}) } }));
+                        const formField = input.field === "practical" ? "miles_practical" : input.field === "short" ? "miles_shortest" : "miles_deadhead";
+                        form.setValue(formField, value, { shouldDirty: true, shouldValidate: true });
+                      }}
+                    />
+                  ) : (
+                    <div className="text-xs text-gray-600">Mileage recommendations appear once every stop has a city and state.</div>
+                  )}
+                </div>
                 <div data-testid="book-load-stops-section">
                 <BookLoadStopsSection
                   operatingCompanyId={operatingCompanyId}
