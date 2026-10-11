@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { learnLoadLanes, type LaneLearningResult } from "../src/dispatch/load-lane-learning.service.js";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const PROD_BRANCH = "br-fancy-credit-akjnd07a";
 const SINCE = "2026-10-11T00:00:00Z";
