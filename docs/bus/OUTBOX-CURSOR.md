@@ -1,5 +1,16 @@
 ## 2026-10-11 · ROUND 443.22-2f OPTION 2 SCENTSX BACKFILL LIVE + SHIP
 
+## 2026-10-11 · ROUND 443.22-2f OPTION 2 + paid_direct EXPORT MERGED
+
+FINDING: ACCT-F44322-2f-OPT2-MERGED — Option 2 Scentsx backfill + `createPaidDirectVendorAdvance` export both on main.
+LANE: FINANCIAL
+MERGED: #26259 squash `98832809f3` (Option 2); #26258 claim `9cccb067ee`; #26257 export `3a7635261d`
+Files Modified: none this tip — OUTBOX proof only
+GUARD: verify-related-party-loan-scentsx-option2-backfill (18374); createPaidDirectVendorAdvance in create-entry.service.ts
+LIVE PROOF: gh pr view 26259 state=MERGED mergeCommit=98832809f3; Neon facility 161616ff… / 2410-00-002 open=1145000 entries=9 bank_links=9; CC-2 callable `createPaidDirectVendorAdvance` for cards 0210/6248/9855; card 5007 Amex → 2500-00-001 NOT loan
+REMAINING: Chrome Loans/Advances after deploy (Rule 42); CC-2 Relay deposit poster wires `createPaidDirectVendorAdvance` then re-measure Jorge/Tio
+NEXT: idle on 443.22 until CC-2 paid_direct deposits land
+
 FINDING: ACCT-F44322-2f-OPT2 — owner chose Option 2; Scentsx-only RPL facility papers 9 bank cats via `createRelatedPartyLoanEntry` (no JE rewrite). Jorge/Tio HOLD until CC-2 paid_direct Relay deposits.
 LANE: FINANCIAL
 Files Modified: scripts/ops/r44322-2f-scentsx-option2-backfill.ts · verify-related-party-loan-scentsx-option2-backfill.mjs · verify-steps/18374-… · OUTBOX · MEMORY_BANK
