@@ -117,7 +117,7 @@ if (isMain) {
     rows = (await client.query(LIVE_SQL, [USMCA, SINCE])).rows;
     await client.query("ROLLBACK");
   } finally {
-    await client.end();
+    await Promise.race([client.end(), new Promise((r) => setTimeout(r, 2000))]);
   }
   failures.push(...liveFailures(rows));
   if (failures.length) {
@@ -126,4 +126,6 @@ if (isMain) {
     process.exit(1);
   }
   console.log(`${LABEL}: PASS — booking calls learnLoadLanes after its stop INSERT; ${rows.length} USMCA load(s) booked since ${SINCE}: every stop after the first has leg_miles and every lane was touched`);
+  // Exit explicitly: a pooled connection can keep the event loop alive after end() and stall the gate.
+  process.exit(0);
 }
