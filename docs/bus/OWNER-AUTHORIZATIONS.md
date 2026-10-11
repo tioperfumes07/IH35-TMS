@@ -7845,3 +7845,13 @@ consumed_at: 2026-10-11T21:41:00Z
 consumed_by: CC-2 (443.72 #3 fuel dates)
 row_counts: 2 receipts re-dated on prod — 13557 (fuel 40ea84c2) -> expense 13557-3 on 2026-08-29 (Dr 5000 84000 / Cr 2510), original 13557 void with reversal 2026-09-29; 13550-4 (fuel 89bd8842) -> expense 13550-5 on 2026-08-27 (Dr 5010 4238 / Cr 2510), original void with reversal 2026-09-27. $882.38 September -> August. TB 0 before and after each apply.
 proof_query: node scripts/verify-fuel-transactions-per-load.mjs on prod -> LIVE PASS, 0 failures (654/654 rows, 142/142 loads, 152/152 Relay transactions)
+
+## AUTH-439
+issued_at: 2026-10-11T22:07:23Z
+issued_by: Lead 443.73 item 6 (a)+(b) ("A receipt is ONE expense … remove the other copy through the engine … fork first"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..438
+owner_quotes: 99794138 — "YES VOID DUPLICTATS" ... "YES I AUTHOROIZE YOU" (CC-2 chat 2026-10-04, AUTH-207: keep 13557); 1848853 — "IT BELONGS TO THE SECOND LOAD, 547" (CC-2 chat 2026-10-04, AUTH-209: keep 13547); 99530579 — "FUEL AUTH: BOTH AUTHORIZED" (CC-3 chat 2026-10-04, AUTH-398: keep 13548). 99416535 / 99477699: Lead 443.73 6(b) — the receipt's diesel is on 13604 only, its DEF line belongs with it.
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — phase 1: governed void (executeVoidCancel expense + fuel_transaction: reversing JE + stampDocumentVoided) of EXACTLY 7 duplicate receipt lines, $2,291.25: 99794138 diesel + DEF on 13571 (fuel 2d53888f / 4478f31d, expenses 13571 / 13571-4); 1848853 diesel + DEF on 13543 (fuel 393fdb0c / 3bda3614, expenses 13543 / 13543-2); 99530579 diesel on 13533 (fuel 6779ab91, expense 13533); 99416535 DEF and 99477699 DEF on 13615 (fuel 3a054214 / 2d4f677b, expenses 13615-4 / 13615-5). Each refuses unless the copy is as measured AND the kept copy is live and posted exactly once. TB 0. 99549122 (13603 / 13621) NOT touched. Phase 2 (complete delete of the voided copies with their reversal pairs) is a separate AUTH with its exact list.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-11-cc2-443-73-void-fuel-double-cost.mts --apply --auth AUTH-439
+rehearsal: throwaway br-royal-math-akze7yz4 (full path, rolled back; deleted): 7 voided, 229125 cents, TB 0 -> 0, the 5 receipts each live exactly once per product after
+expires_at: 2026-10-12T22:07:23Z
+status: OPEN
