@@ -142,7 +142,7 @@ export function classifyFuelPostsOnce(input) {
   checks.push({
     id: "C",
     name: "FUEL_5000_EQUALS_OWN_LINE_TOTAL",
-    expected: `$${(fuelExpenseTotalCents / 100).toFixed(2)} (account 5000 expense-line total)`,
+    expected: `$${(fuelExpenseTotalCents / 100).toFixed(2)} (account 5000 expense-line + live bill-line total)`,
     live: `$${(fuel5000NetCents / 100).toFixed(2)} (5000 Fuel & Diesel GL net)`,
     pass: fuel5000NetCents === fuelExpenseTotalCents,
   });
@@ -273,6 +273,18 @@ function runSelftest() {
     fail += 1;
   } else pass += 1;
 
+  // Lead 443.41 A: the live check-A SQL must adopt a Relay fill posting only through the same entry + the fuel row's
+  // relay_fuel_transaction_id link (never by amount, never by source type alone).
+  {
+    const src = fs.readFileSync(new URL(import.meta.url), "utf8");
+    const ok = /JOIN fuel\.fuel_transactions ft ON ft\.id = e\.source_fuel_transaction_id/.test(src) &&
+      /e\.journal_entry_id = je\.id\s+AND ft\.relay_fuel_transaction_id::text = jep\.source_transaction_id::text/.test(src);
+    if (!ok) { console.error(`${LABEL} --selftest FAIL — check A no longer resolves a Relay fill through its own entry + relay link`); fail += 1; } else pass += 1;
+    const okC = /FROM accounting\.bill_lines bl/.test(src) && /p\.source_transaction_type = 'bill' AND p\.source_transaction_id = b\.id::text/.test(src) &&
+      /Number\(fuelTotalRes\.rows\[0\]\.total_cents\) \+ Number\(billLine5000Res\.rows\[0\]\.total_cents\)/.test(src);
+    if (!okC) { console.error(`${LABEL} --selftest FAIL — check C no longer counts a live bill's own 5000 line as its document`); fail += 1; } else pass += 1;
+  }
+
   const redA = classifyFuelPostsOnce({ ...baseInput, fuelJesCount: 20 });
   if (redA.allPass || redA.checks.find((c) => c.id === "A").pass) {
     console.error(`${LABEL} --selftest FAIL — RED A: expected check A FAIL`);
@@ -344,6 +356,13 @@ async function measureLive(client) {
         AND NOT EXISTS (SELECT 1 FROM accounting.expenses e
                          WHERE e.operating_company_id = jep.operating_company_id AND e.journal_entry_id = je.id
                            AND e.source_fuel_transaction_id::text = jep.source_transaction_id::text AND e.voided_at IS NULL)
+        -- Lead 443.41 A (CC-2 #26299): a Relay fill's posting is keyed on its integrations.relay_fuel_transactions id; its
+        -- expense document on the SAME entry names the fuel row that fill produced (fuel_transactions.relay_fuel_transaction_id).
+        -- Same entry + that exact link = adopted. Measured live 2026-10-11: 461 fill postings / 141 entries, 0 orphans.
+        AND NOT EXISTS (SELECT 1 FROM accounting.expenses e
+                          JOIN fuel.fuel_transactions ft ON ft.id = e.source_fuel_transaction_id
+                         WHERE e.operating_company_id = jep.operating_company_id AND e.journal_entry_id = je.id
+                           AND ft.relay_fuel_transaction_id::text = jep.source_transaction_id::text AND e.voided_at IS NULL)
         AND NOT EXISTS (SELECT 1 FROM accounting.reclassify_batch_lines rl
                          WHERE rl.operating_company_id = jep.operating_company_id AND rl.reclass_journal_entry_id = je.id
                            AND rl.result = 'applied')`,
@@ -403,6 +422,22 @@ async function measureLive(client) {
       WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.posting_status = 'posted'
         AND a.operating_company_id = $1::uuid
         AND a.account_number = '5000'`,
+    [USMCA_COMPANY_ID],
+  );
+  // C (CC-3 2026-10-11): the GL side counts EVERY live 5000 posting, including a live A/P bill's (a driver reimbursed for a
+  // cash fuel buy is billed on the settlement's per-load bill: Dr 5000 / Cr A/P — the bill is its document). So the document
+  // side counts that bill's own 5000 line too: a live, non-voided bill line on 5000 whose bill has a live 'bill' posting.
+  // Measured live: 5 such lines, $47.00 = exactly the gap (5802/5805/5808/5825/5828). Never by amount alone.
+  const billLine5000Res = await client.query(
+    `SELECT COALESCE(SUM(ROUND(bl.amount * 100)), 0)::bigint AS total_cents
+       FROM accounting.bill_lines bl
+       JOIN accounting.bills b ON b.id = bl.bill_id
+       JOIN catalogs.accounts a ON a.id = bl.account_id
+      WHERE b.operating_company_id = $1::uuid AND b.voided_at IS NULL AND bl.voided_at IS NULL
+        AND a.operating_company_id = $1::uuid AND a.account_number = '5000'
+        AND EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+                     WHERE p.source_transaction_type = 'bill' AND p.source_transaction_id = b.id::text
+                       AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL)`,
     [USMCA_COMPANY_ID],
   );
 
@@ -483,7 +518,7 @@ async function measureLive(client) {
     fuelExpensesWithSource: fuelExpensesRes.rows[0].cnt,
     duplicateFuelPointers: dupPtrRes.rows[0].cnt,
     fuel5000NetCents: Number(fuel5000Res.rows[0].net_cents),
-    fuelExpenseTotalCents: Number(fuelTotalRes.rows[0].total_cents),
+    fuelExpenseTotalCents: Number(fuelTotalRes.rows[0].total_cents) + Number(billLine5000Res.rows[0].total_cents),
     expensesWithNullLinkage: nullLinkRes.rows[0].cnt,
     trailerOnlyGapCount: trailerOnlyRes.rows[0].cnt,
     expensesWithNullLinkageDetails: linkageDetails.join(", "),
