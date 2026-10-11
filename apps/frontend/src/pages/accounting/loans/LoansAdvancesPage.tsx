@@ -25,7 +25,10 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { FORM_SELECT_CLASS } from "../../../components/forms/inputClass";
-import { LoanApplicationWizard } from "./LoanApplicationWizard";
+import {
+  LoanApplicationWizard,
+  type LoanApplicationPrefill,
+} from "./LoanApplicationWizard";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { formatUsdCents } from "../../../lib/money";
 import { SelectCombobox } from "../../../components/Combobox";
@@ -50,6 +53,7 @@ const TARGETS: Array<"" | LoanTargetType> = [
   "intercompany",
   "bank_funding",
   "bank_repayment",
+  "paid_direct_vendor",
 ];
 
 function money(cents: number | null | undefined): string {
@@ -65,6 +69,7 @@ export function LoansAdvancesPage() {
   const [status, setStatus] = useState<LoanStatus[]>([]);
   const [targetType, setTargetType] = useState<"" | LoanTargetType>("");
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardPrefill, setWizardPrefill] = useState<LoanApplicationPrefill | null>(null);
   const [expandedFacilityId, setExpandedFacilityId] = useState<string | null>(null);
 
   const facilitiesQuery = useQuery({
@@ -108,14 +113,36 @@ export function LoansAdvancesPage() {
         title="Loans & Advances"
         subtitle="One running facility per related party. Advances and repayments hang under the person."
         actions={
-          <button
-            type="button"
-            onClick={() => setWizardOpen(true)}
-            disabled={!companyId}
-            className="h-7 rounded-sm bg-[#14314F] px-2 text-[12px] font-semibold text-white hover:bg-[#0F1729] disabled:opacity-40"
-          >
-            + Create
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setWizardPrefill(null);
+                setWizardOpen(true);
+              }}
+              disabled={!companyId}
+              className="h-7 rounded-sm bg-[#14314F] px-2 text-[12px] font-semibold text-white hover:bg-[#0F1729] disabled:opacity-40"
+            >
+              + Create
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setWizardPrefill({
+                  target_type: "paid_direct_vendor",
+                  direction: "in",
+                  interest_rate_pct: "4",
+                  interest_method: "simple",
+                });
+                setWizardOpen(true);
+              }}
+              disabled={!companyId}
+              className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-2 text-[12px] font-semibold text-[#14314F] hover:bg-[#F7F8FA] disabled:opacity-40"
+              data-testid="loans-paid-direct-vendor-btn"
+            >
+              Paid directly to a vendor
+            </button>
+          </div>
         }
       />
 
@@ -357,7 +384,11 @@ export function LoansAdvancesPage() {
       <LoanApplicationWizard
         open={wizardOpen}
         operatingCompanyId={companyId}
-        onClose={() => setWizardOpen(false)}
+        prefill={wizardPrefill}
+        onClose={() => {
+          setWizardOpen(false);
+          setWizardPrefill(null);
+        }}
         onCreated={() => refetchAll()}
       />
     </div>

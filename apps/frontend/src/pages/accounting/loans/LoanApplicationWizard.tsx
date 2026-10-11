@@ -47,6 +47,11 @@ export function isLoanRepaymentTarget(targetType: LoanTargetType | string | null
   return targetType === "repayment" || targetType === "bank_repayment";
 }
 
+/** ROUND 443.22-2e — personal-account pay to vendor; no company bank line. */
+export function isPaidDirectVendorTarget(targetType: LoanTargetType | string | null | undefined): boolean {
+  return targetType === "paid_direct_vendor";
+}
+
 /** ROUND 443.22-2a — bank Loan action seeds the wizard; user still confirms rate/person every time. */
 export type LoanApplicationPrefill = {
   principal_cents?: number;
@@ -59,6 +64,9 @@ export type LoanApplicationPrefill = {
   interest_rate_pct?: string;
   interest_method?: LoanInterestMethod;
   target_type?: LoanTargetType;
+  /** ROUND 443.22-2e — debit CoA (Relay Fuel Wallet) when seeded as paid-direct. */
+  funding_account_id?: string;
+  intermediary_name?: string;
 };
 
 type Props = {
@@ -86,6 +94,9 @@ type FormState = {
   payment_count: string;
   first_payment_date: string;
   funding_source_note: string;
+  /** ROUND 443.22-2e — debit account for paid_direct_vendor. */
+  funding_account_id: string;
+  intermediary_name: string;
 };
 
 const STEPS = ["Direction", "Counterparty", "Money & account", "Terms", "Review"] as const;
@@ -102,7 +113,22 @@ const TARGET_TYPES: LoanTargetType[] = [
   "intercompany",
   "bank_funding",
   "bank_repayment",
+  "paid_direct_vendor",
 ];
+
+/** Human labels for purpose — operators never see underscores (00-IH35-LAW plain English). */
+const TARGET_TYPE_LABELS: Record<LoanTargetType, string> = {
+  bill: "Bill",
+  settlement: "Settlement",
+  cash_advance: "Cash advance",
+  expense: "Expense",
+  loan_out: "Loan out",
+  repayment: "Repayment",
+  intercompany: "Intercompany",
+  bank_funding: "Bank funding",
+  bank_repayment: "Bank repayment",
+  paid_direct_vendor: "Paid directly to a vendor",
+};
 
 /** Owner / ROUND 443.22 default annual rate when seeding from bank Categorize → Loan. */
 export const BANK_LOAN_DEFAULT_INTEREST_PCT = "4";
@@ -142,6 +168,8 @@ const EMPTY: FormState = {
   payment_count: "",
   first_payment_date: "",
   funding_source_note: "",
+  funding_account_id: "",
+  intermediary_name: "",
 };
 
 /** Percent -> basis points (1.25% -> 125 bps). */
@@ -164,10 +192,13 @@ export function buildPayload(
   if (principal_cents === null || principal_cents <= 0) return null;
   if (interest_rate_bps === null) return null;
   if (!form.account_id) return null;
+  const paidDirect = isPaidDirectVendorTarget(form.target_type);
+  if (paidDirect && !form.funding_account_id.trim()) return null;
 
   const payload: CreateRelatedPartyLoanRequest = {
     operating_company_id: operatingCompanyId,
-    direction: form.direction,
+    // Paid-direct is always money IN to the company (person funded a vendor for us).
+    direction: paidDirect ? "in" : form.direction,
     relationship: form.relationship,
     counterparty_kind: form.counterparty_kind,
     account_id: form.account_id,
@@ -184,15 +215,23 @@ export function buildPayload(
   if (form.payment_count.trim()) payload.payment_count = Number(form.payment_count.trim());
   if (form.first_payment_date) payload.first_payment_date = form.first_payment_date;
   if (form.funding_source_note.trim()) payload.funding_source_note = form.funding_source_note.trim();
-  if (bankTransactionId?.trim()) payload.bank_transaction_id = bankTransactionId.trim();
+  // Paid-direct never stamps a bank reverse pointer (no company bank line).
+  if (!paidDirect && bankTransactionId?.trim()) payload.bank_transaction_id = bankTransactionId.trim();
+  if (paidDirect && form.funding_account_id.trim()) {
+    payload.funding_account_id = form.funding_account_id.trim();
+  }
+  if (paidDirect && form.intermediary_name.trim()) {
+    payload.intermediary_name = form.intermediary_name.trim();
+  }
   return payload;
 }
 
 function formFromPrefill(prefill: LoanApplicationPrefill | null | undefined): FormState {
   if (!prefill) return { ...EMPTY, entry_date: todayIso() };
+  const paidDirect = isPaidDirectVendorTarget(prefill.target_type);
   return {
     ...EMPTY,
-    direction: prefill.direction ?? "in",
+    direction: paidDirect ? "in" : (prefill.direction ?? "in"),
     counterparty_name: prefill.counterparty_name?.trim() ?? "",
     principal_cents: typeof prefill.principal_cents === "number" ? prefill.principal_cents : null,
     entry_date: prefill.entry_date?.slice(0, 10) || todayIso(),
@@ -200,6 +239,8 @@ function formFromPrefill(prefill: LoanApplicationPrefill | null | undefined): Fo
     interest_method: prefill.interest_method ?? "simple",
     target_type: prefill.target_type ?? (prefill.bank_transaction_id ? "bank_funding" : "bill"),
     funding_source_note: prefill.funding_source_note?.trim() ?? "",
+    funding_account_id: prefill.funding_account_id?.trim() ?? "",
+    intermediary_name: prefill.intermediary_name?.trim() ?? "",
   };
 }
 
@@ -223,6 +264,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const isRepayment = isLoanRepaymentTarget(form.target_type);
+  const isPaidDirect = isPaidDirectVendorTarget(form.target_type);
 
   const accountsQuery = useQuery({
     queryKey: ["related-party-loans", "accounts", operatingCompanyId],
@@ -271,13 +313,19 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
 
   const directionHelp = isRepayment
     ? "Apply repayment — cash leaves the company against the person's open facility balance. Pick the same liability (or receivable) account as the facility. Overpay is refused."
-    : form.direction === "in"
-      ? "Loan TO the company — someone funds a company obligation. A liability rises; pick the liability account."
-      : "Loan FROM the company — the company lends out. A receivable asset rises; pick the receivable account.";
+    : isPaidDirect
+      ? "Paid directly to a vendor — a related party paid a vendor from a personal account. No company bank line. Adds an advance to that person's facility and debits what was paid for (for example Relay Fuel Wallet)."
+      : form.direction === "in"
+        ? "Loan TO the company — someone funds a company obligation. A liability rises; pick the liability account."
+        : "Loan FROM the company — the company lends out. A receivable asset rises; pick the receivable account.";
 
   const submit = async () => {
     if (!payload) {
-      setError("Principal, interest rate and account are required before submitting.");
+      setError(
+        isPaidDirect
+          ? "Principal, interest rate, lender liability account, and debit account (what was paid for) are required before submitting."
+          : "Principal, interest rate and account are required before submitting.",
+      );
       return;
     }
     if (overpayBlocked) {
@@ -314,13 +362,17 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
             style={{ fontSize: typography.panelHeader, color: colors.columnHeader, letterSpacing: typography.tightUpper, fontWeight: 700 }}
             data-testid="loan-wizard-title"
           >
-            {isRepayment ? "Apply loan repayment" : "Loan / Advance application"}
+            {isRepayment
+              ? "Apply loan repayment"
+              : isPaidDirect
+                ? "Paid directly to a vendor"
+                : "Loan / Advance application"}
           </h2>
           <button type="button" onClick={onClose} className="text-[12px] text-[#6B7280] hover:text-[#0F1219]">
             Close
           </button>
         </div>
-        {bankTransactionId ? (
+        {bankTransactionId && !isPaidDirect ? (
           <div
             className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 text-[12px] text-[#1F2A44]"
             data-testid="loan-wizard-bank-prefill-banner"
@@ -328,6 +380,14 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
             {isRepayment
               ? "Seeded from a bank money-out line as Apply repayment. Confirm the person, facility account, and amount — overpay is refused."
               : `Seeded from a bank line at ${form.interest_rate_pct || BANK_LOAN_DEFAULT_INTEREST_PCT}% APR. Confirm the person, account, and rate — nothing posts until you submit.`}
+          </div>
+        ) : null}
+        {isPaidDirect ? (
+          <div
+            className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 text-[12px] text-[#1F2A44]"
+            data-testid="loan-wizard-paid-direct-banner"
+          >
+            No company bank line. Name the lender (facility), debit what was paid for, and optionally record who paid as intermediary. Same advance note as a normal funding.
           </div>
         ) : null}
 
@@ -352,8 +412,10 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
               <label className="block text-xs font-medium text-[#1F2A44]">Direction</label>
               <SelectCombobox
                 className={FORM_SELECT_CLASS}
-                value={form.direction}
+                value={isPaidDirect ? "in" : form.direction}
                 onChange={(e) => set("direction", e.target.value as LoanDirection)}
+                disabled={isPaidDirect}
+                data-testid="loan-wizard-direction"
               >
                 <option value="in">Loan to the company (liability)</option>
                 <option value="out">Loan from the company (receivable)</option>
@@ -364,11 +426,16 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
               <SelectCombobox
                 className={FORM_SELECT_CLASS}
                 value={form.target_type}
-                onChange={(e) => set("target_type", e.target.value as LoanTargetType)}
+                onChange={(e) => {
+                  const next = e.target.value as LoanTargetType;
+                  set("target_type", next);
+                  if (isPaidDirectVendorTarget(next)) set("direction", "in");
+                }}
+                data-testid="loan-wizard-target-type"
               >
                 {TARGET_TYPES.map((t) => (
                   <option key={t} value={t}>
-                    {t}
+                    {TARGET_TYPE_LABELS[t]}
                   </option>
                 ))}
               </SelectCombobox>
@@ -468,8 +535,8 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 Account{" "}
                 {isRepayment
                   ? "(facility being repaid)"
-                  : form.direction === "in"
-                    ? "(liability)"
+                  : isPaidDirect || form.direction === "in"
+                    ? "(lender liability / facility)"
                     : "(receivable)"}
               </label>
               {/* ReferenceSelect, not a plain <SelectCombobox> (verify:referenceselect-coverage-ratchet):
@@ -496,6 +563,53 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                   )}
                   className="mt-1 block text-xs font-semibold text-[#1F2A44] underline"
                 />
+              ) : null}
+              {isPaidDirect ? (
+                <div className="space-y-2" data-testid="loan-wizard-paid-direct-fields">
+                  <label className="block text-xs font-medium text-[#1F2A44]">
+                    Debit account (what was paid for)
+                  </label>
+                  <ReferenceSelect
+                    value={form.funding_account_id || null}
+                    onChange={(v) => set("funding_account_id", v ?? "")}
+                    options={accountOptions}
+                    createKind="account"
+                    operatingCompanyId={operatingCompanyId}
+                    placeholder="e.g. Relay Fuel Wallet"
+                    loading={accountsQuery.isLoading}
+                    onOptionCreated={() => void accountsQuery.refetch()}
+                  />
+                  {form.funding_account_id ? (
+                    <EntityLink
+                      kind="account"
+                      id={form.funding_account_id}
+                      label={entityLabel(
+                        accounts.find((a) => a.id === form.funding_account_id)?.account_name,
+                        form.funding_account_id,
+                        "Account",
+                      )}
+                      className="mt-1 block text-xs font-semibold text-[#1F2A44] underline"
+                    />
+                  ) : null}
+                  <p className="text-xs text-[#6B7280]">
+                    Required. This is the CoA account debited — Relay Fuel Wallet when Relay was funded,
+                    or the prepaid / expense that the personal payment covered.
+                  </p>
+                  <label className="block text-xs font-medium text-[#1F2A44]">
+                    Intermediary (optional)
+                  </label>
+                  <input
+                    className={FORM_INPUT_CLASS}
+                    value={form.intermediary_name}
+                    onChange={(e) => set("intermediary_name", e.target.value)}
+                    placeholder="Who paid from a personal account (e.g. Alberto)"
+                    data-testid="loan-wizard-intermediary-name"
+                  />
+                  <p className="text-xs text-[#6B7280]">
+                    Lender is the counterparty name on the previous step. Intermediary is recorded on the
+                    advance when someone else paid on the lender&apos;s behalf.
+                  </p>
+                </div>
               ) : null}
               {isRepayment ? (
                 <div

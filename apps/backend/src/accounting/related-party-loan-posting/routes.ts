@@ -47,6 +47,8 @@ const TARGET_TYPES = [
   "intercompany",
   "bank_funding",
   "bank_repayment",
+  /** ROUND 443.22-2e — personal-account pay to vendor; no company bank line. */
+  "paid_direct_vendor",
 ] as const;
 
 const listQuerySchema = z.object({
@@ -85,6 +87,13 @@ const createBodySchema = z.object({
   funding_source_note: z.string().trim().max(500).optional(),
   /** ROUND 443.22-2a — optional bank line that opened the Loan wizard (reverse pointer). */
   bank_transaction_id: z.string().uuid().nullable().optional(),
+  /**
+   * ROUND 443.22-2e — CoA debit for paid_direct_vendor (what was paid for: Relay Fuel Wallet, etc.).
+   * Required when target_type is paid_direct_vendor; must be null/omitted for bank-line fundings.
+   */
+  funding_account_id: z.string().uuid().nullable().optional(),
+  /** ROUND 443.22-2e — optional intermediary who paid from a personal account (Alberto). */
+  intermediary_name: z.string().trim().max(200).optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -185,6 +194,10 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
                    e.facility_id::text,
                    e.display_id,
                    e.document_kind,
+                   e.funding_account_id::text,
+                   fa.account_number AS funding_account_number,
+                   fa.account_name AS funding_account_name,
+                   e.intermediary_name,
                    e.note_file_id::text,
                    CASE WHEN e.note_html IS NOT NULL AND length(e.note_html) > 0 THEN true ELSE false END AS has_note,
                    -- Reversal + related-party state belong in the REGISTER, not just the detail page:
@@ -211,6 +224,8 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
               FROM accounting.related_party_loan_entries e
               LEFT JOIN catalogs.accounts a
                 ON a.id = e.account_id AND a.operating_company_id = e.operating_company_id
+              LEFT JOIN catalogs.accounts fa
+                ON fa.id = e.funding_account_id AND fa.operating_company_id = e.operating_company_id
             ${where}
              ORDER BY e.entry_date DESC, e.created_at DESC
              LIMIT $${values.length - 1} OFFSET $${values.length}
@@ -397,6 +412,32 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
         )) as { rows: Array<{ id: string }> };
         if (!acct.rows[0]) return { error: "account_not_found_for_company" as const };
 
+        // ROUND 443.22-2e — paid-direct-to-vendor: no bank line; debit what was paid for.
+        const isPaidDirect = b.target_type === "paid_direct_vendor";
+        if (isPaidDirect) {
+          if (b.direction !== "in") {
+            return { error: "paid_direct_vendor_requires_direction_in" as const };
+          }
+          if (b.bank_transaction_id) {
+            return { error: "paid_direct_vendor_forbids_bank_transaction" as const };
+          }
+          if (!b.funding_account_id) {
+            return { error: "paid_direct_vendor_requires_funding_account" as const };
+          }
+        }
+
+        let fundingAccountId: string | null = b.funding_account_id ?? null;
+        if (fundingAccountId) {
+          const fundAcct = (await client.query(
+            `SELECT id::text FROM catalogs.accounts
+              WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
+            [fundingAccountId, b.operating_company_id]
+          )) as { rows: Array<{ id: string }> };
+          if (!fundAcct.rows[0]) return { error: "funding_account_not_found_for_company" as const };
+        }
+        // Non-paid-direct creates must not stamp a funding debit by accident.
+        if (!isPaidDirect) fundingAccountId = null;
+
         // Option 1: every advance hangs off the person's running facility (one per CoA account).
         const facilityId = await ensureRelatedPartyLoanFacility(client, {
           companyId: b.operating_company_id,
@@ -409,7 +450,9 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
         const documentKind =
           b.target_type === "repayment" || b.target_type === "bank_repayment"
             ? "repayment"
-            : b.target_type === "bank_funding" || b.bank_transaction_id
+            : b.target_type === "bank_funding" ||
+                b.target_type === "paid_direct_vendor" ||
+                Boolean(b.bank_transaction_id)
               ? "funding"
               : "manual";
 
@@ -451,8 +494,8 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
               counterparty_name, account_id, target_type, target_id, principal_cents, entry_date,
               interest_rate_bps, interest_method, payment_frequency, payment_count, first_payment_date,
               funding_source_note, status, facility_id, display_id, document_kind, bank_transaction_id,
-              created_by_user_id)
-           VALUES ($1::uuid,$2,$3,$4,$5::uuid,$6,$7::uuid,$8,$9::uuid,$10,$11::date,$12,$13,$14,$15,$16::date,$17,'open',$18::uuid,$19,$20,$21::uuid,$22::uuid)
+              funding_account_id, intermediary_name, created_by_user_id)
+           VALUES ($1::uuid,$2,$3,$4,$5::uuid,$6,$7::uuid,$8,$9::uuid,$10,$11::date,$12,$13,$14,$15,$16::date,$17,'open',$18::uuid,$19,$20,$21::uuid,$22::uuid,$23,$24::uuid)
            RETURNING id::text, direction, principal_cents, entry_date::text, facility_id::text, display_id`,
           [
             b.operating_company_id,
@@ -476,6 +519,8 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
             displayId,
             documentKind,
             b.bank_transaction_id ?? null,
+            fundingAccountId,
+            b.intermediary_name?.trim() || null,
             authUser.uuid,
           ]
         )) as { rows: Array<{ id: string; facility_id: string; display_id: string }> };
@@ -568,6 +613,9 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
             document_kind: documentKind,
             schedule_rows: scheduleRows,
             note_file_id: noteFileId,
+            funding_account_id: fundingAccountId,
+            intermediary_name: b.intermediary_name?.trim() || null,
+            bank_transaction_id: b.bank_transaction_id ?? null,
           },
           "info",
           "LOAN-05"
@@ -580,6 +628,8 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
           document_kind: documentKind,
           schedule_rows: scheduleRows,
           note_file_id: noteFileId,
+          funding_account_id: fundingAccountId,
+          intermediary_name: b.intermediary_name?.trim() || null,
         };
       });
 
