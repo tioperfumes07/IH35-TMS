@@ -7525,3 +7525,13 @@ consumed_at: 2026-10-11T07:02:19Z
 consumed_by: CC-2 (443.40 Relay vendor on deposit legs)
 row_counts: prod identical to the rehearsal — 52 relay_deposit lines filled with vendor Relay Purchases (1295: 26, 5005: 26); trial balance 0 across 3,233 postings unchanged
 proof_query: SELECT count(*) FROM accounting.journal_entry_postings WHERE source_transaction_type='relay_deposit' AND entity_uuid IS NULL AND account in (1295, 5005) -> 0
+
+## AUTH-414
+issued_at: 2026-10-11T07:13:44Z
+issued_by: Lead ruling 443.42 #6 (D6): "Root cause at POST time ... fix the posters, then fill-once backfill. A line that legitimately has no load (deposit, wallet funding) must still carry its entity". Recorded by CC-2 in the PR that ships the script, as with AUTH-404..413
+owner_quotes: "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — accounting.journal_entry_postings created since 2026-10-11T00:50Z: entity_uuid/entity_type filled ONCE where NULL through resolvePostingSourceEntity; load_id filled ONCE where NULL and provable (Relay fill -> its fill's one load; settlement application line -> the load bill its non-cash bill payment sits on; reversal -> the reversed line). No amount / account / side / JE change; trial balance + count asserted. No DELETE.
+action: OWNER_AUTH_ID=AUTH-414 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-42-d6-entity-load-fill.ts --apply
+rehearsal: throwaway br-little-boat-ak3f0ftu (COMMITTED, deleted): 2,673 postings; entity NULL 487 -> 0; load NULL 899 -> 183 (78 Relay deposit legs = wallet funding, 105 settlement credits spread over several load bills — both legitimately load-less); trial balance 0 across 3,233 postings unchanged
+expires_at: 2026-10-12T07:13:44Z
+status: OPEN
