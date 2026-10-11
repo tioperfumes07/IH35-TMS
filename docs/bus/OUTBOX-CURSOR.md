@@ -1,12 +1,13 @@
-## 2026-10-11 · ROUND 443.22-2f BACKFILL PROPOSAL (READ-ONLY) SHIPPING
+## 2026-10-11 · ROUND 443.22-2f BACKFILL PROPOSAL (READ-ONLY) MERGED (#26225)
 
 FINDING: ACCT-F44322-2f — read-only map of 209 RPL GL lines → person facilities; no JE rewrite; backfill only on owner word
 LANE: FINANCIAL
-Files Modified: RELATED-PARTY-LOAN-BACKFILL-PROPOSAL-44322-2f.md · .json · r44322-2f-measure-rpl-postings.mjs · verify-related-party-loan-backfill-proposal.mjs · 18372 step · gate-step-map · OUTBOX
+MERGED: #26225 squash `469589cf93`
+Files Modified: RELATED-PARTY-LOAN-BACKFILL-PROPOSAL-44322-2f.md · .json · r44322-2f-measure-rpl-postings.mjs · verify-related-party-loan-backfill-proposal.mjs · 18372 step · OUTBOX
 GUARD: verify-related-party-loan-backfill-proposal (18372) selftest+static PASS; counts 209/27/182 locked
 LIVE PROOF: Neon USMCA measured_all_posted=209 live=27 reversed=182; rewrite_journal=false on every live candidate; Scentsx +$11450 / Jorge -$4530 / Tio -$3030 / Laura $0
-REMAINING: owner chooses backfill option 1/2/3 on bus; Chrome proofs after deploy (Rule 42)
-NEXT: FAST-MERGE this 2f PR
+REMAINING: owner chooses backfill option 1/2/3 on bus; Chrome proofs after deploy (Rule 42). 443.22 steps 1–2f complete except owner-authorized backfill execute.
+NEXT: idle on 443.22 until owner word on backfill option; no JE rewrite
 
 ## 2026-10-10 · ROUND 443.22-MIG MERGED (#26208) + 2b shipping
 
