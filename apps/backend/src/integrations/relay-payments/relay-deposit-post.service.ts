@@ -10,9 +10,11 @@
  *   0680               USMCA Bank of America debit card  -> the USMCA Bank of America operating account (1000)
  *   9708, 1354, 4823   Transportation Wells Fargo cards  -> "Inter-company - IH35 Transportation" (8000); nothing is written
  *                                                           to a Transportation book
- *   0210, 6248         Jorge personal                    -> HELD: a related-party loan advance "paid directly to a vendor";
- *   9855               Tio Perfumes 2                       the loan engine (Cursor 443.22-2e) is the one writer, and its
- *                                                           paid-direct writer is not callable as a service yet
+ *   0210               Jorge personal card               -> LOAN (443.58): a related-party loan advance "paid directly to a
+ *                                                           vendor" through the loan engine (createPaidDirectVendorAdvance),
+ *                                                           and the credit leg goes to the lender's 2410-00-001 liability
+ *   6248               Jorge personal                    -> HELD until the owner names it the same way
+ *   9855               Tio Perfumes 2                    -> HELD
  *   5007               Amex Scentsx                      -> "Amex Credit Card Payable" (2500-00-001) (Lead ruling 2026-10-11)
  *   anything else      card owner not named              -> HELD, listed for the owner
  *
@@ -20,10 +22,13 @@
  * = the stored total_amount_cents. Idempotent: one journal entry per deposit (source_transaction_type 'relay_deposit').
  */
 import type { DbClient } from "./db-client.type.js";
+import { createPaidDirectVendorAdvance } from "../../accounting/related-party-loan-posting/create-entry.service.js";
 
 export type DepositFunding =
   | { kind: "account"; account_number: string | null; system_purpose: string | null; label: string }
-  | { kind: "held"; reason: "loan_engine_paid_direct" | "card_owner_not_named"; label: string };
+  | { kind: "held"; reason: "loan_engine_paid_direct" | "card_owner_not_named"; label: string }
+  /** 443.58: the card owner lent the money — loan document through the loan engine + credit to the lender's liability. */
+  | { kind: "loan"; liability_account_number: string; lender_vendor_name: string; relationship: "owner"; label: string };
 
 /** Owner's funding-card map. One place; the guard reads it. */
 export const RELAY_DEPOSIT_FUNDING: Readonly<Record<string, DepositFunding>> = Object.freeze({
@@ -31,7 +36,8 @@ export const RELAY_DEPOSIT_FUNDING: Readonly<Record<string, DepositFunding>> = O
   "9708": { kind: "account", account_number: null, system_purpose: "intercompany_ih35", label: "Laura — Transportation Wells Fargo debit" },
   "1354": { kind: "account", account_number: null, system_purpose: "intercompany_ih35", label: "Laura — Transportation Wells Fargo debit" },
   "4823": { kind: "account", account_number: null, system_purpose: "intercompany_ih35", label: "Laura — Transportation Wells Fargo debit" },
-  "0210": { kind: "held", reason: "loan_engine_paid_direct", label: "Jorge personal card" },
+  // Lead 443.58 (owner 2026-10-11 09:43 CT): the two 0210 deposits post now, as related-party loan advances.
+  "0210": { kind: "loan", liability_account_number: "2410-00-001", lender_vendor_name: "Jorge Pablo Guadalupe Muñoz Gonzalez", relationship: "owner", label: "Jorge personal card" },
   "6248": { kind: "held", reason: "loan_engine_paid_direct", label: "Jorge personal Bank of America debit" },
   "9855": { kind: "held", reason: "loan_engine_paid_direct", label: "Tio Perfumes 2" },
   // Lead ruling 2026-10-11 (after 443.29 b): 5007 credits "Amex Credit Card Payable" (2500-00-001), not the loan engine.
@@ -51,7 +57,7 @@ const cents = (v: unknown): number | null => {
 };
 
 export type DepositPostOutcome =
-  | { outcome: "posted"; deposit_id: string; journal_entry_id: string; amount_cents: number; fee_cents: number; charged_cents: number; funding: string }
+  | { outcome: "posted"; deposit_id: string; journal_entry_id: string; amount_cents: number; fee_cents: number; charged_cents: number; funding: string; loan_entry_id?: string; loan_display_id?: string }
   | { outcome: "already_posted"; deposit_id: string; journal_entry_id: string }
   | { outcome: "held"; deposit_id: string; reason: string; card: string | null; charged_cents: number; label: string; bank_transaction_id?: string }
   | { outcome: "not_settled"; deposit_id: string; status: string }
@@ -114,7 +120,9 @@ export async function postRelayDeposit(
     ).rows;
   const wallet = await acct("system_purpose", "relay_fuel_wallet");
   const feeAcct = await acct("account_number", "5005");
-  const fund = funding.account_number ? await acct("account_number", funding.account_number) : await acct("system_purpose", funding.system_purpose!);
+  const fund =
+    funding.kind === "loan" ? await acct("account_number", funding.liability_account_number)
+    : funding.account_number ? await acct("account_number", funding.account_number) : await acct("system_purpose", funding.system_purpose!);
   if (wallet.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: "relay_fuel_wallet_account_not_exactly_one" };
   if (feeAcct.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: "fuel_card_fees_5005_not_exactly_one" };
   if (fund.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: `funding_account_not_exactly_one (${funding.label})` };
@@ -163,24 +171,91 @@ export async function postRelayDeposit(
   const relayEntity = { entity_uuid: relay[0]!.id, entity_type: "vendor" };
   const src = { source_transaction_type: "relay_deposit", source_transaction_id: d.id };
   const card = d.funding_card_last4 ?? "?";
+
+  // 443.58: a LOAN card — the loan DOCUMENT first, through the loan engine's paid-direct writer (lender = the card owner,
+  // amount = what was charged, date = the deposit date, target = this deposit), then the credit leg names the lender.
+  let loan: { id: string; display_id: string } | null = null;
+  let fundEntity: { entity_uuid?: string; entity_type?: string } = {};
+  if (funding.kind === "loan") {
+    const lender = (
+      await client.query<{ id: string }>(
+        `SELECT id::text FROM mdata.vendors WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL AND vendor_name = $2 LIMIT 2`,
+        [args.operatingCompanyId, funding.lender_vendor_name]
+      )
+    ).rows;
+    if (lender.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: `lender_vendor_not_exactly_one (${funding.lender_vendor_name})` };
+    fundEntity = { entity_uuid: lender[0]!.id, entity_type: "vendor" };
+    const prior = (
+      await client.query<{ id: string; display_id: string; je_id: string | null }>(
+        `SELECT id::text, display_id, je_id::text FROM accounting.related_party_loan_entries
+          WHERE operating_company_id = $1::uuid AND target_type = 'paid_direct_vendor' AND target_id = $2::uuid
+            AND deleted_at IS NULL AND reversed_at IS NULL LIMIT 1`,
+        [args.operatingCompanyId, d.id]
+      )
+    ).rows[0];
+    if (prior?.je_id) return { outcome: "already_posted", deposit_id: d.deposit_id, journal_entry_id: prior.je_id };
+    if (prior) loan = prior;
+    else {
+      const made = await createPaidDirectVendorAdvance(
+        client as never,
+        {
+          operating_company_id: args.operatingCompanyId,
+          account_id: fund[0]!.id,
+          funding_account_id: wallet[0]!.id,
+          principal_cents: total,
+          entry_date: d.entry_date,
+          counterparty_name: funding.lender_vendor_name,
+          relationship: funding.relationship,
+          counterparty_kind: "vendor",
+          counterparty_id: lender[0]!.id,
+          target_id: d.id,
+          funding_source_note: `Relay wallet deposit ${d.deposit_id} paid directly to Relay with card ${card} (${funding.label}): $${(amount / 100).toFixed(2)} + fee $${(fee / 100).toFixed(2)}`,
+        },
+        args.actorUserId
+      );
+      if ("error" in made) return { outcome: "refused", deposit_id: d.deposit_id, reason: `loan_engine_${made.error}` };
+      loan = { id: made.id, display_id: made.display_id };
+    }
+  }
+
   const postings = [
     { account_id: wallet[0]!.id, debit_or_credit: "debit", amount_cents: amount, description: `Relay deposit ${d.deposit_id} — wallet funded`, ...src, ...relayEntity },
     ...(fee > 0 ? [{ account_id: feeAcct[0]!.id, debit_or_credit: "debit", amount_cents: fee, description: `Relay deposit ${d.deposit_id} — 3.25% deposit fee`, ...src, ...relayEntity }] : []),
-    { account_id: fund[0]!.id, debit_or_credit: "credit", amount_cents: total, description: `Relay deposit ${d.deposit_id} — charged to card ${card} (${funding.label})`, ...src },
+    {
+      account_id: fund[0]!.id,
+      debit_or_credit: "credit",
+      amount_cents: total,
+      description: loan
+        ? `Relay deposit ${d.deposit_id} — related-party loan ${loan.display_id} (${funding.label} ${card})`
+        : `Relay deposit ${d.deposit_id} — charged to card ${card} (${funding.label})`,
+      ...src,
+      ...fundEntity,
+    },
   ];
   const je = await deps.createJournalEntryOnClient(
     client,
     {
       operating_company_id: args.operatingCompanyId,
       entry_date: d.entry_date,
-      memo: `Relay wallet deposit ${d.deposit_id}: $${(amount / 100).toFixed(2)} + fee $${(fee / 100).toFixed(2)} charged to card ${card} (${funding.label})`,
+      memo: `Relay wallet deposit ${d.deposit_id}: $${(amount / 100).toFixed(2)} + fee $${(fee / 100).toFixed(2)} charged to card ${card} (${funding.label})${loan ? ` — related-party loan ${loan.display_id}` : ""}`,
       source: "auto",
       ...src,
       postings,
     },
     { userId: args.actorUserId, role: args.actorRole }
   );
-  return { outcome: "posted", deposit_id: d.deposit_id, journal_entry_id: je.id, amount_cents: amount, fee_cents: fee, charged_cents: total, funding: funding.label };
+  // Linked both ways: deposit -> JE by source_transaction_id; loan -> deposit by target_id; loan -> JE by je_id.
+  if (loan) {
+    await client.query(
+      `UPDATE accounting.related_party_loan_entries SET je_id = $2::uuid, updated_at = now(), updated_by_user_id = $3::uuid
+        WHERE id = $1::uuid AND je_id IS NULL`,
+      [loan.id, je.id, args.actorUserId]
+    );
+  }
+  return {
+    outcome: "posted", deposit_id: d.deposit_id, journal_entry_id: je.id, amount_cents: amount, fee_cents: fee, charged_cents: total, funding: funding.label,
+    ...(loan ? { loan_entry_id: loan.id, loan_display_id: loan.display_id } : {}),
+  };
 }
 
 /** Every settled deposit of one company, posted or held — the report the owner reads. */
