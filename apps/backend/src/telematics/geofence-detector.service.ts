@@ -210,6 +210,8 @@ export async function processGeofenceDetectionsForGpsPoint(
             UPDATE mdata.load_stops ls
                SET actual_arrival_at = $4::timestamptz,
                    actual_arrival_source = $5,
+                   -- 443.70 S3: the fence event moves the stop, not only its time (a cancelled / departed stop keeps its state)
+                   status = CASE WHEN ls.status IS NULL OR ls.status = 'pending' THEN 'arrived'::mdata.stop_status_enum ELSE ls.status END,
                    updated_at = now()
               FROM geo.geofences g, mdata.loads l
              WHERE g.id = $1::uuid
@@ -228,6 +230,7 @@ export async function processGeofenceDetectionsForGpsPoint(
             UPDATE mdata.load_stops ls
                SET actual_departure_at = $4::timestamptz,
                    actual_departure_source = $5,
+                   status = CASE WHEN ls.status = 'cancelled' THEN ls.status ELSE 'departed'::mdata.stop_status_enum END,
                    updated_at = now()
               FROM geo.geofences g, mdata.loads l
              WHERE g.id = $1::uuid
