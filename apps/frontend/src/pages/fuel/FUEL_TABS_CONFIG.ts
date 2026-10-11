@@ -11,6 +11,7 @@ export const FUEL_SUBNAV = [
   { id: "integrity", label: "Integrity" },
   { id: "cards", label: "Cards" },
   { id: "relay_unmatched", label: "Relay — unmatched" },
+  { id: "relay_wallet", label: "Relay wallet" },
 ] as const;
 
 export type FuelTabId = (typeof FUEL_SUBNAV)[number]["id"];
