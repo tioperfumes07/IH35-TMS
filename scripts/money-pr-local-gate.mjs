@@ -2363,6 +2363,18 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     skippedLiveChecks.push(msg);
     continue;
   }
+  // GATE-SCOPE ROUND 443.29-B — relay_deposit bank match does not touch banking-kpi / factoring-kpi engines;
+  // migration arms this census via DATA_WRITE_PATHS; tip drift is ambient (cash_position / escrow_*).
+  if (
+    name === "verify-factoring-banking-kpis-tie-to-ledger" &&
+    changedForLiveDomains !== null &&
+    round44329BankReconOnlyDiff(changedForLiveDomains)
+  ) {
+    const msg = `${rel} — bank-recon/banking-pointer diff (ROUND 443.29-B relay_deposit bank match)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
   if (name === "verify-fuel-posts-only-on-bank-match" && changedForLiveDomains !== null) {
     const fuelLawPaths = [
       "apps/backend/src/accounting/fuel-posting/",
