@@ -5,6 +5,7 @@
 import { bookLoadOnClient, type BookLoadInput } from "../dispatch/book-load.service.js";
 import type { SettlementCreatorDraft, SettlementCreatorLoadBlock } from "./settlement-creator.types.js";
 import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
+import { signedRateOverride } from "./settlement-creator-signed-rate.js";
 import { deliverLoadThroughDispatch, localDayStartIso, stampStopsFromTracking, type StopStamp } from "./settlement-creator-deliver.js";
 
 export const SETTLEMENT_CREATOR_QUAL_OVERRIDE_REASON =
@@ -276,7 +277,21 @@ export async function ensureDispatchedLoadsForCreator(
 
     const notDelivered = load.not_yet_delivered !== false && !load.delivery_date;
 
+    // ROUND 443.31 — the signed settlement's rate governs a historical load when today's card would pay differently
+    // (GO-21 B5 reason-carrying override; the rate card is never edited).
+    const card = (
+      await client.query<{ basis_type: string; rate_per_mile_cents: number | null; rate_empty_per_mile_cents: number | null }>(
+        `SELECT basis_type, rate_per_mile_cents::float8 AS rate_per_mile_cents, rate_empty_per_mile_cents::float8 AS rate_empty_per_mile_cents
+           FROM driver_finance.driver_pay_rates
+          WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid AND is_active AND effective_to IS NULL
+          ORDER BY effective_from DESC LIMIT 1`,
+        [draft.operating_company_id, draft.driver_id],
+      )
+    ).rows[0] ?? null;
+    const payOverride = signedRateOverride(draft.settlement_no, load, card);
+
     const input: BookLoadInput = {
+      ...(payOverride ?? {}),
       requestingUserUuid: actor.uuid,
       requestingUserRole: actor.role,
       operating_company_id: draft.operating_company_id,
