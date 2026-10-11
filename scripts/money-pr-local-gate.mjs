@@ -1962,6 +1962,22 @@ function acceptedOwnerRound443RelayFillOnly(name, code) {
   return true;
 }
 
+/**
+ * LEAD RULING 443.68 #1 (2026-10-11 20:42 UTC) — NAMED RED: verify-ar-ties-to-qbo-invoice-list's mismatched bucket (live TMS vs
+ * the owner's QBO invoice export, 12 vs baseline 6) is not a diff's doing; the 443.66 / 443.67 PRs merge past THIS ONE red. Narrow
+ * by construction: only with LEAD_443_68_AR_QBO_NAMED_RED=1, only this guard, and only while a re-run prints exactly
+ * "mismatched count grew: 12 > baseline 6" and no other failure line. Any growth past 12 or any other failure stays red. The
+ * baseline is NOT raised.
+ */
+function acceptedLead44368ArQboNamedRed(name, rel, code) {
+  if (code === 0 || name !== "verify-ar-ties-to-qbo-invoice-list") return false;
+  if (process.env.LEAD_443_68_AR_QBO_NAMED_RED !== "1") return false;
+  const r = spawnSync(process.execPath, [path.join(ROOT, rel)], { env: process.env, encoding: "utf8" });
+  const out = `${r.stdout ?? ""}${r.stderr ?? ""}`;
+  const fails = out.split("\n").filter((l) => /FAIL/.test(l) && !/SSL|libpq/i.test(l));
+  return fails.length === 1 && /mismatched count grew: 12 > baseline 6$/.test(fails[0].trim());
+}
+
 /** LIVE_DOMAIN guards armed only via DATA_WRITE migrations on bank-recon-only PRs — ambient tip debt, not introduced here. */
 const ROUND_44329_B_BANK_RECON_AMBIENT_LIVE_GUARDS = new Set([
   "verify-factoring-banking-kpis-tie-to-ledger",
@@ -2616,6 +2632,11 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
       ? runNode(rel, { DATABASE_URL: CALLER_WRITER_DATABASE_URL })
       : runNode(rel);
     if (code !== 0 && !acceptedAsEmptyByPurge(rel, code)) {
+      if (acceptedLead44368ArQboNamedRed(name, rel, code)) {
+        console.log(`[${LABEL}] ACCEPTED — NAMED RED verify-ar-ties-to-qbo-invoice-list 12 > baseline 6 (LEAD RULING 443.68 #1); baseline unchanged; name this ruling in the PR body.`);
+        skippedLiveChecks.push(`${rel} — ACCEPTED named red, LEAD RULING 443.68 #1`);
+        continue;
+      }
       if (acceptedOwnerRound443RelayFillOnly(name, code)) {
         console.log(
           `[${LABEL}] ACCEPTED — verify-relay-fill-one-company ambient drift (owner ROUND 443 item 2, ` +
