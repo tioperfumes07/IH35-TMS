@@ -59,7 +59,7 @@ export function CreatorMilesChoicePanel({
             <th className={th}>Document (pay)</th>
             <th className={th}>Historical</th>
             <th className={th}>Google</th>
-            <th className={th}>Use for the load</th>
+            <th className={`${th} w-[170px]`}>Use for the load</th>
           </tr>
         </thead>
         <tbody>
@@ -72,11 +72,13 @@ export function CreatorMilesChoicePanel({
             const s = saved?.[f];
             return (
               <tr key={f} className="border-b border-[#E5E7EB] last:border-b-0" data-testid={`sc-load-miles-row-${idx}-${f}`}>
-                <td className={`${td} font-semibold`}>{LABEL[f]}</td>
+                <td className={`${td} whitespace-nowrap font-semibold`}>{LABEL[f]}</td>
                 <td className={`${td} text-center`}>{fmt(doc) ?? <span className={sub}>not on the settlement</span>}</td>
                 <td className={`${td} text-center`} data-testid={`sc-load-miles-historical-${idx}-${f}`}>
                   {loading ? (
                     <span className={sub}>Looking up…</span>
+                  ) : !rec ? (
+                    <span className={sub}>Set pickup + delivery to compare</span>
                   ) : h ? (
                     <>
                       <div>{fmt(h.value)}</div>
@@ -94,6 +96,8 @@ export function CreatorMilesChoicePanel({
                 <td className={`${td} text-center`} data-testid={`sc-load-miles-google-${idx}-${f}`}>
                   {loading ? (
                     <span className={sub}>Looking up…</span>
+                  ) : !rec ? (
+                    <span className={sub}>Set pickup + delivery to compare</span>
                   ) : g ? (
                     <>
                       <div>{fmt(g.value)}</div>

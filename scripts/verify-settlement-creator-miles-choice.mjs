@@ -5,7 +5,8 @@
  *     (postMilesRecommendations -> POST /api/v1/mdata/miles-recommendations) and renders the per-field selector
  *     (CreatorMilesChoicePanel); it calls no other mileage lookup (lane mileage, route mileage, chain deadhead). The post
  *     applies the choice only through the engine (recordDocumentMilesSources + setMilesChoice), writes no miles SQL of its
- *     own, and runs it AFTER the pay-run close, so driver pay (rate × the settlement's miles) is already written.
+ *     own, and runs it AFTER the pay-run close, so driver pay (rate × the settlement's miles) is already written. A place pick in
+ *     the drawer never clears the settlement's miles (the Document value; loaded miles are also the pay fallback).
  *   RULE 2 (live) — a Creator load on a settlement posted after the cutover with a miles field (practical / short / empty)
  *     that has no recorded source fails. Older Creator loads are reported (CC-2's record-sources pass owns them).
  * Run: node scripts/verify-settlement-creator-miles-choice.mjs [--selftest]
@@ -37,6 +38,8 @@ export function staticProblems(s) {
   if (!/value="document"[\s\S]*value="historical"[\s\S]*value="google"[\s\S]*value="manual"/.test(s.panel)) p.push("RULE 1 the selector is not Document | Historical | Google | Manual");
   if (!/recordDocumentMilesSources\(/.test(s.module) || !/setMilesChoice\(/.test(s.module)) p.push("RULE 1 the post does not apply the choice through CC-2's engine (recordDocumentMilesSources + setMilesChoice)");
   if (/UPDATE\s+mdata\.loads|lane_mileage|point_mileage|miles_shortest\s*=|miles_practical\s*=/i.test(s.module)) p.push("RULE 1 the Creator miles module writes miles itself (a second mileage path)");
+  const geo = s.drawer.match(/function applyGeocodeToLoad[\s\S]*?\n}\n/)?.[0] ?? "";
+  if (!geo || /(loaded_miles|line_haul_miles|empty_miles|miles_shortest):\s*null/.test(geo)) p.push("RULE 1 a place pick clears the settlement's miles (the Document value / pay fallback)");
   const apply = s.svc.indexOf("applyCreatorMilesChoices(");
   const close = s.svc.lastIndexOf("closeSettlementPayRun(");
   if (apply < 0) p.push("RULE 1 the post never applies the miles choice");
@@ -60,6 +63,7 @@ function selftest() {
     ["panel without Manual fails", staticProblems({ ...g, panel: g.panel.replace('value="manual"', 'value="x"') }).length > 0],
     ["module writing miles SQL fails", staticProblems({ ...g, module: g.module + "\n// UPDATE mdata.loads SET miles_shortest = 1" }).length > 0],
     ["module without setMilesChoice fails", staticProblems({ ...g, module: g.module.replaceAll("setMilesChoice(", "y(") }).length > 0],
+    ["a place pick that clears miles fails", staticProblems({ ...g, drawer: g.drawer.replace("function applyGeocodeToLoad(", "function applyGeocodeToLoad(/*x*/").replace("...(lng != null ? { pickup_lng: lng } : {}),", "...(lng != null ? { pickup_lng: lng } : {}),\n      loaded_miles: null,") }).length > 0],
     ["choice before the close fails", staticProblems({ ...g, svc: "applyCreatorMilesChoices(\n" + g.svc.replaceAll("applyCreatorMilesChoices(", "z(") }).length > 0],
     ["no live miss passes", liveProblems({ after: 0, before: 146 }).length === 0],
     ["a live miss fails", liveProblems({ after: 1, before: 0 }).length > 0],

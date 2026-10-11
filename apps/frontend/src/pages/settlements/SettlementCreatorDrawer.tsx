@@ -210,10 +210,8 @@ function applyGeocodeToLoad(
       ...(zip ? { pickup_zip: zip } : {}),
       ...(lat != null ? { pickup_lat: lat } : {}),
       ...(lng != null ? { pickup_lng: lng } : {}),
-      // New place → allow lane/route engines to refill miles (operator can still type over).
-      loaded_miles: null,
-      line_haul_miles: null,
-      empty_miles: null,
+      // Lead 443.57: a place pick never clears the settlement's miles (the DOCUMENT value — loaded miles are also the pay
+      // fallback). The engine's Historical / Google for the new point show in Load miles; an empty field still autofills.
     };
   }
   return {
@@ -224,8 +222,6 @@ function applyGeocodeToLoad(
     ...(zip ? { delivery_zip: zip } : {}),
     ...(lat != null ? { delivery_lat: lat } : {}),
     ...(lng != null ? { delivery_lng: lng } : {}),
-    loaded_miles: null,
-    line_haul_miles: null,
   };
 }
 
