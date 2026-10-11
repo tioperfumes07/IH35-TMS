@@ -1,3 +1,14 @@
+## 2026-10-11 · BANK-F44329-MONEY MERGED (#26366) — OUTBOX DONE
+
+FINDING: BANK-F44329-MONEY — Relay match-hint Bank/Wallet/Fee/Charged/Gap were unclickable; now MoneyCell → bank_transaction.
+LANE: NON-FINANCIAL (FE drill only)
+MERGED: #26366 squash `8e9ceac859`
+Files Modified: RelayDepositCategorizedMatchHintsPanel.tsx (prior tip); this tip OUTBOX only
+GUARD: verify-money-cells-click-through OK on tip — shrink-only 0; combined 33 <= 33
+LIVE PROOF: gh pr view 26366 state=MERGED mergeCommit=8e9ceac859; tip `node scripts/verify-money-cells-click-through.mjs` exit 0; five MoneyCell entity drills in RelayDepositCategorizedMatchHintsPanel
+REMAINING: owner Chrome Match drawer (wallet + 3.25% fee) after FE deploy (Rule 42); CC-2 wires createPaidDirectVendorAdvance for Relay cards 0210/6248/9855 (5007 Amex ≠ loan)
+NEXT: INBOX 435/432/433 tip census — money-cells defect from 443.29-B is closed; back-arrow / hard-four / multi-select already on tip
+
 ## 2026-10-11 · ROUND 443.29 Neon 301+302 APPLIED — OUTBOX DONE
 
 FINDING: BANK-F44329-NEON — Relay match DDL + facilities WORM now on USMCA Neon; refuse-delete proven.
