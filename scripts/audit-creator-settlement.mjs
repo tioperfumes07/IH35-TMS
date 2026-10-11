@@ -237,17 +237,29 @@ async function auditSettlement(client, settlementNo) {
   for (const loadDef of ef.loads ?? []) {
     const ln = loadDef.load_number;
     const rateCents = loadDef.line_haul_rate_cents ?? 0;
-    const loadedMiles = loadDef.loaded_miles ?? 0;
+    // ROUND 443.4 / 443.33 — driver pay is miles_shortest (else the loaded miles) x rate, rounded by THE one money rule
+    // (milesTimesRateCents: snap 6 decimals, then half-up) — the same figure booking, the driver bill and the Creator use.
+    const loadedMiles = Number(loadDef.miles_shortest ?? 0) > 0 ? Number(loadDef.miles_shortest) : (loadDef.loaded_miles ?? 0);
     const emptyMiles = loadDef.empty_miles ?? 0;
     const emptyRateCents = loadDef.empty_rate_cents ?? rateCents;
-    const expectedBillCents = Math.round(loadedMiles * rateCents) + Math.round(emptyMiles * emptyRateCents);
+    const milesTimesRateCents = (m, r) => Math.round(Number((Number(m) * Number(r)).toFixed(6)));
+    const milesPayCents = milesTimesRateCents(loadedMiles, rateCents) + milesTimesRateCents(emptyMiles, emptyRateCents);
+    // The driver bill for a load also carries that load's additional pay (loading, layover, bonus), its
+    // reimbursements, and every driver-paid reimbursable expense on it — the same lines the Creator writes.
+    const onLoad = (rows) => (rows ?? []).filter((r) => String(r.load_number ?? "") === String(ln));
+    const sumCents = (rows) => rows.reduce((t, r) => t + Number(r.amount_cents ?? 0), 0);
+    const extrasCents =
+      sumCents(onLoad(ef.additional_pay)) +
+      sumCents(onLoad(ef.reimbursements)) +
+      sumCents(onLoad(ef.expenses).filter((e) => e.is_reimbursable === true && e.is_company_expense !== true));
+    const expectedBillCents = milesPayCents + extrasCents;
 
     check(`${prefix}/BILL-${ln}-EXISTS`, !!billByLoad[ln], `no driver bill for load ${ln}`);
     if (!billByLoad[ln]) continue;
     check(
       `${prefix}/BILL-${ln}-AMOUNT`,
       Number(billByLoad[ln].gross_cents) === expectedBillCents,
-      `gross_cents=${billByLoad[ln].gross_cents} expected=${expectedBillCents} (${loadedMiles}mi×${rateCents}c + ${emptyMiles}mi×${emptyRateCents}c)`
+      `gross_cents=${billByLoad[ln].gross_cents} expected=${expectedBillCents} (${loadedMiles}mi×${rateCents}c + ${emptyMiles}mi×${emptyRateCents}c = ${milesPayCents} + extras ${extrasCents})`
     );
   }
 
@@ -320,11 +332,20 @@ async function auditSettlement(client, settlementNo) {
             ft.notes AS ft_notes
      FROM accounting.expenses e
      JOIN fuel.fuel_transactions ft ON ft.id = e.source_fuel_transaction_id
+     JOIN driver_finance.driver_settlements s ON s.id = $3::uuid
      WHERE e.operating_company_id = $1::uuid
-       AND e.settlement_no = $2
        AND e.voided_at IS NULL
-       AND ft.voided_at IS NULL`,
-    [companyId, settlementNo]
+       AND ft.voided_at IS NULL
+       -- The settlement link: the expense names this settlement (settlement_no, once stamped), or its fuel row is this
+       -- settlement driver's and sits on one of this settlement's loads or inside its period. Never settlement_no alone.
+       AND (
+         e.settlement_no = $2
+         OR (ft.driver_id = s.driver_id AND (
+               ft.load_id IN (SELECT l.id FROM driver_finance.driver_settlement_gl_bills dsg JOIN mdata.loads l ON l.load_number = dsg.load_number AND l.operating_company_id = dsg.operating_company_id WHERE dsg.settlement_id = s.id)
+               OR ft.load_id IN (SELECT sl.load_id FROM driver_finance.settlement_lines sl WHERE sl.settlement_id = s.id AND sl.load_id IS NOT NULL)
+               OR ft.transaction_at::date BETWEEN s.period_start AND s.period_end))
+       )`,
+    [companyId, settlementNo, settlId]
   );
 
   const fileFuelCount = (ef.fuel_purchases ?? []).length;
@@ -427,7 +448,10 @@ async function auditSettlement(client, settlementNo) {
     return;
   }
 
-  // ── CHECK 9: NO posting on any bank account ──
+  // ── CHECK 9: NO posting on any cash (bank) account ──
+  // A fuel-card payable (e.g. 2510, account_type Liability / CreditCard) also has a banking.bank_accounts row so its
+  // statement can be reconciled, and card fuel correctly credits it (card-map ruling). The check is about cash:
+  // only Asset bank ledgers count.
   const bankPostings = await q(
     client,
     `SELECT p.debit_or_credit, p.amount_cents, a.account_number
@@ -435,7 +459,8 @@ async function auditSettlement(client, settlementNo) {
      JOIN catalogs.accounts a ON p.account_id = a.id
      JOIN banking.bank_accounts ba ON ba.ledger_account_id = a.id
      WHERE p.journal_entry_uuid = ANY($1::uuid[])
-       AND p.operating_company_id = $2::uuid`,
+       AND p.operating_company_id = $2::uuid
+       AND a.account_type = 'Asset'`,
     [allJeIds, companyId]
   );
   check(

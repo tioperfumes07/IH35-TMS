@@ -105,6 +105,53 @@ export class PostingLineAlreadyReversedError extends Error {
   }
 }
 
+/**
+ * D6 (Lead order 2026-10-11, measured on prod: 206 of 229 Creator-caused postings had entity_uuid NULL) — the entity a posting
+ * names when its caller did not: taken from the posting's OWN source document, the same way the load stamp is
+ * (posting_source_load_id). A reversal line names what the line it reverses named. An explicit entity always wins.
+ *   invoice -> its customer · bill -> its driver (a driver bill) else its vendor · bill_payment -> its bill's driver, else its vendor ·
+ *   expense -> its vendor, else its driver, else its payee customer · driver_settlement / driver_advance -> the driver.
+ */
+export async function resolvePostingSourceEntity(
+  client: PostingWriterClient,
+  line: Pick<PostingLineWrite, "source_transaction_type" | "source_transaction_id" | "reversal_of_line_id">
+): Promise<{ entity_uuid: string; entity_type: "customer" | "vendor" | "driver" } | null> {
+  if (line.reversal_of_line_id) {
+    const r = await client.query<{ entity_uuid: string | null; entity_type: string | null }>(
+      `SELECT entity_uuid::text, entity_type FROM accounting.journal_entry_postings WHERE id = $1::uuid`,
+      [line.reversal_of_line_id]
+    );
+    const row = r.rows[0];
+    if (row?.entity_uuid && row.entity_type) {
+      return { entity_uuid: row.entity_uuid, entity_type: row.entity_type as "customer" | "vendor" | "driver" };
+    }
+    // The reversed line predates entity stamping -- attribute the reversal from its own source document instead.
+  }
+  const id = String(line.source_transaction_id ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const sql: Record<string, string> = {
+    invoice: `SELECT customer_id::text AS e, 'customer' AS t FROM accounting.invoices WHERE id = $1::uuid`,
+    bill: `SELECT COALESCE(driver_id::text, vendor_uuid::text, vendor_id::text, mdata_vendor_id::text) AS e,
+                  CASE WHEN driver_id IS NOT NULL THEN 'driver' ELSE 'vendor' END AS t
+             FROM accounting.bills WHERE id = $1::uuid`,
+    // A payment on a driver's bill carries the driver, the same party as that bill's A/P credit.
+    bill_payment: `SELECT COALESCE(b.driver_id::text, bp.vendor_id::text) AS e,
+                          CASE WHEN b.driver_id IS NOT NULL THEN 'driver' ELSE 'vendor' END AS t
+                     FROM accounting.bill_payments bp LEFT JOIN accounting.bills b ON b.id = bp.bill_id
+                    WHERE bp.id = $1::uuid`,
+    expense: `SELECT COALESCE(vendor_uuid::text, driver_uuid::text, payee_customer_uuid::text) AS e,
+                     CASE WHEN vendor_uuid IS NOT NULL THEN 'vendor' WHEN driver_uuid IS NOT NULL THEN 'driver' ELSE 'customer' END AS t
+                FROM accounting.expenses WHERE id = $1::uuid`,
+    driver_settlement: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_settlements WHERE id = $1::uuid`,
+    driver_advance: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_advances WHERE id = $1::uuid`,
+  };
+  const q = sql[String(line.source_transaction_type ?? "")];
+  if (!q) return null;
+  const r = await client.query<{ e: string | null; t: "customer" | "vendor" | "driver" }>(q, [id]);
+  const row = r.rows[0];
+  return row?.e ? { entity_uuid: row.e, entity_type: row.t } : null;
+}
+
 async function writeLine(
   client: PostingWriterClient,
   line: PostingLineWrite,
@@ -132,6 +179,12 @@ async function writeLine(
     if (target.rows[0]?.is_reversal) {
       throw new PostingLineIsAlreadyAReversalError(line.reversal_of_line_id);
     }
+  }
+
+  // D6 — every posting names its entity: the caller's, else its source document's (see resolvePostingSourceEntity).
+  if (!line.entity_uuid) {
+    const derived = await resolvePostingSourceEntity(client, line);
+    if (derived) line = { ...line, entity_uuid: derived.entity_uuid, entity_type: derived.entity_type };
   }
 
   const ins = await client.query<{ id: string }>(
