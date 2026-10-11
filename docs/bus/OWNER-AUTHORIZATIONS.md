@@ -7547,7 +7547,10 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — pwa.driver_notifica
 action: OWNER_AUTH_ID=AUTH-415 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-42-hide-historical-dispatch-notices.ts --apply
 rehearsal: throwaway br-square-hat-akj1365j (COMMITTED, deleted): 141 matched (81 at the 443.41 measure + later Creator posts before 6f84ffa6bf went live), 141 hidden, 0 still visible
 expires_at: 2026-10-12T07:11:23Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T07:44:12Z
+consumed_by: CC-2 (443.42 #7 hide historical dispatch notices)
+row_counts: prod identical to the rehearsal — 141 "Load N dispatched" notices for loads that already ran hidden (payload.hidden + read_at, rows kept, audited); 0 still visible
 
 ## AUTH-416
 issued_at: 2026-10-11T07:13:37Z
@@ -7557,7 +7560,10 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the loads in ~/IH35
 action: OWNER_AUTH_ID=AUTH-416 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-42-stop-addresses-from-workbook.ts --file=<443-42-stop-addresses.json> --apply
 rehearsal: throwaway br-polished-pine-ako72hz1 (COMMITTED, deleted): 141 loads / 282 stops; facility_name NULL 42 -> 0; on a Samsara address 60 -> 66; no street 222 -> 216; 10 loads listed whose workbook has more stops than were booked (13528 13537 13538 13570 13576 13583 13589 13599 13600 13628)
 expires_at: 2026-10-12T07:13:37Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T07:44:48Z
+consumed_by: CC-2 (443.42 #5 workbook facility names)
+row_counts: prod identical to the rehearsal — 141 loads / 282 stops: facility_name NULL 42 -> 0; on a Samsara address 60 -> 66; no street 222 -> 216; 10 loads with more workbook stops than booked listed and untouched (CC-3 repairs them, 443.43 #3)
 
 ## AUTH-417
 issued_at: 2026-10-11T07:48:51Z
@@ -7567,4 +7573,7 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — driver e3ac0879-855
 action: OWNER_AUTH_ID=AUTH-417 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-43-provision-escrow-e3ac0879.ts --apply
 rehearsal: throwaway br-old-sea-ak9we4lm (COMMITTED, deleted): escrow 2100-00-043 "EDUARDO AZAEL FLORES ORTIZ — Driver Escrow (hired unknown)" + advance sub-account created; escrow before NULL
 expires_at: 2026-10-12T07:48:51Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T07:57:30Z
+consumed_by: CC-2 (443.43 #1, taken at 07:55Z)
+row_counts: prod identical to the rehearsal — driver e3ac0879 escrow 2100-00-043 "EDUARDO AZAEL FLORES ORTIZ — Driver Escrow (hired unknown)" + Driver Cash Advance sub-account created; escrow before: none
