@@ -54,7 +54,27 @@ function toIso(v: string | undefined, fallbackDate: string | undefined): string 
 }
 
 /** Map one CSV row (by header name) to the raw Relay API transaction shape parseRelayFuelTransactionRow expects. */
-export function csvRowToApiShape(g: (name: string) => string | undefined): Record<string, unknown> | null {
+/** R6 flag text (owner 2026-10-10). One wording, read by the guard. */
+export const DEF_ESTIMATED_FLAG = "gallons estimated at average price (owner 10-10)";
+
+/**
+ * ROUND 443.29 d (Lead R6, owner 2026-10-10 7:10 PM CT "classify as def on average price so you get gallons"): the file's
+ * average DEF price = sum(total_price def) / sum(volume def) over settled code rows that report both. Computed once per file.
+ */
+export function fileDefAveragePricePerGallon(rows: Array<(name: string) => string | undefined>): number | null {
+  let price = 0, vol = 0;
+  for (const g of rows) {
+    if ((g("type") ?? "").trim().toLowerCase() !== "code" || (g("status") ?? "").trim().toLowerCase() !== "settled") continue;
+    const v = Number(g("volume def") ?? ""), p = Number(g("total_price def") ?? "");
+    if (Number.isFinite(v) && v > 0 && Number.isFinite(p) && p > 0) { vol += v; price += p; }
+  }
+  return vol > 0 ? price / vol : null;
+}
+
+export function csvRowToApiShape(
+  g: (name: string) => string | undefined,
+  opts: { defAveragePricePerGallon?: number | null } = {}
+): Record<string, unknown> | null {
   const id = S(g("id"));
   if (!id) return null;
   // CRITICAL (verified 2026-07-12): the Relay CSV mixes type=code (fuel PURCHASED at the pump) with
@@ -91,6 +111,25 @@ export function csvRowToApiShape(g: (name: string) => string | undefined): Recor
   const amount = Number(S(g("amount")) ?? "");
   if (fuel_items.length === 0 && Number.isFinite(amount) && amount > 0) {
     fuel_items.push({ fuel_type: "other", volume: null, volume_uom: null, total_discounted_price: S(g("amount")), total_retail_price: S(g("amount")) });
+  }
+  // ROUND 443.29 d (Lead R6): a fill whose product lines do NOT add up to its amount, and whose products are all DEF, carries
+  // the remainder as DEF at the file's average DEF price — never 0 gallons, never a plug on another product — and says so.
+  // Measured: txn_8LZfDKWFvFv1oD $38.89 shows only 0.112 gal / $0.45; the other $38.44 at $4.8711/gal = 7.891 gal -> 8.003 gal.
+  const avgDef = opts.defAveragePricePerGallon ?? null;
+  if (avgDef && avgDef > 0 && fuel_items.length > 0 && fuel_items.every((i) => i.fuel_type === "def") && Number.isFinite(amount) && amount > 0) {
+    const toCents = (v: unknown) => Math.round(Number(v ?? 0) * 100);
+    const linesCents = fuel_items.reduce((t, i) => t + toCents(i.total_discounted_price), 0);
+    const remainderCents = Math.round(amount * 100) - linesCents;
+    if (remainderCents > 0) {
+      const item = fuel_items[0]!;
+      const vol = Number(item.volume ?? 0) || 0;
+      const addGal = remainderCents / 100 / avgDef;
+      const newCents = toCents(item.total_discounted_price) + remainderCents;
+      item.volume = (vol + addGal).toFixed(3);
+      item.total_discounted_price = (newCents / 100).toFixed(2);
+      item.total_retail_price = (Math.max(toCents(item.total_retail_price), toCents(item.total_discounted_price)) / 100).toFixed(2);
+      item.fuel_type_description = `DEF — ${DEF_ESTIMATED_FLAG}`;
+    }
   }
   const prompts = ([["Truck #", "Truck #"], ["Load #", "Load #"], ["Odometer", "Odometer"], ["Trailer #", "Trailer #"], ["Trip #", "Trip #"], ["Driver #", "Driver #"]] as const)
     .map(([label, col]) => ({ label, value: S(g(col)) }))
@@ -136,6 +175,10 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
     if (rows.length < 2) return reply.code(400).send({ error: "no data rows" });
     const header = rows[0].map((h) => h.trim());
     const idx = new Map(header.map((h, i) => [h, i]));
+    // ROUND 443.29 d (R6): the file's average DEF price, once, for DEF-remainder rows.
+    const defAverage = fileDefAveragePricePerGallon(
+      rows.slice(1).map((r) => (name: string) => (r && idx.has(name) ? r[idx.get(name)!] : undefined))
+    );
 
     let imported = 0, skipped = 0, lines = 0, deposits = 0, depositCompany = 0, depositUnclassified = 0;
     // ROUND 443.29 b: a settled deposit posts (Dr 1295 + Dr 5005 fee / Cr funding account) or is HELD by name.
@@ -185,7 +228,7 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
         }
 
         // type=code → fuel purchased at the pump.
-        const raw = csvRowToApiShape(g);
+        const raw = csvRowToApiShape(g, { defAveragePricePerGallon: defAverage });
         let tx: ReturnType<typeof parseRelayFuelTransactionRow>;
         try {
           tx = raw ? parseRelayFuelTransactionRow(raw) : null;

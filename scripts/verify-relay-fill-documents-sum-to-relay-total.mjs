@@ -50,6 +50,10 @@ export function check(src) {
   const rfw = src.rollForward ?? "";
   if (!/relayFillFeeCents\(\{/.test(rfw)) f.push(`${FILES.rollForward}: fill fees must come from relayFillFeeCents`);
   if (!/bal \+= x\.deposits_cents - x\.fills_cents - x\.fill_fees_cents - x\.lumper_cents;/.test(rfw)) f.push(`${FILES.rollForward}: balance must be deposits − fills − fill fees − lumper (the deposit fee is charged to the card, never the wallet)`);
+  // ROUND 443.29 d — R6: a DEF-only fill's remainder is DEF at the file's average price, flagged; the route passes the average.
+  const imp = src.importRoute ?? "";
+  if (!/fuel_items\.every\(\(i\) => i\.fuel_type === "def"\)/.test(imp) || !/item\.fuel_type_description = `DEF — \$\{DEF_ESTIMATED_FLAG\}`/.test(imp)) f.push(`${FILES.importRoute}: R6 — a DEF-only fill's remainder must become DEF at the average price, flagged estimated`);
+  if (!/csvRowToApiShape\(g, \{ defAveragePricePerGallon: defAverage \}\)/.test(imp)) f.push(`${FILES.importRoute}: R6 — the import must pass the file's average DEF price`);
   return f;
 }
 
@@ -92,6 +96,8 @@ if (process.argv.includes("--selftest")) {
     ["import does not post", { ...real, importRoute: real.importRoute.replace(/postRelayDeposit\(/g, "noop(") }],
     ["deposit fee taken from the wallet", { ...real, rollForward: real.rollForward.replace("bal += x.deposits_cents - x.fills_cents", "bal += x.deposits_cents - x.deposit_fees_cents - x.fills_cents") }],
     ["roll-forward fee constant", { ...real, rollForward: real.rollForward.replace("relayFillFeeCents({", "constantFee({") }],
+    ["R6 rule removed", { ...real, importRoute: real.importRoute.replace("item.fuel_type_description = `DEF — ${DEF_ESTIMATED_FLAG}`", "void 0") }],
+    ["R6 average not passed", { ...real, importRoute: real.importRoute.replace("csvRowToApiShape(g, { defAveragePricePerGallon: defAverage })", "csvRowToApiShape(g)") }],
   ];
   for (const [name, s] of plants) if (check(s).length === 0) fails.push(`plant escaped: ${name}`);
   const ok = { account_number: "5005" };
