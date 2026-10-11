@@ -7769,3 +7769,13 @@ consumed_at: 2026-10-11T17:01:30Z
 consumed_by: CC-2 (443.62 #6 stop fixes)
 row_counts: 2 cities (13506 Laredo, 13543 Albertville); 2 locations re-imported clean; 2 stops street from location (13545, 13599); 4 relearn events delivered, 0 errored
 proof_query: node scripts/verify-stops-resolve-samsara-no-zip-fence.mjs -> PASS
+
+## AUTH-434
+issued_at: 2026-10-11T17:25:31Z
+issued_by: Lead 443.63 ("GO on learnLoadLanes for 13543 under a new AUTH; write google_place_id on stops/locations now the column is live"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..433
+owner_quotes: "We have google in our app, get the addresses from there and fix the engine to parse the warehouse name, street address so this does not occur anymore." (2026-10-11 09:23 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — (1) mdata.load_stops.google_place_id for every 'google_place' stop from its own latest street_from_google_place audit row (only when that row's street is the stop's current street), and the stop's mdata.locations.google_place_id when empty; audited per stop. (2) learnLoadLanes(fresh: true) once for 13543 (city corrected under AUTH-433) so Albertville, AL -> Temple, TX is learned; idempotent by audit marker dispatch.load.lane_relearned; the typo lane ALBERTIVILLE row is kept and listed. No money, no DELETE.
+action: OWNER_AUTH_ID=AUTH-434 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-63-place-id-and-lane.ts --apply
+rehearsal: throwaway br-winter-wave-ak19iruf (COMMITTED, deleted): 150 stops + 111 locations given google_place_id (150 of 150 google_place stops); 13543 lane city_row_created; re-run 0 / 0 / "already relearned"; verify-booked-loads-save-miles PASS on the fork (first fork br-jolly-recipe-aky2d8f6 showed the lane counted twice on re-run — idempotency fixed before this one)
+expires_at: 2026-10-12T17:25:31Z
+status: OPEN
