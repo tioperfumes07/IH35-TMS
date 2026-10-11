@@ -32,7 +32,10 @@ const MIGRATIONS_DIR = path.join(ROOT, "db", "migrations");
 
 /** Baseline = migration files DEFINING a deleted_at column, measured 2026-09-03 when this guard
  * landed (CREATE TABLE / ADD COLUMN with a real type, not a bare mention). May only go DOWN. */
-const BASELINE = 15;
+/** Raised 15→16 when 202615441200_related_party_loan_facility_loc.sql landed on main (#26208)
+ * with facilities.deleted_at already applied (immutable). Opportunistic convert to deactivated_at
+ * / voided_at is a later PR that touches that table — never edit the applied migration. */
+const BASELINE = 16;
 
 /** A column definition, not a comment/WHERE/index reference: `deleted_at` immediately followed by a
  * real SQL type keyword. Case-insensitive; SQL is not case-sensitive on keywords. */

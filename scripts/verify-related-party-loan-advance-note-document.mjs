@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting","docs"],"cols":["connectivity"],"leaves":["related_party_loan_advance_note"],"task":"ACCT-F433-PARTY-LEDGER-RPL-ADVANCE-NOTE","vertical":"class-sweep"}
  * 18366 — ROUND 443.22-2c related-party loan advance note on every funding advance.
  *
  * Asserts: migration adds note_file_id/note_html + widens docs.file_links; create path mints
@@ -18,6 +19,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   migration: "db/migrations/202615461200_related_party_loan_advance_note.sql",
   noteSvc: "apps/backend/src/accounting/related-party-loan-posting/advance-note.service.ts",
+  createEntry: "apps/backend/src/accounting/related-party-loan-posting/create-entry.service.ts",
   routes: "apps/backend/src/accounting/related-party-loan-posting/routes.ts",
   filesRoutes: "apps/backend/src/docs/files.routes.ts",
   entityLabels: "apps/backend/src/docs/entity-labels.ts",
@@ -42,6 +44,7 @@ export function staticProblems(srcs) {
   const {
     migration,
     noteSvc,
+    createEntry,
     routes,
     filesRoutes,
     entityLabels,
@@ -82,9 +85,9 @@ export function staticProblems(srcs) {
     errors.push("F2: advanceRequiresNote must skip repayments and require direction=in");
   }
 
-  // F3 — create route calls mint inside the create transaction
-  if (!routes.includes("mintRelatedPartyLoanAdvanceNote") || !routes.includes("advanceRequiresNote")) {
-    errors.push("F3: routes.ts create must call advanceRequiresNote + mintRelatedPartyLoanAdvanceNote");
+  // F3 — create-entry.service mints note inside the create transaction; list surfaces note fields
+  if (!createEntry.includes("mintRelatedPartyLoanAdvanceNote") || !createEntry.includes("advanceRequiresNote")) {
+    errors.push("F3: create-entry.service must call advanceRequiresNote + mintRelatedPartyLoanAdvanceNote");
   }
   if (!routes.includes("note_file_id") || !routes.includes("has_note")) {
     errors.push("F3: list/create must surface note_file_id / has_note");
@@ -128,7 +131,8 @@ function selftest() {
     migration: "note_file_id note_html 'related_party_loan' 'related_party_loan_facility' REFERENCES docs.files(id)",
     noteSvc:
       'export function advanceRequiresNote export async function mintRelatedPartyLoanAdvanceNote buildAdvanceNoteHtml Related-Party Loan Advance Note "related_party_loan" related_party_loan_facility SET note_file_id note_html documentKind === "repayment" direction === "in" RELATED-PARTY-LOAN-ADVANCE-NOTE-TEMPLATE.md',
-    routes: "mintRelatedPartyLoanAdvanceNote advanceRequiresNote note_file_id has_note",
+    createEntry: "mintRelatedPartyLoanAdvanceNote advanceRequiresNote",
+    routes: "note_file_id has_note",
     filesRoutes:
       'related_party_loan related_party_loan_facility entityType === "related_party_loan" entityType === "related_party_loan_facility"',
     entityLabels: "related_party_loan related_party_loan_facility",
@@ -140,6 +144,7 @@ function selftest() {
   const bad = staticProblems({
     migration: "nope",
     noteSvc: "nope",
+    createEntry: "nope",
     routes: "nope",
     filesRoutes: "nope",
     entityLabels: "nope",

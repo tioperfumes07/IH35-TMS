@@ -1,3 +1,14 @@
+## 2026-10-11 · MONEY-CELLS PARTY LEDGER — SHIP + TIP UNBLOCK (rebased on 443.65)
+
+FINDING: ACCT-F433-PARTY-LEDGER — tip `verify-money-cells-click-through` FAIL after 443.65 due-to/from engine: shrink-only=4 (party-accounts Balance + party-ledger Debit/Credit/Running). Push also blocked by tip alwaysRun: loans raw `<table>`, RPL guards asserting create in routes.ts, deleted_at BASELINE 15, geofence stale token, MilesRecommendations unselected `bg-white`.
+LANE: NON-FINANCIAL (FE + guard retarget; no money rewrite; no Book Load)
+LANE_CROSS: docs/bus/2026-10-11-LEAD-RULING-CURSOR-PARTY-LEDGER-MONEY-CELLS-LANE-CROSS.md
+Files Modified: LoansAdvancesPage.tsx (MoneyCell drills + CSS grid party-accounts/party-ledger) · MilesRecommendationsPanel.tsx · verify-related-party-loan-{advance-note,bank-loan,facility}-*.mjs · verify-no-new-deleted-at-columns.mjs (BASELINE=16) · verify-no-geofence-around-unresolved-point.mjs · LANE_CROSS ruling · OUTBOX-CURSOR.md
+GUARD: verify-money-cells-click-through OK shrink-only 0; verify-money-table-cells-aligned PASS; verify-loans-advances-parity-surface-bar PASS; RPL three PASS; deleted_at OK 16; geofence PASS; unselected-boxes PASS
+LIVE PROOF: Debit/Credit → MoneyCell journal_entry (journal_entry_id from 443.65); Running + party Balance → MoneyCell register on account_id; data-testids party-accounts-table / party-ledger-table kept as grids
+REMAINING: owner Chrome Loans & Advances → Party Ledger after FE deploy (Rule 42)
+NEXT: open Cursor- PR on cursor/loans-party-ledger-money-cells-556e; then INBOX 435/432/433 tip census
+
 ## 2026-10-11 · BANK-F44329-MONEY MERGED (#26366) — OUTBOX DONE
 
 FINDING: BANK-F44329-MONEY — Relay match-hint Bank/Wallet/Fee/Charged/Gap were unclickable; now MoneyCell → bank_transaction.

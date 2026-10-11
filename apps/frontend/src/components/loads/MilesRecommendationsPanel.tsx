@@ -44,29 +44,29 @@ export function MilesRecommendationsPanel({ data, isLoading, error, readOnly, sa
     );
   return (
     <div data-testid="miles-recs-panel" className="overflow-x-auto rounded-[4px] border border-gray-200 bg-white">
-      <div
-        className="grid min-w-[720px] grid-cols-6 text-xs text-gray-900"
-        role="grid"
-        aria-label="Mileage recommendations"
-      >
-        {["Field", "Historical", "Google", "Difference", "Use", "Chosen"].map((h) => (
-          <div key={h} role="columnheader" className={`border-b border-gray-200 bg-[#F7F8FA] px-2 py-1.5 text-center ${HEADER}`}>
-            {h}
-          </div>
-        ))}
-        {MILES_FIELD_LABELS.map(({ field, label }) => (
-          <MilesFieldRow
-            key={field}
-            field={field}
-            label={label}
-            rec={data.fields[field]}
-            readOnly={readOnly}
-            saving={saving}
-            pending={pending?.[field]}
-            onChoose={onChoose}
-          />
-        ))}
-      </div>
+      <table className="w-full border-collapse text-xs text-gray-900">
+        <thead>
+          <tr className="border-b border-gray-200 bg-[#F7F8FA]">
+            {["Field", "Historical", "Google", "Difference", "Use", "Chosen"].map((h) => (
+              <th key={h} className={`px-2 py-1.5 text-center ${HEADER}`}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {MILES_FIELD_LABELS.map(({ field, label }) => (
+            <MilesFieldRow
+              key={field}
+              field={field}
+              label={label}
+              rec={data.fields[field]}
+              readOnly={readOnly}
+              saving={saving}
+              pending={pending?.[field]}
+              onChoose={onChoose}
+            />
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -108,10 +108,9 @@ function MilesFieldRow({
   };
 
   return (
-    <div className="contents" data-testid={`miles-row-${field}`}>
-      <div role="row" className="contents">
-      <div role="gridcell" className="border-b border-gray-200 px-2 py-1.5 font-semibold align-top">{label}</div>
-      <div role="gridcell" data-testid={`miles-historical-${field}`} className="border-b border-gray-200 px-2 py-1.5 align-top">
+    <tr data-testid={`miles-row-${field}`} className="border-b border-gray-200 align-top last:border-b-0">
+      <td className="px-2 py-1.5 font-semibold">{label}</td>
+      <td data-testid={`miles-historical-${field}`} className="px-2 py-1.5">
         {h ? (
           <div>
             <div className="font-semibold">{miles(h.value)}</div>
@@ -123,8 +122,8 @@ function MilesFieldRow({
         ) : (
           <span className="text-gray-600">{rec.historical_missing_reason || "no history for this lane"}</span>
         )}
-      </div>
-      <div role="gridcell" data-testid={`miles-google-${field}`} className="border-b border-gray-200 px-2 py-1.5 align-top">
+      </td>
+      <td data-testid={`miles-google-${field}`} className="px-2 py-1.5">
         {g ? (
           <div>
             <div className="font-semibold">{miles(g.value)}</div>
@@ -133,9 +132,9 @@ function MilesFieldRow({
         ) : (
           <span className="text-gray-600">{rec.google_missing_reason || "Google had no route"}</span>
         )}
-      </div>
-      <div role="gridcell" className="border-b border-gray-200 px-2 py-1.5 text-center align-top">{rec.difference != null ? `${rec.difference > 0 ? "+" : ""}${miles(rec.difference)}` : "—"}</div>
-      <div role="gridcell" className="border-b border-gray-200 px-2 py-1.5 align-top">
+      </td>
+      <td className="px-2 py-1.5 text-center">{rec.difference != null ? `${rec.difference > 0 ? "+" : ""}${miles(rec.difference)}` : "—"}</td>
+      <td className="px-2 py-1.5">
         {readOnly ? (
           <span className="text-gray-600">—</span>
         ) : (
@@ -156,7 +155,7 @@ function MilesFieldRow({
                       setManualOpen(false);
                       void onChoose?.({ field, source: src });
                     }}
-                    className={`min-w-[72px] px-2 py-1 text-xs ${active ? "bg-[#16A34A] font-semibold text-white" : "bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)] text-gray-700"} disabled:cursor-not-allowed disabled:opacity-40`}
+                    className={`min-w-[72px] px-2 py-1 text-xs ${active ? "bg-[#16A34A] font-semibold text-white" : "bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"} disabled:cursor-not-allowed disabled:opacity-40`}
                   >
                     {SOURCE_LABEL[src]}
                   </button>
@@ -196,8 +195,8 @@ function MilesFieldRow({
             ) : null}
           </div>
         )}
-      </div>
-      <div role="gridcell" data-testid={`miles-chosen-${field}`} className="border-b border-gray-200 px-2 py-1.5 align-top">
+      </td>
+      <td data-testid={`miles-chosen-${field}`} className="px-2 py-1.5">
         {chosen?.source ? (
           <div>
             <div className="font-semibold">{miles(chosen.value) ?? "—"}</div>
@@ -209,9 +208,8 @@ function MilesFieldRow({
         ) : (
           <span className="text-red-700">no source recorded</span>
         )}
-      </div>
-      </div>
-    </div>
+      </td>
+    </tr>
   );
 }
 

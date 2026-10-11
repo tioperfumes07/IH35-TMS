@@ -18,6 +18,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   migration: "db/migrations/202615441200_related_party_loan_facility_loc.sql",
   facilitySvc: "apps/backend/src/accounting/related-party-loan-posting/facility.service.ts",
+  createEntry: "apps/backend/src/accounting/related-party-loan-posting/create-entry.service.ts",
   routes: "apps/backend/src/accounting/related-party-loan-posting/routes.ts",
   feApi: "apps/frontend/src/api/related-party-loans.ts",
   fePage: "apps/frontend/src/pages/accounting/loans/LoansAdvancesPage.tsx",
@@ -37,7 +38,7 @@ function fail(errors) {
 
 export function staticProblems(srcs) {
   const errors = [];
-  const { migration, facilitySvc, routes, feApi, fePage, glPost, linkage } = srcs;
+  const { migration, facilitySvc, createEntry, routes, feApi, fePage, glPost, linkage } = srcs;
 
   // M1 — migration plants facility table + entry columns + reverse pointer + bank-line restates
   if (!migration.includes("related_party_loan_facilities")) {
@@ -76,14 +77,14 @@ export function staticProblems(srcs) {
     errors.push("S1: missing RPL-YYYY-NNNN display id allocator");
   }
 
-  // S2 — routes: facilities GET + create attaches facility
+  // S2 — routes: facilities GET; create-entry.service attaches facility + display_id
   if (!routes.includes("/api/v1/accounting/related-party-loan-facilities")) {
     errors.push("S2: missing GET related-party-loan-facilities");
   }
-  if (!routes.includes("ensureRelatedPartyLoanFacility") || !routes.includes("facility_id")) {
+  if (!createEntry.includes("ensureRelatedPartyLoanFacility") || !createEntry.includes("facility_id")) {
     errors.push("S2: create path must ensure facility and write facility_id");
   }
-  if (!routes.includes("allocateRelatedPartyLoanDisplayId") || !routes.includes("document_kind")) {
+  if (!createEntry.includes("allocateRelatedPartyLoanDisplayId") || !createEntry.includes("document_kind")) {
     errors.push("S2: create path must mint display_id and document_kind");
   }
 
@@ -121,8 +122,8 @@ function selftest() {
   const good = {
     migration: read(FILES.migration),
     facilitySvc: read(FILES.facilitySvc),
-    // 443.75: the create writer moved to create-entry.service.ts (443.22-2e); the route delegates to it.
-    routes: `${read(FILES.routes)}\n${read("apps/backend/src/accounting/related-party-loan-posting/create-entry.service.ts")}`,
+    createEntry: read(FILES.createEntry),
+    routes: read(FILES.routes),
     feApi: read(FILES.feApi),
     fePage: read(FILES.fePage),
     glPost: read(FILES.glPost),
@@ -151,8 +152,6 @@ function main() {
     if (!existsSync(join(ROOT, rel))) fail([`missing required file ${rel}`]);
   }
   const srcs = Object.fromEntries(Object.entries(FILES).map(([k, rel]) => [k, read(rel)]));
-  // 443.75: the create writer moved to create-entry.service.ts (443.22-2e); the route delegates to it.
-  srcs.routes = `${srcs.routes}\n${read("apps/backend/src/accounting/related-party-loan-posting/create-entry.service.ts")}`;
   const errors = staticProblems(srcs);
   if (errors.length) fail(errors);
   console.log(`${LABEL} OK`);
