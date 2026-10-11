@@ -107,7 +107,7 @@ if (isMain) {
       ["the shipped resolver passes", staticFailures(src).length === 0],
       ["a resolver without the Samsara step fails", staticFailures(src.replace(/matchSamsaraAddressForStop\(/g, "x(")).some((x) => x.startsWith("RULE 1"))],
       ["unstamped coordinates as rooftop fails", staticFailures(src.replace(/const hasPickerCoordinates\s*=\s*[^;]+;/, "const hasPickerCoordinates = stop.latitude != null;")).some((x) => x.startsWith("RULE 2"))],
-      ["a fence in the zip branch fails", staticFailures(src.replace("geocode_precision='locality', geocode_attempted_at=now(), geocode_failure_reason=NULL, location_id=NULL", "geocode_precision='locality' /* INSERT INTO geo.geofences */")).some((x) => x.startsWith("RULE 3"))],
+      ["a fence in the zip branch fails", staticFailures(src.replace("geocode_precision='locality', geocode_attempted_at=now(),", "geocode_precision='locality' /* INSERT INTO geo.geofences */, geocode_attempted_at=now(),")).some((x) => x.startsWith("RULE 3"))],
       ["the shipped booking + auto-fence pass", sideEffectFailures(bookLoad, autoFence).length === 0],
       ["a backfill booking that dispatches fails", sideEffectFailures(bookLoad.replace("dispatch.historical_backfill_distribution_skipped", "x"), autoFence).some((x) => x.startsWith("RULE 6"))],
       ["an unconditional auto-fence hook fails", sideEffectFailures(bookLoad.replace('if (source !== "historical_backfill") {', "{"), autoFence).some((x) => x.startsWith("RULE 6"))],
