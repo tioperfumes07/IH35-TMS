@@ -2372,5 +2372,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-11",
     "purpose": "RULING 443.62 #7 (for CC-2): google_place_id text on mdata.load_stops and mdata.locations so the Google place id lives on the stop / location row, not only on the audit trail; additive, nullable, no data written"
+  },
+  "202615580900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-11",
+    "purpose": "RULING 443.64 #2: accounting.posting_source_load_id fuel_event Relay fallback returns ONE value when a Relay id maps to several fuel.fuel_transactions rows (73 on prod) instead of raising 'more than one row returned by a subquery'; function body only, no rows written"
   }
 }
