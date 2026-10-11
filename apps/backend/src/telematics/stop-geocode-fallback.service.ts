@@ -83,7 +83,8 @@ export async function geocodeAddressWithEvidence(address: GeocodableAddress): Pr
     if (!provider) return { ok: false, reason: "provider_unavailable" };
     const results = provider === "trimble" ? await singleSearchGeocode(query, 1) : await searchAddress(query, 1);
     const first = results[0];
-    if (!first || typeof first.lat !== "number" || typeof first.lon !== "number") {
+    // 443.62: searchAddress may now answer a city-only row (typed-city search); a street query never takes one as its point.
+    if (!first || typeof first.lat !== "number" || typeof first.lon !== "number" || !(first.address_line1 || first.zip)) {
       return { ok: false, reason: "no_result" };
     }
     return { ok: true, latitude: first.lat, longitude: first.lon, source: provider, confidence: 1, precision: "range" };
