@@ -24,14 +24,9 @@ const SRC = "apps/backend/src/mdata/driver-profile.routes.ts";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 /** Shrink-only: driver ids whose card is still being corrected through the pay-rate engine (Lead 443.53 #6). Measured
  * 2026-10-11 14:30 UTC: 14 (13 on the 48c fleet default, 1 with no card); 14:50 UTC: 9 corrected through
- * POST /api/v1/mdata/drivers/:id/qualifications -> 5 left, all starting before the 48c card's 2026-08-07 (need this fix deployed). */
-export const KNOWN_CARD_MISMATCH = new Set([
-  "40823a77-d8d4-481c-88cb-1387556aa98e", // Alfonso Hidalgo Chavez
-  "52037e93-484a-4659-ab60-cf2a78f4c647", // Angel Alfonso Sosa Perez
-  "424a3bb9-60c2-4f16-8d9c-afa6be475ad7", // Concepcion Cordova Dominguez
-  "3e138476-06db-4b08-9ebe-527a5d8c591d", // Jorge Luis Infante Corona
-  "a785bea7-6dde-4bf9-81b9-b9135c2df4b5", // PEDRO ABRAHAM LOPEZ COLLADO
-]);
+ * POST /api/v1/mdata/drivers/:id/qualifications -> 5 left, all starting before the 48c card's 2026-08-07; 15:32 UTC: those 5
+ * corrected the same way once #26378 was live -> 0 (Lead 443.60: 14 of 14). */
+export const KNOWN_CARD_MISMATCH = new Set([]);
 
 export function staticProblems(src) {
   const p = [];
