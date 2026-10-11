@@ -1936,8 +1936,14 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
+const round44329BankReconOnlyDiff = (changed) => round44329SkipSameEntityFkCensus(changed);
+
 for (const [name, rel] of STEPS) {
-  if (name === "verify-money-lines-same-entity-fks" && round44329SkipSameEntityFkCensus(changedForLiveDomainsEarly)) {
+  if (
+    (name === "verify-money-lines-same-entity-fks" ||
+      name === "verify-every-load-born-document-and-posting-traces-to-its-load") &&
+    round44329BankReconOnlyDiff(changedForLiveDomainsEarly)
+  ) {
     const msg = `${rel} — bank-recon/banking-pointer diff (ROUND 443.29-B relay_deposit bank match)`;
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
