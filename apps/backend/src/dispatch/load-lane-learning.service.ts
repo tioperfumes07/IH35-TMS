@@ -60,6 +60,10 @@ export type LaneLearningResult = {
 };
 
 export type DeadheadMethod = "point_mileage_cache" | "routing_provider" | "haversine_chain";
+/** Audit classes that mark a leg as written by this module (so relearnLoadStopLegs may recompute it). */
+export const LEG_LEARNED_EVENT = "dispatch.load_stop.leg_miles_learned";
+export const LEG_COMPUTED_EVENT = "dispatch.load_stop.leg_miles_computed";
+export const LEG_RELEARNED_EVENT = "dispatch.load_stop.leg_miles_relearned";
 export type FirstStopDeadhead =
   | { miles: number; method: DeadheadMethod; engine_reason?: string; stop_id: string; prior_load_id: string; prior_load_number: string | null }
   | { miles: null; reason: string; stop_id?: string; prior_load_id?: string };
@@ -215,7 +219,7 @@ async function fillFirstStopDeadhead(
     await appendCrudAudit(
       client as never,
       args.actorUserId ?? null as never,
-      "dispatch.load_stop.leg_miles_computed",
+      LEG_COMPUTED_EVENT,
       {
         operating_company_id: args.operatingCompanyId, load_id: args.loadId, stop_id: dh.stop_id, leg_miles: dh.miles,
         source: "computed", method: dh.method, engine_reason: dh.engine_reason ?? null,
@@ -312,6 +316,16 @@ export async function learnLoadLanes(
       [m, s.id, args.operatingCompanyId]
     );
     out.legs_filled += r.rowCount ?? 0;
+    // Ownership marker: relearnLoadStopLegs may later recompute a leg the module wrote, never one a document / owner typed.
+    if (i > 0 && (r.rowCount ?? 0) > 0)
+      await appendCrudAudit(
+        client as never,
+        args.actorUserId ?? null as never,
+        LEG_LEARNED_EVENT,
+        { operating_company_id: args.operatingCompanyId, load_id: args.loadId, stop_id: s.id, leg_miles: m, rule: stops.length === 2 ? "load_loaded_miles" : "point_mileage_pair" },
+        "info",
+        "LEAD-443.35"
+      );
   }
 
   // ── first-stop deadhead from the unit's previous load (443.41 G(2)) — does not count toward legs_filled, so a backfill that
@@ -483,6 +497,121 @@ export async function learnLoadLanes(
       );
       out.customer_lane = "created";
     }
+  }
+  return out;
+}
+
+
+export type RelearnedLeg = { stop_id: string; old: number | null; new: number; method: DeadheadMethod | "load_loaded_miles" };
+export type RelearnLoadStopLegsResult = {
+  changed: RelearnedLeg[];
+  kept_owner_legs: number;
+  unresolved: Array<{ stop_id: string; reason: string }>;
+};
+
+/**
+ * Is this non-first leg one the module wrote (so it may be recomputed)? NULL, an ownership audit row, or the value the
+ * module's own rule produced (the load's loaded miles — the 2-stop delivery rule — or the point_mileage pair). Anything else
+ * was typed by a document / the owner and is kept. Pure — unit-tested.
+ */
+export function isModuleOwnedLeg(
+  leg: number | null,
+  ctx: { audited: boolean; loadedMiles: number | null; pairMiles: number | null }
+): boolean {
+  if (leg == null || ctx.audited) return true;
+  const eq = (a: number | null) => a != null && Math.abs(a - leg) < 0.05;
+  return eq(ctx.loadedMiles) || eq(ctx.pairMiles);
+}
+
+/**
+ * Lead 443.43 #3 (multi-stop repair): after stops are added / resequenced on a load, recompute every NON-first stop's leg
+ * from the previous stop's coordinates to its own — mileage engine first (resolvePointMileage: point_mileage cache, then the
+ * routing provider), else the owner-ruled chain-deadhead haversine (chooseDeadheadMiles); a 2-stop load keeps the module's
+ * rule (delivery leg = the load's loaded miles). Overwrites ONLY legs this module wrote (isModuleOwnedLeg) and NULL legs;
+ * never an owner / document leg; never the first-stop deadhead; never lane_mileage / customer_lanes counts. Each change is
+ * audited (old -> new, method). Runs on the caller's client (same transaction).
+ */
+export async function relearnLoadStopLegs(
+  client: Queryable,
+  args: { operatingCompanyId: string; loadId: string; actorUserId: string },
+  provider: MileageProvider = new OsrmProvider()
+): Promise<RelearnLoadStopLegsResult> {
+  const out: RelearnLoadStopLegsResult = { changed: [], kept_owner_legs: 0, unresolved: [] };
+  const load = (
+    await client.query<{ loaded_miles: string | null; miles_shortest: string | null; miles_practical: string | null }>(
+      `SELECT loaded_miles::text, miles_shortest::text, miles_practical::text
+         FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [args.loadId, args.operatingCompanyId]
+    )
+  ).rows[0];
+  if (!load) return out;
+  const loaded = pos(load.loaded_miles) ?? pos(load.miles_shortest) ?? pos(load.miles_practical);
+  const stops = (
+    await client.query<StopRow>(
+      `SELECT id::text, sequence_number, stop_type::text, city, state, postal_code, latitude, longitude, leg_miles::text, NULL::text AS at
+         FROM mdata.load_stops
+        WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL
+        ORDER BY sequence_number`,
+      [args.loadId, args.operatingCompanyId]
+    )
+  ).rows;
+  if (stops.length < 2) return out;
+  const audited = new Set(
+    (
+      await client.query<{ stop_id: string }>(
+        `SELECT DISTINCT payload->>'stop_id' AS stop_id FROM audit.audit_events
+          WHERE event_class = ANY($1::text[]) AND payload->>'load_id' = $2`,
+        [[LEG_LEARNED_EVENT, LEG_COMPUTED_EVENT, LEG_RELEARNED_EVENT], args.loadId]
+      )
+    ).rows.map((r) => r.stop_id)
+  );
+  for (let i = 1; i < stops.length; i++) {
+    const a = stops[i - 1]!;
+    const b = stops[i]!;
+    const current = num(b.leg_miles);
+    const located = a.latitude != null && a.longitude != null && b.latitude != null && b.longitude != null;
+    const pair = located
+      ? num(
+          (
+            await client.query<{ m: string }>(
+              `SELECT practical_miles::text AS m FROM catalogs.point_mileage
+                WHERE origin_lat = $1::numeric AND origin_lng = $2::numeric AND dest_lat = $3::numeric AND dest_lng = $4::numeric LIMIT 1`,
+              [round4(a.latitude!), round4(a.longitude!), round4(b.latitude!), round4(b.longitude!)]
+            )
+          ).rows[0]?.m
+        )
+      : null;
+    if (!isModuleOwnedLeg(current, { audited: audited.has(b.id), loadedMiles: loaded, pairMiles: pair })) {
+      out.kept_owner_legs += 1;
+      continue;
+    }
+    let next: { miles: number; method: RelearnedLeg["method"] } | null = null;
+    if (stops.length === 2 && loaded != null) next = { miles: round1(loaded), method: "load_loaded_miles" };
+    else if (located) {
+      const from = { lat: Number(a.latitude), lng: Number(a.longitude) };
+      const to = { lat: Number(b.latitude), lng: Number(b.longitude) };
+      const engine = await resolvePointMileage(client, provider, from, to);
+      const chosen = chooseDeadheadMiles(engine, from, to);
+      next = { miles: chosen.miles, method: chosen.method };
+    }
+    if (!next) {
+      out.unresolved.push({ stop_id: b.id, reason: "previous_or_this_stop_not_located" });
+      continue;
+    }
+    if (current != null && Math.abs(current - next.miles) < 0.05) continue;
+    await client.query(
+      `UPDATE mdata.load_stops SET leg_miles = $1::numeric, updated_at = now() WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
+      [next.miles, b.id, args.operatingCompanyId]
+    );
+    await appendCrudAudit(
+      client as never,
+      args.actorUserId,
+      LEG_RELEARNED_EVENT,
+      { operating_company_id: args.operatingCompanyId, load_id: args.loadId, stop_id: b.id, old_leg_miles: current, leg_miles: next.miles, method: next.method },
+      "info",
+      "LEAD-443.43"
+    );
+    out.changed.push({ stop_id: b.id, old: current, new: next.miles, method: next.method });
   }
   return out;
 }
