@@ -43,6 +43,8 @@ type Posting = {
   description?: string | null;
   source_transaction_type?: string | null;
   source_transaction_id?: string | null;
+  entity_uuid?: string | null;
+  entity_type?: "customer" | "vendor" | "driver" | null;
 };
 
 export type RevrecPostResult = {
@@ -340,6 +342,8 @@ type LoadRow = {
   display_id: string | null;
   /** ACCT-F210 — the load's sample flag, carried into every JE this poster creates. */
   is_sample_data: boolean;
+  /** RULING 443.70 S5 — the customer every revenue-recognition leg names (A/R needs its customer). */
+  customer_id: string | null;
 };
 
 async function loadLoad(client: DbClient, operatingCompanyId: string, loadId: string): Promise<LoadRow | null> {
@@ -349,6 +353,7 @@ async function loadLoad(client: DbClient, operatingCompanyId: string, loadId: st
     rate_total_cents: string | number | null;
     display_id: string | null;
     is_sample_data: boolean;
+    customer_id: string | null;
   }>(
     `
       SELECT id::text AS id,
@@ -358,7 +363,8 @@ async function loadLoad(client: DbClient, operatingCompanyId: string, loadId: st
              -- ACCT-F210: carry the load's sample flag into the GL. FAIL-D6 made the load taggable
              -- and the invoice/settlement paths already inherit it; without this the revenue JEs of a
              -- SAMPLE load stayed untagged, and the GL is what financial statements are built from.
-             COALESCE(is_sample_data, false) AS is_sample_data
+             COALESCE(is_sample_data, false) AS is_sample_data,
+             customer_id::text AS customer_id
       FROM mdata.loads
       WHERE operating_company_id = $1::uuid
         AND id = $2::uuid
@@ -375,6 +381,7 @@ async function loadLoad(client: DbClient, operatingCompanyId: string, loadId: st
     rate_total_cents: Number(row.rate_total_cents ?? 0),
     display_id: row.display_id,
     is_sample_data: row.is_sample_data === true,
+    customer_id: row.customer_id ?? null,
   };
 }
 
@@ -587,10 +594,16 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
       );
       invoiceId = invoiceRes.rows[0]?.id ?? null;
     }
-    // Every line names the load except the bill's A/R line (line_sequence 1), which afterInsertBeforeCommit
-    // tags with the invoice — or the load — inside the same transaction, before the writer's source check.
+    // RULING 443.70 S5 (live acceptance run, fork 2026-10-11): the bill's A/R line used to be written with NO source and
+    // stamped after insert (afterInsertBeforeCommit) — but the one posting-line writer refuses an unsourced line AT INSERT
+    // (journal-entries.service.ts, ROUND 393.2), so every Event 2 threw journal_entry_posting_source_required after commit,
+    // was only logged, and the live path never raised A/R (Dr 1100 / Cr 1150) for a sent invoice. The A/R line now names
+    // the invoice when one exists (else the load) when it is built. Every leg names the load's customer.
+    const customer = load.customer_id ? { entity_uuid: load.customer_id, entity_type: "customer" as const } : {};
     postings = postings.map((p, i) =>
-      event === "bill" && i === 0 ? p : { ...p, source_transaction_type: "load", source_transaction_id: input.load_id }
+      event === "bill" && i === 0
+        ? { ...p, source_transaction_type: invoiceId ? "invoice" : "load", source_transaction_id: invoiceId ?? input.load_id, ...customer }
+        : { ...p, source_transaction_type: "load", source_transaction_id: input.load_id, ...customer }
     );
 
     return {
