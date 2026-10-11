@@ -22,5 +22,5 @@ UPDATE accounting.journal_entry_postings jep
   FROM driver_finance.driver_settlement_gl_bills dsg
   JOIN accounting.bills b ON b.id::text = jep.source_transaction_id
  WHERE jep.source_transaction_type = 'bill'
-   AND dsg.bill_id = b.id
+   AND dsg.accounting_bill_id = b.id
    AND jep.settlement_id IS NULL;
