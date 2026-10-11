@@ -20,6 +20,7 @@ export const SWEPT = [
   "apps/backend/src/cron/samsara-documents.cron.ts",
   "apps/backend/src/cron/samsara-driver-replies.cron.ts",
   "apps/backend/src/cron/samsara-fuel-reports.cron.ts",
+  "apps/backend/src/cron/samsara-addresses-mirror.cron.ts",
   "apps/backend/src/cron/samsara-hos-pull.cron.ts",
   "apps/backend/src/cron/samsara-master-sync.cron.ts",
   "apps/backend/src/cron/samsara-remote-count-collector.cron.ts",
