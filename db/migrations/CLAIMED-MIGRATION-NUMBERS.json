@@ -2342,5 +2342,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-11",
     "purpose": "LEAD RULING 443.45 Ask C: driver_finance.driver_settlement_gl_bills.pay_basis ('per_load_driver_bill' | 'salaried') + CHECK (driver_bill_id IS NOT NULL OR pay_basis = 'salaried') -- the A/P chain bills a salaried week's pay line per load with no driver bill (5780); additive, no data written"
+  },
+  "202615540900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-11",
+    "purpose": "OWNER RULING Lead 443.52 B: accounting.expenses CHECK (a settlement number requires a load) -- write-time refusal for every writer; prod measured 0 violations over 647 USMCA expenses; additive, NOT VALID then VALIDATE"
   }
 }
