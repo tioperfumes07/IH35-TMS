@@ -7778,4 +7778,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — (1) mdata.load_stop
 action: OWNER_AUTH_ID=AUTH-434 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-63-place-id-and-lane.ts --apply
 rehearsal: throwaway br-winter-wave-ak19iruf (COMMITTED, deleted): 150 stops + 111 locations given google_place_id (150 of 150 google_place stops); 13543 lane city_row_created; re-run 0 / 0 / "already relearned"; verify-booked-loads-save-miles PASS on the fork (first fork br-jolly-recipe-aky2d8f6 showed the lane counted twice on re-run — idempotency fixed before this one)
 expires_at: 2026-10-12T17:25:31Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T17:33:40Z
+consumed_by: CC-2 (443.63 google_place_id + 13543 lane)
+row_counts: 150 stops + 111 locations given google_place_id (150 of 150 google_place stops); 13543 lane Albertville, AL -> Temple, TX created; typo lane ALBERTIVILLE kept (n 2)
+proof_query: node scripts/verify-booked-loads-save-miles.mjs -> PASS
