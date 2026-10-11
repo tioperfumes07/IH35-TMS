@@ -114,6 +114,11 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-3/443-51-salaried-ap-chain",
     new Set(["db/migrations/202615530900_driver_settlement_gl_bills_pay_basis_salaried.sql"]),
   ],
+  // OWNER RULING (Lead 443.52 B, CC-3): expense settlement number requires a load. Claimed first (#26347, 782e96cd82).
+  [
+    "cc-3/443-59-expense-settlement-needs-load",
+    new Set(["db/migrations/202615540900_expenses_settlement_no_requires_load.sql"]),
+  ],
 ]);
 
 function isOwnerAuthorizedOneOff(branch, files) {
