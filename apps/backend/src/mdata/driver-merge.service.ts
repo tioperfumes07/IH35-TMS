@@ -160,14 +160,19 @@ export type MergePreview = {
   needs_override_reason: boolean;
 };
 
-export async function previewDriverMerge(client: Db, args: { companyId: string; survivorId: string; mergedId: string }): Promise<MergePreview> {
+export async function previewDriverMerge(
+  client: Db,
+  args: { companyId: string; survivorId: string; mergedId: string; resume?: boolean }
+): Promise<MergePreview> {
   const blockers: string[] = [];
   if (args.survivorId === args.mergedId) blockers.push("A driver cannot be merged into itself.");
   const s = await driverRow(client, args.companyId, args.survivorId);
   const m = await driverRow(client, args.companyId, args.mergedId);
   if (!s || !m) throw new Error("driver_merge_driver_not_found");
   if (s.merged_into) blockers.push("The surviving profile was itself merged into another driver — merge into that one instead.");
-  if (m.merged_into) blockers.push("This profile is already merged.");
+  // Lead 443.45: an earlier merge (the 09-28 SQL procedure) left a profile pointing at its survivor but still Active, with
+  // references and a duplicate advance link on it. `resume` lets THIS engine finish exactly that pair (never re-target it).
+  if (m.merged_into && !(args.resume && m.merged_into === s.id)) blockers.push("This profile is already merged.");
   const loads = async (id: string) => Number((await client.query(LOAD_SQL, [id, args.companyId])).rows[0]?.n ?? 0);
   const sLoads = await loads(s.id);
   const mLoads = await loads(m.id);
@@ -230,7 +235,7 @@ export type MergeResult = {
 
 export async function executeDriverMerge(
   client: Db,
-  args: { companyId: string; survivorId: string; mergedId: string; actorUserId: string; actorRole: string; overrideReason?: string | null },
+  args: { companyId: string; survivorId: string; mergedId: string; actorUserId: string; actorRole: string; overrideReason?: string | null; resume?: boolean },
   deps: {
     createJournalEntryOnClient: (c: Db, input: Record<string, unknown>, actor: { userId: string; role: string }) => Promise<{ id: string }>;
     recordEscrowPostingOnly: (c: Db, input: Record<string, unknown>) => Promise<unknown>;
@@ -304,6 +309,16 @@ export async function executeDriverMerge(
     vendorOutcomes.push(...(await repointAll(client, "mdata.vendors", vplan.mergedVendorId, vplan.survivorVendorId, { dryRun: false })));
     await client.query(`UPDATE mdata.vendors SET deactivated_at = COALESCE(deactivated_at, now()), updated_at = now() WHERE id = $1::uuid`, [vplan.mergedVendorId]);
   }
+
+  // 4b. THE ADVANCE LINK: one advance sub-account per driver. When the survivor already has an active link, the merged
+  //     profile's link retires (is_active = false, kept in history) instead of pointing a second profile at an advance
+  //     account — the double bridge that made the advance-balance view count every posting twice (5785, 443.44).
+  await client.query(
+    `UPDATE driver_finance.driver_advance_accounts m SET is_active = false, updated_at = now(), updated_by_user_id = $3::uuid
+      WHERE m.driver_id = $1::uuid AND m.is_active
+        AND EXISTS (SELECT 1 FROM driver_finance.driver_advance_accounts s WHERE s.driver_id = $2::uuid AND s.is_active)`,
+    [M, S, args.actorUserId]
+  );
 
   // 5. REPOINT every discovered driver reference (measured; see repointAll).
   const outcomes = await repointAll(client, "mdata.drivers", M, S, { dryRun: false });
