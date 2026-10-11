@@ -3,6 +3,8 @@
  * POST preview + POST commit. USMCA + Owner/Admin/Accountant only. No Book Load.
  */
 import { FeedGateError } from "./feed-gate/feed-gate.service.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
+import { CreatorCategorizationError, categorizeCreatorSettlement } from "./creator-document-categorization.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -361,6 +363,55 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
           message: err.message,
         });
       }
+      throw err;
+    }
+  });
+
+  // RULING 443.66 — bring a POSTED Creator settlement's documents to the categorization the engine now writes at post
+  // time (D1 items on reimbursement + A/P bill lines, D3 "Line Haul" on invoice lines, D4 posted status, D5 line driver /
+  // unit / trailer). The named engine path: no amount, account, journal entry or posting moves. dry_run rolls back.
+  app.post("/api/v1/driver-finance/settlement-creator/categorize", WRITE_RL, async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    if (!AUTHORITY_ROLES.has(user.role)) {
+      return reply.code(403).send({ error: "forbidden", message: "Owner/Administrator/Accountant only" });
+    }
+    const parsed = z
+      .object({
+        operating_company_id: z.string().uuid(),
+        settlement_no: z.string().trim().min(1).max(40),
+        reimbursement_items: z
+          .array(z.object({ description: z.string(), amount_cents: z.number().int().positive(), load_number: z.string().nullable().optional(), item_id: z.string().uuid() }))
+          .max(200)
+          .default([]),
+        trailer_equipment_number: z.string().trim().max(40).nullable().optional(),
+        dry_run: z.boolean().default(true),
+      })
+      .safeParse(req.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const b = parsed.data;
+    if (b.operating_company_id !== USMCA) return reply.code(400).send({ error: "usmca_only" });
+    await assertCompanyMembership(user.uuid, b.operating_company_id);
+    try {
+      const result = await withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [b.operating_company_id]);
+        return categorizeCreatorSettlement(
+          client as never,
+          {
+            operatingCompanyId: b.operating_company_id,
+            settlementNo: b.settlement_no,
+            actorUserId: user.uuid,
+            reimbursementItems: b.reimbursement_items.map((r) => ({ ...r, load_number: r.load_number ?? null })),
+            trailerEquipmentNumber: b.trailer_equipment_number ?? null,
+            dryRun: b.dry_run,
+          },
+          (eventClass, payload) => appendCrudAudit(client as never, user.uuid, eventClass, payload, "info", "SC-443-66")
+        );
+      });
+      return reply.code(200).send(result);
+    } catch (err) {
+      if (err instanceof CreatorCategorizationError) return reply.code(400).send({ error: err.code, message: err.message });
       throw err;
     }
   });

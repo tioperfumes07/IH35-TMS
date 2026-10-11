@@ -310,6 +310,16 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
   });
   // LV-INV-UUID — customer-facing line text must carry load_number (L-…), never the load UUID.
   const linehaulDescription = `Linehaul · Load ${loadNumber}`;
+  // RULING 443.66 D3 — the line carries its item: this company's active "Line Haul" item, only when that item's income
+  // account IS the account the line posts to (detail in the item, rollup in the account — never two disagreeing).
+  const linehaulItem = await client.query<{ id: string }>(
+    `SELECT id::text FROM catalogs.items
+      WHERE operating_company_id = $1::uuid AND item_name = 'Line Haul' AND deactivated_at IS NULL
+        AND default_income_account_id = $2::uuid
+      LIMIT 2`,
+    [input.operatingCompanyId, revenueResolution.account_id]
+  );
+  const linehaulItemId = linehaulItem.rows.length === 1 ? linehaulItem.rows[0]!.id : null;
   const lineRes = await client.query(
     `
       INSERT INTO accounting.invoice_lines (
@@ -323,8 +333,10 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
         quantity,
         unit_amount_cents,
         line_total_cents,
-        display_order
-      ) VALUES ($1,$2,$3,'linehaul',$4,$5,$6,1,$7,$7,0)
+        display_order,
+        item_id,
+        unit_of_measure
+      ) VALUES ($1,$2,$3,'linehaul',$4,$5,$6,1,$7,$7,0,$8::uuid,CASE WHEN $8::uuid IS NULL THEN NULL ELSE 'each' END)
       RETURNING *
     `,
     [
@@ -335,6 +347,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
       revenueResolution.account_id,
       linehaulDescription,
       lineTotal,
+      linehaulItemId,
     ]
   );
   const line = lineRes.rows[0];

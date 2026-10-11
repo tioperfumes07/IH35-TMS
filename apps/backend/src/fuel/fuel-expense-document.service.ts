@@ -115,6 +115,11 @@ export type FuelExpenseDocumentInput = {
    * suppressed so Creator fuel posts immediately instead of deferring to a Banking match.
    */
   creator_manual_entry?: boolean;
+  /**
+   * RULING 443.66 D5 — the trailer the settlement document names (Settlement Creator). The header takes the fuel row's
+   * trailer (reefer fuel) and else this one; every line carries the header's driver / unit / trailer.
+   */
+  trailer_id?: string | null;
 };
 
 // The fuel-type -> item -> account rule lives in accounting/fuel-posting/fuel-item-account.ts, shared with the fuel
@@ -452,6 +457,9 @@ export async function createExpenseFromFuelTransaction(
     creditPreference,
   );
 
+  // RULING 443.66 D5 — the trailer on the document: the fuel row's (reefer fuel), else the one the settlement names.
+  const headerTrailerId: string | null = fuel.trailer_id ?? input.trailer_id ?? null;
+
   // ---- 5. WRITE THE DOCUMENT. STATUS 'draft' ON PURPOSE. ---------------------------------
   // A backfilled document is not posted by the act of existing. The existing expense posting
   // path posts it, applies the category account, and writes the GL — unchanged, so no new
@@ -501,7 +509,7 @@ export async function createExpenseFromFuelTransaction(
       // linkage-incomplete expenses (ratchet baseline 7) from every backfill call this session.
       fuel.driver_id,
       fuel.unit_id,
-      fuel.trailer_id,
+      headerTrailerId,
     ],
   );
   const expenseId = inserted.rows[0]!.id;
@@ -515,11 +523,14 @@ export async function createExpenseFromFuelTransaction(
     `
       INSERT INTO accounting.expense_lines (
         operating_company_id, expense_id, line_sequence, amount, amount_cents, description,
-        load_id, load_required, expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure
+        load_id, load_required, expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure,
+        driver_id, unit_id, trailer_id
       )
       -- R-178: an item line must carry quantity/rate/uom with round(quantity*rate_cents)=amount_cents
       -- (expense_lines_item_qty_rate_amount_check). Without them every fuel expense create refused.
-      VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, $7, $8::uuid, $9::uuid, 1, $4::bigint, 'each')
+      -- RULING 443.66 D5: the line carries the header's driver / unit / trailer (806 fuel lines had none).
+      VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, $7, $8::uuid, $9::uuid, 1, $4::bigint, 'each',
+              $10::uuid, $11::uuid, $12::uuid)
     `,
     [
       input.operating_company_id,
@@ -531,6 +542,9 @@ export async function createExpenseFromFuelTransaction(
       Boolean(fuel.load_id),
       fuelItem.expenseAccountId,
       fuelItem.itemId,
+      fuel.driver_id,
+      fuel.unit_id,
+      headerTrailerId,
     ],
   );
 
@@ -544,9 +558,11 @@ export async function createExpenseFromFuelTransaction(
       `
         INSERT INTO accounting.expense_lines (
           operating_company_id, expense_id, line_sequence, amount, amount_cents, description,
-          load_id, load_required, expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure
+          load_id, load_required, expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure,
+          driver_id, unit_id, trailer_id
         )
-        VALUES ($1::uuid, $2::uuid, 2, $3, $4::bigint, $5, $6::uuid, $7, $8::uuid, $9::uuid, 1, $4::bigint, 'each')
+        VALUES ($1::uuid, $2::uuid, 2, $3, $4::bigint, $5, $6::uuid, $7, $8::uuid, $9::uuid, 1, $4::bigint, 'each',
+                $10::uuid, $11::uuid, $12::uuid)
       `,
       [
         input.operating_company_id,
@@ -558,6 +574,9 @@ export async function createExpenseFromFuelTransaction(
         Boolean(fuel.load_id),
         feeItem.expenseAccountId,
         feeItem.itemId,
+        fuel.driver_id,
+        fuel.unit_id,
+        headerTrailerId,
       ],
     );
   }
@@ -677,7 +696,7 @@ export async function fillRelayFillExpenseSettlementRef(
 
 export async function adoptRelayFillExpenseDocument(
   client: QueryableClient,
-  input: { operating_company_id: string; relay_fill_id: string; journal_entry_id: string; requesting_user_uuid?: string | null; settlement_no?: string | null },
+  input: { operating_company_id: string; relay_fill_id: string; journal_entry_id: string; requesting_user_uuid?: string | null; settlement_no?: string | null; trailer_id?: string | null },
 ): Promise<RelayFillDocumentOutcome> {
   const company = input.operating_company_id;
   const existing = await client.query<{ id: string }>(
@@ -768,7 +787,7 @@ export async function adoptRelayFillExpenseDocument(
              $10::uuid, $11::uuid, $12::uuid, $13::uuid, 'posted')
      RETURNING id::text`,
     [company, relay.rows[0]!.id, txnDate, totalCents, memo, expenseNumber, primary?.id ?? null, loadId,
-      input.journal_entry_id, credits[0]!.account_id, driverId, unitId, primary?.trailer_id ?? null],
+      input.journal_entry_id, credits[0]!.account_id, driverId, unitId, primary?.trailer_id ?? input.trailer_id ?? null],
   );
   const expenseId = inserted.rows[0]!.id;
   if (input.settlement_no) {
@@ -782,12 +801,13 @@ export async function adoptRelayFillExpenseDocument(
     await client.query(
       `INSERT INTO accounting.expense_lines (
          operating_company_id, expense_id, line_sequence, amount, amount_cents, description, load_id, load_required,
-         expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure)
+         expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure, driver_id, unit_id, trailer_id)
        VALUES ($1::uuid, $2::uuid, $3, $4, $5::bigint, $6, $7::uuid, $8, $9::uuid, $10::uuid,
                CASE WHEN $10::uuid IS NULL THEN NULL ELSE 1 END, CASE WHEN $10::uuid IS NULL THEN NULL ELSE $5::bigint END,
-               CASE WHEN $10::uuid IS NULL THEN NULL ELSE 'each' END)`,
+               CASE WHEN $10::uuid IS NULL THEN NULL ELSE 'each' END, $11::uuid, $12::uuid, $13::uuid)`,
+      // RULING 443.66 D5 — each line carries the header's driver / unit / trailer.
       [company, expenseId, seq, cents / 100, cents, `Relay fill ${input.relay_fill_id} — line ${seq}`, d.load_id ?? loadId,
-        Boolean(d.load_id ?? loadId), d.account_id, itemId],
+        Boolean(d.load_id ?? loadId), d.account_id, itemId, driverId, unitId, primary?.trailer_id ?? input.trailer_id ?? null],
     );
   }
   if (loadAttribution && loadId) {

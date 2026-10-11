@@ -22,3 +22,11 @@ The order also says: "One PR + one named guard per step, guard wired in scripts/
   pairs are recorded by the owner (party_transfer_out.target_id = the funding it answers), never guessed.
 - Guards: verify-party-ledger-sums-to-gl-account (ledger = GL per party; no party posting without its entity — refused at
   the posting-line writer); verify-relay-deposit-no-party-refused (CC-1, 443.59).
+
+## 443.66 — seeded data correctly categorized (owner order 2026-10-11 15:02 CT), CC-3 D1–D5
+- Writers: A/P bill lines carry the settlement line's item (payrun close -> A/P chain); reimbursement settlement lines carry
+  the document's item; linehaul invoice lines carry "Line Haul" (only when its income account is the line's); a posted
+  Creator expense reads status 'posted'; fuel document lines carry the header's driver / unit / trailer; the Creator resolves
+  the document's trailer number to this company's equipment.
+- Existing rows: POST /api/v1/driver-finance/settlement-creator/categorize (named engine path; item / status / driver / unit /
+  trailer only — never an amount, account, journal entry or posting). Guard: verify-creator-documents-categorized.

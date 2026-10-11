@@ -371,7 +371,7 @@ export function LoansAdvancesPage() {
                 key={p.account_id}
                 className="grid grid-cols-[minmax(80px,1fr)_minmax(0,1.4fr)_80px_minmax(120px,1.2fr)_72px] gap-x-2 border-b border-[#F3F4F6]"
               >
-                <div className="px-2 py-1">{p.account_number}</div>
+                <div className="px-2 py-1">{formatAccountDisplayLabel(p, { showNumber: showAccountNumbers })}</div>
                 <div className="px-2 py-1">{p.party_name}</div>
                 <div className="px-2 py-1 text-right">{p.movement_count}</div>
                 <div className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>{balanceText(p.balance_cents)}</div>
@@ -380,7 +380,7 @@ export function LoansAdvancesPage() {
                     type="button"
                     onClick={() => setLedgerAccountId((cur) => (cur === p.account_id ? null : p.account_id))}
                     className="text-xs font-semibold text-[#14314F] underline hover:text-[#0F1729]"
-                    data-testid={`party-account-ledger-btn-${p.account_number}`}
+                    data-testid={`party-account-ledger-btn-${p.account_id}`}
                   >
                     {ledgerAccountId === p.account_id ? "Close" : "View"}
                   </button>

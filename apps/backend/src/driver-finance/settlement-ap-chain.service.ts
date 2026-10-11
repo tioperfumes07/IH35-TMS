@@ -40,7 +40,8 @@ export type ApChainLoadBill = { driverBillId: string | null; loadId: string; loa
 
 /** The key a load's lines / bill are tracked under: its driver bill, or (salaried) the load itself. */
 export const apChainBillKey = (b: ApChainLoadBill): string => b.driverBillId ?? `salaried-load:${b.loadId}`;
-export type ApChainPayItem = { kind: "pay" | "reimbursement" | "detention_pay"; cents: number; accountId: string; loadId: string | null; date: string | null; description: string };
+/** RULING 443.66 D1 — itemId: the settlement line's item; the A/P bill line carries it (detail in the item, rollup in the account). */
+export type ApChainPayItem = { kind: "pay" | "reimbursement" | "detention_pay"; cents: number; accountId: string; loadId: string | null; date: string | null; description: string; itemId?: string | null };
 export type ApChainApplication = { kind: "advance" | "deduction" | "chargeback" | "escrow"; cents: number; accountId: string; description: string; advanceId?: string; preferredLoadId?: string | null; /** ROUND 389.3 R1 — the driver a per-driver receivable credit belongs to (1257 recovery). */ entityDriverId?: string | null };
 
 /** Pure: the load a dated item belongs to — the load whose dates cover the date, else the nearest load by date. */
@@ -204,7 +205,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
   // Lines per load, from the settlement's own pay lines (the same rows the header gross sums — earnings, extra pay,
   // deadhead, team splits — so a team load bills each driver's share, never the whole load twice), plus
   // reimbursements and detention. A line names its load; one that does not goes to the load whose dates cover it.
-  const lines = new Map<string, Array<{ accountId: string; amountCents: number; description: string }>>();
+  const lines = new Map<string, Array<{ accountId: string; amountCents: number; description: string; itemId: string | null }>>();
   for (const b of bills) lines.set(apChainBillKey(b), []);
   let payCents = 0;
   for (const item of input.payItems) {
@@ -214,7 +215,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
     }
     const target = (item.loadId && bills.find((b) => b.loadId === item.loadId)) || attributeToLoad(bills, item.date);
     if (!target) throw new SettlementApChainError("PAY_ITEM_HAS_NO_LOAD", `${item.description} could not be tied to a load of ${input.label}`);
-    lines.get(apChainBillKey(target))!.push({ accountId: item.accountId, amountCents: item.cents, description: `Load ${target.loadNumber} — ${item.description}` });
+    lines.get(apChainBillKey(target))!.push({ accountId: item.accountId, amountCents: item.cents, description: `Load ${target.loadNumber} — ${item.description}`, itemId: item.itemId ?? null });
     if (item.kind === "pay") payCents += item.cents;
   }
   const billsGross = payCents;
@@ -262,7 +263,11 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
       amountCents: total,
       memo: `${input.label} — ${b.payBasis === "salaried" ? "salary" : "driver pay"}, load ${b.loadNumber}`,
       coaAccountId: input.driverPayAccountId,
-      lines: ls.map((l) => ({ accountId: l.accountId, amountCents: l.amountCents, description: l.description, loadId: b.loadId })),
+      // An item line is 1 x amount, 'each' (bill_lines_item_qty_rate_amount_check); no item -> all four NULL.
+      lines: ls.map((l) => ({
+        accountId: l.accountId, amountCents: l.amountCents, description: l.description, loadId: b.loadId,
+        ...(l.itemId ? { itemId: l.itemId, quantity: 1, rateCents: l.amountCents, unitOfMeasure: "each" } : {}),
+      })),
     } as never, input.actorUserId);
     const billId = String((bill as { id: string }).id);
     const p = await postSourceTransactionInClientTx(client as never, { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: billId, posting_purpose: "initial_post", settlement_id: input.settlementId } as never, { userId: input.actorUserId } as never);
