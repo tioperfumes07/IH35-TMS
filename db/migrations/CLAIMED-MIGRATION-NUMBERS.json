@@ -2322,5 +2322,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-11",
     "purpose": "ROUND 443.29 a: seed the \"Fuel Card Fee\" item (-> 5005 Fuel Card Fees) for USMCA; the Relay fill poster resolves its fee leg by that item name and no company has it, so no Relay fill with a fee can post"
+  },
+  "202615500300": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-11",
+    "purpose": "5785 advance recovered 4x: driver_finance.v_driver_advance_balances multiplies every 1245 sub-account posting by the number of active bridge rows on that account (a merged-away profile still bridged to the survivor's sub-account) -- dedupe sub per account, owner resolved through merged_into_driver_id"
   }
 }
