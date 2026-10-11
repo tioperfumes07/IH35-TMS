@@ -34,5 +34,7 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-post-writes-no-bank-posting.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-preview-is-the-post.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-preview-is-the-post.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-gate-gross-includes-extra-pay.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-gate-gross-includes-extra-pay.mjs"]);
   },
 };
