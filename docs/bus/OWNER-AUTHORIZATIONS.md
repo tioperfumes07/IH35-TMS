@@ -7619,3 +7619,13 @@ consumed_at: 2026-10-11T09:21:52Z
 consumed_by: CC-2 (443.45 #4 relearn Creator loads)
 row_counts: prod identical to the rehearsal — 146 loads, 7 legs changed (13570: NULL->159.4, 266.3->150.2; 13589: NULL->1373.7, 1588.7->11.6; 13599: NULL->33.6, NULL->50.9, 1617.3->1351.1), 0 owner legs touched; non-first legs NULL 4 -> 0
 proof_query: node scripts/verify-booked-loads-save-miles.mjs (prod) -> PASS over 146 loads
+
+## AUTH-422
+issued_at: 2026-10-11T10:52:41Z
+issued_by: Lead 443.49 items 1 + 3 on the owner's ruling 2026-10-11 05:39 CT (10:39 UTC), verbatim: "We keep them and we need the real address geo fences." Recorded by CC-2 in the PR that ships the script, as with AUTH-404..421
+owner_quotes: "We keep them and we need the real address geo fences." (2026-10-11 05:39 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — geo.geofences: the auto-dispatch customer-site fences drawn 2026-10-11 whose stop now has a real address AND whose fence has a Samsara copy are moved to the real point, re-activated as that location's one fence, and their EXISTING Samsara address is updated in place by id (outbox samsara.update_geofence — same id; nothing created or deleted in Samsara); a fence whose stop resolved to an owner Samsara address is left in Samsara untouched (local copy retired if active); every real-address location of a Creator stop keeps exactly ONE active fence, pushed to Samsara once (outbox samsara.create_geofence) when it has no Samsara copy; active TMS-drawn fences on a zip / city center are retired locally (history kept). No DELETE anywhere.
+action: OWNER_AUTH_ID=AUTH-422 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-49-real-address-fences.ts --apply
+rehearsal: throwaway br-holy-heart-ak6dqkfe (COMMITTED, deleted): 64 auto fences — 3 moved (Samsara update enqueued: 2000000762878, 2000000762880, 2000000762885), 5 on an owner Samsara address (Indiana Packers local copy retired), 17 real address never in Samsara, 39 still no street; 83 real-address locations: 25 owner Samsara-import, 3 already in Samsara, 55 pushed once; 2 active zip-center fences retired; re-run = 0 changes; verify-stops-resolve-samsara-no-zip-fence PASS after
+expires_at: 2026-10-12T10:52:41Z
+status: OPEN
