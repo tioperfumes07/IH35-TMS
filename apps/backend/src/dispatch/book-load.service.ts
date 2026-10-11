@@ -585,6 +585,20 @@ type DriverPayResolution = {
   rateLoadedPerMileCentsUsed: number | null;
 };
 
+/**
+ * Lead 443.36 #2 (owner ruling 2026-09-28, project doc: a LOCAL driver on WEEKLY SALARY): a load priced by the signed
+ * settlement at a rate of 0 is not "no rate" — it is a salaried week. It counts ONLY as a GO-21-B5 override: the rate is
+ * exactly 0 AND the reason is a real one (>= 10 chars, the same bar as any override) that starts with "Salaried". Such a
+ * load has NO per-load driver bill (the salary is paid on the settlement as its own pay line) and the driver's per-mile
+ * card is NOT used and NOT ended. A 0 without that reason behaves exactly as before (ignored; the card prices the load).
+ */
+export function isSalariedZeroRateOverride(load: Record<string, unknown>): boolean {
+  const reason = typeof load.driver_pay_rate_override_reason === "string" ? load.driver_pay_rate_override_reason.trim() : "";
+  const raw = load.driver_pay_rate_per_mile;
+  if (raw === null || raw === undefined || String(raw).trim() === "") return false;
+  return Number(raw) === 0 && reason.length >= 10 && /^salaried/i.test(reason);
+}
+
 async function resolveDriverBasePayCents(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   operatingCompanyId: string,
@@ -594,6 +608,29 @@ async function resolveDriverBasePayCents(
 ): Promise<DriverPayResolution | null> {
   lastRateCardRefusal = null;
   if (!driverId) return null;
+
+  if (isSalariedZeroRateOverride(load)) {
+    if (actorUserId) {
+      await appendCrudAudit(
+        client as Parameters<typeof appendCrudAudit>[0],
+        actorUserId,
+        "driver_finance.driver_pay_rate.overridden",
+        {
+          load_id: load.id ?? null,
+          driver_id: driverId,
+          operating_company_id: operatingCompanyId,
+          override_rate_per_mile_dollars: 0,
+          override_cents: 0,
+          override_reason: String(load.driver_pay_rate_override_reason).trim(),
+          salaried: true,
+        },
+        "warning",
+        "GO-21-B5"
+      );
+    }
+    lastResolvedRateWasTestData = false;
+    return { totalCents: 0, loadedCents: 0, deadheadCents: 0, milesDeadheadUsed: null, rateEmptyPerMileCentsUsed: null, rateLoadedPerMileCentsUsed: 0 };
+  }
 
   // ROUND 443.31 (Lead, 2026-10-10): the card that prices a load is the one EFFECTIVE ON ITS PICKUP DATE — never the
   // newest card. Measured: Angel 52037e93's only card (48c) starts 2026-08-07, yet load 13498 picked up 2026-08-03 was
@@ -841,7 +878,9 @@ export type DriverBillMintOutcome =
   // practical-miles fallback (2026-09-04, verify-driver-pay-practical-fallback-locked.mjs) is never
   // touched or reached for this case — that fallback stays exactly as ruled and guarded; this is a
   // stricter, additive gate placed in front of it, not a rewrite of it.
-  | { outcome: "refused_no_shortest_miles"; reason: string };
+  | { outcome: "refused_no_shortest_miles"; reason: string }
+  // Lead 443.36 #2: a salaried week (isSalariedZeroRateOverride) has NO per-load driver bill — recorded, never silent.
+  | { outcome: "not_minted_salaried"; reason: string };
 
 export async function createDriverBillArtifacts(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
@@ -880,6 +919,30 @@ export async function createDriverBillArtifacts(
   // ACCT-F277 — a voided bill is an intentional reversal. Never remint over it.
   if (existing && (String(existing.status) === "void" || existing.voided_at != null)) {
     return { outcome: "already_exists" };
+  }
+
+  // Lead 443.36 #2 — a salaried week mints NO per-load driver bill (owner ruling: "A load of a salaried driver has NO
+  // per-load driver bill"); the salary is its own settlement pay line. The decision is recorded on the load (the
+  // mint-or-audit control), and the override itself is audited by resolveDriverBasePayCents' GO-21-B5 event. An
+  // already-existing open bill is left to the path below, where the 0 pay never re-prices it from the card.
+  if (!existing && isSalariedZeroRateOverride(load)) {
+    await resolveDriverBasePayCents(client, input.operating_company_id, primaryDriverForPay, load, input.requestingUserUuid);
+    const reason = String(load.driver_pay_rate_override_reason).trim();
+    await appendCrudAudit(
+      client,
+      input.requestingUserUuid,
+      "driver_finance.driver_bill.not_minted_salaried",
+      {
+        load_id: String(load.id),
+        load_number: String(load.load_number ?? loadNumber),
+        operating_company_id: input.operating_company_id,
+        driver_id: primaryDriverForPay,
+        override_reason: reason,
+      },
+      "info",
+      "LEAD-443.36"
+    );
+    return { outcome: "not_minted_salaried", reason };
   }
 
   // P1 (owner 2026-09-14) — "a driver_finance.driver_bills row may not be minted from a load with
