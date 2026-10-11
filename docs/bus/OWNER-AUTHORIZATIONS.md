@@ -7840,4 +7840,8 @@ action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-11-cc2-443-72-
 rehearsal: throwaway br-red-tree-akt27jdd (COMMITTED, deleted): 13557 -> 13557-3 and 13550-4 -> 13550-5, fuel row + document + JE on the true dates, legs unchanged, reversals on the original September dates, TB 0 before and after, verify-fuel-transactions-per-load LIVE PASS (654/654, 142/142); a re-run refuses (already voided). Rehearsals 1-2 (deleted) found: void-and-recreate is refused by fuel_tx_source_row_hash_uk, and the document engine leaves a draft unposted — hence the date-correction engine and the Creator's post+stamp step.
 partial_apply: 2026-10-11T21:35Z first --apply (#26416 runner) re-dated 13557 -> 13557-3 correctly (fuel row + document + JE 2026-08-29, Dr 5000 84000 / Cr 2510, original void with reversal 2026-09-29, TB 0 — read back through the bypass) and then STOPPED on a false 'no document': its post-check read ran outside the RLS bypass while the production string connects as ih35_app. 13550-4 untouched. Runner fixed (every read in a bypass transaction; a receipt already re-dated is recognized and skipped); rehearsal 4 on a fork of prod HEAD br-fragrant-rice-aklp1r3q (COMMITTED, deleted): 13557 skipped, 13550-4 -> 13550-5 on 2026-08-27, TB 0, fuel guard LIVE PASS, re-run = no-op.
 expires_at: 2026-10-12T21:30:32Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T21:41:00Z
+consumed_by: CC-2 (443.72 #3 fuel dates)
+row_counts: 2 receipts re-dated on prod — 13557 (fuel 40ea84c2) -> expense 13557-3 on 2026-08-29 (Dr 5000 84000 / Cr 2510), original 13557 void with reversal 2026-09-29; 13550-4 (fuel 89bd8842) -> expense 13550-5 on 2026-08-27 (Dr 5010 4238 / Cr 2510), original void with reversal 2026-09-27. $882.38 September -> August. TB 0 before and after each apply.
+proof_query: node scripts/verify-fuel-transactions-per-load.mjs on prod -> LIVE PASS, 0 failures (654/654 rows, 142/142 loads, 152/152 Relay transactions)
