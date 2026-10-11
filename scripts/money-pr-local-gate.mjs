@@ -1371,6 +1371,7 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/integrations/",
       "apps/backend/src/accounting/",
       "data/alwaystrack/",
+      "data/settlement-creator/",
       "scripts/verify-fuel-transactions-per-load.baseline.json",
     ],
   ],
@@ -2310,6 +2311,8 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         f.startsWith("apps/backend/src/integrations/") ||
         f === rel ||
         f.startsWith("data/alwaystrack/") ||
+        f.startsWith("data/settlement-creator/") ||
+        f === "scripts/build-fuel-source-documents.mjs" ||
         f.startsWith("scripts/verify-fuel-transactions-per-load"),
     );
     const touchesNonBankReconAccounting = changedForLiveDomains.some((f) => {
