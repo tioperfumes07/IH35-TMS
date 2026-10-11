@@ -92,7 +92,20 @@ try {
     if (!f.samsara_address_id) { realNoCopy++; lines.push(`REAL_ADDRESS_NO_SAMSARA_COPY (location fence pushed in item 3)\t${tag}`); continue; }
     // Move the fence that has a Samsara copy to the real point and make it the location's one fence.
     const already = (await client.query(`SELECT 1 FROM geo.geofences WHERE id = $1::uuid AND is_active AND location_ref_id = $2::uuid`, [f.fence_id, f.location_id])).rows.length;
-    if (already) { alreadyMoved++; lines.push(`ALREADY_MOVED\t${tag}`); continue; }
+    if (already) {
+      // Its Samsara update never delivered (e.g. failed "no handler" before the handler deployed): enqueue it once more.
+      const updated = (await client.query(
+        `SELECT 1 FROM outbox.events WHERE event_type = 'samsara.update_geofence' AND (payload->>'geofence_id') = $1 AND delivered_at IS NOT NULL`,
+        [f.fence_id])).rows.length;
+      if (!updated) {
+        await enqueueOutboxEvent(client as never, "samsara.update_geofence", { aggregate_type: "geo.geofences", aggregate_id: f.fence_id }, {
+          operating_company_id: USMCA, geofence_id: f.fence_id, samsara_address_id: f.samsara_address_id,
+          latitude: f.lat, longitude: f.lng, label: label(f), formatted_address: label(f), actor_user_id: OWNER,
+        }, `samsara.update_geofence:${f.fence_id}:443.49-retry`);
+        alreadyMoved++; lines.push(`ALREADY_MOVED (Samsara update re-enqueued)\t${tag}`); continue;
+      }
+      alreadyMoved++; lines.push(`ALREADY_MOVED\t${tag}`); continue;
+    }
     await client.query(
       `UPDATE geo.geofences g SET is_active = false, updated_at = now(), updated_by_user_uuid = $3::uuid
         WHERE g.operating_company_id = $1::uuid AND g.location_ref_id = $2::uuid AND g.is_active AND g.source <> 'samsara_import'`,
