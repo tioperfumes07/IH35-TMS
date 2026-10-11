@@ -2312,5 +2312,10 @@
     "desc": "invoices_display_id_check add invoice-dash-load alternative (renumbered from 202610100100 per 443.20 collision repair)",
     "lane": "CC-1",
     "round": "443.8"
+  },
+  "202615480900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-10",
+    "purpose": "ROUND 443.28 same-entity FK for 443.16: UNIQUE (operating_company_id, id) on telematics.unit_stop_events + composite FK mdata.load_stops (operating_company_id, actual_stop_event_id) -> unit_stop_events (verify-money-lines-same-entity-fks red on main) — additive, no data written"
   }
 }
