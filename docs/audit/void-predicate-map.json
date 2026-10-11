@@ -376,6 +376,14 @@
         "is_active"
       ]
     },
+    "accounting.related_party_loan_facilities": {
+      "canonical_column": "deleted_at",
+      "predicate": "deleted_at IS NULL",
+      "all_columns": [
+        "deleted_at",
+        "is_active"
+      ]
+    },
     "accounting.related_party_loan_entries": {
       "canonical_column": "deleted_at",
       "predicate": "deleted_at IS NULL",
