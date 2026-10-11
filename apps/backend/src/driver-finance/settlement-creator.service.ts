@@ -236,7 +236,7 @@ async function voidPriorCreatorSettlementForEdit(
   opco: string,
   settlementId: string,
   settlementLabel: string,
-): Promise<void> {
+): Promise<string[]> {
   const reason = `Settlement Creator Edit = void and repost (${settlementLabel})`;
   const businessDate = companyBusinessDate();
 
@@ -248,7 +248,14 @@ async function voidPriorCreatorSettlementForEdit(
       WHERE operating_company_id = $1::uuid AND settlement_id = $2::uuid AND status = 'posted' LIMIT 1`,
     [opco, settlementId],
   );
-  if (postedRun.rows[0]) {
+  // LEAD RULING 2026-10-11 (5769 repair, Option 1): a settlement posted through the close is replaced too — the engine
+  // reverse at the end of this function (reverseSettlementForVoid) unwinds the pay run (bills, non-cash applications,
+  // net-pay payments). Only a settlement whose post is NOT a Creator post still refuses.
+  const creatorPosted = (await client.query<{ ok: boolean }>(
+    `SELECT EXISTS (SELECT 1 FROM audit.audit_events WHERE event_class = 'driver_finance.settlement_creator.posted' AND payload->>'resource_id' = $1) AS ok`,
+    [settlementId],
+  )).rows[0]?.ok === true;
+  if (postedRun.rows[0] && !creatorPosted) {
     throw new SettlementCreatorError(
       "settlement_posted_through_close",
       `Settlement ${settlementLabel} is posted (per-load A/P bills and payments, pay run ${postedRun.rows[0].id}). Undo that post first; Edit cannot replace a posted settlement.`,
@@ -284,61 +291,9 @@ async function voidPriorCreatorSettlementForEdit(
     }
   }
 
-  // The one void writer (stampDocumentVoided): voided_at/void_reason/voided_by_user_id + archived_at liveness, idempotent
-  // on an already-voided row — never a hand-rolled UPDATE (verify-void-stamp-columns, zero-tolerance on fuel).
-  for (const fuelId of prior.fuel_transaction_ids ?? []) {
-    await stampDocumentVoided(client as never, {
-      operatingCompanyId: opco,
-      family: "fuel_transaction",
-      documentId: fuelId,
-      voidReason: reason,
-      voidedByUserId: actorUserId,
-    });
-  }
-
-  for (const invoiceId of prior.invoice_ids ?? []) {
-    try {
-      await voidDocument(client as never, {
-        operatingCompanyId: opco,
-        type: "invoice",
-        id: invoiceId,
-        reason,
-        actor: { userId: actorUserId },
-        currentBusinessDate: businessDate,
-      });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (!/already.?void|not found|VOID/i.test(msg)) throw err;
-    }
-    // Factoring purchase linked to this invoice (submit-only; voidDocument reverses if funded).
-    const fa = await client.query<{ id: string }>(
-      `
-        SELECT fa.id::text
-          FROM accounting.invoices i
-          JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
-         WHERE i.operating_company_id = $1::uuid
-           AND i.id = $2::uuid
-           AND fa.voided_at IS NULL
-         LIMIT 1
-      `,
-      [opco, invoiceId],
-    );
-    for (const row of fa.rows) {
-      try {
-        await voidDocument(client as never, {
-          operatingCompanyId: opco,
-          type: "factoring_advance",
-          id: row.id,
-          reason,
-          actor: { userId: actorUserId },
-          currentBusinessDate: businessDate,
-        });
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        if (!/already.?void|not found|NOT YET WIRED/i.test(msg)) throw err;
-      }
-    }
-  }
+  // Option 1 (Lead ruling 2026-10-11, 5769 repair) — the prior fill rows are KEPT and re-used by the repost (a fill is one
+  // provider transaction: voiding and re-inserting it collides on its provider hash), and the prior loads' sent invoices
+  // (and any factoring advance on them) are KEPT: revenue never churns. Expenses, advances and the settlement are undone.
 
   for (const advanceId of prior.advance_ids ?? []) {
     const adv = await client.query<{
@@ -398,7 +353,7 @@ async function voidPriorCreatorSettlementForEdit(
     },
     "warning",
     AUDIT_TAG,
-  );
+  );  return prior.fuel_transaction_ids ?? [];
 }
 
 /**
@@ -932,6 +887,8 @@ export async function postSettlementCreatorInClientTx(
   // engine — the ONE settlement calculator and poster (per-load A/P chain).
   const postsThroughClose = !(typedNo && isPresettlementPSeries(typedNo));
   let settlementId: string;
+  // Option 1 — fill rows of the settlement this Edit replaces, re-used (never re-inserted) by the fuel loop below.
+  let priorFuelIds: string[] = [];
   let displayId: string;
   let sourceDocumentRef: string | null = null;
 
@@ -956,7 +913,7 @@ export async function postSettlementCreatorInClientTx(
           `${targetDisplay} already exists. Confirm Edit = void and repost to replace it.`,
         );
       }
-      await voidPriorCreatorSettlementForEdit(
+      priorFuelIds = await voidPriorCreatorSettlementForEdit(
         client,
         actorUserId,
         draft.operating_company_id,
@@ -1017,7 +974,7 @@ export async function postSettlementCreatorInClientTx(
             `Settlement ${typedNo} already exists (${existing.rows[0].display_id}). Confirm Edit = void and repost to replace it.`,
           );
         }
-        await voidPriorCreatorSettlementForEdit(
+        priorFuelIds = await voidPriorCreatorSettlementForEdit(
           client,
           actorUserId,
           draft.operating_company_id,
@@ -1220,7 +1177,22 @@ export async function postSettlementCreatorInClientTx(
     // ROUND 367.2 — one provider transaction is one purchase: refused by name before the INSERT (the database refuses it
     // too, 202615370600). source_row_hash is NOT NULL since 202614220000 and this INSERT never set it (every Settlement
     // Creator fuel line failed with 23502); it is keyed on the provider ID when there is one.
-    try {
+    // Option 1 (5769 repair) — the replaced settlement's own fill for this ticket + product is re-used: stamped with the
+    // card / note / gallons the draft names, then posted below like a new fill. Never a second row for one purchase.
+    const reused = priorFuelIds.length && fuel.invoice
+      ? (await client.query<{ id: string }>(
+          `UPDATE fuel.fuel_transactions ft
+              SET fuel_card_id = (SELECT ct.id FROM catalogs.fuel_card_types ct WHERE ct.operating_company_id = $1::uuid AND ct.code = upper($5) AND ct.is_active),
+                  notes = COALESCE($6, ft.notes), gallons = COALESCE(ft.gallons, $7), price_per_gallon = COALESCE(ft.price_per_gallon, $8),
+                  load_id = COALESCE($9::uuid, ft.load_id), updated_at = now()
+            WHERE ft.id = ANY($2::uuid[]) AND ft.operating_company_id = $1::uuid AND btrim(ft.transaction_reference) = btrim($3)
+              AND ft.fuel_type = $4 AND ft.voided_at IS NULL AND ft.vendor_id = $10::uuid
+            RETURNING ft.id::text`,
+          [draft.operating_company_id, priorFuelIds, fuel.invoice, fuel.fuel_type ?? "diesel", fuel.card, fuel.notes?.trim() || null,
+            fuel.gallons ?? null, fuel.cpg_cents == null ? null : dollarsFromCents(fuel.cpg_cents), loadId, vendor.id],
+        )).rows[0]?.id ?? null
+      : null;
+    if (!reused) try {
       await refuseDuplicateProviderTransaction(client, {
         operatingCompanyId: draft.operating_company_id,
         vendorId: vendor.id,
@@ -1233,16 +1205,40 @@ export async function postSettlementCreatorInClientTx(
     }
 
     const fuelType = fuel.fuel_type ?? "diesel";
+    // ACCT-F403 + 5772 fork rehearsal: a Relay fill is consumed from the prepaid wallet ONLY by the ingested Relay fill
+    // (trg_relay_wallet_consumed_only_by_relay_fill). The Creator row LINKS to that fill (relay_fuel_transaction_id) and
+    // posts no fuel; the fill posts at Relay's charge when its wallet line is matched in Banking. A Relay line with no
+    // known Relay transaction is refused by name — never a wallet credit, never a guess.
+    let relayFillId: string | null = null;
+    if (fuel.card === "relay") {
+      if (!fuel.relay_transaction_id) {
+        throw new SettlementCreatorError("relay_transaction_required", `Fuel line ${fuel.date}: a Relay fill must name its Relay transaction (txn_…) from the Relay file.`);
+      }
+      relayFillId = (await client.query<{ id: string }>(
+        `SELECT id::text FROM integrations.relay_fuel_transactions
+          WHERE operating_company_id = $1::uuid AND transaction_id = $2 AND voided_at IS NULL AND is_active
+          ORDER BY created_at LIMIT 1`,
+        [draft.operating_company_id, fuel.relay_transaction_id],
+      )).rows[0]?.id ?? null;
+      if (!relayFillId) {
+        throw new SettlementCreatorError("relay_fill_not_ingested", `Fuel line ${fuel.date}: Relay transaction ${fuel.relay_transaction_id} is not in this company's Relay fills.`);
+      }
+      if (reused) {
+        await client.query(`UPDATE fuel.fuel_transactions SET relay_fuel_transaction_id = $2::uuid, updated_at = now() WHERE id = $1::uuid`, [reused, relayFillId]);
+      }
+    } else if (fuel.relay_transaction_id) {
+      throw new SettlementCreatorError("relay_transaction_on_non_relay_card", `Fuel line ${fuel.date}: names Relay transaction ${fuel.relay_transaction_id} but is paid by ${fuel.card}.`);
+    }
     // U25 — a reefer fill records the trailer it fueled when this company owns or leases it (ROUND 373.5: a record never
     // references another company's equipment) and only a Reefer trailer (reefer fuel never goes to a dry van).
-    const inserted = await client.query<{ id: string }>(
+    const inserted = reused ? { rows: [{ id: reused }] } : await client.query<{ id: string }>(
       `
         INSERT INTO fuel.fuel_transactions (
           operating_company_id, vendor_id, load_id, driver_id, unit_id,
           fuel_type, gallons, price_per_gallon, total_cost, fee_amount,
           purchased_at, transaction_at, transaction_reference, location_city,
           source, load_required, load_exemption_reason, created_by_user_id, source_row_hash, trailer_id,
-          source_doc_id, fuel_card_id, notes
+          source_doc_id, fuel_card_id, notes, relay_fuel_transaction_id
         )
         VALUES (
           $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid,
@@ -1255,7 +1251,7 @@ export async function postSettlementCreatorInClientTx(
           -- D1/D2 (Lead audit 2026-10-11) — the card the draft names, never NULL: a USMCA row with no card evidence is
           -- read as Relay (fuel-credit-preference.ts) and posts nothing; a Dreamline fill must post Dr fuel / Cr 2510.
           (SELECT ct.id FROM catalogs.fuel_card_types ct WHERE ct.operating_company_id = $1::uuid AND ct.code = upper($20) AND ct.is_active),
-          $21
+          $21, $22::uuid
         )
         RETURNING id::text
       `,
@@ -1282,6 +1278,7 @@ export async function postSettlementCreatorInClientTx(
         fuel.source_doc_id ?? null,
         fuel.card,
         fuel.notes?.trim() || null,
+        relayFillId,
       ],
     );
     const fuelId = inserted.rows[0]!.id;
@@ -1752,7 +1749,11 @@ export async function postSettlementCreatorInClientTx(
     // rolls back, and dispatch queues its revenue latch after commit. Invoice send refuses an
     // invoice on a load that is still 'dispatched' (invoice_on_rolling_load_needs_authorization, since 09-30), so
     // without this no Creator invoice could be issued.
-    await deliverLoadThroughDispatch(client, actorUserId, draft.operating_company_id, loadId, load.delivery_date);
+    // Option 1 — an adopted load (Edit of its own Creator settlement) is already delivered and invoiced: no transition.
+    const loadStatus = (await client.query<{ status: string }>(`SELECT status::text FROM mdata.loads WHERE id = $1::uuid`, [loadId])).rows[0]?.status ?? "";
+    if (!(draft.edit_void_repost && ["delivered", "delivered_pending_docs", "invoiced", "paid", "completed", "closed"].includes(loadStatus))) {
+      await deliverLoadThroughDispatch(client, actorUserId, draft.operating_company_id, loadId, load.delivery_date);
+    }
     let built;
     try {
       built = await buildInvoiceFromLoad(client, {

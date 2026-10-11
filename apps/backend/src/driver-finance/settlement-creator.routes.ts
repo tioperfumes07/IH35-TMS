@@ -119,6 +119,8 @@ const draftSchema = z.object({
         load_id: z.string().uuid().nullable().optional(),
         // D2 (Lead audit 2026-10-11) — e.g. "gallons estimated at average price (owner 10-10)"; stored on the fill.
         notes: z.string().trim().max(500).nullable().optional(),
+        // 5772 fork rehearsal (Lead 2026-10-11): a Relay fill names its Relay transaction (txn_…); the row links to it.
+        relay_transaction_id: z.string().trim().regex(/^txn_[A-Za-z0-9]+$/).nullable().optional(),
       }),
     )
     .default([]),
