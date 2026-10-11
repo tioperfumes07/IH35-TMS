@@ -36,10 +36,21 @@ const runAll = args[0] === "--all";
 const dbUrl = args[args.length - 1];
 let settlementNos = [];
 
+/**
+ * Entry files that are NOT USMCA settlements and are never entered (Lead 443.42/443.43: every load of 5796 is
+ * Transportation). --all reports them as SKIP with the reason instead of failing SETTLEMENT-EXISTS. Named, not inferred.
+ */
+const NOT_USMCA_ENTRIES = new Map([["5796", "every load is Transportation — not entered in USMCA (Lead 443.42/443.43)"]]);
+
 if (runAll) {
   settlementNos = readdirSync(ENTRY_DIR)
     .filter((f) => f.endsWith(".json"))
     .map((f) => f.replace(".json", ""))
+    .filter((no) => {
+      if (!NOT_USMCA_ENTRIES.has(no)) return true;
+      console.log(`SKIP  ${no}: ${NOT_USMCA_ENTRIES.get(no)}`);
+      return false;
+    })
     .sort();
 } else {
   settlementNos = [args[0]];
@@ -179,14 +190,15 @@ async function auditSettlement(client, settlementNo) {
 
     invoiceIdsByLoad[ln] = invRow.id;
 
-    // display_id = <invoice_number>-<load_number> or 0-<load_number> for $0 loads
+    // display_id = <invoice_number>-<load_number> when the file names the owner's Faro / QBO invoice number; with no
+    // number the engine assigns <next>-<load_number> (CC-1 ROUND 443.8 rule — aligned 443.46, the tool expected 0-<load>).
     const rawInvNo =
       loadDef.invoice_number != null ? String(loadDef.invoice_number).trim() : "";
-    const fileInvNo = rawInvNo ? `${rawInvNo}-${ln}` : `0-${ln}`;
+    const numberOk = rawInvNo ? invRow.display_id === `${rawInvNo}-${ln}` : new RegExp(`^\\d+-${ln}$`).test(String(invRow.display_id));
     check(
       `${prefix}/INVOICE-${ln}-NUMBER`,
-      invRow.display_id === fileInvNo,
-      `display_id=${invRow.display_id} expected=${fileInvNo}`
+      numberOk,
+      `display_id=${invRow.display_id} expected=${rawInvNo ? `${rawInvNo}-${ln}` : `<n>-${ln}`}`
     );
 
     const fileAmt = loadDef.line_haul_amount_cents ?? 0;
@@ -254,7 +266,10 @@ async function auditSettlement(client, settlementNo) {
       sumCents(onLoad(ef.expenses).filter((e) => e.is_reimbursable === true && e.is_company_expense !== true));
     const expectedBillCents = milesPayCents + extrasCents;
 
-    check(`${prefix}/BILL-${ln}-EXISTS`, !!billByLoad[ln], `no driver bill for load ${ln}`);
+    // A load the file pays nothing on (a salaried week's load with no pay line, Lead 443.36) has no A/P bill; a salaried
+    // load's salary line is billed on its own A/P bill with no driver bill (pay_basis 'salaried', Lead 443.45 Ask C).
+    if (expectedBillCents === 0 && !billByLoad[ln]) { pass(`${prefix}/BILL-${ln}-NONE-EXPECTED`); continue; }
+    check(`${prefix}/BILL-${ln}-EXISTS`, !!billByLoad[ln], `no A/P bill for load ${ln}`);
     if (!billByLoad[ln]) continue;
     check(
       `${prefix}/BILL-${ln}-AMOUNT`,
@@ -322,40 +337,36 @@ async function auditSettlement(client, settlementNo) {
   }
 
   // ── CHECK 8: fuel transactions — count, total, card_id set, journal entry ──
-  // Fuel transactions for this settlement are linked via accounting.expenses.settlement_no
-  // (expenses.source_fuel_transaction_id → fuel.fuel_transactions)
-  const fuelExpRows = await q(
+  // Aligned 443.46 (CC-3): the settlement's fuel is the fuel rows ON ITS OWN LOADS for its driver (never the driver's
+  // whole period, which pulls in neighbouring settlements). A row reaches the ledger through its expense JE (Dreamline /
+  // card fuel) or, for a Relay fill, through the fill's own fuel_event JE (Lead 443.41 A / R9). A $0 file line (gallons
+  // only) is not a purchase and is not recorded.
+  const fuelRows = await q(
     client,
-    `SELECT e.id::text, e.journal_entry_id::text, e.total_amount_cents,
-            ft.id::text AS ft_id, ft.fuel_card_id::text,
-            round(ft.total_cost * 100)::bigint AS ft_cents,
-            ft.notes AS ft_notes
-     FROM accounting.expenses e
-     JOIN fuel.fuel_transactions ft ON ft.id = e.source_fuel_transaction_id
-     JOIN driver_finance.driver_settlements s ON s.id = $3::uuid
-     WHERE e.operating_company_id = $1::uuid
-       AND e.voided_at IS NULL
-       AND ft.voided_at IS NULL
-       -- The settlement link: the expense names this settlement (settlement_no, once stamped), or its fuel row is this
-       -- settlement driver's and sits on one of this settlement's loads or inside its period. Never settlement_no alone.
-       AND (
-         e.settlement_no = $2
-         OR (ft.driver_id = s.driver_id AND (
-               ft.load_id IN (SELECT l.id FROM driver_finance.driver_settlement_gl_bills dsg JOIN mdata.loads l ON l.load_number = dsg.load_number AND l.operating_company_id = dsg.operating_company_id WHERE dsg.settlement_id = s.id)
-               OR ft.load_id IN (SELECT sl.load_id FROM driver_finance.settlement_lines sl WHERE sl.settlement_id = s.id AND sl.load_id IS NOT NULL)
-               OR ft.transaction_at::date BETWEEN s.period_start AND s.period_end))
-       )`,
-    [companyId, settlementNo, settlId]
+    `SELECT ft.id::text, ft.fuel_card_id::text, round(ft.total_cost * 100)::bigint AS ft_cents,
+            (SELECT e.journal_entry_id::text FROM accounting.expenses e
+              WHERE e.source_fuel_transaction_id = ft.id AND e.voided_at IS NULL AND e.journal_entry_id IS NOT NULL LIMIT 1) AS exp_je,
+            (SELECT p.journal_entry_uuid::text FROM accounting.journal_entry_postings p
+               JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+              WHERE ft.relay_fuel_transaction_id IS NOT NULL AND p.source_transaction_type = 'fuel_event'
+                AND p.source_transaction_id = ft.relay_fuel_transaction_id::text
+                AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL LIMIT 1) AS fill_je
+     FROM fuel.fuel_transactions ft
+     JOIN mdata.loads l ON l.id = ft.load_id
+     WHERE ft.operating_company_id = $1::uuid AND ft.voided_at IS NULL
+       AND l.load_number = ANY($2::text[]) AND ft.driver_id = $3::uuid`,
+    [companyId, (ef.loads ?? []).map((l) => String(l.load_number)), ef.driver_id]
   );
-
-  const fileFuelCount = (ef.fuel_purchases ?? []).length;
-  const fileFuelTotal = (ef.fuel_purchases ?? []).reduce((s, f) => s + f.receipt_cents, 0);
-  const dbFuelTotal = fuelExpRows.reduce((s, r) => s + (Number(r.ft_cents) || 0), 0);
+  for (const r of fuelRows) r.journal_entry_id = r.exp_je ?? r.fill_je ?? null;
+  const fileFuel = (ef.fuel_purchases ?? []).filter((f) => Number(f.receipt_cents ?? 0) > 0);
+  const fileFuelCount = fileFuel.length;
+  const fileFuelTotal = fileFuel.reduce((s, f) => s + f.receipt_cents, 0);
+  const dbFuelTotal = fuelRows.reduce((s, r) => s + (Number(r.ft_cents) || 0), 0);
 
   check(
     `${prefix}/FUEL-COUNT`,
-    fuelExpRows.length === fileFuelCount,
-    `${fuelExpRows.length} fuel transactions in DB (via expenses), file has ${fileFuelCount}`
+    fuelRows.length === fileFuelCount,
+    `${fuelRows.length} fuel rows on this settlement's loads, file has ${fileFuelCount} non-zero line(s)`
   );
   check(
     `${prefix}/FUEL-TOTAL`,
@@ -363,39 +374,37 @@ async function auditSettlement(client, settlementNo) {
     `fuel total ${dbFuelTotal} cents vs file ${fileFuelTotal} cents`
   );
 
-  const missingCard = fuelExpRows.filter((r) => !r.fuel_card_id);
+  const missingCard = fuelRows.filter((r) => !r.fuel_card_id);
   check(
     `${prefix}/FUEL-CARD-ID`,
     missingCard.length === 0,
-    `${missingCard.length} fuel transactions have NULL fuel_card_id`
+    `${missingCard.length} fuel rows have NULL fuel_card_id`
   );
 
-  const missingFuelJe = fuelExpRows.filter((r) => !r.journal_entry_id);
+  const missingFuelJe = fuelRows.filter((r) => !r.journal_entry_id);
   check(
     `${prefix}/FUEL-REACHES-LEDGER`,
     missingFuelJe.length === 0,
-    `${missingFuelJe.length} of ${fuelExpRows.length} fuel expenses have no journal_entry_id — fuel never reached ledger`
+    `${missingFuelJe.length} of ${fuelRows.length} fuel rows reach no journal entry (no expense JE, no Relay fill JE)`
   );
 
-  // Check fuel account from entry file hits a posting
-  const fuelAccountIds = [...new Set((ef.fuel_purchases ?? []).map((f) => f.account_id).filter(Boolean))];
+  // Every fuel account the file names is posted on one of THIS settlement's fuel journal entries.
+  const settlementFuelJeIds = [...new Set(fuelRows.map((r) => r.journal_entry_id).filter(Boolean))];
+  const fuelAccountIds = [...new Set(fileFuel.map((f) => f.account_id).filter(Boolean))];
   for (const acctId of fuelAccountIds) {
-    const postedFuelJeId = fuelExpRows.find((r) => r.journal_entry_id)?.journal_entry_id;
-    if (!postedFuelJeId) continue;
-    const [acctHit] = await q(
-      client,
-      `SELECT 1 FROM accounting.journal_entry_postings p
-       WHERE p.journal_entry_uuid = $1::uuid
-         AND p.account_id = $2::uuid
-         AND p.operating_company_id = $3::uuid`,
-      [postedFuelJeId, acctId, companyId]
-    );
+    const [acctHit] = settlementFuelJeIds.length
+      ? await q(
+          client,
+          `SELECT 1 FROM accounting.journal_entry_postings p
+           WHERE p.journal_entry_uuid = ANY($1::uuid[]) AND p.account_id = $2::uuid AND p.operating_company_id = $3::uuid LIMIT 1`,
+          [settlementFuelJeIds, acctId, companyId]
+        )
+      : [];
     check(
       `${prefix}/FUEL-ACCOUNT-${acctId.slice(0, 8)}`,
       !!acctHit,
-      `fuel account ${acctId.slice(0, 8)} not found in any fuel JE posting`
+      `fuel account ${acctId.slice(0, 8)} not posted on any of this settlement's fuel journal entries`
     );
-    break; // one representative check per unique account
   }
 
   // ── Collect all JE IDs for this settlement ──
@@ -434,9 +443,8 @@ async function auditSettlement(client, settlementNo) {
   const expJeIds = expRows.map((r) => r.je_id);
 
   // Fuel JEs (from expenses linked to fuel transactions)
-  const fuelJeIds = fuelExpRows
-    .filter((r) => r.journal_entry_id)
-    .map((r) => r.journal_entry_id);
+  const fuelJeIds = settlementFuelJeIds;
+  const relayFillJeIds = [...new Set(fuelRows.map((r) => r.fill_je).filter(Boolean))];
 
   const allJeIds = [...new Set([...invoiceJeIds, ...billJeIds, ...expJeIds, ...fuelJeIds])];
 
@@ -460,8 +468,13 @@ async function auditSettlement(client, settlementNo) {
      JOIN banking.bank_accounts ba ON ba.ledger_account_id = a.id
      WHERE p.journal_entry_uuid = ANY($1::uuid[])
        AND p.operating_company_id = $2::uuid
-       AND a.account_type = 'Asset'`,
-    [allJeIds, companyId]
+       AND a.account_type = 'Asset'
+       -- Aligned 443.46: a Relay fill credits the Relay fuel wallet by design (owner 10-02/10-04: fuel cards are bank
+       -- accounts; R9). Only the wallet, and only on a Relay fill's own entry, is excused — any other cash posting fails.
+       AND NOT (p.journal_entry_uuid = ANY($3::uuid[]) AND p.account_id IN (
+             SELECT r.account_id FROM accounting.chart_of_accounts_roles r
+              WHERE r.operating_company_id = $2::uuid AND r.role = 'fuel_wallet_relay'))`,
+    [allJeIds, companyId, relayFillJeIds]
   );
   check(
     `${prefix}/NO-BANK-POSTING`,
@@ -528,17 +541,19 @@ async function auditSettlement(client, settlementNo) {
     `${emailRow.cnt} email_queue row(s) added after settlement was posted`
   );
 
-  // ── CHECK 13: bank_transactions count unchanged since posted ──
+  // ── CHECK 13: no bank transaction is matched to this settlement's entries ──
+  // Aligned 443.46: the old count of ALL new bank_transactions since the post failed whenever the live bank feed
+  // ingested anything. The real rule: the settlement post wrote / matched no bank line.
   const [bankTxRow] = await q(
     client,
     `SELECT COUNT(*) AS cnt FROM banking.bank_transactions
-     WHERE operating_company_id = $1::uuid AND created_at > $2`,
-    [companyId, postedAt]
+     WHERE operating_company_id = $1::uuid AND matched_journal_entry_id = ANY($2::uuid[])`,
+    [companyId, allJeIds.filter((id) => !relayFillJeIds.includes(id))]
   );
   check(
-    `${prefix}/BANK-TXN-UNCHANGED`,
+    `${prefix}/BANK-TXN-NOT-MATCHED`,
     parseInt(bankTxRow.cnt) === 0,
-    `${bankTxRow.cnt} new bank_transaction(s) since settlement was posted`
+    `${bankTxRow.cnt} bank transaction(s) matched to this settlement's journal entries`
   );
 }
 
