@@ -167,7 +167,8 @@ export async function computeMilesRecommendations(
         confidence: lane.confidence, autofill_allowed: Boolean(lane.autofill_allowed) && !lane.short_miles_untrustworthy,
         untrustworthy_reason: lane.short_miles_untrustworthy ? lane.short_miles_untrustworthy_reason ?? "short miles flagged untrustworthy" : null }
     : null;
-  const histEmpty: HistoricalRec | null = lane && num(lane.empty_miles) != null && Number(lane.empty_miles) >= 0
+  // 443.55 "never a blank, never a zero": an average of 0 empty miles is no recommendation — the missing reason shows instead.
+  const histEmpty: HistoricalRec | null = lane && pos(lane.empty_miles) != null
     ? { value: round1(Number(lane.empty_miles)), n_loads: nP, min: null, max: null, last_seen: lane.last_seen,
         confidence: lane.confidence, autofill_allowed: Boolean(lane.autofill_allowed), untrustworthy_reason: null }
     : null;
@@ -272,9 +273,23 @@ export async function milesRecommendationsForLoad(
   const row = await loadMilesRow(client, args.operatingCompanyId, args.loadId);
   if (!row) return null;
   const { stops, firstAt } = await loadStopPoints(client, args.operatingCompanyId, args.loadId);
+  const current = currentFor(row);
+  // Who chose is shown by name, never as a raw user id.
+  const ids = [...new Set(Object.values(current).map((c) => c.chosen_by).filter((v): v is string => !!v && /^[0-9a-f-]{36}$/i.test(v)))];
+  if (ids.length) {
+    const names = new Map(
+      (
+        await client.query<{ id: string; name: string }>(
+          `SELECT id::text, coalesce(nullif(trim(concat_ws(' ', first_name, last_name)), ''), email) AS name FROM identity.users WHERE id = ANY($1::uuid[])`,
+          [ids]
+        )
+      ).rows.map((r) => [r.id, r.name])
+    );
+    for (const c of Object.values(current)) if (c.chosen_by && names.has(c.chosen_by)) c.chosen_by = names.get(c.chosen_by)!;
+  }
   return computeMilesRecommendations(
     client,
-    { operatingCompanyId: args.operatingCompanyId, stops, unitId: row.assigned_unit_id, loadId: row.id, firstStopAt: firstAt, current: currentFor(row) },
+    { operatingCompanyId: args.operatingCompanyId, stops, unitId: row.assigned_unit_id, loadId: row.id, firstStopAt: firstAt, current },
     route
   );
 }

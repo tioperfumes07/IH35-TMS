@@ -7741,3 +7741,13 @@ consumed_at: 2026-10-11T15:52:10Z
 consumed_by: CC-2 (443.53 #1 facility fences to Samsara)
 row_counts: item 1 moved 3 (Samsara copy updated in place); item 3 192 real-address locations = 27 owner import + 60 already in Samsara + 105 pushed; 118 Samsara events delivered, 0 errored; 191 of 191 street locations of Creator stops have one active fence with a Samsara id
 proof_query: SELECT count(*) FILTER (WHERE delivered_at IS NOT NULL), count(*) FILTER (WHERE last_error IS NOT NULL) FROM outbox.events WHERE event_type IN ('samsara.create_geofence','samsara.update_geofence') AND created_at > '2026-10-11 15:50' -> 118, 0
+
+## AUTH-432
+issued_at: 2026-10-11T16:29:47Z
+issued_by: Lead 443.53 #2 (straight-line legs replaced; "legs by source google / lane average / NULL, haversine 0") — the one re-run after the same-point rule. Recorded by CC-2 in the PR that ships the change, as with AUTH-404..431
+owner_quotes: "Yes we can calculate we are supposed to be using estimates from google, and from estimates another Claude agent created basted on averages etc for all the loads historically moved" (2026-10-11 09:23 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — one dispatch.relearn_load_miles (record_sources) per USMCA Creator load (148) under key :443.53-same-point: chooseLegMiles now returns 0.0 / method same_point for two stops at one real point (13628: two White Toque docks at 11 Enterprise Ave N), so the leg the NULL rule emptied is measured again. Outbox rows only; planning legs only; no pay / settlement / money; no DELETE.
+action: OWNER_AUTH_ID=AUTH-432 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-53-relearn-creator-miles.ts --apply --record-sources --pass=443.53-same-point
+rehearsal: throwaway br-rapid-recipe-ak79l7zq (COMMITTED, deleted): 148 enqueued; re-run 0 enqueued / 148 already queued
+expires_at: 2026-10-12T16:29:47Z
+status: OPEN

@@ -38,7 +38,8 @@ if (!apply && !forkCommit) throw new Error("pass --fork-commit (throwaway fork) 
 if (forkCommit && url.includes(PROD_HOST_HINT)) throw new Error("--fork-commit refused on the production endpoint");
 if (apply) {
   const auth = (process.env.OWNER_AUTH_ID ?? "").trim();
-  if (auth !== "AUTH-428") throw new Error(`--apply requires OWNER_AUTH_ID=AUTH-428 (got ${JSON.stringify(auth || null)})`);
+  // AUTH-428 (consumed) ran the 443.53 / 443.55 passes; AUTH-432 is the one re-run after the same-point rule (13628).
+  if (!["AUTH-428", "AUTH-432"].includes(auth)) throw new Error(`--apply requires OWNER_AUTH_ID=AUTH-428 or AUTH-432 (got ${JSON.stringify(auth || null)})`);
   execFileSync(process.execPath, [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), auth], { stdio: "inherit", cwd: ROOT });
 }
 

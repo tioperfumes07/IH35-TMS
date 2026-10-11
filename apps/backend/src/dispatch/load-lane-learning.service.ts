@@ -63,7 +63,7 @@ export type LaneLearningResult = {
   successor_first_stop?: { load_number: string; miles: number | null; reason?: string };
 };
 
-export type DeadheadMethod = "point_mileage_cache" | "routing_provider" | "google" | "lane_average";
+export type DeadheadMethod = "point_mileage_cache" | "routing_provider" | "google" | "lane_average" | "same_point";
 /** The Google routing call (injectable for tests). Returns null when Google has no route / is not configured. */
 export type RouteFn = (from: { lat: number; lng: number }, to: { lat: number; lng: number }) => Promise<RouteReferenceResult | null>;
 type Place = { city: string | null; state: string | null };
@@ -164,6 +164,8 @@ export async function chooseLegMiles(
   provider: MileageProvider = new OsrmProvider(),
   route: RouteFn = computeRouteReference
 ): Promise<{ miles: number; method: DeadheadMethod; engine_reason?: string } | { miles: null; reason: string }> {
+  // Two stops at the same real point (two docks of one warehouse, 13628) are 0.0 miles apart — exact, not an estimate.
+  if (round4(args.from.lat) === round4(args.to.lat) && round4(args.from.lng) === round4(args.to.lng)) return { miles: 0, method: "same_point" };
   const engine = await resolvePointMileage(client, provider, args.from, args.to);
   if (engine.practical_miles != null)
     return { miles: round1(engine.practical_miles), method: engine.source === "cache" ? "point_mileage_cache" : "routing_provider" };
