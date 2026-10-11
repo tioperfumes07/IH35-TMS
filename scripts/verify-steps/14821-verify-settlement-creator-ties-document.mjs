@@ -48,5 +48,7 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-salaried.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-no.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-no.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-multistop.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-multistop.mjs"]);
   },
 };
