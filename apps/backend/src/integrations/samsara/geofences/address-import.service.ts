@@ -72,7 +72,12 @@ export function parseFormattedAddress(formatted: string | null): { street: strin
   if (parts.length && /^(usa|us|united states)$/i.test(parts[parts.length - 1]!)) parts.pop();
   const stateZip = parts.length >= 3 ? parts[parts.length - 1]!.match(/^([A-Z]{2})\s+(\d{5})(?:-\d{4})?$/) : null;
   if (!stateZip) return { street: formatted?.trim() || null, city: null, state: null, zip: null };
-  return { street: parts.slice(0, parts.length - 2).join(", ") || null, city: parts[parts.length - 2]!, state: stateZip[1]!, zip: stateZip[2]! };
+  let street = parts.slice(0, parts.length - 2).join(", ") || null;
+  // 443.60: an address the TMS itself pushed carries "Facility — 290 Chambers Road" (443.49 label); the street is the part
+  // after the dash when that part starts with a house number. A facility name is never stored as the street.
+  const dash = street?.match(/^(.+?)\s+[—–-]\s+(\d+[a-z]?\s+\S.*)$/i);
+  if (dash) street = dash[2]!.trim();
+  return { street, city: parts[parts.length - 2]!, state: stateZip[1]!, zip: stateZip[2]! };
 }
 
 function geofenceKind(locationType: string | null): "customer_site" | "vendor_site" | "yard" | "custom" {
