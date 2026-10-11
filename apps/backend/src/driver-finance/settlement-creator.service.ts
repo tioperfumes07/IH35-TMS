@@ -35,6 +35,8 @@ import { resolveDriverPayItems } from "./settlement-creator-pay-item.js";
 import { milesTimesRateCents } from "./deadhead-rule.js";
 import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
+import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./settlement-deduction-constants.js";
+import { resolveDeductionPostingAccount } from "./settlement-lines-materialize.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { deliverLoadThroughDispatch, stampStopsFromTracking } from "./settlement-creator-deliver.js";
 import { afterCommitMark, afterCommitRollbackTo } from "../lib/after-commit.js";
@@ -124,6 +126,22 @@ function dollarsFromCents(cents: number): number {
  * RELAY-F442 / ROUND 192 — fuel net (total_cost) and card fee (fee_amount) stay separate.
  * receipt_cents / gallons×cpg−discount is the FUEL charge; fees_cents is the card fee, never folded in.
  */
+/**
+ * Rehearsal of 5769 on a prod fork (2026-10-11): postSourceTransactionInClientTx writes the expense's journal entry but
+ * never stamps the expense header, so every Creator fuel / company expense read posting_status 'unposted' with no
+ * journal_entry_id and the feed gate refused ("Expense 13508: not posted"). Same stamp the other expense posters write
+ * (checks/check-create.service.ts, bank-line-expense.service.ts) — only on an unposted, unvoided expense of this company.
+ */
+async function stampExpensePosted(client: DbClient, companyId: string, expenseId: string, journalEntryId: string): Promise<void> {
+  const r = await client.query(
+    `UPDATE accounting.expenses
+        SET posting_status = 'posted', posted_at = COALESCE(posted_at, now()), journal_entry_id = $3::uuid, updated_at = now()
+      WHERE id = $2::uuid AND operating_company_id = $1::uuid AND voided_at IS NULL AND posting_status <> 'reversed'`,
+    [companyId, expenseId, journalEntryId],
+  );
+  if (r.rowCount !== 1) throw new SettlementCreatorError("expense_post_stamp_failed", `Expense ${expenseId}: posted but its header could not be stamped posted.`);
+}
+
 function fuelPurchaseNetAndFeeCents(fuel: {
   receipt_cents?: number | null;
   gallons?: number | null;
@@ -1211,7 +1229,7 @@ export async function postSettlementCreatorInClientTx(
           fuel_type, gallons, price_per_gallon, total_cost, fee_amount,
           purchased_at, transaction_at, transaction_reference, location_city,
           source, load_required, load_exemption_reason, created_by_user_id, source_row_hash, trailer_id,
-          source_doc_id
+          source_doc_id, fuel_card_id, notes
         )
         VALUES (
           $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid,
@@ -1220,7 +1238,11 @@ export async function postSettlementCreatorInClientTx(
           'manual', $14, $15, $16::uuid, $17,
           (SELECT eq.id FROM mdata.equipment eq WHERE eq.id = $18::uuid AND eq.equipment_type ~* 'reefer'
               AND (eq.owner_company_id = $1::uuid OR eq.currently_leased_to_company_id = $1::uuid)),
-          $19::uuid
+          $19::uuid,
+          -- D1/D2 (Lead audit 2026-10-11) — the card the draft names, never NULL: a USMCA row with no card evidence is
+          -- read as Relay (fuel-credit-preference.ts) and posts nothing; a Dreamline fill must post Dr fuel / Cr 2510.
+          (SELECT ct.id FROM catalogs.fuel_card_types ct WHERE ct.operating_company_id = $1::uuid AND ct.code = upper($20) AND ct.is_active),
+          $21
         )
         RETURNING id::text
       `,
@@ -1245,9 +1267,15 @@ export async function postSettlementCreatorInClientTx(
         fuelType === "reefer_diesel" ? draft.trailer_id ?? null : null,
         // SETL-F444 — the receipt image, uploaded and confirmed before Post; null when none.
         fuel.source_doc_id ?? null,
+        fuel.card,
+        fuel.notes?.trim() || null,
       ],
     );
     const fuelId = inserted.rows[0]!.id;
+    const cardStamp = await client.query<{ ok: boolean }>(`SELECT fuel_card_id IS NOT NULL AS ok FROM fuel.fuel_transactions WHERE id = $1::uuid`, [fuelId]);
+    if (!cardStamp.rows[0]?.ok) {
+      throw new SettlementCreatorError("fuel_card_type_missing", `Fuel line ${fuel.date}: no active fuel card type '${fuel.card.toUpperCase()}' for this company — the fill cannot say how it was paid.`);
+    }
     fuelTxnIds.push(fuelId);
 
     const doc = await createExpenseFromFuelTransaction(client, {
@@ -1280,6 +1308,7 @@ export async function postSettlementCreatorInClientTx(
           { userId: actorUserId },
         );
         if (!posted.journal_entry_id) throw new Error("posting engine returned no journal entry");
+        await stampExpensePosted(client, draft.operating_company_id, doc.expense_id, posted.journal_entry_id);
         journalEntryIds.push(posted.journal_entry_id);
       } catch (err) {
         // ROUND 443.6 f — a posting refusal fails the whole post: never a fuel expense without its ledger entry.
@@ -1447,6 +1476,7 @@ export async function postSettlementCreatorInClientTx(
         { userId: actorUserId },
       );
       if (!posted.journal_entry_id) throw new Error("posting engine returned no journal entry");
+      await stampExpensePosted(client, draft.operating_company_id, expenseId, posted.journal_entry_id);
       journalEntryIds.push(posted.journal_entry_id);
     } catch (err) {
       throw new SettlementCreatorError("expense_post_refused", `Company expense "${exp.item_name}": the ledger refused it — ${err instanceof Error ? err.message : String(err)}. Nothing was posted.`);
@@ -1535,12 +1565,26 @@ export async function postSettlementCreatorInClientTx(
     if (p.amount_cents <= 0) continue;
     const lineType = p.pay_kind === "detention" ? "detention_pay" : "extra_pay";
     const loadId = await resolveLoadIdByNumber(p.load_number);
+    // Fork rehearsal of 5771 (2026-10-11): the insert dropped the draft's item_id, so every extra-pay line hit
+    // settlement_lines_extra_pay_requires_item. The item (this company's, active) is written; a flat charge is 1 x amount.
+    const itemId = p.item_id
+      ? (await client.query<{ id: string }>(
+          `SELECT id::text FROM catalogs.items WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+          [p.item_id, draft.operating_company_id],
+        )).rows[0]?.id ?? null
+      : null;
+    if (lineType === "extra_pay" && !itemId) {
+      throw new SettlementCreatorError("extra_pay_item_required", `Additional pay "${p.description}": pick its Driver Pay item (none, or not this company's).`);
+    }
+    const qty = p.quantity != null && Number(p.quantity) > 0 ? Number(p.quantity) : 1;
+    const rateCents = qty === 1 ? p.amount_cents : Math.round(p.amount_cents / qty);
     await client.query(
       `
         INSERT INTO driver_finance.settlement_lines (
-          settlement_id, operating_company_id, line_type, description, amount, load_id, is_active, is_sample_data
+          settlement_id, operating_company_id, line_type, description, amount, load_id, item_id, quantity, rate_cents,
+          unit_of_measure, is_active, is_sample_data
         )
-        VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6::uuid, true, false)
+        VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6::uuid, $7::uuid, $8, $9, 'each', true, false)
       `,
       [
         settlementId,
@@ -1549,6 +1593,9 @@ export async function postSettlementCreatorInClientTx(
         p.description || `${p.pay_kind ?? "other"} pay`,
         dollarsFromCents(p.amount_cents),
         loadId,
+        itemId,
+        itemId ? qty : null,
+        itemId ? rateCents : null,
       ],
     );
   }
@@ -1580,6 +1627,24 @@ export async function postSettlementCreatorInClientTx(
          WHERE id = $2::uuid
       `,
       [settlementId, created.id],
+    );
+    // ROUND 443.32 (CC-2 live finding on 5769, deduction 68041143) — the settlement LINE that applies the deduction, the
+    // same row the canonical writer (settlement-deduction-cap.service.ts) writes: line_type 'deduction', source_table +
+    // source_reference_id -> the deduction, on its load. Without it the close marked the deduction applied (remaining 0)
+    // while v_settlement_deduction_balances, which derives "applied" from these lines, still read $10.00 open.
+    await client.query(
+      `
+        INSERT INTO driver_finance.settlement_lines
+          (settlement_id, operating_company_id, line_type, description, amount, load_id, source_table, source_reference_id,
+           posting_account_id, approval_status, is_sample_data)
+        VALUES ($1::uuid, $2::uuid, 'deduction', $3, $4, $5::uuid, $6, $7::uuid, $8::uuid, 'pending', false)
+      `,
+      [
+        settlementId, draft.operating_company_id, reason.slice(0, 500), amountCents / 100, loadId,
+        SETTLEMENT_DEDUCTION_SOURCE_TABLE, created.id,
+        // Same account resolution as the materializer (settlement-lines-materialize.service.ts), never a guess.
+        (await resolveDeductionPostingAccount(client as never, draft.operating_company_id, draft.driver_id, sourceType)).postingAccountId,
+      ],
     );
   }
 
@@ -1713,7 +1778,8 @@ export async function postSettlementCreatorInClientTx(
   let closeTotals: SettlementCreatorCloseTotals | null = null;
   if (postsThroughClose) {
     await recomputeSettlementHeader(client as never, settlementId, draft.operating_company_id);
-    const closeInput = { operatingCompanyId: draft.operating_company_id, settlementId, onlyAdvanceIds: advanceIds };
+    // R12 — the Creator never pays: the net stays open on A/P until the owner matches a bank line in Banking.
+    const closeInput = { operatingCompanyId: draft.operating_company_id, settlementId, onlyAdvanceIds: advanceIds, leaveNetOpen: true };
     const closeActor = { userId: actorUserId };
     let closePreview: SettlementPayRunResult;
     try {

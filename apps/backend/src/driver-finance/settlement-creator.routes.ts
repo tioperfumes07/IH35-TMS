@@ -117,6 +117,8 @@ const draftSchema = z.object({
         item_id: z.string().uuid().nullable().optional(),
         account_id: z.string().uuid().nullable().optional(),
         load_id: z.string().uuid().nullable().optional(),
+        // D2 (Lead audit 2026-10-11) — e.g. "gallons estimated at average price (owner 10-10)"; stored on the fill.
+        notes: z.string().trim().max(500).nullable().optional(),
       }),
     )
     .default([]),

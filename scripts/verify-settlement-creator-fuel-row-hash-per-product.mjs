@@ -4,14 +4,14 @@
  * per (vendor, reference, fuel_type), so the hand-entered source_row_hash must be too, or the second product collides on
  * fuel_tx_source_row_hash_uk (measured: 5769 preview refused). Diesel keeps its original hash so existing rows never change.
  * Asserts: enteredFuelRowHash takes the fuel type, appends it for non-diesel only, and both writers pass it.
- * Run: node scripts/verify-fuel-row-hash-per-product.mjs [--selftest]
+ * Run: node scripts/verify-settlement-creator-fuel-row-hash-per-product.mjs [--selftest]
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const LABEL = "verify-fuel-row-hash-per-product";
+const LABEL = "verify-settlement-creator-fuel-row-hash-per-product";
 const F = {
   ref: "apps/backend/src/fuel/fuel-provider-reference.ts",
   creator: "apps/backend/src/driver-finance/settlement-creator.service.ts",

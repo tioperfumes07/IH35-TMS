@@ -195,7 +195,8 @@ export async function appendSettlementLineFromDriverBillIfMissing(
     bill.deadhead_pay_cents !== null && bill.deadhead_pay_cents !== undefined
       ? Math.round(Number(bill.deadhead_pay_cents))
       : 0;
-  const hasDeadheadLine = bill.loaded_pay_cents !== null && bill.loaded_pay_cents !== undefined;
+  // D7 (Lead audit 2026-10-11) — no empty miles, no Empty Miles line: a $0.00 active pay line is not written.
+  const hasDeadheadLine = bill.loaded_pay_cents !== null && bill.loaded_pay_cents !== undefined && deadheadCents > 0;
 
   const lineEntries: Array<{ lineType: string; description: string; dollars: number }> = [
     {

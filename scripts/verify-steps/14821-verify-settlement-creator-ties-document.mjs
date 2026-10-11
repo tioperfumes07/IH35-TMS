@@ -24,5 +24,13 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-atomic-post.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-stop-stamps-from-tracking.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-stop-stamps-from-tracking.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-fuel-row-hash-per-product.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-fuel-row-hash-per-product.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-books-signed-settlement-rate.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-books-signed-settlement-rate.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-deduction-has-settlement-line.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-deduction-has-settlement-line.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-post-writes-no-bank-posting.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-post-writes-no-bank-posting.mjs"]);
   },
 };
