@@ -53,6 +53,17 @@ if (APPLY) await assertIsIntendedProduction(db, { label: AUTH_ID });
 else await assertNotProduction(db, { label: `${AUTH_ID} ${FORK ? "fork-commit" : "dry run"}` });
 
 const q = async <T = Record<string, unknown>>(sql: string, v: unknown[] = []) => (await db.query(sql, v)).rows as T[];
+/** Read-only check in its own bypass transaction. The production string connects as ih35_app (RLS on): a bare read sees
+ *  nothing, which on the first apply made the post-check report "no document" for a reissue that had committed correctly. */
+async function readAs<T = Record<string, unknown>>(sql: string, v: unknown[] = []): Promise<T[]> {
+  await db.query("BEGIN");
+  try {
+    await db.query("SELECT set_config('app.bypass_rls','lucia',true)");
+    return await q<T>(sql, v);
+  } finally {
+    await db.query("ROLLBACK");
+  }
+}
 async function tx<T>(fn: () => Promise<T>): Promise<T> {
   await db.query("BEGIN");
   try {
@@ -66,7 +77,7 @@ async function tx<T>(fn: () => Promise<T>): Promise<T> {
     throw e;
   }
 }
-const tb = async () => (await q<{ d: string }>(
+const tb = async () => (await readAs<{ d: string }>(
   `SELECT coalesce(sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::text AS d
      FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
     WHERE je.operating_company_id = $1::uuid AND je.status = 'posted'`, [USMCA]))[0]!.d;
@@ -75,6 +86,13 @@ const tb = async () => (await q<{ d: string }>(
 const measured = await tx(async () => {
   const out = [];
   for (const r of ROWS) {
+      const done = (await q<{ n: number }>(
+        `SELECT count(*)::int AS n FROM fuel.fuel_transactions ft
+           JOIN accounting.expenses e ON e.source_fuel_transaction_id = ft.id AND e.voided_at IS NULL AND e.posting_status = 'posted'
+           JOIN accounting.journal_entries je ON je.id = e.journal_entry_id
+          WHERE ft.id = $1::uuid AND ft.voided_at IS NULL AND ft.transaction_at::date = $2::date AND e.transaction_date = $2::date AND je.entry_date = $2::date
+            AND EXISTS (SELECT 1 FROM accounting.expenses o WHERE o.id = $3::uuid AND o.voided_at IS NOT NULL)`, [r.fuel, r.trueDate, r.expense]))[0]!.n;
+      if (done === 1) { console.log(`already reissued ${r.number}: fuel row + live document + JE on ${r.trueDate}, original void — skipped`); continue; }
     const row = (await q<Record<string, string | null>>(
       `SELECT ft.id::text, ft.transaction_reference AS ref, round(ft.total_cost * 100)::bigint::text AS cents, ft.fuel_type,
               ft.transaction_at::date::text AS day, ft.voided_at::text AS ft_void, l.load_number, l.id::text AS load_id,
@@ -89,7 +107,7 @@ const measured = await tx(async () => {
          JOIN accounting.expenses e ON e.source_fuel_transaction_id = ft.id
          JOIN accounting.journal_entries je ON je.id = e.journal_entry_id
          JOIN accounting.expense_lines el ON el.expense_id = e.id
-        WHERE ft.operating_company_id = $1::uuid AND ft.id = $2::uuid`, [USMCA, r.fuel]))[0];
+        WHERE ft.operating_company_id = $1::uuid AND ft.id = $2::uuid AND e.id = $3::uuid`, [USMCA, r.fuel, r.expense]))[0];
     const why = !row ? "not found"
       : row.eid !== r.expense ? `expense ${row.eid}` : row.expense_number !== r.number ? `number ${row.expense_number}`
       : row.ref !== r.ref ? `ref ${row.ref}` : Number(row.cents) !== r.cents ? `cents ${row.cents}` : row.fuel_type !== r.type ? `type ${row.fuel_type}`
@@ -139,7 +157,7 @@ for (const { r, row } of measured) {
     if (!posted.journal_entry_id) throw new Error(`STOP ${r.number}: posting engine returned no journal entry`);
     await stampExpensePosted(db as never, USMCA, doc.expense_id, posted.journal_entry_id);
   });
-  const after = (await q<Record<string, string | null>>(
+  const after = (await readAs<Record<string, string | null>>(
     `SELECT e.expense_number, e.transaction_date::text AS e_day, je.entry_date::text AS je_day, ft.transaction_at::date::text AS day,
             e.load_id::text, e.unit_id::text, e.driver_uuid::text,
             (SELECT string_agg(a.account_number || ':' || p.debit_or_credit || ':' || p.amount_cents, ',' ORDER BY p.debit_or_credit DESC)
