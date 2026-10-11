@@ -62,7 +62,7 @@ describe("postRelayDeposit (443.29 b)", () => {
   it("an unnamed card is HELD by name, never guessed; a personal card is HELD for the loan engine", async () => {
     const createJournalEntryOnClient = vi.fn();
     expect(await postRelayDeposit(fake(dep({ funding_card_last4: "1222" })), args, { createJournalEntryOnClient })).toMatchObject({ outcome: "held", reason: "card_owner_not_named" });
-    expect(await postRelayDeposit(fake(dep({ funding_card_last4: "6248" })), args, { createJournalEntryOnClient })).toMatchObject({ outcome: "held", reason: "loan_engine_paid_direct" });
+    expect(await postRelayDeposit(fake(dep({ funding_card_last4: "1993" })), args, { createJournalEntryOnClient })).toMatchObject({ outcome: "held", reason: "card_owner_not_named" });
     expect(createJournalEntryOnClient).not.toHaveBeenCalled();
   });
   it("amount + fee must equal the amount charged, to the cent", async () => {
@@ -80,11 +80,13 @@ describe("postRelayDeposit (443.29 b)", () => {
     expect((await postRelayDeposit(fake(dep(), { posted: true }), args, { createJournalEntryOnClient })).outcome).toBe("already_posted");
     expect(createJournalEntryOnClient).not.toHaveBeenCalled();
   });
-  it("the owner's map: 0680 -> 1000, Transportation cards -> 8000, personal/Tio/Scentsx -> loan engine", () => {
+  it("the owner's map: 0680 -> 1000, Transportation cards -> 8000, party cards -> Due to / from <party>", () => {
     expect(fundingForCard("0680")).toMatchObject({ kind: "account", account_number: "1000" });
     for (const c of ["9708", "1354", "4823"]) expect(fundingForCard(c)).toMatchObject({ kind: "account", system_purpose: "intercompany_ih35" });
-    for (const c of ["6248", "9855"]) expect(fundingForCard(c)).toMatchObject({ kind: "held", reason: "loan_engine_paid_direct" });
-    expect(fundingForCard("0210")).toMatchObject({ kind: "loan", liability_account_number: "2410-00-001" });
+    // 443.64: 0210 / 6248 -> Jorge, 9855 -> Tio Perfumes 2 (Due to / from <party>).
+    expect(fundingForCard("0210")).toMatchObject({ kind: "party", party_account_number: "2410-00-001" });
+    expect(fundingForCard("6248")).toMatchObject({ kind: "party", party_account_number: "2410-00-001" });
+    expect(fundingForCard("9855")).toMatchObject({ kind: "party", party_account_number: "2410-00-003", party_vendor_name: "Tio Perfumes 2 LLC" });
     expect(fundingForCard("5007")).toMatchObject({ kind: "account", account_number: "2500-00-001" });
     expect(Object.keys(RELAY_DEPOSIT_FUNDING).length).toBe(8);
   });

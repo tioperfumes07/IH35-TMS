@@ -10,11 +10,10 @@
  *   0680               USMCA Bank of America debit card  -> the USMCA Bank of America operating account (1000)
  *   9708, 1354, 4823   Transportation Wells Fargo cards  -> "Inter-company - IH35 Transportation" (8000); nothing is written
  *                                                           to a Transportation book
- *   0210               Jorge personal card               -> LOAN (443.58): a related-party loan advance "paid directly to a
- *                                                           vendor" through the loan engine (createPaidDirectVendorAdvance),
- *                                                           and the credit leg goes to the lender's 2410-00-001 liability
- *   6248               Jorge personal                    -> HELD until the owner names it the same way
- *   9855               Tio Perfumes 2                    -> HELD
+ *   0210, 6248         Jorge personal cards              -> PARTY (443.58 / 443.64): the party paid Relay — Dr 1295 + Dr 5005 /
+ *                                                           Cr "Due to / from Jorge" (2410-00-001), with the paid-direct
+ *                                                           document from the loan engine (createPaidDirectVendorAdvance)
+ *   9855               Tio Perfumes 2                    -> PARTY: Cr "Due to / from Tio Perfumes 2" (2410-00-003), same way
  *   5007               Amex Scentsx                      -> "Amex Credit Card Payable" (2500-00-001) (Lead ruling 2026-10-11)
  *   anything else      card owner not named              -> HELD, listed for the owner
  *
@@ -27,8 +26,9 @@ import { createPaidDirectVendorAdvance } from "../../accounting/related-party-lo
 export type DepositFunding =
   | { kind: "account"; account_number: string | null; system_purpose: string | null; label: string }
   | { kind: "held"; reason: "loan_engine_paid_direct" | "card_owner_not_named"; label: string }
-  /** 443.58: the card owner lent the money — loan document through the loan engine + credit to the lender's liability. */
-  | { kind: "loan"; liability_account_number: string; lender_vendor_name: string; relationship: "owner"; label: string };
+  /** 443.58 / 443.64: a related party's card paid Relay — paid-direct document through the loan engine + credit to the party's
+   *  "Due to / from <party>" account (CC-1 443.59: one running account per party, debit or credit balance). */
+  | { kind: "party"; party_account_number: string; party_vendor_name: string; relationship: "owner" | "related_company"; label: string };
 
 /** Owner's funding-card map. One place; the guard reads it. */
 export const RELAY_DEPOSIT_FUNDING: Readonly<Record<string, DepositFunding>> = Object.freeze({
@@ -36,10 +36,11 @@ export const RELAY_DEPOSIT_FUNDING: Readonly<Record<string, DepositFunding>> = O
   "9708": { kind: "account", account_number: null, system_purpose: "intercompany_ih35", label: "Laura — Transportation Wells Fargo debit" },
   "1354": { kind: "account", account_number: null, system_purpose: "intercompany_ih35", label: "Laura — Transportation Wells Fargo debit" },
   "4823": { kind: "account", account_number: null, system_purpose: "intercompany_ih35", label: "Laura — Transportation Wells Fargo debit" },
-  // Lead 443.58 (owner 2026-10-11 09:43 CT): the two 0210 deposits post now, as related-party loan advances.
-  "0210": { kind: "loan", liability_account_number: "2410-00-001", lender_vendor_name: "Jorge Pablo Guadalupe Muñoz Gonzalez", relationship: "owner", label: "Jorge personal card" },
-  "6248": { kind: "held", reason: "loan_engine_paid_direct", label: "Jorge personal Bank of America debit" },
-  "9855": { kind: "held", reason: "loan_engine_paid_direct", label: "Tio Perfumes 2" },
+  // Lead 443.58 / 443.59 / 443.64: a party card credits that party's "Due to / from" account (CC-1 #26377 contract).
+  "0210": { kind: "party", party_account_number: "2410-00-001", party_vendor_name: "Jorge Pablo Guadalupe Muñoz Gonzalez", relationship: "owner", label: "Jorge personal card" },
+  // Lead 443.64 (3a): 6248 -> Jorge and 9855 -> Tio Perfumes 2, through the same party contract.
+  "6248": { kind: "party", party_account_number: "2410-00-001", party_vendor_name: "Jorge Pablo Guadalupe Muñoz Gonzalez", relationship: "owner", label: "Jorge personal Bank of America debit" },
+  "9855": { kind: "party", party_account_number: "2410-00-003", party_vendor_name: "Tio Perfumes 2 LLC", relationship: "related_company", label: "Tio Perfumes 2" },
   // Lead ruling 2026-10-11 (after 443.29 b): 5007 credits "Amex Credit Card Payable" (2500-00-001), not the loan engine.
   "5007": { kind: "account", account_number: "2500-00-001", system_purpose: null, label: "Amex Scentsx (Amex Credit Card Payable)" },
 });
@@ -121,7 +122,7 @@ export async function postRelayDeposit(
   const wallet = await acct("system_purpose", "relay_fuel_wallet");
   const feeAcct = await acct("account_number", "5005");
   const fund =
-    funding.kind === "loan" ? await acct("account_number", funding.liability_account_number)
+    funding.kind === "party" ? await acct("account_number", funding.party_account_number)
     : funding.account_number ? await acct("account_number", funding.account_number) : await acct("system_purpose", funding.system_purpose!);
   if (wallet.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: "relay_fuel_wallet_account_not_exactly_one" };
   if (feeAcct.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: "fuel_card_fees_5005_not_exactly_one" };
@@ -176,14 +177,14 @@ export async function postRelayDeposit(
   // amount = what was charged, date = the deposit date, target = this deposit), then the credit leg names the lender.
   let loan: { id: string; display_id: string } | null = null;
   let fundEntity: { entity_uuid?: string; entity_type?: string } = {};
-  if (funding.kind === "loan") {
+  if (funding.kind === "party") {
     const lender = (
       await client.query<{ id: string }>(
         `SELECT id::text FROM mdata.vendors WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL AND vendor_name = $2 LIMIT 2`,
-        [args.operatingCompanyId, funding.lender_vendor_name]
+        [args.operatingCompanyId, funding.party_vendor_name]
       )
     ).rows;
-    if (lender.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: `lender_vendor_not_exactly_one (${funding.lender_vendor_name})` };
+    if (lender.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: `party_vendor_not_exactly_one (${funding.party_vendor_name})` };
     fundEntity = { entity_uuid: lender[0]!.id, entity_type: "vendor" };
     const prior = (
       await client.query<{ id: string; display_id: string; je_id: string | null }>(
@@ -204,7 +205,7 @@ export async function postRelayDeposit(
           funding_account_id: wallet[0]!.id,
           principal_cents: total,
           entry_date: d.entry_date,
-          counterparty_name: funding.lender_vendor_name,
+          counterparty_name: funding.party_vendor_name,
           relationship: funding.relationship,
           counterparty_kind: "vendor",
           counterparty_id: lender[0]!.id,
@@ -226,7 +227,7 @@ export async function postRelayDeposit(
       debit_or_credit: "credit",
       amount_cents: total,
       description: loan
-        ? `Relay deposit ${d.deposit_id} — related-party loan ${loan.display_id} (${funding.label} ${card})`
+        ? `Relay deposit ${d.deposit_id} — Due to / from party, ${loan.display_id} (${funding.label} ${card})`
         : `Relay deposit ${d.deposit_id} — charged to card ${card} (${funding.label})`,
       ...src,
       ...fundEntity,
@@ -237,7 +238,7 @@ export async function postRelayDeposit(
     {
       operating_company_id: args.operatingCompanyId,
       entry_date: d.entry_date,
-      memo: `Relay wallet deposit ${d.deposit_id}: $${(amount / 100).toFixed(2)} + fee $${(fee / 100).toFixed(2)} charged to card ${card} (${funding.label})${loan ? ` — related-party loan ${loan.display_id}` : ""}`,
+      memo: `Relay wallet deposit ${d.deposit_id}: $${(amount / 100).toFixed(2)} + fee $${(fee / 100).toFixed(2)} charged to card ${card} (${funding.label})${loan ? ` — Due to / from party, ${loan.display_id}` : ""}`,
       source: "auto",
       ...src,
       postings,
