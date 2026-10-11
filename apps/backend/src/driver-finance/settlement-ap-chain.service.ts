@@ -245,7 +245,10 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
   const remaining = new Map(posted.map((x) => [x.billId, x.total]));
   const order = posted.map((x) => x.billId);
   const applied = new Map<string, number>();
-  const appPostings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }> = [];
+  const appPostings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string; load_id?: string | null }> = [];
+  // 443.42 #6 — every application line carries the load of the load bill it is applied to (the settlement lines all
+  // carry their load); measured on prod: 412 settlement application lines had load_id NULL.
+  const billLoad = new Map(posted.map((x) => [x.billId, x.b.loadId ?? null]));
   const firstNoncashBp = new Map<string, string>();
   const rank = { advance: 0, deduction: 1, chargeback: 1, escrow: 2 } as const;
   let unappliedCents = 0;
@@ -267,7 +270,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
       const bpId = String((bp as { id: string }).id);
       if (!firstNoncashBp.has(part.key)) firstNoncashBp.set(part.key, bpId);
       applied.set(part.key, (applied.get(part.key) ?? 0) + part.cents);
-      appPostings.push({ account_id: apAccount, debit_or_credit: "debit", amount_cents: part.cents, description: `${input.label} — ${app.description}` });
+      appPostings.push({ account_id: apAccount, debit_or_credit: "debit", amount_cents: part.cents, description: `${input.label} — ${app.description}`, load_id: billLoad.get(part.key) ?? null });
       if (app.kind === "advance" && app.advanceId) {
         await client.query(
           `UPDATE driver_finance.driver_advances SET linked_bill_id = COALESCE(linked_bill_id, $2::uuid), linked_bill_payment_id = COALESCE(linked_bill_payment_id, $3::uuid), updated_at = now()
@@ -276,7 +279,16 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
         );
       }
     }
-    appPostings.push({ account_id: app.accountId, debit_or_credit: "credit", amount_cents: app.cents, description: `${input.label} — ${app.description}`, ...(app.entityDriverId ? { entity_type: "driver", entity_uuid: app.entityDriverId } : {}) } as never);
+    // The credit is split the same way the debit was: one line per load bill it was applied to, each on that bill's load;
+    // a remainder the bills could not hold (a negative settlement) stays one line on the application's own load.
+    const entity = app.entityDriverId ? { entity_type: "driver", entity_uuid: app.entityDriverId } : {};
+    for (const part of parts) {
+      appPostings.push({ account_id: app.accountId, debit_or_credit: "credit", amount_cents: part.cents, description: `${input.label} — ${app.description}`, load_id: billLoad.get(part.key) ?? null, ...entity } as never);
+    }
+    const creditRemainder = app.cents - parts.reduce((n, part) => n + part.cents, 0);
+    if (creditRemainder > 0) {
+      appPostings.push({ account_id: app.accountId, debit_or_credit: "credit", amount_cents: creditRemainder, description: `${input.label} — ${app.description}`, load_id: app.preferredLoadId ?? null, ...entity } as never);
+    }
   }
   // ROUND 389.3 R1 — the excess is a DRIVER RECEIVABLE: Dr 1257 driver_negative_settlement_receivable, the driver on the
   // line and the settlement as the entry's source (both directions). It must equal the pay-run's shortfall exactly.

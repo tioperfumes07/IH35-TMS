@@ -110,7 +110,8 @@ export class PostingLineAlreadyReversedError extends Error {
  * names when its caller did not: taken from the posting's OWN source document, the same way the load stamp is
  * (posting_source_load_id). A reversal line names what the line it reverses named. An explicit entity always wins.
  *   invoice -> its customer · bill -> its driver (a driver bill) else its vendor · bill_payment -> its bill's driver, else its vendor ·
- *   expense -> its vendor, else its driver, else its payee customer · driver_settlement / driver_advance -> the driver.
+ *   expense -> its vendor, else its driver, else its payee customer · driver_settlement / driver_advance -> the driver ·
+ *   relay_deposit (every leg) and a Relay fuel_event -> the vendor Relay · another fuel_event -> its fuel transaction's vendor.
  */
 export async function resolvePostingSourceEntity(
   client: PostingWriterClient,
@@ -145,11 +146,58 @@ export async function resolvePostingSourceEntity(
     driver_settlement: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_settlements WHERE id = $1::uuid`,
     driver_advance: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_advances WHERE id = $1::uuid`,
   };
+  // 443.42 #6 — Relay documents name the vendor Relay: a wallet deposit (every leg, the funding leg included — Relay is the
+  // payee of the card / bank charge) and a Relay fuel fill (source = the integrations.relay_fuel_transactions row). A
+  // non-Relay fuel event names its fuel transaction's vendor.
+  if (line.source_transaction_type === "relay_deposit" || line.source_transaction_type === "fuel_event") {
+    const isRelay =
+      line.source_transaction_type === "relay_deposit" ||
+      (await client.query<{ one: number }>(`SELECT 1 AS one FROM integrations.relay_fuel_transactions WHERE id = $1::uuid`, [id])).rows.length > 0;
+    if (isRelay) {
+      const relay = await relayVendorId(client, line.source_transaction_type === "relay_deposit"
+        ? `SELECT operating_company_id::text AS c FROM integrations.relay_deposits WHERE id = $1::uuid`
+        : `SELECT operating_company_id::text AS c FROM integrations.relay_fuel_transactions WHERE id = $1::uuid`, id);
+      return relay ? { entity_uuid: relay, entity_type: "vendor" } : null;
+    }
+    const v = await client.query<{ e: string | null }>(`SELECT vendor_id::text AS e FROM fuel.fuel_transactions WHERE id = $1::uuid`, [id]);
+    return v.rows[0]?.e ? { entity_uuid: v.rows[0].e, entity_type: "vendor" } : null;
+  }
   const q = sql[String(line.source_transaction_type ?? "")];
   if (!q) return null;
   const r = await client.query<{ e: string | null; t: "customer" | "vendor" | "driver" }>(q, [id]);
   const row = r.rows[0];
   return row?.e ? { entity_uuid: row.e, entity_type: row.t } : null;
+}
+
+/** The one active vendor named Relay in the document's company, or null when there is not exactly one. */
+async function relayVendorId(client: PostingWriterClient, companySql: string, id: string): Promise<string | null> {
+  const company = (await client.query<{ c: string }>(companySql, [id])).rows[0]?.c;
+  if (!company) return null;
+  const r = await client.query<{ id: string }>(
+    `SELECT id::text FROM mdata.vendors WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL AND vendor_name ~* '^relay( |$)' LIMIT 2`,
+    [company]
+  );
+  return r.rows.length === 1 ? r.rows[0]!.id : null;
+}
+
+/**
+ * 443.42 #6 — the load of a Relay fill posting. Its source is the integrations.relay_fuel_transactions row, which
+ * accounting.posting_source_load_id cannot see (that function reads fuel.fuel_transactions by id); the fill's purchase
+ * record carries the load through relay_fuel_transaction_id. Exactly one load, or none (never a guess).
+ */
+export async function resolvePostingSourceLoad(
+  client: PostingWriterClient,
+  line: Pick<PostingLineWrite, "source_transaction_type" | "source_transaction_id" | "reversal_of_line_id">
+): Promise<string | null> {
+  if (line.reversal_of_line_id || line.source_transaction_type !== "fuel_event") return null;
+  const id = String(line.source_transaction_id ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const r = await client.query<{ load_id: string }>(
+    `SELECT DISTINCT ft.load_id::text AS load_id FROM fuel.fuel_transactions ft
+      WHERE ft.relay_fuel_transaction_id::text = $1 AND ft.archived_at IS NULL AND ft.load_id IS NOT NULL LIMIT 2`,
+    [id]
+  );
+  return r.rows.length === 1 ? r.rows[0]!.load_id : null;
 }
 
 async function writeLine(
@@ -185,6 +233,11 @@ async function writeLine(
   if (!line.entity_uuid) {
     const derived = await resolvePostingSourceEntity(client, line);
     if (derived) line = { ...line, entity_uuid: derived.entity_uuid, entity_type: derived.entity_type };
+  }
+  // 443.42 #6 — a Relay fill posting carries its fill's load (posting_source_load_id cannot reach it).
+  if (!line.load_id) {
+    const load = await resolvePostingSourceLoad(client, line);
+    if (load) line = { ...line, load_id: load };
   }
 
   const ins = await client.query<{ id: string }>(
