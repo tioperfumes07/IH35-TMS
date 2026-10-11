@@ -7470,7 +7470,9 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — mdata.load_stops.le
 action: OWNER_AUTH_ID=AUTH-412 DATABASE_URL=<prod> npx tsx apps/backend/scripts/auth412-backfill-first-stop-deadhead.mts --branch=br-fancy-credit-akjnd07a --apply
 rehearsal: throwaway br-wild-rice-akq8fxt9 (COMMITTED, deleted): first-stop leg_miles NULL 48 -> 12; 36 computed (haversine_chain — routing provider osrm_not_configured, 0 osrm rows ever in point_mileage); 12 NULL = no previous load for the unit; verify-booked-loads-save-miles PASS over 107 loads
 expires_at: 2026-10-12T06:41:12Z
-status: OPEN
+status: CONSUMED
+reconsumed_at: 2026-10-11T06:48:40Z
+tail_row_counts: tail runs after 06:46Z — 13627, 13657 and one more booked mid-rollover filled (3 computed, haversine_chain); first-stop NULL ends at 13 = no previous unit load; verify-booked-loads-save-miles PASS over 141 loads; bb78b509f6 live 06:47:47Z
 reopened_at: 2026-10-11T06:50:10Z
 reopened_reason: tail run — load 13627 (and any other) booked by CC-3 after the 06:46Z run and before bb78b509f6 went live; same scope, same command, unexpired (coordinator order)
 previous_status: CONSUMED
