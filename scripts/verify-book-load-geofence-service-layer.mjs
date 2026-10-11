@@ -24,6 +24,14 @@
 // permanently skipped, not a race that resolves itself): "for USMCA, stops with lat/lng = 100%,
 // geofences >= stops, samsara_address_id non-null on every fence created after the fix." Track
 // separately once the wizard's Samsara-address picker + a real geocode fallback land.
+//
+// LEAD 443.73 #3 (2026-10-11) — RULE REPLACED. Old: "bookLoad() must call autoCreateGeofencesForLoad". New: "Book Load -> the
+// stop resolver draws ONE fence per stop, the location fence on the real point, and queues THAT fence to Samsara; no second
+// customer-keyed fence." Why: the 443.70 acceptance run (S1) measured the old call drawing a second, customer-keyed fence for
+// the same stop and pushing IT to Samsara, while the location fence detection and the read-back use was never queued. Links
+// now: (1) bookLoad() runs geocodeStopsBackfill inside result.kind === "ok" for every caller; (2) bookLoad() never calls
+// autoCreateGeofencesForLoad; (3) the HTTP route calls neither; (4) the resolver enqueues "samsara.create_geofence" for the
+// location fence it keeps (geofence_id = that fence); (5) the handler persists samsara_address_id (unchanged).
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -33,7 +41,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-book-load-geofence-service-layer";
 const SERVICE = "apps/backend/src/dispatch/book-load.service.ts";
 const ROUTE = "apps/backend/src/dispatch/loads.routes.ts";
-const AUTO_GEOFENCE = "apps/backend/src/telematics/auto-geofence.service.ts";
+const RESOLVER = "apps/backend/src/telematics/stops-geocode-backfill.service.ts";
 const HANDLER = "apps/backend/src/outbox/handlers/samsara-create-geofence.handler.ts";
 
 function read(rel, root = ROOT) {
@@ -43,7 +51,7 @@ function read(rel, root = ROOT) {
 export function collectProblems(root = ROOT) {
   const problems = [];
   const files = {};
-  for (const [key, rel] of Object.entries({ service: SERVICE, route: ROUTE, autoGeofence: AUTO_GEOFENCE, handler: HANDLER })) {
+  for (const [key, rel] of Object.entries({ service: SERVICE, route: ROUTE, resolver: RESOLVER, handler: HANDLER })) {
     try {
       files[key] = read(rel, root);
     } catch {
@@ -51,40 +59,34 @@ export function collectProblems(root = ROOT) {
     }
   }
   if (problems.length) return problems;
-  const { service, route, autoGeofence, handler } = files;
+  const { service, route, resolver, handler } = files;
 
-  if (!/from ["']\.\.\/telematics\/auto-geofence\.service\.js["']/.test(service) || !/autoCreateGeofencesForLoad/.test(service)) {
-    problems.push(`${SERVICE}: bookLoad() must call autoCreateGeofencesForLoad itself — every caller needs this, not only the HTTP route`);
+  // (1) every caller of bookLoad() gets the resolver, only on a successful booking.
+  if (!/geocodeStopsBackfill/.test(service)) {
+    problems.push(`${SERVICE}: bookLoad() must run geocodeStopsBackfill (the stop resolver that draws the ONE location fence) for every caller`);
+  } else if (!/result\.kind === "ok"[\s\S]{0,1600}geocodeStopsBackfill/.test(service)) {
+    problems.push(`${SERVICE}: geocodeStopsBackfill must be gated on a successful booking (result.kind === "ok")`);
   }
-  // Must fire only on success (kind === "ok"), never unconditionally (a failed booking has no
-  // load to geofence) and never inside the booking transaction itself (a Samsara/geocoding
-  // failure must never roll back or delay the load booking response).
-  // 443.52 C (CC-2): the window was 300 chars; 443.41 added a historical_backfill gate + its comment INSIDE the ok-gate
-  // (a Settlement Creator load that already ran draws no fence), which pushed the call past 300 chars. The law is unchanged:
-  // the call must sit inside the result.kind === "ok" block.
-  if (!/result\.kind === "ok"[\s\S]{0,1200}autoCreateGeofencesForLoad/.test(service)) {
-    problems.push(`${SERVICE}: autoCreateGeofencesForLoad must be gated on a successful booking (result.kind === "ok")`);
+  // (2) no second, customer-keyed fence for the same stop.
+  if (/autoCreateGeofencesForLoad/.test(service)) {
+    problems.push(`${SERVICE}: bookLoad() must not call autoCreateGeofencesForLoad — it draws a second, customer-keyed fence for a stop the resolver already fences (443.73 #3)`);
   }
-
-  // Regression sentinel: the HTTP route must not ALSO call it — that would double-fire for every
-  // HTTP-booked load now that bookLoad() itself does it.
-  if (/autoCreateGeofencesForLoad/.test(route)) {
-    problems.push(`${ROUTE}: must not call autoCreateGeofencesForLoad directly anymore — it moved into bookLoad() (book-load.service.ts); calling it here too double-fires it`);
+  // (3) the HTTP route must not fire either itself (double-fire).
+  if (/autoCreateGeofencesForLoad|geocodeStopsBackfill/.test(route)) {
+    problems.push(`${ROUTE}: must not call the fence writers directly — bookLoad() runs the resolver for every caller`);
   }
-
-  // "invokes the geofence create" — the standalone helper must enqueue the outbox event that
-  // actually talks to Samsara, keyed to the geofence row it just inserted.
-  if (!/enqueueOutboxEvent\(\s*client,\s*\n?\s*"samsara\.create_geofence"/.test(autoGeofence)) {
-    problems.push(`${AUTO_GEOFENCE}: autoCreateGeofencesForLoadWithClient must enqueue a "samsara.create_geofence" outbox event per new geofence`);
+  // (4) the resolver queues THE location fence to Samsara, keyed to that fence.
+  if (!/enqueueOutboxEvent\([\s\S]{0,40}"samsara\.create_geofence"/.test(resolver)) {
+    problems.push(`${RESOLVER}: the resolver must enqueue a "samsara.create_geofence" outbox event for the location fence it keeps`);
   }
-  if (!/geofence_id:\s*geofenceId/.test(autoGeofence)) {
-    problems.push(`${AUTO_GEOFENCE}: the enqueued event must carry the geofence_id it was created for`);
+  if (!/geofence_id:\s*f\.fence_id/.test(resolver)) {
+    problems.push(`${RESOLVER}: the enqueued event must carry the geofence_id of the location fence`);
   }
 
   // "persists the external id" — the handler for that event type must write the created
   // Samsara address id back onto geo.geofences, not just log/audit it.
   if (!/eventType\s*=\s*"samsara\.create_geofence"/.test(handler)) {
-    problems.push(`${HANDLER}: must declare eventType = "samsara.create_geofence" (must match the enqueue in auto-geofence.service.ts)`);
+    problems.push(`${HANDLER}: must declare eventType = "samsara.create_geofence" (must match the enqueue in stops-geocode-backfill.service.ts)`);
   }
   if (!/UPDATE geo\.geofences[\s\S]{0,120}SET[\s\S]{0,120}samsara_address_id\s*=/.test(handler)) {
     problems.push(`${HANDLER}: must persist the created Samsara address id onto geo.geofences.samsara_address_id`);
@@ -112,22 +114,21 @@ if (process.argv.includes("--selftest")) {
 
   const GOOD = {
     [SERVICE]: [
-      `import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";`,
+      `import { geocodeStopsBackfill } from "../telematics/stops-geocode-backfill.service.js";`,
       `export async function bookLoad(input) {`,
       `  const result = await bookLoadInTransaction(input);`,
-      `  if (result.kind === "ok") { void autoCreateGeofencesForLoad(input.requestingUserUuid, {}); }`,
+      `  if (result.kind === "ok") { void geocodeStopsBackfill(input.requestingUserUuid, input.operating_company_id, id); }`,
       `  return result;`,
       `}`,
     ].join("\n"),
-    [ROUTE]: `export async function registerDispatchLoadRoutes(app) { /* no geofence call here */ }`,
-    [AUTO_GEOFENCE]: [
-      `export async function autoCreateGeofencesForLoadWithClient(client, actorUserId, input) {`,
-      `  await enqueueOutboxEvent(`,
-      `    client,`,
-      `    "samsara.create_geofence",`,
-      `    { aggregate_type: "geo.geofences", aggregate_id: geofenceId },`,
-      `    { geofence_id: geofenceId },`,
-      `  );`,
+    [ROUTE]: `export async function registerDispatchLoadRoutes(app) { /* no fence writer here */ }`,
+    [RESOLVER]: [
+      `export async function geocodeStopsWithClient(client, actorId, companyId) {`,
+      `  for (const f of toPush) {`,
+      `    await enqueueOutboxEvent(client as never, "samsara.create_geofence", { aggregate_type: "geo.geofences", aggregate_id: f.fence_id }, {`,
+      `      operating_company_id: companyId, geofence_id: f.fence_id,`,
+      `    }, key);`,
+      `  }`,
       `}`,
     ].join("\n"),
     [HANDLER]: [
@@ -156,16 +157,28 @@ if (process.argv.includes("--selftest")) {
   const cases = [
     { name: "good fixture", overrides: {}, expectProblems: 0 },
     {
-      name: "pre-fix shape (route calls it directly, service doesn't)",
+      name: "old shape: bookLoad calls the customer-keyed auto-geofence (second fence)",
       overrides: {
-        [SERVICE]: `export async function bookLoad(input) { return { kind: "ok", row: {} }; }`,
-        [ROUTE]: `import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";\nvoid autoCreateGeofencesForLoad(x, y);`,
+        [SERVICE]: [
+          `export async function bookLoad(input) {`,
+          `  const result = await bookLoadInTransaction(input);`,
+          `  if (result.kind === "ok") { void autoCreateGeofencesForLoad(a, b); void geocodeStopsBackfill(a, b, c); }`,
+          `}`,
+        ].join("\n"),
       },
-      expectProblems: 3,
+      expectProblems: 1,
     },
     {
-      name: "auto-geofence stops enqueuing the outbox event",
-      overrides: { [AUTO_GEOFENCE]: `export async function autoCreateGeofencesForLoadWithClient() { /* no enqueue */ }` },
+      name: "pre-Inv-40 shape (route fires, service does not)",
+      overrides: {
+        [SERVICE]: `export async function bookLoad(input) { return { kind: "ok", row: {} }; }`,
+        [ROUTE]: `void geocodeStopsBackfill(x, y, z);`,
+      },
+      expectProblems: 2,
+    },
+    {
+      name: "resolver stops queueing the location fence",
+      overrides: { [RESOLVER]: `export async function geocodeStopsWithClient() { /* no enqueue */ }` },
       expectProblems: 2,
     },
     {
@@ -201,5 +214,5 @@ if (process.argv.includes("--selftest")) {
 } else {
   const problems = collectProblems();
   if (problems.length > 0) fail(problems);
-  console.log(`${LABEL} OK — bookLoad() fires auto-geofence/Samsara-address creation for every caller, and the create->enqueue->persist chain is wired end to end`);
+  console.log(`${LABEL} OK — bookLoad() runs the stop resolver for every caller, ONE location fence per stop is queued to Samsara, no customer-keyed second fence, and the enqueue->persist chain is wired end to end`);
 }
