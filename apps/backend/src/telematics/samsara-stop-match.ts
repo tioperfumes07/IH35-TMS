@@ -17,11 +17,29 @@ export type SamsaraStopMatch = { address: SamsaraCandidate; how: "name" | "proxi
 export const normName = (v: unknown) => String(v ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "");
 const same = (a: unknown, b: unknown) => String(a ?? "").trim().toLowerCase() === String(b ?? "").trim().toLowerCase() && String(a ?? "").trim() !== "";
 
+/**
+ * The owner's Samsara account holds duplicate rows for one place (measured 2026-10-11: 3 x "Clemens Coldwater Plan,
+ * 572 Newton Rd" and 2 x "Semares, 1901 Shea St"). The same formatted address within 50 m is ONE place: keep the lowest
+ * samsara_address_id so the choice is stable, and never call the duplicates "ambiguous".
+ */
+export function collapseDuplicateAddresses(candidates: SamsaraCandidate[]): SamsaraCandidate[] {
+  const key = (c: SamsaraCandidate) => String(c.formatted_address ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const sorted = [...candidates].sort((a, b) => String(a.samsara_address_id).localeCompare(String(b.samsara_address_id), "en", { numeric: true }));
+  const kept: SamsaraCandidate[] = [];
+  for (const c of sorted) {
+    const twin = kept.find((k) => key(k) !== "" && key(k) === key(c) &&
+      (k.lat == null || c.lat == null || 111320 * Math.hypot(Number(k.lat) - Number(c.lat), (Number(k.lng) - Number(c.lng)) * Math.cos((Number(k.lat) * Math.PI) / 180)) <= 50));
+    if (!twin) kept.push(c);
+  }
+  return kept;
+}
+
 /** Pure: the one Samsara address this stop is, or null. */
 export function pickSamsaraMatch(
   stop: { facility_name: string | null; city: string | null; state: string | null },
-  candidates: SamsaraCandidate[]
+  allCandidates: SamsaraCandidate[]
 ): SamsaraStopMatch | null {
+  const candidates = collapseDuplicateAddresses(allCandidates);
   const want = normName(stop.facility_name);
   if (want.length >= 4) {
     const hits = candidates.filter((c) => {
