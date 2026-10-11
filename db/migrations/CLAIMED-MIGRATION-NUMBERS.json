@@ -2382,5 +2382,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-11",
     "purpose": "RULING 443.65 #2: related_party_loan_entries_target_type_check gains party_transfer_out (443.59 a/e, already in the engine but refused by the CHECK) and party_paid_vendor (443.65 b: c/d); constraint only, no rows written"
+  },
+  "202615600900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-11",
+    "purpose": "RULING 443.67 #1 a-c: USMCA line categorization refused at the DB for every writer — bill / expense / invoice lines need an item (resolved from the account when exactly one item maps), line account = item default unless an override reason; expenses posted => status posted; items need an account and a category (named exemptions); company flag, NOT VALID -> VALIDATE"
   }
 }
