@@ -156,7 +156,7 @@ function MilesFieldRow({
                       setManualOpen(false);
                       void onChoose?.({ field, source: src });
                     }}
-                    className={`min-w-[72px] px-2 py-1 text-xs ${active ? "bg-[#16A34A] font-semibold text-white" : "bg-white text-gray-700"} disabled:cursor-not-allowed disabled:opacity-40`}
+                    className={`min-w-[72px] px-2 py-1 text-xs ${active ? "bg-[#16A34A] font-semibold text-white" : "bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)] text-gray-700"} disabled:cursor-not-allowed disabled:opacity-40`}
                   >
                     {SOURCE_LABEL[src]}
                   </button>

@@ -89,7 +89,8 @@ if (!/resolveLineItemAndAccount\(client, input\.operating_company_id, \{ item_id
 }
 
 // 4 — the reimbursement line's account reaches the close
-if (!/load_id, posting_account_id\s*\)\s*VALUES \(\$1::uuid, \$2::uuid, 'reimbursement'/.test(svc)) fails.push(`${SVC}: reimbursement settlement_lines no longer carry posting_account_id`);
+// RULING 443.66 D1: the same insert also carries the line's item (item_id, quantity, rate_cents, unit_of_measure).
+if (!/load_id, posting_account_id(?:, item_id, quantity, rate_cents, unit_of_measure)?\s*\)\s*VALUES \(\$1::uuid, \$2::uuid, 'reimbursement'/.test(svc)) fails.push(`${SVC}: reimbursement settlement_lines no longer carry posting_account_id`);
 const close = read("apps/backend/src/driver-finance/settlement-payrun-close.service.ts");
 if (!/r\.posting_account_id \?\? \(await accounts\.reimbursementByType/.test(close)) fails.push("settlement-payrun-close.service.ts: close ignores the reimbursement line's own account");
 

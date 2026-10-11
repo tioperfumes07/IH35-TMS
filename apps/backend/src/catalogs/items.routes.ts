@@ -81,6 +81,8 @@ const updateBodySchema = z
     default_income_account_id: z.string().uuid().nullable().optional(),
     default_expense_account_id: z.string().uuid().nullable().optional(),
     default_class_id: z.string().uuid().nullable().optional(),
+    // RULING 443.68 #3c — an item's category is set through this route (same-entity FK items_category_same_entity_fkey).
+    category_id: z.string().uuid().nullable().optional(),
     qbo_item_id: z.string().trim().max(100).nullable().optional(),
     taxable: z.boolean().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
@@ -307,6 +309,7 @@ export async function registerItemRoutes(app: FastifyInstance) {
     if ("default_income_account_id" in b) add("default_income_account_id", b.default_income_account_id ?? null);
     if ("default_expense_account_id" in b) add("default_expense_account_id", b.default_expense_account_id ?? null);
     if ("default_class_id" in b) add("default_class_id", b.default_class_id ?? null);
+    if ("category_id" in b) add("category_id", b.category_id ?? null);
     if ("qbo_item_id" in b) add("qbo_item_id", b.qbo_item_id ?? null);
     if ("taxable" in b) add("taxable", b.taxable);
     if ("notes" in b) add("notes", b.notes ?? null);
