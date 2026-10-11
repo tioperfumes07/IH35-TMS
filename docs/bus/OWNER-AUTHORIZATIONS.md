@@ -7698,7 +7698,11 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — exactly two settled
 action: OWNER_AUTH_ID=AUTH-429 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-58-relay-0210-loan-deposits.ts --apply
 rehearsal: throwaway br-long-frost-akhyfbz4 (COMMITTED, deleted): 2 posted (loan RPL-2026-0010 / RPL-2026-0011 on the fork); 2410-00-001 credit +722750, 1295 +700000, 5005 +22750; held deposits 16 -> 14; trial balance 0 -> 0; re-run = already_posted x2, deltas 0
 expires_at: 2026-10-12T14:58:29Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T14:54:00Z
+consumed_by: CC-2 (443.58; closed under 443.64 3a)
+row_counts: 2 deposits posted 14:54Z — JEs 76d45127 (5,162.50) + 3060fe52 (2,065.00), Cr 2410-00-001 now "Due to / from Jorge" 7,227.50; loan documents RPL-2026-0010 / -0011; kept as posted (no reversal, no void) per 443.60 #3 / 443.64 3a. Card map 0210 + 6248 -> Due to / from Jorge, 9855 -> Due to / from Tio Perfumes 2 live (#26402 c790a4841f, in live build 3d2233b)
+proof_query: SELECT sum(amount_cents) FROM accounting.journal_entry_postings WHERE journal_entry_uuid IN ('76d45127-34a4-454a-85e3-40d6f3f2d4f2','3060fe52-4ab3-4431-b599-78c991cfdb63') AND debit_or_credit='credit' -> 722750
 
 ## AUTH-428
 issued_at: 2026-10-11T15:00:41Z
@@ -7792,4 +7796,18 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — exactly two fences:
 action: OWNER_AUTH_ID=AUTH-435 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-64-fence-finish.ts --apply
 rehearsal: throwaway br-weathered-shadow-aks5emk5 (COMMITTED, deleted): A adopted (0 m), rename enqueued; B moved 345 m, update enqueued; re-run: both skipped
 expires_at: 2026-10-12T18:32:19Z
+status: CONSUMED
+consumed_at: 2026-10-11T18:39:30Z
+consumed_by: CC-2 (443.64 3b fences)
+row_counts: A AMERICOLD fence adopted Samsara 2000000762879 (0 m), renamed; B 822 Union Pacific fence + location moved 345 m; both updates delivered 18:39Z and READ BACK from Samsara 18:41Z (name "AMERICOLD — 1355 Railroad Avenue, Albertville, AL 35951"; 2000000762951 at 27.62222,-99.47099)
+proof_query: SELECT name, lat, lng, synced_at FROM integrations.samsara_addresses WHERE samsara_address_id IN ('2000000762879','2000000762951')
+
+## AUTH-436
+issued_at: 2026-10-11T18:44:58Z
+issued_by: Lead 443.64 3b ("the zip-center fences that never reached Samsara: retired on our side or re-pointed, count") with owner 443.49 #4 (no active TMS fence on a zip / city center). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..435
+owner_quotes: "We keep them and we need the real address geo fences." (2026-10-11 05:39 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — (1) retire on our side (is_active false, history kept, audited) every active auto_dispatch fence with no Samsara copy whose place has no street and whose label carries no street (measured 37, drawn 2026-09-09..28, none linked to a Creator load); the 2 with a street label are kept and listed. (2) one dispatch.relearn_load_miles (record_sources) for 13587 so its 822 Union Pacific stop follows the location AUTH-435 moved. Nothing in Samsara touched; no DELETE; no money.
+action: OWNER_AUTH_ID=AUTH-436 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-64-zip-fences-13587.ts --apply
+rehearsal: throwaway br-bitter-mouse-ak1amx3c (COMMITTED, deleted): retired 37, kept 2 ("100 Warehouse Dr, Laredo", "200 Cold Storage Rd, San Antonio"), 13587 enqueued; re-run 0 / already queued
+expires_at: 2026-10-12T18:44:58Z
 status: OPEN
