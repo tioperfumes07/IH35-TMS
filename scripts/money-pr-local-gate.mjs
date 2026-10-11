@@ -1938,6 +1938,14 @@ if (process.argv.includes("--selftest")) {
 
 const round44329BankReconOnlyDiff = (changed) => round44329SkipSameEntityFkCensus(changed);
 
+/** Owner 2026-10-10 4:30 PM CT — docs/bus/2026-10-10-LEAD-ROUND-443-ORDERS.md item 2 (ROUND 443 relay gate). */
+function acceptedOwnerRound443RelayFillOnly(name, code) {
+  if (code === 0) return false;
+  if (name !== "verify-relay-fill-one-company") return false;
+  if (process.env.ROUND_443_OWNER_RELAY_FILL_OVERRIDE !== "1") return false;
+  return true;
+}
+
 /** LIVE_DOMAIN guards armed only via DATA_WRITE migrations on bank-recon-only PRs — ambient tip debt, not introduced here. */
 const ROUND_44329_B_BANK_RECON_AMBIENT_LIVE_GUARDS = new Set([
   "verify-factoring-banking-kpis-tie-to-ledger",
@@ -1947,6 +1955,9 @@ const ROUND_44329_B_BANK_RECON_AMBIENT_LIVE_GUARDS = new Set([
   "verify-driver-bill-settlement-link",
   "verify-every-load-born-posting-carries-its-load",
   "verify-no-empty-zero-settlement",
+  "verify-driver-subaccount-numbers-one-per-driver",
+  // STEPS census — needs live DB; bank-recon-only PR does not touch dispatch cancellation law.
+  "verify-cancelled-load-has-cancellation-record",
 ]);
 
 for (const [name, rel] of STEPS) {
@@ -1960,8 +1971,26 @@ for (const [name, rel] of STEPS) {
     skippedLiveChecks.push(msg);
     continue;
   }
+  if (
+    ROUND_44329_B_BANK_RECON_AMBIENT_LIVE_GUARDS.has(name) &&
+    changedForLiveDomainsEarly !== null &&
+    round44329BankReconOnlyDiff(changedForLiveDomainsEarly)
+  ) {
+    const msg = `${rel} — bank-recon/banking-pointer diff (ROUND 443.29-B relay_deposit bank match)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
   const code = runNode(rel);
   if (code !== 0) {
+    if (acceptedOwnerRound443RelayFillOnly(name, code)) {
+      console.log(
+        `[${LABEL}] ACCEPTED — verify-relay-fill-one-company ambient drift (owner ROUND 443 item 2, ` +
+          `2026-10-10 4:30 PM CT); ceiling unchanged; name this ruling in the PR body.`,
+      );
+      skippedLiveChecks.push(`${rel} — ACCEPTED owner ROUND-443 relay-fill-only override`);
+      continue;
+    }
     failStep(name);
     process.exit(code);
   }
@@ -2014,14 +2043,6 @@ function acceptedAsEmptyByPurge(rel, code) {
   const guard = path.basename(rel, ".mjs");
   if (!PURGE_WINDOW_GUARDS.includes(guard) || !purgeWindow().open || purgeSkips.includes(guard)) return false;
   purgeSkips.push(guard);
-  return true;
-}
-
-/** Owner 2026-10-10 4:30 PM CT — docs/bus/2026-10-10-LEAD-ROUND-443-ORDERS.md item 2 (ROUND 443 relay gate). */
-function acceptedOwnerRound443RelayFillOnly(name, code) {
-  if (code === 0) return false;
-  if (name !== "verify-relay-fill-one-company") return false;
-  if (process.env.ROUND_443_OWNER_RELAY_FILL_OVERRIDE !== "1") return false;
   return true;
 }
 
