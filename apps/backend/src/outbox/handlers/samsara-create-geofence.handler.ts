@@ -34,6 +34,10 @@ export class SamsaraCreateGeofenceHandler implements OutboxEventHandler {
     const label = String(payload.label ?? payload.formatted_address ?? "").trim() || `geofence ${geofenceId}`;
     const formattedAddress = String(payload.formatted_address ?? label).trim() || label;
 
+    // 443.49: the outbox worker's client carries no company context, and integrations.samsara_config is under RLS — without
+    // this the config read returned no row and the event was recorded "delivered" with nothing sent to Samsara (56 of 64
+    // creates on 2026-10-11). Scope the delivery transaction to the event's own company first.
+    await ctx.client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const config = await getSamsaraConfigForCompany(ctx.client, operatingCompanyId);
     if (!rowIsConfigured(config) || !Boolean(config?.is_enabled)) {
       return { message: "samsara_not_configured" };
