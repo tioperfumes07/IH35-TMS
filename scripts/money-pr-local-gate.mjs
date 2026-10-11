@@ -1072,6 +1072,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-booked-loads-save-miles",
     ["apps/backend/src/dispatch/", "apps/backend/src/driver-finance/", "scripts/verify-booked-loads-save-miles.mjs"],
   ],
+  // Lead 443.51 #3 (CC-2) — a load at delivered or later has no stop still 'pending'.
+  [
+    "verify-delivered-load-stops-terminal",
+    ["apps/backend/src/driver-finance/", "apps/backend/src/dispatch/", "scripts/verify-delivered-load-stops-terminal.mjs"],
+  ],
   // ROUND 443.38 (CC-2) — stops resolve to the owner's Samsara address; no false rooftop; no fence around a zip center.
   [
     "verify-stops-resolve-samsara-no-zip-fence",

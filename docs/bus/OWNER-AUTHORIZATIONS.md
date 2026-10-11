@@ -7629,3 +7629,13 @@ action: OWNER_AUTH_ID=AUTH-422 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-1
 rehearsal: throwaway br-holy-heart-ak6dqkfe (COMMITTED, deleted): 64 auto fences — 3 moved (Samsara update enqueued: 2000000762878, 2000000762880, 2000000762885), 5 on an owner Samsara address (Indiana Packers local copy retired), 17 real address never in Samsara, 39 still no street; 83 real-address locations: 25 owner Samsara-import, 3 already in Samsara, 55 pushed once; 2 active zip-center fences retired; re-run = 0 changes; verify-stops-resolve-samsara-no-zip-fence PASS after
 expires_at: 2026-10-12T10:52:41Z
 status: OPEN
+
+## AUTH-424
+issued_at: 2026-10-11T11:01:43Z
+issued_by: Lead 443.51 #3 + #4 ("engine fix + backfill through the engine"; "stamp them from the workbook stop date (date_only precision), through the stop-stamp engine"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..421
+owner_quotes: "Were all the documents created correctly? ... Find the root cause of the red and permanently fix" (owner, 443.51)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the stops of every load created since 2026-10-11T00:00Z (Settlement Creator): stampStopsFromTracking (unstamped stops stamped from their workbook date — tracked stop event when one matches, else date_only / manual; a stamped stop never overwritten), then settleStampedStopStatuses (a stamped stop's status -> 'departed'). No money, no DELETE.
+action: OWNER_AUTH_ID=AUTH-424 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-51-creator-stop-status.ts --file=<443-42-stop-addresses.json> --apply
+rehearsal: throwaway br-red-lake-akjfnqlx (COMMITTED, deleted): 148 loads / 309 stops — pending 309 -> 0, departed 0 -> 309; stamped 296 -> 309 (13 date_only from the workbook, 0 tracked matches); verify-delivered-load-stops-terminal PASS after
+expires_at: 2026-10-12T11:01:43Z
+status: OPEN
