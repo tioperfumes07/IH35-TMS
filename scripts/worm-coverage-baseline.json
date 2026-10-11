@@ -23,7 +23,6 @@
     "accounting.payment_applications",
     "accounting.payments",
     "accounting.related_party_loan_entries",
-    "accounting.related_party_loan_facilities",
     "accounting.related_party_loan_schedule",
     "accounting.vendor_credits",
     "accounting.vendor_payment_methods",
@@ -71,5 +70,5 @@
     "factoring.reserve_movement"
   ],
   "unprotected_count": 89,
-  "measured_at": "2026-10-10"
+  "measured_at": "2026-10-01"
 }

@@ -92,13 +92,6 @@
       "reason": "[HOLD — CC-1 ROUND 321] lease-to-own buyout close: lease_contract bought_out_at / buyout_bill_id / buyout_je_id, fixed_assets.equipment_id. Additive, idempotent. Lead validates on a Neon branch, then applies on prod and ledgers it (after 202615210000).",
       "block": "ROUND-321-LEASE-TO-OWN",
       "added_at": "2026-10-02"
-    },
-    {
-      "file": "202615510300_settle_je_settlement_id_link.sql",
-      "reason": "[HOLD-FOR-JORGE — FINANCIAL] 443.37 settlement_id on accounting.journal_entry_postings (FK driver_finance.driver_settlements) + bill-path backfill. Prod ledger newest is 202615520300; this sorts earlier and was never applied — auto prod deploy must skip until owner Neon-applies and ledger-backfills. FK/SQL fixed on branch be752e114b (verify:db:reset green).",
-      "block": "BANK-F44329 / 443.37",
-      "added_at": "2026-10-11",
-      "verify_step": "scripts/verify-steps/18393-verify-settlement-bill-je-carries-settlement-id.mjs"
     }
   ],
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",

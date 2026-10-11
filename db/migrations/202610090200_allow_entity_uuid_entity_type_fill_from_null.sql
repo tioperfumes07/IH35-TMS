@@ -15,10 +15,6 @@
 --
 -- The trigger function is replaced with CREATE OR REPLACE — idempotent; the trigger binding is unchanged.
 
--- Replay order: column must exist before 202610090300 backfill SETs entity_type (full CHECKs land in 202612670000).
-ALTER TABLE accounting.journal_entry_postings
-  ADD COLUMN IF NOT EXISTS entity_type text;
-
 CREATE OR REPLACE FUNCTION accounting.refuse_posting_fact_update()
 RETURNS trigger
 LANGUAGE plpgsql
