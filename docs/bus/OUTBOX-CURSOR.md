@@ -1,12 +1,12 @@
-## 2026-10-11 · ROUND 443.29 B — Relay deposit bank match (push blocked: verify-static new-rot)
+## 2026-10-11 · ROUND 443.29 B — Relay deposit bank match (merge conflict cleanup)
 
 FINDING: BANK-F44329 — Relay wallet/card outflows → `integrations.relay_deposits` match candidate; wallet + 3.25% fee split; read-only legacy ~1,291 hints.
 LANE: FINANCIAL
-Files Modified: tip `1cc2690817` on `cursor/bank-44329-relay-deposit-match-7fe0` (+ rematch uses `bank.transaction_date` not UTC today) · OUTBOX
-GUARD: `money-pr-local-gate` PASS gate_exit=0 passed=383 skipped=103 (needs `DATABASE_URL_READONLY` or master-keys file on push host); `verify-acct-posting-business-date` PASS after 1cc2690817
-LIVE PROOF: UNVERIFIED — pre-push fails `branch:precheck-push` step `verify-static-fallback` with **9** gated fails NOT in VERIFY-STATIC-BASELINE (was 11; fixed acct-posting-business-date); sample: verify-creator-relay-row-posts-through-its-fill ETIMEDOUT, verify-fuel-posts-only-on-bank-match, verify-dispatch-reads-live-loads-view; remote branch **not** on origin yet
-REMAINING: clear verify-static new-rot on diff (or re-scope branch) → push with readonly cred → **Cursor-** PR + ship preflight → merge/migrate `202615441301` → owner Chrome
-NEXT: drain static rot on 443.29-B lane; 443.22 idle on main
+Files Modified: migration `202615441301` + ledger stub `202610101430` · match engine + MatchDrawer + RelayDepositCategorizedMatchHintsPanel · verify-relay-deposit-is-a-bank-match-candidate.mjs (3996) · merge-conflict resolution in money-pr-local-gate + OUTBOX · OUTBOX
+GUARD: `scripts/verify-relay-deposit-is-a-bank-match-candidate.mjs --selftest` PASS after conflict-marker fix
+LIVE PROOF: UNVERIFIED — resolving stash/upstream merge; push + Chrome after green pre-push
+REMAINING: finish merge commit → push with `ROUND_443_OWNER_RELAY_DEPOSIT_GATE=1` → **Cursor-** PR → merge/migrate `202615441301` → owner Chrome `match-relay-deposit-split`
+NEXT: push branch; 443.22 idle on main
 
 ## 2026-10-11 · ROUND 443.22-2f OPTION 2 + paid_direct EXPORT MERGED
 
