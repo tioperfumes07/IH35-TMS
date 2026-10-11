@@ -2270,6 +2270,23 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     }
   }
   if (
+    name === "verify-ar-ties-to-qbo-invoice-list" &&
+    changedForLiveDomains !== null &&
+    !changedForLiveDomains.some(
+      (f) =>
+        f.startsWith("apps/backend/src/accounting/from-load.ts") ||
+        f.startsWith("apps/backend/src/accounting/invoice-send.service.ts") ||
+        f.startsWith("feed-input/qbo-invoice-list-2026-08-07-to-2026-09-27.csv") ||
+        f === rel ||
+        f.startsWith("scripts/verify-ar-ties-to-qbo-invoice-list"),
+    )
+  ) {
+    const msg = `${rel} — no from-load / invoice-send paths in this diff (DATA_WRITE migration must not arm ROUND 163 AR tie-out)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  if (
     name === "verify-settlement-driver-pay-splits-per-load" &&
     changedForLiveDomains !== null &&
     !changedForLiveDomains.some(
