@@ -1,12 +1,13 @@
-## 2026-10-11 · ROUND 443.29 B — Relay deposit bank match (push gate)
+## 2026-10-11 · ROUND 443.29 B MERGED (#26363) — OUTBOX DONE
 
-FINDING: BANK-F44329 — Relay wallet/card outflows → `integrations.relay_deposits` match candidate; wallet + 3.25% fee split; read-only legacy ~1,291 hints.
-LANE: FINANCIAL
-Files Modified: `cursor/bank-44329-relay-deposit-match-7fe0` @ `0897f98840` · OUTBOX (GO-20 hook census)
-GUARD: `verify-relay-deposit-is-a-bank-match-candidate.mjs --selftest` PASS; local `verify:db:reset` APPLY `202615441301` + `202615441302` on `ih35_verify`
-LIVE PROOF: `git pull --ff-only origin/main` Already up to date; `money-pr-local-gate` gate_exit=0 (passed=386 failed=5 skipped=102, `unset DATABASE_URL` + `/tmp/ih35-gate-env.sh`); `branch:precheck-push` money+build+migration-replay PASS then FAIL `verify-static-fallback` — 20 guards NOT in VERIFY-STATIC-BASELINE (incl. `verify-related-party-loan-bank-loan-action-wizard` / `verify-related-party-loan-bank-repay-overpay-stop` F4 static FAIL on tip; `verify-banking-tx-register-uses-paritytable` OK alone); do not export `DATABASE_URL=127.0.0.1:54329` during precheck (breaks money gate SSL)
-REMAINING: wire RPL bank loan/repay F4 OR drop `202615441302` from this PR; main static rot batch (CC-3/Codex) OR block-ready manifest lane → `git push -u origin cursor/bank-44329-relay-deposit-match-7fe0` → **Cursor-** PR → migrate `202615441301` → owner Chrome
-NEXT: 443.29-B push unblock; INBOX 435/432/433 unchanged behind 443.29-B
+FINDING: BANK-F44329-MERGED — Relay deposit bank match on main; no duplicate PR from stale feature branch.
+LANE: NON-FINANCIAL
+MERGED: #26363 squash `96ce637c3d`
+Files Modified: none this tip — OUTBOX proof only
+GUARD: verify-relay-deposit-is-a-bank-match-candidate.mjs --selftest PASS on tip
+LIVE PROOF: gh pr view 26363 state=MERGED mergeCommit=96ce637c3d; Neon USMCA `banking.bank_transactions.matched_relay_deposit_id` EXISTS; WORM trigger on `accounting.related_party_loan_facilities` NOT yet on Neon (apply `202615441302`)
+REMAINING: Neon apply `202615441302` WORM; owner Chrome Match drawer wallet+3.25% fee; retire `cursor/bank-44329-relay-deposit-match-7fe0`; resume INBOX 435/432/433
+NEXT: apply 302 → Chrome proof; do not re-open 443.29-B feature PR
 
 ## 2026-10-11 · ROUND 443.22-2f OPTION 2 + paid_direct EXPORT MERGED
 
