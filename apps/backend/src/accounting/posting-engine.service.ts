@@ -914,6 +914,7 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
     display_id: string | null;
     source_load_id: string | null;
     source_system: string | null;
+    customer_id: string | null;
   }>(
     `
       SELECT
@@ -924,7 +925,8 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
         tax_cents::bigint AS tax_cents,
         display_id,
         source_load_id::text,
-        source_system::text
+        source_system::text,
+        customer_id::text
       FROM accounting.invoices
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -1133,6 +1135,8 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
         amount_cents: arAmount,
         description: `${descriptionBase} AR`,
         source_transaction_line_id: null,
+        entity_uuid: invoice.customer_id ?? null,
+        entity_type: invoice.customer_id ? "customer" : null,
       },
       ...creditLines,
     ],
@@ -1171,6 +1175,7 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
     revoked_at: string | null;
     source_system: string | null;
     class_id: string | null;
+    mdata_vendor_id: string | null;
   }>(
     `
       SELECT
@@ -1184,7 +1189,8 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
         bill_number,
         revoked_at::text,
         source_system::text,
-        class_id::text
+        class_id::text,
+        mdata_vendor_id::text
       FROM accounting.bills
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -1330,6 +1336,8 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
         amount_cents: totalDebit,
         description: `${billLabel} AP`,
         source_transaction_line_id: null,
+        entity_uuid: bill.mdata_vendor_id ?? null,
+        entity_type: bill.mdata_vendor_id ? "vendor" : null,
       },
     ],
     accountResolutionTrace,
