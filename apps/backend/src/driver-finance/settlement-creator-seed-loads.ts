@@ -101,7 +101,46 @@ function streetOrFacility(raw: string | null | undefined): { address_line1?: str
   return looksLikeStreet(v) ? { address_line1: v } : { facility_name: v };
 }
 
+const coord = (v: number | null | undefined) => (typeof v === "number" && Number.isFinite(v) && v !== 0 ? v : undefined);
+
+/**
+ * CC-3 2026-10-11 (CC-2 finding: 10 multi-stop loads were booked as pickup + delivery only, so their legs, miles and lane
+ * were wrong): when the draft lists its stops, every one is booked in that order. The first must be a pickup and the last
+ * a delivery; every stop needs its real city and state (SETL-F438 — never defaulted).
+ */
+function buildOrderedStops(load: SettlementCreatorLoadBlock, stops: NonNullable<SettlementCreatorLoadBlock["stops"]>): BookLoadInput["stops"] {
+  if (stops[0].stop_type !== "pickup" || stops[stops.length - 1].stop_type !== "delivery") {
+    throw new SettlementCreatorSeedError(
+      "stops_order_invalid",
+      `Load ${load.load_number}: the stop list must start with a pickup and end with a delivery.`,
+    );
+  }
+  let lastAt: string | null = null;
+  return stops.map((st, i) => {
+    const city = st.city?.trim();
+    const state = st.state?.trim().toUpperCase();
+    if (!city || !state) {
+      throw new SettlementCreatorSeedError("stop_city_state_required", `Load ${load.load_number}: stop ${i + 1} city AND state are required.`);
+    }
+    // A stop with no date inherits the previous stop's day (the settlement gives dates, never clock times — ROUND 443.16).
+    const at = st.date ? localDayStartIso(st.date) : lastAt ?? (load.pickup_date ? localDayStartIso(load.pickup_date) : new Date().toISOString());
+    lastAt = at;
+    return {
+      sequence_number: i + 1,
+      stop_type: st.stop_type,
+      ...streetOrFacility(st.address ?? null),
+      city,
+      state,
+      postal_code: st.zip?.trim() || undefined,
+      latitude: coord(st.lat),
+      longitude: coord(st.lng),
+      scheduled_arrival_at: at,
+    };
+  });
+}
+
 function buildStops(load: SettlementCreatorLoadBlock): BookLoadInput["stops"] {
+  if (load.stops && load.stops.length >= 2) return buildOrderedStops(load, load.stops);
   // ROUND 443.16 — the settlement gives dates, not clock times: appointments are the day's start in USMCA's timezone,
   // never an invented hour (the measured times come from the truck's stop events — stampStopsFromTracking).
   const pickupAt = load.pickup_date ? localDayStartIso(load.pickup_date) : new Date().toISOString();

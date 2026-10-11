@@ -14,6 +14,22 @@ export type SettlementCreatorAccessorialLine = {
   amount_cents: number;
 };
 
+/**
+ * CC-3 2026-10-11 (CC-2 finding): one stop of a multi-stop load, in the order the owner's settlement lists it.
+ * The pickup_* / delivery_* fields describe only the first pickup and the last delivery; a P/D/D or P/P/D load
+ * carries every stop here so booking never collapses it to two.
+ */
+export type SettlementCreatorDraftStop = {
+  stop_type: "pickup" | "delivery";
+  date?: string | null; // YYYY-MM-DD
+  address?: string | null; // street or facility name, as pickup_address
+  city: string;
+  state: string;
+  zip?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+};
+
 export type SettlementCreatorLoadBlock = {
   load_number: string;
   customer_name?: string | null;
@@ -44,6 +60,8 @@ export type SettlementCreatorLoadBlock = {
   delivery_zip?: string | null;
   delivery_lat?: number | null;
   delivery_lng?: number | null;
+  /** Every stop in order when the load has more than one pickup or delivery (see SettlementCreatorDraftStop). */
+  stops?: SettlementCreatorDraftStop[] | null;
   line_haul_miles?: number | null;
   line_haul_rate_cents?: number | null;
   line_haul_amount_cents?: number | null;

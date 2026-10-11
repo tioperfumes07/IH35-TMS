@@ -66,6 +66,22 @@ const draftSchema = z.object({
         delivery_zip: z.string().trim().max(20).nullable().optional(),
         delivery_lat: z.number().nullable().optional(),
         delivery_lng: z.number().nullable().optional(),
+        stops: z
+          .array(
+            z.object({
+              stop_type: z.enum(["pickup", "delivery"]),
+              date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+              address: z.string().trim().max(240).nullable().optional(),
+              city: z.string().trim().min(1).max(120),
+              state: z.string().trim().min(2).max(6),
+              zip: z.string().trim().max(20).nullable().optional(),
+              lat: z.number().nullable().optional(),
+              lng: z.number().nullable().optional(),
+            }),
+          )
+          .max(20)
+          .nullable()
+          .optional(),
         line_haul_miles: z.number().nullable().optional(),
         line_haul_rate_cents: z.number().int().nullable().optional(),
         line_haul_amount_cents: z.number().int().nullable().optional(),
