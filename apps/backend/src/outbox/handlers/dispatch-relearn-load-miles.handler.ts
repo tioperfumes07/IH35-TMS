@@ -27,6 +27,10 @@ export class DispatchRelearnLoadMilesHandler implements OutboxEventHandler {
     const loadId = requireUuid(payload.load_id, "load_id");
     const actorUserId = requireUuid(payload.actor_user_id, "actor_user_id");
     // The worker's client carries no company context; the stops / loads / lanes read here are under RLS.
+    // The worker's client carries no user context. mdata.loads / load_stops RLS hid the load from 114 of 148 events (the
+    // engine then reported "load_has_no_stops" and recorded nothing); the rest saw it only through a pooled connection's leaked
+    // session state. Transaction-local bypass like every other outbox handler — every engine query below names its company.
+    await ctx.client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
     await ctx.client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     // 443.53 #1: first resolve the load's stops through the one resolution order (Samsara address > existing street location >
     // Google place in the stop's city / state > recorded Google no-result) — in THIS event's transaction, so a deploy restart

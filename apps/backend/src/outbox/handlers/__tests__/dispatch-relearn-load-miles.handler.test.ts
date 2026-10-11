@@ -28,6 +28,7 @@ describe("DispatchRelearnLoadMilesHandler (443.53 #2)", () => {
       { operating_company_id: CO, load_id: LOAD, actor_user_id: ACTOR },
       { client: { query } as never, eventId: "e", instanceId: "t", log: () => {} }
     );
+    expect(query).toHaveBeenCalledWith(expect.stringContaining("app.bypass_rls"));
     expect(query).toHaveBeenCalledWith(expect.stringContaining("app.operating_company_id"), [CO]);
     expect(relearnLoadStopLegs).toHaveBeenCalledWith(expect.anything(), { operatingCompanyId: CO, loadId: LOAD, actorUserId: ACTOR });
     expect(recomputeFirstStopDeadhead).toHaveBeenCalledWith(expect.anything(), { operatingCompanyId: CO, loadId: LOAD, actorUserId: ACTOR });
