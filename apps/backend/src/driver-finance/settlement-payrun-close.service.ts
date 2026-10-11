@@ -638,7 +638,7 @@ export async function closeSettlementPayRun(
         -- "Salaried" override (isSalariedZeroRateOverride) and linked to this settlement, are its load activity.
         SELECT count(*)::text FROM mdata.loads l
          WHERE l.presettlement_link_id = $1::uuid AND l.soft_deleted_at IS NULL
-           AND l.driver_pay_rate_per_mile = 0 AND l.driver_pay_rate_override_reason ILIKE 'Salaried%'
+           AND l.driver_pay_rate_per_mile = 0 AND l.driver_pay_rate_override_reason ~* '^(salaried|local driver — weekly salary)'
       `,
       [settlementId]
     );

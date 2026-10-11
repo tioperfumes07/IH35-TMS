@@ -26,7 +26,7 @@ export function staticProblems(src) {
   if (!/reason\.length < 20/.test(src)) p.push("RULE 1 a reason shorter than 20 chars is not refused");
   if (!/bill\.status !== "open"/.test(src)) p.push("RULE 1 a non-open bill is not refused");
   if (!/bill\.settled_in_settlement_id\) throw/.test(src)) p.push("RULE 1 a settled bill is not refused");
-  if (!/Number\(bill\.rate\) === 0 && \/\^salaried\/i\.test/.test(src)) p.push("RULE 1 the Salaried 0-rate override is not required");
+  if (!/Number\(bill\.rate\) === 0 && \/\^\(salaried\|local driver — weekly salary\)\/i\.test/.test(src)) p.push("RULE 1 the Salaried 0-rate override is not required");
   if (!/Number\(links\.lines\) > 0\) throw/.test(src)) p.push("RULE 1 a bill with live settlement lines is not refused");
   if (!/Number\(links\.gl_bills\) > 0\) throw/.test(src)) p.push("RULE 1 a bill on an A/P-chain run is not refused");
   if (!/Number\(links\.postings\) > 0\) throw/.test(src)) p.push("RULE 1 a bill with journal postings is not refused");
@@ -75,7 +75,7 @@ else {
       `SELECT db.id::text, db.gross_amount_cents::text AS cents, l.load_number
          FROM driver_finance.driver_bills db JOIN mdata.loads l ON l.id = db.load_id
         WHERE db.operating_company_id = $1::uuid AND db.voided_at IS NULL AND db.status <> 'void' AND COALESCE(db.gross_amount_cents, 0) > 0
-          AND l.driver_pay_rate_per_mile = 0 AND l.driver_pay_rate_override_reason ILIKE 'Salaried%'`,
+          AND l.driver_pay_rate_per_mile = 0 AND l.driver_pay_rate_override_reason ~* '^(salaried|local driver — weekly salary)'`,
       [USMCA],
     )).rows;
     await client.query("ROLLBACK");

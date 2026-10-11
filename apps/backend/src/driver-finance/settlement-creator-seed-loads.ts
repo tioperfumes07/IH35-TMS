@@ -14,7 +14,9 @@ import { deliverLoadThroughDispatch, localDayStartIso, stampStopsFromTracking, t
 export const SETTLEMENT_CREATOR_QUAL_OVERRIDE_REASON =
   "entered from the AlwaysTrack settlement / load history (Settlement Creator)";
 
-export const SALARIED_OVERRIDE_REASON = "Salaried (owner ruling): weekly salary on the settlement, no per-load driver pay";
+// Lead 443.53 #7 (owner): weekly salary = LOCAL driver. Loads booked before the rename keep "Salaried (owner ruling)…";
+// every reader (isSalariedZeroRateOverride, feed gate, close, A/P chain) matches both prefixes.
+export const SALARIED_OVERRIDE_REASON = "Local driver — weekly salary (owner ruling): salary on the settlement, no per-load driver pay";
 
 export class SettlementCreatorSeedError extends Error {
   code: string;

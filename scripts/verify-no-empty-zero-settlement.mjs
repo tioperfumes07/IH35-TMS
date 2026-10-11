@@ -81,7 +81,7 @@ const EMPTY_SQL = `
        s.status::text = 'closed' AND coalesce(s.gross_pay, 0) = 0
        AND EXISTS (SELECT 1 FROM mdata.loads l WHERE l.presettlement_link_id = s.id)
        AND NOT EXISTS (SELECT 1 FROM mdata.loads l WHERE l.presettlement_link_id = s.id
-                        AND NOT (l.driver_pay_rate_per_mile = 0 AND l.driver_pay_rate_override_reason ILIKE 'Salaried%'))
+                        AND NOT (l.driver_pay_rate_per_mile = 0 AND l.driver_pay_rate_override_reason ~* '^(salaried|local driver — weekly salary)'))
      )
      -- ROUND 176: an OPEN settlement with at least one load still in flight (not yet
      -- delivered-or-later) is still legitimately being built — only require lines once the
