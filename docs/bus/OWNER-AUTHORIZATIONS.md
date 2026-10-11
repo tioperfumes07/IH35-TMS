@@ -7699,3 +7699,13 @@ action: OWNER_AUTH_ID=AUTH-429 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-1
 rehearsal: throwaway br-long-frost-akhyfbz4 (COMMITTED, deleted): 2 posted (loan RPL-2026-0010 / RPL-2026-0011 on the fork); 2410-00-001 credit +722750, 1295 +700000, 5005 +22750; held deposits 16 -> 14; trial balance 0 -> 0; re-run = already_posted x2, deltas 0
 expires_at: 2026-10-12T14:58:29Z
 status: OPEN
+
+## AUTH-428
+issued_at: 2026-10-11T15:00:41Z
+issued_by: Lead 443.53 #2 on the owner's ruling 2026-10-11 09:23 CT (14:23 UTC). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..427
+owner_quotes: "Yes we can calculate we are supposed to be using estimates from google, and from estimates another Claude agent created basted on averages etc for all the loads historically moved ... the payment to any driver is the payment that is in the settlements" (2026-10-11 09:23 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — one outbox event dispatch.relearn_load_miles per USMCA load created since 2026-10-11 (not cancelled; 148): the server handler re-derives planning leg miles (relearnLoadStopLegs) + first-stop deadhead (recomputeFirstStopDeadhead) through chooseLegMiles (point_mileage cache -> Google routing -> lane_mileage average -> NULL; never haversine). The script writes only outbox rows. No pay / settlement table, no money, no DELETE.
+action: OWNER_AUTH_ID=AUTH-428 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-53-relearn-creator-miles.ts --apply
+rehearsal: throwaway br-red-hat-ak392uy0 (COMMITTED, deleted): 148 loads, 148 events enqueued; re-run 0 enqueued / 148 already queued
+expires_at: 2026-10-12T15:00:41Z
+status: OPEN
