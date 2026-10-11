@@ -12,6 +12,7 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { squareVerticesFromCenter } from "./auto-geofence.service.js";
 import { stableProviderFailureReason, geocodeAddressWithEvidence } from "./stop-geocode-fallback.service.js";
 import { matchSamsaraAddressForStop, normName } from "./samsara-stop-match.js";
@@ -234,6 +235,38 @@ export async function geocodeStopsWithClient(
         WHERE s.id = ANY($1::uuid[]) AND lo.id = s.location_id AND lo.operating_company_id = $2::uuid
           AND s.google_place_id IS NULL AND lo.google_place_id IS NOT NULL`,
       [touched, companyId]);
+  }
+  // 443.70 S1 (owner 443.53 / 443.64: "We keep them and we need the real address geo fences"): the ONE fence on each
+  // street-resolved stop's location is the fence Samsara gets. Before this, the location fence was never queued (only ops
+  // runners pushed them) while auto-geofence pushed a second, customer-keyed fence for the same stop. Queued once per fence
+  // (dedupe key samsara.create_geofence:<fence id>, the same key and payload the AUTH-431 pushes used); a fence already in
+  // Samsara or imported from it is never re-sent.
+  if (touched.length) {
+    const toPush = (await client.query<{ fence_id: string; stop_id: string; load_id: string; lat: number; lng: number; street: string | null;
+      city: string | null; state: string | null; postal_code: string | null; facility: string | null }>(
+      `SELECT DISTINCT ON (g.id) g.id::text AS fence_id, s.id::text AS stop_id, s.load_id::text AS load_id,
+              g.center_lat::float8 AS lat, g.center_lng::float8 AS lng, s.address_line1 AS street, s.city, s.state, s.postal_code,
+              s.facility_name AS facility
+         FROM mdata.load_stops s
+         JOIN geo.geofences g ON g.operating_company_id = $2::uuid AND g.location_ref_id = s.location_id AND g.is_active
+        WHERE s.id = ANY($1::uuid[]) AND s.location_id IS NOT NULL
+          AND coalesce(s.geocode_source, '') NOT IN ('zip_center', 'city_center', 'picker')
+          AND s.address_line1 ~ '^\\s*[0-9]+[A-Za-z]?\\s+\\S'
+          AND g.samsara_address_id IS NULL AND g.source <> 'samsara_import'
+          AND g.center_lat IS NOT NULL AND g.center_lng IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM geo.geofences other
+                           WHERE other.operating_company_id = g.operating_company_id AND other.location_ref_id = g.location_ref_id
+                             AND other.is_active AND (other.samsara_address_id IS NOT NULL OR other.source = 'samsara_import'))
+        ORDER BY g.id, s.sequence_number`,
+      [touched, companyId])).rows;
+    for (const f of toPush) {
+      const formatted = [f.street, f.city, [f.state, f.postal_code].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+      const name = [f.facility, formatted].filter(Boolean).join(" — ");
+      await enqueueOutboxEvent(client as never, "samsara.create_geofence", { aggregate_type: "geo.geofences", aggregate_id: f.fence_id }, {
+        operating_company_id: companyId, geofence_id: f.fence_id, load_id: f.load_id, stop_id: f.stop_id, latitude: f.lat, longitude: f.lng,
+        formatted_address: formatted, label: name, actor_user_id: actorId,
+      }, `samsara.create_geofence:${f.fence_id}`);
+    }
   }
   return { stops_checked: stops.length, stops_geocoded: geocoded, locations_linked: locations, geofences_created: fences, rooftop, locality, failures, samsara_matched: samsara, zip_center_listed: listed, street_from_location: streetFromLocation, street_from_place: streetFromPlace };
 

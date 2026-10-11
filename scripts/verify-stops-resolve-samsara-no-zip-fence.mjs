@@ -15,7 +15,8 @@
  *   RULE 5 — no load stop is geocode_precision 'rooftop' without a street (house-numbered address_line1).
  * STATIC (443.41):
  *   RULE 6 — book-load.service.ts: a historical_backfill booking enqueues no dispatch.load.dispatched (no packet, email or
- *            driver notice) and does not call autoCreateGeofencesForLoad.
+ *            driver notice); and (443.73 #3, rule replaced — old: "only a live booking calls autoCreateGeofencesForLoad") NO
+ *            booking calls autoCreateGeofencesForLoad: the stop resolver draws ONE location fence per stop and queues that one.
  *   RULE 7 — auto-geofence.service.ts skips (never fences / never pushes to Samsara) a stop with no street address.
  * LIVE (443.41):
  *   RULE 8 — no ACTIVE auto_dispatch customer_site fence created at/after AUTO_FENCE_CUTOFF whose label has no street.
@@ -59,8 +60,8 @@ export function sideEffectFailures(bookLoad, autoFence) {
   const out = [];
   if (!/if \(source === "historical_backfill"\) \{[\s\S]{0,600}dispatch\.historical_backfill_distribution_skipped[\s\S]{0,400}\} else await enqueueOutboxEvent\(\s*client,\s*"dispatch\.load\.dispatched"/.test(bookLoad))
     out.push(`RULE 6 ${BOOK_LOAD}: a historical_backfill booking dispatches the load (packet / email / driver notice) again`);
-  if (!/if \(source !== "historical_backfill"\) \{\s*void autoCreateGeofencesForLoad\(/.test(bookLoad))
-    out.push(`RULE 6 ${BOOK_LOAD}: a historical_backfill booking draws customer-site fences / pushes to Samsara again`);
+  if (/autoCreateGeofencesForLoad\(/.test(bookLoad))
+    out.push(`RULE 6 ${BOOK_LOAD}: a booking draws a second, customer-keyed fence and pushes it to Samsara again (443.73 #3: one location fence per stop)`);
   if (!/reason: "no_street_address"/.test(autoFence) || !/for \(const stop of stops\) \{\s*\/\/ 443\.38[\s\S]{0,400}address_line1/.test(autoFence))
     out.push(`RULE 7 ${AUTO_FENCE}: a stop with no street address can be fenced and pushed to Samsara`);
   return out;
@@ -132,7 +133,7 @@ if (isMain) {
       ["a fence in the zip branch fails", staticFailures(src.replace("geocode_precision='locality', geocode_attempted_at=now(),", "geocode_precision='locality' /* INSERT INTO geo.geofences */, geocode_attempted_at=now(),")).some((x) => x.startsWith("RULE 3"))],
       ["the shipped booking + auto-fence pass", sideEffectFailures(bookLoad, autoFence).length === 0],
       ["a backfill booking that dispatches fails", sideEffectFailures(bookLoad.replace("dispatch.historical_backfill_distribution_skipped", "x"), autoFence).some((x) => x.startsWith("RULE 6"))],
-      ["an unconditional auto-fence hook fails", sideEffectFailures(bookLoad.replace('if (source !== "historical_backfill") {', "{"), autoFence).some((x) => x.startsWith("RULE 6"))],
+      ["a booking that calls the customer-keyed auto-fence again fails", sideEffectFailures(bookLoad + "\nvoid autoCreateGeofencesForLoad(a, b);", autoFence).some((x) => x.startsWith("RULE 6"))],
       ["an auto-fence without the street check fails", sideEffectFailures(bookLoad, autoFence.replace('reason: "no_street_address"', 'reason: "x"')).some((x) => x.startsWith("RULE 7"))],
       ["an active zip-center customer-site fence fails", liveFailures({ zipFences: [], falseRooftops: [], autoZipFences: [{ id: "g", label: "Laredo, TX, US" }] }).some((x) => x.startsWith("RULE 8"))],
       ["an active fence on a zip center fails", liveFailures({ zipFences: [], falseRooftops: [], zipCenterFences: [{ id: "g", label: "Laredo, TX" }] }).some((x) => x.startsWith("RULE 9"))],

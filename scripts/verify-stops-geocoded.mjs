@@ -31,7 +31,12 @@ export function failures(files = canonical) {
   if (!files.fallback.includes("geocodeLocality") || !files.fallback.includes("reason: stableProviderFailureReason(error)") || !files.google.includes('headers.get("retry-after")')) out.push("typed provider failure/locality geocoder missing");
   if (!files.precisionMigration.includes("geocode_precision") || !files.precisionMigration.includes("'rooftop','range','locality'")) out.push("geocode precision schema contract missing");
   if (!files.drawer.includes("city-level only — no arrival fence") || !files.drawer.includes("stop-geocode-locality-chip") || !files.editor.includes("city-level only — no arrival fence")) out.push("Stops locality chip missing");
-  if (files.service.includes("samsara.create_geofence") || files.service.includes("/places")) out.push("Samsara place push forbidden");
+  // LEAD 443.73 #3 (2026-10-11) — RULE REPLACED. Old: the resolver never mentions samsara.create_geofence or /places. New: the
+  // resolver queues its ONE location fence to Samsara THROUGH THE OUTBOX (enqueueOutboxEvent "samsara.create_geofence"); a direct
+  // Samsara API call from the resolver (/places, /addresses) stays forbidden. Why: the 443.70 acceptance run measured the stop's
+  // location fence never reaching Samsara while a second, customer-keyed fence did.
+  if (files.service.includes("/places") || files.service.includes("/addresses") || files.service.includes("api.samsara.com")) out.push("Samsara API call from the resolver forbidden — queue through the outbox");
+  if (files.service.includes("samsara.create_geofence") && !/enqueueOutboxEvent\([\s\S]{0,40}"samsara\.create_geofence"/.test(files.service)) out.push("Samsara fence create must go through enqueueOutboxEvent");
   if (!files.route.includes('/api/v1/telematics/stops/geocode-backfill') || !files.route.includes('user.role !== "Owner"')) out.push("admin route missing");
   if (!files.index.includes("registerStopsGeocodeBackfillRoutes(app)")) out.push("route unmounted");
   if (!files.book.includes("geocodeStopsBackfill") || !files.edit.includes("await geocodeStopsWithClient")) out.push("new-stop service hooks missing");
@@ -83,13 +88,17 @@ if (process.argv.includes("--selftest")) {
     { ...canonical, service: canonical.service.replace("ENTER_RADIUS_M = 402", "ENTER_RADIUS_M = 0") },
     { ...canonical, route: canonical.route.replace("/api/v1/telematics/stops/geocode-backfill", "/missing") },
     { ...canonical, edit: canonical.edit.replace("await geocodeStopsWithClient", "void geocodeStopsWithClient") },
-    { ...canonical, service: canonical.service.replace("location_latitude != null", "location_latitude == null") },
+    // replaceAll: the service carries the predicate twice (the location-first branch and the canonical-coordinates check); a
+    // single replace left the other one standing and the plant never planted anything.
+    { ...canonical, service: canonical.service.replaceAll("location_latitude != null", "location_latitude == null") },
+    // 443.73 #3: a direct Samsara API call from the resolver is still refused.
+    { ...canonical, service: canonical.service + "\nawait fetch('https://api.samsara.com/addresses', {});" },
     { ...canonical, service: canonical.service.replace('outcome.precision === "locality"', 'outcome.precision === "range"') },
     { ...canonical, fallback: canonical.fallback.replace("reason: stableProviderFailureReason(error)", "reason: 'provider_error'") },
     { ...canonical, google: canonical.google.replace('headers.get("retry-after")', 'headers.get("ignored")') },
     { ...canonical, drawer: canonical.drawer.replace("city-level only — no arrival fence", "Geocoded") },
   ];
-  for (const plant of plants) if (failures(plant).length === 0) throw new Error("planted regression escaped");
+  plants.forEach((plant, i) => { if (failures(plant).length === 0) throw new Error(`planted regression ${i + 1} escaped`); });
   const localityFencePlant = { unexplained_null: 0, generic_provider_error: 0, zero_zero: 0, locality_fences: 1, geofences: 1, locations: 0 };
   if (!liveFailures(localityFencePlant).includes("locality stop has a fence")) throw new Error("planted locality fence escaped");
   console.log(`PASS verify-stops-geocoded --selftest ${plants.length + 1}/${plants.length + 1}`);

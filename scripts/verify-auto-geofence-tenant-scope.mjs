@@ -23,6 +23,13 @@ mustInclude(service, "operating_company_id,", "insert includes tenant column");
 const servicePath2 = "apps/backend/src/dispatch/book-load.service.ts";
 if (!fs.existsSync(servicePath2)) throw new Error(`Missing service: ${servicePath2}`);
 const bookLoadService = fs.readFileSync(servicePath2, "utf8");
-mustInclude(bookLoadService, "autoCreateGeofencesForLoad", "bookLoad() hook call");
+// LEAD 443.73 #3 (2026-10-11) — RULE REPLACED. Old: bookLoad() must call autoCreateGeofencesForLoad. New: Book Load -> the stop
+// resolver (geocodeStopsBackfill) draws ONE fence per stop, the location fence on the real point, and queues THAT fence to Samsara;
+// no second customer-keyed fence. Why: the 443.70 acceptance run measured the old call pushing a duplicate fence instead of the
+// one the stop uses. The tenant-scope assertions on auto-geofence.service.ts above still hold for its remaining callers.
+mustInclude(bookLoadService, "geocodeStopsBackfill", "bookLoad() stop resolver call (the ONE fence writer)");
+if (/autoCreateGeofencesForLoad/.test(bookLoadService.replace(/\/\/.*$/gm, ""))) {
+  throw new Error("verify-auto-geofence-tenant-scope: bookLoad() must not call autoCreateGeofencesForLoad (second, customer-keyed fence) — 443.73 #3");
+}
 
 console.log("verify-auto-geofence-tenant-scope: ok");

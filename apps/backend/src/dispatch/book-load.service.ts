@@ -42,7 +42,6 @@ import {
   recordDeferredPresettlementSuggestion,
 } from "./presettlement-link.service.js";
 import { geocodeStopsBackfill } from "../telematics/stops-geocode-backfill.service.js";
-import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
 import { computeAndPersistGoogleReferenceMilesForLoad } from "./google-reference-miles.service.js";
 import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "./unit-active-load-guard.js";
 import { resolveInboundLoadEntity, type InboundSource } from "./inbound-load-entity.js";
@@ -1698,17 +1697,10 @@ function queueAfterBookExtras(input: BookLoadInput, result: BookLoadResult, sour
   if (result.kind === "ok") {
     const createdLoadId = String(result.row.id ?? "");
     if (createdLoadId) {
-      // 443.41: a load that already ran (historical_backfill) draws no customer-site fence and pushes nothing to
-      // Samsara — its stops resolve to the owner's Samsara address through geocodeStopsBackfill below, or stay at a
-      // listed zip / city center with no fence (443.38). Live loads keep the hook.
-      if (source !== "historical_backfill") {
-        void autoCreateGeofencesForLoad(input.requestingUserUuid, {
-          operating_company_id: input.operating_company_id,
-          load_id: createdLoadId,
-        }).catch((err) => {
-          console.error("auto_geofence_post_book_failed", { err, load_id: createdLoadId });
-        });
-      }
+      // 443.70 S1: ONE fence per stop. geocodeStopsBackfill below resolves each stop to its location, draws the location's
+      // fence on the real point and queues THAT fence to Samsara. autoCreateGeofencesForLoad used to add a second,
+      // customer-keyed fence for the same stop and push it instead (its own header: "OVERLAP"), so the location fence the
+      // stop actually uses never reached Samsara. It is no longer called from booking.
       void geocodeStopsBackfill(input.requestingUserUuid, input.operating_company_id, createdLoadId).catch((err) => {
         console.error("stops_geocode_backfill_post_book_failed", { err, load_id: createdLoadId });
       });
