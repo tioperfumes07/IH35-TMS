@@ -24,14 +24,32 @@ export const LINK_COLUMNS = [
   "matched_load_id",
   "matched_payment_id",
   "matched_relay_fuel_transaction_id",
+  "matched_relay_deposit_id",
   "matched_settlement_id",
   "matched_transfer_id",
   "linked_entity_id",
 ];
 
 /** SQL: the line carries a document (same predicate as banking.bank_line_classify()). */
-export const LINKED_SQL = (a = "bt") =>
-  `(num_nonnulls(${LINK_COLUMNS.map((c) => `${a}.${c}`).join(", ")}) > 0 OR ${a}.status IN ('split', 'transfer') OR ${a}.transfer_kind IS NOT NULL)`;
+export function linkedSql(a = "bt", columns = LINK_COLUMNS) {
+  const cols = columns.length ? columns : LINK_COLUMNS;
+  return `(num_nonnulls(${cols.map((c) => `${a}.${c}`).join(", ")}) > 0 OR ${a}.status IN ('split', 'transfer') OR ${a}.transfer_kind IS NOT NULL)`;
+}
+
+/** @deprecated Prefer linkedSql(a, linkColumns) inside withUnscopedReadOnly (uses full LINK_COLUMNS). */
+export const LINKED_SQL = (a = "bt") => linkedSql(a, LINK_COLUMNS);
+
+/** Link columns present on banking.bank_transactions (pre-migration guards omit not-yet-applied cols). */
+export async function resolveLinkColumnsPresent(client) {
+  const { rows } = await client.query(
+    `SELECT column_name FROM information_schema.columns
+      WHERE table_schema = 'banking' AND table_name = 'bank_transactions'
+        AND column_name = ANY($1::text[])`,
+    [LINK_COLUMNS],
+  );
+  const present = new Set(rows.map((r) => r.column_name));
+  return LINK_COLUMNS.filter((c) => present.has(c));
+}
 
 /** Companies no seat reads or writes (owner ruling). */
 export const FROZEN_COMPANY_CODES = ["TRANSP", "TRK"]; // ROUND 363: TRANSPORTATION and TRUCKING are frozen
@@ -72,7 +90,8 @@ export async function withUnscopedReadOnly(label, fn) {
       `SELECT count(*)::int AS n FROM information_schema.columns
         WHERE table_schema = 'banking' AND table_name = 'bank_transactions' AND column_name IN ('review_bucket', 'resolution_kind')`
     )).rows[0].n === 2;
-    const out = await fn(c, { total, hasBucket, bypass });
+    const linkColumns = await resolveLinkColumnsPresent(c);
+    const out = await fn(c, { total, hasBucket, bypass, linkColumns });
     await c.query("ROLLBACK");
     return { ...out, total, hasBucket, bypass };
   } catch (err) {
@@ -84,10 +103,10 @@ export async function withUnscopedReadOnly(label, fn) {
 }
 
 /** The bucket a line sits in: the column once 202615350600 is applied; before it, what the classifier will assign. */
-export const BUCKET_SQL = (hasBucket, a = "bt") =>
+export const BUCKET_SQL = (hasBucket, a = "bt", linkColumns = LINK_COLUMNS) =>
   hasBucket
     ? `${a}.review_bucket`
-    : `(CASE WHEN ${LINKED_SQL(a)} THEN 'categorized'
+    : `(CASE WHEN ${linkedSql(a, linkColumns)} THEN 'categorized'
              WHEN ${a}.excluded_reason IS NOT NULL OR ${a}.skip_reason IS NOT NULL OR ${a}.status = 'skipped' OR ${a}.review_state = 'excluded' THEN 'excluded'
              ELSE 'for_review' END)`;
 

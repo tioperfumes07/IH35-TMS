@@ -4,6 +4,8 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { BankingRuleRow, PlaidCategoryRuleRow, mergeSuggestionPreferHigher, suggestionFromPlaidCategory, suggestionFromRules } from "./suggestion-engine.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { bankMatchFilterKindSchema } from "../accounting/bank-recon/match-api-kinds.js";
+import { listRelayDepositCategorizedMatchHints } from "../accounting/bank-recon/relay-deposit-categorized-match-hints.service.js";
 import { findCandidates, MATCH_WINDOW_STEPS } from "../accounting/bank-recon/match.service.js";
 import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 import { supersedePlaidPendingByExactPostedCandidate } from "./bank-tx-dedup.js";
@@ -208,7 +210,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
           .max(120)
           .optional()
           .transform((v) => (v ? v.split(",").map((k) => k.trim()).filter(Boolean) : undefined))
-          .pipe(z.array(z.enum(["payment", "bill_payment", "transfer", "je", "bill", "expense"])).optional()),
+          .pipe(z.array(bankMatchFilterKindSchema).optional()),
         payee: z.string().max(200).optional(),
         date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
         date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -269,6 +271,26 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
       bank_transaction_id: params.data.id,
     };
   });
+
+  /** ROUND 443.29-B — read-only pairing of wallet-categorized Relay outflows with deposit suggestions (no writes). */
+  app.get(
+    "/api/v1/banking/relay-deposit-match-review",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = financeUser(req, reply);
+      if (!user) return;
+
+      const parsed = companyQuerySchema
+        .extend({ limit: z.coerce.number().int().min(1).max(5000).optional().default(2000) })
+        .safeParse(req.query ?? {});
+      if (!parsed.success) return validationError(reply, parsed.error);
+      const operatingCompanyId = parsed.data.operating_company_id;
+      await assertCompanyMembership(user.uuid, operatingCompanyId);
+
+      const payload = await listRelayDepositCategorizedMatchHints(operatingCompanyId, parsed.data.limit);
+      return payload;
+    }
+  );
 
   // B.1 (owner order 2026-09-05, CODER-SEQUENCE-NUMBERED-2026-09-05.md CC-2 §6): a bulk version of
   // match-candidates above so the transactions LIST can show a "suggested match" per row without

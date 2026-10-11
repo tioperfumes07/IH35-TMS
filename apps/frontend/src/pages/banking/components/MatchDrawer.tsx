@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   acceptBankReconMatch,
+  type BankMatchAcceptKind,
   acceptBankReconMultiMatch,
   categorizeBankTransaction,
   commitBankTransactionSplit,
@@ -102,7 +103,11 @@ const KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   bill: "Bill",
   expense: "Expense",
   deposit: "Deposit",
+  relay_fuel: "Relay fuel",
+  relay_deposit: "Relay deposit",
 };
+
+const RELAY_MATCH_KINDS = new Set<BankMatchCandidateKind>(["relay_fuel", "relay_deposit"]);
 
 /** ORDERS §19 Find Other Matches — Record type chips (QBO Show). */
 const RECORD_TYPE_CHIPS: ReadonlyArray<{ kind: BankMatchCandidateKind; label: string }> = [
@@ -113,6 +118,8 @@ const RECORD_TYPE_CHIPS: ReadonlyArray<{ kind: BankMatchCandidateKind; label: st
   { kind: "je", label: "Journal Entry" },
   { kind: "bill", label: "Bill" },
   { kind: "deposit", label: "Deposit" },
+  { kind: "relay_deposit", label: "Relay deposit" },
+  { kind: "relay_fuel", label: "Relay fuel" },
 ];
 
 function chipClassName(selected: boolean) {
@@ -131,6 +138,8 @@ const KIND_ENTITY: Record<BankMatchCandidateKind, EntityKind> = {
   bill: "bill",
   expense: "expense",
   deposit: "deposit",
+  relay_fuel: "expense",
+  relay_deposit: "deposit",
 };
 
 function formatMoneyCents(cents: number | null | undefined) {
@@ -294,7 +303,7 @@ export function MatchDrawer({
       return acceptBankReconMatch({
         operating_company_id: operatingCompanyId,
         bank_transaction_id: String(bankTransactionId),
-        ledger_entry_kind: candidate.ledger_entry_kind as "payment" | "bill_payment" | "transfer" | "je" | "expense",
+        ledger_entry_kind: candidate.ledger_entry_kind as BankMatchAcceptKind,
         ledger_entry_id: candidate.ledger_entry_id,
         variance_account_id: candidate.amount_gap_cents !== 0 ? varianceId || undefined : undefined,
       });
@@ -319,7 +328,7 @@ export function MatchDrawer({
         operating_company_id: operatingCompanyId,
         bank_transaction_id: String(bankTransactionId),
         entries: entries.map((c) => ({
-          ledger_entry_kind: c.ledger_entry_kind as "payment" | "bill_payment" | "transfer" | "je" | "expense",
+          ledger_entry_kind: c.ledger_entry_kind as BankMatchAcceptKind,
           ledger_entry_id: c.ledger_entry_id,
         })),
       }),
@@ -943,17 +952,27 @@ export function MatchDrawer({
                       onChange={() => setSelectedId(c.ledger_entry_id)}
                     />
                     {c.ledger_entry_id ? (
-                      // Drill-through stays available but must not also fire the row's select — otherwise
-                      // navigating would silently change the selection on the way out.
-                      <span onClick={(event) => event.stopPropagation()} data-testid="match-candidate-drillthrough">
-                        <EntityLink
-                          kind={KIND_ENTITY[c.ledger_entry_kind]}
-                          id={c.ledger_entry_id}
-                          label={candidateDrillLabel(c)}
+                      RELAY_MATCH_KINDS.has(c.ledger_entry_kind) ? (
+                        <span
                           data-testid="match-candidate-kind"
                           className={kindBadgeClassName()}
-                        />
-                      </span>
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          {KIND_LABELS[c.ledger_entry_kind]}
+                        </span>
+                      ) : (
+                        // Drill-through stays available but must not also fire the row's select — otherwise
+                        // navigating would silently change the selection on the way out.
+                        <span onClick={(event) => event.stopPropagation()} data-testid="match-candidate-drillthrough">
+                          <EntityLink
+                            kind={KIND_ENTITY[c.ledger_entry_kind]}
+                            id={c.ledger_entry_id}
+                            label={candidateDrillLabel(c)}
+                            data-testid="match-candidate-kind"
+                            className={kindBadgeClassName()}
+                          />
+                        </span>
+                      )
                     ) : null}
                     {isTopAuto ? (
                       <span
@@ -972,6 +991,18 @@ export function MatchDrawer({
                 <div className="mt-1 truncate text-xs text-[#1F2A44]" title={c.memo}>
                   {c.memo?.trim() ? c.memo : "—"}
                 </div>
+
+                {c.ledger_entry_kind === "relay_deposit" &&
+                (c.relay_deposit_wallet_cents != null || c.relay_deposit_fee_cents != null) ? (
+                  <div
+                    className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[#4B5563]"
+                    data-testid="match-relay-deposit-split"
+                  >
+                    <span>Wallet: {formatMoneyCents(c.relay_deposit_wallet_cents)}</span>
+                    <span>Fee (3.25%): {formatMoneyCents(c.relay_deposit_fee_cents)}</span>
+                    <span>Charged: {formatMoneyCents(c.amount_cents)}</span>
+                  </div>
+                ) : null}
 
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[#6B7280]">
                   <span data-testid="match-candidate-date">Date: {String(c.event_date ?? "").slice(0, 10) || "—"}</span>

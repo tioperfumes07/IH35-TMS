@@ -38,6 +38,7 @@ export const DOCUMENTS = {
   "driver_finance.driver_settlements": "voided_at",
   "driver_finance.driver_advances": "voided_at",
   "integrations.relay_fuel_transactions": "voided_at",
+  "integrations.relay_deposits": "voided_at",
   "accounting.deposits": "voided_at",
 };
 /** table -> its bank-line pointer, and which shared primitives release that pointer for it. */
@@ -47,6 +48,7 @@ export const POINTER = {
   "accounting.factoring_advances": "matched_factoring_advance_id", "fuel.fuel_transactions": "matched_fuel_transaction_id",
   "banking.transfers": "matched_transfer_id", "mdata.loads": "matched_load_id", "driver_finance.driver_settlements": "matched_settlement_id",
   "driver_finance.driver_advances": "matched_advance_id", "integrations.relay_fuel_transactions": "matched_relay_fuel_transaction_id",
+  "integrations.relay_deposits": "matched_relay_deposit_id",
   "accounting.deposits": "matched_deposit_id",
 };
 // postVoidReversal -> unmatchBankTransactionsForVoid releases by BANK_LINE_MATCHED_COLUMN (void.service.ts) for these.

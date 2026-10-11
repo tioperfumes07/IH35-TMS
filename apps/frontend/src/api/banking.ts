@@ -544,7 +544,20 @@ export function getFactoringVirtualTimeline(companyId: string, loadId?: string) 
 }
 
 // ROUND 373.4 — "deposit": a Deposit document (Make Deposit) the bank deposit line matches; the match posts nothing.
-export type BankMatchCandidateKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense" | "deposit";
+// ROUND 443.29-B — relay_deposit / relay_fuel: integrations documents; match links only (no fuel JE on relay_deposit).
+export type BankMatchCandidateKind =
+  | "payment"
+  | "bill_payment"
+  | "transfer"
+  | "je"
+  | "bill"
+  | "expense"
+  | "deposit"
+  | "relay_fuel"
+  | "relay_deposit";
+
+/** Kinds POST /bank-recon/accept-match accepts (bill is view-only in the drawer). */
+export type BankMatchAcceptKind = Exclude<BankMatchCandidateKind, "bill">;
 
 export type BankMatchCandidate = {
   ledger_entry_kind: BankMatchCandidateKind;
@@ -566,6 +579,9 @@ export type BankMatchCandidate = {
   match_score: number;
   auto_match: boolean;
   exact_amount?: boolean;
+  /** ROUND 443.29-B — wallet leg when kind = relay_deposit. */
+  relay_deposit_wallet_cents?: number;
+  relay_deposit_fee_cents?: number;
 };
 
 export type BankMatchFilters = {
@@ -614,6 +630,31 @@ export function getMatchCandidates(bankTxnId: string, companyId: string, opts?: 
     /** Abs bank amount — multi-doc Resolve sums selected ledger amounts against this. */
     bank_amount_cents?: number;
   }>(`/api/v1/banking/transactions/${bankTxnId}/match-candidates?${params.toString()}`);
+}
+
+export type RelayDepositMatchReviewRow = {
+  bank_transaction_id: string;
+  transaction_date: string;
+  amount_cents: number;
+  description: string | null;
+  suggested_relay_deposit_id: string | null;
+  relay_deposit_id: string | null;
+  wallet_cents: number | null;
+  fee_cents: number | null;
+  charged_cents: number | null;
+  deposit_date: string | null;
+  amount_gap_cents: number | null;
+  date_gap_days: number | null;
+};
+
+/** ROUND 443.29-B — read-only: wallet-categorized Relay outflows paired with deposit suggestions. */
+export function getRelayDepositMatchReview(companyId: string, limit = 2000) {
+  const params = new URLSearchParams();
+  params.set("operating_company_id", companyId);
+  params.set("limit", String(limit));
+  return apiRequest<{ rows: RelayDepositMatchReviewRow[]; total: number }>(
+    `/api/v1/banking/relay-deposit-match-review?${params.toString()}`
+  );
 }
 
 export function getBankingTiles(companyId: string) {
@@ -1641,7 +1682,7 @@ export function acceptBankReconMatch(
     // BANKREC-CONFIRM-01: backend accept-match zod schema (recon-worklist.routes.ts) also accepts
     // "expense" (Part 2a, #1747) — link-and-clear only, no new GL math. "bill" stays excluded here
     // (CHAIN-04 / Part 2b records the bill payment, not a plain accept).
-    ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je" | "expense";
+    ledger_entry_kind: BankMatchAcceptKind;
     ledger_entry_id: string;
     /** ROUND 206 Resolve — required when amount gap ≠ 0 (write-off / difference account). */
     variance_account_id?: string;
@@ -1658,7 +1699,7 @@ export function acceptBankReconMultiMatch(input: {
   operating_company_id: string;
   bank_transaction_id: string;
   entries: Array<{
-    ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je" | "expense";
+    ledger_entry_kind: BankMatchAcceptKind;
     ledger_entry_id: string;
   }>;
 }) {

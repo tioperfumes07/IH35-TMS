@@ -55,6 +55,7 @@ import { classesCatalogClient, itemsCatalogClient, type AccountingCatalogRow } f
 import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
 import { BankTransactionAttachmentsNotesModal } from "./BankTransactionAttachmentsNotesModal";
 import { MatchDrawer } from "./MatchDrawer";
+import { RelayDepositCategorizedMatchHintsPanel } from "./RelayDepositCategorizedMatchHintsPanel";
 import { buildBankingTransactionsXlsx } from "./banking-transactions-xlsx";
 import { RecordTransferModal } from "../RecordTransferModal";
 import { RecordCCPaymentModal } from "../RecordCCPaymentModal";
@@ -195,6 +196,8 @@ const MATCH_CANDIDATE_KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   bill: "Bill",
   expense: "Expense",
   deposit: "Deposit",
+  relay_fuel: "Relay fuel",
+  relay_deposit: "Relay deposit",
 };
 
 // Match candidates — EntityLink for every kind with a real detail route (Law §9).
@@ -206,6 +209,8 @@ const MATCH_CANDIDATE_ENTITY_KIND: Record<BankMatchCandidateKind, EntityKind> = 
   bill: "bill",
   expense: "expense",
   deposit: "deposit",
+  relay_fuel: "expense",
+  relay_deposit: "deposit",
 };
 
 // ROUND 433-CUR B3 (owner 2026-10-06): match candidates ARE filterable by transaction type
@@ -218,6 +223,8 @@ const MATCH_KIND_FILTER_OPTIONS: ReadonlyArray<{ value: BankMatchCandidateKind; 
   { value: "transfer", label: "Transfer" },
   { value: "je", label: "Journal Entry" },
   { value: "deposit", label: "Deposit" },
+  { value: "relay_deposit", label: "Relay deposit" },
+  { value: "relay_fuel", label: "Relay fuel" },
 ];
 const SETTLEMENT_BORN_MATCH_NOTE =
   "Settlement-born documents by default — narrow by transaction type with the multi-selector.";
@@ -4108,6 +4115,8 @@ export function BankingTransactionsDesignView({
           </div>
         </div>
       </div>
+
+      <RelayDepositCategorizedMatchHintsPanel companyId={companyId} />
 
       <BulkActionBar
         {...bulkSelection.bulkActionBarProps([

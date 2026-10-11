@@ -2306,6 +2306,11 @@
       "claimed_at": "2026-10-10",
       "claimed_by": "cursor",
       "purpose": "Option 1 related-party LOC: accounting.related_party_loan_facilities + entry facility_id/bank_transaction_id/display_id/document_kind; bank_transactions.matched_related_party_loan_id — every 2410-family categorize funding creates a loan document"
+    },
+    "202615441301": {
+      "claimed_at": "2026-10-10",
+      "claimed_by": "cursor",
+      "purpose": "ROUND 443.29 Part B: bank_transactions.matched_relay_deposit_id + reconciliation_matches relay_deposit kind; bank-line functions restated (renumbered from 202610101430 — must run after accounting.deposits / 202615441200 loan LOC)"
     }
   },
   "202610100200": {

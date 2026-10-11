@@ -41,10 +41,10 @@ if (process.argv.includes("--selftest")) {
 
 const statik = check(fs.readFileSync(path.join(ROOT, MIG), "utf8"));
 if (statik.length) report(LABEL, statik, "");
-const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket }) => {
+const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket, linkColumns }) => {
   const rows = (await c.query(`
     SELECT (SELECT code FROM org.companies WHERE id = bt.operating_company_id) AS co, b AS bucket, count(*)::int AS n
-      FROM banking.bank_transactions bt, LATERAL (SELECT ${BUCKET_SQL(hasBucket)} AS b) x
+      FROM banking.bank_transactions bt, LATERAL (SELECT ${BUCKET_SQL(hasBucket, "bt", linkColumns)} AS b) x
      WHERE ${NOT_FROZEN_SQL()}
      GROUP BY 1, 2 ORDER BY 1, 2`)).rows;
   return { rows };

@@ -47,6 +47,7 @@ function liveCheck() {
   for (const n of [
     "BANK_LINE_DOCUMENT_POINTER_COLUMNS",
     "matched_deposit_id",
+    "matched_relay_deposit_id",
     "matched_payment_id",
     "matched_bill_id",
     "bankLineIsUnmatchedSql",
@@ -97,6 +98,9 @@ function liveCheck() {
   }
   if (!feedLinks.includes("matched_deposit_id")) {
     errors.push(`${FILES.feedLinks} LINK_COLUMNS must include matched_deposit_id (ROUND 373.4)`);
+  }
+  if (!feedLinks.includes("matched_relay_deposit_id")) {
+    errors.push(`${FILES.feedLinks} LINK_COLUMNS must include matched_relay_deposit_id (ROUND 443.29-B)`);
   }
   const voidReleaser = read(FILES.voidReleaser);
   const voidGuard = read(FILES.voidGuard);
