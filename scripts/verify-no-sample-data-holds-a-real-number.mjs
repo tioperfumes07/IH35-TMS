@@ -29,6 +29,50 @@ function fail(msg) {
   process.exitCode = 1;
 }
 
+/** Pure: the deny-list from feed_input.json, or a fail-closed reason. */
+export function parseFeedLoadNumbers(feedInput) {
+  const records = Array.isArray(feedInput?.records) ? feedInput.records : null;
+  if (!records) return { error: "feed_input.json has no .records array -- shape has changed, refusing to guess a fallback field." };
+  const set = new Set(records.map((r) => String(r.load_number)).filter(Boolean));
+  if (set.size === 0) return { error: "feed_input.json .records produced zero load_number values -- refusing to pass a guard with an empty deny-list." };
+  return { set };
+}
+
+/** Pure: sample loads that hold a feed load_number. */
+export function sampleCollisions(sampleRows, feedLoadNumbers) {
+  return sampleRows.filter((r) => feedLoadNumbers.has(r.load_number));
+}
+
+/** Pure: denormalized copies whose number differs from the load's current number. */
+export function staleCopies(rows) {
+  return rows.filter((r) => r.copy_number !== r.real_number);
+}
+
+function selftest() {
+  const LABEL = "verify-no-sample-data-holds-a-real-number";
+  const feed = parseFeedLoadNumbers({ records: [{ load_number: 13660 }, { load_number: "13661" }] });
+  const cases = [
+    ["no .records array is refused", () => parseFeedLoadNumbers({ rows: [] }).error],
+    ["empty deny-list is refused", () => parseFeedLoadNumbers({ records: [] }).error],
+    ["sample load holding a feed number is caught",
+      () => sampleCollisions([{ id: "a", load_number: "13660" }], feed.set).length === 1],
+    ["stale denormalized copy is caught",
+      () => staleCopies([{ load_id: "a", copy_number: "13660", real_number: "13660-R" }]).length === 1],
+  ];
+  const clean = [
+    ["real feed list parses", () => feed.set && feed.set.size === 2],
+    ["sample load with a non-feed number passes", () => sampleCollisions([{ id: "b", load_number: "SAMPLE-1" }], feed.set).length === 0],
+    ["matching copy passes", () => staleCopies([{ load_id: "a", copy_number: "13660", real_number: "13660" }]).length === 0],
+  ];
+  let caught = 0;
+  for (const [name, run] of cases) { if (run()) caught++; else console.error(`  ✗ planted violation escaped: ${name}`); }
+  let cleanOk = true;
+  for (const [name, run] of clean) if (!run()) { cleanOk = false; console.error(`  ✗ clean input failed: ${name}`); }
+  if (caught !== cases.length || !cleanOk) { console.error(`${LABEL} SELFTEST: FAIL ${caught}/${cases.length}`); process.exit(1); }
+  console.log(`${LABEL} SELFTEST: ${caught}/${cases.length} planted violations caught; ${clean.length} clean inputs pass`);
+  process.exit(0);
+}
+
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) {
@@ -47,16 +91,12 @@ async function main() {
     fail(`feed_input.json failed to parse: ${e instanceof Error ? e.message : String(e)}`);
     return;
   }
-  const records = Array.isArray(feedInput?.records) ? feedInput.records : null;
-  if (!records) {
-    fail("feed_input.json has no .records array -- shape has changed, refusing to guess a fallback field.");
+  const parsed = parseFeedLoadNumbers(feedInput);
+  if (parsed.error) {
+    fail(parsed.error);
     return;
   }
-  const feedLoadNumbers = new Set(records.map((r) => String(r.load_number)).filter(Boolean));
-  if (feedLoadNumbers.size === 0) {
-    fail("feed_input.json .records produced zero load_number values -- refusing to pass a guard with an empty deny-list.");
-    return;
-  }
+  const feedLoadNumbers = parsed.set;
   console.log(`Loaded ${feedLoadNumbers.size} feed load_number(s) from ${FEED_INPUT_PATH}.`);
 
   const pool = new pg.Pool({ connectionString: url, ssl: { rejectUnauthorized: false } });
@@ -71,7 +111,7 @@ async function main() {
       `SELECT id::text, load_number FROM mdata.loads WHERE operating_company_id = $1::uuid AND is_sample_data = true`,
       [USMCA_COMPANY_ID]
     );
-    const collisions = sampleRes.rows.filter((r) => feedLoadNumbers.has(r.load_number));
+    const collisions = sampleCollisions(sampleRes.rows, feedLoadNumbers);
     console.log(`Sample loads holding a feed number: ${collisions.length} (required value: 0)`);
     for (const c of collisions) fail(`is_sample_data load ${c.id} still holds feed load_number "${c.load_number}".`);
 
@@ -89,8 +129,9 @@ async function main() {
     ];
     for (const { table, sql } of mismatchQueries) {
       const res = await client.query(sql, [USMCA_COMPANY_ID]);
-      console.log(`${table}: stale load_number copies: ${res.rowCount} (required value: 0)`);
-      for (const row of res.rows) {
+      const stale = staleCopies(res.rows);
+      console.log(`${table}: stale load_number copies: ${stale.length} (required value: 0)`);
+      for (const row of stale) {
         fail(`${table} load_id=${row.load_id} carries load_number "${row.copy_number}" but mdata.loads for that id now reads "${row.real_number}".`);
       }
     }
@@ -109,4 +150,5 @@ async function main() {
   }
 }
 
-await main();
+if (process.argv.includes("--selftest")) selftest();
+else await main();

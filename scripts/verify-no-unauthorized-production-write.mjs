@@ -49,6 +49,48 @@ function writesFinancialTable(src) {
   return WRITE_PRIMITIVES.some((p) => src.includes(p));
 }
 
+/** Pure: given { name: source } and the baseline set, the NEW violations and the baseline debt count. */
+export function classifyOpsFiles(sources, baselineSet) {
+  const newViolations = [];
+  let baselineDebtCount = 0;
+  for (const [entry, src] of Object.entries(sources)) {
+    if (!writesFinancialTable(src)) continue;
+    if (src.includes(AUTH_CHECK_SIGNAL)) continue;
+    if (baselineSet.has(entry)) baselineDebtCount++;
+    else newViolations.push(entry);
+  }
+  return { newViolations, baselineDebtCount };
+}
+
+function selftest() {
+  const AUTHED = `execFileSync("node", ["scripts/verify-owner-authorization.mjs", auth]);\n`;
+  const planted = [
+    ["raw UPDATE on accounting.", "await c.query(`UPDATE accounting.journal_entries SET memo = 'x'`);"],
+    ["raw INSERT INTO driver_finance.", "await c.query('INSERT INTO driver_finance.driver_bills (id) VALUES ($1)', [id]);"],
+    ["raw DELETE FROM banking.", "await c.query('DELETE FROM banking.bank_transactions WHERE id = $1', [id]);"],
+    ["write primitive postVoidReversal", "await postVoidReversal(client, { id });"],
+    ["write primitive createJournalEntry(", "await createJournalEntry({ lines });"],
+  ];
+  let caught = 0;
+  for (const [name, src] of planted) {
+    const { newViolations } = classifyOpsFiles({ "new-runner.mts": src }, new Set());
+    if (newViolations.length === 1) caught++;
+    else console.error(`  ✗ planted violation escaped: ${name}`);
+  }
+  const clean = [
+    ["same write with the AUTH check", classifyOpsFiles({ "a.mts": AUTHED + planted[0][1] }, new Set()).newViolations.length === 0],
+    ["read-only runner", classifyOpsFiles({ "b.mts": "await c.query('SELECT 1 FROM accounting.journal_entries');" }, new Set()).newViolations.length === 0],
+    ["baselined file counts as debt, not new", (() => { const r = classifyOpsFiles({ "old.ts": planted[0][1] }, new Set(["old.ts"])); return r.newViolations.length === 0 && r.baselineDebtCount === 1; })()],
+  ];
+  const cleanOk = clean.every(([name, ok]) => ok || (console.error(`  ✗ clean input failed: ${name}`), false));
+  if (caught !== planted.length || !cleanOk) {
+    console.error(`${LABEL} SELFTEST: FAIL ${caught}/${planted.length}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught; ${clean.length} clean inputs pass`);
+  process.exit(0);
+}
+
 function main() {
   if (!fs.existsSync(OPS_DIR)) {
     console.log(`${LABEL}: OK — ${OPS_DIR} does not exist, nothing to check.`);
@@ -59,21 +101,8 @@ function main() {
 
   const entries = fs.readdirSync(OPS_DIR).filter((f) => /\.(ts|mjs|mts)$/.test(f));
 
-  const newViolations = [];
-  let baselineDebtCount = 0;
-
-  for (const entry of entries) {
-    const src = fs.readFileSync(path.join(OPS_DIR, entry), "utf8");
-    if (!writesFinancialTable(src)) continue;
-    const hasCheck = src.includes(AUTH_CHECK_SIGNAL);
-    if (hasCheck) continue;
-
-    if (baselineSet.has(entry)) {
-      baselineDebtCount++;
-    } else {
-      newViolations.push(entry);
-    }
-  }
+  const sources = Object.fromEntries(entries.map((entry) => [entry, fs.readFileSync(path.join(OPS_DIR, entry), "utf8")]));
+  const { newViolations, baselineDebtCount } = classifyOpsFiles(sources, baselineSet);
 
   if (newViolations.length > 0) {
     console.error(`${LABEL}: FAIL — ${newViolations.length} NEW scripts/ops/ file(s) write to a financial table without calling verify-owner-authorization.mjs:`);
@@ -86,4 +115,5 @@ function main() {
   process.exit(0);
 }
 
-main();
+if (process.argv.includes("--selftest")) selftest();
+else main();

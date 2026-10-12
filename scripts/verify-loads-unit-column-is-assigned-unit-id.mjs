@@ -50,7 +50,7 @@ function walk(dir, acc = []) {
   return acc;
 }
 
-if (process.argv[2] === "--selftest") {
+if (process.argv.includes("--selftest")) {
   const cases = [
     ["SELECT DISTINCT unit_id::text FROM mdata.loads WHERE id = ANY($1::uuid[])", 1],
     ["SELECT DISTINCT assigned_unit_id::text AS unit_id FROM mdata.loads WHERE id = ANY($1::uuid[])", 0],
@@ -67,7 +67,7 @@ if (process.argv[2] === "--selftest") {
       bad += 1;
     }
   }
-  console.log(`${LABEL} selftest ${cases.length - bad}/${cases.length}`);
+  console.log(`${LABEL} SELFTEST: ${cases.length - bad}/${cases.length} planted cases classified correctly`);
   process.exit(bad ? 1 : 0);
 }
 

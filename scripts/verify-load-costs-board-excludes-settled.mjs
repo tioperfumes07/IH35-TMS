@@ -70,13 +70,50 @@ async function settledWithRealCostSql() {
 `;
 }
 
+/** Pure: finished-by-money loads with real cost that still appear in the board's active set. */
+export function findLeaks(boardRows, settledWithCostRows) {
+  const boardIds = new Set(boardRows.map((r) => r.id));
+  return settledWithCostRows.filter((r) => boardIds.has(r.id));
+}
+
+/** Pure: the two queries must keep the money-truth shape the leak check depends on. */
+export function sqlShapeFailures(boardSql, settledSql) {
+  const f = [];
+  if (!/NOT IN \('closed', 'invoiced', 'paid'\)/.test(boardSql)) f.push("board query lost the closed/invoiced/paid status exclusion");
+  if (!/AND NOT \(/.test(settledSql)) f.push("leak population is no longer the NEGATION of the board's money CTE");
+  if (!/FROM accounting\.expenses e WHERE e\.load_id IS NOT NULL AND e\.status <> 'void'/.test(settledSql) ||
+      !/FROM driver_finance\.driver_bills db WHERE db\.load_id IS NOT NULL AND db\.status <> 'void'/.test(settledSql)) f.push("leak population counts void expenses/driver bills as real cost");
+  if (!/> 0\s*$/.test(settledSql.trim())) f.push("leak population no longer requires nonzero real cost");
+  return f;
+}
+
+async function selftest() {
+  let planted = 0;
+  let caught = 0;
+  const expect = (label, cond) => { planted++; if (cond) caught++; else console.error(`  ESCAPED: ${label}`); };
+  const board = [{ id: "a", load_number: "13625" }, { id: "b", load_number: "13626" }];
+  const settled = [{ id: "c", load_number: "13001", real_cost_cents: "90000" }];
+  if (findLeaks(board, settled).length !== 0) throw new Error("clean board flagged as leaking");
+  const boardSql = await boardActiveSql();
+  const settledSql = await settledWithRealCostSql();
+  const clean = sqlShapeFailures(boardSql, settledSql);
+  if (clean.length) throw new Error(`real queries fail their own shape check: ${clean.join("; ")}`);
+  expect("settled load with real cost on the board", findLeaks([...board, { id: "c", load_number: "13001" }], settled).length === 1);
+  expect("status exclusion dropped", sqlShapeFailures(boardSql.replace("NOT IN ('closed', 'invoiced', 'paid')", "NOT IN ('closed')"), settledSql).length > 0);
+  expect("leak population not negated", sqlShapeFailures(boardSql, settledSql.replace("AND NOT (", "AND (")).length > 0);
+  expect("void expense counted", sqlShapeFailures(boardSql, settledSql.replace("e.load_id IS NOT NULL AND e.status <> 'void'", "e.load_id IS NOT NULL")).length > 0);
+  expect("void driver bill counted", sqlShapeFailures(boardSql, settledSql.replace("db.load_id IS NOT NULL AND db.status <> 'void'", "db.load_id IS NOT NULL")).length > 0);
+  expect("zero-cost loads counted", sqlShapeFailures(boardSql, settledSql.replace(/> 0\s*$/, ">= 0")).length > 0);
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted} planted violations caught`);
+  process.exit(caught === planted ? 0 : 1);
+}
+
 async function measureLive(client, companyId) {
   const boardSql = await boardActiveSql();
   const settledSql = await settledWithRealCostSql();
   const boardActive = await client.query(boardSql, [companyId]);
   const settledWithCost = await client.query(settledSql, [companyId]);
-  const boardIds = new Set(boardActive.rows.map((r) => r.id));
-  const leaked = settledWithCost.rows.filter((r) => boardIds.has(r.id));
+  const leaked = findLeaks(boardActive.rows, settledWithCost.rows);
   return {
     boardActiveCount: boardActive.rows.length,
     settledWithCostCount: settledWithCost.rows.length,
@@ -137,4 +174,11 @@ async function live() {
   }
 }
 
-live();
+if (process.argv.includes("--selftest")) {
+  selftest().catch((e) => {
+    console.error(`${LABEL} SELFTEST FAIL: ${e.message}`);
+    process.exit(1);
+  });
+} else {
+  live();
+}

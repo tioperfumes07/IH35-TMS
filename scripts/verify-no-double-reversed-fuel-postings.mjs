@@ -39,13 +39,9 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 // is a hard FAIL -- the fix above is what prevents new occurrences.
 const KNOWN_PRE_FIX_CORRUPTED_COUNT = 130;
 
-async function main() {
-  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
-  try {
-    await client.query("BEGIN READ ONLY");
-    await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
-
-    const res = await client.query(`
+// Per voided fuel_transaction: every account's signed net across its original JEs AND the JEs that
+// reverse them. A clean reversal nets to 0; anything else is the double-reversal shape.
+export const NET_BALANCE_SQL = `
       WITH voided AS (
         SELECT id FROM fuel.fuel_transactions
         WHERE operating_company_id = $1::uuid AND voided_at IS NOT NULL
@@ -79,12 +75,60 @@ async function main() {
       WHERE net_cents <> 0
       GROUP BY ft_id
       ORDER BY ft_id
-    `, [USMCA]);
+    `;
+
+/** Pure: the query must keep the shape that makes a double reversal visible. */
+export function sqlShapeFailures(sql) {
+  const f = [];
+  if (!/voided_at IS NOT NULL/.test(sql)) f.push("no longer restricted to voided fuel_transactions");
+  if (!/source_transaction_type = 'fuel_event'/.test(sql)) f.push("no longer keyed to the fuel_event source tag");
+  if (!/reversed_by_je_id AS journal_entry_uuid/.test(sql) || !/SELECT ft_id, journal_entry_uuid FROM reversing_jes/.test(sql)) f.push("reversing JEs dropped from the netting set — every voided row would look corrupted or none would");
+  if (!/WHEN jep\.debit_or_credit = 'debit' THEN jep\.amount_cents ELSE -jep\.amount_cents END/.test(sql)) f.push("netting is no longer signed debit-positive / credit-negative");
+  if (!/GROUP BY aj\.ft_id, jep\.account_id/.test(sql)) f.push("netting no longer per account (offsetting accounts would hide a misstatement)");
+  if (!/WHERE net_cents <> 0/.test(sql)) f.push("a non-zero net in one direction is no longer reported");
+  return f;
+}
+
+/** Pure verdict: a NEW double reversal is any count above the named pre-fix baseline. */
+export function isNewCorruption(count, known = KNOWN_PRE_FIX_CORRUPTED_COUNT) {
+  return count > known;
+}
+
+function selftest() {
+  const clean = sqlShapeFailures(NET_BALANCE_SQL);
+  if (clean.length || isNewCorruption(KNOWN_PRE_FIX_CORRUPTED_COUNT) || isNewCorruption(0)) {
+    console.error(`${LABEL} SELFTEST FAIL: clean query/verdict rejected: ${clean.join("; ")}`);
+    process.exit(1);
+  }
+  const mutations = [
+    ["one more corrupted row than the baseline", () => isNewCorruption(KNOWN_PRE_FIX_CORRUPTED_COUNT + 1)],
+    ["voided filter dropped", () => sqlShapeFailures(NET_BALANCE_SQL.replace("voided_at IS NOT NULL", "true")).length > 0],
+    ["reversing JEs not unioned", () => sqlShapeFailures(NET_BALANCE_SQL.replace(/UNION\s+SELECT ft_id, journal_entry_uuid FROM reversing_jes/, "")).length > 0],
+    ["unsigned netting", () => sqlShapeFailures(NET_BALANCE_SQL.replace("ELSE -jep.amount_cents", "ELSE jep.amount_cents")).length > 0],
+    ["netting across accounts", () => sqlShapeFailures(NET_BALANCE_SQL.replace("GROUP BY aj.ft_id, jep.account_id", "GROUP BY aj.ft_id")).length > 0],
+    ["only positive nets reported", () => sqlShapeFailures(NET_BALANCE_SQL.replace("WHERE net_cents <> 0", "WHERE net_cents > 0")).length > 0],
+  ];
+  let caught = 0;
+  for (const [label, fn] of mutations) {
+    if (fn()) caught += 1;
+    else console.error(`  ESCAPED: ${label}`);
+  }
+  console.log(`${LABEL} SELFTEST: ${caught}/${mutations.length} planted violations caught`);
+  process.exit(caught === mutations.length ? 0 : 1);
+}
+
+async function main() {
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
+  try {
+    await client.query("BEGIN READ ONLY");
+    await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+
+    const res = await client.query(NET_BALANCE_SQL, [USMCA]);
 
     await client.query("ROLLBACK");
 
     const corrupted = res.rows;
-    if (corrupted.length > KNOWN_PRE_FIX_CORRUPTED_COUNT) {
+    if (isNewCorruption(corrupted.length)) {
       console.error(`${LABEL}: FAIL — ${corrupted.length} voided fuel_transaction(s) carry a non-zero net GL balance, more than the known pre-fix baseline (${KNOWN_PRE_FIX_CORRUPTED_COUNT}). A NEW double-reversal occurred.`);
       for (const r of corrupted.slice(0, 30)) {
         console.error(`  ✗ fuel_transaction=${r.ft_id} abs_misstatement_cents=${r.abs_misstatement_cents}`);
@@ -109,4 +153,5 @@ async function main() {
   }
 }
 
-main();
+if (process.argv.includes("--selftest")) selftest();
+else main();

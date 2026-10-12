@@ -21,6 +21,76 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const GATE = path.join(ROOT, "scripts/money-pr-local-gate.mjs");
 const KNOWN_KEYS = new Set(["purged_at", "verified_at", "verified_by", "tables_verified", "day1_closed_at", "day1_day", "seeding_freeze"]);
 
+/** Pure: a measured-empty guard's source must call only the measured helper, with its measured count. */
+export function auditMeasuredEmptySource(g, src) {
+  const out = [];
+  if (/\bexitIfEmptyByPurge\s*\(|\bpurgeWindowFor\s*\(/.test(src)) out.push(`${g} is a measured-empty guard but calls the unmeasured purge-window helper — the exemption must end on the first row`);
+  const calls = [...src.matchAll(/exitIfMeasuredEmptyByPurge\s*\(\s*["'`][^"'`]+["'`]\s*,\s*["'`][^"'`]+["'`]\s*,\s*([^)]+)\)/g)];
+  if (!calls.length) out.push(`${g} is a measured-empty guard but never calls exitIfMeasuredEmptyByPurge`);
+  for (const c of calls) if (/^\s*\d+\s*$/.test(c[1])) out.push(`${g} passes a literal (${c[1].trim()}) instead of its measured live-row count`);
+  return out;
+}
+
+/** Pure: exactly the named guards call the purge-window helper — no more, no fewer. */
+export function auditCallers(callers, expected) {
+  const out = [];
+  for (const c of callers) if (!expected.includes(c)) out.push(`${c} calls the purge-window helper but is not one of the twelve`);
+  for (const e of expected) if (!callers.includes(e)) out.push(`${e} is one of the twelve but no longer calls the purge-window helper at its empty-table arm`);
+  return out;
+}
+
+/** Pure: the money-pr-local-gate accepts EMPTY BY PURGE at exactly four sites, gated on list + open window, and counts it. */
+export function auditGate(gate) {
+  const out = [];
+  const sites = (gate.match(/code !== 0 && !acceptedAsEmptyByPurge\(/g) ?? []).length;
+  if (sites !== 4) out.push(`money-pr-local-gate accepts EMPTY BY PURGE at ${sites} site(s); expected 4 (control totals, parity, LIVE_DOMAIN_GUARDS, E7 batch 2)`);
+  if (!/PURGE_WINDOW_GUARDS\.includes\(guard\)/.test(gate) || !/purgeWindow\(\)\.open/.test(gate)) {
+    out.push("money-pr-local-gate no longer checks the guard list and the open window before accepting the skip");
+  }
+  if (!/GUARDS SKIPPED — EMPTY BY PURGE, verified /.test(gate)) out.push("money-pr-local-gate no longer prints the counted EMPTY BY PURGE summary line");
+  return out;
+}
+
+/** Pure: a purge_state.json carries only the known keys. */
+export function auditStateKeys(state) {
+  return Object.keys(state ?? {}).filter((k) => !KNOWN_KEYS.has(k)).map((k) => `purge_state.json has an unknown key "${k}"`);
+}
+
+if (process.argv.includes("--selftest")) {
+  const realGate = fs.readFileSync(GATE, "utf8");
+  const g = "verify-planted-measured";
+  const measured = `exitIfMeasuredEmptyByPurge("${g}", "mdata.loads", liveRows);`;
+  const planted = [
+    ["gate accepts the skip at only 3 sites", auditGate(realGate.replace(/code !== 0 && !acceptedAsEmptyByPurge\(/, "code !== 0 && !acceptedAsEmptyByPurgeX("))],
+    ["gate stops checking the open window", auditGate(realGate.replaceAll("purgeWindow().open", "true"))],
+    ["gate drops the counted summary line", auditGate(realGate.replaceAll("GUARDS SKIPPED — EMPTY BY PURGE, verified ", "GUARDS SKIPPED "))],
+    ["an unlisted guard inherits the helper", auditCallers(["verify-a", "verify-intruder"], ["verify-a"])],
+    ["a listed guard stops calling the helper", auditCallers([], ["verify-a"])],
+    ["measured-empty guard passes a literal count", auditMeasuredEmptySource(g, measured.replace("liveRows", "0"))],
+    ["measured-empty guard calls the unmeasured helper", auditMeasuredEmptySource(g, `${measured}\nexitIfEmptyByPurge("${g}");`)],
+    ["measured-empty guard never calls the measured helper", auditMeasuredEmptySource(g, "console.log(1);")],
+    ["purge_state.json grows an unknown key", auditStateKeys({ verified_at: "2026-09-24T12:00:00.000Z", skip_everything: true })],
+    ["window open with no verified purge", purgeWindow({ purged_at: "2026-09-24T12:00:00.000Z" }, new Date("2026-09-24T13:00:00.000Z")).open ? [] : ["closed"]],
+  ];
+  const clean = [
+    ["real gate", auditGate(realGate)],
+    ["exact caller list", auditCallers(["verify-a"], ["verify-a"])],
+    ["measured call with its live count", auditMeasuredEmptySource(g, measured)],
+    ["known state keys", auditStateKeys({ verified_at: "2026-09-24T12:00:00.000Z", day1_day: 1 })],
+  ];
+  const escaped = planted.filter(([, f]) => f.length === 0);
+  const dirty = clean.filter(([, f]) => f.length > 0);
+  for (const [n] of escaped) console.error(`  ✗ planted violation escaped: ${n}`);
+  for (const [n, f] of dirty) console.error(`  ✗ clean input failed: ${n}: ${f.join("; ")}`);
+  const caught = planted.length - escaped.length;
+  if (escaped.length || dirty.length) {
+    console.error(`${LABEL} SELFTEST: FAIL ${caught}/${planted.length}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught; ${clean.length} clean inputs pass`);
+  process.exit(0);
+}
+
 const failures = [];
 
 const callers = fs
@@ -40,23 +110,12 @@ const expected = [...PURGE_WINDOW_GUARDS].sort();
 if (PURGE_WINDOW_GUARDS.length !== 18) failures.push(`PURGE_WINDOW_GUARDS lists ${PURGE_WINDOW_GUARDS.length} guards; the rulings name eighteen (nine + four measured-empty, Lead 2026-10-05, + four, owner 2026-10-06, + load-costs, Lead 2026-10-08)`);
 for (const g of MEASURED_EMPTY_GUARDS) {
   const p = path.join(ROOT, "scripts", `${g}.mjs`);
-  const src = fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
-  if (/\bexitIfEmptyByPurge\s*\(|\bpurgeWindowFor\s*\(/.test(src)) failures.push(`${g} is a measured-empty guard but calls the unmeasured purge-window helper — the exemption must end on the first row`);
-  const calls = [...src.matchAll(/exitIfMeasuredEmptyByPurge\s*\(\s*["'`][^"'`]+["'`]\s*,\s*["'`][^"'`]+["'`]\s*,\s*([^)]+)\)/g)];
-  if (!calls.length) failures.push(`${g} is a measured-empty guard but never calls exitIfMeasuredEmptyByPurge`);
-  for (const c of calls) if (/^\s*\d+\s*$/.test(c[1])) failures.push(`${g} passes a literal (${c[1].trim()}) instead of its measured live-row count`);
+  failures.push(...auditMeasuredEmptySource(g, fs.existsSync(p) ? fs.readFileSync(p, "utf8") : ""));
 }
 if (MEASURED_EMPTY_GUARDS.some((g) => !PURGE_WINDOW_GUARDS.includes(g))) failures.push("every measured-empty guard must also be in PURGE_WINDOW_GUARDS");
-for (const c of callers) if (!expected.includes(c)) failures.push(`${c} calls the purge-window helper but is not one of the twelve`);
-for (const e of expected) if (!callers.includes(e)) failures.push(`${e} is one of the twelve but no longer calls the purge-window helper at its empty-table arm`);
+failures.push(...auditCallers(callers, expected));
 
-const gate = fs.readFileSync(GATE, "utf8");
-const sites = (gate.match(/code !== 0 && !acceptedAsEmptyByPurge\(/g) ?? []).length;
-if (sites !== 4) failures.push(`money-pr-local-gate accepts EMPTY BY PURGE at ${sites} site(s); expected 4 (control totals, parity, LIVE_DOMAIN_GUARDS, E7 batch 2)`);
-if (!/PURGE_WINDOW_GUARDS\.includes\(guard\)/.test(gate) || !/purgeWindow\(\)\.open/.test(gate)) {
-  failures.push("money-pr-local-gate no longer checks the guard list and the open window before accepting the skip");
-}
-if (!/GUARDS SKIPPED — EMPTY BY PURGE, verified /.test(gate)) failures.push("money-pr-local-gate no longer prints the counted EMPTY BY PURGE summary line");
+failures.push(...auditGate(fs.readFileSync(GATE, "utf8")));
 
 const at = (iso, hours) => new Date(new Date(iso).getTime() + hours * 3_600_000);
 const V = "2026-09-24T12:00:00.000Z";
@@ -93,7 +152,7 @@ if (fs.existsSync(PURGE_STATE_PATH)) {
   } catch (e) {
     failures.push(`${path.relative(ROOT, PURGE_STATE_PATH)} does not parse: ${e.message}`);
   }
-  for (const k of Object.keys(state ?? {})) if (!KNOWN_KEYS.has(k)) failures.push(`purge_state.json has an unknown key "${k}"`);
+  failures.push(...auditStateKeys(state));
 }
 
 // After a mass void the rows stay: the three arms that counted every row must count live rows by the
