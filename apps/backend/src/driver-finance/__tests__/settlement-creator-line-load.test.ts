@@ -23,6 +23,12 @@ describe("ROUND 443.5 — every deduction, admin fee and fuel line carries its l
   it("a fill no load covers is refused", () => {
     expect(() => attributeFuelLoadNumber(loads, { date: "2026-08-20" })).toThrow(/no load of this settlement covers/);
   });
+  it("443.113 BCF-05 — admission defers an overlap to THE one fuel-to-load rule at post; a fill no load covers is still refused", () => {
+    const overlap = [...loads, { load_number: "13510", pickup_date: "2026-08-07", delivery_date: "2026-08-08" }];
+    expect(lineLoadRefusal({ loads: overlap, fuel_purchases: [{ date: "2026-08-07", invoice: "A" }] })).toBeNull();
+    expect(lineLoadRefusal({ loads, fuel_purchases: [{ date: "2026-08-20", invoice: "B" }] })?.code).toBe("fuel_load_ambiguous");
+    expect(lineLoadRefusal({ loads, fuel_purchases: [{ date: "2026-08-20", load_number: "13508" }] })).toBeNull();
+  });
   it("a deduction with no load is refused (escrow $25 + admin fee $10 on 13508 pass)", () => {
     expect(lineLoadRefusal({ loads, deductions: [{ description: "Admin fee", amount_cents: 1000, load_number: "13508" }] })).toBeNull();
     expect(lineLoadRefusal({ loads, deductions: [{ description: "Tolls", amount_cents: 1000 }] })?.code).toBe("deduction_load_required");
