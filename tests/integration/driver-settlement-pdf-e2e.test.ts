@@ -66,12 +66,12 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
         `
           INSERT INTO mdata.drivers (first_name, last_name, phone, email, identity_user_id, operating_company_id)
           VALUES ('PDF', $2, '+15551234000', $3, $1::uuid, $4::uuid)
-          ON CONFLICT (identity_user_id) DO UPDATE SET
+          -- one driver per (company, identity user): uq_mdata_drivers_company_identity_user (partial, identity_user_id NOT NULL)
+          ON CONFLICT (operating_company_id, identity_user_id) WHERE identity_user_id IS NOT NULL DO UPDATE SET
             phone = EXCLUDED.phone,
             email = EXCLUDED.email,
             first_name = EXCLUDED.first_name,
-            last_name = EXCLUDED.last_name,
-            operating_company_id = EXCLUDED.operating_company_id
+            last_name = EXCLUDED.last_name
           RETURNING id
         `,
         [TEST_OWNER_USER_ID, `E2E-${suffix}`, `pdf-e2e-${suffix}@test.invalid`, companyId]

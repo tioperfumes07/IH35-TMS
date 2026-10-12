@@ -63,6 +63,11 @@ describeIntegration("GAP-EXPENSES expenses list read-only (real Postgres)", () =
 
   async function seedExpenseMatch(scopeCompanyId: string, expenseId: string, matchState: "auto_matched" | "rejected"): Promise<void> {
     await bypass(scopeCompanyId, async () => {
+      // A LIVE match is accepted the way the app accepts it: the bank line carries the document it matches
+      // (banking.refuse_live_match_row_on_released_line, 202615630900 — a live match row on a pointer-less line is refused).
+      if (matchState !== "rejected") {
+        await db.query(`UPDATE banking.bank_transactions SET matched_expense_id = $2::uuid WHERE id = $1::uuid`, [ownBankTxnId, expenseId]);
+      }
       await db.query(
         `INSERT INTO banking.reconciliation_matches
            (operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id, match_state)

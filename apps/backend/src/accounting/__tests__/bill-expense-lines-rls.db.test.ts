@@ -38,6 +38,8 @@ describeIntegration("bill_lines / expense_lines RLS tenant isolation (real Postg
   const primaryLineId = randomUUID();
   const secondaryLineId = randomUUID();
   const driverId = randomUUID();
+  // ROUND 373.5: a record references only its own company's driver — each company gets its own fixture driver.
+  const secondaryDriverId = randomUUID();
   const primaryExpenseId = randomUUID();
   const secondaryExpenseId = randomUUID();
   const primaryExpenseLineId = randomUUID();
@@ -125,6 +127,10 @@ describeIntegration("bill_lines / expense_lines RLS tenant isolation (real Postg
         [driverId, `+1000${suffix.slice(0, 7)}`, primaryCompanyId]
       );
       await db.query(
+        `INSERT INTO mdata.drivers (id, operating_company_id, first_name, last_name, phone) VALUES ($1::uuid, $3::uuid, 'RLS', 'Fixture2', $2)`,
+        [secondaryDriverId, `+1001${suffix.slice(0, 7)}`, secondaryCompanyId]
+      );
+      await db.query(
         `INSERT INTO accounting.expenses (id, operating_company_id, driver_uuid, transaction_date, total_amount_cents, status)
          VALUES ($1::uuid, $2::uuid, $3::uuid, CURRENT_DATE, 5000, 'posted')`,
         [primaryExpenseId, primaryCompanyId, driverId]
@@ -132,15 +138,54 @@ describeIntegration("bill_lines / expense_lines RLS tenant isolation (real Postg
       await db.query(
         `INSERT INTO accounting.expenses (id, operating_company_id, driver_uuid, transaction_date, total_amount_cents, status)
          VALUES ($1::uuid, $2::uuid, $3::uuid, CURRENT_DATE, 7000, 'posted')`,
-        [secondaryExpenseId, secondaryCompanyId, driverId]
+        [secondaryExpenseId, secondaryCompanyId, secondaryDriverId]
+      );
+      // expense_lines_item_id_required: every expense line names its item. A company without one (the fresh CI DB's
+      // TRANSP / TRK) gets a fixture item on its first expense account; an enforcing company (USMCA) already has its own.
+      for (const co of [primaryCompanyId, secondaryCompanyId]) {
+        await db.query(
+          `INSERT INTO catalogs.items (operating_company_id, item_name, item_type, default_expense_account_id)
+           SELECT $1::uuid, $2, 'Service', a.id FROM catalogs.accounts a
+            WHERE a.operating_company_id = $1::uuid AND a.deactivated_at IS NULL AND a.account_type ILIKE '%expense%'
+              AND NOT EXISTS (SELECT 1 FROM catalogs.items i WHERE i.operating_company_id = $1::uuid AND i.deactivated_at IS NULL
+                                AND i.default_expense_account_id IS NOT NULL)
+            ORDER BY a.account_number LIMIT 1`,
+          [co, `RLS Fixture Item ${suffix}`]
+        );
+      }
+      await db.query(
+        // expense_lines_expense_account_required: a line names its expense account (and, where the company enforces
+        // line categorization, the item that account comes from — accounting.enforce_line_categorization).
+        `INSERT INTO accounting.expense_lines (id, expense_id, line_sequence, amount, description, item_id, expense_account_uuid,
+                                              quantity, rate_cents, unit_of_measure, amount_cents)
+         SELECT $1::uuid, $2::uuid, 1, 50.00, $3, it.id,
+                COALESCE(it.default_expense_account_id,
+                  (SELECT a.id FROM catalogs.accounts a WHERE a.operating_company_id = e.operating_company_id AND a.deactivated_at IS NULL
+                      AND a.account_type ILIKE '%expense%' ORDER BY a.account_number LIMIT 1)),
+                1, $4::bigint, 'each', $4::bigint
+           FROM accounting.expenses e
+           LEFT JOIN LATERAL (SELECT i.id, i.default_expense_account_id FROM catalogs.items i
+                               WHERE i.operating_company_id = e.operating_company_id AND i.deactivated_at IS NULL
+                                 AND i.default_expense_account_id IS NOT NULL ORDER BY i.item_name LIMIT 1) it ON true
+          WHERE e.id = $2::uuid`,
+        [primaryExpenseLineId, primaryExpenseId, `expense-primary-${suffix}`, 5000]
       );
       await db.query(
-        `INSERT INTO accounting.expense_lines (id, expense_id, line_sequence, amount, description) VALUES ($1::uuid, $2::uuid, 1, 50.00, $3)`,
-        [primaryExpenseLineId, primaryExpenseId, `expense-primary-${suffix}`]
-      );
-      await db.query(
-        `INSERT INTO accounting.expense_lines (id, expense_id, line_sequence, amount, description) VALUES ($1::uuid, $2::uuid, 1, 70.00, $3)`,
-        [secondaryExpenseLineId, secondaryExpenseId, `expense-secondary-${suffix}`]
+        // expense_lines_expense_account_required: a line names its expense account (and, where the company enforces
+        // line categorization, the item that account comes from — accounting.enforce_line_categorization).
+        `INSERT INTO accounting.expense_lines (id, expense_id, line_sequence, amount, description, item_id, expense_account_uuid,
+                                              quantity, rate_cents, unit_of_measure, amount_cents)
+         SELECT $1::uuid, $2::uuid, 1, 70.00, $3, it.id,
+                COALESCE(it.default_expense_account_id,
+                  (SELECT a.id FROM catalogs.accounts a WHERE a.operating_company_id = e.operating_company_id AND a.deactivated_at IS NULL
+                      AND a.account_type ILIKE '%expense%' ORDER BY a.account_number LIMIT 1)),
+                1, $4::bigint, 'each', $4::bigint
+           FROM accounting.expenses e
+           LEFT JOIN LATERAL (SELECT i.id, i.default_expense_account_id FROM catalogs.items i
+                               WHERE i.operating_company_id = e.operating_company_id AND i.deactivated_at IS NULL
+                                 AND i.default_expense_account_id IS NOT NULL ORDER BY i.item_name LIMIT 1) it ON true
+          WHERE e.id = $2::uuid`,
+        [secondaryExpenseLineId, secondaryExpenseId, `expense-secondary-${suffix}`, 7000]
       );
     });
   });
@@ -151,7 +196,7 @@ describeIntegration("bill_lines / expense_lines RLS tenant isolation (real Postg
       await db.query(`DELETE FROM accounting.bill_lines WHERE id = ANY($1::uuid[])`, [[primaryLineId, secondaryLineId]]);
       await db.query(`DELETE FROM accounting.expense_lines WHERE id = ANY($1::uuid[])`, [[primaryExpenseLineId, secondaryExpenseLineId]]);
       await db.query(`DELETE FROM accounting.expenses WHERE id = ANY($1::uuid[])`, [[primaryExpenseId, secondaryExpenseId]]);
-      await db.query(`DELETE FROM mdata.drivers WHERE id = $1::uuid`, [driverId]);
+      await db.query(`DELETE FROM mdata.drivers WHERE id = ANY($1::uuid[])`, [[driverId, secondaryDriverId]]);
       await db.query(`DELETE FROM accounting.bills WHERE id = ANY($1::uuid[])`, [[primaryBillId, secondaryBillId]]);
       if (createdSecondaryCompany) {
         await db.query(`DELETE FROM org.companies WHERE id = $1::uuid`, [secondaryCompanyId]);

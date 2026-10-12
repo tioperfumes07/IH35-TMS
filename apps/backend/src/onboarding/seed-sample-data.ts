@@ -66,7 +66,7 @@ async function ensureCustomer(client: Queryable, companyId: string, actorUserId:
 
   const insertValues: Record<string, unknown> = {
     customer_name: "Sample Customer Inc",
-    customer_type: "shipper",
+    customer_type: "direct_shipper", // mdata.customer_type is {broker, direct_shipper}
     status: "active",
     operating_company_id: companyId,
     billing_email: "sample-customer@example.com",
@@ -285,6 +285,11 @@ async function ensureLoad(
       notes: "Onboarding sample load",
       is_sample_data: true,
       charges: [{ code: "LINEHAUL", amount_cents: 150000 }],
+      // The booking engine requires practical miles before a load books with a driver (E_MILES_PRACTICAL_REQUIRED):
+      // the sample lane Laredo TX -> San Antonio TX, entered like an operator would.
+      miles_practical: 157,
+      miles_shortest: 154,
+      mileage_source: "Operator entered",
       stops: [
         {
           stop_type: "pickup",
