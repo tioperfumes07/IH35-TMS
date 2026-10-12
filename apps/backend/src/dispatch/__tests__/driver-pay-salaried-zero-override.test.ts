@@ -50,6 +50,8 @@ function fakeClient() {
       return { rows: [{ id: `bill-${inserted.length}` }] };
     }
     if (/audit\.audit_events/.test(sql)) return { rows: [{ exists: false }] };
+    // 443.110 G9 — the mint stamps the bill's truck / trailer from the load (restampDriverBillUnitAndTrailer); no-op here.
+    if (/UPDATE driver_finance\.driver_bills b\s+SET unit_id/.test(sql)) return { rows: [], rowCount: 0 } as never;
     throw new Error(`fakeClient: unhandled query: ${sql}`);
   });
   return { query, inserted, rateCardReads: () => rateCardReads };

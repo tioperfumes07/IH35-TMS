@@ -18,6 +18,8 @@ function fakeClient(rate: Record<string, unknown>) {
     if (/FROM driver_finance\.driver_pay_rates/.test(sql)) return { rows: [rate] };
     if (/INSERT INTO driver_finance\.driver_bills/.test(sql)) { inserted.push(values); return { rows: [{ id: "bill-1" }] }; }
     if (/audit\.audit_events/.test(sql)) return { rows: [{ exists: false }] };
+    // 443.110 G9 — the mint stamps the bill's truck / trailer from the load (restampDriverBillUnitAndTrailer); no-op here.
+    if (/UPDATE driver_finance\.driver_bills b\s+SET unit_id/.test(sql)) return { rows: [], rowCount: 0 } as never;
     throw new Error(`unhandled: ${sql}`);
   });
   return { query, inserted };

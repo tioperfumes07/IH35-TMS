@@ -6,6 +6,7 @@
 // #19618 — postBillPaymentGlIfEnabled) for the linked_bill_id branch. Both were verified before
 // this exemption; neither was assumed — GO-23 C6, 2026-09-02.
 import { releaseBankLinesNamingDocument } from "../accounting/void.service.js";
+import { sameEntityLoadCompanyTrailerSql } from "../accounting/load-trailer.sql.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
@@ -276,13 +277,42 @@ export async function createDriverCashAdvanceCore(
   if (isLoadExpense && !body.load_id) {
     return { ok: false, code: 400, error: "load_id_required_for_load_expense", message: "Lumper / load expense requires a load" };
   }
-  if (body.purpose === "fuel_deposit" && (!body.load_id || !body.unit_id)) {
+  // 443.110 G9: the unit comes from the load (checked again below, after the load is read).
+  if (body.purpose === "fuel_deposit" && !body.load_id) {
     return {
       ok: false,
       code: 400,
       error: "fuel_deposit_requires_load_and_unit",
       message: "Fuel deposit requires load and unit",
     };
+  }
+  if (body.load_id) {
+    // 443.110 G9 — the advance takes its truck and trailer FROM THE LOAD (one rule: accounting/load-trailer.sql.ts), never
+    // from the request body: a request that names a different unit / trailer than the load's is refused by name.
+    const loadRes = await client.query(
+      `
+        SELECT l.id, l.assigned_unit_id::text AS assigned_unit_id,
+               ${sameEntityLoadCompanyTrailerSql("l.id", "l.operating_company_id")}::text AS company_trailer_id
+        FROM mdata.loads l
+        WHERE l.id = $1
+          AND l.operating_company_id = $2::uuid
+          AND l.soft_deleted_at IS NULL
+        LIMIT 1
+      `,
+      [body.load_id, companyId]
+    );
+    const load = loadRes.rows[0] as { id: string; assigned_unit_id: string | null; company_trailer_id: string | null } | undefined;
+    if (!load) return { ok: false, code: 404, error: "load_not_found" };
+    if (body.unit_id && load.assigned_unit_id && body.unit_id !== load.assigned_unit_id) {
+      return { ok: false, code: 422, error: "advance_unit_differs_from_load", message: "The truck on this advance is not the load's truck" };
+    }
+    if (body.trailer_id && load.company_trailer_id && body.trailer_id !== load.company_trailer_id) {
+      return { ok: false, code: 422, error: "advance_trailer_differs_from_load", message: "The trailer on this advance is not the load's trailer" };
+    }
+    body = { ...body, unit_id: load.assigned_unit_id ?? body.unit_id ?? null, trailer_id: load.company_trailer_id ?? body.trailer_id ?? null };
+  }
+  if (body.purpose === "fuel_deposit" && !body.unit_id) {
+    return { ok: false, code: 400, error: "fuel_deposit_requires_load_and_unit", message: "Fuel deposit requires load and unit" };
   }
   // B8 (GO-23 wave 2) — the FE wizard's own zod schema already requires from_bank_account_id for
   // direct_bank_transfer (cash-advances.routes.ts createAdvanceBodySchema superRefine), but this
@@ -352,20 +382,6 @@ export async function createDriverCashAdvanceCore(
     throw err;
   }
 
-  if (body.load_id) {
-    const loadRes = await client.query(
-      `
-        SELECT id, assigned_unit_id
-        FROM mdata.loads
-        WHERE id = $1
-          AND operating_company_id = $2::uuid
-          AND soft_deleted_at IS NULL
-        LIMIT 1
-      `,
-      [body.load_id, companyId]
-    );
-    if (!loadRes.rows[0]) return { ok: false, code: 404, error: "load_not_found" };
-  }
 
   if (body.from_bank_account_id) {
     const bankRes = await client.query(

@@ -11,6 +11,7 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { learnLoadLanes } from "./load-lane-learning.service.js";
 import { randomUUID } from "node:crypto";
+import { restampDriverBillUnitAndTrailer } from "../driver-finance/driver-bill-unit-trailer.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { applyTrailerChoice, resolveTrailerChoice, trailerChoiceShapeRefusal, type ResolvedTrailerChoice, type TrailerChoice } from "./load-trailer-choice.js";
@@ -1289,6 +1290,8 @@ export async function createDriverBillArtifacts(
           row.deadheadCents,
         ]
       );
+      // 443.110 G9 — the bill carries the load's truck and trailer (one rule: driver-finance/driver-bill-unit-trailer.ts).
+      await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.operating_company_id, loadId: String(load.id) });
       const billId = billRes.rows[0]?.id ? String(billRes.rows[0].id) : "";
       if (billId && !firstBillId) firstBillId = billId;
     }
@@ -1373,6 +1376,8 @@ export async function createDriverBillArtifacts(
       deadheadPayCentsForBill,
     ]
   );
+  // 443.110 G9 — the bill carries the load's truck and trailer (one rule: driver-finance/driver-bill-unit-trailer.ts).
+  await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.operating_company_id, loadId: String(load.id) });
   const billId = billRes.rows[0]?.id;
   if (!billId) return mintOutcome(billNumber);
 
@@ -3130,6 +3135,8 @@ export async function createLoadWithFullSideEffects(
         [input.operating_company_id, String(load.id), trailerIdForInsert, input.requestingUserUuid]
       );
     }
+    // 443.110 G9 — the trailer is recorded after the bill was minted: complete the bill's truck / trailer stamp now.
+    await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.operating_company_id, loadId: String(load.id) });
 
     // HOP-ASSIGN-ZERO-RATECARD-DRIVER-BILLS — an initial driver/unit assignment made directly in
     // the lockstep INSERT above (mdata.loads.assigned_primary_driver_id / assigned_unit_id) never

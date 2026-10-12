@@ -19,6 +19,8 @@ const OPCO = "11111111-1111-4111-8111-111111111111";
 const DRIVER = "33333333-3333-4333-8333-333333333333";
 const LOAD = "44444444-4444-4444-8444-444444444444";
 const UNIT = "55555555-5555-4555-8555-555555555555";
+// 443.110 G9 — the truck the fake load carries (the advance takes it from the load).
+let loadUnit: string | null = "55555555-5555-4555-8555-555555555555";
 const BANK = "66666666-6666-4666-8666-666666666666";
 
 describe("resolveEconomicRouting", () => {
@@ -93,7 +95,7 @@ function makeClient(opts: { wizardCols?: boolean } = {}) {
       }
       if (sql.includes("information_schema.columns")) return { rows: [{ ok: false }] };
       if (sql.includes("FROM mdata.drivers")) return { rows: [{ id: params[0], status: "active" }] };
-      if (sql.includes("FROM mdata.loads")) return { rows: [{ id: params[0], assigned_unit_id: UNIT }] };
+      if (sql.includes("FROM mdata.loads")) return { rows: [{ id: params[0], assigned_unit_id: loadUnit, company_trailer_id: null }] };
       if (sql.includes("FROM banking.bank_accounts")) return { rows: [{ id: params[0] }] };
       if (sql.includes("INSERT INTO driver_finance.driver_liabilities")) {
         captured.liabilityBalance = params[5];
@@ -161,7 +163,10 @@ describe("createDriverCashAdvanceCore — wizard depth", () => {
     expect(captured.scheduleHeld).toBe(true);
   });
 
+  // 443.110 G9: the unit comes FROM THE LOAD — a fuel deposit on a load with no truck is refused; one whose load has a
+  // truck takes it (a request naming a different truck is refused).
   it("fuel deposit requires load and unit", async () => {
+    loadUnit = null;
     const { client } = makeClient();
     const res = await createDriverCashAdvanceCore(client, ACTOR, OPCO, {
       driver_id: DRIVER,
@@ -173,5 +178,21 @@ describe("createDriverCashAdvanceCore — wizard depth", () => {
     });
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toBe("fuel_deposit_requires_load_and_unit");
+    loadUnit = UNIT;
+  });
+
+  it("443.110 G9: an advance naming a different truck than its load's is refused by name", async () => {
+    const { client } = makeClient();
+    const res = await createDriverCashAdvanceCore(client, ACTOR, OPCO, {
+      driver_id: DRIVER,
+      amount: 200,
+      purpose: "fuel_deposit",
+      disbursement_method: "wire",
+      recipient_info: { recipient_type: "driver" },
+      load_id: LOAD,
+      unit_id: "99999999-9999-4999-8999-999999999999",
+    });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toBe("advance_unit_differs_from_load");
   });
 });

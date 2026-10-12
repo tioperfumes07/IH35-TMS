@@ -39,6 +39,7 @@
  * split-brain defect this codebase has already paid for more than once.
  */
 
+import { restampDriverBillUnitAndTrailer } from "./driver-bill-unit-trailer.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { driverBillNumberFromLoadNumber } from "./driver-bill-number.js";
 
@@ -314,6 +315,8 @@ export async function createHistoricalDriverBill(
       hasLoaded ? input.deadhead_pay_cents : null,
     ],
   );
+  // 443.110 G9 — the bill carries the load's truck and trailer (one rule: driver-bill-unit-trailer.ts).
+  await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.operating_company_id, loadId: input.load_id });
 
   const driverBillId = inserted.rows[0]!.id;
 
