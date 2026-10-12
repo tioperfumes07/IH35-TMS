@@ -30,12 +30,30 @@ export function run(root = process.cwd()) {
     failures.push("the payment SELECT before void must use FOR UPDATE to lock the row against a concurrent void");
   }
 
-  if (!/UPDATE accounting\.payments[\s\S]{0,300}?AND voided_at IS NULL/i.test(routeBody)) {
-    failures.push("the void UPDATE must carry AND voided_at IS NULL as a belt-and-suspenders guard alongside the row lock");
-  }
-
-  if (!/rowCount[\s\S]{0,80}?=== 0[\s\S]{0,80}?payment_already_voided/.test(routeBody)) {
-    failures.push("a zero-row UPDATE result (the race case) must be treated as payment_already_voided, not silently ignored");
+  // f2dd6fba30 (ACCT-F2026100443): the void stamp moved into the ONE customer-payment void writer shared by every
+  // void door (payment-void-stamp.service.ts). The two belt-and-suspenders properties are held there now; the route
+  // must call that writer and turn its zero-row result into payment_already_voided.
+  const writerSrc = fs.existsSync(`${root}/apps/backend/src/accounting/payment-void-stamp.service.ts`)
+    ? fs.readFileSync(`${root}/apps/backend/src/accounting/payment-void-stamp.service.ts`, "utf8")
+    : "";
+  const viaWriter = /stampCustomerPaymentVoided\(/.test(routeBody);
+  if (viaWriter) {
+    if (!/UPDATE accounting\.payments[\s\S]{0,300}?AND voided_at IS NULL/i.test(writerSrc)) {
+      failures.push("the void UPDATE (payment-void-stamp.service.ts) must carry AND voided_at IS NULL as a belt-and-suspenders guard alongside the row lock");
+    }
+    if (!/if \(!u\.rowCount\) return \{ already_voided: true \}/.test(writerSrc)) {
+      failures.push("the void writer must report a zero-row UPDATE (the race case) as already_voided, not silently ignore it");
+    }
+    if (!/flipped\.already_voided\)\s*return \{ code: 409[^}]*payment_already_voided/.test(routeBody)) {
+      failures.push("the route must turn the writer's already_voided into payment_already_voided (409), not silently continue");
+    }
+  } else {
+    if (!/UPDATE accounting\.payments[\s\S]{0,300}?AND voided_at IS NULL/i.test(routeBody)) {
+      failures.push("the void UPDATE must carry AND voided_at IS NULL as a belt-and-suspenders guard alongside the row lock");
+    }
+    if (!/rowCount[\s\S]{0,80}?=== 0[\s\S]{0,80}?payment_already_voided/.test(routeBody)) {
+      failures.push("a zero-row UPDATE result (the race case) must be treated as payment_already_voided, not silently ignored");
+    }
   }
 
   return failures;
@@ -97,8 +115,31 @@ if (process.argv.includes("--selftest")) {
   f = run(tmp);
   if (!f.length) throw new Error("FAIL fail: silently ignored zero-row UPDATE result should be caught");
 
+  // Current shape (f2dd6fba30): the route calls the shared writer.
+  const goodRoute = good.replace(/const flipped = await client\.query\([\s\S]*?payment_already_voided" \};/, 'const flipped = await stampCustomerPaymentVoided(client, { operatingCompanyId: oci, paymentId: id, userId: uid, reason: r });\n      if (flipped.already_voided) return { code: 409 as const, error: "payment_already_voided" };');
+  const goodWriter = `export async function stampCustomerPaymentVoided(client, input) {
+  const u = await client.query(
+    \`UPDATE accounting.payments SET voided_at = now() WHERE id = $1::uuid AND operating_company_id = $4::uuid AND voided_at IS NULL\`,
+    []
+  );
+  if (!u.rowCount) return { already_voided: true };
+  return { already_voided: false };
+}`;
+  const W = "apps/backend/src/accounting/payment-void-stamp.service.ts";
+  mk("apps/backend/src/accounting/payments.routes.ts", goodRoute); mk(W, goodWriter);
+  if (run(tmp).length) throw new Error("PASS fail (writer shape): " + run(tmp).join("; "));
+  mk(W, goodWriter.replace(" AND voided_at IS NULL", ""));
+  if (!run(tmp).length) throw new Error("FAIL fail: writer UPDATE without AND voided_at IS NULL should be caught");
+  mk(W, goodWriter.replace("  if (!u.rowCount) return { already_voided: true };\n", ""));
+  if (!run(tmp).length) throw new Error("FAIL fail: writer ignoring a zero-row UPDATE should be caught");
+  mk(W, goodWriter);
+  mk("apps/backend/src/accounting/payments.routes.ts", goodRoute.replace('if (flipped.already_voided) return { code: 409 as const, error: "payment_already_voided" };', ""));
+  if (!run(tmp).length) throw new Error("FAIL fail: route ignoring already_voided should be caught");
+  mk("apps/backend/src/accounting/payments.routes.ts", goodRoute.replace("\n          FOR UPDATE", ""));
+  if (!run(tmp).length) throw new Error("FAIL fail: missing FOR UPDATE (writer shape) should be caught");
+
   fs.rmSync(tmp, { recursive: true, force: true });
-  console.log("verify-payment-void-row-locked --selftest OK");
+  console.log("verify-payment-void-row-locked --selftest OK (inline + shared-writer shapes, 7 regressions caught)");
 } else {
   const f = run();
   if (f.length) {

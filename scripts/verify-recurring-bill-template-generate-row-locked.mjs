@@ -35,7 +35,7 @@ export function analyzeGeneratorSource(src) {
   }
   const fn = fnMatch[0];
 
-  if (!/SELECT \* FROM accounting\.recurring_bill_templates[\s\S]*?FOR UPDATE/.test(fn)) {
+  if (!/SELECT \*[^`;]*?FROM accounting\.recurring_bill_templates[^`;]*?FOR UPDATE/.test(fn)) {
     failures.push(`${path.relative(ROOT, FILE)}: template SELECT must carry FOR UPDATE`);
   }
 
@@ -43,14 +43,16 @@ export function analyzeGeneratorSource(src) {
   // must appear textually BEFORE the UPDATE ... next_generation_date, and both inside the same
   // "await withLuciaBypass(async (client) => {" block (only one such block should contain createBill().
   const bypassBlocks = fn.match(/await withLuciaBypass\(async \(client\) => \{[\s\S]*?\n  \}\);?/g) || [];
-  const lockingBlock = bypassBlocks.find((b) => b.includes("createBill("));
+  // ROUND 389.4: the generator now writes through createBillInClientTx on this SAME locked client (never posts) —
+  // stronger than createBill() on its own connection; either name is the bill writer this lock must cover.
+  const lockingBlock = bypassBlocks.find((b) => /createBill(?:InClientTx)?\(/.test(b));
   if (!lockingBlock) {
     failures.push(`${path.relative(ROOT, FILE)}: createBill() must run inside the SAME withLuciaBypass transaction that holds the template's FOR UPDATE lock`);
   } else {
     if (!/FOR UPDATE/.test(lockingBlock)) {
       failures.push(`${path.relative(ROOT, FILE)}: the withLuciaBypass block calling createBill() must also hold the FOR UPDATE lock`);
     }
-    const createIdx = lockingBlock.indexOf("createBill(");
+    const createIdx = lockingBlock.search(/createBill(?:InClientTx)?\(/);
     const updateIdx = lockingBlock.indexOf("UPDATE accounting.recurring_bill_templates");
     if (createIdx < 0 || updateIdx < 0 || updateIdx < createIdx) {
       failures.push(`${path.relative(ROOT, FILE)}: the next_generation_date UPDATE must run AFTER createBill(), still inside the locked transaction`);

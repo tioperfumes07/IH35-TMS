@@ -44,7 +44,12 @@ function audit(src, api, route, matrix, self) {
   if (!/<EntityLink(?:OrTombstone)?[\s\S]{0,120}kind="invoice"[\s\S]{0,120}id=\{linkedInvoice\.id\}[\s\S]{0,120}name=\{linkedInvoice\.display_id\}/.test(src)) {
     failures.push(`${TARGET}: invoice drill must bind the exact returned id and human display id`);
   }
-  if (!/export function listInvoices\([\s\S]{0,420}source_load_id\?: string;/.test(api) || !/export function listInvoices\([\s\S]{0,900}params\.source_load_id\) query\.set\("source_load_id", params\.source_load_id\)/.test(api)) {
+  // Scope to listInvoices' own body (to the next top-level export) instead of fixed 420/900-char windows, which the
+  // growing params list (U12 status, ACCT-F411 aging buckets) pushed past the serialization line.
+  const liStart = api.indexOf("export function listInvoices(");
+  const liEnd = liStart === -1 ? -1 : api.indexOf("\nexport ", liStart + 1);
+  const listInvoicesBody = liStart === -1 ? "" : api.slice(liStart, liEnd === -1 ? undefined : liEnd);
+  if (!/source_load_id\?: string;/.test(listInvoicesBody) || !/params\.source_load_id\) query\.set\("source_load_id", params\.source_load_id\)/.test(listInvoicesBody)) {
     failures.push(`${API}: listInvoices must accept and serialize source_load_id`);
   }
   if (!/const listQuerySchema[\s\S]{0,500}source_load_id: z\.string\(\)\.uuid\(\)\.optional\(\)/.test(route) || !/if \(q\.source_load_id\)[\s\S]{0,180}i\.source_load_id = \$\$\{values\.length\}::uuid/.test(route)) {
