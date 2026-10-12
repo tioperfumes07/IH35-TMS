@@ -12,6 +12,9 @@
  */
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
 import { providerTransactionId } from "../fuel/fuel-provider-reference.js";
+import { findCreatorCustomer } from "./settlement-creator-seed-loads.js";
+import { creatorLineLoadNumber } from "./settlement-creator-line-load.js";
+import { SettlementCreatorError } from "./settlement-creator-error.js";
 
 type Q = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -28,9 +31,49 @@ export async function creatorPreflightRefusals(client: Q, draft: SettlementCreat
     }
     if (l.pickup_lat == null || l.pickup_lng == null) out.push(`Load ${n}: pickup stop has no coordinates (load.stops_geocoded).`);
     if (l.delivery_lat == null || l.delivery_lng == null) out.push(`Load ${n}: delivery stop has no coordinates (load.stops_geocoded).`);
-    if (l.customer_id) {
-      const c = await client.query(`SELECT 1 FROM mdata.customers WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [l.customer_id, co]);
-      if (!c.rows.length) out.push(`Load ${n}: customer ${l.customer_id} is not a customer of this company.`);
+    // 443.110 G3 — the document's customer must match a customer of this company (no oldest-customer fallback). A load
+    // an Edit adopts from the replaced settlement keeps its own customer and is not re-booked.
+    const adopted =
+      draft.edit_void_repost &&
+      (await client.query(`SELECT 1 FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL`, [co, n])).rows.length > 0;
+    if (!adopted) {
+      const cust = await findCreatorCustomer(client as never, co, l);
+      if (!("id" in cust)) out.push(cust.message);
+    }
+  }
+  // 443.110 G5 — every reimbursement, reimbursable expense, additional-pay line and fuel fill resolves to a load: a typed
+  // number of this draft or of this company, else the draft load covering its date / the settlement's only load.
+  const draftLoadNumbers = new Set((draft.loads ?? []).map((x) => x.load_number?.trim()).filter(Boolean) as string[]);
+  const lineLoad = async (line: { label: string; load_id?: string | null; load_number?: string | null; date?: string | null }) => {
+    let num: string | null;
+    try {
+      num = creatorLineLoadNumber(draft.loads ?? [], line);
+    } catch (err) {
+      if (err instanceof SettlementCreatorError) { out.push(err.message); return; }
+      throw err;
+    }
+    if (line.load_id) {
+      const r = await client.query(`SELECT 1 FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL`, [line.load_id, co]);
+      if (!r.rows.length) out.push(`${line.label}: load ${line.load_id} is not a load of this company.`);
+      return;
+    }
+    if (num && !draftLoadNumbers.has(num)) {
+      const r = await client.query(`SELECT 1 FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL`, [co, num]);
+      if (!r.rows.length) out.push(`${line.label}: load ${num} is not a load of this company.`);
+    }
+  };
+  for (const r of draft.reimbursements ?? []) {
+    if (r.amount_cents > 0) await lineLoad({ label: `Reimbursement "${r.description ?? ""}"`, load_number: r.load_number });
+  }
+  for (const e of draft.expenses ?? []) {
+    if (e.is_reimbursable && e.amount_cents > 0) await lineLoad({ label: `Reimbursable expense "${e.item_name}"`, load_id: e.load_id, load_number: e.load_number, date: e.date });
+  }
+  for (const p of draft.additional_pay ?? []) {
+    if (p.amount_cents > 0) await lineLoad({ label: `Additional pay "${p.description ?? ""}"`, load_number: p.load_number });
+  }
+  for (const f of draft.fuel_purchases ?? []) {
+    if (f.load_number?.trim() && !draftLoadNumbers.has(f.load_number.trim())) {
+      await lineLoad({ label: `Fuel line ${f.date}${f.invoice ? ` ticket ${f.invoice}` : ""}`, load_number: f.load_number });
     }
   }
   const vendorId = async (name: string | null | undefined): Promise<string | null> => {

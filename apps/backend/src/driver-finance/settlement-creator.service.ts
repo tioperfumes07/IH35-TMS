@@ -49,7 +49,7 @@ import { DuplicateDocumentNumberError } from "../lib/qbo-custom-document-number.
 import { assertCreatorDraftAdmissible } from "./settlement-creator-admission.js";
 import { ensureDispatchedLoadsForCreator } from "./settlement-creator-seed-loads.js";
 import { setSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
-import { attributeFuelLoadNumber } from "./settlement-creator-line-load.js";
+import { attributeFuelLoadNumber, creatorLineLoadNumber, lineLoadNotFound } from "./settlement-creator-line-load.js";
 import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { voidDocument } from "../accounting/void-document.service.js";
@@ -414,6 +414,8 @@ export async function previewSettlementCreator(
   }
   // R-186.1 — settlement_no may be empty (mint P-series on post), P-NNNN, or AlwaysTrack digits.
   if (!draft.driver_id) blockers.push("Driver is required.");
+  // 443.110 G5 — the unit (truck) is required: the loads are booked on it and every line carries it.
+  if (!draft.unit_id) blockers.push("Unit (truck) is required.");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.period_start) || !/^\d{4}-\d{2}-\d{2}$/.test(draft.period_end)) {
     blockers.push("Start and end dates are required (YYYY-MM-DD).");
   }
@@ -1205,6 +1207,8 @@ export async function postSettlementCreatorInClientTx(
     // ROUND 443.5 — a fill with no load typed belongs to the single load of this settlement whose dates cover it.
     const fuelLoadNumber = attributeFuelLoadNumber(draft.loads, fuel);
     const loadId = await resolveLineLoadId(client, draft.operating_company_id, { ...fuel, load_number: fuelLoadNumber ?? fuel.load_number });
+    // 443.110 G5 — a typed load that is not this company's load used to write the fill with NO load (load exemption).
+    if (!loadId) throw lineLoadNotFound(`Fuel ${[fuel.vendor_name, fuel.invoice].filter(Boolean).join(" ") || "fill"} ${fuel.date}`, fuelLoadNumber ?? fuel.load_number);
 
     // Vendor: match by name or leave null → createExpenseFromFuelTransaction refuses without vendor.
     const vendor = fuel.vendor_name
@@ -1678,15 +1682,17 @@ export async function postSettlementCreatorInClientTx(
   for (const r of draft.reimbursements ?? []) {
     if (r.amount_cents <= 0) continue;
     const rItem = await companyItem(r.item_id);
+    // 443.110 G5 — the draft line names its load; it was dropped, so the reimbursement was written with no load.
+    const rLoadId = await creatorLineLoadId(client, draft, { label: `Reimbursement "${r.description ?? ""}"`, load_number: r.load_number });
     await client.query(
       `
         INSERT INTO driver_finance.settlement_lines (
           settlement_id, operating_company_id, line_type, description, amount, is_active, is_sample_data,
-          item_id, quantity, rate_cents, unit_of_measure
+          item_id, quantity, rate_cents, unit_of_measure, load_id
         )
         VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false,
                 $5::uuid, CASE WHEN $5::uuid IS NULL THEN NULL ELSE 1 END, CASE WHEN $5::uuid IS NULL THEN NULL ELSE $6::bigint END,
-                CASE WHEN $5::uuid IS NULL THEN NULL ELSE 'each' END)
+                CASE WHEN $5::uuid IS NULL THEN NULL ELSE 'each' END, $7::uuid)
       `,
       [
         settlementId,
@@ -1695,6 +1701,7 @@ export async function postSettlementCreatorInClientTx(
         dollarsFromCents(r.amount_cents),
         rItem,
         r.amount_cents,
+        rLoadId,
       ],
     );
   }
@@ -1705,7 +1712,8 @@ export async function postSettlementCreatorInClientTx(
     // account by a NULL reimbursement type.
     const acct = await resolveExpenseLineAccount(client, draft.operating_company_id, exp);
     if (!acct) throw new SettlementCreatorError("expense_account_missing", `No expense account for reimbursement "${exp.item_name}".`);
-    const lineLoadId = await resolveLineLoadId(client, draft.operating_company_id, exp);
+    // 443.110 G5 — typed load, else the settlement load covering the expense date; never written with no load.
+    const lineLoadId = await creatorLineLoadId(client, draft, { label: `Reimbursable expense "${exp.item_name}"`, load_id: exp.load_id, load_number: exp.load_number, date: exp.date });
     const expItem = await companyItem(exp.item_id);
     await client.query(
       `
@@ -1766,7 +1774,8 @@ export async function postSettlementCreatorInClientTx(
   for (const p of draft.additional_pay ?? []) {
     if (p.amount_cents <= 0) continue;
     const lineType = p.pay_kind === "detention" ? "detention_pay" : "extra_pay";
-    const loadId = await resolveLoadIdByNumber(p.load_number);
+    // 443.110 G5 — additional pay belongs to its load (typed, else the settlement's only load); never load-less.
+    const loadId = await creatorLineLoadId(client, draft, { label: `Additional pay "${p.description ?? ""}"`, load_number: p.load_number });
     // Fork rehearsal of 5771 (2026-10-11): the insert dropped the draft's item_id, so every extra-pay line hit
     // settlement_lines_extra_pay_requires_item. The item (this company's, active) is written; a flat charge is 1 x amount.
     const itemId = p.item_id
@@ -2233,6 +2242,18 @@ export async function previewSettlementCreatorThroughClose(
  * ROUND 363-CC2-D — a line's picked load: the id the user chose (must be this company's), else the typed load number.
  * Shared by the preview and the post.
  */
+/** 443.110 G5 — the load id a Creator line is written with (creatorLineLoadNumber rules); refuses, never null. */
+async function creatorLineLoadId(
+  client: DbClient,
+  draft: SettlementCreatorDraft,
+  line: { label: string; load_id?: string | null; load_number?: string | null; date?: string | null },
+): Promise<string> {
+  const n = creatorLineLoadNumber(draft.loads ?? [], line);
+  const id = await resolveLineLoadId(client, draft.operating_company_id, { load_id: line.load_id, load_number: n });
+  if (!id) throw lineLoadNotFound(line.label, n);
+  return id;
+}
+
 async function resolveLineLoadId(
   client: DbClient,
   operatingCompanyId: string,

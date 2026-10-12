@@ -51,7 +51,8 @@ const draftSchema = z.object({
   operating_company_id: z.string().uuid(),
   settlement_no: z.string().trim().max(40).default(""),
   driver_id: z.string().uuid(),
-  unit_id: z.string().uuid().nullable().optional(),
+  // 443.110 G5 — the truck is required: every Creator load is booked on it and every line carries it.
+  unit_id: z.string().uuid(),
   trailer_equipment_number: z.string().trim().max(40).nullable().optional(),
   trailer_id: z.string().uuid().nullable().optional(),
   period_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

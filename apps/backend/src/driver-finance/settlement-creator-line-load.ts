@@ -98,3 +98,35 @@ export function lineLoadRefusal(draft: {
   }
   return null;
 }
+
+type CreatorLine = { label: string; load_id?: string | null; load_number?: string | null; date?: string | null };
+
+/**
+ * 443.110 G5 — a reimbursement, a reimbursable expense line, an additional-pay line or a fuel fill carries ITS load.
+ * Resolution, in order, never a guess: the load picked by id (caller resolves it) -> the typed load number -> the single
+ * load of THIS settlement whose pickup..delivery dates cover the line's date (fuelLoadCandidates — the load the driver
+ * was on that day) -> for a line with no date, the settlement's only load. Anything else is line_load_unresolved naming
+ * the line, so the preview lists it and the post refuses — a line is never written with no load.
+ */
+export function creatorLineLoadNumber(loads: readonly LoadSpan[], line: CreatorLine): string | null {
+  if (line.load_id) return null;
+  const typed = line.load_number?.trim();
+  if (typed) return typed;
+  if (line.date) {
+    const candidates = fuelLoadCandidates(loads, line.date);
+    if (candidates.length === 1) return candidates[0]!;
+    throw new SettlementCreatorError(
+      "line_load_unresolved",
+      candidates.length === 0
+        ? `${line.label} on ${line.date}: no load of this settlement covers that date — type its load number.`
+        : `${line.label} on ${line.date}: loads ${candidates.join(", ")} all cover that date — type which load it belongs to.`,
+    );
+  }
+  if (loads.length === 1) return loads[0]!.load_number;
+  throw new SettlementCreatorError("line_load_unresolved", `${line.label}: type its load number — this settlement has ${loads.length} loads.`);
+}
+
+/** The refusal when a typed / attributed load number is not a load of this company (resolved id is null). */
+export function lineLoadNotFound(label: string, loadNumber: string | null | undefined): SettlementCreatorError {
+  return new SettlementCreatorError("line_load_unresolved", `${label}: load ${loadNumber ?? "(none)"} is not a load of this company.`);
+}
