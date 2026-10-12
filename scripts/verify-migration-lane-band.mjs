@@ -90,6 +90,12 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // Lead 443.134 AJK-13 (moved from Codex; owner 2026-10-01 no-handoff): IFTA filing versions — a filed / approved return is
+  // never modified, a re-prepare is a new draft version. Claimed #(202615910700).
+  [
+    "cc-2/443-134-ajk13-ifta-versions",
+    new Set(["db/migrations/202615910700_ifta_filing_versions_filed_immutable.sql"]),
+  ],
   // Lead 443.128 C (+ 443.132 standing order; locked design READ-FIRST §3; owner 2026-10-01 no-handoff): team driver bills
   // recognized at delivery, one A/P bill per driver. Claimed #(202615890700) in #26692.
   [

@@ -6,6 +6,41 @@ import path from "node:path";
 const ROOT = process.cwd();
 const failures = [];
 
+/**
+ * LEAD 443.134 AJK-13 — a re-prepare never modifies an approved / filed return: no UPSERT that resets status / filed_at /
+ * confirmation_number; an approved / filed quarter gets a NEW draft version (version + 1, supersedes_filing_uuid); the
+ * database refuses changing a filed row (trg_ifta_filing_immutable_once_approved). Pure, for --selftest.
+ */
+export function ajk13Failures(preparerSrc, versionsMigrationSrc) {
+  const out = [];
+  if (/ON CONFLICT \(operating_company_id, quarter\)[\s\S]{0,200}DO UPDATE/.test(preparerSrc))
+    out.push("AJK-13 prepareFiling UPSERTs on (company, quarter) — a filed / approved return is reset to draft");
+  if (/filed_at = NULL|confirmation_number = NULL/.test(preparerSrc))
+    out.push("AJK-13 prepareFiling clears filed_at / confirmation_number of a return");
+  if (!/version, supersedes_filing_uuid/.test(preparerSrc) || !/Number\(latest\.version\) \+ 1/.test(preparerSrc))
+    out.push("AJK-13 a re-prepare of an approved / filed quarter is not a new draft version");
+  if (!/UNIQUE \(operating_company_id, quarter, version\)/.test(versionsMigrationSrc))
+    out.push("AJK-13 the versions migration does not key filings by (company, quarter, version)");
+  if (!/CREATE TRIGGER trg_ifta_filing_immutable_once_approved BEFORE UPDATE/.test(versionsMigrationSrc) || !/OLD\.status = 'filed'/.test(versionsMigrationSrc))
+    out.push("AJK-13 the database does not refuse changing a filed return");
+  return out;
+}
+
+if (process.argv.includes("--selftest")) {
+  const prep = fs.readFileSync(path.join(ROOT, "apps/backend/src/reports/ifta/quarterly-preparer.service.ts"), "utf8");
+  const mig = fs.readFileSync(path.join(ROOT, "db/migrations/202615910700_ifta_filing_versions_filed_immutable.sql"), "utf8");
+  const cases = [
+    ["real sources pass", ajk13Failures(prep, mig).length === 0],
+    ["the old reset-UPSERT is refused", ajk13Failures(prep + "\nON CONFLICT (operating_company_id, quarter)\n DO UPDATE SET filed_at = NULL", mig).length > 0],
+    ["no new version on re-prepare is refused", ajk13Failures(prep.replace("Number(latest.version) + 1", "1"), mig).length > 0],
+    ["no DB immutability trigger is refused", ajk13Failures(prep, mig.replace("CREATE TRIGGER trg_ifta_filing_immutable_once_approved BEFORE UPDATE", "-- gone")).length > 0],
+  ];
+  const bad = cases.filter(([, ok]) => !ok);
+  for (const [name, ok] of cases) console.log(`  ${ok ? "ok" : "FAIL"}  ${name}`);
+  console.log(bad.length ? "verify:ifta-quarterly-preparer --selftest FAIL" : `verify:ifta-quarterly-preparer --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad.length ? 1 : 0);
+}
+
 function fail(message) {
   failures.push(message);
 }
@@ -50,6 +85,8 @@ contains("apps/backend/src/reports/ifta/quarterly-preparer.service.ts", preparer
   { pattern: /ownerApproveFiling/, label: "owner approve service" },
   { pattern: /reports\.ifta_filings/, label: "ifta_filings persistence" },
 ]);
+
+for (const f of ajk13Failures(preparerService, read("db/migrations/202615910700_ifta_filing_versions_filed_immutable.sql"))) fail(f);
 
 const routes = read("apps/backend/src/reports/ifta/routes.ts");
 contains("apps/backend/src/reports/ifta/routes.ts", routes, [
