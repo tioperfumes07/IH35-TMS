@@ -22,6 +22,7 @@ export const REQUIRES_LIVE_DB =
 
 import { register } from "tsx/esm/api";
 import pg from "pg";
+import { buildPgClientConfig } from "./lib/pg-connection-options.cjs"; // TLS off for CI's local postgres, on for Neon
 
 register();
 
@@ -138,7 +139,7 @@ async function live() {
     process.exitCode = 1;
     return;
   }
-  const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const client = new pg.Client(buildPgClientConfig(url));
   try {
     await client.connect();
     await client.query("BEGIN");

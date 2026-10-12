@@ -23,6 +23,7 @@
 //   C. settlement 5787's non-diesel expense total must equal AlwaysTrack's own $140.20 exactly --
 //      the concrete, named case this round exists to prove stays fixed.
 import { register } from "tsx/esm/api";
+import { buildPgPoolConfig } from "./lib/pg-connection-options.cjs"; // TLS off for CI's local postgres, on for Neon
 
 export const REQUIRES_LIVE_DB = "duplicate-expense identity is a live-data invariant; cannot connect = FAIL, never a silent pass";
 
@@ -75,7 +76,7 @@ async function main() {
     return;
   }
   const { default: pg } = await import("pg");
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool(buildPgPoolConfig(process.env.DATABASE_URL));
   const client = await pool.connect();
   try {
     await client.query("BEGIN");

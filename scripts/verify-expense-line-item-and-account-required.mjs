@@ -17,6 +17,7 @@
 // in docs/bus/2026-09-30-CC1-DOCUMENT-INTEGRITY-EXPENSE-LINES-639.md, never guessed. This can only
 // shrink (if a future source lookup resolves one) and must never grow.
 import pg from "pg";
+import { buildPgPoolConfig } from "./lib/pg-connection-options.cjs"; // TLS off for CI's local postgres, on for Neon
 
 export const REQUIRES_LIVE_DB =
   "live money guard -- queries accounting.expense_lines against Postgres; fails closed with no " +
@@ -83,7 +84,7 @@ function selftest() {
 async function main() {
   if (process.argv.includes("--selftest")) { selftest(); return; }
 
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool(buildPgPoolConfig(process.env.DATABASE_URL));
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
