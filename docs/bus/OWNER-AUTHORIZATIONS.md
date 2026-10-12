@@ -7942,3 +7942,13 @@ status: CONSUMED
 consumed_by: CC-2 (443.124)
 row_counts: 4 corrected-route lanes learned through learnLoadLanes(routeCorrected) — 13511, 13536, 13573 catalogs.lane_mileage city rows created, 13660 city row updated; mdata.customer_lanes created for the 4; point_mileage already present; leg_miles identical (runner check)
 proof_query: verify-booked-loads-save-miles live on prod 2026-10-12 18:37 UTC — PASS, 148 USMCA loads booked since 2026-10-11, 0 findings
+
+## AUTH-447
+issued_at: 2026-10-12T21:30:00Z
+issued_by: Lead 443.134 #4 ("OWNER 16:19 CT 'ok yes': 13498 = 538306 · 13520 = 10222 · 13525 = 10380 (owner confirmed). 13562 = 10870 (Lead by the owner's 'use logic' rule ...). Set all 4 through the ONE Edit Load trailer path (company trailer), re-run the stamp (dry run first) ... Prod read-back: driver bills without trailer = 0."). Recorded by CC-2, as with AUTH-404..446
+owner_quotes: "ok yes" (owner 2026-10-12 16:19 CT, the trailer picks); "they are ours" (owner 15:00 CT, company trailers)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the company trailer of EXACTLY 4 loads: 13498 -> 538306, 13520 -> 10222, 13525 -> 10380, 13562 -> 10870, through dispatch/load-trailer-choice.ts resolveTrailerChoice + applyTrailerChoice (the Edit Load path: same-company active trailer, assignment history, trailer_source company), one audit row each; then accounting/bill-trailer-stamp.service.ts stampDriverBillTrailersFromLoads (Owner, only-where-NULL) on the A/P driver bills. Metadata only. The runner refuses unless each load has no trailer yet, each trailer is exactly one active USMCA trailer, and the stamp adds exactly 4 header trailers leaving 0.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-134-trailer-picks.mts --apply --auth AUTH-447
+rehearsal: throwaway br-twilight-dawn-akcer3yd (COMMITTED, deleted): 4 trailer choices recorded; stamp 4 bills changed, 4 header stamps, 7 line stamps, 0 refused, all on these 4 loads' bills (one bill.trailer_stamped_from_load audit each); A/P driver bills without a trailer 4 -> 0; a second run refused (already has a trailer choice)
+expires_at: 2026-10-13T21:30:00Z
+status: OPEN
