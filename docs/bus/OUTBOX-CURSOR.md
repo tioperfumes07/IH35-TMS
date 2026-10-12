@@ -1,3 +1,14 @@
+## 2026-10-12 · GO-20 HOOK CENSUS + AJK-02 DISPATCH (CC-1 MONEY)
+
+FINDING: AJK-02 (DEEP-WIRING-AUDIT 2026-10-12 P0) — `road_service_tickets.payment_method` (`vendor_bill` | `driver_advance` | `cc`) is persisted on create but **ignored** on POST `create-wo`; `wo-integration.ts` hardcodes `payment_timing: vendor_invoice` and always calls `autoCreateBillFromWO` → unpaid A/P bill. Card and driver-advance paths never run (`autoCreateExpenseFromWO` / cash-advance create). FE create omits `payment_method` → API default `vendor_bill`. Guard `verify-road-service-ticket-creates-wo.mjs` **requires** bill-only path.
+LANE: Lead coordination only — **implement on CC-1** (money tier A); Cursor does not rewrite posters.
+MEASURED: tip `origin/main` **`3afd8a41da`** · `git pull --ff-only origin main` Already up to date · `node scripts/verify-money-cells-click-through.mjs` → **OK shrink-only 0 <= 0** (combined 33 <= 33) · INBOX-CURSOR open: **435-CUR** back-arrow · **432-CUR** money UI · **433-CUR** hard four · INBOX-CC-1 open: **432-CC1** engines (393.1 first) then **433-CC1** palette.
+TARGET (CC-1 vertical slice): `apps/backend/src/maintenance/road-service/wo-integration.ts` branch on `payment_method` like `work-orders.routes.ts` ~1049–1061; extend ticket schema/FKs + FE `RoadServiceTicketModal` + guards/tests; bundle AJK-08 (do not mark `invoiced` if GL post fails).
+Files Modified: docs/bus/OUTBOX-CURSOR.md only (this entry)
+GUARD: N/A (dispatch)
+LIVE PROOF: Neon USMCA audit note — 0 roadside tickets at measure time (latent defect; routing still wrong for first live ticket)
+NEXT: CC-1 append OUTBOX-CC-1 when AJK-02 slice ships; Cursor resumes **435-CUR** back-arrow module-boundary guard sweep on tip (no GUARD-WORKORDERS / no Downloads/abb)
+
 ## 2026-10-12 · BANK-F44366 LIVE MEASURE + MILES SLATE LEFTOVER
 
 FINDING: BANK-F44366 — Relay Fuel Wallet + Dreamline Diesel Card list-suggest live counts on Neon USMCA (owner Law B: suggest only, never categorize/match). Plus BANK-F91151 leftover `text-slate-700` on Creator/Miles panels → house `#4B5563`.

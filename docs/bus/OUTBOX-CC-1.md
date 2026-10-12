@@ -2,6 +2,12 @@
 # One entry per job id: JOB ID · what I changed · pasted live proof · what is left.
 # Append below. Do not delete another seat's entries.
 
+## 2026-10-12 · AJK-02 QUEUED (from Cursor lead OUTBOX-CURSOR)
+
+**Ordered (after 393.1 write-time rule + spine count land, or in parallel if owner reprioritizes):** Road service ticket `create-wo` must honor `payment_method` — `vendor_bill` → bill; `cc` → paid-same-day expense + card GL; `driver_advance` → cash advance disburse (no spurious unpaid vendor bill). Evidence map: `wo-integration.ts:61,112,129` vs `work-orders.routes.ts` canonical branch; update `verify-road-service-ticket-creates-wo.mjs` (currently bill-only). FE must send `payment_method` from `RoadServiceTicketModal.tsx`.
+**Live proof:** None yet — not started.
+**Left:** Full vertical slice + one verify-step guard asserting three-branch routing.
+
 ## R-01 — assertNotProduction() guard
 **Changed:** Shared `assertNotProduction()` (scripts/lib/assert-not-production.mjs) queries the LIVE connection's own `neon.branch_id`/`neon.project_id` Postgres GUCs (set by the Neon compute itself, not parsed from any string) and fails closed if the target is the known prod branch or unidentifiable. Static guard `verify-ops-scripts-assert-not-production.mjs` (step 11809) scans every file under `scripts/ops/**` plus `*rehearsal*`/`*test*` scripts for a write without the assertion appearing first.
 **Live proof:**
