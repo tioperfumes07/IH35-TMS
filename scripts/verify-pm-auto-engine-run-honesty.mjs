@@ -39,8 +39,12 @@ export function check(src) {
   }
 
   // 3. There must be a branch that downgrades a no-effect run.
-  if (!/no_odometer_for_all_units/.test(src)) {
-    problems.push("no 'no_odometer_for_all_units' diagnostic — an all-skipped run is still reported as a success");
+  // E-14 (#23632, fa7100a2f5) renamed the diagnostic to `nothing_evaluable` and widened it to count no-baseline skips
+  // with the no-odometer ones; either name passes only when the branch is gated on the skippedNoOdometer count
+  // covering every schedule AND downgrades runStatus to 'skipped' with a persisted diagnostic.
+  const downgrade = /else if \(noEffect && skippedNoOdometer(?:\s*\+\s*\w+)?\s*===\s*schedules\.length\)\s*\{\s*runStatus\s*=\s*"skipped";\s*runDiagnostic\s*=[\s\S]{0,40}?(?:no_odometer_for_all_units|nothing_evaluable):/;
+  if (!downgrade.test(src)) {
+    problems.push("no 'no_odometer_for_all_units' / 'nothing_evaluable' downgrade — an all-skipped run is still reported as a success");
   }
   if (!/no_active_pm_schedules/.test(src)) {
     problems.push("no 'no_active_pm_schedules' diagnostic — a run with zero active schedules is silently 'completed'");
@@ -89,7 +93,20 @@ function selftest() {
   // A status the CHECK constraint would reject at runtime.
   const badStatus = good.replace(/runStatus = "skipped"/, 'runStatus = "completed_no_effect"');
 
+  // The current engine shape (E-14): no-odometer + no-baseline counted together, diagnostic `nothing_evaluable`.
+  const e14 = good.replace(
+    'else if (noEffect && skippedNoOdometer === schedules.length) { runStatus = "skipped"; runDiagnostic = "no_odometer_for_all_units: ..."; }',
+    'else if (noEffect && skippedNoOdometer + skippedNoBaseline === schedules.length) { runStatus = "skipped"; runDiagnostic =\n `nothing_evaluable: ...`; }'
+  );
+  // The downgrade branch removed: an all-skipped run reports 'completed' again.
+  const noDowngrade = e14.replace(/else if \(noEffect[^\n]*\n[^\n]*\}/, "");
+  // The diagnostic kept as text but no longer downgrading the status.
+  const stillCompleted = e14.replace('runStatus = "skipped"; runDiagnostic =\n `nothing_evaluable', 'runDiagnostic =\n `nothing_evaluable');
+
   if (check(good).length) throw new Error(`${LABEL} selftest: compliant flagged — ${check(good).join("; ")}`);
+  if (check(e14).length) throw new Error(`${LABEL} selftest: E-14 engine shape flagged — ${check(e14).join("; ")}`);
+  if (!check(noDowngrade).some((p) => /downgrade/.test(p))) throw new Error(`${LABEL} selftest: removed downgrade branch not caught`);
+  if (!check(stillCompleted).some((p) => /downgrade/.test(p))) throw new Error(`${LABEL} selftest: diagnostic without status downgrade not caught`);
   if (!check("").length) throw new Error(`${LABEL} selftest: missing file not caught`);
 
   const pre = check(preFix);

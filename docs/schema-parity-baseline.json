@@ -767,6 +767,7 @@
       "source_load_id",
       "source_system",
       "status",
+      "status_before_void",
       "submission_batch_ref",
       "submitted_at",
       "version_int",

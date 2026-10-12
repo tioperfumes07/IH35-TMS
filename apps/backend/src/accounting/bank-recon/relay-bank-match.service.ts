@@ -533,16 +533,19 @@ export async function acceptRelayBankMatch(
     });
   }
 
+  // 443.100: the actor column is matched_by_user_uuid — created_by_user_id does not exist on banking.reconciliation_matches
+  // (prod or any migration). The old swallowed .catch hid that failure while it ABORTED the caller's transaction, so the
+  // link stamp above would silently roll back at COMMIT. match_score is on the 0..1 scale
+  // (reconciliation_matches_match_score_check) — the old 100 violated it too; a user match is 1. ON CONFLICT DO NOTHING
+  // needs no named target, so no catch.
   await client.query(
     `INSERT INTO banking.reconciliation_matches (
        operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id,
-       match_score, match_state, created_by_user_id
-     ) VALUES ($1::uuid, $2::uuid, 'relay_fuel', $3::uuid, 100, 'user_matched', $4::uuid)
+       match_score, match_state, matched_by_user_uuid
+     ) VALUES ($1::uuid, $2::uuid, 'relay_fuel', $3::uuid, 1, 'user_matched', $4::uuid)
      ON CONFLICT DO NOTHING`,
     [input.operating_company_id, bank.id, fill.id, input.actor_user_uuid]
-  ).catch(() => {
-    // reconciliation_matches may lack a unique conflict target on older schemas — link stamp above is the authority.
-  });
+  );
 
   return {
     linked: true,
