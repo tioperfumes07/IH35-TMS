@@ -45,6 +45,24 @@ export function enteredFuelRowHash(
     : `entered:${crypto.randomUUID()}`;
 }
 
+/**
+ * LEAD 443.110 G12 — ONE duplicate rule, ONE message: the base provider invoice is one purchase. The Settlement Creator
+ * preflight and the post's refusal both say this, naming the load the purchase already sits on. The preflight used to
+ * tell the operator to type "<ticket>-<load>", which providerTransactionId strips back to the same invoice, so the post
+ * refused the very line the preflight had suggested.
+ */
+export function fuelPurchaseAlreadyRecordedMessage(
+  providerId: string,
+  existingFuelTransactionId: string,
+  existingLoadNumber: string | null
+): string {
+  return (
+    `Fuel purchase ${providerId} is already recorded (fuel transaction ${existingFuelTransactionId}` +
+    `${existingLoadNumber ? `, load ${existingLoadNumber}` : ", no load"}). One provider transaction is one purchase — ` +
+    `open the existing one instead of entering it again.`
+  );
+}
+
 export class FuelProviderTransactionDuplicateError extends Error {
   readonly code = "fuel_provider_transaction_already_recorded";
   constructor(
@@ -52,11 +70,7 @@ export class FuelProviderTransactionDuplicateError extends Error {
     readonly existingFuelTransactionId: string,
     readonly existingLoadNumber: string | null
   ) {
-    super(
-      `Fuel purchase ${providerId} is already recorded (fuel transaction ${existingFuelTransactionId}` +
-        `${existingLoadNumber ? `, load ${existingLoadNumber}` : ", no load"}). One provider transaction is one purchase — ` +
-        `open the existing one instead of entering it again.`
-    );
+    super(fuelPurchaseAlreadyRecordedMessage(providerId, existingFuelTransactionId, existingLoadNumber));
   }
 }
 
