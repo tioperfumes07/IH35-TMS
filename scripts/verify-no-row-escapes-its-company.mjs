@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — data/schema invariant guard; no UI surface wiring claim. */
 /**
  * NO ROW ESCAPES ITS COMPANY (Lead 10-03 "THE ORPHANS ARE NOT FIXED, THEY ARE INVISIBLE" — CC-1, migration 202615350100).
  *
