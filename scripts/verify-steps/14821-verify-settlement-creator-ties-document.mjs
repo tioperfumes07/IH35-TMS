@@ -5,6 +5,8 @@ export default {
     // RULING 443.66 — every Creator-born line has its item on the item's account; status = posting_status; driver/unit/trailer.
     // The live run joins this step once the 68 posted settlements are categorized through the engine route (follow-up PR).
     ctx.run("node", ["scripts/verify-creator-documents-categorized.mjs", "--selftest"]);
+    // RULING 443.67 — the DB refuses uncategorized lines for every writer (202615620900). Live run joins once deployed.
+    ctx.run("node", ["scripts/verify-line-categorization-refused-at-db.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-decimals-f443.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-decimals-f443.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-google-address-wiring.mjs", "--selftest"]);
