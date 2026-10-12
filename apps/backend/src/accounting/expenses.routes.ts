@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { correctPostedExpense, CORRECTABLE_EXPENSE_FIELDS, ExpenseCorrectionRefused } from "./expense-correction.service.js";
 import { EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL } from "./expense-bank-match-sql.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -16,6 +17,7 @@ import { createJournalEntryOnClient } from "./journal-entries.service.js";
 import { openAndRunIntake } from "../driver-finance/feed-gate/feed-gate.service.js";
 
 import { todayIso } from "./void.service.js";
+import { reverseExpenseDocumentInClientTx } from "./expense-void-reversal.js";
 import { canVoid, isVoidEnforcementEnabled, releaseBankLinesNamingDocument } from "./void.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -1104,32 +1106,14 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     try {
       const voided = await withCompanyScope(user.uuid, oci, async (client) => {
         let reversingJeId: string | null = null;
-        if (pre.posting_status === "posted") {
-          // EXP-POSTED-NO-JE-01 (owner-verified live 2026-09-01, expense 8a1b3d84-2cd5-4099-8c98-
-          // 4076cda163c7, $75.00): posting_status='posted' does not guarantee a posted batch exists
-          // to reverse -- this row had posted_at NULL, journal_entry_id NULL, and zero
-          // journal_entry_postings. reversePostedSourceTransactionInClientTx throws
-          // PostingEngineError("SOURCE_NOT_FOUND") in that case, correctly ("there is nothing to
-          // reverse"), but the route had no path forward: it is not this route's job to fake a
-          // reversal for a document that never actually posted. Voiding an unposted document is a
-          // status change plus an audit entry, nothing more -- caught here, specifically, so any
-          // OTHER posting-engine error (PERIOD_LOCKED, a real reversal failure) still fails loud
-          // through the outer catch below.
-          try {
-            const rev = await reversePostedSourceTransactionInClientTx(
-              client,
-              { operating_company_id: oci, source_transaction_type: "expense", source_transaction_id: expenseId },
-              { userId: String(user.uuid) },
-              todayIso()
-            );
-            reversingJeId = rev.journal_entry_id;
-          } catch (revErr) {
-            if (!(revErr instanceof PostingEngineError) || revErr.code !== "SOURCE_NOT_FOUND") throw revErr;
-            // Nothing posted -- fall through with reversingJeId still null. The UPDATE below still
-            // flips posting_status='posted' -> 'reversed' for consistency (it already claimed
-            // posted; 'reversed' is the honest terminal state), but no JE is invented.
-          }
-        }
+        // ACCT-F4431310 — reverse everything LIVE for this document (its own 'expense' lines AND a fuel receipt's
+        // 'fuel_event' entry), decided by reading; EXP-POSTED-NO-JE-01's unposted case is "nothing live", not a swallowed
+        // SOURCE_NOT_FOUND. Any reversal error propagates and the void is refused.
+        const rev = await reverseExpenseDocumentInClientTx(client, {
+          operatingCompanyId: oci, expenseId, actorUserId: String(user.uuid), currentBusinessDate: todayIso(),
+          memo: `Void reversal of expense ${expenseId}: ${body.data.reason}`, expenseReverser: "source",
+        });
+        reversingJeId = rev.reversal_journal_entry_id;
 
         // ROUND 368.2(b) — a bank line that names this expense goes back to For review (match kept, release recorded) before it dies.
         await releaseBankLinesNamingDocument(client as never, { operatingCompanyId: oci, pointerColumn: "matched_expense_id", documentId: expenseId }, {
@@ -1279,6 +1263,20 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         // FAIL LOUD, never a silent no-op: a posted or void expense refuses this route entirely — the
         // posted-and-open-period reverse+repost branch is a distinct, not-yet-built endpoint, and a
         // void expense has no live document left to correct.
+        if (exp.status === "posted" && exp.posting_status === "posted") {
+          // LEAD 443.129 E — a POSTED expense is never edited in place: the one correction path reverses its entry,
+          // re-posts the corrected one (same expense_number) and audits it. Only its correctable fields go through here.
+          const moneyFields = (["transaction_date", "amount_cents", "vendor_uuid"] as const).filter((f) => body.data[f] !== undefined);
+          if (moneyFields.length) return { kind: "posted_field_not_correctable" as const, fields: moneyFields };
+          const corrected = await correctPostedExpense(client, {
+            operatingCompanyId: oci,
+            expenseId,
+            changes: { memo: body.data.memo },
+            actorUserId: String(user.uuid),
+            reason: body.data.reason,
+          });
+          return { kind: "posted_correction" as const, corrected };
+        }
         if (exp.status !== "draft" || exp.posting_status !== "unposted") {
           return { kind: "not_draft" as const, status: exp.status, posting_status: exp.posting_status };
         }
@@ -1341,6 +1339,18 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
 
       if (result.kind === "forbidden") return reply.code(403).send({ error: "forbidden_owner_or_accountant_only" });
       if (result.kind === "not_found") return reply.code(404).send({ error: "expense_not_found" });
+      if (result.kind === "posted_field_not_correctable") {
+        return reply.code(409).send({
+          error: "posted_expense_field_not_correctable",
+          fields: result.fields,
+          detail: `correctable on a posted expense: ${CORRECTABLE_EXPENSE_FIELDS.join(", ")} (POST /api/v1/expenses/:id/correct); a money change is a void and a new document`,
+        });
+      }
+      if (result.kind === "posted_correction") {
+        const c = result.corrected;
+        if (c.outcome === "refused") return reply.code(409).send({ error: "expense_correction_refused", reason: c.reason });
+        return reply.code(200).send(c);
+      }
       if (result.kind === "not_draft") {
         return reply.code(409).send({
           error: "expense_not_draft",
@@ -1352,6 +1362,57 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       }
       return reply.code(200).send({ expense_id: expenseId, status: "draft", ...result.after });
     } catch (err) {
+      if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: "period_locked" });
+      throw err;
+    }
+  });
+
+  // LEAD 443.129 E — the ONE correction path for a POSTED expense: reverse the live entry, correct the document (same
+  // expense_number), re-post, one audit row. dry_run (default true) plans without writing. Owner + Accountant (as /void).
+  const correctBodySchema = z.object({
+    operating_company_id: z.string().uuid(),
+    reason: z.string().trim().min(3),
+    dry_run: z.boolean().optional().default(true),
+    changes: z
+      .object({
+        driver_id: z.string().uuid().nullable().optional(),
+        trailer_id: z.string().uuid().nullable().optional(),
+        memo: z.string().max(2000).nullable().optional(),
+        driver_from_fill: z.boolean().optional(),
+      })
+      .passthrough(),
+  });
+  app.post("/api/v1/expenses/:expenseId/correct", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = z.object({ expenseId: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error" });
+    const body = correctBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    const oci = body.data.operating_company_id;
+    try {
+      const result = await withCompanyScope(user.uuid, oci, async (client) => {
+        if (!canVoid(String(user.role ?? ""))) {
+          await appendCrudAudit(client, user.uuid, "expense.correction_refused_role",
+            { expense_id: params.data.expenseId, operating_company_id: oci, role: String(user.role ?? "") }, "warning", "LEAD-443.129");
+          return { kind: "forbidden" as const };
+        }
+        const corrected = await correctPostedExpense(client, {
+          operatingCompanyId: oci,
+          expenseId: params.data.expenseId,
+          changes: body.data.changes,
+          actorUserId: String(user.uuid),
+          reason: body.data.reason,
+          dryRun: body.data.dry_run,
+        });
+        return { kind: "ok" as const, corrected };
+      });
+      if (result.kind === "forbidden") return reply.code(403).send({ error: "forbidden_owner_or_accountant_only" });
+      const c = result.corrected;
+      if (c.outcome === "refused") return reply.code(c.reason === "expense_not_found" ? 404 : 409).send({ error: "expense_correction_refused", reason: c.reason });
+      return reply.code(200).send({ dry_run: body.data.dry_run, ...c });
+    } catch (err) {
+      if (err instanceof ExpenseCorrectionRefused) return reply.code(409).send({ error: "expense_correction_refused", reason: err.reason });
       if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: "period_locked" });
       throw err;
     }

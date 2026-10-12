@@ -11,10 +11,10 @@
 | bucket | n | meaning |
 |---|---:|---|
 | **create** (collection POST) | 349 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 280 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
+| **nested create** (child POST) | 281 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 253 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 72 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 954 | |
+| **TOTAL POST endpoints** | 955 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -82,6 +82,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/escrow/open` | `apps/backend/src/accounting/escrow/routes.ts:42` | — | — | — |
 | create | `/api/v1/accounting/expense-category-map` | `apps/backend/src/accounting/expense-category-map/routes.ts:222` | — | — | — |
 | create | `/api/v1/accounting/expenses/link-loads` | `apps/backend/src/accounting/expenses.routes.ts:1208` | — | — | — |
+| create | `/api/v1/accounting/expenses/link-loads` | `apps/backend/src/accounting/expenses.routes.ts:1202` | — | — | — |
 | create | `/api/v1/accounting/factoring-advances` | `apps/backend/src/accounting/factoring-advances.routes.ts:426` | — | — | — |
 | nested | `/api/v1/accounting/factoring-advances/:id/advance` | `apps/backend/src/accounting/factoring-advances.routes.ts:759` | — | — | — |
 | nested | `/api/v1/accounting/factoring-advances/:id/recourse-return` | `apps/backend/src/accounting/factoring-advances.routes.ts:1115` | — | — | — |
@@ -677,6 +678,16 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/bank-recon/manual-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:194` | — | — | — |
 | create | `/api/v1/bank-recon/reject-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:148` | — | — | — |
 
+### expenses — 5 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/expenses` | `apps/backend/src/accounting/expenses.routes.ts:1406` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/change-payment-source` | `apps/backend/src/accounting/expenses.routes.ts:2224` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/correct` | `apps/backend/src/accounting/expenses.routes.ts:2179` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:1557` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1942` | — | — | — |
+
 ### ifta — 5 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -743,6 +754,10 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/expenses/:expenseId/change-payment-source` | `apps/backend/src/accounting/expenses.routes.ts:2153` | — | — | — |
 | nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:1563` | — | — | — |
 | nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1948` | — | — | — |
+| create | `/api/v1/expenses` | `apps/backend/src/accounting/expenses.routes.ts:1406` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/change-payment-source` | `apps/backend/src/accounting/expenses.routes.ts:2129` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:1557` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1924` | — | — | — |
 
 ### finance — 3 create-surface(s)
 

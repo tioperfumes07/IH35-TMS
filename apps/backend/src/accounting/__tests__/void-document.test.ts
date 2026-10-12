@@ -15,6 +15,11 @@ vi.mock("../void.service.js", () => ({
 vi.mock("../posting-engine.service.js", () => ({
   reversePostedSourceTransactionInClientTx: vi.fn(async () => ({ journal_entry_id: "je-exp-1" })),
 }));
+// ACCT-F4431310 — the expense case reverses through the ONE document reverser (every live posting, own 'expense' lines +
+// a fuel receipt's fuel_event entry); it is unit-tested in expense-void-reversal.test.ts and mocked here.
+vi.mock("../expense-void-reversal.js", () => ({
+  reverseExpenseDocumentInClientTx: vi.fn(async () => ({ reversal_journal_entry_id: "je-exp-1", reversed: [{ source_type: "expense", source_id: "exp-1", journal_entry_id: "je-exp-1" }] })),
+}));
 vi.mock("../factoring-posting/poster.service.js", () => ({
   reverseFactoringAdvanceEvent: vi.fn(async () => ({
     reversed: true,
@@ -55,6 +60,7 @@ import { voidBillInClientTx, voidBillPaymentInClientTx } from "../bills.service.
 import { postVoidReversal } from "../void.service.js";
 import { reversePostedSourceTransactionInClientTx } from "../posting-engine.service.js";
 import { reverseFactoringAdvanceEvent } from "../factoring-posting/poster.service.js";
+import { reverseExpenseDocumentInClientTx } from "../expense-void-reversal.js";
 import { reverseSettlementForVoid, reverseDeductionForVoid } from "../../driver-finance/void-document-callees.service.js";
 
 const fakeClient = { query: vi.fn() } as unknown as Parameters<typeof voidDocument>[0];
@@ -112,32 +118,26 @@ describe("voidDocument — ROUND 31.2/32.2 dispatcher (not a new reversal engine
     );
   });
 
-  it("expense -> calls the EXISTING reversePostedSourceTransactionInClientTx (posting-engine.service.ts)", async () => {
+  it("expense -> reverses through the ONE document reverser (own 'expense' lines via the posting engine; fuel receipt entries too)", async () => {
     const result = await voidDocument(fakeClient, { ...baseInput, type: "expense", id: "exp-1" });
-    expect(reversePostedSourceTransactionInClientTx).toHaveBeenCalledWith(
+    expect(reverseExpenseDocumentInClientTx).toHaveBeenCalledWith(
       fakeClient,
-      expect.objectContaining({ source_transaction_type: "expense", source_transaction_id: "exp-1" }),
-      expect.objectContaining({ userId: "user-1" }),
-      "2026-09-22"
+      expect.objectContaining({ operatingCompanyId: baseInput.operatingCompanyId, expenseId: "exp-1", actorUserId: "user-1", currentBusinessDate: "2026-09-22", expenseReverser: "source" })
     );
     expect(result.reversalJournalEntryId).toBe("je-exp-1");
   });
 
-  it("expense -> an unposted expense (SOURCE_NOT_FOUND) is a legitimate zero-reversal void, not an error", async () => {
-    (reversePostedSourceTransactionInClientTx as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
-      Object.assign(new Error("nothing posted"), { code: "SOURCE_NOT_FOUND" })
-    );
+  it("expense -> nothing live (unposted) is a legitimate zero-reversal void, decided by reading — not a swallowed error", async () => {
+    vi.mocked(reverseExpenseDocumentInClientTx).mockResolvedValueOnce({ reversal_journal_entry_id: null, reversed: [] });
     const result = await voidDocument(fakeClient, { ...baseInput, type: "expense", id: "exp-unposted" });
     expect(result.reversalJournalEntryId).toBeNull();
   });
 
-  it("expense -> any OTHER posting-engine error (e.g. PERIOD_LOCKED) still throws loud", async () => {
-    (reversePostedSourceTransactionInClientTx as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
-      Object.assign(new Error("period locked"), { code: "PERIOD_LOCKED" })
-    );
-    await expect(voidDocument(fakeClient, { ...baseInput, type: "expense", id: "exp-locked" })).rejects.toThrow(
-      "period locked"
-    );
+  it("expense -> ANY reversal error (e.g. PERIOD_LOCKED, even SOURCE_NOT_FOUND) throws loud — never swallowed", async () => {
+    vi.mocked(reverseExpenseDocumentInClientTx).mockRejectedValueOnce(Object.assign(new Error("period locked"), { code: "PERIOD_LOCKED" }));
+    await expect(voidDocument(fakeClient, { ...baseInput, type: "expense", id: "exp-locked" })).rejects.toThrow("period locked");
+    vi.mocked(reverseExpenseDocumentInClientTx).mockRejectedValueOnce(Object.assign(new Error("nothing posted"), { code: "SOURCE_NOT_FOUND" }));
+    await expect(voidDocument(fakeClient, { ...baseInput, type: "expense", id: "exp-sn" })).rejects.toThrow("nothing posted");
   });
 
   it("factoring_advance -> calls the EXISTING reverseFactoringAdvanceEvent, its own connection", async () => {
