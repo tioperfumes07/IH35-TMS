@@ -7910,4 +7910,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — load_exemption_reas
 action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-105-expense-exemption-reasons.mts --apply --auth AUTH-444
 rehearsal: throwaway br-broad-brook-akb5n54v (real runner, prod mode; COMMITTED, deleted): 5 stamped, money + JE identical, USMCA lines with neither load nor reason 0, 5 audit rows; clearing a reason refused by trg_expense_line_load_or_reason
 expires_at: 2026-10-13T13:58:48Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-12T14:00:15Z
+consumed_by: CC-2 (443.107 #1)
+row_counts: 5 expense lines stamped with load_exemption_reason (EXP-2026-00001..00005, 20314 cents) through stampExpenseLineLoadExemption; amounts + journal entries identical (runner money check); 5 audit rows accounting.expense_line.load_exemption_stamped
+proof_query: USMCA live expense lines with load_id NULL AND load_exemption_reason NULL -> 0 of 865 (read on prod 2026-10-12 via Neon read-only)
