@@ -9,3 +9,4 @@ export { ColumnChooser, type TableColumn } from "./ColumnChooser";
 export { TableHeaderCell } from "./TableHeaderCell";
 export { useTableController, type SortDir } from "./useTableController";
 export { useTablePref, type TablePref } from "./useTablePref";
+export { MoneyListToolbar, type MoneyListToolbarProps } from "./MoneyListToolbar";

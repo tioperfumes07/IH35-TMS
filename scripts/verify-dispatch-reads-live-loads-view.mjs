@@ -62,6 +62,7 @@ const ALLOWLIST = new Map([
   ["dispatch/mileage/miles-recommendations.routes.ts", "443.55 deadhead fill: selects the company's loads still missing miles_deadhead (historical, settled included) to fill them. Not a list/board read."],
   ["dispatch/mileage/miles-recommendations.service.ts", "443.55 miles recommendations: reads ONE load by id (FOR UPDATE on the deadhead fill) and the unit's previous load's last stop. Not a list/board read."],
   ["dispatch/printed-trailer-decision.service.ts", "443.90 #4 printed-trailer decision: groups the loads behind a set of expense documents (by id) by customer. Not a list/board read."],
+  ["dispatch/load-trailer-gps-match.service.ts", "443.107 R17 GPS trailer match: reads ALL non-voided loads without trailer assignment history to match GPS co-location (historical, settled loads included — views.live_loads excludes settled, which would silently skip the exact loads this engine exists to fill). Not a dispatch board surface, not rendered in any list."],
 ]);
 
 function loadBaseline() {
