@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @ratchet — asserts the hardcoded LAW figures, the machine record (data/reconciliation/…json) and the human doc agree. It proves the declaration is unchanged, never that the books behave; it may never back a Live claim. */
 // verify-reconciliation-constants.mjs — the USMCA/Faro reconciliation, CLOSED (owner order,
 // 2026-09-22): "SAVED SO NOBODY ASKS AGAIN." Nine figures are LAW.
 // docs/manuals/00-USMCA-RECONCILIATION-CLOSED-NEVER-ASK-AGAIN.md is the human-readable record;

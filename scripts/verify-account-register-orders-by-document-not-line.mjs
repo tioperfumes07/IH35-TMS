@@ -26,11 +26,11 @@
  *
  * The static half needs no database, so it runs in every CI context including the fresh-DB job.
  *
- * Self-test: node scripts/verify-steps/3077-verify-account-register-orders-by-document-not-line.mjs --selftest
+ * Self-test: node scripts/verify-account-register-orders-by-document-not-line.mjs --selftest
  */
 import fs from "node:fs";
 import path from "node:path";
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "3077-verify-account-register-orders-by-document-not-line";
 const SERVICE = path.join("apps", "backend", "src", "accounting", "account-register.service.ts");
@@ -147,21 +147,8 @@ if (problems.length) {
   fail(`${problems.length} register-ordering invariant(s) broken (ACCT-F349)`);
 }
 
-const url = process.env.DATABASE_URL;
-if (!url) {
-  console.log(`[${LABEL}] PASS (static half) — the register orders by document before line; no DATABASE_URL for the live half`);
-  process.exit(0);
-}
-
-// ── B · LIVE: the ordering key groups each entry contiguously within an account-day ───────────────
-const pool = new pg.Pool({ connectionString: url, ssl: url.includes("localhost") ? false : { rejectUnauthorized: false } });
-let client;
-try {
-  client = await pool.connect();
-} catch {
-  console.log(`[${LABEL}] PASS (static half) — database unreachable; static invariant held`);
-  process.exit(0);
-}
+// 443.105: a live money guard that cannot connect FAILS (ROUND 29.9-B, verify-no-silent-db-skip) — never a skip-pass.
+const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
 
 try {
   await client.query("BEGIN");
@@ -170,10 +157,9 @@ try {
   const present = await client.query(`SELECT to_regclass('accounting.journal_entry_postings') IS NOT NULL AS present`);
   if (!present.rows[0]?.present) {
     await client.query("ROLLBACK").catch(() => {});
-    console.log(`[${LABEL}] PASS (static half) — accounting schema not present (fresh/unmigrated DB)`);
     client.release();
     await pool.end();
-    process.exit(0);
+    fail("accounting schema not present (fresh/unmigrated DB) — an unmigrated database cannot verify this money invariant, so it is not a pass");
   }
 
   // The ordering key must EXIST for every entry, or the sort silently falls back to an arbitrary order.

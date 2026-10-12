@@ -29,11 +29,11 @@
  *
  * The static halves need no database, so they run in every CI context including the fresh-DB job.
  *
- * Self-test: node scripts/verify-steps/3073-verify-failed-posting-batch-is-retriable.mjs --selftest
+ * Self-test: node scripts/verify-failed-posting-batch-is-retriable.mjs --selftest
  */
 import fs from "node:fs";
 import path from "node:path";
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "3073-verify-failed-posting-batch-is-retriable";
 const ENGINE = path.join("apps", "backend", "src", "accounting", "posting-engine.service.ts");
@@ -195,21 +195,8 @@ if (problems.length) {
   fail(`${problems.length} posting-batch retry invariant(s) broken (ACCT-F348)`);
 }
 
-const url = process.env.DATABASE_URL;
-if (!url) {
-  console.log(`[${LABEL}] PASS (static halves) — batch reclaim + no settled-batch downgrade; no DATABASE_URL for the live half`);
-  process.exit(0);
-}
-
-// ── C · LIVE: no non-terminal batch owns journal lines (the reclaim's safety precondition) ────────
-const pool = new pg.Pool({ connectionString: url, ssl: url.includes("localhost") ? false : { rejectUnauthorized: false } });
-let client;
-try {
-  client = await pool.connect();
-} catch {
-  console.log(`[${LABEL}] PASS (static halves) — database unreachable; static invariants held`);
-  process.exit(0);
-}
+// 443.105: a live money guard that cannot connect FAILS (ROUND 29.9-B, verify-no-silent-db-skip) — never a skip-pass.
+const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
 
 try {
   await client.query("BEGIN");
@@ -218,10 +205,9 @@ try {
   const present = await client.query(`SELECT to_regclass('accounting.posting_batches') IS NOT NULL AS present`);
   if (!present.rows[0]?.present) {
     await client.query("ROLLBACK").catch(() => {});
-    console.log(`[${LABEL}] PASS (static halves) — accounting.posting_batches not present (fresh/unmigrated DB)`);
     client.release();
     await pool.end();
-    process.exit(0);
+    fail("accounting.posting_batches not present (fresh/unmigrated DB) — an unmigrated database cannot verify this money invariant, so it is not a pass");
   }
 
   const { rows } = await client.query(`

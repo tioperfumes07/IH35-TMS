@@ -49,7 +49,7 @@ describeIntegration("posted driver bills take their load's unit (443.102, real P
       const driver = (await one(`INSERT INTO mdata.drivers (operating_company_id, first_name, last_name, phone) VALUES ($1, 'Ust', 'Driver', '5555550100') RETURNING id::text AS id`, [opco])).id;
       const account = (await one(`INSERT INTO catalogs.accounts (operating_company_id, account_name, account_type, account_number) VALUES ($1, 'UST driver pay', 'Expense', '96901') RETURNING id::text AS id`, [opco])).id;
       const unit = async (n: string, owner: string, leasedTo: string | null) =>
-        (await one(`INSERT INTO mdata.units (unit_number, vin, owner_company_id, currently_leased_to_company_id) VALUES ($1, $2, $3, $4) RETURNING id::text AS id`,
+        (await one(`INSERT INTO mdata.units (unit_number, vin, owner_company_id, currently_leased_to_company_id, is_sample_data) VALUES ($1, $2, $3, $4, true) RETURNING id::text AS id`,
           [`${tag}-${n}`, `VIN${tag}${n}`.slice(0, 17), owner, leasedTo])).id;
       const uOwn1 = await unit("U1", opco, null);
       const uOwn2 = await unit("U2", opco, null);
