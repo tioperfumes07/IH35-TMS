@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import { register } from 'tsx/esm/api';
+register();
+const { canonicalLoadCostsOpenClause } = await import('../apps/backend/src/dispatch/canonical-active-load-set.ts');
 
 const BOARD = "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx";
 const BACKEND = "apps/backend/src/accounting/load-costs-board.routes.ts";
@@ -64,8 +67,8 @@ function violations(board, backend) {
   if (!board.includes('headerBg="#EEF2F6"') || !board.includes('headerInk="#1F2937"')) errors.push("light table-header re-theme (headerBg/headerInk) missing");
   if (!board.includes("columnGroups={COLUMN_GROUPS}") || !board.includes('label: "The trip"') || !board.includes('label: "Revenue"') || !board.includes('label: "Trip expense"') || !board.includes('label: "Driver pay"')) errors.push("grouped column-band row (spec §2.2) missing");
   // Drafts never shown; voided (cancelled) hidden by default, toggle-able.
-  if (!backend.includes("l.status <> 'draft'") || !backend.includes("l.status <> 'cancelled'") || !backend.includes("show_voided")) errors.push("drafts-never-shown / voided-hidden-by-default filter missing");
-  if (!backend.includes("repairs_maintenance_cents") || !backend.includes("linked_work_order_uuid") || !backend.includes("wo.load_id = e.load_id") || !backend.includes("wo.load_id = bl.load_id")) errors.push("direct-trip R&M must derive from same-load work-order financial links");
+  if (!backend.includes('canonicalLoadCostsOpenClause("l", parsed.data.show_voided)') || !backend.includes("l.status <> 'draft'") || !backend.includes("l.status NOT IN ('cancelled','voided',")) errors.push("drafts-never-shown / voided-hidden-by-default filter missing");
+  if (!backend.includes("repairs_maintenance_cents") || !backend.includes("linked_work_order_uuid") || !backend.includes("wo.load_id = cd.load_id") || !backend.includes('COALESCE(el.load_id,e.load_id)') || !backend.includes('COALESCE(bl.load_id,b.load_id)')) errors.push("direct-trip R&M must derive from same-load work-order financial links");
   if (!backend.includes("wo.load_id IS NOT NULL") || !backend.includes("wo.status <> 'cancelled'")) errors.push("R&M aggregate must exclude non-trip and cancelled work orders");
   // Honesty rule (owner order 2026-09-04): Empty Miles / Deadhead Pay render BLANK, never 0, when
   // untracked -- a 0 would claim no empty miles and underpay the driver.
@@ -73,7 +76,7 @@ function violations(board, backend) {
   // Spec §2.4 / §5.3: "If it does not foot, the board is lying" -- no clamp may hide a footing bug,
   // and the category buckets must exclude WO-linked lines so they can never double-count with R&M.
   if (backend.includes("GREATEST(0,")) errors.push("other_cost_cents is clamped -- a footing failure would be silently masked (spec §2.4)");
-  if (!backend.includes("e.linked_work_order_uuid IS NULL") || !backend.includes("b.linked_work_order_uuid IS NULL")) errors.push("category_costs must exclude WO-linked lines to avoid double-counting with R&M");
+  if (!backend.includes("linked_work_order_uuid IS NULL") || !backend.includes('el.line_category, e.linked_work_order_uuid') || !backend.includes('b.linked_work_order_uuid,b.status')) errors.push("category_costs must exclude WO-linked expense AND bill lines to avoid double-counting with R&M");
   // Spec §4: "A totals row that foots every money column."
   // 2026-09-06 (lead): DSP-TBL (owner ruling 2026-09-05) replaced ParityTable's raw `footer={` with `footerCells={`
   // (the totals keyed per column). The old literal pin went stale and reddened locked-guards-heavy on main via the
@@ -90,7 +93,10 @@ function check(board, backend) {
 }
 
 const board = fs.readFileSync(BOARD, "utf8");
-const backend = fs.readFileSync(BACKEND, "utf8");
+// R443.139 extracted one shared cost model and one canonical scope. Inspect their actual
+// emitted SQL as well as the route; call-site assertions prevent unmounted code passing.
+const backend = fs.readFileSync(BACKEND, "utf8") + '\n' +
+  fs.readFileSync('apps/backend/src/accounting/load-costs-live-documents.sql.ts','utf8') + '\n' + canonicalLoadCostsOpenClause('l');
 
 if (process.argv.includes("--selftest")) {
   let caught = 0;
@@ -118,14 +124,17 @@ if (process.argv.includes("--selftest")) {
     { board: board.replaceAll('"In transit"', '"removed"'), backend },
     { board: board.replaceAll("Delivered — no appointment on file", "removed"), backend },
     { board, backend: backend.replaceAll("repairs_maintenance_cents", "removed_rm_cents") },
-    { board, backend: backend.replaceAll("wo.load_id = e.load_id", "TRUE") },
-    { board, backend: backend.replaceAll("wo.load_id = bl.load_id", "TRUE") },
+    { board, backend: backend.replaceAll("wo.load_id = cd.load_id", "TRUE") },
+    { board, backend: backend.replaceAll("COALESCE(el.load_id,e.load_id)", "e.load_id") },
+    { board, backend: backend.replaceAll("COALESCE(bl.load_id,b.load_id)", "b.load_id") },
+    { board, backend: backend.replaceAll('canonicalLoadCostsOpenClause("l", parsed.data.show_voided)', 'TRUE') },
     { board, backend: backend.replace("l.status <> 'draft'", "TRUE") },
-    { board, backend: backend.replace("l.status <> 'cancelled'", "TRUE") },
+    { board, backend: backend.replace("l.status NOT IN ('cancelled','voided',", "l.status NOT IN (") },
     { board: board.replaceAll("empty_miles == null", "false"), backend },
     { board, backend: `${backend}\nGREATEST(0, ` },
-    { board, backend: backend.replace("e.linked_work_order_uuid IS NULL", "TRUE") },
-    { board, backend: backend.replace("b.linked_work_order_uuid IS NULL", "TRUE") },
+    { board, backend: backend.replace("linked_work_order_uuid IS NULL", "TRUE") },
+    { board, backend: backend.replace("el.line_category, e.linked_work_order_uuid", "el.line_category, NULL") },
+    { board, backend: backend.replace("b.linked_work_order_uuid,b.status", "NULL,b.status") },
     { board: board.replaceAll("footerCells={", "removedFooterCells={").replaceAll("footer={", "removedFooter={"), backend },
     { board: board.replaceAll("load-costs-totals-revenue", "removed"), backend },
   ];

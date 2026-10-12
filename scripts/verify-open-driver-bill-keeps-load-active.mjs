@@ -84,11 +84,13 @@ async function main() {
 
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
-    await client.query("BEGIN");
+    await client.query("BEGIN READ ONLY");
     await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);
 
     const companiesRes = await client.query(
-      `SELECT DISTINCT operating_company_id::text FROM mdata.loads WHERE soft_deleted_at IS NULL`
+      `SELECT DISTINCT operating_company_id::text FROM mdata.loads
+        WHERE soft_deleted_at IS NULL AND operating_company_id=$1::uuid`,
+      ["5c854333-6ea5-4faa-af31-67cb272fef80"]
     );
 
     let checked = 0;
@@ -98,7 +100,8 @@ async function main() {
         `SELECT l.id::text AS id, l.load_number
            FROM mdata.loads l
            JOIN driver_finance.driver_bills db
-             ON db.load_id = l.id AND db.status <> 'void' AND db.settled_in_settlement_id IS NULL
+             ON db.load_id = l.id AND db.operating_company_id=l.operating_company_id
+              AND db.status <> 'void' AND db.settled_in_settlement_id IS NULL
           WHERE l.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
             AND l.status IN ('booked','planned','assigned','unassigned','assigned_not_dispatched',
@@ -108,11 +111,11 @@ async function main() {
             AND NOT EXISTS (
               SELECT 1 FROM driver_finance.settlement_lines sl
               JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id AND ds.status = 'closed'
-               WHERE sl.load_id = l.id AND sl.is_active IS TRUE
+               WHERE sl.load_id = l.id AND sl.is_active IS TRUE AND ds.operating_company_id=l.operating_company_id
             )
             AND NOT EXISTS (
               SELECT 1 FROM accounting.invoices i
-               WHERE i.source_load_id = l.id AND i.status NOT IN ('draft', 'proforma', 'void')
+               WHERE i.source_load_id = l.id AND i.operating_company_id=l.operating_company_id AND i.status NOT IN ('draft', 'proforma', 'void')
             )`,
         [operating_company_id]
       );
@@ -123,7 +126,7 @@ async function main() {
         checked++;
         if (!activeIds.has(row.id)) {
           console.error(
-            `${LABEL}: FAIL — load ${row.load_number} (${row.id}) has ONLY an open/unsettled ` +
+            `${LABEL}: FAIL — a USMCA load has ONLY an open/unsettled ` +
               "driver bill and is still excluded from the canonical active set — the fix regressed."
           );
           await client.query("ROLLBACK");

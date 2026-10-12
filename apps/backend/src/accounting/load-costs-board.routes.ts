@@ -3,7 +3,8 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { countUncategorizedTransactions } from "../banking/pending-categorization.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
-import { canonicalActiveLoadNotFinishedByMoneyCte } from "../dispatch/canonical-active-load-set.js";
+import { canonicalLoadCostsOpenClause } from "../dispatch/canonical-active-load-set.js";
+import { LOAD_COST_DOCUMENTS_CTE, loadCostsRevenueJoin } from "./load-costs-live-documents.sql.js";
 import { wizardChargesLeftJoin } from "./load-wizard-charges.sql.js";
 import { LEDGER_POSTING_COUNTS_SQL } from "./ledger-membership.js";
 
@@ -57,7 +58,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
       // own serviceStatus() branch order (LoadCostsBoardPage.tsx): In transit(0) < Delivered-no-
       // appt(1) < On Time(2) < Late(3), so ascending server sort visually matches ascending column
       // click same as every other column.
-      const marginSql = "(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))";
+      const marginSql = "(revenue.revenue_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))";
       const sortColumns = {
         ledger_cost: "l.load_number", // re-sorted by ledger_cost_cents after the ledger read
         load: "l.load_number",
@@ -66,7 +67,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
         pu_date: "pickup.scheduled_arrival_at",
         del_date: "delivery.actual_arrival_at",
         status: "CASE WHEN delivery.actual_arrival_at IS NULL THEN 0 WHEN delivery.scheduled_arrival_at IS NULL THEN 1 WHEN delivery.actual_arrival_at <= delivery.scheduled_arrival_at THEN 2 ELSE 3 END",
-        revenue: "l.rate_total_cents",
+        revenue: "revenue.revenue_cents",
         line_haul: "COALESCE(wiz.linehaul_cents,0)",
         fuel_surcharge: "COALESCE(wiz.fuel_surcharge_cents,0)",
         accessorials: "COALESCE(wiz.accessorial_cents,0)",
@@ -85,34 +86,22 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
         deadhead_pay: "CASE WHEN COALESCE(dpa.has_deadhead_miles,false) THEN COALESCE(dpa.deadhead_pay_cents,0) END",
         gross: "COALESCE(dp.driver_pay_cents,0)",
         margin: marginSql,
-        margin_pct: `(${marginSql}::numeric / NULLIF(l.rate_total_cents, 0))`,
+        margin_pct: `(${marginSql}::numeric / NULLIF(revenue.revenue_cents, 0))`,
         settlement: "si.settlement_display_id",
       } as const;
       const sortSql = `${sortColumns[parsed.data.load_costs_sort]} ${parsed.data.sort_direction.toUpperCase()} NULLS LAST, l.load_number ASC`;
       const result = await client.query(
-        `WITH expense_costs AS (
-           SELECT e.load_id,
-                  COALESCE(SUM(e.total_amount_cents), 0)::bigint AS expense_cents,
-                  COUNT(*)::int AS expense_count
-             FROM accounting.expenses e
-            WHERE e.operating_company_id = $1::uuid
-              AND e.load_id IS NOT NULL
-              AND e.status <> 'void'
-            GROUP BY e.load_id
+        `WITH ${LOAD_COST_DOCUMENTS_CTE}, expense_costs AS (
+           SELECT load_id, COALESCE(SUM(amount_cents),0)::bigint AS expense_cents,
+                  COUNT(DISTINCT document_id)::int AS expense_count
+             FROM cost_documents WHERE kind='expense' AND load_id IS NOT NULL
+            GROUP BY load_id
          ), bill_costs AS (
-           SELECT bl.load_id,
-                  COALESCE(SUM(ROUND(bl.amount * 100)), 0)::bigint AS bill_cents,
-                  COUNT(DISTINCT b.id)::int AS bill_count,
-                  COUNT(DISTINCT b.id) FILTER (WHERE b.status IN ('open','unpaid','partial','partially_paid'))::int AS unpaid_bill_count
-             FROM accounting.bill_lines bl
-             JOIN accounting.bills b
-               ON b.id = bl.bill_id
-              AND b.operating_company_id = $1::uuid
-            WHERE bl.load_id IS NOT NULL
-              AND b.status NOT IN ('void','voided')
-              AND b.revoked_at IS NULL
-              AND bl.voided_at IS NULL
-            GROUP BY bl.load_id
+           SELECT load_id, COALESCE(SUM(amount_cents),0)::bigint AS bill_cents,
+                  COUNT(DISTINCT document_id)::int AS bill_count,
+                  COUNT(DISTINCT document_id) FILTER (WHERE unpaid)::int AS unpaid_bill_count
+             FROM cost_documents WHERE kind='bill' AND load_id IS NOT NULL
+            GROUP BY load_id
          -- LOAD-COSTS-COMPLETE item (3): owner's exact board-column list breaks "Costs" into
          -- Late Fee / Lumper / Fuel / R&M Exp (already computed below, own WO-linkage mechanism) /
          -- Other. RECONCILED with Cursor-load-costs-board-columns (#20360, merged same day): both
@@ -139,23 +128,8 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                   COALESCE(SUM(amount_cents) FILTER (WHERE line_category = 'detention_paid'), 0)::bigint AS late_fee_cents,
                   COALESCE(SUM(amount_cents) FILTER (WHERE line_category = 'lumper'), 0)::bigint AS lumper_cents,
                   COALESCE(SUM(amount_cents) FILTER (WHERE line_category IN ('diesel','def')), 0)::bigint AS fuel_cents
-             FROM (
-               SELECT el.load_id, el.line_category, el.amount_cents
-                 FROM accounting.expense_lines el
-                 JOIN accounting.expenses e ON e.id = el.expense_id AND e.operating_company_id = $1::uuid
-                WHERE el.load_id IS NOT NULL
-                  AND e.status <> 'void'
-                  AND e.linked_work_order_uuid IS NULL
-               UNION ALL
-               SELECT bl.load_id, bl.line_category, ROUND(bl.amount * 100)::bigint AS amount_cents
-                 FROM accounting.bill_lines bl
-                 JOIN accounting.bills b ON b.id = bl.bill_id AND b.operating_company_id = $1::uuid
-                WHERE bl.load_id IS NOT NULL
-                  AND b.status NOT IN ('void','voided')
-                  AND b.revoked_at IS NULL
-                  AND bl.voided_at IS NULL
-                  AND b.linked_work_order_uuid IS NULL
-             ) x
+             FROM cost_documents
+            WHERE load_id IS NOT NULL AND linked_work_order_uuid IS NULL
             GROUP BY load_id
          -- Driver-pay DETAIL (Short Miles / Rate Loaded / Loaded Pay / Empty Miles / Rate Empty /
          -- Deadhead Pay): one representative driver_bills row per load (the primary, non-team,
@@ -177,7 +151,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
              FROM driver_finance.driver_bills db
             WHERE db.operating_company_id = $1::uuid
               AND db.load_id IS NOT NULL
-              AND db.status <> 'void'
+              AND db.status NOT IN ('void','voided') AND db.voided_at IS NULL
               AND db.team_driver_id IS NULL
             ORDER BY db.load_id, db.created_at DESC
          -- SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11, verbatim: "remove and delete any
@@ -249,14 +223,6 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                ON ds.id = COALESCE(linked.presettlement_link_id, bill_link.settlement_id)
               AND ds.operating_company_id = linked.operating_company_id AND ds.voided_at IS NULL
             WHERE linked.operating_company_id = $1::uuid
-         -- Issued invoices are independent of dispatch status. Keep this signal alongside
-         -- the tour-continuation flag so invoiced loads cannot re-enter an active bucket.
-         ), invoice_info AS (
-           SELECT i.source_load_id AS load_id, true AS is_invoiced
-             FROM accounting.invoices i
-            WHERE i.operating_company_id = $1::uuid
-              AND i.source_load_id IS NOT NULL
-              AND i.status NOT IN ('draft', 'proforma', 'void')
          ), driver_pay_amounts AS (
            SELECT db.load_id,
                   COALESCE(SUM(db.loaded_pay_cents), 0)::bigint AS loaded_pay_cents,
@@ -265,36 +231,17 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
              FROM driver_finance.driver_bills db
             WHERE db.operating_company_id = $1::uuid
               AND db.load_id IS NOT NULL
-              AND db.status <> 'void'
+              AND db.status NOT IN ('void','voided') AND db.voided_at IS NULL
             GROUP BY db.load_id
          ), repair_documents AS (
-           SELECT e.load_id, e.total_amount_cents::bigint AS amount_cents
-             FROM accounting.expenses e
+           SELECT cd.load_id, cd.amount_cents
+             FROM cost_documents cd
              JOIN maintenance.work_orders wo
-               ON wo.id = e.linked_work_order_uuid
-              AND wo.operating_company_id = e.operating_company_id
-              AND wo.load_id = e.load_id
+               ON wo.id = cd.linked_work_order_uuid
+              AND wo.operating_company_id = $1::uuid
+              AND wo.load_id = cd.load_id
               AND wo.load_id IS NOT NULL
               AND wo.status <> 'cancelled'
-            WHERE e.operating_company_id = $1::uuid
-              AND e.load_id IS NOT NULL
-              AND e.status <> 'void'
-           UNION ALL
-           SELECT bl.load_id, ROUND(bl.amount * 100)::bigint AS amount_cents
-             FROM accounting.bill_lines bl
-             JOIN accounting.bills b
-               ON b.id = bl.bill_id
-              AND b.operating_company_id = $1::uuid
-             JOIN maintenance.work_orders wo
-               ON wo.id = b.linked_work_order_uuid
-              AND wo.operating_company_id = b.operating_company_id
-              AND wo.load_id = bl.load_id
-              AND wo.load_id IS NOT NULL
-              AND wo.status <> 'cancelled'
-            WHERE bl.load_id IS NOT NULL
-              AND b.status NOT IN ('void','voided')
-              AND b.revoked_at IS NULL
-              AND bl.voided_at IS NULL
          ), repair_costs AS (
            SELECT load_id, COALESCE(SUM(amount_cents), 0)::bigint AS repairs_maintenance_cents
              FROM repair_documents
@@ -305,14 +252,15 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
              FROM driver_finance.driver_bills db
             WHERE db.operating_company_id = $1::uuid
               AND db.load_id IS NOT NULL
-              AND db.status <> 'void'
+              AND db.status NOT IN ('void','voided') AND db.voided_at IS NULL
             GROUP BY db.load_id
          )
          SELECT l.id::text AS load_id, l.load_number, l.status::text, COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id,l.operating_company_id)) AS customer_name,
                 mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id,l.operating_company_id) AS driver_name,
                 u.unit_number, tr.equipment_number AS trailer_number, pickup.city AS pickup_city, delivery.city AS delivery_city,
                 pickup.scheduled_arrival_at::text AS pickup_date, delivery.scheduled_arrival_at::text AS scheduled_delivery_at,
-                delivery.actual_arrival_at::text AS actual_delivery_at, l.created_at::text, l.rate_total_cents::text AS revenue_cents,
+                delivery.actual_arrival_at::text AS actual_delivery_at, l.created_at::text,
+                revenue.revenue_cents::text AS revenue_cents, revenue.revenue_source,
                 -- ROUND 285.4.4 — Book Load wizard amounts (dispatch.load_charge_lines), not re-derived.
                 COALESCE(wiz.linehaul_cents, 0)::text AS line_haul_cents,
                 COALESCE(wiz.fuel_surcharge_cents, 0)::text AS fuel_surcharge_cents,
@@ -344,12 +292,12 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 CASE WHEN COALESCE(dpa.has_deadhead_miles, false) THEN COALESCE(dpa.deadhead_pay_cents, 0)::text ELSE NULL END AS deadhead_pay_cents,
                 si.settlement_display_id, si.settlement_id,
                 COALESCE(si.is_resettlement, false) AS is_resettlement,
-                COALESCE(ii.is_invoiced, false) AS is_invoiced
-           FROM views.dispatch_load_with_driver_status l
+                revenue.is_invoiced
+           FROM mdata.loads l
            LEFT JOIN expense_costs ec ON ec.load_id=l.id LEFT JOIN bill_costs bc ON bc.load_id=l.id LEFT JOIN repair_costs rm ON rm.load_id=l.id LEFT JOIN driver_pay dp ON dp.load_id=l.id
            LEFT JOIN category_costs cb ON cb.load_id=l.id LEFT JOIN driver_pay_detail dpd ON dpd.load_id=l.id LEFT JOIN driver_pay_amounts dpa ON dpa.load_id=l.id
            LEFT JOIN settlement_info si ON si.load_id=l.id
-           LEFT JOIN invoice_info ii ON ii.load_id=l.id
+           ${loadCostsRevenueJoin("l")}
            ${wizardChargesLeftJoin("l.id", "l.operating_company_id", "wiz")}
            LEFT JOIN mdata.customers c ON c.id=l.customer_id AND c.operating_company_id=l.operating_company_id
            -- W-FIX-3b (loads.routes.ts, same rule): mdata.units has owner_company_id /
@@ -370,26 +318,8 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
            ) tr ON true
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='pickup' AND soft_deleted_at IS NULL ORDER BY sequence_number ASC LIMIT 1) pickup ON true
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at,actual_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='delivery' AND soft_deleted_at IS NULL ORDER BY sequence_number DESC LIMIT 1) delivery ON true
-          WHERE l.operating_company_id=$1::uuid AND l.soft_deleted_at IS NULL
-            -- LOAD-COSTS-COMPLETE item (3): drafts never appear on this board (owner order
-            -- 2026-09-04) -- a draft is not a real, money-bearing load yet. Voided (cancelled)
-            -- loads are hidden by default, toggle-able via show_voided.
-            AND l.status <> 'draft'
-            ${parsed.data.show_voided ? "" : "AND l.status <> 'cancelled'"}
-            -- ROUND 31.2 P0 (owner, 2026-09-22): "LOAD COSTS IS STILL RENDERING OLDER LOADS THAT
-            -- HAVE ALREADY BEEN SETTLED... ONLY LOADS THAT ARE ACTIVE, NOT INVOICED, CLOSED,
-            -- DELIVERED, ETC." Root cause: this board's OWN invoice_info CTE (above) already
-            -- computed "does this load carry a real, issued invoice" and never applied it here.
-            -- ROUND 32.2-CORRECTED (owner, 2026-09-22): invoice-exclusion alone still overcounted
-            -- 33 -> the real 9 -- on this fed data, 24 loads are fully settled/driver-billed
-            -- WITHOUT status ever advancing past dispatched/delivered, and none was ever invoiced.
-            -- Money is the source of truth, not status: exclude the three settled statuses status
-            -- alone can miss, plus ANY load already finished by settlement, driver bill, or
-            -- invoice. Measured live: 114 -> 33 (invoice-only) -> 9 (the corrected predicate).
-            AND l.status NOT IN ('closed', 'invoiced', 'paid')
-            -- ROUND 292 / FACTOR-BUT-NOT-DELIVERED: pass l.status so pre-delivery + issued
-            -- invoice (13625/13626) stays on the board — matches canonicalActiveLoadWhereClause.
-            AND ${canonicalActiveLoadNotFinishedByMoneyCte("l.id", "l.status")}
+          WHERE l.operating_company_id=$1::uuid
+            AND ${canonicalLoadCostsOpenClause("l", parsed.data.show_voided)}
           ORDER BY ${sortSql}`,
         [parsed.data.operating_company_id]
       );

@@ -307,6 +307,30 @@ export function canonicalActiveLoadWhereClause(alias = "l"): string {
   return `${canonicalActiveLoadStatusClause(alias)} AND ${canonicalActiveLoadNotFinishedByMoneyCte(`${alias}.id`, `${alias}.status`)}`;
 }
 
+/** R443.139: an issued invoice is revenue, not proof that a load's costs are finished.
+ * The current-cost board retains invoiced loads until their actual settlement closes.
+ * Keep this named read scope here, not as another private board status definition.
+ */
+export function canonicalLoadCostsOpenClause(alias = "l", showVoided = false): string {
+  return `${alias}.soft_deleted_at IS NULL AND ${alias}.is_sample_data IS NOT TRUE
+    AND ${alias}.status <> 'draft'
+    ${showVoided ? "" : `AND ${alias}.voided_at IS NULL AND ${alias}.status NOT IN ('cancelled','voided','abandoned','driver_walkoff','driver_no_show')`}
+    AND NOT EXISTS (
+      SELECT 1 FROM driver_finance.settlement_lines sl
+      JOIN driver_finance.driver_settlements ds ON ds.id=sl.settlement_id
+       WHERE sl.load_id=${alias}.id AND sl.is_active IS TRUE
+         AND ds.operating_company_id=${alias}.operating_company_id
+         AND ds.voided_at IS NULL AND ds.status='closed'
+    ) AND NOT EXISTS (
+      SELECT 1 FROM driver_finance.driver_bills db
+      JOIN driver_finance.driver_settlements ds ON ds.id=db.settled_in_settlement_id
+       WHERE db.load_id=${alias}.id AND db.operating_company_id=${alias}.operating_company_id
+         AND ds.operating_company_id=db.operating_company_id
+         AND db.voided_at IS NULL AND db.status NOT IN ('void','voided')
+         AND ds.voided_at IS NULL AND ds.status='closed'
+    )`;
+}
+
 /**
  * DISPATCH WORK — "is a unit carrying this load right now." See the file-header section above for
  * why this is a SEPARATE, permanent predicate from the accounting one above, never a widening of
