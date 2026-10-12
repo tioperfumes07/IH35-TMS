@@ -317,8 +317,10 @@ export async function confirmPrintBatch(
     for (const item of itemsRes.rows) {
       if (BigInt(item.check_number) < reprintFrom) continue;
       await client.query(`UPDATE banking.check_print_batch_items SET outcome = 'spoiled' WHERE id = $1::uuid`, [item.item_id]);
+      // 443.91: a SPOILED number is not a voided one — voided_at belongs only to status 'voided'
+      // (check_number_registry_status_matches_voided_at); the reprint reason and who spoiled it are kept.
       await client.query(
-        `UPDATE banking.check_number_registry SET status = 'spoiled', voided_at = now(), void_reason = 'reprint', voided_by_user_id = $2::uuid WHERE id = $1::uuid`,
+        `UPDATE banking.check_number_registry SET status = 'spoiled', void_reason = 'reprint', voided_by_user_id = $2::uuid WHERE id = $1::uuid`,
         [item.registry_id, actorUserId]
       );
       await client.query(
