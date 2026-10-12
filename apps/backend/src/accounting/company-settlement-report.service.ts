@@ -109,6 +109,22 @@ export type CompanySettlementDowntimeCostRow = {
   unit_rate_cents: number | null;
   amount_cents: number;
   is_cash_cost: boolean;
+  /** 443.103 — the source document each cost posted through (reverse drill-through); null when the cost has none yet. */
+  expense_id: string | null;
+  journal_entry_id: string | null;
+  tank_event_id: string | null;
+  docs_file_id: string | null;
+};
+
+/** 443.103 — downtime.event_day_reasons: one reason per calendar day an event spans (the close trigger requires it). */
+export type CompanySettlementDowntimeDayReasonRow = {
+  event_id: string;
+  reason_date: string;
+  category: string | null;
+  fault: string | null;
+  reason_text: string;
+  entered_by: string | null;
+  entered_at: string;
 };
 
 /** ROUND 285.4.9 / #58 — downtime.lost_opportunity. Management only. */
@@ -119,6 +135,14 @@ export type CompanySettlementLostOpportunityRow = {
   miles: number | null;
   pu_label: string | null;
   del_label: string | null;
+  /** 443.103 — the rest of the cancelled-load record (pickup / delivery, replacement, who cancelled and why). */
+  pu_date: string | null;
+  del_date: string | null;
+  replacement_load_number: string | null;
+  reposition_miles: number | null;
+  cancelled_at: string;
+  cancelled_by: string | null;
+  cancellation_reason: string | null;
 };
 
 /** ROUND 285.4.9 / #58 — fuel.load_fuel_cost (consumed vs purchased). Missing fields stay null. */
@@ -180,6 +204,7 @@ export type CompanySettlementReport = {
       events: CompanySettlementDowntimeEventRow[];
       costs: CompanySettlementDowntimeCostRow[];
       lost_opportunity: CompanySettlementLostOpportunityRow[];
+      day_reasons: CompanySettlementDowntimeDayReasonRow[];
       total_duration_hours: number;
       total_idle_hours: number;
     };
@@ -277,6 +302,7 @@ export async function buildCompanySettlementReport(
         events: [],
         costs: [],
         lost_opportunity: [],
+        day_reasons: [],
         total_duration_hours: 0,
         total_idle_hours: 0,
       },
@@ -641,6 +667,10 @@ export async function buildCompanySettlementReport(
     unit_rate_cents: string | null;
     amount_cents_num: string;
     is_cash_cost: boolean;
+    expense_id: string | null;
+    journal_entry_id: string | null;
+    tank_event_id: string | null;
+    docs_file_id: string | null;
   }>(
     `
       SELECT ec.event_id::text AS event_id,
@@ -651,7 +681,11 @@ export async function buildCompanySettlementReport(
              CASE WHEN ec.cost_type = 'idle_fuel' THEN ec.quantity::text ELSE NULL END AS gallons,
              ec.unit_rate_cents::text AS unit_rate_cents,
              ROUND(ec.amount_cents)::bigint::text AS amount_cents_num,
-             COALESCE(ec.is_cash_cost, false) AS is_cash_cost
+             COALESCE(ec.is_cash_cost, false) AS is_cash_cost,
+             ec.expense_id::text AS expense_id,
+             ec.journal_entry_id::text AS journal_entry_id,
+             ec.tank_event_id::text AS tank_event_id,
+             ec.docs_file_id::text AS docs_file_id
       FROM downtime.event_costs ec
       JOIN downtime.events e ON e.id = ec.event_id
       LEFT JOIN mdata.units u ON u.id = e.unit_id
@@ -674,6 +708,52 @@ export async function buildCompanySettlementReport(
     unit_rate_cents: r.unit_rate_cents === null ? null : Number(r.unit_rate_cents),
     amount_cents: Number(r.amount_cents_num),
     is_cash_cost: Boolean(r.is_cash_cost),
+    expense_id: r.expense_id,
+    journal_entry_id: r.journal_entry_id,
+    tank_event_id: r.tank_event_id,
+    docs_file_id: r.docs_file_id,
+  }));
+
+  // 443.103 — the per-day reasons behind each event (downtime.event_day_reasons), scoped through the event's company.
+  const dayReasonsRes = await client.query<{
+    event_id: string;
+    reason_date: string;
+    category: string | null;
+    fault: string | null;
+    reason_text: string;
+    entered_by: string | null;
+    entered_at: string;
+  }>(
+    `
+      SELECT edr.event_id::text AS event_id,
+             edr.reason_date::text AS reason_date,
+             cat.label AS category,
+             fp.label AS fault,
+             edr.reason_text,
+             NULLIF(TRIM(BOTH ' ' FROM COALESCE(eu.first_name, '') || ' ' || COALESCE(eu.last_name, '')), '') AS entered_by,
+             edr.entered_at::text AS entered_at
+      FROM downtime.event_day_reasons edr
+      JOIN downtime.events e ON e.id = edr.event_id AND e.operating_company_id = edr.operating_company_id
+      LEFT JOIN catalogs.downtime_categories cat ON cat.id = edr.category_id AND cat.operating_company_id = e.operating_company_id
+      LEFT JOIN catalogs.downtime_fault_parties fp ON fp.id = edr.fault_party_id AND fp.operating_company_id = e.operating_company_id
+      LEFT JOIN identity.users eu ON eu.id = edr.entered_by_user_id
+      WHERE edr.operating_company_id = $1::uuid
+        AND edr.event_id = ANY($2::uuid[])
+      ORDER BY edr.event_id, edr.reason_date
+    `,
+    [
+      input.operatingCompanyId,
+      downtimeEventIds.length ? downtimeEventIds : ["00000000-0000-0000-0000-000000000000"],
+    ]
+  );
+  const dayReasonRows: CompanySettlementDowntimeDayReasonRow[] = dayReasonsRes.rows.map((r) => ({
+    event_id: r.event_id,
+    reason_date: r.reason_date,
+    category: r.category,
+    fault: r.fault,
+    reason_text: r.reason_text,
+    entered_by: r.entered_by,
+    entered_at: r.entered_at,
   }));
 
   const lostOppRes = await client.query<{
@@ -683,16 +763,35 @@ export async function buildCompanySettlementReport(
     miles: string | null;
     pu_label: string | null;
     del_label: string | null;
+    pu_date: string | null;
+    del_date: string | null;
+    replacement_load_number: string | null;
+    reposition_miles: string | null;
+    cancelled_at: string;
+    cancelled_by: string | null;
+    cancellation_reason: string | null;
   }>(
     `
       SELECT lo.event_id::text AS event_id,
              cl.load_number AS cancelled_load_number,
              ROUND(lo.would_have_invoiced_cents)::bigint::text AS would_have_invoiced_cents_num,
              lo.miles::text AS miles,
-             NULLIF(TRIM(BOTH ', ' FROM COALESCE(lo.pu_city, '') || ', ' || COALESCE(lo.pu_state, '')), '') AS pu_label,
-             NULLIF(TRIM(BOTH ', ' FROM COALESCE(lo.del_city, '') || ', ' || COALESCE(lo.del_state, '')), '') AS del_label
+             COALESCE(NULLIF(TRIM(lo.pu_location_name), ''),
+                      NULLIF(TRIM(BOTH ', ' FROM COALESCE(lo.pu_city, '') || ', ' || COALESCE(lo.pu_state, '')), '')) AS pu_label,
+             COALESCE(NULLIF(TRIM(lo.del_location_name), ''),
+                      NULLIF(TRIM(BOTH ', ' FROM COALESCE(lo.del_city, '') || ', ' || COALESCE(lo.del_state, '')), '')) AS del_label,
+             lo.pu_date::text AS pu_date,
+             lo.del_date::text AS del_date,
+             rl.load_number AS replacement_load_number,
+             lo.reposition_miles::text AS reposition_miles,
+             lo.cancelled_at::text AS cancelled_at,
+             NULLIF(TRIM(BOTH ' ' FROM COALESCE(cu.first_name, '') || ' ' || COALESCE(cu.last_name, '')), '') AS cancelled_by,
+             cr.display_name AS cancellation_reason
       FROM downtime.lost_opportunity lo
       LEFT JOIN mdata.loads cl ON cl.id = lo.cancelled_load_id
+      LEFT JOIN mdata.loads rl ON rl.id = lo.replacement_load_id AND rl.operating_company_id = lo.operating_company_id
+      LEFT JOIN identity.users cu ON cu.id = lo.cancelled_by_user_id
+      LEFT JOIN catalogs.load_cancellation_reasons cr ON cr.id = lo.cancellation_reason_id AND cr.operating_company_id = lo.operating_company_id
       WHERE lo.operating_company_id = $1::uuid
         AND lo.event_id = ANY($2::uuid[])
       ORDER BY cl.load_number NULLS LAST
@@ -709,6 +808,13 @@ export async function buildCompanySettlementReport(
     miles: r.miles === null ? null : Number(r.miles),
     pu_label: r.pu_label,
     del_label: r.del_label,
+    pu_date: r.pu_date,
+    del_date: r.del_date,
+    replacement_load_number: r.replacement_load_number,
+    reposition_miles: r.reposition_miles === null ? null : Number(r.reposition_miles),
+    cancelled_at: r.cancelled_at,
+    cancelled_by: r.cancelled_by,
+    cancellation_reason: r.cancellation_reason,
   }));
 
   const totalDurationHours = downtimeEventRows.reduce((s, r) => s + (r.duration_hours ?? 0), 0);
@@ -818,6 +924,7 @@ export async function buildCompanySettlementReport(
         events: downtimeEventRows,
         costs: downtimeCostRows,
         lost_opportunity: lostOppRows,
+        day_reasons: dayReasonRows,
         total_duration_hours: totalDurationHours,
         total_idle_hours: totalIdleHours,
       },
