@@ -156,11 +156,12 @@ export async function resolvePostingSourceEntity(
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const sql: Record<string, string> = {
     invoice: `SELECT customer_id::text AS e, 'customer' AS t FROM accounting.invoices WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-    bill: `SELECT COALESCE(driver_id::text, vendor_uuid::text, vendor_id::text, mdata_vendor_id::text) AS e,
+    bill: `SELECT COALESCE(driver_id::text, vendor_uuid::text, CASE WHEN vendor_id::text ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN vendor_id::text END, mdata_vendor_id::text) AS e,
                   CASE WHEN driver_id IS NOT NULL THEN 'driver' ELSE 'vendor' END AS t
              FROM accounting.bills WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     // A payment on a driver's bill carries the driver, the same party as that bill's A/P credit.
-    bill_payment: `SELECT COALESCE(b.driver_id::text, bp.vendor_id::text) AS e,
+    // vendor_id is TEXT and carries QBO-mirror ids (TRANSP: 6,543 of 6,544 rows, e.g. '101'): only a uuid is a party.
+    bill_payment: `SELECT COALESCE(b.driver_id::text, CASE WHEN bp.vendor_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN bp.vendor_id END) AS e,
                           CASE WHEN b.driver_id IS NOT NULL THEN 'driver' ELSE 'vendor' END AS t
                      FROM accounting.bill_payments bp
                      LEFT JOIN accounting.bills b ON b.id = bp.bill_id AND b.operating_company_id = bp.operating_company_id
