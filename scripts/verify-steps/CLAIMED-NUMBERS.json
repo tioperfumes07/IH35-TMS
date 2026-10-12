@@ -16485,41 +16485,47 @@
   "18407": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-12",
-    "purpose": "verify-reassign-moves-open-driver-bill (AJK-01) — LEAD 443.113"
+    "purpose": "verify-reassign-moves-open-driver-bill (AJK-01) \u2014 LEAD 443.113"
   },
   "18411": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-12",
-    "purpose": "verify-cash-advance-disburse-atomic-with-gl (BCF-01) — LEAD 443.113"
+    "purpose": "verify-cash-advance-disburse-atomic-with-gl (BCF-01) \u2014 LEAD 443.113"
   },
   "18415": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-12",
-    "purpose": "verify-cash-advance-applied-bill-matches-driver-load (BCF-02) — LEAD 443.113"
+    "purpose": "verify-cash-advance-applied-bill-matches-driver-load (BCF-02) \u2014 LEAD 443.113"
   },
   "18419": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-12",
-    "purpose": "verify-settlement-pay-line-has-item (BCF-09) — LEAD 443.113"
+    "purpose": "verify-settlement-pay-line-has-item (BCF-09) \u2014 LEAD 443.113"
   },
   "18423": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-12",
-    "purpose": "verify-no-second-escrow-writer (BCF-11) — LEAD 443.113"
+    "purpose": "verify-no-second-escrow-writer (BCF-11) \u2014 LEAD 443.113"
   },
   "18427": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-12",
-    "purpose": "verify-driver-reimbursement-retry-idempotent (BCF-10) — LEAD 443.113"
+    "purpose": "verify-driver-reimbursement-retry-idempotent (BCF-10) \u2014 LEAD 443.113"
   },
   "18431": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-12",
-    "purpose": "verify-ensure-driver-vendor-links-or-refuses (AJK-04) — LEAD 443.113"
+    "purpose": "verify-ensure-driver-vendor-links-or-refuses (AJK-04) \u2014 LEAD 443.113"
   },
   "18435": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-12",
-    "purpose": "verify-driver-pay-recognized-at-delivery (443.116 #2 + (c)) — LEAD 443.116 CORRECTION"
+    "purpose": "verify-driver-pay-recognized-at-delivery (443.116 #2 + (c)) \u2014 LEAD 443.116 CORRECTION"
+  },
+  "18409": {
+    "seat": "CC-1",
+    "step": "verify-advance-disburse-atomic",
+    "date": "2026-10-12",
+    "reason": "443.113 BCF-01 atomic advance disburse guard"
   }
 }
