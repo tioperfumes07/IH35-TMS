@@ -13,7 +13,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import pg from "pg";
+
+const { buildPgClientConfig } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 
 // LEAD 2026-09-30: declared per verify-no-silent-db-skip's own instruction. This guard is a HYBRID —
 // its static source checks (the backfill route must write the odometer reading, must never seed
@@ -23,12 +26,14 @@ import pg from "pg";
 // is a partial pass, not a silent one — and it says so on stdout.
 
 export const REQUIRES_LIVE_DB = "Neon live verification required";
-export const ALLOW_OFFLINE_SKIP = "Static source checks always run and enforce the rule; only the live row cross-check needs DATABASE_URL.";
 
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-pm-schedule-never-guesses-a-baseline";
 const BACKFILL_ROUTE = "apps/backend/src/maintenance/service-history-backfill.routes.ts";
+// #24004 (CC-3 queue 2c): the backfill writes its odometer reading through the ONE manual writer (day-unique upsert)
+// -- verify-odometer-ledger-has-one-writer forbids a second raw INSERT -- so (c) checks the call + the writer's INSERT.
+const ODOMETER_WRITER = "apps/backend/src/telematics/odometer-manual-upsert.service.ts";
 
 // Static arm always runs; live honesty check needs Neon. Declared so verify-no-silent-db-skip (03d)
 // does not treat the intentional offline skip as a silent green.
@@ -36,7 +41,7 @@ export const ALLOW_OFFLINE_SKIP =
   "static source checks always run; live pm_schedules honesty check requires DATABASE_URL";
 
 /** Static source checks — pure, take the route file's text as input. */
-export function findStaticProblems(routeSrc) {
+export function findStaticProblems(routeSrc, writerSrc) {
   const problems = [];
 
   // (a) last_service_odometer must never be seeded from a current/live odometer reading
@@ -56,8 +61,11 @@ export function findStaticProblems(routeSrc) {
   if (!/INSERT INTO maintenance\.work_orders/i.test(routeSrc)) {
     problems.push("no INSERT INTO maintenance.work_orders found in the backfill route");
   }
-  if (!/INSERT INTO telematics\.odometer_readings/i.test(routeSrc)) {
-    problems.push("no INSERT INTO telematics.odometer_readings found in the backfill route — a backfill must never write the work order without the odometer reading");
+  if (!/await upsertManualOdometerReading\(client/.test(routeSrc)) {
+    problems.push("the backfill route no longer writes the odometer reading (await upsertManualOdometerReading(client, ...)) — a backfill must never write the work order without the odometer reading");
+  }
+  if (!/INSERT INTO telematics\.odometer_readings/i.test(writerSrc)) {
+    problems.push(`${ODOMETER_WRITER}: the manual odometer writer no longer INSERTs into telematics.odometer_readings`);
   }
 
   // (d) next_due_odometer must only ever be set alongside last_service_odometer in the same
@@ -81,30 +89,35 @@ export function findStaticProblems(routeSrc) {
 
 function selftest() {
   const good = fs.readFileSync(path.join(ROOT, BACKFILL_ROUTE), "utf8");
-  if (findStaticProblems(good).length) {
-    throw new Error(`expected PASS on the real route file, got: ${findStaticProblems(good).join(" | ")}`);
+  const writer = fs.readFileSync(path.join(ROOT, ODOMETER_WRITER), "utf8");
+  if (findStaticProblems(good, writer).length) {
+    throw new Error(`expected PASS on the real route file, got: ${findStaticProblems(good, writer).join(" | ")}`);
   }
 
   const seedFromCurrent = good.replace(
     "const nextDue = schedule.interval_kind",
     'const last_service_odometer = unit.odometer_mi;\n          const nextDue = schedule.interval_kind'
   );
-  if (findStaticProblems(seedFromCurrent).length === 0) {
+  if (findStaticProblems(seedFromCurrent, writer).length === 0) {
     throw new Error("expected FAIL when last_service_odometer is seeded from odometer_mi");
   }
 
   const targetsFrozenTable = good.replace("maintenance.pm_schedules", "maint.pm_schedule");
-  if (findStaticProblems(targetsFrozenTable).length === 0) {
+  if (findStaticProblems(targetsFrozenTable, writer).length === 0) {
     throw new Error("expected FAIL when a writer targets maint.pm_schedule");
   }
 
-  const noOdometerInsert = good.replace(/INSERT INTO telematics\.odometer_readings[\s\S]*?RETURNING id\n/, "");
-  if (findStaticProblems(noOdometerInsert).length === 0) {
-    throw new Error("expected FAIL when the odometer_readings insert is missing");
+  const noOdometerWrite = good.replace("await upsertManualOdometerReading(client", "await Promise.resolve(client");
+  if (noOdometerWrite === good || findStaticProblems(noOdometerWrite, writer).length === 0) {
+    throw new Error("expected FAIL when the backfill route no longer writes the odometer reading");
+  }
+  const writerNoInsert = writer.replace(/INSERT INTO telematics\.odometer_readings/g, "SELECT 1 FROM telematics.odometer_readings");
+  if (findStaticProblems(good, writerNoInsert).length === 0) {
+    throw new Error("expected FAIL when the manual odometer writer no longer INSERTs");
   }
 
   const noWorkOrderInsert = good.replace(/INSERT INTO maintenance\.work_orders \(/, "-- removed --(");
-  if (findStaticProblems(noWorkOrderInsert).length === 0) {
+  if (findStaticProblems(noWorkOrderInsert, writer).length === 0) {
     throw new Error("expected FAIL when the work_orders insert is missing");
   }
 
@@ -115,7 +128,7 @@ if (process.argv.includes("--selftest")) {
   selftest();
 } else {
   const routeSrc = fs.readFileSync(path.join(ROOT, BACKFILL_ROUTE), "utf8");
-  const staticProblems = findStaticProblems(routeSrc);
+  const staticProblems = findStaticProblems(routeSrc, fs.readFileSync(path.join(ROOT, ODOMETER_WRITER), "utf8"));
   if (staticProblems.length) {
     console.error(`${LABEL} FAIL (static):\n- ${staticProblems.join("\n- ")}`);
     process.exit(1);
@@ -124,7 +137,7 @@ if (process.argv.includes("--selftest")) {
   if (!process.env.DATABASE_URL) {
     console.log(`${LABEL} (live check): SKIP — no DATABASE_URL (the static check above already passed).`);
   } else {
-    const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+    const client = new pg.Client(buildPgClientConfig(process.env.DATABASE_URL));
     await client.connect();
     try {
       await client.query("RESET ROLE");

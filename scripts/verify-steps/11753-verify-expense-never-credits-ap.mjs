@@ -19,7 +19,12 @@
  *
  * Fail-closed, live: zero live expense-sourced journal entries credit account 2000, in any entity.
  */
+import { createRequire } from "node:module";
 import pg from "pg";
+
+// 443.99: TLS per host via the one helper -- CI's postgres service / local Docker speak no SSL, so a hardcoded
+// ssl option failed every run with "The server does not support SSL connections" before any query ran.
+const { buildPgPoolConfig } = createRequire(import.meta.url)("../lib/pg-connection-options.cjs");
 
 export const ALLOW_OFFLINE_SKIP = "requires DATABASE_URL to query live GL state; no static code-shape substitute exists for a live count";
 
@@ -32,7 +37,7 @@ async function main() {
     return;
   }
 
-  const pool = new pg.Pool({ connectionString: databaseUrl, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool(buildPgPoolConfig(databaseUrl));
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
