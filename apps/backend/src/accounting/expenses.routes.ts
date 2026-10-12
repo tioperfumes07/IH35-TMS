@@ -7,7 +7,8 @@ import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { attributeExpenseToLoad } from "../expense-attribution/attribute.service.js";
 import { resolveLineLoadExemption } from "./expense-line-load-exemption.js";
-import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
+import { generateExpenseNumber, insertExpenseLoadLink } from "../expense-attribution/expense-number.js";
+import { ExpenseLoadLinkBackfillError, linkExpensesToLoads, refuseNonOwnerExpenseLoadLink } from "./expense-load-link-backfill.service.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { resolveExpenseCategoryId } from "./expense-category-catalog.js";
 import { postSourceTransaction, postSourceTransactionInClientTx, reversePostedSourceTransactionInClientTx, PostingEngineError, ensureOpenPeriod } from "./posting-engine.service.js";
@@ -942,36 +943,18 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
     const numbered = await generateExpenseNumber(client, attribution.loadId, body.operating_company_id);
     const headerNumber = expenseNumber ?? numbered.number;
 
-    await client.query(
-      `
-        INSERT INTO expense_attribution.expense_load_links (
-    operating_company_id,
-    expense_id,
-    expense_source,
-    load_id,
-    load_number,
-    expense_seq,
-    expense_number,
-    attribution_method,
-    attribution_confidence,
-    attribution_reason,
-    attributed_by_user_id
-        )
-        VALUES ($1,$2,'accounting',$3,$4,$5,$6,$7,$8,$9,$10)
-      `,
-      [
-        body.operating_company_id,
-        expenseId,
-        attribution.loadId,
-        numbered.loadNumber,
-        numbered.seq,
-        headerNumber,
-        attribution.method,
-        attribution.confidence,
-        attribution.reason,
-        userId,
-      ]
-    );
+    await insertExpenseLoadLink(client, {
+      operatingCompanyId: body.operating_company_id,
+      expenseId,
+      loadId: attribution.loadId,
+      loadNumber: numbered.loadNumber,
+      seq: numbered.seq,
+      expenseNumber: headerNumber,
+      method: attribution.method,
+      confidence: attribution.confidence,
+      reason: attribution.reason,
+      userId,
+    });
 
     expenseNumber = headerNumber;
 
@@ -1014,34 +997,18 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
     // 'explicit_load' + numeric 1 failed the CHECK, aborted the txn after
     // expenses.load_id was staged, and left load-linked TMS expenses with
     // expense_number NULL + zero expense_load_links rows (9 on USMCA).
-    await client.query(
-      `
-        INSERT INTO expense_attribution.expense_load_links (
-    operating_company_id,
-    expense_id,
-    expense_source,
-    load_id,
-    load_number,
-    expense_seq,
-    expense_number,
-    attribution_method,
-    attribution_confidence,
-    attribution_reason,
-    attributed_by_user_id
-        )
-        VALUES ($1,$2,'accounting',$3,$4,$5,$6,'user_assigned','high',$7,$8)
-      `,
-      [
-        body.operating_company_id,
-        expenseId,
-        body.load_id,
-        numbered.loadNumber,
-        numbered.seq,
-        headerNumber,
-        "Load stamped explicitly by the operator on expense create",
-        userId,
-      ]
-    );
+    await insertExpenseLoadLink(client, {
+      operatingCompanyId: body.operating_company_id,
+      expenseId,
+      loadId: body.load_id,
+      loadNumber: numbered.loadNumber,
+      seq: numbered.seq,
+      expenseNumber: headerNumber,
+      method: "user_assigned",
+      confidence: "high",
+      reason: "Load stamped explicitly by the operator on expense create",
+      userId,
+    });
     expenseNumber = headerNumber;
     if (hasExpenseNumber) {
       await client.query(`UPDATE accounting.expenses SET expense_number = $2 WHERE id = $1`, [expenseId, headerNumber]);
@@ -1146,6 +1113,11 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
 
 export type CreateExpenseBody = import("zod").infer<typeof createExpenseBodySchema>;
 
+// LEAD 443.112 #1 — Owner backfill of expense load links. Dry run unless asked.
+const linkLoadsBodySchema = z.object({
+  dry_run: z.boolean().optional().default(true),
+});
+
 export async function registerExpenseRoutes(app: FastifyInstance) {
   // GAP-EXPENSES browse side (READ-ONLY). Paginated list of accounting.expenses for the Expenses
   // list screen. STRICTLY read-only — SELECT only, no INSERT/UPDATE/DELETE. Mirrors the read-only
@@ -1223,6 +1195,29 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       });
     },
   );
+
+  // LEAD 443.112 #1 — the Owner's backfill of expense_load_links for load expenses written without one (the Creator's
+  // pre-G13 direct writes). Link row only, never money; dry run unless asked; refusal audited.
+  app.post("/api/v1/accounting/expenses/link-loads", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = linkLoadsBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    const opco = query.data.operating_company_id;
+    if (String(user.role ?? "") !== "Owner") {
+      await withCompanyScope(user.uuid, opco, (client) =>
+        refuseNonOwnerExpenseLoadLink(client, { userId: String(user.uuid), role: String(user.role ?? "") }, opco).catch((e) => {
+          if (!(e instanceof ExpenseLoadLinkBackfillError)) throw e;
+        })
+      );
+      return reply.code(403).send({ error: "owner_only", message: "Only the Owner can backfill expense load links." });
+    }
+    return withCompanyScope(user.uuid, opco, (client) =>
+      linkExpensesToLoads(client, { operatingCompanyId: opco, actorUserId: String(user.uuid), actorRole: "Owner", dryRun: body.data.dry_run })
+    );
+  });
 
   app.get("/api/v1/expenses/next-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
@@ -1621,36 +1616,19 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             ]
           );
         } else {
-          await client.query(
-            `
-              INSERT INTO expense_attribution.expense_load_links (
-                operating_company_id,
-                expense_id,
-                expense_source,
-                load_id,
-                load_number,
-                expense_seq,
-                expense_number,
-                attribution_method,
-                attribution_confidence,
-                attribution_reason,
-                attributed_by_user_id,
-                overridden_from_expense_number
-              )
-              VALUES ($1,$2,'accounting',$3,$4,$5,$6,'manual_override','high',$7,$8,$9)
-            `,
-            [
-              body.operating_company_id,
-              params.data.expenseId,
-              body.new_load_id,
-              numbered.loadNumber,
-              numbered.seq,
-              numbered.number,
-              body.reason,
-              user.uuid,
-              priorNumber,
-            ]
-          );
+          await insertExpenseLoadLink(client, {
+            operatingCompanyId: body.operating_company_id,
+            expenseId: params.data.expenseId,
+            loadId: body.new_load_id,
+            loadNumber: numbered.loadNumber,
+            seq: numbered.seq,
+            expenseNumber: numbered.number,
+            method: "manual_override",
+            confidence: "high",
+            reason: body.reason,
+            userId: user.uuid,
+            overriddenFromExpenseNumber: priorNumber,
+          });
         }
 
         if (await columnExists(client, "accounting", "expenses", "expense_number")) {

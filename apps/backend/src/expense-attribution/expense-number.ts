@@ -80,3 +80,74 @@ export async function generateExpenseNumber(
   }
   return { number, seq: s, loadNumber };
 }
+
+/**
+ * LEAD 443.112 #1 — the ONE writer of an expense's expense_attribution.expense_load_links row. The shared expense writer
+ * (createExpenseInClientTx, both its auto-attributed and explicit-load branches) and the Owner link backfill
+ * (expense-load-link-backfill.service.ts) all write the row through here, so the column set, the CHECK-valid method /
+ * confidence literals and the company scope have one definition.
+ */
+export async function insertExpenseLoadLink(
+  tx: Pick<PoolClient, "query">,
+  link: {
+    operatingCompanyId: string;
+    expenseId: string;
+    loadId: string;
+    loadNumber: string;
+    seq: number;
+    expenseNumber: string;
+    method: "auto_timestamp" | "auto_location" | "manual_override" | "user_assigned";
+    confidence: "high" | "medium" | "low";
+    reason: string | null;
+    userId: string | null;
+    /** Reattribution only: the number the expense carried before it moved to this load. */
+    overriddenFromExpenseNumber?: string | null;
+  }
+): Promise<void> {
+  await tx.query(
+    `
+      INSERT INTO expense_attribution.expense_load_links (
+        operating_company_id,
+        expense_id,
+        expense_source,
+        load_id,
+        load_number,
+        expense_seq,
+        expense_number,
+        attribution_method,
+        attribution_confidence,
+        attribution_reason,
+        attributed_by_user_id,
+        overridden_from_expense_number
+      )
+      VALUES ($1,$2,'accounting',$3,$4,$5,$6,$7,$8,$9,$10,$11)
+    `,
+    [
+      link.operatingCompanyId,
+      link.expenseId,
+      link.loadId,
+      link.loadNumber,
+      link.seq,
+      link.expenseNumber,
+      link.method,
+      link.confidence,
+      link.reason,
+      link.userId,
+      link.overriddenFromExpenseNumber ?? null,
+    ]
+  );
+}
+
+/**
+ * The load-spine sequence an existing expense number stands for on its load (inverse of formatLoadExpenseNumber):
+ * `<load>` -> 1, `<load>-k` -> k + 1. Anything else is not on that load's spine -> null.
+ */
+export function seqFromLoadExpenseNumber(loadNumber: string, expenseNumber: string | null | undefined): number | null {
+  if (!loadNumber || !expenseNumber) return null;
+  if (expenseNumber === loadNumber) return 1;
+  const prefix = `${loadNumber}-`;
+  if (!expenseNumber.startsWith(prefix)) return null;
+  const rest = expenseNumber.slice(prefix.length);
+  if (!/^[1-9][0-9]*$/.test(rest)) return null;
+  return Number(rest) + 1;
+}
