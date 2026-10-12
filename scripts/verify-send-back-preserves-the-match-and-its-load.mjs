@@ -8,7 +8,7 @@
  * reconciliation_matches row (migration 202615330930).
  *   static — every send-back path calls the release before its clear; nothing flips an accepted row to 'rejected' in
  *            place; the migration still declares the refusal, the release function and the partial uniqueness.
- *   live   — UNSCOPED: the trigger is enabled, the functions exist; 0 bank lines in a matched state with nothing matched
+ *   live   — USMCA data only: the trigger is enabled, the functions exist; 0 bank lines in a matched state with nothing matched
  *            across all 13 matched_* columns; every released row is complete (who/when/why/how/from); 0 accepted match
  *            rows whose live bank line no longer carries the pointer (a release that was not recorded).
  * No allow-list. No database = FAIL. Run: node scripts/verify-send-back-preserves-the-match-and-its-load.mjs [--selftest]
@@ -19,6 +19,23 @@ import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 const LABEL = "verify-send-back-preserves-the-match-and-its-load";
 export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const MIGRATION = "db/migrations/202615330930_send_back_keeps_the_match.sql";
+const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
+const POINTER_KINDS = ["load", "bill", "settlement", "expense", "transfer", "payment", "bill_payment", "journal_entry", "factoring_advance", "invoice", "fuel_transaction", "relay_fuel_transaction", "advance"];
+const PTRS = POINTER_KINDS.map((k) => `bt.matched_${k}_id IS NOT NULL`).join(" OR ");
+// These exact queries are exercised against transaction-local fixture tables by --selftest.
+const DATA_QUERIES = {
+  matchedNothing: `SELECT count(*)::int AS n FROM banking.bank_transactions bt
+    WHERE bt.operating_company_id = $1 AND bt.voided_at IS NULL
+      AND (bt.review_state = 'matched' OR bt.resolution_kind = 'matched') AND NOT (${PTRS})`,
+  incompleteReleases: `SELECT count(*)::int AS n FROM banking.reconciliation_matches
+    WHERE operating_company_id = $1 AND match_state = 'released'
+      AND (released_at IS NULL OR release_kind IS NULL OR btrim(coalesce(release_reason, '')) = '' OR released_from_state IS NULL)`,
+  orphanAccepted: `SELECT count(*)::int AS n FROM banking.reconciliation_matches m
+    JOIN banking.bank_transactions bt ON bt.id = m.bank_transaction_id AND bt.operating_company_id = $1 AND bt.voided_at IS NULL
+    WHERE m.operating_company_id = $1 AND m.voided_at IS NULL AND m.match_state IN ('auto_matched', 'user_matched')
+      AND NOT EXISTS (SELECT 1 FROM banking.bank_line_match_pointers(to_jsonb(bt)) p
+        WHERE p.kind = m.ledger_entry_kind AND p.ledger_entry_id = m.ledger_entry_id)`,
+};
 
 /** Each send-back path: the file, the release call that must appear, and the clear it must come before. */
 export const PATHS = [
@@ -83,6 +100,56 @@ if (process.argv.includes("--selftest")) {
     ["live orphan accepted", liveGaps({ ...clean, orphanAccepted: 2 }).length === 1],
     ["live trigger off", liveGaps({ ...clean, trigger: false }).length === 1],
   ];
+  // No credential fallback: fixture writes are permitted only on explicit loopback PostgreSQL 16.
+  const url = process.env.SELFTEST_DATABASE_URL;
+  if (!url || !["127.0.0.1", "localhost", "[::1]"].includes(new URL(url).hostname))
+    throw new Error("--selftest requires SELFTEST_DATABASE_URL pointing to isolated loopback PostgreSQL 16; never production");
+  const { Client } = await import("pg");
+  const db = new Client({ connectionString: url });
+  await db.connect();
+  try {
+    const branch = (await db.query("SELECT current_setting('neon.branch_id', true) AS branch")).rows[0].branch;
+    if (branch) throw new Error("selftest requires local PostgreSQL, not a proxied Neon branch");
+    const version = Number((await db.query("SHOW server_version_num")).rows[0].server_version_num);
+    if (version < 160000 || version >= 170000) throw new Error("selftest requires PostgreSQL 16");
+    await db.query("BEGIN");
+    // Temp relations model legacy invalid rows without disabling any real table's refusals.
+    await db.query(`CREATE TEMP TABLE bank_transactions (
+      id uuid, operating_company_id uuid, voided_at timestamptz, review_state text, resolution_kind text,
+      ${POINTER_KINDS.map(k => `matched_${k}_id uuid`).join(", ")}) ON COMMIT DROP`);
+    await db.query(`CREATE TEMP TABLE reconciliation_matches (
+      bank_transaction_id uuid, operating_company_id uuid, voided_at timestamptz, match_state text,
+      released_at timestamptz, release_kind text, release_reason text, released_from_state text,
+      ledger_entry_kind text, ledger_entry_id uuid) ON COMMIT DROP`);
+    const other = "00000000-0000-4000-8000-000000000002";
+    const bank = "00000000-0000-4000-8000-000000000003";
+    const entry = "00000000-0000-4000-8000-000000000004";
+    const tempQuery = q => q.replaceAll("banking.bank_transactions", "pg_temp.bank_transactions")
+      .replaceAll("banking.reconciliation_matches", "pg_temp.reconciliation_matches");
+    for (const company of [other, USMCA]) {
+      await db.query("TRUNCATE pg_temp.bank_transactions, pg_temp.reconciliation_matches");
+      await db.query("INSERT INTO pg_temp.bank_transactions (id, operating_company_id, review_state) VALUES ($1,$2,'matched')", [bank, company]);
+      await db.query(`INSERT INTO pg_temp.reconciliation_matches (bank_transaction_id, operating_company_id, match_state, ledger_entry_kind, ledger_entry_id)
+        VALUES ($1,$2,'released','expense',$3),($1,$2,'user_matched','expense',$3)`, [bank, company, entry]);
+      for (const [name, query] of Object.entries(DATA_QUERIES)) {
+        const count = (await db.query(tempQuery(query), [USMCA])).rows[0].n;
+        cases.push([`${name}: ${company === USMCA ? "USMCA gap counted" : "other-company gap excluded"}`, count === (company === USMCA ? 1 : 0)]);
+        if (company === other) {
+          const mutant = tempQuery(query).replace(/(?:bt\.|m\.)?operating_company_id = \$1 AND /g, "");
+          const changed = (await db.query(mutant)).rows[0].n;
+          cases.push([`${name}: removed-scope mutation rejected`, changed === 1 && changed !== count]);
+        }
+      }
+    }
+    // Both sides of the join are independently scoped, even for a corrupt cross-company pointer.
+    await db.query("UPDATE pg_temp.bank_transactions SET operating_company_id=$1", [other]);
+    const scoped = (await db.query(tempQuery(DATA_QUERIES.orphanAccepted), [USMCA])).rows[0].n;
+    const mutant = tempQuery(DATA_QUERIES.orphanAccepted).replace("bt.operating_company_id = $1 AND ", "");
+    cases.push(["orphanAccepted: bank join scope removal rejected", scoped === 0 && (await db.query(mutant, [USMCA])).rows[0].n === 1]);
+  } finally {
+    await db.query("ROLLBACK").catch(() => {});
+    await db.end();
+  }
   const bad = cases.filter(([, v]) => !v);
   if (bad.length) { console.error(`selftest FAIL: ${bad.map(([n]) => n).join(", ")}`); process.exit(1); }
   console.log(`${LABEL} selftest ${cases.length}/${cases.length}`);
@@ -91,8 +158,6 @@ if (process.argv.includes("--selftest")) {
 
 const fails = [...pathGaps(), ...migrationGaps(sql)];
 const { client: c, pool } = await requireLiveDbOrExit({ label: LABEL });
-const PTRS = ["load", "bill", "settlement", "expense", "transfer", "payment", "bill_payment", "journal_entry", "factoring_advance", "invoice", "fuel_transaction", "relay_fuel_transaction", "advance"]
-  .map((k) => `bt.matched_${k}_id IS NOT NULL`).join(" OR ");
 try {
   await c.query("BEGIN READ ONLY");
   await c.query("SET LOCAL ROLE NONE");
@@ -101,21 +166,12 @@ try {
   const facts = (await c.query(`
     SELECT
       EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'banking.bank_transactions'::regclass AND tgname = 'trg_send_back_keeps_the_match' AND tgenabled <> 'D') AS trigger,
-      to_regprocedure('banking.release_bank_line_matches(uuid,text,text,uuid)') IS NOT NULL AS fn,
-      (SELECT count(*) FROM banking.bank_transactions bt
-        WHERE bt.voided_at IS NULL AND (bt.review_state = 'matched' OR bt.resolution_kind = 'matched') AND NOT (${PTRS}))::int AS "matchedNothing"`)).rows[0];
+      to_regprocedure('banking.release_bank_line_matches(uuid,text,text,uuid)') IS NOT NULL AS fn`)).rows[0];
+  facts.matchedNothing = (await c.query(DATA_QUERIES.matchedNothing, [USMCA])).rows[0].n;
   let incompleteReleases = 0, orphanAccepted = 0;
   if (facts.fn) {
-    incompleteReleases = (await c.query(`
-      SELECT count(*)::int AS n FROM banking.reconciliation_matches
-       WHERE match_state = 'released' AND (released_at IS NULL OR release_kind IS NULL OR btrim(coalesce(release_reason, '')) = '' OR released_from_state IS NULL)`)).rows[0].n;
-    orphanAccepted = (await c.query(`
-      SELECT count(*)::int AS n
-        FROM banking.reconciliation_matches m
-        JOIN banking.bank_transactions bt ON bt.id = m.bank_transaction_id AND bt.voided_at IS NULL
-       WHERE m.voided_at IS NULL AND m.match_state IN ('auto_matched', 'user_matched')
-         AND NOT EXISTS (SELECT 1 FROM banking.bank_line_match_pointers(to_jsonb(bt)) p
-                          WHERE p.kind = m.ledger_entry_kind AND p.ledger_entry_id = m.ledger_entry_id)`)).rows[0].n;
+    incompleteReleases = (await c.query(DATA_QUERIES.incompleteReleases, [USMCA])).rows[0].n;
+    orphanAccepted = (await c.query(DATA_QUERIES.orphanAccepted, [USMCA])).rows[0].n;
   }
   const live = liveGaps({ ...facts, incompleteReleases, orphanAccepted });
   if (!applied) {
@@ -123,7 +179,7 @@ try {
     console.log(`${LABEL}: today — matched with nothing matched ${facts.matchedNothing}; ${live.length} live gap(s)`);
   } else {
     fails.push(...live);
-    console.log(`${LABEL}: live, unscoped — matched-with-nothing ${facts.matchedNothing}, incomplete releases ${incompleteReleases}, orphan accepted ${orphanAccepted}`);
+    console.log(`${LABEL}: live, USMCA only — matched-with-nothing ${facts.matchedNothing}, incomplete releases ${incompleteReleases}, orphan accepted ${orphanAccepted}`);
   }
   await c.query("ROLLBACK");
 } finally {

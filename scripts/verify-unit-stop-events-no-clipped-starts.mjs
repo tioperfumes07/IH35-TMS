@@ -39,7 +39,8 @@ if (process.env.DATABASE_URL && !process.argv.includes("--selftest")) {
     await c.query("SELECT set_config('app.bypass_rls','lucia',true)");
     const r = await c.query(
       `SELECT count(*)::int n FROM (SELECT unit_id, ended_at FROM telematics.unit_stop_events
-         WHERE ended_at IS NOT NULL GROUP BY 1, 2 HAVING count(*) > 1 AND max(created_at) > $1::timestamptz) d`, [CUTOFF]);
+         WHERE operating_company_id = $1 AND ended_at IS NOT NULL GROUP BY 1, 2 HAVING count(*) > 1 AND max(created_at) > $2::timestamptz) d`,
+      ["5c854333-6ea5-4faa-af31-67cb272fef80", CUTOFF]);
     if (r.rows[0].n > 0) fails.push(`${r.rows[0].n} stop(s) written after ${CUTOFF} have a clipped copy`);
     await c.query("ROLLBACK");
   } finally { await c.end(); }

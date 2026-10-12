@@ -67,7 +67,7 @@ try {
   const r = (await c.query(`
     SELECT count(*)::int n, coalesce(sum(p.amount_cents), 0)::bigint cents FROM accounting.journal_entry_postings p
      WHERE p.operating_company_id = $1::uuid AND p.source_transaction_type = 'invoice'
-       AND NOT EXISTS (SELECT 1 FROM accounting.transaction_source_links l WHERE l.journal_entry_posting_id = p.id)`, [USMCA])).rows[0];
+       AND NOT EXISTS (SELECT 1 FROM accounting.transaction_source_links l WHERE l.journal_entry_posting_id = p.id AND l.operating_company_id = $1::uuid)`, [USMCA])).rows[0];
   if (!applied) console.log(`${LABEL}: PENDING DEPLOY — migration not in the ledger; trigger check skipped`);
   fails.push(...auditLive(applied ? trigger : { tgenabled: "O" }, r.n));
   console.log(`${LABEL}: ${r.n} unlinked invoice-sourced posting(s), $${(Number(r.cents) / 100).toFixed(2)} (ceiling ${CEILING})`);

@@ -259,7 +259,10 @@ const fails = auditStatic(sql);
         const k = fks.find((x) => !x.composite && `${x.t}.${x.col}` === key);
         if (!k || !BLOCKED.includes(k.t)) continue;
         crossCounts[key] = Number((await c.query(
-          `SELECT count(*) n FROM ${k.t} x JOIN ${k.parent} p ON p.id = x.${k.col} WHERE x.operating_company_id IS DISTINCT FROM p.operating_company_id`)).rows[0].n);
+          `SELECT count(*) n FROM ${k.t} x
+            LEFT JOIN ${k.parent} p ON p.id = x.${k.col} AND p.operating_company_id = $1
+            WHERE x.operating_company_id = $1 AND x.${k.col} IS NOT NULL AND p.id IS NULL`,
+          ["5c854333-6ea5-4faa-af31-67cb272fef80"])).rows[0].n);
       }
       fails.push(...auditLive(fks, checks, BLOCKED, crossCounts));
       console.log(`verify-money-lines-same-entity-fks: ${fks.filter((k) => !k.composite).length} company-bearing FKs on ${BLOCKED.length} tables checked live`);

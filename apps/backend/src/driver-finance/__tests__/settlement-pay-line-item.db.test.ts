@@ -1,4 +1,6 @@
 import pg from "pg";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { refuseProductionConnectionString, refuseProductionDatabase } from "../../../test-helpers/refuse-production.js";
@@ -8,6 +10,17 @@ import { addSettlementPayLineInClientTx, PAY_LINE_KINDS } from "../settlement-pa
 import { loadSettlementPayItems } from "../settlement-payrun-close.service.js";
 
 describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("BCF-09 selected pay item (isolated PostgreSQL)", () => {
+  it("keeps every send-back assertion and rejects removal of USMCA scope on PostgreSQL 16", () => {
+    const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
+    if (!cs) throw new Error("DATABASE_URL required");
+    refuseProductionConnectionString(cs);
+    const root = fileURLToPath(new URL("../../../../../", import.meta.url));
+    const result = spawnSync(process.execPath, ["scripts/verify-send-back-preserves-the-match-and-its-load.mjs", "--selftest"], {
+      cwd: root, env: { ...process.env, SELFTEST_DATABASE_URL: cs }, encoding: "utf8",
+    });
+    expect(result.status, result.stderr + result.stdout).toBe(0);
+    expect(result.stdout).toContain("selftest 20/20");
+  });
   it("rejects the old extra-pay INSERT, accepts every pay kind with its item's account, and refuses unavailable items", async () => {
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
