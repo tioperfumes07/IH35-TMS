@@ -150,19 +150,35 @@ export async function disburseCashAdvanceSplit(
         if (leg.kind === "bill_payment") {
           // ACCT-F353 — derive from the BILL being paid, matching bills.service.ts's own bill_payment
           // writer precedent (paying a sample bill is a sample payment).
-          const billSample = await client.query<{ is_sample_data: boolean | null }>(
-            `SELECT is_sample_data FROM accounting.bills WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+          // ROUND 443.106 — also stamp vendor_id from the bill (DB refuses a blank/null vendor).
+          const billSample = await client.query<{
+            is_sample_data: boolean | null;
+            vendor_id: string | null;
+            mdata_vendor_id: string | null;
+          }>(
+            `SELECT is_sample_data, vendor_id, mdata_vendor_id::text AS mdata_vendor_id
+               FROM accounting.bills
+              WHERE id = $1::uuid AND operating_company_id = $2::uuid
+              LIMIT 1`,
             [leg.bill_id, companyId],
           );
+          const billVendor =
+            (billSample.rows[0]?.vendor_id && String(billSample.rows[0].vendor_id).trim()) ||
+            billSample.rows[0]?.mdata_vendor_id ||
+            null;
+          if (!billVendor) {
+            throw new DisburseSplitFailure(422, "bill_missing_vendor", `bill ${leg.bill_id} has no vendor_id`);
+          }
           // advance→bill leg (payment_date/status default; payment_method matches the existing rail).
           const bp = await client.query(
             `INSERT INTO accounting.bill_payments
-               (operating_company_id, bill_id, amount, amount_cents, payment_method, advance_id, source_bank_transaction_id, is_sample_data)
-             VALUES ($1::uuid, $2::uuid, $3, $4, 'cash_advance', $5::uuid, $6, $7)
+               (operating_company_id, bill_id, vendor_id, amount, amount_cents, payment_method, advance_id, source_bank_transaction_id, is_sample_data)
+             VALUES ($1::uuid, $2::uuid, $3, $4, $5, 'cash_advance', $6::uuid, $7, $8)
              RETURNING id::text AS id`,
             [
               companyId,
               leg.bill_id,
+              billVendor,
               leg.amount_cents / 100,
               leg.amount_cents,
               input.advance_id,

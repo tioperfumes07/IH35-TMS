@@ -385,12 +385,18 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
             INSERT INTO accounting.bill_payments (
               operating_company_id,
               bill_id,
+              vendor_id,
               amount,
               payment_method,
               advance_id,
               is_sample_data
             )
-            VALUES ($1, $2, $3, $4, $5,
+            VALUES ($1, $2,
+              -- ROUND 443.106 — stamp vendor from the bill being paid (DB refuses a blank vendor_id).
+              (SELECT COALESCE(NULLIF(btrim(COALESCE(b.vendor_id, '')), ''), b.mdata_vendor_id::text)
+                 FROM accounting.bills b
+                WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid),
+              $3, $4, $5,
               -- ACCT-F265 — inherit the parent bill's sample flag (see bills.service.ts). A cash advance
               -- settled against a SAMPLE bill must not produce a REAL payment; the driver-advance path
               -- is the one most likely to be exercised with fixture data.
