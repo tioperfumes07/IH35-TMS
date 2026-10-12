@@ -23,6 +23,12 @@ vi.mock("../shared.js", async () => {
               fuel_cents: "30000",
               tolls_cents: "5000",
               chargebacks_cents: "0",
+              // LAW 5 / ROUND 153 (dispatch-margin.routes.ts): headline numbers come from the canonical per-load rollup
+              // (LOAD_COST_ROLLUP_SELECT lc_* columns), never re-derived by the report.
+              lc_revenue_cents: "250000",
+              lc_driver_pay_cents: "100000",
+              lc_costs_cents: "35000",
+              lc_margin_cents: "115000",
             },
           ],
         })),

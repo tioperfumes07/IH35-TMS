@@ -55,7 +55,9 @@ function installMocks(subtreeRows: Array<{ closing_balance_cents: number; normal
   mockQuery.mockReset();
   mockQuery.mockImplementation(async (sql: string) => {
     if (sql.includes("WITH RECURSIVE subtree")) return { rows: subtreeRows };
-    if (sql.includes("escrow_accounts")) return { rows: [{ total_cents: escrowSubledgerCents }] };
+    // KILL-THE-SECOND-SYSTEM (subledger-gl-control-rec.service.ts sumEscrowSubledgerCents): the escrow subledger is the
+    // derived view driver_finance.v_driver_escrow_balance, no longer escrow_accounts.balance_cents.
+    if (sql.includes("v_driver_escrow_balance")) return { rows: [{ total_cents: escrowSubledgerCents }] };
     return { rows: [] };
   });
 }

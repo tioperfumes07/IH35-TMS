@@ -16,7 +16,7 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites, getIntegrationWorkOrderSeedIds } from "../../../test-helpers/db-fixture.js";
+import { ensureIntegrationPrerequisites, getIntegrationWorkOrderSeedIds, ensureIntegrationLoadId } from "../../../test-helpers/db-fixture.js";
 import { listWorkOrderLinkedFinancials } from "../bills.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -47,6 +47,7 @@ describeIntegration("WO↔bill/expense hard FK link (real Postgres)", () => {
   beforeAll(async () => {
     companyId = await ensureIntegrationPrerequisites();
     ({ unitId, driverId } = await getIntegrationWorkOrderSeedIds());
+    const loadId = await ensureIntegrationLoadId();
 
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL!;
     db = new pg.Client(buildPgClientConfig(cs));
@@ -56,9 +57,11 @@ describeIntegration("WO↔bill/expense hard FK link (real Postgres)", () => {
     workOrderId = randomUUID();
     await bypass(async () => {
       await db.query(
-        `INSERT INTO maintenance.work_orders (id, operating_company_id, wo_type, source_type, unit_sequence, status, unit_id, driver_id, display_id)
-         VALUES ($1::uuid, $2::uuid, 'repair', 'RT', 1, 'open', $3::uuid, $4::uuid, $5)`,
-        [workOrderId, companyId, unitId, driverId, `WO-LINK-${suffix}`]
+        // 443.91 #4: an RT (road) work order is TIER1 — the truck was working, so it names its load
+        // (E_TIER1_LOAD_REQUIRED, docs/laws/TRANSACTION-LINKAGE-LAW.md). The fixture uses the integration load.
+        `INSERT INTO maintenance.work_orders (id, operating_company_id, wo_type, source_type, unit_sequence, status, unit_id, driver_id, display_id, load_id)
+         VALUES ($1::uuid, $2::uuid, 'repair', 'RT', 1, 'open', $3::uuid, $4::uuid, $5, $6::uuid)`,
+        [workOrderId, companyId, unitId, driverId, `WO-LINK-${suffix}`, loadId]
       );
     });
   });

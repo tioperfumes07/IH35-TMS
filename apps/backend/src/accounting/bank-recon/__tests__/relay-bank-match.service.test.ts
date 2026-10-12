@@ -315,7 +315,9 @@ describe("R5 recommend / accept", () => {
         return null;
       },
       (q) => {
-        if (q.sql.includes("FROM accounting.journal_entries")) {
+        // The prior entry's source is read per posting (relay-bank-match.service.ts rematchRelayBankMatch: FROM
+        // accounting.journal_entry_postings — ROUND 393.2 every line names its source document).
+        if (q.sql.includes("FROM accounting.journal_entry_postings")) {
           return {
             rows: [{ source_transaction_type: "bank_categorization", source_transaction_id: "bank-1" }],
           };

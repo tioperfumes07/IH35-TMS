@@ -14,6 +14,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites, prepareCompanyForLoadInserts } from "../../../../test-helpers/db-fixture.js";
 import { createDraftLoadFrom204, parseX12204Payload } from "../transactions/inbound-204.handler.js";
+import { TEST_OWNER_USER_ID } from "../../../../test-helpers/constants.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -46,6 +47,10 @@ describeIntegration("createDraftLoadFrom204 -> the shared create path (E6)", () 
     await db.query("SET ROLE ih35_app");
     await db.query(`SELECT set_config('app.bypass_rls', 'lucia', false)`);
     await db.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [companyId]);
+    // 443.91 #4: the route runs createDraftLoadFrom204 inside withCurrentUser (edi.routes.ts), and the charge-line policy
+    // (dispatch.load_charge_lines_scope -> org.user_accessible_company_ids()) is membership-scoped — the fixture sets the
+    // same current user the app does (the integration Owner), never a bypass.
+    await db.query(`SELECT set_config('app.current_user_id', $1::text, false)`, [TEST_OWNER_USER_ID]);
     await db.query("BEGIN");
     await prepareCompanyForLoadInserts(db, companyId);
     const suf = randomUUID().slice(0, 8);

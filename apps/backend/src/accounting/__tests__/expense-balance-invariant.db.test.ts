@@ -27,6 +27,10 @@ describeIntegration("expense total=sum balance invariant (real Postgres)", () =>
   const suffix = randomUUID();
   const driverId = randomUUID();
   const committedExpenseIds: string[] = [];
+  // 443.91 #4: the fixture obeys the DB refusals that landed after this suite — a POSTED expense carries its journal entry
+  // (CHECK expenses_posted_requires_je) and every line names its expense account (CHECK expense_lines_expense_account_required).
+  let expenseAccountId = "";
+  let itemId = ""; // CHECK expense_lines_item_id_required: every line names its item (the account comes from the item)
 
   // Seed a posted/unposted expense (+ optional lines) inside ONE transaction and COMMIT.
   // Deferred constraint triggers fire at COMMIT, so a violation surfaces when the tx commits.
@@ -40,18 +44,25 @@ describeIntegration("expense total=sum balance invariant (real Postgres)", () =>
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
     try {
+      const jeId = opts.postingStatus === "posted"
+        ? (await db.query<{ id: string }>(
+            `INSERT INTO accounting.journal_entries (operating_company_id, entry_date, memo) VALUES ($1::uuid, CURRENT_DATE, $2) RETURNING id::text`,
+            [companyId, `balance-invariant fixture ${suffix}`])).rows[0]!.id
+        : null;
       await db.query(
         `INSERT INTO accounting.expenses
-           (id, operating_company_id, driver_uuid, transaction_date, total_amount_cents, status, posting_status)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, CURRENT_DATE, $4, 'posted', $5)`,
-        [opts.expenseId, companyId, driverId, opts.totalCents, opts.postingStatus]
+           (id, operating_company_id, driver_uuid, transaction_date, total_amount_cents, status, posting_status, journal_entry_id)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, CURRENT_DATE, $4, $6, $5, $7::uuid)`,
+        [opts.expenseId, companyId, driverId, opts.totalCents, opts.postingStatus, opts.postingStatus === "posted" ? "posted" : "draft", jeId]
       );
       let seq = 1;
       for (const c of opts.lineCents) {
         await db.query(
-          `INSERT INTO accounting.expense_lines (expense_id, line_sequence, amount_cents, amount, description)
-           VALUES ($1::uuid, $2, $3, $4, $5)`,
-          [opts.expenseId, seq++, c, c / 100, `line-${suffix}`]
+          // CHECK expense_lines_item_qty_rate_amount_check: an itemed line carries quantity x rate = amount.
+          `INSERT INTO accounting.expense_lines (expense_id, line_sequence, amount_cents, amount, description, expense_account_uuid, item_id,
+                                                quantity, rate_cents, unit_of_measure)
+           VALUES ($1::uuid, $2, $3::bigint, $4, $5, $6::uuid, $7::uuid, 1, $3::bigint, 'each')`,
+          [opts.expenseId, seq++, c, c / 100, `line-${suffix}`, expenseAccountId, itemId]
         );
       }
       await db.query("COMMIT");
@@ -89,6 +100,14 @@ describeIntegration("expense total=sum balance invariant (real Postgres)", () =>
       `INSERT INTO mdata.drivers (id, operating_company_id, first_name, last_name, phone) VALUES ($1::uuid,$3::uuid,'INV','Fixture',$2)`,
       [driverId, `+1001${suffix.slice(0, 7)}`, companyId]
     );
+    expenseAccountId = (await db.query<{ id: string }>(
+      `INSERT INTO catalogs.accounts (operating_company_id, account_number, account_name, account_type, is_postable)
+       VALUES ($1::uuid, $2, $3, 'Expense', true) RETURNING id::text`,
+      [companyId, `69${suffix.replace(/\D/g, "").slice(0, 6)}`, `Balance invariant fixture ${suffix.slice(0, 8)}`])).rows[0]!.id;
+    itemId = (await db.query<{ id: string }>(
+      `INSERT INTO catalogs.items (operating_company_id, item_name, item_type, default_expense_account_id)
+       VALUES ($1::uuid, $2, 'Service', $3::uuid) RETURNING id::text`,
+      [companyId, `Balance invariant item ${suffix.slice(0, 8)}`, expenseAccountId])).rows[0]!.id;
     await db.query("COMMIT");
   });
 
