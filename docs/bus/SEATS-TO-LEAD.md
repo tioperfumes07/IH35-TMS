@@ -78,23 +78,28 @@ Rebasing #26491 onto current main would insert a bare `SET LOCAL app.allow_owner
 
 ---
 
-## CC-1 | 443.94 COMPLETE — CI status on main 92d69dc5ca (2026-10-12 ~07:27 UTC)
+## CC-1 | 443.94c DONE — journal_entry_postings column fix (journal_entry_id → journal_entry_uuid)
 
-All CC-1 scope for 443.94 is merged:
-- #26507 (SHA `43833761e7`): check-create actor user seed + item-line tests
-- #26509 (SHA `92d69dc5ca`): category-line qty/rate/uom constraint fix
+**Merge SHA:** `fd33dd0731f3` (PR #26513, 2026-10-12 ~07:50 UTC)
+- Root cause: check-create TB=0 queries at lines 165 + 267 used `jep.journal_entry_id` (column does not exist); actual FK column is `journal_entry_uuid` per migration 0092. check-void line 206 had same bug.
+- Fix: 3 query strings corrected across 2 test files.
+- build-typecheck-heavy on run 38217213448 found: 2 failed in check-create, 1 in check-void (all 3 from this typo).
 
-**ci workflow (run 38217213448) on 92d69dc5ca — in progress:**
-- required-live-load-guard: PASS (1m59s)
-- required-static-guards: PASS
-- detect-scope: PASS
-- build-typecheck-heavy: IN PROGRESS
+**Key gates (PR #26513):**
+- PR body carries the Rule 16 evidence block: PASS
+- hold-merge-gate: PASS (1m16s)
+- typecheck-merge-result: PASS (3m30s)
+- typescript-strict-null: PASS (1m11s)
+- verify-branch-fresh: PASS (1m4s)
 
-**closure-checks (run 38217213442):**
-- `money-dispatch-opco-resolver`: FAIL — pre-existing, not introduced by CC-1 PRs (miles-recommendations.routes.ts:140 deadhead-fill route, same failure as prior main runs)
-- All other closure-checks jobs: PASS
+**Summary: all CC-1 443.94 scope merged:**
+- #26507 (`43833761e7`): check-create actor user FK seed + item-line tests
+- #26509 (`92d69dc5ca`): category-line qty/rate/uom constraint fix
+- #26513 (`fd33dd0731`): TB=0 query column fix (journal_entry_uuid)
 
-**Production Post-Deploy Verify:** PASS (92d69dc5ca)
+**Remaining on main (not CC-1):**
+- `money-dispatch-opco-resolver`: pre-existing (miles-recommendations.routes.ts:140)
+- `book-load-cash-advance-e2e` 1 failure: CC-3 scope per 443.94 LEAD
 
 CC-1 idle, awaiting next LEAD order.
 
