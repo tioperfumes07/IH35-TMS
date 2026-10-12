@@ -43,3 +43,12 @@ describe("443.116 (c) — close applies to the delivery bill; pay is never poste
     }
   });
 });
+
+describe("443.128 C — team shares", () => {
+  it("the driver's share at its ratio, the co-driver the remainder — no cent lost", async () => {
+    const { teamShareCents } = await import("../driver-pay-delivery-accrual.service.js");
+    expect(teamShareCents(300_000, 0.6)).toEqual({ driverCents: 180_000, teamDriverCents: 120_000 });
+    expect(teamShareCents(100_001, 0.5)).toEqual({ driverCents: 50_001, teamDriverCents: 50_000 });
+    expect(teamShareCents(1000, 1.4)).toEqual({ driverCents: 1000, teamDriverCents: 0 });
+  });
+});

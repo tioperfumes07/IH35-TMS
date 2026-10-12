@@ -135,7 +135,8 @@ export function splitLoadLinesAgainstDeliveryAccrual(ls: ApChainBillLine[], accr
 export async function loadSettlementLoadBills(client: pg.PoolClient, opco: string, settlementId: string, driverId: string): Promise<ApChainLoadBill[]> {
   const r = await client.query<{ id: string; load_id: string; load_number: string | null; gross: string; span_start: string | null; span_end: string | null; unit_id: string | null; accrued_bill_id: string | null }>(
     `SELECT db.id::text, db.load_id::text, COALESCE(l.load_number, db.load_number) AS load_number, db.gross_amount_cents::text AS gross,
-            db.accrued_bill_id::text AS accrued_bill_id,
+            -- LEAD 443.128 C: a team bill's two drivers each settle their own delivery-posted A/P bill.
+            (CASE WHEN db.team_driver_id = $3::uuid AND db.driver_id IS DISTINCT FROM $3::uuid THEN db.accrued_team_bill_id ELSE db.accrued_bill_id END)::text AS accrued_bill_id,
             ${sameEntityLoadUnitSql("l.id", "l.operating_company_id")}::text AS unit_id,
             (SELECT min(COALESCE(st.actual_arrival_at, st.appointment_start_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = db.load_id) AS span_start,
             (SELECT max(COALESCE(st.actual_departure_at, st.actual_arrival_at, st.appointment_end_at, st.scheduled_departure_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = db.load_id) AS span_end
