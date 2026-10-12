@@ -616,7 +616,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
               ) : null}
               {isRepayment ? (
                 <div
-                  className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
+                  className="bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
                   data-testid="loan-wizard-facility-open-balance"
                 >
                   {facilitiesQuery.isLoading

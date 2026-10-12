@@ -66,6 +66,9 @@ import os from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+// It never reads a database: DATABASE_URL appears only as the dead sentinel it hands child --selftest runs (noDbEnv).
+export const ALLOW_OFFLINE_SKIP = "static census of --selftest arms; never connects — DATABASE_URL is only the dead sentinel given to child selftests";
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SCRIPTS = path.join(ROOT, "scripts");
 const SELF_PATH = fileURLToPath(import.meta.url);

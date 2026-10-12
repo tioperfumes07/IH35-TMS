@@ -57,7 +57,7 @@ export function RelayDepositCategorizedMatchHintsPanel({ companyId }: Props) {
           ) : (
             <>
               <CappedListNotice shown={rows.length} limit={2000} total={total} />
-              <div className="mt-2 max-h-64 overflow-auto rounded-sm border border-[#E5E7EB]">
+              <div className="mt-2 max-h-64 overflow-auto border-t border-[#E5E7EB]">
                 <div
                   role="table"
                   aria-label="Relay deposit match hints"
