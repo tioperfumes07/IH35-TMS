@@ -45,6 +45,60 @@ function fail(msg) {
   process.exit(1);
 }
 
+/** The reversing-entry probe. ROUND 393.2: a reclassification out-leg is excluded only when reclassify_batch_lines
+ *  records exactly that line moved by exactly this entry (structural proof, never the memo). */
+export function reversingSql(hasReclass) {
+  return `
+    WITH reversing AS (
+      SELECT DISTINCT jep.journal_entry_uuid AS je_id
+        FROM accounting.journal_entry_postings jep
+       WHERE jep.reversal_of_line_id IS NOT NULL
+         ${hasReclass ? `AND NOT EXISTS (
+               SELECT 1 FROM accounting.reclassify_batch_lines bl
+                WHERE bl.posting_id = jep.reversal_of_line_id
+                  AND bl.reclass_journal_entry_id = jep.journal_entry_uuid
+                  AND bl.result = 'applied')` : ""}
+    )
+    SELECT je.id::text                     AS je_id,
+           je.operating_company_id::text   AS opco,
+           je.entry_date::text             AS entry_date,
+           je.memo                         AS memo,
+           (je.reverses_je_id IS NULL)     AS missing_fk
+      FROM reversing r
+      JOIN accounting.journal_entries je ON je.id = r.je_id
+     ORDER BY je.entry_date
+`;
+}
+
+/** Verdict over the probe's rows: empty is unverifiable; a NULL FK not waived by id fails; repaired waivers are named. */
+export function classifyReversals(rows, waivers) {
+  const missing = rows.filter((r) => r.missing_fk);
+  return {
+    empty: rows.length === 0,
+    missing,
+    unexpected: missing.filter((r) => !waivers.has(r.je_id)),
+    waived: missing.filter((r) => waivers.has(r.je_id)),
+    staleWaivers: [...waivers].filter((id) => !missing.some((m) => m.je_id === id)),
+  };
+}
+
+if (process.argv.includes("--selftest")) {
+  let ok = true;
+  const ex = (n, c) => { if (!c) { console.error(`SELFTEST FAIL: ${n}`); ok = false; } };
+  const W = new Set(["w1"]);
+  ex("zero reversing entries is unverifiable, never a pass", classifyReversals([], W).empty === true);
+  ex("a reversal without its JE-level FK fails", classifyReversals([{ je_id: "x", missing_fk: true }], W).unexpected.length === 1);
+  ex("a waived legacy row is waived, not failed", (() => { const r = classifyReversals([{ je_id: "w1", missing_fk: true }], W); return r.unexpected.length === 0 && r.waived.length === 1; })());
+  ex("a repaired waiver is named stale", classifyReversals([{ je_id: "a", missing_fk: false }], W).staleWaivers[0] === "w1");
+  ex("linked reversals pass", (() => { const r = classifyReversals([{ je_id: "a", missing_fk: false }, { je_id: "w1", missing_fk: true }], W); return !r.empty && r.unexpected.length === 0; })());
+  const withR = reversingSql(true), noR = reversingSql(false);
+  ex("reclass exclusion is keyed on the exact line + entry + applied", /bl\.posting_id = jep\.reversal_of_line_id/.test(withR) && /bl\.reclass_journal_entry_id = jep\.journal_entry_uuid/.test(withR) && /bl\.result = 'applied'/.test(withR));
+  ex("no reclass table -> no exclusion", !/reclassify_batch_lines/.test(noR) && /reversal_of_line_id IS NOT NULL/.test(noR));
+  ex("probe never greps the memo", !/memo\s+(I?LIKE|~)/i.test(withR));
+  console.log(ok ? `${LABEL} --selftest PASS (8/8)` : `${LABEL} --selftest FAIL`);
+  process.exit(ok ? 0 : 1);
+}
+
 const url = process.env.DATABASE_URL;
 if (!url) {
   console.log(`[${LABEL}] SKIP — no DATABASE_URL (static context); this guard is DB-backed by design`);
@@ -83,42 +137,19 @@ try {
   // leg is excluded only when accounting.reclassify_batch_lines records exactly that line moved by exactly this entry —
   // structural proof, never the memo. Any other reversal leg still requires the JE-level FK.
   const hasReclass = (await client.query(`SELECT to_regclass('accounting.reclassify_batch_lines') IS NOT NULL AS present`)).rows[0]?.present;
-  const { rows } = await client.query(`
-    WITH reversing AS (
-      SELECT DISTINCT jep.journal_entry_uuid AS je_id
-        FROM accounting.journal_entry_postings jep
-       WHERE jep.reversal_of_line_id IS NOT NULL
-         ${hasReclass ? `AND NOT EXISTS (
-               SELECT 1 FROM accounting.reclassify_batch_lines bl
-                WHERE bl.posting_id = jep.reversal_of_line_id
-                  AND bl.reclass_journal_entry_id = jep.journal_entry_uuid
-                  AND bl.result = 'applied')` : ""}
-    )
-    SELECT je.id::text                     AS je_id,
-           je.operating_company_id::text   AS opco,
-           je.entry_date::text             AS entry_date,
-           je.memo                         AS memo,
-           (je.reverses_je_id IS NULL)     AS missing_fk
-      FROM reversing r
-      JOIN accounting.journal_entries je ON je.id = r.je_id
-     ORDER BY je.entry_date
-  `);
+  const { rows } = await client.query(reversingSql(hasReclass));
   await client.query("COMMIT");
 
+  const { empty, missing, unexpected, waived, staleWaivers } = classifyReversals(rows, KNOWN_LEGACY_UNLINKED);
   // Completeness discriminator — a clean result over zero reversing entries proves nothing.
-  if (rows.length === 0) {
+  if (empty) {
     fail(
       "no reversing journal entries found at all — that is an unverifiable read (RLS mask or empty DB), not a clean result"
     );
   }
 
-  const missing = rows.filter((r) => r.missing_fk);
-  const unexpected = missing.filter((r) => !KNOWN_LEGACY_UNLINKED.has(r.je_id));
-  const waived = missing.filter((r) => KNOWN_LEGACY_UNLINKED.has(r.je_id));
-
   // A ratchet that silently shrinks is a ratchet that rots: if a waived row has been repaired, say so
   // loudly so the allowlist gets tightened rather than quietly outliving the defect.
-  const staleWaivers = [...KNOWN_LEGACY_UNLINKED].filter((id) => !missing.some((m) => m.je_id === id));
   for (const id of staleWaivers) {
     console.log(`[${LABEL}] NOTE — waived row ${id} now carries its FK; remove it from KNOWN_LEGACY_UNLINKED to tighten the ratchet.`);
   }

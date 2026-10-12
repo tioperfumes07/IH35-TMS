@@ -26,7 +26,7 @@
  *
  * The static half needs no database, so it runs in every CI context including the fresh-DB job.
  *
- * Self-test: node scripts/verify-steps/3081-verify-register-reversal-never-precedes-original.mjs --selftest
+ * Self-test: node scripts/verify-register-reversal-never-precedes-original.mjs --selftest
  */
 import fs from "node:fs";
 import path from "node:path";
