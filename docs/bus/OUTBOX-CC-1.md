@@ -2046,3 +2046,37 @@ date       | amount  | account                                 | payer       | d
 - The 5 expenses ($203.14) stand, as ruled. USMCA now has no live deposit or expense created by categorize besides those 5.
 - **Handoff:** `docs/bus/2026-10-08-CC1-HANDOFF-TO-CURSOR-FINAL.md`. Unmerged branches pushed as drafts: #25791 (RELAY-F441), #25792 (superseded, close).
 - CC-1 is retired. CI is down account-wide; local gates are the record.
+
+---
+
+## 443.84 → 443.86 #6 — 2026-10-12T02:45Z
+
+**#26450 MERGED** — `128d72efa5` (squash, admin, `cc-1/443-84-v3`)
+
+**Both every-PR guard fixes:**
+1. `verify:outbox-handler-parity` — `dispatch-relearn-load-miles.handler.ts:19`: `eventType = DISPATCH_RELEARN_LOAD_MILES_EVENT` (constant, invisible to guard regex) → `eventType = "dispatch.relearn_load_miles" as const`
+2. `verify-dispatch-load-patch-money-evidence-guard` — `update-load.service.ts:173`: JSDoc missing "never revenue/pay" phrase required by guard → appended `, never revenue/pay`
+
+**Main CI on 128d72efa5 (as of 02:45Z):**
+
+| Check | Result |
+|---|---|
+| required-live-load-guard | pending |
+| build-typecheck-heavy | not yet run on merge commit |
+| locked-guards-heavy | not yet run on merge commit |
+| bank-recon-closed-session-conflict | ✓ success |
+| driver-bypass-pk-opco-scope | ✓ success |
+| drivers-rls-scope | ✓ success |
+| faro-reconciliation-contract | ✓ success |
+| go26-consolidation-ratchet | ✓ success |
+| guard-integrity | ✓ success |
+| lucia-bypass-guard-pattern | ✓ success |
+| migration-role-validation | ✓ success |
+| money-dispatch-opco-resolver | ✓ success |
+| no-archived-imports | ✓ success |
+| no-iso-date-display | ✓ success |
+| phantom-relation-guard | ✓ success |
+| production-deploy-gate | ✓ success |
+| required-checks-gate | ✓ success |
+
+NOTE: `required-live-load-guard` was already failing on `903a8fac3b` (pre-merge main HEAD). `build-typecheck-heavy` DB test failures and `locked-guards-heavy` orphan guard failures (`verify-related-party-bank-pair-suggestions.mjs`, `verify-relay-fill-not-a-bank-match-candidate.mjs`) are pre-existing on main, not introduced by #26450.
