@@ -2423,6 +2423,11 @@
     "claimed_at": "2026-10-12",
     "purpose": "443.91 #4 batch 1: restore security_invoker on views.live_loads (202614670900 CREATE OR REPLACE dropped it — RLS bypass on prod; live-defects F3)"
   },
+  "202615680900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.91 #4 batch 3: accounting.cash_flow_row_adjustments RLS policy gains the lucia bypass branch (catalogs-rls-bypass-branch ratchet red on main)"
+  },
   "202615451400": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-12",
