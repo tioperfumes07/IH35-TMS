@@ -23,6 +23,28 @@ const TARGETS = [
 
 const UTC_DATEONLY_RE = /new Date\(\)\s*\.\s*toISOString\(\)\s*\.\s*(?:slice|substring)\(\s*0\s*,\s*10\s*\)/;
 
+/**
+ * Actual vs Projected must key its fetch on the COMMITTED range, never the draft DatePicker values
+ * (CLS-FILTER-GEAR-APPLY). LEAD 443.107 ruling on row 4068: verify-cash-flow-avp-staged-filters
+ * (LV-CASH-FLOW-ACTUAL-SPLIT-FILTER-APPLY, faef76faf7) stands — From/To + variance live in one
+ * useStagedListFilters draft and the committed range is the `applied` object. This check pins the
+ * same intent in that shape: the queryKey reads applied.from / applied.to (no staged.draft in it),
+ * and the only commit is onApply's setApplied(next) after the From<=To check.
+ */
+export function checkAvpCommittedRange(rel, src) {
+  const v = [];
+  const key = src.match(/queryKey:\s*\[\s*"cash-flow-avp"[^\]]*\]/);
+  if (!key) v.push(`${rel}: Actual vs Projected query must be keyed ["cash-flow-avp", ...].`);
+  else {
+    if (!/applied\.from/.test(key[0]) || !/applied\.to/.test(key[0])) v.push(`${rel}: queryKey must use the committed applied.from / applied.to.`);
+    if (/staged\.draft|draft\./.test(key[0])) v.push(`${rel}: queryKey must not use draft DatePicker values.`);
+  }
+  if (!/onApply:\s*\(next\)\s*=>\s*\{[\s\S]{0,200}?next\.from\s*>\s*next\.to[\s\S]{0,120}?setApplied\(next\)/.test(src)) {
+    v.push(`${rel}: Apply must commit the staged draft into applied via setApplied(next) after the From<=To check.`);
+  }
+  return v;
+}
+
 function runGuard() {
   const violations = [];
   for (const rel of TARGETS) {
@@ -38,17 +60,7 @@ function runGuard() {
     if (UTC_DATEONLY_RE.test(src)) {
       violations.push(`${rel}: contains new Date().toISOString().slice(0,10) — reintroduces the cash-position "today = tomorrow" bug.`);
     }
-    if (rel.endsWith("ActualVsProjectedTab.tsx")) {
-      if (!src.includes("appliedFrom") || !src.includes("appliedTo")) {
-        violations.push(`${rel}: must stage date range (appliedFrom/appliedTo) before refetch (CLS-FILTER-GEAR-APPLY).`);
-      }
-      if (!src.includes('queryKey: ["cash-flow-avp", operatingCompanyId, appliedFrom, appliedTo]')) {
-        violations.push(`${rel}: queryKey must use appliedFrom/appliedTo, not draft DatePicker values.`);
-      }
-      if (!src.includes("setAppliedFrom(from)") || !src.includes("setAppliedTo(to)")) {
-        violations.push(`${rel}: Apply must commit draft from/to into appliedFrom/appliedTo.`);
-      }
-    }
+    if (rel.endsWith("ActualVsProjectedTab.tsx")) violations.push(...checkAvpCommittedRange(rel, src));
   }
 
   if (violations.length > 0) {
@@ -65,6 +77,25 @@ export default {
   run: () => runGuard(),
 };
 
+function selftest() {
+  const rel = "ActualVsProjectedTab.tsx";
+  const real = fs.readFileSync(path.join(ROOT, TARGETS[1]), "utf8");
+  let ok = true;
+  const ex = (n, c) => { if (!c) { console.error(`SELFTEST FAIL: ${n}`); ok = false; } };
+  ex("real Actual vs Projected passes", checkAvpCommittedRange(rel, real).length === 0);
+  ex("queryKey on the draft DatePicker values is caught",
+    checkAvpCommittedRange(rel, real.replace(/applied\.from, applied\.to\]/, "staged.draft.from, staged.draft.to]")).length > 0);
+  ex("queryKey without the committed range is caught",
+    checkAvpCommittedRange(rel, real.replace(/, applied\.from, applied\.to\]/, "]")).length > 0);
+  ex("Apply that no longer commits is caught", checkAvpCommittedRange(rel, real.replace("setApplied(next)", "void next")).length > 0);
+  ex("Apply that skips the From<=To check is caught",
+    checkAvpCommittedRange(rel, real.replace(/if \(next\.from > next\.to\) return;/, "")).length > 0);
+  ex("UTC date-only anti-pattern still detected", UTC_DATEONLY_RE.test("const d = new Date().toISOString().slice(0, 10);"));
+  console.log(ok ? "verify-cashflow-business-date --selftest PASS (6/6)" : "verify-cashflow-business-date --selftest FAIL");
+  process.exit(ok ? 0 : 1);
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  runGuard();
+  if (process.argv.includes("--selftest")) selftest();
+  else runGuard();
 }
