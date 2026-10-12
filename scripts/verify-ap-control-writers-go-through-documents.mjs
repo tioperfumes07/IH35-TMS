@@ -56,6 +56,9 @@ export const DOCUMENT_POSTERS = new Set([
   "apps/backend/src/accounting/bill-gl-draft.service.ts", // a bill's own GL lines
   "apps/backend/src/accounting/settlement-posting/settlement-bill-payment-posting.service.ts", // bill_payment
   "apps/backend/src/driver-finance/settlement-ap-chain.service.ts", // the settlement's bills + their payment
+  // LEAD 443.116 (c) / 443.128 C (#26706): the delivery-accrued per-load driver pay bill (one per driver share) — posts A/P only
+  // through createBillInClientTx + the 'bill' source posting; it names ap_control only to refuse when the role is unbound.
+  "apps/backend/src/driver-finance/driver-pay-delivery-accrual.service.ts",
 ]);
 
 export const KNOWN_DEBT = new Map([]);
