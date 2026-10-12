@@ -19,6 +19,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import { createIsolatedOperatingCompany } from "../../../test-helpers/isolated-company.js";
 import { CASH_ADVANCE_MAP_TEST_LOCK_KEY, TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 import {
   BANK_DRIVER_ADVANCE_FLAG_KEY,
@@ -128,7 +129,11 @@ describeIntegration("BLOCK-6 IDEMPOTENCY FIX — bank-driver-advance re-run neve
   }
 
   beforeAll(async () => {
-    companyId = await ensureIntegrationPrerequisites();
+    await ensureIntegrationPrerequisites();
+    // 443.94: this suite binds the cash_advance map and the advance_recovery role to its own accounts. On the SHARED
+    // integration company that repoint leaked into concurrent suites (main ci 3867ca31: book-load-cash-advance-e2e provisioned
+    // its driver's advance sub-account under this suite's DADI parent). It now owns an isolated company — nothing shared.
+    ({ companyId } = await createIsolatedOperatingCompany({ codePrefix: "B6I", legalNamePrefix: "Bank driver advance idempotency" }));
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
     db = new pg.Client(buildPgClientConfig(cs));
@@ -153,9 +158,7 @@ describeIntegration("BLOCK-6 IDEMPOTENCY FIX — bank-driver-advance re-run neve
       await mk(acct.driverAdvance, "DADI", "Asset");
       await mk(acct.bank, "DBNI", "Asset");
 
-      // Repoint the SINGLETON active cash_advance mapping at this test's driver-advance account (same
-      // FLAKE FIX pattern as bank-driver-advance.db.test.ts — this test owns the mapping for its duration
-      // under the advisory lock above).
+      // The cash_advance mapping of this suite's own isolated company -> its driver-advance account.
       await db.query(
         `INSERT INTO accounting.expense_category_account_map
            (operating_company_id, category_kind, category_code, account_id, posting_side, is_active)
@@ -166,8 +169,7 @@ describeIntegration("BLOCK-6 IDEMPOTENCY FIX — bank-driver-advance re-run neve
       );
 
       // 443.93 / ROUND 394 RULING 1: a driver advance posts to the driver's OWN sub-account under the account bound to the
-      // advance_recovery role (driver-advance-account-resolver.ts). Bind it to this test's receivable (repointed for the
-      // test's duration, the same way the cash_advance map above is).
+      // advance_recovery role (driver-advance-account-resolver.ts) — bound here in this suite's own isolated company.
       await db.query(
         `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
          VALUES ($1::uuid,'advance_recovery',$2::uuid,true)
