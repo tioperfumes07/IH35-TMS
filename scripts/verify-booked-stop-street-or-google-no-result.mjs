@@ -90,7 +90,7 @@ if (process.env.DATABASE_URL) {
          FROM mdata.load_stops s JOIN mdata.loads l ON l.id = s.load_id
         WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL AND l.status <> 'cancelled' AND s.soft_deleted_at IS NULL
           AND nullif(trim(s.facility_name), '') IS NOT NULL AND nullif(trim(s.city), '') IS NOT NULL
-          AND coalesce(s.address_line1, '') !~ '^\\s*[0-9]+[A-Za-z]?\\s+\\S'
+          AND coalesce(s.address_line1, '') !~* '^\\s*([0-9]+[A-Za-z]?|one|two|three|four|five|six|seven|eight|nine|ten)\\s+\\S'
           AND s.geocode_attempted_at IS NOT NULL
           AND s.geocode_failure_reason IS DISTINCT FROM $2
         ORDER BY l.load_number, s.sequence_number`, [USMCA, MARKER])).rows;

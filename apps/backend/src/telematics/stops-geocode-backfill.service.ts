@@ -251,7 +251,8 @@ export async function geocodeStopsWithClient(
          JOIN geo.geofences g ON g.operating_company_id = $2::uuid AND g.location_ref_id = s.location_id AND g.is_active
         WHERE s.id = ANY($1::uuid[]) AND s.location_id IS NOT NULL
           AND coalesce(s.geocode_source, '') NOT IN ('zip_center', 'city_center', 'picker')
-          AND s.address_line1 ~ '^\\s*[0-9]+[A-Za-z]?\\s+\\S'
+          -- 443.91: a house number can be spelled (Google: "ONE Arizona Way", 13511) — still a street address.
+          AND s.address_line1 ~* '^\\s*([0-9]+[A-Za-z]?|one|two|three|four|five|six|seven|eight|nine|ten)\\s+\\S'
           AND g.samsara_address_id IS NULL AND g.source <> 'samsara_import'
           AND g.center_lat IS NOT NULL AND g.center_lng IS NOT NULL
           AND NOT EXISTS (SELECT 1 FROM geo.geofences other
