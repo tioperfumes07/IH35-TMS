@@ -26,11 +26,12 @@ import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 const LABEL = "verify-reversed-jes-carry-header-linkage";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const KNOWN_PRE_FIX_BASELINE_COUNT = 116;
+const SAMPLE_LIMIT = 30;
 
 /** Pure: the verdict for the measured rows (fully line-reversed JEs still missing reversed_by_je_id) vs the shrink-only baseline. */
 export function headerLinkageVerdict(rows, baseline = KNOWN_PRE_FIX_BASELINE_COUNT) {
   const count = rows.length;
-  return { ok: count <= baseline, count, sample: rows.slice(0, 30).map((r) => r.id) };
+  return { ok: count <= baseline, count, sample: rows.slice(0, SAMPLE_LIMIT).map((r) => r.id) };
 }
 
 if (process.argv.includes("--selftest")) {
@@ -39,7 +40,7 @@ if (process.argv.includes("--selftest")) {
     ["0 rows passes", headerLinkageVerdict(rows(0)).ok === true],
     ["exactly the baseline (116) passes", headerLinkageVerdict(rows(KNOWN_PRE_FIX_BASELINE_COUNT)).ok === true],
     ["one NEW occurrence over the baseline fails", headerLinkageVerdict(rows(KNOWN_PRE_FIX_BASELINE_COUNT + 1)).ok === false],
-    ["the failure names at most 30 sample ids", headerLinkageVerdict(rows(200)).sample.length === 30],
+    ["the failure names at most SAMPLE_LIMIT sample ids", headerLinkageVerdict(rows(200)).sample.length === SAMPLE_LIMIT],
   ];
   for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
   const bad = cases.filter(([, ok]) => !ok).length;
