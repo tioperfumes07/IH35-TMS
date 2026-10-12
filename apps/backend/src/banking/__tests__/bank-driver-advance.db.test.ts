@@ -170,6 +170,16 @@ describeIntegration("BLOCK-6 bank-categorize driver advance posting (real Postgr
         [companyId, acct.driverAdvance]
       );
 
+      // 443.93 / ROUND 394 RULING 1: a driver advance posts to the driver's OWN sub-account under the account bound to the
+      // advance_recovery role (driver-advance-account-resolver.ts). Bind it to this test's receivable (repointed for the
+      // test's duration, the same way the cash_advance map above is).
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         VALUES ($1::uuid,'advance_recovery',$2::uuid,true)
+         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO UPDATE SET account_id = EXCLUDED.account_id`,
+        [companyId, acct.driverAdvance]
+      );
+
       // A bank account whose ledger register is the bank COA account (the CREDIT side).
       await db.query(
         `INSERT INTO banking.bank_accounts (id, operating_company_id, account_name, ledger_account_id)
@@ -294,7 +304,12 @@ describeIntegration("BLOCK-6 bank-categorize driver advance posting (real Postgr
     expect(lines.length).toBe(2);
     const debit = lines.find((l) => l.debit_or_credit === "debit");
     const credit = lines.find((l) => l.debit_or_credit === "credit");
-    expect(debit?.account_id).toBe(acct.driverAdvance);
+    // ROUND 394 RULING 1: the debit lands on the driver's OWN sub-account under the advance_recovery parent (acct.driverAdvance).
+    const debitAcct = await scopedRead<{ parent_account_id: string | null }>(
+      `SELECT parent_account_id::text FROM catalogs.accounts WHERE id = $1::uuid`,
+      [debit?.account_id]
+    );
+    expect(debitAcct[0]?.parent_account_id).toBe(acct.driverAdvance);
     expect(credit?.account_id).toBe(acct.bank);
     expect(Number(debit?.amount_cents)).toBe(amountCents);
     expect(Number(credit?.amount_cents)).toBe(amountCents);

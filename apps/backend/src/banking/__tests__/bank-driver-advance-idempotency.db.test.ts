@@ -165,6 +165,16 @@ describeIntegration("BLOCK-6 IDEMPOTENCY FIX — bank-driver-advance re-run neve
         [companyId, acct.driverAdvance]
       );
 
+      // 443.93 / ROUND 394 RULING 1: a driver advance posts to the driver's OWN sub-account under the account bound to the
+      // advance_recovery role (driver-advance-account-resolver.ts). Bind it to this test's receivable (repointed for the
+      // test's duration, the same way the cash_advance map above is).
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         VALUES ($1::uuid,'advance_recovery',$2::uuid,true)
+         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO UPDATE SET account_id = EXCLUDED.account_id`,
+        [companyId, acct.driverAdvance]
+      );
+
       await db.query(
         `INSERT INTO banking.bank_accounts (id, operating_company_id, account_name, ledger_account_id)
          VALUES ($1::uuid,$2::uuid,'B6IDEM Ops Checking',$3::uuid)`,
