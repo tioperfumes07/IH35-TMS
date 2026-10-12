@@ -295,7 +295,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
   const remaining = new Map(posted.map((x) => [x.billId, x.total]));
   const order = posted.map((x) => x.billId);
   const applied = new Map<string, number>();
-  const appPostings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string; load_id?: string | null }> = [];
+  const appPostings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string; load_id?: string | null; entity_type?: "vendor" | "driver"; entity_uuid?: string }> = [];
   // 443.42 #6 — every application line carries the load of the load bill it is applied to (the settlement lines all
   // carry their load); measured on prod: 412 settlement application lines had load_id NULL.
   const billLoad = new Map(posted.map((x) => [x.billId, x.b.loadId ?? null]));
@@ -320,7 +320,10 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
       const bpId = String((bp as { id: string }).id);
       if (!firstNoncashBp.has(part.key)) firstNoncashBp.set(part.key, bpId);
       applied.set(part.key, (applied.get(part.key) ?? 0) + part.cents);
-      appPostings.push({ account_id: apAccount, debit_or_credit: "debit", amount_cents: part.cents, description: `${input.label} — ${app.description}`, load_id: billLoad.get(part.key) ?? null });
+      // 443.102 — the A/P debit names the VENDOR whose bill it pays down (every bill in this chain is the driver's own
+      // vendor record), so the A/P sub-ledger reads per vendor from the line itself. Measured on prod: 185 legs over 65
+      // settlements carried no vendor and 16 driver-vendors read $6,608.21 high against accounting.vendor_balances.
+      appPostings.push({ account_id: apAccount, debit_or_credit: "debit", amount_cents: part.cents, description: `${input.label} — ${app.description}`, load_id: billLoad.get(part.key) ?? null, entity_type: "vendor", entity_uuid: vendorId });
       if (app.kind === "advance" && app.advanceId) {
         await client.query(
           `UPDATE driver_finance.driver_advances SET linked_bill_id = COALESCE(linked_bill_id, $2::uuid), linked_bill_payment_id = COALESCE(linked_bill_payment_id, $3::uuid), updated_at = now()

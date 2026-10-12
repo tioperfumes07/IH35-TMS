@@ -565,6 +565,18 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       [[chainRows[0]!.bill_je, res.journal_entry_id, chainRows[0]!.cash_je], acct.ap]
     );
     expect(Number(apNet[0]!.v)).toBe(0);
+    // 443.102 — every A/P leg the settlement writes names the bill's vendor, so the A/P sub-ledger reads per vendor
+    // from the line itself (vendor_balances = A/P control per vendor, to the cent).
+    const apLegs = await read<{ entity_type: string | null; entity_uuid: string | null }>(
+      `SELECT entity_type, entity_uuid::text AS entity_uuid FROM accounting.journal_entry_postings
+        WHERE journal_entry_uuid = $1::uuid AND account_id = $2::uuid AND debit_or_credit = 'debit'`,
+      [res.journal_entry_id, acct.ap]
+    );
+    expect(apLegs.length).toBeGreaterThan(0);
+    for (const leg of apLegs) {
+      expect(leg.entity_type).toBe("vendor");
+      expect(leg.entity_uuid).toBe(billUnit[0]!.vendor);
+    }
 
     // escrow credit lands on the driver's OWN Damage-Claim liability sub-account (parent set, Liability)
     const esc = await read<{ account_id: string; amount_cents: string; account_type: string; parent: string | null }>(

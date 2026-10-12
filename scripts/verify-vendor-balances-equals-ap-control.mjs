@@ -1,6 +1,16 @@
 #!/usr/bin/env node
 /**
  * KILL THE SECOND SYSTEM table 12 (CC-3) — FAILS IF accounting.vendor_balances and A/P control disagree.
+ *
+ * LEAD 443.102 (2026-10-12) — attribution of settlement deduction legs.
+ *   old rule: an A/P posting belongs to a vendor only by its vendor entity or its bill source.
+ *   new rule: also by the settlement run that posted it (driver_settlement_gl_runs.driver_vendor_id); every vendor
+ *             must still tie to the cent and A/P that no vendor owes still fails.
+ *   why: measured on prod — A/P 2000 net 10,391,926c equalled the sub-ledger in total, but 185 settlement deduction
+ *        legs (65 settlements) named the driver, so 16 driver-vendors read 660,821c high. The engine now writes the
+ *        bill's vendor on those legs (settlement-ap-chain.service.ts); the existing legs cannot be repointed
+ *        (refuse_posting_fact_update) and are attributed through their run. With it: 18 vendors, 0 mismatched,
+ *        0 vendorless.
  * vendor_balances is a VIEW over open bills (never a stored balance). The GL is A/P control: the account bound to role
  * ap_control. Two facts, both on USMCA (TRANSPORTATION / TRUCKING are frozen and never read):
  *   1. PER VENDOR — the view's balance equals the A/P GL attributed to that vendor (by the posting's vendor entity or its
@@ -67,7 +77,15 @@ try {
     `WITH gl AS (
        SELECT COALESCE(CASE WHEN p.entity_type ILIKE 'vendor%' THEN p.entity_uuid::text END,
                        (SELECT COALESCE(NULLIF(b.vendor_id, ''), NULLIF(b.vendor_uuid, '')) FROM accounting.bills b
-                         WHERE p.source_transaction_type = 'bill' AND b.id::text = p.source_transaction_id::text)) vendor_id,
+                         WHERE p.source_transaction_type = 'bill' AND b.id::text = p.source_transaction_id::text),
+                       -- 443.102: a settlement's deduction legs (Dr A/P) pay down the bills that same settlement run
+                       -- posted, all to the run's driver_vendor_id. Legs posted before 443.102 name the driver, not
+                       -- the vendor, and postings cannot be repointed (refuse_posting_fact_update), so they are
+                       -- attributed through the run that wrote them.
+                       (SELECT DISTINCT r.driver_vendor_id::text FROM driver_finance.driver_settlement_gl_runs r
+                         WHERE p.source_transaction_type = 'driver_settlement'
+                           AND r.settlement_id::text = p.source_transaction_id::text
+                           AND r.operating_company_id = p.operating_company_id)) vendor_id,
               sum(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END)::bigint gl_cents
          FROM accounting.journal_entry_postings p
         WHERE p.account_id = $1::uuid AND p.operating_company_id = $2::uuid GROUP BY 1),

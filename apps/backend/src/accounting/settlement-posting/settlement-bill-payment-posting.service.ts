@@ -786,7 +786,9 @@ export async function postSettlementBillPayment(
   // ── Deduction JE (ONE balanced entry): Dr A/P (total) / Cr each driver-own-or-recovery target. ───
   if (totalDeductions > 0 && !deductionJournalEntryId) {
     const postings = [
-      { account_id: apAccount, debit_or_credit: "debit" as const, amount_cents: totalDeductions, description: `${label} — A/P reduced by deductions` },
+      // 443.102 — the A/P debit names the driver's vendor (the payee of the bills it reduces), so the A/P sub-ledger
+      // reads per vendor from the line itself.
+      { account_id: apAccount, debit_or_credit: "debit" as const, amount_cents: totalDeductions, description: `${label} — A/P reduced by deductions`, entity_type: "vendor" as const, entity_uuid: driverVendorId },
       ...resolvedDeductions.map((d) => ({
         account_id: d.accountId,
         debit_or_credit: "credit" as const,
