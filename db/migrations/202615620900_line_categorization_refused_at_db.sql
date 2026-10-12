@@ -15,7 +15,8 @@
 --      existing rows normalized (status word only), then CHECK NOT VALID -> VALIDATE.
 -- Every refusal is a check_violation with a stable code word in the message. Idempotent; lock_timeout 5s.
 BEGIN;
-SET LOCAL lock_timeout = '5s';
+-- 443.81: 5s lost to live traffic on Render (pre_deploy_failed dep-db62nl779l7c7380rgi0: "canceling statement due to lock timeout" — 4 ALTER TABLEs on busy line tables). Never applied anywhere; 60s.
+SET LOCAL lock_timeout = '60s';
 
 ALTER TABLE org.companies ADD COLUMN IF NOT EXISTS enforce_line_categorization boolean NOT NULL DEFAULT false;
 UPDATE org.companies SET enforce_line_categorization = true WHERE code = 'USMCA' AND NOT enforce_line_categorization;
