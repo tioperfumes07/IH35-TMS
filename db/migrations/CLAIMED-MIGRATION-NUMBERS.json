@@ -2537,5 +2537,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
     "purpose": "443.116 #2 + (c): driver_finance.driver_bills.due_date (projected delivery date, fixed at delivery) + accrued_bill_id (the per-load A/P bill posted at delivery)"
+  },
+  "202615840910": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.120 A: FK on safety.civil_fines.converted_to_liability_id -> driver_finance.driver_liabilities(id) (a fine pointer outlived its liability)"
   }
 }
