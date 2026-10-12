@@ -41,9 +41,12 @@ const AUDIT_TAG = "B3-EMPLOYEE-LOAN-LEDGER";
  * (no-op), leaving the advance unposted until the flag is enabled. This mirrors the expense and
  * other money-posting kill-switches.
  *
- * Two phases on purpose: the disbursed flip must COMMIT before the posting reads the row,
- * so buildDriverAdvanceLines (a separate pooled connection) sees disbursement_status='disbursed'.
- * The post is idempotent (posting-engine idempotency key), so a retry never double-posts.
+ * BCF-01: the disbursement UPDATE and the GL post run in ONE atomic transaction — disburse + post
+ * or nothing. buildDriverAdvanceLines uses the same client (see ACCT-F2026092584 comment in
+ * posting-engine.service.ts), so it sees the UPDATE within the same transaction without a
+ * separate committed read. Retry is idempotent: the advance must be in 'approved' state to
+ * proceed; a prior failed attempt that rolled back leaves the row in 'approved' and a retry
+ * will succeed cleanly.
  */
 export async function disburseDriverAdvanceCore(
   actorUserUuid: string,
@@ -56,7 +59,8 @@ export async function disburseDriverAdvanceCore(
   // posting_date (back-dating) requires Owner/Administrator.
   if (input.posting_date != null && !isOwnerOrAdmin(actorRole)) return FORBIDDEN;
 
-  const phase1 = await withCurrentUser(actorUserUuid, async (client) => {
+  // BCF-01: single atomic transaction — disburse + post or nothing.
+  const result = await withCurrentUser(actorUserUuid, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
     const cur = await client.query(
       `
@@ -116,37 +120,22 @@ export async function disburseDriverAdvanceCore(
       user_uuid: actorUserUuid,
     });
 
-    return {
-      ok: true as const,
-      postingDate: postingDateNew,
-      glPostingEnabled,
-      amountCents: Math.round(Number(row.amount ?? "0") * 100),
-      fromBankAccountId: row.from_bank_account_id ?? null,
-    };
-  });
-
-  if (!phase1.ok) return phase1;
-
-  if (!phase1.glPostingEnabled) {
-    // Flag OFF: disbursement committed above, but GL post is a no-op. The advance stays
-    // unposted; enabling the flag later will let a subsequent/retry path post it.
-    return { ok: true, advanceId: input.advance_id, postingDate: phase1.postingDate };
-  }
-
-  // ACCT-F358 — bank-cache decrement is ATOMIC with the JE post (postSourceTransactionInClientTx runs
-  // on THIS client), same shape as payBill's "GUARD 2026-07-11" comment: the bank-balance cache and the
-  // GL cash account are separate stores, so recording -amount in both is cache coherence, not double
-  // counting, and a posting failure now rolls back the decrement with it — bank and GL can never
-  // diverge. Only decrement when the advance names its own bank AND the caller did not override the
-  // credit account at disbursement time (an explicit credit_account_id is not guaranteed to be a
-  // banking.bank_accounts row, so there is nothing safe to decrement in that case — same ambiguity the
-  // GL-resolution precedence in buildDriverAdvanceLines already accepts for an explicit override).
-  const posting = await withCurrentUser(actorUserUuid, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
-    if (!input.credit_account_id && phase1.fromBankAccountId) {
-      await updateBankBalance(client, companyId, phase1.fromBankAccountId, -Math.abs(phase1.amountCents));
+    if (!glPostingEnabled) {
+      // Flag OFF: disbursement committed with this tx, GL post is a no-op.
+      return { ok: true as const, postingDate: postingDateNew, posting: undefined as PostingResult | undefined, fromBankAccountId: row.from_bank_account_id ?? null, amountCents: Math.round(Number(row.amount ?? "0") * 100) };
     }
-    const posted = await postSourceTransactionInClientTx(
+
+    // ACCT-F358 — bank-cache decrement is ATOMIC with the JE post, same shape as payBill's
+    // "GUARD 2026-07-11" comment: the bank-balance cache and the GL cash account are separate
+    // stores, so recording -amount in both is cache coherence, not double counting, and a
+    // posting failure rolls back the decrement with it — bank and GL can never diverge.
+    // Only decrement when the advance names its own bank AND the caller did not override the
+    // credit account at disbursement time.
+    if (!input.credit_account_id && row.from_bank_account_id) {
+      await updateBankBalance(client, companyId, row.from_bank_account_id, -Math.abs(Math.round(Number(row.amount ?? "0") * 100)));
+    }
+
+    const posting = await postSourceTransactionInClientTx(
       client,
       {
         operating_company_id: companyId,
@@ -158,55 +147,61 @@ export async function disburseDriverAdvanceCore(
     );
     // LEAD 443.128 A — a lumper advance is the load's lumper expense (and, billable, its invoice line), in this transaction.
     await recordLumperAdvanceExpenseInClientTx(client, { operatingCompanyId: companyId, advanceId: input.advance_id, actorUserId: actorUserUuid });
-    return posted;
+
+    return { ok: true as const, postingDate: postingDateNew, posting, fromBankAccountId: row.from_bank_account_id ?? null, amountCents: Math.round(Number(row.amount ?? "0") * 100) };
   });
+
+  if (!result.ok) return result;
 
   // B4: timeline 'posted' step — if this advance originated from a cash-advance request, link
   // the money event back to that request. Best-effort: the disbursement + GL post already
   // committed, so a timeline emit failure must not surface as a disbursement error.
-  try {
-    await withCurrentUser(actorUserUuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
-      const reqRes = await client.query(
-        `
-          SELECT id::text
-          FROM driver_finance.cash_advance_requests
-          WHERE operating_company_id = $1::uuid AND linked_advance_id = $2::uuid
-          LIMIT 1
-        `,
-        [companyId, input.advance_id]
-      );
-      const requestId = (reqRes.rows[0] as { id?: string } | undefined)?.id;
-      if (requestId) {
-        await emitDriverRequestSpineEvent(client, "posted", {
-          operating_company_id: companyId,
-          request_id: requestId,
-          request_type: "cash_advance",
-          source_table: "driver_finance.cash_advance_requests",
-          actor_type: "user",
-          actor_user_id: actorUserUuid,
-          actor_role: actorRole,
-          payload: {
-            driver_advance_id: input.advance_id,
-            journal_entry_id: posting.journal_entry_id,
-            gl_posting_enabled: true,
-          },
-        });
-      }
-    });
-  } catch (err) {
-    // Money already moved; the timeline emit is best-effort post-commit, so a failure must NOT
-    // surface as a disbursement error. But it must NOT vanish silently either (SWL-1) — log it
-    // with context so a lost audit-spine event is visible/alertable.
-    logger.warn("spine_emit_driver_advance_posted_failed", {
-      err: err instanceof Error ? err.message : String(err),
-      company_id: companyId,
-      driver_advance_id: input.advance_id,
-      journal_entry_id: posting.journal_entry_id,
-    });
+  const committedPosting = result.posting;
+  if (committedPosting) {
+    try {
+      await withCurrentUser(actorUserUuid, async (client) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+        const reqRes = await client.query(
+          `
+            SELECT id::text
+            FROM driver_finance.cash_advance_requests
+            WHERE operating_company_id = $1::uuid AND linked_advance_id = $2::uuid
+            LIMIT 1
+          `,
+          [companyId, input.advance_id]
+        );
+        const requestId = (reqRes.rows[0] as { id?: string } | undefined)?.id;
+        if (requestId) {
+          await emitDriverRequestSpineEvent(client, "posted", {
+            operating_company_id: companyId,
+            request_id: requestId,
+            request_type: "cash_advance",
+            source_table: "driver_finance.cash_advance_requests",
+            actor_type: "user",
+            actor_user_id: actorUserUuid,
+            actor_role: actorRole,
+            payload: {
+              driver_advance_id: input.advance_id,
+              journal_entry_id: committedPosting.journal_entry_id,
+              gl_posting_enabled: true,
+            },
+          });
+        }
+      });
+    } catch (err) {
+      // Money already moved; the timeline emit is best-effort post-commit, so a failure must NOT
+      // surface as a disbursement error. But it must NOT vanish silently either (SWL-1) — log it
+      // with context so a lost audit-spine event is visible/alertable.
+      logger.warn("spine_emit_driver_advance_posted_failed", {
+        err: err instanceof Error ? err.message : String(err),
+        company_id: companyId,
+        driver_advance_id: input.advance_id,
+        journal_entry_id: committedPosting.journal_entry_id,
+      });
+    }
   }
 
-  return { ok: true, advanceId: input.advance_id, postingDate: phase1.postingDate, posting };
+  return { ok: true, advanceId: input.advance_id, postingDate: result.postingDate, posting: committedPosting };
 }
 
 /**
