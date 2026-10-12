@@ -26,3 +26,21 @@ describe("claimDriverSubAccountNumber", () => {
       .rejects.toBeInstanceOf(DriverSubAccountNumberTakenError);
   });
 });
+
+describe("allocateDriverSubAccountNnn number space (443.94)", () => {
+  it("counts driver sub-accounts under ANY parent, not only the five canonical numbers", async () => {
+    const { allocateDriverSubAccountNnn } = await import("../driver-subaccount-number.js");
+    const seen: string[] = [];
+    const client = {
+      query: async (sql: string) => {
+        seen.push(sql);
+        if (sql.includes("max(substring(a.account_number")) return { rows: [{ n: 1 }] }; // DADI…-00-001 held by another driver
+        return { rows: [] };
+      },
+    };
+    expect(await allocateDriverSubAccountNnn(client as never, "co", "d")).toBe("002");
+    const maxSql = seen.find((q) => q.includes("max(substring(a.account_number"))!;
+    expect(maxSql).toContain("driver_finance.driver_advance_accounts");
+    expect(maxSql).toContain("accounting.escrow_accounts");
+  });
+});

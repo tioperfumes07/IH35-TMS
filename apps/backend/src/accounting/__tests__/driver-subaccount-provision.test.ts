@@ -29,7 +29,7 @@ function makeClient(opts: { parentId: string | null; alreadyExists?: string | nu
     query: vi.fn(async (sql: string, params?: unknown[]) => {
       sqls.push({ sql, params: params ?? [] });
       // ROUND 389.3 — the per-driver number allocator: no existing number for this driver, highest used is 006.
-      if (sql.includes("max(substring(account_number")) return { rows: [{ n: 6 }] };
+      if (sql.includes("max(substring(a.account_number")) return { rows: [{ n: 6 }] };
       if (sql.includes("WHERE account_name = $1") && sql.includes("parent_account_id IS NULL")) {
         return { rows: opts.parentId ? [{ id: opts.parentId }] : [] }; // resolveCanonicalParentAccount
       }
@@ -68,7 +68,7 @@ describe("driver advance sub-account provisioning (ROUND 389.3 ruling 2: 1245-00
     const { client, sqls } = makeClient({ parentId: "parent-1245" });
     await provisionDriverAdvanceSubAccount(client as never, { ...ARGS, nnn: "001" });
     expect(sqls.find((q) => q.sql.includes("INSERT INTO catalogs.accounts"))!.params[5]).toBe("001");
-    expect(sqls.some((q) => q.sql.includes("max(substring(account_number"))).toBe(false);
+    expect(sqls.some((q) => q.sql.includes("max(substring(a.account_number"))).toBe(false);
   });
 
   it("is idempotent — skips when the sub-account already exists (no INSERT)", async () => {
