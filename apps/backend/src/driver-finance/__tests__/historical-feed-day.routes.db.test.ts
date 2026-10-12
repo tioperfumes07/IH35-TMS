@@ -42,6 +42,13 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
     }
   }
 
+  // GO-10 REV-B: Book Load refuses to invent a company's first load number (first_load_number_required);
+  // the office types it. This fixture types a fresh numeric one per load (unique under
+  // UNIQUE(operating_company_id, load_number) on the shared integration company across forks).
+  function typedLoadNumber(): string {
+    return String(600_000_000 + Math.floor(Math.random() * 99_999_999));
+  }
+
   async function seedLoad(loadNumberSuffix: string): Promise<string> {
     return bypass(async () => {
       const result = await createLoadWithFullSideEffects(
@@ -52,8 +59,15 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
           operating_company_id: companyId,
           customer_id: customerId,
           status: "unassigned",
+          load_number: typedLoadNumber(),
           save_mode: "book_dispatch",
-          assigned_primary_driver_id: driverId,
+          // Booked WITHOUT a crewed driver on purpose. Book Load now (a) refuses a driver-assigned booking
+          // with no practical miles (E_MILES_PRACTICAL_REQUIRED) and (b) once miles are present mints the
+          // load's open driver bill at assignment (createDriverBillArtifacts). Either way a crewed booking
+          // can no longer leave the "no driver bill yet" gap this route exists to fill, so the fixture
+          // books the load uncrewed and the feed day names the driver, exactly as the printed document does.
+          // Practical miles are still typed, as the booking screen requires for a real load.
+          miles_practical: 500,
           notes: "feed-day route test fixture",
           is_sample_data: false,
           charges: [],
