@@ -1,10 +1,10 @@
 {
-  "healthzSha": "a2008fb",
-  "generated_at": "2026-10-12T18:32:03.716Z",
+  "healthzSha": "c13778c",
+  "generated_at": "2026-10-12T18:50:08.445Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "a2008fb",
+    "deployedSha": "c13778c",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,51 @@
   },
   "recentActivity": [
     {
+      "number": 26680,
+      "title": "FINDING: ACCT-F4431231 LANE: FINANCIAL -- 443.123: one Relay paid rule — a legacy CSV row whose stored paid carries its recorded fee is fuel = lines (poster, Match drawer, bank match, roll-forward, wallet feed)",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 01:46 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26680",
+      "sha": "0b6f77d2a3",
+      "committedAtIso": "2026-10-12T13:46:08-05:00"
+    },
+    {
+      "number": 26679,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- 443.126 #1: classify fuel.fuel_receipt_postings in TABLE_REGISTRY (verify-transaction-linkage-law red on main)",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 01:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26679",
+      "sha": "a6390ed93f",
+      "committedAtIso": "2026-10-12T13:44:26-05:00"
+    },
+    {
+      "number": 26678,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 01:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26678",
+      "sha": "c13778c75d",
+      "committedAtIso": "2026-10-12T13:41:18-05:00"
+    },
+    {
+      "number": 26677,
+      "title": "FINDING: N/A (AUTH-446 CONSUMED — 443.124 lane repair applied on prod, record only)",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 01:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26677",
+      "sha": "d98f374bd6",
+      "committedAtIso": "2026-10-12T13:38:04-05:00"
+    },
+    {
+      "number": 26676,
+      "title": "FINDING: ACCT-F4431241 LANE: FINANCIAL — 443.124: a GPS-corrected route never learned its lane (13511 / 13536 / 13573 / 13660, verify-booked-loads-save-miles RULE 3)",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 01:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26676",
+      "sha": "3e8c6a28e2",
+      "committedAtIso": "2026-10-12T13:36:49-05:00"
+    },
+    {
       "number": 26674,
       "title": "FINDING: BCF-10 LANE: FINANCIAL -- main CI red: reimbursement idempotent test teardown surfaced instead of swallowed (verify:aggregate-savepoints)",
       "state": "merged",
@@ -2166,51 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26670",
       "sha": "17e5fa3a2f",
       "committedAtIso": "2026-10-12T12:29:17-05:00"
-    },
-    {
-      "number": 26669,
-      "title": "chore: claim migration 202615850910 (443.121 #1)",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 12:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26669",
-      "sha": "3101c76220",
-      "committedAtIso": "2026-10-12T12:26:56-05:00"
-    },
-    {
-      "number": 26668,
-      "title": "Cursor- DEGH-02+06+07 G6: categorize creates expense doc; load spine; fuel adopt; AJK-12 void guards",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 12:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26668",
-      "sha": "d0ce8cef59",
-      "committedAtIso": "2026-10-12T12:25:33-05:00"
-    },
-    {
-      "number": 26664,
-      "title": "Claude-3- FINDING: AJK-12 LANE: FINANCIAL -- 443.120 A fine liability FK",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 12:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26664",
-      "sha": "e326311b49",
-      "committedAtIso": "2026-10-12T12:24:36-05:00"
-    },
-    {
-      "number": 26667,
-      "title": "FINDING: BCF-10 LANE: FINANCIAL -- 443.120 B: driver reimbursement decrements the bank cache once per reimbursement",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 12:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26667",
-      "sha": "f496ce9e86",
-      "committedAtIso": "2026-10-12T12:23:56-05:00"
-    },
-    {
-      "number": 26666,
-      "title": "FINDING: N/A (CLAIM-RESERVE: verify-step 18435 for CC-2 LEAD 443.116 #2 + (c) — reservation-only commit, no code fix)",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 12:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26666",
-      "sha": "ebeb42566a",
-      "committedAtIso": "2026-10-12T12:23:44-05:00"
     }
   ]
 }

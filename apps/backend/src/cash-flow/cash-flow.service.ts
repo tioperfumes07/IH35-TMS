@@ -1087,6 +1087,18 @@ function factoringCounterpartyLabel(customerName: string | null, nInvoices: numb
 // the merged `rows`). Fixed by firing all 9 concurrently via Promise.all and processing their
 // results in the SAME original order afterward — output row order and every per-row field are
 // byte-for-byte unchanged, only the wall-clock shape changed (sum of 9 round-trips -> max of 9).
+/** LEAD 443.116 #2 — true once driver_bills.due_date / accrued_bill_id exist (migration 202615830700). Cached only when true. */
+let driverBillDueDateColumnsCached = false;
+async function driverBillDueDateColumnsExist(client: { query: (sql: string) => Promise<{ rows: unknown[] }> }): Promise<boolean> {
+  if (driverBillDueDateColumnsCached) return true;
+  const r = await client.query(
+    `SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'driver_finance' AND table_name = 'driver_bills' AND column_name IN ('due_date', 'due_date_basis', 'accrued_bill_id')`
+  );
+  driverBillDueDateColumnsCached = r.rows.length === 3;
+  return driverBillDueDateColumnsCached;
+}
+
 export async function getRollingLedgerRows(
   client: Queryable,
   operatingCompanyId: string,
@@ -1165,15 +1177,24 @@ export async function getRollingLedgerRows(
       return { rows: [] as { id: string; display_id: string | null; driver_name: string; created_at: string; due_date: string; amount_cents: number }[] };
     });
 
-  // 3) driver_finance.driver_bills — open (not yet folded into a settlement, not voided). No
-  // due_date column exists on this table (checked live schema — never invented one); due = its own
-  // created_at date, i.e. due immediately, the honest reading of "open with no separate term".
+  // 3) driver_finance.driver_bills — open (not yet folded into a settlement, not voided).
+  // LEAD 443.116 #2 (locked design READ-FIRST §3: due_date drives cash flow): due on the load's projected delivery date
+  // (driver_bills.due_date, migration 202615830700); an undelivered date already past is due today
+  // (driver_finance.driver_bill_effective_due_date); a bill with no due date yet falls back to its created date. A bill whose
+  // pay was posted at delivery (accrued_bill_id) is an open A/P bill and is already in section 1 — never counted twice.
+  // Column-gated: until migration 202615830700 is applied the read is exactly the pre-443.116 one (a missing column would
+  // abort this whole read's transaction, not only this subquery — measured against prod before the deploy).
+  const dueCols = await driverBillDueDateColumnsExist(client);
+  const driverBillDueSql = dueCols
+    ? "COALESCE(driver_finance.driver_bill_effective_due_date(db.due_date, db.due_date_basis, $2::date), db.created_at::date)::text"
+    : "db.created_at::date::text";
   const driverBillsPromise = client
     .query<{
       id: string;
       bill_number: string | null;
       driver_name: string;
       created_at: string;
+      due_date: string;
       amount_cents: number;
     }>(
       `
@@ -1182,6 +1203,7 @@ export async function getRollingLedgerRows(
         db.bill_number,
         COALESCE(NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), ''), 'Driver') AS driver_name,
         db.created_at::date::text AS created_at,
+        ${driverBillDueSql} AS due_date,
         COALESCE(db.gross_amount_cents, 0)::int AS amount_cents
       FROM driver_finance.driver_bills db
       LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
@@ -1197,17 +1219,18 @@ export async function getRollingLedgerRows(
         -- Now uses the same shared active-settlement predicate the register/list routes use.
         AND NOT ${BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL}
         AND db.voided_at IS NULL
+        ${dueCols ? "AND db.accrued_bill_id IS NULL" : ""}
         AND COALESCE(db.gross_amount_cents, 0) > 0
-      ORDER BY db.created_at ASC
+      ORDER BY 5 ASC, db.created_at ASC
       `,
-      [operatingCompanyId]
+      dueCols ? [operatingCompanyId, today] : [operatingCompanyId]
     )
     .catch((err) => {
       logger.warn("cash-flow rolling-ledger: driver_bills subquery failed", {
         operating_company_id: operatingCompanyId,
         error_stack: err instanceof Error ? err.stack : String(err),
       });
-      return { rows: [] as { id: string; bill_number: string | null; driver_name: string; created_at: string; amount_cents: number }[] };
+      return { rows: [] as { id: string; bill_number: string | null; driver_name: string; created_at: string; due_date: string; amount_cents: number }[] };
     });
 
   // 4) accounting.expenses — posted, not voided, no matched bank line yet
@@ -1496,7 +1519,7 @@ export async function getRollingLedgerRows(
   }
 
   for (const db_ of driverBillRows.rows) {
-    const daysOverdue = daysBetween(today, db_.created_at);
+    const daysOverdue = daysBetween(today, db_.due_date);
     rows.push({
       row_kind: "expense",
       type: "Driver bill",
@@ -1505,7 +1528,7 @@ export async function getRollingLedgerRows(
       document_label: db_.bill_number ?? db_.id.slice(0, 8),
       counterparty: db_.driver_name,
       origin_date: db_.created_at,
-      due_date: db_.created_at,
+      due_date: db_.due_date,
       amount_cents: db_.amount_cents,
       days_overdue: daysOverdue,
       status: rowStatus(daysOverdue),

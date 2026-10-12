@@ -976,10 +976,12 @@ export async function reverseSettlementBillPaymentInClientTx(
       cash_bill_payment_id: string | null;
       cash_journal_entry_id: string | null;
       deduction_bill_payment_id: string | null;
+      bill_posted_at_delivery: boolean;
+      pay_basis: string;
     }>(
       `SELECT driver_bill_id::text, accounting_bill_id::text, bill_journal_entry_id::text,
               cash_bill_payment_id::text, cash_journal_entry_id::text,
-              deduction_bill_payment_id::text
+              deduction_bill_payment_id::text, bill_posted_at_delivery, pay_basis
          FROM driver_finance.driver_settlement_gl_bills WHERE run_id = $1::uuid`,
       [run.id]
     );
@@ -1023,7 +1025,9 @@ export async function reverseSettlementBillPaymentInClientTx(
           `Settlement ${settlementId} bill ${gb.accounting_bill_id} is missing its original journal-entry linkage`
         );
       }
-      originalJeIds.push(gb.bill_journal_entry_id);
+      // LEAD 443.116 (c): a bill posted AT DELIVERY predates this settlement — the void reverses what the close did to it
+      // (cash + non-cash payments below), never the bill or its pay posting; it returns to open A/P.
+      if (!gb.bill_posted_at_delivery) originalJeIds.push(gb.bill_journal_entry_id);
 
       if (gb.cash_bill_payment_id) {
         if (!gb.cash_journal_entry_id) {
@@ -1075,6 +1079,7 @@ export async function reverseSettlementBillPaymentInClientTx(
         );
       }
 
+      if (gb.bill_posted_at_delivery) continue;
       const billReversal = await voidBillInClientTx(
         client,
         {
@@ -1234,7 +1239,8 @@ export async function reverseSettlementBillPaymentInClientTx(
       );
     }
 
-    const driverBillIds = glBills.map((row) => row.driver_bill_id);
+    // LEAD 443.116 (c): a close-time supplement row settles no driver bill of its own (its load's accrued row does).
+    const driverBillIds = glBills.filter((row) => row.pay_basis !== "close_supplement").map((row) => row.driver_bill_id);
     if (new Set(driverBillIds).size !== driverBillIds.length) throw new Error("settlement_reversal_duplicate_driver_bill_link");
     const restoredDriverBills = await client.query<{ id: string }>(
       `UPDATE driver_finance.driver_bills
@@ -1257,7 +1263,7 @@ export async function reverseSettlementBillPaymentInClientTx(
       unrestored_driver_bill_count: number;
     }>(
       `WITH linked AS (
-         SELECT accounting_bill_id, driver_bill_id, cash_bill_payment_id, deduction_bill_payment_id
+         SELECT accounting_bill_id, driver_bill_id, cash_bill_payment_id, deduction_bill_payment_id, bill_posted_at_delivery
            FROM driver_finance.driver_settlement_gl_bills WHERE run_id = $1::uuid
        ), payment_ids AS (
          SELECT cash_bill_payment_id AS id FROM linked WHERE cash_bill_payment_id IS NOT NULL
@@ -1268,7 +1274,7 @@ export async function reverseSettlementBillPaymentInClientTx(
          (SELECT COUNT(*)::int FROM accounting.bill_payments bp JOIN payment_ids p ON p.id = bp.id
            WHERE bp.operating_company_id = $2::uuid AND bp.revoked_at IS NULL) AS active_payment_count,
          (SELECT COUNT(*)::int FROM accounting.bills b JOIN linked l ON l.accounting_bill_id = b.id
-           WHERE b.operating_company_id = $2::uuid AND b.revoked_at IS NULL) AS nonvoid_bill_count,
+           WHERE b.operating_company_id = $2::uuid AND b.revoked_at IS NULL AND NOT l.bill_posted_at_delivery) AS nonvoid_bill_count,
          (SELECT COUNT(*)::int FROM accounting.bills b JOIN linked l ON l.accounting_bill_id = b.id
            WHERE b.operating_company_id = $2::uuid AND COALESCE(b.paid_cents, 0) <> 0) AS nonzero_paid_bill_count,
          (SELECT COUNT(*)::int FROM driver_finance.driver_bills db JOIN linked l ON l.driver_bill_id = db.id

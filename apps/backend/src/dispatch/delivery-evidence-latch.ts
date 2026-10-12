@@ -44,6 +44,8 @@ import { syncLoadStatusToBilling } from "./load-billing-lifecycle.service.js";
 // accounting/invoice-send.service.ts) — that indirect path was the import cycle. Re-imported here so
 // this file's own call site below keeps working unchanged.
 import { isDeliveryEvidenceStatus } from "./delivery-evidence-status.js";
+import { withLuciaBypass } from "../auth/db.js";
+import { accrueDriverPayAtDeliveryInClientTx } from "../driver-finance/driver-pay-delivery-accrual.service.js";
 
 /**
  * The caller's transaction client. Used as the after-commit queue key AND (ACCT-F351) to run the
@@ -99,6 +101,24 @@ async function firePostLoadRevenueLatch(input: DeliveryEvidenceLatchInput): Prom
       { err, load_id: input.loadId, target_status: input.targetStatus },
       "disp_wire_07_revrec_latch_failed"
     );
+  }
+}
+
+/**
+ * LEAD 443.116 (c) — driver pay is incurred at delivery (locked design READ-FIRST §3: recognized once, on the day incurred).
+ * After the delivery commits, each open per-load driver bill becomes the load's A/P bill (Dr driver pay / Cr A/P, dated the
+ * delivery). Own connection + transaction, idempotent (driver_bills.accrued_bill_id), gated on the same evidence as the revenue
+ * earn (the final delivery stop's actual departure). Swallow-and-log like the revenue latch: a posting failure never 500s the
+ * driver's delivery tap; an unaccrued delivered bill still posts whole at settlement close.
+ */
+async function fireDriverPayAccrual(input: DeliveryEvidenceLatchInput): Promise<void> {
+  try {
+    await withLuciaBypass(
+      (client) => accrueDriverPayAtDeliveryInClientTx(client, { operatingCompanyId: input.operatingCompanyId, loadId: input.loadId, actorUserId: input.actorUserId }),
+      { actorUserId: input.actorUserId }
+    );
+  } catch (err) {
+    console.warn({ err, load_id: input.loadId }, "driver_pay_delivery_accrual_failed");
   }
 }
 
@@ -242,9 +262,15 @@ export async function latchOnDeliveryEvidence(
     label: `load-billing-sync:${input.loadId}`,
     run: () => fireLoadBillingSync(input),
   });
+  // LEAD 443.116 (c) — driver pay accrues on the same delivery event, after commit (the stop's departure must be durable).
+  const payAccrualQueued = enqueueAfterCommit(client, {
+    label: `driver-pay-accrual:${input.loadId}`,
+    run: () => fireDriverPayAccrual(input),
+  });
   if (queued) {
     if (!factoringQueued) await fireFactoringAutoSubmit(input);
     if (!billingQueued) await fireLoadBillingSync(input);
+    if (!payAccrualQueued) await fireDriverPayAccrual(input);
     return "deferred";
   }
   // ROUND 315 (CC-2 measured a ~5 min idle-in-transaction lock on load 13626): with no after-commit scope the
@@ -261,5 +287,6 @@ export async function latchOnDeliveryEvidence(
   await firePostLoadRevenueLatch(input);
   await fireFactoringAutoSubmit(input);
   await fireLoadBillingSync(input);
+  await fireDriverPayAccrual(input);
   return "fired";
 }

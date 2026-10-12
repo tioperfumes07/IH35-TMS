@@ -4975,11 +4975,14 @@
       "voided_by_user_id"
     ],
     "driver_finance.driver_bills": [
+      "accrued_bill_id",
       "bill_number",
       "created_at",
       "created_by_user_id",
       "deadhead_pay_cents",
       "driver_id",
+      "due_date",
+      "due_date_basis",
       "gross_amount_cents",
       "id",
       "load_id",
@@ -5217,6 +5220,7 @@
     "driver_finance.driver_settlement_gl_bills": [
       "accounting_bill_id",
       "bill_journal_entry_id",
+      "bill_posted_at_delivery",
       "cash_bill_payment_id",
       "cash_cents",
       "cash_journal_entry_id",
@@ -5232,7 +5236,8 @@
       "pay_basis",
       "run_id",
       "settlement_id",
-      "superseded_at"
+      "superseded_at",
+      "supplements_driver_bill_id"
     ],
     "driver_finance.driver_settlement_gl_runs": [
       "created_at",
