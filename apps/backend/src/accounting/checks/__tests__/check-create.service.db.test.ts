@@ -30,7 +30,7 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
 
   async function bypass(fn: () => Promise<void>) {
     await db.query("BEGIN");
-    await db.query("SET LOCAL bypass_rls = 'lucia'");
+    await db.query("SET LOCAL app.bypass_rls = 'lucia'");
     await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     try { await fn(); await db.query("COMMIT"); }
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
@@ -38,7 +38,7 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
 
   async function scopedRead<T = Record<string, unknown>>(sql: string, params: unknown[]): Promise<T[]> {
     await db.query("BEGIN");
-    await db.query("SET LOCAL bypass_rls = 'lucia'");
+    await db.query("SET LOCAL app.bypass_rls = 'lucia'");
     await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     try { const r = await db.query(sql, params); await db.query("COMMIT"); return r.rows as T[]; }
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
@@ -67,16 +67,17 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
 
       // AP control role binding (needed by postSourceTransaction)
       await db.query(
-        `INSERT INTO accounting.account_role_bindings (operating_company_id, role_name, account_id)
-         VALUES ($1::uuid,'ap_control',$2::uuid)
-         ON CONFLICT (operating_company_id, role_name) DO UPDATE SET account_id = EXCLUDED.account_id`,
+        // 443.94: COA roles live in accounting.chart_of_accounts_roles (there is no account_role_bindings table).
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id)
+         SELECT $1::uuid, 'ap_control', $2::uuid
+          WHERE NOT EXISTS (SELECT 1 FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1::uuid AND role = 'ap_control')`,
         [companyId, apAccountId]
       );
 
       // Bank account
       await db.query(
-        `INSERT INTO banking.bank_accounts (id, operating_company_id, account_name, ledger_account_id)
-         VALUES ($1::uuid,$2::uuid,'Test Checking ${suffix}',$3::uuid)`,
+        `INSERT INTO banking.bank_accounts (id, operating_company_id, account_name, ledger_account_id, account_class, is_active, sync_status)
+         VALUES ($1::uuid,$2::uuid,'Test Checking ${suffix}',$3::uuid,'depository',true,'active')`,
         [bankAccountId, companyId, cashAccountId]
       );
 
