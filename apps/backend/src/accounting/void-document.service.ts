@@ -55,6 +55,7 @@ import {
 } from "./void.service.js";
 import { voidBillInClientTx, voidBillPaymentInClientTx, type BillMutationClient } from "./bills.service.js";
 import { reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
+import { reverseExpenseDocumentInClientTx } from "./expense-void-reversal.js";
 import { reverseFactoringAdvanceEvent } from "./factoring-posting/poster.service.js";
 import { reverseSettlementForVoid, reverseDeductionForVoid } from "../driver-finance/void-document-callees.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -137,25 +138,13 @@ export async function voidDocument(
     }
 
     case "expense": {
-      // Matches expenses.routes.ts's own SOURCE_NOT_FOUND handling — an unposted expense
-      // legitimately has nothing to reverse; every other posting-engine error still throws.
-      let reversalJournalEntryId: string | null = null;
-      try {
-        const rev = await reversePostedSourceTransactionInClientTx(
-          client,
-          {
-            operating_company_id: input.operatingCompanyId,
-            source_transaction_type: "expense",
-            source_transaction_id: input.id,
-          },
-          { userId: input.actor.userId },
-          input.currentBusinessDate
-        );
-        reversalJournalEntryId = rev.journal_entry_id ?? null;
-      } catch (err) {
-        const code = (err as { code?: string })?.code;
-        if (code !== "SOURCE_NOT_FOUND") throw err;
-      }
+      // ACCT-F4431310 — reverse everything LIVE for the document (own 'expense' lines + a fuel receipt's 'fuel_event'
+      // entry), decided by reading; nothing live = unposted. Never a swallowed SOURCE_NOT_FOUND.
+      const rev = await reverseExpenseDocumentInClientTx(client as never, {
+        operatingCompanyId: input.operatingCompanyId, expenseId: input.id, actorUserId: input.actor.userId,
+        currentBusinessDate: input.currentBusinessDate, memo: `Void reversal of expense ${input.id}: ${input.reason}`, expenseReverser: "source",
+      });
+      const reversalJournalEntryId: string | null = rev.reversal_journal_entry_id;
       // AUTH-400 — a void is WHOLE at this door: the ledger reversed AND the header stamped, in this transaction. Callers
       // that also stamp (check-void) pass the same reason and actor, which the stamp treats as an idempotent replay.
       const stamped = await stampDocumentVoided(client as never, { operatingCompanyId: input.operatingCompanyId, family: "expense", documentId: input.id, voidReason: input.reason, voidedByUserId: input.actor.userId });

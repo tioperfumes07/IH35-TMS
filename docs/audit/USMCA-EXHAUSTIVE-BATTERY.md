@@ -745,6 +745,15 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/docs/files/:file_id/versions` | `apps/backend/src/docs/files.routes.ts:1121` | — | — | — |
 | create | `/api/v1/docs/files/upload-url` | `apps/backend/src/docs/files.routes.ts:377` | — | — | — |
 
+### expenses — 4 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/expenses` | `apps/backend/src/accounting/expenses.routes.ts:1406` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/change-payment-source` | `apps/backend/src/accounting/expenses.routes.ts:2129` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:1557` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1924` | — | — | — |
+
 ### finance — 3 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
