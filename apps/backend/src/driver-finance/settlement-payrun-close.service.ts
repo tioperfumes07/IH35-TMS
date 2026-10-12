@@ -686,6 +686,14 @@ export async function closeSettlementPayRun(
              SELECT 1 FROM driver_finance.driver_settlement_gl_bills b
               WHERE b.run_id = r.id AND b.bill_journal_entry_id IS NOT NULL
            )
+           -- 443.93: since ROUND 326 this pay-run close itself posts the per-load A/P chain and writes the run / bill
+           -- anchors above. A settlement this close already claimed (payrun_gl_runs) is OURS — its retry must reach the
+           -- idempotent existing-run path below, not be refused as "the other poster". The bill-payment poster never
+           -- writes payrun_gl_runs, so its post (no claim here) is still refused.
+           AND NOT EXISTS (
+             SELECT 1 FROM driver_finance.payrun_gl_runs p
+              WHERE p.operating_company_id = r.operating_company_id AND p.settlement_id = r.settlement_id
+           )
          LIMIT 1
       `,
       [opco, settlementId]
