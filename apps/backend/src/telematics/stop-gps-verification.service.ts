@@ -43,6 +43,8 @@ export const FACILITY_RADIUS_M = 400;
 /** RULING 443.86 #2: a ZIP-CENTER stop (no street, the point is the zip centroid) takes the truck's loading dwell within this
  *  distance of the centroid on the document date — the city the document names, never another town. */
 export const ZIP_CITY_RADIUS_M = 40_000;
+/** 443.90 #1: a business found BY NAME is accepted within this distance of the document's zip center. */
+export const ZIP_NAME_RADIUS_M = 30_000;
 const DAY_MS = 86_400_000;
 
 export type StopGpsVerdict = {
@@ -289,12 +291,19 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
         if (same) byName = { source: "same_business", street: same.address_line1, city: same.city, state: same.state, zip: same.postal_code ?? "", lat: same.lat, lng: same.lng,
           place_id: same.google_place_id, name: zipStop.facility_name, geocode_source: same.geocode_source, from: `load ${same.load_number}` };
         else if (isGooglePlacesEnabled() && isGooglePlacesConfigured()) {
-          const q = [zipStop.facility_name.split(/\bc\/o\b/i).pop()!.trim(), zipStop.city, zipStop.state, zipStop.postal_code].filter(Boolean).join(" ");
-          const hits = await searchAddress(q, 5);
+          const biz = zipStop.facility_name.split(/\bc\/o\b/i).pop()!.trim();
+          const q = [biz, zipStop.city, zipStop.state, zipStop.postal_code].filter(Boolean).join(" ");
+          // Second wording (no zip, no INC / LLC / CO) when the first returns only the town.
+          const q2 = [biz.replace(/[,.]?\s*\b(inc|llc|co|corp|ltd)\b\.?/gi, "").trim(), zipStop.city, zipStop.state].filter(Boolean).join(" ");
+          const hits = [...(await searchAddress(q, 5)), ...(q2 !== q ? await searchAddress(q2, 5) : [])];
           const zipNorm = String(zipStop.postal_code ?? "").slice(0, 5);
+          // The place check: the document's zip, or its city (FT -> FORT, ST -> SAINT), or within ZIP_NAME_RADIUS_M of the
+          // document's zip center (a business sits in the next zip of the same town: Barney Robinson, Fort Worth 76127).
+          const cityNorm = (c: string | null | undefined) => String(c ?? "").toLowerCase().replace(/\bft\b\.?/g, "fort").replace(/\bst\b\.?/g, "saint").replace(/[^a-z]/g, "");
           const ok = hits.find((h) => h.lat != null && h.lon != null && h.address_line1 && h.name
             && zipFacilityConfirmed(zipStop.facility_name, h.name, [zipStop.city, zipStop.state, h.city, h.state])
-            && ((zipNorm && h.zip?.slice(0, 5) === zipNorm) || (h.city ?? "").toLowerCase() === String(zipStop.city ?? "").toLowerCase()));
+            && ((zipNorm && h.zip?.slice(0, 5) === zipNorm) || cityNorm(h.city) === cityNorm(zipStop.city)
+                || (st.lat != null && st.lng != null && metersBetween(st.lat, st.lng, h.lat!, h.lon!) <= ZIP_NAME_RADIUS_M)));
           if (ok) byName = { source: "google_place", street: ok.address_line1, city: ok.city, state: ok.state, zip: ok.zip, lat: ok.lat!, lng: ok.lon!,
             place_id: ok.place_id ?? null, name: ok.name ?? null, geocode_source: "google_place", from: `Google: ${q}` };
           else reason = `${reason ?? "no dwell"}; Google "${q}": ${hits.length ? hits.map((h) => h.name ?? h.formatted).slice(0, 3).join(" | ") : "no result"} — no result carries the business at that zip / city`;
