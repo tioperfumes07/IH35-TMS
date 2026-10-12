@@ -2392,5 +2392,15 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-12",
     "purpose": "RULING 443.80 #2: banking.refuse_live_match_row_on_released_line lets a SUGGESTION sit without a pointer (accepted match still refused); fuel duplicate trigger keyed on the base invoice (CC-2 443.76 d); function bodies + one index, no rows"
+  },
+  "202615620900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "RULING 443.67 / 443.81: the 443.67 DB refusals re-numbered from 202615600900 (it now sorts before the applied 202615610900 = deploy blocker); same content + document_trailer_number"
+  },
+  "202615630900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "RULING 443.81 #1: restore banking.refuse_live_match_row_on_released_line to refuse a pointer-less auto_matched row (owner: never automatch; suggestions are read-only, nothing persists them)"
   }
 }
