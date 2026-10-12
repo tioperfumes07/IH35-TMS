@@ -49,4 +49,8 @@ if (own.length || missed.length) {
   console.error(`${LABEL}: FAIL — ${[...own, ...missed.map((n) => `plant '${n}' not caught`)].join("; ")}`);
   process.exit(1);
 }
+if (process.argv.includes("--selftest")) {
+  console.log(`${LABEL} SELFTEST: ${plants.length - missed.length}/${plants.length} planted violations caught (clean source passes)`);
+  process.exit(0);
+}
 console.log(`${LABEL}: PASS — every reversal leg keeps its own source (${plants.length}/${plants.length} plants caught; mixed-source document planted in void.service.test.ts)`);

@@ -15,12 +15,18 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => readFileSync(join(ROOT, rel), "utf8");
 const codeOnly = (src) => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 
-function main() {
+function readSources() {
+  return {
+    groupSrc: read("apps/backend/src/dispatch/truck-line/group-by-unit.ts"),
+    routesSrc: read("apps/backend/src/dispatch/truck-line/truck-line.routes.ts"),
+    boardSrc: read("apps/frontend/src/pages/dispatch/TruckLineBoard.tsx"),
+    helperSrc: read("apps/backend/src/dispatch/current-truck-line-load.ts"),
+  };
+}
+
+/** Every static check, over in-memory sources — so --selftest can plant regressions. */
+export function findProblems({ groupSrc, routesSrc, boardSrc, helperSrc }) {
   const problems = [];
-  const groupSrc = read("apps/backend/src/dispatch/truck-line/group-by-unit.ts");
-  const routesSrc = read("apps/backend/src/dispatch/truck-line/truck-line.routes.ts");
-  const boardSrc = read("apps/frontend/src/pages/dispatch/TruckLineBoard.tsx");
-  const helperSrc = read("apps/backend/src/dispatch/current-truck-line-load.ts");
   const boardCode = codeOnly(boardSrc);
 
   if (!/export function groupTruckLineByUnit/.test(groupSrc)) {
@@ -74,6 +80,11 @@ function main() {
   if (!/useLoadCostRollups/.test(boardCode) || !/costRollups\.get\(r\.load\.load_id\)/.test(boardCode)) {
     problems.push("TruckLineBoard must keep useLoadCostRollups + costRollups.get(r.load.load_id) (LAW-5 / R-173)");
   }
+  return problems;
+}
+
+function main() {
+  const problems = findProblems(readSources());
 
   // Pure duplicate-detection contract the grouper must keep (red fixture).
   const fixtureGroups = [{ unit_id: "u1" }, { unit_id: "u2" }, { unit_id: "u1" }];
@@ -104,6 +115,55 @@ function main() {
     process.exit(1);
   }
   console.log(`${LABEL} OK — unique unit_id top-level + CURRENT helper + sections + empty state + columns`);
+}
+
+/** Synthetic sources that satisfy every check — the clean control. Built from the rule text, not the
+ *  repo, so the selftest proves the checks themselves whatever state the real files are in. */
+const CLEAN_FIXTURE = {
+  groupSrc: [
+    "export function groupTruckLineByUnit(rows) { return assertUniqueUnitIds(rows); }",
+    "function findDuplicateTopLevelUnitIds(g) {}",
+    'throw new Error("truck_line_duplicate_top_level_unit");',
+  ].join("\n"),
+  routesSrc: 'import { CURRENT_TRUCK_LINE_LOAD_SQL } from "../current-truck-line-load.js";\nconst groups = groupTruckLineByUnit(rows);',
+  helperSrc: [
+    "export function currentTruckLineLoadSql(a) { return canonicalDispatchWorkWhereClause(a); }",
+    "export const CURRENT_TRUCK_LINE_LOAD_SQL = currentTruckLineLoadSql('l');",
+  ].join("\n"),
+  boardSrc: [
+    'const SECTION_ORDER = ["tour", "in_transit", "available"];',
+    "<div data-testid={`truck-line-section-${section}`} />",
+    '<div data-testid="truck-line-empty" />',
+    "const showLoading = q.isPending && !q.isFetched;",
+    '<H label="UNIT" /><H label="TOUR / PRE-SETTLEMENT" /><H label="LOAD" /><H label="PU DATE" /><H label="DELIVERY DATE" />',
+    "const costRollups = useLoadCostRollups(ids); const c = costRollups.get(r.load.load_id);",
+  ].join("\n"),
+};
+
+if (process.argv.includes("--selftest")) {
+  const f = CLEAN_FIXTURE;
+  const planted = [
+    ["grouper no longer exported", { groupSrc: f.groupSrc.replace("export function groupTruckLineByUnit", "function groupTruckLineByUnit") }],
+    ["unique-unit enforcement removed", { groupSrc: "export function groupTruckLineByUnit(rows) { return rows; }\nthrow new Error(\"truck_line_duplicate_top_level_unit\");" }],
+    ["duplicate unit no longer throws", { groupSrc: f.groupSrc.replace("truck_line_duplicate_top_level_unit", "dup") }],
+    ["routes skip the grouper", { routesSrc: f.routesSrc.replace("groupTruckLineByUnit(rows)", "rows") }],
+    ["routes inline their own CURRENT predicate", { routesSrc: f.routesSrc.replace("../current-truck-line-load.js", "../somewhere-else.js") }],
+    ["CURRENT back on the accounting predicate", { helperSrc: f.helperSrc.replace("canonicalDispatchWorkWhereClause", "canonicalActiveLoadWhereClause") }],
+    ["available section dropped", { boardSrc: f.boardSrc.replace(', "available"', "") }],
+    ["empty state removed (stuck Loading)", { boardSrc: f.boardSrc.replace("truck-line-empty", "truck-line-blank") }],
+    ["Next appointment column painted", { boardSrc: f.boardSrc + '\n<H label="Next appointment" />' }],
+    ["Net painted in the row", { boardSrc: f.boardSrc + "\n<span>Net {fmt(c.net)}</span>" }],
+    ["cost rollup hook unwired", { boardSrc: f.boardSrc.replace("useLoadCostRollups(ids)", "new Map()") }],
+  ];
+  let caught = 0;
+  for (const [name, patch] of planted) {
+    if (findProblems({ ...f, ...patch }).length > 0) caught += 1;
+    else console.error(`${LABEL} SELFTEST: planted violation escaped — ${name}`);
+  }
+  const clean = findProblems(f);
+  if (clean.length) console.error(`${LABEL} SELFTEST: clean fixture flagged — ${clean.join("; ")}`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught`);
+  process.exit(caught === planted.length && clean.length === 0 ? 0 : 1);
 }
 
 main();

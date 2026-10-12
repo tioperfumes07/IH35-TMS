@@ -54,9 +54,11 @@ const EXPECTED = {
   driver_reimbursement: { table: "driver_finance.driver_reimbursements", livenessColumn: null },
 };
 
-function staticCheck() {
-  const src = fs.readFileSync(SERVICE_FILE, "utf8");
-  const spec = JSON.parse(fs.readFileSync(SPEC_FILE, "utf8"));
+function readStaticSources() {
+  return { src: fs.readFileSync(SERVICE_FILE, "utf8"), spec: JSON.parse(fs.readFileSync(SPEC_FILE, "utf8")) };
+}
+
+function staticCheck({ src, spec } = readStaticSources()) {
   const specByTable = new Map(spec.must_be_zero_after_purge.map((r) => [r.table, r.live_predicate]));
 
   const mismatches = [];
@@ -153,4 +155,39 @@ async function main() {
   process.exit(0);
 }
 
-main();
+/** --selftest: no database. Static arm gets mutated service source / spec JSON; live arm gets a
+ *  fake client answering the same two queries with planted rows. */
+async function selftest() {
+  const sources = readStaticSources();
+  const fakeClient = ({ fuelN = 0, loadIds = [] } = {}) => ({
+    query: async (sql, params) => {
+      if (params?.[0] !== USMCA) throw new Error("selftest: live query not scoped to USMCA");
+      if (sql.includes("FROM fuel.fuel_transactions") && sql.includes("voided_at IS NOT NULL") && sql.includes("archived_at IS NULL")) {
+        return { rows: [{ n: String(fuelN) }] };
+      }
+      if (sql.includes("FROM mdata.loads") && sql.includes("status = 'voided'") && sql.includes("soft_deleted_at IS NULL") && sql.includes("db.status <> 'void'")) {
+        return { rows: loadIds.map((id) => ({ id })) };
+      }
+      throw new Error(`selftest: unrecognised live query ${sql.slice(0, 80)}`);
+    },
+  });
+  const specDrift = structuredClone(sources.spec);
+  for (const r of specDrift.must_be_zero_after_purge) if (r.table === "fuel.fuel_transactions") r.live_predicate = "voided_at IS NULL";
+  const planted = [
+    ["fuel stops stamping archived_at", staticCheck({ ...sources, src: sources.src.replace(/(fuel_transaction:\s*\{[^}]*livenessColumn:\s*)"archived_at"/s, "$1null") }).length > 0],
+    ["load stamps the wrong liveness column", staticCheck({ ...sources, src: sources.src.replace(/(load:\s*\{[^}]*livenessColumn:\s*)"soft_deleted_at"/s, '$1"archived_at"') }).length > 0],
+    ["invoice gains an unnecessary extra write", staticCheck({ ...sources, src: sources.src.replace(/(invoice:\s*\{[^}]*livenessColumn:\s*)null/s, '$1"soft_deleted_at"') }).length > 0],
+    ["spec JSON drops fuel archived_at", staticCheck({ ...sources, spec: specDrift }).length > 0],
+    ["voided fuel row missing archived_at", (await liveCheck(fakeClient({ fuelN: 1 }))).length === 1],
+    ["voided load with no blocking driver bill missing soft_deleted_at", (await liveCheck(fakeClient({ loadIds: ["00000000-0000-0000-0000-000000000001"] }))).length === 1],
+  ];
+  const caught = planted.filter(([, ok]) => ok).length;
+  for (const [name, ok] of planted) if (!ok) console.error(`${LABEL} SELFTEST: planted violation escaped — ${name}`);
+  const clean = [...staticCheck(sources), ...(await liveCheck(fakeClient()))];
+  if (clean.length) console.error(`${LABEL} SELFTEST: clean input flagged — ${clean.join("; ")}`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught`);
+  process.exit(caught === planted.length && clean.length === 0 ? 0 : 1);
+}
+
+if (process.argv.includes("--selftest")) await selftest();
+else main();

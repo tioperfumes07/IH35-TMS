@@ -105,9 +105,11 @@ const LIVE_CHECKS = [
   },
 ];
 
-function staticCheck() {
-  const src = fs.readFileSync(ENGINE_FILE, "utf8");
-  const spec = JSON.parse(fs.readFileSync(SPEC_FILE, "utf8"));
+function readStaticSources() {
+  return { src: fs.readFileSync(ENGINE_FILE, "utf8"), spec: JSON.parse(fs.readFileSync(SPEC_FILE, "utf8")) };
+}
+
+function staticCheck({ src, spec } = readStaticSources()) {
   const specByTable = new Map(spec.must_be_zero_after_purge.map((r) => [r.table, r.live_predicate]));
 
   const mismatches = [];
@@ -191,4 +193,36 @@ async function main() {
   process.exit(0);
 }
 
-main();
+/** --selftest: no database. Static arm gets mutated engine source / spec JSON; live arm gets a
+ *  fake client that answers the same count query with planted numbers. */
+async function selftest() {
+  const sources = readStaticSources();
+  const fakeClient = (countFor) => ({
+    query: async (sql, params) => {
+      const check = LIVE_CHECKS.find((c) => sql.includes(`FROM ${c.childTable} c`) && sql.includes(`p.${c.parentVoidPredicate}`) && sql.includes(`c.${c.livenessColumn} IS NULL`));
+      if (!check) throw new Error(`selftest: unrecognised live query ${sql.slice(0, 80)}`);
+      if (params[0] !== USMCA) throw new Error("selftest: live query not scoped to USMCA");
+      return { rows: [{ n: String(countFor(check)) }] };
+    },
+  });
+  const specDrift = structuredClone(sources.spec);
+  for (const r of specDrift.must_be_zero_after_purge) if (r.table === "accounting.bill_lines") r.live_predicate = "true";
+  const afterExpiry = new Date(new Date(KNOWN_ORPHAN_EXCLUSIONS["accounting.bill_lines"][0].expires_at).getTime() + 1);
+  const planted = [
+    ["engine stops cascading invoice_lines", staticCheck({ ...sources, src: sources.src.replace(/table:\s*"invoice_lines"/, 'table: "invoice_lines_x"') }).length > 0],
+    ["engine cascades settlement_lines on the wrong column", staticCheck({ ...sources, src: sources.src.replace(/(table:\s*"settlement_lines",\s*fkColumn:\s*"settlement_id",\s*livenessColumn:\s*)"voided_at"/, '$1"soft_deleted_at"') }).length > 0],
+    ["spec JSON live_predicate drifts", staticCheck({ ...sources, spec: specDrift }).length > 0],
+    ["live bill_line under a voided bill", (await liveCheck(fakeClient((c) => (c.childTable === "accounting.bill_lines" ? 1 : 0)))).length === 1],
+    ["live deduction under a cancelled settlement", (await liveCheck(fakeClient((c) => (c.childTable === "driver_finance.driver_settlement_deductions" ? 3 : 0)))).length === 1],
+    ["named exclusion still honored after expiry", activeExclusionIds("accounting.bill_lines", afterExpiry).length === 0],
+  ];
+  const caught = planted.filter(([, ok]) => ok).length;
+  for (const [name, ok] of planted) if (!ok) console.error(`${LABEL} SELFTEST: planted violation escaped — ${name}`);
+  const clean = [...staticCheck(sources), ...(await liveCheck(fakeClient(() => 0)))];
+  if (clean.length) console.error(`${LABEL} SELFTEST: clean input flagged — ${clean.join("; ")}`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught`);
+  process.exit(caught === planted.length && clean.length === 0 ? 0 : 1);
+}
+
+if (process.argv.includes("--selftest")) await selftest();
+else main();

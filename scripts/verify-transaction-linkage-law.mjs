@@ -389,9 +389,8 @@ export function checkMaintenanceMoneyBankLegs(
   return [{ level: "OK", message: "maintenance money linkage: WO -> bill/expense -> bill payment -> JE -> bank line, and bill payment -> WO, resolve both ways." }];
 }
 
-function checkTier2LoadDemand() {
+function checkTier2LoadDemand(src = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8")) {
   const findings = [];
-  const src = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8");
 
   const regressedToUnconditional = /\["repair", "tire", "accident"\]\.includes\(body\.wo_type\)/.test(src);
   if (regressedToUnconditional) {
@@ -413,6 +412,38 @@ function checkTier2LoadDemand() {
     findings.push({ level: "OK", message: `${WORK_ORDERS_ROUTES_PATH}: tire is correctly gated by source_type (RS required, IS never forced) per ROUND 302 A-34.` });
   }
   return findings;
+}
+
+/** Live work-order verdict as a pure function (same rule the live half applies to its rows). */
+function workOrderLinkVerdict(rows, baselineIds) {
+  const tier1Bad = [];
+  const tier2Bad = [];
+  for (const r of rows) {
+    const tier = classifyWorkOrderSourceType(r.source_type);
+    if (tier === TIER.TIER1 && (r.unit_id === null || r.driver_id === null || r.load_id === null)) {
+      tier1Bad.push(r.id);
+    }
+    if (tier === TIER.TIER2 && r.unit_id === null) {
+      tier2Bad.push(r.id);
+    }
+  }
+  return { tier1Bad, tier2Bad, newTier1Bad: tier1Bad.filter((id) => !baselineIds.has(id)) };
+}
+
+/** Live expense-line verdict as a pure function (same rule the live half applies to its rows). */
+function expenseLineVerdict(rows, tier1Codes) {
+  let tier1MissingUnitOrDriver = 0;
+  let tier2MissingUnit = 0;
+  let tier3UnitPresent = 0;
+  for (const r of rows) {
+    const tier = r.line_category && tier1Codes.has(r.line_category)
+      ? TIER.TIER1
+      : classifyExpenseLineCategoryCode(r.code, new Set());
+    if (tier === TIER.TIER1 && (r.unit_id === null || r.driver_id === null)) tier1MissingUnitOrDriver++;
+    if (tier === TIER.TIER2 && r.unit_id === null) tier2MissingUnit++;
+    if (tier === TIER.TIER3 && r.unit_id !== null) tier3UnitPresent++;
+  }
+  return { tier1MissingUnitOrDriver, tier2MissingUnit, tier3UnitPresent };
 }
 
 function checkTableRegistryDrift(liveTables) {
@@ -451,13 +482,41 @@ function runSelftest() {
   if (tier2Findings.some((f) => f.level === "FAIL")) failures.push(`checkTier2LoadDemand unexpectedly FAILed against the current (should be fixed) work-orders.routes.ts: ${tier2Findings.map((f) => f.message).join(" | ")}`);
   if (!tier2Findings.some((f) => f.level === "OK")) failures.push("checkTier2LoadDemand did not report OK against the current, already-fixed work-orders.routes.ts");
 
+  // Planted violations, each run through the SAME function the live/static half uses. A plant that
+  // comes back clean is an escape and fails the selftest.
+  const routesSrc = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8");
   const regressedSnippet = `if (["repair", "tire", "accident"].includes(body.wo_type) && !body.load_id) {`;
-  if (!/\["repair", "tire", "accident"\]\.includes\(body\.wo_type\)/.test(regressedSnippet)) {
-    failures.push("selftest fixture invalid: regressedSnippet should match the regression-detection regex (proves checkTier2LoadDemand would FAIL if this pattern ever came back)");
-  }
   const fixedGateSnippet = `if (["repair", "accident"].includes(body.wo_type) || (body.wo_type === "tire" && tireIsTier1Roadside)) {`;
-  if (!/body\.wo_type === "tire" && tireIsTier1Roadside/.test(fixedGateSnippet)) {
-    failures.push("selftest fixture invalid: fixedGateSnippet should match hasSourceTypeGate's detection regex (proves the guard recognizes the correct fix, not just the absence of the bug)");
+  const isFail = (findings) => findings.some((f) => f.level === "FAIL");
+  const noGate = routesSrc.replace(/body\.wo_type === "tire" && tireIsTier1Roadside/g, "false").replace(/body\.wo_type === "tire"[\s\S]{0,80}source_type === "RS"/g, "false");
+  const t1 = (o) => ({ id: "wo-x", source_type: "RS", unit_id: "u", driver_id: "d", load_id: "l", ...o });
+  const plantTier1Codes = new Set(["diesel"]);
+  const planted = [
+    ["tire forced back into the unconditional load array", isFail(checkTier2LoadDemand(`${fixedGateSnippet}\n${regressedSnippet}`))],
+    ["tire source_type gate removed", isFail(checkTier2LoadDemand(noGate))],
+    ["unit -> work orders filter removed", isFail(checkUnitWorkOrderReverseLink(routesSrc.replace(/if \(q\.unit_id\)/, "if (false)")))],
+    ["driver-at-time re-inlined", isFail(checkWorkOrderLinkageBothWays(routesSrc.replace(/driverAtTimeSql\(/g, "inlined(")))],
+    ["bill payment -> WO link removed", isFail(checkMaintenanceMoneyBankLegs(undefined, undefined, readFileSync(join(ROOT, BILL_PAYMENT_DETAIL_PAGE_PATH), "utf8").replace(/kind="work_order"/g, 'kind="unit"')))],
+    ["unregistered money table", checkTableRegistryDrift(["accounting.some_brand_new_money_table"]).length === 1],
+    ["roadside WO with no load", workOrderLinkVerdict([t1({ load_id: null })], new Set()).newTier1Bad.length === 1],
+    ["accident WO with no driver", workOrderLinkVerdict([t1({ source_type: "AC", driver_id: null })], new Set()).newTier1Bad.length === 1],
+    ["in-shop WO with no unit", workOrderLinkVerdict([t1({ source_type: "IS", unit_id: null, load_id: null })], new Set()).tier2Bad.length === 1],
+    ["TIER1 diesel line with no driver", expenseLineVerdict([{ line_category: "diesel", code: null, unit_id: "u", driver_id: null }], plantTier1Codes).tier1MissingUnitOrDriver === 1],
+    ["TIER2 tires line with no unit", expenseLineVerdict([{ line_category: null, code: "TIRES", unit_id: null, driver_id: null }], plantTier1Codes).tier2MissingUnit === 1],
+    ["TIER3 office line carrying a unit", expenseLineVerdict([{ line_category: null, code: "OFFICE", unit_id: "u", driver_id: null }], plantTier1Codes).tier3UnitPresent === 1],
+  ];
+  const caught = planted.filter(([, ok]) => ok).length;
+  for (const [name, ok] of planted) if (!ok) failures.push(`planted violation escaped: ${name}`);
+  // Clean controls: the fixed gate snippet, a baseline-known gap, ES (never guessed), fully linked rows.
+  if (isFail(checkTier2LoadDemand(fixedGateSnippet))) failures.push("checkTier2LoadDemand FAILed the correct source_type gate");
+  if (workOrderLinkVerdict([t1({ id: "known", load_id: null })], new Set(["known"])).newTier1Bad.length !== 0) failures.push("a baseline-known WO gap was counted as new");
+  {
+    const v = workOrderLinkVerdict([t1({}), t1({ source_type: "ES", unit_id: null, driver_id: null, load_id: null }), t1({ source_type: "IS", load_id: null })], new Set());
+    if (v.tier1Bad.length || v.tier2Bad.length) failures.push("fully linked / ES / in-shop-without-load work orders were flagged");
+  }
+  {
+    const v = expenseLineVerdict([{ line_category: "diesel", code: null, unit_id: "u", driver_id: "d" }, { line_category: null, code: "OFFICE", unit_id: null, driver_id: null }, { line_category: null, code: "REPAIR", unit_id: null, driver_id: null }], plantTier1Codes);
+    if (v.tier1MissingUnitOrDriver || v.tier2MissingUnit || v.tier3UnitPresent) failures.push("clean expense lines were flagged");
   }
 
   const reverse = checkUnitWorkOrderReverseLink();
@@ -482,7 +541,7 @@ function runSelftest() {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest: OK -- classifiers, drift check, and tier2-load-demand scan all fire correctly`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught -- classifiers, drift check, static linkage and live verdicts all fire correctly`);
   process.exit(0);
 }
 
@@ -490,8 +549,8 @@ function runSelftest() {
 // main
 // ---------------------------------------------------------------------------------------------
 async function main() {
+  if (process.argv.includes("--selftest")) return runSelftest();
   const args = process.argv.slice(2);
-  if (args.includes("--selftest")) return runSelftest();
 
   const baseline = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
   const failures = [];
@@ -564,19 +623,8 @@ async function main() {
         `SELECT id, display_id, source_type, unit_id, driver_id, load_id FROM maintenance.work_orders WHERE status <> 'voided' AND operating_company_id = $1`,
         [USMCA_OPERATING_COMPANY_ID]
       );
-      let tier1Bad = [];
-      let tier2Bad = [];
-      for (const r of rows) {
-        const tier = classifyWorkOrderSourceType(r.source_type);
-        if (tier === TIER.TIER1 && (r.unit_id === null || r.driver_id === null || r.load_id === null)) {
-          tier1Bad.push(r.id);
-        }
-        if (tier === TIER.TIER2 && r.unit_id === null) {
-          tier2Bad.push(r.id);
-        }
-      }
       const baselineWoIds = new Set(baseline["maintenance.work_orders"]?.tier1_known_gap_ids ?? []);
-      const newTier1Bad = tier1Bad.filter((id) => !baselineWoIds.has(id));
+      const { tier1Bad, tier2Bad, newTier1Bad } = workOrderLinkVerdict(rows, baselineWoIds);
       if (newTier1Bad.length > 0) {
         failures.push(`maintenance.work_orders: ${newTier1Bad.length} NEW TIER1 row(s) (source_type AC/RS/RT/ET) missing unit/driver/load, not in baseline: ${newTier1Bad.join(", ")}`);
       } else {
@@ -626,17 +674,7 @@ async function main() {
          WHERE el.operating_company_id = $1`,
         [USMCA_OPERATING_COMPANY_ID]
       );
-      let tier1MissingUnitOrDriver = 0;
-      let tier2MissingUnit = 0;
-      let tier3UnitPresent = 0;
-      for (const r of rows) {
-        const tier = r.line_category && tier1Codes.has(r.line_category)
-          ? TIER.TIER1
-          : classifyExpenseLineCategoryCode(r.code, new Set());
-        if (tier === TIER.TIER1 && (r.unit_id === null || r.driver_id === null)) tier1MissingUnitOrDriver++;
-        if (tier === TIER.TIER2 && r.unit_id === null) tier2MissingUnit++;
-        if (tier === TIER.TIER3 && r.unit_id !== null) tier3UnitPresent++;
-      }
+      const { tier1MissingUnitOrDriver, tier2MissingUnit, tier3UnitPresent } = expenseLineVerdict(rows, tier1Codes);
       const baselineCeiling = baseline["accounting.expense_lines"]?.tier1_missing_unit_or_driver_max ?? 0;
       if (tier1MissingUnitOrDriver > baselineCeiling) {
         failures.push(`accounting.expense_lines: ${tier1MissingUnitOrDriver} TIER1 rows missing unit_id/driver_id -- exceeds baseline ceiling of ${baselineCeiling} (this is a KNOWN, LARGE, pre-existing gap -- see docs/audit/GUARD-WORKORDERS.md LINKAGE-A30-EXPENSE-LINES-NO-UNIT-DRIVER)`);

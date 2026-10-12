@@ -22,14 +22,24 @@ function assertStablePages(sql) {
   }
 }
 assertStablePages(route);
-let orderCaught = false;
-try { assertStablePages(route.replace("ORDER BY v.period_start DESC, v.id DESC", "ORDER BY v.period_start DESC")); }
-catch { orderCaught = true; }
-if (!orderCaught) throw new Error("Unstable pagination mutation escaped");
-let caught = false;
-try { assertWiring(source.replace("rows={preSettlementsQuery.data ?? []}", "rows={settlementsReadyRows}")); }
-catch { caught = true; }
-if (!caught) throw new Error("Old preview wiring mutation escaped");
+const plants = [
+  ["equal-date pages lose the id tie-breaker", () => assertStablePages(route.replace("ORDER BY v.period_start DESC, v.id DESC", "ORDER BY v.period_start DESC"))],
+  ["tab renders the capped payment-ready preview", () => assertWiring(source.replace("rows={preSettlementsQuery.data ?? []}", "rows={settlementsReadyRows}"))],
+  ["tab hides query errors", () => assertWiring(source.replace("isError={preSettlementsQuery.isError}", "isError={false}"))],
+  ["list not company-scoped", () => assertWiring(source.replace("queryFn: () => listOpenPreSettlements(selectedCompanyId!)", "queryFn: () => listOpenPreSettlements()"))],
+];
+let caughtCount = 0;
+for (const [name, plant] of plants) {
+  let caught = false;
+  try { plant(); } catch { caught = true; }
+  if (!caught) throw new Error("Mutation escaped: " + name);
+  caughtCount += 1;
+}
+// --selftest: the static half only (clean sources pass above, every plant is caught) — no vitest spawn.
+if (process.argv.includes("--selftest")) {
+  console.log(`verify-settlement-sweep-pre-list SELFTEST: ${caughtCount}/${plants.length} planted violations caught (clean sources pass)`);
+  process.exit(0);
+}
 const result = spawnSync(process.execPath, [root + "node_modules/vitest/vitest.mjs", "run", "--config", root + "apps/frontend/vitest.config.ts",
   "src/api/preSettlements.test.ts", "src/components/driver-finance/__tests__/PreSettlementsPanel.test.tsx"],
 { cwd: root + "apps/frontend", stdio: "inherit", timeout: 120000 });
