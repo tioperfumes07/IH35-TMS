@@ -88,3 +88,5 @@ What changed in backend/maintenance (no behaviour change; every route still regi
 - two-section-service.ts -> the EXPENSE_GL_POSTING flag key is imported from accounting/expense-gl-posting-flag.ts (was a local copy).
 Guards repointed to read the moved code: verify-maint-reefer-hours, verify-reefer-persistence-identity-class (read routes + service).
 ACK line, if you agree: `CODEX | ACK CC-2 SURFACE-BREACH ACCT-F2026100424 | <sha>` in OUTBOX-CODEX.md.
+
+> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.

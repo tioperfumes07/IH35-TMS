@@ -12,6 +12,7 @@ import {
 } from "../../apps/backend/test-helpers/db-fixture";
 import {
   approveCashAdvanceRequest,
+  detectCashAdvanceCascadeBranch,
   createCashAdvanceRequest,
 } from "../../apps/backend/src/driver-finance/cash-advance-requests.service.js";
 import { bookLoad, type BookLoadInput } from "../../apps/backend/src/dispatch/book-load.service.js";
@@ -82,7 +83,12 @@ describeE2E("book-load cash advance — E2E (real DB, #1440)", () => {
     try {
       await tx(async () => {
         await client.query("SET LOCAL app.bypass_rls = 'lucia'");
-        await client.query(`DELETE FROM driver_finance.driver_advances WHERE load_id = $1::uuid`, [loadId]);
+        // 443.101: a loan-branch advance carries no load, so clean up through the request's linked advance too.
+        await client.query(
+          `DELETE FROM driver_finance.driver_advances WHERE load_id = $1::uuid
+              OR id IN (SELECT linked_advance_id FROM driver_finance.cash_advance_requests WHERE load_id = $1::uuid AND linked_advance_id IS NOT NULL)`,
+          [loadId]
+        );
         await client.query(`DELETE FROM driver_finance.cash_advance_requests WHERE load_id = $1::uuid`, [loadId]);
       });
     } catch {
@@ -112,14 +118,19 @@ describeE2E("book-load cash advance — E2E (real DB, #1440)", () => {
     expect(Number(row?.requested_amount_cents)).toBe(AMOUNT_CENTS);
   });
 
-  it("(b) owner approval → forwards load_id onto the disbursed driver_advances row (the fix the harness caught)", async () => {
-    const advLoadId = await tx(async () => {
+  // 443.101: the #1440 load trace is forwarded onto the advance ONLY off the loan branch — a loan is the "no active
+  // load, no open bill" outcome and never links to a load (verify-cash-advance-close-time-three-way-routing, the
+  // 2026-09-06 law). The branch is read from the engine's own detector (the same call approval makes), and each
+  // outcome is asserted for what it must be — never a skip.
+  it("(b) owner approval → load_id forwarded on the bill-payment branches, never on the loan branch", async () => {
+    const out = await tx(async () => {
       await asCompany(companyId);
-      const reqRow = await client.query<{ id: string }>(
-        `SELECT id::text FROM driver_finance.cash_advance_requests WHERE load_id = $1::uuid AND status = 'pending' ORDER BY created_at DESC LIMIT 1`,
+      const reqRow = await client.query<{ id: string; driver_id: string }>(
+        `SELECT id::text, driver_id::text FROM driver_finance.cash_advance_requests WHERE load_id = $1::uuid AND status = 'pending' ORDER BY created_at DESC LIMIT 1`,
         [loadId]
       );
       const requestId = reqRow.rows[0]!.id;
+      const { branch } = await detectCashAdvanceCascadeBranch(client, companyId, reqRow.rows[0]!.driver_id);
       const res = await approveCashAdvanceRequest(client, {
         operatingCompanyId: companyId,
         requestId,
@@ -130,15 +141,22 @@ describeE2E("book-load cash advance — E2E (real DB, #1440)", () => {
         body: { approval_notes: "e2e approve", bank_reference: "E2E-COMCHEK-0001" },
       });
       expect(res).not.toHaveProperty("error");
-      const adv = await client.query<{ load_id: string | null }>(
-        `SELECT da.load_id::text FROM driver_finance.driver_advances da
-         JOIN driver_finance.cash_advance_requests r ON r.linked_advance_id = da.id
-         WHERE r.id = $1::uuid LIMIT 1`,
+      const adv = await client.query<{ load_id: string | null; type: string | null }>(
+        `SELECT da.load_id::text, l.type::text
+           FROM driver_finance.driver_advances da
+           JOIN driver_finance.cash_advance_requests r ON r.linked_advance_id = da.id
+           LEFT JOIN driver_finance.driver_liabilities l ON l.id = da.liability_id
+          WHERE r.id = $1::uuid LIMIT 1`,
         [requestId]
       );
-      return adv.rows[0]?.load_id ?? null;
+      expect(adv.rows.length, "approval must disburse a driver_advances row linked from the request").toBe(1);
+      return { branch, loadId: adv.rows[0]!.load_id, type: adv.rows[0]!.type };
     });
-    expect(advLoadId, "driver_advances.load_id must be forwarded from the request").toBe(loadId);
+    if (out.branch === "loan") {
+      expect(out.loadId, "a loan never links to a load").toBeNull();
+    } else {
+      expect(out.loadId, "driver_advances.load_id must be forwarded from the request on a bill-payment branch").toBe(loadId);
+    }
   });
 
   // 443.91 #4: bookLoad no longer books a cash advance (cash_advance_cents is read nowhere in the backend — advances are

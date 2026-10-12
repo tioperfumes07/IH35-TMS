@@ -37,7 +37,9 @@ const MUST_CITE = [
   ".cursor/rules/00-always-read-first.mdc",
   ".cursor/rules/33-standing-session-directive.mdc",
   ".cursor/rules/38-fully-wired-complete-bar.mdc",
-  ".windsurf/rules/standing-session-directive.md",
+  // 443.101: .windsurf/rules/ was retired by #19548 (851cb6deae) and the 2026-09-02 owner law (AGENTS.md autoload);
+  // the boot path it stood for is now the autoloaded current-state doc.
+  "claude/00-IH35-CURRENT-STATE-AND-LAW-READ-FIRST.md",
   ".claude/skills/ih35-tms-standards/SKILL.md",
   ".claude/skills/ih35-evidence-before-done/SKILL.md",
   "docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md",
@@ -96,6 +98,30 @@ function selftest() {
     fs.mkdirSync(path.join(tmp, "docs", "specs"), { recursive: true });
     fs.writeFileSync(path.join(tmp, "docs/specs/STANDING-SESSION-DIRECTIVE.md"), "# no cite\n");
     const planted = findMissing(tmp);
+    // 443.101: the autoloaded current-state doc dropping its citation is caught.
+    const curAbs = path.join(ROOT, "claude/00-IH35-CURRENT-STATE-AND-LAW-READ-FIRST.md");
+    const tmp2 = fs.mkdtempSync(path.join(ROOT, "scripts", ".fully-wired-selftest2-"));
+    let caughtCurrent = false;
+    try {
+      for (const rel of MUST_CITE) {
+        const src = path.join(ROOT, rel);
+        if (!fs.existsSync(src)) continue;
+        fs.mkdirSync(path.dirname(path.join(tmp2, rel)), { recursive: true });
+        fs.copyFileSync(src, path.join(tmp2, rel));
+      }
+      fs.mkdirSync(path.join(tmp2, "docs", "lockdown"), { recursive: true });
+      fs.copyFileSync(path.join(ROOT, LAW), path.join(tmp2, LAW));
+      fs.mkdirSync(path.join(tmp2, "docs", "law"), { recursive: true });
+      fs.copyFileSync(path.join(ROOT, "docs/law/LAW.json"), path.join(tmp2, "docs/law/LAW.json"));
+      fs.writeFileSync(path.join(tmp2, "claude/00-IH35-CURRENT-STATE-AND-LAW-READ-FIRST.md"), fs.readFileSync(curAbs, "utf8").replaceAll("FULLY-WIRED-COMPLETE-BAR-2026-08-13", "X"));
+      caughtCurrent = findMissing(tmp2).some((m) => m.startsWith("claude/00-IH35-CURRENT-STATE-AND-LAW-READ-FIRST.md"));
+    } finally {
+      fs.rmSync(tmp2, { recursive: true, force: true });
+    }
+    if (!caughtCurrent) {
+      console.error(`${LABEL} SELFTEST FAIL — current-state doc losing its citation not caught`);
+      process.exit(1);
+    }
     if (planted.length < 2) {
       console.error(`${LABEL} SELFTEST FAIL — planted defects not caught (${planted.length})`);
       process.exit(1);
