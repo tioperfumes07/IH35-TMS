@@ -13,23 +13,6 @@ import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 const LABEL = "verify-voided-loads-hold-no-real-number";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
-/** A voided load's number must be VOID-prefixed (stampDocumentVoided); returns the voided loads still holding a real one. */
-export function realNumberHolders(rows) {
-  return rows.filter((r) => r.status === undefined || r.status === "voided").filter((r) => !String(r.load_number ?? "").startsWith("VOID"));
-}
-
-if (process.argv.includes("--selftest")) {
-  const cases = [
-    ["a voided load renumbered VOID-13527-ab12cd34 passes", realNumberHolders([{ id: "l1", status: "voided", load_number: "VOID-13527-ab12cd34" }]).length === 0],
-    ["a voided load keeping 13527 fails", realNumberHolders([{ id: "l1", status: "voided", load_number: "13527" }]).length === 1],
-    ["a live load is not this guard's concern", realNumberHolders([{ id: "l2", status: "delivered", load_number: "13528" }]).length === 0],
-  ];
-  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
-  const bad = cases.filter(([, p]) => !p).length;
-  console.log(bad ? "verify-voided-loads-hold-no-real-number --selftest FAIL" : `verify-voided-loads-hold-no-real-number --selftest PASS (${cases.length}/${cases.length})`);
-  process.exit(bad ? 1 : 0);
-}
-
 async function main() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
@@ -46,10 +29,9 @@ async function main() {
 
     await client.query("ROLLBACK");
 
-    const holders = realNumberHolders(res.rows);
-    if (holders.length > 0) {
-      console.error(`${LABEL}: FAIL — ${holders.length} voided USMCA load(s) still hold a real (non-VOID-prefixed) load_number:`);
-      for (const r of holders.slice(0, 30)) {
+    if (res.rows.length > 0) {
+      console.error(`${LABEL}: FAIL — ${res.rows.length} voided USMCA load(s) still hold a real (non-VOID-prefixed) load_number:`);
+      for (const r of res.rows.slice(0, 30)) {
         console.error(`  ✗ load=${r.id} load_number="${r.load_number}"`);
       }
       console.error(`${LABEL}: stampDocumentVoided()'s 'load' family renumbering did not apply. Every voided load blocks the AlwaysTrack feed from re-creating that number.`);

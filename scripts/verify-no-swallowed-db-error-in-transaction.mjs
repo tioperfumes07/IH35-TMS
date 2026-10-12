@@ -89,7 +89,7 @@ function measure() {
   return { total, files: Object.keys(byFile).length, byFile };
 }
 
-if (process.argv.includes("--selftest")) {
+if (process.argv[2] === "--selftest") {
   const cases = [
     ["const a = async () => { try { await client.query('x'); } catch { v = null; } }", 1],
     ["const a = async () => { try { await client.query('x'); } catch (err) { req.log.error(err); } }", 0],

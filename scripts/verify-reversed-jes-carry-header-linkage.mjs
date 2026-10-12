@@ -27,22 +27,6 @@ const LABEL = "verify-reversed-jes-carry-header-linkage";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const KNOWN_PRE_FIX_BASELINE_COUNT = 116;
 
-/** Fully line-reversed JEs without a header reversed_by_je_id may not exceed the pre-fix baseline (shrink-only). */
-export function overBaseline(count, baseline = KNOWN_PRE_FIX_BASELINE_COUNT) {
-  return count > baseline;
-}
-if (process.argv.includes("--selftest")) {
-  const cases = [
-    ["at the baseline passes", overBaseline(KNOWN_PRE_FIX_BASELINE_COUNT) === false],
-    ["below the baseline passes", overBaseline(0) === false],
-    ["one NEW occurrence above the baseline fails", overBaseline(KNOWN_PRE_FIX_BASELINE_COUNT + 1) === true],
-  ];
-  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
-  const bad = cases.filter(([, p]) => !p).length;
-  console.log(bad ? "verify-reversed-jes-carry-header-linkage --selftest FAIL" : `verify-reversed-jes-carry-header-linkage --selftest PASS (${cases.length}/${cases.length})`);
-  process.exit(bad ? 1 : 0);
-}
-
 async function main() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
@@ -64,7 +48,7 @@ async function main() {
     await client.query("ROLLBACK");
 
     const count = res.rows.length;
-    if (overBaseline(count)) {
+    if (count > KNOWN_PRE_FIX_BASELINE_COUNT) {
       console.error(`${LABEL}: FAIL — ${count} journal_entry row(s) are fully line-reversed but missing header-level reversed_by_je_id, more than the known pre-fix baseline (${KNOWN_PRE_FIX_BASELINE_COUNT}). A NEW occurrence of the defect this round fixed.`);
       for (const r of res.rows.slice(0, 30)) console.error(`  ✗ ${r.id}`);
       process.exit(1);

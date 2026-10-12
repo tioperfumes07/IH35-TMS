@@ -425,89 +425,64 @@ function checkTableRegistryDrift(liveTables) {
 // ---------------------------------------------------------------------------------------------
 function runSelftest() {
   const failures = [];
-  let checks = 0;
 
-  checks++;
   if (classifyWorkOrderSourceType("AC") !== TIER.TIER1) failures.push("AC should classify TIER1 (accident)");
-  checks++;
   if (classifyWorkOrderSourceType("RS") !== TIER.TIER1) failures.push("RS should classify TIER1 (roadside)");
-  checks++;
   if (classifyWorkOrderSourceType("IS") !== TIER.TIER2) failures.push("IS should classify TIER2 (in-shop)");
-  checks++;
   if (classifyWorkOrderSourceType("IT") !== TIER.TIER2) failures.push("IT should classify TIER2 (inspection)");
-  checks++;
   if (classifyWorkOrderSourceType("backfill") !== TIER.TIER2) failures.push("backfill should classify TIER2");
-  checks++;
   if (classifyWorkOrderSourceType("ES") !== null) failures.push("ES (external shop) should be unclassified (null), never guessed");
-  checks++;
   if (classifyWorkOrderSourceType("bogus") !== null) failures.push("an unknown source_type should be unclassified, never guessed");
 
   const tier1Codes = new Set(["diesel", "def", "toll", "scale", "lumper", "parking", "roadside_repair", "detention_paid", "over_road_other"]);
-  checks++;
   if (classifyExpenseLineCategoryCode("FUEL", new Set(["fuel"])) !== TIER.TIER1) failures.push("a category present in the live tier1 set should classify TIER1");
-  checks++;
   if (classifyExpenseLineCategoryCode("TIRES", tier1Codes) !== TIER.TIER2) failures.push("TIRES should classify TIER2");
-  checks++;
   if (classifyExpenseLineCategoryCode("OFFICE", tier1Codes) !== TIER.TIER3) failures.push("OFFICE should classify TIER3");
-  checks++;
   if (classifyExpenseLineCategoryCode("REPAIR", tier1Codes) !== null) failures.push("REPAIR should be unclassified (ambiguous OTR vs in-house), never guessed");
 
   const drift = checkTableRegistryDrift(["accounting.expense_lines", "accounting.some_brand_new_money_table"]);
-  checks++;
   if (!drift.includes("accounting.some_brand_new_money_table")) failures.push("checkTableRegistryDrift did not catch a fabricated unregistered table");
-  checks++;
   if (drift.includes("accounting.expense_lines")) failures.push("checkTableRegistryDrift false-flagged a registered table");
 
   // checkTier2LoadDemand reads the real file from disk; against the current (fixed) source it must
   // report OK, never FAIL. Regression detection itself is proven directly against synthetic source
   // snippets here, without touching the real file.
   const tier2Findings = checkTier2LoadDemand();
-  checks++;
   if (tier2Findings.some((f) => f.level === "FAIL")) failures.push(`checkTier2LoadDemand unexpectedly FAILed against the current (should be fixed) work-orders.routes.ts: ${tier2Findings.map((f) => f.message).join(" | ")}`);
-  checks++;
   if (!tier2Findings.some((f) => f.level === "OK")) failures.push("checkTier2LoadDemand did not report OK against the current, already-fixed work-orders.routes.ts");
 
   const regressedSnippet = `if (["repair", "tire", "accident"].includes(body.wo_type) && !body.load_id) {`;
-  checks++;
   if (!/\["repair", "tire", "accident"\]\.includes\(body\.wo_type\)/.test(regressedSnippet)) {
     failures.push("selftest fixture invalid: regressedSnippet should match the regression-detection regex (proves checkTier2LoadDemand would FAIL if this pattern ever came back)");
   }
   const fixedGateSnippet = `if (["repair", "accident"].includes(body.wo_type) || (body.wo_type === "tire" && tireIsTier1Roadside)) {`;
-  checks++;
   if (!/body\.wo_type === "tire" && tireIsTier1Roadside/.test(fixedGateSnippet)) {
     failures.push("selftest fixture invalid: fixedGateSnippet should match hasSourceTypeGate's detection regex (proves the guard recognizes the correct fix, not just the absence of the bug)");
   }
 
   const reverse = checkUnitWorkOrderReverseLink();
-  checks++;
   if (!reverse.some((f) => f.level === "OK")) failures.push(`checkUnitWorkOrderReverseLink did not report OK against the current work-orders.routes.ts: ${reverse.map((f) => f.message).join(" | ")}`);
   const brokenRoutes = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8").replace(/if \(q\.unit_id\)/, "if (false)");
-  checks++;
   if (!checkUnitWorkOrderReverseLink(brokenRoutes).some((f) => f.level === "FAIL")) failures.push("checkUnitWorkOrderReverseLink did not FAIL when the unit_id filter was removed");
 
   const woLink = checkWorkOrderLinkageBothWays();
-  checks++;
   if (!woLink.some((x) => x.level === "OK")) failures.push(`checkWorkOrderLinkageBothWays not OK on current source: ${woLink.map((x) => x.message).join(" | ")}`);
   const brokenWo = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8").replace(/driverAtTimeSql\(/g, "inlined(");
-  checks++;
   if (!checkWorkOrderLinkageBothWays(brokenWo).some((x) => x.level === "FAIL")) failures.push("checkWorkOrderLinkageBothWays did not FAIL when driverAtTimeSql was removed");
 
   const money = checkMaintenanceMoneyBankLegs();
-  checks++;
   if (!money.some((x) => x.level === "OK")) failures.push(`checkMaintenanceMoneyBankLegs not OK on current source: ${money.map((x) => x.message).join(" | ")}`);
   const brokenBp = readFileSync(join(ROOT, BILL_PAYMENT_DETAIL_PAGE_PATH), "utf8").replace(/kind="work_order"/g, 'kind="unit"');
-  checks++;
   if (!checkMaintenanceMoneyBankLegs(undefined, undefined, brokenBp).some((x) => x.level === "FAIL")) failures.push("checkMaintenanceMoneyBankLegs did not FAIL when the bill payment -> WO link was removed");
   const brokenSvc = readFileSync(join(ROOT, BILLS_SERVICE_PATH), "utf8").replace("SELECT ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id", "SELECT NULL AS matched_bank_transaction_id");
-  checks++;
   if (!checkMaintenanceMoneyBankLegs(brokenSvc).some((x) => x.level === "FAIL")) failures.push("checkMaintenanceMoneyBankLegs did not FAIL when the detail dropped the shared bank-line rule");
 
   if (failures.length > 0) {
-    console.error(`${LABEL} --selftest FAIL (${checks - failures.length}/${checks})`);
+    console.error(`${LABEL} --selftest: FAIL`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS (${checks}/${checks}) -- classifiers, drift check, and tier2-load-demand scan all fire correctly`);
+  console.log(`${LABEL} --selftest: OK -- classifiers, drift check, and tier2-load-demand scan all fire correctly`);
   process.exit(0);
 }
 
@@ -516,7 +491,7 @@ function runSelftest() {
 // ---------------------------------------------------------------------------------------------
 async function main() {
   const args = process.argv.slice(2);
-  if (process.argv.includes("--selftest")) return runSelftest();
+  if (args.includes("--selftest")) return runSelftest();
 
   const baseline = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
   const failures = [];

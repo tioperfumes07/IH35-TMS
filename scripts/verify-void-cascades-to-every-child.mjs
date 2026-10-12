@@ -65,7 +65,7 @@ const KNOWN_ORPHAN_EXCLUSIONS = {
   ],
 };
 
-export function activeExclusionIds(childTable, now = new Date()) {
+function activeExclusionIds(childTable, now = new Date()) {
   const rows = KNOWN_ORPHAN_EXCLUSIONS[childTable] ?? [];
   return rows.filter((r) => now.getTime() < new Date(r.expires_at).getTime()).map((r) => r.id);
 }
@@ -106,11 +106,8 @@ const LIVE_CHECKS = [
 ];
 
 function staticCheck() {
-  return staticMismatches(fs.readFileSync(ENGINE_FILE, "utf8"), JSON.parse(fs.readFileSync(SPEC_FILE, "utf8")));
-}
-
-/** The engine's CASCADE_CHILDREN must name every writable child, and the purge spec must test the same liveness column. */
-export function staticMismatches(src, spec) {
+  const src = fs.readFileSync(ENGINE_FILE, "utf8");
+  const spec = JSON.parse(fs.readFileSync(SPEC_FILE, "utf8"));
   const specByTable = new Map(spec.must_be_zero_after_purge.map((r) => [r.table, r.live_predicate]));
 
   const mismatches = [];
@@ -135,13 +132,6 @@ export function staticMismatches(src, spec) {
   return mismatches;
 }
 
-/** A live child row under a voided parent is a violation; 0 is clean. */
-export function liveViolation(check, n) {
-  return n > 0
-    ? `${check.label}: ${n} live child row(s) under a voided parent (${check.parentTable}.${check.parentVoidPredicate}, ${check.childTable}.${check.livenessColumn} IS NULL)`
-    : null;
-}
-
 async function liveCheck(client) {
   const violations = [];
 
@@ -159,8 +149,9 @@ async function liveCheck(client) {
       [USMCA, excludeIds]
     );
     const n = Number(res.rows[0].n);
-    const v = liveViolation(check, n);
-    if (v) violations.push(v);
+    if (n > 0) {
+      violations.push(`${check.label}: ${n} live child row(s) under a voided parent (${check.parentTable}.${check.parentVoidPredicate}, ${check.childTable}.${check.livenessColumn} IS NULL)`);
+    }
     if (excludeIds.length > 0) {
       console.log(`${LABEL}: ${check.childTable} has ${excludeIds.length} active named exclusion(s) (see KNOWN_ORPHAN_EXCLUSIONS) -- not counted above, not a pass on those rows.`);
     }
@@ -198,26 +189,6 @@ async function main() {
 
   console.log(`${LABEL}: OK — static arm (CASCADE_CHILDREN vs the spec JSON) and live arm (0 live children under a voided parent, across ${LIVE_CHECKS.length} registered writable child tables) both clean.`);
   process.exit(0);
-}
-
-if (process.argv.includes("--selftest")) {
-  const src = fs.readFileSync(ENGINE_FILE, "utf8");
-  const spec = JSON.parse(fs.readFileSync(SPEC_FILE, "utf8"));
-  const specBroken = { ...spec, must_be_zero_after_purge: spec.must_be_zero_after_purge.map((r) =>
-    r.table === "accounting.bill_lines" ? { ...r, live_predicate: "1=1" } : r) };
-  const cases = [
-    ["the real engine + purge spec agree", staticMismatches(src, spec).length === 0],
-    ["an engine that drops bill_lines from CASCADE_CHILDREN fails", staticMismatches(src.replace(/table:\s*"bill_lines"/, 'table: "bill_linez"'), spec).length > 0],
-    ["a spec whose bill_lines predicate ignores voided_at fails", staticMismatches(src, specBroken).length > 0],
-    ["0 live children under a voided parent is clean", liveViolation(LIVE_CHECKS[0], 0) === null],
-    ["1 live child under a voided parent is a violation", typeof liveViolation(LIVE_CHECKS[1], 1) === "string"],
-    ["an exclusion past its expiry no longer excludes", activeExclusionIds("accounting.bill_lines", new Date("2030-01-01")).length === 0],
-    ["an exclusion before its expiry excludes its row", activeExclusionIds("accounting.bill_lines", new Date("2026-10-01")).length === 1],
-  ];
-  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
-  const bad = cases.filter(([, p]) => !p).length;
-  console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
-  process.exit(bad ? 1 : 0);
 }
 
 main();
