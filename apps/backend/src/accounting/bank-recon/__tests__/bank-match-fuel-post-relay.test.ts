@@ -42,7 +42,8 @@ function client(
             ],
           };
         }
-        if (sql.includes("JOIN mdata.loads l ON l.id = lat.load_id")) return { rows: [{ load_id: "load-1", load_number: "13558" }] };
+        // 443.110 G7 — the one fuel-to-load rule (fuel/fuel-load-at-time.ts)
+        if (sql.includes("by_unit") && sql.includes("by_driver")) return { rows: [{ load_id: "load-1", load_number: "13558", matched_by: "unit", trailer_id: null, non_owned_trailer_id: null }] };
         if (sql.includes("FROM integrations.relay_fuel_transaction_lines l") && sql.includes("AS fuel_type")) {
           return {
             rows: lines.map((l) => ({

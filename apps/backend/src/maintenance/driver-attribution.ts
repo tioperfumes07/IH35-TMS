@@ -1,4 +1,5 @@
 import { stopFenceTimeSql } from "../telematics/stop-arrival-events.js";
+import { COMPANY_TIME_ZONE } from "../lib/company-business-date.js";
 import { canonicalDispatchWorkStatusClause, canonicalNotCancelledLoadClause } from "../dispatch/canonical-active-load-set.js";
 
 /**
@@ -367,6 +368,33 @@ export async function resolveDriverMilesInPeriod(
  * LEFT JOIN: no load -> NULL, never guessed. The caller's `$1` is operating_company_id.
  */
 export function loadAtTimeSql(unitAlias: string, tsExpr: string, resultAlias = "load_at_time"): string {
+  return loadAtTimeLateralSql(`l.assigned_unit_id = ${unitAlias}`, tsExpr, resultAlias);
+}
+
+/**
+ * LEAD 443.110 G7 — the same rule keyed on the DRIVER (primary or secondary seat) instead of the unit. Used only as the
+ * fallback when a document names no unit, or the unit was running no load at that moment (a driver swapped trucks).
+ */
+export function loadAtTimeForDriverSql(driverAlias: string, tsExpr: string, resultAlias = "load_at_time_driver"): string {
+  return loadAtTimeLateralSql(
+    `(l.assigned_primary_driver_id = ${driverAlias} OR l.assigned_secondary_driver_id = ${driverAlias})`,
+    tsExpr,
+    resultAlias
+  );
+}
+
+/**
+ * LEAD 443.110 G7 — a stop stamp at exactly local midnight is a DATE, not a moment: historical loads (Settlement Creator
+ * from the signed document) carry date-only actual times (measured on prod: every USMCA stop "actual" = 05:00Z). A load
+ * delivered "on 08-12" was still being run during 08-12, so a date-only FINISH counts through the end of that day.
+ * A real time is used as-is. Applied to the TMS stamps only — fence times are always real moments.
+ */
+export function dayEndIfDateOnlySql(stampExpr: string): string {
+  return `CASE WHEN ${stampExpr} IS NOT NULL AND (${stampExpr} AT TIME ZONE '${COMPANY_TIME_ZONE}')::time = time '00:00'
+              THEN ${stampExpr} + interval '1 day' - interval '1 microsecond' ELSE ${stampExpr} END`;
+}
+
+function loadAtTimeLateralSql(matchClause: string, tsExpr: string, resultAlias: string): string {
   return `LEFT JOIN LATERAL (
     SELECT l.id AS load_id
     FROM mdata.loads l
@@ -374,7 +402,7 @@ export function loadAtTimeSql(unitAlias: string, tsExpr: string, resultAlias = "
       -- Finished = the delivery's own actual stamps, else the unit's first EXIT from that delivery stop's
       -- Samsara fence (E-25 label load-<uuid>-stop-<seq>, canonical detector). Owner 2026-10-01: 13625/13638
       -- were delivered and factored but nobody stamped the delivery in TMS -- the fence saw it.
-      SELECT COALESCE(d.actual_departure_at, d.actual_arrival_at,
+      SELECT COALESCE(${dayEndIfDateOnlySql("COALESCE(d.actual_departure_at, d.actual_arrival_at)")},
                ${stopFenceTimeSql("l.id", "d.sequence_number", "l.assigned_unit_id", "exited")}) AS actual_finished_at,
              COALESCE(d.scheduled_departure_at, d.scheduled_arrival_at) AS scheduled_finished_at
       FROM mdata.load_stops d
@@ -390,7 +418,7 @@ export function loadAtTimeSql(unitAlias: string, tsExpr: string, resultAlias = "
       LIMIT 1
     ) pk ON true
     WHERE l.operating_company_id = $1::uuid
-      AND l.assigned_unit_id = ${unitAlias}
+      AND ${matchClause}
       AND l.soft_deleted_at IS NULL
       AND l.voided_at IS NULL
       AND ${canonicalNotCancelledLoadClause("l")}

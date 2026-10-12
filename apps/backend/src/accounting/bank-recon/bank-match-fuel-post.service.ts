@@ -8,7 +8,7 @@
  * Fail-closed: null unit_id or null load_id is an ENGINE defect (owner), not a data soft-skip.
  */
 import { adoptRelayFillExpenseDocument } from "../../fuel/fuel-expense-document.service.js";
-import { loadAtTimeSql } from "../../maintenance/driver-attribution.js";
+import { resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
 import { relayLineIsGallonsSql, relayLineKindSql } from "../../fuel/relay-product-kind.js";
 import {
   buildFuelTxnJeMemo,
@@ -151,29 +151,6 @@ async function postCanonicalFuelTxn(
   });
 }
 
-async function resolveLoadForUnitAt(
-  client: DbClient,
-  operatingCompanyId: string,
-  unitId: string,
-  atIso: string
-): Promise<{ load_id: string; load_number: string | null } | null> {
-  // The load on this unit at fill time — the ONE canonical rule (maintenance/driver-attribution.ts loadAtTimeSql: the
-  // trip under way by its first pickup / last delivery stop, NB-then-return aware; never created_at). This used to read
-  // l.unit_id / l.dispatched_at / l.delivered_at / l.completed_at — none of which exist on mdata.loads (it carries
-  // assigned_unit_id; delivery time lives on the stops), so the query raised on every call (verify-no-phantom-load-
-  // assignments). Never invent — no load at that time returns null.
-  const res = await client.query<{ load_id: string; load_number: string | null }>(
-    `
-      SELECT lat.load_id::text AS load_id, l.load_number::text AS load_number
-        FROM (SELECT $2::uuid AS unit_id) u
-        ${loadAtTimeSql("u.unit_id", "$3::timestamptz", "lat")}
-        JOIN mdata.loads l ON l.id = lat.load_id
-    `,
-    [operatingCompanyId, unitId, atIso]
-  );
-  return res.rows[0] ?? null;
-}
-
 async function postRelayFuelFill(
   client: DbClient,
   input: {
@@ -232,7 +209,14 @@ async function postRelayFuelFill(
       `relay_fuel ${input.fill_id}: matched_unit_id is null — engine defect (owner: fuel posting requires unit)`
     );
   }
-  const load = await resolveLoadForUnitAt(client, input.operating_company_id, row.unit_id, row.transaction_at);
+  // 443.110 G7 — the one fuel-to-load rule (fuel/fuel-load-at-time.ts), same as the fuel-card import: unit first,
+  // driver fallback, date-only stamps count to the end of their day.
+  const load = await resolveFuelLoadAtTime(client, {
+    operatingCompanyId: input.operating_company_id,
+    unitId: row.unit_id,
+    driverId: row.driver_id,
+    at: row.transaction_at,
+  });
   if (!load?.load_id) {
     throw new FuelMatchPostError(
       "fuel_fill_missing_load",
