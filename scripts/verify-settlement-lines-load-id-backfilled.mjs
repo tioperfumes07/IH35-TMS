@@ -19,11 +19,47 @@
 // load_id link -- e.g. a future one-off backfill/import repeating the same historical mistake.
 //
 // Usage: DATABASE_URL=<prod> node scripts/verify-settlement-lines-load-id-backfilled.mjs
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
 const LABEL = "verify-settlement-lines-load-id-backfilled";
+
+/** The row predicate of the live query, pure (same as its WHERE): an active reimbursement / deduction line with no
+ *  load_id whose own description names a load. */
+export function namesLoadWithoutLink(row) {
+  return row.load_id == null && ["reimbursement", "deduction"].includes(row.line_type) && row.is_active === true
+    && /load \d+/.test(String(row.description ?? ""));
+}
+
+/** The rule, pure: the failure message for the offending rows, or null when there are none. */
+export function unlinkedLoadLinesFailure(rows) {
+  if (!rows.length) return null;
+  const sample = rows.slice(0, 5).map((r) => `${r.id}: ${r.description.slice(0, 80)}`).join("\n  ");
+  return (
+    `${rows.length} settlement_lines row(s) name a load in their own description but have no ` +
+    `load_id link -- backfill them (parse "load (\\d+)", resolve against mdata.loads by ` +
+    `(load_number, operating_company_id), write only when the resolution is unambiguous). Sample:\n  ${sample}`
+  );
+}
+
+function selftest() {
+  const line = (o) => ({ id: "l1", load_id: null, line_type: "reimbursement", is_active: true, description: "Lumper load 13517", ...o });
+  const pick = (rows) => rows.filter(namesLoadWithoutLink);
+  const cases = [
+    ["a linked line passes", unlinkedLoadLinesFailure(pick([line({ load_id: "x" })])) === null],
+    ["a line naming no load passes", unlinkedLoadLinesFailure(pick([line({ description: "Lumper fee" })])) === null],
+    ["an inactive or non-reimbursement line is out of scope", unlinkedLoadLinesFailure(pick([line({ is_active: false }), line({ line_type: "earning" })])) === null],
+    ["a reimbursement naming load 13517 with no load_id fails", unlinkedLoadLinesFailure(pick([line({})]))?.startsWith("1 settlement_lines row(s)") === true],
+    ["a deduction naming a load fails too", unlinkedLoadLinesFailure(pick([line({ line_type: "deduction", description: "Advance load 13600" })])) !== null],
+  ];
+  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
 
 async function main() {
   const url = process.env.DATABASE_URL;
@@ -47,14 +83,8 @@ async function main() {
         WHERE load_id IS NULL AND line_type IN ('reimbursement','deduction') AND is_active = true
           AND description ~ 'load \\d+'`
     );
-    if (res.rows.length > 0) {
-      const sample = res.rows.slice(0, 5).map((r) => `${r.id}: ${r.description.slice(0, 80)}`).join("\n  ");
-      throw new Error(
-        `${res.rows.length} settlement_lines row(s) name a load in their own description but have no ` +
-          `load_id link -- backfill them (parse "load (\\d+)", resolve against mdata.loads by ` +
-          `(load_number, operating_company_id), write only when the resolution is unambiguous). Sample:\n  ${sample}`
-      );
-    }
+    const failure = unlinkedLoadLinesFailure(res.rows);
+    if (failure) throw new Error(failure);
     console.log(`${LABEL} PASS -- every reimbursement/deduction settlement_lines row that names a load in its description has a real load_id link`);
   } finally {
     client.release();
@@ -62,7 +92,13 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(e.message);
-  process.exitCode = 1;
-});
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  if (process.argv.includes("--selftest")) selftest();
+  else {
+    main().catch((e) => {
+      console.error(e.message);
+      process.exitCode = 1;
+    });
+  }
+}
