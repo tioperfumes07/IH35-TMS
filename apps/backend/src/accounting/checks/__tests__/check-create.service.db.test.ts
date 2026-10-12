@@ -128,6 +128,13 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
          VALUES ($1::uuid,$2::uuid,'Test Maintenance Item ${suffix}','Service',$3::uuid)`,
         [maintenanceItemId, companyId, maintenanceAccountId]
       );
+      // 443.95: a check posts only when EXPENSE_GL_POSTING_ENABLED is on (check-create.service.ts:344, the same gate as a
+      // regular expense). The isolated company turns it on, as the owner's company has it; TB is then read from the check's JE.
+      await db.query(
+        `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
+         VALUES ('EXPENSE_GL_POSTING_ENABLED', $1::uuid, NULL, true, $2::uuid)`,
+        [companyId, ACTOR_USER_ID]
+      );
     });
   }, 60_000);
 
@@ -147,6 +154,8 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
       });
       expect(result.id.length).toBeGreaterThan(0);
       expect(result.total_amount_cents).toBe(12345);
+      expect(result.posting_status).toBe("posted");
+      expect(result.journal_entry_id).toBeTruthy();
 
       // Verify expense_lines has item_id set (not null — constraint proof)
       const lines = await scopedRead<{ item_id: string | null }>(
@@ -162,8 +171,8 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
            SUM(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE 0 END)::text AS debit_sum,
            SUM(CASE WHEN debit_or_credit='credit' THEN amount_cents ELSE 0 END)::text AS credit_sum
          FROM accounting.journal_entry_postings
-         WHERE source_transaction_id = $1`,
-        [result.id]
+         WHERE journal_entry_uuid = $1::uuid AND source_transaction_type = 'expense' AND source_transaction_id = $2`,
+        [result.journal_entry_id, result.id]
       );
       expect(je[0]?.debit_sum).toBe("12345");
       expect(je[0]?.credit_sum).toBe("12345");
@@ -247,6 +256,8 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
         lines: [{ line_kind: "item", item_id: maintenanceItemId, quantity: 2, rate_cents: 5000, amount_cents: 10000 }],
       });
       expect(result.total_amount_cents).toBe(10000);
+      expect(result.posting_status).toBe("posted");
+      expect(result.journal_entry_id).toBeTruthy();
 
       const lines = await scopedRead<{ item_id: string; quantity: number; rate_cents: number }>(
         `SELECT item_id::text, quantity, rate_cents FROM accounting.expense_lines WHERE expense_id = $1::uuid`,
@@ -263,8 +274,8 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
            SUM(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE 0 END)::text AS debit_sum,
            SUM(CASE WHEN debit_or_credit='credit' THEN amount_cents ELSE 0 END)::text AS credit_sum
          FROM accounting.journal_entry_postings
-         WHERE source_transaction_id = $1`,
-        [result.id]
+         WHERE journal_entry_uuid = $1::uuid AND source_transaction_type = 'expense' AND source_transaction_id = $2`,
+        [result.journal_entry_id, result.id]
       );
       expect(je[0]?.debit_sum).toBe("10000");
       expect(je[0]?.credit_sum).toBe("10000");
