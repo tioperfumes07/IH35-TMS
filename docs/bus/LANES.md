@@ -37,6 +37,11 @@ apps/backend/src/maintenance/__tests__/pm-auto-engine-e14.test.ts
 apps/backend/src/system/engine-status.catalog.ts
 scripts/db-migrate.mjs
 scripts/audit-creator-settlement.mjs
+# ROUND 443.140 8b (CC-1, 2026-10-12) — cash-flow projections: card_payable_2510 + relay_topup + late-load receipt
+apps/backend/src/cash-flow/cash-flow.service.ts
+apps/backend/src/cash-flow/projected-cash-date.ts
+apps/backend/src/cash-flow/__tests__/8b-cash-flow-projections.db.test.ts
+scripts/verify-steps/18445-verify-cash-flow-projections-8b.mjs
 # ROUND 443.139 8c (CC-1, 2026-10-12) — basis (accrual/cash) on all 7 money reports
 scripts/verify-steps/18441-verify-all-money-reports-take-basis.mjs
 apps/backend/src/accounting/__tests__/8c-money-reports-basis.db.test.ts

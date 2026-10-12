@@ -997,7 +997,9 @@ export type RollingLedgerRow = {
     | "loan_amortization_row"
     | "invoice"
     | "factoring_advance"
-    | "load";
+    | "load"
+    | "card_payable"
+    | "relay_topup";
   document_id: string;
   document_label: string;
   counterparty: string;
@@ -1302,6 +1304,10 @@ export async function getRollingLedgerRows(
 
   // 1) accounting.invoices — sent, real open balance, NOT factored (factored invoices are tracked
   // via factoring_advances below instead, so a factored invoice's cash isn't double-counted here).
+  // 443.140 #8(b) — LATE LOAD MOVES ITS RECEIPT: when the underlying load is still in transit,
+  // the effective receipt date is recomputed from the load's CURRENT delivery appointment
+  // + payment_terms (same rule as not-invoiced loads). This matches the driver-bill effective_due_date
+  // behaviour — both the bill and the receipt move together when a load is late.
   const invoicesPromise = client.query<{
     id: string;
     display_id: string | null;
@@ -1318,13 +1324,32 @@ export async function getRollingLedgerRows(
       i.display_id,
       COALESCE(c.customer_name, 'Customer') AS customer_name,
       i.issue_date::text AS issue_date,
-      i.due_date::text AS due_date,
+      -- LATE LOAD MOVES ITS RECEIPT: for an in-transit load recompute from current delivery appt
+      -- + terms; for an already-delivered/invoiced/paid/closed load keep the invoice's own due_date.
+      COALESCE(
+        CASE
+          WHEN l.id IS NOT NULL
+            AND l.status::text NOT IN ('delivered','invoiced','paid','closed','cancelled')
+            AND fd.scheduled_arrival_at IS NOT NULL
+          THEN (fd.scheduled_arrival_at::date + COALESCE(NULLIF(pt.days_until_due, 0), 0) * INTERVAL '1 day')::date::text
+          ELSE i.due_date::text
+        END,
+        i.due_date::text
+      ) AS due_date,
       COALESCE(i.amount_open_cents, 0)::int AS amount_open_cents,
       l.id::text AS load_id,
       l.load_number AS load_number
     FROM accounting.invoices i
     LEFT JOIN mdata.customers c ON c.id = i.customer_id AND c.operating_company_id = $1::uuid
+    LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id AND pt.operating_company_id = $1::uuid
     LEFT JOIN mdata.loads l ON l.id = i.source_load_id AND l.operating_company_id = $1::uuid
+    LEFT JOIN LATERAL (
+      SELECT scheduled_arrival_at
+      FROM mdata.load_stops
+      WHERE load_id = l.id AND stop_type = 'delivery'
+      ORDER BY sequence_number DESC
+      LIMIT 1
+    ) fd ON l.id IS NOT NULL
     WHERE i.operating_company_id = $1::uuid
       AND i.status IN ('sent', 'partial')
       AND i.voided_at IS NULL
@@ -1468,10 +1493,89 @@ export async function getRollingLedgerRows(
     [operatingCompanyId, notInvoicedStatuses]
   );
 
-  // All 9 above are independent reads (each keyed only on operatingCompanyId/today) -- fire them
-  // concurrently instead of paying 9 sequential Neon round-trips, then process in the exact same
+  // 443.140 #8(b) — CARD PAYABLE (2510): The Dreamline Diesel Card Payable account (2510) accumulates
+  // a credit balance each time fuel posts (Dr fuel / Cr 2510). The bank match that pays the card
+  // clears 2510 via debit. The outstanding net credit balance on 2510 is a real cash obligation that
+  // must appear in the rolling ledger. Due date defaults to today (it is an already-incurred
+  // liability); the owner can roll it forward via cash_flow_row_adjustments if the card payment
+  // date is in the future.
+  const cardPayable2510Promise = client.query<{
+    account_id: string;
+    account_name: string;
+    balance_cents: number;
+    due_date: string;
+  }>(
+    `
+    SELECT
+      ca.id::text AS account_id,
+      ca.account_name,
+      GREATEST(
+        COALESCE(SUM(
+          CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE -jep.amount_cents END
+        ), 0)::int,
+        0
+      ) AS balance_cents,
+      $2::date AS due_date
+    FROM catalogs.accounts ca
+    JOIN accounting.journal_entry_postings jep ON jep.account_id = ca.id
+      AND jep.operating_company_id = $1::uuid
+    JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+      AND je.operating_company_id = $1::uuid
+      AND je.voided_at IS NULL
+    WHERE ca.operating_company_id = $1::uuid
+      AND (ca.account_number = '2510' OR ca.account_name ILIKE '%diesel card payable%')
+      AND ca.deactivated_at IS NULL
+    GROUP BY ca.id, ca.account_name
+    HAVING GREATEST(
+      COALESCE(SUM(
+        CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE -jep.amount_cents END
+      ), 0)::int,
+      0
+    ) > 0
+    `,
+    [operatingCompanyId, today]
+  ).catch((err) => {
+    logger.warn("cash-flow rolling-ledger: card_payable_2510 subquery failed", {
+      operating_company_id: operatingCompanyId,
+      error_stack: err instanceof Error ? err.stack : String(err),
+    });
+    return { rows: [] as { account_id: string; account_name: string; balance_cents: number; due_date: string }[] };
+  });
+
+  // 443.140 #8(b) — RELAY WALLET TOP-UPS: planned Relay wallet top-ups entered by the owner as
+  // cash-flow adjustments (label contains 'relay'). These are cash outflows from the bank account
+  // to fund the Relay fuel wallet (1295). The owner schedules them via accounting.cash_flow_adjustments;
+  // the daily prediction already exposes these for a single date — the rolling ledger picks up ALL
+  // upcoming relay top-up entries across the window so the owner sees the full projected schedule.
+  const relayTopupPromise = client.query<{
+    id: string;
+    entry_date: string;
+    label: string;
+    amount_cents: number;
+  }>(
+    `
+    SELECT id::text, entry_date::text AS entry_date, label, amount_cents::int
+    FROM accounting.cash_flow_adjustments
+    WHERE operating_company_id = $1::uuid
+      AND label ILIKE '%relay%'
+      AND amount_cents > 0
+      AND archived_at IS NULL
+      AND entry_date >= $2::date
+    ORDER BY entry_date ASC, created_at ASC
+    `,
+    [operatingCompanyId, today]
+  ).catch((err) => {
+    logger.warn("cash-flow rolling-ledger: relay_topup subquery failed", {
+      operating_company_id: operatingCompanyId,
+      error_stack: err instanceof Error ? err.stack : String(err),
+    });
+    return { rows: [] as { id: string; entry_date: string; label: string; amount_cents: number }[] };
+  });
+
+  // All 11 above are independent reads (each keyed only on operatingCompanyId/today) -- fire them
+  // concurrently instead of paying sequential Neon round-trips, then process in the exact same
   // order the old sequential-await code did so row order/content is unchanged.
-  const [billRows, settlementRows, driverBillRows, expenseRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows] =
+  const [billRows, settlementRows, driverBillRows, expenseRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows, cardPayable2510Rows, relayTopupRows] =
     await Promise.all([
       billsPromise,
       settlementsPromise,
@@ -1482,6 +1586,8 @@ export async function getRollingLedgerRows(
       advancesPromise,
       reservesPromise,
       notInvoicedPromise,
+      cardPayable2510Promise,
+      relayTopupPromise,
     ]);
 
   for (const b of billRows.rows) {
@@ -1644,6 +1750,42 @@ export async function getRollingLedgerRows(
       status: rowStatus(daysOverdue),
       load_id: l.id,
       load_number: l.load_number,
+    });
+  }
+
+  // 443.140 #8(b) — CARD PAYABLE (2510) rows
+  for (const cp of cardPayable2510Rows.rows) {
+    const daysOverdue = daysBetween(today, cp.due_date);
+    rows.push({
+      row_kind: "expense",
+      type: "Card Payable (Fuel Card)",
+      document_kind: "card_payable",
+      document_id: cp.account_id,
+      document_label: cp.account_name,
+      counterparty: cp.account_name,
+      origin_date: cp.due_date,
+      due_date: cp.due_date,
+      amount_cents: cp.balance_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  // 443.140 #8(b) — RELAY WALLET TOP-UP rows
+  for (const rt of relayTopupRows.rows) {
+    const daysOverdue = daysBetween(today, rt.entry_date);
+    rows.push({
+      row_kind: "expense",
+      type: "Relay Wallet Top-Up",
+      document_kind: "relay_topup",
+      document_id: rt.id,
+      document_label: rt.label,
+      counterparty: "Relay",
+      origin_date: rt.entry_date,
+      due_date: rt.entry_date,
+      amount_cents: rt.amount_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
     });
   }
 
