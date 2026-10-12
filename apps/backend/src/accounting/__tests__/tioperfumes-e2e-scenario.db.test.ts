@@ -78,6 +78,7 @@ run("Tio Perfumes end-to-end money scenario (real engine)", () => {
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL!;
     db = new pg.Client(buildPgClientConfig(cs)); await db.connect(); await db.query("SET ROLE ih35_app");
     await tx(async () => {
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(`INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`, [userId, `tio-${s}@test.local`]);
       // Chart of accounts + roles
       await acct(ids.ar, `AR${s}`, "Accounts Receivable", "Asset");

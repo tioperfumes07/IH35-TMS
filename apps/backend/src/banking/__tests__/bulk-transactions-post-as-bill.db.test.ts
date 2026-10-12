@@ -137,6 +137,7 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
     // Actor must exist BEFORE createIsolatedOperatingCompany({ actorUserId }).
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
+    await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
     await db.query(
       `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
       [userId, `bulk-post-bill-${suffix}@test.local`]

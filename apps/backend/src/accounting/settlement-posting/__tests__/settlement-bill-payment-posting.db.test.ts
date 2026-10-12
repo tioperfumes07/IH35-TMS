@@ -302,6 +302,7 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     await acquireGlobalAccountRoleBindingsLock(db);
     heldGlobalBindingsLock = true;
     await bypass(async () => {
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `sbp-${suffix}@test.local`]

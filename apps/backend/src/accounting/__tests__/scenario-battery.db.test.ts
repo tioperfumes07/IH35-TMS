@@ -56,6 +56,7 @@ run("cross-module scenario battery (real engine)", () => {
     db = new pg.Client(buildPgClientConfig(process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL!));
     await db.connect(); await db.query("SET ROLE ih35_app");
     await tx(async () => {
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(`INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`, [userId, `battery-${s}@test.local`]);
       const acct=(i:string,n:string,nm:string,t:string)=>db.query(`INSERT INTO catalogs.accounts (id,operating_company_id,account_number,account_name,account_type,is_postable) VALUES ($1::uuid,$2::uuid,$3,$4,$5,true)`,[i,companyId,n,nm,t]);
       await acct(id.ap,`AP${s}`,"Accounts Payable","Liability");

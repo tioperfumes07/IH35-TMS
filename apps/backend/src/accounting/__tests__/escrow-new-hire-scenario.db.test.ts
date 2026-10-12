@@ -69,6 +69,7 @@ run("stage-3 · new-hire driver escrow (real engine)", () => {
       // ordering guarantee between separate test files/workers, so any FK on this actor 23503'd
       // whenever this file ran before that one. Seed it here too (idempotent) so this file is
       // self-sufficient.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [actor.userId, `escrow-hire-${s}@test.local`]);

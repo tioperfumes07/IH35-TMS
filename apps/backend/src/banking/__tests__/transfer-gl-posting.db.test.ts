@@ -102,6 +102,7 @@ describeIntegration("BANKING-GL-COMPLETION transfer -> GL posting end-to-end (re
     await db.connect();
     await db.query("SET ROLE ih35_app");
     await bypass(async () => {
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `transfer-gl-${suffix}@test.local`]

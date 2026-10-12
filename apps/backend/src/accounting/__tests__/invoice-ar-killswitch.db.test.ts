@@ -114,6 +114,7 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
     await db.query("SET ROLE ih35_app");
 
     await bypass(async () => {
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `chain06-${suffix}@test.local`]

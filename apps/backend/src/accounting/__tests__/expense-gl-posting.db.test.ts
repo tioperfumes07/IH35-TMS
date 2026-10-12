@@ -52,6 +52,7 @@ describeIntegration("expense → GL posting (real Postgres)", () => {
     await db.query("SET ROLE ih35_app");
     await bypass(async () => {
       // a real user for withCurrentUser(app.current_user_id)
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `gl-post-${suffix}@test.local`]

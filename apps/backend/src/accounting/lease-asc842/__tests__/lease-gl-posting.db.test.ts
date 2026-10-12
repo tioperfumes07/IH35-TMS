@@ -225,6 +225,7 @@ describeIntegration("FIN-22 lease ASC 842 GL posting (real Postgres)", () => {
       trkId = r.rows[0]!.id;
     }
     await bypass(async () => {
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `fin22-${suffix}@test.local`]

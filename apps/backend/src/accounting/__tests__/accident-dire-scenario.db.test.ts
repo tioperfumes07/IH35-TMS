@@ -54,6 +54,7 @@ run("dire accident scenario — full linkage (real engine)", () => {
     db = new pg.Client(buildPgClientConfig(process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL!));
     await db.connect(); await db.query("SET ROLE ih35_app");
     await tx(async () => {
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(`INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`, [userId, `dire-${s}@test.local`]);
       // CI-BUILD-TYPECHECK-ACCIDENT-TYPE-ID-NOT-NULL: safety.accident_reports.accident_type_id is
       // NOT NULL with an FK to catalogs.accident_types(operating_company_id, id) — a per-entity

@@ -138,6 +138,7 @@ describeIntegration("BLOCK-6 bank-categorize driver advance posting (real Postgr
     // two files' setup/teardown of that shared row can never overlap. Serialization only — no GL behavior.
     await db.query("SELECT pg_advisory_lock($1::bigint)", [CASH_ADVANCE_MAP_TEST_LOCK_KEY]);
     await bypass(async () => {
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `b6-${suffix}@test.local`]

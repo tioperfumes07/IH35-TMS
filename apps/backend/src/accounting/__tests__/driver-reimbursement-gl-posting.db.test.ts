@@ -62,6 +62,7 @@ describeIntegration("driver reimbursement → GL posting end-to-end (real Postgr
     await db.connect();
     await db.query("SET ROLE ih35_app");
     await bypass(async () => {
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `driver-reimb-gl-${suffix}@test.local`]
