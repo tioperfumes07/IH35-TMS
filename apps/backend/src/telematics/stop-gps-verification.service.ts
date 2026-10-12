@@ -74,6 +74,14 @@ export function sameFacilityName(a: string | null | undefined, b: string | null 
   return [...A].some((w) => B.has(w));
 }
 
+/** 443.87: a zip-center stop's facility must carry the document's own name; short acronyms count (JVL, TCI, GFS). */
+export function zipFacilityConfirmed(documentFacility: string | null | undefined, found: string | null | undefined, places: Array<string | null | undefined> = []): boolean {
+  if (sameFacilityName(documentFacility, found, places)) return true;
+  const placeWords = new Set(places.flatMap((p) => String(p ?? "").toLowerCase().split(/[^a-z0-9]+/)).filter(Boolean));
+  const acr = String(documentFacility ?? "").split(/[^A-Za-z0-9]+/).filter((w) => w.length === 3 && w === w.toUpperCase() && /[A-Z]/.test(w) && !placeWords.has(w.toLowerCase()));
+  const f = new Set(String(found ?? "").toUpperCase().split(/[^A-Z0-9]+/));
+  return acr.some((w) => f.has(w));
+}
 export function metersBetween(aLat: number, aLng: number, bLat: number, bLng: number): number {
   const r = Math.PI / 180;
   const h = Math.sin(((bLat - aLat) * r) / 2) ** 2 + Math.cos(aLat * r) * Math.cos(bLat * r) * Math.sin(((bLng - aLng) * r) / 2) ** 2;
@@ -244,11 +252,18 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
             && metersBetween(st.lat!, st.lng!, d.lat, d.lng) <= ZIP_CITY_RADIUS_M)
           .sort((a, b) => b.dwellMinutes - a.dwellMinutes).slice(0, 3);
         if (!cands.length) reason = hasFixesOn(st.day) ? "no loading dwell of the truck in that city on the document date" : "no GPS for the truck on the document date";
+        const others: string[] = [];
         for (const d of cands) {
           const f = await resolveFacility(client, input.operatingCompanyId, d.lat, d.lng, docFacility);
-          if (f && f.name !== "TRUCK_STOP" && f.street) { pick = { d, f }; break; }
+          if (!f || f.name === "TRUCK_STOP" || !f.street) continue;
+          // 443.87: only the document's own business is written; a dwell at another business (a repair shop, a drop box)
+          // is listed for the owner, never fenced.
+          if (zipFacilityConfirmed(docFacility, f.name, [zipStop.city, zipStop.state, f.city, f.state])) { pick = { d, f }; break; }
+          others.push(`${f.name ?? "unnamed place"} (${f.street}, ${f.city})`);
         }
-        if (cands.length && !pick) reason = "the dwell resolves to no facility with a street (truck stop or no Google / Samsara place)";
+        if (cands.length && !pick) reason = others.length
+          ? `the truck's dwell in that city is at another business, not "${docFacility}": ${others.join("; ")}`
+          : "the dwell resolves to no facility with a street (truck stop or no Google / Samsara place)";
       }
       let applied = false;
       if (pick && input.apply) {
