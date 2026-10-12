@@ -10,6 +10,7 @@ const COSTS = "apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx";
 const BOARD = "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx";
 const ROUTES = "apps/frontend/src/routes/manifest.tsx";
 const BACKEND = "apps/backend/src/accounting/load-costs-board.routes.ts";
+const DOCUMENT_MODEL = "apps/backend/src/accounting/load-costs-live-documents.sql.ts";
 const FINANCE = "apps/frontend/src/pages/finance/FinanceModuleTabs.tsx";
 const SIDEBAR = "apps/frontend/src/components/layout/sidebar-config.ts";
 const DISPATCH = "apps/frontend/src/pages/dispatch/DispatchOverview.tsx";
@@ -38,6 +39,20 @@ function reverseViolations(billsReverse, driverProfile, trailerProfile) {
 function checkReverse(...args) {
   const errors = reverseViolations(...args);
   if (errors.length) throw new Error(errors.join("; "));
+}
+
+function allocationViolations(backend, model) {
+  const contracts = [
+    [backend, 'WITH ${LOAD_COST_DOCUMENTS_CTE}'],
+    [backend, 'LEFT JOIN expense_costs ec ON ec.load_id=l.id'],
+    [backend, 'LEFT JOIN bill_costs bc ON bc.load_id=l.id'],
+    [backend, "FROM cost_documents WHERE kind='expense' AND load_id IS NOT NULL"],
+    [backend, "FROM cost_documents WHERE kind='bill' AND load_id IS NOT NULL"],
+    [model, 'COALESCE(el.load_id,e.load_id)'],
+    [model, 'COALESCE(bl.load_id,b.load_id)'],
+    [model, 'ROUND(bl.amount*100)::bigint'],
+  ];
+  return contracts.filter(([src, token]) => !src.includes(token)).map(([, token]) => `missing per-load allocation: ${token}`);
 }
 
 function violations(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage) {
@@ -69,7 +84,8 @@ function violations(drawer, costs, board, routes, backend, finance, sidebar, dis
   // computation and for any other consumer (e.g. DispatchLoadCostsPanel).
   if (!board.includes("PU Date") || !board.includes("Del Date")) errors.push("Load costs board missing the locked PU Date / Del Date columns");
   if (!routes.includes('path="/dispatch/load-costs"') || !drawer.includes('initialTab?: DrawerTab')) errors.push("Costs board route or drawer deep-link contract is missing");
-  if (!backend.includes("LEFT JOIN bill_costs") || !backend.includes("SUM(ROUND(bl.amount * 100))") || !backend.includes("e.load_id IS NOT NULL")) errors.push("per-load expense/bill allocation is not enforced");
+  // R443.139: allocation moved into the mounted shared document CTE. Assert both line attribution and load joins.
+  errors.push(...allocationViolations(backend, documentModel));
   if (!backend.includes("LOAD_COSTS_HUB_LINKAGE") || !backend.includes("org.companies") || !backend.includes("maintenance.work_orders")) errors.push("Load costs board is missing the twelve-hub declaration");
   if (backend.includes("INSERT INTO") || backend.includes("UPDATE accounting") || backend.includes("DELETE FROM")) errors.push("Costs board backend introduced a writer");
   if (!backend.includes('"Dispatcher"')) errors.push("load-costs-board GET must stay readable while dispatching");
@@ -116,6 +132,7 @@ const costs = fs.readFileSync(COSTS, "utf8");
 const board = fs.readFileSync(BOARD, "utf8");
 const routes = fs.readFileSync(ROUTES, "utf8");
 const backend = fs.readFileSync(BACKEND, "utf8");
+const documentModel = fs.readFileSync(DOCUMENT_MODEL, "utf8");
 const finance = fs.readFileSync(FINANCE, "utf8");
 const sidebar = fs.readFileSync(SIDEBAR, "utf8");
 const dispatch = fs.readFileSync(DISPATCH, "utf8");
@@ -128,6 +145,20 @@ const driverProfile = fs.readFileSync(DRIVER_PROFILE, "utf8");
 const trailerProfile = fs.readFileSync(TRAILER_PROFILE, "utf8");
 
 if (process.argv.includes("--selftest")) {
+  const allocationPlants = [
+    ...['WITH ${LOAD_COST_DOCUMENTS_CTE}', 'LEFT JOIN expense_costs ec ON ec.load_id=l.id',
+      'LEFT JOIN bill_costs bc ON bc.load_id=l.id',
+      "FROM cost_documents WHERE kind='expense' AND load_id IS NOT NULL",
+      "FROM cost_documents WHERE kind='bill' AND load_id IS NOT NULL"]
+      .map(token => [backend.replaceAll(token, 'MUTATED'), documentModel]),
+    ...['COALESCE(el.load_id,e.load_id)', 'COALESCE(bl.load_id,b.load_id)', 'ROUND(bl.amount*100)::bigint']
+      .map(token => [backend, documentModel.replaceAll(token, 'MUTATED')]),
+  ];
+  if (allocationViolations(backend, documentModel).length) throw new Error('real allocation invalid');
+  for (const args of allocationPlants) {
+    if (!allocationViolations(...args).length) throw new Error('allocation mutation escaped');
+  }
+  console.log(`PASS per-load allocation selftest (${allocationPlants.length}/${allocationPlants.length})`);
   const base = [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage];
   const mutations = [
     // replaceAll: the drawer names "Costs", in both the PRIMARY tab order and the accounting-context order (LDT-0);
