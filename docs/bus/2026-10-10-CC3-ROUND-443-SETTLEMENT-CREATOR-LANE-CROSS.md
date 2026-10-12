@@ -51,3 +51,7 @@ The order also says: "One PR + one named guard per step, guard wired in scripts/
   - The payment is capped at the invoice's open balance.
   - The release is Dr cash_clearing / Cr 1235.
   - Selftest 16/16.
+
+## 443.86 #1 + #2 — G5 deadhead + zip-center stops (Lead 02:38 UTC 10-12: items 1 and 2 are CC-3's)
+- `apps/backend/src/dispatch/mileage/**` (deadhead fill engine + Owner route) and `apps/backend/src/telematics/stop-gps-verification.service.ts` / `stops-geocode-backfill.routes.ts` (zip-center stop → GPS dwell, Owner route), with migration 202615640900 (deadhead method values) and two guards.
+- No amount, rate or pay miles change.
