@@ -7938,4 +7938,7 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the corrected route
 action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-124-relearn-corrected-lanes.mts --apply --auth AUTH-446
 rehearsal: throwaway br-twilight-leaf-ak94h0q1 (COMMITTED, deleted): 13511 / 13536 / 13573 city lane created, 13660 city lane updated, leg_miles identical; a second run refused (already learned); verify-booked-loads-save-miles live on the fork: PASS, 148 loads, 0 findings
 expires_at: 2026-10-13T18:35:00Z
-status: OPEN
+status: CONSUMED
+consumed_by: CC-2 (443.124)
+row_counts: 4 corrected-route lanes learned through learnLoadLanes(routeCorrected) — 13511, 13536, 13573 catalogs.lane_mileage city rows created, 13660 city row updated; mdata.customer_lanes created for the 4; point_mileage already present; leg_miles identical (runner check)
+proof_query: verify-booked-loads-save-miles live on prod 2026-10-12 18:37 UTC — PASS, 148 USMCA loads booked since 2026-10-11, 0 findings
