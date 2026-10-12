@@ -105,12 +105,15 @@ describe("postRelayDeposit (443.29 b)", () => {
     expect((out as { reason: string }).reason).toMatch(/^party_account_missing \(Alberto/);
     expect(createJournalEntryOnClient).not.toHaveBeenCalled();
   });
-  it("443.133 B: a posted deposit is stamped on its row (posted_to_gl, posted_journal_entry_id, classification)", async () => {
+  it("443.133 B / 443.136: a posted deposit's row gets its classification from the app; its posted state is never written by hand", async () => {
     const createJournalEntryOnClient = vi.fn(async () => ({ id: "je-new" }));
     const db = fake(dep({ funding_card_last4: "9708" }));
     await postRelayDeposit(db, args, { createJournalEntryOnClient });
     const stamp = db.query.mock.calls.find((c) => /UPDATE integrations\.relay_deposits/.test(String(c[0])));
-    expect(stamp?.[1]).toEqual(["dep-1", "co", "je-new", "intercompany"]);
+    expect(stamp?.[1]).toEqual(["dep-1", "co", "intercompany"]);
+    // posted_to_gl / posted_journal_entry_id are stamped by the posting registry trigger (migration 202615920910).
+    const handStamp = db.query.mock.calls.find((c) => /posted_to_gl\s*=\s*true/i.test(String(c[0])));
+    expect(handStamp).toBeUndefined();
   });
 
   it("0210 (443.58): loan document through the loan engine, then Dr 1295 + Dr 5005 / Cr 2410-00-001 naming the lender, linked both ways", async () => {

@@ -203,6 +203,18 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-3/c134-rp",
     new Set(["db/migrations/202615900910_related_party_accounts_link.sql"]),
   ],
+  // LEAD 443.136 #1 (CC-3): the Relay deposit posting registry trigger stamps the deposit row. Claimed first on main
+  // (#26721, 31695686ae) under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c136-deposit",
+    new Set(["db/migrations/202615920910_relay_deposit_stamped_by_posting_registry.sql"]),
+  ],
+  // LEAD 443.136 #2 (CC-3): WORM on accounting.related_party_accounts. Claimed first on main (#26721, 31695686ae) under
+  // claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c136-worm",
+    new Set(["db/migrations/202615930910_related_party_accounts_worm.sql"]),
+  ],
   // RULING 443.62 #3/#4/#7 (Lead 16:35 UTC): 2410-00-001..004 "Due to / from <party>" rename (taken from CC-1 #26377) +
   // google_place_id on stop / location for CC-2. Claimed first on main (#26389); exact branch + exact files.
   [

@@ -12,7 +12,7 @@ import { refuseProductionConnectionString, refuseProductionDatabase } from "../.
 import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID } from "../../../../test-helpers/constants.js";
 import { createIsolatedOperatingCompany, deactivateIsolatedOperatingCompany } from "../../../../test-helpers/isolated-company.js";
-import { createJournalEntryOnClient } from "../../../accounting/journal-entries.service.js";
+import { createJournalEntryOnClient, reverseJournalEntryNoFlip } from "../../../accounting/journal-entries.service.js";
 import { postRelayDeposit } from "../relay-deposit-post.service.js";
 
 const describeIntegration = process.env.DATABASE_URL || process.env.DATABASE_DIRECT_URL ? describe : describe.skip;
@@ -110,6 +110,15 @@ describeIntegration("Relay deposits post by the owner's card map, once (443.133 
         } as never, { userId: TEST_OWNER_USER_ID, role: "Owner" })
       ).rejects.toThrow(/relay_deposit_already_posted/);
       await db.query("ROLLBACK TO SAVEPOINT dup");
+
+      // 3b. LEAD 443.136 #1 — the posted state is the POSTING's, stamped by the registry trigger, not by the app: reversing the
+      // deposit's entry through the engine clears the stamp in the same transaction (old code: the app's hand stamp stayed true).
+      await db.query("SAVEPOINT rev");
+      await reverseJournalEntryNoFlip(db as never, { operatingCompanyId: opco, journalEntryId: je, reason: "443.136 test reversal", actorUserId: TEST_OWNER_USER_ID });
+      expect(await one(
+        `SELECT posted_to_gl, posted_journal_entry_id::text AS je FROM integrations.relay_deposits WHERE id = $1::uuid`, [dLaura]
+      )).toEqual({ posted_to_gl: false, je: null });
+      await db.query("ROLLBACK TO SAVEPOINT rev");
 
       // 4. Alberto's card is named but its "Due to / from" account does not exist: refused BY NAME, nothing written.
       const a = await post(dAlberto);

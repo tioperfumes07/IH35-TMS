@@ -9,8 +9,8 @@
  * LEAD 443.133 B: the funding map below is now DATA — integrations.relay_company_cards.funding_kind (+ account / party),
  * seeded by migration 202615870910 from the owner's words and owner-editable; this list is its history. Added 443.133 B:
  * 0275 Scentsx, 9830 Tio Perfumes 2, 1222/3088/7180 Laura (Due to / from Laura), 1993 Alberto Lozano (refused by name until
- * its account exists). Every post / already-posted deposit is stamped on its row (posted_to_gl, posted_journal_entry_id,
- * classification); a deposit enters 1295 once (integrations.relay_deposit_postings, database refusal).
+ * its account exists). Every post / already-posted deposit carries its classification; its posted state (posted_to_gl,
+ * posted_journal_entry_id) is stamped by the posting registry trigger (443.136); a deposit enters 1295 once (database refusal).
  *
  * FUNDING MAP (owner, verbatim in ~/IH35-LEAD-CHANNEL/2026-10-10-LEAD-TO-SEATS.md, 7:26 / 7:28 / 7:30 PM CT):
  *   0680               USMCA Bank of America debit card  -> the USMCA Bank of America operating account (1000)
@@ -66,22 +66,24 @@ export async function loadDepositFunding(client: DbClient, operatingCompanyId: s
   };
 }
 
-/** LEAD 443.133 B — the deposit row records what posted it (metadata only; the posting itself is the engine's). */
-async function stampDepositPosted(
+/**
+ * LEAD 443.133 B / 443.136 #1 — the deposit row records its classification (metadata). Its posted state
+ * (posted_to_gl, posted_journal_entry_id) is NOT written here: the posting registry trigger on the deposit's journal lines
+ * (integrations.tg_register_relay_deposit_posting, migration 202615920910) stamps it in the same transaction and clears it
+ * on reversal — the flag is a consequence of the posting, never set by hand (verify-fuel-posts-only-on-bank-match rule 3).
+ */
+async function stampDepositClassification(
   client: DbClient,
   operatingCompanyId: string,
   depositRowId: string,
-  journalEntryId: string,
   classification: "company" | "party" | "intercompany" | null
 ): Promise<void> {
+  if (!classification) return;
   await client.query(
     `UPDATE integrations.relay_deposits
-        SET posted_to_gl = true, posted_journal_entry_id = $3::uuid,
-            classification = coalesce($4, classification), updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid
-        AND (posted_to_gl IS NOT TRUE OR posted_journal_entry_id IS DISTINCT FROM $3::uuid
-             OR ($4::text IS NOT NULL AND classification IS DISTINCT FROM $4))`,
-    [depositRowId, operatingCompanyId, journalEntryId, classification]
+        SET classification = $3, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND classification IS DISTINCT FROM $3`,
+    [depositRowId, operatingCompanyId, classification]
   );
 }
 
@@ -147,7 +149,7 @@ export async function postRelayDeposit(
   ).rows[0];
   if (existing) {
     const f = await loadDepositFunding(client, args.operatingCompanyId, d.funding_card_last4);
-    await stampDepositPosted(client, args.operatingCompanyId, d.id, existing.id, f.kind === "party" ? "party" : f.kind === "account" ? f.classification : null);
+    await stampDepositClassification(client, args.operatingCompanyId, d.id, f.kind === "party" ? "party" : f.kind === "account" ? f.classification : null);
     return { outcome: "already_posted", deposit_id: d.deposit_id, journal_entry_id: existing.id };
   }
 
@@ -251,7 +253,7 @@ export async function postRelayDeposit(
       )
     ).rows[0];
     if (prior?.je_id) {
-      await stampDepositPosted(client, args.operatingCompanyId, d.id, prior.je_id, "party");
+      await stampDepositClassification(client, args.operatingCompanyId, d.id, "party");
       return { outcome: "already_posted", deposit_id: d.deposit_id, journal_entry_id: prior.je_id };
     }
     if (prior) loan = prior;
@@ -312,7 +314,7 @@ export async function postRelayDeposit(
       [loan.id, je.id, args.actorUserId]
     );
   }
-  await stampDepositPosted(client, args.operatingCompanyId, d.id, je.id, funding.kind === "party" ? "party" : funding.classification);
+  await stampDepositClassification(client, args.operatingCompanyId, d.id, funding.kind === "party" ? "party" : funding.classification);
   return {
     outcome: "posted", deposit_id: d.deposit_id, journal_entry_id: je.id, amount_cents: amount, fee_cents: fee, charged_cents: total, funding: funding.label,
     ...(loan ? { loan_entry_id: loan.id, loan_display_id: loan.display_id } : {}),
