@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity","qbo_chrome"],"leafRe":"dispatch\\.parity\\.book_load_equipment","task":"DSP-BOOKLOAD-EQUIPMENT-ENTITYPICKER-SEARCH","vertical":"class-sweep"} */
 /**
  * Book Load equipment — truck EntityPicker + trailer Combobox server search (no silent 500-cap SelectCombobox).
  * Cursor even claim: 2100.
@@ -67,11 +68,14 @@ export function collectProblems(root = ROOT) {
   for (const [field, label] of [
     ["customer_id", "customer"],
     ["assigned_unit_id", "unit"],
-    ["assigned_trailer_unit_id", "trailer"],
   ]) {
     if (!new RegExp(`${field}:\\s*values\\.${field}`).test(modal)) {
       problems.push(`${MODAL_FILE}: submit payload must carry the canonical ${label} FK (${field})`);
     }
+  }
+  // assigned_trailer_unit_id appears in a ternary — require the key directly followed by the ternary that reads the value
+  if (!/assigned_trailer_unit_id:\s*values\.trailer_source[^;{]+values\.assigned_trailer_unit_id/.test(modal)) {
+    problems.push(`${MODAL_FILE}: submit payload must carry the canonical trailer FK (assigned_trailer_unit_id)`);
   }
   if (!/assigned_primary_driver_id:\s*values\.assignment_mode\s*===\s*["']solo["'][\s\S]{0,120}?values\.assigned_primary_driver_id/.test(modal)) {
     problems.push(`${MODAL_FILE}: submit payload must carry the canonical driver FK (assigned_primary_driver_id)`);
@@ -117,7 +121,7 @@ if (process.argv.includes("--selftest")) {
     [MODAL_FILE, realModal, /customer_id:\s*values\.customer_id/, "customer_id: undefined", "customer FK"],
     [MODAL_FILE, realModal, /assigned_unit_id:\s*values\.assigned_unit_id\s*\|\|\s*undefined/, "assigned_unit_id: undefined", "unit FK"],
     [MODAL_FILE, realModal, /assigned_primary_driver_id:\s*values\.assignment_mode[\s\S]*?undefined,/, "assigned_primary_driver_id: undefined,", "driver FK"],
-    [MODAL_FILE, realModal, /assigned_trailer_unit_id:\s*values\.assigned_trailer_unit_id\s*\|\|\s*undefined/, "assigned_trailer_unit_id: undefined", "trailer FK"],
+    [MODAL_FILE, realModal, /values\.trailer_source === ["']owned["'] \? values\.assigned_trailer_unit_id \|\| undefined/, "undefined \/\/ mutated", "trailer FK"],
     [BOOK_LOAD_SERVICE, realService, /new_trailer_id,/, "removed_trailer_column,", "trailer sink"],
   ];
   for (const [rel, original, pattern, replacement, label] of fkMutations) {
