@@ -2492,5 +2492,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
     "purpose": "443.105 #2: refuse an accounting.expense_lines row with no load_id AND no load_exemption_reason for companies that enforce line categorization (USMCA); prod has exactly 5 such lines (EXP-2026-00001..00005), stamped by AUTH before the refusal is validated"
+  },
+  "202615780700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.105 run #4 (verify-form-field-roundtrip): fuel.fuel_transactions.location_id -> mdata.locations, so the fuel stop the operator picks is linked, not only its text"
   }
 }
