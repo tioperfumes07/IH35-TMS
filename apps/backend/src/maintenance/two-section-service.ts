@@ -1,6 +1,5 @@
 import { resolveExpenseCategoryById } from "../accounting/expense-category-catalog.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { resolveBillLineAccountId } from "../bills/bill-line-account-resolution.service.js";
 import { resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { postSourceTransactionInClientTx, PostingEngineError } from "../accounting/posting-engine.service.js";
@@ -103,6 +102,8 @@ export type SectionALine = {
   quantity: number;
   amount: number;
   expense_category_uuid: string;
+  /** The catalog item this line bills — the WO->bill copy takes its account (no description guess). */
+  item_id?: string | null;
 };
 
 export type SectionBSubLine = {
@@ -114,6 +115,8 @@ export type SectionBSubLine = {
   part_uuid?: string;
   labor_rate_uuid?: string;
   part_location_codes?: string[];
+  /** The catalog item this part / labor row bills (falls back to its parent line's item on the bill copy). */
+  item_id?: string | null;
 };
 
 export type SectionBLine = {
@@ -122,8 +125,30 @@ export type SectionBLine = {
   unit_cost: number;
   amount: number;
   service_item_uuid?: string | null;
+  /** The catalog item this line bills; its part / labor rows inherit it unless they name their own. */
+  item_id?: string | null;
   sub_rows?: SectionBSubLine[];
 };
+
+/** A work-order line names a catalog item of the WORK ORDER's company (work_order_lines has no company column). */
+export class WorkOrderLineItemError extends Error {
+  readonly code: string;
+  constructor(code: "wo_line_item_not_in_company" | "wo_line_item_required", message: string) {
+    super(`${code}: ${message}`);
+    this.code = code;
+    this.name = "WorkOrderLineItemError";
+  }
+}
+
+async function assertWorkOrderLineItem(client: DbClient, operatingCompanyId: string, itemId: string | null | undefined): Promise<string | null> {
+  if (!itemId) return null;
+  const hit = await client.query<{ id: string }>(
+    `SELECT id::text FROM catalogs.items WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [itemId, operatingCompanyId]
+  );
+  if (!hit.rows[0]) throw new WorkOrderLineItemError("wo_line_item_not_in_company", `item ${itemId} is not an item of this company`);
+  return itemId;
+}
 
 function asNumber(value: number | string | null | undefined) {
   const next = Number(value ?? 0);
@@ -414,10 +439,11 @@ export async function createWorkOrderWithLines(
       `
         INSERT INTO maintenance.work_order_lines (
           work_order_uuid, line_type, description, quantity, unit_cost, total_cost,
-          section, expense_category_uuid
-        ) VALUES ($1,'other',$2,$3,$4,$5,'A',$6)
+          section, expense_category_uuid, item_id
+        ) VALUES ($1,'other',$2,$3,$4,$5,'A',$6,$7::uuid)
       `,
-      [wo.id, line.description, quantity, amount, amount * quantity, line.expense_category_uuid]
+      [wo.id, line.description, quantity, amount, amount * quantity, line.expense_category_uuid,
+       await assertWorkOrderLineItem(client, header.operating_company_id, line.item_id)]
     );
     await appendCrudAudit(
       client as never,
@@ -434,11 +460,12 @@ export async function createWorkOrderWithLines(
       `
         INSERT INTO maintenance.work_order_lines (
           work_order_uuid, line_type, description, quantity, unit_cost, total_cost,
-          section, service_item_uuid
-        ) VALUES ($1,'other',$2,$3,$4,$5,'B',$6)
+          section, service_item_uuid, item_id
+        ) VALUES ($1,'other',$2,$3,$4,$5,'B',$6,$7::uuid)
         RETURNING uuid AS id
       `,
-      [wo.id, parent.description, Math.max(1, asNumber(parent.quantity)), asNumber(parent.unit_cost), asNumber(parent.amount), parent.service_item_uuid]
+      [wo.id, parent.description, Math.max(1, asNumber(parent.quantity)), asNumber(parent.unit_cost), asNumber(parent.amount), parent.service_item_uuid,
+       await assertWorkOrderLineItem(client, header.operating_company_id, parent.item_id)]
     );
     const parentId = parentInsert.rows[0]?.id;
     await appendCrudAudit(
@@ -455,9 +482,9 @@ export async function createWorkOrderWithLines(
         `
           INSERT INTO maintenance.work_order_lines (
             work_order_uuid, line_type, description, quantity, unit_cost, total_cost, section,
-            parent_line_uuid, part_uuid, labor_rate_uuid, part_location_codes
+            parent_line_uuid, part_uuid, labor_rate_uuid, part_location_codes, item_id
           ) VALUES (
-            $1,$2,$3,$4,$5,$6,'B',$7,$8,$9,$10
+            $1,$2,$3,$4,$5,$6,'B',$7,$8,$9,$10,$11::uuid
           )
           RETURNING uuid AS id
         `,
@@ -472,6 +499,7 @@ export async function createWorkOrderWithLines(
           sub.part_uuid ?? null,
           sub.labor_rate_uuid ?? null,
           sub.part_location_codes ?? null,
+          await assertWorkOrderLineItem(client, header.operating_company_id, sub.item_id ?? parent.item_id),
         ]
       );
       await appendCrudAudit(
@@ -585,14 +613,21 @@ async function copyToAccountingLines(
     part_uuid: string | null;
     labor_rate_uuid: string | null;
     part_location_codes: string[] | null;
+    item_id: string | null;
+    item_account_id: string | null;
   }>(
     `
       SELECT
-        uuid as id, line_type, description, quantity, unit_cost, total_cost AS amount,
-        COALESCE(section, 'B') AS section,
-        parent_line_uuid, expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes
-      FROM maintenance.work_order_lines
-      WHERE work_order_uuid = $1
+        l.uuid as id, l.line_type, l.description, l.quantity, l.unit_cost, l.total_cost AS amount,
+        COALESCE(l.section, 'B') AS section,
+        l.parent_line_uuid, l.expense_category_uuid, l.service_item_uuid, l.part_uuid, l.labor_rate_uuid, l.part_location_codes,
+        -- the line's item, else its parent line's item (part / labor rows inherit the Section B item)
+        COALESCE(l.item_id, p.item_id)::text AS item_id,
+        i.default_expense_account_id::text AS item_account_id
+      FROM maintenance.work_order_lines l
+      LEFT JOIN maintenance.work_order_lines p ON p.uuid = l.parent_line_uuid AND p.work_order_uuid = l.work_order_uuid
+      LEFT JOIN catalogs.items i ON i.id = COALESCE(l.item_id, p.item_id) AND i.operating_company_id = $2::uuid
+      WHERE l.work_order_uuid = $1
         -- WO-BILL-ZERO-LINE-JE-CHECK-VIOLATION: a Section B "item line" that carries typed
         -- part/labor sub_rows (the normal, expected shape — see SectionBLine's own sub_rows
         -- field) always has its OWN total_cost = 0; the real cost lives entirely in its
@@ -609,12 +644,12 @@ async function copyToAccountingLines(
         -- same for both the bill and expense branches this function already serves, and adds
         -- no new GL math — sub_rows still copy with their real amounts, just without a
         -- bill_lines-level parent reference when their own container was $0.
-        AND total_cost <> 0
+        AND l.total_cost <> 0
         -- MAINT-MONEY-F6797: a voided line must never be copied into a real AP bill/expense.
-        AND voided_at IS NULL
-      ORDER BY created_at ASC
+        AND l.voided_at IS NULL
+      ORDER BY l.created_at ASC
     `,
-    [sourceWoId]
+    [sourceWoId, operatingCompanyId]
   );
 
   const idMap = new Map<string, string>();
@@ -625,11 +660,25 @@ async function copyToAccountingLines(
     const isBillLineCopy = destinationTable === "accounting.bill_lines";
     const insert = isBillLineCopy
       ? await (async () => {
-          const resolution = await resolveBillLineAccountId(operatingCompanyId, {
-            description: row.description,
-            line_type: row.line_type,
-            category_kind: "maintenance",
-          });
+          // WO -> bill: the line's account is its ITEM's account (443.67 G3: line account = item account). The old path
+          // guessed a maintenance category from the line's description keywords ("tire", "brake", …) and could post a
+          // line to a different account than the item it names. No item -> refused by name; never guessed.
+          if (!row.item_id || !row.item_account_id) {
+            throw new WorkOrderLineItemError(
+              "wo_line_item_required",
+              `work-order line "${row.description}" names no catalog item with an expense account — pick the item before billing`
+            );
+          }
+          const resolution = { category_kind: "maintenance" as const, category_code: null as string | null, account_id: row.item_account_id };
+          // An item line carries quantity x rate = amount (bill_lines_item_qty_rate_amount_check): the WO line's own
+          // quantity and unit cost when they foot to its amount exactly, else one unit at the line amount.
+          const amountCents = Math.round(asNumber(row.amount) * 100);
+          const woQty = asNumber(row.quantity);
+          const woRateCents = Math.round(asNumber(row.unit_cost) * 100);
+          const footsExactly = woQty > 0 && woRateCents > 0 && Math.round(woQty * woRateCents) === amountCents;
+          const itemQty = footsExactly ? woQty : 1;
+          const itemRateCents = footsExactly ? woRateCents : amountCents;
+          const itemUom = row.line_type === "labor" ? "hour" : "each";
           // ACCT-LINK-04 (bill branch — mirrors the expense branch below): work_order_lines.expense_category_uuid
           // points at catalogs.qbo_categories, while accounting.bill_lines.expense_category_uuid is FK'd to
           // catalogs.expense_categories, same-entity (bill_lines_expense_category_same_entity_fkey). Passing the
@@ -637,7 +686,7 @@ async function copyToAccountingLines(
           // WO→Bill with a categorized cost line) because it never exists in catalogs.expense_categories. Resolve
           // it the same way the expense branch already does: keep the pointer only when it resolves in THIS
           // entity's expense-category catalog, otherwise the projected line is uncategorized. Never touches
-          // account_id/category_kind/category_code (the actual GL posting target), which resolveBillLineAccountId
+          // account_id/category_kind/category_code (the actual GL posting target), which the line's item
           // already resolves correctly above — this only fixes the separate categorization pointer.
           const projectedBillCategoryId = row.expense_category_uuid
             ? await resolveExpenseCategoryById(client, {
@@ -650,8 +699,8 @@ async function copyToAccountingLines(
               INSERT INTO accounting.bill_lines (
                 ${destinationFkColumn}, line_sequence, amount, description, section, parent_line_uuid,
                 expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes, linked_wo_line_uuid,
-                category_kind, category_code, account_id
-              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+                category_kind, category_code, account_id, item_id, quantity, rate_cents, unit_of_measure
+              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::uuid,$17,$18,$19)
               RETURNING id
             `,
             [
@@ -670,6 +719,10 @@ async function copyToAccountingLines(
               resolution.category_kind,
               resolution.category_code,
               resolution.account_id,
+              row.item_id,
+              itemQty,
+              itemRateCents,
+              itemUom,
             ]
           );
         })()

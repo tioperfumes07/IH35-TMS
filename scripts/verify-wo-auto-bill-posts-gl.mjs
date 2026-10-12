@@ -105,15 +105,33 @@ export function check(text) {
   return problems;
 }
 
+
+/**
+ * WO -> bill line account = its ITEM's account (443.67 G3): the bill-line copy (copyToAccountingLines, bill branch) takes
+ * the WO line's item and that item's default expense account; it never guesses a maintenance category from the line's
+ * description (resolveBillLineAccountId / deriveMaintenanceCategoryCode keyword match); a line with no item is refused.
+ */
+export function checkItemAccount(text) {
+  const problems = [];
+  const start = text.indexOf("const isBillLineCopy = destinationTable === \"accounting.bill_lines\"");
+  const branch = start === -1 ? "" : text.slice(start, text.indexOf(": await (async () => {", start + 1));
+  if (!branch) problems.push("could not find the WO->bill line copy (isBillLineCopy branch).");
+  if (/resolveBillLineAccountId|deriveMaintenanceCategoryCode/.test(text)) problems.push("the WO->bill copy still guesses the line account from description keywords (resolveBillLineAccountId / deriveMaintenanceCategoryCode).");
+  if (!/account_id: row\.item_account_id/.test(branch)) problems.push("the WO->bill line account is not the WO line item's account (row.item_account_id).");
+  if (!/"wo_line_item_required"/.test(branch)) problems.push("a WO line with no item is not refused by name (wo_line_item_required).");
+  if (!/COALESCE\(l\.item_id, p\.item_id\)/.test(text) || !/i\.default_expense_account_id/.test(text)) problems.push("the copy does not read the line's item (or its parent line's) and that item's default expense account.");
+  return problems;
+}
+
 function run() {
   const text = readFileSync(TARGET, "utf8");
-  const problems = [...check(text), ...checkPostsOrNothing(text, readFileSync(WOI, "utf8"), readFileSync(ROUTES, "utf8"))];
+  const problems = [...check(text), ...checkPostsOrNothing(text, readFileSync(WOI, "utf8"), readFileSync(ROUTES, "utf8")), ...checkItemAccount(text)];
   if (problems.length) {
     console.error(`${LABEL} FAILED:`);
     for (const p of problems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — autoCreateBillFromWO inserts status='unpaid' + vendor_id, and posts the GL JE in-transaction, gated and non-fatal; the road-service ticket posts or nothing (443.129 D).`);
+  console.log(`${LABEL} OK — autoCreateBillFromWO inserts status='unpaid' + vendor_id, and posts the GL JE in-transaction, gated and non-fatal; the road-service ticket posts or nothing (443.129 D); WO->bill lines take their item's account, never a description guess.`);
 }
 
 function selftest() {
@@ -170,13 +188,22 @@ function selftest() {
   if (!checkPostsOrNothing(real, o7, routes).some((m) => m.includes("does not pass requirePosted"))) failures.push("offender-7 (road-service without requirePosted) NOT caught");
   const o8 = routes.replace("return reply.code(422)", "return reply.code(500)");
   if (!checkPostsOrNothing(real, woi, o8).some((m) => m.includes("surface the posting refusals"))) failures.push("offender-8 (refusal not surfaced by name) NOT caught");
+  // WO -> bill item account offenders.
+  const baseItem = checkItemAccount(real);
+  if (baseItem.length) failures.push(`baseline item-account should pass, got: ${baseItem.join(" | ")}`);
+  const o9 = real.replace("account_id: row.item_account_id", "account_id: (await resolveBillLineAccountId(operatingCompanyId, { description: row.description })).account_id");
+  if (!checkItemAccount(o9).some((m) => m.includes("description keywords") || m.includes("item's account"))) failures.push("offender-9 (description-keyword account guess) NOT caught");
+  const o10 = real.replaceAll('"wo_line_item_required"', '"wo_line_ok"');
+  if (!checkItemAccount(o10).some((m) => m.includes("refused by name"))) failures.push("offender-10 (no-item line not refused) NOT caught");
+  const o11 = real.replaceAll("COALESCE(l.item_id, p.item_id)", "l.service_item_uuid");
+  if (!checkItemAccount(o11).some((m) => m.includes("does not read the line's item"))) failures.push("offender-11 (item not read) NOT caught");
 
   if (failures.length) {
     console.error(`${LABEL} --selftest FAIL:`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS — 8/8 offenders caught, baseline clean`);
+  console.log(`${LABEL} --selftest PASS — 11/11 offenders caught, baseline clean`);
 }
 
 if (process.argv.includes("--selftest")) {

@@ -124,6 +124,8 @@ const sectionALineSchema = z.object({
   quantity: z.number().min(0).default(1),
   amount: z.number().min(0),
   expense_category_uuid: z.string().uuid(),
+  // The catalog item this line bills — the WO->bill copy takes its account (no description-keyword guess).
+  item_id: z.string().uuid().optional().nullable(),
 });
 
 const sectionBSubRowSchema = z.object({
@@ -135,6 +137,7 @@ const sectionBSubRowSchema = z.object({
   part_uuid: z.string().uuid().optional(),
   labor_rate_uuid: z.string().uuid().optional(),
   part_location_codes: z.array(z.string()).optional(),
+  item_id: z.string().uuid().optional().nullable(),
 });
 
 const sectionBLineSchema = z.object({
@@ -145,6 +148,7 @@ const sectionBLineSchema = z.object({
   // Nullable by schema: permit an honestly described cost line when the service-item catalog is
   // degraded. The linkage can be completed later without losing the operational WO/cost record.
   service_item_uuid: z.string().uuid().optional().nullable(),
+  item_id: z.string().uuid().optional().nullable(),
   sub_rows: z.array(sectionBSubRowSchema).default([]),
 });
 
