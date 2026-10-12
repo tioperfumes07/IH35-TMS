@@ -2472,5 +2472,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-12",
     "purpose": "443.101 R2: add the missing FKs found by verify-orphan-fk-inventory (users / companies / same-entity JE, account, item, load, fuel, relay, bank-line parents); 0 prod orphans per column"
+  },
+  "202615750915": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.101 R6: FORCE ROW LEVEL SECURITY on catalogs.downtime_categories + catalogs.downtime_fault_parties (verify-entity-isolation; RLS on, FORCE off on prod)"
   }
 }
