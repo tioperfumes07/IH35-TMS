@@ -20,6 +20,9 @@ SET LOCAL lock_timeout = '5s';
 ALTER TABLE org.companies ADD COLUMN IF NOT EXISTS enforce_line_categorization boolean NOT NULL DEFAULT false;
 UPDATE org.companies SET enforce_line_categorization = true WHERE code = 'USMCA' AND NOT enforce_line_categorization;
 
+-- 443.80 #1: a trailer printed on the signed settlement document that is NOT in the equipment master is kept as document text;
+-- trailer_id stays NULL (its ownership is on no document — creating equipment would be a guess).
+ALTER TABLE accounting.expenses ADD COLUMN IF NOT EXISTS document_trailer_number text;
 ALTER TABLE accounting.bill_lines    ADD COLUMN IF NOT EXISTS item_account_override_reason text;
 ALTER TABLE accounting.expense_lines ADD COLUMN IF NOT EXISTS item_account_override_reason text;
 ALTER TABLE accounting.invoice_lines ADD COLUMN IF NOT EXISTS item_account_override_reason text;

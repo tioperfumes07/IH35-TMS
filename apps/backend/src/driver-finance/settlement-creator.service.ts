@@ -2014,6 +2014,15 @@ export async function postSettlementCreatorInClientTx(
   await stampCreatorExpenseSettlementNo(client as never, {
     operatingCompanyId: draft.operating_company_id, settlementId, settlementNo: sourceDocumentRef ?? displayId, expenseIds, actorUserId,
   });
+  // 443.80 #1 — a trailer printed on the document that is not in the equipment master: kept as document text on every
+  // expense of this post (trailer_id stays NULL; ownership is on no document, so no equipment row is created).
+  if (!draft.trailer_id && draft.trailer_equipment_number?.trim() && expenseIds.length) {
+    await client.query(
+      `UPDATE accounting.expenses SET document_trailer_number = $3, updated_at = now()
+        WHERE operating_company_id = $1::uuid AND id = ANY($2::uuid[]) AND trailer_id IS NULL AND document_trailer_number IS NULL`,
+      [draft.operating_company_id, expenseIds, draft.trailer_equipment_number.trim()],
+    );
+  }
 
   // Lead 443.57 — the LOAD's saved operating miles per field (Document | Historical | Google | Manual), through CC-2's mileage
   // engine only. Last, after delivery + driver bills + A/P chain + close: pay (rate × the settlement's miles) is already written.

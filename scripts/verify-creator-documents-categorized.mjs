@@ -82,7 +82,7 @@ async function measure(client) {
            (e.driver_uuid IS NOT NULL AND el.driver_id IS NULL) AS miss_driver,
            (e.unit_id IS NOT NULL AND el.unit_id IS NULL) AS miss_unit,
            (e.trailer_id IS NOT NULL AND el.trailer_id IS NULL) AS miss_trailer,
-           (e.trailer_id IS NULL) AS header_no_trailer
+           (e.trailer_id IS NULL) AS header_no_trailer, e.document_trailer_number
       FROM live JOIN accounting.expenses e ON e.operating_company_id = live.co AND e.settlement_no = live.ref AND e.voided_at IS NULL
       JOIN accounting.expense_lines el ON el.expense_id = e.id
       LEFT JOIN catalogs.items i ON i.id = el.item_id
@@ -149,6 +149,11 @@ if (isMain) {
     }
     if (m) {
       const noTrl = new Set(m.exp.filter((r) => r.header_no_trailer).map((r) => r.expense_id)).size;
+      // 443.80 #1: a header with no trailer must carry the trailer number as printed on its settlement document.
+      const bare = [...new Set(m.exp.filter((r) => r.header_no_trailer && !r.document_trailer_number).map((r) => r.expense_id))];
+      for (const id of bare) lf.push(`L5 expense ${id}: no trailer and no printed trailer number`);
+      const printed = [...new Set(m.exp.filter((r) => r.header_no_trailer && r.document_trailer_number).map((r) => r.document_trailer_number))];
+      if (printed.length) console.log(`  LISTED: trailer numbers printed on the documents, not in the equipment master: ${printed.join(", ")}`);
       console.log(`  checked: ${m.exp.length} expense line(s), ${m.bill.length} bill line(s), ${m.inv.length} invoice line(s); LISTED: ${noTrl} expense header(s) with no trailer (document trailer not in the equipment master)`);
       const byRule = {};
       for (const x of lf) byRule[x.slice(0, 2)] = (byRule[x.slice(0, 2)] ?? 0) + 1;

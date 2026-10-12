@@ -48,6 +48,8 @@ export type CategorizeCreatorSettlementResult = {
   d5_lines_driver_unit: number;
   d5_headers_trailer: number;
   d5_lines_trailer: number;
+  /** 443.80 #1 — headers given the printed trailer number as document text (trailer not in the equipment master). */
+  d5_headers_document_trailer: number;
   trailer_unresolved: string | null;
   reimbursements_unmatched: string[];
 };
@@ -89,7 +91,7 @@ export async function categorizeCreatorSettlement(
   const out: CategorizeCreatorSettlementResult = {
     settlement_no: input.settlementNo, settlement_id: sid, dry_run: Boolean(input.dryRun),
     d1_settlement_lines_itemed: 0, d1_bill_lines_itemed: 0, d1_bill_lines_unmatched: [], d3_invoice_lines_itemed: 0,
-    d4_expenses_status_posted: 0, d5_lines_driver_unit: 0, d5_headers_trailer: 0, d5_lines_trailer: 0,
+    d4_expenses_status_posted: 0, d5_lines_driver_unit: 0, d5_headers_trailer: 0, d5_lines_trailer: 0, d5_headers_document_trailer: 0,
     trailer_unresolved: null, reimbursements_unmatched: [],
   };
   await client.query("SAVEPOINT creator_categorize");
@@ -196,6 +198,18 @@ export async function categorizeCreatorSettlement(
     // ---- D5: header trailer from the document; lines from the header -----------------------------------------
     const trailerId = await resolveCreatorTrailerId(client as never, co, input.trailerEquipmentNumber);
     if (input.trailerEquipmentNumber && !trailerId) out.trailer_unresolved = input.trailerEquipmentNumber;
+    // 443.80 #1 — the printed trailer is kept as document text where the equipment master has no such trailer.
+    if (input.trailerEquipmentNumber && !trailerId) {
+      const dt = await client.query(
+        `UPDATE accounting.expenses SET document_trailer_number = $3, updated_at = now()
+          WHERE operating_company_id = $1::uuid AND (settlement_no = $2 OR (settlement_no IS NULL AND load_id IN (SELECT sl.load_id FROM driver_finance.settlement_lines sl
+               JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+              WHERE ds.operating_company_id = $1::uuid AND ds.voided_at IS NULL AND ds.source_document_ref = $2 AND sl.load_id IS NOT NULL))) AND voided_at IS NULL AND trailer_id IS NULL
+            AND document_trailer_number IS NULL`,
+        [co, input.settlementNo, input.trailerEquipmentNumber.trim()]
+      );
+      out.d5_headers_document_trailer = dt.rowCount ?? 0;
+    }
     if (trailerId) {
       const h = await client.query(
         `UPDATE accounting.expenses SET trailer_id = $3::uuid, updated_at = now()

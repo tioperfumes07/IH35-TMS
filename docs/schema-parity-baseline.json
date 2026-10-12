@@ -656,6 +656,7 @@
       "created_at",
       "created_by_user_id",
       "deleted_at",
+      "document_trailer_number",
       "driver_uuid",
       "expense_number",
       "id",

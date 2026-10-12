@@ -1,10 +1,10 @@
 {
-  "healthzSha": "726c5bc",
-  "generated_at": "2026-10-11T23:39:46.300Z",
+  "healthzSha": "39c77cf",
+  "generated_at": "2026-10-12T00:31:39.634Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "726c5bc",
+    "deployedSha": "39c77cf",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,51 @@
   },
   "recentActivity": [
     {
+      "number": 26437,
+      "title": "FINDING: ACCT-F2026101202 LANE: FINANCIAL — 443.80 #4: the GPS stop engine classed 4 deliveries \"truck elsewhere\" while their own truck dwelled there 2-3 days after the day-level document date, and a shared CITY word confirmed a facility (13605 Campbell Soup ~ a Lumberton cold storage); window -2..+3 days, place words excluded",
+      "state": "merged",
+      "mergedAtCt": "10/11/2026, 07:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26437",
+      "sha": "d7a2b4a6d9",
+      "committedAtIso": "2026-10-11T19:27:30-05:00"
+    },
+    {
+      "number": 26436,
+      "title": "FINDING: ACCT-F44380 LANE: FINANCIAL -- 443.80 #2: a bank SUGGESTION needs no pointer on the line (G6), fuel duplicate refused on the base invoice (G4), category create route scoped (RLS 42501)",
+      "state": "merged",
+      "mergedAtCt": "10/11/2026, 07:25 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26436",
+      "sha": "39c77cf8c5",
+      "committedAtIso": "2026-10-11T19:25:14-05:00"
+    },
+    {
+      "number": 26435,
+      "title": "FINDING: ACCT-F2026101201 LANE: FINANCIAL — G6: the Relay wallet / Dreamline / BofA lines had no measurable suggested document — the ranking the Lead decided (443.80 #3) is now one read-only function, suggestBankMatches, used by GET /api/v1/bank-recon/suggestions and the per-account report; nothing is persisted (Owner Law B)",
+      "state": "merged",
+      "mergedAtCt": "10/11/2026, 07:13 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26435",
+      "sha": "13dcc01a2e",
+      "committedAtIso": "2026-10-11T19:13:58-05:00"
+    },
+    {
+      "number": 26434,
+      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615610900 — reservation-only commit, no code fix)",
+      "state": "merged",
+      "mergedAtCt": "10/11/2026, 07:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26434",
+      "sha": "90a97e0a1c",
+      "committedAtIso": "2026-10-11T19:06:03-05:00"
+    },
+    {
+      "number": 26432,
+      "title": "FINDING: ACCT-F2026101116 LANE: FINANCIAL — 443.74: no engine checked a stop against where the truck actually stopped — 13660's pickup is a Warsaw NC address the truck never came within 96 km of; the stop GPS verification engine measures every USMCA stop against the unit's GPS dwells and corrects a stop only to a confirmed facility (AUTH-441)",
+      "state": "merged",
+      "mergedAtCt": "10/11/2026, 06:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26432",
+      "sha": "726c5bc12b",
+      "committedAtIso": "2026-10-11T18:36:18-05:00"
+    },
+    {
       "number": 26430,
       "title": "FINDING: N/A (CLAIM-RESERVE migration 202615600900 — reservation-only commit, no code fix)",
       "state": "merged",
@@ -2166,51 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26426",
       "sha": "e9cebac40c",
       "committedAtIso": "2026-10-11T17:29:02-05:00"
-    },
-    {
-      "number": 26425,
-      "title": "FINDING: ACCT-F2026101112 LANE: FINANCIAL — 443.73 #6(e): verify-fuel-transactions-per-load never saw a receipt expensed twice under a \"<invoice>-<load>\" suffix (9 lines / $2,906.21); it now keys duplicates on the base invoice + cents + product, and a receipt printed on two settlement documents is shown on the second as \"already on load N\" (posted once)",
-      "state": "merged",
-      "mergedAtCt": "10/11/2026, 05:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26425",
-      "sha": "1239d3d10f",
-      "committedAtIso": "2026-10-11T17:23:05-05:00"
-    },
-    {
-      "number": 26420,
-      "title": "Claude-1-443.72: register 8 unaccounted guards (census 8→0, budget ≤3)",
-      "state": "merged",
-      "mergedAtCt": "10/11/2026, 05:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26420",
-      "sha": "fa37ae851f",
-      "committedAtIso": "2026-10-11T17:19:36-05:00"
-    },
-    {
-      "number": 26424,
-      "title": "FINDING: ACCT-F2026101111 LANE: FINANCIAL — 443.74 #4: the GPS test (owner: \"Probably the gps is source of truth or verification\") changes the AUTH-439 set before any apply — 99549122 decided by GPS (keep 13603, void the 13621 copies), 1848853 CONTRADICTED by GPS (taken out, listed for the owner); 7 lines, $2,291.42",
-      "state": "merged",
-      "mergedAtCt": "10/11/2026, 05:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26424",
-      "sha": "06bcda6654",
-      "committedAtIso": "2026-10-11T17:18:06-05:00"
-    },
-    {
-      "number": 26423,
-      "title": "FINDING: ACCT-F2026101110 LANE: FINANCIAL — 443.73 #6 (a)+(b): the same fuel purchase is expensed twice on 9 lines ($2,906.21) after the AUTH-400 clean slate re-fed each receipt from both settlement documents; AUTH-439 voids the second copy of 7 lines ($2,291.25) through the governed void, keeping the load the owner named",
-      "state": "merged",
-      "mergedAtCt": "10/11/2026, 05:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26423",
-      "sha": "cd257678a7",
-      "committedAtIso": "2026-10-11T17:11:32-05:00"
-    },
-    {
-      "number": 26422,
-      "title": "FINDING: ACCT-F2026101109 LANE: FINANCIAL — 443.73 #3 (443.70 S1): Book Load drew TWO fences per stop and pushed the wrong one to Samsara — auto-geofence's customer-keyed fence was queued while the stop's location fence (the one detection and read-back use) never was; now ONE fence per stop, the location fence, queued by the resolver",
-      "state": "merged",
-      "mergedAtCt": "10/11/2026, 05:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26422",
-      "sha": "1c44c9c448",
-      "committedAtIso": "2026-10-11T17:11:25-05:00"
     }
   ]
 }
