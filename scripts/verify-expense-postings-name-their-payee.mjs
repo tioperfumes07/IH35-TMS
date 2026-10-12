@@ -22,6 +22,9 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+// LEAD 443.99 class A / 443.132: runs in the live-DB job (ci.yml required-live-load-guard, prod read-only); out of context for the no-DB static sweep.
+export const REQUIRES_LIVE_DB = "live-ledger guard: runs in the live-DB job (required-live-load-guard)";
+
 const LABEL = "verify-expense-postings-name-their-payee";
 const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
