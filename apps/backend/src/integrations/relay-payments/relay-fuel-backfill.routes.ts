@@ -12,7 +12,9 @@ import { randomUUID } from "node:crypto";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { resolveOperatingCompanyId } from "../../auth/operating-company-scope.js";
+import { hostname } from "node:os";
 import { runRelayFuelBackfill } from "./relay-fuel-ingest.cron.js";
+import { closeInterruptedBackfillRun, nextIsoDay, readLatestBackfillRun } from "./relay-fuel-backfill-runs.js";
 
 export async function registerRelayFuelBackfillRoute(app: FastifyInstance) {
   app.get("/api/integrations/relay/fuel/backfill/status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -24,55 +26,9 @@ export async function registerRelayFuelBackfillRoute(app: FastifyInstance) {
     const status = await withCurrentUser(userId, async (client) => {
       const operatingCompanyId = await resolveOperatingCompanyId(client, userId, requestedCompanyId);
       if (!operatingCompanyId) return null;
-      const result = await client.query<{
-        run_id: string;
-        status: "running" | "completed" | "failed";
-        months: number;
-        started_at: string;
-        completed_at: string | null;
-        pulled: number | null;
-        upserted: number | null;
-        skipped: number | null;
-        error: string | null;
-      }>(
-        `WITH latest_start AS (
-           SELECT payload ->> 'run_id' AS run_id,
-                  COALESCE((payload ->> 'months')::int, 24) AS months,
-                  created_at
-           FROM audit.audit_events
-           WHERE source = 'RELAY-FUEL-INGEST-1'
-             AND event_class = 'integrations.relay_fuel_ingest_backfill_started'
-             AND payload ->> 'operating_company_id' = $1
-           ORDER BY created_at DESC
-           LIMIT 1
-         ), terminal AS (
-           SELECT e.event_class, e.payload, e.created_at
-           FROM audit.audit_events e
-           JOIN latest_start s ON e.payload ->> 'run_id' = s.run_id
-           WHERE e.source = 'RELAY-FUEL-INGEST-1'
-             AND e.event_class IN (
-               'integrations.relay_fuel_ingest_backfill_completed',
-               'integrations.relay_fuel_ingest_backfill_failed'
-             )
-           ORDER BY e.created_at DESC
-           LIMIT 1
-         )
-         SELECT s.run_id,
-                CASE WHEN t.event_class LIKE '%_completed' THEN 'completed'
-                     WHEN t.event_class LIKE '%_failed' THEN 'failed'
-                     ELSE 'running' END AS status,
-                s.months,
-                s.created_at::text AS started_at,
-                t.created_at::text AS completed_at,
-                NULLIF(t.payload ->> 'pulled', '')::int AS pulled,
-                NULLIF(t.payload ->> 'upserted', '')::int AS upserted,
-                NULLIF(t.payload ->> 'skipped', '')::int AS skipped,
-                t.payload ->> 'error' AS error
-         FROM latest_start s
-         LEFT JOIN terminal t ON true`,
-        [operatingCompanyId]
-      );
-      return { operating_company_id: operatingCompanyId, run: result.rows[0] ?? null };
+      // LEAD 443.126 2b — the one run reader: a run whose worker is gone reads "interrupted" with its last window.
+      const run = await readLatestBackfillRun(client, operatingCompanyId);
+      return { operating_company_id: operatingCompanyId, run };
     });
     if (!status) return reply.code(403).send({ error: "forbidden_company_membership" });
     return reply.send(status);
@@ -84,7 +40,7 @@ export async function registerRelayFuelBackfillRoute(app: FastifyInstance) {
     if (!["Owner", "Administrator"].includes(role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
-    const body = req.body as { operating_company_id?: string; months?: number } | undefined;
+    const body = req.body as { operating_company_id?: string; months?: number; resume?: boolean } | undefined;
     const requestedCompanyId = body?.operating_company_id?.trim();
     if (!requestedCompanyId) {
       return reply.code(400).send({ error: "operating_company_id_required" });
@@ -92,24 +48,39 @@ export async function registerRelayFuelBackfillRoute(app: FastifyInstance) {
     const userId = String((req.user as { uuid?: string } | undefined)?.uuid ?? "");
     const months = Number.isFinite(Number(body?.months)) && Number(body?.months) > 0 ? Number(body?.months) : 24;
     const runId = randomUUID();
-    const operatingCompanyId = await withCurrentUser(userId, async (client) => {
+    // LEAD 443.126 2b — one run per company: a live run refuses a second; a run whose worker is gone is closed as
+    // interrupted first; `resume: true` continues from its last committed window + 1 day.
+    const start = await withCurrentUser(userId, async (client) => {
       const companyId = await resolveOperatingCompanyId(client, userId, requestedCompanyId);
-      if (companyId) {
-        await client.query(`SELECT audit.append_event($1, 'info', $2::jsonb, $3::uuid, $4)`, [
-          "integrations.relay_fuel_ingest_backfill_started",
-          JSON.stringify({ run_id: runId, operating_company_id: companyId, months }),
-          userId,
-          "RELAY-FUEL-INGEST-1",
-        ]);
+      if (!companyId) return { kind: "forbidden" as const };
+      await client.query(`SELECT pg_advisory_xact_lock(hashtext('relay_fuel_backfill:' || $1))`, [companyId]);
+      const latest = await readLatestBackfillRun(client, companyId);
+      if (latest?.status === "running") return { kind: "running" as const, run: latest };
+      if (latest?.status === "interrupted") await closeInterruptedBackfillRun(client, latest, companyId);
+      let resumeFromDate: string | null = null;
+      let resumedFrom: string | null = null;
+      let runMonths = months;
+      if (body?.resume === true) {
+        if (latest?.status !== "interrupted") return { kind: "nothing_to_resume" as const, run: latest };
+        resumedFrom = latest.run_id;
+        runMonths = latest.months;
+        resumeFromDate = latest.last_window_end ? nextIsoDay(latest.last_window_end) : null;
       }
-      return companyId;
+      await client.query(`SELECT audit.append_event($1, 'info', $2::jsonb, $3::uuid, $4)`, [
+        "integrations.relay_fuel_ingest_backfill_started",
+        JSON.stringify({ run_id: runId, operating_company_id: companyId, months: runMonths, resumed_from_run_id: resumedFrom, resume_from_date: resumeFromDate, instance: hostname() }),
+        userId,
+        "RELAY-FUEL-INGEST-1",
+      ]);
+      return { kind: "started" as const, companyId, resumeFromDate, resumedFrom, runMonths };
     });
-    if (!operatingCompanyId) {
-      return reply.code(403).send({ error: "forbidden_company_membership" });
-    }
+    if (start.kind === "forbidden") return reply.code(403).send({ error: "forbidden_company_membership" });
+    if (start.kind === "running") return reply.code(409).send({ error: "relay_fuel_backfill_already_running", run: start.run });
+    if (start.kind === "nothing_to_resume") return reply.code(409).send({ error: "relay_fuel_backfill_nothing_to_resume", run: start.run });
+    const operatingCompanyId = start.companyId;
     // Fire in the background: pulling N months of transactions per flagged company can exceed the request
     // timeout. Errors are logged (and re-thrown inside runRelayFuelBackfill → audit stream), never swallowed.
-    void runRelayFuelBackfill(app, { months, operatingCompanyId, runId }).catch(async (err) => {
+    void runRelayFuelBackfill(app, { months: start.runMonths, operatingCompanyId, runId, resumeFromDate: start.resumeFromDate ?? undefined }).catch(async (err) => {
       app.log.error({ err }, "[RELAY_FUEL_BACKFILL] backfill failed");
       await withCurrentUser(userId, (client) => client.query(`SELECT audit.append_event($1, 'warning', $2::jsonb, $3::uuid, $4)`, [
         "integrations.relay_fuel_ingest_backfill_failed",
@@ -119,6 +90,6 @@ export async function registerRelayFuelBackfillRoute(app: FastifyInstance) {
       ])).catch((auditErr) => app.log.error({ err: auditErr, run_id: runId }, "[RELAY_FUEL_BACKFILL] terminal audit failed"));
     });
     app.log.info({ months, operating_company_id: operatingCompanyId, triggered_by_role: role }, "[RELAY_FUEL_BACKFILL] backfill started");
-    return reply.code(202).send({ status: "relay_fuel_backfill_started", run_id: runId, months, operating_company_id: operatingCompanyId });
+    return reply.code(202).send({ status: "relay_fuel_backfill_started", run_id: runId, months: start.runMonths, operating_company_id: operatingCompanyId, resumed_from_run_id: start.resumedFrom, resume_from_date: start.resumeFromDate });
   });
 }

@@ -13,6 +13,8 @@
  * any other uncaught background-job failure. This intentionally does NOT use wrapBackgroundJobTick,
  * which only logs and does not rethrow.
  */
+import { hostname } from "node:os";
+import { recordBackfillWindow } from "./relay-fuel-backfill-runs.js";
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../../auth/db.js";
@@ -823,7 +825,7 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
  */
 export async function runRelayFuelBackfill(
   app: FastifyInstance,
-  opts?: { months?: number; operatingCompanyId?: string; runId?: string }
+  opts?: { months?: number; operatingCompanyId?: string; runId?: string; resumeFromDate?: string }
 ): Promise<void> {
   const months =
     opts?.months ?? (Number.parseInt(process.env.RELAY_FUEL_INGEST_BACKFILL_MONTHS ?? "24", 10) || 24);
@@ -868,7 +870,9 @@ export async function runRelayFuelBackfill(
       // Server-side date filter via dtstart/dtend (Mike), one paced call per window. Network I/O stays outside
       // the DB transaction; each window's rows commit in their own withLuciaBypass.
       // RELAY DATE LAW — USMCA backfill never asks Relay for a day before 2026-08-03.
-      const rangeStart = clampRelayRangeStartForCompany(operatingCompanyId, isoDateMonthsAgo(months));
+      // LEAD 443.126 2b — a resumed run continues after the interrupted run's last committed window (never before the floor).
+      const horizonStart = clampRelayRangeStartForCompany(operatingCompanyId, isoDateMonthsAgo(months));
+      const rangeStart = opts?.resumeFromDate && opts.resumeFromDate > horizonStart ? opts.resumeFromDate : horizonStart;
       const rangeEnd = todayIsoDate();
       if (rangeStart > rangeEnd) {
         app.log.info(
@@ -894,6 +898,18 @@ export async function runRelayFuelBackfill(
           skipped += stats.skipped;
           rejected.push(...stats.rejected);
           pendingGlPosts.push(...stats.gl_post_candidates);
+          // LEAD 443.126 2b — the run's heartbeat: this window is committed; a run that stops beating is interrupted.
+          if (opts?.runId) {
+            await withLuciaBypass((client) => recordBackfillWindow(client, {
+              run_id: opts.runId!,
+              operating_company_id: operatingCompanyId,
+              window_start: w.startDate,
+              window_end: w.endDate,
+              instance: hostname(),
+              pulled: stats.pulled,
+              upserted: stats.upserted,
+            }));
+          }
           app.log.info(
             {
               operating_company_id: operatingCompanyId,

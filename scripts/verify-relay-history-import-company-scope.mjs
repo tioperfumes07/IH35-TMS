@@ -13,6 +13,7 @@ const FILES = {
   api: "apps/frontend/src/api/relayDeposits.ts",
   route: "apps/backend/src/integrations/relay-payments/relay-fuel-backfill.routes.ts",
   cron: "apps/backend/src/integrations/relay-payments/relay-fuel-ingest.cron.ts",
+  runs: "apps/backend/src/integrations/relay-payments/relay-fuel-backfill-runs.ts",
 };
 
 function inspect(parts) {
@@ -24,15 +25,21 @@ function inspect(parts) {
   if (!/body: \{ operating_company_id: operatingCompanyId, months \}/.test(parts.api)) errors.push("API client omits operating_company_id");
   if (!parts.route.includes("operating_company_id_required")) errors.push("route does not require explicit company");
   if ((parts.route.match(/resolveOperatingCompanyId\(client, userId, requestedCompanyId\)/g)?.length ?? 0) !== 2) errors.push("status and start routes do not both membership-validate company");
-  if (!parts.route.includes("{ months, operatingCompanyId, runId }")) errors.push("route does not constrain backfill target and run identity");
+  // LEAD 443.126 2b — the run target now also carries the resume point (months from the start / the resumed run).
+  if (!parts.route.includes("{ months: start.runMonths, operatingCompanyId, runId, resumeFromDate:")) errors.push("route does not constrain backfill target and run identity");
   if (!parts.route.includes('/api/integrations/relay/fuel/backfill/status')) errors.push("route does not expose durable status query-back");
   if (!parts.route.includes("integrations.relay_fuel_ingest_backfill_started")) errors.push("route does not append started evidence");
-  if (!parts.cron.includes("integrations.relay_fuel_ingest_backfill_completed") || (parts.route.match(/integrations\.relay_fuel_ingest_backfill_failed/g)?.length ?? 0) !== 2) errors.push("backfill does not append and query terminal evidence on success and every rejected run");
+  // LEAD 443.126 2b — the route appends the failed event; the ONE run reader (relay-fuel-backfill-runs.ts) queries it, with
+  // the interrupted terminal and the window heartbeat.
+  if (!parts.cron.includes("integrations.relay_fuel_ingest_backfill_completed") || (parts.route.match(/integrations\.relay_fuel_ingest_backfill_failed/g)?.length ?? 0) !== 1
+      || !(parts.runs ?? "").includes("'integrations.relay_fuel_ingest_backfill_failed'") || !(parts.runs ?? "").includes("'integrations.relay_fuel_ingest_backfill_interrupted'")
+      || !/readLatestBackfillRun\(client, operatingCompanyId\)/.test(parts.route)) errors.push("backfill does not append and query terminal evidence on success and every rejected run");
+  if (!/recordBackfillWindow\(client, \{/.test(parts.cron) || !/latest\?\.status === "running"\) return \{ kind: "running"/.test(parts.route) || !/closeInterruptedBackfillRun\(client, latest, companyId\)/.test(parts.route)) errors.push("a run whose worker is gone must read interrupted (heartbeat per window), be closed on the next start, and never run twice per company");
   if (!parts.cron.includes("totalPulled") || !parts.cron.includes("totalUpserted") || !parts.cron.includes("totalSkipped")) errors.push("terminal evidence omits durable result totals");
   if (!parts.control.includes("getRelayFuelBackfillStatus") || !parts.control.includes('data-testid="relay-backfill-status"')) errors.push("control does not render durable status query-back");
   if (!parts.control.includes("refetchInterval")) errors.push("control does not recompute running status");
   if (!parts.control.includes('statusQuery.data?.run?.status === "running"')) errors.push("control permits duplicate launch while canonical run is active");
-  if (!/opts\?: \{ months\?: number; operatingCompanyId\?: string; runId\?: string \}/.test(parts.cron)) errors.push("backfill has no company/run target option");
+  if (!/opts\?: \{ months\?: number; operatingCompanyId\?: string; runId\?: string; resumeFromDate\?: string \}/.test(parts.cron)) errors.push("backfill has no company/run target option");
   if (!/activeCompanyIds\.filter\(\(\{ id \}\) => id === opts\.operatingCompanyId\)/.test(parts.cron)) errors.push("backfill does not narrow active companies to target");
   if (!parts.cron.includes("relay_fuel_ingest_backfill_company_not_active")) errors.push("inactive target is not rejected");
   // BANK-F91323 leftover refuse — RelayHistoryImport.tsx page-scoped text token ratchet
@@ -56,6 +63,11 @@ if (process.argv.includes("--selftest")) {
     ["status polling", { ...source, control: source.control.replace("refetchInterval:", "staleInterval:") }],
     ["terminal event", { ...source, cron: source.cron.replace("integrations.relay_fuel_ingest_backfill_completed", "integrations.relay_fuel_ingest_backfill_snapshot") }],
     ["failure event", { ...source, route: source.route.replaceAll("integrations.relay_fuel_ingest_backfill_failed", "integrations.relay_fuel_ingest_backfill_lost") }],
+    // LEAD 443.126 2b
+    ["no heartbeat", { ...source, cron: source.cron.replace("recordBackfillWindow(client, {", "noBeat(client, {") }],
+    ["second concurrent run allowed", { ...source, route: source.route.replace('latest?.status === "running") return { kind: "running"', 'false) return { kind: "running"') }],
+    ["stale run never closed", { ...source, route: source.route.replace("closeInterruptedBackfillRun(client, latest, companyId)", "void latest") }],
+    ["interrupted not read", { ...source, runs: source.runs.replace("'integrations.relay_fuel_ingest_backfill_interrupted'", "'x'") }],
     ["duplicate launch", { ...source, control: source.control.replaceAll('statusQuery.data?.run?.status === "running"', "false") }],
   ];
   const missed = mutations.filter(([, candidate]) => inspect(candidate).length === 0);
