@@ -30,7 +30,7 @@ import {
   type SavedCoaRoleDesignation,
 } from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../test-helpers/constants.js";
-import { upsertDriverEscrowAccountLink } from "../../accounting/driver-subaccount-provision.service.js";
+import { upsertDriverAdvanceAccountLink, upsertDriverEscrowAccountLink } from "../../accounting/driver-subaccount-provision.service.js";
 import { closeSettlementPayRun, SettlementPayRunError } from "../settlement-payrun-close.service.js";
 import { ESCROW_CAP_CENTS } from "../escrow-resolver.service.js";
 import { createJournalEntry, createJournalEntryOnClient } from "../../accounting/journal-entries.service.js";
@@ -228,10 +228,13 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
        ON CONFLICT (operating_company_id, driver_id) DO NOTHING`,
       [companyId, s.driverId]
     );
+    // 443.93: a 'week_calendar' settlement — the model whose escrow contribution the CLOSE computes against the cap
+    // (settlement-payrun-close.service.ts:735-747 computeCappedEscrowContributionCents). A 'load_bookended' one sums the
+    // escrow lines it accrued per load instead (the cap is applied at accrual), so it could not prove the cap here.
     await db.query(
       `INSERT INTO driver_finance.driver_settlements
          (id, operating_company_id, display_id, driver_id, period_start, period_end, status, locked_at, gross_pay, deductions_total, reimbursements_total, net_pay, settlement_model)
-       VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),3000,0,0,0,'load_bookended')`,
+       VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),3000,0,0,0,'week_calendar')`,
       [s.settlementId, companyId, s.displayId, s.driverId]
     );
     // 443.93: driver pay is A/P to the driver's own vendor (mdata.vendors.driver_id) — the pay-run refuses without it.
@@ -286,6 +289,26 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
          (id, operating_company_id, display_id, driver_id, liability_id, amount, purpose, disbursement_method, disbursement_status, recipient_type, created_by_user_id, status, outstanding_balance)
        VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,200.00,'fuel','ach','disbursed','driver',$6::uuid,'outstanding',200.00)`,
       [s.advanceId, companyId, `ADV-${s.displayId}`, s.driverId, s.liabilityId, userId]
+    );
+    // 443.93: an advance is outstanding in the GL, not on its row — driver_finance.v_driver_advance_balances reads the
+    // 'driver_advance' disbursement posting on the driver's own advance sub-account (a child of the advance_recovery
+    // account). The fixture writes what the disbursement engine writes: the sub-account + its link + Dr sub / Cr cash.
+    const advanceSub = randomUUID();
+    await mkAcct(advanceSub, `${s.displayId} — Driver Advance`, "Asset", acct.advanceClearing, null);
+    await upsertDriverAdvanceAccountLink(db as never, { operatingCompanyId: companyId, driverId: s.driverId, coaAccountId: advanceSub, actorUserId: userId });
+    await createJournalEntryOnClient(
+      db as never,
+      {
+        operating_company_id: companyId,
+        entry_date: new Date().toISOString().slice(0, 10),
+        memo: `TEST DATA — advance disbursement ${s.displayId}`,
+        source: "auto",
+        postings: [
+          { account_id: advanceSub, debit_or_credit: "debit", amount_cents: 20000, description: "advance disbursed", source_transaction_type: "driver_advance", source_transaction_id: s.advanceId },
+          { account_id: acct.cash, debit_or_credit: "credit", amount_cents: 20000, description: "advance disbursed", source_transaction_type: "driver_advance", source_transaction_id: s.advanceId },
+        ],
+      } as never,
+      { userId, role: "Owner" }
     );
   }
 
@@ -479,10 +502,37 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     expect(res.breakdown.escrow_contribution_cents).toBe(25000);
     expect(res.breakdown.net_cents).toBe(205000);
 
-    // JE balances to the cent
+    // 443.93 — the pay-run posts the per-load A/P chain (settlement-payrun-close.service.ts:1289-1345, ROUND 326 items 2-5):
+    // (a) the load's A/P bill  Dr driver pay 300000 / Cr A/P (settlement-ap-chain.service.ts:264),
+    // (b) ONE application JE   Dr A/P / Cr insurance 40000 + chargeback 10000 + advance 20000 + escrow 25000 = 95000
+    //     (settlement-ap-chain.service.ts:347) — res.journal_entry_id (settlement-payrun-close.service.ts:1347),
+    // (c) the net as a bill payment  Dr A/P 205000 / Cr bank (settlement-ap-chain.service.ts:372).
+    // Each JE balances to the cent and A/P for the settlement nets to zero.
     const bal = await jeBalance(res.journal_entry_id!);
     expect(bal.dr).toBe(bal.cr);
-    expect(bal.dr).toBe(300000);
+    expect(bal.dr).toBe(95000);
+    const chainRows = await read<{ bill_je: string | null; cash_je: string | null }>(
+      `SELECT bill_journal_entry_id::text AS bill_je, cash_journal_entry_id::text AS cash_je
+         FROM driver_finance.driver_settlement_gl_bills WHERE settlement_id = $1::uuid`,
+      [below.settlementId]
+    );
+    expect(chainRows.length).toBe(1); // one load -> one A/P bill
+    const billBal = await jeBalance(chainRows[0]!.bill_je!);
+    expect(billBal.dr).toBe(billBal.cr);
+    expect(billBal.dr).toBe(300000);
+    const pay = await read<{ total: string }>(
+      `SELECT COALESCE(SUM(amount_cents),0)::text AS total FROM accounting.journal_entry_postings
+        WHERE journal_entry_uuid=$1::uuid AND debit_or_credit='debit' AND account_id=$2::uuid`,
+      [chainRows[0]!.bill_je, acct.driverPay]
+    );
+    expect(Number(pay[0]!.total)).toBe(300000);
+    const apNet = await read<{ v: string }>(
+      `SELECT COALESCE(SUM(CASE WHEN debit_or_credit='credit' THEN amount_cents ELSE -amount_cents END),0)::text AS v
+         FROM accounting.journal_entry_postings
+        WHERE journal_entry_uuid = ANY($1::uuid[]) AND account_id=$2::uuid`,
+      [[chainRows[0]!.bill_je, res.journal_entry_id, chainRows[0]!.cash_je], acct.ap]
+    );
+    expect(Number(apNet[0]!.v)).toBe(0);
 
     // escrow credit lands on the driver's OWN Damage-Claim liability sub-account (parent set, Liability)
     const esc = await read<{ account_id: string; amount_cents: string; account_type: string; parent: string | null }>(
@@ -496,11 +546,11 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     expect(esc[0]!.account_type).toBe("Liability");
     expect(esc[0]!.parent).toBeTruthy();
 
-    // net credits the payment-method's cash account
+    // net credits the operating bank's cash account — on the net bill payment's JE (settlement-ap-chain.service.ts:372)
     const cash = await read<{ total: string }>(
       `SELECT COALESCE(SUM(amount_cents),0)::text AS total FROM accounting.journal_entry_postings
         WHERE journal_entry_uuid=$1::uuid AND debit_or_credit='credit' AND account_id=$2::uuid`,
-      [res.journal_entry_id, acct.cash]
+      [chainRows[0]!.cash_je, acct.cash]
     );
     expect(Number(cash[0]!.total)).toBe(205000);
 
@@ -529,6 +579,11 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
 
   it("(1b) idempotent: a second flag-ON close does not double-post (one JE, advance recovered once)", async () => {
     await setFlag(true);
+    const jeCount = async () => Number((await read<{ c: string }>(
+      `SELECT count(*)::text AS c FROM accounting.journal_entries WHERE operating_company_id=$1::uuid AND memo LIKE $2`,
+      [companyId, `Settlement ${below.displayId}%`]
+    ))[0]!.c);
+    const jesBefore = await jeCount();
     const res2 = await closeSettlementPayRun(
       { operatingCompanyId: companyId, settlementId: below.settlementId, paymentMethodId },
       { userId: flagActor }
@@ -538,11 +593,13 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     expect(res2.recovered_advance_ids).toEqual([]);
     const runs = await read<{ c: string }>(`SELECT count(*)::text AS c FROM driver_finance.payrun_gl_runs WHERE settlement_id=$1::uuid`, [below.settlementId]);
     expect(Number(runs[0]!.c)).toBe(1);
-    const jes = await read<{ c: string }>(
-      `SELECT count(*)::text AS c FROM accounting.journal_entries WHERE operating_company_id=$1::uuid AND memo LIKE $2`,
-      [companyId, `Settlement ${below.displayId}%`]
-    );
-    expect(Number(jes[0]!.c)).toBe(1);
+    // 443.93: the per-load chain writes several JEs (bill, application, net payment — settlement-ap-chain.service.ts:264/
+    // 347/372); the retry adds NONE (idempotent existing-run path, settlement-payrun-close.service.ts:1113) and the A/P bill
+    // set stays one per load.
+    expect(jesBefore).toBeGreaterThan(0);
+    expect(await jeCount()).toBe(jesBefore);
+    const bills = await read<{ c: string }>(`SELECT count(*)::text AS c FROM driver_finance.driver_settlement_gl_bills WHERE settlement_id=$1::uuid`, [below.settlementId]);
+    expect(Number(bills[0]!.c)).toBe(1);
   });
 
   it("(2) at/over cap: escrow_contribution == 0 and the JE still balances", async () => {
@@ -691,6 +748,13 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
         `INSERT INTO driver_finance.driver_bills (id, operating_company_id, load_id, load_number, bill_number, driver_id, gross_amount_cents, status, settled_in_settlement_id)
          VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5,$6::uuid,29760,'open',$7::uuid)`,
         [otherDriverBillId, companyId, otherLoadId, `L-INTERLOCK-${suffix}`, `DB-INTERLOCK-${suffix}`, interlockDriverId, interlockSettlementId]
+      );
+      // 443.93: the close refuses a settlement with no earnings line on a real load BEFORE it reads the interlock
+      // (settlement-payrun-close.service.ts:640-661) — the interlock settlement carries its load's earnings line.
+      await db.query(
+        `INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, load_id, is_active)
+         VALUES ($1::uuid,'earnings','linehaul earnings',297.60,$2::uuid,true)`,
+        [interlockSettlementId, otherLoadId]
       );
       await db.query(
         `INSERT INTO accounting.bills (id, operating_company_id, amount_cents, is_sample_data) VALUES ($1::uuid,$2::uuid,29760,true)`,
