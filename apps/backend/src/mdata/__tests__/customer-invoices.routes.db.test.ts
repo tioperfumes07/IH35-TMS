@@ -11,6 +11,7 @@ import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
 import { testAuthHeaders } from "../../../test-helpers/auth-fixture.js";
 import { createIntegrationApp } from "../../../test-helpers/http-app.js";
+import { insertInvoiceLine, insertLoadForInvoice } from "../../../test-helpers/load-born-invoice.js";
 import { registerCustomerInvoicesRoutes } from "../customer-invoices.routes.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -58,14 +59,18 @@ describeIntegration("GET /api/v1/customers/:id/invoices (real Postgres)", () => 
       );
       customerB = custBRes.rows[0]!.id;
 
+      // LAW 363.2: a from_load invoice is written with its load (trg_from_load_invoice_carries_its_load).
+      const loadId = await insertLoadForInvoice(db, companyId, customerA, { rateTotalCents: 150000 });
       const invRes = await db.query<{ id: string }>(
         `INSERT INTO accounting.invoices
-           (operating_company_id, customer_id, display_id, status, issue_date, due_date, total_cents)
-         VALUES ($1::uuid, $2::uuid, $3, 'draft', CURRENT_DATE, CURRENT_DATE + 30, 150000)
+           (operating_company_id, customer_id, display_id, status, issue_date, due_date, total_cents, source_load_id)
+         VALUES ($1::uuid, $2::uuid, $3, 'draft', CURRENT_DATE, CURRENT_DATE + 30, 150000, $4::uuid)
          RETURNING id`,
-        [companyId, customerA, `INV-2026-${suffix.replace(/\D/g, "").padEnd(5, "0").slice(0, 5)}`]
+        [companyId, customerA, `INV-2026-${suffix.replace(/\D/g, "").padEnd(5, "0").slice(0, 5)}`, loadId]
       );
       invoiceId = invRes.rows[0]!.id;
+      // invoice_must_have_lines: a live invoice header has at least one line.
+      await insertInvoiceLine(db, companyId, invoiceId, 150000, { loadId });
     });
 
     app = await createIntegrationApp(async (a) => {

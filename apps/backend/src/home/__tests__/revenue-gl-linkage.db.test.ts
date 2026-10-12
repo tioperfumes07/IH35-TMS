@@ -20,6 +20,7 @@ import {
   deactivateIsolatedOperatingCompany,
   type IsolatedOperatingCompany,
 } from "../../../test-helpers/isolated-company.js";
+import { insertInvoiceLine, insertLoadForInvoice } from "../../../test-helpers/load-born-invoice.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
 import { computeRevenueGlLinkage } from "../revenue-gl-linkage.service.js";
 
@@ -53,6 +54,13 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
   const reversedBatchId = randomUUID();
   const compensatingBatchId = randomUUID();
   const today = companyBusinessDate();
+  /**
+   * LAW 363.2: every invoice here is from_load (the column default), and trg_from_load_invoice_carries_its_load
+   * refuses one with no source_load_id — so each invoice is written with its own load, and every posting sourced
+   * from that invoice carries the load (trg_load_born_posting_carries_its_load).
+   */
+  const loadIds: Record<string, string> = {};
+  let otherLoadId: string | null = null;
   const revenueCents = 25_000;
   const n = () => String(Math.floor(10_000 + Math.random() * 89_999));
   const displayIds = {
@@ -148,12 +156,25 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
         [customerId, companyId, `REVGL Cust ${suffix}`]
       );
 
+      for (const [key, cents] of [
+        ["matched", revenueCents],
+        ["missing", 12000],
+        ["wrong", 9000],
+        ["voided", 6000],
+        ["draft", 777777],
+        ["tsl", 3500],
+      ] as const) {
+        loadIds[key] = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: cents });
+      }
+
       // Matched invoice + balanced JE (Dr AR / Cr Income) with source spine.
       await db.query(
-        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,$6,0,$6,'sent')`,
-        [matchedInvoiceId, companyId, customerId, displayIds.matched, today, revenueCents]
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,$6,0,$6,'draft',$7::uuid)`,
+        [matchedInvoiceId, companyId, customerId, displayIds.matched, today, revenueCents, loadIds.matched]
       );
+      // The send path writes the line first, then the header moves to its status (invoice_sent_requires_live_line).
+      await insertInvoiceLine(db, companyId, matchedInvoiceId, revenueCents, { loadId: loadIds.matched, status: "sent" });
       await db.query(
         `INSERT INTO accounting.journal_entries (id, operating_company_id, entry_date, memo, status, source)
          VALUES ($1::uuid,$2::uuid,$3::date,'revgl matched','posted','auto')`,
@@ -162,18 +183,18 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
       const pDebit = await db.query<{ id: string }>(
         `INSERT INTO accounting.journal_entry_postings
            (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents,
-            source_transaction_type, source_transaction_id)
-         VALUES ($1::uuid,$2::uuid,1,$3::uuid,'debit',$4,'invoice',$5)
+            source_transaction_type, source_transaction_id, load_id)
+         VALUES ($1::uuid,$2::uuid,1,$3::uuid,'debit',$4,'invoice',$5,$6::uuid)
          RETURNING id`,
-        [companyId, matchedJeId, arAccountId, revenueCents, matchedInvoiceId]
+        [companyId, matchedJeId, arAccountId, revenueCents, matchedInvoiceId, loadIds.matched]
       );
       const pCredit = await db.query<{ id: string }>(
         `INSERT INTO accounting.journal_entry_postings
            (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents,
-            source_transaction_type, source_transaction_id)
-         VALUES ($1::uuid,$2::uuid,2,$3::uuid,'credit',$4,'invoice',$5)
+            source_transaction_type, source_transaction_id, load_id)
+         VALUES ($1::uuid,$2::uuid,2,$3::uuid,'credit',$4,'invoice',$5,$6::uuid)
          RETURNING id`,
-        [companyId, matchedJeId, incomeAccountId, revenueCents, matchedInvoiceId]
+        [companyId, matchedJeId, incomeAccountId, revenueCents, matchedInvoiceId, loadIds.matched]
       );
       await db.query(
         `INSERT INTO accounting.transaction_source_links
@@ -185,17 +206,21 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
 
       // Missing JE invoice.
       await db.query(
-        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,12000,0,12000,'sent')`,
-        [missingJeInvoiceId, companyId, customerId, displayIds.missing, today]
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,12000,0,12000,'draft',$6::uuid)`,
+        [missingJeInvoiceId, companyId, customerId, displayIds.missing, today, loadIds.missing]
       );
+      // The send path writes the line first, then the header moves to its status (invoice_sent_requires_live_line).
+      await insertInvoiceLine(db, companyId, missingJeInvoiceId, 12000, { loadId: loadIds.missing, status: "sent" });
 
       // Wrong account: credit landed on Expense.
       await db.query(
-        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,9000,0,9000,'sent')`,
-        [wrongAcctInvoiceId, companyId, customerId, displayIds.wrong, today]
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,9000,0,9000,'draft',$6::uuid)`,
+        [wrongAcctInvoiceId, companyId, customerId, displayIds.wrong, today, loadIds.wrong]
       );
+      // The send path writes the line first, then the header moves to its status (invoice_sent_requires_live_line).
+      await insertInvoiceLine(db, companyId, wrongAcctInvoiceId, 9000, { loadId: loadIds.wrong, status: "sent" });
       await db.query(
         `INSERT INTO accounting.journal_entries (id, operating_company_id, entry_date, memo, status, source)
          VALUES ($1::uuid,$2::uuid,$3::date,'revgl wrong acct','posted','auto')`,
@@ -204,18 +229,20 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
       await db.query(
         `INSERT INTO accounting.journal_entry_postings
            (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents,
-            source_transaction_type, source_transaction_id)
-         VALUES ($1::uuid,$2::uuid,1,$3::uuid,'debit',9000,'invoice',$4),
-                ($1::uuid,$2::uuid,2,$5::uuid,'credit',9000,'invoice',$4)`,
-        [companyId, wrongJeId, arAccountId, wrongAcctInvoiceId, expenseAccountId]
+            source_transaction_type, source_transaction_id, load_id)
+         VALUES ($1::uuid,$2::uuid,1,$3::uuid,'debit',9000,'invoice',$4,$6::uuid),
+                ($1::uuid,$2::uuid,2,$5::uuid,'credit',9000,'invoice',$4,$6::uuid)`,
+        [companyId, wrongJeId, arAccountId, wrongAcctInvoiceId, expenseAccountId, loadIds.wrong]
       );
 
       // Voided JE for an invoice.
       await db.query(
-        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,6000,0,6000,'sent')`,
-        [voidedInvoiceId, companyId, customerId, displayIds.voided, today]
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,6000,0,6000,'draft',$6::uuid)`,
+        [voidedInvoiceId, companyId, customerId, displayIds.voided, today, loadIds.voided]
       );
+      // The send path writes the line first, then the header moves to its status (invoice_sent_requires_live_line).
+      await insertInvoiceLine(db, companyId, voidedInvoiceId, 6000, { loadId: loadIds.voided, status: "sent" });
       await db.query(
         `INSERT INTO accounting.journal_entries (id, operating_company_id, entry_date, memo, status, source, voided_at)
          VALUES ($1::uuid,$2::uuid,$3::date,'revgl voided','voided','auto',now())`,
@@ -224,25 +251,29 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
       await db.query(
         `INSERT INTO accounting.journal_entry_postings
            (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents,
-            source_transaction_type, source_transaction_id)
-         VALUES ($1::uuid,$2::uuid,1,$3::uuid,'debit',6000,'invoice',$4),
-                ($1::uuid,$2::uuid,2,$5::uuid,'credit',6000,'invoice',$4)`,
-        [companyId, voidedJeId, arAccountId, voidedInvoiceId, incomeAccountId]
+            source_transaction_type, source_transaction_id, load_id)
+         VALUES ($1::uuid,$2::uuid,1,$3::uuid,'debit',6000,'invoice',$4,$6::uuid),
+                ($1::uuid,$2::uuid,2,$5::uuid,'credit',6000,'invoice',$4,$6::uuid)`,
+        [companyId, voidedJeId, arAccountId, voidedInvoiceId, incomeAccountId, loadIds.voided]
       );
 
       // Draft exclusion plant — large draft must not enter invoice basis.
       await db.query(
-        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,777777,0,777777,'draft')`,
-        [draftInvoiceId, companyId, customerId, displayIds.draft, today]
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,777777,0,777777,'draft',$6::uuid)`,
+        [draftInvoiceId, companyId, customerId, displayIds.draft, today, loadIds.draft]
       );
+      // invoice_must_have_lines: a live invoice header has at least one line.
+      await insertInvoiceLine(db, companyId, draftInvoiceId, 777777, { loadId: loadIds.draft });
 
       // TSL-only link: no denormalized source_transaction_* on postings; link via transaction_source_links.
       await db.query(
-        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,3500,0,3500,'sent')`,
-        [tslOnlyInvoiceId, companyId, customerId, displayIds.tsl, today]
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,3500,0,3500,'draft',$6::uuid)`,
+        [tslOnlyInvoiceId, companyId, customerId, displayIds.tsl, today, loadIds.tsl]
       );
+      // The send path writes the line first, then the header moves to its status (invoice_sent_requires_live_line).
+      await insertInvoiceLine(db, companyId, tslOnlyInvoiceId, 3500, { loadId: loadIds.tsl, status: "sent" });
       await db.query(
         `INSERT INTO accounting.journal_entries (id, operating_company_id, entry_date, memo, status, source)
          VALUES ($1::uuid,$2::uuid,$3::date,'revgl tsl-only','posted','auto')`,
@@ -301,11 +332,14 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
         `INSERT INTO mdata.customers (id, operating_company_id, customer_name) VALUES ($1::uuid,$2::uuid,$3)`,
         [otherCustomerId, otherCompanyId, `REVGL Other ${suffix}`]
       );
+      otherLoadId = await insertLoadForInvoice(db, otherCompanyId!, otherCustomerId, { rateTotalCents: 999999 });
       await db.query(
-        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,999999,0,999999,'sent')`,
-        [otherCompanyInvoiceId, otherCompanyId, otherCustomerId, displayIds.other, today]
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,999999,0,999999,'draft',$6::uuid)`,
+        [otherCompanyInvoiceId, otherCompanyId, otherCustomerId, displayIds.other, today, otherLoadId]
       );
+      // The send path writes the line first, then the header moves to its status (invoice_sent_requires_live_line).
+      await insertInvoiceLine(db, otherCompanyId!, otherCompanyInvoiceId, 999999, { loadId: otherLoadId, status: "sent" });
     });
   });
 
@@ -314,7 +348,9 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
     try {
       if (otherCompanyId) {
         await bypass(otherCompanyId, async () => {
+          await db.query(`DELETE FROM accounting.invoice_lines WHERE invoice_id = $1::uuid`, [otherCompanyInvoiceId]);
           await db.query(`DELETE FROM accounting.invoices WHERE id = $1::uuid`, [otherCompanyInvoiceId]);
+          if (otherLoadId) await db.query(`DELETE FROM mdata.loads WHERE id = $1::uuid`, [otherLoadId]);
           await db.query(`DELETE FROM mdata.customers WHERE id = $1::uuid`, [otherCustomerId]);
           if (otherIsolated) await deactivateIsolatedOperatingCompany(db, otherIsolated);
         });
@@ -337,7 +373,9 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
         await db.query(`DELETE FROM accounting.posting_batches WHERE id = ANY($1::uuid[])`, [
           [reversedBatchId, compensatingBatchId],
         ]);
+        await db.query(`DELETE FROM accounting.invoice_lines WHERE invoice_id = ANY($1::uuid[])`, [invoiceIds]);
         await db.query(`DELETE FROM accounting.invoices WHERE id = ANY($1::uuid[])`, [invoiceIds]);
+        await db.query(`DELETE FROM mdata.loads WHERE id = ANY($1::uuid[])`, [Object.values(loadIds)]);
         await db.query(`DELETE FROM mdata.customers WHERE id = ANY($1::uuid[])`, [[customerId]]);
         await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [
           [incomeAccountId, expenseAccountId, arAccountId],
@@ -398,9 +436,10 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
     await expect(
       bypass(companyId, async () => {
         await db.query(
-          `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
-           VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,1,0,1,'sent')`,
-          [probeId, otherCompanyId, otherCustomerId, probeDisplay, today]
+          // Carries a real (other-company) load so the refusal under test is the RLS WITH CHECK, not LAW 363.2.
+          `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status, source_load_id)
+           VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,1,0,1,'draft',$6::uuid)`,
+          [probeId, otherCompanyId, otherCustomerId, probeDisplay, today, otherLoadId]
         );
       })
     ).rejects.toMatchObject({ code: "42501" });
@@ -465,12 +504,16 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
       dt.setUTCDate(dt.getUTCDate() + 1);
       return companyBusinessDate(dt);
     })();
+    let tomorrowLoadId: string | null = null;
     await bypass(companyId, async () => {
+      tomorrowLoadId = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 1111 });
       await db.query(
-        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,1111,0,1111,'sent')`,
-        [tomorrowInv, companyId, customerId, displayIds.tomorrow, tomorrow]
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,1111,0,1111,'draft',$6::uuid)`,
+        [tomorrowInv, companyId, customerId, displayIds.tomorrow, tomorrow, tomorrowLoadId]
       );
+      // The send path writes the line first, then the header moves to its status (invoice_sent_requires_live_line).
+      await insertInvoiceLine(db, companyId, tomorrowInv, 1111, { loadId: tomorrowLoadId, status: "sent" });
     });
     try {
       const client = await scopedClient();
@@ -482,7 +525,9 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
       expect(result.drill.mismatched_invoices.some((d) => d.invoice_id === tomorrowInv)).toBe(false);
     } finally {
       await bypass(companyId, async () => {
+        await db.query(`DELETE FROM accounting.invoice_lines WHERE invoice_id=$1::uuid`, [tomorrowInv]);
         await db.query(`DELETE FROM accounting.invoices WHERE id=$1::uuid`, [tomorrowInv]);
+        if (tomorrowLoadId) await db.query(`DELETE FROM mdata.loads WHERE id=$1::uuid`, [tomorrowLoadId]);
       });
     }
   });
