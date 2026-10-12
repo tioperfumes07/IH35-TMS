@@ -2452,5 +2452,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-10-11",
     "purpose": "ROUND 443.54-7: widen related_party_loan_entries target_type CHECK for party_transfer_out (USMCA bank outflow to related party)"
+  },
+  "202615720912": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.99 C lane 2: create the 3 tables code reads but no migration creates (catalogs.downtime_categories, catalogs.downtime_fault_parties, safety.accidents) + their safety.* helper functions, IF NOT EXISTS, matching prod DDL (verify-sql-read-targets 7 phantom reads)"
   }
 }
