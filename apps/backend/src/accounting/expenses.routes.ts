@@ -6,6 +6,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { attributeExpenseToLoad } from "../expense-attribution/attribute.service.js";
+import { resolveLineLoadExemption } from "./expense-line-load-exemption.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { resolveExpenseCategoryId } from "./expense-category-catalog.js";
@@ -808,6 +809,21 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
     newId: expenseId,
   });
 
+  // Load attribution is driver-centric — skip when caller already stamped load_id (WAVE-H2). Read-only; resolved
+  // BEFORE the line insert (443.105) so the line carries the same load the header is stamped with below.
+  const attribution =
+    !body.load_id && body.driver_id
+      ? await attributeExpenseToLoad(client, {
+    driverId: body.driver_id,
+    operatingCompanyId: body.operating_company_id,
+    expenseTimestamp: new Date(`${body.expense_date}T12:00:00.000Z`),
+    expenseLocation:
+      body.location_lat != null && body.location_lng != null
+        ? { lat: body.location_lat, lng: body.location_lng }
+        : undefined,
+        })
+      : null;
+
   // Categorized line carrying the resolved GL account, so the posting engine debits the real
   // category (not "Uncategorized"). One line = the full amount on the integer-cents spine.
   if (categoryAccountId && (await relationExists(client, "accounting.expense_lines"))) {
@@ -851,13 +867,34 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
       lineColumns.push("line_category");
       lineValues.push(lineCategory);
     }
-    if (lineCategory && (await columnExists(client, "accounting", "expense_lines", "load_id"))) {
+    // 443.105 #2 — EVERY line carries its load (the caller's, else the driver-attributed one the header gets) or an
+    // explicit reason. A G18 load-required category is never auto-exempted: with neither, the DB trigger refuses it.
+    const lineLoadId = body.load_id ?? attribution?.loadId ?? null;
+    if (await columnExists(client, "accounting", "expense_lines", "load_id")) {
       lineColumns.push("load_id");
-      lineValues.push(body.load_id ?? null);
+      lineValues.push(lineLoadId);
     }
-    if (lineCategory && (await columnExists(client, "accounting", "expense_lines", "load_exemption_reason"))) {
+    if (await columnExists(client, "accounting", "expense_lines", "load_exemption_reason")) {
+      const accountLabel = lineLoadId
+        ? null
+        : (
+            (
+              await client.query(
+                `SELECT NULLIF(concat_ws(' ', a.account_number, a.account_name), '') AS label FROM catalogs.accounts a WHERE a.id = $1::uuid`,
+                [categoryAccountId]
+              )
+            ).rows[0] as { label?: string | null } | undefined
+          )?.label ?? null;
       lineColumns.push("load_exemption_reason");
-      lineValues.push(body.load_exemption_reason ?? null);
+      lineValues.push(
+        resolveLineLoadExemption({
+          loadId: lineLoadId,
+          reason: body.load_exemption_reason ?? null,
+          loadRequired: Boolean(lineCategory),
+          accountLabel,
+          context: `expense ${body.expense_date}`,
+        })
+      );
     }
 
     await client.query(
@@ -867,19 +904,6 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
     );
   }
 
-  // Load attribution is driver-centric — skip when caller already stamped load_id (WAVE-H2).
-  const attribution =
-    !body.load_id && body.driver_id
-      ? await attributeExpenseToLoad(client, {
-    driverId: body.driver_id,
-    operatingCompanyId: body.operating_company_id,
-    expenseTimestamp: new Date(`${body.expense_date}T12:00:00.000Z`),
-    expenseLocation:
-      body.location_lat != null && body.location_lng != null
-        ? { lat: body.location_lat, lng: body.location_lng }
-        : undefined,
-        })
-      : null;
 
   let expenseNumber: string | null = operatorExpenseNumber;
 

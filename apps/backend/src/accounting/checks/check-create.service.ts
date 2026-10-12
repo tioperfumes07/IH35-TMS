@@ -17,6 +17,7 @@ import { reassignDraftAttachments } from "../../documents/attachments.service.js
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "../expense-gl-posting-flag.js";
 import { advanceCheckStockAfterUse } from "./check-stock.service.js";
+import { resolveLineLoadExemption } from "../expense-line-load-exemption.js";
 
 export type CreateCheckLineInput = {
   line_kind: "category" | "item";
@@ -290,13 +291,29 @@ export async function createCheck(
               )
             ).rows[0]?.id ?? null
           : null;
+      // 443.105 #2 — a check line with no load says why (company cost on <account>, check #).
+      const lineLoadId = line.load_id ?? input.load_id ?? null;
+      const lineAccountLabel = lineLoadId
+        ? null
+        : (
+            await client.query<{ label: string | null }>(
+              `SELECT NULLIF(concat_ws(' ', a.account_number, a.account_name), '') AS label FROM catalogs.accounts a WHERE a.id = $1::uuid`,
+              [resolved.account_id]
+            )
+          ).rows[0]?.label ?? null;
+      const lineLoadExemption = resolveLineLoadExemption({
+        loadId: lineLoadId,
+        accountLabel: lineAccountLabel,
+        context: checkNumber ? `check #${checkNumber}` : "check (print later)",
+      });
       await client.query(
         `INSERT INTO accounting.expense_lines (
            expense_id, line_sequence, amount, amount_cents, description, expense_account_uuid,
            expense_category_uuid, item_id, billable_customer_uuid, load_id, operating_company_id,
-           driver_id, unit_id, trailer_id, linked_work_order_uuid, quantity, rate_cents, unit_of_measure
+           driver_id, unit_id, trailer_id, linked_work_order_uuid, quantity, rate_cents, unit_of_measure,
+           load_exemption_reason
          ) VALUES ($1::uuid, $2, $3, $4, $5, $6::uuid, $7::uuid, $8::uuid, $9::uuid, $10::uuid, $11::uuid,
-                   $12::uuid, $13::uuid, $14::uuid, $15::uuid, $16, $17, $18)`,
+                   $12::uuid, $13::uuid, $14::uuid, $15::uuid, $16, $17, $18, $19)`,
         [
           expenseId,
           seq++,
@@ -307,7 +324,7 @@ export async function createCheck(
           expenseCategoryUuid,
           line.line_kind === "item" ? line.item_id : categoryItemId,
           line.billable_customer_uuid ?? null,
-          line.load_id ?? input.load_id ?? null,
+          lineLoadId,
           operating_company_id,
           // A per-line value wins; omitted/null falls back to the check header's own dimension --
           // e.g. a single-truck repair check needs no per-line override at all.
@@ -330,6 +347,7 @@ export async function createCheck(
           line.line_kind === "item"
             ? line.unit_of_measure
             : categoryItemId !== null ? "each" : null,
+          lineLoadExemption,
         ]
       );
     }

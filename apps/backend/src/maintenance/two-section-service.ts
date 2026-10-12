@@ -8,6 +8,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 
 // The one expense GL-posting flag key (accounting/expense-gl-posting-flag.ts), shared with every expense-GL call site.
 import { EXPENSE_GL_POSTING_FLAG_KEY as WO_EXPENSE_GL_POSTING_FLAG_KEY } from "../accounting/expense-gl-posting-flag.js";
+import { resolveLineLoadExemption } from "../accounting/expense-line-load-exemption.js";
 // Same flag key as accounting/bill-gl.service.ts's own BILL_GL_POSTING_FLAG_KEY, redefined here for
 // the same reason (avoid a service->service import cycle risk) — same value, same semantics.
 const WO_BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
@@ -528,7 +529,10 @@ async function copyToAccountingLines(
   sourceWoId: string,
   destinationTable: "accounting.bill_lines" | "accounting.expense_lines",
   destinationFkColumn: "bill_id" | "expense_id",
-  destinationId: string
+  destinationId: string,
+  // 443.105 #2 — expense lines are written WITH their load or the reason they have none (never a bare line the DB
+  // has to refuse and a later UPDATE has to fix).
+  expenseLineLink?: { loadId: string | null; loadExemptionReason: string | null }
 ) {
   const woContext = await client.query<{ operating_company_id: string }>(
     `
@@ -666,8 +670,9 @@ async function copyToAccountingLines(
             `
               INSERT INTO accounting.expense_lines (
                 expense_id, line_sequence, amount_cents, amount, description, section, parent_line_uuid,
-                expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes, linked_wo_line_uuid
-              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+                expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes, linked_wo_line_uuid,
+                load_id, load_exemption_reason
+              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
               RETURNING id
             `,
             [
@@ -684,6 +689,8 @@ async function copyToAccountingLines(
               row.labor_rate_uuid,
               row.part_location_codes ?? null,
               row.id,
+              expenseLineLink?.loadId ?? null,
+              expenseLineLink?.loadExemptionReason ?? null,
             ]
           );
         })();
@@ -852,6 +859,7 @@ export async function autoCreateExpenseFromWO(
     vendor_uuid: string | null;
     unit_id: string | null;
     load_id: string | null;
+    display_id: string | null;
     total_amount_cents: number | null;
   }>(
     `
@@ -860,6 +868,7 @@ export async function autoCreateExpenseFromWO(
         COALESCE(w.external_vendor_id, w.vendor_id) AS vendor_uuid,
         w.unit_id::text AS unit_id,
         w.load_id,
+        w.display_id::text AS display_id,
         -- ACT-F5414: accounting.expenses has no "total_amount" dollars column (unlike
         -- accounting.bills, which this function's sibling autoCreateBillFromWO targets) — it only
         -- has total_amount_cents. This INSERT always referenced the non-existent "total_amount"
@@ -1016,7 +1025,17 @@ export async function autoCreateExpenseFromWO(
     );
   }
   if (await relationExists(client, "accounting.expense_lines")) {
-    await copyToAccountingLines(client, woUuid, "accounting.expense_lines", "expense_id", expenseId);
+    const lineLoadExemption = resolveLineLoadExemption({
+      loadId: wo.load_id ?? null,
+      reason: exemptionReason.length >= 20 ? exemptionReason : null,
+      loadRequired: Boolean(expenseCategoryRequiresLoad.rows[0]?.requires_load),
+      accountLabel: "Maintenance work order cost",
+      context: `work order ${wo.display_id ?? woUuid}`,
+    });
+    await copyToAccountingLines(client, woUuid, "accounting.expense_lines", "expense_id", expenseId, {
+      loadId: wo.load_id ?? null,
+      loadExemptionReason: lineLoadExemption,
+    });
 
     const hasLoadId = await columnExists(client, "accounting.expense_lines", "load_id");
     const hasLoadRequired = await columnExists(client, "accounting.expense_lines", "load_required");
@@ -1034,7 +1053,7 @@ export async function autoCreateExpenseFromWO(
         updates.push(`load_required = $${values.length}`);
       }
       if (hasExemption) {
-        values.push(exemptionReason.length >= 20 ? exemptionReason : null);
+        values.push(lineLoadExemption);
         updates.push(`load_exemption_reason = $${values.length}`);
       }
       if (hasLineCategory) {
