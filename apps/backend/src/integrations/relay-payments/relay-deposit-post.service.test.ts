@@ -20,6 +20,7 @@ const ACCTS: Record<string, string> = { relay_fuel_wallet: "acct-1295", "5005": 
 
 function fake(dep: Record<string, unknown> | null, opts: { posted?: boolean; bookedBankLine?: boolean } = {}) {
   const query = vi.fn(async (sql: string, values: unknown[] = []) => {
+    if (/to_regclass\('integrations\.relay_deposit_postings'\)/.test(sql)) return { rows: [{ ok: true }] };
     if (/FROM integrations\.relay_deposit_postings/.test(sql)) return { rows: [] };
     if (/FROM integrations\.relay_company_cards/.test(sql)) { const m = MAP[String(values[1])]; return { rows: m ? [m] : [] }; }
     if (/UPDATE integrations\.relay_deposits/.test(sql)) return { rows: [] };

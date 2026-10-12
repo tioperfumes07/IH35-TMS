@@ -13,10 +13,8 @@
 | **create** (collection POST) | 350 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 281 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 253 | `/:id/approve`, `/scan` — operates on an existing row |
-| infra (NOT a surface) | 72 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 956 | |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 955 | |
+| **TOTAL POST endpoints** | 957 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
