@@ -65,6 +65,8 @@ run("stage-3 · insurer claim recovery (real engine)", () => {
       // ordering guarantee between separate test files/workers, so the flag-flip below's
       // set_by_user_uuid FK 23503'd whenever this file ran before that one. Seed it here too
       // (idempotent) so this file is self-sufficient.
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `ins-recovery-${s}@test.local`]);

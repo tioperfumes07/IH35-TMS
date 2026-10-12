@@ -134,6 +134,8 @@ describeIntegration("BANKING-GL-COMPLETION atomic bank-transaction-splits vendor
     // Actor must exist BEFORE createIsolatedOperatingCompany({ actorUserId }) — fail-loud grant (#2719).
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
+    // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+    await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
     await db.query(
       `INSERT INTO identity.users (id, email, role, preferred_language)
        VALUES ($1::uuid,$2,'Owner','en')

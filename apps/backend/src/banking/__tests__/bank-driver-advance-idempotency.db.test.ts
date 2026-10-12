@@ -138,6 +138,8 @@ describeIntegration("BLOCK-6 IDEMPOTENCY FIX — bank-driver-advance re-run neve
     // the SAME shared TRANSP company's singleton active cash_advance mapping.
     await db.query("SELECT pg_advisory_lock($1::bigint)", [CASH_ADVANCE_MAP_TEST_LOCK_KEY]);
     await bypass(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `b6idem-${suffix}@test.local`]

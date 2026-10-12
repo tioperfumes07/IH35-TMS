@@ -88,6 +88,8 @@ describeIntegration("ap_control isolation stress — concurrent cash/CC bill-pay
     // Actor must exist BEFORE createIsolatedOperatingCompany({ actorUserId }) — fail-loud grant.
     await client.query("BEGIN");
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+    await client.query("SET LOCAL app.allow_owner_bootstrap = '1'");
     await client.query(
       `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
       [userId, `stress-${kind}-${suffix}@test.local`]
