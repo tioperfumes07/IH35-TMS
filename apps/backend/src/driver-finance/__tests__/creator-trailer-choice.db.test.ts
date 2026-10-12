@@ -8,6 +8,8 @@
  *  - explicit "no trailer"            -> none
  *  - nothing                          -> null: preview refuses trailer_required for loads it would BOOK (never for a
  *                                        load that already exists), and the seed refuses before anything is booked
+ *  - the trailer TYPE follows the document (443.110 G2): Reefer fleet trailer -> REFRIGERATED_VAN, customer trailer ->
+ *    POWER_ONLY_CUSTOMER_TRAILER, none -> POWER_ONLY_NO_TRAILER (no longer book-load's DRY_VAN default)
  *  - the company choice recorded on a load -> its assignment trailer (load-trailer-choice.db.test.ts proves the expense)
  */
 import { randomUUID } from "node:crypto";
@@ -17,7 +19,7 @@ import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites, prepareCompanyForLoadInserts } from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 import { applyTrailerChoice, resolveTrailerChoice } from "../../dispatch/load-trailer-choice.js";
-import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorTrailerChoice } from "../creator-trailer-choice.js";
+import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorLoadTrailerEquipmentId, creatorTrailerChoice } from "../creator-trailer-choice.js";
 import { creatorPreflightRefusals } from "../settlement-creator-preflight.js";
 import { ensureDispatchedLoadsForCreator, SettlementCreatorSeedError } from "../settlement-creator-seed-loads.js";
 import type { SettlementCreatorDraft } from "../settlement-creator.types.js";
@@ -120,6 +122,30 @@ describeIntegration("Settlement Creator records the load trailer at birth from t
       expect(String((err as Error).message)).toContain(CREATOR_TRAILER_REQUIRED_MESSAGE);
       const after = (await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM mdata.loads WHERE operating_company_id = $1::uuid`, [companyId])).rows[0]!.n;
       expect(after).toBe(before);
+    } finally {
+      await db.query("ROLLBACK");
+    }
+  });
+
+  it("the load's trailer TYPE follows the document's trailer, never the DRY_VAN default (443.110 G2)", async () => {
+    await db.query("BEGIN");
+    try {
+      await db.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+      for (const [code, name] of [["REFRIGERATED_VAN", "Reefer"], ["POWER_ONLY_CUSTOMER_TRAILER", "Power-only · customer trailer"], ["POWER_ONLY_NO_TRAILER", "Power-only · no trailer"]]) {
+        await db.query(
+          `INSERT INTO catalogs.load_trailer_equipment (operating_company_id, code, display_name) VALUES ($1::uuid, $2, $3)
+           ON CONFLICT (operating_company_id, code) DO NOTHING`,
+          [companyId, code, name],
+        );
+      }
+      const codeOf = async (id: string | null) =>
+        id ? (await db.query<{ code: string }>(`SELECT code FROM catalogs.load_trailer_equipment WHERE id = $1::uuid`, [id])).rows[0]?.code : null;
+      const reefer = await creatorTrailerChoice(db as never, draft({ trailer_equipment_number: ownTrailerNumber }));
+      expect(await codeOf(await creatorLoadTrailerEquipmentId(db as never, companyId, reefer))).toBe("REFRIGERATED_VAN");
+      const customer = await creatorTrailerChoice(db as never, draft({ trailer_equipment_number: "CUST-53-002" }));
+      expect(await codeOf(await creatorLoadTrailerEquipmentId(db as never, companyId, customer))).toBe("POWER_ONLY_CUSTOMER_TRAILER");
+      expect(await codeOf(await creatorLoadTrailerEquipmentId(db as never, companyId, { kind: "none" }))).toBe("POWER_ONLY_NO_TRAILER");
+      expect(await creatorLoadTrailerEquipmentId(db as never, companyId, null)).toBeNull();
     } finally {
       await db.query("ROLLBACK");
     }

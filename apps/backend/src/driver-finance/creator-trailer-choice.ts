@@ -43,3 +43,33 @@ export async function creatorTrailerChoice(client: Q, draft: SettlementCreatorDr
   if (draft.trailer_none === true) return { kind: "none" };
   return null;
 }
+
+/**
+ * LEAD 443.110 G2 — the load's trailer TYPE comes from the same document decision (before this every Creator load was
+ * booked DRY_VAN, book-load's default): a fleet trailer's own equipment type (Reefer -> REFRIGERATED_VAN, DryVan ->
+ * DRY_VAN, Flatbed -> FLATBED); a customer / shipper trailer -> POWER_ONLY_CUSTOMER_TRAILER; none -> POWER_ONLY_NO_TRAILER.
+ * Returns this company's active catalogs.load_trailer_equipment id, or null (book-load keeps its default) when the
+ * company's catalog has no such code.
+ */
+const EQUIPMENT_TYPE_TO_TRAILER_CODE: Record<string, string> = { reefer: "REFRIGERATED_VAN", dryvan: "DRY_VAN", flatbed: "FLATBED" };
+
+export async function creatorLoadTrailerEquipmentId(client: Q, companyId: string, choice: TrailerChoice | null): Promise<string | null> {
+  if (!choice) return null;
+  let code: string | null = null;
+  if (choice.kind === "customer" || choice.kind === "interchange") code = "POWER_ONLY_CUSTOMER_TRAILER";
+  else if (choice.kind === "none") code = "POWER_ONLY_NO_TRAILER";
+  else {
+    const t = (await client.query<{ equipment_type: string | null }>(
+      `SELECT equipment_type FROM mdata.equipment WHERE id = $1::uuid
+          AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)`,
+      [choice.equipment_id, companyId],
+    )).rows[0]?.equipment_type;
+    code = EQUIPMENT_TYPE_TO_TRAILER_CODE[String(t ?? "").toLowerCase().replace(/[^a-z]/g, "")] ?? null;
+  }
+  if (!code) return null;
+  const r = await client.query<{ id: string }>(
+    `SELECT id::text FROM catalogs.load_trailer_equipment WHERE operating_company_id = $1::uuid AND code = $2 AND is_active = true LIMIT 1`,
+    [companyId, code],
+  );
+  return r.rows[0]?.id ?? null;
+}

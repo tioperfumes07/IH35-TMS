@@ -11,7 +11,7 @@ import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.j
 import { milesTimesRateCents } from "./deadhead-rule.js";
 import { signedRateOverride } from "./settlement-creator-signed-rate.js";
 import { deliverLoadThroughDispatch, localDayStartIso, stampStopsFromTracking, type StopStamp } from "./settlement-creator-deliver.js";
-import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorTrailerChoice } from "./creator-trailer-choice.js";
+import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorLoadTrailerEquipmentId, creatorTrailerChoice } from "./creator-trailer-choice.js";
 
 export const SETTLEMENT_CREATOR_QUAL_OVERRIDE_REASON =
   "entered from the AlwaysTrack settlement / load history (Settlement Creator)";
@@ -324,7 +324,10 @@ export async function ensureDispatchedLoadsForCreator(
     )
   ).rows as CatalogCharge[];
   // LEAD 443.109 — a load is never born without its trailer (the document decides; preview refuses trailer_required).
+  // Resolved BEFORE any load is booked (443.110 G2): the printed number becomes the fleet trailer id, a customer trailer
+  // or an explicit none, and the trailer TYPE follows it (Reefer / Dry Van / power-only) instead of book-load's DRY_VAN.
   const trailerChoice = seed && draft.loads.length ? await creatorTrailerChoice(client, draft) : null;
+  const trailerTypeId = await creatorLoadTrailerEquipmentId(client, draft.operating_company_id, trailerChoice);
   for (const load of draft.loads) {
     const existing = await client.query<{ id: string }>(
       `SELECT id::text FROM mdata.loads
@@ -418,10 +421,11 @@ export async function ensureDispatchedLoadsForCreator(
       live_load_number: load.load_number.trim(),
       assigned_primary_driver_id: draft.driver_id,
       assigned_unit_id: draft.unit_id ?? undefined,
-      assigned_trailer_unit_id: draft.trailer_id ?? undefined,
+      assigned_trailer_unit_id: (trailerChoice?.kind === "company" ? trailerChoice.equipment_id : draft.trailer_id) ?? undefined,
       // LEAD 443.107 item 3 + 443.109: the document's trailer is the load's recorded choice at birth (fleet trailer,
       // customer / shipper trailer, or an explicit none) — creatorTrailerChoice decided it above, never invented.
       trailer_choice: trailerChoice,
+      load_trailer_equipment_id: trailerTypeId ?? undefined,
       miles_practical: load.loaded_miles ?? load.line_haul_miles ?? null,
       // CC-2 finding 2026-10-11 (verify-mileage-g1-g5-live G4 on 5769's 13498 / 13508): miles carry their source. The
       // Creator's miles are typed from the signed settlement / AlwaysTrack record by the operator.
