@@ -86,6 +86,13 @@ const REVERSAL_WRAPPERS = [
   // reverseFactoringAdvanceEventInClientTx (the factoring_advance engine named above) and stamps the advance via
   // stampDocumentVoided, one transaction. Verified in source (purchase.routes.ts POST /factoring/purchases/:id/void).
   "voidPurchase",
+  // 443.136 (CC-3) — accounting/expense-void.service.ts voidExpenseDocumentInClientTx(), the ONE expense void (extracted
+  // from expenses.routes.ts POST /:expenseId/void), reverses through reverseExpenseDocumentInClientTx ->
+  // reversePostedSourceTransactionInClientTx (own lines) + postVoidReversal (fuel_event) before it stamps. Verified in source.
+  "voidExpenseDocumentInClientTx",
+  // 443.136 (CC-3) — fuel/relay-duplicate-purchase.service.ts voidLaterRelayDuplicatePurchases() (fuel-receipt-repoint.routes.ts
+  // POST /api/v1/fuel/relay-duplicates/void-later) voids each duplicate copy only through voidExpenseDocumentInClientTx above.
+  "voidLaterRelayDuplicatePurchases",
 ];
 
 /** All function names that satisfy the reversal requirement. */

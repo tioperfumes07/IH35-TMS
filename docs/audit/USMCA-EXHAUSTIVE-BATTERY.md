@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 351 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **create** (collection POST) | 352 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 281 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 252 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 957 | |
+| **TOTAL POST endpoints** | 958 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -81,7 +81,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/escrow/deposit` | `apps/backend/src/accounting/escrow/routes.ts:119` | — | — | — |
 | create | `/api/v1/accounting/escrow/open` | `apps/backend/src/accounting/escrow/routes.ts:42` | — | — | — |
 | create | `/api/v1/accounting/expense-category-map` | `apps/backend/src/accounting/expense-category-map/routes.ts:222` | — | — | — |
-| create | `/api/v1/accounting/expenses/link-loads` | `apps/backend/src/accounting/expenses.routes.ts:427` | — | — | — |
+| create | `/api/v1/accounting/expenses/link-loads` | `apps/backend/src/accounting/expenses.routes.ts:426` | — | — | — |
 | create | `/api/v1/accounting/factoring-advances` | `apps/backend/src/accounting/factoring-advances.routes.ts:426` | — | — | — |
 | nested | `/api/v1/accounting/factoring-advances/:id/advance` | `apps/backend/src/accounting/factoring-advances.routes.ts:759` | — | — | — |
 | nested | `/api/v1/accounting/factoring-advances/:id/recourse-return` | `apps/backend/src/accounting/factoring-advances.routes.ts:1115` | — | — | — |
@@ -551,6 +551,22 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/compliance/property-tax/renditions/:id/lines` | `apps/backend/src/compliance/property-tax/property-tax.routes.ts:258` | — | — | — |
 | create | `/api/v1/compliance/required-document-types` | `apps/backend/src/compliance/required-documents.routes.ts:91` | — | — | — |
 
+### fuel — 11 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/fuel/card-assignments` | `apps/backend/src/fuel/fuel-card-assignments.routes.ts:101` | — | — | — |
+| nested | `/api/v1/fuel/card-assignments/:id/end` | `apps/backend/src/fuel/fuel-card-assignments.routes.ts:121` | — | — | — |
+| nested | `/api/v1/fuel/card-overage-events/:id/exempt` | `apps/backend/src/fuel/fuel-card-overage.routes.ts:299` | — | — | — |
+| create | `/api/v1/fuel/card-overage-events/reprocess` | `apps/backend/src/fuel/fuel-card-overage.routes.ts:363` | — | — | — |
+| nested | `/api/v1/fuel/card-types/:id/issuer` | `apps/backend/src/fuel/fuel-card-assignments.routes.ts:169` | — | — | — |
+| create | `/api/v1/fuel/gl/reflush-unposted` | `apps/backend/src/fuel/fuel-gl-reflush.routes.ts:26` | — | — | — |
+| nested | `/api/v1/fuel/planner/recommendations/:id/send-to-driver` | `apps/backend/src/fuel/planner.routes.ts:284` | — | — | — |
+| create | `/api/v1/fuel/receipts/repoint-to-loads` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:18` | — | — | — |
+| create | `/api/v1/fuel/relay-duplicates/void-later` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:64` | — | — | — |
+| create | `/api/v1/fuel/relay-links/undo-cross-rail` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:41` | — | — | — |
+| create | `/api/v1/fuel/transactions` | `apps/backend/src/fuel/fuel-transactions.routes.ts:350` | — | — | — |
+
 ### insurance — 11 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -566,21 +582,6 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/insurance/policies/with-bills` | `apps/backend/src/insurance/policy-create-atomic.routes.ts:42` | — | — | — |
 | create | `/api/v1/insurance/schedule-confirmations` | `apps/backend/src/insurance/schedule-confirmations.routes.ts:35` | — | — | — |
 | create | `/api/v1/insurance/type-catalog` | `apps/backend/src/insurance/type-catalog.routes.ts:116` | — | — | — |
-
-### fuel — 10 create-surface(s)
-
-| kind | endpoint | route file | created | registered | gap |
-|---|---|---|---|---|---|
-| create | `/api/v1/fuel/card-assignments` | `apps/backend/src/fuel/fuel-card-assignments.routes.ts:101` | — | — | — |
-| nested | `/api/v1/fuel/card-assignments/:id/end` | `apps/backend/src/fuel/fuel-card-assignments.routes.ts:121` | — | — | — |
-| nested | `/api/v1/fuel/card-overage-events/:id/exempt` | `apps/backend/src/fuel/fuel-card-overage.routes.ts:299` | — | — | — |
-| create | `/api/v1/fuel/card-overage-events/reprocess` | `apps/backend/src/fuel/fuel-card-overage.routes.ts:363` | — | — | — |
-| nested | `/api/v1/fuel/card-types/:id/issuer` | `apps/backend/src/fuel/fuel-card-assignments.routes.ts:169` | — | — | — |
-| create | `/api/v1/fuel/gl/reflush-unposted` | `apps/backend/src/fuel/fuel-gl-reflush.routes.ts:26` | — | — | — |
-| nested | `/api/v1/fuel/planner/recommendations/:id/send-to-driver` | `apps/backend/src/fuel/planner.routes.ts:284` | — | — | — |
-| create | `/api/v1/fuel/receipts/repoint-to-loads` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:17` | — | — | — |
-| create | `/api/v1/fuel/relay-links/undo-cross-rail` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:40` | — | — | — |
-| create | `/api/v1/fuel/transactions` | `apps/backend/src/fuel/fuel-transactions.routes.ts:350` | — | — | — |
 
 ### identity — 9 create-surface(s)
 
@@ -683,11 +684,11 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| create | `/api/v1/expenses` | `apps/backend/src/accounting/expenses.routes.ts:631` | — | — | — |
-| nested | `/api/v1/expenses/:expenseId/change-payment-source` | `apps/backend/src/accounting/expenses.routes.ts:1441` | — | — | — |
-| nested | `/api/v1/expenses/:expenseId/correct` | `apps/backend/src/accounting/expenses.routes.ts:1396` | — | — | — |
-| nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:792` | — | — | — |
-| nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1159` | — | — | — |
+| create | `/api/v1/expenses` | `apps/backend/src/accounting/expenses.routes.ts:630` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/change-payment-source` | `apps/backend/src/accounting/expenses.routes.ts:1412` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/correct` | `apps/backend/src/accounting/expenses.routes.ts:1367` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:791` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1130` | — | — | — |
 
 ### ifta — 5 create-surface(s)
 
@@ -723,11 +724,11 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| nested | `/api/v1/master-data/drivers/:id/link-qbo-vendor` | `apps/backend/src/integrations/qbo/qbo-vendor-linkage.routes.ts:167` | — | — | — |
-| nested | `/api/v1/master-data/trailers/:id/link-qbo-class` | `apps/backend/src/integrations/qbo/qbo-vendor-linkage.routes.ts:225` | — | — | — |
-| nested | `/api/v1/master-data/trailers/:id/unlink-qbo-class` | `apps/backend/src/integrations/qbo/qbo-vendor-linkage.routes.ts:278` | — | — | — |
-| nested | `/api/v1/master-data/units/:id/link-qbo-class` | `apps/backend/src/integrations/qbo/qbo-vendor-linkage.routes.ts:199` | — | — | — |
-| nested | `/api/v1/master-data/units/:id/unlink-qbo-class` | `apps/backend/src/integrations/qbo/qbo-vendor-linkage.routes.ts:261` | — | — | — |
+| nested | `/api/v1/master-data/drivers/:id/link-qbo-vendor` | `apps/backend/src/integrations/qbo/qbo-vendor-linkage.routes.ts:176` | — | — | — |
+| nested | `/api/v1/master-data/trailers/:id/link-qbo-class` | `apps/backend/src/integrations/qbo/qbo-vendor-linkage.routes.ts:236` | — | — | — |
+| nested | `/api/v1/master-data/trailers/:id/unlink-qbo-class` | `apps/backend/src/integrations/qbo/qbo-vendor-linkage.routes.ts:295` | — | — | — |
+| nested | `/api/v1/master-data/units/:id/link-qbo-class` | `apps/backend/src/integrations/qbo/qbo-vendor-linkage.routes.ts:209` | — | — | — |
+| nested | `/api/v1/master-data/units/:id/unlink-qbo-class` | `apps/backend/src/integrations/qbo/qbo-vendor-linkage.routes.ts:273` | — | — | — |
 
 ### chat — 4 create-surface(s)
 
