@@ -2306,7 +2306,8 @@ export type SuggestionOutcome =
   | { bank_transaction_id: string; result: "suggested"; ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string; reference: string | null; variance_cents?: number }
   | { bank_transaction_id: string; result: "already_suggested_or_matched" }
   | { bank_transaction_id: string; result: "several"; documents: string[] }
-  | { bank_transaction_id: string; result: "none"; reason: "no_candidate" | "no_exact_amount" | "several_exact_documents" | "document_held_by_another_line" | "document_competes_with_another_line" | "error"; detail?: string };
+  | { bank_transaction_id: string; result: "group"; ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string; reference: string | null; members: string[]; variance_cents: number }
+  | { bank_transaction_id: string; result: "none"; reason: "no_candidate" | "no_exact_amount" | "several_exact_documents" | "document_held_by_another_line" | "document_competes_with_another_line" | "categorize_no_document" | "error"; detail?: string };
 
 export async function suggestBankMatches(input: {
   operating_company_id: string;
@@ -2315,8 +2316,9 @@ export async function suggestBankMatches(input: {
 }): Promise<{ lines: number; suggested: number; outcomes: SuggestionOutcome[] }> {
   const lines = await withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-    return (await client.query<{ id: string; amount_cents: number; held: boolean; description: string | null; d: string; ledger_account_id: string | null }>(
+    return (await client.query<{ id: string; amount_cents: number; held: boolean; description: string | null; d: string; ledger_account_id: string | null; account_name: string | null }>(
       `SELECT bt.id::text, bt.amount_cents::int, bt.description, bt.transaction_date::text AS d,
+              (SELECT ba.account_name FROM banking.bank_accounts ba WHERE ba.id = bt.bank_account_id) AS account_name,
               (SELECT ba.ledger_account_id::text FROM banking.bank_accounts ba WHERE ba.id = bt.bank_account_id) AS ledger_account_id,
               EXISTS (SELECT 1 FROM banking.reconciliation_matches m
                        WHERE m.bank_transaction_id = bt.id AND m.voided_at IS NULL AND m.match_state IN ('auto_matched', 'user_matched')) AS held
@@ -2331,7 +2333,7 @@ export async function suggestBankMatches(input: {
   // Six lines at a time (findCandidates is the drawer's full candidate search, ~1-2 s per line).
   let next = 0;
   const worker = async () => { while (next < lines.length) { const line = lines[next++]!; await suggestOne(line); } };
-  const suggestOne = async (line: { id: string; amount_cents: number; held: boolean; description: string | null; d: string; ledger_account_id: string | null }) => {
+  const suggestOne = async (line: { id: string; amount_cents: number; held: boolean; description: string | null; d: string; ledger_account_id: string | null; account_name: string | null }) => {
     if (line.held) { outcomes.push({ bank_transaction_id: line.id, result: "already_suggested_or_matched" }); return; }
     try {
       const found = await findCandidates({ operating_company_id: input.operating_company_id, bank_transaction_id: line.id });
@@ -2339,28 +2341,87 @@ export async function suggestBankMatches(input: {
       // statement runs a median 3.6% under the document (p10 -10.3%, p90 +0.1%) and carries no invoice. When no document equals the
       // line, the same-store document of the card's own ledger account inside the card-pricing band is the suggestion, with its
       // variance shown — the human accept resolves the difference (acceptMatchWithResolveDifference); nothing is decided here.
+      // LEAD 443.81 #3a: a card statement line is ONE purchase = the documents that share its invoice (diesel + DEF + reefer are
+      // separate expenses of the same receipt). Candidate GROUPS: the card ledger account's own fuel expenses at the line's store
+      // city, dated -2..+1, grouped by the base invoice; the group whose sum fits the line (card pricing: max(3.00, 12%)) is the
+      // suggestion — one member = a single suggestion, more = a group suggestion with its members; variance shown.
       const cardVariance = async (): Promise<boolean> => {
         const store = /\s([A-Z][A-Z.'-]+)\s+([A-Z]{2})\s*$/.exec(String(line.description ?? "").toUpperCase().trim());
         if (!store || !line.ledger_account_id) return false;
-        const docs = await withLuciaBypass(async (client) => (await client.query<{ id: string; expense_number: string | null; amt: number }>(
-          `SELECT e.id::text, e.expense_number, e.total_amount_cents::int AS amt
+        const groups = await withLuciaBypass(async (client) => (await client.query<{ inv: string; ids: string[]; refs: string[]; amt: number }>(
+          `SELECT regexp_replace(btrim(coalesce(ft.transaction_reference, e.id::text)), '-1[0-9]{4}$', '') AS inv,
+                  array_agg(e.id::text ORDER BY e.total_amount_cents DESC) AS ids, array_agg(coalesce(e.expense_number, '') ORDER BY e.total_amount_cents DESC) AS refs,
+                  sum(e.total_amount_cents)::int AS amt
              FROM accounting.expenses e JOIN fuel.fuel_transactions ft ON ft.id = e.source_fuel_transaction_id
             WHERE e.operating_company_id = $1::uuid AND e.payment_account_uuid = $2::uuid AND e.voided_at IS NULL AND ft.voided_at IS NULL
               AND e.transaction_date BETWEEN $3::date - 2 AND $3::date + 1
               AND upper(coalesce(ft.location_city, '')) LIKE '%' || $4 || '%'
-              AND abs(e.total_amount_cents - $5::int) <= greatest(300, round(e.total_amount_cents * 0.12))
               AND NOT EXISTS (SELECT 1 FROM banking.reconciliation_matches m WHERE m.ledger_entry_kind = 'expense' AND m.ledger_entry_id = e.id
-                                AND m.voided_at IS NULL AND m.match_state IN ('auto_matched', 'user_matched'))`,
-          [input.operating_company_id, line.ledger_account_id, line.d, store[1], Math.abs(Number(line.amount_cents))])).rows);
-        if (docs.length === 1) {
-          outcomes.push({ bank_transaction_id: line.id, result: "suggested", ledger_entry_kind: "expense", ledger_entry_id: docs[0]!.id,
-            reference: docs[0]!.expense_number, variance_cents: Math.abs(Number(line.amount_cents)) - docs[0]!.amt });
+                                AND m.voided_at IS NULL AND m.match_state IN ('auto_matched', 'user_matched'))
+            GROUP BY 1`,
+          [input.operating_company_id, line.ledger_account_id, line.d, store[1]])).rows);
+        const bank = Math.abs(Number(line.amount_cents));
+        const band = (amt: number) => Math.abs(amt - bank) <= Math.max(300, Math.round(amt * 0.12));
+        let fits = groups.filter((g) => band(g.amt));
+        // Measured 2026-10-12: the Dreamline statement prints each PRODUCT of a receipt as its own line (Palestine AR 08-07:
+        // DEF 67.86 and diesel 690.12 are two lines). When no whole receipt fits, the receipt's member that fits is the suggestion.
+        if (!fits.length) {
+          const members = await withLuciaBypass(async (client) => (await client.query<{ id: string; ref: string | null; amt: number }>(
+            `SELECT e.id::text, e.expense_number AS ref, e.total_amount_cents::int AS amt FROM accounting.expenses e WHERE e.id = ANY($1::uuid[])`,
+            [groups.flatMap((g) => g.ids)])).rows);
+          fits = members.filter((m) => band(m.amt)).map((m) => ({ inv: m.ref ?? m.id, ids: [m.id], refs: [m.ref ?? ""], amt: m.amt }));
+        }
+        // the one equal to the cent wins over the band
+        const exactG = fits.filter((g) => g.amt === bank);
+        const pick = exactG.length === 1 ? [exactG[0]!] : fits;
+        if (pick.length === 1) {
+          const g = pick[0]!;
+          if (g.ids.length === 1) outcomes.push({ bank_transaction_id: line.id, result: "suggested", ledger_entry_kind: "expense", ledger_entry_id: g.ids[0]!, reference: g.refs[0] || null, variance_cents: bank - g.amt });
+          else outcomes.push({ bank_transaction_id: line.id, result: "group", ledger_entry_kind: "expense", ledger_entry_id: g.ids[0]!, reference: `invoice ${g.inv}`,
+            members: g.ids.map((id) => `expense:${id}`), variance_cents: bank - g.amt });
           return true;
         }
-        if (docs.length > 1) { outcomes.push({ bank_transaction_id: line.id, result: "several", documents: docs.map((x) => `expense:${x.id}`) }); return true; }
+        if (pick.length > 1) { outcomes.push({ bank_transaction_id: line.id, result: "several", documents: pick.map((g) => `invoice ${g.inv}: ` + g.ids.map((id) => `expense:${id}`).join("+")) }); return true; }
         return false;
       };
-      if (found.candidates.length === 0) { if (await cardVariance()) return; outcomes.push({ bank_transaction_id: line.id, result: "none", reason: "no_candidate" }); return; }
+      // LEAD 443.81 #3b — the operating bank (not a card): a payment to a driver is the settlement NET (its driver bills as a group);
+      // a Relay wallet top-up is its Relay deposit; a transfer to a related party is the party entry. Anything else is not a Creator
+      // document — it keeps the vendor / account hints and counts as "categorize, no document".
+      const bankDocuments = async (): Promise<boolean> => {
+        if (line.ledger_account_id && /DREAMLINE|RELAY|WALLET/i.test(line.account_name ?? "")) return false;
+        const bank = Math.abs(Number(line.amount_cents));
+        const r = await withLuciaBypass(async (client) => {
+          const settlements = (await client.query<{ id: string; ref: string | null; drv: string | null; members: string[] }>(
+            `SELECT s.id::text, s.display_id::text AS ref, (SELECT upper(d.first_name || ' ' || d.last_name) FROM mdata.drivers d WHERE d.id = s.driver_id) AS drv,
+                    coalesce((SELECT array_agg('driver_bill:' || b.id::text) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.voided_at IS NULL), '{}') AS members
+               FROM driver_finance.driver_settlements s
+              WHERE s.operating_company_id = $1::uuid AND s.voided_at IS NULL AND round(coalesce(s.net_pay, 0) * 100)::int = $2
+                AND s.period_end BETWEEN $3::date - 30 AND $3::date + 7
+                AND NOT EXISTS (SELECT 1 FROM banking.reconciliation_matches m WHERE m.ledger_entry_kind = 'settlement' AND m.ledger_entry_id = s.id
+                                  AND m.voided_at IS NULL AND m.match_state IN ('auto_matched', 'user_matched'))`,
+            [input.operating_company_id, bank, line.d])).rows;
+          const deposits = (await client.query<{ id: string; ref: string | null }>(
+            `SELECT rd.id::text, rd.deposit_id AS ref FROM integrations.relay_deposits rd
+              WHERE rd.operating_company_id = $1::uuid AND rd.voided_at IS NULL AND rd.total_amount_cents = $2
+                AND rd.relay_created_at::date BETWEEN $3::date - 5 AND $3::date + 2 AND rd.matched_bank_transaction_id IS NULL`,
+            [input.operating_company_id, bank, line.d])).rows;
+          const party = (await client.query<{ id: string; ref: string | null }>(
+            `SELECT p.id::text, p.counterparty_name AS ref FROM accounting.related_party_loan_entries p
+              WHERE p.operating_company_id = $1::uuid AND p.principal_cents = $2 AND p.entry_date BETWEEN $3::date - 5 AND $3::date + 2`,
+            [input.operating_company_id, bank, line.d]).catch(() => ({ rows: [] }))).rows;
+          return { settlements, deposits, party };
+        });
+        const desc = String(line.description ?? "").toUpperCase();
+        let st = r.settlements;
+        if (st.length > 1) { const byName = st.filter((x) => x.drv && x.drv.split(/\s+/).some((w) => w.length >= 4 && desc.includes(w))); if (byName.length) st = byName; }
+        if (st.length === 1) { const x = st[0]!; outcomes.push({ bank_transaction_id: line.id, result: "group", ledger_entry_kind: "settlement", ledger_entry_id: x.id, reference: `settlement ${x.ref ?? ""} ${x.drv ?? ""}`.trim(), members: x.members, variance_cents: 0 }); return true; }
+        if (st.length > 1) { outcomes.push({ bank_transaction_id: line.id, result: "several", documents: st.map((x) => `settlement:${x.id}`) }); return true; }
+        if (r.deposits.length === 1) { outcomes.push({ bank_transaction_id: line.id, result: "suggested", ledger_entry_kind: "relay_deposit", ledger_entry_id: r.deposits[0]!.id, reference: r.deposits[0]!.ref }); return true; }
+        if (r.party.length === 1) { outcomes.push({ bank_transaction_id: line.id, result: "suggested", ledger_entry_kind: "related_party_loan" as LedgerEntryKind, ledger_entry_id: r.party[0]!.id, reference: r.party[0]!.ref }); return true; }
+        outcomes.push({ bank_transaction_id: line.id, result: "none", reason: "categorize_no_document" });
+        return true;
+      };
+      if (found.candidates.length === 0) { if (await cardVariance() || await bankDocuments()) return; outcomes.push({ bank_transaction_id: line.id, result: "none", reason: "no_candidate" }); return; }
       // LEAD 443.80 #3 (decided): an expense and its own Relay fill are ONE purchase -> the suggestion is the EXPENSE (it carries
       // the fill + the sender fee). The wallet line is compared fee-inclusive: a line that carries the paid amount only (17751)
       // equals the document minus the fill's sender fee (17951 - 2.00); a line that carries paid + fee (19903) equals it exactly.
@@ -2396,7 +2457,7 @@ export async function suggestBankMatches(input: {
       // One purchase: drop a Relay fill whose own expense is also exact — the expense is the suggestion.
       const expenseFills = new Set(exact.filter((c) => c.ledger_entry_kind === "expense").map((c) => fillOf.get(c.ledger_entry_id)).filter(Boolean) as string[]);
       exact = exact.filter((c) => !(c.ledger_entry_kind === "relay_fuel" && expenseFills.has(c.ledger_entry_id)));
-      if (exact.length === 0) { if (await cardVariance()) return; outcomes.push({ bank_transaction_id: line.id, result: "none", reason: "no_exact_amount" }); return; }
+      if (exact.length === 0) { if (await cardVariance() || await bankDocuments()) return; outcomes.push({ bank_transaction_id: line.id, result: "none", reason: "no_exact_amount" }); return; }
       // Several exact documents (different purchases): all returned, none preselected (443.80 #3).
       if (exact.length > 1) { outcomes.push({ bank_transaction_id: line.id, result: "several", documents: exact.map((c) => `${c.ledger_entry_kind}:${c.ledger_entry_id}`) }); return; }
       const pick = exact[0]!;
@@ -2409,10 +2470,10 @@ export async function suggestBankMatches(input: {
   await Promise.all(Array.from({ length: Math.min(6, lines.length) }, () => worker()));
   // One document, one line: a document suggested to two lines is suggested to neither — both listed.
   const uses = new Map<string, number>();
-  for (const o of outcomes) if (o.result === "suggested") uses.set(o.ledger_entry_id, (uses.get(o.ledger_entry_id) ?? 0) + 1);
+  for (const o of outcomes) if (o.result === "suggested" || o.result === "group") uses.set(o.ledger_entry_id, (uses.get(o.ledger_entry_id) ?? 0) + 1);
   for (let k = 0; k < outcomes.length; k++) {
     const o = outcomes[k]!;
-    if (o.result === "suggested" && (uses.get(o.ledger_entry_id) ?? 0) > 1) {
+    if ((o.result === "suggested" || o.result === "group") && (uses.get(o.ledger_entry_id) ?? 0) > 1) {
       outcomes[k] = { bank_transaction_id: o.bank_transaction_id, result: "none", reason: "document_competes_with_another_line", detail: `${o.ledger_entry_kind}:${o.ledger_entry_id}` };
     }
   }

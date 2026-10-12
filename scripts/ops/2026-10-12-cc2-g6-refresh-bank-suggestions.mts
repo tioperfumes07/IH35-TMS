@@ -22,11 +22,13 @@ for (const [name, id] of ACCOUNTS.filter(([n]) => !only || n.toLowerCase().inclu
   for (const o of out.outcomes) {
     if (o.result === "none") { reasons[o.reason] = (reasons[o.reason] ?? 0) + 1; rows.push([name, o.bank_transaction_id, "none", o.reason + ((o as { detail?: string }).detail ? ` ${(o as { detail?: string }).detail}` : "")].join("\t")); }
     else if (o.result === "several") rows.push([name, o.bank_transaction_id, "several", o.documents.join(",")].join("\t"));
-    else if (o.result === "suggested") rows.push([name, o.bank_transaction_id, "suggested", `${o.ledger_entry_kind}:${o.ledger_entry_id} ${o.reference ?? ""}`].join("\t"));
+    else if (o.result === "suggested") rows.push([name, o.bank_transaction_id, "suggested", `${o.ledger_entry_kind}:${o.ledger_entry_id} ${o.reference ?? ""}${o.variance_cents ? ` variance ${o.variance_cents}` : ""}`].join("\t"));
+    else if (o.result === "group") rows.push([name, o.bank_transaction_id, "group", `${o.reference ?? ""} = ${o.members.join("+")}${o.variance_cents ? ` variance ${o.variance_cents}` : ""}`].join("\t"));
   }
   const several = out.outcomes.filter((o) => o.result === "several").length;
+  const group = out.outcomes.filter((o) => o.result === "group").length;
   const already = out.outcomes.filter((o) => o.result === "already_suggested_or_matched").length;
-  console.log(`${name}: ${out.lines} lines — one suggested document ${out.suggested}, several ${several}, already matched ${already}, none ${JSON.stringify(reasons)} (${Math.round((Date.now() - t0) / 1000)}s)`);
+  console.log(`${name}: ${out.lines} lines — one suggestion ${out.suggested}, group suggestion ${group}, several ${several}, already matched ${already}, none ${JSON.stringify(reasons)} (${Math.round((Date.now() - t0) / 1000)}s)`);
 }
 if (tsv) { fs.writeFileSync(tsv, rows.join("\n") + "\n"); console.log(`tsv -> ${tsv}`); }
 process.exit(0);
