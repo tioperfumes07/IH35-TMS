@@ -170,7 +170,7 @@ export function canOwnerOverrideLoadEditLock(role: string | undefined): boolean 
   return r === "Owner" || r === "Administrator";
 }
 
-/** Fields an Owner may PATCH while load_edit_locked WITHOUT a long override_reason — linkage / ops metadata only. */
+/** Fields an Owner may PATCH while load_edit_locked WITHOUT a long override_reason — linkage / ops metadata only, never revenue/pay. */
 export const OWNER_LOCK_OVERRIDE_ALLOWED_FIELD_KEYS = new Set<string>([
   "live_load_number",
   "notes",

@@ -16,7 +16,7 @@ function requireUuid(value: unknown, field: string): string {
 export const DISPATCH_RELEARN_LOAD_MILES_EVENT = "dispatch.relearn_load_miles" as const;
 
 export class DispatchRelearnLoadMilesHandler implements OutboxEventHandler {
-  eventType = DISPATCH_RELEARN_LOAD_MILES_EVENT;
+  eventType = "dispatch.relearn_load_miles" as const;
 
   canHandle() {
     return true;
