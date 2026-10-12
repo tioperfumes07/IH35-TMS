@@ -18,7 +18,7 @@ import { z } from "zod";
 import { listInvoices, type Invoice } from "../api/accounting";
 import { listAllLoads, type DispatchLoadRow } from "../api/loads";
 import { getCustomerProfitability, type CustomerProfitabilityRow } from "../api/reports";
-import { listAllCustomerPayments, type CustomerPaymentListRow } from "../api/customers";
+import { listAllCustomerPayments, unapplyCustomerPaymentApplication, type CustomerPaymentListRow } from "../api/customers";
 import { listUsStates } from "../api/catalogs";
 import { ApiError, apiRequest } from "../api/client";
 import { listAllFmcsaLookups } from "../api/fmcsa";
@@ -969,6 +969,20 @@ export function CustomerDetailPage() {
       pushToast("Lane deactivated", "info");
     },
     onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to deactivate lane", "error"),
+  });
+
+  const unapplyCustomerPaymentMutation = useMutation({
+    mutationFn: async (payment: CustomerPaymentListRow) => {
+      const applications = payment.applied_to_invoices ?? [];
+      for (const application of applications) {
+        await unapplyCustomerPaymentApplication(payment.id, application.application_id, operatingCompanyId!);
+      }
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["customer-payments", id] });
+      pushToast("Payment unapplied", "success");
+    },
+    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to unapply payment", "error"),
   });
 
   const paymentsBackendPending =

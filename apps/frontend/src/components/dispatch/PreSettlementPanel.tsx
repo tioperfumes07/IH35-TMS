@@ -104,7 +104,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
         <div>
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Pre-Settlement</div>
           <div className="font-semibold text-gray-900">
-            <EntityLinkOrTombstone kind="settlement" id={settlement.id} name={settlementLabel(settlement)} noun="Record" />
+            <EntityLinkOrTombstone kind="settlement" id={settlement.id} name={settlement.display_id} noun="Record" />
           </div>
           {/* Exact Leaves secondary.pre_settlements:driver / reverse — panel was scoped by driverId but never drilled */}
           <div className="mt-0.5 text-xs text-[#4B5563]" data-testid="pre-settlement-panel-driver-entitylink">
@@ -159,9 +159,22 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
             </div>
           ))
         ) : (
-          <div className="rounded-sm border border-dashed border-gray-200 px-2 py-1.5 text-xs text-gray-400">
-            Return (SB) load not yet linked — use "Add to it" from the board
-          </div>
+          <>
+            <EntityLinkOrTombstone
+              kind="load"
+              id={settlement.first_load_id}
+              name={settlement.first_load_number}
+              noun="Outbound Load"
+              className="font-mono text-xs font-semibold text-[#1F2A44]"
+            />
+            <EntityLinkOrTombstone
+              kind="load"
+              id={settlement.last_load_id}
+              name={settlement.last_load_number}
+              noun="Return Load"
+              className="font-mono text-xs font-semibold text-[#1F2A44]"
+            />
+          </>
         )}
       </div>
 
