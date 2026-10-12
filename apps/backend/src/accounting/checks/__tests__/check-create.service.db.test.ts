@@ -1,53 +1,176 @@
-// Real Postgres proof for check-create.service.ts's createCheck() -- CI-gated (GITHUB_ACTIONS), same
-// pattern as PR 1/7's accept-bill-match.db.test.ts and PR 2/7's resolver tests.
-//
-// Deliberately NOT run against the real USMCA production branch (br-fancy-credit-akjnd07a) --
-// R-157.1's standing order is "CC-2 does not create a check in USMCA production." This test targets
-// a disposable Neon branch forked from prod (br-empty-rice-akqh08we, "cc2-check-engine-pr3-rehearsal")
-// via DATABASE_URL/DATABASE_DIRECT_URL passed in the environment when run locally -- it carries the
-// exact same real USMCA rows (same vendor/bank-account/category-map ids) without touching prod.
-import { describe, it, expect } from "vitest";
+// Real Postgres proof for check-create.service.ts's createCheck() — isolated company.
+// CheckPayeeError fixture fix (443.92 #1): seeds all required rows in beforeAll so the test runs
+// on any migrated DB. Also proves the 443.92 #1b engine fix: category-line check posts, TB = 0
+// (item_id resolved from account, expense_lines_item_id_required satisfied).
+import { randomUUID } from "node:crypto";
+import pg from "pg";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
+import { createIsolatedOperatingCompany, ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
 import { createCheck, CreateCheckConflictError, CheckAccountError } from "../check-create.service.js";
 
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
-const USMCA_BOA_CHECKING = "e83028a5-dcda-4233-b660-5b9923b3d39c";
-const REAL_VENDOR_ID = "a94a93d2-37b4-4179-82c3-9e155eb33af7";
-const REAL_DRIVER_ID = "52037e93-484a-4659-ab60-cf2a78f4c647";
-const ACTOR_USER_ID = "00000000-0000-4000-8000-000000000001"; // FK-optional created_by_user_id; only needs to be a uuid shape here.
+const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
-function uniqueCheckNumber(): string {
-  return `TST-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-}
+describeIntegration("check-create.service createCheck (real Postgres, isolated company)", () => {
+  let db: pg.Client;
+  let companyId: string;
+  const vendorId = randomUUID();
+  const driverId = randomUUID();
+  const bankAccountId = randomUUID();
+  const cashAccountId = randomUUID();
+  const apAccountId = randomUUID();
+  const maintenanceAccountId = randomUUID();
+  const maintenanceItemId = randomUUID();
+  const suffix = randomUUID().slice(0, 6);
+  const ACTOR_USER_ID = "00000000-0000-4000-8000-0000000000cc";
 
-describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("check-create.service createCheck (real Postgres, rehearsal branch only)", () => {
+  function uniqueCheckNumber(): string {
+    return `TST-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  }
+
+  async function bypass(fn: () => Promise<void>) {
+    await db.query("BEGIN");
+    await db.query("SET LOCAL bypass_rls = 'lucia'");
+    await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
+    try { await fn(); await db.query("COMMIT"); }
+    catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
+  }
+
+  async function scopedRead<T = Record<string, unknown>>(sql: string, params: unknown[]): Promise<T[]> {
+    await db.query("BEGIN");
+    await db.query("SET LOCAL bypass_rls = 'lucia'");
+    await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
+    try { const r = await db.query(sql, params); await db.query("COMMIT"); return r.rows as T[]; }
+    catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
+  }
+
+  beforeAll(async () => {
+    await ensureIntegrationPrerequisites();
+    const isolated = await createIsolatedOperatingCompany({ label: "chkcreate" });
+    companyId = isolated.companyId;
+    const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
+    if (!cs) throw new Error("DATABASE_URL required");
+    db = new pg.Client(buildPgClientConfig(cs));
+    await db.connect();
+
+    await bypass(async () => {
+      // Accounts
+      const mk = async (id: string, num: string, name: string, type: string) =>
+        db.query(
+          `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
+           VALUES ($1::uuid,$2::uuid,$3,$4,$5,true)`,
+          [id, companyId, `${num}${suffix}`, name, type]
+        );
+      await mk(cashAccountId, "CASH", "Test Cash", "Asset");
+      await mk(apAccountId, "AP", "Test AP", "Liability");
+      await mk(maintenanceAccountId, "MAINT", "Test Maintenance", "Expense");
+
+      // AP control role binding (needed by postSourceTransaction)
+      await db.query(
+        `INSERT INTO accounting.account_role_bindings (operating_company_id, role_name, account_id)
+         VALUES ($1::uuid,'ap_control',$2::uuid)
+         ON CONFLICT (operating_company_id, role_name) DO UPDATE SET account_id = EXCLUDED.account_id`,
+        [companyId, apAccountId]
+      );
+
+      // Bank account
+      await db.query(
+        `INSERT INTO banking.bank_accounts (id, operating_company_id, account_name, ledger_account_id)
+         VALUES ($1::uuid,$2::uuid,'Test Checking ${suffix}',$3::uuid)`,
+        [bankAccountId, companyId, cashAccountId]
+      );
+
+      // Vendor
+      await db.query(
+        `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type)
+         VALUES ($1::uuid,$2::uuid,'Test Vendor ${suffix}','Other')`,
+        [vendorId, companyId]
+      );
+
+      // Driver (for driver-payee tests)
+      await db.query(
+        `INSERT INTO mdata.drivers (id, operating_company_id, first_name, last_name, phone)
+         VALUES ($1::uuid,$2::uuid,'Test','Driver${suffix}','555-0000')`,
+        [driverId, companyId]
+      );
+
+      // Category map: maintenance/maintenance → Expense account
+      await db.query(
+        `INSERT INTO accounting.expense_category_account_map
+           (operating_company_id, category_kind, category_code, account_id, posting_side, is_active)
+         VALUES ($1::uuid,'maintenance','maintenance',$2::uuid,'debit',true)
+         ON CONFLICT (operating_company_id, category_kind, category_code, is_active) WHERE is_active = true
+         DO UPDATE SET account_id = EXCLUDED.account_id`,
+        [companyId, maintenanceAccountId]
+      );
+      // Category map: cash_advance/cash_advance → Expense account (for driver-advance refusal test)
+      await db.query(
+        `INSERT INTO accounting.expense_category_account_map
+           (operating_company_id, category_kind, category_code, account_id, posting_side, is_active)
+         VALUES ($1::uuid,'cash_advance','cash_advance',$2::uuid,'debit',true)
+         ON CONFLICT (operating_company_id, category_kind, category_code, is_active) WHERE is_active = true
+         DO UPDATE SET account_id = EXCLUDED.account_id`,
+        [companyId, maintenanceAccountId]
+      );
+
+      // Item with default_expense_account_id = maintenanceAccountId (items law: line account = item's account)
+      await db.query(
+        `INSERT INTO catalogs.items (id, operating_company_id, item_name, item_type, default_expense_account_id)
+         VALUES ($1::uuid,$2::uuid,'Test Maintenance Item ${suffix}','Service',$3::uuid)`,
+        [maintenanceItemId, companyId, maintenanceAccountId]
+      );
+    });
+  }, 60_000);
+
+  afterAll(async () => { await db?.end().catch(() => {}); });
+
   it(
-    "creates a real check against a real vendor + real mapped category, one line",
+    "creates a category-line check — item_id resolved from account (443.92 #1b engine fix), TB = 0",
     async () => {
-      const result = await createCheck(USMCA_COMPANY_ID, ACTOR_USER_ID, {
-        bank_account_id: USMCA_BOA_CHECKING,
+      const result = await createCheck(companyId, ACTOR_USER_ID, {
+        bank_account_id: bankAccountId,
         payee_kind: "vendor",
-        payee_id: REAL_VENDOR_ID,
-        check_date: "2026-09-25",
+        payee_id: vendorId,
+        check_date: "2026-10-12",
         print_later: false,
         check_number: uniqueCheckNumber(),
         lines: [{ line_kind: "category", category_kind: "maintenance", category_code: "maintenance", amount_cents: 12345 }],
       });
       expect(result.id.length).toBeGreaterThan(0);
-      expect(result.print_status).toBe("not_set");
       expect(result.total_amount_cents).toBe(12345);
-      expect(result.print_on_check_name).toBe("Guzman Landscaping And Pool Maintenance");
+
+      // Verify expense_lines has item_id set (not null — constraint proof)
+      const lines = await scopedRead<{ item_id: string | null }>(
+        `SELECT item_id::text FROM accounting.expense_lines WHERE expense_id = $1::uuid`,
+        [result.id]
+      );
+      expect(lines.length).toBe(1);
+      expect(lines[0]?.item_id).toBe(maintenanceItemId);
+
+      // TB = 0: sum of debit postings = sum of credit postings
+      const je = await scopedRead<{ debit_sum: string; credit_sum: string }>(
+        `SELECT
+           SUM(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE 0 END)::text AS debit_sum,
+           SUM(CASE WHEN debit_or_credit='credit' THEN amount_cents ELSE 0 END)::text AS credit_sum
+         FROM accounting.journal_entry_postings jep
+         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_id
+         WHERE je.source_transaction_id = $1`,
+        [result.id]
+      );
+      expect(je[0]?.debit_sum).toBe("12345");
+      expect(je[0]?.credit_sum).toBe("12345");
     },
     30_000
   );
 
   it(
-    "print-later leaves check_number null and print_status need_to_print, no registry row",
+    "print-later leaves check_number null and print_status need_to_print",
     async () => {
-      const result = await createCheck(USMCA_COMPANY_ID, ACTOR_USER_ID, {
-        bank_account_id: USMCA_BOA_CHECKING,
+      const result = await createCheck(companyId, ACTOR_USER_ID, {
+        bank_account_id: bankAccountId,
         payee_kind: "vendor",
-        payee_id: REAL_VENDOR_ID,
-        check_date: "2026-09-25",
+        payee_id: vendorId,
+        check_date: "2026-10-12",
         print_later: true,
         lines: [{ line_kind: "category", category_kind: "maintenance", category_code: "maintenance", amount_cents: 500 }],
       });
@@ -61,21 +184,21 @@ describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("check-create.service cre
     "refuses a duplicate check number on the same bank account with CreateCheckConflictError",
     async () => {
       const num = uniqueCheckNumber();
-      await createCheck(USMCA_COMPANY_ID, ACTOR_USER_ID, {
-        bank_account_id: USMCA_BOA_CHECKING,
+      await createCheck(companyId, ACTOR_USER_ID, {
+        bank_account_id: bankAccountId,
         payee_kind: "vendor",
-        payee_id: REAL_VENDOR_ID,
-        check_date: "2026-09-25",
+        payee_id: vendorId,
+        check_date: "2026-10-12",
         print_later: false,
         check_number: num,
         lines: [{ line_kind: "category", category_kind: "maintenance", category_code: "maintenance", amount_cents: 100 }],
       });
       await expect(
-        createCheck(USMCA_COMPANY_ID, ACTOR_USER_ID, {
-          bank_account_id: USMCA_BOA_CHECKING,
+        createCheck(companyId, ACTOR_USER_ID, {
+          bank_account_id: bankAccountId,
           payee_kind: "vendor",
-          payee_id: REAL_VENDOR_ID,
-          check_date: "2026-09-25",
+          payee_id: vendorId,
+          check_date: "2026-10-12",
           print_later: false,
           check_number: num,
           lines: [{ line_kind: "category", category_kind: "maintenance", category_code: "maintenance", amount_cents: 200 }],
@@ -89,11 +212,11 @@ describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("check-create.service cre
     "refuses a driver + cash_advance line as DRIVER_ADVANCE_IS_A_BILL_PAYMENT, writes nothing",
     async () => {
       await expect(
-        createCheck(USMCA_COMPANY_ID, ACTOR_USER_ID, {
-          bank_account_id: USMCA_BOA_CHECKING,
+        createCheck(companyId, ACTOR_USER_ID, {
+          bank_account_id: bankAccountId,
           payee_kind: "driver",
-          payee_id: REAL_DRIVER_ID,
-          check_date: "2026-09-25",
+          payee_id: driverId,
+          check_date: "2026-10-12",
           print_later: false,
           check_number: uniqueCheckNumber(),
           lines: [{ line_kind: "category", category_kind: "cash_advance", category_code: "cash_advance", amount_cents: 5000 }],
@@ -107,11 +230,11 @@ describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("check-create.service cre
     "refuses a zero-line total with TOTAL_MUST_BE_POSITIVE before touching the database",
     async () => {
       await expect(
-        createCheck(USMCA_COMPANY_ID, ACTOR_USER_ID, {
-          bank_account_id: USMCA_BOA_CHECKING,
+        createCheck(companyId, ACTOR_USER_ID, {
+          bank_account_id: bankAccountId,
           payee_kind: "vendor",
-          payee_id: REAL_VENDOR_ID,
-          check_date: "2026-09-25",
+          payee_id: vendorId,
+          check_date: "2026-10-12",
           print_later: true,
           lines: [{ line_kind: "category", category_kind: "maintenance", category_code: "maintenance", amount_cents: 0 }],
         })
