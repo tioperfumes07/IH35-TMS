@@ -161,7 +161,7 @@ describeIntegration("G11: geocode_precision at booking + load status from fence 
     const unitId = randomUUID();
     // Seed a unit
     await db.query(
-      `INSERT INTO mdata.units (id, operating_company_id, unit_number) VALUES ($1::uuid, $2::uuid, $3)
+      `INSERT INTO mdata.units (id, operating_company_id, unit_number, is_sample_data) VALUES ($1::uuid, $2::uuid, $3, true)
        ON CONFLICT DO NOTHING`,
       [unitId, companyId, `G11-unit-${unitId.slice(0, 8)}`]
     );
