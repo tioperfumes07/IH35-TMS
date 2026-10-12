@@ -11,10 +11,10 @@
 | bucket | n | meaning |
 |---|---:|---|
 | **create** (collection POST) | 349 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 280 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
+| **nested create** (child POST) | 281 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 253 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 72 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 954 | |
+| **TOTAL POST endpoints** | 955 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -677,6 +677,16 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/bank-recon/manual-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:194` | — | — | — |
 | create | `/api/v1/bank-recon/reject-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:148` | — | — | — |
 
+### expenses — 5 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/expenses` | `apps/backend/src/accounting/expenses.routes.ts:1406` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/change-payment-source` | `apps/backend/src/accounting/expenses.routes.ts:2224` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/correct` | `apps/backend/src/accounting/expenses.routes.ts:2179` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:1557` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1942` | — | — | — |
+
 ### ifta — 5 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -881,8 +891,8 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| create | `/api/v1/road-service-tickets` | `apps/backend/src/maintenance/road-service/tickets.routes.ts:160` | — | — | — |
-| nested | `/api/v1/road-service-tickets/:id/create-wo` | `apps/backend/src/maintenance/road-service/tickets.routes.ts:312` | — | — | — |
+| create | `/api/v1/road-service-tickets` | `apps/backend/src/maintenance/road-service/tickets.routes.ts:162` | — | — | — |
+| nested | `/api/v1/road-service-tickets/:id/create-wo` | `apps/backend/src/maintenance/road-service/tickets.routes.ts:314` | — | — | — |
 
 ### tax-documents — 2 create-surface(s)
 

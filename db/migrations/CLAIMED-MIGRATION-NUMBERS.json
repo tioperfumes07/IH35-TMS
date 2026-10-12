@@ -2557,5 +2557,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
     "purpose": "443.116 #2 + (c): driver_finance.driver_bills.due_date (projected delivery date, fixed at delivery) + accrued_bill_id (the per-load A/P bill posted at delivery)"
+  },
+  "202615890700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.128 C: team driver bills recognized at delivery — driver_bills.accrued_team_bill_id (the co-driver's delivery-posted A/P bill) + the settlement spine keyed per driver bill AND accounting bill (two team drivers close the same driver bill)"
   }
 }

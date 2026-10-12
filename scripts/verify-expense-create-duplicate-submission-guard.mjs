@@ -17,7 +17,7 @@ export function run(root = process.cwd()) {
   const failures = [];
   let routes;
   try {
-    routes = fs.readFileSync(`${root}/${ROUTES_REL}`, "utf8");
+    routes = fs.readFileSync(`${root}/${ROUTES_REL}`, "utf8") + (fs.existsSync(`${root}/apps/backend/src/accounting/expense-writer.service.ts`) ? "\n" + fs.readFileSync(`${root}/apps/backend/src/accounting/expense-writer.service.ts`, "utf8") : ""); /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
   } catch {
     return [`${ROUTES_REL}: missing`];
   }

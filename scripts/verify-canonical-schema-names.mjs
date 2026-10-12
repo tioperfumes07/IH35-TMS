@@ -43,10 +43,29 @@ function report(relUnix, hint) {
   exitCode = 1;
 }
 
+// A full-line SQL comment ("-- ...") is documentation, never executed: a migration may NAME the legacy table
+// in its WHY note. Only full-line comments are dropped — executable SQL, strings and DO bodies are still scanned.
+export function sqlWithoutFullLineComments(sql) {
+  return sql.split("\n").filter((line) => !/^\s*--/.test(line)).join("\n");
+}
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["comment-only mention passes", !BAD.test(sqlWithoutFullLineComments("-- renamed from safety.fines\nALTER TABLE safety.civil_fines ADD x int;")), true],
+    ["executable mention fails", BAD.test(sqlWithoutFullLineComments("ALTER TABLE safety.fines ADD x int;")), true],
+    ["trailing comment on executable line still fails", BAD.test(sqlWithoutFullLineComments("ALTER TABLE safety.fines ADD x int; -- note")), true],
+    ["string literal mention still fails", BAD.test(sqlWithoutFullLineComments("SELECT 'safety.fines';")), true],
+  ];
+  const bad = cases.filter(([, got, want]) => got !== want);
+  for (const [name, got, want] of cases) console.log(`${got === want ? "PASS" : "FAIL"} ${name}`);
+  console.log(`verify-canonical-schema-names --selftest: ${cases.length - bad.length}/${cases.length}`);
+  process.exit(bad.length ? 1 : 0);
+}
+
 for (const file of walkFiles(path.join(ROOT, "db", "migrations"), (p) => p.endsWith(".sql"))) {
   const rel = path.relative(ROOT, file).split(path.sep).join("/");
   if (ALLOW_REL_SQL.has(rel)) continue;
-  const text = fs.readFileSync(file, "utf8");
+  const text = sqlWithoutFullLineComments(fs.readFileSync(file, "utf8"));
   if (BAD.test(text)) {
     report(rel, 'Forbidden legacy table reference `safety.fines`; canonical name is `safety.civil_fines`.');
   }

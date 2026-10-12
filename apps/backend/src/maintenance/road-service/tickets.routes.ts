@@ -5,6 +5,8 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { createWorkOrderFromRoadServiceTicket } from "./wo-integration.js";
+import { WoBillGlPostingDisabledError } from "../two-section-service.js";
+import { PostingEngineError } from "../../accounting/posting-engine.service.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 
 export type { DbClient } from "./db-client.type.js";
@@ -317,12 +319,25 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
     const body = createWoBodySchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
 
-    const result = await withCompany(user.uuid, body.data.operating_company_id, async (client) =>
-      createWorkOrderFromRoadServiceTicket(client, user.uuid, {
-        operatingCompanyId: body.data.operating_company_id,
-        ticketId: params.data.id,
-      })
-    );
+    // LEAD 443.129 D / AJK-08 — the ticket posts or nothing: a posting refusal / posting-disabled company rolls the whole
+    // create back (withCompany's transaction) and is surfaced BY NAME, never as a 500 or a half-invoiced ticket.
+    let result: Awaited<ReturnType<typeof createWorkOrderFromRoadServiceTicket>>;
+    try {
+      result = await withCompany(user.uuid, body.data.operating_company_id, async (client) =>
+        createWorkOrderFromRoadServiceTicket(client, user.uuid, {
+          operatingCompanyId: body.data.operating_company_id,
+          ticketId: params.data.id,
+        })
+      );
+    } catch (err) {
+      if (err instanceof WoBillGlPostingDisabledError) {
+        return reply.code(409).send({ error: err.code, message: err.message });
+      }
+      if (err instanceof PostingEngineError) {
+        return reply.code(422).send({ error: "bill_posting_refused", code: err.code, message: err.message });
+      }
+      throw err;
+    }
 
     return { ...result };
   });
