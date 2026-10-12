@@ -660,6 +660,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   const [unitId, setUnitId] = useState<string | null>(null);
   const [trailerId, setTrailerId] = useState<string | null>(null);
   const [trailerNumber, setTrailerNumber] = useState("");
+  // LEAD 443.109 — the load is never born without its trailer: a fleet trailer, the customer / shipper trailer number
+  // printed on the document, or an explicit "no trailer (bobtail / power only)".
+  const [trailerKind, setTrailerKind] = useState<"company" | "customer" | "none">("company");
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [loads, setLoads] = useState<LoadDraft[]>([emptyLoad()]);
@@ -1090,8 +1093,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
       settlement_no: settlementNo.trim(),
       driver_id: driverId,
       unit_id: unitId,
-      trailer_id: trailerId,
-      trailer_equipment_number: trailerNumber.trim() || null,
+      trailer_id: trailerKind === "company" ? trailerId : null,
+      trailer_equipment_number: trailerKind === "none" ? null : trailerNumber.trim() || null,
+      trailer_none: trailerKind === "none",
       period_start: periodStart,
       period_end: periodEnd,
       loads: loads.map((l) => ({
@@ -1139,6 +1143,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     unitId,
     trailerId,
     trailerNumber,
+    trailerKind,
     settlementNo,
     periodStart,
     periodEnd,
@@ -1414,19 +1419,51 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               />
             </Field>
             <Field label="Trailer">
-              <EntityPicker
-                kind="trailer"
-                operatingCompanyId={companyId}
-                value={trailerId}
-                onChange={(id, opt) => {
-                  setTrailerId(id);
-                  setTrailerNumber(opt?.label ?? "");
-                }}
-                allowCreate={false}
-                size={pickerSize}
-                className="mt-0"
-                dataTestId="sc-trailer"
-              />
+              <div className="flex h-7 w-full min-w-0 gap-1">
+                <select
+                  value={trailerKind}
+                  onChange={(e) => {
+                    const k = e.target.value as "company" | "customer" | "none";
+                    setTrailerKind(k);
+                    setTrailerId(null);
+                    setTrailerNumber("");
+                  }}
+                  className={`${inputClass} w-20 shrink-0`}
+                  aria-label="Trailer kind"
+                  data-testid="sc-trailer-kind"
+                >
+                  <option value="company">Fleet</option>
+                  <option value="customer">Customer</option>
+                  <option value="none">None</option>
+                </select>
+                {trailerKind === "company" ? (
+                  <EntityPicker
+                    kind="trailer"
+                    operatingCompanyId={companyId}
+                    value={trailerId}
+                    onChange={(id, opt) => {
+                      setTrailerId(id);
+                      setTrailerNumber(opt?.label ?? "");
+                    }}
+                    allowCreate={false}
+                    size={pickerSize}
+                    className="mt-0 min-w-0 flex-1"
+                    dataTestId="sc-trailer"
+                  />
+                ) : trailerKind === "customer" ? (
+                  <input
+                    value={trailerNumber}
+                    onChange={(e) => setTrailerNumber(e.target.value)}
+                    placeholder="Trailer # on document"
+                    className={inputClass}
+                    data-testid="sc-trailer-number"
+                  />
+                ) : (
+                  <span className="flex h-7 min-w-0 flex-1 items-center truncate text-xs text-[var(--text-muted,#4B5563)]" data-testid="sc-trailer-none">
+                    Bobtail / power only
+                  </span>
+                )}
+              </div>
             </Field>
             <Field label="Start date">
               <DatePicker value={periodStart} onChange={setPeriodStart} className={inputClass} data-testid="sc-start" />
