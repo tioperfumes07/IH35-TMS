@@ -123,9 +123,9 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
       await db.query(
         `INSERT INTO driver_finance.driver_settlements
            (id, operating_company_id, display_id, driver_id, period_start, period_end, status, locked_at,
-            gross_pay, deductions_total, reimbursements_total, net_pay)
+            gross_pay, deductions_total, reimbursements_total, net_pay, settlement_model)
          VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE - 7, CURRENT_DATE,'locked', now(),
-            $5,$6,0,$7)`,
+            $5,$6,0,$7,'load_bookended')`,
         [id, companyId, `S-${suffix}-${settlementIds.length}`, opts.driverId, opts.grossCents / 100, opts.deductionCents / 100, opts.netCents / 100]
       );
       if (opts.deductionCents > 0) {

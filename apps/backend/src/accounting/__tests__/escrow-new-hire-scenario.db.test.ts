@@ -79,6 +79,11 @@ run("stage-3 · new-hire driver escrow (real engine)", () => {
       // back to the driver; booking it anywhere else would recognise someone else's money as ours.
       await db.query(`INSERT INTO catalogs.accounts (id,operating_company_id,account_number,account_name,account_type,is_postable) VALUES ($1::uuid,$2::uuid,$3,'Driver Escrow - Held in Trust','Liability',true)`, [id.escrow, companyId, `2100${s}`]);
       await db.query(`INSERT INTO accounting.chart_of_accounts_roles (operating_company_id,role,account_id,is_active) VALUES ($1::uuid,'cash_clearing',$2::uuid,true)`, [companyId, id.cash]);
+      // 443.93: a DRIVER-held escrow posts against driver net-pay clearing, not cash (escrow/service.ts:376-381) — the
+      // isolated company binds that role the way every live entity does.
+      const payrollClearing = randomUUID();
+      await db.query(`INSERT INTO catalogs.accounts (id,operating_company_id,account_number,account_name,account_type,is_postable) VALUES ($1::uuid,$2::uuid,$3,'Driver Net-Pay Clearing','Liability',true)`, [payrollClearing, companyId, `PRC${s}`]);
+      await db.query(`INSERT INTO accounting.chart_of_accounts_roles (operating_company_id,role,account_id,is_active) VALUES ($1::uuid,'driver_payroll_clearing',$2::uuid,true)`, [companyId, payrollClearing]);
       await db.query(`INSERT INTO accounting.chart_of_accounts_roles (operating_company_id,role,account_id,is_active) VALUES ($1::uuid,'escrow_liability_default',$2::uuid,true)`, [companyId, id.escrow]);
       await db.query(`INSERT INTO mdata.drivers (id,operating_company_id,first_name,last_name,phone,status) VALUES ($1::uuid,$2::uuid,'NewHire','Driver',$3,'Active')`, [id.driver, companyId, `95606${s.slice(0,5)}`]);
     });
@@ -136,7 +141,7 @@ run("stage-3 · new-hire driver escrow (real engine)", () => {
 
   it("release reverses the direction and REFUSES to over-draw the trust balance", async () => {
     await releaseEscrow(
-      { operating_company_id: companyId, escrow_account_id: escrowAccountId, amount_cents: RELEASE_CENTS, source_type: "manual" as never, note: "TEST DATA — partial escrow return" },
+      { operating_company_id: companyId, escrow_account_id: escrowAccountId, amount_cents: RELEASE_CENTS, source_type: "manual" as never, source_id: randomUUID(), note: "TEST DATA — partial escrow return" },
       actor
     );
     const [bal] = await read(`SELECT COALESCE((SELECT balance_cents FROM driver_finance.v_driver_escrow_balance WHERE escrow_account_id=$1::uuid), 0)::text AS balance_cents`, [escrowAccountId]);
@@ -153,7 +158,7 @@ run("stage-3 · new-hire driver escrow (real engine)", () => {
 
     // Over-draw must be refused outright. Trust money that was never collected cannot be paid out.
     await expect(releaseEscrow(
-      { operating_company_id: companyId, escrow_account_id: escrowAccountId, amount_cents: OVER_RELEASE_CENTS, source_type: "manual" as never, note: "TEST DATA — over-draw attempt" },
+      { operating_company_id: companyId, escrow_account_id: escrowAccountId, amount_cents: OVER_RELEASE_CENTS, source_type: "manual" as never, source_id: randomUUID(), note: "TEST DATA — over-draw attempt" },
       actor
     )).rejects.toThrow();
 

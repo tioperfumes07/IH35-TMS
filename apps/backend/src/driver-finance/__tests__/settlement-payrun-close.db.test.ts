@@ -33,7 +33,7 @@ import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../test-helpers/c
 import { upsertDriverEscrowAccountLink } from "../../accounting/driver-subaccount-provision.service.js";
 import { closeSettlementPayRun, SettlementPayRunError } from "../settlement-payrun-close.service.js";
 import { ESCROW_CAP_CENTS } from "../escrow-resolver.service.js";
-import { createJournalEntry } from "../../accounting/journal-entries.service.js";
+import { createJournalEntry, createJournalEntryOnClient } from "../../accounting/journal-entries.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -69,6 +69,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     chargebackRecovery: randomUUID(),
     reimbursementExpense: randomUUID(),
     cash: randomUUID(),
+    ap: randomUUID(),
   };
   // GLOBAL catalogs.account_role_bindings UNIQUE(role_key) — share lock with settlement-bill-payment +
   // settlement-gl-posting for save → bind → tests → fail-loud restore.
@@ -78,6 +79,9 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     "advance_recovery",
     "abandonment_chargeback_recovery",
     "reimbursement_expense",
+    // 443.93: the pay-run also resolves these two — saved and restored like the rest (the company is shared).
+    "ap_control",
+    "operating_bank",
   ] as const;
   let priorGlobalBindings: SavedAccountRoleBinding[] = [];
   let priorCoaDesignations: SavedCoaRoleDesignation[] = [];
@@ -187,7 +191,10 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     // (driver_finance.v_driver_escrow_balance) and accounting.escrow_accounts.balance_cents no longer exists — so the
     // starting balance the cap-check scenarios assert is seeded AS GL: Dr opening equity / Cr the driver's escrow leaf.
     if (escrowBalanceCents > 0) {
-      await createJournalEntry(
+      // 443.93: posted on the fixture's OWN connection — its accounts are created in this still-open transaction and are
+      // invisible to createJournalEntry's separate connection (journal_entry_postings_account_id_fkey).
+      await createJournalEntryOnClient(
+        db as never,
         {
           operating_company_id: companyId,
           entry_date: new Date().toISOString().slice(0, 10),
@@ -211,10 +218,36 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     );
     await db.query(
       `INSERT INTO driver_finance.driver_settlements
-         (id, operating_company_id, display_id, driver_id, period_start, period_end, status, locked_at, gross_pay, deductions_total, reimbursements_total, net_pay)
-       VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),3000,0,0,0)`,
+         (id, operating_company_id, display_id, driver_id, period_start, period_end, status, locked_at, gross_pay, deductions_total, reimbursements_total, net_pay, settlement_model)
+       VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),3000,0,0,0,'load_bookended')`,
       [s.settlementId, companyId, s.displayId, s.driverId]
     );
+    // 443.93: driver pay is A/P to the driver's own vendor (mdata.vendors.driver_id) — the pay-run refuses without it.
+    await db.query(
+      `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type, driver_id)
+       VALUES ($1::uuid, $2, 'driver', $3::uuid)`,
+      [companyId, `PayRun driver ${s.displayId}`, s.driverId]);
+    // 443.93: a settlement is load-bookended — the pay-run refuses one with no earnings line on a real load
+    // (settlement-payrun-close.service.ts:640-661 SETTLEMENT_HAS_NO_LOAD_ACTIVITY). The fixture gives it the delivered load
+    // and the 3000.00 earnings line on it that the Creator writes (gross unchanged).
+    const custId = randomUUID();
+    const loadId = randomUUID();
+    const loadNumber = String(800000000 + Math.floor(Math.random() * 90000000));
+    await db.query(`INSERT INTO mdata.customers (id, operating_company_id, customer_name) VALUES ($1::uuid,$2::uuid,$3)`,
+      [custId, companyId, `PayRun customer ${s.displayId}`]);
+    await db.query(
+      `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, load_trailer_equipment_id)
+       VALUES ($1::uuid,$2::uuid,$3,$4::uuid,'delivered_pending_docs',300000,$5::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1))`,
+      [loadId, companyId, loadNumber, custId, userId]);
+    // ...and its per-load driver bill (numbered as the load), settled in this settlement — a settlement pays loads.
+    await db.query(
+      `INSERT INTO driver_finance.driver_bills (id, operating_company_id, load_id, load_number, bill_number, driver_id, gross_amount_cents, status, settled_in_settlement_id)
+       VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$4,$5::uuid,300000,'open',$6::uuid)`,
+      [randomUUID(), companyId, loadId, loadNumber, s.driverId, s.settlementId]);
+    await db.query(
+      `INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, load_id, is_active)
+       VALUES ($1::uuid,'earnings','linehaul earnings',3000.00,$2::uuid,true)`,
+      [s.settlementId, loadId]);
     // a plain 'insurance' deduction (400.00) -> insurance_recovery role
     await db.query(
       `INSERT INTO driver_finance.driver_settlement_deductions
@@ -276,6 +309,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       await mkAcct(acct.chargebackRecovery, `Chargeback Recovery ${suffix}`, "Income", null, null);
       await mkAcct(acct.reimbursementExpense, `Reimbursement Expense ${suffix}`, "Expense", null, null);
       await mkAcct(acct.cash, `Operating Cash ${suffix}`, "Asset", null, null);
+      await mkAcct(acct.ap, `Accounts Payable ${suffix}`, "Liability", null, null);
       await mkAcct(escrowGrandparent, `Damage Claim Escrow ${suffix}`, "Liability", null, escrowQbo("GP"));
       await mkAcct(escrowParent, `Driver Escrow ${suffix}`, "Liability", escrowGrandparent, escrowQbo("P"));
       await mkAcct(openingEscrowEquity, `Opening Escrow Equity ${suffix}`, "Equity", null, null);
@@ -302,6 +336,15 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
          VALUES ($1::uuid,$2::uuid,$3,$4,$5::uuid,true)`,
         [paymentMethodId, companyId, `ACH_${suffix}`, `ACH ${suffix}`, acct.cash]
       );
+      // 443.93: the net pays out of the operating bank — an active bank account on the cash ledger, bound to the
+      // operating_bank role (the payout refuses without one).
+      await db.query(
+        `INSERT INTO banking.bank_accounts (operating_company_id, account_name, account_class, is_active, ledger_account_id, sync_status)
+         VALUES ($1::uuid, $2, 'depository', true, $3::uuid, 'active')`,
+        [companyId, `PayRun Operating ${suffix}`, acct.cash]
+      );
+      await designate("operating_bank", acct.cash);
+      await designate("ap_control", acct.ap);
       await db.query(
         `INSERT INTO integrations.qbo_connections
            (operating_company_id, realm_id, access_token, refresh_token, access_token_expires_at, refresh_token_expires_at, authorized_by_user_id)
@@ -607,8 +650,8 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       );
       await db.query(
         `INSERT INTO driver_finance.driver_settlements
-           (id, operating_company_id, display_id, driver_id, period_start, period_end, status, locked_at, gross_pay, deductions_total, reimbursements_total, net_pay)
-         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),297.60,0,0,297.60)`,
+           (id, operating_company_id, display_id, driver_id, period_start, period_end, status, locked_at, gross_pay, deductions_total, reimbursements_total, net_pay, settlement_model)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),297.60,0,0,297.60,'load_bookended')`,
         [interlockSettlementId, companyId, interlockDisplayId, interlockDriverId]
       );
       // The other poster's own full FK chain (driver_settlement_gl_bills' driver_bill_id /

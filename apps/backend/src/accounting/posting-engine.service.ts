@@ -3380,12 +3380,13 @@ async function executeSourceReversalOnClient(
     account_id: string;
     class_id: string | null;
     entity_uuid: string | null;
+    entity_type: string | null;
     debit_or_credit: "debit" | "credit";
     amount_cents: number;
     description: string | null;
   }>(
     `
-      SELECT id::text, account_id::text, class_id::text, entity_uuid::text,
+      SELECT id::text, account_id::text, class_id::text, entity_uuid::text, entity_type,
              debit_or_credit, amount_cents::bigint, description
       FROM accounting.journal_entry_postings
       WHERE operating_company_id = $1::uuid
@@ -3503,6 +3504,7 @@ async function executeSourceReversalOnClient(
           account_id,
           class_id,
           entity_uuid,
+          entity_type,
           debit_or_credit,
           amount_cents,
           description,
@@ -3517,7 +3519,8 @@ async function executeSourceReversalOnClient(
           updated_at
         )
         -- ROUND 363-CC1-A: a reversal carries the load of the line it reverses (its document may already be gone).
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6::uuid, $7, $8, $9, $10, $11, NULL, $12::uuid, $13, $14::uuid,
+        -- 443.93: and its party PAIR — entity_uuid without entity_type is refused (journal_entry_postings_entity_pair_check).
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6::uuid, $15, $7, $8, $9, $10, $11, NULL, $12::uuid, $13, $14::uuid,
                 accounting.posting_source_load_id($10::text, $11::text, NULL, $14::uuid), now(), now())
         RETURNING id::text
       `,
@@ -3536,6 +3539,7 @@ async function executeSourceReversalOnClient(
         reversalBatchId,
         idempotencyKey,
         row.id,
+        row.entity_type,
       ]
     );
     const reversalLineId = ins.rows[0]?.id;
