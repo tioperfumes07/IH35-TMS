@@ -629,13 +629,15 @@ async function s7() {
 // ================= S6 FARO PURCHASE (CC-3, LEAD 443.82; expected legs CC-1 443-70 designed behaviour S6) =================
 // Faro is a SECURED BORROWING (accounting/factoring-posting/poster.service.ts header): A/R is untouched at funding and goes
 // down only when the customer pays Faro. Three real USMCA invoices, three kinds, through the real routes:
-//   A purchased   POST /factoring/purchases -> /:id/post (funding) -> /factoring-advances/:id/reserve-held (customer pays
-//                 Faro) -> /factoring-advances/:id/release (escrow released)
-//   B not purchased  untouched: stays not_factored, its whole open balance on 1100, nothing on 2150
-//   C short pay   purchased + posted; the customer pays Faro part (the customer-payment engine, as the bank match calls it);
-//                 Faro's cash-reserve report carries the short-pay line (committed + posted through its routes:
-//                 DR 2150 / CR 1235); the Owner keeps the customer's remainder OPEN as a dispute (short-pay-resolution
-//                 kept_open) — the unpaid part stays on 1100 on that customer.
+//   A purchased   POST /factoring/purchases -> /:id/post (funding). Then Faro's reports through the LIVE writer
+//                 (LEAD 443.84: Faro's own report is the evidence the debtor paid): /faro-reserve-report/commit, then
+//                 /faro-reserve-entries/:id/post for each row. Escrow Reserve Held = the funding JE. Transfer Escrow to Cash =
+//                 Dr 1235 / Cr 1230 + the customer payment Dr 2150 / Cr 1100. Client Payable to us = the release,
+//                 Dr cash clearing / Cr 1235.
+//   B not purchased  untouched: stays not_factored, its whole open balance on 1100, nothing on 2150.
+//   C short pay   purchased + posted. Faro's short-pay row, through the same live writer, posts Dr 2150 / Cr 1100 for
+//                 "Paid" and Dr 2150 / Cr 1235 for the shortfall. The Owner then keeps the remainder OPEN as a dispute
+//                 (short-pay-resolution kept_open), and the unpaid part stays on 1100 on that customer.
 // Legs are matched by the company's COA role -> account (cash_clearing, factor_reserve_held, factor_fee_expense,
 // factor_wire_fee, factor_cash_reserve_held, factoring_advance_liability, ar_control).
 const FARO_VENDOR = "a1f4c2b6-8e35-4f91-9c2d-6b7a58e0f3c4";
@@ -661,7 +663,7 @@ async function advanceJes(advanceId) {
       WHERE p.operating_company_id = $1::uuid AND p.source_transaction_id = $2 AND p.reversed_by_line_id IS NULL`, [CO, advanceId]);
 }
 /** The invoice's balance on an account (debit - credit): every live posting sourced to the invoice, its load (revenue
- *  recognition) or its Faro advance (customer payment). */
+ *  recognition), its Faro advance, or a Faro report row on the invoice's purchase line (customer payment, short pay). */
 async function invoiceOn(inv, accountId) {
   const adv = (await read(`SELECT factoring_advance_id::text AS a, source_load_id::text AS l FROM accounting.invoices WHERE id = $1::uuid`, [inv.id]))[0];
   const ids = [inv.id, adv.a, adv.l].filter(Boolean);
@@ -669,10 +671,39 @@ async function invoiceOn(inv, accountId) {
     `SELECT COALESCE(SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::bigint AS v
        FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.voided_at IS NULL
       WHERE p.operating_company_id = $1::uuid AND p.account_id = $2::uuid AND p.reversed_by_line_id IS NULL
-        AND p.source_transaction_id = ANY($3::text[])`,
-    [CO, accountId, ids]))[0].v);
+        AND (p.source_transaction_id = ANY($3::text[])
+          OR (p.source_transaction_type = 'faro_reserve_entry' AND p.source_transaction_id IN (
+                SELECT e.id::text FROM accounting.faro_reserve_entries e
+                  JOIN accounting.factoring_purchase_lines l ON l.operating_company_id = e.operating_company_id
+                   AND l.faro_invoice_number = e.faro_invoice_number AND l.voided_at IS NULL
+                 WHERE e.operating_company_id = $1::uuid AND l.invoice_id = $4::uuid)))`,
+    [CO, accountId, ids, inv.id]))[0].v);
 }
 const usd = (c) => (Number(c) / 100).toFixed(2);
+/** A register account's GL balance (debit - credit): the Faro report's Beginning Balance for a fork run. */
+async function glBalance(accountId) {
+  return Number((await read(
+    `SELECT COALESCE(SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::bigint AS v
+       FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.voided_at IS NULL
+      WHERE p.operating_company_id = $1::uuid AND p.account_id = $2::uuid AND p.reversed_by_line_id IS NULL`, [CO, accountId]))[0].v);
+}
+/** Faro's report shape (FARO_REPORT_COLUMNS): Beginning Balance, then rows [ID, Inv, Note, cents] with a running balance. */
+function faroCsv(beginCents, rows, mmdd) {
+  const m = (x) => (x / 100).toFixed(2);
+  let bal = beginCents;
+  return ["ID,Inv,PO Ref#,Debtor,Pmt Ref,Note,Date,Amount,Balance", `,,,,,Beginning Balance,,,${m(bal)}`,
+    ...rows.map(([id, inv, note, cents]) => { bal += cents; return `${id},${inv},${inv ? "S6" : ""},${inv ? "Debtor" : ""},S6,${note},${mmdd},${m(cents)},${m(bal)}`; })].join("\n");
+}
+/** Net (debit - credit) on an account of the JEs posted for the given Faro entry ids. */
+async function faroRowsNet(faroIds, accountId) {
+  return Number((await read(
+    `SELECT COALESCE(SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::bigint AS v
+       FROM accounting.journal_entry_postings p
+      WHERE p.operating_company_id = $1::uuid AND p.account_id = $2::uuid AND p.reversed_by_line_id IS NULL
+        AND p.journal_entry_uuid IN (SELECT DISTINCT journal_entry_id FROM accounting.faro_reserve_entries
+                                      WHERE operating_company_id = $1::uuid AND faro_entry_id = ANY($3::text[]) AND journal_entry_id IS NOT NULL)`,
+    [CO, accountId, faroIds]))[0].v);
+}
 
 async function purchaseAndPost(t, inv, faroNo) {
   const q = `?operating_company_id=${CO}`;
@@ -739,23 +770,48 @@ async function s6() {
   const invA = (await read(`SELECT factoring_status, factoring_advance_id::text FROM accounting.invoices WHERE id = $1::uuid`, [A.id]))[0];
   t.ok("A invoice factoring_status advanced + carries the advance", invA.factoring_status === "advanced" && invA.factoring_advance_id === a.advance_id, invA.factoring_status);
 
-  // ---- A: customer pays Faro ----
-  const qa = `?operating_company_id=${CO}`;
-  const paid = await call("POST", `/api/v1/accounting/factoring-advances/${a.advance_id}/reserve-held${qa}`, {});
-  if (t.ok("POST /factoring-advances/:id/reserve-held 200", paid.status === 200, `status ${paid.status} ${paid.status !== 200 ? JSON.stringify(paid.body).slice(0, 300) : ""}`)) {
-    const je = (await advanceJes(a.advance_id)).find((r) => r.t === "factoring_customer_payment")?.je;
-    t.notNull("customer-payment JE", je);
-    const l = je ? await legsOf(je) : {};
-    t.ok(`customer payment Dr ${R.factoring_advance_liability.account_number} / Cr ${R.ar_control.account_number} = invoice`, l[`${R.factoring_advance_liability.account_number} D`] === Number(a.gross) && l[`${R.ar_control.account_number} C`] === Number(a.gross) && Object.keys(l).length === 2, JSON.stringify(l));
-    t.ok("A's A/R relieved to 0", (await invoiceOn(A, R.ar_control.id)) === arA0 - Number(a.gross), usd(await invoiceOn(A, R.ar_control.id)));
+  // ---- A: Faro's reports — escrow held, escrow -> cash (the debtor paid: customer payment), client payable (release) ----
+  const today = new Date(), mmdd = `${String(today.getUTCMonth() + 1).padStart(2, "0")}/${String(today.getUTCDate()).padStart(2, "0")}/${today.getUTCFullYear()}`;
+  const esc = Number(a.escrow);
+  const escrowCsv = faroCsv(await glBalance(R.factor_reserve_held.id), [
+    ["990101", "901", "Escrow Reserve Held", esc],
+    ["990102", "901", "Transfer Escrow to Cash", -esc],
+  ], mmdd);
+  const cashCsv = faroCsv(await glBalance(R.factor_cash_reserve_held.id), [
+    ["990102", "901", "Transfer Escrow to Cash", esc],
+    ["", "", "Client Payable S6", -esc],
+  ], mmdd);
+  for (const [register, csv] of [["escrow", escrowCsv], ["cash", cashCsv]]) {
+    const r = await call("POST", "/api/v1/factoring/faro-reserve-report/commit", { operating_company_id: CO, register, csv_text: csv });
+    t.ok(`POST /faro-reserve-report/commit (${register}) imports A's rows`, r.status === 200 && r.body?.imported === 2 && !(r.body?.rejected ?? []).length, `status ${r.status} ${JSON.stringify(r.body).slice(0, 300)}`);
   }
-  // ---- A: reserve release ----
-  const rel = await call("POST", `/api/v1/accounting/factoring-advances/${a.advance_id}/release${qa}`, { release_amount_cents: Number(a.escrow), factor_fee_cents: 0 });
-  if (t.ok("POST /factoring-advances/:id/release 200", rel.status === 200, `status ${rel.status} ${rel.status !== 200 ? JSON.stringify(rel.body).slice(0, 300) : ""}`)) {
-    const je = (await advanceJes(a.advance_id)).find((r) => r.t === "factoring_release")?.je;
-    t.notNull("release JE", je);
-    const l = je ? await legsOf(je) : {};
-    t.ok(`release Dr ${R.cash_clearing.account_number} / Cr ${R.factor_reserve_held.account_number} = escrow`, l[`${R.cash_clearing.account_number} D`] === Number(a.escrow) && l[`${R.factor_reserve_held.account_number} C`] === Number(a.escrow) && Object.keys(l).length === 2, JSON.stringify(l));
+  const entryOf = async (kind, register) => (await read(
+    `SELECT id::text FROM accounting.faro_reserve_entries WHERE operating_company_id = $1::uuid AND entry_kind = $2 AND register = $3
+        AND (faro_invoice_number = '901' OR (faro_invoice_number IS NULL AND note = 'Client Payable S6'))`, [CO, kind, register]))[0]?.id;
+  const postEntry = async (id, label) => {
+    const r = await call("POST", `/api/v1/factoring/faro-reserve-entries/${id}/post`, { operating_company_id: CO });
+    t.ok(`POST /faro-reserve-entries/:id/post ${label} 200`, r.status === 200, `status ${r.status} ${r.status !== 200 ? JSON.stringify(r.body).slice(0, 300) : ""}`);
+    return (await read(`SELECT journal_entry_id::text AS je FROM accounting.faro_reserve_entries WHERE id = $1::uuid`, [id]))[0]?.je;
+  };
+  const heldJe = await postEntry(await entryOf("escrow_held", "escrow"), "escrow held");
+  t.ok("escrow held matches the funding JE (no second entry)", heldJe === a.je);
+  const e2cJe = await postEntry(await entryOf("escrow_to_cash", "escrow"), "escrow -> cash");
+  {
+    const l = e2cJe ? await legsOf(e2cJe) : {};
+    const L = R.factoring_advance_liability.account_number, AR = R.ar_control.account_number;
+    t.ok(`customer payment (live writer) Dr ${L} / Cr ${AR} = invoice`, l[`${L} D`] === Number(a.gross) && l[`${AR} C`] === Number(a.gross), JSON.stringify(l));
+    t.ok(`escrow -> cash Dr ${R.factor_cash_reserve_held.account_number} / Cr ${R.factor_reserve_held.account_number}`, l[`${R.factor_cash_reserve_held.account_number} D`] === esc && l[`${R.factor_reserve_held.account_number} C`] === esc && Object.keys(l).length === 4, JSON.stringify(l));
+    const legsCustomer = await read(`SELECT count(*) FILTER (WHERE entity_uuid::text = $2) AS c, count(*) AS n FROM accounting.journal_entry_postings WHERE journal_entry_uuid = $1::uuid`, [e2cJe, A.customer_id]);
+    t.ok("every leg carries the customer", Number(legsCustomer[0].c) === Number(legsCustomer[0].n), `${legsCustomer[0].c}/${legsCustomer[0].n}`);
+    t.ok("A's A/R relieved to 0", (await invoiceOn(A, R.ar_control.id)) === arA0 - Number(a.gross), usd(await invoiceOn(A, R.ar_control.id)));
+    const ia = (await read(`SELECT status::text, amount_paid_cents::bigint AS p FROM accounting.invoices WHERE id = $1::uuid`, [A.id]))[0];
+    t.ok("A invoice paid in the subledger", ia.status === "paid" && Number(ia.p) === Number(A.total), `${ia.status} ${usd(ia.p)}`);
+  }
+  const relJe = await postEntry(await entryOf("client_payable", "cash"), "client payable (release)");
+  {
+    const l = relJe ? await legsOf(relJe) : {};
+    t.ok(`release Dr ${R.cash_clearing.account_number} / Cr ${R.factor_cash_reserve_held.account_number} = escrow`, l[`${R.cash_clearing.account_number} D`] === esc && l[`${R.factor_cash_reserve_held.account_number} C`] === esc && Object.keys(l).length === 2, JSON.stringify(l));
+    t.ok(`release chain nets Dr ${R.cash_clearing.account_number} / Cr ${R.factor_reserve_held.account_number} (CC-1's table)`, (await faroRowsNet(["990101", "990102"], R.factor_reserve_held.id)) === 0 && (await faroRowsNet(["990102"], R.factor_cash_reserve_held.id)) - l[`${R.factor_cash_reserve_held.account_number} C`] === 0);
   }
 
   // ---- B: not purchased ----
@@ -769,30 +825,24 @@ async function s6() {
   if (!c) return;
   const shortCents = Math.max(1, Math.round(Number(c.gross) * 0.1));
   const paidCents = Number(c.gross) - shortCents;
-  const { postFactoringCustomerPaymentEvent } = await import("../../apps/backend/src/accounting/factoring-posting/poster.service.ts");
-  const pay = await postFactoringCustomerPaymentEvent({ operating_company_id: CO, factoring_advance_id: c.advance_id, actor_user_id: OWNER, amount_cents: paidCents, paid_at_iso: new Date().toISOString() });
-  t.ok("C customer pays Faro part (engine posted)", pay && !pay.gate, JSON.stringify(pay).slice(0, 160));
-  t.ok("C's A/R keeps the unpaid part", (await invoiceOn(C, R.ar_control.id)) === arC0 - paidCents, `${usd(await invoiceOn(C, R.ar_control.id))} open, short ${usd(shortCents)}`);
-  const d = new Date(), mmdd = `${String(d.getUTCMonth() + 1).padStart(2, "0")}/${String(d.getUTCDate()).padStart(2, "0")}/${d.getUTCFullYear()}`;
-  const begin = Number((await read(
-    `SELECT COALESCE(SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::bigint AS v
-       FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.voided_at IS NULL
-      WHERE p.operating_company_id = $1::uuid AND p.account_id = $2::uuid AND p.reversed_by_line_id IS NULL`, [CO, R.factor_cash_reserve_held.id]))[0].v);
+  const d = new Date(), mmddC = `${String(d.getUTCMonth() + 1).padStart(2, "0")}/${String(d.getUTCDate()).padStart(2, "0")}/${d.getUTCFullYear()}`;
   const money = (x) => (x / 100).toFixed(2);
-  const csv = [
-    "ID,Inv,PO Ref#,Debtor,Pmt Ref,Note,Date,Amount,Balance",
-    `,,,,,Beginning Balance,,,${money(begin)}`,
-    `990001,902,S6,Debtor,S6,Balance: ${money(Number(c.gross))} :: Paid: ${money(paidCents)} :: ${money(shortCents)} to Rsv,${mmdd},-${money(shortCents)},${money(begin - shortCents)}`,
-  ].join("\n");
+  const csv = faroCsv(await glBalance(R.factor_cash_reserve_held.id), [
+    ["990001", "902", `Balance: ${money(Number(c.gross))} :: Paid: ${money(paidCents)} :: ${money(shortCents)} to Rsv`, -shortCents],
+  ], mmddC);
   const commit = await call("POST", "/api/v1/factoring/faro-reserve-report/commit", { operating_company_id: CO, register: "cash", csv_text: csv });
-  if (!t.ok("POST /faro-reserve-report/commit (cash) 200", commit.status === 200, `status ${commit.status} ${JSON.stringify(commit.body).slice(0, 300)}`)) return;
+  if (!t.ok("POST /faro-reserve-report/commit (cash) 200", commit.status === 200 && commit.body?.imported === 1, `status ${commit.status} ${JSON.stringify(commit.body).slice(0, 300)}`)) return;
   const entry = (await read(`SELECT id::text FROM accounting.faro_reserve_entries WHERE operating_company_id = $1::uuid AND faro_entry_id = '990001' AND faro_invoice_number = '902'`, [CO]))[0];
   if (!t.ok("short-pay entry imported", entry)) return;
   const sp = await call("POST", `/api/v1/factoring/faro-reserve-entries/${entry.id}/post`, { operating_company_id: CO });
-  if (t.ok("POST /faro-reserve-entries/:id/post 200", sp.status === 200, `status ${sp.status} ${sp.status !== 200 ? JSON.stringify(sp.body).slice(0, 300) : ""}`)) {
+  if (t.ok("POST /faro-reserve-entries/:id/post (short pay) 200", sp.status === 200, `status ${sp.status} ${sp.status !== 200 ? JSON.stringify(sp.body).slice(0, 300) : ""}`)) {
     const je = (await read(`SELECT journal_entry_id::text AS je FROM accounting.faro_reserve_entries WHERE id = $1::uuid`, [entry.id]))[0].je;
     const l = je ? await legsOf(je) : {};
-    t.ok(`short pay Dr ${R.factoring_advance_liability.account_number} / Cr ${R.factor_cash_reserve_held.account_number} = shortfall`, l[`${R.factoring_advance_liability.account_number} D`] === shortCents && l[`${R.factor_cash_reserve_held.account_number} C`] === shortCents && Object.keys(l).length === 2, JSON.stringify(l));
+    const L = R.factoring_advance_liability.account_number;
+    t.ok(`short pay (live writer): Dr ${L} paid + short / Cr ${R.ar_control.account_number} paid + Cr ${R.factor_cash_reserve_held.account_number} short`, l[`${L} D`] === paidCents + shortCents && l[`${R.ar_control.account_number} C`] === paidCents && l[`${R.factor_cash_reserve_held.account_number} C`] === shortCents && Object.keys(l).length === 3, JSON.stringify(l));
+    t.ok("C's A/R keeps the unpaid part", (await invoiceOn(C, R.ar_control.id)) === arC0 - paidCents, `${usd(await invoiceOn(C, R.ar_control.id))} open, short ${usd(shortCents)}`);
+    const ic = (await read(`SELECT status::text, amount_paid_cents::bigint AS p FROM accounting.invoices WHERE id = $1::uuid`, [C.id]))[0];
+    t.ok("C invoice partial in the subledger", ic.status === "partial" && Number(ic.p) === paidCents, `${ic.status} ${usd(ic.p)}`);
   }
   const disp = await call("POST", `/api/v1/factoring/faro-reserve-entries/${entry.id}/short-pay-resolution`, { operating_company_id: CO, resolution: "kept_open", note: "443.82 S6: customer short-paid; disputed with the customer" });
   t.ok("short-pay kept_open (dispute) 200", disp.status === 200, `status ${disp.status} ${disp.status !== 200 ? JSON.stringify(disp.body).slice(0, 300) : ""}`);
