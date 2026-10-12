@@ -119,6 +119,13 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-3/443-59-expense-settlement-needs-load",
     new Set(["db/migrations/202615540900_expenses_settlement_no_requires_load.sql"]),
   ],
+  // LEAD 443.101 R6 (CC-3): verify:arch-design / entity-isolation — FORCE RLS on the two downtime catalogs, the first red
+  // step on every main CI run. Claimed first on main under claimed_by CC-3 inside the cc-3 band (HH 09) — #26574
+  // ac43266e9f, placed under "claimed" by a601c5bf9a. Same exact-branch + exact-file shape.
+  [
+    "cc-3/c101-r6-arch",
+    new Set(["db/migrations/202615750915_downtime_catalogs_force_rls.sql"]),
+  ],
   // RULING 443.62 #3/#4/#7 (Lead 16:35 UTC): 2410-00-001..004 "Due to / from <party>" rename (taken from CC-1 #26377) +
   // google_place_id on stop / location for CC-2. Claimed first on main (#26389); exact branch + exact files.
   [
