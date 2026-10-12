@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * verify-g18-expense-line-category-and-load-exemption.mjs
+ * @matrix-built {"modules":["accounting"],"cols":["expense","load"],"leafRe":"^expenses\\.","task":"LV-G18-INERT-ON-EXPENSE-LINES"}
  *
  * LV-G18-INERT-ON-EXPENSE-LINES — accounting.enforce_load_fk_invariant() (migration 0093) is a real
  * hard BEFORE INSERT/UPDATE trigger on accounting.expense_lines, but line_category was never written
@@ -31,7 +32,7 @@ import { readFileSync } from "node:fs";
 const failures = [];
 
 const routesPath = "apps/backend/src/accounting/expenses.routes.ts";
-const routesSrc = readFileSync(routesPath, "utf8");
+const routesSrc = (readFileSync(routesPath, "utf8") + "\n" + readFileSync("apps/backend/src/accounting/expense-writer.service.ts", "utf8")) /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */;
 
 if (!/load_exemption_reason: z\s*\.\s*string\(\)[^\n]*min\(20\)/.test(routesSrc)) {
   failures.push(`${routesPath}: create-expense body schema no longer accepts load_exemption_reason with a >=20-char floor`);
