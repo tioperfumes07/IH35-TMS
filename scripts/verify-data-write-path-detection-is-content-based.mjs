@@ -27,21 +27,20 @@ const ok = (m) => console.log(`verify-data-write-path-detection-is-content-based
 
 // ---- 1. structural check: the gate file must actually call the shared, content-based function,
 // not the old blunt "spread DATA_WRITE_PATHS straight into prefixes" pattern. ----
-function checkGateFileStructure(source) {
+export function gateStructureFailures(source) {
+  const f = [];
   if (/const prefixes = \[\.\.\.DATA_WRITE_PATHS, \.\.\.domainPaths\]/.test(source)) {
-    fail(
-      `${GATE_FILE} still spreads DATA_WRITE_PATHS unconditionally into prefixes — the exact ` +
-        `pre-fix blunt path match (GATE-SCOPE-02).`,
-    );
+    f.push(`${GATE_FILE} still spreads DATA_WRITE_PATHS unconditionally into prefixes — the exact ` +
+      `pre-fix blunt path match (GATE-SCOPE-02).`);
   }
   if (!/dataWritePathFileActuallyWrites/.test(source)) {
-    fail(`${GATE_FILE} never references dataWritePathFileActuallyWrites — the content-based check is not wired in.`);
+    f.push(`${GATE_FILE} never references dataWritePathFileActuallyWrites — the content-based check is not wired in.`);
   }
   if (!/dataWritePathDiffActuallyWrites/.test(source)) {
-    fail(`${GATE_FILE} does not inspect added diff lines before activating all live-domain guards.`);
+    f.push(`${GATE_FILE} does not inspect added diff lines before activating all live-domain guards.`);
   }
   if (!/from ["']\.\/lib\/data-write-path-detection\.mjs["']/.test(source)) {
-    fail(`${GATE_FILE} does not import from ./lib/data-write-path-detection.mjs — the shared implementation is not actually used.`);
+    f.push(`${GATE_FILE} does not import from ./lib/data-write-path-detection.mjs — the shared implementation is not actually used.`);
   }
   // domain paths must remain unconditional for real fuel/ / accounting/ touches — only the
   // DATA_WRITE_PATHS branch gets the content gate. Exception (GATE-SCOPE bank-recon, 2026-09-28):
@@ -53,15 +52,19 @@ function checkGateFileStructure(source) {
     !/f\.startsWith\(p\)/.test(source) ||
     !/apps\/backend\/src\/accounting\/bank-recon\//.test(source)
   ) {
-    fail(
-      `${GATE_FILE} no longer triggers on a domainPaths match (or lost the bank-recon GATE-SCOPE carve-out) — that would silently weaken real domain guards, not just fix the false-positive class.`,
-    );
+    f.push(`${GATE_FILE} no longer triggers on a domainPaths match (or lost the bank-recon GATE-SCOPE carve-out) — that would silently weaken real domain guards, not just fix the false-positive class.`);
   }
   const dataWriteBranch = source.indexOf("if (DATA_WRITE_PATHS.some((p) => f.startsWith(p)))");
   const domainBranch = source.indexOf("domainPaths.some((p) =>", dataWriteBranch);
   if (dataWriteBranch < 0 || domainBranch < 0 || dataWriteBranch > domainBranch) {
-    fail(`${GATE_FILE} checks domainPaths before DATA_WRITE_PATHS, allowing a broad db/migrations/ or scripts/ops/ domain entry to bypass the diff-content gate.`);
+    f.push(`${GATE_FILE} checks domainPaths before DATA_WRITE_PATHS, allowing a broad db/migrations/ or scripts/ops/ domain entry to bypass the diff-content gate.`);
   }
+  return f;
+}
+
+function checkGateFileStructure(source) {
+  const f = gateStructureFailures(source);
+  if (f.length) fail(f[0]);
 }
 
 // ---- 2. direct unit proof against the shared function, with real scratch files ----
@@ -120,7 +123,26 @@ function checkDetectionFunctionBehavior() {
 }
 
 if (!existsSync(path.join(ROOT, GATE_FILE))) fail(`${GATE_FILE} is missing.`);
-checkGateFileStructure(readFileSync(path.join(ROOT, GATE_FILE), "utf8"));
+const gateSource = readFileSync(path.join(ROOT, GATE_FILE), "utf8");
+
+if (process.argv.includes("--selftest")) {
+  const plant = (from, to) => gateSource.split(from).join(to);
+  const cases = [
+    ["the real gate passes the structural rules", gateStructureFailures(gateSource).length === 0],
+    ["the blunt DATA_WRITE_PATHS spread fails", gateStructureFailures(gateSource + "\nconst prefixes = [...DATA_WRITE_PATHS, ...domainPaths]").length > 0],
+    ["a gate without the content-based detector fails", gateStructureFailures(plant("dataWritePathFileActuallyWrites", "x")).length > 0],
+    ["a gate without the shared import fails", gateStructureFailures(plant("./lib/data-write-path-detection.mjs", "./lib/other.mjs")).length > 0],
+    ["a gate that lost the bank-recon carve-out fails", gateStructureFailures(plant("apps/backend/src/accounting/bank-recon/", "apps/backend/src/x/")).length > 0],
+  ];
+  for (const [n, okc] of cases) console.log(`  ${okc ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, okc]) => !okc).length;
+  // The scratch-file unit proof of the shared detector runs too (it exits non-zero on any miss).
+  if (!bad) checkDetectionFunctionBehavior();
+  console.log(bad ? "verify-data-write-path-detection-is-content-based --selftest FAIL" : `verify-data-write-path-detection-is-content-based --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
+checkGateFileStructure(gateSource);
 checkDetectionFunctionBehavior();
 
 ok("PASS — DATA_WRITE_PATHS matches are content-gated; real .sql migrations and genuine DB-client scripts.ops writers still trigger unconditionally/correctly; domain paths remain unconditional.");
