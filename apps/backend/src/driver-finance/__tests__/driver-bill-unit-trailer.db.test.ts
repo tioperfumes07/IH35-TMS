@@ -32,7 +32,7 @@ describeIntegration("driver bill carries the load's unit and trailer (real Postg
       const company = load.company;
       const sfx = randomUUID().slice(0, 6);
       const unit = (await db.query<{ id: string }>(
-        `INSERT INTO mdata.units (unit_number, vin, owner_company_id) VALUES ($1, $2, $3::uuid) RETURNING id::text`,
+        `INSERT INTO mdata.units (unit_number, vin, owner_company_id, is_sample_data) VALUES ($1, $2, $3::uuid, true) RETURNING id::text`,
         [`U-G9-${sfx}`, `1G9TEST${sfx.toUpperCase()}0000`.slice(0, 17), company]
       )).rows[0]!.id;
       const driver = randomUUID();
