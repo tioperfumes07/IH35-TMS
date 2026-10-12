@@ -1,3 +1,4 @@
+import { restampDriverBillUnitAndTrailer } from "./driver-bill-unit-trailer.js";
 /**
  * void-open-driver-bill.service.ts — SETL-TIEOUT-01 (owner order 2026-09-05, deadline 02:30Z).
  *
@@ -184,6 +185,8 @@ export async function correctOpenDriverBillMileage(
       input.deadheadPayCents,
     ]
   );
+  // 443.110 G9 — the bill carries the load's truck and trailer (one rule: driver-bill-unit-trailer.ts).
+  await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.operatingCompanyId, loadId: input.loadId });
   const newBillId = newBillRes.rows[0]!.id;
 
   // 3. Mint the replacement settlement lines — same (settlement_id, line_type, description, amount,
