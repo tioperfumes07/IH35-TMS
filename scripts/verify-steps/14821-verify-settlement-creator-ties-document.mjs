@@ -73,7 +73,7 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-travel-off-driver-pay.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-travel-off-driver-pay.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-ap-tieout-counts-chain-bills.mjs", "--selftest"]);
-    ctx.run("node", ["scripts/verify-settlement-creator-ap-tieout-counts-chain-bills.mjs"]);
+    // 443.100: the live half of verify-settlement-creator-ap-tieout-counts-chain-bills runs in the live-DB job (ci.yml required-live-load-guard); its selftest stays here.
     ctx.run("node", ["scripts/verify-settlement-creator-salaried-ap-chain.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-salaried-ap-chain.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-salaried-stray-bill-void.mjs", "--selftest"]);

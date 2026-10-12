@@ -5,7 +5,7 @@
  * it does not foot, the board is lying." Two checks: (1) static -- no clamp (GREATEST(0,...)) can
  * mask a footing failure; (2) DB-backed -- the identity actually holds on whatever loads exist in the
  * reachable database (CI's ephemeral migrated Postgres; SKIPs cleanly on an unmigrated/unreachable one,
- * same convention as scripts/verify-steps/3049-verify-voided-money-doc-has-gl-reversal.mjs).
+ * same convention as scripts/verify-voided-money-doc-has-gl-reversal.mjs).
  */
 import fs from "node:fs";
 import pg from "pg";

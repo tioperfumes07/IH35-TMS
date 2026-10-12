@@ -144,7 +144,21 @@ jobs:
             scripts/verify-relay-fill-one-company.mjs \
             scripts/verify-trial-balance-and-balance-sheet.mjs \
             scripts/verify-factoring-interest-at-close-2150-ties.mjs \
-            scripts/verify-factoring-advance-links-its-load.mjs
+            scripts/verify-factoring-advance-links-its-load.mjs \
+            scripts/verify-loves-geofences-seeded.mjs \
+            scripts/verify-samsara-mapping-integrity.mjs \
+            scripts/verify-driver-vendor-financial-identity-invariant.mjs \
+            scripts/verify-lease-engine-owner-only-and-unit-derivation.mjs \
+            scripts/verify-send-back-preserves-the-match-and-its-load.mjs \
+            scripts/verify-relay-fill-documents-sum-to-relay-total.mjs \
+            scripts/verify-faro-reserve-registers.mjs \
+            scripts/verify-csv-statement-upload-idempotent.mjs \
+            scripts/verify-faro-cash-reserve-presents-as-payable.mjs \
+            scripts/verify-settlement-creator-ap-tieout-counts-chain-bills.mjs \
+            scripts/verify-ar-subledger-ties-to-gl.mjs \
+            scripts/verify-no-journal-entry-has-zero-postings.mjs \
+            scripts/verify-voided-money-doc-has-gl-reversal.mjs \
+            scripts/verify-factoring-purchase-owner-only.mjs
       # ROUND 389 (LEAD) — the ONLY place a credential-gated derived artifact's freshness can actually be
       # proven. scripts/canonical-relations.json is regenerated from the live schema, so its generator
       # declares requiresDatabase; every other job runs guards through scripts/verify-static.mjs, which

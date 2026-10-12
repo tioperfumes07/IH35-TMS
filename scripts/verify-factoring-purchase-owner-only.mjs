@@ -7,12 +7,12 @@
 // static: every file that INSERTs accounting.factoring_advances, every create/submit/advance/close route, and both
 //         bank-match accept functions call the gate; auto-submit-on-delivery never creates a purchase.
 // live (read-only): 0 factoring purchases created after the clean slate by an actor who is not the Owner.
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 const LABEL = "verify-factoring-purchase-owner-only";
-const ROOT = new URL("../../", import.meta.url);
+const ROOT = new URL("../", import.meta.url);
 const read = (p) => readFileSync(new URL(p, ROOT), "utf8");
 const CLEAN_SLATE_AT = "2026-10-01T16:09:51Z"; // AUTH-193 audit b7b25e3d
 const GATE = /requireFactoringPurchaseOwner|checkFactoringPurchaseOwner/;
@@ -91,13 +91,8 @@ function selftest() {
 selftest();
 if (process.argv.includes("--selftest")) process.exit(0);
 
-const url = process.env.DATABASE_URL;
-if (!url) {
-  console.log(`${LABEL}: SKIP live — no DATABASE_URL (static PASS above)`);
-  process.exit(0);
-}
-const client = new pg.Client({ connectionString: url, statement_timeout: 30000 });
-await client.connect();
+// 443.100: a live money guard that cannot connect FAILS (ROUND 29.9-B, verify-no-silent-db-skip) — never a skip-pass.
+const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
 try {
   await client.query("BEGIN READ ONLY");
   await client.query("SET LOCAL app.bypass_rls = 'lucia'");
@@ -116,5 +111,6 @@ try {
   }
   console.log(`${LABEL}: LIVE PASS — ${total} purchase(s) created since the clean slate, all by the Owner`);
 } finally {
-  await client.end();
+  client.release();
+  await pool.end();
 }
