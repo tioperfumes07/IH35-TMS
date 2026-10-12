@@ -30,6 +30,7 @@
 // exhibiting the pattern that is not in the baseline and does not declare ALLOW_OFFLINE_SKIP, that
 // is an immediate FAIL — the whole point of this guard.
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -99,10 +100,10 @@ function candidateFiles() {
 // ~50s wall-clock, blowing verify-static.mjs's own 25s per-guard timeout when this guard runs
 // nested inside that full sweep; caught live during PR #22164/#22167). Same per-file semantics
 // (exit0/timedOut/note), just N files in flight at once instead of one at a time.
-function runsExit0(file, env) {
+function runsExit0(file, env, dir = path.join(ROOT, "scripts")) {
   return new Promise((resolve) => {
     const extraArg = LIVE_FLAG_FILES.get(file);
-    const args = [path.join(ROOT, "scripts", file), ...(extraArg ? [extraArg] : [])];
+    const args = [path.join(dir, file), ...(extraArg ? [extraArg] : [])];
     const child = spawn(process.execPath, args, { cwd: ROOT, env });
     let settled = false;
     const timer = setTimeout(() => {
@@ -141,9 +142,71 @@ async function mapPool(items, limit, fn) {
   return results;
 }
 
-function declaresAllowOfflineSkip(file) {
-  const src = fs.readFileSync(path.join(ROOT, "scripts", file), "utf8");
+function declaresAllowOfflineSkip(file, dir = path.join(ROOT, "scripts")) {
+  const src = fs.readFileSync(path.join(dir, file), "utf8");
   return /export\s+const\s+ALLOW_OFFLINE_SKIP\s*=\s*["'`]/.test(src);
+}
+
+/** Pure: sort each file's real run outcome into new regressions / fixed-but-still-baselined / hangs. */
+export function classifyOutcomes(files, outcomes, baseline, declaresAllow) {
+  const violations = [];
+  const nowFixed = [];
+  const timedOut = [];
+  files.forEach((f, i) => {
+    const { exit0, timedOut: to, note } = outcomes[i];
+    if (to) { timedOut.push({ f, note }); return; }
+    if (!exit0) {
+      if (baseline.has(f)) nowFixed.push(f); // was in baseline, no longer exhibits the pattern
+      return;
+    }
+    // exit0 === true: exhibits the silent-skip pattern right now.
+    if (baseline.has(f)) return; // known pre-existing debt, not a new regression
+    if (declaresAllow(f)) return; // explicitly, visibly declared — allowed
+    violations.push(f);
+  });
+  return { violations, nowFixed, timedOut };
+}
+
+/** --selftest: real child processes in a temp dir — the same spawn path the sweep uses, no database. */
+async function selftest() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "no-silent-db-skip-"));
+  const write = (f, body) => fs.writeFileSync(path.join(dir, f), body);
+  write("verify-planted-silent-skip.mjs", 'if (!process.env.DATABASE_URL) { console.log("SKIP no db"); process.exit(0); }\n');
+  write("verify-planted-hang.mjs", "setInterval(() => {}, 1000);\n");
+  write("verify-clean-fail-closed.mjs", 'if (!process.env.DATABASE_URL) { console.error("FAIL no db"); process.exit(1); }\n');
+  write("verify-clean-declared.mjs", 'export const ALLOW_OFFLINE_SKIP = "static only";\nprocess.exit(0);\n');
+  write("verify-clean-baselined.mjs", "process.exit(0);\n");
+  write("verify-clean-fixed-but-baselined.mjs", "process.exit(1);\n");
+  const env = { ...process.env };
+  delete env.DATABASE_URL;
+  delete env.DATABASE_DIRECT_URL;
+  const files = fs.readdirSync(dir).sort();
+  const baseline = new Set(["verify-clean-baselined.mjs", "verify-clean-fixed-but-baselined.mjs"]);
+  let outcomes;
+  try {
+    outcomes = await mapPool(files, 16, (f) => runsExit0(f, env, dir));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  const r = classifyOutcomes(files, outcomes, baseline, (f) => f === "verify-clean-declared.mjs");
+  const planted = [
+    ["silent skip exiting 0 is a new violation", r.violations.includes("verify-planted-silent-skip.mjs")],
+    ["a hang is not a pass", r.timedOut.some((t) => t.f === "verify-planted-hang.mjs")],
+  ];
+  const clean = [
+    ["only the planted file is a violation", r.violations.length === 1],
+    ["only the planted file hangs", r.timedOut.length === 1],
+    ["fixed baselined file is reported for removal", r.nowFixed.length === 1 && r.nowFixed[0] === "verify-clean-fixed-but-baselined.mjs"],
+  ];
+  const caught = planted.filter(([, ok]) => ok).length;
+  for (const [n, ok] of planted) if (!ok) console.error(`  ✗ planted violation escaped: ${n}`);
+  for (const [n, ok] of clean) if (!ok) console.error(`  ✗ clean input misjudged: ${n}`);
+  if (caught !== planted.length || !clean.every(([, ok]) => ok)) {
+    console.error(`${LABEL} SELFTEST: FAIL ${caught}/${planted.length}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught; ${clean.length} clean inputs pass`);
+  process.exit(0);
 }
 
 async function main() {
@@ -157,10 +220,6 @@ async function main() {
   // this guard proves a live guard with NO credential fails closed; a fallback would turn the test into a live run.
   delete env.DATABASE_URL_READONLY;
   env.IH35_NO_GATE_CREDENTIAL_FALLBACK = "1";
-
-  const violations = [];
-  const nowFixed = [];
-  const timedOut = [];
 
   const outcomes = await mapPool(files, 16, (f) => runsExit0(f, env));
 
@@ -178,18 +237,7 @@ async function main() {
     outcomes[i] = await runsExit0(files[i], env);
   }
 
-  files.forEach((f, i) => {
-    const { exit0, timedOut: to, note } = outcomes[i];
-    if (to) { timedOut.push({ f, note }); return; }
-    if (!exit0) {
-      if (baseline.has(f)) nowFixed.push(f); // was in baseline, no longer exhibits the pattern
-      return;
-    }
-    // exit0 === true: exhibits the silent-skip pattern right now.
-    if (baseline.has(f)) return; // known pre-existing debt, not a new regression
-    if (declaresAllowOfflineSkip(f)) return; // explicitly, visibly declared — allowed
-    violations.push(f);
-  });
+  const { violations, nowFixed, timedOut } = classifyOutcomes(files, outcomes, baseline, (f) => declaresAllowOfflineSkip(f));
 
   if (timedOut.length > 0) {
     console.error(`${LABEL}: FAIL — ${timedOut.length} guard(s) hung instead of exiting when DATABASE_URL was stripped (a hang is not a pass either):`);
@@ -213,4 +261,5 @@ async function main() {
   console.log(`${LABEL}: PASS — ${files.length} DATABASE_URL-referencing guard(s) scanned live, ${baseline.size} pre-existing baseline debt (ratchets down only), 0 new silent-skip regressions.`);
 }
 
-await main();
+if (process.argv.includes("--selftest")) await selftest();
+else await main();

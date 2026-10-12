@@ -17,14 +17,24 @@ function assertSeparation(code) {
   ]) if (!code.includes(required)) throw new Error('NB tour separation missing: ' + required);
 }
 assertSeparation(source);
-for (const oldBehavior of [
+const mutations = [
   source.replace('!open.is_closed && open.has_other_nb', 'false'),
   source.replace('open_settlement_already_has_nb', 'allow_second_nb'),
   source.replace('SET presettlement_link_id = $1::uuid, tour_id = $3::uuid', 'SET presettlement_link_id = $1::uuid'),
-]) {
+  source.replaceAll('suggestion.tour_id = randomUUID()', 'suggestion.tour_id = target.tour_id'),
+  source.replace('reopenSettlementForContinuationInClientTx(client,', 'openNewSettlementInClientTx(client,'),
+];
+let caughtCount = 0;
+for (const oldBehavior of mutations) {
   let caught = false;
   try { assertSeparation(oldBehavior); } catch { caught = true; }
   if (!caught) throw new Error('NB old-behavior mutation escaped');
+  caughtCount += 1;
+}
+// --selftest: the static half only (clean source passes above, every planted old behavior is caught) — no vitest spawn.
+if (process.argv.includes("--selftest")) {
+  console.log(`verify-nb-open-tour-split SELFTEST: ${caughtCount}/${mutations.length} planted violations caught (clean source passes)`);
+  process.exit(0);
 }
 const result = spawnSync(process.execPath, [root + 'node_modules/vitest/vitest.mjs', 'run', '--config',
   root + 'apps/backend/vitest.config.ts', 'apps/backend/src/dispatch/__tests__/presettlement-link.service.test.ts'],

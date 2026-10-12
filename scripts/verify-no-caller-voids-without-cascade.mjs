@@ -91,6 +91,54 @@ function findUpdateBlocks(content, table) {
   return blocks;
 }
 
+/** Pure: the registered parent table this file void-writes WITHOUT a cascadeVoidChildren( call, or null. */
+export function unwiredVoidWriteTable(content) {
+  let flaggedTable = null;
+  for (const table of PARENT_TABLES) {
+    const blocks = findUpdateBlocks(content, table);
+    for (const block of blocks) {
+      if (VOID_WRITE_SIGNAL.test(block)) {
+        flaggedTable = table;
+        break;
+      }
+    }
+    if (flaggedTable) break;
+  }
+  if (!flaggedTable) return null;
+  return CASCADE_CALL_SIGNAL.test(content) ? null : flaggedTable;
+}
+
+function selftest() {
+  const VOID_INVOICE = "await client.query(`UPDATE accounting.invoices SET status = 'void', voided_at = now() WHERE id = $1`, [id]);";
+  const clean = [
+    ["void write that cascades", VOID_INVOICE + "\nawait cascadeVoidChildren(client, { parent: 'invoice', id });"],
+    ["CASE read of status, not an assignment", "`UPDATE accounting.factoring_advances SET status = CASE WHEN status = 'void' THEN 'void' ELSE 'factored' END`"],
+    ["un-void (voided_at = NULL)", "`UPDATE accounting.bills SET voided_at = NULL WHERE id = $1`"],
+    ["void write to a non-parent table", "`UPDATE accounting.payrun_gl_runs SET status = 'void'`"],
+    ["parent UPDATE without void, next statement voids another table", "`UPDATE driver_finance.driver_settlements SET closed_at = now()`,\n  [id]);\nawait c.query(`UPDATE accounting.payrun_gl_runs SET status='void'`);"],
+  ];
+  const planted = [
+    ["invoice voided by status, no cascade", VOID_INVOICE, "accounting.invoices"],
+    ["bill voided by voided_at, no cascade", "`UPDATE accounting.bills SET voided_at = now() WHERE id = $1`", "accounting.bills"],
+    ["expense status='void' (no spaces), no cascade", "`UPDATE accounting.expenses SET status='void' WHERE id = $1`", "accounting.expenses"],
+    ["settlement voided, no cascade", "`UPDATE driver_finance.driver_settlements SET voided_at = $2 WHERE id = $1`", "driver_finance.driver_settlements"],
+    ["factoring advance voided, no cascade", "`UPDATE accounting.factoring_advances SET status = 'void'`", "accounting.factoring_advances"],
+  ];
+  for (const [label, src] of clean) {
+    if (unwiredVoidWriteTable(src) !== null) {
+      console.error(`verify-no-caller-voids-without-cascade SELFTEST FAIL: clean case flagged: ${label}`);
+      process.exit(1);
+    }
+  }
+  let caught = 0;
+  for (const [label, src, table] of planted) {
+    if (unwiredVoidWriteTable(src) === table) caught += 1;
+    else console.error(`  ESCAPED: ${label}`);
+  }
+  console.log(`verify-no-caller-voids-without-cascade SELFTEST: ${caught}/${planted.length} planted violations caught`);
+  process.exit(caught === planted.length ? 0 : 1);
+}
+
 function loadBaseline() {
   try {
     return JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
@@ -111,21 +159,8 @@ function main() {
     const relFile = path.relative(REPO_ROOT, absFile);
     const content = readFileSync(absFile, "utf8");
 
-    let flaggedTable = null;
-    for (const table of PARENT_TABLES) {
-      const blocks = findUpdateBlocks(content, table);
-      for (const block of blocks) {
-        if (VOID_WRITE_SIGNAL.test(block)) {
-          flaggedTable = table;
-          break;
-        }
-      }
-      if (flaggedTable) break;
-    }
-    if (!flaggedTable) continue;
-
-    const hasCascade = CASCADE_CALL_SIGNAL.test(content);
-    if (hasCascade) continue; // wired -- fine, whether or not it's also in the baseline (baseline entry now stale, reported below)
+    const flaggedTable = unwiredVoidWriteTable(content);
+    if (!flaggedTable) continue; // no void write, or wired -- fine, whether or not it's also in the baseline (baseline entry now stale, reported below)
 
     if (baselineFiles.has(relFile)) {
       stillNeeded.add(relFile);
@@ -153,4 +188,5 @@ function main() {
   process.exit(0);
 }
 
-main();
+if (process.argv.includes("--selftest")) selftest();
+else main();

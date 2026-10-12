@@ -26,7 +26,105 @@ const BASE = process.env.LANE_BASE || 'origin/main';
 const fail = (m) => { console.error(`\n  LANE GUARD FAIL: ${m}\n`); process.exit(1); };
 const ok   = (m) => console.log(`  LANE GUARD PASS: ${m}`);
 
+// ---- parse LANES.md ---------------------------------------------------------
+// Sections are "## CC-N ..." / "## SHARED ..." / "## FORBIDDEN ...".
+// Path globs are the lines that are not TABLES:/prose.
+// Pure: returns { sections } or { error } so --selftest can plant a bad lane file in memory.
+export function parseLanes(text) {
+  const sections = {};
+  let cur = null;
+  for (const raw of text.split('\n')) {
+    const h = raw.match(/^##\s+(CC-[123]|LEAD|CURSOR|CODEX|SHARED|FORBIDDEN)/);
+    if (h) { cur = h[1]; sections[cur] = []; continue; }
+    if (!cur) continue;
+    const line = raw.trim();
+    if (!line || line.startsWith('TABLES:') || line.startsWith('#')) continue;
+    if (/^[A-Za-z].*:/.test(line) && !line.includes('/')) continue;   // prose like "Any write to: ..."
+    if (line.includes('/') || line.includes('*')) sections[cur].push(line.split(/\s{2,}/)[0].trim());
+  }
+
+  // ---- guard on the guard -----------------------------------------------------
+  // A CURSOR-seat bug (2026-09-22, same round as the seat landing itself) proved this file's own
+  // parser is not just naive but actively dangerous: prose inside a lane section that happens to
+  // contain "/" or "*" (e.g. an em-dash-joined sentence naming a path) silently compiles into a real
+  // glob and grants a lane nobody wrote. Every parsed entry must look like an actual path pattern --
+  // no whitespace, no em/en-dash, no sentence-ending punctuation -- or this guard is worse than none,
+  // because it reads as coverage while quietly widening a seat's real access.
+  const PATH_LIKE = /^[A-Za-z0-9_.*/-]+$/;
+  for (const [section, globs] of Object.entries(sections)) {
+    for (const g of globs) {
+      if (!PATH_LIKE.test(g)) {
+        return { error:
+          `${LANES_FILE} section "## ${section}" parsed a non-path line as a lane glob: "${g}". ` +
+          `This is prose being silently compiled into a permission grant -- move it below the TABLES: ` +
+          `line or prefix it with "# " (the parser skips both). Refusing to trust any lane in this file ` +
+          `until every entry looks like a real path.` };
+      }
+    }
+  }
+
+  for (const s of ['CC-1', 'CC-2', 'CC-3', 'SHARED']) {
+    if (!sections[s]?.length) return { error: `${LANES_FILE} has no path patterns under "## ${s}". Refusing to run a guard that would pass everything.` };
+  }
+  return { sections };
+}
+
+// glob -> regex.  ** = any depth, * = within one segment.
+const rx = (g) => new RegExp('^' + g
+  .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+  .replace(/\*\*/g, '\u0000')
+  .replace(/\*/g, '[^/]*')
+  .replace(/\u0000/g, '.*') + '($|/)');
+
+const matches = (file, globs) => globs.some((g) => rx(g).test(file));
+
+/** Pure verdict: which changed files are FORBIDDEN, which sit outside `seat`'s lane. */
+export function classifyFiles(files, seat, sections) {
+  const mine = sections[seat] ?? [];
+  const others = ['CC-1', 'CC-2', 'CC-3', 'LEAD', 'CURSOR', 'CODEX'].filter((s) => s !== seat && sections[s]?.length);
+  const violations = [];
+  const forbidden = [];
+  for (const f of files) {
+    if (matches(f, sections.FORBIDDEN || [])) { forbidden.push(f); continue; }
+    if (matches(f, mine) || matches(f, sections.SHARED)) continue;
+    const owner = others.find((s) => matches(f, sections[s]));
+    violations.push({ file: f, owner: owner || 'UNASSIGNED' });
+  }
+  return { violations, forbidden };
+}
+
+// ---- --selftest: plant each violation this guard exists to catch, in memory ----------------
+if (process.argv.includes("--selftest")) {
+  const LANES = [
+    '## CC-1 money', 'TABLES: accounting.*', 'apps/backend/src/accounting/**',
+    '## CC-2 guard', 'scripts/verify-*.mjs',
+    '## CC-3 fe', 'apps/frontend/**',
+    '## SHARED', 'docs/bus/**',
+    '## FORBIDDEN', 'db/migrations/.ledger.json',
+  ].join('\n');
+  let caught = 0; let planted = 0;
+  const expect = (label, cond) => { planted++; if (cond) caught++; else console.error(`  ESCAPED: ${label}`); };
+  const clean = parseLanes(LANES);
+  if (clean.error) { console.error(`verify-lane-ownership SELFTEST FAIL: clean lane file rejected: ${clean.error}`); process.exit(1); }
+  const inLane = classifyFiles(['scripts/verify-x.mjs', 'docs/bus/LANES.md'], 'CC-2', clean.sections);
+  if (inLane.violations.length || inLane.forbidden.length) { console.error('verify-lane-ownership SELFTEST FAIL: in-lane diff flagged'); process.exit(1); }
+  const cross = classifyFiles(['apps/backend/src/accounting/void.service.ts'], 'CC-2', clean.sections);
+  expect('CC-2 touching CC-1 file', cross.violations.length === 1 && cross.violations[0].owner === 'CC-1');
+  const unassigned = classifyFiles(['infra/random.tf'], 'CC-2', clean.sections);
+  expect('unassigned file', unassigned.violations[0]?.owner === 'UNASSIGNED');
+  const forb = classifyFiles(['db/migrations/.ledger.json'], 'CC-1', clean.sections);
+  expect('FORBIDDEN file', forb.forbidden.length === 1);
+  expect('prose compiled into a glob', !!parseLanes(LANES.replace('apps/frontend/**', 'apps/frontend/** — and also whatever else')).error);
+  expect('missing CC-2 section patterns', !!parseLanes(LANES.replace('scripts/verify-*.mjs', '')).error);
+  expect('one-segment * does not span dirs', classifyFiles(['scripts/sub/verify-x.mjs'], 'CC-2', clean.sections).violations.length === 1);
+  console.log(`verify-lane-ownership SELFTEST: ${caught}/${planted} planted violations caught`);
+  process.exit(caught === planted ? 0 : 1);
+}
+
 if (!existsSync(LANES_FILE)) fail(`${LANES_FILE} is missing. The lane table IS the rule; without it nothing is enforced.`);
+const parsed = parseLanes(readFileSync(LANES_FILE, 'utf8'));
+if (parsed.error) fail(parsed.error);
+const sections = parsed.sections;
 
 // ---- resolve seat -----------------------------------------------------------
 let seat = (process.env.SEAT || '').trim().toUpperCase();
@@ -64,56 +162,6 @@ if (!/^(CC-[123]|LEAD|CURSOR|CODEX|DEVIN-A)$/.test(seat)) {
        `A PR with no owner is exactly how two seats wrote the same rows.`);
 }
 
-// ---- parse LANES.md ---------------------------------------------------------
-// Sections are "## CC-N ..." / "## SHARED ..." / "## FORBIDDEN ...".
-// Path globs are the lines that are not TABLES:/prose.
-const text = readFileSync(LANES_FILE, 'utf8');
-const sections = {};
-let cur = null;
-for (const raw of text.split('\n')) {
-  const h = raw.match(/^##\s+(CC-[123]|LEAD|CURSOR|CODEX|SHARED|FORBIDDEN)/);
-  if (h) { cur = h[1]; sections[cur] = []; continue; }
-  if (!cur) continue;
-  const line = raw.trim();
-  if (!line || line.startsWith('TABLES:') || line.startsWith('#')) continue;
-  if (/^[A-Za-z].*:/.test(line) && !line.includes('/')) continue;   // prose like "Any write to: ..."
-  if (line.includes('/') || line.includes('*')) sections[cur].push(line.split(/\s{2,}/)[0].trim());
-}
-
-// ---- guard on the guard -----------------------------------------------------
-// A CURSOR-seat bug (2026-09-22, same round as the seat landing itself) proved this file's own
-// parser is not just naive but actively dangerous: prose inside a lane section that happens to
-// contain "/" or "*" (e.g. an em-dash-joined sentence naming a path) silently compiles into a real
-// glob and grants a lane nobody wrote. Every parsed entry must look like an actual path pattern --
-// no whitespace, no em/en-dash, no sentence-ending punctuation -- or this guard is worse than none,
-// because it reads as coverage while quietly widening a seat's real access.
-const PATH_LIKE = /^[A-Za-z0-9_.*/-]+$/;
-for (const [section, globs] of Object.entries(sections)) {
-  for (const g of globs) {
-    if (!PATH_LIKE.test(g)) {
-      fail(
-        `${LANES_FILE} section "## ${section}" parsed a non-path line as a lane glob: "${g}". ` +
-        `This is prose being silently compiled into a permission grant -- move it below the TABLES: ` +
-        `line or prefix it with "# " (the parser skips both). Refusing to trust any lane in this file ` +
-        `until every entry looks like a real path.`
-      );
-    }
-  }
-}
-
-for (const s of ['CC-1', 'CC-2', 'CC-3', 'SHARED']) {
-  if (!sections[s]?.length) fail(`${LANES_FILE} has no path patterns under "## ${s}". Refusing to run a guard that would pass everything.`);
-}
-
-// glob -> regex.  ** = any depth, * = within one segment.
-const rx = (g) => new RegExp('^' + g
-  .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-  .replace(/\*\*/g, '\u0000')
-  .replace(/\*/g, '[^/]*')
-  .replace(/\u0000/g, '.*') + '($|/)');
-
-const matches = (file, globs) => globs.some((g) => rx(g).test(file));
-
 // ---- changed files ----------------------------------------------------------
 let files = [];
 try {
@@ -137,17 +185,7 @@ if (cross) {
 }
 
 // ---- verdict ----------------------------------------------------------------
-const mine = sections[seat] ?? [];
-const others = ['CC-1', 'CC-2', 'CC-3', 'LEAD', 'CURSOR', 'CODEX'].filter((s) => s !== seat && sections[s]?.length);
-const violations = [];
-const forbidden = [];
-
-for (const f of files) {
-  if (matches(f, sections.FORBIDDEN || [])) { forbidden.push(f); continue; }
-  if (matches(f, mine) || matches(f, sections.SHARED)) continue;
-  const owner = others.find((s) => matches(f, sections[s]));
-  violations.push({ file: f, owner: owner || 'UNASSIGNED' });
-}
+const { violations, forbidden } = classifyFiles(files, seat, sections);
 
 if (forbidden.length) {
   fail(`${forbidden.length} file(s) in the FORBIDDEN list. No ruling overrides this:\n` +

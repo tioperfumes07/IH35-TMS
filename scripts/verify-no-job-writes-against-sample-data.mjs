@@ -40,6 +40,48 @@ const CHECKS = [
   },
 ];
 
+/** Pure: each writer's selection must still be the writer's own filter, narrowed to sample rows only. */
+export function checkShapeFailures(checks) {
+  const f = [];
+  for (const c of checks) {
+    if (!/\bis_sample_data IS TRUE\b/.test(c.sql)) f.push(`${c.name}: no longer selects ONLY sample-flagged rows`);
+    if (!/SELECT COUNT\(\*\) AS n\b/.test(c.sql)) f.push(`${c.name}: no longer returns a count named n`);
+  }
+  if (!checks.some((c) => /maintenance\.pm_schedules/.test(c.sql) && /ps\.is_active = true/.test(c.sql))) f.push("pm_auto_wo_log writer selection lost");
+  if (!checks.some((c) => /samsara_driver_id IS NOT NULL/.test(c.sql) && /deactivated_at IS NULL/.test(c.sql) && /status = 'Active'/.test(c.sql))) f.push("hos_snapshots writer selection lost");
+  return f;
+}
+
+/** Pure verdict over the per-check counts the live run returns. */
+export function failingChecks(counts) {
+  return counts.filter((c) => Number(c.n) > 0).map((c) => c.name);
+}
+
+function selftest() {
+  const label = "verify-no-job-writes-against-sample-data";
+  const clean = checkShapeFailures(CHECKS);
+  if (clean.length || failingChecks(CHECKS.map((c) => ({ name: c.name, n: "0" }))).length) {
+    console.error(`${label} SELFTEST FAIL: clean checks rejected: ${clean.join("; ")}`);
+    process.exit(1);
+  }
+  const mutate = (i, from, to) => CHECKS.map((c, j) => (j === i ? { ...c, sql: c.sql.replace(from, to) } : c));
+  const mutations = [
+    ["pm writer selects one sample unit", () => failingChecks([{ name: CHECKS[0].name, n: "1" }, { name: CHECKS[1].name, n: "0" }]).length === 1],
+    ["hos writer selects sample drivers", () => failingChecks([{ name: CHECKS[0].name, n: "0" }, { name: CHECKS[1].name, n: "7" }]).length === 1],
+    ["pm sample predicate inverted", () => checkShapeFailures(mutate(0, "u.is_sample_data IS TRUE", "u.is_sample_data IS FALSE")).length > 0],
+    ["hos sample predicate dropped", () => checkShapeFailures(mutate(1, "AND d.is_sample_data IS TRUE", "")).length > 0],
+    ["pm writer's active filter dropped", () => checkShapeFailures(mutate(0, "ps.is_active = true AND ", "")).length > 0],
+    ["hos writer's active filter dropped", () => checkShapeFailures(mutate(1, "AND d.status = 'Active'", "")).length > 0],
+  ];
+  let caught = 0;
+  for (const [name, fn] of mutations) {
+    if (fn()) caught += 1;
+    else console.error(`  ESCAPED: ${name}`);
+  }
+  console.log(`${label} SELFTEST: ${caught}/${mutations.length} planted violations caught`);
+  process.exit(caught === mutations.length ? 0 : 1);
+}
+
 async function main() {
   // H-4 / X-31 (ROUND 301) -- FAIL CLOSED BEFORE CONNECTING, never hang.
   // This guard already declares REQUIRES_LIVE_DB, which excludes it from verify-static's no-DB
@@ -78,7 +120,8 @@ async function main() {
   console.log(`verify-no-job-writes-against-sample-data PASS — ${CHECKS.length} known writer(s) checked, none select sample-flagged rows.`);
 }
 
-main().catch((e) => {
+if (process.argv.includes("--selftest")) selftest();
+else main().catch((e) => {
   console.error(e);
   process.exit(1);
 });

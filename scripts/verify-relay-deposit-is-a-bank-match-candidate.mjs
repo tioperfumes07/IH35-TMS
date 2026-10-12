@@ -33,18 +33,19 @@ function fail(errors) {
   process.exit(1);
 }
 
-function liveCheck() {
+/** Every check, over in-memory sources keyed like FILES — so --selftest can plant regressions. */
+export function findErrors(src) {
   const errors = [];
-  const match = read(FILES.match);
-  const math = read(FILES.math);
-  const kinds = read(FILES.kinds);
-  const routes = read(FILES.routes);
-  const accept = read(FILES.accept);
-  const hints = read(FILES.hints);
-  const migration = read(FILES.migration);
-  const pointer = read(FILES.pointer);
-  const fe = read(FILES.fe);
-  const drawer = read(FILES.drawer);
+  const match = src.match;
+  const math = src.math;
+  const kinds = src.kinds;
+  const routes = src.routes;
+  const accept = src.accept;
+  const hints = src.hints;
+  const migration = src.migration;
+  const pointer = src.pointer;
+  const fe = src.fe;
+  const drawer = src.drawer;
 
   if (!math.includes("RELAY_DEPOSIT_FEE_BPS = 325")) {
     errors.push(`${FILES.math} must use 325 bps fee`);
@@ -125,20 +126,35 @@ function liveCheck() {
     errors.push(`${FILES.drawer} must show wallet/fee split before confirm for relay_deposit`);
   }
 
+  return errors;
+}
+
+function liveCheck() {
+  const errors = findErrors(Object.fromEntries(Object.entries(FILES).map(([k, rel]) => [k, read(rel)])));
   if (errors.length) fail(errors);
   console.log(`${LABEL}: OK — relay deposit is a bank match candidate (engine + accept + read-only review)`);
 }
 
 function selftest() {
-  const match = read(FILES.match);
-  const planted = match.replace('wants("relay_deposit")', 'wants("relay_deposit_MISSING")');
-  if (planted.includes('wants("relay_deposit")') && !planted.includes('wants("relay_deposit_MISSING")')) {
-    console.error(`${LABEL} --selftest: plant did not change source`);
-    process.exit(1);
+  const sources = Object.fromEntries(Object.entries(FILES).map(([k, rel]) => [k, read(rel)]));
+  const planted = [
+    ["relay_deposit kind dropped from the match query", { match: sources.match.replaceAll('wants("relay_deposit")', 'wants("relay_deposit_MISSING")') }],
+    ["fee changed to 300 bps", { math: sources.math.replace("RELAY_DEPOSIT_FEE_BPS = 325", "RELAY_DEPOSIT_FEE_BPS = 300") }],
+    ["charged amount back to wallet+fee", { math: sources.math.replace("RELAY_DEPOSIT_CHARGED_AMOUNT_SQL = `rd.total_amount_cents`", "RELAY_DEPOSIT_CHARGED_AMOUNT_SQL = `rd.wallet_cents + rd.fee_cents`") }],
+    ["accept no longer stamps the pointer", { match: sources.match.replaceAll("matched_relay_deposit_id", "matched_other_id") }],
+    ["accept kinds lose relay_deposit", { kinds: sources.kinds.replaceAll('"relay_deposit"', '"relay_other"') }],
+    ["drawer hides the wallet/fee split", { drawer: sources.drawer.replaceAll("match-relay-deposit-split", "match-split") }],
+  ];
+  let caught = 0;
+  for (const [name, patch] of planted) {
+    if (findErrors({ ...sources, ...patch }).length > 0) caught += 1;
+    else console.error(`${LABEL} SELFTEST: planted violation escaped — ${name}`);
   }
-  console.log(`${LABEL} --selftest: OK`);
+  const clean = findErrors(sources);
+  if (clean.length) console.error(`${LABEL} SELFTEST: clean sources flagged — ${clean.join("; ")}`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught`);
+  process.exit(caught === planted.length && clean.length === 0 ? 0 : 1);
 }
 
-const arg = process.argv[2] ?? "";
-if (arg === "--selftest") selftest();
+if (process.argv.includes("--selftest")) selftest();
 else liveCheck();

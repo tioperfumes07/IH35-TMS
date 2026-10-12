@@ -89,7 +89,7 @@ function measure() {
   return { total, files: Object.keys(byFile).length, byFile };
 }
 
-if (process.argv[2] === "--selftest") {
+if (process.argv.includes("--selftest")) {
   const cases = [
     ["const a = async () => { try { await client.query('x'); } catch { v = null; } }", 1],
     ["const a = async () => { try { await client.query('x'); } catch (err) { req.log.error(err); } }", 0],
@@ -106,7 +106,7 @@ if (process.argv[2] === "--selftest") {
       bad += 1;
     }
   }
-  console.log(`${LABEL} selftest ${cases.length - bad}/${cases.length}`);
+  console.log(`${LABEL} SELFTEST: ${cases.length - bad}/${cases.length} cases (2 planted swallows caught, 4 honest handlers pass)`);
   process.exit(bad ? 1 : 0);
 }
 

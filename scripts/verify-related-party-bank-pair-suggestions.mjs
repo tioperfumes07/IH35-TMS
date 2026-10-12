@@ -34,114 +34,142 @@ function fail(errors) {
   process.exit(1);
 }
 
-const errors = [];
+/** Every check, over in-memory sources keyed like FILES — so --selftest can plant regressions. */
+export function findErrors(src) {
+  const errors = [];
 
-const cardMap = read(FILES.cardMap);
-for (const last4 of ["0210", "6248", "9855", "0275", "1354", "4823", "9708"]) {
-  if (!cardMap.includes(`"${last4}"`)) {
-    errors.push(`${FILES.cardMap} must map card ${last4}`);
+  const cardMap = src.cardMap;
+  for (const last4 of ["0210", "6248", "9855", "0275", "1354", "4823", "9708"]) {
+    if (!cardMap.includes(`"${last4}"`)) {
+      errors.push(`${FILES.cardMap} must map card ${last4}`);
+    }
   }
-}
-if (!cardMap.includes('USMCA_OWN_RELAY_CARD_LAST4 = "0680"')) {
-  errors.push(`${FILES.cardMap} must exclude USMCA own card 0680`);
-}
-if (!cardMap.includes("card_confirmed: false") || !cardMap.includes("0275")) {
-  errors.push(`${FILES.cardMap} card 0275 must be card_confirmed=false (suggestion only)`);
+  if (!cardMap.includes('USMCA_OWN_RELAY_CARD_LAST4 = "0680"')) {
+    errors.push(`${FILES.cardMap} must exclude USMCA own card 0680`);
+  }
+  if (!cardMap.includes("card_confirmed: false") || !cardMap.includes("0275")) {
+    errors.push(`${FILES.cardMap} card 0275 must be card_confirmed=false (suggestion only)`);
+  }
+
+  const suggest = src.suggest;
+  if (!suggest.includes("RELATED_PARTY_PAIR_WINDOW_DAYS = 5")) {
+    errors.push(`${FILES.suggest} must use 5-day window`);
+  }
+  if (!suggest.includes("listRelatedPartyPairSuggestions")) {
+    errors.push(`${FILES.suggest} must export listRelatedPartyPairSuggestions`);
+  }
+  if (!suggest.includes("pair_status") || !suggest.includes('"unpaired"')) {
+    errors.push(`${FILES.suggest} must surface unpaired rows`);
+  }
+  if (!suggest.includes("zelle") || !suggest.includes("IDCGR")) {
+    errors.push(`${FILES.suggest} must candidate Zelle + IDCGR outflows`);
+  }
+
+  const confirm = src.confirm;
+  if (!confirm.includes("confirmRelatedPartyPair")) {
+    errors.push(`${FILES.confirm} must export confirmRelatedPartyPair`);
+  }
+  if (!confirm.includes("postBankCategorizationOnClient")) {
+    errors.push(`${FILES.confirm} must categorize via postBankCategorizationOnClient (one JE)`);
+  }
+  if (!confirm.includes("createRelatedPartyLoanEntry")) {
+    errors.push(`${FILES.confirm} must create party_transfer_out via createRelatedPartyLoanEntry`);
+  }
+  if (!confirm.includes('target_type: "party_transfer_out"') && !confirm.includes("party_transfer_out")) {
+    errors.push(`${FILES.confirm} must use target_type party_transfer_out`);
+  }
+  if (/postRelatedPartyLoan|RELATED_PARTY_LOAN_GL_POSTING|postingEnabled\(/.test(confirm)) {
+    errors.push(`${FILES.confirm} must NOT call the loan poster (0 duplicate postings)`);
+  }
+  if (!confirm.includes("matched_relay_deposit_id") || !confirm.includes("matched_bank_transaction_id")) {
+    errors.push(`${FILES.confirm} must link bank↔deposit pointers on confirm`);
+  }
+  if (!confirm.includes("duplicate_postings: 0")) {
+    errors.push(`${FILES.confirm} must report duplicate_postings: 0`);
+  }
+  if (!confirm.includes(".posted !== true") && !confirm.includes("posted !== true")) {
+    errors.push(`${FILES.confirm} must fail-closed on BankFeedGlResult.posted !== true (not .ok)`);
+  }
+
+  const createEntry = src.createEntry;
+  if (!createEntry.includes('"party_transfer_out"') && !createEntry.includes("party_transfer_out")) {
+    errors.push(`${FILES.createEntry} TARGET_TYPES must include party_transfer_out`);
+  }
+  if (!createEntry.includes("isPartyTransferOut")) {
+    errors.push(`${FILES.createEntry} must validate party_transfer_out (direction out + funding_account_id)`);
+  }
+
+  const poster = src.poster;
+  if (!poster.includes("fundingAccountId") || !poster.includes("direction === \"out\"")) {
+    errors.push(`${FILES.poster} resolveCounterAccount must accept fundingAccountId for out`);
+  }
+
+  const routes = src.routes;
+  if (!routes.includes("related-party-pairs")) {
+    errors.push(`${FILES.routes} must register GET /api/v1/banking/related-party-pairs`);
+  }
+  if (!routes.includes("related-party-pairs/confirm")) {
+    errors.push(`${FILES.routes} must register POST /api/v1/banking/related-party-pairs/confirm`);
+  }
+  if (!routes.includes("listRelatedPartyPairSuggestions") || !routes.includes("confirmRelatedPartyPair")) {
+    errors.push(`${FILES.routes} must wire suggest + confirm services`);
+  }
+
+  const migration = src.migration;
+  if (!migration.includes("party_transfer_out")) {
+    errors.push(`${FILES.migration} must widen target_type CHECK for party_transfer_out`);
+  }
+  if (!migration.includes("related_party_loan_entries_target_type_check")) {
+    errors.push(`${FILES.migration} must restate related_party_loan_entries_target_type_check`);
+  }
+
+  const feApi = src.feApi;
+  if (!feApi.includes("related-party-pairs") || !feApi.includes("getRelatedPartyPairSuggestions")) {
+    errors.push(`${FILES.feApi} must call related-party-pairs API`);
+  }
+  if (!feApi.includes("confirmRelatedPartyPair")) {
+    errors.push(`${FILES.feApi} must export confirmRelatedPartyPair`);
+  }
+
+  const fePanel = src.fePanel;
+  if (!fePanel.includes("data-testid=\"related-party-pair-suggestions\"")) {
+    errors.push(`${FILES.fePanel} must expose related-party-pair-suggestions test id`);
+  }
+  if (!fePanel.includes("Confirm")) {
+    errors.push(`${FILES.fePanel} must offer Confirm (owner-only action)`);
+  }
+
+  const feView = src.feView;
+  if (!feView.includes("RelatedPartyPairSuggestionsPanel")) {
+    errors.push(`${FILES.feView} must mount RelatedPartyPairSuggestionsPanel`);
+  }
+  return errors;
 }
 
-const suggest = read(FILES.suggest);
-if (!suggest.includes("RELATED_PARTY_PAIR_WINDOW_DAYS = 5")) {
-  errors.push(`${FILES.suggest} must use 5-day window`);
-}
-if (!suggest.includes("listRelatedPartyPairSuggestions")) {
-  errors.push(`${FILES.suggest} must export listRelatedPartyPairSuggestions`);
-}
-if (!suggest.includes("pair_status") || !suggest.includes('"unpaired"')) {
-  errors.push(`${FILES.suggest} must surface unpaired rows`);
-}
-if (!suggest.includes("zelle") || !suggest.includes("IDCGR")) {
-  errors.push(`${FILES.suggest} must candidate Zelle + IDCGR outflows`);
+const sources = Object.fromEntries(Object.entries(FILES).map(([k, rel]) => [k, read(rel)]));
+
+if (process.argv.includes("--selftest")) {
+  const planted = [
+    ["card 9708 unmapped", { cardMap: sources.cardMap.replaceAll('"9708"', '"0000"') }],
+    ["own card 0680 no longer excluded", { cardMap: sources.cardMap.replace('USMCA_OWN_RELAY_CARD_LAST4 = "0680"', 'USMCA_OWN_RELAY_CARD_LAST4 = ""') }],
+    ["window widened to 10 days", { suggest: sources.suggest.replace("RELATED_PARTY_PAIR_WINDOW_DAYS = 5", "RELATED_PARTY_PAIR_WINDOW_DAYS = 10") }],
+    ["confirm calls the loan poster (duplicate posting)", { confirm: sources.confirm + "\nawait postRelatedPartyLoan(client, entry);\n" }],
+    ["confirm trusts .ok instead of .posted", { confirm: sources.confirm.replaceAll("posted !== true", "ok !== true") }],
+    ["confirm route unregistered", { routes: sources.routes.replaceAll("related-party-pairs/confirm", "related-party-pairs/x") }],
+    ["panel unmounted", { feView: sources.feView.replaceAll("RelatedPartyPairSuggestionsPanel", "Nothing") }],
+  ];
+  let caught = 0;
+  for (const [name, patch] of planted) {
+    if (findErrors({ ...sources, ...patch }).length > 0) caught += 1;
+    else console.error(`${LABEL} SELFTEST: planted violation escaped — ${name}`);
+  }
+  const clean = findErrors(sources);
+  if (clean.length) console.error(`${LABEL} SELFTEST: clean sources flagged — ${clean.join("; ")}`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught`);
+  process.exit(caught === planted.length && clean.length === 0 ? 0 : 1);
 }
 
-const confirm = read(FILES.confirm);
-if (!confirm.includes("confirmRelatedPartyPair")) {
-  errors.push(`${FILES.confirm} must export confirmRelatedPartyPair`);
-}
-if (!confirm.includes("postBankCategorizationOnClient")) {
-  errors.push(`${FILES.confirm} must categorize via postBankCategorizationOnClient (one JE)`);
-}
-if (!confirm.includes("createRelatedPartyLoanEntry")) {
-  errors.push(`${FILES.confirm} must create party_transfer_out via createRelatedPartyLoanEntry`);
-}
-if (!confirm.includes('target_type: "party_transfer_out"') && !confirm.includes("party_transfer_out")) {
-  errors.push(`${FILES.confirm} must use target_type party_transfer_out`);
-}
-if (/postRelatedPartyLoan|RELATED_PARTY_LOAN_GL_POSTING|postingEnabled\(/.test(confirm)) {
-  errors.push(`${FILES.confirm} must NOT call the loan poster (0 duplicate postings)`);
-}
-if (!confirm.includes("matched_relay_deposit_id") || !confirm.includes("matched_bank_transaction_id")) {
-  errors.push(`${FILES.confirm} must link bank↔deposit pointers on confirm`);
-}
-if (!confirm.includes("duplicate_postings: 0")) {
-  errors.push(`${FILES.confirm} must report duplicate_postings: 0`);
-}
-if (!confirm.includes(".posted !== true") && !confirm.includes("posted !== true")) {
-  errors.push(`${FILES.confirm} must fail-closed on BankFeedGlResult.posted !== true (not .ok)`);
-}
-
-const createEntry = read(FILES.createEntry);
-if (!createEntry.includes('"party_transfer_out"') && !createEntry.includes("party_transfer_out")) {
-  errors.push(`${FILES.createEntry} TARGET_TYPES must include party_transfer_out`);
-}
-if (!createEntry.includes("isPartyTransferOut")) {
-  errors.push(`${FILES.createEntry} must validate party_transfer_out (direction out + funding_account_id)`);
-}
-
-const poster = read(FILES.poster);
-if (!poster.includes("fundingAccountId") || !poster.includes("direction === \"out\"")) {
-  errors.push(`${FILES.poster} resolveCounterAccount must accept fundingAccountId for out`);
-}
-
-const routes = read(FILES.routes);
-if (!routes.includes("related-party-pairs")) {
-  errors.push(`${FILES.routes} must register GET /api/v1/banking/related-party-pairs`);
-}
-if (!routes.includes("related-party-pairs/confirm")) {
-  errors.push(`${FILES.routes} must register POST /api/v1/banking/related-party-pairs/confirm`);
-}
-if (!routes.includes("listRelatedPartyPairSuggestions") || !routes.includes("confirmRelatedPartyPair")) {
-  errors.push(`${FILES.routes} must wire suggest + confirm services`);
-}
-
-const migration = read(FILES.migration);
-if (!migration.includes("party_transfer_out")) {
-  errors.push(`${FILES.migration} must widen target_type CHECK for party_transfer_out`);
-}
-if (!migration.includes("related_party_loan_entries_target_type_check")) {
-  errors.push(`${FILES.migration} must restate related_party_loan_entries_target_type_check`);
-}
-
-const feApi = read(FILES.feApi);
-if (!feApi.includes("related-party-pairs") || !feApi.includes("getRelatedPartyPairSuggestions")) {
-  errors.push(`${FILES.feApi} must call related-party-pairs API`);
-}
-if (!feApi.includes("confirmRelatedPartyPair")) {
-  errors.push(`${FILES.feApi} must export confirmRelatedPartyPair`);
-}
-
-const fePanel = read(FILES.fePanel);
-if (!fePanel.includes("data-testid=\"related-party-pair-suggestions\"")) {
-  errors.push(`${FILES.fePanel} must expose related-party-pair-suggestions test id`);
-}
-if (!fePanel.includes("Confirm")) {
-  errors.push(`${FILES.fePanel} must offer Confirm (owner-only action)`);
-}
-
-const feView = read(FILES.feView);
-if (!feView.includes("RelatedPartyPairSuggestionsPanel")) {
-  errors.push(`${FILES.feView} must mount RelatedPartyPairSuggestionsPanel`);
-}
-
+const errors = findErrors(sources);
 if (errors.length) fail(errors);
 console.log(`${LABEL} OK`);
 process.exit(0);
