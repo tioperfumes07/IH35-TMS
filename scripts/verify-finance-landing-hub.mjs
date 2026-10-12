@@ -28,6 +28,7 @@ export function assertFinanceLanding({
   tabs,
   hubPage,
   breakEvenPage,
+  subnav = "",
 }) {
   const errors = [];
   if (!manifest) errors.push("manifest.tsx missing");
@@ -66,7 +67,18 @@ export function assertFinanceLanding({
   if (!/\{\s*id:\s*["']overview["'],\s*label:\s*["']Overview["'],\s*to:\s*["']\/finance\/overview["']\s*\}/.test(tabs)) {
     errors.push("Finance Overview tab must target /finance/overview");
   }
-  if (!/tab\.id\s*===\s*["']hub["'][^;]{0,120}currentPath\s*===\s*["']\/finance\/hub["']/.test(tabs)) {
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: FinanceModuleTabs hand-codes `tab.id === "hub" && currentPath === "/finance/hub"`.
+  //   new rule: that clause, OR the tabs render through the shared NavyPageSubNav (items carry tab.to) whose
+  //             active tab is the most-specific prefix match — isActive(pathname, to) is
+  //             `pathname === to || pathname.startsWith(`${to}/`)` — so /finance/hub keeps the Hub ("/finance") tab active.
+  //   why: LST-F10158-NAVY-FINANCE (#18880, 5b28a88ddc) moved the module onto NavyPageSubNav; ROUND 441.6's
+  //        NavyPageSubNav.most-specific test pins mostSpecificActiveTo("/finance/hub") === "/finance".
+  const navyKeepsHubActive =
+    /<NavyPageSubNav\s+items=\{tabs\.map\(\(tab\) => \(\{ label: tab\.label, to: tab\.to \}\)\)\}/.test(tabs) &&
+    /return pathname === to \|\| pathname\.startsWith\(`\$\{to\}\/`\);/.test(subnav) &&
+    /const activeTo = mostSpecificActiveTo\(/.test(subnav);
+  if (!navyKeepsHubActive && !/tab\.id\s*===\s*["']hub["'][^;]{0,120}currentPath\s*===\s*["']\/finance\/hub["']/.test(tabs)) {
     errors.push("legacy /finance/hub must keep the Hub tab active");
   }
 
@@ -109,6 +121,17 @@ function selftest() {
     `,
   };
 
+  // 443.99 — the current shape: tabs through the shared NavyPageSubNav (no hand-coded legacy clause).
+  const navyGood = {
+    ...good,
+    tabs: good.tabs.replace(/const isActive = currentPath === tab\.to[\s\S]*?"\/finance\/hub"\);/, "") +
+      "\n      <NavyPageSubNav items={tabs.map((tab) => ({ label: tab.label, to: tab.to }))} />\n",
+    subnav: "function isActive(pathname, to) {\n  if (to === \"/\") return pathname === \"/\";\n  return pathname === to || pathname.startsWith(`${to}/`);\n}\n  const activeTo = mostSpecificActiveTo(\n",
+  };
+  if (assertFinanceLanding(navyGood).length) {
+    console.error(`[${LABEL}] SELFTEST FAILED: shared NavyPageSubNav shape rejected: ${assertFinanceLanding(navyGood).join("; ")}`);
+    process.exit(1);
+  }
   const cases = [
     ["root mounts stub", { ...good, manifest: good.manifest.replace(
       '<Route path="/finance" element={<ProtectedRoute><FinanceHubPage /></ProtectedRoute>} />',
@@ -120,6 +143,8 @@ function selftest() {
     ["flyout overview stale", { ...good, sidebar: good.sidebar.replace('Overview", to: "/finance/overview"', 'Overview", to: "/finance"') }, "flyout Overview"],
     ["hub tab stale", { ...good, tabs: good.tabs.replace('id: "hub", label: "Hub", to: "/finance"', 'id: "hub", label: "Hub", to: "/finance/hub"') }, "Hub tab"],
     ["legacy active state lost", { ...good, tabs: good.tabs.replace('currentPath === "/finance/hub"', 'currentPath === "/finance/legacy"') }, "keep the Hub tab active"],
+    ["navy subnav loses prefix matching", { ...navyGood, subnav: navyGood.subnav.replace("|| pathname.startsWith(`${to}/`)", "") }, "keep the Hub tab active"],
+    ["navy items stop carrying tab.to", { ...navyGood, tabs: navyGood.tabs.replace("to: tab.to }))}", "to: \"/finance\" }))}") }, "keep the Hub tab active"],
     ["back link loops", { ...good, hubPage: good.hubPage.replaceAll("/finance/overview", "/finance") }, "back navigation"],
     ["break-even back loops", { ...good, breakEvenPage: good.breakEvenPage.replace("/finance/overview", "/finance") }, "Break-Even back navigation"],
   ];
@@ -148,6 +173,7 @@ const errors = assertFinanceLanding({
   tabs: read("apps/frontend/src/pages/finance/FinanceModuleTabs.tsx"),
   hubPage: read("apps/frontend/src/pages/finance/FinanceHubPage.tsx"),
   breakEvenPage: read("apps/frontend/src/pages/finance/BreakEvenPage.tsx"),
+  subnav: read("apps/frontend/src/components/layout/NavyPageSubNav.tsx"),
 });
 
 if (errors.length) {

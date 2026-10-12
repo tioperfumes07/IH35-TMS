@@ -46,7 +46,14 @@ const VISIBLE_DOC_LABEL_USES_GUARD_RE =
   /export function visibleDocumentLabel\([\s\S]*?!looksLikeSerializedJson\(s\)[\s\S]*?\n\}/;
 const MEMO_TEXT_HELPER_RE = /function memoText\([\s\S]*?looksLikeSerializedJson\(s\)[\s\S]*?\n\}/;
 const MEMO_TEXT_CALLED_TWICE_RE = /memoText\(row\.memo\)/;
-const MEMO_TEXT_CALLED_DETAIL_RE = /memoText\(detail\.transfer\.memo\)/;
+// LEAD 443.99 class B (2026-10-12).
+//   old rule: the detail panel must contain memoText(detail.transfer.memo).
+//   new rule: memoText(detail.transfer.memo), OR the panel binds `const transfer = query.data.transfer` and
+//             renders memoText(transfer.memo); a raw {transfer.memo} / {detail.transfer.memo} render fails.
+//   why: BANK-F31517-B1F (#23919, 61b0878186) moved the detail panel onto its own query and a local
+//        `transfer` binding; the Memo line still routes through memoText().
+const MEMO_TEXT_CALLED_DETAIL_RE = /memoText\(detail\.transfer\.memo\)|const transfer = query\.data\.transfer;[\s\S]*?Memo: \{memoText\(transfer\.memo\)\}/;
+const RAW_DETAIL_MEMO_RE = /Memo: \{(?:detail\.)?transfer\.memo\b/;
 
 export function checkEntityLabelRejectsJson(labelSrc, transfersSrc = "") {
   const offenders = [];
@@ -73,7 +80,7 @@ export function checkEntityLabelRejectsJson(labelSrc, transfersSrc = "") {
     if (!MEMO_TEXT_CALLED_TWICE_RE.test(transfersSrc)) {
       offenders.push(`${TRANSFERS_FILE}: the Memo table column no longer routes through memoText().`);
     }
-    if (!MEMO_TEXT_CALLED_DETAIL_RE.test(transfersSrc)) {
+    if (!MEMO_TEXT_CALLED_DETAIL_RE.test(transfersSrc) || RAW_DETAIL_MEMO_RE.test(transfersSrc)) {
       offenders.push(`${TRANSFERS_FILE}: the transfer detail panel's Memo line no longer routes through memoText().`);
     }
   }
@@ -116,6 +123,18 @@ if (process.argv.includes("--selftest")) {
   const buggyOffenders = checkEntityLabelRejectsJson(buggy, buggyTransfers);
   const fixedOffenders = checkEntityLabelRejectsJson(fixedLabel, fixedTransfers);
 
+  // 443.99 — the current panel shape with its Memo line rendered raw must be caught.
+  const rawLocalDetail = fixedTransfers.replace("Memo: {memoText(transfer.memo)}", 'Memo: {transfer.memo || "-"}');
+  const rawLocalOffenders = checkEntityLabelRejectsJson(fixedLabel, rawLocalDetail);
+  if (rawLocalDetail === fixedTransfers || !rawLocalOffenders.some((o) => o.includes("detail panel"))) {
+    console.error("verify:entity-label-rejects-serialized-json selftest FAILED — raw local-binding Memo line not caught");
+    process.exit(1);
+  }
+  const buggyDetailOffenders = checkEntityLabelRejectsJson(fixedLabel, buggyTransfers);
+  if (!buggyDetailOffenders.some((o) => o.includes("detail panel"))) {
+    console.error("verify:entity-label-rejects-serialized-json selftest FAILED — raw detail.transfer.memo not caught");
+    process.exit(1);
+  }
   if (buggyOffenders.length >= 1 && fixedOffenders.length === 0) {
     console.log("verify:entity-label-rejects-serialized-json selftest OK");
     process.exit(0);

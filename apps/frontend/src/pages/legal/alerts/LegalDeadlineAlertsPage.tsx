@@ -11,6 +11,7 @@ import { formatDateTimeUS } from "../../../lib/formatDate";
 import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../components/Combobox";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import {
   applyUniversalDatePreset,
   QBO_DATE_PRESETS,
@@ -148,61 +149,64 @@ export function LegalDeadlineAlertsPage() {
             )}
           </div>
 
-          <div className="overflow-x-auto rounded-sm border border-[#E5E7EB] bg-white">
-            <table className="w-full border-collapse text-xs text-[#0F1219]">
-              <thead>
-                <tr className="border-b border-[#E5E7EB] bg-[#F7F8FA]">
-                  {["Severity", "Kind", "Title", "Due", "Days", "Link"].map((h) => (
-                    <th
-                      key={h}
-                      className={
-                        h === "Due"
-                          ? "w-[132px] min-w-[132px] px-2 py-2 text-center text-xs font-bold uppercase tracking-wide text-[#4B5563]"
-                          : "px-2 py-2 text-center text-xs font-bold uppercase tracking-wide text-[#4B5563]"
-                      }
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-2 py-4 text-center text-[#6B7280]">
-                      {alerts.length === 0
-                        ? "No open legal deadline or expiry alerts in the 90-day window."
-                        : "No alerts in the selected due date range."}
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((a) => (
-                    <tr key={a.alert_id} className="border-b border-[#E5E7EB]">
-                      <td className="px-2 py-2 text-center">
-                        <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold capitalize ${SEV[a.severity] ?? SEV.info}`}>
-                          {a.severity}
-                        </span>
-                      </td>
-                      <td className="px-2 py-2 text-center text-[#1F2A44]">{a.kind.replaceAll("_", " ")}</td>
-                      <td className="px-2 py-2 text-center">
-                        <div className="font-medium">{a.title}</div>
-                        <div className="text-xs text-[#6B7280]">{a.subtitle}</div>
-                      </td>
-                      <td className="w-[132px] min-w-[132px] whitespace-nowrap px-2 py-2 text-center tabular-nums">
-                        {formatDateTimeUS(a.due_at)}
-                      </td>
-                      <td className="whitespace-nowrap px-2 py-2 text-center">{daysLabel(a.days_until)}</td>
-                      <td className="px-2 py-2 text-center">
-                        <Link to={a.href} className="text-xs text-[#14314F] underline">
-                          Open
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table): sortable headers, gear, export. */}
+          <ParityTable<LegalDeadlineAlert>
+            rows={filtered}
+            rowKey={(a) => a.alert_id}
+            storageKey="legal-deadline-alerts"
+            exportFilename="legal-deadline-alerts"
+            suppressToolbarRange
+            emptyText={
+              alerts.length === 0
+                ? "No open legal deadline or expiry alerts in the 90-day window."
+                : "No alerts in the selected due date range."
+            }
+            columns={[
+              {
+                key: "severity",
+                label: "Severity",
+                sortable: true,
+                sortValue: (a) => a.severity,
+                render: (a) => (
+                  <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold capitalize ${SEV[a.severity] ?? SEV.info}`}>{a.severity}</span>
+                ),
+              },
+              { key: "kind", label: "Kind", sortable: true, sortValue: (a) => a.kind, cellClass: "text-[#1F2A44]", render: (a) => a.kind.replaceAll("_", " ") },
+              {
+                key: "title",
+                label: "Title",
+                sortable: true,
+                sortValue: (a) => a.title,
+                allowWrap: true,
+                render: (a) => (
+                  <>
+                    <div className="font-medium">{a.title}</div>
+                    <div className="text-xs text-[#6B7280]">{a.subtitle}</div>
+                  </>
+                ),
+              },
+              {
+                key: "due_at",
+                label: "Due",
+                sortable: true,
+                minWidth: 132,
+                sortValue: (a) => a.due_at,
+                cellClass: "whitespace-nowrap tabular-nums",
+                render: (a) => formatDateTimeUS(a.due_at),
+              },
+              { key: "days_until", label: "Days", kind: "number", sortable: true, sortValue: (a) => a.days_until, render: (a) => daysLabel(a.days_until) },
+              {
+                key: "href",
+                label: "Link",
+                sortable: false,
+                render: (a) => (
+                  <Link to={a.href} className="text-xs text-[#14314F] underline">
+                    Open
+                  </Link>
+                ),
+              },
+            ]}
+          />
         </>
       )}
     </div>

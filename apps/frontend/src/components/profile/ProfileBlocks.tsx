@@ -28,18 +28,23 @@ export function ProfileKpi(props: { label: string; value: string; tone?: "red" |
   );
 }
 
-/** Label / value rows (money right-aligned, tabular). */
-export function ProfileRows(props: { rows: Array<[string, ReactNode, string?]> }) {
+/**
+ * Label / value rows (money right-aligned, tabular). A definition list, not a table element: these are facts about one
+ * record (an aging ladder, a credit position), not a list of records — a list goes through ParityTable.
+ * Tuple: [label, value, value class?, row class?] — row class carries emphasis for a total line.
+ */
+export function ProfileRows(props: { rows: Array<[string, ReactNode, string?, string?]>; testId?: string }) {
   return (
-    <table className="w-full tabular-nums">
-      <tbody>
-        {props.rows.map(([label, value, cls], i) => (
-          <tr key={label} className={i < props.rows.length - 1 ? "border-b border-[color:var(--ih-rule)]" : ""}>
-            <td className="py-1">{label}</td>
-            <td className={`py-1 text-right ${cls ?? ""}`}>{value}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <dl className="m-0 w-full tabular-nums" data-testid={props.testId}>
+      {props.rows.map(([label, value, cls, rowCls], i) => (
+        <div
+          key={label}
+          className={`flex items-baseline justify-between gap-3 py-1 ${i < props.rows.length - 1 ? "border-b border-[color:var(--ih-rule)]" : ""} ${rowCls ?? ""}`}
+        >
+          <dt>{label}</dt>
+          <dd className={`m-0 text-right ${cls ?? ""}`}>{value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

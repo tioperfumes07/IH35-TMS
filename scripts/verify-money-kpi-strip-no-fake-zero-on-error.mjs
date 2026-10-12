@@ -166,18 +166,35 @@ function checkAccountingHub(src) {
   }
 }
 
+// LEAD 443.99 class B (2026-10-12) — FactoringHome KPI strip.
+//   old rule: the row's Reserve Balance tile reads summaryQuery.isError ? "—" : fmtCurrency(summary?.reserve_balance).
+//   new rule: every DrillKpiCard value in factoring-home-kpi-row that formats money is guarded by its own
+//             query's isError (`<query>.isError ? null : …` — DrillKpiCard renders null as "—", or the legacy
+//             `? "—" :` form); the Outstanding Liability tile must be summaryQuery-guarded; no money tile may
+//             format without a guard.
+//   why: ACCT-F9329 / ROUND 326.2 (bfda280a34) rebuilt the strip on one book-reserve engine — the Reserve
+//        Balance tile is gone and the tiles pass null for the card's own "—". Stricter: every money tile is
+//        now checked, not one named tile.
 function checkFactoringHome(src) {
   if (!src.includes('data-testid="factoring-home-kpi-row"')) {
     fail(`${FACTORING_HOME}: factoring-home-kpi-row not found — did the summary KPI strip move?`);
     return;
   }
   const start = src.indexOf('data-testid="factoring-home-kpi-row"');
-  const block = src.slice(start, start + 1600);
+  const endMarker = src.indexOf('data-testid="factoring-home-liability-cleared"', start);
+  const block = src.slice(start, endMarker > start ? endMarker : start + 4000);
   if (!block.includes("summaryQuery.isError")) {
     fail(`${FACTORING_HOME}: KPI row does not branch on summaryQuery.isError — reserve/chargeback tiles will show fabricated currency on a failed fetch.`);
   }
-  if (!/summaryQuery\.isError\s*\?\s*"—"\s*:\s*fmtCurrency\(summary\?\.reserve_balance\)/.test(block)) {
-    fail(`${FACTORING_HOME}: Reserve Balance tile missing summaryQuery.isError ? "—" : fmtCurrency(...) branch.`);
+  const values = [...block.matchAll(/<DrillKpiCard[\s\S]*?value=\{([\s\S]*?)\}\s*\n/g)].map((m) => m[1]);
+  const guarded = (v) => /^\s*\w+\.isError\s*\?\s*(?:null|"—")\s*:/.test(v);
+  for (const v of values) {
+    if (/fmtCurrency\(/.test(v) && !guarded(v)) {
+      fail(`${FACTORING_HOME}: money KPI tile formats without an isError guard: value={${v.trim()}}`);
+    }
+  }
+  if (!/summaryQuery\.isError\s*\?\s*(?:null|"—")\s*:\s*fmtCurrency\(summary\?\.outstanding_liability_balance\)/.test(block)) {
+    fail(`${FACTORING_HOME}: Outstanding Liability tile missing summaryQuery.isError ? null : fmtCurrency(...) branch.`);
   }
 }
 
@@ -191,7 +208,14 @@ function checkMaintenanceHome(src, rowsSrc) {
   if (!src.includes("isError={kpisQuery.isError}")) {
     fail(`${MAINT_HOME}: MaintKpiRows must be passed isError={kpisQuery.isError}.`);
   }
-  if (!rowsSrc.includes("isError ? null : pick(kpis.open_wos)")) {
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: the Open WOs tile itself reads isError ? null : pick(kpis.open_wos).
+  //   new rule: that per-tile null, OR the whole tile grid (holding Open WOs) renders only in the else-branch of
+  //             `{isError ? ( <error state> ) : ( <grid> )}` — on error no tile renders at all.
+  //   why: C-22 / BANK-F91475 (#25217, acf9a8e191) replaced the strip with a LOAD_FAIL error state on isError,
+  //        so a failed fetch can no longer paint any tile, Open WOs included.
+  const errorBranchGrid = /\{isError \? \(\s*<div data-testid="maint-kpi-rows-error">[\s\S]*?\) : \(\s*<div[^>]*data-testid="maint-kpi-rows"[\s\S]*?label="Open WOs"/.test(rowsSrc);
+  if (!rowsSrc.includes("isError ? null : pick(kpis.open_wos)") && !errorBranchGrid) {
     fail(`${MAINT_KPI_ROWS}: Open WOs tile must null out when isError.`);
   }
 }
@@ -353,7 +377,9 @@ function selftest() {
       .replace(/summaryQuery\.isError \? "—" : \(summary\?\.active_factor_name \?\? "Not configured"\)/g, 'summary?.active_factor_name ?? "Not configured"')
       .replace(/summaryQuery\.isError \? "—" : fmtCurrency\(summary\?\.reserve_balance\)/g, "fmtCurrency(summary?.reserve_balance)")
       .replace(/summaryQuery\.isError \? "—" : fmtCurrency\(summary\?\.chargeback_balance\)/g, "fmtCurrency(summary?.chargeback_balance)")
-      .replace(/summaryQuery\.isError \? "—" : Number\(summary\?\.recourse_days \?\? 95\)/g, "Number(summary?.recourse_days ?? 95)");
+      .replace(/summaryQuery\.isError \? "—" : Number\(summary\?\.recourse_days \?\? 95\)/g, "Number(summary?.recourse_days ?? 95)")
+      // 443.99 — the current strip's null-guarded form.
+      .replace(/value=\{summaryQuery\.isError \? null : /g, "value={");
     if (mutated === original) {
       console.error("SELFTEST SETUP FAILED: FactoringHome summaryQuery.isError patterns not found.");
       process.exitCode = 1;
@@ -368,6 +394,31 @@ function selftest() {
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping FactoringHome summaryQuery.isError was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
+  // Mutation 5b (443.99): MaintKpiRows drops the error branch, so the grid renders on a failed fetch.
+  {
+    const originalHome = fs.readFileSync(MAINT_HOME, "utf8");
+    const originalRows = fs.readFileSync(MAINT_KPI_ROWS, "utf8");
+    const mutatedRows = originalRows.replace("{isError ? (", "{false ? (");
+    if (mutatedRows === originalRows) {
+      console.error("SELFTEST SETUP FAILED: MaintKpiRows isError branch not found to mutate.");
+      process.exitCode = 1;
+      return;
+    }
+    let caught = false;
+    try {
+      checkMaintenanceHome(originalHome, mutatedRows);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping the MaintKpiRows error branch was not caught.");
       process.exitCode = 1;
       return;
     }

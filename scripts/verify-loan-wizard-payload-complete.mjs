@@ -45,8 +45,15 @@ export function wizardControlFields(src) {
 export function payloadKeys(src) {
   const start = src.indexOf("export function buildPayload");
   if (start < 0) return [];
-  const end = src.indexOf("\nexport function", start + 1);
-  const body = src.slice(start, end < 0 ? undefined : end);
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: buildPayload's body runs from its header to the next "\nexport function".
+  //   new rule: the body ends at buildPayload's own closing brace (first "\n}\n" after the header).
+  //   why: a NON-exported helper added after buildPayload (formFromPrefill, the bank-line prefill) was
+  //        swallowed into the slice, so its `interest_rate_pct:` form key was reported as a payload key
+  //        the backend rejects — a false red on a payload that sends interest_rate_bps. Same keys, same
+  //        checks; the slice is just the function the rule is about.
+  const close = src.indexOf("\n}\n", start + 1);
+  const body = src.slice(start, close < 0 ? undefined : close + 2);
   const keys = new Set();
   // `key: value` …
   for (const m of body.matchAll(/^\s{4}([a-z_]+):/gm)) keys.add(m[1]);
@@ -182,6 +189,12 @@ export function other() {}
   // Stale parsers must fail loudly rather than pass on zero findings.
   if (audit({ wizardSrc: "no controls here", routesSrc: routes }).length === 0)
     failures.push("case5 FAIL — a stale parser passed vacuously");
+
+  // 443.99 — a non-exported helper AFTER buildPayload (a form-state object, not the POST body) must not be
+  // read as payload keys; an invented key INSIDE buildPayload is still caught (case4).
+  const helperAfter = goodWizard.replace("export function other() {}", "function formFromPrefill() {\n  return {\n    interest_rate_pct: \"0\",\n  };\n}\nexport function other() {}");
+  if (audit({ wizardSrc: helperAfter, routesSrc: routes }).length !== 0)
+    failures.push(`case7 FAIL — a helper after buildPayload was read as payload: ${audit({ wizardSrc: helperAfter, routesSrc: routes }).join(" | ")}`);
 
   const tree = auditTree();
   if (tree.length !== 0) failures.push(`case6 FAIL — real source flagged: ${tree.join(" | ")}`);

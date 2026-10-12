@@ -7,7 +7,7 @@ import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { applyReclassify, findReclassifyLines, type ReclassifyBatchResult } from "../../api/reclassify";
+import { applyReclassify, findReclassifyLines, type ReclassifyBatchResult, type ReclassifyLine } from "../../api/reclassify";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { Button } from "../../components/Button";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -16,6 +16,7 @@ import { formatDateQboList } from "../../lib/formatDate";
 import { docTarget, notReclassifiable } from "../../lib/reclassifyDrill";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
+import { ParityTable } from "../../components/parity/ParityTable";
 
 /** Hard fetch cap — must surface shown-vs-total (CLS-SILENT-CAP / LST-F407-C). Keep the
  *  numeric literal on the request (`limit: 500`) so the silent-cap guard can still see the boundary. */
@@ -126,25 +127,25 @@ export function WizardReclassifyPanel({
         </p>
       ) : null}
 
+      {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table): sortable headers, gear, export. */}
       {lines.length > 0 ? (
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-[#E5E7EB] text-center">
-              <th className="p-1" />
-              <th className="p-1">Date</th>
-              <th className="p-1">Document</th>
-              <th className="p-1">Account</th>
-              <th className="p-1">Memo</th>
-              <th className="p-1 text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {lines.map((l) => {
-              const why = notReclassifiable(l);
-              const target = docTarget(l);
-              return (
-                <tr key={l.posting_id} className="border-b border-[#E5E7EB]" title={why ?? undefined}>
-                  <td className="p-1 text-center">
+        <ParityTable<ReclassifyLine>
+          embedded
+          rows={lines}
+          rowKey={(l) => l.posting_id}
+          storageKey="wizard-reclassify-lines"
+          exportFilename="reclassify-lines"
+          suppressToolbarRange
+          rowTestId={(l) => `sc-reclassify-line-${l.posting_id}`}
+          columns={[
+            {
+              key: "select",
+              label: "Select",
+              sortable: false,
+              render: (l) => {
+                const why = notReclassifiable(l);
+                return (
+                  <span title={why ?? undefined}>
                     <input
                       type="checkbox"
                       disabled={Boolean(why)}
@@ -157,19 +158,43 @@ export function WizardReclassifyPanel({
                       }}
                       aria-label={`Select ${l.document_number ?? l.posting_id}`}
                     />
-                  </td>
-                  <td className="p-1 text-center">{formatDateQboList(l.entry_date)}</td>
-                  <td className="p-1 text-center">
-                    <EntityLink kind={target.kind} id={target.id} label={l.document_number ?? "Open"} />
-                  </td>
-                  <td className="p-1">{formatAccountDisplayLabel({ account_name: l.account_name, account_number: l.account_number }, { showNumber: showAccountNumbers })}</td>
-                  <td className="p-1">{l.description ?? "—"}</td>
-                  <td className="p-1"><MoneyCell cents={l.amount_cents} format={formatUsdCentsTable} drill={{ entity: { kind: target.kind, id: target.id } }} /></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  </span>
+                );
+              },
+            },
+            { key: "entry_date", label: "Date", sortable: true, sortValue: (l) => l.entry_date, render: (l) => formatDateQboList(l.entry_date) },
+            {
+              key: "document_number",
+              label: "Document",
+              sortable: true,
+              sortValue: (l) => l.document_number,
+              render: (l) => {
+                const target = docTarget(l);
+                return <EntityLink kind={target.kind} id={target.id} label={l.document_number ?? "Open"} />;
+              },
+            },
+            {
+              key: "account_name",
+              label: "Account",
+              sortable: true,
+              sortValue: (l) => l.account_name,
+              cellClass: "text-left",
+              render: (l) => formatAccountDisplayLabel({ account_name: l.account_name, account_number: l.account_number }, { showNumber: showAccountNumbers }),
+            },
+            { key: "description", label: "Memo", sortable: true, sortValue: (l) => l.description, cellClass: "text-left", render: (l) => l.description ?? "—" },
+            {
+              key: "amount_cents",
+              label: "Amount",
+              kind: "money",
+              sortable: true,
+              sortValue: (l) => l.amount_cents,
+              render: (l) => {
+                const target = docTarget(l);
+                return <MoneyCell cents={l.amount_cents} format={formatUsdCentsTable} drill={{ entity: { kind: target.kind, id: target.id } }} />;
+              },
+            },
+          ]}
+        />
       ) : null}
 
       {lines.length > 0 ? (

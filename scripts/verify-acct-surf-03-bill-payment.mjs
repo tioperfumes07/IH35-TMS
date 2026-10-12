@@ -71,8 +71,18 @@ function contractErrors(src) {
   if (!/searchParams\.get\(["']create["']\)\s*===\s*["']1["']/.test(src.list)) {
     errors.push("VERIFY-1: BillPaymentsListPage must honor ?create=1 for PayBillModal");
   }
-  if (!/params\.delete\(["']create["']\)/.test(src.list) || !/params\.set\(["']create["'],\s*["']1["']\)/.test(src.list)) {
-    errors.push("VERIFY-1: BillPaymentsListPage must URL-sync create open/close");
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: the page both sets ?create=1 on open (params.set) and deletes it on close (params.delete).
+  //   new rule: the ?create=1 deep link opens the modal and closing it deletes the param; the on-page
+  //             "+ Record Bill Payment" opens through local state and must NOT write ?create=1.
+  //   why: ACCT-F9821 (#18829, a1d9775637) — the page sits in <Suspense key={pathname+search}>, so writing
+  //        ?create=1 from the on-page button remounted it and wiped the selected bill ("No bill selected.").
+  //        Still fails if the deep link stops clearing on close, or if the button goes back to the URL.
+  if (!/params\.delete\(["']create["']\)/.test(src.list) || !/if \(payModalOpenFromDeepLink\) clearPayModalDeepLink\(\)/.test(src.list)) {
+    errors.push("VERIFY-1: BillPaymentsListPage must clear ?create=1 when the deep-linked modal closes");
+  }
+  if (/params\.set\(["']create["'],\s*["']1["']\)/.test(src.list) || !/setPayModalOpenLocal\(true\)/.test(src.list)) {
+    errors.push("VERIFY-1: BillPaymentsListPage on-page Record Bill Payment must open via local state, never by writing ?create=1 (ACCT-F9821 remount)");
   }
 
   for (const needle of [
@@ -178,7 +188,7 @@ function selftest() {
     map: "ACCT-SURF-03 `/accounting/bill-payments`",
     manifest: 'path="/accounting/bill-payments"\n<BillPaymentsListPage />\n',
     subnav: "/accounting/bill-payments",
-    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nvisibleDocumentLabel(row.bill_number, row.bill_id, "Bill")\njournal_entry_date\njournal_entry_memo\nmatched_bank_transaction_date\nmatched_bank_transaction_description\n',
+    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.delete("create")\nif (payModalOpenFromDeepLink) clearPayModalDeepLink()\nsetPayModalOpenLocal(true)\nvisibleDocumentLabel(row.bill_number, row.bill_id, "Bill")\njournal_entry_date\njournal_entry_memo\nmatched_bank_transaction_date\nmatched_bank_transaction_description\n',
     pay: [
       "ParityDrawer",
       "<ParityDrawer",
@@ -200,9 +210,20 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL good:`, contractErrors(good));
     process.exit(1);
   }
+  // 443.99 — the on-page button writing ?create=1 again (the ACCT-F9821 remount) must be caught.
+  const urlOpenAgain = { ...good, list: good.list + 'params.set("create", "1")\n' };
+  if (!contractErrors(urlOpenAgain).some((e) => /ACCT-F9821/.test(e))) {
+    console.error(`${LABEL} --selftest FAIL: must catch the on-page open writing ?create=1`);
+    process.exit(1);
+  }
+  const noDeepLinkClear = { ...good, list: good.list.replace("if (payModalOpenFromDeepLink) clearPayModalDeepLink()", "") };
+  if (!contractErrors(noDeepLinkClear).some((e) => /clear \?create=1/.test(e))) {
+    console.error(`${LABEL} --selftest FAIL: must catch the deep-linked modal not clearing ?create=1`);
+    process.exit(1);
+  }
   const thinList = {
     ...good,
-    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nentityLabel(null, row.bill_id, "Bill")\n',
+    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.delete("create")\nif (payModalOpenFromDeepLink) clearPayModalDeepLink()\nsetPayModalOpenLocal(true)\nentityLabel(null, row.bill_id, "Bill")\n',
   };
   if (!contractErrors(thinList).some((e) => /bill_number|UUID chrome/.test(e))) {
     console.error(`${LABEL} --selftest FAIL: must catch null bill_number label`);
@@ -213,7 +234,7 @@ function selftest() {
   // under the CURRENT helper name, not just the retired entityLabel spelling.
   const thinListVisibleDoc = {
     ...good,
-    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nvisibleDocumentLabel(null, row.bill_id, "Bill")\n',
+    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.delete("create")\nif (payModalOpenFromDeepLink) clearPayModalDeepLink()\nsetPayModalOpenLocal(true)\nvisibleDocumentLabel(null, row.bill_id, "Bill")\n',
   };
   if (!contractErrors(thinListVisibleDoc).some((e) => /bill_number|UUID chrome/.test(e))) {
     console.error(`${LABEL} --selftest FAIL: must catch null bill_number label via visibleDocumentLabel`);

@@ -69,7 +69,15 @@ for (const label of ["MPG against fleet", "Gallons per 100 mi", "Fills with no l
   if (!ddSvc.includes(label)) fails.push(`driver detail integrity row missing: "${label}"`);
 }
 for (const snapshot of ["Angel Sosa", "$1,842.60", "S-2026-5819", "$1,140.00", "9,150", "fleet 6.4"]) if (ddUi.includes(snapshot)) fails.push(`hardcoded DriverDetail board figure "${snapshot}" ships`);
-if (!/className="ih-table"/.test(ui)) fails.push("board table must use ih-table (rules for rows, never for columns)");
+// 443.100 class B (verify-table-header-and-date-column, hand-rolled <table> ratchet 40).
+//   old rule: PartyBoard renders a hand-rolled <table className="ih-table">.
+//   new rule: PartyBoard renders the shared <ParityTable appearance="board"> — the boards' palette, horizontal
+//             rules only (ParityTable's board mode sets borderTop/borderBottom, never borderLeft/Right) — and no
+//             hand-rolled <table>.
+//   why: the table law sends every list through ParityTable (centered sortable headers, one gear, export,
+//        pager); the two guards demanded opposite markup. The property this rule protects — rules for rows,
+//        never for columns — is kept and still checked below on party-board.css.
+if (!/<ParityTable<R>\s+appearance="board"/.test(ui) || /<table[\s>]/.test(ui)) fails.push("board table must be <ParityTable appearance=\"board\"> (rules for rows, never for columns), not a hand-rolled <table>");
 if (/border-(left|right)\s*:/.test(css)) fails.push("party-board.css declares a column border");
 if (!/cents \? usd\(cents\) : "—"/.test(ui)) fails.push("missing money must render — (never $0.00)");
 if (!process.env.DATABASE_URL) { console.error("verify-party-boards-bound-live: FAIL — DATABASE_URL not set (live guard fails closed)."); process.exit(1); }

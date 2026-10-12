@@ -4,6 +4,7 @@
  * GLOBAL-TYPE-SIZE-BASELINE tokens, tabular-nums on every money figure. Each block renders its value or the
  * engine's named empty reason — never a placeholder. Every row drills to its record (invoice/payment/load/vendor).
  */
+import type { ReactNode } from "react";
 import { MoneyCell } from "../shared/MoneyCell";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +15,7 @@ import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ListErrorState } from "../ListErrorState";
 import { EntityLink } from "../shared/EntityLink";
 import { AmountLink, type AgingBucketId } from "../shared/AmountLink";
-import { ProfileKpi, ProfileSection } from "../profile/ProfileBlocks";
+import { ProfileKpi, ProfileRows, ProfileSection } from "../profile/ProfileBlocks";
 
 type Block<T> = { value: T; empty_reason: string | null };
 type OpenLoad = { id: string; load_number: string; status: string; rate_total_cents: number; origin: string | null; destination: string | null; invoiced: boolean };
@@ -35,7 +36,6 @@ export type CustomerProfile = {
   rate_history: Block<Rate[]>;
 };
 
-const money = "tabular-nums";
 const Section = ProfileSection;
 const Kpi = ProfileKpi;
 
@@ -108,71 +108,72 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
 
       <div className="grid gap-2 lg:grid-cols-3">
         <Section title="AR aging" testId="customer-profile-ar-aging" reason={p.ar_aging.empty_reason}>
-          <table className={`w-full ${money}`}>
-            <tbody>
-              {/* ROUND 433.2 — each bucket drills to this customer's open invoices in that bucket, as of the date the server
-                  bucketed on (the one ladder, the one open-A/R population), so the list adds up to the figure clicked. */}
-              {([
+          {/* ROUND 433.2 — each bucket drills to this customer's open invoices in that bucket, as of the date the server
+              bucketed on (the one ladder, the one open-A/R population), so the list adds up to the figure clicked. */}
+          <ProfileRows
+            testId="customer-ar-aging-rows"
+            rows={[
+              ...([
                 ["Current", a.current_cents, "current"],
                 ["1–30 days", a.d1_30_cents, "d1_30"],
                 ["31–60 days", a.d31_60_cents, "d31_60"],
                 ["61–90 days", a.d61_90_cents, "d61_90"],
                 ["Over 90 days", a.d90_plus_cents, "d90_plus"],
-              ] as const).map(([label, cents, bucket]) => (
-                <tr key={label} className="border-b border-[color:var(--ih-rule)]">
-                  <td className="py-1">{label}</td>
-                  <td className="py-1 text-right tabular-nums">
-                    <AmountLink
-                      filter={a.as_of ? { target: "invoices", customerId: props.customerId, hasBalance: true, agingBucket: bucket as AgingBucketId, agingAsOf: a.as_of } : null}
-                      data-testid={`customer-ar-${bucket}`}
-                    >
-                      {formatUsdCents(cents)}
-                    </AmountLink>
-                  </td>
-                </tr>
-              ))}
-              <tr className="font-semibold">
-                <td className="py-1">Total open ({a.open_invoice_count} invoices)</td>
-                <td className="py-1 text-right tabular-nums">
-                  <AmountLink filter={{ target: "invoices", customerId: props.customerId, hasBalance: true }} data-testid="customer-ar-total">
-                    {formatUsdCents(a.total_open_cents)}
-                  </AmountLink>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+              ] as const).map(([label, cents, bucket]): [string, ReactNode] => [
+                label,
+                <AmountLink
+                  key={bucket}
+                  filter={a.as_of ? { target: "invoices", customerId: props.customerId, hasBalance: true, agingBucket: bucket as AgingBucketId, agingAsOf: a.as_of } : null}
+                  data-testid={`customer-ar-${bucket}`}
+                >
+                  {formatUsdCents(cents)}
+                </AmountLink>,
+              ]),
+              [
+                `Total open (${a.open_invoice_count} invoices)`,
+                <AmountLink key="total" filter={{ target: "invoices", customerId: props.customerId, hasBalance: true }} data-testid="customer-ar-total">
+                  {formatUsdCents(a.total_open_cents)}
+                </AmountLink>,
+                undefined,
+                "font-semibold",
+              ],
+            ]}
+          />
         </Section>
 
         <Section title="Credit limit & exposure" testId="customer-profile-credit" reason={p.credit.empty_reason}>
-          <table className={`w-full ${money}`}>
-            <tbody>
-              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open AR</td><td className="py-1 text-right tabular-nums"><AmountLink filter={{ target: "invoices", customerId: props.customerId, hasBalance: true }} data-testid="customer-credit-open-ar">{formatUsdCents(c.open_ar_cents)}</AmountLink></td></tr>
-              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open loads not yet invoiced</td><td className="py-1"><MoneyCell cents={c.uninvoiced_open_load_cents} drill={{ none: "Loads delivered for this customer and not yet invoiced — each load opens from the Loads tab" }} /></td></tr>
-              <tr className="border-b border-[color:var(--ih-rule)] font-semibold"><td className="py-1">Exposure</td><td className="py-1"><MoneyCell cents={c.exposure_cents} className={c.over_limit ? "text-red-600" : undefined} drill={{ none: "Exposure = open A/R (linked above) + loads not yet invoiced; computed, no single list" }} /></td></tr>
-              <tr><td className="py-1">Limit{c.credit_limit_source ? ` (${c.credit_limit_source})` : ""}</td><td className="py-1">{c.credit_limit_cents == null ? <span className="block text-right">Not set</span> : <MoneyCell cents={c.credit_limit_cents} drill={{ none: "Credit limit is a customer setting, not a transaction" }} />}</td></tr>
-            </tbody>
-          </table>
+          <ProfileRows
+            testId="customer-credit-rows"
+            rows={[
+              ["Open AR", <AmountLink key="ar" filter={{ target: "invoices", customerId: props.customerId, hasBalance: true }} data-testid="customer-credit-open-ar">{formatUsdCents(c.open_ar_cents)}</AmountLink>],
+              ["Open loads not yet invoiced", <MoneyCell key="uninv" cents={c.uninvoiced_open_load_cents} drill={{ none: "Loads delivered for this customer and not yet invoiced — each load opens from the Loads tab" }} />],
+              ["Exposure", <MoneyCell key="exp" cents={c.exposure_cents} className={c.over_limit ? "text-red-600" : undefined} drill={{ none: "Exposure = open A/R (linked above) + loads not yet invoiced; computed, no single list" }} />, undefined, "font-semibold"],
+              [
+                `Limit${c.credit_limit_source ? ` (${c.credit_limit_source})` : ""}`,
+                c.credit_limit_cents == null ? "Not set" : <MoneyCell key="lim" cents={c.credit_limit_cents} drill={{ none: "Credit limit is a customer setting, not a transaction" }} />,
+              ],
+            ]}
+          />
         </Section>
 
         <Section title="Factoring eligibility" testId="customer-profile-factoring" reason={p.factoring.empty_reason}>
-          <table className={`w-full ${money}`}>
-            <tbody>
-              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Eligible</td><td className="py-1 text-right">{f.eligible ? "Yes" : "No"}</td></tr>
-              <tr className="border-b border-[color:var(--ih-rule)]">
-                <td className="py-1">Factor</td>
-                <td className="py-1 text-right">
-                  {f.factoring_company_vendor_id ? (
-                    <button type="button" className="text-[color:var(--ih-green)] underline" onClick={() => navigate(`/vendors/${f.factoring_company_vendor_id}`)}>
-                      {f.factoring_company_name ?? "Factor"}
-                    </button>
-                  ) : "None assigned"}
-                </td>
-              </tr>
-              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Recourse</td><td className="py-1 text-right">{f.recourse_type ?? "Factor default"}</td></tr>
-              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Purchased lines</td><td className="py-1 text-right">{f.purchased_line_count}</td></tr>
-              <tr><td className="py-1">Purchased gross</td><td className="py-1"><MoneyCell cents={f.purchased_gross_cents} drill={{ none: "Gross of this customer's invoices purchased by the factor — each opens from the Factoring tab" }} /></td></tr>
-            </tbody>
-          </table>
+          <ProfileRows
+            testId="customer-factoring-rows"
+            rows={[
+              ["Eligible", f.eligible ? "Yes" : "No"],
+              [
+                "Factor",
+                f.factoring_company_vendor_id ? (
+                  <button key="factor" type="button" className="text-[color:var(--ih-green)] underline" onClick={() => navigate(`/vendors/${f.factoring_company_vendor_id}`)}>
+                    {f.factoring_company_name ?? "Factor"}
+                  </button>
+                ) : "None assigned",
+              ],
+              ["Recourse", f.recourse_type ?? "Factor default"],
+              ["Purchased lines", f.purchased_line_count],
+              ["Purchased gross", <MoneyCell key="gross" cents={f.purchased_gross_cents} drill={{ none: "Gross of this customer's invoices purchased by the factor — each opens from the Factoring tab" }} />],
+            ]}
+          />
         </Section>
       </div>
 

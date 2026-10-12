@@ -133,9 +133,18 @@ contains("apps/frontend/src/components/home/AccountingKpiBar.tsx", kpiBar, [
 const qboHome = read("apps/frontend/src/pages/home/QboStyleHomePage.tsx");
 contains("apps/frontend/src/pages/home/QboStyleHomePage.tsx", qboHome, [
   { pattern: /UnclearedDocumentsNote/, label: "QBO home names uncleared documents" },
-  { pattern: /bg-slate-100/, label: "QBO home uncleared notice uses slate not amber" },
+  // LEAD 443.99 class B (2026-10-12): old rule — any bg-slate-100 on the page; new rule — the not-cleared notice
+  // itself sits on the neutral surface, bg-slate-100 OR the house token bg-[#F7F8FA] it was swept to
+  // (BANK-F91254, #25933, 7827082f25), never an amber/yellow alert fill. Tighter: tied to the notice element.
+  { pattern: /className="[^"]*\bbg-(?:slate-100|\[#F7F8FA\])[^"]*"\s*>\s*Applied payments that have not been matched/i, label: "QBO home uncleared notice uses slate not amber" },
   { pattern: /not cleared/, label: "QBO home not-cleared copy" },
 ]);
+// 443.99 — EVERY not-cleared notice (A/P and A/R) must be neutral, not just one of them.
+for (const m of qboHome.matchAll(/className="([^"]*)"\s*>\s*Applied payments that have not been matched/g)) {
+  if (!/\bbg-(?:slate-100|\[#F7F8FA\])/i.test(m[1]) || /\b(?:bg|border|text)-(?:amber|yellow)-/.test(m[1])) {
+    fail(`apps/frontend/src/pages/home/QboStyleHomePage.tsx: a not-cleared notice is not on the neutral surface: className="${m[1]}"`);
+  }
+}
 
 const docs = read("docs/specs/gap-67-accounting-home-view.md");
 contains("docs/specs/gap-67-accounting-home-view.md", docs, [

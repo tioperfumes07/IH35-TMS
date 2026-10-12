@@ -2,7 +2,12 @@
 /**
  * ROUND 443.29-B — Relay wallet funding: bank outflow must offer integrations.relay_deposits
  * as a match candidate (charged = wallet + 3.25% fee); accept path stamps matched_relay_deposit_id.
+ *
+ * 443.99: also owns the Required leaf banking.panel.relay_deposit_categorized_match_hints (added by #26363 with no
+ * owning guard): connectivity (panel -> getRelayDepositMatchReview -> GET /api/v1/banking/relay-deposit-match-review
+ * -> listRelayDepositCategorizedMatchHints) and reverse_link (every money cell drills back to its bank line).
  */
+/** @matrix-built {"modules":["banking"],"cols":["connectivity","reverse_link"],"leaves":["banking.panel.relay_deposit_categorized_match_hints"],"task":"443.99-RELAY-HINTS-PANEL-LEAF"} */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,6 +26,8 @@ const FILES = {
   pointer: "apps/backend/src/banking/bank-line-match-pointer.ts",
   fe: "apps/frontend/src/api/banking.ts",
   drawer: "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
+  panel: "apps/frontend/src/pages/banking/components/RelayDepositCategorizedMatchHintsPanel.tsx",
+  view: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
 };
 
 function read(rel) {
@@ -126,6 +133,23 @@ export function findErrors(src) {
     errors.push(`${FILES.drawer} must show wallet/fee split before confirm for relay_deposit`);
   }
 
+  // Leaf banking.panel.relay_deposit_categorized_match_hints — connectivity: mounted, reads the real API, which the
+  // route serves from the hints service.
+  if (!/<RelayDepositCategorizedMatchHintsPanel companyId=\{companyId\} \/>/.test(src.view)) {
+    errors.push(`${FILES.view} must mount RelayDepositCategorizedMatchHintsPanel`);
+  }
+  if (!/queryFn: \(\) => getRelayDepositMatchReview\(companyId, \d+\)/.test(src.panel)) {
+    errors.push(`${FILES.panel} must read getRelayDepositMatchReview (connectivity)`);
+  }
+  if (!/"\/api\/v1\/banking\/relay-deposit-match-review"[\s\S]{0,600}listRelayDepositCategorizedMatchHints\(/.test(src.routes)) {
+    errors.push(`${FILES.routes} relay-deposit-match-review must be served by listRelayDepositCategorizedMatchHints`);
+  }
+  // reverse_link: every money cell drills back to the bank line it describes.
+  const cells = src.panel.match(/<MoneyCell[\s\S]*?\/>/g) ?? [];
+  if (cells.length === 0 || cells.some((c) => !/drill=\{\{ entity: \{ kind: "bank_transaction", id: r\.bank_transaction_id \} \}\}/.test(c))) {
+    errors.push(`${FILES.panel} every money cell must drill back to its bank line (reverse_link)`);
+  }
+
   return errors;
 }
 
@@ -144,6 +168,10 @@ function selftest() {
     ["accept no longer stamps the pointer", { match: sources.match.replaceAll("matched_relay_deposit_id", "matched_other_id") }],
     ["accept kinds lose relay_deposit", { kinds: sources.kinds.replaceAll('"relay_deposit"', '"relay_other"') }],
     ["drawer hides the wallet/fee split", { drawer: sources.drawer.replaceAll("match-relay-deposit-split", "match-split") }],
+    ["hints panel unmounted", { view: sources.view.replace("<RelayDepositCategorizedMatchHintsPanel companyId={companyId} />", "") }],
+    ["hints panel reads a stub instead of the API", { panel: sources.panel.replace(/queryFn: \(\) => getRelayDepositMatchReview\(companyId, \d+\)/, "queryFn: async () => ({ rows: [], total: 0 })") }],
+    ["hints route served by something else", { routes: sources.routes.replace("listRelayDepositCategorizedMatchHints(operatingCompanyId", "Promise.resolve([])(operatingCompanyId") }],
+    ["one hints money cell loses its bank-line drill", { panel: sources.panel.replace(/(cents=\{r\.fee_cents\}\s*)drill=\{\{ entity: \{ kind: "bank_transaction", id: r\.bank_transaction_id \} \}\}/, "$1") }],
   ];
   let caught = 0;
   for (const [name, patch] of planted) {

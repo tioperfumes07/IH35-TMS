@@ -88,7 +88,9 @@ export function reclassifyFlagshipOk(src) {
     { re: /case\s+"truck"\s*:\s*return\s+[^;]*<EntityLink\s+kind="unit"/, label: "truck/unit cell EntityLink" },
     { re: /case\s+"vendor"\s*:\s*return\s+[^;]*<EntityLink\s+kind="vendor"/, label: "vendor cell EntityLink" },
     { re: /const toggleSort\s*=/, label: "toggleSort (sortable headers)" },
-    { re: /data-testid=\{`reclassify-sort-\$\{c\.sort\}`\}/, label: "reclassify-sort testids" },
+    // 443.100 class B: the reclassify grid is the shared ParityTable — the sort header id is the column testId
+    // (old rule: a hand-rolled <th><button data-testid={`reclassify-sort-${c.sort}`}>; same id, now on the ParityTable header).
+    { re: /data-testid=\{`reclassify-sort-\$\{c\.sort\}`\}|c\.sort \? `reclassify-sort-\$\{c\.sort\}`/, label: "reclassify-sort testids" },
     {
       re: /reclassify-account-\$\{a\.account_id\}`[\s\S]{0,800}<EntityLink\s+kind="account"\s+id=\{a\.account_id\}[\s\S]{0,400}stopPropagation/,
       label: "left-pane account tree EntityLink + stopPropagation",

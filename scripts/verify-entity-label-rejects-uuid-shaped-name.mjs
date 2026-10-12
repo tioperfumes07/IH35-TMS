@@ -496,8 +496,14 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
-    bad: /String\(suggestion\.id\s*\?\?\s*""\)/,
-    good: /entityLabel\(\s*suggestion\.description\s*,\s*suggestion\.id\s*,\s*"Transaction"\s*\)/,
+    // LEAD 443.99 class B (2026-10-12).
+    //   old rule: the match-suggestion label must be entityLabel(suggestion.description, suggestion.id, "Transaction").
+    //   new rule: it must be humanMemo(suggestion.description) falling back to the suggestion's category/kind, and
+    //             the suggestion id must never be rendered (String(suggestion.id …) or {suggestion.id}).
+    //   why: BANK-F4334 / 433-CUR B7 (#25611, 7c2e82458b) — the description cell may never carry an internal id,
+    //        not even entityLabel's short-id fallback; the label now has no path to the id at all (stricter).
+    bad: /String\(suggestion\.id\s*\?\?\s*""\)|\{\s*suggestion\.id\s*\}|entityLabel\(\s*suggestion\.description\s*,\s*suggestion\.id/,
+    good: /humanMemo\(suggestion\.description\)\s*:\s*String\(suggestion\.category \?\? suggestion\.kind \?\? "[^"]+"\)/,
   },
   {
     rel: "apps/frontend/src/pages/safety/AccidentsPage.tsx",

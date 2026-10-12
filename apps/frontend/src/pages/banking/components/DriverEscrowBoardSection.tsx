@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Settings2 } from "lucide-react";
 import {
   getEscrowDriverBalances,
   getEscrowDriverTimeline,
@@ -16,6 +15,7 @@ import { formatUsd } from "../../../lib/money";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { useToast } from "../../../components/Toast";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type Props = {
   operatingCompanyId: string;
@@ -34,29 +34,9 @@ type EscrowBoardRow = {
   settlementLabel: string | null;
 };
 
-type ColumnId = "driver" | "unit" | "held" | "target" | "progress" | "last_withheld" | "settlement" | "release";
-
-const DEFAULT_COLUMNS: ColumnId[] = [
-  "driver",
-  "unit",
-  "held",
-  "target",
-  "progress",
-  "last_withheld",
-  "settlement",
-  "release",
-];
-
-const COLUMN_LABELS: Record<ColumnId, string> = {
-  driver: "Driver",
-  unit: "Unit",
-  held: "Held",
-  target: "Target",
-  progress: "Progress",
-  last_withheld: "Last withheld",
-  settlement: "Settlement",
-  release: "Release",
-};
+function progressPct(row: EscrowBoardRow): number | null {
+  return row.target != null && row.target > 0 ? Math.min(100, Math.round((row.held / row.target) * 100)) : null;
+}
 
 function dash(v: string | number | null | undefined) {
   if (v == null || v === "") return "—";
@@ -70,8 +50,6 @@ function dash(v: string | number | null | undefined) {
  */
 export function DriverEscrowBoardSection({ operatingCompanyId, driverEscrowBalance }: Props) {
   const { pushToast } = useToast();
-  const [visibleColumns, setVisibleColumns] = useState<ColumnId[]>(DEFAULT_COLUMNS);
-  const [gearOpen, setGearOpen] = useState(false);
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [releaseDriverId, setReleaseDriverId] = useState<string | null>(null);
   const [releaseRuleDraft, setReleaseRuleDraft] = useState({
@@ -137,7 +115,99 @@ export function DriverEscrowBoardSection({ operatingCompanyId, driverEscrowBalan
     ? null
     : enrichedRows.reduce((s, r) => s + Number(r.target ?? 0), 0);
 
-  const colOn = (id: ColumnId) => visibleColumns.includes(id);
+  // 443.99 — the board is the shared ParityTable (was a hand-rolled HTML table with its own gear): the
+  // ParityTable gear is the column chooser, its sort/resize/export apply, and the totals are footerCells.
+  const columns: Array<ParityColumn<EscrowBoardRow>> = [
+    {
+      key: "driver",
+      label: "Driver",
+      sortable: true,
+      sortValue: (row) => entityLabel(row.driver_name, row.driver_id, "Driver"),
+      render: (row) => (
+        <Link to={`/drivers/${row.driver_id}`} className="text-[#1F2A44] hover:underline">
+          {entityLabel(row.driver_name, row.driver_id, "Driver")}
+        </Link>
+      ),
+    },
+    { key: "unit", label: "Unit", sortable: true, sortValue: (row) => row.unit, render: (row) => dash(row.unit) },
+    {
+      key: "held",
+      label: "Held",
+      kind: "money",
+      sortable: true,
+      minWidth: 120,
+      sortValue: (row) => row.held,
+      // row.held is in dollars (escrow_balance); MoneyCell only formats it through formatUsd.
+      render: (row) => <MoneyCell cents={row.held} format={formatUsd} drill={{ entity: { kind: "escrow_record", id: row.driver_id } }} />,
+    },
+    {
+      key: "target",
+      label: "Target",
+      kind: "money",
+      sortable: true,
+      minWidth: 120,
+      sortValue: (row) => row.target,
+      render: (row) => <MoneyCell cents={row.target} format={formatUsd} drill={{ none: "Escrow target is a driver setting, not a transaction" }} />,
+    },
+    {
+      key: "progress",
+      label: "Progress",
+      sortable: true,
+      minWidth: 120,
+      sortValue: (row) => progressPct(row),
+      render: (row) => {
+        const pct = progressPct(row);
+        return pct == null ? (
+          <span className="block text-center text-[#6B7280]">—</span>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="h-2 flex-1 overflow-hidden rounded-sm bg-[#E5E7EB]">
+              <div className="h-full bg-[#14314F]" style={{ width: `${pct}%` }} />
+            </div>
+            <span data-quantity className="w-10 text-right tabular-nums text-[#6B7280]">{pct}%</span>
+          </div>
+        );
+      },
+    },
+    {
+      key: "last_withheld_at",
+      label: "Last withheld",
+      sortable: true,
+      minWidth: 132,
+      sortValue: (row) => row.lastWithheldAt,
+      render: (row) => (row.lastWithheldAt ? formatDateUS(row.lastWithheldAt) : "—"),
+    },
+    {
+      key: "settlement",
+      label: "Settlement",
+      sortable: true,
+      sortValue: (row) => row.settlementLabel,
+      render: (row) =>
+        row.settlementId ? (
+          <EntityLink kind="settlement" id={row.settlementId} label={row.settlementLabel ?? "Settlement"} />
+        ) : (
+          "—"
+        ),
+    },
+    {
+      key: "release",
+      label: "Release",
+      sortable: false,
+      render: (row) => (
+        <button
+          type="button"
+          className="inline-flex h-[34px] items-center rounded-sm border border-[#E5E7EB] px-2 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
+          onClick={(e) => {
+            e.stopPropagation();
+            setReleaseDriverId(row.driver_id);
+            setSelectedDriverId(row.driver_id);
+          }}
+        >
+          Release
+        </button>
+      ),
+    },
+  ];
 
   const saveRules = () => {
     setSavedRules(releaseRuleDraft);
@@ -171,168 +241,38 @@ export function DriverEscrowBoardSection({ operatingCompanyId, driverEscrowBalan
         ) : null}
 
         <div className="rounded-sm border border-[#E5E7EB] bg-white">
-          <div className="flex items-center justify-between border-b border-[#E5E7EB] px-3 py-2">
+          <div className="border-b border-[#E5E7EB] px-3 py-2">
             <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Driver escrow</p>
-            <div className="relative">
-              <button
-                type="button"
-                className="inline-flex h-[34px] w-[34px] items-center justify-center rounded-sm border border-[#E5E7EB] text-[#1F2A44] hover:bg-[#F7F8FA]"
-                aria-label="Column chooser"
-                data-testid="escrow-column-gear"
-                onClick={() => setGearOpen((o) => !o)}
-              >
-                <Settings2 className="h-4 w-4" />
-              </button>
-              {gearOpen ? (
-                <div className="absolute right-0 z-20 mt-1 w-52 border border-[#E5E7EB] bg-white p-2 shadow-sm">
-                  <p className="mb-1 text-xs font-bold uppercase text-[#4B5563]">Columns</p>
-                  {(Object.keys(COLUMN_LABELS) as ColumnId[]).map((id) => (
-                    <label key={id} className="flex items-center gap-2 py-0.5 text-xs text-[#0F1219]">
-                      <input
-                        type="checkbox"
-                        checked={colOn(id)}
-                        onChange={() =>
-                          setVisibleColumns((prev) =>
-                            prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
-                          )
-                        }
-                      />
-                      {COLUMN_LABELS[id]}
-                    </label>
-                  ))}
-                </div>
-              ) : null}
-            </div>
           </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs tabular-nums" data-testid="driver-escrow-board-table">
-              <thead>
-                <tr className="border-b border-[#E5E7EB] bg-[#F7F8FA] text-center text-xs font-bold uppercase tracking-wide text-[#4B5563]">
-                  {colOn("driver") ? <th className="px-2 py-1.5 text-left font-bold">Driver</th> : null}
-                  {colOn("unit") ? <th className="px-2 py-1.5 font-bold">Unit</th> : null}
-                  {colOn("held") ? <th className="px-2 py-1.5 text-right font-bold" style={{ width: 120 }}>Held</th> : null}
-                  {colOn("target") ? <th className="px-2 py-1.5 text-right font-bold" style={{ width: 120 }}>Target</th> : null}
-                  {colOn("progress") ? <th className="px-2 py-1.5 font-bold" style={{ minWidth: 120 }}>Progress</th> : null}
-                  {colOn("last_withheld") ? <th className="px-2 py-1.5 font-bold" style={{ width: 132 }}>Last withheld</th> : null}
-                  {colOn("settlement") ? <th className="px-2 py-1.5 font-bold">Settlement</th> : null}
-                  {colOn("release") ? <th className="px-2 py-1.5 font-bold">Release</th> : null}
-                </tr>
-              </thead>
-              <tbody>
-                {enrichedRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={visibleColumns.length || 1} className="px-3 py-4 text-center text-[#6B7280]">
-                      No driver escrow balances
-                    </td>
-                  </tr>
-                ) : (
-                  enrichedRows.map((row) => {
-                    const pct =
-                      row.target != null && row.target > 0
-                        ? Math.min(100, Math.round((row.held / row.target) * 100))
-                        : null;
-                    const selected = row.driver_id === selectedDriverId;
-                    return (
-                      <tr
-                        key={row.driver_id}
-                        className={`border-b border-[#E5E7EB] last:border-b-0 ${selected ? "bg-[#F7F8FA]" : ""}`}
-                        onClick={() => setSelectedDriverId(row.driver_id)}
-                        data-testid={`escrow-board-row-${row.driver_id}`}
-                      >
-                        {colOn("driver") ? (
-                          <td className="px-2 py-1.5 text-left">
-                            <Link to={`/drivers/${row.driver_id}`} className="text-[#1F2A44] hover:underline">
-                              {entityLabel(row.driver_name, row.driver_id, "Driver")}
-                            </Link>
-                          </td>
-                        ) : null}
-                        {colOn("unit") ? <td className="px-2 py-1.5 text-center">{dash(row.unit)}</td> : null}
-                        {colOn("held") ? (
-                          <td className="px-2 py-1.5 font-medium" style={{ width: 120 }}>
-                            {/* row.held is in dollars (escrow_balance); MoneyCell only formats it through formatUsd. */}
-                            <MoneyCell cents={row.held} format={formatUsd} drill={{ entity: { kind: "escrow_record", id: row.driver_id } }} />
-                          </td>
-                        ) : null}
-                        {colOn("target") ? (
-                          <td className="px-2 py-1.5" style={{ width: 120 }}>
-                            <MoneyCell cents={row.target} format={formatUsd} drill={{ none: "Escrow target is a driver setting, not a transaction" }} />
-                          </td>
-                        ) : null}
-                        {colOn("progress") ? (
-                          <td className="px-2 py-1.5">
-                            {pct == null ? (
-                              <span className="block text-center text-[#6B7280]">—</span>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <div className="h-2 flex-1 overflow-hidden rounded-sm bg-[#E5E7EB]">
-                                  <div className="h-full bg-[#14314F]" style={{ width: `${pct}%` }} />
-                                </div>
-                                <span data-quantity className="w-10 text-right tabular-nums text-[#6B7280]">{pct}%</span>
-                              </div>
-                            )}
-                          </td>
-                        ) : null}
-                        {colOn("last_withheld") ? (
-                          <td className="px-2 py-1.5 text-center tabular-nums" style={{ width: 132 }}>
-                            {row.lastWithheldAt ? formatDateUS(row.lastWithheldAt) : "—"}
-                          </td>
-                        ) : null}
-                        {colOn("settlement") ? (
-                          <td className="px-2 py-1.5 text-center">
-                            {row.settlementId ? (
-                              <EntityLink
-                                kind="settlement"
-                                id={row.settlementId}
-                                label={row.settlementLabel ?? "Settlement"}
-                              />
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                        ) : null}
-                        {colOn("release") ? (
-                          <td className="px-2 py-1.5 text-center">
-                            <button
-                              type="button"
-                              className="inline-flex h-[34px] items-center rounded-sm border border-[#E5E7EB] px-2 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setReleaseDriverId(row.driver_id);
-                                setSelectedDriverId(row.driver_id);
-                              }}
-                            >
-                              Release
-                            </button>
-                          </td>
-                        ) : null}
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-              <tfoot>
-                <tr className="border-t border-[#E5E7EB] bg-[#F7F8FA] text-xs font-semibold">
-                  {colOn("driver") ? <td className="px-2 py-2 text-left">Totals</td> : null}
-                  {colOn("unit") ? <td /> : null}
-                  {colOn("held") ? (
-                    <td className="px-2 py-2" data-testid="escrow-footer-held">
-                      <MoneyCell cents={heldTotal} format={formatUsd} drill={{ none: "Total of the rows above — each row opens that driver's escrow record" }} />
-                    </td>
-                  ) : null}
-                  {colOn("target") ? (
-                    <td className="px-2 py-2" data-testid="escrow-footer-target">
-                      <MoneyCell cents={targetTotal} format={formatUsd} drill={{ none: "Total of the escrow targets above — targets are driver settings" }} />
-                    </td>
-                  ) : null}
-                  {colOn("progress") ? <td /> : null}
-                  {colOn("last_withheld") ? <td /> : null}
-                  {colOn("settlement") ? <td /> : null}
-                  {colOn("release") ? <td /> : null}
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+          <ParityTable<EscrowBoardRow>
+            embedded
+            rows={enrichedRows}
+            rowKey={(row) => row.driver_id}
+            columns={columns}
+            loading={balancesQuery.isLoading}
+            emptyText="No driver escrow balances"
+            storageKey="banking-driver-escrow-board"
+            exportFilename="driver-escrow"
+            tableTestId="driver-escrow-board-table"
+            gearButtonTestId="escrow-column-gear"
+            rowTestId={(row) => `escrow-board-row-${row.driver_id}`}
+            onRowClick={(row) => setSelectedDriverId(row.driver_id)}
+            rowClassName={(row) => (row.driver_id === selectedDriverId ? "bg-[#F7F8FA]" : "")}
+            suppressToolbarRange
+            footerCells={{
+              driver: "Totals",
+              held: (
+                <span data-testid="escrow-footer-held">
+                  <MoneyCell cents={heldTotal} format={formatUsd} drill={{ none: "Total of the rows above — each row opens that driver's escrow record" }} />
+                </span>
+              ),
+              target: (
+                <span data-testid="escrow-footer-target">
+                  <MoneyCell cents={targetTotal} format={formatUsd} drill={{ none: "Total of the escrow targets above — targets are driver settings" }} />
+                </span>
+              ),
+            }}
+          />
         </div>
       </div>
 

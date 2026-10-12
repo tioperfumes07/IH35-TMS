@@ -1,4 +1,5 @@
-import { useMemo, type ReactNode } from "react";
+// TABLE_DATE_OMIT: these panels show each unit / load's CURRENT state (who, which load, status, days idle, reason) — the date-shaped facts are rendered as ages ("Days idle"), not as a date column.
+import { isValidElement, useMemo, type ReactNode } from "react";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -19,6 +20,7 @@ import {
 } from "../../api/dispatch";
 import { listLoadsNeedingDriverBillRemint } from "../../api/loads";
 import { DispatchLoadCostsPanel } from "../../components/dispatch/DispatchLoadCostsPanel";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import "../../design/ih35-design-tokens.css";
 import "./dispatch-board.css";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
@@ -131,6 +133,29 @@ type PanelState = { isLoading: boolean; isError: boolean; refetch: () => unknown
 type PanelColumn = { label: string; num?: boolean };
 type PanelRowData = { key: string; cells: ReactNode[]; onOpen?: () => void };
 
+/** The text a cell shows — the sort key for a panel column whose cells are links / badges, not raw values. */
+function cellText(node: ReactNode): string {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(cellText).join("");
+  if (isValidElement(node)) {
+    const props = node.props as { label?: ReactNode; name?: ReactNode; children?: ReactNode };
+    return cellText(props.label ?? props.name ?? props.children);
+  }
+  return "";
+}
+
+/** A numeric panel cell ("12", "20d") sorts as a number; anything else sorts as text. */
+function cellSortValue(node: ReactNode, numeric: boolean | undefined): string | number | null {
+  const text = cellText(node).trim();
+  if (!text) return null;
+  if (numeric) {
+    const n = Number.parseFloat(text.replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(n) ? n : text;
+  }
+  return text;
+}
+
 /** One overview panel = one card holding one table: header row of column labels, one line per row. */
 function OverviewTable({
   title,
@@ -172,28 +197,31 @@ function OverviewTable({
       ) : rows.length === 0 ? (
         <div className="dpo-state">{emptyMessage}</div>
       ) : (
-        <table className="ih-table">
-          <thead>
-            <tr>
-              {columns.map((c) => (
-                <th key={c.label} className={c.num ? "ih-hd ih-num" : "ih-hd"}>{c.label}</th>
-              ))}
-              {withOpen ? <th className="ih-hd" aria-label="Open" /> : null}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.key}>
-                {r.cells.map((cell, i) => (
-                  <td key={i} className={columns[i]?.num ? "ih-num" : undefined}>{cell ?? DASH}</td>
-                ))}
-                {withOpen ? (
-                  <td>{r.onOpen ? <button type="button" className="dpo-open" onClick={r.onOpen}>open →</button> : null}</td>
-                ) : null}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        // 443.99 — the shared ParityTable (was a hand-rolled HTML table): sortable headers, gear, export.
+        <ParityTable<PanelRowData>
+          appearance="board"
+          embedded
+          rows={rows}
+          rowKey={(r) => r.key}
+          columns={columns.map(
+            (c, i): ParityColumn<PanelRowData> => ({
+              key: `col_${i}`,
+              label: c.label,
+              kind: c.num ? "number" : undefined,
+              sortable: true,
+              sortValue: (r) => cellSortValue(r.cells[i], c.num),
+              render: (r) => r.cells[i] ?? DASH,
+            }),
+          )}
+          storageKey={`dispatch-overview-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+          suppressToolbarSearch
+          suppressToolbarRange
+          rowActions={
+            withOpen
+              ? (r) => (r.onOpen ? <button type="button" className="dpo-open" onClick={r.onOpen}>open →</button> : null)
+              : undefined
+          }
+        />
       )}
     </section>
   );

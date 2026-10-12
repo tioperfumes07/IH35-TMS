@@ -30,6 +30,10 @@ import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
+import { ParityTable } from "../../components/parity/ParityTable";
+
+type Receipt = UndepositedReceipt;
+type DepositListRow = Awaited<ReturnType<typeof listBankDeposits>>["rows"][number];
 
 type BatchRow = {
   key: string;
@@ -287,49 +291,36 @@ export function MakeDepositPage() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse tabular-nums">
-                <thead>
-                  <tr className="border-b border-[#E5E7EB] text-column-header font-bold uppercase text-[#4B5563]">
-                    <th className="px-2 py-[7px] text-center">☐</th>
-                    <th className="px-2 py-[7px] text-center">Type</th>
-                    <th className="px-2 py-[7px] text-center">Ref</th>
-                    <th className="px-2 py-[7px] text-center">Payee</th>
-                    <th className="px-2 py-[7px] text-center">Date</th>
-                    <th className="px-2 py-[7px] text-center">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {receipts.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-2 py-4 text-center text-[#6B7280]">
-                        No undeposited receipts in Undeposited Funds.
-                      </td>
-                    </tr>
-                  ) : (
-                    receipts.map((r) => {
-                      const key = `${r.kind}:${r.id}`;
-                      return (
-                        <tr key={key} className="border-b border-[#E5E7EB]">
-                          <td className="px-2 py-[7px] text-center">
-                            <input type="checkbox" checked={Boolean(selected[key])} onChange={() => toggle(r)} />
-                          </td>
-                          <td className="px-2 py-[7px] text-center">{r.kind === "customer_payment" ? "Payment" : "Faro advance"}</td>
-                          <td className="px-2 py-[7px] text-center">
-                            {r.kind === "customer_payment" ? (
-                              <EntityLink kind="payment" id={r.id} label={r.display_id ?? r.id.slice(0, 8)} />
-                            ) : (
-                              <EntityLink kind="factoring_advance" id={r.id} label={r.display_id ?? r.id.slice(0, 8)} />
-                            )}
-                          </td>
-                          <td className="px-2 py-[7px] text-center">{r.payee_name ?? "—"}</td>
-                          <td className="px-2 py-[7px] text-center">{r.receipt_date ? formatDateUS(r.receipt_date) : "—"}</td>
-                          <td className="px-2 py-[7px] text-center">{formatCurrencyFromCents(r.amount_cents)}</td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+              <ParityTable<Receipt>
+                storageKey="make-deposit-receipts"
+                tableTestId="make-deposit-receipts"
+                rows={receipts}
+                rowKey={(r) => `${r.kind}:${r.id}`}
+                emptyText="No undeposited receipts in Undeposited Funds."
+                suppressToolbarRange
+                initialPageSize={100}
+                pageSizeOptions={[100, 300]}
+                allowAllPageSize
+                columns={[
+                  {
+                    key: "selected", label: "Select", sortable: false, minWidth: 40,
+                    render: (r) => <input type="checkbox" aria-label="Select receipt" checked={Boolean(selected[`${r.kind}:${r.id}`])} onChange={() => toggle(r)} />,
+                  },
+                  { key: "kind", label: "Type", render: (r) => (r.kind === "customer_payment" ? "Payment" : "Faro advance") },
+                  {
+                    key: "display_id", label: "Ref",
+                    render: (r) =>
+                      r.kind === "customer_payment" ? (
+                        <EntityLink kind="payment" id={r.id} label={r.display_id ?? r.id.slice(0, 8)} />
+                      ) : (
+                        <EntityLink kind="factoring_advance" id={r.id} label={r.display_id ?? r.id.slice(0, 8)} />
+                      ),
+                  },
+                  { key: "payee_name", label: "Payee", render: (r) => r.payee_name ?? "—" },
+                  { key: "receipt_date", label: "Date", sortValue: (r) => r.receipt_date ?? "", render: (r) => (r.receipt_date ? formatDateUS(r.receipt_date) : "—") },
+                  { key: "amount_cents", label: "Amount", kind: "money", render: (r) => formatCurrencyFromCents(r.amount_cents) },
+                ]}
+              />
             </div>
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -436,27 +427,23 @@ export function MakeDepositPage() {
               </Button>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse tabular-nums">
-                <thead>
-                  <tr className="border-b border-[#E5E7EB] text-column-header font-bold uppercase text-[#4B5563]">
-                    <th className="px-2 py-[7px] text-center">Date</th>
-                    <th className="px-2 py-[7px] text-center">Bank</th>
-                    <th className="px-2 py-[7px] text-center">Payment ids</th>
-                    <th className="px-2 py-[7px] text-center">Advance ids</th>
-                    <th className="px-2 py-[7px] text-center">Cash back</th>
-                    <th className="px-2 py-[7px] text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {batchRows.map((row, idx) => (
-                    <tr key={row.key} className="border-b border-[#E5E7EB]">
-                      <td className="px-2 py-[7px]">
+              <ParityTable<BatchRow & { idx: number }>
+                storageKey="make-deposit-batch"
+                tableTestId="make-deposit-batch"
+                rows={batchRows.map((row, idx) => ({ ...row, idx }))}
+                rowKey={(row) => row.key}
+                suppressToolbarSearch
+                suppressToolbarRange
+                initialPageSize={100}
+                allowAllPageSize
+                columns={[
+                  { key: "deposit_date", label: "Date", overflowVisible: true, render: ({ idx, ...row }) => (
                         <DatePicker
                           value={row.deposit_date}
                           onChange={(v) => setBatchRows((prev) => prev.map((r, i) => (i === idx ? { ...r, deposit_date: v } : r)))}
                         />
-                      </td>
-                      <td className="px-2 py-[7px] min-w-[180px]">
+                    ) },
+                  { key: "bank_account_id", label: "Bank", minWidth: 180, overflowVisible: true, sortable: false, render: ({ idx, ...row }) => (
                         <ReferenceSelect
                           size="sm"
                           value={row.bank_account_id || null}
@@ -468,8 +455,8 @@ export function MakeDepositPage() {
                           createKind="account"
                           operatingCompanyId={companyId}
                         />
-                      </td>
-                      <td className="px-2 py-[7px]">
+                    ) },
+                  { key: "payment_ids", label: "Payment ids", sortable: false, render: ({ idx, ...row }) => (
                         <input
                           className="h-7 w-full rounded-sm border border-[#E5E7EB] px-2"
                           placeholder="payment ids (comma)"
@@ -491,8 +478,8 @@ export function MakeDepositPage() {
                             )
                           }
                         />
-                      </td>
-                      <td className="px-2 py-[7px]">
+                    ) },
+                  { key: "factoring_advance_ids", label: "Advance ids", sortable: false, render: ({ idx, ...row }) => (
                         <input
                           className="h-7 w-full rounded-sm border border-[#E5E7EB] px-2"
                           placeholder="advance ids (comma)"
@@ -514,60 +501,49 @@ export function MakeDepositPage() {
                             )
                           }
                         />
-                      </td>
-                      <td className="px-2 py-[7px]">
+                    ) },
+                  { key: "cash_back_cents", label: "Cash back", kind: "money", render: ({ idx, ...row }) => (
                         <MoneyInput
                           valueCents={row.cash_back_cents}
                           onChangeCents={(c) => setBatchRows((prev) => prev.map((r, i) => (i === idx ? { ...r, cash_back_cents: c ?? 0 } : r)))}
                         />
-                      </td>
-                      <td className="px-2 py-[7px] text-center">
-                        {row.status === "saved" && row.deposit_id && row.display_id ? <EntityLink kind="deposit" id={row.deposit_id} label={row.display_id} /> : row.status === "error" ? row.error : "draft"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    ) },
+                  { key: "status", label: "Status", render: (row) => (row.status === "saved" && row.deposit_id && row.display_id ? <EntityLink kind="deposit" id={row.deposit_id} label={row.display_id} /> : row.status === "error" ? row.error : "draft") },
+                ]}
+              />
             </div>
           </section>
         )}
 
         <section className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-3" data-section="deposits-list">
           <h2 className=" font-bold uppercase text-[#4B5563]">Recent deposits</h2>
-          <table className="w-full border-collapse tabular-nums">
-            <thead>
-              <tr className="border-b border-[#E5E7EB] text-column-header font-bold uppercase text-[#4B5563]">
-                <th className="px-2 py-[7px] text-center">Deposit</th>
-                <th className="px-2 py-[7px] text-center">Date</th>
-                <th className="px-2 py-[7px] text-center">Bank</th>
-                <th className="px-2 py-[7px] text-center">Amount</th>
-                <th className="px-2 py-[7px] text-center">JE</th>
-                <th className="px-2 py-[7px] text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(depositsQ.data?.rows ?? []).map((d) => (
-                <tr key={d.id} className="border-b border-[#E5E7EB]">
-                  <td className="px-2 py-[7px] text-center"><EntityLink kind="deposit" id={d.id} label={d.display_id} /></td>
-                  <td className="px-2 py-[7px] text-center">{formatDateUS(d.deposit_date)}</td>
-                  <td className="px-2 py-[7px] text-center">{d.bank_account_name ?? "—"}</td>
-                  <td className="px-2 py-[7px] text-center">{formatCurrencyFromCents(Number(d.amount_deposited_cents))}</td>
-                  <td className="px-2 py-[7px] text-center">
-                    {d.journal_entry_id ? <EntityLink kind="journal_entry" id={d.journal_entry_id} label="JE" /> : "—"}
-                  </td>
-                  <td className="px-2 py-[7px] text-center">
-                    {d.voided_at ? (
-                      <span className="text-[#6B7280]">Voided</span>
-                    ) : (
-                      <Button type="button" variant="secondary" onClick={() => setVoidTargetId(d.id)}>
-                        Void
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ParityTable<DepositListRow>
+            storageKey="make-deposit-recent"
+            tableTestId="make-deposit-recent"
+            rows={depositsQ.data?.rows ?? []}
+            rowKey={(d) => d.id}
+            suppressToolbarRange
+            initialPageSize={50}
+            pageSizeOptions={[50, 100, 300]}
+            columns={[
+              { key: "display_id", label: "Deposit", render: (d) => <EntityLink kind="deposit" id={d.id} label={d.display_id} /> },
+              { key: "deposit_date", label: "Date", render: (d) => formatDateUS(d.deposit_date) },
+              { key: "bank_account_name", label: "Bank", render: (d) => d.bank_account_name ?? "—" },
+              { key: "amount_deposited_cents", label: "Amount", kind: "money", sortValue: (d) => Number(d.amount_deposited_cents), render: (d) => formatCurrencyFromCents(Number(d.amount_deposited_cents)) },
+              { key: "journal_entry_id", label: "JE", sortable: false, render: (d) => (d.journal_entry_id ? <EntityLink kind="journal_entry" id={d.journal_entry_id} label="JE" /> : "—") },
+              {
+                key: "actions", label: "Actions", sortable: false,
+                render: (d) =>
+                  d.voided_at ? (
+                    <span className="text-[#6B7280]">Voided</span>
+                  ) : (
+                    <Button type="button" variant="secondary" onClick={() => setVoidTargetId(d.id)}>
+                      Void
+                    </Button>
+                  ),
+              },
+            ]}
+          />
           {voidTargetId ? (
             <div className="flex flex-wrap items-end gap-2 border-t border-[#E5E7EB] pt-2">
               <label className="block">
