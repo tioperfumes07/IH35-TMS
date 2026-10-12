@@ -30,6 +30,7 @@ import {
   ReinstateDocumentError,
 } from "./reinstate-document.service.js";
 import { nextBillDisplayId } from "./display-id.js";
+import { BillUnitStampError, refuseNonOwnerBillUnitStamp, stampDriverBillUnitsFromLoads } from "./bill-unit-stamp.service.js";
 import {
   DuplicateDocumentNumberError,
   duplicateDocumentNumberBody,
@@ -205,6 +206,11 @@ const payBillBodySchema = z.object({
   check_number: z.string().trim().max(80).optional(),
   reference_number: z.string().trim().max(120).optional(),
   memo: z.string().trim().max(2000).optional(),
+});
+
+// LEAD 443.102 ruling 1 — the Owner's stamp of posted driver bills' unit from their loads. Dry run unless asked.
+const stampUnitsBodySchema = z.object({
+  dry_run: z.boolean().optional().default(true),
 });
 
 const voidBodySchema = z.object({
@@ -734,6 +740,30 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       }
       throw error;
     }
+  });
+
+  // LEAD 443.102 ruling 1 (P38 Wave-A) — POSTED driver bills take their load's same-entity unit, metadata only (no
+  // amount / account / JE change), one audit row per bill. Owner only: a refusal is audited in its own committed scope.
+  app.post("/api/v1/accounting/bills/stamp-units-from-loads", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = stampUnitsBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    const opco = query.data.operating_company_id;
+    if (String(user.role ?? "") !== "Owner") {
+      await withCompanyScope(user.uuid, opco, (client) =>
+        refuseNonOwnerBillUnitStamp(client, { userId: String(user.uuid), role: String(user.role ?? "") }, opco).catch((e) => {
+          if (!(e instanceof BillUnitStampError)) throw e;
+        })
+      );
+      return reply.code(403).send({ error: "owner_only", message: "Only the Owner can stamp units on posted bills." });
+    }
+    const result = await withCompanyScope(user.uuid, opco, (client) =>
+      stampDriverBillUnitsFromLoads(client, { operatingCompanyId: opco, actorUserId: String(user.uuid), actorRole: "Owner", dryRun: body.data.dry_run })
+    );
+    return result;
   });
 
   app.post("/api/v1/accounting/bills/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
