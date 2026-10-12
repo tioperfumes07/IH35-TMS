@@ -65,3 +65,50 @@ export function relayWalletDrawdownCents(totalAmountPaidCents: number, feeCents:
   if (!Number.isFinite(fee) || fee < 0) throw new Error("relay_wallet_drawdown: fee_cents invalid");
   return paid + fee;
 }
+
+/**
+ * LEAD 443.123 — THE one paid rule. RELAY-F442 says total_amount_paid is FUEL ONLY. The CSV importer before
+ * relay-csv-paid-excludes-fee stored Relay's CSV "total" (fuel + fee) as paid, with the fee only in top-level fees[]
+ * (no per-line fee). Such a legacy row is recognised ONLY when paid equals the product lines plus the recorded fee to
+ * the cent; then fuel = the product lines and the fee stays the recorded fee. Every other shape keeps the stored paid
+ * (any other difference is the poster's relay_fill_lines_do_not_foot refusal — never a plug, never a tolerance).
+ * Every wallet / bank-match / roll-forward / poster amount comes from this function (or its SQL twin below).
+ */
+export function relayFuelPaidCents(input: {
+  transaction_id: string;
+  stored_paid_cents: number;
+  product_lines_cents: number | null | undefined;
+  fees?: unknown[] | null;
+  line_fee_amount_cents?: Array<number | null | undefined> | null;
+  ingest_source?: string | null;
+}): { fuel_paid_cents: number; fee_cents: number; wallet_cents: number; legacy_paid_includes_fee: boolean } {
+  const stored = Math.round(Number(input.stored_paid_cents));
+  const fee = relayFillFeeCents({ transaction_id: input.transaction_id, fees: input.fees, line_fee_amount_cents: input.line_fee_amount_cents });
+  const product = input.product_lines_cents == null ? null : Math.round(Number(input.product_lines_cents));
+  const lineFees = (input.line_fee_amount_cents ?? []).reduce<number>((t, c) => t + Math.max(0, Math.round(Number(c ?? 0)) || 0), 0);
+  const legacy =
+    input.ingest_source === "csv_import" && lineFees === 0 && fee > 0 && product != null && product > 0 && stored === product + fee;
+  const fuel = legacy ? (product as number) : stored;
+  return { fuel_paid_cents: fuel, fee_cents: fee, wallet_cents: relayWalletDrawdownCents(fuel, fee), legacy_paid_includes_fee: legacy };
+}
+
+/**
+ * SQL twin of relayFuelPaidCents for a relay_fuel_transactions row aliased `alias`: the wallet drawdown in cents.
+ * fees[] is the fee source here (as the Match drawer always read it); a legacy CSV row (paid = lines + fees[] exactly,
+ * no line fee) draws down its stored paid, every other row draws down paid + fees[].
+ */
+export function relayFuelWalletAmountSql(alias: string): string {
+  const fees = `COALESCE((
+      SELECT ROUND(SUM((f->>'amount')::numeric * 100))::bigint
+        FROM jsonb_array_elements(CASE WHEN jsonb_typeof(${alias}.fees) = 'array' THEN ${alias}.fees ELSE '[]'::jsonb END) f
+       WHERE (f->>'amount') ~ '^[0-9]+(\\.[0-9]+)?$'
+    ), 0)`;
+  const product = `COALESCE((SELECT SUM(l.total_discounted_price_cents)::bigint FROM integrations.relay_fuel_transaction_lines l
+       WHERE l.relay_fuel_transaction_id = ${alias}.id AND l.voided_at IS NULL), 0)`;
+  const lineFee = `COALESCE((SELECT SUM(l.fee_amount_cents)::bigint FROM integrations.relay_fuel_transaction_lines l
+       WHERE l.relay_fuel_transaction_id = ${alias}.id AND l.voided_at IS NULL), 0)`;
+  const paid = `ABS(COALESCE(${alias}.total_amount_paid_cents, 0))`;
+  return `(CASE WHEN ${alias}.ingest_source = 'csv_import' AND ${lineFee} = 0 AND ${fees} > 0 AND ${product} > 0
+                 AND ${paid} = ${product} + ${fees}
+            THEN ${paid} ELSE ${paid} + ${fees} END)`;
+}

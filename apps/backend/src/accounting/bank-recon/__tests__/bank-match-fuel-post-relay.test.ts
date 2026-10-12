@@ -22,6 +22,7 @@ function client(
   paid: number,
   lines: Array<{ fuel_type: string; cents: number; fee_cents?: number }>,
   fees: unknown[] = [],
+  ingestSource: string | null = "daily_pull",
 ) {
   const calls: string[] = [];
   return {
@@ -37,6 +38,7 @@ function client(
                 amount_cents: String(paid),
                 transaction_id: "txn_4ypX8FQCRzHr5n",
                 fees_json: fees,
+                ingest_source: ingestSource,
                 driver_id: "d1",
                 unit_id: "u1",
                 unit_number: "T169",
@@ -131,6 +133,27 @@ describe("Relay fill posting — one leg per product", () => {
       await expect(postFuelFillOnBankMatch(c, input)).rejects.toMatchObject({ code });
       await expect(postFuelFillOnBankMatch(c, input)).rejects.toBeInstanceOf(FuelMatchPostError);
     }
+    expect(mockPost).not.toHaveBeenCalled();
+  });
+  it("LEAD 443.123 — a legacy CSV row whose stored paid carries its recorded fee posts fuel = lines + its own fee leg (was refused)", async () => {
+    // Real shape (counts only): paid 917.64 = DEF 20.82 + reefer 894.82 + relay_fee 2.00, fee only in top-level fees[].
+    const { c } = client(91764, [{ fuel_type: "def", cents: 2082 }, { fuel_type: "reefer", cents: 89482 }], [{ type: "relay_fee", amount: "2.00" }], "csv_import");
+    await postFuelFillOnBankMatch(c, input);
+    const arg = mockPost.mock.calls[0]![1] as { amount_cents: number; fee_amount_cents: number | null; cost_lines: Array<{ amount_cents: number }> };
+    expect(arg.cost_lines.reduce((t, l) => t + l.amount_cents, 0)).toBe(91564);
+    expect(arg.fee_amount_cents).toBe(200);
+    // Wallet credit = what Relay drew: 917.64 — the fee is not added a second time.
+    expect(arg.amount_cents).toBe(91764);
+  });
+
+  it("LEAD 443.123 — any difference that is NOT exactly the recorded fee is still refused (no plug, no tolerance)", async () => {
+    for (const [paid, src] of [[91701, "csv_import"], [91764, "daily_pull"], [91764 + 1, "csv_import"]] as const) {
+      const { c } = client(paid, [{ fuel_type: "def", cents: 2082 }, { fuel_type: "reefer", cents: 89482 }], [{ type: "relay_fee", amount: "2.00" }], src);
+      await expect(postFuelFillOnBankMatch(c, input)).rejects.toMatchObject({ code: "relay_fill_lines_do_not_foot" });
+    }
+    // A legacy-shaped row that ALSO carries a per-line fee is not the legacy CSV shape -> refused.
+    const { c } = client(91764, [{ fuel_type: "def", cents: 2082, fee_cents: 200 }, { fuel_type: "reefer", cents: 89482 }], [{ type: "relay_fee", amount: "2.00" }], "csv_import");
+    await expect(postFuelFillOnBankMatch(c, input)).rejects.toMatchObject({ code: "relay_fill_lines_do_not_foot" });
     expect(mockPost).not.toHaveBeenCalled();
   });
 });

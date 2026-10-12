@@ -28,13 +28,23 @@ const FILES = {
   deposit: "apps/backend/src/integrations/relay-payments/relay-deposit-post.service.ts",
   importRoute: "apps/backend/src/integrations/relay-payments/relay-fuel-csv-import.routes.ts",
   rollForward: "apps/backend/src/integrations/relay-payments/relay-wallet-roll-forward.service.ts",
+  feeRule: "apps/backend/src/integrations/relay-payments/relay-sender-fee-cents.ts",
+};
+
+// LEAD 443.123 — the ONE paid rule (relayFuelPaidCents) wraps the one fee rule and the one drawdown rule; a consumer that
+// goes through it takes its fee from relayFillFeeCents and its wallet from relayWalletDrawdownCents by construction.
+const PAID_RULE = /relayFuelPaidCents\(\{/;
+const paidRuleWrapsBoth = (feeRule) => {
+  const fn = (feeRule ?? "").slice((feeRule ?? "").indexOf("export function relayFuelPaidCents"));
+  return /relayFillFeeCents\(\{/.test(fn) && /relayWalletDrawdownCents\(/.test(fn);
 };
 
 export function check(src) {
   const f = [];
+  const viaPaidRule = (k) => PAID_RULE.test(src[k] ?? "") && paidRuleWrapsBoth(src.feeRule);
   for (const k of ["poster", "ingest", "backfill"]) {
-    if (!/relayFillFeeCents\(\{/.test(src[k] ?? "")) f.push(`${FILES[k]}: fee must come from relayFillFeeCents (Relay's reported fee)`);
-    if (!/relayWalletDrawdownCents\(/.test(src[k] ?? "")) f.push(`${FILES[k]}: wallet amount must come from relayWalletDrawdownCents`);
+    if (!/relayFillFeeCents\(\{/.test(src[k] ?? "") && !viaPaidRule(k)) f.push(`${FILES[k]}: fee must come from relayFillFeeCents (Relay's reported fee)`);
+    if (!/relayWalletDrawdownCents\(/.test(src[k] ?? "") && !viaPaidRule(k)) f.push(`${FILES[k]}: wallet amount must come from relayWalletDrawdownCents`);
   }
   if (/fee_amount_cents, 0\)\)[\s\S]{0,200}AS fee_cents/.test(src.backfill ?? "")) f.push(`${FILES.backfill}: wallet backfill sums line fees only again`);
   if (!/relay_fill_lines_do_not_foot/.test(src.poster ?? "")) f.push(`${FILES.poster}: product lines must foot to Relay's paid amount (refuse, never plug)`);
@@ -48,7 +58,7 @@ export function check(src) {
   if (!/postRelayDeposit\(/.test(src.importRoute ?? "")) f.push(`${FILES.importRoute}: settled deposits must post on import`);
   // ROUND 443.29 c — roll-forward.
   const rfw = src.rollForward ?? "";
-  if (!/relayFillFeeCents\(\{/.test(rfw)) f.push(`${FILES.rollForward}: fill fees must come from relayFillFeeCents`);
+  if (!/relayFillFeeCents\(\{/.test(rfw) && !viaPaidRule("rollForward")) f.push(`${FILES.rollForward}: fill fees must come from relayFillFeeCents`);
   if (!/bal \+= x\.deposits_cents - x\.fills_cents - x\.fill_fees_cents - x\.lumper_cents;/.test(rfw)) f.push(`${FILES.rollForward}: balance must be deposits − fills − fill fees − lumper (the deposit fee is charged to the card, never the wallet)`);
   // ROUND 443.29 d — R6: a DEF-only fill's remainder is DEF at the file's average price, flagged; the route passes the average.
   const imp = src.importRoute ?? "";
@@ -86,7 +96,7 @@ if (process.argv.includes("--selftest")) {
   const fails = [];
   if (check(real).length) fails.push(`tree not clean: ${check(real).join("; ")}`);
   const plants = [
-    ["backfill sums line fees only", { ...real, backfill: real.backfill.replace("relayFillFeeCents({", "lineFeesOnly({") }],
+    ["backfill sums line fees only", { ...real, backfill: real.backfill.replace("relayFillFeeCents({", "lineFeesOnly({").replace("relayFuelPaidCents({", "lineFeesOnly({") }],
     ["poster plugs the difference", { ...real, poster: real.poster.replace(/relay_fill_lines_do_not_foot/g, "relay_fill_ok") }],
     ["ingest fee constant", { ...real, ingest: real.ingest.replace(/relayFillFeeCents\(\{/g, "constantFee({") }],
     ["migration missing", { ...real, migration: "" }],
@@ -95,7 +105,8 @@ if (process.argv.includes("--selftest")) {
     ["canceled deposit posts", { ...real, deposit: real.deposit.replace('if (String(d.status).toLowerCase() !== "settled") return { outcome: "not_settled"', 'if (false) return { outcome: "not_settled"') }],
     ["import does not post", { ...real, importRoute: real.importRoute.replace(/postRelayDeposit\(/g, "noop(") }],
     ["deposit fee taken from the wallet", { ...real, rollForward: real.rollForward.replace("bal += x.deposits_cents - x.fills_cents", "bal += x.deposits_cents - x.deposit_fees_cents - x.fills_cents") }],
-    ["roll-forward fee constant", { ...real, rollForward: real.rollForward.replace("relayFillFeeCents({", "constantFee({") }],
+    ["roll-forward fee constant", { ...real, rollForward: real.rollForward.replace("relayFillFeeCents({", "constantFee({").replace("relayFuelPaidCents({", "constantFee({") }],
+    ["paid rule stops using the fee rule", { ...real, feeRule: real.feeRule.replace(/(export function relayFuelPaidCents[\s\S]*?)relayFillFeeCents\(\{/, "$1constantFee({") }],
     ["R6 rule removed", { ...real, importRoute: real.importRoute.replace("item.fuel_type_description = `DEF — ${DEF_ESTIMATED_FLAG}`", "void 0") }],
     ["R6 average not passed", { ...real, importRoute: real.importRoute.replace("csvRowToApiShape(g, { defAveragePricePerGallon: defAverage })", "csvRowToApiShape(g)") }],
   ];
