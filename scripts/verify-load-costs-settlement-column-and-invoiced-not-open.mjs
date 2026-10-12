@@ -36,7 +36,11 @@ export function backendSurfacesSettlementColumn(src) {
     /ds\.id = COALESCE\(linked\.presettlement_link_id, bill_link\.settlement_id\)/.test(src) &&
     /si\.settlement_display_id,\s*si\.settlement_id/.test(src) &&
     /LEFT JOIN settlement_info si ON si\.load_id=l\.id/.test(src) &&
-    /"settlement",\s*\n\s*\]\)\.default\("load"\)/.test(src)
+    // 443.99 (CC-2, 2026-10-12) sort-key rule:
+    //   old: "settlement" had to be the LAST entry of the sort_by enum (immediately before `]).default("load")`).
+    //   new: "settlement" must be an entry of that same sort_by enum (anywhere before `]).default("load")`).
+    //   why: U3 (#24830) appended "ledger_cost" after it; the column is still sortable. Still fails if "settlement" leaves the enum.
+    /"settlement",(?:\s*(?:\/\/[^\n]*\n\s*)?"[a-z_]+",)*\s*\]\)\.default\("load"\)/.test(src)
   );
 }
 
@@ -82,7 +86,13 @@ export function frontendIsClosedHonorsIsInvoiced(src) {
   const isClosedBody = isClosedMatch[1];
   return (
     /is_invoiced: boolean;/.test(src) &&
-    /CLOSED\.includes\(r\.status\) \|\| r\.is_invoiced/.test(isClosedBody) &&
+    // 443.99 (CC-2, 2026-10-12) isClosed rule:
+    //   old: isClosed body contained `CLOSED.includes(r.status) || r.is_invoiced`.
+    //   new: isClosed body is `CLOSED.includes(r.status) || (r.is_invoiced && !MOTION.includes(r.status))`.
+    //   why: ROUND 18.2 (owner-live 2026-09-30, #23394) — an invoice must not hide a load that is physically in motion
+    //        (13625/13626 vanished from Costs). The invoiced-closes-it half (NEW-09) is still required; the bare
+    //        `|| r.is_invoiced` that ROUND 18.2 overturned now FAILS this guard instead of being its pass condition.
+    /CLOSED\.includes\(r\.status\) \|\| \(r\.is_invoiced && !MOTION\.includes\(r\.status\)\)$/.test(isClosedBody.trim()) &&
     !/is_resettlement/.test(isClosedBody) &&
     /function matches\(r: BoardRow, f: FilterPill\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)/.test(src)
   );
@@ -114,19 +124,24 @@ if (process.argv.includes("--selftest")) {
     // this is the exact defect that hid 7 in-route USMCA loads (13587/13590-13595) from every
     // Costs pill until the owner overturned REG-040's inclusion of it here.
     [backendSrc, boardSrc.replace(
-      "const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced;",
-      "const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced || r.is_resettlement === true;"
+      "const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || (r.is_invoiced && !MOTION.includes(r.status));",
+      "const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || (r.is_invoiced && !MOTION.includes(r.status)) || r.is_resettlement === true;"
     )],
     [backendSrc.replace("LEFT JOIN settlement_info si ON si.load_id=l.id", ""), boardSrc],
-    [backendSrc.replace('"settlement",\n      ]).default("load"),', ']).default("load"),'), boardSrc],
+    [backendSrc.replace(/\n\s*"settlement",\n/, "\n"), boardSrc],
     [backendSrc, boardSrc.replace('key: "settlement", label: "Settlement/Tour", testId: "col-settlement"', 'key: "settlement_removed"')],
     [backendSrc, boardSrc.replace('const CLOSED = ["cancelled", "abandoned", "closed", "paid", "invoiced", "driver_walkoff", "driver_no_show"];', 'const CLOSED = ["cancelled", "abandoned", "closed", "paid", "driver_walkoff", "driver_no_show"];')],
     [backendSrc, boardSrc.replace('const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received"];', 'const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced"];').replace('const CLOSED = ["cancelled", "abandoned", "closed", "paid", "invoiced", "driver_walkoff", "driver_no_show"];', 'const CLOSED = ["cancelled", "abandoned", "closed", "paid", "driver_walkoff", "driver_no_show"];')],
     [backendSrc.replaceAll("i.status NOT IN ('draft', 'proforma', 'void')", "i.status <> 'void'"), boardSrc],
     [backendSrc.replace("LEFT JOIN invoice_info ii ON ii.load_id=l.id\n", ""), boardSrc],
     [backendSrc, boardSrc.replace(
-      "const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced;",
+      "const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || (r.is_invoiced && !MOTION.includes(r.status));",
       "const isClosed = (r: BoardRow) => CLOSED.includes(r.status);"
+    )],
+    // ROUND 18.2 regression: the bare `|| r.is_invoiced` that hid in-motion 13625/13626 must be caught.
+    [backendSrc, boardSrc.replace(
+      "const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || (r.is_invoiced && !MOTION.includes(r.status));",
+      "const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced;"
     )],
     [backendSrc, boardSrc.replace('if (f === "delivered_open") return DELIVERED.includes(r.status) && !isClosed(r);', 'if (f === "delivered_open") return DELIVERED.includes(r.status);')],
   ];

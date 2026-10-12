@@ -59,8 +59,14 @@ const contracts = [
   [
     "LoadsPlanner supplies status per row",
     "loads",
-    (s) => s.includes("status: load.status"),
-    (s) => s.replace("status: load.status", ""),
+    // 443.99 (CC-2, 2026-10-12):
+    //   old: the row literally carries `status: load.status`.
+    //   new: the row carries the load's own status through the STATUS_LABEL display map —
+    //        `status: STATUS_LABEL[load.status ...] ?? load.status` (raw value as the fallback).
+    //   why: ROUND 20.6 L1 (#21936, ed6239a3e0) labels the status column with human text; the per-row status is still
+    //        supplied. Still fails when the row stops carrying the load's status at all.
+    (s) => /status:\s*STATUS_LABEL\[load\.status\b[^\]]*\]\s*\?\?\s*load\.status\b/.test(s),
+    (s) => s.replace(/status:\s*STATUS_LABEL\[load\.status\b[^\]]*\]\s*\?\?\s*load\.status\b,?/g, ""),
   ],
   [
     "PlannerGrid CSS styles the status column",

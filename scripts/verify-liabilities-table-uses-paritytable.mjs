@@ -62,8 +62,19 @@ function assertMigrated(src) {
   if (!src.includes("No active liabilities.")) {
     errors.push(`${PAGE}: must keep empty-state message`);
   }
+  // 443.99 class B (CC-2, 2026-10-12) — money cell anchor.
+  //   old rule: each amount renders as the literal `$${Number(row.<field> ?? 0).toFixed(2)}`.
+  //   new rule: each amount renders as that literal OR as the canonical C-37 money cell
+  //             `<TableMoneyCell dollars={row.<field>` with TableMoneyCell imported from components/table/TableMoneyCell
+  //             (lib/money formatUsdTable: USD, 2 decimals, accounting parentheses, red negatives, missing → "—").
+  //   why: ACCT-F9799 (ROUND 296, e5680e1c36) moved the driver-finance surfaces onto lib/money; the amounts are
+  //        still USD-formatted, the literal anchor just could not see it. Not looser: a raw / unformatted amount
+  //        (e.g. {row.current_balance}) still fails — planted in the selftest.
+  const moneyCellImported = /import\s*\{\s*TableMoneyCell\s*\}\s*from\s*["'][./]+components\/table\/TableMoneyCell["']/.test(src);
   for (const field of ["original_amount", "paid_to_date", "current_balance", "scheduled_deduction"]) {
-    if (!src.includes(`\${Number(row.${field} ?? 0).toFixed(2)}`)) {
+    const legacy = src.includes(`\${Number(row.${field} ?? 0).toFixed(2)}`);
+    const moneyCell = moneyCellImported && new RegExp(`<TableMoneyCell\\s+dollars=\\{row\\.${field}\\b`).test(src);
+    if (!legacy && !moneyCell) {
       errors.push(`${PAGE}: must keep $ toFixed(2) formatting for ${field}`);
     }
   }
@@ -119,6 +130,24 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  // The canonical TableMoneyCell shape (today's page) passes; one raw amount is caught.
+  const moneyCellGood = good
+    .replace('import { ParityTable', 'import { TableMoneyCell } from "../../../components/table/TableMoneyCell";\n    import { ParityTable')
+    .replace(/<>\\?\$\{Number\(row\.(\w+) \?\? 0\)\.toFixed\(2\)\}<\/>/g, "<TableMoneyCell dollars={row.$1 as number | string | null | undefined} />");
+  if (moneyCellGood === good || assertMigrated(moneyCellGood).length) {
+    console.error(`${LABEL} --selftest FAIL TableMoneyCell fixture rejected:`, assertMigrated(moneyCellGood));
+    process.exit(1);
+  }
+  const rawAmount = moneyCellGood.replace("<TableMoneyCell dollars={row.current_balance as number | string | null | undefined} />", "<>{row.current_balance}</>");
+  if (rawAmount === moneyCellGood || !assertMigrated(rawAmount).some((e) => e.includes("current_balance"))) {
+    console.error(`${LABEL} --selftest FAIL: a raw unformatted current_balance was NOT caught`);
+    process.exit(1);
+  }
+  const noImport = moneyCellGood.replace('import { TableMoneyCell } from "../../../components/table/TableMoneyCell";', "");
+  if (assertMigrated(noImport).length < 4) {
+    console.error(`${LABEL} --selftest FAIL: TableMoneyCell without the canonical import was NOT caught`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);

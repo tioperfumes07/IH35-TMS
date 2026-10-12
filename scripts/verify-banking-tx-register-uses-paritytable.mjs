@@ -182,7 +182,13 @@ function selftest() {
       renderExpanded={renderExpandedRegisterRow}
       groupBy={showGroupHeaders ? { getKey: () => "x", renderHeader: () => null } : undefined}
     />
+    <div data-testid="banking-categorize-inline-redirect" />
+    <Modal><div className="overflow-auto p-3" data-testid="banking-categorize-match-modal" /></Modal>
   `;
+  // 443.99 (CC-2) fixture repair — old: the good fixture predates ROUND 433-CUR (b38b71de42), which added two
+  // required test ids to assertMigrated, so every good fixture was rejected and --selftest could never pass.
+  // new: the good fixture carries the 433-CUR modal + inline-redirect stub the real page has.
+  // why: fixture drift, not a code defect — the rule is unchanged; the planted bad fixture still fails hard.
   const bad = `
     import { TableHeaderCell, useTablePref } from "../../../components/table";
     export function BankingTransactionsDesignView() {
