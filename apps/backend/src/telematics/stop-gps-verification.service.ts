@@ -167,6 +167,9 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
   operatingCompanyId: string; loadId: string; apply: boolean; actorUserId: string; reason?: string;
   /** 443.86 #2: only the load's zip-center stops are resolved (and applied); every other stop is left as it is. */
   zipCenterOnly?: boolean;
+  /** 443.91 #1 (owner: "the gps is source of truth"): zip-center stops the Owner decides BY GPS — the truck's dwell in that
+   *  city is the stop even when the business at the point carries another name; the document's business name is kept. */
+  gpsDecidedStopIds?: string[];
 }): Promise<StopGpsVerdict[]> {
   const load = (await client.query<{ load_number: string; unit_id: string | null }>(
     `SELECT load_number::text, assigned_unit_id::text AS unit_id FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
@@ -248,6 +251,7 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
       const st = stopsIn.find((x) => x.stop_id === v.stop_id)!;
       let reason: string | null = null;
       let pick: { d: Dwell; f: NonNullable<StopGpsVerdict["facility"]> } | null = null;
+      let gpsDecided = false;
       if (!load.unit_id) reason = "the load has no unit";
       else if (st.lat == null || st.lng == null || !st.day) reason = "the stop has no zip point or date";
       else {
@@ -264,6 +268,7 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
           // 443.87: only the document's own business is written; a dwell at another business (a repair shop, a drop box)
           // is listed for the owner, never fenced.
           if (zipFacilityConfirmed(docFacility, f.name, [zipStop.city, zipStop.state, f.city, f.state])) { pick = { d, f }; break; }
+          if (input.gpsDecidedStopIds?.includes(v.stop_id)) { pick = { d, f }; gpsDecided = true; break; }
           others.push(`${f.name ?? "unnamed place"} (${f.street}, ${f.city})`);
         }
         if (cands.length && !pick) reason = others.length
@@ -349,9 +354,11 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
           resource_type: "mdata.load_stops", resource_id: v.stop_id, operating_company_id: input.operatingCompanyId, load_id: input.loadId,
           load_number: load.load_number, sequence_number: v.sequence_number, document_address: v.document_address,
           resolved_address: `${f.street}, ${f.city}, ${f.state} ${f.zip}`, facility_at_point: f.name, source: f.source,
+          document_business: docFacility, gps_decided: gpsDecided,
           samsara_address_id: f.samsara_address_id, google_place_id: f.place_id,
           dwell: { lat: d.lat, lng: d.lng, started_at: d.startedAt.toISOString(), minutes: d.dwellMinutes },
-          distance_from_zip_center_m: metersBetween(st.lat!, st.lng!, d.lat, d.lng), reason: input.reason ?? "443.86 #2 zip-center stop resolved by GPS dwell",
+          distance_from_zip_center_m: metersBetween(st.lat!, st.lng!, d.lat, d.lng),
+          reason: gpsDecided ? `GPS-decided (443.91, owner: the gps is source of truth): document business "${docFacility}" kept; the truck's dwell is the stop` : input.reason ?? "443.86 #2 zip-center stop resolved by GPS dwell",
         }, "warning", "443.86");
         applied = true;
         moved++;

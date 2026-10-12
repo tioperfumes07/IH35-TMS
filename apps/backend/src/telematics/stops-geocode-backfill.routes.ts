@@ -7,7 +7,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { verifyLoadStopsAgainstGps, type StopGpsVerdict } from "./stop-gps-verification.service.js";
 
 const bodySchema = z.object({ operating_company_id: z.string().uuid() });
-const zipBody = z.object({ operating_company_id: z.string().uuid(), dry_run: z.boolean().default(true) });
+const zipBody = z.object({ operating_company_id: z.string().uuid(), dry_run: z.boolean().default(true), gps_decided_stop_ids: z.array(z.string().uuid()).max(50).optional() });
 
 export async function registerStopsGeocodeBackfillRoutes(app: FastifyInstance) {
   app.post("/api/v1/telematics/stops/geocode-backfill", { config: { rateLimit: { max: 2, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -43,6 +43,8 @@ export async function registerStopsGeocodeBackfillRoutes(app: FastifyInstance) {
       const verdicts: StopGpsVerdict[] = [];
       for (const l of loads) verdicts.push(...(await verifyLoadStopsAgainstGps(client as never, {
         operatingCompanyId: co, loadId: l.id, apply: !parsed.data.dry_run, actorUserId: user.uuid, zipCenterOnly: true,
+        // GPS-decided stops are the Owner's decision alone.
+        gpsDecidedStopIds: user.role === "Owner" ? parsed.data.gps_decided_stop_ids : undefined,
         reason: "443.86 #2 zip-center stop resolved by GPS dwell",
       })));
       if (parsed.data.dry_run) await client.query("ROLLBACK TO SAVEPOINT zip_center_resolve");
