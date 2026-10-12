@@ -36,7 +36,13 @@ export class SettlementApChainError extends Error {
  * load's own A/P bill with payBasis 'salaried' (driver_settlement_gl_bills.pay_basis; the CHECK allows a NULL driver bill
  * only then).
  */
-export type ApChainLoadBill = { driverBillId: string | null; loadId: string; loadNumber: string; grossCents: number; spanStart: string | null; spanEnd: string | null; payBasis?: "per_load_driver_bill" | "salaried" };
+/**
+ * 443.101 (P38 Wave-A linkage) — unitId: the load's assigned unit when the load's company owns or currently leases it
+ * (the same rule mdata.refuse_cross_company_reference enforces on accounting.bills.unit_id). The per-load A/P bill carries
+ * it, so a driver-pay bill links to its UNIT as well as its vendor and load (unit cost / load profitability). Measured
+ * prod 2026-10-12: 146 of 146 live USMCA driver bills sat on loads with a same-entity assigned unit and carried none.
+ */
+export type ApChainLoadBill = { driverBillId: string | null; loadId: string; loadNumber: string; grossCents: number; spanStart: string | null; spanEnd: string | null; payBasis?: "per_load_driver_bill" | "salaried"; unitId?: string | null };
 
 /** The key a load's lines / bill are tracked under: its driver bill, or (salaried) the load itself. */
 export const apChainBillKey = (b: ApChainLoadBill): string => b.driverBillId ?? `salaried-load:${b.loadId}`;
@@ -98,8 +104,9 @@ export function allocateApplication(remaining: Map<string, number>, order: strin
 
 /** The settlement's per-load driver bills with each load's date span (stops). */
 export async function loadSettlementLoadBills(client: pg.PoolClient, opco: string, settlementId: string, driverId: string): Promise<ApChainLoadBill[]> {
-  const r = await client.query<{ id: string; load_id: string; load_number: string | null; gross: string; span_start: string | null; span_end: string | null }>(
+  const r = await client.query<{ id: string; load_id: string; load_number: string | null; gross: string; span_start: string | null; span_end: string | null; unit_id: string | null }>(
     `SELECT db.id::text, db.load_id::text, COALESCE(l.load_number, db.load_number) AS load_number, db.gross_amount_cents::text AS gross,
+            (SELECT u.id::text FROM mdata.units u WHERE u.id = l.assigned_unit_id AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)) AS unit_id,
             (SELECT min(COALESCE(st.actual_arrival_at, st.appointment_start_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = db.load_id) AS span_start,
             (SELECT max(COALESCE(st.actual_departure_at, st.actual_arrival_at, st.appointment_end_at, st.scheduled_departure_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = db.load_id) AS span_end
        FROM driver_finance.driver_bills db
@@ -110,7 +117,7 @@ export async function loadSettlementLoadBills(client: pg.PoolClient, opco: strin
       ORDER BY span_start NULLS LAST, l.load_number`,
     [opco, settlementId, driverId]
   );
-  return r.rows.map((x) => ({ driverBillId: x.id, loadId: x.load_id, loadNumber: String(x.load_number ?? x.load_id), grossCents: Number(x.gross), spanStart: x.span_start, spanEnd: x.span_end }));
+  return r.rows.map((x) => ({ driverBillId: x.id, loadId: x.load_id, loadNumber: String(x.load_number ?? x.load_id), grossCents: Number(x.gross), spanStart: x.span_start, spanEnd: x.span_end, unitId: x.unit_id ?? null }));
 }
 
 /**
@@ -120,8 +127,9 @@ export async function loadSettlementLoadBills(client: pg.PoolClient, opco: strin
  * still refused NO_LOAD_BILLS exactly as before.
  */
 export async function loadSalariedSettlementLoads(client: pg.PoolClient, opco: string, settlementId: string): Promise<ApChainLoadBill[]> {
-  const r = await client.query<{ load_id: string; load_number: string; span_start: string | null; span_end: string | null }>(
+  const r = await client.query<{ load_id: string; load_number: string; span_start: string | null; span_end: string | null; unit_id: string | null }>(
     `SELECT l.id::text AS load_id, l.load_number,
+            (SELECT u.id::text FROM mdata.units u WHERE u.id = l.assigned_unit_id AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)) AS unit_id,
             (SELECT min(COALESCE(st.actual_arrival_at, st.appointment_start_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = l.id AND st.soft_deleted_at IS NULL) AS span_start,
             (SELECT max(COALESCE(st.actual_departure_at, st.actual_arrival_at, st.appointment_end_at, st.scheduled_departure_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = l.id AND st.soft_deleted_at IS NULL) AS span_end
        FROM mdata.loads l
@@ -134,7 +142,7 @@ export async function loadSalariedSettlementLoads(client: pg.PoolClient, opco: s
       ORDER BY span_start NULLS LAST, l.load_number`,
     [opco, settlementId]
   );
-  return r.rows.map((x) => ({ driverBillId: null, loadId: x.load_id, loadNumber: x.load_number, grossCents: 0, spanStart: x.span_start, spanEnd: x.span_end, payBasis: "salaried" as const }));
+  return r.rows.map((x) => ({ driverBillId: null, loadId: x.load_id, loadNumber: x.load_number, grossCents: 0, spanStart: x.span_start, spanEnd: x.span_end, payBasis: "salaried" as const, unitId: x.unit_id ?? null }));
 }
 
 /** The bank a payment posts from: the payment method's bank, else the entity's operating bank (owner: BofA). Never a holding account. */
@@ -257,6 +265,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
       operatingCompanyId: opco,
       vendorId,
       driverId: input.driverId,
+      unitId: b.unitId ?? null,
       billNumber: b.loadNumber,
       autoDisplayId: spent.rows.length > 0,
       billDate: input.billDate,

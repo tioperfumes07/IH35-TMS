@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // ROUND 23.2 B4/B5 (ACCT-F26307) — for every USMCA settlement, net_pay must equal the signed
-// AlwaysTrack document's TOTAL DUE to the cent, and every settlement must post through the
-// canonical Bill+BillPayment engine, never the single-JE driver_finance.payrun_gl_runs
-// (closeSettlementPayRun) path.
+// AlwaysTrack document's TOTAL DUE to the cent, and (ROUND 326 item 18, superseding B5) every settlement
+// is posted exactly once through the close engine (closeSettlementPayRun / driver_finance.payrun_gl_runs).
 //
 // GROUND TRUTH: data/alwaystrack/settlements-truth-2026-09-13.json (self-validating parse of the
 // 44 signed AlwaysTrack documents, L5). Never re-parsed here — read as committed.
@@ -44,7 +43,14 @@ const OPCO = "5c854333-6ea5-4faa-af31-67cb272fef80"; // USMCA
 // correctly asserts 34 instead -- state which set an assertion uses, do not assume they're the same
 // number. Verified: all 35 driver documents exist as distinct entries in the truth file and their
 // total_due values sum to exactly $49,297.42, the same target both docs cite.
-const USMCA_CUTOVER_DOCS = Array.from({ length: 35 }, (_, i) => String(5769 + i)); // 5769..5803
+// LEAD RULINGS 443.43 / 443.50 (2026-10-11, measured prod): documents 5770 (loads 13503/13509) and 5796 (load 13541) are
+// IH35 TRANSPORTATION settlements, "not USMCA entries" — their old USMCA rows were purged under AUTH-400
+// (audit.record_deletions) and they are never re-entered in USMCA. They leave the USMCA set and are asserted ABSENT from
+// USMCA instead (a live USMCA row for either fails). 35 driver documents - 2 = 33; sum 49,297.42 - 1,997.50 - 379.73.
+export const NOT_USMCA_DOCS = Object.freeze(["5770", "5796"]);
+const USMCA_CUTOVER_DOCS = Array.from({ length: 35 }, (_, i) => String(5769 + i)).filter((d) => !NOT_USMCA_DOCS.includes(d)); // 5769..5803 less the 2
+const USMCA_DOC_COUNT = 33;
+const USMCA_TARGET_SUM = 46920.19;
 
 // The known duplicate mega-row for tour 5782 (CC-2's B5 1:1 re-cut territory, not this guard's job)
 // — see r232-backfill-settlement-header-from-posted-je.mts's own header comment for the live-verified
@@ -98,19 +104,24 @@ export function judgeSettlements(usmcaDocs, truth, liveRows) {
   return { lines, failures };
 }
 
-/** B5 law: 0 settlements posted through closeSettlementPayRun. */
-export function payrunFailures(payrunCount) {
+/**
+ * Posting mechanism. B5 (ROUND 23.2, 2026-09-13) required 0 closeSettlementPayRun postings; ROUND 326 item 18 (#24181,
+ * 958d732399, owner: "the totals he verifies must come from the same code path the post writes — do not create a second
+ * calculator") made the close engine THE settlement poster: the Settlement Creator previews and posts through
+ * closeSettlementPayRun. The law this guard now holds: every USMCA document's settlement is posted EXACTLY ONCE through
+ * the close engine — no settlement left unposted, none posted twice.
+ */
+export function payrunFailures(postedCloseRunsByDoc) {
   const failures = [];
-  if (payrunCount > 0) {
-    failures.push(
-      `${payrunCount} USMCA settlement(s) are posted via the disfavored single-JE closeSettlementPayRun ` +
-        `path (driver_finance.payrun_gl_runs) — B5 requires the canonical Bill+BillPayment engine only. ` +
-        `These postings are individually penny-exact to their signed documents (verified above) — this is ` +
-        `a mechanism migration, not a money error, and reversing+reposting 30+ already-correct settlements ` +
-        `is a separate, owner-gated undertaking, not a header-sync fix.`
-    );
+  for (const [doc, n] of postedCloseRunsByDoc) {
+    if (n !== 1) failures.push(`${doc}: ${n} posted close run(s) (driver_finance.payrun_gl_runs) — the settlement must be posted exactly once through the close engine (ROUND 326 item 18)`);
   }
   return failures;
+}
+
+/** 443.101: a Transportation document must never have a live USMCA settlement. */
+export function notUsmcaFailures(rows) {
+  return rows.map((r) => `${r.source_document_ref} (${r.display_id}): a live USMCA settlement exists for a Transportation document (LEAD 443.43/443.50: not a USMCA entry)`);
 }
 
 function selftest() {
@@ -120,10 +131,12 @@ function selftest() {
   const off = (doc, delta) => clean.map((r) => (r.source_document_ref === doc ? { ...r, net_pay: (Number(r.net_pay) + delta).toFixed(2) } : r));
   const planted = [
     ["net_pay one cent high", judgeSettlements(docs, truth, off(docs[0], 0.01)).failures.length === 1],
-    ["net_pay one cent low", judgeSettlements(docs, truth, off(docs[34], -0.01)).failures.length === 1],
+    ["net_pay one cent low", judgeSettlements(docs, truth, off(docs[docs.length - 1], -0.01)).failures.length === 1],
     ["document with no live settlement", judgeSettlements(docs, truth, clean.filter((r) => r.source_document_ref !== docs[13])).failures.length === 1],
     ["two live settlements for one document", judgeSettlements(docs, truth, [...clean, { ...clean[5], display_id: "S-2026-9999" }]).failures.length === 1],
-    ["settlement posted via closeSettlementPayRun", payrunFailures(1).length === 1],
+    ["settlement never posted through the close engine", payrunFailures(new Map([["5771", 0]])).length === 1],
+    ["settlement posted twice through the close engine", payrunFailures(new Map([["5771", 2]])).length === 1],
+    ["Transportation document 5770 live in USMCA", notUsmcaFailures([{ source_document_ref: "5770", display_id: "P-9999" }]).length === 1],
   ];
   const caught = planted.filter(([, ok]) => ok).length;
   for (const [name, ok] of planted) if (!ok) console.error(`${LABEL} SELFTEST: planted violation escaped — ${name}`);
@@ -131,7 +144,9 @@ function selftest() {
     && judgeSettlements(docs, truth, clean).failures.length === 0
     // the named duplicate mega-row is exempt, so it must not turn a clean document red
     && judgeSettlements(docs, truth, [...clean, { ...clean[13], display_id: "S-2026-0011" }]).failures.length === 0
-    && payrunFailures(0).length === 0;
+    && payrunFailures(new Map(docs.map((d) => [d, 1]))).length === 0
+    && notUsmcaFailures([]).length === 0
+    && !docs.includes("5770") && !docs.includes("5796") && docs.length === USMCA_DOC_COUNT;
   if (!cleanOk) console.error(`${LABEL} SELFTEST: clean input flagged`);
   console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught`);
   process.exit(caught === planted.length && cleanOk ? 0 : 1);
@@ -141,16 +156,16 @@ async function main() {
   const truth = loadSignedTotals();
   const usmcaDocs = USMCA_CUTOVER_DOCS.filter((d) => truth.has(d));
   // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
-  if (usmcaDocs.length !== 35) {
+  if (usmcaDocs.length !== USMCA_DOC_COUNT) {
     throw new Error(
-      `expected exactly 35 USMCA settlement documents (5769-5803 inclusive) in ${path.basename(TRUTH_PATH)}, found ${usmcaDocs.length} — ` +
+      `expected exactly ${USMCA_DOC_COUNT} USMCA settlement documents (5769-5803 less ${NOT_USMCA_DOCS.join("/")}) in ${path.basename(TRUTH_PATH)}, found ${usmcaDocs.length} — ` +
         `ground-truth file may be stale or the L2 boundary changed; re-verify before trusting this guard`
     );
   }
   const targetSum = usmcaDocs.reduce((s, d) => s + truth.get(d), 0);
-  if (Math.abs(targetSum - 49297.42) > 0.005) {
+  if (Math.abs(targetSum - USMCA_TARGET_SUM) > 0.005) {
     throw new Error(
-      `sum of all 35 documents' TOTAL DUE is ${targetSum.toFixed(2)}, not the expected 49,297.42 — ` +
+      `sum of the ${USMCA_DOC_COUNT} USMCA documents' TOTAL DUE is ${targetSum.toFixed(2)}, not the expected ${USMCA_TARGET_SUM.toFixed(2)} — ` +
         `ground-truth file changed since this guard was written; re-verify the acceptance figure before trusting it`
     );
   }
@@ -181,35 +196,52 @@ async function main() {
 
     const { lines, failures } = judgeSettlements(usmcaDocs, truth, res.rows);
 
-    // 0 rows posted via closeSettlementPayRun (B5 law: canonical Bill+BillPayment only, going forward).
+    // ROUND 326 item 18: each USMCA document's live settlement is posted EXACTLY ONCE through the close engine.
     const payrunRes = await client.query(
       `
       WITH b AS MATERIALIZED (SELECT set_config('app.bypass_rls','lucia',true) AS v)
-      SELECT count(*)::int AS n
-      FROM driver_finance.payrun_gl_runs pr
-      JOIN driver_finance.driver_settlements ds ON ds.id = pr.settlement_id
+      SELECT ds.source_document_ref, count(pr.id) FILTER (WHERE pr.status = 'posted')::int AS n
+      FROM driver_finance.driver_settlements ds
+      LEFT JOIN driver_finance.payrun_gl_runs pr
+        ON pr.settlement_id = ds.id AND pr.operating_company_id = ds.operating_company_id
       CROSS JOIN b
       WHERE (SELECT v FROM b) = 'lucia'
-        AND pr.operating_company_id = $1::uuid
-        AND pr.status = 'posted'
+        AND ds.operating_company_id = $1::uuid
+        AND ds.status <> 'cancelled'
+        AND ds.source_document_ref = ANY($2::text[])
+        AND NOT (ds.display_id = ANY($3::text[]))
+      GROUP BY ds.source_document_ref
+      `,
+      [OPCO, usmcaDocs, [...KNOWN_DUPLICATE_EXEMPT]]
+    );
+    const postedByDoc = new Map(payrunRes.rows.map((r) => [r.source_document_ref, Number(r.n)]));
+    const notUsmcaRes = await client.query(
+      `
+      WITH b AS MATERIALIZED (SELECT set_config('app.bypass_rls','lucia',true) AS v)
+      SELECT ds.source_document_ref, ds.display_id
+      FROM driver_finance.driver_settlements ds, b
+      WHERE (SELECT v FROM b) = 'lucia'
+        AND ds.operating_company_id = $1::uuid
+        AND ds.status <> 'cancelled'
         AND ds.source_document_ref = ANY($2::text[])
       `,
-      [OPCO, usmcaDocs]
+      [OPCO, [...NOT_USMCA_DOCS]]
     );
-    const payrunCount = Number(payrunRes.rows[0]?.n ?? 0);
 
-    console.log(`${LABEL} — ${usmcaDocs.length} USMCA settlement documents (5769-5803):\n`);
+    console.log(`${LABEL} — ${usmcaDocs.length} USMCA settlement documents (5769-5803 less ${NOT_USMCA_DOCS.join("/")}, Transportation):\n`);
     console.log("doc   display_id       net        signed     status");
     console.log("----- ---------------- ---------- ---------- ------");
     for (const l of lines) console.log(l);
-    console.log(`\ncloseSettlementPayRun (payrun_gl_runs) posted rows for these documents: ${payrunCount} (law requires 0)`);
+    const onceCount = [...postedByDoc.values()].filter((n) => n === 1).length;
+    console.log(`\nposted exactly once through the close engine: ${onceCount} of ${postedByDoc.size} live settlement(s); Transportation documents live in USMCA: ${notUsmcaRes.rows.length}`);
 
-    failures.push(...payrunFailures(payrunCount));
+    failures.push(...payrunFailures(postedByDoc));
+    failures.push(...notUsmcaFailures(notUsmcaRes.rows));
 
     if (failures.length > 0) {
       throw new Error(`${failures.length} failure(s):\n  ${failures.join("\n  ")}`);
     }
-    console.log(`\n${LABEL} PASS — all ${usmcaDocs.length} documents net_pay = signed TOTAL DUE; 0 rows via closeSettlementPayRun.`);
+    console.log(`\n${LABEL} PASS — all ${usmcaDocs.length} documents net_pay = signed TOTAL DUE, each posted exactly once through the close engine; 0 Transportation documents in USMCA.`);
   } finally {
     client.release();
     await pool.end();

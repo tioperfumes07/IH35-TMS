@@ -102,6 +102,8 @@ type DriverBillRow = {
   load_id: string;
   load_number: string | null;
   gross_amount_cents: number;
+  /** 443.101 — the load's same-entity unit (owned or currently leased), or null. */
+  unit_id?: string | null;
 };
 
 type DeductionRow = {
@@ -247,7 +249,11 @@ async function loadDriverBills(client: DbClient, operatingCompanyId: string, set
   // by creation so the load# numbering + deduction allocation are deterministic.
   const res = await client.query<DriverBillRow>(
     `
-      SELECT db.id::text, db.load_id::text, db.load_number, db.gross_amount_cents::int AS gross_amount_cents
+      SELECT db.id::text, db.load_id::text, db.load_number, db.gross_amount_cents::int AS gross_amount_cents,
+             -- 443.101 (P38 Wave-A) — the load's same-entity unit (owned or currently leased), stamped on the per-load bill.
+             (SELECT u.id::text FROM mdata.loads l JOIN mdata.units u ON u.id = l.assigned_unit_id
+               WHERE l.id = db.load_id AND l.operating_company_id = db.operating_company_id
+                 AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)) AS unit_id
       FROM driver_finance.driver_bills db
       WHERE db.operating_company_id = $1::uuid
         AND db.driver_id = $3::uuid
@@ -620,6 +626,8 @@ export async function postSettlementBillPayment(
           // bills already stamp it via the Costs-tab bill-creator path; this is the matching
           // driver-pay-side stamp, forward-fix only (does not touch any already-posted bill).
           driverId: settlement.driver_id,
+          // 443.101 (P38 Wave-A) — the driver-pay bill links to the load's unit, not only its vendor and load.
+          unitId: b.unit_id ?? null,
           // GO-19 slice 03 (owner reversal of the prior AP-BILL-NUMBER-IS-THE-LOAD-NUMBER rationale
           // below) — driver bill number EQUALS the load number, no 'B-' prefix, matching
           // driver-bill-number.ts's driverBillNumberFromLoadNumber contract everywhere else a driver

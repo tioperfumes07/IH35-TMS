@@ -24,14 +24,26 @@ const url = process.env.DATABASE_URL || process.env.DATABASE_DIRECT_URL || "";
 const LABEL = "verify-usmca-settlement-cutover";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
-const LOAD_NUMBERS = ["13497", "13498", "13503", "13504", "13506", "13509", "13579"];
+// 443.101 — every B7 row was hard-deleted under AUTH-400 (2026-10-05, audit.record_deletions) and the owner re-entered the
+// USMCA loads through the app. LEAD RULINGS 443.43 / 443.50 (measured prod): settlement document 5770 — loads 13503 and
+// 13509 — is IH35 TRANSPORTATION, "not a USMCA entry". So the floor now holds:
+//   - the 5 USMCA loads exist live under USMCA and carry the B7 values;
+//   - 13503 / 13509 are ABSENT from USMCA and their old USMCA rows are on the governed deletion ledger (non-null auth_id);
+//   - the tour settlements are keyed by their SIGNED DOCUMENT (5797 = 13569/13577, 5802 = 13579) — the S-2026-0019 /
+//     S-2026-0025 display ids no longer exist; the Settlement Creator re-posted those documents as P-0027 / P-0031.
+const LOAD_NUMBERS = ["13497", "13498", "13504", "13506", "13579"];
+export const NOT_USMCA_LOAD_NUMBERS = ["13503", "13509"];
 const EXPECTED_RATE_TOTAL_CENTS = { "13579": 490000 };
-const EXPECTED_DRIVER_BILL_GROSS_CENTS = { "13509": 96035, "13579": 94510 };
-const TOUR_SETTLEMENT_DISPLAY_IDS = ["S-2026-0019", "S-2026-0025"]; // 13569/13577, 13579
+const EXPECTED_DRIVER_BILL_GROSS_CENTS = { "13579": 94510 };
+const TOUR_SETTLEMENT_DOCS = ["5797", "5802"]; // 13569/13577, 13579
 
 /** Pure predicate so --selftest can exercise it with no database. */
-export function findViolations({ loads, invoices, driverBills, tourSettlements }) {
+export function findViolations({ loads, invoices, driverBills, tourSettlements, notUsmcaLive = [], notUsmcaDeleted = NOT_USMCA_LOAD_NUMBERS }) {
   const violations = [];
+  for (const n of notUsmcaLive) violations.push(`load ${n}: live in USMCA, but it is a Transportation load (settlement 5770, LEAD 443.43)`);
+  for (const n of NOT_USMCA_LOAD_NUMBERS) {
+    if (!notUsmcaDeleted.includes(n)) violations.push(`load ${n}: no governed USMCA deletion on audit.record_deletions — its removal is unexplained`);
+  }
   for (const l of loads) {
     if (l.is_sample_data === true) {
       violations.push(`load ${l.load_number}: is_sample_data still true`);
@@ -54,7 +66,7 @@ export function findViolations({ loads, invoices, driverBills, tourSettlements }
   }
   for (const s of tourSettlements ?? []) {
     if (s.status === "cancelled") {
-      violations.push(`tour settlement ${s.display_id}: status still cancelled (signed, closed document — must be closed, not stuck)`);
+      violations.push(`tour settlement ${s.display_id} (document ${s.source_document_ref}): status still cancelled (signed, closed document — must be closed, not stuck)`);
     }
     if (!s.trip_closed_at) {
       violations.push(`tour settlement ${s.display_id}: trip_closed_at not stamped`);
@@ -93,15 +105,26 @@ async function main() {
       const driverBills = await client.query(
         `SELECT l.load_number, db.gross_amount_cents::text AS gross_amount_cents
            FROM driver_finance.driver_bills db
-           JOIN mdata.loads l ON l.id = db.load_id
-          WHERE l.load_number IN ('13509', '13579') AND l.operating_company_id = $1::uuid`,
-        [USMCA_COMPANY_ID]
+           JOIN mdata.loads l ON l.id = db.load_id AND l.operating_company_id = db.operating_company_id
+          WHERE l.load_number = ANY($1::text[]) AND l.operating_company_id = $2::uuid`,
+        [Object.keys(EXPECTED_DRIVER_BILL_GROSS_CENTS), USMCA_COMPANY_ID]
       );
       const tourSettlements = await client.query(
-        `SELECT display_id, status, trip_closed_at
+        `SELECT display_id, source_document_ref, status, trip_closed_at
            FROM driver_finance.driver_settlements
-          WHERE display_id = ANY($1::text[]) AND operating_company_id = $2::uuid`,
-        [TOUR_SETTLEMENT_DISPLAY_IDS, USMCA_COMPANY_ID]
+          WHERE source_document_ref = ANY($1::text[]) AND operating_company_id = $2::uuid AND status <> 'cancelled'`,
+        [TOUR_SETTLEMENT_DOCS, USMCA_COMPANY_ID]
+      );
+      const notUsmcaLive = await client.query(
+        `SELECT load_number FROM mdata.loads WHERE load_number = ANY($1::text[]) AND operating_company_id = $2::uuid`,
+        [NOT_USMCA_LOAD_NUMBERS, USMCA_COMPANY_ID]
+      );
+      const notUsmcaDeleted = await client.query(
+        `SELECT DISTINCT row_data->>'load_number' AS load_number
+           FROM audit.record_deletions
+          WHERE table_name = 'mdata.loads' AND auth_id IS NOT NULL
+            AND row_data->>'load_number' = ANY($1::text[]) AND row_data->>'operating_company_id' = $2`,
+        [NOT_USMCA_LOAD_NUMBERS, USMCA_COMPANY_ID]
       );
       await client.query("ROLLBACK");
 
@@ -110,20 +133,23 @@ async function main() {
         process.exit(1);
         return;
       }
-      if (tourSettlements.rows.length !== TOUR_SETTLEMENT_DISPLAY_IDS.length) {
-        console.error(`${LABEL} FAILED — expected ${TOUR_SETTLEMENT_DISPLAY_IDS.length} tour settlements, found ${tourSettlements.rows.length}`);
+      if (tourSettlements.rows.length !== TOUR_SETTLEMENT_DOCS.length) {
+        console.error(`${LABEL} FAILED — expected exactly ${TOUR_SETTLEMENT_DOCS.length} live tour settlements (documents ${TOUR_SETTLEMENT_DOCS.join(", ")}), found ${tourSettlements.rows.length}`);
         process.exit(1);
         return;
       }
 
-      const violations = findViolations({ loads: loads.rows, invoices: invoices.rows, driverBills: driverBills.rows, tourSettlements: tourSettlements.rows });
+      const violations = findViolations({
+        loads: loads.rows, invoices: invoices.rows, driverBills: driverBills.rows, tourSettlements: tourSettlements.rows,
+        notUsmcaLive: notUsmcaLive.rows.map((r) => r.load_number), notUsmcaDeleted: notUsmcaDeleted.rows.map((r) => r.load_number),
+      });
       if (violations.length > 0) {
         console.error(`${LABEL} FAILED — ${violations.length} cutover-flag violation(s):`);
         for (const v of violations) console.error(`  ${v}`);
         process.exit(1);
         return;
       }
-      console.log(`${LABEL} OK — all 7 B7 loads is_sample_data=false, 13579 rate/invoice correct, 13509+13579 driver bills correct, both tour settlements closed`);
+      console.log(`${LABEL} OK — the 5 USMCA B7 loads is_sample_data=false, 13579 rate/invoice/driver bill correct, 13503+13509 absent from USMCA with a governed deletion (Transportation), tour documents 5797+5802 closed`);
       process.exit(0);
     } finally {
       client.release();
@@ -141,20 +167,17 @@ function selftest() {
     loads: [
       { load_number: "13497", is_sample_data: false, rate_total_cents: "720000" },
       { load_number: "13498", is_sample_data: false, rate_total_cents: "380000" },
-      { load_number: "13503", is_sample_data: false, rate_total_cents: "490000" },
       { load_number: "13504", is_sample_data: false, rate_total_cents: "490000" },
       { load_number: "13506", is_sample_data: false, rate_total_cents: "390000" },
-      { load_number: "13509", is_sample_data: false, rate_total_cents: "440000" },
       { load_number: "13579", is_sample_data: false, rate_total_cents: "490000" },
     ],
     invoices: [{ load_number: "13579", is_sample_data: false }],
     driverBills: [
-      { load_number: "13509", gross_amount_cents: "96035" },
       { load_number: "13579", gross_amount_cents: "94510" },
     ],
     tourSettlements: [
-      { display_id: "S-2026-0019", status: "closed", trip_closed_at: "2026-09-05T00:00:00.000Z" },
-      { display_id: "S-2026-0025", status: "closed", trip_closed_at: "2026-09-11T00:00:00.000Z" },
+      { display_id: "P-0027", source_document_ref: "5797", status: "closed", trip_closed_at: "2026-09-05T00:00:00.000Z" },
+      { display_id: "P-0031", source_document_ref: "5802", status: "closed", trip_closed_at: "2026-09-11T00:00:00.000Z" },
     ],
   };
   if (findViolations(clean).length !== 0) {
@@ -166,10 +189,11 @@ function selftest() {
     { ...clean, loads: clean.loads.map((l) => (l.load_number === "13498" ? { ...l, is_sample_data: true } : l)) },
     { ...clean, loads: clean.loads.map((l) => (l.load_number === "13579" ? { ...l, rate_total_cents: "465000" } : l)) },
     { ...clean, invoices: [{ load_number: "13579", is_sample_data: true }] },
-    { ...clean, driverBills: clean.driverBills.map((d) => (d.load_number === "13509" ? { ...d, gross_amount_cents: "101190" } : d)) },
+    { ...clean, notUsmcaLive: ["13509"] },
+    { ...clean, notUsmcaDeleted: ["13503"] },
     { ...clean, driverBills: clean.driverBills.map((d) => (d.load_number === "13579" ? { ...d, gross_amount_cents: "53851" } : d)) },
-    { ...clean, tourSettlements: clean.tourSettlements.map((s) => (s.display_id === "S-2026-0019" ? { ...s, status: "cancelled" } : s)) },
-    { ...clean, tourSettlements: clean.tourSettlements.map((s) => (s.display_id === "S-2026-0025" ? { ...s, trip_closed_at: null } : s)) },
+    { ...clean, tourSettlements: clean.tourSettlements.map((s) => (s.display_id === "P-0027" ? { ...s, status: "cancelled" } : s)) },
+    { ...clean, tourSettlements: clean.tourSettlements.map((s) => (s.display_id === "P-0031" ? { ...s, trip_closed_at: null } : s)) },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (findViolations(mutated).length === 0) {

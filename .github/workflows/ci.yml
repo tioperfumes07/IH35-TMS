@@ -159,7 +159,12 @@ jobs:
             scripts/verify-no-journal-entry-has-zero-postings.mjs \
             scripts/verify-voided-money-doc-has-gl-reversal.mjs \
             scripts/verify-factoring-purchase-owner-only.mjs \
-            scripts/verify-usmca-fleet-fuel-tasks-neon-pv.mjs
+            scripts/verify-usmca-fleet-fuel-tasks-neon-pv.mjs \
+            scripts/verify-settlement-net-matches-signed-doc.mjs \
+            scripts/verify-usmca-settlement-cutover.mjs \
+            scripts/verify-expense-dedupe-never-keys-on-load-and-amount.mjs \
+            scripts/verify-faro-invoice-lines-load-linkage.mjs \
+            scripts/verify-disbursement-never-credits-receipt-clearing.mjs
       # ROUND 389 (LEAD) — the ONLY place a credential-gated derived artifact's freshness can actually be
       # proven. scripts/canonical-relations.json is regenerated from the live schema, so its generator
       # declares requiresDatabase; every other job runs guards through scripts/verify-static.mjs, which

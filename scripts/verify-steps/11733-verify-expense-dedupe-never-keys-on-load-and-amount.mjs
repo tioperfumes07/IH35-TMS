@@ -3,7 +3,7 @@
 export default {
   name: "verify:expense-dedupe-never-keys-on-load-and-amount",
   run(ctx) {
-    ctx.run("node", ["scripts/verify-expense-dedupe-never-keys-on-load-and-amount.mjs", "--selftest"]);
-    return ctx.run("node", ["scripts/verify-expense-dedupe-never-keys-on-load-and-amount.mjs"]);
+    // 443.101: the live half runs in the live-DB job (ci.yml required-live-load-guard); its selftest stays here.
+    return ctx.run("node", ["scripts/verify-expense-dedupe-never-keys-on-load-and-amount.mjs", "--selftest"]);
   },
 };
