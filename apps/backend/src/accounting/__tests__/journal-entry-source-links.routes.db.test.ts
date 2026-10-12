@@ -30,6 +30,17 @@ describeIntegration("GET /api/v1/accounting/journal-entries/:id/source-links (re
   let sourceExpenseId: string;
   const expenseNumber = `EXP-SRC-LINK-TEST-${randomUUID().slice(0, 8)}`;
 
+  // trg_new_posting_has_spine_link (deferred, LAW 393.2): every posting line commits with its spine link — the writers
+  // (createJournalEntryOnClient / the posting engine) write it per line; a raw fixture must too.
+  async function spine(postingId: string, type: string, id: string, role: string) {
+    await db.query(
+      `INSERT INTO accounting.transaction_source_links
+         (operating_company_id, journal_entry_posting_id, linked_object_type, linked_object_id, relationship_role)
+       VALUES ($1::uuid, $2::uuid, $3, $4, $5)`,
+      [companyId, postingId, type, id, role]
+    );
+  }
+
   async function bypass<T>(fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
@@ -82,12 +93,14 @@ describeIntegration("GET /api/v1/accounting/journal-entries/:id/source-links (re
       const postingId = postingRes.rows[0]!.id;
       // Balancing credit line (accounting.ensure_journal_entry_balanced trigger requires debits=credits
       // on the same journal_entry_uuid) — not itself under test, just satisfies the DB invariant.
-      await db.query(
+      const credit1 = await db.query<{ id: string }>(
         `INSERT INTO accounting.journal_entry_postings
-           (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents)
-         VALUES ($1::uuid, $2::uuid, 2, $3::uuid, 'credit', 5000)`,
-        [companyId, jeWithLinks, accountId]
+           (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents,
+            source_transaction_type, source_transaction_id)
+         VALUES ($1::uuid, $2::uuid, 2, $3::uuid, 'credit', 5000, 'bill', $4) RETURNING id`,
+        [companyId, jeWithLinks, accountId, sourceBillId]
       );
+      await spine(credit1.rows[0]!.id, "bill", sourceBillId, "test_source");
 
       await db.query(
         `INSERT INTO accounting.transaction_source_links
@@ -103,18 +116,18 @@ describeIntegration("GET /api/v1/accounting/journal-entries/:id/source-links (re
         [companyId]
       );
       jeWithoutLinks = jeNoLinksRes.rows[0]!.id;
-      await db.query(
-        `INSERT INTO accounting.journal_entry_postings
-           (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents)
-         VALUES ($1::uuid, $2::uuid, 1, $3::uuid, 'credit', 5000)`,
-        [companyId, jeWithoutLinks, accountId]
-      );
-      await db.query(
-        `INSERT INTO accounting.journal_entry_postings
-           (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents)
-         VALUES ($1::uuid, $2::uuid, 2, $3::uuid, 'debit', 5000)`,
-        [companyId, jeWithoutLinks, accountId]
-      );
+      // A hand-keyed JE: no DOCUMENT behind it. Its lines are their own source (manual_je = this header) with the
+      // journal_entry spine row — exactly what createJournalEntryOnClient writes for a manual entry.
+      for (const [seq, dc] of [[1, "credit"], [2, "debit"]] as const) {
+        const p = await db.query<{ id: string }>(
+          `INSERT INTO accounting.journal_entry_postings
+             (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents,
+              source_transaction_type, source_transaction_id)
+           VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, 5000, 'manual_je', $2::text) RETURNING id`,
+          [companyId, jeWithoutLinks, seq, accountId, dc]
+        );
+        await spine(p.rows[0]!.id, "journal_entry", jeWithoutLinks, "manual_entry");
+      }
 
       // ACCT-F9511 / JE-SOURCE-LINKS-EXPENSE-NEVER-JOINED — real accounting.expenses row (not a bare
       // random uuid like sourceBillId above) so source_transaction_display_id has something to
@@ -142,19 +155,16 @@ describeIntegration("GET /api/v1/accounting/journal-entries/:id/source-links (re
         [companyId]
       );
       jeWithExpenseSource = jeExpRes.rows[0]!.id;
-      await db.query(
-        `INSERT INTO accounting.journal_entry_postings
-           (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents,
-            source_transaction_type, source_transaction_id)
-         VALUES ($1::uuid, $2::uuid, 1, $3::uuid, 'debit', 1200, 'expense', $4)`,
-        [companyId, jeWithExpenseSource, accountId, sourceExpenseId]
-      );
-      await db.query(
-        `INSERT INTO accounting.journal_entry_postings
-           (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents)
-         VALUES ($1::uuid, $2::uuid, 2, $3::uuid, 'credit', 1200)`,
-        [companyId, jeWithExpenseSource, accountId]
-      );
+      for (const [seq, dc] of [[1, "debit"], [2, "credit"]] as const) {
+        const p = await db.query<{ id: string }>(
+          `INSERT INTO accounting.journal_entry_postings
+             (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents,
+              source_transaction_type, source_transaction_id)
+           VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, 1200, 'expense', $6) RETURNING id`,
+          [companyId, jeWithExpenseSource, seq, accountId, dc, sourceExpenseId]
+        );
+        await spine(p.rows[0]!.id, "expense", sourceExpenseId, "source_transaction");
+      }
     });
 
     app = await createIntegrationApp(async (a) => {
@@ -202,8 +212,11 @@ describeIntegration("GET /api/v1/accounting/journal-entries/:id/source-links (re
     const body = res.json() as {
       source_links: Array<{ source_transaction_type: string | null; linked_object_type: string | null }>;
     };
-    // The posting line itself still returns (LEFT JOIN), but with no source markers.
-    expect(body.source_links.every((r) => r.source_transaction_type === null && r.linked_object_type === null)).toBe(true);
+    // A hand-keyed JE names no DOCUMENT: its lines are their own source (manual_je) linked to the journal entry itself
+    // (every line carries a spine row since trg_new_posting_has_spine_link) — no bill / invoice / expense behind it.
+    expect(body.source_links.length).toBeGreaterThan(0);
+    expect(body.source_links.every((r) => (r.source_transaction_type === null || r.source_transaction_type === "manual_je")
+      && (r.linked_object_type === null || r.linked_object_type === "journal_entry"))).toBe(true);
   });
 
   it("ACCT-F9511: resolves a real display id for an expense-sourced posting (was 'Source — not visible')", async () => {

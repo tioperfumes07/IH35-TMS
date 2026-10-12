@@ -702,7 +702,9 @@ describe("ledger-integrity-detectors.service — extended B3/B4/B7/B8 subledger 
         match: (sql) => sql.includes("fn_account_balances_as_of") && sql.includes("closing_balance_cents"),
         rows: [{ closing_balance_cents: "5000", normal_balance: "credit" }],
       },
-      { match: (sql) => sql.includes("FROM accounting.escrow_accounts"), rows: [{ total_cents: "5000" }] },
+      // KILL-THE-SECOND-SYSTEM: sumEscrowSubledgerCents reads driver_finance.v_driver_escrow_balance
+      // (subledger-gl-control-rec.service.ts), the escrow sub-accounts' own GL balances — no longer accounting.escrow_accounts.
+      { match: (sql) => sql.includes("FROM driver_finance.v_driver_escrow_balance"), rows: [{ total_cents: "5000" }] },
     ]);
 
     await checkExtendedSubledgerTieOutForCompany(client as never, COMPANY, "run-1");
@@ -710,7 +712,7 @@ describe("ledger-integrity-detectors.service — extended B3/B4/B7/B8 subledger 
     // Asserts the escrow-specific query fired at all — the property this test exists to prove
     // (correct role -> function dispatch). GL/subledger sign-normalization and tie-out arithmetic
     // are already covered by loadControlBalanceCents' own tests elsewhere; not re-asserted here.
-    expect(client.calls.some((c) => c.sql.includes("FROM accounting.escrow_accounts"))).toBe(true);
+    expect(client.calls.some((c) => c.sql.includes("FROM driver_finance.v_driver_escrow_balance"))).toBe(true);
   });
 });
 

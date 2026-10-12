@@ -346,8 +346,10 @@ export async function getIntegrationWorkOrderSeedIds(): Promise<{ unitId: string
       `SELECT id FROM mdata.units WHERE currently_leased_to_company_id = $1::uuid LIMIT 1`,
       [companyId]
     );
+    // ROUND 373.5: a record references only a unit its company owns or currently leases — never another company's.
     const unitFallback = await client.query<{ id: string }>(
-      `SELECT id FROM mdata.units ORDER BY created_at ASC LIMIT 1`
+      `SELECT id FROM mdata.units WHERE owner_company_id = $1::uuid ORDER BY created_at ASC LIMIT 1`,
+      [companyId]
     );
     let unitId = unitRes.rows[0]?.id ?? unitFallback.rows[0]?.id;
 
@@ -355,8 +357,10 @@ export async function getIntegrationWorkOrderSeedIds(): Promise<{ unitId: string
       `SELECT id FROM mdata.drivers WHERE operating_company_id = $1::uuid LIMIT 1`,
       [companyId]
     );
+    // ROUND 373.5: only this company's driver (a missing one is provisioned below).
     const driverFallback = await client.query<{ id: string }>(
-      `SELECT id FROM mdata.drivers WHERE deactivated_at IS NULL ORDER BY created_at ASC LIMIT 1`
+      `SELECT id FROM mdata.drivers WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL ORDER BY created_at ASC LIMIT 1`,
+      [companyId]
     );
     let driverId = driverRes.rows[0]?.id ?? driverFallback.rows[0]?.id;
 

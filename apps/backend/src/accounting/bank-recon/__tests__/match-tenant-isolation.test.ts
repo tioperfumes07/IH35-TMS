@@ -20,7 +20,9 @@ describe("bank-recon match tenant isolation", () => {
     mockWithLuciaBypass.mockClear();
 
     mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("FROM banking.bank_transactions")) {
+      // Only the transaction loader (loadTransaction): candidate queries now carry a correlated
+      // "SELECT 1 FROM banking.bank_transactions" (match.service.ts) and must not get the bank row as a candidate.
+      if (sql.includes("FROM banking.bank_transactions") && !sql.includes("SELECT 1 FROM banking.bank_transactions")) {
         return {
           rows: [
             {

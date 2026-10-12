@@ -39,8 +39,9 @@ function makeClient(state: { variance_cents: number; open_alert_id: string | nul
         return state.open_alert_id ? { rows: [{ id: state.open_alert_id }] } : { rows: [] };
       }
       if (/INSERT INTO banking\.reconciliation_drift_alerts/.test(sql)) {
+        // F-RETRY: the insert is an ON CONFLICT upsert RETURNING id — "opened" is read from the returned id.
         state.open_alert_id = ALERT_ID;
-        return { rows: [] };
+        return { rows: [{ id: ALERT_ID }] };
       }
       if (/UPDATE banking\.reconciliation_drift_alerts[\s\S]*SET bank_balance_cents/.test(sql)) {
         return { rows: [] }; // refresh of an already-open alert
