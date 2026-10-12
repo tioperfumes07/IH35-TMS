@@ -30,7 +30,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "3081-verify-register-reversal-never-precedes-original";
 const SERVICE = path.join("apps", "backend", "src", "accounting", "account-register.service.ts");
@@ -144,21 +144,8 @@ if (problems.length) {
   fail(`${problems.length} register unwind-ordering invariant(s) broken (ACCT-F350)`);
 }
 
-const url = process.env.DATABASE_URL;
-if (!url) {
-  console.log(`[${LABEL}] PASS (static half) — originals rank before reversals and reversals unwind LIFO; no DATABASE_URL for the live half`);
-  process.exit(0);
-}
-
-// ── B · LIVE: under the register's ordering, no reversal precedes the entry it reverses ───────────
-const pool = new pg.Pool({ connectionString: url, ssl: url.includes("localhost") ? false : { rejectUnauthorized: false } });
-let client;
-try {
-  client = await pool.connect();
-} catch {
-  console.log(`[${LABEL}] PASS (static half) — database unreachable; static invariant held`);
-  process.exit(0);
-}
+// 443.100: a live money guard that cannot connect FAILS (ROUND 29.9-B, verify-no-silent-db-skip) — never a skip-pass.
+const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
 
 try {
   await client.query("BEGIN");
@@ -167,10 +154,9 @@ try {
   const present = await client.query(`SELECT to_regclass('accounting.journal_entries') IS NOT NULL AS present`);
   if (!present.rows[0]?.present) {
     await client.query("ROLLBACK").catch(() => {});
-    console.log(`[${LABEL}] PASS (static half) — accounting schema not present (fresh/unmigrated DB)`);
     client.release();
     await pool.end();
-    process.exit(0);
+    fail("accounting schema not present (fresh/unmigrated DB) — an unmigrated database cannot verify this money invariant, so it is not a pass");
   }
 
   const { rows } = await client.query(`

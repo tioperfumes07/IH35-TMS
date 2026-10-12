@@ -26,7 +26,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "3069-verify-cancelled-settlement-not-reusable";
 const SERVICE = path.join("apps", "backend", "src", "driver-finance", "settlements-load-bookended.service.ts");
@@ -94,21 +94,8 @@ if (broken.length) {
   );
 }
 
-const url = process.env.DATABASE_URL;
-if (!url) {
-  console.log(`[${LABEL}] PASS (static half) — both reuse sites exclude cancelled/voided settlements; no DATABASE_URL for the live half`);
-  process.exit(0);
-}
-
-// ── B · no reusable cancelled/voided settlement exists on any entity ─────────────────────────────
-const pool = new pg.Pool({ connectionString: url, ssl: url.includes("localhost") ? false : { rejectUnauthorized: false } });
-let client;
-try {
-  client = await pool.connect();
-} catch {
-  console.log(`[${LABEL}] PASS (static half) — database unreachable; static invariant held`);
-  process.exit(0);
-}
+// 443.100: a live money guard that cannot connect FAILS (ROUND 29.9-B, verify-no-silent-db-skip) — never a skip-pass.
+const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
 
 try {
   await client.query("BEGIN");
@@ -117,10 +104,9 @@ try {
   const present = await client.query(`SELECT to_regclass('driver_finance.driver_settlements') IS NOT NULL AS present`);
   if (!present.rows[0]?.present) {
     await client.query("ROLLBACK").catch(() => {});
-    console.log(`[${LABEL}] PASS (static half) — driver_finance schema not present (fresh/unmigrated DB)`);
     client.release();
     await pool.end();
-    process.exit(0);
+    fail("driver_finance schema not present (fresh/unmigrated DB) — an unmigrated database cannot verify this money invariant, so it is not a pass");
   }
 
   const { rows } = await client.query(`
