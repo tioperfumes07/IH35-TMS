@@ -283,6 +283,7 @@ function writeBaseline() {
       "Only tables NOT in this list are evaluated by verify-no-duplicate-financial-ledger. Regenerate with " +
       "`node scripts/verify-no-duplicate-financial-ledger.mjs --write-baseline` ONLY after a legitimately-" +
       "reconciled new financial table has landed (with its CANONICAL-CHECK / SUPERSEDES).",
+    measured_at: new Date().toISOString(),
     frozen_tables: frozen,
   };
   fs.writeFileSync(path.join(ROOT, BASELINE_REL), `${JSON.stringify(payload, null, 2)}\n`);
