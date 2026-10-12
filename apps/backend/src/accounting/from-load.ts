@@ -4,6 +4,7 @@
 // linking, not by invoice creation itself — verified 2026-09-02, GO-23 C6.
 import { resolveInvoiceDisplayId } from "./display-id.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
+import { chargeLineType, planInvoiceChargeLines, resolveInvoiceLineItemId, type LoadChargeLineRow, type PlannedInvoiceLine } from "./invoice-charge-lines.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createJournalEntryOnClient } from "./journal-entries.service.js";
@@ -214,6 +215,20 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
       code: "load_number_required_for_invoice_line",
     });
   }
+  // LEAD 443.110 G10 — the invoice is itemized from the load's charge lines (line haul, fuel surcharge, each accessorial),
+  // planned BEFORE anything is written: lines that do not foot to rate_total_cents refuse the invoice by name.
+  let plannedChargeLines: PlannedInvoiceLine[] = [];
+  if (!input.authorizedZeroRevenue) {
+    const chargeRows = await client.query<LoadChargeLineRow>(
+      `SELECT cl.id::text, cl.charge_code, cl.description, cl.amount_cents, ac.display_name
+         FROM dispatch.load_charge_lines cl
+         LEFT JOIN catalogs.additional_charges ac ON ac.id = cl.additional_charge_id AND ac.operating_company_id = cl.operating_company_id
+        WHERE cl.load_id = $1::uuid AND cl.operating_company_id = $2::uuid AND COALESCE(cl.is_active, true)
+        ORDER BY cl.sort_order, cl.created_at`,
+      [input.loadId, input.operatingCompanyId]
+    );
+    if (chargeRows.rows.length > 0) plannedChargeLines = planInvoiceChargeLines(chargeRows.rows, rateCents, loadNumber);
+  }
   const displayId = await resolveInvoiceDisplayId(
     client,
     input.operatingCompanyId,
@@ -304,53 +319,79 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
   }
   const invoice = invoiceRes.rows[0];
 
-  const lineTotal = Number(load.rate_total_cents ?? 0);
-  const revenueResolution = await resolveInvoiceLineRevenueAccountId(input.operatingCompanyId, {
-    line_type: "linehaul",
-  });
-  // LV-INV-UUID — customer-facing line text must carry load_number (L-…), never the load UUID.
-  const linehaulDescription = `Linehaul · Load ${loadNumber}`;
-  // RULING 443.66 D3 — the line carries its item: this company's active "Line Haul" item, only when that item's income
-  // account IS the account the line posts to (detail in the item, rollup in the account — never two disagreeing).
-  const linehaulItem = await client.query<{ id: string }>(
-    `SELECT id::text FROM catalogs.items
-      WHERE operating_company_id = $1::uuid AND item_name = 'Line Haul' AND deactivated_at IS NULL
-        AND default_income_account_id = $2::uuid
-      LIMIT 2`,
-    [input.operatingCompanyId, revenueResolution.account_id]
-  );
-  const linehaulItemId = linehaulItem.rows.length === 1 ? linehaulItem.rows[0]!.id : null;
-  const lineRes = await client.query(
-    `
-      INSERT INTO accounting.invoice_lines (
-        operating_company_id,
-        invoice_id,
-        source_load_id,
-        line_type,
-        revenue_code,
-        account_id,
-        description,
-        quantity,
-        unit_amount_cents,
-        line_total_cents,
-        display_order,
-        item_id,
-        unit_of_measure
-      ) VALUES ($1,$2,$3,'linehaul',$4,$5,$6,1,$7,$7,0,$8::uuid,CASE WHEN $8::uuid IS NULL THEN NULL ELSE 'each' END)
-      RETURNING *
-    `,
-    [
-      input.operatingCompanyId,
-      invoice.id,
-      input.loadId,
-      revenueResolution.revenue_code,
-      revenueResolution.account_id,
-      linehaulDescription,
-      lineTotal,
-      linehaulItemId,
-    ]
-  );
-  const line = lineRes.rows[0];
+  // LEAD 443.110 G10 — one invoice line per charge line, each with its item and that item's income account (refused by
+  // accounting.enforce_line_categorization when the catalog cannot name one item). A load with no charge lines keeps the
+  // single line-haul line for its whole rate (below), as before.
+  let firstItemizedLine: Record<string, unknown> | undefined;
+  for (const [idx, planned] of plannedChargeLines.entries()) {
+    const resolution = await resolveInvoiceLineRevenueAccountId(input.operatingCompanyId, { line_type: planned.line_type });
+    const itemId = await resolveInvoiceLineItemId(client, input.operatingCompanyId, resolution.account_id, planned.preferred_item_names);
+    const itemizedRes = await client.query(
+      `
+        INSERT INTO accounting.invoice_lines (
+          operating_company_id, invoice_id, source_load_id, line_type, revenue_code, account_id, description,
+          quantity, unit_amount_cents, line_total_cents, display_order, item_id, unit_of_measure
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,1,$8,$8,$9,$10::uuid,CASE WHEN $10::uuid IS NULL THEN NULL ELSE 'each' END)
+        RETURNING *
+      `,
+      [
+        input.operatingCompanyId, invoice.id, input.loadId, planned.line_type, resolution.revenue_code, resolution.account_id,
+        planned.description, planned.amount_cents, idx, itemId,
+      ]
+    );
+    firstItemizedLine ??= itemizedRes.rows[0] as Record<string, unknown> | undefined;
+  }
+  let line: Record<string, unknown> = firstItemizedLine ?? {};
+  if (plannedChargeLines.length === 0) {
+    const lineTotal = Number(load.rate_total_cents ?? 0);
+    const revenueResolution = await resolveInvoiceLineRevenueAccountId(input.operatingCompanyId, {
+      line_type: "linehaul",
+    });
+    // LV-INV-UUID — customer-facing line text must carry load_number (L-…), never the load UUID.
+    const linehaulDescription = `Linehaul · Load ${loadNumber}`;
+    // RULING 443.66 D3 — the line carries its item: this company's active "Line Haul" item, only when that item's income
+    // account IS the account the line posts to (detail in the item, rollup in the account — never two disagreeing).
+    const linehaulItem = await client.query<{ id: string }>(
+      `SELECT id::text FROM catalogs.items
+        WHERE operating_company_id = $1::uuid AND item_name = 'Line Haul' AND deactivated_at IS NULL
+          AND default_income_account_id = $2::uuid
+        LIMIT 2`,
+      [input.operatingCompanyId, revenueResolution.account_id]
+    );
+    const linehaulItemId = linehaulItem.rows.length === 1 ? linehaulItem.rows[0]!.id : null;
+    const lineRes = await client.query(
+      `
+        INSERT INTO accounting.invoice_lines (
+          operating_company_id,
+          invoice_id,
+          source_load_id,
+          line_type,
+          revenue_code,
+          account_id,
+          description,
+          quantity,
+          unit_amount_cents,
+          line_total_cents,
+          display_order,
+          item_id,
+          unit_of_measure
+        ) VALUES ($1,$2,$3,'linehaul',$4,$5,$6,1,$7,$7,0,$8::uuid,CASE WHEN $8::uuid IS NULL THEN NULL ELSE 'each' END)
+        RETURNING *
+      `,
+      [
+        input.operatingCompanyId,
+        invoice.id,
+        input.loadId,
+        revenueResolution.revenue_code,
+        revenueResolution.account_id,
+        linehaulDescription,
+        lineTotal,
+        linehaulItemId,
+      ]
+    );
+    line = lineRes.rows[0];
+  }
+
 
   const stopExtraRatesRes = await client
     .query<{
@@ -440,6 +481,9 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
       if (rate.rate_type === "lumper" && !lumperConfirmed) continue;
       const resolution = rate.rate_type === "lumper" && lumperResolution ? lumperResolution : accessorialResolution;
       const cents = Math.max(0, Number(rate.amount_cents ?? 0));
+      // LEAD 443.110 G10 — the accessorial / lumper line carries its item (same rule as the charge lines above).
+      const stopKind = chargeLineType(String(rate.rate_type ?? ""), rate.description);
+      const stopItemId = await resolveInvoiceLineItemId(client, input.operatingCompanyId, resolution.account_id, stopKind.preferred_item_names);
       const invoiceLineRes = await client.query<{ id: string }>(
         `
           INSERT INTO accounting.invoice_lines (
@@ -453,8 +497,10 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
             quantity,
             unit_amount_cents,
             line_total_cents,
-            display_order
-          ) VALUES ($1,$2,$3,$9,$4,$5,$6,1,$7,$7,$8)
+            display_order,
+            item_id,
+            unit_of_measure
+          ) VALUES ($1,$2,$3,$9,$4,$5,$6,1,$7,$7,$8,$10::uuid,CASE WHEN $10::uuid IS NULL THEN NULL ELSE 'each' END)
           RETURNING id
         `,
         [
@@ -472,6 +518,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
           cents,
           idx + 1,
           rate.rate_type === "lumper" ? "lumper" : "accessorial",
+          stopItemId,
         ]
       );
       const invoiceLineId = String(invoiceLineRes.rows[0]?.id ?? "");
