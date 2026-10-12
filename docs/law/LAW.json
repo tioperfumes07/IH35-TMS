@@ -120,10 +120,10 @@
   },
   {
     "id": "LAW-2026-08-05-A2-QBO-MIRROR-IS-THE-ONLY-REAL-DATA",
-    "title": "ALL TMS-native data is TEST; only the TRANSP QBO mirror is real — QBO-origin documents are correctly unposted and must never be backfilled into the TMS GL",
-    "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
-    "guard": "scripts/verify-invoice-qbo-origin-guard.mjs",
-    "type": "enforced"
+    "title": "SUPERSEDED historical decision: TMS-native rows are TEST and QBO-origin documents must never be backfilled into the TMS GL",
+    "source_file": "docs/bus/2026-10-12-CODEX-443-117-NATIVE-GL.md",
+    "guard": null,
+    "type": "judgment"
   },
   {
     "id": "LAW-2026-08-05-B1-FINDINGS-FLOW-AGENT-BOARD-AGENT",
@@ -1040,6 +1040,13 @@
     "title": "BCF-02 (LEAD 443.113) — when creating a cash advance linked to a driver_bill, the bill must match the advance's driver, be live (open + not voided), and be locked FOR UPDATE before the allocation read to prevent concurrent allocation races",
     "source_file": "AGENTS.md",
     "guard": "scripts/verify-steps/18415-verify-advance-bill-driver-load-check.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-12-R443-117-NATIVE-GL-INDEPENDENT-OF-QBO",
+    "title": "Native invoice, bill, expense, payment, deposit, and credit-memo builders post to the TMS GL independently of QBO-origin metadata, while document eligibility, revrec latch, bill-before-payment, period, balance, and idempotency controls remain enforced",
+    "source_file": "docs/bus/2026-10-12-CODEX-443-117-NATIVE-GL.md",
+    "guard": "scripts/verify-native-document-gl-independent-of-qbo.mjs",
     "type": "enforced"
   }
 ]

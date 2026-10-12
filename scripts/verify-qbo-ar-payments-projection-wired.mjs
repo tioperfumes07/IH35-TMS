@@ -10,15 +10,15 @@
 //   3) The puller never calls a GL/journal poster (subledger-only; GL stays QuickBooks' job) and always
 //      projects rows as source_system='qbo'.
 //   4) sync-scheduler.ts wires both stages as ISOLATED runStep()s (so an earlier failure can't skip them).
-//   5) posting-engine.service.ts REFUSES to post a qbo-sourced customer payment
-//      (QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED, tied to source_system/qbo_payment_id) — never invent a
-//      second TMS GL entry for a receipt QuickBooks already owns.
+//   5) Native customer-payment GL eligibility is independent of QBO-origin metadata; non-origin
+//      document protections remain enforced by the shared native-document contract guard.
 //
 // --selftest exercises the failure detection on synthetic inputs (no repo dependency).
 
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { analyzeNativeDocumentGl, createNativeDocumentFixture } from "./lib/native-document-gl-contract.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = process.env.VERIFY_QBO_AR_PAYMENTS_PROJECTION_ROOT
@@ -100,18 +100,7 @@ export function analyzeScheduler(text) {
 }
 
 export function analyzePosting(text) {
-  const failures = [];
-  if (!text.includes("QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED")) {
-    failures.push(
-      "posting-engine.service.ts lost QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED — a qbo-sourced customer payment could post a phantom TMS JE."
-    );
-  }
-  if (text.includes("QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED") && !/qbo_payment_id/.test(text)) {
-    failures.push(
-      "posting-engine.service.ts references QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED but not qbo_payment_id — the guard is not tied to the qbo-origin marker."
-    );
-  }
-  return failures;
+  return analyzeNativeDocumentGl(text);
 }
 
 function analyzeMigrations() {
@@ -174,8 +163,8 @@ export async function projectArPaymentsToLedger() {
   const goodSched = `runStep("ar_payments_pull", id, () => pullArPaymentsFromQbo(id));`;
   const badSched = `runStep("ap_bills_pull", id, () => pullApBillsFromQbo(id));`;
   const badSchedProject = goodSched + `\nrunStep("ar_payments_project", id, () => projectArPaymentsToLedger(id));`;
-  const goodPost = `code !== "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED"; if (payment.qbo_payment_id) throw x;`;
-  const badPost = `no guard here`;
+  const goodPost = createNativeDocumentFixture();
+  const badPost = `no builder functions here`;
   const goodMig = `INSERT INTO lib.feature_flags QBO_AR_PAYMENT_MIRROR_PULL_ENABLED QBO_AR_PAYMENTS_PROJECTION_ENABLED mdata.qbo_ar_payments`;
   const badMig = `INSERT INTO lib.feature_flags QBO_AR_PAYMENT_MIRROR_PULL_ENABLED`;
 
@@ -232,6 +221,6 @@ if (failures.length > 0) {
 }
 
 console.log(
-  "verify-qbo-ar-payments-projection-wired: PASS (DB-flag mirror gate; both flags registered OFF; GL refuse present; mirror table present; ACCT-F4431380: projection refuses by name, no native payments write, not scheduled)"
+  "verify-qbo-ar-payments-projection-wired: PASS (mirror gate retained; native GL independent of QBO; archive projection refuses native writes and is not scheduled)"
 );
 process.exit(0);

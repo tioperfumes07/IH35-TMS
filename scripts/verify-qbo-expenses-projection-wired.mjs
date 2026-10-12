@@ -8,8 +8,8 @@
 //      a migration's lib.feature_flags catalog, and are DEFAULT OFF with NO per-entity ON override seeded
 //      in any migration (build-and-HOLD — the owner flips them ON).
 //   3) sync-scheduler.ts wires both stages as ISOLATED runStep()s (so an earlier failure can't skip them).
-//   4) posting-engine.service.ts REFUSES to post a qbo-sourced expense (EXPENSE_POST_GL_REFUSED, guarded on
-//      qbo_purchase_id) — never invent a second TMS GL entry for spend QuickBooks already owns.
+//   4) Native expense GL eligibility is independent of QBO-origin metadata; document status controls
+//      remain enforced by the shared native-document contract guard.
 //   5) a migration creates the projection idempotency key uq_expenses_company_qbo_purchase_id.
 //
 // --selftest exercises the failure detection on synthetic inputs (no repo dependency).
@@ -17,6 +17,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { analyzeNativeDocumentGl, createNativeDocumentFixture } from "./lib/native-document-gl-contract.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = process.env.VERIFY_QBO_EXPENSES_PROJECTION_ROOT
@@ -93,15 +94,7 @@ export function analyzeScheduler(text) {
 }
 
 export function analyzePosting(text) {
-  const failures = [];
-  if (!text.includes("EXPENSE_POST_GL_REFUSED")) {
-    failures.push("posting-engine.service.ts lost EXPENSE_POST_GL_REFUSED — a qbo-sourced expense could post a phantom TMS JE.");
-  }
-  // The refuse must be tied to qbo_purchase_id (the qbo-origin marker on accounting.expenses).
-  if (text.includes("EXPENSE_POST_GL_REFUSED") && !/qbo_purchase_id/.test(text)) {
-    failures.push("posting-engine.service.ts references EXPENSE_POST_GL_REFUSED but not qbo_purchase_id — the guard is not tied to the qbo-origin marker.");
-  }
-  return failures;
+  return analyzeNativeDocumentGl(text);
 }
 
 function analyzeMigrations() {
@@ -165,8 +158,8 @@ export async function projectPurchasesToExpenses() {
   const goodSched = `runStep("qbo_purchases_pull", id, () => pullPurchasesFromQbo(id));`;
   const badSched = `runStep("ap_bills_pull", id, () => pullApBillsFromQbo(id));`;
   const badSchedProject = goodSched + `\nrunStep("qbo_purchases_project", id, () => projectPurchasesToExpenses(id));`;
-  const goodPost = `code !== "EXPENSE_POST_GL_REFUSED"; if (exp.qbo_purchase_id) throw x;`;
-  const badPost = `no guard here`;
+  const goodPost = createNativeDocumentFixture();
+  const badPost = `no builder functions here`;
 
   const checks = {
     pullerGoodPasses: analyzePuller(goodPuller).length === 0,
@@ -214,5 +207,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log("verify-qbo-expenses-projection-wired: PASS (DB-flag mirror gate; both flags registered OFF; GL refuse present; projection key migration kept; ACCT-F4431380: projection refuses by name, no native expenses write, not scheduled)");
+console.log("verify-qbo-expenses-projection-wired: PASS (mirror gate retained; native GL independent of QBO; archive projection refuses native writes and is not scheduled)");
 process.exit(0);
