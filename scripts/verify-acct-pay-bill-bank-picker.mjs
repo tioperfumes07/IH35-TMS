@@ -16,7 +16,11 @@ if (!src.includes("allowAddNew")) fail("From bank account must use Combobox allo
 if (!src.includes("+ Add new bank account")) fail("inline + Add new bank account label missing");
 if (!src.includes("PlaidLink")) fail("Add-bank drawer must use PlaidLink (canonical bank provision)");
 if (!src.includes("pay-bill-add-bank-drawer")) fail("nested add-bank drawer testid missing");
-if (src.includes("SelectCombobox") && src.includes("From bank account")) {
+// The bank-account picker section must use Combobox (with allowAddNew), not SelectCombobox.
+// Search the JSX block around "From bank account" — SelectCombobox within 300 chars of that label = violation.
+const bankPickerIdx = src.indexOf("From bank account");
+const bankPickerWindow = bankPickerIdx >= 0 ? src.slice(Math.max(0, bankPickerIdx - 50), bankPickerIdx + 300) : "";
+if (bankPickerWindow.includes("SelectCombobox")) {
   fail("From bank account must not use SelectCombobox (no inline +Create)");
 }
 // Box-in-box: payment fields must not sit inside a nested bordered grid panel.
