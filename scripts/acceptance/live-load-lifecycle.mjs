@@ -909,6 +909,63 @@ async function s6() {
 //   S4c — exact_match is only true when amount_cents and event_date are both identical to the bank
 //          transaction (necessary condition for the ROUND 276 pre-tick rule; sufficient would require
 //          counterparty_name which is not in the public API response).
+// ================= S4-bank-match — SUGGEST / ACCEPT / UNMATCH (CC-3, LEAD 443.86 #4 / 443.88) =================
+// On the Dreamline Diesel Card (2510) register, through the real routes: the read-only suggestion (never persisted); the Owner
+// accepts ONE single exact suggestion (POST /bank-recon/accept-match) and ONE receipt group with the card discount
+// (POST /bank-recon/accept-multi-match card_discount); TB 0; a second accept of the same line is refused (nothing posts twice);
+// unmatching both (POST /bank-recon/unmatch) returns every account balance to the cent.
+const DREAMLINE_BANK = "f1839d0c-04ea-425b-b942-d0de1c4447a9";
+async function s4bankMatch() {
+  const t = step("S4-bank-match");
+  const { default: reconRoutes } = await import("../../apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts");
+  const app4 = await createIntegrationApp(async (a) => { await a.register(reconRoutes); });
+  const call4 = async (method, url, payload) => {
+    const res = await app4.inject({ method, url, payload, headers: auth });
+    let body = null; try { body = res.json(); } catch { body = res.body; }
+    return { status: res.statusCode, body };
+  };
+  const balances = async () => Object.fromEntries((await read(
+    `SELECT p.account_id::text AS a, SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END)::bigint AS v
+       FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.voided_at IS NULL
+      WHERE p.operating_company_id = $1::uuid GROUP BY 1`, [CO])).map((r) => [r.a, Number(r.v)]));
+  const tb = async () => Number((await read(`SELECT COALESCE(SUM(CASE WHEN debit_or_credit = 'debit' THEN amount_cents ELSE -amount_cents END), 0)::bigint AS v
+     FROM accounting.journal_entry_postings WHERE operating_company_id = $1::uuid`, [CO]))[0].v);
+  try {
+    const sug = await call4("GET", `/api/v1/bank-recon/suggestions?operating_company_id=${CO}&bank_account_id=${DREAMLINE_BANK}`);
+    if (!t.ok("GET /bank-recon/suggestions (Dreamline 2510) 200", sug.status === 200, `HTTP ${sug.status} ${sug.status !== 200 ? JSON.stringify(sug.body).slice(0, 200) : ""}`)) return;
+    const outs = sug.body.outcomes ?? [];
+    const persisted = Number((await read(`SELECT count(*) FROM banking.bank_transactions WHERE bank_account_id = $1::uuid AND review_state = 'suggested'`, [DREAMLINE_BANK]))[0].count);
+    t.ok("suggestions are read only (nothing persisted)", persisted === 0, `${persisted} persisted`);
+    const single = outs.find((o) => o.result === "suggested" && Number(o.variance_cents ?? 0) === 0);
+    const group = outs.find((o) => o.result === "group" && Number(o.variance_cents) < 0 && o.within_card_cap);
+    t.ok("one single exact suggestion", single, `${outs.filter((o) => o.result === "suggested").length} suggested`);
+    t.ok("one receipt group with a card discount within the cap", group, `${outs.filter((o) => o.result === "group").length} groups`);
+    if (!single || !group) return;
+    const before = await balances();
+    const tb0 = await tb();
+    const a1 = await call4("POST", "/api/v1/bank-recon/accept-match", { operating_company_id: CO, bank_transaction_id: single.bank_transaction_id,
+      ledger_entry_kind: single.ledger_entry_kind, ledger_entry_id: single.ledger_entry_id });
+    t.ok("accept the single suggestion 200", a1.status === 200, `HTTP ${a1.status} ${a1.status !== 200 ? JSON.stringify(a1.body).slice(0, 200) : ""}`);
+    const entries = group.members.map((m) => { const [k, id] = m.split(":"); return { ledger_entry_kind: k, ledger_entry_id: id }; });
+    const a2 = await call4("POST", "/api/v1/bank-recon/accept-multi-match", { operating_company_id: CO, bank_transaction_id: group.bank_transaction_id, entries, card_discount: true });
+    t.ok(`accept the group (${entries.length} receipts, card discount ${(Number(group.variance_cents) / 100).toFixed(2)}) 200`, a2.status === 200, `HTTP ${a2.status} ${a2.status !== 200 ? JSON.stringify(a2.body).slice(0, 200) : ""}`);
+    t.ok("TB 0 after both accepts", (await tb()) === 0 && tb0 === 0);
+    const again = await call4("POST", "/api/v1/bank-recon/accept-match", { operating_company_id: CO, bank_transaction_id: single.bank_transaction_id,
+      ledger_entry_kind: single.ledger_entry_kind, ledger_entry_id: single.ledger_entry_id });
+    t.ok("a second accept of the same line is refused (nothing posts twice)", again.status === 409, `HTTP ${again.status}`);
+    for (const [label, id] of [["single", single.bank_transaction_id], ["group", group.bank_transaction_id]]) {
+      const u = await call4("POST", "/api/v1/bank-recon/unmatch", { operating_company_id: CO, bank_transaction_id: id });
+      t.ok(`unmatch the ${label} line 200`, u.status === 200, `HTTP ${u.status} ${u.status !== 200 ? JSON.stringify(u.body).slice(0, 200) : ""}`);
+    }
+    const after = await balances();
+    const diffs = Object.keys({ ...before, ...after }).filter((k) => (before[k] ?? 0) !== (after[k] ?? 0));
+    t.ok("unmatch reverses to the cent (every account balance back)", diffs.length === 0, diffs.length ? `${diffs.length} account(s) differ` : "0 differ");
+    t.ok("TB 0 after unmatch", (await tb()) === 0);
+  } finally {
+    await app4.close();
+  }
+}
+
 async function s4bank() {
   const t = step("S4-bank");
   const { registerBankingLinkSuggestionsRoutes } = await import("../../apps/backend/src/banking/link-suggestions.routes.ts");
@@ -1051,7 +1108,7 @@ try {
   if (runs("S2")) await s2();
   if (runs("S3")) await s3();
   if (runs("S4")) await s4feed();
-  if (runs("S4-bank")) await s4bank();
+  if (runs("S4-bank")) { await s4bank(); await s4bankMatch(); }
   if (runs("S5")) await s5();
   if (runs("S6")) await s6();
   if (runs("S7")) await s7();
