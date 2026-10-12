@@ -26,6 +26,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+// LEAD 443.99 class A / 443.132: runs in the live-DB job (ci.yml required-live-load-guard, prod read-only); out of context for the no-DB static sweep.
+export const REQUIRES_LIVE_DB = "live-ledger guard: runs in the live-DB job (required-live-load-guard)";
+
 const LABEL = "3061-verify-bill-wave-a-fk-write-path";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 

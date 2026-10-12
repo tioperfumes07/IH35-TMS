@@ -28,6 +28,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+// LEAD 443.99 class A / 443.132: runs in the live-DB job (ci.yml required-live-load-guard, prod read-only); out of context for the no-DB static sweep.
+export const REQUIRES_LIVE_DB = "live-ledger guard: runs in the live-DB job (required-live-load-guard)";
+
 const LABEL = "3069-verify-cancelled-settlement-not-reusable";
 const SERVICE = path.join("apps", "backend", "src", "driver-finance", "settlements-load-bookended.service.ts");
 
