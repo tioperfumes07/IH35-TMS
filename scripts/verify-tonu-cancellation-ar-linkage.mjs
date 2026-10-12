@@ -30,7 +30,9 @@ function failures(sources) {
     out.push(`${SVC}: must gate the TONU billing call on TONU_CANCELLATION_AR_POSTING_FLAG_KEY (per-entity kill switch)`);
   }
 
-  const gateStart = svc.indexOf("resolvedBillable && input.cancellation_charge_cents != null");
+  // 443.113 AJK-10: the TONU billing lives in finalizeLoadCancellationInClientTx (shared by the immediate cancel and the
+  // Owner's approval), keyed on the cancellation's own billable flag + charge.
+  const gateStart = svc.indexOf("args.billable_to_customer && args.cancellation_charge_cents != null");
   if (gateStart === -1) {
     out.push(`${SVC}: the billable+charge-present precondition is missing or changed shape — re-check this guard`);
   } else {
@@ -72,7 +74,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       file: SVC,
       mutate: (text) =>
         text.replace(
-          "const tonuFlagOn = await isEnabled(client, TONU_CANCELLATION_AR_POSTING_FLAG_KEY, {\n          operating_company_id: input.operating_company_id,\n          user_uuid: userId,\n        });\n        if (tonuFlagOn) {",
+          "const tonuFlagOn = await isEnabled(client, TONU_CANCELLATION_AR_POSTING_FLAG_KEY, {\n      operating_company_id: args.operating_company_id,\n      user_uuid: userId,\n    });\n    if (tonuFlagOn) {",
           "if (true) {"
         ),
     },
@@ -86,7 +88,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       file: SVC,
       mutate: (text) =>
         text.replace(
-          /const backlinkRes = await client\.query<\{ id: string \}>\(\s*`\s*\n\s*UPDATE dispatch\.load_cancellations[\s\S]*?\[cancellation\.id, tonuInvoice\.invoiceId, tonuInvoice\.invoiceLineId, userId, input\.operating_company_id\]\s*\);/,
+          /const backlinkRes = await client\.query<\{ id: string \}>\(\s*`\s*\n\s*UPDATE dispatch\.load_cancellations[\s\S]*?\[args\.cancellation_id, tonuInvoice\.invoiceId, tonuInvoice\.invoiceLineId, userId, args\.operating_company_id\]\s*\);/,
           ""
         ),
     },
