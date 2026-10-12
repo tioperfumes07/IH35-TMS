@@ -2462,9 +2462,10 @@ export function BookLoadModalV4({
                     {/* is_sample_data stays form-backed and still submits — it just can no longer be SET
                         from Book Load (STOP-NO-SEAT-LOADS). */}
                     <input type="hidden" {...form.register("is_sample_data")} data-testid="book-load-is-sample-data" />
-                    {/* catalog_load_type_id kept in form state for edit hydrate of legacy rows only —
-                        no operator control (duplicates Trailer type). Never written from create. */}
-                    <input type="hidden" {...form.register("catalog_load_type_id")} />
+                    {/* catalog_load_type_id stays in form STATE (editLoadMapping hydrates it for legacy rows) but is
+                        no longer a registered input: there is no operator control (duplicates Trailer type, owner #20072)
+                        and the edit patch never writes it, so a registered input only made it look like a silently
+                        discarded entry (443.101, verify-form-field-roundtrip). */}
 
                   <div className="overflow-x-auto border-t border-b border-gray-200">
                     <table className="w-full border-collapse text-xs">

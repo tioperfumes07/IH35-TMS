@@ -75,8 +75,11 @@ export function audit(s = {}) {
   //        picker that duplicated Trailer type"); WIZ-46 #20281 (68156de12c): disabling the autocomplete while it
   //        loads blurred the input on the first keystroke and dropped characters 2..n. The load-types catalog
   //        itself stays fully checked below (list page, client, scoped CRUD, matrix).
-  if (/loadTypesQuery|loadTypesCatalogClient|createKind=["']load_type["']/.test(bookLoadModal) || !/type="hidden" \{\.\.\.form\.register\("catalog_load_type_id"\)\}/.test(bookLoadModal)) {
-    failures.push("BookLoadModalV4 must not render a load-type catalog picker (owner #20072) — catalog_load_type_id stays hidden");
+  // 443.101: old rule also REQUIRED a hidden `form.register("catalog_load_type_id")` input; new rule forbids any
+  // registered input for it — with no control and no write path (owner #20072, edit patch skips it) a registered
+  // input reads as a silently discarded operator entry (verify-form-field-roundtrip). Stricter: no picker AND no input.
+  if (/loadTypesQuery|loadTypesCatalogClient|createKind=["']load_type["']/.test(bookLoadModal) || /form\.register\(\s*["']catalog_load_type_id["']/.test(bookLoadModal)) {
+    failures.push("BookLoadModalV4 must not render a load-type catalog picker or input (owner #20072) — catalog_load_type_id is hydrated state only");
   }
   if (!bookLoadModal.includes("loading={customersQuery.isLoading}") || !bookLoadModal.includes("disabled={customersQuery.isError}") || /disabled=\{customersQuery\.isLoading/.test(bookLoadModal)) {
     failures.push("BookLoadModalV4 customer picker must show loading={customersQuery.isLoading} and be disabled={customersQuery.isError} only (WIZ-46)");
