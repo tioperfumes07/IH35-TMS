@@ -274,6 +274,22 @@ export async function createCheck(
               accountId: resolved.account_id,
             })
           : null;
+      // Items law (443.92 #1b): expense_lines_item_id_required demands item_id on every line.
+      // Category lines resolve item by account: the item whose default_expense_account_id matches
+      // the resolved debit account (same as from-load.ts's income-account pattern, expense side).
+      const categoryItemId =
+        line.line_kind === "category"
+          ? (
+              await client.query<{ id: string }>(
+                `SELECT id::text FROM catalogs.items
+                  WHERE operating_company_id = $1::uuid
+                    AND default_expense_account_id = $2::uuid
+                    AND deactivated_at IS NULL
+                  LIMIT 1`,
+                [operating_company_id, resolved.account_id]
+              )
+            ).rows[0]?.id ?? null
+          : null;
       await client.query(
         `INSERT INTO accounting.expense_lines (
            expense_id, line_sequence, amount, amount_cents, description, expense_account_uuid,
@@ -289,7 +305,7 @@ export async function createCheck(
           line.description ?? payee.print_on_check_name,
           resolved.account_id,
           expenseCategoryUuid,
-          line.line_kind === "item" ? line.item_id : null,
+          line.line_kind === "item" ? line.item_id : categoryItemId,
           line.billable_customer_uuid ?? null,
           line.load_id ?? input.load_id ?? null,
           operating_company_id,
