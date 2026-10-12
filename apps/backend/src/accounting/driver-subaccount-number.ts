@@ -49,3 +49,43 @@ export async function allocateDriverSubAccountNnn(client: DbClient, operatingCom
   if (next > 999) throw new Error("driver_subaccount_number_exhausted: no 3-digit driver number left in this entity");
   return String(next).padStart(3, "0");
 }
+
+/** 443.94: the number a driver's sub-account would take under a parent is held by an account that is NOT his. */
+export class DriverSubAccountNumberTakenError extends Error {
+  readonly code = "driver_subaccount_number_taken";
+  constructor(readonly accountNumber: string, readonly heldByAccountId: string, readonly heldByAccountName: string | null) {
+    super(`driver_subaccount_number_taken: ${accountNumber} is already held by account ${heldByAccountId}${heldByAccountName ? ` ("${heldByAccountName}")` : ""}, which is not this driver's — the driver's number (one stable nnn per driver, ROUND 389.3) cannot be used under this parent; resolve the holder first`);
+    this.name = "DriverSubAccountNumberTakenError";
+  }
+}
+
+/**
+ * 443.94 — before a provisioner inserts `<parent>…nnn`, the number must be free or already THIS driver's. Returns the
+ * driver's own account id when the number is already his (escrow via accounting.escrow_accounts, advance via
+ * driver_finance.driver_advance_accounts) so the provisioner reuses it; throws DriverSubAccountNumberTakenError when any
+ * other account holds it (a raw 23505 on uq_accounts_company_account_number was the only signal before). The stable
+ * one-number-per-driver rule is unchanged.
+ */
+export async function claimDriverSubAccountNumber(
+  client: DbClient,
+  input: { operatingCompanyId: string; parentId: string; driverId: string; nnn: string; joiner: "-" | "-00-" }
+): Promise<{ accountNumber: string; ownAccountId: string | null }> {
+  const parent = (await client.query<{ account_number: string | null }>(
+    `SELECT account_number FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [input.parentId, input.operatingCompanyId]
+  )).rows[0];
+  const accountNumber = `${parent?.account_number ?? ""}${input.joiner}${input.nnn}`;
+  const held = (await client.query<{ id: string; account_name: string | null; mine: boolean }>(
+    `SELECT a.id::text, a.account_name,
+            (a.id IN (SELECT ea.coa_account_id FROM accounting.escrow_accounts ea WHERE ea.holder_type = 'driver' AND ea.holder_id = $3::uuid)
+             OR a.id IN (SELECT d.coa_account_id FROM driver_finance.driver_advance_accounts d
+                          WHERE d.operating_company_id = $1::uuid AND d.driver_id = $3::uuid)) AS mine
+       FROM catalogs.accounts a
+      WHERE a.operating_company_id = $1::uuid AND a.account_number = $2
+      LIMIT 1`,
+    [input.operatingCompanyId, accountNumber, input.driverId]
+  )).rows[0];
+  if (!held) return { accountNumber, ownAccountId: null };
+  if (held.mine) return { accountNumber, ownAccountId: held.id };
+  throw new DriverSubAccountNumberTakenError(accountNumber, held.id, held.account_name);
+}
