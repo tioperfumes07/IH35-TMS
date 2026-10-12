@@ -159,7 +159,9 @@ export async function computeLoadRealDrivenMiles(client: DbClient, operatingComp
             WHERE l.operating_company_id = $1::uuid AND l.assigned_unit_id = f.unit_id AND l.id <> f.load_id
               AND l.voided_at IS NULL AND l.canceled_at IS NULL AND s.soft_deleted_at IS NULL
               AND COALESCE(s.actual_departure_at, s.actual_arrival_at, s.scheduled_arrival_at) < f.at
-            ORDER BY COALESCE(s.actual_departure_at, s.actual_arrival_at, s.scheduled_arrival_at) DESC
+            -- 443.103: ties on time (two stops of the prior load at one manual timestamp) resolve to the LAST stop by
+            -- sequence, then id -- an unordered tie flipped the deadhead reason between "stop 1" and "stop 2" every run.
+            ORDER BY COALESCE(s.actual_departure_at, s.actual_arrival_at, s.scheduled_arrival_at) DESC, s.sequence_number DESC, s.id DESC
             LIMIT 1) p`,
       [operatingCompanyId, firsts.map((f) => f.stop_id), firsts.map((f) => f.unit_id), firsts.map((f) => f.arrival_at ?? f.scheduled_arrival_at), firsts.map((f) => f.load_id)]
     );
@@ -248,26 +250,43 @@ export async function storageReady(client: DbClient): Promise<boolean> {
   return Number(r.rows[0]?.n ?? 0) === 4;
 }
 
-/** Writes the computed legs and totals. Returns null when migration 202615160000 is not applied yet. */
+/**
+ * Writes the computed legs and totals. Returns null when migration 202615160000 is not applied yet, else the number of
+ * loads whose stored figures CHANGED.
+ *
+ * 443.103: a row is written only when a computed value differs from the stored one (or the load was never computed).
+ * Before this the hourly tick rewrote every due load with identical values and a fresh computed_at, on every instance:
+ * ~296 audit.row_changes rows an hour on USMCA, mdata.loads.updated_at bumped for all 148 loads (which also kept every
+ * load inside loadsDueForRealMiles' own "updated in the last 14 days" window forever) — a bulk write that changed
+ * nothing but the timestamps the rest of the app reads as "this load changed".
+ */
 export async function persistLoadRealDrivenMiles(client: DbClient, operatingCompanyId: string, rows: LoadRealMilesRow[]): Promise<number | null> {
   if (!(await storageReady(client))) return null;
+  let changed = 0;
   for (const row of rows) {
     for (const leg of row.legs) {
       await client.query(
         `UPDATE mdata.load_stops
             SET leg_miles_driven_actual = $2, leg_miles_driven_actual_source = $3, leg_miles_driven_actual_reason = $4
-          WHERE id = $1::uuid`,
+          WHERE id = $1::uuid
+            AND (leg_miles_driven_actual, leg_miles_driven_actual_source, leg_miles_driven_actual_reason)
+                IS DISTINCT FROM ($2::numeric, $3::text, $4::text)`,
         [leg.stop_id, leg.miles, leg.source, leg.reason]
       );
     }
-    await client.query(
+    const r = await client.query(
       `UPDATE mdata.loads
           SET miles_driven_actual = $3, miles_driven_actual_source = $4, miles_driven_actual_reason = $5, miles_driven_actual_computed_at = now()
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+          AND (miles_driven_actual_computed_at IS NULL
+               OR (miles_driven_actual, miles_driven_actual_source, miles_driven_actual_reason)
+                  IS DISTINCT FROM ($3::numeric, $4::text, $5::text))
+       RETURNING id`,
       [row.load_id, operatingCompanyId, row.miles_driven_actual, row.source, row.reason]
     );
+    changed += r.rows.length;
   }
-  return rows.length;
+  return changed;
 }
 
 /** Loads to (re)compute: delivered (last stop arrived) and either never computed or touched in the last 14 days. */
