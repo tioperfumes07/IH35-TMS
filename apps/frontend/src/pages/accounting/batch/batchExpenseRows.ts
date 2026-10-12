@@ -21,6 +21,7 @@ export type BatchExpenseRow = {
   classId: string; // unit / class
   classText: string;
   loadNumber: string;
+  loadId: string | null;
   memo: string;
   status: "draft" | "saving" | "saved" | "error";
   error: string | null;
@@ -37,7 +38,7 @@ export function newRow(partial: Partial<BatchExpenseRow> = {}): BatchExpenseRow 
   return {
     key: `r${Date.now().toString(36)}${seq}`,
     date: "", payee: "", payeeText: "", paymentAccount: "", paymentMethod: "", refNo: "", amount: "",
-    category: "", categoryText: "", classId: "", classText: "", loadNumber: "", memo: "",
+    category: "", categoryText: "", classId: "", classText: "", loadNumber: "", loadId: null, memo: "",
     status: "draft", error: null, expenseId: null, feedGate: null, ...partial,
   };
 }
