@@ -8,6 +8,7 @@ export { resolveBackendGitSha, resolveBackendVersion, resolveBuildRef, resolveBu
 import { createResilientRedis, type RedisHealthStatus } from "../lib/redis.client.js";
 import { logger } from "../observability/structured-logger.js";
 import { LEDGER_FINANCIAL_HEALTH_CHECKS } from "./ledger-financial-health.checks.js";
+import { geocodeHealth } from "./geocode-health.js";
 import {
   HEALTH_ERROR_GENERIC,
   HealthCheckError,
@@ -927,6 +928,13 @@ export async function registerHealthRoutes(app: FastifyInstance) {
       uptime_seconds: Math.floor(process.uptime()),
       ...healthzBuildIdentity(),
     };
+  });
+
+  // 443.102: the geocode provider can only be proven where its key lives (Render). Fixed address, cached
+  // 10 min — read post-deploy by scripts/verify-geocode-provider-is-reachable.mjs (deploy-parity-monitor).
+  app.get("/api/v1/healthz/geocode", async (_req, reply) => {
+    const h = await geocodeHealth();
+    return reply.code(h.ok ? 200 : 503).send({ ...h, ...healthzBuildIdentity() });
   });
 
   app.get("/api/v1/healthz/readyz", async (_req, reply) => {

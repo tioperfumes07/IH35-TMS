@@ -117,6 +117,10 @@ if (process.argv.includes("--selftest")) {
   expect('prose compiled into a glob', !!parseLanes(LANES.replace('apps/frontend/**', 'apps/frontend/** — and also whatever else')).error);
   expect('missing CC-2 section patterns', !!parseLanes(LANES.replace('scripts/verify-*.mjs', '')).error);
   expect('one-segment * does not span dirs', classifyFiles(['scripts/sub/verify-x.mjs'], 'CC-2', clean.sections).violations.length === 1);
+  expect('detached CI PR checkout resolves the pushed branch', resolveBranchName('HEAD', { GITHUB_HEAD_REF: 'cc-3/x', GITHUB_REF_NAME: '26000/merge' }) === 'cc-3/x');
+  expect('detached push checkout resolves GITHUB_REF_NAME', resolveBranchName('HEAD', { GITHUB_REF_NAME: 'cursor/y' }) === 'cursor/y');
+  expect('a real local branch is never overridden by CI env', resolveBranchName('cc-1/z', { GITHUB_HEAD_REF: 'cc-3/x' }) === 'cc-1/z');
+  expect('detached with no CI ref stays unresolved (seat check still fails)', resolveBranchName('HEAD', {}) === 'HEAD');
   console.log(`verify-lane-ownership SELFTEST: ${caught}/${planted} planted violations caught`);
   process.exit(caught === planted ? 0 : 1);
 }
@@ -126,11 +130,36 @@ const parsed = parseLanes(readFileSync(LANES_FILE, 'utf8'));
 if (parsed.error) fail(parsed.error);
 const sections = parsed.sections;
 
+// ---- changed files ----------------------------------------------------------
+let files = [];
+try {
+  const mergeBase = execSync(`git merge-base ${BASE} HEAD`, { encoding: 'utf8' }).trim();
+  files = execSync(`git diff --name-only ${mergeBase}..HEAD`, { encoding: 'utf8' })
+    .split('\n').map((s) => s.trim()).filter(Boolean);
+} catch (e) {
+  fail(`could not diff against ${BASE} (${e.message}). Fetch the base branch first. ` +
+       `A guard that cannot see the diff must never pass.`);
+}
+// 443.102: a checkout with no changes against the base (main itself, a push-to-main CI run) has no
+// diff to own, so there is no seat to name. Any branch WITH changes still must resolve its seat below.
+if (files.length === 0) { ok('no changed files against ' + BASE + ' — nothing to own.'); process.exit(0); }
+
+/** 443.102: the branch the seat pushed — the local name, or GitHub's ref when the checkout is detached. */
+export function resolveBranchName(localBranch, env) {
+  const b = (localBranch || '').trim();
+  if (b && b !== 'HEAD') return b;
+  return (env.GITHUB_HEAD_REF || env.GITHUB_REF_NAME || b || '').trim();
+}
+
 // ---- resolve seat -----------------------------------------------------------
 let seat = (process.env.SEAT || '').trim().toUpperCase();
 if (!seat) {
   let branch = '';
   try { branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim(); } catch {}
+  // 443.102: a CI checkout of a pull request is a DETACHED merge commit, so the local branch name reads
+  // "HEAD" and the seat could never resolve there. GitHub names the real branch in GITHUB_HEAD_REF
+  // (pull_request) / GITHUB_REF_NAME (push) — the same branch the seat pushed, so the same mapping applies.
+  branch = resolveBranchName(branch, process.env);
   const m = branch.toLowerCase().match(/^(?:claude-)?(?:coder-)?cc-?([123])\b/);
   if (m) seat = `CC-${m[1]}`;
   // LEAD: scripts/claim-verify-step.mjs's own SEATS table already defines a `lead` seat in the
@@ -162,17 +191,6 @@ if (!/^(CC-[123]|LEAD|CURSOR|CODEX|DEVIN-A)$/.test(seat)) {
        `A PR with no owner is exactly how two seats wrote the same rows.`);
 }
 
-// ---- changed files ----------------------------------------------------------
-let files = [];
-try {
-  const mergeBase = execSync(`git merge-base ${BASE} HEAD`, { encoding: 'utf8' }).trim();
-  files = execSync(`git diff --name-only ${mergeBase}..HEAD`, { encoding: 'utf8' })
-    .split('\n').map((s) => s.trim()).filter(Boolean);
-} catch (e) {
-  fail(`could not diff against ${BASE} (${e.message}). Fetch the base branch first. ` +
-       `A guard that cannot see the diff must never pass.`);
-}
-if (files.length === 0) { ok(`${seat}: no changed files.`); process.exit(0); }
 
 // ---- lane cross -------------------------------------------------------------
 const cross = (process.env.LANE_CROSS || '').trim();
