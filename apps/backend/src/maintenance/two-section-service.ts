@@ -13,6 +13,15 @@ import { resolveLineLoadExemption } from "../accounting/expense-line-load-exempt
 // the same reason (avoid a service->service import cycle risk) — same value, same semantics.
 const WO_BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 
+/** LEAD 443.129 D / AJK-08 — a requirePosted caller cannot complete while the company's bill GL posting is OFF. */
+export class WoBillGlPostingDisabledError extends Error {
+  readonly code = "bill_gl_posting_disabled";
+  constructor(operatingCompanyId: string) {
+    super(`bill_gl_posting_disabled: ${WO_BILL_GL_POSTING_FLAG_KEY} is off for company ${operatingCompanyId} — the document cannot be completed on an unposted bill`);
+    this.name = "WoBillGlPostingDisabledError";
+  }
+}
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
@@ -41,6 +50,8 @@ export type TwoSectionHeader = {
   external_vendor_id?: string | null;
   external_vendor_wo_number?: string | null;
   external_vendor_invoice_number?: string | null;
+  /** 443.129 D — the vendor invoice amount a WO born 'complete' must carry (wo completion trigger reconciles it to cost). */
+  external_vendor_invoice_amount?: number | null;
   description: string;
   severity?: string | null;
   payment_timing: "in_house" | "paid_same_day" | "vendor_invoice";
@@ -222,6 +233,7 @@ export async function createWorkOrderWithLines(
   }, 0);
   const totalCost = Number((sectionATotal + sectionBTotal).toFixed(2));
 
+  const bornComplete = header.status === "complete";
   const woRes = await client.query<{ id: string; display_id: string }>(
     `
       INSERT INTO maintenance.work_orders (
@@ -241,7 +253,10 @@ export async function createWorkOrderWithLines(
       header.operating_company_id,
       header.wo_type,
       header.source_type,
-      header.status ?? "open",
+      // 443.129 D: a WO born 'complete' (road service) is inserted OPEN, its V5 display id finalized below, THEN completed —
+      // maintenance.refresh_wo_display_id refuses a complete WO (E_WO_DISPLAY_ID_LOCKED), so every road-service ticket's
+      // create-wo used to die here before its bill was ever written.
+      bornComplete ? "open" : header.status ?? "open",
       header.unit_id,
       header.driver_id ?? null,
       header.load_id ?? null,
@@ -279,6 +294,16 @@ export async function createWorkOrderWithLines(
   );
   if (refreshedDisplay.rows[0]?.display_id) {
     wo = { ...wo, display_id: refreshedDisplay.rows[0].display_id };
+  }
+  if (bornComplete) {
+    await client.query(
+      `UPDATE maintenance.work_orders
+          SET status = $2,
+              external_vendor_invoice_amount = COALESCE($3::numeric, external_vendor_invoice_amount),
+              updated_at = now()
+        WHERE id = $1`,
+      [wo.id, header.status, header.external_vendor_invoice_amount ?? null]
+    );
   }
 
   // Block 8 (migration 202606221100) — persist VMRS repair detail post-insert (same pattern as the dispatch
@@ -717,8 +742,8 @@ export async function autoCreateBillFromWO(
   client: DbClient,
   userId: string,
   woUuid: string,
-  opts?: { billNumber?: string | null; memo?: string | null }
-) {
+  opts?: { billNumber?: string | null; memo?: string | null; requirePosted?: boolean }
+): Promise<{ uuid: string; posted: boolean } | null> {
   if (!(await relationExists(client, "accounting.bills"))) return null;
   // Law §9: stamp unit_id from the WO header (migration 202607050810 hard FK). Vendor preserved via COALESCE.
   // WO-AUTO-BILL-NEVER-POSTS-GL-JE: this INSERT used to write status='draft' and never set the
@@ -798,18 +823,42 @@ export async function autoCreateBillFromWO(
   // fixed once this session for the revenue latch (LV-REVREC-NOT-FIRING) and again for this same
   // file's autoCreateExpenseFromWO (MAINT-F5697-CLASS, just below). Runs IN THE CALLER'S OWN OPEN
   // TRANSACTION via postSourceTransactionInClientTx instead — no new GL math, same poster.
+  // LEAD 443.129 D / AJK-08 — a caller whose document is FINANCIALLY COMPLETE only when its bill is posted (a road-service
+  // ticket becomes 'invoiced') passes requirePosted: the bill posts in this same transaction or NOTHING is written. A
+  // posting refusal propagates by name (never caught-and-logged) and a company whose bill posting flag is OFF is refused
+  // up front (WoBillGlPostingDisabledError) — a deferred posting must never leave an "invoiced" ticket on an unposted bill.
+  let posted = false;
   if (billOperatingCompanyId) {
     const flagOn = await isEnabled(client as never, WO_BILL_GL_POSTING_FLAG_KEY, {
       operating_company_id: billOperatingCompanyId,
       user_uuid: userId,
     });
-    if (flagOn) {
+    if (!flagOn && opts?.requirePosted) {
+      throw new WoBillGlPostingDisabledError(billOperatingCompanyId);
+    }
+    if (flagOn && opts?.requirePosted) {
+      await postSourceTransactionInClientTx(
+        client as never,
+        { operating_company_id: billOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: billId },
+        { userId }
+      );
+      posted = true;
+      await appendCrudAudit(
+        client as never,
+        userId,
+        "accounting.bill.gl_posted",
+        { work_order_id: woUuid, bill_id: billId, source: "auto_created_from_wo", require_posted: true },
+        "info",
+        "WO-AUTO-BILL-NEVER-POSTS-GL-JE"
+      );
+    } else if (flagOn) {
       try {
         await postSourceTransactionInClientTx(
           client as never,
           { operating_company_id: billOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: billId },
           { userId }
         );
+        posted = true;
         await appendCrudAudit(
           client as never,
           userId,
@@ -843,7 +892,7 @@ export async function autoCreateBillFromWO(
     "info",
     "P3-T11.17-TWO-SECTION-V5"
   );
-  return { uuid: billId };
+  return { uuid: billId, posted };
 }
 
 export async function autoCreateExpenseFromWO(
