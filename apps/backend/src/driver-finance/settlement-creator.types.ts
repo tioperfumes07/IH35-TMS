@@ -298,6 +298,8 @@ export type SettlementCreatorPostResult = {
   display_id: string;
   load_ids: string[];
   expense_ids: string[];
+  /** 443.110 G4 — vendor bills for company expenses owed to the vendor (posted; voided on Edit). */
+  owed_bill_ids?: string[];
   fuel_transaction_ids: string[];
   advance_ids: string[];
   journal_entry_ids: string[];

@@ -91,6 +91,9 @@ type CreateBillInput = {
    * billNumber as the display number (used when a re-posted settlement bills a load whose number a reversed bill holds).
    */
   autoDisplayId?: boolean;
+  /** 443.110 G4 — the bill's own document number when it differs from billNumber (the vendor's reference): the
+   *  Settlement Creator's owed bill keeps the vendor's invoice number as bill_number and its load-spine number here. */
+  displayId?: string;
   billDate: string;
   dueDate?: string;
   amountCents: number;
@@ -2944,7 +2947,7 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
   // INSERT, as it does for every writer. Only an operator-typed number replaces it, and only the id the
   // trigger just assigned (never another writer's stamp).
   const triggerDisplayId = (res.rows[0] as { display_id?: string | null }).display_id ?? null;
-  const requestedDisplayId = input.autoDisplayId ? null : billNumber ?? null;
+  const requestedDisplayId = input.displayId?.trim() || (input.autoDisplayId ? null : billNumber ?? null);
   if (insertedId && (!triggerDisplayId || (requestedDisplayId && requestedDisplayId !== triggerDisplayId))) {
     const billDisplayId = await resolveBillDisplayId(
       client,
