@@ -2433,6 +2433,11 @@
     "claimed_at": "2026-10-12",
     "purpose": "443.91 #4 batch 0: WORM audit trigger on 4 money tables (deposit_lines, expenses_review_queue, reclassify_batch_lines, settlement_line_item_splits)"
   },
+  "202615710935": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.99 C lane 3: seed the 4 flag keys code gates on but lib.feature_flags never got (DSP_ASSIGN_CONFIRMATION_ENABLED, PM_AUTO_ENGINE_CREATE_WORK_ORDERS, RELATED_PARTY_LOAN_GL_POSTING_ENABLED, TONU_CANCELLATION_AR_POSTING_ENABLED), default off"
+  },
   "202615700900": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-12",
