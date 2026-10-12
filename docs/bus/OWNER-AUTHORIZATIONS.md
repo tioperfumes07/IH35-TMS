@@ -7951,4 +7951,7 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the company trailer
 action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-134-trailer-picks.mts --apply --auth AUTH-447
 rehearsal: throwaway br-twilight-dawn-akcer3yd (COMMITTED, deleted): 4 trailer choices recorded; stamp 4 bills changed, 4 header stamps, 7 line stamps, 0 refused, all on these 4 loads' bills (one bill.trailer_stamped_from_load audit each); A/P driver bills without a trailer 4 -> 0; a second run refused (already has a trailer choice)
 expires_at: 2026-10-13T21:30:00Z
-status: OPEN
+status: CONSUMED
+consumed_by: CC-2 (443.134 #4)
+row_counts: 4 loads trailer choice recorded (company): 13498 538306, 13520 10222, 13525 10380, 13562 10870 (4 assignment-history rows + 4 audit rows); A/P driver bill stamp: 4 bills, 4 header trailers, 7 line equipment stamps, 0 refused (4 bill.trailer_stamped_from_load audit rows)
+proof_query: USMCA live A/P driver bills (bill_category driver) with trailer_id AND non_owned_trailer_id NULL -> 0 of 146 (read on prod via Neon read-only, bypass, 2026-10-12 ~21:40 UTC)
