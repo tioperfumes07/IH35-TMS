@@ -26,6 +26,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { FORM_SELECT_CLASS } from "../../../components/forms/inputClass";
@@ -260,7 +261,6 @@ export function LoansAdvancesPage() {
               {
                 key: "person",
                 label: "Person",
-                sortable: true,
                 render: (r) =>
                   entityLabel(r.counterparty_name ?? r.account_name, r.account_id, "Related party"),
               },
@@ -268,7 +268,6 @@ export function LoansAdvancesPage() {
               {
                 key: "account",
                 label: "Account",
-                sortable: true,
                 render: (r) => (
                   <EntityLink
                     kind="account"
@@ -287,7 +286,6 @@ export function LoansAdvancesPage() {
               {
                 key: "advanced",
                 label: "Advanced",
-                sortable: true,
                 className: "text-right",
                 cellClass: "text-right whitespace-nowrap",
                 render: (r) => money(r.principal_advanced_cents),
@@ -295,7 +293,6 @@ export function LoansAdvancesPage() {
               {
                 key: "repaid",
                 label: "Repaid",
-                sortable: true,
                 className: "text-right",
                 cellClass: "text-right whitespace-nowrap",
                 render: (r) => money(r.principal_repaid_cents),
@@ -303,7 +300,6 @@ export function LoansAdvancesPage() {
               {
                 key: "open",
                 label: "Open balance",
-                sortable: true,
                 className: "text-right",
                 cellClass: "text-right whitespace-nowrap",
                 render: (r) => money(r.open_balance_cents),
@@ -311,7 +307,6 @@ export function LoansAdvancesPage() {
               {
                 key: "interest",
                 label: "Accrued interest",
-                sortable: true,
                 className: "text-right",
                 cellClass: "text-right whitespace-nowrap",
                 render: (r) => money(r.accrued_interest_cents),
@@ -319,14 +314,12 @@ export function LoansAdvancesPage() {
               {
                 key: "docs",
                 label: "Docs",
-                sortable: true,
                 render: (r) => `${r.advance_count} adv / ${r.repayment_count} repay`,
               },
               { key: "status", label: "Status", render: (r) => r.status },
               {
                 key: "balance_label",
                 label: "Balance direction",
-                sortable: true,
                 render: (r) => {
                   const b = r.open_balance_cents;
                   if (b === 0) return <span className="text-[#6B7280]">Settled</span>;
@@ -337,7 +330,6 @@ export function LoansAdvancesPage() {
               {
                 key: "ledger_link",
                 label: "Ledger",
-                sortable: true,
                 render: (r) => (
                   <button
                     type="button"
@@ -368,7 +360,7 @@ export function LoansAdvancesPage() {
             Party ledgers — Due to / from
           </div>
           <div className="w-full text-xs" data-testid="party-accounts-table">
-            <div className="grid grid-cols-[minmax(80px,1fr)_minmax(0,1.4fr)_80px_minmax(120px,1.2fr)_72px] gap-x-2 border-b border-[#E5E7EB] bg-[#EEF2F6] text-section-header font-bold uppercase text-[#1F2937]">
+            <div className="grid grid-cols-[88px_minmax(0,1.4fr)_88px_minmax(140px,1.2fr)_72px] gap-x-2 border-b border-[#E5E7EB] bg-[#EEF2F6] text-section-header font-bold uppercase text-[#1F2937]">
               <div className="px-2 py-1 text-center">Account</div>
               <div className="px-2 py-1 text-center">Party</div>
               <div className="px-2 py-1 text-center">Movements</div>
@@ -378,12 +370,27 @@ export function LoansAdvancesPage() {
             {(partiesQuery.data?.parties ?? []).map((p: PartyAccount) => (
               <div
                 key={p.account_id}
-                className="grid grid-cols-[minmax(80px,1fr)_minmax(0,1.4fr)_80px_minmax(120px,1.2fr)_72px] gap-x-2 border-b border-[#F3F4F6]"
+                className="grid grid-cols-[88px_minmax(0,1.4fr)_88px_minmax(140px,1.2fr)_72px] gap-x-2 border-b border-[#F3F4F6]"
               >
-                <div className="px-2 py-1">{formatAccountDisplayLabel(p, { showNumber: showAccountNumbers })}</div>
+                <div className="px-2 py-1">
+                  {formatAccountDisplayLabel(
+                    { account_name: p.account_name, account_number: p.account_number },
+                    { showNumber: showAccountNumbers },
+                  )}
+                </div>
                 <div className="px-2 py-1">{p.party_name}</div>
-                <div className="px-2 py-1 text-right">{p.movement_count}</div>
-                <div className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>{balanceText(p.balance_cents)}</div>
+                <div className="px-2 py-1 text-right" data-quantity>
+                  {p.movement_count}
+                </div>
+                <div className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
+                  <MoneyCell
+                    cents={p.balance_cents}
+                    format={(c) => balanceText(c)}
+                    drill={{
+                      amount: { target: "register", accountId: p.account_id },
+                    }}
+                  />
+                </div>
                 <div className="px-2 py-1 text-center">
                   <button
                     type="button"
@@ -419,7 +426,7 @@ export function LoansAdvancesPage() {
           )}
           {ledgerQuery.data && ledgerQuery.data.lines.length > 0 && (
             <div className="mt-2 w-full text-xs" data-testid="party-ledger-table">
-              <div className="grid grid-cols-[80px_minmax(80px,1fr)_minmax(0,1.4fr)_100px_100px_120px_100px] gap-x-2 border-b border-[#E5E7EB] bg-[#EEF2F6] text-section-header font-bold uppercase text-[#1F2937]">
+              <div className="grid grid-cols-[88px_minmax(100px,1fr)_minmax(0,1.4fr)_minmax(88px,1fr)_minmax(88px,1fr)_minmax(140px,1.2fr)_minmax(88px,1fr)] gap-x-2 border-b border-[#E5E7EB] bg-[#EEF2F6] text-section-header font-bold uppercase text-[#1F2937]">
                 <div className="px-2 py-1 text-center">Date</div>
                 <div className="px-2 py-1 text-center">Document</div>
                 <div className="px-2 py-1 text-center">Bank line</div>
@@ -431,7 +438,7 @@ export function LoansAdvancesPage() {
               {ledgerQuery.data.lines.map((line: PartyLedgerLine) => (
                 <div
                   key={line.posting_id}
-                  className="grid grid-cols-[80px_minmax(80px,1fr)_minmax(0,1.4fr)_100px_100px_120px_100px] gap-x-2 border-b border-[#F3F4F6]"
+                  className="grid grid-cols-[88px_minmax(100px,1fr)_minmax(0,1.4fr)_minmax(88px,1fr)_minmax(88px,1fr)_minmax(140px,1.2fr)_minmax(88px,1fr)] gap-x-2 border-b border-[#F3F4F6]"
                 >
                   <div className="px-2 py-1 whitespace-nowrap">{formatDateUS(line.date)}</div>
                   <div className="px-2 py-1 whitespace-nowrap">{line.document}</div>
@@ -441,13 +448,45 @@ export function LoansAdvancesPage() {
                       : "—"}
                   </div>
                   <div className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
-                    {line.debit_or_credit === "debit" ? money(line.amount_cents) : ""}
+                    {line.debit_or_credit === "debit" ? (
+                      <MoneyCell
+                        cents={line.amount_cents}
+                        format={money}
+                        drill={{
+                          entity: { kind: "journal_entry", id: line.journal_entry_id },
+                        }}
+                      />
+                    ) : null}
                   </div>
                   <div className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
-                    {line.debit_or_credit === "credit" ? money(line.amount_cents) : ""}
+                    {line.debit_or_credit === "credit" ? (
+                      <MoneyCell
+                        cents={line.amount_cents}
+                        format={money}
+                        drill={{
+                          entity: { kind: "journal_entry", id: line.journal_entry_id },
+                        }}
+                      />
+                    ) : null}
                   </div>
-                  <div className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS} font-semibold`}>
-                    {balanceText(line.running_balance_cents)}
+                  <div className={`px-2 py-1 ${QBO_MONEY_CELL_CLASS}`}>
+                    <MoneyCell
+                      cents={line.running_balance_cents}
+                      format={(c) => balanceText(c)}
+                      drill={{
+                        amount: {
+                          target: "register",
+                          accountId: ledgerQuery.data.account.account_id,
+                        },
+                      }}
+                      className={`font-semibold ${
+                        line.running_balance_cents > 0
+                          ? "text-[#B91C1C]"
+                          : line.running_balance_cents < 0
+                            ? "text-[#16A34A]"
+                            : "text-[#6B7280]"
+                      }`}
+                    />
                   </div>
                   <div className="px-2 py-1 whitespace-nowrap" data-testid="party-ledger-pair">
                     {line.pair_status === "paired"
@@ -483,38 +522,32 @@ export function LoansAdvancesPage() {
               {
                 key: "display_id",
                 label: "Document",
-                sortable: true,
                 render: (r) => r.display_id ?? "—",
               },
               {
                 key: "entry_date",
                 label: "Date",
-                sortable: true,
                 render: (r) => formatDateUS(r.entry_date),
               },
               {
                 key: "direction",
                 label: "Direction",
-                sortable: true,
                 render: (r) => (r.direction === "in" ? "To company" : "From company"),
               },
               {
                 key: "counterparty",
                 label: "Counterparty",
-                sortable: true,
                 render: (r) => entityLabel(r.counterparty_name, r.counterparty_id, "Counterparty"),
               },
               { key: "relationship", label: "Relationship", render: (r) => r.relationship },
               {
                 key: "kind",
                 label: "Kind",
-                sortable: true,
                 render: (r) => r.document_kind ?? r.target_type,
               },
               {
                 key: "note",
                 label: "Note",
-                sortable: true,
                 render: (r) =>
                   r.note_file_id || r.has_note ? (
                     <EntityLink kind="document" id={r.note_file_id ?? r.id} label="Advance note" />
@@ -527,7 +560,6 @@ export function LoansAdvancesPage() {
               {
                 key: "account",
                 label: "Account",
-                sortable: true,
                 render: (r) => (
                   <EntityLink kind="account" id={r.account_id} label={entityLabel(r.account_name, r.account_id, "Account")} />
                 ),
@@ -535,7 +567,6 @@ export function LoansAdvancesPage() {
               {
                 key: "principal",
                 label: "Principal",
-                sortable: true,
                 className: "text-right",
                 cellClass: "text-right whitespace-nowrap",
                 render: (r) => money(r.principal_cents ?? r.amount_cents),
@@ -544,7 +575,6 @@ export function LoansAdvancesPage() {
               {
                 key: "je",
                 label: "JE",
-                sortable: true,
                 render: (r) =>
                   r.je_id ? (
                     <EntityLink kind="journal_entry" id={r.je_id} label={entityLabel(null, r.je_id, "Journal entry")} />

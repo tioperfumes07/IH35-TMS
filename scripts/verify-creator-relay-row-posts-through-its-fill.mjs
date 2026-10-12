@@ -16,6 +16,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import pg from "pg";
+import { resolveGateReadonlyDbUrl } from "./lib/gate-db-credential.mjs";
 
 const LABEL = "verify:creator-relay-row-posts-through-its-fill";
 const BASELINE_PATH = join("scripts", "verify-creator-relay-row-posts-through-its-fill.baseline.json");
@@ -56,23 +57,32 @@ function selftest() {
   t("SQL filters voided_at IS NULL", UNPOSTED_RELAY_ROWS_SQL.includes("f.voided_at IS NULL"));
   t("ALLOW_OFFLINE_SKIP is exported", typeof ALLOW_OFFLINE_SKIP === "string" && ALLOW_OFFLINE_SKIP.length > 0);
   t("BASELINE_PATH ends with .json", BASELINE_PATH.endsWith(".json"));
+  {
+    const src = readFileSync(new URL(import.meta.url), "utf8");
+    t("resolveDbUrl uses resolveGateReadonlyDbUrl", src.includes("resolveGateReadonlyDbUrl"));
+    // Legacy file-path join must stay gone (ROUND 210/370). Assert on the join call shape, not a
+    // string that this selftest itself would re-introduce into `src`.
+    t("resolveDbUrl has no HOME+legacy join", !/join\(\s*process\.env\.HOME/.test(src));
+  }
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} selftest OK — 9 cases`);
+  console.log(`${LABEL} selftest OK — 11 cases`);
   process.exit(0);
 }
 
 if (process.argv.includes("--selftest")) selftest();
 
 async function resolveDbUrl() {
+  // Explicit env wins (money-pr-local-gate / hand runs). Never read neon-prod-readonly.url
+  // directly — ROUND 210 retired that path (owner creds leaked into it) and ROUND 370
+  // requires IH35_NO_GATE_CREDENTIAL_FALLBACK so verify-static noDbEnv cannot quietly open
+  // Neon and ETIMEDOUT under parallel load (alwaysRun tip rot, 2026-10-11).
   const env = process.env.DATABASE_URL_READONLY ?? process.env.DATABASE_URL;
   if (env) return env;
-  const legacy = join(process.env.HOME ?? "", ".config", "ih35", "neon-prod-readonly.url");
-  if (existsSync(legacy)) return readFileSync(legacy, "utf8").trim();
-  return null;
+  return resolveGateReadonlyDbUrl() ?? null;
 }
 
 async function run() {

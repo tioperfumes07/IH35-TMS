@@ -20,6 +20,7 @@ const FILES = {
   wizard: "apps/frontend/src/pages/accounting/loans/LoanApplicationWizard.tsx",
   qbo: "apps/frontend/src/design/qbo-parity.ts",
   feApi: "apps/frontend/src/api/related-party-loans.ts",
+  createEntry: "apps/backend/src/accounting/related-party-loan-posting/create-entry.service.ts",
   routes: "apps/backend/src/accounting/related-party-loan-posting/routes.ts",
   glPost: "apps/backend/src/banking/bank-feed-gl-posting.service.ts",
 };
@@ -36,7 +37,7 @@ function fail(errors) {
 
 export function staticProblems(srcs) {
   const errors = [];
-  const { designView, wizard, qbo, feApi, routes, glPost } = srcs;
+  const { designView, wizard, qbo, feApi, createEntry, routes, glPost } = srcs;
 
   // F1 — QBO parity label
   if (!qbo.includes('loan: "Loan"')) {
@@ -87,19 +88,22 @@ export function staticProblems(srcs) {
     errors.push("F3: bank-seeded wizard must default target_type bank_funding");
   }
 
-  // F4 — FE API + BE create stamp reverse pointer with voided_at
+  // F4 — FE API + create-entry.service stamp reverse pointer with voided_at
   if (!feApi.includes("bank_transaction_id")) {
     errors.push("F4: CreateRelatedPartyLoanRequest must carry bank_transaction_id");
   }
-  if (!routes.includes("bank_transaction_id") || !routes.includes("matched_related_party_loan_id")) {
-    errors.push("F4: create route must accept bank_transaction_id and stamp matched_related_party_loan_id");
+  if (!routes.includes("bank_transaction_id")) {
+    errors.push("F4: routes schema must accept bank_transaction_id");
   }
-  if (!routes.includes("voided_at IS NULL")) {
+  if (!createEntry.includes("bank_transaction_id") || !createEntry.includes("matched_related_party_loan_id")) {
+    errors.push("F4: create-entry.service must accept bank_transaction_id and stamp matched_related_party_loan_id");
+  }
+  if (!createEntry.includes("voided_at IS NULL")) {
     errors.push("F4: bank SELECT/UPDATE must filter voided_at IS NULL (column is not deleted_at)");
   }
-  if (routes.includes("deleted_at IS NULL") && routes.includes("bank_transactions")) {
+  if (createEntry.includes("deleted_at IS NULL") && createEntry.includes("bank_transactions")) {
     // Narrow: fail if bank_transactions queries still use deleted_at
-    const bankBlocks = routes.split("banking.bank_transactions");
+    const bankBlocks = createEntry.split("banking.bank_transactions");
     for (let i = 1; i < bankBlocks.length; i++) {
       const chunk = bankBlocks[i].slice(0, 400);
       if (chunk.includes("deleted_at IS NULL")) {
@@ -108,7 +112,7 @@ export function staticProblems(srcs) {
       }
     }
   }
-  if (!routes.includes('document_kind') || !routes.includes('"funding"')) {
+  if (!createEntry.includes("document_kind") || !createEntry.includes('"funding"')) {
     errors.push("F4: create must set document_kind funding for bank_funding / bank_transaction_id");
   }
 
