@@ -128,6 +128,24 @@ export function auditSources({ resolverSrc, postingEngineSrc, materializeSrc, pa
   return failures;
 }
 
+// 443.120 B (BCF-10) -- the bank-cache decrement in payDriverReimbursementImmediately must be gated by the
+// poster's own idempotency verdict (result === "posted"), and must run AFTER the post. An ungated decrement
+// before the post subtracted the amount again on every retry of an already-paid reimbursement.
+const PAY_SERVICE_REL = "apps/backend/src/driver-finance/driver-reimbursement.service.ts";
+export function auditPayService(src) {
+  if (src === null) return [`${PAY_SERVICE_REL}: missing`];
+  const failures = [];
+  const dec = src.indexOf("updateBankBalance(client");
+  const post = src.indexOf("postSourceTransactionInClientTx(\n");
+  const gate = /if \(\s*\w+\.result === "posted"[^)]*\)\s*\{\s*await updateBankBalance\(/.test(src);
+  if (dec === -1 || post === -1) failures.push(`${PAY_SERVICE_REL}: pay path no longer calls both postSourceTransactionInClientTx and updateBankBalance`);
+  else {
+    if (!gate) failures.push(`${PAY_SERVICE_REL}: updateBankBalance is not gated by result === "posted" -- a retry decrements the bank cache twice (BCF-10)`);
+    if (dec < post) failures.push(`${PAY_SERVICE_REL}: updateBankBalance runs before the idempotent post -- it cannot know whether this call created the posting (BCF-10)`);
+  }
+  return failures;
+}
+
 function readOrNull(root, rel) {
   const p = path.join(root, rel);
   return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null;
@@ -304,7 +322,26 @@ export async function backfillExistingSettlementLineAccounts(client, input) {
     throw new Error("SELFTEST FAIL: missing CHECK-widen migration went undetected");
   }
 
-  console.log("verify-reimbursement-per-type-gl: SELFTEST PASS (8/8)");
+  const goodPay = `
+    const posted = await postSourceTransactionInClientTx(
+      client, {}, {});
+    if (posted.result === "posted" && !input.credit_account_id && phase1.fromBankAccountId) {
+      await updateBankBalance(client, companyId, phase1.fromBankAccountId, -Math.abs(phase1.amountCents));
+    }
+`;
+  if (auditPayService(goodPay).length) throw new Error("SELFTEST FAIL: clean pay service flagged: " + JSON.stringify(auditPayService(goodPay)));
+  const ungatedPay = `
+    if (!input.credit_account_id && phase1.fromBankAccountId) {
+      await updateBankBalance(client, companyId, phase1.fromBankAccountId, -Math.abs(phase1.amountCents));
+    }
+    return postSourceTransactionInClientTx(
+      client, {}, {});
+`;
+  if (auditPayService(ungatedPay).length === 0) throw new Error("SELFTEST FAIL: ungated bank-cache decrement (BCF-10) went undetected");
+  const ungatedAfter = goodPay.replace('if (posted.result === "posted" && ', "if (");
+  if (auditPayService(ungatedAfter).length === 0) throw new Error("SELFTEST FAIL: decrement after the post but without the posted gate went undetected");
+
+  console.log("verify-reimbursement-per-type-gl: SELFTEST PASS (8/8 + 3 BCF-10 pay-service arms)");
   process.exit(0);
 }
 
@@ -317,6 +354,7 @@ const failures = auditSources({
   migrationCheckWidenSrc: readOrNull(root, MIGRATION_CHECK_WIDEN_REL),
   migrationSeedSrc: readOrNull(root, MIGRATION_SEED_REL),
 });
+failures.push(...auditPayService(readOrNull(root, PAY_SERVICE_REL)));
 if (failures.length) {
   console.error("verify-reimbursement-per-type-gl FAILED:");
   for (const f of failures) console.error(`  - ${f}`);
