@@ -27,6 +27,26 @@ const LABEL = "verify-reversed-jes-carry-header-linkage";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const KNOWN_PRE_FIX_BASELINE_COUNT = 116;
 
+/** Pure: the verdict for the measured rows (fully line-reversed JEs still missing reversed_by_je_id) vs the shrink-only baseline. */
+export function headerLinkageVerdict(rows, baseline = KNOWN_PRE_FIX_BASELINE_COUNT) {
+  const count = rows.length;
+  return { ok: count <= baseline, count, sample: rows.slice(0, 30).map((r) => r.id) };
+}
+
+if (process.argv.includes("--selftest")) {
+  const rows = (n) => Array.from({ length: n }, (_, i) => ({ id: `je-${i}` }));
+  const cases = [
+    ["0 rows passes", headerLinkageVerdict(rows(0)).ok === true],
+    ["exactly the baseline (116) passes", headerLinkageVerdict(rows(KNOWN_PRE_FIX_BASELINE_COUNT)).ok === true],
+    ["one NEW occurrence over the baseline fails", headerLinkageVerdict(rows(KNOWN_PRE_FIX_BASELINE_COUNT + 1)).ok === false],
+    ["the failure names at most 30 sample ids", headerLinkageVerdict(rows(200)).sample.length === 30],
+  ];
+  for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, ok]) => !ok).length;
+  console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 async function main() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
@@ -47,10 +67,11 @@ async function main() {
 
     await client.query("ROLLBACK");
 
-    const count = res.rows.length;
-    if (count > KNOWN_PRE_FIX_BASELINE_COUNT) {
+    const verdict = headerLinkageVerdict(res.rows);
+    const count = verdict.count;
+    if (!verdict.ok) {
       console.error(`${LABEL}: FAIL — ${count} journal_entry row(s) are fully line-reversed but missing header-level reversed_by_je_id, more than the known pre-fix baseline (${KNOWN_PRE_FIX_BASELINE_COUNT}). A NEW occurrence of the defect this round fixed.`);
-      for (const r of res.rows.slice(0, 30)) console.error(`  ✗ ${r.id}`);
+      for (const id of verdict.sample) console.error(`  ✗ ${id}`);
       process.exit(1);
     }
 
@@ -66,4 +87,4 @@ async function main() {
   }
 }
 
-main();
+if (!process.argv.includes("--selftest")) main();
