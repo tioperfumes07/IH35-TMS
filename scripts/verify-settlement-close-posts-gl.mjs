@@ -21,10 +21,38 @@
  */
 export const REQUIRES_LIVE_DB = "Neon live verification required";
 
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-settlement-close-posts-gl";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
+
+/** The rule, pure: the failure lines for the measured offenders (closed/locked load_bookended settlements with ZERO
+ *  live postings), or null when there are none. --selftest feeds it planted rows (no database). */
+export function closedWithoutGlFailure(offenders) {
+  if (!offenders.length) return null;
+  const lines = [`${LABEL}: FAIL — ${offenders.length} load_bookended settlement(s) are closed/locked with ZERO live GL postings:`];
+  for (const r of offenders.slice(0, 30)) lines.push(`  ✗ ${r.display_id} (${r.id}) status=${r.status}`);
+  if (offenders.length > 30) lines.push(`  ... and ${offenders.length - 30} more`);
+  lines.push(`This is the exact USMCA-LOAD-BOOKENDED-SETTLEMENTS-NEVER-POST-GL shape (docs/audit/GUARD-WORKORDERS.md) -- the load-bookended close path must call closeSettlementPayRun (with the Driver Net-Pay Clearing payment method) before or as part of closing, not leave the settlement finalized with no ledger trace.`);
+  return lines;
+}
+
+function selftest() {
+  const row = (n, status = "closed") => ({ id: `id-${n}`, display_id: `SETL-${n}`, status });
+  const many = Array.from({ length: 31 }, (_, i) => row(i));
+  const cases = [
+    ["no offender passes", closedWithoutGlFailure([]) === null],
+    ["one closed settlement with zero postings fails", closedWithoutGlFailure([row(1)])?.[0].includes("1 load_bookended settlement(s)") === true],
+    ["a locked one fails too", closedWithoutGlFailure([row(2, "locked")])?.[1].includes("status=locked") === true],
+    ["31 offenders list 30 and count the rest", (() => { const f = closedWithoutGlFailure(many); return f !== null && f.some((l) => l.includes("... and 1 more")); })()],
+  ];
+  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
 
 async function main() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
@@ -51,14 +79,9 @@ async function main() {
 
     await client.query("ROLLBACK");
 
-    const offenders = res.rows;
-    if (offenders.length > 0) {
-      console.error(`${LABEL}: FAIL — ${offenders.length} load_bookended settlement(s) are closed/locked with ZERO live GL postings:`);
-      for (const r of offenders.slice(0, 30)) {
-        console.error(`  ✗ ${r.display_id} (${r.id}) status=${r.status}`);
-      }
-      if (offenders.length > 30) console.error(`  ... and ${offenders.length - 30} more`);
-      console.error(`This is the exact USMCA-LOAD-BOOKENDED-SETTLEMENTS-NEVER-POST-GL shape (docs/audit/GUARD-WORKORDERS.md) -- the load-bookended close path must call closeSettlementPayRun (with the Driver Net-Pay Clearing payment method) before or as part of closing, not leave the settlement finalized with no ledger trace.`);
+    const failure = closedWithoutGlFailure(res.rows);
+    if (failure) {
+      for (const l of failure) console.error(l);
       process.exit(1);
     }
 
@@ -74,4 +97,8 @@ async function main() {
   }
 }
 
-main();
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  if (process.argv.includes("--selftest")) selftest();
+  else main();
+}
