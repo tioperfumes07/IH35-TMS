@@ -33,16 +33,14 @@ function fail(errors) {
   process.exit(1);
 }
 
-function liveCheck() {
+function readAll() {
+  return Object.fromEntries(Object.entries(FILES).map(([k, rel]) => [k, read(rel)]));
+}
+
+/** The rules, pure over the sources (keys of FILES). Returns every violation (empty = OK). */
+export function pointerFailures(src) {
   const errors = [];
-  const helper = read(FILES.helper);
-  const alert = read(FILES.alert);
-  const kpi = read(FILES.kpi);
-  const match = read(FILES.match);
-  const suggest = read(FILES.suggest);
-  const reconcile = read(FILES.reconcile);
-  const kpiGuard = read(FILES.kpiGuard);
-  const feedLinks = read(FILES.feedLinks);
+  const { helper, alert, kpi, match, suggest, reconcile, kpiGuard, feedLinks } = src;
 
   for (const n of [
     "BANK_LINE_DOCUMENT_POINTER_COLUMNS",
@@ -102,8 +100,7 @@ function liveCheck() {
   if (!feedLinks.includes("matched_relay_deposit_id")) {
     errors.push(`${FILES.feedLinks} LINK_COLUMNS must include matched_relay_deposit_id (ROUND 443.29-B)`);
   }
-  const voidReleaser = read(FILES.voidReleaser);
-  const voidGuard = read(FILES.voidGuard);
+  const { voidReleaser, voidGuard } = src;
   if (!voidReleaser.includes("BANK_LINE_DOCUMENT_POINTER_COLUMNS")) {
     errors.push(`${FILES.voidReleaser} RELEASABLE_POINTER_COLUMNS must be the helper list (deposit was dropped from a second copy)`);
   }
@@ -114,24 +111,31 @@ function liveCheck() {
     errors.push(`${FILES.kpiGuard} still ties unmatched KPI to review_state`);
   }
 
+  return errors;
+}
+
+function liveCheck() {
+  const errors = pointerFailures(readAll());
   if (errors.length) fail(errors);
   console.log(`${LABEL}: OK — unmatched is a live document pointer (helper + KPI + accept + suggest + reconcile)`);
 }
 
 function selftest() {
-  const helper = read(FILES.helper);
-  const planted = helper.replace("matched_deposit_id", "matched_MISSING_deposit_id");
-  if (planted.includes("matched_deposit_id") && !planted.includes("matched_MISSING_deposit_id")) {
-    console.error(`${LABEL} --selftest: plant did not change source`);
-    process.exit(1);
-  }
-  if (!planted.includes("matched_MISSING_deposit_id")) {
-    console.error(`${LABEL} --selftest FAILED: mutation not visible`);
-    process.exit(1);
-  }
-  console.log(`${LABEL} --selftest: OK (deposit pointer plant visible)`);
+  const src = readAll();
+  const plant = (k, from, to) => ({ ...src, [k]: src[k].split(from).join(to) });
+  const cases = [
+    ["the real sources pass", pointerFailures(src).length === 0],
+    ["a helper that drops matched_deposit_id fails", pointerFailures(plant("helper", "matched_deposit_id", "matched_x_id")).length > 0],
+    ["a helper that keys match off review_state fails", pointerFailures({ ...src, helper: src.helper + "\n// review_state" }).length > 0],
+    ["a KPI that treats for_review as unmatched fails", pointerFailures({ ...src, kpi: src.kpi + "\nconst UNMATCHED = `b.review_state = 'for_review'`" }).length > 0],
+    ["an accept path without the live-pointer refusal fails", pointerFailures(plant("match", "bankLineHasLiveDocumentPointer", "x")).length > 0],
+    ["a feed state machine without matched_relay_deposit_id fails", pointerFailures(plant("feedLinks", "matched_relay_deposit_id", "x")).length > 0],
+  ];
+  for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, ok]) => !ok).length;
+  console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
 }
 
-const arg = process.argv[2] ?? "";
-if (arg === "--selftest") selftest();
+if (process.argv.includes("--selftest")) selftest();
 else liveCheck();

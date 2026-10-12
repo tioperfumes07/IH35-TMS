@@ -36,15 +36,38 @@ const fail = (msg) => {
   process.exit(1);
 };
 
-const writer = fs.readFileSync(WRITER, "utf8");
-for (const token of [
+const WRITER_TOKENS = [
   "journal_entry_posting_source_required",
   "journal_entry_posting_source_pair_incomplete",
   "source_transaction_type IS NULL OR source_transaction_id IS NULL",
-]) {
-  if (!writer.includes(token)) {
-    fail(`${path.relative(ROOT, WRITER)} no longer contains "${token}" — the writer must refuse an unsourced posting`);
-  }
+];
+/** CODE arm, pure: the refusal tokens the writer no longer carries (empty = holds). */
+export function missingWriterTokens(src) {
+  return WRITER_TOKENS.filter((t) => !src.includes(t));
+}
+/** LIVE arm, pure: the shrink-only ceiling verdict for n unsourced rows against the baseline. */
+export function ceilingVerdict(n, baselineCount) {
+  return n > baselineCount ? "grew" : n < baselineCount ? "shrank" : "held";
+}
+
+const writer = fs.readFileSync(WRITER, "utf8");
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["the real writer carries every refusal", missingWriterTokens(writer).length === 0],
+    ["a writer without journal_entry_posting_source_required fails", missingWriterTokens(writer.split("journal_entry_posting_source_required").join("x")).length === 1],
+    ["unsourced rows above the baseline = grew (FAIL)", ceilingVerdict(11, 10) === "grew"],
+    ["unsourced rows at the baseline = held (PASS)", ceilingVerdict(10, 10) === "held"],
+    ["unsourced rows below the baseline = shrank (PASS, tighten)", ceilingVerdict(9, 10) === "shrank"],
+  ];
+  for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, ok]) => !ok).length;
+  console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
+for (const token of missingWriterTokens(writer)) {
+  fail(`${path.relative(ROOT, WRITER)} no longer contains "${token}" — the writer must refuse an unsourced posting`);
 }
 
 if (!fs.existsSync(BASELINE_PATH)) fail(`baseline not found at ${path.relative(ROOT, BASELINE_PATH)}`);
@@ -66,7 +89,7 @@ try {
   );
   const n = res.rows[0].n;
   const usd = (Number(res.rows[0].cents) / 100).toFixed(2);
-  if (n > baseline.unsourced_postings) {
+  if (ceilingVerdict(n, baseline.unsourced_postings) === "grew") {
     const newest = await client.query(
       `SELECT p.id::text, p.created_at::text, left(je.memo, 80) AS memo, je.source
          FROM accounting.journal_entry_postings p
@@ -82,7 +105,7 @@ try {
     process.exit(1);
   }
   await client.query("COMMIT");
-  if (n < baseline.unsourced_postings) {
+  if (ceilingVerdict(n, baseline.unsourced_postings) === "shrank") {
     console.log(`${LABEL}: unsourced postings shrank ${baseline.unsourced_postings} -> ${n}; commit ${n} to ${path.relative(ROOT, BASELINE_PATH)}`);
   }
   console.log(`${LABEL}: PASS — writer refuses unsourced postings; ${n} unsourced USMCA posting rows ($${usd}) <= baseline ${baseline.unsourced_postings}.`);
