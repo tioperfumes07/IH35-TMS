@@ -33,6 +33,7 @@ const F = {
   creator: "apps/backend/src/driver-finance/settlement-creator.service.ts",
   fromLoad: "apps/backend/src/accounting/from-load.ts",
   fuelDoc: "apps/backend/src/fuel/fuel-expense-document.service.ts",
+  writer: "apps/backend/src/accounting/expenses.routes.ts",
 };
 
 export function staticFailures(src) {
@@ -47,8 +48,10 @@ export function staticFailures(src) {
   if ((src.fuelDoc.match(/driver_id, unit_id, trailer_id/g) ?? []).length < 3) f.push(`S5 ${F.fuelDoc}: a fuel document line is written without driver / unit / trailer`);
   if (!/resolveCreatorTrailerId\(client, draft\.operating_company_id, draft\.trailer_equipment_number\)/.test(src.creator)) f.push(`S5 ${F.creator}: the Creator does not resolve the document's trailer`);
   // 443.84 #2: a load-attributed Creator expense is numbered on its load's spine; EXP-YYYY-##### only without a load.
-  if (!/const expenseNumber = loadId\s*\?\s*\(await generateExpenseNumber\(client as never, loadId, draft\.operating_company_id\)\)\.number\s*:\s*await nextExpenseDisplayId\(/.test(src.creator))
-    f.push(`S6 ${F.creator}: a load-attributed company expense is not numbered on its load's spine (generateExpenseNumber)`);
+  // 443.110 G13: the company expense goes through the shared writer with its load, which numbers it on the load's spine
+  // (generateExpenseNumber(client, body.load_id, ...)) and writes its expense_load_links row.
+  if (!/await createExpenseInClientTx\(\s*client,\s*\{[\s\S]{0,900}load_id: loadId,/.test(src.creator) || !/generateExpenseNumber\(client, body\.load_id, body\.operating_company_id\)/.test(src.writer))
+    f.push(`S6 ${F.creator}: a load-attributed company expense is not numbered on its load's spine (shared writer with load_id -> generateExpenseNumber)`);
   return f;
 }
 
@@ -126,7 +129,7 @@ if (isMain) {
       ["a bill line without the item fails S1", staticFailures(plant("apchain", 'unitOfMeasure: "each"', "u: 1")).some((x) => x.startsWith("S1"))],
       ["a linehaul line without Line Haul fails S3", staticFailures(plant("fromLoad", "item_name = 'Line Haul'", "1=1")).some((x) => x.startsWith("S3"))],
       ["a posted stamp without status fails S4", staticFailures(plant("creator", "status = 'posted', posted_at", "posted_at")).some((x) => x.startsWith("S4"))],
-      ["a load expense numbered EXP-YYYY fails S6", staticFailures(plant("creator", "const expenseNumber = loadId", "const expenseNumber = false")).some((x) => x.startsWith("S6"))],
+      ["a load expense numbered EXP-YYYY fails S6", staticFailures(plant("creator", "        load_id: loadId,\n", "        load_id: null,\n")).some((x) => x.startsWith("S6"))],
       ["a fuel line without driver/unit/trailer fails S5", staticFailures(plant("fuelDoc", "driver_id, unit_id, trailer_id", "x")).some((x) => x.startsWith("S5"))],
       ["a categorized line passes", liveFailures([ok]).length === 0],
       ["a line without an item fails L1", liveFailures([{ ...ok, item_id: null }]).some((x) => x.startsWith("L1"))],
