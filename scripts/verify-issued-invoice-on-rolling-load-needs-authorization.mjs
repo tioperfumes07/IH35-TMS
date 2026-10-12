@@ -70,7 +70,9 @@ const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
 await client.connect();
 try {
   await client.query("BEGIN");
-  await client.query("SET LOCAL ROLE neondb_owner");
+  // LEAD 443.91 #3 (2026-10-12): old rule — SET LOCAL ROLE neondb_owner before the read; new rule — read as the CI role with
+  // the bypass GUC only, like the other post-deploy guards; why — the post-deploy credential is ih35_guard_reader, which
+  // cannot SET ROLE neondb_owner ("permission denied to set role"), so the guard never measured anything on prod.
   await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
   const { rows } = await client.query(
     `SELECT l.load_number, i.display_id, i.status AS invoice_status, i.factoring_status
