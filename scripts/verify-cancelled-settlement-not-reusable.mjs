@@ -36,13 +36,7 @@ function fail(msg) {
   process.exit(1);
 }
 
-if (!fs.existsSync(SERVICE)) fail(`${SERVICE} not found — the bookend settlement path moved; re-point this guard rather than deleting it`);
-const src = fs.readFileSync(SERVICE, "utf8");
-
-// ── A · both reuse sites exclude cancelled/voided ────────────────────────────────────────────────
-// Comments are stripped first. An earlier guard of mine (3065) reported PASS on a deleted field
-// because its own explanatory comment mentioned the identifier — a guard must never match its prose.
-const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").replace(/\/\/.*$/gm, "");
+const stripComments = (src) => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").replace(/\/\/.*$/gm, "");
 
 // PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE (#18524): both sites moved from the blacklist status <> 'cancelled' to the
 // whitelist status = 'open' — strictly tighter (cancelled AND approved/paid/closed are refused), so either form holds.
@@ -50,11 +44,49 @@ const sites = [
   { name: "openLoadBookendedSettlement reuse query", re: /s\.status\s*(?:<>\s*'cancelled'|=\s*'open')/, voidRe: /s\.voided_at\s+IS\s+NULL/ },
   { name: "getActiveSettlementForDriver", re: /(?<!s\.)\bstatus\s*(?:<>\s*'cancelled'|=\s*'open')/, voidRe: /(?<!s\.)\bvoided_at\s+IS\s+NULL/ },
 ];
-const broken = [];
-for (const site of sites) {
-  if (!site.re.test(code)) broken.push(`${site.name}: missing status <> 'cancelled'`);
-  if (!site.voidRe.test(code)) broken.push(`${site.name}: missing voided_at IS NULL`);
+
+/** A · both reuse sites exclude cancelled/voided. Comments are stripped first — an earlier guard (3065) reported
+ *  PASS on a deleted field because its own explanatory comment mentioned the identifier. */
+export function checkReuseSites(src) {
+  const code = stripComments(src);
+  const broken = [];
+  for (const site of sites) {
+    if (!site.re.test(code)) broken.push(`${site.name}: missing status <> 'cancelled'`);
+    if (!site.voidRe.test(code)) broken.push(`${site.name}: missing voided_at IS NULL`);
+  }
+  return broken;
 }
+
+/** B · live verdict: an empty scope is unverifiable (never a pass); any reusable cancelled/voided row fails. */
+export function liveVerdict(bookended, reusableRows) {
+  if (bookended === 0) return { ok: false, reason: "empty" };
+  if (reusableRows.length) return { ok: false, reason: "reusable" };
+  return { ok: true };
+}
+
+if (!fs.existsSync(SERVICE)) fail(`${SERVICE} not found — the bookend settlement path moved; re-point this guard rather than deleting it`);
+const src = fs.readFileSync(SERVICE, "utf8");
+
+if (process.argv.includes("--selftest")) {
+  let ok = true;
+  const ex = (n, c) => { if (!c) { console.error(`SELFTEST FAIL: ${n}`); ok = false; } };
+  ex("real service passes", checkReuseSites(src).length === 0);
+  const noStatus = `SELECT 1 FROM driver_settlements s WHERE s.voided_at IS NULL; SELECT 1 WHERE voided_at IS NULL`;
+  ex("reuse query without a status clause fails", checkReuseSites(noStatus).length > 0);
+  const noVoid = `SELECT 1 FROM driver_settlements s WHERE s.status = 'open'; SELECT 1 WHERE status = 'open'`;
+  ex("reuse sites without voided_at IS NULL fail", checkReuseSites(noVoid).length > 0);
+  const onlyInComment = `/* s.status <> 'cancelled' AND s.voided_at IS NULL */ // status = 'open' voided_at IS NULL`;
+  ex("clause present only in a comment fails", checkReuseSites(onlyInComment).length > 0);
+  const both = `WHERE s.status = 'open' AND s.voided_at IS NULL; WHERE status <> 'cancelled' AND voided_at IS NULL`;
+  ex("both sites guarded passes", checkReuseSites(both).length === 0);
+  ex("empty scope is not a pass", liveVerdict(0, []).ok === false && liveVerdict(0, []).reason === "empty");
+  ex("a reusable cancelled settlement fails", liveVerdict(69, [{ display_id: "S-1" }]).ok === false);
+  ex("clean live scope passes", liveVerdict(69, []).ok === true);
+  console.log(ok ? `${LABEL} --selftest PASS (8/8)` : `${LABEL} --selftest FAIL`);
+  process.exit(ok ? 0 : 1);
+}
+
+const broken = checkReuseSites(src);
 if (broken.length) {
   for (const b of broken) console.error(` - ${b}`);
   fail(
@@ -111,11 +143,12 @@ try {
   await client.query("COMMIT");
 
   const bookended = scope.rows[0]?.bookended ?? 0;
-  if (bookended === 0) {
+  const verdict = liveVerdict(bookended, rows);
+  if (verdict.reason === "empty") {
     fail("no load_bookended settlements exist at all — this guard cannot see what it checks (RLS mask or empty DB), which is not a clean result");
   }
 
-  if (rows.length) {
+  if (verdict.reason === "reusable") {
     for (const r of rows) {
       console.error(
         ` - opco ${r.opco}: settlement ${r.display_id} is ${r.status} but still REUSABLE (trip open + live anchor load) — the next load for that driver would attach its pay to dead paperwork.`

@@ -131,7 +131,11 @@ jobs:
             scripts/verify-factoring-fees-are-financing-costs.mjs \
             scripts/verify-unmatched-document-is-matchable-again.mjs \
             scripts/verify-no-duplicate-active-account-names.mjs \
-            scripts/verify-load-to-cash-chain.mjs
+            scripts/verify-load-to-cash-chain.mjs \
+            scripts/verify-usmca-app-path-list-apis.mjs \
+            scripts/verify-reversing-je-carries-je-level-fk.mjs \
+            scripts/verify-cancelled-settlement-not-reusable.mjs \
+            scripts/verify-register-reversal-never-precedes-original.mjs
       # ROUND 389 (LEAD) — the ONLY place a credential-gated derived artifact's freshness can actually be
       # proven. scripts/canonical-relations.json is regenerated from the live schema, so its generator
       # declares requiresDatabase; every other job runs guards through scripts/verify-static.mjs, which
