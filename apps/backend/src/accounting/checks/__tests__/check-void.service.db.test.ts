@@ -49,6 +49,19 @@ describeIntegration("check-void.service (real Postgres, isolated company)", () =
     return result.id;
   }
 
+  async function seedItemCheck(): Promise<string> {
+    const result = await createCheck(companyId, actorUserId, {
+      bank_account_id: bankAccountId,
+      payee_kind: "vendor",
+      payee_id: vendorId,
+      check_date: "2026-10-12",
+      print_later: false,
+      check_number: uniqueCheckNumber(),
+      lines: [{ line_kind: "item", item_id: maintenanceItemId, quantity: 1, rate_cents: 2000, amount_cents: 2000 }],
+    });
+    return result.id;
+  }
+
   beforeAll(async () => {
     await ensureIntegrationPrerequisites();
     const isolated = await createIsolatedOperatingCompany({ label: "chkvoid" });
@@ -168,6 +181,35 @@ describeIntegration("check-void.service (real Postgres, isolated company)", () =
       await expect(voidCheck(companyId, actorUserId, checkId, "second void")).rejects.toMatchObject({
         code: "CHECK_ALREADY_VOID",
       });
+    },
+    30_000
+  );
+
+  it(
+    "voids an item-line check (qty × rate = 2000): status=void, reversal JE TB = 0",
+    async () => {
+      const checkId = await seedItemCheck();
+      const result = await voidCheck(companyId, actorUserId, checkId, "item-line void test");
+
+      const row = await withLuciaBypass(async (client) => {
+        const res = await client.query(`SELECT status FROM accounting.expenses WHERE id = $1::uuid`, [checkId]);
+        return res.rows[0] as { status: string };
+      });
+      expect(row.status).toBe("void");
+
+      if (result.reversal_journal_entry_id) {
+        const je = await withLuciaBypass(async (client) => {
+          const res = await client.query(
+            `SELECT
+               SUM(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE 0 END)::text AS debit_sum,
+               SUM(CASE WHEN debit_or_credit='credit' THEN amount_cents ELSE 0 END)::text AS credit_sum
+             FROM accounting.journal_entry_postings WHERE journal_entry_id = $1::uuid`,
+            [result.reversal_journal_entry_id]
+          );
+          return res.rows[0] as { debit_sum: string; credit_sum: string };
+        });
+        expect(je.debit_sum).toBe(je.credit_sum);
+      }
     },
     30_000
   );

@@ -54,6 +54,14 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
     await db.connect();
 
     await bypass(async () => {
+      // Actor user — created_by_user_id FK on accounting.expenses + banking.check_number_registry
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
+      await db.query(
+        `INSERT INTO identity.users (id, email, role, preferred_language)
+         VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
+        [ACTOR_USER_ID, `chkcreate-${suffix}@test.local`]
+      );
+
       // Accounts
       const mk = async (id: string, num: string, name: string, type: string) =>
         db.query(
@@ -223,6 +231,45 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
           lines: [{ line_kind: "category", category_kind: "cash_advance", category_code: "cash_advance", amount_cents: 5000 }],
         })
       ).rejects.toMatchObject({ code: "DRIVER_ADVANCE_IS_A_BILL_PAYMENT" });
+    },
+    30_000
+  );
+
+  it(
+    "item-line check: qty × rate = amount_cents, expense_lines.quantity + rate_cents stored, TB = 0",
+    async () => {
+      const result = await createCheck(companyId, ACTOR_USER_ID, {
+        bank_account_id: bankAccountId,
+        payee_kind: "vendor",
+        payee_id: vendorId,
+        check_date: "2026-10-12",
+        print_later: false,
+        check_number: uniqueCheckNumber(),
+        lines: [{ line_kind: "item", item_id: maintenanceItemId, quantity: 2, rate_cents: 5000, amount_cents: 10000 }],
+      });
+      expect(result.total_amount_cents).toBe(10000);
+
+      const lines = await scopedRead<{ item_id: string; quantity: number; rate_cents: number }>(
+        `SELECT item_id::text, quantity, rate_cents FROM accounting.expense_lines WHERE expense_id = $1::uuid`,
+        [result.id]
+      );
+      expect(lines.length).toBe(1);
+      expect(lines[0]?.item_id).toBe(maintenanceItemId);
+      expect(Number(lines[0]?.quantity)).toBe(2);
+      expect(Number(lines[0]?.rate_cents)).toBe(5000);
+
+      // TB = 0
+      const je = await scopedRead<{ debit_sum: string; credit_sum: string }>(
+        `SELECT
+           SUM(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE 0 END)::text AS debit_sum,
+           SUM(CASE WHEN debit_or_credit='credit' THEN amount_cents ELSE 0 END)::text AS credit_sum
+         FROM accounting.journal_entry_postings jep
+         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_id
+         WHERE je.source_transaction_id = $1`,
+        [result.id]
+      );
+      expect(je[0]?.debit_sum).toBe("10000");
+      expect(je[0]?.credit_sum).toBe("10000");
     },
     30_000
   );
