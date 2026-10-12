@@ -113,10 +113,12 @@ run("Tio Perfumes end-to-end money scenario (real engine)", () => {
   it("LEG 1 — invoices the delivered Tio Perfumes load: DR A/R / CR Revenue $0.05", async () => {
     const invId = randomUUID();
     await tx(async () => {
-      await db.query(`INSERT INTO accounting.invoices (id,operating_company_id,customer_id,display_id,due_date,status,issue_date,total_cents,tax_cents,source_load_id) VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,'sent',CURRENT_DATE,$5,0,$6::uuid)`,
+      await db.query(`INSERT INTO accounting.invoices (id,operating_company_id,customer_id,display_id,due_date,status,issue_date,total_cents,tax_cents,source_load_id) VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,'draft',CURRENT_DATE,$5,0,$6::uuid)`,
         [invId, companyId, ids.customer, `INV-2026-00001`, CENTS, ids.load]);
       await db.query(`INSERT INTO accounting.invoice_lines (operating_company_id,invoice_id,line_type,description,unit_amount_cents,line_total_cents,account_id) VALUES ($1::uuid,$2::uuid,'linehaul','Tio Perfumes load',$3,$3,$4::uuid)`,
         [companyId, invId, CENTS, ids.revenue]);
+      // 443.93: the send path writes the line first (fn_invoice_sent_requires_live_line) — the invoice is born draft, gets its line, then is sent.
+      await db.query(`UPDATE accounting.invoices SET status='sent' WHERE id=$1::uuid`, [invId]);
     });
     await postAndRead("invoice", invId);
   });

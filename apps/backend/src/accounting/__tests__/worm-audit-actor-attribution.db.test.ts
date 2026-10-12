@@ -142,12 +142,19 @@ describeIntegration("ACCT-F177 — WORM row_changes names the actor and the role
       await client.query(
         `INSERT INTO accounting.invoices
            (id, operating_company_id, customer_id, display_id, issue_date, due_date,
-            subtotal_cents, tax_cents, total_cents, status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,1000,0,1000,'draft')`,
+            subtotal_cents, tax_cents, total_cents, status, invoice_type)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,1000,0,1000,'draft','manual')`,
         // display_id is CHECK-constrained to ^INV-[0-9]{4}-[0-9]{5}$ and UNIQUE per
         // (operating_company_id, display_id). A fixed value is safe because this suite owns an
         // isolated company, so it cannot collide with the INV-2026-000xx rows on shared entities.
         [invoiceId, companyId, customerId, "INV-2026-00001"]
+      );
+      // 443.93: a header is never written without its line (invoice_must_have_lines, deferred) and a from_load invoice is
+      // load-born (refuse_load_born_document_without_load) — this audit fixture is a MANUAL invoice with its one line.
+      await client.query(
+        `INSERT INTO accounting.invoice_lines (operating_company_id, invoice_id, line_type, description, quantity, unit_amount_cents, line_total_cents, display_order)
+         VALUES ($1::uuid,$2::uuid,'other','Audit fixture line',1,1000,1000,0)`,
+        [companyId, invoiceId]
       );
     });
 
