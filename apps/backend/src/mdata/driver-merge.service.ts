@@ -63,20 +63,20 @@ export const discoverDriverReferences = (client: Db) => discoverReferences(clien
 export type RepointOutcome = { ref: string; rows: number; status: "moved" | "kept_on_survivor" | "history_kept"; reason?: string };
 
 /**
- * Repoint every reference of `from` to `to`, MEASURED per column inside a savepoint:
+ * Repoint every reference of `from` to `to`, MEASURED per column inside a savepoint (EXECUTION ONLY — the preview never
+ * writes; it reads the same three outcomes from the catalog in planRepoint):
  *   moved            — the rows now point at the survivor
  *   kept_on_survivor — unique conflict: the survivor already has its own 1:1 row; the merged copy stays, superseded
  *   history_kept     — the database refused (no UPDATE privilege, or an immutability trigger: HOS ledger, posted
  *                      settlements, closed periods …). Immutable records are never rewritten; they resolve to the
  *                      survivor through merged_into. The reason is the database's own message.
- * Any other error refuses the whole merge. dryRun rolls every attempt back (the preview shows exactly what will happen).
+ * Any other error refuses the whole merge.
  */
 export async function repointAll(
   client: Db,
   target: "mdata.drivers" | "mdata.vendors",
   from: string,
-  to: string,
-  opts: { dryRun: boolean }
+  to: string
 ): Promise<RepointOutcome[]> {
   const out: RepointOutcome[] = [];
   for (const r of await discoverReferences(client, target)) {
@@ -86,7 +86,7 @@ export async function repointAll(
     await client.query("SAVEPOINT merge_ref");
     try {
       const res = await client.query(`UPDATE ${qi(r.table)} SET ${qi(r.column)} = $2::uuid WHERE ${qi(r.column)} = $1::uuid`, [from, to]);
-      await client.query(opts.dryRun ? "ROLLBACK TO SAVEPOINT merge_ref" : "RELEASE SAVEPOINT merge_ref");
+      await client.query("RELEASE SAVEPOINT merge_ref");
       out.push({ ref, rows: res.rowCount ?? has, status: "moved" });
     } catch (e) {
       await client.query("ROLLBACK TO SAVEPOINT merge_ref");
@@ -102,6 +102,72 @@ export async function repointAll(
 }
 
 const qi = (ident: string) => ident.split(".").map((p) => `"${p.replace(/"/g, '""')}"`).join(".");
+
+/**
+ * AJK-05 (443.113) — THE PREVIEW IS READ-ONLY. It predicts repointAll's three outcomes with SELECTs on the data and the
+ * catalog only (the GET used to run every UPDATE and roll it back to a savepoint: locks taken, triggers fired):
+ *   history_kept     — the role has no UPDATE privilege on the column, or an enabled BEFORE UPDATE row trigger on the
+ *                      table raises an exception (an immutability / append-only guard)
+ *   kept_on_survivor — a unique index containing the column (its partial predicate applied to both sides) already holds
+ *                      a survivor row equal to one of the merged rows on the index's other columns
+ *   moved            — otherwise
+ * The merge itself still measures every column (repointAll); the preview is the plan, never a rehearsal.
+ */
+export async function planRepoint(client: Db, target: "mdata.drivers" | "mdata.vendors", from: string, to: string): Promise<RepointOutcome[]> {
+  const out: RepointOutcome[] = [];
+  for (const r of await discoverReferences(client, target)) {
+    const ref = `${r.table}.${r.column}`;
+    const has = Number((await client.query(`SELECT count(*)::int AS n FROM ${qi(r.table)} WHERE ${qi(r.column)} = $1::uuid`, [from])).rows[0]?.n ?? 0);
+    if (has === 0) continue;
+    const priv = (await client.query(`SELECT has_column_privilege($1::text::regclass, $2::text, 'UPDATE') AS ok`, [r.table, r.column])).rows[0];
+    if (priv && priv.ok === false) {
+      out.push({ ref, rows: has, status: "history_kept", reason: `no UPDATE privilege on ${ref}` });
+      continue;
+    }
+    const refusing = (
+      await client.query(
+        `SELECT t.tgname::text AS tg FROM pg_trigger t JOIN pg_proc f ON f.oid = t.tgfoid
+          WHERE t.tgrelid = $1::text::regclass AND NOT t.tgisinternal AND t.tgenabled <> 'D'
+            AND (t.tgtype & 1) = 1 AND (t.tgtype & 2) = 2 AND (t.tgtype & 16) = 16
+            AND f.prosrc ~* 'RAISE[[:space:]]+EXCEPTION'
+          ORDER BY 1 LIMIT 1`,
+        [r.table]
+      )
+    ).rows[0];
+    if (refusing) {
+      out.push({ ref, rows: has, status: "history_kept", reason: `update refused by trigger ${String(refusing.tg)} (predicted)` });
+      continue;
+    }
+    const uniques = (
+      await client.query(
+        `SELECT array_agg(a.attname::text ORDER BY k.ord) FILTER (WHERE a.attname IS NOT NULL) AS cols,
+                bool_or(k.attnum = 0) AS has_expr,
+                pg_get_expr(i.indpred, i.indrelid) AS pred
+           FROM pg_index i
+           CROSS JOIN LATERAL unnest(i.indkey::int2[]) WITH ORDINALITY AS k(attnum, ord)
+           LEFT JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = k.attnum
+          WHERE i.indrelid = $1::text::regclass AND i.indisunique
+          GROUP BY i.indexrelid, i.indpred, i.indrelid`,
+        [r.table]
+      )
+    ).rows as Array<{ cols: string[] | null; has_expr: boolean; pred: string | null }>;
+    let conflict = false;
+    for (const u of uniques) {
+      const cols = u.cols ?? [];
+      if (u.has_expr || !cols.includes(r.column)) continue;
+      const others = cols.filter((c) => c !== r.column);
+      const base = `(SELECT * FROM ${qi(r.table)}${u.pred ? ` WHERE ${u.pred}` : ""})`;
+      const on = [`s.${qi(r.column)} = $2::uuid`, ...others.map((c) => `s.${qi(c)} = m.${qi(c)}`)].join(" AND ");
+      const hit = (await client.query(`SELECT EXISTS (SELECT 1 FROM ${base} m JOIN ${base} s ON ${on} WHERE m.${qi(r.column)} = $1::uuid) AS c`, [from, to])).rows[0];
+      if (hit?.c === true) {
+        conflict = true;
+        break;
+      }
+    }
+    out.push(conflict ? { ref, rows: has, status: "kept_on_survivor", reason: "the survivor already has its own row" } : { ref, rows: has, status: "moved" });
+  }
+  return out;
+}
 
 /** Polymorphic references (entity_type / holder_type / signer_type columns), counted alongside the discovered ones. */
 const POLYMORPHIC: Array<{ key: string; count: string; repoint: string | null }> = [
@@ -189,7 +255,7 @@ export async function previewDriverMerge(
   if ((await open(s.id)) > 0 && (await open(m.id)) > 0)
     blockers.push("Both profiles have an OPEN settlement — close the merged profile's settlement first.");
 
-  const outcomes = await repointAll(client, "mdata.drivers", m.id, s.id, { dryRun: true });
+  const outcomes = await planRepoint(client, "mdata.drivers", m.id, s.id);
   const references: Array<{ ref: string; rows: number; status?: string; reason?: string }> = outcomes.map((o) => ({ ...o }));
   for (const p of POLYMORPHIC) {
     const n = Number((await client.query(p.count, [m.id])).rows[0]?.n ?? 0);
@@ -197,7 +263,7 @@ export async function previewDriverMerge(
   }
   const vendorPlan = await driverVendorPlan(client, args.companyId, s.id, m.id);
   if (vendorPlan.mergedVendorId && vendorPlan.survivorVendorId) {
-    for (const o of await repointAll(client, "mdata.vendors", vendorPlan.mergedVendorId, vendorPlan.survivorVendorId, { dryRun: true }))
+    for (const o of await planRepoint(client, "mdata.vendors", vendorPlan.mergedVendorId, vendorPlan.survivorVendorId))
       references.push({ ...o, ref: `vendor: ${o.ref}` });
   }
   const esc = async (id: string) =>
@@ -306,7 +372,7 @@ export async function executeDriverMerge(
   const vplan = await driverVendorPlan(client, args.companyId, S, M);
   const vendorOutcomes: RepointOutcome[] = [];
   if (vplan.mergedVendorId && vplan.survivorVendorId) {
-    vendorOutcomes.push(...(await repointAll(client, "mdata.vendors", vplan.mergedVendorId, vplan.survivorVendorId, { dryRun: false })));
+    vendorOutcomes.push(...(await repointAll(client, "mdata.vendors", vplan.mergedVendorId, vplan.survivorVendorId)));
     await client.query(`UPDATE mdata.vendors SET deactivated_at = COALESCE(deactivated_at, now()), updated_at = now() WHERE id = $1::uuid`, [vplan.mergedVendorId]);
   }
 
@@ -321,7 +387,7 @@ export async function executeDriverMerge(
   );
 
   // 5. REPOINT every discovered driver reference (measured; see repointAll).
-  const outcomes = await repointAll(client, "mdata.drivers", M, S, { dryRun: false });
+  const outcomes = await repointAll(client, "mdata.drivers", M, S);
   const repointed = outcomes.filter((o) => o.status === "moved").map((o) => ({ ref: o.ref, rows: o.rows }));
   const kept = outcomes.filter((o) => o.status !== "moved").map((o) => o.ref);
   for (const p of POLYMORPHIC) {

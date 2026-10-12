@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { queryTrialBalanceRows } from "./trial-balance.service.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -410,30 +411,19 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     const q = companyQuerySchema.extend({ as_of: z.string().optional() }).safeParse(req.query ?? {});
     if (!q.success) return validationError(reply, q.error);
 
+    // I-01 (443.113): the legacy endpoint is the canonical trial balance — the same statement and the same
+    // ledger-membership rule (no voided / sample / unposted-batch postings) as /api/v1/reports/trial-balance.
     const rows = await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
-      const res = await client.query(
-        `
-          SELECT
-            jep.account_id,
-            a.account_number,
-            a.account_name,
-            a.account_type,
-            SUM(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE 0 END)::bigint AS debit_cents,
-            SUM(CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE 0 END)::bigint AS credit_cents
-          FROM accounting.journal_entry_postings jep
-          JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-                                             AND je.operating_company_id = jep.operating_company_id
-          JOIN catalogs.accounts a ON a.id = jep.account_id
-                                   AND a.operating_company_id = jep.operating_company_id
-          WHERE jep.operating_company_id = $1::uuid
-            AND ($2::date IS NULL OR je.entry_date <= $2::date)
-          GROUP BY jep.account_id, a.account_number, a.account_name, a.account_type
-          ORDER BY a.account_number NULLS LAST, a.account_name
-        `,
-        [q.data.operating_company_id, q.data.as_of ?? null]
-      );
+      const tb = await queryTrialBalanceRows(client, { operating_company_id: q.data.operating_company_id, to_date: q.data.as_of ?? null });
       await appendCrudAudit(client, user.uuid, "accounting.report_trial_balance", { as_of: q.data.as_of ?? null }, "info", "P7-W2-ACC");
-      return res.rows;
+      return tb.map((r) => ({
+        account_id: r.account_id,
+        account_number: r.account_code || null,
+        account_name: r.account_name,
+        account_type: r.account_type,
+        debit_cents: r.total_debits,
+        credit_cents: r.total_credits,
+      }));
     });
 
     return { as_of: q.data.as_of ?? null, accounts: rows };

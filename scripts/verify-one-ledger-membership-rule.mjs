@@ -13,6 +13,7 @@
  *   RULE 4  LIVE: accounting.fn_account_balances_as_of — which SQL cannot import — holds all three clauses in its
  *           definition. Without a database this arm reports UNVERIFIED (exit 2), never a pass.
  *
+ * RULE 5 (I-01, 443.113): every route serving a trial balance runs the canonical trial-balance query.
  * Run: node scripts/verify-one-ledger-membership-rule.mjs [--selftest]
  */
 /** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
@@ -56,7 +57,32 @@ export function evaluate({ files, moduleSrc, fnDef }) {
   if (fnDef !== null) {
     CLAUSES.forEach((re, i) => { if (!re.test(fnDef)) problems.push(`RULE 4: accounting.fn_account_balances_as_of lacks clause ${i + 1} (${re.source}) — it disagrees with every statement`); });
   }
+  problems.push(...trialBalanceRouteProblems(files));
   return problems;
+}
+
+/**
+ * RULE 5 (I-01, 443.113): every route that serves a trial balance runs THE trial-balance query. The legacy
+ * /api/v1/accounting/reports/trial-balance (p7-wave2.routes.ts) summed postings itself with no void / sample / batch
+ * rule and this guard never saw it (it listed readers by hand). A handler registered on a "trial-balance" path must call
+ * queryTrialBalanceRows / getTrialBalanceReport (or the export service that does) and must not read
+ * accounting.journal_entry_postings itself.
+ */
+const TB_SERVICE_CALL = /\b(queryTrialBalanceRows|getTrialBalanceReport|exportTrialBalanceStatement)\(/;
+export function trialBalanceRouteProblems(files) {
+  const out = [];
+  for (const [rel, src] of Object.entries(files)) {
+    const re = /app\.(get|post)\(\s*["'`]([^"'`]*trial-balance[^"'`]*)["'`]/g;
+    let m;
+    while ((m = re.exec(src))) {
+      const rest = src.slice(m.index + m[0].length);
+      const next = rest.search(/\n\s*app\.(get|post|put|patch|delete)\(/);
+      const body = next === -1 ? rest : rest.slice(0, next);
+      if (/accounting\.journal_entry_postings/.test(body)) out.push(`RULE 5: ${rel} ${m[2]} sums postings itself — delegate to queryTrialBalanceRows (accounting/trial-balance.service.ts)`);
+      else if (!TB_SERVICE_CALL.test(body)) out.push(`RULE 5: ${rel} ${m[2]} does not run the canonical trial-balance query`);
+    }
+  }
+  return out;
 }
 
 function walk(dir, out = []) {
@@ -81,6 +107,9 @@ if (process.argv.includes("--selftest")) {
     ["a reader that stops importing the module fails", evaluate({ files: { ...files, [READERS[0]]: "export const x = 1;" }, moduleSrc, fnDef: null }).some((p) => p.startsWith("RULE 3"))],
     ["a database function without the sample-data clause fails", evaluate({ files, moduleSrc, fnDef: goodFn.replace("AND COALESCE(je.is_sample_data, false) = false ", "") }).some((p) => p.startsWith("RULE 4"))],
     ["a database function with all three clauses passes", evaluate({ files, moduleSrc, fnDef: goodFn }).length === 0],
+    ["I-01: a trial-balance route that sums postings itself fails", evaluate({ files: { ...files, "apps/backend/src/x/legacy.routes.ts": 'app.get("/api/v1/x/trial-balance", async () => { await c.query(`SELECT SUM(amount_cents) FROM accounting.journal_entry_postings`); });' }, moduleSrc, fnDef: null }).some((p) => p.startsWith("RULE 5"))],
+    ["I-01: a trial-balance route that skips the canonical query fails", evaluate({ files: { ...files, "apps/backend/src/x/legacy.routes.ts": 'app.get("/api/v1/x/trial-balance", async () => { return []; });' }, moduleSrc, fnDef: null }).some((p) => p.startsWith("RULE 5"))],
+    ["I-01: the legacy endpoint reverted to its own SUM fails", evaluate({ files: { ...files, "apps/backend/src/accounting/p7-wave2.routes.ts": files["apps/backend/src/accounting/p7-wave2.routes.ts"].replace("queryTrialBalanceRows(client", "client.query(`SELECT 1 FROM accounting.journal_entry_postings`, ") }, moduleSrc, fnDef: null }).some((p) => p.startsWith("RULE 5"))],
     ["a comment mentioning the clause is not a copy", evaluate({ files: { ...files, "apps/backend/src/x/doc.ts": "// pb.batch_status IN ('posted', 'reversed') is the rule" }, moduleSrc, fnDef: null }).length === 0],
   ];
   for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
