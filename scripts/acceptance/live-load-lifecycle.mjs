@@ -899,9 +899,151 @@ async function s6() {
   t.ok("trial balance 0", Number(tb) === 0, String(tb));
 }
 
-// S4-bank (Cursor) lands in this file under its own function.
-async function pending(name, seat) {
-  step(name).ok(`owned by ${seat} — not yet written`, false);
+// ================= S4-bank BANKING LINK-SUGGESTIONS + CATEGORIZE (CC-1) =================
+// Verifies the three acceptance conditions on a fresh Neon fork of prod HEAD:
+//   S4a — a fuel-card bank line with a matching posted expense is surface by GET link-suggestions,
+//          accepted via POST link-suggestions/accept, and the existing JE does NOT gain extra legs
+//          (no double-posting).
+//   S4b — an uncategorized bank line categorized via POST transactions/:id/categorize with fuel
+//          account 5000 + a vendor stamps matched_journal_entry_id and the JE posts on 5000 (debit).
+//   S4c — exact_match is only true when amount_cents and event_date are both identical to the bank
+//          transaction (necessary condition for the ROUND 276 pre-tick rule; sufficient would require
+//          counterparty_name which is not in the public API response).
+async function s4bank() {
+  const t = step("S4-bank");
+  const { registerBankingLinkSuggestionsRoutes } = await import("../../apps/backend/src/banking/link-suggestions.routes.ts");
+  const { registerBankingLinkSuggestionActionsRoutes } = await import("../../apps/backend/src/banking/link-suggestions-actions.routes.ts");
+  const { registerBankTxCategorizationRoutes } = await import("../../apps/backend/src/banking/categorization.routes.ts");
+  const bankApp = await createIntegrationApp(async (a) => {
+    await registerBankingLinkSuggestionsRoutes(a);
+    await registerBankingLinkSuggestionActionsRoutes(a);
+    await registerBankTxCategorizationRoutes(a);
+  });
+  const bCall = async (method, url, payload) => {
+    const r = await bankApp.inject({ method, url, payload, headers: auth });
+    let body = null;
+    try { body = r.json(); } catch { body = r.body; }
+    return { status: r.statusCode, body };
+  };
+  let sugRes = null;
+  try {
+    // ---- S4a: fuel-card bank line + matching expense → suggestions → accept → no double-post ----
+    const fuelLines = await read(
+      `SELECT bt.id::text AS bt_id, bt.amount_cents::bigint AS cents, bt.transaction_date::text AS day,
+              bt.merchant_name, e.id::text AS expense_id, e.journal_entry_id::text AS je_id
+         FROM banking.bank_transactions bt
+         JOIN accounting.expenses e ON e.source_bank_transaction_id = bt.id
+        WHERE bt.operating_company_id = $1::uuid AND e.operating_company_id = $1::uuid
+          AND bt.voided_at IS NULL AND bt.review_state IS DISTINCT FROM 'excluded'
+          AND bt.matched_expense_id IS NULL AND bt.categorized_at IS NULL
+          AND e.voided_at IS NULL AND e.status NOT IN ('void', 'draft') AND e.journal_entry_id IS NOT NULL
+        LIMIT 3`, [CO]);
+    t.ok("S4a: fuel-card bank lines with a corresponding posted expense exist on this fork", fuelLines.length > 0, `${fuelLines.length} found`);
+
+    sugRes = await bCall("GET", `/api/v1/banking/link-suggestions?operating_company_id=${CO}`);
+    t.ok("S4a: GET /banking/link-suggestions 200", sugRes.status === 200, `HTTP ${sugRes.status}`);
+    const transactions = sugRes.status === 200 ? (sugRes.body?.transactions ?? []) : [];
+    t.ok("S4a: GET /banking/link-suggestions returns bank lines (BANK-F44366 guard)", transactions.length > 0,
+      `${transactions.length} of ${sugRes.body?.candidate_pool_size ?? "?"} pool — 0 = BANK-F44366 unfixed`);
+
+    const fl = fuelLines[0];
+    if (fl) {
+      const ourTxn = transactions.find((tx) => tx.bank_transaction_id === fl.bt_id);
+      t.ok("S4a: the fuel-card bank line appears in the suggestions list", !!ourTxn, `${transactions.length} lines returned`);
+      const expenseSug = ourTxn?.candidates?.find((c) => c.obligation_type === "expense" && c.obligation_id === fl.expense_id);
+      t.ok("S4a: the matching expense is a ranked candidate for that bank line", !!expenseSug,
+        `${ourTxn?.candidates?.length ?? 0} candidates for this line`);
+
+      const jeCountBefore = Number((await read(
+        `SELECT COUNT(*)::int AS n FROM accounting.journal_entry_postings p
+           JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+          WHERE je.operating_company_id = $1::uuid AND p.journal_entry_uuid = $2::uuid
+            AND je.voided_at IS NULL`, [CO, fl.je_id]))[0]?.n ?? 0);
+
+      const acceptRes = await bCall("POST", "/api/v1/banking/link-suggestions/accept", {
+        operating_company_id: CO, bank_transaction_id: fl.bt_id, obligation_type: "expense", obligation_id: fl.expense_id,
+      });
+      t.ok("S4a: POST /banking/link-suggestions/accept 200", acceptRes.status === 200,
+        `HTTP ${acceptRes.status} — ${JSON.stringify(acceptRes.body).slice(0, 200)}`);
+
+      if (acceptRes.status === 200) {
+        const jeCountAfter = Number((await read(
+          `SELECT COUNT(*)::int AS n FROM accounting.journal_entry_postings p
+             JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+            WHERE je.operating_company_id = $1::uuid AND p.journal_entry_uuid = $2::uuid
+              AND je.voided_at IS NULL`, [CO, fl.je_id]))[0]?.n ?? 0);
+        t.ok("S4a: no double-posting — JE posting leg count unchanged after accept",
+          jeCountAfter === jeCountBefore, `before ${jeCountBefore} legs, after ${jeCountAfter}`);
+        const linked = (await read(
+          `SELECT matched_expense_id::text AS mid FROM banking.bank_transactions WHERE id = $1::uuid`, [fl.bt_id]))[0];
+        t.ok("S4a: bank_transaction.matched_expense_id stamped after accept", linked?.mid === fl.expense_id, linked?.mid ?? "NULL");
+      }
+    }
+
+    // ---- S4b: uncategorized bank line → POST categorize (fuel 5000 + vendor) → JE on 5000 ----
+    const acct5000 = await acct("5000");
+    t.ok("S4b: fuel account 5000 exists on USMCA", !!acct5000, acct5000 ?? "NULL");
+    const vendor = (await read(
+      `SELECT id::text FROM mdata.vendors WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL LIMIT 1`, [CO]))[0];
+    t.ok("S4b: a vendor exists on USMCA", !!vendor, vendor?.id ?? "NULL");
+    const uncatLines = await read(
+      `SELECT bt.id::text AS bt_id, bt.amount_cents::bigint AS cents, bt.transaction_date::text AS day, bt.merchant_name, bt.status
+         FROM banking.bank_transactions bt
+        WHERE bt.operating_company_id = $1::uuid
+          AND bt.voided_at IS NULL AND bt.review_state IS DISTINCT FROM 'excluded'
+          AND bt.matched_expense_id IS NULL AND bt.matched_bill_id IS NULL
+          AND bt.matched_settlement_id IS NULL AND bt.matched_invoice_id IS NULL
+          AND bt.matched_load_id IS NULL AND bt.categorized_at IS NULL
+          AND bt.status IN ('pending_categorization', 'uncategorized')
+          AND bt.is_credit = false
+        ORDER BY bt.transaction_date DESC LIMIT 5`, [CO]);
+    t.ok("S4b: uncategorized debit bank lines exist on this fork", uncatLines.length > 0, `${uncatLines.length} found`);
+
+    const line = uncatLines.find((l) => !fuelLines.some((f) => f.bt_id === l.bt_id)) ?? uncatLines[0];
+    if (line && acct5000 && vendor) {
+      const catRes = await bCall("POST", `/api/v1/banking/transactions/${line.bt_id}/categorize?operating_company_id=${CO}`, {
+        category_kind: "expense", gl_account_id: acct5000, vendor_id: vendor.id, memo: "443.86 S4-bank acceptance",
+      });
+      t.ok("S4b: POST /banking/transactions/:id/categorize 200", catRes.status === 200,
+        `HTTP ${catRes.status} — ${JSON.stringify(catRes.body).slice(0, 200)}`);
+
+      if (catRes.status === 200) {
+        const bt2 = (await read(
+          `SELECT matched_journal_entry_id::text AS je_id, categorization_vendor_id::text AS vid
+             FROM banking.bank_transactions WHERE id = $1::uuid`, [line.bt_id]))[0];
+        t.ok("S4b: matched_journal_entry_id stamped after categorize", !!bt2?.je_id, bt2?.je_id ?? "NULL");
+        t.ok("S4b: categorization_vendor_id stamped", bt2?.vid === vendor.id, bt2?.vid ?? "NULL");
+        if (bt2?.je_id) {
+          const posting = (await read(
+            `SELECT p.debit_or_credit FROM accounting.journal_entry_postings p
+               JOIN catalogs.accounts a ON a.id = p.account_id
+              WHERE p.journal_entry_uuid = $1::uuid AND a.account_number = '5000'`, [bt2.je_id]))[0];
+          t.ok("S4b: JE posts on fuel account 5000 (debit)", posting?.debit_or_credit === "debit",
+            posting ? posting.debit_or_credit : "no posting on 5000");
+        }
+      }
+    }
+
+    // ---- S4c: exact_match only when amount AND date are both identical (ROUND 276 pre-tick rule) ----
+    const allTxns = sugRes?.status === 200 ? (sugRes.body?.transactions ?? []) : [];
+    let exactMatchViolations = 0;
+    let checkedCandidates = 0;
+    for (const tx of allTxns.slice(0, 30)) {
+      for (const c of tx.candidates ?? []) {
+        const amountGap = Math.abs(tx.amount_cents - Math.abs(c.amount_cents));
+        const sameDay = tx.transaction_date === c.event_date;
+        if (c.exact_match && (amountGap !== 0 || !sameDay)) exactMatchViolations++;
+        checkedCandidates++;
+      }
+    }
+    t.ok(`S4c: exact_match=true never fires when amount or date differ (${checkedCandidates} candidates checked)`,
+      exactMatchViolations === 0, `${exactMatchViolations} violation(s)`);
+    if (allTxns.length === 0) t.ok("S4c: skip-note — no link-suggestion data to validate (BANK-F44366)", true,
+      "0 transactions returned; fix the finding first, then re-run S4-bank");
+
+  } finally {
+    await bankApp.close();
+  }
 }
 
 try {
@@ -909,7 +1051,7 @@ try {
   if (runs("S2")) await s2();
   if (runs("S3")) await s3();
   if (runs("S4")) await s4feed();
-  if (runs("S4-bank")) await pending("S4-bank", "Cursor");
+  if (runs("S4-bank")) await s4bank();
   if (runs("S5")) await s5();
   if (runs("S6")) await s6();
   if (runs("S7")) await s7();
