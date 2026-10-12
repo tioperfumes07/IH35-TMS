@@ -9,6 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-usmca-fleet-fuel-tasks-neon-pv";
@@ -176,19 +177,15 @@ async function main() {
   }
 
   const problems = auditManifests();
-  if (process.env.DATABASE_URL) {
-    assertNotPooler(process.env.DATABASE_URL);
-    const pg = (await import("pg")).default;
-    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
-    const client = await pool.connect();
-    try {
-      problems.push(...(await auditNeonLive(client)));
-    } finally {
-      client.release();
-      await pool.end();
-    }
-  } else {
-    console.log(`[${LABEL}] DATABASE_URL unset — static manifest checks only`);
+  // 443.101: the live half fails closed (ROUND 29.9-B, verify-no-silent-db-skip) — a fleet/fuel prod-proof guard that
+  // cannot reach a database is a FAIL, never a static-only pass.
+  if (process.env.DATABASE_URL) assertNotPooler(process.env.DATABASE_URL);
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
+  try {
+    problems.push(...(await auditNeonLive(client)));
+  } finally {
+    client.release();
+    await pool.end();
   }
 
   if (problems.length) {
