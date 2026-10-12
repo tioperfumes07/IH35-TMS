@@ -1755,6 +1755,7 @@ export function BookLoadModalV4({
       }
       if (createdId) {
         if (applyPostSaveIntent(createdId, createdLabel || createdId)) return;
+        onCreated(createdId ? { id: createdId, label: createdLabel } : undefined);
         setSaveAck({
           id: createdId,
           loadNumber: createdLabel || createdId,
