@@ -16,13 +16,19 @@ const dispatchPath = join(root, "apps/frontend/src/pages/Dispatch.tsx");
 const dispatch = readFileSync(dispatchPath, "utf-8");
 const errors = [];
 
-if (!/const NB = "#1f2a44"/.test(timeline)) {
+// LEAD 443.99 class B (2026-10-12) — colour-token anchors.
+//   old rule: the tokens must be written in lowercase hex (e.g. const TR = "#b45309").
+//   new rule: the same colour values, hex case-insensitive (/i).
+//   why: LST-F44122 (#25891, 331ea0dfdc) normalised app-wide hex to UPPERCASE ("#B45309"); the colours are
+//        unchanged, only the spelling. A different colour still fails exactly as before.
+
+if (!/const NB = "#1f2a44"/i.test(timeline)) {
   errors.push("RoundTripsTimeline.tsx is missing the restored NB color token (#1f2a44).");
 }
-if (!/const SB = "#475569"/.test(timeline)) {
+if (!/const SB = "#475569"/i.test(timeline)) {
   errors.push("RoundTripsTimeline.tsx is missing the restored SB color token (#475569).");
 }
-if (!/const TR = "#b45309"/.test(timeline)) {
+if (!/const TR = "#b45309"/i.test(timeline)) {
   errors.push("RoundTripsTimeline.tsx is missing the restored TR color token (#b45309).");
 }
 
@@ -45,7 +51,7 @@ if (/<PlannerGrid\b/.test(timeline)) {
 if (!/outline:\s*`1\.5px solid \$\{LONG_LEG_OUTLINE\}`/.test(timeline)) {
   errors.push("RoundTripsTimeline.tsx must visually outline a long leg (1.5px, LONG_LEG_OUTLINE), not just carry the data-rt-long-leg attribute with no paint.");
 }
-if (!/const LONG_LEG_OUTLINE = "#dc2626"/.test(timeline)) {
+if (!/const LONG_LEG_OUTLINE = "#dc2626"/i.test(timeline)) {
   errors.push("RoundTripsTimeline.tsx is missing the long-leg outline color token (#dc2626).");
 }
 if (!/data-testid="round-trips-timeline-legend"/.test(timeline)) {

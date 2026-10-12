@@ -250,9 +250,9 @@
       "bill_id",
       "created_at",
       "id",
+      "operating_company_id",
       "superseded_at",
-      "superseded_reason",
-      "tenant_id"
+      "superseded_reason"
     ],
     "accounting.bills": [
       "amount_cents",
@@ -408,8 +408,8 @@
       "id",
       "name",
       "number",
+      "operating_company_id",
       "qbo_id",
-      "tenant_id",
       "type",
       "updated_at"
     ],
@@ -1674,8 +1674,8 @@
       "created_at",
       "id",
       "name",
+      "operating_company_id",
       "qbo_id",
-      "tenant_id",
       "updated_at"
     ],
     "accounting.ps_item": [
@@ -1685,14 +1685,14 @@
       "created_at",
       "id",
       "name",
+      "operating_company_id",
       "qbo_id",
-      "tenant_id",
       "updated_at"
     ],
     "accounting.pse_posting_policy": [
       "created_at",
       "enforce_posting",
-      "tenant_id",
+      "operating_company_id",
       "updated_at"
     ],
     "accounting.qbo_accounts": [
@@ -2231,10 +2231,10 @@
       "active",
       "created_at",
       "id",
+      "operating_company_id",
       "ps_category_qbo_id",
       "ps_item_qbo_id",
       "qbo_account_id",
-      "tenant_id",
       "updated_at",
       "vendor_subtype"
     ],
@@ -2433,11 +2433,11 @@
       "new_data",
       "old_data",
       "op",
+      "operating_company_id",
       "row_pk",
       "schema_name",
       "session_id",
-      "table_name",
-      "tenant_id"
+      "table_name"
     ],
     "audit.scenario_status": [
       "evidence",
@@ -5726,10 +5726,10 @@
       "grace_days",
       "id",
       "is_full_recourse",
+      "operating_company_id",
       "repurchase_deadline_days",
       "repurchase_term_days",
       "reserve_rate",
-      "tenant_id",
       "voided_at",
       "voided_by_user_id"
     ],
@@ -6703,8 +6703,8 @@
       "description",
       "id",
       "name",
+      "operating_company_id",
       "sort_order",
-      "tenant_id",
       "updated_at"
     ],
     "integrations.active_driver_set_cache": [
@@ -7167,14 +7167,14 @@
       "detector_version",
       "evidence",
       "id",
+      "operating_company_id",
       "resolution_note",
       "severity",
       "status",
       "status_changed_at",
       "status_changed_by",
       "subject_id",
-      "subject_type",
-      "tenant_id"
+      "subject_type"
     ],
     "legal.contract_attorney_review_tokens": [
       "consumed_at",
@@ -7415,12 +7415,12 @@
       "created_at",
       "id",
       "name",
+      "operating_company_id",
       "position_set_id",
       "qty_on_hand",
       "reorder_point",
       "requires_position",
       "sku",
-      "tenant_id",
       "unit_cost_cents",
       "updated_at"
     ],
@@ -7444,8 +7444,8 @@
       "last_done_miles",
       "next_due_date",
       "next_due_miles",
+      "operating_company_id",
       "pm_type",
-      "tenant_id",
       "updated_at"
     ],
     "maint.position_history": [
@@ -8220,7 +8220,7 @@
       "new_status",
       "note",
       "old_status",
-      "tenant_id"
+      "operating_company_id"
     ],
     "mdata.assets": [
       "acquisition_cost_cents",
@@ -8233,12 +8233,12 @@
       "insured_value_cents",
       "make",
       "model",
+      "operating_company_id",
       "out_of_service",
       "owning_entity",
       "repair_estimate_cents",
       "samsara_unit_id",
       "status",
-      "tenant_id",
       "unit_code",
       "unit_id",
       "updated_at",

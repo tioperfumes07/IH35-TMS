@@ -32,6 +32,7 @@ const PATHS = {
   driversWrapper: "apps/frontend/src/pages/drivers/DriversPage.tsx",
   deprecatedPages: "apps/frontend/src/pages/lists/driver/deprecated-subcatalog-pages.tsx",
   archDesign: "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+  tabsConfig: "apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts",
 };
 
 const ARCHIVE_MARKER = "@archived — Drivers active-path";
@@ -71,6 +72,29 @@ function assertNavigate(manifest, fromPath, toPath) {
   return null;
 }
 
+// 443.99 (2026-10-12) — Drivers subtab-count check re-anchored.
+//   old rule: IH35_ARCHITECTURAL_DESIGN.md must contain the literal "9 query-synced subtabs".
+//   new rule: the doc's "<N> query-synced subtabs" heading must equal the code's own
+//             DRIVERS_CANONICAL_SUBNAV_COUNT in DRIVERS_TABS_CONFIG.ts (the canonical config), and the doc
+//             must name that constant with the same N.
+//   why: DRV-F418 added the Home subtab (Home at /drivers, roster at /drivers/roster), so code and doc both
+//        moved to 10 together while the guard still demanded 9 — a frozen literal that could only pass by
+//        making the doc lie. Not looser: a doc that drifts from the code count (either direction), or a
+//        config without the constant, still fails.
+export function subtabCountProblems(archDesign, tabsConfig) {
+  const code = /export const DRIVERS_CANONICAL_SUBNAV_COUNT = (\d+);/.exec(tabsConfig ?? "");
+  if (!code) return ["DRIVERS_TABS_CONFIG.ts must export DRIVERS_CANONICAL_SUBNAV_COUNT"];
+  const n = code[1];
+  const problems = [];
+  if (!new RegExp(`\\b${n} query-synced subtabs\\b`).test(archDesign)) {
+    problems.push(`ARCHITECTURAL_DESIGN must say "${n} query-synced subtabs" (DRIVERS_CANONICAL_SUBNAV_COUNT = ${n})`);
+  }
+  if (!archDesign.includes(`DRIVERS_CANONICAL_SUBNAV_COUNT = ${n}`)) {
+    problems.push(`ARCHITECTURAL_DESIGN must cite DRIVERS_CANONICAL_SUBNAV_COUNT = ${n}`);
+  }
+  return problems;
+}
+
 function runChecks() {
   const failures = [];
   const files = {};
@@ -84,7 +108,7 @@ function runChecks() {
   }
   if (failures.length) return failures;
 
-  const { manifest, driversCanonical, driversWrapper, deprecatedPages, archDesign } = files;
+  const { manifest, driversCanonical, driversWrapper, deprecatedPages, archDesign, tabsConfig } = files;
 
   // 1. Canonical LIVE mount
   if (!/React\.lazy\(\(\)\s*=>\s*import\(["']\.\.\/pages\/Drivers["']\)/.test(manifest)) {
@@ -167,9 +191,7 @@ function runChecks() {
   if (!archDesign.includes("Active-path law")) {
     failures.push("IH35_ARCHITECTURAL_DESIGN.md must document Drivers Active-path law");
   }
-  if (!archDesign.includes("9 query-synced subtabs")) {
-    failures.push("ARCHITECTURAL_DESIGN must keep locked 9 query-synced subtabs");
-  }
+  failures.push(...subtabCountProblems(archDesign, tabsConfig));
 
   return failures;
 }
@@ -207,7 +229,26 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAILED — Navigate helper: ${navOk}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS`);
+  // Subtab count: the doc must track the code constant, in both directions.
+  const cfg = (n) => `export const DRIVERS_CANONICAL_SUBNAV_COUNT = ${n};`;
+  const doc = (n, c = n) => `### Sub-nav tabs (${n} query-synced subtabs)\n(\`DRIVERS_CANONICAL_SUBNAV_COUNT = ${c}\`)`;
+  const countPlants = [
+    ["doc stale below the code", subtabCountProblems(doc(9), cfg(10))],
+    ["doc ahead of the code", subtabCountProblems(doc(11), cfg(10))],
+    ["doc cites a different constant value", subtabCountProblems(doc(10, 9), cfg(10))],
+    ["config lost the constant", subtabCountProblems(doc(10), "export const OTHER = 10;")],
+  ];
+  for (const [name, problems] of countPlants) {
+    if (problems.length === 0) {
+      console.error(`${LABEL} SELFTEST FAILED — planted subtab-count drift escaped: ${name}`);
+      process.exit(1);
+    }
+  }
+  if (subtabCountProblems(doc(10), cfg(10)).length) {
+    console.error(`${LABEL} SELFTEST FAILED — matching doc/config flagged`);
+    process.exit(1);
+  }
+  console.log(`${LABEL}: selftest PASS (${countPlants.length}/${countPlants.length} subtab-count plants caught)`);
 }
 
 if (process.argv.includes("--selftest")) {

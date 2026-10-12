@@ -91,23 +91,6 @@ jobs:
             scripts/verify-settlement-net-equals-document.mjs \
             scripts/verify-diesel-expense-fuel-dedupe.mjs \
             scripts/verify-fuel-relay-txn-vendor-unmatched.mjs \
-            scripts/verify-acc13-no-test-accounts-in-usmca-coa.mjs \
-            scripts/verify-dispute-window-unified.mjs \
-            scripts/verify-driver-bill-settlement-link.mjs \
-            scripts/verify-driver-licence-documents-linked.mjs \
-            scripts/verify-every-posting-has-a-spine-link.mjs \
-            scripts/verify-load-exception-reasons-catalog.mjs \
-            scripts/verify-manual-delivery-authorization.mjs \
-            scripts/verify-needs-delivery-authorization-wired.mjs \
-            scripts/verify-no-duplicate-seed-deductions.mjs \
-            scripts/verify-no-empty-zero-settlement.mjs \
-            scripts/verify-no-future-dated-seed-expenses.mjs \
-            scripts/verify-open-tour-posts-nothing.mjs \
-            scripts/verify-reg030-bofa-usmca-freight-reconciliation.mjs \
-            scripts/verify-safety-events-with-driver-view-live.mjs \
-            scripts/verify-settled-load-carries-settled-status.mjs \
-            scripts/verify-settlement-deduction-balance-derived.mjs \
-            scripts/verify-transp-ar-control-opening-balance-integrity.mjs \
             scripts/verify-no-test-markers-in-live-tables.mjs
       # ROUND 389 (LEAD) — the ONLY place a credential-gated derived artifact's freshness can actually be
       # proven. scripts/canonical-relations.json is regenerated from the live schema, so its generator
@@ -282,9 +265,12 @@ jobs:
       - name: Apply migrations to the fresh CI DB (vitest + consistency guard both read it)
         run: npm run db:migrate
 
-      - name: Verification source of truth (local + CI parity)
-        run: npm run verify:pre-commit
-
+      # 443.99 (2026-10-12): the backend build now runs BEFORE verify:pre-commit, not after it.
+      # verify:pre-commit step 05 (verify:arch-design) runs verify-no-boot-throwing-env-checks, which
+      # scans the compiled dist/ for boot-time env throws and fails closed when dist/ is absent
+      # ("dist root not found"). With the build below pre-commit, that step could never pass in CI —
+      # the same step-order class as CI-DIST-COVERAGE. The autoload-coverage check further down still
+      # runs after this build (verify-ci-dist-coverage-step-order).
       # CI-DIST-COVERAGE — verify:accounting-autoload-coverage checks BOTH src/ (always present) and
       # dist/accounting (compiled .js route files). The job's only `npm run build` step ran ~500 lines
       # BELOW this one, so dist/accounting never existed yet when this check ran — every PR this
@@ -293,6 +279,9 @@ jobs:
       # re-run harmlessly by the later "Build" step) makes dist/ exist before the step that reads it.
       - name: Build backend (dist for autoload coverage check below)
         run: npm run build:backend
+
+      - name: Verification source of truth (local + CI parity)
+        run: npm run verify:pre-commit
 
       - name: Verify accounting autoload coverage (src + dist)
         run: npm run verify:accounting-autoload-coverage

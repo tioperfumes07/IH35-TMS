@@ -11,23 +11,22 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, "..", "..");
 const FACTORING_HOME = join(repoRoot, "apps", "frontend", "src", "pages", "factoring", "FactoringHome.tsx");
 
-function main() {
-  if (process.argv.includes("--selftest")) {
-    console.log("selftest OK — layout detection works");
-    return;
-  }
-
-  const src = readFileSync(FACTORING_HOME, "utf8");
+// 443.99 class B (CC-2, 2026-10-12) — section anchor.
+//   old rule: the section starts at `tab === "chargebacks_fees"` and ends at the next `{tab === "`.
+//   new rule: the section starts at `{show("chargebacks_fees") ? (` and ends at the next `{show("`.
+//   why: bdd45147f8 (ROUND-435-CC2, owner's ten-tab set) gates every section through show(); the old anchor
+//        no longer exists, so the guard reported "Could not find" on correct code. Every layout check
+//        below (no lg:grid-cols-2 split, monthly above detail, space-y-3 stack) is unchanged.
+export function layoutFailures(src) {
   const failures = [];
-
   // 1. Find the chargebacks_fees tab section by locating the tab condition and the next tab.
-  const tabStart = src.indexOf('tab === "chargebacks_fees"');
+  const tabStart = src.indexOf('{show("chargebacks_fees") ? (');
   if (tabStart === -1) {
     failures.push("Could not find chargebacks_fees tab section");
   } else {
     // Find the end: the next tab === or the closing of this section.
     const afterStart = src.substring(tabStart);
-    const nextTabMatch = afterStart.match(/\n      \{tab === "/);
+    const nextTabMatch = afterStart.match(/\n      \{show\("/);
     const section = nextTabMatch ? afterStart.substring(0, nextTabMatch.index) : afterStart;
 
     // 2. Must NOT have a side-by-side grid wrapping both sections (exclude comments).
@@ -54,6 +53,36 @@ function main() {
       failures.push("chargebacks_fees tab must use vertical stacking (space-y-3), not a grid layout");
     }
   }
+
+  return failures;
+}
+
+function selftest() {
+  const src = readFileSync(FACTORING_HOME, "utf8");
+  const clean = layoutFailures(src);
+  if (clean.length) throw new Error(`selftest: real FactoringHome.tsx rejected — ${clean.join("; ")}`);
+  const start = src.indexOf('{show("chargebacks_fees") ? (');
+  const next = src.indexOf('\n      {show("', start + 1);
+  const section = src.slice(start, next);
+  const swap = (s) => src.slice(0, start) + s + src.slice(next);
+  const planted = [
+    ["section removed", src.replace('{show("chargebacks_fees") ? (', "{false ? (")],
+    ["detail stacked above the monthly summary", swap(section.replace("Monthly fee summaries", "@@M@@").replace("Chargebacks + fee history", "Monthly fee summaries").replace("@@M@@", "Chargebacks + fee history"))],
+    ["vertical stack replaced by a grid", swap(section.replaceAll("space-y-3", "grid gap-3"))],
+    ["side-by-side split", swap(section.replace("Monthly fee summaries", '<div className="grid lg:grid-cols-2">Monthly fee summaries'))],
+  ];
+  const escaped = planted.filter(([, s]) => layoutFailures(s).length === 0).map(([n]) => n);
+  if (escaped.length) throw new Error(`selftest: planted layout regression not caught — ${escaped.join(", ")}`);
+  console.log(`selftest OK — ${planted.length}/${planted.length} planted layout regressions caught; real page passes`);
+}
+
+function main() {
+  if (process.argv.includes("--selftest")) {
+    selftest();
+    return;
+  }
+
+  const failures = layoutFailures(readFileSync(FACTORING_HOME, "utf8"));
 
   if (failures.length > 0) {
     console.error(`verify-factoring-chargebacks-layout FAILED (${failures.length}):`);

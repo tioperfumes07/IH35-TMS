@@ -110,8 +110,17 @@ for (const file of tsxFiles) {
   if (delegatesToDispatchCatalog || delegatesToCatalogTable) {
     check(true, `${rel}: voided/inactive toggle present (via shared component)`);
   } else {
+    // LEAD 443.99 class B (2026-10-12):
+    //   old rule: a showInactive/showVoided state AND a type="checkbox".
+    //   new rule: that checkbox, OR a "Show" status filter (select / SelectCombobox) that offers both an
+    //             "inactive" and an "all" option, so inactive rows are still reachable.
+    //   why: round 296 filter law (LST-F3273, #24148, c5d9fced0b) replaced the checkbox on these catalog
+    //        lists — it double-filtered with the Show select (Show = Inactive rendered nothing until the box
+    //        was also ticked). Still fails when a page offers no way to see inactive rows.
+    const hasStatusShowFilter =
+      /<(?:select|SelectCombobox)\b[\s\S]{0,800}?<option value="inactive">[\s\S]{0,200}?<option value="all">/.test(src);
     const hasInactiveToggle =
-      /showInactive|showVoided/.test(src) && /type="checkbox"/.test(src);
+      (/showInactive|showVoided/.test(src) && /type="checkbox"/.test(src)) || hasStatusShowFilter;
     check(hasInactiveToggle, `${rel}: voided/inactive toggle (showInactive/showVoided + checkbox) present`);
   }
 
