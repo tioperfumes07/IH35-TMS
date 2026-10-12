@@ -153,21 +153,35 @@ describe("voidDocument — ROUND 31.2/32.2 dispatcher (not a new reversal engine
     expect(result.reversalJournalEntryId).toBe("je-void-1");
   });
 
-  it("credit_memo -> TASK 18: verified zero posting lines, registers the void, returns reversalJournalEntryId: null (never a guessed reversal, never a silent no-op)", async () => {
+  it("credit_memo -> ROUND 373.4: a credit memo POSTS, so the void reverses its posting through the engine (never a null)", async () => {
     const result = await voidDocument(fakeClient, { ...baseInput, type: "credit_memo", id: "cm-1" });
-    expect(result.reversalJournalEntryId).toBeNull();
-    expect(result.voidedAt).toBeTruthy();
-    // No underlying GL reversal engine touched — there is nothing to reverse.
-    expect(postVoidReversal).not.toHaveBeenCalledWith(
+    expect(reversePostedSourceTransactionInClientTx).toHaveBeenCalledWith(
       fakeClient,
-      expect.objectContaining({ entityId: "cm-1" }),
-      expect.anything()
+      expect.objectContaining({ source_transaction_type: "credit_memo", source_transaction_id: "cm-1" }),
+      expect.objectContaining({ userId: "user-1" }),
+      "2026-09-22"
     );
-    // The dispatcher registers the void itself (fakeClient.query stands in for appendCrudAudit's write).
+    expect(result.reversalJournalEntryId).toBe("je-exp-1");
+    expect(result.voidedAt).toBeTruthy();
     expect(fakeClient.query).toHaveBeenCalledWith(
       expect.stringContaining("audit.append_event"),
-      expect.arrayContaining(["accounting.credit_memo.voided_no_gl_impact"])
+      expect.arrayContaining(["accounting.credit_memo.voided"])
     );
+  });
+
+  it("credit_memo -> one whose GL is owned elsewhere never posted (SOURCE_NOT_FOUND): nothing to reverse, still registered", async () => {
+    (reversePostedSourceTransactionInClientTx as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      Object.assign(new Error("nothing posted"), { code: "SOURCE_NOT_FOUND" })
+    );
+    const result = await voidDocument(fakeClient, { ...baseInput, type: "credit_memo", id: "cm-overpay" });
+    expect(result.reversalJournalEntryId).toBeNull();
+  });
+
+  it("credit_memo -> any OTHER posting-engine error still throws loud", async () => {
+    (reversePostedSourceTransactionInClientTx as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      Object.assign(new Error("period locked"), { code: "PERIOD_LOCKED" })
+    );
+    await expect(voidDocument(fakeClient, { ...baseInput, type: "credit_memo", id: "cm-locked" })).rejects.toThrow("period locked");
   });
 
   it("liability -> TASK 18: verified zero posting lines, registers the void, returns reversalJournalEntryId: null (never a guessed reversal, never a silent no-op)", async () => {

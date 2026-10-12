@@ -24,7 +24,9 @@ import fs from "node:fs";
 const LABEL = "verify-reefer-lumper-confirmation-captured";
 const MIGRATION_PATH = "db/migrations/202614010000_loads_reefer_lumper_confirmation.sql";
 const BOOK_LOAD_SERVICE = "apps/backend/src/dispatch/book-load.service.ts";
-const LOADS_ROUTES = "apps/backend/src/dispatch/loads.routes.ts";
+// 443.100: the dispatch-transition gate moved from loads.routes.ts into the one transition engine
+// load-transition.service.ts (#23821, 25f2a8faa4) — every status move (route, bulk, GPS, PWA) goes through it.
+const LOADS_ROUTES = "apps/backend/src/dispatch/load-transition.service.ts";
 const FROM_LOAD = "apps/backend/src/accounting/from-load.ts";
 const EQUIPMENT_SECTION = "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx";
 const BOOK_LOAD_MODAL = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
@@ -113,7 +115,7 @@ function violations(files) {
   if (!migrationAddsThreeColumns(files.migration)) errors.push("migration no longer adds all 3 lumper columns");
   if (!bookLoadPersistsLumperFields(files.bookLoad)) errors.push("book-load.service.ts no longer persists the 3 lumper fields post-insert");
   if (!bookLoadPersistsTrailerType(files.bookLoad)) errors.push("book-load.service.ts no longer persists trailer_type on the main INSERT -- the dispatch-transition gate would go dead for every future booking");
-  if (!dispatchTransitionGatesOnLumperFields(files.loadsRoutes)) errors.push("loads.routes.ts no longer gates the dispatched transition on a reefer load's 3 lumper fields");
+  if (!dispatchTransitionGatesOnLumperFields(files.loadsRoutes)) errors.push("load-transition.service.ts no longer gates the dispatched transition on a reefer load's 3 lumper fields");
   if (!frontendRequiresLumperFieldsBeforeSubmit(files.bookLoadModal)) errors.push("BookLoadModalV4.tsx no longer requires the 3 lumper fields before submit for a reefer load");
   if (!equipmentSectionRendersConfirmationPanel(files.equipmentSection)) errors.push("BookLoadEquipmentSection.tsx no longer renders the reefer-lumper confirmation panel");
   if (!invoiceLineSkipsUnconfirmedLumperAndReusesResolver(files.fromLoad)) errors.push("from-load.ts no longer skips an unconfirmed customer-billed lumper line or reuses the existing lumper revenue-code resolver");
@@ -145,6 +147,8 @@ if (process.argv.includes("--selftest")) {
     { ...files, bookLoad: files.bookLoad.replace("input.lumper_payer != null ||\n", "") },
     { ...files, bookLoad: files.bookLoad.replace("input.trailer_type ?? null,\n", "") },
     { ...files, loadsRoutes: files.loadsRoutes.replace('current.trailer_type === "refrigerated_van"', 'false') },
+    { ...files, loadsRoutes: files.loadsRoutes.replace("current.lumper_late_penalty_applies == null", "false") },
+    { ...files, loadsRoutes: files.loadsRoutes.replaceAll("reefer_lumper_confirmation_required", "x") },
     {
       ...files,
       bookLoadModal: files.bookLoadModal.replace(

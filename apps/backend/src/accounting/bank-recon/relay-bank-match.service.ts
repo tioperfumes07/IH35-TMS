@@ -16,6 +16,7 @@ import {
   RELAY_USMCA_DATA_FLOOR,
 } from "../../integrations/relay-payments/relay-usmca-date-floor.js";
 import { reversePostedSourceTransactionInClientTx } from "../posting-engine.service.js";
+import { unmatchBankTransactionOnClient } from "./unmatch-bank-transaction.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -149,6 +150,8 @@ type BankRow = {
   notes: string | null;
   matched_bill_id: string | null;
   matched_relay_fuel_transaction_id: string | null;
+  matched_fuel_transaction_id: string | null;
+  matched_factoring_advance_id: string | null;
   matched_journal_entry_id: string | null;
   review_state: string | null;
   status: string | null;
@@ -172,6 +175,7 @@ async function loadBankRow(client: DbClient, operatingCompanyId: string, bankTra
     `SELECT id::text, operating_company_id::text, transaction_date::text,
             amount_cents::int, description, merchant_name, notes,
             matched_bill_id::text, matched_relay_fuel_transaction_id::text,
+            matched_fuel_transaction_id::text, matched_factoring_advance_id::text,
             matched_journal_entry_id::text, review_state::text, status::text
        FROM banking.bank_transactions
       WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
@@ -557,8 +561,15 @@ export async function acceptRelayBankMatch(
 }
 
 /**
- * Re-match: reverse any prior bank_categorization / match-created JE via reversePostedSourceTransaction
- * (never void), clear the prior link, then accept the new link.
+ * Re-match: reverse a prior categorize-written JE via reversePostedSourceTransaction (never void), release the prior
+ * link through the ONE unmatch writer, then accept the new link.
+ *
+ * 443.100: the release used to be an inline UPDATE here — it skipped releaseBankLineMatches (LAW 363.9: the release is
+ * written beside the accepted match), left matched_fuel_transaction_id / matched_factoring_advance_id / the deposit and
+ * invoice pointers set (half-release), and dropped matched_journal_entry_id for any other JE source with no reversal
+ * (orphan JE). unmatchBankTransactionOnClient clears every pointer, records the release, and reverses a JE the prior
+ * MATCH created (fill / chargeback) exactly once; a categorize-written JE is the re-match's own job (ROUND 360: unmatch
+ * never reverses what categorize wrote), so it is reversed here first and only when no match created the JE.
  */
 export async function rematchRelayBankMatch(
   client: DbClient,
@@ -576,7 +587,10 @@ export async function rematchRelayBankMatch(
     });
   }
 
-  if (bank.matched_journal_entry_id) {
+  const matchCreatedJe = Boolean(
+    bank.matched_fuel_transaction_id || bank.matched_relay_fuel_transaction_id || bank.matched_factoring_advance_id
+  );
+  if (bank.matched_journal_entry_id && !matchCreatedJe) {
     const src = await client.query<{ source_transaction_type: string | null; source_transaction_id: string | null }>(
       `SELECT DISTINCT ON (source_transaction_type) source_transaction_type::text, source_transaction_id::text
          FROM accounting.journal_entry_postings
@@ -589,7 +603,7 @@ export async function rematchRelayBankMatch(
     const st = src.rows[0]?.source_transaction_type;
     const sid = src.rows[0]?.source_transaction_id ?? bank.id;
     if (st === "bank_categorization" || st === "fuel_expense" || st === "relay_fuel" || st === "bank_match_fuel") {
-      // CHAIN-05 re-match: reverse the prior posting (never void).
+      // CHAIN-05 re-match: reverse the prior categorize posting (never void).
       await reversePostedSourceTransactionInClientTx(
         client as never,
         {
@@ -603,17 +617,11 @@ export async function rematchRelayBankMatch(
     }
   }
 
-  await client.query(
-    `UPDATE banking.bank_transactions
-        SET matched_relay_fuel_transaction_id = NULL,
-            matched_journal_entry_id = NULL,
-            matched_bill_id = NULL,
-            review_state = 'for_review',
-            resolution_kind = NULL,
-            updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-    [bank.id, input.operating_company_id]
-  );
+  await unmatchBankTransactionOnClient(client as never, {
+    operating_company_id: input.operating_company_id,
+    bank_transaction_id: bank.id,
+    actor_user_uuid: input.actor_user_uuid,
+  });
 
   return acceptRelayBankMatch(client, input);
 }

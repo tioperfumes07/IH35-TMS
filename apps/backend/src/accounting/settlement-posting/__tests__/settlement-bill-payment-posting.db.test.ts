@@ -623,6 +623,18 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     expect(Number(conn[0]!.runs)).toBe(1);
     expect(Number(conn[0]!.billrows)).toBe(3);
 
+    // 443.100 (verify-step 18393): every bill JE line names its settlement at INSERT — the pay-run path posted its bills
+    // with no settlement_id, so the settlement -> bill JE drill had no posting-level link.
+    const unstamped = await read<{ total: string; missing: string }>(
+      `SELECT count(*)::text AS total, count(*) FILTER (WHERE jep.settlement_id IS DISTINCT FROM $1::uuid)::text AS missing
+         FROM accounting.journal_entry_postings jep
+         JOIN driver_finance.driver_settlement_gl_bills g ON g.bill_journal_entry_id = jep.journal_entry_uuid
+        WHERE g.settlement_id = $1::uuid AND jep.source_transaction_type = 'bill'`,
+      [settlementId]
+    );
+    expect(Number(unstamped[0]!.total)).toBeGreaterThan(0);
+    expect(Number(unstamped[0]!.missing)).toBe(0);
+
     // SETL-POST-01 — a real post through this poster stamps the header's posted_at/posted_by_user_id
     // (migration 202607520000 added the columns; this is the writer-repoint that never landed until now).
     const posted = await read<{ posted_at: string | null; posted_by_user_id: string | null }>(

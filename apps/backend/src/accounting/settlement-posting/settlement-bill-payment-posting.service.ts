@@ -682,8 +682,10 @@ export async function postSettlementBillPayment(
       );
     }
     if (!billJeId) {
+      // 443.100: stamp the settlement on every bill JE line at INSERT (the ap-chain path's 443.37-v2 rule, 7ef5410e20) —
+      // the pay-run path posted its bill with no settlement_id, so verify-step 18393 found its lines unlinked.
       const billPost = await postSourceTransaction(
-        { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: accountingBillId, posting_purpose: "initial_post" },
+        { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: accountingBillId, posting_purpose: "initial_post", settlement_id: settlementId },
         { userId: actor.userId }
       );
       billJeId = billPost.journal_entry_id;

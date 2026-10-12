@@ -14,7 +14,7 @@ const LABEL = "verify-factoring-advance-links-its-load";
 // Named exceptions — an advance on a real app invoice that has NO load, per the owner's reconciliation
 // (09-30-26-UPDATED FIRST RECONCILIATION.xlsx row 9: Faro 7, ITS Logistics $350, "NO ALLWAYS LOAD").
 const NO_LOAD_EXCEPTIONS = ["FAC-2026-00007"];
-const ROOT = new URL("../../", import.meta.url);
+const ROOT = new URL("../", import.meta.url);
 const read = (p) => readFileSync(new URL(p, ROOT), "utf8");
 
 function selftest() {
@@ -48,7 +48,9 @@ const client = new pg.Client({ connectionString: url, statement_timeout: 20000 }
 await client.connect();
 try {
   await client.query("BEGIN");
-  const hasOwner = (await client.query(`SELECT 1 FROM pg_roles WHERE rolname = 'neondb_owner'`)).rows.length > 0;
+  // 443.100: assume neondb_owner only when this login can — the prod read-only role (the live-DB job) cannot, and
+  // `SET ROLE` there died 42501 before the check ran. bypass_rls alone reads every company.
+  const hasOwner = (await client.query(`SELECT 1 FROM pg_roles WHERE rolname = 'neondb_owner' AND pg_has_role(current_user, oid, 'MEMBER')`)).rows.length > 0;
   if (hasOwner) await client.query("SET LOCAL ROLE neondb_owner");
   await client.query("SET LOCAL app.bypass_rls = 'lucia'");
   const col = (await client.query(`SELECT 1 FROM information_schema.columns WHERE table_schema='accounting' AND table_name='factoring_advances' AND column_name='source_load_id'`)).rows.length > 0;

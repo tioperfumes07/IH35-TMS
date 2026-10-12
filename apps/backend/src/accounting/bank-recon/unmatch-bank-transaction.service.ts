@@ -3,7 +3,7 @@
 // banking/bank-line-state-machine.service.ts.
 import type { PoolClient } from "pg";
 import { attachReleaseReversals, releaseBankLineMatches, releasedInThisTransaction, type BankLineReleaseKind } from "../../banking/bank-line-release.js";
-import { type LedgerEntryKind } from "./match.service.js";
+import type { LedgerEntryKind } from "./ledger-entry-kind.type.js";
 import { reverseJournalEntryNoFlip } from "../journal-entries.service.js";
 
 export type UnmatchOnClientResult = {
