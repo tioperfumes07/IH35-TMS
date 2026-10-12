@@ -7,7 +7,8 @@ export default {
     if (!ok) {
       ctx.fail(message);
     } else {
-      ctx.pass(message);
+      // 443.99: the verify-steps context has no ctx.pass (only fail) — a passing guard crashed the step.
+      console.log(message);
     }
   },
 };

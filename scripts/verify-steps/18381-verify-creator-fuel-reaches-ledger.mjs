@@ -15,7 +15,7 @@
  *   A) creator_manual_entry flag in FuelTxnGlPostCandidate
  *   B) bypass condition on relay_fuel_wallet throw in fuel-credit-preference.ts
  *   C) FuelExpenseDocumentInput gains company_direct_credit + creator_manual_entry
- *   D) createExpenseFromFuelTransaction call in settlement-creator passes both fields
+ *   D) createExpenseFromFuelTransaction call in settlement-creator passes both fields (creator_manual_entry for non-Relay rows)
  *   E) outcome="relay_link" still used for non-Creator USMCA rows (no regression)
  *   F) CompanyDirectCredit imported in fuel-expense-document.service.ts
  */
@@ -80,10 +80,13 @@ check(
   creatorFile.includes("company_direct_credit: fuel.card === \"dreamline\""),
   "settlement-creator must pass company_direct_credit based on fuel.card"
 );
+// 443.99: Lead option a (2026-10-11, f983f39bf2 / #26270) — a Relay fill is NOT posted as an expense against the
+// wallet (trg_relay_wallet_consumed_only_by_relay_fill refuses it); it takes relay_link and posts THROUGH its fill.
+// So the bypass is for every non-Relay Creator row, never for a Relay row.
 check(
-  "D: creator passes creator_manual_entry: true",
-  creatorFile.includes("creator_manual_entry: true"),
-  "settlement-creator must pass creator_manual_entry: true"
+  "D: creator passes creator_manual_entry for every non-Relay row",
+  creatorFile.includes('creator_manual_entry: fuel.card !== "relay"'),
+  'settlement-creator must pass creator_manual_entry: fuel.card !== "relay" (Dreamline posts at once; Relay posts through its fill)'
 );
 
 // E — non-Creator relay_link path still exists (no regression on ACCT-F403)

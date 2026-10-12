@@ -46,10 +46,21 @@ const num = (v: unknown) => (v == null ? 0 : Number(v));
 
 type Accounts = Record<"escrow" | "cash" | "fee" | "interest", { id: string | null; label: string; merged?: boolean }>;
 
+/**
+ * 443.99: the operator never reads a CoA role key. An unbound role is named as the CoA Roles page names it
+ * (apps/frontend/src/pages/accounting/CoaRolesPage.tsx), where it is designated (verify-kpi-provenance-business-language).
+ */
+const FACTORING_ROLE_NAMES = {
+  factor_reserve_held: "Factor reserve held",
+  factor_cash_reserve_held: "Factor cash reserve held",
+  factor_fee_expense: "Factor fee expense",
+  default_interest_expense: "Factoring default interest",
+} as const;
+
 async function factoringAccounts(client: DbClient, oci: string): Promise<Accounts> {
-  const pick = async (role: Parameters<typeof resolveRoleAccountOptional>[2]) => {
+  const pick = async (role: keyof typeof FACTORING_ROLE_NAMES) => {
     const id = await resolveRoleAccountOptional(client as never, oci, role);
-    if (!id) return { id: null, label: `role ${role} (unbound)` };
+    if (!id) return { id: null, label: `${FACTORING_ROLE_NAMES[role]} (no GL account designated)` };
     const r = await client.query<{ n: string; name: string }>(`SELECT account_number AS n, account_name AS name FROM catalogs.accounts WHERE id = $1::uuid`, [id]);
     return { id, label: `${r.rows[0]?.n ?? "?"} ${r.rows[0]?.name ?? ""}`.trim() };
   };
@@ -157,7 +168,7 @@ export async function computeFactoringKpis(client: DbClient, oci: string, range:
       row_count: r.n,
       empty_reason: merged
         ? `One Faro Security Reserve — Faro's Cash Rsv is a column of the reserve above (${a.label.replace("merged into ", "")}), not a second balance.`
-        : !a.id ? `${a.label} — bind the CoA role` : r.n === 0 ? "No posting on this account yet." : null });
+        : !a.id ? `${a.label} — designate it on CoA Roles` : r.n === 0 ? "No posting on this account yet." : null });
   }
 
   for (const [key, label, a] of [
@@ -166,7 +177,7 @@ export async function computeFactoringKpis(client: DbClient, oci: string, range:
   ] as const) {
     const r = a.id ? (await client.query<{ n: number; v: string }>(`SELECT count(*)::int n, COALESCE(sum(${SIGNED}),0)::bigint v ${postingsSql("activity")}`, [...base, a.id])).rows[0]! : { n: 0, v: "0" };
     out.push({ key, label, unit: "cents", value: num(r.v), source: "Posted general-ledger activity in the date range", gl_account: a.label,
-      row_count: r.n, empty_reason: !a.id ? `${a.label} — bind the CoA role` : r.n === 0 ? "Nothing accrued in this range." : null });
+      row_count: r.n, empty_reason: !a.id ? `${a.label} — designate it on CoA Roles` : r.n === 0 ? "Nothing accrued in this range." : null });
   }
 
   const cash = (await client.query<{ n: number; v: string }>(

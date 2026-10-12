@@ -31,8 +31,12 @@ const LABEL = "verify-driver-pay-practical-fallback-locked";
 function extractFunction(src) {
   const start = src.indexOf("async function resolveDriverBasePayCents");
   if (start === -1) return null;
-  // Grab a generous window -- the function body plus its leading doc comment block.
-  return src.slice(Math.max(0, start - 1600), start + 4000);
+  // The function body (to the next top-level declaration) plus its leading doc comment block.
+  // 443.99: a fixed +4000-char window stopped short of the fallback once the function grew (salaried
+  // override, 443.31 rate-card refusals) — bound it by the function's own end, never a byte count.
+  const rest = src.slice(start + 1);
+  const end = rest.search(/\n(?:export\s+)?(?:async\s+)?(?:function|const|let|class|interface|type)\s/);
+  return src.slice(Math.max(0, start - 1600), end === -1 ? src.length : start + 1 + end);
 }
 
 export function run(root = ROOT) {
