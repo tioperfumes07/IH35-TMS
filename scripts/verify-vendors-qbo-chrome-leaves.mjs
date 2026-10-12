@@ -11,7 +11,7 @@
  * included, evidence VendorsListView.tsx) — both live in verify-collapsed-list-filters-apply.mjs.
  * None of the 4 toolbar leaves are re-claimed here.
  *
- * All 19 leaves below are genuinely built, traced through the real route/component wiring:
+ * All 18 leaves below are genuinely built, traced through the real route/component wiring:
  *   - list.view_list / list.filter_chips: VendorsListView.tsx — real ParityTable +
  *     CollapsedListFilters + the Active/1099-eligible/With-open filter chip row.
  *   - list.view_master_detail / list.filters / list.create: Vendors.tsx — the roster-level
@@ -35,8 +35,9 @@
  *   - detail.w9_1099: VendorDetail.tsx's W-9/1099 tab — a real field-grid summary with a real
  *     "Open Documents tab" drill-through button (deliberately read-only; W-9 file lives on Documents).
  *   - vendors.modal.vendor_create: VendorCreateModal.tsx, a real Modal variant="drawer".
- *   - vendors.modal.vendor_linkage: VendorLinkageModal.tsx, a real Modal with a live QBO-vendor
- *     search/select flow.
+ *   (443.137 9e part 2, CC-2 — OLD: also claimed vendors.modal.vendor_linkage on VendorLinkageModal.tsx.
+ *   NEW: claim and check removed. WHY: the modal was deleted — its QBO vendor-link/unlink routes answer
+ *   409 QBO_NATIVE_WRITE_REFUSED (#26732); claiming a Built leaf on a deleted surface would be false.)
  *
  * @matrix-built {"modules":["vendors"],"cols":["qbo_chrome"],"leafRe":"^list\\.view_list$","task":"VERTICAL-QBO-CHROME-vendors-list-view-list","vertical":"column-wave"}
  * @matrix-built {"modules":["vendors"],"cols":["qbo_chrome"],"leafRe":"^list\\.filter_chips$","task":"VERTICAL-QBO-CHROME-vendors-list-filter-chips","vertical":"column-wave"}
@@ -56,7 +57,6 @@
  * @matrix-built {"modules":["vendors"],"cols":["qbo_chrome"],"leafRe":"^detail\\.ap\\.record_bill_payment$","task":"VERTICAL-QBO-CHROME-vendors-record-bill-payment","vertical":"column-wave"}
  * @matrix-built {"modules":["vendors"],"cols":["qbo_chrome"],"leafRe":"^detail\\.w9_1099$","task":"VERTICAL-QBO-CHROME-vendors-w9-1099","vertical":"column-wave"}
  * @matrix-built {"modules":["vendors"],"cols":["qbo_chrome"],"leafRe":"^vendors\\.modal\\.vendor_create$","task":"VERTICAL-QBO-CHROME-vendors-modal-create","vertical":"column-wave"}
- * @matrix-built {"modules":["vendors"],"cols":["qbo_chrome"],"leafRe":"^vendors\\.modal\\.vendor_linkage$","task":"VERTICAL-QBO-CHROME-vendors-modal-linkage","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-vendors-qbo-chrome-leaves.mjs --selftest
  */
@@ -141,11 +141,6 @@ const CHECKS = [
     file: "apps/frontend/src/components/vendors/VendorCreateModal.tsx",
     pattern: /<Modal variant="drawer" open=\{open\}[\s\S]{0,100}title="Create Vendor"/,
   },
-  {
-    name: "vendors.modal.vendor_linkage: VendorLinkageModal is a real Modal with a live QBO-vendor search flow",
-    file: "apps/frontend/src/components/qbo/VendorLinkageModal.tsx",
-    pattern: /<Modal open=\{open\}[\s\S]{0,100}title="QBO Vendor Linkage"[\s\S]{0,2000}<input/,
-  },
 ];
 
 function runChecks(root = ROOT) {
@@ -194,4 +189,4 @@ if (fails.length) {
   console.error(`${LABEL} FAIL (${fails.length}):\n- ${fails.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — ${CHECKS.length} checks / 19 vendors qbo_chrome leaf asserts`);
+console.log(`${LABEL} PASS — ${CHECKS.length} checks / 18 vendors qbo_chrome leaf asserts`);

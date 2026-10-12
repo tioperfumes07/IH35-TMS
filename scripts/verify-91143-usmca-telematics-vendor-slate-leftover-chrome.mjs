@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 const TARGETS = [
   "apps/frontend/src/pages/admin/USMCAActivationPanel.tsx",
   "apps/frontend/src/components/telematics/TelematicsLinksPanel.tsx",
-  "apps/frontend/src/components/qbo/VendorLinkageModal.tsx",
+  // 443.137 9e part 2 (CC-2): components/qbo/VendorLinkageModal.tsx removed — the file was deleted (its
+  // link/unlink routes answer 409 QBO_NATIVE_WRITE_REFUSED; QuickBooks is a read-only archive).
 ];
 const LABEL = "verify-91143-usmca-telematics-vendor-slate-leftover-chrome";
 function leftoverHits(src) {

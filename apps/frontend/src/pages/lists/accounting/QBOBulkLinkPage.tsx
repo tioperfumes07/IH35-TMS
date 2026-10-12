@@ -1,37 +1,44 @@
-import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { Button } from "../../../components/Button";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { QboCombobox } from "../../../components/forms/QboCombobox";
-import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ApiError } from "../../../api/client";
-import { getQboUnlinkedEntities, postQboBulkLink, type UnlinkedEntityRow } from "../../../api/qbo-integration";
+import { getQboUnlinkedEntities, type UnlinkedEntityRow } from "../../../api/qbo-integration";
 
-type Step = 1 | 2 | 3;
+/*
+ * 443.137 9e — QBO is a read-only archive ("USMCA is entirely our TMS ERP").
+ *
+ * This page used to be a 3-step wizard whose step 2 put a QBO-mirror picker in every row and whose
+ * step 3 ("Apply bulk link") wrote the picked QuickBooks ids onto NATIVE rows
+ * (mdata.drivers / mdata.units qbo_vendor_id + qbo_class_id). The class column even searched QBO
+ * ACCOUNTS, so it wrote an account id into a column the driver profile reads as a TMS class id.
+ * The page's whole purpose is QBO linking, there is no native equivalent to swap in, so the write
+ * path is removed rather than re-pointed: the page is now a read-only review of the archive's
+ * suggested matches. Native linkage lives on the record itself — a driver's payee is the A/P vendor
+ * on the driver profile (mdata.vendors.driver_id), a unit's ownership / lease entity is its Owner
+ * Company / Leased To Company, and class is the TMS class catalog on each profile.
+ */
+type Step = 1 | 2;
 type EntityType = "drivers" | "assets" | "both";
-
-type RowEdit = UnlinkedEntityRow & {
-  accept: boolean;
-  qbo_vendor_id: string | null;
-  qbo_class_id: string | null;
-};
 
 function unlinkedErrorStatus(error: unknown) {
   return error instanceof ApiError ? error.status : 0;
 }
 
+function archiveId(value: string | null) {
+  return value ? <span className="font-mono">{value}</span> : <span className="text-gray-400">—</span>;
+}
+
 export function QBOBulkLinkPage() {
-  const { pushToast } = useToast();
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  // USMCA/TRK are TMS-native — QBO bulk-link chrome is TRANSP-only (hub twin #8751).
+  // USMCA/TRK are TMS-native — the QBO archive review is TRANSP-only (hub twin #8751).
   const qboAvailable = selectedCompany?.code === "TRANSP";
   const [step, setStep] = useState<Step>(1);
   const [entityType, setEntityType] = useState<EntityType>("drivers");
-  const [rows, setRows] = useState<RowEdit[]>([]);
 
   const unlinkedQuery = useQuery({
     queryKey: ["qbo", "unlinked", companyId, entityType],
@@ -40,69 +47,16 @@ export function QBOBulkLinkPage() {
     staleTime: 60_000,
   });
 
-  useEffect(() => {
-    if (step !== 2 || !unlinkedQuery.isSuccess || !unlinkedQuery.data) return;
-    setRows((prev) => {
-      if (prev.length > 0) return prev;
-      return unlinkedQuery.data.entities.map((r) => ({
-        ...r,
-        accept: r.match_confidence >= 0.5,
-        qbo_vendor_id: r.suggested_qbo_vendor_id,
-        qbo_class_id: r.suggested_qbo_class_id,
-      }));
-    });
-  }, [step, unlinkedQuery.isSuccess, unlinkedQuery.data]);
+  const rows = useMemo(() => unlinkedQuery.data?.entities ?? [], [unlinkedQuery.data]);
+  const withMatches = useMemo(
+    () => rows.filter((r) => (r.suggested_qbo_vendor_id || r.suggested_qbo_class_id) && r.match_confidence > 0),
+    [rows]
+  );
+  const noMatches = useMemo(() => rows.filter((r) => !r.suggested_qbo_vendor_id && !r.suggested_qbo_class_id), [rows]);
 
-  const withMatches = useMemo(() => rows.filter((r) => (r.qbo_vendor_id || r.qbo_class_id) && r.match_confidence > 0), [rows]);
-  const noMatches = useMemo(() => rows.filter((r) => !r.qbo_vendor_id && !r.qbo_class_id), [rows]);
-
-  const bulkMutation = useMutation({
-    mutationFn: () => {
-      const mappings = rows
-        .filter((r) => r.accept)
-        .map((r) => ({
-          entity_kind: r.entity_kind,
-          entity_id: r.id,
-          qbo_vendor_id: r.qbo_vendor_id || null,
-          qbo_class_id: r.qbo_class_id || null,
-        }))
-        .filter((m) => m.qbo_vendor_id || m.qbo_class_id);
-      return postQboBulkLink(companyId, { type: entityType, mappings });
-    },
-    onSuccess: (res) => {
-      pushToast(`Bulk link: applied ${res.applied}, failed ${res.failed}`, res.failed ? "info" : "success");
-      if (res.errors.length) {
-        console.warn("[qbo bulk-link]", res.errors);
-      }
-      setStep(1);
-      setRows([]);
-    },
-    onError: (e) => pushToast(String((e as Error).message || "Bulk link failed"), "error"),
-  });
-
-  const acceptedCount = rows.filter((r) => r.accept && (r.qbo_vendor_id || r.qbo_class_id)).length;
-
-  // Display-only ParityTable columns — cell renderers preserve the accept checkbox and the
-  // QboCombobox link controls 1:1 from the former hand-rolled table markup.
-  const columns = useMemo<Array<ParityColumn<RowEdit>>>(
+  // Display-only ParityTable columns — the archive's suggestions are shown, never written.
+  const columns = useMemo<Array<ParityColumn<UnlinkedEntityRow>>>(
     () => [
-      {
-        key: "accept",
-        label: "",
-        alwaysVisible: true,
-        render: (r) => (
-          <input
-            type="checkbox"
-            aria-label="Select"
-            checked={r.accept}
-            onChange={(e) =>
-              setRows((prev) =>
-                prev.map((x) => (x.id === r.id && x.entity_kind === r.entity_kind ? { ...x, accept: e.target.checked } : x))
-              )
-            }
-          />
-        ),
-      },
       {
         key: "name",
         label: "Entity",
@@ -115,45 +69,16 @@ export function QBOBulkLinkPage() {
         sortable: true,
       },
       {
-        key: "qbo_vendor_id",
+        key: "suggested_qbo_vendor_id",
         label: "QBO vendor",
         sortable: true,
-        render: (r) =>
-          r.entity_kind === "equipment" ? (
-            <span className="text-gray-400">—</span>
-          ) : (
-            <QboCombobox
-              entityType="vendor"
-              operatingCompanyId={companyId}
-              value={r.qbo_vendor_id}
-              displayValue=""
-              allowFreeText={false}
-              onChange={(id) =>
-                setRows((prev) =>
-                  prev.map((x) => (x.id === r.id && x.entity_kind === r.entity_kind ? { ...x, qbo_vendor_id: id } : x))
-                )
-              }
-            />
-          ),
+        render: (r) => (r.entity_kind === "equipment" ? <span className="text-gray-400">—</span> : archiveId(r.suggested_qbo_vendor_id)),
       },
       {
-        key: "qbo_class_id",
+        key: "suggested_qbo_class_id",
         label: "QBO class",
         sortable: true,
-        render: (r) => (
-          <QboCombobox
-            entityType="account"
-            operatingCompanyId={companyId}
-            value={r.qbo_class_id}
-            displayValue=""
-            allowFreeText={false}
-            onChange={(id) =>
-              setRows((prev) =>
-                prev.map((x) => (x.id === r.id && x.entity_kind === r.entity_kind ? { ...x, qbo_class_id: id } : x))
-              )
-            }
-          />
-        ),
+        render: (r) => archiveId(r.suggested_qbo_class_id),
       },
       {
         key: "match_confidence",
@@ -163,7 +88,7 @@ export function QBOBulkLinkPage() {
         render: (r) => `${(r.match_confidence * 100).toFixed(0)}%`,
       },
     ],
-    [companyId]
+    []
   );
 
   return (
@@ -176,9 +101,16 @@ export function QBOBulkLinkPage() {
         </p>
       ) : null}
 
+      {qboAvailable ? (
+        <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#4B5563]" data-testid="qbo-bulk-link-read-only">
+          QuickBooks is a read-only archive. This review shows the archive&apos;s suggested matches and writes nothing. Link a
+          driver&apos;s payee with the A/P vendor on the driver profile; a unit&apos;s ownership is its Owner Company in Edit.
+        </p>
+      ) : null}
+
       {qboAvailable && step === 1 ? (
         <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-xs">
-          <p className="text-gray-600">Link drivers and fleet assets to existing QuickBooks Online vendors and classes (snapshot archive).</p>
+          <p className="text-gray-600">Review drivers and fleet assets against QuickBooks Online vendors and classes (snapshot archive).</p>
           <div className="space-y-2">
             <label className="flex items-center gap-2">
               <input type="radio" name="etype" checked={entityType === "drivers"} onChange={() => setEntityType("drivers")} />
@@ -193,19 +125,17 @@ export function QBOBulkLinkPage() {
               Both
             </label>
           </div>
-          <Button
-            onClick={() => {
-              setRows([]);
-              setStep(2);
-            }}
-          >
-            Continue — load unlinked
-          </Button>
+          <Button onClick={() => setStep(2)}>Continue — load unlinked</Button>
         </div>
       ) : null}
 
       {qboAvailable && step === 2 ? (
         <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Button variant="secondary" onClick={() => setStep(1)}>
+              Back
+            </Button>
+          </div>
           {unlinkedQuery.isLoading ? <p className="text-xs text-gray-500">Loading suggestions…</p> : null}
           {unlinkedQuery.isError ? (
             <ListErrorState
@@ -215,33 +145,10 @@ export function QBOBulkLinkPage() {
               onRetry={() => void unlinkedQuery.refetch()}
             />
           ) : null}
-          {unlinkedQuery.isSuccess && rows.length > 0 ? (
+          {unlinkedQuery.isSuccess ? (
             <>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setStep(1);
-                    setRows([]);
-                  }}
-                >
-                  Back
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    const all = rows.every((r) => r.accept);
-                    setRows((prev) => prev.map((r) => ({ ...r, accept: !all })));
-                  }}
-                >
-                  Toggle all accept
-                </Button>
-                <Button onClick={() => setStep(3)} disabled={acceptedCount === 0}>
-                  Continue — confirm
-                </Button>
-              </div>
               <p className="text-xs text-gray-600">Matches use Levenshtein-style confidence on entity names vs QBO archive labels.</p>
-              <ParityTable<RowEdit>
+              <ParityTable<UnlinkedEntityRow>
                 columns={columns}
                 rows={rows}
                 rowKey={(r) => `${r.entity_kind}-${r.id}`}
@@ -251,7 +158,7 @@ export function QBOBulkLinkPage() {
               />
               {withMatches.length > 0 ? (
                 <p className="text-xs text-gray-500">
-                  {withMatches.length} row{withMatches.length === 1 ? "" : "s"} with auto suggestions ({noMatches.length} without).
+                  {withMatches.length} row{withMatches.length === 1 ? "" : "s"} with archive suggestions ({noMatches.length} without).
                 </p>
               ) : null}
               {noMatches.length > 0 ? (
@@ -268,23 +175,6 @@ export function QBOBulkLinkPage() {
               ) : null}
             </>
           ) : null}
-        </div>
-      ) : null}
-
-      {qboAvailable && step === 3 ? (
-        <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-xs">
-          <div>
-            Summary: <strong>{rows.filter((r) => r.accept && r.entity_kind === "driver").length}</strong> drivers,{" "}
-            <strong>{rows.filter((r) => r.accept && r.entity_kind !== "driver").length}</strong> fleet rows accepted for link.
-          </div>
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setStep(2)}>
-              Back
-            </Button>
-            <Button loading={bulkMutation.isPending} onClick={() => bulkMutation.mutate()}>
-              Apply bulk link
-            </Button>
-          </div>
         </div>
       ) : null}
     </div>

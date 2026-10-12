@@ -43,27 +43,6 @@ export function getQboUnlinkedEntities(operatingCompanyId: string, type: "driver
   return apiRequest<{ entities: UnlinkedEntityRow[] }>(`/api/v1/qbo/unlinked-entities?${qs.toString()}`);
 }
 
-export function postQboBulkLink(
-  operatingCompanyId: string,
-  body: {
-    type: "drivers" | "assets" | "both";
-    mappings: Array<{
-      entity_kind: "driver" | "unit" | "equipment";
-      entity_id: string;
-      qbo_vendor_id?: string | null;
-      qbo_class_id?: string | null;
-    }>;
-  }
-) {
-  return apiRequest<{ applied: number; failed: number; errors: Array<{ entity_id: string; message: string }> }>(
-    "/api/v1/qbo/bulk-link",
-    {
-      method: "POST",
-      body: { operating_company_id: operatingCompanyId, ...body },
-    }
-  );
-}
-
 /** Block V dashboard — qbo.sync_runs */
 export type QboSyncRunStatus = "pending" | "running" | "success" | "failed" | "dead_letter" | "cancelled";
 

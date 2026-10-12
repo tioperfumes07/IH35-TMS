@@ -1986,6 +1986,9 @@ export type UpdateVendorInput = Partial<{
   payment_terms_id: string | null;
   default_expense_account_id: string | null;
   account_number: string | null;
+  /** Canonical driver-as-vendor (A/P payee) link — mdata.vendors.driver_id; the PATCH route checks the
+   *  driver is in the vendor's own company. NOT mdata.drivers.qbo_vendor_id (a QuickBooks archive key). */
+  driver_id: string | null;
 }>;
 
 export function updateVendor(id: string, body: UpdateVendorInput) {
@@ -2220,36 +2223,9 @@ export function listQboVendorSuggestions(
   );
 }
 
-export function linkDriverQboVendor(
-  driverId: string,
-  body: { operating_company_id: string; qbo_vendor_id: string; reason: string; force?: boolean }
-) {
-  return apiRequest<{ ok: true; idempotent: boolean }>(`/api/v1/master-data/drivers/${driverId}/link-qbo-vendor`, {
-    method: "POST",
-    body,
-  });
-}
-
-export function linkUnitQboClass(
-  unitId: string,
-  body: { operating_company_id: string; qbo_class_id: string; reason: string; force?: boolean }
-) {
-  return apiRequest<{ ok: true; idempotent: boolean }>(`/api/v1/master-data/units/${unitId}/link-qbo-class`, {
-    method: "POST",
-    body,
-  });
-}
-
-export function linkTrailerQboClass(
-  trailerId: string,
-  body: { operating_company_id: string; qbo_class_id: string; reason: string; force?: boolean }
-) {
-  return apiRequest<{ ok: true; idempotent: boolean }>(`/api/v1/master-data/trailers/${trailerId}/link-qbo-class`, {
-    method: "POST",
-    body,
-  });
-}
-
+// 443.137 9e part 2 (#26732): the QBO vendor/class link + unlink writers (linkDriverQboVendor,
+// linkUnitQboClass, linkTrailerQboClass, linkQboVendor, unlinkQboVendor) were removed — their routes
+// always answer 409 QBO_NATIVE_WRITE_REFUSED (QuickBooks is a read-only archive). Reads below stay.
 export function listDriverQboMappingStatus(operatingCompanyId: string) {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
   return apiRequest<{ rows: DriverQboMappingStatus[] }>(`/api/v1/master-data/drivers/qbo-mapping-status?${params.toString()}`);
@@ -2264,37 +2240,6 @@ export function listQboVendorLinkageHistory(
   if (entityType) params.set("entity_type", entityType);
   if (entityId) params.set("entity_id", entityId);
   return apiRequest<{ rows: Array<Record<string, unknown>> }>(`/api/v1/integrations/qbo/vendor-linkage-history?${params.toString()}`);
-}
-
-export function unlinkQboVendor(
-  operatingCompanyId: string,
-  entityType: "driver" | "unit" | "equipment" | "asset",
-  entityId: string,
-  reason: string
-) {
-  return apiRequest<{ ok: true; idempotent: boolean }>(`/api/v1/integrations/qbo/vendor-link/${entityType}/${entityId}`, {
-    method: "DELETE",
-    body: {
-      operating_company_id: operatingCompanyId,
-      reason,
-    },
-  });
-}
-
-export function linkQboVendor(
-  body: {
-    operating_company_id: string;
-    entity_type: "driver" | "unit" | "equipment" | "asset";
-    entity_id: string;
-    qbo_vendor_id: string;
-    reason: string;
-    force?: boolean;
-  }
-) {
-  return apiRequest<{ ok: true; idempotent: boolean }>("/api/v1/integrations/qbo/vendor-link", {
-    method: "POST",
-    body,
-  });
 }
 
 export type MdataUnit = Record<string, unknown> & {

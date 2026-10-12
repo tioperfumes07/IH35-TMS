@@ -104,16 +104,6 @@ vi.mock("../parity/ReferenceSelect", () => ({
   ),
 }));
 
-vi.mock("../forms/QboCombobox", () => ({
-  QboCombobox: ({
-    onChange,
-  }: {
-    onChange: (qboId: string | null, displayName: string) => void;
-  }) => (
-    <input aria-label="Vendor" onChange={(event) => onChange("vendor-qbo-1", event.target.value)} />
-  ),
-}));
-
 function wrap(ui: React.ReactElement) {
   return (
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
