@@ -142,6 +142,7 @@ jobs:
             scripts/verify-bank-possible-duplicates-flagged-never-removed.mjs \
             scripts/verify-for-review-has-no-document.mjs \
             scripts/verify-relay-fill-one-company.mjs \
+            scripts/verify-expense-postings-name-their-payee.mjs \
             scripts/verify-geofence-odometer-capture-freshness.mjs \
             scripts/verify-bank-line-buckets-are-the-three-tabs.mjs \
             scripts/verify-no-future-dated-or-untagged-sample-money.mjs \
