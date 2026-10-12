@@ -3369,15 +3369,27 @@ export async function createLoadWithFullSideEffects(
       const isBackfill = source === "historical_backfill";
       const actualArrivalAt = isBackfill ? stop.actual_arrival_at ?? null : null;
       const actualDepartureAt = isBackfill ? stop.actual_departure_at ?? null : null;
+      // G11: derive geocode precision at insert so bindLoadToGeofences can fence the stop immediately.
+      // google_place_id → Google Places rooftop; location_id → existing catalog rooftop;
+      // raw lat/lng without either → picker coords (NULL precision, no fence until cron backfill).
+      const geocodeSource = stop.google_place_id?.trim()
+        ? "google"
+        : stop.location_id
+          ? "location_existing"
+          : stop.latitude != null
+            ? "picker"
+            : null;
+      const geocodePrecision = stop.google_place_id?.trim() || stop.location_id ? "rooftop" : null;
       await client.query(
         `
           INSERT INTO mdata.load_stops (
             load_id, sequence_number, stop_type, location_id, facility_name, address_line1, city, state, country, scheduled_arrival_at, status,
             time_window_type, pickup_time_type_id, appointment_start_at, appointment_end_at, lumper_required, lumper_provider_id, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
             site_contact_name, site_contact_phone, gate_dock_text, postal_code, latitude, longitude, leg_miles,
-            actual_arrival_at, actual_departure_at, actual_arrival_source, actual_departure_source, google_place_id
+            actual_arrival_at, actual_departure_at, actual_arrival_source, actual_departure_source, google_place_id,
+            geocode_precision, geocode_source
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35)
         `,
         [
           load.id,
@@ -3413,6 +3425,8 @@ export async function createLoadWithFullSideEffects(
           actualArrivalAt ? "manual" : null,
           actualDepartureAt ? "manual" : null,
           stop.google_place_id?.trim() || null,
+          geocodePrecision,
+          geocodeSource,
         ]
       );
     }

@@ -24,6 +24,8 @@ vi.mock("../../accounting/posting-engine.service.js", () => ({ postSourceTransac
 vi.mock("../../accounting/bills.service.js", () => ({ updateBankBalance: mockUpdateBankBalance }));
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: mockAudit }));
 vi.mock("../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
+// 443.128 A — the lumper expense is proven on real Postgres (lumper-advance-expense.db.test.ts); here it is a no-op.
+vi.mock("../lumper-advance-expense.service.js", () => ({ recordLumperAdvanceExpenseInClientTx: vi.fn(async () => ({ recorded: false, reason: "not_a_lumper" })) }));
 // Mirror the real isOwnerOrAdmin predicate (Owner/Administrator) for test isolation.
 vi.mock("../../bulk/bulk-update.factory.js", () => ({
   isOwnerOrAdmin: (role: string) => role === "Owner" || role === "Administrator",

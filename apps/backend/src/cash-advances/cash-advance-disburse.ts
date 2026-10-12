@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { recordLumperAdvanceExpenseInClientTx } from "./lumper-advance-expense.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isOwnerOrAdmin } from "../lib/authz/roles.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
@@ -145,7 +146,7 @@ export async function disburseDriverAdvanceCore(
     if (!input.credit_account_id && phase1.fromBankAccountId) {
       await updateBankBalance(client, companyId, phase1.fromBankAccountId, -Math.abs(phase1.amountCents));
     }
-    return postSourceTransactionInClientTx(
+    const posted = await postSourceTransactionInClientTx(
       client,
       {
         operating_company_id: companyId,
@@ -155,6 +156,9 @@ export async function disburseDriverAdvanceCore(
       },
       { userId: actorUserUuid }
     );
+    // LEAD 443.128 A — a lumper advance is the load's lumper expense (and, billable, its invoice line), in this transaction.
+    await recordLumperAdvanceExpenseInClientTx(client, { operatingCompanyId: companyId, advanceId: input.advance_id, actorUserId: actorUserUuid });
+    return posted;
   });
 
   // B4: timeline 'posted' step — if this advance originated from a cash-advance request, link

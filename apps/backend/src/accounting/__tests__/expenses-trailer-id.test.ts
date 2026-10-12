@@ -18,7 +18,10 @@ describe("accounting/expenses.routes RANK4-EXPENSE-TRAILER-ID", () => {
     expect(routes).toContain('await columnExists(client, "accounting", "expenses", "trailer_id")');
     expect(routes).toContain("if (hasTrailerId) {");
     expect(routes).toContain("columns.push(`trailer_id`);");
-    expect(routes).toContain("values.push(body.trailer_id ?? null);");
+    // 443.128 B (N1): the body's trailer is written when the expense names no load; on a load the load's trailer is (a
+    // different one is refused before the INSERT — expense-load-attribution.db.test.ts).
+    expect(routes).toContain("const expenseTrailerId = loadAttribution ? loadAttribution.trailerId : body.trailer_id ?? null;");
+    expect(routes).toContain("values.push(expenseTrailerId);");
   });
 
   it("returns trailer_id + a trailer_display_id (mdata.equipment.equipment_number) on the detail GET", () => {

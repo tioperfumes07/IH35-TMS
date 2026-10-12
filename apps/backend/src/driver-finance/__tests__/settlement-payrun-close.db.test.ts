@@ -37,6 +37,7 @@ import { closeSettlementPayRun, SettlementPayRunError } from "../settlement-payr
 import { ESCROW_CAP_CENTS } from "../escrow-resolver.service.js";
 import { createJournalEntry, createJournalEntryOnClient } from "../../accounting/journal-entries.service.js";
 import { accrueDriverPayAtDeliveryInClientTx } from "../driver-pay-delivery-accrual.service.js";
+import { loadSettlementLoadBills } from "../settlement-ap-chain.service.js";
 import { reverseSettlementForVoid } from "../void-document-callees.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -1071,5 +1072,93 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       [companyId]
     ))[0]!;
     expect(Number(tb2.dr)).toBe(Number(tb2.cr));
+  });
+
+  it("(10) 443.128 C: a TEAM driver bill posts one A/P bill per driver at delivery (its split share), once; each driver settles its own", async () => {
+    const d1 = randomUUID();
+    const d2 = randomUUID();
+    const loadId = randomUUID();
+    const billId = randomUUID();
+    const settlement2 = randomUUID();
+    const loadNumber = String(810000000 + Math.floor(Math.random() * 9000000));
+    await bypass(async () => {
+      for (const [d, n] of [[d1, "One"], [d2, "Two"]] as const) {
+        await db.query(`INSERT INTO mdata.drivers (id, operating_company_id, first_name, last_name, phone) VALUES ($1::uuid,$2::uuid,'Team',$3,$4)`, [d, companyId, `${n}-${suffix}`, `+1007${randomUUID().slice(0, 7)}`]);
+        await db.query(`INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type, driver_id) VALUES ($1::uuid,$2,'driver',$3::uuid)`, [companyId, `Team ${n} ${suffix}`, d]);
+      }
+      const cust = randomUUID();
+      await db.query(`INSERT INTO mdata.customers (id, operating_company_id, customer_name) VALUES ($1::uuid,$2::uuid,$3)`, [cust, companyId, `Team customer ${suffix}`]);
+      const unit = randomUUID();
+      await db.query(`INSERT INTO mdata.units (id, owner_company_id, unit_number, vin, is_sample_data) VALUES ($1::uuid,$2::uuid,$3,$4,true)`, [unit, companyId, `TMU${loadNumber.slice(-6)}`, `1TMU${loadNumber}`.slice(0, 17).padEnd(17, "0")]);
+      // The load's own team split override: driver One 60 % / driver Two 40 %.
+      await db.query(
+        `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, load_trailer_equipment_id, assigned_unit_id,
+                                  assigned_primary_driver_id, assigned_secondary_driver_id, team_split_override_primary_driver_id, team_split_override_secondary_driver_id,
+                                  team_split_override_primary_ratio, team_split_override_secondary_ratio, team_split_override_reason, team_split_override_set_by_user_id, team_split_override_set_at)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,'delivered_pending_docs',500000,$5::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1),$6::uuid,
+                 $7::uuid,$8::uuid,$7::uuid,$8::uuid,0.6,0.4,'one_off_team',$5::uuid,now())`,
+        [loadId, companyId, loadNumber, cust, userId, unit, d1, d2]
+      );
+      await db.query(`INSERT INTO mdata.load_stops (load_id, sequence_number, stop_type, actual_departure_at) VALUES ($1::uuid, 2, 'delivery', now())`, [loadId]);
+      await db.query(
+        `INSERT INTO driver_finance.driver_bills (id, operating_company_id, load_id, load_number, bill_number, driver_id, team_driver_id, gross_amount_cents, status)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$4,$5::uuid,$6::uuid,300000,'open')`,
+        [billId, companyId, loadId, loadNumber, d1, d2]
+      );
+      await db.query(
+        `INSERT INTO driver_finance.driver_settlements (id, operating_company_id, display_id, driver_id, period_start, period_end, status, gross_pay, deductions_total, reimbursements_total, net_pay, settlement_model)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'draft',1200,0,0,1200,'week_calendar')`,
+        [settlement2, companyId, `PR-TEAM2-${suffix}`, d2]
+      );
+      await db.query(`UPDATE mdata.loads SET presettlement_link_id = $2::uuid WHERE id = $1::uuid`, [loadId, settlement2]);
+    });
+    let out: Awaited<ReturnType<typeof accrueDriverPayAtDeliveryInClientTx>> | null = null;
+    await bypass(async () => { out = await accrueDriverPayAtDeliveryInClientTx(db as never, { operatingCompanyId: companyId, loadId, actorUserId: flagActor }); });
+    expect(out!.accrued.map((a) => a.amount_cents).sort()).toEqual([120000, 180000]);
+    const bills = await read<{ driver_id: string; amount: number; bill_date: string }>(
+      `SELECT b.driver_id::text, b.amount_cents::int AS amount, b.bill_date::text FROM accounting.bills b
+        WHERE b.id IN (SELECT accrued_bill_id FROM driver_finance.driver_bills WHERE id = $1::uuid UNION ALL SELECT accrued_team_bill_id FROM driver_finance.driver_bills WHERE id = $1::uuid)
+        ORDER BY b.amount_cents DESC`,
+      [billId]
+    );
+    expect(bills.map((b) => [b.driver_id, b.amount])).toEqual([[d1, 180000], [d2, 120000]]);
+    // Pay posted once, in full: Dr driver pay 300000 on this load.
+    const pay = await read<{ v: string }>(
+      `SELECT COALESCE(SUM(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE -amount_cents END),0)::text AS v FROM accounting.journal_entry_postings
+        WHERE operating_company_id = $1::uuid AND account_id = $2::uuid AND load_id = $3::uuid`,
+      [companyId, acct.driverPay, loadId]
+    );
+    expect(Number(pay[0]!.v)).toBe(300000);
+    // Once: the delivery event again posts nothing.
+    let again: Awaited<ReturnType<typeof accrueDriverPayAtDeliveryInClientTx>> | null = null;
+    await bypass(async () => { again = await accrueDriverPayAtDeliveryInClientTx(db as never, { operatingCompanyId: companyId, loadId, actorUserId: flagActor }); });
+    expect(again!.accrued.length).toBe(0);
+    // The co-driver's settlement sees ITS OWN delivery-posted bill (not driver One's).
+    let loadBills: Awaited<ReturnType<typeof loadSettlementLoadBills>> = [];
+    await bypass(async () => { loadBills = await loadSettlementLoadBills(db as never, companyId, settlement2, d2); });
+    const team = await read<{ t: string }>(`SELECT accrued_team_bill_id::text AS t FROM driver_finance.driver_bills WHERE id = $1::uuid`, [billId]);
+    expect(loadBills.map((b) => b.accruedBillId)).toEqual([team[0]!.t]);
+    // The spine accepts both drivers' live rows for the same driver bill (one per A/P bill), never the same pair twice.
+    const both = await read<{ a: string; t: string }>(`SELECT accrued_bill_id::text AS a, accrued_team_bill_id::text AS t FROM driver_finance.driver_bills WHERE id = $1::uuid`, [billId]);
+    await bypass(async () => {
+      const run = (await db.query<{ id: string }>(
+        `INSERT INTO driver_finance.driver_settlement_gl_runs (operating_company_id, settlement_id, driver_id, driver_vendor_id, run_key, gross_cents, deductions_cents, net_cents, status, posted_by_user_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,(SELECT id FROM mdata.vendors WHERE operating_company_id = $1::uuid AND driver_id = $3::uuid LIMIT 1),$4,0,0,0,'posted',$5::uuid) RETURNING id::text`,
+        [companyId, settlement2, d2, `team-test:${settlement2}`, flagActor]
+      )).rows[0]!.id;
+      for (const ab of [both[0]!.a, both[0]!.t]) {
+        await db.query(
+          `INSERT INTO driver_finance.driver_settlement_gl_bills (operating_company_id, run_id, settlement_id, driver_bill_id, load_id, load_number, accounting_bill_id, gross_cents, deduction_cents, cash_cents)
+           VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6,$7::uuid,0,0,0)`,
+          [companyId, run, settlement2, billId, loadId, loadNumber, ab]
+        );
+      }
+      await expect(db.query(
+        `INSERT INTO driver_finance.driver_settlement_gl_bills (operating_company_id, run_id, settlement_id, driver_bill_id, load_id, load_number, accounting_bill_id, gross_cents, deduction_cents, cash_cents)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6,$7::uuid,0,0,0)`,
+        [companyId, run, settlement2, billId, loadId, loadNumber, both[0]!.t]
+      )).rejects.toThrow(/unique|duplicate/i);
+      throw new Error("rollback-team-spine-probe");
+    }).catch((e) => { if (!String(e).includes("rollback-team-spine-probe")) throw e; });
   });
 });
