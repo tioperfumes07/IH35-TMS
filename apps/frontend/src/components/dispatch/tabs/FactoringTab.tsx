@@ -21,7 +21,7 @@ import {
   listBrokerAdvances,
   listFactoringAdvances,
 } from "../../../api/accounting";
-import { getDownloadUrl, type DocsFile } from "../../../api/docs";
+import { getDownloadUrl, listAllFiles, type DocsFile } from "../../../api/docs";
 import { createFactor, listFactors } from "../../../api/factoring";
 import { apiRequest } from "../../../api/client";
 import { Button } from "../../Button";
@@ -33,7 +33,7 @@ import { FactoringPurchaseLinksPanel } from "../../factoring/FactoringPurchaseLi
 import { EntityLinkOrTombstone } from "../../shared/EntityLinkOrTombstone";
 import { QueryErrorNote } from "./QueryErrorNote";
 import { formatMoneyCents } from "../constants";
-import { useLoadDocuments } from "./useLoadDocuments";
+import { derivePacketDocuments } from "./useLoadDocuments";
 
 // ─── .ldt-* palette (GLOBAL-TYPE-SIZE-BASELINE tokens) ────────────────────────
 
@@ -216,14 +216,26 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   });
   const linkedInvoice = useMemo(() => invoicesQ.data?.invoices?.[0] ?? null, [invoicesQ.data]);
 
-  // documents for this load — SHARED READ (useLoadDocuments). LDT-D Documents tab and
-  // LDT-2 Stops tab consume the same hook + query key, so BOL/POD chips never drift.
-  const { packetDocuments, isError: docsLoadError, refetch: refetchDocs } = useLoadDocuments({
-    operatingCompanyId,
-    loadId,
-    invoiceId: linkedInvoice?.id,
+  // documents for this load — SHARED READ (same query keys as LDT-D Documents tab and
+  // LDT-2 Stops tab, so BOL/POD chips never drift).
+  const loadDocsQ = useQuery({
+    queryKey: ["ldt-load-documents", "load", operatingCompanyId, loadId],
+    queryFn: () => listAllFiles({ operating_company_id: operatingCompanyId, entity_type: "load", entity_id: loadId! }).then((res) => res.files),
     enabled: Boolean(operatingCompanyId && loadId),
+    staleTime: 30_000,
   });
+  const invoiceDocsQ = useQuery({
+    queryKey: ["ldt-load-documents", "invoice", operatingCompanyId, linkedInvoice?.id],
+    queryFn: () => listAllFiles({ operating_company_id: operatingCompanyId, entity_type: "invoice", entity_id: linkedInvoice!.id }).then((res) => res.files),
+    enabled: Boolean(operatingCompanyId && linkedInvoice?.id),
+    staleTime: 30_000,
+  });
+  const packetDocuments = useMemo(() => derivePacketDocuments(
+    (loadDocsQ.data ?? []).filter((f) => !f.deleted_at),
+    (invoiceDocsQ.data ?? []).filter((f) => !f.deleted_at),
+  ), [loadDocsQ.data, invoiceDocsQ.data]);
+  const docsLoadError = loadDocsQ.isError || invoiceDocsQ.isError;
+  const refetchDocs = () => Promise.all([loadDocsQ.refetch(), invoiceDocsQ.refetch()]);
 
   // active factors for submission
   const factorsQ = useQuery({
