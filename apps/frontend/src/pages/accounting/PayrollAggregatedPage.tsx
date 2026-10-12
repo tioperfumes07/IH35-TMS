@@ -1,17 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  getAggregatedPayroll,
-  refreshAggregatedPayroll,
-  type AggregatedDriverSettlement,
-  type AggregatedQboW2Run,
-} from "../../api/payrollAggregated";
-import { Button } from "../../components/Button";
+import { useQuery } from "@tanstack/react-query";
+import { getAggregatedPayroll, type AggregatedDriverSettlement } from "../../api/payrollAggregated";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
-import { entityLabel } from "../../lib/entity-label";
 
 import { formatUsdCents } from "../../lib/money";
 
@@ -42,68 +34,24 @@ const SETTLEMENT_COLUMNS: Array<ParityColumn<AggregatedDriverSettlement>> = [
   },
 ];
 
-const W2_RUN_COLUMNS: Array<ParityColumn<AggregatedQboW2Run>> = [
-  {
-    key: "qbo_payroll_run_name",
-    label: "Run",
-    render: (row) => entityLabel(row.qbo_payroll_run_name, row.qbo_payroll_run_id, "Payroll run"),
-  },
-  {
-    key: "employee_count",
-    label: "Employees",
-    className: "text-right",
-    render: (row) => row.employee_count ?? 0,
-  },
-  {
-    key: "net_cents",
-    label: "Net",
-    className: "text-right",
-    render: (row) => money(Number(row.net_cents ?? 0)),
-  },
-];
-
+// ACCT-F4431379 (Lead 443.137 9d) — the QBO Payroll W-2 runs table and its sync Refresh were removed:
+// driver pay comes ONLY from driver_finance and QBO is out of scope for USMCA.
 export function PayrollAggregatedPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const { pushToast } = useToast();
-  const queryClient = useQueryClient();
-
   const aggregatedQuery = useQuery({
     queryKey: ["payroll", "aggregated", companyId],
     queryFn: () => getAggregatedPayroll(companyId),
     enabled: Boolean(companyId),
   });
 
-  const refreshMutation = useMutation({
-    mutationFn: () => refreshAggregatedPayroll(companyId),
-    onSuccess: () => {
-      pushToast("Payroll sync refreshed", "success");
-      void queryClient.invalidateQueries({ queryKey: ["payroll", "aggregated", companyId] });
-    },
-    onError: (error: unknown) => {
-      pushToast(error instanceof Error ? error.message : "Refresh failed", "error");
-    },
-  });
-
   const data = aggregatedQuery.data;
 
   return (
-    <AccountingSubNavWrapper title="Payroll (aggregated)" subtitle="Option B — driver settlements in TMS + W-2 runs mirrored from QBO Payroll">
+    <AccountingSubNavWrapper title="Payroll (aggregated)" subtitle="Option B — driver settlements from driver_finance, the only source of driver pay">
       <div data-testid="payroll-aggregated-page" className="contents">
       {aggregatedQuery.isError ? <ListErrorBanner message="Failed to load aggregated payroll view." /> : null}
-      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs">
-        <span>
-          Sync state: <strong>{data?.sync_state ?? "—"}</strong>
-        </span>
-        <span className="text-gray-500">
-          Last synced: {data?.last_synced_at ? new Date(data.last_synced_at).toLocaleString() : "Never"}
-        </span>
-        <Button size="sm" variant="secondary" loading={refreshMutation.isPending} onClick={() => void refreshMutation.mutateAsync()}>
-          Refresh
-        </Button>
-      </div>
-
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid gap-3">
         <section className="rounded-sm border border-gray-200 bg-white p-3">
           <h2 className="mb-2 text-xs font-semibold text-gray-900">Driver settlements (TMS)</h2>
           <ParityTable<AggregatedDriverSettlement>
@@ -114,19 +62,6 @@ export function PayrollAggregatedPage() {
             emptyText="No driver settlements."
             storageKey="payroll-aggregated-driver-settlements"
             tableTestId="payroll-aggregated-driver-settlements-table"
-          />
-        </section>
-
-        <section className="rounded-sm border border-gray-200 bg-white p-3">
-          <h2 className="mb-2 text-xs font-semibold text-gray-900">QBO Payroll W-2 runs</h2>
-          <ParityTable<AggregatedQboW2Run>
-            columns={W2_RUN_COLUMNS}
-            rows={data?.qbo_w2_runs ?? []}
-            rowKey={(row) => row.qbo_payroll_run_id}
-            loading={aggregatedQuery.isLoading}
-            emptyText="No QBO payroll runs linked yet."
-            storageKey="payroll-aggregated-qbo-w2-runs"
-            tableTestId="payroll-aggregated-qbo-w2-runs-table"
           />
         </section>
       </div>

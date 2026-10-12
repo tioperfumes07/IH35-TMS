@@ -1,10 +1,10 @@
 {
-  "healthzSha": "9702be9",
-  "generated_at": "2026-10-12T22:24:13.321Z",
+  "healthzSha": "553a2cd",
+  "generated_at": "2026-10-12T22:30:23.432Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "9702be9",
+    "deployedSha": "553a2cd",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 26728,
+      "title": "FINDING: ACCT-F4431380 LANE: FINANCIAL — QBO pullers, reconcilers and the CC bill-payment route no longer write native money or master tables; QuickBooks is a read-only archive",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 05:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26728",
+      "sha": "595f0687ec",
+      "committedAtIso": "2026-10-12T17:28:07-05:00"
+    },
+    {
       "number": 26727,
       "title": "FINDING: ACCT-F4431362 LANE: FINANCIAL -- 443.136 #2: WORM on accounting.related_party_accounts (verify-new-financial-table-ships-worm + verify-worm-coverage-ratchet red on main)",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26721",
       "sha": "31695686ae",
       "committedAtIso": "2026-10-12T17:01:17-05:00"
-    },
-    {
-      "number": 26720,
-      "title": "FINDING: N/A (443.136 — CC-2's main red: verify-ap-control-writers-go-through-documents did not classify driver-pay-delivery-accrual.service.ts, from #26706)",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26720",
-      "sha": "e60a7d5505",
-      "committedAtIso": "2026-10-12T17:00:45-05:00"
     }
   ]
 }
