@@ -47,6 +47,9 @@ apps/backend/src/legal/contracts.service.ts
 apps/backend/src/maintenance/fuel-integrity.service.ts
 apps/backend/src/telematics/stop-events.reads.ts
 **/*.db.test.ts
+# 443.105 item 4 (2026-10-12) — scheduled-reports worker CI fix; apps/backend/src/scheduled-reports/ has no seat:
+apps/backend/src/scheduled-reports/scheduled-reports-worker.ts
+apps/backend/src/scheduled-reports/scheduled-reports-worker.smoke.test.ts
 TABLES: accounting.company_settlements · driver_finance.driver_bills · mdata.drivers · identity.*
         mdata.loads
 

@@ -4,6 +4,8 @@ import { deliverScheduledReportToEmail } from "./report-delivery.js";
 import { computeNextRunAt, scheduleInputFromDbRow, type ScheduleFrequency } from "./next-run.js";
 
 let timer: NodeJS.Timeout | undefined;
+// Holds the Promise for the currently-running tick so tests can await it.
+let _currentTickPromise: Promise<void> | undefined;
 
 function intervalMs() {
   const raw = Number(process.env.SCHEDULED_REPORTS_WORKER_INTERVAL_MS ?? "60000");
@@ -177,9 +179,11 @@ export function initializeScheduledReportsWorker(app: FastifyInstance) {
     }
   };
 
-  void tick();
+  _currentTickPromise = tick();
+  void _currentTickPromise;
   timer = setInterval(() => {
-    void tick();
+    _currentTickPromise = tick();
+    void _currentTickPromise;
   }, ms);
 
   app.log.info({ ms }, "[scheduled-reports-worker] started");
@@ -188,4 +192,13 @@ export function initializeScheduledReportsWorker(app: FastifyInstance) {
 export function stopScheduledReportsWorker() {
   if (timer) clearInterval(timer);
   timer = undefined;
+}
+
+/**
+ * Test-only: await the currently-running tick to completion.
+ * The tick always resolves (errors are caught internally and logged via app.log.error).
+ * Callers should check the mock log for errors after awaiting.
+ */
+export async function flushTickForTest(): Promise<void> {
+  if (_currentTickPromise) await _currentTickPromise;
 }

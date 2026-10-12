@@ -16,7 +16,7 @@ vi.mock("./report-delivery.js", () => ({
 }));
 
 import { deliverScheduledReportToEmail } from "./report-delivery.js";
-import { initializeScheduledReportsWorker, stopScheduledReportsWorker } from "./scheduled-reports-worker.js";
+import { flushTickForTest, initializeScheduledReportsWorker, stopScheduledReportsWorker } from "./scheduled-reports-worker.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -122,22 +122,20 @@ describeIntegration("scheduled-reports-worker smoke (integration)", () => {
     } as unknown as FastifyInstance["log"];
 
     initializeScheduledReportsWorker({ log } as unknown as FastifyInstance);
-    // 443.91 #4: a fixed 750 ms sleep raced the worker on a loaded CI runner (the run row was not written yet, status '').
-    // Wait for the worker's own run row (up to 20 s), then stop it — the assertions below are unchanged.
-    const deadline = Date.now() + 20_000;
-    while (Date.now() < deadline) {
-      const done = await withLuciaBypass(async (client) => {
-        await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
-        const r = await client.query(
-          `SELECT 1 FROM reporting.scheduled_report_runs WHERE scheduled_report_id = $1::uuid AND status IS NOT NULL AND status <> 'running' LIMIT 1`,
-          [scheduleId]
-        );
-        return r.rows.length > 0;
-      });
-      if (done) break;
-      await new Promise((resolve) => setTimeout(resolve, 250));
-    }
+    // 443.105 item 4: await the tick directly instead of polling — eliminates the race between
+    // void tick() and the polling loop. flushTickForTest() resolves once the tick's Promise settles
+    // (the tick catches all errors internally and logs them via app.log.error).
+    await flushTickForTest();
     stopScheduledReportsWorker();
+
+    // Surface any worker errors before the row assertion — this gives a meaningful failure message
+    // instead of "expected '' to be 'success'" when the tick silently failed.
+    const workerErrors = (log.error as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+    if (workerErrors.length > 0) {
+      throw new Error(
+        `[smoke] worker tick logged ${workerErrors.length} error(s): ${JSON.stringify(workerErrors[0])}`
+      );
+    }
 
     await withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
