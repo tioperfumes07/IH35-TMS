@@ -78,6 +78,20 @@ const DIESEL_SQL = `
          (coalesce(tw.has_twin, false) AND NOT coalesce(tw.twin_posts, false)) AS twin_unposted
     FROM tw`;
 
+/** Pure: shrink-only ratchet — which metrics grew past the baseline (FAIL) and which shrank (tighten). */
+export function ratchet(current, baseline) {
+  const grew = [], shrank = [];
+  for (const m of METRICS) {
+    if (current[m] > baseline[m]) grew.push(m);
+    else if (current[m] < baseline[m]) shrank.push(m);
+  }
+  return { grew, shrank };
+}
+/** Pure: the known settlement-5782 rows that exist but are NOT voided with the disclosed reason. */
+export function badlyVoided(rows) {
+  return rows.filter((r) => r.status !== "void" || r.void_reason !== VOID_REASON_5782);
+}
+
 function readBaseline() {
   if (!fs.existsSync(BASELINE_PATH)) {
     console.error(`${LABEL}: FAIL — baseline not found at ${path.relative(ROOT, BASELINE_PATH)}`);
@@ -108,13 +122,13 @@ async function live() {
     const current = { doubled_with_live_fuel_twin: doubled.length, live_diesel_expenses: rows.length };
     const usd = (list) => (list.reduce((a, r) => a + Number(r.total_amount_cents), 0) / 100).toFixed(2);
 
-    for (const m of METRICS) {
-      if (current[m] > baseline[m]) {
-        console.error(`${LABEL}: LIVE FAIL — ${m} grew: ${current[m]} > baseline ${baseline[m]}`);
-        failures++;
-      } else if (current[m] < baseline[m]) {
-        console.log(`${LABEL}: ${m} shrank ${baseline[m]} -> ${current[m]}; commit ${current[m]} to ${path.relative(ROOT, BASELINE_PATH)}`);
-      }
+    const r8 = ratchet(current, baseline);
+    for (const m of r8.grew) {
+      console.error(`${LABEL}: LIVE FAIL — ${m} grew: ${current[m]} > baseline ${baseline[m]}`);
+      failures++;
+    }
+    for (const m of r8.shrank) {
+      console.log(`${LABEL}: ${m} shrank ${baseline[m]} -> ${current[m]}; commit ${current[m]} to ${path.relative(ROOT, BASELINE_PATH)}`);
     }
     for (const r of rows.filter((x) => x.twin_unposted)) {
       console.warn(
@@ -136,11 +150,9 @@ async function live() {
     // Post-AUTH-001-wipe: the known settlement-5782 rows may have been purged.
     // If they exist, they must be correctly voided. If they're gone (purged), that's fine —
     // the wipe removed them, and they can't be "not correctly voided" if they don't exist.
-    for (const r of knownRes.rows) {
-      if (r.status !== "void" || r.void_reason !== VOID_REASON_5782) {
-        console.error(`${LABEL}: LIVE FAIL — ${r.id} is not correctly voided (status=${r.status}, void_reason=${r.void_reason})`);
-        failures++;
-      }
+    for (const r of badlyVoided(knownRes.rows)) {
+      console.error(`${LABEL}: LIVE FAIL — ${r.id} is not correctly voided (status=${r.status}, void_reason=${r.void_reason})`);
+      failures++;
     }
 
     await client.query("COMMIT");
@@ -154,6 +166,24 @@ async function live() {
     client.release();
     await pool.end();
   }
+}
+
+if (process.argv.includes("--selftest")) {
+  const base = { doubled_with_live_fuel_twin: 2, live_diesel_expenses: 10 };
+  const cases = [
+    ["at the baseline nothing grows", ratchet({ doubled_with_live_fuel_twin: 2, live_diesel_expenses: 10 }, base).grew.length === 0],
+    ["a new doubled purchase grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 3, live_diesel_expenses: 10 }, base).grew.includes("doubled_with_live_fuel_twin")],
+    ["a new Diesel expense grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 2, live_diesel_expenses: 11 }, base).grew.includes("live_diesel_expenses")],
+    ["a shrink is reported, not failed", (() => { const r = ratchet({ doubled_with_live_fuel_twin: 1, live_diesel_expenses: 10 }, base); return r.grew.length === 0 && r.shrank.includes("doubled_with_live_fuel_twin"); })()],
+    ["a correctly voided 5782 row passes", badlyVoided([{ id: "a", status: "void", void_reason: VOID_REASON_5782 }]).length === 0],
+    ["a 5782 row un-voided fails", badlyVoided([{ id: "a", status: "posted", void_reason: VOID_REASON_5782 }]).length === 1],
+    ["a 5782 row voided with another reason fails", badlyVoided([{ id: "a", status: "void", void_reason: "other" }]).length === 1],
+    ["a purged 5782 row (absent) is accepted", badlyVoided([]).length === 0],
+  ];
+  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
 }
 
 await live();
