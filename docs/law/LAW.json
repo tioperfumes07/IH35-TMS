@@ -1,5 +1,12 @@
 [
   {
+    "id": "R443-139-LOAD-COSTS-LIVE-DOCUMENTS",
+    "title": "Load Costs reads current booking charges or issued invoices and native cost documents immediately; driver AP accrual is not a second cost; invoicing does not hide unsettled loads",
+    "source_file": "apps/backend/src/accounting/load-costs-live-documents.sql.ts",
+    "guard": "scripts/verify-load-costs-live-documents.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "BCF-09-SETTLEMENT-PAY-ITEM-ACCOUNT",
     "title": "Settlement extra/detention pay requires a native item and retains its mapped account through A/P posting",
     "source_file": "apps/backend/src/driver-finance/settlement-pay-line.service.ts",

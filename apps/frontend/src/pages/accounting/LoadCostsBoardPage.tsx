@@ -40,6 +40,7 @@ type BoardRow = {
   unit_number: string | null; trailer_number: string | null; pickup_city: string | null; delivery_city: string | null;
   pickup_date: string | null; scheduled_delivery_at: string | null; actual_delivery_at: string | null; created_at: string;
   revenue_cents: string; expense_cents: string; bill_cents: string; repairs_maintenance_cents: string; driver_pay_cents: string;
+  revenue_source: "invoice" | "proforma";
   /** U3 — what the general ledger carries for this load (expense + COGS postings, net of reversals). */
   ledger_cost_cents?: number;
   /** ROUND 285.4.4 — Book Load wizard amounts from dispatch.load_charge_lines. */
@@ -61,10 +62,7 @@ type BoardRow = {
    * booking time, SET-01/SET-02) -- null only for a load with no driver bill yet (e.g. unassigned). */
   settlement_display_id: string | null;
   settlement_id: string | null;
-  /** NEW-09: true when a real, issued (non-draft, non-proforma, non-void) accounting.invoices row
-   * exists for this load -- the ground truth for "already invoiced, belongs in resettlement, not
-   * open items." mdata.loads.status never actually reaches 'invoiced' (0 rows system-wide), so
-   * that literal string in CLOSED below never matched anything -- this is the real signal. */
+  /** Issued invoice supplies revenue, independently of open cost collection. */
   is_invoiced: boolean;
   is_resettlement?: boolean;
 };
@@ -94,44 +92,16 @@ const NUM = "text-center whitespace-nowrap [font-variant-numeric:tabular-nums]";
 // gets it uniformly; no longer set per-cell here. The Gross cell's extra .tot-c shade (#EDF1F5)
 // distinguishing it from the rest of the row is not reproducible per-cell in the new column-keyed
 // model (footerCells has no per-cell background override) — an accepted, honest simplification.
-// NEW-09 (owner raw findings 2026-09-07): "unit 168 / a load already invoiced should not still be
-// sitting in Load Costs as an open item -- it belongs in resettlement". A 2026-09-07 pass added the
-// literal 'invoiced' status here, reasoning a load reaches mdata.loads.status='invoiced' once
-// accounting.invoices has a real row for it -- but live-reconfirmed 2026-09-08: NOTHING in the
-// codebase ever sets mdata.loads.status='invoiced' (0 rows system-wide carry it, across every
-// entity). That fix never actually fired; load 13569 (unit T168, real signed invoice already SENT)
-// stayed in `delivered_pending_docs`, still an open bucket. `invoiced` is kept in this list (a
-// future write path could legitimately use it and this must not silently stop honoring it), but the
-// real fix is isClosed() below, which checks the load's actual invoice existence server-computed
-// (`is_invoiced`, load-costs-board.routes.ts's invoice_info CTE) instead of a status value that
-// nothing writes.
-const CLOSED = ["cancelled", "abandoned", "closed", "paid", "invoiced", "driver_walkoff", "driver_no_show"];
+// R443.139: backend owns current-cost membership; issued revenue is still visible.
+const CLOSED = ["cancelled", "voided", "abandoned", "driver_walkoff", "driver_no_show"];
 const MOTION = ["draft", "booked", "planned", "unassigned", "assigned", "assigned_not_dispatched", "dispatched", "at_pickup", "in_transit", "at_delivery"];
 const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received"];
-// ROUND 18.1 (owner ruling, 2026-09-11 20:40 CT / 01:40 UTC 09-12 — OVERTURNS REG-040/#21692's
-// is_resettlement inclusion here): 7 genuinely in-route USMCA loads (13587 SB, 13590 NB, 13591 SB,
-// 13592 SB, 13593 SB, 13594 SB, 13595 SB — all status='dispatched', none invoiced) went INVISIBLE
-// on every Costs pill because is_resettlement is a TOUR-level flag load-costs-board.routes.ts's
-// settlement_info CTE sets whenever the tour's FIRST load is closed/invoiced (13578/13569/13571/
-// 13526/13576/13563 respectively) — a load that is still in route must show as current regardless
-// of what already happened to an earlier load on the same tour. A load's own state decides whether
-// it is current, never a sibling load's state. is_resettlement stays load-costs-board.routes.ts's
-// signal for the SEPARATE Resettlement tab (isResettlement() below, unchanged) — just no longer a
-// reason to hide an otherwise-active load from Costs.
-// ROUND 18.2 (owner-live 2026-09-30, "LOAD COSTS SHOULD SHOW ALL 16") — the SAME class of defect
-// ROUND 18.1 above overturned, arriving through is_invoiced instead of is_resettlement. Measured
-// live: /api/v1/accounting/load-costs-board returns all 16 open USMCA loads; the board rendered 14.
-// The two it dropped, 13625 and 13626, come back status='dispatched', is_invoiced=true — freight
-// physically in transit that carries an invoice nobody authorised. `|| r.is_invoiced` closed them
-// on the spot, so the loads most in need of attention were the only ones invisible.
-//
-// A load's PHYSICAL state decides whether it is in motion. Invoicing is an ACCOUNTING state and
-// cannot move a truck off the road. An invoice still closes a load that is no longer in a motion
-// status -- that intent is kept -- it just can no longer erase one that is.
-const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || (r.is_invoiced && !MOTION.includes(r.status));
-// An issued invoice moves the original load out of every active bucket ONCE IT HAS STOPPED MOVING,
-// independent of tour close. status === "invoiced" is the real resettlement signal; a dispatched
-// load wearing an invoice is an anomaly to surface on Costs, not a resettlement to file away.
+// R443.139: invoicing changes the revenue source, never hides costs still landing on a load.
+// Actual settlement closure is filtered once by the backend's canonical cost-board scope.
+const isClosed = (r: BoardRow) => CLOSED.includes(r.status);
+// This secondary register groups issued/nonmoving rows and explicit resettlements, but does
+// not remove them from current costs. R443.139: only actual closure, checked by the server,
+// finishes current costs; a status label or issued invoice alone cannot do that.
 const isResettlement = (r: BoardRow) =>
   r.is_resettlement === true || r.status === "invoiced" || (r.is_invoiced && !CLOSED.includes(r.status) && !MOTION.includes(r.status));
 export const LOAD_COSTS_ELEMENT_MANIFEST = [
@@ -576,7 +546,7 @@ function TourRegister({ state, companyId, onCount }: { state: "open" | "closed";
 export function LoadCostsBoardPage() {
   const navigate = useNavigate(); const { selectedCompanyId } = useCompanyContext(); const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
-  const [filter, setFilter] = useState<FilterPill>("in_motion");
+  const [filter, setFilter] = useState<FilterPill>("all_open");
   const [showVoided, setShowVoided] = useState(false);
   const [costTab, setCostTab] = useState<CostTab>("costs");
   // Spec 09-04-2026 (Load Costs Board 19 Columns) §3/DoD-2: "every one of the 19 is server-side
@@ -587,7 +557,7 @@ export function LoadCostsBoardPage() {
   // and calls onSortChange, and the actual order comes back from the server on every click.
   const [sortKey, setSortKey] = useState("load");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const query = useQuery({ queryKey: ["accounting", "load-costs-board", companyId, showVoided, sortKey, sortDirection], queryFn: () => apiRequest<{ rows: BoardRow[]; unmatched_bank_count: number }>(`/api/v1/accounting/load-costs-board?operating_company_id=${encodeURIComponent(companyId)}&show_voided=${showVoided}&load_costs_sort=${encodeURIComponent(sortKey)}&sort_direction=${sortDirection}`), enabled: Boolean(companyId), retry: false });
+  const query = useQuery({ queryKey: ["accounting", "load-costs-board", companyId, showVoided, sortKey, sortDirection], queryFn: () => apiRequest<{ rows: BoardRow[]; unmatched_bank_count: number }>(`/api/v1/accounting/load-costs-board?operating_company_id=${encodeURIComponent(companyId)}&show_voided=${showVoided}&load_costs_sort=${encodeURIComponent(sortKey)}&sort_direction=${sortDirection}`), enabled: Boolean(companyId), retry: false, refetchInterval: 15_000 });
   const rows = query.data?.rows ?? [];
   // STATUS-DROPDOWN SWEEP (owner 2026-09-10, verbatim: "the button like quickbooks has drop down
   // everywhere to change status wherever necessary") -- this board's own Status column only ever
@@ -768,7 +738,7 @@ export function LoadCostsBoardPage() {
         );
       },
     },
-    { key: "revenue", label: "Revenue", testId: "col-revenue", sortable: true, className: NUM, sortValue: r => Number(r.revenue_cents), render: r => fmt(Number(r.revenue_cents)) },
+    { key: "revenue", label: "Revenue", testId: "col-revenue", sortable: true, className: NUM, sortValue: r => Number(r.revenue_cents), render: r => <span title={r.revenue_source === "invoice" ? "Issued invoice revenue, excluding tax" : "Proforma: current booking charges"}>{fmt(Number(r.revenue_cents))}<span className="block text-xs text-gray-500">{r.revenue_source === "invoice" ? "Invoiced" : "Proforma"}</span></span> },
     // ROUND 285.4.4 — wizard amounts traced to dispatch.load_charge_lines (Book Load). Dash = never
     // recorded on the load (honesty rule); never invent from rate_total.
     { key: "line_haul", label: "Line haul", testId: "col-line-haul", sortable: true, className: NUM, sortValue: r => Number(r.line_haul_cents), render: r => fmtDash(Number(r.line_haul_cents)) },

@@ -2,9 +2,6 @@
   "established": "2026-09-22",
   "note": "ROUND 36.1 — shrink-only ratchet, seeded at the offender count remaining after fixing the reported-broken surfaces (Home tiles, Dispatch board ACTIVE LOADS/DELIVERED-PENDING-DOCS, At Risk, Late Arrivals, Truck Line, Planner roster, Trip Pairing). Each remaining file either mutates mdata.loads (not a list/board read) or is a genuinely out-of-scope internal computation (deadhead optimizer, OCR, BOL generation) not named by the owner complaint — never silently excused, tracked here to shrink.",
   "files": {
-    "accounting/load-costs-board.routes.ts": {
-      "count": 2
-    },
     "dispatch/analytics/booking-gap.service.ts": {
       "count": 1
     },
