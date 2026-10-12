@@ -2502,5 +2502,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
     "purpose": "443.105 run #4 (verify-form-field-roundtrip): fuel.fuel_transactions.location_id -> mdata.locations, so the fuel stop the operator picks is linked, not only its text"
+  },
+  "202615781200": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.106: refuse_driver_bill_without_links (vendor/driver/load/unit on live driver bills); bill_payments.vendor_id NOT NULL; expense_lines refuse driver/unit attribution that differs from a load-bearing header — trailer clause deferred (prod still has 4 bills without trailer); expense load/exemption already 202615770700 (CC-2; 5 EXP rows still open)"
   }
 }
