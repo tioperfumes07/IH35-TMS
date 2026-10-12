@@ -251,8 +251,9 @@ async function writeLine(
   // RULING 443.65 #2d — a line on a "Due to / from <party>" account names its party, or it is refused.
   if (!line.entity_uuid) {
     const party = await client.query<{ hit: number }>(
-      `SELECT 1 AS hit FROM catalogs.accounts WHERE id = $1::uuid AND account_name LIKE 'Due to / from %' LIMIT 1`,
-      [line.account_id]
+      `SELECT 1 AS hit FROM catalogs.accounts
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND account_name LIKE 'Due to / from %' LIMIT 1`,
+      [line.account_id, line.operating_company_id]
     );
     if (party.rows[0]) throw new RelatedPartyPostingWithoutPartyError(String(line.account_id), String(line.journal_entry_uuid));
   }

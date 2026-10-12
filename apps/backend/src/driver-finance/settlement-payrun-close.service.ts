@@ -642,6 +642,7 @@ export async function closeSettlementPayRun(
         SELECT count(*)::text AS n
           FROM driver_finance.settlement_lines sl
          WHERE sl.settlement_id = $1::uuid
+           AND sl.operating_company_id = $2::uuid
            AND sl.is_active = true
            AND sl.line_type IN ('earnings', 'deadhead_pay')
            AND sl.load_id IS NOT NULL
@@ -649,10 +650,10 @@ export async function closeSettlementPayRun(
         -- Lead 443.36: a SALARIED driver's settlement has no per-load pay line by design; its loads, booked with the 0-rate
         -- "Salaried" override (isSalariedZeroRateOverride) and linked to this settlement, are its load activity.
         SELECT count(*)::text FROM mdata.loads l
-         WHERE l.presettlement_link_id = $1::uuid AND l.soft_deleted_at IS NULL
+         WHERE l.presettlement_link_id = $1::uuid AND l.operating_company_id = $2::uuid AND l.soft_deleted_at IS NULL
            AND l.driver_pay_rate_per_mile = 0 AND l.driver_pay_rate_override_reason ~* '^(salaried|local driver — weekly salary)'
       `,
-      [settlementId]
+      [settlementId, opco]
     );
     if (loadActivity.rows.reduce((t, r) => t + Number(r.n ?? 0), 0) === 0) {
       throw new SettlementPayRunError(

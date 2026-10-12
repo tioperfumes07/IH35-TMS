@@ -1,10 +1,10 @@
 {
-  "healthzSha": "3fd3552",
-  "generated_at": "2026-10-12T10:19:32.796Z",
+  "healthzSha": "68acad9",
+  "generated_at": "2026-10-12T10:30:29.929Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "3fd3552",
+    "deployedSha": "68acad9",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 26542,
+      "title": "FINDING: ACCT-F4439913 LANE: FINANCIAL -- 443.99 C lane 3 batch 2: 11 verify-steps green (+ 3069 static half, 3418 census) — categorizer read revoked A/P bills, 4 flag keys never seeded, Creator import cycle, ctx.pass missing, 4 orphan guards wired, 9 stale guards re-anchored",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 05:26 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26542",
+      "sha": "303b71886d",
+      "committedAtIso": "2026-10-12T05:26:58-05:00"
+    },
+    {
+      "number": 26541,
+      "title": "FINDING: ACCT-F4439915 LANE: FINANCIAL -- 443.99 C lane 5 batch 3: the 17 live-DB guards #26531 moved were dropped from ci.yml by #26536 (run nowhere); 3 guards restated to owner/Lead law that moved",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 05:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26541",
+      "sha": "efed2955cf",
+      "committedAtIso": "2026-10-12T05:25:12-05:00"
+    },
+    {
+      "number": 26540,
+      "title": "FINDING: ACCT-F4439910 LANE: FINANCIAL -- 443.99 C lane 0: 14 verify-steps green — samsara webhook pre-verify org leak closed, AlwaysTrack seed joins its loads to their settlement, 4 guards honor the URL's TLS mode, 9 guards re-anchored on the engines that moved",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 05:23 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26540",
+      "sha": "68acad9f3d",
+      "committedAtIso": "2026-10-12T05:23:38-05:00"
+    },
+    {
       "number": 26538,
       "title": "FINDING: ACCT-F4439915 LANE: FINANCIAL -- 443.99 C lane 5 batch 2: factoring KPIs showed raw CoA role keys for unbound roles; payrun-close suite isolated off shared ap_control; 7 guards re-anchored to the design that moved",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26533",
       "sha": "d626e7b7aa",
       "committedAtIso": "2026-10-12T05:09:30-05:00"
-    },
-    {
-      "number": 26532,
-      "title": "FINDING: ACCT-F4439915 LANE: FINANCIAL -- 443.99 C lane 5: 6 guards connect to CI's local postgres (TLS by host), a stale selftest anchor, 5 comments that tripped the neondb_owner scan",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:09 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26532",
-      "sha": "b0c27009c5",
-      "committedAtIso": "2026-10-12T05:09:23-05:00"
-    },
-    {
-      "number": 26531,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- 443.99 A: 17 live-ledger guards move from the fresh-DB heavy step to the live-DB job (prod read-only), each PASS on prod",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:03 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26531",
-      "sha": "87a9813a68",
-      "committedAtIso": "2026-10-12T05:03:38-05:00"
-    },
-    {
-      "number": 26530,
-      "title": "FINDING: ACCT-F443991 LANE: FINANCIAL -- 443.99 C: Settlement Creator Edit (void and repost) voids the prior post's deductions (driver was deducted twice); lease guard released its live-DB probe (hung verify:pre-commit)",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:01 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26530",
-      "sha": "214129e580",
-      "committedAtIso": "2026-10-12T05:01:28-05:00"
     }
   ]
 }

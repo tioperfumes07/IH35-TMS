@@ -130,8 +130,9 @@ if (SELFTEST) {
   expectCaught(
     "contest-void-guard-removed",
     live.replace(
-      "SET status = 'contested',\n              notes = COALESCE($3, notes),\n              updated_by_user_id = $4\n          WHERE id = $1\n            AND operating_company_id = $2\n            AND voided_at IS NULL",
-      "SET status = 'contested',\n              notes = COALESCE($3, notes),\n              updated_by_user_id = $4\n          WHERE id = $1\n            AND operating_company_id = $2"
+      // The live predicate is "operating_company_id = $2::uuid" (typed bind) — the fixture must match it or the case is inert.
+      "SET status = 'contested',\n              notes = COALESCE($3, notes),\n              updated_by_user_id = $4\n          WHERE id = $1\n            AND operating_company_id = $2::uuid\n            AND voided_at IS NULL",
+      "SET status = 'contested',\n              notes = COALESCE($3, notes),\n              updated_by_user_id = $4\n          WHERE id = $1\n            AND operating_company_id = $2::uuid"
     ),
     "/contest: the UPDATE does not carry"
   );

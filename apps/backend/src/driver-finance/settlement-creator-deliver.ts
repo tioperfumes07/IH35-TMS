@@ -75,12 +75,14 @@ export async function settleStampedStopStatuses(client: DbClient, loadId: string
 export async function stampStopsFromTracking(
   client: DbClient,
   loadId: string,
+  operatingCompanyId: string,
   dates: { pickupDate?: string | null; deliveryDate?: string | null; stopDates?: Record<string, string> },
 ): Promise<StopStamp[]> {
   const load = (
     await client.query<{ load_number: string; unit_id: string | null; company_id: string }>(
-      `SELECT load_number, assigned_unit_id::text AS unit_id, operating_company_id::text AS company_id FROM mdata.loads WHERE id = $1::uuid`,
-      [loadId],
+      `SELECT load_number, assigned_unit_id::text AS unit_id, operating_company_id::text AS company_id
+         FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [loadId, operatingCompanyId],
     )
   ).rows[0];
   if (!load) return [];

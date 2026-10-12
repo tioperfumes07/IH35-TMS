@@ -441,7 +441,7 @@ export async function ensureDispatchedLoadsForCreator(
     const delivered = !(load.not_yet_delivered !== false && !load.delivery_date);
     const bookedId = String((result as { row?: { id?: unknown } }).row?.id ?? "");
     if (delivered && bookedId) {
-      stopStamps.push(...(await stampStopsFromTracking(client, bookedId, { pickupDate: load.pickup_date, deliveryDate: load.delivery_date })));
+      stopStamps.push(...(await stampStopsFromTracking(client, bookedId, draft.operating_company_id, { pickupDate: load.pickup_date, deliveryDate: load.delivery_date })));
       await deliverLoadThroughDispatch(client, actor.uuid, draft.operating_company_id, bookedId, load.delivery_date);
     }
     // RULING 443.86 #1: a document that prints no empty miles still has a deadhead when the truck ran a load before this

@@ -51,8 +51,14 @@ export function staticProblems(root) {
   if (!/RELAY_FUEL_WALLET_AMOUNT_SQL/.test(match)) {
     p.push("match.service loadLedgerAmountCents / candidates must use RELAY_FUEL_WALLET_AMOUNT_SQL (F442)");
   }
-  if (!/wants\("relay_fuel"\)/.test(match) && !/wants\('relay_fuel'\)/.test(match)) {
-    p.push("fetchLedgerCandidates must surface relay_fuel under !isCredit");
+  // ROUND 443.54 (04ae209084, #26376) RETIRED the 441.21-B R5 rule that fills are bank Match candidates: a Relay fill
+  // draws from wallet 1295, never the bank, so the bank drawer must NOT list it (same law as
+  // verify-relay-fill-not-a-bank-match-candidate). An existing matched_relay_fuel_transaction_id pointer still accepts.
+  if (/wants\(\s*["']relay_fuel["']\s*\)/.test(match)) {
+    p.push("fetchLedgerCandidates must NOT surface relay_fuel as a bank Match candidate (443.54: fills draw from 1295)");
+  }
+  if (!match.includes("matched_relay_fuel_transaction_id")) {
+    p.push("match.service must keep matched_relay_fuel_transaction_id so an existing fill pointer still accepts / unmatches");
   }
   const requiredTests = [
     "exact single match links",

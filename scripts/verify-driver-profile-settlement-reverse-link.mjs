@@ -36,7 +36,9 @@ export function check(sources) {
   if (!be) {
     problems.push(`${BACKEND}: missing`);
   } else {
-    const weeksCte = be.match(/weeks AS \(\s*SELECT[\s\S]{0,300}?FROM driver_finance\.driver_settlements/)?.[0] ?? "";
+    // Bounded by the CTE itself, not a character count: f3276b46ba (ACCT-F10360) added settlement_display_id and pushed
+    // the select list past the old 300-char window. The match may not cross into the next CTE ("), name AS (").
+    const weeksCte = be.match(/weeks AS \(\s*SELECT(?:(?!\)\s*,\s*\w+ AS \()[\s\S])*?FROM driver_finance\.driver_settlements/)?.[0] ?? "";
     if (!/id::text AS settlement_id/.test(weeksCte)) {
       problems.push(`${BACKEND}: weeks CTE must SELECT id::text AS settlement_id — without it no per-row link is possible`);
     }
