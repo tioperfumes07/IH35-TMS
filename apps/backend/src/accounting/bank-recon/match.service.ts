@@ -2292,3 +2292,94 @@ export async function previewMatchVariance(input: {
     };
   });
 }
+
+/**
+ * G6 (LEAD 443.78 / 443.80 #3) — the SUGGESTED match of every unmatched bank line, READ ONLY. OWNER LAW B (2026-09-12,
+ * permanent): "it should never automatch, it suggests and we accept it or change the transactions" — nothing here is persisted
+ * (no reconciliation_matches row, no bank-line pointer, no status): the suggestion is the Match drawer's own live candidate
+ * search (findCandidates) ranked by the decided rules, and the owner accepts or changes it through the existing accept path.
+ * Ranking (443.80 #3): an expense and its own Relay fill are ONE purchase -> the EXPENSE, compared fee-inclusive; a Relay fill
+ * is compared fee-inclusive too; a Relay deposit line -> its Relay deposit document by its wallet leg; several exact documents
+ * -> all returned, none preselected; no exact amount / no candidate -> returned with the reason.
+ */
+export type SuggestionOutcome =
+  | { bank_transaction_id: string; result: "suggested"; ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string; reference: string | null }
+  | { bank_transaction_id: string; result: "already_suggested_or_matched" }
+  | { bank_transaction_id: string; result: "several"; documents: string[] }
+  | { bank_transaction_id: string; result: "none"; reason: "no_candidate" | "no_exact_amount" | "several_exact_documents" | "document_held_by_another_line" | "error"; detail?: string };
+
+export async function suggestBankMatches(input: {
+  operating_company_id: string;
+  bank_account_id?: string | null;
+  actor_user_uuid?: string;
+}): Promise<{ lines: number; suggested: number; outcomes: SuggestionOutcome[] }> {
+  const lines = await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    return (await client.query<{ id: string; amount_cents: number; held: boolean }>(
+      `SELECT bt.id::text, bt.amount_cents::int,
+              EXISTS (SELECT 1 FROM banking.reconciliation_matches m
+                       WHERE m.bank_transaction_id = bt.id AND m.voided_at IS NULL AND m.match_state IN ('auto_matched', 'user_matched')) AS held
+         FROM banking.bank_transactions bt
+        WHERE bt.operating_company_id = $1::uuid AND bt.voided_at IS NULL
+          AND ($2::uuid IS NULL OR bt.bank_account_id = $2::uuid)
+          AND bt.review_state IS DISTINCT FROM 'matched' AND bt.status::text <> 'categorized'
+        ORDER BY bt.transaction_date, bt.created_at`,
+      [input.operating_company_id, input.bank_account_id ?? null])).rows;
+  });
+  const outcomes: SuggestionOutcome[] = [];
+  // Six lines at a time (findCandidates is the drawer's full candidate search, ~1-2 s per line).
+  let next = 0;
+  const worker = async () => { while (next < lines.length) { const line = lines[next++]!; await suggestOne(line); } };
+  const suggestOne = async (line: { id: string; amount_cents: number; held: boolean }) => {
+    if (line.held) { outcomes.push({ bank_transaction_id: line.id, result: "already_suggested_or_matched" }); return; }
+    try {
+      const found = await findCandidates({ operating_company_id: input.operating_company_id, bank_transaction_id: line.id });
+      if (found.candidates.length === 0) { outcomes.push({ bank_transaction_id: line.id, result: "none", reason: "no_candidate" }); return; }
+      // LEAD 443.80 #3 (decided): an expense and its own Relay fill are ONE purchase -> the suggestion is the EXPENSE (it carries
+      // the fill + the sender fee). The wallet line is compared fee-inclusive: a line that carries the paid amount only (17751)
+      // equals the document minus the fill's sender fee (17951 - 2.00); a line that carries paid + fee (19903) equals it exactly.
+      const relayIds = found.candidates.filter((c) => c.ledger_entry_kind === "relay_fuel").map((c) => c.ledger_entry_id);
+      const expenseIds = found.candidates.filter((c) => c.ledger_entry_kind === "expense").map((c) => c.ledger_entry_id);
+      const fees = new Map<string, number>();       // document id -> sender fee cents (Relay fill, or the fill under an expense)
+      const fillOf = new Map<string, string>();     // expense id -> its own Relay fill id
+      if (relayIds.length || expenseIds.length) {
+        await withLuciaBypass(async (client) => {
+          const feeSql = `COALESCE((SELECT round(sum((f->>'amount')::numeric) * 100) FROM jsonb_array_elements(COALESCE(r.fees, '[]'::jsonb)) f), 0)::int`;
+          const r = await client.query<{ id: string; fee_cents: number }>(
+            `SELECT r.id::text, ${feeSql} AS fee_cents FROM integrations.relay_fuel_transactions r
+              WHERE r.id = ANY($1::uuid[]) AND r.operating_company_id = $2::uuid`, [relayIds, input.operating_company_id]);
+          for (const row of r.rows) fees.set(row.id, Number(row.fee_cents));
+          const e = await client.query<{ id: string; fill_id: string | null; fee_cents: number }>(
+            `SELECT e.id::text, r.id::text AS fill_id, COALESCE(${feeSql}, 0)::int AS fee_cents
+               FROM accounting.expenses e
+               LEFT JOIN fuel.fuel_transactions ft ON ft.id = e.source_fuel_transaction_id
+               LEFT JOIN integrations.relay_fuel_transactions r ON r.id = ft.relay_fuel_transaction_id
+              WHERE e.id = ANY($1::uuid[]) AND e.operating_company_id = $2::uuid`, [expenseIds, input.operating_company_id]);
+          for (const row of e.rows) { fees.set(row.id, Number(row.fee_cents)); if (row.fill_id) fillOf.set(row.id, row.fill_id); }
+        });
+      }
+      const bankAbs = Math.abs(Number(line.amount_cents));
+      const isExact = (c: (typeof found.candidates)[number]) => {
+        const amt = Math.abs(Number(c.amount_cents));
+        const fee = fees.get(c.ledger_entry_id) ?? 0;
+        // A Relay deposit lands on the wallet as its wallet leg (gross minus the 3.25% fee) — its own document (443.80 #3).
+        if (c.ledger_entry_kind === "relay_deposit" && c.relay_deposit_wallet_cents != null && Math.abs(Number(c.relay_deposit_wallet_cents)) === bankAbs) return true;
+        return amt === bankAbs || (fee > 0 && (amt - fee === bankAbs || amt + fee === bankAbs));
+      };
+      let exact = found.candidates.filter(isExact);
+      // One purchase: drop a Relay fill whose own expense is also exact — the expense is the suggestion.
+      const expenseFills = new Set(exact.filter((c) => c.ledger_entry_kind === "expense").map((c) => fillOf.get(c.ledger_entry_id)).filter(Boolean) as string[]);
+      exact = exact.filter((c) => !(c.ledger_entry_kind === "relay_fuel" && expenseFills.has(c.ledger_entry_id)));
+      if (exact.length === 0) { outcomes.push({ bank_transaction_id: line.id, result: "none", reason: "no_exact_amount" }); return; }
+      // Several exact documents (different purchases): all returned, none preselected (443.80 #3).
+      if (exact.length > 1) { outcomes.push({ bank_transaction_id: line.id, result: "several", documents: exact.map((c) => `${c.ledger_entry_kind}:${c.ledger_entry_id}`) }); return; }
+      const pick = exact[0]!;
+      outcomes.push({ bank_transaction_id: line.id, result: "suggested", ledger_entry_kind: pick.ledger_entry_kind, ledger_entry_id: pick.ledger_entry_id, reference: pick.reference ?? null });
+    } catch (e) {
+      const msg = (e as Error).message ?? String(e);
+      outcomes.push({ bank_transaction_id: line.id, result: "none", reason: "error", detail: msg.slice(0, 200) });
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(6, lines.length) }, () => worker()));
+  return { lines: lines.length, suggested: outcomes.filter((o) => o.result === "suggested").length, outcomes };
+}
