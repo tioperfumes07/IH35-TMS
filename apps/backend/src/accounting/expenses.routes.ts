@@ -18,6 +18,7 @@ import { openAndRunIntake } from "../driver-finance/feed-gate/feed-gate.service.
 /** OWNER LAW 2026-10-01: an expense created in the app always posts; a poster failure refuses the create (transaction rolls back). */
 class ExpensePostRefused extends Error { constructor(public code: string, public detail: string) { super(`expense_post_refused_gl_post_failed:${code}`); } }
 import { todayIso } from "./void.service.js";
+import { reverseExpenseDocumentInClientTx } from "./expense-void-reversal.js";
 import { canVoid, isVoidEnforcementEnabled, releaseBankLinesNamingDocument } from "./void.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -1881,32 +1882,14 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     try {
       const voided = await withCompanyScope(user.uuid, oci, async (client) => {
         let reversingJeId: string | null = null;
-        if (pre.posting_status === "posted") {
-          // EXP-POSTED-NO-JE-01 (owner-verified live 2026-09-01, expense 8a1b3d84-2cd5-4099-8c98-
-          // 4076cda163c7, $75.00): posting_status='posted' does not guarantee a posted batch exists
-          // to reverse -- this row had posted_at NULL, journal_entry_id NULL, and zero
-          // journal_entry_postings. reversePostedSourceTransactionInClientTx throws
-          // PostingEngineError("SOURCE_NOT_FOUND") in that case, correctly ("there is nothing to
-          // reverse"), but the route had no path forward: it is not this route's job to fake a
-          // reversal for a document that never actually posted. Voiding an unposted document is a
-          // status change plus an audit entry, nothing more -- caught here, specifically, so any
-          // OTHER posting-engine error (PERIOD_LOCKED, a real reversal failure) still fails loud
-          // through the outer catch below.
-          try {
-            const rev = await reversePostedSourceTransactionInClientTx(
-              client,
-              { operating_company_id: oci, source_transaction_type: "expense", source_transaction_id: expenseId },
-              { userId: String(user.uuid) },
-              todayIso()
-            );
-            reversingJeId = rev.journal_entry_id;
-          } catch (revErr) {
-            if (!(revErr instanceof PostingEngineError) || revErr.code !== "SOURCE_NOT_FOUND") throw revErr;
-            // Nothing posted -- fall through with reversingJeId still null. The UPDATE below still
-            // flips posting_status='posted' -> 'reversed' for consistency (it already claimed
-            // posted; 'reversed' is the honest terminal state), but no JE is invented.
-          }
-        }
+        // ACCT-F4431310 — reverse everything LIVE for this document (its own 'expense' lines AND a fuel receipt's
+        // 'fuel_event' entry), decided by reading; EXP-POSTED-NO-JE-01's unposted case is "nothing live", not a swallowed
+        // SOURCE_NOT_FOUND. Any reversal error propagates and the void is refused.
+        const rev = await reverseExpenseDocumentInClientTx(client, {
+          operatingCompanyId: oci, expenseId, actorUserId: String(user.uuid), currentBusinessDate: todayIso(),
+          memo: `Void reversal of expense ${expenseId}: ${body.data.reason}`, expenseReverser: "source",
+        });
+        reversingJeId = rev.reversal_journal_entry_id;
 
         // ROUND 368.2(b) — a bank line that names this expense goes back to For review (match kept, release recorded) before it dies.
         await releaseBankLinesNamingDocument(client as never, { operatingCompanyId: oci, pointerColumn: "matched_expense_id", documentId: expenseId }, {
