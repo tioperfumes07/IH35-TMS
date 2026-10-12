@@ -6,6 +6,9 @@ export default {
     // RULING 443.65 #2d — the party ledger = its GL account, per party; no party posting without its party entity.
     await ctx.run("node", ["scripts/verify-party-ledger-sums-to-gl-account.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-party-ledger-sums-to-gl-account.mjs"]);
+    // LEAD 443.134 #1 — one writer of a related party's running "Due to / from" account.
+    await ctx.run("node", ["scripts/verify-related-party-account-one-writer.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-related-party-account-one-writer.mjs"]);
     // RULING 443.59 — non-opco Relay deposits must be refused (not posted) when they hit a party account.
     await ctx.run("node", ["scripts/verify-relay-deposit-no-party-refused.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-relay-deposit-no-party-refused.mjs"]);

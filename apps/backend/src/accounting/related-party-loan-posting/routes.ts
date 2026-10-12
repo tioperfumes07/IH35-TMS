@@ -30,6 +30,11 @@ import {
   createRelatedPartyLoanEntry,
 } from "./create-entry.service.js";
 import { getPartyLedger, listPartyAccounts } from "./party-ledger.service.js";
+import {
+  RelatedPartyAccountError,
+  ensureRelatedPartyAccount,
+  refuseNonOwnerRelatedPartyAccount,
+} from "./party-account.service.js";
 import { pairPartyTransfer, postPartyEntry } from "./party-entry-post.service.js";
 import { createJournalEntryOnClient } from "../journal-entries.service.js";
 
@@ -422,6 +427,47 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
         listPartyAccounts(client as never, q.data.operating_company_id)
       );
       return { parties };
+    }
+  );
+
+  // LEAD 443.134 #1 — the app creates a related party's ONE running "Due to / from <party>" account (2410-00-nnn, linked to
+  // the party, card-map rows for the party pointed at it). Owner only; dry_run defaults true; idempotent. Posts nothing.
+  app.post(
+    "/api/v1/accounting/related-parties/accounts/ensure",
+    { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+      if (!q.success) return validationError(reply, q.error);
+      const b = z
+        .object({ party_type: z.literal("vendor"), party_id: z.string().uuid(), dry_run: z.boolean().default(true) })
+        .safeParse(req.body ?? {});
+      if (!b.success) return validationError(reply, b.error);
+      const opco = q.data.operating_company_id;
+      const role = String((authUser as { role?: string }).role ?? "");
+      if (role !== "Owner") {
+        await withCompanyScope(authUser.uuid, opco, (client) =>
+          refuseNonOwnerRelatedPartyAccount(client as never, { userId: authUser.uuid, role }, opco).catch((e) => {
+            if (!(e instanceof RelatedPartyAccountError)) throw e;
+          })
+        );
+        return reply.code(403).send({ error: "owner_only", message: "Only the Owner can create a related party's account." });
+      }
+      try {
+        return await withCompanyScope(authUser.uuid, opco, (client) =>
+          ensureRelatedPartyAccount(client as never, {
+            operatingCompanyId: opco,
+            partyType: b.data.party_type,
+            partyId: b.data.party_id,
+            actorUserId: authUser.uuid,
+            dryRun: b.data.dry_run,
+          })
+        );
+      } catch (e) {
+        if (e instanceof RelatedPartyAccountError) return reply.code(e.status).send({ error: e.code, message: e.message });
+        throw e;
+      }
     }
   );
 

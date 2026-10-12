@@ -170,6 +170,7 @@ export const TABLE_REGISTRY = {
   "accounting.payments": { status: "OUT_OF_SCOPE" },
   "accounting.period_cash_basis_snapshot": { status: "NOT_TRANSACTIONAL" },
   "accounting.periods": { status: "NOT_TRANSACTIONAL", reason: "config" },
+  "accounting.related_party_accounts": { status: "NOT_TRANSACTIONAL", reason: "443.134 #1 link related party (vendor) -> its one running Due to / from account; master data, no amount" },
   "accounting.posting_batches": { status: "NOT_TRANSACTIONAL" },
   "accounting.prepaid_amortization_rows": { status: "NEEDS_JOIN_PATH", reason: "usually company-level (TIER3); TIER2 if a specific unit's prepaid item -- needs the source join" },
   "accounting.prepaid_assets": { status: "NEEDS_JOIN_PATH" },
