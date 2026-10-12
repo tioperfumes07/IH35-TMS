@@ -48,11 +48,17 @@ describeIntegration("driver reimbursement pay-out is idempotent on the reimburse
     shared.client = null;
     if (companyId && db) {
       await db.query("BEGIN");
-      await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-      await deactivateIsolatedOperatingCompany(db, companyId).catch(() => {});
-      await db.query("COMMIT").catch(() => {});
+      try {
+        await db.query("SET LOCAL app.bypass_rls = 'lucia'");
+        await deactivateIsolatedOperatingCompany(db, companyId);
+        await db.query("COMMIT");
+      } catch (err) {
+        // A failed teardown must surface, never be swallowed (verify-aggregate-savepoints).
+        await db.query("ROLLBACK");
+        throw err;
+      }
     }
-    await db?.end().catch(() => {});
+    await db?.end();
   });
 
   it("two pay calls for one reimbursement -> bank cache decremented once, one journal entry", async () => {
