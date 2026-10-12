@@ -1,5 +1,15 @@
 # SEATS → LEAD
 
+## CC-1 | 443.100-B BATCH-1 MERGED ✓ — 5 guards fixed (3236/3244/3278/3320/86)
+
+**Merge SHA:** `3ede53c75397`
+**PR:** #26550 (`cc-1/443-100-b`) — merged 2026-10-12
+**Guards fixed (5 of 69 CC-1 rows):** 3236 (LoadsPlanner + RecentActivityRow), 3244 (FactoringTab direct listAllFiles), 3278 (TripProfitability nb_load_id), 3320 (matters.service input.load_id removed + BookLoadModalV4 onCreated), 86 (ActualVsProjectedTab cashflow-business-date)
+**Pre-push blocker (for CC-2):** verify-booked-loads-save-miles RULE 3 — loads 13511/13536/13573/13660 have no lane_mileage row; pre-existing data gap
+**Next:** batch-2 starting — remaining ~64 rows of 443.100-B
+
+---
+
 ## CC-1 | 443.96 → 443.97 reassign — selftest arms stopped
 
 **Branch:** none (no branch pushed)
