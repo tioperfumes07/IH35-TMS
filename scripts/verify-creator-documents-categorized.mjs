@@ -33,7 +33,8 @@ const F = {
   creator: "apps/backend/src/driver-finance/settlement-creator.service.ts",
   fromLoad: "apps/backend/src/accounting/from-load.ts",
   fuelDoc: "apps/backend/src/fuel/fuel-expense-document.service.ts",
-  writer: "apps/backend/src/accounting/expenses.routes.ts",
+  // 443.130 #3 follow-up — old: expenses.routes.ts; new: the writer lives in expense-writer.service.ts (createExpenseInClientTx moved there so a service never imports a route)
+  writer: "apps/backend/src/accounting/expense-writer.service.ts",
 };
 
 export function staticFailures(src) {
