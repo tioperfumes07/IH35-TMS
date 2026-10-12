@@ -23,6 +23,7 @@ import { postSourceTransactionInClientTx } from "../accounting/posting-engine.se
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { resolveDriverVendorLink, DriverVendorMissingError } from "../accounting/driver-vendor-link.service.js";
+import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
 
 export class SettlementApChainError extends Error {
   constructor(public code: string, message: string, public details: Record<string, unknown> = {}) {
@@ -106,7 +107,7 @@ export function allocateApplication(remaining: Map<string, number>, order: strin
 export async function loadSettlementLoadBills(client: pg.PoolClient, opco: string, settlementId: string, driverId: string): Promise<ApChainLoadBill[]> {
   const r = await client.query<{ id: string; load_id: string; load_number: string | null; gross: string; span_start: string | null; span_end: string | null; unit_id: string | null }>(
     `SELECT db.id::text, db.load_id::text, COALESCE(l.load_number, db.load_number) AS load_number, db.gross_amount_cents::text AS gross,
-            (SELECT u.id::text FROM mdata.units u WHERE u.id = l.assigned_unit_id AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)) AS unit_id,
+            ${sameEntityLoadUnitSql("l.id", "l.operating_company_id")}::text AS unit_id,
             (SELECT min(COALESCE(st.actual_arrival_at, st.appointment_start_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = db.load_id) AS span_start,
             (SELECT max(COALESCE(st.actual_departure_at, st.actual_arrival_at, st.appointment_end_at, st.scheduled_departure_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = db.load_id) AS span_end
        FROM driver_finance.driver_bills db
@@ -129,7 +130,7 @@ export async function loadSettlementLoadBills(client: pg.PoolClient, opco: strin
 export async function loadSalariedSettlementLoads(client: pg.PoolClient, opco: string, settlementId: string): Promise<ApChainLoadBill[]> {
   const r = await client.query<{ load_id: string; load_number: string; span_start: string | null; span_end: string | null; unit_id: string | null }>(
     `SELECT l.id::text AS load_id, l.load_number,
-            (SELECT u.id::text FROM mdata.units u WHERE u.id = l.assigned_unit_id AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)) AS unit_id,
+            ${sameEntityLoadUnitSql("l.id", "l.operating_company_id")}::text AS unit_id,
             (SELECT min(COALESCE(st.actual_arrival_at, st.appointment_start_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = l.id AND st.soft_deleted_at IS NULL) AS span_start,
             (SELECT max(COALESCE(st.actual_departure_at, st.actual_arrival_at, st.appointment_end_at, st.scheduled_departure_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = l.id AND st.soft_deleted_at IS NULL) AS span_end
        FROM mdata.loads l

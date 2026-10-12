@@ -1,4 +1,5 @@
 import { assertNoHistoricalSettlementCoverage } from "../../driver-finance/settlement-historical-attribution.service.js";
+import { sameEntityLoadUnitSql } from "../load-unit.sql.js";
 // SETTLEMENT-BILL-PAYMENT — the canonical driver-settlement GL posting engine (blueprint §3, LOCKED).
 // TIER-1 FINANCIAL, BUILD-AND-HOLD. Flag SETTLEMENT_GL_POSTING_ENABLED (default OFF) => NO-OP.
 //
@@ -251,9 +252,7 @@ async function loadDriverBills(client: DbClient, operatingCompanyId: string, set
     `
       SELECT db.id::text, db.load_id::text, db.load_number, db.gross_amount_cents::int AS gross_amount_cents,
              -- 443.101 (P38 Wave-A) — the load's same-entity unit (owned or currently leased), stamped on the per-load bill.
-             (SELECT u.id::text FROM mdata.loads l JOIN mdata.units u ON u.id = l.assigned_unit_id
-               WHERE l.id = db.load_id AND l.operating_company_id = db.operating_company_id
-                 AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)) AS unit_id
+             ${sameEntityLoadUnitSql("db.load_id", "db.operating_company_id")}::text AS unit_id
       FROM driver_finance.driver_bills db
       WHERE db.operating_company_id = $1::uuid
         AND db.driver_id = $3::uuid
