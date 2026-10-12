@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { correctPostedExpense, CORRECTABLE_EXPENSE_FIELDS, ExpenseCorrectionRefused } from "./expense-correction.service.js";
+import { EXPENSE_LOAD_MISMATCH_ERROR, type ExpenseLoadMismatch } from "./expense-load-attribution.js";
 import { EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL } from "./expense-bank-match-sql.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -661,6 +662,16 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           detail:
             "An expense with no truck cannot be costed. Provide unit_id directly, or a load_id whose load already carries an assigned unit.",
         });
+      // LEAD 443.128 B — the expense's unit / driver / trailer must be its load's; a different one is refused by name.
+      if ("loadAttributionMismatch" in payload) {
+        const m = payload as unknown as ExpenseLoadMismatch;
+        return reply.code(400).send({
+          error: EXPENSE_LOAD_MISMATCH_ERROR[m.mismatch],
+          detail: `The expense names a load whose ${m.mismatch} is ${m.load ?? "not set"}, not the ${m.mismatch} supplied (${m.supplied}). An expense on a load carries that load's unit, driver and trailer.`,
+          supplied: m.supplied,
+          load_value: m.load,
+        });
+      }
       // GO-19-1b G2 — an expense may not carry a load_id whose load has a DIFFERENT unit_id.
       if ("unitLoadMismatch" in payload)
         return reply.code(400).send({
