@@ -35,7 +35,8 @@ const stubClient = {
   query: vi.fn(async (_sql: string, values?: unknown[]) => {
     const id = String(values?.[0] ?? "");
     const row = ACCOUNTS[id];
-    return { rows: row ? [row] : [] };
+    // The shared resolver's active-account check (bill-account-resolver.ts assertActiveAccount) reads the row's id.
+    return { rows: row ? [{ id, ...row }] : [] };
   }),
 };
 

@@ -156,22 +156,25 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
     const billC = await seedBill(companyId, 4321, `BANKREC-LISTSTATUS bill C ${suffix}`);
     await seedPayment(companyId, billC, 4321);
 
+    // A live match row must sit on a bank line that carries its document (trg_live_match_row_has_a_linked_line,
+    // ROUND 368.2(b)): the match service stamps the line's pointer and writes the row together — the fixture does the same.
+    const stampLine = (scope: string, bankTxnId: string, paymentId: string) =>
+      bypass(scope, async () => {
+        await db.query(
+          `UPDATE banking.bank_transactions
+              SET matched_bill_payment_id = $1::uuid
+            WHERE id = $2::uuid
+              AND operating_company_id = $3::uuid`,
+          [paymentId, bankTxnId, scope]
+        );
+      });
     // Active match for payment A — this is the ONLY row that should flip is_reconciled true.
+    await stampLine(companyId, ownBankTxnId, paymentA);
     await seedMatch(companyId, ownBankTxnId, paymentA, "auto_matched");
-    // Match service writes the canonical bank-side reverse FK. The list/detail projection must expose
-    // this direct banking.bank_transactions relation, not only a reconciled boolean from bank.* history.
-    await bypass(companyId, async () => {
-      await db.query(
-        `UPDATE banking.bank_transactions
-            SET matched_bill_payment_id = $1::uuid
-          WHERE id = $2::uuid
-            AND operating_company_id = $3::uuid`,
-        [paymentA, ownBankTxnId, companyId]
-      );
-    });
     // Rejected match for payment B — must NOT count as matched (the reversed/void analog).
     await seedMatch(companyId, ownBankTxnId, paymentB, "rejected");
     // Active match for payment B, but under the FOREIGN entity — must NOT count (entity isolation).
+    await stampLine(foreignCompanyId, foreignBankTxnId, paymentB);
     await seedMatch(foreignCompanyId, foreignBankTxnId, paymentB, "auto_matched");
 
     // --- Bills list rolls the payment-level match up to the bill ---

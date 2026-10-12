@@ -7,7 +7,10 @@
  * reads — at the right amount, vendor, and entity, WITHOUT double-counting TMS-native bills and
  * WITHOUT ever posting to the GL.
  *
- * Guards, in order:
+ * 443.91: QBO_AP_BILLS_PROJECTION_ENABLED is BLOCKED PERMANENTLY (ROUND 195, migration 202614530000; RULING 443.71) —
+ * the flag-ON guards below are now asserted as the DB refusal + a projection that writes nothing.
+ *
+ * Guards, in order (historical design):
  *   1. Flag OFF (QBO_AP_BILLS_PROJECTION_ENABLED unset) -> projection no-ops; the mirrored bill is
  *      NOT in accounting.bills and the A/P aging is unchanged.
  *   2. Flag ON -> the mirrored bill lands in accounting.bills (source_system='qbo') and views.ap_aging
@@ -248,81 +251,31 @@ describeIntegration("QBO-AP-PULL Stage 2 projection -> A/P aging (real Postgres)
     expect(await agingOpenCents(vendorNativeUuid)).toBe(NATIVE_CENTS);
   });
 
-  it("flag ON: mirrored QBO bill is projected and appears in views.ap_aging at the right amount/vendor/entity", async () => {
-    // The puller now resolves the flag from the DB (isEnabled), NOT process.env — enable it in the test
-    // DB. (resolveFlagEnabled honors default_enabled for this non-per-entity-gated flag.)
-    await db.query(
-      `UPDATE lib.feature_flags SET default_enabled = true WHERE flag_key = 'QBO_AP_BILLS_PROJECTION_ENABLED'`
-    );
+  // ROUND 195 (owner order 2026-09-28, migration 202614530000_qbo_flags_permanent_block) + RULING 443.71 ("QuickBooks is NOT
+  // a data source"): QBO_AP_BILLS_PROJECTION_ENABLED is BLOCKED PERMANENTLY — the DB refuses turning it on, so the projection
+  // can never write accounting.bills. The former "flag ON" cases asserted the forbidden path; they now assert the refusal.
+  it("flag ON is refused by the database (QBO_FLAG_PERMANENTLY_BLOCKED) and the projection stays a no-op", async () => {
+    await expect(
+      db.query(`UPDATE lib.feature_flags SET default_enabled = true WHERE flag_key = 'QBO_AP_BILLS_PROJECTION_ENABLED'`)
+    ).rejects.toThrow(/QBO_FLAG_PERMANENTLY_BLOCKED/);
     const mod = await import("../ap-bills-puller.js");
     const res = await mod.projectApBillsToLedger(companyId);
-    expect(res.enabled).toBe(true);
-    expect(res.rowsProjected).toBeGreaterThanOrEqual(2);
-    expect(res.lines.enabled).toBe(true);
-    expect(res.lines.linesProjected).toBeGreaterThanOrEqual(3); // 2 AccountBased + 1 ItemBased
-
-    // Exactly one accounting.bills row per QBO bill, source_system='qbo', matched vendor linked.
-    expect(await billRowCount(qboBillMatchedId)).toBe(1);
-    const matched = await db.query<{ source_system: string; vendor_uuid: string; amount_cents: string; status: string; id: string }>(
-      `SELECT id::text, source_system, vendor_uuid, amount_cents, status FROM accounting.bills WHERE operating_company_id=$1::uuid AND qbo_bill_id=$2`,
-      [companyId, qboBillMatchedId]
-    );
-    expect(matched.rows[0]!.source_system).toBe("qbo");
-    expect(matched.rows[0]!.vendor_uuid).toBe(vendorMatchedUuid);
-    expect(Number(matched.rows[0]!.amount_cents)).toBe(MATCHED_CENTS);
-    expect(matched.rows[0]!.status).toBe("unpaid");
-
-    // Stage 2b: AccountBased lines projected with mapped account_id; DescriptionOnly skipped.
-    const lines = await db.query<{ n: string; with_acct: string }>(
-      `SELECT count(*)::int AS n,
-              count(*) FILTER (WHERE account_id = $2::uuid)::int AS with_acct
-       FROM accounting.bill_lines WHERE bill_id = $1::uuid`,
-      [matched.rows[0]!.id, coaAccountId]
-    );
-    expect(Number(lines.rows[0]!.n)).toBe(2);
-    expect(Number(lines.rows[0]!.with_acct)).toBe(2);
-
-    // The A/P aging (what FIN-20 reads) now returns the QBO bill under its matched LOCAL vendor.
-    expect(await agingOpenCents(vendorMatchedUuid)).toBe(MATCHED_CENTS);
+    expect(res.enabled).toBe(false);
+    expect(res.rowsProjected).toBe(0);
+    expect(await billRowCount(qboBillMatchedId)).toBe(0);
+    expect(await billRowCount(qboBillUnmatchedId)).toBe(0);
+    // The TMS-native bill is untouched and never doubled.
+    expect(await agingOpenCents(vendorNativeUuid)).toBe(NATIVE_CENTS);
   });
 
-  it("flag ON: a QBO vendor with no local match is recorded + surfaced (not silently dropped)", async () => {
-    // Projection already ran in the previous test (flag ON module cached). Verify the unmatched row.
-    expect(await billRowCount(qboBillUnmatchedId)).toBe(1);
-    const unmatched = await db.query<{ vendor_uuid: string | null; vendor_id: string }>(
-      `SELECT vendor_uuid, vendor_id FROM accounting.bills WHERE operating_company_id=$1::uuid AND qbo_bill_id=$2`,
-      [companyId, qboBillUnmatchedId]
-    );
-    expect(unmatched.rows[0]!.vendor_uuid).toBeNull();
-    expect(unmatched.rows[0]!.vendor_id).toBe(qboVendorUnmatchedId);
-    // Surfaced in aging under the QBO vendor id key at the right amount.
-    expect(await agingOpenCents(qboVendorUnmatchedId)).toBe(UNMATCHED_CENTS);
-  });
-
-  it("flag ON: idempotent re-run creates no duplicate and does not change the aging; native bill not doubled", async () => {
+  it("blocked flag: re-running the projection writes nothing; the TMS-native bill and its line are untouched", async () => {
     const mod = await import("../ap-bills-puller.js");
     await mod.projectApBillsToLedger(companyId);
-    const mid = await db.query<{ n: string }>(
-      `SELECT count(*)::int AS n FROM accounting.bill_lines bl
-       JOIN accounting.bills b ON b.id = bl.bill_id
-       WHERE b.operating_company_id=$1::uuid AND b.qbo_bill_id=$2`,
-      [companyId, qboBillMatchedId]
-    );
     await mod.projectApBillsToLedger(companyId);
-    const after = await db.query<{ n: string }>(
-      `SELECT count(*)::int AS n FROM accounting.bill_lines bl
-       JOIN accounting.bills b ON b.id = bl.bill_id
-       WHERE b.operating_company_id=$1::uuid AND b.qbo_bill_id=$2`,
-      [companyId, qboBillMatchedId]
-    );
-    expect(Number(after.rows[0]!.n)).toBe(Number(mid.rows[0]!.n));
-    expect(Number(after.rows[0]!.n)).toBe(2);
-
-    expect(await billRowCount(qboBillMatchedId)).toBe(1);
-    expect(await billRowCount(qboBillUnmatchedId)).toBe(1);
-    expect(await agingOpenCents(vendorMatchedUuid)).toBe(MATCHED_CENTS);
-    expect(await agingOpenCents(qboVendorUnmatchedId)).toBe(UNMATCHED_CENTS);
-    // TMS-native bill untouched — exactly its own amount, never doubled by the QBO projection.
+    expect(await billRowCount(qboBillMatchedId)).toBe(0);
+    expect(await billRowCount(qboBillUnmatchedId)).toBe(0);
+    expect(await agingOpenCents(vendorMatchedUuid)).toBeNull();
+    // TMS-native bill untouched — exactly its own amount, never doubled or wiped.
     expect(await agingOpenCents(vendorNativeUuid)).toBe(NATIVE_CENTS);
     const native = await db.query<{ n: string }>(
       `SELECT count(*)::int AS n FROM accounting.bills WHERE operating_company_id=$1::uuid AND id=$2::uuid AND source_system='tms'`,

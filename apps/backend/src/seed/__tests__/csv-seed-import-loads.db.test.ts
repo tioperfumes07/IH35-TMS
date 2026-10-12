@@ -17,7 +17,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
-import { runAdminCsvImport } from "../csv-seed-import.js";
+import { CsvImportRowErrors, runAdminCsvImport } from "../csv-seed-import.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -116,9 +116,13 @@ describeIntegration("csv-seed-import.ts loads import (real Postgres, shared crea
     // connection before calling it, since its own internal BEGIN would reset a LOCAL setting.
     await db.query(`SELECT set_config('app.bypass_rls', 'lucia', false)`);
     await db.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [companyId]);
+    // A commit runs INSIDE the caller's transaction (txnMode "participant", as POST /admin/data-import does:
+    // BEGIN -> runAdminCsvImport -> COMMIT) and returns { inserted_rows, skipped_rows, errors }.
+    await db.query("BEGIN");
     const result = await runAdminCsvImport(db, { csvText, seedKind: "loads", preview: false });
+    await db.query("COMMIT");
     expect((result as { errors: unknown[] }).errors).toEqual([]);
-    expect((result as { inserted: number }).inserted).toBe(1);
+    expect((result as { inserted_rows: number }).inserted_rows).toBe(1);
 
     const loadRow = await bypass(() =>
       db.query<{ id: string }>(`SELECT id::text FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2`, [
@@ -168,11 +172,19 @@ describeIntegration("csv-seed-import.ts loads import (real Postgres, shared crea
 
     await db.query(`SELECT set_config('app.bypass_rls', 'lucia', false)`);
     await db.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [companyId]);
-    const result = (await runAdminCsvImport(db, { csvText, seedKind: "loads", preview: false })) as {
-      errors: Array<{ message: string }>;
-      inserted: number;
-    };
-    expect(result.inserted).toBe(0);
-    expect(result.errors.some((e) => /MXN/.test(e.message))).toBe(true);
+    // A commit is all-or-nothing: any row error throws CsvImportRowErrors and the caller rolls back.
+    await db.query("BEGIN");
+    let thrown: unknown = null;
+    try {
+      await runAdminCsvImport(db, { csvText, seedKind: "loads", preview: false });
+    } catch (err) {
+      thrown = err;
+    } finally {
+      await db.query("ROLLBACK");
+    }
+    expect(thrown).toBeInstanceOf(CsvImportRowErrors);
+    expect((thrown as CsvImportRowErrors).errors.some((e) => /MXN/.test(e.message))).toBe(true);
+    const created = await db.query(`SELECT count(*)::int AS n FROM mdata.loads WHERE load_number = $1`, [loadNumber]);
+    expect(created.rows[0]?.n).toBe(0);
   });
 });
