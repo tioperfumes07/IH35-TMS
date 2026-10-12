@@ -10,7 +10,7 @@ import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
-import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { MoneyListToolbar } from "../../components/table";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { companyToday } from "../../lib/businessDate";
