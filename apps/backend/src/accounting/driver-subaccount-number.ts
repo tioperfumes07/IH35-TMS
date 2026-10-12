@@ -27,7 +27,7 @@ export async function allocateDriverSubAccountNnn(client: DbClient, operatingCom
       SELECT substring(a.account_number FROM '-([0-9]{3})$') AS nnn
         FROM catalogs.accounts a
        WHERE a.operating_company_id = $1::uuid
-         AND a.account_number ~ '${SQL_NUMBER_RE}'
+         AND a.account_number ~ '-[0-9]{3}$'
          AND a.id IN (
            SELECT ea.coa_account_id FROM accounting.escrow_accounts ea WHERE ea.holder_type = 'driver' AND ea.holder_id = $2::uuid
            UNION
@@ -39,10 +39,21 @@ export async function allocateDriverSubAccountNnn(client: DbClient, operatingCom
     [operatingCompanyId, driverId]
   );
   if (existing.rows[0]?.nnn) return existing.rows[0].nnn;
+  // 443.94: the number space is EVERY driver sub-account of this entity — the five canonical parents AND any account linked
+  // to a driver as his escrow / advance account, whatever its parent's number. Before, only the five canonical numbers were
+  // counted, so under any other parent (an advance_recovery account numbered otherwise) the max read nothing and the next
+  // driver was handed 001 again — a number another driver already held (main ci 3867ca31, DADI…-00-001).
   const max = await client.query<{ n: number | null }>(
-    `SELECT max(substring(account_number FROM '-([0-9]{3})$')::int) AS n
-       FROM catalogs.accounts
-      WHERE operating_company_id = $1::uuid AND account_number ~ '${SQL_NUMBER_RE}'`,
+    `SELECT max(substring(a.account_number FROM '-([0-9]{3})$')::int) AS n
+       FROM catalogs.accounts a
+      WHERE a.operating_company_id = $1::uuid
+        AND (a.account_number ~ '${SQL_NUMBER_RE}'
+             OR (a.account_number ~ '-[0-9]{3}$' AND a.id IN (
+                   SELECT ea.coa_account_id FROM accounting.escrow_accounts ea
+                    WHERE ea.holder_type = 'driver' AND ea.coa_account_id IS NOT NULL
+                   UNION
+                   SELECT d.coa_account_id FROM driver_finance.driver_advance_accounts d
+                    WHERE d.operating_company_id = $1::uuid AND d.coa_account_id IS NOT NULL)))`,
     [operatingCompanyId]
   );
   const next = Number(max.rows[0]?.n ?? 0) + 1;
