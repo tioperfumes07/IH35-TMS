@@ -7929,3 +7929,13 @@ consumed_by: CC-2 (443.112 #2 / 443.115)
 row_counts: 11 driver advances trailer_id filled from their loads (CA-2026-0001, 0002, 0004-0012) through stampAdvanceUnitTrailerFromLoad; amounts / balances / status / reversals identical (runner check); 11 audit rows driver_finance.driver_advance.unit_trailer_stamped
 proof_query: USMCA driver advances on a load that records a trailer with trailer_id NULL -> 0 (read on prod via Neon read-only, bypass)
 
+
+## AUTH-446
+issued_at: 2026-10-12T18:35:00Z
+issued_by: Lead 443.124 ("Repair the 4 through the engine (relearnLoadStopLegs / learnLoadLanes on their saved stops) — no hand-typed miles; owner-set legs untouched. Prod read-back: the guard's live check = 0 findings over 148+ loads."). Recorded by CC-2, as with AUTH-404..445
+owner_quotes: "every booked load, any source, saves its miles for the next estimate" (owner 2026-10-11 00:25 CT, ROUND 443.35)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the corrected route's lane on EXACTLY 4 loads: 13511, 13536, 13573, 13660 (booked 2026-10-11; their origin / destination moved by the 443.74 / 443.86 / 443.90 GPS stop correction; corrected lane never learned). Through learnLoadLanes({ fresh: false, routeCorrected: true }) (apps/backend/src/dispatch/load-lane-learning.service.ts): catalogs.lane_mileage / point_mileage / mdata.customer_lanes for the corrected route; leg_miles untouched (runner check); refuses unless exactly the 4 loads and each lane still unlearned; rolls back if a leg moves or a lane stays unlearned.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-124-relearn-corrected-lanes.mts --apply --auth AUTH-446
+rehearsal: throwaway br-twilight-leaf-ak94h0q1 (COMMITTED, deleted): 13511 / 13536 / 13573 city lane created, 13660 city lane updated, leg_miles identical; a second run refused (already learned); verify-booked-loads-save-miles live on the fork: PASS, 148 loads, 0 findings
+expires_at: 2026-10-13T18:35:00Z
+status: OPEN

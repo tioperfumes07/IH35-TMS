@@ -1,10 +1,10 @@
 {
-  "healthzSha": "e345db8",
-  "generated_at": "2026-10-12T17:19:01.803Z",
+  "healthzSha": "a2008fb",
+  "generated_at": "2026-10-12T18:32:03.716Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "e345db8",
+    "deployedSha": "a2008fb",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 26657,
-      "title": "FINDING: ACCT-F443116 LANE: FINANCIAL — reserve migration 202615830700 for 443.116 #2 + (c) before authoring",
+      "number": 26674,
+      "title": "FINDING: BCF-10 LANE: FINANCIAL -- main CI red: reimbursement idempotent test teardown surfaced instead of swallowed (verify:aggregate-savepoints)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 12:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26657",
-      "sha": "0715be0570",
-      "committedAtIso": "2026-10-12T12:15:56-05:00"
+      "mergedAtCt": "10/12/2026, 01:12 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26674",
+      "sha": "a2008fbc20",
+      "committedAtIso": "2026-10-12T13:12:56-05:00"
     },
     {
-      "number": 26660,
-      "title": "FINDING: ACCT-F4431061 LANE: FINANCIAL — settlement close refused on prod: the driver bill header INSERT lacked driver and load",
+      "number": 26673,
+      "title": "FINDING: ACCT-F4431212 LANE: FINANCIAL -- 443.121 #2 + #3: a fuel receipt with no load posts on receipt (deadhead/yard reason) and attaches to its load when one is booked (same JE, same document); the engine stamps the settlement reference",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 12:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26660",
-      "sha": "7e79ac5770",
-      "committedAtIso": "2026-10-12T12:15:43-05:00"
+      "mergedAtCt": "10/12/2026, 01:11 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26673",
+      "sha": "4de0865d62",
+      "committedAtIso": "2026-10-12T13:11:37-05:00"
     },
     {
-      "number": 26656,
-      "title": "FINDING: CI-BOOKLOAD-TRAILER-FK-01 LANE: claude — main ci red: two Book Load guards demanded the unconditional trailer FK after the trailer choice became required",
+      "number": 26672,
+      "title": "FINDING: BANK-F4431152 — tip-fix LAY-04 KpiCard + MoneyListToolbar barrel + MapView honesty (supersedes #26658)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 12:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26656",
-      "sha": "e345db83c4",
-      "committedAtIso": "2026-10-12T12:14:36-05:00"
+      "mergedAtCt": "10/12/2026, 12:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26672",
+      "sha": "80b86c4e7f",
+      "committedAtIso": "2026-10-12T12:43:51-05:00"
     },
     {
-      "number": 26653,
-      "title": "chore: claim migration 202615830910 (443.116 #1 fuel posts on receipt flag)",
+      "number": 26671,
+      "title": "FINDING: ACCT-F4431211 LANE: FINANCIAL -- 443.121 #1: ONE fuel receipt identity across import, Settlement Creator and bank match; the database refuses a second live posting of a receipt",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 11:41 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26653",
-      "sha": "9438c4d8da",
-      "committedAtIso": "2026-10-12T11:41:06-05:00"
+      "mergedAtCt": "10/12/2026, 12:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26671",
+      "sha": "9c3add349e",
+      "committedAtIso": "2026-10-12T12:38:41-05:00"
     },
     {
-      "number": 26652,
-      "title": "FINDING: AJK-12 LANE: FINANCIAL -- 443.114: dismissing a converted fine voids the driver liability in one action; dangling-link Owner route",
+      "number": 26670,
+      "title": "FINDING: BCF-11 LANE: FINANCIAL -- 443.120 C: one escrow writer — the historical feed-day escrow writer (deposit with no JE / no source) is retired; escrow is written only by the settlement close",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 11:37 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26652",
-      "sha": "87f64bb0b4",
-      "committedAtIso": "2026-10-12T11:37:03-05:00"
+      "mergedAtCt": "10/12/2026, 12:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26670",
+      "sha": "17e5fa3a2f",
+      "committedAtIso": "2026-10-12T12:29:17-05:00"
     },
     {
-      "number": 26651,
-      "title": "FINDING: N/A (AUTH-445 CONSUMED — 11 advance trailers stamped on prod, read-back 0)",
+      "number": 26669,
+      "title": "chore: claim migration 202615850910 (443.121 #1)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 11:36 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26651",
-      "sha": "9167fd154b",
-      "committedAtIso": "2026-10-12T11:36:34-05:00"
+      "mergedAtCt": "10/12/2026, 12:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26669",
+      "sha": "3101c76220",
+      "committedAtIso": "2026-10-12T12:26:56-05:00"
     },
     {
-      "number": 26650,
-      "title": "FINDING: ACCT-F4431131 LANE: FINANCIAL -- 443.113 BCF-04 + BCF-05: Creator fuel fills + paid company expenses use THE one fuel-to-load rule, only this settlement's loads, and the load's driver + unit",
+      "number": 26668,
+      "title": "Cursor- DEGH-02+06+07 G6: categorize creates expense doc; load spine; fuel adopt; AJK-12 void guards",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 11:35 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26650",
-      "sha": "3daef4d18d",
-      "committedAtIso": "2026-10-12T11:35:45-05:00"
+      "mergedAtCt": "10/12/2026, 12:25 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26668",
+      "sha": "d0ce8cef59",
+      "committedAtIso": "2026-10-12T12:25:33-05:00"
     },
     {
-      "number": 26649,
-      "title": "FINDING: N/A (AUTH-445 recorded — Lead 443.112 #2 + 443.115; registry entry only, no code)",
+      "number": 26664,
+      "title": "Claude-3- FINDING: AJK-12 LANE: FINANCIAL -- 443.120 A fine liability FK",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 11:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26649",
-      "sha": "b1b22a3dcf",
-      "committedAtIso": "2026-10-12T11:34:55-05:00"
+      "mergedAtCt": "10/12/2026, 12:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26664",
+      "sha": "e326311b49",
+      "committedAtIso": "2026-10-12T12:24:36-05:00"
     },
     {
-      "number": 26648,
-      "title": "FINDING: ACCT-F443113AJK01 LANE: FINANCIAL — a same-total reassignment kept the OLD driver on the open driver bill; reassign now moves the open bill to the new driver through the one driver-bill engine, and a closed bill refuses by name",
+      "number": 26667,
+      "title": "FINDING: BCF-10 LANE: FINANCIAL -- 443.120 B: driver reimbursement decrements the bank cache once per reimbursement",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 11:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26648",
-      "sha": "ead02fd88e",
-      "committedAtIso": "2026-10-12T11:32:20-05:00"
+      "mergedAtCt": "10/12/2026, 12:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26667",
+      "sha": "f496ce9e86",
+      "committedAtIso": "2026-10-12T12:23:56-05:00"
     },
     {
-      "number": 26647,
-      "title": "FINDING: AJK-10 AJK-11 LANE: FINANCIAL -- 443.113: Owner approval runs the same cancellation cascade; the TONU charge survives (and can be raised at all)",
+      "number": 26666,
+      "title": "FINDING: N/A (CLAIM-RESERVE: verify-step 18435 for CC-2 LEAD 443.116 #2 + (c) — reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 11:27 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26647",
-      "sha": "05c031c602",
-      "committedAtIso": "2026-10-12T11:27:38-05:00"
+      "mergedAtCt": "10/12/2026, 12:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26666",
+      "sha": "ebeb42566a",
+      "committedAtIso": "2026-10-12T12:23:44-05:00"
     }
   ]
 }

@@ -16,6 +16,10 @@
  *   RULE 5 (static) — learnLoadLanes computes the first-stop deadhead (computeFirstStopDeadhead).
  *   RULE 6 (static, Lead 443.43 #3) — relearnLoadStopLegs is exported, protects owner legs (isModuleOwnedLeg) and never
  *            touches lane_mileage / customer_lanes.
+ *   RULE 7 (static, Lead 443.124) — a route corrected after booking learns the corrected lane: stop-gps-verification.service.ts
+ *            (443.74 / 443.86 / 443.90) compares the load's origin / destination before and after it moves stops and, when they
+ *            changed, calls learnLoadLanes with routeCorrected: true (the engine's only bypass of "already_learned"). Prod: 13511,
+ *            13536, 13573, 13660 were moved by the GPS correction and their corrected lanes were never learned (RULE 3 red).
  * --selftest exercises every rule.
  */
 import { readFileSync } from "node:fs";
@@ -51,6 +55,22 @@ export function staticFailures(bookSrc, moduleSrc) {
   }
   for (const t of ["UPDATE mdata.load_stops SET leg_miles", "catalogs.lane_mileage", "INSERT INTO catalogs.point_mileage", "INSERT INTO mdata.customer_lanes"])
     if (!moduleSrc.includes(t)) out.push(`RULE 1 load-lane-learning.service.ts no longer writes ${t}`);
+  return out;
+}
+
+/** RULE 7 (443.124) — the GPS stop correction learns the corrected route's lane through the one engine. */
+export function routeCorrectionFailures(gpsSrc, moduleSrc) {
+  const out = [];
+  if (!gpsSrc.includes('import { learnLoadLanes } from "../dispatch/load-lane-learning.service.js";'))
+    out.push("RULE 7 stop-gps-verification.service.ts does not import learnLoadLanes — a GPS-corrected route never learns its lane");
+  const movedAt = gpsSrc.indexOf("if (moved > 0) {");
+  const block = movedAt < 0 ? "" : gpsSrc.slice(movedAt, movedAt + 2000);
+  if (!block.includes("routeAfter !== routeBefore") || !block.includes("routeCorrected: true"))
+    out.push("RULE 7 stop-gps-verification.service.ts moves stops without learning the corrected route's lane (learnLoadLanes routeCorrected)");
+  if (!gpsSrc.includes("const routeBefore = await loadRouteKey(client, input.loadId);"))
+    out.push("RULE 7 stop-gps-verification.service.ts does not capture the route before it moves stops");
+  if (!moduleSrc.includes("if (!args.fresh && !args.routeCorrected && out.legs_filled === 0) {"))
+    out.push("RULE 7 learnLoadLanes no longer lets a corrected route past already_learned");
   return out;
 }
 
@@ -123,6 +143,8 @@ if (isMain) {
     const book = 'import { learnLoadLanes } from "./load-lane-learning.service.js";\n INSERT INTO mdata.load_stops (...)\n await learnLoadLanes(client, {';
     const relearn = "\nexport async function relearnLoadStopLegs(client) {\n  if (!isModuleOwnedLeg(x)) {}\n}\n";
     const mod = "UPDATE mdata.load_stops SET leg_miles catalogs.lane_mileage INSERT INTO catalogs.point_mileage INSERT INTO mdata.customer_lanes export async function computeFirstStopDeadhead fillFirstStopDeadhead(client, args" + relearn;
+    const gpsOk = 'import { learnLoadLanes } from "../dispatch/load-lane-learning.service.js";\n const routeBefore = await loadRouteKey(client, input.loadId);\n if (moved > 0) {\n if (routeAfter !== routeBefore) { await learnLoadLanes(client, { routeCorrected: true }); }';
+    const modOk = "if (!args.fresh && !args.routeCorrected && out.legs_filled === 0) {";
     const cases = [
       ["wired clean passes", staticFailures(book, mod).length === 0],
       ["a module without relearnLoadStopLegs fails", staticFailures(book, mod.replace("export async function relearnLoadStopLegs(", "async function x(")).some((x) => x.startsWith("RULE 6"))],
@@ -136,6 +158,10 @@ if (isMain) {
       ["a module without the deadhead computation fails", staticFailures(book, mod.replace("fillFirstStopDeadhead(client, args", "")).some((x) => x.startsWith("RULE 5"))],
       ["a first stop missing its computable deadhead fails", liveFailures([{ load_number: "1", non_first_stops_without_leg: 0, lane_touched: true, lane: "A -> B", first_stop_missing_deadhead: true, prior_load_number: "0" }]).some((x) => x.startsWith("RULE 4"))],
       ["a first stop with no previous load passes", liveFailures([{ load_number: "1", non_first_stops_without_leg: 0, lane_touched: true, lane: "A -> B", first_stop_missing_deadhead: false, prior_load_number: null }]).length === 0],
+      ["RULE 7 wired clean passes", routeCorrectionFailures(gpsOk, modOk).length === 0],
+      ["RULE 7 a GPS correction without the lane learn fails", routeCorrectionFailures(gpsOk.replace("routeCorrected: true", ""), modOk).some((x) => x.startsWith("RULE 7"))],
+      ["RULE 7 no route snapshot before the move fails", routeCorrectionFailures(gpsOk.replace("const routeBefore = await loadRouteKey(client, input.loadId);", ""), modOk).some((x) => x.startsWith("RULE 7"))],
+      ["RULE 7 an engine that refuses a corrected route fails", routeCorrectionFailures(gpsOk, modOk.replace("!args.routeCorrected && ", "")).some((x) => x.startsWith("RULE 7"))],
       ["an untouched lane fails", liveFailures([{ load_number: "1", non_first_stops_without_leg: 0, lane_touched: false, lane: "A -> B" }]).some((x) => x.startsWith("RULE 3"))],
     ];
     for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);
@@ -144,10 +170,16 @@ if (isMain) {
     process.exit(bad ? 1 : 0);
   }
 
-  const failures = staticFailures(
+  const failures = [
+    ...routeCorrectionFailures(
+      readFileSync(resolve(ROOT, "apps/backend/src/telematics/stop-gps-verification.service.ts"), "utf8"),
+      readFileSync(resolve(ROOT, "apps/backend/src/dispatch/load-lane-learning.service.ts"), "utf8")
+    ),
+    ...staticFailures(
     readFileSync(resolve(ROOT, "apps/backend/src/dispatch/book-load.service.ts"), "utf8"),
     readFileSync(resolve(ROOT, "apps/backend/src/dispatch/load-lane-learning.service.ts"), "utf8")
-  );
+    ),
+  ];
   requireLiveDbOrExit(LABEL, REQUIRES_LIVE_DB);
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
   // A server-side disconnect after the read (pooler / compute suspend) must not crash a finished verdict.
