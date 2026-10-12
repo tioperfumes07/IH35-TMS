@@ -37,7 +37,11 @@ export function problems(s) {
   if (!/kind: "escrow", cents: Number\(r\.cents\), accountId: escrow\.accountId, preferredLoadId: r\.load_id/.test(s.close)) p.push("D5: per-load escrow is not applied to its own load");
   if (!/const hasDeadheadLine = bill\.loaded_pay_cents !== null && bill\.loaded_pay_cents !== undefined && deadheadCents > 0;/.test(s.engine)) p.push("D7: a $0 Empty Miles line is still written");
   // Fork rehearsal (2026-10-11): a posted Creator expense is stamped posted; extra pay carries its item.
-  if ((s.creator.match(/await stampExpensePosted\(client, draft\.operating_company_id, /g) ?? []).length !== 2) p.push("a Creator expense (fuel or company) is posted but not stamped posted");
+  // LEAD 443.130: three Creator posting paths since 443.121 #1 (#26671) — the adopted fuel receipt, a fresh fuel posting, a
+  // company expense. Each must stamp the expense posted with ITS journal entry (was: a bare count of 2 call sites).
+  if (!/if \(receiptPosted\?\.journal_entry_id\) \{\s*await stampExpensePosted\(client, draft\.operating_company_id, doc\.expense_id, receiptPosted\.journal_entry_id\)/.test(s.creator)) p.push("a Creator expense (fuel, adopted receipt) is posted but not stamped posted");
+  if (!/if \(!posted\.journal_entry_id\) throw new Error\("posting engine returned no journal entry"\);\s*await stampExpensePosted\(client, draft\.operating_company_id, doc\.expense_id, posted\.journal_entry_id\)/.test(s.creator)) p.push("a Creator expense (fuel) is posted but not stamped posted");
+  if (!/if \(!journalEntryId\) throw new Error\("posting engine returned no journal entry"\);\s*await stampExpensePosted\(client, draft\.operating_company_id, expenseId, journalEntryId\)/.test(s.creator)) p.push("a Creator expense (company) is posted but not stamped posted");
   if (!/SET posting_status = 'posted',(?: status = 'posted',)? posted_at = COALESCE\(posted_at, now\(\)\), journal_entry_id = \$3::uuid/.test(s.creator)) p.push("stampExpensePosted no longer stamps posting_status + journal_entry_id");
   if (!/extra_pay_item_required/.test(s.creator) || !/item_id, quantity, rate_cents,\s*unit_of_measure, is_active, is_sample_data/.test(s.creator)) p.push("extra pay is written without its item");
   return p;
@@ -59,6 +63,8 @@ function selftest() {
     ["creator", (x) => x.replace("source_doc_id, fuel_card_id, notes", "source_doc_id")],
     ["engine", (x) => x.replace(" && deadheadCents > 0;", ";")],
     ["creator", (x) => x.replace("await stampExpensePosted(client, draft.operating_company_id, doc.expense_id", "await Promise.resolve(client, draft.operating_company_id, doc.expense_id")],
+    ["creator", (x) => x.replace("await stampExpensePosted(client, draft.operating_company_id, doc.expense_id, receiptPosted.journal_entry_id)", "void receiptPosted")],
+    ["creator", (x) => x.replace("await stampExpensePosted(client, draft.operating_company_id, expenseId, journalEntryId)", "void journalEntryId")],
     ["creator", (x) => x.replace("extra_pay_item_required", "extra_pay_x")],
   ];
   for (const [k, f] of plants) {

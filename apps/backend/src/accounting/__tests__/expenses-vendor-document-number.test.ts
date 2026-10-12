@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const routes = fs.readFileSync(path.join(here, "../expenses.routes.ts"), "utf8");
+const routes = fs.readFileSync(path.join(here, "../expenses.routes.ts"), "utf8") + fs.readFileSync(path.join(here, "../expense-writer.service.ts"), "utf8"); // 443.130: the writer moved out of the route
 
 // GO-09 L2 (2026-09-01) — accounting.expenses gets vendor_document_number: the VENDOR's own
 // receipt/invoice number, distinct from expense_number (OURS, company-wide unique, mint-if-blank).

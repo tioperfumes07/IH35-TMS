@@ -20,7 +20,7 @@ import { execFileSync } from "node:child_process";
 const ROUTE_PATH = "apps/backend/src/accounting/expenses.routes.ts";
 
 function loadSource() {
-  return readFileSync(ROUTE_PATH, "utf8");
+  return readFileSync(ROUTE_PATH, "utf8") + "\n" + readFileSync("apps/backend/src/accounting/expense-writer.service.ts", "utf8"); /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
 }
 
 export function collectFailures(src = loadSource()) {

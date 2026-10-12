@@ -33,7 +33,8 @@ const HELPER_FN = "enqueueOutboxEvent";
  * absent from the list and with no handler, failing in the outbox on prod. A hand-maintained list
  * blanket-approves every future call; call-site checking cannot.
  */
-const LOCAL_WRAPPERS = [{ fileSuffix: "accounting/expenses.routes.ts", fn: "emitOutbox" }];
+/* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
+const LOCAL_WRAPPERS = [{ fileSuffix: "accounting/expenses.routes.ts", fn: "emitOutbox" }, { fileSuffix: "accounting/expense-writer.service.ts", fn: "emitOutbox" }];
 const ANNOTATION_PATTERN = /outbox-handler-parity:\s*literal-types=\[([^\]]*)\]/i;
 
 function walkTsFiles(dir) {

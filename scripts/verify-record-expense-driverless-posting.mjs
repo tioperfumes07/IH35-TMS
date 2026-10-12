@@ -28,7 +28,7 @@ if (!/row\.expense_account_uuid[\s\S]{0,120}line_direct_account/.test(engine))
   fail("buildExpenseLines must prefer the line's direct expense_account_uuid (method 'line_direct_account')");
 
 // 3) Create route: entity-scoped resolve + reject unbridged + driverless guardrails + flag-gated post
-const route = read("apps/backend/src/accounting/expenses.routes.ts");
+const route = (read("apps/backend/src/accounting/expenses.routes.ts") + "\n" + read("apps/backend/src/accounting/expense-writer.service.ts")) /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */;
 if (!/FROM\s+catalogs\.accounts[\s\S]{0,160}qbo_account_id\s*=\s*\$1[\s\S]{0,160}operating_company_id\s*=\s*\$2/.test(route))
   fail("route must resolve category_qbo_id -> catalogs.accounts scoped by operating_company_id");
 if (!/category_not_in_ledger_chart/.test(route)) fail("route must reject an unbridged category (category_not_in_ledger_chart)");

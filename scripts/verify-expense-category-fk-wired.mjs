@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["expense","category"],"leafRe":"^expenses\\.","task":"EXPENSE-CATEGORY-FK"}
  * ACCT-LINK-04 (ACCT-F07) guard — catalogs.expense_categories must keep a real inbound link from
  * accounting.expense_lines, and every writer that stamps that column must resolve it against the
  * line's own entity catalog.
@@ -184,7 +185,7 @@ const failures = [];
 const files = {
   migration: read(MIGRATION, failures),
   resolver: read(RESOLVER, failures),
-  routes: read(EXPENSES_ROUTES, failures),
+  routes: read(EXPENSES_ROUTES, failures) + "\n" + read("apps/backend/src/accounting/expense-writer.service.ts", failures), /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
   puller: read(PURCHASES_PULLER, failures),
   twoSection: read(TWO_SECTION, failures),
 };
