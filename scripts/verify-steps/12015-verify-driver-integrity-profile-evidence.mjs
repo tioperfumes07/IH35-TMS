@@ -63,7 +63,9 @@ let scorecard;
 let profiles;
 try {
   await client.query("BEGIN");
-  await client.query("SET LOCAL ROLE neondb_owner");
+  // LEAD 443.94 (2026-10-12): old rule — SET LOCAL ROLE neondb_owner before the read; new rule — the CI role + the
+  // app.bypass_rls GUC only; why — the CI / post-deploy credential (ih35_guard_reader) cannot SET ROLE neondb_owner
+  // ("permission denied to set role"), so this guard failed without measuring.
   await client.query("SET LOCAL app.bypass_rls = 'lucia'");
   const end = new Date().toISOString();
   // Wide window on purpose: the card-fill feed currently ends 2026-09-11, so a trailing 30 days
