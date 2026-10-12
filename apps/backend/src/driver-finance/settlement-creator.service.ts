@@ -71,7 +71,7 @@ import type {
   SettlementCreatorPreview,
 } from "./settlement-creator.types.js";
 import { isReeferFuelItemName } from "../fuel/reefer-fuel.service.js";
-import { createBillInClientTx } from "../accounting/bills.service.js";
+import { voidCreatorOwedBills, writeCreatorOwedBill } from "./settlement-creator-owed-bill.js";
 import { applyCreatorMilesChoices, CreatorMilesChoiceError } from "./settlement-creator-miles-choice.js";
 
 export type { DbClient };
@@ -242,6 +242,7 @@ async function writeDriverPayLine(
 
 type PriorCreatorPostPayload = {
   expense_ids?: string[];
+  owed_bill_ids?: string[];
   fuel_transaction_ids?: string[];
   advance_ids?: string[];
   invoice_ids?: string[];
@@ -312,6 +313,9 @@ async function voidPriorCreatorSettlementForEdit(
       if (!/already.?void|not found|SOURCE_NOT_FOUND/i.test(msg)) throw err;
     }
   }
+
+  // 443.110 G4 — the prior post's owed vendor bills are voided through the bill void engine (reversal JE).
+  await voidCreatorOwedBills(client, { operatingCompanyId: opco, billIds: prior.owed_bill_ids ?? [], reason, actorUserId, currentBusinessDate: businessDate });
 
   // Option 1 (Lead ruling 2026-10-11, 5769 repair) — the prior fill rows are KEPT and re-used by the repost (a fill is one
   // provider transaction: voiding and re-inserting it collides on its provider hash), and the prior loads' sent invoices
@@ -392,6 +396,7 @@ async function voidPriorCreatorSettlementForEdit(
       operating_company_id: opco,
       settlement_label: settlementLabel,
       prior_expense_ids: prior.expense_ids ?? [],
+      prior_owed_bill_ids: prior.owed_bill_ids ?? [],
       prior_invoice_ids: prior.invoice_ids ?? [],
       prior_advance_ids: prior.advance_ids ?? [],
       prior_fuel_transaction_ids: prior.fuel_transaction_ids ?? [],
@@ -1115,6 +1120,7 @@ export async function postSettlementCreatorInClientTx(
 
   const loadIds: string[] = [];
   const expenseIds: string[] = [];
+  const owedBillIds: string[] = [];
   const fuelTxnIds: string[] = [];
   const advanceIds: string[] = [];
   const journalEntryIds: string[] = [];
@@ -1591,38 +1597,31 @@ export async function postSettlementCreatorInClientTx(
       throw new SettlementCreatorError("expense_quantity_rate_mismatch", `Company expense "${exp.item_name}": ${qty} ${uom} does not price to ${dollarsFromCents(exp.amount_cents)}.`);
     }
     if (card === "owed") {
-      // Owed -> a BILL in Accounts Payable. ROUND 443.13 (CC-1) — createBillInClientTx now carries
-      // loadId + vendorDocumentNumber + lines (item/qty/UoM/rate), so we can create the bill.
-      const billMemo = `[SC ${draft.settlement_no}] ${exp.description ?? exp.item_name}`.slice(0, 500);
-      await createBillInClientTx(
-        client as never,
-        {
-          operatingCompanyId: draft.operating_company_id,
-          vendorId: vendor.id,
-          vendorDocumentNumber: exp.vendor_document_number?.trim() || undefined,
-          loadId,
-          // ROUND 443.6 c — every bill carries the driver, unit and trailer of the settlement it came from.
-          driverId: draft.driver_id,
-          unitId: draft.unit_id ?? null,
-          trailerId: draft.trailer_id ?? null,
-          billDate: exp.date,
-          amountCents: exp.amount_cents,
-          memo: billMemo,
-          lines: [
-            {
-              amountCents: exp.amount_cents,
-              itemId: itemAcct.item_id ?? undefined,
-              quantity: qty,
-              rateCents,
-              unitOfMeasure: uom,
-              loadId,
-              description: exp.description ?? exp.item_name ?? undefined,
-              accountId: itemAcct.id,
-            },
-          ],
-        },
+      // Owed -> a BILL in Accounts Payable. 443.110 G4: numbered on the load spine, GL-posted here (Dr item account /
+      // Cr A/P with the vendor), id kept in the posted audit so Edit voids it (settlement-creator-owed-bill.ts).
+      const owed = await writeCreatorOwedBill(client, {
+        operatingCompanyId: draft.operating_company_id,
         actorUserId,
-      );
+        vendorId: vendor.id,
+        vendorDocumentNumber: exp.vendor_document_number,
+        loadId,
+        // ROUND 443.6 c — every bill carries the driver, unit and trailer of the settlement it came from.
+        driverId: draft.driver_id,
+        unitId: draft.unit_id ?? null,
+        trailerId: draft.trailer_id ?? null,
+        billDate: exp.date,
+        amountCents: exp.amount_cents,
+        memo: `[SC ${draft.settlement_no}] ${exp.description ?? exp.item_name}`.slice(0, 500),
+        itemId: itemAcct.item_id,
+        accountId: itemAcct.id,
+        quantity: qty,
+        rateCents,
+        unitOfMeasure: uom,
+        description: exp.description ?? exp.item_name ?? null,
+        label: exp.item_name,
+      });
+      owedBillIds.push(owed.billId);
+      journalEntryIds.push(owed.journalEntryId);
       continue;
     }
     const preference = card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet";
@@ -2104,6 +2103,7 @@ export async function postSettlementCreatorInClientTx(
       source_document_ref: sourceDocumentRef,
       load_ids: loadIds,
       expense_ids: expenseIds,
+      owed_bill_ids: owedBillIds,
       fuel_transaction_ids: fuelTxnIds,
       advance_ids: advanceIds,
       invoice_ids: invoiceIds,
@@ -2131,6 +2131,7 @@ export async function postSettlementCreatorInClientTx(
     display_id: displayId,
     load_ids: loadIds,
     expense_ids: expenseIds,
+    owed_bill_ids: owedBillIds,
     fuel_transaction_ids: fuelTxnIds,
     advance_ids: advanceIds,
     journal_entry_ids: journalEntryIds,
