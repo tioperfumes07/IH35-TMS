@@ -7924,5 +7924,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — trailer_id fill on 
 action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-112-advance-trailer-stamp.mts --apply --auth AUTH-445
 rehearsal: throwaway br-wandering-forest-ak9rj87a (COMMITTED, deleted): 11 stamped (trailer_id), money identical, 0 left; a second run refused (0 found)
 expires_at: 2026-10-13T16:34:45Z
-status: OPEN
+status: CONSUMED
+consumed_by: CC-2 (443.112 #2 / 443.115)
+row_counts: 11 driver advances trailer_id filled from their loads (CA-2026-0001, 0002, 0004-0012) through stampAdvanceUnitTrailerFromLoad; amounts / balances / status / reversals identical (runner check); 11 audit rows driver_finance.driver_advance.unit_trailer_stamped
+proof_query: USMCA driver advances on a load that records a trailer with trailer_id NULL -> 0 (read on prod via Neon read-only, bypass)
 
