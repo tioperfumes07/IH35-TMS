@@ -7964,4 +7964,7 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the SETTLED driver_
 action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-137-settled-driver-bill-backstamp.mts --apply --auth AUTH-448
 rehearsal: throwaway br-sparkling-unit-akfox9bi (COMMITTED, deleted): 145 settled bills stamped (unit 145; 135 company trailer, 10 customer trailer); after: missing unit 0, missing trailer choice 0; money md5 unchanged; a second run stamped 0
 expires_at: 2026-10-13T22:10:00Z
-status: OPEN
+status: CONSUMED
+consumed_by: CC-2 (443.137 #1)
+row_counts: 145 settled USMCA driver bills stamped (unit 145; company trailer 135, customer trailer 10); 145 driver_finance.driver_bill.unit_trailer_backstamped audit rows; money md5 unchanged (runner check); COMMITTED
+proof_query: USMCA settled, non-voided driver_finance.driver_bills -> 145; missing unit 0; missing trailer choice 0; both trailers set 0; 145 audit rows (read on prod via Neon read-only, bypass, 2026-10-12 ~22:45 UTC)
