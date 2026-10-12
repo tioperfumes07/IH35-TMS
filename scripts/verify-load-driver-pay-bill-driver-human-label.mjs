@@ -37,7 +37,11 @@ function analyze(routeSrc, componentSrc) {
   // different, already-correct query) isn't conflated.
   const detailRouteStart = routeSrc.indexOf('"/api/v1/driver-finance/loads/:loadId/driver-pay-detail"');
   const billQueryStart = detailRouteStart === -1 ? -1 : routeSrc.indexOf("FROM driver_finance.driver_bills db", detailRouteStart);
-  const billQuerySection = billQueryStart === -1 ? "" : routeSrc.slice(Math.max(0, billQueryStart - 400), billQueryStart + 400);
+  // Bound the section by the SQL statement itself (its opening and closing backticks), not a fixed character window:
+  // the bill query's select list grew past 400 chars and the old window silently stopped reaching driver_name.
+  const stmtOpen = billQueryStart === -1 ? -1 : routeSrc.lastIndexOf("`", billQueryStart);
+  const stmtClose = billQueryStart === -1 ? -1 : routeSrc.indexOf("`", billQueryStart);
+  const billQuerySection = billQueryStart === -1 || stmtOpen === -1 || stmtClose === -1 ? "" : routeSrc.slice(stmtOpen, stmtClose + 1);
 
   if (detailRouteStart === -1) {
     failures.push(`${routePath}: GET .../driver-pay-detail route not found — has the tab's read model moved again?`);

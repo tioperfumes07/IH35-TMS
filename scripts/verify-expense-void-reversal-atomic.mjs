@@ -18,7 +18,11 @@ export function run(root = process.cwd()) {
   const failures = [];
   const src = fs.readFileSync(`${root}/apps/backend/src/accounting/expenses.routes.ts`, "utf8");
 
-  if (!src.includes('import { postSourceTransaction, reversePostedSourceTransactionInClientTx, PostingEngineError } from "./posting-engine.service.js"')) {
+  // The posting-engine import list grows (postSourceTransactionInClientTx, ensureOpenPeriod, ...); what matters is that
+  // the atomic, client-taking reverser is imported from the posting engine — an exact whole-line match broke on every
+  // unrelated addition to that import.
+  const engineImport = src.match(/import\s*\{([^}]*)\}\s*from\s*"\.\/posting-engine\.service\.js"/);
+  if (!engineImport || !/\breversePostedSourceTransactionInClientTx\b/.test(engineImport[1])) {
     failures.push("expenses.routes.ts must import reversePostedSourceTransactionInClientTx (the client-taking, atomic variant), not the non-atomic reversePostedSourceTransaction");
   }
   if (/\breversePostedSourceTransaction\(/.test(src.replace(/reversePostedSourceTransactionInClientTx/g, ""))) {
