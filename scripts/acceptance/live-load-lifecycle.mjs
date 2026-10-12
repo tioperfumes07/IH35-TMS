@@ -358,10 +358,9 @@ async function s4feed() {
   const t = step("S4-feed");
   const load = ctx.realLoad || (await pickRealDeliveredLoad());
   if (!t.ok("the S3 real load", load)) return;
-  // Design (443.70 S4, owner): RECOMMENDED to the load, not auto-assigned. Today the Dreamline import and the Relay bridge
-  // assign load_id themselves (fuel/fuel-transaction-import.ts:312 resolveLoadId, called :384; relay-fuel-canonical-bridge.ts:72).
-  t.ok("fuel -> load is a recommendation the user accepts (no import auto-assigns load_id)", false,
-    "fuel/fuel-transaction-import.ts:384 + integrations/relay-payments/relay-fuel-canonical-bridge.ts:72 assign load_id on import");
+  // RULING 443.86 #3 (S4-feed): the importers KEEP stamping load_id = the load the truck was running (GPS / earliest-pickup
+  // unfinished load). That stamp IS the recommendation: the owner sees it and can change it through the app — asserted per
+  // row below ((a): every row on the GPS-running load) and, after the loop, (b): changing it moves the cost.
   const rows = await read(
     `SELECT ft.id::text, ft.fuel_type, ft.transaction_at::date::text AS day, ft.relay_fuel_transaction_id IS NOT NULL AS is_relay,
             round(ft.total_cost * 100)::bigint AS cents, ft.load_id::text
@@ -372,13 +371,16 @@ async function s4feed() {
   const { registerExpenseLoadLookupRoutes } = await import("../../apps/backend/src/accounting/load-lookup.routes.ts");
   const app2 = await createIntegrationApp(async (a) => { await registerExpenseLoadLookupRoutes(a); });
   try {
+    let firstDoc = null;
     for (const r of rows) {
       const p = `fuel ${r.id.slice(0, 8)} ${r.fuel_type} ${r.day}`;
       const res = await app2.inject({ method: "GET", headers: auth,
         url: `/api/v1/expenses/suggest-load?operating_company_id=${CO}&unit_id=${load.unit_id}&driver_id=${load.driver_id}&transaction_date=${r.day}` });
       const sug = res.statusCode === 200 ? res.json().data : null;
-      t.ok(`${p} recommended to load ${load.load_number}`, sug?.load_id === load.id, sug ? `${sug.load_number} (${sug.confidence})` : `HTTP ${res.statusCode}, no suggestion`);
-      t.ok(`${p} on load ${load.load_number}`, r.load_id === load.id, r.load_id ? r.load_id.slice(0, 8) : "NULL");
+      // (a) 443.86 #3: the import's stamp = the load the truck was running at that moment = the app's recommendation. The S3
+      // load's window (-36 h / +48 h) can hold the truck's NEXT load's fuel (it holds the next load while running this one).
+      t.ok(`${p} has a recommendation (the running load)`, sug?.load_id, sug ? `${sug.load_number} (${sug.confidence})` : `HTTP ${res.statusCode}, no suggestion`);
+      t.ok(`${p} stamped on the recommended running load`, r.load_id && r.load_id === sug?.load_id, `${r.load_id ? r.load_id.slice(0, 8) : "NULL"} vs ${sug?.load_id?.slice(0, 8) ?? "none"}`);
       const e = (await read(
         `SELECT e.id::text, e.load_id::text, e.unit_id::text, e.driver_uuid::text, e.trailer_id::text, e.journal_entry_id::text,
                 pa.account_number AS pay_acct
@@ -389,6 +391,7 @@ async function s4feed() {
                                                  WHERE me.relay_fuel_transaction_id IS NOT NULL AND sib.relay_fuel_transaction_id = me.relay_fuel_transaction_id))
           ORDER BY (e.source_fuel_transaction_id = $1::uuid) DESC LIMIT 1`, [r.id]))[0];
       if (!t.ok(`${p} expense document exists`, e)) continue;
+      if (!firstDoc && e.journal_entry_id) firstDoc = e;
       for (const f of ["load_id", "unit_id", "driver_uuid", "trailer_id", "journal_entry_id"]) t.notNull(`${p} expense.${f}`, e[f]);
       t.ok(`${p} paid from its card's funding account`, e.pay_acct === (r.is_relay ? "1295" : "2510"), `${e.pay_acct}`);
       const lines = await read(
@@ -404,6 +407,46 @@ async function s4feed() {
       t.ok(`${p} line account = ${want ? want[1] : "?"} and comes from the item`, want && main?.account_number === want[1] && main?.acct_from_item, `${main?.account_number ?? "NULL"} from item: ${main?.acct_from_item}`);
       t.ok(`${p} posted on that account`, main?.posted_on_it);
       for (const fee of lines.filter((l) => l.item_name === "Fuel Card Fee")) t.ok(`${p} card fee on 5005 from the item`, fee.account_number === "5005" && fee.acct_from_item);
+    }
+    // (b) Changing the stamp through the app moves the COST: POST /api/v1/expenses/:id/reattribute to the truck's other
+    // load — header, lines, the fuel row and the live GL postings follow; an audit row; nothing else moves; TB 0.
+    const doc = firstDoc;
+    const fromLoad = doc ? (await read(`SELECT id::text, load_number FROM mdata.loads WHERE id = $1::uuid`, [doc.load_id]))[0] : null;
+    const other = fromLoad ? (await read(`SELECT id::text, load_number FROM mdata.loads WHERE operating_company_id = $1::uuid AND assigned_unit_id = $2::uuid
+       AND id <> $3::uuid AND soft_deleted_at IS NULL AND voided_at IS NULL ORDER BY load_number DESC LIMIT 1`, [CO, load.unit_id, fromLoad.id]))[0] : null;
+    if (t.ok("(b) a fuel document + another load of the truck to move it to", doc && other)) {
+      const costOn = async (loadId) => Number((await read(
+        `SELECT COALESCE(SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::bigint AS v
+           FROM accounting.journal_entry_postings p JOIN catalogs.accounts a ON a.id = p.account_id
+           JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.voided_at IS NULL
+          WHERE (p.source_transaction_type, p.source_transaction_id::text) IN (SELECT DISTINCT source_transaction_type, source_transaction_id::text
+                  FROM accounting.journal_entry_postings WHERE journal_entry_uuid = $1::uuid)
+            AND p.load_id = $2::uuid AND a.account_number LIKE '5%'`,
+        [doc.journal_entry_id, loadId]))[0].v); // net over the document's sources: the original entry + the reattribution pair
+      const before = { from: await costOn(fromLoad.id), to: await costOn(other.id) };
+      const tb0 = (await read(`SELECT COALESCE(SUM(CASE WHEN debit_or_credit = 'debit' THEN amount_cents ELSE -amount_cents END), 0)::bigint AS v
+         FROM accounting.journal_entry_postings WHERE operating_company_id = $1::uuid`, [CO]))[0].v;
+      const { registerExpenseRoutes } = await import("../../apps/backend/src/accounting/expenses.routes.ts");
+      const app3 = await createIntegrationApp(async (a) => { await registerExpenseRoutes(a); });
+      try {
+        const res = await app3.inject({ method: "POST", headers: auth, url: `/api/v1/expenses/${doc.id}/reattribute`,
+          payload: { operating_company_id: CO, new_load_id: other.id, reason: "443.86 S4-feed acceptance: owner moves the fuel to the other load" } });
+        t.ok(`(b) POST /api/v1/expenses/:id/reattribute -> load ${other.load_number} 200`, res.statusCode === 200, `HTTP ${res.statusCode} ${res.statusCode !== 200 ? res.body.slice(0, 200) : ""}`);
+      } finally {
+        await app3.close();
+      }
+      const after = { from: await costOn(fromLoad.id), to: await costOn(other.id) };
+      t.ok(`(b) fuel cost moved ${fromLoad.load_number} -> ${other.load_number}`, before.from > 0 && after.from === 0 && after.to === before.to + before.from, `before ${JSON.stringify(before)} after ${JSON.stringify(after)}`);
+      const moved = (await read(`SELECT e.load_id::text AS h, (SELECT bool_and(el.load_id = e.load_id) FROM accounting.expense_lines el WHERE el.expense_id = e.id) AS lines,
+          (SELECT ft.load_id::text FROM fuel.fuel_transactions ft WHERE ft.id = e.source_fuel_transaction_id) AS ft
+         FROM accounting.expenses e WHERE e.id = $1::uuid`, [doc.id]))[0];
+      t.ok("(b) header, every line and the fuel row are on the new load", moved.h === other.id && moved.lines && moved.ft === other.id, JSON.stringify(moved));
+      t.ok("(b) audit row expense.reattributed", (await read(`SELECT 1 FROM audit.audit_events WHERE event_class = 'expense.reattributed' AND payload->>'expense_id' = $1`, [doc.id])).length > 0);
+      const tb1 = (await read(`SELECT COALESCE(SUM(CASE WHEN debit_or_credit = 'debit' THEN amount_cents ELSE -amount_cents END), 0)::bigint AS v
+         FROM accounting.journal_entry_postings WHERE operating_company_id = $1::uuid`, [CO]))[0].v;
+      const pairs = (await read(`SELECT count(*)::int AS n FROM audit.audit_events WHERE event_class = 'expense.reattribution_posted' AND payload->>'expense_id' = $1`, [doc.id]))[0].n;
+      t.ok("(b) exactly one reattribution entry (nothing posts twice)", pairs === 1, `${pairs}`);
+      t.ok("(b) TB 0 and unchanged (the reattribution pairs net to zero)", Number(tb1) === 0 && Number(tb1) === Number(tb0), `${tb0} -> ${tb1}`);
     }
   } finally {
     await app2.close();
