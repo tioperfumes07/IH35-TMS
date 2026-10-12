@@ -5,11 +5,12 @@
  *   (load-real-driven-miles.service.ts:251, :258).
  * IDEMPOTENCY: DETERMINISTIC OVERWRITE — each UPDATE sets a computed column to a pure function of the captures; no
  *   history or recalculation-log row is inserted.
- * OVERLAP: two runs write the same values; nothing accumulates.
+ * OVERLAP: one instance per tick (job lease, 443.103); a row is written only when a computed value changed, so a
+ *   repeat run writes nothing.
  */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { runLoadRealDrivenMilesCronTick } from "./load-real-driven-miles.service.js";
 
 let initialized = false;
@@ -33,7 +34,10 @@ export function initializeLoadRealDrivenMilesCron(app: FastifyInstance) {
         async () => {
           await runLoadRealDrivenMilesCronTick();
         },
-        app.log
+        app.log,
+        // 443.103: one instance per tick. Without the lease every instance ran the tick (2 passes an hour, 3-4 around a
+        // deploy), each rewriting every due load.
+        { leaseSeconds: JOB_LEASE_SECONDS }
       );
     },
     { maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
