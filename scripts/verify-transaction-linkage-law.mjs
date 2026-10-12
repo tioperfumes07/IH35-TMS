@@ -223,6 +223,9 @@ export const TABLE_REGISTRY = {
   "fuel.fuel_receipt_postings": { status: "NOT_TRANSACTIONAL", reason: "443.121 #1 receipt-identity registry: one live row per fuel receipt, no amount; links posting_batch_id -> posting batch -> journal entry, receipt_key -> its fuel transaction / Relay fill (which carries unit + driver + load); the money lives on those TIER1 rows" },
   "fuel.fuel_transaction_derivations": { status: "NOT_TRANSACTIONAL", reason: "derived output side-table; source fuel_transactions stay TIER1" },
   "fuel.fuel_transactions": { status: TIER.TIER1, reason: "the purest TIER1 table -- always unit+driver+load" },
+  // LEAD 443.121 #1 / migration 202615850910: uniqueness registry for one LIVE fuel posting per receipt_key.
+  // Written by trigger on accounting.posting_batches; money + unit/driver/load live on the batch / JE / fuel_transactions.
+  "fuel.fuel_receipt_postings": { status: "NOT_TRANSACTIONAL", reason: "receipt-identity registry (one live posting per receipt_key); money lives on posting_batches / JE / fuel_transactions" },
   "fuel.load_fuel_cost": { status: "OUT_OF_SCOPE", reason: "derived/aggregated rollup, not itself a transaction" },
   "fuel.loves_prices_daily": { status: "NOT_TRANSACTIONAL", reason: "reference price feed" },
   "fuel.tank_events": { status: "NOT_TRANSACTIONAL", reason: "operational telemetry, no cost column" },
