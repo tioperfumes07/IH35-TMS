@@ -2512,5 +2512,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
     "purpose": "443.108: trailer choice required on Book / Edit Load — mdata.loads.trailer_source allows 'none' (bobtail / power only); the expense trailer fill carries a customer (non-owned) trailer from its load"
+  },
+  "202615800700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.110 G9: driver_finance.driver_bills.unit_id / trailer_id / non_owned_trailer_id stamped at mint from the load"
   }
 }
