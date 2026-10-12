@@ -31,44 +31,65 @@ const POSTER = resolve(ROOT, "apps/backend/src/accounting/related-party-loan-pos
 const CREATE = resolve(ROOT, "apps/backend/src/accounting/related-party-loan-posting/create-entry.service.ts");
 const ROUTES = resolve(ROOT, "apps/backend/src/accounting/related-party-loan-posting/routes.ts");
 
-function check(file, pattern, label) {
-  if (!existsSync(file)) return `MISSING FILE: ${file}`;
-  const src = readFileSync(file, "utf8");
-  if (!pattern.test(src)) return `FAIL — ${label} not found in ${file.replace(ROOT + "/", "")}`;
+/** Pure decision on one source text: null when the pattern is present, else the failure line. */
+export function checkSource(src, pattern, label, displayPath) {
+  if (src == null) return `MISSING FILE: ${displayPath}`;
+  if (!pattern.test(src)) return `FAIL — ${label} not found in ${displayPath}`;
   return null;
 }
 
-const problems = [
+/** The four wiring rules, as data (443.97: shared by the normal run and --selftest). */
+export const RULES = [
   // poster: party_transfer_out supplies explicit bank account as counter for direction='out'
-  check(
-    POSTER,
-    /party_transfer_out.*supplies.*bank|fundingAccountId.*accountId.*direction.*out|if \(fundingAccountId\) return \{ ok: true/s,
-    "party_transfer_out fundingAccountId passthrough in poster.service.ts",
-  ),
+  ["poster", /party_transfer_out.*supplies.*bank|fundingAccountId.*accountId.*direction.*out|if \(fundingAccountId\) return \{ ok: true/s,
+    "party_transfer_out fundingAccountId passthrough in poster.service.ts"],
   // create-entry: party_transfer_out in RELATED_PARTY_LOAN_TARGET_TYPES
-  check(
-    CREATE,
-    /party_transfer_out/,
-    "party_transfer_out in RELATED_PARTY_LOAN_TARGET_TYPES",
-  ),
+  ["create", /party_transfer_out/, "party_transfer_out in RELATED_PARTY_LOAN_TARGET_TYPES"],
   // create-entry: validation requires direction='out' and funding_account_id
-  check(
-    CREATE,
-    /isPartyTransferOut.*direction.*out|party_transfer_out.*direction.*out/s,
-    "party_transfer_out direction='out' validation",
-  ),
+  ["create", /isPartyTransferOut.*direction.*out|party_transfer_out.*direction.*out/s, "party_transfer_out direction='out' validation"],
   // routes: ledger endpoint exists
-  check(
-    ROUTES,
-    /\/ledger\/:facilityId|ledger.*facilityId/,
-    "party ledger endpoint in routes.ts",
-  ),
-].filter(Boolean);
+  ["routes", /\/ledger\/:facilityId|ledger.*facilityId/, "party ledger endpoint in routes.ts"],
+];
+
+/** Pure decision over the three sources ({ poster, create, routes } → text or null). */
+export function problemsFor(sources, paths) {
+  return RULES.map(([k, re, label]) => checkSource(sources[k], re, label, paths[k])).filter(Boolean);
+}
+
+const PATHS = { poster: POSTER, create: CREATE, routes: ROUTES };
+const read = (f) => (existsSync(f) ? readFileSync(f, "utf8") : null);
+const sources = { poster: read(POSTER), create: read(CREATE), routes: read(ROUTES) };
+const problems = problemsFor(sources, {
+  poster: existsSync(POSTER) ? POSTER.replace(ROOT + "/", "") : POSTER,
+  create: existsSync(CREATE) ? CREATE.replace(ROOT + "/", "") : CREATE,
+  routes: existsSync(ROUTES) ? ROUTES.replace(ROOT + "/", "") : ROUTES,
+});
 
 const ok = problems.length === 0;
 const message = ok
   ? "verify-relay-deposit-no-party-refused OK — party_transfer_out wired + ledger endpoint present"
   : `verify-relay-deposit-no-party-refused FAIL:\n  - ${problems.join("\n  - ")}`;
+
+if (import.meta.url === `file://${process.argv[1]}` && process.argv.includes("--selftest")) {
+  const good = {
+    poster: "if (fundingAccountId) return { ok: true, accountId: fundingAccountId };",
+    create: "const T = ['party_transfer_out']; if (isPartyTransferOut && input.direction !== 'out') throw x;",
+    routes: "app.get('/api/v1/accounting/related-party-loans/ledger/:facilityId', h)",
+  };
+  const p = { poster: "poster", create: "create", routes: "routes" };
+  const cases = [
+    ["the real sources pass", problems.length === 0],
+    ["a wired synthetic set passes", problemsFor(good, p).length === 0],
+    ["a poster without the funding passthrough fails", problemsFor({ ...good, poster: "return cashClearing;" }, p).length === 1],
+    ["a create-entry without party_transfer_out fails both create rules", problemsFor({ ...good, create: "const T = ['loan'];" }, p).length === 2],
+    ["routes without the ledger endpoint fail", problemsFor({ ...good, routes: "app.get('/x', h)" }, p).length === 1],
+    ["a missing file fails", problemsFor({ ...good, routes: null }, p).some((x) => x.startsWith("MISSING FILE"))],
+  ];
+  for (const [n, c] of cases) console.log(`  ${c ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, c]) => !c).length;
+  console.log(bad ? "verify-relay-deposit-no-party-refused --selftest FAIL" : `verify-relay-deposit-no-party-refused --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   console.log(message);
