@@ -2413,6 +2413,11 @@
     "claimed_at": "2026-10-12",
     "purpose": "RULING 443.90 #4: printed trailer decision — mdata.loads.trailer_source + non_owned_trailer_id, accounting.expenses.non_owned_trailer_id"
   },
+  "202615660900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "RULING 443.91 #4: invoices_display_id_check re-asserted as on prod (202610100200 sorts before 202613650001 on a fresh DB and loses the <invoice>-<load> pattern)"
+  },
   "202615451400": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-12",
