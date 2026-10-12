@@ -204,6 +204,8 @@ export async function processGeofenceDetectionsForGpsPoint(
       load_id: string;
       stop_id: string;
       booked_by_user_id: string | null;
+      stop_type: string;
+      sequence_number: number;
     }>(
       transition === "entered"
         ? `
@@ -224,7 +226,8 @@ export async function processGeofenceDetectionsForGpsPoint(
                AND ls.soft_deleted_at IS NULL
                AND ls.actual_arrival_at IS NULL
          RETURNING ls.load_id::text AS load_id, ls.id::text AS stop_id,
-                   COALESCE(l.booked_by_user_id, l.dispatcher_user_id, l.updated_by_user_id)::text AS booked_by_user_id
+                   COALESCE(l.booked_by_user_id, l.dispatcher_user_id, l.updated_by_user_id)::text AS booked_by_user_id,
+                   ls.stop_type::text AS stop_type, ls.sequence_number
           `
         : `
             UPDATE mdata.load_stops ls
@@ -243,7 +246,8 @@ export async function processGeofenceDetectionsForGpsPoint(
                AND ls.soft_deleted_at IS NULL
                AND ls.actual_departure_at IS NULL
          RETURNING ls.load_id::text AS load_id, ls.id::text AS stop_id,
-                   COALESCE(l.booked_by_user_id, l.dispatcher_user_id, l.updated_by_user_id)::text AS booked_by_user_id
+                   COALESCE(l.booked_by_user_id, l.dispatcher_user_id, l.updated_by_user_id)::text AS booked_by_user_id,
+                   ls.stop_type::text AS stop_type, ls.sequence_number
           `,
       [row.geofence_id, input.operating_company_id, input.unit_id, input.occurred_at, source]
     );
@@ -260,6 +264,49 @@ export async function processGeofenceDetectionsForGpsPoint(
           data: { kind: "arrival_prompt", stop_id: stamped.stop_id, unit_id: input.unit_id },
         });
       }
+      // G11: final delivery arrival → delivered_pending_docs (invoicing still waits on BOL/POD).
+      // Guard: only advances status; never goes backward; idempotent (IS NULL check above prevents re-entry).
+      if (stamped.load_id && stamped.stop_type === "delivery") {
+        await client.query(
+          `
+            UPDATE mdata.loads l
+               SET status = 'delivered_pending_docs'::mdata.load_status_enum,
+                   updated_at = now()
+             WHERE l.id = $1::uuid
+               AND l.operating_company_id = $2::uuid
+               AND l.soft_deleted_at IS NULL
+               AND l.status NOT IN ('delivered','completed_docs_received','settled','voided','abandoned')
+               AND NOT EXISTS (
+                 SELECT 1 FROM mdata.load_stops ls2
+                  WHERE ls2.load_id = l.id
+                    AND ls2.stop_type = 'delivery'
+                    AND ls2.soft_deleted_at IS NULL
+                    AND ls2.actual_arrival_at IS NULL
+                    AND ls2.id != $3::uuid
+               )
+          `,
+          [stamped.load_id, input.operating_company_id, stamped.stop_id]
+        );
+      }
+    }
+    // G11: first pickup departure → in_transit.
+    if (transition === "exited" && stamped?.load_id && stamped.stop_type === "pickup") {
+      await client.query(
+        `
+          UPDATE mdata.loads l
+             SET status = 'in_transit'::mdata.load_status_enum,
+                 updated_at = now()
+           WHERE l.id = $1::uuid
+             AND l.operating_company_id = $2::uuid
+             AND l.soft_deleted_at IS NULL
+             AND l.status IN ('booked','planned','assigned','dispatched','at_pickup')
+             AND $3::integer = (
+               SELECT MIN(ls2.sequence_number) FROM mdata.load_stops ls2
+                WHERE ls2.load_id = l.id AND ls2.stop_type = 'pickup' AND ls2.soft_deleted_at IS NULL
+             )
+        `,
+        [stamped.load_id, input.operating_company_id, stamped.sequence_number]
+      );
     }
     if (stamped?.load_id && stamped.stop_id && stamped.booked_by_user_id) {
       await mintProformaInvoiceOnFirstPickup(client, {
