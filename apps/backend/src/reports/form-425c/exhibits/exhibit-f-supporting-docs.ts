@@ -222,13 +222,13 @@ export async function buildExhibitF(
     `
       SELECT b.id,
              b.bill_number,
-             qv.display_name AS vendor_name,
+             v.vendor_name,
              b.amount_cents AS total_cents,
              b.bill_date::text
       FROM accounting.bills b
-      LEFT JOIN mdata.qbo_vendors qv
-        ON qv.qbo_id = b.vendor_id
-       AND qv.operating_company_id = b.operating_company_id
+      LEFT JOIN mdata.vendors v
+        ON (v.id::text = b.vendor_id OR v.qbo_vendor_id = b.vendor_id)
+       AND v.operating_company_id = b.operating_company_id
       WHERE b.operating_company_id = $1::uuid
         AND b.bill_date >= $2::date
         AND b.bill_date <= $3::date

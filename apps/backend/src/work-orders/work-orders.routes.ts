@@ -533,7 +533,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
 
         if (body.vendor_id) {
           const vr = await client.query(
-            `SELECT 1 FROM mdata.qbo_vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+            `SELECT 1 FROM mdata.vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
             [body.vendor_id, body.operating_company_id]
           );
           if ((vr.rowCount ?? 0) === 0) return { kind: "bad_vendor" as const };
@@ -666,7 +666,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       if ("kind" in created && created.kind === "bad_vendor") {
         return reply.code(400).send({
           error: "invalid_vendor_id",
-          message: "vendor_id must reference a synced QuickBooks vendor for this operating company",
+          message: "vendor_id must reference a registered vendor for this operating company",
         });
       }
       return reply.code(201).send({ work_order: created.wo });
@@ -696,7 +696,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
 
       if (body.vendor_id) {
         const vr = await client.query(
-          `SELECT 1 FROM mdata.qbo_vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+          `SELECT 1 FROM mdata.vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
           [body.vendor_id, query.data.operating_company_id]
         );
         if ((vr.rowCount ?? 0) === 0) return { kind: "bad_vendor" as const };
