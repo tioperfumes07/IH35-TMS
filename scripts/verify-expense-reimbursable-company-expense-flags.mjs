@@ -80,7 +80,7 @@ export function checkMigration(sql) {
 }
 
 function selftest() {
-  const routeSrc = readFileSync(path.join(ROOT, ROUTE_FILE), "utf8");
+  const routeSrc = readFileSync(path.join(ROOT, ROUTE_FILE), "utf8") + "\n" + readFileSync(path.join(ROOT, "apps/backend/src/accounting/expense-writer.service.ts"), "utf8"); // 443.130 #3 follow-up — old: expenses.routes.ts; new: the writer lives in expense-writer.service.ts (createExpenseInClientTx moved there so a service never imports a route)
   const formSrc = readFileSync(path.join(ROOT, FORM_FILE), "utf8");
   const submitSrc = readFileSync(path.join(ROOT, SUBMIT_FILE), "utf8");
   const migrationSql = readFileSync(path.join(ROOT, MIGRATION_FILE), "utf8");
@@ -150,7 +150,7 @@ async function liveCheck() {
 if (process.argv.includes("--selftest")) {
   selftest();
 } else {
-  const routeSrc = readFileSync(path.join(ROOT, ROUTE_FILE), "utf8");
+  const routeSrc = readFileSync(path.join(ROOT, ROUTE_FILE), "utf8") + "\n" + readFileSync(path.join(ROOT, "apps/backend/src/accounting/expense-writer.service.ts"), "utf8"); // 443.130 #3 follow-up — old: expenses.routes.ts; new: the writer lives in expense-writer.service.ts (createExpenseInClientTx moved there so a service never imports a route)
   const formSrc = readFileSync(path.join(ROOT, FORM_FILE), "utf8");
   const submitSrc = readFileSync(path.join(ROOT, SUBMIT_FILE), "utf8");
   const migrationSql = readFileSync(path.join(ROOT, MIGRATION_FILE), "utf8");

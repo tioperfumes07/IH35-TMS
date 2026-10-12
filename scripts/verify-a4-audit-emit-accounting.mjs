@@ -37,7 +37,9 @@ const checks = [
   { file: "apps/backend/src/accounting/invoices.routes.ts", events: ["invoice.created", "invoice.updated", "invoice.sent", "invoice.voided"] },
   // LST-F413: ACCT-F9510 (6a5aade69e) moved the bill emits in-transaction into the service; the route only comments now.
   { file: "apps/backend/src/accounting/bills.service.ts", events: ["bill.created", "bill.paid", "bill.voided", "payment.bill_voided"] },
-  { file: "apps/backend/src/accounting/expenses.routes.ts", events: ["expense.created", "expense.reattributed"] },
+  // 443.130 #3 follow-up — old: expenses.routes.ts; new: the writer lives in expense-writer.service.ts (createExpenseInClientTx moved there so a service never imports a route)
+  { file: "apps/backend/src/accounting/expense-writer.service.ts", events: ["expense.created"] },
+  { file: "apps/backend/src/accounting/expenses.routes.ts", events: ["expense.reattributed"] },
   { file: "apps/backend/src/accounting/payments.routes.ts", events: ["payment.created", "payment.voided"] },
   { file: "apps/backend/src/accounting/customer-payments.routes.ts", events: ["payment.customer_created"] },
 ];
