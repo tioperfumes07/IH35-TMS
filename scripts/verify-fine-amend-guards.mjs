@@ -18,12 +18,13 @@
  * dims fields on transactions that carry dependents. A silent cascade would reach into a driver's
  * debt without anyone looking at it.
  *
- * 443.113 AJK-12 (2026-10-12): /dismiss is held to the SAME block. Conversion also books a posted driver
- * receivable and a pending settlement deduction; dismissing only the fine leaves the driver owing a dismissed
- * fine (the database lock E_FINE_LOCKED_AFTER_CONVERSION made it a raw 500 with no remedy). /dismiss must
- * refuse a converted fine by name (fine_already_converted_to_liability + driver_liability_id) and carry
- * `converted_to_liability_id IS NULL` in its UPDATE.
- *
+ * 443.113 AJK-12 (2026-10-12) held /dismiss to the same block; LEAD 443.114 (same day) RULED the other way for
+ * dismissal: a fine dismissed (e.g. in court) must clear the driver charge in ONE action. /dismiss on a converted fine
+ * therefore calls the ONE liability void engine (voidDriverLiabilityInClientTx — voids the pending deduction, reverses
+ * the receivable, refuses when any of it was already recovered) INSIDE its transaction and BEFORE the dismiss UPDATE,
+ * and the DB lock (migration 202615820910) allows converted -> dismissed only once that liability is voided.
+ * /reduce keeps the Option B block.
+
  * Also enforced: contest/dismiss/reduce must refuse VOIDED fines. void-not-delete means a voided row
  * is immutable history; editing it is never correct.
  *
@@ -40,6 +41,7 @@ const LABEL = "verify-fine-amend-guards";
 const SELFTEST = process.argv.includes("--selftest");
 
 const read = () => fs.readFileSync(path.join(ROOT, FILE), "utf8");
+const readOpt = (rel) => { try { return fs.readFileSync(path.join(ROOT, rel), "utf8"); } catch { return null; } };
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
 
 /** Body of one route handler, from its app.post(...) to the next app.<verb>( at the same level. */
@@ -83,21 +85,36 @@ export function assertFineAmendGuards(source) {
     }
   }
 
+  // LEAD 443.114 (AJK-12 ruling): dismissing a converted fine clears the driver charge in ONE action — inside the one
+  // withCompanyScope transaction it calls the ONE liability void engine (voidDriverLiabilityInClientTx) BEFORE the
+  // dismiss UPDATE, and surfaces the engine's "already recovered" refusal by name.
   const dismiss = routeBody(code, "dismiss");
   if (dismiss) {
+    const txStart = dismiss.indexOf("withCompanyScope(");
+    const voidAt = dismiss.indexOf("voidDriverLiabilityInClientTx(");
+    const updateAt = dismiss.search(/UPDATE safety\.civil_fines[\s\S]*?SET status = 'dismissed'/);
+    if (voidAt === -1) {
+      problems.push(`${FILE} /dismiss: does not void the converted driver liability through voidDriverLiabilityInClientTx (443.114).`);
+    } else {
+      if (txStart === -1 || voidAt < txStart) {
+        problems.push(`${FILE} /dismiss: the liability void runs outside the dismissal transaction (443.114: one action).`);
+      }
+      if (updateAt !== -1 && voidAt > updateAt) {
+        problems.push(`${FILE} /dismiss: the fine is marked dismissed BEFORE its liability is voided (443.114: void THEN dismiss).`);
+      }
+    }
     const update = /UPDATE safety\.civil_fines[\s\S]*?RETURNING \*/.exec(dismiss)?.[0] ?? "";
-    if (!/converted_to_liability_id IS NULL/.test(update)) {
-      problems.push(
-        `${FILE} /dismiss: the UPDATE does not carry \`converted_to_liability_id IS NULL\` — dismissing a fine ` +
-          `converted to a driver liability leaves the driver owing a dismissed fine (443.113 AJK-12).`
-      );
+    if (!/converted_to_liability_id IS NOT DISTINCT FROM/.test(update)) {
+      problems.push(`${FILE} /dismiss: the UPDATE does not re-check the converted pointer it voided (race with a concurrent convert).`);
     }
-    if (!/fine_already_converted_to_liability/.test(dismiss)) {
-      problems.push(`${FILE} /dismiss: no \`fine_already_converted_to_liability\` refusal for a converted fine (443.113 AJK-12).`);
+    if (!/driver_receivable_partly_recovered/.test(dismiss)) {
+      problems.push(`${FILE} /dismiss: the void engine's "already recovered" refusal is not surfaced by name.`);
     }
-    if (!/driver_liability_id/.test(dismiss)) {
-      problems.push(`${FILE} /dismiss: the converted-fine refusal does not return driver_liability_id (the record to void).`);
-    }
+  }
+  // The liability void route and the dismissal share ONE engine.
+  const liabRoutes = readOpt("apps/backend/src/liabilities/liabilities.routes.ts");
+  if (liabRoutes !== null && !/voidDriverLiabilityInClientTx\(/.test(stripComments(liabRoutes))) {
+    problems.push(`apps/backend/src/liabilities/liabilities.routes.ts: PATCH /liabilities/:id/void no longer calls voidDriverLiabilityInClientTx (one engine).`);
   }
 
   for (const route of ["contest", "dismiss"]) {
@@ -158,25 +175,38 @@ if (SELFTEST) {
     "/reduce: the refusal does not return driver_liability_id"
   );
 
-  // Case 4 (AJK-12): /dismiss loses its converted-liability predicate.
+  // Case 4 (443.114): /dismiss dismisses without voiding the liability.
   expectCaught(
-    "dismiss-converted-guard-removed",
-    inRoute("dismiss", /\n\s*AND converted_to_liability_id IS NULL/, ""),
-    "/dismiss: the UPDATE does not carry `converted_to_liability_id IS NULL`"
+    "dismiss-without-void",
+    inRoute("dismiss", /const voided = await voidDriverLiabilityInClientTx\(/, "const voided = await noopVoid("),
+    "/dismiss: does not void the converted driver liability"
   );
 
-  // Case 5 (AJK-12): /dismiss stops refusing a converted fine by name.
+  // Case 5 (443.114): /dismiss voids the liability but marks the fine dismissed FIRST (void after dismiss).
+  {
+    const start = live.indexOf('app.post("/api/v1/safety/fines/:id/dismiss"');
+    const rest = live.slice(start + 10);
+    const end = start + 10 + rest.search(/app\.(post|get|patch|put|delete)\(/);
+    const body = live.slice(start, end);
+    const voidCall = /\n\s*const voided = await voidDriverLiabilityInClientTx\([\s\S]*?\}\);\n/.exec(body)?.[0] ?? "";
+    const swapped = voidCall
+      ? body.replace(voidCall, "\n").replace(/(RETURNING \*\n\s*`,\n[^\n]*\n\s*\);\n)/, `$1${voidCall}`)
+      : body;
+    expectCaught("dismiss-void-after-dismiss", live.slice(0, start) + swapped + live.slice(end), "BEFORE its liability is voided");
+  }
+
+  // Case 6 (443.114): the liability void runs outside the dismissal transaction.
   expectCaught(
-    "dismiss-refusal-removed",
-    inRoute("dismiss", /fine_already_converted_to_liability/g, "conflict"),
-    "/dismiss: no `fine_already_converted_to_liability` refusal"
+    "dismiss-void-outside-txn",
+    inRoute("dismiss", /const outcome = await withCompanyScope\(/, "await voidDriverLiabilityInClientTx(pool, {});\n    const outcome = await withCompanyScope("),
+    "outside the dismissal transaction"
   );
 
-  // Case 6 (AJK-12): /dismiss's refusal stops naming the liability to void.
+  // Case 7 (443.114): the void engine's recovered refusal is swallowed.
   expectCaught(
-    "dismiss-remedy-not-named",
-    inRoute("dismiss", /driver_liability_id: outcome\.liabilityId,\n/, ""),
-    "/dismiss: the converted-fine refusal does not return driver_liability_id"
+    "dismiss-recovered-refusal-dropped",
+    inRoute("dismiss", /driver_receivable_partly_recovered/g, "conflict"),
+    "\"already recovered\" refusal is not surfaced"
   );
 
   // Case 3: contest loses its voided guard.
@@ -198,7 +228,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 6 planted defects caught, live source clean`);
+  console.log(`${LABEL} SELFTEST PASS — 7 planted defects caught, live source clean`);
   process.exit(0);
 }
 

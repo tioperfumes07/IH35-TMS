@@ -153,6 +153,13 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-3/c113-cancel",
     new Set(["db/migrations/202615810910_invoice_type_accepts_cancellation_tonu.sql"]),
   ],
+  // LEAD 443.114 (CC-3, AJK-12 ruling): safety.enforce_fine_lock_after_conversion allows converted -> dismissed only when the
+  // driver liability is voided, and clearing the pointer only when its liability does not exist. Claimed first on main
+  // (#26646, 966947fd54). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c114-fines",
+    new Set(["db/migrations/202615820910_fine_dismiss_after_liability_void.sql"]),
+  ],
   // RULING 443.62 #3/#4/#7 (Lead 16:35 UTC): 2410-00-001..004 "Due to / from <party>" rename (taken from CC-1 #26377) +
   // google_place_id on stop / location for CC-2. Claimed first on main (#26389); exact branch + exact files.
   [
