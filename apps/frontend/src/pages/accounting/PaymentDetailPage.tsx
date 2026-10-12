@@ -6,6 +6,7 @@ import { applyPayment, getPayment, listInvoices, unapplyPayment, voidPayment, ty
 import { Button } from "../../components/Button";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -102,6 +103,8 @@ export function PaymentDetailPage() {
   });
 
   const [voidOpen, setVoidOpen] = useState(false);
+  // 443.104 — Unapply moves money between a payment and an invoice; it is confirmed before it is sent.
+  const [pendingUnapplyId, setPendingUnapplyId] = useState<string | null>(null);
 
   // Display-only ParityTable migration: columns/order/formatting mirror the former
   // hand-rolled table 1:1 (Invoice # / Applied amount / Open after / Applied at / Actions).
@@ -141,7 +144,7 @@ export function PaymentDetailPage() {
       render: (app) => (
         <span className="text-gray-700">
           {!isVoided ? (
-            <Button size="sm" variant="secondary" onClick={() => unapplyMutation.mutate(app.id)} loading={unapplyMutation.isPending}>
+            <Button size="sm" variant="secondary" onClick={() => setPendingUnapplyId(app.id)} loading={unapplyMutation.isPending} data-testid={`payment-unapply-${app.id}`}>
               Unapply
             </Button>
           ) : (
@@ -197,6 +200,19 @@ export function PaymentDetailPage() {
                 <Button variant="danger" onClick={() => setVoidOpen(true)}>
                   Void
                 </Button>
+                <ConfirmModal
+                  open={pendingUnapplyId !== null}
+                  title="Unapply payment"
+                  message="Remove this payment's application from the invoice? The invoice goes back to open for this amount and the payment becomes unapplied credit."
+                  confirmLabel="Unapply"
+                  danger
+                  onClose={() => setPendingUnapplyId(null)}
+                  onConfirm={async () => {
+                    if (!pendingUnapplyId) return;
+                    await unapplyMutation.mutateAsync(pendingUnapplyId);
+                    setPendingUnapplyId(null);
+                  }}
+                />
                 <VoidReasonModal
                   open={voidOpen}
                   title="Void Payment"
