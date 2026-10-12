@@ -38,7 +38,10 @@ async function selftest() {
   const svc = read("apps/backend/src/fuel/fuel-card-assignments.service.ts");
   assert.ok(/ambiguous_assignment/.test(svc) && /LIMIT 2/.test(svc), "two matching assignments is ambiguity, never a pick");
   const routes = read("apps/backend/src/fuel/fuel-card-assignments.routes.ts");
-  assert.equal((routes.match(/if \(!requireCardWriteRole\(reply/g) ?? []).length, 3, "create / end / void are accounting-role gated");
+  // ROUND 381.6 (#24874) added a 4th write route (card-type issuer); every write route is gated, one gate per POST.
+  const writeRoutes = (routes.match(/app\.(?:post|put|patch|delete)\(/g) ?? []).length;
+  assert.ok(writeRoutes >= 4, "create / end / void / card-type issuer write routes present");
+  assert.equal((routes.match(/if \(!requireCardWriteRole\(reply/g) ?? []).length, writeRoutes, "create / end / void / card-type issuer are accounting-role gated (one gate per write route)");
   assert.ok(/unit_id: q\.data\.unit_id/.test(routes) && /driver_id: q\.data\.driver_id/.test(routes), "reverse read: unit -> cards, driver -> cards");
   assert.ok(/registerFuelCardAssignmentRoutes\(app\)/.test(read("apps/backend/src/index.ts")), "routes mounted");
   console.log(`${LABEL} --selftest PASS (16/16)`);

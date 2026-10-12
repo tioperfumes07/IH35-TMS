@@ -30,7 +30,9 @@ export function verifyStatic(src) {
   if (!/\|\s*"SETTLEMENT_HAS_NO_LOAD_ACTIVITY"/.test(src)) {
     f.push("PayRunCloseErrorCode must include SETTLEMENT_HAS_NO_LOAD_ACTIVITY as a union member");
   }
-  const checkMatch = src.match(/const loadActivity = await client\.query[\s\S]{0,600}?SETTLEMENT_HAS_NO_LOAD_ACTIVITY[\s\S]{0,300}?\n\s*\}\n/);
+  // Lead 443.36 (salaried loads UNION) grew the query past a fixed character window; the check is now bounded
+  // structurally instead — from the loadActivity query to its throw with no other client.query in between.
+  const checkMatch = src.match(/const loadActivity = await client\.query(?:(?!await client\.query)[\s\S])*?SETTLEMENT_HAS_NO_LOAD_ACTIVITY[\s\S]{0,300}?\n\s*\}\n/);
   if (!checkMatch) {
     f.push("closeSettlementPayRun must query settlement_lines for a real load_id and throw SETTLEMENT_HAS_NO_LOAD_ACTIVITY when none exist");
   } else {

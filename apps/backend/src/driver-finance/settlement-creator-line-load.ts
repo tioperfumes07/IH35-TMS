@@ -16,7 +16,7 @@
  * Escrow with no load number keeps the settlement's first load (owner 2026-10-10: "escrow with no load number yes as
  * you said") — not changed here.
  */
-import { SettlementCreatorError } from "./settlement-creator.service.js";
+import { SettlementCreatorError } from "./settlement-creator-error.js";
 
 type LoadSpan = { load_number: string; pickup_date?: string | null; delivery_date?: string | null };
 type MoneyLine = { description?: string | null; amount_cents: number; load_number?: string | null };
