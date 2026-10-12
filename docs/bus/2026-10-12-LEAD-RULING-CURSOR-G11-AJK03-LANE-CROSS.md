@@ -13,7 +13,9 @@ apps/backend/src/telematics/geofence-detector.service.ts
 apps/backend/src/telematics/__tests__/geofence-stop-arrival-prompt.test.ts
 scripts/verify-geofence-at-booking-and-status-follows.mjs
 scripts/verify-samsara-history-is-never-an-operational-path-into-a-frozen-company.mjs
+scripts/money-engine-linkage-register.json
 ```
+
 
 Cite this file by name in the PR body and as
 `LANE_CROSS=2026-10-12-LEAD-RULING-CURSOR-G11-AJK03-LANE-CROSS.md`.
@@ -31,6 +33,11 @@ move G15 / BCF-06 / AJK-02 / AJK-06 / AJK-07 / AJK-08 off Cursor's queue. The de
 The fix, db test, unit mocks, and `verify-geofence-at-booking-and-status-follows` guard are one
 ship. The samsara-history guard touch is tip-unblock only (OPERATIONAL classify for
 `fuel-load-at-time.ts` + `dr.` pin) — no `fuel/` code change, no money write.
+
+Tip unblock (ambient main red on `origin/main` tip after #26690): declare
+`accounting/expense-correction.service.ts` in `scripts/money-engine-linkage-register.json`
+with reverse `accounting/void.service.ts`. Proven red on main worktree at
+`63bbb3dfba` before this declare — not introduced by G11.
 
 `docs/bus/LANES.md` still maps dispatch/book-load and these verify scripts to CC-1 / UNASSIGNED.
 Without this ruling the lane guard blocks the owner-assigned Cursor ship.
