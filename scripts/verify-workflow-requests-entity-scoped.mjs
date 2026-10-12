@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
+import { assertNotProdTarget } from './lib/prod-target-guard.mjs';
 
 export const REQUIRES_LIVE_DB = 'Production RLS metadata and isolated local behavior are independently required.';
 const LABEL = 'verify-workflow-requests-entity-scoped';
@@ -75,6 +76,8 @@ async function main() {
   assert.ok(url, isolated ? 'WORKFLOW_RLS_TEST_DATABASE_URL required; no production fixture fallback' : 'DATABASE_URL required');
   if (isolated) assert.ok(isolatedTarget(url), 'fixtures forbidden outside local ih35_verify/ih35_test database');
   const local = isolatedTarget(url);
+  // LST-SEED-01: the fixture arm writes rows — the shared prod refusal runs before connecting, on top of isolatedTarget.
+  if (local) assertNotProdTarget({ label: LABEL, connectionString: url });
   const client = new Client({connectionString:url, connectionTimeoutMillis:10000});
   await client.connect();
   try {
