@@ -146,6 +146,11 @@ if (process.argv.includes("--selftest")) {
     const scoped = (await db.query(tempQuery(DATA_QUERIES.orphanAccepted), [USMCA])).rows[0].n;
     const mutant = tempQuery(DATA_QUERIES.orphanAccepted).replace("bt.operating_company_id = $1 AND ", "");
     cases.push(["orphanAccepted: bank join scope removal rejected", scoped === 0 && (await db.query(mutant, [USMCA])).rows[0].n === 1]);
+    await db.query("UPDATE pg_temp.bank_transactions SET operating_company_id=$1", [USMCA]);
+    await db.query("UPDATE pg_temp.reconciliation_matches SET operating_company_id=$1", [other]);
+    const matchScoped = (await db.query(tempQuery(DATA_QUERIES.orphanAccepted), [USMCA])).rows[0].n;
+    const matchMutant = tempQuery(DATA_QUERIES.orphanAccepted).replace("m.operating_company_id = $1 AND ", "");
+    cases.push(["orphanAccepted: match scope removal rejected", matchScoped === 0 && (await db.query(matchMutant, [USMCA])).rows[0].n === 1]);
   } finally {
     await db.query("ROLLBACK").catch(() => {});
     await db.end();

@@ -61,16 +61,16 @@ const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 export function livePostingSql(sourceTypes, idExpr) {
   const types = sourceTypes.map((t) => `'${t}'`).join(",");
   return `EXISTS (SELECT 1 FROM accounting.journal_entry_postings jep
-      JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-     WHERE jep.source_transaction_type = ANY(ARRAY[${types}]::text[])
+      JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid AND je.operating_company_id = $1::uuid
+     WHERE jep.operating_company_id = $1::uuid AND jep.source_transaction_type = ANY(ARRAY[${types}]::text[])
        AND jep.source_transaction_id = (${idExpr})::text
        AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL)`;
 }
 
 // The settlement that carries a driver bill: the one holding the bill's ACTIVE settlement line.
 const BILL_CLOSED_SETTLEMENT = (extra) => `EXISTS (SELECT 1 FROM driver_finance.settlement_lines sl
-      JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id AND s.voided_at IS NULL
-     WHERE sl.source_driver_bill_id = d.id AND sl.voided_at IS NULL AND s.status = 'closed' AND ${extra})`;
+      JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id AND s.operating_company_id = $1::uuid AND s.voided_at IS NULL
+     WHERE sl.operating_company_id = $1::uuid AND sl.source_driver_bill_id = d.id AND sl.voided_at IS NULL AND s.status = 'closed' AND ${extra})`;
 
 // ROUND 251 Item 1 (adoption fallback for accounting.bill_payments, mirroring BILL_CLOSED_SETTLEMENT
 // above for the SAME reason): the AP-adoption backfills (scripts/ops/*ap-adoption*.ts) recreated
@@ -85,15 +85,15 @@ const BILL_CLOSED_SETTLEMENT = (extra) => `EXISTS (SELECT 1 FROM driver_finance.
 // cash was already posted by the settlement that closed for this load and driver."
 const BILL_PAYMENT_ADOPTED_SETTLEMENT = `EXISTS (
   SELECT 1 FROM accounting.bills b
-    JOIN driver_finance.settlement_lines sl ON sl.load_id = b.load_id AND sl.voided_at IS NULL
+    JOIN driver_finance.settlement_lines sl ON sl.load_id = b.load_id AND sl.operating_company_id = $1::uuid AND sl.voided_at IS NULL
     JOIN driver_finance.driver_settlements s
-      ON s.id = sl.settlement_id AND s.voided_at IS NULL AND s.driver_id = b.driver_id
-   WHERE b.id = d.bill_id AND b.driver_id IS NOT NULL AND b.load_id IS NOT NULL
+      ON s.id = sl.settlement_id AND s.operating_company_id = $1::uuid AND s.voided_at IS NULL AND s.driver_id = b.driver_id
+   WHERE b.operating_company_id = $1::uuid AND b.id = d.bill_id AND b.driver_id IS NOT NULL AND b.load_id IS NOT NULL
      AND s.status = 'closed'
      AND ${livePostingSql(["driver_settlement"], "s.id")}
 )`;
 const SETTLEMENT_LINES_TOTAL = (sid) =>
-  `COALESCE((SELECT SUM(x.amount) FROM driver_finance.settlement_lines x WHERE x.settlement_id = ${sid} AND x.voided_at IS NULL), 0)`;
+  `COALESCE((SELECT SUM(x.amount) FROM driver_finance.settlement_lines x WHERE x.operating_company_id = $1::uuid AND x.settlement_id = ${sid} AND x.voided_at IS NULL), 0)`;
 // Settlement states that are not yet postable (the JE posts at close — settlement-pay-run closeSettlementPayRun).
 const SETTLEMENT_NOT_YET_POSTABLE = ["draft", "open", "approved"];
 
@@ -116,8 +116,8 @@ const DOCUMENT_CLASSES = [
   // uncovered were all Relay fill documents), so the ratchet goes 141 -> 0.
   { table: "accounting.expenses", voidCol: "voided_at", sourceType: "expense", expectedToPost: true,
     coveredSql: `(${livePostingSql(["expense"], "d.id")} OR EXISTS (SELECT 1 FROM accounting.journal_entries oje
-       WHERE oje.id = d.journal_entry_id AND oje.voided_at IS NULL AND oje.reversed_by_je_id IS NULL AND oje.status = 'posted'
-         AND EXISTS (SELECT 1 FROM accounting.journal_entry_postings op WHERE op.journal_entry_uuid = oje.id)))` },
+       WHERE oje.operating_company_id = $1::uuid AND oje.id = d.journal_entry_id AND oje.voided_at IS NULL AND oje.reversed_by_je_id IS NULL AND oje.status = 'posted'
+         AND EXISTS (SELECT 1 FROM accounting.journal_entry_postings op WHERE op.operating_company_id = $1::uuid AND op.journal_entry_uuid = oje.id)))` },
   { table: "accounting.bills", voidCol: "voided_at", sourceType: "bill", expectedToPost: true },
   {
     table: "accounting.bill_payments", voidCol: "voided_at",
@@ -143,7 +143,7 @@ const DOCUMENT_CLASSES = [
     // its expense document sits on that same entry. Such a row is on the ledger through that exact link — never by amount.
     // Measured live: 630/630 USMCA fuel rows covered, gap 0 (was 208 = every Relay product row), so the ratchet goes 32 -> 0.
     coveredSql: `(${livePostingSql(["fuel_event"], "d.id")} OR EXISTS (SELECT 1 FROM accounting.expenses e
-       WHERE e.source_fuel_transaction_id = d.id AND e.voided_at IS NULL AND ${livePostingSql(["expense"], "e.id")})
+       WHERE e.operating_company_id = $1::uuid AND e.source_fuel_transaction_id = d.id AND e.voided_at IS NULL AND ${livePostingSql(["expense"], "e.id")})
        OR (d.relay_fuel_transaction_id IS NOT NULL AND ${livePostingSql(["fuel_event"], "d.relay_fuel_transaction_id")}))`,
     zeroSql: "COALESCE(d.total_cost, 0) = 0",
   },
@@ -156,9 +156,9 @@ const DOCUMENT_CLASSES = [
     // non-superseded gl_bills row whose bill journal entry is live — the exact chain row, never by amount.
     coveredSql: `(${BILL_CLOSED_SETTLEMENT(livePostingSql(["driver_settlement"], "s.id"))} OR EXISTS (SELECT 1
        FROM driver_finance.driver_settlement_gl_bills gb
-       JOIN driver_finance.driver_settlement_gl_runs gr ON gr.id = gb.run_id AND gr.status = 'posted'
-       JOIN accounting.journal_entries bje ON bje.id = gb.bill_journal_entry_id
-      WHERE gb.driver_bill_id = d.id AND gb.superseded_at IS NULL
+       JOIN driver_finance.driver_settlement_gl_runs gr ON gr.id = gb.run_id AND gr.operating_company_id = $1::uuid AND gr.status = 'posted'
+       JOIN accounting.journal_entries bje ON bje.id = gb.bill_journal_entry_id AND bje.operating_company_id = $1::uuid
+      WHERE gb.operating_company_id = $1::uuid AND gb.driver_bill_id = d.id AND gb.superseded_at IS NULL
         AND bje.voided_at IS NULL AND bje.reversed_by_je_id IS NULL AND bje.status = 'posted'))`,
     zeroSql: BILL_CLOSED_SETTLEMENT(`${SETTLEMENT_LINES_TOTAL("s.id")} = 0`),
     pendingSql: `NOT ${BILL_CLOSED_SETTLEMENT("true")}`,
@@ -170,9 +170,9 @@ const DOCUMENT_CLASSES = [
     // It is on the ledger through its own POSTED GL run whose live, non-superseded bills each name a live posted bill entry.
     coveredSql: `(${livePostingSql(["driver_settlement"], "d.id")} OR EXISTS (SELECT 1
        FROM driver_finance.driver_settlement_gl_runs sr
-       JOIN driver_finance.driver_settlement_gl_bills sb ON sb.run_id = sr.id AND sb.superseded_at IS NULL
-       JOIN accounting.journal_entries sje ON sje.id = sb.bill_journal_entry_id
-      WHERE sr.settlement_id = d.id AND sr.status = 'posted'
+       JOIN driver_finance.driver_settlement_gl_bills sb ON sb.run_id = sr.id AND sb.operating_company_id = $1::uuid AND sb.superseded_at IS NULL
+       JOIN accounting.journal_entries sje ON sje.id = sb.bill_journal_entry_id AND sje.operating_company_id = $1::uuid
+      WHERE sr.operating_company_id = $1::uuid AND sr.settlement_id = d.id AND sr.status = 'posted'
         AND sje.voided_at IS NULL AND sje.reversed_by_je_id IS NULL AND sje.status = 'posted'))`,
     zeroSql: `d.status = 'closed' AND ${SETTLEMENT_LINES_TOTAL("d.id")} = 0`,
     pendingSql: `d.status::text = ANY(ARRAY[${SETTLEMENT_NOT_YET_POSTABLE.map((s) => `'${s}'`).join(",")}]::text[])`,

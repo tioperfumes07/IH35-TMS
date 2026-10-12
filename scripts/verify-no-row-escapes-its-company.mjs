@@ -124,7 +124,7 @@ async function measure(client) {
     const n = Number(r.rows[0].n);
     if (n > 0) nullCounts[`${s}.${t}`] = n;
   }
-  const p = await client.query(`SELECT count(*)::bigint AS n FROM accounting.expense_lines WHERE expense_id IS NULL`);
+  const p = await client.query(`SELECT count(*)::bigint AS n FROM accounting.expense_lines WHERE operating_company_id = $1 AND expense_id IS NULL`, ["5c854333-6ea5-4faa-af31-67cb272fef80"]);
   await client.query("ROLLBACK");
   return { nullCounts, parentless: Number(p.rows[0].n), scanned: tables.length };
 }
