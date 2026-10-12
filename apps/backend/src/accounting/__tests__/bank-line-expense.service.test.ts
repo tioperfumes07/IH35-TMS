@@ -5,8 +5,11 @@ import { describe, expect, it, vi } from "vitest";
 // several are refused by name, never guessed.
 
 const nextExpenseDisplayId = vi.fn(async () => "EXP-2026-00042");
+const generateExpenseNumber = vi.fn(async () => ({ number: "12225", seq: 1, loadNumber: "12225" }));
+const insertExpenseLoadLink = vi.fn(async () => undefined);
 const postSourceTransactionInClientTx = vi.fn(async () => ({ journal_entry_id: "je-1", posting_batch_id: "pb-1" }));
 vi.mock("../display-id.js", () => ({ nextExpenseDisplayId }));
+vi.mock("../../expense-attribution/expense-number.js", () => ({ generateExpenseNumber, insertExpenseLoadLink }));
 vi.mock("../posting-engine.service.js", () => ({ postSourceTransactionInClientTx }));
 
 const { resolveExpenseItemForAccount, createAndPostBankLineExpenseOnClient, BankLineExpenseError } = await import(
@@ -122,6 +125,33 @@ describe("createAndPostBankLineExpenseOnClient — load or exemption reason (443
     const line = await run({ loadId: "load-1" });
     expect(line.values?.[7]).toBe("load-1");
     expect(line.values?.[11]).toBeNull();
+  });
+  // DEGH-06 / 443.113-C — load-tagged bank-line expense uses the load spine, never EXP-YYYY-#####
+  it("DEGH-06: loadId uses generateExpenseNumber + insertExpenseLoadLink, not nextExpenseDisplayId", async () => {
+    generateExpenseNumber.mockClear();
+    insertExpenseLoadLink.mockClear();
+    nextExpenseDisplayId.mockClear();
+    const calls: Array<{ text: string; values?: unknown[] }> = [];
+    const client = {
+      query: vi.fn(async (text: string, values?: unknown[]) => {
+        calls.push({ text, values });
+        if (/INSERT INTO accounting\.expenses/.test(text)) return { rows: [{ id: "exp-load" }] };
+        return { rows: [] };
+      }),
+    };
+    await createAndPostBankLineExpenseOnClient(
+      client as never,
+      { ...base, loadId: "load-12225" } as never,
+      { userId: "u-1" }
+    );
+    expect(generateExpenseNumber).toHaveBeenCalledWith(client, "load-12225", CO);
+    expect(insertExpenseLoadLink).toHaveBeenCalledWith(
+      client,
+      expect.objectContaining({ expenseId: "exp-load", loadId: "load-12225", expenseNumber: "12225" })
+    );
+    expect(nextExpenseDisplayId).not.toHaveBeenCalled();
+    const header = calls.find((c) => /INSERT INTO accounting\.expenses/.test(c.text))!;
+    expect(header.values?.[4]).toBe("12225");
   });
   it("the caller's reason wins over the derived one", async () => {
     const line = await run({ loadExemptionReason: "Owner: bank fee for the operating account" });

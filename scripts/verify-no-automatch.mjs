@@ -58,6 +58,10 @@ const TARGET_COLUMN_WRITE_ALLOWLIST = new Set([
   "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts",
   "apps/backend/src/accounting/payments/bank-invoice-backlink.service.ts",
   "apps/backend/src/accounting/payments/bank-bill-backlink.service.ts",
+  // DEGH-02 / BANK-F4431132 — human Categorize (operator chose the expense account) creates the
+  // Expense document and stamps matched_expense_id on THAT line in the same transaction. Not a
+  // candidate suggester; not a cron. Owner Law B: suggest + accept — Categorize IS the accept.
+  "apps/backend/src/banking/bank-feed-gl-posting.service.ts",
 ]);
 
 const TARGET_COLUMNS = ["matched_expense_id", "matched_bill_id", "matched_load_id", "matched_settlement_id", "matched_invoice_id"];

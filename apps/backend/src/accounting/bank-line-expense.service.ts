@@ -12,6 +12,7 @@
  * picks it: the operator's item, else the ONE item mapped to the account. Several items or none are refused by name, never
  * guessed.
  */
+import { generateExpenseNumber, insertExpenseLoadLink } from "../expense-attribution/expense-number.js";
 import { nextExpenseDisplayId } from "./display-id.js";
 import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { resolveLineLoadExemption } from "./expense-line-load-exemption.js";
@@ -93,11 +94,20 @@ export async function createAndPostBankLineExpenseOnClient(
   input: BankLineExpenseInput,
   actor: { userId: string }
 ): Promise<{ expense_id: string; journal_entry_id: string; posting_batch_id: string | null }> {
-  const expenseNumber = await nextExpenseDisplayId(
-    client as never,
-    input.operatingCompanyId,
-    new Date(`${input.transactionDate}T00:00:00.000Z`)
-  );
+  // DEGH-06 / 443.113-C — a load-tagged bank-line expense uses the load spine (12225, 12225-1, …),
+  // never the generic EXP-YYYY-##### series. Same allocator as expenses.routes / fuel documents.
+  let expenseNumber: string;
+  let loadAttribution: { number: string; seq: number; loadNumber: string } | null = null;
+  if (input.loadId) {
+    loadAttribution = await generateExpenseNumber(client as never, input.loadId, input.operatingCompanyId);
+    expenseNumber = loadAttribution.number;
+  } else {
+    expenseNumber = await nextExpenseDisplayId(
+      client as never,
+      input.operatingCompanyId,
+      new Date(`${input.transactionDate}T00:00:00.000Z`)
+    );
+  }
 
   const inserted = await client.query<{ id: string }>(
     `INSERT INTO accounting.expenses (
@@ -132,6 +142,21 @@ export async function createAndPostBankLineExpenseOnClient(
   );
   const expenseId = inserted.rows[0]?.id;
   if (!expenseId) throw new BankLineExpenseError("expense_insert_failed", "The expense could not be created.");
+
+  if (loadAttribution && input.loadId) {
+    await insertExpenseLoadLink(client as never, {
+      operatingCompanyId: input.operatingCompanyId,
+      expenseId,
+      loadId: input.loadId,
+      loadNumber: loadAttribution.loadNumber,
+      seq: loadAttribution.seq,
+      expenseNumber: loadAttribution.number,
+      method: "user_assigned",
+      confidence: "high",
+      reason: "Bank-line expense attributed to its tagged load",
+      userId: actor.userId,
+    });
+  }
 
   // 443.105 #2 — a bank-line expense with no load says why: company cost on <account>, from this bank line.
   const accountLabel = input.loadId

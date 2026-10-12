@@ -49,6 +49,7 @@ import {
   resolveAccountForCategory,
   ExpenseCategoryMapResolutionError,
 } from "../accounting/expense-category-map/resolver.service.js";
+import { createAndPostBankLineExpenseOnClient, resolveExpenseItemForAccount } from "../accounting/bank-line-expense.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { isBankAccountHideEnabled } from "./bank-account-visibility.js";
 
@@ -85,6 +86,8 @@ export type BankFeedGlResult =
       bank_ledger_account_id: string;
       amount_cents: number;
       already_posted: boolean;
+      /** DEGH-02 / 443.113-C — set when money-out to an expense account created the Expense document. */
+      expense_id?: string;
     };
 
 export type MaybePostBankCategorizationInput = {
@@ -97,9 +100,14 @@ type DecisionOk = {
   ok: true;
   direction: "money_in" | "money_out";
   categorizedAccountId: string;
+  /** catalogs.accounts.account_type — Expense / CostOfGoodsSold / OtherExpense → expense document (DEGH-02). */
+  categorizedAccountType: string | null;
   bankLedgerAccountId: string;
   amountCents: number;
 };
+
+/** Account types whose money-out categorization is an Expense document (DEGH-02 / QBO "Categorize + Add"). */
+export const EXPENSE_DOCUMENT_ACCOUNT_TYPES: ReadonlySet<string> = new Set(["Expense", "CostOfGoodsSold", "OtherExpense"]);
 type Decision = { ok: false; reason: BankFeedGlSkipReason; message?: string } | DecisionOk;
 
 /**
@@ -146,7 +154,8 @@ async function decideOnClient(client: PgClient, input: MaybePostBankCategorizati
           ca.id::text                                  AS cat_account_id,
           ca.operating_company_id::text                AS cat_account_opco,
           ca.deactivated_at                            AS cat_account_deactivated_at,
-          ca.is_postable                               AS cat_account_is_postable
+          ca.is_postable                               AS cat_account_is_postable,
+          ca.account_type::text                        AS cat_account_type
         FROM banking.bank_transactions bt
         LEFT JOIN banking.bank_accounts ba
           ON ba.id = bt.bank_account_id
@@ -199,6 +208,7 @@ async function decideOnClient(client: PgClient, input: MaybePostBankCategorizati
           cat_account_opco: string | null;
           cat_account_deactivated_at: string | null;
           cat_account_is_postable: boolean | null;
+          cat_account_type: string | null;
         }
       | undefined;
     if (!txn) return { ok: false, reason: "bank_txn_not_found" };
@@ -333,6 +343,7 @@ async function decideOnClient(client: PgClient, input: MaybePostBankCategorizati
       ok: true,
       direction: txn.is_credit === true ? "money_in" : "money_out",
       categorizedAccountId,
+      categorizedAccountType: txn.cat_account_type,
       bankLedgerAccountId: txn.bank_ledger_account_id,
       amountCents,
     };
@@ -361,6 +372,13 @@ export async function maybePostBankCategorizationToGl(input: MaybePostBankCatego
 export async function postBankCategorizationOnClient(client: PgClient, input: MaybePostBankCategorizationInput): Promise<BankFeedGlResult> {
   const decision = await decideOnClient(client, input);
   if (!decision.ok) return { posted: false, reason: decision.reason, message: decision.message };
+
+  // DEGH-02 / 443.113-C — money OUT to an Expense / COGS / Other Expense account creates the Expense document
+  // (QBO "Categorize + Add"), posted by the expense poster — never a bare bank_categorization JE. Asset /
+  // liability / equity / money-in keep the CHAIN-05 categorization entry.
+  if (decision.direction === "money_out" && EXPENSE_DOCUMENT_ACCOUNT_TYPES.has(decision.categorizedAccountType ?? "")) {
+    return postBankLineAsExpenseOnClient(client, input, decision);
+  }
 
   // BANK-F05 — a categorization that has been reversed must RE-post, not silently return the original batch. The
   // revision is the number of journal entries for THIS source already reversed: stable across a double-submit (it
@@ -416,5 +434,110 @@ export async function postBankCategorizationOnClient(client: PgClient, input: Ma
     bank_ledger_account_id: decision.bankLedgerAccountId,
     amount_cents: decision.amountCents,
     already_posted: posted.result === "already_posted",
+  };
+}
+
+/**
+ * DEGH-02 / 443.113-C — the categorized money-out line becomes an Expense: payee = the vendor the operator
+ * tagged, paid from the bank's ledger account, one line on the chosen account with its item and the line's
+ * load / unit / trailer / driver tags. Posted by the existing expense poster in this transaction; the line
+ * and the document name each other (matched_expense_id + matched_journal_entry_id;
+ * expenses.source_bank_transaction_id). resolution_kind 'added': this line created it.
+ */
+async function postBankLineAsExpenseOnClient(
+  client: PgClient,
+  input: MaybePostBankCategorizationInput,
+  decision: DecisionOk
+): Promise<BankFeedGlResult> {
+  const lineRes = await client.query(
+    `SELECT bt.transaction_date::text AS transaction_date, bt.description, bt.categorization_memo,
+            bt.categorization_vendor_id::text AS vendor_id, bt.categorization_item_id::text AS item_id,
+            bt.categorization_load_id::text AS load_id, bt.categorization_unit_id::text AS unit_id,
+            bt.categorization_trailer_id::text AS trailer_id, bt.categorization_driver_id::text AS driver_id,
+            ca.account_number, ca.account_name
+       FROM banking.bank_transactions bt
+       JOIN catalogs.accounts ca ON ca.id = bt.categorization_gl_account_id AND ca.operating_company_id = bt.operating_company_id
+      WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid
+      LIMIT 1`,
+    [input.bankTransactionId, input.companyId]
+  );
+  const line = lineRes.rows[0] as
+    | {
+        transaction_date: string;
+        description: string | null;
+        categorization_memo: string | null;
+        vendor_id: string | null;
+        item_id: string | null;
+        load_id: string | null;
+        unit_id: string | null;
+        trailer_id: string | null;
+        driver_id: string | null;
+        account_number: string | null;
+        account_name: string | null;
+      }
+    | undefined;
+  if (!line) return { posted: false, reason: "bank_txn_not_found" };
+
+  if (line.vendor_id) {
+    const v = await client.query(
+      `SELECT 1 FROM mdata.vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
+      [line.vendor_id, input.companyId]
+    );
+    if (!v.rows[0]) {
+      return { posted: false, reason: "account_cross_entity", message: "The tagged vendor is not an active vendor of this company." };
+    }
+  }
+
+  const itemId = await resolveExpenseItemForAccount(client as never, {
+    operatingCompanyId: input.companyId,
+    accountId: decision.categorizedAccountId,
+    explicitItemId: line.item_id,
+    accountLabel: [line.account_number, line.account_name].filter(Boolean).join(" "),
+  });
+
+  const description = (line.categorization_memo ?? "").trim() || (line.description ?? "").trim() || "Bank transaction";
+  const created = await createAndPostBankLineExpenseOnClient(
+    client as never,
+    {
+      operatingCompanyId: input.companyId,
+      transactionDate: line.transaction_date,
+      amountCents: decision.amountCents,
+      memo: description.slice(0, 500),
+      vendorId: line.vendor_id,
+      paymentAccountId: decision.bankLedgerAccountId,
+      expenseAccountId: decision.categorizedAccountId,
+      itemId,
+      lineDescription: description.slice(0, 500),
+      sourceBankTransactionId: input.bankTransactionId,
+      loadId: line.load_id,
+      unitId: line.unit_id,
+      trailerId: line.trailer_id,
+      driverId: line.driver_id,
+    },
+    { userId: input.actorUserUuid }
+  );
+
+  await client.query(
+    `UPDATE banking.bank_transactions
+        SET matched_expense_id = $1::uuid,
+            matched_journal_entry_id = $2::uuid,
+            review_state = 'matched',
+            resolution_kind = 'added',
+            reviewed_at = now(),
+            updated_at = now()
+      WHERE id = $3::uuid AND operating_company_id = $4::uuid AND matched_journal_entry_id IS NULL`,
+    [created.expense_id, created.journal_entry_id, input.bankTransactionId, input.companyId]
+  );
+
+  return {
+    posted: true,
+    journal_entry_id: created.journal_entry_id,
+    posting_batch_id: created.posting_batch_id ?? "",
+    direction: decision.direction,
+    categorized_account_id: decision.categorizedAccountId,
+    bank_ledger_account_id: decision.bankLedgerAccountId,
+    amount_cents: decision.amountCents,
+    already_posted: false,
+    expense_id: created.expense_id,
   };
 }
