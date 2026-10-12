@@ -196,18 +196,36 @@ export async function createDriverCashAdvanceCore(
   // actually owes the driver. The recursive call never carries linked_driver_bill_id, so this
   // cannot loop past one level.
   if (body.linked_driver_bill_id) {
+    // LEAD 443.113 BCF-02 (Codex): the bill is LOCKED before its remaining balance is read, so two concurrent advances
+    // cannot both allocate the same remainder; and it must be live and belong to this driver + load — an advance applied
+    // to another driver's bill, a voided bill, a settled bill or another load's bill is refused by name.
     const billRes = await client.query(
       `
-        SELECT gross_amount_cents
+        SELECT gross_amount_cents, driver_id::text AS driver_id, team_driver_id::text AS team_driver_id,
+               load_id::text AS load_id, status, voided_at, settled_in_settlement_id::text AS settled_in_settlement_id
         FROM driver_finance.driver_bills
         WHERE id = $1
           AND operating_company_id = $2::uuid
         LIMIT 1
+        FOR UPDATE
       `,
       [body.linked_driver_bill_id, companyId]
     );
     const bill = billRes.rows[0];
     if (!bill) return { ok: false, code: 404, error: "linked_driver_bill_not_found" };
+    if (bill.voided_at || bill.status === "void") {
+      return { ok: false, code: 409, error: "linked_driver_bill_voided", message: "The driver bill this advance applies to is voided." };
+    }
+    if (bill.settled_in_settlement_id) {
+      return { ok: false, code: 409, error: "linked_driver_bill_settled", message: "The driver bill this advance applies to is already settled." };
+    }
+    if (body.driver_id !== bill.driver_id && body.driver_id !== bill.team_driver_id) {
+      return { ok: false, code: 422, error: "linked_driver_bill_driver_mismatch", message: "The driver bill belongs to another driver." };
+    }
+    if (body.load_id && bill.load_id && body.load_id !== bill.load_id) {
+      return { ok: false, code: 422, error: "linked_driver_bill_load_mismatch", message: "The driver bill is for another load." };
+    }
+    if (!body.load_id && bill.load_id) body = { ...body, load_id: String(bill.load_id) };
 
     const priorRes = await client.query(
       `
