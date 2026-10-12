@@ -22,6 +22,8 @@
  * despite the memo showing they came from one.
  */
 import pg from "pg";
+import { createRequire } from "node:module";
+const { inferPgSslOption } = createRequire(import.meta.url)("../lib/pg-connection-options.cjs");
 
 export const ALLOW_OFFLINE_SKIP = "requires DATABASE_URL to query live GL state; no static code-shape substitute exists for a live count";
 
@@ -35,7 +37,7 @@ async function main() {
     return;
   }
 
-  const pool = new pg.Pool({ connectionString: databaseUrl, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool({ connectionString: databaseUrl, ssl: inferPgSslOption(databaseUrl) });
   const client = await pool.connect();
   try {
     await client.query("BEGIN");

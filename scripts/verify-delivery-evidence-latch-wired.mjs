@@ -45,17 +45,35 @@ const LATCH_MARKERS = ["latchOnDeliveryEvidence", "postLoadRevenueLatch"];
  *   (b) the calling file has NO direct `UPDATE mdata.loads ... SET status` of its own — a file that
  *       both delegates and writes the status itself must latch itself.
  */
-const LATCHING_DELEGATES = ["transitionDispatchLoadInClientTx"];
-const DIRECT_STATUS_WRITE = /UPDATE\s+mdata\.loads\b[\s\S]{0,400}?\bSET\s+status\b/i;
+// 443.99 C: deliverLoadThroughDispatch (driver-finance/settlement-creator-deliver.ts) walks a load through THE
+// machine (dispatched -> in_transit -> delivered_pending_docs) and never writes the status itself. It is proven
+// TRANSITIVELY: it qualifies only while its own file reaches an already-proven delegate and writes no status, so
+// the moment the machine stops latching, the Settlement Creator turns red with it.
+const LATCHING_DELEGATES = ["transitionDispatchLoadInClientTx", "deliverLoadThroughDispatch"];
+// One SQL statement only: the span may not cross a statement or string boundary (; ` " '), so a file that writes
+// mdata.loads.presettlement_link_id and, separately, driver_settlements.status is not read as a load-status write.
+const DIRECT_STATUS_WRITE = /UPDATE\s+mdata\.loads\b[^;`"']{0,400}?\bSET\s+status\b/i;
 
-/** Delegates (from LATCHING_DELEGATES) whose exported definition in `files` references the latch. */
+/** A file reaches delegate `name` by calling it, or by injecting it (`transition = transitionDispatchLoadInClientTx`). */
+export function reachesDelegate(executable, name) {
+  return new RegExp(`\\b${name}\\s*\\(|=\\s*${name}\\b`).test(executable);
+}
+
+/**
+ * Delegates (from LATCHING_DELEGATES) whose exported definition in `files` references the latch — directly, or
+ * (to a fixpoint) by reaching an already-proven delegate from a file with no direct status write of its own.
+ */
 export function latchingDelegates(files) {
   const ok = new Set();
-  for (const { src } of files) {
-    const executable = stripCommentsForLatchScan(src);
-    for (const name of LATCHING_DELEGATES) {
-      if (new RegExp(`export\\s+(?:async\\s+)?function\\s+${name}\\b`).test(executable) && LATCH_MARKERS.some((m) => executable.includes(m))) {
-        ok.add(name);
+  const execs = files.map(({ src }) => stripCommentsForLatchScan(src));
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const executable of execs) {
+      for (const name of LATCHING_DELEGATES) {
+        if (ok.has(name) || !new RegExp(`export\\s+(?:async\\s+)?function\\s+${name}\\b`).test(executable)) continue;
+        const direct = LATCH_MARKERS.some((m) => executable.includes(m));
+        const transitive = !DIRECT_STATUS_WRITE.test(executable) && [...ok].some((d) => d !== name && reachesDelegate(executable, d));
+        if (direct || transitive) { ok.add(name); grew = true; }
       }
     }
   }
@@ -183,7 +201,7 @@ export function auditSources(files) {
     if (!status.startsWith("assigns the literal status")) widened++;
     const viaDelegate =
       !DIRECT_STATUS_WRITE.test(executable) &&
-      [...delegates].some((name) => new RegExp(`\\b${name}\\s*\\(`).test(executable));
+      [...delegates].some((name) => reachesDelegate(executable, name));
     if (!viaDelegate && !LATCH_MARKERS.some((m) => executable.includes(m))) {
       problems.push(
         `${rel}: ${status}, but never references the revenue latch ` +
@@ -350,6 +368,28 @@ function selftest() {
       failures.push(`case10d FAIL — removing the latch from the REAL ${machineRel} left ${geoRel} GREEN`);
   } else failures.push(`case10d FAIL — ${machineRel} or ${geoRel} missing; the real delegate proof cannot run`);
 
+  // case11 (443.99) — a TRANSITIVE delegate: the Settlement Creator shape. deliver.ts injects the machine as a default
+  // parameter and never writes the status; creator.ts calls deliver. Clean while the machine latches; RED for BOTH
+  // the moment the machine stops latching; RED if deliver.ts also writes the status itself.
+  const deliver = `import { transitionDispatchLoadInClientTx } from "../dispatch/m.service.js";
+  export async function deliverLoadThroughDispatch(client, a, o, id, d, transition = transitionDispatchLoadInClientTx) {
+    await transition(client, a, o, id, { new_status: next, delivered_at: next === "delivered_pending_docs" ? d : null });
+  }`;
+  const creator = `if (!["delivered_pending_docs"].includes(s)) await deliverLoadThroughDispatch(client, a, o, id, d);
+  await client.query("UPDATE mdata.loads SET presettlement_link_id = $1 WHERE id = $2", [x, id]);
+  await client.query("UPDATE driver_finance.driver_settlements SET status = 'closed' WHERE id = $1", [x]);`;
+  const tree3 = (m, dl) => [
+    { rel: "apps/backend/src/dispatch/m.service.ts", src: m },
+    { rel: "apps/backend/src/driver-finance/deliver.ts", src: dl },
+    { rel: "apps/backend/src/driver-finance/creator.service.ts", src: creator },
+  ];
+  if (auditSources(tree3(machine, deliver)).problems.length !== 0)
+    failures.push("case11a FAIL — the transitive Settlement Creator delegate chain was flagged while the machine latches");
+  if (auditSources(tree3(machine.replace("latchOnDeliveryEvidence", "noLatchHere"), deliver)).problems.length < 2)
+    failures.push("case11b FAIL — the machine stopped latching and the transitive delegate chain stayed GREEN");
+  if (auditSources(tree3(machine, deliver + `\nawait client.query("UPDATE mdata.loads SET status = $2 WHERE id = $1", [id, s]);`)).problems.length === 0)
+    failures.push("case11c FAIL — a transitive delegate that ALSO writes the status itself was excused");
+
   // NOTE: the selftest deliberately does NOT assert that the real tree is clean. That conflates two
   // different things — "is the matcher correct" (this selftest) and "is the repo currently compliant"
   // (the main run). The previous version asserted tree-cleanliness here, which meant a genuine defect
@@ -359,7 +399,7 @@ function selftest() {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS — 15/15 writer, latch, delegate, comment, and real-file mutation cases`);
+  console.log(`${LABEL}: selftest PASS — 18/18 writer, latch, delegate, comment, and real-file mutation cases`);
 }
 
 function main() {

@@ -32,6 +32,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
+import { createRequire } from "node:module";
+const { inferPgSslOption } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-one-feed-path-per-purchase";
@@ -162,7 +164,7 @@ async function liveCheck() {
     return;
   }
   const { default: pg } = await import("pg");
-  const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const client = new pg.Client({ connectionString: url, ssl: inferPgSslOption(url) });
   await client.connect();
   try {
     await client.query("BEGIN");

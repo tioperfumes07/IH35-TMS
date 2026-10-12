@@ -53,6 +53,10 @@ const KNOWN_LEGACY_ORPHAN_LOAD_NUMBERS = new Set(["13580", "13581", "13508"]);
 
 const WRITE_SITE_RE = /UPDATE\s+mdata\.loads[\s\S]{0,300}?SET[\s\S]{0,300}?assigned_primary_driver_id\s*=\s*\$/;
 const LINKER_CALL_RE = /linkLoadToPresettlementAfterAssignmentInClientTx\(|linkLoadToPresettlementAtBookingInClientTx\(/;
+// 443.99 C: a writer that POSTS the settlement itself (Settlement Creator, the AlwaysTrack seed engine) joins the load
+// to that settlement directly — the same column the linker writes — instead of minting a second open pre-settlement
+// for a load it is settling in the same transaction. That direct join counts; an assignment with neither still fails.
+const DIRECT_SETTLEMENT_JOIN_RE = /UPDATE\s+mdata\.loads\s+SET\s+presettlement_link_id\s*=\s*\$/;
 
 function listTsFiles(dir, out = []) {
   let entries;
@@ -72,7 +76,7 @@ function listTsFiles(dir, out = []) {
 
 export function auditFile(relPath, src) {
   if (!WRITE_SITE_RE.test(src)) return null; // not a write site at all -- nothing to check
-  if (LINKER_CALL_RE.test(src)) return { relPath, status: "linked" };
+  if (LINKER_CALL_RE.test(src) || DIRECT_SETTLEMENT_JOIN_RE.test(src)) return { relPath, status: "linked" };
   if (ALLOWLIST[relPath]) return { relPath, status: "allowlisted", reason: ALLOWLIST[relPath] };
   return { relPath, status: "FAIL" };
 }
@@ -98,6 +102,14 @@ if (process.argv.includes("--selftest")) {
     await client.query(\`UPDATE mdata.loads SET assigned_primary_driver_id = $2 WHERE id = $1\`, []);
     await linkLoadToPresettlementAtBookingInClientTx(client, {});
   `;
+  const directJoinGood = `
+    await client.query(\`UPDATE mdata.loads SET assigned_primary_driver_id = $1::uuid WHERE id = $3::uuid\`, []);
+    await client.query(\`UPDATE mdata.loads SET presettlement_link_id = $1::uuid, updated_at = now() WHERE id = $2::uuid\`, []);
+  `;
+  const readOnlyLinkCompare = `
+    await client.query(\`UPDATE mdata.loads SET assigned_primary_driver_id = $1::uuid WHERE id = $3::uuid\`, []);
+    await client.query(\`SELECT 1 FROM mdata.loads WHERE presettlement_link_id = $1::uuid\`, []);
+  `;
   const readOnlyComparison = `
     await client.query(\`SELECT l.id FROM mdata.loads l WHERE l.assigned_primary_driver_id = $3\`, []);
   `;
@@ -111,6 +123,12 @@ if (process.argv.includes("--selftest")) {
   if (auditFile("apps/backend/src/x/b.ts", bookingGood)?.status !== "linked") {
     throw new Error("SELFTEST FAIL: the at-booking linker variant was not recognized as linked");
   }
+  if (auditFile("apps/backend/src/x/e.ts", directJoinGood)?.status !== "linked") {
+    throw new Error("SELFTEST FAIL: a settlement writer's direct join onto its own settlement was not recognized as linked");
+  }
+  if (auditFile("apps/backend/src/x/f.ts", readOnlyLinkCompare)?.status !== "FAIL") {
+    throw new Error("SELFTEST FAIL: a read of presettlement_link_id was mistaken for a direct settlement join");
+  }
   if (auditFile("apps/backend/src/x/c.ts", readOnlyComparison) !== null) {
     throw new Error("SELFTEST FAIL: a read-only WHERE comparison was misclassified as a write site");
   }
@@ -121,7 +139,7 @@ if (process.argv.includes("--selftest")) {
     throw new Error("SELFTEST FAIL: the allow-listed seed file was not recognized as allowlisted");
   }
 
-  console.log("verify-presettlement-autolink-all-paths: SELFTEST PASS (5/5)");
+  console.log("verify-presettlement-autolink-all-paths: SELFTEST PASS (7/7)");
   process.exit(0);
 }
 
