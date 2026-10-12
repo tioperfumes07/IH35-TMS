@@ -108,7 +108,30 @@ jobs:
             scripts/verify-settled-load-carries-settled-status.mjs \
             scripts/verify-settlement-deduction-balance-derived.mjs \
             scripts/verify-transp-ar-control-opening-balance-integrity.mjs \
-            scripts/verify-no-test-markers-in-live-tables.mjs
+            scripts/verify-no-test-markers-in-live-tables.mjs \
+            scripts/verify-bank-match-suggest-is-read-only.mjs \
+            scripts/verify-one-profile-per-driver.mjs \
+            scripts/verify-every-load-born-document-and-posting-traces-to-its-load.mjs \
+            scripts/verify-factoring-writers-write-the-spine.mjs \
+            scripts/verify-list-count-matches-its-own-banner-count.mjs \
+            scripts/verify-reclassify-shows-every-coa-account-including-zero.mjs \
+            scripts/verify-ap-control-ties-subledger.mjs \
+            scripts/verify-every-bill-posting-carries-its-source-link.mjs \
+            scripts/verify-usmca-settlement-linkage.mjs \
+            scripts/verify-relay-ingest-usmca-only.mjs \
+            scripts/verify-reclassify-list-sums-to-its-balance.mjs \
+            scripts/verify-factor-reserve-roles-match-faro-bank-accounts.mjs \
+            scripts/verify-fuel-expense-is-unique-per-provider-transaction.mjs \
+            scripts/verify-no-bank-line-is-matched-to-nothing.mjs \
+            scripts/verify-undo-leaves-no-document-behind.mjs \
+            scripts/verify-invoice-copies-export-safe.mjs \
+            scripts/verify-draft-load-saves-and-is-visible.mjs \
+            scripts/verify-round173-8-stops-have-addresses.mjs \
+            scripts/verify-categorized-has-a-document.mjs \
+            scripts/verify-factoring-fees-are-financing-costs.mjs \
+            scripts/verify-unmatched-document-is-matchable-again.mjs \
+            scripts/verify-no-duplicate-active-account-names.mjs \
+            scripts/verify-load-to-cash-chain.mjs
       # ROUND 389 (LEAD) — the ONLY place a credential-gated derived artifact's freshness can actually be
       # proven. scripts/canonical-relations.json is regenerated from the live schema, so its generator
       # declares requiresDatabase; every other job runs guards through scripts/verify-static.mjs, which
