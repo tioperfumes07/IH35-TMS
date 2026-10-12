@@ -55,6 +55,7 @@ const draftSchema = z.object({
   unit_id: z.string().uuid(),
   trailer_equipment_number: z.string().trim().max(40).nullable().optional(),
   trailer_id: z.string().uuid().nullable().optional(),
+  trailer_none: z.boolean().optional(),
   period_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   period_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   seed_dispatched_loads: z.boolean().optional().default(true),

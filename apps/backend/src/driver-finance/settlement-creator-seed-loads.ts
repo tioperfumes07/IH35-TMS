@@ -11,6 +11,7 @@ import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.j
 import { milesTimesRateCents } from "./deadhead-rule.js";
 import { signedRateOverride } from "./settlement-creator-signed-rate.js";
 import { deliverLoadThroughDispatch, localDayStartIso, stampStopsFromTracking, type StopStamp } from "./settlement-creator-deliver.js";
+import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorTrailerChoice } from "./creator-trailer-choice.js";
 
 export const SETTLEMENT_CREATOR_QUAL_OVERRIDE_REASON =
   "entered from the AlwaysTrack settlement / load history (Settlement Creator)";
@@ -322,6 +323,8 @@ export async function ensureDispatchedLoadsForCreator(
       [draft.operating_company_id],
     )
   ).rows as CatalogCharge[];
+  // LEAD 443.109 — a load is never born without its trailer (the document decides; preview refuses trailer_required).
+  const trailerChoice = seed && draft.loads.length ? await creatorTrailerChoice(client, draft) : null;
   for (const load of draft.loads) {
     const existing = await client.query<{ id: string }>(
       `SELECT id::text FROM mdata.loads
@@ -351,6 +354,8 @@ export async function ensureDispatchedLoadsForCreator(
         `Load ${load.load_number} not found in USMCA. Book it in Dispatch first, then type it here.`,
       );
     }
+    // LEAD 443.109 — this load is about to be born: it is never born without its trailer.
+    if (!trailerChoice) throw new SettlementCreatorSeedError("trailer_required", `Load ${load.load_number}: ${CREATOR_TRAILER_REQUIRED_MESSAGE}`);
 
     // SETL-F438 — bookLoad() refuses a non-draft load with neither PO nor W/O
     // (customer_po_or_wo_number_required, ROUND 285.3.6). The Creator books with
@@ -414,9 +419,9 @@ export async function ensureDispatchedLoadsForCreator(
       assigned_primary_driver_id: draft.driver_id,
       assigned_unit_id: draft.unit_id ?? undefined,
       assigned_trailer_unit_id: draft.trailer_id ?? undefined,
-      // LEAD 443.107 item 3: the Creator's source names the trailer at settlement level — pass it as the recorded choice
-      // (validated against the company's fleet). With no trailer on the source nothing is invented: no choice is sent.
-      trailer_choice: draft.trailer_id ? { kind: "company", equipment_id: draft.trailer_id } : undefined,
+      // LEAD 443.107 item 3 + 443.109: the document's trailer is the load's recorded choice at birth (fleet trailer,
+      // customer / shipper trailer, or an explicit none) — creatorTrailerChoice decided it above, never invented.
+      trailer_choice: trailerChoice,
       miles_practical: load.loaded_miles ?? load.line_haul_miles ?? null,
       // CC-2 finding 2026-10-11 (verify-mileage-g1-g5-live G4 on 5769's 13498 / 13508): miles carry their source. The
       // Creator's miles are typed from the signed settlement / AlwaysTrack record by the operator.

@@ -15,12 +15,24 @@ import { providerTransactionId } from "../fuel/fuel-provider-reference.js";
 import { findCreatorCustomer } from "./settlement-creator-seed-loads.js";
 import { creatorLineLoadNumber } from "./settlement-creator-line-load.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
+import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorTrailerChoice } from "./creator-trailer-choice.js";
 
 type Q = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
 export async function creatorPreflightRefusals(client: Q, draft: SettlementCreatorDraft): Promise<string[]> {
   const out: string[] = [];
   const co = draft.operating_company_id;
+  // LEAD 443.109 — a load is never born without its trailer: the document names it, or the operator marks none.
+  // Only loads this post will BOOK are born here; a load the Edit adopts already exists.
+  const typedNumbers = (draft.loads ?? []).map((l) => l.load_number?.trim()).filter((n): n is string => !!n);
+  if (draft.seed_dispatched_loads !== false && typedNumbers.length) {
+    const existing = await client.query<{ load_number: string }>(
+      `SELECT load_number FROM mdata.loads WHERE operating_company_id = $1::uuid AND soft_deleted_at IS NULL AND load_number = ANY($2::text[])`,
+      [co, typedNumbers],
+    );
+    const born = typedNumbers.filter((n) => !existing.rows.some((r) => r.load_number === n));
+    if (born.length && !(await creatorTrailerChoice(client, draft))) out.push(`Loads ${born.join(", ")}: ${CREATOR_TRAILER_REQUIRED_MESSAGE}`);
+  }
   for (const l of draft.loads ?? []) {
     const n = l.load_number?.trim() || "(no number)";
     if (!l.customer_po_number?.trim() && !l.customer_wo_number?.trim()) out.push(`Load ${n}: the customer's PO number (or W/O number) is required.`);

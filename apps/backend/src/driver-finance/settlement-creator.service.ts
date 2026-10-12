@@ -48,6 +48,7 @@ export { deliverLoadThroughDispatch } from "./settlement-creator-deliver.js";
 import { DuplicateDocumentNumberError } from "../lib/qbo-custom-document-number.js";
 import { assertCreatorDraftAdmissible } from "./settlement-creator-admission.js";
 import { ensureDispatchedLoadsForCreator } from "./settlement-creator-seed-loads.js";
+import { creatorTrailerChoice } from "./creator-trailer-choice.js";
 import { setSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
 import { attributeFuelLoadNumber, creatorLineLoadNumber, lineLoadNotFound } from "./settlement-creator-line-load.js";
 import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
@@ -916,7 +917,12 @@ export async function postSettlementCreatorInClientTx(
   // RULING 443.66 D5 — the trailer the settlement document names. A draft carrying only trailer_equipment_number (all
   // 68 posted on 2026-10-10/11) left every expense header and line with no trailer; resolve it once here to this
   // company's equipment (owned or leased to it, exactly one) so every document below carries it.
-  draft = { ...draft, trailer_id: draft.trailer_id ?? (await resolveCreatorTrailerId(client, draft.operating_company_id, draft.trailer_equipment_number)) };
+  // LEAD 443.109 — the same decision that recorded the load's trailer at birth (creator-trailer-choice.ts).
+  const docTrailer = await creatorTrailerChoice(client as never, draft);
+  draft = {
+    ...draft,
+    trailer_id: draft.trailer_id ?? (docTrailer?.kind === "company" ? docTrailer.equipment_id : await resolveCreatorTrailerId(client, draft.operating_company_id, draft.trailer_equipment_number)),
+  };
   const preview = await previewSettlementCreator(client, draft);
   // A dry run (previewSettlementCreatorThroughClose) writes the settlement inside a savepoint the caller rolls
   // back, so the posting engine can compute the totals the owner checks — it never refuses on the preview.
@@ -2064,6 +2070,16 @@ export async function postSettlementCreatorInClientTx(
       `UPDATE accounting.expenses SET document_trailer_number = $3, updated_at = now()
         WHERE operating_company_id = $1::uuid AND id = ANY($2::uuid[]) AND trailer_id IS NULL AND document_trailer_number IS NULL`,
       [draft.operating_company_id, expenseIds, draft.trailer_equipment_number.trim()],
+    );
+    // LEAD 443.109 / 443.90 — that printed number is a customer / shipper trailer: the load recorded it at birth
+    // (trailer_source 'customer'); every expense of this post on such a load points at the same non-owned trailer.
+    await client.query(
+      `UPDATE accounting.expenses e SET non_owned_trailer_id = l.non_owned_trailer_id, updated_at = now()
+         FROM mdata.loads l
+        WHERE e.operating_company_id = $1::uuid AND e.id = ANY($2::uuid[]) AND e.trailer_id IS NULL AND e.non_owned_trailer_id IS NULL
+          AND l.id = e.load_id AND l.operating_company_id = e.operating_company_id
+          AND l.trailer_source = 'customer' AND l.non_owned_trailer_id IS NOT NULL`,
+      [draft.operating_company_id, expenseIds],
     );
   }
 

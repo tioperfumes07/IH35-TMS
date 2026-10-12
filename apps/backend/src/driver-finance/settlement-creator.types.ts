@@ -203,6 +203,8 @@ export type SettlementCreatorDraft = {
   unit_id?: string | null;
   trailer_equipment_number?: string | null;
   trailer_id?: string | null;
+  /** LEAD 443.109 — the operator's explicit "No trailer (bobtail / power only)" when the document names no trailer. */
+  trailer_none?: boolean;
   period_start: string; // YYYY-MM-DD
   period_end: string;
   loads: SettlementCreatorLoadBlock[];
