@@ -111,6 +111,52 @@ export class RelatedPartyPostingWithoutPartyError extends Error {
   }
 }
 
+/**
+ * LEAD 443.113 I-02 — the entity invariant is UNIVERSAL: every posting source type is classified here, explicitly.
+ *   PARTY_FROM_DOCUMENT — the document names its party (vendor / customer / driver); resolvePostingSourceEntity stamps
+ *                         it on every line the caller did not stamp, so such a document can never post party-less while
+ *                         it names a party (a bank line categorized straight to an account names none, and stays NULL).
+ *   PARTYLESS           — the document has no single party (GL journals, depreciation, transfers, deposits/sweeps of
+ *                         many customers, factoring events whose legs belong to different parties and are stamped by
+ *                         their caller per line, loans / leases / claims whose counterparty is on their own bill/line).
+ * (A line with no source at all is already refused: posting_line_requires_source.) Any OTHER type is refused until it is
+ * classified, so a new poster can never silently write party-less lines.
+ */
+export const PARTY_FROM_DOCUMENT_SOURCE_TYPES = [
+  "invoice", "bill", "bill_payment", "expense", "customer_payment", "credit_memo", "vendor_credit",
+  "driver_settlement", "driver_advance", "cash_advance", "driver_reimbursement", "driver_liability", "relay_deposit",
+  "bank_categorization", "fuel_event",
+  // its poster (party-entry-post.service.ts) stamps the party itself; the Due to / from refusal backs it.
+  "related_party_loan",
+] as const;
+export const PARTYLESS_SOURCE_TYPES = [
+  "journal_entry", "manual_je", "period_close", "recurring_template", "transfer", "bank_reconciliation", "bank_transaction",
+  "bank_deposit", "customer_payment_deposit", "fixed_asset", "fixed_asset_depreciation", "prepaid_purchase",
+  "prepaid_amortization", "loan", "loan_payment", "lease_contract", "lease_rental", "lease_disposal", "liability",
+  "escrow_account", "property_tax_rendition", "accident_liability", "insurance_claim", "warranty_claim", "safety_fine",
+  "settlement_dispute", "load", "factoring_advance", "factoring_advance_deposit", "factoring_funding",
+  "factoring_customer_payment", "factoring_reserve_release", "factoring_default_interest", "faro_reserve_entry",
+  "faro_cash_reserve_reclass", "factoring_chargeback" ,
+  // legacy aliases still read by reports; no live writer posts under them
+  "payment", "settlement"
+] as const;
+
+export type PostingPartyClass = "from_document" | "partyless" | "unclassified";
+export function postingPartyClass(sourceType: string | null | undefined): PostingPartyClass {
+  if ((PARTY_FROM_DOCUMENT_SOURCE_TYPES as readonly string[]).includes(String(sourceType))) return "from_document";
+  if ((PARTYLESS_SOURCE_TYPES as readonly string[]).includes(String(sourceType))) return "partyless";
+  return "unclassified";
+}
+
+/** I-02 — a posting source type nobody classified: refused until it is added to the classification above. */
+export class UnclassifiedPostingSourceTypeError extends Error {
+  readonly code = "posting_source_type_unclassified";
+  constructor(readonly sourceType: string) {
+    super(`posting_source_type_unclassified: source type "${sourceType}" is not classified for its party (posting-line-writer.ts)`);
+    this.name = "UnclassifiedPostingSourceTypeError";
+  }
+}
+
 /** 443.110 G8 — a posting may only carry a load of its own company. */
 export class PostingLoadOfAnotherCompanyError extends Error {
   readonly code = "posting_load_of_another_company";
@@ -170,6 +216,14 @@ export async function resolvePostingSourceEntity(
                      CASE WHEN vendor_uuid IS NOT NULL THEN 'vendor' WHEN driver_uuid IS NOT NULL THEN 'driver' ELSE 'customer' END AS t
                 FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     driver_settlement: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    // 443.113 I-02 — the remaining party-bearing documents the posting engine builds (buildPostingDraft).
+    customer_payment: `SELECT customer_id::text AS e, 'customer' AS t FROM accounting.payments WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    credit_memo: `SELECT customer_id::text AS e, 'customer' AS t FROM accounting.credit_memos WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    vendor_credit: `SELECT CASE WHEN vendor_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN vendor_id END AS e, 'vendor' AS t
+                      FROM accounting.vendor_credits WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    cash_advance: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.cash_advance_requests WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    driver_reimbursement: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_reimbursements WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    driver_liability: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_liabilities WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     driver_advance: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_advances WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     // 443.110 G8 — a categorized bank line names the party it was categorized to: its vendor, else its driver.
     bank_categorization: `SELECT COALESCE(categorization_vendor_id::text, categorization_driver_id::text) AS e,
@@ -298,6 +352,11 @@ async function writeLine(
   if (!line.entity_uuid) {
     const derived = await resolvePostingSourceEntity(client, line);
     if (derived) line = { ...line, entity_uuid: derived.entity_uuid, entity_type: derived.entity_type };
+  }
+  // LEAD 443.113 I-02 — the invariant is universal: a source type nobody classified is refused (no silent party-less
+  // poster). A PARTY_FROM_DOCUMENT document's party was stamped just above whenever the document names one.
+  if (postingPartyClass(line.source_transaction_type) === "unclassified") {
+    throw new UnclassifiedPostingSourceTypeError(String(line.source_transaction_type));
   }
   // RULING 443.65 #2d — a line on a "Due to / from <party>" account names its party, or it is refused.
   if (!line.entity_uuid) {
