@@ -42,6 +42,8 @@ const DOOR = "db/migrations/202615410950_relay_wallet_consumed_only_by_relay_fil
 const FILLPOST = "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts";
 const UNMATCH = "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction.service.ts";
 const CREATOR = "apps/backend/src/driver-finance/settlement-creator.service.ts";
+// LEAD 443.121 #1 — ONE fuel receipt identity (migration + every writer asks first).
+const RECEIPT_MIG = "db/migrations/202615850910_fuel_receipt_one_posting_identity.sql";
 /** Rule 6: the Creator's one sanctioned call — posts the Relay fill itself to the Relay wallet. */
 const CREATOR_RELAY_FILL_POST = /postFuelExpenseOnClient\(client as never, \{(?:(?!postFuelExpense)[\s\S]){0,500}?fuel_event_id: relayFillId,(?:(?!postFuelExpense)[\s\S]){0,500}?company_direct_credit: "relay_fuel_wallet",/g;
 const LINK_SITES = {
@@ -120,6 +122,28 @@ export function check(files) {
   for (const [f, re] of Object.entries(LINK_SITES)) {
     if (!re.test(files[f] ?? "")) problems.push(`${f}: creates a Relay fill / settlement fuel row without calling the one linker (fuel/relay-fill-link.service.ts) — the settlement row would never link to its fill`);
   }
+  // 8 (LEAD 443.121 #1) — ONE fuel receipt identity across import, Settlement Creator and bank match: the database refuses a
+  // second live posting of a receipt, and every writer finds a receipt's existing posting (any writer) before posting.
+  const mig = files[RECEIPT_MIG] ?? "";
+  if (!/^CREATE UNIQUE INDEX IF NOT EXISTS fuel_receipt_postings_one_live_uk\s+ON fuel\.fuel_receipt_postings \(operating_company_id, receipt_key\)\s+WHERE released_at IS NULL;/m.test(mig))
+    problems.push(`${RECEIPT_MIG}: the one-live-posting-per-receipt unique index is missing — a receipt could post twice`);
+  if (!/^CREATE TRIGGER trg_register_fuel_receipt_posting\s+AFTER INSERT ON accounting\.posting_batches/m.test(mig) || !/fuel_receipt_already_posted/.test(mig))
+    problems.push(`${RECEIPT_MIG}: posting batches are not registered against their receipt by trigger — a writer that forgets would post a receipt twice`);
+  const poster = files[POSTER] ?? "";
+  if (!/export async function findPostedFuelReceipt\(/.test(poster)) problems.push(`${POSTER}: findPostedFuelReceipt (the one receipt lookup) is missing`);
+  const fe = poster.indexOf("export async function findPostedFuelEvent(");
+  const feBody = fe < 0 ? "" : poster.slice(fe, poster.indexOf("\n}\n", fe));
+  if (!/findPostedFuelReceipt\(client, operatingCompanyId, "fuel_event", fuelEventId\)/.test(feBody))
+    problems.push(`${POSTER}: findPostedFuelEvent ignores a receipt posted by another writer (the Creator's expense document) — the bank match would post it again`);
+  const pe = poster.indexOf("export async function postFuelExpenseOnClient(");
+  const peBody = pe < 0 ? "" : poster.slice(pe, poster.indexOf("\n}\n", pe));
+  const rcpt = peBody.indexOf('findPostedFuelReceipt(client, input.operating_company_id, "fuel_event", input.fuel_event_id)');
+  const batch = peBody.indexOf("INSERT INTO accounting.posting_batches");
+  if (rcpt < 0 || batch < 0 || rcpt > batch) problems.push(`${POSTER}: postFuelExpenseOnClient posts before asking whether the receipt already posted`);
+  const cr = files[CREATOR] ?? "";
+  const crAsk = cr.indexOf('findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id)');
+  const crPost = cr.indexOf('source_transaction_type: "expense",\n            source_transaction_id: doc.expense_id');
+  if (crAsk < 0 || crPost < 0 || crAsk > crPost) problems.push(`${CREATOR}: the Creator posts a fuel expense document without adopting the receipt's existing posting`);
   return problems;
 }
 
@@ -135,6 +159,8 @@ function load() {
   walk("apps/backend/src");
   const door = path.join(ROOT, DOOR);
   if (fs.existsSync(door)) out[DOOR] = fs.readFileSync(door, "utf8");
+  const mig = path.join(ROOT, RECEIPT_MIG);
+  if (fs.existsSync(mig)) out[RECEIPT_MIG] = fs.readFileSync(mig, "utf8");
   return out;
 }
 
@@ -159,6 +185,11 @@ if (process.argv.includes("--selftest")) {
     ["creator's relay-fill post credits another rail", { ...real, [CREATOR]: real[CREATOR].replace('company_direct_credit: "relay_fuel_wallet",', 'company_direct_credit: "cash",') }],
     ["creator never links", { ...real, ["apps/backend/src/driver-finance/settlement-creator.service.ts"]: real["apps/backend/src/driver-finance/settlement-creator.service.ts"].replaceAll("linkSettlementFuelRowToRelayFill(", "noop(") }],
     ["ingest never links", { ...real, ["apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts"]: real["apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts"].replaceAll("linkRelayFillToSettlementFuelRows(", "noop(") }],
+    ["receipt unique index gone", { ...real, [RECEIPT_MIG]: real[RECEIPT_MIG].replace("CREATE UNIQUE INDEX IF NOT EXISTS fuel_receipt_postings_one_live_uk", "CREATE INDEX IF NOT EXISTS fuel_receipt_postings_one_live_uk") }],
+    ["receipt registration trigger gone", { ...real, [RECEIPT_MIG]: real[RECEIPT_MIG].replace("CREATE TRIGGER trg_register_fuel_receipt_posting", "-- CREATE TRIGGER trg_register_fuel_receipt_posting") }],
+    ["bank match blind to the Creator's posting", { ...real, [POSTER]: real[POSTER].replace('?? (await findPostedFuelReceipt(client, operatingCompanyId, "fuel_event", fuelEventId))', "") }],
+    ["poster posts without asking the receipt", { ...real, [POSTER]: real[POSTER].replace('const receiptPosted = await findPostedFuelReceipt(client, input.operating_company_id, "fuel_event", input.fuel_event_id);', "const receiptPosted = null;") }],
+    ["creator posts the receipt again", { ...real, [CREATOR]: real[CREATOR].replace('findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id)', "Promise.resolve(null)") }],
   ];
   const missed = cases.filter(([, files]) => check(files).length === 0).map(([n]) => n);
   if (missed.length) { console.error(`${LABEL} --selftest FAIL: not caught: ${missed.join("; ")}`); process.exit(1); }
@@ -168,4 +199,4 @@ if (process.argv.includes("--selftest")) {
 
 const problems = check(load());
 if (problems.length) { console.error(`${LABEL}: FAIL —\n  ${problems.join("\n  ")}`); process.exit(1); }
-console.log(`${LABEL}: PASS — a fill posts on receipt only behind FUEL_POSTS_ON_RECEIPT_ENABLED through the one fill poster, else at bank match; the match never posts a fill twice; posted_to_gl is derived, never hand-set`);
+console.log(`${LABEL}: PASS — a fill posts on receipt only behind FUEL_POSTS_ON_RECEIPT_ENABLED through the one fill poster, else at bank match; the match never posts a fill twice; posted_to_gl is derived, never hand-set; one live posting per fuel receipt (443.121 #1)`);

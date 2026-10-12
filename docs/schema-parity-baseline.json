@@ -6275,6 +6275,14 @@
       "updated_at",
       "updated_by_user_id"
     ],
+    "fuel.fuel_receipt_postings": [
+      "created_at",
+      "id",
+      "operating_company_id",
+      "posting_batch_id",
+      "receipt_key",
+      "released_at"
+    ],
     "fuel.fuel_transaction_derivations": [
       "confidence",
       "derived_at",

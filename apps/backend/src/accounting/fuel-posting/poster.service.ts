@@ -231,6 +231,46 @@ async function resolveExistingPostedResult(
   );
   const batch = existingBatch.rows[0];
   if (!batch || batch.batch_status !== "posted") return null;
+  return postedResultForBatch(client, operatingCompanyId, batch.id, idempotencyKey);
+}
+
+/**
+ * LEAD 443.121 #1 — ONE fuel receipt identity across every fuel writer (import / receipt poster and bank match post the
+ * fill as 'fuel_event'; the Settlement Creator posts its fuel expense document as 'expense'). fuel.fuel_receipt_key maps any
+ * of those sources to the receipt (relay:<txn> | provider:<vendor>:<base invoice>:<type> | fuel_txn:<id>), and
+ * fuel.fuel_receipt_postings holds the one LIVE posting of each receipt (migration 202615850910 — written by trigger on
+ * accounting.posting_batches, so the database refuses a second one even when a caller forgets to ask). Every writer asks
+ * here first: a receipt that already posted, by ANY writer, is matched / adopted — never posted again.
+ */
+export async function findPostedFuelReceipt(
+  client: DbClient,
+  operatingCompanyId: string,
+  sourceType: "fuel_event" | "expense",
+  sourceId: string
+): Promise<FuelPostingResult | null> {
+  const hit = await client.query<{ posting_batch_id: string; idempotency_key: string | null }>(
+    `SELECT rp.posting_batch_id::text, b.idempotency_key
+       FROM fuel.fuel_receipt_postings rp
+       JOIN accounting.posting_batches b ON b.id = rp.posting_batch_id AND b.operating_company_id = rp.operating_company_id
+      WHERE rp.operating_company_id = $1::uuid
+        AND rp.released_at IS NULL
+        AND b.batch_status = 'posted'
+        AND rp.receipt_key = fuel.fuel_receipt_key($1::uuid, $2::text, $3::text)
+      LIMIT 1`,
+    [operatingCompanyId, sourceType, sourceId]
+  );
+  const row = hit.rows[0];
+  if (!row) return null;
+  return postedResultForBatch(client, operatingCompanyId, row.posting_batch_id, row.idempotency_key ?? "");
+}
+
+async function postedResultForBatch(
+  client: DbClient,
+  operatingCompanyId: string,
+  batchId: string,
+  idempotencyKey: string
+): Promise<FuelPostingResult | null> {
+  const batch = { id: batchId };
 
   const postingRows = await client.query<{ posting_id: string; journal_entry_uuid: string }>(
     `
@@ -272,7 +312,8 @@ export async function findPostedFuelEvent(
     posting_path: "company_direct",
     correction_revision: 0,
   });
-  return resolveExistingPostedResult(client, operatingCompanyId, key);
+  return (await resolveExistingPostedResult(client, operatingCompanyId, key))
+    ?? (await findPostedFuelReceipt(client, operatingCompanyId, "fuel_event", fuelEventId));
 }
 
 /**
@@ -337,6 +378,9 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
 
   const existing = await resolveExistingPostedResult(client, input.operating_company_id, idempotencyKey);
   if (existing) return existing;
+  // LEAD 443.121 #1 — the receipt already posted through another writer (e.g. the Creator's fuel expense document): adopt.
+  const receiptPosted = await findPostedFuelReceipt(client, input.operating_company_id, "fuel_event", input.fuel_event_id);
+  if (receiptPosted) return receiptPosted;
   await ensureOpenPeriod(client, input.operating_company_id, postingDate);
 
   let creditAccountId = "";
