@@ -306,7 +306,7 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
                 || (st.lat != null && st.lng != null && metersBetween(st.lat, st.lng, h.lat!, h.lon!) <= ZIP_NAME_RADIUS_M)));
           if (ok) byName = { source: "google_place", street: ok.address_line1, city: ok.city, state: ok.state, zip: ok.zip, lat: ok.lat!, lng: ok.lon!,
             place_id: ok.place_id ?? null, name: ok.name ?? null, geocode_source: "google_place", from: `Google: ${q}` };
-          else reason = `${reason ?? "no dwell"}; Google "${q}": ${hits.length ? hits.map((h) => h.name ?? h.formatted).slice(0, 3).join(" | ") : "no result"} — no result carries the business at that zip / city`;
+          else reason = `${reason ?? "no dwell"}; Google "${q}": ${hits.length ? hits.slice(0, 4).map((h) => `${h.name ?? h.formatted} [${h.address_line1 || "no street"}, ${h.city} ${h.zip}${h.lat != null && st.lat != null ? `, ${Math.round(metersBetween(st.lat, st.lng!, h.lat, h.lon!) / 1000)} km` : ""}]`).join(" | ") : "no result"} — no result carries the business at that zip / city`;
         }
       }
       if (byName && input.apply) {
