@@ -224,6 +224,9 @@ export function CheckPrintPage() {
     }
   }
 
+  // Payee / Date / Amount / Memo sort the DISPLAY only (locked UI law: sortable column headers). The number each check
+  // prints is keyed by its id (proposedById, planned from the queue's own order), so re-sorting the view never changes
+  // what prints. The select box and the editable number input stay unsortable.
   const columns: Array<ParityColumn<PrintQueueRow>> = [
     {
       key: "select",
@@ -267,23 +270,21 @@ export function CheckPrintPage() {
     {
       key: "print_on_check_name",
       label: "Payee",
-      sortable: false,
       render: (row) => (
         <Link to={`/accounting/checks/${row.id}`} className="text-[var(--accent-green)] underline">
           {row.print_on_check_name}
         </Link>
       ),
     },
-    { key: "transaction_date", label: "Date", sortable: false, render: (row) => formatDateUS(row.transaction_date) },
+    { key: "transaction_date", label: "Date", render: (row) => formatDateUS(row.transaction_date) },
     {
       key: "total_amount_cents",
       label: "Amount",
-      sortable: false,
       className: "text-right",
       cellClass: "text-right",
       render: (row) => formatMoneyCents(row.total_amount_cents),
     },
-    { key: "memo", label: "Memo", sortable: false, render: (row) => row.memo ?? "—" },
+    { key: "memo", label: "Memo", render: (row) => row.memo ?? "—" },
   ];
 
   return (

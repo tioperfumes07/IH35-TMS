@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const EDITOR = path.join(ROOT, "apps/frontend/src/pages/dispatch/MultiStopEditor.tsx");
 const DRAWER = path.join(ROOT, "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx");
+const EDIT_MAPPING = path.join(ROOT, "apps/frontend/src/pages/dispatch/components/book-load-v4/editLoadMapping.ts");
 const API = path.join(ROOT, "apps/frontend/src/api/dispatch.ts");
 const SERVICE = path.join(ROOT, "apps/backend/src/dispatch/dispatch-refinements.service.ts");
 const ROUTES = path.join(ROOT, "apps/backend/src/dispatch/dispatch-refinements.routes.ts");
@@ -26,13 +27,25 @@ function assertWired(label, src, re) {
   if (!re.test(src)) throw new Error(`${label}: missing ${re}`);
 }
 
-function checkSources({ editor, drawer, api, service, routes }) {
+function checkSources({ editor, drawer, api, service, routes, editMapping = "" }) {
   const errors = [];
   const replaceService = service.match(/export async function replaceLoadStopsRefined\([\s\S]*?(?=\nexport async function listAvailableDriversForDispatch)/)?.[0] ?? "";
   try {
+    // LEAD 443.99 class B (2026-10-12).
+    //   old rule: the drawer's Stops tab mounts <MultiStopEditor> inline when canEdit.
+    //   new rule: the Stops tab renders the read-only <LoadStopsRecordTab> whose onEditStops is gated on canEdit and
+    //             opens the scoped Book Load edit (openScopedEdit("stops") -> setEditWizardOpen(true), wizard mounted
+    //             with editLoadId={load.id}); the wizard's edit mapping sends body.stops when the stops group is
+    //             dirty; and the drawer must NOT inline-edit stops with MultiStopEditor.
+    //   why: owner-sourced LDT-2 GLB-13526 (#20805, b6f37a132a) — the Stops tab "was the Book Load wizard edit form
+    //        rendered inline … not a RECORD of what happened"; editing moved to the wizard's §C. A tab with no edit
+    //        entry, an ungated edit, a wizard without the load id, or an edit mapping that drops stops still fails.
     assertWired("LoadDetailDrawer", drawer, /activeTab === ["']Stops["']/);
-    assertWired("LoadDetailDrawer", drawer, /<MultiStopEditor\b/);
-    assertWired("LoadDetailDrawer", drawer, /canEdit\s*\?\s*\(?\s*<MultiStopEditor/);
+    assertWired("LoadDetailDrawer", drawer, /<LoadStopsRecordTab\b[\s\S]{0,200}onEditStops=\{canEdit \? \(\) => openScopedEdit\("stops"\) : undefined\}/);
+    assertWired("LoadDetailDrawer", drawer, /const openScopedEdit = \(focus: "full" \| "stops"\) => \{[\s\S]{0,80}setEditWizardOpen\(true\)/);
+    assertWired("LoadDetailDrawer", drawer, /editLoadId=\{load\.id\}/);
+    if (/<MultiStopEditor\b/.test(drawer)) throw new Error("LoadDetailDrawer: Stops must not be inline-edited with MultiStopEditor (LDT-2)");
+    assertWired("editLoadMapping", editMapping, /if \(isDirty\("stops"\)\) \{[\s\S]{0,200}body\.stops = /);
   } catch (e) {
     errors.push(String(e.message || e));
   }
@@ -84,6 +97,7 @@ function readAll() {
   return {
     editor: fs.readFileSync(EDITOR, "utf8"),
     drawer: fs.readFileSync(DRAWER, "utf8"),
+    editMapping: fs.readFileSync(EDIT_MAPPING, "utf8"),
     api: fs.readFileSync(API, "utf8"),
     service: fs.readFileSync(SERVICE, "utf8"),
     routes: fs.readFileSync(ROUTES, "utf8"),
@@ -108,6 +122,20 @@ function selftest() {
     }
     console.log(`selftest PASS — planted ${label} fails:`, errors[0]);
   }
+  if (checkSources(sources).length) throw new Error(`selftest: real sources fail: ${checkSources(sources).join("; ")}`);
+  const drawerPlants = [
+    ["ungated stop edit", sources.drawer.replace('onEditStops={canEdit ? () => openScopedEdit("stops") : undefined}', 'onEditStops={() => openScopedEdit("stops")}'), "drawer"],
+    ["inline MultiStopEditor back on the Stops tab", `${sources.drawer}\n{canEdit ? <MultiStopEditor loadId={load.id} /> : null}`, "drawer"],
+    ["wizard opened without the load", sources.drawer.replaceAll("editLoadId={load.id}", "editLoadId={undefined}"), "drawer"],
+    ["edit mapping drops stops", sources.editMapping.replace(/if \(isDirty\("stops"\)\) \{/, 'if (false) {'), "editMapping"],
+  ];
+  for (const [label, mutated, key] of drawerPlants) {
+    if (mutated === sources[key] || checkSources({ ...sources, [key]: mutated }).length === 0) {
+      throw new Error(`selftest: planted ${label} did not FAIL the guard`);
+    }
+    console.log(`selftest PASS — planted ${label} is rejected`);
+  }
+
   const serviceMutation = sources.service.replace('code: "E_STOP_TYPE_INVALID"', 'code: "REMOVED"');
   if (serviceMutation === sources.service) throw new Error("selftest: could not plant stop-type service failure");
   if (checkSources({ ...sources, service: serviceMutation }).length === 0) {

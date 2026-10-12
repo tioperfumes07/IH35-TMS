@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — generic renderer — columns come per section from DriverTelematicsPanel / TelematicsLinksPanel, and every time-series section leads with its own time column there.
 import { ParityTable } from "../parity/ParityTable";
 import type { Row, Section } from "./telematicsColumns";
 

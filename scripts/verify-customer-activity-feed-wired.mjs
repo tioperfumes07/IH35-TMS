@@ -29,7 +29,9 @@ export function collectFailures(sources) {
   requireText("page", "activityQuery.data?.total_count ?? 0", "activity feed discards the exact server total");
   requireText("page", 'data-testid="customer-activity-server-pager"', "activity feed lacks exact server pager chrome");
   requireText("page", "hidePager", "activity feed leaves the contradictory local ParityTable pager mounted");
-  requireText("page", "if ((activityQuery.data?.events.length ?? 0) === 0) setActivityPage(1)", "activity feed cannot recover from an out-of-range page after history changes");
+  // LEAD 443.99 class B (2026-10-12): old anchor `events.length`; new `events?.length` — CLS-F7066 (961ce5f6b6) made the
+  // chain crash-safe on a partial payload. Same out-of-range recovery; removing it still fails.
+  requireText("page", "if ((activityQuery.data?.events?.length ?? 0) === 0) setActivityPage(1)", "activity feed cannot recover from an out-of-range page after history changes");
   requireText("page", 'activeTab === "activity_feed"', "Activity Feed tab is not mounted");
   if (sources.page.includes(PLACEHOLDER)) failures.push("static Activity Feed placeholder remains");
 
@@ -75,7 +77,7 @@ if (process.argv.includes("--selftest")) {
     { name: "drops-exact-total", key: "page", from: "activityQuery.data?.total_count ?? 0", to: "activityQuery.data?.events.length ?? 0" },
     { name: "drops-server-pager", key: "page", from: 'data-testid="customer-activity-server-pager"', to: 'data-testid="customer-activity"' },
     { name: "restores-local-pager", key: "page", from: "        hidePager\n", to: "" },
-    { name: "drops-page-recovery", key: "page", from: "if ((activityQuery.data?.events.length ?? 0) === 0) setActivityPage(1)", to: "if (false) setActivityPage(1)" },
+    { name: "drops-page-recovery", key: "page", from: "if ((activityQuery.data?.events?.length ?? 0) === 0) setActivityPage(1)", to: "if (false) setActivityPage(1)" },
     { name: "drops-company-scope", key: "route", from: "el.operating_company_id = $1::uuid", to: "TRUE" },
     {
       name: "drops-required-customer",

@@ -34,7 +34,9 @@ function audit(s) {
     if (!route.test(s.routes)) failures.push(`${path} canonical roster redirect missing`);
   }
   if (!/listAllCustomers\(\{ operating_company_id: companyId, active_company_only: true \}\)/.test(s.customers)) failures.push("customer roster complete company scope missing");
-  if (!/listAllVendors\(\{ operating_company_id: companyId, active_company_only: true \}\)/.test(s.vendors)) failures.push("vendor roster company scope missing");
+  // 443.99: old rule matched the one-line call literally; the call is now multi-line (C-31 split the roster into
+  // with-transactions + all queries). New rule: same scoped args, any whitespace, optional trailing comma.
+  if (!/listAllVendors\(\{\s*operating_company_id: companyId,\s*active_company_only: true,?\s*\}\)/.test(s.vendors)) failures.push("vendor roster company scope missing");
   if (!/onRowClick=\{\(row\) => onSelectCustomer\?\.\(row\.id\)\}/.test(s.customerList)) failures.push("customer list row drill missing");
   if (!/onRowClick=\{\(row\) => onSelectVendor\?\.\(row\.id\)\}/.test(s.vendorList)) failures.push("vendor list row drill missing");
   if (!/<CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/.test(s.customerSidebar)) failures.push("customer profile anchor missing");

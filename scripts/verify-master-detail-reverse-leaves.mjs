@@ -26,10 +26,26 @@ function audit(s) {
   ) {
     failures.push("customer transaction drills missing");
   }
-  if (!/navigate\(`\/accounting\/invoices\?customer_id=\$\{selectedCustomer\.id\}`\)/.test(s.customers) || !/navigate\(`\/customers\/\$\{selectedCustomer\.id\}`\)/.test(s.customers)) failures.push("customer header routes missing");
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: the master-detail header navigates to the full-page profile (`/customers/${id}` / `/vendors/${id}`)
+  //             beside the New-transaction route.
+  //   new rule: the header keeps New transaction AND its Edit opens the record's side ParityDrawer
+  //             (CustomerEditDrawer / VendorEditDrawer) for the selected row; the full profile stays reachable by
+  //             URL and by the sidebar CardLink (verify-roster-reverse-link-leaves).
+  //   why: owner inventory row 50 (2026-09-05) → CUR-2 #20812 (cda6f7b4e3): "when editing … side modal, not full
+  //        page, just like in QuickBooks". A header with no Edit, or an Edit not bound to the selected row, still fails.
+  if (
+    !/navigate\(`\/accounting\/invoices\?customer_id=\$\{selectedCustomer\.id\}`\)/.test(s.customers) ||
+    !/onClick=\{\(\) => setEditDrawerCustomer\(selectedCustomer\)\}\s*data-testid="customer-header-edit"/.test(s.customers) ||
+    !/<CustomerEditDrawer[\s\S]{0,120}customer=\{editDrawerCustomer\}/.test(s.customers)
+  ) failures.push("customer header routes missing");
   if (!/Couldn't load customer transactions/.test(s.customers) || !/No transactions for current filters\./.test(s.customers)) failures.push("customer transaction honest states missing");
   if (!/listBills\(companyId, \{[\s\S]{0,100}vendor_id: selectedVendor!\.id/.test(s.vendors)) failures.push("vendor transaction scope missing");
-  if (!/navigate\(`\/accounting\/bills\?vendor_id=\$\{selectedVendor\.id\}`\)/.test(s.vendors) || !/navigate\(`\/vendors\/\$\{selectedVendor\.id\}`\)/.test(s.vendors)) failures.push("vendor header routes missing");
+  if (
+    !/navigate\(`\/accounting\/bills\?vendor_id=\$\{selectedVendor\.id\}`\)/.test(s.vendors) ||
+    !/onClick=\{\(\) => setEditVendorId\(selectedVendor\.id\)\}\s*data-testid="vendor-header-edit"/.test(s.vendors) ||
+    !/<VendorEditDrawer[\s\S]{0,120}vendorId=\{editVendorId\}/.test(s.vendors)
+  ) failures.push("vendor header routes missing");
   if (!/Couldn't load vendor transactions/.test(s.vendors) || !/No transactions for current filters\./.test(s.vendors)) failures.push("vendor transaction honest states missing");
   for (const [path, target] of [["/accounting/customers", "/customers"], ["/accounting/vendors", "/vendors"]]) {
     if (!new RegExp(`path="${path}"[\\s\\S]{0,180}<Navigate to="${target}" replace`).test(s.routes)) failures.push(`${path} canonical redirect missing`);
@@ -57,7 +73,8 @@ if (process.argv.includes("--selftest")) {
     ["customer-error", "customers", /Couldn't load customer transactions/g, "Loading"],
     ["vendor-scope", "vendors", /vendor_id: selectedVendor!\.id/g, "vendor_id: ''"],
     ["vendor-new", "vendors", /\/accounting\/bills\?vendor_id=/g, "/accounting/bills?wrong="],
-    ["vendor-edit", "vendors", /\/vendors\/\$\{selectedVendor\.id\}/g, "/vendors"],
+    ["vendor-edit", "vendors", /setEditVendorId\(selectedVendor\.id\)/g, "setEditVendorId(null)"],
+    ["customer-edit", "customers", /setEditDrawerCustomer\(selectedCustomer\)/g, "setEditDrawerCustomer(null)"],
     ["vendor-error", "vendors", /Couldn't load vendor transactions/g, "Loading"],
     ["alias", "routes", /<Navigate to="\/customers" replace/g, '<Navigate to="/wrong" replace'],
   ];

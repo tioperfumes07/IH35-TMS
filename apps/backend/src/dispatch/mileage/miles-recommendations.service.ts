@@ -14,6 +14,7 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { computeRouteReference } from "../../integrations/google/routes-api-client.js";
 import { googleLegMiles, type RouteFn } from "../load-lane-learning.service.js";
 import { loadedMilesFor } from "../book-load.service.js";
+import { canonicalHappenedNotVoidedLoadClause } from "../canonical-active-load-set.js";
 
 type Queryable = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -107,7 +108,7 @@ async function priorLastStop(client: Queryable, companyId: string, unitId: strin
             ORDER BY x.sequence_number DESC LIMIT 1
          ) ls ON true
         WHERE l.assigned_unit_id = $1::uuid AND l.operating_company_id = $2::uuid AND ($3::uuid IS NULL OR l.id <> $3::uuid)
-          AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL AND l.status::text NOT IN ('cancelled', 'canceled', 'void', 'voided')
+          AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL AND ${canonicalHappenedNotVoidedLoadClause("l")}
           AND ls.at IS NOT NULL AND ($4::timestamptz IS NULL OR ls.at < $4::timestamptz)
         ORDER BY ls.at DESC, l.load_number DESC LIMIT 1`,
       [unitId, companyId, excludeLoadId, before]

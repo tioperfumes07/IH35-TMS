@@ -36,20 +36,45 @@ export const SEGMENT_PAGES = [
   { file: "apps/frontend/src/pages/Vendors.tsx", required: ["all", "active", "inactive"] },
 ];
 
+// LEAD 443.99 class B (2026-10-12) — which element carries the segment set.
+//   old rule: the page renders <SecondaryNavTabs>, and each required id appears as an `id: "<id>"` literal (page or
+//             its `also` config file).
+//   new rule: the set is carried by <SecondaryNavTabs>, <NavyPageSubNav> or a <SegmentedControl> status filter; each
+//             required id is an `id: "<id>"` tab literal (page or `also` config) OR a `value: "<id>"` option INSIDE a
+//             <SegmentedControl ... /> on the page. A `value:` literal anywhere else does not count.
+//   why: the owner navy-subnav sweep (LST-F10170 #18898 Vendors, LST-F10179 #18911 Customers, LST-F10180 #18912
+//        Drivers) replaced SecondaryNavTabs with NavyPageSubNav, and C-01 / DRV-F417 then moved the
+//        active / inactive / all status set onto SegmentedControl chips ("filters are SegmentedControl chips, never
+//        a second NavyPageSubNav"). The set is still on all three pages; deleting it (b3690eb68 shape) still fails.
+function segmentedControlBlocks(code) {
+  const blocks = [];
+  const re = /<SegmentedControl\b/g;
+  let m;
+  while ((m = re.exec(code)) !== null) {
+    // the element closes at the first "/>" at JSX depth 0 after its options array — bounded window is enough
+    const end = code.indexOf("/>", code.indexOf("options=", m.index) >= 0 ? code.indexOf("options=", m.index) : m.index);
+    blocks.push(code.slice(m.index, end < 0 ? m.index + 1200 : end));
+  }
+  return blocks.join("\n");
+}
+
 export function assertSegmentTabs(src, file, required, alsoSrc = "") {
   const problems = [];
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (!/<SecondaryNavTabs/.test(code)) {
+  if (!/<(SecondaryNavTabs|NavyPageSubNav|SegmentedControl)\b/.test(code)) {
     problems.push(`${file}: no <SecondaryNavTabs> at all — the §7 segment tab set is gone (b3690eb68 class).`);
     return problems;
   }
   // The id: "..." literals may live inline in the page, or in an imported shared config file (Drivers.tsx
   // extracted DRIVERS_LIST_STATUS_TABS this way) — check the combined text either way.
   const combinedCode = code + "\n" + alsoSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  const chips = segmentedControlBlocks(code);
   for (const id of required) {
-    // the tab entries are object literals: { id: "active", label: `Active (${...})` }
+    // the tab entries are object literals: { id: "active", label: `Active (${...})` } — or chip options
+    // { value: "active", label: "Active" } inside a <SegmentedControl>.
     const re = new RegExp(String.raw`id:\s*"${id}"`);
-    if (!re.test(combinedCode)) {
+    const chipRe = new RegExp(String.raw`value:\s*"${id}"`);
+    if (!re.test(combinedCode) && !chipRe.test(chips)) {
       problems.push(
         `${file}: segment tab id "${id}" is missing. §7 is ADDITIVE-ONLY — archive, never delete. ` +
           `b3690eb68 removed this set from Customers and Vendors and nothing caught it for ~12 weeks.`,
@@ -93,8 +118,24 @@ if (process.argv.includes("--selftest")) {
     }
   }
 
+  // 443.99 — the SegmentedControl chip shape (Customers / Vendors today).
+  const chipGood = `<SegmentedControl value={s} onChange={set} options={[\n { value: "active", label: "Active" },\n { value: "inactive", label: "Inactive" },\n { value: "all", label: "All" },\n]} />`;
+  const chipCases = [
+    ["chip set with all three values", chipGood, 0],
+    ["chip set lost inactive", chipGood.replace('{ value: "inactive", label: "Inactive" },', ""), 1],
+    ["value literals outside any SegmentedControl do not count", `<NavyPageSubNav tabs={T} />\nconst opts = [{ value: "all" }, { value: "active" }, { value: "inactive" }];`, 3],
+    ["chip control deleted entirely", "const x = 1;", 1],
+  ];
+  for (const [name, src, want] of chipCases) {
+    const got = assertSegmentTabs(src, "test.tsx", ["all", "active", "inactive"]).length;
+    if (got !== want) {
+      console.error(`SELFTEST FAIL: ${name} — expected ${want}, got ${got}`);
+      failed++;
+    }
+  }
+
   if (failed) process.exit(1);
-  console.log(`${LABEL} SELFTEST PASS — ${cases.length + alsoCases.length} mutations detected correctly`);
+  console.log(`${LABEL} SELFTEST PASS — ${cases.length + alsoCases.length + chipCases.length} mutations detected correctly`);
   process.exit(0);
 }
 

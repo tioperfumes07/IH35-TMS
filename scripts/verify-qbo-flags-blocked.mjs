@@ -47,6 +47,30 @@ const REQUIRED_BLOCKED_KEYS = [
 // first. Any of the 17 would do; this one is chosen because it is also the flag whose accidental
 // enable would be the single most consequential (real JEs pushed into QuickBooks).
 
+const TRIGGER_TABLES = [["lib.feature_flag_overrides", /BEFORE INSERT OR UPDATE/], ["lib.feature_flags", /BEFORE (INSERT OR )?UPDATE/]];
+
+/** The enabled BEFORE-write trigger on tbl whose function checks the blocklist and raises — or undefined. */
+function refusalTrigger(triggers, tbl, mustFireOn) {
+  return triggers.find((r) => r.tbl === tbl && r.raises && r.lists && r.tgenabled !== "D" && mustFireOn.test(r.def));
+}
+
+/** Pure verdict over everything main() reads — --selftest feeds it planted catalogs. */
+export function judgeQboBlock({ blockedKeys, enabledOverrides, globalEnabled, triggers }) {
+  const failures = [];
+  const blockedSet = new Set(blockedKeys);
+  for (const key of REQUIRED_BLOCKED_KEYS) {
+    if (!blockedSet.has(key)) failures.push(`${key}: missing from catalogs.blocked_feature_flags`);
+  }
+  for (const row of enabledOverrides) failures.push(`${row.flag_key}: enabled=true for ${row.short_name} — the block did not hold`);
+  for (const row of globalEnabled) failures.push(`${row.flag_key}: default_enabled/rollout_pct armed on lib.feature_flags — the block did not hold`);
+  for (const [tbl, mustFireOn] of TRIGGER_TABLES) {
+    if (!refusalTrigger(triggers, tbl, mustFireOn)) {
+      failures.push(`${tbl}: no ENABLED BEFORE-write trigger whose function checks blocked_feature_flags and raises QBO_FLAG_PERMANENTLY_BLOCKED`);
+    }
+  }
+  return failures;
+}
+
 function selftest() {
   const failures = [];
   // STALE-LITERAL-OK: fixed owner-locked QBO key-list length selftest, not a purge/count window.
@@ -58,11 +82,36 @@ function selftest() {
   for (const uiKey of ["QBO_RECONCILE_UI_ENABLED", "TMS_QBO_RECON_UI_ENABLED"]) {
     if (REQUIRED_BLOCKED_KEYS.includes(uiKey)) failures.push(`read-only UI flag must NOT be in the blocked list: ${uiKey}`);
   }
+  // Planted breaks of the block through the same verdict main() uses.
+  const trig = (tbl, def) => ({ tbl, tgname: "trg_block", tgenabled: "O", def, raises: true, lists: true });
+  const clean = {
+    blockedKeys: [...REQUIRED_BLOCKED_KEYS],
+    enabledOverrides: [],
+    globalEnabled: [],
+    triggers: [
+      trig("lib.feature_flag_overrides", "CREATE TRIGGER t BEFORE INSERT OR UPDATE ON lib.feature_flag_overrides"),
+      trig("lib.feature_flags", "CREATE TRIGGER t BEFORE INSERT OR UPDATE ON lib.feature_flags"),
+    ],
+  };
+  if (judgeQboBlock(clean).length) failures.push(`clean catalog rejected: ${judgeQboBlock(clean).join("; ")}`);
+  const plants = [
+    ["a key dropped from the blocklist", { ...clean, blockedKeys: REQUIRED_BLOCKED_KEYS.filter((k) => k !== "QBO_JE_PUSH_ENABLED") }],
+    ["an override enables JE push for USMCA", { ...clean, enabledOverrides: [{ flag_key: "QBO_JE_PUSH_ENABLED", short_name: "USMCA" }] }],
+    ["rollout armed globally", { ...clean, globalEnabled: [{ flag_key: "TMS_QBO_RECON_ENABLED" }] }],
+    ["overrides trigger disabled", { ...clean, triggers: [{ ...clean.triggers[0], tgenabled: "D" }, clean.triggers[1]] }],
+    ["overrides trigger fires AFTER the write", { ...clean, triggers: [trig("lib.feature_flag_overrides", "CREATE TRIGGER t AFTER INSERT OR UPDATE ON x"), clean.triggers[1]] }],
+    ["flags trigger no longer raises", { ...clean, triggers: [clean.triggers[0], { ...clean.triggers[1], raises: false }] }],
+  ];
+  let caught = 0;
+  for (const [name, input] of plants) {
+    if (judgeQboBlock(input).length) caught += 1;
+    else failures.push(`planted violation escaped: ${name}`);
+  }
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} selftest OK — 17 required keys, 3 named hard-core present, 2 UI flags correctly excluded`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${plants.length} planted violations caught — 17 required keys, 3 named hard-core present, 2 UI flags correctly excluded`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -79,11 +128,6 @@ async function main() {
 
     // #1 — every required key present in the blocklist table.
     const blockedRes = await client.query(`SELECT flag_key FROM catalogs.blocked_feature_flags`);
-    const blockedSet = new Set(blockedRes.rows.map((r) => r.flag_key));
-    for (const key of REQUIRED_BLOCKED_KEYS) {
-      if (!blockedSet.has(key)) failures.push(`${key}: missing from catalogs.blocked_feature_flags`);
-    }
-
     // #2 — every required key resolves FALSE for every live entity, right now.
     const companiesRes = await client.query(`SELECT id::text, short_name FROM org.companies WHERE deactivated_at IS NULL`);
     const enabledRes = await client.query(
@@ -98,16 +142,10 @@ async function main() {
       `,
       [REQUIRED_BLOCKED_KEYS]
     );
-    for (const row of enabledRes.rows) {
-      failures.push(`${row.flag_key}: enabled=true for ${row.short_name} — the block did not hold`);
-    }
     const globalEnabledRes = await client.query(
       `SELECT flag_key FROM lib.feature_flags WHERE flag_key = ANY($1::text[]) AND (default_enabled = true OR rollout_pct > 0)`,
       [REQUIRED_BLOCKED_KEYS]
     );
-    for (const row of globalEnabledRes.rows) {
-      failures.push(`${row.flag_key}: default_enabled/rollout_pct armed on lib.feature_flags — the block did not hold`);
-    }
 
     await client.query("ROLLBACK");
 
@@ -123,10 +161,17 @@ async function main() {
          FROM pg_trigger t JOIN pg_proc p ON p.oid = t.tgfoid
         WHERE t.tgrelid IN ('lib.feature_flag_overrides'::regclass, 'lib.feature_flags'::regclass) AND NOT t.tgisinternal`
     );
-    for (const [tbl, mustFireOn] of [["lib.feature_flag_overrides", /BEFORE INSERT OR UPDATE/], ["lib.feature_flags", /BEFORE (INSERT OR )?UPDATE/]]) {
-      const ok = trig.rows.find((r) => r.tbl === tbl && r.raises && r.lists && r.tgenabled !== "D" && mustFireOn.test(r.def));
-      if (!ok) failures.push(`${tbl}: no ENABLED BEFORE-write trigger whose function checks blocked_feature_flags and raises QBO_FLAG_PERMANENTLY_BLOCKED`);
-      else console.log(`${LABEL}: live refusal installed — ${tbl} ${ok.tgname} (enabled, ${mustFireOn.source})`);
+    failures.push(
+      ...judgeQboBlock({
+        blockedKeys: blockedRes.rows.map((r) => r.flag_key),
+        enabledOverrides: enabledRes.rows,
+        globalEnabled: globalEnabledRes.rows,
+        triggers: trig.rows,
+      })
+    );
+    for (const [tbl, mustFireOn] of TRIGGER_TABLES) {
+      const ok = refusalTrigger(trig.rows, tbl, mustFireOn);
+      if (ok) console.log(`${LABEL}: live refusal installed — ${tbl} ${ok.tgname} (enabled, ${mustFireOn.source})`);
     }
 
     if (failures.length) {

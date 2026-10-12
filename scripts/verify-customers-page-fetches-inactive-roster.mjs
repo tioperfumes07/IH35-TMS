@@ -38,7 +38,13 @@ export function checkPageSource(src) {
   if (!/const visibleCustomers = useMemo\(\(\) => \{\s*let all = fullCustomersRoster;/.test(src)) {
     problems.push("visibleCustomers no longer sources from fullCustomersRoster — the Inactive/All tabs would go back to active-only");
   }
-  if (!/all: fullCustomersRoster\.length/.test(src)) {
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: customerTabCounts.all = fullCustomersRoster.length.
+  //   new rule: all = the server counts route's all (active + inactive) with fullCustomersRoster.length as the only
+  //             fallback — never the active-only customersRoster.
+  //   why: C-50 (#23546, f5a3226f14) added GET /customers/counts (all = all_active + inactive, customers.routes.ts)
+  //        so tab badges don't wait on two full roster scans. Both sources still include inactive customers.
+  if (!/all: (?:customerCountsQuery\.data\?\.all \?\? )?fullCustomersRoster\.length/.test(src)) {
     problems.push("customerTabCounts no longer sources from fullCustomersRoster — tab counts would go back to active-only");
   }
   // C-19: parent picker may use parentCustomersRoster (active-only, unfiltered for transactions)
@@ -104,7 +110,7 @@ function selftest() {
     },
     {
       name: "customerTabCounts reverted to customersRoster (active-only)",
-      src: goodSrc.replace("all: fullCustomersRoster.length,", "all: customersRoster.length,"),
+      src: goodSrc.replace(/all: (customerCountsQuery\.data\?\.all \?\? )?fullCustomersRoster\.length,/, "all: $1customersRoster.length,"),
       expectProblems: true,
     },
     {

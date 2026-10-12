@@ -73,7 +73,13 @@ export function verify(source) {
   if (!legal?.leaves?.some((leaf) => leaf.id === "matters.create")) failures.push("legal:matters.create inventory leaf must remain present");
   if (required(legal, "matters.create").includes("load")) failures.push("legal:matters.create must not invent a load FK");
   forbid("legalForm", "load_id", "legal matter form must not imply a nonexistent load field");
-  forbid("legalService", "input.load_id", "legal matter service must not imply a nonexistent load input");
+  // 443.99 — old rule: the matter service must not touch input.load_id (there was no matter→load column).
+  // New rule: ROUND 316 (ACCT-F9732 #23829, migration 202615190100) gave legal.matters a real load_id; every path that
+  // accepts it must scope-check it against the company first (create AND update) — an unchecked load input still fails.
+  {
+    const scoped = (source.legalService.match(/assertMatterPartyInCompany\(client, "mdata\.loads", input\.load_id, args\.operatingCompanyId\)/g) ?? []).length;
+    if (/input\.load_id/.test(source.legalService) && scoped < 2) failures.push("legal matter service must scope-check input.load_id on create and update");
+  }
 
   if (!required(dispatch, "dispatch.modal.load_create").includes("load")) failures.push("dispatch load creator must retain exact load Required");
   need("bookLoad", "const payload = await createDispatchLoad({", "dispatch creator must submit through the canonical client");
@@ -82,7 +88,11 @@ export function verify(source) {
   need("dispatchRoute", 'app.post("/api/v1/dispatch/loads"', "dispatch load create route must remain mounted");
   need("dispatchRoute", "withCompanyScope(authUser.uuid, body.data.operating_company_id", "dispatch create must validate within company scope");
   need("bookLoadService", "INSERT INTO mdata.loads", "dispatch create must persist the canonical load row");
-  need("bookLoad", "onCreated(createdId ? { id: createdId, label: createdLabel } : undefined);", "dispatch creator must trigger canonical reload after success");
+  // 443.99 — old rule: one immediate `onCreated(createdId ? {...} : undefined)` after save. WIZ-38 #20192 (85533d8939)
+  // moved success behind the save-ack / proof panel; the created {id,label} reaches onCreated from Save-and-close and
+  // from the ack Continue. New rule: both exits hand the created load to onCreated.
+  need("bookLoad", "onCreated({ id, label });", "dispatch creator must trigger canonical reload after success");
+  need("bookLoad", "onCreated({ id: ack.id, label: ack.loadNumber });", "dispatch creator must trigger canonical reload after success");
   if (!required(dispatch, "planning.reserve").includes("reverse_link")) failures.push("dispatch planning.reserve must retain exact reverse_link Required");
   need("manifest", 'path="/dispatch/book-load"', "Reserve a Load route must remain mounted");
   need("dispatchPage", 'const onBookPath = location.pathname.replace(/\\/$/, "") === "/dispatch/book-load";', "Reserve a Load canonical path must be recognized");
@@ -124,6 +134,8 @@ if (process.argv.includes("--selftest")) {
     ["maintenanceMatrix", '"id": "wo.create"'], ["woPicker", 'dataField="load_id"'], ["woForm", "load_id: values.load_id || undefined"],
     ["woRoute", "load_id: z.string().uuid().optional()"], ["woRoute", "LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id"],
     ["woRoute", "body.load_id ?? null"], ["woTable", '<EntityLinkOrTombstone kind="load" id={row.load_id}'],
+    ["bookLoad", "onCreated({ id, label });"], ["bookLoad", "onCreated({ id: ack.id, label: ack.loadNumber });"],
+    ["legalService", 'assertMatterPartyInCompany(client, "mdata.loads", input.load_id, args.operatingCompanyId)'],
   ];
   mutations.forEach(([key, token], index) => {
     if (!source[key].includes(token)) throw new Error(`selftest fixture missing: ${key} ${token}`);

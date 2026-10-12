@@ -7,6 +7,9 @@ import { fileURLToPath } from "node:url";
 import { runExecutableGuard } from "./guard-executable-contract.mjs";
 import { evaluatePass8Orchestration } from "./pass-8-orchestration-policy.mjs";
 
+// 443.100: declared so verify-no-silent-db-skip can tell an honest static-only run from a skipped live verdict.
+export const ALLOW_OFFLINE_SKIP = "static classification of the push gate source; never connects — DATABASE_URL appears only as text the gate must classify";
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = Object.freeze({
   precheck: "scripts/branch-precheck-push.mjs",
@@ -41,9 +44,12 @@ function loadRepositoryFixture() {
       fs.readFileSync(path.join(ROOT, relativePath), "utf8"),
     ])
   );
+  // 443.99 (2026-10-12): `git ls-files` is now ~1.5 MB; Node's 1 MB default maxBuffer KILLED the child (ENOBUFS),
+  // so this guard crashed before classifying anything. Same fix and reason as verify-board-append-only's git().
   fixture.trackedFiles = execFileSync("git", ["ls-files"], {
     cwd: ROOT,
     encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
   })
     .trim()
     .split(/\r?\n/)

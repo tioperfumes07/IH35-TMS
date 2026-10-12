@@ -48,7 +48,10 @@ const PROFILE_CONNECTIVITY = new Map([
   ["unit.profile.telemetry", /data-testid="vp-section-2-telemetry"[\s\S]{0,520}<LiveTelemetrySection/],
   ["unit.profile.current_load", /data-testid="vp-section-4-load"[\s\S]{0,180}<CurrentLoadSection[\s\S]{0,120}unitId=\{id\}/],
   ["unit.profile.trip_cost", /data-testid="vp-section-4-load"[\s\S]{0,500}<TripCostCalculator unitId=\{id\} companyId=\{companyId\}/],
-  ["unit.profile.maintenance", /data-testid="vp-section-5-maintenance"[\s\S]{0,360}<MaintenanceSnapshotSection[\s\S]{0,220}unitId=\{id\}/],
+  // 443.99: anchored on the section's own structure instead of a 360-char window — the honest fault-summary
+  // error state (FLEET-F6021, #14566) sits between the section div and the snapshot, and REG-025/026 (#21604)
+  // widened the div's className, pushing the snapshot past the window. Still requires the snapshot for THIS unit.
+  ["unit.profile.maintenance", /data-testid="vp-section-5-maintenance"[^>]*>\s*(?:\{faultSummaryQuery\.isError \? \([\s\S]{0,600}?\) : null\}\s*)?<MaintenanceSnapshotSection\b[\s\S]{0,220}?unitId=\{id\}/],
   ["unit.profile.compliance", /data-testid="vp-section-6-compliance"[\s\S]{0,120}<ComplianceSection compliance=\{profile\.compliance\}/],
   ["unit.profile.action_bar", /data-testid="vp-section-11-action-bar"[\s\S]{0,180}<ActionBar[\s\S]{0,100}unitId=\{id\}[\s\S]{0,100}companyId=\{companyId\}/],
   ["unit.profile.audit_history", /data-testid="vp-section-12-audit-history"[\s\S]{0,240}<EntityAuditHistoryTab operatingCompanyId=\{companyId\} entityType="unit" entityId=\{id\}/],
@@ -204,7 +207,8 @@ if (process.argv.includes("--selftest")) {
     ["profile-qbo-capability", "profile", /const qboAvailable = selectedCompany\?\.code === "TRANSP";/, "const qboAvailable = true;"],
     ["profile-qbo-control", "profile", /qboAvailable \? <label/, "true ? <label"],
     ["profile-qbo-write", "profile", /\.\.\.\(qboAvailable \? \{ qbo_vendor_id:/, "...({ qbo_vendor_id:"],
-    ["profile-class-control", "profile", /<SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" value=\{qboClassTmsId\}/, "<SelectCombobox value={undefined}"],
+    // 443.99: plant anchor no longer pins the font size — GLB-01 (13d356e228) moved this select text-sm -> text-xs.
+    ["profile-class-control", "profile", /<SelectCombobox className="[^"]*" value=\{qboClassTmsId\}/, "<SelectCombobox value={undefined}"],
     ["profile-class-write", "profile", /qbo_class_id: qboClassTmsId \|\| null/, "qbo_class_id: null"],
     ["profile-class-retry", "profile", /onRetry=\{\(\) => void classesQuery\.refetch\(\)\}/, "onRetry={undefined}"],
     ["profile-class-select-gate", "profile", /value=\{qboClassTmsId\} disabled=\{classesQuery\.isError\}/, "value={qboClassTmsId}"],

@@ -436,8 +436,11 @@ export function isInert(attrs) {
 // =================================================================================================
 
 const READ_PREFIX = /^(list|get|fetch|search|count|use[A-Z])/;
+// 443.99 (LEAD class B, 2026-10-12): `end` added — `endFuelCardAssignment(companyId, id, effectiveToIso)` is a real
+// API write (ends a card assignment as of a date), so its arguments ARE the payload. Without it the detector read the
+// end-date picker's state as discarded. Still a write verb only; an `end*` field omitted from that call still fails.
 const API_WRITE_PREFIX =
-  /^(create|open|update|patch|save|post|add|submit|record|book|assign|upsert|delete|void|apply|send|import|generate|spawn|link|attach|mark|approve|reject|resolve|register|file|request|confirm|cancel|complete|finalize|remove|reopen|release|revoke|restore|archive|activate|deactivate|renew|pay|adjust|reclass|acknowledge|escalate|transfer|merge|hold|forfeit|dispute|sync|convert|issue|log)/;
+  /^(create|end|open|update|patch|save|post|add|submit|record|book|assign|upsert|delete|void|apply|send|import|generate|spawn|link|attach|mark|approve|reject|resolve|register|file|request|confirm|cancel|complete|finalize|remove|reopen|release|revoke|restore|archive|activate|deactivate|renew|pay|adjust|reclass|acknowledge|escalate|transfer|merge|hold|forfeit|dispute|sync|convert|issue|log)/;
 /** camelCase verb + Capital — hook mutators and local submit helpers, never a React setter. */
 const LOCAL_WRITE_CALL =
   /\b((?:create|open|update|patch|save|submit|post|upsert|delete|void|apply|send|record|book|assign|spawn|issue|register|confirm|approve|reject|remove|archive|activate|deactivate|renew|pay|adjust|reclass|generate|import|convert|complete|finalize|resolve|escalate|acknowledge|attach|link|mark|log|file|request|sync|transfer|merge|hold|release|forfeit|dispute|verify|do|handle|perform|run|persist|commit|write|push|add|insert)[A-Z][\w$]*)\s*\(/g;
@@ -957,6 +960,29 @@ export function AppliedSearchDrawer() {
     ).replace(`  const [name, setName] = useState("");`, `  const [name, setName] = useState("");\n  const [memo, setMemo] = useState("");`)
   );
   expectHit("D2 plant: rendered-but-dropped field is caught", findOrphanFieldState("planted.tsx", planted), "'memo'");
+
+  // 443.99: an `end*` API writer is a submit path — a date passed to it positionally reaches the wire; one it omits does not.
+  const endWriter = (call) => blankComments(`
+import { useState } from "react";
+import { endFuelCardAssignment } from "../../api/fuelCards";
+import { ParityDrawer } from "../components/ParityDrawer";
+export function EndDrawer() {
+  const [effectiveTo, setEffectiveTo] = useState("");
+  const submit = async () => { ${call} };
+  return (<ParityDrawer open onClose={close}><form onSubmit={submit}>
+    <input value={effectiveTo} onChange={(e) => setEffectiveTo(e.target.value)} />
+  </form></ParityDrawer>);
+}
+`);
+  expectClean(
+    "D2 control: a date passed positionally to an end* API writer reaches the wire",
+    findOrphanFieldState("end.tsx", endWriter("await endFuelCardAssignment(companyId, id, toIso(`${effectiveTo}T00:00`));"))
+  );
+  expectHit(
+    "D2 plant: an end* API writer that omits the date is caught",
+    findOrphanFieldState("end-dropped.tsx", endWriter("await endFuelCardAssignment(companyId, id, toIso(today));")),
+    "'effectiveTo'"
+  );
 
   // the same dropped field, annotated + inert, is BLOCKED not FAILED
   const annotated = blankComments(

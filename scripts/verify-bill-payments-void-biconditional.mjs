@@ -47,7 +47,8 @@ function selftest() {
   if (!/FROM accounting\.bill_payments/.test(QUERY)) failures.push("query does not read accounting.bill_payments");
   if (failures.length) {
     for (const f of failures) console.error(`${LABEL} --selftest FAIL — ${f}`);
-    return 1;
+    // Exit here, not via main()'s return value: a selftest that finds a problem must end the process non-zero itself.
+    process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS — query shape correct (voided_at<=>revoked_at biconditional on accounting.bill_payments)`);
   return 0;

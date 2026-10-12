@@ -67,7 +67,13 @@ function check(routesSrc, driversSrc, panelSrc, apiSrc) {
   if (!/listSettlementDeductions\s*\(/.test(panel)) {
     failures.push(`${PANEL}: panel does not call listSettlementDeductions (FAIL-DD2)`);
   }
-  if (!/status:\s*["']pending["']/.test(panel) && !/status:\s*"pending"/.test(panel)) {
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: the request literally carries status: "pending".
+  //   new rule: status: "pending", or the one sanctioned form status: requestedDeductionId ? undefined : "pending"
+  //             (the working queue is always pending; only a deep link naming one deduction lifts the filter).
+  //   why: ACCT-F5729 (#13835, c2ebbf24f5) added the deduction reverse-identity deep link; the queue itself is
+  //        unchanged. Any other status expression (applied/void/none) still fails.
+  if (!/status:\s*(?:requestedDeductionId\s*\?\s*undefined\s*:\s*)?["']pending["']/.test(panel)) {
     failures.push(`${PANEL}: panel must request status=pending (FAIL-DD2)`);
   }
 
@@ -120,6 +126,14 @@ function selftest() {
         panel,
         api,
       ],
+    },
+    {
+      name: "panel queue stops filtering to pending",
+      apply: () => [routes, drivers, panel.replace(/status:\s*requestedDeductionId \? undefined : "pending"/, "status: undefined"), api],
+    },
+    {
+      name: "panel queue requests applied rows",
+      apply: () => [routes, drivers, panel.replace(/: "pending",/, ': "applied",'), api],
     },
     {
       name: "pending deductions panel unmounted",

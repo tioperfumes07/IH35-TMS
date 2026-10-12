@@ -31,6 +31,8 @@ const FILES = {
   required: "docs/specs/scoreboard/modules/customers.required.json",
   feed: "docs/specs/scoreboard/wire-sprint-built.json",
   self: "scripts/verify-customers-list-master-detail.mjs",
+  shell: "apps/frontend/src/components/layout/MasterDetailShell.tsx",
+  masterDetail: "apps/frontend/src/design/master-detail.ts",
 };
 const LABEL = "verify-customers-list-master-detail";
 const EXACT_HEADER = '/** @matrix-built {"modules":["customers"],"cols":["connectivity"],"leaves":["list.view_list","list.view_master_detail","list.segment.preferred","list.segment.watch","list.segment.factored","list.segment.active","list.segment.inactive","list.create","md.transaction_list","md.coi_requests","md.new_transaction","md.tasks"],"task":"CUST-F5919-LIST-MASTER-DETAIL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */';
@@ -56,13 +58,24 @@ export function audit(src) {
   if (!/customersQuery\.isError \|\| inactiveCustomersQuery\.isError/.test(src.customers)) {
     failures.push(`${FILES.customers}: active and inactive roster GET failures must both block the shared list`);
   }
-  if (!/Promise\.all\(\[customersQuery\.refetch\(\), inactiveCustomersQuery\.refetch\(\)\]\)/.test(src.customers)) {
+  // LEAD 443.99 class B (2026-10-12) — six anchors re-pinned to owner/finding-driven code (old/new/why each):
+  //   retry  old: Promise.all([customersQuery.refetch(), inactiveCustomersQuery.refetch()]) exactly.
+  //          new: the shared roster retry is one Promise.all that refetches BOTH roster reads (plus the counts and
+  //               with-transactions reads C-50 added). why: C-50 (#23546, f5a3226f14) added the two new reads.
+  if (!/void Promise\.all\(\[[^\]]*customersQuery\.refetch\(\),[^\]]*inactiveCustomersQuery\.refetch\(\),?[^\]]*\]\)/.test(src.customers)) {
     failures.push(`${FILES.customers}: shared roster failure retry must refetch both company-scoped roster reads`);
   }
   if (!/raw === "all"/.test(src.customers) || !/else params\.set\("listTab", next\)/.test(src.customers)) {
     failures.push(`${FILES.customers}: all segment must be URL-backed by listTab=all`);
   }
-  if (!/useStagedListFilters\(\{[\s\S]*?applied: \{ listTab, rosterType, rosterCreditStatus \}/.test(src.customers)) {
+  //   filters old: roster filters staged via useStagedListFilters({ applied: { listTab, rosterType, rosterCreditStatus } }).
+  //           new: the roster toolbar is inline (data-customers-roster-filter-toolbar="inline") with the Type and
+  //                Credit-status selects bound straight to rosterType / rosterCreditStatus, and both feed the roster
+  //                filter. why: K.9 (#20550, ece6191004) restored the filters inline, 0 clicks, direct state.
+  if (!/data-customers-roster-filter-toolbar="inline"/.test(src.customers) ||
+      !/value=\{rosterType\}[\s\S]{0,120}onChange=\{\(event\) => setRosterType\(/.test(src.customers) ||
+      !/onChange=\{\(event\) => setRosterCreditStatus\(/.test(src.customers) ||
+      !/if \(rosterType\) all = all\.filter\(\(customer\) => customer\.customer_type === rosterType\)/.test(src.customers)) {
     failures.push(`${FILES.customers}: roster filters must stage canonical segment/type/status state`);
   }
   if (!/c\.quality_overall_flag === "preferred"/.test(src.customers)) {
@@ -74,7 +87,10 @@ export function audit(src) {
   if (!/Boolean\(c\.factoring_company_vendor_id\)/.test(src.customers)) {
     failures.push(`${FILES.customers}: factored segment must filter real factoring_company_vendor_id`);
   }
-  if (!/queryKey: \["customers", "transactions"[\s\S]{0,320}listAllInvoices\(companyId,\s*\{\s*customer_id: selectedCustomer!\.id,/.test(src.customers)) {
+  //   transactions old: listAllInvoices(companyId, { customer_id: selectedCustomer!.id, ... }).
+  //                new: the customer-scoped reverse-drill reader listAllCustomerInvoices(selectedCustomer!.id, companyId, ...).
+  //                why: VC-06 (#21342, 5d1a3dac8f) — the general list never joined load/settlement/truck columns.
+  if (!/queryKey: \["customers", "transactions"[\s\S]{0,700}listAllCustomerInvoices\(selectedCustomer!\.id, companyId,/.test(src.customers)) {
     failures.push(`${FILES.customers}: transaction_list must query invoices scoped by real customer_id`);
   }
   if (!/customer_id=\$\{selectedCustomer\.id\}/.test(src.customers)) {
@@ -83,7 +99,9 @@ export function audit(src) {
   if (!/targetType="customer"/.test(src.customers)) {
     failures.push(`${FILES.customers}: md.tasks must scope TasksTab to targetType="customer"`);
   }
-  if (!/listInsuranceCoiRequests\(\{\s*operating_company_id: operatingCompanyId!,\s*customer_id: customerId,\s*status:/.test(src.coi)) {
+  //   coi old/new: same read; a comment line may now sit between customer_id and status — LST-F3282 (round 297)
+  //                made the status selector apply on the customer tab.
+  if (!/listInsuranceCoiRequests\(\{\s*operating_company_id: operatingCompanyId!,\s*customer_id: customerId,\s*(?:\/\/[^\n]*\n\s*)*status:/.test(src.coi)) {
     failures.push(`${FILES.coi}: md.coi_requests must read by the real customer_id`);
   }
   if (!/createInsuranceCoiRequest\(\{\s*\.\.\.input\.payload,\s*operating_company_id: input\.companyId,\s*customer_id: input\.customerId,/.test(src.coi)) {
@@ -138,10 +156,19 @@ export function audit(src) {
   if (!/CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/.test(src.sidebar)) {
     failures.push(`${FILES.sidebar}: home.roster rows must link to the real customer's own record`);
   }
-  if (!/className="flex flex-col gap-3 xl:flex-row"/.test(src.customers)) {
+  //   layout old: Customers.tsx literal className="flex flex-col gap-3 xl:flex-row"; sidebar literal
+  //               min-w-0 max-w-none ... xl:min-w-[300px] ... xl:max-w-[560px].
+  //          new: Customers mounts <MasterDetailShell>, whose root is MASTER_DETAIL.shellClass (flex-col, xl:flex-row);
+  //               the sidebar uses MASTER_DETAIL.masterPaneClass (w-full; widths only at xl:).
+  //          why: LST-F19 (f20b4b03ca) moved every master-detail page onto the one shared shell (design/master-detail.ts).
+  const shellClass = /shellClass:\s*"([^"]+)"/.exec(src.masterDetail)?.[1] ?? "";
+  const masterPaneClass = /masterPaneClass:\s*\n?\s*"([^"]+)"/.exec(src.masterDetail)?.[1] ?? "";
+  if (!/<MasterDetailShell\b/.test(src.customers) || !/className=\{`\$\{MASTER_DETAIL\.shellClass\}/.test(src.shell) ||
+      !/\bflex-col\b/.test(shellClass) || !/\bxl:flex-row\b/.test(shellClass)) {
     failures.push(`${FILES.customers}: master-detail must stack below xl so detail tabs stay reachable`);
   }
-  if (!/min-w-0 max-w-none[^"]*xl:min-w-\[300px\][^"]*xl:max-w-\[560px\]/.test(src.sidebar)) {
+  if (!/className=\{`\$\{MASTER_DETAIL\.masterPaneClass\}/.test(src.sidebar) || !/\bw-full\b/.test(masterPaneClass) ||
+      masterPaneClass.split(/\s+/).some((c) => /^(?:min-w|max-w|w)-\[\d+px\]$/.test(c))) {
     failures.push(`${FILES.sidebar}: roster sidebar must release its desktop width below xl`);
   }
   const required = JSON.parse(src.required);
@@ -174,6 +201,8 @@ function loadSrc(root) {
     required: fs.readFileSync(path.join(root, FILES.required), "utf8"),
     feed: fs.readFileSync(path.join(root, FILES.feed), "utf8"),
     self: fs.readFileSync(path.join(root, FILES.self), "utf8"),
+    shell: fs.readFileSync(path.join(root, FILES.shell), "utf8"),
+    masterDetail: fs.readFileSync(path.join(root, FILES.masterDetail), "utf8"),
   };
 }
 
@@ -188,14 +217,15 @@ if (process.argv.includes("--selftest")) {
     ["inactive-filter", "customers", /customer\.deactivated_at != null/g, "false"],
     ["active-filter", "customers", /customer\.deactivated_at == null/g, "false"],
     ["inactive-roster-error", "customers", /customersQuery\.isError \|\| inactiveCustomersQuery\.isError/g, "customersQuery.isError"],
-    ["combined-roster-retry", "customers", /Promise\.all\(\[customersQuery\.refetch\(\), inactiveCustomersQuery\.refetch\(\)\]\)/, "customersQuery.refetch()"],
+    ["combined-roster-retry", "customers", /inactiveCustomersQuery\.refetch\(\),/, ""],
     ["all-segment", "customers", /raw === "all"/, "false"],
     ["all-segment-url", "customers", /else params\.set\("listTab", next\)/, 'else params.set("tab", next)'],
-    ["roster-staged-filters", "customers", /applied: \{ listTab, rosterType, rosterCreditStatus \}/, "applied: { listTab }"],
+    ["roster-inline-type-filter", "customers", /onChange=\{\(event\) => setRosterType\(/, "onChange={() => ("],
+    ["roster-type-filter-unapplied", "customers", /if \(rosterType\) all = all\.filter/, "if (false) all = all.filter"],
     ["preferred-filter", "customers", /c\.quality_overall_flag === "preferred"/g, "false"],
     ["watch-filter", "customers", /c\.quality_overall_flag === "caution"/g, "false"],
     ["factored-filter", "customers", /Boolean\(c\.factoring_company_vendor_id\)/g, "false"],
-    ["transaction-list-scope", "customers", /(queryKey: \["customers", "transactions"[\s\S]{0,320}listAllInvoices\(companyId,\s*\{\s*)customer_id: selectedCustomer!\.id/, "$1customer_id: undefined"],
+    ["transaction-list-scope", "customers", /listAllCustomerInvoices\(selectedCustomer!\.id, companyId,/, "listAllInvoices(companyId, {"],
     ["new-transaction-nav", "customers", /customer_id=\$\{selectedCustomer\.id\}/, "customer_id=none"],
     ["tasks-target-type", "customers", /targetType="customer"/, 'targetType="unit"'],
     ["coi-read-customer-id", "coi", /(listInsuranceCoiRequests\(\{[\s\S]*?)customer_id: customerId/, "$1customer_id: undefined"],
@@ -227,8 +257,9 @@ if (process.argv.includes("--selftest")) {
     ["edit-form-error-gate", "editModal", /!paymentTermsQuery\.isError && !parentCandidatesQuery\.isError/, "true"],
     ["edit-save-error-gate", "editModal", /paymentTermsQuery\.isError \|\| parentCandidatesQuery\.isError \|\| /, ""],
     ["sidebar-link", "sidebar", /CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/, 'CardLink href="/customers"'],
-    ["responsive-stack", "customers", /className="flex flex-col gap-3 xl:flex-row"/, 'className="flex gap-3"'],
-    ["responsive-sidebar", "sidebar", /min-w-0 max-w-none/, "min-w-[300px] max-w-[560px]"],
+    ["responsive-stack", "masterDetail", /shellClass: "flex min-h-0 flex-1 flex-col gap-3 xl:flex-row"/, 'shellClass: "flex min-h-0 flex-1 gap-3"'],
+    ["responsive-shell-unused", "customers", /<MasterDetailShell\b/, "<div"],
+    ["responsive-sidebar", "masterDetail", /xl:w-\[640px\]/, "w-[640px]"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };

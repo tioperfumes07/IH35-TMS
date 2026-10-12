@@ -88,8 +88,31 @@ function runChecks(mirrorOverride) {
     );
   }
 
-  const canonTable = parseTable(canon, "const allowedTransitions", "canon");
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: the canon's literal `const allowedTransitions = { ... }` table equals the mirror's ALLOWED_TRANSITIONS.
+  //   new rule: the canon's `forwardTransitions` table equals the mirror's ALLOWED_TRANSITIONS exactly; the canon's
+  //             allowedTransitions must still be built as forwardTransitions + REVERSIBLE_BACK_EDGES; and the mirror
+  //             must carry NO back-edge (a reverse move needs a reason the frontend cannot yet send).
+  //   why: #21942 (28fe56dfa6, owner order 2026-09-12) split the canon into forward edges + reason-gated Zone-1
+  //        back-edges merged at runtime; the literal table no longer exists, so the parser read nothing and every
+  //        edge reported as drift. The FE confirm-modal was explicitly deferred in that PR — a mirror offering a
+  //        back-edge would render a one-click move the route refuses (400 reversal_reason_required).
+  const canonTable = parseTable(canon, "const forwardTransitions", "canon");
   const mirrorTable = parseTable(mirror, "ALLOWED_TRANSITIONS", "mirror");
+  if (!/for \(const \[from, to\] of REVERSIBLE_BACK_EDGES\)[\s\S]{0,120}merged\[from\]\.push\(to\)/.test(canon) ||
+      !/const allowedTransitions[\s\S]{0,200}Object\.entries\(forwardTransitions\)/.test(canon)) {
+    failures.push("canon: allowedTransitions must be forwardTransitions + REVERSIBLE_BACK_EDGES");
+  }
+  const backEdgesBlock = canon.slice(canon.indexOf("export const REVERSIBLE_BACK_EDGES"), canon.indexOf("const allowedTransitions"));
+  const backEdges = [...backEdgesBlock.matchAll(/\["([a-z_]+)",\s*"([a-z_]+)"\]/g)].map((m) => [m[1], m[2]]);
+  if (backEdges.length === 0) failures.push("canon: parsed zero REVERSIBLE_BACK_EDGES");
+  if (mirrorTable) {
+    for (const [from, to] of backEdges) {
+      if ((mirrorTable[from] ?? []).includes(to)) {
+        failures.push(`mirror offers reverse edge ${from} -> ${to} with no reason path (route requires reversal_reason)`);
+      }
+    }
+  }
   if (canonTable && mirrorTable) {
     for (const k of new Set([...Object.keys(canonTable), ...Object.keys(mirrorTable)])) {
       const a = JSON.stringify(canonTable[k] ?? null);
@@ -174,6 +197,16 @@ if (process.argv.includes("--selftest")) {
       expect: /must resolve the status via tryFromMdataStatus/,
     },
     {
+      name: "mirror offers a reason-gated back edge",
+      mutate: (src) => src.replace(/(\n\s*in_transit:\s*\[)/, '$1"dispatched", '),
+      expect: /mirror offers reverse edge in_transit -> dispatched|transition drift for "in_transit"/,
+    },
+    {
+      name: "mirror drops a forward edge",
+      mutate: (src) => src.replace(/(\n\s*unassigned:\s*\[)"assigned_not_dispatched",\s*/, "$1"),
+      expect: /transition drift for "unassigned"/,
+    },
+    {
       name: "drifted at_pickup alias",
       mutate: (src) =>
         src.replace('if (status === "at_pickup") return "dispatched";', 'if (status === "at_pickup") return "in_transit";'),
@@ -192,7 +225,7 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-load-state-machine-parity --selftest: FAIL — restore did not pass");
     process.exit(1);
   }
-  console.log("verify-load-state-machine-parity --selftest: OK (3 planted failures, restore pass)");
+  console.log("verify-load-state-machine-parity --selftest: OK (5 planted failures, restore pass)");
   process.exit(0);
 }
 

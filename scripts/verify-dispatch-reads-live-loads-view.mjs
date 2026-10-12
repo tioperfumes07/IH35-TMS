@@ -49,6 +49,19 @@ const ALLOWLIST = new Map([
   ["dispatch/stop-stamp.service.ts", "status-transition route (arrival/departure stamps) — mutation, not a list/board read"],
   ["dispatch/load-id-reservation.service.ts", "reserves a load_number sequence — not a list/board read"],
   ["dispatch/draft-crew-status-advance.ts", "status-transition (draft->crewed) — mutation, not a list/board read"],
+  // LEAD 443.99 class B (2026-10-12) — allow-list.
+  //   old rule: every SELECT FROM mdata.loads under dispatch/** outside the 11 named files above was new rot.
+  //   new rule: plus the 5 miles / trailer-decision ENGINES below, each named with why. A list/board surface under dispatch/**
+  //             is still new rot (the selftest's planted board read still fails).
+  //   why: 443.35 / 443.55 / 443.60 / 443.90 (2026-10-11) added engines that read ONE load by id, or a unit's PREVIOUS load,
+  //        or backfill historical loads. Those loads are routinely settled/closed, which views.live_loads hides by design, so
+  //        moving them onto the view would silently skip exactly the loads they exist to fill. Same class as
+  //        load-history.service.ts above. Nothing here renders a board.
+  ["dispatch/load-lane-learning.service.ts", "443.35 lane learning: reads ONE booked load by id and the unit's PREVIOUS / NEXT load for deadhead legs — those neighbours are usually settled, which views.live_loads excludes. Not a list/board read."],
+  ["dispatch/mileage/mileage-source-backfill.service.ts", "443.60 #2 backfill: stamps mileage_source on historical loads (settled included) that carry miles but no source. Not a list/board read."],
+  ["dispatch/mileage/miles-recommendations.routes.ts", "443.55 deadhead fill: selects the company's loads still missing miles_deadhead (historical, settled included) to fill them. Not a list/board read."],
+  ["dispatch/mileage/miles-recommendations.service.ts", "443.55 miles recommendations: reads ONE load by id (FOR UPDATE on the deadhead fill) and the unit's previous load's last stop. Not a list/board read."],
+  ["dispatch/printed-trailer-decision.service.ts", "443.90 #4 printed-trailer decision: groups the loads behind a set of expense documents (by id) by customer. Not a list/board read."],
 ]);
 
 function loadBaseline() {

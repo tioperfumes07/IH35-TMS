@@ -340,6 +340,16 @@ export function canonicalNotCancelledLoadClause(alias = "l"): string {
   return `${alias}.status::text <> 'cancelled'`;
 }
 
+/**
+ * HAPPENED AND NOT VOIDED — every load except a cancelled or a voided one, whatever stage it reached (settled included).
+ * The miles engines (443.55) learn from a unit's previous real load; a voided load's status is 'voided' and nothing ties
+ * that status to voided_at at the table, so both are excluded by status here. 'cancelled' and 'voided' are the only two
+ * such values of mdata.load_status_enum.
+ */
+export function canonicalHappenedNotVoidedLoadClause(alias = "l"): string {
+  return `${alias}.status::text NOT IN ('cancelled', 'voided')`;
+}
+
 /** `l.status IN (...)` fragment for the dispatch-work set, aliasable to match the caller's query. */
 export function canonicalDispatchWorkStatusClause(alias = "l"): string {
   return `${alias}.status IN (${statusInClause(DISPATCH_WORK_LOAD_STATUSES)})`;

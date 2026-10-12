@@ -43,7 +43,8 @@ function selftest() {
   if (!AP_STATUS_EXCLUSIONS.includes("draft")) failures.push("AP status exclusions do not match ap-aging.service.ts's own exclusion set");
   if (failures.length) {
     for (const f of failures) console.error(`${LABEL} --selftest FAIL — ${f}`);
-    return 1;
+    // Exit here, not via main()'s return value: a selftest that finds a problem must end the process non-zero itself.
+    process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS — status exclusion sets match ar-aging.service.ts / ap-aging.service.ts`);
   return 0;

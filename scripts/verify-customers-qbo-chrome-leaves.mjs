@@ -76,11 +76,29 @@ const CHECKS = [
   { name: "Vendors create open is URL-only (VENDORS-CREATE-DEAD-CLICK)", file: "apps/frontend/src/pages/Vendors.tsx", pattern: /const createOpen = searchParams\.get\("create"\) === "1"/ },
   { name: "list.filters: CustomersListView real MoneyListToolbar + MultiSelect + ParityTable", file: "apps/frontend/src/pages/customers/CustomersListView.tsx", pattern: /<ParityTable[\s\S]*MoneyListToolbar[\s\S]*MultiSelectDropdown|MoneyListToolbar[\s\S]*MultiSelectDropdown[\s\S]*<ParityTable/ },
   { name: "md.transaction_list: Customers.tsx ?tab=transaction_list real ParityTable", file: "apps/frontend/src/pages/Customers.tsx", pattern: /activeTab === "transaction_list"[\s\S]{0,2000}<ParityTable/ },
-  { name: "md.customer_details: CustomerDetailsTab real DetailRow grid + EntityLinkOrTombstone + Edit action", file: "apps/frontend/src/pages/Customers.tsx", pattern: /function CustomerDetailsTab\(\{[\s\S]{0,800}data-testid="customer-details-edit"[\s\S]{0,3000}EntityLinkOrTombstone/ },
+  // LEAD 443.99 class B (2026-10-12) — md.customer_details.
+  //   old rule: within 800 chars of "function CustomerDetailsTab({" the Edit button, then within 3000 the link.
+  //   new rule: inside the CustomerDetailsTab component body (to the next top-level function) there is the Edit
+  //             action, a DetailRow grid and the EntityLinkOrTombstone factoring-company link.
+  //   why: CUST-F31901 (#23871, 11f770a9cb) and GLB-01 grew the component's props; the same three surfaces are
+  //        there, 860 chars in. Scoping to the component body is exact instead of a character budget.
+  { name: "md.customer_details: CustomerDetailsTab real DetailRow grid + EntityLinkOrTombstone + Edit action", file: "apps/frontend/src/pages/Customers.tsx", pattern: { test: (src) => {
+    const start = src.indexOf("function CustomerDetailsTab({");
+    if (start < 0) return false;
+    const next = src.indexOf("\nfunction ", start + 1);
+    const body = src.slice(start, next < 0 ? undefined : next);
+    return /onClick=\{onEdit\}[^>]*data-testid="customer-details-edit"/.test(body) && /<DetailRow label=/.test(body) && /<EntityLinkOrTombstone\b/.test(body);
+  } } },
   { name: "md.new_transaction: Customers.tsx navigates to the real invoices list, customer-scoped", file: "apps/frontend/src/pages/Customers.tsx", pattern: /navigate\(`\/accounting\/invoices\?customer_id=\$\{selectedCustomer\.id\}`\)/ },
   { name: "detail.profile / detail.billing: CustomerDetail real DatePicker + MoneyInput chrome", file: "apps/frontend/src/pages/CustomerDetail.tsx", pattern: /MoneyInput[\s\S]*DatePicker|DatePicker[\s\S]*MoneyInput/ },
   { name: "detail.contacts.create: CustomerDetail real Modal variant=drawer Create Contact", file: "apps/frontend/src/pages/CustomerDetail.tsx", pattern: /<Modal variant="drawer" open=\{contactModalOpen\}/ },
-  { name: "detail.billing.record_payment: CustomerDetail real inline DatePicker + MoneyInput payment fields", file: "apps/frontend/src/pages/CustomerDetail.tsx", pattern: /DatePicker[\s\S]{0,80}value=\{payDate\}[\s\S]{0,400}MoneyInput[\s\S]{0,80}valueDollars=\{payAmount\}/ },
+  // LEAD 443.99 class B (2026-10-12) — detail.billing.record_payment.
+  //   old rule: inline DatePicker value={payDate} + MoneyInput valueDollars={payAmount} payment fields.
+  //   new rule: the leaf is the read-only notice — Record Payment shown disabled, payments sent to Accounting →
+  //             Receive payment (/accounting/payments?create=1) — and the inline payment fields are gone.
+  //   why: owner ORDERS 2026-10-01 §3 (customer invoices + A/R READ ONLY); CUST-F20 (#23767, 0234fe78d1).
+  { name: "detail.billing.record_payment: CustomerDetail A/R read-only — Record Payment disabled, payments via Accounting", file: "apps/frontend/src/pages/CustomerDetail.tsx", pattern: { test: (src) =>
+    /data-testid="customer-record-payment-disabled"/.test(src) && /href="\/accounting\/payments\?create=1"/.test(src) && !/value=\{payDate\}|valueDollars=\{payAmount\}/.test(src) } },
   { name: "detail.quality.create_event: CustomerDetail real Modal variant=drawer Create Quality Event", file: "apps/frontend/src/pages/CustomerDetail.tsx", pattern: /<Modal variant="drawer" open=\{qualityModalOpen\}/ },
   { name: "detail.lanes.create: CustomerDetail real Modal variant=drawer Create/Edit Lane with MoneyInput", file: "apps/frontend/src/pages/CustomerDetail.tsx", pattern: /<Modal variant="drawer" open=\{laneModalOpen\}[\s\S]{0,4000}MoneyInput/ },
   { name: "detail.edit / customers.modal.customer_edit: CustomerDetail mounts the real CustomerEditModal", file: "apps/frontend/src/pages/CustomerDetail.tsx", pattern: /<CustomerEditModal/ },

@@ -30,14 +30,41 @@ const HEADERS = [
 
 const read = (file) => fs.readFileSync(file, "utf8");
 
+// LEAD 443.99 class B (2026-10-12) — two selector anchors.
+//   loads   old rule: <EntityLink kind="load" id={load.id}> followed within 800 chars by testId `loads-planner-bar-`.
+//           new rule: the SAME planner row object (from its `name:` EntityLink to the row's closing `};`) carries
+//                     <EntityLink(OrTombstone) kind="load" id={load.id}> AND a bar with testId `loads-planner-bar-` and
+//                     loadId: load.id. Bounded by the row, not a character count.
+//           why: ROUND 20.6 L1 + Planners-lists item 3 added sortKey / statusSortKey / status / C1 label to the row,
+//                pushing the bar 1,199 chars past the link; same row, same selector.
+//   recent  old rule: <EntityLink kind="work_order" id={row.id} ... onClick={(event) => { event.preventDefault(); onOpen(row.id); }}>.
+//           new rule: the WO # cell is <EntityLink(OrTombstone) kind="work_order" id={row.id}> (canonical deep link) AND the
+//                     same table opens the drawer in place via onOpen(row.id) (link onClick or the row's Open action).
+//           why: MAINT-RECENT-CANCELLED-COLUMNS (#19308, 7496ccfd21) rebuilt Recent / Completed WOs onto ParityTable
+//                matching Active WOs: the WO # is the canonical link and "Open" is its own action column.
+function loadsPlannerRowOk(src) {
+  const start = src.search(/name:\s*<EntityLink(?:OrTombstone)?\s+kind="load"\s+id=\{load\.id\}/);
+  if (start < 0) return false;
+  const end = src.indexOf("\n            };", start);
+  const row = src.slice(start, end < 0 ? start + 2000 : end);
+  return /testId:\s*`loads-planner-bar-/.test(row) && /loadId:\s*load\.id/.test(row);
+}
+function recentWorkOrderOk(src) {
+  const link = /<EntityLink(?:OrTombstone)?\s+kind="work_order"\s+id=\{row\.id\}/.test(src);
+  const open =
+    /onClick=\{\(event\) => \{ event\.preventDefault\(\); onOpen\(row\.id\); \}\}/.test(src) ||
+    /onClick=\{\(\) => onOpen\(row\.id\)\}/.test(src);
+  return link && open;
+}
+
 function check(sources) {
   const failures = [];
+  if (!loadsPlannerRowOk(sources.loads)) failures.push(`${FILES.loads}: missing canonical loads planner selector`);
+  if (!recentWorkOrderOk(sources.recent)) failures.push(`${FILES.recent}: missing canonical recent work order selector`);
   const expects = [
-    ["loads", /<EntityLink(?:OrTombstone)?[\s\S]{0,180}kind="load"[\s\S]{0,180}id=\{load\.id\}[\s\S]{0,800}testId:\s*`loads-planner-bar-/, "loads planner"],
     ["timeline", /entityLabel\(load\.load_number[\s\S]{0,400}testId:\s*`timeline-load-/, "timeline planner"],
     ["claims", /<EntityLink[\s\S]{0,120}kind="claim"[\s\S]{0,120}id=\{claim\.id\}[\s\S]{0,160}label=\{entityLabel\(claim\.claim_number/, "claim row"],
     ["lawsuits", /<EntityLink[\s\S]{0,120}kind="lawsuit"[\s\S]{0,120}id=\{lawsuit\.id\}[\s\S]{0,160}label=\{entityLabel\(lawsuit\.case_number/, "lawsuit row"],
-    ["recent", /<EntityLink kind="work_order" id=\{row\.id\}[\s\S]{0,220}onClick=\{\(event\) => \{ event\.preventDefault\(\); onOpen\(row\.id\); \}\}/, "recent work order"],
     ["buckets", /<EntityLink kind="work_order" id=\{row\.id\}[\s\S]{0,260}onClick=\{\(event\) => \{ event\.preventDefault\(\); onOpen\(row\.id\); \}\}/, "R&M board work order"],
     ["resolver", /case "load":[\s\S]{0,100}\/dispatch\/loads\//, "load resolver"],
     ["resolver", /case "work_order":[\s\S]{0,120}\/maintenance\/work-orders\//, "work-order resolver"],
@@ -80,14 +107,18 @@ if (process.argv.includes("--self-test")) {
   const mutations = [
     ["loads", 'kind="load"', 'kind="customer"'],
     ["loads", 'id={load.id}', 'id={undefined}'],
-    ["timeline", 'kind="load"', 'kind="customer"'],
-    ["timeline", 'id={load.id}', 'id={undefined}'],
+    // 443.99: GO-PLANNER-01 (#18231) made timeline rows driver-keyed; the load selector is the bar's
+    // entityLabel(load.load_number, ...) + timeline-load- testId (what check() asserts), so plant those.
+    ["timeline", 'entityLabel(load.load_number', 'String(load.id'],
+    ["timeline", 'timeline-load-', 'timeline-bar-'],
     ["claims", 'kind="claim"', 'kind="invoice"'],
     ["claims", 'id={claim.id}', 'id={undefined}'],
     ["lawsuits", 'kind="lawsuit"', 'kind="matter"'],
     ["lawsuits", 'id={lawsuit.id}', 'id={undefined}'],
     ["recent", 'kind="work_order"', 'kind="unit"'],
     ["recent", 'id={row.id}', 'id={undefined}'],
+    ["recent", 'onOpen(row.id)', 'void 0'],
+    ["loads", 'loads-planner-bar-', 'planner-bar-'],
     ["buckets", 'kind="work_order"', 'kind="unit"'],
     ["buckets", 'id={row.id}', 'id={undefined}'],
     ["resolver", 'case "load"', 'case "load_removed"'],
@@ -140,7 +171,7 @@ if (process.argv.includes("--self-test")) {
   const feed = JSON.parse(sources.feed);
   feed.entries.unshift({ guard: FILES.self, modules: ["maintenance"], cols: ["reverse_link"], leafRe: ".*" });
   if (!check({ ...sources, feed: JSON.stringify(feed) }).length) throw new Error("feed mutation survived");
-  console.log(`${LABEL} SELFTEST PASS — 51 planted defects rejected`);
+  console.log(`${LABEL} SELFTEST PASS — 53 planted defects rejected`);
   process.exit(0);
 }
 

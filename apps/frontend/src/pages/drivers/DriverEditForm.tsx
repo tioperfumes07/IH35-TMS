@@ -116,8 +116,6 @@ export function DriverEditForm({
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [form, setForm] = useState<Record<string, string>>({});
-  const [bankConfirm, setBankConfirm] = useState(false);
-  const [bankDraft, setBankDraft] = useState({ account: "", routing: "" });
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -552,17 +550,10 @@ export function DriverEditForm({
         </Group>
 
         <Group title="Payment method">
+          {/* 443.99 (verify-form-field-roundtrip): the "Account / Routing (masked)" inputs here showed hard-coded
+              "•••• 1234" / "•••• 0000", accepted typed bank numbers and never sent them anywhere. Banking is
+              changed only through the audited payment-method writer below. */}
           <p className="text-[12px] text-[#64748B]">Banking is masked. Changing it is an audited event and needs a second approval.</p>
-          <Field label="Account (masked)" width="wm">
-            <input className={`${CTRL} wm text-right`} value={bankConfirm ? bankDraft.account : "•••• 1234"} readOnly={!bankConfirm} onChange={(e) => setBankDraft((c) => ({ ...c, account: e.target.value }))} />
-          </Field>
-          <Field label="Routing (masked)" width="wm">
-            <input className={`${CTRL} wm text-right`} value={bankConfirm ? bankDraft.routing : "•••• 0000"} readOnly={!bankConfirm} onChange={(e) => setBankDraft((c) => ({ ...c, routing: e.target.value }))} />
-          </Field>
-          <label className="flex items-center gap-2 text-[12px] text-[#0F1B2D]">
-            <input type="checkbox" checked={bankConfirm} onChange={(e) => setBankConfirm(e.target.checked)} />
-            I have a second approval to change banking
-          </label>
           <DriverPaymentMethodsCard driverId={driverId} companyId={operatingCompanyId} />
         </Group>
 

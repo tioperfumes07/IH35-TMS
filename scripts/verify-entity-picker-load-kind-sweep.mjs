@@ -44,6 +44,18 @@ const TABLE_ONLY_LOAD_READS = new Map([
       /emptyText="No loads found for this driver\."/,
     ],
   ],
+  // 443.99: the Dispatch board's own list read. #21789 (4ff602799e, DSP-F23037) inlined listLoads/listAllLoads in
+  // place of the allowlisted useLoadsList hook so Round Trips could page past the API's 200 cap. It is the board
+  // table, not a picker: it must stay company-scoped, surface its error honestly, and drill to the canonical load.
+  [
+    "apps/frontend/src/pages/Dispatch.tsx",
+    [
+      /operating_company_id:\s*filters\.companyIds/,
+      /listLoads\(\{\s*\.\.\.loadListFilters,\s*limit,\s*offset\s*\}\)/,
+      /listError=\{dataTableErrorState\(loadsQuery\.error, \(\) => void loadsQuery\.refetch\(\)\)\}/,
+      /<EntityLink\s+kind="load"/,
+    ],
+  ],
 ]);
 
 function readRel(root, rel) {
@@ -113,7 +125,10 @@ export function collectProblems(root = ROOT) {
     if (/listDispatchLoads\(/.test(code)) {
       problems.push(`${rel}: must not local-fetch listDispatchLoads — EntityPicker kind=load`);
     }
-    if (/Combobox[\s\S]{0,400}load|loadOptions[\s\S]{0,200}Combobox/.test(code)) {
+    // 443.99 — old rule: the text "Combobox" followed by "load" anywhere in the next 400 chars. That matched a
+    // closing </SelectCombobox> (PodReview's POD-status filter, #25899) followed by unrelated page text. New rule:
+    // a Combobox whose OWN opening tag references a load value/options, or loadOptions feeding a Combobox.
+    if (/<(?:Select)?Combobox\b[^<]{0,600}?\bload(?!ing)/i.test(code) || /loadOptions[\s\S]{0,200}Combobox/.test(code)) {
       problems.push(`${rel}: must not use Combobox for load selection`);
     }
     if (/loadOptions\.map/.test(code)) {
@@ -215,7 +230,11 @@ listLoads({ limit: 200 })
       `listDispatchLoads({ operating_company_id: operatingCompanyId, driver: driverId })\n<EntityLink kind="load" id={row.id} />`
     );
     const planted = collectProblems(tmpStubRoot);
-    if (planted.length < 5 || !planted.some((problem) => problem.includes("table-only load read lost"))) {
+    if (
+      planted.length < 5 ||
+      !planted.some((problem) => problem.includes("table-only load read lost")) ||
+      !planted.some((problem) => problem.includes("must not use Combobox for load selection"))
+    ) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL hard enough`, planted);
       process.exit(1);
     }

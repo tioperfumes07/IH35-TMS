@@ -26,7 +26,15 @@ function assertAll(srcs) {
     if (file.endsWith("VendorBalancesPage.tsx") && src.includes("text-[11px]")) {
       problems.push(`${file}: must not use text-[11px] — use text-xs`);
     }
-    if (file.endsWith("VendorBalancesPage.tsx") && (!src.includes("UnclearedDocumentsNote") || !src.includes("not cleared") || !src.includes("bg-slate-100"))) {
+    // LEAD 443.99 class B (2026-10-12).
+    //   old rule: the file contains UnclearedDocumentsNote, "not cleared" and the token bg-slate-100 anywhere.
+    //   new rule: the <p> notice that names "not cleared" itself sits on the neutral surface (house bg-[#F7F8FA]
+    //             or legacy bg-slate-100) and carries no amber/yellow warning tint.
+    //   why: BANK-F91079 (#26013, 72eaebf5b6) moved this page's slate chrome to the house tokens; the notice is
+    //        unchanged. Pinning the tint to the notice itself is tighter than "bg-slate-100 somewhere in the file".
+    const notice = /<p className="([^"]*)">[^<]*\{money\(totalCleared\)\}[^<]*not cleared/.exec(src);
+    const neutral = notice && /(?:^|\s)bg-(?:\[#F7F8FA\]|slate-100)(?=\s|$)/i.test(notice[1]) && !/amber|yellow/.test(notice[1]);
+    if (file.endsWith("VendorBalancesPage.tsx") && (!src.includes("UnclearedDocumentsNote") || !neutral)) {
       problems.push(`${file}: 363-CUR-A must name uncleared payments not cleared on slate`);
     }
     // BANK-F91083 — ORDERS chrome: VendorCreditsPage uses text-xs, not text-[11px].
@@ -46,6 +54,12 @@ if (SELFTEST) {
   planted[vb] = planted[vb].replace(/UnclearedDocumentsNote/g, "GoneNote");
   if (!assertAll(planted).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
+    process.exit(1);
+  }
+  const amber = { ...srcs, [vb]: srcs[vb].replace("bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]", "bg-amber-50 px-3 py-2 text-xs text-amber-800") };
+  const noNotice = { ...srcs, [vb]: srcs[vb].replace("named not cleared", "named pending") };
+  if (amber[vb] === srcs[vb] || !assertAll(amber).length || !assertAll(noNotice).length) {
+    console.error(`${LABEL} SELFTEST FAILED: amber notice or missing "not cleared" not caught`);
     process.exit(1);
   }
   const live = assertAll(srcs);

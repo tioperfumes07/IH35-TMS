@@ -38,7 +38,9 @@ const BASE_REF = process.env.BOARD_BASE_REF || "origin/main";
  * than the gap). RATCHET: a NEW uncited completion fails. NEVER add to this number to make a build
  * green — raising it is the one edit this guard exists to prevent.
  */
-const UNCITED_BASELINE = 1686;
+// 443.99 (2026-10-12): ratcheted DOWN 1686 -> 1682 — 14 post-baseline completion rows now cite their merged PR, and
+// "NOT FIXED" filings are no longer miscounted. Shrink-only.
+const UNCITED_BASELINE = 1682;
 
 /** A board row: a markdown table row that opens with bold. */
 const ROW_RE = /^\|\s*\*\*/;
@@ -55,7 +57,14 @@ const ROW_RE = /^\|\s*\*\*/;
  * row's state.
  */
 const STATUS_CELL_RE = /^\|\s*\*\*([^*]{0,120})\*\*/;
-const COMPLETION_RE = /\b(FIXED|DRAINED)\b/;
+// LEAD 443.99 class B (2026-10-12).
+//   old rule: the status cell claims completion when it contains FIXED or DRAINED anywhere.
+//   new rule: …unless that word is negated in the cell — "NOT FIXED" / "NOT DRAINED" (e.g. "OPEN — FILED, NOT FIXED")
+//             is a filing, not a completion claim.
+//   why: six OPEN rows (CC-2 ROUND 24.3 / 25.1, 2026-09-14) whose status cell reads "OPEN — FILED, NOT FIXED" were
+//        counted as uncited completions — the same false-positive class this guard already excludes for prose. A
+//        bare FIXED / DRAINED status cell with no PR or sha still fails.
+const COMPLETION_RE = /(?<!\bNOT\s)\b(FIXED|DRAINED)\b/;
 function statusCell(line) {
   return STATUS_CELL_RE.exec(line)?.[1] ?? "";
 }
@@ -118,6 +127,12 @@ if (SELFTEST) {
     failures.push("a row that only MENTIONS 'FIXED' in its prose was counted as an uncited completion");
   }
   // And the real defect must still be caught when FIXED is the STATUS.
+  if (uncitedCompletions(row("OPEN — FILED, NOT FIXED (CC-2, 2026-09-14):** `ACCT-F8` — filed only")).length !== 0) {
+    failures.push("an OPEN 'NOT FIXED' filing was counted as an uncited completion");
+  }
+  if (uncitedCompletions(row("FIXED, NOT FIXED-LOOKING `ACCT-F7` — still a bare FIXED claim")).length !== 1) {
+    failures.push("a bare FIXED claim beside a negated word escaped");
+  }
   if (uncitedCompletions(row("FIXED `ACCT-F9` — no citation anywhere")).length !== 1) {
     failures.push("an uncited completion in the STATUS CELL was missed — the #4724 defect");
   }
@@ -128,7 +143,7 @@ if (SELFTEST) {
     process.exit(1);
   }
   console.log(
-    "verify-board-append-only SELFTEST OK — 9/9 (row deletion detected, additions fine, uncited completion caught, PR/SHA-cited and OPEN rows pass, prose mentioning FIXED is not a claim, status-cell FIXED still caught)"
+    "verify-board-append-only SELFTEST OK — 11/11 (NOT FIXED filings are not claims, row deletion detected, additions fine, uncited completion caught, PR/SHA-cited and OPEN rows pass, prose mentioning FIXED is not a claim, status-cell FIXED still caught)"
   );
   process.exit(0);
 }

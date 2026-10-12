@@ -125,7 +125,10 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     },
     {
       name: "remove same-mount transition opener",
-      mutate: (d) => d.replace("setNewLoadOpen(true);", "/* planted missing transition opener */"),
+      // 443.99: MOD-01's openBookLoadModal callback (LST-F6335 #19177, d5eff3ebe8) now holds the FIRST
+      // `setNewLoadOpen(true);` in the file, so a first-occurrence replace planted into the wrong place and the
+      // transition effect stayed intact. Plant inside the effect itself (the line after the suppression check).
+      mutate: (d) => d.replace("if (bookLoadAutoOpenSuppressedRef.current) return;\n    setNewLoadOpen(true);", "if (bookLoadAutoOpenSuppressedRef.current) return;\n    /* planted missing transition opener */"),
       expect: /transition effect/,
     },
   ];

@@ -23,7 +23,6 @@
 //   C. settlement 5787's non-diesel expense total must equal AlwaysTrack's own $140.20 exactly --
 //      the concrete, named case this round exists to prove stays fixed.
 import { register } from "tsx/esm/api";
-import { buildPgPoolConfig } from "./lib/pg-connection-options.cjs"; // TLS off for CI's local postgres, on for Neon
 
 export const REQUIRES_LIVE_DB = "duplicate-expense identity is a live-data invariant; cannot connect = FAIL, never a silent pass";
 
@@ -47,6 +46,27 @@ function fmt(cents) {
   return (Number(cents) / 100).toFixed(2);
 }
 
+/** Pure verdict over the three live measurements — main() and --selftest share it. */
+export function judgeDedupe({ loadAmountCount, violRows, settl5787Cents }) {
+  const failures = [];
+  if (loadAmountCount > KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS) {
+    failures.push(
+      `${loadAmountCount} row(s) now carry a void_reason citing "(load, amount)" -- GREW past the ratchet baseline of ${KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS}. A new sweep just reintroduced the unsafe key.`
+    );
+  }
+  if (violRows.length > KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS) {
+    failures.push(
+      `${violRows.length} voided, document-numbered row(s) have no live row on their own load bearing the same document -- ` +
+        `GREW past the ratchet baseline of ${KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS}. New rows: ` +
+        violRows.map((r) => `${r.load_number}/${r.vendor_document_number}/$${fmt(r.total_amount_cents)}`).join(", ")
+    );
+  }
+  if (settl5787Cents !== 14020) {
+    failures.push(`settlement 5787 (load 13549) non-diesel expense total is $${fmt(settl5787Cents)}, expected $140.20 exactly (AlwaysTrack ground truth)`);
+  }
+  return failures;
+}
+
 async function selftest() {
   const failures = [];
   if (typeof KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS !== "number" || KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS < 0) {
@@ -58,11 +78,26 @@ async function selftest() {
   if (typeof KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS !== "number" || KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS < 0) {
     failures.push("(load, amount) ratchet baseline must be a non-negative number");
   }
+  // Planted violations through the same verdict main() uses.
+  const row = (n) => ({ load_number: "13549", vendor_document_number: `D${n}`, total_amount_cents: 1000 });
+  const clean = { loadAmountCount: KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS, violRows: Array.from({ length: KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS }, (_, i) => row(i)), settl5787Cents: 14020 };
+  if (judgeDedupe(clean).length) failures.push("clean measurements (at the baselines, $140.20) rejected");
+  const plants = [
+    ["a new sweep voids on (load, amount)", { ...clean, loadAmountCount: KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS + 1 }],
+    ["a new document-numbered void with no live twin", { ...clean, violRows: [...clean.violRows, row(99)] }],
+    ["settlement 5787 loses a real $1 charge", { ...clean, settl5787Cents: 13920 }],
+    ["settlement 5787 gains a voided charge back", { ...clean, settl5787Cents: 14120 }],
+  ];
+  let caught = 0;
+  for (const [name, input] of plants) {
+    if (judgeDedupe(input).length) caught += 1;
+    else failures.push(`planted violation escaped: ${name}`);
+  }
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} selftest OK`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${plants.length} planted violations caught`);
 }
 
 async function main() {
@@ -76,7 +111,7 @@ async function main() {
     return;
   }
   const { default: pg } = await import("pg");
-  const pool = new pg.Pool(buildPgPoolConfig(process.env.DATABASE_URL));
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -95,11 +130,7 @@ async function main() {
       [USMCA]
     );
     const loadAmountCount = loadAmountRes.rows[0].n;
-    if (loadAmountCount > KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS) {
-      failures.push(
-        `${loadAmountCount} row(s) now carry a void_reason citing "(load, amount)" -- GREW past the ratchet baseline of ${KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS}. A new sweep just reintroduced the unsafe key.`
-      );
-    } else if (loadAmountCount < KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS) {
+    if (loadAmountCount < KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS) {
       console.log(`${LABEL}: NOTE — ratchet improved (${loadAmountCount} < baseline ${KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS}). Lower KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS in this file to match.`);
     }
 
@@ -128,13 +159,7 @@ async function main() {
       [USMCA]
     );
     const violCount = violRes.rows.length;
-    if (violCount > KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS) {
-      failures.push(
-        `${violCount} voided, document-numbered row(s) have no live row on their own load bearing the same document -- ` +
-          `GREW past the ratchet baseline of ${KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS}. New rows: ` +
-          violRes.rows.map((r) => `${r.load_number}/${r.vendor_document_number}/$${fmt(r.total_amount_cents)}`).join(", ")
-      );
-    } else if (violCount < KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS) {
+    if (violCount < KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS) {
       console.log(`${LABEL}: NOTE — ratchet improved (${violCount} < baseline ${KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS}). Lower KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS in this file to match.`);
     }
 
@@ -151,9 +176,7 @@ async function main() {
       [USMCA]
     );
     const settl5787Cents = Number(settl5787Res.rows[0]?.cents ?? 0);
-    if (settl5787Cents !== 14020) {
-      failures.push(`settlement 5787 (load 13549) non-diesel expense total is $${fmt(settl5787Cents)}, expected $140.20 exactly (AlwaysTrack ground truth)`);
-    }
+    failures.push(...judgeDedupe({ loadAmountCount, violRows: violRes.rows, settl5787Cents }));
 
     await client.query("ROLLBACK");
 

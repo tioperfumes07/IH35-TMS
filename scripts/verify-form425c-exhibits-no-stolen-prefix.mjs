@@ -53,12 +53,31 @@ export function collectProblems(src, page = PAGE) {
       problems.push(`${page}: related hops must stay on /425c?tab=history`);
     }
   }
+  // LEAD 443.99 class B (2026-10-12) — flagged-line Exhibit hop.
+  //   old rule: FORM and PROFILES render an "Exhibit required" badge that Links to /425c/exhibits.
+  //   new rule: FORM — every flagged line writes its Exhibit A/B explanation in place (textarea + button calling
+  //             onSaveExhibit(q.num, …), labelled `Save Exhibit ${letter} entry`); PROFILES — a flagged default answer
+  //             Links to the Form tab (/425c?tab=form) "Save Exhibit on Form 425C". Neither may Link to /425c/exhibits,
+  //             and a dead (unlinked/unwired) control still fails.
+  //   why: F425C-EXHIBIT-REQUIRED-DEAD-HOP-TO-AF (#15121, 8d99ae0d17) and #15122 (9a2ea92229): /425c/exhibits is the
+  //        A–F banking package — the click never wrote the court-filing line explanation (wrong surface). The
+  //        official Exhibit A/B writers (POST /form-425c/:id/exhibit-a|b) are now reached from the line itself.
   if (page === FORM || page === PROFILES) {
-    if (!src.includes('to="/425c/exhibits"')) {
-      problems.push(`${page}: Exhibit required badge must Link to /425c/exhibits (dead span is leftover FINDING)`);
+    if (src.includes('to="/425c/exhibits"')) {
+      problems.push(`${page}: a flagged line must not hop to /425c/exhibits (A–F banking package, wrong surface)`);
     }
-    if (!src.includes("Exhibit required")) {
-      problems.push(`${page}: missing Exhibit required label`);
+  }
+  if (page === FORM) {
+    if (!/<textarea[\s\S]{0,400}value=\{exhibitDrafts\[q\.num\][\s\S]{0,400}onClick=\{\(\) => onSaveExhibit\(q\.num, exhibitDrafts\[q\.num\] \?\? ""\)\}/.test(src)) {
+      problems.push(`${page}: flagged line must save its Exhibit A/B explanation in place via onSaveExhibit(q.num, …)`);
+    }
+    if (!src.includes("Save Exhibit ${letter} entry")) {
+      problems.push(`${page}: missing "Save Exhibit A/B entry" control label`);
+    }
+  }
+  if (page === PROFILES) {
+    if (!/\{flagged \? \(\s*<Link\s+to="\/425c\?tab=form"[\s\S]{0,200}Save Exhibit on Form 425C/.test(src)) {
+      problems.push(`${page}: flagged default answer must Link to /425c?tab=form "Save Exhibit on Form 425C"`);
     }
   }
   return problems;
@@ -108,25 +127,35 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL good home: ${goodHome.join("; ")}`);
     process.exit(1);
   }
-  const badForm = collectProblems(`<span>Exhibit required</span>`, FORM);
-  const goodForm = collectProblems(`<Link to="/425c/exhibits">Exhibit required</Link>`, FORM);
-  if (!badForm.some((p) => p.includes("Exhibit required badge"))) {
-    console.error(`${LABEL} --selftest FAIL: dead Exhibit required span must fail`);
-    process.exit(1);
-  }
-  if (goodForm.length) {
-    console.error(`${LABEL} --selftest FAIL good form: ${goodForm.join("; ")}`);
-    process.exit(1);
-  }
-  const badProfiles = collectProblems(`<span>Exhibit required</span>`, PROFILES);
-  const goodProfiles = collectProblems(`<Link to="/425c/exhibits">Exhibit required</Link>`, PROFILES);
-  if (!badProfiles.some((p) => p.includes("Exhibit required badge"))) {
-    console.error(`${LABEL} --selftest FAIL: dead Profiles Exhibit required span must fail`);
-    process.exit(1);
-  }
-  if (goodProfiles.length) {
-    console.error(`${LABEL} --selftest FAIL good profiles: ${goodProfiles.join("; ")}`);
-    process.exit(1);
+  const goodFormSrc = `{flagged ? (<div>
+      <textarea placeholder="x" value={exhibitDrafts[q.num] ?? ""} onChange={(e) => setExhibitDrafts(e.target.value)} />
+      <button type="button" onClick={() => onSaveExhibit(q.num, exhibitDrafts[q.num] ?? "")}>{savingExhibit ? "Saving…" : \`Save Exhibit \${letter} entry\`}</button>
+    </div>) : null}`;
+  const formCases = [
+    ["good form", goodFormSrc, 0],
+    ["form hops to /425c/exhibits", `${goodFormSrc}<Link to="/425c/exhibits">Exhibit required</Link>`, 1],
+    ["form button not wired to onSaveExhibit", goodFormSrc.replace("onClick={() => onSaveExhibit(q.num, exhibitDrafts[q.num] ?? \"\")}", "onClick={() => undefined}"), 1],
+    ["dead Exhibit required span only", `<span>Exhibit required</span>`, 1],
+  ];
+  const goodProfilesSrc = `{flagged ? (
+                  <Link
+                    to="/425c?tab=form"
+                    className="x"
+                  >
+                    Save Exhibit on Form 425C
+                  </Link>
+                ) : null}`;
+  const profileCases = [
+    ["good profiles", goodProfilesSrc, 0],
+    ["profiles hop to /425c/exhibits", goodProfilesSrc.replace("/425c?tab=form", "/425c/exhibits"), 1],
+    ["profiles dead span", `<span>Save Exhibit on Form 425C</span>`, 1],
+  ];
+  for (const [name, fixture, want] of [...formCases.map((c) => [...c, FORM]), ...profileCases.map((c) => [...c, PROFILES])].map(([n, f, w, pg]) => [n, [f, pg], w])) {
+    const got = collectProblems(fixture[0], fixture[1]).length;
+    if (want === 0 ? got !== 0 : got === 0) {
+      console.error(`${LABEL} --selftest FAIL: ${name} (problems=${got})`);
+      process.exit(1);
+    }
   }
   console.log(`${LABEL} --selftest PASS`);
   process.exit(0);

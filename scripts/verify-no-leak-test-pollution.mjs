@@ -33,6 +33,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
+// 443.100: declared so verify-no-silent-db-skip can tell an honest static-only run from a skipped live verdict.
+export const ALLOW_OFFLINE_SKIP = "mechanism ratchet over fixture-writer source (prod refusal, no swallowed cleanup, residue check); never connects — prod row counts are a GUARD re-run, not CI";
+
 const ROOT = process.cwd();
 const LABEL = "verify:no-leak-test-pollution";
 const SELFTEST = process.argv.includes("--selftest");

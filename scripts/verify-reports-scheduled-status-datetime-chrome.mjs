@@ -18,11 +18,20 @@ function read(rel) {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
+// LEAD 443.99 class B (2026-10-12) — display-date formatter.
+//   old rule: SubscriptionManager imports formatDateTimeUS (import presence only).
+//   new rule: SubscriptionManager imports mmmDdTime from lib/formatDate AND subscriptionTimestampLabel returns mmmDdTime(value) (stricter: the helper must actually use it).
+//   why: GLB-08 (#25795, 2026-10-07, owner-approved app-wide MMM-DD date sweep) converted report date displays from
+//        legacy MM/DD/YYYY formatDateUS / formatDateTimeUS to lib/formatDate mmmDd / mmmDdTime. The page was right;
+//        the guard still demanded the retired formatter. A raw ISO / sliced timestamp still fails.
 function analyze() {
   const failures = [];
   const page = read(PAGE);
-  if (!/formatDateTimeUS/.test(page) || !/from ["'].*lib\/formatDate["']/.test(page)) {
-    failures.push("SubscriptionManager must import formatDateTimeUS");
+  if (!/import \{[^}]*\bmmmDdTime\b[^}]*\} from ["'].*lib\/formatDate["']/.test(page)) {
+    failures.push("SubscriptionManager must import mmmDdTime");
+  }
+  if (!/function subscriptionTimestampLabel\([^)]*\)[^{]*\{[\s\S]{0,120}?return mmmDdTime\(value\)/.test(page)) {
+    failures.push("subscriptionTimestampLabel must format through mmmDdTime");
   }
   if (!/subscriptionStatusLabel|Active/.test(page) || /"active"\s*:\s*"inactive"|\? "active" : "inactive"/.test(page)) {
     failures.push("Status must render governed Active/Inactive labels");
@@ -58,6 +67,11 @@ function selftest() {
       "row.last_sent_at?.slice(0, 19) ?? \"—\"",
     );
     if (bad === original) fail("selftest could not plant raw status/datetime");
+    const rawHelper = original.replace(/return mmmDdTime\(value\) \|\| "—";/, 'return value.slice(0, 16) || "—";');
+    SELFTEST_OVERLAY.set(PAGE, rawHelper);
+    if (rawHelper === original || !analyze().some((m) => /through mmmDdTime|slice raw ISO/.test(m))) {
+      fail("selftest expected raw-ISO subscriptionTimestampLabel to fail");
+    }
     SELFTEST_OVERLAY.set(PAGE, bad);
     const planted = analyze();
     if (!planted.some((m) => /Active\/Inactive|slice raw ISO|subscriptionTimestampLabel/.test(m))) {

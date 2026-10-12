@@ -18,12 +18,21 @@ function read(rel) {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
+// LEAD 443.99 class B (2026-10-12) — display-date formatter.
+//   old rule: CancellationsReportPage imports formatDateUS (import presence only).
+//   new rule: CancellationsReportPage imports mmmDd from lib/formatDate AND cancellationsByDateLabel formats through mmmDd (stricter).
+//   why: GLB-08 (#25795, 2026-10-07, owner-approved app-wide MMM-DD date sweep) converted report date displays from
+//        legacy MM/DD/YYYY formatDateUS / formatDateTimeUS to lib/formatDate mmmDd / mmmDdTime. The page was right;
+//        the guard still demanded the retired formatter. A raw ISO / sliced timestamp still fails.
 function analyze() {
   const failures = [];
   const page = read(PAGE);
 
-  if (!/formatDateUS/.test(page) || !/from ["'].*lib\/formatDate["']/.test(page)) {
-    failures.push("CancellationsReportPage must import formatDateUS");
+  if (!/import \{[^}]*\bmmmDd\b[^}]*\} from ["'].*lib\/formatDate["']/.test(page)) {
+    failures.push("CancellationsReportPage must import mmmDd");
+  }
+  if (!/function cancellationsByDateLabel\([^)]*\)[^{]*\{[\s\S]{0,160}?return mmmDd\(raw\)/.test(page)) {
+    failures.push("cancellationsByDateLabel must format through mmmDd");
   }
   if (!/cancellationsByDateLabel/.test(page) || !/formatAsDate:\s*true/.test(page)) {
     failures.push("By date bucket must use cancellationsByDateLabel via formatAsDate:true");
@@ -58,6 +67,11 @@ function selftest() {
       'if (formatAsDate) {\n          return <span className="font-medium text-gray-800">{row.label}</span>;',
     );
     if (bad === original) fail("selftest could not plant raw ISO date label");
+    const rawHelper = original.replace("return mmmDd(raw) || raw;", "return raw;");
+    SELFTEST_OVERLAY.set(PAGE, rawHelper);
+    if (rawHelper === original || !analyze().some((m) => /through mmmDd/.test(m))) {
+      fail("selftest expected raw cancellationsByDateLabel to fail");
+    }
     SELFTEST_OVERLAY.set(PAGE, bad);
     const planted = analyze();
     if (!planted.some((m) => /raw row\.label|cancellationsByDateLabel|formatAsDate/.test(m))) {
@@ -78,4 +92,4 @@ if (process.argv.includes("--selftest")) {
 
 const failures = analyze();
 if (failures.length) fail(failures.join("; "));
-console.log(`${LABEL} PASS — Cancellations By date uses formatDateUS display chrome`);
+console.log(`${LABEL} PASS — Cancellations By date uses mmmDd display chrome`);

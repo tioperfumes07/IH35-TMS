@@ -1,10 +1,10 @@
 {
-  "healthzSha": "68acad9",
-  "generated_at": "2026-10-12T10:30:29.929Z",
+  "healthzSha": "303b718",
+  "generated_at": "2026-10-12T10:37:10.126Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "68acad9",
+    "deployedSha": "303b718",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 26544,
+      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615720912 — reservation-only commit, no code fix)",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 05:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26544",
+      "sha": "b1af07bba7",
+      "committedAtIso": "2026-10-12T05:34:03-05:00"
+    },
+    {
+      "number": 26543,
+      "title": "FINDING: ACCT-F4439914 LANE: FINANCIAL -- 443.99 C lane 4: 15 failing verify:pre-commit steps green -- 6 Settlement Creator / posting / trailer queries entity-scoped, 13 stale or broken guards repointed at the code that moved",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 05:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26543",
+      "sha": "5ff31da7fa",
+      "committedAtIso": "2026-10-12T05:33:43-05:00"
+    },
+    {
       "number": 26542,
       "title": "FINDING: ACCT-F4439913 LANE: FINANCIAL -- 443.99 C lane 3 batch 2: 11 verify-steps green (+ 3069 static half, 3418 census) — categorizer read revoked A/P bills, 4 flag keys never seeded, Creator import cycle, ctx.pass missing, 4 orphan guards wired, 9 stale guards re-anchored",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26535",
       "sha": "e2fa7072cc",
       "committedAtIso": "2026-10-12T05:12:42-05:00"
-    },
-    {
-      "number": 26534,
-      "title": "FINDING: ACCT-F4439912 LANE: FINANCIAL -- 443.99 C lane 2: two money guards hard-coded TLS (fail on CI's postgres), banking pass_count stale, a step called a missing ctx.pass, two stale collision entries",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:11 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26534",
-      "sha": "7106de897b",
-      "committedAtIso": "2026-10-12T05:11:41-05:00"
-    },
-    {
-      "number": 26533,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- 443.99 C lane 3 batch 1: 5 live guards hard-coded TLS and could not reach CI's local postgres; they now take TLS from pg-connection-options.cjs",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:09 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26533",
-      "sha": "d626e7b7aa",
-      "committedAtIso": "2026-10-12T05:09:30-05:00"
     }
   ]
 }
