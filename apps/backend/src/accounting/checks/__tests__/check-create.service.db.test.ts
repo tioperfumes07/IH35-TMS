@@ -162,7 +162,7 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
            SUM(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE 0 END)::text AS debit_sum,
            SUM(CASE WHEN debit_or_credit='credit' THEN amount_cents ELSE 0 END)::text AS credit_sum
          FROM accounting.journal_entry_postings jep
-         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_id
+         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
          WHERE je.source_transaction_id = $1`,
         [result.id]
       );
@@ -264,7 +264,7 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
            SUM(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE 0 END)::text AS debit_sum,
            SUM(CASE WHEN debit_or_credit='credit' THEN amount_cents ELSE 0 END)::text AS credit_sum
          FROM accounting.journal_entry_postings jep
-         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_id
+         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
          WHERE je.source_transaction_id = $1`,
         [result.id]
       );

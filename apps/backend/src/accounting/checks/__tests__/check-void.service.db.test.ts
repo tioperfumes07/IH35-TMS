@@ -203,7 +203,7 @@ describeIntegration("check-void.service (real Postgres, isolated company)", () =
             `SELECT
                SUM(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE 0 END)::text AS debit_sum,
                SUM(CASE WHEN debit_or_credit='credit' THEN amount_cents ELSE 0 END)::text AS credit_sum
-             FROM accounting.journal_entry_postings WHERE journal_entry_id = $1::uuid`,
+             FROM accounting.journal_entry_postings WHERE journal_entry_uuid = $1::uuid`,
             [result.reversal_journal_entry_id]
           );
           return res.rows[0] as { debit_sum: string; credit_sum: string };
