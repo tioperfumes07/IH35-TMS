@@ -3,6 +3,7 @@
  * (driver-finance/settlement-creator.service.ts) never imports a route (verify-no-service-imports-an-http-route-module).
  * Unchanged code; accounting/expenses.routes.ts imports it back and re-exports it for existing callers.
  */
+import { readLoadAttribution, reconcileExpenseWithLoad, type ExpenseAttribution } from "./expense-load-attribution.js";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
@@ -204,6 +205,21 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
   const hasUnitId = await columnExists(client, "accounting", "expenses", "unit_id");
   const hasTrailerId = await columnExists(client, "accounting", "expenses", "trailer_id");
 
+  // LEAD 443.128 B (N1) — an expense that names a load takes the load's unit, driver and trailer (company trailer, customer
+  // trailer or the load's "no trailer" choice); a different one is refused by name (expense-load-attribution.ts). The same
+  // values go on the expense line below.
+  let loadAttribution: ExpenseAttribution | null = null;
+  if (body.load_id) {
+    const onLoad = await readLoadAttribution(client, body.operating_company_id, body.load_id);
+    if (onLoad) {
+      const reconciled = reconcileExpenseWithLoad({ unitId: body.unit_id, driverId: body.driver_id, trailerId: body.trailer_id }, onLoad);
+      if ("mismatch" in reconciled) return { loadAttributionMismatch: true as const, ...reconciled };
+      loadAttribution = reconciled;
+    }
+  }
+  const expenseDriverId = loadAttribution?.driverId ?? body.driver_id ?? null;
+  const expenseTrailerId = loadAttribution ? loadAttribution.trailerId : body.trailer_id ?? null;
+
   // TEST-DATA-BANK-MATCH-EXPENSES-DOUBLE-SEEDED-6210: this route has no per-call idempotency key,
   // so a caller (script retry, or a UI double-click racing the "submitting" disable) that POSTs an
   // identical (operating_company_id, memo) body twice creates a second real GL-posting expense with
@@ -364,7 +380,7 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
 
   if (driverColumn) {
     columns.push(driverColumn);
-    values.push(body.driver_id ?? null);
+    values.push(expenseDriverId);
   }
 
   if (hasMemo) {
@@ -420,7 +436,11 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
 
   if (hasTrailerId) {
     columns.push(`trailer_id`);
-    values.push(body.trailer_id ?? null);
+    values.push(expenseTrailerId);
+  }
+  if (loadAttribution?.nonOwnedTrailerId && (await columnExists(client, "accounting", "expenses", "non_owned_trailer_id"))) {
+    columns.push(`non_owned_trailer_id`);
+    values.push(loadAttribution.nonOwnedTrailerId);
   }
 
   const hasInsuranceClaimId = await columnExists(client, "accounting", "expenses", "insurance_claim_id");
@@ -614,7 +634,7 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
       lineColumns.push("item_id", "quantity", "rate_cents", "unit_of_measure");
       lineValues.push(body.item_id, qty, body.rate_cents ?? (qty === 1 ? cents : null), body.unit_of_measure?.trim() || "each");
     }
-    for (const [col, val] of [["driver_id", body.driver_id ?? null], ["unit_id", headerUnitId], ["trailer_id", body.trailer_id ?? null]] as const) {
+    for (const [col, val] of [["driver_id", expenseDriverId], ["unit_id", headerUnitId], ["trailer_id", expenseTrailerId]] as const) {
       if (val && (await columnExists(client, "accounting", "expense_lines", col))) {
         lineColumns.push(col);
         lineValues.push(val);
