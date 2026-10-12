@@ -5,7 +5,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
-import { ensureDriverVendor } from "../mdata/ensure-driver-vendor.shared.js";
+import { DriverVendorIdentityUnresolvedError, ensureDriverVendor } from "../mdata/ensure-driver-vendor.shared.js";
 
 export const APPLICANT_STATUSES = ["new", "screening", "interview", "offer", "hired", "declined", "withdrawn"] as const;
 export type ApplicantStatus = (typeof APPLICANT_STATUSES)[number];
@@ -322,6 +322,8 @@ export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
+    // AJK-04: a same-name vendor that cannot be linked to the new driver unambiguously refuses the conversion BY NAME
+    // (the whole transaction rolls back) — never a converted driver with no payee.
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const applicantRes = await client.query<Record<string, unknown>>(
         `
@@ -503,10 +505,16 @@ export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
         onboarding_session_id: sessionId,
         onboarding_path: `/drivers/onboarding/${sessionId}`,
       };
+    }).catch((err: unknown) => {
+      if (!(err instanceof DriverVendorIdentityUnresolvedError)) throw err;
+      return { error: "driver_vendor_identity_unresolved" as const, vendor_name: err.vendorName, reason: err.reason };
     });
 
     if ("error" in result) {
       if (result.error === "applicant_not_found") return reply.code(404).send({ error: result.error });
+      if (result.error === "driver_vendor_identity_unresolved") {
+        return reply.code(409).send({ error: result.error, vendor_name: result.vendor_name, reason: result.reason });
+      }
       return reply.code(400).send({ error: result.error });
     }
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["legal","accounting"],"cols":["load","bill","reverse_link"],"leafRe":"^legal\\.","task":"AJK-09-LEGAL-BILL-LOAD"}
  * ROUND 326 — Lead-named guard: scripts/verify-legal-linkage.mjs
  * FAILS IF:
  *  - sync/apply linkage engine is unwired (contracts create/sign/detail/sync-linkage route)
@@ -76,6 +77,12 @@ export function check(s) {
     }
     if (!/export async function postMatterLegalFee/.test(s.money)) p.push(`${P.money}: postMatterLegalFee missing`);
     if (!/export async function postMatterRecovery/.test(s.money)) p.push(`${P.money}: postMatterRecovery missing`);
+    // LEAD 443.134 AJK-09 — a legal reserve / fee bill carries the matter's load + that load's driver / unit / trailer, and
+    // its generated LR- / LF- reference never becomes the bill's document number (it fails the display_id shape).
+    if (!/export async function matterBillAttribution\(/.test(s.money)) p.push(`${P.money}: AJK-09 matterBillAttribution missing (legal bills drop the matter's load)`);
+    if ((s.money.match(/loadId: (?:planned\.)?(?:m\.)?attr\.loadId/g) ?? []).length < 2) p.push(`${P.money}: AJK-09 a legal reserve / fee bill does not carry the matter's load`);
+    if ((s.money.match(/trailerId: (?:planned\.)?(?:m\.)?attr\.trailerId/g) ?? []).length < 2) p.push(`${P.money}: AJK-09 a legal reserve / fee bill does not carry the load's trailer`);
+    if ((s.money.match(/autoDisplayId: true/g) ?? []).length < 2) p.push(`${P.money}: AJK-09 a generated LR- / LF- reference is used as the bill's display id (refused by the shape check)`);
   }
   if (!/\/api\/v1\/legal\/matters\/:id\/legal-fee/.test(s.matterRoutes)) {
     p.push(`${P.matterRoutes}: POST legal-fee route missing`);
@@ -121,7 +128,10 @@ if (process.argv.includes("--selftest")) {
   ex("sync dropped", { ...real, link: real.link.replace("export async function syncContractInstanceLinkage", "async function _gone") }, true);
   ex("matter gate dropped", { ...real, matters: real.matters.replace("legal_matter_requires_subject_or_unlinked_reason", "noop") }, true);
   ex("route dropped", { ...real, routes: real.routes.replace("/api/v1/legal/contracts/sync-linkage", "/api/v1/legal/contracts/noop") }, true);
-  console.log(ok ? `${LABEL} --selftest PASS (4/4)` : `${LABEL} --selftest FAIL`);
+  ex("AJK-09 load dropped", { ...real, money: real.money.replace("loadId: m.attr.loadId", "loadId: null") }, true);
+  ex("AJK-09 trailer dropped", { ...real, money: real.money.replace("trailerId: planned.attr.trailerId", "trailerId: null") }, true);
+  ex("AJK-09 generated number as display id", { ...real, money: real.money.replace("autoDisplayId: true", "autoDisplayId: false") }, true);
+  console.log(ok ? `${LABEL} --selftest PASS (7/7)` : `${LABEL} --selftest FAIL`);
   process.exit(ok ? 0 : 1);
 }
 
