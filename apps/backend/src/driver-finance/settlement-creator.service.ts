@@ -54,6 +54,7 @@ import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { voidDocument } from "../accounting/void-document.service.js";
 import {
   reverseSettlementForVoid,
+  reverseDeductionForVoid,
   SettlementVoidBlockedError,
 } from "./void-document-callees.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
@@ -338,6 +339,29 @@ async function voidPriorCreatorSettlementForEdit(
     });
   }
 
+  // 443.99 — the prior post's DEDUCTIONS are undone with it. reverseSettlementForVoid never touches deductions, so an Edit
+  // left the old settlement's deductions live while the repost wrote new ones: the driver was deducted twice (measured:
+  // load 13508, "Admin fee - GAS" $10.00 x2, 5769 posted 01:04 then reposted 03:52). Voided through the engine
+  // (reverseDeductionForVoid -> voidSettlementDeduction; an already-collected deduction is a record-only void there):
+  //   - every live deduction applied to this settlement (the Creator stamps applied_to_settlement_id since 443.32);
+  //   - a legacy Creator post (before 443.32) left its deduction unlinked: the still-pending, unapplied deductions on this
+  //     settlement's loads written in the SAME transaction as the settlement (created_at = the settlement's created_at).
+  const priorDeductions = (await client.query<{ id: string }>(
+    `SELECT d.id::text
+       FROM driver_finance.driver_settlement_deductions d
+       JOIN driver_finance.driver_settlements s ON s.id = $2::uuid AND s.operating_company_id = d.operating_company_id
+      WHERE d.operating_company_id = $1::uuid AND d.voided_at IS NULL
+        AND (d.applied_to_settlement_id = s.id
+             OR (d.applied_to_settlement_id IS NULL AND d.status = 'pending' AND d.created_at = s.created_at
+                 AND d.driver_id = s.driver_id
+                 AND d.load_id IN (SELECT sl.load_id FROM driver_finance.settlement_lines sl
+                                    WHERE sl.settlement_id = s.id AND sl.load_id IS NOT NULL)))`,
+    [opco, settlementId],
+  )).rows;
+  for (const d of priorDeductions) {
+    await reverseDeductionForVoid(client as never, { operatingCompanyId: opco, deductionId: d.id, reason, actor: { userId: actorUserId } });
+  }
+
   try {
     await reverseSettlementForVoid(client, {
       operatingCompanyId: opco,
@@ -368,6 +392,7 @@ async function voidPriorCreatorSettlementForEdit(
       prior_invoice_ids: prior.invoice_ids ?? [],
       prior_advance_ids: prior.advance_ids ?? [],
       prior_fuel_transaction_ids: prior.fuel_transaction_ids ?? [],
+      prior_deduction_ids: priorDeductions.map((d) => d.id),
     },
     "warning",
     AUDIT_TAG,
