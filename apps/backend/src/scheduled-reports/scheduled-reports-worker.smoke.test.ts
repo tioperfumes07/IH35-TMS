@@ -98,7 +98,10 @@ describeIntegration("scheduled-reports-worker smoke (integration)", () => {
             'pdf',
             'active',
             $2::uuid,
-            now() - interval '1 minute'
+            -- 443.105: the earliest due row in the shared DB. The worker drains due rows oldest-first, 10 per tick, and
+            -- this suite pins the tick to 10 min; the fixture setup leaves ~18 company schedules due earlier today, so a
+            -- row due "1 minute ago" never got its turn inside the 20 s wait (status '' on every fresh DB).
+            now() - interval '30 days'
           )
           RETURNING id
         `,
