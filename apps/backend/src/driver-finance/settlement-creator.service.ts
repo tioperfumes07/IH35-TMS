@@ -34,6 +34,8 @@ import { generateExpenseNumber } from "../expense-attribution/expense-number.js"
 import { creatorEmptyPayCents, creatorEmptyRateCents, creatorLoadedPayCents, creatorPayMiles } from "./settlement-creator-empty-pay.js";
 import { resolveDriverPayItems } from "./settlement-creator-pay-item.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
+import { resolveCreatorDeductionType } from "./settlement-creator-deduction-type.js";
+import type { SettlementDeductionSourceType } from "./deductions.service.js";
 import { milesTimesRateCents } from "./deadhead-rule.js";
 import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
@@ -722,6 +724,16 @@ export async function previewSettlementCreator(
   for (const d of draft.deductions ?? []) {
     if (d.amount_cents <= 0) continue;
     deductionCents += d.amount_cents;
+    // LEAD 443.110 G14 — the credit leg is the account of the deduction's own type (its item), the account the close posts.
+    let dedAcct: { account_number: string | null; account_name: string } | null = income7200;
+    try {
+      const t = await resolveCreatorDeductionType(client as never, draft.operating_company_id, d);
+      dedAcct = (await client.query<{ account_number: string | null; account_name: string }>(
+        `SELECT account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid`, [t.accountId])).rows[0] ?? null;
+    } catch (err) {
+      if (!(err instanceof SettlementCreatorError)) throw err;
+      blockers.push(err.message);
+    }
     push({
       load_number: d.load_number ?? null,
       account_number: deductClearingAcct?.account_number ?? null,
@@ -733,8 +745,8 @@ export async function previewSettlementCreator(
     });
     push({
       load_number: d.load_number ?? null,
-      account_number: income7200?.account_number ?? null,
-      account_name: income7200?.account_name ?? "Driver Admin Fee & Chargeback Income",
+      account_number: dedAcct?.account_number ?? null,
+      account_name: dedAcct?.account_name ?? "Driver Admin Fee & Chargeback Income",
       debit_cents: 0,
       credit_cents: d.amount_cents,
       memo: d.description || "Deduction",
@@ -1812,7 +1824,7 @@ export async function postSettlementCreatorInClientTx(
   }
 
   // Deductions + admin fee → createSettlementDeduction (other → 7200 on close) + apply to this settlement.
-  async function applyDeduction(amountCents: number, reason: string, loadNumber: string | null | undefined, sourceType: "other" | "fine" | "toll" = "other") {
+  async function applyDeduction(amountCents: number, reason: string, loadNumber: string | null | undefined, sourceType: SettlementDeductionSourceType) {
     if (amountCents <= 0) return;
     // ROUND 443.5 — a deduction belongs to its load; missing or unknown refuses (never settlement-only).
     const loadId = loadNumber?.trim() ? await resolveLoadIdByNumber(loadNumber.trim()) : null;
@@ -1862,11 +1874,10 @@ export async function postSettlementCreatorInClientTx(
   for (const d of draft.deductions ?? []) {
     if (d.amount_cents <= 0) continue;
     const reason = d.description?.trim() || `Settlement ${draft.settlement_no} deduction`;
-    const isAdmin = /admin\s*fee/i.test(reason);
-    // The admin fee arrives as a deduction line with its load (other -> 7200 on close); a separate
-    // admin_fee_cents is refused at admission (ROUND 443.5).
-    void isAdmin;
-    await applyDeduction(d.amount_cents, reason, d.load_number, "other");
+    // LEAD 443.110 G14 — each deduction posts by its own type (its item's account; the admin fee by name), never all "other".
+    // A separate admin_fee_cents is refused at admission (ROUND 443.5); the admin fee arrives as a deduction line.
+    const { deductionType } = await resolveCreatorDeductionType(client as never, draft.operating_company_id, d);
+    await applyDeduction(d.amount_cents, reason, d.load_number, deductionType);
   }
 
   // Invoice mint + send (existing engines only). Delivered loads only — not_yet_delivered skips.
