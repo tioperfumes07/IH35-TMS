@@ -28,6 +28,25 @@ export const REQUIRES_LIVE_DB =
   "live-data money-linkage guard; fails closed via requireLiveDbOrExit with no DATABASE_URL (ROUND 29.9-B pattern)";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
+/** population 0 = instrument problem (FAIL); any adopted bill without its 'bill' back-reference = FAIL. */
+export function verdict(population, badRows) {
+  if (population === 0) return { ok: false, reason: "zero_population" };
+  if (badRows.length > 0) return { ok: false, reason: "missing_back_reference" };
+  return { ok: true, reason: null };
+}
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["all adopted bills carry the back-reference passes", verdict(90, []).ok === true],
+    ["a bill without its 'bill' posting fails", verdict(90, [{ id: "b1" }]).reason === "missing_back_reference"],
+    ["0 adopted bills is an instrument failure", verdict(0, []).reason === "zero_population"],
+  ];
+  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? "verify-every-bill-posting-carries-its-source-link --selftest FAIL" : `verify-every-bill-posting-carries-its-source-link --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 async function live() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
@@ -43,7 +62,7 @@ async function live() {
       [USMCA_COMPANY_ID]
     );
     const population = Number(populationRes.rows[0].n);
-    if (population === 0) {
+    if (verdict(population, []).reason === "zero_population") {
       console.error(`${LABEL}: LIVE FAIL — 0 driver-settlement-adopted bills; completeness discriminator says this is an instrument problem, not a real zero`);
       process.exit(1);
     }
@@ -64,7 +83,7 @@ async function live() {
 
     await client.query("COMMIT");
 
-    if (badRes.rows.length > 0) {
+    if (!verdict(population, badRes.rows).ok) {
       console.error(`${LABEL}: LIVE FAIL — ${badRes.rows.length} of ${population} driver-settlement-adopted bill(s) have no journal_entry_postings back-reference:`);
       for (const r of badRes.rows) console.error(`  ✗ ${r.id} status=${r.status} amount_cents=${r.amount_cents}`);
       process.exit(1);
