@@ -6,7 +6,7 @@ import { companyQuerySchema, currentAuthUser, validationError } from "../shared.
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { ReconciledSessionLockedError } from "../../banking/closed-session-immutability.js";
 import { bankMatchAcceptKindSchema } from "./match-api-kinds.js";
-import { type LedgerEntryKind, acceptExactMultiDocumentMatch } from "./match.service.js";
+import { type LedgerEntryKind, acceptExactMultiDocumentMatch, suggestBankMatches } from "./match.service.js";
 import { acceptReconMatch, closeReconPeriod, getReconWorklist, rejectReconMatch, unmatchBankTransaction } from "./recon-worklist.service.js";
 
 const worklistQuerySchema = companyQuerySchema.extend({
@@ -86,6 +86,22 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
       period_end: query.data.period_end,
     });
     return payload;
+  });
+
+  // G6 (LEAD 443.78 / 443.80 #3): the suggested document of every unmatched line of an account — READ ONLY (Owner Law B: it
+  // suggests, a human accepts or changes it). Per line: suggested / several / none + reason.
+  app.get("/api/v1/bank-recon/suggestions", { config: { rateLimit: { max: 6, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const q = z.object({ operating_company_id: z.string().uuid(), bank_account_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!q.success) return validationError(reply, q.error);
+    await assertCompanyMembership(user.uuid, q.data.operating_company_id);
+    const out = await suggestBankMatches({ operating_company_id: q.data.operating_company_id, bank_account_id: q.data.bank_account_id });
+    const reasons: Record<string, number> = {};
+    for (const o of out.outcomes) if (o.result === "none") reasons[o.reason] = (reasons[o.reason] ?? 0) + 1;
+    return { lines: out.lines, suggested: out.suggested, several: out.outcomes.filter((o) => o.result === "several").length,
+      none_by_reason: reasons, outcomes: out.outcomes };
   });
 
   app.post("/api/v1/bank-recon/accept-match", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
