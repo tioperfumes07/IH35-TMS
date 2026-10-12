@@ -24,6 +24,14 @@ const ROUTES = "apps/backend/src/safety/company-violations.routes.ts";
 const RETIRED = ["related_drivers", "related_units", "related_fine_ids"];
 const JOIN_TABLES = ["company_violation_drivers", "company_violation_units", "company_violation_fines"];
 
+// 443.99: the handlers are formatted `app.patch(\n    "/api/...:id",` (ACCT-F92 #17749 reflowed the file), so a
+// one-line indexOf no longer found them and the guard failed "would pass vacuously" on the fixed source. Match the
+// call with any whitespace between `(` and the exact path literal — the `:id"` close keeps `/:id/resolve` out.
+export function routeIndex(source, method) {
+  const m = new RegExp(`app\\.${method}\\(\\s*"/api/v1/safety/company-violations/:id"`).exec(source);
+  return m ? m.index : -1;
+}
+
 export function auditViolationLinkWrites(source) {
   const problems = [];
 
@@ -42,7 +50,7 @@ export function auditViolationLinkWrites(source) {
 
   // 2. The PATCH handler must actually sync the join tables — absence of a jsonb write is not proof
   //    that the links are persisted anywhere at all.
-  const patchIdx = source.indexOf('app.patch("/api/v1/safety/company-violations/:id"');
+  const patchIdx = routeIndex(source, "patch");
   if (patchIdx === -1) {
     problems.push(`${ROUTES}: could not locate the PATCH handler — this guard would pass vacuously.`);
   } else {
@@ -80,7 +88,7 @@ export function auditViolationLinkWrites(source) {
   }
 
   // 3. The detail read must return the join arrays, or an edit looks like it vanished on reload.
-  const getIdx = source.indexOf('app.get("/api/v1/safety/company-violations/:id"');
+  const getIdx = routeIndex(source, "get");
   if (getIdx === -1) {
     problems.push(`${ROUTES}: could not locate the GET /:id handler — this guard would pass vacuously.`);
   } else {
@@ -116,7 +124,7 @@ export default {
     }
 
     // arm B — PATCH stops syncing the join tables.
-    const patchAt = good.indexOf('app.patch("/api/v1/safety/company-violations/:id"');
+    const patchAt = routeIndex(good, "patch");
     const withoutSync =
       good.slice(0, patchAt) +
       good.slice(patchAt).replace(/company_violation_(drivers|units|fines)/g, "nowhere");
@@ -134,7 +142,7 @@ export default {
     }
 
     // arm D — GET /:id reverts to a bare SELECT *.
-    const getAt = good.indexOf('app.get("/api/v1/safety/company-violations/:id"');
+    const getAt = routeIndex(good, "get");
     const bareGet =
       good.slice(0, getAt) +
       good.slice(getAt, getAt + 3000).replace(/company_violation_drivers/g, "x") +

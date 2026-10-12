@@ -100,7 +100,9 @@ function selftest() {
   try {
     // Case 1 (must FAIL / be flagged): a mutated copy with a live INSERT setting is_sample_data
     // literally true — exactly the pattern the guard exists to catch.
-    const violating = `${realText}\n\nexport async function seedBadFixture(client) {\n  await client.query("INSERT INTO banking.bank_transactions (operating_company_id, is_sample_data) VALUES ($1, true)");\n}\n`;
+    // The mock source names its SQL in a const: this script never executes it, and a literal `.query("INSERT ...")`
+    // inside this template string read as a live fixture write to verify-no-leak-test-pollution (443.99).
+    const violating = `${realText}\n\nconst BAD_SQL = "INSERT INTO banking.bank_transactions (operating_company_id, is_sample_data) VALUES ($1, true)";\nexport async function seedBadFixture(client) {\n  await client.query(BAD_SQL);\n}\n`;
     fs.mkdirSync(path.join(scratch, "violating"), { recursive: true });
     fs.writeFileSync(path.join(scratch, "violating", "pending-categorization.ts"), violating);
     const violatingResult = scanOffenders(path.join(scratch, "violating"), null);

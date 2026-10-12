@@ -135,6 +135,8 @@ function selftest() {
   const failures = [];
 
   // (a) progress contradicts pass_count/total_count
+  // 443.99: scored N counts only PASS + prod_verified:true (#18010 MODCOMP-PROD-VERIFIED-GATES-N-UNIVERSAL), so a
+  // fixture meant to score 5 PASS items must carry prod_verified:true — without it the selftest measured 0 of 5.
   const badProgress = {
     module: "help",
     complete: true,
@@ -142,11 +144,11 @@ function selftest() {
     total_count: 5,
     progress: "0 of 5",
     items: [
-      { id: "A", title: "a", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e" },
-      { id: "B", title: "b", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e" },
-      { id: "C", title: "c", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e" },
-      { id: "D", title: "d", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e" },
-      { id: "E", title: "e", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e" },
+      { id: "A", title: "a", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e", prod_verified: true },
+      { id: "B", title: "b", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e", prod_verified: true },
+      { id: "C", title: "c", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e", prod_verified: true },
+      { id: "D", title: "d", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e", prod_verified: true },
+      { id: "E", title: "e", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e", prod_verified: true },
     ],
   };
   const pA = assertManifestIntegrity("help.json", badProgress);
@@ -198,13 +200,13 @@ function selftest() {
     failures.push(`(c)/count mismatch not caught: ${pC.join("; ")}`);
   }
 
-  // Direction reverse: honest complete:true all PASS → clean
+  // Direction reverse: honest complete:true all PASS + prod_verified → clean
   const good = syncManifestCounts({
     module: "z",
     complete: true,
     items: [
-      { id: "A", title: "a", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e", prod_verified: false },
-      { id: "B", title: "b", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e", prod_verified: false },
+      { id: "A", title: "a", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e", prod_verified: true },
+      { id: "B", title: "b", layers: ["DOD-A"], spec: "s", status: "PASS", evidence: "e", prod_verified: true },
     ],
   });
   const pGood = assertManifestIntegrity("z.json", good);
