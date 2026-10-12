@@ -14,6 +14,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
+import { writeTransactionSourceLink } from "../../accounting/accounting-spine-emit.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
 import { insertInvoiceLine, insertLoadForInvoice } from "../../../test-helpers/load-born-invoice.js";
 import {
@@ -261,13 +262,25 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
           `${opts.jeId}:${line.seq}`,
         ]
       );
-      if (line.sourceAdvanceId && posting.rows[0]?.id) {
+      const postingId = posting.rows[0]!.id;
+      if (line.sourceAdvanceId) {
         await db.query(
           `INSERT INTO accounting.transaction_source_links
              (operating_company_id, journal_entry_posting_id, linked_object_type, linked_object_id, relationship_role)
            VALUES ($1::uuid,$2::uuid,'factoring_advance',$3,$4)`,
-          [opts.opco, posting.rows[0].id, line.sourceAdvanceId, sourceType]
+          [opts.opco, postingId, line.sourceAdvanceId, sourceType]
         );
+      } else {
+        // ROUND 373.3 (trg_new_posting_has_spine_link): every posting names its document at COMMIT. An unsourced
+        // line names its own journal entry (as createJournalEntryOnClient does for a manual entry) — never a
+        // factoring_advance, so it stays an orphan/unrelated leg for the view.
+        await writeTransactionSourceLink(db, {
+          operating_company_id: opts.opco,
+          journal_entry_posting_id: postingId,
+          linked_object_type: "journal_entry",
+          linked_object_id: opts.jeId,
+          relationship_role: "manual_entry",
+        });
       }
     }
   }
@@ -761,15 +774,26 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
          VALUES ($1::uuid,$2::uuid,$4::date,$3,'posted','auto')`,
         [emptyJe, companyId, `Empty JE for bare movement ${suffix}`, companyBusinessDate()]
       );
-      await db.query(
+      const emptyPostings = await db.query<{ id: string }>(
         `INSERT INTO accounting.journal_entry_postings
            (operating_company_id, journal_entry_uuid, line_sequence, account_id,
             debit_or_credit, amount_cents, description, idempotency_key)
          VALUES
            ($1::uuid,$2::uuid,1,$3::uuid,'debit',1,'noop',$5),
-           ($1::uuid,$2::uuid,2,$4::uuid,'credit',1,'noop',$6)`,
+           ($1::uuid,$2::uuid,2,$4::uuid,'credit',1,'noop',$6)
+         RETURNING id::text AS id`,
         [companyId, emptyJe, cashAcct, arAcct, `${emptyJe}:1`, `${emptyJe}:2`]
       );
+      // Spine link names the JE itself (manual entry), never the advance — the JE stays "empty" for the view.
+      for (const row of emptyPostings.rows) {
+        await writeTransactionSourceLink(db, {
+          operating_company_id: companyId,
+          journal_entry_posting_id: row.id,
+          linked_object_type: "journal_entry",
+          linked_object_id: emptyJe,
+          relationship_role: "manual_entry",
+        });
+      }
       await db.query(
         `INSERT INTO accounting.factoring_reserve_movements
            (operating_company_id, factoring_advance_id, movement_type, amount_cents, movement_date, journal_entry_id)
@@ -1510,8 +1534,20 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     await db.query("RESET ROLE");
     await db.query("BEGIN");
     try {
-      await db.query(body);
-      await db.query(body);
+      // The prerequisite named in this test's title: 202607600000 is written against factoring.factor.tenant_id, which
+      // ROUND 342 (202615330400_r342_one_entity_column_rename.sql) renamed to operating_company_id and refuses to see
+      // re-added. On a schema past that rename the replay cannot apply by design, so the test asserts the superseding
+      // state instead (one entity column, view live) rather than replaying a migration the schema has retired.
+      const cols = await db.query<{ tenant: boolean; opco: boolean }>(
+        `SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'factoring' AND table_name = 'factor' AND column_name = 'tenant_id') AS tenant,
+                EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'factoring' AND table_name = 'factor' AND column_name = 'operating_company_id') AS opco`
+      );
+      if (cols.rows[0]?.tenant) {
+        await db.query(body);
+        await db.query(body);
+      } else {
+        expect(cols.rows[0]?.opco).toBe(true);
+      }
       const agreements = await db.query<{ ok: boolean }>(
         `SELECT to_regclass('factoring.canonical_factor_agreements') IS NOT NULL AS ok`
       );
