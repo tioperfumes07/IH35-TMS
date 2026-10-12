@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["platform"],"cols":["migration","lane"],"leafRe":"^db/migrations/","task":"MIGRATION-LANE-BAND"}
  * Migration numbers are allocated from a RESERVED PER-LANE BAND, so two lanes cannot pick the same one.
  *
  * On 2026-07-28 two lanes independently chose `202610060000` for unrelated migrations. Both applied;
@@ -89,6 +90,12 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // Lead 443.128 C (+ 443.132 standing order; locked design READ-FIRST §3; owner 2026-10-01 no-handoff): team driver bills
+  // recognized at delivery, one A/P bill per driver. Claimed #(202615890700) in #26692.
+  [
+    "cc-2/443-128c-team-bills-at-delivery",
+    new Set(["db/migrations/202615890700_team_driver_bill_accrued_at_delivery.sql"]),
+  ],
   // Lead 443.116 #2 + (c) CORRECTION (locked design, READ-FIRST §3 "three dates, three columns"; owner 2026-10-01 no-handoff):
   // driver bills carry their due date and the per-load A/P bill posted at delivery. Claimed #(202615830700) in #26657.
   [

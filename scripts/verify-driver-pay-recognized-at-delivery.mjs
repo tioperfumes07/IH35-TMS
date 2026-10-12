@@ -15,6 +15,9 @@
  *      refusal PAY_BELOW_DELIVERY_ACCRUAL, and the spine row flagged bill_posted_at_delivery;
  *   5. a settlement void never voids a delivery-accrued bill nor reverses its pay posting;
  *   6. cash flow reads the driver bill's effective due date and never lists an accrued bill twice.
+ *   7. (LEAD 443.128 C) a TEAM driver bill accrues too: one A/P bill per driver for its share of the load's team split
+ *      (resolveTeamSplitForLoad), stamped accrued_team_bill_id for the co-driver; each driver's settlement applies to its own
+ *      (the co-driver reads accrued_team_bill_id); the spine is unique per (driver bill, A/P bill).
  * --selftest plants each violation into a copy of the real sources and must see it refused.
  */
 import { existsSync, readFileSync } from "node:fs";
@@ -25,6 +28,7 @@ const LABEL = "verify-driver-pay-recognized-at-delivery";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const F = {
   migration: "db/migrations/202615830700_driver_bill_due_date_and_delivery_accrual.sql",
+  teamMigration: "db/migrations/202615890700_team_driver_bill_accrued_at_delivery.sql",
   latch: "apps/backend/src/dispatch/delivery-evidence-latch.ts",
   accrual: "apps/backend/src/driver-finance/driver-pay-delivery-accrual.service.ts",
   chain: "apps/backend/src/driver-finance/settlement-ap-chain.service.ts",
@@ -67,7 +71,8 @@ export function deliveryPayErrors(src) {
   need("accrual", "billDate: deliveryDate,", "bill dated the delivery");
   need("accrual", "dueDate: deliveryDate,", "due on the delivery");
   need("accrual", "loadId: input.loadId,", "the load rides the bill header");
-  need("accrual", "AND accrued_bill_id IS NULL AND settled_in_settlement_id IS NULL", "accrued once, never on a settled bill");
+  // 443.128 C: the once-only stamp also requires no co-driver bill yet (old anchor lacked accrued_team_bill_id).
+  need("accrual", "AND accrued_bill_id IS NULL AND accrued_team_bill_id IS NULL AND settled_in_settlement_id IS NULL", "accrued once, never on a settled bill");
   need("accrual", "db.settled_in_settlement_id IS NULL AND db.accrued_bill_id IS NULL", "only unaccrued, unsettled bills are read");
 
   // 4. close reuses the accrued bill
@@ -87,6 +92,14 @@ export function deliveryPayErrors(src) {
   if (!rev.includes("if (!gb.bill_posted_at_delivery) originalJeIds.push(gb.bill_journal_entry_id);")) errors.push(`${F.reversal}: a settlement void reverses the delivery pay posting`);
   const beforeVoid = between(rev, "if (gb.bill_posted_at_delivery) continue;", "voidBillInClientTx(");
   if (!beforeVoid) errors.push(`${F.reversal}: a settlement void voids the delivery-accrued bill`);
+
+  // 7. team bills (443.128 C)
+  need("accrual", "resolveTeamSplitForLoad(", "a team bill is split by the load's team split");
+  need("accrual", 'column: "accrued_team_bill_id"', "the co-driver's share is its own A/P bill");
+  if (src.accrual.includes("team_bill_accrues_at_close")) errors.push(`${F.accrual}: a team bill is skipped at delivery (it must accrue its shares)`);
+  need("chain", "THEN db.accrued_team_bill_id ELSE db.accrued_bill_id END", "the co-driver's settlement applies to its own delivery bill");
+  need("teamMigration", "ADD COLUMN IF NOT EXISTS accrued_team_bill_id", "the driver bill names the co-driver's delivery bill");
+  need("teamMigration", "ON driver_finance.driver_settlement_gl_bills (operating_company_id, driver_bill_id, accounting_bill_id)", "the spine is unique per driver bill AND A/P bill");
 
   // 6. cash flow
   need("cashFlow", "driver_finance.driver_bill_effective_due_date(db.due_date, db.due_date_basis", "cash flow reads the driver bill's due date");
@@ -115,12 +128,15 @@ if (process.argv.includes("--selftest")) {
     ["latch", "    if (!payAccrualQueued) await fireDriverPayAccrual(input);\n", "", "accrual dropped when the queue refuses"],
     ["latch", "  await fireLoadBillingSync(input);\n  await fireDriverPayAccrual(input);\n", "  await fireLoadBillingSync(input);\n", "inline delivery path without accrual"],
     ["accrual", "billDate: deliveryDate,", "billDate: new Date().toISOString().slice(0, 10),", "accrual dated today, not the delivery"],
-    ["accrual", "AND accrued_bill_id IS NULL AND settled_in_settlement_id IS NULL", "", "accrual stamp not once-only"],
+    ["accrual", "AND accrued_bill_id IS NULL AND accrued_team_bill_id IS NULL AND settled_in_settlement_id IS NULL", "", "accrual stamp not once-only"],
     ["chain", "billId: b.accruedBillId", "billId: (await postLoadBill(b, ls, b.loadNumber, \"x\")).billId", "close re-posts the whole pay"],
     ["chain", "\"PAY_BELOW_DELIVERY_ACCRUAL\"", "\"PAY_DIFFERS\"", "pay-below refusal renamed away"],
     ["reversal", "if (!gb.bill_posted_at_delivery) originalJeIds.push(gb.bill_journal_entry_id);", "originalJeIds.push(gb.bill_journal_entry_id);", "void reverses the delivery pay"],
     ["reversal", "      if (gb.bill_posted_at_delivery) continue;\n", "", "void voids the delivery bill"],
     ["cashFlow", "AND db.accrued_bill_id IS NULL", "", "accrued bill counted twice in cash flow"],
+    ["accrual", "resolveTeamSplitForLoad(", "skipTeam(", "team bill no longer split at delivery"],
+    ["chain", "THEN db.accrued_team_bill_id ELSE db.accrued_bill_id END", "THEN db.accrued_bill_id ELSE db.accrued_bill_id END", "co-driver settles driver One's bill"],
+    ["teamMigration", "ON driver_finance.driver_settlement_gl_bills (operating_company_id, driver_bill_id, accounting_bill_id)", "ON driver_finance.driver_settlement_gl_bills (operating_company_id, driver_bill_id)", "spine still one row per driver bill"],
     ["cashFlow", "const daysOverdue = daysBetween(today, db_.due_date);", "const daysOverdue = daysBetween(today, db_.created_at);", "cash flow ages from creation"],
   ];
   let failed = 0;

@@ -1,10 +1,10 @@
 {
-  "healthzSha": "2208fef",
-  "generated_at": "2026-10-12T20:29:27.602Z",
+  "healthzSha": "659d3c7",
+  "generated_at": "2026-10-12T20:40:18.309Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "2208fef",
+    "deployedSha": "659d3c7",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 26705,
+      "title": "FINDING: ACCT-F4431282 LANE: FINANCIAL — 443.128 B (N1): an expense that names a load did not take the load's driver and trailer; a mismatched driver / trailer was stored silently",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 03:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26705",
+      "sha": "4e1741d703",
+      "committedAtIso": "2026-10-12T15:39:02-05:00"
+    },
+    {
+      "number": 26704,
+      "title": "FINDING: ACCT-F4431334 LANE: FINANCIAL -- WO->bill line account = its item's account (no description-keyword guess); a WO line with no item is refused by name",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 03:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26704",
+      "sha": "659d3c7187",
+      "committedAtIso": "2026-10-12T15:31:41-05:00"
+    },
+    {
+      "number": 26703,
+      "title": "FINDING: ACCT-F4431331 LANE: FINANCIAL -- 443.133 A: a Relay fill links only to a Relay-card fuel row; cross-rail links undone; the poster refuses a fill that pairs with another rail",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 03:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26703",
+      "sha": "9f45f099af",
+      "committedAtIso": "2026-10-12T15:31:32-05:00"
+    },
+    {
+      "number": 26702,
+      "title": "FINDING: ACCT-F4431320 LANE: FINANCIAL -- 443.132: CC-3's static reds on main (3 guards re-pointed to today's engine shape, equally strict; 1 local-env only)",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 03:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26702",
+      "sha": "f9982ce73a",
+      "committedAtIso": "2026-10-12T15:30:09-05:00"
+    },
+    {
       "number": 26701,
       "title": "FINDING: N/A (443.130 item 3 follow-up — 3 source-text guards still read the moved expense writer from expenses.routes.ts; red on main since c4dc73d5ba, CC-2's to fix first)",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26693",
       "sha": "4d20a7f6af",
       "committedAtIso": "2026-10-12T15:10:45-05:00"
-    },
-    {
-      "number": 26690,
-      "title": "FINDING: ACCT-F4431295 LANE: FINANCIAL -- 443.129 E: one correction path for a posted expense (reverse + re-post, same number, audited)",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 03:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26690",
-      "sha": "3a497275a9",
-      "committedAtIso": "2026-10-12T15:09:13-05:00"
-    },
-    {
-      "number": 26687,
-      "title": "FINDING: AJK-08 LANE: FINANCIAL -- 443.129 D: a road-service ticket posts or nothing (bill posted in the same transaction or nothing written; refusals surfaced by name)",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 03:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26687",
-      "sha": "323f090959",
-      "committedAtIso": "2026-10-12T15:06:52-05:00"
-    },
-    {
-      "number": 26697,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- 443.132: 12 live-DB-job guards declare REQUIRES_LIVE_DB (12 of the 53 static reds on main)",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 03:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26697",
-      "sha": "b3cd26e1a3",
-      "committedAtIso": "2026-10-12T15:04:46-05:00"
-    },
-    {
-      "number": 26692,
-      "title": "FINDING: ACCT-F4431283 LANE: FINANCIAL — reserve migration 202615890700 for 443.128 C (team bills at delivery) before authoring",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 03:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26692",
-      "sha": "4e9bc2dd72",
-      "committedAtIso": "2026-10-12T15:04:36-05:00"
     }
   ]
 }

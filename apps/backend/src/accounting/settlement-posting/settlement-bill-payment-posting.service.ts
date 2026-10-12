@@ -687,7 +687,7 @@ export async function postSettlementBillPayment(
               (operating_company_id, run_id, settlement_id, driver_bill_id, load_id, load_number,
                accounting_bill_id, gross_cents, deduction_cents, cash_cents)
             VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6,$7::uuid,$8,$9,$10)
-            ON CONFLICT (operating_company_id, driver_bill_id) WHERE superseded_at IS NULL DO UPDATE SET
+            ON CONFLICT (operating_company_id, driver_bill_id, accounting_bill_id) WHERE superseded_at IS NULL DO UPDATE SET
               accounting_bill_id = EXCLUDED.accounting_bill_id
           `,
           [opco, runId, settlementId, b.id, b.load_id, b.load_number, accountingBillId, b.gross_amount_cents, alloc.deductionCents, alloc.cashCents]
@@ -765,7 +765,7 @@ export async function postSettlementBillPayment(
              accounting_bill_id, bill_journal_entry_id, cash_bill_payment_id, cash_journal_entry_id,
              deduction_bill_payment_id, gross_cents, deduction_cents, cash_cents)
           VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6,$7::uuid,$8::uuid,$9::uuid,$10::uuid,$11::uuid,$12,$13,$14)
-          ON CONFLICT (operating_company_id, driver_bill_id) WHERE superseded_at IS NULL DO UPDATE SET
+          ON CONFLICT (operating_company_id, driver_bill_id, accounting_bill_id) WHERE superseded_at IS NULL DO UPDATE SET
             accounting_bill_id = EXCLUDED.accounting_bill_id,
             bill_journal_entry_id = COALESCE(EXCLUDED.bill_journal_entry_id, driver_settlement_gl_bills.bill_journal_entry_id),
             cash_bill_payment_id = COALESCE(EXCLUDED.cash_bill_payment_id, driver_settlement_gl_bills.cash_bill_payment_id),
@@ -1306,7 +1306,8 @@ export async function reverseSettlementBillPaymentInClientTx(
     );
     if (!transitioned.rows[0]?.id) throw new Error("settlement_reversal_state_transition_failed");
     // Lead ROUND 330.6: the reversed run's spine rows stay (audit trail) but are superseded, so a re-post of the same
-    // driver bills can write its own live spine rows (uq_driver_settlement_gl_bills_live_driver_bill).
+    // driver bills can write its own live spine rows (uq_driver_settlement_gl_bills_live_driver_bill_ap_bill, 443.128 C:
+    // one live row per driver bill AND A/P bill — a team load's two drivers settle the same driver bill on their own bills).
     await client.query(
       `UPDATE driver_finance.driver_settlement_gl_bills SET superseded_at = now()
         WHERE run_id = $1::uuid AND operating_company_id = $2::uuid AND superseded_at IS NULL`,
