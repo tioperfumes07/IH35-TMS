@@ -9,6 +9,8 @@ import { listRelayDepositCategorizedMatchHints } from "../accounting/bank-recon/
 import { listRelatedPartyPairSuggestions } from "../accounting/bank-recon/related-party-pair-suggestions.service.js";
 import { confirmRelatedPartyPair } from "../accounting/bank-recon/related-party-pair-confirm.service.js";
 import { findCandidates, MATCH_WINDOW_STEPS } from "../accounting/bank-recon/match.service.js";
+import { suggestRelayWalletLine } from "../accounting/bank-recon/relay-wallet-suggest.service.js";
+import { suggestDreamlineCardLine } from "../accounting/bank-recon/dreamline-card-suggest.service.js";
 import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 import { supersedePlaidPendingByExactPostedCandidate } from "./bank-tx-dedup.js";
 import { runDriftDetectors } from "./drift-alerts.service.js";
@@ -375,6 +377,33 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
 
     const results = await Promise.all(
       body.data.bank_transaction_ids.map(async (bankTransactionId) => {
+        // ROUND 443.66-C — Relay Fuel Wallet: txn_id → fill expense (fee-inclusive) / IN → relay_deposit.
+        // Runs before the general matcher so wallet lines are not lost to exact-cents-only + 500-row caps.
+        const wallet = await suggestRelayWalletLine({
+          operating_company_id: operatingCompanyId,
+          bank_transaction_id: bankTransactionId,
+        });
+        if (wallet.applies) {
+          return {
+            bank_transaction_id: bankTransactionId,
+            suggestion: wallet.suggestion,
+            gap_reason: wallet.gap_reason ?? null,
+          };
+        }
+
+        // ROUND 443.66-C — Dreamline Diesel Card: store city + invoice group within card-pricing band.
+        const dreamline = await suggestDreamlineCardLine({
+          operating_company_id: operatingCompanyId,
+          bank_transaction_id: bankTransactionId,
+        });
+        if (dreamline.applies) {
+          return {
+            bank_transaction_id: bankTransactionId,
+            suggestion: dreamline.suggestion,
+            gap_reason: dreamline.gap_reason ?? null,
+          };
+        }
+
         const result = await findCandidates({
           operating_company_id: operatingCompanyId,
           bank_transaction_id: bankTransactionId,
@@ -383,11 +412,21 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         // "suggest exact cents +-5d to expenses/bills" — literal filter, narrower than the general
         // auto_match flag (which also requires memo_similarity >= 0.8): amount_gap_cents === 0 and
         // date_gap_days <= AUTO_MATCH_DATE_WINDOW_DAYS (5), kind in {expense, bill} only.
-        const qualifying = result.candidates.filter(
-          (c) => c.exact_amount && c.date_gap_days <= 5 && (c.ledger_entry_kind === "expense" || c.ledger_entry_kind === "bill")
-        );
+        // ROUND 443.66-C — also relay_deposit (wallet funding credits) when exact (incl. wallet leg).
+        const qualifying = result.candidates.filter((c) => {
+          if (c.date_gap_days > 5) return false;
+          if (c.ledger_entry_kind === "expense" || c.ledger_entry_kind === "bill") return c.exact_amount;
+          if (c.ledger_entry_kind === "relay_deposit") {
+            return (
+              c.exact_amount ||
+              (c.relay_deposit_wallet_cents != null &&
+                Math.abs(Number(c.relay_deposit_wallet_cents)) === Math.abs(Number(result.bank_amount_cents)))
+            );
+          }
+          return false;
+        });
         const best = qualifying[0];
-        if (!best) return { bank_transaction_id: bankTransactionId, suggestion: null };
+        if (!best) return { bank_transaction_id: bankTransactionId, suggestion: null, gap_reason: null };
         return {
           bank_transaction_id: bankTransactionId,
           suggestion: {
@@ -406,12 +445,16 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
             // BANK-F91062 — ORDERS §18: "N match found" (not hardcoded 1). Count of exact±5d expense/bill.
             suggested_match_count: qualifying.length,
           },
+          gap_reason: null,
         };
       })
     );
 
     return {
       suggestions: Object.fromEntries(results.map((r) => [r.bank_transaction_id, r.suggestion])),
+      gap_reasons: Object.fromEntries(
+        results.filter((r) => r.gap_reason).map((r) => [r.bank_transaction_id, r.gap_reason])
+      ),
     };
   });
 

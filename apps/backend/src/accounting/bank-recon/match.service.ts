@@ -671,6 +671,43 @@ async function fetchLedgerCandidates(
       );
       for (const row of deposits.rows) results.push(toCandidate("deposit", row, "customer"));
     }
+
+    // ROUND 443.66-C — Relay wallet funding deposits land as MONEY IN (credits on 1295).
+    // Previously wrongly gated under !isCredit (443.29-B / 443.54), so wallet IN lines never saw them.
+    if (wants("relay_deposit")) {
+      const deposits = await client.query<RawRow>(
+        `
+          SELECT rd.id::text,
+                 ${RELAY_DEPOSIT_CHARGED_AMOUNT_SQL} AS amount_cents,
+                 COALESCE(rd.relay_created_at, rd.created_at)::date::text AS event_date,
+                 ('Relay deposit ' || rd.deposit_id)::text AS memo,
+                 NULL::text AS counterparty_id,
+                 'Relay'::text AS counterparty_name,
+                 rd.deposit_id::text AS reference,
+                 ('Relay deposit ' || rd.deposit_id)::text AS description,
+                 NULL::int AS open_balance_cents,
+                 ${RELAY_DEPOSIT_WALLET_AMOUNT_SQL} AS relay_deposit_wallet_cents,
+                 ${RELAY_DEPOSIT_FEE_AMOUNT_SQL} AS relay_deposit_fee_cents
+            FROM integrations.relay_deposits rd
+           WHERE rd.operating_company_id = $1::uuid
+             AND rd.status = 'settled'
+             AND ${RELAY_DEPOSIT_MATCHABLE_SQL}
+             AND rd.voided_at IS NULL
+             AND COALESCE(rd.is_active, true) = true
+             AND COALESCE(rd.relay_created_at, rd.created_at)::date
+                   BETWEEN GREATEST($2::date, $6::date) AND $3::date
+             AND ($4::text IS NULL OR lower(COALESCE(rd.note_raw, '') || ' ' || COALESCE(rd.deposit_id, '') || ' relay deposit') LIKE $4)
+             AND rd.matched_bank_transaction_id IS NULL
+             AND NOT EXISTS (
+               SELECT 1 FROM banking.bank_transactions bt
+                WHERE bt.matched_relay_deposit_id = rd.id AND bt.voided_at IS NULL
+             )
+           LIMIT $5
+        `,
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, RELAY_USMCA_DATA_FLOOR]
+      );
+      for (const row of deposits.rows) results.push(toCandidate("relay_deposit", row, "vendor"));
+    }
   }
 
   // --- MONEY OUT (withdrawal) — settlement-born bill_payments / bills + expenses --
@@ -777,42 +814,8 @@ async function fetchLedgerCandidates(
     // ROUND 443.54 — Relay fills are paid from wallet 1295, NOT from the bank. They must never
     // appear as bank match candidates (accept/unmatch of an existing pointer still works below).
     // Previously ROUND 441.21-B R5 listed them here; that is retired for the bank Match drawer.
-
-    // ROUND 443.29-B / 443.54 — Relay wallet funding deposits: match amount = charged (= total_amount_cents).
-    if (wants("relay_deposit")) {
-      const deposits = await client.query<RawRow>(
-        `
-          SELECT rd.id::text,
-                 ${RELAY_DEPOSIT_CHARGED_AMOUNT_SQL} AS amount_cents,
-                 COALESCE(rd.relay_created_at, rd.created_at)::date::text AS event_date,
-                 ('Relay deposit ' || rd.deposit_id)::text AS memo,
-                 NULL::text AS counterparty_id,
-                 'Relay'::text AS counterparty_name,
-                 rd.deposit_id::text AS reference,
-                 ('Relay deposit ' || rd.deposit_id)::text AS description,
-                 NULL::int AS open_balance_cents,
-                 ${RELAY_DEPOSIT_WALLET_AMOUNT_SQL} AS relay_deposit_wallet_cents,
-                 ${RELAY_DEPOSIT_FEE_AMOUNT_SQL} AS relay_deposit_fee_cents
-            FROM integrations.relay_deposits rd
-           WHERE rd.operating_company_id = $1::uuid
-             AND rd.status = 'settled'
-             AND ${RELAY_DEPOSIT_MATCHABLE_SQL}
-             AND rd.voided_at IS NULL
-             AND COALESCE(rd.is_active, true) = true
-             AND COALESCE(rd.relay_created_at, rd.created_at)::date
-                   BETWEEN GREATEST($2::date, $6::date) AND $3::date
-             AND ($4::text IS NULL OR lower(COALESCE(rd.note_raw, '') || ' ' || COALESCE(rd.deposit_id, '') || ' relay deposit') LIKE $4)
-             AND rd.matched_bank_transaction_id IS NULL
-             AND NOT EXISTS (
-               SELECT 1 FROM banking.bank_transactions bt
-                WHERE bt.matched_relay_deposit_id = rd.id AND bt.voided_at IS NULL
-             )
-           LIMIT $5
-        `,
-        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, RELAY_USMCA_DATA_FLOOR]
-      );
-      for (const row of deposits.rows) results.push(toCandidate("relay_deposit", row, "vendor"));
-    }
+    // ROUND 443.66-C — wallet OUT suggestions go through suggestRelayWalletLine (expense, fee-inclusive);
+    // fills themselves stay out of this candidate pool. relay_deposit listing moved to isCredit above.
   }
 
   const haystack = (r: RawLedgerCandidate) =>

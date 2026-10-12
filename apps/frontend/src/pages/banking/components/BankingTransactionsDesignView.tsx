@@ -675,7 +675,14 @@ export function formatSuggestedMatchInline(
   formatCents: (cents: number) => string = (c) => formatUsdCents(Math.abs(c)),
 ): string {
   const kind = String(suggestion.suggested_ledger_entry_kind ?? "").trim();
-  const kindLabel = kind === "bill" ? "Bill" : kind === "expense" ? "Expense" : kind || "Match";
+  const kindLabel =
+    kind === "bill"
+      ? "Bill"
+      : kind === "expense"
+        ? "Expense"
+        : kind === "relay_deposit"
+          ? "Relay deposit"
+          : kind || "Match";
   const ref = String(suggestion.suggested_reference ?? "").trim();
   const date = formatBankTransactionDate(suggestion.suggested_event_date ?? null);
   const cents = Number(suggestion.suggested_amount_cents ?? 0);
