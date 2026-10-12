@@ -2433,6 +2433,11 @@
     "claimed_at": "2026-10-12",
     "purpose": "443.91 #4 batch 0: WORM audit trigger on 4 money tables (deposit_lines, expenses_review_queue, reclassify_batch_lines, settlement_line_item_splits)"
   },
+  "202615700900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "RULING 443.92 #2: same-entity composite FKs for the non_owned_trailer_id columns (mdata.loads, accounting.expenses) + (operating_company_id, id) key on dispatch.non_owned_trailers"
+  },
   "202615451400": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-12",
