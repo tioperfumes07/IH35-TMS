@@ -1601,7 +1601,70 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           ]);
         }
         if (await columnExists(client, "accounting", "expenses", "load_id")) {
+          // RULING 443.86 #3 (S4-feed): the importer's load stamp IS the recommendation; changing it here moves the COST to the
+          // new load — the header, every line, the fuel transaction it came from (and its Relay siblings on the same document)
+          // and the live GL postings of its journal entry — in this one transaction (posting load_id is a dimension, not a fact:
+          // refuse_posting_fact_update leaves it writable; amounts and accounts never move).
+          const prior = (await client.query(
+            `SELECT load_id::text, journal_entry_id::text, source_fuel_transaction_id::text FROM accounting.expenses WHERE id = $1 FOR UPDATE`,
+            [params.data.expenseId]
+          )).rows[0] as { load_id: string | null; journal_entry_id: string | null; source_fuel_transaction_id: string | null } | undefined;
           await client.query(`UPDATE accounting.expenses SET load_id = $2 WHERE id = $1`, [params.data.expenseId, body.new_load_id]);
+          await client.query(`UPDATE accounting.expense_lines SET load_id = $2 WHERE expense_id = $1 AND load_id IS DISTINCT FROM $2`, [params.data.expenseId, body.new_load_id]);
+          if (prior?.source_fuel_transaction_id) {
+            await client.query(
+              `UPDATE fuel.fuel_transactions SET load_id = $2, updated_at = now()
+                WHERE operating_company_id = $3::uuid AND (id = $1::uuid OR id IN (
+                  SELECT sib.id FROM fuel.fuel_transactions sib JOIN fuel.fuel_transactions me ON me.id = $1::uuid
+                   WHERE me.relay_fuel_transaction_id IS NOT NULL AND sib.relay_fuel_transaction_id = me.relay_fuel_transaction_id))`,
+              [prior.source_fuel_transaction_id, body.new_load_id, body.operating_company_id]
+            );
+          }
+          if (prior?.journal_entry_id && prior.load_id && prior.load_id !== body.new_load_id) {
+            // A posting's load is a fact (refuse_posting_fact_update) and the ledger is WORM, so the cost moves the way the
+            // Reclassify engine moves an account: ONE reattribution entry for the document, each live line of its entry that
+            // sits on the old load posted back (opposite side, old load) and again on the new load (same side) — same account,
+            // amount, source and party. Net: the cost leaves the old load and lands on the new one; TB and every account balance
+            // unchanged. Works for every poster of the document (expense, fuel_event, ...).
+            const legs = (await client.query(
+              `SELECT p.account_id::text, p.debit_or_credit, p.amount_cents::bigint AS amount_cents, p.source_transaction_type,
+                      p.source_transaction_id::text, p.source_transaction_line_id::text, p.entity_uuid::text, p.entity_type,
+                      p.class_id::text, p.location_id::text, je.entry_date::text
+                 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+                WHERE p.journal_entry_uuid = $1::uuid AND p.operating_company_id = $2::uuid AND p.load_id = $3::uuid
+                  AND p.reversed_by_line_id IS NULL AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL
+                ORDER BY p.line_sequence`,
+              [prior.journal_entry_id, body.operating_company_id, prior.load_id]
+            )).rows as Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: string; source_transaction_type: string;
+              source_transaction_id: string; source_transaction_line_id: string | null; entity_uuid: string | null; entity_type: string | null;
+              class_id: string | null; location_id: string | null; entry_date: string }>;
+            if (legs.length) {
+              const memo = `Expense ${numbered.number} moved to load ${numbered.loadNumber}: ${body.reason}`.slice(0, 500);
+              const leg = (l: (typeof legs)[number], dc: "debit" | "credit", loadId: string) => ({
+                account_id: l.account_id, debit_or_credit: dc, amount_cents: Number(l.amount_cents), description: memo,
+                source_transaction_type: l.source_transaction_type, source_transaction_id: l.source_transaction_id,
+                ...(l.source_transaction_line_id ? { source_transaction_line_id: l.source_transaction_line_id } : {}),
+                entity_uuid: l.entity_uuid, entity_type: l.entity_type, class_id: l.class_id, location_id: l.location_id, load_id: loadId,
+              });
+              const today = todayIso();
+              const je = await createJournalEntryOnClient(
+                client as never,
+                {
+                  operating_company_id: body.operating_company_id,
+                  entry_date: legs[0]!.entry_date > today ? legs[0]!.entry_date : today,
+                  memo,
+                  source: "auto",
+                  postings: legs.flatMap((l) => [
+                    leg(l, l.debit_or_credit === "debit" ? "credit" : "debit", prior.load_id!),
+                    leg(l, l.debit_or_credit, body.new_load_id),
+                  ]) as never,
+                },
+                { userId: String(user.uuid), role: String(user.role ?? "") }
+              );
+              await appendCrudAudit(client, user.uuid, "expense.reattribution_posted",
+                { expense_id: params.data.expenseId, journal_entry_id: je.id, from_load_id: prior.load_id, to_load_id: body.new_load_id, lines: legs.length }, "info", "443.86");
+            }
+          }
         }
 
         await emitOutbox(client, "expense.reattributed", {
