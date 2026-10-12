@@ -81,6 +81,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/escrow/deposit` | `apps/backend/src/accounting/escrow/routes.ts:119` | — | — | — |
 | create | `/api/v1/accounting/escrow/open` | `apps/backend/src/accounting/escrow/routes.ts:42` | — | — | — |
 | create | `/api/v1/accounting/expense-category-map` | `apps/backend/src/accounting/expense-category-map/routes.ts:222` | — | — | — |
+| create | `/api/v1/accounting/expenses/link-loads` | `apps/backend/src/accounting/expenses.routes.ts:1208` | — | — | — |
 | create | `/api/v1/accounting/expenses/link-loads` | `apps/backend/src/accounting/expenses.routes.ts:1202` | — | — | — |
 | create | `/api/v1/accounting/factoring-advances` | `apps/backend/src/accounting/factoring-advances.routes.ts:426` | — | — | — |
 | nested | `/api/v1/accounting/factoring-advances/:id/advance` | `apps/backend/src/accounting/factoring-advances.routes.ts:759` | — | — | — |
@@ -749,6 +750,10 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
+| create | `/api/v1/expenses` | `apps/backend/src/accounting/expenses.routes.ts:1412` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/change-payment-source` | `apps/backend/src/accounting/expenses.routes.ts:2153` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:1563` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1948` | — | — | — |
 | create | `/api/v1/expenses` | `apps/backend/src/accounting/expenses.routes.ts:1406` | — | — | — |
 | nested | `/api/v1/expenses/:expenseId/change-payment-source` | `apps/backend/src/accounting/expenses.routes.ts:2129` | — | — | — |
 | nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:1557` | — | — | — |
@@ -891,6 +896,8 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
+| create | `/api/v1/road-service-tickets` | `apps/backend/src/maintenance/road-service/tickets.routes.ts:169` | — | — | — |
+| nested | `/api/v1/road-service-tickets/:id/create-wo` | `apps/backend/src/maintenance/road-service/tickets.routes.ts:325` | — | — | — |
 | create | `/api/v1/road-service-tickets` | `apps/backend/src/maintenance/road-service/tickets.routes.ts:162` | — | — | — |
 | nested | `/api/v1/road-service-tickets/:id/create-wo` | `apps/backend/src/maintenance/road-service/tickets.routes.ts:314` | — | — | — |
 

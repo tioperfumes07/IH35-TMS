@@ -19,6 +19,7 @@ import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture
 import { createIsolatedOperatingCompany, deactivateIsolatedOperatingCompany, insertMaintenanceCategoryMap } from "../../../test-helpers/isolated-company.js";
 import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 import { createWorkOrderFromRoadServiceTicket } from "../road-service/wo-integration.js";
+import { createExpenseInClientTx } from "../../accounting/expense-writer.service.js";
 import { WoBillGlPostingDisabledError } from "../two-section-service.js";
 import { PostingEngineError } from "../../accounting/posting-engine.service.js";
 
@@ -54,19 +55,24 @@ describeIntegration("road-service ticket posts or nothing (443.129 D / AJK-08, r
         `INSERT INTO mdata.units (unit_number, vin, owner_company_id, is_sample_data) VALUES ($1, $2, $3, true) RETURNING id::text AS id`,
         [`${tag}-U1`, `VIN${tag}`.slice(0, 17), opco]
       )).id;
-      await db.query(
-        `INSERT INTO catalogs.qbo_categories (operating_company_id, code, display_name) VALUES ($1, 'road_service_repair', 'Road service repair')`,
+      const category = (await one(
+        `INSERT INTO catalogs.qbo_categories (operating_company_id, code, display_name) VALUES ($1, 'road_service_repair', 'Road service repair') RETURNING id::text AS id`,
         [opco]
-      );
+      )).id;
+      // 443.129 C (AJK-07) — the ticket names its item (category + expense account); a category is never guessed.
+      const item = (await one(
+        `INSERT INTO catalogs.items (operating_company_id, item_type, item_name, category_id, default_expense_account_id) VALUES ($1, 'Service', $2, $3, $4) RETURNING id::text AS id`,
+        [opco, `${tag} road service repair`, category, repairAccount]
+      )).id;
       const vendor = (await one(
         `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type) VALUES ($1, 'RSP Towing', 'other') RETURNING id::text AS id`,
         [opco]
       )).id;
       const ticket = async (n: string) =>
         (await one(
-          `INSERT INTO maintenance.road_service_tickets (operating_company_id, ticket_number, vendor_name, vendor_id, unit_id, service_type, total_cost_cents, status)
-           VALUES ($1, $2, 'RSP Towing', $3, $4, 'tow', 25000, 'completed') RETURNING id::text AS id`,
-          [opco, `${tag}-${n}`, vendor, unit]
+          `INSERT INTO maintenance.road_service_tickets (operating_company_id, ticket_number, vendor_name, vendor_id, unit_id, service_type, total_cost_cents, status, item_id)
+           VALUES ($1, $2, 'RSP Towing', $3, $4, 'tow', 25000, 'completed', $5) RETURNING id::text AS id`,
+          [opco, `${tag}-${n}`, vendor, unit, item]
         )).id;
       const setFlag = async (enabled: boolean) => {
         await db.query(
@@ -85,7 +91,7 @@ describeIntegration("road-service ticket posts or nothing (443.129 D / AJK-08, r
         postings: (await one<{ n: number }>(`SELECT count(*)::int AS n FROM accounting.journal_entry_postings WHERE operating_company_id = $1`, [opco])).n,
       });
       const create = (ticketId: string) =>
-        createWorkOrderFromRoadServiceTicket(db as never, TEST_OWNER_USER_ID, { operatingCompanyId: opco, ticketId });
+        createWorkOrderFromRoadServiceTicket(db as never, TEST_OWNER_USER_ID, { operatingCompanyId: opco, ticketId, writeExpense: createExpenseInClientTx as never });
 
       // 1. Flag OFF: refused by name, nothing written, ticket not invoiced.
       const t1 = await ticket("T1");
