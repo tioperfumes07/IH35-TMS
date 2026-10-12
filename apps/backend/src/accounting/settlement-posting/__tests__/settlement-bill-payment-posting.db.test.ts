@@ -82,7 +82,10 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
   const driverVendorId = `VND-${suffix}`; // QBO text key, written to accounting.bills.vendor_id
   const driverVendorUuid = randomUUID(); // mdata.vendors.id, written to accounting.bills.mdata_vendor_id
   const loadIds = [randomUUID(), randomUUID(), randomUUID()];
-  const loadNumbers = [`L-${suffix}-1`, `L-${suffix}-2`, `L-${suffix}-3`];
+  // 443.93: a load number is digits (the app's load-number spine), and the driver-pay bill is numbered EXACTLY as its load
+  // (BILL_DISPLAY_ID_PATTERN, display-id.ts:49) — unique per run.
+  const loadBase = 700000000 + Math.floor(Math.random() * 90000000);
+  const loadNumbers = [`${loadBase + 1}`, `${loadBase + 2}`, `${loadBase + 3}`];
   const billIds = [randomUUID(), randomUUID(), randomUUID()];
   const grossCents = [52500, 48000, 51000]; // 1,515.00 total
   const advanceCents = 20000;
@@ -251,8 +254,8 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       await db.query(
         `INSERT INTO driver_finance.driver_settlements
            (id, operating_company_id, display_id, driver_id, period_start, period_end, status, locked_at,
-            gross_pay, deductions_total, reimbursements_total, net_pay)
-         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),1515,275,0,1240)`,
+            gross_pay, deductions_total, reimbursements_total, net_pay, settlement_model)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),1515,275,0,1240,'load_bookended')`,
         [settlementId, companyId, `S-${suffix}`, driverId]
       );
       for (let i = 0; i < 3; i += 1) {
@@ -861,8 +864,8 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       await db.query(
         `INSERT INTO driver_finance.driver_settlements
            (id, operating_company_id, display_id, driver_id, period_start, period_end, status, locked_at,
-            gross_pay, deductions_total, reimbursements_total, net_pay)
-         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),297.60,0,0,297.60)`,
+            gross_pay, deductions_total, reimbursements_total, net_pay, settlement_model)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),297.60,0,0,297.60,'load_bookended')`,
         [interlockSettlementId, companyId, `S-INTERLOCK-${suffix}`, driverId]
       );
       // A minimal but real journal_entries row so the FK on payrun_gl_runs.journal_entry_id resolves —
