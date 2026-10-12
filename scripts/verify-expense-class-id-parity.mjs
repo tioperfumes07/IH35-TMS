@@ -19,17 +19,17 @@ const LABEL = "verify-expense-class-id-parity";
 const CHECKS = [
   {
     name: "backend: createExpenseBodySchema accepts class_id",
-    file: "apps/backend/src/accounting/expenses.routes.ts",
+    file: "apps/backend/src/accounting/expense-writer.service.ts", /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
     pattern: /class_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)\.nullable\(\)/,
   },
   {
     name: "backend: expenses INSERT is columnExists-gated on class_id",
-    file: "apps/backend/src/accounting/expenses.routes.ts",
+    file: "apps/backend/src/accounting/expense-writer.service.ts", /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
     pattern: /columnExists\(client,\s*"accounting",\s*"expenses",\s*"class_id"\)/,
   },
   {
     name: "backend: expenses INSERT pushes class_id column+value together",
-    file: "apps/backend/src/accounting/expenses.routes.ts",
+    file: "apps/backend/src/accounting/expense-writer.service.ts", /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
     pattern: /hasClassId[\s\S]{0,120}?columns\.push\(`class_id`\)[\s\S]{0,120}?values\.push\(body\.class_id \?\? null\)/,
   },
   {
@@ -96,7 +96,7 @@ export function checkAll(readFile) {
 
 if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
-    "apps/backend/src/accounting/expenses.routes.ts": `
+    "apps/backend/src/accounting/expense-writer.service.ts": `
       class_id: z.string().uuid().optional().nullable(),
       const hasClassId = await columnExists(client, "accounting", "expenses", "class_id");
       if (hasClassId) {

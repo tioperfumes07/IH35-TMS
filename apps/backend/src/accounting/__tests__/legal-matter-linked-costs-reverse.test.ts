@@ -97,7 +97,7 @@ describe("accounting/bills ACCT-F5043-LEGAL-MATTER-PICKER-ON-CREATE", () => {
 // legal matters, unlike insurance claims, have no maintenance-work-order relationship).
 describe("accounting/bills ACCT-F5629-LEGAL-MATTER-EXPENSE-LINKAGE", () => {
   const service = fs.readFileSync(path.join(here, "../bills.service.ts"), "utf8");
-  const expensesRoutes = fs.readFileSync(path.join(here, "../expenses.routes.ts"), "utf8");
+  const expensesRoutes = fs.readFileSync(path.join(here, "../expenses.routes.ts"), "utf8") + fs.readFileSync(path.join(here, "../expense-writer.service.ts"), "utf8"); // 443.130: the writer moved out of the route
 
   it("listLegalMatterLinkedCosts sums accounting.expenses via legal_matter_id, mirroring the bills arm", () => {
     expect(service).toContain('await colExists("accounting", "expenses", "legal_matter_id")');

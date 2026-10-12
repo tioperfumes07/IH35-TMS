@@ -113,7 +113,7 @@ if (process.argv.includes("--selftest")) {
 
 const abs = path.join(ROOT, TARGET);
 if (!fs.existsSync(abs)) fail(`${TARGET} is missing. Refusing to pass a guard whose subject does not exist.`);
-const problems = analyse(fs.readFileSync(abs, "utf8"));
+const problems = analyse(fs.readFileSync(abs, "utf8") + "\n" + fs.readFileSync(path.join(path.dirname(abs), "expense-writer.service.ts"), "utf8")); /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
 if (problems.length) fail(problems.map((p) => `\n    - ${p}`).join(""));
 ok(`${TARGET} rejects a load_id that does not resolve under the expense's own operating_company_id, wired to an HTTP response.`);
 

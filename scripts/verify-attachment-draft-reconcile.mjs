@@ -25,7 +25,7 @@ if (!/SET entity_id = \$4/.test(svc)) fail("helper must set entity_id to the new
 // 2) Wired create surfaces: the body schema accepts attachment_draft_id (schemaFile) AND the helper is
 // called with the right entity_type in the same txn as the insert (callFile — the service for bill).
 const WIRED = [
-  { schemaFile: "apps/backend/src/accounting/expenses.routes.ts", callFile: "apps/backend/src/accounting/expenses.routes.ts", entityType: "expense" },
+  { schemaFile: "apps/backend/src/accounting/expense-writer.service.ts", callFile: "apps/backend/src/accounting/expense-writer.service.ts", entityType: "expense" } /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */,
   { schemaFile: "apps/backend/src/work-orders/work-orders.routes.ts", callFile: "apps/backend/src/work-orders/work-orders.routes.ts", entityType: "work_order" },
   // The endpoint the Create WO modal ACTUALLY posts to (POST /api/v1/maintenance/work-orders) — the
   // /api/v1/work-orders reconcile above is on a route the UI doesn't hit, so this is the one that matters.
