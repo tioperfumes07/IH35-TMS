@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { correctPostedExpense, CORRECTABLE_EXPENSE_FIELDS, ExpenseCorrectionRefused } from "./expense-correction.service.js";
 import { EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL } from "./expense-bank-match-sql.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -1279,6 +1280,20 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         // FAIL LOUD, never a silent no-op: a posted or void expense refuses this route entirely — the
         // posted-and-open-period reverse+repost branch is a distinct, not-yet-built endpoint, and a
         // void expense has no live document left to correct.
+        if (exp.status === "posted" && exp.posting_status === "posted") {
+          // LEAD 443.129 E — a POSTED expense is never edited in place: the one correction path reverses its entry,
+          // re-posts the corrected one (same expense_number) and audits it. Only its correctable fields go through here.
+          const moneyFields = (["transaction_date", "amount_cents", "vendor_uuid"] as const).filter((f) => body.data[f] !== undefined);
+          if (moneyFields.length) return { kind: "posted_field_not_correctable" as const, fields: moneyFields };
+          const corrected = await correctPostedExpense(client, {
+            operatingCompanyId: oci,
+            expenseId,
+            changes: { memo: body.data.memo },
+            actorUserId: String(user.uuid),
+            reason: body.data.reason,
+          });
+          return { kind: "posted_correction" as const, corrected };
+        }
         if (exp.status !== "draft" || exp.posting_status !== "unposted") {
           return { kind: "not_draft" as const, status: exp.status, posting_status: exp.posting_status };
         }
@@ -1341,6 +1356,18 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
 
       if (result.kind === "forbidden") return reply.code(403).send({ error: "forbidden_owner_or_accountant_only" });
       if (result.kind === "not_found") return reply.code(404).send({ error: "expense_not_found" });
+      if (result.kind === "posted_field_not_correctable") {
+        return reply.code(409).send({
+          error: "posted_expense_field_not_correctable",
+          fields: result.fields,
+          detail: `correctable on a posted expense: ${CORRECTABLE_EXPENSE_FIELDS.join(", ")} (POST /api/v1/expenses/:id/correct); a money change is a void and a new document`,
+        });
+      }
+      if (result.kind === "posted_correction") {
+        const c = result.corrected;
+        if (c.outcome === "refused") return reply.code(409).send({ error: "expense_correction_refused", reason: c.reason });
+        return reply.code(200).send(c);
+      }
       if (result.kind === "not_draft") {
         return reply.code(409).send({
           error: "expense_not_draft",
@@ -1352,6 +1379,57 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       }
       return reply.code(200).send({ expense_id: expenseId, status: "draft", ...result.after });
     } catch (err) {
+      if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: "period_locked" });
+      throw err;
+    }
+  });
+
+  // LEAD 443.129 E — the ONE correction path for a POSTED expense: reverse the live entry, correct the document (same
+  // expense_number), re-post, one audit row. dry_run (default true) plans without writing. Owner + Accountant (as /void).
+  const correctBodySchema = z.object({
+    operating_company_id: z.string().uuid(),
+    reason: z.string().trim().min(3),
+    dry_run: z.boolean().optional().default(true),
+    changes: z
+      .object({
+        driver_id: z.string().uuid().nullable().optional(),
+        trailer_id: z.string().uuid().nullable().optional(),
+        memo: z.string().max(2000).nullable().optional(),
+        driver_from_fill: z.boolean().optional(),
+      })
+      .passthrough(),
+  });
+  app.post("/api/v1/expenses/:expenseId/correct", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = z.object({ expenseId: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error" });
+    const body = correctBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    const oci = body.data.operating_company_id;
+    try {
+      const result = await withCompanyScope(user.uuid, oci, async (client) => {
+        if (!canVoid(String(user.role ?? ""))) {
+          await appendCrudAudit(client, user.uuid, "expense.correction_refused_role",
+            { expense_id: params.data.expenseId, operating_company_id: oci, role: String(user.role ?? "") }, "warning", "LEAD-443.129");
+          return { kind: "forbidden" as const };
+        }
+        const corrected = await correctPostedExpense(client, {
+          operatingCompanyId: oci,
+          expenseId: params.data.expenseId,
+          changes: body.data.changes,
+          actorUserId: String(user.uuid),
+          reason: body.data.reason,
+          dryRun: body.data.dry_run,
+        });
+        return { kind: "ok" as const, corrected };
+      });
+      if (result.kind === "forbidden") return reply.code(403).send({ error: "forbidden_owner_or_accountant_only" });
+      const c = result.corrected;
+      if (c.outcome === "refused") return reply.code(c.reason === "expense_not_found" ? 404 : 409).send({ error: "expense_correction_refused", reason: c.reason });
+      return reply.code(200).send({ dry_run: body.data.dry_run, ...c });
+    } catch (err) {
+      if (err instanceof ExpenseCorrectionRefused) return reply.code(409).send({ error: "expense_correction_refused", reason: err.reason });
       if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: "period_locked" });
       throw err;
     }
