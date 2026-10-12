@@ -40,11 +40,17 @@ export const OTHER_STOP_RADIUS_M = 1500;
  *  stop) — the load's dates or unit disagree with the GPS, not its address. Listed as gps_elsewhere, never moved. 13660 = 96 km. */
 export const MAX_CORRECTION_M = 250_000;
 export const FACILITY_RADIUS_M = 400;
+/** RULING 443.86 #2: a ZIP-CENTER stop (no street, the point is the zip centroid) takes the truck's loading dwell within this
+ *  distance of the centroid on the document date — the city the document names, never another town. */
+export const ZIP_CITY_RADIUS_M = 40_000;
 const DAY_MS = 86_400_000;
 
 export type StopGpsVerdict = {
   load_id: string; load_number: string; stop_id: string; sequence_number: number; stop_type: string;
-  document_address: string; verdict: "verified" | "disagrees" | "gps_elsewhere" | "no_gps" | "no_dwell" | "no_point";
+  document_address: string;
+  verdict: "verified" | "disagrees" | "gps_elsewhere" | "no_gps" | "no_dwell" | "no_point" | "zip_center_resolved" | "zip_center_unresolved";
+  /** 443.86 #2 — why a zip-center stop stayed on its centroid. */
+  reason?: string;
   dwell: { lat: number; lng: number; started_at: string; ended_at: string; minutes: number } | null;
   distance_m: number | null;
   facility: { source: "samsara" | "google"; name: string | null; street: string; city: string; state: string; zip: string;
@@ -146,14 +152,17 @@ async function resolveFacility(client: DbClient, companyId: string, lat: number,
 /** Verify (and with apply: correct) every pickup / delivery stop of one load against the unit's GPS. Caller owns the transaction. */
 export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
   operatingCompanyId: string; loadId: string; apply: boolean; actorUserId: string; reason?: string;
+  /** 443.86 #2: only the load's zip-center stops are resolved (and applied); every other stop is left as it is. */
+  zipCenterOnly?: boolean;
 }): Promise<StopGpsVerdict[]> {
   const load = (await client.query<{ load_number: string; unit_id: string | null }>(
     `SELECT load_number::text, assigned_unit_id::text AS unit_id FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     [input.loadId, input.operatingCompanyId])).rows[0];
   if (!load) return [];
   const stops = (await client.query<{ stop_id: string; sequence_number: number; stop_type: string; lat: number | null; lng: number | null;
-    day: string | null; facility_name: string | null; address_line1: string | null; city: string | null; state: string | null; postal_code: string | null }>(
-    `SELECT s.id::text AS stop_id, s.sequence_number, s.stop_type::text, s.latitude::float8 AS lat, s.longitude::float8 AS lng,
+    day: string | null; facility_name: string | null; address_line1: string | null; city: string | null; state: string | null; postal_code: string | null;
+    geocode_source: string | null }>(
+    `SELECT s.id::text AS stop_id, s.sequence_number, s.stop_type::text, s.latitude::float8 AS lat, s.longitude::float8 AS lng, s.geocode_source,
             coalesce(s.actual_arrival_at, s.appointment_start_at, s.scheduled_arrival_at)::text AS day,
             s.facility_name, s.address_line1, s.city, s.state, s.postal_code
        FROM mdata.load_stops s
@@ -219,6 +228,56 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
   let moved = 0;
   for (const v of verdicts) {
     const docFacility = stops.find((s) => s.stop_id === v.stop_id)?.facility_name ?? null;
+    const zipStop = stops.find((s) => s.stop_id === v.stop_id && s.geocode_source === "zip_center" && !s.address_line1);
+    if (input.zipCenterOnly && !zipStop) continue;
+    if (zipStop) {
+      // 443.86 #2 — a zip centroid is not a place: the truck's loading dwell in that city on the document date is the stop.
+      const st = stopsIn.find((x) => x.stop_id === v.stop_id)!;
+      let reason: string | null = null;
+      let pick: { d: Dwell; f: NonNullable<StopGpsVerdict["facility"]> } | null = null;
+      if (!load.unit_id) reason = "the load has no unit";
+      else if (st.lat == null || st.lng == null || !st.day) reason = "the stop has no zip point or date";
+      else {
+        const mid = st.day.getTime() + DAY_MS / 2;
+        const cands = dwells
+          .filter((d) => d.dwellMinutes >= LOADING_DWELL_MINUTES && Math.abs(d.startedAt.getTime() - mid) <= 1.5 * DAY_MS
+            && metersBetween(st.lat!, st.lng!, d.lat, d.lng) <= ZIP_CITY_RADIUS_M)
+          .sort((a, b) => b.dwellMinutes - a.dwellMinutes).slice(0, 3);
+        if (!cands.length) reason = hasFixesOn(st.day) ? "no loading dwell of the truck in that city on the document date" : "no GPS for the truck on the document date";
+        for (const d of cands) {
+          const f = await resolveFacility(client, input.operatingCompanyId, d.lat, d.lng, docFacility);
+          if (f && f.name !== "TRUCK_STOP" && f.street) { pick = { d, f }; break; }
+        }
+        if (cands.length && !pick) reason = "the dwell resolves to no facility with a street (truck stop or no Google / Samsara place)";
+      }
+      let applied = false;
+      if (pick && input.apply) {
+        const { d, f } = pick;
+        await client.query(
+          `UPDATE mdata.load_stops
+              SET address_line1 = $2, city = $3, state = $4, postal_code = coalesce(nullif($5, ''), postal_code),
+                  latitude = $6, longitude = $7, google_place_id = $8, location_id = NULL,
+                  geocode_source = $9, geocode_precision = 'rooftop', geocode_confidence = 1, geocode_failure_reason = NULL,
+                  geocode_attempted_at = now(), updated_at = now()
+            WHERE id = $1::uuid AND geocode_source = 'zip_center'`,
+          [v.stop_id, f.street, f.city, f.state, f.zip, f.lat, f.lng, f.place_id, f.source === "samsara" ? "gps_dwell_samsara" : "gps_dwell_google"]);
+        await appendCrudAudit(client as never, input.actorUserId, "dispatch.load_stop.zip_center_resolved_by_gps", {
+          resource_type: "mdata.load_stops", resource_id: v.stop_id, operating_company_id: input.operatingCompanyId, load_id: input.loadId,
+          load_number: load.load_number, sequence_number: v.sequence_number, document_address: v.document_address,
+          resolved_address: `${f.street}, ${f.city}, ${f.state} ${f.zip}`, facility_at_point: f.name, source: f.source,
+          samsara_address_id: f.samsara_address_id, google_place_id: f.place_id,
+          dwell: { lat: d.lat, lng: d.lng, started_at: d.startedAt.toISOString(), minutes: d.dwellMinutes },
+          distance_from_zip_center_m: metersBetween(st.lat!, st.lng!, d.lat, d.lng), reason: input.reason ?? "443.86 #2 zip-center stop resolved by GPS dwell",
+        }, "warning", "443.86");
+        applied = true;
+        moved++;
+      }
+      out.push({ ...v, verdict: pick ? "zip_center_resolved" : "zip_center_unresolved", reason: reason ?? undefined,
+        dwell: pick ? { lat: pick.d.lat, lng: pick.d.lng, started_at: pick.d.startedAt.toISOString(), ended_at: pick.d.endedAt.toISOString(), minutes: pick.d.dwellMinutes } : null,
+        distance_m: pick && st.lat != null ? metersBetween(st.lat, st.lng!, pick.d.lat, pick.d.lng) : null,
+        load_id: input.loadId, load_number: load.load_number, facility: pick?.f ?? null, confirmed: Boolean(pick), applied });
+      continue;
+    }
     let facility = v.verdict === "disagrees" && v.dwell ? await resolveFacility(client, input.operatingCompanyId, v.dwell.lat, v.dwell.lng, docFacility) : null;
     if (facility?.name === "TRUCK_STOP" && v.dwell) {
       // The longest dwell was a rest at a truck stop: try the next-longest loading-length dwells of the stop's day (up to 3).

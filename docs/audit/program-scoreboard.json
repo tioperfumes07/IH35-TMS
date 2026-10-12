@@ -1,10 +1,10 @@
 {
-  "healthzSha": "1238065",
-  "generated_at": "2026-10-12T02:48:39.691Z",
+  "healthzSha": "7c78986",
+  "generated_at": "2026-10-12T02:58:52.376Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "1238065",
+    "deployedSha": "7c78986",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 26453,
+      "title": "FINDING: ACCT-F443861 LANE: FINANCIAL -- 443.86 #1 G5: deadhead where a previous load exists — one engine (Google practical from the previous load's last stop, else the truck's Samsara position at dispatch), Creator fills it at birth, Owner route fills the 69",
+      "state": "merged",
+      "mergedAtCt": "10/11/2026, 09:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26453",
+      "sha": "7c78986aaa",
+      "committedAtIso": "2026-10-11T21:54:25-05:00"
+    },
+    {
       "number": 26452,
       "title": "FINDING: N/A (CLAIM-RESERVE migration 202615640900 — reservation-only commit, no code fix)",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26446",
       "sha": "117c395b4c",
       "committedAtIso": "2026-10-11T20:54:26-05:00"
-    },
-    {
-      "number": 26445,
-      "title": "FINDING: ACCT-F44384 LANE: FINANCIAL -- deploy blocker: #26431 edited APPLIED migration 202615441200 (ledger checksum 97efec7a..., disk 70afe787...) -> every prod pre-deploy failed since 01:04Z; file restored byte-exact (sha256 97efec7a0253229f4b2492aecbb84bd3a65b908eb5b814f010caf74d428f174b)",
-      "state": "merged",
-      "mergedAtCt": "10/11/2026, 08:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26445",
-      "sha": "c1ee886df9",
-      "committedAtIso": "2026-10-11T20:35:50-05:00"
     }
   ]
 }

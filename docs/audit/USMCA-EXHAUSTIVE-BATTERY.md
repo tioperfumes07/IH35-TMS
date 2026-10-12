@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 340 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **create** (collection POST) | 341 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 279 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 253 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 72 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 944 | |
+| **TOTAL POST endpoints** | 945 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -726,6 +726,15 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:1502` | — | — | — |
 | nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1841` | — | — | — |
 
+### telematics — 4 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/telematics/geofences` | `apps/backend/src/telematics/geofences.routes.ts:227` | — | — | — |
+| create | `/api/v1/telematics/odometer-readings` | `apps/backend/src/telematics/odometer-manual.routes.ts:57` | — | — | — |
+| create | `/api/v1/telematics/stops/geocode-backfill` | `apps/backend/src/telematics/stops-geocode-backfill.routes.ts:13` | — | — | — |
+| create | `/api/v1/telematics/stops/zip-center-resolve` | `apps/backend/src/telematics/stops-geocode-backfill.routes.ts:26` | — | — | — |
+
 ### finance — 3 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -757,14 +766,6 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/safety-docs` | `apps/backend/src/safetydoc/safetydoc.routes.ts:15` | — | — | — |
 | nested | `/api/v1/safety-docs/assignments/:id/read` | `apps/backend/src/safetydoc/safetydoc.routes.ts:108` | — | — | — |
 | nested | `/api/v1/safety-docs/assignments/:id/sign` | `apps/backend/src/safetydoc/safetydoc.routes.ts:131` | — | — | — |
-
-### telematics — 3 create-surface(s)
-
-| kind | endpoint | route file | created | registered | gap |
-|---|---|---|---|---|---|
-| create | `/api/v1/telematics/geofences` | `apps/backend/src/telematics/geofences.routes.ts:227` | — | — | — |
-| create | `/api/v1/telematics/odometer-readings` | `apps/backend/src/telematics/odometer-manual.routes.ts:57` | — | — | — |
-| create | `/api/v1/telematics/stops/geocode-backfill` | `apps/backend/src/telematics/stops-geocode-backfill.routes.ts:9` | — | — | — |
 
 ### driver-pwa — 3 create-surface(s)
 
