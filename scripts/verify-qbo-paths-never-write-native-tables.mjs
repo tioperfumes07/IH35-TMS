@@ -31,6 +31,17 @@
  *       every tick).
  *   R5  cc-payment.routes.ts stamps no qbo_* identity onto a native row and queues no `qbo.*` event.
  *
+ * ACCT-F4431381 (Lead 443.137 item 9e, part 2) — the remaining writers part 1 found:
+ *   R1/R3 now also cover integrations/qbo/qbo-vendor-linkage.service.ts: it no longer INSERTs mdata.drivers /
+ *       mdata.units or UPDATEs their qbo_vendor_id / qbo_class_id; its six writers refuse by name.
+ *   R6  Every scripts/ops/ file whose name contains "qbo" carries no native write (same allowed targets as
+ *       R1), and the three retired QBO backfills (bill payments, purchases -> expenses, item expense
+ *       accounts) refuse by name (QBO_NATIVE_WRITE_REFUSED + process.exit(1)) and open no connection.
+ *   R7  The carrier bootstrap writes no qbo_* mirror table at all (it used to clone the template's QuickBooks
+ *       chart into the new carrier's mdata.qbo_accounts with qbo_id NULL — rows QuickBooks never had), and
+ *       names its chart refusal (coa_refused).
+ *   R8  The dead QBO files removed in part 2 stay absent (qbo-cc-payment-poster.ts, master-data-anchor-drift.ts).
+ *
  * Comments are stripped before scanning, so prose that names a table never trips the guard.
  *
  * --selftest copies the REAL scoped files into a temp tree, proves that tree passes, then plants one
@@ -57,6 +68,8 @@ const SCOPE_FILES = [
   "apps/backend/src/integrations/qbo/sync-inbound.worker.ts",
   "apps/backend/src/integrations/qbo/forensic-import.service.ts",
   "apps/backend/src/integrations/qbo/qbo-cdc.service.ts",
+  // ACCT-F4431381 (9e part 2)
+  "apps/backend/src/integrations/qbo/qbo-vendor-linkage.service.ts",
 ];
 
 const ALLOWED_SCHEMAS = new Set(["qbo", "qbo_sync", "qbo_archive", "_system", "audit"]);
@@ -86,7 +99,30 @@ const REFUSAL_SITES = {
   "apps/backend/src/qbo-sync/customers-reconciler.ts": ["reconcileCustomers"],
   "apps/backend/src/qbo-sync/vendors-reconciler.ts": ["reconcileVendors"],
   "apps/backend/src/qbo-sync/items-reconciler.ts": ["reconcileItems"],
+  // ACCT-F4431381 (9e part 2) — no mdata.qbo_* link table exists, so every native writer refuses.
+  "apps/backend/src/integrations/qbo/qbo-vendor-linkage.service.ts": [
+    "createDriverWithQboVendor",
+    "createUnitWithQboClass",
+    "linkVendor",
+    "unlinkVendor",
+    "linkClass",
+    "unlinkClass",
+  ],
 };
+const VENDOR_LINKAGE_ROUTES = "apps/backend/src/integrations/qbo/qbo-vendor-linkage.routes.ts";
+
+/** R6 — scripts/ops QBO files: no native write; the retired backfills refuse by name. */
+const OPS_DIR = "scripts/ops";
+const RETIRED_OPS_BACKFILLS = [
+  "scripts/ops/backfill-qbo-bill-payments.mjs",
+  "scripts/ops/backfill-qbo-purchases-expenses.mjs",
+  "scripts/ops/backfill-qbo-item-expense-accounts.mjs",
+];
+/** R8 — dead QBO files removed in part 2; they must stay absent. */
+const REMOVED_FILES = [
+  "apps/backend/src/bill-payments/qbo-cc-payment-poster.ts",
+  "apps/backend/src/qbo-sync/master-data-anchor-drift.ts",
+];
 const SCHEDULER = "apps/backend/src/qbo-sync/sync-scheduler.ts";
 const CC_PAYMENT = "apps/backend/src/bill-payments/cc-payment.routes.ts";
 const CC_FORBIDDEN = [
@@ -132,6 +168,16 @@ function walk(root, relDir, out) {
     if (ent.isDirectory()) walk(root, rel, out);
     else if (ent.name.endsWith(".ts") && !isTestFile(rel)) out.push(rel);
   }
+}
+
+export function opsQboFiles(root) {
+  const abs = path.join(root, OPS_DIR);
+  if (!fs.existsSync(abs)) return [];
+  return fs
+    .readdirSync(abs)
+    .filter((f) => /qbo/i.test(f) && /\.(mjs|js|ts|mts|cjs)$/.test(f))
+    .map((f) => path.posix.join(OPS_DIR, f))
+    .sort();
 }
 
 export function scopedFiles(root) {
@@ -186,6 +232,57 @@ export function analyze(root = REPO_ROOT) {
     }
   }
 
+  // R6 — scripts/ops QBO files
+  const opsFiles = opsQboFiles(root);
+  for (const rel of opsFiles) {
+    const code = stripComments(fs.readFileSync(path.join(root, rel), "utf8"));
+    for (const m of code.matchAll(WRITE_RE)) {
+      const [, verb, schema, table] = m;
+      if (!isAllowedTarget(schema.toLowerCase(), table.toLowerCase())) {
+        failures.push(`R6 ${rel}:${lineOf(code, m.index)} — ${verb.replace(/\s+/g, " ").toUpperCase()} ${schema.toLowerCase()}.${table.toLowerCase()}: a QBO ops script writes a native table`);
+      }
+    }
+  }
+  for (const rel of RETIRED_OPS_BACKFILLS) {
+    const abs = path.join(root, rel);
+    if (!fs.existsSync(abs)) continue; // deleted is fine — nothing can run it
+    const code = stripComments(fs.readFileSync(abs, "utf8"));
+    if (!/QBO_NATIVE_WRITE_REFUSED/.test(code) || !/process\.exit\(\s*1\s*\)/.test(code)) {
+      failures.push(`R6 ${rel} — retired QBO backfill must refuse by name (QBO_NATIVE_WRITE_REFUSED) and exit 1`);
+    }
+    if (/\bfrom\s+["']pg["']|require\(\s*["']pg["']\s*\)|new\s+(?:pg\.)?(?:Client|Pool)\s*\(/.test(code)) {
+      failures.push(`R6 ${rel} — retired QBO backfill must open no database connection`);
+    }
+  }
+
+  // R7 — carrier bootstrap writes no qbo_* mirror and names its chart refusal
+  const bootAbs = path.join(root, DYNAMIC_SITE);
+  if (fs.existsSync(bootAbs)) {
+    const boot = stripComments(fs.readFileSync(bootAbs, "utf8"));
+    for (const m of boot.matchAll(WRITE_RE)) {
+      const [, verb, schema, table] = m;
+      if (/^qbo/.test(schema.toLowerCase()) || /^qbo_/.test(table.toLowerCase())) {
+        failures.push(`R7 ${DYNAMIC_SITE}:${lineOf(boot, m.index)} — ${verb.replace(/\s+/g, " ").toUpperCase()} ${schema.toLowerCase()}.${table.toLowerCase()}: the carrier bootstrap writes the QuickBooks archive (rows QuickBooks never had)`);
+      }
+    }
+    if (!/\bcoa_refused\b/.test(boot)) failures.push(`R7 ${DYNAMIC_SITE} — the chart step must name its refusal (coa_refused)`);
+  }
+
+  // R8 — removed dead QBO files stay absent
+  for (const rel of REMOVED_FILES) {
+    if (fs.existsSync(path.join(root, rel))) failures.push(`R8 ${rel} — removed in 443.137 9e (no callers; QuickBooks is a read-only archive); must stay absent`);
+  }
+
+  // R3 (routes) — the vendor-linkage routes answer the refusal as 409, never a 500
+  const vlrAbs = path.join(root, VENDOR_LINKAGE_ROUTES);
+  if (fs.existsSync(vlrAbs)) {
+    const vlr = stripComments(fs.readFileSync(vlrAbs, "utf8"));
+    const handled = (vlr.match(/isQboNativeWriteRefusedError\(error\)\)\s*return\s+sendNativeWriteRefused/g) ?? []).length;
+    if (!/reply\.code\(409\)\.send\(\{\s*error:\s*QBO_NATIVE_WRITE_REFUSED/.test(vlr) || handled < 7) {
+      failures.push(`R3 ${VENDOR_LINKAGE_ROUTES} — all 7 write routes must answer QBO_NATIVE_WRITE_REFUSED as 409 (found ${handled})`);
+    }
+  }
+
   // R3
   for (const [rel, fns] of Object.entries(REFUSAL_SITES)) {
     const abs = path.join(root, rel);
@@ -236,7 +333,9 @@ function copyInto(tmp, rel, root = REPO_ROOT) {
 
 function selftest() {
   const results = [];
-  const realFiles = [...new Set([...scopedFiles(REPO_ROOT), ...Object.keys(REFUSAL_SITES), SCHEDULER, CC_PAYMENT])];
+  const realFiles = [
+    ...new Set([...scopedFiles(REPO_ROOT), ...Object.keys(REFUSAL_SITES), SCHEDULER, CC_PAYMENT, VENDOR_LINKAGE_ROUTES, ...opsQboFiles(REPO_ROOT)]),
+  ];
   const fresh = () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "ih35-qbo-native-"));
     for (const rel of realFiles) copyInto(tmp, rel);
@@ -285,6 +384,35 @@ function selftest() {
   check("R5 plant: cc-payment queues a qbo.* outbox event", (t) =>
     edit(t, CC_PAYMENT, (s) => s + '\nconst EVT = "qbo.cc_bill_payment.created";\n'), true, /R5 .*qbo\.\*/);
 
+  // ACCT-F4431381 (9e part 2)
+  const VL = "apps/backend/src/integrations/qbo/qbo-vendor-linkage.service.ts";
+  const BP = "scripts/ops/backfill-qbo-bill-payments.mjs";
+  check("R1 plant: vendor linkage re-adds INSERT INTO mdata.drivers", (t) =>
+    edit(t, VL, (s) => s + "\nconst PLANT = `INSERT INTO mdata.drivers (first_name) VALUES ($1)`;\n"), true, /R1 .*qbo-vendor-linkage.*mdata\.drivers/);
+  check("R1 near miss: vendor linkage comment naming UPDATE mdata.units does NOT fail", (t) =>
+    edit(t, VL, (s) => s + "\n// formerly UPDATE mdata.units SET qbo_class_id = $2 (history)\n"), false);
+  check("R3 plant: vendor linkage linkVendor refusal reverted", (t) =>
+    edit(t, VL, (s) => s.replace('"integrations/qbo/qbo-vendor-linkage#linkVendor"', "X").replace(/(export async function linkVendor[\s\S]*?)return refuseQboNativeWrite\(/, "$1return noop(")), true, /R3 .*linkVendor/);
+  check("R3 plant: a vendor-linkage route stops answering 409", (t) =>
+    edit(t, VENDOR_LINKAGE_ROUTES, (s) => s.replace("if (isQboNativeWriteRefusedError(error)) return sendNativeWriteRefused(reply, error);", "")), true, /R3 .*409/);
+  check("R6 plant: retired backfill re-adds INSERT INTO accounting.bill_payments", (t) =>
+    edit(t, BP, (s) => s + "\nconst SQL = `INSERT INTO accounting.bill_payments (id) VALUES ($1)`;\n"), true, /R6 .*accounting\.bill_payments/);
+  check("R6 plant: retired backfill loses its refusal", (t) =>
+    edit(t, BP, (s) => s.split("QBO_NATIVE_WRITE_REFUSED").join("X")), true, /R6 .*refuse by name/);
+  check("R6 plant: retired backfill opens a pg connection", (t) =>
+    edit(t, BP, (s) => 'import pg from "pg";\n' + s), true, /R6 .*no database connection/);
+  check("R6 plant: new scripts/ops QBO file writes catalogs.items", (t) =>
+    fs.writeFileSync(path.join(t, "scripts/ops/backfill-qbo-plant.mjs"), "await c.query(`UPDATE catalogs.items SET default_expense_account_id = $2 WHERE id = $1`);\n"), true, /R6 .*backfill-qbo-plant.*catalogs\.items/);
+  check("R6 near miss: comment-only native write in a retired backfill does NOT fail", (t) =>
+    edit(t, BP, (s) => s + "\n// formerly: INSERT INTO accounting.bill_payments ... (history)\n"), false);
+  check("R7 plant: carrier bootstrap re-adds the chart clone into mdata.qbo_accounts", (t) =>
+    edit(t, DYNAMIC_SITE, (s) => s + "\nconst PLANT = `INSERT INTO mdata.qbo_accounts (id, operating_company_id) SELECT gen_random_uuid(), $2 FROM mdata.qbo_accounts`;\n"), true, /R7 .*mdata\.qbo_accounts/);
+  check("R8 plant: the removed QBO CC payment poster comes back", (t) => {
+    const f = path.join(t, REMOVED_FILES[0]);
+    fs.mkdirSync(path.dirname(f), { recursive: true });
+    fs.writeFileSync(f, "export const PayType = 'CreditCard';\n");
+  }, true, /R8 .*qbo-cc-payment-poster/);
+
   const pass = results.filter((r) => r.ok).length;
   for (const r of results) console.log(`${r.ok ? "PASS" : "FAIL"}  ${r.name}${r.detail ? `  ${r.detail}` : ""}`);
   console.log(`${LABEL} --selftest ${pass}/${results.length}`);
@@ -302,5 +430,5 @@ if (isMain) {
     for (const f of failures) console.error(`  ✗ ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} PASS — ${files.length} scoped QBO files write only mirror/staging tables; ${Object.values(REFUSAL_SITES).flat().length} former QBO->native entry points refuse by name; scheduler + cc-payment clean`);
+  console.log(`${LABEL} PASS — ${files.length} scoped QBO files + ${opsQboFiles(REPO_ROOT).length} scripts/ops QBO files write only mirror/staging tables; ${Object.values(REFUSAL_SITES).flat().length} former QBO->native entry points refuse by name; scheduler + cc-payment clean`);
 }

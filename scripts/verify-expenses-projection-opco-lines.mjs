@@ -66,6 +66,18 @@ export function analyzePullerRefuses(src, label) {
   return failures;
 }
 
+export function analyzeBackfillRefuses(src, label) {
+  const failures = [];
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+  if (/(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM|MERGE\s+INTO)\s+accounting\.(?!qbo_)[a-z_]+/i.test(code)) {
+    failures.push(`${label}: must not write any native accounting.* table — QuickBooks is a read-only archive (443.137 9e).`);
+  }
+  if (!/QBO_NATIVE_WRITE_REFUSED/.test(code) || !/process\.exit\(1\)/.test(code)) {
+    failures.push(`${label}: must refuse by name (QBO_NATIVE_WRITE_REFUSED) and exit 1.`);
+  }
+  return failures;
+}
+
 function analyze() {
   const failures = [];
   if (!fs.existsSync(PULLER)) {
@@ -87,10 +99,14 @@ function analyze() {
       failures.push("qbo-purchases-sync-kind.ts missing qbo_purchases_expenses_projection kind constant.");
     }
   }
+  // ACCT-F4431381 (Lead 443.137 item 9e, part 2) — OLD: the owner backfill script had to carry an
+  //   INSERT INTO accounting.expense_lines that stamps operating_company_id (analyzeExpenseLineInserts).
+  //   NEW: the backfill must REFUSE (QBO_NATIVE_WRITE_REFUSED, exit 1) and carry NO native accounting.*
+  //   write at all; if the file is deleted later that is also fine (nothing can run it).
+  //   WHY: the backfill was a second, hand-run copy of the QuickBooks -> native expense projection that
+  //   part 1 removed from the puller. QuickBooks is a read-only archive; the strict check is now absence.
   if (fs.existsSync(BACKFILL)) {
-    failures.push(
-      ...analyzeExpenseLineInserts(fs.readFileSync(BACKFILL, "utf8"), "backfill-qbo-purchases-expenses.mjs")
-    );
+    failures.push(...analyzeBackfillRefuses(fs.readFileSync(BACKFILL, "utf8"), "backfill-qbo-purchases-expenses.mjs"));
   }
   return failures;
 }
@@ -114,11 +130,20 @@ if (process.argv.includes("--selftest")) {
     "plant"
   ).length > 0;
   const plantNoRefuse = analyzePullerRefuses(realPuller.split("refuseQboNativeWrite(").join("noop("), "plant").length > 0;
-  if (goodFails === 0 && badFails > 0 && realOk && plantWrite && plantNoRefuse) {
+  // ACCT-F4431381 (9e part 2) plants on the REAL backfill: it must pass as-is, fail on a re-added native
+  // write, and fail when the refusal is removed; a comment-only mention must not trip it.
+  const realBackfill = fs.existsSync(BACKFILL) ? fs.readFileSync(BACKFILL, "utf8") : 'console.error("QBO_NATIVE_WRITE_REFUSED"); process.exit(1);';
+  const backfillOk = analyzeBackfillRefuses(realBackfill, "real").length === 0;
+  const backfillPlantWrite =
+    analyzeBackfillRefuses(realBackfill + "\nconst P = `INSERT INTO accounting.expenses (id) VALUES ($1)`;\n", "plant").length > 0;
+  const backfillPlantNoRefuse = analyzeBackfillRefuses(realBackfill.split("QBO_NATIVE_WRITE_REFUSED").join("X"), "plant").length > 0;
+  const backfillNearMiss =
+    analyzeBackfillRefuses(realBackfill + "\n// formerly INSERT INTO accounting.expense_lines (history)\n", "near").length === 0;
+  if (goodFails === 0 && badFails > 0 && realOk && plantWrite && plantNoRefuse && backfillOk && backfillPlantWrite && backfillPlantNoRefuse && backfillNearMiss) {
     console.log("verify-expenses-projection-opco-lines --selftest: PASS");
     process.exit(0);
   }
-  console.error("verify-expenses-projection-opco-lines --selftest: FAIL", { goodFails, badFails, realOk, plantWrite, plantNoRefuse });
+  console.error("verify-expenses-projection-opco-lines --selftest: FAIL", { goodFails, badFails, realOk, plantWrite, plantNoRefuse, backfillOk, backfillPlantWrite, backfillPlantNoRefuse, backfillNearMiss });
   process.exit(1);
 }
 
@@ -130,5 +155,5 @@ if (failures.length) {
 }
 console.log(
   "PASS verify-expenses-projection-opco-lines — QBO purchases puller writes no native expense rows and its " +
-    "projection refuses by name (9e); backfill expense_lines INSERTs stamp operating_company_id; sync kind present."
+    "projection refuses by name (9e); the QBO purchases backfill refuses by name with no native write; sync kind present."
 );

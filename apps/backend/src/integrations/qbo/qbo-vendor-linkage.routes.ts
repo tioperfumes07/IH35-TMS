@@ -12,6 +12,7 @@ import {
   unlinkClass,
   unlinkVendor,
 } from "./qbo-vendor-linkage.service.js";
+import { isQboNativeWriteRefusedError, QBO_NATIVE_WRITE_REFUSED } from "../../qbo-sync/qbo-native-write-refused.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -70,6 +71,12 @@ function canUnlink(role: string) {
   return role === "Owner" || role === "Administrator";
 }
 
+// ACCT-F4431381 (443.137 9e) — every route below that would write a QuickBooks id onto a native
+// mdata row now receives a named refusal from the service; answer it as 409 with the code, never a 500.
+function sendNativeWriteRefused(reply: FastifyReply, error: unknown) {
+  return reply.code(409).send({ error: QBO_NATIVE_WRITE_REFUSED, message: (error as Error).message });
+}
+
 function validationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
 }
@@ -114,6 +121,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
       });
       return result;
     } catch (error) {
+      if (isQboNativeWriteRefusedError(error)) return sendNativeWriteRefused(reply, error);
       const message = String((error as Error)?.message ?? "link_vendor_failed");
       if (
         message === "qbo_vendor_not_found" ||
@@ -143,6 +151,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
       });
       return result;
     } catch (error) {
+      if (isQboNativeWriteRefusedError(error)) return sendNativeWriteRefused(reply, error);
       const message = String((error as Error)?.message ?? "unlink_vendor_failed");
       if (message === "entity_not_found") return reply.code(404).send({ error: message });
       throw error;
@@ -189,6 +198,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
       });
       return result;
     } catch (error) {
+      if (isQboNativeWriteRefusedError(error)) return sendNativeWriteRefused(reply, error);
       const message = String((error as Error)?.message ?? "driver_link_failed");
       if (message === "entity_not_found" || message === "qbo_vendor_not_found") return reply.code(404).send({ error: message });
       if (message === "qbo_vendor_already_linked_use_force") return reply.code(409).send({ error: message });
@@ -215,6 +225,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
       });
       return result;
     } catch (error) {
+      if (isQboNativeWriteRefusedError(error)) return sendNativeWriteRefused(reply, error);
       const message = String((error as Error)?.message ?? "unit_link_failed");
       if (message === "entity_not_found") return reply.code(404).send({ error: message });
       if (message === "qbo_class_already_linked_use_force") return reply.code(409).send({ error: message });
@@ -241,6 +252,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
       });
       return result;
     } catch (error) {
+      if (isQboNativeWriteRefusedError(error)) return sendNativeWriteRefused(reply, error);
       const message = String((error as Error)?.message ?? "trailer_link_failed");
       if (message === "entity_not_found") return reply.code(404).send({ error: message });
       if (message === "qbo_class_already_linked_use_force") return reply.code(409).send({ error: message });
@@ -266,12 +278,17 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const body = unlinkBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
-    await unlinkClass(user.uuid, {
-      operatingCompanyId: body.data.operating_company_id,
-      entityType: "unit",
-      entityId: params.data.id,
-      reason: body.data.reason,
-    });
+    try {
+      await unlinkClass(user.uuid, {
+        operatingCompanyId: body.data.operating_company_id,
+        entityType: "unit",
+        entityId: params.data.id,
+        reason: body.data.reason,
+      });
+    } catch (error) {
+      if (isQboNativeWriteRefusedError(error)) return sendNativeWriteRefused(reply, error);
+      throw error;
+    }
     return { ok: true };
   });
 
@@ -283,12 +300,17 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const body = unlinkBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
-    await unlinkClass(user.uuid, {
-      operatingCompanyId: body.data.operating_company_id,
-      entityType: "trailer",
-      entityId: params.data.id,
-      reason: body.data.reason,
-    });
+    try {
+      await unlinkClass(user.uuid, {
+        operatingCompanyId: body.data.operating_company_id,
+        entityType: "trailer",
+        entityId: params.data.id,
+        reason: body.data.reason,
+      });
+    } catch (error) {
+      if (isQboNativeWriteRefusedError(error)) return sendNativeWriteRefused(reply, error);
+      throw error;
+    }
     return { ok: true };
   });
 }

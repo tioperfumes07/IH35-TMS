@@ -20,7 +20,6 @@ const TARGETS = [
   "apps/backend/src/integrations/qbo/sync-outbound-accounting.entities.ts",
   "apps/backend/src/qbo-sync/vendors-reconciler.ts",
   "apps/backend/src/qbo-sync/drift-detector.ts",
-  "apps/backend/src/qbo-sync/master-data-anchor-drift.ts",
   "apps/backend/src/integrations/qbo/mirror-integrity.service.ts",
   "apps/backend/src/accounting/qbo-recon-reads.ts",
   "apps/backend/src/reconciliation/reconciliation-worker.service.ts",
@@ -37,6 +36,21 @@ export function assertCanonicalReconReader(source, filename) {
   return problems;
 }
 
+
+// ACCT-F4431381 (Lead 443.137 item 9e, part 2):
+//   OLD: TARGETS listed apps/backend/src/qbo-sync/master-data-anchor-drift.ts and required it to read
+//        mdata.qbo_vendors.
+//   NEW: that file is deleted (zero callers — detectAnchorDrift was never imported); this guard now
+//        requires it to stay ABSENT, so a QBO->native anchor-drift pass cannot quietly return.
+//   WHY: QuickBooks is a read-only archive. A deleted reader cannot read the wrong table, and the
+//        absence check is stricter than the reader check it replaces.
+export const REMOVED_QBO_DRIFT_FILES = ["apps/backend/src/qbo-sync/master-data-anchor-drift.ts"];
+
+export function assertRemovedStayAbsent(exists) {
+  return REMOVED_QBO_DRIFT_FILES.filter((rel) => exists(rel)).map(
+    (rel) => `${rel}: removed in 443.137 9e (no callers; QuickBooks is a read-only archive) — must stay absent`
+  );
+}
 
 const OUTBOUND = "apps/backend/src/integrations/qbo/sync-outbound-accounting.entities.ts";
 
@@ -56,6 +70,7 @@ function main() {
     assertCanonicalReconReader(fs.readFileSync(path.join(ROOT, filename), "utf8"), filename)
   );
   problems.push(...assertOutboundVendorJoin(fs.readFileSync(path.join(ROOT, OUTBOUND), "utf8")));
+  problems.push(...assertRemovedStayAbsent((rel) => fs.existsSync(path.join(ROOT, rel))));
   if (problems.length) {
     console.error(`${LABEL} FAIL:`);
     for (const problem of problems) console.error(`  ${problem}`);
@@ -80,6 +95,8 @@ function selftest() {
   if (!phantom.some((p) => p.includes("vendor_uuid"))) failures.push("did not catch phantom vendor_uuid");
   const goodJoin = assertOutboundVendorJoin("ON qv.qbo_id = v.qbo_vendor_id\n AND qv.operating_company_id = v.operating_company_id");
   if (goodJoin.length) failures.push(`false positive join: ${goodJoin.join("; ")}`);
+  if (assertRemovedStayAbsent(() => true).length !== REMOVED_QBO_DRIFT_FILES.length) failures.push("did not catch a re-added removed drift file");
+  if (assertRemovedStayAbsent(() => false).length !== 0) failures.push("false positive on absent drift file");
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED: ${failures.join("; ")}`);
     process.exit(1);
