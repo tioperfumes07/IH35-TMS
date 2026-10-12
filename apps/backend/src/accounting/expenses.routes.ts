@@ -183,6 +183,12 @@ const createExpenseBodySchema = z.object({
   // the 9 G18 categories. Mirrors accounting.enforce_load_fk_invariant()'s own >=20-char floor
   // (migration 0093) so a too-short reason fails with the same clear DB error, not a generic 500.
   load_exemption_reason: z.string().trim().min(20).max(2000).optional().nullable(),
+  // 443.110 G13 — the line's item (this company's catalogs.items) and the source quantity / unit / rate, so a writer
+  // that knows the item (the Settlement Creator) records it on the line instead of bypassing this shared writer.
+  item_id: z.string().uuid().optional().nullable(),
+  quantity: z.number().positive().optional().nullable(),
+  rate_cents: z.number().nonnegative().optional().nullable(),
+  unit_of_measure: z.string().trim().min(1).max(40).optional().nullable(),
 });
 
 const reattributeBodySchema = z.object({
@@ -532,6 +538,15 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
     }
   }
 
+  // 443.110 G13 — an item named on the line must be this company's.
+  if (body.item_id) {
+    const itemRes = await client.query(
+      `SELECT id FROM catalogs.items WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+      [body.item_id, body.operating_company_id]
+    );
+    if (!itemRes.rows[0]) return { itemNotInCompany: true as const };
+  }
+
   if (body.vendor_uuid) {
     const vendorRes = await client.query(
       `SELECT id FROM mdata.vendors
@@ -674,6 +689,7 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
     values.push(body.work_order_id ?? null);
   }
 
+  let headerUnitId: string | null = null;
   if (hasUnitId) {
     // GO-19-1b (owner 2026-09-03, re-scoped FORWARD GUARANTEE — no backfill, no touching the
     // frozen entities' 27,070 legacy rows): "unit_id MANDATORY on every new expense. An
@@ -706,6 +722,7 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
     }
     columns.push(`unit_id`);
     values.push(resolvedUnitId);
+    headerUnitId = resolvedUnitId;
   }
 
   if (hasTrailerId) {
@@ -895,6 +912,20 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
           context: `expense ${body.expense_date}`,
         })
       );
+    }
+
+    // 443.110 G13 — the line names its item with the source quantity / unit / rate (1 x amount 'each' when the caller
+    // gave none), and carries the header's driver / unit / trailer (RULING 443.66 D5: every line carries them).
+    if (body.item_id && (await columnExists(client, "accounting", "expense_lines", "item_id"))) {
+      const qty = body.quantity ?? 1;
+      lineColumns.push("item_id", "quantity", "rate_cents", "unit_of_measure");
+      lineValues.push(body.item_id, qty, body.rate_cents ?? (qty === 1 ? cents : null), body.unit_of_measure?.trim() || "each");
+    }
+    for (const [col, val] of [["driver_id", body.driver_id ?? null], ["unit_id", headerUnitId], ["trailer_id", body.trailer_id ?? null]] as const) {
+      if (val && (await columnExists(client, "accounting", "expense_lines", col))) {
+        lineColumns.push(col);
+        lineValues.push(val);
+      }
     }
 
     await client.query(
@@ -1400,6 +1431,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         createExpenseInClientTx(client, body, user.uuid));
 
       if ("unavailable" in payload) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
+      if ("itemNotInCompany" in payload) return reply.code(400).send({ error: "item_not_in_company", detail: "The item is not one of this company's items." });
       // GO-19-1b G1 — "an expense with no truck cannot be costed." unit_id must be supplied directly
       // or derivable from load_id's mdata.loads.assigned_unit_id; neither resolving is a hard reject,
       // never a silent NULL write.

@@ -29,8 +29,6 @@ import { postSourceTransactionInClientTx } from "../accounting/posting-engine.se
 import { resolveRoleAccountOptional, type CoaRole } from "../accounting/coa-roles/resolver.service.js";
 import { resolveDriverReimbursementParentAccount } from "../accounting/driver-subaccount-provision.service.js";
 import { resolveCompanyDirectCreditAccount, postFuelExpenseOnClient, type FuelCategoryCode } from "../accounting/fuel-posting/poster.service.js";
-import { nextExpenseDisplayId } from "../accounting/display-id.js";
-import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { creatorEmptyPayCents, creatorEmptyRateCents, creatorLoadedPayCents, creatorPayMiles } from "./settlement-creator-empty-pay.js";
 import { resolveDriverPayItems } from "./settlement-creator-pay-item.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
@@ -73,6 +71,7 @@ import type {
 } from "./settlement-creator.types.js";
 import { isReeferFuelItemName } from "../fuel/reefer-fuel.service.js";
 import { voidCreatorOwedBills, writeCreatorOwedBill } from "./settlement-creator-owed-bill.js";
+import { createExpenseInClientTx, type CreateExpenseBody } from "../accounting/expenses.routes.js";
 import { applyCreatorMilesChoices, CreatorMilesChoiceError } from "./settlement-creator-miles-choice.js";
 
 export type { DbClient };
@@ -1127,6 +1126,7 @@ export async function postSettlementCreatorInClientTx(
   const loadIds: string[] = [];
   const expenseIds: string[] = [];
   const owedBillIds: string[] = [];
+  const companyExpenseMemos = new Map<string, number>();
   const fuelTxnIds: string[] = [];
   const advanceIds: string[] = [];
   const journalEntryIds: string[] = [];
@@ -1632,55 +1632,61 @@ export async function postSettlementCreatorInClientTx(
     }
     const preference = card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet";
     const { account_id: paymentAccountId } = await resolveCompanyDirectCreditAccount(client as never, draft.operating_company_id, preference);
-    // 443.84 #2: a load-attributed expense is numbered on its load's spine (load, load-1, load-2 ...), the one load-scoped
-    // series every other expense writer uses (expense-number.ts); EXP-YYYY-##### is only for an expense with no load.
-    const expenseNumber = loadId
-      ? (await generateExpenseNumber(client as never, loadId, draft.operating_company_id)).number
-      : await nextExpenseDisplayId(client as never, draft.operating_company_id, new Date(`${exp.date}T12:00:00.000Z`));
-    const memo = `[SC ${draft.settlement_no}] ${exp.description ?? exp.item_name}`.slice(0, 500);
-    const inserted = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.expenses (
-          operating_company_id, status, transaction_date, total_amount_cents,
-          memo, expense_number, load_id, is_sample_data, payment_account_uuid,
-          is_company_expense, driver_uuid, vendor_uuid, unit_id, trailer_id, vendor_document_number
-        )
-        VALUES ($1::uuid, 'draft', $2::date, $3::bigint, $4, $5, $6::uuid, false, $7::uuid, true, $8::uuid,
-                $9::uuid, $10::uuid, $11::uuid, $12)
-        RETURNING id::text
-      `,
-      [
-        draft.operating_company_id, exp.date, exp.amount_cents, memo, expenseNumber, loadId, paymentAccountId,
-        draft.driver_id, vendor.id, draft.unit_id ?? null, draft.trailer_id ?? null, exp.vendor_document_number?.trim() || null,
-      ],
+    // 443.110 G13 — a paid-now company expense goes through THE shared expense writer (expenses.routes.ts
+    // createExpenseInClientTx), like every other expense: load-spine number + expense_load_links row, the vendor-document
+    // duplicate refusal, the unit from the load, item / quantity / rate / UoM and driver / unit / trailer on the line.
+    // The memo is the writer's double-submit key, so a repeated description on this settlement gets its position.
+    const baseMemo = `[SC ${draft.settlement_no}] ${exp.description ?? exp.item_name}`.slice(0, 480);
+    const memoSeen = (companyExpenseMemos.get(baseMemo) ?? 0) + 1;
+    companyExpenseMemos.set(baseMemo, memoSeen);
+    const memo = memoSeen === 1 ? baseMemo : `${baseMemo} (${memoSeen})`;
+    const written = await createExpenseInClientTx(
+      client,
+      {
+        operating_company_id: draft.operating_company_id,
+        driver_id: draft.driver_id,
+        category_account_id: itemAcct.id,
+        expense_date: exp.date,
+        amount_cents: exp.amount_cents,
+        vendor_uuid: vendor.id,
+        memo,
+        is_company_expense: true,
+        payment_account_uuid: paymentAccountId,
+        load_id: loadId,
+        unit_id: draft.unit_id ?? null,
+        trailer_id: draft.trailer_id ?? null,
+        vendor_document_number: exp.vendor_document_number?.trim() || null,
+        item_id: itemAcct.item_id,
+        quantity: qty,
+        rate_cents: rateCents,
+        unit_of_measure: uom,
+      } as CreateExpenseBody,
+      actorUserId,
     );
-    const expenseId = inserted.rows[0]!.id;
-    await client.query(
-      `
-        INSERT INTO accounting.expense_lines (
-          operating_company_id, expense_id, line_sequence, amount, amount_cents, description,
-          load_id, load_required, expense_account_uuid, quantity, rate_cents, unit_of_measure, item_id,
-          driver_id, unit_id, trailer_id
-        )
-        VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, true, $7::uuid, $8, $9, $10, $11::uuid,
-                $12::uuid, $13::uuid, $14::uuid)
-      `,
-      [
-        draft.operating_company_id, expenseId, exp.amount_cents / 100, exp.amount_cents, memo, loadId, itemAcct.id,
-        qty, rateCents, uom, itemAcct.item_id, draft.driver_id, draft.unit_id ?? null, draft.trailer_id ?? null,
-      ],
-    );
-    expenseIds.push(expenseId);
-    // ROUND 443.6 f — a posting refusal fails the whole post: never a document without its ledger entry.
-    try {
-      const posted = await postSourceTransactionInClientTx(
-        client as never,
-        { operating_company_id: draft.operating_company_id, source_transaction_type: "expense", source_transaction_id: expenseId },
-        { userId: actorUserId },
+    if (!("expense_id" in written) || !written.expense_id) {
+      const refusal = Object.keys(written)[0] ?? "refused";
+      throw new SettlementCreatorError(
+        "expense_writer_refused",
+        `Company expense "${exp.item_name}": the expense writer refused it (${refusal}${"existingExpenseId" in written && written.existingExpenseId ? ` — existing expense ${written.existingExpenseId}` : ""}). Nothing was posted.`,
       );
-      if (!posted.journal_entry_id) throw new Error("posting engine returned no journal entry");
-      await stampExpensePosted(client, draft.operating_company_id, expenseId, posted.journal_entry_id);
-      journalEntryIds.push(posted.journal_entry_id);
+    }
+    const expenseId: string = written.expense_id;
+    expenseIds.push(expenseId);
+    // ROUND 443.6 f — a posting refusal fails the whole post: never a document without its ledger entry. The writer posts
+    // in this transaction when the company's expense-posting flag is on; otherwise the Creator posts it here.
+    try {
+      let journalEntryId = written.posted_journal_entry_id;
+      if (!journalEntryId) {
+        const posted = await postSourceTransactionInClientTx(
+          client as never,
+          { operating_company_id: draft.operating_company_id, source_transaction_type: "expense", source_transaction_id: expenseId },
+          { userId: actorUserId },
+        );
+        journalEntryId = posted.journal_entry_id;
+      }
+      if (!journalEntryId) throw new Error("posting engine returned no journal entry");
+      await stampExpensePosted(client, draft.operating_company_id, expenseId, journalEntryId);
+      journalEntryIds.push(journalEntryId);
     } catch (err) {
       throw new SettlementCreatorError("expense_post_refused", `Company expense "${exp.item_name}": the ledger refused it — ${err instanceof Error ? err.message : String(err)}. Nothing was posted.`);
     }
