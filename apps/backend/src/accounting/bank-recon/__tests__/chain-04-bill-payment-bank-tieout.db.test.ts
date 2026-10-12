@@ -87,9 +87,9 @@ describeIntegration("CHAIN-04 bill -> bill_payment -> bank_transaction tie-out p
     await bypass(async () => {
       await db.query(
         `INSERT INTO accounting.bill_payments
-           (id, operating_company_id, bill_id, payment_date, amount_cents, amount, payment_method, from_bank_account_id, status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,CURRENT_DATE,$4,$5,'ach',$6::uuid,'posted')`,
-        [id, companyId, billId, amountCents, amountCents / 100, bankAccountId]
+           (id, operating_company_id, bill_id, vendor_id, payment_date, amount_cents, amount, payment_method, from_bank_account_id, status)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,$5,$6,'ach',$7::uuid,'posted')`,
+        [id, companyId, billId, `T04-VENDOR-${suffix}`, amountCents, amountCents / 100, bankAccountId]
       );
     });
     paymentIds.push(id);

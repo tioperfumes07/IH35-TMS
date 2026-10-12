@@ -1038,6 +1038,17 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-no-bill-payment-without-postings",
     ["db/migrations/", "apps/backend/src/accounting/", "apps/backend/src/banking/", "apps/backend/src/bill-payments/", "apps/backend/src/cash-advances/", "apps/backend/src/ap/", "scripts/verify-no-bill-payment-without-postings.mjs"],
   ],
+  // ROUND 443.106 (Cursor) — DB refuses driver/load-born bills without core links, blank bill-payment vendors, expense attr mismatch.
+  [
+    "verify-document-links-enforced-at-db",
+    [
+      "db/migrations/202615781200_document_links_refused_at_db.sql",
+      "db/migrations/202615770700_expense_line_load_or_exemption_refused.sql",
+      "apps/backend/src/accounting/",
+      "apps/backend/src/cash-advances/",
+      "scripts/verify-document-links-enforced-at-db.mjs",
+    ],
+  ],
   // ROUND 374 (CC-1) — a driver escrow GL balance is never below zero; the refusal is live and deferred.
   [
     "verify-driver-escrow-gl-never-negative",

@@ -108,7 +108,9 @@ describe("disburseCashAdvanceSplit — C6 bill_payment leg GL poster", () => {
       if (sql.includes("SELECT set_config")) return { rows: [] };
       if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK") return { rows: [] };
       if (sql.includes("FROM driver_finance.driver_advances")) return { rows: [{ amount: "400.00" }] };
-      if (sql.includes("SELECT is_sample_data FROM accounting.bills")) return { rows: [{ is_sample_data: false }] };
+      if (sql.includes("FROM accounting.bills") && sql.includes("is_sample_data")) {
+        return { rows: [{ is_sample_data: false, vendor_id: "vend-fixture-1", mdata_vendor_id: null }] };
+      }
       if (sql.includes("INSERT INTO accounting.bill_payments")) return { rows: [{ id: BILL_PAYMENT_ID }] };
       if (sql.includes("FROM catalogs.accounts")) return { rows: [{ id: "acct-117" }] };
       if (sql.includes("SELECT is_sample_data FROM mdata.loads")) return { rows: [{ is_sample_data: false }] };
@@ -167,7 +169,9 @@ describe("disburseCashAdvanceSplit — C6 bill_payment leg GL poster", () => {
       if (sql.includes("SELECT set_config")) return { rows: [] };
       if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK") return { rows: [] };
       if (sql.includes("FROM driver_finance.driver_advances")) return { rows: [{ amount: "400.00" }] };
-      if (sql.includes("SELECT is_sample_data FROM accounting.bills")) return { rows: [{ is_sample_data: false }] };
+      if (sql.includes("FROM accounting.bills") && sql.includes("is_sample_data")) {
+        return { rows: [{ is_sample_data: false, vendor_id: "vend-fixture-1", mdata_vendor_id: null }] };
+      }
       if (sql.includes("INSERT INTO accounting.bill_payments")) return { rows: [{ id: BILL_PAYMENT_ID }] };
       if (sql.includes("FROM catalogs.accounts")) return { rows: [{ id: "acct-117" }] };
       if (sql.includes("SELECT is_sample_data FROM mdata.loads")) return { rows: [{ is_sample_data: false }] };

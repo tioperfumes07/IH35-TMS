@@ -79,9 +79,9 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
     await bypass(scopeCompanyId, async () => {
       await db.query(
         `INSERT INTO accounting.bill_payments
-           (id, operating_company_id, bill_id, payment_date, amount_cents, amount, payment_method, status, created_by_user_id)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, CURRENT_DATE, $4, $5, 'cash', 'posted', $6::uuid)`,
-        [id, scopeCompanyId, billId, amountCents, amountCents / 100, TEST_OWNER_USER_ID]
+           (id, operating_company_id, bill_id, vendor_id, payment_date, amount_cents, amount, payment_method, status, created_by_user_id)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, CURRENT_DATE, $5, $6, 'cash', 'posted', $7::uuid)`,
+        [id, scopeCompanyId, billId, `bankrec-vendor-${suffix}`, amountCents, amountCents / 100, TEST_OWNER_USER_ID]
       );
     });
     return id;

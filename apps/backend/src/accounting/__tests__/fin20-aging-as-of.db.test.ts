@@ -87,9 +87,9 @@ describeIntegration("FIN-20 as-of AR/AP aging (real Postgres)", () => {
       [billId, companyId, vendorUuid, billDisplay]
     );
     await db.query(
-      `INSERT INTO accounting.bill_payments (operating_company_id, bill_id, payment_date, amount_cents, payment_method)
-       VALUES ($1::uuid,$2::uuid,DATE '2026-02-20',20000,'ach')`,
-      [companyId, billId]
+      `INSERT INTO accounting.bill_payments (operating_company_id, bill_id, vendor_id, payment_date, amount_cents, payment_method)
+       VALUES ($1::uuid,$2::uuid,$3,DATE '2026-02-20',20000,'ach')`,
+      [companyId, billId, vendorUuid]
     );
   });
 
