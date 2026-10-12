@@ -7,7 +7,7 @@
  *
  * Fail-closed: null unit_id or null load_id is an ENGINE defect (owner), not a data soft-skip.
  */
-import { adoptRelayFillExpenseDocument } from "../../fuel/fuel-expense-document.service.js";
+import { adoptRelayFillExpenseDocument, createExpenseFromFuelTransaction } from "../../fuel/fuel-expense-document.service.js";
 import { resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
 import { relayLineIsGallonsSql, relayLineKindSql } from "../../fuel/relay-product-kind.js";
 import { buildFuelTxnJeMemo, mapFuelTypeToPostingKind } from "../fuel-posting/fuel-txn-memo.js";
@@ -174,7 +174,7 @@ async function postCanonicalFuelTxn(
     signals
   );
 
-  return postFuelExpenseOnClient(client, {
+  const posted = await postFuelExpenseOnClient(client, {
     operating_company_id: input.operating_company_id,
     actor_user_id: input.actor_user_uuid,
     fuel_event_id: input.fill_id,
@@ -198,6 +198,19 @@ async function postCanonicalFuelTxn(
       fuel_card_code: signals.fuel_card_code,
     }),
   });
+  // DEGH-07 / 443.113-C — canonical fuel accept adopts the expense DOCUMENT for the same JE
+  // (Relay already does this via adoptRelayFillExpenseDocument). One JE, never two; refuse by name.
+  if (posted.journal_entry_id) {
+    const doc = await createExpenseFromFuelTransaction(client as never, {
+      operating_company_id: input.operating_company_id,
+      fuel_transaction_id: input.fill_id,
+      requesting_user_uuid: input.actor_user_uuid,
+    });
+    if (doc.outcome === "refused") {
+      throw new FuelMatchPostError("fuel_fill_document_refused", doc.reason);
+    }
+  }
+  return posted;
 }
 
 async function postRelayFuelFill(

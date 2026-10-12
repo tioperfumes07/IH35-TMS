@@ -7,7 +7,11 @@ const { mockPost } = vi.hoisted(() => ({ mockPost: vi.fn(async () => ({ result: 
 vi.mock("../../fuel-posting/poster.service.js", () => ({ postFuelExpenseOnClient: mockPost, findPostedFuelEvent: vi.fn(async () => null) }));
 // Lead 443.41 A: after the fill posts, its expense document adopts that SAME entry (asserted below).
 const { mockAdopt } = vi.hoisted(() => ({ mockAdopt: vi.fn(async () => ({ outcome: "created", expense_id: "exp-1", expense_number: "1", journal_entry_id: "je-1", amount_cents: 0 })) }));
-vi.mock("../../../fuel/fuel-expense-document.service.js", () => ({ adoptRelayFillExpenseDocument: mockAdopt }));
+vi.mock("../../../fuel/fuel-expense-document.service.js", () => ({
+  adoptRelayFillExpenseDocument: mockAdopt,
+  // DEGH-07 — canonical path imports createExpenseFromFuelTransaction from the same module
+  createExpenseFromFuelTransaction: vi.fn(async () => ({ outcome: "created", expense_id: "exp-c", expense_number: "1" })),
+}));
 
 import { FuelMatchPostError, postFuelFillOnBankMatch } from "../bank-match-fuel-post.service.js";
 

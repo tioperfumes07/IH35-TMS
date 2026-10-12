@@ -5,5 +5,8 @@ export default {
     // ROUND 441.19 CHAIN-05 orphan-guard wiring (Devin-A batch-23)
     ctx.run("node", ["scripts/verify-bank-categorize-posts-chain05-matrix.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-bank-categorize-posts-chain05-matrix.mjs"]);
+    // DEGH-02 / 443.113-C — money-out Expense/COGS/OtherExpense categorizations are expense documents
+    ctx.run("node", ["scripts/verify-bank-categorized-cost-is-expense-document.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-bank-categorized-cost-is-expense-document.mjs"]);
   },
 };
