@@ -17,8 +17,8 @@ import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { refuseProductionConnectionString, refuseProductionDatabase } from "../../../test-helpers/refuse-production.js";
 import { ensureIntegrationPrerequisites, prepareCompanyForLoadInserts } from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
-import type { TrailerGpsFix } from "../../integrations/samsara/samsara-client.js";
-import { CO_LOCATED_METERS, matchLoadTrailersByGps, scoreCandidate } from "../load-trailer-gps-match.service.js";
+import type { TrailerGpsFix, TrailerGpsHistory } from "../../integrations/samsara/samsara-client.js";
+import { CO_LOCATED_METERS, dwellAt, dwellSearchSpan, matchLoadTrailersByGps, scoreCandidate } from "../load-trailer-gps-match.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -37,6 +37,22 @@ describe("GPS co-location scoring (pure)", () => {
     // present for the drive but not at delivery -> no match
     expect(scoreCandidate(truck, track().slice(0, 15), START, START + 240 * MIN).matches).toBe(false);
     expect(CO_LOCATED_METERS).toBe(300);
+  });
+});
+
+describe("dwell from GPS when the stop stamp is date-only (pure, R17)", () => {
+  it("a local-midnight stamp searches the whole day; the dwell is the truck's closest approach to the stop", () => {
+    const midnight = "2026-09-01T05:00:00.000Z"; // 00:00 CDT — what the Creator writes
+    const span = dwellSearchSpan(midnight);
+    expect(span[1] - span[0]).toBe(86_400_000);
+    const t = track();
+    // The pickup stop sits where the truck was at 14:00 (fix 12): the dwell is 14:00, not midnight.
+    expect(dwellAt(t, t[12]!.lat, t[12]!.lng, span)).toBe(t[12]!.t);
+    // A stop 50 km away the truck never reached: no dwell (never guessed).
+    expect(dwellAt(t, 30.5, -98.5, span)).toBeNull();
+    // A real timestamped stop searches +/- 6 h around it.
+    const real = dwellSearchSpan("2026-09-01T13:37:00.000Z");
+    expect(real[1] - real[0]).toBe(12 * 3_600_000);
   });
 });
 
@@ -79,16 +95,22 @@ describeIntegration("load trailer decided by Samsara GPS (443.107, real Postgres
         [opco, `${tag}-C1`, customer]
       )).id;
       let ev = 0;
-      const load = async (n: string, unitId: string) => {
+      const DAY = 86_400_000;
+      const DAYS: Record<string, number> = {}; // load id -> its day offset
+      const load = async (n: string, unitId: string, day: number, dateOnly = false) => {
         const id = (await one(
           `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, dispatcher_user_id, load_trailer_equipment_id, assigned_unit_id)
            VALUES ($1, $2, $3, $4, $5, $6) RETURNING id::text AS id`,
           [opco, `${tag}${n}`, customer, TEST_OWNER_USER_ID, trailerType, unitId]
         )).id;
-        await db.query(`INSERT INTO mdata.load_stops (operating_company_id, load_id, sequence_number, stop_type, actual_arrival_at, actual_departure_at)
-                        VALUES ($1, $2, 1, 'pickup', $3, $3), ($1, $2, 2, 'delivery', $4, $4)`,
-          [opco, id, new Date(START).toISOString(), new Date(START + 240 * 60_000).toISOString()]);
-        for (const f of track()) {
+        DAYS[id] = day;
+        const t = track().map((f) => ({ ...f, t: f.t + day * DAY }));
+        // Date-only stamps (local midnight, what the Creator writes) on one load; real times on the rest.
+        const stamp = (ms: number) => dateOnly ? new Date(Date.UTC(new Date(ms).getUTCFullYear(), new Date(ms).getUTCMonth(), new Date(ms).getUTCDate(), 5)).toISOString() : new Date(ms).toISOString();
+        await db.query(`INSERT INTO mdata.load_stops (operating_company_id, load_id, sequence_number, stop_type, actual_arrival_at, actual_departure_at, latitude, longitude)
+                        VALUES ($1, $2, 1, 'pickup', $3, $3, $5, $6), ($1, $2, 2, 'delivery', $4, $4, $7, $8)`,
+          [opco, id, stamp(t[0]!.t), stamp(t[24]!.t), t[0]!.lat, t[0]!.lng, t[24]!.lat, t[24]!.lng]);
+        for (const f of t) {
           await db.query(`INSERT INTO telematics.vehicle_locations (operating_company_id, unit_id, samsara_vehicle_id, captured_at, lat, lng, raw_samsara_event_id)
                           VALUES ($1, $2, 'veh', $3, $4, $5, $6)`, [opco, unitId, new Date(f.t).toISOString(), f.lat, f.lng, `${tag}-ev-${(ev += 1)}`]);
         }
@@ -99,29 +121,35 @@ describeIntegration("load trailer decided by Samsara GPS (443.107, real Postgres
         (await one(`INSERT INTO accounting.expenses (operating_company_id, transaction_date, total_amount_cents, trace_no, load_id, trailer_id)
                     VALUES ($1, current_date, 500, $2, $3, $4) RETURNING id::text AS id`, [opco, (trace += 1), loadId, trailerId])).id;
 
-      const lMatch = await load("1", await unit("U1"));
+      // One load per day, so one trailer can ride several loads; load 1 carries date-only (midnight) stop stamps.
+      const lMatch = await load("1", await unit("U1"), 0, true);
       const xMatch = await expense(lMatch, null);
-      const lTwo = await load("2", await unit("U2"));
-      const lNoGps = await load("3", await unit("U3"));
-      const lParked = await load("4", await unit("U4"));
-      const lConflict = await load("5", await unit("U5"));
+      const lTwo = await load("2", await unit("U2"), 1);
+      const lNoGps = await load("3", await unit("U3"), 2);
+      const lParked = await load("4", await unit("U4"), 3);
+      const lConflict = await load("5", await unit("U5"), 4);
       await expense(lConflict, tParked);
-      const lCustomer = await load("6", await unit("U6"));
+      const lCustomer = await load("6", await unit("U6"), 5);
       await db.query(`UPDATE mdata.loads SET trailer_source = 'customer', non_owned_trailer_id = $2 WHERE id = $1`, [lCustomer, nonOwned]);
 
-      // Samsara (injected): S1 rides with every truck; S2 rides only on load 2's window too (same window for all loads, so
-      // per-load behaviour is driven by which ids the fetcher returns per call — keyed by the load being scored).
-      let call = 0;
-      const order = [lMatch, lTwo, lNoGps, lParked, lConflict];
-      const fetchTrailerGps = async () => {
-        const l = order[call++];
-        const m = new Map<string, TrailerGpsFix[]>();
-        if (l === lMatch || l === lConflict) m.set(`${tag}S1`, track(0.0005));
-        if (l === lTwo) { m.set(`${tag}S1`, track(0.0005)); m.set(`${tag}S2`, track(-0.0005)); }
-        if (l === lParked) m.set(`${tag}S3`, track(0.05));
-        if (l !== lNoGps) m.set(`${tag}S4`, track(0.0001)); // foreign trailer right on the truck: must be ignored
-        return m;
+      // The Samsara "world": each trailer's whole track. S1 rides loads 1, 2 and 5; S2 rides load 2; S3 sits 5 km off on
+      // load 4's day; S4 (another company's) rides every load but 3 — it must never be a candidate. Nothing on day 2.
+      const ride = (day: number, dLat: number) => track(dLat).map((f) => ({ ...f, t: f.t + day * DAY }));
+      const world = new Map<string, TrailerGpsFix[]>([
+        [`${tag}S1`, [...ride(0, 0.0005), ...ride(1, 0.0005), ...ride(4, 0.0005)]],
+        [`${tag}S2`, ride(1, -0.0005)],
+        [`${tag}S3`, ride(3, 0.05)],
+        [`${tag}S4`, [0, 1, 3, 4].flatMap((d) => ride(d, 0.0001))],
+      ]);
+      const requested: string[][] = [];
+      const fetchTrailerGps = async (ids: string[], startIso: string, endIso: string): Promise<TrailerGpsHistory> => {
+        requested.push(ids);
+        const a = Date.parse(startIso), b = Date.parse(endIso);
+        const fixes = new Map<string, TrailerGpsFix[]>();
+        for (const id of ids) fixes.set(id, (world.get(id) ?? []).filter((f) => f.t >= a && f.t <= b));
+        return { fixes, requests: 1, rows: ids.length, retries: 0 };
       };
+      const order = [lMatch, lTwo, lNoGps, lParked, lConflict];
       const loadIds = order; // excludes nothing — the customer load is filtered by the service itself
       const amounts = async () => (await db.query(`SELECT id, total_amount_cents, status FROM accounting.expenses WHERE operating_company_id = $1 ORDER BY id`, [opco])).rows;
       const before = await amounts();
@@ -132,6 +160,12 @@ describeIntegration("load trailer decided by Samsara GPS (443.107, real Postgres
       const byLoad = (r: typeof dry) => Object.fromEntries(r.loads.map((d) => [d.load_id, d]));
       const dd = byLoad(dry);
       expect(dd[lMatch]).toMatchObject({ decision: "match", trailer_id: tRide, outcome: "planned" });
+      // Date-only stamps: the dwell came from the truck's GPS (12:00 / 16:00 UTC), not midnight.
+      expect(dd[lMatch].pickup_dwell_at).toBe(new Date(START).toISOString());
+      expect(dd[lMatch].delivery_dwell_at).toBe(new Date(START + 240 * 60_000).toISOString());
+      // Data-path proof on the response; stage 3 (whole trip) only fetched the trailers that survived pickup + delivery.
+      expect(dd[lMatch].samsara).toMatchObject({ trailers_queried: 3, at_pickup: 1, at_delivery: 1 });
+      expect(dry.samsara_requests).toBeGreaterThan(0);
       expect(dd[lTwo]).toMatchObject({ decision: "two_candidates", trailer_id: null });
       expect(dd[lTwo].reason).toMatch(/two candidates/);
       expect(dd[lNoGps]).toMatchObject({ decision: "no_trailer_gps" });
@@ -142,7 +176,6 @@ describeIntegration("load trailer decided by Samsara GPS (443.107, real Postgres
       expect(await hist()).toBe(0);
 
       // Real run.
-      call = 0;
       const run = await matchLoadTrailersByGps(db as never, { operatingCompanyId: opco, actorUserId: TEST_OWNER_USER_ID, dryRun: false, loadIds, fetchTrailerGps });
       expect(run.stamped_loads).toBe(1);
       expect(run.refused_loads).toBe(0);
@@ -156,7 +189,6 @@ describeIntegration("load trailer decided by Samsara GPS (443.107, real Postgres
       expect(await amounts()).toEqual(before);
 
       // Idempotent: the matched load now has an assignment trailer and is not considered again.
-      call = 1;
       const again = await matchLoadTrailersByGps(db as never, { operatingCompanyId: opco, actorUserId: TEST_OWNER_USER_ID, dryRun: false, loadIds: order.slice(1), fetchTrailerGps });
       expect(again.stamped_loads).toBe(0);
       expect(again.loads.find((d) => d.load_id === lMatch)).toBeUndefined();
