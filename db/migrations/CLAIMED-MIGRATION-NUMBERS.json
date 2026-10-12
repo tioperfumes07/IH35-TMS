@@ -2387,5 +2387,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-11",
     "purpose": "RULING 443.67 #1 a-c: USMCA line categorization refused at the DB for every writer — bill / expense / invoice lines need an item (resolved from the account when exactly one item maps), line account = item default unless an override reason; expenses posted => status posted; items need an account and a category (named exemptions); company flag, NOT VALID -> VALIDATE"
+  },
+  "202615610900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "RULING 443.80 #2: banking.refuse_live_match_row_on_released_line lets a SUGGESTION sit without a pointer (accepted match still refused); fuel duplicate trigger keyed on the base invoice (CC-2 443.76 d); function bodies + one index, no rows"
   }
 }
