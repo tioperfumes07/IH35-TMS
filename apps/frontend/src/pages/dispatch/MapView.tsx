@@ -133,9 +133,6 @@ export function MapView() {
                   noun="Unit"
                 />
               </span>
-              <span>
-                {p.lat.toFixed(4)}, {p.lng.toFixed(4)}
-              </span>
               <span>{p.speed_mph != null ? `${p.speed_mph} mph` : "—"}</span>
               {p.stale ? <span className="text-[#4B5563]">stale</span> : null}
             </li>
