@@ -51,6 +51,12 @@ async function seedFixtureCompany(): Promise<void> {
     REAL_VENDOR_ID = (await client.query<{ id: string }>(
       `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type)
        VALUES ($1::uuid, 'Fixture Repair Shop', 'repair_shop') RETURNING id::text`, [companyId])).rows[0]!.id;
+    // DEGH-04 (443.113): a check exists only if it posts, so the fixture company has expense GL posting ON (as the owner's does).
+    await client.query(
+      `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
+       VALUES ('EXPENSE_GL_POSTING_ENABLED', $1::uuid, NULL, true, $2::uuid)`,
+      [companyId, ACTOR_USER_ID]
+    );
     await client.query("COMMIT");
   } finally {
     await client.end();

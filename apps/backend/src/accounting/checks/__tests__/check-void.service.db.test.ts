@@ -123,6 +123,12 @@ describeIntegration("check-void.service (real Postgres, isolated company)", () =
          VALUES ($1::uuid,$2::uuid,'Test Maintenance Item ${suffix}','Service',$3::uuid)`,
         [maintenanceItemId, companyId, maintenanceAccountId]
       );
+      // DEGH-04 (443.113): a check exists only if it posts, so the fixture company has expense GL posting ON (as the owner's does).
+      await db.query(
+        `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
+         VALUES ('EXPENSE_GL_POSTING_ENABLED', $1::uuid, NULL, true, $2::uuid)`,
+        [companyId, actorUserId]
+      );
     });
   }, 60_000);
 
