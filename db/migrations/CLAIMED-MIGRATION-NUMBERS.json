@@ -158,6 +158,11 @@
       "claimed_at": "2026-10-12",
       "purpose": "443.116 #1: seed lib.feature_flags FUEL_POSTS_ON_RECEIPT_ENABLED (default OFF) — a fuel fill posts when it is received (import), the bank line only matches"
     },
+    "202615850910": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-12",
+      "purpose": "443.121 #1: fuel.fuel_receipt_postings — ONE fuel receipt identity across import / Settlement Creator / bank match; a second live fuel posting for the same receipt is refused by the database"
+    },
     "202615840910": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-12",
