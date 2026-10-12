@@ -204,41 +204,42 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
   // LV-CASH-FLOW-ACTUAL-SPLIT-FILTER-APPLY — From/To + Net variance share one staged Filters draft.
   const defaultFrom = sevenDaysAgoIso();
   const defaultTo = todayIso();
-  const [applied, setApplied] = useState<AvpFilterDraft>({
-    from: defaultFrom,
-    to: defaultTo,
-    varianceFilter: "all",
-  });
+  const [appliedFrom, setAppliedFrom] = useState(defaultFrom);
+  const [appliedTo, setAppliedTo] = useState(defaultTo);
+  const [appliedVarianceFilter, setAppliedVarianceFilter] = useState<VarianceFilter>("all");
+  const applied: AvpFilterDraft = { from: appliedFrom, to: appliedTo, varianceFilter: appliedVarianceFilter };
   const staged = useStagedListFilters({
     applied,
     empty: { from: defaultFrom, to: defaultTo, varianceFilter: "all" as VarianceFilter },
-    onApply: (next) => {
-      if (next.from > next.to) return;
-      setApplied(next);
+    onApply: ({ from, to, varianceFilter }) => {
+      if (from > to) return;
+      setAppliedFrom(from);
+      setAppliedTo(to);
+      setAppliedVarianceFilter(varianceFilter);
     },
   });
   const draftInvalid = staged.draft.from > staged.draft.to;
   const activeFilterCount =
-    (applied.varianceFilter === "all" ? 0 : 1) +
-    (applied.from !== defaultFrom || applied.to !== defaultTo ? 1 : 0);
+    (appliedVarianceFilter === "all" ? 0 : 1) +
+    (appliedFrom !== defaultFrom || appliedTo !== defaultTo ? 1 : 0);
 
   const avpQ = useQuery<ActualVsProjectedResult>({
-    queryKey: ["cash-flow-avp", operatingCompanyId, applied.from, applied.to],
-    queryFn: () => getActualVsProjected(operatingCompanyId, applied.from, applied.to),
-    enabled: !!operatingCompanyId && applied.from <= applied.to,
+    queryKey: ["cash-flow-avp", operatingCompanyId, appliedFrom, appliedTo],
+    queryFn: () => getActualVsProjected(operatingCompanyId, appliedFrom, appliedTo),
+    enabled: !!operatingCompanyId && appliedFrom <= appliedTo,
   });
   const { data, isLoading, isError } = avpQ;
 
   const groups = data ? groupByDate(data.lines) : [];
   const filteredGroups = useMemo(() => {
-    if (applied.varianceFilter === "all") return groups;
+    if (appliedVarianceFilter === "all") return groups;
     return groups.filter((g) => {
       const v = g.net.variance_cents;
-      if (applied.varianceFilter === "over") return v > 0;
-      if (applied.varianceFilter === "under") return v < 0;
+      if (appliedVarianceFilter === "over") return v > 0;
+      if (appliedVarianceFilter === "under") return v < 0;
       return v === 0;
     });
-  }, [groups, applied.varianceFilter]);
+  }, [groups, appliedVarianceFilter]);
   const acc = data?.accuracy_summary;
 
   return (

@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import type { WorkOrder } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
+import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
@@ -50,7 +52,7 @@ function Table({
         label: "WO #",
         sortable: true,
         render: (row) => (
-          <EntityLinkOrTombstone kind="work_order" id={row.id} name={row.display_id} noun="Work order" />
+          <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Work order")} className="text-xs font-semibold text-gray-800" onClick={(event) => { event.preventDefault(); onOpen(row.id); }} />
         ),
       },
       { key: "source_type", label: "Source", sortable: true, render: (row) => row.source_type ?? "—" },

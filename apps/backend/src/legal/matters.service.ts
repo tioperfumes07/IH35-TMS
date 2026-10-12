@@ -60,10 +60,9 @@ export const matterCreateSchema = z.object({
   unit_id: z.string().uuid().optional().nullable(),
   // Trailers live in mdata.equipment, NOT mdata.units - a separate key space, so a separate column.
   equipment_id: z.string().uuid().optional().nullable(),
-  // ROUND 316 (§10-B, migration 202615190100): the customer / vendor / load the matter is about.
+  // ROUND 316 (§10-B, migration 202615190100): the customer / vendor the matter is about.
   customer_id: z.string().uuid().optional().nullable(),
   vendor_id: z.string().uuid().optional().nullable(),
-  load_id: z.string().uuid().optional().nullable(),
 });
 
 /** ROUND 316: entity-scope a matter's customer / vendor / load before it is linked. */
@@ -574,12 +573,11 @@ export async function createMatter(
   await assertInsuranceLawsuitInCompany(client, input.insurance_lawsuit_id, args.operatingCompanyId);
   await assertMatterPartyInCompany(client, "mdata.customers", input.customer_id, args.operatingCompanyId);
   await assertMatterPartyInCompany(client, "mdata.vendors", input.vendor_id, args.operatingCompanyId);
-  await assertMatterPartyInCompany(client, "mdata.loads", input.load_id, args.operatingCompanyId);
   // ROUND 326: every matter must link a subject OR carry a named UNLINKED_REASON (no orphan matters).
   const provisional = {
     customer_id: input.customer_id,
     vendor_id: input.vendor_id,
-    load_id: input.load_id,
+    load_id: null,
     related_driver_id: input.related_driver_id,
     related_user_id: input.related_user_id,
     unit_id: input.unit_id,
@@ -667,11 +665,11 @@ export async function createMatter(
   );
   const row = ins.rows[0]!;
   const mid = String(row.id);
-  if (input.customer_id || input.vendor_id || input.load_id) {
+  if (input.customer_id || input.vendor_id) {
     const linked = await client.query(
-      `UPDATE legal.matters SET customer_id = $3::uuid, vendor_id = $4::uuid, load_id = $5::uuid
+      `UPDATE legal.matters SET customer_id = $3::uuid, vendor_id = $4::uuid
         WHERE id = $1::uuid AND operating_company_id = $2::uuid RETURNING *`,
-      [mid, args.operatingCompanyId, input.customer_id ?? null, input.vendor_id ?? null, input.load_id ?? null]
+      [mid, args.operatingCompanyId, input.customer_id ?? null, input.vendor_id ?? null]
     );
     if (linked.rows[0]) Object.assign(row, linked.rows[0]);
   }
@@ -706,7 +704,6 @@ export async function updateMatter(
   await assertInsuranceLawsuitInCompany(client, input.insurance_lawsuit_id, args.operatingCompanyId);
   await assertMatterPartyInCompany(client, "mdata.customers", input.customer_id, args.operatingCompanyId);
   await assertMatterPartyInCompany(client, "mdata.vendors", input.vendor_id, args.operatingCompanyId);
-  await assertMatterPartyInCompany(client, "mdata.loads", input.load_id, args.operatingCompanyId);
   const fields: string[] = [];
   const values: unknown[] = [];
   let i = 1;
@@ -744,7 +741,6 @@ export async function updateMatter(
   if (input.equipment_id !== undefined) push("equipment_id", input.equipment_id);
   if (input.customer_id !== undefined) push("customer_id", input.customer_id);
   if (input.vendor_id !== undefined) push("vendor_id", input.vendor_id);
-  if (input.load_id !== undefined) push("load_id", input.load_id);
   if (fields.length === 0) {
     const cur = await client.query(`SELECT * FROM legal.matters WHERE id = $1 AND operating_company_id = $2::uuid`, [
       args.matterId,

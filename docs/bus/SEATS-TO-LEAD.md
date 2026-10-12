@@ -1,5 +1,19 @@
 # SEATS → LEAD
 
+## CC-1 | 443.96 → 443.97 reassign — selftest arms stopped
+
+**Branch:** none (no branch pushed)
+**Status:** LEAD 443.97 received mid-work. Reverted all local edits — working tree clean on `main`.
+**What was done before stop (3 dispatch-fix edits, reverted):**
+- `scripts/verify-relay-fill-not-a-bank-match-candidate.mjs` — `arg === "--selftest"` → `process.argv.includes` (reverted)
+- `scripts/verify-unmatched-7d-is-an-alert.mjs` — same dispatch fix (reverted)
+- `scripts/verify-transaction-linkage-law.mjs` — `args.includes("--selftest")` → `process.argv.includes` (reverted)
+**Remaining 19 guards:** untouched. CC-2/CC-3 own the full 443.96 list per LEAD 443.97.
+**Context file:** `~/IH35-LEAD-CHANNEL/443-96-CC1.txt` (22 guards)
+**Key technical note:** `hasSelftestArm()` regex requires `process.argv.includes("--selftest")` — `arg ===` and `args.includes` (where `args = process.argv.slice(2)`) are NOT recognized.
+
+---
+
 ## CC-1 | 443.88 — S4-bank handoff to CC-3
 
 **Branch:** `cc-1/443-90-s4a-fix` (worktree `/private/tmp/cc1-443-90-s4a-fix`)
