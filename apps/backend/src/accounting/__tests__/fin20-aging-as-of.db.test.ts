@@ -14,6 +14,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import { insertInvoiceLine, insertLoadForInvoice } from "../../../test-helpers/load-born-invoice.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -54,11 +55,15 @@ describeIntegration("FIN-20 as-of AR/AP aging (real Postgres)", () => {
       `INSERT INTO mdata.customers (id, operating_company_id, customer_name) VALUES ($1::uuid,$2::uuid,$3)`,
       [customerId, companyId, `AS-OF Cust ${invDisplay}`]
     );
+    // LAW 363.2: a from_load invoice is written with its load (trg_from_load_invoice_carries_its_load).
+    const loadId = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 100000 });
     await db.query(
-      `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, total_cents, status)
-       VALUES ($1::uuid,$2::uuid,$3::uuid,$4,DATE '2026-01-01',DATE '2026-01-31',100000,'sent')`,
-      [invoiceId, companyId, customerId, invDisplay]
+      `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, total_cents, status, source_load_id)
+       VALUES ($1::uuid,$2::uuid,$3::uuid,$4,DATE '2026-01-01',DATE '2026-01-31',100000,'draft',$5::uuid)`,
+      [invoiceId, companyId, customerId, invDisplay, loadId]
     );
+    // The send path writes the line first, then the header becomes 'sent' (invoice_sent_requires_live_line).
+    await insertInvoiceLine(db, companyId, invoiceId, 100000, { loadId, status: "sent" });
     await db.query(
       `INSERT INTO accounting.payments (id, operating_company_id, customer_id, display_id, payment_method, payment_date, amount_cents)
        VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'ach',DATE '2026-02-15',40000)`,

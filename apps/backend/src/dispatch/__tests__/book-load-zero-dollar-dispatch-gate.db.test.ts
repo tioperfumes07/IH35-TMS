@@ -38,6 +38,10 @@ describeIntegration("Zero-dollar charge-lines at dispatch gate (FEED-PARITY-02)"
     await db.query("SET ROLE ih35_app");
     await db.query(`SELECT set_config('app.bypass_rls', 'lucia', false)`);
     await db.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [companyId]);
+    // The real caller (withCurrentUser) sets the acting user. dispatch.load_charge_lines' RLS policy has
+    // no bypass arm -- it scopes by org.user_accessible_company_ids(), which reads app.current_user_id --
+    // so without the actor a real charge line is refused (42501) before THIS gate is ever reached.
+    await db.query(`SELECT set_config('app.current_user_id', $1::text, false)`, [TEST_OWNER_USER_ID]);
     await db.query("BEGIN");
     await prepareCompanyForLoadInserts(db, companyId);
     const suf = randomUUID().slice(0, 8);
@@ -70,6 +74,14 @@ describeIntegration("Zero-dollar charge-lines at dispatch gate (FEED-PARITY-02)"
     await db?.end();
   });
 
+  // GO-10 REV-B: the allocator refuses to invent a first number (first_load_number_required, 422)
+  // for a company with no purely-numeric load yet, so the office types it -- this fixture does the
+  // same. Each call types a fresh number: every test rolls back to its savepoint, and parallel forks
+  // share this company under UNIQUE(operating_company_id, load_number).
+  function typedLoadNumber(): string {
+    return String(700_000_000 + Math.floor(Math.random() * 99_999_999));
+  }
+
   function dispatchInput(overrides: Partial<BookLoadInput> = {}): BookLoadInput {
     const tomorrow = new Date(Date.now() + 86_400_000).toISOString();
     const dayAfter = new Date(Date.now() + 2 * 86_400_000).toISOString();
@@ -79,6 +91,7 @@ describeIntegration("Zero-dollar charge-lines at dispatch gate (FEED-PARITY-02)"
       operating_company_id: companyId,
       customer_id: customerId,
       status: "assigned_not_dispatched",
+      load_number: typedLoadNumber(),
       assigned_primary_driver_id: driverId,
       miles_practical: 950,
       charges: [], // <-- the planted defect: no charge lines at all

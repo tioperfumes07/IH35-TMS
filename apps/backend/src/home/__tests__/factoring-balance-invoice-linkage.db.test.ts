@@ -15,6 +15,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import { insertInvoiceLine, insertLoadForInvoice } from "../../../test-helpers/load-born-invoice.js";
 import {
   FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY,
   TEST_OWNER_USER_ID,
@@ -332,15 +333,22 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
          VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'advanced',1000000,97,970000,1.5,15000,1.5,15000,now())`,
         [multiAdvanceId, companyId, vendorId, `FA-FBL-${n()}`]
       );
+      // LAW 363.2: every invoice here is from_load (the column default) and trg_from_load_invoice_carries_its_load
+      // refuses one with no source_load_id — each invoice is written with its own load (one live invoice per load).
+      const loadA = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 600000 });
+      const loadB = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 400000 });
       await db.query(
         `INSERT INTO accounting.invoices
            (id, operating_company_id, customer_id, display_id, issue_date, due_date,
-            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status)
+            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status, source_load_id)
          VALUES
-           ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,600000,0,600000,'factored',$5::uuid,'advanced'),
-           ($6::uuid,$2::uuid,$3::uuid,$7,CURRENT_DATE,CURRENT_DATE,400000,0,400000,'factored',$5::uuid,'advanced')`,
-        [invA, companyId, customerId, displayIds.invA, multiAdvanceId, invB, displayIds.invB]
+           ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,600000,0,600000,'factored',$5::uuid,'advanced',$8::uuid),
+           ($6::uuid,$2::uuid,$3::uuid,$7,CURRENT_DATE,CURRENT_DATE,400000,0,400000,'factored',$5::uuid,'advanced',$9::uuid)`,
+        [invA, companyId, customerId, displayIds.invA, multiAdvanceId, invB, displayIds.invB, loadA, loadB]
       );
+      // invoice_must_have_lines: a live invoice header has at least one line.
+      await insertInvoiceLine(db, companyId, invA, 600000, { loadId: loadA });
+      await insertInvoiceLine(db, companyId, invB, 400000, { loadId: loadB });
       await insertBalancedJe({
         jeId: fundingJeMulti,
         opco: companyId,
@@ -361,13 +369,16 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
          VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'reserve_held',500000,97,485000,1.5,7500,1.5,7500,now(),now())`,
         [settledAdvanceId, companyId, vendorId, `FA-SET-${n()}`]
       );
+      const loadSettled = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 500000 });
       await db.query(
         `INSERT INTO accounting.invoices
            (id, operating_company_id, customer_id, display_id, issue_date, due_date,
-            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,500000,0,500000,'paid',$5::uuid,'reserve_held')`,
-        [invSettled, companyId, customerId, displayIds.invSettled, settledAdvanceId]
+            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,500000,0,500000,'draft',$5::uuid,'reserve_held',$6::uuid)`,
+        [invSettled, companyId, customerId, displayIds.invSettled, settledAdvanceId, loadSettled]
       );
+      // The send path writes the line first, then the header moves to its status (invoice_sent_requires_live_line).
+      await insertInvoiceLine(db, companyId, invSettled, 500000, { loadId: loadSettled, status: "paid" });
       await insertBalancedJe({
         jeId: fundingJeSettled,
         opco: companyId,
@@ -435,13 +446,16 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
          VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'recourse_returned',200000,97,194000,1.5,3000,1.5,3000,now(),now())`,
         [recourseAdvanceId, companyId, vendorId, `FA-REC-${n()}`]
       );
+      const loadRecourse = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 200000 });
       await db.query(
         `INSERT INTO accounting.invoices
            (id, operating_company_id, customer_id, display_id, issue_date, due_date,
-            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,200000,0,200000,'factored',$5::uuid,'recourse_returned')`,
-        [invRecourse, companyId, customerId, displayIds.invRecourse, recourseAdvanceId]
+            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,200000,0,200000,'factored',$5::uuid,'recourse_returned',$6::uuid)`,
+        [invRecourse, companyId, customerId, displayIds.invRecourse, recourseAdvanceId, loadRecourse]
       );
+      // invoice_must_have_lines: a live invoice header has at least one line.
+      await insertInvoiceLine(db, companyId, invRecourse, 200000, { loadId: loadRecourse });
       await insertBalancedJe({
         jeId: fundingJeRecourse,
         opco: companyId,
@@ -486,13 +500,16 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
          VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'collected',300000,97,291000,1.5,4500,1.5,4500,now(),now())`,
         [statusOnlyAdvanceId, companyId, vendorId, `FA-STAT-${n()}`]
       );
+      const loadStatusOnly = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 300000 });
       await db.query(
         `INSERT INTO accounting.invoices
            (id, operating_company_id, customer_id, display_id, issue_date, due_date,
-            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,300000,0,300000,'paid',$5::uuid,'collected')`,
-        [invStatusOnly, companyId, customerId, displayIds.invStatusOnly, statusOnlyAdvanceId]
+            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,300000,0,300000,'draft',$5::uuid,'collected',$6::uuid)`,
+        [invStatusOnly, companyId, customerId, displayIds.invStatusOnly, statusOnlyAdvanceId, loadStatusOnly]
       );
+      // The send path writes the line first, then the header moves to its status (invoice_sent_requires_live_line).
+      await insertInvoiceLine(db, companyId, invStatusOnly, 300000, { loadId: loadStatusOnly, status: "paid" });
       await insertBalancedJe({
         jeId: fundingJeStatusOnly,
         opco: companyId,
@@ -513,29 +530,34 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
          VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'voided',999999,97,970000,1.5,15000,1.5,15000,now())`,
         [voidedAdvanceId, companyId, vendorId, `FA-VOID-${n()}`]
       );
+      const loadVoidedAdv = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 999999 });
       await db.query(
         `INSERT INTO accounting.invoices
            (id, operating_company_id, customer_id, display_id, issue_date, due_date,
-            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status, voided_at)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,999999,0,999999,'void',$5::uuid,'advanced',now())`,
-        [invVoidedAdv, companyId, customerId, displayIds.invVoidedAdv, voidedAdvanceId]
+            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status, voided_at, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,999999,0,999999,'void',$5::uuid,'advanced',now(),$6::uuid)`,
+        [invVoidedAdv, companyId, customerId, displayIds.invVoidedAdv, voidedAdvanceId, loadVoidedAdv]
       );
 
+      const loadVoidedInvoice = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 1 });
       await db.query(
         `INSERT INTO accounting.invoices
            (id, operating_company_id, customer_id, display_id, issue_date, due_date,
-            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status, voided_at)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,1,0,1,'void',$5::uuid,'advanced',now())`,
-        [invVoidedInvoice, companyId, customerId, displayIds.invVoidedInvoice, multiAdvanceId]
+            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status, voided_at, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,1,0,1,'void',$5::uuid,'advanced',now(),$6::uuid)`,
+        [invVoidedInvoice, companyId, customerId, displayIds.invVoidedInvoice, multiAdvanceId, loadVoidedInvoice]
       );
 
+      const loadC = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 0 });
       await db.query(
         `INSERT INTO accounting.invoices
            (id, operating_company_id, customer_id, display_id, issue_date, due_date,
-            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,0,0,0,'factored',$5::uuid,'advanced')`,
-        [invC, companyId, customerId, displayIds.invC, multiAdvanceId]
+            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,0,0,0,'factored',$5::uuid,'advanced',$6::uuid)`,
+        [invC, companyId, customerId, displayIds.invC, multiAdvanceId, loadC]
       );
+      // invoice_must_have_lines: a live invoice header has at least one line.
+      await insertInvoiceLine(db, companyId, invC, 0, { loadId: loadC });
     });
 
     await bypass(otherCompanyId!, async () => {
@@ -557,13 +579,16 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
          VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'advanced',7777777,97,7500000,1.5,116666,1.5,116666,now())`,
         [otherCompanyAdvanceId, otherCompanyId, otherVendorId, `FA-OTH-${n()}`]
       );
+      const loadOther = await insertLoadForInvoice(db, otherCompanyId!, otherCustomerId, { rateTotalCents: 7777777 });
       await db.query(
         `INSERT INTO accounting.invoices
            (id, operating_company_id, customer_id, display_id, issue_date, due_date,
-            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,7777777,0,7777777,'factored',$5::uuid,'advanced')`,
-        [invOther, otherCompanyId, otherCustomerId, displayIds.invOther, otherCompanyAdvanceId]
+            subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,7777777,0,7777777,'factored',$5::uuid,'advanced',$6::uuid)`,
+        [invOther, otherCompanyId, otherCustomerId, displayIds.invOther, otherCompanyAdvanceId, loadOther]
       );
+      // invoice_must_have_lines: a live invoice header has at least one line.
+      await insertInvoiceLine(db, otherCompanyId!, invOther, 7777777, { loadId: loadOther });
     });
   }, 180_000);
 
@@ -653,12 +678,14 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     expect(isCanonicalInvoiceDisplayId(badDisplay)).toBe(false);
     await expect(
       bypass(companyId, async () => {
+        // Carries its load so the refusal under test is invoices_display_id_check, not LAW 363.2.
+        const badLoadId = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 1 });
         await db.query(
           `INSERT INTO accounting.invoices
              (id, operating_company_id, customer_id, display_id, issue_date, due_date,
-              subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status)
-           VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,1,0,1,'factored',$5::uuid,'advanced')`,
-          [badId, companyId, customerId, badDisplay, multiAdvanceId]
+              subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status, source_load_id)
+           VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,1,0,1,'factored',$5::uuid,'advanced',$6::uuid)`,
+          [badId, companyId, customerId, badDisplay, multiAdvanceId, badLoadId]
         );
       })
     ).rejects.toMatchObject({

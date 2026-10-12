@@ -21,6 +21,7 @@ import {
   type IsolatedOperatingCompany,
 } from "../../../test-helpers/db-fixture.js";
 import { createIntegrationApp } from "../../../test-helpers/http-app.js";
+import { insertInvoiceLine, insertLoadForInvoice } from "../../../test-helpers/load-born-invoice.js";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { registerCreditMemosRoutes } from "../credit-memos.routes.js";
 
@@ -82,16 +83,22 @@ describeIntegration("AR credit memos live path (real Postgres)", () => {
          VALUES ($1::uuid, $2::uuid, $3)`,
         [otherCustomerId, companyId, `Other Customer ${suffix}`]
       );
+      // LAW 363.2: a from_load invoice is written with its load (trg_from_load_invoice_carries_its_load).
+      const loadId = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 50000 });
+      const otherLoadId = await insertLoadForInvoice(db, companyId, otherCustomerId, { rateTotalCents: 50000 });
       await db.query(
-        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, due_date, total_cents)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, CURRENT_DATE + 30, 50000)`,
-        [invoiceId, companyId, customerId, `INV-2026-${suffixDigits}`]
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, due_date, total_cents, source_load_id)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, CURRENT_DATE + 30, 50000, $5::uuid)`,
+        [invoiceId, companyId, customerId, `INV-2026-${suffixDigits}`, loadId]
       );
       await db.query(
-        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, due_date, total_cents)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, CURRENT_DATE + 30, 50000)`,
-        [otherCustomerInvoiceId, companyId, otherCustomerId, `INV-2026-9${suffixDigits.slice(0, 4)}`]
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, due_date, total_cents, source_load_id)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, CURRENT_DATE + 30, 50000, $5::uuid)`,
+        [otherCustomerInvoiceId, companyId, otherCustomerId, `INV-2026-9${suffixDigits.slice(0, 4)}`, otherLoadId]
       );
+      // invoice_must_have_lines: a live invoice header has at least one line.
+      await insertInvoiceLine(db, companyId, invoiceId, 50000, { loadId });
+      await insertInvoiceLine(db, companyId, otherCustomerInvoiceId, 50000, { loadId: otherLoadId });
       await db.query(
         `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, account_subtype, is_postable)
          VALUES ($1::uuid, $3::uuid, $4, $5, 'Asset', 'AccountsReceivable', true),
@@ -119,7 +126,9 @@ describeIntegration("AR credit memos live path (real Postgres)", () => {
           [companyId]
         );
         await db.query(`DELETE FROM accounting.credit_memos WHERE operating_company_id = $1::uuid`, [companyId]);
+        await db.query(`DELETE FROM accounting.invoice_lines WHERE operating_company_id = $1::uuid`, [companyId]);
         await db.query(`DELETE FROM accounting.invoices WHERE operating_company_id = $1::uuid`, [companyId]);
+        await db.query(`DELETE FROM mdata.loads WHERE operating_company_id = $1::uuid`, [companyId]);
         await db.query(`DELETE FROM mdata.customers WHERE operating_company_id = $1::uuid`, [companyId]);
       }).catch(() => {});
       await db.end().catch(() => {});

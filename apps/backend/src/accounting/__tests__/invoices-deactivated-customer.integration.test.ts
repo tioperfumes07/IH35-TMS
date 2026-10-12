@@ -23,6 +23,7 @@ import {
   type IsolatedOperatingCompany,
 } from "../../../test-helpers/db-fixture.js";
 import { createIntegrationApp } from "../../../test-helpers/http-app.js";
+import { insertInvoiceLine, insertLoadForInvoice } from "../../../test-helpers/load-born-invoice.js";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { registerInvoiceRoutes } from "../invoices.routes.js";
 
@@ -74,11 +75,15 @@ describeIntegration("invoices list survives a deactivated customer (real Postgre
          VALUES ($1::uuid, $2::uuid, $3)`,
         [customerId, companyId, customerName]
       );
+      // LAW 363.2: a from_load invoice is written with its load (trg_from_load_invoice_carries_its_load).
+      const loadId = await insertLoadForInvoice(db, companyId, customerId, { rateTotalCents: 12500 });
       await db.query(
-        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, due_date, total_cents)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, CURRENT_DATE + 30, 12500)`,
-        [invoiceId, companyId, customerId, `INV-2026-${suffixDigits}`]
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, due_date, total_cents, source_load_id)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, CURRENT_DATE + 30, 12500, $5::uuid)`,
+        [invoiceId, companyId, customerId, `INV-2026-${suffixDigits}`, loadId]
       );
+      // invoice_must_have_lines: a live invoice header has at least one line.
+      await insertInvoiceLine(db, companyId, invoiceId, 12500, { loadId });
       // The whole point of this suite: deactivate the customer AFTER the invoice already cites it.
       await db.query(`UPDATE mdata.customers SET deactivated_at = now() WHERE id = $1::uuid`, [customerId]);
     });
@@ -92,7 +97,9 @@ describeIntegration("invoices list survives a deactivated customer (real Postgre
     await app?.close();
     if (db) {
       await bypass(async () => {
+        await db.query(`DELETE FROM accounting.invoice_lines WHERE operating_company_id = $1::uuid`, [companyId]);
         await db.query(`DELETE FROM accounting.invoices WHERE operating_company_id = $1::uuid`, [companyId]);
+        await db.query(`DELETE FROM mdata.loads WHERE operating_company_id = $1::uuid`, [companyId]);
         await db.query(`DELETE FROM mdata.customers WHERE operating_company_id = $1::uuid`, [companyId]);
       }).catch(() => {});
       await db.end().catch(() => {});
