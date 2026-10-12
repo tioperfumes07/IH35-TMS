@@ -133,7 +133,7 @@ export type SectionBLine = {
 /** A work-order line names a catalog item of the WORK ORDER's company (work_order_lines has no company column). */
 export class WorkOrderLineItemError extends Error {
   readonly code: string;
-  constructor(code: "wo_line_item_not_in_company" | "wo_line_item_required", message: string) {
+  constructor(code: "wo_line_item_not_in_company" | "wo_line_item_required" | "wo_line_item_account_mismatch", message: string) {
     super(`${code}: ${message}`);
     this.code = code;
     this.name = "WorkOrderLineItemError";
@@ -148,6 +148,45 @@ export async function assertWorkOrderLineItem(client: DbClient, operatingCompany
   );
   if (!hit.rows[0]) throw new WorkOrderLineItemError("wo_line_item_not_in_company", `item ${itemId} is not an item of this company`);
   return itemId;
+}
+
+/**
+ * ACCT-F4431382 (DEGH-03, 443.113 — the rule a check category line uses, and the WO Section A item picker's filter):
+ * a CATEGORY line's item must post to that category's account. The category is a catalogs.accounts row of the work
+ * order's company and the item's default_expense_account_id must be that account — otherwise the bill line (which posts
+ * to the ITEM's account) would book somewhere other than the category the operator chose. Refused by name, never fixed
+ * up. One helper, called by the V5 create route (Section A) and the edit /line-items route (when a category is named).
+ */
+export async function assertWorkOrderCategoryLineItem(
+  client: DbClient,
+  operatingCompanyId: string,
+  itemId: string | null | undefined,
+  categoryAccountId: string | null | undefined
+): Promise<void> {
+  if (!itemId || !categoryAccountId) return;
+  const row = (
+    await client.query<{ item_account_id: string | null; item_name: string; category_account_id: string | null }>(
+      `SELECT i.default_expense_account_id::text AS item_account_id, i.item_name,
+              (SELECT a.id::text FROM catalogs.accounts a
+                WHERE a.id = $3::uuid AND a.operating_company_id = $2::uuid) AS category_account_id
+         FROM catalogs.items i
+        WHERE i.id = $1::uuid AND i.operating_company_id = $2::uuid`,
+      [itemId, operatingCompanyId, categoryAccountId]
+    )
+  ).rows[0];
+  if (!row) throw new WorkOrderLineItemError("wo_line_item_not_in_company", `item ${itemId} is not an item of this company`);
+  if (!row.category_account_id) {
+    throw new WorkOrderLineItemError(
+      "wo_line_item_account_mismatch",
+      `category ${categoryAccountId} is not an account of this company — a category line's item must post to its category account`
+    );
+  }
+  if (row.item_account_id !== row.category_account_id) {
+    throw new WorkOrderLineItemError(
+      "wo_line_item_account_mismatch",
+      `item "${row.item_name}" posts to a different account than this line's category — pick an item of that category, or add the cost as a Section B item line`
+    );
+  }
 }
 
 function asNumber(value: number | string | null | undefined) {
