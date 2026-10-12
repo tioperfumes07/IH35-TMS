@@ -1738,6 +1738,16 @@ export async function bookLoadOnClient(
   // live_feed (fail-closed). See createLoadWithFullSideEffects's own header.
   const source: LoadCreateSource = opts?.source === "historical_backfill" ? "historical_backfill" : "live_feed";
   const result = await createLoadWithFullSideEffects(client, input, { source });
+  // LEAD 443.121 #2 — a fuel receipt posted before this load existed (deadhead / yard reason) whose fill time this load
+  // covers is attached to it now: same JE, same document (fuel/fuel-receipt-repoint.service.ts). Never fails the booking.
+  if (result.kind === "ok" && result.row?.id) {
+    const { repointFuelReceiptsToLoad } = await import("../fuel/fuel-receipt-repoint.service.js");
+    await repointFuelReceiptsToLoad(client as never, {
+      operatingCompanyId: input.operating_company_id,
+      loadId: String(result.row.id),
+      actorUserId: input.requestingUserUuid,
+    });
+  }
   return { result, afterCommit: () => queueAfterBookExtras(input, result, source) };
 }
 

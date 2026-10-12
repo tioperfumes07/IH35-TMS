@@ -707,9 +707,44 @@ export async function fillRelayFillExpenseSettlementRef(
   return Boolean(r.rows[0]);
 }
 
+/**
+ * LEAD 443.121 #3 — a fuel receipt document that lands on a load already held by ONE live settlement names that settlement,
+ * written by the engine (never a second document, never a manual fix). Same settlement predicate as
+ * verify-relay-fill-expense-settlement-ref (driver_settlement_gl_bills by load number, or settlement_lines by load); same
+ * reference the Creator passes (source_document_ref ?? display_id); fill-once through fillRelayFillExpenseSettlementRef.
+ * Zero or several holding settlements -> nothing is stamped (the Creator adopt names it when the settlement posts).
+ */
+export async function stampReceiptDocumentSettlementRef(
+  client: QueryableClient,
+  input: { operating_company_id: string; expense_id: string; actor_user_uuid?: string | null },
+): Promise<string | null> {
+  const r = await client.query<{ ref: string | null; n: number }>(
+    `WITH doc AS (
+       SELECT e.load_id, e.operating_company_id FROM accounting.expenses e
+        WHERE e.id = $1::uuid AND e.operating_company_id = $2::uuid AND e.voided_at IS NULL AND e.load_id IS NOT NULL
+          AND (e.settlement_no IS NULL OR e.source_settlement_ref IS NULL)
+     ), holders AS (
+       SELECT DISTINCT s.id, COALESCE(NULLIF(btrim(s.source_document_ref), ''), s.display_id) AS ref
+         FROM doc
+         JOIN driver_finance.driver_settlements s ON s.operating_company_id = doc.operating_company_id
+        WHERE s.voided_at IS NULL AND s.status <> 'cancelled'
+          AND (s.id IN (SELECT g.settlement_id FROM driver_finance.driver_settlement_gl_bills g
+                          JOIN mdata.loads l ON l.load_number = g.load_number AND l.operating_company_id = g.operating_company_id
+                         WHERE l.id = doc.load_id)
+               OR s.id IN (SELECT sl.settlement_id FROM driver_finance.settlement_lines sl WHERE sl.load_id = doc.load_id))
+     )
+     SELECT min(ref) AS ref, count(*)::int AS n FROM holders`,
+    [input.expense_id, input.operating_company_id],
+  );
+  const row = r.rows[0];
+  if (!row || row.n !== 1 || !row.ref) return null;
+  await fillRelayFillExpenseSettlementRef(client, { operating_company_id: input.operating_company_id, expense_id: input.expense_id, settlement_no: row.ref, actor_user_uuid: input.actor_user_uuid ?? null });
+  return row.ref;
+}
+
 export async function adoptRelayFillExpenseDocument(
   client: QueryableClient,
-  input: { operating_company_id: string; relay_fill_id: string; journal_entry_id: string; requesting_user_uuid?: string | null; settlement_no?: string | null; trailer_id?: string | null },
+  input: { operating_company_id: string; relay_fill_id: string; journal_entry_id: string; requesting_user_uuid?: string | null; settlement_no?: string | null; trailer_id?: string | null; load_exemption_reason?: string | null },
 ): Promise<RelayFillDocumentOutcome> {
   const company = input.operating_company_id;
   const existing = await client.query<{ id: string }>(
@@ -720,6 +755,8 @@ export async function adoptRelayFillExpenseDocument(
   if (existing.rows[0]) {
     if (input.settlement_no) {
       await fillRelayFillExpenseSettlementRef(client, { operating_company_id: company, expense_id: existing.rows[0].id, settlement_no: input.settlement_no, actor_user_uuid: input.requesting_user_uuid ?? null });
+    } else {
+      await stampReceiptDocumentSettlementRef(client, { operating_company_id: company, expense_id: existing.rows[0].id, actor_user_uuid: input.requesting_user_uuid ?? null });
     }
     return { outcome: "already_exists", expense_id: existing.rows[0].id, journal_entry_id: input.journal_entry_id };
   }
@@ -831,7 +868,7 @@ export async function adoptRelayFillExpenseDocument(
         Boolean(d.load_id ?? loadId), d.account_id, itemId, driverId, unitId, primary?.trailer_id ?? input.trailer_id ?? null,
         resolveLineLoadExemption({
           loadId: d.load_id ?? loadId,
-          reason: primary?.load_exemption_reason ?? fills.rows[0]?.load_exemption_reason ?? null,
+          reason: primary?.load_exemption_reason ?? fills.rows[0]?.load_exemption_reason ?? input.load_exemption_reason ?? null,
           accountLabel: "Relay fuel",
           context: `Relay fill ${input.relay_fill_id} — no load matched`,
         })],
@@ -846,6 +883,9 @@ export async function adoptRelayFillExpenseDocument(
       [company, expenseId, loadId, loadAttribution.loadNumber, loadAttribution.seq, expenseNumber,
         "Relay fill — load carried on its posting", input.requesting_user_uuid ?? null],
     );
+  }
+  if (!input.settlement_no) {
+    await stampReceiptDocumentSettlementRef(client, { operating_company_id: company, expense_id: expenseId, actor_user_uuid: input.requesting_user_uuid ?? null });
   }
   await appendCrudAudit(
     client,
