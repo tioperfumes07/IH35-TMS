@@ -19,6 +19,7 @@ import {
   fillLoadDeadhead,
   type DeadheadFillResult,
 } from "./miles-recommendations.service.js";
+import { decidePrintedTrailers } from "../printed-trailer-decision.service.js";
 
 const READ_ROLES = new Set(["Owner", "Administrator", "Manager", "Dispatcher", "Accountant", "Safety"]);
 const WRITE_ROLES = new Set(["Owner", "Administrator", "Manager", "Dispatcher"]);
@@ -166,6 +167,25 @@ export async function registerMilesRecommendationsRoutes(app: FastifyInstance) {
         not_filled: results.filter((r) => r.status === "not_filled").map((r) => `${r.load_number}: ${r.reason}`),
         filled: results.filter((r) => r.status === "filled").map((r) => `${r.load_number} ${r.miles} (${r.method})`),
       };
+    });
+    if (!out) return reply.code(404).send({ error: "company_not_found" });
+    return out;
+  });
+
+  // RULING 443.90 #4 — every printed trailer number gets a decision (company equipment / Samsara unmapped / customer trailer).
+  app.post("/api/v1/mdata/loads/printed-trailer-decide", { config: { rateLimit: { max: 6, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const u = authUser(req, reply, DEADHEAD_FILL_ROLES);
+    if (!u) return reply;
+    const b = z.object({ operating_company_id: z.string().uuid(), dry_run: z.boolean().default(true) }).safeParse(req.body ?? {});
+    if (!b.success) return reply.code(400).send({ error: "invalid_request" });
+    const out = await withCurrentUser(u.uuid, async (client) => {
+      const companyId = await scope(client, u.uuid, b.data.operating_company_id);
+      if (!companyId) return null;
+      await client.query("SAVEPOINT printed_trailer");
+      const decisions = await decidePrintedTrailers(client as never, { operatingCompanyId: companyId, actorUserId: u.uuid });
+      if (b.data.dry_run) await client.query("ROLLBACK TO SAVEPOINT printed_trailer");
+      else await client.query("RELEASE SAVEPOINT printed_trailer");
+      return { dry_run: b.data.dry_run, decisions };
     });
     if (!out) return reply.code(404).send({ error: "company_not_found" });
     return out;

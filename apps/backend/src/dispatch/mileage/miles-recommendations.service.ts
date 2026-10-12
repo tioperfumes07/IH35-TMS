@@ -407,7 +407,7 @@ export async function recordDocumentMilesSources(
 // recommendation uses:
 //   google_practical_prev_stop          the unit's previous load's last stop -> this load's first pickup
 //   google_practical_samsara_position   the unit's FIRST load: the truck's Samsara position at dispatch (last fix at or before
-//                                       the first pickup, within 48 h) -> the first pickup
+//                                       the first pickup, any age — 443.90 #2) -> the first pickup
 //   otherwise                           nothing written; the reason is returned and listed ("no previous load", ...)
 // Only a NULL miles_deadhead is filled — a document or user value is never replaced. Only miles_deadhead, its method and
 // miles_choice.empty are written: loaded miles, pay and invoice amounts are untouched (document miles stay the pay basis).
@@ -463,13 +463,14 @@ export async function fillLoadDeadhead(
       const fix = (
         await client.query<{ lat: number; lng: number; captured_at: string }>(
           `SELECT lat::float8 AS lat, lng::float8 AS lng, captured_at::text FROM telematics.vehicle_locations
-            WHERE unit_id = $1::uuid AND captured_at <= $2::timestamptz AND captured_at > $2::timestamptz - interval '48 hours'
+            WHERE unit_id = $1::uuid AND captured_at <= $2::timestamptz
               AND lat IS NOT NULL AND lng IS NOT NULL
             ORDER BY captured_at DESC LIMIT 1`,
           [row.unit, firstAt]
         )
       ).rows[0];
-      if (!fix) reason = "no previous load and no Samsara position for the truck in the 48 h before the first pickup";
+      // 443.90 #2: the truck's LAST Samsara position before the pickup, at any age (the truck has not moved since).
+      if (!fix) reason = "no previous load and no Samsara position for the truck before the first pickup";
       else {
         const leg = await googleLegMiles(client, { lat: Number(fix.lat), lng: Number(fix.lng) }, { lat: Number(first.latitude), lng: Number(first.longitude) }, route);
         if (!leg) reason = "Google had no route from the truck's Samsara position";
