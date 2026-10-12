@@ -38,11 +38,16 @@ async function loadFragments() {
   return { canonicalDispatchWorkStatusClause, currentTruckLineLoadSql, UNIT_IN_SERVICE_SQL };
 }
 
-function staticChecks() {
+function readSources() {
+  return {
+    helper: read("apps/backend/src/dispatch/current-truck-line-load.ts"),
+    board: read("apps/frontend/src/pages/dispatch/TruckLineBoard.tsx"),
+    routes: read("apps/backend/src/dispatch/truck-line/truck-line.routes.ts"),
+  };
+}
+
+function staticChecks({ helper, board, routes } = readSources()) {
   const problems = [];
-  const helper = read("apps/backend/src/dispatch/current-truck-line-load.ts");
-  const board = read("apps/frontend/src/pages/dispatch/TruckLineBoard.tsx");
-  const routes = read("apps/backend/src/dispatch/truck-line/truck-line.routes.ts");
 
   if (!/canonicalDispatchWorkWhereClause/.test(helper)) {
     problems.push("current-truck-line-load.ts must alias canonicalDispatchWorkWhereClause (TRUCKLINE-16 — dispatch-work, not accounting)");
@@ -97,6 +102,37 @@ function staticChecks() {
   return problems;
 }
 
+/** Live verdict as a pure function — board and canonical must be the SAME load_number set. */
+function compareSets(cSet, bSet) {
+  const onlyC = cSet.filter((n) => !bSet.includes(n));
+  const onlyB = bSet.filter((n) => !cSet.includes(n));
+  return { onlyC, onlyB, differs: onlyC.length > 0 || onlyB.length > 0 || cSet.length !== bSet.length };
+}
+
+function selftest() {
+  const src = readSources();
+  const header = src.board.match(/data-testid="truck-line-column-order"[\s\S]*?<\/div>/)?.[0] ?? "";
+  const planted = [
+    ["CURRENT back on the accounting predicate", staticChecks({ ...src, helper: src.helper.replaceAll("canonicalDispatchWorkWhereClause", "canonicalActiveLoadWhereClause") }).length > 0],
+    ["48h hide reintroduced", staticChecks({ ...src, helper: src.helper + "\n// AND l.delivered_at > now() - interval '48 hours'" }).length > 0],
+    ["columns reordered (LOAD before TOUR)", staticChecks({ ...src, board: src.board.replace(header, header.replace('label="TOUR"', 'label="__T__"').replace('label="LOAD"', 'label="TOUR"').replace('label="__T__"', 'label="LOAD"')) }).length > 0],
+    ["return-trip row loses its unit", staticChecks({ ...src, board: src.board.replaceAll("truck-line-return-trip-", "truck-line-rt-") }).length > 0],
+    ["status dropdown removed", staticChecks({ ...src, board: src.board.replaceAll("truck-line-status-dropdown-", "truck-line-sd-") }).length > 0],
+    ["drag unwired", staticChecks({ ...src, board: src.board.replaceAll("onDragStatus", "onNothing") }).length > 0],
+    ["settled-while-rolling load dropped off the board", compareSets(["13660", "13661"], ["13660"]).differs],
+    ["stray load on the board", compareSets(["13660"], ["13660", "13999"]).differs],
+    ["duplicate board row", compareSets(["13660", "13661"], ["13660", "13661", "13661"]).differs],
+  ];
+  const caught = planted.filter(([, ok]) => ok).length;
+  for (const [name, ok] of planted) if (!ok) console.error(`${LABEL} SELFTEST: planted violation escaped — ${name}`);
+  const clean = staticChecks(src);
+  const cleanSets = !compareSets(["13660", "13661"], ["13661", "13660"]).differs;
+  if (clean.length) console.error(`${LABEL} SELFTEST: clean sources flagged — ${clean.join("; ")}`);
+  if (!cleanSets) console.error(`${LABEL} SELFTEST: equal sets flagged`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught`);
+  process.exit(caught === planted.length && clean.length === 0 && cleanSets ? 0 : 1);
+}
+
 async function liveChecks() {
   if (!process.env.DATABASE_URL) {
     console.error(`${LABEL}: FAIL — DATABASE_URL not set (REQUIRES_LIVE_DB)`);
@@ -134,9 +170,8 @@ async function liveChecks() {
 
     const cSet = canonical.rows.map((r) => r.load_number);
     const bSet = board.rows.map((r) => r.load_number);
-    const onlyC = cSet.filter((n) => !bSet.includes(n));
-    const onlyB = bSet.filter((n) => !cSet.includes(n));
-    if (onlyC.length || onlyB.length || cSet.length !== bSet.length) {
+    const { onlyC, onlyB, differs } = compareSets(cSet, bSet);
+    if (differs) {
       console.error(
         `${LABEL}: FAIL — board (${bSet.length}) != canonical (${cSet.length}). ` +
           `only_canonical=${onlyC.join(",") || "—"} only_board=${onlyB.join(",") || "—"}`
@@ -166,4 +201,5 @@ async function main() {
   await liveChecks();
 }
 
-main();
+if (process.argv.includes("--selftest")) selftest();
+else main();

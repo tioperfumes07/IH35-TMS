@@ -18,6 +18,7 @@ const FILES = {
   notify: "apps/backend/src/notifications/dispatcher.ts",
   strip: "apps/frontend/src/pages/banking/components/BankingHomeAttentionStrip.tsx",
   rules: "apps/frontend/src/pages/banking/CategorizationRulesPage.tsx",
+  pointer: "apps/backend/src/banking/bank-line-match-pointer.ts",
 };
 
 function read(rel) {
@@ -38,14 +39,15 @@ function assertNeedles(src, rel, needles) {
   return errors;
 }
 
-function liveCheck() {
+/** Every check, over in-memory sources keyed like FILES — so --selftest can plant regressions. */
+export function findErrors(src) {
   const errors = [];
-  const helper = read(FILES.helper);
-  const engine = read(FILES.engine);
-  const stats = read(FILES.stats);
-  const notify = read(FILES.notify);
-  const strip = read(FILES.strip);
-  const rules = read(FILES.rules);
+  const helper = src.helper;
+  const engine = src.engine;
+  const stats = src.stats;
+  const notify = src.notify;
+  const strip = src.strip;
+  const rules = src.rules;
 
   errors.push(
     ...assertNeedles(helper, FILES.helper, [
@@ -60,7 +62,7 @@ function liveCheck() {
       "resolveBankUnmatched7dEvents",
     ])
   );
-  const pointer = read("apps/backend/src/banking/bank-line-match-pointer.ts");
+  const pointer = src.pointer;
   errors.push(
     ...assertNeedles(pointer, "apps/backend/src/banking/bank-line-match-pointer.ts", [
       "matched_bill_id",
@@ -93,7 +95,7 @@ function liveCheck() {
 
   // Standing order point 9 — single-fire. ENG-7D's watchdog is this cron; without a lease
   // both Render instances upsert the same digest and notify Owners twice every 6h.
-  const cron = read(FILES.cron);
+  const cron = src.cron;
   errors.push(
     ...assertNeedles(cron, FILES.cron, [
       "JOB_LEASE_SECONDS",
@@ -140,46 +142,41 @@ function liveCheck() {
     ])
   );
 
+  return errors;
+}
+
+function readAll() {
+  return Object.fromEntries(Object.entries(FILES).map(([k, rel]) => [k, read(rel)]));
+}
+
+function liveCheck() {
+  const errors = findErrors(readAll());
   if (errors.length) fail(errors);
   console.log(`${LABEL}: OK — 7-day unmatched is an alert (integrity + page + Home/Rules), not a recency counter`);
 }
 
 function selftest() {
-  const helper = read(FILES.helper);
-  const planted = helper.replace("UNMATCHED_7D_THRESHOLD_DAYS = 7", "UNMATCHED_7D_THRESHOLD_DAYS = 30");
-  if (planted.includes("UNMATCHED_7D_THRESHOLD_DAYS = 7")) {
-    console.error(`${LABEL} --selftest: plant did not change source`);
-    process.exit(1);
+  const sources = readAll();
+  const planted = [
+    ["threshold raised to 30 days", { helper: sources.helper.replace("UNMATCHED_7D_THRESHOLD_DAYS = 7", "UNMATCHED_7D_THRESHOLD_DAYS = 30") }],
+    ["unmatched keyed off coa_account_id (categorize != match)", { helper: sources.helper + "\nconst q = `WHERE bt.coa_account_id IS NULL`;\n" }],
+    ["age replaced by created_at recency", { helper: sources.helper + "\nconst q = `AND bt.created_at >= now() - interval '7 day'`;\n" }],
+    ["cron lease option stripped (both instances fire)", { cron: sources.cron.replace(/,\s*\{\s*leaseSeconds:\s*JOB_LEASE_SECONDS\s*\}/, "") }],
+    ["owners never paged", { engine: sources.engine.replaceAll("notifyOwnersBankUnmatched7d", "logBankUnmatched7d") }],
+    ["stats back to last-7-days uncategorized", { stats: sources.stats + "\n// created_at >= (now() - interval '7 day') AND coa_account_id IS NULL\n" }],
+    ["Home strip drops the alert", { strip: sources.strip.replaceAll("unmatched-7d-alert", "unmatched-7d-count") }],
+    ["pointer list loses matched_invoice_id", { pointer: sources.pointer.replaceAll("matched_invoice_id", "matched_other_id") }],
+  ];
+  let caught = 0;
+  for (const [name, patch] of planted) {
+    if (findErrors({ ...sources, ...patch }).length > 0) caught += 1;
+    else console.error(`${LABEL} SELFTEST: planted violation escaped — ${name}`);
   }
-  const caught = planted.includes("UNMATCHED_7D_THRESHOLD_DAYS = 30");
-  if (!caught) {
-    console.error(`${LABEL} --selftest FAILED: mutation not visible`);
-    process.exit(1);
-  }
-
-  // Lease plant: strip the option argument. Option must vanish; wrap must remain.
-  // Comments may still say "leaseSeconds" — assert the code option only.
-  const cron = read(FILES.cron);
-  if (!/leaseSeconds:\s*JOB_LEASE_SECONDS/.test(cron)) {
-    console.error(`${LABEL} --selftest: cron fixture missing leaseSeconds (tree not green)`);
-    process.exit(1);
-  }
-  const unleased = cron.replace(/,\s*\{\s*leaseSeconds:\s*JOB_LEASE_SECONDS\s*\}/, "");
-  if (/leaseSeconds:\s*JOB_LEASE_SECONDS/.test(unleased)) {
-    console.error(`${LABEL} --selftest: lease plant did not remove leaseSeconds option`);
-    process.exit(1);
-  }
-  if (!/wrapBackgroundJobTick/.test(unleased)) {
-    console.error(`${LABEL} --selftest: lease plant removed wrapBackgroundJobTick`);
-    process.exit(1);
-  }
-  if (!/wrapBackgroundJobTick\([\s\S]*?app\.log\s*\)/.test(unleased)) {
-    console.error(`${LABEL} --selftest: unleased wrap must end at app.log) so liveCheck can catch it`);
-    process.exit(1);
-  }
-  console.log(`${LABEL} --selftest: OK (threshold plant + lease plant visible)`);
+  const clean = findErrors(sources);
+  if (clean.length) console.error(`${LABEL} SELFTEST: clean sources flagged — ${clean.join("; ")}`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught`);
+  process.exit(caught === planted.length && clean.length === 0 ? 0 : 1);
 }
 
-const arg = process.argv[2] ?? "";
-if (arg === "--selftest") selftest();
+if (process.argv.includes("--selftest")) selftest();
 else liveCheck();

@@ -57,6 +57,83 @@ function loadSignedTotals() {
   return byDoc;
 }
 
+/** Per-document verdict over the live rows (pure — --selftest feeds it synthetic rows). */
+export function judgeSettlements(usmcaDocs, truth, liveRows) {
+  const byDocRows = new Map();
+  for (const row of liveRows) {
+    if (!byDocRows.has(row.source_document_ref)) byDocRows.set(row.source_document_ref, []);
+    byDocRows.get(row.source_document_ref).push(row);
+  }
+
+  const lines = [];
+  const failures = [];
+  for (const doc of usmcaDocs) {
+    const target = truth.get(doc);
+    const rows = (byDocRows.get(doc) ?? []).filter((r) => !KNOWN_DUPLICATE_EXEMPT.has(r.display_id));
+    if (rows.length === 0) {
+      failures.push(`${doc}: NO live settlement row found (target TOTAL DUE ${target.toFixed(2)})`);
+      lines.push(`${doc.padEnd(5)} MISSING          target=${target.toFixed(2).padStart(10)}`);
+      continue;
+    }
+    if (rows.length > 1) {
+      failures.push(
+        `${doc}: ${rows.length} non-cancelled, non-exempt settlement rows exist (${rows
+          .map((r) => r.display_id)
+          .join(", ")}) — expected exactly 1 (1:1 re-cut, CC-2 B5); cannot assert a single net_pay`
+      );
+      lines.push(`${doc.padEnd(5)} DUPLICATE(${rows.length})   target=${target.toFixed(2).padStart(10)}`);
+      continue;
+    }
+    const row = rows[0];
+    const net = Number(row.net_pay);
+    const ok = Math.abs(net - target) < 0.005;
+    if (!ok) failures.push(`${doc} (${row.display_id}): net_pay ${net.toFixed(2)} != signed TOTAL DUE ${target.toFixed(2)}`);
+    lines.push(
+      `${doc.padEnd(5)} ${row.display_id.padEnd(16)} net=${net.toFixed(2).padStart(10)} signed=${target.toFixed(2).padStart(10)} ${ok ? "OK" : "FAIL"}`
+    );
+  }
+  return { lines, failures };
+}
+
+/** B5 law: 0 settlements posted through closeSettlementPayRun. */
+export function payrunFailures(payrunCount) {
+  const failures = [];
+  if (payrunCount > 0) {
+    failures.push(
+      `${payrunCount} USMCA settlement(s) are posted via the disfavored single-JE closeSettlementPayRun ` +
+        `path (driver_finance.payrun_gl_runs) — B5 requires the canonical Bill+BillPayment engine only. ` +
+        `These postings are individually penny-exact to their signed documents (verified above) — this is ` +
+        `a mechanism migration, not a money error, and reversing+reposting 30+ already-correct settlements ` +
+        `is a separate, owner-gated undertaking, not a header-sync fix.`
+    );
+  }
+  return failures;
+}
+
+function selftest() {
+  const truth = loadSignedTotals();
+  const docs = USMCA_CUTOVER_DOCS.filter((d) => truth.has(d));
+  const clean = docs.map((d, i) => ({ source_document_ref: d, display_id: `S-2026-${String(100 + i).padStart(4, "0")}`, status: "posted", net_pay: truth.get(d).toFixed(2) }));
+  const off = (doc, delta) => clean.map((r) => (r.source_document_ref === doc ? { ...r, net_pay: (Number(r.net_pay) + delta).toFixed(2) } : r));
+  const planted = [
+    ["net_pay one cent high", judgeSettlements(docs, truth, off(docs[0], 0.01)).failures.length === 1],
+    ["net_pay one cent low", judgeSettlements(docs, truth, off(docs[34], -0.01)).failures.length === 1],
+    ["document with no live settlement", judgeSettlements(docs, truth, clean.filter((r) => r.source_document_ref !== docs[13])).failures.length === 1],
+    ["two live settlements for one document", judgeSettlements(docs, truth, [...clean, { ...clean[5], display_id: "S-2026-9999" }]).failures.length === 1],
+    ["settlement posted via closeSettlementPayRun", payrunFailures(1).length === 1],
+  ];
+  const caught = planted.filter(([, ok]) => ok).length;
+  for (const [name, ok] of planted) if (!ok) console.error(`${LABEL} SELFTEST: planted violation escaped — ${name}`);
+  const cleanOk = docs.length === USMCA_CUTOVER_DOCS.length
+    && judgeSettlements(docs, truth, clean).failures.length === 0
+    // the named duplicate mega-row is exempt, so it must not turn a clean document red
+    && judgeSettlements(docs, truth, [...clean, { ...clean[13], display_id: "S-2026-0011" }]).failures.length === 0
+    && payrunFailures(0).length === 0;
+  if (!cleanOk) console.error(`${LABEL} SELFTEST: clean input flagged`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught`);
+  process.exit(caught === planted.length && cleanOk ? 0 : 1);
+}
+
 async function main() {
   const truth = loadSignedTotals();
   const usmcaDocs = USMCA_CUTOVER_DOCS.filter((d) => truth.has(d));
@@ -99,39 +176,7 @@ async function main() {
       [OPCO, usmcaDocs]
     );
 
-    const byDocRows = new Map();
-    for (const row of res.rows) {
-      if (!byDocRows.has(row.source_document_ref)) byDocRows.set(row.source_document_ref, []);
-      byDocRows.get(row.source_document_ref).push(row);
-    }
-
-    const lines = [];
-    const failures = [];
-    for (const doc of usmcaDocs) {
-      const target = truth.get(doc);
-      const rows = (byDocRows.get(doc) ?? []).filter((r) => !KNOWN_DUPLICATE_EXEMPT.has(r.display_id));
-      if (rows.length === 0) {
-        failures.push(`${doc}: NO live settlement row found (target TOTAL DUE ${target.toFixed(2)})`);
-        lines.push(`${doc.padEnd(5)} MISSING          target=${target.toFixed(2).padStart(10)}`);
-        continue;
-      }
-      if (rows.length > 1) {
-        failures.push(
-          `${doc}: ${rows.length} non-cancelled, non-exempt settlement rows exist (${rows
-            .map((r) => r.display_id)
-            .join(", ")}) — expected exactly 1 (1:1 re-cut, CC-2 B5); cannot assert a single net_pay`
-        );
-        lines.push(`${doc.padEnd(5)} DUPLICATE(${rows.length})   target=${target.toFixed(2).padStart(10)}`);
-        continue;
-      }
-      const row = rows[0];
-      const net = Number(row.net_pay);
-      const ok = Math.abs(net - target) < 0.005;
-      if (!ok) failures.push(`${doc} (${row.display_id}): net_pay ${net.toFixed(2)} != signed TOTAL DUE ${target.toFixed(2)}`);
-      lines.push(
-        `${doc.padEnd(5)} ${row.display_id.padEnd(16)} net=${net.toFixed(2).padStart(10)} signed=${target.toFixed(2).padStart(10)} ${ok ? "OK" : "FAIL"}`
-      );
-    }
+    const { lines, failures } = judgeSettlements(usmcaDocs, truth, res.rows);
 
     // 0 rows posted via closeSettlementPayRun (B5 law: canonical Bill+BillPayment only, going forward).
     const payrunRes = await client.query(
@@ -156,15 +201,7 @@ async function main() {
     for (const l of lines) console.log(l);
     console.log(`\ncloseSettlementPayRun (payrun_gl_runs) posted rows for these documents: ${payrunCount} (law requires 0)`);
 
-    if (payrunCount > 0) {
-      failures.push(
-        `${payrunCount} USMCA settlement(s) are posted via the disfavored single-JE closeSettlementPayRun ` +
-          `path (driver_finance.payrun_gl_runs) — B5 requires the canonical Bill+BillPayment engine only. ` +
-          `These postings are individually penny-exact to their signed documents (verified above) — this is ` +
-          `a mechanism migration, not a money error, and reversing+reposting 30+ already-correct settlements ` +
-          `is a separate, owner-gated undertaking, not a header-sync fix.`
-      );
-    }
+    failures.push(...payrunFailures(payrunCount));
 
     if (failures.length > 0) {
       throw new Error(`${failures.length} failure(s):\n  ${failures.join("\n  ")}`);
@@ -176,7 +213,8 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+if (process.argv.includes("--selftest")) selftest();
+else main().catch((err) => {
   console.error(`${LABEL} FAIL: ${err.message}`);
   process.exit(1);
 });

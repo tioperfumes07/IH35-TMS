@@ -13,19 +13,52 @@ import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 const LABEL = "verify-voided-loads-hold-no-real-number";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
+export const VOIDED_REAL_NUMBER_SQL = `
+      SELECT id::text, load_number
+      FROM mdata.loads
+      WHERE operating_company_id = $1::uuid
+        AND status = 'voided'
+        AND load_number NOT LIKE 'VOID%'
+    `;
+
+/** The query must stay scoped to the company, to voided loads, and to real (non-VOID) numbers. */
+export function sqlShapeProblems(sql) {
+  const p = [];
+  if (!/operating_company_id = \$1::uuid/.test(sql)) p.push("not scoped to the company");
+  if (!/status = 'voided'/.test(sql)) p.push("not scoped to voided loads");
+  if (!/load_number NOT LIKE 'VOID%'/.test(sql)) p.push("does not isolate real (non-VOID) numbers");
+  return p;
+}
+
+/** Rows the live query would return are the violations; mirror its predicate for the selftest. */
+export function violations(rows) {
+  return rows.filter((r) => r.status === "voided" && !String(r.load_number).startsWith("VOID"));
+}
+
+function selftest() {
+  const planted = [
+    ["voided load keeps a real number", violations([{ status: "voided", load_number: "13539" }]).length === 1],
+    ["one bad among renumbered", violations([{ status: "voided", load_number: "VOID-13540-ab12cd34" }, { status: "voided", load_number: "13541" }]).length === 1],
+    ["query drops the void filter", sqlShapeProblems(VOIDED_REAL_NUMBER_SQL.replace("AND status = 'voided'", "")).length > 0],
+    ["query drops the real-number filter", sqlShapeProblems(VOIDED_REAL_NUMBER_SQL.replace("AND load_number NOT LIKE 'VOID%'", "")).length > 0],
+    ["query unscoped", sqlShapeProblems(VOIDED_REAL_NUMBER_SQL.replace("operating_company_id = $1::uuid", "true")).length > 0],
+  ];
+  const caught = planted.filter(([, ok]) => ok).length;
+  for (const [name, ok] of planted) if (!ok) console.error(`${LABEL} SELFTEST: planted violation escaped — ${name}`);
+  const clean = violations([{ status: "voided", load_number: "VOID-13539-ab12cd34" }, { status: "delivered", load_number: "13542" }]).length === 0
+    && sqlShapeProblems(VOIDED_REAL_NUMBER_SQL).length === 0;
+  if (!clean) console.error(`${LABEL} SELFTEST: clean input flagged`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught`);
+  process.exit(caught === planted.length && clean ? 0 : 1);
+}
+
 async function main() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     await client.query("BEGIN READ ONLY");
     await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
 
-    const res = await client.query(`
-      SELECT id::text, load_number
-      FROM mdata.loads
-      WHERE operating_company_id = $1::uuid
-        AND status = 'voided'
-        AND load_number NOT LIKE 'VOID%'
-    `, [USMCA]);
+    const res = await client.query(VOIDED_REAL_NUMBER_SQL, [USMCA]);
 
     await client.query("ROLLBACK");
 
@@ -50,4 +83,5 @@ async function main() {
   }
 }
 
-main();
+if (process.argv.includes("--selftest")) selftest();
+else main();
