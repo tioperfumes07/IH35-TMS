@@ -2457,5 +2457,15 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-12",
     "purpose": "443.99 C lane 2: create the 3 tables code reads but no migration creates (catalogs.downtime_categories, catalogs.downtime_fault_parties, safety.accidents) + their safety.* helper functions, IF NOT EXISTS, matching prod DDL (verify-sql-read-targets 7 phantom reads)"
+  },
+  "202615730913": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.100 C2 lane 3: attach the existing audit.tg_audit_row() to driver_finance.feed_intakes + feed_intake_checks (verify-driver-finance-money-tables-row-audited FAILS on prod: 2 unaudited money tables)"
+  },
+  "202615730917": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.100 C2 lane 3: restate accounting.factoring_advances.status_before_void (text NULL) — present on prod, created by no migration (verify-sql-write-targets phantom write in void-cancel-executors.ts)"
   }
 }
