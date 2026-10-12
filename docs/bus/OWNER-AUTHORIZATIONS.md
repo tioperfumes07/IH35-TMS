@@ -7901,3 +7901,13 @@ consumed_at: 2026-10-12T02:00:51Z
 consumed_by: CC-2 (443.85)
 row_counts: 1 catalog row — item 5ef541cb "Fuel Card Discount" -> 5000, category of Fuel-Truck Diesel; no money, no posting
 proof_query: catalogs.items id 5ef541cb created_at 2026-10-12T02:00:51Z on prod
+
+## AUTH-444
+issued_at: 2026-10-12T14:00:00Z
+issued_by: Lead RULINGS 443.107 #1 ("CC-2 — AUTH-444 (Lead, not owner): apply scripts/ops/2026-10-12-cc2-443-105-expense-exemption-reasons.mts --apply on prod for EXP-2026-00001..00005 (metadata only, rehearsed: money identical). Post prod read-back 0 and mark AUTH-444 CONSUMED."). Recorded by CC-2, as with AUTH-404..443
+owner_quotes: "Every engine (load wizard, feed, Settlement Creator, bills, bill payments, expenses, invoices, Faro) must record correctly with truck / driver / load / trailer / vendor / item / account" (owner 2026-10-12 07:50 CT, via Lead 443.105)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — load_exemption_reason on EXACTLY the 5 live expense lines with neither a load nor a reason: EXP-2026-00001 / 00002 / 00003 / 00004 / 00005 (Bank of America fees x4 + ED-HER PLASTICS, $203.14, company overhead from bank-line categorization 2026-10-07). Through stampExpenseLineLoadExemption (apps/backend/src/accounting/expense-line-exemption-stamp.service.ts): metadata only, refuses a line that already has a load or a reason, one audit row per line; the runner refuses unless exactly these 5 are found and rolls back if any amount or journal entry moves.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-105-expense-exemption-reasons.mts --apply --auth AUTH-444
+rehearsal: throwaway br-broad-brook-akb5n54v (real runner, prod mode; COMMITTED, deleted): 5 stamped, money + JE identical, USMCA lines with neither load nor reason 0, 5 audit rows; clearing a reason refused by trg_expense_line_load_or_reason
+expires_at: 2026-10-13T13:58:48Z
+status: OPEN
