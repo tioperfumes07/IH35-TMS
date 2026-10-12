@@ -2418,6 +2418,11 @@
     "claimed_at": "2026-10-12",
     "purpose": "RULING 443.91 #4: invoices_display_id_check re-asserted as on prod (202610100200 sorts before 202613650001 on a fresh DB and loses the <invoice>-<load> pattern)"
   },
+  "202615670900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.91 #4 batch 1: restore security_invoker on views.live_loads (202614670900 CREATE OR REPLACE dropped it — RLS bypass on prod; live-defects F3)"
+  },
   "202615451400": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-12",
