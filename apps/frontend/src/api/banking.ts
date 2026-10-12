@@ -657,6 +657,57 @@ export function getRelayDepositMatchReview(companyId: string, limit = 2000) {
   );
 }
 
+export type RelatedPartyPairSuggestionRow = {
+  bank_transaction_id: string;
+  transaction_date: string;
+  amount_cents: number;
+  description: string | null;
+  bank_party_hint: string | null;
+  suggested_relay_deposit_id: string | null;
+  relay_deposit_id: string | null;
+  deposit_date: string | null;
+  funding_card_last4: string | null;
+  party_key: string | null;
+  party_name: string | null;
+  party_account_number: string | null;
+  card_confirmed: boolean | null;
+  date_gap_days: number | null;
+  pair_status: "suggested" | "unpaired";
+};
+
+/** ROUND 443.54-7 — read-only suggested related-party bank↔Relay pairs (±5d same amount). */
+export function getRelatedPartyPairSuggestions(companyId: string, limit = 2000) {
+  const params = new URLSearchParams();
+  params.set("operating_company_id", companyId);
+  params.set("limit", String(limit));
+  return apiRequest<{ rows: RelatedPartyPairSuggestionRow[]; total: number }>(
+    `/api/v1/banking/related-party-pairs?${params.toString()}`
+  );
+}
+
+/** ROUND 443.54-7 — owner confirms one pair: categorize + party_transfer_out document + optional deposit link. */
+export function confirmRelatedPartyPair(input: {
+  operating_company_id: string;
+  bank_transaction_id: string;
+  relay_deposit_id?: string | null;
+}) {
+  return apiRequest<{
+    ok: true;
+    bank_transaction_id: string;
+    related_party_loan_id: string;
+    related_party_loan_display_id: string;
+    party_account_number: string;
+    party_name: string;
+    journal_entry_id: string | null;
+    relay_deposit_id: string | null;
+    paired: boolean;
+    duplicate_postings: 0;
+  }>("/api/v1/banking/related-party-pairs/confirm", {
+    method: "POST",
+    body: input,
+  });
+}
+
 export function getBankingTiles(companyId: string) {
   return apiRequest<{ tiles: BankingTile[] }>(`/api/v1/banking/account-tiles?${q(companyId)}`);
 }

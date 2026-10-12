@@ -56,6 +56,7 @@ import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
 import { BankTransactionAttachmentsNotesModal } from "./BankTransactionAttachmentsNotesModal";
 import { MatchDrawer } from "./MatchDrawer";
 import { RelayDepositCategorizedMatchHintsPanel } from "./RelayDepositCategorizedMatchHintsPanel";
+import { RelatedPartyPairSuggestionsPanel } from "./RelatedPartyPairSuggestionsPanel";
 import { buildBankingTransactionsXlsx } from "./banking-transactions-xlsx";
 import { RecordTransferModal } from "../RecordTransferModal";
 import { RecordCCPaymentModal } from "../RecordCCPaymentModal";
@@ -4126,6 +4127,7 @@ export function BankingTransactionsDesignView({
       </div>
 
       <RelayDepositCategorizedMatchHintsPanel companyId={companyId} />
+      <RelatedPartyPairSuggestionsPanel companyId={companyId} />
 
       <BulkActionBar
         {...bulkSelection.bulkActionBarProps([
