@@ -33,6 +33,7 @@ const FE = "apps/frontend/src/pages/program/scenario-tracker/registry.ts";
 const CERTIFIER = "scripts/scenario-certify.mjs";
 const SCOREBOARD = "scripts/scoreboard-from-live.mjs";
 const HOME = "apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx";
+const PROBE = "apps/backend/src/home/scenario-probe.service.ts";
 
 /** Money probes that MUST exclude imported rows, and the discriminator each one needs. */
 const ORIGIN_REQUIRED = [
@@ -94,10 +95,12 @@ const CHAIN_REQUIRED = [
       "NULLIF(BTRIM(pi.part_number), '') IS NOT NULL",
       "p.vendor_id IS NULL OR v.id IS NOT NULL",
       "p.work_order_id IS NULL OR w.id IS NOT NULL",
-      "lib.feature_flag_overrides",
-      "ffo.flag_key = 'PARTS_PURCHASE_GL_POSTING_ENABLED'",
-      "ffo.operating_company_id = p.operating_company_id",
-      "ffo.enabled = true",
+      // 443.99: SYSTEM-F7511 (91489cd1c8, #18157) — the flag is no longer read raw from lib.feature_flag_overrides (it
+      // could disagree with the poster's gating); the probe declares a flag_gate that scenario-probe.service.ts resolves
+      // through the canonical isEnabled() per entity, and the gate selects the balanced-posting count.
+      "flag_gate: {",
+      'key: "PARTS_PURCHASE_GL_POSTING_ENABLED"',
+      'enabled_count_column: "posting_n"',
       "accounting.parts_purchase_postings",
       "ppp.parts_purchase_id = p.id",
       "ppp.parts_inventory_id = p.parts_inventory_id",
@@ -564,6 +567,15 @@ function check(sources) {
     }
   }
 
+  // 443.99 (SYSTEM-F7511, 91489cd1c8): a probe's flag_gate must be resolved through the canonical per-entity isEnabled()
+  // and select the gate's enabled count column — never a raw feature_flag_overrides read that can disagree with the poster.
+  {
+    const probe = stripComments(sources[PROBE] ?? "");
+    if (!/def\.probe\.flag_gate/.test(probe) || !/await isEnabled\(client as never, def\.probe\.flag_gate\.key, \{\s*operating_company_id: entity,?\s*\}\)/.test(probe) || !/countColumn = def\.probe\.flag_gate\.enabled_count_column/.test(probe)) {
+      errors.push(`${PROBE}: flag_gate is not resolved through the canonical per-entity isEnabled() selecting enabled_count_column.`);
+    }
+  }
+
   // 4 — both live writers must refuse to write from a masked connection.
   for (const f of [CERTIFIER, SCOREBOARD]) {
     const src = stripComments(sources[f] ?? "");
@@ -636,7 +648,7 @@ function check(sources) {
 
 function loadAll() {
   const out = {};
-  for (const f of [BACKEND, FE, CERTIFIER, SCOREBOARD, HOME]) {
+  for (const f of [BACKEND, FE, CERTIFIER, SCOREBOARD, HOME, PROBE]) {
     try {
       out[f] = readFileSync(f, "utf8");
     } catch {
@@ -655,6 +667,9 @@ function selftest() {
     process.exit(1);
   }
   const mutations = [
+    ["flag_gate resolved without isEnabled", (s) => ({ ...s, [PROBE]: s[PROBE].replace("await isEnabled(client as never, def.probe.flag_gate.key", "await Promise.resolve(true || def.probe.flag_gate.key") })],
+    ["flag_gate no longer selects the enabled count", (s) => ({ ...s, [PROBE]: s[PROBE].replace("countColumn = def.probe.flag_gate.enabled_count_column", "countColumn = \"n\"") })],
+    ["parts_receive drops its flag_gate", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace('key: "PARTS_PURCHASE_GL_POSTING_ENABLED"', 'key: "X"') })],
     ["pod_bol key reverted to hop.evidence", (s) => ({ ...s, [BACKEND]: s[BACKEND].split('"hop.pod_bol"').join('"hop.evidence"') })],
     ["invoice probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND i.qbo_invoice_id IS NULL", "") })],
     ["bills probe counts QBO clones", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND b.qbo_bill_id IS NULL", "") })],

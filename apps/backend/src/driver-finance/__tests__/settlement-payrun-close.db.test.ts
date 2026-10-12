@@ -20,6 +20,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import {
   acquireGlobalAccountRoleBindingsLock,
+  createIsolatedOperatingCompany,
+  deactivateIsolatedOperatingCompany,
   ensureIntegrationPrerequisites,
   releaseGlobalAccountRoleBindingsLock,
   restoreGlobalAccountRoleBindings,
@@ -313,7 +315,11 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
   }
 
   beforeAll(async () => {
-    companyId = await ensureIntegrationPrerequisites();
+    await ensureIntegrationPrerequisites();
+    // 443.99: this suite designates ap_control (443.93) — a per-company singleton. On the SHARED TRANSP company a
+    // sibling fork's ap_control DO UPDATE races it (the cash/CC bill-payment flake), so the suite owns its own
+    // company (verify-shared-coa-role-tests-serialized). The GLOBAL bindings lock + restore below still apply.
+    companyId = (await createIsolatedOperatingCompany({ codePrefix: "PRC", legalNamePrefix: "PayRun Close" })).companyId;
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
     db = new pg.Client(buildPgClientConfig(cs));
@@ -462,6 +468,14 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       });
     } catch (postRestoreCleanupErr) {
       void postRestoreCleanupErr;
+    }
+
+    try {
+      await bypass(async () => {
+        await deactivateIsolatedOperatingCompany(db, companyId);
+      });
+    } catch (deactivateErr) {
+      restoreError ??= deactivateErr;
     }
 
     if (heldGlobalBindingsLock) {

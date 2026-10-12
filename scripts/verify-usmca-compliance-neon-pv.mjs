@@ -53,8 +53,16 @@ export function auditManifest(root = ROOT) {
     if (row.prod_verified !== true) {
       problems.push(`compliance.json: ${id} prod_verified must be true`);
     }
-    if (!/PROD-VERIFIED|Neon lucia/i.test(String(row.evidence ?? ""))) {
-      problems.push(`compliance.json: ${id} evidence must cite PROD-VERIFIED / Neon lucia`);
+    // 443.99: GO-TRUST-02 (7849bed61c #17773, 732be9f092 #17658) re-verified these items live and CC-2 bound
+    // each (GUARD PACKET … SHA x) to live_verified_at + live_verified_sha, replacing the legacy "PROD-VERIFIED" text. Either citation counts;
+    // evidence with neither — or a live claim with no sha binding — still fails.
+    const ev = String(row.evidence ?? "");
+    const legacyCite = /PROD-VERIFIED|Neon lucia/i.test(ev);
+    const sha = String(row.live_verified_sha ?? "");
+    const packet = /GUARD PACKET \(CC-2, \d{4}-\d{2}-\d{2}, SHA ([0-9a-f]{7,40})\)/.exec(ev);
+    const liveBound = /\blive\b/i.test(ev) && /^[0-9a-f]{7,40}$/.test(sha) && packet?.[1] === sha && !Number.isNaN(Date.parse(String(row.live_verified_at ?? "")));
+    if (!legacyCite && !liveBound) {
+      problems.push(`compliance.json: ${id} evidence must cite PROD-VERIFIED / Neon lucia, or a live re-verification bound by its CC-2 GUARD PACKET sha to live_verified_sha + live_verified_at`);
     }
   }
   return problems;
@@ -133,6 +141,22 @@ async function main() {
       const planted = auditManifest(tmp);
       if (!planted.some((p) => /prod_verified must be true/.test(p))) {
         console.error(`${LABEL} SELFTEST FAIL: planted prod_verified:false not caught`);
+        process.exit(1);
+      }
+      if (auditManifest(ROOT).length) {
+        console.error(`${LABEL} SELFTEST FAIL: the real manifest does not pass`);
+        process.exit(1);
+      }
+      // A live-Chrome claim with no sha binding, and evidence citing nothing, must both fail.
+      const doc2 = JSON.parse(fs.readFileSync(path.join(ROOT, "docs/module-completion/compliance.json"), "utf8"));
+      const s01 = doc2.items.find((it) => it.id === "COMP-S01");
+      const s02 = doc2.items.find((it) => it.id === "COMP-S02");
+      s01.live_verified_sha = null;
+      s02.evidence = "PASS -- looked fine";
+      fs.writeFileSync(path.join(tmp, "docs/module-completion/compliance.json"), JSON.stringify(doc2, null, 2) + "\n");
+      const planted2 = auditManifest(tmp);
+      if (!planted2.some((p) => /COMP-S01 evidence must cite/.test(p)) || !planted2.some((p) => /COMP-S02 evidence must cite/.test(p))) {
+        console.error(`${LABEL} SELFTEST FAIL: an unbound live claim / an uncited evidence was not caught`);
         process.exit(1);
       }
       console.log(`${LABEL} SELFTEST PASS`);
