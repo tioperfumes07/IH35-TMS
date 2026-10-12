@@ -111,6 +111,15 @@ export class RelatedPartyPostingWithoutPartyError extends Error {
   }
 }
 
+/** 443.110 G8 — a posting may only carry a load of its own company. */
+export class PostingLoadOfAnotherCompanyError extends Error {
+  readonly code = "posting_load_of_another_company";
+  constructor(loadId: string, companyId: string) {
+    super(`posting_load_of_another_company: load ${loadId} is not a load of company ${companyId}`);
+    this.name = "PostingLoadOfAnotherCompanyError";
+  }
+}
+
 export class PostingLineAlreadyReversedError extends Error {
   readonly code = "posting_line_already_reversed";
   constructor(readonly targetLineId: string) {
@@ -129,7 +138,8 @@ export class PostingLineAlreadyReversedError extends Error {
  */
 export async function resolvePostingSourceEntity(
   client: PostingWriterClient,
-  line: Pick<PostingLineWrite, "operating_company_id" | "source_transaction_type" | "source_transaction_id" | "reversal_of_line_id">
+  line: Pick<PostingLineWrite, "operating_company_id" | "source_transaction_type" | "source_transaction_id" | "reversal_of_line_id"> &
+    Partial<Pick<PostingLineWrite, "source_transaction_line_id">>
 ): Promise<{ entity_uuid: string; entity_type: "customer" | "vendor" | "driver" } | null> {
   if (line.reversal_of_line_id) {
     const r = await client.query<{ entity_uuid: string | null; entity_type: string | null }>(
@@ -160,7 +170,24 @@ export async function resolvePostingSourceEntity(
                 FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     driver_settlement: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     driver_advance: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_advances WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    // 443.110 G8 — a categorized bank line names the party it was categorized to: its vendor, else its driver.
+    bank_categorization: `SELECT COALESCE(categorization_vendor_id::text, categorization_driver_id::text) AS e,
+                                 CASE WHEN categorization_vendor_id IS NOT NULL THEN 'vendor' ELSE 'driver' END AS t
+                            FROM banking.bank_transactions WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
   };
+  // 443.110 G8 — a bank SPLIT line names its own party first (a split can carry a different vendor / driver).
+  if (line.source_transaction_type === "bank_categorization" && line.source_transaction_line_id) {
+    const sid = String(line.source_transaction_line_id);
+    if (/^[0-9a-f-]{36}$/i.test(sid)) {
+      const sp = await client.query<{ e: string | null; t: "vendor" | "driver" }>(
+        `SELECT COALESCE(s.vendor_id::text, s.driver_id::text) AS e, CASE WHEN s.vendor_id IS NOT NULL THEN 'vendor' ELSE 'driver' END AS t
+           FROM banking.bank_transaction_splits s
+          WHERE s.id = $1::uuid AND s.operating_company_id = $2::uuid`,
+        [sid, line.operating_company_id]
+      );
+      if (sp.rows[0]?.e) return { entity_uuid: sp.rows[0].e, entity_type: sp.rows[0].t };
+    }
+  }
   // 443.42 #6 — Relay documents name the vendor Relay: a wallet deposit (every leg, the funding leg included — Relay is the
   // payee of the card / bank charge) and a Relay fuel fill (source = the integrations.relay_fuel_transactions row). A
   // non-Relay fuel event names its fuel transaction's vendor.
@@ -196,17 +223,39 @@ async function relayVendorId(client: PostingWriterClient, companySql: string, id
 }
 
 /**
+ * 443.110 G8 — every factoring lifecycle event (customer payment, reserve release, chargeback, default interest, the
+ * advance's deposit) is sourced by its FACTORING ADVANCE's id, and the advance names its load (source_load_id).
+ * accounting.posting_source_load_id only maps 'factoring_advance', so these events posted with no load.
+ */
+export const FACTORING_EVENT_SOURCE_TYPES = [
+  "factoring_customer_payment",
+  "factoring_reserve_release",
+  "factoring_chargeback",
+  "factoring_default_interest",
+  "factoring_advance_deposit",
+] as const;
+
+/**
  * 443.42 #6 — the load of a Relay fill posting. Its source is the integrations.relay_fuel_transactions row, which
  * accounting.posting_source_load_id cannot see (that function reads fuel.fuel_transactions by id); the fill's purchase
  * record carries the load through relay_fuel_transaction_id. Exactly one load, or none (never a guess).
  */
 export async function resolvePostingSourceLoad(
   client: PostingWriterClient,
-  line: Pick<PostingLineWrite, "source_transaction_type" | "source_transaction_id" | "reversal_of_line_id">
+  line: Pick<PostingLineWrite, "source_transaction_type" | "source_transaction_id" | "reversal_of_line_id"> &
+    Partial<Pick<PostingLineWrite, "operating_company_id">>
 ): Promise<string | null> {
-  if (line.reversal_of_line_id || line.source_transaction_type !== "fuel_event") return null;
+  if (line.reversal_of_line_id) return null;
   const id = String(line.source_transaction_id ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  if ((FACTORING_EVENT_SOURCE_TYPES as readonly string[]).includes(String(line.source_transaction_type)) && line.operating_company_id) {
+    const fa = await client.query<{ load_id: string | null }>(
+      `SELECT source_load_id::text AS load_id FROM accounting.factoring_advances WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [id, line.operating_company_id]
+    );
+    return fa.rows[0]?.load_id ?? null;
+  }
+  if (line.source_transaction_type !== "fuel_event") return null;
   const r = await client.query<{ load_id: string }>(
     `SELECT DISTINCT ft.load_id::text AS load_id FROM fuel.fuel_transactions ft
       WHERE ft.relay_fuel_transaction_id::text = $1 AND ft.archived_at IS NULL AND ft.load_id IS NOT NULL LIMIT 2`,
@@ -258,10 +307,22 @@ async function writeLine(
     );
     if (party.rows[0]) throw new RelatedPartyPostingWithoutPartyError(String(line.account_id), String(line.journal_entry_uuid));
   }
-  // 443.42 #6 — a Relay fill posting carries its fill's load (posting_source_load_id cannot reach it).
+  // 443.42 #6 / 443.110 G8 — a Relay fill posting and a factoring lifecycle event carry their document's load
+  // (posting_source_load_id cannot reach them).
   if (!line.load_id) {
     const load = await resolvePostingSourceLoad(client, line);
     if (load) line = { ...line, load_id: load };
+  }
+  // 443.110 G8 — a posting's load is its OWN company's load. A caller naming another company's load is refused by name.
+  if (line.load_id) {
+    // (A load that does not exist at all is refused by journal_entry_postings_load_id_fkey.)
+    const foreign = await client.query<{ foreign_load: number }>(
+      `SELECT 1 AS foreign_load FROM mdata.loads WHERE id = $1::uuid AND operating_company_id <> $2::uuid`,
+      [line.load_id, line.operating_company_id]
+    );
+    if (foreign.rows[0]?.foreign_load === 1) {
+      throw new PostingLoadOfAnotherCompanyError(String(line.load_id), String(line.operating_company_id));
+    }
   }
 
   const ins = await client.query<{ id: string }>(
@@ -294,7 +355,10 @@ async function writeLine(
       -- carries the load of the line it reverses (its document may already be gone).
       VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9, $10, $11::uuid, $12, $13::uuid, $14::uuid, $15::uuid,
               $16::uuid, $17,
-              COALESCE($18::uuid, accounting.posting_source_load_id($8::text, $9::text, $10::text, $15::uuid)),
+              -- 443.110 G8: a load derived from the source document stamps only when it is this company's load.
+              COALESCE($18::uuid, (SELECT sl.id FROM mdata.loads sl
+                                    WHERE sl.id = accounting.posting_source_load_id($8::text, $9::text, $10::text, $15::uuid)
+                                      AND sl.operating_company_id = $1::uuid)),
               $19::uuid, now(), now())
       ${opts.skipOnIdempotencyConflict
         ? "ON CONFLICT (operating_company_id, idempotency_key, line_sequence) WHERE idempotency_key IS NOT NULL DO NOTHING"
