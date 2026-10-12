@@ -89,6 +89,13 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // Lead 443.105 #2 (owner 2026-10-12 07:50 CT "Every engine ... must record correctly with truck / driver / load / trailer /
+  // vendor / item / account"; owner 2026-10-01 "fully complete and build their own engine, no handing off"): an expense line
+  // carries its load or a load_exemption_reason, refused at the DB. Claimed #(202615770700) in #26593.
+  [
+    "cc-2/443-105-expense-load-or-reason",
+    new Set(["db/migrations/202615770700_expense_line_load_or_exemption_refused.sql"]),
+  ],
   // 5785 (CC-3 report 2026-10-11; owner 2026-10-01 "fully complete and build their own engine, no handing off"): the
   // advance-balance view counted a posting once per bridge row, so the Creator close recovered a $301.99 advance 4x.
   // CC-2's advance path; claimed #(202615500300) in #26277.

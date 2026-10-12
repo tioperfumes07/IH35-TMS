@@ -14,6 +14,7 @@
  */
 import { nextExpenseDisplayId } from "./display-id.js";
 import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
+import { resolveLineLoadExemption } from "./expense-line-load-exemption.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -83,6 +84,8 @@ export type BankLineExpenseInput = {
   unitId?: string | null;
   trailerId?: string | null;
   driverId?: string | null;
+  /** 443.105 — why a line with no load is not a load cost; derived from the account + bank line when omitted. */
+  loadExemptionReason?: string | null;
 };
 
 export async function createAndPostBankLineExpenseOnClient(
@@ -130,17 +133,36 @@ export async function createAndPostBankLineExpenseOnClient(
   const expenseId = inserted.rows[0]?.id;
   if (!expenseId) throw new BankLineExpenseError("expense_insert_failed", "The expense could not be created.");
 
+  // 443.105 #2 — a bank-line expense with no load says why: company cost on <account>, from this bank line.
+  const accountLabel = input.loadId
+    ? null
+    : (
+        await client.query<{ label: string | null }>(
+          `SELECT NULLIF(concat_ws(' ', a.account_number, a.account_name), '') AS label
+             FROM catalogs.accounts a WHERE a.id = $1::uuid`,
+          [input.expenseAccountId]
+        )
+      ).rows[0]?.label ?? null;
+  const loadExemptionReason = resolveLineLoadExemption({
+    loadId: input.loadId ?? null,
+    reason: input.loadExemptionReason ?? null,
+    accountLabel,
+    context: input.sourceBankTransactionId
+      ? `bank line ${input.transactionDate}`
+      : `reconciliation service charge ${input.transactionDate}`,
+  });
+
   await client.query(
     `INSERT INTO accounting.expense_lines (
         operating_company_id, expense_id, line_sequence, amount, amount_cents,
         description, load_required, expense_account_uuid, item_id,
         quantity, rate_cents, unit_of_measure,
-        load_id, unit_id, trailer_id, driver_id
+        load_id, unit_id, trailer_id, driver_id, load_exemption_reason
       ) VALUES (
         $1::uuid, $2::uuid, 1, $3::numeric, $4::bigint,
         $5, false, $6::uuid, $7::uuid,
         1, $4::bigint, 'each',
-        $8::uuid, $9::uuid, $10::uuid, $11::uuid
+        $8::uuid, $9::uuid, $10::uuid, $11::uuid, $12
       )`,
     [
       input.operatingCompanyId,
@@ -154,6 +176,7 @@ export async function createAndPostBankLineExpenseOnClient(
       input.unitId ?? null,
       input.trailerId ?? null,
       input.driverId ?? null,
+      loadExemptionReason,
     ]
   );
 

@@ -55,6 +55,7 @@ describe("createAndPostBankLineExpenseOnClient", () => {
       query: vi.fn(async (text: string, values?: unknown[]) => {
         calls.push({ text, values });
         if (/INSERT INTO accounting\.expenses/.test(text)) return { rows: [{ id: "exp-1" }] };
+        if (/FROM catalogs\.accounts a WHERE a\.id/.test(text)) return { rows: [{ label: "6900 Miscellaneous" }] };
         return { rows: [] };
       }),
     };
@@ -79,11 +80,55 @@ describe("createAndPostBankLineExpenseOnClient", () => {
     expect(header.values).toEqual([CO, "2026-08-18", 14614, "ED-HER PLASTICS", "EXP-2026-00042", "v-edher", "acct-1000", "bt-1", null, null, null, null, "u-1"]);
     const line = calls.find((c) => /INSERT INTO accounting\.expense_lines/.test(c.text))!;
     expect(line.values?.slice(0, 7)).toEqual([CO, "exp-1", 146.14, 14614, "ED-HER PLASTICS", "acct-6900", "item-misc"]);
+    // 443.105 #2 — no load: the line says why (company cost on its account, from this bank line).
+    expect(line.text).toMatch(/load_exemption_reason/);
+    expect(line.values?.[11]).toBe("Company cost — 6900 Miscellaneous — not tied to a load (bank line 2026-08-18)");
     expect(postSourceTransactionInClientTx).toHaveBeenCalledWith(
       client,
       { operating_company_id: CO, source_transaction_type: "expense", source_transaction_id: "exp-1" },
       { userId: "u-1" }
     );
     expect(calls.some((c) => /SET status = 'posted', posting_status = 'posted'/.test(c.text))).toBe(true);
+  });
+});
+
+describe("createAndPostBankLineExpenseOnClient — load or exemption reason (443.105 #2)", () => {
+  const base = {
+    operatingCompanyId: CO,
+    transactionDate: "2026-01-15",
+    amountCents: 500,
+    memo: "External transfer fee",
+    vendorId: "v-bofa",
+    paymentAccountId: "acct-1000",
+    expenseAccountId: "acct-6300",
+    itemId: "item-wire",
+    lineDescription: "External transfer fee",
+    sourceBankTransactionId: "bt-9",
+  };
+  const run = async (extra: Record<string, unknown>) => {
+    const calls: Array<{ text: string; values?: unknown[] }> = [];
+    const client = {
+      query: vi.fn(async (text: string, values?: unknown[]) => {
+        calls.push({ text, values });
+        if (/INSERT INTO accounting\.expenses/.test(text)) return { rows: [{ id: "exp-9" }] };
+        if (/FROM catalogs\.accounts a WHERE a\.id/.test(text)) return { rows: [{ label: "6300 Bank Service Charges & Wire Fees" }] };
+        return { rows: [] };
+      }),
+    };
+    await createAndPostBankLineExpenseOnClient(client as never, { ...base, ...extra } as never, { userId: "u-1" });
+    return calls.find((c) => /INSERT INTO accounting\.expense_lines/.test(c.text))!;
+  };
+  it("a line with a load carries no reason (the load is the link)", async () => {
+    const line = await run({ loadId: "load-1" });
+    expect(line.values?.[7]).toBe("load-1");
+    expect(line.values?.[11]).toBeNull();
+  });
+  it("the caller's reason wins over the derived one", async () => {
+    const line = await run({ loadExemptionReason: "Owner: bank fee for the operating account" });
+    expect(line.values?.[11]).toBe("Owner: bank fee for the operating account");
+  });
+  it("a reconciliation service charge (no bank line) names that context", async () => {
+    const line = await run({ sourceBankTransactionId: null });
+    expect(line.values?.[11]).toBe("Company cost — 6300 Bank Service Charges & Wire Fees — not tied to a load (reconciliation service charge 2026-01-15)");
   });
 });
