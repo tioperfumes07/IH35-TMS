@@ -61,9 +61,10 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const noScope = {
+    // whitespace-tolerant (443.113: the backlink moved into finalizeLoadCancellationInClientTx, re-indented)
     service: good.service.replace(
-      "               WHERE id = $1\n                 AND operating_company_id = $5::uuid\n                 AND status = 'approved'\n               RETURNING id",
-      "               WHERE id = $1\n               RETURNING id",
+      /WHERE id = \$1\s*\n\s*AND operating_company_id = \$5::uuid\s*\n\s*AND status = 'approved'\s*\n(\s*)RETURNING id/,
+      "WHERE id = $1\n$1RETURNING id",
     ),
   };
   if (noScope.service === good.service) {
@@ -76,12 +77,7 @@ if (process.argv.includes("--selftest")) {
   }
   const noCheck = {
     service: good.service.replace(
-      `          if (!backlinkRes.rows[0]) {
-            throw Object.assign(new Error("cancellation_charge_backlink_failed"), {
-              code: "cancellation_charge_backlink_failed",
-            });
-          }
-`,
+      /\n\s*if \(!backlinkRes\.rows\[0\]\) \{\s*throw Object\.assign\(new Error\("cancellation_charge_backlink_failed"\), \{\s*code: "cancellation_charge_backlink_failed",\s*\}\);\s*\}/,
       "",
     ),
   };

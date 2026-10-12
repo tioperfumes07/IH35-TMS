@@ -146,6 +146,13 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-3/c107-r16",
     new Set(["db/migrations/202615790910_load_trailer_source_none.sql"]),
   ],
+  // LEAD RULINGS 443.113 AJK-10/11 (CC-3): invoices_invoice_type_check accepts 'cancellation_tonu' (the TONU writer's own
+  // type). Claimed first on main (#26638, d1fabb4cb7) under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch +
+  // exact-file shape.
+  [
+    "cc-3/c113-cancel",
+    new Set(["db/migrations/202615810910_invoice_type_accepts_cancellation_tonu.sql"]),
+  ],
   // RULING 443.62 #3/#4/#7 (Lead 16:35 UTC): 2410-00-001..004 "Due to / from <party>" rename (taken from CC-1 #26377) +
   // google_place_id on stop / location for CC-2. Claimed first on main (#26389); exact branch + exact files.
   [

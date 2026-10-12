@@ -120,6 +120,618 @@ type CancelLoadClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
 
+/**
+ * 443.113 AJK-10 — THE cancellation finalization: TONU charge invoice (billable + flag), the load's status, revenue
+ * recognition, and the whole money-document cascade (settlements, driver bills, expenses, vendor bills, fuel, advances,
+ * invoices). ONE function, called by BOTH the immediate cancel (cancelLoadInClientTx, no approval needed) and the Owner's
+ * later approval of a requested cancellation (approveCancellation) — before this, approval stamped the load cancelled and
+ * settled revrec only, leaving every driver bill / invoice / advance of the cancelled load live.
+ * The cancellation row must already be status 'approved' (the TONU backlink requires it).
+ */
+export async function finalizeLoadCancellationInClientTx(
+  client: CancelLoadClient,
+  userId: string,
+  args: {
+    operating_company_id: string;
+    load_id: string;
+    cancellation_id: string;
+    reason_code: string;
+    cancellation_notes: string;
+    billable_to_customer: boolean;
+    cancellation_charge_cents: number | null;
+    /** the load's status read under FOR UPDATE by the caller — the status write is compare-and-set on it */
+    prior_status: string;
+    revrec_memo: string;
+  }
+) {
+  {
+    const cancelledLoad = await client.query<{ id: string }>(
+      `
+        UPDATE mdata.loads
+        SET status = 'cancelled'::mdata.load_status_enum,
+            updated_at = now()
+        WHERE id = $1
+          AND operating_company_id = $2::uuid
+          AND status::text = $3
+        RETURNING id
+      `,
+      [args.load_id, args.operating_company_id, args.prior_status]
+    );
+    if (!cancelledLoad.rows[0]?.id) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
+    // ROUND 326: a cancelled load carries no recognized revenue — deleted, not reversed (owner law 2026-10-02).
+    await settleRevrecOnCancel(client as never, args.operating_company_id, args.load_id, userId, args.revrec_memo);
+  }
+
+  // WIRE-10 / VOID-CANCEL-NOT-VOID (owner-verified live 2026-09-01, Devin-A void-10 walk,
+  // L-20260830-0020/0024: $2,500.00 + $1,100.00 orphaned — load cancelled, invoice STILL
+  // 'sent', voided_at NULL, void_reason NULL, no reversing JE) — cancelling a load must not
+  // leave its money artifacts alive.
+  //
+  // ORIGINAL DESIGN (superseded below for invoices): only 'proforma' was auto-voided, on the
+  // reasoning that a 'sent'/'paid' invoice might represent a genuinely-owed TONU/cancellation
+  // charge and voiding it silently would destroy real A/R. That reasoning UNDERSTATED the WORM
+  // violation: leaving a live invoice attached to an operationally-dead load is itself the
+  // defect, and "might be owed" is not the same as "is being actively collected" — a genuinely
+  // owed TONU charge is booked as its OWN new invoice (createTonuInvoiceForCancellation,
+  // right above this block), not left riding on the cancelled load's original invoice.
+  //
+  // THE CASCADE, in FK order, all inside this SAME transaction (so a throw anywhere rolls back
+  // everything already done in this call, including the load-status UPDATE above — no partial
+  // voids by construction, not by ordering):
+  //   1. every live (non-void) invoice sourced from this load — voided, WITH a reversing JE via
+  //      the shared postVoidReversal (the SAME primitive the direct /invoices/:id/void route
+  //      and the bulk set_status route already use — no new GL math invented here).
+  //   2. a 'paid' invoice is NOT silently voided — real cash was collected against it. FAILS
+  //      LOUD instead (throws, cancels nothing) so a human resolves it explicitly; same for
+  //      'factored' (sold to the factor — a different liability, not this function's call).
+  //   3. ROUND 118 FIX (stale comment, real defect — whoever read this next would have built
+  //      against a lie): this comment used to say open driver bills are NOT auto-voided and the
+  //      cancellation "FAILS LOUD" instead. The code twenty lines below has always voided every
+  //      open driver bill WHOLE (VOID-CASCADE-DRIVER-BILLS) — there is no fail-loud branch for
+  //      driver bills here; settlements are the ones that fail loud when unreversable (paid_to_date
+  //      > 0, see VOID-CASCADE-ADVANCES below) and skip when already paid. The owner's own ROUND
+  //      118 ruling on the driver-bill VOID-WHOLE behavior: "IF A LOAD WAS INPUTED... AND ASSIGNED
+  //      TO A DRIVER AND TRUCK AND THEN CANCELLED, THEN THERE SHOULD BE NOTHING RELATED TO IT, THE
+  //      DRIVER BILL SHOULD BE VOIDED" — confirming VOID-WHOLE is correct behavior when there is no
+  //      movement evidence. Line-level (keep empty/deadhead miles actually driven, void the rest)
+  //      is the owner-ruled behavior when movement evidence exists (ROUND 118/119) — not built here
+  //      yet; see docs/bus/ for the tracked follow-up, blocked on the STOP WRITER item (nothing
+  //      writes mdata.load_stops.actual_departure_at/actual_arrival_at today).
+  {
+    // VOID-CASCADE-DRIVER-BILLS — void every open (non-void) driver bill for this load in the
+    // same transaction. A cancelled load should not leave phantom payables orphaned. This does
+    // NOT invent GL math — driver bills are a TMS-native subledger concept; their GL impact
+    // materialises only when they are pulled into a settlement and settled via
+    // reverseSettlementBillPaymentInClientTx below.
+    // ACCT-SETL-BILL-VOID-GAP: the "no voided_at column" half of the comment above is stale —
+    // driver_finance.driver_bills has carried voided_at/void_reason/voided_by_user_id/
+    // void_reversal_entry_id since GO-22 (migration 202613490001), this is the ONLY place in
+    // the codebase that ever sets status='void' on this table (confirmed via full-repo grep),
+    // and it never wrote the newer columns. Stamped here now (COALESCE-guarded, matching the
+    // same pattern already shipped for driver_advances/driver_liabilities in
+    // reverseDriverAdvanceInClientTx) — same trigger, same reason text, just also recorded to
+    // the standard register.
+    const openDriverBillsRes = await client.query<{ id: string; bill_number: string }>(
+      `SELECT id::text, bill_number
+         FROM driver_finance.driver_bills
+        WHERE load_id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND status <> 'void'
+        FOR UPDATE`,
+      [args.load_id, args.operating_company_id]
+    );
+    const voidedDriverBillIds: string[] = [];
+    for (const bill of openDriverBillsRes.rows) {
+      const driverBillVoidReason = `Load cancelled (${args.reason_code}) — driver bill voided by load cancellation cascade`;
+      await client.query(
+        `UPDATE driver_finance.driver_bills
+            SET status = 'void',
+                voided_at = COALESCE(voided_at, now()),
+                void_reason = COALESCE(void_reason, $3),
+                voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
+                updated_at = now()
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND status <> 'void'`,
+        [bill.id, args.operating_company_id, driverBillVoidReason, userId]
+      );
+      await appendCrudAudit(
+        client,
+        userId,
+        "driver_finance.driver_bill.voided_by_load_cancel",
+        {
+          resource_type: "driver_finance.driver_bills",
+          resource_id: bill.id,
+          bill_number: bill.bill_number,
+          load_id: args.load_id,
+          operating_company_id: args.operating_company_id,
+          reason: driverBillVoidReason,
+        },
+        "warning",
+        "VOID-CASCADE-LOAD-CANCEL"
+      );
+      voidedDriverBillIds.push(bill.id);
+    }
+
+    // VOID-CASCADE-SETTLEMENTS — for each distinct settlement that has lines tied to this load
+    // and is not already paid/cancelled, cancel it via the shared executeVoidCancel executor
+    // (reuses reverseSettlementBillPaymentInClientTx — no new GL math). A 'paid' settlement
+    // already disbursed cash to the driver and cannot be reversed here; it becomes an explicit
+    // human task (the API will still succeed: paid settlements are skipped, not blocked).
+    const settlementLinesRes = await client.query<{ settlement_id: string }>(
+      `SELECT DISTINCT sl.settlement_id::text
+         FROM driver_finance.settlement_lines sl
+         JOIN driver_finance.driver_settlements ds
+           ON ds.id = sl.settlement_id
+          AND ds.operating_company_id = $2::uuid
+        WHERE sl.load_id = $1::uuid`,
+      [args.load_id, args.operating_company_id]
+    );
+    const cancelledSettlementIds: string[] = [];
+    const skippedSettlementIds: string[] = [];
+    for (const row of settlementLinesRes.rows) {
+      const cancelResult = await executeVoidCancel("driver_settlement", {
+        client,
+        operatingCompanyId: args.operating_company_id,
+        entityId: row.settlement_id,
+        action: "cancel",
+        userId,
+        reason: `Load cancelled (${args.reason_code}) — settlement cancelled by load cancellation cascade: ${args.cancellation_notes.trim()}`,
+      });
+      if (cancelResult.kind === "ok" || cancelResult.kind === "already_done") {
+        cancelledSettlementIds.push(row.settlement_id);
+      } else if (cancelResult.kind === "not_completable") {
+        // Settlement is 'paid' — cash already disbursed; skip and record for human review.
+        skippedSettlementIds.push(row.settlement_id);
+      } else {
+        throw Object.assign(
+          new Error(
+            `load_cancel_settlement_void_failed:${row.settlement_id}:${cancelResult.kind}`
+          ),
+          { code: "load_cancel_settlement_void_failed", settlement_id: row.settlement_id, result: cancelResult.kind }
+        );
+      }
+    }
+
+    // VOID-CASCADE-PRESETTLEMENT-LINK-RELEASE (ROUND 219 ADDENDUM, owner, 2026-09-28: load
+    // 13623 — cancelled, still pointing at an open pre-settlement). ROOT CAUSE, confirmed live
+    // on prod: mdata.loads.presettlement_link_id is a FORWARD pointer set at booking/dispatch
+    // time (presettlement-link.service.ts), before the load has ever been pulled into a
+    // settlement close and BEFORE any driver_finance.settlement_lines row exists for it. The
+    // cascade above (VOID-CASCADE-SETTLEMENTS) only finds settlements that already have
+    // settlement_lines for this load — i.e. it only ever cleans up AFTER a tour has closed. A
+    // load cancelled before its tour ever closes has zero settlement_lines, so that cascade
+    // finds nothing, and the load's own forward pointer is never released — it keeps claiming a
+    // slot on an open pre-settlement forever. Confirmed live: load 13623's link was created at
+    // booking (08:57:46) and never touched again through cancellation (10:09:49); zero
+    // settlement_lines ever existed for it.
+    // Scope: only when this load has NO settlement_lines at all (nothing was ever actually
+    // settled against it — releasing the pointer changes no amount, no GL account, and no
+    // settlement total, on this or any other load/settlement). A load that already has
+    // settlement_lines is left to VOID-CASCADE-SETTLEMENTS above, unchanged.
+    if (
+      !cancelledSettlementIds.length &&
+      !skippedSettlementIds.length
+    ) {
+      const releasedLink = await client.query<{ id: string; presettlement_link_id: string }>(
+        `UPDATE mdata.loads
+            SET presettlement_link_id = NULL, updated_at = now()
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND presettlement_link_id IS NOT NULL
+            AND NOT EXISTS (
+              SELECT 1 FROM driver_finance.settlement_lines sl WHERE sl.load_id = $1::uuid
+            )
+          RETURNING id, presettlement_link_id`,
+        [args.load_id, args.operating_company_id]
+      );
+      if (releasedLink.rows[0]) {
+        await appendCrudAudit(
+          client,
+          userId,
+          "dispatch.load.presettlement_link_released_by_cancel",
+          {
+            resource_type: "mdata.loads",
+            resource_id: args.load_id,
+            operating_company_id: args.operating_company_id,
+            released_presettlement_id: releasedLink.rows[0].presettlement_link_id,
+            reason: `Load cancelled (${args.reason_code}) — presettlement forward-link released: load had zero settlement_lines, so cancellation cascade never reached it`,
+          },
+          "warning",
+          "VOID-CASCADE-PRESETTLEMENT-LINK-RELEASE"
+        );
+      }
+    }
+
+    // VOID-CASCADE-EXPENSES (SET-09, owner 2026-09-03: cancelling a load did not void the
+    // load's expenses) — every open (non-void) accounting.expenses row sourced from this load
+    // gets voided via the SAME shared executeVoidCancel("expense", ...) executor the direct
+    // /api/v1/expenses/:id/void route uses, which internally calls postVoidReversal(entityType:
+    // "expense"). postVoidReversal ALREADY unconditionally releases any bank-transaction match
+    // tied to the voided entity BEFORE it does anything else (BANK-ORPHAN-01: "no voided
+    // document may leave a bank transaction categorized against it") — so this one call also
+    // closes the BANK-MATCH-RELEASE hole named in the same owner instruction; no separate bank-
+    // match code is needed here. No blocking gate analogous to invoices' paid/factored exists
+    // for expenses (they carry no "collected" state), so every open expense is voided.
+    const openExpensesRes = await client.query<{ id: string }>(
+      `SELECT id::text FROM accounting.expenses
+        WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'
+        FOR UPDATE`,
+      [args.load_id, args.operating_company_id]
+    );
+    const voidedExpenseIds: string[] = [];
+    for (const exp of openExpensesRes.rows) {
+      const expResult = await executeVoidCancel("expense", {
+        client,
+        operatingCompanyId: args.operating_company_id,
+        entityId: exp.id,
+        action: "cancel",
+        userId,
+        reason: `Load cancelled (${args.reason_code}) — expense voided by load cancellation cascade: ${args.cancellation_notes.trim()}`,
+      });
+      if (expResult.kind === "ok" || expResult.kind === "already_done") {
+        voidedExpenseIds.push(exp.id);
+      } else {
+        throw Object.assign(
+          new Error(`load_cancel_expense_void_failed:${exp.id}:${expResult.kind}`),
+          { code: "load_cancel_expense_void_failed", expense_id: exp.id, result: expResult.kind }
+        );
+      }
+    }
+
+    // ROUND 125/126 (Lead + owner) — VOID-CASCADE-FUEL. "A fuel EXPENSE is created by a LOAD. A
+    // fuel BANK TRANSACTION is a separate real thing we MATCH to it... voiding one must never
+    // delete or alter the other." Every open (non-void) fuel.fuel_transactions row sourced from
+    // this load gets voided via the SAME shared executeVoidCancel("fuel_transaction", ...)
+    // executor (void-cancel-executors.ts's executeFuelTransaction, ROUND 125/126) that internally
+    // calls postVoidReversal(entityType:"fuel_event", entityId:<fuel_transaction id>) — this
+    // releases any BANK-ORPHAN-01 match (banking.bank_transactions row itself untouched, only its
+    // match/categorization pointers) in the same call that reverses the GL. Header write goes
+    // through stampDocumentVoided only (the executor's own import comment), never a hand UPDATE.
+    const openFuelRes = await client.query<{ id: string }>(
+      `SELECT id::text FROM fuel.fuel_transactions
+        WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+        FOR UPDATE`,
+      [args.load_id, args.operating_company_id]
+    );
+    const voidedFuelIds: string[] = [];
+    for (const ft of openFuelRes.rows) {
+      const ftResult = await executeVoidCancel("fuel_transaction", {
+        client,
+        operatingCompanyId: args.operating_company_id,
+        entityId: ft.id,
+        action: "cancel",
+        userId,
+        reason: `Load cancelled (${args.reason_code}) — fuel transaction voided by load cancellation cascade: ${args.cancellation_notes.trim()}`,
+      });
+      if (ftResult.kind === "ok" || ftResult.kind === "already_done") {
+        voidedFuelIds.push(ft.id);
+      } else {
+        throw Object.assign(
+          new Error(`load_cancel_fuel_void_failed:${ft.id}:${ftResult.kind}`),
+          { code: "load_cancel_fuel_void_failed", fuel_transaction_id: ft.id, result: ftResult.kind }
+        );
+      }
+    }
+
+    // ROUND 118 DEFECT 2 — VOID-CASCADE-VENDOR-BILLS. Newly possible: accounting.bills.load_id
+    // (migration 202614320000) is the load linkage the HEADER never had. Real-repo investigation
+    // before wiring this (not guessed): the canonical createBill() path never writes a bill-
+    // header load_id at all -- load linkage for the one real load-driven bill type in this
+    // codebase today (driver-pay bills numbered by load#, settlement-bill-payment-posting
+    // .service.ts) lives on accounting.bill_lines.load_id, a column that already existed
+    // (migration 202607200000). So this query checks BOTH: the new header column (for any
+    // future/direct header-level write) AND a join through bill_lines (for the real load-driven
+    // bill type that exists today). Reuses the SAME shared executeVoidCancel("bill", ...)
+    // executor the governance dispatch map already wires (void-cancel-executors.ts's
+    // executeBill) — no new GL math, same postVoidReversal engine every other cascade step here
+    // uses. A bill already PAID (bill_has_payments) fails loud — same policy as a paid invoice,
+    // real money already moved, resolved manually.
+    //
+    // ALSO FOUND, not guessed: maintenance/two-section-service.ts's autoCreateBillFromWO
+    // (WO-close auto-bill) already wrote work_orders.load_id into accounting.bills.load_id --
+    // a column that did not exist in any migration until 202614320000 landed. That write path
+    // was throwing "column load_id of relation bills does not exist" on every WO-auto-bill
+    // create before this migration; it is fixed as a side effect, not the point of this round,
+    // but worth stating plainly rather than discovering it silently.
+    // ROUND 155.20 fix — Postgres categorically refuses `SELECT DISTINCT ... FOR UPDATE` (not
+    // just this column combination; the clause is disallowed outright with DISTINCT/GROUP BY/
+    // window functions/UNION etc.). The DISTINCT here existed only to collapse duplicate
+    // b.id rows produced by the LEFT JOIN to bill_lines when a bill has more than one matching
+    // line for this load — an EXISTS-scoped header query returns each bill exactly once without
+    // ever needing DISTINCT, so FOR UPDATE OF b is valid again. Same real bills matched, same
+    // lock, no behavior change beyond making this cancellation path executable at all (it threw
+    // "FOR UPDATE is not allowed with DISTINCT clause" on every single call before this fix).
+    const openVendorBillsRes = await client.query<{ id: string }>(
+      `SELECT b.id::text
+         FROM accounting.bills b
+        WHERE b.operating_company_id = $2::uuid AND b.status <> 'void'
+          AND (
+            b.load_id = $1::uuid
+            OR EXISTS (
+              SELECT 1 FROM accounting.bill_lines bl
+               WHERE bl.bill_id = b.id AND bl.operating_company_id = b.operating_company_id AND bl.load_id = $1::uuid
+            )
+          )
+        FOR UPDATE OF b`,
+      [args.load_id, args.operating_company_id]
+    );
+    const voidedVendorBillIds: string[] = [];
+    for (const vb of openVendorBillsRes.rows) {
+      const vbResult = await executeVoidCancel("bill", {
+        client,
+        operatingCompanyId: args.operating_company_id,
+        entityId: vb.id,
+        action: "cancel",
+        userId,
+        reason: `Load cancelled (${args.reason_code}) — vendor bill voided by load cancellation cascade: ${args.cancellation_notes.trim()}`,
+      });
+      if (vbResult.kind === "ok" || vbResult.kind === "already_done") {
+        voidedVendorBillIds.push(vb.id);
+      } else if (vbResult.kind === "bill_has_payments") {
+        throw Object.assign(
+          new Error(
+            `load_cancel_blocked_paid_vendor_bill: vendor bill ${vb.id} already has recorded payments — real money already moved, cannot be silently voided by a cancellation. Resolve manually.`
+          ),
+          { code: "load_cancel_blocked_paid_vendor_bill", bill_id: vb.id }
+        );
+      } else {
+        throw Object.assign(
+          new Error(`load_cancel_vendor_bill_void_failed:${vb.id}:${vbResult.kind}`),
+          { code: "load_cancel_vendor_bill_void_failed", bill_id: vb.id, result: vbResult.kind }
+        );
+      }
+    }
+
+    // VOID-CASCADE-ADVANCES (SET-09, owner 2026-09-03: cancelling a load did not reverse
+    // ADVANCES/LIABILITIES) — every driver_advances row load-linked to this load (#1440
+    // traceability: driver_advances.load_id mirrors cash_advance_requests.load_id when a
+    // request originated from a booked load) is reversed via the SAME shared
+    // reverseDriverAdvanceInClientTx primitive the direct PATCH .../reverse route uses.
+    // CASH-ADV-F9930's correct-grain guard (paid_to_date > 0 blocks reversal) applies here too:
+    // an advance already recovered through a settlement is not silently un-recovered by a
+    // cancellation — it fails loud instead, same "no partial cascade, no silent orphan" policy
+    // already established above for unvoidable invoices.
+    const loadAdvancesRes = await client.query<{
+      id: string;
+      liability_id: string | null;
+      linked_bill_payment_id: string | null;
+      linked_bill_id: string | null;
+      recovered_cents: string | null;
+    }>(
+      `
+        -- ROUND 394 RULING 1 — recovered is the GL-derived recovered_cents (v_driver_advance_balances),
+        -- not the liability's stored paid_to_date.
+        SELECT a.id::text, a.liability_id::text, a.linked_bill_payment_id::text, a.linked_bill_id::text,
+               vb.recovered_cents::text
+          FROM driver_finance.driver_advances a
+          LEFT JOIN driver_finance.v_driver_advance_balances vb ON vb.advance_id = a.id
+         WHERE a.load_id = $1::uuid
+           AND a.operating_company_id = $2::uuid
+           AND a.disbursement_status <> 'reversed'
+         FOR UPDATE OF a
+      `,
+      [args.load_id, args.operating_company_id]
+    );
+    const unreversableAdvances = loadAdvancesRes.rows.filter((r) => Number(r.recovered_cents ?? 0) > 0);
+    if (unreversableAdvances.length > 0) {
+      throw Object.assign(
+        new Error(
+          `load_cancel_blocked_unreversable_advance: advance(s) ${unreversableAdvances
+            .map((r) => r.id)
+            .join(", ")} already have recoveries recorded against them on the GL (recovered_cents > 0) — real money already moved, cannot be silently reversed by a cancellation. Resolve manually.`
+        ),
+        { code: "load_cancel_blocked_unreversable_advance", details: unreversableAdvances }
+      );
+    }
+    const reversedAdvanceIds: string[] = [];
+    for (const adv of loadAdvancesRes.rows) {
+      await reverseDriverAdvanceInClientTx(client, userId, args.operating_company_id, {
+        advanceId: adv.id,
+        liabilityId: adv.liability_id,
+        linkedBillPaymentId: adv.linked_bill_payment_id,
+        linkedBillId: adv.linked_bill_id,
+        reason: `Load cancelled (${args.reason_code}) — advance reversed by load cancellation cascade: ${args.cancellation_notes.trim()}`,
+      });
+      reversedAdvanceIds.push(adv.id);
+    }
+
+    const liveInvoicesForGate = await client.query<{ id: string; status: string; issue_date: string | null }>(
+      `SELECT id::text, status::text, issue_date::text FROM accounting.invoices
+        WHERE source_load_id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'
+          -- 443.113 AJK-11: the charge this cancellation EARNED (TONU) is not one of the load's original
+          -- documents — identified by its canonical backlink, never by type/memo — so it is never unwound.
+          AND NOT EXISTS (
+            SELECT 1 FROM dispatch.load_cancellations lc
+             WHERE lc.charge_invoice_id = accounting.invoices.id
+               AND lc.operating_company_id = accounting.invoices.operating_company_id
+          )`,
+      [args.load_id, args.operating_company_id]
+    );
+    const unvoidable = liveInvoicesForGate.rows.filter((r) => r.status === "paid" || r.status === "factored");
+    if (unvoidable.length > 0) {
+      throw Object.assign(
+        new Error(
+          `load_cancel_blocked_unvoidable_invoice: invoice(s) ${unvoidable.map((r) => r.id).join(", ")} are '${unvoidable
+            .map((r) => r.status)
+            .join("/")}' — real money already moved, cannot be silently voided by a cancellation. Resolve manually.`
+        ),
+        { code: "load_cancel_blocked_unvoidable_invoice", details: unvoidable }
+      );
+    }
+
+    const cascadeReason = `Load cancelled (${args.reason_code}) — invoice voided by the cancellation cascade: ${args.cancellation_notes.trim()}`;
+    const voidedInvoiceIds: string[] = [];
+    const voidFlagOn = await isVoidEnforcementEnabled(client, args.operating_company_id, userId);
+    for (const inv of liveInvoicesForGate.rows) {
+      let reversal = { reversal_journal_entry_id: null as string | null, reversal_date: null as string | null, closed_period_reversal: false, reversed_line_count: 0 };
+      if (voidFlagOn) {
+        const originalDate = pgDateColumnToIsoDay(inv.issue_date);
+        reversal = await postVoidReversal(
+          client,
+          {
+            operatingCompanyId: args.operating_company_id,
+            entityType: "invoice",
+            entityId: inv.id,
+            originalDate,
+            memo: `Void reversal of invoice ${inv.id}: ${cascadeReason}`,
+          },
+          { userId }
+        );
+      }
+      const updated = await client.query<{ id: string }>(
+        `
+          UPDATE accounting.invoices
+          SET status = 'void',
+              voided_at = now(),
+              void_reason = COALESCE(void_reason, $3),
+              voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
+              updated_at = now(),
+              updated_by_user_id = $4
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'
+          RETURNING id::text
+        `,
+        [inv.id, args.operating_company_id, cascadeReason, userId]
+      );
+      if (!updated.rows[0]?.id) {
+        throw Object.assign(new Error(`load_cancel_invoice_void_race_lost: ${inv.id}`), {
+          code: "load_cancel_invoice_void_race_lost",
+        });
+      }
+      // ROUND 138 -- this UPDATE (like executeInvoice's own raw UPDATE) never goes through
+      // stampDocumentVoided, so its cascade wiring never fires for this caller. Cascade here
+      // directly; idempotent, safe even if some other path already touched a child row.
+      await cascadeVoidChildren(client, "invoice", inv.id, args.operating_company_id);
+      voidedInvoiceIds.push(inv.id);
+      if (voidFlagOn) {
+        await auditVoid(client, userId, "invoice", {
+          operatingCompanyId: args.operating_company_id,
+          entityId: inv.id,
+          reason: cascadeReason,
+          reversal,
+        });
+      }
+    }
+
+    // FAIL-V1: `voided_at` and `void_reason` are NOT optional bookkeeping here — they are half of
+    // the void. `accounting.invoices` carries CHECK `invoices_void_state_authoritative`:
+    //     (status = 'void') = (voided_at IS NOT NULL)
+    // an IFF, so writing `status='void'` alone violates it — enforced above by writing both
+    // halves together in the SAME UPDATE. Reproduced live pre-fix on L-20260808-0093 /
+    // INV-2026-00024 (still proforma, voided_at NULL) and again on L-20260830-0020/0024 (still
+    // 'sent', $2,500.00 + $1,100.00 orphaned, no reversing JE — the VOID-CANCEL-NOT-VOID
+    // finding this whole block now closes).
+    // ROUND 118 DEFECT 4 (SUPERSEDED, ROUND 125/126, owner explicit ruling) — this cascade
+    // originally left fuel.fuel_transactions untouched on the reasoning that "the diesel was
+    // REALLY bought, voiding it would misstate a real expense as never having happened." The
+    // owner's later, explicit ruling draws a finer line this reasoning had collapsed: the
+    // physical fuel purchase and its BANK TRANSACTION record are real and untouched by this
+    // cascade (VOID-CASCADE-FUEL above never alters banking.bank_transactions, only releases its
+    // match); what DOES void is the ACCOUNTING document (fuel.fuel_transactions) and its GL --
+    // "A fuel EXPENSE is created by a LOAD... they are NOT the same record." A cancelled load's
+    // fuel expense is now voided by the block above, same as every other load-sourced expense.
+    // accounting.factoring_advances is still NOT joined here (unchanged reasoning): it carries no
+    // direct load_id or invoice_id column (an advance is often a multi-invoice batch submission)
+    // — the existing unvoidable-invoice gate (an invoice already sold reads status='factored' and
+    // blocks this whole cancellation before any void runs) is the real safety net, not a join
+    // here.
+
+    // Always write the money-artifacts audit when any financial artifact was touched — this
+    // includes driver bills, settlements, and invoices. Even an empty set on one axis is
+    // worth recording (zero orphans = confirmed clean cascade).
+    if (
+      voidedDriverBillIds.length > 0 ||
+      cancelledSettlementIds.length > 0 ||
+      voidedInvoiceIds.length > 0 ||
+      voidedExpenseIds.length > 0 ||
+      voidedVendorBillIds.length > 0 ||
+      reversedAdvanceIds.length > 0 ||
+      voidedFuelIds.length > 0
+    ) {
+      await appendCrudAudit(
+        client,
+        userId,
+        "dispatch.load.cancellation_money_artifacts",
+        {
+          resource_type: "mdata.loads",
+          resource_id: args.load_id,
+          operating_company_id: args.operating_company_id,
+          // Ordered steps: settlements first (GL reversal), then driver bills (subledger), then
+          // expenses (bank-match release rides along, BANK-ORPHAN-01), then vendor bills, then
+          // advances/liabilities, then invoices (A/R reversal).
+          settlements_cancelled: cancelledSettlementIds,
+          settlements_skipped_paid: skippedSettlementIds,
+          driver_bills_voided: voidedDriverBillIds,
+          expenses_voided: voidedExpenseIds,
+          vendor_bills_voided: voidedVendorBillIds,
+          advances_reversed: reversedAdvanceIds,
+          invoices_voided: voidedInvoiceIds,
+          // ROUND 125/126 (owner ruling supersedes ROUND 118 Defect 4 -- see comment above): the
+          // fuel EXPENSE document is now voided by this cascade; the underlying bank transaction
+          // and the real fuel purchase are untouched, only the match pointer is released.
+          fuel_transactions_voided: voidedFuelIds,
+          factoring_advances_reason:
+            "N/A -- accounting.factoring_advances has no load_id/invoice_id column to join on; " +
+            "safety is provided by the unvoidable-invoice gate above (a 'factored' invoice already blocks this cancellation)",
+          note: "load cancellation cascade: settlements cancelled, driver bills voided, expenses voided (bank matches released), vendor bills voided, fuel transactions voided (bank matches released, bank transaction itself untouched), advances/liabilities reversed, invoices voided with reversing JEs, factoring explicitly declared N/A — all in the same transaction",
+        },
+        "warning",
+        "VOID-CANCEL-NOT-VOID"
+      );
+    }
+  }
+
+  // 443.113 AJK-10/11 — the earned charge is raised LAST, after the cascade above voided the load's original invoices:
+  // accounting.invoices allows ONE live invoice per load (uq_invoices_source_load_active), so raising the TONU first
+  // made every billable cancellation fail, and the void loop then selected the TONU it had just raised.
+  // ACCT-F5701 — a billable cancellation charge (TONU) used to stop at "captured and displayed"
+  // (dispatch.load_cancellations.cancellation_charge_cents) with no path to an invoice / A/R / GL
+  // — the money silently evaporated. Reuses the existing revenue resolution + invoice totals
+  // machinery (no new GL math); books to the SAME existing Accessorial/Detention Income account
+  // every other accessorial line already resolves to (owner ruling, TONU = operating revenue,
+  // 2026-07-21; live board answer 2026-08-21: no new account). Flag-gated OFF by default — with
+  // the flag off this is a strict no-op, today's behaviour exactly.
+  if (args.billable_to_customer && args.cancellation_charge_cents != null) {
+    const tonuFlagOn = await isEnabled(client, TONU_CANCELLATION_AR_POSTING_FLAG_KEY, {
+      operating_company_id: args.operating_company_id,
+      user_uuid: userId,
+    });
+    if (tonuFlagOn) {
+      const tonuInvoice = await createTonuInvoiceForCancellation(client, {
+        operatingCompanyId: args.operating_company_id,
+        loadId: args.load_id,
+        cancellationChargeCents: args.cancellation_charge_cents,
+        actorUserId: userId,
+      });
+      // DSP-MONEY-F7146B-R1 (CC-1): the backlink write must bind the cancellation's own company
+      // and confirm it is still the 'approved' row this transaction just wrote (the cancellation is
+      // 'approved' whenever this finalization runs — immediately, or after the Owner's approval) — the bare
+      // `WHERE id = $1` accepted any operating_company_id and any status, and never checked
+      // whether the row actually changed, so a lost/RLS-filtered/status-drifted update could
+      // commit the TONU invoice while silently losing the canonical backlink.
+      const backlinkRes = await client.query<{ id: string }>(
+        `
+          UPDATE dispatch.load_cancellations
+             SET charge_invoice_id = $2::uuid,
+                 charge_invoice_line_id = $3::uuid,
+                 charged_at = now(),
+                 charged_by_user_id = $4
+           WHERE id = $1
+             AND operating_company_id = $5::uuid
+             AND status = 'approved'
+           RETURNING id
+        `,
+        [args.cancellation_id, tonuInvoice.invoiceId, tonuInvoice.invoiceLineId, userId, args.operating_company_id]
+      );
+      if (!backlinkRes.rows[0]) {
+        throw Object.assign(new Error("cancellation_charge_backlink_failed"), {
+          code: "cancellation_charge_backlink_failed",
+        });
+      }
+    }
+  }
+}
+
 /** Client-accepting cancel — used by single POST and bulk fail-stop (same txn). */
 export async function cancelLoadInClientTx(
   client: CancelLoadClient,
@@ -193,581 +805,18 @@ export async function cancelLoadInClientTx(
         approved_by_user_id: pendingOwnerApproval ? null : userId,
       });
 
-      // ACCT-F5701 — a billable cancellation charge (TONU) used to stop at "captured and displayed"
-      // (dispatch.load_cancellations.cancellation_charge_cents) with no path to an invoice / A/R / GL
-      // — the money silently evaporated. Reuses the existing revenue resolution + invoice totals
-      // machinery (no new GL math); books to the SAME existing Accessorial/Detention Income account
-      // every other accessorial line already resolves to (owner ruling, TONU = operating revenue,
-      // 2026-07-21; live board answer 2026-08-21: no new account). Flag-gated OFF by default — with
-      // the flag off this is a strict no-op, today's behaviour exactly.
-      if (!pendingOwnerApproval && resolvedBillable && input.cancellation_charge_cents != null) {
-        const tonuFlagOn = await isEnabled(client, TONU_CANCELLATION_AR_POSTING_FLAG_KEY, {
+      if (!pendingOwnerApproval) {
+        await finalizeLoadCancellationInClientTx(client, userId, {
           operating_company_id: input.operating_company_id,
-          user_uuid: userId,
+          load_id: input.load_id,
+          cancellation_id: cancellation.id,
+          reason_code: input.reason_code,
+          cancellation_notes: input.cancellation_notes,
+          billable_to_customer: resolvedBillable,
+          cancellation_charge_cents: input.cancellation_charge_cents ?? null,
+          prior_status: String(loadRes.rows[0].status),
+          revrec_memo: `Load cancelled: ${input.cancellation_notes.trim().slice(0, 200)}`,
         });
-        if (tonuFlagOn) {
-          const tonuInvoice = await createTonuInvoiceForCancellation(client, {
-            operatingCompanyId: input.operating_company_id,
-            loadId: input.load_id,
-            cancellationChargeCents: input.cancellation_charge_cents,
-            actorUserId: userId,
-          });
-          // DSP-MONEY-F7146B-R1 (CC-1): the backlink write must bind the cancellation's own company
-          // and confirm it is still the 'approved' row this transaction just wrote (this branch only
-          // runs when !pendingOwnerApproval, i.e. status was just set to 'approved' above) — the bare
-          // `WHERE id = $1` accepted any operating_company_id and any status, and never checked
-          // whether the row actually changed, so a lost/RLS-filtered/status-drifted update could
-          // commit the TONU invoice while silently losing the canonical backlink.
-          const backlinkRes = await client.query<{ id: string }>(
-            `
-              UPDATE dispatch.load_cancellations
-                 SET charge_invoice_id = $2::uuid,
-                     charge_invoice_line_id = $3::uuid,
-                     charged_at = now(),
-                     charged_by_user_id = $4
-               WHERE id = $1
-                 AND operating_company_id = $5::uuid
-                 AND status = 'approved'
-               RETURNING id
-            `,
-            [cancellation.id, tonuInvoice.invoiceId, tonuInvoice.invoiceLineId, userId, input.operating_company_id]
-          );
-          if (!backlinkRes.rows[0]) {
-            throw Object.assign(new Error("cancellation_charge_backlink_failed"), {
-              code: "cancellation_charge_backlink_failed",
-            });
-          }
-        }
-      }
-
-      if (!pendingOwnerApproval) {
-        const cancelledLoad = await client.query<{ id: string }>(
-          `
-            UPDATE mdata.loads
-            SET status = 'cancelled'::mdata.load_status_enum,
-                updated_at = now()
-            WHERE id = $1
-              AND operating_company_id = $2::uuid
-              AND status::text = $3
-            RETURNING id
-          `,
-          [input.load_id, input.operating_company_id, String(loadRes.rows[0].status)]
-        );
-        if (!cancelledLoad.rows[0]?.id) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
-        // ROUND 326: a cancelled load carries no recognized revenue — deleted, not reversed (owner law 2026-10-02).
-        await settleRevrecOnCancel(client as never, input.operating_company_id, input.load_id, userId, `Load cancelled: ${input.cancellation_notes.trim().slice(0, 200)}`);
-      }
-
-      // WIRE-10 / VOID-CANCEL-NOT-VOID (owner-verified live 2026-09-01, Devin-A void-10 walk,
-      // L-20260830-0020/0024: $2,500.00 + $1,100.00 orphaned — load cancelled, invoice STILL
-      // 'sent', voided_at NULL, void_reason NULL, no reversing JE) — cancelling a load must not
-      // leave its money artifacts alive.
-      //
-      // ORIGINAL DESIGN (superseded below for invoices): only 'proforma' was auto-voided, on the
-      // reasoning that a 'sent'/'paid' invoice might represent a genuinely-owed TONU/cancellation
-      // charge and voiding it silently would destroy real A/R. That reasoning UNDERSTATED the WORM
-      // violation: leaving a live invoice attached to an operationally-dead load is itself the
-      // defect, and "might be owed" is not the same as "is being actively collected" — a genuinely
-      // owed TONU charge is booked as its OWN new invoice (createTonuInvoiceForCancellation,
-      // right above this block), not left riding on the cancelled load's original invoice.
-      //
-      // THE CASCADE, in FK order, all inside this SAME transaction (so a throw anywhere rolls back
-      // everything already done in this call, including the load-status UPDATE above — no partial
-      // voids by construction, not by ordering):
-      //   1. every live (non-void) invoice sourced from this load — voided, WITH a reversing JE via
-      //      the shared postVoidReversal (the SAME primitive the direct /invoices/:id/void route
-      //      and the bulk set_status route already use — no new GL math invented here).
-      //   2. a 'paid' invoice is NOT silently voided — real cash was collected against it. FAILS
-      //      LOUD instead (throws, cancels nothing) so a human resolves it explicitly; same for
-      //      'factored' (sold to the factor — a different liability, not this function's call).
-      //   3. ROUND 118 FIX (stale comment, real defect — whoever read this next would have built
-      //      against a lie): this comment used to say open driver bills are NOT auto-voided and the
-      //      cancellation "FAILS LOUD" instead. The code twenty lines below has always voided every
-      //      open driver bill WHOLE (VOID-CASCADE-DRIVER-BILLS) — there is no fail-loud branch for
-      //      driver bills here; settlements are the ones that fail loud when unreversable (paid_to_date
-      //      > 0, see VOID-CASCADE-ADVANCES below) and skip when already paid. The owner's own ROUND
-      //      118 ruling on the driver-bill VOID-WHOLE behavior: "IF A LOAD WAS INPUTED... AND ASSIGNED
-      //      TO A DRIVER AND TRUCK AND THEN CANCELLED, THEN THERE SHOULD BE NOTHING RELATED TO IT, THE
-      //      DRIVER BILL SHOULD BE VOIDED" — confirming VOID-WHOLE is correct behavior when there is no
-      //      movement evidence. Line-level (keep empty/deadhead miles actually driven, void the rest)
-      //      is the owner-ruled behavior when movement evidence exists (ROUND 118/119) — not built here
-      //      yet; see docs/bus/ for the tracked follow-up, blocked on the STOP WRITER item (nothing
-      //      writes mdata.load_stops.actual_departure_at/actual_arrival_at today).
-      if (!pendingOwnerApproval) {
-        // VOID-CASCADE-DRIVER-BILLS — void every open (non-void) driver bill for this load in the
-        // same transaction. A cancelled load should not leave phantom payables orphaned. This does
-        // NOT invent GL math — driver bills are a TMS-native subledger concept; their GL impact
-        // materialises only when they are pulled into a settlement and settled via
-        // reverseSettlementBillPaymentInClientTx below.
-        // ACCT-SETL-BILL-VOID-GAP: the "no voided_at column" half of the comment above is stale —
-        // driver_finance.driver_bills has carried voided_at/void_reason/voided_by_user_id/
-        // void_reversal_entry_id since GO-22 (migration 202613490001), this is the ONLY place in
-        // the codebase that ever sets status='void' on this table (confirmed via full-repo grep),
-        // and it never wrote the newer columns. Stamped here now (COALESCE-guarded, matching the
-        // same pattern already shipped for driver_advances/driver_liabilities in
-        // reverseDriverAdvanceInClientTx) — same trigger, same reason text, just also recorded to
-        // the standard register.
-        const openDriverBillsRes = await client.query<{ id: string; bill_number: string }>(
-          `SELECT id::text, bill_number
-             FROM driver_finance.driver_bills
-            WHERE load_id = $1::uuid
-              AND operating_company_id = $2::uuid
-              AND status <> 'void'
-            FOR UPDATE`,
-          [input.load_id, input.operating_company_id]
-        );
-        const voidedDriverBillIds: string[] = [];
-        for (const bill of openDriverBillsRes.rows) {
-          const driverBillVoidReason = `Load cancelled (${input.reason_code}) — driver bill voided by load cancellation cascade`;
-          await client.query(
-            `UPDATE driver_finance.driver_bills
-                SET status = 'void',
-                    voided_at = COALESCE(voided_at, now()),
-                    void_reason = COALESCE(void_reason, $3),
-                    voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
-                    updated_at = now()
-              WHERE id = $1::uuid
-                AND operating_company_id = $2::uuid
-                AND status <> 'void'`,
-            [bill.id, input.operating_company_id, driverBillVoidReason, userId]
-          );
-          await appendCrudAudit(
-            client,
-            userId,
-            "driver_finance.driver_bill.voided_by_load_cancel",
-            {
-              resource_type: "driver_finance.driver_bills",
-              resource_id: bill.id,
-              bill_number: bill.bill_number,
-              load_id: input.load_id,
-              operating_company_id: input.operating_company_id,
-              reason: driverBillVoidReason,
-            },
-            "warning",
-            "VOID-CASCADE-LOAD-CANCEL"
-          );
-          voidedDriverBillIds.push(bill.id);
-        }
-
-        // VOID-CASCADE-SETTLEMENTS — for each distinct settlement that has lines tied to this load
-        // and is not already paid/cancelled, cancel it via the shared executeVoidCancel executor
-        // (reuses reverseSettlementBillPaymentInClientTx — no new GL math). A 'paid' settlement
-        // already disbursed cash to the driver and cannot be reversed here; it becomes an explicit
-        // human task (the API will still succeed: paid settlements are skipped, not blocked).
-        const settlementLinesRes = await client.query<{ settlement_id: string }>(
-          `SELECT DISTINCT sl.settlement_id::text
-             FROM driver_finance.settlement_lines sl
-             JOIN driver_finance.driver_settlements ds
-               ON ds.id = sl.settlement_id
-              AND ds.operating_company_id = $2::uuid
-            WHERE sl.load_id = $1::uuid`,
-          [input.load_id, input.operating_company_id]
-        );
-        const cancelledSettlementIds: string[] = [];
-        const skippedSettlementIds: string[] = [];
-        for (const row of settlementLinesRes.rows) {
-          const cancelResult = await executeVoidCancel("driver_settlement", {
-            client,
-            operatingCompanyId: input.operating_company_id,
-            entityId: row.settlement_id,
-            action: "cancel",
-            userId,
-            reason: `Load cancelled (${input.reason_code}) — settlement cancelled by load cancellation cascade: ${input.cancellation_notes.trim()}`,
-          });
-          if (cancelResult.kind === "ok" || cancelResult.kind === "already_done") {
-            cancelledSettlementIds.push(row.settlement_id);
-          } else if (cancelResult.kind === "not_completable") {
-            // Settlement is 'paid' — cash already disbursed; skip and record for human review.
-            skippedSettlementIds.push(row.settlement_id);
-          } else {
-            throw Object.assign(
-              new Error(
-                `load_cancel_settlement_void_failed:${row.settlement_id}:${cancelResult.kind}`
-              ),
-              { code: "load_cancel_settlement_void_failed", settlement_id: row.settlement_id, result: cancelResult.kind }
-            );
-          }
-        }
-
-        // VOID-CASCADE-PRESETTLEMENT-LINK-RELEASE (ROUND 219 ADDENDUM, owner, 2026-09-28: load
-        // 13623 — cancelled, still pointing at an open pre-settlement). ROOT CAUSE, confirmed live
-        // on prod: mdata.loads.presettlement_link_id is a FORWARD pointer set at booking/dispatch
-        // time (presettlement-link.service.ts), before the load has ever been pulled into a
-        // settlement close and BEFORE any driver_finance.settlement_lines row exists for it. The
-        // cascade above (VOID-CASCADE-SETTLEMENTS) only finds settlements that already have
-        // settlement_lines for this load — i.e. it only ever cleans up AFTER a tour has closed. A
-        // load cancelled before its tour ever closes has zero settlement_lines, so that cascade
-        // finds nothing, and the load's own forward pointer is never released — it keeps claiming a
-        // slot on an open pre-settlement forever. Confirmed live: load 13623's link was created at
-        // booking (08:57:46) and never touched again through cancellation (10:09:49); zero
-        // settlement_lines ever existed for it.
-        // Scope: only when this load has NO settlement_lines at all (nothing was ever actually
-        // settled against it — releasing the pointer changes no amount, no GL account, and no
-        // settlement total, on this or any other load/settlement). A load that already has
-        // settlement_lines is left to VOID-CASCADE-SETTLEMENTS above, unchanged.
-        if (
-          !cancelledSettlementIds.length &&
-          !skippedSettlementIds.length
-        ) {
-          const releasedLink = await client.query<{ id: string; presettlement_link_id: string }>(
-            `UPDATE mdata.loads
-                SET presettlement_link_id = NULL, updated_at = now()
-              WHERE id = $1::uuid
-                AND operating_company_id = $2::uuid
-                AND presettlement_link_id IS NOT NULL
-                AND NOT EXISTS (
-                  SELECT 1 FROM driver_finance.settlement_lines sl WHERE sl.load_id = $1::uuid
-                )
-              RETURNING id, presettlement_link_id`,
-            [input.load_id, input.operating_company_id]
-          );
-          if (releasedLink.rows[0]) {
-            await appendCrudAudit(
-              client,
-              userId,
-              "dispatch.load.presettlement_link_released_by_cancel",
-              {
-                resource_type: "mdata.loads",
-                resource_id: input.load_id,
-                operating_company_id: input.operating_company_id,
-                released_presettlement_id: releasedLink.rows[0].presettlement_link_id,
-                reason: `Load cancelled (${input.reason_code}) — presettlement forward-link released: load had zero settlement_lines, so cancellation cascade never reached it`,
-              },
-              "warning",
-              "VOID-CASCADE-PRESETTLEMENT-LINK-RELEASE"
-            );
-          }
-        }
-
-        // VOID-CASCADE-EXPENSES (SET-09, owner 2026-09-03: cancelling a load did not void the
-        // load's expenses) — every open (non-void) accounting.expenses row sourced from this load
-        // gets voided via the SAME shared executeVoidCancel("expense", ...) executor the direct
-        // /api/v1/expenses/:id/void route uses, which internally calls postVoidReversal(entityType:
-        // "expense"). postVoidReversal ALREADY unconditionally releases any bank-transaction match
-        // tied to the voided entity BEFORE it does anything else (BANK-ORPHAN-01: "no voided
-        // document may leave a bank transaction categorized against it") — so this one call also
-        // closes the BANK-MATCH-RELEASE hole named in the same owner instruction; no separate bank-
-        // match code is needed here. No blocking gate analogous to invoices' paid/factored exists
-        // for expenses (they carry no "collected" state), so every open expense is voided.
-        const openExpensesRes = await client.query<{ id: string }>(
-          `SELECT id::text FROM accounting.expenses
-            WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'
-            FOR UPDATE`,
-          [input.load_id, input.operating_company_id]
-        );
-        const voidedExpenseIds: string[] = [];
-        for (const exp of openExpensesRes.rows) {
-          const expResult = await executeVoidCancel("expense", {
-            client,
-            operatingCompanyId: input.operating_company_id,
-            entityId: exp.id,
-            action: "cancel",
-            userId,
-            reason: `Load cancelled (${input.reason_code}) — expense voided by load cancellation cascade: ${input.cancellation_notes.trim()}`,
-          });
-          if (expResult.kind === "ok" || expResult.kind === "already_done") {
-            voidedExpenseIds.push(exp.id);
-          } else {
-            throw Object.assign(
-              new Error(`load_cancel_expense_void_failed:${exp.id}:${expResult.kind}`),
-              { code: "load_cancel_expense_void_failed", expense_id: exp.id, result: expResult.kind }
-            );
-          }
-        }
-
-        // ROUND 125/126 (Lead + owner) — VOID-CASCADE-FUEL. "A fuel EXPENSE is created by a LOAD. A
-        // fuel BANK TRANSACTION is a separate real thing we MATCH to it... voiding one must never
-        // delete or alter the other." Every open (non-void) fuel.fuel_transactions row sourced from
-        // this load gets voided via the SAME shared executeVoidCancel("fuel_transaction", ...)
-        // executor (void-cancel-executors.ts's executeFuelTransaction, ROUND 125/126) that internally
-        // calls postVoidReversal(entityType:"fuel_event", entityId:<fuel_transaction id>) — this
-        // releases any BANK-ORPHAN-01 match (banking.bank_transactions row itself untouched, only its
-        // match/categorization pointers) in the same call that reverses the GL. Header write goes
-        // through stampDocumentVoided only (the executor's own import comment), never a hand UPDATE.
-        const openFuelRes = await client.query<{ id: string }>(
-          `SELECT id::text FROM fuel.fuel_transactions
-            WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
-            FOR UPDATE`,
-          [input.load_id, input.operating_company_id]
-        );
-        const voidedFuelIds: string[] = [];
-        for (const ft of openFuelRes.rows) {
-          const ftResult = await executeVoidCancel("fuel_transaction", {
-            client,
-            operatingCompanyId: input.operating_company_id,
-            entityId: ft.id,
-            action: "cancel",
-            userId,
-            reason: `Load cancelled (${input.reason_code}) — fuel transaction voided by load cancellation cascade: ${input.cancellation_notes.trim()}`,
-          });
-          if (ftResult.kind === "ok" || ftResult.kind === "already_done") {
-            voidedFuelIds.push(ft.id);
-          } else {
-            throw Object.assign(
-              new Error(`load_cancel_fuel_void_failed:${ft.id}:${ftResult.kind}`),
-              { code: "load_cancel_fuel_void_failed", fuel_transaction_id: ft.id, result: ftResult.kind }
-            );
-          }
-        }
-
-        // ROUND 118 DEFECT 2 — VOID-CASCADE-VENDOR-BILLS. Newly possible: accounting.bills.load_id
-        // (migration 202614320000) is the load linkage the HEADER never had. Real-repo investigation
-        // before wiring this (not guessed): the canonical createBill() path never writes a bill-
-        // header load_id at all -- load linkage for the one real load-driven bill type in this
-        // codebase today (driver-pay bills numbered by load#, settlement-bill-payment-posting
-        // .service.ts) lives on accounting.bill_lines.load_id, a column that already existed
-        // (migration 202607200000). So this query checks BOTH: the new header column (for any
-        // future/direct header-level write) AND a join through bill_lines (for the real load-driven
-        // bill type that exists today). Reuses the SAME shared executeVoidCancel("bill", ...)
-        // executor the governance dispatch map already wires (void-cancel-executors.ts's
-        // executeBill) — no new GL math, same postVoidReversal engine every other cascade step here
-        // uses. A bill already PAID (bill_has_payments) fails loud — same policy as a paid invoice,
-        // real money already moved, resolved manually.
-        //
-        // ALSO FOUND, not guessed: maintenance/two-section-service.ts's autoCreateBillFromWO
-        // (WO-close auto-bill) already wrote work_orders.load_id into accounting.bills.load_id --
-        // a column that did not exist in any migration until 202614320000 landed. That write path
-        // was throwing "column load_id of relation bills does not exist" on every WO-auto-bill
-        // create before this migration; it is fixed as a side effect, not the point of this round,
-        // but worth stating plainly rather than discovering it silently.
-        // ROUND 155.20 fix — Postgres categorically refuses `SELECT DISTINCT ... FOR UPDATE` (not
-        // just this column combination; the clause is disallowed outright with DISTINCT/GROUP BY/
-        // window functions/UNION etc.). The DISTINCT here existed only to collapse duplicate
-        // b.id rows produced by the LEFT JOIN to bill_lines when a bill has more than one matching
-        // line for this load — an EXISTS-scoped header query returns each bill exactly once without
-        // ever needing DISTINCT, so FOR UPDATE OF b is valid again. Same real bills matched, same
-        // lock, no behavior change beyond making this cancellation path executable at all (it threw
-        // "FOR UPDATE is not allowed with DISTINCT clause" on every single call before this fix).
-        const openVendorBillsRes = await client.query<{ id: string }>(
-          `SELECT b.id::text
-             FROM accounting.bills b
-            WHERE b.operating_company_id = $2::uuid AND b.status <> 'void'
-              AND (
-                b.load_id = $1::uuid
-                OR EXISTS (
-                  SELECT 1 FROM accounting.bill_lines bl
-                   WHERE bl.bill_id = b.id AND bl.operating_company_id = b.operating_company_id AND bl.load_id = $1::uuid
-                )
-              )
-            FOR UPDATE OF b`,
-          [input.load_id, input.operating_company_id]
-        );
-        const voidedVendorBillIds: string[] = [];
-        for (const vb of openVendorBillsRes.rows) {
-          const vbResult = await executeVoidCancel("bill", {
-            client,
-            operatingCompanyId: input.operating_company_id,
-            entityId: vb.id,
-            action: "cancel",
-            userId,
-            reason: `Load cancelled (${input.reason_code}) — vendor bill voided by load cancellation cascade: ${input.cancellation_notes.trim()}`,
-          });
-          if (vbResult.kind === "ok" || vbResult.kind === "already_done") {
-            voidedVendorBillIds.push(vb.id);
-          } else if (vbResult.kind === "bill_has_payments") {
-            throw Object.assign(
-              new Error(
-                `load_cancel_blocked_paid_vendor_bill: vendor bill ${vb.id} already has recorded payments — real money already moved, cannot be silently voided by a cancellation. Resolve manually.`
-              ),
-              { code: "load_cancel_blocked_paid_vendor_bill", bill_id: vb.id }
-            );
-          } else {
-            throw Object.assign(
-              new Error(`load_cancel_vendor_bill_void_failed:${vb.id}:${vbResult.kind}`),
-              { code: "load_cancel_vendor_bill_void_failed", bill_id: vb.id, result: vbResult.kind }
-            );
-          }
-        }
-
-        // VOID-CASCADE-ADVANCES (SET-09, owner 2026-09-03: cancelling a load did not reverse
-        // ADVANCES/LIABILITIES) — every driver_advances row load-linked to this load (#1440
-        // traceability: driver_advances.load_id mirrors cash_advance_requests.load_id when a
-        // request originated from a booked load) is reversed via the SAME shared
-        // reverseDriverAdvanceInClientTx primitive the direct PATCH .../reverse route uses.
-        // CASH-ADV-F9930's correct-grain guard (paid_to_date > 0 blocks reversal) applies here too:
-        // an advance already recovered through a settlement is not silently un-recovered by a
-        // cancellation — it fails loud instead, same "no partial cascade, no silent orphan" policy
-        // already established above for unvoidable invoices.
-        const loadAdvancesRes = await client.query<{
-          id: string;
-          liability_id: string | null;
-          linked_bill_payment_id: string | null;
-          linked_bill_id: string | null;
-          recovered_cents: string | null;
-        }>(
-          `
-            -- ROUND 394 RULING 1 — recovered is the GL-derived recovered_cents (v_driver_advance_balances),
-            -- not the liability's stored paid_to_date.
-            SELECT a.id::text, a.liability_id::text, a.linked_bill_payment_id::text, a.linked_bill_id::text,
-                   vb.recovered_cents::text
-              FROM driver_finance.driver_advances a
-              LEFT JOIN driver_finance.v_driver_advance_balances vb ON vb.advance_id = a.id
-             WHERE a.load_id = $1::uuid
-               AND a.operating_company_id = $2::uuid
-               AND a.disbursement_status <> 'reversed'
-             FOR UPDATE OF a
-          `,
-          [input.load_id, input.operating_company_id]
-        );
-        const unreversableAdvances = loadAdvancesRes.rows.filter((r) => Number(r.recovered_cents ?? 0) > 0);
-        if (unreversableAdvances.length > 0) {
-          throw Object.assign(
-            new Error(
-              `load_cancel_blocked_unreversable_advance: advance(s) ${unreversableAdvances
-                .map((r) => r.id)
-                .join(", ")} already have recoveries recorded against them on the GL (recovered_cents > 0) — real money already moved, cannot be silently reversed by a cancellation. Resolve manually.`
-            ),
-            { code: "load_cancel_blocked_unreversable_advance", details: unreversableAdvances }
-          );
-        }
-        const reversedAdvanceIds: string[] = [];
-        for (const adv of loadAdvancesRes.rows) {
-          await reverseDriverAdvanceInClientTx(client, userId, input.operating_company_id, {
-            advanceId: adv.id,
-            liabilityId: adv.liability_id,
-            linkedBillPaymentId: adv.linked_bill_payment_id,
-            linkedBillId: adv.linked_bill_id,
-            reason: `Load cancelled (${input.reason_code}) — advance reversed by load cancellation cascade: ${input.cancellation_notes.trim()}`,
-          });
-          reversedAdvanceIds.push(adv.id);
-        }
-
-        const liveInvoicesForGate = await client.query<{ id: string; status: string; issue_date: string | null }>(
-          `SELECT id::text, status::text, issue_date::text FROM accounting.invoices
-            WHERE source_load_id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'`,
-          [input.load_id, input.operating_company_id]
-        );
-        const unvoidable = liveInvoicesForGate.rows.filter((r) => r.status === "paid" || r.status === "factored");
-        if (unvoidable.length > 0) {
-          throw Object.assign(
-            new Error(
-              `load_cancel_blocked_unvoidable_invoice: invoice(s) ${unvoidable.map((r) => r.id).join(", ")} are '${unvoidable
-                .map((r) => r.status)
-                .join("/")}' — real money already moved, cannot be silently voided by a cancellation. Resolve manually.`
-            ),
-            { code: "load_cancel_blocked_unvoidable_invoice", details: unvoidable }
-          );
-        }
-
-        const cascadeReason = `Load cancelled (${input.reason_code}) — invoice voided by the cancellation cascade: ${input.cancellation_notes.trim()}`;
-        const voidedInvoiceIds: string[] = [];
-        const voidFlagOn = await isVoidEnforcementEnabled(client, input.operating_company_id, userId);
-        for (const inv of liveInvoicesForGate.rows) {
-          let reversal = { reversal_journal_entry_id: null as string | null, reversal_date: null as string | null, closed_period_reversal: false, reversed_line_count: 0 };
-          if (voidFlagOn) {
-            const originalDate = pgDateColumnToIsoDay(inv.issue_date);
-            reversal = await postVoidReversal(
-              client,
-              {
-                operatingCompanyId: input.operating_company_id,
-                entityType: "invoice",
-                entityId: inv.id,
-                originalDate,
-                memo: `Void reversal of invoice ${inv.id}: ${cascadeReason}`,
-              },
-              { userId }
-            );
-          }
-          const updated = await client.query<{ id: string }>(
-            `
-              UPDATE accounting.invoices
-              SET status = 'void',
-                  voided_at = now(),
-                  void_reason = COALESCE(void_reason, $3),
-                  voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
-                  updated_at = now(),
-                  updated_by_user_id = $4
-              WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'
-              RETURNING id::text
-            `,
-            [inv.id, input.operating_company_id, cascadeReason, userId]
-          );
-          if (!updated.rows[0]?.id) {
-            throw Object.assign(new Error(`load_cancel_invoice_void_race_lost: ${inv.id}`), {
-              code: "load_cancel_invoice_void_race_lost",
-            });
-          }
-          // ROUND 138 -- this UPDATE (like executeInvoice's own raw UPDATE) never goes through
-          // stampDocumentVoided, so its cascade wiring never fires for this caller. Cascade here
-          // directly; idempotent, safe even if some other path already touched a child row.
-          await cascadeVoidChildren(client, "invoice", inv.id, input.operating_company_id);
-          voidedInvoiceIds.push(inv.id);
-          if (voidFlagOn) {
-            await auditVoid(client, userId, "invoice", {
-              operatingCompanyId: input.operating_company_id,
-              entityId: inv.id,
-              reason: cascadeReason,
-              reversal,
-            });
-          }
-        }
-
-        // FAIL-V1: `voided_at` and `void_reason` are NOT optional bookkeeping here — they are half of
-        // the void. `accounting.invoices` carries CHECK `invoices_void_state_authoritative`:
-        //     (status = 'void') = (voided_at IS NOT NULL)
-        // an IFF, so writing `status='void'` alone violates it — enforced above by writing both
-        // halves together in the SAME UPDATE. Reproduced live pre-fix on L-20260808-0093 /
-        // INV-2026-00024 (still proforma, voided_at NULL) and again on L-20260830-0020/0024 (still
-        // 'sent', $2,500.00 + $1,100.00 orphaned, no reversing JE — the VOID-CANCEL-NOT-VOID
-        // finding this whole block now closes).
-        // ROUND 118 DEFECT 4 (SUPERSEDED, ROUND 125/126, owner explicit ruling) — this cascade
-        // originally left fuel.fuel_transactions untouched on the reasoning that "the diesel was
-        // REALLY bought, voiding it would misstate a real expense as never having happened." The
-        // owner's later, explicit ruling draws a finer line this reasoning had collapsed: the
-        // physical fuel purchase and its BANK TRANSACTION record are real and untouched by this
-        // cascade (VOID-CASCADE-FUEL above never alters banking.bank_transactions, only releases its
-        // match); what DOES void is the ACCOUNTING document (fuel.fuel_transactions) and its GL --
-        // "A fuel EXPENSE is created by a LOAD... they are NOT the same record." A cancelled load's
-        // fuel expense is now voided by the block above, same as every other load-sourced expense.
-        // accounting.factoring_advances is still NOT joined here (unchanged reasoning): it carries no
-        // direct load_id or invoice_id column (an advance is often a multi-invoice batch submission)
-        // — the existing unvoidable-invoice gate (an invoice already sold reads status='factored' and
-        // blocks this whole cancellation before any void runs) is the real safety net, not a join
-        // here.
-
-        // Always write the money-artifacts audit when any financial artifact was touched — this
-        // includes driver bills, settlements, and invoices. Even an empty set on one axis is
-        // worth recording (zero orphans = confirmed clean cascade).
-        if (
-          voidedDriverBillIds.length > 0 ||
-          cancelledSettlementIds.length > 0 ||
-          voidedInvoiceIds.length > 0 ||
-          voidedExpenseIds.length > 0 ||
-          voidedVendorBillIds.length > 0 ||
-          reversedAdvanceIds.length > 0 ||
-          voidedFuelIds.length > 0
-        ) {
-          await appendCrudAudit(
-            client,
-            userId,
-            "dispatch.load.cancellation_money_artifacts",
-            {
-              resource_type: "mdata.loads",
-              resource_id: input.load_id,
-              operating_company_id: input.operating_company_id,
-              // Ordered steps: settlements first (GL reversal), then driver bills (subledger), then
-              // expenses (bank-match release rides along, BANK-ORPHAN-01), then vendor bills, then
-              // advances/liabilities, then invoices (A/R reversal).
-              settlements_cancelled: cancelledSettlementIds,
-              settlements_skipped_paid: skippedSettlementIds,
-              driver_bills_voided: voidedDriverBillIds,
-              expenses_voided: voidedExpenseIds,
-              vendor_bills_voided: voidedVendorBillIds,
-              advances_reversed: reversedAdvanceIds,
-              invoices_voided: voidedInvoiceIds,
-              // ROUND 125/126 (owner ruling supersedes ROUND 118 Defect 4 -- see comment above): the
-              // fuel EXPENSE document is now voided by this cascade; the underlying bank transaction
-              // and the real fuel purchase are untouched, only the match pointer is released.
-              fuel_transactions_voided: voidedFuelIds,
-              factoring_advances_reason:
-                "N/A -- accounting.factoring_advances has no load_id/invoice_id column to join on; " +
-                "safety is provided by the unvoidable-invoice gate above (a 'factored' invoice already blocks this cancellation)",
-              note: "load cancellation cascade: settlements cancelled, driver bills voided, expenses voided (bank matches released), vendor bills voided, fuel transactions voided (bank matches released, bank transaction itself untouched), advances/liabilities reversed, invoices voided with reversing JEs, factoring explicitly declared N/A — all in the same transaction",
-            },
-            "warning",
-            "VOID-CANCEL-NOT-VOID"
-          );
-        }
       }
 
       await appendCrudAudit(
@@ -887,6 +936,81 @@ export async function listCancellationReasons(userId: string, operatingCompanyId
   });
 }
 
+/** Client-accepting Owner approval (same txn as the caller) — 443.113 AJK-10. */
+export async function approveCancellationInClientTx(
+  client: CancelLoadClient,
+  userId: string,
+  role: string,
+  input: { operating_company_id: string; cancellation_id: string }
+) {
+  if (!isOwner(role)) throw new Error("E_OWNER_ONLY");
+  const row = await client.query<{ id: string; load_id: string; status: string }>(
+    `
+      UPDATE dispatch.load_cancellations
+      SET status = 'approved',
+          approved_by_user_id = $2,
+          approved_at = now()
+      WHERE id = $1
+        AND operating_company_id = $3::uuid
+        AND status = 'requested'
+      RETURNING id, load_id, status
+    `,
+    [input.cancellation_id, userId, input.operating_company_id]
+  );
+  const cancellation = row.rows[0];
+  if (!cancellation) throw new Error("E_NOT_FOUND");
+  // 443.113 AJK-10 — approval completes the cancel through the SAME finalization as an immediate cancel.
+  const detail = await client.query<{
+    reason_code: string;
+    cancellation_notes: string;
+    billable_to_customer: boolean;
+    cancellation_charge_cents: number | null;
+  }>(
+    `SELECT reason_code, cancellation_notes, billable_to_customer, cancellation_charge_cents
+       FROM dispatch.load_cancellations WHERE id = $1 AND operating_company_id = $2::uuid`,
+    [input.cancellation_id, input.operating_company_id]
+  );
+  const loadRow = await client.query<{ status: string }>(
+    `SELECT status::text FROM mdata.loads
+      WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL
+      FOR UPDATE`,
+    [cancellation.load_id, input.operating_company_id]
+  );
+  if (!loadRow.rows[0] || loadRow.rows[0].status === "cancelled") throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
+  const d = detail.rows[0];
+  await finalizeLoadCancellationInClientTx(client, userId, {
+    operating_company_id: input.operating_company_id,
+    load_id: String(cancellation.load_id),
+    cancellation_id: input.cancellation_id,
+    reason_code: d.reason_code,
+    cancellation_notes: d.cancellation_notes,
+    billable_to_customer: d.billable_to_customer,
+    cancellation_charge_cents: d.cancellation_charge_cents == null ? null : Number(d.cancellation_charge_cents),
+    prior_status: loadRow.rows[0].status,
+    revrec_memo: "Load cancellation approved",
+  });
+  await appendCrudAudit(
+    client,
+    userId,
+    "dispatch.load.cancellation_approved",
+    {
+      resource_type: "dispatch.load_cancellations",
+      resource_id: input.cancellation_id,
+      operating_company_id: input.operating_company_id,
+      load_id: cancellation.load_id,
+    },
+    "warning",
+    "P5-F4-CANCELLATIONS"
+  );
+  await emitDispatchSpineEvent(client, {
+    operating_company_id: input.operating_company_id,
+    actor_user_id: userId,
+    event_type: "load.cancellation_approved",
+    load_id: cancellation.load_id,
+  });
+  return { id: input.cancellation_id, load_id: cancellation.load_id, status: "approved" };
+}
+
 export async function approveCancellation(
   userId: string,
   role: string,
@@ -896,59 +1020,9 @@ export async function approveCancellation(
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
     try {
-      const row = await client.query<{ id: string; load_id: string; status: string }>(
-        `
-          UPDATE dispatch.load_cancellations
-          SET status = 'approved',
-              approved_by_user_id = $2,
-              approved_at = now()
-          WHERE id = $1
-            AND operating_company_id = $3::uuid
-            AND status = 'requested'
-          RETURNING id, load_id, status
-        `,
-        [input.cancellation_id, userId, input.operating_company_id]
-      );
-      const cancellation = row.rows[0];
-      if (!cancellation) throw new Error("E_NOT_FOUND");
-      const cancelledLoad = await client.query<{ id: string }>(
-        `
-          UPDATE mdata.loads
-          SET status = 'cancelled'::mdata.load_status_enum,
-              updated_at = now()
-          WHERE id = $1
-            AND operating_company_id = $2::uuid
-            AND status <> 'cancelled'::mdata.load_status_enum
-            AND soft_deleted_at IS NULL
-          RETURNING id::text
-        `,
-        [cancellation.load_id, input.operating_company_id]
-      );
-      if (!cancelledLoad.rows[0]?.id) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
-      // ROUND 326: approval completes the cancel — the load's recognized revenue is deleted with it.
-      await settleRevrecOnCancel(client as never, input.operating_company_id, String(cancellation.load_id), userId, "Load cancellation approved");
-      await appendCrudAudit(
-        client,
-        userId,
-        "dispatch.load.cancellation_approved",
-        {
-          resource_type: "dispatch.load_cancellations",
-          resource_id: input.cancellation_id,
-          operating_company_id: input.operating_company_id,
-          load_id: cancellation.load_id,
-        },
-        "warning",
-        "P5-F4-CANCELLATIONS"
-      );
-      await emitDispatchSpineEvent(client, {
-        operating_company_id: input.operating_company_id,
-        actor_user_id: userId,
-        event_type: "load.cancellation_approved",
-        load_id: cancellation.load_id,
-      });
-      return { id: input.cancellation_id, load_id: cancellation.load_id, status: "approved" };
+      return await approveCancellationInClientTx(client as never, userId, role, input);
     } catch (error) {
-      throw error;
+      throw translateCancellationDbError(error);
     }
   });
 }
