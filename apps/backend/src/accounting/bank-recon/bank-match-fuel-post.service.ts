@@ -8,6 +8,7 @@
  * Fail-closed: null unit_id is an ENGINE defect (owner), not a data soft-skip. A fill with no load covering its time
  * posts with the explicit deadhead/yard reason (LEAD 443.121 #2) and is re-pointed when its load is booked.
  */
+import { crossRailFuelRowsForRelayFill } from "../../fuel/relay-fill-link.service.js";
 import { adoptRelayFillExpenseDocument, createExpenseFromFuelTransaction } from "../../fuel/fuel-expense-document.service.js";
 import { resolveFillDriverAtTime, resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
 import { relayLineIsGallonsSql, relayLineKindSql } from "../../fuel/relay-product-kind.js";
@@ -26,7 +27,7 @@ export class FuelMatchPostError extends Error {
     public code:
       | "fuel_fill_not_found" | "fuel_fill_missing_unit" | "fuel_fill_missing_load" | "fuel_fill_zero_amount"
       | "relay_fill_unknown_product" | "relay_fill_has_no_fuel_lines" | "relay_fill_lines_do_not_foot" | "relay_fill_document_refused"
-      | "fuel_fill_document_refused",
+      | "fuel_fill_document_refused" | "relay_fill_matches_other_rail_fill",
     message: string
   ) {
     super(message);
@@ -285,6 +286,16 @@ async function postRelayFuelFill(
     throw new FuelMatchPostError(
       "fuel_fill_missing_unit",
       `relay_fuel ${input.fill_id}: matched_unit_id is null — engine defect (owner: fuel posting requires unit)`
+    );
+  }
+  // LEAD 443.133 A — a Relay fill that pairs with a fuel row ON ANOTHER RAIL (e.g. a DREAMLINE settlement row, already posted
+  // Cr 2510) may be the same purchase recorded twice. Posting the fill too would book the fuel twice; the owner decides which
+  // rail paid. Refused by name, listing the rows — never posted, never guessed.
+  const crossRail = await crossRailFuelRowsForRelayFill(client, input.operating_company_id, input.fill_id);
+  if (crossRail.length) {
+    throw new FuelMatchPostError(
+      "relay_fill_matches_other_rail_fill",
+      `relay_fuel ${input.fill_id}: pairs with ${crossRail.length} fuel row(s) paid on another rail (${crossRail.map((r) => `${r.fuel_transaction_id} ${r.card ?? "no card"}`).join(", ")}) — the owner decides which rail paid before it posts`
     );
   }
   // 443.110 G7 — the one fuel-to-load rule (fuel/fuel-load-at-time.ts), same as the fuel-card import: unit first,

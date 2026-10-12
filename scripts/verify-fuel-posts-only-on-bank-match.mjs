@@ -44,6 +44,8 @@ const UNMATCH = "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction
 const CREATOR = "apps/backend/src/driver-finance/settlement-creator.service.ts";
 // LEAD 443.121 #1 — ONE fuel receipt identity (migration + every writer asks first).
 const RECEIPT_MIG = "db/migrations/202615850910_fuel_receipt_one_posting_identity.sql";
+// LEAD 443.133 A — a Relay fill links ONLY to a row paid by the Relay card; a row on another rail is a cross-rail candidate.
+const LINKER = "apps/backend/src/fuel/relay-fill-link.service.ts";
 /** Rule 6: the Creator's one sanctioned call — posts the Relay fill itself to the Relay wallet. */
 const CREATOR_RELAY_FILL_POST = /postFuelExpenseOnClient\(client as never, \{(?:(?!postFuelExpense)[\s\S]){0,500}?fuel_event_id: relayFillId,(?:(?!postFuelExpense)[\s\S]){0,500}?company_direct_credit: "relay_fuel_wallet",/g;
 const LINK_SITES = {
@@ -144,6 +146,18 @@ export function check(files) {
   const crAsk = cr.indexOf('findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id)');
   const crPost = cr.indexOf('source_transaction_type: "expense",\n            source_transaction_id: doc.expense_id');
   if (crAsk < 0 || crPost < 0 || crAsk > crPost) problems.push(`${CREATOR}: the Creator posts a fuel expense document without adopting the receipt's existing posting`);
+  // 9 (LEAD 443.133 A) — the linker pairs only Relay-card rows; the Relay fill poster refuses a fill that pairs with a row on
+  // another rail (the same purchase may already be posted there — booking it again would double the fuel).
+  const linker = files[LINKER] ?? "";
+  if (!/const PAIR_SQL = `\$\{PAIR_EVIDENCE_SQL\}\s*AND \$\{RELAY_CARD_ROW_SQL\}`;/.test(linker) || !/upper\(ct\.code\) = 'RELAY'/.test(linker))
+    problems.push(`${LINKER}: the Relay linker no longer requires the row to be paid by the Relay card — a Dreamline row would link to a Relay fill`);
+  const fpost = files[FILLPOST] ?? "";
+  const rf = fpost.indexOf("async function postRelayFuelFill(");
+  const rfBody = rf < 0 ? "" : fpost.slice(rf, fpost.indexOf("\n}\n", rf));
+  const xr = rfBody.indexOf("await crossRailFuelRowsForRelayFill(client, input.operating_company_id, input.fill_id)");
+  const ref = rfBody.indexOf('"relay_fill_matches_other_rail_fill"');
+  const leg = rfBody.indexOf("postFuelExpenseOnClient(");
+  if (xr < 0 || ref < 0 || (leg >= 0 && xr > leg)) problems.push(`${FILLPOST}: the Relay fill poster posts a fill that pairs with a row on another rail — the fuel would book twice`);
   return problems;
 }
 
@@ -189,6 +203,9 @@ if (process.argv.includes("--selftest")) {
     ["receipt registration trigger gone", { ...real, [RECEIPT_MIG]: real[RECEIPT_MIG].replace("CREATE TRIGGER trg_register_fuel_receipt_posting", "-- CREATE TRIGGER trg_register_fuel_receipt_posting") }],
     ["bank match blind to the Creator's posting", { ...real, [POSTER]: real[POSTER].replace('?? (await findPostedFuelReceipt(client, operatingCompanyId, "fuel_event", fuelEventId))', "") }],
     ["poster posts without asking the receipt", { ...real, [POSTER]: real[POSTER].replace('const receiptPosted = await findPostedFuelReceipt(client, input.operating_company_id, "fuel_event", input.fuel_event_id);', "const receiptPosted = null;") }],
+    ["linker pairs any card", { ...real, [LINKER]: real[LINKER].replace("AND ${RELAY_CARD_ROW_SQL}`;", "`;") }],
+    ["linker card rule loosened", { ...real, [LINKER]: real[LINKER].replace("upper(ct.code) = 'RELAY'", "ct.code IS NOT NULL") }],
+    ["poster ignores cross-rail rows", { ...real, [FILLPOST]: real[FILLPOST].replace("const crossRail = await crossRailFuelRowsForRelayFill(client, input.operating_company_id, input.fill_id);", "const crossRail = [];") }],
     ["creator posts the receipt again", { ...real, [CREATOR]: real[CREATOR].replace('findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id)', "Promise.resolve(null)") }],
   ];
   const missed = cases.filter(([, files]) => check(files).length === 0).map(([n]) => n);
