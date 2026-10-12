@@ -116,10 +116,12 @@ describe("Faro reserve posters — post what the line says", () => {
     expect(je.postings.map((p: { account_id: string }) => p.account_id)).toEqual(["acct:factoring_advance_liability", "acct:factor_cash_reserve_held"]);
   });
 
-  it("client payable to IH 35: DR 8000 intercompany / CR 1235; to us it is a transfer and refuses", async () => {
+  it("client payable to IH 35: DR 8000 intercompany / CR 1235; to us it is the reserve release DR cash clearing / CR 1235 (LEAD 443.84)", async () => {
     await postFaroReserveEntryOnClient(client(entry({ entry_kind: "client_payable", faro_entry_id: null, faro_invoice_number: null, amount_cents: "-500000", counterparty: "ih35_transportation" })), { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" });
     expect(mockCreateJe.mock.calls[0]![1].postings[0].account_id).toBe("acct:intercompany_receivable_ih35_transportation");
-    await expect(postFaroReserveEntryOnClient(client(entry({ entry_kind: "client_payable", faro_entry_id: null, faro_invoice_number: null, amount_cents: "-500000" })), { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" })).rejects.toThrow("faro_client_payable_to_us_posts_as_a_transfer");
+    await postFaroReserveEntryOnClient(client(entry({ entry_kind: "client_payable", faro_entry_id: null, faro_invoice_number: null, amount_cents: "-500000" })), { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" });
+    const release = mockCreateJe.mock.calls.at(-1)![1].postings;
+    expect(release.map((p: { account_id: string; debit_or_credit: string }) => `${p.debit_or_credit}:${p.account_id}`)).toEqual(["debit:acct:cash_clearing", "credit:acct:factor_cash_reserve_held"]);
   });
 
   it("rsv deposit refuses (it posts with its payment match); escrow held matches the funding JE without a new entry", async () => {

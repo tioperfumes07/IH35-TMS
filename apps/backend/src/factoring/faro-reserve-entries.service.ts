@@ -18,7 +18,20 @@
 //                    reserve; the customer's A/R keeps the unpaid part open (customer-pays-Faro relieved only what was
 //                    paid), so the variance stays visible on the customer, with Faro's Balance / Paid recorded here
 //   client_payable   to IH 35 TRANSPORTATION: DR 8000 intercompany_receivable_ih35_transportation / CR 1235 (USMCA side
-//                    only, never income or cost). To us: a transfer — it posts when matched to our bank line, not here.
+//                    only, never income or cost). To us (LEAD 443.84 #1b, the reserve RELEASE): DR cash_clearing (1090) /
+//                    CR 1235 — Faro pays the released reserve out of the cash reserve; the wire on our operating account is
+//                    then matched in Banking to the clearing (suggested, never auto-matched). Escrow reaches the cash reserve
+//                    only through escrow_to_cash (DR 1235 / CR 1230), so the two rows together are CC-1's release, DR cash /
+//                    CR 1230; crediting 1230 here would credit it twice.
+//
+// CUSTOMER PAYMENT (LEAD 443.84 #1a — the evidence the debtor paid Faro is Faro's own report). Under the secured-borrowing
+// model this is where A/R goes down, per INVOICE, on the row that shows it, in the SAME journal entry as the row:
+//   escrow_to_cash   + DR 2150 / CR 1100 for the invoice face Faro still holds as unpaid (purchase line gross − what Faro's
+//                    earlier rows already showed paid or charged to reserve) — Faro releases escrow when the debtor paid
+//   short_pay        + DR 2150 / CR 1100 for Faro's "Paid" figure; the shortfall (DR 2150 / CR 1235) stays OPEN on 1100 on
+//                    the customer — the Owner's short-pay resolution (dispute = kept_open, or a write-down) decides it
+// Both legs carry the customer and the Faro row (spine-linked to the invoice); the invoice's amount_paid moves with them.
+// One JE per Faro row: a posted row is never posted again.
 //   rsv_deposit      Faro holds it back from a payment wire (Payments − Deposits = net wired): it posts as part of that
 //                    payment's match, not here. faroReserveDepositsOn() exposes the day's deposits to the match engine.
 import { createHash } from "node:crypto";
@@ -369,12 +382,13 @@ export async function commitFaroReserveImport(
 type EntryRow = {
   id: string; register: FaroRegister; entry_kind: FaroEntryKind; faro_entry_id: string | null; amount_cents: string; entry_date: string;
   faro_invoice_number: string | null; counterparty: string | null; bank_transaction_id: string | null; journal_entry_id: string | null;
+  short_pay_paid_cents: string | null;
 };
 
 async function loadEntry(client: DbClient, oci: string, id: string): Promise<EntryRow> {
   const r = await client.query<EntryRow>(
     `SELECT id::text, register, entry_kind, faro_entry_id, amount_cents::text, entry_date::text, faro_invoice_number, counterparty,
-            bank_transaction_id::text, journal_entry_id::text
+            bank_transaction_id::text, journal_entry_id::text, short_pay_paid_cents::text
        FROM accounting.faro_reserve_entries WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`,
     [id, oci]
   );
@@ -396,6 +410,31 @@ async function stampPosted(client: DbClient, oci: string, entry: EntryRow, jeId:
       WHERE id = $2::uuid AND operating_company_id = $3::uuid AND matched_journal_entry_id IS NULL`,
     [jeId, entry.bank_transaction_id, oci, kind]
   );
+}
+
+/** True once Faro released the invoice's escrow (a posted escrow -> cash row): the invoice is closed at Faro. */
+async function faroInvoiceClosed(client: DbClient, oci: string, faroInvoiceNumber: string): Promise<boolean> {
+  const r = await client.query(
+    `SELECT 1 FROM accounting.faro_reserve_entries
+      WHERE operating_company_id = $1::uuid AND faro_invoice_number = $2 AND entry_kind = 'escrow_to_cash' AND journal_entry_id IS NOT NULL LIMIT 1`,
+    [oci, faroInvoiceNumber]
+  );
+  return r.rows.length > 0;
+}
+
+/** The face Faro still holds unpaid on an invoice: the purchase line's gross less what Faro's posted rows already showed —
+ *  a short pay's "Paid" plus its shortfall charged to reserve. */
+async function faroUnpaidFaceCents(client: DbClient, oci: string, faroInvoiceNumber: string, purchaseLineId: string): Promise<number> {
+  const r = await client.query<{ gross: string; shown: string }>(
+    `SELECT l.gross_cents::text AS gross,
+            (SELECT COALESCE(SUM(COALESCE(e.short_pay_paid_cents, 0) + abs(e.amount_cents)), 0)::text
+               FROM accounting.faro_reserve_entries e
+              WHERE e.operating_company_id = $1::uuid AND e.faro_invoice_number = $2 AND e.entry_kind = 'short_pay'
+                AND e.journal_entry_id IS NOT NULL) AS shown
+       FROM accounting.factoring_purchase_lines l WHERE l.id = $3::uuid`,
+    [oci, faroInvoiceNumber, purchaseLineId]
+  );
+  return Math.max(0, Number(r.rows[0]?.gross ?? 0) - Number(r.rows[0]?.shown ?? 0));
 }
 
 /** Post one Faro reserve entry (and, for escrow -> cash, its pair). Refuses what this poster must not post. */
@@ -421,9 +460,6 @@ export async function postFaroReserveEntryOnClient(
     return { entry_id: entry.id, journal_entry_id: link!.purchase_je };
   }
   if (entry.entry_kind === "rsv_deposit") throw new FaroReserveError("faro_rsv_deposit_posts_with_its_payment_match");
-  if (entry.entry_kind === "client_payable" && entry.counterparty !== "ih35_transportation") {
-    throw new FaroReserveError("faro_client_payable_to_us_posts_as_a_transfer");
-  }
 
   const stamp = (e: EntryRow) => ({
     source_transaction_type: "faro_reserve_entry",
@@ -436,6 +472,7 @@ export async function postFaroReserveEntryOnClient(
   type Leg = { account: string; dc: "debit" | "credit"; amount: number; entry: EntryRow };
   let legs: Leg[];
   let memo: string;
+  let payment: { cents: number; entry: EntryRow } | null = null;
 
   if (entry.entry_kind === "escrow_to_cash") {
     if (!entry.faro_entry_id) throw new FaroReserveError("faro_transfer_without_faro_id");
@@ -456,6 +493,7 @@ export async function postFaroReserveEntryOnClient(
       { account: await role("factor_reserve_held"), dc: "credit", amount, entry: escrowSide },
     ];
     memo = `Faro transfer escrow to cash — Inv ${entry.faro_invoice_number}`;
+    payment = { cents: await faroUnpaidFaceCents(client, oci, entry.faro_invoice_number!, link!.purchase_line_id), entry: cashSide };
   } else if (entry.entry_kind === "schedule_fee") {
     // PROVEN on Faro's own Cash Reserve report (11 of 11 rows): the "Schedule Fee" is the contract's DEFAULT INTEREST —
     // 0.067%/day compounded for the days past day 35, charged against the cash reserve on the collection date. So it is
@@ -488,17 +526,48 @@ export async function postFaroReserveEntryOnClient(
     ];
     memo = `Faro default interest charged to cash reserve (Faro "Schedule Fee") — Inv ${entry.faro_invoice_number}`;
   } else if (entry.entry_kind === "short_pay") {
+    if (await faroInvoiceClosed(client, oci, entry.faro_invoice_number!)) throw new FaroReserveError("faro_short_pay_after_escrow_released");
     legs = [
       { account: await role("factoring_advance_liability"), dc: "debit", amount, entry },
       { account: cash, dc: "credit", amount, entry },
     ];
     memo = `Faro short-pay charged to reserve — Inv ${entry.faro_invoice_number}`;
+    payment = { cents: Number(entry.short_pay_paid_cents ?? 0), entry };
+  } else if (entry.counterparty !== "ih35_transportation") {
+    legs = [
+      { account: await role("cash_clearing"), dc: "debit", amount, entry },
+      { account: cash, dc: "credit", amount, entry },
+    ];
+    memo = "Faro reserve release to USMCA (client payable) — to cash clearing, matched to the wire in Banking";
   } else {
     legs = [
       { account: await role("intercompany_receivable_ih35_transportation"), dc: "debit", amount, entry },
       { account: cash, dc: "credit", amount, entry },
     ];
     memo = "Faro client payable to IH 35 TRANSPORTATION reserve — due from affiliate";
+  }
+
+  if (payment && payment.cents > 0) {
+    const inv = (await client.query<{ total: string; paid: string }>(
+      `SELECT total_cents::text AS total, COALESCE(amount_paid_cents, 0)::text AS paid FROM accounting.invoices
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL FOR UPDATE`,
+      [link!.invoice_id, oci]
+    )).rows[0];
+    if (!inv) throw new FaroReserveError("faro_invoice_not_found");
+    if (payment.cents > Number(inv.total) - Number(inv.paid)) throw new FaroReserveError("faro_payment_exceeds_invoice_open_balance");
+    legs.push(
+      { account: await role("factoring_advance_liability"), dc: "debit", amount: payment.cents, entry: payment.entry },
+      { account: await role("ar_control"), dc: "credit", amount: payment.cents, entry: payment.entry },
+    );
+    memo = `${memo} · customer paid Faro ${(payment.cents / 100).toFixed(2)}`;
+    await client.query(
+      `UPDATE accounting.invoices
+          SET amount_paid_cents = COALESCE(amount_paid_cents, 0) + $2::bigint,
+              status = CASE WHEN COALESCE(amount_paid_cents, 0) + $2::bigint >= total_cents THEN 'paid' ELSE 'partial' END,
+              updated_at = now()
+        WHERE id = $1::uuid AND operating_company_id = $3::uuid`,
+      [link!.invoice_id, payment.cents, oci]
+    );
   }
 
   const je = await createJournalEntryOnClient(

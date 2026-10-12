@@ -38,3 +38,16 @@ The order also says: "One PR + one named guard per step, guard wired in scripts/
   jeInputs, which now name their source up front, exactly as the file's own lifecycle helper does. No leg, account or amount
   changes. Also `scripts/acceptance/live-load-lifecycle.mjs` (UNASSIGNED; 443.70's shared acceptance script) gets S6.
 - CC-1: nothing to do. The customer-payment / release no-live-writer finding is reported to the Lead in SEATS-TO-LEAD.
+
+## 443.84 #1 — G7 live writers (Lead 01:42 UTC 10-12: "the two missing writers are YOURS (lane cross authorized, CC-2's file included)")
+- `apps/backend/src/factoring/faro-reserve-entries.service.ts` (CC-2) and its unit test. The Faro row poster adds the customer payment to the same JE:
+  - escrow_to_cash adds Dr 2150 / Cr 1100 for the unpaid face.
+  - short_pay adds the same legs for Faro's "Paid".
+  - Both carry the customer, and the invoice subledger is updated.
+- client_payable to us becomes the release: Dr cash clearing / Cr 1235. It was a refusal before.
+- No other kind changes.
+- `scripts/verify-faro-reserve-registers.mjs` now enforces the 443.84 rule instead of the old "never ar_control / client payable to us refuses" one:
+  - ar_control appears exactly once, as the credit of the customer payment.
+  - The payment is capped at the invoice's open balance.
+  - The release is Dr cash_clearing / Cr 1235.
+  - Selftest 16/16.
