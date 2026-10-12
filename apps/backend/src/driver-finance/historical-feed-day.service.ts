@@ -14,6 +14,9 @@
  * a loop is how day 7 gets fed on top of an unreconciled day 6 and nobody notices until the
  * totals are wrong by an amount nobody can attribute.
  *
+ * BCF-11 (LEAD 443.120 C): the escrow step no longer writes — escrow has ONE writer, the settlement
+ * close; a day naming escrow holds is refused (FEED_DAY_ESCROW_RETIRED). Historical note follows.
+ *
  * ORDER IS NOT COSMETIC. Escrow depends on the driver bill existing — CC-3's writer declares
  * `STEPS["escrow"].needs = ["driver_bill"]`. Fuel is independent of both. The order here is the
  * dependency order, and a step whose dependency refused is SKIPPED with that reason recorded,
@@ -36,8 +39,11 @@
  */
 
 import { createHistoricalDriverBill } from "./historical-driver-bill-backfill.service.js";
-import { createHistoricalEscrowHold } from "./historical-escrow-backfill.service.js";
 import { createExpenseFromFuelTransaction } from "../fuel/fuel-expense-document.service.js";
+
+/** BCF-11: the one escrow writer is the settlement close; a feed day never writes escrow. */
+export const FEED_DAY_ESCROW_RETIRED =
+  "escrow_written_only_by_settlement_close: escrow holds are posted by the settlement close (Settlement Creator), with their settlement and journal entry — a feed day does not write escrow (BCF-11)";
 
 export type QueryableClient = {
   query: <T = Record<string, unknown>>(
@@ -131,8 +137,7 @@ export async function executeHistoricalFeedDay(
   };
 
   outer: for (const load of input.loads) {
-    // ---- STEP 1. DRIVER BILL. Escrow depends on it, so it goes first. ---------------------
-    let driverBillOk = true;
+    // ---- STEP 1. DRIVER BILL. ---------------------------------------------------------------
     if (load.driver_bill) {
       const key = `${load.load_number}/${load.driver_id}`;
       if (dryRun) {
@@ -160,7 +165,6 @@ export async function executeHistoricalFeedDay(
           requesting_user_uuid: input.actor_user_id,
         });
         if (r.outcome === "refused") {
-          driverBillOk = false;
           push({
             step: "driver_bill", load_id: load.load_id, load_number: load.load_number,
             natural_key: key, status: "refused", detail: r.reason,
@@ -179,52 +183,19 @@ export async function executeHistoricalFeedDay(
       }
     }
 
-    // ---- STEP 2. ESCROW. Needs the driver bill. A load can carry escrow and no pay lines. --
+    // ---- STEP 2. ESCROW — RETIRED HERE (BCF-11, LEAD 443.120 C). ------------------------------
+    // Escrow is written by exactly ONE engine: the settlement close (closeSettlementPayRun ->
+    // recordEscrowPostingOnly 'deposit' with its source settlement and its JE), which the Settlement
+    // Creator posts through. The former historical escrow writer appended an escrow deposit with no
+    // source id and no JE — a second, incomplete escrow system. A feed day that names escrow holds is
+    // refused, by name, before anything is written; the holds belong on the settlement, posted by close.
     for (const hold of load.escrow_holds ?? []) {
-      const key = `${load.load_number}/${load.driver_id}/${hold.description}`;
-      if (!driverBillOk) {
-        push({
-          step: "escrow", load_id: load.load_id, load_number: load.load_number,
-          natural_key: key, status: "skipped_dependency",
-          detail: "driver bill refused on this load; escrow depends on it and was not attempted",
-        });
-        continue;
-      }
-      if (dryRun) {
-        push({
-          step: "escrow", load_id: load.load_id, load_number: load.load_number,
-          natural_key: key, status: "would_create",
-          detail: `${hold.amount_cents} cents, sign derived by the writer`,
-        });
-        continue;
-      }
-      try {
-        const r = await createHistoricalEscrowHold(client, {
-          source: "historical_backfill",
-          operating_company_id: input.operating_company_id,
-          driver_id: load.driver_id,
-          load_id: load.load_id,
-          description: hold.description,
-          amount_cents: hold.amount_cents,
-          actor_user_id: input.actor_user_id,
-        });
-        push({
-          step: "escrow", load_id: load.load_id, load_number: load.load_number,
-          natural_key: key,
-          status: r.outcome === "created" ? "created" : "already_exists",
-          detail: `escrow_ledger ${r.escrow_ledger_id}`,
-        });
-      } catch (err) {
-        // That writer throws on a contract violation by design. A thrown contract violation is
-        // a refusal for this day, reported with its own words — not re-raised into a 500 that
-        // loses which load and which line it happened on.
-        push({
-          step: "escrow", load_id: load.load_id, load_number: load.load_number,
-          natural_key: key, status: "refused",
-          detail: err instanceof Error ? err.message : String(err),
-        });
-        if (stopOnFirstRefusal) break outer;
-      }
+      push({
+        step: "escrow", load_id: load.load_id, load_number: load.load_number,
+        natural_key: `${load.load_number}/${load.driver_id}/${hold.description}`, status: "refused",
+        detail: FEED_DAY_ESCROW_RETIRED,
+      });
+      if (stopOnFirstRefusal) break outer;
     }
 
     // ---- STEP 3. FUEL. Independent of both; a fuel document stands on its own. -------------

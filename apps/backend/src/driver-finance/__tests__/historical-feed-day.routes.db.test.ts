@@ -269,6 +269,69 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
     expect(Number(closedEvent.rows[0]?.n)).toBe(0);
   });
 
+  it("BCF-11: a feed day naming escrow holds is REFUSED by name and writes NO escrow (one escrow writer = settlement close)", async () => {
+    const loadId = await seedLoad("ESC");
+    const countEscrow = async () =>
+      bypass(async () => {
+        const ledger = await db.query<{ n: string }>(
+          `SELECT count(*)::text AS n FROM driver_finance.escrow_ledger WHERE operating_company_id = $1::uuid AND load_id = $2::uuid`,
+          [companyId, loadId]
+        );
+        const postings = await db.query<{ n: string }>(
+          `SELECT count(*)::text AS n FROM accounting.escrow_postings p
+             JOIN accounting.escrow_accounts a ON a.id = p.escrow_account_id
+            WHERE p.operating_company_id = $1::uuid AND a.holder_id = $2::uuid AND p.posting_type = 'deposit'
+              AND p.linked_journal_entry_id IS NULL`,
+          [companyId, driverId]
+        );
+        return { ledger: Number(ledger.rows[0]?.n), unlinkedDeposits: Number(postings.rows[0]?.n) };
+      });
+    // The driver HAS an escrow account bridge, so the old historical writer would have reached the
+    // unlinked deposit (no JE, no source id) — the defect this test pins (BCF-11).
+    await bypass(async () => {
+      const acct = await db.query<{ id: string }>(
+        `SELECT id::text FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_type ILIKE '%liab%' ORDER BY account_number NULLS LAST LIMIT 1`,
+        [companyId]
+      );
+      await db.query(
+        `INSERT INTO accounting.escrow_accounts (operating_company_id, holder_id, holder_type, purpose, coa_account_id, status)
+         SELECT $1::uuid, $2::uuid, 'driver', 'driver_bond', $3::uuid, 'active'
+          WHERE NOT EXISTS (SELECT 1 FROM accounting.escrow_accounts WHERE operating_company_id = $1::uuid AND holder_id = $2::uuid AND holder_type = 'driver')`,
+        [companyId, driverId, acct.rows[0]?.id ?? null]
+      );
+    });
+    const before = await countEscrow();
+
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/driver-finance/feed-day/run",
+      headers: testAuthHeaders(undefined, "Owner"),
+      payload: {
+        operating_company_id: companyId,
+        feed_date: "2026-08-19",
+        source_document_ref: `TEST-${suffix}-ESC`,
+        stop_on_first_refusal: false,
+        loads: [
+          {
+            load_id: loadId,
+            load_number: `FD-${suffix}-ESC`,
+            driver_id: driverId,
+            driver_bill: { gross_amount_cents: 90000 },
+            escrow_holds: [{ description: `Driver Deduction-Escrow for Claims-${suffix}`, amount_cents: 2500 }],
+          },
+        ],
+      },
+    });
+    const body = res.json() as { report?: { steps?: Array<{ step: string; status: string; detail?: string }> } };
+    const escrowStep = (body.report?.steps ?? []).find((s) => s.step === "escrow");
+    expect(escrowStep?.status).toBe("refused");
+    expect(String(escrowStep?.detail)).toContain("escrow_written_only_by_settlement_close");
+
+    const after = await countEscrow();
+    expect(after.ledger).toBe(before.ledger);
+    expect(after.unlinkedDeposits).toBe(before.unlinkedDeposits);
+  });
+
   it("dry_run never commits, even when the plan would otherwise be clean", async () => {
     const loadId = await seedLoad("E");
     const res = await app.inject({
