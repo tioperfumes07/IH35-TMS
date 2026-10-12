@@ -11,6 +11,7 @@ import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.se
 import { invoiceLineTotalCents } from "./invoice-line-total.js";
 import { assertLineAccountMatchesItem, lineCategorizationRefusal } from "./line-categorization.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
+import { assertExplicitIncomeAccount, createInvoiceLineInClientTx, ensureDraftInvoice } from "./invoice-line-create.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const lineParamsSchema = z.object({ id: z.string().uuid(), lineId: z.string().uuid() });
@@ -40,29 +41,6 @@ const createLineBodySchema = z.object({
   item_account_override_reason: z.string().trim().min(10).max(2000).optional().nullable(),
 });
 
-async function assertExplicitIncomeAccount(
-  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
-  operatingCompanyId: string,
-  accountId: string
-) {
-  const res = await client.query(
-    `
-      SELECT id
-      FROM catalogs.accounts
-      WHERE id = $1
-        AND operating_company_id = $2::uuid
-        AND deactivated_at IS NULL
-        AND is_postable = true
-        AND account_type IN ('Income', 'OtherIncome')
-      LIMIT 1
-    `,
-    [accountId, operatingCompanyId]
-  );
-  if (!res.rows[0]) {
-    throw Object.assign(new Error("invoice_line_income_account_invalid"), { code: "invoice_line_income_account_invalid" });
-  }
-}
-
 const patchLineBodySchema = z
   .object({
     line_type: lineTypeSchema.optional(),
@@ -79,23 +57,6 @@ const patchLineBodySchema = z
   })
   .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
 
-async function ensureDraftInvoice(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }, invoiceId: string, operatingCompanyId: string) {
-  const invoiceRes = await client.query(
-    `
-      SELECT *
-      FROM accounting.invoices
-      WHERE id = $1
-        AND operating_company_id = $2::uuid
-      LIMIT 1
-    `,
-    [invoiceId, operatingCompanyId]
-  );
-  const invoice = invoiceRes.rows[0] ?? null;
-  if (!invoice) return { ok: false as const, code: 404 as const, error: "invoice_not_found" };
-  if (String(invoice.status) !== "draft") return { ok: false as const, code: 409 as const, error: "invoice_not_draft" };
-  return { ok: true as const, invoice };
-}
-
 export async function registerInvoiceLineRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/invoices/:id/lines", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -107,102 +68,9 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
     const body = createLineBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
     try {
-      const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-        const guard = await ensureDraftInvoice(client, params.data.id, query.data.operating_company_id);
-        if (!guard.ok) return guard;
-        const lineTotal = invoiceLineTotalCents(body.data.quantity, body.data.unit_amount_cents);
-        let revenueCode: string;
-        let accountId: string;
-        if (body.data.account_id) {
-          await assertExplicitIncomeAccount(client, query.data.operating_company_id, body.data.account_id);
-          const derived = await resolveInvoiceLineRevenueAccountId(query.data.operating_company_id, {
-            line_type: body.data.line_type,
-          });
-          revenueCode = derived.revenue_code;
-          accountId = body.data.account_id;
-        } else {
-          const revenueResolution = await resolveInvoiceLineRevenueAccountId(query.data.operating_company_id, {
-            line_type: body.data.line_type,
-          });
-          revenueCode = revenueResolution.revenue_code;
-          accountId = revenueResolution.account_id;
-        }
-        await assertLineAccountMatchesItem(client, {
-          operatingCompanyId: query.data.operating_company_id,
-          side: "income",
-          itemId: body.data.item_id,
-          accountId,
-          overrideReason: body.data.item_account_override_reason,
-        });
-        const rowRes = await client.query(
-          `
-            INSERT INTO accounting.invoice_lines (
-              operating_company_id,
-              invoice_id,
-              source_load_id,
-              line_type,
-              revenue_code,
-              account_id,
-              description,
-              quantity,
-              unit_amount_cents,
-              line_total_cents,
-              qbo_class_snapshot,
-              qbo_item_id,
-              item_id,
-              item_account_override_reason,
-              display_order
-            ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$15,
-              COALESCE($14, (
-                SELECT COALESCE(MAX(display_order), -1) + 1
-                FROM accounting.invoice_lines
-                WHERE invoice_id = $2
-              ))
-            )
-            RETURNING *
-          `,
-          [
-            query.data.operating_company_id,
-            params.data.id,
-            body.data.source_load_id ?? null,
-            body.data.line_type,
-            revenueCode,
-            accountId,
-            body.data.description,
-            body.data.quantity,
-            body.data.unit_amount_cents,
-            lineTotal,
-            body.data.qbo_class_snapshot ?? null,
-            body.data.qbo_item_id ?? null,
-            body.data.item_id ?? null,
-            body.data.display_order ?? null,
-            body.data.item_account_override_reason?.trim() || null,
-          ]
-        );
-        const line = rowRes.rows[0] ?? null;
-        if (!line) return { ok: false as const, code: 500 as const, error: "invoice_line_create_failed" };
-        const totals = await recomputeInvoiceTotals(client, params.data.id);
-        await appendCrudAudit(
-          client,
-          user.uuid,
-          "accounting.invoice_lines.created",
-          {
-            resource_type: "accounting.invoice_lines",
-            resource_id: line.id,
-            invoice_id: params.data.id,
-            operating_company_id: query.data.operating_company_id,
-          },
-          "info",
-          "P3-T11.20.2-INVOICE-FLOW"
-        );
-        await enqueueTmsInvoicePushRequested(client, {
-          operating_company_id: query.data.operating_company_id,
-          invoice_id: params.data.id,
-          operation: "update",
-        });
-        return { ok: true as const, code: 201 as const, data: { line, totals } };
-      });
+      const result = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+        createInvoiceLineInClientTx(client, { operatingCompanyId: query.data.operating_company_id, invoiceId: params.data.id, ...body.data }, user.uuid)
+      );
 
       if (!result.ok) return reply.code(result.code).send({ error: result.error });
       return reply.code(result.code).send(result.data);
