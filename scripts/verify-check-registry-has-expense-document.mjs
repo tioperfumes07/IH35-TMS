@@ -80,7 +80,7 @@ let rows;
 try {
   await client.query("BEGIN READ ONLY");
   // LEAD 443.94 (2026-10-12): old rule — SET LOCAL ROLE neondb_owner before the read; new rule — the CI role + the
-  // app.bypass_rls GUC only; why — the CI / post-deploy credential (ih35_guard_reader) cannot SET ROLE neondb_owner
+  // app.bypass_rls GUC only; why — the CI / post-deploy credential (ih35_guard_reader) cannot assume the database owner role
   // ("permission denied to set role"), so this guard failed without measuring.
   await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
   const res = await client.query(

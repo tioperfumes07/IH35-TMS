@@ -8,6 +8,9 @@
 // unit carrying this load right now," canonicalDispatchWorkWhereClause) and must all agree with
 // EACH OTHER, never with the money-aware set.
 import { register } from "tsx/esm/api";
+import { createRequire } from "node:module";
+// 443.99: TLS by host (localhost / CI postgres service = off, Neon = on) — a hard-coded ssl option cannot connect to CI's local postgres.
+const { inferPgSslOption } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 
 export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
 register();
@@ -70,7 +73,7 @@ async function main() {
   } = await loadFragments();
   const { default: pg } = await import("pg");
 
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: inferPgSslOption(process.env.DATABASE_URL) });
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
