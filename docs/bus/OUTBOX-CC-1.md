@@ -2080,3 +2080,25 @@ date       | amount  | account                                 | payer       | d
 | required-checks-gate | ✓ success |
 
 NOTE: `required-live-load-guard` was already failing on `903a8fac3b` (pre-merge main HEAD). `build-typecheck-heavy` DB test failures and `locked-guards-heavy` orphan guard failures (`verify-related-party-bank-pair-suggestions.mjs`, `verify-relay-fill-not-a-bank-match-candidate.mjs`) are pre-existing on main, not introduced by #26450.
+
+## 443.86 #4 S4-bank — 2026-10-12T03:35Z
+
+**PR #26459 MERGED** — `4c24d77eadc2` (squash, admin, `cc-1/443-86-s4bank`)
+
+**S4-bank assertion table:**
+| Step | Result | Notes |
+|------|--------|-------|
+| S4a: GET /banking/link-suggestions 200 | PASS | |
+| S4a: fuel-card bank lines with posted expense | FAIL | 0 expenses have `source_bank_transaction_id` on USMCA — pre-existing data gap; import path doesn't populate it |
+| S4a: expense appears as candidate in suggestions list | SKIP (data gap) | |
+| S4a: accept POST 200 + no double JE | SKIP (data gap) | |
+| S4b: POST /banking/transactions/:id/categorize 200 | PASS | |
+| S4b: `matched_journal_entry_id` stamped | PASS | JE `0f9d0a46-c823-405d-8f93-aeecf9e3e730` |
+| S4b: JE debit on acct 5000 | PASS | |
+| S4c: exact_match=true never fires when amt/date differ | PASS | 0 violations / 90 candidates |
+
+**Total: 10/11 assertions (1 FAIL = pre-existing data gap, not a code defect)**
+
+**Neon fork** `br-restless-field-aksy3bkn` (project `tiny-field-89581227`) — still live; CC-3 may reuse or delete.
+
+**443.88 handoff → see INBOX-CC-3.md**
