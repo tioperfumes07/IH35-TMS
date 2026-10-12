@@ -60,6 +60,11 @@ export function createVerifyPrecommitContext(rootDir) {
     console.error(message);
     process.exit(exitCode);
   };
+  // Structured steps (2982 2984 2988 2990 2994 …) report success with ctx.pass(message); the context never
+  // carried it, so every one of them threw "ctx.pass is not a function" exactly when its guard PASSED.
+  const pass = (message) => {
+    if (message) console.log(message);
+  };
 
   const assertDockerAvailable = () => {
     const result = spawnSync("docker", ["--version"], { stdio: "ignore" });
@@ -132,6 +137,7 @@ export function createVerifyPrecommitContext(rootDir) {
     run,
     runAllowFailure,
     fail,
+    pass,
     ensureDatabaseUrl,
     parseBackendVitestReport,
     cleanup,

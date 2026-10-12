@@ -44,9 +44,11 @@ const src = fs.readFileSync(SERVICE, "utf8");
 // because its own explanatory comment mentioned the identifier — a guard must never match its prose.
 const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").replace(/\/\/.*$/gm, "");
 
+// PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE (#18524): both sites moved from the blacklist status <> 'cancelled' to the
+// whitelist status = 'open' — strictly tighter (cancelled AND approved/paid/closed are refused), so either form holds.
 const sites = [
-  { name: "openLoadBookendedSettlement reuse query", re: /s\.status\s*<>\s*'cancelled'/, voidRe: /s\.voided_at\s+IS\s+NULL/ },
-  { name: "getActiveSettlementForDriver", re: /(?<!s\.)\bstatus\s*<>\s*'cancelled'/, voidRe: /(?<!s\.)\bvoided_at\s+IS\s+NULL/ },
+  { name: "openLoadBookendedSettlement reuse query", re: /s\.status\s*(?:<>\s*'cancelled'|=\s*'open')/, voidRe: /s\.voided_at\s+IS\s+NULL/ },
+  { name: "getActiveSettlementForDriver", re: /(?<!s\.)\bstatus\s*(?:<>\s*'cancelled'|=\s*'open')/, voidRe: /(?<!s\.)\bvoided_at\s+IS\s+NULL/ },
 ];
 const broken = [];
 for (const site of sites) {

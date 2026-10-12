@@ -13,7 +13,7 @@
  *    and a re-post of the same load keeps its own invoice (buildInvoiceFromLoad is idempotent per load).
  */
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
-import { SettlementCreatorError } from "./settlement-creator.service.js";
+import { SettlementCreatorError } from "./settlement-creator-error.js";
 import { lineLoadRefusal } from "./settlement-creator-line-load.js";
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> };

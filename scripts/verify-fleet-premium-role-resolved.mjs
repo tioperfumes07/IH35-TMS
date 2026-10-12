@@ -43,8 +43,14 @@ export function check(service, resolver, feApi, mig) {
     if (!/resolveRoleAccount\([^)]*"insurance_expense"\)/.test(service)) {
       problems.push('must resolveRoleAccount(..., "insurance_expense") for debit expense');
     }
-    if (!/resolveRoleAccount\([^)]*"ap_control"\)/.test(service)) {
-      problems.push('must resolveRoleAccount(..., "ap_control") for credit payable');
+    // LST-F414 (#25583): A/P is written only by its documents (ROUND 393.1 trg_ap_control_written_only_by_documents).
+    // The payable side is the insurer's bill (add) / vendor credit (remove), which post ap_control themselves; this
+    // module must never resolve ap_control and write raw A/P journal lines again.
+    if (!/\bcreateBill\(/.test(service) || !/\bcreateVendorCreditInClientTx\(/.test(service)) {
+      problems.push("fleet premium A/P must go through the insurer's documents: createBill (add) + createVendorCreditInClientTx (remove) (LST-F414)");
+    }
+    if (/resolveRoleAccount\([^)]*"ap_control"\)/.test(service) || /INSERT\s+INTO\s+accounting\.journal_(?:entries|lines)/i.test(service)) {
+      problems.push("fleet premium must not resolve ap_control or insert journal rows directly — A/P is written only by its documents (LST-F414)");
     }
   }
 
@@ -71,8 +77,8 @@ function selftest() {
   const goodService = `
     async function pickFleetPremiumAccounts(client, opco) {
       const expenseAccountId = await resolveRoleAccount(client, opco, "insurance_expense");
-      const payableAccountId = await resolveRoleAccount(client, opco, "ap_control");
-      return { expenseAccountId, payableAccountId };
+      if (direction === "add") return createBill(client, { accountId: expenseAccountId });
+      return createVendorCreditInClientTx(client, { accountId: expenseAccountId });
     }
   `;
   const badService = `
@@ -88,6 +94,9 @@ function selftest() {
   if (!check(badService, goodResolver, goodFe, goodMig).length) {
     throw new Error("ORDER BY created_at LIMIT 2 not caught");
   }
+  const rawAp = goodService.replace("if (direction", `const ap = await resolveRoleAccount(client, opco, "ap_control");\n      if (direction`);
+  if (!check(rawAp, goodResolver, goodFe, goodMig).length) throw new Error("raw ap_control resolution not caught (LST-F414)");
+  if (!check(goodService.replace("createVendorCreditInClientTx(", "postJe("), goodResolver, goodFe, goodMig).length) throw new Error("remove path off the vendor credit not caught (LST-F414)");
   console.log(`[${LABEL}] SELFTEST PASS`);
 }
 
@@ -103,4 +112,4 @@ if (problems.length) {
   for (const p of problems) console.error(`  ✗ ${p}`);
   process.exit(1);
 }
-console.log(`[${LABEL}] OK — fleet premium resolves insurance_expense + ap_control (no created_at LIMIT 2)`);
+console.log(`[${LABEL}] OK — fleet premium resolves insurance_expense by role; A/P through the insurer's bill / vendor credit (no created_at LIMIT 2)`);

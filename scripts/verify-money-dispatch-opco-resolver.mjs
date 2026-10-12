@@ -131,8 +131,26 @@ function extractHandlers(src) {
   return handlers;
 }
 
-function isViolation(body, rel, head) {
+// A same-file helper whose OWN body calls a membership validator (e.g. miles-recommendations.routes.ts
+// `async function scope(...)` = resolveOperatingCompanyId + assertCompanyMembership) validates exactly like the
+// wrapper it contains. Only helpers declared in the same file AND proven to embed a VALIDATOR count.
+export function localValidatorHelpers(src) {
+  const names = [];
+  const re = /(?:^|\n)\s*(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g;
+  let m;
+  while ((m = re.exec(src))) {
+    const open = src.indexOf("{", re.lastIndex);
+    if (open === -1) continue;
+    let depth = 0, end = open;
+    for (; end < src.length; end++) { const c = src[end]; if (c === "{") depth++; else if (c === "}" && --depth === 0) break; }
+    if (VALIDATOR.test(src.slice(open, end + 1))) names.push(m[1]);
+  }
+  return names;
+}
+
+function isViolation(body, rel, head, helpers = []) {
   if (!SINK.test(body) || VALIDATOR.test(body)) return false;
+  if (helpers.some((n) => new RegExp(`\\b${n.replace(/\$/g, "\\$")}\\s*\\(`).test(body))) return false;
   const allow = SYSTEM_DERIVED_ALLOWLIST.find((a) => rel === a.file && head.includes(a.fragment));
   return !allow;
 }
@@ -146,6 +164,15 @@ if (process.argv.includes("--selftest")) {
   const errs = [];
   if (!isViolation(bad, "x.routes.ts", ".get(...)")) errs.push("negative case: unguarded sink was NOT flagged");
   if (isViolation(good, "x.routes.ts", ".get(...)")) errs.push("positive case: guarded sink WAS flagged");
+  const helperFile = `async function scope(client, userId, requested) {
+    const companyId = await resolveOperatingCompanyId(client, userId, requested);
+    await assertCompanyMembership(client, userId, companyId); return companyId; }
+  async function noop(client, id) { return id; }`;
+  const viaHelper = `{ const companyId = await scope(client, u.uuid, b.operating_company_id);
+    await client.query("SELECT 1 FROM mdata.loads l WHERE l.operating_company_id = $1::uuid", [companyId]); }`;
+  const viaNoop = viaHelper.replace("await scope(", "await noop(");
+  if (isViolation(viaHelper, "x.routes.ts", ".post(...)", localValidatorHelpers(helperFile))) errs.push("positive case: sink behind a same-file validating helper WAS flagged");
+  if (!isViolation(viaNoop, "x.routes.ts", ".post(...)", localValidatorHelpers(helperFile))) errs.push("negative case: sink behind a same-file NON-validating helper was NOT flagged");
   if (errs.length) {
     console.error("verify:money-dispatch-opco-resolver --selftest FAILED");
     for (const e of errs) console.error(`  - ${e}`);
@@ -159,8 +186,9 @@ const failures = [];
 for (const file of listRouteFiles()) {
   const rel = path.relative(srcRoot, file);
   const src = fs.readFileSync(file, "utf8");
+  const helpers = localValidatorHelpers(src);
   for (const h of extractHandlers(src)) {
-    if (isViolation(h.body, rel, h.head)) failures.push(`${rel}:${h.line}  ${h.head}`);
+    if (isViolation(h.body, rel, h.head, helpers)) failures.push(`${rel}:${h.line}  ${h.head}`);
   }
 }
 

@@ -37,6 +37,8 @@ const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const BYPASS = `WITH b AS MATERIALIZED (SELECT set_config('app.bypass_rls','lucia',true) AS v)`;
 
 const SETTLEMENT_SUMMARY_ROUTE = "apps/backend/src/dispatch/load-settlement-summary.routes.ts";
+// ROUND 150 (#22941) extracted the route's settlement resolve into this file; the route calls it. Both are audited as one unit.
+const SETTLEMENT_RESOLVER = "apps/backend/src/dispatch/resolve-settlement-for-load.ts";
 const TOUR_READOUT_ROUTE = "apps/backend/src/driver-finance/tour-readout.routes.ts";
 
 /**
@@ -50,12 +52,13 @@ export function auditSettlementSummaryCurrentOnly(src) {
     failures.push(`${SETTLEMENT_SUMMARY_ROUTE}: no longer reads presettlement_link_id at all — regressed to a pure historical-search resolver`);
     return failures;
   }
-  if (!/status\s*<>\s*'cancelled'/.test(src)) {
+  if (!/status\s*(?:<>|IS\s+DISTINCT\s+FROM)\s*'cancelled'/.test(src)) {
     failures.push(`${SETTLEMENT_SUMMARY_ROUTE}: fallback resolver no longer excludes cancelled settlements`);
   }
   // The presettlement_link_id branch must be tried BEFORE the fallback query runs — the fallback
   // must be conditioned on the primary resolve having failed (an `if (!s)` / `s ?? ` shape).
-  if (!/if\s*\(\s*!s\s*\)/.test(src)) {
+  // #22941 resolver shape: the presettlement_link_id lookup returns early when it resolves (`if (byLink.rows[0]) return`).
+  if (!/if\s*\(\s*!s\s*\)/.test(src) && !/if\s*\(\s*byLink\.rows\[0\]\s*\)\s*return\b/.test(src)) {
     failures.push(`${SETTLEMENT_SUMMARY_ROUTE}: no longer gates the fallback query behind "only if the primary resolve found nothing" — could re-run the historical search even when presettlement_link_id already resolved a current settlement`);
   }
   return failures;
@@ -87,7 +90,10 @@ async function live() {
   const staticFailures = [];
   const summaryPath = path.join(ROOT, SETTLEMENT_SUMMARY_ROUTE);
   if (fs.existsSync(summaryPath)) {
-    staticFailures.push(...auditSettlementSummaryCurrentOnly(fs.readFileSync(summaryPath, "utf8")));
+    const resolverPath = path.join(ROOT, SETTLEMENT_RESOLVER);
+    if (!fs.existsSync(resolverPath)) staticFailures.push(`${SETTLEMENT_RESOLVER}: file no longer exists — update this guard`);
+    else if (!/\bresolveSettlementForLoad\(/.test(fs.readFileSync(summaryPath, "utf8"))) staticFailures.push(`${SETTLEMENT_SUMMARY_ROUTE}: no longer resolves through ${SETTLEMENT_RESOLVER}`);
+    else staticFailures.push(...auditSettlementSummaryCurrentOnly(fs.readFileSync(summaryPath, "utf8") + "\n" + fs.readFileSync(resolverPath, "utf8")));
   } else {
     staticFailures.push(`${SETTLEMENT_SUMMARY_ROUTE}: file no longer exists — update this guard`);
   }
@@ -182,6 +188,15 @@ function selftest() {
     }
   `;
   assert.ok(auditSettlementSummaryCurrentOnly(plantedRedNoCancelledFilter).length > 0, "PLANTED-RED: fallback missing the cancelled exclusion must be caught");
+
+  const goodResolver = `
+    const s = await resolveSettlementForLoad(client, { presettlementLinkId: loadRow.presettlement_link_id });
+    if (presettlementLinkId) { const byLink = await client.query(\`SELECT ...\`); if (byLink.rows[0]) return byLink.rows[0]!; }
+    const settlRes = await client.query(\`SELECT ... WHERE s.status IS DISTINCT FROM 'cancelled' AND (...)\`);
+  `;
+  assert.ok(auditSettlementSummaryCurrentOnly(goodResolver).length === 0, "must accept the #22941 extracted resolver shape (early return + IS DISTINCT FROM)");
+  assert.ok(auditSettlementSummaryCurrentOnly(goodResolver.replace("IS DISTINCT FROM 'cancelled'", "IS DISTINCT FROM 'void'")).length > 0, "PLANTED-RED: extracted resolver without the cancelled exclusion must be caught");
+  assert.ok(auditSettlementSummaryCurrentOnly(goodResolver.replace("if (byLink.rows[0]) return byLink.rows[0]!;", "")).length > 0, "PLANTED-RED: extracted resolver that never returns the link first must be caught");
 
   const goodReadout = `
     -- DISPATCH-NO-HISTORY (owner 2026-09-11): ...

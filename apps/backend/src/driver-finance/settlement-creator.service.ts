@@ -33,6 +33,7 @@ import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { creatorEmptyPayCents, creatorEmptyRateCents, creatorLoadedPayCents, creatorPayMiles } from "./settlement-creator-empty-pay.js";
 import { resolveDriverPayItems } from "./settlement-creator-pay-item.js";
+import { SettlementCreatorError } from "./settlement-creator-error.js";
 import { milesTimesRateCents } from "./deadhead-rule.js";
 import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
@@ -2304,11 +2305,5 @@ async function reeferFuelExpenseRefusal(client: DbClient, operatingCompanyId: st
   return isReeferFuelItemName(name) ? `"${exp.item_name}" ${REEFER_FUEL_AS_EXPENSE_MESSAGE}` : null;
 }
 
-export class SettlementCreatorError extends Error {
-  code: string;
-  constructor(code: string, message: string) {
-    super(message);
-    this.name = "SettlementCreatorError";
-    this.code = code;
-  }
-}
+// The class lives in its own leaf module (breaks the helper -> service import cycle); re-exported for every importer.
+export { SettlementCreatorError };

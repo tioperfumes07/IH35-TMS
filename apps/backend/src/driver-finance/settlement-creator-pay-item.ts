@@ -7,7 +7,7 @@
  * driver_pay_item_unresolved naming the driver. The Creator never writes the flag; the owner supplies who is B1.
  */
 import type { DbClient } from "../dispatch/presettlement-link.service.js";
-import { SettlementCreatorError } from "./settlement-creator.service.js";
+import { SettlementCreatorError } from "./settlement-creator-error.js";
 
 export const PAY_ITEM_FAMILIES = {
   cdl: { loaded: "Driver Pay-CDL-Loaded Miles", empty: "Driver Pay-CDL-Empty Miles" },

@@ -7,7 +7,7 @@
 import type { DbClient } from "../dispatch/presettlement-link.service.js";
 import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.service.js";
 import { fromMdataStatus } from "../dispatch/load-state-machine.js";
-import { SettlementCreatorError } from "./settlement-creator.service.js";
+import { SettlementCreatorError } from "./settlement-creator-error.js";
 import { DEFAULT_DEPART_RADIUS_M } from "../integrations/samsara/geofences/state-machine/states.js";
 
 /** ROUND 443.16 — how one stop of a load was stamped (listed in the post result). */
