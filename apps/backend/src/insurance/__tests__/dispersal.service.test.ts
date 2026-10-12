@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import { bulkPostTransactionsAsBills } from "../../banking/bulk-transactions.js";
 import { persistInsuranceDispersalBills } from "../dispersal.routes.js";
 import {
   buildInsuranceGenerateBillsResponse,
@@ -7,36 +6,24 @@ import {
   splitCentsExact,
 } from "../dispersal.service.js";
 
-vi.mock("../../banking/bulk-transactions.js", () => ({
-  bulkPostTransactionsAsBills: vi.fn(async (_client: unknown, input: { txnIds: string[] }) => ({
-    bill_ids: input.txnIds.map((_, index) => `bill-${index + 1}`),
-  })),
-}));
-
 vi.mock("../../auth/db.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../auth/db.js")>();
   return {
     ...actual,
     withCurrentUser: vi.fn(async (_userId: string, fn: (client: unknown) => Promise<unknown>) => {
-      let transactionSequence = 0;
+      let billSequence = 0;
       return fn({
-        query: vi.fn(async (sql: string, values?: unknown[]) => {
-          if (sql.includes("FROM mdata.vendors")) return { rows: [{ id: "vendor-1" }], rowCount: 1 };
-          if (sql.includes("FROM banking.bank_accounts")) return { rows: [{ id: "bank-1" }], rowCount: 1 };
-          if (sql.includes("INSERT INTO banking.bank_transactions")) {
-            transactionSequence += 1;
-            return { rows: [{ id: `txn-${transactionSequence}` }], rowCount: 1 };
+        query: vi.fn(async (sql: string) => {
+          if (sql.includes("FROM mdata.vendors")) {
+            return { rows: [{ id: "vendor-1", is_sample_data: false }], rowCount: 1 };
           }
-          if (sql.includes("SELECT id::text AS transaction_id, linked_entity_id::text AS bill_id")) {
-            const txnIds = (values?.[1] as string[] | undefined) ?? [];
-            return {
-              rows: txnIds.map((txnId, index) => ({
-                transaction_id: txnId,
-                bill_id: `bill-${index + 1}`,
-              })),
-              rowCount: txnIds.length,
-            };
+          // K-10 — bills only; no bank_accounts / bank_transactions / bulkPost.
+          if (sql.includes("INSERT INTO accounting.bills")) {
+            billSequence += 1;
+            return { rows: [{ id: `bill-${billSequence}` }], rowCount: 1 };
           }
+          if (sql.includes("UPDATE accounting.bills")) return { rows: [], rowCount: 1 };
+          if (sql.includes("INSERT INTO accounting.bill_unit_allocation")) return { rows: [], rowCount: 1 };
           return { rows: [], rowCount: 1 };
         }),
       });
@@ -178,7 +165,7 @@ describe("generate-bills endpoint contract", () => {
     expect(response.total_count).toBe(3);
   });
 
-  it("persists bills through ACCT-08 multi-bill engine", async () => {
+  it("K-10: persists A/P bills only — no synthetic bank_transactions / bulkPost", async () => {
     const bills = computeInsuranceDispersal(
       {
         id: "66666666-6666-4666-8666-666666666666",
@@ -208,7 +195,6 @@ describe("generate-bills endpoint contract", () => {
     expect(created).toHaveLength(3);
     expect(created[0]?.bill_id).toBe("bill-1");
     expect(created[2]?.bill_id).toBe("bill-3");
-    expect(bulkPostTransactionsAsBills).toHaveBeenCalledTimes(1);
   });
 });
 

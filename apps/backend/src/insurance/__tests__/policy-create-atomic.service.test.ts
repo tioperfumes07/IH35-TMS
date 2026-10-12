@@ -9,7 +9,6 @@ vi.mock("../../auth/db.js", async (importOriginal) => {
     withCurrentUser: vi.fn(async (_userId: string, fn: (client: unknown) => Promise<unknown>) => {
       let policySeq = 0;
       let unitSeq = 0;
-      let txnSeq = 0;
       let billSeq = 0;
       return fn({
         query: membershipAware(vi.fn(async (sql: string) => {
@@ -27,17 +26,12 @@ vi.mock("../../auth/db.js", async (importOriginal) => {
           if (sql.includes("FROM mdata.vendors")) {
             return { rows: [{ id: "00000000-0000-4000-8000-0000000000f1", vendor_name: "Test Insurer", is_sample_data: false }] };
           }
-          if (sql.includes("FROM banking.bank_accounts")) return { rows: [{ id: "bank-1" }] };
-          if (sql.includes("INSERT INTO banking.bank_transactions")) {
-            txnSeq += 1;
-            return { rows: [{ id: `txn-${txnSeq}` }] };
-          }
+          // K-10 — no bank_accounts / bank_transactions invent path.
           if (sql.includes("INSERT INTO accounting.bills")) {
             billSeq += 1;
             return { rows: [{ id: `bill-${billSeq}` }] };
           }
           if (sql.includes("UPDATE accounting.bills")) return { rows: [], rowCount: 1 };
-          if (sql.includes("UPDATE banking.bank_transactions")) return { rows: [], rowCount: 1 };
           if (sql.includes("INSERT INTO accounting.bill_unit_allocation")) return { rows: [], rowCount: 1 };
           if (sql.includes("INSERT INTO audit")) return { rows: [], rowCount: 1 };
           return { rows: [], rowCount: 0 };

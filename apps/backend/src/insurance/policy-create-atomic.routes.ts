@@ -91,10 +91,7 @@ export async function registerInsurancePolicyCreateAtomicRoutes(app: FastifyInst
       if (message.startsWith("asset_not_found:")) {
         return reply.code(404).send({ error: "asset_not_found", detail: message });
       }
-      if (
-        message === "insurance_vendor_not_found" ||
-        message === "insurance_seed_bank_account_not_found"
-      ) {
+      if (message === "insurance_vendor_not_found" || message === "insurance_created_bill_not_found") {
         return reply.code(409).send({ error: message });
       }
       throw err;
