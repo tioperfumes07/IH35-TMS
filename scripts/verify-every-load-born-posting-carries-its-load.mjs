@@ -148,6 +148,40 @@ export function writerFailures(src) {
   return f;
 }
 
+/**
+ * RULE 5 (static, LEAD 443.113 I-02) — the entity invariant is universal: every posting source type the backend writes
+ * is CLASSIFIED in the writer (PARTY_FROM_DOCUMENT / PARTYLESS), an unclassified type is refused, and every
+ * PARTY_FROM_DOCUMENT type has a party derivation in resolvePostingSourceEntity. Source types are the posting engine's POSTING_SOURCE_TYPES plus
+ * every `source_transaction_type: "<literal>"` in non-test backend code.
+ */
+export function classifiedTypes(writer) {
+  const grab = (name) => [...((new RegExp(`${name}\\s*=\\s*\\[([\\s\\S]*?)\\]\\s*as const`).exec(writer)?.[1]) ?? "").matchAll(/"([a-z_]+)"/g)].map((m) => m[1]);
+  return new Set([...grab("PARTY_FROM_DOCUMENT_SOURCE_TYPES"), ...grab("PARTYLESS_SOURCE_TYPES")]);
+}
+export function writtenSourceTypes(files, engineSrc) {
+  // Comments inside the list quote account roles (e.g. "cash_clearing"); only the entries count.
+  const list = (/POSTING_SOURCE_TYPES = \[([\s\S]*?)\] as const/.exec(engineSrc)?.[1] ?? "").replace(/\/\/.*$/gm, "");
+  const out = new Set([...list.matchAll(/"([a-z_]+)"/g)].map((m) => m[1]));
+  for (const f of files) {
+    if (/__tests__|\.test\.ts$/.test(f.rel)) continue;
+    for (const m of f.src.matchAll(/source_transaction_type:\s*["']([a-z_]+)["']/g)) out.add(m[1]);
+  }
+  return out;
+}
+export function partyFailures(writer, written) {
+  const f = [];
+  const known = classifiedTypes(writer);
+  for (const t of written) if (!known.has(t)) f.push(`RULE 5 ${WRITER}: posting source type "${t}" is written but not classified for its party`);
+  if (!/=== "unclassified"\) \{\s*throw new UnclassifiedPostingSourceTypeError\(/.test(writer)) f.push(`RULE 5 ${WRITER}: an unclassified source type is no longer refused`);
+  const fromDoc = [...((/PARTY_FROM_DOCUMENT_SOURCE_TYPES\s*=\s*\[([\s\S]*?)\]\s*as const/.exec(writer)?.[1]) ?? "").matchAll(/"([a-z_]+)"/g)].map((m) => m[1]);
+  const derivation = writer.slice(writer.indexOf("export async function resolvePostingSourceEntity"), writer.indexOf("async function relayVendorId"));
+  for (const t of fromDoc) {
+    if (t === "related_party_loan") continue; // its poster stamps the party itself (party-entry-post.service.ts)
+    if (!new RegExp(`(\\b${t}:\\s*\`SELECT|"${t}")`).test(derivation)) f.push(`RULE 5 ${WRITER}: PARTY_FROM_DOCUMENT type "${t}" has no party derivation in resolvePostingSourceEntity`);
+  }
+  return f;
+}
+
 export function run() {
   const files = walk(join(ROOT, "apps/backend/src")).map((p) => ({ rel: relative(ROOT, p), src: readFileSync(p, "utf8") }));
   const { failures, inserts } = staticFailures(files);
@@ -156,6 +190,8 @@ export function run() {
   if (!resolver) failures.push("RULE 3: no migration defines accounting.posting_source_load_id — the matcher is stale");
   else failures.push(...resolverFailures(resolver.rel, resolver.sql));
   failures.push(...writerFailures(readFileSync(join(ROOT, WRITER), "utf8")));
+  failures.push(...partyFailures(readFileSync(join(ROOT, WRITER), "utf8"),
+    writtenSourceTypes(files, readFileSync(join(ROOT, "apps/backend/src/accounting/posting-engine.service.ts"), "utf8"))));
   return { failures, inserts, resolver: resolver?.rel };
 }
 
@@ -271,6 +307,20 @@ if (isMain) {
           ["RULE 4: a derived load without the company check fails", writerFailures(w.replace("AND sl.operating_company_id = $1::uuid", "")).some((x) => x.includes("derived load"))],
           ["RULE 4: dropping the foreign-load refusal fails", writerFailures(w.replace("throw new PostingLoadOfAnotherCompanyError(", "void (")).some((x) => x.includes("another company"))],
           ["RULE 4: dropping the bank_categorization party fails", writerFailures(w.replace("bank_categorization: `SELECT COALESCE(categorization_vendor_id::text", "bank_categorization: `SELECT COALESCE(NULL::text")).some((x) => x.includes("party"))],
+        ];
+      })(),
+      // RULE 5 (443.113 I-02) — the real writer + every written source type pass; each planted regression is caught.
+      ...(() => {
+        const w = readFileSync(join(ROOT, WRITER), "utf8");
+        const files = walk(join(ROOT, "apps/backend/src")).map((p) => ({ rel: relative(ROOT, p), src: readFileSync(p, "utf8") }));
+        const written = writtenSourceTypes(files, readFileSync(join(ROOT, "apps/backend/src/accounting/posting-engine.service.ts"), "utf8"));
+        return [
+          ["RULE 5: every written source type is classified (real code)", partyFailures(w, written).length === 0 && written.size > 20],
+          ["RULE 5: a new poster's unclassified type fails", partyFailures(w, new Set([...written, "tst_new_poster"])).some((x) => x.includes("tst_new_poster"))],
+          ["RULE 5: a type dropped from the classification fails", partyFailures(w.replace('"driver_liability", "relay_deposit",', '"relay_deposit",'), written).some((x) => x.includes("driver_liability"))],
+          ["RULE 5: dropping the unclassified refusal fails", partyFailures(w.replace("throw new UnclassifiedPostingSourceTypeError(", "void ("), written).some((x) => x.includes("unclassified source type"))],
+          ["RULE 5: a document-party type without a derivation fails", partyFailures(w.replace("    driver_liability: `SELECT", "    driver_liability_x: `SELECT"), written).some((x) => x.includes('"driver_liability" has no party derivation'))],
+          ["RULE 5: test-only literals are not counted as written", !writtenSourceTypes([{ rel: "x/__tests__/a.test.ts", src: 'source_transaction_type: "tst_only"' }], "").has("tst_only")],
         ];
       })(),
       ["live mismatch fails", liveFailures({ mismatched: [{ id: "p1", source_transaction_type: "expense", source_transaction_id: "e1", load_id: null, expected: "l1" }] }).length === 1],
