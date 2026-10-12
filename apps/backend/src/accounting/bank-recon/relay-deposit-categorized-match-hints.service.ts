@@ -1,8 +1,9 @@
 import { withLuciaBypass } from "../../auth/db.js";
 import {
   RELAY_DEPOSIT_CHARGED_AMOUNT_SQL,
-  relayDepositChargedCents,
-  relayDepositFeeCents,
+  RELAY_DEPOSIT_FEE_AMOUNT_SQL,
+  RELAY_DEPOSIT_MATCHABLE_SQL,
+  RELAY_DEPOSIT_WALLET_AMOUNT_SQL,
 } from "./relay-deposit-match-math.js";
 
 type RelayDepositCategorizedMatchHintQueryRow = RelayDepositCategorizedMatchHintRow & {
@@ -25,8 +26,9 @@ export type RelayDepositCategorizedMatchHintRow = {
 };
 
 /**
- * ROUND 443.29-B — read-only: bank lines already categorized to Relay Fuel Wallet (outflows),
- * with the settled company deposit they would match (charged = wallet + 3.25% fee). No writes.
+ * ROUND 443.29-B / 443.54 — read-only: bank lines already categorized to Relay Fuel Wallet (outflows),
+ * with the settled matchable deposit they would match (charged = total_amount_cents = wallet + fee).
+ * No writes. MATCHABLE = company classification OR existing deposit JE (live 0680 stayed unclassified).
  */
 export async function listRelayDepositCategorizedMatchHints(
   operatingCompanyId: string,
@@ -34,7 +36,7 @@ export async function listRelayDepositCategorizedMatchHints(
 ): Promise<{ rows: RelayDepositCategorizedMatchHintRow[]; total: number }> {
   const res = await withLuciaBypass((client) =>
     client.query<RelayDepositCategorizedMatchHintQueryRow>(
-    `
+      `
       WITH wallet_lines AS (
         SELECT bt.id,
                bt.transaction_date::date::text AS transaction_date,
@@ -55,8 +57,8 @@ export async function listRelayDepositCategorizedMatchHints(
         SELECT wl.*,
                sug.id::text AS suggested_relay_deposit_id,
                sug.deposit_id AS relay_deposit_id,
-               sug.total_amount_cents::int AS wallet_cents,
-               ((sug.total_amount_cents * 325 + 5000) / 10000)::int AS fee_cents,
+               ${RELAY_DEPOSIT_WALLET_AMOUNT_SQL.replace(/rd\./g, "sug.")}::int AS wallet_cents,
+               ${RELAY_DEPOSIT_FEE_AMOUNT_SQL.replace(/rd\./g, "sug.")}::int AS fee_cents,
                ${RELAY_DEPOSIT_CHARGED_AMOUNT_SQL.replace(/rd\./g, "sug.")}::int AS charged_cents,
                COALESCE(sug.relay_created_at, sug.created_at)::date::text AS deposit_date,
                abs(${RELAY_DEPOSIT_CHARGED_AMOUNT_SQL.replace(/rd\./g, "sug.")} - wl.amount_cents)::int AS amount_gap_cents,
@@ -67,7 +69,7 @@ export async function listRelayDepositCategorizedMatchHints(
               FROM integrations.relay_deposits rd
              WHERE rd.operating_company_id = $1::uuid
                AND rd.status = 'settled'
-               AND rd.classification = 'company'
+               AND ${RELAY_DEPOSIT_MATCHABLE_SQL}
                AND rd.voided_at IS NULL
                AND COALESCE(rd.is_active, true) = true
                AND rd.matched_bank_transaction_id IS NULL
@@ -91,31 +93,20 @@ export async function listRelayDepositCategorizedMatchHints(
   );
 
   const total = res.rows[0] ? Number(res.rows[0].total) : 0;
-  const rows = res.rows.map((r: RelayDepositCategorizedMatchHintQueryRow) => {
-    const wallet = r.wallet_cents;
-    const fee =
-      wallet != null ? relayDepositFeeCents(wallet) : r.fee_cents != null ? Number(r.fee_cents) : null;
-    const charged =
-      wallet != null
-        ? relayDepositChargedCents(wallet)
-        : r.charged_cents != null
-          ? Number(r.charged_cents)
-          : null;
-    return {
-      bank_transaction_id: r.bank_transaction_id,
-      transaction_date: r.transaction_date,
-      amount_cents: Number(r.amount_cents),
-      description: r.description,
-      suggested_relay_deposit_id: r.suggested_relay_deposit_id,
-      relay_deposit_id: r.relay_deposit_id,
-      wallet_cents: wallet != null ? Number(wallet) : null,
-      fee_cents: fee,
-      charged_cents: charged,
-      deposit_date: r.deposit_date,
-      amount_gap_cents: r.amount_gap_cents != null ? Number(r.amount_gap_cents) : null,
-      date_gap_days: r.date_gap_days != null ? Number(r.date_gap_days) : null,
-    };
-  });
+  const rows = res.rows.map((r: RelayDepositCategorizedMatchHintQueryRow) => ({
+    bank_transaction_id: r.bank_transaction_id,
+    transaction_date: r.transaction_date,
+    amount_cents: Number(r.amount_cents),
+    description: r.description,
+    suggested_relay_deposit_id: r.suggested_relay_deposit_id,
+    relay_deposit_id: r.relay_deposit_id,
+    wallet_cents: r.wallet_cents != null ? Number(r.wallet_cents) : null,
+    fee_cents: r.fee_cents != null ? Number(r.fee_cents) : null,
+    charged_cents: r.charged_cents != null ? Number(r.charged_cents) : null,
+    deposit_date: r.deposit_date,
+    amount_gap_cents: r.amount_gap_cents != null ? Number(r.amount_gap_cents) : null,
+    date_gap_days: r.date_gap_days != null ? Number(r.date_gap_days) : null,
+  }));
 
   return { rows, total };
 }

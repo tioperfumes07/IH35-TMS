@@ -52,6 +52,12 @@ function liveCheck() {
   if (!math.includes("5000) / 10000")) {
     errors.push(`${FILES.math} must half-up fee with +5000 / 10000`);
   }
+  if (!math.includes("RELAY_DEPOSIT_MATCHABLE_SQL")) {
+    errors.push(`${FILES.math} must export RELAY_DEPOSIT_MATCHABLE_SQL (company OR deposit JE)`);
+  }
+  if (!math.includes("RELAY_DEPOSIT_CHARGED_AMOUNT_SQL = `rd.total_amount_cents`")) {
+    errors.push(`${FILES.math} charged amount must be rd.total_amount_cents (never wallet+fee again)`);
+  }
 
   if (!kinds.includes('"relay_deposit"')) {
     errors.push(`${FILES.kinds} must list relay_deposit in accept + filter kinds`);
@@ -66,11 +72,20 @@ function liveCheck() {
   if (!match.includes("relay_deposit_wallet_cents")) {
     errors.push(`${FILES.match} must expose wallet/fee split on relay_deposit candidates`);
   }
+  if (!match.includes("RELAY_DEPOSIT_MATCHABLE_SQL")) {
+    errors.push(`${FILES.match} must use RELAY_DEPOSIT_MATCHABLE_SQL (not classification=company alone)`);
+  }
+  if (!match.includes("'Relay deposit ' || rd.deposit_id") && !match.includes('"Relay deposit " || rd.deposit_id')) {
+    errors.push(`${FILES.match} must label candidates as Relay deposit <txn id>`);
+  }
   if (!match.includes("matched_relay_deposit_id")) {
     errors.push(`${FILES.match} must persist matched_relay_deposit_id on accept`);
   }
   if (!match.includes("integrations.relay_deposits") || !match.includes("matched_bank_transaction_id")) {
     errors.push(`${FILES.match} must stamp relay_deposits.matched_bank_transaction_id on accept`);
+  }
+  if (!hints.includes("RELAY_DEPOSIT_MATCHABLE_SQL")) {
+    errors.push(`${FILES.hints} must use RELAY_DEPOSIT_MATCHABLE_SQL (same charged math as Match drawer)`);
   }
 
   if (!routes.includes("relay-deposit-match-review")) {

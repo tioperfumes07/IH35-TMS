@@ -59,7 +59,7 @@ describe("postRelayDeposit (443.29 b)", () => {
     expect((await postRelayDeposit(fake(dep({ status: "canceled" })), args, { createJournalEntryOnClient })).outcome).toBe("not_settled");
     expect(createJournalEntryOnClient).not.toHaveBeenCalled();
   });
-  it("an unnamed card is HELD by name, never guessed; a personal card is HELD for the loan engine", async () => {
+  it("an unnamed card is HELD by name, never guessed", async () => {
     const createJournalEntryOnClient = vi.fn();
     expect(await postRelayDeposit(fake(dep({ funding_card_last4: "1222" })), args, { createJournalEntryOnClient })).toMatchObject({ outcome: "held", reason: "card_owner_not_named" });
     expect(await postRelayDeposit(fake(dep({ funding_card_last4: "1993" })), args, { createJournalEntryOnClient })).toMatchObject({ outcome: "held", reason: "card_owner_not_named" });

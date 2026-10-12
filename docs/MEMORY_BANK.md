@@ -132,6 +132,23 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   paid_direct (fail closed).
 - Card map (owner): 0680=USMCA BoA; 9708/1354/4823=Laura Transportation → 8000 (not USMCA RPL).
 
+### Active Architectural Decisions — Related-party bank↔Relay SUGGESTED pairs (Cursor, ROUND 443.54-7, 2026-10-11)
+
+- **Owner:** USMCA bank outflow to a related party + Relay deposit (or Dreamline) same amount within
+  **5 days** = SUGGESTED PAIR. Owner confirms; **nothing auto-pairs**.
+- **Confirm order (0 duplicate postings):** (1) `postBankCategorizationOnClient` → one JE
+  Dr Due to/from / Cr bank (`BankFeedGlResult.posted === true`); (2) `createRelatedPartyLoanEntry`
+  with `target_type=party_transfer_out` (document + `matched_related_party_loan_id` only — **loan
+  poster OFF**); (3) stamp `matched_relay_deposit_id` ↔ deposit `matched_bank_transaction_id`.
+- **Card map:** 0210/6248→Jorge `2410-00-001`; 9855→Tio `2410-00-003`; **0275→Scentsx suggestion
+  only** (`card_confirmed=false`); 1354/4823/9708→Transportation `8000`; **0680 exclude**.
+- **Replaces item-3 Cr 2410 loan for card-0210 deposits:** deposit Cr Due to/from Jorge is **CC-2**;
+  Banking only suggests/confirm on the USMCA bank outflow.
+- **API/UI:** GET `/api/v1/banking/related-party-pairs` · POST `…/confirm` ·
+  `RelatedPartyPairSuggestionsPanel`. Mig `202615561540`. Guard EVEN **18376**.
+- **Fork proof** (`br-dark-voice-ak5riprg`): known N=4 (Scentsx+0210 suggested; two 10-08 unpaired);
+  confirm Scentsx → RPL-2026-0012 · JE Dr 2410-00-002 / Cr 1000 · `extra_jes_for_loan=0`.
+
 ### Active Architectural Decisions — Bank Categorize = CoA Category like QBO (Cursor, Martin audit, 2026-10-09)
 
 - **Live audit (USMCA, last 3d categorized):** 66 bank_transactions status=categorized; **0 missing JE**;

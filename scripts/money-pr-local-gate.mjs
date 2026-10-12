@@ -1970,6 +1970,9 @@ const ROUND_44329_B_BANK_RECON_AMBIENT_LIVE_GUARDS = new Set([
   "verify-cancelled-load-has-cancellation-record",
   // LIVE_DOMAIN — armed via driver-finance path prefix on bank-recon PR; tip booked-load leg_miles debt (CC-2).
   "verify-booked-loads-save-miles",
+  // LIVE_DOMAIN — DATA_WRITE migrations arm expense_number LINK 3 census; tip measured 64/632 ambient
+  // mismatches (CC-1 load-expense renumber), not bank-recon / related-party pair confirm.
+  "verify-load-to-cash-chain",
 ]);
 
 for (const [name, rel] of STEPS) {

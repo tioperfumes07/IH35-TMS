@@ -41,7 +41,12 @@ import {
   bankLinePointerSelectSql,
 } from "../../banking/bank-line-match-pointer.js";
 import { RELAY_FUEL_WALLET_AMOUNT_SQL } from "./relay-bank-match.service.js";
-import { RELAY_DEPOSIT_CHARGED_AMOUNT_SQL } from "./relay-deposit-match-math.js";
+import {
+  RELAY_DEPOSIT_CHARGED_AMOUNT_SQL,
+  RELAY_DEPOSIT_FEE_AMOUNT_SQL,
+  RELAY_DEPOSIT_MATCHABLE_SQL,
+  RELAY_DEPOSIT_WALLET_AMOUNT_SQL,
+} from "./relay-deposit-match-math.js";
 import { RELAY_USMCA_DATA_FLOOR } from "../../integrations/relay-payments/relay-usmca-date-floor.js";
 
 /**
@@ -769,61 +774,34 @@ async function fetchLedgerCandidates(
       for (const row of expenses.rows) results.push(toCandidate("expense", row, "vendor"));
     }
 
-    // ROUND 441.21-B R5 — Relay fuel fills as Match-drawer candidates (wallet drawdown / F442).
-    // Floor 2026-08-03: never surface TRANSPORTATION-era fills into USMCA matching.
-    if (wants("relay_fuel")) {
-      const fills = await client.query<RawRow>(
-        `
-          SELECT r.id::text,
-                 ${RELAY_FUEL_WALLET_AMOUNT_SQL} AS amount_cents,
-                 COALESCE(r.relay_created_at, r.created_at)::date::text AS event_date,
-                 COALESCE(r.merchant_name, r.transaction_id)::text AS memo,
-                 NULL::text AS counterparty_id,
-                 COALESCE(r.merchant_name, 'Relay')::text AS counterparty_name,
-                 r.transaction_id::text AS reference,
-                 COALESCE(r.matched_unit_number, '')::text AS description,
-                 NULL::int AS open_balance_cents
-            FROM integrations.relay_fuel_transactions r
-           WHERE r.operating_company_id = $1::uuid
-             AND COALESCE(r.relay_created_at, r.created_at)::date
-                   BETWEEN GREATEST($2::date, $6::date) AND $3::date
-             AND r.voided_at IS NULL
-             AND ($4::text IS NULL OR lower(COALESCE(r.merchant_name, '') || ' ' || COALESCE(r.transaction_id, '') || ' ' || COALESCE(r.matched_unit_number, '')) LIKE $4)
-             AND NOT EXISTS (
-               SELECT 1 FROM banking.bank_transactions bt
-                WHERE bt.matched_relay_fuel_transaction_id = r.id AND bt.voided_at IS NULL
-             )
-           LIMIT $5
-        `,
-        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, RELAY_USMCA_DATA_FLOOR]
-      );
-      for (const row of fills.rows) results.push(toCandidate("relay_fuel", row, "vendor"));
-    }
+    // ROUND 443.54 — Relay fills are paid from wallet 1295, NOT from the bank. They must never
+    // appear as bank match candidates (accept/unmatch of an existing pointer still works below).
+    // Previously ROUND 441.21-B R5 listed them here; that is retired for the bank Match drawer.
 
-    // ROUND 443.29-B — Relay wallet funding deposits (company, settled): match amount = wallet + 3.25% fee.
+    // ROUND 443.29-B / 443.54 — Relay wallet funding deposits: match amount = charged (= total_amount_cents).
     if (wants("relay_deposit")) {
       const deposits = await client.query<RawRow>(
         `
           SELECT rd.id::text,
                  ${RELAY_DEPOSIT_CHARGED_AMOUNT_SQL} AS amount_cents,
                  COALESCE(rd.relay_created_at, rd.created_at)::date::text AS event_date,
-                 COALESCE(rd.note_raw, rd.deposit_id)::text AS memo,
+                 ('Relay deposit ' || rd.deposit_id)::text AS memo,
                  NULL::text AS counterparty_id,
                  'Relay'::text AS counterparty_name,
                  rd.deposit_id::text AS reference,
-                 COALESCE(rd.classification, '')::text AS description,
+                 ('Relay deposit ' || rd.deposit_id)::text AS description,
                  NULL::int AS open_balance_cents,
-                 rd.total_amount_cents::int AS relay_deposit_wallet_cents,
-                 ((rd.total_amount_cents * 325 + 5000) / 10000)::int AS relay_deposit_fee_cents
+                 ${RELAY_DEPOSIT_WALLET_AMOUNT_SQL} AS relay_deposit_wallet_cents,
+                 ${RELAY_DEPOSIT_FEE_AMOUNT_SQL} AS relay_deposit_fee_cents
             FROM integrations.relay_deposits rd
            WHERE rd.operating_company_id = $1::uuid
              AND rd.status = 'settled'
-             AND rd.classification = 'company'
+             AND ${RELAY_DEPOSIT_MATCHABLE_SQL}
              AND rd.voided_at IS NULL
              AND COALESCE(rd.is_active, true) = true
              AND COALESCE(rd.relay_created_at, rd.created_at)::date
                    BETWEEN GREATEST($2::date, $6::date) AND $3::date
-             AND ($4::text IS NULL OR lower(COALESCE(rd.note_raw, '') || ' ' || COALESCE(rd.deposit_id, '')) LIKE $4)
+             AND ($4::text IS NULL OR lower(COALESCE(rd.note_raw, '') || ' ' || COALESCE(rd.deposit_id, '') || ' relay deposit') LIKE $4)
              AND rd.matched_bank_transaction_id IS NULL
              AND NOT EXISTS (
                SELECT 1 FROM banking.bank_transactions bt
@@ -991,7 +969,7 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
         WHERE rd.id = $1::uuid
           AND rd.operating_company_id = $2::uuid
           AND rd.status = 'settled'
-          AND rd.classification = 'company'
+          AND ${RELAY_DEPOSIT_MATCHABLE_SQL}
           AND rd.voided_at IS NULL
         LIMIT 1`,
       [entryId, operatingCompanyId]

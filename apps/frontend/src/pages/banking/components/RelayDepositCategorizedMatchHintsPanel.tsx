@@ -9,6 +9,9 @@ type Props = {
   companyId: string;
 };
 
+const COLS =
+  "grid grid-cols-[minmax(4.5rem,1fr)_repeat(4,minmax(4.5rem,1fr))_minmax(6rem,1.4fr)_minmax(4.5rem,1fr)]";
+
 export function RelayDepositCategorizedMatchHintsPanel({ companyId }: Props) {
   const [open, setOpen] = useState(false);
 
@@ -55,75 +58,70 @@ export function RelayDepositCategorizedMatchHintsPanel({ companyId }: Props) {
             <>
               <CappedListNotice shown={rows.length} limit={2000} total={total} />
               <div className="mt-2 max-h-64 overflow-auto rounded-sm border border-[#E5E7EB]">
-                <table className="w-full border-collapse text-xs tabular-nums text-[#0F1219]">
-                  <thead>
-                    <tr className="border-b border-[#E5E7EB] bg-[#F7F8FA]">
-                      <th className="px-2 py-1 text-center font-bold uppercase tracking-wide text-[#4B5563]">
-                        Date
-                      </th>
-                      <th className="px-2 py-1 text-center font-bold uppercase tracking-wide text-[#4B5563]">
-                        Bank
-                      </th>
-                      <th className="px-2 py-1 text-center font-bold uppercase tracking-wide text-[#4B5563]">
-                        Wallet
-                      </th>
-                      <th className="px-2 py-1 text-center font-bold uppercase tracking-wide text-[#4B5563]">
-                        Fee
-                      </th>
-                      <th className="px-2 py-1 text-center font-bold uppercase tracking-wide text-[#4B5563]">
-                        Charged
-                      </th>
-                      <th className="px-2 py-1 text-center font-bold uppercase tracking-wide text-[#4B5563]">
-                        Deposit
-                      </th>
-                      <th className="px-2 py-1 text-center font-bold uppercase tracking-wide text-[#4B5563]">
-                        Gap $
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((r: RelayDepositMatchReviewRow) => (
-                      <tr key={r.bank_transaction_id} className="border-b border-[#E5E7EB]">
-                        <td className="px-2 py-1 text-center whitespace-nowrap">
-                          {r.transaction_date ? formatDateUS(r.transaction_date) : "—"}
-                        </td>
-                        <td className="px-2 py-1">
-                          <MoneyCell
-                            cents={r.amount_cents}
-                            drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
-                          />
-                        </td>
-                        <td className="px-2 py-1">
-                          <MoneyCell
-                            cents={r.wallet_cents}
-                            drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
-                          />
-                        </td>
-                        <td className="px-2 py-1">
-                          <MoneyCell
-                            cents={r.fee_cents}
-                            drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
-                          />
-                        </td>
-                        <td className="px-2 py-1">
-                          <MoneyCell
-                            cents={r.charged_cents}
-                            drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
-                          />
-                        </td>
-                        <td className="px-2 py-1 text-center whitespace-nowrap">
-                          {r.relay_deposit_id ?? r.suggested_relay_deposit_id ?? "—"}
-                        </td>
-                        <td className="px-2 py-1">
-                          <MoneyCell
-                            cents={r.amount_gap_cents}
-                            drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
-                          />
-                        </td>
-                      </tr>
+                <div
+                  role="table"
+                  aria-label="Relay deposit match hints"
+                  className="w-full text-xs tabular-nums text-[#0F1219]"
+                >
+                  <div
+                    role="row"
+                    className={`${COLS} border-b border-[#E5E7EB] bg-[#F7F8FA]`}
+                  >
+                    {["Date", "Bank", "Wallet", "Fee", "Charged", "Deposit", "Gap $"].map((label) => (
+                      <div
+                        key={label}
+                        role="columnheader"
+                        className="px-2 py-1 text-center font-bold uppercase tracking-wide text-[#4B5563]"
+                      >
+                        {label}
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                  {rows.map((r: RelayDepositMatchReviewRow) => (
+                    <div
+                      key={r.bank_transaction_id}
+                      role="row"
+                      className={`${COLS} border-b border-[#E5E7EB]`}
+                    >
+                      <div role="cell" className="px-2 py-1 text-center whitespace-nowrap">
+                        {r.transaction_date ? formatDateUS(r.transaction_date) : "—"}
+                      </div>
+                      <div role="cell" className="px-2 py-1">
+                        <MoneyCell
+                          cents={r.amount_cents}
+                          drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
+                        />
+                      </div>
+                      <div role="cell" className="px-2 py-1">
+                        <MoneyCell
+                          cents={r.wallet_cents}
+                          drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
+                        />
+                      </div>
+                      <div role="cell" className="px-2 py-1">
+                        <MoneyCell
+                          cents={r.fee_cents}
+                          drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
+                        />
+                      </div>
+                      <div role="cell" className="px-2 py-1">
+                        <MoneyCell
+                          cents={r.charged_cents}
+                          drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
+                        />
+                      </div>
+                      <div role="cell" className="px-2 py-1 text-center whitespace-nowrap">
+                        {r.relay_deposit_id ?? r.suggested_relay_deposit_id ?? "—"}
+                      </div>
+                      <div role="cell" className="px-2 py-1">
+                        <MoneyCell
+                          cents={r.amount_gap_cents}
+                          drill={{ entity: { kind: "bank_transaction", id: r.bank_transaction_id } }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </>
           )}

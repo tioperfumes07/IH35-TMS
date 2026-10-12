@@ -2402,5 +2402,15 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-12",
     "purpose": "RULING 443.81 #1: restore banking.refuse_live_match_row_on_released_line to refuse a pointer-less auto_matched row (owner: never automatch; suggestions are read-only, nothing persists them)"
+  },
+  "202615451400": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-12",
+    "purpose": "ROUND 443.54: relay deposit match bucket CHECK + charged_cents"
+  },
+  "202615561540": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-11",
+    "purpose": "ROUND 443.54-7: widen related_party_loan_entries target_type CHECK for party_transfer_out (USMCA bank outflow to related party)"
   }
 }
