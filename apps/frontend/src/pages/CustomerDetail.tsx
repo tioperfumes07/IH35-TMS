@@ -18,7 +18,7 @@ import { z } from "zod";
 import { listInvoices, type Invoice } from "../api/accounting";
 import { listAllLoads, type DispatchLoadRow } from "../api/loads";
 import { getCustomerProfitability, type CustomerProfitabilityRow } from "../api/reports";
-import { listAllCustomerPayments, unapplyCustomerPaymentApplication, type CustomerPaymentListRow } from "../api/customers";
+import { listAllCustomerPayments, type CustomerPaymentListRow } from "../api/customers";
 import { listUsStates } from "../api/catalogs";
 import { ApiError, apiRequest } from "../api/client";
 import { listAllFmcsaLookups } from "../api/fmcsa";
@@ -969,20 +969,6 @@ export function CustomerDetailPage() {
       pushToast("Lane deactivated", "info");
     },
     onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to deactivate lane", "error"),
-  });
-
-  const unapplyCustomerPaymentMutation = useMutation({
-    mutationFn: async (payment: CustomerPaymentListRow) => {
-      const applications = payment.applied_to_invoices ?? [];
-      for (const application of applications) {
-        await unapplyCustomerPaymentApplication(payment.id, application.application_id, operatingCompanyId!);
-      }
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["customer-payments", id] });
-      pushToast("Payment unapplied", "success");
-    },
-    onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to unapply payment", "error"),
   });
 
   const paymentsBackendPending =
@@ -2305,6 +2291,20 @@ export function CustomerDetailPage() {
                     },
                   },
                   { key: "qbo_payment_id", label: "Reference", sortable: true, render: (p) => p.qbo_payment_id ?? "—" },
+                  // 443.104 — the customer profile is A/R READ ONLY (owner ORDERS 2026-10-01 §3, CUST-F20 #23767): unapply
+                  // happens on the payment itself in Accounting (confirmed, mounted DELETE .../applications/:id).
+                  {
+                    key: "unapply",
+                    label: "Unapply",
+                    render: (p) =>
+                      (p.applied_to_invoices ?? []).length > 0 ? (
+                        <a href={`/accounting/payments/${p.id}`} className="text-[#1F2A44] hover:underline" data-testid={`customer-payment-unapply-in-accounting-${p.id}`}>
+                          Unapply in Accounting
+                        </a>
+                      ) : (
+                        "—"
+                      ),
+                  },
                 ]}
               />
             )}
