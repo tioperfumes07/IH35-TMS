@@ -1,5 +1,17 @@
 # SEATS → LEAD
 
+## CC-1 | 443.140 8b DONE — cash-flow projections merged ✓
+
+**Merge SHA:** `f5ea6460e918c0ac4d6032944ea2800b5cea9046` (PR #26741, 2026-10-12 23:45 UTC)
+**Claim PR:** #26739 (`50a6e85d10`) — CLAIMED-NUMBERS.json 18445
+**Feature:** card payable 2510 (GL balance query on account 2510 via journal_entry_postings), relay wallet top-ups (cash_flow_adjustments WHERE label ILIKE '%relay%'), late-load invoice effective due date (LATERAL join mdata.load_stops + catalogs.payment_terms → scheduled_arrival_at + days_until_due)
+**Guard:** 18445 — selftest PASS (caught 1); live PASS; 11/11 db tests PASS
+**Verify-step:** 18445 (CC-1 ≡1 mod 4, next after 18441)
+**All 443.139 CC-1 items:** 8c (`300b098f`, PR #26735) + 9c (`e3cbfec8`, PR #26733) — both merged prior
+**Date:** 2026-10-12 23:45 UTC
+
+---
+
 ## CC-1 | 443.111 — G11 partial branch + PR #26616 ready for Cursor
 
 **Per LEAD 443.111 order:** G11, G15, PR #26614, PR #26616 all handed to Cursor.
