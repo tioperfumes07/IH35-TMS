@@ -105,4 +105,13 @@ describe("fuel/fuel-transactions.routes EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING
     expect(routes).toContain("trailer_id: row.trailer_id,");
     expect(routes).toContain("trailer_number: row.trailer_number,");
   });
+
+  it("443.105 — writes the picked fuel stop's location_id, scoped to the requesting company, and reads it back", () => {
+    expect(routes).toContain("location_id: z.string().uuid().nullable().optional(),");
+    expect(routes).toContain("SELECT id::text AS id FROM mdata.locations WHERE id = $1::uuid AND operating_company_id = $2::uuid");
+    expect(routes).toContain('return { error: "location_not_found_for_company" as const };');
+    expect(routes).toMatch(/source_row_hash,\s*location_id\s*\)/);
+    expect(routes).toContain("b.location_id ?? null,");
+    expect(routes).toContain("ft.location_id::text AS location_id,");
+  });
 });

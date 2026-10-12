@@ -185,6 +185,8 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
         total_cost: totalCost,
         location_city: locationCity.trim() || undefined,
         location_state: locationState.trim() || undefined,
+        // 443.105 — the picked stop is linked, not only its text.
+        location_id: locationId || null,
         notes: notes.trim() || undefined,
         load_id: loadId || null,
         load_exemption_reason: loadId ? undefined : loadExemptionReason.trim(),

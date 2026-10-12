@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+// LEAD 443.105 (2026-10-12) — required miles styling.
+//   old rule: the required branch used border-slate-400 text-slate-900.
+//   new rule: the required branch uses the house dark border + weight (border-[#4B5563] font-semibold text-[#0F1219]) and stays
+//             distinct from the default border-[#E5E7EB]; any slate class fails.
+//   why: verify-dispatch-miles-kanban-slate-leftover-chrome (house palette law) forbids slate on this strip, so the two guards
+//        could never both pass after d390390eab.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -26,7 +32,7 @@ export function run(modal = read(MODAL_REL)) {
     errors
   );
   assert(
-    strip.includes("required={practicalRequired}") && strip.includes("border-slate-400") && strip.includes("text-slate-900"),
+    strip.includes("required={practicalRequired}") && strip.includes('practicalRequired ? "border-[#4B5563] font-semibold text-[#0F1219]" : "border-[#E5E7EB] text-[#0F1219]"') && !/border-slate|text-slate/.test(strip),
     "MilesStrip practical input must use required styling when required",
     errors
   );
@@ -47,7 +53,7 @@ export function run(modal = read(MODAL_REL)) {
     errors
   );
   assert(
-    strip.includes("required={shortestRequired}") && strip.includes("border-slate-400") && strip.includes("text-slate-900"),
+    strip.includes("required={shortestRequired}") && strip.includes('shortestRequired ? "border-[#4B5563] font-semibold text-[#0F1219]" : "border-[#E5E7EB] text-[#0F1219]"') && !/border-slate|text-slate/.test(strip),
     "MilesStrip shortest input must use required styling when required",
     errors
   );

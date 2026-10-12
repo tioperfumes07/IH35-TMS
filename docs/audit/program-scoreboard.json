@@ -1,10 +1,10 @@
 {
-  "healthzSha": "3d79448",
-  "generated_at": "2026-10-12T13:44:16.056Z",
+  "healthzSha": "38a924f",
+  "generated_at": "2026-10-12T13:50:52.450Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "3d79448",
+    "deployedSha": "38a924f",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 26604,
+      "title": "FINDING: ACCT-F443109 LANE: NON-FINANCIAL -- 443.105 #4: main ci red on two steps — slate back on SubscriptionManager (two guards contradicted) and a stale program scoreboard",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 08:48 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26604",
+      "sha": "7b196b71b4",
+      "committedAtIso": "2026-10-12T08:48:49-05:00"
+    },
+    {
+      "number": 26603,
+      "title": "FINDING: ACCT-F4431051 LANE: FINANCIAL -- 443.105 R13: acceptance books its load with its trailer; load linkage reads the physical trailer (not the trailer type)",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 08:47 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26603",
+      "sha": "38a924f1f0",
+      "committedAtIso": "2026-10-12T08:47:12-05:00"
+    },
+    {
       "number": 26602,
       "title": "FINDING: N/A (CLAIM-RESERVE migration 202615780700 — reservation-only commit, no code fix)",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26595",
       "sha": "c34ebbd26b",
       "committedAtIso": "2026-10-12T13:05:19Z"
-    },
-    {
-      "number": 26593,
-      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615770700 — reservation-only commit, no code fix)",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 07:57 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26593",
-      "sha": "75562e2169",
-      "committedAtIso": "2026-10-12T07:57:16-05:00"
-    },
-    {
-      "number": 26592,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- claim migration 202615770910 for CC-3 (443.105 item 1, driver-bill non-owned trailer)",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 07:56 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26592",
-      "sha": "29b737ab2e",
-      "committedAtIso": "2026-10-12T07:56:23-05:00"
     }
   ]
 }
