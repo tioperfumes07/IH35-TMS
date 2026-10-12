@@ -30,6 +30,7 @@ import { resolveRoleAccountOptional, type CoaRole } from "../accounting/coa-role
 import { resolveDriverReimbursementParentAccount } from "../accounting/driver-subaccount-provision.service.js";
 import { resolveCompanyDirectCreditAccount, postFuelExpenseOnClient, type FuelCategoryCode } from "../accounting/fuel-posting/poster.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
+import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { creatorEmptyPayCents, creatorEmptyRateCents, creatorLoadedPayCents, creatorPayMiles } from "./settlement-creator-empty-pay.js";
 import { resolveDriverPayItems } from "./settlement-creator-pay-item.js";
 import { milesTimesRateCents } from "./deadhead-rule.js";
@@ -1584,7 +1585,11 @@ export async function postSettlementCreatorInClientTx(
     }
     const preference = card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet";
     const { account_id: paymentAccountId } = await resolveCompanyDirectCreditAccount(client as never, draft.operating_company_id, preference);
-    const expenseNumber = await nextExpenseDisplayId(client as never, draft.operating_company_id, new Date(`${exp.date}T12:00:00.000Z`));
+    // 443.84 #2: a load-attributed expense is numbered on its load's spine (load, load-1, load-2 ...), the one load-scoped
+    // series every other expense writer uses (expense-number.ts); EXP-YYYY-##### is only for an expense with no load.
+    const expenseNumber = loadId
+      ? (await generateExpenseNumber(client as never, loadId, draft.operating_company_id)).number
+      : await nextExpenseDisplayId(client as never, draft.operating_company_id, new Date(`${exp.date}T12:00:00.000Z`));
     const memo = `[SC ${draft.settlement_no}] ${exp.description ?? exp.item_name}`.slice(0, 500);
     const inserted = await client.query<{ id: string }>(
       `
