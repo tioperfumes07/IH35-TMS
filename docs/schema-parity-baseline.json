@@ -1931,6 +1931,14 @@
       "template_payload",
       "updated_at"
     ],
+    "accounting.related_party_accounts": [
+      "account_id",
+      "created_at",
+      "created_by_user_id",
+      "id",
+      "operating_company_id",
+      "party_vendor_id"
+    ],
     "accounting.related_party_loan_entries": [
       "account_id",
       "bank_transaction_id",
