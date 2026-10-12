@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
-import { geocodeStopsBackfill } from "./stops-geocode-backfill.service.js";
+import { geocodeStopsBackfill, queueStopFencesToSamsara } from "./stops-geocode-backfill.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { verifyLoadStopsAgainstGps, type StopGpsVerdict } from "./stop-gps-verification.service.js";
@@ -55,6 +55,27 @@ export async function registerStopsGeocodeBackfillRoutes(app: FastifyInstance) {
           `${v.load_number} #${v.sequence_number} -> ${v.facility?.street}, ${v.facility?.city} ${v.facility?.state} (${v.facility?.source}${v.facility?.name ? `: ${v.facility.name}` : ""}; ${v.dwell?.minutes} min, ${v.distance_m} m from zip center)${v.applied ? "" : " [not applied]"}`),
         listed: verdicts.filter((v) => v.verdict === "zip_center_unresolved").map((v) => `${v.load_number} #${v.sequence_number}: ${v.reason}`),
       };
+    });
+    return reply.send(out);
+  });
+
+  // 443.91 — push a load's street-resolved stop fences to Samsara (the same one-per-fence queue the fence writer uses), for a
+  // stop whose fence was drawn but never queued. Owner / Administrator. Nothing is re-resolved.
+  app.post("/api/v1/telematics/stops/push-fences", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return reply;
+    const user = req.user;
+    if (!user) return;
+    if (user.role !== "Owner" && user.role !== "Administrator") return reply.code(403).send({ error: "admin_required" });
+    const parsed = z.object({ operating_company_id: z.string().uuid(), load_id: z.string().uuid() }).safeParse(req.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const out = await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(client as never, user.uuid, parsed.data.operating_company_id);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [parsed.data.operating_company_id]);
+      const stops = (await client.query<{ id: string }>(
+        `SELECT s.id::text FROM mdata.load_stops s JOIN mdata.loads l ON l.id = s.load_id
+          WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid AND s.soft_deleted_at IS NULL`,
+        [parsed.data.load_id, parsed.data.operating_company_id])).rows.map((r) => r.id);
+      return { stops: stops.length, queued: await queueStopFencesToSamsara(client as never, user.uuid, parsed.data.operating_company_id, stops) };
     });
     return reply.send(out);
   });
