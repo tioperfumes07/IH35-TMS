@@ -42,8 +42,8 @@ export type TripProfitabilityRow = {
   period_start: string;
   period_end: string;
   status: string;
-  nb_load_id: string | null;
-  nb_load_number: string | null;
+  first_load_id: string | null;
+  first_load_number: string | null;
   load_links: Array<{ id: string; label: string | null }>;
   revenue_cents: number;
   quick_pay_cents: number;
@@ -437,8 +437,8 @@ export async function computeTripProfitabilityReport(
       sip.period_start::text,
       sip.period_end::text,
       sip.status,
-      nb.load_id::text AS nb_load_id,
-      nb.load_number AS nb_load_number,
+      nb.load_id::text AS first_load_id,
+      nb.load_number AS first_load_number,
       COALESCE(lr.load_links, '[]'::jsonb) AS load_links,
       COALESCE(lr.revenue_cents, 0)::bigint AS revenue_cents,
       COALESCE(qp.quick_pay_cents, 0)::bigint AS quick_pay_cents,
@@ -507,8 +507,8 @@ export async function computeTripProfitabilityReport(
       period_start: String(r.period_start),
       period_end: String(r.period_end),
       status: String(r.status),
-      nb_load_id: r.nb_load_id ? String(r.nb_load_id) : null,
-      nb_load_number: r.nb_load_number ? String(r.nb_load_number) : null,
+      first_load_id: r.first_load_id ? String(r.first_load_id) : null,
+      first_load_number: r.first_load_number ? String(r.first_load_number) : null,
       load_links: rawLoadLinks.map((link) => {
         const value = link as Record<string, unknown>;
         return { id: String(value.id), label: value.label == null ? null : String(value.label) };

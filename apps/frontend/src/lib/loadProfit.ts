@@ -39,8 +39,8 @@ export type TripProfitabilityRow = {
   period_start: string;
   period_end: string;
   status: string;
-  nb_load_id: string | null;
-  nb_load_number: string | null;
+  first_load_id: string | null;
+  first_load_number: string | null;
   load_links: Array<{ id: string; label: string | null }>;
   revenue_cents: number;
   quick_pay_cents: number;
