@@ -21,6 +21,9 @@ const FILES = {
   qbo: "apps/frontend/src/design/qbo-parity.ts",
   routes: "apps/backend/src/accounting/related-party-loan-posting/routes.ts",
   facility: "apps/backend/src/accounting/related-party-loan-posting/facility.service.ts",
+  // 3a7635261d (#26257, ACCT-F44322-2e-EXPORT) moved the create writer — overpay gate included — out of routes.ts
+  // into create-entry.service.ts so the Relay deposit poster can call it; the route forwards its 400.
+  writer: "apps/backend/src/accounting/related-party-loan-posting/create-entry.service.ts",
 };
 
 function read(rel) {
@@ -35,7 +38,7 @@ function fail(errors) {
 
 export function staticProblems(srcs) {
   const errors = [];
-  const { designView, wizard, qbo, routes, facility } = srcs;
+  const { designView, wizard, qbo, routes, facility, writer } = srcs;
 
   // F1 — QBO label for Apply repayment
   if (!qbo.includes('applyRepayment: "Apply repayment"')) {
@@ -74,13 +77,16 @@ export function staticProblems(srcs) {
   if (!facility.includes("export async function getFacilityOpenBalanceCents")) {
     errors.push("F4: facility.service must export getFacilityOpenBalanceCents");
   }
-  if (!routes.includes("getFacilityOpenBalanceCents") || !routes.includes("repayment_exceeds_facility_open_balance")) {
+  if (!/createRelatedPartyLoanEntry\(client, b, authUser\.uuid\)/.test(routes)) {
+    errors.push("F4: create route must write through createRelatedPartyLoanEntry (the writer that refuses overpay)");
+  }
+  if (!writer.includes("getFacilityOpenBalanceCents(") || !writer.includes("repayment_exceeds_facility_open_balance")) {
     errors.push("F4: create route must call getFacilityOpenBalanceCents and refuse overpay");
   }
-  if (!routes.includes("documentKind === \"repayment\"") && !routes.includes("documentKind === 'repayment'")) {
+  if (!writer.includes("documentKind === \"repayment\"") && !writer.includes("documentKind === 'repayment'")) {
     errors.push("F4: overpay gate must run for document_kind repayment (bank_repayment / repayment)");
   }
-  if (!routes.includes("open_balance_cents") || !routes.includes("do not overpay")) {
+  if (!writer.includes("do not overpay") || !/result\.error === "repayment_exceeds_facility_open_balance"[\s\S]{0,200}?open_balance_cents: result\.open_balance_cents/.test(routes)) {
     errors.push("F4: 400 response must carry open_balance_cents + plain-English overpay message");
   }
 
@@ -94,8 +100,9 @@ function selftest() {
 
   const broken = {
     ...good,
-    routes: good.routes.replaceAll("repayment_exceeds_facility_open_balance", "repayment_ok_always"),
+    writer: good.writer.replaceAll("repayment_exceeds_facility_open_balance", "repayment_ok_always"),
   };
+  if (broken.writer === good.writer) fail(["selftest mutation did not apply — the writer no longer names the overpay refusal"]);
   const bad = staticProblems(broken);
   if (!bad.some((e) => e.startsWith("F4:"))) {
     fail(["selftest expected F4 failure when overpay refuse is stripped"]);

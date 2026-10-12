@@ -1879,7 +1879,7 @@ export async function postSettlementCreatorInClientTx(
 
     // ROUND 443.16 — tracked stop times (date only when no stop event matches); loads booked by this post were stamped
     // when the seeder delivered them, so a stop already stamped is left as it is.
-    await stampStopsFromTracking(client, loadId, { pickupDate: load.pickup_date, deliveryDate: load.delivery_date });
+    await stampStopsFromTracking(client, loadId, draft.operating_company_id, { pickupDate: load.pickup_date, deliveryDate: load.delivery_date });
 
     // ROUND 443.4 — driver pay = pay rate x short miles (loaded line) + empty rate x empty miles (empty line).
     // The customer's invoice amount and accessorials are never read here: they feed the invoice only.
@@ -1922,7 +1922,10 @@ export async function postSettlementCreatorInClientTx(
     // invoice on a load that is still 'dispatched' (invoice_on_rolling_load_needs_authorization, since 09-30), so
     // without this no Creator invoice could be issued.
     // Option 1 — an adopted load (Edit of its own Creator settlement) is already delivered and invoiced: no transition.
-    const loadStatus = (await client.query<{ status: string }>(`SELECT status::text FROM mdata.loads WHERE id = $1::uuid`, [loadId])).rows[0]?.status ?? "";
+    const loadStatus = (await client.query<{ status: string }>(
+      `SELECT status::text FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [loadId, draft.operating_company_id],
+    )).rows[0]?.status ?? "";
     if (!(draft.edit_void_repost && ["delivered", "delivered_pending_docs", "invoiced", "paid", "completed", "closed"].includes(loadStatus))) {
       await deliverLoadThroughDispatch(client, actorUserId, draft.operating_company_id, loadId, load.delivery_date);
     }

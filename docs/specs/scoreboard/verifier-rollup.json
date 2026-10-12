@@ -1,23 +1,23 @@
 {
-  "asOf": "2026-08-29T00:00:00Z",
-  "healthzSha": "14daeed",
+  "asOf": "2026-10-12T10:30:01.145Z",
+  "healthzSha": "68acad9",
   "modules": {
     "accounting": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 2,
-        "unstamped": 9
+        "state": "stamped",
+        "stamped": 38,
+        "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 2
+        "yes": 38
       },
       "proven": {
         "state": "false",
-        "true": 9,
-        "false": 30
+        "true": 38,
+        "false": 2
       },
       "evidence_class": {
         "state": "browser",
@@ -33,25 +33,25 @@
         "none": 0
       },
       "proof_age": {
-        "days": 102
+        "days": 146
       }
     },
     "banking": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 2,
-        "unstamped": 15
+        "state": "stamped",
+        "stamped": 19,
+        "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 2
+        "yes": 19
       },
       "proven": {
         "state": "false",
-        "true": 17,
-        "false": 2
+        "true": 19,
+        "false": 1
       },
       "evidence_class": {
         "state": "prose",
@@ -67,25 +67,25 @@
         "none": 0
       },
       "proof_age": {
-        "days": 44
+        "days": 88
       }
     },
     "cash-flow": {
       "l6": {
         "state": "stamped",
-        "stamped": 1,
+        "stamped": 3,
         "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 1
+        "yes": 3
       },
       "proven": {
         "state": "false",
-        "true": 1,
-        "false": 2
+        "true": 3,
+        "false": 1
       },
       "evidence_class": {
         "state": "none",
@@ -101,25 +101,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 13
+        "days": 57
       }
     },
     "compliance": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 0,
-        "unstamped": 1
+        "state": "stamped",
+        "stamped": 9,
+        "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 9
       },
       "proven": {
-        "state": "false",
-        "true": 1,
-        "false": 8
+        "state": "true",
+        "true": 9,
+        "false": 0
       },
       "evidence_class": {
         "state": "neon",
@@ -135,25 +135,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 31
+        "days": 63
       }
     },
     "customers": {
       "l6": {
-        "state": "none",
-        "stamped": 0,
+        "state": "stamped",
+        "stamped": 10,
         "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 10
       },
       "proven": {
-        "state": "false",
-        "true": 0,
-        "false": 10
+        "state": "true",
+        "true": 10,
+        "false": 0
       },
       "evidence_class": {
         "state": "none",
@@ -169,25 +169,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 21
+        "days": 44
       }
     },
     "dispatch": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 0,
-        "unstamped": 6
+        "state": "stamped",
+        "stamped": 37,
+        "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 37
       },
       "proven": {
         "state": "false",
-        "true": 6,
-        "false": 31
+        "true": 37,
+        "false": 1
       },
       "evidence_class": {
         "state": "http",
@@ -203,25 +203,25 @@
         "none": 0
       },
       "proof_age": {
-        "days": 29
+        "days": 130
       }
     },
     "docs": {
       "l6": {
-        "state": "none",
-        "stamped": 0,
+        "state": "stamped",
+        "stamped": 7,
         "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 7
       },
       "proven": {
-        "state": "false",
-        "true": 0,
-        "false": 7
+        "state": "true",
+        "true": 7,
+        "false": 0
       },
       "evidence_class": {
         "state": "none",
@@ -237,25 +237,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 22
+        "days": 66
       }
     },
     "driver-hub": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 1,
-        "unstamped": 2
+        "state": "stamped",
+        "stamped": 7,
+        "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 1
+        "yes": 7
       },
       "proven": {
-        "state": "false",
-        "true": 3,
-        "false": 4
+        "state": "true",
+        "true": 7,
+        "false": 0
       },
       "evidence_class": {
         "state": "browser",
@@ -271,25 +271,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 19
+        "days": 63
       }
     },
     "drivers": {
       "l6": {
         "state": "stamped",
-        "stamped": 7,
+        "stamped": 20,
         "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 7
+        "yes": 20
       },
       "proven": {
-        "state": "false",
-        "true": 7,
-        "false": 13
+        "state": "true",
+        "true": 20,
+        "false": 0
       },
       "evidence_class": {
         "state": "none",
@@ -305,25 +305,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 31
+        "days": 75
       }
     },
     "eld": {
       "l6": {
         "state": "stamped",
-        "stamped": 1,
+        "stamped": 5,
         "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 1
+        "yes": 5
       },
       "proven": {
-        "state": "false",
-        "true": 1,
-        "false": 4
+        "state": "true",
+        "true": 5,
+        "false": 0
       },
       "evidence_class": {
         "state": "none",
@@ -339,25 +339,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 31
+        "days": 75
       }
     },
     "factoring": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 1,
-        "unstamped": 6
+        "state": "stamped",
+        "stamped": 10,
+        "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 1
+        "yes": 10
       },
       "proven": {
         "state": "false",
-        "true": 7,
-        "false": 3
+        "true": 10,
+        "false": 1
       },
       "evidence_class": {
         "state": "browser",
@@ -373,25 +373,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 19
+        "days": 63
       }
     },
     "finance": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 1,
-        "unstamped": 1
+        "state": "stamped",
+        "stamped": 9,
+        "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 1
+        "yes": 9
       },
       "proven": {
-        "state": "false",
-        "true": 2,
-        "false": 7
+        "state": "true",
+        "true": 9,
+        "false": 0
       },
       "evidence_class": {
         "state": "browser",
@@ -407,25 +407,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 22
+        "days": 66
       }
     },
     "fleet": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 0,
-        "unstamped": 4
+        "state": "stamped",
+        "stamped": 7,
+        "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 7
       },
       "proven": {
-        "state": "false",
-        "true": 4,
-        "false": 3
+        "state": "true",
+        "true": 7,
+        "false": 0
       },
       "evidence_class": {
         "state": "http",
@@ -441,25 +441,25 @@
         "none": 0
       },
       "proof_age": {
-        "days": 20
+        "days": 64
       }
     },
     "form_425": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 0,
-        "unstamped": 2
+        "state": "stamped",
+        "stamped": 5,
+        "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 5
       },
       "proven": {
-        "state": "false",
-        "true": 2,
-        "false": 3
+        "state": "true",
+        "true": 5,
+        "false": 0
       },
       "evidence_class": {
         "state": "browser",
@@ -475,25 +475,25 @@
         "none": 0
       },
       "proof_age": {
-        "days": 0
+        "days": 72
       }
     },
     "fuel": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 0,
-        "unstamped": 3
+        "state": "stamped",
+        "stamped": 9,
+        "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 9
       },
       "proven": {
-        "state": "false",
-        "true": 3,
-        "false": 6
+        "state": "true",
+        "true": 9,
+        "false": 0
       },
       "evidence_class": {
         "state": "http",
@@ -509,25 +509,25 @@
         "none": 0
       },
       "proof_age": {
-        "days": 20
+        "days": 64
       }
     },
     "help": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 0,
-        "unstamped": 1
+        "state": "stamped",
+        "stamped": 5,
+        "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 5
       },
       "proven": {
-        "state": "false",
-        "true": 1,
-        "false": 4
+        "state": "true",
+        "true": 5,
+        "false": 0
       },
       "evidence_class": {
         "state": "browser",
@@ -543,25 +543,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 26
+        "days": 70
       }
     },
     "home": {
       "l6": {
-        "state": "none",
-        "stamped": 0,
+        "state": "stamped",
+        "stamped": 1,
         "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 1
       },
       "proven": {
-        "state": "false",
-        "true": 0,
-        "false": 1
+        "state": "true",
+        "true": 1,
+        "false": 0
       },
       "evidence_class": {
         "state": "none",
@@ -577,25 +577,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 31
+        "days": 44
       }
     },
     "insurance": {
       "l6": {
         "state": "stamped",
-        "stamped": 1,
+        "stamped": 6,
         "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 1
+        "yes": 6
       },
       "proven": {
-        "state": "false",
-        "true": 1,
-        "false": 5
+        "state": "true",
+        "true": 6,
+        "false": 0
       },
       "evidence_class": {
         "state": "none",
@@ -611,25 +611,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 13
+        "days": 57
       }
     },
     "inventory": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 0,
-        "unstamped": 3
+        "state": "stamped",
+        "stamped": 7,
+        "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 7
       },
       "proven": {
-        "state": "false",
-        "true": 3,
-        "false": 4
+        "state": "true",
+        "true": 7,
+        "false": 0
       },
       "evidence_class": {
         "state": "http",
@@ -645,25 +645,25 @@
         "none": 0
       },
       "proof_age": {
-        "days": 13
+        "days": 57
       }
     },
     "legal": {
       "l6": {
         "state": "stamped",
-        "stamped": 1,
+        "stamped": 12,
         "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 1
+        "yes": 12
       },
       "proven": {
-        "state": "false",
-        "true": 1,
-        "false": 11
+        "state": "true",
+        "true": 12,
+        "false": 0
       },
       "evidence_class": {
         "state": "none",
@@ -679,25 +679,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 20
+        "days": 64
       }
     },
     "lists": {
       "l6": {
         "state": "stamped",
-        "stamped": 10,
+        "stamped": 23,
         "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 10
+        "yes": 23
       },
       "proven": {
-        "state": "false",
-        "true": 1,
-        "false": 22
+        "state": "true",
+        "true": 23,
+        "false": 0
       },
       "evidence_class": {
         "state": "none",
@@ -713,25 +713,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 36
+        "days": 80
       }
     },
     "maintenance": {
       "l6": {
         "state": "stamped",
-        "stamped": 1,
+        "stamped": 39,
         "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 1
+        "yes": 39
       },
       "proven": {
-        "state": "false",
-        "true": 1,
-        "false": 38
+        "state": "true",
+        "true": 39,
+        "false": 0
       },
       "evidence_class": {
         "state": "none",
@@ -747,25 +747,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 29
+        "days": 73
       }
     },
     "program": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 0,
-        "unstamped": 4
+        "state": "stamped",
+        "stamped": 7,
+        "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 7
       },
       "proven": {
-        "state": "false",
-        "true": 4,
-        "false": 3
+        "state": "true",
+        "true": 7,
+        "false": 0
       },
       "evidence_class": {
         "state": "http",
@@ -781,25 +781,25 @@
         "none": 0
       },
       "proof_age": {
-        "days": 21
+        "days": 65
       }
     },
     "reports": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 0,
-        "unstamped": 3
+        "state": "stamped",
+        "stamped": 8,
+        "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 8
       },
       "proven": {
-        "state": "false",
-        "true": 3,
-        "false": 5
+        "state": "true",
+        "true": 8,
+        "false": 0
       },
       "evidence_class": {
         "state": "browser",
@@ -815,25 +815,25 @@
         "none": 0
       },
       "proof_age": {
-        "days": 26
+        "days": 70
       }
     },
     "safety": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 2,
-        "unstamped": 1
+        "state": "stamped",
+        "stamped": 34,
+        "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 2
+        "yes": 34
       },
       "proven": {
         "state": "false",
-        "true": 2,
-        "false": 36
+        "true": 34,
+        "false": 4
       },
       "evidence_class": {
         "state": "neon",
@@ -849,25 +849,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 49
+        "days": 93
       }
     },
     "settlements": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 1,
-        "unstamped": 1
+        "state": "stamped",
+        "stamped": 8,
+        "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 1
+        "yes": 8
       },
       "proven": {
         "state": "false",
-        "true": 2,
-        "false": 7
+        "true": 8,
+        "false": 2
       },
       "evidence_class": {
         "state": "neon",
@@ -883,25 +883,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 20
+        "days": 64
       }
     },
     "system": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 2,
-        "unstamped": 6
+        "state": "stamped",
+        "stamped": 9,
+        "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 2
+        "yes": 9
       },
       "proven": {
-        "state": "false",
-        "true": 8,
-        "false": 1
+        "state": "true",
+        "true": 9,
+        "false": 0
       },
       "evidence_class": {
         "state": "browser",
@@ -917,20 +917,20 @@
         "none": 0
       },
       "proof_age": {
-        "days": 20
+        "days": 64
       }
     },
     "tasks": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 0,
-        "unstamped": 5
+        "state": "stamped",
+        "stamped": 5,
+        "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 5
       },
       "proven": {
         "state": "true",
@@ -951,25 +951,25 @@
         "none": 0
       },
       "proof_age": {
-        "days": 20
+        "days": 64
       }
     },
     "users": {
       "l6": {
-        "state": "unstamped",
-        "stamped": 0,
-        "unstamped": 5
+        "state": "stamped",
+        "stamped": 6,
+        "unstamped": 0
       },
       "bound": {
-        "state": "unknown",
+        "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 0
+        "yes": 6
       },
       "proven": {
-        "state": "false",
-        "true": 5,
-        "false": 1
+        "state": "true",
+        "true": 6,
+        "false": 0
       },
       "evidence_class": {
         "state": "browser",
@@ -985,25 +985,25 @@
         "none": 1
       },
       "proof_age": {
-        "days": 19
+        "days": 83
       }
     },
     "vendors": {
       "l6": {
         "state": "stamped",
-        "stamped": 2,
+        "stamped": 7,
         "unstamped": 0
       },
       "bound": {
         "state": "yes",
         "no": 0,
         "unknown": 0,
-        "yes": 2
+        "yes": 7
       },
       "proven": {
         "state": "false",
-        "true": 0,
-        "false": 7
+        "true": 7,
+        "false": 2
       },
       "evidence_class": {
         "state": "none",
@@ -1019,7 +1019,7 @@
         "none": 1
       },
       "proof_age": {
-        "days": 26
+        "days": 70
       }
     }
   }

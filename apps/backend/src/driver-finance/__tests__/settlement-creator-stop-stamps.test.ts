@@ -21,31 +21,31 @@ const delivery = { id: "s2", sequence_number: 2, stop_type: "delivery", latitude
 describe("ROUND 443.16 — stop stamps come from the tracking data", () => {
   it("a stop event at the stop on its date -> real started_at / ended_at, eld_geofence, linked by stop event id", async () => {
     const { client, updates } = fake([pickup], [{ id: "ev1", started_at: "2026-08-06T15:12:00Z", ended_at: "2026-08-06T17:40:00Z", metres: "120" }]);
-    const r = await stampStopsFromTracking(client as never, "l", { pickupDate: "2026-08-06", deliveryDate: "2026-08-07" });
+    const r = await stampStopsFromTracking(client as never, "l", "co", { pickupDate: "2026-08-06", deliveryDate: "2026-08-07" });
     expect(r[0]).toMatchObject({ precision: "tracked", stop_event_id: "ev1", arrival_at: "2026-08-06T15:12:00Z", departure_at: "2026-08-06T17:40:00Z" });
     expect(updates[0]!.sql).toMatch(/actual_stamp_precision = 'tracked'/);
     expect(updates[0]!.params).toEqual(["s1", "2026-08-06T15:12:00Z", "2026-08-06T17:40:00Z", "ev1"]);
   });
   it("several candidates -> the nearest, and the result says so", async () => {
     const { client } = fake([pickup], [{ id: "near", started_at: "a", ended_at: "b", metres: "40" }, { id: "far", started_at: "c", ended_at: "d", metres: "600" }]);
-    const r = await stampStopsFromTracking(client as never, "l", { pickupDate: "2026-08-06" });
+    const r = await stampStopsFromTracking(client as never, "l", "co", { pickupDate: "2026-08-06" });
     expect(r[0]).toMatchObject({ stop_event_id: "near", note: expect.stringContaining("nearest of 2") });
   });
   it("no stop event -> the document date, date_only, manual — never an invented clock time, with the reason", async () => {
     const { client, updates } = fake([delivery], []);
-    const r = await stampStopsFromTracking(client as never, "l", { deliveryDate: "2026-08-07" });
+    const r = await stampStopsFromTracking(client as never, "l", "co", { deliveryDate: "2026-08-07" });
     expect(r[0]).toMatchObject({ precision: "date_only", stop_event_id: null, note: expect.stringContaining(`within ${STOP_MATCH_RADIUS_M} m on 2026-08-07`) });
     expect(updates[0]!.sql).toMatch(/actual_stamp_precision = 'date_only'/);
     expect(updates[0]!.sql).not.toMatch(/T18:00/);
   });
   it("a load with no truck is date only, saying why", async () => {
     const { client } = fake([pickup], [], { unit: null });
-    const r = await stampStopsFromTracking(client as never, "l", { pickupDate: "2026-08-06" });
+    const r = await stampStopsFromTracking(client as never, "l", "co", { pickupDate: "2026-08-06" });
     expect(r[0]).toMatchObject({ precision: "date_only", note: expect.stringContaining("no truck") });
   });
   it("a stop already stamped is never overwritten", async () => {
     const { client, updates } = fake([{ ...pickup, stamped: true }], []);
-    const r = await stampStopsFromTracking(client as never, "l", { pickupDate: "2026-08-06" });
+    const r = await stampStopsFromTracking(client as never, "l", "co", { pickupDate: "2026-08-06" });
     expect(r[0]!.precision).toBe("already_stamped");
     // #26343 settles stamped stops' status afterwards (settleStampedStopStatuses); that UPDATE writes status only.
     // The rule here is the stamp itself: no UPDATE writes an actual arrival/departure time.

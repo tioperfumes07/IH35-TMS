@@ -27,7 +27,9 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const DISPATCH = "apps/backend/src/dispatch/loads.routes.ts";
+// 25f2a8faa4 (#23821, R313-E31): PATCH /api/v1/dispatch/loads/:id/transition now delegates to
+// transitionDispatchLoadInClientTx in load-transition.service.ts — that is where the office delivery branch lives.
+const DISPATCH = "apps/backend/src/dispatch/load-transition.service.ts";
 const HELPER = "apps/backend/src/dispatch/stamp-final-delivery-departure.ts";
 const LABEL = "verify-office-delivery-stamps-stop-evidence";
 
@@ -116,7 +118,7 @@ function auditStampSql(sqlSrc, label) {
 }
 
 /**
- * @param {string} routeSrc loads.routes.ts
+ * @param {string} routeSrc load-transition.service.ts (the office transition)
  * @param {string} helperSrc stamp-final-delivery-departure.ts
  */
 export function auditOfficeDelivery(routeSrc, helperSrc) {
@@ -183,7 +185,7 @@ function selftest() {
       run: () => {
         const mutated = mutate(
           route,
-          /if \(loadStatusRequiresDeliveryDepartureStamp\(targetStatus\)\) \{[\s\S]*?\n      \}\n/,
+          /if \(loadStatusRequiresDeliveryDepartureStamp\(targetStatus\)\) \{[\s\S]*?\n  \}\n/,
           "",
           "remove coupling",
         );

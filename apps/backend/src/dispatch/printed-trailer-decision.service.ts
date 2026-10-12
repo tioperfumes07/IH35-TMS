@@ -50,7 +50,7 @@ export async function decidePrintedTrailers(
     if (eq.length === 1) {
       await client.query(`UPDATE accounting.expenses SET trailer_id = $2::uuid, updated_at = now() WHERE id = ANY($1::uuid[]) AND trailer_id IS NULL`, [o.expense_ids, eq[0]!.id]);
       await client.query(`UPDATE accounting.expense_lines SET trailer_id = $2::uuid WHERE expense_id = ANY($1::uuid[]) AND trailer_id IS NULL`, [o.expense_ids, eq[0]!.id]);
-      await client.query(`UPDATE mdata.loads SET trailer_source = 'company', updated_at = now() WHERE id = ANY($1::uuid[]) AND trailer_source IS NULL`, [loadIds]);
+      await client.query(`UPDATE mdata.loads SET trailer_source = 'company', updated_at = now() WHERE id = ANY($1::uuid[]) AND operating_company_id = $2::uuid AND trailer_source IS NULL`, [loadIds, co]);
       out.push({ trailer_number: o.n, expenses: o.expense_ids.length, loads: loadIds.length, decision: "company_equipment", detail: `equipment ${eq[0]!.equipment_number}` });
       await appendCrudAudit(client as never, input.actorUserId, "dispatch.printed_trailer.decided", { operating_company_id: co, trailer_number: o.n, decision: "company_equipment", equipment_id: eq[0]!.id, expense_ids: o.expense_ids }, "info", "443.90");
       continue;
@@ -63,7 +63,8 @@ export async function decidePrintedTrailers(
     }
     // Not ours anywhere: the customer's / shipper's trailer. One record per number and customer.
     const customers = (await client.query<{ customer_id: string | null; ids: string[] }>(
-      `SELECT l.customer_id::text, array_agg(l.id::text) AS ids FROM mdata.loads l WHERE l.id = ANY($1::uuid[]) GROUP BY 1`, [loadIds])).rows;
+      `SELECT l.customer_id::text, array_agg(l.id::text) AS ids FROM mdata.loads l
+        WHERE l.id = ANY($1::uuid[]) AND l.operating_company_id = $2::uuid GROUP BY 1`, [loadIds, co])).rows;
     for (const c of customers.length ? customers : [{ customer_id: null, ids: [] as string[] }]) {
       const existing = (await client.query<{ id: string }>(
         `SELECT id::text FROM dispatch.non_owned_trailers WHERE operating_company_id = $1::uuid AND upper(trailer_number) = $2
@@ -73,7 +74,7 @@ export async function decidePrintedTrailers(
         `INSERT INTO dispatch.non_owned_trailers (operating_company_id, trailer_number, counterparty_type, counterparty_id, notes, is_active, is_sample_data, created_by_user_id)
          VALUES ($1::uuid, $2, 'customer', $3::uuid, $4, true, false, $5::uuid) RETURNING id::text`,
         [co, o.n, c.customer_id, "443.90 #4: printed on the load's documents; not in the equipment master nor Samsara — customer / shipper trailer (drop & hook)", input.actorUserId])).rows[0]!.id;
-      await client.query(`UPDATE mdata.loads SET trailer_source = 'customer', non_owned_trailer_id = $2::uuid, updated_at = now() WHERE id = ANY($1::uuid[])`, [c.ids, nid]);
+      await client.query(`UPDATE mdata.loads SET trailer_source = 'customer', non_owned_trailer_id = $2::uuid, updated_at = now() WHERE id = ANY($1::uuid[]) AND operating_company_id = $3::uuid`, [c.ids, nid, co]);
       await client.query(`UPDATE accounting.expenses SET non_owned_trailer_id = $2::uuid, updated_at = now()
                            WHERE id = ANY($1::uuid[]) AND (load_id = ANY($3::uuid[]) OR $4::boolean)`, [o.expense_ids, nid, c.ids, customers.length === 0]);
       await appendCrudAudit(client as never, input.actorUserId, "dispatch.printed_trailer.decided", { operating_company_id: co, trailer_number: o.n, decision: "customer_trailer", non_owned_trailer_id: nid, customer_id: c.customer_id, load_ids: c.ids }, "info", "443.90");

@@ -62,7 +62,14 @@ const KNOWN_WALL_CLOCK_FILES = 10;
 //   * justified files are reported by name and are NOT counted against KNOWN_WALL_CLOCK_FILES.
 // Empty on 2026-10-04: the two the Lead named (bank-tieout-live, preserve-ledger) were anchored to their job's last
 // recorded run by CC-2 (0037e76ecf), so they no longer match and must not be listed.
-export const JUSTIFIED_WALL_CLOCK = {};
+// 2026-10-12 (CC-3, 443.99 C): verify-relay-tick-completes joined the list after the baseline was set to 10 (e968c38b32, 10-05; it was added 10-07,
+// RELAY-F440) and pushed the count to 11. It is reviewed here BY NAME, never by raising the number.
+export const JUSTIFIED_WALL_CLOCK = {
+  "scripts/verify-relay-tick-completes.mjs":
+    "liveness probe, not a population window: an integration_sync_log claim is 'stuck' only relative to now (open " +
+    "longer than OPEN_CLAIM_MAX_AGE) — the same clock rule the engine itself applies (relay-fuel-ingest.cron.ts " +
+    "closes an open claim older than RELAY_CLAIM_STALE_MINUTES). No money row's verdict depends on the calendar.",
+};
 
 const SELF_FILENAME = path.basename(fileURLToPath(import.meta.url));
 

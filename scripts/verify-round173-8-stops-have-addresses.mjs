@@ -3,6 +3,9 @@
 // 13631/13638) must never regress to a NULL address_line1. Pinned by stop_id, not by load number
 // or city, so a future re-dispatch/renumbering of these loads can't silently defeat the guard.
 import pg from "pg";
+// 443.99: TLS is inferred per host (scripts/lib/pg-connection-options.cjs) — a hardcoded ssl option failed every
+// non-TLS Postgres (CI's fresh-migrated ih35_verify) with "The server does not support SSL connections".
+import pgConnectionOptions from "./lib/pg-connection-options.cjs";
 
 export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
 
@@ -60,7 +63,7 @@ async function main() {
     console.log(`${LABEL}: SKIP — no DATABASE_URL (live-data invariant by design).`);
     process.exit(0);
   }
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool(pgConnectionOptions.buildPgPoolConfig(process.env.DATABASE_URL));
   const client = await pool.connect();
   try {
     await client.query("BEGIN");

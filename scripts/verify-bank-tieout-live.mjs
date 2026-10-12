@@ -34,7 +34,10 @@ export function checkStatic(s) {
   const p = [];
   if (!/accounting\.fn_account_balances_as_of\(\$1::uuid, \$2::date, NULL\)/.test(s.svc)) p.push(`${P.svc}: GL balance no longer read via fn_account_balances_as_of.`);
   if (!/CASE WHEN bt\.is_credit THEN abs\(bt\.amount_cents\) ELSE -abs\(bt\.amount_cents\) END/.test(s.svc)) p.push(`${P.svc}: feed lines not signed the canonical way (is_credit).`);
-  if (!/je\.status <> 'voided' AND \(p\.posting_batch_id IS NULL OR pb\.batch_status IN \('posted', 'reversed'\)\)/.test(s.svc)) p.push(`${P.svc}: GL-only population differs from fn_account_balances_as_of.`);
+  // 835241b70b (ACCT-F2026100601): the posting-membership rule is ONE module (accounting/ledger-membership.ts) that the
+  // SQL function mirrors (migration 202615430500) — the GL-only population must import it, never re-type it.
+  if (!/import \{ LEDGER_POSTING_COUNTS_SQL \} from "\.\.\/accounting\/ledger-membership\.js";/.test(s.svc) ||
+      !/const GL_ONLY_SQL = `[\s\S]*?LEFT JOIN accounting\.posting_batches pb ON pb\.id = p\.posting_batch_id[\s\S]*?AND \$\{LEDGER_POSTING_COUNTS_SQL\}[\s\S]*?`;/.test(s.svc)) p.push(`${P.svc}: GL-only population differs from fn_account_balances_as_of.`);
   if (/DELETE FROM banking\.bank_account_tieouts/i.test(s.svc)) p.push(`${P.svc}: engine deletes tie-outs.`);
   if (!/FORCE ROW LEVEL SECURITY/.test(s.mig) || /GRANT[^;]*DELETE[^;]*bank_account_tieouts/i.test(s.mig)) p.push(`${P.mig}: FORCE RLS missing or DELETE granted.`);
   if (!/registerBankTieoutRoutes\(app\)/.test(s.idx) || !/initializeBankTieoutCron\(app\)/.test(s.idx)) p.push(`${P.idx}: tie-out routes or cron not wired.`);
@@ -82,7 +85,8 @@ if (process.argv.includes("--selftest")) {
   ex("wrong sign", { ...real, svc: real.svc.replaceAll("CASE WHEN bt.is_credit THEN abs(bt.amount_cents) ELSE -abs(bt.amount_cents) END", "bt.amount_cents") }, true);
   ex("delete grant", { ...real, mig: real.mig.replace("GRANT SELECT, INSERT, UPDATE ON banking.bank_account_tieouts", "GRANT SELECT, INSERT, UPDATE, DELETE ON banking.bank_account_tieouts") }, true);
   ex("header unwired", { ...real, reg: real.reg.replace("<BankTieoutHeader ", "<X ") }, true);
-  console.log(ok ? `${LABEL} --selftest PASS (5/5)` : `${LABEL} --selftest FAIL`);
+  ex("GL-only re-types its own membership", { ...real, svc: real.svc.replace("AND ${LEDGER_POSTING_COUNTS_SQL}", "AND je.status <> 'voided'") }, true);
+  console.log(ok ? `${LABEL} --selftest PASS (6/6)` : `${LABEL} --selftest FAIL`);
   process.exit(ok ? 0 : 1);
 }
 const problems = [...checkStatic(real), ...(await live())];

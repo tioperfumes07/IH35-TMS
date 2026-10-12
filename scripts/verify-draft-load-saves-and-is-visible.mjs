@@ -30,6 +30,9 @@ import { exitIfMeasuredEmptyByPurge } from "./lib/purge-window.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+// 443.99: TLS is inferred per host (scripts/lib/pg-connection-options.cjs) — a hardcoded ssl option failed every
+// non-TLS Postgres (CI's fresh-migrated ih35_verify) with "The server does not support SSL connections".
+import pgConnectionOptions from "./lib/pg-connection-options.cjs";
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
@@ -97,7 +100,7 @@ async function liveCheck() {
     process.exit(1);
   }
   const { default: pg } = await import("pg");
-  const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const client = new pg.Client(pgConnectionOptions.buildPgClientConfig(url));
   await client.connect();
   try {
     const totalRes = await client.query(

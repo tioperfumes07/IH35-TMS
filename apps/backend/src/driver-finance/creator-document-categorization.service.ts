@@ -111,9 +111,11 @@ export async function categorizeCreatorSettlement(
     const reimbLines = (
       await client.query<{ id: string; description: string | null; amount: string; load_number: string | null; item_id: string | null }>(
         `SELECT sl.id::text, sl.description, abs(sl.amount)::text AS amount, l.load_number, sl.item_id::text AS item_id
-           FROM driver_finance.settlement_lines sl LEFT JOIN mdata.loads l ON l.id = sl.load_id
-          WHERE sl.settlement_id = $1::uuid AND sl.line_type = 'reimbursement' AND sl.is_active AND sl.voided_at IS NULL`,
-        [sid]
+           FROM driver_finance.settlement_lines sl
+           LEFT JOIN mdata.loads l ON l.id = sl.load_id AND l.operating_company_id = sl.operating_company_id
+          WHERE sl.settlement_id = $1::uuid AND sl.operating_company_id = $2::uuid
+            AND sl.line_type = 'reimbursement' AND sl.is_active AND sl.voided_at IS NULL`,
+        [sid, co]
       )
     ).rows;
     const usedLine = new Set<string>();
