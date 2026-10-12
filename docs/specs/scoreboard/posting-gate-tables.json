@@ -1,6 +1,6 @@
 {
   "operating_company": "USMCA",
-  "note": "GO-2340: do not seed pod_documents until after B. Other six launch_owed true. Seed ~25 not ~700. CC-2 extends by tracing posters.",
+  "note": "GO-2340: do not seed pod_documents until after B. CC-2 extends by tracing posters. 443.101: a gated table is never SEEDED — the 2026-08-27 'seed a labeled TEST row' order is superseded by owner law 2026-09-02 (no test / sample fixtures in USMCA) and owner law 2026-10-04 (coders never feed data). A launch_owed table that is empty on USMCA is proven alive by `proof_test`: a real-Postgres backend test that drives `writer` (the table's engine writer) on an isolated company. scripts/verify-no-posting-gate-on-empty-table.mjs verifies every proof statically and reports the live USMCA count.",
   "tables": [
     {
       "table": "dispatch.pod_documents",
@@ -13,43 +13,62 @@
       "table": "factoring.batch",
       "path": "factoring batch posting",
       "launch_owed": true,
-      "triage": "SEED",
-      "reason": "labeled TEST batch"
+      "triage": "ENGINE_PROOF",
+      "writer": { "file": "apps/backend/src/factoring/batch.service.ts", "symbol": "createDraftBatch" },
+      "proof_test": "apps/backend/src/factoring/__tests__/posting-gate-factoring-batch.db.test.ts",
+      "reason": "draft batch over a real sent, open, unfactored invoice; rolled back"
     },
     {
       "table": "factor.faro_daily_imports",
       "path": "Faro import recon",
       "launch_owed": true,
-      "triage": "SEED",
-      "reason": "owner: every gated table gets a TEST row; not TRANSP books"
+      "triage": "ENGINE_PROOF",
+      "writer": { "file": "apps/backend/src/data-infra/data-infra.service.ts", "symbol": "upsertFaroDailyImportOnClient" },
+      "proof_test": "apps/backend/src/factoring/__tests__/posting-gate-faro-daily-import.db.test.ts",
+      "reason": "daily import + its invoice line through the app's only writer; rolled back"
     },
     {
       "table": "dispatch.detention_evidence",
       "path": "detention billing",
       "launch_owed": true,
-      "triage": "SEED",
-      "reason": "labeled TEST detention"
+      "triage": "ENGINE_PROOF",
+      "writer": { "file": "apps/backend/src/dispatch/detention-approval.service.ts", "symbol": "approveDetentionRequest" },
+      "proof_test": "apps/backend/src/dispatch/__tests__/posting-gate-detention-evidence.db.test.ts",
+      "reason": "closed detention event -> engine-synced request -> approval records evidence and invoices it"
     },
     {
       "table": "banking.equipment_loans",
       "path": "equipment loan posting",
       "launch_owed": true,
-      "triage": "SEED",
-      "reason": "owner authorized one TEST asset + loan + bank txns to match"
+      "triage": "ENGINE_PROOF",
+      "writer": { "file": "apps/backend/src/data-infra/data-infra.service.ts", "symbol": "createEquipmentLoan" },
+      "proof_test": "apps/backend/src/data-infra/__tests__/posting-gate-equipment-loan.db.test.ts",
+      "reason": "loan on the company's own trailer + lender, read back joined by the engine list"
     },
     {
       "table": "accounting.related_party_loan_schedule",
       "path": "RP interest accrual",
       "launch_owed": true,
-      "triage": "SEED",
-      "reason": "labeled TEST schedule so the poster can fire"
+      "triage": "ENGINE_PROOF",
+      "writer": {
+        "file": "apps/backend/src/accounting/related-party-loan-posting/create-entry.service.ts",
+        "symbol": "createRelatedPartyLoanEntry"
+      },
+      "proof_test": "apps/backend/src/accounting/related-party-loan-posting/__tests__/posting-gate-rp-loan-schedule.db.test.ts",
+      "reason": "loan entry + facility + amortised schedule through the shared create writer; rolled back"
     },
     {
       "table": "accounting.tax_document",
       "path": "tax document",
       "launch_owed": true,
-      "triage": "SEED",
-      "reason": "labeled TEST tax doc; keep; do not delete"
+      "triage": "ENGINE_PROOF",
+      "writer": {
+        "file": "apps/backend/src/tax-documents/tax-documents.routes.ts",
+        "symbol": "registerTaxDocumentRoutes",
+        "route": "/api/v1/tax-documents/1099-nec/generate-batch"
+      },
+      "proof_test": "apps/backend/src/tax-documents/__tests__/posting-gate-tax-document.db.test.ts",
+      "reason": "1099-NEC generate-batch over a paid settlement + US-person profile; flag-OFF refusal proven too"
     }
   ]
 }
