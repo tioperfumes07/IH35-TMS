@@ -1,3 +1,14 @@
+## 2026-10-12 · BANK-F44366 LIVE MEASURE + MILES SLATE LEFTOVER
+
+FINDING: BANK-F44366 — Relay Fuel Wallet + Dreamline Diesel Card list-suggest live counts on Neon USMCA (owner Law B: suggest only, never categorize/match). Plus BANK-F91151 leftover `text-slate-700` on Creator/Miles panels → house `#4B5563`.
+LANE: NON-FINANCIAL (read-only measure + FE tokens; no money rewrite; no Book Load)
+MERGED (prior): #26456 squash `3de5832ba1b436f55098b534ec55a5498c58051d` (suggest engine)
+Files Modified: CreatorMilesChoicePanel.tsx · MilesRecommendationsPanel.tsx · verify-settlement-creator-miles-choice.mjs (RULE 3 leftover slate refuse) · scripts/ops/2026-10-12-cursor-44366-suggest-measure.mts · OUTBOX-CURSOR.md · .gate-step-map ownedPaths
+GUARD: `node scripts/verify-settlement-creator-miles-choice.mjs --selftest` → PASS 13/13
+LIVE PROOF: Neon `br-fancy-credit-akjnd07a` USMCA bypass_rls=lucia — wallet pending **258** / suggested **150** (OUT 122 · IN 28); gaps fill_exists_no_expense_document=93 · no_document_card_owner_pending=10 · several_deposits=4 · several_expenses=1. Dreamline pending **397** / suggested **192** / none 205; gaps dreamline_no_expense_at_store=113 · dreamline_no_amount_band=58 · several_expenses=30 · dreamline_store_city_unparsed=4. Measure EXIT:0 (~617s). S4-bank already on main via CC-1 #26459 `4c24d77ead` (443.88 → CC-3). Failed PRs in owner screenshot #26376 + #26414 already MERGED.
+REMAINING: owner Chrome Match drawer accept on Relay/Dreamline suggestions (Rule 42 FE deploy); CC-2 mint missing fuel expenses for the 93+113 gap rows; owner cards for 10 unclassified Relay cards
+NEXT: tip census INBOX 435/432/433 (back-arrow guard already PASS 0 cross-module; money-cells shrink-only 0)
+
 ## 2026-10-11 · MONEY-CELLS PARTY LEDGER — PR #26414 OPEN (pushed 43faa66861)
 
 FINDING: ACCT-F433-PARTY-LEDGER — same as below; branch pushed with LANE_CROSS ruling; pre-push verify-static 6171/6171 OK.

@@ -25,9 +25,12 @@ export const CUTOVER = "2026-10-11T17:00:00Z";
 const F = {
   drawer: "apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx",
   panel: "apps/frontend/src/pages/settlements/CreatorMilesChoicePanel.tsx",
+  milesRec: "apps/frontend/src/components/loads/MilesRecommendationsPanel.tsx",
   module: "apps/backend/src/driver-finance/settlement-creator-miles-choice.ts",
   svc: "apps/backend/src/driver-finance/settlement-creator.service.ts",
 };
+
+const SLATE_RE = /(?:text|bg|border|ring|divide|outline|decoration|accent|caret)-slate-|hover:(?:bg|text|border)-slate-|focus(?:-visible)?:(?:bg|ring|border|outline)-slate-|disabled:bg-slate-/;
 
 export function staticProblems(s) {
   const p = [];
@@ -44,6 +47,9 @@ export function staticProblems(s) {
   const close = s.svc.lastIndexOf("closeSettlementPayRun(");
   if (apply < 0) p.push("RULE 1 the post never applies the miles choice");
   else if (close < 0 || apply < close) p.push("RULE 1 the miles choice runs before the pay-run close (pay could move with it)");
+  // BANK-F91151 leftover — house tokens only (GLOBAL-TYPE-SIZE-BASELINE #4B5563), never Tailwind slate-*
+  if (SLATE_RE.test(s.panel)) p.push("RULE 3 CreatorMilesChoicePanel leftover slate class (use house text-[#4B5563])");
+  if (s.milesRec && SLATE_RE.test(s.milesRec)) p.push("RULE 3 MilesRecommendationsPanel leftover slate class (use house text-[#4B5563])");
   return p;
 }
 
@@ -67,6 +73,8 @@ function selftest() {
     ["choice before the close fails", staticProblems({ ...g, svc: "applyCreatorMilesChoices(\n" + g.svc.replaceAll("applyCreatorMilesChoices(", "z(") }).length > 0],
     ["no live miss passes", liveProblems({ after: 0, before: 146 }).length === 0],
     ["a live miss fails", liveProblems({ after: 1, before: 0 }).length > 0],
+    ["panel leftover slate fails", staticProblems({ ...g, panel: g.panel + '\n<span className="text-slate-700">x</span>' }).length > 0],
+    ["milesRec leftover slate fails", staticProblems({ ...g, milesRec: (g.milesRec || "") + '\n<span className="text-slate-700">x</span>' }).length > 0],
   ];
   const bad = cases.filter(([, ok]) => !ok).map(([n]) => n);
   if (bad.length) { console.error(`${LABEL} selftest FAIL: ${bad.join("; ")}`); process.exit(1); }
