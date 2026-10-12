@@ -927,8 +927,9 @@ export async function createDriverBillArtifacts(
     gross_amount_cents: string | number | null;
     voided_at: string | null;
     settled_in_settlement_id: string | null;
+    driver_id: string | null;
   }>(
-    `SELECT id::text, status, gross_amount_cents, voided_at, settled_in_settlement_id::text
+    `SELECT id::text, status, gross_amount_cents, voided_at, settled_in_settlement_id::text, driver_id::text
        FROM driver_finance.driver_bills
       WHERE operating_company_id = $1::uuid
         AND load_id = $2::uuid
@@ -1145,6 +1146,20 @@ export async function createDriverBillArtifacts(
       return { outcome: "already_exists" };
     }
     if (totalBillCents === existingGross) {
+      // AJK-01: same-total reassignment must still move the bill to the new driver.
+      const newDriverId = input.assigned_primary_driver_id ?? null;
+      if (newDriverId && existing.driver_id !== newDriverId) {
+        await client.query(
+          `UPDATE driver_finance.driver_bills
+              SET driver_id = $2::uuid,
+                  team_driver_id = $3::uuid,
+                  updated_at = now()
+            WHERE id = $1::uuid
+              AND status = 'open'
+              AND settled_in_settlement_id IS NULL`,
+          [existing.id, newDriverId, input.assigned_secondary_driver_id ?? null]
+        );
+      }
       return { outcome: "already_exists" };
     }
     await client.query(
