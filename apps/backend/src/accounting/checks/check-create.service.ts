@@ -315,11 +315,21 @@ export async function createCheck(
           line.unit_id ?? input.unit_id ?? null,
           line.trailer_id ?? input.trailer_id ?? null,
           line.linked_work_order_uuid ?? input.linked_work_order_uuid ?? null,
-          // R-83: quantity/rate_cents/unit_of_measure travel together, item lines only (normalized
-          // above); a category line sends null for all three, matching the DB's own CHECK.
-          line.line_kind === "item" ? line.quantity : null,
-          line.line_kind === "item" ? line.rate_cents : null,
-          line.line_kind === "item" ? line.unit_of_measure : null,
+          // R-83: quantity/rate_cents/unit_of_measure travel together with item_id (normalized above
+          // for item lines). Category lines that resolved a categoryItemId must satisfy the same
+          // CHECK (expense_lines_item_qty_rate_amount_check): quantity=1, rate_cents=amount_cents,
+          // unit_of_measure='each' so that round(1 × amount_cents) = amount_cents holds exactly.
+          // Category lines WITHOUT a resolved item_id still send null for all three (item_id is also
+          // null in that case, so the "all null" branch of the CHECK is satisfied).
+          line.line_kind === "item"
+            ? line.quantity
+            : categoryItemId !== null ? 1 : null,
+          line.line_kind === "item"
+            ? line.rate_cents
+            : categoryItemId !== null ? line.amount_cents : null,
+          line.line_kind === "item"
+            ? line.unit_of_measure
+            : categoryItemId !== null ? "each" : null,
         ]
       );
     }
