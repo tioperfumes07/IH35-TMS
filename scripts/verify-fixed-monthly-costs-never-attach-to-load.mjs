@@ -17,6 +17,7 @@
 //
 // Usage: DATABASE_URL=<prod> node scripts/verify-fixed-monthly-costs-never-attach-to-load.mjs
 import pg from "pg";
+import { buildPgPoolConfig } from "./lib/pg-connection-options.cjs"; // TLS off for CI's local postgres, on for Neon
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
@@ -60,7 +61,7 @@ async function main() {
     console.error("verify-fixed-monthly-costs-never-attach-to-load: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
     process.exit(1);
   }
-  const pool = new pg.Pool({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool(buildPgPoolConfig(url));
   const client = await pool.connect();
   try {
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");

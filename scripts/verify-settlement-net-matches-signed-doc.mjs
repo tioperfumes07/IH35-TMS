@@ -25,6 +25,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { createRequire } from "node:module";
+// 443.99: TLS by host (localhost / CI postgres service = off, Neon = on) — a hard-coded ssl option cannot connect to CI's local postgres.
+const { inferPgSslOption } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
@@ -157,7 +160,7 @@ async function main() {
     console.error("verify-settlement-net-matches-signed-doc: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
     process.exit(1);
   }
-  const pool = new pg.Pool({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool({ connectionString: url, ssl: inferPgSslOption(url) });
   const client = await pool.connect();
   try {
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");

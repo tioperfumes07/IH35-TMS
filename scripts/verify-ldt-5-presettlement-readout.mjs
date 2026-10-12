@@ -20,6 +20,7 @@
  * second read model in the Settlement tab, the old "No active pre-settlement found" text.
  */
 import fs from "node:fs";
+import { buildPgClientConfig } from "./lib/pg-connection-options.cjs"; // TLS off for CI's local postgres, on for Neon
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2c)";
 
@@ -97,7 +98,7 @@ async function live() {
   const url = process.env.DATABASE_URL;
   if (!url) { console.error("verify-ldt-5-presettlement-readout: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B)."); process.exit(1); }
   const { default: pg } = await import("pg");
-  const c = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const c = new pg.Client(buildPgClientConfig(url));
   await c.connect();
   try {
     await c.query(`SELECT set_config('app.bypass_rls','lucia',false)`);

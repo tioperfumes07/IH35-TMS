@@ -94,8 +94,9 @@ function selftest() {
   if (noSchemaField === routeSrc) { console.error(`${LABEL} SELFTEST SETUP FAILED: schema-field anchor not found`); process.exit(1); }
   if (!checkBackend(noSchemaField).some((f) => f.includes("must accept is_reimbursable"))) { console.error(`${LABEL} SELFTEST FAILED: dropping the zod fields was not caught`); process.exit(1); }
 
+  // 443.99: indentation-agnostic — the writer moved out of a nested block (cb335ba96c), the planted removal is the same four lines.
   const noWriter = routeSrc.replace(
-    "        columns.push(`is_reimbursable`);\n        values.push(body.is_reimbursable === true);\n        columns.push(`is_company_expense`);\n        values.push(body.is_company_expense === true);\n\n",
+    /[ \t]*columns\.push\(`is_reimbursable`\);\n[ \t]*values\.push\(body\.is_reimbursable === true\);\n[ \t]*columns\.push\(`is_company_expense`\);\n[ \t]*values\.push\(body\.is_company_expense === true\);\n/,
     ""
   );
   if (noWriter === routeSrc) { console.error(`${LABEL} SELFTEST SETUP FAILED: writer anchor not found`); process.exit(1); }

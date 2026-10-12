@@ -8,6 +8,9 @@
 //
 // Usage: node scripts/verify-bills-mdata-vendor-id-fk.mjs [--selftest]
 import pg from "pg";
+import { createRequire } from "node:module";
+// 443.99: TLS by host (localhost / CI postgres service = off, Neon = on) — a hard-coded ssl option cannot connect to CI's local postgres.
+const { inferPgSslOption } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 
 const LABEL = "verify-bills-mdata-vendor-id-fk";
 export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
@@ -33,7 +36,7 @@ if (process.argv.includes("--selftest")) {
 } else if (!process.env.DATABASE_URL) {
   throw new Error(`${LABEL}: DATABASE_URL required; --selftest is not live proof`);
 } else {
-  const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: inferPgSslOption(process.env.DATABASE_URL) });
   await client.connect();
   try {
     const { rows } = await client.query(`
