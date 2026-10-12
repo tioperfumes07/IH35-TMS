@@ -1,5 +1,12 @@
 [
   {
+    "id": "BCF-09-SETTLEMENT-PAY-ITEM-ACCOUNT",
+    "title": "Settlement extra/detention pay requires a native item and retains its mapped account through A/P posting",
+    "source_file": "apps/backend/src/driver-finance/settlement-pay-line.service.ts",
+    "guard": "scripts/verify-settlement-pay-line-item-account.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-09-30-LOAD-COSTS-WIZARD-AMOUNTS",
     "title": "ROUND 285.4.4 \u2014 Load Costs board and DispatchLoadCostsPanel must render Book Load wizard amounts (line haul, fuel surcharge, accessorials, detention, layover) from dispatch.load_charge_lines via the shared load-wizard-charges pivot; never invent from rate_total alone",
     "source_file": "claude/00-ROUND-285-FULL-WORK-SEQUENCE-EVERY-SEAT.md",

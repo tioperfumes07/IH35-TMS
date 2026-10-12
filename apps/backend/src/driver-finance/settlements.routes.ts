@@ -1278,6 +1278,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     const body = z.object({
       operating_company_id: z.string().uuid(),
       kind: z.enum(PAY_LINE_KINDS),
+      item_id: z.string().uuid(),
       amount_cents: z.number().int().positive(),
       description: z.string().trim().max(500).nullable().optional(),
       transaction_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -1290,6 +1291,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           operatingCompanyId: body.data.operating_company_id,
           settlementId: params.data.id,
           kind: body.data.kind,
+          itemId: body.data.item_id,
           amountCents: body.data.amount_cents,
           description: body.data.description ?? null,
           transactionDate: body.data.transaction_date,

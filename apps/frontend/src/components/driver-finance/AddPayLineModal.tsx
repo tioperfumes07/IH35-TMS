@@ -5,7 +5,7 @@
  * to the driver's settlement, the load whose dates cover the pay date (owner rule) and the driver-pay GL account, and
  * the settlement header re-totals. Save and close, per the design law.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Modal } from "../Modal";
 import { Button } from "../Button";
@@ -15,6 +15,8 @@ import { useToast } from "../Toast";
 import { companyToday } from "../../lib/businessDate";
 import { addSettlementPayLine, listSettlements, type SettlementPayLineKind } from "../../api/driverFinance";
 import { SelectCombobox } from "../Combobox";
+import { ReferenceSelect, type ReferenceOption } from "../parity/ReferenceSelect";
+import { searchQboMasterData } from "../../api/qbo-mdata";
 
 const KINDS: Array<{ value: SettlementPayLineKind; label: string }> = [
   { value: "detention", label: "Detention" },
@@ -34,7 +36,16 @@ export function AddPayLineModal(props: { open: boolean; onClose: () => void; ope
   const [amountCents, setAmountCents] = useState<number | null>(null);
   const [date, setDate] = useState(companyToday());
   const [description, setDescription] = useState("");
+  const [itemSearch, setItemSearch] = useState("");
+  const [debouncedItemSearch, setDebouncedItemSearch] = useState("");
+  const [selectedItem, setSelectedItem] = useState<ReferenceOption | null>(null);
+  const [itemId, setItemId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedItemSearch(itemSearch.trim()), 250);
+    return () => clearTimeout(timer);
+  }, [itemSearch]);
 
   const settlementsQuery = useQuery({
     queryKey: ["driver-finance", "settlements", props.operatingCompanyId, "open-for-driver", props.driverId],
@@ -47,11 +58,25 @@ export function AddPayLineModal(props: { open: boolean; onClose: () => void; ope
   );
   const chosen = settlementId || openSettlements[0]?.id || "";
 
+  const itemsQuery = useQuery({
+    queryKey: ["driver-finance", "pay-line-items", props.operatingCompanyId, debouncedItemSearch],
+    queryFn: () => searchQboMasterData("item", props.operatingCompanyId, { q: debouncedItemSearch, active_only: true }),
+    enabled: props.open && Boolean(props.operatingCompanyId),
+  });
+  const itemOptions = useMemo(() => {
+    const rows = itemsQuery.data?.results ?? [];
+    const options = rows.map((row) => ({ value: row.id, label: row.display_name, type: row.item_type ?? undefined }));
+    return selectedItem && selectedItem.value === itemId && !options.some((option) => option.value === itemId)
+      ? [selectedItem, ...options]
+      : options;
+  }, [itemsQuery.data, itemId, selectedItem]);
+
   const save = useMutation({
     mutationFn: () =>
       addSettlementPayLine(chosen, {
         operating_company_id: props.operatingCompanyId,
         kind,
+        item_id: itemId!,
         amount_cents: amountCents ?? 0,
         transaction_date: date,
         description: description.trim() || null,
@@ -65,7 +90,7 @@ export function AddPayLineModal(props: { open: boolean; onClose: () => void; ope
     onError: (e) => setError(String((e as Error)?.message ?? "Could not add the pay line")),
   });
 
-  const canSave = Boolean(chosen) && (amountCents ?? 0) > 0 && /^\d{4}-\d{2}-\d{2}$/.test(date) && !save.isPending;
+  const canSave = Boolean(chosen && itemId) && (amountCents ?? 0) > 0 && /^\d{4}-\d{2}-\d{2}$/.test(date) && !save.isPending;
 
   return (
     <Modal open={props.open} onClose={props.onClose} title={`Add payment${props.driverName ? ` — ${props.driverName}` : ""}`} variant="drawer" isDirty={(amountCents ?? 0) > 0} confirmDiscardOnClose>
@@ -95,6 +120,29 @@ export function AddPayLineModal(props: { open: boolean; onClose: () => void; ope
               <option key={k.value} value={k.value}>{k.label}</option>
             ))}
           </SelectCombobox>
+        </label>
+        <label className="block">
+          <span className="mb-1 block font-semibold text-gray-700">Product or service</span>
+          <ReferenceSelect
+            id="add-pay-line-item"
+            value={itemId}
+            onChange={(next) => {
+              setItemId(next);
+              setSelectedItem(next ? itemOptions.find((option) => option.value === next) ?? null : null);
+            }}
+            options={itemOptions}
+            createKind="item"
+            operatingCompanyId={props.operatingCompanyId}
+            placeholder="Select a product or service…"
+            loading={itemsQuery.isLoading || itemsQuery.isFetching}
+            disabled={!props.operatingCompanyId}
+            onSearch={setItemSearch}
+            onOptionCreated={(option) => {
+              setSelectedItem(option);
+              setItemId(option.value);
+              void itemsQuery.refetch();
+            }}
+          />
         </label>
         <label className="block">
           <span className="mb-1 block font-semibold text-gray-700">Amount</span>

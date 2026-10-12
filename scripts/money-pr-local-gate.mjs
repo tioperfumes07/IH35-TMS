@@ -53,6 +53,7 @@ const STEPS = [
   // asserted AT CLOSE/SEND TIME by source-wiring, not swept up later by a one-shot. Pure static
   // text check, no DB.
   ["verify-settlement-close-advances-load-status", "scripts/verify-settlement-close-advances-load-status.mjs"],
+  ["verify-settlement-pay-line-item-account", "scripts/verify-settlement-pay-line-item-account.mjs"],
   // ROUND 203/205 (owner, 2026-09-28) — "white background, wrong contrast... tokens for surface/
   // border/text." TruckLineBoard.tsx had drifted off the LOCKED GLOBAL-TYPE-SIZE-BASELINE.md
   // surface/border/text palette; this asserts the retired values never reappear and the file
