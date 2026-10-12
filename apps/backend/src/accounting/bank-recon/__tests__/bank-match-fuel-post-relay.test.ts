@@ -23,6 +23,8 @@ function client(
   lines: Array<{ fuel_type: string; cents: number; fee_cents?: number }>,
   fees: unknown[] = [],
   ingestSource: string | null = "daily_pull",
+  matchedDriverId: string | null = "d1",
+  loadRows: unknown[] = [{ load_id: "load-1", load_number: "13558", matched_by: "unit", trailer_id: null, non_owned_trailer_id: null }],
 ) {
   const calls: string[] = [];
   return {
@@ -39,7 +41,7 @@ function client(
                 transaction_id: "txn_4ypX8FQCRzHr5n",
                 fees_json: fees,
                 ingest_source: ingestSource,
-                driver_id: "d1",
+                driver_id: matchedDriverId,
                 unit_id: "u1",
                 unit_number: "T169",
                 location_state: "TX",
@@ -50,7 +52,9 @@ function client(
           };
         }
         // 443.110 G7 — the one fuel-to-load rule (fuel/fuel-load-at-time.ts)
-        if (sql.includes("by_unit") && sql.includes("by_driver")) return { rows: [{ load_id: "load-1", load_number: "13558", matched_by: "unit", trailer_id: null, non_owned_trailer_id: null }] };
+        if (sql.includes("by_unit") && sql.includes("by_driver")) return { rows: loadRows };
+        // 443.126 2a — the truck's ONE driver assignment at fill time (telematics.vehicle_driver_assignments).
+        if (sql.includes("FROM telematics.vehicle_driver_assignments")) return { rows: [{ d: "truck-driver" }] };
         if (sql.includes("FROM integrations.relay_fuel_transaction_lines l") && sql.includes("AS fuel_type")) {
           return {
             rows: lines.map((l) => ({
@@ -155,5 +159,14 @@ describe("Relay fill posting — one leg per product", () => {
     const { c } = client(91764, [{ fuel_type: "def", cents: 2082, fee_cents: 200 }, { fuel_type: "reefer", cents: 89482 }], [{ type: "relay_fee", amount: "2.00" }], "csv_import");
     await expect(postFuelFillOnBankMatch(c, input)).rejects.toMatchObject({ code: "relay_fill_lines_do_not_foot" });
     expect(mockPost).not.toHaveBeenCalled();
+  });
+  it("LEAD 443.126 2a — a no-load fill whose provider named no driver posts and documents the truck's driver at fill time (old: no driver)", async () => {
+    mockAdopt.mockClear();
+    const { c } = client(5000, [{ fuel_type: "diesel", cents: 5000 }], [], "daily_pull", null, []);
+    await postFuelFillOnBankMatch(c, input);
+    const arg = mockPost.mock.calls[0]![1] as { driver_id: string | null; load_id: string | null };
+    expect(arg.load_id).toBeNull();
+    expect(arg.driver_id).toBe("truck-driver");
+    expect(mockAdopt).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ driver_id: "truck-driver" }));
   });
 });

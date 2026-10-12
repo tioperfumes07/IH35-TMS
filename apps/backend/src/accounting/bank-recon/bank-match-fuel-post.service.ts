@@ -9,7 +9,7 @@
  * posts with the explicit deadhead/yard reason (LEAD 443.121 #2) and is re-pointed when its load is booked.
  */
 import { adoptRelayFillExpenseDocument, createExpenseFromFuelTransaction } from "../../fuel/fuel-expense-document.service.js";
-import { resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
+import { resolveFillDriverAtTime, resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
 import { relayLineIsGallonsSql, relayLineKindSql } from "../../fuel/relay-product-kind.js";
 import { buildFuelTxnJeMemo, mapFuelTypeToPostingKind } from "../fuel-posting/fuel-txn-memo.js";
 import { loadFuelTxnCreditSignals, resolveCompanyDirectCreditPreference } from "../fuel-posting/fuel-credit-preference.js";
@@ -298,6 +298,16 @@ async function postRelayFuelFill(
   // LEAD 443.121 #2 — no load covered the unit at fill time (deadhead / yard): the fill still posts on receipt, with the
   // explicit no-load reason on its document lines; repointFuelReceiptsToLoad attaches it when a covering load is booked.
   const noLoadReason = load?.load_id ? null : fuelNoLoadReason(row.transaction_at, row.unit_number);
+  // LEAD 443.126 2a — the one fill-driver rule: Relay's matched driver, else the card's / truck's driver at fill time,
+  // else the load's driver. A no-load (deadhead / yard) fill still names who fueled.
+  const fillDriver = await resolveFillDriverAtTime(client, {
+    operatingCompanyId: input.operating_company_id,
+    matchedDriverId: row.driver_id,
+    unitId: row.unit_id,
+    at: row.transaction_at,
+    loadId: load?.load_id ?? null,
+  });
+  const fillDriverId = fillDriver?.driver_id ?? null;
   // RELAY-F442 — total_amount_paid is fuel only; wallet / GL credit = paid + sender_fee.
   const paidCents = Math.round(Number(row.amount_cents ?? 0));
   if (!Number.isFinite(paidCents) || paidCents <= 0) {
@@ -359,7 +369,7 @@ async function postRelayFuelFill(
     posted_at: row.transaction_at,
     amount_cents: amountCents,
     posting_path: "company_direct",
-    driver_id: row.driver_id,
+    driver_id: fillDriverId,
     unit_id: row.unit_id,
     // 443.116 #1 — the load the one rule resolved above, and its trailer: a fill posted on receipt has no settlement row
     // to carry them, so the poster stamps them (the document then takes the load-spine number).
@@ -385,6 +395,7 @@ async function postRelayFuelFill(
       requesting_user_uuid: input.actor_user_uuid,
       trailer_id: load?.trailer_id ?? null,
       load_exemption_reason: noLoadReason,
+      driver_id: fillDriverId,
     });
     if (doc.outcome === "refused") throw new FuelMatchPostError("relay_fill_document_refused", doc.reason);
   }

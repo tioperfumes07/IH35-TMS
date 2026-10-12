@@ -88,6 +88,12 @@ export function checkFuelReceiptAttach(src) {
   if (!/repointFuelReceiptsToLoad\(/.test(src.bookLoad)) p.push("bookLoadOnClient must attach the receipts the new load covers");
   if (!/repointFuelReceiptsToLoad\(/.test(src.updateLoad)) p.push("updateDispatchLoad must attach the receipts the edited load covers");
   if (!/attachFuelReceiptToLoad\(/.test(src.rematch)) p.push("the Relay load rematch must move a posted receipt through attachFuelReceiptToLoad, never the fuel row alone");
+  // LEAD 443.126 2a — a no-load fill still names who fueled: the one fill-driver rule (card / truck at fill time) feeds the
+  // poster AND the document.
+  if (!/resolveFillDriverAtTime\(client, \{/.test(src.relay) || !/driver_id: fillDriverId,\n\s+unit_id: row\.unit_id,/.test(src.relay)) p.push("the Relay fill must take its driver from resolveFillDriverAtTime (card / truck at fill time) on the posting");
+  if (!/load_exemption_reason: noLoadReason,\n\s+driver_id: fillDriverId,/.test(src.relay)) p.push("the Relay fill's document must receive the one fill-driver rule's driver");
+  if (!/\?\? input\.driver_id \?\? loadDriver/.test(src.document ?? "")) p.push("adoptRelayFillExpenseDocument must use the passed fill driver before the load fallback");
+  if (!/FROM telematics\.vehicle_driver_assignments/.test(src.helper ?? "") || !/FROM fuel\.fuel_card_assignments/.test(src.helper ?? "") || !/rows\.length === 1/.test(src.helper ?? "")) p.push("resolveFillDriverAtTime must read the card assignment and the truck's ONE driver assignment (never guess between two)");
   if (!/\/api\/v1\/fuel\/receipts\/repoint-to-loads/.test(src.route) || !/String\(user\.role \?\? ""\) !== "Owner"/.test(src.route)) p.push("the history route must exist and be Owner only");
   return p;
 }
@@ -100,6 +106,8 @@ function readAttachSources() {
     updateLoad: read("apps/backend/src/dispatch/update-load.service.ts"),
     rematch: read("apps/backend/src/integrations/relay-payments/relay-fuel-load-rematch.service.ts"),
     route: read("apps/backend/src/fuel/fuel-receipt-repoint.routes.ts"),
+    document: read("apps/backend/src/fuel/fuel-expense-document.service.ts"),
+    helper: read("apps/backend/src/fuel/fuel-load-at-time.ts"),
   };
 }
 
@@ -141,6 +149,11 @@ function selftest() {
         ["attach skipping the settlement stamp is caught", bad({ repoint: a.repoint.replace("settlementNo = await stampReceiptDocumentSettlementRef(", "settlementNo = await noStamp(") })],
         ["Book Load not attaching is caught", bad({ bookLoad: a.bookLoad.replaceAll("repointFuelReceiptsToLoad(", "noop(") })],
         ["rematch moving the fuel row alone is caught", bad({ rematch: a.rematch.replaceAll("attachFuelReceiptToLoad(", "noop(") })],
+        // LEAD 443.126 2a
+        ["Relay fill posting the provider's driver only is caught", bad({ relay: a.relay.replace(/driver_id: fillDriverId,(\n\s+unit_id: row\.unit_id,)/, "driver_id: row.driver_id,$1") })],
+        ["document not receiving the fill driver is caught", bad({ relay: a.relay.replace("load_exemption_reason: noLoadReason,\n      driver_id: fillDriverId,", "load_exemption_reason: noLoadReason,") })],
+        ["document ignoring the fill driver is caught", bad({ document: a.document.replace("?? input.driver_id ?? loadDriver", "?? loadDriver") })],
+        ["rule guessing between two truck drivers is caught", bad({ helper: a.helper.replaceAll("rows.length === 1", "rows.length >= 1") })],
       ];
     })(),
   ];
