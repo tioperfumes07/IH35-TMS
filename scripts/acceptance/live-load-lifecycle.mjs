@@ -1120,15 +1120,133 @@ async function s4bank() {
   }
 }
 
+
+// ================= LINKAGE (LEAD 443.105) =================
+// After every step: every document that step created on the run's company is asserted for its hub links — driver, unit,
+// trailer (company trailer_id or customer non_owned_trailer_id), load, vendor / customer, an item on every line, line
+// account = the item's default account unless item_account_override_reason is set, every JE balanced with the company
+// stamped on the JE and every posting. A failing document prints its id, the missing field and the writer to look at.
+const WRITERS = {
+  load: "apps/backend/src/dispatch/book-load.service.ts", stop: "apps/backend/src/dispatch/book-load.service.ts",
+  invoice: "apps/backend/src/accounting/from-load.ts / invoice-lines.routes.ts",
+  bill: "apps/backend/src/driver-finance/settlement-ap-chain.service.ts / accounting/settlement-posting/settlement-bill-payment-posting.service.ts / accounting/bills.service.ts",
+  driver_bill: "apps/backend/src/driver-finance/settlement-ap-chain.service.ts", bill_payment: "apps/backend/src/accounting/settlement-posting/settlement-bill-payment-posting.service.ts",
+  expense: "apps/backend/src/driver-finance/settlement-creator.service.ts / fuel/fuel-expense-document.service.ts / accounting/expenses.routes.ts",
+  je: "apps/backend/src/accounting/posting-engine.service.ts (poster of the source_transaction_type)",
+};
+const colsCache = {};
+async function hasCol(schema, table, col) {
+  const k = `${schema}.${table}.${col}`;
+  if (!(k in colsCache)) colsCache[k] = (await read(`SELECT 1 FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2 AND column_name=$3`, [schema, table, col])).length > 0;
+  return colsCache[k];
+}
+async function linkageMark() { return (await read(`SELECT clock_timestamp()::text AS t`))[0].t; }
+async function linkage(stepName, since) {
+  const t = step(`${stepName} linkage`);
+  const fail = (kind, id, field, extra = "") => t.ok(`${kind} ${id} ${field}`, false, `${extra}${extra ? " · " : ""}writer: ${WRITERS[kind] ?? "?"}`);
+  let docs = 0;
+  const pass = () => { docs += 1; };
+  // loads
+  for (const l of await read(`SELECT id::text, load_number, assigned_primary_driver_id AS drv, assigned_unit_id AS unit, load_trailer_equipment_id AS tr,
+      non_owned_trailer_id AS nt, customer_id AS cust FROM mdata.loads WHERE operating_company_id=$1::uuid AND created_at >= $2::timestamptz`, [CO, since])) {
+    const miss = [!l.drv && "driver", !l.unit && "unit", !l.tr && !l.nt && "trailer", !l.cust && "customer"].filter(Boolean);
+    miss.length ? miss.forEach((f) => fail("load", l.load_number ?? l.id, f)) : pass();
+  }
+  // stops: company stamped and equal to the load's company
+  for (const st of await read(`SELECT s.id::text, s.operating_company_id::text AS sco, l.operating_company_id::text AS lco FROM mdata.load_stops s
+      JOIN mdata.loads l ON l.id = s.load_id WHERE l.operating_company_id=$1::uuid AND s.created_at >= $2::timestamptz`, [CO, since])) {
+    st.sco === st.lco ? pass() : fail("stop", st.id, "operating_company_id", `stop ${st.sco ?? "NULL"} vs load ${st.lco}`);
+  }
+  // invoices + lines
+  for (const i of await read(`SELECT id::text, display_id, customer_id AS cust, source_load_id AS load FROM accounting.invoices
+      WHERE operating_company_id=$1::uuid AND created_at >= $2::timestamptz AND voided_at IS NULL`, [CO, since])) {
+    const miss = [!i.cust && "customer", !i.load && "load"].filter(Boolean);
+    miss.length ? miss.forEach((f) => fail("invoice", i.display_id ?? i.id, f)) : pass();
+  }
+  for (const ln of await read(`SELECT il.id::text, i.display_id, il.item_id AS item, il.account_id::text AS acct, it.default_income_account_id::text AS item_acct,
+      il.item_account_override_reason AS why, il.operating_company_id::text AS lco, i.operating_company_id::text AS hco
+      FROM accounting.invoice_lines il JOIN accounting.invoices i ON i.id = il.invoice_id LEFT JOIN catalogs.items it ON it.id = il.item_id
+      WHERE i.operating_company_id=$1::uuid AND il.created_at >= $2::timestamptz AND i.voided_at IS NULL`, [CO, since])) {
+    const miss = [!ln.item && "item_id", ln.item && ln.acct !== ln.item_acct && !ln.why && "account = item account", ln.lco !== ln.hco && "operating_company_id"].filter(Boolean);
+    miss.length ? miss.forEach((f) => fail("invoice", `${ln.display_id} line ${ln.id}`, f, f.startsWith("account") ? `line ${ln.acct} item ${ln.item_acct}` : "")) : pass();
+  }
+  // bills + lines (load-linked bills carry driver / unit / trailer / load)
+  const billNot = (await hasCol("accounting", "bills", "non_owned_trailer_id")) ? "b.non_owned_trailer_id" : "NULL";
+  for (const b of await read(`SELECT b.id::text, b.display_id, COALESCE(b.mdata_vendor_id::text, b.vendor_id::text) AS vendor, b.driver_id AS drv, b.unit_id AS unit,
+      b.trailer_id AS tr, ${billNot} AS nt, l.load_trailer_equipment_id AS ltr, l.non_owned_trailer_id AS lnt,
+      COALESCE(b.load_id, (SELECT bl.load_id FROM accounting.bill_lines bl WHERE bl.bill_id = b.id AND bl.load_id IS NOT NULL LIMIT 1)) AS load
+      FROM accounting.bills b LEFT JOIN mdata.loads l ON l.id = COALESCE(b.load_id, (SELECT bl.load_id FROM accounting.bill_lines bl WHERE bl.bill_id = b.id AND bl.load_id IS NOT NULL LIMIT 1))
+      WHERE b.operating_company_id=$1::uuid AND b.created_at >= $2::timestamptz AND b.voided_at IS NULL AND b.revoked_at IS NULL`, [CO, since])) {
+    const miss = [!b.vendor && "vendor"];
+    if (b.load || b.drv) miss.push(!b.load && "load", !b.drv && "driver", !b.unit && "unit");
+    const trailerMiss = (b.load || b.drv) && !b.tr && !b.nt;
+    const m = miss.filter(Boolean);
+    m.forEach((f) => fail("bill", b.display_id ?? b.id, f));
+    if (trailerMiss) fail("bill", b.display_id ?? b.id, "trailer", `${billNot === "NULL" && b.lnt ? "customer trailer, bills.non_owned_trailer_id absent — " : ""}pending R12 (443.105 item 1) if not merged`);
+    if (!m.length && !trailerMiss) pass();
+  }
+  for (const ln of await read(`SELECT bl.id::text, b.display_id, bl.item_id AS item, bl.account_id::text AS acct, it.default_expense_account_id::text AS item_acct,
+      bl.item_account_override_reason AS why, bl.operating_company_id::text AS lco, b.operating_company_id::text AS hco
+      FROM accounting.bill_lines bl JOIN accounting.bills b ON b.id = bl.bill_id LEFT JOIN catalogs.items it ON it.id = bl.item_id
+      WHERE b.operating_company_id=$1::uuid AND bl.created_at >= $2::timestamptz AND b.voided_at IS NULL AND b.revoked_at IS NULL`, [CO, since])) {
+    const miss = [!ln.item && "item_id", ln.item && ln.acct !== ln.item_acct && !ln.why && "account = item account", ln.lco !== ln.hco && "operating_company_id"].filter(Boolean);
+    miss.length ? miss.forEach((f) => fail("bill", `${ln.display_id} line ${ln.id}`, f, f.startsWith("account") ? `line ${ln.acct} item ${ln.item_acct}` : "")) : pass();
+  }
+  // driver_finance.driver_bills
+  for (const d of await read(`SELECT id::text, load_id AS load, driver_id AS drv FROM driver_finance.driver_bills
+      WHERE operating_company_id=$1::uuid AND created_at >= $2::timestamptz AND voided_at IS NULL`, [CO, since])) {
+    const miss = [!d.load && "load", !d.drv && "driver"].filter(Boolean);
+    miss.length ? miss.forEach((f) => fail("driver_bill", d.id, f)) : pass();
+  }
+  // bill payments
+  for (const p of await read(`SELECT id::text, vendor_id AS vendor, bill_id AS bill FROM accounting.bill_payments
+      WHERE operating_company_id=$1::uuid AND created_at >= $2::timestamptz AND voided_at IS NULL AND revoked_at IS NULL`, [CO, since])) {
+    const miss = [!p.vendor && "vendor", !p.bill && "bill"].filter(Boolean);
+    miss.length ? miss.forEach((f) => fail("bill_payment", p.id, f)) : pass();
+  }
+  // expenses + lines (overhead lines carry load_exemption_reason instead of a load)
+  for (const e of await read(`SELECT e.id::text, e.expense_number, e.vendor_uuid AS vendor, e.payee_customer_uuid AS pcust, e.load_id AS load, e.unit_id AS unit,
+      e.trailer_id AS tr, e.non_owned_trailer_id AS nt, e.driver_uuid AS drv,
+      (SELECT bool_and(el.load_id IS NULL AND el.load_exemption_reason IS NOT NULL) FROM accounting.expense_lines el WHERE el.expense_id = e.id) AS overhead,
+      (SELECT bool_or(el.driver_id IS NOT NULL) FROM accounting.expense_lines el WHERE el.expense_id = e.id) AS line_drv
+      FROM accounting.expenses e WHERE e.operating_company_id=$1::uuid AND e.created_at >= $2::timestamptz AND e.voided_at IS NULL`, [CO, since])) {
+    const miss = [!e.vendor && !e.pcust && "vendor"];
+    if (!e.overhead) miss.push(!e.load && "load", !e.unit && "unit", !e.tr && !e.nt && "trailer", !e.drv && !e.line_drv && "driver");
+    const m = miss.filter(Boolean);
+    m.length ? m.forEach((f) => fail("expense", e.expense_number ?? e.id, f)) : pass();
+  }
+  for (const ln of await read(`SELECT el.id::text, e.expense_number, el.item_id AS item, el.expense_account_uuid::text AS acct, it.default_expense_account_id::text AS item_acct,
+      el.item_account_override_reason AS why, el.operating_company_id::text AS lco, e.operating_company_id::text AS hco, el.load_id AS load, el.load_exemption_reason AS exempt
+      FROM accounting.expense_lines el JOIN accounting.expenses e ON e.id = el.expense_id LEFT JOIN catalogs.items it ON it.id = el.item_id
+      WHERE e.operating_company_id=$1::uuid AND el.created_at >= $2::timestamptz AND e.voided_at IS NULL`, [CO, since])) {
+    const miss = [!ln.item && "item_id", ln.item && ln.acct !== ln.item_acct && !ln.why && "account = item account",
+      ln.lco !== ln.hco && "operating_company_id", !ln.load && !ln.exempt && "load or load_exemption_reason"].filter(Boolean);
+    miss.length ? miss.forEach((f) => fail("expense", `${ln.expense_number} line ${ln.id}`, f, f.startsWith("account") ? `line ${ln.acct} item ${ln.item_acct}` : "")) : pass();
+  }
+  // journal entries: balanced, company on the JE and every posting
+  for (const j of await read(`SELECT je.id::text, je.operating_company_id::text AS jco,
+      COALESCE(sum(p.amount_cents) FILTER (WHERE p.debit_or_credit='debit'),0)::bigint AS dr,
+      COALESCE(sum(p.amount_cents) FILTER (WHERE p.debit_or_credit='credit'),0)::bigint AS cr,
+      count(p.id)::int AS n, count(p.id) FILTER (WHERE p.operating_company_id IS DISTINCT FROM je.operating_company_id)::int AS off,
+      string_agg(DISTINCT p.source_transaction_type, ',') AS src
+      FROM accounting.journal_entries je LEFT JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = je.id
+      WHERE je.operating_company_id=$1::uuid AND je.created_at >= $2::timestamptz GROUP BY je.id`, [CO, since])) {
+    const miss = [j.n === 0 && "postings", String(j.dr) !== String(j.cr) && "balanced", j.off > 0 && "operating_company_id on every posting"].filter(Boolean);
+    miss.length ? miss.forEach((f) => fail("je", `${j.id} (${j.src ?? "?"})`, f, f === "balanced" ? `Dr ${j.dr} Cr ${j.cr}` : "")) : pass();
+  }
+  t.ok(`${docs} document(s) fully linked`, true);
+}
+
 try {
-  if (runs("S1")) await s1();
-  if (runs("S2")) await s2();
-  if (runs("S3")) await s3();
-  if (runs("S4")) await s4feed();
-  if (runs("S4-bank")) { await s4bank(); await s4bankMatch(); }
-  if (runs("S5")) await s5();
-  if (runs("S6")) await s6();
-  if (runs("S7")) await s7();
+  const withLinkage = async (name, fn) => { const since = await linkageMark(); await fn(); await linkage(name, since); };
+  if (runs("S1")) await withLinkage("S1", s1);
+  if (runs("S2")) await withLinkage("S2", s2);
+  if (runs("S3")) await withLinkage("S3", s3);
+  if (runs("S4")) await withLinkage("S4-feed", s4feed);
+  if (runs("S4-bank")) await withLinkage("S4-bank", async () => { await s4bank(); await s4bankMatch(); });
+  if (runs("S5")) await withLinkage("S5", s5);
+  if (runs("S6")) await withLinkage("S6", s6);
+  if (runs("S7")) await withLinkage("S7", s7);
 } finally {
   await app.close();
   await db.end();
