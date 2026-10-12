@@ -134,6 +134,9 @@ export function createVerifyPrecommitContext(rootDir) {
   return {
     ROOT: rootDir,
     VITEST_REPORT_PATH,
+    // 443.100: step 11723 hands this to its --isolated run; it was never exported, so CI passed undefined and the
+    // workflow-RLS behavior check failed closed ("WORKFLOW_RLS_TEST_DATABASE_URL required") on every run.
+    VERIFY_DB_URL,
     run,
     runAllowFailure,
     fail,

@@ -60,10 +60,24 @@ const MATCHED_ALL_NULL_SQL = MATCHED_ID_COLUMNS.map((c) => `${c} IS NULL`).join(
 // CI. `verify-load-costs-board-trailer-unit-columns.mjs` proved the same "written but never wired"
 // pattern earlier this session. Pure predicate extracted below so --selftest can prove the logic
 // with planted fixtures, not a live DB connection.
+//
+// ROUND 360 (202615350600 banking.bank_line_classify) made review_state='matched' a compatibility ECHO of
+// review_bucket='categorized', which the trigger sets for ANY live document link: a matched_* column, a
+// linked_entity_id (post-as-bill / categorize links), or a split. A matched line resolved by linked_entity_id or by a
+// split therefore references something real. A split is real only when it has live split lines — status 'split' alone is
+// still an orphan here (stricter than the trigger, which trusts the status).
 export function isOrphanMatchedRow(row) {
   if (row.review_state !== "matched") return false;
+  if (row.linked_entity_id != null) return false;
+  if (row.status === "split" && Number(row.live_split_count ?? 0) > 0) return false;
   return MATCHED_ID_COLUMNS.every((col) => row[col] == null);
 }
+const ORPHAN_MATCHED_SQL = `${MATCHED_ID_COLUMNS.map((c) => `bt.${c} IS NULL`).join("\n      AND ")}
+      AND bt.linked_entity_id IS NULL
+      AND NOT (bt.status = 'split' AND EXISTS (
+            SELECT 1 FROM banking.bank_transaction_splits s
+             WHERE s.bank_transaction_id = bt.id AND s.operating_company_id = bt.operating_company_id
+               AND s.voided_at IS NULL))`;
 
 function runSelftest() {
   const allNull = Object.fromEntries([
@@ -99,6 +113,18 @@ function runSelftest() {
   const notMatched = { ...allNull, review_state: "for_review" };
   if (isOrphanMatchedRow(notMatched)) {
     throw new Error("selftest: review_state='for_review' must never be flagged as an orphaned match — it was");
+  }
+  if (isOrphanMatchedRow({ ...allNull, linked_entity_id: "44444444-4444-4444-8444-444444444444" })) {
+    throw new Error("selftest: a matched line linked by linked_entity_id (ROUND 360 live link) must NOT be flagged — it was");
+  }
+  if (isOrphanMatchedRow({ ...allNull, status: "split", live_split_count: 2 })) {
+    throw new Error("selftest: a split line with live split lines (ROUND 360 live link) must NOT be flagged — it was");
+  }
+  if (!isOrphanMatchedRow({ ...allNull, status: "split", live_split_count: 0 })) {
+    throw new Error("selftest: a 'split' line with NO live split lines must still be flagged orphaned — it was not");
+  }
+  if (!/bt\.linked_entity_id IS NULL/.test(ORPHAN_MATCHED_SQL) || !/s\.voided_at IS NULL/.test(ORPHAN_MATCHED_SQL)) {
+    throw new Error("selftest: the live orphan-matched SQL must mirror isOrphanMatchedRow (link + live split)");
   }
   if (MATCHED_ID_COLUMNS.length < 13) {
     throw new Error(`selftest: MATCHED_ID_COLUMNS must stay at full roster (got ${MATCHED_ID_COLUMNS.length})`);
@@ -192,9 +218,9 @@ async function main() {
   //    predicate. Do NOT "fix" live money to silence a partial-column false red.
   const orphanMatched = await client.query(`
     SELECT count(*)::int AS n
-    FROM banking.bank_transactions
-    WHERE review_state = 'matched'
-      AND ${MATCHED_ALL_NULL_SQL}
+    FROM banking.bank_transactions bt
+    WHERE bt.review_state = 'matched'
+      AND ${ORPHAN_MATCHED_SQL}
   `);
   const orphanMatchedCount = Number(orphanMatched.rows[0]?.n ?? 0);
   if (orphanMatchedCount > 0) {
