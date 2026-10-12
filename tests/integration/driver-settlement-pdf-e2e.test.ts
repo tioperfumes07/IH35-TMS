@@ -147,7 +147,8 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
             assigned_unit_id,
             assigned_primary_driver_id,
             dispatcher_user_id,
-            load_trailer_equipment_id
+            load_trailer_equipment_id,
+            trip_type
           )
           VALUES (
             $1::uuid,
@@ -158,7 +159,8 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
             $4::uuid,
             $5::uuid,
             $6::uuid,
-            $7::uuid
+            $7::uuid,
+            'NB'
           )
           RETURNING id
         `,
@@ -167,6 +169,44 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
       loadId = String(loadInsert.rows[0]?.id ?? "");
       if (!loadId) throw new Error("load_insert_failed");
 
+      // 443.91 #4: a delivered load the way the app leaves it, so the settlement feed gate's load checks pass on the data
+      // (driver-finance/feed-gate/feed-gate.checks.ts loadChecks): two geocoded stops stamped arrive/depart, a trip type
+      // (above), and the load's invoice — one live line on an income account, total = the load's rate, dated.
+      await pgClient.query(
+        `INSERT INTO mdata.load_stops (operating_company_id, load_id, sequence_number, stop_type, city, state, latitude, longitude,
+                                       scheduled_arrival_at, actual_arrival_at, actual_departure_at, actual_arrival_source, actual_departure_source)
+         VALUES ($1::uuid, $2::uuid, 1, 'pickup', 'Laredo', 'TX', 27.5306, -99.4803,
+                 TIMESTAMPTZ '2026-05-06T14:00:00Z', TIMESTAMPTZ '2026-05-06T14:00:00Z', TIMESTAMPTZ '2026-05-06T16:00:00Z', 'manual', 'manual'),
+                ($1::uuid, $2::uuid, 2, 'delivery', 'San Antonio', 'TX', 29.4241, -98.4936,
+                 TIMESTAMPTZ '2026-05-07T14:00:00Z', TIMESTAMPTZ '2026-05-07T14:00:00Z', TIMESTAMPTZ '2026-05-07T16:00:00Z', 'manual', 'manual')`,
+        [companyId, loadId]
+      );
+      const incomeAccount = await pgClient.query<{ id: string }>(
+        `SELECT id::text FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_type = 'Income' AND deactivated_at IS NULL ORDER BY account_number LIMIT 1`,
+        [companyId]
+      );
+      const incomeAccountId = incomeAccount.rows[0]?.id
+        ?? (await pgClient.query<{ id: string }>(
+          `INSERT INTO catalogs.accounts (operating_company_id, account_number, account_name, account_type, is_postable)
+           VALUES ($1::uuid, $2, 'Linehaul Revenue (PDF e2e)', 'Income', true) RETURNING id::text`,
+          [companyId, `4${suffix.replace(/\D/g, "").padEnd(6, "0").slice(0, 6)}`])).rows[0]!.id;
+      // The invoice writer runs scoped to the company and the acting user (the invoices policy is membership-scoped).
+      await pgClient.query(`SELECT set_config('app.operating_company_id', $1::text, true), set_config('app.current_user_id', $2::text, true)`, [companyId, TEST_OWNER_USER_ID]);
+      const invoiceRes = await pgClient.query<{ id: string }>(
+        `INSERT INTO accounting.invoices (operating_company_id, customer_id, display_id, source_load_id, invoice_type, status,
+                                          issue_date, due_date, subtotal_cents, total_cents)
+         VALUES ($1::uuid, $2::uuid, $3, $4::uuid, 'from_load', 'draft', DATE '2026-05-07', DATE '2026-06-06', 450000, 450000)
+         RETURNING id::text`,
+        [companyId, customerId, String(Date.now()).slice(-10), loadId]
+      );
+      await pgClient.query(
+        `INSERT INTO accounting.invoice_lines (operating_company_id, invoice_id, line_type, description, unit_amount_cents, line_total_cents, account_id)
+         VALUES ($1::uuid, $2::uuid, 'linehaul', 'Linehaul', 450000, 450000, $3::uuid)`,
+        [companyId, invoiceRes.rows[0]!.id, incomeAccountId]
+      );
+
+      // 443.91 #4: a driver bill is the DRIVER'S PAY for the load (the feed gate's settlement.gross_equals_driver_bills,
+      // driver-finance/feed-gate/feed-gate.checks.ts:171) — 25% of the load's 4,500.00 rate = 1,125.00; the load keeps its rate.
       await pgClient.query(
         `
           INSERT INTO driver_finance.driver_bills (
@@ -186,7 +226,7 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
             $3,
             $4,
             $5::uuid,
-            450000,
+            112500,
             'open',
             $6,
             TIMESTAMPTZ '2026-05-08T15:00:00Z'
@@ -232,7 +272,7 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
       if (displayId) {
         await pgClient.query(`DELETE FROM email.email_queue WHERE subject ILIKE $1`, [`%${displayId}%`]);
         await pgClient.query(`DELETE FROM sms.queue WHERE body LIKE $1`, [`%${displayId}%`]);
-        await pgClient.query(`DELETE FROM whatsapp.queue WHERE variables::text LIKE $1`, [`%${displayId}%`]);
+        await pgClient.query(`DELETE FROM whatsapp.queue WHERE body LIKE $1`, [`%${displayId}%`]);
       }
 
       if (settlementId) {
@@ -268,12 +308,13 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
         driver_id: driverId,
         period_start: periodStart,
         period_end: periodEnd,
-        driver_share_rate: 0.25,
+        // The preview sums the period's driver bills; they already ARE the driver's pay, so the share applied is 100%.
+        driver_share_rate: 1,
       },
     });
     expect(previewRes.statusCode).toBe(200);
     const preview = previewRes.json() as { net_dollars?: number; revenue_dollars?: number };
-    expect(preview.revenue_dollars).toBeCloseTo(4500, 5);
+    expect(preview.revenue_dollars).toBeCloseTo(1125, 5);
     expect(preview.net_dollars).toBeCloseTo(295, 5);
 
     const createRes = await app.inject({
@@ -305,6 +346,18 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
     try {
       const row = await pgClient.query(`SELECT id, status FROM driver_finance.driver_settlements WHERE id = $1::uuid LIMIT 1`, [settlementId]);
       expect(row.rows.length).toBe(1);
+      // 443.91 #4: the rows the engines write before approval — the feed gate (assertSubjectMayCloseOnClient) refuses a
+      // settlement with no load, gross ≠ Σ its bills, or no pay method. The settlement engine attaches the period's driver
+      // bills (driver_bills.settled_in_settlement_id, driver-finance/settlement-engine.ts) and the pay-run close records how
+      // the net is paid (pay_method 'bank_bill_payment', settlement-payrun-close.service.ts:1361).
+      await pgClient.query(
+        `UPDATE driver_finance.driver_bills SET settled_in_settlement_id = $1::uuid WHERE load_id = $2::uuid AND driver_id = $3::uuid AND voided_at IS NULL`,
+        [settlementId, loadId, driverId]
+      );
+      await pgClient.query(
+        `UPDATE driver_finance.driver_settlements SET pay_method = 'bank_bill_payment' WHERE id = $1::uuid AND pay_method IS NULL`,
+        [settlementId]
+      );
       await pgClient.query("COMMIT");
     } catch (err) {
       await pgClient.query("ROLLBACK").catch(() => {});
@@ -316,6 +369,7 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
       url: `/api/v1/settlements/${settlementId}/approve?operating_company_id=${encodeURIComponent(companyId)}`,
       headers: { ...testAuthHeaders() },
     });
+    if (approveRes.statusCode !== 200) console.log("APPROVE_BODY", approveRes.body);
     expect(approveRes.statusCode).toBe(200);
 
     await pgClient.query("BEGIN");
@@ -365,7 +419,8 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
       expect(smsRow.rows.length).toBe(1);
 
       const waRow = await pgClient.query(
-        `SELECT provider_status, variables FROM whatsapp.queue WHERE variables::text LIKE $1 ORDER BY created_at DESC LIMIT 1`,
+        // The dispatcher writes the WhatsApp message into body (notifications/dispatcher.ts, 443.91 #26481), like sms.queue.
+        `SELECT status, body FROM whatsapp.queue WHERE body LIKE $1 ORDER BY created_at DESC LIMIT 1`,
         [`%${displayId}%`]
       );
       expect(waRow.rows.length).toBe(1);
