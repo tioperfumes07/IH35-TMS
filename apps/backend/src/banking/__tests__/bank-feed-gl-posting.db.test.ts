@@ -350,6 +350,12 @@ describeIntegration("CHAIN-05 bank-feed categorization → GL posting (real Post
     expect(res.posted).toBe(false);
     if (!res.posted) expect(res.reason).toBe("no_account");
     expect((await jeLines(txn)).length).toBe(0);
+    // 443.100: the no-account line is an impossible state planted only to prove the poster fails closed. afterAll's
+    // DELETE is refused once any sibling posted (WORM), so return this fixture line to For review rather than leave a
+    // "categorized with nothing" row that verify-bank-feed-live-tieout rightly fails on later in the same CI run.
+    await bypass(async () => {
+      await db.query(`UPDATE banking.bank_transactions SET status = 'pending_categorization' WHERE id = $1::uuid`, [txn]);
+    });
   });
 
   it("(8) idempotent -> second call already_posted; exactly ONE batch + TWO lines", async () => {
