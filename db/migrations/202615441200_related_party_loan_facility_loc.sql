@@ -11,6 +11,13 @@
 --   * banking.bank_transactions.matched_related_party_loan_id — reverse pointer (Match/Categorize stamp)
 --
 -- Additive, idempotent, CREATE-only. No DROP. No existing row rewritten.
+--
+-- CANONICAL-CHECK: accounting.related_party_loan_facilities is a NEW money concept — the LOC
+-- facility header (one per company × 2410-family related-party CoA account). It does NOT
+-- duplicate accounting.bills (vendor-issued A/P trade documents) or accounting.journal_entries
+-- (the double-entry posting layer). The 2410 family represents lines of credit between USMCA
+-- and related parties (Jorge, Scentsx, Tio Perfumes 2), not trade payables; no existing
+-- canonical ledger covers this running-LOC-document concept.
 
 BEGIN;
 SET LOCAL lock_timeout = '15s';

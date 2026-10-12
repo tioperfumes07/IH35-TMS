@@ -220,15 +220,15 @@ export async function postRelayDeposit(
   }
 
   const postings = [
-    { account_id: wallet[0]!.id, debit_or_credit: "debit", amount_cents: amount, description: `Relay deposit ${d.deposit_id} — wallet funded`, ...src, ...relayEntity },
-    ...(fee > 0 ? [{ account_id: feeAcct[0]!.id, debit_or_credit: "debit", amount_cents: fee, description: `Relay deposit ${d.deposit_id} — 3.25% deposit fee`, ...src, ...relayEntity }] : []),
+    { account_id: wallet[0]!.id, debit_or_credit: "debit", amount_cents: amount, description: `Relay deposit ${d.entry_date} — wallet funded`, ...src, ...relayEntity },
+    ...(fee > 0 ? [{ account_id: feeAcct[0]!.id, debit_or_credit: "debit", amount_cents: fee, description: `Relay deposit ${d.entry_date} — 3.25% deposit fee`, ...src, ...relayEntity }] : []),
     {
       account_id: fund[0]!.id,
       debit_or_credit: "credit",
       amount_cents: total,
       description: loan
-        ? `Relay deposit ${d.deposit_id} — Due to / from party, ${loan.display_id} (${funding.label} ${card})`
-        : `Relay deposit ${d.deposit_id} — charged to card ${card} (${funding.label})`,
+        ? `Relay deposit ${d.entry_date} — Due to / from party, ${loan.display_id} (${funding.label} ${card})`
+        : `Relay deposit ${d.entry_date} — charged to card ${card} (${funding.label})`,
       ...src,
       ...fundEntity,
     },
@@ -238,7 +238,7 @@ export async function postRelayDeposit(
     {
       operating_company_id: args.operatingCompanyId,
       entry_date: d.entry_date,
-      memo: `Relay wallet deposit ${d.deposit_id}: $${(amount / 100).toFixed(2)} + fee $${(fee / 100).toFixed(2)} charged to card ${card} (${funding.label})${loan ? ` — Due to / from party, ${loan.display_id}` : ""}`,
+      memo: `Relay wallet deposit ${d.entry_date}: $${(amount / 100).toFixed(2)} + fee $${(fee / 100).toFixed(2)} charged to card ${card} (${funding.label})${loan ? ` — Due to / from party, ${loan.display_id}` : ""}`,
       source: "auto",
       ...src,
       postings,
