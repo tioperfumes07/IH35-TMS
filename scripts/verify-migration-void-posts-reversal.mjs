@@ -125,9 +125,18 @@ const MARKER_SYNC_ONLY = new Set(["202612480900_bills_sync_void_markers.sql"]);
  * '%recon%'` → 0 — no posting has ever referenced a reconciliation session, applied or not. The
  * migration's own UPDATE also never touches a `status = 'reconciled'` row (confirmed by reading the
  * WHERE clause), so no live financial figure was reclassified, only a duplicate worksheet retired.
+ *
+ * 443.99 (2026-10-12, CC-3 live-verify): 202615350600_bank_feed_bucket_and_kind.sql (applied on prod 2026-10-03
+ * 15:19 UTC, immutable) retires `banking.reconciliation_matches` rows left live after their bank line was released.
+ * A match row is a LINK between a bank line and a document; ROUND 360 (#24617, "match posts nothing") made matching
+ * a pure link — the document it points at carries its own posting, independent of the match row. Live-confirmed on
+ * prod read-only: `SELECT count(*) FROM accounting.journal_entry_postings WHERE source_transaction_id::text IN
+ * (SELECT id::text FROM banking.reconciliation_matches)` → 0 of 7,169 postings; `source_transaction_type ILIKE
+ * '%match%'` → 0. Its UPDATE touches no amount and voids no document — only the link, with a reason (WORM).
  */
 const NEVER_POSTED_CONFIRMED = new Set([
   "202613300700_go_acct_01_recon_sessions_void_status_and_unique.sql",
+  "202615350600_bank_feed_bucket_and_kind.sql",
 ]);
 
 if (process.argv.includes("--selftest")) {

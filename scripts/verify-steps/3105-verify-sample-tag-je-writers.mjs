@@ -35,12 +35,22 @@ const LABEL = "3105-verify-sample-tag-je-writers";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..", "..");
 
 const WRITERS = [
-  "apps/backend/src/accounting/recurring.worker.ts",
   "apps/backend/src/accounting/amortization-posting/amortization-posting.service.ts",
   "apps/backend/src/accounting/fuel-posting/poster.service.ts",
   "apps/backend/src/accounting/period-close-retained-earnings.service.ts",
   "apps/backend/src/accounting/bank-recon/match.service.ts",
 ];
+
+// RETIRED writers — once JE writers, now create-only by ruling. ROUND 389.4 RULING 1 (#25140): recurring.worker.ts
+// never posts (a JE template is never materialized; documents are created draft / unposted). Stricter than the
+// writer check: the file may hold NO journal_entries INSERT at all (443.99). verify-recurring-worker-never-posts
+// pins the rest of that ruling.
+const RETIRED_WRITERS = ["apps/backend/src/accounting/recurring.worker.ts"];
+
+export function checkRetired(src) {
+  const n = findInsertColumnLists(src).length;
+  return n === 0 ? { ok: true } : { ok: false, reason: `${n} INSERT INTO accounting.journal_entries — a retired writer must post nothing (ROUND 389.4 R1)` };
+}
 
 function fail(msg) {
   console.error(`[${LABEL}] FAIL: ${msg}`);
@@ -112,6 +122,13 @@ if (process.argv.includes("--selftest")) {
     if (!r.ok) fail(`selftest baseline: real writer ${w} should pass but does not — ${r.reason}`);
   }
 
+  for (const w of RETIRED_WRITERS) {
+    const src = fs.readFileSync(path.join(ROOT, w), "utf8");
+    const r = checkRetired(src);
+    if (!r.ok) fail(`selftest baseline: retired writer ${w} should post nothing but does not — ${r.reason}`);
+    if (checkRetired(`${src}\n${good}`).ok) fail(`selftest: a JE INSERT re-added to retired writer ${w} was not caught`);
+  }
+
   console.log(`[${LABEL}] selftest: PASS — fixtures classify correctly (incl. the no-space INSERT form); all ${WRITERS.length} real writers pass`);
   process.exit(0);
 }
@@ -128,9 +145,16 @@ for (const w of WRITERS) {
   if (!r.ok) failures.push(`${w}: ${r.reason}`);
 }
 
+for (const w of RETIRED_WRITERS) {
+  const p = path.join(ROOT, w);
+  if (!fs.existsSync(p)) continue; // a deleted retired writer posts nothing
+  const r = checkRetired(fs.readFileSync(p, "utf8"));
+  if (!r.ok) failures.push(`${w}: ${r.reason}`);
+}
+
 if (failures.length) {
   console.error(`[${LABEL}] FAIL — ${failures.length} of ${WRITERS.length} JE writer(s) regressed:`);
   for (const f of failures) console.error(` - ${f}`);
   process.exit(1);
 }
-console.log(`[${LABEL}] PASS — all ${WRITERS.length} remaining journal_entries writers explicitly bind is_sample_data`);
+console.log(`[${LABEL}] PASS — all ${WRITERS.length} remaining journal_entries writers explicitly bind is_sample_data; ${RETIRED_WRITERS.length} retired writer(s) post nothing`);

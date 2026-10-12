@@ -37,6 +37,8 @@ import path from "node:path";
 export const ALLOW_OFFLINE_SKIP = "mechanism ratchet over fixture-writer source (prod refusal, no swallowed cleanup, residue check); never connects — prod row counts are a GUARD re-run, not CI";
 
 const ROOT = process.cwd();
+// 443.99: a static source scan — it never opens a connection; DATABASE_URL appears only in the text it audits.
+export const ALLOW_OFFLINE_SKIP = "static source scan of fixture writers; never connects to a database";
 const LABEL = "verify:no-leak-test-pollution";
 const SELFTEST = process.argv.includes("--selftest");
 
