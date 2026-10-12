@@ -58,3 +58,5 @@ The order also says: "One PR + one named guard per step, guard wired in scripts/
 
 ## 443.95+: selftest arms for guards listed by verify-guard-selftests-are-real (Lead: main ci last red)
 - CC-3 adds a real `--selftest` arm (planted pass + planted violation, no database) to guards in any lane. The enforced rules, thresholds and baselines do not change; the guard is only refactored.
+## 443.95+ — selftest arms for guards listed by verify-guard-selftests-are-real (Lead: main ci last red)
+- CC-3 batch 1 (Lead 443.96 split): verify-b2-session-bypass-node-env-gate, verify-control-totals, verify-diesel-expense-fuel-dedupe, verify-driver-bill-settlement-link, verify-faro-purchase-day-feed-law, verify-fuel-expense-line-and-number-engine — refactor into exported pure checks + a real --selftest; normal-path rules unchanged.
