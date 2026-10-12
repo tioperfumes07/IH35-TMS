@@ -2577,5 +2577,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
     "purpose": "443.128 C: team driver bills recognized at delivery — driver_bills.accrued_team_bill_id (the co-driver's delivery-posted A/P bill) + the settlement spine keyed per driver bill AND accounting bill (two team drivers close the same driver bill)"
+  },
+  "202615910700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.134 AJK-13: reports.ifta_filings versions — a re-prepare of an approved / filed quarter is a NEW draft version (version + supersedes_filing_uuid); the unique key becomes (company, quarter, version); a filed / approved filing is never modified"
   }
 }
