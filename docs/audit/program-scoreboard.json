@@ -1,10 +1,10 @@
 {
-  "healthzSha": "8befa25",
-  "generated_at": "2026-10-12T21:16:04.091Z",
+  "healthzSha": "733b56b",
+  "generated_at": "2026-10-12T21:21:26.251Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "8befa25",
+    "deployedSha": "733b56b",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 26712,
+      "title": "FINDING: ACCT-F4431341 LANE: FINANCIAL — AJK-04 (443.134): a same-name vendor returned \"already_present\" without linking the driver — the driver still had no payee",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 04:19 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26712",
+      "sha": "37435d3db1",
+      "committedAtIso": "2026-10-12T16:19:27-05:00"
+    },
+    {
+      "number": 26711,
+      "title": "chore: claim migration 202615900910 (443.134 #1 related-party account link)",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 04:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26711",
+      "sha": "733b56ba67",
+      "committedAtIso": "2026-10-12T16:15:25-05:00"
+    },
+    {
       "number": 26709,
       "title": "Claude-3- FINDING: ACCT-F4431332 LANE: FINANCIAL -- 443.133 B Relay deposits classified by the owner's card map",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26703",
       "sha": "9f45f099af",
       "committedAtIso": "2026-10-12T15:31:32-05:00"
-    },
-    {
-      "number": 26702,
-      "title": "FINDING: ACCT-F4431320 LANE: FINANCIAL -- 443.132: CC-3's static reds on main (3 guards re-pointed to today's engine shape, equally strict; 1 local-env only)",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 03:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26702",
-      "sha": "f9982ce73a",
-      "committedAtIso": "2026-10-12T15:30:09-05:00"
-    },
-    {
-      "number": 26701,
-      "title": "FINDING: N/A (443.130 item 3 follow-up — 3 source-text guards still read the moved expense writer from expenses.routes.ts; red on main since c4dc73d5ba, CC-2's to fix first)",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 03:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26701",
-      "sha": "68e5c0f15a",
-      "committedAtIso": "2026-10-12T15:24:27-05:00"
     }
   ]
 }

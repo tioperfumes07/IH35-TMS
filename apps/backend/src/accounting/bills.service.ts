@@ -3161,20 +3161,20 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
       [input.coaAccountId, input.operatingCompanyId]
     );
     if (!acct.rows[0]) throw new Error("bill_line_account_not_in_company");
-    // ACCT-F5452: load_id is named explicitly, not omitted. This header-only path (caller supplied
-    // coaAccountId, no per-line lines[]) has no per-line loadId to draw from — CreateBillInput has
-    // no BILL-level loadId either, only CreateBillLineInput's per-line one used by the lines[]
-    // branch above — so NULL here is the honest value for "this synthesized line carries no load
-    // association," not a silently-dropped column. Naming it lets a report tell "never wired" from
-    // "wired, no load" for this bill-creation path.
+    // ACCT-F5452 / LEAD 443.134 AJK-09: load_id is named explicitly. This header-only path (caller supplied
+    // coaAccountId, no per-line lines[]) takes the BILL-level loadId (CreateBillInput.loadId, added with the 443.106 header
+    // load) — NULL only when the bill names no load — and the bill's unit / trailer (equipment_id), so the one line carries
+    // the same load / truck / trailer as its header.
     await client.query(
       `
         INSERT INTO accounting.bill_lines (
-          bill_id, line_sequence, amount, description, section, account_id, load_id
+          bill_id, line_sequence, amount, description, section, account_id, load_id, unit_id, equipment_id
         )
-        VALUES ($1::uuid, 1, $2, $3, 'A', $4::uuid, NULL)
+        VALUES ($1::uuid, 1, $2, $3, 'A', $4::uuid, $5::uuid, $6::uuid, $7::uuid)
       `,
-      [created.id, input.amountCents / 100, input.memo ?? null, input.coaAccountId]
+      // LEAD 443.134 AJK-09 — the synthesized single line carries the bill's own load / unit / trailer (was NULL load always:
+      // a legal reserve / fee bill on a load lost the load on its line).
+      [created.id, input.amountCents / 100, input.memo ?? null, input.coaAccountId, input.loadId ?? null, input.unitId ?? null, input.trailerId ?? null]
     );
   }
 
