@@ -25,6 +25,7 @@ import { listSamsaraIngestionTenantIds } from "../integrations/samsara/ingestion
 import { geocodeStopsWithClient, NO_STREET_SOURCE_TRIED } from "../telematics/stops-geocode-backfill.service.js";
 import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 import { relearnLoadStopLegs } from "../dispatch/load-lane-learning.service.js";
+import { canonicalNotCancelledLoadClause } from "../dispatch/canonical-active-load-set.js";
 
 const CRON_NAME = "dispatch.stop_resolution_sweep";
 const SYSTEM_ACTOR = SYSTEM_ACTOR_USER_ID;
@@ -41,7 +42,7 @@ export async function runStopResolutionSweepTick(limit = 200) {
         await client.query<{ load_id: string }>(
           `SELECT DISTINCT s.load_id::text AS load_id
              FROM mdata.load_stops s JOIN mdata.loads l ON l.id = s.load_id
-            WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL AND l.status <> 'cancelled'
+            WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL AND ${canonicalNotCancelledLoadClause("l")}
               AND s.soft_deleted_at IS NULL AND s.facility_name IS NOT NULL
               AND s.geocode_source IN ('zip_center', 'city_center')
               -- 443.44: a stop the place step has not tried yet (resolved off-server / before the step existed) is picked now;

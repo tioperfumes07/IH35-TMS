@@ -18,6 +18,14 @@ const INDEX_CSS = path.join(SRC, "index.css");
 const TABLE_HEADER_CELL = path.join(SRC, "components/table/TableHeaderCell.tsx");
 const BASELINE_DOC = path.join(ROOT, "docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md");
 const DATE_RE = /date|incurred|earned|due\b|paid|cleared|created|posted|occurred|as of|period/i;
+// LEAD 443.99 class B (2026-10-12) — date-column detection.
+//   old rule: a call site has a date column only if a column LABEL or KEY matches DATE_RE (date / created / posted ...).
+//   new rule: ...or a column KEY is timestamp-shaped (DATE_KEY_RE: *_at, *_date, *_day / day, since, effective_from|to).
+//   why: tables built since the 2026-09-06 baseline show real date columns under owner-facing labels like "When", "Opened",
+//        "Triggered", "Day", "Since", "Last run", keyed transaction_at / opened_at / triggered_at / day / since /
+//        last_run_at and rendered through formatDate*. The label regex counted 13 of them as "no date column". Not looser:
+//        a table with no time-keyed column and no date label still counts as missing (selftest plants it).
+const DATE_KEY_RE = /(?:^|_)(?:at|date|day|since)$|^effective_(?:from|to)$/;
 const RAW_TABLE = /<table[\s>]/i;
 const TABLE_INFRA = new Set([
   "components/DataTable.tsx",
@@ -47,6 +55,11 @@ function rel(abs) {
   return path.relative(ROOT, abs).split(path.sep).join("/");
 }
 
+/** A call site has a date column when a label/key reads as a date, or a key is timestamp-shaped. */
+export function hasDateColumn(labels, keys) {
+  return [...labels, ...keys].some((v) => DATE_RE.test(v)) || keys.some((k) => DATE_KEY_RE.test(k));
+}
+
 export function measure() {
   const parity = fs.readFileSync(PARITY, "utf8");
   const tokens = fs.readFileSync(TOKENS, "utf8");
@@ -66,7 +79,7 @@ export function measure() {
     callSites.push(rel(f));
     const labels = [...s.matchAll(/\blabel:\s*"([^"]+)"/g)].map((m) => m[1]);
     const keys = [...s.matchAll(/\bkey:\s*"([^"]+)"/g)].map((m) => m[1]);
-    const hasDate = [...labels, ...keys].some((v) => DATE_RE.test(v));
+    const hasDate = hasDateColumn(labels, keys);
     const omit = s.includes("TABLE_DATE_OMIT:");
     if (!hasDate && !omit) missingDate.push(rel(f));
     const sortableTrue = (s.match(/sortable:\s*true/g) || []).length;
@@ -118,6 +131,21 @@ if (process.argv.includes("--selftest")) {
   const bad = { ...current, header_ok: false };
   if (check(bad, { missing_date_count: current.missing_date_count, hand_rolled_count: current.hand_rolled_count }).length === 0) {
     throw new Error("selftest missed header regression");
+  }
+  const dateCases = [
+    ["status-only worklist", ["Load #", "Status"], ["load_number", "status"], false],
+    ["catalog with an order column", ["Code", "Order"], ["code", "sort_order"], false],
+    ["formatter-named key is not a date", ["Amount"], ["format", "amount_cents"], false],
+    ["'When' keyed transaction_at", ["When", "Gal"], ["transaction_at", "gallons"], true],
+    ["'Day' keyed day", ["Day", "Net"], ["day", "net_cents"], true],
+    ["'Since' keyed since", ["Since", "Amount"], ["since", "amount_cents"], true],
+    ["'Date' label", ["Date", "Amount"], ["when", "amount_cents"], true],
+  ];
+  for (const [name, labels, keys, want] of dateCases) {
+    if (hasDateColumn(labels, keys) !== want) throw new Error(`selftest date-column case wrong: ${name}`);
+  }
+  if (check({ ...current, missing_date_count: current.missing_date_count + 1 }, { missing_date_count: current.missing_date_count, hand_rolled_count: current.hand_rolled_count }).length === 0) {
+    throw new Error("selftest missed a new table with no date column");
   }
   console.log(`PASS ${LABEL} --selftest`);
   process.exit(0);

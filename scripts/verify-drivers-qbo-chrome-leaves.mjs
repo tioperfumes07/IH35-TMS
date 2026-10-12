@@ -119,7 +119,16 @@ const CHECKS = [
   {
     name: "profiles.drawer.equipment_qualification: DriverDetail real Modal drawer + DatePicker",
     file: "apps/frontend/src/pages/DriverDetail.tsx",
-    pattern: /<Modal variant="drawer" open=\{addQualificationOpen\}[\s\S]{0,2500}DatePicker/,
+    // LEAD 443.99 class B (2026-10-12): old rule = DatePicker within 2,500 chars of the drawer's opening tag; new rule =
+    // DatePicker inside the addQualificationOpen drawer's own body (up to its </Modal>). why: DRV-F6702 (#16412,
+    // c6a71537de) and SETL-45 (#18725, 53d3b669e4) added the scoped equipment-type picker + pay fields above the date —
+    // the date is 4,527 chars in and still inside the drawer. A date outside the drawer, or no drawer, still fails.
+    pattern: { test: (src) => {
+      const open = src.indexOf('<Modal variant="drawer" open={addQualificationOpen}');
+      if (open < 0) return false;
+      const close = src.indexOf("</Modal>", open);
+      return close > open && /<DatePicker\b/.test(src.slice(open, close));
+    } },
   },
   {
     name: "profiles.drawer.safety_event: DriverDetail real Modal drawer + Combobox + DatePicker",

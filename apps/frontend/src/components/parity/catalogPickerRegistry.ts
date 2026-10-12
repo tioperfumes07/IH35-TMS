@@ -445,7 +445,10 @@ export const CATALOG_PICKER_CONFIGS = {
     table: "catalogs.load_types",
     endpoint: "/api/v1/catalogs/dispatch/load-types",
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
-    consumerPath: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+    // No consumerPath: the owner-ordered Book Load layout restore (#20072, 2026-09-03) removed the
+    // load-type picker from BookLoadModalV4 because it duplicated Trailer type. The catalog is
+    // maintained at /lists/dispatch/load-types; naming a consumer that no longer renders the picker
+    // would make LST-PICKER-01 assert adoption that does not exist.
   }),
 
   // GO-21 B3 — a canned-reason-TEXT quick-pick, not an FK picker: the caller reads the picked
@@ -459,7 +462,10 @@ export const CATALOG_PICKER_CONFIGS = {
     table: "catalogs.historical_import_reasons",
     endpoint: "/api/v1/catalogs/dispatch/historical-import-reasons",
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
-    consumerPath: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+    // No consumerPath: the owner-ordered Book Load layout restore (#20072, 2026-09-03) removed the
+    // load-type picker from BookLoadModalV4 because it duplicated Trailer type. The catalog is
+    // maintained at /lists/dispatch/load-types; naming a consumer that no longer renders the picker
+    // would make LST-PICKER-01 assert adoption that does not exist.
   }),
 
   load_commodity: catalogEntry({
@@ -468,7 +474,10 @@ export const CATALOG_PICKER_CONFIGS = {
     table: "catalogs.load_commodities",
     endpoint: "/api/v1/catalogs/dispatch/load-commodities",
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
-    consumerPath: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+    // No consumerPath: the owner-ordered Book Load layout restore (#20072, 2026-09-03) removed the
+    // load-type picker from BookLoadModalV4 because it duplicated Trailer type. The catalog is
+    // maintained at /lists/dispatch/load-types; naming a consumer that no longer renders the picker
+    // would make LST-PICKER-01 assert adoption that does not exist.
   }),
 
   dispatch_flag_color: {

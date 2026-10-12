@@ -16,7 +16,10 @@ function audit(text) {
   const need = (condition, message) => { if (!condition) failures.push(message); };
   const create = block(text, "const createLaneMutation", "const updateLaneMutation");
   const update = block(text, "const updateLaneMutation", "const deactivateLaneMutation");
-  const deactivate = block(text, "const deactivateLaneMutation", "const openInvoicesForPayment");
+  // LEAD 443.99 class B (2026-10-12): old end anchor "const openInvoicesForPayment" was deleted with the profile's
+  // record-payment flow (owner ORDERS A/R read-only, CUST-F20 #23767, 0234fe78d1); the block now ends at the
+  // mutation's own close "\n  });". Same block, same two assertions.
+  const deactivate = block(text, "const deactivateLaneMutation", "\n  });");
   need(/onError: \(error\)[\s\S]*Failed to create lane/.test(create), "create lane failure must be visible");
   need(/onError: \(error\)[\s\S]*Failed to update lane/.test(update), "update lane failure must be visible");
   need(/onError: \(error\)[\s\S]*Failed to deactivate lane/.test(deactivate), "deactivate lane failure must be visible");

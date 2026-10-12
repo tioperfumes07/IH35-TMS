@@ -17,10 +17,10 @@ export const ALLOW_OFFLINE_SKIP = "pure static source-shape check, no live data 
 const ESCROW_FILE = "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx";
 const RECON_FILE = "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx";
 
-function checkEscrowFilter(failures) {
-  let src;
+function checkEscrowFilter(failures, source) {
+  let src = source;
   try {
-    src = readFileSync(ESCROW_FILE, "utf8");
+    if (src === undefined) src = readFileSync(ESCROW_FILE, "utf8");
   } catch {
     failures.push(`${ESCROW_FILE} not found.`);
     return;
@@ -59,10 +59,10 @@ function checkEscrowFilter(failures) {
   }
 }
 
-function checkReconcile(failures) {
-  let src;
+function checkReconcile(failures, source) {
+  let src = source;
   try {
-    src = readFileSync(RECON_FILE, "utf8");
+    if (src === undefined) src = readFileSync(RECON_FILE, "utf8");
   } catch {
     failures.push(`${RECON_FILE} not found.`);
     return;
@@ -106,11 +106,32 @@ function selftest() {
   if (ESCROW_FILE === RECON_FILE) failures.push("ESCROW_FILE and RECON_FILE must be distinct paths.");
   if (!/DriverEscrowLedgerSection/.test(ESCROW_FILE)) failures.push("ESCROW_FILE path drifted.");
   if (!/ReconciliationWorkspace/.test(RECON_FILE)) failures.push("RECON_FILE path drifted.");
+  // Planted regressions against the real sources, through the same check functions main() runs.
+  const escrow = readFileSync(ESCROW_FILE, "utf8");
+  const recon = readFileSync(RECON_FILE, "utf8");
+  const clean = [];
+  checkEscrowFilter(clean, escrow);
+  checkReconcile(clean, recon);
+  if (clean.length) failures.push(`real sources rejected: ${clean.join(" | ")}`);
+  const plants = [
+    ["escrow: driver filter not threaded into the query", escrow.replace(/driverIds:/g, "driverIdz:"), checkEscrowFilter],
+    ["escrow: header total from an unfiltered prop", escrow.replace(/ledgerQuery\.data\?\.total_amount_cents/g, "props.total_amount_cents"), checkEscrowFilter],
+    ["recon: needsForceComplete hardcoded false", recon.replace(/needsForceComplete\s*=\s*([^;]+);/, "needsForceComplete = false;"), checkReconcile],
+    ["recon: variance auto-plugged to zero", recon + "\nconst plug = { varianceCents: 0 };\n", checkReconcile],
+    ["recon: service charge input removed", recon.replace(/serviceCharge/g, "svcFee"), checkReconcile],
+  ];
+  let caught = 0;
+  for (const [name, planted, check] of plants) {
+    const found = [];
+    check(found, planted);
+    if (found.length) caught += 1;
+    else failures.push(`planted violation escaped: ${name}`);
+  }
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} selftest OK`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${plants.length} planted violations caught (real sources pass)`);
 }
 
 function main() {

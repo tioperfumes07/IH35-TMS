@@ -35,9 +35,9 @@
  *   - trailer.profile.documents: TrailerProfilePage.tsx mounts the real DocumentsSection component.
  *   - trailer.profile.action_bar: TrailerProfilePage.tsx mounts the real trailer-profile ActionBar,
  *     which itself renders a real "Export PDF" download link.
- *   - trailer.edit: EditTrailerModal.tsx is a real Modal with a real Combobox field.
+ *   - trailer.edit: EditTrailerModal.tsx is a real ParityDrawer with a real Combobox field.
  *   - fleet.modal.status_change: components/trailer-profile/StatusChangeModal.tsx is a real Modal
- *     with a real status <select>.
+ *     with a real status SelectCombobox.
  *
  * @matrix-built {"modules":["fleet"],"cols":["qbo_chrome"],"leafRe":"^home\\.roster$","task":"VERTICAL-QBO-CHROME-fleet-home-roster","vertical":"column-wave"}
  * @matrix-built {"modules":["fleet"],"cols":["qbo_chrome"],"leafRe":"^home\\.create_unit$","task":"VERTICAL-QBO-CHROME-fleet-create-unit","vertical":"column-wave"}
@@ -75,12 +75,15 @@ const CHECKS = [
   {
     name: "home.create_unit: FleetHomePage real + Create Unit -> CreateUnitModal",
     file: "apps/frontend/src/pages/fleet/FleetHomePage.tsx",
-    pattern: /\+ Create Unit[\s\S]{0,2000}<CreateUnitModal/,
+    // 443.99: PR3 FLEET (#25519, 84fea98b6b) moved the buttons into PageHeader actions ~11KB above the mounts, past the
+    // old 2000-char window. Now bound by state: the button's setter must be the modal's open flag (stricter).
+    pattern: /onClick=\{\(\) => setCreateUnitOpen\(true\)\}\s*>\s*\+ Create Unit[\s\S]*<CreateUnitModal\s+open=\{createUnitOpen\}/,
   },
   {
     name: "home.create_trailer: FleetHomePage real + Create Trailer -> CreateTrailerModal",
     file: "apps/frontend/src/pages/fleet/FleetHomePage.tsx",
-    pattern: /\+ Create Trailer[\s\S]{0,2200}<CreateTrailerModal/,
+    // 443.99: same PR3 FLEET move; bound by state, not distance.
+    pattern: /onClick=\{\(\) => setCreateTrailerOpen\(true\)\}\s*>\s*\+ Create Trailer[\s\S]*<CreateTrailerModal\s+open=\{createTrailerOpen\}/,
   },
   {
     name: "roster.row.edit_unit / roster.row.edit_trailer: FleetTable real per-row Edit -> EditVehicleModal + EditTrailerModal",
@@ -157,9 +160,10 @@ const CHECKS = [
     // the Modal itself is present, and the real Combobox sits directly under its own
     // "Leased To Company" field label (tight, structural, immune to unrelated additions
     // elsewhere in the modal body).
-    name: "trailer.edit: EditTrailerModal is a real Modal that mounts",
+    name: "trailer.edit: EditTrailerModal is a real ParityDrawer that mounts",
     file: "apps/frontend/src/components/fleet/EditTrailerModal.tsx",
-    pattern: /<Modal\s+open=\{open\}\s+title="Edit trailer"\s+onClose=\{resetAndClose\}/,
+    // 443.99: REG-025/026 (#21604, 8205a9d94e) moved the oversized centered editor into the canonical ParityDrawer.
+    pattern: /<ParityDrawer\s+open=\{open\}\s+title="Edit trailer"\s+onClose=\{resetAndClose\}/,
   },
   {
     name: "trailer.edit: EditTrailerModal's Leased To Company field is a real Combobox",
@@ -179,7 +183,8 @@ const CHECKS = [
   {
     name: "fleet.modal.status_change: trailer StatusChangeModal is a real Modal with a real status select",
     file: "apps/frontend/src/components/trailer-profile/StatusChangeModal.tsx",
-    pattern: /<Modal open=\{open\} title="Change trailer status"[\s\S]{0,500}<select/,
+    // 443.99: D5 (#25899, bf8280b075) replaced the native <select> with the canonical SelectCombobox (same as the unit modal).
+    pattern: /<Modal open=\{open\} title="Change trailer status"[\s\S]{0,500}<SelectCombobox/,
   },
 ];
 

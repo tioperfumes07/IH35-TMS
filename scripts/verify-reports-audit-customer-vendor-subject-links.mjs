@@ -15,7 +15,13 @@ export function failures(input = sources) {
     ["customer", "audit_customer", "customer_name"],
     ["vendor", "audit_vendor", "vendor_name"],
   ]) {
-    const projection = `WHEN \${alias}.subject_type = '${kind}' THEN NULLIF(TRIM(${alias}.${labelColumn}), '')`;
+    // LEAD 443.99 class B (2026-10-12).
+    //   old rule: WHEN subject_type = '<kind>' THEN NULLIF(TRIM(<alias>.<name>), '').
+    //   new rule: the same label, COALESCEd to mdata.resolve_<kind>_label_same_company(subject_id, operating_company_id)
+    //             — the bare projection alone now fails (it loses the name of a deactivated subject).
+    //   why: AUDIT-TRAIL-SUBJECT-LABEL-LOST-FOR-DEACTIVATED-ENTITIES (#16443, 00f71487b2): FORCE RLS hides deactivated
+    //        customers/vendors from the join, so the bare form printed an id-less blank for real, preserved rows.
+    const projection = `WHEN \${alias}.subject_type = '${kind}' THEN COALESCE(NULLIF(TRIM(${alias}.${labelColumn}), ''), mdata.resolve_${kind}_label_same_company(\${alias}.subject_id, \${alias}.operating_company_id))`;
     if (!input.route.includes(projection)) {
       problems.push(`${kind} subject must project its canonical human label`);
     }
@@ -40,6 +46,7 @@ if (process.argv.includes("--selftest")) {
     ["customer-label", "route", /audit_customer\.customer_name/, "NULL"],
     ["customer-scope", "route", /audit_customer\.operating_company_id = \$\{alias\}\.operating_company_id/, "TRUE"],
     ["vendor-label", "route", /audit_vendor\.vendor_name/, "NULL"],
+    ["deactivated-customer-label-fallback", "route", /COALESCE\((NULLIF\(TRIM\(audit_customer\.customer_name\), ''\)), mdata\.resolve_customer_label_same_company\([^)]*\)\)/, "$1"],
     ["vendor-scope", "route", /audit_vendor\.operating_company_id = \$\{alias\}\.operating_company_id/, "TRUE"],
     ["customer-kind", "page", /customer:\s*"customer"/, 'customer: "vendor"'],
     ["vendor-kind", "page", /vendor:\s*"vendor"/, 'vendor: "customer"'],

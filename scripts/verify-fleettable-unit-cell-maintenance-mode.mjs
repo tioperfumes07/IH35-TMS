@@ -82,13 +82,16 @@ function selftest() {
     process.exit(1);
   }
 
+  // 443.99: plants re-anchored on the canonical one-line Unit-cell ternary (the multi-line renderer they used to
+  // target was deleted as dead duplicate code by #20170, a861529601). Same two regressions planted.
+  const BASE_ARM = /<EntityLink kind=\{row\.kind === "trailer" \? "trailer" : "unit"\}[^>]*\/>/;
+  if (!BASE_ARM.test(clean)) {
+    console.error("verify-fleettable-unit-cell-maintenance-mode --selftest FAILED — plant anchor (base EntityLink arm) not found");
+    process.exit(1);
+  }
   const plantedIdentical = clean.replace(
-    /\/\* Base \/fleet:[\s\S]*?<\/td>/,
-    `<td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
-                        <Link to={fleetProfilePath(row)} className="font-semibold text-slate-700 hover:underline">
-                          {entityLabel(row.unit_number, row.id, "Unit")}
-                        </Link>
-                      </td>`
+    BASE_ARM,
+    `<Link to={fleetProfilePath(row)} className="font-semibold text-[#1F2A44] hover:underline">{entityLabel(row.unit_number, row.id, "Unit")}</Link>`
   );
   if (!collectFailures(plantedIdentical).length) {
     console.error(
@@ -97,13 +100,7 @@ function selftest() {
     process.exit(1);
   }
 
-  const plantedPlain = clean.replace(
-    /\/\* Base \/fleet:[\s\S]*?<\/td>/,
-    `/* Base /fleet: LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES */
-                      <td className="px-2 py-1 font-semibold text-slate-700">
-                        {entityLabel(row.unit_number, row.id, "Unit")}
-                      </td>`
-  );
+  const plantedPlain = clean.replace(BASE_ARM, `<span className="font-semibold text-slate-700">{entityLabel(row.unit_number, row.id, "Unit")}</span>`);
   if (!collectFailures(plantedPlain).length) {
     console.error(
       "verify-fleettable-unit-cell-maintenance-mode --selftest FAILED — planted plain-text base escaped"

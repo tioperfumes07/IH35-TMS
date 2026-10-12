@@ -63,14 +63,29 @@ export function audit(s = {}) {
   if (!multiStopEditor.includes("listAllDispatchCatalogRows(pickupTimeTypesCatalogClient") || /pickupTimeTypesCatalogClient\.list\([\s\S]{0,180}limit:\s*200/.test(multiStopEditor)) failures.push("MultiStopEditor must exhaust pickup-time-types catalog");
   for (const token of ["pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}", "disabled={pickupTimeTypesLoading || pickupTimeTypesUnavailable}", "Could not load pickup and appointment types.", "onClick={() => void pickupTimeTypesQuery.refetch()}"])
     if (!multiStopEditor.includes(token)) failures.push(`MultiStopEditor pickup-time failure honesty missing ${token}`);
-  for (const client of ["pickupTimeTypesCatalogClient", "lumperProvidersCatalogClient", "loadTypesCatalogClient"]) {
+  // LEAD 443.99 class B (2026-10-12) — Book Load catalog rules.
+  //   old rule: BookLoadModalV4 exhausts loadTypesCatalogClient and renders a load-type picker with
+  //             disabled={loadTypesQuery.isLoading || loadTypesQuery.isError} + a "Could not load load types." banner;
+  //             the customer picker is disabled={customersQuery.isLoading || customersQuery.isError}.
+  //   new rule: Book Load carries NO load-type catalog picker (no loadTypesQuery / loadTypesCatalogClient /
+  //             createKind="load_type"; catalog_load_type_id survives only as a hidden edit-hydrate field);
+  //             the customer picker shows in-flight state via loading={customersQuery.isLoading} and is
+  //             disabled={customersQuery.isError} — folding isLoading into disabled is now a failure.
+  //   why: owner-ordered Book Load layout restore #20072 (5a147c0f00, 2026-09-03: "removes the catalog load-type
+  //        picker that duplicated Trailer type"); WIZ-46 #20281 (68156de12c): disabling the autocomplete while it
+  //        loads blurred the input on the first keystroke and dropped characters 2..n. The load-types catalog
+  //        itself stays fully checked below (list page, client, scoped CRUD, matrix).
+  if (/loadTypesQuery|loadTypesCatalogClient|createKind=["']load_type["']/.test(bookLoadModal) || !/type="hidden" \{\.\.\.form\.register\("catalog_load_type_id"\)\}/.test(bookLoadModal)) {
+    failures.push("BookLoadModalV4 must not render a load-type catalog picker (owner #20072) — catalog_load_type_id stays hidden");
+  }
+  if (!bookLoadModal.includes("loading={customersQuery.isLoading}") || !bookLoadModal.includes("disabled={customersQuery.isError}") || /disabled=\{customersQuery\.isLoading/.test(bookLoadModal)) {
+    failures.push("BookLoadModalV4 customer picker must show loading={customersQuery.isLoading} and be disabled={customersQuery.isError} only (WIZ-46)");
+  }
+  for (const client of ["pickupTimeTypesCatalogClient", "lumperProvidersCatalogClient"]) {
     if (!bookLoadModal.includes(`listAllDispatchCatalogRows(${client}`) || new RegExp(`${client}\\.list\\([\\s\\S]{0,180}limit:\\s*200`).test(bookLoadModal)) failures.push(`BookLoadModalV4 must exhaust ${client}`);
   }
   for (const token of [
-    "disabled={customersQuery.isLoading || customersQuery.isError}",
     'message="Could not load customers." onRetry={() => void customersQuery.refetch()}',
-    "disabled={loadTypesQuery.isLoading || loadTypesQuery.isError}",
-    'message="Could not load load types." onRetry={() => void loadTypesQuery.refetch()}',
     "disabled={lumperProvidersQuery.isLoading || lumperProvidersQuery.isError}",
     'message="Could not load lumper providers." onRetry={() => void lumperProvidersQuery.refetch()}',
     "pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}",
@@ -127,7 +142,10 @@ if (process.argv.includes("--selftest")) {
     ["multiStopEditor", original.multiStopEditor.replace("pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}", "pickupTimeTypesUnavailable={false}")],
     ["multiStopEditor", original.multiStopEditor.replace("onClick={() => void pickupTimeTypesQuery.refetch()}", "onClick={() => undefined}")],
     ["bookLoadModal", original.bookLoadModal.replace("listAllDispatchCatalogRows(lumperProvidersCatalogClient", "lumperProvidersCatalogClient.list")],
-    ["bookLoadModal", original.bookLoadModal.replace("disabled={loadTypesQuery.isLoading || loadTypesQuery.isError}", "disabled={loadTypesQuery.isLoading}")],
+    ["bookLoadModal", original.bookLoadModal.replace("disabled={customersQuery.isError}", "disabled={customersQuery.isLoading || customersQuery.isError}")],
+    ["bookLoadModal", original.bookLoadModal.replace("loading={customersQuery.isLoading}", "")],
+    ["bookLoadModal", original.bookLoadModal.replace('createKind="customer"', 'createKind="customer"\n/>\n<ReferenceSelect createKind="load_type" options={loadTypesQuery.data}')],
+    ["bookLoadModal", original.bookLoadModal.replace('message="Could not load customers."', 'message="Something went wrong."')],
     ["bookLoadModal", original.bookLoadModal.replace("onRetry={() => void lumperProvidersQuery.refetch()}", "onRetry={() => undefined}")],
     ["bookLoadModal", original.bookLoadModal.replace("pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}", "pickupTimeTypesUnavailable={false}")],
     ["bookLoadStops", original.bookLoadStops.replace("pickupTimeTypesLoading || pickupTimeTypesUnavailable", "pickupTimeTypesLoading")],

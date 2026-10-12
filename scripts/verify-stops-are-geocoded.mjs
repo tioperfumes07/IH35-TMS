@@ -24,8 +24,38 @@ const DISPATCHABLE_STATUSES = [
   "at_pickup", "in_transit", "at_delivery",
 ];
 
+/**
+ * Row-level mirror of main()'s SQL: load numbers (dispatchable, not soft-deleted) with at least one live stop that has no
+ * latitude or carries a geocode failure.
+ */
+export function uncoordinatedLoads(rows) {
+  const out = new Set();
+  for (const r of rows) {
+    if (r.load_soft_deleted_at || r.stop_soft_deleted_at) continue;
+    if (!DISPATCHABLE_STATUSES.includes(r.status)) continue;
+    if (r.latitude == null || r.geocode_failure_reason != null) out.add(r.load_number);
+  }
+  return [...out].sort();
+}
+
 function selftest() {
-  console.log(`${LABEL} selftest OK — this guard is a live-data check by design (no pure logic to unit test beyond the SQL itself)`);
+  const stop = (over) => ({ load_number: "13700", status: "dispatched", latitude: 27.5, geocode_failure_reason: null, load_soft_deleted_at: null, stop_soft_deleted_at: null, ...over });
+  const plants = [
+    ["dispatched load with a stop never geocoded", [stop({ latitude: null })]],
+    ["in-transit load whose geocode failed", [stop({ status: "in_transit", geocode_failure_reason: "ZERO_RESULTS" })]],
+    ["one bad stop among good ones", [stop({}), stop({ load_number: "13701", status: "booked", latitude: null })]],
+  ];
+  const escaped = plants.filter(([, rows]) => uncoordinatedLoads(rows).length === 0).map(([n]) => n);
+  const clean = uncoordinatedLoads([
+    stop({}),
+    stop({ load_number: "13702", status: "closed", latitude: null }), // not dispatchable
+    stop({ load_number: "13703", latitude: null, stop_soft_deleted_at: "2026-10-01" }), // deleted stop
+  ]);
+  if (escaped.length || clean.length) {
+    console.error(`${LABEL} SELFTEST FAILED:\n  - escaped: ${escaped.join(", ") || "none"}\n  - clean flagged: ${clean.join(", ") || "none"}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST: ${plants.length}/${plants.length} planted violations caught (non-dispatchable and deleted stops out of scope)`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -41,7 +71,8 @@ async function main() {
     // app.bypass_rls GUC but cannot escalate role membership ("permission denied to set role").
     await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);
     const res = await client.query(
-      `SELECT DISTINCT l.load_number
+      `SELECT l.load_number, l.status::text AS status, ls.latitude, ls.geocode_failure_reason,
+              l.soft_deleted_at AS load_soft_deleted_at, ls.soft_deleted_at AS stop_soft_deleted_at
          FROM mdata.loads l
          JOIN mdata.load_stops ls ON ls.load_id = l.id AND ls.soft_deleted_at IS NULL
         WHERE l.operating_company_id = $1::uuid
@@ -53,9 +84,10 @@ async function main() {
     );
     await client.query("ROLLBACK");
 
-    if (res.rows.length > 0) {
-      console.error(`${LABEL}: FAIL — ${res.rows.length} dispatchable load(s) have at least one uncoordinated stop:`);
-      for (const r of res.rows) console.error(`  ✗ load ${r.load_number}`);
+    const bad = uncoordinatedLoads(res.rows);
+    if (bad.length > 0) {
+      console.error(`${LABEL}: FAIL — ${bad.length} dispatchable load(s) have at least one uncoordinated stop:`);
+      for (const n of bad) console.error(`  ✗ load ${n}`);
       process.exit(1);
     }
     console.log(`${LABEL}: PASS — every dispatchable load's stops are geocoded.`);

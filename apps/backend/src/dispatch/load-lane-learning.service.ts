@@ -45,6 +45,7 @@ import { computeRouteReference, type RouteReferenceResult } from "../integration
 import { resolvePointMileage } from "./mileage/mileage.service.js";
 import type { MileageProvider } from "./mileage/mileage-provider.js";
 import { OsrmProvider } from "./mileage/osrm.provider.js";
+import { canonicalHappenedNotVoidedLoadClause } from "./canonical-active-load-set.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number | null }>;
@@ -262,7 +263,7 @@ export async function computeFirstStopDeadhead(
          ) ls ON true
         WHERE l.assigned_unit_id = $1::uuid AND l.operating_company_id = $2::uuid AND l.id <> $3::uuid
           AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL
-          AND l.status::text NOT IN ('cancelled', 'canceled', 'void', 'voided')
+          AND ${canonicalHappenedNotVoidedLoadClause("l")}
           AND ls.at IS NOT NULL AND ls.at < $4::timestamptz
         ORDER BY ls.at DESC, l.load_number DESC LIMIT 1`,
       [first.unit_id, args.operatingCompanyId, args.loadId, first.at]
@@ -504,7 +505,7 @@ export async function learnLoadLanes(
                            FROM mdata.load_stops y WHERE y.load_id = n.id AND y.soft_deleted_at IS NULL
                           ORDER BY y.sequence_number LIMIT 1) f ON true
           WHERE me.unit_id IS NOT NULL AND me.last_at IS NOT NULL AND f.at > me.last_at
-            AND n.voided_at IS NULL AND n.soft_deleted_at IS NULL AND n.status::text NOT IN ('cancelled', 'canceled', 'void', 'voided')
+            AND n.voided_at IS NULL AND n.soft_deleted_at IS NULL AND ${canonicalHappenedNotVoidedLoadClause("n")}
           ORDER BY f.at LIMIT 1`,
         [args.loadId, args.operatingCompanyId]
       )

@@ -63,7 +63,8 @@ function selftest() {
   if (!/line_type IN \('earnings', 'deadhead_pay'\)/.test(QUERY)) failures.push("query does not scope to earnings/deadhead_pay lines");
   if (failures.length) {
     for (const f of failures) console.error(`${LABEL} --selftest FAIL — ${f}`);
-    return 1;
+    // Exit here, not via main()'s return value: a selftest that finds a problem must end the process non-zero itself.
+    process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS — query shape correct (load_stops join, no soft-delete filter, earnings/deadhead_pay scope)`);
   return 0;

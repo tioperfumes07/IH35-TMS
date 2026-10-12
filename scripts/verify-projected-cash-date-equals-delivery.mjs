@@ -22,6 +22,28 @@ export const REQUIRES_LIVE_DB =
 
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
+/** Pure verdict over the proforma rows main() reads — --selftest feeds it planted rows. */
+export function judgeProjected(rows) {
+  const failures = [];
+  const nonFactoredReported = [];
+  for (const row of rows) {
+    if (!row.delivery_date) {
+      failures.push(`${row.display_id} (load ${row.load_number}): no delivery stop scheduled_arrival_at to anchor on`);
+      continue;
+    }
+    if (!row.factored) {
+      nonFactoredReported.push(`${row.display_id} (load ${row.load_number}): non-factored, real net terms apply (not asserted zero-lag here)`);
+      continue;
+    }
+    if (row.delivery_date.getTime() !== row.zero_lag_projected_date.getTime()) {
+      failures.push(
+        `${row.display_id} (load ${row.load_number}): delivery_date=${row.delivery_date.toISOString().slice(0, 10)} but zero-lag projection=${row.zero_lag_projected_date.toISOString().slice(0, 10)} — variance found on a factored load`
+      );
+    }
+  }
+  return { failures, nonFactoredReported };
+}
+
 function selftest() {
   // STALE-LITERAL-OK: 36 is a UUID's fixed string length (8-4-4-4-12 + 4 hyphens), not a
   // measured/derived count subject to drift — a structural shape check, not a purge-window count.
@@ -29,7 +51,19 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAILED:\n  - USMCA company id malformed`);
     process.exit(1);
   }
-  console.log(`${LABEL} selftest OK`);
+  const d = (iso) => new Date(`${iso}T00:00:00Z`);
+  const row = (over) => ({ display_id: "P-0001", load_number: "13700", factored: true, delivery_date: d("2026-10-01"), zero_lag_projected_date: d("2026-10-01"), ...over });
+  const plants = [
+    ["factored load projected a day late", [row({ zero_lag_projected_date: d("2026-10-02") })]],
+    ["proforma with no delivery stop date", [row({ delivery_date: null })]],
+  ];
+  const escaped = plants.filter(([, rows]) => judgeProjected(rows).failures.length === 0).map(([n]) => n);
+  const clean = judgeProjected([row({}), row({ factored: false, zero_lag_projected_date: d("2026-10-31") })]);
+  if (escaped.length || clean.failures.length || clean.nonFactoredReported.length !== 1) {
+    console.error(`${LABEL} SELFTEST FAILED:\n  - escaped: ${escaped.join(", ") || "none"}; clean failures: ${clean.failures.join("; ") || "none"}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST: ${plants.length}/${plants.length} planted violations caught (zero-lag factored + non-factored net terms pass)`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -72,23 +106,7 @@ async function main() {
 
     await client.query("ROLLBACK");
 
-    const failures = [];
-    const nonFactoredReported = [];
-    for (const row of res.rows) {
-      if (!row.delivery_date) {
-        failures.push(`${row.display_id} (load ${row.load_number}): no delivery stop scheduled_arrival_at to anchor on`);
-        continue;
-      }
-      if (!row.factored) {
-        nonFactoredReported.push(`${row.display_id} (load ${row.load_number}): non-factored, real net terms apply (not asserted zero-lag here)`);
-        continue;
-      }
-      if (row.delivery_date.getTime() !== row.zero_lag_projected_date.getTime()) {
-        failures.push(
-          `${row.display_id} (load ${row.load_number}): delivery_date=${row.delivery_date.toISOString().slice(0, 10)} but zero-lag projection=${row.zero_lag_projected_date.toISOString().slice(0, 10)} — variance found on a factored load`
-        );
-      }
-    }
+    const { failures, nonFactoredReported } = judgeProjected(res.rows);
 
     if (nonFactoredReported.length) {
       console.log(`${LABEL}: ${nonFactoredReported.length} open USMCA proforma(s) on non-factored customers — real net terms apply, not asserted zero-lag:`);

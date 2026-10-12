@@ -43,7 +43,12 @@ const CHECKS = [
   ["contacts", /queryKey: \["customer-contacts", id,/],
   ["contacts.create", /createCustomerContact\(id, payload, operatingCompanyId!\)/],
   ["billing", /queryKey: \["customer-billing-summary", id,/],
-  ["billing.record_payment", /recordCustomerPayment\(id, selectedCompanyId \?\? "", \{/],
+  // LEAD 443.99 class B (2026-10-12) — detail.billing.record_payment.
+  //   old rule: the profile calls recordCustomerPayment(id, selectedCompanyId ?? "", {...}).
+  //   new rule: the leaf is the read-only notice — Record Payment shown disabled on this customer, payments go to
+  //             Accounting → Receive payment. (verify-customer-billing-invoice-wired forbids a writer coming back.)
+  //   why: owner ORDERS 2026-10-01 §3 "invoices + AR READ ONLY"; CUST-F20 (#23767, 0234fe78d1) removed the writer.
+  ["billing.record_payment", /data-testid="customer-record-payment-disabled"/],
   ["quality", /queryKey: \["customer-quality-events", id,/],
   ["quality.create_event", /createCustomerQualityEvent\(\s*id,\s*\{/],
   ["lanes", /queryKey: \["customer-lanes", id,/],
@@ -59,6 +64,12 @@ const CHECKS = [
   ["edit", /await updateCustomer\(id, \{/],
   ["fmcsa_verify", /mutationFn: \(\) => verifyCustomerFmcsa\(id, operatingCompanyId!\)/],
   ["safer_verify_now_opco", /fmcsa-safer\/verify-now[\s\S]{0,280}operating_company_id:\s*operatingCompanyId/],
+];
+
+const MONEY_LIST_STATES = [
+  ["recentInvoicesListState", "recentInvoicesQuery", "Couldn't load recent invoices"],
+  ["openInvoicesListState", "paymentInvoicesQuery", "Couldn't load open invoices"],
+  ["customerPaymentsListState", "customerPaymentsQuery", "Couldn't load payment history"],
 ];
 
 const customerLanesRoutes = fs.readFileSync(path.join(ROOT, CUSTOMER_LANES_ROUTES), "utf8");
@@ -119,11 +130,9 @@ export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSr
   // raw query) since both render sites gate on recentInvoicesListState/openInvoicesListState.
   // CUST-MONEY-F6278 — same class: payment history collapsed a GET failure into "No payments
   // recorded." because nothing branched on customerPaymentsListState.isError.
-  for (const [state, query, title] of [
-    ["recentInvoicesListState", "recentInvoicesQuery", "Couldn't load recent invoices"],
-    ["openInvoicesListState", "paymentInvoicesQuery", "Couldn't load open invoices"],
-    ["customerPaymentsListState", "customerPaymentsQuery", "Couldn't load payment history"],
-  ]) {
+  // 443.99: the open-invoices picker exists only while the profile has a record-payment flow; under the owner's
+  // A/R read-only ORDERS (CUST-F20) it is gone, so its retry is required only when the picker is present.
+  for (const [state, query, title] of MONEY_LIST_STATES.filter(([, q]) => q !== "paymentInvoicesQuery" || /const paymentInvoicesQuery/.test(src))) {
     const pattern = new RegExp(`${state}\\.isError[\\s\\S]{0,500}title="${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[\\s\\S]{0,500}${query}\\.refetch\\(\\)`);
     if (!pattern.test(src)) failures.push(`${FILE}: ${state} money GET failure must render exact-query retry, not a false empty`);
   }
@@ -184,7 +193,7 @@ if (process.argv.includes("--selftest")) {
     }
     caught++;
   }
-  for (const [state, query] of [["recentInvoicesListState", "recentInvoicesQuery"], ["openInvoicesListState", "paymentInvoicesQuery"], ["customerPaymentsListState", "customerPaymentsQuery"]]) {
+  for (const [state, query] of MONEY_LIST_STATES.filter(([, q]) => q !== "paymentInvoicesQuery" || /const paymentInvoicesQuery/.test(good))) {
     // customerPaymentsQuery.refetch() appears twice (the paymentsBackendPending retry button, and
     // the isError branch this finding adds) — replace ALL occurrences so the mutation actually
     // strips the assertion's target instead of the first, unrelated call site.

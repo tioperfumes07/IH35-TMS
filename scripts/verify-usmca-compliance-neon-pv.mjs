@@ -9,6 +9,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+// 443.100: declared so verify-no-silent-db-skip can tell an honest static-only run from a skipped live verdict.
+export const ALLOW_OFFLINE_SKIP = "static manifest half always runs; the live Neon half runs whenever DATABASE_URL is set (CI and the live job), so an unset URL is a static-only run, not a skipped money verdict";
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-usmca-compliance-neon-pv";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";

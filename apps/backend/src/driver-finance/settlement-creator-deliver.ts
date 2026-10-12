@@ -9,6 +9,7 @@ import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.se
 import { fromMdataStatus } from "../dispatch/load-state-machine.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
 import { DEFAULT_DEPART_RADIUS_M } from "../integrations/samsara/geofences/state-machine/states.js";
+import { assertCanonicalSubset, DELIVERED_OR_LATER_STATUSES } from "../dispatch/canonical-active-load-set.js";
 
 /** ROUND 443.16 — how one stop of a load was stamped (listed in the post result). */
 export type StopStamp = {
@@ -170,7 +171,8 @@ export async function stampStopsFromTracking(
 
 /** The forward path from a dispatched load to delivered in dispatch's state machine (load-state-machine.ts forwardTransitions). */
 const CREATOR_DELIVERY_PATH = ["dispatched", "in_transit", "delivered_pending_docs"] as const;
-const ALREADY_DELIVERED = new Set(["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced", "paid", "closed"]);
+assertCanonicalSubset("CREATOR_DELIVERY_PATH", CREATOR_DELIVERY_PATH);
+const ALREADY_DELIVERED = new Set<string>(DELIVERED_OR_LATER_STATUSES);
 
 export async function deliverLoadThroughDispatch(
   client: DbClient,

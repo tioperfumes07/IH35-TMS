@@ -454,7 +454,12 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         }
       />
 
-      {/* C-11 — one horizontal KPI band below tabs (Overview only so other tabs keep one-screen density). */}
+      {companyId ? (
+        <DriverOverviewBoard operatingCompanyId={companyId} driverId={id} hideChrome />
+      ) : null}
+
+      {/* C-11 — one horizontal KPI band below tabs (Overview only so other tabs keep one-screen density).
+          443.99: the tab strip is DriverOverviewBoard's ProfileTabStrip (DRV-F420, #25517), so this band renders after it. */}
       {activeTab === "Overview" ? (
         itemsQ.isError ? (
           <ListErrorState
@@ -532,10 +537,6 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             </KpiStrip>
           </div>
         )
-      ) : null}
-
-      {companyId ? (
-        <DriverOverviewBoard operatingCompanyId={companyId} driverId={id} hideChrome />
       ) : null}
 
       {activeTab === "Overview" ? (

@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — the lines of ONE check (# / description / amount); the check's date is on the check header above, not per line.
 // R-172 step 8 -- the check's own detail view + More menu (Void / Copy / Transaction journal /
 // Audit history). A check IS an accounting.expenses row (R-154 §2), but voiding one must go through
 // the CHECK-specific voidCheck() (check_number_registry stamping, print_status, etc.) -- reusing

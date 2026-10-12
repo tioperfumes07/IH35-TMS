@@ -30,7 +30,20 @@ function assert(src) {
     if (!/\bw-2\b/.test(win)) {
       problems.push(`${FILE}: resize handle must use w-2 (8px) hit target`);
     }
-    if (!/bg-slate-/.test(win)) {
+    // LEAD 443.99 class B (2026-10-12).
+    //   old rule: the handle window contains a bg-slate-* class.
+    //   new rule: the handle's className carries an AT-REST (no hover:/focus:/active: prefix) background that is
+    //             either a slate-* or a house-token hex (bg-[#RRGGBB]) at >= 50% opacity.
+    //   why: BANK-F91229 (#25897, 606a5b6afb) swept ParityTable's slate onto the owner house tokens
+    //        (bg-slate-200/90 -> bg-[#E5E7EB]/90, the §7 border grey). Still opaque at rest; a hover-only,
+    //        transparent or near-invisible (< 50%) grip still fails.
+    const cls = (/className="([^"]*)"/.exec(win) ?? [])[1] ?? "";
+    const atRest = cls.split(/\s+/).filter((t) => /^bg-/.test(t));
+    const opaque = atRest.some((t) => {
+      const m = /^bg-(?:slate-\d+|\[#[0-9A-Fa-f]{6}\])(?:\/(\d+))?$/.exec(t);
+      return m && (m[1] === undefined || Number(m[1]) >= 50);
+    });
+    if (!opaque) {
       problems.push(`${FILE}: resize handle must use opaque §7 slate background at rest`);
     }
     if (/bg-transparent|opacity-0|invisible/.test(win)) {
@@ -48,15 +61,22 @@ function assert(src) {
 const src = readFileSync(path.join(ROOT, FILE), "utf8");
 
 if (SELFTEST) {
-  const planted = src
-    .replace(/data-testid="parity-table-col-resize"/g, 'data-testid="gone"')
-    .replace(/\bw-2\b/g, "w-1");
-  const caught = assert(planted);
-  if (!caught.length) {
-    console.error(`${LABEL} SELFTEST FAIL — planted defect not caught`);
+  const plants = [
+    ["handle removed", src.replace(/data-testid="parity-table-col-resize"/g, 'data-testid="gone"').replace(/\bw-2\b/g, "w-1")],
+    ["hover-only grip", src.replace("bg-[#E5E7EB]/90 hover:bg-[#E5E7EB]", "hover:bg-[#E5E7EB]")],
+    ["near-invisible grip", src.replace("bg-[#E5E7EB]/90 hover:bg-[#E5E7EB]", "bg-[#E5E7EB]/10 hover:bg-[#E5E7EB]")],
+    ["transparent grip", src.replace("bg-[#E5E7EB]/90 hover:bg-[#E5E7EB]", "bg-transparent hover:bg-[#E5E7EB]")],
+  ];
+  let caughtCount = 0;
+  for (const [name, planted] of plants) {
+    if (planted !== src && assert(planted).length) caughtCount += 1;
+    else console.error(`${LABEL} SELFTEST: planted defect escaped — ${name}`);
+  }
+  if (caughtCount !== plants.length || assert(src).length) {
+    console.error(`${LABEL} SELFTEST FAIL — ${caughtCount}/${plants.length} caught; real source ${assert(src).length ? "flagged" : "clean"}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS`);
+  console.log(`${LABEL} SELFTEST PASS — ${caughtCount}/${plants.length} planted defects caught`);
   process.exit(0);
 }
 
@@ -66,5 +86,5 @@ if (problems.length) {
   for (const p of problems) console.error("  - " + p);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — ParityTable resize grip discoverable (w-2 slate)`);
+console.log(`${LABEL}: OK — ParityTable resize grip discoverable (w-2, opaque at rest)`);
 process.exit(0);

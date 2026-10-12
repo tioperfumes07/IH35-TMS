@@ -29,8 +29,33 @@ const LABEL = "verify-settlement-line-posting-account-complete";
 export const REQUIRES_LIVE_DB =
   "live-data money guard (settlement_lines.posting_account_id completeness on closed settlements); fails closed via requireLiveDbOrExit with no DATABASE_URL (ROUND 29.9-B)";
 
+/**
+ * Row-level mirror of main()'s SQL, and the failure text: an ACTIVE line on a CLOSED settlement with no posting account.
+ * Hard zero — no exemption set.
+ */
+export function missingPostingAccounts(companyShortName, lines) {
+  return lines
+    .filter((l) => l.settlement_status === "closed" && l.is_active === true && l.posting_account_id == null)
+    .map((l) => `${companyShortName}/${l.display_id}: ${l.line_type} "${l.description}" (line ${l.line_id}) — NULL posting_account_id on a CLOSED settlement`);
+}
+
 function selftest() {
-  console.log(`${LABEL} selftest OK — hard zero-tolerance check, no exemptions`);
+  const line = (over) => ({ line_id: "L1", line_type: "reimbursement", description: "scale", display_id: "S-2026-0001", settlement_status: "closed", is_active: true, posting_account_id: "acct-1", ...over });
+  const plants = [
+    ["closed settlement reimbursement with no account", [line({ posting_account_id: null })]],
+    ["closed settlement deduction with no account among good lines", [line({}), line({ line_id: "L2", line_type: "deduction", posting_account_id: null })]],
+  ];
+  const escaped = plants.filter(([, lines]) => missingPostingAccounts("USMCA", lines).length === 0).map(([n]) => n);
+  const clean = missingPostingAccounts("USMCA", [
+    line({}),
+    line({ line_id: "L3", settlement_status: "open", posting_account_id: null }), // open pre-settlement still being built
+    line({ line_id: "L4", is_active: false, posting_account_id: null }), // inactive line
+  ]);
+  if (escaped.length || clean.length) {
+    console.error(`${LABEL} SELFTEST FAILED:\n  - escaped: ${escaped.join(", ") || "none"}\n  - clean flagged: ${clean.join("; ") || "none"}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST: ${plants.length}/${plants.length} planted violations caught — hard zero-tolerance, open and inactive lines out of scope`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -53,7 +78,8 @@ async function main() {
     for (const co of companies.rows) {
       const res = await client.query(
         `
-          SELECT sl.id::text AS line_id, sl.line_type, sl.description, ds.display_id
+          SELECT sl.id::text AS line_id, sl.line_type, sl.description, ds.display_id,
+                 ds.status AS settlement_status, sl.is_active, sl.posting_account_id
             FROM driver_finance.settlement_lines sl
             JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
            WHERE ds.operating_company_id = $1::uuid
@@ -65,11 +91,7 @@ async function main() {
         [co.id]
       );
 
-      for (const row of res.rows) {
-        failures.push(
-          `${co.short_name}/${row.display_id}: ${row.line_type} "${row.description}" (line ${row.line_id}) — NULL posting_account_id on a CLOSED settlement`
-        );
-      }
+      failures.push(...missingPostingAccounts(co.short_name, res.rows));
     }
 
     await client.query("ROLLBACK");

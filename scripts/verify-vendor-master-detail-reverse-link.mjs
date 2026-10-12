@@ -10,9 +10,14 @@ const source = { page: fs.readFileSync(PAGE, "utf8"), matrix: fs.readFileSync(MA
 const checks = [
   ["selected company produces canonical company id", "page", /const \{ selectedCompanyId, selectedCompany \} = useCompanyContext\(\)[\s\S]{0,80}const companyId = selectedCompanyId \?\? ""/],
   // C-19: queryKey includes txnScope; has_transactions is an opt-in filter on the same company-scoped reader.
-  ["vendor cache identity includes selected company", "page", /queryKey: \["vendors", "page", companyId(?:, txnScope)?\]/],
+  // LEAD 443.99 class B (2026-10-12) — vendor reader cache key.
+  //   old rule: queryKey ["vendors", "page", companyId] or [..., companyId, txnScope].
+  //   new rule: also the literal scope keys [..., companyId, "with_transactions"] / [..., companyId, "all"].
+  //   why: ROUND 298.1 (#23495, 584f51c792) split the one txnScope reader into two company-scoped readers
+  //        (with-transactions default + all). companyId stays in the key and the reader still waits on it.
+  ["vendor cache identity includes selected company", "page", /queryKey: \["vendors", "page", companyId(?:, txnScope|, "with_transactions"|, "all")?\]/],
   ["vendor reader sends selected company and active scope", "page", /listAllVendors\(\{[\s\S]{0,120}operating_company_id: companyId,[\s\S]{0,80}active_company_only: true/],
-  ["vendor reader waits for selected company", "page", /queryKey: \["vendors", "page", companyId(?:, txnScope)?\][\s\S]{0,700}enabled: Boolean\(companyId\)/],
+  ["vendor reader waits for selected company", "page", /queryKey: \["vendors", "page", companyId(?:, txnScope|, "with_transactions"|, "all")?\][\s\S]{0,700}enabled: Boolean\(companyId\)/],
   ["selected master row resolves exact canonical ID", "page", /vendorsSorted\.find\(\(vendor\) => vendor\.id === selectedVendorId\)/],
   ["list-to-master transition stores selected canonical ID", "page", /onSelectVendor=\{\(vendorId\) => \{[\s\S]{0,100}setSelectedVendorId\(vendorId\)[\s\S]{0,100}setViewMode\("master-detail"\)/],
   ["sidebar selection writes the same selected ID state", "page", /onSelectVendor=\{setSelectedVendorId\}/],

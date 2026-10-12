@@ -7,6 +7,11 @@
 //
 // Usage: node scripts/verify-invoice-header-requires-line-constraint.mjs [--selftest]
 import pg from "pg";
+import { createRequire } from "node:module";
+
+// TLS by host through the shared helper: CI's postgres service and the loopback fixture DB this guard writes to have no
+// TLS, and a hard-coded ssl:{} made them fail with "The server does not support SSL connections" before any check ran.
+const { buildPgClientConfig } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 
 const LABEL = "verify-invoice-header-requires-line-constraint";
 export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
@@ -31,7 +36,7 @@ if (process.argv.includes("--selftest")) {
 } else if (!process.env.DATABASE_URL) {
   throw new Error(`${LABEL}: DATABASE_URL required; --selftest is not live proof`);
 } else {
-  const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  const client = new pg.Client(buildPgClientConfig(process.env.DATABASE_URL));
   await client.connect();
   try {
     await client.query("RESET ROLE");

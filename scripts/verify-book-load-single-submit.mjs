@@ -33,7 +33,10 @@ function assert(files) {
   if (!/finally\s*\{[\s\S]{0,200}submitInFlightRef\.current = false;/.test(m)) {
     problems.push(`${MODAL}: the in-flight ref must be released in a finally, or a failed submit wedges the form shut`);
   }
-  if (!/disabled=\{form\.formState\.isSubmitting/.test(m)) {
+  // 443.99: old rule `disabled={form.formState.isSubmitting` on one line; new rule allows whitespace/newline after
+  // `disabled={` — WIZ-49 #20315 (4d493e9ea9) moved the submit onto SaveDropdown with a multi-line disabled
+  // expression that still leads with isSubmitting. A button not disabled while submitting still fails.
+  if (!/disabled=\{\s*form\.formState\.isSubmitting/.test(m)) {
     problems.push(`${MODAL}: the submit button must also disable while submitting (visible affordance)`);
   }
   return problems;
@@ -45,7 +48,7 @@ if (SELFTEST) {
   const checks = [
     ["re-entry check removed", { [MODAL]: files[MODAL].replace(/if \(submitInFlightRef\.current\) return;/, "") }],
     ["finally release removed", { [MODAL]: files[MODAL].replace(/submitInFlightRef\.current = false;/, "") }],
-    ["button disable reverted", { [MODAL]: files[MODAL].replace(/disabled=\{form\.formState\.isSubmitting \|\| /, "disabled={") }],
+    ["button disable reverted", { [MODAL]: files[MODAL].replace(/disabled=\{\s*form\.formState\.isSubmitting \|\| /, "disabled={") }],
   ];
   for (const [name, planted] of checks) {
     if (!assert(planted).length) {

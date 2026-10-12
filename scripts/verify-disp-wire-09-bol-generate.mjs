@@ -33,6 +33,7 @@ const PATHS = {
   panel: "apps/frontend/src/components/dispatch/LoadBolPanel.tsx",
   podReview: "apps/frontend/src/pages/dispatch/PodReviewPage.tsx",
   drawer: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
+  documentsTab: "apps/frontend/src/components/dispatch/tabs/LdtDocumentsTab.tsx",
 };
 
 function read(rel) {
@@ -48,6 +49,7 @@ export function auditBolWire(sources) {
   const panel = sources.panel ?? "";
   const podReview = sources.podReview ?? "";
   const drawer = sources.drawer ?? "";
+  const documentsTab = sources.documentsTab ?? "";
 
   if (!/\/api\/v1\/dispatch\/loads\/:loadId\/bol\/generate/.test(routes)) {
     problems.push(`${PATHS.routes}: missing POST bol/generate route`);
@@ -132,7 +134,19 @@ export function auditBolWire(sources) {
   if (!/<LoadBolPanel\b/.test(podReview)) {
     problems.push(`${PATHS.podReview}: Pod Review must mount <LoadBolPanel /> (entry kept)`);
   }
-  if (!/<LoadBolPanel\b/.test(drawer)) {
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: LoadDetailDrawer.tsx itself contains <LoadBolPanel.
+  //   new rule: the drawer's Documents tab mounts <LoadBolPanel directly, OR mounts <LdtDocumentsTab (imported from
+  //             ./tabs/LdtDocumentsTab) inside `activeTab === "Documents"` and LdtDocumentsTab mounts <LoadBolPanel.
+  //   why: LDT-D #20882 (ca42c9771d) rebuilt the Documents tab as LdtDocumentsTab and moved the same panel inside it
+  //        ("The BOL generate panel (LoadBolPanel) is kept"). Removing the panel from LdtDocumentsTab, or the tab from
+  //        the drawer's Documents branch, still fails.
+  const directMount = /<LoadBolPanel\b/.test(drawer);
+  const viaDocumentsTab =
+    /import \{ LdtDocumentsTab \} from "\.\/tabs\/LdtDocumentsTab"/.test(drawer) &&
+    /activeTab === "Documents"[\s\S]{0,800}<LdtDocumentsTab\b/.test(drawer) &&
+    /<LoadBolPanel\b/.test(documentsTab);
+  if (!directMount && !viaDocumentsTab) {
     problems.push(
       `${PATHS.drawer}: Load Detail drawer Documents tab must mount <LoadBolPanel /> — ` +
         `EntityLink /dispatch/loads/:id is the canonical load path; BOL cannot live only on pod-review`,
@@ -237,7 +251,16 @@ function selftest() {
       run: () =>
         auditBolWire({
           ...real,
-          drawer: mutate(real.drawer, /<LoadBolPanel\b/, "<LoadBolGONE", "drawer"),
+          documentsTab: mutate(real.documentsTab, /<LoadBolPanel\b/, "<LoadBolGONE", "documents tab"),
+        }),
+      expect: "Load Detail drawer",
+    },
+    {
+      label: "Documents tab no longer mounts LdtDocumentsTab",
+      run: () =>
+        auditBolWire({
+          ...real,
+          drawer: mutate(real.drawer, /<LdtDocumentsTab\b/, "<LdtDocumentsGONE", "drawer documents tab"),
         }),
       expect: "Load Detail drawer",
     },

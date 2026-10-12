@@ -20,6 +20,7 @@ import {
   type DeadheadFillResult,
 } from "./miles-recommendations.service.js";
 import { decidePrintedTrailers } from "../printed-trailer-decision.service.js";
+import { canonicalHappenedNotVoidedLoadClause } from "../canonical-active-load-set.js";
 
 const READ_ROLES = new Set(["Owner", "Administrator", "Manager", "Dispatcher", "Accountant", "Safety"]);
 const WRITE_ROLES = new Set(["Owner", "Administrator", "Manager", "Dispatcher"]);
@@ -149,7 +150,7 @@ export async function registerMilesRecommendationsRoutes(app: FastifyInstance) {
         await client.query<{ id: string }>(
           `SELECT l.id::text FROM mdata.loads l
             WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL AND l.voided_at IS NULL AND l.miles_deadhead IS NULL
-              AND l.status::text NOT IN ('cancelled', 'canceled', 'void', 'voided')
+              AND ${canonicalHappenedNotVoidedLoadClause("l")}
               AND ($2::uuid[] IS NULL OR l.id = ANY($2::uuid[]))
             ORDER BY l.load_number`,
           [companyId, b.data.load_ids ?? null]

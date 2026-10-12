@@ -30,8 +30,72 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASELINE_FILE = path.join(ROOT, "scripts/verify-load-status-has-audit-event.baseline.json");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
+const LIFECYCLE_EVENTS = ["load.created", "load.status_changed", "load.cancelled", "load.cancellation_approved"];
+const CANCEL_EVENTS = ["load.cancelled", "load.cancellation_approved"];
+
+/**
+ * Row-level mirror of main()'s SQL: loads (not voided) whose MOST RECENT lifecycle event is a cancel but whose live status is
+ * not 'cancelled' — a resurrection with no recorded transition.
+ */
+export function unauditedResurrections(loads, events) {
+  const last = new Map();
+  for (const e of events) {
+    if (!LIFECYCLE_EVENTS.includes(e.event_type)) continue;
+    const prev = last.get(e.load_id);
+    if (!prev || e.occurred_at > prev.occurred_at) last.set(e.load_id, e);
+  }
+  return loads
+    .filter((l) => !l.voided_at && l.status !== "cancelled" && CANCEL_EVENTS.includes(last.get(l.id)?.event_type))
+    .map((l) => l.load_number);
+}
+
+/** Shrink-only ratchet verdict: a live violation not on the baseline is new rot. */
+export function ratchetFailures(liveLoadNumbers, baseline) {
+  const liveSet = new Set(liveLoadNumbers);
+  if (baseline === null) {
+    return liveSet.size > 0
+      ? [`${BASELINE_FILE} missing and ${liveSet.size} live violation(s) found: ${[...liveSet].join(", ")} -- run with --write-baseline once to seed it`]
+      : [];
+  }
+  const baselineSet = new Set(baseline);
+  const newRot = [...liveSet].filter((ln) => !baselineSet.has(ln));
+  return newRot.length > 0 ? [`new rot, not in baseline: ${newRot.join(", ")} -- a load left 'cancelled' with no load.status_changed event recorded`] : [];
+}
+
 function selftest() {
-  console.log(`${LABEL} selftest OK — pure live-data invariant, no static logic to unit test`);
+  const failures = [];
+  const ev = (load_id, event_type, occurred_at) => ({ load_id, event_type, occurred_at });
+  const loads = [
+    { id: "a", load_number: "13700", status: "dispatched", voided_at: null }, // cancelled, then resurrected with no event -> violation
+    { id: "b", load_number: "13701", status: "dispatched", voided_at: null }, // cancelled, then an audited status_changed -> clean
+    { id: "c", load_number: "13702", status: "cancelled", voided_at: null }, // cancelled and still cancelled -> clean
+    { id: "d", load_number: "13703", status: "booked", voided_at: "2026-10-01" }, // voided -> out of scope
+    { id: "e", load_number: "13704", status: "booked", voided_at: null }, // approval cancel, resurrected -> violation
+  ];
+  const events = [
+    ev("a", "load.created", "2026-10-01T01"), ev("a", "load.cancelled", "2026-10-01T02"),
+    ev("b", "load.cancelled", "2026-10-01T02"), ev("b", "load.status_changed", "2026-10-01T03"),
+    ev("c", "load.cancelled", "2026-10-01T02"),
+    ev("d", "load.cancelled", "2026-10-01T02"),
+    ev("e", "load.cancellation_approved", "2026-10-01T02"), ev("e", "load.note_added", "2026-10-01T05"),
+  ];
+  const found = unauditedResurrections(loads, events);
+  if (found.join(",") !== "13700,13704") failures.push(`row mirror found [${found}] — expected [13700,13704]`);
+  const plants = [
+    ["a new resurrection not on the baseline", ratchetFailures(["13625", "13999"], ["13625"])],
+    ["violations with no baseline file", ratchetFailures(["13999"], null)],
+  ];
+  let caught = 0;
+  for (const [name, f] of plants) {
+    if (f.length) caught += 1;
+    else failures.push(`planted violation escaped: ${name}`);
+  }
+  if (ratchetFailures(["13625"], ["13625", "13627"]).length || ratchetFailures([], null).length) failures.push("clean measurement rejected");
+  if (failures.length) {
+    console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST: ${caught + 2}/${plants.length + 2} planted violations caught (2 row-level resurrections + 2 ratchet plants)`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -94,17 +158,7 @@ async function main() {
   const baseline = loadBaseline();
   const liveSet = new Set(liveLoadNumbers);
 
-  if (baseline === null) {
-    if (liveSet.size > 0) {
-      failures.push(`${BASELINE_FILE} missing and ${liveSet.size} live violation(s) found: ${[...liveSet].join(", ")} -- run with --write-baseline once to seed it`);
-    }
-  } else {
-    const baselineSet = new Set(baseline);
-    const newRot = [...liveSet].filter((ln) => !baselineSet.has(ln));
-    if (newRot.length > 0) {
-      failures.push(`new rot, not in baseline: ${newRot.join(", ")} -- a load left 'cancelled' with no load.status_changed event recorded`);
-    }
-  }
+  failures.push(...ratchetFailures(liveLoadNumbers, baseline));
 
   console.log(`${LABEL}: ${liveSet.size} load(s) live with a 'cancelled' lifecycle event but a non-cancelled status and no recorded transition (baseline ${baseline ? baseline.length : "none"})`);
 

@@ -37,12 +37,23 @@ const CHECKS = [
   {
     name: "CustomerDetail's Billing tab lists invoices scoped by customer_id (forward query)",
     file: "apps/frontend/src/pages/CustomerDetail.tsx",
-    pattern: /listInvoices\(operatingCompanyId!,\s*\{\s*customer_id:\s*id\s*\}\)/,
+    // LEAD 443.99 class B (2026-10-12): the list now also passes status: "active" — LST-F3282 (9a738dd0b0,
+    // round 297 audit) keeps voided invoices out of the counted set. Still scoped by customer_id: id.
+    pattern: /listInvoices\(operatingCompanyId!,\s*\{\s*customer_id:\s*id(?:,\s*status:\s*"active")?\s*\}\)/,
   },
   {
-    name: "CustomerDetail's Billing tab mounts a record-payment flow applying against open invoices",
+    // LEAD 443.99 class B (2026-10-12).
+    //   old rule: CustomerDetail's Billing tab mounts a record-payment flow (recordPaymentOpen) applying a payment
+    //             across open invoices.
+    //   new rule: the Billing tab is A/R READ ONLY — it states so, points to Accounting → Receive payment
+    //             (/accounting/payments?create=1), shows Record Payment disabled, and mounts no payment writer.
+    //   why: owner ORDERS 2026-10-01 §3 ("invoices + AR READ ONLY", docs/bus/ORDERS-2026-10-01-CURSOR.md),
+    //        built by CUST-F20 (#23767, 0234fe78d1), which removed the profile payment write. A payment writer
+    //        coming back on the profile now fails.
+    name: "CustomerDetail's Billing tab is A/R read-only and sends payments to Accounting → Receive payment",
     file: "apps/frontend/src/pages/CustomerDetail.tsx",
-    pattern: /recordPaymentOpen/,
+    pattern: /data-cust-ar-readonly="1"[\s\S]{0,400}href="\/accounting\/payments\?create=1"[\s\S]{0,4000}data-testid="customer-record-payment-disabled"/,
+    forbidPattern: /recordPaymentOpen|createCustomerPayment\(|recordCustomerPayment\(|applyCustomerPayment\(/,
   },
   {
     name: "CUST-MONEY-F6312 Statements tab reads invoices + payments (not coming-state copy)",
@@ -84,6 +95,9 @@ export function checkAll(readFile) {
     if (!c.pattern.test(src)) {
       failures.push(`${c.name}: ${c.file} no longer matches expected shape`);
     }
+    if (c.forbidPattern && c.forbidPattern.test(src)) {
+      failures.push(`${c.name}: ${c.file} still mounts a forbidden writer (${c.forbidPattern.source})`);
+    }
     if (c.antiPattern && c.antiPattern.test(src)) {
       failures.push(`${c.name}: ${c.file} still contains leftover coming-state copy`);
     }
@@ -107,8 +121,10 @@ if (process.argv.includes("--selftest")) {
     "apps/frontend/src/pages/accounting/InvoicesListPage.tsx":
       'const customerId = searchParams.get("customer_id") ?? "";',
     "apps/frontend/src/pages/CustomerDetail.tsx": `
-      queryFn: () => listInvoices(operatingCompanyId!, { customer_id: id }).then((res) => res.invoices ?? []),
-      const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
+      listInvoices(operatingCompanyId!, { customer_id: id, status: "active" }).then((res) =>
+      <div className="space-y-3" data-testid="customer-billing-ar-readonly" data-cust-ar-readonly="1">
+        <a href="/accounting/payments?create=1">Accounting → Receive payment</a>
+      <div data-testid="customer-record-payment-disabled">Record Payment is disabled</div>
     `,
     "apps/backend/src/accounting/recurring-template-detail.routes.ts":
       'app.get("/api/v1/accounting/recurring-templates"',
@@ -125,6 +141,15 @@ if (process.argv.includes("--selftest")) {
   );
   if (!leftoverComing.some((line) => line.includes("coming-state"))) {
     console.error(`[${LABEL}] selftest FAIL: leftover coming-state fixture must fail antiPattern`);
+    process.exit(1);
+  }
+  const writerBack = checkAll((f) =>
+    f === "apps/frontend/src/pages/CustomerDetail.tsx"
+      ? GOOD_FIXTURES[f] + "\nconst [recordPaymentOpen, setRecordPaymentOpen] = useState(false);"
+      : GOOD_FIXTURES[f] ?? null,
+  );
+  if (!writerBack.some((line) => line.includes("forbidden writer"))) {
+    console.error(`[${LABEL}] selftest FAIL: a record-payment writer back on the read-only profile must fail`);
     process.exit(1);
   }
   const regressedFailures = checkAll(() => "nothing matches here");
@@ -146,4 +171,4 @@ if (failures.length) {
   for (const f of failures) console.error("  ✗", f);
   process.exit(1);
 }
-console.log(`[${LABEL}] PASS — customer new-transaction hop + billing invoice list + record-payment flow all present`);
+console.log(`[${LABEL}] PASS — customer new-transaction hop + billing invoice list + A/R read-only billing (payments via Accounting) all present`);

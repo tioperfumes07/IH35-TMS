@@ -56,15 +56,18 @@ if (failures.length) {
 if (process.argv.includes("--selftest")) {
   const muts = [
     { ...src, all: { ...all, "apps/backend/src/x.ts": "INSERT INTO catalogs.point_mileage (a) VALUES (1)" } },
-    { ...src, svc: src.svc.replace("miles_choice = coalesce(miles_choice", "miles_choice = (miles_choice") },
-    { ...src, svc: src.svc.replace('"dispatch.load.miles_choice"', '"x"') },
+    // 443.99: replaceAll — the engine now writes miles_choice on two paths, so a first-only plant left one behind and
+    // escaped; every writer must lose the clause for the plant to be the defect.
+    { ...src, svc: src.svc.replaceAll("miles_choice = coalesce(miles_choice", "miles_choice = (miles_choice") },
+    { ...src, svc: src.svc.replaceAll('"dispatch.load.miles_choice"', '"x"') },
     { ...src, svc: src.svc.replace(/manual_miles_requires_reason/g, "x") },
     { ...src, svc: src.svc.replace(/google_missing_reason/g, "x") },
     { ...src, bookRoute: src.bookRoute.replace(/miles_choice:\s*z/, "x: z") },
-    { ...src, book: src.book.replace("SET miles_choice = $2::jsonb", "SET x = $2") },
+    { ...src, book: src.book.replaceAll("SET miles_choice = $2::jsonb", "SET x = $2") },
   ];
-  if (muts.some((m) => audit(m).length === 0)) {
-    console.error("verify-load-miles-source-recorded SELFTEST FAIL — a planted mutation escaped");
+  const escaped = muts.map((m, i) => (audit(m).length === 0 ? i : -1)).filter((i) => i >= 0);
+  if (escaped.length) {
+    console.error(`verify-load-miles-source-recorded SELFTEST FAIL — planted mutation(s) escaped: #${escaped.join(", #")}`);
     process.exit(1);
   }
   console.log(`verify-load-miles-source-recorded SELFTEST PASS ${muts.length}/${muts.length}`);

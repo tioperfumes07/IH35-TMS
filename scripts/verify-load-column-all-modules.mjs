@@ -56,7 +56,10 @@ const CHECKS = [
   ["apps/frontend/src/pages/fuel/FuelPlannerHome.tsx", /searchParams\.get\("load_id"\)/, "Fuel planner reverse load route"],
   ["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx", /kind="load" id=\{row\.id\} label=\{entityLabel\(row\.load_number, row\.id, "Load"\)\}/, "Home active-load drill"],
   ["apps/frontend/src/pages/reports/DispatchMarginPage.tsx", /kind="load" id=\{row\.load_id\}/, "Dispatch-margin load drill"],
-  ["apps/frontend/src/pages/dispatch/TripProfitability.tsx", /kind="load" id=\{row\.nb_load_id\}/, "Trip-profitability load drill"],
+  // 443.99: old rule `kind="load" id={row.nb_load_id}` (one NB load per row). COMPANY-SETTLEMENT-TWO-BOOKEND-GRAIN
+  // #19489 (2612e7ffb1) moved Trip profitability to settlement grain: each row carries load_links[], and EVERY linked
+  // load drills. New rule: the load_links map renders the load EntityLink(OrTombstone) on load.id.
+  ["apps/frontend/src/pages/dispatch/TripProfitability.tsx", /row\.load_links\.map\(\(load\) => \(\s*<EntityLink(?:OrTombstone)?\b[^>]*kind="load" id=\{load\.id\}/, "Trip-profitability load drill"],
   ["apps/frontend/src/components/reports/LaneDetailModal.tsx", /kind="load" id=\{load\.load_id\}/, "Lane-profitability load drill"],
 ];
 

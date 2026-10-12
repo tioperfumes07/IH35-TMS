@@ -3,7 +3,7 @@
  * verify-reports-geofence-reconciliation-display-dates.mjs
  * LV-REPORTS-GEOFENCE-RECONCILIATION-RAW-ISO-EMPTY-DATE
  *
- * ParityTable emptyText must display appliedDate via formatDateUS; API/query
+ * ParityTable emptyText must display appliedDate via mmmDd (GLB-08); API/query
  * state may keep raw ISO.
  */
 import fs from "node:fs";
@@ -21,13 +21,19 @@ function read(rel) {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
+// LEAD 443.99 class B (2026-10-12) — display-date formatter.
+//   old rule: emptyText interpolates formatDateUS(appliedDate).
+//   new rule: emptyText interpolates mmmDd(appliedDate) imported from lib/formatDate; raw appliedDate still fails.
+//   why: GLB-08 (#25795, 2026-10-07, owner-approved app-wide MMM-DD date sweep) converted report date displays from
+//        legacy MM/DD/YYYY formatDateUS / formatDateTimeUS to lib/formatDate mmmDd / mmmDdTime. The page was right;
+//        the guard still demanded the retired formatter. A raw ISO / sliced timestamp still fails.
 function analyze(src) {
   const failures = [];
-  if (!/formatDateUS/.test(src) || !/from ["']\.\.\/\.\.\/lib\/formatDate["']/.test(src)) {
-    failures.push(`${PAGE}: must import formatDateUS`);
+  if (!/import \{[^}]*\bmmmDd\b[^}]*\} from ["']\.\.\/\.\.\/lib\/formatDate["']/.test(src)) {
+    failures.push(`${PAGE}: must import mmmDd from lib/formatDate`);
   }
-  if (!/emptyText=\{`No anomalies found for \$\{formatDateUS\(appliedDate\)\}\.`\}/.test(src)) {
-    failures.push(`${PAGE}: emptyText must interpolate formatDateUS(appliedDate), not raw appliedDate`);
+  if (!/emptyText=\{`No anomalies found for \$\{mmmDd\(appliedDate\)\}\.`\}/.test(src)) {
+    failures.push(`${PAGE}: emptyText must interpolate mmmDd(appliedDate), not raw appliedDate`);
   }
   if (/emptyText=\{`No anomalies found for \$\{appliedDate\}\.`\}/.test(src)) {
     failures.push(`${PAGE}: emptyText must not interpolate raw appliedDate ISO`);
@@ -52,12 +58,12 @@ function selftest() {
   const original = fs.readFileSync(pagePath, "utf8");
   try {
     const planted = original.replace(
-      /emptyText=\{`No anomalies found for \$\{formatDateUS\(appliedDate\)\}\.`\}/,
+      /emptyText=\{`No anomalies found for \$\{mmmDd\(appliedDate\)\}\.`\}/,
       "emptyText={`No anomalies found for ${appliedDate}.`}",
     );
     SELFTEST_OVERLAY.set(PAGE, planted);
     const bad = analyze(planted);
-    if (!bad.some((m) => /raw appliedDate|formatDateUS\(appliedDate\)/.test(m))) {
+    if (!bad.some((m) => /raw appliedDate|mmmDd\(appliedDate\)/.test(m))) {
       fail(`selftest expected raw emptyText interpolation to fail: ${bad.join("; ") || "none"}`);
     }
   } finally {
@@ -78,7 +84,7 @@ function main() {
     for (const f of failures) console.error(`${LABEL} FAIL: ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} PASS — geofence recon emptyText uses formatDateUS (query ISO preserved)`);
+  console.log(`${LABEL} PASS — geofence recon emptyText uses mmmDd (query ISO preserved)`);
 }
 
 main();
