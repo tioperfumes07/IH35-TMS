@@ -1,10 +1,10 @@
 {
-  "healthzSha": "303b718",
-  "generated_at": "2026-10-12T10:37:10.126Z",
+  "healthzSha": "3d79448",
+  "generated_at": "2026-10-12T13:44:16.056Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "303b718",
+    "deployedSha": "3d79448",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 26544,
-      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615720912 — reservation-only commit, no code fix)",
+      "number": 26602,
+      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615780700 — reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26544",
-      "sha": "b1af07bba7",
-      "committedAtIso": "2026-10-12T05:34:03-05:00"
+      "mergedAtCt": "10/12/2026, 08:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26602",
+      "sha": "3d7944856e",
+      "committedAtIso": "2026-10-12T08:36:39-05:00"
     },
     {
-      "number": 26543,
-      "title": "FINDING: ACCT-F4439914 LANE: FINANCIAL -- 443.99 C lane 4: 15 failing verify:pre-commit steps green -- 6 Settlement Creator / posting / trailer queries entity-scoped, 13 stale or broken guards repointed at the code that moved",
+      "number": 26601,
+      "title": "FINDING: ACCT-F443107 LANE: FINANCIAL -- 443.105 #2: an expense line could be written with no load and no reason why (5 live USMCA lines, $203.14); refused at the DB, every writer now records the reason",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26543",
-      "sha": "5ff31da7fa",
-      "committedAtIso": "2026-10-12T05:33:43-05:00"
+      "mergedAtCt": "10/12/2026, 08:30 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26601",
+      "sha": "ebd9f92d09",
+      "committedAtIso": "2026-10-12T08:30:55-05:00"
     },
     {
-      "number": 26542,
-      "title": "FINDING: ACCT-F4439913 LANE: FINANCIAL -- 443.99 C lane 3 batch 2: 11 verify-steps green (+ 3069 static half, 3418 census) — categorizer read revoked A/P bills, 4 flag keys never seeded, Creator import cycle, ctx.pass missing, 4 orphan guards wired, 9 stale guards re-anchored",
+      "number": 26600,
+      "title": "FINDING: ACCT-F4431052 LANE: FINANCIAL -- 443.105 R14 batch 3: backend-vitest — scheduled-reports worker smoke test's own schedule is the earliest due row (it never got a turn on a fresh DB)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:26 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26542",
-      "sha": "303b71886d",
-      "committedAtIso": "2026-10-12T05:26:58-05:00"
+      "mergedAtCt": "10/12/2026, 08:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26600",
+      "sha": "e8b7683ec2",
+      "committedAtIso": "2026-10-12T08:27:35-05:00"
     },
     {
-      "number": 26541,
-      "title": "FINDING: ACCT-F4439915 LANE: FINANCIAL -- 443.99 C lane 5 batch 3: the 17 live-DB guards #26531 moved were dropped from ci.yml by #26536 (run nowhere); 3 guards restated to owner/Lead law that moved",
+      "number": 26599,
+      "title": "FINDING: ACCT-F4431052 LANE: FINANCIAL -- 443.105 R14 batch 2: step 3429 (money orphan-guard batch) green — 7 guards hidden behind the first red re-pointed to the code that moved, each still as tight",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:25 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26541",
-      "sha": "efed2955cf",
-      "committedAtIso": "2026-10-12T05:25:12-05:00"
+      "mergedAtCt": "10/12/2026, 08:22 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26599",
+      "sha": "f57a8d9227",
+      "committedAtIso": "2026-10-12T08:22:33-05:00"
     },
     {
-      "number": 26540,
-      "title": "FINDING: ACCT-F4439910 LANE: FINANCIAL -- 443.99 C lane 0: 14 verify-steps green — samsara webhook pre-verify org leak closed, AlwaysTrack seed joins its loads to their settlement, 4 guards honor the URL's TLS mode, 9 guards re-anchored on the engines that moved",
+      "number": 26598,
+      "title": "FINDING: ACCT-F4431052 LANE: FINANCIAL -- 443.105 R14 batch 1: advance-recovery guard follows the loan rule; stamp fixture sample unit; closed-loop inputs declared; depreciation guard follows ROUND 300; 5 live-ledger guards to the live-DB job",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:23 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26540",
-      "sha": "68acad9f3d",
-      "committedAtIso": "2026-10-12T05:23:38-05:00"
+      "mergedAtCt": "10/12/2026, 08:18 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26598",
+      "sha": "ceedabd52c",
+      "committedAtIso": "2026-10-12T08:18:48-05:00"
     },
     {
-      "number": 26538,
-      "title": "FINDING: ACCT-F4439915 LANE: FINANCIAL -- 443.99 C lane 5 batch 2: factoring KPIs showed raw CoA role keys for unbound roles; payrun-close suite isolated off shared ap_control; 7 guards re-anchored to the design that moved",
+      "number": 26597,
+      "title": "FINDING: ACCT-F4431050 LANE: FINANCIAL -- 443.105 R12: driver bills carry the load's trailer (company or customer); Owner stamp route",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:17 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26538",
-      "sha": "b2fff1d41b",
-      "committedAtIso": "2026-10-12T05:17:17-05:00"
+      "mergedAtCt": "10/12/2026, 08:11 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26597",
+      "sha": "1fac6ffe70",
+      "committedAtIso": "2026-10-12T08:11:46-05:00"
     },
     {
-      "number": 26539,
-      "title": "FINDING: N/A (CLAIM-RESERVE verify-step 18405 + migration 202615710935 — reservation-only commit, no code fix)",
+      "number": 26596,
+      "title": "FINDING: ACCT-F4431051 LANE: FINANCIAL -- 443.105 R13: acceptance S1..S7 gains a LINKAGE assert on every document each step creates",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:17 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26539",
-      "sha": "7b3acb6814",
-      "committedAtIso": "2026-10-12T05:17:07-05:00"
+      "mergedAtCt": "10/12/2026, 08:10 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26596",
+      "sha": "a1549dbd9b",
+      "committedAtIso": "2026-10-12T08:10:00-05:00"
     },
     {
-      "number": 26537,
-      "title": "FINDING: ACCT-F4439912 LANE: FINANCIAL -- 443.99 C lane 2: five guards drifted from the design they pin (runScoped claim, reflowed routes, BOOT-F396 mount chain, prod_verified scoring) + three fixture writers lacked the prod refusal",
+      "number": 26595,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:15 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26537",
-      "sha": "a066f1ceec",
-      "committedAtIso": "2026-10-12T05:15:59-05:00"
+      "mergedAtCt": "10/12/2026, 08:05 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26595",
+      "sha": "c34ebbd26b",
+      "committedAtIso": "2026-10-12T13:05:19Z"
     },
     {
-      "number": 26536,
-      "title": "FINDING: ACCT-F443100 LANE: NON-FINANCIAL -- 443.100 class B batch 1: 19 pre-commit steps red (never reached in CI behind the first heavy-step red)",
+      "number": 26593,
+      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615770700 — reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:14 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26536",
-      "sha": "3fd35529cf",
-      "committedAtIso": "2026-10-12T05:14:35-05:00"
+      "mergedAtCt": "10/12/2026, 07:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26593",
+      "sha": "75562e2169",
+      "committedAtIso": "2026-10-12T07:57:16-05:00"
     },
     {
-      "number": 26535,
-      "title": "FINDING: ACCT-F4439911 LANE: FINANCIAL -- 443.99 C lane 1: 3 stale/broken guards (duplicate export, hard-coded TLS, callers moved by consolidation)",
+      "number": 26592,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- claim migration 202615770910 for CC-3 (443.105 item 1, driver-bill non-owned trailer)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26535",
-      "sha": "e2fa7072cc",
-      "committedAtIso": "2026-10-12T05:12:42-05:00"
+      "mergedAtCt": "10/12/2026, 07:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26592",
+      "sha": "29b737ab2e",
+      "committedAtIso": "2026-10-12T07:56:23-05:00"
     }
   ]
 }
