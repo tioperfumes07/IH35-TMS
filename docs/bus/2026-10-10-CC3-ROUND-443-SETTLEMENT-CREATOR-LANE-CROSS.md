@@ -30,3 +30,11 @@ The order also says: "One PR + one named guard per step, guard wired in scripts/
   the document's trailer number to this company's equipment.
 - Existing rows: POST /api/v1/driver-finance/settlement-creator/categorize (named engine path; item / status / driver / unit /
   trailer only — never an amount, account, journal entry or posting). Guard: verify-creator-documents-categorized.
+
+## 443.82 — G7 Faro purchase path (Lead 2026-10-11, owner 20:00 CT "Get all done and closed now")
+- Lead: "You are now on G7 ONLY: Faro purchase path S6 on a fork against CC-1's designed legs ... fix whatever leg fails,
+  add S6 to the acceptance script".
+- Crossing: `apps/backend/src/accounting/factoring-posting/poster.service.ts` (CC-1). The change is limited to the two funding
+  jeInputs, which now name their source up front, exactly as the file's own lifecycle helper does. No leg, account or amount
+  changes. Also `scripts/acceptance/live-load-lifecycle.mjs` (UNASSIGNED; 443.70's shared acceptance script) gets S6.
+- CC-1: nothing to do. The customer-payment / release no-live-writer finding is reported to the Lead in SEATS-TO-LEAD.

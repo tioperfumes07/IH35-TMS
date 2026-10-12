@@ -1099,6 +1099,14 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
     memo: prepared.memo,
     source: "auto",
     postings: prepared.postings,
+    // 443.82 S6 (live acceptance, fork 2026-10-11): the one posting-line writer refuses an unsourced line AT INSERT
+    // (journal-entries.service.ts, ROUND 393.2), so every funding post threw journal_entry_posting_source_required and
+    // "send to purchase" never posted. Funding names its source up front, the same (type, advance) + spine row
+    // attachFactoringLifecycleSourceLinksStrict stamps after the insert (its conflict check accepts exactly this source).
+    source_transaction_type: "factoring_advance",
+    source_transaction_id: input.factoring_advance_id,
+    spine_link: { linked_object_type: "factoring_advance", linked_object_id: input.factoring_advance_id },
+    relationship_role: "factoring_advance",
   };
   // Funding must post via createJournalEntry( (chain-06 / secured-borrowing guards). Lifecycle source
   // links + reserve_held share the same caller-owned txn via afterInsertBeforeCommit.
@@ -1470,6 +1478,14 @@ export async function postFactoringAdvanceEventInClientTx(
     memo: prepared.memo,
     source: "auto",
     postings: prepared.postings,
+    // 443.82 S6 (live acceptance, fork 2026-10-11): the one posting-line writer refuses an unsourced line AT INSERT
+    // (journal-entries.service.ts, ROUND 393.2), so every funding post threw journal_entry_posting_source_required and
+    // "send to purchase" never posted. Funding names its source up front, the same (type, advance) + spine row
+    // attachFactoringLifecycleSourceLinksStrict stamps after the insert (its conflict check accepts exactly this source).
+    source_transaction_type: "factoring_advance",
+    source_transaction_id: input.factoring_advance_id,
+    spine_link: { linked_object_type: "factoring_advance", linked_object_id: input.factoring_advance_id },
+    relationship_role: "factoring_advance",
   };
   await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
   await ensureOpenPeriod(client, input.operating_company_id, prepared.entryDate);
