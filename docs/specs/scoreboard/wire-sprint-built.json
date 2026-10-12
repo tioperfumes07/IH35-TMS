@@ -392,7 +392,7 @@
     {
       "task": "P38",
       "pr": "#5805",
-      "guard": "scripts/verify-steps/3061-verify-bill-wave-a-fk-write-path.mjs",
+      "guard": "scripts/verify-bill-wave-a-fk-write-path.mjs",
       "modules": [
         "accounting"
       ],
