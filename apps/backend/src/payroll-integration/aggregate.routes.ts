@@ -10,8 +10,38 @@ import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { pullTmsSettlements } from "./tms-settlements-pull.js";
-import { pullQboPayroll } from "./qbo-payroll-pull.js";
 import { allocatePayrollClass, buildClassSummary, type PersonAllocation } from "./class-allocator.js";
+
+type Queryable = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> };
+
+/**
+ * ACCT-F4431379 (Lead 443.137 9d) — the labor-cost aggregate. Driver pay comes ONLY from
+ * driver_finance (pullTmsSettlements). This used to add a QBO Payroll pull (qbo-payroll-pull.ts, reading
+ * a QBO payroll link table that was never migrated) into w2_total / benefits / taxes / grand_total.
+ * QBO is out of scope for USMCA and no explicit payroll reconciliation screen exists, so the QBO
+ * read is removed from every total rather than kept as a second source of pay.
+ */
+export async function buildPayrollAggregate(client: Queryable, operatingCompanyId: string, periodStart: string, periodEnd: string) {
+  const tms = await pullTmsSettlements(client, operatingCompanyId, periodStart, periodEnd);
+  const persons: PersonAllocation[] = tms.rows.map((r) => ({
+    person_id: r.driver_id,
+    person_name: r.driver_name,
+    pay_type: "1099" as const,
+    class: allocatePayrollClass("1099"),
+    gross_cents: r.gross_cents,
+    deductions_cents: r.deductions_cents,
+    net_cents: r.net_cents,
+  }));
+  return {
+    period_start: periodStart,
+    period_end: periodEnd,
+    driver_total: tms.total_cents,
+    grand_total: tms.total_cents,
+    by_class: buildClassSummary(persons),
+    by_person: persons,
+    stale: false,
+  };
+}
 
 const periodQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -45,49 +75,9 @@ export async function registerPayrollIntegrationRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const { operating_company_id, period_start, period_end } = parsed.data;
 
-    const result = await withCompany(user.uuid, operating_company_id, async (client) => {
-      const [tms, qbo] = await Promise.all([
-        pullTmsSettlements(client, operating_company_id, period_start, period_end),
-        pullQboPayroll(client, operating_company_id, period_start, period_end),
-      ]);
-
-      const persons: PersonAllocation[] = [
-        ...tms.rows.map((r) => ({
-          person_id: r.driver_id,
-          person_name: r.driver_name,
-          pay_type: "1099" as const,
-          class: allocatePayrollClass("1099"),
-          gross_cents: r.gross_cents,
-          deductions_cents: r.deductions_cents,
-          net_cents: r.net_cents,
-        })),
-        ...qbo.rows.map((r) => ({
-          person_id: r.employee_id,
-          person_name: r.employee_name,
-          pay_type: "W2" as const,
-          class: allocatePayrollClass("W2"),
-          gross_cents: r.gross_cents,
-          deductions_cents: r.deductions_cents,
-          net_cents: r.net_cents,
-        })),
-      ];
-
-      const by_class = buildClassSummary(persons);
-      const grand_total = tms.total_cents + qbo.total_gross_cents;
-
-      return {
-        period_start,
-        period_end,
-        driver_total: tms.total_cents,
-        w2_total: qbo.total_gross_cents,
-        benefits: qbo.total_benefits_cents,
-        taxes: qbo.total_taxes_cents,
-        grand_total,
-        by_class,
-        by_person: persons,
-        stale: false,
-      };
-    });
+    const result = await withCompany(user.uuid, operating_company_id, (client) =>
+      buildPayrollAggregate(client, operating_company_id, period_start, period_end)
+    );
 
     return result;
   });

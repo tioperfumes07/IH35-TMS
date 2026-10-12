@@ -1,5 +1,7 @@
 /**
- * CLOSURE-12 — PayrollIntegrationPage: unified TMS↔QBO labor dashboard.
+ * CLOSURE-12 — PayrollIntegrationPage: labor dashboard over driver_finance settlements.
+ * ACCT-F4431379 — driver pay comes ONLY from driver_finance; the QBO W-2 and benefits KPIs
+ * (added into Total Labor Cost) are removed — QBO is out of scope for USMCA.
  * Route: /payroll-integration
  */
 import { useState } from "react";
@@ -37,16 +39,14 @@ export function PayrollIntegrationPage() {
 
   const kpis = [
     { label: "Driver Settlements", value: data ? cents(data.driver_total) : "—", sub: "1099 drivers" },
-    { label: "W-2 Payroll", value: data ? cents(data.w2_total) : "—", sub: "Office & W-2 staff" },
-    { label: "Benefits", value: data ? cents(data.benefits) : "—", sub: "Employer contributions" },
-    { label: "Total Labor Cost", value: data ? cents(data.grand_total) : "—", sub: "All classes combined", highlight: true },
+    { label: "Total Labor Cost", value: data ? cents(data.grand_total) : "—", sub: "Driver settlements (driver_finance)", highlight: true },
   ];
 
   function handleRefresh() {
     refreshMutation.mutate(
       { periodStart: period.start, periodEnd: period.end },
       {
-        onSuccess: () => pushToast("Payroll data refreshed from QBO", "success"),
+        onSuccess: () => pushToast("Payroll data refreshed", "success"),
         onError: (e) => pushToast(String((e as Error).message || "Refresh failed"), "error"),
       }
     );
@@ -56,7 +56,7 @@ export function PayrollIntegrationPage() {
     <div className="flex flex-col gap-4 p-4">
       <PageHeader
         title="Payroll Integration"
-        subtitle="Unified TMS driver settlements + QBO W-2 payroll view"
+        subtitle="Driver settlements from driver_finance — the only source of driver pay"
         actions={
           <button
             type="button"
@@ -64,7 +64,7 @@ export function PayrollIntegrationPage() {
             disabled={refreshMutation.isPending}
             className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1F2A44] disabled:opacity-50"
           >
-            {refreshMutation.isPending ? "Refreshing…" : "Refresh from QBO"}
+            {refreshMutation.isPending ? "Refreshing…" : "Refresh"}
           </button>
         }
       />
@@ -87,8 +87,8 @@ export function PayrollIntegrationPage() {
 
       {aggregateQuery.isError && <ListErrorBanner onRetry={() => void aggregateQuery.refetch()} />}
 
-      {/* 4 KPI cards */}
-      <div className="grid gap-3 md:grid-cols-4">
+      {/* KPI cards */}
+      <div className="grid gap-3 md:grid-cols-2">
         {kpis.map((kpi) => (
           <div key={kpi.label} className={`rounded-sm border p-4 ${kpi.highlight ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-200 bg-[var(--surface-unselected)]"}`}>
             <div className="text-xs font-medium uppercase tracking-wide text-gray-500">{kpi.label}</div>
@@ -118,7 +118,7 @@ export function PayrollIntegrationPage() {
       </div>
 
       {data?.stale && (
-        <p className="text-xs text-amber-600">Data may be stale (&gt;24h old). Click "Refresh from QBO" to update.</p>
+        <p className="text-xs text-amber-600">Data may be stale (&gt;24h old). Click "Refresh" to update.</p>
       )}
     </div>
   );
