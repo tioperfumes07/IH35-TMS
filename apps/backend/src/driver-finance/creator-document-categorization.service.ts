@@ -152,7 +152,7 @@ export async function categorizeCreatorSettlement(
       await client.query<{ id: string; description: string | null; amount: string; account_id: string | null; load_id: string | null; load_number: string | null }>(
         `SELECT bl.id::text, bl.description, bl.amount::text, bl.account_id::text, g.load_id::text, g.load_number
            FROM driver_finance.driver_settlement_gl_bills g
-           JOIN accounting.bills b ON b.id = g.accounting_bill_id AND b.voided_at IS NULL AND b.revoked_at IS NULL
+           JOIN accounting.bills b ON b.id = g.accounting_bill_id AND b.operating_company_id = g.operating_company_id AND b.voided_at IS NULL AND b.revoked_at IS NULL
            JOIN accounting.bill_lines bl ON bl.bill_id = b.id AND bl.voided_at IS NULL
           WHERE g.settlement_id = $1::uuid AND g.operating_company_id = $2::uuid AND g.superseded_at IS NULL AND bl.item_id IS NULL`,
         [sid, co]

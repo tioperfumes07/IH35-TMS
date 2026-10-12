@@ -33,18 +33,27 @@ function main() {
 
   const poster = read("apps/backend/src/banking/recon-adjustments.service.ts");
   assert.match(poster, /createAndPostServiceChargeExpense/);
-  assert.match(poster, /postSourceTransactionInClientTx/);
-  assert.match(poster, /source_transaction_type: "expense"/);
-  assert.match(poster, /is_company_expense/);
-  assert.match(poster, /payment_account_uuid/);
+  // ROUND 441.5 (#25762, 84a705420b): the service charge posts through the ONE bank-line expense writer the categorize
+  // poster uses. The expense-engine assertions follow the code there; the poster must hand it the bank (paid from),
+  // the service-charge account and the item.
+  assert.match(poster, /import \{ createAndPostBankLineExpenseOnClient \} from "\.\.\/accounting\/bank-line-expense\.service\.js"/);
+  assert.match(poster, /await createAndPostBankLineExpenseOnClient\(/);
+  assert.match(poster, /paymentAccountId: input\.bank_ledger_account_id/);
+  assert.match(poster, /expenseAccountId: input\.service_charge_account_id/);
+  assert.match(poster, /itemId,/);
+  const writer = read("apps/backend/src/accounting/bank-line-expense.service.ts");
+  assert.match(writer, /postSourceTransactionInClientTx/);
+  assert.match(writer, /source_transaction_type: "expense"/);
+  assert.match(writer, /is_company_expense/);
+  assert.match(writer, /payment_account_uuid/);
+  assert.match(writer, /unit_of_measure/);
+  assert.match(writer, /'each'/);
   assert.match(poster, /createJournalEntryOnClient/); // interest still income JE (not a 5xxx/6xxx cost)
   assert.match(poster, /Interest earned/);
   // SC must not mint a bare cost JE: only one createJournalEntryOnClient *call* (interest).
   const jeCallSites = [...poster.matchAll(/await createJournalEntryOnClient\s*\(/g)];
   assert.equal(jeCallSites.length, 1, "exactly one await createJournalEntryOnClient (interest); SC uses expense engine");
   assert.match(poster, /item_id/);
-  assert.match(poster, /unit_of_measure/);
-  assert.match(poster, /'each'/);
 
   const routes = read("apps/backend/src/banking/reconciliation.routes.ts");
   assert.match(routes, /postReconciliationAdjustments/);

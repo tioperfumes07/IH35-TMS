@@ -2461,7 +2461,7 @@ export async function suggestBankMatches(input: {
         const bank = Math.abs(Number(line.amount_cents));
         const r = await withLuciaBypass(async (client) => {
           const settlements = (await client.query<{ id: string; ref: string | null; drv: string | null; members: string[] }>(
-            `SELECT s.id::text, s.display_id::text AS ref, (SELECT upper(d.first_name || ' ' || d.last_name) FROM mdata.drivers d WHERE d.id = s.driver_id) AS drv,
+            `SELECT s.id::text, s.display_id::text AS ref, (SELECT upper(d.first_name || ' ' || d.last_name) FROM mdata.drivers d WHERE d.id = s.driver_id AND d.operating_company_id = s.operating_company_id) AS drv,
                     coalesce((SELECT array_agg('driver_bill:' || b.id::text) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.voided_at IS NULL), '{}') AS members
                FROM driver_finance.driver_settlements s
               WHERE s.operating_company_id = $1::uuid AND s.voided_at IS NULL AND round(coalesce(s.net_pay, 0) * 100)::int = $2
