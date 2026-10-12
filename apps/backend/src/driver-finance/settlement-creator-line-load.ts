@@ -10,9 +10,9 @@
  *   - a deduction names its load; blank -> deduction_load_required naming the line
  *   - the admin fee is a deduction line with its load (the drawer sends it that way); a separate admin_fee_cents is
  *     refused — it carries no load, and alongside an "Admin fee" deduction line it would be charged twice
- *   - a fuel fill with no load typed is attributed by purchase date against THIS settlement's loads (pickup date to
- *     delivery date): exactly one match -> that load; none or several -> fuel_load_ambiguous naming the fill, the date
- *     and the candidates. Never the first load.
+ *   - a fuel fill with no load typed: at post, THE one fuel-to-load rule (LEAD 443.113 BCF-05, creatorFillLoad); here,
+ *     a fill no load of this settlement covers is refused (fuel_load_ambiguous naming the fill and the date). Never the
+ *     first load.
  * Escrow with no load number keeps the settlement's first load (owner 2026-10-10: "escrow with no load number yes as
  * you said") — not changed here.
  */
@@ -88,7 +88,12 @@ export function lineLoadRefusal(draft: {
         : "Enter the admin fee as a deduction line with its load number.",
     );
   }
+  // LEAD 443.113 BCF-05 — overlapping loads (a truck running NB and its SB return) are decided at post by THE one
+  // fuel-to-load rule (settlement-creator.service.ts creatorFillLoad -> fuel/fuel-load-at-time.ts), not refused here;
+  // a fill that NO load of this settlement covers is still refused before anything is written.
   for (const f of draft.fuel_purchases ?? []) {
+    if (f.load_id || f.load_number?.trim()) continue;
+    if (fuelLoadCandidates(draft.loads, f.date).length > 0) continue;
     try {
       attributeFuelLoadNumber(draft.loads, f);
     } catch (err) {

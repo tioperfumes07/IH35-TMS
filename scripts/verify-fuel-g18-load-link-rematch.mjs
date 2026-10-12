@@ -46,6 +46,20 @@ export function checkOneFuelLoadRule(src) {
   if (!/dayEndIfDateOnlySql\("COALESCE\(d\.actual_departure_at, d\.actual_arrival_at\)"\)/.test(src.attribution)) p.push("loadAtTimeSql must count a date-only delivery stamp to the end of its day");
   if (!/d\.soft_deleted_at IS NULL/.test(src.attribution) || !/p\.soft_deleted_at IS NULL/.test(src.attribution)) p.push("loadAtTimeSql must read active (non-soft-deleted) stops only");
   if (!/l\.assigned_primary_driver_id = \$\{driverAlias\} OR l\.assigned_secondary_driver_id = \$\{driverAlias\}/.test(src.attribution)) p.push("loadAtTimeForDriverSql must match the primary or secondary driver seat");
+  // LEAD 443.113 BCF-04 / BCF-05 — the Settlement Creator's fuel fills and paid company expenses use the same one rule
+  // (creatorFillLoad -> resolveFuelLoadAtTime), only THIS settlement's loads, and the LOAD's driver + unit.
+  if (src.creator) {
+    const cf = src.creator.match(/export async function creatorFillLoad\([\s\S]*?\n\}/)?.[0] ?? "";
+    if (!cf) p.push("settlement-creator.service.ts: creatorFillLoad missing (the Creator's one-rule fill load)");
+    else {
+      if (!/resolveFuelLoadAtTime\(/.test(cf)) p.push("creatorFillLoad must resolve an untyped fill through resolveFuelLoadAtTime");
+      if (!/line_load_not_on_settlement/.test(cf)) p.push("creatorFillLoad must refuse a load that is not one of this settlement's loads");
+      if (!/sameEntityLoadUnitSql\(/.test(cf) || !/assigned_primary_driver_id/.test(cf)) p.push("creatorFillLoad must take the unit (same-entity rule) and driver from the load");
+    }
+    if ((src.creator.match(/await creatorFillLoad\(client, draft,/g) ?? []).length < 2) p.push("the Creator fuel fill AND paid company expense must both resolve through creatorFillLoad");
+    if (!/fillLoad\.driverId,\s*fillLoad\.unitId,/.test(src.creator)) p.push("the Creator fuel row must carry the load's driver + unit (fillLoad), not the draft's");
+    if (!/driver_id: expLoad\.driverId/.test(src.creator) || !/unit_id: expLoad\.unitId/.test(src.creator)) p.push("the Creator paid company expense must carry the load's driver + unit (expLoad)");
+  }
   return p;
 }
 
@@ -55,6 +69,7 @@ function readRuleSources() {
     relay: read("apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts"),
     helper: read("apps/backend/src/fuel/fuel-load-at-time.ts"),
     attribution: read("apps/backend/src/maintenance/driver-attribution.ts"),
+    creator: read("apps/backend/src/driver-finance/settlement-creator.service.ts"),
   };
 }
 
@@ -68,6 +83,11 @@ function selftest() {
     ["driver fallback removed is caught", checkOneFuelLoadRule({ ...real, helper: real.helper.replace('loadAtTimeForDriverSql("x.driver_id"', 'loadAtTimeSql("x.unit_id"') }).length > 0],
     ["date-only finish treated as midnight is caught", checkOneFuelLoadRule({ ...real, attribution: real.attribution.replace('${dayEndIfDateOnlySql("COALESCE(d.actual_departure_at, d.actual_arrival_at)")}', "d.actual_departure_at, d.actual_arrival_at") }).length > 0],
     ["retired (soft-deleted) stops read is caught", checkOneFuelLoadRule({ ...real, attribution: real.attribution.replace("AND d.soft_deleted_at IS NULL", "") }).length > 0],
+    // LEAD 443.113 BCF-04 / BCF-05
+    ["Creator fill load back on the date window only is caught", checkOneFuelLoadRule({ ...real, creator: real.creator.replace(/const atTime = await resolveFuelLoadAtTime\(/, "const atTime = null && await noRule(") }).length > 0],
+    ["Creator accepting a load off the settlement is caught", checkOneFuelLoadRule({ ...real, creator: real.creator.replace('"line_load_not_on_settlement"', '"x"') }).length > 0],
+    ["Creator fuel row stamping the draft's driver/unit is caught", checkOneFuelLoadRule({ ...real, creator: real.creator.replace("fillLoad.driverId,\n        fillLoad.unitId,", "draft.driver_id,\n        draft.unit_id ?? null,") }).length > 0],
+    ["Creator company expense stamping the draft's unit is caught", checkOneFuelLoadRule({ ...real, creator: real.creator.replace("unit_id: expLoad.unitId", "unit_id: draft.unit_id ?? null") }).length > 0],
   ];
   const failed = cases.filter(([, ok]) => !ok);
   for (const [n] of failed) console.error(`verify-fuel-g18-load-link-rematch: selftest FAIL — ${n}`);

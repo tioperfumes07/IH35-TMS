@@ -10,7 +10,8 @@
  *   1. applyDeduction resolves the line's load and passes loadId; missing/unknown refuses deduction_load_required
  *   2. no separate admin_fee_cents posting; admission refuses admin_fee_cents (no load / double entry); the drawer
  *      sends the admin fee as a deduction line with its load and admin_fee_cents null
- *   3. fuel with no load is attributed by date to exactly one of this settlement's loads (attributeFuelLoadNumber);
+ *   3. fuel with no load: THE one fuel-to-load rule at post (LEAD 443.113 BCF-05, creatorFillLoad -> resolveFuelLoadAtTime),
+ *      else the document's dates to exactly one of this settlement's loads (attributeFuelLoadNumber);
  *      none or several refuses fuel_load_ambiguous — never the first load
  *   4. admission runs lineLoadRefusal before anything is written
  *   5. escrow's first-load fallback is unchanged (owner ruling 2026-10-10)
@@ -41,7 +42,9 @@ export function problems(src) {
   if (/adminFeePost/.test(src.svc)) p.push("a separate admin_fee_cents is still posted");
   if (!/"admin_fee_needs_load"/.test(src.rule)) p.push("admission must refuse a separate admin_fee_cents");
   if (!/admin_fee_cents: null,/.test(src.drawer) || !/description: "Admin fee", amount_cents: adminFeeCents, load_number: adminFeeLoadNumber/.test(src.drawer)) p.push("the drawer must send the admin fee as a deduction line with its load");
-  if (!/const fuelLoadNumber = attributeFuelLoadNumber\(draft\.loads, fuel\)/.test(src.svc)) p.push("fuel with no load must be attributed by date (attributeFuelLoadNumber)");
+  // LEAD 443.113 BCF-05 — an untyped fill: the one fuel-to-load rule, else the document's dates (attributeFuelLoadNumber).
+  const cf = src.svc.match(/export async function creatorFillLoad\([\s\S]*?\n\}/)?.[0] ?? "";
+  if (!/const fillLoad = await creatorFillLoad\(client, draft, \{/.test(src.svc) || !/attributeFuelLoadNumber\(draft\.loads \?\? \[\]/.test(cf)) p.push("fuel with no load must be attributed (creatorFillLoad: the one rule, else by date via attributeFuelLoadNumber)");
   const fuelRule = src.rule.slice(src.rule.indexOf("export function attributeFuelLoadNumber("), src.rule.indexOf("export function attributeFuelLoadNumber(") + 900);
   if (!/candidates\.length === 1\) return candidates\[0\]/.test(fuelRule) || !/"fuel_load_ambiguous"/.test(src.rule) || /candidates\[0\]!?\s*;?\s*\/\/ first|\?\? loads\[0\]/.test(src.rule)) p.push("fuel attribution must take exactly one candidate, refuse otherwise, never the first load");
   if (!/lineLoadRefusal\(/.test(src.adm)) p.push("admission must run lineLoadRefusal before anything is written");
@@ -56,7 +59,7 @@ export function problems(src) {
   if (!/const rLoadId = await creatorLineLoadId\(client, draft, \{ label: `Reimbursement/.test(src.svc)) p.push("G5: a reimbursement must carry its load (creatorLineLoadId)");
   if (!/const lineLoadId = await creatorLineLoadId\(client, draft, \{ label: `Reimbursable expense/.test(src.svc)) p.push("G5: a reimbursable expense line must carry its load (creatorLineLoadId)");
   if (!/const loadId = await creatorLineLoadId\(client, draft, \{ label: `Additional pay/.test(src.svc)) p.push("G5: additional pay must carry its load (creatorLineLoadId)");
-  if (!/if \(!loadId\) throw lineLoadNotFound\(`Fuel/.test(src.svc)) p.push("G5: a fuel fill whose typed load is not this company's must refuse, never post load-less");
+  if (!/if \(!loadId\) throw lineLoadNotFound\(fill\.label, typed\);/.test(cf) || !/if \(!loadId\) throw lineLoadNotFound\(fill\.label, n\);/.test(cf)) p.push("G5: a fuel fill whose typed load is not this company's must refuse, never post load-less");
   if (!/if \(!id\) throw lineLoadNotFound\(line\.label, n\);/.test(src.svc)) p.push("G5: creatorLineLoadId must refuse, never return null");
   if (!/"line_load_unresolved"/.test(src.rule) || /return loads\[0\]!?\.load_number;\s*\n\s*\}\s*\n\s*\/\*\*/.test(src.rule) && !/if \(loads\.length === 1\) return loads\[0\]!\.load_number;/.test(src.rule)) p.push("G5: line attribution must refuse line_load_unresolved (only the settlement's single load may be taken undated)");
   if (!/creatorLineLoadNumber\(draft\.loads \?\? \[\], line\)/.test(src.pre)) p.push("G5: the preview must list every line whose load does not resolve");
@@ -78,7 +81,8 @@ function selftest() {
   if (!problems(m("seed", "  return {\n    code: \"customer_unmatched\",\n    message: `Load ${load.load_number}: customer \"${name}\"", "  return { id: (await client.query(`SELECT id FROM mdata.customers ORDER BY created_at ASC\n      LIMIT 1`)).rows[0].id };\n  return {\n    code: \"customer_unmatched\",\n    message: `Load ${load.load_number}: customer \"${name}\"")).some((x) => /G3: the Creator must refuse/.test(x))) bad.push("the oldest-customer fallback passed");
   if (!problems(m("pre", "await findCreatorCustomer(client as never, co, l)", "await noop(client, co, l)")).some((x) => /G3: the preview/.test(x))) bad.push("a preview without the customer check passed");
   if (!problems(m("svc", "const rLoadId = await creatorLineLoadId(client, draft, { label: `Reimbursement", "const rLoadId = null && ({ label: `Reimbursement")).some((x) => /G5: a reimbursement/.test(x))) bad.push("a load-less reimbursement passed");
-  if (!problems(m("svc", "if (!loadId) throw lineLoadNotFound(`Fuel", "if (false) throw lineLoadNotFound(`Fuel")).some((x) => /G5: a fuel fill/.test(x))) bad.push("a load-less fuel fill passed");
+  if (!problems(m("svc", "if (!loadId) throw lineLoadNotFound(fill.label, typed);", "if (false) throw lineLoadNotFound(fill.label, typed);")).some((x) => /G5: a fuel fill/.test(x))) bad.push("a load-less fuel fill passed");
+  if (!problems(m("svc", "const fillLoad = await creatorFillLoad(client, draft, {", "const fillLoad = await noRule(client, draft, {")).some((x) => /fuel with no load must be attributed/.test(x))) bad.push("a fuel fill off the one rule passed");
   if (!problems(m("svc", "          item_id, quantity, rate_cents, unit_of_measure, load_id\n", "          item_id, quantity, rate_cents, unit_of_measure\n")).some((x) => /does not bind load_id/.test(x))) bad.push("a settlement_lines insert without load_id passed");
   if (!problems(m("routes", "unit_id: z.string().uuid(),", "unit_id: z.string().uuid().nullable().optional(),")).some((x) => /unit \(truck\)/.test(x))) bad.push("an optional unit passed");
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }

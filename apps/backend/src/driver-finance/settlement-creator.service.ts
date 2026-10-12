@@ -51,6 +51,8 @@ import { ensureDispatchedLoadsForCreator } from "./settlement-creator-seed-loads
 import { creatorTrailerChoice } from "./creator-trailer-choice.js";
 import { setSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
 import { attributeFuelLoadNumber, creatorLineLoadNumber, lineLoadNotFound } from "./settlement-creator-line-load.js";
+import { resolveFuelLoadAtTime } from "../fuel/fuel-load-at-time.js";
+import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
 import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { voidDocument } from "../accounting/void-document.service.js";
@@ -734,7 +736,8 @@ export async function previewSettlementCreator(
     try {
       const t = await resolveCreatorDeductionType(client as never, draft.operating_company_id, d);
       dedAcct = (await client.query<{ account_number: string | null; account_name: string }>(
-        `SELECT account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid`, [t.accountId])).rows[0] ?? null;
+        `SELECT account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [t.accountId, draft.operating_company_id])).rows[0] ?? null;
     } catch (err) {
       if (!(err instanceof SettlementCreatorError)) throw err;
       blockers.push(err.message);
@@ -1228,11 +1231,13 @@ export async function postSettlementCreatorInClientTx(
     const { netCents, feeCents } = fuelPurchaseNetAndFeeCents(fuel);
     if (netCents + feeCents <= 0) continue;
 
-    // ROUND 443.5 — a fill with no load typed belongs to the single load of this settlement whose dates cover it.
-    const fuelLoadNumber = attributeFuelLoadNumber(draft.loads, fuel);
-    const loadId = await resolveLineLoadId(client, draft.operating_company_id, { ...fuel, load_number: fuelLoadNumber ?? fuel.load_number });
-    // 443.110 G5 — a typed load that is not this company's load used to write the fill with NO load (load exemption).
-    if (!loadId) throw lineLoadNotFound(`Fuel ${[fuel.vendor_name, fuel.invoice].filter(Boolean).join(" ") || "fill"} ${fuel.date}`, fuelLoadNumber ?? fuel.load_number);
+    // LEAD 443.113 BCF-04 / BCF-05 — the fill's load through THE one fuel-to-load rule (creatorFillLoad), one of THIS
+    // settlement's loads, and the driver + unit the fill carries come from that load.
+    const fillLoad = await creatorFillLoad(client, draft, {
+      label: `Fuel ${[fuel.vendor_name, fuel.invoice].filter(Boolean).join(" ") || "fill"} ${fuel.date}`,
+      date: fuel.date, load_id: fuel.load_id, load_number: fuel.load_number, vendor_name: fuel.vendor_name, invoice: fuel.invoice,
+    });
+    const loadId = fillLoad.loadId;
 
     // Vendor: match by name or leave null → createExpenseFromFuelTransaction refuses without vendor.
     const vendor = fuel.vendor_name
@@ -1264,12 +1269,13 @@ export async function postSettlementCreatorInClientTx(
           `UPDATE fuel.fuel_transactions ft
               SET fuel_card_id = (SELECT ct.id FROM catalogs.fuel_card_types ct WHERE ct.operating_company_id = $1::uuid AND ct.code = upper($5) AND ct.is_active),
                   notes = COALESCE($6, ft.notes), gallons = COALESCE(ft.gallons, $7), price_per_gallon = COALESCE(ft.price_per_gallon, $8),
-                  load_id = COALESCE($9::uuid, ft.load_id), updated_at = now()
+                  load_id = COALESCE($9::uuid, ft.load_id), driver_id = $11::uuid, unit_id = $12::uuid, updated_at = now()
             WHERE ft.id = ANY($2::uuid[]) AND ft.operating_company_id = $1::uuid AND btrim(ft.transaction_reference) = btrim($3)
               AND ft.fuel_type = $4 AND ft.voided_at IS NULL AND ft.vendor_id = $10::uuid
             RETURNING ft.id::text`,
           [draft.operating_company_id, priorFuelIds, fuel.invoice, fuel.fuel_type ?? "diesel", fuel.card, fuel.notes?.trim() || null,
-            fuel.gallons ?? null, fuel.cpg_cents == null ? null : dollarsFromCents(fuel.cpg_cents), loadId, vendor.id],
+            fuel.gallons ?? null, fuel.cpg_cents == null ? null : dollarsFromCents(fuel.cpg_cents), loadId, vendor.id,
+            fillLoad.driverId, fillLoad.unitId],
         )).rows[0]?.id ?? null
       : null;
     if (!reused) try {
@@ -1339,8 +1345,8 @@ export async function postSettlementCreatorInClientTx(
         draft.operating_company_id,
         vendor.id,
         loadId,
-        draft.driver_id,
-        draft.unit_id ?? null,
+        fillLoad.driverId,
+        fillLoad.unitId,
         fuelType,
         fuel.gallons,
         dollarsFromCents(fuel.cpg_cents),
@@ -1589,12 +1595,13 @@ export async function postSettlementCreatorInClientTx(
     }
     const reeferRefusal = await reeferFuelExpenseRefusal(client, draft.operating_company_id, exp, itemAcct.item_id);
     if (reeferRefusal) throw new SettlementCreatorError("reefer_fuel_needs_gallons", reeferRefusal);
-    // Every settlement item belongs to a load (443.5): typed, else the one load whose dates cover the expense date.
-    const expLoadNumber = attributeFuelLoadNumber(draft.loads, { date: exp.date, load_number: exp.load_number, load_id: exp.load_id, vendor_name: exp.vendor_name, invoice: exp.vendor_document_number });
-    const loadId = await resolveLineLoadId(client, draft.operating_company_id, { ...exp, load_number: expLoadNumber ?? exp.load_number });
-    if (!loadId) {
-      throw new SettlementCreatorError("expense_load_required", `Company expense "${exp.item_name}": load ${expLoadNumber ?? exp.load_number ?? ""} is not a load of this company.`);
-    }
+    // Every settlement item belongs to a load (443.5). LEAD 443.113 BCF-04 / BCF-05 — the same one rule as a fuel fill
+    // (creatorFillLoad): one of THIS settlement's loads, and the expense carries that load's driver + unit.
+    const expLoad = await creatorFillLoad(client, draft, {
+      label: `Company expense "${exp.item_name}"`,
+      date: exp.date, load_id: exp.load_id, load_number: exp.load_number, vendor_name: exp.vendor_name, invoice: exp.vendor_document_number,
+    });
+    const loadId = expLoad.loadId;
     // Quantity / unit / rate as the source gave them (gallons of DEF); a flat charge is 1 each.
     const qty = exp.quantity != null && exp.quantity > 0 ? Number(exp.quantity) : 1;
     const uom = exp.quantity != null && exp.quantity > 0 ? (exp.unit_of_measure?.trim() || "each") : "each";
@@ -1611,9 +1618,9 @@ export async function postSettlementCreatorInClientTx(
         vendorId: vendor.id,
         vendorDocumentNumber: exp.vendor_document_number,
         loadId,
-        // ROUND 443.6 c — every bill carries the driver, unit and trailer of the settlement it came from.
-        driverId: draft.driver_id,
-        unitId: draft.unit_id ?? null,
+        // ROUND 443.6 c / 443.113 BCF-04 — the bill carries its LOAD's driver and unit (and the settlement's trailer).
+        driverId: expLoad.driverId,
+        unitId: expLoad.unitId,
         trailerId: draft.trailer_id ?? null,
         billDate: exp.date,
         amountCents: exp.amount_cents,
@@ -1644,7 +1651,7 @@ export async function postSettlementCreatorInClientTx(
       client,
       {
         operating_company_id: draft.operating_company_id,
-        driver_id: draft.driver_id,
+        driver_id: expLoad.driverId,
         category_account_id: itemAcct.id,
         expense_date: exp.date,
         amount_cents: exp.amount_cents,
@@ -1653,7 +1660,7 @@ export async function postSettlementCreatorInClientTx(
         is_company_expense: true,
         payment_account_uuid: paymentAccountId,
         load_id: loadId,
-        unit_id: draft.unit_id ?? null,
+        unit_id: expLoad.unitId,
         trailer_id: draft.trailer_id ?? null,
         vendor_document_number: exp.vendor_document_number?.trim() || null,
         item_id: itemAcct.item_id,
@@ -2276,6 +2283,72 @@ export async function previewSettlementCreatorThroughClose(
  * ROUND 363-CC2-D — a line's picked load: the id the user chose (must be this company's), else the typed load number.
  * Shared by the preview and the post.
  */
+/**
+ * LEAD 443.113 BCF-04 / BCF-05 — the load a Creator fuel fill or paid company expense belongs to, and the driver + unit
+ * it carries. ONE rule, the same one the fuel-card import and the Relay fill post use:
+ *   1. the load picked by id, or the load number the document prints on the line (it wins — it IS the document);
+ *   2. else THE fuel-to-load rule (fuel/fuel-load-at-time.ts resolveFuelLoadAtTime): the load the settlement's truck
+ *      (else its driver) was running at the fill time — actual stamps first, date-only stamps to the end of their day;
+ *   3. else, when no stop of the truck is stamped yet, the explicit historical evidence of THIS document: the single
+ *      settlement load whose pickup..delivery dates cover the date (attributeFuelLoadNumber — ambiguity is refused).
+ * The load must be one of THIS settlement's loads (a fill / expense is never attached to another trip), and its driver
+ * and unit are the LOAD's (the unit through the same-entity rule, accounting/load-unit.sql.ts) — never the draft's
+ * independently. Anything else is refused by name, before anything is written.
+ */
+export async function creatorFillLoad(
+  client: DbClient,
+  draft: SettlementCreatorDraft,
+  fill: { label: string; date: string; load_id?: string | null; load_number?: string | null; vendor_name?: string | null; invoice?: string | null },
+): Promise<{ loadId: string; loadNumber: string; driverId: string; unitId: string }> {
+  const opco = draft.operating_company_id;
+  const settlementLoads = (await client.query<{ id: string; load_number: string }>(
+    `SELECT id::text, load_number::text FROM mdata.loads
+      WHERE operating_company_id = $1::uuid AND load_number = ANY($2::text[]) AND soft_deleted_at IS NULL`,
+    [opco, (draft.loads ?? []).map((l) => l.load_number.trim())],
+  )).rows;
+  let loadId: string | null = null;
+  const typed = fill.load_number?.trim() || null;
+  if (fill.load_id || typed) {
+    loadId = await resolveLineLoadId(client, opco, { load_id: fill.load_id, load_number: typed });
+    if (!loadId) throw lineLoadNotFound(fill.label, typed);
+  } else {
+    const atTime = await resolveFuelLoadAtTime(client as never, {
+      operatingCompanyId: opco,
+      unitId: draft.unit_id ?? null,
+      driverId: draft.driver_id ?? null,
+      at: `${fill.date}T17:00:00.000Z`,
+    });
+    if (atTime) {
+      loadId = atTime.load_id;
+    } else {
+      const n = attributeFuelLoadNumber(draft.loads ?? [], { date: fill.date, vendor_name: fill.vendor_name, invoice: fill.invoice });
+      loadId = settlementLoads.find((l) => l.load_number === n)?.id ?? null;
+      if (!loadId) throw lineLoadNotFound(fill.label, n);
+    }
+  }
+  if (!settlementLoads.some((l) => l.id === loadId)) {
+    throw new SettlementCreatorError(
+      "line_load_not_on_settlement",
+      `${fill.label}: the load it belongs to is not one of this settlement's loads (${settlementLoads.map((l) => l.load_number).join(", ") || "none"}) — type which of them it belongs to.`,
+    );
+  }
+  const row = (await client.query<{ load_number: string; driver_id: string | null; unit_id: string | null }>(
+    `SELECT l.load_number::text, l.assigned_primary_driver_id::text AS driver_id,
+            ${sameEntityLoadUnitSql("l.id", "l.operating_company_id")}::text AS unit_id
+       FROM mdata.loads l WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid`,
+    [loadId, opco],
+  )).rows[0];
+  if (!row?.unit_id) {
+    throw new SettlementCreatorError("line_load_has_no_unit", `${fill.label}: load ${row?.load_number ?? ""} has no truck of this company assigned — assign it on the load first.`);
+  }
+  if (draft.driver_id && row.driver_id && row.driver_id !== draft.driver_id) {
+    throw new SettlementCreatorError("line_load_other_driver", `${fill.label}: load ${row.load_number} is driven by another driver — not this settlement's.`);
+  }
+  const driverId = row.driver_id ?? draft.driver_id;
+  if (!driverId) throw new SettlementCreatorError("line_load_has_no_driver", `${fill.label}: load ${row.load_number} has no driver.`);
+  return { loadId: loadId!, loadNumber: row.load_number, driverId, unitId: row.unit_id };
+}
+
 /** 443.110 G5 — the load id a Creator line is written with (creatorLineLoadNumber rules); refuses, never null. */
 async function creatorLineLoadId(
   client: DbClient,
