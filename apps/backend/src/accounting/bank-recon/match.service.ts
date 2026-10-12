@@ -1130,6 +1130,51 @@ function computeCashBasisRevenueFromActualCashHit(input: { bankAmountCents: numb
     .reduce((sum, entry) => sum + Number(entry.amount_cents ?? 0), 0);
 }
 
+/** LEAD 443.84 #3 — the card discount cap: above it the line is a different purchase, never a discount. */
+export const CARD_DISCOUNT_MAX_PCT = 8;
+export const FUEL_CARD_DISCOUNT_ITEM = "Fuel Card Discount";
+
+/**
+ * LEAD 443.84 #3 — a fuel-card line pays its receipt(s) at the card's discounted price (measured: a median 3.6% under the pump
+ * receipt). The difference is the card discount: Dr the card payable (the bank account's ledger, e.g. 2510) / Cr the account of
+ * the item "Fuel Card Discount" (mapped to "Fuel & Diesel" 5000 — no new account). Split across the receipts in proportion to
+ * their amounts; each pair is sourced to its receipt's expense, so it carries that receipt's load, its driver (entity) and its
+ * unit class — the fuel cost on the load becomes what the card charged. Refused: a non-expense member, a line ABOVE the receipt
+ * (a different purchase), a discount above CARD_DISCOUNT_MAX_PCT, a missing item. Caller owns the transaction.
+ */
+type CardDiscountSplit = { difference_account_id: string; item_id: string; discount_cents: number;
+  legs: Array<{ source_expense_id: string; cents: number; class_id: string | null; label: string }> };
+async function cardDiscountShares(client: DbClient, input: {
+  operating_company_id: string; bank_account_id: string; is_credit: boolean;
+  variance_cents: number; ledger_sum_cents: number;
+  members: Array<{ kind: LedgerEntryKind; id: string; amount_cents: number }>;
+}): Promise<CardDiscountSplit> {
+  if (input.is_credit) throw new Error("card_discount_requires_a_payment_line");
+  if (input.members.some((m) => m.kind !== "expense")) throw new Error("card_discount_members_must_be_expenses");
+  if (input.variance_cents > 0) throw new Error(`card_line_above_receipt:${input.variance_cents}`);
+  const discount = -input.variance_cents;
+  if (discount * 100 > input.ledger_sum_cents * CARD_DISCOUNT_MAX_PCT) {
+    throw new Error(`card_discount_above_cap:${discount}:${input.ledger_sum_cents}:${CARD_DISCOUNT_MAX_PCT}%`);
+  }
+  const item = (await client.query<{ id: string; account_id: string | null }>(
+    `SELECT i.id::text, i.default_expense_account_id::text AS account_id FROM catalogs.items i
+      WHERE i.item_name = $2 AND i.deactivated_at IS NULL AND (i.operating_company_id = $1::uuid OR i.operating_company_id IS NULL)
+      ORDER BY (i.operating_company_id = $1::uuid) DESC NULLS LAST LIMIT 1`, [input.operating_company_id, FUEL_CARD_DISCOUNT_ITEM])).rows[0];
+  if (!item?.account_id) throw new Error("fuel_card_discount_item_missing");
+  const stamps = (await client.query<{ id: string; class_id: string | null; ref: string | null }>(
+    `SELECT e.id::text, e.expense_number AS ref,
+            (SELECT p.class_id::text FROM accounting.journal_entry_postings p WHERE p.journal_entry_uuid = e.journal_entry_id AND p.debit_or_credit = 'debit' AND p.class_id IS NOT NULL LIMIT 1) AS class_id
+       FROM accounting.expenses e WHERE e.id = ANY($1::uuid[]) AND e.operating_company_id = $2::uuid`,
+    [input.members.map((m) => m.id), input.operating_company_id])).rows;
+  const byId = new Map(stamps.map((r) => [r.id, r]));
+  const shares = input.members.map((m) => ({ m, cents: Math.floor((discount * m.amount_cents) / input.ledger_sum_cents) }));
+  const rest = discount - shares.reduce((a, x) => a + x.cents, 0);
+  [...shares].sort((a, b) => b.m.amount_cents - a.m.amount_cents)[0]!.cents += rest;
+  return { difference_account_id: item.account_id, item_id: item.id, discount_cents: discount,
+    legs: shares.filter((x) => x.cents > 0).map((x) => ({ source_expense_id: x.m.id, cents: x.cents, class_id: byId.get(x.m.id)?.class_id ?? null,
+      label: `${FUEL_CARD_DISCOUNT_ITEM} — ${byId.get(x.m.id)?.ref ?? x.m.id}` })) };
+}
+
 async function postDifferenceJournalEntry(
   client: DbClient,
   input: {
@@ -1141,6 +1186,8 @@ async function postDifferenceJournalEntry(
     transaction_date: string;
     variance_cents: number;
     is_credit: boolean;
+    /** 443.84 #3 card discount: one pair per receipt, sourced to the receipt (its load), linked to this bank line as the variance. */
+    split?: Array<{ source_expense_id: string; cents: number; class_id: string | null; label: string }>;
   }
 ) {
   if (input.variance_cents === 0) return null;
@@ -1258,6 +1305,24 @@ async function postDifferenceJournalEntry(
     { account_id: cashAccountId, side: cashSide, description: "Bank reconciliation variance leg", key: `bank-recon-var:${journalEntryId}`, seq: 1 },
     { account_id: input.difference_account_id, side: diffSide, description: "Bank reconciliation offset leg", key: `bank-recon-off:${journalEntryId}`, seq: 2 },
   ] as const;
+  if (input.split?.length) {
+    if (input.split.reduce((a, l) => a + l.cents, 0) !== magnitude) throw new Error("card_discount_split_does_not_equal_variance");
+    let seq = 0;
+    for (const l of input.split) {
+      for (const [account_id, side, role] of [[cashAccountId, cashSide, "card payable"], [input.difference_account_id, diffSide, "fuel cost"]] as const) {
+        seq += 1;
+        await insertPostingLineWithSpine(client, {
+          operating_company_id: input.operating_company_id, journal_entry_uuid: journalEntryId, line_sequence: seq, account_id,
+          debit_or_credit: side, amount_cents: l.cents, description: `${l.label} (${role})`,
+          idempotency_key: `bank-recon-card:${journalEntryId}:${l.source_expense_id}:${side}`,
+          source_transaction_type: "expense", source_transaction_id: l.source_expense_id, class_id: l.class_id,
+          relationship_role: "bank_reconciliation_variance",
+          spine_link: { linked_object_type: "bank_transaction", linked_object_id: input.bank_transaction_id },
+        });
+      }
+    }
+    return journalEntryId;
+  }
   for (const leg of legs) {
     await insertPostingLineWithSpine(client, {
       operating_company_id: input.operating_company_id,
@@ -2079,6 +2144,9 @@ export async function acceptExactMultiDocumentMatch(input: {
   bank_transaction_id: string;
   actor_user_uuid: string;
   entries: Array<{ ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string }>;
+  /** LEAD 443.84 #3: a fuel-CARD line paying its receipt(s) at the card's discounted price — the difference posts as the
+   *  item "Fuel Card Discount" (Dr the card payable / Cr the item's account), capped at CARD_DISCOUNT_MAX_PCT. */
+  card_discount?: boolean;
 }): Promise<{
   variance_cents: number;
   match_ids: string[];
@@ -2137,7 +2205,25 @@ export async function acceptExactMultiDocumentMatch(input: {
 
     const txnAmountAbs = Math.abs(Number(txn.amount_cents ?? 0));
     const varianceCents = txnAmountAbs - ledgerSum;
-    if (varianceCents !== 0) {
+    let cardDiscountJournalEntryId: string | null = null;
+    if (varianceCents !== 0 && input.card_discount) {
+      const split = await cardDiscountShares(client, {
+        operating_company_id: input.operating_company_id, bank_account_id: txn.bank_account_id, is_credit: Boolean(txn.is_credit),
+        variance_cents: varianceCents, ledger_sum_cents: ledgerSum,
+        members: input.entries.map((e, i) => ({ kind: e.ledger_entry_kind, id: e.ledger_entry_id, amount_cents: amounts[i]! })),
+      });
+      // The card discount IS this match's variance: posted by the one variance poster (reversed on unmatch through its
+      // bank_reconciliation_variance link), Dr the card payable / Cr the item's account, one pair per receipt.
+      cardDiscountJournalEntryId = await postDifferenceJournalEntry(client, {
+        operating_company_id: input.operating_company_id, bank_transaction_id: input.bank_transaction_id, bank_account_id: txn.bank_account_id,
+        difference_account_id: split.difference_account_id, actor_user_uuid: input.actor_user_uuid, transaction_date: txn.transaction_date,
+        variance_cents: varianceCents, is_credit: Boolean(txn.is_credit), split: split.legs,
+      });
+      await appendCrudAudit(client, input.actor_user_uuid, "bank_match.card_discount_posted", {
+        bank_transaction_id: input.bank_transaction_id, journal_entry_id: cardDiscountJournalEntryId, discount_cents: split.discount_cents,
+        item: FUEL_CARD_DISCOUNT_ITEM, item_id: split.item_id, legs: split.legs,
+      }, "info", "443.84-CARD-DISCOUNT");
+    } else if (varianceCents !== 0) {
       throw new Error(`multi_match_nonzero_variance:${varianceCents}`);
     }
 
@@ -2303,10 +2389,10 @@ export async function previewMatchVariance(input: {
  * -> all returned, none preselected; no exact amount / no candidate -> returned with the reason.
  */
 export type SuggestionOutcome =
-  | { bank_transaction_id: string; result: "suggested"; ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string; reference: string | null; variance_cents?: number }
+  | { bank_transaction_id: string; result: "suggested"; ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string; reference: string | null; variance_cents?: number; within_card_cap?: boolean }
   | { bank_transaction_id: string; result: "already_suggested_or_matched" }
   | { bank_transaction_id: string; result: "several"; documents: string[] }
-  | { bank_transaction_id: string; result: "group"; ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string; reference: string | null; members: string[]; variance_cents: number }
+  | { bank_transaction_id: string; result: "group"; ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string; reference: string | null; members: string[]; variance_cents: number; within_card_cap?: boolean }
   | { bank_transaction_id: string; result: "none"; reason: "no_candidate" | "no_exact_amount" | "several_exact_documents" | "document_held_by_another_line" | "document_competes_with_another_line" | "categorize_no_document" | "error"; detail?: string };
 
 export async function suggestBankMatches(input: {
@@ -2376,9 +2462,11 @@ export async function suggestBankMatches(input: {
         const pick = exactG.length === 1 ? [exactG[0]!] : fits;
         if (pick.length === 1) {
           const g = pick[0]!;
-          if (g.ids.length === 1) outcomes.push({ bank_transaction_id: line.id, result: "suggested", ledger_entry_kind: "expense", ledger_entry_id: g.ids[0]!, reference: g.refs[0] || null, variance_cents: bank - g.amt });
+          // 443.84 #3: acceptable with the card discount only at or below the receipt and within the cap.
+          const within = g.amt >= bank && (g.amt - bank) * 100 <= g.amt * CARD_DISCOUNT_MAX_PCT;
+          if (g.ids.length === 1) outcomes.push({ bank_transaction_id: line.id, result: "suggested", ledger_entry_kind: "expense", ledger_entry_id: g.ids[0]!, reference: g.refs[0] || null, variance_cents: bank - g.amt, within_card_cap: within });
           else outcomes.push({ bank_transaction_id: line.id, result: "group", ledger_entry_kind: "expense", ledger_entry_id: g.ids[0]!, reference: `invoice ${g.inv}`,
-            members: g.ids.map((id) => `expense:${id}`), variance_cents: bank - g.amt });
+            members: g.ids.map((id) => `expense:${id}`), variance_cents: bank - g.amt, within_card_cap: within });
           return true;
         }
         if (pick.length > 1) { outcomes.push({ bank_transaction_id: line.id, result: "several", documents: pick.map((g) => `invoice ${g.inv}: ` + g.ids.map((id) => `expense:${id}`).join("+")) }); return true; }
