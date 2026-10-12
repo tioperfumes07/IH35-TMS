@@ -411,6 +411,8 @@ export async function recordDocumentMilesSources(
 //   otherwise                           nothing written; the reason is returned and listed ("no previous load", ...)
 // Only a NULL miles_deadhead is filled — a document or user value is never replaced. Only miles_deadhead, its method and
 // miles_choice.empty are written: loaded miles, pay and invoice amounts are untouched (document miles stay the pay basis).
+/** A previous last stop this close to the first pickup is the same place: deadhead 0. */
+export const SAME_PLACE_M = 150;
 export type DeadheadFillResult = {
   load_id: string; load_number: string | null;
   status: "filled" | "already_set" | "not_filled";
@@ -439,6 +441,20 @@ export async function fillLoadDeadhead(
   let reason: string | null = miles != null ? null : empty?.google_missing_reason ?? "no recommendation";
   let from: string | null = miles != null ? "previous load's last stop" : null;
 
+  // The previous load ended where this one picks up (the same yard / dock): Google returns no route for a zero-length leg,
+  // and the deadhead is 0 — measured 13640 -> 13646, 40761 / 40722 Cannel St, Laredo, 5 m apart.
+  if (miles == null && reason === "Google had no route" && row.unit) {
+    const { stops, firstAt } = await loadStopPoints(client, args.operatingCompanyId, args.loadId);
+    const first = stops[0];
+    const prior = first && located(first) ? await priorLastStop(client, args.operatingCompanyId, row.unit, args.loadId, firstAt) : null;
+    if (prior && located(prior) && first) {
+      const r = Math.PI / 180;
+      const h = Math.sin(((Number(first.latitude) - Number(prior.latitude)) * r) / 2) ** 2
+        + Math.cos(Number(prior.latitude) * r) * Math.cos(Number(first.latitude) * r) * Math.sin(((Number(first.longitude) - Number(prior.longitude)) * r) / 2) ** 2;
+      const meters = 2 * 6371000 * Math.asin(Math.sqrt(h));
+      if (meters <= SAME_PLACE_M) { miles = 0; method = "google_practical_prev_stop"; reason = null; from = `previous load's last stop (same place, ${Math.round(meters)} m)`; }
+    }
+  }
   if (miles == null && reason === "no previous load for this unit" && row.unit) {
     const { stops, firstAt } = await loadStopPoints(client, args.operatingCompanyId, args.loadId);
     const first = stops[0];
