@@ -374,6 +374,31 @@ export function parseMigrations(migrationsDir) {
         schema.get(relation).add(newCol);
       }
     }
+
+    // ── DYNAMIC ALTER TABLE RENAME COLUMN (EXECUTE format over a FOREACH array) ──
+    // 443.99: the same idiom as the dynamic ADD above, for a rename —
+    // 202615330400_r342_one_entity_column_rename.sql renames tenant_id -> operating_company_id on 17
+    // tables via `FOREACH t IN ARRAY ARRAY[…] LOOP … EXECUTE format('ALTER TABLE %s RENAME COLUMN
+    // tenant_id TO operating_company_id', t)`. The static renameColRe needs a literal schema.table, so
+    // the baseline kept claiming tenant_id on all 17 (verify-baseline-columns-exist-in-db red: columns
+    // that exist on no table). Same nearest-preceding-FOREACH scoping as the ADD case.
+    const dynamicRenameRe =
+      /EXECUTE\s+format\(\s*'ALTER\s+TABLE\s+%s\s+RENAME\s+COLUMN\s+"?([A-Za-z_][A-Za-z0-9_]*)"?\s+TO\s+"?([A-Za-z_][A-Za-z0-9_]*)"?\s*'\s*,\s*(\w+)\s*\)/gi;
+    while ((m = dynamicRenameRe.exec(sql)) !== null) {
+      const oldCol = m[1].toLowerCase();
+      const newCol = m[2].toLowerCase();
+      const loopVar = m[3];
+      const block = [...foreachBlocks].reverse().find((b) => b.idx < m.index && b.loopVar === loopVar);
+      if (!block) continue;
+      for (const relation of block.relations) {
+        const [schemaName] = relation.split(".");
+        if (EXCLUDED_SCHEMAS.has(schemaName)) continue;
+        if (schema.has(relation) && schema.get(relation).has(oldCol)) {
+          schema.get(relation).delete(oldCol);
+          schema.get(relation).add(newCol);
+        }
+      }
+    }
   }
 
   // ── Resolve LIKE inheritance ────────────────────────────────────────────────

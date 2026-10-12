@@ -71,10 +71,31 @@ assertIncludes(
   "C-24 Active WOs opened date uses QBO list format",
 );
 
+// 443.99 class B (CC-2, 2026-10-12) — D54 banking action labels.
+//   old rule: the feed file contains the strings "Record transfer" and "D54" (both only in comments since
+//             2a6438d954).
+//   new rule: the feed's one action-label mapper, qboActionLabel(), returns the D54 token for every mode —
+//             Match / Record transfer / Record as credit card payment / Loan / Add — read from QBO_BANKING_ACTIONS.
+//   why: BANK-ACTION-QBO-01 (owner 2026-10-03, 2a6438d954) removed the separate "Action type" column that
+//        carried the "// D54" comment; the D54 labels now live on the action button via qboActionLabel(). A
+//        comment marker proves nothing; the mapper is what the operator sees. Stricter: a mode that loses its
+//        D54 label, or a hard-coded label, now fails.
 assertIncludes(
   "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
-  ["Record transfer", "D54"],
+  [
+    "export function qboActionLabel(",
+    'if (mode === "match") return QBO_BANKING_ACTIONS.match;',
+    'if (mode === "transfer") return QBO_BANKING_ACTIONS.recordTransfer;',
+    'if (mode === "cc_payment") return QBO_BANKING_ACTIONS.recordCcPayment;',
+    'if (mode === "loan") return QBO_BANKING_ACTIONS.loan;',
+    "return QBO_BANKING_ACTIONS.add;",
+  ],
   "C-24 Banking D54 action labels remain",
+);
+assertIncludes(
+  "apps/frontend/src/design/qbo-parity.ts",
+  ['add: "Add"', 'match: "Match"', 'recordTransfer: "Record transfer"'],
+  "C-24 D54 token values are the QuickBooks words",
 );
 
 console.log("verify-c24-qbo-parity-tail --selftest OK");

@@ -66,12 +66,18 @@ function main() {
   assertIncludes(samsara, 'data-dp-samsara="1"', SAMSARA);
   assertIncludes(samsara, "duplicate_warning", SAMSARA);
   assertIncludes(samsara, "Duplicate Samsara record warning", SAMSARA);
-  // §7 palette — warning banner must use slate tokens (never amber/emerald/yellow status paint).
-  assertIncludes(samsara, "border-slate-200", SAMSARA);
-  assertIncludes(samsara, "bg-slate-100", SAMSARA);
-  assertIncludes(samsara, "text-slate-700", SAMSARA);
+  // §7 palette — warning banner must use the neutral house tokens (never amber/emerald/yellow status paint).
+  // LEAD 443.99 class B (2026-10-12):
+  //   old rule: the banner carries border-slate-200 / bg-slate-100 / text-slate-700.
+  //   new rule: the banner carries the house-token equivalents border-[#E5E7EB] / bg-[#F7F8FA] / text-[#1F2A44]
+  //             (hex case-insensitive), and still no amber/emerald/yellow/green status paint.
+  //   why: BANK-F91237 (#25913, e3568098f0) moved this banner from slate-* to the locked house tokens
+  //        (docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md). Same neutral palette; a status colour still fails.
+  for (const token of [/border-\[#E5E7EB\]/i, /bg-\[#F7F8FA\]/i, /text-\[#1F2A44\]/i]) {
+    if (!token.test(samsara)) throw new Error(`${SAMSARA}: missing house token ${token.source}`);
+  }
   if (/amber-|emerald-|yellow-|bg-green-|text-green-/.test(samsara)) {
-    throw new Error(`${SAMSARA}: off-palette §7 status class (use slate tokens only)`);
+    throw new Error(`${SAMSARA}: off-palette §7 status class (use the neutral house tokens only)`);
   }
   assertIncludes(fuel, 'data-dp-fuel-verdicts="1"', FUEL);
   assertIncludes(fuel, "E-21", FUEL);

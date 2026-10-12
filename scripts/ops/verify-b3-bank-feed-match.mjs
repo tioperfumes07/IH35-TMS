@@ -88,7 +88,14 @@ function main() {
   assertIncludes(feed, '["match", QBO_BANKING_ACTIONS.match]', FEED);
   assertIncludes(feed, '["transfer", QBO_BANKING_ACTIONS.recordAsTransfer]', FEED);
   assertIncludes(feed, '["cc_payment", QBO_BANKING_ACTIONS.recordCcPayment]', FEED);
-  assertIncludes(feed, '["loan", QBO_BANKING_ACTIONS.loan]', FEED);
+  // 443.99 class B (CC-2, 2026-10-12) — loan radio label.
+  //   old rule: the loan radio is the literal tuple ["loan", QBO_BANKING_ACTIONS.loan] (always "Loan").
+  //   new rule: the loan radio labels by direction — money IN = "Loan" (funding), money OUT = "Apply repayment".
+  //   why: e7299e4095 (ROUND 443.22-2d) split the label by direction; the bare tuple would label a repayment
+  //        outflow "Loan", which is the regression. Stricter: the old always-"Loan" tuple now fails.
+  if (!/\[\s*"loan",\s*tx\.is_credit \? QBO_BANKING_ACTIONS\.loan : QBO_BANKING_ACTIONS\.applyRepayment,?\s*\]/.test(feed)) {
+    throw new Error(`${FEED}: loan radio must label money IN "Loan" and money OUT "Apply repayment" (tx.is_credit split)`);
+  }
   assertIncludes(feed, "QBO_BANKING_ACTIONS.findOtherMatches", FEED);
   assertIncludes(feed, "1 match found", FEED);
   assertIncludes(feed, 'mode: "match" | "categorize" | "transfer" | "cc_payment" | "loan"', FEED);
@@ -98,6 +105,7 @@ function main() {
   assertIncludes(tokens, 'recordAsTransfer: "Record as transfer"', TOKENS);
   assertIncludes(tokens, 'recordCcPayment: "Record as credit card payment"', TOKENS);
   assertIncludes(tokens, 'loan: "Loan"', TOKENS);
+  assertIncludes(tokens, 'applyRepayment: "Apply repayment"', TOKENS);
   assertIncludes(tokens, 'findOtherMatches: "Find other matches"', TOKENS);
 
   // BANK-F91064 — MatchDrawer body/actions use locked text-xs (12px), not off-scale text-[11px].
