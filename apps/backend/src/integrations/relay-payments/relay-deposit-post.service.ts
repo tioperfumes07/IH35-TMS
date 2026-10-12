@@ -6,6 +6,12 @@
  * A CANCELED deposit posts nothing. A card whose owner is not named, or whose writer is not this engine, is HELD and listed —
  * never guessed. Lifts the classifier header's HOLD-FOR-JORGE "nothing here posts" per the owner order above.
  *
+ * LEAD 443.133 B: the funding map below is now DATA — integrations.relay_company_cards.funding_kind (+ account / party),
+ * seeded by migration 202615870910 from the owner's words and owner-editable; this list is its history. Added 443.133 B:
+ * 0275 Scentsx, 9830 Tio Perfumes 2, 1222/3088/7180 Laura (Due to / from Laura), 1993 Alberto Lozano (refused by name until
+ * its account exists). Every post / already-posted deposit is stamped on its row (posted_to_gl, posted_journal_entry_id,
+ * classification); a deposit enters 1295 once (integrations.relay_deposit_postings, database refusal).
+ *
  * FUNDING MAP (owner, verbatim in ~/IH35-LEAD-CHANNEL/2026-10-10-LEAD-TO-SEATS.md, 7:26 / 7:28 / 7:30 PM CT):
  *   0680               USMCA Bank of America debit card  -> the USMCA Bank of America operating account (1000)
  *   9708, 1354, 4823   Transportation Wells Fargo cards  -> "Inter-company - IH35 Transportation" (8000); nothing is written
@@ -24,29 +30,59 @@ import type { DbClient } from "./db-client.type.js";
 import { createPaidDirectVendorAdvance } from "../../accounting/related-party-loan-posting/create-entry.service.js";
 
 export type DepositFunding =
-  | { kind: "account"; account_number: string | null; system_purpose: string | null; label: string }
+  | { kind: "account"; account_number: string | null; system_purpose: string | null; label: string; classification: "company" | "intercompany" }
   | { kind: "held"; reason: "loan_engine_paid_direct" | "card_owner_not_named"; label: string }
   /** 443.58 / 443.64: a related party's card paid Relay — paid-direct document through the loan engine + credit to the party's
-   *  "Due to / from <party>" account (CC-1 443.59: one running account per party, debit or credit balance). */
-  | { kind: "party"; party_account_number: string; party_vendor_name: string; relationship: "owner" | "related_company"; label: string };
+   *  "Due to / from <party>" account (CC-1 443.59: one running account per party, debit or credit balance). 443.133 B: the
+   *  party is the map's vendor id; a party with no account yet is refused by name. */
+  | { kind: "party"; party_account_number: string | null; party_vendor_id: string; relationship: string; label: string };
 
-/** Owner's funding-card map. One place; the guard reads it. */
-export const RELAY_DEPOSIT_FUNDING: Readonly<Record<string, DepositFunding>> = Object.freeze({
-  "0680": { kind: "account", account_number: "1000", system_purpose: null, label: "USMCA Bank of America debit" },
-  "9708": { kind: "account", account_number: null, system_purpose: "intercompany_ih35", label: "Laura — Transportation Wells Fargo debit" },
-  "1354": { kind: "account", account_number: null, system_purpose: "intercompany_ih35", label: "Laura — Transportation Wells Fargo debit" },
-  "4823": { kind: "account", account_number: null, system_purpose: "intercompany_ih35", label: "Laura — Transportation Wells Fargo debit" },
-  // Lead 443.58 / 443.59 / 443.64: a party card credits that party's "Due to / from" account (CC-1 #26377 contract).
-  "0210": { kind: "party", party_account_number: "2410-00-001", party_vendor_name: "Jorge Pablo Guadalupe Muñoz Gonzalez", relationship: "owner", label: "Jorge personal card" },
-  // Lead 443.64 (3a): 6248 -> Jorge and 9855 -> Tio Perfumes 2, through the same party contract.
-  "6248": { kind: "party", party_account_number: "2410-00-001", party_vendor_name: "Jorge Pablo Guadalupe Muñoz Gonzalez", relationship: "owner", label: "Jorge personal Bank of America debit" },
-  "9855": { kind: "party", party_account_number: "2410-00-003", party_vendor_name: "Tio Perfumes 2 LLC", relationship: "related_company", label: "Tio Perfumes 2" },
-  // Lead ruling 2026-10-11 (after 443.29 b): 5007 credits "Amex Credit Card Payable" (2500-00-001), not the loan engine.
-  "5007": { kind: "account", account_number: "2500-00-001", system_purpose: null, label: "Amex Scentsx (Amex Credit Card Payable)" },
-});
+/** LEAD 443.133 B — the owner's funding-card map, read from integrations.relay_company_cards (data, not code). */
+export async function loadDepositFunding(client: DbClient, operatingCompanyId: string, last4: string | null): Promise<DepositFunding> {
+  if (!last4) return { kind: "held", reason: "card_owner_not_named", label: "no card in note" };
+  const row = (
+    await client.query<{
+      funding_kind: string | null; funding_account_number: string | null; funding_system_purpose: string | null;
+      party_vendor_id: string | null; party_relationship: string | null; label: string | null;
+    }>(
+      `SELECT funding_kind, funding_account_number, funding_system_purpose, party_vendor_id::text, party_relationship, label
+         FROM integrations.relay_company_cards
+        WHERE operating_company_id = $1::uuid AND card_last4 = $2 AND is_active AND voided_at IS NULL
+        LIMIT 1`,
+      [operatingCompanyId, last4]
+    )
+  ).rows[0];
+  const label = row?.label ?? `card ${last4}`;
+  if (!row?.funding_kind) return { kind: "held", reason: "card_owner_not_named", label };
+  if (row.funding_kind === "party") {
+    return { kind: "party", party_account_number: row.funding_account_number, party_vendor_id: row.party_vendor_id!, relationship: row.party_relationship ?? "other", label };
+  }
+  return {
+    kind: "account",
+    account_number: row.funding_account_number,
+    system_purpose: row.funding_system_purpose,
+    label,
+    classification: row.funding_kind === "intercompany" ? "intercompany" : "company",
+  };
+}
 
-export function fundingForCard(last4: string | null): DepositFunding {
-  return (last4 && RELAY_DEPOSIT_FUNDING[last4]) || { kind: "held", reason: "card_owner_not_named", label: last4 ? `card ${last4}` : "no card in note" };
+/** LEAD 443.133 B — the deposit row records what posted it (metadata only; the posting itself is the engine's). */
+async function stampDepositPosted(
+  client: DbClient,
+  operatingCompanyId: string,
+  depositRowId: string,
+  journalEntryId: string,
+  classification: "company" | "party" | "intercompany" | null
+): Promise<void> {
+  await client.query(
+    `UPDATE integrations.relay_deposits
+        SET posted_to_gl = true, posted_journal_entry_id = $3::uuid,
+            classification = coalesce($4, classification), updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+        AND (posted_to_gl IS NOT TRUE OR posted_journal_entry_id IS DISTINCT FROM $3::uuid
+             OR ($4::text IS NOT NULL AND classification IS DISTINCT FROM $4))`,
+    [depositRowId, operatingCompanyId, journalEntryId, classification]
+  );
 }
 
 const cents = (v: unknown): number | null => {
@@ -88,7 +124,16 @@ export async function postRelayDeposit(
   if (d.voided_at) return { outcome: "refused", deposit_id: d.deposit_id, reason: "deposit_voided" };
   if (String(d.status).toLowerCase() !== "settled") return { outcome: "not_settled", deposit_id: d.deposit_id, status: d.status };
 
-  const existing = (
+  // LEAD 443.133 B: the deposit's ONE live entry is in integrations.relay_deposit_postings (database refusal); entries
+  // written before that registry are found from their posting lines.
+  const registered = (
+    await client.query<{ id: string }>(
+      `SELECT journal_entry_id::text AS id FROM integrations.relay_deposit_postings
+        WHERE operating_company_id = $1::uuid AND relay_deposit_id = $2::uuid AND released_at IS NULL LIMIT 1`,
+      [args.operatingCompanyId, d.id]
+    )
+  ).rows[0];
+  const existing = registered ?? (
     await client.query<{ id: string }>(
       `SELECT DISTINCT journal_entry_uuid::text AS id FROM accounting.journal_entry_postings
         WHERE operating_company_id = $1::uuid AND source_transaction_type = 'relay_deposit' AND source_transaction_id = $2
@@ -96,7 +141,11 @@ export async function postRelayDeposit(
       [args.operatingCompanyId, d.id]
     )
   ).rows[0];
-  if (existing) return { outcome: "already_posted", deposit_id: d.deposit_id, journal_entry_id: existing.id };
+  if (existing) {
+    const f = await loadDepositFunding(client, args.operatingCompanyId, d.funding_card_last4);
+    await stampDepositPosted(client, args.operatingCompanyId, d.id, existing.id, f.kind === "party" ? "party" : f.kind === "account" ? f.classification : null);
+    return { outcome: "already_posted", deposit_id: d.deposit_id, journal_entry_id: existing.id };
+  }
 
   const raw = d.raw_payload ?? {};
   const amount = cents(raw.amount);
@@ -107,7 +156,7 @@ export async function postRelayDeposit(
   if (amount <= 0 || fee < 0 || amount + fee !== total || total !== stored)
     return { outcome: "refused", deposit_id: d.deposit_id, reason: `amount ${amount} + fee ${fee} != charged ${total} (stored ${stored})` };
 
-  const funding = fundingForCard(d.funding_card_last4);
+  const funding = await loadDepositFunding(client, args.operatingCompanyId, d.funding_card_last4);
   if (funding.kind === "held")
     return { outcome: "held", deposit_id: d.deposit_id, reason: funding.reason, card: d.funding_card_last4, charged_cents: total, label: funding.label };
 
@@ -121,8 +170,11 @@ export async function postRelayDeposit(
     ).rows;
   const wallet = await acct("system_purpose", "relay_fuel_wallet");
   const feeAcct = await acct("account_number", "5005");
+  // 443.133 B: a party named in the map with no "Due to / from" account yet is refused BY NAME — never an invented account.
+  if (funding.kind === "party" && !funding.party_account_number)
+    return { outcome: "refused", deposit_id: d.deposit_id, reason: `party_account_missing (${funding.label}): the owner creates the party's "Due to / from" account, then the deposit posts` };
   const fund =
-    funding.kind === "party" ? await acct("account_number", funding.party_account_number)
+    funding.kind === "party" ? await acct("account_number", funding.party_account_number!)
     : funding.account_number ? await acct("account_number", funding.account_number) : await acct("system_purpose", funding.system_purpose!);
   if (wallet.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: "relay_fuel_wallet_account_not_exactly_one" };
   if (feeAcct.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: "fuel_card_fees_5005_not_exactly_one" };
@@ -179,12 +231,12 @@ export async function postRelayDeposit(
   let fundEntity: { entity_uuid?: string; entity_type?: string } = {};
   if (funding.kind === "party") {
     const lender = (
-      await client.query<{ id: string }>(
-        `SELECT id::text FROM mdata.vendors WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL AND vendor_name = $2 LIMIT 2`,
-        [args.operatingCompanyId, funding.party_vendor_name]
+      await client.query<{ id: string; vendor_name: string }>(
+        `SELECT id::text, vendor_name FROM mdata.vendors WHERE id = $2::uuid AND operating_company_id = $1::uuid AND deactivated_at IS NULL LIMIT 1`,
+        [args.operatingCompanyId, funding.party_vendor_id]
       )
     ).rows;
-    if (lender.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: `party_vendor_not_exactly_one (${funding.party_vendor_name})` };
+    if (lender.length !== 1) return { outcome: "refused", deposit_id: d.deposit_id, reason: `party_vendor_not_found (${funding.label})` };
     fundEntity = { entity_uuid: lender[0]!.id, entity_type: "vendor" };
     const prior = (
       await client.query<{ id: string; display_id: string; je_id: string | null }>(
@@ -194,7 +246,10 @@ export async function postRelayDeposit(
         [args.operatingCompanyId, d.id]
       )
     ).rows[0];
-    if (prior?.je_id) return { outcome: "already_posted", deposit_id: d.deposit_id, journal_entry_id: prior.je_id };
+    if (prior?.je_id) {
+      await stampDepositPosted(client, args.operatingCompanyId, d.id, prior.je_id, "party");
+      return { outcome: "already_posted", deposit_id: d.deposit_id, journal_entry_id: prior.je_id };
+    }
     if (prior) loan = prior;
     else {
       const made = await createPaidDirectVendorAdvance(
@@ -205,8 +260,8 @@ export async function postRelayDeposit(
           funding_account_id: wallet[0]!.id,
           principal_cents: total,
           entry_date: d.entry_date,
-          counterparty_name: funding.party_vendor_name,
-          relationship: funding.relationship,
+          counterparty_name: lender[0]!.vendor_name,
+          relationship: funding.relationship as "owner" | "spouse" | "friend" | "employee" | "related_company" | "other",
           counterparty_kind: "vendor",
           counterparty_id: lender[0]!.id,
           target_id: d.id,
@@ -253,6 +308,7 @@ export async function postRelayDeposit(
       [loan.id, je.id, args.actorUserId]
     );
   }
+  await stampDepositPosted(client, args.operatingCompanyId, d.id, je.id, funding.kind === "party" ? "party" : funding.classification);
   return {
     outcome: "posted", deposit_id: d.deposit_id, journal_entry_id: je.id, amount_cents: amount, fee_cents: fee, charged_cents: total, funding: funding.label,
     ...(loan ? { loan_entry_id: loan.id, loan_display_id: loan.display_id } : {}),

@@ -17,9 +17,11 @@ import { assertCompanyMembership } from "../../_helpers/company-membership-guard
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { withLuciaBypass } from "../../auth/db.js";
+import { createJournalEntryOnClient } from "../../accounting/journal-entries.service.js";
+import { postRelayDeposit, type DepositPostOutcome } from "./relay-deposit-post.service.js";
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
-const RELAY_DEPOSIT_CLASSIFICATIONS = ["company", "unclassified", "canceled"] as const;
+const RELAY_DEPOSIT_CLASSIFICATIONS = ["company", "party", "intercompany", "unclassified", "canceled"] as const;
 
 type OfficeUser = { uuid: string; role: string };
 
@@ -108,7 +110,10 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
                 led.account_number              AS funding_gl_account_number,
                 led.account_name                AS funding_gl_account_name,
                 led.account_type                AS funding_gl_account_type,
-                (c.funding_bank_account_id IS NULL) AS funding_unmapped
+                (c.funding_bank_account_id IS NULL) AS funding_unmapped,
+                -- LEAD 443.133 B: the owner's card map (what a deposit on this card credits, and the owner's ruling).
+                c.funding_kind, c.funding_account_number, c.funding_system_purpose,
+                c.party_vendor_id::text AS party_vendor_id, c.party_relationship, c.owner_ruling
          FROM integrations.relay_company_cards c
          LEFT JOIN banking.bank_accounts ba ON ba.id = c.funding_bank_account_id
          LEFT JOIN catalogs.accounts led ON led.id = ba.ledger_account_id
@@ -141,6 +146,7 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
         label: string | null;
         source_hint: string | null;
         is_active: boolean;
+        funding_kind: string | null;
       }>(
         `INSERT INTO integrations.relay_company_cards AS existing (operating_company_id, card_last4, label, source_hint, is_active, voided_at)
          VALUES ($1::uuid, $2, $3, $4, $5, NULL)
@@ -149,14 +155,16 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
                        source_hint = COALESCE(EXCLUDED.source_hint, existing.source_hint),
                        is_active = EXCLUDED.is_active,
                        voided_at = NULL, updated_at = now()
-         RETURNING id::text, label, source_hint, is_active`,
+         RETURNING id::text, label, source_hint, is_active, funding_kind`,
         [opco, card, body.label ?? null, body.source_hint ?? null, isActive]
       );
       const persistedCard = cardResult.rows[0];
       if (!persistedCard) throw new Error("relay_company_card_write_failed");
       // Re-classify existing deposits for this card: active company card → 'company'; else back to
       // 'unclassified' (canceled rows stay 'canceled'). NEVER posts. Storage snapshot only.
-      const newClass = isActive ? "company" : "unclassified";
+      // LEAD 443.133 B: the card's class follows the owner's card map (party / intercompany / company).
+      const fk = persistedCard.funding_kind;
+      const newClass = !isActive ? "unclassified" : fk === "party" ? "party" : fk === "intercompany" ? "intercompany" : "company";
       const updated = (await client.query(
         `UPDATE integrations.relay_deposits
          SET classification = $3, updated_at = now()
@@ -190,6 +198,86 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
         is_active: persistedCard.is_active,
         reclassified_deposits: updated,
       });
+    });
+  });
+  /**
+   * LEAD 443.133 B — classify every settled Relay deposit by the owner's card map and post it through the ONE deposit poster
+   * (postRelayDeposit). Owner only. dry_run (default true) runs the whole thing and rolls it back. Each deposit runs in its
+   * own savepoint, so one refusal never blocks the others; a refusal is reported by name. Already-posted deposits are only
+   * stamped on their row (posted_to_gl, posted_journal_entry_id, classification) — metadata, never a second posting.
+   */
+  app.post("/api/integrations/relay/deposits/classify-and-post", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return reply;
+    const user = (req as { user?: OfficeUser }).user;
+    const opco = String((req.query as { operating_company_id?: string } | undefined)?.operating_company_id ?? "").trim();
+    if (!UUID_RE.test(opco)) return reply.code(400).send({ error: "operating_company_id query param required (uuid)" });
+    if (String(user?.role ?? "") !== "Owner") {
+      await withLuciaBypass(async (client) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
+        await appendCrudAudit(client, String(user?.uuid ?? ""), "integrations.relay_deposits.classify_and_post_refused",
+          { operating_company_id: opco, role: user?.role ?? null }, "warning", "RELAY-DEPOSIT-CARD-MAP");
+      });
+      return reply.code(403).send({ error: "owner_only" });
+    }
+    await assertCompanyMembership(user!.uuid, opco);
+    const dryRun = (req.body as { dry_run?: boolean } | undefined)?.dry_run !== false;
+
+    return withLuciaBypass(async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
+      await client.query("SAVEPOINT relay_dep_run");
+      const ids = (
+        await client.query<{ id: string; card: string | null }>(
+          `SELECT id::text, funding_card_last4 AS card FROM integrations.relay_deposits
+            WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND lower(status) = 'settled'
+            ORDER BY relay_created_at, deposit_id`,
+          [opco]
+        )
+      ).rows;
+      const deposits: Array<DepositPostOutcome & { card: string | null }> = [];
+      for (const [i, row] of ids.entries()) {
+        const sp = `relay_dep_${i}`;
+        await client.query(`SAVEPOINT ${sp}`);
+        try {
+          const out = await postRelayDeposit(
+            client as never,
+            { operatingCompanyId: opco, relayDepositId: row.id, actorUserId: user!.uuid, actorRole: "Owner" },
+            { createJournalEntryOnClient: createJournalEntryOnClient as never }
+          );
+          await client.query(`RELEASE SAVEPOINT ${sp}`);
+          deposits.push({ ...out, card: row.card });
+        } catch (err) {
+          // A database refusal (e.g. the Relay Fuel Wallet would go negative, or the deposit already has a live entry)
+          // undoes only this deposit and is reported by name; it is never swallowed silently.
+          await client.query(`ROLLBACK TO SAVEPOINT ${sp}`);
+          deposits.push({ outcome: "refused", deposit_id: row.id, reason: err instanceof Error ? err.message : String(err), card: row.card });
+        }
+      }
+      const count = (o: string) => deposits.filter((d) => d.outcome === o).length;
+      const byCard: Record<string, Record<string, number>> = {};
+      for (const d of deposits) {
+        const k = d.card ?? "none";
+        byCard[k] = byCard[k] ?? {};
+        byCard[k]![d.outcome] = (byCard[k]![d.outcome] ?? 0) + 1;
+      }
+      const summary = {
+        dry_run: dryRun,
+        operating_company_id: opco,
+        considered: deposits.length,
+        posted: count("posted"),
+        already_posted: count("already_posted"),
+        held: count("held"),
+        refused: count("refused"),
+        not_settled: count("not_settled"),
+        by_card: byCard,
+      };
+      if (dryRun) {
+        await client.query("ROLLBACK TO SAVEPOINT relay_dep_run");
+      } else {
+        await appendCrudAudit(client, user!.uuid, "integrations.relay_deposits.classified_and_posted",
+          { ...summary, deposits: deposits.map((d) => ({ deposit_id: d.deposit_id, outcome: d.outcome, card: d.card })) }, "info", "RELAY-DEPOSIT-CARD-MAP");
+        await client.query("RELEASE SAVEPOINT relay_dep_run");
+      }
+      return reply.code(200).send({ ...summary, deposits });
     });
   });
 }
