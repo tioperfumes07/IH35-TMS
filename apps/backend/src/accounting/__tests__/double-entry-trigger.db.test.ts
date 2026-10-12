@@ -22,6 +22,7 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
+import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 
@@ -82,24 +83,34 @@ describeIntegration("double-entry balance trigger (real Postgres)", () => {
     );
 
     // Debit 500 cents
+    const line1 = randomUUID();
     await db.query(
       `
       INSERT INTO accounting.journal_entry_postings
-        (id, operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents)
-      VALUES ($1::uuid, $2::uuid, $3::uuid, 1, $4::uuid, 'debit', 500)
+        (id, operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents,
+         source_transaction_type, source_transaction_id)
+      VALUES ($1::uuid, $2::uuid, $3::uuid, 1, $4::uuid, 'debit', 500, 'manual_je', $3::text)
       `,
-      [randomUUID(), companyId, jeId, accountId]
+      [line1, companyId, jeId, accountId]
     );
+    // trg_new_posting_has_spine_link (deferred) refuses a line without its spine link: write it as the JE writer does.
+    await writeTransactionSourceLink(db, { operating_company_id: companyId, journal_entry_posting_id: line1,
+      linked_object_type: "journal_entry", linked_object_id: jeId, relationship_role: "manual_entry" });
 
     // Credit 500 cents — entry is balanced
+    const line2 = randomUUID();
     await db.query(
       `
       INSERT INTO accounting.journal_entry_postings
-        (id, operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents)
-      VALUES ($1::uuid, $2::uuid, $3::uuid, 2, $4::uuid, 'credit', 500)
+        (id, operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents,
+         source_transaction_type, source_transaction_id)
+      VALUES ($1::uuid, $2::uuid, $3::uuid, 2, $4::uuid, 'credit', 500, 'manual_je', $3::text)
       `,
-      [randomUUID(), companyId, jeId, accountId]
+      [line2, companyId, jeId, accountId]
     );
+    // trg_new_posting_has_spine_link (deferred) refuses a line without its spine link: write it as the JE writer does.
+    await writeTransactionSourceLink(db, { operating_company_id: companyId, journal_entry_posting_id: line2,
+      linked_object_type: "journal_entry", linked_object_id: jeId, relationship_role: "manual_entry" });
 
     // COMMIT must succeed — trigger fires here (DEFERRED) and sees debits == credits
     await expect(db.query("COMMIT")).resolves.not.toThrow();

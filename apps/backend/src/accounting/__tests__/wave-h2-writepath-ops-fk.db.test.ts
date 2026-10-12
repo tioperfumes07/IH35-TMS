@@ -116,7 +116,8 @@ describeIntegration("WAVE-H2 write-path stamps ops FKs (expense load_id + invoic
            'delivered', $6::uuid, $7::uuid, 250000,
            (SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1)
          )`,
-        [loadId, companyId, `L-H2WP-${suffix}`, customerId, TEST_OWNER_USER_ID, driverId, unitId],
+        // ROUND 443.8: a from-load invoice is numbered <invoice>-<load number>; a real load number is digits (invoices_display_id_check).
+        [loadId, companyId, `9${String(Date.now()).slice(-8)}`, customerId, TEST_OWNER_USER_ID, driverId, unitId],
       );
     });
 

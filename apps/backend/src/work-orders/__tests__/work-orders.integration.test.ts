@@ -114,9 +114,10 @@ describeIntegration("work-orders.routes integration", () => {
       method: "POST",
       url: `/api/v1/work-orders/00000000-0000-4000-8000-000000000999/cancel?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Manager") },
-      payload: { cancellation_reason: "manager should not be allowed" },
+      // cancel_reason_code is required (LST-LINK-02 catalog code) — a valid body, so the ROLE gate is what refuses.
+      payload: { cancel_reason_code: "duplicate", cancellation_reason: "manager should not be allowed" },
     });
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode, res.body).toBe(403);
   });
 
   it("POST /api/v1/work-orders/:id/void rejects non Owner/Admin (Manager) — void is Owner/Admin only", async () => {
@@ -168,7 +169,7 @@ describeIntegration("work-orders.routes integration", () => {
         description: `integration-create-${randomUUID()}`,
       },
     });
-    expect(res.statusCode).toBe(201);
+    expect(res.statusCode, res.body).toBe(201);
     const body = res.json() as { work_order?: { id?: string } };
     expect(body.work_order?.id).toMatch(/^[0-9a-f-]{36}$/i);
   });

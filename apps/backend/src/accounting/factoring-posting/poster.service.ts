@@ -2625,6 +2625,12 @@ async function postFactoringChargebackEventImpl(input: PostFactoringChargebackIn
       entry_date: entryDate,
       memo: repayMemo,
       source: "auto",
+      // The one posting-line writer refuses an unsourced line AT INSERT (ROUND 393.2): name the advance up front,
+      // the same (type, advance) + spine row attachFactoringLifecycleSourceLinksStrict accepts (as funding, #26442).
+      source_transaction_type: "factoring_chargeback",
+      source_transaction_id: input.factoring_advance_id,
+      spine_link: { linked_object_type: "factoring_advance", linked_object_id: input.factoring_advance_id },
+      relationship_role: "factoring_chargeback",
       postings: [
         {
           account_id: liabilityAccountId,
@@ -2655,6 +2661,12 @@ async function postFactoringChargebackEventImpl(input: PostFactoringChargebackIn
       entry_date: entryDate,
       memo: returnMemo,
       source: "auto",
+      // The one posting-line writer refuses an unsourced line AT INSERT (ROUND 393.2): name the advance up front,
+      // the same (type, advance) + spine row attachFactoringLifecycleSourceLinksStrict accepts (as funding, #26442).
+      source_transaction_type: "factoring_chargeback",
+      source_transaction_id: input.factoring_advance_id,
+      spine_link: { linked_object_type: "factoring_advance", linked_object_id: input.factoring_advance_id },
+      relationship_role: "factoring_chargeback",
       postings: [
         {
           account_id: recoursedAccountId,

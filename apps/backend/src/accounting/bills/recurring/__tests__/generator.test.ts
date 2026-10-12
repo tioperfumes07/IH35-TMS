@@ -26,15 +26,17 @@ describe("generator: error paths", () => {
 });
 
 describe("generator: auto_post integration (static shape check)", () => {
-  it("generator service imports postSourceTransaction", async () => {
+  // ROUND 389.4 RULING 1 (generator.service.ts:6-9): the recurring generator CREATES the bill and NEVER books it —
+  // the bill posts through its own post path. The static check asserts the ruling, no longer the retired auto-post.
+  it("generator service creates the bill (createBillInClientTx) and never posts it", async () => {
     const { readFileSync } = await import("node:fs");
     const { fileURLToPath } = await import("node:url");
     const { resolve, dirname } = await import("node:path");
     const src = resolve(dirname(fileURLToPath(import.meta.url)), "../generator.service.ts");
     const content = readFileSync(src, "utf8");
-    expect(content).toMatch(/postSourceTransaction/);
-    expect(content).toMatch(/auto_post/);
-    expect(content).toMatch(/createBill/);
+    expect(content).toMatch(/createBillInClientTx/);
+    expect(content).not.toMatch(/import[^\n]*\bpostSourceTransaction\b/);
+    expect(content).not.toMatch(/\bpostSourceTransaction(InClientTx)?\(/);
   });
 
   it("generator writes to generation_log on success and failure", async () => {
