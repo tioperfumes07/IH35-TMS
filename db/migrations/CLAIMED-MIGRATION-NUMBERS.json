@@ -158,6 +158,11 @@
       "claimed_at": "2026-10-12",
       "purpose": "DEGH-05 / 443.129+443.131: refuse_driver_bill_without_links trailer clause (trailer_id OR non_owned_trailer_id OR load.trailer_source=none) on INSERT/UPDATE only; expense_lines attribution compared even when header driver/unit is NULL"
     },
+    "202615900910": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-12",
+      "purpose": "LEAD 443.134 #1: accounting.related_party_accounts — the durable link related party (vendor) -> its ONE running 'Due to / from <party>' account, filled by ensureRelatedPartyAccount; backfilled from the owner's card map for the 4 existing 2410-00-00N accounts"
+    },
     "202615890910": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-12",
