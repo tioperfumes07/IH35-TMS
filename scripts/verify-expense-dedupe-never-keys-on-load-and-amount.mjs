@@ -21,7 +21,8 @@
 //      Shrink-only ratchet: 9 known violations today (10 measured, 1 reinstated via AUTH-127/
 //      ROUND 236 this round), never allowed to grow.
 //   C. settlement 5787's non-diesel expense total must equal AlwaysTrack's own $140.20 exactly --
-//      the concrete, named case this round exists to prove stays fixed.
+//      the concrete, named case this round exists to prove stays fixed. Measured over the document's loads
+//      (13549 + 13555) plus its Drv reimbursement lines (443.101; see check C below).
 import { register } from "tsx/esm/api";
 import { buildPgPoolConfig } from "./lib/pg-connection-options.cjs"; // TLS off for CI's local postgres, on for Neon
 
@@ -34,14 +35,16 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 // Shrink-only ratchet. Measured live 2026-09-29 after AUTH-127 reinstated 13549-19 (doc 6232741):
 // 9 of AUTH-089's voided, document-numbered rows still have no live row on their own load bearing
 // that same document. Never raise this number; lower it only as real reinstatements land.
-const KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS = 9;
+// 443.101: measured 0 on prod (2026-10-12) — lowered to match, shrink-only.
+const KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS = 0;
 // Shrink-only ratchet for check A too. Reinstatement CLEARS void_reason entirely (confirmed live on
 // 3ce7e2a5 after AUTH-127 -- was AUTH-089 text, is now NULL), so this count and
 // KNOWN_UNRESOLVED_DOCUMENT_VIOLATIONS shrink via the exact same remediation (triage, then either
 // reinstate or a corrected void_reason) -- not a text-editing exercise. Measured live 2026-09-29
 // after AUTH-127: 86 rows total carry the "(load, amount)"/AUTH-089 fingerprint (the 77-row
 // undocumented triage register plus the 9 still-unresolved documented ones).
-const KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS = 86;
+// 443.101: measured 0 on prod (2026-10-12) — lowered to match, shrink-only.
+const KNOWN_LOAD_AMOUNT_PHRASE_VIOLATIONS = 0;
 
 function fmt(cents) {
   return (Number(cents) / 100).toFixed(2);
@@ -63,7 +66,7 @@ export function judgeDedupe({ loadAmountCount, violRows, settl5787Cents }) {
     );
   }
   if (settl5787Cents !== 14020) {
-    failures.push(`settlement 5787 (load 13549) non-diesel expense total is $${fmt(settl5787Cents)}, expected $140.20 exactly (AlwaysTrack ground truth)`);
+    failures.push(`settlement 5787 (loads 13549 + 13555, plus its Drv reimbursement lines) non-diesel expense total is $${fmt(settl5787Cents)}, expected $140.20 exactly (AlwaysTrack ground truth)`);
   }
   return failures;
 }
@@ -165,17 +168,37 @@ async function main() {
     }
 
     // C. settlement 5787's non-diesel expense total must equal AlwaysTrack's own $140.20 exactly.
+    // 443.101 — measured over the SIGNED DOCUMENT, not load 13549 alone: #25389 (6ece36c912, owner standing order
+    // 2026-10-04) sends each EXPENSES row to the load the document proves (5787 = loads 13549 + 13555), and a Drv
+    // (is_reimbursable) row posts as a 'reimbursement' settlement line — Dr expense / Cr 2175 through the close engine —
+    // not as an accounting.expenses row (settlement-creator.service.ts, "Drv reimbursements"). The total is still the
+    // document's $140.20 exactly: a lost row, a duplicate, or a voided charge brought back all move it.
     const settl5787Res = await client.query(
-      `SELECT sum(e.total_amount_cents)::text AS cents, count(*) AS n
-         FROM accounting.expenses e
-         JOIN mdata.loads l ON l.id = e.load_id
-        WHERE l.operating_company_id = $1::uuid AND l.load_number = '13549'
-          AND e.voided_at IS NULL
-          AND (e.source_fuel_transaction_id IS NULL
-               OR EXISTS (SELECT 1 FROM fuel.fuel_transactions ft
-                           WHERE ft.id = e.source_fuel_transaction_id AND ft.fuel_type <> 'diesel'))`,
+      `WITH s AS (
+         SELECT ds.id FROM driver_finance.driver_settlements ds
+          WHERE ds.operating_company_id = $1::uuid AND ds.source_document_ref = '5787' AND ds.status <> 'cancelled'
+       ), loads AS (
+         SELECT DISTINCT sl.load_id FROM driver_finance.settlement_lines sl JOIN s ON s.id = sl.settlement_id
+          WHERE sl.load_id IS NOT NULL
+       )
+       SELECT (
+         COALESCE((SELECT sum(e.total_amount_cents)
+                     FROM accounting.expenses e
+                    WHERE e.operating_company_id = $1::uuid AND e.load_id IN (SELECT load_id FROM loads)
+                      AND e.voided_at IS NULL
+                      AND (e.source_fuel_transaction_id IS NULL
+                           OR EXISTS (SELECT 1 FROM fuel.fuel_transactions ft
+                                       WHERE ft.id = e.source_fuel_transaction_id AND ft.fuel_type <> 'diesel'))), 0)
+         + COALESCE((SELECT sum(round(sl.amount * 100))
+                       FROM driver_finance.settlement_lines sl JOIN s ON s.id = sl.settlement_id
+                      WHERE sl.line_type = 'reimbursement'), 0)
+       )::text AS cents,
+       (SELECT count(*) FROM s) AS settlements`,
       [USMCA]
     );
+    if (Number(settl5787Res.rows[0]?.settlements ?? 0) !== 1) {
+      failures.push(`settlement document 5787: expected exactly 1 live USMCA settlement, found ${settl5787Res.rows[0]?.settlements ?? 0}`);
+    }
     const settl5787Cents = Number(settl5787Res.rows[0]?.cents ?? 0);
     failures.push(...judgeDedupe({ loadAmountCount, violRows: violRes.rows, settl5787Cents }));
 

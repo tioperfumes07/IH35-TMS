@@ -100,6 +100,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
   const escrowQbo = (tag: string) => `1150040187-${suffix}-${tag}`;
 
   type Scenario = { driverId: string; escrowSub: string; settlementId: string; displayId: string; advanceId?: string; liabilityId?: string };
+  const unitBySettlement = new Map<string, string>();
   const below: Scenario = { driverId: randomUUID(), escrowSub: randomUUID(), settlementId: randomUUID(), displayId: `PR-BELOW-${suffix}` };
   const atcap: Scenario = { driverId: randomUUID(), escrowSub: randomUUID(), settlementId: randomUUID(), displayId: `PR-ATCAP-${suffix}` };
   const off: Scenario = { driverId: randomUUID(), escrowSub: randomUUID(), settlementId: randomUUID(), displayId: `PR-OFF-${suffix}` };
@@ -252,10 +253,16 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     const loadNumber = String(800000000 + Math.floor(Math.random() * 90000000));
     await db.query(`INSERT INTO mdata.customers (id, operating_company_id, customer_name) VALUES ($1::uuid,$2::uuid,$3)`,
       [custId, companyId, `PayRun customer ${s.displayId}`]);
+    // 443.101 (P38 Wave-A) — the load runs on a unit its company owns, so the per-load A/P bill must carry that unit.
+    const unitId = randomUUID();
     await db.query(
-      `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, load_trailer_equipment_id)
-       VALUES ($1::uuid,$2::uuid,$3,$4::uuid,'delivered_pending_docs',300000,$5::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1))`,
-      [loadId, companyId, loadNumber, custId, userId]);
+      `INSERT INTO mdata.units (id, owner_company_id, unit_number, vin, is_sample_data) VALUES ($1::uuid,$2::uuid,$3,$4,true)`,
+      [unitId, companyId, `PRU${loadNumber.slice(-6)}`, `1PRU${loadNumber}`.slice(0, 17).padEnd(17, "0")]);
+    unitBySettlement.set(s.settlementId, unitId);
+    await db.query(
+      `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, load_trailer_equipment_id, assigned_unit_id)
+       VALUES ($1::uuid,$2::uuid,$3,$4::uuid,'delivered_pending_docs',300000,$5::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1),$6::uuid)`,
+      [loadId, companyId, loadNumber, custId, userId, unitId]);
     // ...and its per-load driver bill (numbered as the load), settled in this settlement — a settlement pays loads.
     await db.query(
       `INSERT INTO driver_finance.driver_bills (id, operating_company_id, load_id, load_number, bill_number, driver_id, gross_amount_cents, status, settled_in_settlement_id)
@@ -531,6 +538,17 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       [below.settlementId]
     );
     expect(chainRows.length).toBe(1); // one load -> one A/P bill
+    // 443.101 (P38 Wave-A) — the per-load driver-pay bill links to the load's unit as well as its vendor and load.
+    const billUnit = await read<{ unit_id: string | null; vendor: string | null; line_load: string | null }>(
+      `SELECT b.unit_id::text AS unit_id, b.mdata_vendor_id::text AS vendor,
+              (SELECT bl.load_id::text FROM accounting.bill_lines bl WHERE bl.bill_id = b.id AND bl.load_id IS NOT NULL LIMIT 1) AS line_load
+         FROM driver_finance.driver_settlement_gl_bills g JOIN accounting.bills b ON b.id = g.accounting_bill_id
+        WHERE g.settlement_id = $1::uuid`,
+      [below.settlementId]
+    );
+    expect(billUnit[0]!.unit_id).toBe(unitBySettlement.get(below.settlementId));
+    expect(billUnit[0]!.vendor).toBeTruthy();
+    expect(billUnit[0]!.line_load).toBeTruthy();
     const billBal = await jeBalance(chainRows[0]!.bill_je!);
     expect(billBal.dr).toBe(billBal.cr);
     expect(billBal.dr).toBe(300000);

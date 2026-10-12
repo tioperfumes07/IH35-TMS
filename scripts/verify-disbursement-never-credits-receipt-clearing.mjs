@@ -24,9 +24,13 @@
  * rather than crashing as a false money finding when handed a reachable but unmigrated database
  * (the ACCT-F333 lesson: a crash reported as FAIL is a crash, not a finding).
  */
-import pg from "pg";
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
+import { FROZEN_COMPANY_CODES, NOT_FROZEN_SQL } from "./lib/bank-feed-state-machine.mjs";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "3057-verify-disbursement-never-credits-receipt-clearing";
+const src = fs.readFileSync(fileURLToPath(import.meta.url), "utf8");
 
 /**
  * Source types that move money OUT. Each was verified against prod as an actual
@@ -41,25 +45,54 @@ const DISBURSEMENT_SOURCE_TYPES = ["driver_advance", "driver_reimbursement", "ca
 /** The receipt-side clearing roles. Crediting either for an outflow is wrong by definition. */
 const RECEIPT_CLEARING_ROLES = ["undeposited_funds", "cash_clearing"];
 
+/**
+ * 443.101 — scope: every company EXCEPT the frozen ones (OWNER RULING 2026-10-02 + ROUND 363 law: TRANSPORTATION and
+ * TRUCKING are "not read, not written"; scripts/lib/bank-feed-state-machine.mjs NOT_FROZEN_SQL, the convention 15 live
+ * guards already use). A finding there cannot be repaired by any seat, so it is named in the report, never a red gate:
+ * measured 2026-10-12, TRANSP bill_payment 402b2bb3 / JE dcbe5700 credits QBO-168 Undeposited Funds $5.00 (2026-08-03
+ * AUDIT-GL-PROOF row) — the engine has refused this since ACCT-F345 (resolveDisbursementCashAccountForCompany).
+ */
+
 function fail(msg) {
   console.error(`[${LABEL}] FAIL: ${msg}`);
   process.exit(1);
 }
 
-const url = process.env.DATABASE_URL;
-if (!url) {
-  console.log(`[${LABEL}] SKIP — no DATABASE_URL (static context); this guard is DB-backed by design`);
-  process.exit(0);
+/** Pure verdict — main() and --selftest share it. */
+export function judgeDisbursements({ rolesBound, badCredits, negativeClearing }) {
+  if (rolesBound === 0) return { empty: true, problems: [] };
+  const problems = [];
+  for (const r of badCredits) {
+    problems.push(
+      `opco ${r.opco}: ${r.lines} ${r.src} posting line(s) CREDIT ${r.account_number} ${r.account_name} for ${(Number(r.credit_cents) / 100).toFixed(2)} — a disbursement must credit the account the money actually left (operating_bank or the operator-chosen source), never a receipt-side clearing account.`
+    );
+  }
+  for (const r of negativeClearing) {
+    problems.push(
+      `opco ${r.opco}: ${r.account_number} ${r.account_name} (undeposited_funds) carries a NET CREDIT balance of ${(Number(r.net_debit_cents) / 100).toFixed(2)} — an asset holding customer money received-not-yet-deposited cannot be negative; something credited it that should not have.`
+    );
+  }
+  return { empty: false, problems };
 }
 
-const pool = new pg.Pool({ connectionString: url, ssl: url.includes("localhost") ? false : { rejectUnauthorized: false } });
-let client;
-try {
-  client = await pool.connect();
-} catch {
-  console.log(`[${LABEL}] SKIP — database unreachable (static context)`);
-  process.exit(0);
+if (process.argv.includes("--selftest")) {
+  let ok = true;
+  const ex = (n, c) => { if (!c) { console.error(`SELFTEST FAIL: ${n}`); ok = false; } };
+  const bad = { opco: "u", src: "bill_payment", account_number: "1090", account_name: "Undeposited Funds", lines: 1, credit_cents: 500 };
+  ex("no bound clearing role is unverifiable, never a pass", judgeDisbursements({ rolesBound: 0, badCredits: [], negativeClearing: [] }).empty);
+  ex("a disbursement crediting a receipt-clearing account fails", judgeDisbursements({ rolesBound: 2, badCredits: [bad], negativeClearing: [] }).problems.length === 1);
+  ex("a net-credit undeposited_funds account fails", judgeDisbursements({ rolesBound: 2, badCredits: [], negativeClearing: [{ opco: "u", account_number: "1090", account_name: "UF", net_debit_cents: -500 }] }).problems.length === 1);
+  ex("clean scope passes", judgeDisbursements({ rolesBound: 2, badCredits: [], negativeClearing: [] }).problems.length === 0);
+  ex("frozen scope covers TRANSPORTATION and TRUCKING only", FROZEN_COMPANY_CODES.join(",") === "TRANSP,TRK" && /NOT IN \(SELECT id FROM org\.companies WHERE code = ANY/.test(NOT_FROZEN_SQL("x")));
+  ex("all three probes are frozen-scoped", (src.match(/\$\{NOT_FROZEN_SQL\(/g) ?? []).length >= 4);
+  ex("reversed lines stay excluded (a repaired credit is not live)", /jep\.reversed_by_line_id IS NULL/.test(src));
+  ex("bill_payment stays a disbursement source", DISBURSEMENT_SOURCE_TYPES.includes("bill_payment"));
+  console.log(ok ? `[${LABEL}] --selftest PASS (8/8)` : `[${LABEL}] --selftest FAIL`);
+  process.exit(ok ? 0 : 1);
 }
+
+// 443.101: a live money guard that cannot connect FAILS (ROUND 29.9-B, verify-no-silent-db-skip) — never a skip-pass.
+const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
 
 try {
   await client.query("BEGIN");
@@ -70,10 +103,9 @@ try {
   const present = await client.query(`SELECT to_regclass('accounting.chart_of_accounts_roles') IS NOT NULL AS present`);
   if (!present.rows[0]?.present) {
     await client.query("ROLLBACK").catch(() => {});
-    console.log(`[${LABEL}] SKIP — database reachable but the accounting schema is not present (fresh/unmigrated DB)`);
     client.release();
     await pool.end();
-    process.exit(0);
+    fail("database reachable but the accounting schema is not present (fresh/unmigrated DB) — an unmigrated database cannot verify this money invariant, so it is not a pass");
   }
 
   // INVARIANT A — a disbursement crediting a receipt-side clearing account.
@@ -91,6 +123,7 @@ try {
        WHERE jep.source_transaction_type = ANY($1::text[])
          AND jep.debit_or_credit = 'credit'
          AND je.status = 'posted'
+         AND ${NOT_FROZEN_SQL("je.operating_company_id")}
          -- A REVERSED LINE IS NOT A LIVE VIOLATION. Reversal in a WORM ledger writes a NEW opposing
          -- entry; it never deletes the original, so the offending credit line survives forever by
          -- design. Without this clause the guard stays RED after a correct repair — it did exactly
@@ -134,6 +167,7 @@ try {
        WHERE r.role = 'undeposited_funds'
          AND r.is_active = true
          AND je.status = 'posted'
+         AND ${NOT_FROZEN_SQL("r.operating_company_id")}
        GROUP BY 1, 2, 3
       HAVING sum(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE -jep.amount_cents END) < 0
        ORDER BY 1
@@ -144,8 +178,10 @@ try {
   const { rows: scope } = await client.query(
     `
       SELECT
-        (SELECT count(*) FROM accounting.chart_of_accounts_roles WHERE role = ANY($1::text[]) AND is_active = true)::int AS clearing_roles_bound,
-        (SELECT count(*) FROM accounting.journal_entry_postings WHERE source_transaction_type = ANY($2::text[]))::int AS disbursement_lines
+        (SELECT count(*) FROM accounting.chart_of_accounts_roles r WHERE r.role = ANY($1::text[]) AND r.is_active = true
+            AND ${NOT_FROZEN_SQL("r.operating_company_id")})::int AS clearing_roles_bound,
+        (SELECT count(*) FROM accounting.journal_entry_postings jep JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+          WHERE jep.source_transaction_type = ANY($2::text[]) AND ${NOT_FROZEN_SQL("je.operating_company_id")})::int AS disbursement_lines
     `,
     [RECEIPT_CLEARING_ROLES, DISBURSEMENT_SOURCE_TYPES]
   );
@@ -153,23 +189,13 @@ try {
 
   const rolesBound = scope[0]?.clearing_roles_bound ?? 0;
   const disbLines = scope[0]?.disbursement_lines ?? 0;
-  if (rolesBound === 0) {
+  const verdict = judgeDisbursements({ rolesBound, badCredits, negativeClearing });
+  if (verdict.empty) {
     fail(
-      "no active undeposited_funds/cash_clearing role bindings found on ANY entity — this guard cannot see what it is meant to check (RLS mask or empty DB), which is not a clean result"
+      "no active undeposited_funds/cash_clearing role bindings found on ANY non-frozen entity — this guard cannot see what it is meant to check (RLS mask or empty DB), which is not a clean result"
     );
   }
-
-  const problems = [];
-  for (const r of badCredits) {
-    problems.push(
-      `opco ${r.opco}: ${r.lines} ${r.src} posting line(s) CREDIT ${r.account_number} ${r.account_name} for ${(Number(r.credit_cents) / 100).toFixed(2)} — a disbursement must credit the account the money actually left (operating_bank or the operator-chosen source), never a receipt-side clearing account.`
-    );
-  }
-  for (const r of negativeClearing) {
-    problems.push(
-      `opco ${r.opco}: ${r.account_number} ${r.account_name} (undeposited_funds) carries a NET CREDIT balance of ${(Number(r.net_debit_cents) / 100).toFixed(2)} — an asset holding customer money received-not-yet-deposited cannot be negative; something credited it that should not have.`
-    );
-  }
+  const problems = verdict.problems;
 
   if (problems.length) {
     for (const p of problems) console.error(` - ${p}`);
@@ -177,7 +203,7 @@ try {
   }
 
   console.log(
-    `[${LABEL}] PASS — no disbursement credits a receipt-side clearing account and no undeposited_funds account is net-credit · ${rolesBound} clearing role binding(s), ${disbLines} disbursement posting line(s) in scope`
+    `[${LABEL}] PASS — no disbursement credits a receipt-side clearing account and no undeposited_funds account is net-credit · ${rolesBound} clearing role binding(s), ${disbLines} disbursement posting line(s) in scope [not read: ${FROZEN_COMPANY_CODES.join(", ")} — frozen by owner ruling]`
   );
 } catch (err) {
   await client.query("ROLLBACK").catch(() => {});
