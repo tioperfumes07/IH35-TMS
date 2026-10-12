@@ -89,6 +89,12 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // Lead 443.116 #2 + (c) CORRECTION (locked design, READ-FIRST §3 "three dates, three columns"; owner 2026-10-01 no-handoff):
+  // driver bills carry their due date and the per-load A/P bill posted at delivery. Claimed #(202615830700) in #26657.
+  [
+    "cc-2/443-116-driver-pay-accrual",
+    new Set(["db/migrations/202615830700_driver_bill_due_date_and_delivery_accrual.sql"]),
+  ],
   // Lead 443.110 G9 (owner 2026-10-12 09:50 CT full load-creation mapping; owner 2026-10-01 no-handoff): driver bills carry the
   // load's truck and trailer. Claimed #(202615800700) in #26619.
   [

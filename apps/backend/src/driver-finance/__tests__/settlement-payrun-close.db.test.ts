@@ -36,6 +36,8 @@ import { upsertDriverAdvanceAccountLink, upsertDriverEscrowAccountLink } from ".
 import { closeSettlementPayRun, SettlementPayRunError } from "../settlement-payrun-close.service.js";
 import { ESCROW_CAP_CENTS } from "../escrow-resolver.service.js";
 import { createJournalEntry, createJournalEntryOnClient } from "../../accounting/journal-entries.service.js";
+import { accrueDriverPayAtDeliveryInClientTx } from "../driver-pay-delivery-accrual.service.js";
+import { reverseSettlementForVoid } from "../void-document-callees.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -122,7 +124,10 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
   // a user_uuid-non-NULL / company-NULL row, and they read with a DIFFERENT actor (TEST_OWNER) so they
   // never fetch ours — the flag state is immune in BOTH directions (no cross-suite contamination).
   const flagActor = randomUUID();
-  const allDrivers = [below.driverId, atcap.driverId, off.driverId, gate.driverId];
+  // LEAD 443.116 (c) — booked the real way: an UNSETTLED per-load driver bill on a load pre-linked to the settlement.
+  const accrued: Scenario = { driverId: randomUUID(), escrowSub: randomUUID(), settlementId: randomUUID(), displayId: `PR-ACCRUED-${suffix}` };
+  const loadBySettlement = new Map<string, string>();
+  const allDrivers = [below.driverId, atcap.driverId, off.driverId, gate.driverId, accrued.driverId];
 
   async function bypass(fn: () => Promise<void>) {
     await db.query("BEGIN");
@@ -195,7 +200,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
   }
 
   /** Seed a driver + its escrow leaf + bridge + a locked settlement (gross 3000). */
-  async function seedDriverAndSettlement(s: Scenario, escrowBalanceCents: number) {
+  async function seedDriverAndSettlement(s: Scenario, escrowBalanceCents: number, opts: { bookedUnsettled?: boolean } = {}) {
     await db.query(
       `INSERT INTO mdata.drivers (id, operating_company_id, first_name, last_name, phone)
        VALUES ($1::uuid,$2::uuid,'PayRun',$3,$4)`,
@@ -264,6 +269,10 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, load_trailer_equipment_id, assigned_unit_id)
        VALUES ($1::uuid,$2::uuid,$3,$4::uuid,'delivered_pending_docs',300000,$5::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1),$6::uuid)`,
       [loadId, companyId, loadNumber, custId, userId, unitId]);
+    loadBySettlement.set(s.settlementId, loadId);
+    if (opts.bookedUnsettled) {
+      await db.query(`UPDATE mdata.loads SET presettlement_link_id = $2::uuid WHERE id = $1::uuid`, [loadId, s.settlementId]);
+    }
     // 443.105 item 1 — the load's assignment records the company trailer it rides, so the per-load A/P bill carries it.
     const trailerId = randomUUID();
     await db.query(
@@ -278,7 +287,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     await db.query(
       `INSERT INTO driver_finance.driver_bills (id, operating_company_id, load_id, load_number, bill_number, driver_id, gross_amount_cents, status, settled_in_settlement_id)
        VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$4,$5::uuid,300000,'open',$6::uuid)`,
-      [randomUUID(), companyId, loadId, loadNumber, s.driverId, s.settlementId]);
+      [randomUUID(), companyId, loadId, loadNumber, s.driverId, opts.bookedUnsettled ? null : s.settlementId]);
     await db.query(
       `INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, load_id, is_active)
        VALUES ($1::uuid,'earnings','linehaul earnings',3000.00,$2::uuid,true)`,
@@ -415,6 +424,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       await seedDriverAndSettlement(atcap, CAP);    // at cap    -> contributes 0
       await seedDriverAndSettlement(off, 50_000);   // flag-off preview
       await seedDriverAndSettlement(gate, 50_000);  // GO-22 B7 blocking-decision gate
+      await seedDriverAndSettlement(accrued, 50_000, { bookedUnsettled: true }); // 443.116 — pay posted at delivery
       // ACCT-F5613 — an active reimbursement line (50.00) plus an INACTIVE one (999.00, must be
       // excluded by loadReimbursementsCents' is_active filter, same as the existing chargeback filter).
       await db.query(
@@ -920,5 +930,146 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     );
     expect(auditRows.length).toBe(1);
     expect(auditRows[0]!.payload).toMatchObject({ mode: "full", decided_by_user_id: flagActor, applied_this_close_cents: 20000, rolled_forward_cents: 0 });
+  });
+
+  // ── LEAD 443.116 #2 + (c), locked design READ-FIRST §3: due date = projected delivery; pay recognized once, at delivery ──
+  const accruedLoad = () => loadBySettlement.get(accrued.settlementId)!;
+  const accruedBill = async () => (await read<{ id: string; due_date: string | null; basis: string | null; accrued_bill_id: string | null; status: string; settled: string | null; effective: string | null; today: string }>(
+    `SELECT id::text, due_date::text, due_date_basis AS basis, accrued_bill_id::text, status, settled_in_settlement_id::text AS settled,
+            driver_finance.driver_bill_effective_due_date(due_date, due_date_basis, (now() AT TIME ZONE 'America/Chicago')::date)::text AS effective,
+            ((now() AT TIME ZONE 'America/Chicago')::date)::text AS today
+       FROM driver_finance.driver_bills WHERE load_id = $1::uuid`,
+    [accruedLoad()]
+  ))[0]!;
+  const chicagoDate = async (offsetDays: number) => (await read<{ d: string }>(
+    `SELECT (((now() + make_interval(days => $1::int)) AT TIME ZONE 'America/Chicago')::date)::text AS d`, [offsetDays]
+  ))[0]!.d;
+  const payPostedCents = async () => Number((await read<{ v: string }>(
+    `SELECT COALESCE(SUM(CASE WHEN p.debit_or_credit='debit' THEN p.amount_cents ELSE -p.amount_cents END),0)::text AS v
+       FROM accounting.journal_entry_postings p
+      WHERE p.operating_company_id = $1::uuid AND p.account_id = $2::uuid AND p.load_id = $3::uuid`,
+    [companyId, acct.driverPay, accruedLoad()]
+  ))[0]!.v);
+
+  it("(7) 443.116 #2: the booked driver bill is due on the projected delivery, moves with the appointment, rolls to today, fixes at delivery", async () => {
+    const stopId = randomUUID();
+    await bypass(async () => {
+      await db.query(
+        `INSERT INTO mdata.load_stops (id, load_id, sequence_number, stop_type, appointment_start_at) VALUES ($1::uuid, $2::uuid, 2, 'delivery', now() + interval '3 days')`,
+        [stopId, accruedLoad()]
+      );
+    });
+    let b = await accruedBill();
+    expect(b.basis).toBe("projected");
+    expect(b.due_date).toBe(await chicagoDate(3));
+    // Edit Load / re-plan: the appointment moves -> the due date moves (any writer: the stop trigger).
+    await bypass(async () => { await db.query(`UPDATE mdata.load_stops SET appointment_start_at = now() + interval '5 days' WHERE id = $1::uuid`, [stopId]); });
+    b = await accruedBill();
+    expect(b.due_date).toBe(await chicagoDate(5));
+    // Late load: the appointment passed undelivered -> stored date stays, effective due date is today.
+    await bypass(async () => { await db.query(`UPDATE mdata.load_stops SET appointment_start_at = now() - interval '2 days' WHERE id = $1::uuid`, [stopId]); });
+    b = await accruedBill();
+    expect(b.due_date).toBe(await chicagoDate(-2));
+    expect(b.effective).toBe(b.today);
+    // Delivered: fixed at the actual delivery date.
+    await bypass(async () => { await db.query(`UPDATE mdata.load_stops SET actual_departure_at = now() WHERE id = $1::uuid`, [stopId]); });
+    b = await accruedBill();
+    expect(b.basis).toBe("delivered");
+    expect(b.due_date).toBe(b.today);
+    expect(b.effective).toBe(b.today);
+  });
+
+  it("(8) 443.116 (c): at delivery Dr driver pay / Cr A/P posts ONCE on the driver bill; a second delivery event posts nothing", async () => {
+    expect(await payPostedCents()).toBe(0);
+    let first: Awaited<ReturnType<typeof accrueDriverPayAtDeliveryInClientTx>> | null = null;
+    await bypass(async () => {
+      first = await accrueDriverPayAtDeliveryInClientTx(db as never, { operatingCompanyId: companyId, loadId: accruedLoad(), actorUserId: flagActor });
+    });
+    expect(first!.accrued.length).toBe(1);
+    expect(first!.accrued[0]!.amount_cents).toBe(300000);
+    const b = await accruedBill();
+    expect(b.accrued_bill_id).toBe(first!.accrued[0]!.accounting_bill_id);
+    expect(b.basis).toBe("delivered");
+    const bill = (await read<{ bill_date: string; due_date: string; amount_cents: number; driver_id: string | null; load_id: string | null; unit_id: string | null; vendor: string | null }>(
+      `SELECT bill_date::text, due_date::text, amount_cents::int, driver_id::text, load_id::text, unit_id::text, mdata_vendor_id::text AS vendor FROM accounting.bills WHERE id = $1::uuid`,
+      [b.accrued_bill_id]
+    ))[0]!;
+    expect(bill.bill_date).toBe(b.due_date);
+    expect(bill.due_date).toBe(b.due_date);
+    expect(bill.amount_cents).toBe(300000);
+    expect(bill.driver_id).toBe(accrued.driverId);
+    expect(bill.load_id).toBe(accruedLoad());
+    expect(bill.unit_id).toBe(unitBySettlement.get(accrued.settlementId));
+    const je = await jeBalance(first!.accrued[0]!.journal_entry_id);
+    expect(je.dr).toBe(300000);
+    expect(je.cr).toBe(300000);
+    const apCredit = Number((await read<{ v: string }>(
+      `SELECT COALESCE(SUM(amount_cents),0)::text AS v FROM accounting.journal_entry_postings WHERE journal_entry_uuid = $1::uuid AND account_id = $2::uuid AND debit_or_credit = 'credit'`,
+      [first!.accrued[0]!.journal_entry_id, acct.ap]
+    ))[0]!.v);
+    expect(apCredit).toBe(300000);
+    expect(await payPostedCents()).toBe(300000);
+    // Idempotent: the same delivery event again posts nothing.
+    let again: Awaited<ReturnType<typeof accrueDriverPayAtDeliveryInClientTx>> | null = null;
+    await bypass(async () => {
+      again = await accrueDriverPayAtDeliveryInClientTx(db as never, { operatingCompanyId: companyId, loadId: accruedLoad(), actorUserId: flagActor });
+    });
+    expect(again!.accrued.length).toBe(0);
+    expect(await payPostedCents()).toBe(300000);
+  });
+
+  it("(9) 443.116 (c): close APPLIES to the delivery bill — 0 new pay postings, A/P nets to 0, TB balances; a settlement void keeps the delivery bill open", async () => {
+    await setFlag(true);
+    const accrualBillId = (await accruedBill()).accrued_bill_id!;
+    const res = await closeSettlementPayRun({ operatingCompanyId: companyId, settlementId: accrued.settlementId, paymentMethodId }, { userId: flagActor });
+    expect(res.result).toBe("posted");
+    expect(res.breakdown.gross_cents).toBe(300000);
+    // Pay is never posted again: still exactly the delivery accrual on this load.
+    expect(await payPostedCents()).toBe(300000);
+    const spine = await read<{ accounting_bill_id: string; bill_posted_at_delivery: boolean; pay_basis: string }>(
+      `SELECT accounting_bill_id::text, bill_posted_at_delivery, pay_basis FROM driver_finance.driver_settlement_gl_bills WHERE settlement_id = $1::uuid AND superseded_at IS NULL`,
+      [accrued.settlementId]
+    );
+    expect(spine).toEqual([{ accounting_bill_id: accrualBillId, bill_posted_at_delivery: true, pay_basis: "per_load_driver_bill" }]);
+    // A/P on the delivery bill: Cr 300000 at delivery, Dr applications 95000 + net 205000 at close -> 0.
+    const apOnBill = Number((await read<{ v: string }>(
+      `SELECT COALESCE(SUM(CASE WHEN p.debit_or_credit='credit' THEN p.amount_cents ELSE -p.amount_cents END),0)::text AS v
+         FROM accounting.journal_entry_postings p
+        WHERE p.operating_company_id = $1::uuid AND p.account_id = $2::uuid AND p.load_id = $3::uuid`,
+      [companyId, acct.ap, accruedLoad()]
+    ))[0]!.v);
+    expect(apOnBill).toBe(0);
+    const paid = (await read<{ paid: number; amount: number }>(`SELECT paid_cents::int AS paid, amount_cents::int AS amount FROM accounting.bills WHERE id = $1::uuid`, [accrualBillId]))[0]!;
+    expect(paid.paid).toBe(paid.amount);
+    // Trial balance: every entry this company wrote balances (sum debits == sum credits).
+    const tb = (await read<{ dr: string; cr: string }>(
+      `SELECT COALESCE(SUM(amount_cents) FILTER (WHERE debit_or_credit='debit'),0)::text AS dr, COALESCE(SUM(amount_cents) FILTER (WHERE debit_or_credit='credit'),0)::text AS cr
+         FROM accounting.journal_entry_postings WHERE operating_company_id = $1::uuid`,
+      [companyId]
+    ))[0]!;
+    expect(Number(tb.dr)).toBe(Number(tb.cr));
+
+    // Settlement void: reverses what the close did (payments, applications), never the delivery bill or its pay posting.
+    await bypass(async () => {
+      // A locked settlement is unlocked before it is voided (settlement_reverse_blocked_locked).
+      await db.query(`UPDATE driver_finance.driver_settlements SET locked_at = NULL WHERE id = $1::uuid`, [accrued.settlementId]);
+      await reverseSettlementForVoid(db as never, { operatingCompanyId: companyId, settlementId: accrued.settlementId, reason: "443.116 test void", actor: { userId: flagActor } });
+    });
+    const after = (await read<{ revoked: boolean; voided: boolean; paid: number }>(
+      `SELECT (revoked_at IS NOT NULL) AS revoked, (voided_at IS NOT NULL) AS voided, COALESCE(paid_cents,0)::int AS paid FROM accounting.bills WHERE id = $1::uuid`,
+      [accrualBillId]
+    ))[0]!;
+    expect(after).toEqual({ revoked: false, voided: false, paid: 0 });
+    expect(await payPostedCents()).toBe(300000);
+    const db_ = await accruedBill();
+    expect(db_.accrued_bill_id).toBe(accrualBillId);
+    expect(db_.status).toBe("open");
+    expect(db_.settled).toBeNull();
+    const tb2 = (await read<{ dr: string; cr: string }>(
+      `SELECT COALESCE(SUM(amount_cents) FILTER (WHERE debit_or_credit='debit'),0)::text AS dr, COALESCE(SUM(amount_cents) FILTER (WHERE debit_or_credit='credit'),0)::text AS cr
+         FROM accounting.journal_entry_postings WHERE operating_company_id = $1::uuid`,
+      [companyId]
+    ))[0]!;
+    expect(Number(tb2.dr)).toBe(Number(tb2.cr));
   });
 });
