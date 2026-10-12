@@ -161,9 +161,8 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
         `SELECT
            SUM(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE 0 END)::text AS debit_sum,
            SUM(CASE WHEN debit_or_credit='credit' THEN amount_cents ELSE 0 END)::text AS credit_sum
-         FROM accounting.journal_entry_postings jep
-         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-         WHERE je.source_transaction_id = $1`,
+         FROM accounting.journal_entry_postings
+         WHERE source_transaction_id = $1`,
         [result.id]
       );
       expect(je[0]?.debit_sum).toBe("12345");
@@ -263,9 +262,8 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
         `SELECT
            SUM(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE 0 END)::text AS debit_sum,
            SUM(CASE WHEN debit_or_credit='credit' THEN amount_cents ELSE 0 END)::text AS credit_sum
-         FROM accounting.journal_entry_postings jep
-         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-         WHERE je.source_transaction_id = $1`,
+         FROM accounting.journal_entry_postings
+         WHERE source_transaction_id = $1`,
         [result.id]
       );
       expect(je[0]?.debit_sum).toBe("10000");
