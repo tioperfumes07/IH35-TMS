@@ -77,11 +77,22 @@ try {
     process.exit(0);
   }
 
+  // ROUND 393.2 (ACCT-F2026100402, 7e1105eef6): a RECLASSIFICATION entry's out-leg names the ONE line it undoes
+  // (reversal_of_line_id) — a line-level move, not a reversal of the original entry. It must NOT carry reverses_je_id:
+  // that would mark the whole original entry reversed while its other lines (and the reclass in-leg) stay live. Such a
+  // leg is excluded only when accounting.reclassify_batch_lines records exactly that line moved by exactly this entry —
+  // structural proof, never the memo. Any other reversal leg still requires the JE-level FK.
+  const hasReclass = (await client.query(`SELECT to_regclass('accounting.reclassify_batch_lines') IS NOT NULL AS present`)).rows[0]?.present;
   const { rows } = await client.query(`
     WITH reversing AS (
       SELECT DISTINCT jep.journal_entry_uuid AS je_id
         FROM accounting.journal_entry_postings jep
        WHERE jep.reversal_of_line_id IS NOT NULL
+         ${hasReclass ? `AND NOT EXISTS (
+               SELECT 1 FROM accounting.reclassify_batch_lines bl
+                WHERE bl.posting_id = jep.reversal_of_line_id
+                  AND bl.reclass_journal_entry_id = jep.journal_entry_uuid
+                  AND bl.result = 'applied')` : ""}
     )
     SELECT je.id::text                     AS je_id,
            je.operating_company_id::text   AS opco,

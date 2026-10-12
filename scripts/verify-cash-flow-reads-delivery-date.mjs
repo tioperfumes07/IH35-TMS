@@ -41,6 +41,8 @@
 // that same due_date -- proving the service function actually reads it once the invoice is
 // visible to it at all.
 import { register } from "tsx/esm/api";
+import { createRequire } from "node:module";
+const { inferPgSslOption } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 
 export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
 register();
@@ -122,7 +124,7 @@ async function main() {
   const { getRollingLedgerRows } = await import("../apps/backend/src/cash-flow/cash-flow.service.ts");
   const { default: pg } = await import("pg");
 
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: inferPgSslOption(process.env.DATABASE_URL) });
   const client = await pool.connect();
   try {
     // ROUND 241 (CC-3 finding, folded in here since this is the same file): `SET LOCAL ROLE

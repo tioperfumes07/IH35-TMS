@@ -1131,6 +1131,17 @@ export async function seedSettlementDocument(
 
   const settlementId = await seedDriverSettlement(client, operatingCompanyId, actorUserId, plan, Object.values(driverBillIds), input.is_sample_data ?? false);
 
+  // REG-008 / SET-01 (443.99 C): every driver-assigned load joins its settlement. seedLoad assigns the driver after
+  // booking, so the booking-time linker never ran; the load joins THIS document's own settlement directly — the same
+  // link the Settlement Creator writes — never a new open pre-settlement for an already-settled historical load.
+  for (const loadId of Object.values(loadIds)) {
+    await client.query(
+      `UPDATE mdata.loads SET presettlement_link_id = $1::uuid, updated_at = now()
+        WHERE id = $2::uuid AND operating_company_id = $3::uuid AND presettlement_link_id IS DISTINCT FROM $1::uuid`,
+      [settlementId, loadId, operatingCompanyId]
+    );
+  }
+
   await seedFactoringAdvancePlaceholder();
 
   await appendCrudAudit(

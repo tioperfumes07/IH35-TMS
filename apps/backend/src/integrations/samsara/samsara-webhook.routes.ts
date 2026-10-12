@@ -57,7 +57,10 @@ async function handleSamsaraWebhookPost(req: FastifyRequest, reply: FastifyReply
   }
   const operatingCompanyId = await resolveWebhookCompany(rawBody, q.data.operating_company_id);
   if (!operatingCompanyId) {
-    return reply.code(400).send({ error: "samsara_org_not_configured" });
+    // 443.99 C (verify-no-unauth-integration-state-route): this runs BEFORE the signature is verified, so it must
+    // not tell an anonymous caller whether a Samsara integration is configured — the same 401 as a bad signature.
+    req.log.warn({ path: req.url, bytes: rawBody.length }, "samsara_webhook_org_unresolved");
+    return reply.code(401).send({ error: "unauthorized" });
   }
 
   req.log.info(

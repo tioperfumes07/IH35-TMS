@@ -156,6 +156,12 @@ async function auditMpgNeverReturnedOnGap() {
         location_city: "Laredo",
         location_state: "TX",
         unit_id: "unit-gap",
+        // ROUND 306 E-19/E-21: the scorecard now aggregates gallons from the fills themselves, through the ONE
+        // fuel-purchase-eligibility predicate — a fixture fill must be a real motor-fuel purchase to count.
+        fuel_type: "diesel",
+        same_stamp_count: 1,
+        total_cost: 400,
+        load_id: "load-unit-gap",
       },
       {
         id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
@@ -167,6 +173,12 @@ async function auditMpgNeverReturnedOnGap() {
         location_city: "Laredo",
         location_state: "TX",
         unit_id: "unit-clean",
+        // ROUND 306 E-19/E-21: the scorecard now aggregates gallons from the fills themselves, through the ONE
+        // fuel-purchase-eligibility predicate — a fixture fill must be a real motor-fuel purchase to count.
+        fuel_type: "diesel",
+        same_stamp_count: 1,
+        total_cost: 320,
+        load_id: "load-unit-clean",
       },
     ],
   });

@@ -78,7 +78,10 @@ function findFunctionBody(src, name) {
 
 /** Every `operating_company_id = $N` occurrence that is NOT immediately followed by `::uuid`. */
 function uncastOccurrences(body) {
-  const re = /operating_company_id\s*=\s*\$\d+(::uuid)?/g;
+  // 443.99: also the TEXT-column shape (SAF-F6366 — da_program_enrollments.operating_company_id is text):
+  // `e.operating_company_id::text = $1::uuid::text`. A matcher blind to `::text =` saw zero comparisons in
+  // listEnrollments() and passed it vacuously (its selftest could not even find a cast to strip).
+  const re = /operating_company_id(?:::text)?\s*=\s*\$\d+(::uuid)?/g;
   const bad = [];
   let match;
   while ((match = re.exec(body))) {
@@ -137,7 +140,7 @@ function selftest() {
       process.exit(1);
     }
     // Strip the cast from exactly this function's occurrence(s) and confirm detection fires.
-    const mutatedBody = body.replace(/operating_company_id\s*=\s*(\$\d+)::uuid/g, "operating_company_id = $1");
+    const mutatedBody = body.replace(/operating_company_id(::text)?\s*=\s*(\$\d+)::uuid/g, "operating_company_id$1 = $2");
     if (mutatedBody === body) {
       console.error(`SELFTEST SETUP FAILED: no ::uuid cast found to strip in ${name}().`);
       process.exit(1);

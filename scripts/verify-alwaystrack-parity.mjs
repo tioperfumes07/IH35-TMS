@@ -45,6 +45,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { exitIfEmptyByPurge, purgeLiveRowCondition } from "./lib/purge-window.mjs";
+import { createRequire } from "node:module";
+const { inferPgSslOption } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 
 // REQUIRES_LIVE_DB (ruled 2026-09-23): excludes this guard from verify-static.mjs's dead-port
 // sentinel sweep. live() fails closed without DATABASE_URL by design (ROUND 29.9-B).
@@ -204,7 +206,7 @@ async function live() {
   const raw = JSON.parse(fs.readFileSync(GROUND_TRUTH_PATH, "utf8"));
   const { documents, totals, documentCount } = computeGroundTruthTargets(raw);
 
-  const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const client = new pg.Client({ connectionString: url, ssl: inferPgSslOption(url) });
   await client.connect();
   try {
     await client.query("BEGIN");

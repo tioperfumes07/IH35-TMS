@@ -15,6 +15,7 @@ import path from "node:path";
 //   - reversing_entry_ref(the audit linkage column the reversal id is persisted into)
 
 const WO_ROUTES = "apps/backend/src/work-orders/work-orders.routes.ts";
+const WO_SETTLE = "apps/backend/src/work-orders/work-order-financial-settle.service.ts";
 
 const REQUIRED = [
   { token: "postVoidReversal", why: "shared void-engine reversal call (reuse void.service, no new GL math)" },
@@ -42,10 +43,21 @@ export default {
       process.exit(1);
     }
 
-    // Defense-in-depth: the reversal call and the bill void must sit in the same routes file as the
-    // void handler (proves the handler itself wires the engine, not some unrelated mention).
-    const hasVoidHandler = /work-orders\/:id\/void/.test(src);
-    const hasBillEntityReversal = /entityType:\s*["']bill["']/.test(src);
+    // Defense-in-depth: the void handler must itself wire the engine. ACCT-F2026100424 (#25496, 0910379b2c) moved the
+    // reversal body, behaviour-preserving, out of the routes module into work-order-financial-settle.service.ts
+    // (settleWorkOrderFinancialLinkage); that PR repointed 9 guards and missed this one. So: the void handler's own
+    // body calls settleWorkOrderFinancialLinkage, and THAT exported function reverses the linked bill (entityType
+    // "bill") through postVoidReversal — re-proven from the service file every run, never assumed.
+    const voidAt = src.indexOf('"/api/v1/work-orders/:id/void"');
+    const voidBody = voidAt < 0 ? "" : src.slice(voidAt, (src.indexOf("app.post(", voidAt + 10) + 1 || src.length + 1) - 1);
+    const hasVoidHandler = voidAt >= 0;
+    const settleFile = path.resolve(WO_SETTLE);
+    const settle = fs.existsSync(settleFile) ? fs.readFileSync(settleFile, "utf8") : "";
+    const settleFn = settle.slice(Math.max(0, settle.indexOf("export async function settleWorkOrderFinancialLinkage(")));
+    const handlerWiresSettle = /\bsettleWorkOrderFinancialLinkage\(/.test(voidBody) && /export async function settleWorkOrderFinancialLinkage\(/.test(settle);
+    const hasBillEntityReversal =
+      /entityType:\s*["']bill["']/.test(src) ||
+      (handlerWiresSettle && /entityType:\s*["']bill["']/.test(settleFn) && /postVoidReversal\(/.test(settleFn));
     if (!hasVoidHandler || !hasBillEntityReversal) {
       console.error(
         "verify-wo-void-reverses-gl FAILED — could not confirm the void handler reverses the linked bill " +
