@@ -171,6 +171,10 @@ describe("civil fine contest/dismiss — voided records are immutable", () => {
     it(`${action} carries a voided_at IS NULL predicate`, async () => {
       let seenSql = "";
       mockQuery.mockImplementation(async (sql: string) => {
+        // 443.113 AJK-12: /dismiss reads the fine first (FOR UPDATE) to refuse a converted fine by name.
+        if (sql.includes("SELECT id::text, converted_to_liability_id::text")) {
+          return { rows: [{ id: FINE_ID, converted_to_liability_id: null }], rowCount: 1 };
+        }
         if (sql.includes(`SET status = '${action}ed'`)) seenSql = sql;
         return { rows: [], rowCount: 0 };
       });
@@ -184,4 +188,41 @@ describe("civil fine contest/dismiss — voided records are immutable", () => {
       expect(seenSql).toContain("voided_at IS NULL");
     });
   }
+
+  // 443.113 AJK-12 — /dismiss is held to the reduce route's Option B block.
+  it("dismiss BLOCKS a fine already converted to a driver liability (names the liability, writes nothing)", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SELECT id::text, converted_to_liability_id::text")) {
+        return { rows: [{ id: FINE_ID, converted_to_liability_id: LIABILITY_ID }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/fines/${FINE_ID}/dismiss?operating_company_id=${COMPANY}`,
+      payload: { notes: "court dismissed" },
+    });
+    expect(res.statusCode).toBe(409);
+    const body = res.json();
+    expect(body.error).toBe("fine_already_converted_to_liability");
+    expect(body.driver_liability_id).toBe(LIABILITY_ID);
+    expect(mockQuery.mock.calls.some(([sql]) => String(sql).includes("SET status = 'dismissed'"))).toBe(false);
+  });
+
+  it("dismiss carries a converted_to_liability_id IS NULL predicate in its UPDATE", async () => {
+    let seenSql = "";
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SELECT id::text, converted_to_liability_id::text")) {
+        return { rows: [{ id: FINE_ID, converted_to_liability_id: null }], rowCount: 1 };
+      }
+      if (sql.includes("SET status = 'dismissed'")) seenSql = sql;
+      return { rows: [], rowCount: 0 };
+    });
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/fines/${FINE_ID}/dismiss?operating_company_id=${COMPANY}`,
+      payload: { notes: "note" },
+    });
+    expect(seenSql).toContain("converted_to_liability_id IS NULL");
+  });
 });

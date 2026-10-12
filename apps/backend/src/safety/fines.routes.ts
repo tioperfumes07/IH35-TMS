@@ -657,7 +657,26 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     const body = updateStatusBody.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
-    const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    // 443.113 AJK-12 — a fine converted to a driver liability carries a posted driver receivable (Dr
+    // driver_fine_receivable / Cr civil_fines_expense) and a pending settlement deduction. Dismissing only the
+    // fine would leave the driver owing a dismissed fine, so the dismissal is refused BY NAME with the remedy —
+    // the same hard block the reduce route applies (OWNER RULING 2026-07-23, Option B). The database already
+    // locks a converted fine's status to paid / reduced (safety.enforce_fine_lock_after_conversion, migration
+    // 0050), which made this path a raw 500 with no remedy. The debt is cancelled through the one liability void
+    // engine (Owner: PATCH /api/v1/liabilities/:id/void — voids the pending deduction, reverses the receivable,
+    // refuses if any of it was already recovered through a settlement).
+    const outcome = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const cur = await client.query<{ id: string; converted_to_liability_id: string | null }>(
+        `SELECT id::text, converted_to_liability_id::text
+           FROM safety.civil_fines
+          WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL
+          LIMIT 1 FOR UPDATE`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      const fine = cur.rows[0];
+      if (!fine) return { kind: "not_found" as const };
+      if (fine.converted_to_liability_id) return { kind: "converted" as const, liabilityId: fine.converted_to_liability_id };
+
       const res = await client.query(
         `
           UPDATE safety.civil_fines
@@ -667,14 +686,34 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
           WHERE id = $1
             AND operating_company_id = $2::uuid
             AND voided_at IS NULL
+            AND converted_to_liability_id IS NULL
           RETURNING *
         `,
         [params.data.id, query.data.operating_company_id, body.data.notes ?? null, user.uuid]
       );
-      return res.rows[0] ?? null;
+      // The predicate is repeated so a concurrent convert between the SELECT and the UPDATE cannot slip through.
+      if (!res.rows[0]) return { kind: "conflict_race" as const };
+      return { kind: "ok" as const, row: res.rows[0] };
     });
-    if (!updated) return reply.code(404).send({ error: "fine_not_found" });
-    return updated;
+    if (outcome.kind === "not_found") return reply.code(404).send({ error: "fine_not_found" });
+    if (outcome.kind === "converted") {
+      return reply.code(409).send({
+        error: "fine_already_converted_to_liability",
+        message:
+          "This fine was converted to a driver liability, so the driver owes it through a settlement deduction. " +
+          "Dismissing only the fine would leave that debt live. To cancel the driver's debt for a dismissed fine, " +
+          "the Owner voids the driver liability (Liabilities › Void), which voids the pending deduction and reverses " +
+          "the receivable; money already recovered through a settlement is never voided silently.",
+        driver_liability_id: outcome.liabilityId,
+      });
+    }
+    if (outcome.kind === "conflict_race") {
+      return reply.code(409).send({
+        error: "fine_state_changed",
+        message: "This fine was voided or converted to a liability while you were editing it. Reload and retry.",
+      });
+    }
+    return outcome.row;
   });
 
   app.post("/api/v1/safety/fines/:id/reduce", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

@@ -18,6 +18,12 @@
  * dims fields on transactions that carry dependents. A silent cascade would reach into a driver's
  * debt without anyone looking at it.
  *
+ * 443.113 AJK-12 (2026-10-12): /dismiss is held to the SAME block. Conversion also books a posted driver
+ * receivable and a pending settlement deduction; dismissing only the fine leaves the driver owing a dismissed
+ * fine (the database lock E_FINE_LOCKED_AFTER_CONVERSION made it a raw 500 with no remedy). /dismiss must
+ * refuse a converted fine by name (fine_already_converted_to_liability + driver_liability_id) and carry
+ * `converted_to_liability_id IS NULL` in its UPDATE.
+ *
  * Also enforced: contest/dismiss/reduce must refuse VOIDED fines. void-not-delete means a voided row
  * is immutable history; editing it is never correct.
  *
@@ -77,6 +83,23 @@ export function assertFineAmendGuards(source) {
     }
   }
 
+  const dismiss = routeBody(code, "dismiss");
+  if (dismiss) {
+    const update = /UPDATE safety\.civil_fines[\s\S]*?RETURNING \*/.exec(dismiss)?.[0] ?? "";
+    if (!/converted_to_liability_id IS NULL/.test(update)) {
+      problems.push(
+        `${FILE} /dismiss: the UPDATE does not carry \`converted_to_liability_id IS NULL\` — dismissing a fine ` +
+          `converted to a driver liability leaves the driver owing a dismissed fine (443.113 AJK-12).`
+      );
+    }
+    if (!/fine_already_converted_to_liability/.test(dismiss)) {
+      problems.push(`${FILE} /dismiss: no \`fine_already_converted_to_liability\` refusal for a converted fine (443.113 AJK-12).`);
+    }
+    if (!/driver_liability_id/.test(dismiss)) {
+      problems.push(`${FILE} /dismiss: the converted-fine refusal does not return driver_liability_id (the record to void).`);
+    }
+  }
+
   for (const route of ["contest", "dismiss"]) {
     const body = routeBody(code, route);
     if (!body) {
@@ -112,18 +135,48 @@ if (SELFTEST) {
     }
   };
 
-  // Case 1: the converted-liability predicate is dropped from the UPDATE (the money defect).
+  /** Apply a replacement inside ONE route's handler only, so a case cannot be satisfied by another route. */
+  const inRoute = (route, from, to) => {
+    const start = live.indexOf(`app.post("/api/v1/safety/fines/:id/${route}"`);
+    const rest = live.slice(start + 10);
+    const next = rest.search(/app\.(post|get|patch|put|delete)\(/);
+    const end = next === -1 ? live.length : start + 10 + next;
+    return live.slice(0, start) + live.slice(start, end).replace(from, to) + live.slice(end);
+  };
+
+  // Case 1: the converted-liability predicate is dropped from the /reduce UPDATE (the money defect).
   expectCaught(
     "converted-guard-removed",
-    live.replace(/\n\s*AND converted_to_liability_id IS NULL/, ""),
-    "converted_to_liability_id IS NULL"
+    inRoute("reduce", /\n\s*AND converted_to_liability_id IS NULL/, ""),
+    "/reduce: the UPDATE does not carry `converted_to_liability_id IS NULL`"
   );
 
   // Case 2: the refusal stops naming the blocking liability.
   expectCaught(
     "remedy-not-named",
-    live.replace(/driver_liability_id: outcome\.liabilityId,\n/, ""),
-    "does not return driver_liability_id"
+    inRoute("reduce", /driver_liability_id: outcome\.liabilityId,\n/, ""),
+    "/reduce: the refusal does not return driver_liability_id"
+  );
+
+  // Case 4 (AJK-12): /dismiss loses its converted-liability predicate.
+  expectCaught(
+    "dismiss-converted-guard-removed",
+    inRoute("dismiss", /\n\s*AND converted_to_liability_id IS NULL/, ""),
+    "/dismiss: the UPDATE does not carry `converted_to_liability_id IS NULL`"
+  );
+
+  // Case 5 (AJK-12): /dismiss stops refusing a converted fine by name.
+  expectCaught(
+    "dismiss-refusal-removed",
+    inRoute("dismiss", /fine_already_converted_to_liability/g, "conflict"),
+    "/dismiss: no `fine_already_converted_to_liability` refusal"
+  );
+
+  // Case 6 (AJK-12): /dismiss's refusal stops naming the liability to void.
+  expectCaught(
+    "dismiss-remedy-not-named",
+    inRoute("dismiss", /driver_liability_id: outcome\.liabilityId,\n/, ""),
+    "/dismiss: the converted-fine refusal does not return driver_liability_id"
   );
 
   // Case 3: contest loses its voided guard.
@@ -145,7 +198,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 3 planted defects caught, live source clean`);
+  console.log(`${LABEL} SELFTEST PASS — 6 planted defects caught, live source clean`);
   process.exit(0);
 }
 
