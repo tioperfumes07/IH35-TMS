@@ -48,6 +48,9 @@ export const REQUIRES_LIVE_DB =
 import fs from "node:fs";
 import path from "node:path";
 import pg from "pg";
+import { createRequire } from "node:module";
+// 443.100: TLS by host (Neon keeps TLS; CI/local postgres has none) — a hard-coded ssl option cannot connect in CI.
+const { inferPgSslOption } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 
 const LABEL = "verify-bank-line-status-has-live-target";
 const BASELINE_PATH = path.join(process.cwd(), "scripts/verify-bank-line-status-has-live-target.baseline.json");
@@ -116,7 +119,7 @@ async function live() {
     process.exitCode = 1;
     return;
   }
-  const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const client = new pg.Client({ connectionString: url, ssl: inferPgSslOption(url) });
   try {
     await client.connect();
   } catch (err) {
