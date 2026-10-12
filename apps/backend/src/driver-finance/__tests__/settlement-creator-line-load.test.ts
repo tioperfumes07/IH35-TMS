@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attributeFuelLoadNumber, fuelLoadCandidates, lineLoadRefusal } from "../settlement-creator-line-load.js";
+import { attributeFuelLoadNumber, creatorLineLoadNumber, fuelLoadCandidates, lineLoadNotFound, lineLoadRefusal } from "../settlement-creator-line-load.js";
 
 // Settlement 5769 shape: 13498 picked 08/04 delivered 08/05; 13508 picked 08/06 delivered 08/07.
 const loads = [
@@ -53,5 +53,30 @@ describe("ROUND 443.6 — a company expense names how it was paid and its vendor
     const qty = 15.432;
     const rate = Number((6784 / qty).toFixed(4));
     expect(milesTimesRateCents(qty, rate)).toBe(6784);
+  });
+});
+
+describe("443.110 G5 — reimbursement / reimbursable expense / additional pay / fuel carry their load or refuse", () => {
+  it("a typed load number wins", () => {
+    expect(creatorLineLoadNumber(loads, { label: "Reimbursement", load_number: "13498", date: "2026-08-07" })).toBe("13498");
+  });
+  it("a dated line takes the one load of this settlement covering that date (the load the driver was on)", () => {
+    expect(creatorLineLoadNumber(loads, { label: "Reimbursable expense", date: "2026-08-07" })).toBe("13508");
+  });
+  it("a dated line no load covers, or two loads cover, is refused — never the first load", () => {
+    expect(() => creatorLineLoadNumber(loads, { label: "Reimbursable expense \"Lumper\"", date: "2026-08-20" })).toThrow(/Lumper.*no load of this settlement covers/);
+    const overlap = [...loads, { load_number: "13510", pickup_date: "2026-08-07", delivery_date: "2026-08-08" }];
+    expect(() => creatorLineLoadNumber(overlap, { label: "X", date: "2026-08-07" })).toThrow(/13508, 13510/);
+  });
+  it("an undated line takes the settlement's only load; with several loads it is refused", () => {
+    expect(creatorLineLoadNumber([loads[0]!], { label: "Additional pay" })).toBe("13498");
+    expect(() => creatorLineLoadNumber(loads, { label: "Additional pay \"Bonus\"" })).toThrow(/Bonus.*type its load number/);
+    try { creatorLineLoadNumber(loads, { label: "x" }); } catch (e) { expect((e as { code?: string }).code).toBe("line_load_unresolved"); }
+  });
+  it("a line picked by id is resolved by the caller (no number)", () => {
+    expect(creatorLineLoadNumber(loads, { label: "x", load_id: "00000000-0000-0000-0000-000000000001" })).toBeNull();
+  });
+  it("an unknown typed load is refused naming the line and the number", () => {
+    expect(lineLoadNotFound("Reimbursement \"Scale\"", "99999").message).toMatch(/Reimbursement "Scale": load 99999 is not a load of this company/);
   });
 });

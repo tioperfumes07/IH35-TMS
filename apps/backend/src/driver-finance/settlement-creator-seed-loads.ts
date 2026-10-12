@@ -32,38 +32,55 @@ type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
 };
 
+/**
+ * 443.110 G3 — the customer a Creator load is booked against is the one the document NAMES (or the one picked by id),
+ * never a guess. The former fallback booked an unmatched name against the company's OLDEST active customer, so a typo
+ * silently put the freight — and its A/R — on the wrong customer. Unmatched -> customer_unmatched naming the document's
+ * customer; the preview lists it (creatorPreflightRefusals) so the owner picks or creates the customer first.
+ */
+export async function findCreatorCustomer(
+  client: DbClient,
+  opco: string,
+  load: Pick<SettlementCreatorLoadBlock, "load_number" | "customer_id" | "customer_name">,
+): Promise<{ id: string } | { code: "customer_unmatched" | "customer_required"; message: string }> {
+  if (load.customer_id) {
+    const byId = await client.query<{ id: string }>(
+      `SELECT id::text FROM mdata.customers
+        WHERE id = $2::uuid AND operating_company_id = $1::uuid AND deactivated_at IS NULL
+          AND COALESCE(is_sample_data, false) IS NOT TRUE`,
+      [opco, load.customer_id],
+    );
+    if (byId.rows[0]) return { id: byId.rows[0].id };
+    return { code: "customer_unmatched", message: `Load ${load.load_number}: customer ${load.customer_id} is not an active customer of this company.` };
+  }
+  const name = load.customer_name?.trim();
+  if (!name) {
+    return { code: "customer_required", message: `Load ${load.load_number}: the document's customer is required — pick or create it.` };
+  }
+  const byName = await client.query<{ id: string }>(
+    `SELECT id::text FROM mdata.customers
+      WHERE operating_company_id = $1::uuid
+        AND lower(trim(customer_name)) = lower(trim($2))
+        AND COALESCE(is_sample_data, false) IS NOT TRUE
+        AND deactivated_at IS NULL
+      LIMIT 1`,
+    [opco, name],
+  );
+  if (byName.rows[0]) return { id: byName.rows[0].id };
+  return {
+    code: "customer_unmatched",
+    message: `Load ${load.load_number}: customer "${name}" on the document is not a customer of this company — pick the customer or create it first.`,
+  };
+}
+
 async function resolveCustomerId(
   client: DbClient,
   opco: string,
   load: SettlementCreatorLoadBlock,
 ): Promise<string> {
-  if (load.customer_id) return load.customer_id;
-  if (load.customer_name?.trim()) {
-    const byName = await client.query<{ id: string }>(
-      `SELECT id::text FROM mdata.customers
-        WHERE operating_company_id = $1::uuid
-          AND lower(trim(customer_name)) = lower(trim($2))
-          AND COALESCE(is_sample_data, false) IS NOT TRUE
-          AND deactivated_at IS NULL
-        LIMIT 1`,
-      [opco, load.customer_name.trim()],
-    );
-    if (byName.rows[0]) return byName.rows[0].id;
-  }
-  // Fall back to any active USMCA customer so Book Load can proceed (owner seeds from AT history).
-  const any = await client.query<{ id: string }>(
-    `SELECT id::text FROM mdata.customers
-      WHERE operating_company_id = $1::uuid
-        AND COALESCE(is_sample_data, false) IS NOT TRUE
-        AND deactivated_at IS NULL
-      ORDER BY created_at ASC
-      LIMIT 1`,
-    [opco],
-  );
-  if (!any.rows[0]) {
-    throw new SettlementCreatorSeedError("customer_required", `Load ${load.load_number}: no USMCA customer to book against.`);
-  }
-  return any.rows[0].id;
+  const found = await findCreatorCustomer(client, opco, load);
+  if ("id" in found) return found.id;
+  throw new SettlementCreatorSeedError(found.code, found.message);
 }
 
 async function resolveTourIdForSb(
