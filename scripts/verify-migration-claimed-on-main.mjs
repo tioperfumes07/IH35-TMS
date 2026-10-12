@@ -167,6 +167,12 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-3/c116-fuel",
     new Set(["db/migrations/202615830910_fuel_posts_on_receipt_flag.sql"]),
   ],
+  // LEAD 443.120 A (CC-3): FK safety.civil_fines.converted_to_liability_id -> driver_liabilities(id). Claimed first on main
+  // (#26662 + #26665) under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c120-a",
+    new Set(["db/migrations/202615840910_fine_converted_liability_fk.sql"]),
+  ],
   // RULING 443.62 #3/#4/#7 (Lead 16:35 UTC): 2410-00-001..004 "Due to / from <party>" rename (taken from CC-1 #26377) +
   // google_place_id on stop / location for CC-2. Claimed first on main (#26389); exact branch + exact files.
   [
