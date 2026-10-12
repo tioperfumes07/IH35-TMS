@@ -62,6 +62,15 @@ const ALLOWLIST = new Map([
   ["dispatch/mileage/miles-recommendations.routes.ts", "443.55 deadhead fill: selects the company's loads still missing miles_deadhead (historical, settled included) to fill them. Not a list/board read."],
   ["dispatch/mileage/miles-recommendations.service.ts", "443.55 miles recommendations: reads ONE load by id (FOR UPDATE on the deadhead fill) and the unit's previous load's last stop. Not a list/board read."],
   ["dispatch/printed-trailer-decision.service.ts", "443.90 #4 printed-trailer decision: groups the loads behind a set of expense documents (by id) by customer. Not a list/board read."],
+  // LEAD 443.130 (2026-10-12) — allow-list, same class as 443.99 class B above.
+  //   old rule: the three load-trailer engines below were unlisted -> new rot.
+  //   new rule: listed by name with why; a list/board surface under dispatch/** is still new rot.
+  //   why: 443.107 / 443.109 trailer engines read ONE load by id (Book/Edit Load trailer choice) or stamp the trailer onto
+  //        HISTORICAL loads, which are mostly settled — views.live_loads hides settled loads by design, so the view would
+  //        silently skip exactly the loads they exist to fix (prod: 133 of 138 stamped loads were settled). Nothing renders a board.
+  ["dispatch/load-trailer-choice.ts", "443.107 trailer choice: Book/Edit Load reads ONE load by id (its customer) to record the trailer it is saving. Single-record mutation, not a list/board read."],
+  ["dispatch/load-trailer-expense-document.service.ts", "443.109 trailer from expense documents: Owner backfill over HISTORICAL loads (settled included) with no trailer. Not a list/board read."],
+  ["dispatch/load-trailer-gps-match.service.ts", "443.107 #2 GPS trailer match: Owner backfill over HISTORICAL loads (settled included) with no trailer. Not a list/board read."],
 ]);
 
 function loadBaseline() {
