@@ -94,6 +94,9 @@ export type HistoricalDriverBillInput = {
 export type HistoricalDriverBillOutcome =
   | { outcome: "created"; driver_bill_id: string; bill_number: string }
   | { outcome: "already_exists"; driver_bill_id: string; bill_number: string }
+  /** LEAD 443.92 #3: the load's OPEN, unsettled bill (Book Load mints it at assignment, $0 or a rate estimate) now
+   *  carries the amount the signed document prints. One bill per driver per load — never a second one. */
+  | { outcome: "filled"; driver_bill_id: string; bill_number: string; previous_gross_cents: number }
   | { outcome: "refused"; reason: string };
 
 /**
@@ -144,9 +147,11 @@ export async function createHistoricalDriverBill(
     voided_at: string | null;
     settled_in_settlement_id: string | null;
     gross_amount_cents: number;
+    loaded_pay_cents: string | null;
+    deadhead_pay_cents: string | null;
   }>(
     `SELECT id::text, bill_number, status, voided_at::text, settled_in_settlement_id::text,
-            gross_amount_cents
+            gross_amount_cents, loaded_pay_cents::text, deadhead_pay_cents::text
        FROM driver_finance.driver_bills
       WHERE operating_company_id = $1::uuid AND load_id = $2 AND driver_id = $3
       ORDER BY created_at
@@ -175,7 +180,75 @@ export async function createHistoricalDriverBill(
       };
     }
     // An open bill for the same load and driver IS this bill. Re-running the day is safe.
-    return { outcome: "already_exists", driver_bill_id: prior.id, bill_number: prior.bill_number };
+    // LEAD 443.92 #3 (2026-10-12): old rule — any open bill returned already_exists untouched; new rule — an OPEN,
+    // unsettled bill whose amounts differ from the signed document takes the document's amounts (the same bill, same
+    // number, no second bill); identical amounts stay already_exists; why — Book Load mints the bill at assignment
+    // ($0 when unpriced, else a rate-card estimate) and the feed then reported "already exists" and never wrote the
+    // printed pay, leaving the load's driver pay at $0 / the estimate. The driver was paid what the paper says.
+    const printedLoaded = hasLoaded ? (input.loaded_pay_cents as number) : null;
+    const printedDeadhead = hasLoaded ? (input.deadhead_pay_cents as number) : null;
+    const previousGross = Number(prior.gross_amount_cents ?? 0);
+    const same =
+      previousGross === input.gross_amount_cents &&
+      (prior.loaded_pay_cents == null ? null : Number(prior.loaded_pay_cents)) === printedLoaded &&
+      (prior.deadhead_pay_cents == null ? null : Number(prior.deadhead_pay_cents)) === printedDeadhead;
+    if (same || String(prior.status) !== "open") {
+      return { outcome: "already_exists", driver_bill_id: prior.id, bill_number: prior.bill_number };
+    }
+    const filled = await client.query(
+      `UPDATE driver_finance.driver_bills
+          SET gross_amount_cents = $2,
+              miles_basis = $3,
+              miles_basis_type = $4,
+              rate_per_mile_cents = $5,
+              miles_deadhead = $6,
+              rate_empty_per_mile_cents = $7,
+              loaded_pay_cents = $8,
+              deadhead_pay_cents = $9,
+              notes = $10
+        WHERE id = $1::uuid AND status = 'open' AND voided_at IS NULL AND settled_in_settlement_id IS NULL`,
+      [
+        prior.id,
+        input.gross_amount_cents,
+        input.miles_basis ?? null,
+        input.miles_basis_type ?? null,
+        input.rate_per_mile_cents ?? null,
+        input.miles_deadhead ?? null,
+        input.rate_empty_per_mile_cents ?? null,
+        printedLoaded,
+        printedDeadhead,
+        `Amount as printed on signed settlement ${input.source_document_ref} (was ${previousGross} cents at booking) — ` +
+          `historical backfill, not derived from a pay rate.`,
+      ],
+    );
+    if (!filled.rowCount) {
+      return {
+        outcome: "refused",
+        reason: `driver bill ${prior.bill_number} on load ${input.load_number} changed state while the feed ran (no longer open and unsettled); nothing written.`,
+      };
+    }
+    await appendCrudAudit(
+      client,
+      input.requesting_user_uuid ?? HISTORICAL_BACKFILL_SYSTEM_ACTOR,
+      "driver_finance.driver_bill.historical_backfill_fill",
+      {
+        driver_bill_id: prior.id,
+        bill_number: prior.bill_number,
+        operating_company_id: input.operating_company_id,
+        load_id: input.load_id,
+        load_number: input.load_number,
+        driver_id: input.driver_id,
+        previous_gross_cents: previousGross,
+        gross_amount_cents: input.gross_amount_cents,
+        loaded_pay_cents: printedLoaded,
+        deadhead_pay_cents: printedDeadhead,
+        source: "historical_backfill",
+        source_document_ref: input.source_document_ref,
+      },
+      "info",
+      "FEED-DRIVER-BILL-01",
+    );
+    return { outcome: "filled", driver_bill_id: prior.id, bill_number: prior.bill_number, previous_gross_cents: previousGross };
   }
 
   // ROUND 326 audit A5 — ONE DRIVER BILL PER LOAD (per driver on a team load). A live bill on this load for a DIFFERENT
