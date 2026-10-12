@@ -10,6 +10,9 @@
 import pg from "pg";
 import { readFileSync } from "node:fs";
 
+// LEAD 443.99 class A / 443.132: runs in the live-DB job (ci.yml required-live-load-guard, prod read-only); out of context for the no-DB static sweep.
+export const REQUIRES_LIVE_DB = "live-ledger guard: runs in the live-DB job (required-live-load-guard)";
+
 const LABEL = "verify-factoring-advance-links-its-load";
 // Named exceptions — an advance on a real app invoice that has NO load, per the owner's reconciliation
 // (09-30-26-UPDATED FIRST RECONCILIATION.xlsx row 9: Faro 7, ITS Logistics $350, "NO ALLWAYS LOAD").
