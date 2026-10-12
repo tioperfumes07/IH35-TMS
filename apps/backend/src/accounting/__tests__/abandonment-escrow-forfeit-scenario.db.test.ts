@@ -68,6 +68,8 @@ run("stage-3 · load abandonment → escrow forfeit (real engine)", () => {
       // to have already inserted into identity.users as a beforeAll side effect — vitest gives no
       // ordering guarantee between separate test files/workers, so this FK'd 23503 whenever this file
       // ran before that one. Seed it here too (idempotent) so this file is self-sufficient.
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `abandon-${s}@test.local`]);

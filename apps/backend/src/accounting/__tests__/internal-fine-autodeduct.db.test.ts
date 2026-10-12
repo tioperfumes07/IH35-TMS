@@ -34,6 +34,8 @@ run("internal fine auto-deducts from driver pay up to the per-settlement cap", (
     db = new pg.Client(buildPgClientConfig(process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL!));
     await db.connect(); await db.query("SET ROLE ih35_app");
     await tx(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(`INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`, [userId, `intfine-${s}@test.local`]);
       await db.query(`INSERT INTO mdata.drivers (id,operating_company_id,first_name,last_name,phone) VALUES ($1::uuid,$2::uuid,'Fined','Driver',$3)`, [id.driver, companyId, `95605${s.slice(0,5)}`]);
       await db.query(`INSERT INTO driver_finance.driver_settlements (id,operating_company_id,display_id,driver_id,period_start,period_end,status,approval_status) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'open','needs_review')`, [id.settlement, companyId, `SET-${s}`, id.driver]);
