@@ -2428,6 +2428,11 @@
     "claimed_at": "2026-10-12",
     "purpose": "443.91 #4 batch 3: accounting.cash_flow_row_adjustments RLS policy gains the lucia bypass branch (catalogs-rls-bypass-branch ratchet red on main)"
   },
+  "202615690910": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.91 #4 batch 0: WORM audit trigger on 4 money tables (deposit_lines, expenses_review_queue, reclassify_batch_lines, settlement_line_item_splits)"
+  },
   "202615451400": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-12",
