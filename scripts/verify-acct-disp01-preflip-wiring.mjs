@@ -29,6 +29,12 @@ function read(rel) {
 const routes = read("apps/backend/src/accounting/revenue-recognition.routes.ts");
 const poster = read("apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts");
 const loads = read("apps/backend/src/dispatch/loads.routes.ts");
+// #23821 (25f2a8faa4) + #4730 (30ce12a690): the dispatch hook moved out of loads.routes.ts — the route transitions
+// through load-transition.service.ts, which calls the after-commit helper delivery-evidence-latch.ts, and THAT
+// calls postLoadRevenueLatch for both events. The guard follows the chain; it still requires every link.
+const transition = read("apps/backend/src/dispatch/load-transition.service.ts");
+const latch = read("apps/backend/src/dispatch/delivery-evidence-latch.ts");
+const noComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
 const flags = read("apps/backend/src/lib/feature-flags/service.ts");
 const mig = read("db/migrations/202610201200_disp_01_unbilled_role_bind_rls_safe.sql");
 const fa = read("apps/backend/src/accounting/fixed-assets.routes.ts");
@@ -54,11 +60,16 @@ if (!/unbilled_revenue/.test(poster)) {
   failures.push("poster must resolveRoleAccount unbilled_revenue");
 }
 
-if (!/postLoadRevenueLatch/.test(loads)) {
-  failures.push("loads.routes.ts must call postLoadRevenueLatch");
+if (!/transitionDispatchLoadInClientTx\(/.test(noComments(loads))) {
+  failures.push("loads.routes.ts must route status changes through transitionDispatchLoadInClientTx");
 }
-if (!/delivered_pending_docs/.test(loads) || !/completed_docs_received/.test(loads)) {
-  failures.push("loads.routes.ts must hook both delivered_pending_docs and completed_docs_received");
+if (!/await latchOnDeliveryEvidence\(client,/.test(noComments(transition))) {
+  failures.push("load-transition.service.ts must call latchOnDeliveryEvidence (dispatch hook for postLoadRevenueLatch)");
+}
+const latchCode = noComments(latch);
+if (!/await postLoadRevenueLatch\(\{[\s\S]*?target_status:\s*"delivered_pending_docs"/.test(latchCode) ||
+    !/await postLoadRevenueLatch\(\{[\s\S]*?target_status:\s*"completed_docs_received"/.test(latchCode)) {
+  failures.push("delivery-evidence-latch.ts must call postLoadRevenueLatch for both delivered_pending_docs and completed_docs_received");
 }
 
 if (!/POSTING_FLAG_KEYS/.test(flags) || !/REVENUE_RECOGNITION_POST_ENABLED/.test(flags)) {
