@@ -125,10 +125,11 @@ export async function listPartyAccounts(client: PgClient, operatingCompanyId: st
             COALESCE((SELECT SUM(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END)
                         FROM accounting.journal_entry_postings p
                         JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
-                         AND je.voided_at IS NULL AND je.status = 'posted'
+                         AND je.operating_company_id = p.operating_company_id AND je.voided_at IS NULL AND je.status = 'posted'
                        WHERE p.account_id = a.id AND p.operating_company_id = a.operating_company_id), 0)::bigint AS balance_cents,
             (SELECT count(*) FROM accounting.journal_entry_postings p
-               JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.voided_at IS NULL AND je.status = 'posted'
+               JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+                AND je.voided_at IS NULL AND je.status = 'posted'
               WHERE p.account_id = a.id AND p.operating_company_id = a.operating_company_id)::int AS movement_count
        FROM catalogs.accounts a
       WHERE a.operating_company_id = $1::uuid AND a.deactivated_at IS NULL AND a.account_name LIKE $2 || '%'

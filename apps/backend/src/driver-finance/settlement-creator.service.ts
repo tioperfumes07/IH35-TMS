@@ -107,7 +107,7 @@ async function itemAccountByName(
     `
       SELECT a.account_number, a.account_name
         FROM catalogs.items i
-        JOIN catalogs.accounts a ON a.id = i.default_expense_account_id
+        JOIN catalogs.accounts a ON a.id = i.default_expense_account_id AND a.operating_company_id = $1::uuid
        WHERE i.item_name = $2
          AND (i.operating_company_id = $1::uuid OR i.operating_company_id IS NULL)
          AND i.deactivated_at IS NULL
@@ -2180,7 +2180,7 @@ export async function previewSettlementCreatorThroughClose(
       `SELECT je.id::text AS je, je.memo, a.account_number, a.account_name, p.debit_or_credit, p.amount_cents::text
          FROM accounting.journal_entry_postings p
          JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
-         JOIN catalogs.accounts a ON a.id = p.account_id
+         JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
         WHERE je.operating_company_id = $1::uuid AND je.created_at = now()
         ORDER BY je.created_at, je.id, p.debit_or_credit DESC`,
       [draft.operating_company_id],

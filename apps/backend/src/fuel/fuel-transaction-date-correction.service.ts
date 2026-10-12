@@ -39,7 +39,7 @@ export async function correctFuelTransactionDate(client: DbClient, input: FuelDa
     `SELECT coalesce(ft.purchased_at, ft.transaction_at)::date::text AS day,
             ft.voided_at IS NOT NULL AS voided, ft.archived_at IS NOT NULL AS archived,
             (SELECT count(*)::int FROM accounting.expenses e WHERE e.source_fuel_transaction_id = ft.id AND e.voided_at IS NULL) AS live_docs,
-            (SELECT count(*)::int FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+            (SELECT count(*)::int FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
               WHERE p.source_transaction_type = 'fuel_event' AND p.source_transaction_id = ft.id::text
                 AND je.status = 'posted' AND je.reversed_by_je_id IS NULL) AS live_legs,
             (SELECT count(*)::int FROM banking.bank_transactions b WHERE b.matched_fuel_transaction_id = ft.id) AS live_bank

@@ -1630,7 +1630,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
               `SELECT p.account_id::text, p.debit_or_credit, p.amount_cents::bigint AS amount_cents, p.source_transaction_type,
                       p.source_transaction_id::text, p.source_transaction_line_id::text, p.entity_uuid::text, p.entity_type,
                       p.class_id::text, p.location_id::text, je.entry_date::text
-                 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+                 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
                 WHERE p.journal_entry_uuid = $1::uuid AND p.operating_company_id = $2::uuid AND p.load_id = $3::uuid
                   AND p.reversed_by_line_id IS NULL AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL
                 ORDER BY p.line_sequence`,

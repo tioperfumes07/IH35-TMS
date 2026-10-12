@@ -67,7 +67,7 @@ export async function suggestDreamlineCardLine(input: {
               bt.description, ba.account_name, a.account_number, ba.ledger_account_id::text
          FROM banking.bank_transactions bt
          JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
-         LEFT JOIN catalogs.accounts a ON a.id = ba.ledger_account_id
+         LEFT JOIN catalogs.accounts a ON a.id = ba.ledger_account_id AND a.operating_company_id = bt.operating_company_id
         WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid AND bt.voided_at IS NULL
         LIMIT 1`,
       [input.bank_transaction_id, input.operating_company_id]
@@ -114,7 +114,7 @@ export async function suggestDreamlineCardLine(input: {
               sum(e.total_amount_cents)::int AS amt
          FROM accounting.expenses e
          JOIN fuel.fuel_transactions ft ON ft.id = e.source_fuel_transaction_id
-         LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
+         LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
         WHERE e.operating_company_id = $1::uuid
           AND e.payment_account_uuid = $2::uuid
           AND e.voided_at IS NULL AND e.is_active = true AND e.status = 'posted'

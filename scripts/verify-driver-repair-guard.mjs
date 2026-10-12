@@ -1,17 +1,9 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
-export const REQUIRES_LIVE_DB =
-  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
-
-if (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true") {
-  console.log("SKIP: CI environment");
-  process.exit(0);
-}
-if (!process.env.DATABASE_URL) {
-  console.error("verify-driver-repair-guard: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
-  process.exit(1);
-}
+// 443.100: this guard reads two SOURCE files and never queries a database. Its old header skip-passed in CI
+// ("SKIP: CI environment", exit 0) and demanded a database connection string it never used, so in CI it checked nothing and
+// verify-no-silent-db-skip flagged the silent exit 0. It now runs everywhere, CI included — stricter, not looser.
 
 const root = process.cwd();
 const routePath = path.join(root, "apps/backend/src/dispatch/load-assign.routes.ts");

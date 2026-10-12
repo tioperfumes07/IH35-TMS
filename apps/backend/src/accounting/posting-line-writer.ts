@@ -129,12 +129,12 @@ export class PostingLineAlreadyReversedError extends Error {
  */
 export async function resolvePostingSourceEntity(
   client: PostingWriterClient,
-  line: Pick<PostingLineWrite, "source_transaction_type" | "source_transaction_id" | "reversal_of_line_id">
+  line: Pick<PostingLineWrite, "operating_company_id" | "source_transaction_type" | "source_transaction_id" | "reversal_of_line_id">
 ): Promise<{ entity_uuid: string; entity_type: "customer" | "vendor" | "driver" } | null> {
   if (line.reversal_of_line_id) {
     const r = await client.query<{ entity_uuid: string | null; entity_type: string | null }>(
-      `SELECT entity_uuid::text, entity_type FROM accounting.journal_entry_postings WHERE id = $1::uuid`,
-      [line.reversal_of_line_id]
+      `SELECT entity_uuid::text, entity_type FROM accounting.journal_entry_postings WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [line.reversal_of_line_id, line.operating_company_id]
     );
     const row = r.rows[0];
     if (row?.entity_uuid && row.entity_type) {
@@ -145,20 +145,21 @@ export async function resolvePostingSourceEntity(
   const id = String(line.source_transaction_id ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const sql: Record<string, string> = {
-    invoice: `SELECT customer_id::text AS e, 'customer' AS t FROM accounting.invoices WHERE id = $1::uuid`,
+    invoice: `SELECT customer_id::text AS e, 'customer' AS t FROM accounting.invoices WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     bill: `SELECT COALESCE(driver_id::text, vendor_uuid::text, vendor_id::text, mdata_vendor_id::text) AS e,
                   CASE WHEN driver_id IS NOT NULL THEN 'driver' ELSE 'vendor' END AS t
-             FROM accounting.bills WHERE id = $1::uuid`,
+             FROM accounting.bills WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     // A payment on a driver's bill carries the driver, the same party as that bill's A/P credit.
     bill_payment: `SELECT COALESCE(b.driver_id::text, bp.vendor_id::text) AS e,
                           CASE WHEN b.driver_id IS NOT NULL THEN 'driver' ELSE 'vendor' END AS t
-                     FROM accounting.bill_payments bp LEFT JOIN accounting.bills b ON b.id = bp.bill_id
-                    WHERE bp.id = $1::uuid`,
+                     FROM accounting.bill_payments bp
+                     LEFT JOIN accounting.bills b ON b.id = bp.bill_id AND b.operating_company_id = bp.operating_company_id
+                    WHERE bp.id = $1::uuid AND bp.operating_company_id = $2::uuid`,
     expense: `SELECT COALESCE(vendor_uuid::text, driver_uuid::text, payee_customer_uuid::text) AS e,
                      CASE WHEN vendor_uuid IS NOT NULL THEN 'vendor' WHEN driver_uuid IS NOT NULL THEN 'driver' ELSE 'customer' END AS t
-                FROM accounting.expenses WHERE id = $1::uuid`,
-    driver_settlement: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_settlements WHERE id = $1::uuid`,
-    driver_advance: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_advances WHERE id = $1::uuid`,
+                FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    driver_settlement: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    driver_advance: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_advances WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
   };
   // 443.42 #6 — Relay documents name the vendor Relay: a wallet deposit (every leg, the funding leg included — Relay is the
   // payee of the card / bank charge) and a Relay fuel fill (source = the integrations.relay_fuel_transactions row). A
@@ -178,7 +179,7 @@ export async function resolvePostingSourceEntity(
   }
   const q = sql[String(line.source_transaction_type ?? "")];
   if (!q) return null;
-  const r = await client.query<{ e: string | null; t: "customer" | "vendor" | "driver" }>(q, [id]);
+  const r = await client.query<{ e: string | null; t: "customer" | "vendor" | "driver" }>(q, [id, line.operating_company_id]);
   const row = r.rows[0];
   return row?.e ? { entity_uuid: row.e, entity_type: row.t } : null;
 }

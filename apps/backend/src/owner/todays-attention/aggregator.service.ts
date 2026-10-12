@@ -327,7 +327,7 @@ async function sourcePeriodCloseAttention(
   _ociId: string,
   log?: AttentionLog
 ): Promise<AttentionItem[]> {
-  warnSkipped(log, "period_close_warnings", "hard_stub_no_migrated_table");
+  warnSkipped(log, "period_close", "hard_stub_no_migrated_table");
   return [];
 }
 
@@ -567,7 +567,7 @@ async function sourceAtRiskUnits(
 
 const ATTENTION_SOURCE_KEYS = [
   "form_425c_deadline", "fuel_fraud", "bank_drift", "eng_fault_wo", "cargo_sensor",
-  "period_close_warnings", "damage_liability", "factoring_repurchase_due", "detention_approval", "cooling_customers", "at_risk_units",
+  "period_close", "damage_liability", "factoring_repurchase_due", "detention_approval", "cooling_customers", "at_risk_units",
 ] as const;
 if (ATTENTION_SOURCE_KEYS.length !== ATTENTION_SOURCE_COUNT) throw new Error("ATTENTION_SOURCE_COUNT must equal ATTENTION_SOURCE_KEYS.length");
 

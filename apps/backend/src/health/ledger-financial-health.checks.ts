@@ -149,7 +149,7 @@ export async function assertApTieout(): Promise<void> {
              )
              AND NOT EXISTS (
                SELECT 1 FROM accounting.journal_entry_postings bp
-                 JOIN accounting.journal_entries bje ON bje.id = bp.journal_entry_uuid
+                 JOIN accounting.journal_entries bje ON bje.id = bp.journal_entry_uuid AND bje.operating_company_id = bp.operating_company_id
                 WHERE bp.operating_company_id = b.operating_company_id
                   AND bp.source_transaction_type = 'bill' AND bp.source_transaction_id = b.id::text
                   AND bp.account_id = $2::uuid AND bp.debit_or_credit = 'credit'

@@ -54,7 +54,7 @@ export async function creatorPreflightRefusals(client: Q, draft: SettlementCreat
       }
     } else if (vid && providerTransactionId(f.invoice)) {
       const d = await client.query<{ load_number: string | null }>(
-        `SELECT l.load_number FROM fuel.fuel_transactions ft LEFT JOIN mdata.loads l ON l.id = ft.load_id
+        `SELECT l.load_number FROM fuel.fuel_transactions ft LEFT JOIN mdata.loads l ON l.id = ft.load_id AND l.operating_company_id = ft.operating_company_id
           WHERE ft.operating_company_id = $1::uuid AND ft.vendor_id = $2::uuid AND btrim(ft.transaction_reference) = $3
             AND ft.fuel_type = $4 AND ft.voided_at IS NULL LIMIT 1`,
         [co, vid, providerTransactionId(f.invoice), f.fuel_type ?? "diesel"],

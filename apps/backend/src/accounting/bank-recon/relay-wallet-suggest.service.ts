@@ -74,7 +74,7 @@ export async function suggestRelayWalletLine(input: {
               bt.description, ba.account_name, a.account_number
          FROM banking.bank_transactions bt
          JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
-         LEFT JOIN catalogs.accounts a ON a.id = ba.ledger_account_id
+         LEFT JOIN catalogs.accounts a ON a.id = ba.ledger_account_id AND a.operating_company_id = bt.operating_company_id
         WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid AND bt.voided_at IS NULL
         LIMIT 1`,
       [input.bank_transaction_id, input.operating_company_id]
@@ -114,7 +114,7 @@ export async function suggestRelayWalletLine(input: {
              JOIN fuel.fuel_transactions ft ON ft.relay_fuel_transaction_id = r.id AND ft.voided_at IS NULL
              JOIN accounting.expenses e ON e.source_fuel_transaction_id = ft.id
               AND e.voided_at IS NULL AND e.is_active = true AND e.status = 'posted'
-             LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
+             LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
             WHERE r.operating_company_id = $1::uuid
               AND r.transaction_id = $2
               AND r.voided_at IS NULL
@@ -128,7 +128,7 @@ export async function suggestRelayWalletLine(input: {
                ON e.operating_company_id = r.operating_company_id
               AND e.voided_at IS NULL AND e.is_active = true AND e.status = 'posted'
               AND e.memo ILIKE '%' || r.id::text || '%'
-             LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
+             LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
             WHERE r.operating_company_id = $1::uuid
               AND r.transaction_id = $2
               AND r.voided_at IS NULL`,
@@ -153,8 +153,8 @@ export async function suggestRelayWalletLine(input: {
                   COALESCE(e.expense_number, e.memo)::text AS ref,
                   v.vendor_name::text AS payee
              FROM accounting.expenses e
-             JOIN catalogs.accounts a ON a.id = e.payment_account_uuid AND a.account_number = '1295'
-             LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
+             JOIN catalogs.accounts a ON a.id = e.payment_account_uuid AND a.operating_company_id = e.operating_company_id AND a.account_number = '1295'
+             LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
             WHERE e.operating_company_id = $1::uuid
               AND e.voided_at IS NULL AND e.is_active = true AND e.status = 'posted'
               AND e.transaction_date BETWEEN $2::date - 5 AND $2::date + 5

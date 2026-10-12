@@ -114,7 +114,7 @@ async function candidateStops(client: DbClient, companyId: string, loadId?: stri
            s.latitude::double precision, s.longitude::double precision, s.geocode_precision, s.geocode_source,
            loc.latitude::double precision location_latitude, loc.longitude::double precision location_longitude,
            (nullif(trim(loc.address_line1), '') IS NOT NULL) location_has_street,
-           (SELECT c.customer_name FROM mdata.customers c WHERE c.id = l.customer_id) AS customer_name
+           (SELECT c.customer_name FROM mdata.customers c WHERE c.id = l.customer_id AND c.operating_company_id = l.operating_company_id) AS customer_name
       FROM mdata.load_stops s
       JOIN mdata.loads l ON l.id = s.load_id
       LEFT JOIN mdata.locations loc ON loc.id=s.location_id AND loc.operating_company_id=$1::uuid AND loc.deactivated_at IS NULL
