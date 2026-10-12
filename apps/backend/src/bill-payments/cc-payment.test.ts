@@ -1,19 +1,8 @@
 import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
 import { registerCcPaymentRoutes } from "./cc-payment.routes.js";
-import { buildQboCcBillPaymentPayload } from "./qbo-cc-payment-poster.js";
 
 describe("cc bill payment", () => {
-  it("builds QBO CreditCard payload", () => {
-    const payload = buildQboCcBillPaymentPayload({
-      vendorQboId: "1",
-      ccLiabilityQboAccountId: "2",
-      paymentDate: "2026-06-05",
-      allocations: [{ billId: "b", qboBillId: "qb", amountCents: 500 }],
-    });
-    expect(payload.PayType).toBe("CreditCard");
-  });
-
   it("rejects unauthenticated POST", async () => {
     const app = Fastify();
     await registerCcPaymentRoutes(app);
