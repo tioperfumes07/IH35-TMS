@@ -4976,6 +4976,7 @@
     ],
     "driver_finance.driver_bills": [
       "accrued_bill_id",
+      "accrued_team_bill_id",
       "bill_number",
       "created_at",
       "created_by_user_id",
@@ -5008,8 +5009,7 @@
       "void_reason",
       "void_reversal_entry_id",
       "voided_at",
-      "voided_by_user_id",
-      "accrued_team_bill_id"
+      "voided_by_user_id"
     ],
     "driver_finance.driver_deduction_bucket_events": [
       "actor_user_id",
