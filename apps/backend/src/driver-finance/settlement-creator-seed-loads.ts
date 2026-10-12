@@ -397,6 +397,9 @@ export async function ensureDispatchedLoadsForCreator(
       assigned_primary_driver_id: draft.driver_id,
       assigned_unit_id: draft.unit_id ?? undefined,
       assigned_trailer_unit_id: draft.trailer_id ?? undefined,
+      // LEAD 443.107 item 3: the Creator's source names the trailer at settlement level — pass it as the recorded choice
+      // (validated against the company's fleet). With no trailer on the source nothing is invented: no choice is sent.
+      trailer_choice: draft.trailer_id ? { kind: "company", equipment_id: draft.trailer_id } : undefined,
       miles_practical: load.loaded_miles ?? load.line_haul_miles ?? null,
       // CC-2 finding 2026-10-11 (verify-mileage-g1-g5-live G4 on 5769's 13498 / 13508): miles carry their source. The
       // Creator's miles are typed from the signed settlement / AlwaysTrack record by the operator.

@@ -26,6 +26,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { getLoad, getDispatchLoadEditLock, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
 import { buildEditPrefill, buildEditPatchBody, shouldApplyEditPrefill } from "./book-load-v4/editLoadMapping";
+import { buildTrailerChoice, TRAILER_CHOICE_REQUIRED_MESSAGE, type TrailerSource } from "./book-load-v4/trailerChoice";
 import { bookLoadToastMessage, bookLoadToastTone, serverStatusOf } from "./book-load-toast";
 import { searchCustomersAutocomplete } from "../../../api/mdata";
 import { heldEntityIsSelectable, heldEntityMergedMessage } from "../../../lib/resolve-held-entity";
@@ -104,8 +105,10 @@ type FormValues = BookLoadFormValues & {
   assigned_unit_id: string;
   assigned_trailer_unit_id: string;
   /** GO-23 A1 — our trailer XOR an interchange (non-owned) trailer, never both. */
-  trailer_source: "owned" | "interchange";
+  trailer_source: TrailerSource;
   interchange_trailer_id: string;
+  /** LEAD 443.107: the customer / shipper trailer number when trailer_source = "customer". */
+  customer_trailer_number: string;
   assignment_mode: "solo" | "team";
   team_id: string;
   assigned_primary_driver_id: string;
@@ -394,6 +397,7 @@ export function BookLoadModalV4({
       assigned_trailer_unit_id: "",
       trailer_source: "owned",
       interchange_trailer_id: "",
+      customer_trailer_number: "",
       assignment_mode: "solo",
       team_id: "",
       assigned_primary_driver_id: prefillDriverId ?? "",
@@ -1285,6 +1289,13 @@ export function BookLoadModalV4({
     // Block 7 — EDIT mode: PATCH only the fields the user changed (dirtyFields-gated, anti-data-loss).
     // Trip-type is not editable here, so the create-only trip_type gate below does not apply.
     if (isEditMode && editLoadId) {
+      // LEAD 443.107 item 3: Edit Load saves the trailer choice too — never without one.
+      if (!buildTrailerChoice(values)) {
+        form.setError("assigned_trailer_unit_id", { type: "required", message: TRAILER_CHOICE_REQUIRED_MESSAGE });
+        setSubmitErrorMessage(TRAILER_CHOICE_REQUIRED_MESSAGE);
+        pushToast("Choose the trailer before saving", "error");
+        return;
+      }
       try {
         if (loadIsEditLocked && canOwnerLockOverride && !(effectiveOverrideReason && effectiveOverrideReason.length >= 10)) {
           setSubmitErrorMessage(
@@ -1478,6 +1489,13 @@ export function BookLoadModalV4({
         pushToast("Enter practical miles before booking", "error");
         return;
       }
+      // LEAD 443.107 item 3: no booking without the trailer choice (company / customer / interchange / none).
+      if (!buildTrailerChoice(values)) {
+        form.setError("assigned_trailer_unit_id", { type: "required", message: TRAILER_CHOICE_REQUIRED_MESSAGE });
+        setSubmitErrorMessage(TRAILER_CHOICE_REQUIRED_MESSAGE);
+        pushToast("Choose the trailer before booking", "error");
+        return;
+      }
       // RG-03 / MIL-01 (owner CONSOLIDATED, DSP-22): shortest (short) miles drive driver pay —
       // once a driver is seated, booking without them would settle the driver on $0 miles. Not
       // required before a driver is assigned (the load can still be booked open).
@@ -1624,7 +1642,9 @@ export function BookLoadModalV4({
         assigned_unit_id: values.assigned_unit_id || undefined,
         // The service persists this through dispatch.load_assignment_history.new_trailer_id after
         // creating the load; mdata.loads intentionally has no trailer FK column.
-        assigned_trailer_unit_id: values.assigned_trailer_unit_id || undefined,
+        assigned_trailer_unit_id: values.trailer_source === "owned" ? values.assigned_trailer_unit_id || undefined : undefined,
+        // LEAD 443.107 item 3: the required trailer choice (the server refuses a booking without it).
+        trailer_choice: buildTrailerChoice(values) ?? undefined,
         team_id: values.assignment_mode === "team" ? values.team_id || undefined : undefined,
         assigned_primary_driver_id:
           values.assignment_mode === "solo"

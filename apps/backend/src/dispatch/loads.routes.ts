@@ -17,6 +17,7 @@ import {
   updateDispatchLoad,
   LoadNotFoundError,
   LoadEditLockedError,
+  TrailerChoiceRefusedError,
   OwnerLockPropagationRefuseError,
   detectLoadEditLock,
   type UpdateDispatchLoadFields,
@@ -314,6 +315,13 @@ const createDispatchLoadBodySchema = z.object({
   assigned_unit_id: z.string().uuid().optional(),
   // W-FIX-3b: persisted after load creation to dispatch.load_assignment_history.new_trailer_id.
   assigned_trailer_unit_id: z.string().uuid().optional(),
+  // LEAD 443.107 item 3: the trailer choice — company trailer / customer trailer number / none (bobtail, power only).
+  trailer_choice: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("company"), equipment_id: z.string().uuid() }),
+    z.object({ kind: z.literal("customer"), trailer_number: z.string().trim().min(1).max(40) }),
+    z.object({ kind: z.literal("interchange"), non_owned_trailer_id: z.string().uuid() }),
+    z.object({ kind: z.literal("none") }),
+  ]).optional(),
   temperature_type: z.enum(["frozen", "fresh"]).optional(), // W-FIX-1: reefer Frozen/Fresh → loads.temperature_type
   assigned_primary_driver_id: z.string().uuid().optional(),
   // Historical imports deliberately do not widen the live active-driver picker. The existing inactive
@@ -420,6 +428,13 @@ const createDispatchLoadBodySchema = z.object({
 // stops (>=2 when provided) are replaced evidence-safely in the service.
 const updateDispatchLoadBodySchema = z.object({
   operating_company_id: z.string().uuid(),
+  // LEAD 443.107 item 3: the trailer choice — company trailer / customer trailer number / none (bobtail, power only).
+  trailer_choice: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("company"), equipment_id: z.string().uuid() }),
+    z.object({ kind: z.literal("customer"), trailer_number: z.string().trim().min(1).max(40) }),
+    z.object({ kind: z.literal("interchange"), non_owned_trailer_id: z.string().uuid() }),
+    z.object({ kind: z.literal("none") }),
+  ]).optional(),
   customer_id: z.string().uuid().optional(),
   dispatch_flag_color_id: z.string().uuid().optional(),
   customer_wo_number: z.string().trim().max(120).nullable().optional(),
@@ -1268,6 +1283,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  -- joins above; NOT added to the view, which would widen it unscoped for every consumer.
                  ml.trip_type AS trip_type,
                  ml.load_trailer_equipment_id AS load_trailer_equipment_id,
+                 -- LEAD 443.107 item 3: the recorded trailer choice, so Edit Load prefills it and the drawer shows it.
+                 ml.trailer_source AS trailer_source,
+                 (SELECT h.new_trailer_id::text FROM dispatch.load_assignment_history h
+                   WHERE h.load_id = ml.id AND h.operating_company_id = ml.operating_company_id AND h.new_trailer_id IS NOT NULL
+                   ORDER BY h.created_at DESC LIMIT 1) AS assigned_trailer_unit_id,
+                 (SELECT nt.trailer_number FROM dispatch.non_owned_trailers nt
+                   WHERE nt.id = ml.non_owned_trailer_id AND nt.operating_company_id = ml.operating_company_id) AS non_owned_trailer_number,
                  ml.dispatch_flag_color_id AS dispatch_flag_color_id,
                  df.flag_code AS flag_code,
                  df.display_name AS flag_display_name,
@@ -1843,7 +1865,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const body = updateDispatchLoadBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
-    const { operating_company_id, charges, stops, override_reason, override_rules, ...fields } = body.data;
+    const { operating_company_id, charges, stops, override_reason, override_rules, trailer_choice, ...fields } = body.data;
     try {
       const result = await withCompanyScope(authUser.uuid, operating_company_id, (client) =>
         updateDispatchLoad(client, {
@@ -1856,11 +1878,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           fields: fields as UpdateDispatchLoadFields,
           charges,
           stops,
+          trailer_choice,
         })
       );
       return reply.send(result);
     } catch (error) {
       if (error instanceof LoadNotFoundError) return reply.code(404).send({ error: "load_not_found" });
+      if (error instanceof TrailerChoiceRefusedError) return reply.code(422).send({ error: error.code });
       if (error instanceof LoadEditLockedError) {
         return reply.code(409).send({ error: "load_edit_locked", lock: error.lock });
       }

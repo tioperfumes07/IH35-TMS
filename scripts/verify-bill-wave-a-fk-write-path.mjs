@@ -162,6 +162,8 @@ try {
       WITH lb AS (
         SELECT DISTINCT b.id, b.trailer_id, b.non_owned_trailer_id, l.load_number,
                (l.trailer_source = 'customer' AND l.non_owned_trailer_id IS NOT NULL) AS customer_trailer,
+               -- 443.107: 'none' = the operator recorded "no trailer (bobtail / power only)" — a choice, not a gap.
+               (l.trailer_source = 'none') AS no_trailer_chosen,
                EXISTS (
                  SELECT 1 FROM mdata.equipment e
                   WHERE e.id = COALESCE(
@@ -183,11 +185,12 @@ try {
       SELECT count(DISTINCT id) FILTER (WHERE trailer_id IS NULL AND non_owned_trailer_id IS NULL AND (customer_trailer OR company_trailer))::int AS derivable_unstamped,
              count(DISTINCT id) FILTER (WHERE trailer_id IS NOT NULL OR non_owned_trailer_id IS NOT NULL)::int AS with_trailer,
              count(DISTINCT id)::int AS driver_bills,
-             COALESCE(string_agg(DISTINCT load_number, ', ') FILTER (WHERE trailer_id IS NULL AND non_owned_trailer_id IS NULL AND NOT customer_trailer AND NOT company_trailer), '') AS no_recorded_trailer
+             count(DISTINCT id) FILTER (WHERE no_trailer_chosen)::int AS no_trailer_chosen,
+             COALESCE(string_agg(DISTINCT load_number, ', ') FILTER (WHERE trailer_id IS NULL AND non_owned_trailer_id IS NULL AND NOT customer_trailer AND NOT company_trailer AND NOT no_trailer_chosen), '') AS no_recorded_trailer
         FROM lb
     `,
     [USMCA]
-  )).rows[0] ?? { derivable_unstamped: 0, with_trailer: 0, driver_bills: 0, no_recorded_trailer: "" };
+  )).rows[0] ?? { derivable_unstamped: 0, with_trailer: 0, driver_bills: 0, no_trailer_chosen: 0, no_recorded_trailer: "" };
   await client.query("COMMIT");
 
   const live = rows[0]?.live_bills ?? 0;
@@ -201,7 +204,7 @@ try {
     console.log(`[${LABEL}] REPORT — driver bill(s) on load(s) with NO recorded trailer anywhere (no assignment trailer, no customer trailer, no expense trailer): ${trailerRows.no_recorded_trailer} — the trailer must be recorded on the load (assignment) before a bill can carry it`);
   }
 
-  console.log(`[${LABEL}] PASS — write path binds the FK columns AND ${linked} of ${live} live USMCA bill(s) carry unit + vendor + load FKs; ${trailerRows.with_trailer} of ${trailerRows.driver_bills} live driver bill(s) carry their trailer (company or customer), 0 with a recorded trailer left unstamped`);
+  console.log(`[${LABEL}] PASS — write path binds the FK columns AND ${linked} of ${live} live USMCA bill(s) carry unit + vendor + load FKs; ${trailerRows.with_trailer} of ${trailerRows.driver_bills} live driver bill(s) carry their trailer (company or customer), ${trailerRows.no_trailer_chosen} on a load recorded as No trailer (bobtail / power only), 0 with a recorded trailer left unstamped`);
 } catch (err) {
   await client.query("ROLLBACK").catch(() => {});
   fail(`query failed: ${err?.message ?? err}`);

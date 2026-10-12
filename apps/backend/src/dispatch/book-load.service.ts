@@ -13,6 +13,7 @@ import { learnLoadLanes } from "./load-lane-learning.service.js";
 import { randomUUID } from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { applyTrailerChoice, resolveTrailerChoice, trailerChoiceShapeRefusal, type ResolvedTrailerChoice, type TrailerChoice } from "./load-trailer-choice.js";
 import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-number.js";
 import {
   appendSettlementLineFromDriverBillIfMissing,
@@ -284,6 +285,12 @@ export type BookLoadInput = {
   // W-FIX-3b: the selected trailer (mdata.equipment id) → persisted post-insert to the real link
   // dispatch.load_assignment_history.new_trailer_id (mdata.loads has no trailer-equipment column).
   assigned_trailer_unit_id?: string;
+  /**
+   * LEAD 443.107 item 3: the REQUIRED trailer choice (company trailer / customer trailer number / no trailer).
+   * Book Load refuses a non-draft live booking without it (422 trailer_choice_required); load-trailer-choice.ts
+   * validates and records it. A historical_backfill caller (the Settlement Creator) passes it when its source names one.
+   */
+  trailer_choice?: TrailerChoice;
   // W-FIX-1: reefer Frozen/Fresh → mdata.loads.temperature_type (migration 202606231600).
   temperature_type?: "frozen" | "fresh";
   assigned_primary_driver_id?: string;
@@ -1558,7 +1565,7 @@ export async function assertClosedLoadHasPricedDriverBill(
  * HTTP path (bookLoad) and the caller's-transaction path (bookLoadOnClient) refuse exactly the same
  * inputs with exactly the same errors. null = every check passed.
  */
-function bookLoadInputPrecheck(input: BookLoadInput): BookLoadResult | null {
+function bookLoadInputPrecheck(input: BookLoadInput, source: LoadCreateSource = "live_feed"): BookLoadResult | null {
   if (input.assigned_primary_driver_id && input.team_id) {
     return { kind: "error", status: 400, payload: { error: "solo_or_team_assignment_required_not_both" } };
   }
@@ -1620,6 +1627,15 @@ function bookLoadInputPrecheck(input: BookLoadInput): BookLoadResult | null {
     if (input.assigned_primary_driver_id && !input.trip_type) {
       return { kind: "error", status: 400, payload: { error: "trip_type_required_when_driver_assigned" } };
     }
+    // LEAD 443.107 item 3 (owner, 2026-10-12): a live booking records WHICH trailer moves the load — a company
+    // trailer, a customer / shipper trailer number, or an explicit "no trailer (bobtail / power only)". Measured:
+    // 138 USMCA loads carried no physical trailer, so driver bills and expenses had nothing to inherit. The
+    // server refuses the booking without the choice, whatever client sent it. Drafts stay exempt; a
+    // historical_backfill caller is validated when it passes a choice (its source may not name a trailer).
+    if (source === "live_feed" || input.trailer_choice) {
+      const refusal = trailerChoiceShapeRefusal(input.trailer_choice);
+      if (refusal) return { kind: "error", status: 422, payload: refusal };
+    }
   }
   return null;
 }
@@ -1645,7 +1661,7 @@ export async function bookLoadOnClient(
   input: BookLoadInput,
   opts?: { source?: LoadCreateSource }
 ): Promise<BookLoadOnClientResult> {
-  const refused = bookLoadInputPrecheck(input);
+  const refused = bookLoadInputPrecheck(input, opts?.source === "historical_backfill" ? "historical_backfill" : "live_feed");
   if (refused) return { result: refused, afterCommit: () => {} };
   await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);
   // Book Load is the "running now" case -- every gate below blocks. A caller recording a load that
@@ -1767,6 +1783,15 @@ export async function createLoadWithFullSideEffects(
   if (input.authorizedZeroRevenue === true && input.charges.reduce((sum, c) => sum + c.amount_cents, 0) !== 0) {
     return { kind: "error", status: 422, payload: { error: "zero_revenue_flag_on_rated_load" } };
   }
+  // LEAD 443.107 item 3: validate the trailer choice against the company BEFORE anything is written — a foreign or
+  // deactivated trailer is refused (422), never silently dropped the way assigned_trailer_unit_id used to be.
+  let resolvedTrailerChoice: ResolvedTrailerChoice | null = null;
+  if (input.trailer_choice && input.save_mode !== "draft") {
+    const resolved = await resolveTrailerChoice(client, input.operating_company_id, input.trailer_choice);
+    if (!resolved.ok) return { kind: "error", status: 422, payload: resolved.refusal };
+    resolvedTrailerChoice = resolved.choice;
+  }
+
   // B6 — resolve the uploaded rate confirmation inside the SAME transaction that creates the load.
     // Never trust a browser-supplied R2 key as document identity, and never return 201 unless the
     // completed, entity-scoped docs.files row can also be linked to the created load.
@@ -2781,7 +2806,7 @@ export async function createLoadWithFullSideEffects(
     // reefer / trip_type below, so the 39-column lockstep INSERT is untouched). Only attach a trailer this
     // operating company owns or currently leases — never a foreign company's trailer.
     let trailerIdForInsert: string | null = null;
-    if (input.assigned_trailer_unit_id) {
+    if (input.assigned_trailer_unit_id && !resolvedTrailerChoice) {
       const trailerRows = await optionalQuery(
         client,
         `
@@ -3084,7 +3109,15 @@ export async function createLoadWithFullSideEffects(
     // 'full_form' (the Book Load full-form wizard) is one of the allowed CHECK values
     // (full_form|quicksave|drag_drop|auto_reassign|manual_reassign). Only writes when an entity-scoped
     // trailer was resolved above.
-    if (trailerIdForInsert) {
+    if (resolvedTrailerChoice) {
+      await applyTrailerChoice(client, {
+        operatingCompanyId: input.operating_company_id,
+        loadId: String(load.id),
+        actorUserId: input.requestingUserUuid,
+        choice: resolvedTrailerChoice,
+        assignmentMethod: "full_form",
+      });
+    } else if (trailerIdForInsert) {
       await client.query(
         `
           INSERT INTO dispatch.load_assignment_history (
@@ -3576,7 +3609,7 @@ export async function createLoadWithFullSideEffects(
     const save_proof = await buildLoadSaveProof(client, {
       operatingCompanyId: input.operating_company_id,
       load,
-      trailerId: input.assigned_trailer_unit_id ?? null,
+      trailerId: (resolvedTrailerChoice?.kind === "company" ? resolvedTrailerChoice.equipment_id : null) ?? input.assigned_trailer_unit_id ?? null,
       driverBillMint,
     });
 

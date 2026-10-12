@@ -16,6 +16,7 @@ function baseInput(stops: BookLoadInput["stops"]): BookLoadInput {
     charges: [],
     stops,
     save_mode: "book_dispatch",
+    trailer_choice: { kind: "none" }, // 443.107: Book Load requires the trailer choice
   };
 }
 
