@@ -54,7 +54,11 @@ export function check(src) {
     for (const e of EXTRAS) if (code.includes(e)) errors.push(`bookLoadOnClient runs ${e.slice(0, -1)} directly — it must be returned as afterCommit`);
     // 443.52 C: the extras now receive the booking's source (a historical_backfill load fences/dispatches nothing — 443.41).
     if (!/afterCommit: \(\) => queueAfterBookExtras\(input, result, source\)/.test(code)) errors.push("bookLoadOnClient does not return the extras as afterCommit (with its source)");
-    if (!code.includes("bookLoadInputPrecheck(input)")) errors.push("bookLoadOnClient skips the shared input checks");
+    // 443.132: since 443.107 R16 / 443.110 G2 the caller-transaction path passes its OWN booking source to the shared checks
+    // (a historical_backfill load records a trailer choice from its document) — the source must be exactly the booking's.
+    if (!code.includes("bookLoadInputPrecheck(input)") &&
+        !code.includes('bookLoadInputPrecheck(input, opts?.source === "historical_backfill" ? "historical_backfill" : "live_feed")'))
+      errors.push("bookLoadOnClient skips the shared input checks");
     if (!code.includes("setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id)")) errors.push("bookLoadOnClient skips setScopedCompanyContext");
     if (!code.includes("createLoadWithFullSideEffects(client, input, { source })")) errors.push("bookLoadOnClient does not book through createLoadWithFullSideEffects with its (fail-closed) source");
   }
@@ -86,7 +90,7 @@ function selftest() {
   const cases = [
     ["own transaction in bookLoadOnClient", plant("  await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);\n  // Book Load", "  await client.query(\"BEGIN\");\n  await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);\n  // Book Load")],
     ["extras run eagerly", plant("return { result, afterCommit: () => queueAfterBookExtras(input, result, source) };", "queueAfterBookExtras(input, result, source);\n  return { result, afterCommit: () => {} };")],
-    ["checks skipped", plant("  const refused = bookLoadInputPrecheck(input);\n  if (refused) return { result: refused", "  const refused = null as BookLoadResult | null;\n  if (refused) return { result: refused")],
+    ["checks skipped", plant('  const refused = bookLoadInputPrecheck(input, opts?.source === "historical_backfill" ? "historical_backfill" : "live_feed");\n  if (refused) return { result: refused', "  const refused = null as BookLoadResult | null;\n  if (refused) return { result: refused")],
     ["wrapper books directly", plant("const booked = await bookLoadOnClient(client, input);", "const booked = { result: await createLoadWithFullSideEffects(client, input, { source: \"live_feed\" }), afterCommit: () => {} };")],
     ["afterCommit dropped", plant("  afterCommit();\n  return result;", "  return result;")],
     ["second body back", good + "\nasync function bookLoadInTransaction() {}\n"],

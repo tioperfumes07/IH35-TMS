@@ -39,7 +39,9 @@ const need = [
   // ROUND 393.2 — the explicit leg load stamp moved into the ONE posting-line writer: the JE service passes the leg's
   // load_id through, and the writer lets it win over the source-resolved stamp. Same invariant, new home.
   [je, /load_id: posting\.load_id \?\? null,/, "the JE service no longer passes an explicit leg load stamp to the writer"],
-  [writer, /COALESCE\(\$18::uuid, accounting\.posting_source_load_id\(/, "the posting-line writer no longer accepts an explicit leg load stamp"],
+  // 443.132: the source-resolved fallback is now a company-scoped subselect around posting_source_load_id (join-entity-scope,
+  // 443.100 #26559) — the explicit $18 leg load still wins FIRST in the COALESCE. Same invariant, both shapes held to it.
+  [writer, /COALESCE\(\$18::uuid, (?:accounting\.posting_source_load_id\(|\(SELECT sl\.id FROM mdata\.loads sl\s+WHERE sl\.id = accounting\.posting_source_load_id\()/, "the posting-line writer no longer accepts an explicit leg load stamp"],
   [page, /data-testid="reclassify-to-item"/, "the Reclassify form lost Change item"],
   [page, /data-testid="reclassify-to-load"/, "the Reclassify form lost Change load"],
   [mig, /ADD COLUMN IF NOT EXISTS from_load_id uuid/, "202615380600 lost the batch-line load columns"],

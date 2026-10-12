@@ -43,7 +43,9 @@ export function problems(src) {
   // driver / unit / trailer on the line.
   const call = s.slice(s.indexOf("await createExpenseInClientTx("), s.indexOf("await createExpenseInClientTx(") + 1500);
   if (/INSERT INTO accounting\.expenses\b|INSERT INTO accounting\.expense_lines\b/.test(s)) p.push("the Creator writes an expense row directly — company expenses go through the shared expense writer (443.110 G13)");
-  if (!s.includes("await createExpenseInClientTx(") || !/vendor_uuid: vendor\.id,/.test(call) || !/unit_id: draft\.unit_id/.test(call) || !/trailer_id: draft\.trailer_id/.test(call) || !/vendor_document_number:/.test(call) || !/load_id: loadId,/.test(call) || !/driver_id: draft\.driver_id,/.test(call))
+  // 443.132: BCF-04/05 (#26650) — the line's driver and unit come from its LOAD through the one rule (creatorFillLoad),
+  // never the draft; the checks below pin that source (was: draft.unit_id / draft.driver_id).
+  if (!s.includes("await createExpenseInClientTx(") || !/vendor_uuid: vendor\.id,/.test(call) || !/unit_id: expLoad\.unitId,/.test(call) || !/trailer_id: draft\.trailer_id/.test(call) || !/vendor_document_number:/.test(call) || !/load_id: loadId,/.test(call) || !/driver_id: expLoad\.driverId,/.test(call) || !/const expLoad = await creatorFillLoad\(client, draft,/.test(s))
     p.push("the company expense must carry vendor, unit, trailer and vendor_document_number");
   if (!/item_id: itemAcct\.item_id,/.test(call) || !/quantity: qty,/.test(call) || !/rate_cents: rateCents,/.test(call) || !/unit_of_measure: uom,/.test(call)
       || !/lineColumns\.push\("item_id", "quantity", "rate_cents", "unit_of_measure"\)/.test(src.writer) || !/\["driver_id", body\.driver_id \?\? null\], \["unit_id", headerUnitId\], \["trailer_id", body\.trailer_id \?\? null\]/.test(src.writer))
@@ -56,7 +58,7 @@ export function problems(src) {
     // 443.110 G4: the owed bill is written (and GL-posted) through writeCreatorOwedBill -> createBillInClientTx
     // (settlement-creator-owed-bill.ts; verify-settlement-creator-owed-bill-posted pins that module).
     if (!/await writeCreatorOwedBill\(/.test(owed) || !/continue;/.test(owed)) p.push("owed must become an A/P bill (writeCreatorOwedBill -> createBillInClientTx) and never fall through to a card credit");
-    else if (!/vendorDocumentNumber:/.test(owed) || !/\bloadId,/.test(owed) || !/driverId: draft\.driver_id/.test(owed) || !/unitId:/.test(owed) || !/trailerId:/.test(owed) || !/quantity: qty/.test(owed)) p.push("the owed bill must carry vendor document number, load, driver, unit, trailer and the source quantity");
+    else if (!/vendorDocumentNumber:/.test(owed) || !/\bloadId,/.test(owed) || !/driverId: expLoad\.driverId,/.test(owed) || !/unitId: expLoad\.unitId,/.test(owed) || !/trailerId:/.test(owed) || !/quantity: qty/.test(owed)) p.push("the owed bill must carry vendor document number, load, driver, unit, trailer and the source quantity");
   }
   if (!/card: null,\s*\n\s*vendor_name: ""/.test(src.drawer) || !/value: "owed", label: "Owed to vendor \(bill\)"/.test(src.drawer)) p.push("the drawer must have no default payment source and offer Owed to vendor");
   if (!/expense_payment_source_required/.test(src.test) || !/6784/.test(src.test)) p.push("443.6 unit tests missing");
@@ -75,7 +77,7 @@ function selftest() {
   if (!problems(m("svc", "await createExpenseInClientTx(", "await legacyExpenseInsert(")).some((x) => /carry vendor/.test(x))) bad.push("a company expense bypassing the shared writer passed");
   if (!problems(m("svc", "const baseMemo =", "await client.query(`INSERT INTO accounting.expenses (id) VALUES (gen_random_uuid())`);\n    const baseMemo =")).some((x) => /writes an expense row directly/.test(x))) bad.push("a direct expense INSERT in the Creator passed");
   if (!problems(m("drawer", 'card: null,\n    vendor_name: ""', 'card: "relay",\n    vendor_name: ""')).some((x) => /drawer/.test(x))) bad.push("a drawer default passed");
-  if (!problems(m("svc", "        driverId: draft.driver_id,\n", "")).some((x) => /owed bill must carry/.test(x))) bad.push("an unstamped owed bill passed");
+  if (!problems(m("svc", "        driverId: expLoad.driverId,\n        unitId: expLoad.unitId,\n        trailerId: draft.trailer_id ?? null,\n        billDate", "        unitId: expLoad.unitId,\n        trailerId: draft.trailer_id ?? null,\n        billDate")).some((x) => /owed bill must carry/.test(x))) bad.push("an unstamped owed bill passed");
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }
   console.log(`${LABEL} SELFTEST OK — 8/8 (real tree passes; relay default, unstamped expense, writer bypass, direct expense INSERT, swallowed posting refusal, drawer default, unstamped owed bill each caught)`);
   process.exit(0);
