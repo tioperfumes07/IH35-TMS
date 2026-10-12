@@ -28,8 +28,13 @@ const backfill = read("scripts/ops/backfill-qbo-item-expense-accounts.mjs");
 if (!/resolveDefaultExpenseAccountId/.test(puller)) {
   failures.push("items-puller must export/resolveDefaultExpenseAccountId from ExpenseAccountRef");
 }
-if (!/default_expense_account_id/.test(puller)) {
-  failures.push("items-puller upsert must write default_expense_account_id");
+// ACCT-F4431380 (Lead 443.137 item 9e) — OLD: the items-puller upsert had to write catalogs.items.default_expense_account_id. NEW: the puller must write no catalogs.items row at all and must still fill mdata.qbo_items; the read-only resolveDefaultExpenseAccountId lookup + no-invented-accounts checks are kept. WHY: QuickBooks is a read-only archive; the native write was removed and the reconciler refuses by name.
+const pullerCode = puller.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+if (/(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+catalogs\.items\b/i.test(pullerCode) || /PULLER_UPSERT_ITEM_SQL/.test(pullerCode)) {
+  failures.push("items-puller must NOT write catalogs.items (default_expense_account_id included) — QBO pulls write only mdata.qbo_items");
+}
+if (!/INSERT\s+INTO\s+mdata\.qbo_items\b/i.test(pullerCode)) {
+  failures.push("items-puller must still fill its mirror mdata.qbo_items");
 }
 if (!/ExpenseAccountRef/.test(puller)) {
   failures.push("items-puller must read QBO ExpenseAccountRef");

@@ -420,7 +420,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/catalogs/driver-termination-reasons/:id/reactivate` | `apps/backend/src/mdata/driver-safety-events.routes.ts:334` | — | — | — |
 | create | `/api/v1/catalogs/equipment-types` | `apps/backend/src/catalogs/equipment-types.routes.ts:218` | — | — | — |
 | create | `/api/v1/catalogs/file-categories` | `apps/backend/src/catalogs/file-categories.routes.ts:69` | — | — | — |
-| create | `/api/v1/catalogs/items` | `apps/backend/src/catalogs/items.routes.ts:182` | — | — | — |
+| create | `/api/v1/catalogs/items` | `apps/backend/src/catalogs/items.routes.ts:183` | — | — | — |
 | create | `/api/v1/catalogs/load-cancellation-reasons` | `apps/backend/src/catalogs/load-cancellation-reasons.routes.ts:131` | — | — | — |
 | create | `/api/v1/catalogs/load-exception-reasons` | `apps/backend/src/catalogs/load-exception-reasons.routes.ts:107` | — | — | — |
 | create | `/api/v1/catalogs/maintenance/parts-master` | `apps/backend/src/catalogs/maintenance/parts.routes.ts:115` | — | — | — |
@@ -943,7 +943,7 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| create | `/api/v1/bill-payments/cc` | `apps/backend/src/bill-payments/cc-payment.routes.ts:36` | — | — | — |
+| create | `/api/v1/bill-payments/cc` | `apps/backend/src/bill-payments/cc-payment.routes.ts:33` | — | — | — |
 
 ### border-crossing — 1 create-surface(s)
 

@@ -1,3 +1,6 @@
+// ACCT-F4431380 (Lead 443.137 item 9e) — QuickBooks is a READ-ONLY ARCHIVE. This puller writes ONLY the
+// mirror (mdata.qbo_accounts). The former native write (catalogs.accounts) is REMOVED: a QBO pull never creates,
+// heals or deactivates a native master row. Guard: scripts/verify-qbo-paths-never-write-native-tables.mjs.
 import type { PoolClient } from "pg";
 import { qboCompanyContext, qboPaginateEntity } from "../integrations/qbo/qbo-client.js";
 import { withLuciaBypass } from "../auth/db.js";
@@ -14,23 +17,6 @@ function metaUpdatedAt(row: Record<string, unknown>): Date | null {
   if (typeof raw !== "string") return null;
   const d = new Date(raw);
   return Number.isFinite(d.getTime()) ? d : null;
-}
-
-function mapAccountType(accountType: string | null): string {
-  if (!accountType) return "Expense";
-  if (["Bank", "Accounts Receivable", "Other Current Asset", "Fixed Asset", "Other Asset"].includes(accountType)) {
-    return "Asset";
-  }
-  if (["Accounts Payable", "Credit Card", "Other Current Liability", "Long Term Liability"].includes(accountType)) {
-    return "Liability";
-  }
-  if (accountType === "Equity") return "Equity";
-  if (accountType === "Income") return "Income";
-  if (accountType === "Expense") return "Expense";
-  if (accountType === "Cost of Goods Sold") return "CostOfGoodsSold";
-  if (accountType === "Other Income") return "OtherIncome";
-  if (accountType === "Other Expense") return "OtherExpense";
-  return "Expense";
 }
 
 async function upsertMirror(
@@ -81,54 +67,6 @@ async function upsertMirror(
   );
 }
 
-async function upsertCatalogAccount(
-  client: PoolClient,
-  operatingCompanyId: string,
-  row: Record<string, unknown>
-): Promise<void> {
-  const qboId = String(row.Id ?? "");
-  if (!qboId) return;
-  const name = String(row.Name ?? "");
-  if (!name) return;
-  const accountType = row.AccountType != null ? String(row.AccountType) : null;
-  const accountSubType = row.AccountSubType != null ? String(row.AccountSubType) : null;
-  const active = row.Active === undefined ? true : Boolean(row.Active);
-  const mappedType = mapAccountType(accountType);
-
-  // AF-1 made catalogs.accounts per-entity: operating_company_id is NOT NULL and the single-col unique on
-  // qbo_account_id was replaced by (operating_company_id, qbo_account_id). This write must carry
-  // operating_company_id and conflict on the composite arbiter, or it 500s AND cross-entity clobbers.
-  await client.query(
-    `
-      INSERT INTO catalogs.accounts (
-        operating_company_id,
-        account_number,
-        account_name,
-        account_type,
-        account_subtype,
-        qbo_account_id,
-        notes,
-        deactivated_at,
-        qbo_synced_at,
-        qbo_sync_status,
-        qbo_sync_error
-      )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now(),'synced',NULL)
-      ON CONFLICT (operating_company_id, qbo_account_id) WHERE qbo_account_id IS NOT NULL
-      DO UPDATE SET
-        account_name = EXCLUDED.account_name,
-        account_type = EXCLUDED.account_type,
-        account_subtype = EXCLUDED.account_subtype,
-        deactivated_at = CASE WHEN $9::boolean THEN NULL ELSE COALESCE(catalogs.accounts.deactivated_at, now()) END,
-        qbo_synced_at = now(),
-        qbo_sync_status = 'synced',
-        qbo_sync_error = NULL,
-        updated_at = now()
-    `,
-    [operatingCompanyId, `QBO-${qboId}`, name, mappedType, accountSubType, qboId, `Synced from QBO (${operatingCompanyId})`, active ? null : new Date(), active]
-  );
-}
-
 export async function pullChartOfAccountsFromQbo(operatingCompanyId: string): Promise<CoaPullResult> {
   const pulledAt = new Date().toISOString();
   let rowsPulled = 0;
@@ -140,7 +78,6 @@ export async function pullChartOfAccountsFromQbo(operatingCompanyId: string): Pr
       for (const row of page) {
         rowsPulled += 1;
         await upsertMirror(client, operatingCompanyId, row);
-        await upsertCatalogAccount(client, operatingCompanyId, row);
         rowsUpserted += 1;
       }
     }

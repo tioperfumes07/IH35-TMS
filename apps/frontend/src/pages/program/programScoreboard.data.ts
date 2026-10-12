@@ -29,12 +29,12 @@ export interface ProgramScoreboard {
 }
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
-  "healthzSha": "e256697",
-  "generated_at": "2026-10-12T21:34:38.871Z",
+  "healthzSha": "9702be9",
+  "generated_at": "2026-10-12T22:24:13.321Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "e256697",
+    "deployedSha": "9702be9",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,

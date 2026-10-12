@@ -59,14 +59,18 @@ export function assertNoHardDeleteBillLines(opts = {}) {
     if (DELETE_RE.test(src)) {
       failures.push(`${PULLER} must not DELETE FROM accounting.bill_lines`);
     }
-    if (!/voided_at\s*=\s*COALESCE\(bl\.voided_at,\s*now\(\)\)/.test(src) && !/SET voided_at\s*=/.test(src)) {
-      failures.push(`${PULLER} orphan path must UPDATE voided_at (void-not-delete)`);
+    // ACCT-F4431380 (Lead 443.137 item 9e) — OLD: the puller's QBO orphan-line path had to UPDATE voided_at
+    // (COALESCE(bl.voided_at, now())), stamp voided_reason 'qbo_orphan_superseded', and exclude voided lines
+    // from the header/line sum check. NEW: QuickBooks is a read-only archive — the bill_lines projection (and
+    // with it the orphan path) was REMOVED; projectApBillLinesToLedger() refuses by name. The puller must now
+    // write NO accounting.bill_lines row at all (no INSERT / UPDATE / DELETE), which subsumes void-not-delete
+    // for this file. The repo-wide hard-DELETE ban below is unchanged.
+    // WHY: a QBO path never writes a native money table.
+    if (/(?:INSERT\s+INTO|UPDATE)\s+accounting\.bill_lines\b/i.test(src)) {
+      failures.push(`${PULLER} writes accounting.bill_lines — the QBO -> native line projection was removed (ACCT-F4431380)`);
     }
-    if (!/qbo_orphan_superseded/.test(src)) {
-      failures.push(`${PULLER} must stamp voided_reason qbo_orphan_superseded`);
-    }
-    if (!/AND bl\.voided_at IS NULL/.test(src) && !/bl\.voided_at IS NULL/.test(src)) {
-      failures.push(`${PULLER} header/line sum mismatch must exclude voided lines`);
+    if (!/refuseQboNativeWrite\(/.test(src)) {
+      failures.push(`${PULLER} must refuse the removed line projection by name (refuseQboNativeWrite)`);
     }
   }
 
@@ -104,7 +108,22 @@ function selftest() {
     console.error(`[${LABEL}] SELFTEST FAIL — planted DELETE was not caught`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] SELFTEST PASS — planted DELETE caught (${planted.length} failure(s))`);
+  // ACCT-F4431380 (9e): the REAL puller copied into the temp tree must pass the puller checks, and the same
+  // copy with the old orphan-void UPDATE re-planted must fail.
+  const realPuller = fs.readFileSync(path.join(ROOT, PULLER), "utf8");
+  fs.writeFileSync(path.join(tmpPullerDir, "ap-bills-puller.ts"), realPuller);
+  const clean = assertNoHardDeleteBillLines({ root: tmp }).filter((f) => f.includes(PULLER));
+  fs.writeFileSync(
+    path.join(tmpPullerDir, "ap-bills-puller.ts"),
+    realPuller + "\nconst PLANT = `UPDATE accounting.bill_lines bl SET voided_at = COALESCE(bl.voided_at, now())`;\n"
+  );
+  const replanted = assertNoHardDeleteBillLines({ root: tmp }).filter((f) => f.includes(PULLER));
+  fs.rmSync(tmp, { recursive: true, force: true });
+  if (clean.length !== 0 || replanted.length === 0) {
+    console.error(`[${LABEL}] SELFTEST FAIL — real puller clean=${JSON.stringify(clean)} replanted=${replanted.length}`);
+    process.exit(1);
+  }
+  console.log(`[${LABEL}] SELFTEST PASS — planted DELETE caught (${planted.length} failure(s)); real puller clean; re-planted native line UPDATE caught`);
 }
 
 function main() {
@@ -118,7 +137,7 @@ function main() {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] PASS — no hard DELETE of accounting.bill_lines; orphan void path + mig present`);
+  console.log(`[${LABEL}] PASS — no hard DELETE of accounting.bill_lines; QBO puller writes no bill_lines (ACCT-F4431380 refusal) + void migration present`);
 }
 
 main();

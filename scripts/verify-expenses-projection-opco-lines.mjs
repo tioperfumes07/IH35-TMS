@@ -47,6 +47,25 @@ function analyzeExpenseLineInserts(src, label, { requireProjectFn = false } = {}
   return failures;
 }
 
+export function analyzePullerRefuses(src, label) {
+  const failures = [];
+  const fnIdx = src.indexOf("export async function projectPurchasesToExpenses");
+  if (fnIdx < 0) {
+    failures.push(`${label}: missing export async function projectPurchasesToExpenses (callers must get a named refusal, not an import error)`);
+    return failures;
+  }
+  if (!/^export async function projectPurchasesToExpenses[^\n]*\n[\s\S]{0,300}?refuseQboNativeWrite\(/m.test(src.slice(fnIdx))) {
+    failures.push(`${label}: projectPurchasesToExpenses must refuse by name (refuseQboNativeWrite) — never project or silently no-op.`);
+  }
+  if (/(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+accounting\.(?!qbo_)[a-z_]+/i.test(src)) {
+    failures.push(`${label}: must not write any native accounting.* table (expenses / expense_lines) — QuickBooks is a read-only archive.`);
+  }
+  if (!/INSERT\s+INTO\s+mdata\.qbo_purchases/.test(src)) {
+    failures.push(`${label}: must still upsert the mdata.qbo_purchases mirror.`);
+  }
+  return failures;
+}
+
 function analyze() {
   const failures = [];
   if (!fs.existsSync(PULLER)) {
@@ -54,13 +73,14 @@ function analyze() {
     return failures;
   }
   const puller = fs.readFileSync(PULLER, "utf8");
-  failures.push(...analyzeExpenseLineInserts(puller, "qbo-purchases-puller.ts", { requireProjectFn: true }));
-  if (!/QBO_PURCHASES_EXPENSES_PROJECTION_SYNC_KIND/.test(puller)) {
-    failures.push(
-      "projectPurchasesToExpenses must write qbo.sync_runs via QBO_PURCHASES_EXPENSES_PROJECTION_SYNC_KIND " +
-        "(so stage-2 is visible — mdata.qbo_sync_runs will never show purchases)."
-    );
-  }
+  // ACCT-F4431380 (Lead 443.137 item 9e) — OLD: projectPurchasesToExpenses had to INSERT INTO
+  //   accounting.expense_lines stamping operating_company_id, and record qbo.sync_runs under
+  //   QBO_PURCHASES_EXPENSES_PROJECTION_SYNC_KIND.
+  //   NEW: the puller must NOT write accounting.expenses / expense_lines (or any native accounting.* table) at
+  //   all, and projectPurchasesToExpenses must REFUSE BY NAME (refuseQboNativeWrite). The owner backfill script
+  //   below keeps its operating_company_id check (it is a separate, AUTH-gated path, still scanned).
+  //   WHY: QuickBooks is a read-only archive; the projection/write was removed and its entry point refuses by name.
+  failures.push(...analyzePullerRefuses(puller, "qbo-purchases-puller.ts"));
   if (fs.existsSync(KIND)) {
     const kindSrc = fs.readFileSync(KIND, "utf8");
     if (!/qbo_purchases_expenses_projection/.test(kindSrc)) {
@@ -85,11 +105,20 @@ if (process.argv.includes("--selftest")) {
   }`;
   const goodFails = analyzeExpenseLineInserts(good, "good").length;
   const badFails = analyzeExpenseLineInserts(bad, "bad").length;
-  if (goodFails === 0 && badFails > 0) {
+  // ACCT-F4431380 (9e) plants on the REAL puller: it must pass as-is, and fail on a re-added native line write
+  // and on a reverted refusal.
+  const realPuller = fs.readFileSync(PULLER, "utf8");
+  const realOk = analyzePullerRefuses(realPuller, "real").length === 0;
+  const plantWrite = analyzePullerRefuses(
+    realPuller + "\nconst P = `INSERT INTO accounting.expense_lines (operating_company_id, expense_id) VALUES ($1,$2)`;\n",
+    "plant"
+  ).length > 0;
+  const plantNoRefuse = analyzePullerRefuses(realPuller.split("refuseQboNativeWrite(").join("noop("), "plant").length > 0;
+  if (goodFails === 0 && badFails > 0 && realOk && plantWrite && plantNoRefuse) {
     console.log("verify-expenses-projection-opco-lines --selftest: PASS");
     process.exit(0);
   }
-  console.error("verify-expenses-projection-opco-lines --selftest: FAIL", { goodFails, badFails });
+  console.error("verify-expenses-projection-opco-lines --selftest: FAIL", { goodFails, badFails, realOk, plantWrite, plantNoRefuse });
   process.exit(1);
 }
 
@@ -100,6 +129,6 @@ if (failures.length) {
   process.exit(1);
 }
 console.log(
-  "PASS verify-expenses-projection-opco-lines — expense_lines INSERTs stamp operating_company_id; " +
-    "stage-2 sync kind qbo_purchases_expenses_projection present."
+  "PASS verify-expenses-projection-opco-lines — QBO purchases puller writes no native expense rows and its " +
+    "projection refuses by name (9e); backfill expense_lines INSERTs stamp operating_company_id; sync kind present."
 );

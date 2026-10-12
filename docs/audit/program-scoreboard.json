@@ -1,10 +1,10 @@
 {
-  "healthzSha": "e256697",
-  "generated_at": "2026-10-12T21:34:38.871Z",
+  "healthzSha": "9702be9",
+  "generated_at": "2026-10-12T22:24:13.321Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "e256697",
+    "deployedSha": "9702be9",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 26718,
-      "title": "Claude-3- FINDING: ACCT-F4431341 LANE: FINANCIAL -- 443.134 related-party due-to account by the app (Alberto Lozano)",
+      "number": 26727,
+      "title": "FINDING: ACCT-F4431362 LANE: FINANCIAL -- 443.136 #2: WORM on accounting.related_party_accounts (verify-new-financial-table-ships-worm + verify-worm-coverage-ratchet red on main)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 04:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26718",
-      "sha": "933fa78c3c",
-      "committedAtIso": "2026-10-12T16:33:03-05:00"
+      "mergedAtCt": "10/12/2026, 05:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26727",
+      "sha": "553a2cd8d1",
+      "committedAtIso": "2026-10-12T17:22:43-05:00"
     },
     {
-      "number": 26717,
-      "title": "FINDING: ACCT-F4431342 LANE: FINANCIAL — AJK-09 (443.134): a legal reserve / fee bill dropped the matter's load (and its driver / unit / trailer), and a generated LR- / LF- number was refused as the bill's display id",
+      "number": 26726,
+      "title": "Cursor-DEGH-05: driver-bill trailer clause + expense-line null-header attribution (443.131)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 04:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26717",
-      "sha": "e2566972e6",
-      "committedAtIso": "2026-10-12T16:28:23-05:00"
+      "mergedAtCt": "10/12/2026, 05:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26726",
+      "sha": "fac801d0f0",
+      "committedAtIso": "2026-10-12T17:21:15-05:00"
     },
     {
-      "number": 26716,
-      "title": "FINDING: ACCT-F4431343 LANE: FINANCIAL — reserve migration 202615910700 for 443.134 AJK-13 (IFTA filing versions) before authoring",
+      "number": 26724,
+      "title": "FINDING: N/A (443.137 #1 — AUTH-448 CONSUMED: 145 settled USMCA driver bills back-stamped on prod, record only)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 04:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26716",
-      "sha": "23084ece90",
-      "committedAtIso": "2026-10-12T16:26:50-05:00"
+      "mergedAtCt": "10/12/2026, 05:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26724",
+      "sha": "9702be9851",
+      "committedAtIso": "2026-10-12T17:17:08-05:00"
     },
     {
-      "number": 26715,
-      "title": "FINDING: N/A (AUTH-447 CONSUMED — 443.134 #4 trailer picks applied on prod, record only)",
+      "number": 26655,
+      "title": "FINDING: BCF-02 LANE: FINANCIAL -- 443.113 BCF-02: advance bill link validates driver + live + FOR UPDATE",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 04:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26715",
-      "sha": "e756af032d",
-      "committedAtIso": "2026-10-12T16:25:14-05:00"
+      "mergedAtCt": "10/12/2026, 05:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26655",
+      "sha": "8e00b8793d",
+      "committedAtIso": "2026-10-12T17:16:29-05:00"
     },
     {
-      "number": 26714,
-      "title": "FINDING: N/A (443.134 #4 — owner-picked company trailers for loads 13498 / 13520 / 13525 / 13562: engine runner + AUTH-447, record only)",
+      "number": 26654,
+      "title": "FINDING: BCF-01 LANE: FINANCIAL -- 443.113 BCF-01: atomic advance disburse (UPDATE + GL in one tx)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 04:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26714",
-      "sha": "8d955e80ea",
-      "committedAtIso": "2026-10-12T16:24:17-05:00"
+      "mergedAtCt": "10/12/2026, 05:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26654",
+      "sha": "04bad09375",
+      "committedAtIso": "2026-10-12T17:15:43-05:00"
     },
     {
-      "number": 26712,
-      "title": "FINDING: ACCT-F4431341 LANE: FINANCIAL — AJK-04 (443.134): a same-name vendor returned \"already_present\" without linking the driver — the driver still had no payee",
+      "number": 26723,
+      "title": "FINDING: ACCT-F4431378 LANE: FINANCIAL — 145 settled USMCA driver bills carried no truck and no trailer; back-stamp them from their loads through the engine (metadata only)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 04:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26712",
-      "sha": "37435d3db1",
-      "committedAtIso": "2026-10-12T16:19:27-05:00"
+      "mergedAtCt": "10/12/2026, 05:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26723",
+      "sha": "eb2c883525",
+      "committedAtIso": "2026-10-12T17:15:41-05:00"
     },
     {
-      "number": 26711,
-      "title": "chore: claim migration 202615900910 (443.134 #1 related-party account link)",
+      "number": 26722,
+      "title": "FINDING: ACCT-F4431361 LANE: FINANCIAL -- 443.136 #1: a Relay deposit's posted state is stamped by the posting registry trigger, never by hand (verify-fuel-posts-only-on-bank-match red on main)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 04:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26711",
-      "sha": "733b56ba67",
-      "committedAtIso": "2026-10-12T16:15:25-05:00"
+      "mergedAtCt": "10/12/2026, 05:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26722",
+      "sha": "2e1bc40b08",
+      "committedAtIso": "2026-10-12T17:15:17-05:00"
     },
     {
-      "number": 26709,
-      "title": "Claude-3- FINDING: ACCT-F4431332 LANE: FINANCIAL -- 443.133 B Relay deposits classified by the owner's card map",
+      "number": 26675,
+      "title": "Codex- BCF-09 native pay items and USMCA-scoped gate readers",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 04:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26709",
-      "sha": "8befa255e2",
-      "committedAtIso": "2026-10-12T16:11:55-05:00"
+      "mergedAtCt": "10/12/2026, 05:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26675",
+      "sha": "4939441e2b",
+      "committedAtIso": "2026-10-12T17:06:13-05:00"
     },
     {
-      "number": 26710,
-      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615891200 — reservation-only commit, no code fix)",
+      "number": 26721,
+      "title": "chore: claim migrations 202615920910 + 202615930910 (443.136)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 04:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26710",
-      "sha": "825ea9ab07",
-      "committedAtIso": "2026-10-12T16:02:43-05:00"
+      "mergedAtCt": "10/12/2026, 05:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26721",
+      "sha": "31695686ae",
+      "committedAtIso": "2026-10-12T17:01:17-05:00"
     },
     {
-      "number": 26708,
-      "title": "FINDING: ACCT-F4431281 LANE: FINANCIAL — 443.128 A (G15 + BCF-06): a lumper paid by cash advance booked no expense (\"expense posting HOLD\") and a billable lumper never reached the invoice",
+      "number": 26720,
+      "title": "FINDING: N/A (443.136 — CC-2's main red: verify-ap-control-writers-go-through-documents did not classify driver-pay-delivery-accrual.service.ts, from #26706)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 03:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26708",
-      "sha": "a9ec441762",
-      "committedAtIso": "2026-10-12T15:47:09-05:00"
+      "mergedAtCt": "10/12/2026, 05:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26720",
+      "sha": "e60a7d5505",
+      "committedAtIso": "2026-10-12T17:00:45-05:00"
     }
   ]
 }

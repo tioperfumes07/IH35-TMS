@@ -40,6 +40,14 @@
  * is mutation-tested in BOTH directions against the REAL source file (see selftest()), and every
  * mutation asserts that it actually applied — a fixture that silently stops matching the source can
  * never again masquerade as a passing test.
+ *
+ * ACCT-F4431380 (Lead 443.137 item 9e) — OLD: asserted the puller's catalogs.items ADOPT stood down on a
+ * twin-claimed qbo_item_id (scoped, real column, real parameter) and that the upsert (in items-write-sql.ts)
+ * never assigned item_name on conflict. NEW: both failure modes are made impossible rather than handled —
+ * the puller contains NO catalogs.items adopt UPDATE and NO catalogs.items upsert (it writes only
+ * mdata.qbo_items), and reconcileItems() (the items_reconcile step that also aborted) REFUSES BY NAME via
+ * refuseQboNativeWrite(). Mutations are still applied to the REAL files and proven to have applied.
+ * WHY: QuickBooks is a read-only archive; the native write was removed and the reconciler refuses by name.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -47,6 +55,7 @@ import { join } from "node:path";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const PULLER = "apps/backend/src/qbo-sync/items-puller.ts";
+const RECONCILER = "apps/backend/src/qbo-sync/items-reconciler.ts";
 const LABEL = "verify-no-generic-seed-shadowing-qbo-items";
 
 function stripComments(src) {
@@ -56,227 +65,113 @@ function stripComments(src) {
     .replace(/--[^\n]*/g, "");
 }
 
-/** Return the balanced-paren substring starting at the "(" at or after `from`, exclusive of the outer parens. */
-function balancedParen(text, from) {
-  const open = text.indexOf("(", from);
-  if (open === -1) return null;
-  let depth = 0;
-  for (let i = open; i < text.length; i += 1) {
-    if (text[i] === "(") depth += 1;
-    else if (text[i] === ")") {
-      depth -= 1;
-      if (depth === 0) return text.slice(open + 1, i);
-    }
-  }
-  return null;
-}
-
+/** Invariant 1 (was: adopt stands down on a twin) — there is no adopt at all. */
 export function auditAdopt(src) {
   const code = stripComments(src);
   const problems = [];
-  const upd = /UPDATE\s+catalogs\.items[\s\S]*?RETURNING/i.exec(code);
-  if (!upd) {
+  if (/UPDATE\s+catalogs\.items\b/i.test(code)) {
     problems.push(
-      `${PULLER}: no adopt step — a QBO item matching an unclaimed local row falls through to an INSERT that collides on item_name.`
-    );
-    return problems;
-  }
-  const adopt = upd[0];
-
-  // Read the QBO-id parameter off the SET clause rather than hardcoding $3, so the guard follows the
-  // code instead of assuming a parameter order that a future edit may change.
-  const setParam = /\bqbo_item_id\s*=\s*(\$\d+)/i.exec(adopt);
-  if (!setParam) {
-    problems.push(`${PULLER}: the adopt UPDATE never assigns qbo_item_id — it is not an adopt at all.`);
-    return problems;
-  }
-  const idParam = setParam[1];
-  const idParamRe = new RegExp(`\\${idParam}(?!\\d)`);
-
-  if (!/qbo_item_id\s+IS\s+NULL/i.test(adopt)) {
-    problems.push(
-      `${PULLER}: the adopt UPDATE does not require qbo_item_id IS NULL — it could rebind a row already owned by a different QBO item.`
+      `${PULLER}: contains an UPDATE of catalogs.items (an adopt/rebind). A QBO pull may not stamp a QBO id ` +
+        `onto, or rename, a native item — QuickBooks is a read-only archive (ACCT-F4431380).`
     );
   }
-
-  const notExistsAt = adopt.search(/NOT\s+EXISTS\s*\(/i);
-  if (notExistsAt === -1) {
-    problems.push(
-      `${PULLER}: the adopt UPDATE does not check whether ANOTHER row already claims this qbo_item_id. ` +
-        `Stamping a twin-held id violates uq_items_company_qbo_item_id and aborts the pull — the same ` +
-        `class of failure the adopt was written to fix.`
-    );
-    return problems;
+  if (!/INSERT\s+INTO\s+mdata\.qbo_items\b/i.test(code)) {
+    problems.push(`${PULLER}: no INSERT INTO mdata.qbo_items — the pull no longer fills its mirror; cannot verify (fails closed).`);
   }
-
-  const sub = balancedParen(adopt, notExistsAt);
-  if (sub === null) {
-    problems.push(`${PULLER}: the adopt UPDATE's NOT EXISTS has unbalanced parentheses — cannot verify the twin check.`);
-    return problems;
-  }
-
-  // The invariant is the LINKAGE COLUMN, not the keyword. A NOT EXISTS on any other column is
-  // permanently false, so the guard would be always-true and protect nothing.
-  if (!/FROM\s+catalogs\.items\b/i.test(sub)) {
-    problems.push(
-      `${PULLER}: the adopt's NOT EXISTS does not read catalogs.items, so it cannot detect a twin. ` +
-        `A subquery over any other relation is inert here.`
-    );
-  }
-
-  const comparesQboId =
-    new RegExp(`qbo_item_id\\s*=\\s*\\${idParam}(?!\\d)`, "i").test(sub) ||
-    new RegExp(`\\${idParam}(?!\\d)\\s*=\\s*(?:[a-z_]+\\.)?qbo_item_id`, "i").test(sub);
-  if (!comparesQboId) {
-    problems.push(
-      `${PULLER}: the adopt's NOT EXISTS does not compare qbo_item_id to ${idParam} (the parameter the ` +
-        `UPDATE stamps into qbo_item_id). A twin check against any other column — or against a different ` +
-        `bound parameter — never matches a row, so NOT EXISTS is always true and the check is INERT. ` +
-        `uq_items_company_qbo_item_id is the constraint being defended; qbo_item_id is the only column ` +
-        `that can defend it.`
-    );
-  }
-
-  if (!/operating_company_id\s*=/i.test(sub) || !idParamRe.test(sub)) {
-    if (!/operating_company_id\s*=/i.test(sub)) {
-      problems.push(
-        `${PULLER}: the adopt's NOT EXISTS is not scoped by operating_company_id. ` +
-          `uq_items_company_qbo_item_id is (operating_company_id, qbo_item_id): an unscoped probe both ` +
-          `reads across entities and mis-reports a twin that belongs to another operating company.`
-      );
-    }
-  }
-
   return problems;
 }
 
+/** Invariant 2 (was: upsert never assigns item_name on conflict) — there is no upsert at all. */
 export function auditUpsertKeepsName(src) {
   const code = stripComments(src);
   const problems = [];
-  const ins = /INSERT INTO catalogs\.items[\s\S]*?DO UPDATE SET([\s\S]*?)`/i.exec(code);
-  if (!ins) {
-    problems.push(`${PULLER}: no catalogs.items upsert found — cannot verify the item_name invariant.`);
-    return problems;
-  }
-  // The invariant is that item_name is NOT ASSIGNED on conflict — in ANY form. Matching only
-  // "EXCLUDED.item_name" would wave through `item_name = COALESCE(EXCLUDED.item_name, ...)`, which
-  // renames the twin exactly as destructively whenever QBO supplies a name.
-  const assigns = /(^|,)\s*item_name\s*=/m.exec(ins[1]);
-  if (assigns) {
+  if (/INSERT\s+INTO\s+catalogs\.items\b/i.test(code) || /PULLER_UPSERT_ITEM_SQL/.test(code)) {
     problems.push(
-      `${PULLER}: the upsert's DO UPDATE assigns item_name. That renames the '<name> [QBO nn]' twin to ` +
-        `QBO's bare short name and collides with a same-named native row under uq_items_company_item_name ` +
-        `— UNIQUE(operating_company_id, item_name), NOT partial. This is the single line that made ` +
-        `items_pull and items_reconcile abort on every run. QBO owns the item's identity and economics, ` +
-        `not its local display name once that name is taken.`
+      `${PULLER}: inserts/upserts catalogs.items from QuickBooks (inline or via PULLER_UPSERT_ITEM_SQL). ` +
+        `The upsert that renamed twins is removed; a QBO pull writes only mdata.qbo_items.`
     );
   }
   return problems;
 }
 
-/**
- * ACCT-F83 — the puller's upsert SQL moved into items-write-sql.ts (one reviewed home for every
- * QBO-sourced catalogs.items write, shared with the reconciler). This guard's item_name invariant is
- * about the SQL, not about which file holds it, so it now reads BOTH and audits the pair.
- *
- * It failed CLOSED when the SQL moved ("no catalogs.items upsert found") rather than passing by
- * absence, which is the correct behaviour and the reason this is a re-anchor and not a repair of a
- * fail-open hole. Both files are required to exist: if either read throws, the guard errors instead of
- * quietly auditing half the statement.
- */
-const SQL_MODULE = "apps/backend/src/qbo-sync/items-write-sql.ts";
-
-function realSource() {
-  return `${readFileSync(join(ROOT, PULLER), "utf8")}\n${readFileSync(join(ROOT, SQL_MODULE), "utf8")}`;
+/** Invariant 3 — the items_reconcile step refuses by name and writes no native item. */
+export function auditReconcilerRefuses(src) {
+  const code = stripComments(src);
+  const problems = [];
+  const m = /^export\s+async\s+function\s+reconcileItems\b[\s\S]*?\n\}/m.exec(code);
+  if (!m) problems.push(`${RECONCILER}: reconcileItems() missing — callers would get an import error, not a named refusal.`);
+  else if (!/\brefuseQboNativeWrite\s*\(/.test(m[0])) {
+    problems.push(`${RECONCILER}: reconcileItems() does not call refuseQboNativeWrite() — a silent no-op or a native write.`);
+  }
+  if (/(?:INSERT\s+INTO|UPDATE)\s+catalogs\.items\b/i.test(code) || /(HEAL_ITEM_DRIFT_SQL|CREATE_MISSING_ITEMS_SQL)/.test(code)) {
+    problems.push(`${RECONCILER}: writes catalogs.items (inline or via the removed items-write-sql constants).`);
+  }
+  return problems;
 }
 
-function auditTree(src = realSource()) {
-  return [...auditAdopt(src), ...auditUpsertKeepsName(src)];
+const realPuller = () => readFileSync(join(ROOT, PULLER), "utf8");
+const realReconciler = () => readFileSync(join(ROOT, RECONCILER), "utf8");
+
+function auditTree() {
+  const p = realPuller();
+  return [...auditAdopt(p), ...auditUpsertKeepsName(p), ...auditReconcilerRefuses(realReconciler())];
 }
 
-/**
- * Apply a mutation to real source and PROVE it applied. A mutation that silently no-ops (because the
- * source moved on) would leave the negative case untested while still reporting PASS — the exact
- * fail-open shape this guard exists to prevent.
- */
+/** Apply a mutation to real source and PROVE it applied (a silent no-op mutation is an untested case). */
 function mutate(src, from, to, label) {
   const out = src.replace(from, to);
   if (out === src) {
-    throw new Error(
-      `mutation "${label}" did not apply — the selftest fixture no longer matches ${PULLER}. ` +
-        `The negative case is UNTESTED; fix the fixture rather than trusting this guard.`
-    );
+    throw new Error(`mutation "${label}" did not apply — the selftest fixture no longer matches the real file; the negative case is UNTESTED.`);
   }
   return out;
 }
 
 function selftest() {
   const failures = [];
-  const real = realSource();
-
-  // POSITIVE — real, unmutated source must be clean. If this fails the guard is wrong, not the code.
-  const clean = auditTree(real);
+  const clean = auditTree();
   if (clean.length !== 0) failures.push(`case0 FAIL — real source flagged: ${clean.join(" | ")}`);
 
-  // NEGATIVE — every check must actually reject its own defect, mutated into REAL source.
+  const puller = realPuller();
+  const reconciler = realReconciler();
+  const ANCHOR = /\nexport async function pullItemsFromQbo/;
   const cases = [
     {
-      label: "twin check on the WRONG column (the inert form)",
-      mutated: () => mutate(real, "other.qbo_item_id = $3", "other.item_code = $3", "wrong twin column"),
-      audit: auditAdopt,
-      expect: "does not compare qbo_item_id",
-    },
-    {
-      label: "twin check against the WRONG bound parameter",
-      mutated: () => mutate(real, "other.qbo_item_id = $3", "other.qbo_item_id = $2", "wrong twin parameter"),
-      audit: auditAdopt,
-      expect: "does not compare qbo_item_id",
-    },
-    {
-      label: "twin check not scoped by operating_company_id",
-      // Tolerates an optional `::uuid` cast between `$1` and the newline — the real source picked
-      // one up (SYS-F5503, the repo-wide uncast-operating_company_id sweep) and this fixture's exact
-      // match went stale, throwing "mutation did not apply" and leaving the negative case untested.
+      label: "the ACCT-F77 adopt (with its twin check) re-added to the real puller",
       mutated: () =>
-        mutate(
-          real,
-          /WHERE other\.operating_company_id = \$1(?:::uuid)?\s*\n\s*AND other\.qbo_item_id/,
-          "WHERE other.qbo_item_id",
-          "drop opco scoping"
-        ),
+        mutate(puller, ANCHOR, "\nconst ADOPT = `UPDATE catalogs.items SET qbo_item_id = $3 WHERE operating_company_id = $1 AND item_name = $2 AND qbo_item_id IS NULL AND NOT EXISTS (SELECT 1 FROM catalogs.items other WHERE other.operating_company_id = $1 AND other.qbo_item_id = $3) RETURNING id`;\nexport async function pullItemsFromQbo", "re-add adopt"),
       audit: auditAdopt,
-      expect: "not scoped by operating_company_id",
+      expect: "UPDATE of catalogs.items",
     },
     {
-      label: "twin check removed entirely",
-      mutated: () => mutate(real, /AND NOT EXISTS \([\s\S]*?\)\n/, "", "remove twin check"),
-      audit: auditAdopt,
-      expect: "already claims this qbo_item_id",
-    },
-    {
-      label: "adopt no longer requires qbo_item_id IS NULL",
-      mutated: () => mutate(real, "AND qbo_item_id IS NULL", "AND qbo_item_id IS NOT DISTINCT FROM qbo_item_id", "drop unclaimed guard"),
-      audit: auditAdopt,
-      expect: "does not require qbo_item_id IS NULL",
-    },
-    {
-      label: "upsert renames the twin (the original defect)",
+      label: "the twin-renaming upsert re-added to the real puller",
       mutated: () =>
-        mutate(real, "item_code = EXCLUDED.item_code,", "item_name = EXCLUDED.item_name,\n        item_code = EXCLUDED.item_code,", "reintroduce rename"),
+        mutate(puller, ANCHOR, "\nconst UPSERT = `INSERT INTO catalogs.items (operating_company_id, item_name) VALUES ($1,$2) ON CONFLICT (operating_company_id, qbo_item_id) WHERE qbo_item_id IS NOT NULL DO UPDATE SET item_name = EXCLUDED.item_name`;\nexport async function pullItemsFromQbo", "re-add upsert"),
       audit: auditUpsertKeepsName,
-      expect: "assigns item_name",
+      expect: "inserts/upserts catalogs.items",
     },
     {
-      label: "upsert renames the twin via COALESCE (the form a substring check would miss)",
-      mutated: () =>
-        mutate(
-          real,
-          "item_code = EXCLUDED.item_code,",
-          "item_name = COALESCE(EXCLUDED.item_name, catalogs.items.item_name),\n        item_code = EXCLUDED.item_code,",
-          "reintroduce rename via COALESCE"
-        ),
+      label: "the puller re-wired to PULLER_UPSERT_ITEM_SQL",
+      mutated: () => mutate(puller, ANCHOR, "\nconst Q = PULLER_UPSERT_ITEM_SQL;\nexport async function pullItemsFromQbo", "re-wire const"),
       audit: auditUpsertKeepsName,
-      expect: "assigns item_name",
+      expect: "inserts/upserts catalogs.items",
+    },
+    {
+      label: "mirror write removed (instrument must fail closed)",
+      mutated: () => mutate(puller, /INSERT INTO mdata\.qbo_items/, "INSERT INTO mdata.qbo_items_gone", "drop mirror"),
+      audit: auditAdopt,
+      expect: "no INSERT INTO mdata.qbo_items",
+    },
+    {
+      label: "reconcileItems refusal reverted to a silent no-op",
+      mutated: () => mutate(reconciler, /return refuseQboNativeWrite\([^;]*\);/, "return { driftDetected: 0, createdFromQbo: 0, healed: 0, localOnly: 0, nameConflictsRetained: 0, reconciledAt: '' };", "revert refusal"),
+      audit: auditReconcilerRefuses,
+      expect: "does not call refuseQboNativeWrite",
+    },
+    {
+      label: "reconciler re-gains the ACCT-F83 heal",
+      mutated: () => mutate(reconciler, /\nexport type ItemsSyncStatus/, "\nconst H = `UPDATE catalogs.items ci SET item_name = qi.name FROM mdata.qbo_items qi`;\nexport type ItemsSyncStatus", "re-add heal"),
+      audit: auditReconcilerRefuses,
+      expect: "writes catalogs.items",
     },
   ];
 
@@ -289,9 +184,7 @@ function selftest() {
       continue;
     }
     if (!problems.some((p) => p.includes(c.expect))) {
-      failures.push(
-        `FAIL — ${c.label} was NOT caught (expected a problem containing "${c.expect}"; got: ${problems.join(" | ") || "no problems"})`
-      );
+      failures.push(`FAIL — ${c.label} was NOT caught (expected "${c.expect}"; got: ${problems.join(" | ") || "no problems"})`);
     }
   }
 
@@ -299,11 +192,7 @@ function selftest() {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
     process.exit(1);
   }
-  console.log(
-    `${LABEL}: selftest PASS — real source clean, and all ${cases.length} defect mutations rejected ` +
-      `(wrong twin column, wrong parameter, unscoped probe, missing twin check, rebindable adopt, ` +
-      `rename, rename-via-COALESCE). Every mutation verified to have applied.`
-  );
+  console.log(`${LABEL}: selftest PASS — real sources clean, and all ${cases.length} mutations of the REAL files rejected (every mutation verified to have applied).`);
 }
 
 function main() {
@@ -313,10 +202,7 @@ function main() {
     for (const p of problems) console.error(`  ✗ ${p}`);
     process.exit(1);
   }
-  console.log(
-    `${LABEL} OK — the adopt stands down on a twin-claimed qbo_item_id (scoped, real column, real parameter), ` +
-      `and the upsert never assigns item_name on conflict.`
-  );
+  console.log(`${LABEL} OK — the items pull neither adopts nor upserts catalogs.items (mirror only), and reconcileItems() refuses by name.`);
 }
 
 main();
