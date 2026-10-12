@@ -11,10 +11,12 @@
  *           L2 bill_payments.vendor_id is NOT NULL when the three new triggers are applied
  *              (skipped while migration pending; trigger alone still refuses blanks);
  *           L3 USMCA live counts: 0 driver bills missing vendor/driver/load/unit,
+ *              0 driver bills missing trailer (trailer_id OR non_owned_trailer_id OR load.trailer_source='none'),
  *              0 bill payments missing vendor, 0 expense lines with no load and no reason,
  *              0 expense lines whose driver/unit differ from a load-bearing header (IS DISTINCT FROM).
- *           Trailer gaps on historical rows are NOT L3-zeroed — DEGH-05 is INSERT/UPDATE only while
- *           loads 13498/13520/13525/13562 remain open for the owner.
+ *           DEGH-05-all (ROUND 443.140): live USMCA trailer census is L3-zeroed — measured 146/0
+ *           on Neon br-fancy-credit (loads 13498/13520/13525/13562 stamped). INSERT/UPDATE trigger
+ *           still refuse blanks; L3 keeps the historical floor from reopening.
  * --selftest plants each failure class (in-memory) → exit non-zero.
  *
  * Owned paths (gate-step-map):
@@ -150,6 +152,19 @@ async function measure(client) {
              AND (mdata_vendor_id IS NULL AND NULLIF(btrim(COALESCE(vendor_id, '')), '') IS NULL
                   OR driver_id IS NULL OR load_id IS NULL OR unit_id IS NULL)
          ) AS driver_bills_missing_core_links,
+         (SELECT count(*) FROM accounting.bills b
+           WHERE b.operating_company_id = $1::uuid AND b.voided_at IS NULL
+             AND (b.bill_category = 'driver' OR b.load_id IS NOT NULL)
+             AND b.load_id IS NOT NULL
+             AND b.trailer_id IS NULL
+             AND b.non_owned_trailer_id IS NULL
+             AND NOT EXISTS (
+               SELECT 1 FROM mdata.loads l
+                WHERE l.id = b.load_id
+                  AND l.operating_company_id = b.operating_company_id
+                  AND l.trailer_source = 'none'
+             )
+         ) AS driver_bills_missing_trailer,
          (SELECT count(*) FROM accounting.bill_payments
            WHERE operating_company_id = $1::uuid AND voided_at IS NULL
              AND NULLIF(btrim(COALESCE(vendor_id, '')), '') IS NULL
@@ -190,6 +205,7 @@ if (isMain) {
       vendorNotNull: true,
       violations: {
         driver_bills_missing_core_links: 0,
+        driver_bills_missing_trailer: 0,
         bill_payments_missing_vendor: 0,
         expense_lines_no_load_no_reason: 0,
         expense_lines_attr_mismatch: 0,
@@ -266,6 +282,13 @@ if (isMain) {
         }).some((x) => x.startsWith("L3") && x.includes("driver_bills_missing_core_links")),
       ],
       [
+        "a planted driver-bill missing-trailer violation fails L3",
+        liveFailures({
+          ...good,
+          violations: { ...good.violations, driver_bills_missing_trailer: 1 },
+        }).some((x) => x.startsWith("L3") && x.includes("driver_bills_missing_trailer")),
+      ],
+      [
         "a planted bill-payment violation fails L3",
         liveFailures({
           ...good,
@@ -313,7 +336,7 @@ if (isMain) {
       process.exitCode = 1;
     } else {
       console.log(
-        `${LABEL}: OK — DB refuses driver bills without core links + trailer clause (DEGH-05), blank bill-payment vendors, and expense-line attribution mismatches (null-header aware); expense load-or-reason still enforced; 0 USMCA live core-link violations.`
+        `${LABEL}: OK — DB refuses driver bills without core links + trailer clause (DEGH-05), blank bill-payment vendors, and expense-line attribution mismatches (null-header aware); expense load-or-reason still enforced; 0 USMCA live core-link + missing-trailer violations (DEGH-05-all L3 floor).`
       );
     }
   } finally {
