@@ -7,6 +7,7 @@ import { UnitAlreadyActiveOnLoadError } from "../unit-active-load-guard.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
+import { DriverBillReassignRefusedError } from "../book-load.service.js";
 
 // DSP-05 (owner requirement 5.5, 2026-09-01): "the dispatcher needs to receive a message on the
 // screen and must confirm. Warnings and override by owner." Flag default OFF (no seed row -> isEnabled
@@ -121,6 +122,10 @@ function mapValidationError(error: unknown) {
         },
       },
     };
+  }
+  // 443.113 AJK-01 — a settled / closed driver bill never silently changes driver: refused by name.
+  if (error instanceof DriverBillReassignRefusedError) {
+    return { status: 409, payload: { error: error.code, message: error.message, details: { driver_bill_id: error.billId } } };
   }
   const code = String((error as Error)?.message ?? "");
   if (code === "E_LOAD_NOT_FOUND") return { status: 404, payload: { error: code } };

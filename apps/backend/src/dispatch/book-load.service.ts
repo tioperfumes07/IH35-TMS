@@ -886,6 +886,26 @@ const skipReason =
  * miles_shortest, 18 skip events exist, and 2 USMCA driver bills. The refusal to invent a wage is
  * CORRECT — the silence about it is the defect.
  */
+/**
+ * 443.113 AJK-01 — a reassignment that would move a driver bill that is no longer open (settled into a settlement,
+ * closed or voided) to another driver is refused by name: the money belongs to the driver it was settled for. Callers
+ * roll the reassignment back (quick-assign, Edit Load, Book Load all run inside one transaction).
+ */
+export class DriverBillReassignRefusedError extends Error {
+  readonly code = "driver_bill_reassign_refused";
+  constructor(
+    readonly billId: string,
+    readonly fromDriverId: string | null,
+    readonly toDriverId: string | null,
+    readonly billStatus: string
+  ) {
+    super(
+      `driver_bill_reassign_refused: the driver bill on this load is ${billStatus} — it cannot move from driver ${fromDriverId ?? "(none)"} to ${toDriverId ?? "(none)"}; void and reissue it through the settlement first`
+    );
+    this.name = "DriverBillReassignRefusedError";
+  }
+}
+
 export type DriverBillMintOutcome =
   | { outcome: "not_applicable" }
   | { outcome: "already_exists" }
@@ -927,8 +947,11 @@ export async function createDriverBillArtifacts(
     gross_amount_cents: string | number | null;
     voided_at: string | null;
     settled_in_settlement_id: string | null;
+    driver_id: string | null;
+    team_driver_id: string | null;
   }>(
-    `SELECT id::text, status, gross_amount_cents, voided_at, settled_in_settlement_id::text
+    `SELECT id::text, status, gross_amount_cents, voided_at, settled_in_settlement_id::text,
+            driver_id::text, team_driver_id::text
        FROM driver_finance.driver_bills
       WHERE operating_company_id = $1::uuid
         AND load_id = $2::uuid
@@ -1138,14 +1161,54 @@ export async function createDriverBillArtifacts(
     // only on booking/assignment/edit/delivery events that already call this function) — only
     // whether an already-priced-but-still-open bill is eligible to be recalculated when it does.
     const isRecalculable = String(existing.status) === "open" && existing.settled_in_settlement_id == null;
+    // 443.113 AJK-01 — WHO the bill belongs to is compared as well as how much. Before, a reassignment from driver A to
+    // driver B at the same pay hit `totalBillCents === existingGross` (or an unpriced / $0 bill) and returned
+    // already_exists before driver_id was ever read, leaving A's bill on B's load.
+    const toDriverId = input.assigned_primary_driver_id ?? null;
+    const toTeamDriverId = input.assigned_secondary_driver_id ?? null;
+    const identityChanged =
+      (existing.driver_id ?? null) !== toDriverId || (existing.team_driver_id ?? null) !== toTeamDriverId;
     if (!isRecalculable) {
+      if (identityChanged) {
+        throw new DriverBillReassignRefusedError(
+          existing.id,
+          existing.driver_id ?? null,
+          toDriverId,
+          existing.settled_in_settlement_id != null ? "settled" : String(existing.status)
+        );
+      }
       return { outcome: "already_exists" };
     }
     if (unpriced || totalBillCents <= 0) {
+      if (!identityChanged) return { outcome: "already_exists" };
+      // The bill moves to the new driver; its money is not re-priced from an unpriced / $0 resolution.
+      await client.query(
+        `UPDATE driver_finance.driver_bills SET driver_id = $2::uuid, team_driver_id = $3::uuid
+          WHERE id = $1::uuid AND status = 'open' AND settled_in_settlement_id IS NULL`,
+        [existing.id, toDriverId, toTeamDriverId]
+      );
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "driver_finance.driver_bill.reassigned",
+        { operating_company_id: input.operating_company_id, driver_bill_id: existing.id, load_id: String(load.id), from_driver_id: existing.driver_id, to_driver_id: toDriverId, repriced: false },
+        "info",
+        "443.113-AJK-01"
+      );
       return { outcome: "already_exists" };
     }
-    if (totalBillCents === existingGross) {
+    if (totalBillCents === existingGross && !identityChanged) {
       return { outcome: "already_exists" };
+    }
+    if (identityChanged) {
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "driver_finance.driver_bill.reassigned",
+        { operating_company_id: input.operating_company_id, driver_bill_id: existing.id, load_id: String(load.id), from_driver_id: existing.driver_id, to_driver_id: toDriverId, repriced: totalBillCents !== existingGross },
+        "info",
+        "443.113-AJK-01"
+      );
     }
     await client.query(
       `
