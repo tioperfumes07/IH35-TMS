@@ -159,7 +159,18 @@ describe("reverse drill-through production behavior", () => {
     apiMocks.listCoaAccountsForJe.mockResolvedValue({ accounts: [] });
     apiMocks.listAccountingAuditTrail.mockResolvedValue({ events: [], next_cursor: null });
     apiMocks.listExpenses.mockResolvedValue({ rows: [], total: 0 });
-    apiMocks.apiRequest.mockResolvedValue({ drafts: [] });
+    // 443.102 — the invoice / payment pages now also mount MoneyProofTrailPanel and FactoringPurchaseLinksPanel, which
+    // read through apiRequest. Answer each with its real (empty) shape instead of the fault-drafts payload, so the page
+    // renders and the drill assertions below run against the production component (they were crashing on undefined).
+    apiMocks.apiRequest.mockImplementation(async (path: string) => {
+      const url = String(path);
+      const proof = url.match(/\/accounting\/proof-trail\/([^/]+)\/([^?]+)/);
+      if (proof) {
+        return { document_type: decodeURIComponent(proof[1]!), document_id: decodeURIComponent(proof[2]!), display_id: null, status: null, trace_no: "", trace_key: "", postings: [] };
+      }
+      if (url.includes("factoring") && url.includes("purchase")) return { purchases: [] };
+      return { drafts: [] };
+    });
   });
 
   it("registers exactly one ProtectedRoute for every guarded accounting path", () => {

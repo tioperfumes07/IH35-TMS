@@ -26,10 +26,19 @@ const STOLEN_RE =
 //        forward drill from a document to the statements it ties to (no dead-end screen). With the two rules both
 //        registered, verify:form425c-history-includes-drafts could never pass.
 export const ECON_DRILLS = ['to="/accounting/reconciliation"', 'to="/finance/statements"', 'to="/legal/reports"'];
+// LEAD 443.102 (2026-10-12) — same contradiction on the 425C HOME page.
+//   old rule: Form425CHome's related links may not leave /425c (#15003 removed the doors under the seat-lane rule).
+//   new rule: exactly the three related-module doors verify-operational-compliance-module-doors (LINK-F5154 #6652)
+//             requires — /safety/audit-425c, /maintenance/compliance, /compliance — are allowed on the home page;
+//             every other foreign hop (and any econ drill on home) still fails.
+//   why: seat lanes are superseded (AGENTS.md 2026-09-02); the linkage law requires module doors; with both rules
+//        registered, step 3258 could never pass.
+export const HOME_DOORS = ['to: "/safety/audit-425c"', 'to: "/maintenance/compliance"', 'to: "/compliance"'];
 
 export function collectProblems(src, page = PAGE) {
   const problems = [];
-  const scanned = page === PAGE ? ECON_DRILLS.reduce((acc, d) => acc.split(d).join('to="/425c"'), src) : src;
+  const allowed = page === PAGE ? ECON_DRILLS : page === HOME ? HOME_DOORS : [];
+  const scanned = allowed.reduce((acc, d) => acc.split(d).join('to="/425c"'), src);
   if (STOLEN_RE.test(scanned)) {
     problems.push(`${page}: related links must not steal other seats' prefixes`);
   }
@@ -109,7 +118,8 @@ const kept = `
   pushToast("No exhibit payload to export", "error");
   pushToast("Exported exhibit A JSON", "success");
 `;
-const stolenHome = `links={[{ label: "Safety Audit", to: "/safety/audit-425c" }]}`;
+// 443.102: the safety-audit door is now allowed (HOME_DOORS); the planted home steal uses a foreign hop that is not.
+const stolenHome = `links={[{ label: "Fleet", to: "/fleet/units" }]}`;
 const keptHome = `
   links={[
     { label: "Deposit Import", to: "/425c?tab=qb" },
@@ -138,6 +148,9 @@ if (process.argv.includes("--selftest")) {
     ["exhibits + an extra /accounting hop", `${kept}<Link to="/accounting/journal">x</Link>`, PAGE, 1],
     ["exhibits + a /finance hop that is not the statements drill", `${kept}<Link to="/finance/hub">x</Link>`, PAGE, 1],
     ["home borrows an econ drill", `${keptHome}<Link to="/finance/statements">x</Link>`, HOME, 1],
+    ["home + the 3 module doors", `${keptHome}${HOME_DOORS.map((d) => `{ label: "x", ${d} },`).join("")}`, HOME, 0],
+    ["home + a /safety hop that is not the audit door", `${keptHome}{ label: "x", to: "/safety/hos" },`, HOME, 1],
+    ["exhibits borrows a home door", `${kept}{ label: "x", to: "/compliance" },`, PAGE, 1],
   ];
   for (const [name, fixture, pg, want] of econCases) {
     const got = collectProblems(fixture, pg).filter((p) => p.includes("steal")).length;

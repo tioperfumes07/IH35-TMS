@@ -17,6 +17,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect, type ReferenceOption } from "../../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
@@ -25,7 +26,6 @@ import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import { classesCatalogClient } from "../../../api/catalogs-accounting";
 import { listVendors } from "../../../api/mdata";
 import { createExpense } from "../../../api/accounting";
-import { listLoads } from "../../../api/loads";
 import { Link } from "react-router-dom";
 import { isExpenseAccount, isPaymentAccount } from "../../../lib/account-picker-scope";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -113,13 +113,6 @@ export function BatchExpensesPage() {
       set(r.key, { status: "saving", error: null });
       try {
         const amount = dollarsToCents(r.amount);
-        let resolvedLoadId: string | null = null;
-        if (r.loadNumber.trim()) {
-          try {
-            const loadSearch = await listLoads({ operating_company_id: [companyId], board_scope: "history", search: r.loadNumber.trim(), limit: 5 });
-            resolvedLoadId = loadSearch.loads.find((l) => l.load_number === r.loadNumber.trim())?.id ?? null;
-          } catch { /* best-effort — load_id stays null */ }
-        }
         const res = await createExpense(companyId, {
           category_account_id: r.category,
           expense_date: r.date,
@@ -128,11 +121,13 @@ export function BatchExpensesPage() {
           memo: [r.memo.trim(), `Payment: ${r.paymentMethod.toUpperCase()}`, r.refNo.trim() ? `Ref: ${r.refNo.trim()}` : null, r.loadNumber.trim() ? `Load: ${r.loadNumber.trim()}` : null, "Batch transactions"].filter(Boolean).join(" · "),
           ...(r.payee ? { vendor_uuid: r.payee } : {}),
           ...(r.classId ? { class_id: r.classId } : {}),
+          // 443.102 — the expense links to its load (G18). The number used to reach the memo only, so every batch
+          // expense was saved with no load.
+          ...(r.loadId ? { load_id: r.loadId } : {}),
           ...(r.refNo.trim() ? { vendor_document_number: r.refNo.trim() } : {}),
-          ...(resolvedLoadId ? { load_id: resolvedLoadId } : {}),
         });
         saved += 1; cents += amount;
-        setRows((prev) => prev.map((x) => (x.key === r.key ? { ...x, status: "saved", error: null, expenseId: res.expense_id, loadId: resolvedLoadId, feedGate: res.feed_gate ?? null } : x)));
+        setRows((prev) => prev.map((x) => (x.key === r.key ? { ...x, status: "saved", error: null, expenseId: res.expense_id, feedGate: res.feed_gate ?? null } : x)));
       } catch (err) {
         failed += 1;
         setRows((prev) => prev.map((x) => (x.key === r.key ? { ...x, status: "error", error: userFacingApiError(err, "Could not save this row") } : x)));
@@ -234,7 +229,24 @@ export function BatchExpensesPage() {
                 {classes.map((c) => <option key={c.id} value={c.id}>{c.display_name || c.code}</option>)}
               </SelectCombobox>
             ) },
-            { key: "loadNumber", label: "Load", render: (r) => r.status === "saved" && r.loadId ? <EntityLink kind="load" id={r.loadId} label={r.loadNumber || "—"} /> : <input value={r.loadNumber} onChange={(e) => set(r.key, { loadNumber: e.target.value })} className={cellCls(r, "loadNumber")} disabled={r.status === "saved"} placeholder="13xxx" /> },
+            { key: "loadNumber", label: "Load", overflowVisible: true, sortValue: (r) => r.loadNumber, render: (r) => (
+              r.status === "saved" ? (
+                r.loadId ? <EntityLink kind="load" id={r.loadId} label={r.loadNumber || "Load"} /> : <span>—</span>
+              ) : (
+                <span className={cellCls(r, "loadNumber")} title={title(r, "loadNumber") || r.loadNumber}>
+                  <EntityPicker
+                    kind="load"
+                    operatingCompanyId={companyId}
+                    value={r.loadId || null}
+                    onChange={(id, option) => set(r.key, { loadId: id ?? "", loadNumber: id ? option?.label ?? r.loadNumber : "" })}
+                    allowCreate={false}
+                    allowClear
+                    placeholder={r.loadNumber && !r.loadId ? `? ${r.loadNumber}` : "Load"}
+                    ariaLabel={`Load for row ${r.rowIndex + 1}`}
+                  />
+                </span>
+              )
+            ) },
             { key: "memo", label: "Memo", render: (r) => <input value={r.memo} onChange={(e) => set(r.key, { memo: e.target.value })} className={cellCls(r, "memo")} disabled={r.status === "saved"} /> },
             { key: "status", label: "Status", allowWrap: true, render: (r) => <span className="whitespace-nowrap">{r.status === "saved" && r.expenseId ? <span className="inline-flex items-center gap-1"><EntityLink kind="expense" id={r.expenseId} label="Saved → open" />{r.feedGate ? <Link to={`/feed-gate/${r.feedGate.intake_id}`} className={`rounded px-1 text-xs ${r.feedGate.status === "passed" ? "bg-[#1F2A44] text-white" : "bg-red-600 text-white"}`} data-testid="batch-expenses-feed-gate">{r.feedGate.status === "passed" ? "gate green" : `gate: ${r.feedGate.checks_failed} red`}</Link> : null}</span> : r.status === "error" ? <span className="text-red-700" title={r.error ?? ""}>Error: {r.error}</span> : r.status === "saving" ? "Saving…" : isRowEmpty(r) ? "" : Object.keys(validateRow(r)).length ? <span className="text-[#1F2A44]">Fix red cells</span> : "Ready"}</span> },
             { key: "actions", label: "Actions", sortable: false, render: (r) => {

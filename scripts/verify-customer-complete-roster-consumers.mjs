@@ -41,7 +41,9 @@ export function audit(s) {
   }
   const consumers = [
     ["active roster", "customers", /listAllCustomers\(\{ operating_company_id: companyId, active_company_only: true \}\)/],
-    ["inactive roster", "customers", /listAllCustomers\(\{ operating_company_id: companyId, status: "inactive" \}\)/],
+    // 443.102: old rule matched the one-line call; C-19 (#23480, b96e77e8ba) reformatted it across lines — same complete
+    // reader, same args. New rule tolerates whitespace / a trailing comma; a limit, a page cap or another reader still fails.
+    ["inactive roster", "customers", /listAllCustomers\(\{\s*operating_company_id: companyId,\s*status: "inactive",?\s*\}\)/],
     ["detail parent picker", "detail", /listAllCustomers\(\{ operating_company_id: operatingCompanyId! \}\)/],
     ["full edit parent picker", "edit", /listAllCustomers\(\{ operating_company_id: companyId \}\)/],
     ["record payment customer picker", "payment", /listAllCustomers\(\{ operating_company_id: operatingCompanyId \}\)/],

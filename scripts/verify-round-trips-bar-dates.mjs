@@ -133,13 +133,27 @@ function analyze(src, timelineSrc) {
 
   // 4) RT-TIMELINE-LIFECYCLE (owner 2026-09-09): the timeline must show every unit that worked in
   // the window, including legs already delivered / in the billing tail. It filters by the BROADER
-  // RT_TIMELINE_STATUSES set — never the pairing engine's active-only set — and that set must carry
-  // delivered_pending_docs so a truck whose only visible load already delivered still appears.
+  // RT_TIMELINE_STATUSES set — never the pairing engine's active-only set.
+  // LEAD 443.102 (2026-10-12) — this guard contradicted verify-dispatch-open-only-scope; it changes.
+  //   old rule: RT_TIMELINE_STATUSES must CARRY delivered_pending_docs (a delivered truck stays on the timeline).
+  //   new rule: RT_TIMELINE_STATUSES is the pre-assignment statuses (booked / planned / unassigned) PLUS the pairing
+  //             active set, and carries NO post-delivery / billing-tail status.
+  //   why: LST-F26137 (#21815, 7b09f669e8, 2026-09-11) found the Round Trips Timeline rendering closed / billing-tail
+  //        loads as "current" and removed them; verify-dispatch-open-only-scope locks that. With both rules
+  //        registered, one of the two guards was always red.
   const timelineSet = src.match(/export const RT_TIMELINE_STATUSES = \[[\s\S]*?\] as const;/);
   if (!timelineSet) {
     errors.push("roundTripsLegs: RT_TIMELINE_STATUSES set is missing (timeline lifecycle statuses)");
-  } else if (!/delivered_pending_docs/.test(timelineSet[0])) {
-    errors.push("roundTripsLegs: RT_TIMELINE_STATUSES no longer includes delivered_pending_docs — delivered units drop off the timeline");
+  } else {
+    for (const pre of ["booked", "planned", "unassigned"]) {
+      if (!timelineSet[0].includes(`"${pre}"`)) errors.push(`roundTripsLegs: RT_TIMELINE_STATUSES dropped "${pre}" — a booked truck with no movement drops off the timeline`);
+    }
+    if (!/\.\.\.RT_PAIRING_ACTIVE_STATUSES/.test(timelineSet[0])) {
+      errors.push("roundTripsLegs: RT_TIMELINE_STATUSES no longer spans the pairing active set");
+    }
+    for (const post of ["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced", "paid"]) {
+      if (timelineSet[0].includes(`"${post}"`)) errors.push(`roundTripsLegs: RT_TIMELINE_STATUSES carries post-delivery status "${post}" — billing-tail loads render as current (LST-F26137)`);
+    }
   }
   // Parity lock: the pairing engine's active set stays narrow — never widened to delivered.
   const pairingSet = src.match(/export const RT_PAIRING_ACTIVE_STATUSES = \[[\s\S]*?\] as const;/);
@@ -186,8 +200,13 @@ if (process.argv.includes("--selftest")) {
       timelineSrc.replace('data-testid="round-trips-no-dates"', 'data-testid="x"'),
     ],
     [
-      "timeline set drops delivered_pending_docs",
-      src.replace(/"delivered_pending_docs",\n/, ""),
+      "timeline set re-admits a billing-tail status (LST-F26137)",
+      src.replace("export const RT_TIMELINE_STATUSES = [", 'export const RT_TIMELINE_STATUSES = [\n  "delivered_pending_docs",'),
+      timelineSrc,
+    ],
+    [
+      "timeline set drops booked",
+      src.replace(/export const RT_TIMELINE_STATUSES = \[\s*"booked",/, "export const RT_TIMELINE_STATUSES = ["),
       timelineSrc,
     ],
     [

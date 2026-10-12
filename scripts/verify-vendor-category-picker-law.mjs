@@ -15,7 +15,13 @@ function stripComments(src) {
 function problems(src) {
   const code = stripComments(src);
   const result = [];
-  const block = code.match(/listStatus === "by-category"[\s\S]{0,2200}?\) : null\}/)?.[0] ?? "";
+  // 443.102: old rule took the FIRST `listStatus === "by-category"` + 2,200 chars. Later work put that expression in the
+  // roster filter (VEND-F7534 / C-31) and the status select, so the window landed on filter logic and never saw the
+  // picker. New rule: the By Category JSX branch itself — `{listStatus === "by-category" ? (` up to the next
+  // `{viewMode` section — must hold the picker; same three requirements.
+  const blockStart = code.indexOf('{listStatus === "by-category" ? (');
+  const blockEnd = blockStart < 0 ? -1 : code.indexOf("{viewMode", blockStart);
+  const block = blockStart < 0 ? "" : code.slice(blockStart, blockEnd < 0 ? undefined : blockEnd);
   if (!block.includes("<ReferenceSelect")) result.push("By Category is not using ReferenceSelect");
   if (!block.includes('createKind="vendor_type"')) result.push("missing canonical vendor_type creator");
   if (!block.includes('addNewLabel="+ Add new vendor type"')) result.push("missing first-row + Add new label");

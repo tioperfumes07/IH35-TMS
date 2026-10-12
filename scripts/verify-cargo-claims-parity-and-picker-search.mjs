@@ -60,7 +60,16 @@ export function assertCargoParityAndPickerSearch(sources) {
   // `if (onSearch) return sourceOptions.slice(0, MAX_VISIBLE_OPTIONS)` — that kept a silent 50-row
   // display cap AFTER the server returned the full roster (ACCT-F209). The real SAF-F31 contract is:
   // when onSearch is set, return sourceOptions untouched (no local query filter, no MAX slice).
-  if (!/onSearch\?: \(query: string\) => void;/.test(src[COMBOBOX])) {
+  // 443.102: old rule matched `onSearch?:` anywhere in Combobox.tsx; since #19936 (K2 shared-combobox retire) the file
+  // also holds SimpleComboboxProps with its own onSearch, so removing it from the main ComboboxProps went unseen (the
+  // selftest plant escaped). New rule: the prop must be declared inside the ComboboxProps block itself.
+  const comboboxPropsBlock = (() => {
+    const start = src[COMBOBOX].indexOf("type ComboboxProps = {");
+    if (start < 0) return "";
+    const end = src[COMBOBOX].indexOf("\n};", start);
+    return src[COMBOBOX].slice(start, end < 0 ? undefined : end);
+  })();
+  if (!/onSearch\?: \(query: string\) => void;/.test(comboboxPropsBlock)) {
     problems.push(`${COMBOBOX}: no optional onSearch prop — pickers cannot ask the server, so limit:200 silently truncates.`);
   }
   if (!/if \(onSearch\) return sourceOptions;/.test(src[COMBOBOX])) {
