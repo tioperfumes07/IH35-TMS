@@ -33,6 +33,8 @@ vi.mock("../../_helpers/company-membership-guard.js", () => ({
 }));
 vi.mock("../../auth/session-middleware.js", () => ({ requireAuth: () => true }));
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
+const { mockVoidLiability } = vi.hoisted(() => ({ mockVoidLiability: vi.fn() }));
+vi.mock("../../liabilities/driver-liability-void.service.js", () => ({ voidDriverLiabilityInClientTx: mockVoidLiability }));
 vi.mock("../../driver-finance/deductions.service.js", () => ({
   createSettlementDeduction: vi.fn(async () => ({ id: "deduction" })),
 }));
@@ -189,8 +191,37 @@ describe("civil fine contest/dismiss — voided records are immutable", () => {
     });
   }
 
-  // 443.113 AJK-12 — /dismiss is held to the reduce route's Option B block.
-  it("dismiss BLOCKS a fine already converted to a driver liability (names the liability, writes nothing)", async () => {
+  // LEAD 443.114 — dismissing a converted fine voids its driver liability through the one void engine, THEN dismisses.
+  it("dismiss on a converted fine voids the liability through the void engine BEFORE the dismiss UPDATE", async () => {
+    const order: string[] = [];
+    mockVoidLiability.mockReset();
+    mockVoidLiability.mockImplementation(async () => {
+      order.push("void");
+      return { kind: "ok" };
+    });
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SELECT id::text, converted_to_liability_id::text")) {
+        return { rows: [{ id: FINE_ID, converted_to_liability_id: LIABILITY_ID }], rowCount: 1 };
+      }
+      if (sql.includes("SET status = 'dismissed'")) {
+        order.push("dismiss");
+        return { rows: [{ id: FINE_ID, status: "dismissed" }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/fines/${FINE_ID}/dismiss?operating_company_id=${COMPANY}`,
+      payload: { notes: "court dismissed" },
+    });
+    expect(res.statusCode, res.body).toBe(200);
+    expect(mockVoidLiability).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ liabilityId: LIABILITY_ID }));
+    expect(order).toEqual(["void", "dismiss"]);
+  });
+
+  it("dismiss surfaces the void engine's recovered refusal by name and never dismisses", async () => {
+    mockVoidLiability.mockReset();
+    mockVoidLiability.mockResolvedValue({ kind: "recovered", recovered_cents: 5000 });
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("SELECT id::text, converted_to_liability_id::text")) {
         return { rows: [{ id: FINE_ID, converted_to_liability_id: LIABILITY_ID }], rowCount: 1 };
@@ -203,19 +234,20 @@ describe("civil fine contest/dismiss — voided records are immutable", () => {
       payload: { notes: "court dismissed" },
     });
     expect(res.statusCode).toBe(409);
-    const body = res.json();
-    expect(body.error).toBe("fine_already_converted_to_liability");
-    expect(body.driver_liability_id).toBe(LIABILITY_ID);
+    expect(res.json().error).toBe("driver_receivable_partly_recovered");
     expect(mockQuery.mock.calls.some(([sql]) => String(sql).includes("SET status = 'dismissed'"))).toBe(false);
   });
 
-  it("dismiss carries a converted_to_liability_id IS NULL predicate in its UPDATE", async () => {
+  it("dismiss re-checks the converted pointer it read in its UPDATE (race with a concurrent convert)", async () => {
     let seenSql = "";
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("SELECT id::text, converted_to_liability_id::text")) {
         return { rows: [{ id: FINE_ID, converted_to_liability_id: null }], rowCount: 1 };
       }
-      if (sql.includes("SET status = 'dismissed'")) seenSql = sql;
+      if (sql.includes("SET status = 'dismissed'")) {
+        seenSql = sql;
+        return { rows: [{ id: FINE_ID }], rowCount: 1 };
+      }
       return { rows: [], rowCount: 0 };
     });
     await app.inject({
@@ -223,6 +255,6 @@ describe("civil fine contest/dismiss — voided records are immutable", () => {
       url: `/api/v1/safety/fines/${FINE_ID}/dismiss?operating_company_id=${COMPANY}`,
       payload: { notes: "note" },
     });
-    expect(seenSql).toContain("converted_to_liability_id IS NULL");
+    expect(seenSql).toContain("converted_to_liability_id IS NOT DISTINCT FROM");
   });
 });

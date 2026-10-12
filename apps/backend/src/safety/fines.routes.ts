@@ -7,6 +7,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { createSettlementDeduction } from "../driver-finance/deductions.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { postCompanyPaidCivilFine } from "../accounting/safety-fine-posting/poster.service.js";
+import { voidDriverLiabilityInClientTx } from "../liabilities/driver-liability-void.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -63,6 +64,13 @@ const updateFineBody = z.object({
 const updateStatusBody = z.object({
   notes: z.string().min(1).optional(),
 });
+
+const clearDanglingLinkBody = z.object({
+  dry_run: z.boolean().default(true),
+});
+
+/** Thrown inside the dismiss transaction so a lost race rolls the liability void back with it. */
+class FineStateChangedError extends Error {}
 
 const reduceFineBody = z.object({
   amount_cents: z.number().int().min(0),
@@ -657,14 +665,15 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     const body = updateStatusBody.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
-    // 443.113 AJK-12 — a fine converted to a driver liability carries a posted driver receivable (Dr
-    // driver_fine_receivable / Cr civil_fines_expense) and a pending settlement deduction. Dismissing only the
-    // fine would leave the driver owing a dismissed fine, so the dismissal is refused BY NAME with the remedy —
-    // the same hard block the reduce route applies (OWNER RULING 2026-07-23, Option B). The database already
-    // locks a converted fine's status to paid / reduced (safety.enforce_fine_lock_after_conversion, migration
-    // 0050), which made this path a raw 500 with no remedy. The debt is cancelled through the one liability void
-    // engine (Owner: PATCH /api/v1/liabilities/:id/void — voids the pending deduction, reverses the receivable,
-    // refuses if any of it was already recovered through a settlement).
+    // LEAD 443.114 (AJK-12 ruling) — a fine dismissed (e.g. in court) clears the driver charge in ONE action. A fine
+    // converted to a driver liability carries a posted driver receivable (Dr driver_fine_receivable / Cr
+    // civil_fines_expense) and a pending settlement deduction, so dismissing it runs, in this one transaction:
+    //   1. the ONE liability void engine (voidDriverLiabilityInClientTx — the same function PATCH
+    //      /api/v1/liabilities/:id/void calls): voids the pending deduction, reverses the receivable, holds the
+    //      schedule, audits; refused BY NAME (nothing written) when any of it was already recovered through settlement;
+    //   2. THEN the fine is marked dismissed — the DB lock (migration 202615820910) allows converted -> dismissed only
+    //      once that liability is voided.
+    // Voiding a driver debt is Owner-only (the liability void route's gate), so dismissing a CONVERTED fine is too.
     const outcome = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const cur = await client.query<{ id: string; converted_to_liability_id: string | null }>(
         `SELECT id::text, converted_to_liability_id::text
@@ -675,7 +684,23 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
       );
       const fine = cur.rows[0];
       if (!fine) return { kind: "not_found" as const };
-      if (fine.converted_to_liability_id) return { kind: "converted" as const, liabilityId: fine.converted_to_liability_id };
+
+      let voidedLiabilityId: string | null = null;
+      if (fine.converted_to_liability_id) {
+        if (user.role !== "Owner") return { kind: "owner_only" as const };
+        const voided = await voidDriverLiabilityInClientTx(client, {
+          operatingCompanyId: query.data.operating_company_id,
+          liabilityId: fine.converted_to_liability_id,
+          actorUserId: user.uuid,
+          reason: `Fine dismissed: ${body.data.notes ?? "dismissed"}`,
+        });
+        if (voided.kind === "recovered") {
+          return { kind: "recovered" as const, liabilityId: fine.converted_to_liability_id, recoveredCents: voided.recovered_cents };
+        }
+        if (voided.kind === "not_found") return { kind: "liability_missing" as const, liabilityId: fine.converted_to_liability_id };
+        // already_voided: the debt is already cancelled — the dismissal itself proceeds.
+        voidedLiabilityId = fine.converted_to_liability_id;
+      }
 
       const res = await client.query(
         `
@@ -686,24 +711,49 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
           WHERE id = $1
             AND operating_company_id = $2::uuid
             AND voided_at IS NULL
-            AND converted_to_liability_id IS NULL
+            AND converted_to_liability_id IS NOT DISTINCT FROM $5::uuid
           RETURNING *
         `,
-        [params.data.id, query.data.operating_company_id, body.data.notes ?? null, user.uuid]
+        [params.data.id, query.data.operating_company_id, body.data.notes ?? null, user.uuid, fine.converted_to_liability_id]
       );
-      // The predicate is repeated so a concurrent convert between the SELECT and the UPDATE cannot slip through.
-      if (!res.rows[0]) return { kind: "conflict_race" as const };
+      // The pointer is repeated so a concurrent convert between the SELECT and the UPDATE cannot slip through.
+      if (!res.rows[0]) throw new FineStateChangedError();
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "safety.fine.dismissed",
+        {
+          fine_id: params.data.id,
+          operating_company_id: query.data.operating_company_id,
+          voided_driver_liability_id: voidedLiabilityId,
+          notes: body.data.notes ?? null,
+        },
+        voidedLiabilityId ? "warning" : "info",
+        "LEAD-443.114-AJK-12"
+      );
       return { kind: "ok" as const, row: res.rows[0] };
+    }).catch((e: unknown) => {
+      if (e instanceof FineStateChangedError) return { kind: "conflict_race" as const };
+      throw e;
     });
     if (outcome.kind === "not_found") return reply.code(404).send({ error: "fine_not_found" });
-    if (outcome.kind === "converted") {
+    if (outcome.kind === "owner_only") {
+      return reply.code(403).send({
+        error: "forbidden_owner_only",
+        message: "This fine was converted to a driver liability; dismissing it voids the driver's debt, which only the Owner can do.",
+      });
+    }
+    if (outcome.kind === "recovered") {
       return reply.code(409).send({
-        error: "fine_already_converted_to_liability",
-        message:
-          "This fine was converted to a driver liability, so the driver owes it through a settlement deduction. " +
-          "Dismissing only the fine would leave that debt live. To cancel the driver's debt for a dismissed fine, " +
-          "the Owner voids the driver liability (Liabilities › Void), which voids the pending deduction and reverses " +
-          "the receivable; money already recovered through a settlement is never voided silently.",
+        error: "driver_receivable_partly_recovered",
+        message: `$${(outcome.recoveredCents / 100).toFixed(2)} of this fine's driver receivable was already recovered through settlement; it cannot be written off whole, so the fine was not dismissed.`,
+        driver_liability_id: outcome.liabilityId,
+      });
+    }
+    if (outcome.kind === "liability_missing") {
+      return reply.code(409).send({
+        error: "fine_liability_link_dangling",
+        message: "This fine points at a driver liability that no longer exists. The Owner clears the dangling link first (POST /api/v1/safety/fines/:id/clear-missing-liability-link), then dismisses.",
         driver_liability_id: outcome.liabilityId,
       });
     }
@@ -715,6 +765,87 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     }
     return outcome.row;
   });
+
+  // LEAD 443.114 — a converted fine whose driver liability no longer exists (e.g. removed by a governed purge) keeps a
+  // dangling converted_to_liability_id: the fine looks converted, yet no debt exists, and dismiss / reduce / convert are
+  // all blocked. The Owner clears ONLY that pointer (dry run first); the fine's status is unchanged. The DB lock
+  // (migration 202615820910) refuses clearing a pointer whose liability exists.
+  app.post(
+    "/api/v1/safety/fines/:id/clear-missing-liability-link",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const params = idParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return sendValidationError(reply, params.error);
+      const query = companyQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return sendValidationError(reply, query.error);
+      const body = clearDanglingLinkBody.safeParse(req.body ?? {});
+      if (!body.success) return sendValidationError(reply, body.error);
+      const dryRun = body.data.dry_run;
+
+      const outcome = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+        if (user.role !== "Owner") {
+          await appendCrudAudit(
+            client,
+            user.uuid,
+            "safety.fine.dangling_liability_link_clear_refused_non_owner",
+            { fine_id: params.data.id, operating_company_id: query.data.operating_company_id, role: user.role },
+            "warning",
+            "LEAD-443.114-AJK-12"
+          );
+          return { kind: "owner_only" as const };
+        }
+        const cur = await client.query<{ id: string; status: string; converted_to_liability_id: string | null; liability_exists: boolean }>(
+          `SELECT f.id::text, f.status::text, f.converted_to_liability_id::text,
+                  EXISTS (SELECT 1 FROM driver_finance.driver_liabilities l WHERE l.id = f.converted_to_liability_id) AS liability_exists
+             FROM safety.civil_fines f
+            WHERE f.id = $1 AND f.operating_company_id = $2::uuid AND f.voided_at IS NULL
+            LIMIT 1 FOR UPDATE`,
+          [params.data.id, query.data.operating_company_id]
+        );
+        const fine = cur.rows[0];
+        if (!fine) return { kind: "not_found" as const };
+        if (!fine.converted_to_liability_id) return { kind: "not_converted" as const };
+        if (fine.liability_exists) return { kind: "liability_exists" as const, liabilityId: fine.converted_to_liability_id };
+        if (dryRun) {
+          return { kind: "ok" as const, dry_run: true, fine_id: fine.id, status: fine.status, cleared_liability_id: fine.converted_to_liability_id };
+        }
+        await client.query(
+          `UPDATE safety.civil_fines
+              SET converted_to_liability_id = NULL,
+                  updated_by_user_id = $3
+            WHERE id = $1 AND operating_company_id = $2::uuid`,
+          [fine.id, query.data.operating_company_id, user.uuid]
+        );
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "safety.fine.dangling_liability_link_cleared",
+          {
+            fine_id: fine.id,
+            operating_company_id: query.data.operating_company_id,
+            old_converted_to_liability_id: fine.converted_to_liability_id,
+            status_unchanged: fine.status,
+          },
+          "warning",
+          "LEAD-443.114-AJK-12"
+        );
+        return { kind: "ok" as const, dry_run: false, fine_id: fine.id, status: fine.status, cleared_liability_id: fine.converted_to_liability_id };
+      });
+      if (outcome.kind === "owner_only") return reply.code(403).send({ error: "forbidden_owner_only" });
+      if (outcome.kind === "not_found") return reply.code(404).send({ error: "fine_not_found" });
+      if (outcome.kind === "not_converted") return reply.code(409).send({ error: "fine_not_converted" });
+      if (outcome.kind === "liability_exists") {
+        return reply.code(409).send({
+          error: "fine_liability_exists",
+          message: "The liability this fine points at exists; the link is not dangling. Dismiss the fine (voids the liability) or void the liability instead.",
+          driver_liability_id: outcome.liabilityId,
+        });
+      }
+      return outcome;
+    }
+  );
 
   app.post("/api/v1/safety/fines/:id/reduce", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);

@@ -6,7 +6,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { driverReceivableFor } from "../driver-finance/driver-receivable-roles.js";
-import { writeOffDriverReceivableInClientTx } from "../driver-finance/driver-receivable-writeoff.service.js";
+import { voidDriverLiabilityInClientTx } from "./driver-liability-void.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -420,72 +420,15 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
     const companyId = query.data.operating_company_id;
 
-    const result = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const pre = await client.query<{ id: string; voided_at: string | null }>(
-        `SELECT id, voided_at::text AS voided_at
-           FROM driver_finance.driver_liabilities
-          WHERE id = $1 AND operating_company_id = $2::uuid
-          LIMIT 1 FOR UPDATE`,
-        [params.data.id, companyId]
-      );
-      if (!pre.rows[0]) return { kind: "not_found" as const };
-      if (pre.rows[0].voided_at) return { kind: "already_voided" as const };
-
-      // ROUND 394 RULING 2 — a posted driver receivable (damage / fine) is written off ONLY by the reversing
-      // entry of its creation posting; refused when any of it was already recovered through settlement.
-      const writeOff = await writeOffDriverReceivableInClientTx(client, {
+    // ONE engine (LEAD 443.114): the same function the fine dismissal cascade calls.
+    const result = await withCompanyScope(user.uuid, companyId, async (client) =>
+      voidDriverLiabilityInClientTx(client, {
         operatingCompanyId: companyId,
         liabilityId: params.data.id,
         actorUserId: user.uuid,
         reason: body.data.reason,
-      });
-      if (writeOff.kind === "recovered") return { kind: "recovered" as const, recovered_cents: writeOff.recovered_cents };
-
-      await client.query(
-        `
-          UPDATE driver_finance.driver_liabilities
-          SET current_balance = 0,
-              status = 'voided',
-              voided_at = now(),
-              void_reason = $3,
-              voided_by_user_id = $4::uuid,
-              void_reversal_entry_id = COALESCE($5::uuid, void_reversal_entry_id)
-          WHERE id = $1
-            AND operating_company_id = $2::uuid
-        `,
-        [params.data.id, companyId, body.data.reason, user.uuid, writeOff.kind === "reversed" ? writeOff.journal_entry_id : null]
-      );
-
-      // Cascade: stop any future recovery. deduction_schedule has no cancelled/voided concept of its
-      // own (append-only forward schedule) — reuse the SAME hold_until_period/hold_reason mechanism
-      // the /hold route already uses, just permanent rather than the +14-day temporary hold, so a
-      // voided liability can never silently resume deducting once its hold happens to expire.
-      await client.query(
-        `
-          UPDATE driver_finance.deduction_schedule
-          SET hold_until_period = '9999-12-31'::date,
-              hold_reason = $2,
-              updated_at = now()
-          WHERE liability_id = $1
-        `,
-        [params.data.id, `Parent liability voided: ${body.data.reason}`]
-      );
-
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "liability.voided",
-        {
-          resource_type: "driver_finance.driver_liabilities",
-          resource_id: params.data.id,
-          operating_company_id: companyId,
-          reason: body.data.reason,
-        },
-        "warning",
-        "ACCT-SETL-LIAB-VOID-GAP"
-      );
-      return { kind: "ok" as const };
-    });
+      })
+    );
 
     if (result.kind === "not_found") return reply.code(404).send({ error: "liability_not_found" });
     if (result.kind === "already_voided") return reply.code(409).send({ error: "liability_already_voided" });

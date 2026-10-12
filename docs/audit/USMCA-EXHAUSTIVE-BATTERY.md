@@ -11,10 +11,10 @@
 | bucket | n | meaning |
 |---|---:|---|
 | **create** (collection POST) | 348 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 279 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
+| **nested create** (child POST) | 280 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 253 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 72 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 952 | |
+| **TOTAL POST endpoints** | 953 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -135,7 +135,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/vendor-credits` | `apps/backend/src/accounting/vendor-credits.routes.ts:233` | — | — | — |
 | create | `/api/v1/accounting/vendors/batch-categorize` | `apps/backend/src/accounting/vendor-category.routes.ts:45` | — | — | — |
 
-### safety — 67 create-surface(s)
+### safety — 68 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
@@ -175,12 +175,13 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/safety/drug-program/tests` | `apps/backend/src/safety/drug-program.routes.ts:211` | — | — | — |
 | create | `/api/v1/safety/dvir` | `apps/backend/src/safety/dvir.routes.ts:260` | — | — | — |
 | create | `/api/v1/safety/events-log` | `apps/backend/src/safety/events/safety-events.routes.ts:312` | — | — | — |
-| create | `/api/v1/safety/fines` | `apps/backend/src/safety/fines.routes.ts:282` | — | — | — |
-| nested | `/api/v1/safety/fines/:id/contest` | `apps/backend/src/safety/fines.routes.ts:618` | — | — | — |
-| nested | `/api/v1/safety/fines/:id/convert-to-liability` | `apps/backend/src/safety/fines.routes.ts:447` | — | — | — |
-| nested | `/api/v1/safety/fines/:id/dismiss` | `apps/backend/src/safety/fines.routes.ts:649` | — | — | — |
-| nested | `/api/v1/safety/fines/:id/link-payment` | `apps/backend/src/safety/fines.routes.ts:810` | — | — | — |
-| nested | `/api/v1/safety/fines/:id/reduce` | `apps/backend/src/safety/fines.routes.ts:719` | — | — | — |
+| create | `/api/v1/safety/fines` | `apps/backend/src/safety/fines.routes.ts:290` | — | — | — |
+| nested | `/api/v1/safety/fines/:id/clear-missing-liability-link` | `apps/backend/src/safety/fines.routes.ts:773` | — | — | — |
+| nested | `/api/v1/safety/fines/:id/contest` | `apps/backend/src/safety/fines.routes.ts:626` | — | — | — |
+| nested | `/api/v1/safety/fines/:id/convert-to-liability` | `apps/backend/src/safety/fines.routes.ts:455` | — | — | — |
+| nested | `/api/v1/safety/fines/:id/dismiss` | `apps/backend/src/safety/fines.routes.ts:657` | — | — | — |
+| nested | `/api/v1/safety/fines/:id/link-payment` | `apps/backend/src/safety/fines.routes.ts:941` | — | — | — |
+| nested | `/api/v1/safety/fines/:id/reduce` | `apps/backend/src/safety/fines.routes.ts:850` | — | — | — |
 | create | `/api/v1/safety/hos-violations` | `apps/backend/src/routes/safety/hos-violations.ts:168` | — | — | — |
 | create | `/api/v1/safety/hos/exceptions` | `apps/backend/src/safety/hos.routes.ts:34` | — | — | — |
 | create | `/api/v1/safety/incidents` | `apps/backend/src/safety/incidents.routes.ts:345` | — | — | — |
