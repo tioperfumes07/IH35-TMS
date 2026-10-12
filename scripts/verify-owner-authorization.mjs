@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input origin/main — reads the AUTH block's own adding commit and its merge (git log -S / git show origin/main), not only the declaration file. */
 // ROUND 133 (owner law, P0): "A production write is authorized ONLY by an OPEN, unexpired
 // AUTH-<NNN> on main. Verify with scripts/verify-owner-authorization.mjs before you run it."
 //

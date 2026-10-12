@@ -34,7 +34,7 @@
  * Any other error (syntax, permission, connection reset mid-query, a column that vanished) still FAILs
  * loud — only "the specific relation this guard reads doesn't exist yet" is treated as unverifiable.
  */
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "3041-verify-no-future-dated-or-untagged-sample-money";
 const FUTURE_DAYS = 30;
@@ -73,20 +73,8 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const url = process.env.DATABASE_URL;
-if (!url) {
-  console.log(`[${LABEL}] SKIP — no DATABASE_URL (static context); this guard is DB-backed by design`);
-  process.exit(0);
-}
-
-const pool = new pg.Pool({ connectionString: url, ssl: url.includes("localhost") ? false : { rejectUnauthorized: false } });
-let client;
-try {
-  client = await pool.connect();
-} catch {
-  console.log(`[${LABEL}] SKIP — database unreachable (static context)`);
-  process.exit(0);
-}
+// 443.105: a live money guard that cannot connect FAILS (ROUND 29.9-B, verify-no-silent-db-skip) — never a skip-pass.
+const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
 
 try {
   await client.query("BEGIN");
@@ -154,14 +142,7 @@ try {
   );
 } catch (err) {
   await client.query("ROLLBACK").catch(() => {});
-  if (isMissingGuardedRelation(err)) {
-    // Same posture as the no-DATABASE_URL / unreachable-DB SKIPs above: the process is exiting either
-    // way, so no cleanup dance — just report and go, matching this file's own established style.
-    console.log(
-      `[${LABEL}] SKIP — ${err.message} (schema not provisioned in this DB context; this guard is DB-backed by design, same class as no-DATABASE_URL / unreachable-DB)`
-    );
-    process.exit(0);
-  }
+  // 443.105: a missing guarded relation is an unverifiable read in the live job, never a pass.
   fail(`query failed: ${err?.message ?? err}`);
 } finally {
   client.release();
