@@ -1,5 +1,6 @@
 import { assertNoHistoricalSettlementCoverage } from "../../driver-finance/settlement-historical-attribution.service.js";
 import { sameEntityLoadUnitSql } from "../load-unit.sql.js";
+import { stampNewDriverBillTrailerFromLoad } from "../bill-trailer-stamp.service.js";
 // SETTLEMENT-BILL-PAYMENT — the canonical driver-settlement GL posting engine (blueprint §3, LOCKED).
 // TIER-1 FINANCIAL, BUILD-AND-HOLD. Flag SETTLEMENT_GL_POSTING_ENABLED (default OFF) => NO-OP.
 //
@@ -663,6 +664,9 @@ export async function postSettlementBillPayment(
           [accountingBillId, b.gross_amount_cents / 100, lineDescription, driverPayAccount, b.load_id]
         )
       );
+      // 443.105 item 1: the bill carries its load's trailer (company -> trailer_id + line equipment_id; customer ->
+      // non_owned_trailer_id), from the same rule as the Owner back-stamp (load-trailer.sql.ts).
+      await scoped(actor, opco, (client) => stampNewDriverBillTrailerFromLoad(client, { operatingCompanyId: opco, billId: accountingBillId, loadId: b.load_id }));
       // ACCT-F348 — PERSIST THE LINK THE INSTANT THE BILL EXISTS, not at the end of the leg.
       //
       // The per-load link row was written only in step (d), AFTER the bill JE and both payments. A crash

@@ -24,6 +24,7 @@ import { createJournalEntryOnClient } from "../accounting/journal-entries.servic
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { resolveDriverVendorLink, DriverVendorMissingError } from "../accounting/driver-vendor-link.service.js";
 import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
+import { stampNewDriverBillTrailerFromLoad } from "../accounting/bill-trailer-stamp.service.js";
 
 export class SettlementApChainError extends Error {
   constructor(public code: string, message: string, public details: Record<string, unknown> = {}) {
@@ -280,6 +281,8 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
       })),
     } as never, input.actorUserId);
     const billId = String((bill as { id: string }).id);
+    // 443.105 item 1: the bill carries its load's trailer (company -> trailer_id + line equipment_id; customer -> non_owned_trailer_id).
+    await stampNewDriverBillTrailerFromLoad(client, { operatingCompanyId: opco, billId, loadId: b.loadId });
     const p = await postSourceTransactionInClientTx(client as never, { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: billId, posting_purpose: "initial_post", settlement_id: input.settlementId } as never, { userId: input.actorUserId } as never);
     const billJeId = (p as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
     // AUTH-400 rehearsal (2026-10-04): 90 settlement GL-bill rows with NO bill_journal_entry_id made 45 settlements

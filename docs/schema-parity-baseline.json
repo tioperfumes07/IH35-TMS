@@ -278,6 +278,7 @@
       "load_id",
       "mdata_vendor_id",
       "memo",
+      "non_owned_trailer_id",
       "operating_company_id",
       "paid_amount",
       "paid_cents",
