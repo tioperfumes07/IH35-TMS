@@ -3041,6 +3041,30 @@
       "sort_order",
       "updated_at"
     ],
+    "catalogs.cdl_endorsements": [
+      "code",
+      "created_at",
+      "description",
+      "display_name",
+      "id",
+      "is_active",
+      "metadata",
+      "operating_company_id",
+      "sort_order",
+      "updated_at"
+    ],
+    "catalogs.cdl_restrictions": [
+      "code",
+      "created_at",
+      "description",
+      "display_name",
+      "id",
+      "is_active",
+      "metadata",
+      "operating_company_id",
+      "sort_order",
+      "updated_at"
+    ],
     "catalogs.classes": [
       "class_code",
       "class_name",
@@ -3245,6 +3269,18 @@
       "severity",
       "updated_at",
       "updated_by_user_id"
+    ],
+    "catalogs.employment_statuses": [
+      "code",
+      "created_at",
+      "description",
+      "display_name",
+      "id",
+      "is_active",
+      "metadata",
+      "operating_company_id",
+      "sort_order",
+      "updated_at"
     ],
     "catalogs.equipment_line_item_templates": [
       "code",
@@ -3468,6 +3504,18 @@
       "vacation_advance_notice_days",
       "vacation_days_per_year"
     ],
+    "catalogs.license_classes": [
+      "code",
+      "created_at",
+      "description",
+      "display_name",
+      "id",
+      "is_active",
+      "metadata",
+      "operating_company_id",
+      "sort_order",
+      "updated_at"
+    ],
     "catalogs.load_cancellation_reasons": [
       "billable_to_customer_default",
       "category",
@@ -3519,6 +3567,18 @@
     ],
     "catalogs.maintenance_vendors": [
       "linked_vendor_id"
+    ],
+    "catalogs.medical_card_statuses": [
+      "code",
+      "created_at",
+      "description",
+      "display_name",
+      "id",
+      "is_active",
+      "metadata",
+      "operating_company_id",
+      "sort_order",
+      "updated_at"
     ],
     "catalogs.mexico_states": [
       "code",
@@ -4651,6 +4711,82 @@
       "r2_object_key",
       "sha256_hash",
       "updated_at"
+    ],
+    "downtime.event_costs": [
+      "amount_cents",
+      "basis",
+      "cost_type",
+      "created_at",
+      "docs_file_id",
+      "event_id",
+      "expense_id",
+      "id",
+      "is_cash_cost",
+      "journal_entry_id",
+      "operating_company_id",
+      "quantity",
+      "tank_event_id",
+      "unit_rate_cents"
+    ],
+    "downtime.event_day_reasons": [
+      "category_id",
+      "entered_at",
+      "entered_by_user_id",
+      "event_id",
+      "fault_party_id",
+      "id",
+      "operating_company_id",
+      "reason_date",
+      "reason_text"
+    ],
+    "downtime.events": [
+      "category_id",
+      "closed_at",
+      "closed_by_user_id",
+      "created_at",
+      "driver_id",
+      "ended_at",
+      "engine_on_idle_hours",
+      "fault_party_id",
+      "following_load_id",
+      "id",
+      "idle_source",
+      "is_sample_data",
+      "location_city",
+      "location_lat",
+      "location_lng",
+      "location_name",
+      "location_state",
+      "operating_company_id",
+      "preceding_load_id",
+      "started_at",
+      "unit_id",
+      "updated_at",
+      "work_order_id"
+    ],
+    "downtime.lost_opportunity": [
+      "cancellation_reason_id",
+      "cancelled_at",
+      "cancelled_by_user_id",
+      "cancelled_load_id",
+      "created_at",
+      "customer_id",
+      "del_city",
+      "del_date",
+      "del_location_name",
+      "del_state",
+      "event_id",
+      "fault_party_id",
+      "id",
+      "miles",
+      "operating_company_id",
+      "pu_city",
+      "pu_date",
+      "pu_location_name",
+      "pu_state",
+      "replacement_load_id",
+      "reposition_miles",
+      "would_have_invoiced_cents"
     ],
     "driver_finance.abandonment_chargebacks": [
       "abandonment_event_at",
