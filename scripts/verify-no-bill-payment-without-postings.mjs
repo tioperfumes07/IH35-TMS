@@ -8,12 +8,12 @@
  * STATIC (every run):
  *   RULE 1 — every file under apps/backend/src that does `INSERT INTO accounting.bill_payments` also posts it on the
  *            same transaction: `postSourceTransactionInClientTx(` with source "bill_payment", or
- *            `postBillPaymentGlIfEnabledInClientTx(`. The QBO-origin puller is the one named exception (parallel books:
- *            QBO already holds that A/P settlement — posting-engine refuses QBO_BILL_PAYMENT_POST_GL_REFUSED).
+ *            `postBillPaymentGlIfEnabledInClientTx(`. No provenance exemption exists: ROUND 443.117 9e
+ *            retired mirror-to-native writes (#26728), and a regression must fail like any other writer.
  *   RULE 2 — no caller outside bill-payment-gl.service.ts calls the post-commit `postBillPaymentGlIfEnabled(` — that
  *            is how a committed payment was left with no postings (the post ran after commit and a failure was logged).
- * LIVE (direct endpoint, unscoped, read-only):
- *   RULE 3 — cash bill payments (not settlement_deduction_noncash, not void, not QBO-origin, not sample) with no
+ * LIVE (USMCA plus fail-closed NULL-company rows, read-only):
+ *   RULE 3 — cash bill payments (not settlement_deduction_noncash, not void, not sample) with no
  *            bill_payment posting: may only SHRINK from the committed baseline (0 since 2026-10-06). The original baseline was the 90 written by
  *            scripts/ops/2026-09-28-cc1-round148-ap-adoption-setbased.ts (#22918) — August/September documents, closed
  *            periods (claude/00-AUGUST-AND-SEPTEMBER-ARE-CLOSED-NO-SEAT-TOUCHES-THEM.md) and purge population; they are
@@ -39,9 +39,6 @@ const LABEL = "verify-no-bill-payment-without-postings";
 // 2026-10-06: 0 — the AUTH-400 purge removed the 90 and every writer posts in its own transaction (#25466), so the
 // ceiling drops to the measured 0 (shrink-only). Any unposted cash bill payment now fails.
 export const UNPOSTED_CASH_BASELINE = 0; // STALE-LITERAL-OK: measured live 2026-10-06, shrink-only
-const EXEMPT_INSERTERS = {
-  "apps/backend/src/qbo-sync/ap-bill-payments-puller.ts": "QBO-origin mirror — parallel books, QBO already holds the A/P settlement",
-};
 const INSERT_RE = /INSERT\s+INTO\s+accounting\.bill_payments\b/i;
 const IN_TX_POST_RE = /postBillPaymentGlIfEnabledInClientTx\s*\(|postSourceTransactionInClientTx\s*\([\s\S]{0,300}?["']bill_payment["']/;
 const POST_COMMIT_RE = /\bpostBillPaymentGlIfEnabled\s*\(/;
@@ -88,7 +85,7 @@ export function staticFailures(files) {
     const code = stripComments(src);
     if (INSERT_RE.test(code)) {
       inserters++;
-      if (!EXEMPT_INSERTERS[rel] && !IN_TX_POST_RE.test(code)) {
+      if (!IN_TX_POST_RE.test(code)) {
         failures.push(`RULE 1 ${rel}: inserts accounting.bill_payments but never posts it on the same transaction`);
       }
       for (const line of swallowedPostings(code)) {
@@ -132,20 +129,23 @@ export function liveFailures(unposted, refusal = null) {
   return out;
 }
 
+export const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+export const UNPOSTED_CASH_SQL = `
+    SELECT count(*)::int AS n
+      FROM accounting.bill_payments bp
+     WHERE (bp.operating_company_id = $1::uuid OR bp.operating_company_id IS NULL)
+       AND (bp.operating_company_id IS NULL OR (
+           NOT COALESCE(bp.settlement_deduction_noncash, false)
+       AND bp.voided_at IS NULL AND bp.revoked_at IS NULL AND COALESCE(bp.status, '') <> 'void'
+       AND COALESCE(bp.is_sample_data, false) = false
+       AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings p
+                        WHERE p.operating_company_id = bp.operating_company_id
+                          AND p.source_transaction_type = 'bill_payment' AND p.source_transaction_id = bp.id::text)))`;
+
 async function measure(client) {
   await client.query("BEGIN READ ONLY");
   await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
-  const r = await client.query(`
-    SELECT count(*)::int AS n
-      FROM accounting.bill_payments bp
-      LEFT JOIN accounting.bills b ON b.id = bp.bill_id
-     WHERE NOT COALESCE(bp.settlement_deduction_noncash, false)
-       AND bp.voided_at IS NULL AND bp.revoked_at IS NULL AND COALESCE(bp.status, '') <> 'void'
-       AND COALESCE(bp.is_sample_data, false) = false
-       AND lower(COALESCE(b.source_system, '')) <> 'qbo'
-       AND bp.qbo_bill_payment_id IS NULL
-       AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings p
-                        WHERE p.source_transaction_type = 'bill_payment' AND p.source_transaction_id = bp.id::text)`);
+  const r = await client.query(UNPOSTED_CASH_SQL, [USMCA_COMPANY_ID]);
   const applied = (await client.query(`SELECT 1 FROM _system._schema_migrations WHERE filename LIKE '202615360100%'`)).rows.length > 0;
   const trig = (await client.query(`
     SELECT t.tgenabled AS enabled, t.tgdeferrable AS deferrable, t.tginitdeferred AS initdeferred
@@ -168,7 +168,7 @@ if (isMain) {
       ["try around the whole transaction passes (catch runs after rollback)", f([{ rel: "w.ts", src: 'try { await withCompanyScope(u, c, async (client) => { ' + ins + ' await postBillPaymentGlIfEnabledInClientTx(client, c, id, a); }); } catch (err) { return reply.code(500).send({}); }' }]).length === 0],
       ["post in a catch that rethrows passes", f([{ rel: "z.ts", src: ins + ' try { await postSourceTransactionInClientTx(client, { source_transaction_type: "bill_payment", source_transaction_id: id }, a); } catch (err) { logger.warn("x"); throw err; }' }]).length === 0],
       ["post-commit caller fails", f([{ rel: "y.ts", src: "await postBillPaymentGlIfEnabled(c, id, a);" }]).some((x) => x.startsWith("RULE 2"))],
-      ["QBO puller exempt", f([{ rel: "apps/backend/src/qbo-sync/ap-bill-payments-puller.ts", src: ins }]).length === 0],
+      ["QBO puller cannot regain an unposted native writer", f([{ rel: "apps/backend/src/qbo-sync/ap-bill-payments-puller.ts", src: ins }]).length > 0],
       ["live at baseline passes", liveFailures(UNPOSTED_CASH_BASELINE).length === 0],
       ["live above baseline fails", liveFailures(UNPOSTED_CASH_BASELINE + 1).length === 1],
       ["refusal applied + live deferred trigger passes", liveFailures(0, { applied: true, trigger: { enabled: "O", deferrable: true, initdeferred: true } }).length === 0],

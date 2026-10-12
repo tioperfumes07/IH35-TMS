@@ -1048,5 +1048,12 @@
     "source_file": "docs/bus/2026-10-12-CODEX-443-117-NATIVE-GL.md",
     "guard": "scripts/verify-native-document-gl-independent-of-qbo.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-12-NATIVE-BILL-PAYMENT-WRITERS",
+    "title": "QBO provenance never exempts native bill payments from the shared atomic poster; preserve bill-first and explicit noncash settlement application",
+    "source_file": "docs/bus/2026-10-12-CODEX-443-117-NATIVE-BILL-PAYMENTS.md",
+    "guard": "scripts/verify-qbo-origin-bill-payment-writers-post-native-gl.mjs",
+    "type": "enforced"
   }
 ]

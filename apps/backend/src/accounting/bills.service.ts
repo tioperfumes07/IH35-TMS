@@ -3483,12 +3483,9 @@ async function payBillRowInClientTx(
       "P5-D2-BILL-PAYMENT"
     );
 
-    // Parallel books: QBO-origin bills never receive a TMS Bill→GL leg. Attempting BillPayment→GL
-    // would throw BILL_AP_NOT_POSTED (or invent a second JE) and — because posting runs in THIS txn —
-    // roll back the entire subledger payment. Skip GL for source_system=qbo; keep payment + bank cache.
-    const isQboBill = String(bill.source_system ?? "").toLowerCase() === "qbo";
-
-    // When posting is ON for this entity (and the bill is TMS-native), post the balanced DR ap_control /
+    // ROUND 443.117 9b: imported provenance never changes native payment posting ownership.
+    // The shared poster requires the bill's native A/P leg and refuses an unposted bill atomically.
+    // When posting is ON for this entity, post the balanced DR ap_control /
     // CR bank JE ATOMICALLY in THIS transaction (GUARD 2026-07-11: the bank-balance cache and the GL cash
     // account are SEPARATE stores — recording −amount in both is correct double-entry + cache coherence,
     // not double-counting). Running it on the same client means a posting failure rolls back the payment
@@ -3498,7 +3495,7 @@ async function payBillRowInClientTx(
     // Outer `if (flags.glPostingEnabled)` is required by verify-bill-payment-posts-gl (flag-OFF must still pay).
     if (flags.glPostingEnabled) {
       // ROUND 326: a non-cash settlement application's GL is the settlement close's application JE, never a cash leg.
-      if (!isQboBill && input.settlementDeductionNoncash !== true) {
+      if (input.settlementDeductionNoncash !== true) {
         await postSourceTransactionInClientTx(
           client,
           {
@@ -3527,8 +3524,8 @@ async function payBillRowInClientTx(
     return {
       ...paymentRes.rows[0],
       amount_cents: Number(paymentRes.rows[0].amount_cents ?? Math.round(Number(paymentRes.rows[0].amount ?? 0) * 100)),
-      gl_posting: isQboBill
-        ? ({ posted: false, reason: "qbo_parallel_books" } as const)
+      gl_posting: input.settlementDeductionNoncash === true
+        ? ({ posted: false, reason: "settlement_noncash_application" } as const)
         : flags.glPostingEnabled
           ? ({ posted: true } as const)
           : ({ posted: false, reason: "blocked_flag_off" } as const),
