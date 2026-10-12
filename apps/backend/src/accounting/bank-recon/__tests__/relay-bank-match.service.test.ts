@@ -4,11 +4,16 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockReverse } = vi.hoisted(() => ({
+const { mockReverse, mockUnmatch } = vi.hoisted(() => ({
   mockReverse: vi.fn(async () => ({ result: "reversed" })),
+  mockUnmatch: vi.fn(async () => ({ released: [], reversed_match_journal_entry_id: null })),
 }));
 vi.mock("../../posting-engine.service.js", () => ({
   reversePostedSourceTransactionInClientTx: mockReverse,
+}));
+// 443.100: the re-match releases the prior link through the ONE unmatch writer (never an inline UPDATE).
+vi.mock("../unmatch-bank-transaction.service.js", () => ({
+  unmatchBankTransactionOnClient: mockUnmatch,
 }));
 
 import {
@@ -287,15 +292,9 @@ describe("R5 recommend / accept", () => {
     ).rejects.toMatchObject({ code: "account_cross_entity" });
   });
 
-  it("re-match → prior link reversed via reversePostedSourceTransaction, never void", async () => {
-    const prior = {
-      ...bankBase,
-      matched_relay_fuel_transaction_id: "fill-old",
-      matched_journal_entry_id: "je-prior",
-      review_state: "matched",
-    };
+  function rematchClient(prior: Record<string, unknown>, priorSource: string) {
     let bankLoads = 0;
-    const { c, calls } = makeClient([
+    return makeClient([
       (q) => {
         if (q.sql.includes("matched_relay_fuel_transaction_id = $1")) return { rows: [] };
         if (q.sql.includes("FROM banking.bank_transactions") && q.sql.includes("LIMIT 1") && !q.sql.includes("UPDATE")) {
@@ -318,15 +317,7 @@ describe("R5 recommend / accept", () => {
         // The prior entry's source is read per posting (relay-bank-match.service.ts rematchRelayBankMatch: FROM
         // accounting.journal_entry_postings — ROUND 393.2 every line names its source document).
         if (q.sql.includes("FROM accounting.journal_entry_postings")) {
-          return {
-            rows: [{ source_transaction_type: "bank_categorization", source_transaction_id: "bank-1" }],
-          };
-        }
-        return null;
-      },
-      (q) => {
-        if (q.sql.includes("UPDATE banking.bank_transactions") && q.sql.includes("for_review")) {
-          return { rows: [], rowCount: 1 };
+          return { rows: [{ source_transaction_type: priorSource, source_transaction_id: "bank-1" }] };
         }
         return null;
       },
@@ -347,6 +338,12 @@ describe("R5 recommend / accept", () => {
         return null;
       },
     ]);
+  }
+
+  it("re-match → categorize-written JE reversed via reversePostedSourceTransaction, link released by the one unmatch writer, never void", async () => {
+    mockUnmatch.mockClear();
+    const prior = { ...bankBase, matched_journal_entry_id: "je-prior", review_state: "categorized" };
+    const { c, calls } = rematchClient(prior, "bank_categorization");
 
     await rematchRelayBankMatch(c as never, {
       operating_company_id: OPCO,
@@ -359,7 +356,32 @@ describe("R5 recommend / accept", () => {
       source_transaction_type: "bank_categorization",
       source_transaction_id: "bank-1",
     });
+    expect(mockUnmatch).toHaveBeenCalledTimes(1);
+    expect(mockUnmatch.mock.calls[0]![1]).toMatchObject({ operating_company_id: OPCO, bank_transaction_id: "bank-1", actor_user_uuid: "actor" });
+    // The release is never an inline pointer wipe here (half-release / orphan JE — 443.100).
+    expect(calls.some((q) => /matched_journal_entry_id\s*=\s*NULL/i.test(q.sql))).toBe(false);
     expect(JSON.stringify(calls)).not.toMatch(/voidDocument|void_at|postVoid/i);
+  });
+
+  it("re-match of a line whose JE a prior MATCH created → not reversed here (the unmatch writer reverses it once)", async () => {
+    mockReverse.mockClear();
+    mockUnmatch.mockClear();
+    const prior = {
+      ...bankBase,
+      matched_relay_fuel_transaction_id: "fill-old",
+      matched_journal_entry_id: "je-prior",
+      review_state: "matched",
+    };
+    const { c } = rematchClient(prior, "relay_fuel");
+
+    await rematchRelayBankMatch(c as never, {
+      operating_company_id: OPCO,
+      bank_transaction_id: "bank-1",
+      relay_fuel_transaction_id: "fill-1",
+      actor_user_uuid: "actor",
+    });
+    expect(mockReverse).not.toHaveBeenCalled();
+    expect(mockUnmatch).toHaveBeenCalledTimes(1);
   });
 
   it("$0 → refusal zero_amount", async () => {

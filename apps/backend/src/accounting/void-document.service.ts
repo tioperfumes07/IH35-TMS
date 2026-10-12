@@ -243,13 +243,45 @@ export async function voidDocument(
       return { voidedAt: result.voidedAt, reversalJournalEntryId: result.reversalJournalEntryId };
     }
 
-    case "credit_memo":
+    case "credit_memo": {
+      // ROUND 373.4 (202615370000, CC-1): a credit memo that names its account POSTS at creation (Dr account / Cr A/R),
+      // so the TASK 18 "zero posting lines" premise no longer holds for this type — the tripwire
+      // (verify-credit-memo-liability-zero-posting-lines) fired in CI the first time one posted. The void reverses that
+      // posting through the engine on this transaction, exactly as credit-memos.routes.ts's /void does; a credit memo whose
+      // GL is owned elsewhere (payment overpayment, Faro short-pay) never posted and has nothing to reverse.
+      let reversalJournalEntryId: string | null = null;
+      try {
+        const rev = await reversePostedSourceTransactionInClientTx(
+          client,
+          {
+            operating_company_id: input.operatingCompanyId,
+            source_transaction_type: "credit_memo",
+            source_transaction_id: input.id,
+          },
+          { userId: input.actor.userId },
+          input.currentBusinessDate
+        );
+        reversalJournalEntryId = rev.journal_entry_id ?? null;
+      } catch (err) {
+        const code = (err as { code?: string })?.code;
+        if (code !== "SOURCE_NOT_FOUND") throw err;
+      }
+      await appendCrudAudit(
+        client,
+        input.actor.userId,
+        "accounting.credit_memo.voided",
+        { resource_type: input.type, resource_id: input.id, reason: input.reason, reversal_journal_entry_id: reversalJournalEntryId },
+        "warning",
+        "ACCT-F5606"
+      );
+      return { voidedAt: nowIso(), reversalJournalEntryId };
+    }
+
     case "liability": {
-      // TASK 18 — see this file's header. Verified live, zero posting lines at either source type
-      // today; nothing to reverse. Register the void event ourselves (the real routes for both
-      // types — credit-memos.routes.ts, liabilities.routes.ts — flip status directly and never call
-      // an underlying reversal engine that would otherwise write this audit entry) and return a
-      // clean null, never a thrown refusal for a case verified genuinely empty.
+      // TASK 18 — see this file's header. Verified live, zero posting lines at this source type
+      // today; nothing to reverse. Register the void event ourselves (liabilities.routes.ts flips
+      // status directly and never calls an underlying reversal engine that would otherwise write this
+      // audit entry) and return a clean null, never a thrown refusal for a case verified genuinely empty.
       await appendCrudAudit(
         client,
         input.actor.userId,

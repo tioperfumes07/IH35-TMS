@@ -13,9 +13,6 @@ import { fileURLToPath } from "node:url";
 export const ALLOW_OFFLINE_SKIP = "static manifest half always runs; the live Neon half runs whenever DATABASE_URL is set (CI and the live job), so an unset URL is a static-only run, not a skipped money verdict";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-// 443.99: the enforcing half (compliance.json prod_verified ratchet) is static and always runs; the live half only reads
-// compliance counts (no money data, honest zero OK) when DATABASE_URL is set — required-live-load-guard runs it with one.
-export const ALLOW_OFFLINE_SKIP = "static manifest ratchet always runs and fails closed; live half reads non-money compliance counts only";
 const LABEL = "verify-usmca-compliance-neon-pv";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const BRANCH = "br-fancy-credit-akjnd07a";

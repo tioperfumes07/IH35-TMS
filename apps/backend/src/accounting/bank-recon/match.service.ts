@@ -58,22 +58,10 @@ import { RELAY_USMCA_DATA_FLOOR } from "../../integrations/relay-payments/relay-
  * Candidate universe = settlement-born only (see settlement-born-candidates.ts). BUILD NO TYPE FILTER.
  */
 
-export type LedgerEntryKind =
-  | "payment"
-  | "bill_payment"
-  | "transfer"
-  | "je"
-  | "bill"
-  | "expense"
-  | "factoring_advance"
-  | "fuel_transaction"
-  | "relay_fuel"
-  | "settlement"
-  // ROUND 373.4 — a Deposit document (accounting.deposits): the bank deposit line matches the deposit that already
-  // posted (Dr bank / Cr Undeposited Funds) when it was made. The match links; it posts nothing.
-  | "deposit"
-  // ROUND 443.29-B — settled Relay company wallet funding (wallet + 3.25% fee = bank/card outflow).
-  | "relay_deposit";
+// 443.100: LedgerEntryKind lives in the type-only leaf ledger-entry-kind.type.ts so the one unmatch writer can name it
+// without importing this engine (verify-no-circular-dependencies).
+import type { LedgerEntryKind } from "./ledger-entry-kind.type.js";
+export type { LedgerEntryKind };
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
 
 // banking.reconciliation_matches.ledger_entry_kind has a CHECK constraint. Migration
