@@ -179,8 +179,8 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/safety/fines/:id/contest` | `apps/backend/src/safety/fines.routes.ts:618` | — | — | — |
 | nested | `/api/v1/safety/fines/:id/convert-to-liability` | `apps/backend/src/safety/fines.routes.ts:447` | — | — | — |
 | nested | `/api/v1/safety/fines/:id/dismiss` | `apps/backend/src/safety/fines.routes.ts:649` | — | — | — |
-| nested | `/api/v1/safety/fines/:id/link-payment` | `apps/backend/src/safety/fines.routes.ts:771` | — | — | — |
-| nested | `/api/v1/safety/fines/:id/reduce` | `apps/backend/src/safety/fines.routes.ts:680` | — | — | — |
+| nested | `/api/v1/safety/fines/:id/link-payment` | `apps/backend/src/safety/fines.routes.ts:810` | — | — | — |
+| nested | `/api/v1/safety/fines/:id/reduce` | `apps/backend/src/safety/fines.routes.ts:719` | — | — | — |
 | create | `/api/v1/safety/hos-violations` | `apps/backend/src/routes/safety/hos-violations.ts:168` | — | — | — |
 | create | `/api/v1/safety/hos/exceptions` | `apps/backend/src/safety/hos.routes.ts:34` | — | — | — |
 | create | `/api/v1/safety/incidents` | `apps/backend/src/safety/incidents.routes.ts:345` | — | — | — |
