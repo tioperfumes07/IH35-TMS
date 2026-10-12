@@ -148,6 +148,18 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
          VALUES ('SETTLEMENT_GL_POSTING_ENABLED', NULL, $1::uuid, $2, $3::uuid)`,
         [flagActor, enabled, userId]
       );
+      // 443.93: the net pay is a bill payment that must post its own JE (settlement-ap-chain.service.ts:357-382,
+      // CASH_PAYMENT_JOURNAL_ENTRY_MISSING) — the same per-user override for BILL_PAYMENT_GL_POSTING_ENABLED, as on
+      // every live entity where settlements post.
+      await db.query(
+        `DELETE FROM lib.feature_flag_overrides WHERE flag_key='BILL_PAYMENT_GL_POSTING_ENABLED' AND user_uuid=$1::uuid`,
+        [flagActor]
+      );
+      await db.query(
+        `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
+         VALUES ('BILL_PAYMENT_GL_POSTING_ENABLED', NULL, $1::uuid, true, $2::uuid)`,
+        [flagActor, userId]
+      );
     });
   }
 
@@ -400,6 +412,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
         await db.query(`DELETE FROM catalogs.payment_methods WHERE id=$1::uuid`, [paymentMethodId]);
         await db.query(`DELETE FROM mdata.drivers WHERE id = ANY($1::uuid[])`, [allDrivers]);
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND (operating_company_id=$1::uuid OR user_uuid=$2::uuid)`, [companyId, flagActor]);
+        await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='BILL_PAYMENT_GL_POSTING_ENABLED' AND user_uuid=$1::uuid`, [flagActor]);
         await db.query(`DELETE FROM integrations.qbo_connections WHERE operating_company_id=$1::uuid AND realm_id=$2`, [companyId, realm]);
       });
     } catch (fixtureCleanupErr) {
