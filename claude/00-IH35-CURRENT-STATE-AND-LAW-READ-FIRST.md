@@ -1,5 +1,7 @@
 See [`docs/LAW.md`](../docs/LAW.md) — the authoritative source for all accounting, schema, and production decisions.
 
+> **Done bar (on-demand):** [docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md](../docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md) — FULLY-WIRED-COMPLETE-BAR-2026-08-13, the 12-item surface bar, Live Chrome last.
+
 ## THE TRANSACTION LINKAGE LAW — owner-stated 2026-09-30, BINDING
 
 Full text: `docs/laws/TRANSACTION-LINKAGE-LAW.md`. Read it before writing any money row.

@@ -83,3 +83,5 @@ DO NOT
 
 DONE LINE per item: PR number · squash sha · deploy id + deployed sha · for the breadcrumb, the
 before/after file count · the guard PASS line verbatim.
+
+> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.

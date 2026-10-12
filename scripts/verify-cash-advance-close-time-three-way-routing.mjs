@@ -52,6 +52,11 @@ export function checkCascadeFile(src) {
     if (!/cascadeBranch === "loan"\s*\n\s*\? await createEmployeeLoanCore/.test(approveFn)) {
       failures.push(`${CASCADE_FILE}: the 'loan' branch must route to createEmployeeLoanCore -- the automatic-loan-to-driver path this item asks for.`);
     }
+    // 443.101: the #1440 load trace is forwarded onto the advance (and its recovery deduction) ONLY off the loan
+    // branch — the approval path itself must never write a loan with a load (the live half below measures it).
+    if (!/const advanceLoadId = cascadeBranch === "loan" \? null :/.test(approveFn) || !/\[advanceLoadId, core\.advanceId/.test(approveFn) || !/loadId: advanceLoadId,/.test(approveFn)) {
+      failures.push(`${CASCADE_FILE}: approveCashAdvanceRequest must forward the request's load_id onto the advance and its recovery deduction only when the branch is not 'loan' -- a loan never links to a load.`);
+    }
     if (!/linked_driver_bill_id: linkedDriverBillId/.test(approveFn)) {
       failures.push(`${CASCADE_FILE}: the bill-payment branches (load_bill/open_bill) must forward linked_driver_bill_id -- the with-a-load bill-payment path this item asks for.`);
     }
@@ -92,11 +97,15 @@ function selftest() {
   if (noBillLink === cascadeSrc) { console.error(`${LABEL} SELFTEST SETUP FAILED: bill-link anchor not found`); process.exit(1); }
   if (!checkCascadeFile(noBillLink).some((f) => f.includes("bill-payment path"))) { console.error(`${LABEL} SELFTEST FAILED: dropping linked_driver_bill_id was not caught`); process.exit(1); }
 
+  const loanCarriesLoad = cascadeSrc.replace('const advanceLoadId = cascadeBranch === "loan" ? null :', 'const advanceLoadId =');
+  if (loanCarriesLoad === cascadeSrc) { console.error(`${LABEL} SELFTEST SETUP FAILED: advanceLoadId anchor not found`); process.exit(1); }
+  if (!checkCascadeFile(loanCarriesLoad).some((f) => f.includes("a loan never links to a load"))) { console.error(`${LABEL} SELFTEST FAILED: forwarding load_id onto a loan was not caught`); process.exit(1); }
+
   const noLoanType = createSrc.replaceAll('liability_type: "loan",', "");
   if (noLoanType === createSrc) { console.error(`${LABEL} SELFTEST SETUP FAILED: liability_type anchor not found`); process.exit(1); }
   if (!checkCreateFile(noLoanType).some((f) => f.includes("distinct liability row"))) { console.error(`${LABEL} SELFTEST FAILED: dropping liability_type:'loan' was not caught`); process.exit(1); }
 
-  console.log(`${LABEL} SELFTEST PASS (5/5 planted regressions caught, real files clean)`);
+  console.log(`${LABEL} SELFTEST PASS (6/6 planted regressions caught, real files clean)`);
 }
 
 async function liveCheck() {

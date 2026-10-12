@@ -790,11 +790,14 @@ export async function approveCashAdvanceRequest(
   // disbursed advance, so driver_finance.driver_advances.load_id mirrors cash_advance_requests.load_id (the
   // load↔advance trace — the whole point of #1440). Booked cash advances carry a load_id; driver-initiated ones
   // don't (NULL, no-op). Entity-scoped to the same operating company.
-  if (row.load_id) {
+  // 443.101: NEVER on the loan branch — a loan is the "no active load, no open bill" outcome and never links to a
+  // load (verify-cash-advance-close-time-three-way-routing, 2026-09-06 law, supersedes the #1440 blanket copy).
+  const advanceLoadId = cascadeBranch === "loan" ? null : ((row.load_id as string | null | undefined) ?? null);
+  if (advanceLoadId) {
     await client.query(
       `UPDATE driver_finance.driver_advances SET load_id = $1::uuid, updated_at = now()
        WHERE id = $2::uuid AND operating_company_id = $3::uuid AND load_id IS NULL`,
-      [row.load_id, core.advanceId, args.operatingCompanyId]
+      [advanceLoadId, core.advanceId, args.operatingCompanyId]
     );
   }
 
@@ -878,7 +881,7 @@ export async function approveCashAdvanceRequest(
     reason: `Cash advance ${core.displayId} (request ${String(updated.display_id ?? args.requestId)})`,
     // #1440/load_id-direct: carry the originating load straight onto the recovery deduction (mirrors the
     // load_id we just stamped on driver_advances). Booked advances carry it; driver-initiated → null.
-    loadId: (row.load_id as string | null | undefined) ?? null,
+    loadId: advanceLoadId,
     createdByUserId: args.actorUserId,
   });
 
