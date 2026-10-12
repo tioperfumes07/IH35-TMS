@@ -2403,6 +2403,11 @@
     "claimed_at": "2026-10-12",
     "purpose": "RULING 443.81 #1: restore banking.refuse_live_match_row_on_released_line to refuse a pointer-less auto_matched row (owner: never automatch; suggestions are read-only, nothing persists them)"
   },
+  "202615640900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "RULING 443.86 #1: deadhead method values for the Google practical deadhead (previous load last stop / truck Samsara position -> first pickup)"
+  },
   "202615451400": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-12",
