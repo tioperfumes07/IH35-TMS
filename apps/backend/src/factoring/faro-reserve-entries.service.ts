@@ -461,10 +461,18 @@ export async function postFaroReserveEntryOnClient(
   }
   if (entry.entry_kind === "rsv_deposit") throw new FaroReserveError("faro_rsv_deposit_posts_with_its_payment_match");
 
+  // 443.110 G8 — a reserve entry tied to a Faro invoice posts on that invoice's load (same company).
+  const reserveLoadId = link
+    ? (await client.query<{ load_id: string | null }>(
+        `SELECT source_load_id::text AS load_id FROM accounting.invoices WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [link.invoice_id, oci]
+      )).rows[0]?.load_id ?? null
+    : null;
   const stamp = (e: EntryRow) => ({
     source_transaction_type: "faro_reserve_entry",
     source_transaction_id: e.id,
     ...(link ? { entity_type: "customer" as const, entity_uuid: link.customer_id } : {}),
+    ...(reserveLoadId ? { load_id: reserveLoadId } : {}),
   });
   const role = (r: Parameters<typeof resolveRoleAccount>[2]) => resolveRoleAccount(client as never, oci, r);
   const cash = await role("factor_cash_reserve_held");

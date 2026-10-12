@@ -124,6 +124,30 @@ export function newestResolverMigration() {
   return null;
 }
 
+/** 443.110 G8 — the factoring lifecycle source types whose load is their factoring advance's (posting-line-writer.ts). */
+export const FACTORING_EVENT_TYPES = ["factoring_customer_payment", "factoring_reserve_release", "factoring_chargeback", "factoring_default_interest", "factoring_advance_deposit"];
+const FACTORING_EVENT_TYPES_SQL = FACTORING_EVENT_TYPES.map((t) => `'${t}'`).join(", ");
+export const WRITER = "apps/backend/src/accounting/posting-line-writer.ts";
+
+/**
+ * RULE 4 (static, 443.110 G8) — the ONE posting writer derives a posting's load from its source document when the
+ * caller did not pass one, and only ever its OWN company's load:
+ *   (a) every factoring lifecycle event type resolves to its advance's source_load_id, scoped to the company;
+ *   (b) the INSERT's derived load is accepted only when mdata.loads says it is this company's load;
+ *   (c) a caller passing another company's load is refused (PostingLoadOfAnotherCompanyError);
+ *   (d) a bank_categorization posting names its party (categorized vendor / driver) — the entity is the document's too.
+ */
+export function writerFailures(src) {
+  const f = [];
+  const list = /FACTORING_EVENT_SOURCE_TYPES\s*=\s*\[([\s\S]*?)\]/.exec(src)?.[1] ?? "";
+  for (const t of FACTORING_EVENT_TYPES) if (!list.includes(`"${t}"`)) f.push(`RULE 4 ${WRITER}: factoring event ${t} no longer derives its advance's load`);
+  if (!/FROM accounting\.factoring_advances WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/.test(src)) f.push(`RULE 4 ${WRITER}: the factoring advance load lookup is not company-scoped`);
+  if (!/sl\.id = accounting\.posting_source_load_id\([\s\S]{0,120}?sl\.operating_company_id = \$1::uuid/.test(src)) f.push(`RULE 4 ${WRITER}: a derived load is stamped without checking it is the posting's company's load`);
+  if (!/throw new PostingLoadOfAnotherCompanyError\(/.test(src)) f.push(`RULE 4 ${WRITER}: a caller-passed load of another company is no longer refused`);
+  if (!/bank_categorization:\s*`SELECT COALESCE\(categorization_vendor_id::text, categorization_driver_id::text\)/.test(src)) f.push(`RULE 4 ${WRITER}: a bank_categorization posting no longer names its categorized party`);
+  return f;
+}
+
 export function run() {
   const files = walk(join(ROOT, "apps/backend/src")).map((p) => ({ rel: relative(ROOT, p), src: readFileSync(p, "utf8") }));
   const { failures, inserts } = staticFailures(files);
@@ -131,6 +155,7 @@ export function run() {
   const resolver = newestResolverMigration();
   if (!resolver) failures.push("RULE 3: no migration defines accounting.posting_source_load_id — the matcher is stale");
   else failures.push(...resolverFailures(resolver.rel, resolver.sql));
+  failures.push(...writerFailures(readFileSync(join(ROOT, WRITER), "utf8")));
   return { failures, inserts, resolver: resolver?.rel };
 }
 
@@ -154,8 +179,24 @@ async function measure(client) {
       -- to_load_id on the leg that puts it on the new one; the undo entry the other way round). Every other posting is
       -- expected to carry what its source resolves to. Same strictness, read from the engine's own record.
       SELECT jep.id, jep.source_transaction_type, jep.source_transaction_id, jep.load_id, jep.created_at,
-             COALESCE(rc.expected_load, accounting.posting_source_load_id(jep.source_transaction_type, jep.source_transaction_id, jep.source_transaction_line_id, jep.reversal_of_line_id), sx.line_load) AS expected
+             COALESCE(rc.expected_load, accounting.posting_source_load_id(jep.source_transaction_type, jep.source_transaction_id, jep.source_transaction_line_id, jep.reversal_of_line_id), sx.line_load, fx.doc_load) AS expected
         FROM accounting.journal_entry_postings jep
+        -- 443.110 G8 (RULE 4): a factoring lifecycle event is sourced by its factoring advance and carries the advance's
+        -- load; a Faro reserve entry tied to a Faro invoice carries that invoice's load. Same company, never a guess.
+        LEFT JOIN LATERAL (
+          SELECT CASE
+                   WHEN jep.reversal_of_line_id IS NULL AND jep.source_transaction_type IN (${FACTORING_EVENT_TYPES_SQL}) THEN
+                     (SELECT fa.source_load_id FROM accounting.factoring_advances fa
+                       WHERE fa.id::text = jep.source_transaction_id AND fa.operating_company_id = jep.operating_company_id)
+                   WHEN jep.reversal_of_line_id IS NULL AND jep.source_transaction_type = 'faro_reserve_entry' THEN
+                     (SELECT CASE WHEN count(DISTINCT i.source_load_id) = 1 THEN (array_agg(i.source_load_id))[1] END
+                        FROM accounting.faro_reserve_entries e
+                        JOIN accounting.factoring_purchase_lines pl ON pl.operating_company_id = e.operating_company_id
+                         AND pl.faro_invoice_number = e.faro_invoice_number AND pl.voided_at IS NULL
+                        JOIN accounting.invoices i ON i.id = pl.invoice_id AND i.operating_company_id = pl.operating_company_id
+                       WHERE e.id::text = jep.source_transaction_id AND e.operating_company_id = jep.operating_company_id)
+                 END AS doc_load
+        ) fx ON true
         -- RULING 443.64 #2 (CC-3): the resolver names a settlement's load only when the settlement covers ONE load. The
         -- pay-run close engine posts a multi-load settlement's pay / recovery legs per load (settlement-payrun-close
         -- byRoleLoad / perLoad), each leg carrying the load of its own settlement line. Such a leg is expected to carry a
@@ -220,6 +261,18 @@ if (isMain) {
       ["202615520300 on disk (the shipped crash) fails RULE 3", (() => { const rel = "db/migrations/202615520300_posting_source_load_id_relay_fill_path.sql"; return resolverFailures(rel, readFileSync(join(ROOT, rel), "utf8")).some((x) => x.includes("relay_fuel_transaction_id")); })()],
       ["the newest resolver migration on disk passes RULE 3", (() => { const m = newestResolverMigration(); return !!m && resolverFailures(m.rel, m.sql).length === 0; })()],
       ["a live query error is a FAIL line, not a crash", liveErrorFailures(new Error("more than one row returned by a subquery used as an expression")).some((x) => x.startsWith("RULE 2") && x.includes("more than one row"))],
+      // RULE 4 (443.110 G8) — the real writer passes; each planted removal is caught.
+      ...(() => {
+        const w = readFileSync(join(ROOT, WRITER), "utf8");
+        return [
+          ["RULE 4: the real posting writer passes", writerFailures(w).length === 0],
+          ["RULE 4: a factoring event dropped from the writer fails", writerFailures(w.replace('"factoring_chargeback",', "")).some((x) => x.includes("factoring_chargeback"))],
+          ["RULE 4: an unscoped advance load lookup fails", writerFailures(w.replace("FROM accounting.factoring_advances WHERE id = $1::uuid AND operating_company_id = $2::uuid", "FROM accounting.factoring_advances WHERE id = $1::uuid")).some((x) => x.includes("company-scoped"))],
+          ["RULE 4: a derived load without the company check fails", writerFailures(w.replace("AND sl.operating_company_id = $1::uuid", "")).some((x) => x.includes("derived load"))],
+          ["RULE 4: dropping the foreign-load refusal fails", writerFailures(w.replace("throw new PostingLoadOfAnotherCompanyError(", "void (")).some((x) => x.includes("another company"))],
+          ["RULE 4: dropping the bank_categorization party fails", writerFailures(w.replace("bank_categorization: `SELECT COALESCE(categorization_vendor_id::text", "bank_categorization: `SELECT COALESCE(NULL::text")).some((x) => x.includes("party"))],
+        ];
+      })(),
       ["live mismatch fails", liveFailures({ mismatched: [{ id: "p1", source_transaction_type: "expense", source_transaction_id: "e1", load_id: null, expected: "l1" }] }).length === 1],
     ];
     for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);
