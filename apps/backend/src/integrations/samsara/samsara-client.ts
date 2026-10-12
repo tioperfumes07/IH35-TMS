@@ -19,6 +19,32 @@ export type SamsaraDriver = { id: string; raw: Record<string, unknown> };
 export type SamsaraVehicle = { id: string; raw: Record<string, unknown> };
 export type SamsaraTrailer = { id: string; raw: Record<string, unknown> };
 export type TrailerGpsFix = { t: number; lat: number; lng: number };
+/** Trailer id -> time-ordered fixes, plus what the calls cost (diagnostics for the dry run). */
+export type TrailerGpsHistory = { fixes: Map<string, TrailerGpsFix[]>; requests: number; rows: number; retries: number };
+
+/** Samsara allows 10 requests/s; pace below it and back off on 429 / 5xx (Retry-After honoured). */
+export const SAMSARA_MIN_REQUEST_GAP_MS = 150;
+export const SAMSARA_MAX_ATTEMPTS = 6;
+let lastSamsaraRequestAt = 0;
+export let samsaraSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+export function setSamsaraSleepForTests(fn: (ms: number) => Promise<void>) { samsaraSleep = fn; }
+
+export async function withSamsaraRateLimit<T>(stats: { requests: number; retries: number }, call: () => Promise<T>): Promise<T> {
+  for (let attempt = 1; ; attempt += 1) {
+    const wait = lastSamsaraRequestAt + SAMSARA_MIN_REQUEST_GAP_MS - Date.now();
+    if (wait > 0) await samsaraSleep(wait);
+    lastSamsaraRequestAt = Date.now();
+    stats.requests += 1;
+    try {
+      return await call();
+    } catch (e) {
+      const err = e as SamsaraApiError;
+      if (!(err instanceof SamsaraApiError) || !err.retryable || attempt >= SAMSARA_MAX_ATTEMPTS) throw e;
+      stats.retries += 1;
+      await samsaraSleep(err.retryAfterMs ?? Math.min(30_000, 1000 * 2 ** (attempt - 1)));
+    }
+  }
+}
 export type SamsaraAddress = { id: string; raw: Record<string, unknown> };
 export type SamsaraRouteStopInput = {
   externalIds: Ih35SamsaraExternalIds;
@@ -149,13 +175,16 @@ export class SamsaraApiError extends Error {
   readonly statusCode: number | null;
   readonly body: Record<string, unknown> | null;
   readonly retryable: boolean;
+  /** Server-sent Retry-After (429), in ms, when present. */
+  readonly retryAfterMs: number | null;
 
-  constructor(message: string, statusCode: number | null, body: Record<string, unknown> | null, retryable: boolean) {
+  constructor(message: string, statusCode: number | null, body: Record<string, unknown> | null, retryable: boolean, retryAfterMs: number | null = null) {
     super(message);
     this.name = "SamsaraApiError";
     this.statusCode = statusCode;
     this.body = body;
     this.retryable = retryable;
+    this.retryAfterMs = retryAfterMs;
   }
 }
 
@@ -536,6 +565,15 @@ async function fetchSamsaraStatsPage(
   return { data, hasNextPage, cursor, typesUsed, fullSetError };
 }
 
+/** Retry-After is either delta-seconds or an HTTP date. */
+export function parseRetryAfterMs(v: string | null): number | null {
+  if (!v) return null;
+  const secs = Number(v);
+  if (Number.isFinite(secs) && secs >= 0) return Math.round(secs * 1000);
+  const at = Date.parse(v);
+  return Number.isFinite(at) ? Math.max(0, at - Date.now()) : null;
+}
+
 async function fetchSamsaraPage(
   token: string,
   endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/fleet/trailers" | "/fleet/trailers/stats/history" | "/addresses" | "/fleet/safety-events",
@@ -567,7 +605,7 @@ async function fetchSamsaraPage(
   if (!res.ok) {
     const body = await readJsonResponse(res);
     const retryable = res.status === 429 || res.status >= 500;
-    throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, body, retryable);
+    throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, body, retryable, parseRetryAfterMs(res.headers?.get?.("retry-after") ?? null));
   }
   const json = await readJsonResponse(res);
   const data = Array.isArray(json.data)
@@ -1265,37 +1303,40 @@ export class SamsaraClient {
    * ids over [startTime, endTime] (RFC 3339). Returns trailer id -> time-ordered fixes. Unlike listTrailers this THROWS on
    * an API failure: the GPS trailer match must report "Samsara unavailable", never read a failure as "no trailer GPS".
    */
-  async trailerGpsHistory(trailerIds: string[], startTime: string, endTime: string): Promise<Map<string, TrailerGpsFix[]>> {
+  async trailerGpsHistory(trailerIds: string[], startTime: string, endTime: string): Promise<TrailerGpsHistory> {
     const token = this._token();
     if (!token) throw new SamsaraApiError("samsara_not_configured", null, null, false);
-    const out = new Map<string, TrailerGpsFix[]>();
+    const out: TrailerGpsHistory = { fixes: new Map(), requests: 0, rows: 0, retries: 0 };
     for (let i = 0; i < trailerIds.length; i += 50) {
       const ids = trailerIds.slice(i, i + 50);
       let after: string | null = null;
       for (let page = 0; page < 100; page += 1) {
-        const { data, hasNextPage, cursor } = await fetchSamsaraPage(token, "/fleet/trailers/stats/history", after, {
-          types: "gps",
-          startTime,
-          endTime,
-          trailerIds: ids.join(","),
-        });
+        const { data, hasNextPage, cursor } = await withSamsaraRateLimit(out, () =>
+          fetchSamsaraPage(token, "/fleet/trailers/stats/history", after, {
+            types: "gps",
+            startTime,
+            endTime,
+            trailerIds: ids.join(","),
+          })
+        );
+        out.rows += data.length;
         for (const row of data) {
           const id = typeof row.id === "string" ? row.id.trim() : row.id != null ? String(row.id) : "";
           if (!id) continue;
-          const fixes = out.get(id) ?? [];
+          const fixes = out.fixes.get(id) ?? [];
           for (const g of Array.isArray(row.gps) ? (row.gps as Record<string, unknown>[]) : []) {
             const t = Date.parse(String(g.time ?? ""));
             const lat = Number(g.latitude ?? (g.location as Record<string, unknown> | undefined)?.latitude);
             const lng = Number(g.longitude ?? (g.location as Record<string, unknown> | undefined)?.longitude);
             if (Number.isFinite(t) && Number.isFinite(lat) && Number.isFinite(lng)) fixes.push({ t, lat, lng });
           }
-          out.set(id, fixes);
+          out.fixes.set(id, fixes);
         }
         if (!hasNextPage || !cursor) break;
         after = cursor;
       }
     }
-    for (const fixes of out.values()) fixes.sort((a, b) => a.t - b.t);
+    for (const fixes of out.fixes.values()) fixes.sort((a, b) => a.t - b.t);
     return out;
   }
 

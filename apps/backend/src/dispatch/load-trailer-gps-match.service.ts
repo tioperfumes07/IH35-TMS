@@ -29,7 +29,7 @@
  * the route runs after the loads in the same transaction. Customer-trailer loads are never touched.
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import type { TrailerGpsFix } from "../integrations/samsara/samsara-client.js";
+import type { TrailerGpsFix, TrailerGpsHistory } from "../integrations/samsara/samsara-client.js";
 
 type Queryable = { query: <R = any>(sql: string, params?: unknown[]) => Promise<{ rows: R[]; rowCount?: number | null }> };
 
@@ -44,10 +44,19 @@ export const MIN_CO_LOCATED_SHARE = 0.8;
 export const MIN_PAIRED_FIXES = 5;
 /** The trailer must be with the truck at the pickup AND at the delivery (the two dwells). */
 export const DWELL_TOLERANCE_MS = 60 * 60 * 1000;
-/** Truck fixes are thinned to at most this many per load (the decision does not need every 30-second fix). */
+/** Truck fixes are thinned to at most this many per load for the co-location SHARE (the share does not need every
+ *  30-second fix). The pickup / delivery dwell is found on the FULL track, never the thinned one. */
 const MAX_TRUCK_FIXES = 400;
+/** Stop "actual" stamps written by the Creator are DATE-ONLY (local midnight, measured: every USMCA stop 05:00Z/06:00Z).
+ *  The dwell moment is therefore read from the truck's own GPS: its closest approach to the stop's geocode on that day.
+ *  1,500 m covers a facility yard plus geocode precision (rooftop/street); a truck farther than that never reached it. */
+export const STOP_ARRIVAL_METERS = 1500;
+/** A real stamp (not local midnight) is searched +/- this much for the dwell. */
+const STAMPED_DWELL_SEARCH_MS = 6 * 60 * 60 * 1000;
+/** A load window longer than this is a data error (a placeholder delivery date), not a trip — flagged, never matched. */
+export const MAX_WINDOW_DAYS = 14;
 
-export type GpsFetcher = (samsaraTrailerIds: string[], startIso: string, endIso: string) => Promise<Map<string, TrailerGpsFix[]>>;
+export type GpsFetcher = (samsaraTrailerIds: string[], startIso: string, endIso: string) => Promise<TrailerGpsHistory>;
 
 export type CandidateScore = {
   trailer_id: string;
@@ -68,6 +77,11 @@ export type LoadTrailerDecision = {
   window_end: string | null;
   truck_fixes: number;
   existing_trailer_id: string | null;
+  /** The truck's GPS moment at the pickup / delivery stop (stop stamps are date-only). */
+  pickup_dwell_at?: string | null;
+  delivery_dwell_at?: string | null;
+  /** Data-path proof: Samsara calls for this load and how many trailers survived each stage. */
+  samsara?: { requests: number; retries: number; rows: number; trailers_queried: number; trailers_with_fixes_at_pickup: number; at_pickup: number; at_delivery: number };
   decision: "match" | "confirm" | "conflict" | "no_truck_gps" | "no_trailer_gps" | "no_co_located_trailer" | "two_candidates" | "no_window" | "samsara_unavailable";
   trailer_id: string | null;
   trailer_number: string | null;
@@ -88,6 +102,10 @@ export type LoadTrailerGpsResult = {
   no_match: number;
   stamped_loads: number;
   refused_loads: number;
+  /** Run-level data-path proof. */
+  samsara_requests: number;
+  samsara_retries: number;
+  trailers_with_any_gps: number;
   loads: LoadTrailerDecision[];
 };
 
@@ -135,6 +153,38 @@ export function scoreCandidate(truck: TrailerGpsFix[], trailer: TrailerGpsFix[],
   return { paired, co_located: coLocated, share, at_pickup: atPickup, at_delivery: atDelivery, matches: paired >= MIN_PAIRED_FIXES && share >= MIN_CO_LOCATED_SHARE && atPickup && atDelivery };
 }
 
+function isLocalMidnightStamp(iso: string): boolean {
+  const d = new Date(iso);
+  // America/Chicago midnight = 05:00Z (CDT) or 06:00Z (CST), with zero minutes/seconds — a date-only stamp.
+  return d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0 && (d.getUTCHours() === 5 || d.getUTCHours() === 6);
+}
+/** Where to look for a stop's dwell: the whole local day for a date-only stamp, +/- 6 h around a real one. */
+export function dwellSearchSpan(stamp: string | null): [number, number] {
+  const t = stamp ? Date.parse(stamp) : NaN;
+  if (!Number.isFinite(t)) return [NaN, NaN];
+  return isLocalMidnightStamp(String(stamp)) ? [t, t + 86_400_000] : [t - STAMPED_DWELL_SEARCH_MS, t + STAMPED_DWELL_SEARCH_MS];
+}
+/** The truck's closest approach to the stop inside the span, if within STOP_ARRIVAL_METERS; else null. */
+export function dwellAt(track: TrailerGpsFix[], lat: number | null, lng: number | null, span: [number, number]): number | null {
+  if (lat == null || lng == null || !Number.isFinite(span[0])) return null;
+  let best: { t: number; m: number } | null = null;
+  for (const f of track) {
+    if (f.t < span[0] || f.t > span[1]) continue;
+    const m = metersBetween(f, { lat, lng });
+    if (!best || m < best.m) best = { t: f.t, m };
+  }
+  return best && best.m <= STOP_ARRIVAL_METERS ? best.t : null;
+}
+function truckFixesAround(track: TrailerGpsFix[], at: number): TrailerGpsFix[] {
+  return track.filter((f) => Math.abs(f.t - at) <= DWELL_TOLERANCE_MS);
+}
+/** The thinned track plus the full-resolution fixes inside both dwell tolerances (thinning must never drop the dwell). */
+function withDwellFixes(thinned: TrailerGpsFix[], full: TrailerGpsFix[], pickupAt: number, deliveryAt: number): TrailerGpsFix[] {
+  const extra = full.filter((f) => Math.abs(f.t - pickupAt) <= DWELL_TOLERANCE_MS || Math.abs(f.t - deliveryAt) <= DWELL_TOLERANCE_MS);
+  const seen = new Set(thinned.map((f) => f.t));
+  return [...thinned, ...extra.filter((f) => !seen.has(f.t))].sort((a, b) => a.t - b.t);
+}
+
 function thin<T>(rows: T[], max: number): T[] {
   if (rows.length <= max) return rows;
   const step = rows.length / max;
@@ -152,9 +202,10 @@ export async function matchLoadTrailersByGps(
     await client.query<{
       id: string; load_number: string | null; unit_id: string | null; unit_number: string | null;
       w0: string | null; w1: string | null; pickup_at: string | null; delivery_at: string | null; expense_trailer_id: string | null;
+      p_lat: number | null; p_lng: number | null; d_lat: number | null; d_lng: number | null;
     }>(
       `SELECT l.id::text, l.load_number::text, l.assigned_unit_id::text AS unit_id, u.unit_number::text,
-              w.w0, w.w1, w.pickup_at, w.delivery_at,
+              w.w0, w.w1, w.pickup_at, w.delivery_at, w.p_lat, w.p_lng, w.d_lat, w.d_lng,
               (SELECT (array_agg(DISTINCT x.trailer_id))[1]::text FROM accounting.expenses x
                 WHERE x.load_id = l.id AND x.operating_company_id = l.operating_company_id
                   AND x.voided_at IS NULL AND x.trailer_id IS NOT NULL
@@ -168,7 +219,11 @@ export async function matchLoadTrailersByGps(
                   (array_agg(COALESCE(s.actual_departure_at, s.actual_arrival_at, s.scheduled_departure_at, s.scheduled_arrival_at, s.appointment_start_at)
                              ORDER BY s.sequence_number ASC))[1]::text AS pickup_at,
                   (array_agg(COALESCE(s.actual_arrival_at, s.scheduled_arrival_at, s.appointment_start_at, s.actual_departure_at, s.scheduled_departure_at)
-                             ORDER BY s.sequence_number DESC))[1]::text AS delivery_at
+                             ORDER BY s.sequence_number DESC))[1]::text AS delivery_at,
+                  (array_agg(s.latitude::float8 ORDER BY s.sequence_number ASC))[1] AS p_lat,
+                  (array_agg(s.longitude::float8 ORDER BY s.sequence_number ASC))[1] AS p_lng,
+                  (array_agg(s.latitude::float8 ORDER BY s.sequence_number DESC))[1] AS d_lat,
+                  (array_agg(s.longitude::float8 ORDER BY s.sequence_number DESC))[1] AS d_lng
              FROM mdata.load_stops s WHERE s.load_id = l.id AND s.soft_deleted_at IS NULL
          ) w ON true
         WHERE l.operating_company_id = $1::uuid
@@ -195,8 +250,10 @@ export async function matchLoadTrailersByGps(
 
   const result: LoadTrailerGpsResult = {
     dry_run: input.dryRun, operating_company_id: opco, loads_considered: loads.length,
-    matched: 0, confirmed: 0, conflicts: 0, no_match: 0, stamped_loads: 0, refused_loads: 0, loads: [],
+    matched: 0, confirmed: 0, conflicts: 0, no_match: 0, stamped_loads: 0, refused_loads: 0,
+    samsara_requests: 0, samsara_retries: 0, trailers_with_any_gps: 0, loads: [],
   };
+  const gpsSeen = new Set<string>();
 
   for (const l of loads) {
     const d: LoadTrailerDecision = {
@@ -205,27 +262,36 @@ export async function matchLoadTrailersByGps(
       decision: "no_window", trailer_id: null, trailer_number: null, reason: "", candidates: [], outcome: "skipped",
     };
     result.loads.push(d);
-    const w0 = l.w0 ? Date.parse(l.w0) : NaN;
-    const w1 = l.w1 ? Date.parse(l.w1) : NaN;
+    // Stop stamps are often date-only (local midnight): the trip window runs from the start of the pickup search span to
+    // the end of the delivery search span, so a same-day load still has a real window.
+    const pSpan = dwellSearchSpan(l.pickup_at ?? l.w0);
+    const dSpan = dwellSearchSpan(l.delivery_at ?? l.w1);
+    const w0 = Math.min(l.w0 ? Date.parse(l.w0) : NaN, pSpan[0]);
+    const w1 = Math.max(l.w1 ? Date.parse(l.w1) : NaN, dSpan[1]);
+    d.window_start = Number.isFinite(w0) ? new Date(w0).toISOString() : l.w0;
+    d.window_end = Number.isFinite(w1) ? new Date(w1).toISOString() : l.w1;
     if (!l.unit_id || !Number.isFinite(w0) || !Number.isFinite(w1) || w1 <= w0) {
       d.reason = !l.unit_id ? "load has no truck assigned" : "load has no pickup -> delivery window";
       result.no_match += 1;
       continue;
     }
-    const truck = thin(
-      (
-        await client.query<{ t: string; lat: number; lng: number }>(
-          `SELECT v.captured_at::text AS t, v.lat::float8 AS lat, v.lng::float8 AS lng
-             FROM telematics.vehicle_locations v
-            WHERE v.unit_id = $1::uuid AND v.operating_company_id = $2::uuid
-              AND v.captured_at BETWEEN $3::timestamptz AND $4::timestamptz
-              AND v.lat IS NOT NULL AND v.lng IS NOT NULL
-            ORDER BY v.captured_at`,
-          [l.unit_id, opco, l.w0, l.w1]
-        )
-      ).rows.map((r) => ({ t: Date.parse(r.t), lat: Number(r.lat), lng: Number(r.lng) })),
-      MAX_TRUCK_FIXES
-    );
+    if ((w1 - w0) / 86_400_000 > MAX_WINDOW_DAYS) {
+      d.reason = `load window is ${Math.round((w1 - w0) / 86_400_000)} days (> ${MAX_WINDOW_DAYS}) — the stop dates look like placeholders, fix the stops`;
+      result.no_match += 1;
+      continue;
+    }
+    const fullTruck = (
+      await client.query<{ t: string; lat: number; lng: number }>(
+        `SELECT v.captured_at::text AS t, v.lat::float8 AS lat, v.lng::float8 AS lng
+           FROM telematics.vehicle_locations v
+          WHERE v.unit_id = $1::uuid AND v.operating_company_id = $2::uuid
+            AND v.captured_at BETWEEN $3::timestamptz AND $4::timestamptz
+            AND v.lat IS NOT NULL AND v.lng IS NOT NULL
+          ORDER BY v.captured_at`,
+        [l.unit_id, opco, new Date(w0).toISOString(), new Date(w1).toISOString()]
+      )
+    ).rows.map((r) => ({ t: Date.parse(r.t), lat: Number(r.lat), lng: Number(r.lng) }));
+    const truck = thin(fullTruck, MAX_TRUCK_FIXES);
     d.truck_fixes = truck.length;
     if (truck.length < MIN_PAIRED_FIXES) {
       d.decision = "no_truck_gps";
@@ -233,22 +299,58 @@ export async function matchLoadTrailersByGps(
       result.no_match += 1;
       continue;
     }
-    let gps: Map<string, TrailerGpsFix[]>;
+    const pickupAt = dwellAt(fullTruck, l.p_lat, l.p_lng, pSpan);
+    const deliveryAt = dwellAt(fullTruck, l.d_lat, l.d_lng, dSpan);
+    d.pickup_dwell_at = pickupAt == null ? null : new Date(pickupAt).toISOString();
+    d.delivery_dwell_at = deliveryAt == null ? null : new Date(deliveryAt).toISOString();
+    if (pickupAt == null || deliveryAt == null) {
+      d.decision = "no_truck_gps";
+      d.reason = `truck ${l.unit_number ?? ""} GPS never within ${STOP_ARRIVAL_METERS} m of the ${pickupAt == null ? "pickup" : "delivery"} stop on its date${(pickupAt == null ? l.p_lat : l.d_lat) == null ? " (stop not geocoded)" : ""}`;
+      result.no_match += 1;
+      continue;
+    }
+    const sam = { requests: 0, retries: 0, rows: 0, trailers_queried: trailers.length, trailers_with_fixes_at_pickup: 0, at_pickup: 0, at_delivery: 0 };
+    d.samsara = sam;
+    const fetchSpan = async (ids: string[], t0: number, t1: number) => {
+      const h = await input.fetchTrailerGps(ids, new Date(t0 - PAIR_TIME_TOLERANCE_MS).toISOString(), new Date(t1 + PAIR_TIME_TOLERANCE_MS).toISOString());
+      sam.requests += h.requests; sam.retries += h.retries; sam.rows += h.rows;
+      result.samsara_requests += h.requests; result.samsara_retries += h.retries;
+      for (const [id, f] of h.fixes) if (f.length) gpsSeen.add(id);
+      result.trailers_with_any_gps = gpsSeen.size;
+      return h.fixes;
+    };
+    const bySamsara = new Map(trailers.map((t) => [t.samsara_id, t]));
+    const nearTruck = (fixes: TrailerGpsFix[], at: number) =>
+      truckFixesAround(fullTruck, at).some((tf) => { const n = nearestInTime(fixes, tf.t); return !!n && metersBetween(tf, n) <= CO_LOCATED_METERS; });
+    let full: Map<string, TrailerGpsFix[]>;
     try {
-      gps = await input.fetchTrailerGps(trailers.map((t) => t.samsara_id), new Date(w0 - PAIR_TIME_TOLERANCE_MS).toISOString(), new Date(w1 + PAIR_TIME_TOLERANCE_MS).toISOString());
+      // Stage 1 — every fleet trailer, only around the pickup dwell (one short request instead of the whole trip).
+      const atP = await fetchSpan(trailers.map((t) => t.samsara_id), pickupAt - DWELL_TOLERANCE_MS, pickupAt + DWELL_TOLERANCE_MS);
+      sam.trailers_with_fixes_at_pickup = [...atP.values()].filter((f) => f.length).length;
+      let ids = [...atP].filter(([, f]) => nearTruck(f, pickupAt)).map(([id]) => id);
+      sam.at_pickup = ids.length;
+      // Stage 2 — only trailers that were with the truck at pickup, around the delivery dwell.
+      if (ids.length) {
+        const atD = await fetchSpan(ids, deliveryAt - DWELL_TOLERANCE_MS, deliveryAt + DWELL_TOLERANCE_MS);
+        ids = ids.filter((id) => nearTruck(atD.get(id) ?? [], deliveryAt));
+      }
+      sam.at_delivery = ids.length;
+      // The expense trailer is always scored too, so a confirm / conflict is reported on evidence.
+      const existingSid = trailers.find((t) => t.id === l.expense_trailer_id)?.samsara_id;
+      if (existingSid && !ids.includes(existingSid)) ids.push(existingSid);
+      // Stage 3 — the whole trip, only for the survivors: the share test runs on the full track.
+      full = ids.length ? await fetchSpan(ids, w0, w1) : new Map();
     } catch (e) {
       d.decision = "samsara_unavailable";
       d.reason = `Samsara trailer GPS could not be read: ${String((e as Error)?.message ?? e)}`;
       result.no_match += 1;
       continue;
     }
-    const pickupAt = Date.parse(String(l.pickup_at ?? l.w0));
-    const deliveryAt = Date.parse(String(l.delivery_at ?? l.w1));
-    let anyTrailerFix = false;
-    for (const t of trailers) {
-      const fixes = gps.get(t.samsara_id) ?? [];
-      if (fixes.length) anyTrailerFix = true;
-      const s = scoreCandidate(truck, fixes, pickupAt, deliveryAt);
+    const anyTrailerFix = sam.trailers_with_fixes_at_pickup > 0;
+    for (const [sid, fixes] of full) {
+      const t = bySamsara.get(sid);
+      if (!t) continue;
+      const s = scoreCandidate(withDwellFixes(truck, fullTruck, pickupAt, deliveryAt), fixes, pickupAt, deliveryAt);
       if (s.paired > 0) d.candidates.push({ trailer_id: t.id, trailer_number: t.equipment_number, ...s, share: Math.round(s.share * 1000) / 1000 });
     }
     d.candidates.sort((a, b) => b.co_located - a.co_located);
