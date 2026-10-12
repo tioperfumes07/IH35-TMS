@@ -77,6 +77,13 @@ async function emitOutbox(client: any, eventType: string, payload: Record<string
 async function insertUnattributedAlert(client: any, operatingCompanyId: string, expenseId: string) {
   const ok = await relationExists(client, "qbo.sync_alerts");
   if (!ok) return;
+  // 443.129 — schema drift: a fresh migration chain gives qbo.sync_alerts entity_type + error_message NOT NULL, prod's
+  // table has neither column. Writing them only when they exist keeps this alert (and the expense create that raises
+  // it) working on both — it used to fail every driver expense without a load on a fresh database (CI).
+  const hasEntityType = await columnExists(client, "qbo", "sync_alerts", "entity_type");
+  const hasErrorMessage = await columnExists(client, "qbo", "sync_alerts", "error_message");
+  const extraCols = [hasEntityType ? "entity_type" : null, hasErrorMessage ? "error_message" : null].filter(Boolean) as string[];
+  const extraVals = [hasEntityType ? "'expense'" : null, hasErrorMessage ? "'Could not auto-attribute expense to a load'" : null].filter(Boolean) as string[];
 
   await client.query(
     `
@@ -88,7 +95,7 @@ async function insertUnattributedAlert(client: any, operatingCompanyId: string, 
         message,
         severity,
         replay_hint,
-        error_payload
+        error_payload${extraCols.length ? `, ${extraCols.join(", ")}` : ""}
       )
       VALUES (
         $1,
@@ -98,7 +105,7 @@ async function insertUnattributedAlert(client: any, operatingCompanyId: string, 
         'Could not auto-attribute expense to a load',
         'warning',
         NULL,
-        jsonb_build_object('reason', 'auto_attribute_miss')
+        jsonb_build_object('reason', 'auto_attribute_miss')${extraVals.length ? `, ${extraVals.join(", ")}` : ""}
       )
     `,
     [operatingCompanyId, expenseId]

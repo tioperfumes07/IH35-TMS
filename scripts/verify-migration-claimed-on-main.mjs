@@ -179,6 +179,12 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-3/c121-1",
     new Set(["db/migrations/202615850910_fuel_receipt_one_posting_identity.sql"]),
   ],
+  // LEAD 443.129 A/B/C (CC-3): roadside ticket payment source + hub linkage + item (maintenance.road_service_tickets).
+  // Claimed first on main (#26686) under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c129-abc",
+    new Set(["db/migrations/202615880910_road_service_ticket_payment_source_and_linkage.sql"]),
+  ],
   // RULING 443.62 #3/#4/#7 (Lead 16:35 UTC): 2410-00-001..004 "Due to / from <party>" rename (taken from CC-1 #26377) +
   // google_place_id on stop / location for CC-2. Claimed first on main (#26389); exact branch + exact files.
   [
