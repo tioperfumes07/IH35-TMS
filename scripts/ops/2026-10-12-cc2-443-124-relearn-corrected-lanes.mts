@@ -3,6 +3,8 @@
 // (verify-booked-loads-save-miles RULE 3). This re-learns each corrected route through the ONE engine:
 // learnLoadLanes({ fresh: false, routeCorrected: true }) — no hand-typed miles; legs already set (owner / document legs) are
 // never touched (the engine fills only NULL legs). lane_mileage / point_mileage / customer_lanes for the corrected route only.
+// Rule 53: ONE transaction per batch — all 4 loads in a single BEGIN / COMMIT (all or nothing). Not a set-based UPDATE because
+// each lane is learned by the ONE engine (learnLoadLanes), which works per load; no miles are written by this script itself.
 //   default          DRY RUN (one transaction, rolled back)
 //   --fork-commit    apply on a throwaway fork (assertNotProduction) and commit
 //   --apply --auth AUTH-NNN   apply on production (assertIsIntendedProduction + verify-owner-authorization)
