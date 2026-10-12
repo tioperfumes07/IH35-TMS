@@ -33,6 +33,7 @@ export const OPERATIONAL = new Set([
   "maintenance/damage-event-attribution.service.ts",
   "maintenance/integrity-findings-attribution.service.ts",
   "integrations/fuel/fraud-detector/rules.service.ts",
+  "fuel/fuel-load-at-time.ts", // 443.126 fill-driver-at-time — OPERATIONAL fuel attribution (company-pinned)
   "dispatch/driver-pwa/tour-close.service.ts",
   "dispatch/trip-pairing-board.service.ts",
   "safety/driver-scoring/scoring.service.ts",
@@ -75,7 +76,8 @@ export const HISTORY = new Map([
 
 const PIN_RE = [
   /assignmentInCompanySql\s*\(/,
-  /\bd\.operating_company_id\s*=\s*(?:\$\d|[a-z_]+\.operating_company_id)/,
+  // driver alias may be d / dr / icd — any JOIN that pins the driver's operating_company_id
+  /\bd(?:r)?\.operating_company_id\s*=\s*(?:\$\d|[a-z_]+\.operating_company_id)/,
   /(?:owner_company_id|currently_leased_to_company_id)[^\n]{0,80}(?:\$\d|[a-z_]+\.operating_company_id)/,
 ];
 const READ_RE = /(?:FROM|JOIN)\s+telematics\.vehicle_driver_assignments\b/g;

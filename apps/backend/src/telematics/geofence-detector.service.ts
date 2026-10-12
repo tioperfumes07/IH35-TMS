@@ -1,7 +1,7 @@
 /**
  * ENGINE: canonical geofence detector — turns a GPS fix into fence enter / exit events, stamps load-stop arrival / departure, mints the first-pickup proforma, prompts the driver, runs DOT dwell
  * SCHEDULE: on demand — webhook-projectors/vehicle-projector.ts + geofence-projector.ts (every minute), samsara-positions.service.ts (cron/samsara-positions-cron.ts *\/5 * * * *), load-stop-geofence-sync.service.ts, geofence-events-backfill.service.ts
- * WRITES: geo.geofence_events, mdata.load_stops (actual_arrival_* / actual_departure_*), the non-posting proforma via accounting/proforma-mint-on-first-pickup.ts, compliance.dot_inspection_events; external: driver web push
+ * WRITES: geo.geofence_events, mdata.load_stops (actual_arrival_* / actual_departure_*), mdata.loads.status ONLY via dispatch/load-transition.service.ts (G11/AJK-03), the non-posting proforma via accounting/proforma-mint-on-first-pickup.ts, compliance.dot_inspection_events; external: driver web push
  * IDEMPOTENCY: ADVISORY LOCK geo.fence_transition:<fence>:<unit> + UNIQUE(operating_company_id, geofence_id, unit_id, event_kind, occurred_at, source) ON CONFLICT (uq_geo_geofence_events_dedupe, migration 0220); stop stamps SAME-STATEMENT WHERE actual_arrival_at / actual_departure_at IS NULL
  * OVERLAP: the second caller waits on the fence+unit lock, then sees the first's event inside the 5-minute window and skips; side effects run only for a newly inserted event
  * REVERSE: NOT-A-DOCUMENT — immutable fence evidence; stop stamps are first-write-only
@@ -10,12 +10,78 @@
  */
 import { processDotDwellForGeofenceEvent } from "./dot-dwell-detector.service.js";
 import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
+import { GEOFENCE_AUTO_DELIVERY_ACTOR } from "../dispatch/geofence-auto-delivery.service.js";
+import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.service.js";
+import { fromMdataStatus, type DispatchStatus } from "../dispatch/load-state-machine.js";
 import { normalizeVertices, pointInPolygon } from "./geofence.js";
 export { pointInPolygon } from "./geofence.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
 };
+
+/** Forward path the fence detector may walk through the ONE transition engine (AJK-03 / G11). */
+const FENCE_STATUS_PATH: DispatchStatus[] = [
+  "assigned_not_dispatched",
+  "dispatched",
+  "in_transit",
+  "delivered_pending_docs",
+];
+
+/**
+ * G11 + AJK-03: advance load status from fence evidence ONLY via transitionDispatchLoadInClientTx
+ * (same engine as the office route and geofence-auto-delivery). Walks legal forward edges; never
+ * invents a raw UPDATE; ignores invalid_transition / status_changed silently (idempotent).
+ */
+async function walkLoadStatusFromFence(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadId: string,
+  target: "in_transit" | "delivered_pending_docs",
+  deliveredAt?: string | null
+): Promise<void> {
+  const cur = await client.query<{ status: string }>(
+    `SELECT status::text AS status FROM mdata.loads
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+        AND soft_deleted_at IS NULL AND voided_at IS NULL
+      LIMIT 1`,
+    [loadId, operatingCompanyId]
+  );
+  const row = cur.rows[0];
+  if (!row) return;
+  let status: DispatchStatus;
+  try {
+    status = fromMdataStatus(row.status);
+  } catch {
+    return;
+  }
+  if (
+    status === "cancelled" ||
+    status === "abandoned" ||
+    status === "driver_walkoff" ||
+    status === "driver_no_show" ||
+    status === "completed_docs_received"
+  ) {
+    return;
+  }
+  const targetIdx = FENCE_STATUS_PATH.indexOf(target);
+  const curIdx = FENCE_STATUS_PATH.indexOf(status);
+  if (curIdx >= targetIdx && curIdx >= 0) return;
+  const startIdx = curIdx >= 0 ? curIdx + 1 : 0;
+  for (let i = startIdx; i <= targetIdx; i++) {
+    const step = FENCE_STATUS_PATH[i]!;
+    const r = await transitionDispatchLoadInClientTx(
+      client as never,
+      GEOFENCE_AUTO_DELIVERY_ACTOR,
+      operatingCompanyId,
+      loadId,
+      step === "delivered_pending_docs"
+        ? { new_status: step, delivered_at: deliveredAt ?? null }
+        : { new_status: step }
+    );
+    if ("error" in r) return;
+  }
+}
 
 type Transition = "entered" | "exited" | null;
 
@@ -204,6 +270,8 @@ export async function processGeofenceDetectionsForGpsPoint(
       load_id: string;
       stop_id: string;
       booked_by_user_id: string | null;
+      stop_type: string;
+      sequence_number: number;
     }>(
       transition === "entered"
         ? `
@@ -224,7 +292,8 @@ export async function processGeofenceDetectionsForGpsPoint(
                AND ls.soft_deleted_at IS NULL
                AND ls.actual_arrival_at IS NULL
          RETURNING ls.load_id::text AS load_id, ls.id::text AS stop_id,
-                   COALESCE(l.booked_by_user_id, l.dispatcher_user_id, l.updated_by_user_id)::text AS booked_by_user_id
+                   COALESCE(l.booked_by_user_id, l.dispatcher_user_id, l.updated_by_user_id)::text AS booked_by_user_id,
+                   ls.stop_type::text AS stop_type, ls.sequence_number
           `
         : `
             UPDATE mdata.load_stops ls
@@ -243,7 +312,8 @@ export async function processGeofenceDetectionsForGpsPoint(
                AND ls.soft_deleted_at IS NULL
                AND ls.actual_departure_at IS NULL
          RETURNING ls.load_id::text AS load_id, ls.id::text AS stop_id,
-                   COALESCE(l.booked_by_user_id, l.dispatcher_user_id, l.updated_by_user_id)::text AS booked_by_user_id
+                   COALESCE(l.booked_by_user_id, l.dispatcher_user_id, l.updated_by_user_id)::text AS booked_by_user_id,
+                   ls.stop_type::text AS stop_type, ls.sequence_number
           `,
       [row.geofence_id, input.operating_company_id, input.unit_id, input.occurred_at, source]
     );
@@ -259,6 +329,59 @@ export async function processGeofenceDetectionsForGpsPoint(
           tag: `arrival-${stamped.stop_id}`,
           data: { kind: "arrival_prompt", stop_id: stamped.stop_id, unit_id: input.unit_id },
         });
+      }
+      // G11 + AJK-03: final delivery ARRIVAL → delivered_pending_docs through the ONE transition engine
+      // (invoicing still waits on BOL/POD). Only when every other delivery stop already has arrival.
+      if (stamped.load_id && stamped.stop_type === "delivery") {
+        const finalDelivery = await client.query(
+          `
+            SELECT 1 FROM mdata.loads l
+             WHERE l.id = $1::uuid
+               AND l.operating_company_id = $2::uuid
+               AND l.soft_deleted_at IS NULL
+               AND l.voided_at IS NULL
+               AND NOT EXISTS (
+                 SELECT 1 FROM mdata.load_stops ls2
+                  WHERE ls2.load_id = l.id
+                    AND ls2.stop_type = 'delivery'
+                    AND ls2.soft_deleted_at IS NULL
+                    AND ls2.actual_arrival_at IS NULL
+                    AND ls2.id != $3::uuid
+               )
+             LIMIT 1
+          `,
+          [stamped.load_id, input.operating_company_id, stamped.stop_id]
+        );
+        if (finalDelivery.rows.length > 0) {
+          await walkLoadStatusFromFence(
+            client,
+            input.operating_company_id,
+            stamped.load_id,
+            "delivered_pending_docs",
+            input.occurred_at
+          );
+        }
+      }
+    }
+    // G11 + AJK-03: first pickup DEPARTURE → in_transit through the ONE transition engine.
+    if (transition === "exited" && stamped?.load_id && stamped.stop_type === "pickup") {
+      const firstPickup = await client.query(
+        `
+          SELECT 1 FROM mdata.loads l
+           WHERE l.id = $1::uuid
+             AND l.operating_company_id = $2::uuid
+             AND l.soft_deleted_at IS NULL
+             AND l.voided_at IS NULL
+             AND $3::integer = (
+               SELECT MIN(ls2.sequence_number) FROM mdata.load_stops ls2
+                WHERE ls2.load_id = l.id AND ls2.stop_type = 'pickup' AND ls2.soft_deleted_at IS NULL
+             )
+           LIMIT 1
+        `,
+        [stamped.load_id, input.operating_company_id, stamped.sequence_number]
+      );
+      if (firstPickup.rows.length > 0) {
+        await walkLoadStatusFromFence(client, input.operating_company_id, stamped.load_id, "in_transit");
       }
     }
     if (stamped?.load_id && stamped.stop_id && stamped.booked_by_user_id) {

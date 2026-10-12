@@ -1,6 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../dot-dwell-detector.service.js", () => ({ processDotDwellForGeofenceEvent: vi.fn(async () => undefined) }));
+vi.mock("../../dispatch/load-transition.service.js", () => ({
+  transitionDispatchLoadInClientTx: vi.fn(async () => ({ ok: true as const, status: "in_transit" })),
+}));
+vi.mock("../../dispatch/geofence-auto-delivery.service.js", () => ({
+  GEOFENCE_AUTO_DELIVERY_ACTOR: "00000000-0000-4000-8000-000000000001",
+}));
+vi.mock("../../accounting/proforma-mint-on-first-pickup.js", () => ({
+  mintProformaInvoiceOnFirstPickup: vi.fn(async () => undefined),
+}));
 
 import { processGeofenceDetectionsForGpsPoint } from "../geofence-detector.service.js";
 
@@ -22,7 +31,18 @@ function clientFor(lastEventKind: "entered" | "exited" | null, stamped: boolean)
       if (sql.includes("INSERT INTO geo.geofence_events")) return { rows: [], rowCount: 1 };
       if (sql.includes("UPDATE mdata.load_stops")) {
         return stamped
-          ? { rows: [{ load_id: "22222222-2222-4222-8222-222222222222", stop_id: "33333333-3333-4333-8333-333333333333", booked_by_user_id: null }] }
+          ? {
+              rows: [
+                {
+                  load_id: "22222222-2222-4222-8222-222222222222",
+                  stop_id: "33333333-3333-4333-8333-333333333333",
+                  booked_by_user_id: null,
+                  // Prompt-only fixture: not a pickup/delivery status walk (no stop_type → walk skipped).
+                  stop_type: null,
+                  sequence_number: 1,
+                },
+              ],
+            }
           : { rows: [] };
       }
       return { rows: [] };
