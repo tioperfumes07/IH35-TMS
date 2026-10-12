@@ -108,6 +108,9 @@ export async function createWorkOrderFromRoadServiceTicket(
     vendor_id: ticket.vendor_id,
     external_vendor_id: ticket.vendor_id,
     external_vendor_invoice_number: ticket.ticket_number,
+    // 443.129 D — the WO is born complete, so the completion trigger needs the vendor's WO number + invoice amount.
+    external_vendor_wo_number: ticket.ticket_number,
+    external_vendor_invoice_amount: totalAmount,
     description: description || serviceLabel,
     payment_timing: "vendor_invoice",
     bill_terms: "Net 30",
@@ -129,6 +132,8 @@ export async function createWorkOrderFromRoadServiceTicket(
   const bill = await autoCreateBillFromWO(client, userId, String(woUuid), {
     billNumber: ticket.ticket_number,
     memo: `Road service ticket ${ticket.ticket_number} — ${ticket.vendor_name}`,
+    // LEAD 443.129 D / AJK-08 — the ticket becomes 'invoiced' below, so its bill posts here or nothing is written.
+    requirePosted: true,
   });
 
   // MAINT-MONEY-F6803A: the ticket row is FOR-UPDATE-locked above, which serializes concurrent

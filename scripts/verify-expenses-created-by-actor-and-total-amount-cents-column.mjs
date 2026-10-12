@@ -38,7 +38,7 @@ import { readFileSync, readdirSync } from "node:fs";
 const failures = [];
 
 const routesPath = "apps/backend/src/accounting/expenses.routes.ts";
-const routesSrc = readFileSync(routesPath, "utf8");
+const routesSrc = (readFileSync(routesPath, "utf8") + "\n" + readFileSync("apps/backend/src/accounting/expense-writer.service.ts", "utf8")) /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */;
 if (!/columnExists\(client, "accounting", "expenses", "created_by_user_id"\)/.test(routesSrc)) {
   failures.push(`${routesPath}: create-expense INSERT no longer checks for created_by_user_id`);
 }

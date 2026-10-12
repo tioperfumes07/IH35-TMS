@@ -12,6 +12,7 @@ import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { refuseProductionConnectionString, refuseProductionDatabase } from "../../../test-helpers/refuse-production.js";
 import { ensureIntegrationPrerequisites, prepareCompanyForLoadInserts } from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
+import { createIsolatedOperatingCompany, deactivateIsolatedOperatingCompany } from "../../../test-helpers/isolated-company.js";
 import { nextOwedBillSpineNumber, voidCreatorOwedBills, writeCreatorOwedBill } from "../settlement-creator-owed-bill.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -25,12 +26,14 @@ describeIntegration("Settlement Creator owed company expense -> posted vendor bi
     const db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
     await refuseProductionDatabase(db);
+    // verify-shared-coa-role-tests-serialized: an ap_control seeder makes its company through the canonical helper
+    // (it commits the company row; everything else below rolls back; the company is deactivated in finally).
+    const tag = `G4T${Date.now().toString(36).toUpperCase()}`;
+    const opco = (await createIsolatedOperatingCompany({ client: db, codePrefix: tag, legalNamePrefix: "G4 owed bill test" })).companyId;
     try {
       await db.query("BEGIN");
       await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-      const tag = `G4T${Date.now().toString(36).toUpperCase()}`;
       const one = async <T = { id: string }>(sql: string, params: unknown[]) => (await db.query<T>(sql, params)).rows[0]!;
-      const opco = (await one(`INSERT INTO org.companies (code, legal_name, company_type) VALUES ($1, 'G4 owed bill test', 'operating_carrier') RETURNING id::text AS id`, [tag])).id;
       await db.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       const trailerType = await prepareCompanyForLoadInserts(db, opco);
 
@@ -133,7 +136,11 @@ describeIntegration("Settlement Creator owed company expense -> posted vendor bi
       // A second void (Edit again) is a no-op, never an error.
       await voidCreatorOwedBills(db as never, { operatingCompanyId: opco, billIds: [owed.billId], reason: "G4 test Edit again", actorUserId: TEST_OWNER_USER_ID, currentBusinessDate: "2026-10-12" });
     } finally {
-      await db.query("ROLLBACK").catch(() => {});
+      await db.query("ROLLBACK");
+      await db.query("BEGIN");
+      await db.query("SET LOCAL app.bypass_rls = 'lucia'");
+      await deactivateIsolatedOperatingCompany(db, opco);
+      await db.query("COMMIT");
       await db.end();
     }
   }, 60_000);

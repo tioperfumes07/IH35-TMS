@@ -74,7 +74,7 @@ function load() {
     checks: read("apps/backend/src/driver-finance/feed-gate/feed-gate.checks.ts"),
     routes: read("apps/backend/src/driver-finance/feed-gate/feed-gate.routes.ts"),
     send: read("apps/backend/src/accounting/invoice-send.service.ts"),
-    expenses: read("apps/backend/src/accounting/expenses.routes.ts"),
+    expenses: (read("apps/backend/src/accounting/expenses.routes.ts") + "\n" + read("apps/backend/src/accounting/expense-writer.service.ts")) /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */,
     creator: read("apps/backend/src/driver-finance/settlement-creator.service.ts"),
   };
 }

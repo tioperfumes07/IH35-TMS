@@ -38,7 +38,9 @@ const TARGETS = [
   { file: "apps/backend/src/accounting/bills.service.ts", expectedCount: 4 },
   { file: "apps/backend/src/accounting/payments.routes.ts", expectedCount: 2 },
   { file: "apps/backend/src/accounting/customer-payments.routes.ts", expectedCount: 1 },
-  { file: "apps/backend/src/accounting/expenses.routes.ts", expectedCount: 2 },
+  /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
+  { file: "apps/backend/src/accounting/expenses.routes.ts", expectedCount: 1 },
+  { file: "apps/backend/src/accounting/expense-writer.service.ts", expectedCount: 1 },
 ];
 
 export function check(fileContentsByPath) {

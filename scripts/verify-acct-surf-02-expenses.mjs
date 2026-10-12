@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["expense","connectivity"],"leafRe":"^expenses\\.","task":"ACCT-SURF-02-EXPENSES"}
  * ACCT-SURF-02 — Expenses deep structural DoD.
  *
  * Frozen map: docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md
@@ -45,7 +46,9 @@ const REVERSE_GUARD_FILES = [
 ];
 
 function read(rel) {
-  return fs.readFileSync(path.join(ROOT, rel), "utf8");
+  const src = fs.readFileSync(path.join(ROOT, rel), "utf8");
+  /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
+  return rel === FILES.service ? src + "\n" + fs.readFileSync(path.join(ROOT, "apps/backend/src/accounting/expense-writer.service.ts"), "utf8") : src;
 }
 
 function routeBlock(manifest, routePath) {

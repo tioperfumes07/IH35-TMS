@@ -74,7 +74,7 @@ import type {
 } from "./settlement-creator.types.js";
 import { isReeferFuelItemName } from "../fuel/reefer-fuel.service.js";
 import { voidCreatorOwedBills, writeCreatorOwedBill } from "./settlement-creator-owed-bill.js";
-import { createExpenseInClientTx, type CreateExpenseBody } from "../accounting/expenses.routes.js";
+import { createExpenseInClientTx, type CreateExpenseBody } from "../accounting/expense-writer.service.js";
 import { applyCreatorMilesChoices, CreatorMilesChoiceError } from "./settlement-creator-miles-choice.js";
 
 export type { DbClient };
