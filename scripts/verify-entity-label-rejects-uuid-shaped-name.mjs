@@ -160,11 +160,8 @@ const SIBLINGS = [
   // ACCT-F4431379 (Lead 443.137 9d) — old: PayrollAggregatedPage.tsx qbo_payroll_run_name site;
   // new: entry removed; why: the QBO Payroll W-2 runs table it pinned was deleted (driver pay comes
   // ONLY from driver_finance). verify-payroll-aggregated-page-uses-paritytable now fails if it returns.
-  {
-    rel: "apps/frontend/src/components/qbo/VendorLinkageModal.tsx",
-    bad: /row\.company_name\s*\?\?\s*row\.qbo_vendor_id/,
-    good: /entityLabel\(\s*row\.company_name\s*,\s*row\.qbo_vendor_id\s*,\s*"QBO vendor"\s*\)/,
-  },
+  // 443.137 9e part 2 (CC-2) — old: VendorLinkageModal.tsx company_name site; new: entry removed; why:
+  // the modal was deleted (its QBO vendor-link routes answer 409 QBO_NATIVE_WRITE_REFUSED).
   {
     rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
     bad: /links\.vendor_name\s*\|\|\s*"Vendor"|links\.customer_name\s*\|\|\s*"Customer"/,

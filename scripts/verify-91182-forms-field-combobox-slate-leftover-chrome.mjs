@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 const TARGETS = [
   "apps/frontend/src/components/forms/FieldError.tsx",
   "apps/frontend/src/components/forms/FormField.tsx",
-  "apps/frontend/src/components/forms/QboCombobox.tsx",
+  // 443.137 9e (CC-2): components/forms/QboCombobox.tsx removed — the file was deleted (QBO is a
+  // read-only archive; no screen imports it), so there is no slate chrome left in it to audit.
 ];
 const LABEL = "verify-91182-forms-field-combobox-slate-leftover-chrome";
 function leftoverHits(src) {

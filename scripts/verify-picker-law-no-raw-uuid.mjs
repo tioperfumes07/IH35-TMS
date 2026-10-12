@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["drivers"],"cols":["picker_law"],"leafRe":"^profiles\\.detail$","task":"443.137-9E-DRIVER-AP-VENDOR-NATIVE-PICKER"} */
 /**
  * C1 — PICKER LAW: NO RAW-UUID TEXT INPUT ON A FORM.
  *
@@ -70,6 +71,66 @@ const REFERENCE_SELECT_FILE = `${SRC}/components/parity/ReferenceSelect.tsx`;
 const CATALOG_REGISTRY_FILE = `${SRC}/components/parity/catalogPickerRegistry.ts`;
 
 const UUID = /uuid/i;
+
+// =================================================================================================
+// 443.137 9e — NO QBO PICKER ON A NATIVE SCREEN (CC-2, rule added; nothing existing loosened).
+//
+// QBO is a read-only archive ("USMCA is entirely our TMS ERP"). A picker whose roster is the QBO
+// mirror (components/forms/QboCombobox over api/qbo-mdata searchQboMasterData) selects a QuickBooks
+// record to drive native data — exactly what the picker law already forbids for registry kinds
+// (REGISTRY-MIRROR). The three screens that still had one — DriverDetail (driver vendor),
+// VehicleProfilePage (unit ownership vendor) and QBOBulkLinkPage (bulk QBO id write onto
+// drivers/units) — were migrated to the native EntityPicker / made read-only, and QboCombobox was
+// deleted. This rule keeps it that way, everywhere in production frontend code (test files are not
+// scanned): importing or rendering QboCombobox fails, and so does a screen calling the QBO-MIRROR
+// branch of searchQboMasterData — `"account"` (reads /api/v1/mdata/qbo/accounts) or a non-literal
+// entity type that could reach it. Despite its name, searchQboMasterData("vendor" | "customer" |
+// "item") reads the CANONICAL mdata.vendors / mdata.customers / catalogs.items (see api/qbo-mdata.ts),
+// so those literal calls are native reads and are NOT claimed (AddPayLineModal's item picker is one).
+// =================================================================================================
+const QBO_MIRROR_SEARCH_API = `${SRC}/api/qbo-mdata.ts`;
+/** The native screens 443.137 9e migrated off the QBO picker — named in the failure for traceability. */
+const QBO_PICKER_MIGRATED_SCREENS = new Set([
+  `${SRC}/pages/DriverDetail.tsx`,
+  `${SRC}/pages/fleet/VehicleProfilePage.tsx`,
+  `${SRC}/pages/lists/accounting/QBOBulkLinkPage.tsx`,
+]);
+
+/**
+ * 443.137 9e (#26728 + #26732): QBO routes that ALWAYS answer 409 QBO_NATIVE_WRITE_REFUSED. A frontend
+ * call to one can only fail, so no screen may call them (no broken action). Read routes are not listed.
+ */
+const QBO_REFUSED_WRITE_ROUTES = [
+  /\/api\/v1\/qbo-sync\/[a-z-]+\/reconcile-now/,
+  /\/api\/v1\/integrations\/qbo\/vendor-link(?:["'`/?]|$)/,
+  /\/api\/v1\/master-data\/drivers\/[^"'`]*\/link-qbo-vendor/,
+  /\/api\/v1\/master-data\/(?:units|trailers)\/[^"'`]*\/(?:un)?link-qbo-class/,
+];
+
+/** Every production frontend file that uses a QBO-mirror picker, as { file, why }. */
+export function scanQboPickers(files) {
+  const hits = [];
+  for (const [rel, raw] of Object.entries(files)) {
+    if (raw === MISSING || typeof raw !== "string") continue;
+    const code = blankComments(raw);
+    if (/from\s+["'][^"']*\/QboCombobox["']/.test(code) || /import\(\s*["'][^"']*\/QboCombobox["']\s*\)/.test(code)) {
+      hits.push({ file: rel, why: "imports QboCombobox (QBO-mirror picker)" });
+    } else if (/<QboCombobox\b/.test(code)) {
+      hits.push({ file: rel, why: "renders <QboCombobox> (QBO-mirror picker)" });
+    }
+    for (const re of QBO_REFUSED_WRITE_ROUTES) {
+      if (re.test(code)) hits.push({ file: rel, why: `calls a refused QBO write route (${re.source}) — it always answers 409 QBO_NATIVE_WRITE_REFUSED` });
+    }
+    if (rel !== QBO_MIRROR_SEARCH_API) {
+      for (const m of code.matchAll(/\bsearchQboMasterData\s*\(\s*([^,)]*)/g)) {
+        const arg = m[1].trim();
+        if (/^["'`](vendor|customer|item)["'`]$/.test(arg)) continue; // canonical-table branches
+        hits.push({ file: rel, why: `calls searchQboMasterData(${arg || "?"}, …) — the QBO-mirror account roster` });
+      }
+    }
+  }
+  return hits;
+}
 
 /** Input types that cannot carry a UUID — excluded so the rule stays about identity fields. */
 const NON_TEXT_INPUT_TYPES = new Set([
@@ -667,6 +728,15 @@ export function contractErrors(src) {
     errors.push(`ADDITIVE: ${CATALOG_REGISTRY_FILE} is missing. The catalog picker registry may not be removed.`);
   }
 
+  // ---- 6. NO QBO PICKER ON A NATIVE SCREEN (443.137 9e) -----------------------------------------
+  for (const hit of scanQboPickers(src.files)) {
+    const migrated = QBO_PICKER_MIGRATED_SCREENS.has(hit.file) ? " (a screen 443.137 9e migrated to the native picker)" : "";
+    errors.push(
+      `QBO-PICKER: ${hit.file} ${hit.why}${migrated}. QBO is a read-only archive — pick from the native ` +
+        `roster with <EntityPicker> / <ReferenceSelect> instead.`
+    );
+  }
+
   return errors;
 }
 
@@ -964,7 +1034,60 @@ function selftest() {
       },
       /EXEMPT-ARCHIVED: .*does not exist/,
     ],
+    // 443.137 9e plants — each puts a QBO-mirror picker back on a native screen.
+    [
+      "DriverDetail imports QboCombobox again (QBO vendor picker on the driver profile)",
+      withFile(good, `${SRC}/pages/DriverDetail.tsx`, 'import { QboCombobox } from "../components/forms/QboCombobox";\nexport const x = 1;'),
+      /QBO-PICKER: .*pages\/DriverDetail\.tsx imports QboCombobox.*443\.137 9e migrated/,
+    ],
+    [
+      "VehicleProfilePage renders <QboCombobox> again (QBO vendor on the unit profile)",
+      withFile(good, `${SRC}/pages/fleet/VehicleProfilePage.tsx`, '<QboCombobox entityType="vendor" operatingCompanyId={companyId} />'),
+      /QBO-PICKER: .*VehicleProfilePage\.tsx renders <QboCombobox>/,
+    ],
+    [
+      "QBOBulkLinkPage lazy-imports QboCombobox again (bulk QBO id write onto drivers/units)",
+      withFile(good, `${SRC}/pages/lists/accounting/QBOBulkLinkPage.tsx`, 'const Q = lazy(() => import("../../../components/forms/QboCombobox"));'),
+      /QBO-PICKER: .*QBOBulkLinkPage\.tsx imports QboCombobox/,
+    ],
+    [
+      "a new screen hand-rolls a picker over the QBO-mirror account search",
+      withFile(good, `${SRC}/pages/x/NewAccountField.tsx`, "useQuery({ queryFn: () => searchQboMasterData('account', cid, { q }) });"),
+      /QBO-PICKER: .*NewAccountField\.tsx calls searchQboMasterData\('account'/,
+    ],
+    [
+      "a screen passes a variable entity type that can reach the QBO-mirror account branch",
+      withFile(good, `${SRC}/pages/x/AnyKindField.tsx`, "searchQboMasterData(entityType, cid, { q });"),
+      /QBO-PICKER: .*AnyKindField\.tsx calls searchQboMasterData\(entityType/,
+    ],
+    [
+      "a sync panel calls reconcile-now again (always 409)",
+      withFile(good, `${SRC}/pages/vendors/VendorsSyncPanel.tsx`, 'postVendorsAction("/api/v1/qbo-sync/vendors/reconcile-now", id);'),
+      /QBO-PICKER: .*VendorsSyncPanel\.tsx calls a refused QBO write route/,
+    ],
+    [
+      "the linkage page calls link-qbo-class again (always 409)",
+      withFile(good, `${SRC}/api/mdata.ts`, "apiRequest(`/api/v1/master-data/units/${unitId}/link-qbo-class`, { method: 'POST' });"),
+      /QBO-PICKER: .*api\/mdata\.ts calls a refused QBO write route/,
+    ],
+    [
+      "a client calls the vendor-link route again (always 409)",
+      withFile(good, `${SRC}/api/qbo-x.ts`, 'apiRequest("/api/v1/integrations/qbo/vendor-link", { method: "POST", body });'),
+      /QBO-PICKER: .*qbo-x\.ts calls a refused QBO write route/,
+    ],
   ];
+
+  // NEGATIVE CONTROLS for the 443.137 9e rule: prose and the defining API module are not call sites.
+  for (const [what, rel, source] of [
+    ["a commented-out QboCombobox import", `${SRC}/pages/x/CommentedQbo.tsx`, '// was: import { QboCombobox } from "../forms/QboCombobox";\n/* <QboCombobox /> */\nexport const y = 1;'],
+    ["the API module that defines searchQboMasterData", QBO_MIRROR_SEARCH_API, "export function searchQboMasterData(entityType, cid) { return apiRequest(`/x`); }"],
+    // Live shape (AddPayLineModal, BCF-09): the "item" branch reads canonical catalogs.items.
+    ["a read route (vendor-linkage-history)", `${SRC}/api/y.ts`, "apiRequest(`/api/v1/integrations/qbo/vendor-linkage-history?${p}`);"],
+    ["a pull-now refresh (mirror only)", `${SRC}/pages/z.tsx`, 'post("/api/v1/qbo-sync/vendors/pull-now", id);'],
+    ["a canonical-table item search", `${SRC}/components/x/PayItem.tsx`, 'searchQboMasterData("item", props.operatingCompanyId, { q, active_only: true })'],
+  ]) {
+    if (scanQboPickers({ [rel]: source }).length) failures.push(`QBO-PICKER rule OVER-claimed ${what}: ${rel}`);
+  }
 
   for (const [name, fixture, expected] of mutations) {
     const found = contractErrors(fixture);

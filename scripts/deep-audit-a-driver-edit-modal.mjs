@@ -42,10 +42,22 @@ for (const field of requiredFields) {
 }
 
 if (!source.includes("saveDriverQboMutation")) {
-  failures.push("DriverDetail must retain separate Save QBO fields mutation");
+  failures.push("DriverDetail must retain the separate vendor & class save mutation");
 }
-if (!source.includes("QboCombobox")) {
-  failures.push("DriverDetail Profile must retain QBO vendor combobox in edit context");
+// 443.137 9e (CC-2), guard change — OLD: DriverDetail had to retain the QboCombobox QBO-vendor picker.
+// NEW: it must NOT — the driver's vendor is the native A/P payee, an EntityPicker kind="vendor" over
+// mdata.vendors, saved on mdata.vendors.driver_id. WHY: QBO is a read-only archive ("USMCA is
+// entirely our TMS ERP"); the QBO picker wrote a QuickBooks id onto the native driver row.
+// 443.137 9e part 2: the QBO Mapping tab is read-only — the QBO vendor-link routes answer 409
+// QBO_NATIVE_WRITE_REFUSED (#26732), so no "Edit Linkage" / VendorLinkageModal may come back.
+if (/VendorLinkageModal|setQboModalOpen/.test(source)) {
+  failures.push("DriverDetail QBO Mapping tab must stay read-only (no VendorLinkageModal / Edit Linkage)");
+}
+if (/QboCombobox/.test(source)) {
+  failures.push("DriverDetail Profile must not use the QBO-mirror QboCombobox (QBO is a read-only archive)");
+}
+if (!/<EntityPicker\s+kind="vendor"[\s\S]{0,200}value=\{apVendorPickId\}/.test(source) || !/updateVendor\(apVendorPickId, \{ driver_id: id \}\)/.test(source)) {
+  failures.push("DriverDetail Profile vendor must be the native A/P payee EntityPicker saved on mdata.vendors.driver_id");
 }
 
 for (const section of ["Edit Modal", "QBO", "CRITICAL", "HIGH"]) {

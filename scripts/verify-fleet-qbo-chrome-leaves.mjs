@@ -24,8 +24,8 @@
  *   - unit.profile.quick_assign: VehicleProfilePage.tsx mounts the real QuickAssignModal (a real
  *     Modal with a real DriverPickerWithCreate field).
  *   - unit.profile.documents: VehicleProfilePage.tsx mounts the real PhotoGallery component.
- *   - unit.profile.qbo_mapping: VehicleProfilePage.tsx's real "QBO vendor (ownership / lease
- *     entity)" mapping field.
+ *   - unit.profile.qbo_mapping: VehicleProfilePage.tsx's real "Asset classification" card — the
+ *     TMS class SelectCombobox (443.137 9e retired the QBO vendor picker that used to sit here).
  *   - unit.profile.action_bar: VehicleProfilePage.tsx mounts the real vehicle-profile ActionBar
  *     (Edit/Export PDF/Archive), which itself renders a real "Export PDF" download link.
  *   - unit.edit.identity / unit.edit.documents: EditVehicleModal.tsx's real field-config array with
@@ -113,9 +113,14 @@ const CHECKS = [
     // tripping the cap on a genuine, correct addition. Re-anchored directly from the field label
     // to its own real QboCombobox component (tight, structural, immune to unrelated additions
     // elsewhere in the same card).
-    name: "unit.profile.qbo_mapping: VehicleProfilePage real QBO vendor mapping field",
+    // 443.137 9e (CC-2), guard change — OLD: anchored on the "QBO vendor (ownership / lease entity)"
+    // label and its <QboCombobox>. NEW: anchored on the "Asset classification" card's real TMS class
+    // <SelectCombobox value={qboClassTmsId}>. WHY: QBO is a read-only archive; the QBO-mirror vendor
+    // picker was removed from the unit profile (the native ownership / lease entity is Owner Company /
+    // Leased To Company in EditVehicleModal). The leaf is still a real control on the same card.
+    name: "unit.profile.qbo_mapping: VehicleProfilePage real Asset classification (TMS class) field",
     file: "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
-    pattern: /QBO vendor \(ownership \/ lease entity\)[\s\S]{0,150}<QboCombobox/,
+    pattern: />Asset classification<\/div>[\s\S]{0,1200}Class \(TMS catalog\)\s*<SelectCombobox[^>]{0,200}value=\{qboClassTmsId\}/,
   },
   {
     name: "unit.profile.action_bar: VehicleProfilePage mounts the real ActionBar (Edit/Archive), which itself renders a real Export PDF link",

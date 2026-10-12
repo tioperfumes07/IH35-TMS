@@ -10,7 +10,6 @@ import { QuickAssignModal } from "../../components/fleet/QuickAssignModal";
 import { listClassesForJe } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
-import { QboCombobox } from "../../components/forms/QboCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
@@ -143,17 +142,14 @@ function postQuickAvailability(unitId: string, operatingCompanyId: string, value
 export function VehicleProfilePage() {
   const { id = "" } = useParams();
   const [searchParams] = useSearchParams();
-  const { selectedCompanyId, selectedCompany, isLoading: companyLoading } = useCompanyContext();
+  const { selectedCompanyId, isLoading: companyLoading } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const qboAvailable = selectedCompany?.code === "TRANSP";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [quickAssignOpen, setQuickAssignOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [statusModalTarget, setStatusModalTarget] = useState<UnitLifecycleStatus | null>(null);
-  const [qboVendorId, setQboVendorId] = useState<string | null>(null);
-  const [qboVendorLabel, setQboVendorLabel] = useState("");
   const [qboClassTmsId, setQboClassTmsId] = useState("");
   const actionGenerationRef = useRef(0);
   const canFetchProfile = Boolean(id && companyId);
@@ -207,9 +203,8 @@ export function VehicleProfilePage() {
 
   useEffect(() => {
     if (!unit) return;
-    setQboVendorId((unit.qbo_vendor_id as string | null) ?? null);
     setQboClassTmsId(String(unit.qbo_class_id ?? ""));
-  }, [unit?.id, unit?.qbo_vendor_id, unit?.qbo_class_id]);
+  }, [unit?.id, unit?.qbo_class_id]);
 
   const saveMutation = useMutation({
     mutationFn: (input: { unitId: string; companyId: string; generation: number; patch: Record<string, unknown> }) =>
@@ -217,7 +212,7 @@ export function VehicleProfilePage() {
     onSuccess: (_data, input) => {
       if (input.generation !== actionGenerationRef.current) return;
       void queryClient.invalidateQueries({ queryKey: ["unit-profile", input.unitId, input.companyId] });
-      pushToast("Unit QBO fields saved", "success");
+      pushToast("Unit classification saved", "success");
     },
     onError: (_error, input) => {
       if (input.generation === actionGenerationRef.current) pushToast("Failed to save", "error");
@@ -619,7 +614,11 @@ export function VehicleProfilePage() {
       ) : null}
 
       {profile ? <div id="asset-financial" className="max-w-2xl scroll-mt-4 space-y-3 rounded-sm border border-gray-200 bg-white p-4">
-        <div className="text-xs font-semibold text-gray-600">{qboAvailable ? "QBO mapping" : "Asset classification"}</div>
+        {/* 443.137 9e: QBO is a read-only archive. The former TRANSP-only "QBO vendor (ownership / lease
+            entity)" picker searched the QuickBooks mirror and wrote mdata.units.qbo_vendor_id; it is gone.
+            The native ownership / lease entity is the unit's Owner Company / Leased To Company, edited in
+            Edit (EditVehicleModal) over org companies. */}
+        <div className="text-xs font-semibold text-gray-600">Asset classification</div>
         {classesQuery.isError ? (
           <ListErrorState
             title="Couldn't load TMS classes"
@@ -628,21 +627,6 @@ export function VehicleProfilePage() {
             onRetry={() => void classesQuery.refetch()}
           />
         ) : null}
-        {qboAvailable ? <label className="block text-xs text-gray-600">
-          QBO vendor (ownership / lease entity)
-          <div className="mt-1">
-            <QboCombobox
-              entityType="vendor"
-              operatingCompanyId={companyId}
-              value={qboVendorId}
-              displayValue={qboVendorLabel}
-              onChange={(qId, name) => {
-                setQboVendorId(qId);
-                setQboVendorLabel(name);
-              }}
-            />
-          </div>
-        </label> : null}
         <label className="block text-xs text-gray-600">
           Class (TMS catalog)
           <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" value={qboClassTmsId} disabled={classesQuery.isError} onChange={(e) => setQboClassTmsId(e.target.value)}>
@@ -665,7 +649,6 @@ export function VehicleProfilePage() {
               companyId,
               generation: actionGenerationRef.current,
               patch: {
-                ...(qboAvailable ? { qbo_vendor_id: qboVendorId || null } : {}),
                 qbo_class_id: qboClassTmsId || null,
               },
             })

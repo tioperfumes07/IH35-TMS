@@ -1,14 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  linkDriverQboVendor,
-  linkUnitQboClass,
-  listDriverQboMappingStatus,
-  listQboVendorSuggestions,
-  listUnits,
-  type DriverQboMappingStatus,
-} from "../../api/mdata";
+import { useQuery } from "@tanstack/react-query";
+import { listDriverQboMappingStatus, listUnits, type DriverQboMappingStatus } from "../../api/mdata";
 import { listClassesForJe } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
@@ -16,8 +9,6 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { useToast } from "../../components/Toast";
-import { VendorLinkageModal } from "../../components/qbo/VendorLinkageModal";
 import { SelectCombobox } from "../../components/Combobox";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -41,11 +32,19 @@ function driverDisplayName(row: DriverQboMappingStatus): string {
   return `${row.last_name}, ${row.first_name}`;
 }
 
+/*
+ * 443.137 9e (part 2, #26732 ACCT-F4431380): QuickBooks is a read-only archive. The seven QBO
+ * vendor-linkage write routes (vendor-link POST/DELETE, drivers/:id/link-qbo-vendor,
+ * units|trailers/:id/link-qbo-class, units|trailers/:id/unlink-qbo-class) now always answer 409
+ * QBO_NATIVE_WRITE_REFUSED. This page therefore shows the archive linkage READ-ONLY: the
+ * "Link to Existing" / "Edit Linkage" actions, the class picker + link button, the
+ * "Auto-Link High Confidence" button and the VendorLinkageModal are removed — never a broken button.
+ * A driver's payee is the native A/P vendor on the driver profile (mdata.vendors.driver_id); a unit's
+ * class is the TMS class on the unit profile.
+ */
 export function QboVendorLinkagePage() {
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
-  const { pushToast } = useToast();
-  const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = parseQboVendorLinkageTab(searchParams.get("tab"));
@@ -56,15 +55,6 @@ export function QboVendorLinkagePage() {
     setSearchParams(params, { replace: true });
   };
   const [filter, setFilter] = useState<"all" | "linked" | "unlinked">("all");
-  const [linkageTarget, setLinkageTarget] = useState<{
-    entityType: "driver" | "asset";
-    entityId: string;
-    name: string;
-    currentQboVendorId?: string | null;
-  } | null>(null);
-  const [classByUnit, setClassByUnit] = useState<Record<string, string>>({});
-
-  const canManage = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
 
   const driversQuery = useQuery({
     queryKey: ["qbo-vendor-linkage", "drivers", companyId],
@@ -144,27 +134,6 @@ export function QboVendorLinkagePage() {
         sortValue: (row) => (row.linked ? "Linked" : "Unlinked"),
         render: (row) => (row.linked ? "Linked" : "Unlinked"),
       },
-      {
-        key: "actions",
-        label: "Actions",
-        alwaysVisible: true,
-        render: (row) => (
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() =>
-              setLinkageTarget({
-                entityType: "driver",
-                entityId: row.id,
-                name: `${row.first_name} ${row.last_name}`,
-                currentQboVendorId: row.qbo_vendor_id,
-              })
-            }
-          >
-            {row.qbo_vendor_id ? "Edit Linkage" : "Link to Existing"}
-          </Button>
-        ),
-      },
     ];
   }, []);
 
@@ -191,81 +160,8 @@ export function QboVendorLinkagePage() {
         render: (row) =>
           row.qbo_class_id ? entityLabel(classNameById.get(row.qbo_class_id), row.qbo_class_id, "Class") : "—",
       },
-      {
-        key: "actions",
-        label: "Actions",
-        alwaysVisible: true,
-        render: (row) => (
-          <div className="flex items-center gap-2">
-            <SelectCombobox
-              className="h-7 min-w-[10rem] rounded-sm border border-gray-300 px-2 text-xs"
-              value={classByUnit[row.id] ?? row.qbo_class_id ?? ""}
-              onChange={(event) => setClassByUnit((current) => ({ ...current, [row.id]: event.target.value }))}
-            >
-              <option value="">Select class…</option>
-              {(classesQuery.data?.classes ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.class_code ? `${c.class_code} — ` : ""}
-                  {c.class_name}
-                </option>
-              ))}
-            </SelectCombobox>
-            <Button
-              size="sm"
-              onClick={() => {
-                const qboClassId = (classByUnit[row.id] ?? row.qbo_class_id ?? "").trim();
-                if (!qboClassId) {
-                  pushToast("Select a class", "error");
-                  return;
-                }
-                void linkUnitQboClass(row.id, {
-                  operating_company_id: companyId,
-                  qbo_class_id: qboClassId,
-                  reason: "manual_asset_link",
-                  force: true,
-                })
-                  .then(() => {
-                    pushToast("Unit linked", "success");
-                    void queryClient.invalidateQueries({ queryKey: ["qbo-vendor-linkage", "units", companyId] });
-                  })
-                  .catch((e) => pushToast(String((e as Error)?.message ?? "Link failed"), "error"));
-              }}
-            >
-              Link to Existing
-            </Button>
-          </div>
-        ),
-      },
     ];
-  }, [classByUnit, classNameById, classesQuery.data?.classes, companyId, pushToast, queryClient]);
-
-  async function autoLinkHighConfidence() {
-    const candidates = (driversQuery.data?.rows ?? []).filter((row) => !row.qbo_vendor_id);
-    let linkedCount = 0;
-    let failedCount = 0;
-    for (const candidate of candidates) {
-      const suggestions = await listQboVendorSuggestions(companyId, "driver", candidate.id);
-      const top = suggestions.rows[0];
-      if (!top || Number(top.score ?? 0) < 0.9) continue;
-      try {
-        await linkDriverQboVendor(candidate.id, {
-          operating_company_id: companyId,
-          qbo_vendor_id: top.qbo_vendor_id,
-          reason: "bulk_auto_link_high_confidence",
-          force: false,
-        });
-        linkedCount += 1;
-      } catch {
-        failedCount += 1;
-      }
-    }
-    if (failedCount > 0) {
-      pushToast(`Auto-link complete: ${linkedCount} drivers linked, ${failedCount} failed`, "info");
-    } else {
-      pushToast(`Auto-link complete: ${linkedCount} drivers linked`, "success");
-    }
-    void queryClient.invalidateQueries({ queryKey: ["qbo-vendor-linkage", "drivers", companyId] });
-  }
+  }, [classNameById]);
 
   if (auth.user?.role !== "Owner" && auth.user?.role !== "Administrator") {
     return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-600">Owner/Admin only.</div>;
@@ -275,7 +171,7 @@ export function QboVendorLinkagePage() {
     <div className="space-y-3">
       <PageHeader
         title="QBO Vendor Linkage"
-        subtitle="Link drivers/assets to QBO Vendor/Class records"
+        subtitle="Read-only view of the QuickBooks vendor / class linkage archive"
         actions={
           <div className="flex items-center gap-2">
             <Button variant={activeTab === "drivers" ? "primary" : "secondary"} onClick={() => setActiveTab("drivers")}>
@@ -303,9 +199,9 @@ export function QboVendorLinkagePage() {
                 <option value="unlinked">Unlinked</option>
               </SelectCombobox>
             </div>
-            <Button onClick={() => void autoLinkHighConfidence()} disabled={!canManage}>
-              Auto-Link High Confidence (&gt; 0.9)
-            </Button>
+            <span className="text-xs text-gray-600" data-testid="qbo-vendor-linkage-read-only">
+              QuickBooks is a read-only archive — linkage is shown, never written.
+            </span>
           </div>
           {driversQuery.isError ? (
             <ListErrorState
@@ -351,23 +247,6 @@ export function QboVendorLinkagePage() {
         </div>
       )}
 
-      {linkageTarget ? (
-        <VendorLinkageModal
-          open={Boolean(linkageTarget)}
-          operatingCompanyId={companyId}
-          entityType={linkageTarget.entityType}
-          entityId={linkageTarget.entityId}
-          entityName={linkageTarget.name}
-          currentQboVendorId={linkageTarget.currentQboVendorId}
-          canManage={canManage}
-          onClose={() => setLinkageTarget(null)}
-          onSaved={() => {
-            setLinkageTarget(null);
-            pushToast("Vendor linkage saved", "success");
-            void queryClient.invalidateQueries({ queryKey: ["qbo-vendor-linkage", "drivers", companyId] });
-          }}
-        />
-      ) : null}
     </div>
   );
 }

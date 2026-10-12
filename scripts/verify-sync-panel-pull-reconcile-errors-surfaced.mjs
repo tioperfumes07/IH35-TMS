@@ -26,7 +26,12 @@ const TARGETS = [
   "apps/frontend/src/pages/vendors/VendorsSyncPanel.tsx",
   "apps/frontend/src/pages/customers/CustomersSyncPanel.tsx",
 ];
-const MUTATIONS = ["pullMutation", "reconcileMutation"];
+// 443.137 9e (CC-2), guard change — OLD: both pullMutation AND reconcileMutation had to carry onError.
+// NEW: pullMutation must carry onError, and the panels must NOT call */reconcile-now at all. WHY: since
+// ACCT-F4431380 (#26728) every QBO reconcile-now route answers 409 QBO_NATIVE_WRITE_REFUSED (QuickBooks
+// is a read-only archive), so a Reconcile button could only ever fail — the action was removed, not
+// left broken. Stricter: re-adding a reconcile call now fails this guard.
+const MUTATIONS = ["pullMutation"];
 
 function extractMutationBlock(src, mutationName) {
   const startRe = new RegExp(`const ${mutationName} = useMutation\\(\\{`);
@@ -44,6 +49,11 @@ export function checkSyncPanelPullReconcileErrors(file, src) {
     if (!block || !/onError:/.test(block)) {
       offenders.push(`${file}: ${name} has no onError — a rejected sync will silently return to idle.`);
     }
+  }
+  // Comments are prose, not call sites (the panels explain the removal in a comment).
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  if (/reconcile-now|reconcileMutation/.test(code)) {
+    offenders.push(`${file}: calls a QBO reconcile-now route — it always answers 409 QBO_NATIVE_WRITE_REFUSED (443.137 9e); remove the action.`);
   }
   return offenders;
 }
@@ -69,6 +79,11 @@ if (process.argv.includes("--selftest")) {
     });
   `;
   const buggyOffenders = checkSyncPanelPullReconcileErrors("test-file.tsx", buggy);
+  const reconcilePlant = `
+    const pullMutation = useMutation({ mutationFn: () => doPull(), onError: (e) => toast(e) });
+    const m = useMutation({ mutationFn: () => post("/api/v1/qbo-sync/vendors/reconcile-now"), onError: (e) => toast(e) });
+  `;
+  const reconcileCaught = checkSyncPanelPullReconcileErrors("plant.tsx", reconcilePlant).some((o) => /reconcile-now/.test(o));
 
   let fixedOffenders = [];
   for (const file of TARGETS) {
@@ -76,7 +91,7 @@ if (process.argv.includes("--selftest")) {
     fixedOffenders.push(...checkSyncPanelPullReconcileErrors(file, src));
   }
 
-  if (buggyOffenders.length >= 1 && fixedOffenders.length === 0) {
+  if (buggyOffenders.length >= 1 && reconcileCaught && fixedOffenders.length === 0) {
     console.log("verify-sync-panel-pull-reconcile-errors-surfaced selftest OK");
     process.exit(0);
   }
@@ -96,6 +111,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1);
   }
   console.log(
-    "verify-sync-panel-pull-reconcile-errors-surfaced OK — Vendors/Customers QBO sync panels surface pull/reconcile failures, never a silent idle return",
+    "verify-sync-panel-pull-reconcile-errors-surfaced OK — Vendors/Customers QBO sync panels surface pull failures and offer no refused reconcile action",
   );
 }
