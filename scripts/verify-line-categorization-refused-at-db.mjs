@@ -2,7 +2,7 @@
 /**
  * verify-line-categorization-refused-at-db — RULING 443.67 #1 a-c (owner 2026-10-11 15:30 CT: "FIX ALL THESE ISSUES
  * PERMANENTLY"), CC-3. A script guard alone is not permanent; the database refuses the bad row for every writer
- * (migration 202615600900). This guard proves the refusal is in force and nothing slipped in before it:
+ * (migration 202615620900). This guard proves the refusal is in force and nothing slipped in before it:
  *   STATIC  S1 the migration defines the line resolver on all three line tables, the item rule, and the expense CHECK.
  *   LIVE    L1 the three line triggers, the item trigger and the expense status trigger exist and are ENABLED;
  *           L2 expenses_posted_is_not_draft is VALIDATED;
@@ -19,7 +19,7 @@ import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 export const REQUIRES_LIVE_DB = "the refusal is a live database object — fails closed without a database";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-line-categorization-refused-at-db";
-const MIGRATION = "db/migrations/202615600900_line_categorization_refused_at_db.sql";
+const MIGRATION = "db/migrations/202615620900_line_categorization_refused_at_db.sql";
 const TRIGGERS = [
   ["accounting.bill_lines", "trg_bill_lines_enforce_categorization"],
   ["accounting.expense_lines", "trg_expense_lines_enforce_categorization"],

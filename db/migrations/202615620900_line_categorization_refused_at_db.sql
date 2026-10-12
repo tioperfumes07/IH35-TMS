@@ -1,4 +1,4 @@
--- 202615600900_line_categorization_refused_at_db.sql
+-- 202615620900_line_categorization_refused_at_db.sql
 -- CC-3 · RULING 443.67 #1 a-c (owner 2026-10-11 15:30 CT: "FIX ALL THESE ISSUES PERMANENTLY"). The database refuses the badly
 -- categorized row for EVERY writer, not only the Settlement Creator path. Scoped to the companies that opt in
 -- (org.companies.enforce_line_categorization, set for USMCA by code — TRANSP / TRK are QBO mirrors, frozen, and carry
