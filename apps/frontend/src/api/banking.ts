@@ -1699,7 +1699,8 @@ export function getBankReconWorklist(
 }
 
 export type BankTransactionSuggestion = {
-  suggested_ledger_entry_kind: "expense" | "bill";
+  /** ROUND 443.66-C — relay_deposit for Relay Fuel Wallet funding credits. */
+  suggested_ledger_entry_kind: "expense" | "bill" | "relay_deposit";
   suggested_ledger_entry_id: string;
   suggested_confidence: "high" | "medium";
   date_gap_days: number;
@@ -1717,13 +1718,14 @@ export type BankTransactionSuggestion = {
 // so a row can show "Suggested" without opening the Match drawer for each one. Read-only: the drawer
 // (existing MatchDrawer + acceptBankReconMatch) still owns Accept — this never writes a match itself.
 export function suggestBankTransactionMatches(operatingCompanyId: string, bankTransactionIds: string[]) {
-  return apiRequest<{ suggestions: Record<string, BankTransactionSuggestion | null> }>(
-    `/api/v1/banking/transactions/suggest`,
-    {
-      method: "POST",
-      body: { operating_company_id: operatingCompanyId, bank_transaction_ids: bankTransactionIds },
-    }
-  );
+  return apiRequest<{
+    suggestions: Record<string, BankTransactionSuggestion | null>;
+    /** ROUND 443.66-C — why a wallet/card line has no 1:1 document suggestion. */
+    gap_reasons?: Record<string, string>;
+  }>(`/api/v1/banking/transactions/suggest`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, bank_transaction_ids: bankTransactionIds },
+  });
 }
 
 export function acceptBankReconMatch(

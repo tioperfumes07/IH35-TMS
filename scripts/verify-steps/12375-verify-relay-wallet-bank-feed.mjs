@@ -5,5 +5,8 @@ export default {
     // RELAY-F442 — sender_fee → wallet drawdown + Fuel Card Fee leg (piggyback EVEN 12375).
     ctx.run("node", ["scripts/verify-relay-f442-sender-fee.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-relay-f442-sender-fee.mjs"]);
+    // ROUND 443.66-C — wallet list suggest (piggyback EVEN 12375).
+    ctx.run("node", ["scripts/verify-relay-wallet-suggest-44366.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-relay-wallet-suggest-44366.mjs"]);
   },
 };
