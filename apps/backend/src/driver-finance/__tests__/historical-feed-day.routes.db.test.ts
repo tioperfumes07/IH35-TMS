@@ -49,7 +49,7 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
     return String(600_000_000 + Math.floor(Math.random() * 99_999_999));
   }
 
-  async function seedLoad(loadNumberSuffix: string): Promise<string> {
+  async function seedLoad(loadNumberSuffix: string, crewed = false): Promise<string> {
     return bypass(async () => {
       const result = await createLoadWithFullSideEffects(
         db,
@@ -68,6 +68,8 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
           // books the load uncrewed and the feed day names the driver, exactly as the printed document does.
           // Practical miles are still typed, as the booking screen requires for a real load.
           miles_practical: 500,
+          // LEAD 443.92 #3: a crewed booking (driver + miles) — Book Load mints the load's open bill at assignment.
+          ...(crewed ? { assigned_primary_driver_id: driverId } : {}),
           notes: "feed-day route test fixture",
           is_sample_data: false,
           charges: [],
@@ -308,5 +310,59 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
       },
     });
     expect(res.statusCode).toBe(403);
+  });
+
+  it("LEAD 443.92 #3: a load booked with driver + miles has its open bill — the feed day writes the printed amount onto THAT bill (one bill, idempotent)", async () => {
+    const loadId = await seedLoad("G", true);
+    const minted = await bypass(() =>
+      db.query<{ id: string; gross: string; status: string }>(
+        `SELECT id::text, gross_amount_cents::text AS gross, status FROM driver_finance.driver_bills WHERE load_id = $1::uuid AND voided_at IS NULL`,
+        [loadId]
+      )
+    );
+    expect(minted.rows.length).toBe(1);
+    expect(minted.rows[0]!.status).toBe("open");
+    const run = (feedDate: string, ref: string) =>
+      app.inject({
+        method: "POST",
+        url: "/api/v1/driver-finance/feed-day/run",
+        headers: testAuthHeaders(undefined, "Owner"),
+        payload: {
+          operating_company_id: companyId,
+          feed_date: feedDate,
+          source_document_ref: ref,
+          loads: [{ load_id: loadId, load_number: `FD-${suffix}-G`, driver_id: driverId,
+                    driver_bill: { gross_amount_cents: 123456, loaded_pay_cents: 120000, deadhead_pay_cents: 3456 } }],
+        },
+      });
+    const res = await run("2026-08-20", `TEST-${suffix}-G`);
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { report: { clean: boolean; created: number; filled: number; steps: Array<{ status: string }> } };
+    expect(body.report.clean).toBe(true);
+    expect(body.report.created).toBe(0);
+    expect(body.report.filled).toBe(1);
+    const after = await bypass(() =>
+      db.query<{ id: string; gross: string; loaded: string; deadhead: string }>(
+        `SELECT id::text, gross_amount_cents::text AS gross, loaded_pay_cents::text AS loaded, deadhead_pay_cents::text AS deadhead
+           FROM driver_finance.driver_bills WHERE load_id = $1::uuid AND voided_at IS NULL`,
+        [loadId]
+      )
+    );
+    expect(after.rows.length).toBe(1);
+    expect(after.rows[0]!.id).toBe(minted.rows[0]!.id);
+    expect(Number(after.rows[0]!.gross)).toBe(123456);
+    expect(Number(after.rows[0]!.loaded)).toBe(120000);
+    expect(Number(after.rows[0]!.deadhead)).toBe(3456);
+
+    // Idempotent: the same printed amount on another (unclosed) day is already_exists, still one bill.
+    const again = await run("2026-08-21", `TEST-${suffix}-G2`);
+    expect(again.statusCode).toBe(200);
+    const againBody = again.json() as { report: { filled: number; already_existed: number } };
+    expect(againBody.report.filled).toBe(0);
+    expect(againBody.report.already_existed).toBe(1);
+    const count = await bypass(() =>
+      db.query<{ n: string }>(`SELECT count(*)::text AS n FROM driver_finance.driver_bills WHERE load_id = $1::uuid`, [loadId])
+    );
+    expect(Number(count.rows[0]!.n)).toBe(1);
   });
 });

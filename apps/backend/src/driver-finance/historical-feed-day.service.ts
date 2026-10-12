@@ -92,7 +92,7 @@ export type FeedStepResult = {
   load_id: string;
   load_number: string;
   natural_key: string;
-  status: "created" | "already_exists" | "refused" | "skipped_dependency" | "would_create" | "relay_link";
+  status: "created" | "filled" | "already_exists" | "refused" | "skipped_dependency" | "would_create" | "relay_link";
   detail: string;
 };
 
@@ -102,6 +102,8 @@ export type FeedDayReport = {
   dry_run: boolean;
   loads_planned: number;
   created: number;
+  /** Open bills (minted at booking) that took the printed amount — LEAD 443.92 #3. */
+  filled: number;
   already_existed: number;
   refused: number;
   skipped: number;
@@ -168,8 +170,10 @@ export async function executeHistoricalFeedDay(
           push({
             step: "driver_bill", load_id: load.load_id, load_number: load.load_number,
             natural_key: key,
-            status: r.outcome === "created" ? "created" : "already_exists",
-            detail: `bill ${r.bill_number}`,
+            status: r.outcome === "created" ? "created" : r.outcome === "filled" ? "filled" : "already_exists",
+            detail: r.outcome === "filled"
+              ? `bill ${r.bill_number}: printed ${load.driver_bill.gross_amount_cents} cents written onto the open bill (was ${r.previous_gross_cents})`
+              : `bill ${r.bill_number}`,
           });
         }
       }
@@ -263,6 +267,7 @@ export async function executeHistoricalFeedDay(
   }
 
   const created = steps.filter((s) => s.status === "created").length;
+  const filled = steps.filter((s) => s.status === "filled").length;
   const alreadyExisted = steps.filter((s) => s.status === "already_exists").length;
   const refused = steps.filter((s) => s.status === "refused").length;
   const skipped = steps.filter((s) => s.status === "skipped_dependency").length;
@@ -273,6 +278,7 @@ export async function executeHistoricalFeedDay(
     dry_run: dryRun,
     loads_planned: input.loads.length,
     created,
+    filled,
     already_existed: alreadyExisted,
     refused,
     skipped,
