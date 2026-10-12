@@ -17,9 +17,20 @@ const PROFILES = "apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx";
 const STOLEN_RE =
   /to[=:]\s*"\/(legal|finance|accounting|safety|maintenance|compliance|customers|drivers|fleet|lists|cash-flow|driver-hub)/;
 
+// LEAD 443.101 (2026-10-12) — the two form425c guards contradicted each other; this one changes.
+//   old rule: ExhibitsViewer may link to NO /accounting, /finance or /legal path (seat-lane prefix ownership, #14998).
+//   new rule: exactly the three economic drills that verify-form425c-econ-link-pack (#5417, 425-ECON-01 / 425-LINK-01)
+//             requires — /accounting/reconciliation, /finance/statements, /legal/reports — are allowed on the exhibits
+//             page; every other foreign-prefix hop on every 425c page still fails.
+//   why: the prefix ban enforced seat lanes, which AGENTS.md marks SUPERSEDED (2026-09-02); the live linkage law requires
+//        forward drill from a document to the statements it ties to (no dead-end screen). With the two rules both
+//        registered, verify:form425c-history-includes-drafts could never pass.
+export const ECON_DRILLS = ['to="/accounting/reconciliation"', 'to="/finance/statements"', 'to="/legal/reports"'];
+
 export function collectProblems(src, page = PAGE) {
   const problems = [];
-  if (STOLEN_RE.test(src)) {
+  const scanned = page === PAGE ? ECON_DRILLS.reduce((acc, d) => acc.split(d).join('to="/425c"'), src) : src;
+  if (STOLEN_RE.test(scanned)) {
     problems.push(`${page}: related links must not steal other seats' prefixes`);
   }
   if (page === PAGE) {
@@ -83,10 +94,11 @@ export function collectProblems(src, page = PAGE) {
   return problems;
 }
 
+// 443.101: the three economic drills are now allowed (see ECON_DRILLS); the planted steal uses foreign hops that are not.
 const stolen = `
-  <Link to="/accounting/reconciliation">Bank reconciliation</Link>
-  <Link to="/finance/statements">Accounting statements</Link>
-  <Link to="/legal/reports">Legal reports</Link>
+  <Link to="/accounting/journal-entries">Journal entries</Link>
+  <Link to="/finance/hub">Finance hub</Link>
+  <Link to="/legal/matters">Legal matters</Link>
 `;
 const kept = `
   <Link to="/425c?tab=qb">Deposit Import</Link>
@@ -118,6 +130,21 @@ if (process.argv.includes("--selftest")) {
   if (good.length) {
     console.error(`${LABEL} --selftest FAIL good fixture: ${good.join("; ")}`);
     process.exit(1);
+  }
+  // 443.101: the three named economic drills pass on the exhibits page; any other foreign hop, or the same drill on
+  // another 425c page, still fails.
+  const econCases = [
+    ["exhibits + the 3 econ drills", `${kept}${ECON_DRILLS.map((d) => `<Link ${d}>x</Link>`).join("")}`, PAGE, 0],
+    ["exhibits + an extra /accounting hop", `${kept}<Link to="/accounting/journal">x</Link>`, PAGE, 1],
+    ["exhibits + a /finance hop that is not the statements drill", `${kept}<Link to="/finance/hub">x</Link>`, PAGE, 1],
+    ["home borrows an econ drill", `${keptHome}<Link to="/finance/statements">x</Link>`, HOME, 1],
+  ];
+  for (const [name, fixture, pg, want] of econCases) {
+    const got = collectProblems(fixture, pg).filter((p) => p.includes("steal")).length;
+    if (want === 0 ? got !== 0 : got === 0) {
+      console.error(`${LABEL} --selftest FAIL: ${name} (steal problems=${got})`);
+      process.exit(1);
+    }
   }
   if (!badHome.some((p) => p.includes("steal"))) {
     console.error(`${LABEL} --selftest FAIL: home stolen prefixes must fail`);
