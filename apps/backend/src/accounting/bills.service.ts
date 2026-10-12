@@ -2669,13 +2669,15 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         coa_account_id,
         linked_work_order_uuid,
         unit_id,
+        driver_id,
+        load_id,
         insurance_claim_id,
         class_id,
         created_by_user_id,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$16,$12,now(),now())
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$17::uuid,$18::uuid,$15,$16,$12,now(),now())
       RETURNING *
     `
       : hasInsuranceClaimId
@@ -2697,12 +2699,14 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         coa_account_id,
         linked_work_order_uuid,
         unit_id,
+        driver_id,
+        load_id,
         insurance_claim_id,
         created_by_user_id,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$12,now(),now())
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$16::uuid,$17::uuid,$15,$12,now(),now())
       RETURNING *
     `
       : hasClassId
@@ -2724,12 +2728,14 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         coa_account_id,
         linked_work_order_uuid,
         unit_id,
+        driver_id,
+        load_id,
         class_id,
         created_by_user_id,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$12,now(),now())
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$16::uuid,$17::uuid,$15,$12,now(),now())
       RETURNING *
     `
       : `
@@ -2750,11 +2756,13 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         coa_account_id,
         linked_work_order_uuid,
         unit_id,
+        driver_id,
+        load_id,
         created_by_user_id,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$12,now(),now())
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15::uuid,$16::uuid,$12,now(),now())
       RETURNING *
     `,
     hasInsuranceClaimId && hasClassId
@@ -2775,6 +2783,8 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
           input.unitId ?? null,
           insuranceClaimId,
           classId,
+          input.driverId ?? null,
+          input.loadId ?? null,
         ]
       : hasInsuranceClaimId
       ? [
@@ -2793,6 +2803,8 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
           input.workOrderId ?? null,
           input.unitId ?? null,
           insuranceClaimId,
+          input.driverId ?? null,
+          input.loadId ?? null,
         ]
       : hasClassId
         ? [
@@ -2811,6 +2823,8 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
             input.workOrderId ?? null,
             input.unitId ?? null,
             classId,
+            input.driverId ?? null,
+            input.loadId ?? null,
           ]
       : [
           input.operatingCompanyId,
@@ -2827,6 +2841,8 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
           userId,
           input.workOrderId ?? null,
           input.unitId ?? null,
+          input.driverId ?? null,
+          input.loadId ?? null,
         ]
   );
   if ((res.rowCount ?? 0) === 0 || !res.rows[0]) throw new Error("bill_insert_failed");

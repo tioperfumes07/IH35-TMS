@@ -267,6 +267,9 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
       operatingCompanyId: opco,
       vendorId,
       driverId: input.driverId,
+      // 443.106 (trg_refuse_driver_bill_without_links, BEFORE INSERT): a driver bill carries vendor, driver, load and unit on
+      // its INSERT row — the load goes on the header, not only on the lines.
+      loadId: b.loadId,
       unitId: b.unitId ?? null,
       billNumber: b.loadNumber,
       autoDisplayId: spent.rows.length > 0,

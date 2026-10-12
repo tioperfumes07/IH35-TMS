@@ -258,11 +258,16 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
          VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),1515,275,0,1240,'load_bookended')`,
         [settlementId, companyId, `S-${suffix}`, driverId]
       );
+      // 443.106 (trg_refuse_driver_bill_without_links): a driver bill carries its load's truck — the loads run on a company unit.
+      const unitId = (await db.query<{ id: string }>(
+        `INSERT INTO mdata.units (unit_number, vin, owner_company_id, is_sample_data) VALUES ($1, $2, $3::uuid, true) RETURNING id::text AS id`,
+        [`SBP-${suffix}`, `VINSBP${suffix}`.slice(0, 17), companyId]
+      )).rows[0]!.id;
       for (let i = 0; i < 3; i += 1) {
         await db.query(
-          `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, id, load_trailer_equipment_id)
-           VALUES ($1::uuid,$2,$3::uuid,'delivered_pending_docs',$4,$5::uuid,$6::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $1::uuid AND code = 'DRY_VAN' LIMIT 1))`,
-          [companyId, loadNumbers[i], customerId, grossCents[i]! * 3, userId, loadIds[i]]
+          `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, id, load_trailer_equipment_id, assigned_unit_id)
+           VALUES ($1::uuid,$2,$3::uuid,'delivered_pending_docs',$4,$5::uuid,$6::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $1::uuid AND code = 'DRY_VAN' LIMIT 1),$7::uuid)`,
+          [companyId, loadNumbers[i], customerId, grossCents[i]! * 3, userId, loadIds[i], unitId]
         );
         await db.query(
           `INSERT INTO driver_finance.driver_bills

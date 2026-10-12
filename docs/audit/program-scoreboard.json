@@ -1,10 +1,10 @@
 {
-  "healthzSha": "38a924f",
-  "generated_at": "2026-10-12T13:50:52.450Z",
+  "healthzSha": "9438c4d",
+  "generated_at": "2026-10-12T17:15:03.903Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "38a924f",
+    "deployedSha": "9438c4d",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 26604,
-      "title": "FINDING: ACCT-F443109 LANE: NON-FINANCIAL -- 443.105 #4: main ci red on two steps — slate back on SubscriptionManager (two guards contradicted) and a stale program scoreboard",
+      "number": 26656,
+      "title": "FINDING: CI-BOOKLOAD-TRAILER-FK-01 LANE: claude — main ci red: two Book Load guards demanded the unconditional trailer FK after the trailer choice became required",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 08:48 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26604",
-      "sha": "7b196b71b4",
-      "committedAtIso": "2026-10-12T08:48:49-05:00"
+      "mergedAtCt": "10/12/2026, 12:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26656",
+      "sha": "e345db83c4",
+      "committedAtIso": "2026-10-12T12:14:36-05:00"
     },
     {
-      "number": 26603,
-      "title": "FINDING: ACCT-F4431051 LANE: FINANCIAL -- 443.105 R13: acceptance books its load with its trailer; load linkage reads the physical trailer (not the trailer type)",
+      "number": 26653,
+      "title": "chore: claim migration 202615830910 (443.116 #1 fuel posts on receipt flag)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 08:47 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26603",
-      "sha": "38a924f1f0",
-      "committedAtIso": "2026-10-12T08:47:12-05:00"
+      "mergedAtCt": "10/12/2026, 11:41 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26653",
+      "sha": "9438c4d8da",
+      "committedAtIso": "2026-10-12T11:41:06-05:00"
     },
     {
-      "number": 26602,
-      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615780700 — reservation-only commit, no code fix)",
+      "number": 26652,
+      "title": "FINDING: AJK-12 LANE: FINANCIAL -- 443.114: dismissing a converted fine voids the driver liability in one action; dangling-link Owner route",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 08:36 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26602",
-      "sha": "3d7944856e",
-      "committedAtIso": "2026-10-12T08:36:39-05:00"
+      "mergedAtCt": "10/12/2026, 11:37 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26652",
+      "sha": "87f64bb0b4",
+      "committedAtIso": "2026-10-12T11:37:03-05:00"
     },
     {
-      "number": 26601,
-      "title": "FINDING: ACCT-F443107 LANE: FINANCIAL -- 443.105 #2: an expense line could be written with no load and no reason why (5 live USMCA lines, $203.14); refused at the DB, every writer now records the reason",
+      "number": 26651,
+      "title": "FINDING: N/A (AUTH-445 CONSUMED — 11 advance trailers stamped on prod, read-back 0)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 08:30 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26601",
-      "sha": "ebd9f92d09",
-      "committedAtIso": "2026-10-12T08:30:55-05:00"
+      "mergedAtCt": "10/12/2026, 11:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26651",
+      "sha": "9167fd154b",
+      "committedAtIso": "2026-10-12T11:36:34-05:00"
     },
     {
-      "number": 26600,
-      "title": "FINDING: ACCT-F4431052 LANE: FINANCIAL -- 443.105 R14 batch 3: backend-vitest — scheduled-reports worker smoke test's own schedule is the earliest due row (it never got a turn on a fresh DB)",
+      "number": 26650,
+      "title": "FINDING: ACCT-F4431131 LANE: FINANCIAL -- 443.113 BCF-04 + BCF-05: Creator fuel fills + paid company expenses use THE one fuel-to-load rule, only this settlement's loads, and the load's driver + unit",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 08:27 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26600",
-      "sha": "e8b7683ec2",
-      "committedAtIso": "2026-10-12T08:27:35-05:00"
+      "mergedAtCt": "10/12/2026, 11:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26650",
+      "sha": "3daef4d18d",
+      "committedAtIso": "2026-10-12T11:35:45-05:00"
     },
     {
-      "number": 26599,
-      "title": "FINDING: ACCT-F4431052 LANE: FINANCIAL -- 443.105 R14 batch 2: step 3429 (money orphan-guard batch) green — 7 guards hidden behind the first red re-pointed to the code that moved, each still as tight",
+      "number": 26649,
+      "title": "FINDING: N/A (AUTH-445 recorded — Lead 443.112 #2 + 443.115; registry entry only, no code)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 08:22 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26599",
-      "sha": "f57a8d9227",
-      "committedAtIso": "2026-10-12T08:22:33-05:00"
+      "mergedAtCt": "10/12/2026, 11:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26649",
+      "sha": "b1b22a3dcf",
+      "committedAtIso": "2026-10-12T11:34:55-05:00"
     },
     {
-      "number": 26598,
-      "title": "FINDING: ACCT-F4431052 LANE: FINANCIAL -- 443.105 R14 batch 1: advance-recovery guard follows the loan rule; stamp fixture sample unit; closed-loop inputs declared; depreciation guard follows ROUND 300; 5 live-ledger guards to the live-DB job",
+      "number": 26648,
+      "title": "FINDING: ACCT-F443113AJK01 LANE: FINANCIAL — a same-total reassignment kept the OLD driver on the open driver bill; reassign now moves the open bill to the new driver through the one driver-bill engine, and a closed bill refuses by name",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 08:18 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26598",
-      "sha": "ceedabd52c",
-      "committedAtIso": "2026-10-12T08:18:48-05:00"
+      "mergedAtCt": "10/12/2026, 11:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26648",
+      "sha": "ead02fd88e",
+      "committedAtIso": "2026-10-12T11:32:20-05:00"
     },
     {
-      "number": 26597,
-      "title": "FINDING: ACCT-F4431050 LANE: FINANCIAL -- 443.105 R12: driver bills carry the load's trailer (company or customer); Owner stamp route",
+      "number": 26647,
+      "title": "FINDING: AJK-10 AJK-11 LANE: FINANCIAL -- 443.113: Owner approval runs the same cancellation cascade; the TONU charge survives (and can be raised at all)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 08:11 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26597",
-      "sha": "1fac6ffe70",
-      "committedAtIso": "2026-10-12T08:11:46-05:00"
+      "mergedAtCt": "10/12/2026, 11:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26647",
+      "sha": "05c031c602",
+      "committedAtIso": "2026-10-12T11:27:38-05:00"
     },
     {
-      "number": 26596,
-      "title": "FINDING: ACCT-F4431051 LANE: FINANCIAL -- 443.105 R13: acceptance S1..S7 gains a LINKAGE assert on every document each step creates",
+      "number": 26646,
+      "title": "chore: claim migration 202615820910 (443.114 AJK-12 fine lock)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 08:10 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26596",
-      "sha": "a1549dbd9b",
-      "committedAtIso": "2026-10-12T08:10:00-05:00"
+      "mergedAtCt": "10/12/2026, 11:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26646",
+      "sha": "966947fd54",
+      "committedAtIso": "2026-10-12T11:27:07-05:00"
     },
     {
-      "number": 26595,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 26644,
+      "title": "FINDING: ACCT-F4431133 LANE: FINANCIAL -- 443.113 DEGH-03 + DEGH-04: check category lines name their item (no account->item guess); a check exists only if it posts",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 08:05 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26595",
-      "sha": "c34ebbd26b",
-      "committedAtIso": "2026-10-12T13:05:19Z"
+      "mergedAtCt": "10/12/2026, 11:24 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26644",
+      "sha": "43a52f5a89",
+      "committedAtIso": "2026-10-12T11:24:15-05:00"
     }
   ]
 }
