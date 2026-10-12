@@ -2809,6 +2809,16 @@ export async function createLoadWithFullSideEffects(
     await client.query(`SAVEPOINT book_load_insert`);
     let loadRes: { rows: Record<string, unknown>[] };
     try {
+      // P1 2026-09-14 (LOAD-NUMBER-COUNTER-POISONED) — a manually-typed number (requestedLoadNumber === loadNumber,
+      // i.e. not an auto-allocated one) seeds the company's LOAD counter if it has none yet — see
+      // seedLoadNumberCounterFromManualEntry's own header for why. A no-op once the counter exists.
+      // 443.100 LOCK ORDER: the seed runs BEFORE the INSERT, inside this savepoint. The INSERT's trg_assign_trace_no
+      // upserts the company's 'LD' counter row and the auto-allocated path takes the 'LOAD' row before its INSERT, so
+      // seeding 'LOAD' after the INSERT inverted the order ('LD' then 'LOAD' vs 'LOAD' then 'LD') and two concurrent
+      // bookings in one company deadlocked. A rolled-back INSERT still never seeds: ROLLBACK TO SAVEPOINT undoes it.
+      if (requestedLoadNumber && requestedLoadNumber === loadNumber) {
+        await seedLoadNumberCounterFromManualEntry(client, input.operating_company_id, loadNumber);
+      }
       loadRes = await client.query(
       `
         INSERT INTO mdata.loads (
@@ -2900,14 +2910,6 @@ export async function createLoadWithFullSideEffects(
       ]
       );
       await client.query(`RELEASE SAVEPOINT book_load_insert`);
-      // P1 2026-09-14 (LOAD-NUMBER-COUNTER-POISONED) — the load just saved for real, inside this
-      // same transaction. If this was a manually-typed number (requestedLoadNumber === loadNumber,
-      // i.e. not an auto-allocated one) and the company has no counter yet, seed it with THIS exact
-      // number now — see seedLoadNumberCounterFromManualEntry's own header for why. A no-op once
-      // the counter already exists (every booking after the company's first).
-      if (requestedLoadNumber && requestedLoadNumber === loadNumber) {
-        await seedLoadNumberCounterFromManualEntry(client, input.operating_company_id, loadNumber);
-      }
     } catch (err) {
       await client.query(`ROLLBACK TO SAVEPOINT book_load_insert`).catch(() => undefined);
       if ((err as { code?: string }).code !== "23505") throw err;

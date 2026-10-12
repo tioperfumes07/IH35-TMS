@@ -7,6 +7,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { createIsolatedOperatingCompany, ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
+import { insertMaintenanceCategoryMap } from "../../../../test-helpers/isolated-company.js";
 import { createCheck, CreateCheckConflictError, CheckAccountError } from "../check-create.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -103,15 +104,8 @@ describeIntegration("check-create.service createCheck (real Postgres, isolated c
         [driverId, companyId]
       );
 
-      // Category map: maintenance/maintenance → Expense account
-      await db.query(
-        `INSERT INTO accounting.expense_category_account_map
-           (operating_company_id, category_kind, category_code, account_id, posting_side, is_active)
-         VALUES ($1::uuid,'maintenance','maintenance',$2::uuid,'debit',true)
-         ON CONFLICT (operating_company_id, category_kind, category_code, is_active) WHERE is_active = true
-         DO UPDATE SET account_id = EXCLUDED.account_id`,
-        [companyId, maintenanceAccountId]
-      );
+      // Category map: maintenance/maintenance + its 9 sub-codes → Expense account (one statement; 443.100)
+      await insertMaintenanceCategoryMap(db, companyId, maintenanceAccountId);
       // Category map: cash_advance/cash_advance → Expense account (for driver-advance refusal test)
       await db.query(
         `INSERT INTO accounting.expense_category_account_map

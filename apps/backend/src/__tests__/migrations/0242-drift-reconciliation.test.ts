@@ -11,15 +11,35 @@ const migrationPath = path.join(repoRoot, "db/migrations/0242_drift_reconciliati
 const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
 
 describe("0242_drift_reconciliation migration", () => {
-  it.runIf(Boolean(connectionString))("is idempotent and reconciles all 14 target entries", async () => {
+  it.runIf(Boolean(connectionString))("is idempotent and reconciles all 14 target entries", { timeout: 120_000 }, async () => {
     const sql = fs.readFileSync(migrationPath, "utf8");
     const client = new Client({ connectionString });
     await client.connect();
 
     try {
+      // 443.100 — this is the one backend test that replays DDL (ALTER TABLE / CREATE OR REPLACE VIEW / CREATE INDEX)
+      // against the SHARED test database while every other file runs DML in parallel. Taking those locks mid-suite
+      // deadlocked it with concurrent bookings, and Postgres chose the OTHER test as the victim
+      // (book-load-zero-dollar-dispatch-gate got "deadlock detected"). The replay now yields instead: its lock_timeout
+      // is below deadlock_timeout (1s), so it aborts before deadlock detection can pick another file, rolls its
+      // migration transaction back, and retries. Assertions unchanged: two clean full applies, then the 14 checks.
+      await client.query("SET lock_timeout = '500ms'");
+      const applyYielding = async () => {
+        for (let attempt = 1; ; attempt += 1) {
+          try {
+            await client.query(sql);
+            return;
+          } catch (err) {
+            await client.query("ROLLBACK").catch(() => undefined);
+            const code = (err as { code?: string }).code;
+            if ((code !== "55P03" && code !== "40P01") || attempt >= 40) throw err;
+            await new Promise((r) => setTimeout(r, 250 * Math.min(attempt, 8)));
+          }
+        }
+      };
       // Runs repeatedly on partially-healed schemas without errors.
-      await client.query(sql);
-      await client.query(sql);
+      await applyYielding();
+      await applyYielding();
 
       const checks: Array<[string, unknown[]]> = [
         [
