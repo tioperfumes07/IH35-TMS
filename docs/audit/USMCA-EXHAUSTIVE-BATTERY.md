@@ -559,7 +559,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/insurance/lawsuits` | `apps/backend/src/insurance/lawsuit.routes.ts:131` | — | — | — |
 | create | `/api/v1/insurance/payment-schedule` | `apps/backend/src/insurance/payment-schedule.routes.ts:101` | — | — | — |
 | create | `/api/v1/insurance/policies` | `apps/backend/src/insurance/policy.routes.ts:274` | — | — | — |
-| nested | `/api/v1/insurance/policies/:id/generate-bills` | `apps/backend/src/insurance/dispersal.routes.ts:274` | — | — | — |
+| nested | `/api/v1/insurance/policies/:id/generate-bills` | `apps/backend/src/insurance/dispersal.routes.ts:211` | — | — | — |
 | nested | `/api/v1/insurance/policies/:policy_id/renew` | `apps/backend/src/insurance/policy.routes.ts:701` | — | — | — |
 | nested | `/api/v1/insurance/policies/:policy_id/units` | `apps/backend/src/insurance/policy.routes.ts:518` | — | — | — |
 | create | `/api/v1/insurance/policies/with-bills` | `apps/backend/src/insurance/policy-create-atomic.routes.ts:42` | — | — | — |
