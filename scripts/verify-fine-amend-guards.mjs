@@ -53,6 +53,26 @@ function routeBody(code, route) {
   return nextIdx === -1 ? code.slice(start) : code.slice(start, start + 10 + nextIdx);
 }
 
+/** LEAD 443.120 A: a migration must declare the FK safety.civil_fines.converted_to_liability_id -> driver_liabilities(id). */
+export function assertFineLiabilityFk(migrations) {
+  const declared = migrations.some(
+    (m) =>
+      /ALTER TABLE\s+safety\.civil_fines\s+ADD CONSTRAINT[\s\S]*?FOREIGN KEY\s*\(\s*converted_to_liability_id\s*\)\s*REFERENCES\s+driver_finance\.driver_liabilities/i.test(
+        stripComments(m)
+      )
+  );
+  return declared
+    ? []
+    : [
+        "db/migrations: no migration declares FOREIGN KEY (converted_to_liability_id) REFERENCES driver_finance.driver_liabilities " +
+          "on safety.civil_fines (443.120 A) — a fine pointer may outlive its liability without it.",
+      ];
+}
+const readMigrations = () => {
+  const dir = path.join(ROOT, "db/migrations");
+  return fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).map((f) => fs.readFileSync(path.join(dir, f), "utf8"));
+};
+
 export function assertFineAmendGuards(source) {
   const code = stripComments(source ?? read());
   const problems = [];
@@ -220,6 +240,16 @@ if (SELFTEST) {
     "/contest: the UPDATE does not carry"
   );
 
+  // Case 8 (443.120 A): the fine -> liability FK migration is removed.
+  {
+    const migs = readMigrations();
+    const without = migs.filter((m) => !/civil_fines_converted_to_liability_id_fkey/.test(m));
+    if (without.length === migs.length) failures.push("fk-migration-removed: no migration declares the FK — inert case");
+    else if (!assertFineLiabilityFk(without).some((p) => p.includes("443.120 A")))
+      failures.push("fk-migration-removed: planted defect NOT caught");
+    if (assertFineLiabilityFk(migs).length) failures.push("live migrations FAIL the 443.120 A FK check");
+  }
+
   const liveProblems = assertFineAmendGuards(live);
   if (liveProblems.length) failures.push(`live source FAILS: ${liveProblems.join(" | ")}`);
 
@@ -228,11 +258,11 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 7 planted defects caught, live source clean`);
+  console.log(`${LABEL} SELFTEST PASS — 8 planted defects caught, live source clean`);
   process.exit(0);
 }
 
-const problems = assertFineAmendGuards();
+const problems = [...assertFineAmendGuards(), ...assertFineLiabilityFk(readMigrations())];
 if (problems.length) {
   console.error(`${LABEL} FAILED:`);
   for (const p of problems) console.error(`  ${p}`);
