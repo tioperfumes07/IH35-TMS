@@ -29,7 +29,7 @@ import { allocateNextSettlementSourceDocumentRef } from "./settlement-source-doc
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { resolveRoleAccountOptional, type CoaRole } from "../accounting/coa-roles/resolver.service.js";
 import { resolveDriverReimbursementParentAccount } from "../accounting/driver-subaccount-provision.service.js";
-import { resolveCompanyDirectCreditAccount, postFuelExpenseOnClient, type FuelCategoryCode } from "../accounting/fuel-posting/poster.service.js";
+import { resolveCompanyDirectCreditAccount, postFuelExpenseOnClient, findPostedFuelReceipt, type FuelCategoryCode } from "../accounting/fuel-posting/poster.service.js";
 import { creatorEmptyPayCents, creatorEmptyRateCents, creatorLoadedPayCents, creatorPayMiles } from "./settlement-creator-empty-pay.js";
 import { resolveDriverPayItems } from "./settlement-creator-pay-item.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
@@ -1513,6 +1513,14 @@ export async function postSettlementCreatorInClientTx(
       journalEntryIds.push(receiptJe);
     } else if (doc.outcome === "created" || doc.outcome === "already_exists") {
       expenseIds.push(doc.expense_id);
+      // LEAD 443.121 #1 — ONE fuel receipt identity: if this receipt already posted through any writer (received at
+      // import, matched at the bank), the document adopts that entry; the Creator never posts the same receipt twice.
+      const receiptPosted = await findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id);
+      if (receiptPosted?.journal_entry_id) {
+        await stampExpensePosted(client, draft.operating_company_id, doc.expense_id, receiptPosted.journal_entry_id);
+        journalEntryIds.push(receiptPosted.journal_entry_id);
+        continue;
+      }
       // Stamp Comp. Exp. card rail already set by fuel writer; post through existing engine.
       try {
         const posted = await postSourceTransactionInClientTx(
