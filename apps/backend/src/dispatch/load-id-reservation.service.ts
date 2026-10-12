@@ -216,9 +216,9 @@ export async function peekNextLoadNumber(client: DbClient, operatingCompanyId: s
 
 /**
  * P1 2026-09-14 (LOAD-NUMBER-COUNTER-POISONED) — call this right after a MANUALLY-TYPED, purely
- * numeric load number is actually saved (book-load.service.ts, right after the INSERT's own
- * SAVEPOINT releases — inside the same transaction, so a rolled-back booking never seeds a
- * counter for a load that was never really created). If the company has no lib.trace_counters
+ * numeric load number is saved (book-load.service.ts, inside the INSERT's own SAVEPOINT and BEFORE the
+ * INSERT — lock order 'LOAD' then the trigger's 'LD', same as the auto-allocated path (443.100); a
+ * rolled-back booking never seeds a counter because ROLLBACK TO SAVEPOINT undoes it). If the company has no lib.trace_counters
  * row yet, seed it with THIS exact office-typed number — never a MAX() scan reconstructed later
  * from whatever rows happen to exist by then. That reconstruction is exactly what let a
  * status='cancelled' test booking win the seed 154 numbers above the true working max in the

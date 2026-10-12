@@ -9,7 +9,7 @@ import pg from "pg";
 import { beforeAll, describe, expect, it } from "vitest";
 import { withLuciaBypass } from "../../../auth/db.js";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
-import { createIsolatedOperatingCompany } from "../../../../test-helpers/isolated-company.js";
+import { createIsolatedOperatingCompany, insertMaintenanceCategoryMap } from "../../../../test-helpers/isolated-company.js";
 import { createCheck } from "../check-create.service.js";
 import { assignPrintBatch, confirmPrintBatch, CheckPrintBatchError } from "../check-print-batch.service.js";
 
@@ -38,9 +38,7 @@ async function seedFixtureCompany(): Promise<void> {
     USMCA_BOA_CHECKING = (await client.query<{ id: string }>(
       `INSERT INTO banking.bank_accounts (operating_company_id, account_name, account_class, is_active, ledger_account_id, sync_status)
        VALUES ($1::uuid, 'Fixture Checking', 'depository', true, $2::uuid, 'active') RETURNING id::text`, [companyId, bankLedger])).rows[0]!.id;
-    await client.query(
-      `INSERT INTO accounting.expense_category_account_map (operating_company_id, category_kind, category_code, account_id, posting_side)
-       VALUES ($1::uuid, 'maintenance', 'maintenance', $2::uuid, 'debit')`, [companyId, cogs]);
+    await insertMaintenanceCategoryMap(client, companyId, cogs); // anchor + 9 sub-codes, one statement (443.100)
     REPAIR_ITEM_ID = (await client.query<{ id: string }>(
       `INSERT INTO catalogs.items (operating_company_id, item_name, item_type, default_expense_account_id)
        VALUES ($1::uuid, 'Fixture Repair', 'Service', $2::uuid) RETURNING id::text`, [companyId, cogs])).rows[0]!.id;

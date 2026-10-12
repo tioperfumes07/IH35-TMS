@@ -59,7 +59,8 @@ describeIntegration("Save draft — real Postgres round-trip (ROUND 24.3)", () =
     // as it always does on prod (114 real USMCA loads already exist there).
     await db.query(
       `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, dispatcher_user_id, load_trailer_equipment_id)
-       VALUES ($1::uuid, $2, $3::uuid, $4::uuid, $5::uuid)`,
+       VALUES ($1::uuid, $2, $3::uuid, $4::uuid, $5::uuid)
+       ON CONFLICT (operating_company_id, load_number) DO NOTHING`, // the shared integration company keeps it across runs
       [companyId, "90000000", customerId, TEST_OWNER_USER_ID, trailerEquipmentId]
     );
     await db.query("COMMIT");

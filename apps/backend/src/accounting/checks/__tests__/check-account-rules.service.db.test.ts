@@ -7,7 +7,7 @@
 import { afterAll, beforeAll, describe, it, expect } from "vitest";
 import pg from "pg";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
-import { createIsolatedOperatingCompany } from "../../../../test-helpers/isolated-company.js";
+import { createIsolatedOperatingCompany, insertMaintenanceCategoryMap } from "../../../../test-helpers/isolated-company.js";
 import { resolveCheckBankAccount, resolveCheckLineDebitAccount, assertNotDriverAdvanceCheck, CheckAccountError } from "../check-account-rules.service.js";
 
 let USMCA_COMPANY_ID = "";
@@ -42,8 +42,9 @@ beforeAll(async () => {
        VALUES ($1::uuid, 'Fixture Repair', 'Service', $2::uuid) RETURNING id::text`, [companyId, cogs])).rows[0]!.id;
     await client.query(
       `INSERT INTO accounting.expense_category_account_map (operating_company_id, category_kind, category_code, account_id, posting_side)
-       VALUES ($1::uuid, 'maintenance', 'maintenance', $2::uuid, 'debit'), ($1::uuid, 'revenue', 'linehaul', $3::uuid, 'debit')`,
-      [companyId, cogs, income]);
+       VALUES ($1::uuid, 'revenue', 'linehaul', $2::uuid, 'debit')`,
+      [companyId, income]);
+    await insertMaintenanceCategoryMap(client, companyId, cogs); // anchor + 9 sub-codes, one statement (443.100)
     await client.query("COMMIT");
   } finally {
     await client.end();

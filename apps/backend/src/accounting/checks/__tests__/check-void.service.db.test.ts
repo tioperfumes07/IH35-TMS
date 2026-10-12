@@ -6,6 +6,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, it, expect } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { createIsolatedOperatingCompany, ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
+import { insertMaintenanceCategoryMap } from "../../../../test-helpers/isolated-company.js";
 import { withLuciaBypass } from "../../../auth/db.js";
 import { createCheck } from "../check-create.service.js";
 import { voidCheck, reissueCheck, CheckVoidError } from "../check-void.service.js";
@@ -113,15 +114,8 @@ describeIntegration("check-void.service (real Postgres, isolated company)", () =
         [vendorId, companyId]
       );
 
-      // Category map: maintenance/maintenance → Expense account
-      await db.query(
-        `INSERT INTO accounting.expense_category_account_map
-           (operating_company_id, category_kind, category_code, account_id, posting_side, is_active)
-         VALUES ($1::uuid,'maintenance','maintenance',$2::uuid,'debit',true)
-         ON CONFLICT (operating_company_id, category_kind, category_code, is_active) WHERE is_active = true
-         DO UPDATE SET account_id = EXCLUDED.account_id`,
-        [companyId, maintenanceAccountId]
-      );
+      // Category map: maintenance/maintenance + its 9 sub-codes → Expense account (one statement; 443.100)
+      await insertMaintenanceCategoryMap(db, companyId, maintenanceAccountId);
 
       // Item (items law: expense_lines_item_id_required)
       await db.query(

@@ -63,6 +63,9 @@ function installQueryMock(opts: { status?: string } = {}) {
     // ACCT-F5653 — verifyCreditAccountBelongsToCompany's existence check: only the fixture's own
     // CHOSEN_CREDIT, scoped to OPCO, resolves — anything else (a different entity's account) is a
     // real, expected refusal, exercised by the dedicated test below.
+    // RULING 443.65 #2d — the writer's "Due to / from <party>" probe (company-scoped since #26543): the fixture's
+    // accounts are a driver sub-account and a bank account, never a related-party account, so the probe finds none.
+    if (sql.includes("account_name LIKE 'Due to / from %'")) return { rows: [] };
     if (sql.includes("FROM catalogs.accounts")) {
       if (String(params[0]) === CHOSEN_CREDIT && String(params[1]) === OPCO) {
         return { rows: [{ id: CHOSEN_CREDIT }] };
