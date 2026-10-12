@@ -3,7 +3,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockPost } = vi.hoisted(() => ({ mockPost: vi.fn(async () => ({ result: "posted", journal_entry_id: "je-1" })) }));
-vi.mock("../../fuel-posting/poster.service.js", () => ({ postFuelExpenseOnClient: mockPost }));
+// 443.116 #1 — the match first looks for a fill already posted on receipt; none here, so it posts.
+vi.mock("../../fuel-posting/poster.service.js", () => ({ postFuelExpenseOnClient: mockPost, findPostedFuelEvent: vi.fn(async () => null) }));
 // Lead 443.41 A: after the fill posts, its expense document adopts that SAME entry (asserted below).
 const { mockAdopt } = vi.hoisted(() => ({ mockAdopt: vi.fn(async () => ({ outcome: "created", expense_id: "exp-1", expense_number: "1", journal_entry_id: "je-1", amount_cents: 0 })) }));
 vi.mock("../../../fuel/fuel-expense-document.service.js", () => ({ adoptRelayFillExpenseDocument: mockAdopt }));

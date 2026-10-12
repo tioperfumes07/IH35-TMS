@@ -209,7 +209,7 @@ const CHECKS = [
   { name: "Audit Trail drills parent lifecycle", file: AUDIT_TRAIL, pattern: /case "loan_payment":\s*return "finance_loan";\s*case "prepaid_purchase":\s*return "prepaid_asset";/ },
   { name: "Posting Lineage drills parent lifecycle", file: POSTING_LINEAGE, pattern: /case "loan_payment":\s*return "finance_loan";\s*case "prepaid_purchase":\s*return "prepaid_asset";/ },
   { name: "JE Detail drills parent lifecycle", file: JE_DETAIL, pattern: /case "loan_payment":\s*return "finance_loan";\s*case "prepaid_purchase":\s*return "prepaid_asset";/ },
-  { name: "Fuel poster stores canonical transaction id", file: "apps/backend/src/accounting/fuel-posting/maybe-post-from-fuel-transaction.service.ts", pattern: /fuel_event_id: candidate\.fuel_transaction_id/ },
+  { name: "Fuel poster stores canonical transaction id", file: "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts", pattern: /async function postCanonicalFuelTxn\([\s\S]*?fuel_event_id: input\.fill_id,/ },
   { name: "Fuel reader accepts exact transaction id", file: "apps/backend/src/fuel/fuel-transactions.routes.ts", pattern: /transaction_id: z\.string\(\)\.uuid\(\)\.optional\(\)/ },
   { name: "Fuel reader scopes exact id with company", file: "apps/backend/src/fuel/fuel-transactions.routes.ts", pattern: /filters: string\[\] = \["ft\.operating_company_id = \$1::uuid"[\s\S]*?filters\.push\(`ft\.id = \$\$\{values\.length\}::uuid`\)/ },
   { name: "Fuel API sends exact transaction id", file: "apps/frontend/src/api/fuelPlanner.ts", pattern: /if \(params\.transaction_id\) search\.set\("transaction_id", params\.transaction_id\)/ },

@@ -139,8 +139,10 @@ if (poster) {
 }
 
 if (maybe) {
-  if (!/postFuelExpenseFromEvent\(/.test(maybe)) {
-    errors.push(`${maybeRel} must call postFuelExpenseFromEvent`);
+  // LEAD 443.116 #1 — the receipt post goes through the ONE fill poster (postFuelFillOnReceipt -> postFuelExpenseOnClient,
+  // whose map codes / class scope this guard checks above); the retired postFuelExpenseFromEvent is no longer called here.
+  if (!/postFuelFillOnReceipt\(/.test(maybe)) {
+    errors.push(`${maybeRel} must post through the one fill poster (postFuelFillOnReceipt)`);
   }
   if (!/EXPENSE_GL_POSTING_ENABLED/.test(maybe)) {
     errors.push(`${maybeRel} must gate on EXPENSE_GL_POSTING_ENABLED`);

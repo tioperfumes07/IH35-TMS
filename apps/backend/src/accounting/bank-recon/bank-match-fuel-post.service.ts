@@ -10,13 +10,10 @@
 import { adoptRelayFillExpenseDocument } from "../../fuel/fuel-expense-document.service.js";
 import { resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
 import { relayLineIsGallonsSql, relayLineKindSql } from "../../fuel/relay-product-kind.js";
-import {
-  buildFuelTxnJeMemo,
-  loadFuelTxnCreditSignals,
-  mapFuelTypeToPostingKind,
-  resolveCompanyDirectCreditPreference,
-} from "../fuel-posting/maybe-post-from-fuel-transaction.service.js";
-import { postFuelExpenseOnClient, type FuelCategoryCode, type FuelPostingResult } from "../fuel-posting/poster.service.js";
+import { buildFuelTxnJeMemo, mapFuelTypeToPostingKind } from "../fuel-posting/fuel-txn-memo.js";
+import { loadFuelTxnCreditSignals, resolveCompanyDirectCreditPreference } from "../fuel-posting/fuel-credit-preference.js";
+import { findPostedFuelEvent, postFuelExpenseOnClient, type FuelCategoryCode, type FuelPostingResult } from "../fuel-posting/poster.service.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { relayFillFeeCents, relayWalletDrawdownCents } from "../../integrations/relay-payments/relay-sender-fee-cents.js";
 
 type DbClient = {
@@ -27,7 +24,8 @@ export class FuelMatchPostError extends Error {
   constructor(
     public code:
       | "fuel_fill_not_found" | "fuel_fill_missing_unit" | "fuel_fill_missing_load" | "fuel_fill_zero_amount"
-      | "relay_fill_unknown_product" | "relay_fill_has_no_fuel_lines" | "relay_fill_lines_do_not_foot" | "relay_fill_document_refused",
+      | "relay_fill_unknown_product" | "relay_fill_has_no_fuel_lines" | "relay_fill_lines_do_not_foot" | "relay_fill_document_refused"
+      | "fuel_fill_document_refused",
     message: string
   ) {
     super(message);
@@ -48,10 +46,60 @@ export async function postFuelFillOnBankMatch(
     fill_id: string;
   }
 ): Promise<FuelPostingResult> {
+  // LEAD 443.116 #1 — a fill that already posted (when it was RECEIVED, or by an earlier match) is only matched: the
+  // bank line names that entry and nothing posts, nothing is re-validated, no document is re-adopted.
+  const already = await findPostedFuelEvent(client, input.operating_company_id, input.fill_id);
+  if (already) return already;
+  return postFuelFill(client, input);
+}
+
+/** The ONE fill poster (canonical card fill or Relay fill). Called on receipt (import) and, for a fill not yet posted, at match. */
+async function postFuelFill(
+  client: DbClient,
+  input: { operating_company_id: string; actor_user_uuid: string; kind: "fuel_transaction" | "relay_fuel"; fill_id: string }
+): Promise<FuelPostingResult> {
   if (input.kind === "fuel_transaction") {
     return postCanonicalFuelTxn(client, input);
   }
   return postRelayFuelFill(client, input);
+}
+
+/** Audit event the receipt poster writes: the bank match that later names this JE did NOT create it (unmatch keeps it). */
+export const FUEL_POSTED_ON_RECEIPT_EVENT = "fuel.posted_on_receipt";
+
+/**
+ * LEAD RULINGS 443.116 #1 (owner design 2026-10-12: "THE COSTS SHOULD POST DAILY, AS THEY ARE RECEIVED FROM RELAY,
+ * ETC") — supersedes the posting MOMENT of OWNER RULING 2026-10-02 (fuel cards are bank accounts): a fill posts when it
+ * is received, through the SAME poster the match uses (postFuelFill); the card / wallet bank line then only matches it.
+ * Idempotent per fill (the poster's key). A canonical card fill gets its expense document adopting the same JE; a Relay
+ * fill's document is adopted inside postRelayFuelFill. Writes fuel.posted_on_receipt so unmatch never reverses this JE.
+ */
+export async function postFuelFillOnReceipt(
+  client: DbClient,
+  input: { operating_company_id: string; actor_user_uuid: string; kind: "fuel_transaction" | "relay_fuel"; fill_id: string }
+): Promise<FuelPostingResult> {
+  const already = await findPostedFuelEvent(client, input.operating_company_id, input.fill_id);
+  if (already) return already;
+  const posted = await postFuelFill(client, input);
+  if (input.kind === "fuel_transaction" && posted.journal_entry_id) {
+    const { createExpenseFromFuelTransaction } = await import("../../fuel/fuel-expense-document.service.js");
+    const doc = await createExpenseFromFuelTransaction(client as never, {
+      operating_company_id: input.operating_company_id,
+      fuel_transaction_id: input.fill_id,
+      requesting_user_uuid: input.actor_user_uuid,
+    });
+    if (doc.outcome === "refused") throw new FuelMatchPostError("fuel_fill_document_refused", `fuel_transaction ${input.fill_id}: ${doc.reason}`);
+  }
+  if (posted.result === "posted") {
+    await appendCrudAudit(client as never, input.actor_user_uuid, FUEL_POSTED_ON_RECEIPT_EVENT, {
+      operating_company_id: input.operating_company_id,
+      fill_kind: input.kind,
+      fill_id: input.fill_id,
+      journal_entry_id: posted.journal_entry_id,
+      posting_batch_id: posted.posting_batch_id,
+    }, "info", "LEAD-443.116");
+  }
+  return posted;
 }
 
 async function postCanonicalFuelTxn(
@@ -136,6 +184,7 @@ async function postCanonicalFuelTxn(
     posting_path: "company_direct",
     driver_id: row.driver_id,
     unit_id: row.unit_id,
+    load_id: row.load_id,
     trailer_id: row.trailer_id ?? signals.trailer_id,
     ifta_state: row.location_state,
     ifta_gallons: row.gallons != null ? Number(row.gallons) : null,
@@ -282,6 +331,10 @@ async function postRelayFuelFill(
     posting_path: "company_direct",
     driver_id: row.driver_id,
     unit_id: row.unit_id,
+    // 443.116 #1 — the load the one rule resolved above, and its trailer: a fill posted on receipt has no settlement row
+    // to carry them, so the poster stamps them (the document then takes the load-spine number).
+    load_id: load.load_id,
+    trailer_id: load.trailer_id,
     ifta_state: row.location_state,
     ifta_gallons: row.gallons != null ? Number(row.gallons) : null,
     company_direct_credit: "relay_fuel_wallet",
@@ -300,6 +353,7 @@ async function postRelayFuelFill(
       relay_fill_id: input.fill_id,
       journal_entry_id: posted.journal_entry_id,
       requesting_user_uuid: input.actor_user_uuid,
+      trailer_id: load.trailer_id,
     });
     if (doc.outcome === "refused") throw new FuelMatchPostError("relay_fill_document_refused", doc.reason);
   }

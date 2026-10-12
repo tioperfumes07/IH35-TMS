@@ -10,8 +10,9 @@
 import { linkSettlementFuelRowToRelayFill } from "../fuel/relay-fill-link.service.js";
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { createExpenseFromFuelTransaction, resolveFuelLineAccount, adoptRelayFillExpenseDocument } from "../fuel/fuel-expense-document.service.js";
+import { createExpenseFromFuelTransaction, resolveFuelLineAccount, adoptRelayFillExpenseDocument, fillRelayFillExpenseSettlementRef } from "../fuel/fuel-expense-document.service.js";
 import { enteredFuelRowHash, FuelProviderTransactionDuplicateError, refuseDuplicateProviderTransaction } from "../fuel/fuel-provider-reference.js";
+import { findReceivedCardFillToAdopt } from "./creator-received-fill-adoption.js";
 import { resolveLineItemAndAccount, type ResolvedLineAccount } from "../accounting/line-item-account.js";
 import {
   createDriverCashAdvanceCore,
@@ -1264,7 +1265,7 @@ export async function postSettlementCreatorInClientTx(
     // Creator fuel line failed with 23502); it is keyed on the provider ID when there is one.
     // Option 1 (5769 repair) — the replaced settlement's own fill for this ticket + product is re-used: stamped with the
     // card / note / gallons the draft names, then posted below like a new fill. Never a second row for one purchase.
-    const reused = priorFuelIds.length && fuel.invoice
+    const priorReused = priorFuelIds.length && fuel.invoice
       ? (await client.query<{ id: string }>(
           `UPDATE fuel.fuel_transactions ft
               SET fuel_card_id = (SELECT ct.id FROM catalogs.fuel_card_types ct WHERE ct.operating_company_id = $1::uuid AND ct.code = upper($5) AND ct.is_active),
@@ -1278,6 +1279,18 @@ export async function postSettlementCreatorInClientTx(
             fillLoad.driverId, fillLoad.unitId],
         )).rows[0]?.id ?? null
       : null;
+    // LEAD 443.116 #1 — a card fill that was already RECEIVED (imported and posted on receipt) is ADOPTED by this
+    // settlement on the same load: no second fuel row, no second expense, no second posting.
+    const adoptedReceipt = !priorReused && fuel.card !== "relay"
+      ? await findReceivedCardFillToAdopt(client, {
+          operatingCompanyId: draft.operating_company_id,
+          vendorId: vendor.id,
+          reference: fuel.invoice,
+          fuelType: fuel.fuel_type ?? "diesel",
+          loadId,
+        })
+      : null;
+    const reused = priorReused ?? adoptedReceipt;
     if (!reused) try {
       await refuseDuplicateProviderTransaction(client, {
         operatingCompanyId: draft.operating_company_id,
@@ -1479,7 +1492,26 @@ export async function postSettlementCreatorInClientTx(
         expenseIds.push(fillDoc.expense_id);
       }
     }
-    if (doc.outcome === "created" || doc.outcome === "already_exists") {
+    if (adoptedReceipt && doc.outcome === "already_exists") {
+      // LEAD 443.116 #1 — the received fill's document already carries its posting: name this settlement on it and adopt.
+      const receiptDoc = await client.query<{ journal_entry_id: string | null }>(
+        `SELECT journal_entry_id::text FROM accounting.expenses
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL AND posting_status = 'posted'`,
+        [doc.expense_id, draft.operating_company_id],
+      );
+      const receiptJe = receiptDoc.rows[0]?.journal_entry_id;
+      if (!receiptJe) {
+        throw new SettlementCreatorError("received_fill_not_posted", `Fuel line ${fuel.date}: the received fill ${adoptedReceipt} has no posted expense document to adopt.`);
+      }
+      await fillRelayFillExpenseSettlementRef(client as never, {
+        operating_company_id: draft.operating_company_id,
+        expense_id: doc.expense_id,
+        settlement_no: sourceDocumentRef ?? displayId,
+        actor_user_uuid: actorUserId,
+      });
+      expenseIds.push(doc.expense_id);
+      journalEntryIds.push(receiptJe);
+    } else if (doc.outcome === "created" || doc.outcome === "already_exists") {
       expenseIds.push(doc.expense_id);
       // Stamp Comp. Exp. card rail already set by fuel writer; post through existing engine.
       try {

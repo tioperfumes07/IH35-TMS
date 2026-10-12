@@ -769,7 +769,14 @@ export async function adoptRelayFillExpenseDocument(
   );
   const primary = fills.rows.find((f) => !f.taken) ?? null;
   const loadId = primary?.load_id ?? fills.rows[0]?.load_id ?? debits.find((d) => d.load_id)?.load_id ?? null;
-  const driverId = primary?.driver_id ?? fills.rows[0]?.driver_id ?? relayRow.rows[0]?.matched_driver_id ?? null;
+  // 443.116 #1 — a fill received before any settlement row names its driver takes the driver of the load it was bought for.
+  const loadDriver = !primary?.driver_id && !fills.rows[0]?.driver_id && !relayRow.rows[0]?.matched_driver_id && loadId
+    ? (await client.query<{ d: string | null }>(
+        `SELECT assigned_primary_driver_id::text AS d FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [loadId, company],
+      )).rows[0]?.d ?? null
+    : null;
+  const driverId = primary?.driver_id ?? fills.rows[0]?.driver_id ?? relayRow.rows[0]?.matched_driver_id ?? loadDriver;
   const unitId = primary?.unit_id ?? fills.rows[0]?.unit_id ?? relayRow.rows[0]?.matched_unit_id ?? null;
   const txnDate = primary?.txn_date ?? fills.rows[0]?.txn_date ?? legs.rows[0]!.entry_date;
 

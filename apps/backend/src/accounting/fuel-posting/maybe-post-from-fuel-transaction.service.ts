@@ -1,24 +1,20 @@
 /**
- * Production caller for postFuelExpenseFromEvent — invoked AFTER fuel.fuel_transactions lands
+ * Receipt-time fuel poster (LEAD 443.116 #1) — invoked AFTER fuel.fuel_transactions / the Relay fill lands
  * (Relay bridge / fleet-card CSV import) and AFTER the ingest transaction commits.
  *
- * FLAG: EXPENSE_GL_POSTING_ENABLED (no fuel-specific GL flag exists). Per-entity override only;
- * default OFF. When OFF this is a strict no-op.
+ * FLAGS (both per-company): FUEL_POSTS_ON_RECEIPT_ENABLED (LEAD 443.116 #1 — the fill posts when it is received) AND
+ * EXPENSE_GL_POSTING_ENABLED. Either OFF -> strict no-op (the fill posts when its card bank line is matched).
  *
  * PARALLEL BOOKS: posts to the TMS GL only. Does NOT enable QBO_JE_PUSH_ENABLED / entity push.
- * Idempotent via postFuelExpenseFromEvent's posting_batches key (fuel_event_id = fuel.fuel_transactions.id).
+ * Idempotent via the fill poster's posting_batches key (fuel_event_id = the fill id: Relay fill or card fuel transaction).
  */
 import { RelayFillLinksNotPostsError, resolveCompanyDirectCreditPreference, loadFuelTxnCreditSignals, type FuelTxnGlPostCandidate, type CompanyDirectCredit } from "./fuel-credit-preference.js";
 export { RelayFillLinksNotPostsError, resolveCompanyDirectCreditPreference, loadFuelTxnCreditSignals, type FuelTxnGlPostCandidate, type CompanyDirectCredit } from "./fuel-credit-preference.js";
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "../expense-gl-posting-flag.js";
 import { withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
-import {
-  postFuelExpenseFromEvent,
-  type FuelCategoryCode,
-  type FuelPostingPath,
-  type FuelPostingResult,
-} from "./poster.service.js";
+import { type FuelPostingResult } from "./poster.service.js";
+export { buildFuelTxnJeMemo, mapFuelTypeToPostingKind } from "./fuel-txn-memo.js";
 
 /** Same key as expenses.routes — fuel expense is an expense-class GL post. */
 export const FUEL_EXPENSE_GL_POSTING_FLAG_KEY = EXPENSE_GL_POSTING_FLAG_KEY;
@@ -30,6 +26,8 @@ export type MaybePostFuelTxnResult =
   | { status: "skipped_posts_on_bank_match" }
   | { status: "skipped_flag_off" }
   | { status: "skipped_zero_amount" }
+  | { status: "skipped_not_a_fill" }
+  | { status: "unposted_at_receipt"; message: string }
   | { status: "posted"; posting: FuelPostingResult }
   | { status: "already_posted"; posting: FuelPostingResult }
   | { status: "error"; message: string };
@@ -38,20 +36,7 @@ type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
 
-/** Map fuel.fuel_transactions.fuel_type → Block-27 poster category codes. */
-export function mapFuelTypeToPostingKind(fuelType: string): FuelCategoryCode {
-  const t = fuelType.trim().toLowerCase();
-  if (t === "diesel") return "diesel";
-  if (t === "def") return "def";
-  if (t === "reefer_diesel" || t === "reefer") return "reefer";
-  if (t === "oil") return "oil";
-  return "misc";
-}
 
-function resolvePostingPath(candidate: FuelTxnGlPostCandidate): FuelPostingPath {
-  if (candidate.cash_advance && candidate.driver_id) return "driver_advance";
-  return "company_direct";
-}
 
 /** USMCA operating_company_id — the only entity R-153.6/153.7's owner-stated rail rule applies to. */
 
@@ -85,141 +70,82 @@ function resolvePostingPath(candidate: FuelTxnGlPostCandidate): FuelPostingPath 
  * (fuel.fuel_transactions.relay_fuel_transaction_id). Every fuel-row posting path resolves its rail here, so this is the door.
  */
 
-/** E14.2 — JE memo with at least one human id (load / unit / vendor / driver). Never bare fuel UUID. */
-export function buildFuelTxnJeMemo(args: {
-  fuel_type: string;
-  load_number?: string | null;
-  unit_number?: string | null;
-  vendor_name?: string | null;
-  driver_name?: string | null;
-  fuel_card_code?: string | null;
-}): string {
-  const kind = (args.fuel_type || "diesel").trim().toLowerCase() || "diesel";
-  const parts: string[] = ["Fuel"];
-  if (args.load_number?.trim()) parts.push(`load ${args.load_number.trim()}`);
-  if (args.unit_number?.trim()) parts.push(`unit ${args.unit_number.trim()}`);
-  if (args.vendor_name?.trim()) parts.push(args.vendor_name.trim());
-  if (args.driver_name?.trim()) parts.push(args.driver_name.trim());
-  if (args.fuel_card_code?.trim()) parts.push(args.fuel_card_code.trim());
-  parts.push(`(${kind})`);
-  // If we have nothing human beyond "Fuel (diesel)", still avoid UUID — card/rail word is enough.
-  if (parts.length <= 2) parts.splice(1, 0, "purchase");
-  return parts.join(" ").slice(0, 200);
-}
 
 
 /**
- * Flag-gated TMS GL post for one canonical fuel transaction. Safe to call repeatedly (idempotent).
- * Must run AFTER the ingest transaction that wrote fuel.fuel_transactions has committed.
+ * LEAD RULINGS 443.116 #1 (owner design 2026-10-12, his words: "THE COSTS SHOULD POST DAILY, AS THEY ARE RECEIVED FROM
+ * RELAY, ETC") — SUPERSEDES the posting MOMENT of OWNER RULING 2026-10-02 ("they are imported and work as a banking or
+ * credit card bank... must be matched to a transaction or categorized in banking") and the import-time retirement that
+ * followed it (CC-2 #24027, FUEL_POSTS_ON_BANK_MATCH_ONLY): per company, a fill posts WHEN IT IS RECEIVED, through the
+ * ONE fill poster the bank match uses (bank-match-fuel-post.service.ts postFuelFillOnReceipt -> postFuelFill): a Relay
+ * fill Dr fuel per product + Dr Fuel Card Fees / Cr Relay Fuel Wallet, a Dreamline / card fill Dr fuel / Cr Dreamline Diesel
+ * Card Payable, each with its expense document on its load. The card / wallet bank line then only MATCHES it (the match
+ * finds the posted fill first and posts nothing). The competing import-only poster (postFuelExpenseFromEvent) is no
+ * longer called here — there is one poster. Company flag FUEL_POSTS_ON_RECEIPT_ENABLED (seeded OFF, 202615830910):
+ * OFF keeps the fill posting at bank match exactly as before.
  */
-/**
- * OWNER RULING 2026-10-02 ("THEY ARE IMPORTED AND WORK AS A BANKING OR CREDIT CARD BANK. THEY MUST BE MATCHED TO A
- * TRANSACTION OR CATEGORIZED IN BANKING.") + OWNER LAW competing-engine audit: a fuel fill does NOT post when it is
- * imported. It posts when its card bank line (Dreamline Diesel Card / Relay Fuel Wallet) is matched to it in Banking —
- * the match engine calls postFuelExpenseOnClient (poster.service.ts) inside the match transaction. This import-time
- * auto-poster competed with that path (it credited the card account directly, so the card's own bank line could only be
- * flag-matched or categorized a second time). Typed boolean so the retired body stays type-checked.
- */
-export const FUEL_POSTS_ON_BANK_MATCH_ONLY: boolean = true;
+export const FUEL_POSTS_ON_RECEIPT_FLAG_KEY = "FUEL_POSTS_ON_RECEIPT_ENABLED";
 
+/**
+ * Flag-gated post of one received fill. Safe to call repeatedly (the poster's key makes it idempotent per fill).
+ * Must run AFTER the ingest transaction that wrote the fill has committed.
+ */
 export async function maybePostFuelExpenseFromCanonicalTxn(
   candidate: FuelTxnGlPostCandidate
 ): Promise<MaybePostFuelTxnResult> {
-  if (FUEL_POSTS_ON_BANK_MATCH_ONLY) return { status: "skipped_posts_on_bank_match" };
   const amountCents = Math.round(Number(candidate.amount_cents ?? 0));
   if (!Number.isFinite(amountCents) || amountCents <= 0) {
     return { status: "skipped_zero_amount" };
   }
+  // A Relay cash advance drawn by a driver is not a fuel fill; it is never posted as fuel.
+  if (candidate.cash_advance) return { status: "skipped_not_a_fill" };
 
   const actorUserId = (candidate.actor_user_id?.trim() || SYSTEM_ACTOR_USER_ID).toLowerCase();
 
-  let flagOn = false;
+  let receiptOn = false;
+  let expenseOn = false;
   try {
-    flagOn = await withLuciaBypass(async (client: DbClient) => {
+    [receiptOn, expenseOn] = await withLuciaBypass(async (client: DbClient) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
         candidate.operating_company_id,
       ]);
-      return isEnabled(client, FUEL_EXPENSE_GL_POSTING_FLAG_KEY, {
-        operating_company_id: candidate.operating_company_id,
-        user_uuid: actorUserId,
-      });
+      const ctx = { operating_company_id: candidate.operating_company_id, user_uuid: actorUserId };
+      return [
+        await isEnabled(client, FUEL_POSTS_ON_RECEIPT_FLAG_KEY, ctx),
+        await isEnabled(client, FUEL_EXPENSE_GL_POSTING_FLAG_KEY, ctx),
+      ] as [boolean, boolean];
     });
   } catch (err) {
     return { status: "error", message: `flag_check_failed:${String((err as Error)?.message ?? err)}` };
   }
+  if (!receiptOn) return { status: "skipped_posts_on_bank_match" };
+  if (!expenseOn) return { status: "skipped_flag_off" };
 
-  if (!flagOn) return { status: "skipped_flag_off" };
-
+  // The Relay fill itself (integrations.relay_fuel_transactions) is the receipt on the Relay rail; a card fill is its
+  // fuel.fuel_transactions row. One fill id per receipt — the same id the bank match posts / finds.
+  const kind = candidate.relay_fuel_transaction_id ? ("relay_fuel" as const) : ("fuel_transaction" as const);
+  const fillId = candidate.relay_fuel_transaction_id ?? candidate.fuel_transaction_id;
   try {
-    const postingPath = resolvePostingPath(candidate);
-    // RANK2-FUEL-JE-CLASS — loaded unconditionally (not just for the company_direct credit
-    // preference below): the class dimension applies to a driver_advance-path JE too.
-    const txnSignals = await withLuciaBypass(async (client: DbClient) => {
+    const posting: FuelPostingResult = await withLuciaBypass(async (client: DbClient) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
         candidate.operating_company_id,
       ]);
-      return loadFuelTxnCreditSignals(client, candidate.operating_company_id, candidate.fuel_transaction_id);
-    }).catch(() => null);
-    const companyDirectCredit =
-      postingPath === "company_direct" ? resolveCompanyDirectCreditPreference(candidate, txnSignals) : undefined;
-
-    const posting = await postFuelExpenseFromEvent({
-      operating_company_id: candidate.operating_company_id,
-      actor_user_id: actorUserId,
-      fuel_event_id: candidate.fuel_transaction_id,
-      fuel_kind: mapFuelTypeToPostingKind(candidate.fuel_type),
-      posted_at: candidate.transaction_at,
-      amount_cents: amountCents,
-      posting_path: postingPath,
-      driver_id: candidate.driver_id ?? null,
-      unit_id: txnSignals?.unit_id ?? null,
-      trailer_id: txnSignals?.trailer_id ?? null,
-      ifta_state: candidate.location_state ?? null,
-      ifta_gallons: candidate.gallons ?? null,
-      company_direct_credit: companyDirectCredit,
-      // E14.2 — never embed the fuel_transaction UUID as the only identity in the JE memo.
-      memo: buildFuelTxnJeMemo({
-        fuel_type: candidate.fuel_type,
-        load_number: txnSignals?.load_number,
-        unit_number: txnSignals?.unit_number,
-        vendor_name: txnSignals?.vendor_name,
-        driver_name: txnSignals?.driver_name,
-        fuel_card_code: txnSignals?.fuel_card_code,
-      }),
-    });
-
-    // 202615410940: integrations.relay_fuel_transactions.posted_to_gl is DERIVED (the matched bank line's journal entry,
-    // fuel/relay-fills.routes.ts) and the database refuses a stored true. The old markRelayPostedToGl flip outlived every
-    // JE behind it (75 USMCA rows flagged, 0 traceable) and is gone.
-
-    // ROUND 290.1 — the fuel-to-expense bridge is mandatory, not optional. postFuelExpenseFromEvent
-    // (above) posts the JE directly from the fuel event with no accounting.expenses document
-    // behind it. createExpenseFromFuelTransaction ADOPTS that same journal entry (via its own
-    // idempotent source_fuel_transaction_id check) instead of posting a second one — no new GL
-    // math. This is the single shared flush point for every fuel import path (fleet-card CSV,
-    // Relay bridge, cron ingest), so fixing it here closes the creation-path gap everywhere at once.
-    if (posting.result === "posted" || posting.result === "already_posted") {
-      await withLuciaBypass(async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
-          candidate.operating_company_id,
-        ]);
-        const { createExpenseFromFuelTransaction } = await import("../../fuel/fuel-expense-document.service.js");
-        await createExpenseFromFuelTransaction(client, {
-          operating_company_id: candidate.operating_company_id,
-          fuel_transaction_id: candidate.fuel_transaction_id,
-          requesting_user_uuid: actorUserId,
-        });
-      }).catch(() => {
-        // Never block posting success on the document step; the ROUND 290.1 guard catches any
-        // row left without one and it is backfillable the same way the original 34 were.
+      const { postFuelFillOnReceipt } = await import("../bank-recon/bank-match-fuel-post.service.js");
+      return postFuelFillOnReceipt(client as never, {
+        operating_company_id: candidate.operating_company_id,
+        actor_user_uuid: actorUserId,
+        kind,
+        fill_id: fillId,
       });
-    }
-
-    return {
-      status: posting.result === "already_posted" ? "already_posted" : "posted",
-      posting,
-    };
+    });
+    return { status: posting.result === "already_posted" ? "already_posted" : "posted", posting };
   } catch (err) {
+    const name = (err as Error)?.name;
+    // A fill the poster refuses by name (no unit / no load at fill time, a Relay-rail settlement row that only links)
+    // stays unposted and posts when its bank line is matched, through the same poster — never a silent half-post.
+    if (name === "FuelMatchPostError" || err instanceof RelayFillLinksNotPostsError) {
+      return { status: "unposted_at_receipt", message: String((err as Error)?.message ?? err) };
+    }
     return { status: "error", message: String((err as Error)?.message ?? err) };
   }
 }
@@ -228,8 +154,8 @@ export async function maybePostFuelExpenseFromCanonicalTxn(
 export async function flushFuelGlPostsAfterCommit(
   candidates: FuelTxnGlPostCandidate[],
   log?: { warn?: (obj: unknown, msg?: string) => void; info?: (obj: unknown, msg?: string) => void }
-): Promise<{ attempted: number; posted: number; skipped_flag_off: number; skipped_posts_on_bank_match: number; errors: number }> {
-  const stats = { attempted: 0, posted: 0, skipped_flag_off: 0, skipped_posts_on_bank_match: 0, errors: 0 };
+): Promise<{ attempted: number; posted: number; skipped_flag_off: number; skipped_posts_on_bank_match: number; unposted_at_receipt: number; errors: number }> {
+  const stats = { attempted: 0, posted: 0, skipped_flag_off: 0, skipped_posts_on_bank_match: 0, unposted_at_receipt: 0, errors: 0 };
   for (const candidate of candidates) {
     if (!candidate.fuel_transaction_id) continue;
     stats.attempted += 1;
@@ -240,6 +166,12 @@ export async function flushFuelGlPostsAfterCommit(
       stats.skipped_flag_off += 1;
     } else if (result.status === "skipped_posts_on_bank_match") {
       stats.skipped_posts_on_bank_match += 1;
+    } else if (result.status === "unposted_at_receipt") {
+      stats.unposted_at_receipt += 1;
+      log?.info?.(
+        { operating_company_id: candidate.operating_company_id, fuel_transaction_id: candidate.fuel_transaction_id, reason: result.message },
+        "[FUEL_GL_POST] fill not postable at receipt — it posts when its bank line is matched"
+      );
     } else if (result.status === "error") {
       stats.errors += 1;
       log?.warn?.(

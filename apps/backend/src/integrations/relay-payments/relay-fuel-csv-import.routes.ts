@@ -250,11 +250,10 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
           continue;
         }
         if (!tx) { skipped++; continue; }
-        // ROUND 43 FOLLOW-UP item 2: upsertRelayFuelTransaction no longer bridges into
-        // fuel.fuel_transactions or produces a GL post candidate — gl_post_candidate is always
-        // null now (see that file's own header for why). pendingGlPosts stays declared/flushed
-        // below so a future real candidate source is a one-line change, not a signature change.
-        await upsertRelayFuelTransaction(client, opco, tx, "csv_import");
+        // LEAD 443.116 #1 — a newly received Relay fill is a post candidate (posted after commit only when the company's
+        // FUEL_POSTS_ON_RECEIPT_ENABLED is ON; see relay-fuel-ingest.service.ts gl_post_candidate).
+        const upserted = await upsertRelayFuelTransaction(client, opco, tx, "csv_import");
+        if (upserted.gl_post_candidate) pendingGlPosts.push(upserted.gl_post_candidate);
         imported++;
         lines += Array.isArray(tx.fuel_items) ? tx.fuel_items.length : 0;
       }
