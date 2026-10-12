@@ -530,7 +530,10 @@ export function AccountRegisterPage() {
       // B-1 / QBO §B-1: LOCATION under PAYEE on line 2 (honest "—" when absent).
       render: (r) => line2(r.payee ?? "—", r.location?.trim() || "—"),
     },
-    { key: "memo", label: "Memo", sortable: true, defaultHidden: true, render: (r) => r.memo ?? r.description ?? "—" },
+    // 443.102 — ADDITIVE-ONLY LAW (docs/LAW.md L379): Memo / Type / Account / Location were added defaultHidden by
+    // BANK-F1001 (#23713) with no OWNER-REMOVE wording, which the shrink-only ratchet counts as a removal. Shown by
+    // default; the owner hides any of them from the column gear.
+    { key: "memo", label: "Memo", sortable: true, render: (r) => r.memo ?? r.description ?? "—" },
     { key: "class_name", label: "Class", sortable: true, render: (r) => r.class_name ?? "—" },
     {
       key: "payment",
@@ -625,14 +628,13 @@ export function AccountRegisterPage() {
       cellClass: "text-right font-medium tabular-nums",
       render: (r) => (balanceInDateOrder ? fmtCents(r.running_balance_cents) : "n/a"),
     },
-    { key: "type", label: "Type", sortable: true, defaultHidden: true, render: (r) => r.type },
-    { key: "split_account", label: "Account", sortable: true, defaultHidden: true, render: (r) => r.split_account ?? "—" },
+    { key: "type", label: "Type", sortable: true, render: (r) => r.type },
+    { key: "split_account", label: "Account", sortable: true, render: (r) => r.split_account ?? "—" },
     // Location from bank categorization when present — honest "—" otherwise (no fabricated place).
     {
       key: "location",
       label: "Location",
       sortable: true,
-      defaultHidden: true,
       sortValue: (r) => r.location ?? "",
       render: (r) => r.location?.trim() || "—",
     },

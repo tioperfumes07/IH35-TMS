@@ -16,7 +16,10 @@ describe("Batch transactions — row rules (QBO spec §23)", () => {
     );
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({ date: "2026-09-29", payee: "ven-dl", paymentAccount: "acc-1000", paymentMethod: "ach", amount: "6,767.78", category: "acc-5000", classId: "cls-t100", loadNumber: "13593" });
-    expect(validateRow(rows[0]!)).toEqual({});
+    // 443.102 — a pasted load number is a hint until the load is picked: unpicked it is flagged (it used to save with
+    // no load link — the number reached the memo only); once picked the row is ready and carries load_id.
+    expect(validateRow(rows[0]!)).toEqual({ loadNumber: 'Pick the load for "13593"' });
+    expect(validateRow({ ...rows[0]!, loadId: "load-13593" })).toEqual({});
     expect(rows[1]).toMatchObject({ payee: "", payeeText: "Nobody", category: "", categoryText: "Parking", refNo: "1699" });
     expect(validateRow(rows[1]!)).toMatchObject({ payee: 'No vendor named "Nobody"', category: 'No account named "Parking"' });
   });

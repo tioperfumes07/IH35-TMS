@@ -622,6 +622,11 @@ export function Form425CHome() {
           { label: "Deposit Import", to: "/425c?tab=qb" },
           { label: "Merge & Export", to: "/425c?tab=merge" },
           { label: "History", to: "/425c?tab=history" },
+          // 443.102 — the related-module doors (LINK-F5154 #6652) restored: the 425C home links out to the safety
+          // audit, maintenance compliance and the compliance board it reports on (linkage law: no dead-end module).
+          { label: "Safety Audit", to: "/safety/audit-425c" },
+          { label: "Maintenance Compliance", to: "/maintenance/compliance" },
+          { label: "Compliance", to: "/compliance" },
         ]}
       />
 
