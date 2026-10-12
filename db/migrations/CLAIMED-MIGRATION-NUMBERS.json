@@ -2467,5 +2467,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-12",
     "purpose": "443.100 C2 lane 3: restate accounting.factoring_advances.status_before_void (text NULL) — present on prod, created by no migration (verify-sql-write-targets phantom write in void-cancel-executors.ts)"
+  },
+  "202615740913": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.101 R2: add the missing FKs found by verify-orphan-fk-inventory (users / companies / same-entity JE, account, item, load, fuel, relay, bank-line parents); 0 prod orphans per column"
   }
 }
