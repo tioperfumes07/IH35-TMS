@@ -204,6 +204,8 @@ export type DispatchBookLoadPayload = {
   // Persisted after load creation through dispatch.load_assignment_history.new_trailer_id;
   // mdata.loads intentionally has no trailer FK column.
   assigned_trailer_unit_id?: string;
+  /** LEAD 443.107 item 3: required trailer choice (company / customer number / interchange / none). */
+  trailer_choice?: import("../pages/dispatch/components/book-load-v4/trailerChoice").TrailerChoicePayload;
   temperature_type?: "frozen" | "fresh"; // W-FIX-1: reefer Frozen/Fresh → mdata.loads.temperature_type
   assigned_primary_driver_id?: string;
   historical_import_driver_id?: string;

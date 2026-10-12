@@ -10,6 +10,7 @@
 // No migration: every column already exists. This file writes only mdata.loads + mdata.load_stops.
 import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { applyTrailerChoice, resolveTrailerChoice, type ResolvedTrailerChoice, type TrailerChoice, type TrailerChoiceRefusal } from "./load-trailer-choice.js";
 import { geocodeStopsWithClient } from "../telematics/stops-geocode-backfill.service.js";
 import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
 import {
@@ -162,6 +163,8 @@ export type UpdateDispatchLoadInput = {
   fields: UpdateDispatchLoadFields;
   charges?: UpdateLoadCharge[];
   stops?: UpdateLoadStopInput[];
+  /** LEAD 443.107 item 3: the trailer choice (company / customer number / none), recorded by load-trailer-choice.ts. */
+  trailer_choice?: TrailerChoice;
 };
 
 /** D-H0 / ROUND 312 — Owner or Administrator may full-override a locked load with a reason. */
@@ -289,6 +292,25 @@ export function isLiveLoadNumberOnlyPatch(input: UpdateDispatchLoadInput): boole
   if (input.charges !== undefined) return false;
   const keys = Object.keys(input.fields ?? {});
   return keys.length === 1 && keys[0] === "live_load_number";
+}
+
+/**
+ * LEAD 443.107 item 3: a PATCH that only records the trailer choice is equipment metadata — it moves no revenue,
+ * pay or posted amount — so, like live_load_number, it is not blocked by the money/evidence edit lock (the owner
+ * records the trailer on a load whose settlement already posted).
+ */
+export function isTrailerChoiceOnlyPatch(input: UpdateDispatchLoadInput): boolean {
+  if (!input.trailer_choice) return false;
+  if (input.stops !== undefined || input.charges !== undefined) return false;
+  return Object.keys(input.fields ?? {}).length === 0;
+}
+
+/** LEAD 443.107 item 3: the trailer choice was refused (422) — foreign / deactivated trailer, or incomplete choice. */
+export class TrailerChoiceRefusedError extends Error {
+  constructor(public readonly code: TrailerChoiceRefusal["error"]) {
+    super(code);
+    this.name = "TrailerChoiceRefusedError";
+  }
 }
 
 export class LoadNotFoundError extends Error {
@@ -628,7 +650,15 @@ export async function updateDispatchLoad(
   // LIVE-LOAD-NUMBER-NULL: live_load_number-only is linkage metadata (any role).
   // D-H0: Owner/Admin + override_reason (>=10) may PATCH every field; propagation refuses paid/synced invoice & settled bill.
   // Owner/Admin without reason: non-money scalars only (notes, refs, AT#, trip_type, tour).
-  if (!isLiveLoadNumberOnlyPatch(input)) {
+  // LEAD 443.107: resolve the trailer choice before anything is written; a refusal writes nothing.
+  let resolvedTrailerChoice: ResolvedTrailerChoice | null = null;
+  if (input.trailer_choice) {
+    const resolved = await resolveTrailerChoice(client, operatingCompanyId, input.trailer_choice);
+    if (!resolved.ok) throw new TrailerChoiceRefusedError(resolved.refusal.error);
+    resolvedTrailerChoice = resolved.choice;
+  }
+
+  if (!isLiveLoadNumberOnlyPatch(input) && !isTrailerChoiceOnlyPatch(input)) {
     const lock = await detectLoadEditLock(client, operatingCompanyId, loadId);
     if (lock) {
       if (isOwnerFullLockOverridePatch(input)) {
@@ -948,6 +978,26 @@ export async function updateDispatchLoad(
     if (updatedLoad.rows[0]?.id !== loadId) {
       throw writeConflict("E_LOAD_WRITE_CONFLICT");
     }
+  }
+
+  // 3b) LEAD 443.107 item 3 — record the trailer choice on the load (assignment history / non-owned trailer / none).
+  let trailerChoiceRecorded: Awaited<ReturnType<typeof applyTrailerChoice>> | null = null;
+  if (resolvedTrailerChoice) {
+    trailerChoiceRecorded = await applyTrailerChoice(client, {
+      operatingCompanyId,
+      loadId,
+      actorUserId: requestingUserUuid,
+      choice: resolvedTrailerChoice,
+      assignmentMethod: "manual_reassign",
+    });
+    await appendCrudAudit(client as never, requestingUserUuid, "dispatch.load.trailer_choice_recorded", {
+      operating_company_id: operatingCompanyId,
+      load_id: loadId,
+      trailer_source: trailerChoiceRecorded.trailer_source,
+      equipment_id: trailerChoiceRecorded.equipment_id,
+      non_owned_trailer_id: trailerChoiceRecorded.non_owned_trailer_id,
+      previous_trailer_source: old.trailer_source ?? null,
+    }, "info", "443.107");
   }
 
   // 4) Stops replace (evidence-safe).

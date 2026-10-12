@@ -90,6 +90,7 @@ describeIntegration("bookLoadOnClient books inside the CALLER's transaction (ROU
         { stop_type: "delivery", sequence_number: 2, city: "Dallas", state: "TX", scheduled_arrival_at: dayAfter },
       ],
       save_mode: "book_dispatch", // + a crewed driver -> statusForInsert = 'dispatched'
+      trailer_choice: { kind: "none" }, // 443.107: Book Load requires the trailer choice
       ...overrides,
     };
   }

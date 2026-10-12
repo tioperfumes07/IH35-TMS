@@ -19,6 +19,7 @@
  *
  * Kept as pure functions so the anti-data-loss behavior is unit-testable without rendering the modal.
  */
+import { buildTrailerChoice, trailerChoicePrefill } from "./trailerChoice";
 import type { LoadDetail } from "../../../../api/loads";
 import { buildBookLoadChargeLines } from "../../../../components/dispatch/accessorial-editor-lib";
 
@@ -115,6 +116,8 @@ export function buildEditPrefill(load: LoadDetail): AnyValues {
     detention_reason_id: str(load.detention_reason_id),
     catalog_load_type_id: str(load.catalog_load_type_id),
     load_trailer_equipment_id: str(load.load_trailer_equipment_id),
+    // LEAD 443.107 item 3: the load's recorded trailer choice.
+    ...trailerChoicePrefill(load as never),
     detention_expected_hours: num(load.detention_expected_hours),
     detention_bill_customer_per_hour_cents: num(load.detention_bill_customer_per_hour_cents),
     detention_driver_pay_per_hour_cents: num(load.detention_driver_pay_per_hour_cents),
@@ -262,6 +265,10 @@ export function buildEditPatchBody(
   for (const [formKey, patchKey, transform] of SCALAR_FIELDS) {
     if (isDirty(formKey)) body[patchKey] = transform(values);
   }
+
+  // LEAD 443.107 item 3: Edit Load always saves the trailer choice (the server records it only when it changed).
+  const trailerChoice = buildTrailerChoice(values as never);
+  if (trailerChoice) body.trailer_choice = trailerChoice;
 
   // Charges (rate) — replace only if the rate inputs changed.
   if (CHARGE_KEYS.some(isDirty)) {

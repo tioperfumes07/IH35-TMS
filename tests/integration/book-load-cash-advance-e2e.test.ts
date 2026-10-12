@@ -173,6 +173,7 @@ describeE2E("book-load cash advance — E2E (real DB, #1440)", () => {
       charges: [],
       stops: [],
       save_mode: "book_dispatch",
+      trailer_choice: { kind: "none" }, // 443.107: Book Load requires the trailer choice
       cash_advance_cents: 5000,
     };
     const result = await bookLoad(input);

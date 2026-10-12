@@ -156,7 +156,7 @@ async function s1() {
     operating_company_id: CO, customer_id: customer.id, status: "assigned_not_dispatched", trip_type: "NB",
     override_reason: "443.70 acceptance run on a throwaway fork: owner override of driver documents",
     customer_po_number: "PO-ACCEPT-443-70", customer_wo_number: "WO-ACCEPT-443-70", commodity: "Produce", weight_lbs: 40000,
-    assigned_unit_id: unit.unit_id, assigned_primary_driver_id: unit.driver_id, assigned_trailer_unit_id: TRAILER,
+    assigned_unit_id: unit.unit_id, assigned_primary_driver_id: unit.driver_id, assigned_trailer_unit_id: TRAILER, trailer_choice: { kind: "company", equipment_id: TRAILER },
     miles_practical: choice.practical.value, miles_shortest: choice.short.value, miles_deadhead: choice.empty.value,
     miles_choice: choice, charges: [{ code: "linehaul", amount_cents: 590000 }], stops,
   };
@@ -475,7 +475,7 @@ async function ensureLoad(t) {
     operating_company_id: CO, customer_id: customer.id, status: "assigned_not_dispatched", trip_type: "NB",
     override_reason: "443.70 acceptance run on a throwaway fork: owner override of driver documents",
     customer_po_number: "PO-ACCEPT-443-70-S2", commodity: "Produce", weight_lbs: 40000,
-    assigned_unit_id: unit.unit_id, assigned_primary_driver_id: unit.driver_id, assigned_trailer_unit_id: TRAILER,
+    assigned_unit_id: unit.unit_id, assigned_primary_driver_id: unit.driver_id, assigned_trailer_unit_id: TRAILER, trailer_choice: { kind: "company", equipment_id: TRAILER },
     miles_practical: 1210, miles_shortest: 1180, miles_deadhead: 12,
     miles_choice: { practical: manual(1210), short: manual(1180), empty: manual(12) },
     charges: [{ code: "linehaul", amount_cents: 590000 }],
@@ -1158,9 +1158,11 @@ async function linkage(stepName, since) {
         WHERE h.load_id = l.id AND h.new_trailer_id IS NOT NULL
           AND (e.owner_company_id = l.operating_company_id OR e.currently_leased_to_company_id = l.operating_company_id)
         ORDER BY h.created_at DESC LIMIT 1) AS tr,
-      CASE WHEN l.trailer_source = 'customer' THEN l.non_owned_trailer_id END AS nt, l.customer_id AS cust
+      CASE WHEN l.trailer_source = 'customer' THEN l.non_owned_trailer_id END AS nt, l.customer_id AS cust,
+      (l.trailer_source = 'none') AS no_trailer
       FROM mdata.loads l WHERE l.operating_company_id=$1::uuid AND l.created_at >= $2::timestamptz AND l.voided_at IS NULL`, [CO, since])) {
-    const miss = [!l.drv && "driver", !l.unit && "unit", !l.tr && !l.nt && "trailer", !l.cust && "customer"].filter(Boolean);
+    // 443.107: trailer_source = 'none' is the recorded choice "No trailer (bobtail / power only)" — never a gap.
+    const miss = [!l.drv && "driver", !l.unit && "unit", !l.tr && !l.nt && !l.no_trailer && "trailer", !l.cust && "customer"].filter(Boolean);
     miss.length ? miss.forEach((f) => fail("load", l.load_number ?? l.id, f)) : pass();
   }
   // stops: company stamped and equal to the load's company
@@ -1184,13 +1186,13 @@ async function linkage(stepName, since) {
   // bills + lines (load-linked bills carry driver / unit / trailer / load)
   const billNot = (await hasCol("accounting", "bills", "non_owned_trailer_id")) ? "b.non_owned_trailer_id" : "NULL";
   for (const b of await read(`SELECT b.id::text, b.display_id, COALESCE(b.mdata_vendor_id::text, b.vendor_id::text) AS vendor, b.driver_id AS drv, b.unit_id AS unit,
-      b.trailer_id AS tr, ${billNot} AS nt, l.load_trailer_equipment_id AS ltr, l.non_owned_trailer_id AS lnt,
+      b.trailer_id AS tr, ${billNot} AS nt, l.load_trailer_equipment_id AS ltr, l.non_owned_trailer_id AS lnt, (l.trailer_source = 'none') AS no_trailer,
       COALESCE(b.load_id, (SELECT bl.load_id FROM accounting.bill_lines bl WHERE bl.bill_id = b.id AND bl.load_id IS NOT NULL LIMIT 1)) AS load
       FROM accounting.bills b LEFT JOIN mdata.loads l ON l.id = COALESCE(b.load_id, (SELECT bl.load_id FROM accounting.bill_lines bl WHERE bl.bill_id = b.id AND bl.load_id IS NOT NULL LIMIT 1))
       WHERE b.operating_company_id=$1::uuid AND b.created_at >= $2::timestamptz AND b.voided_at IS NULL AND b.revoked_at IS NULL`, [CO, since])) {
     const miss = [!b.vendor && "vendor"];
     if (b.load || b.drv) miss.push(!b.load && "load", !b.drv && "driver", !b.unit && "unit");
-    const trailerMiss = (b.load || b.drv) && !b.tr && !b.nt;
+    const trailerMiss = (b.load || b.drv) && !b.tr && !b.nt && !b.no_trailer;
     const m = miss.filter(Boolean);
     m.forEach((f) => fail("bill", b.display_id ?? b.id, f));
     if (trailerMiss) fail("bill", b.display_id ?? b.id, "trailer", billNot === "NULL" && b.lnt ? "customer trailer, bills.non_owned_trailer_id absent" : "");
@@ -1218,11 +1220,12 @@ async function linkage(stepName, since) {
   // expenses + lines (overhead lines carry load_exemption_reason instead of a load)
   for (const e of await read(`SELECT e.id::text, e.expense_number, e.vendor_uuid AS vendor, e.payee_customer_uuid AS pcust, e.load_id AS load, e.unit_id AS unit,
       e.trailer_id AS tr, e.non_owned_trailer_id AS nt, e.driver_uuid AS drv,
+      (SELECT l.trailer_source = 'none' FROM mdata.loads l WHERE l.id = e.load_id AND l.operating_company_id = e.operating_company_id) AS no_trailer,
       (SELECT bool_and(el.load_id IS NULL AND el.load_exemption_reason IS NOT NULL) FROM accounting.expense_lines el WHERE el.expense_id = e.id) AS overhead,
       (SELECT bool_or(el.driver_id IS NOT NULL) FROM accounting.expense_lines el WHERE el.expense_id = e.id) AS line_drv
       FROM accounting.expenses e WHERE e.operating_company_id=$1::uuid AND e.created_at >= $2::timestamptz AND e.voided_at IS NULL`, [CO, since])) {
     const miss = [!e.vendor && !e.pcust && "vendor"];
-    if (!e.overhead) miss.push(!e.load && "load", !e.unit && "unit", !e.tr && !e.nt && "trailer", !e.drv && !e.line_drv && "driver");
+    if (!e.overhead) miss.push(!e.load && "load", !e.unit && "unit", !e.tr && !e.nt && !e.no_trailer && "trailer", !e.drv && !e.line_drv && "driver");
     const m = miss.filter(Boolean);
     m.length ? m.forEach((f) => fail("expense", e.expense_number ?? e.id, f)) : pass();
   }

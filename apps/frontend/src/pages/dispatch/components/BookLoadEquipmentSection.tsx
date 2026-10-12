@@ -16,6 +16,7 @@ import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTo
 import { ListErrorState } from "../../../components/ListErrorState";
 import type { EntityPickerOption } from "../../../components/parity/entityPickerRegistry";
 import { InterchangeTrailerPicker } from "./book-load-v4/InterchangeTrailerPicker";
+import { buildTrailerChoice, TRAILER_CHOICE_REQUIRED_MESSAGE, type TrailerSource } from "./book-load-v4/trailerChoice";
 import { getDriverPayCard, type NonOwnedTrailer } from "../../../api/dispatch";
 
 type Props = {
@@ -66,8 +67,13 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   const [trailerOption, setTrailerOption] = useState<EntityPickerOption | null>(null);
   // GO-23 A1 — trailer source: our own fleet OR an interchange (non-owned) trailer, never both.
   // trailer_source defaults to "owned" so every existing load's behavior is unchanged.
-  const trailerSource = watch ? (String(watch("trailer_source") ?? "owned") as "owned" | "interchange") : "owned";
+  const trailerSource = watch ? (String(watch("trailer_source") ?? "owned") as TrailerSource) : "owned";
   const interchangeTrailerId = watch ? String(watch("interchange_trailer_id") ?? "") : "";
+  const customerTrailerNumber = watch ? String(watch("customer_trailer_number") ?? "") : "";
+  // LEAD 443.107 item 3: the trailer choice is REQUIRED (Book Load and Edit Load refuse to save without it).
+  const trailerChoiceComplete = Boolean(
+    buildTrailerChoice({ trailer_source: trailerSource, assigned_trailer_unit_id: assignedTrailerUnitId, customer_trailer_number: customerTrailerNumber, interchange_trailer_id: interchangeTrailerId })
+  );
   const [interchangeTrailerOption, setInterchangeTrailerOption] = useState<NonOwnedTrailer | null>(null);
   // AUTHGATE-PANEL-MISSING-ENTITY-LABELS: lift the resolved labels up so BookLoadModalV4's separate
   // <AuthGatePanel> can pass real names instead of leaving EntityLinkOrTombstone id-only.
@@ -209,33 +215,40 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           label="Trailer"
           input={
             <div className="flex w-full min-w-0 flex-col gap-1">
-              {/* GO-23 A1: our trailer XOR an interchange trailer — never both. Toggle sits above the
-                  picker so the unit name is never clipped to "Select tra...". */}
-              <div className="inline-flex h-7 w-fit shrink-0 overflow-hidden whitespace-nowrap rounded-sm border border-gray-300 bg-white text-xs font-semibold leading-none" data-testid="trailer-source-toggle">
-                <button
-                  type="button"
-                  title="Our trailer"
-                  onClick={() => {
-                    setValue?.("trailer_source", "owned", { shouldDirty: true });
-                    setValue?.("interchange_trailer_id", "", { shouldDirty: true });
-                    setInterchangeTrailerOption(null);
-                  }}
-                  className={`px-1.5 ${trailerSource === "owned" ? "bg-[#1F2A44] text-white" : "text-gray-700"}`}
-                >
-                  Ours
-                </button>
-                <button
-                  type="button"
-                  title="Interchange trailer"
-                  onClick={() => {
-                    setValue?.("trailer_source", "interchange", { shouldDirty: true });
-                    setTrailerOption(null);
-                    setValue?.("assigned_trailer_unit_id", "", { shouldDirty: true });
-                  }}
-                  className={`border-l border-gray-300 px-1.5 ${trailerSource === "interchange" ? "bg-[#1F2A44] text-white" : "text-gray-700"}`}
-                >
-                  Interchange
-                </button>
+              {/* LEAD 443.107 item 3 (owner, 2026-10-12): the trailer choice is REQUIRED — Company trailer (equipment list),
+                  Customer trailer (its number), Interchange (GO-23 A1 non-owned trailer) or No trailer (bobtail / power only).
+                  Exactly one; switching clears the others. */}
+              <div className="inline-flex h-7 w-fit shrink-0 overflow-hidden whitespace-nowrap rounded-sm border border-gray-300 bg-white text-xs font-semibold leading-none" data-testid="trailer-source-toggle" role="radiogroup" aria-label="Trailer">
+                {([
+                  ["owned", "Company", "Company trailer from the equipment list"],
+                  ["customer", "Customer", "Customer / shipper trailer — type its number"],
+                  ["interchange", "Interchange", "Interchange trailer"],
+                  ["none", "No trailer", "No trailer — bobtail / power only"],
+                ] as const).map(([value, label, title], i) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={trailerSource === value}
+                    title={title}
+                    data-testid={`trailer-source-${value}`}
+                    onClick={() => {
+                      setValue?.("trailer_source", value, { shouldDirty: true });
+                      if (value !== "owned") {
+                        setTrailerOption(null);
+                        setValue?.("assigned_trailer_unit_id", "", { shouldDirty: true });
+                      }
+                      if (value !== "interchange") {
+                        setValue?.("interchange_trailer_id", "", { shouldDirty: true });
+                        setInterchangeTrailerOption(null);
+                      }
+                      if (value !== "customer") setValue?.("customer_trailer_number", "", { shouldDirty: true });
+                    }}
+                    className={`${i > 0 ? "border-l border-gray-300 " : ""}px-1.5 ${trailerSource === value ? "bg-[#1F2A44] text-white" : "text-gray-700"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
               <div className="min-w-0 w-full">
               {trailerSource === "owned" ? (
@@ -254,6 +267,21 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                   dataField="assigned_trailer_unit_id"
                   disabled={!operatingCompanyId}
                 />
+              ) : trailerSource === "none" ? (
+                <p className="h-7 text-xs leading-7 text-[#4B5563]" data-testid="trailer-none-note">No trailer — bobtail / power only</p>
+              ) : trailerSource === "customer" ? (
+                <input
+                  id="book-load-customer-trailer-number"
+                  type="text"
+                  maxLength={40}
+                  value={customerTrailerNumber}
+                  onChange={(e) => setValue?.("customer_trailer_number", e.target.value, { shouldDirty: true })}
+                  placeholder="Customer / shipper trailer number"
+                  aria-label="Customer trailer number"
+                  data-field="customer_trailer_number"
+                  data-testid="customer-trailer-number"
+                  className="h-7 w-full rounded-sm border border-gray-300 bg-white px-2 text-xs"
+                />
               ) : (
                 <InterchangeTrailerPicker
                   size="sm"
@@ -267,6 +295,9 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                 />
               )}
               </div>
+              {!trailerChoiceComplete ? (
+                <p className="text-[11px] text-red-600" role="alert" data-testid="trailer-choice-required">{TRAILER_CHOICE_REQUIRED_MESSAGE}</p>
+              ) : null}
             </div>
           }
         />

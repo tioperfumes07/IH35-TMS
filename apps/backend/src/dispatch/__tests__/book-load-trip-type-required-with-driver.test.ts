@@ -20,6 +20,7 @@ function baseInput(overrides: Partial<BookLoadInput> = {}): BookLoadInput {
       { stop_type: "delivery", sequence_number: 2, scheduled_arrival_at: "2026-09-11T08:00:00Z" },
     ],
     save_mode: "book_dispatch",
+    trailer_choice: { kind: "none" }, // 443.107: Book Load requires the trailer choice
     ...overrides,
   };
 }
