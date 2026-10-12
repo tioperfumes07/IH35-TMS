@@ -12,6 +12,8 @@ const itemsQuerySchema = companyQuerySchema.extend({
   kind: z.enum(["service", "inventory", "labor", "all"]).default("service"),
   search: z.string().trim().max(100).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
+  // 443.113 DEGH-03 — a check CATEGORY line names its item: list only the items that post to that line's account.
+  expense_account_id: z.string().uuid().optional(),
 });
 
 function officeRole(role: string) {
@@ -95,7 +97,7 @@ export async function registerAccountingCatalogLookupRoutes(app: FastifyInstance
     const parsed = itemsQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
-    const { operating_company_id: oc, kind, search, limit } = parsed.data;
+    const { operating_company_id: oc, kind, search, limit, expense_account_id } = parsed.data;
 
     const rows = await withCompanyScope(user.uuid, oc, async (client) => {
       const values: unknown[] = [oc];
@@ -112,6 +114,10 @@ export async function registerAccountingCatalogLookupRoutes(app: FastifyInstance
         filters.push(`lower(trim(coalesce(item_type, ''))) = 'inventory'`);
       } else if (kind === "labor") {
         filters.push(`lower(trim(coalesce(item_name, ''))) LIKE '%labor%'`);
+      }
+      if (expense_account_id) {
+        values.push(expense_account_id);
+        filters.push(`default_expense_account_id = $${values.length}::uuid`);
       }
       if (search) {
         values.push(`%${search}%`);

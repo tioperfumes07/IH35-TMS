@@ -647,12 +647,12 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| create | `/api/v1/checks` | `apps/backend/src/accounting/checks/checks.routes.ts:142` | — | — | — |
-| nested | `/api/v1/checks/:id/reissue` | `apps/backend/src/accounting/checks/checks.routes.ts:914` | — | — | — |
-| nested | `/api/v1/checks/:id/unvoid` | `apps/backend/src/accounting/checks/checks.routes.ts:881` | — | — | — |
-| create | `/api/v1/checks/pay-bills` | `apps/backend/src/accounting/checks/checks.routes.ts:492` | — | — | — |
-| create | `/api/v1/checks/print-batch` | `apps/backend/src/accounting/checks/checks.routes.ts:769` | — | — | — |
-| nested | `/api/v1/checks/print-batch/:id/confirm` | `apps/backend/src/accounting/checks/checks.routes.ts:805` | — | — | — |
+| create | `/api/v1/checks` | `apps/backend/src/accounting/checks/checks.routes.ts:147` | — | — | — |
+| nested | `/api/v1/checks/:id/reissue` | `apps/backend/src/accounting/checks/checks.routes.ts:919` | — | — | — |
+| nested | `/api/v1/checks/:id/unvoid` | `apps/backend/src/accounting/checks/checks.routes.ts:886` | — | — | — |
+| create | `/api/v1/checks/pay-bills` | `apps/backend/src/accounting/checks/checks.routes.ts:497` | — | — | — |
+| create | `/api/v1/checks/print-batch` | `apps/backend/src/accounting/checks/checks.routes.ts:774` | — | — | — |
+| nested | `/api/v1/checks/print-batch/:id/confirm` | `apps/backend/src/accounting/checks/checks.routes.ts:810` | — | — | — |
 
 ### driver-pay — 6 create-surface(s)
 

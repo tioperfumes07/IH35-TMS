@@ -229,6 +229,38 @@ function renderLinkageCell(kind: LinkageKind, line: DraftLine, operatingCompanyI
 }
 
 /** Billable + Customer + the 5 fleet-linkage columns, identical across the category and item grids. */
+// 443.113 DEGH-03 — a category line names its ITEM. Only the items whose default expense account is the chosen
+// category's account are offered; with several, the operator must pick one (the server refuses an ambiguous line).
+function CategoryLineItemSelect({
+  id,
+  operatingCompanyId,
+  accountId,
+  value,
+  onChange,
+}: {
+  id: string;
+  operatingCompanyId: string;
+  accountId: string | null;
+  value: string | null;
+  onChange: (next: string | null) => void;
+}) {
+  const q = useAccountingItemsQuery({ operatingCompanyId, kind: "all", expenseAccountId: accountId, enabled: Boolean(accountId) });
+  const options = useMemo(() => (q.data ?? []).map((i) => ({ value: i.id, label: i.name })), [q.data]);
+  return (
+    <ReferenceSelect
+      id={id}
+      value={value}
+      onChange={onChange}
+      options={options}
+      createKind="item"
+      operatingCompanyId={operatingCompanyId}
+      placeholder={!accountId ? "Pick a category first" : options.length > 1 ? "Select item… (required)" : "Select item…"}
+      disabled={!accountId}
+      size="sm"
+    />
+  );
+}
+
 function sharedLineColumns(
   operatingCompanyId: string,
   customerOptions: Array<{ value: string; label: string }>,
@@ -707,7 +739,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         <SelectCombobox
           className="h-8 w-full rounded border border-gray-300 px-1"
           value={line.categoryMapId ?? ""}
-          onChange={(e) => updateLine(line.key, { categoryMapId: e.target.value || null })}
+          onChange={(e) => updateLine(line.key, { categoryMapId: e.target.value || null, itemId: null })}
         >
           <option value="">Select category…</option>
           {categoryRows.map((row) => (
@@ -716,6 +748,20 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
             </option>
           ))}
         </SelectCombobox>
+      ),
+    },
+    {
+      key: "categoryItemId",
+      label: "Item",
+      sortable: false,
+      render: (line) => (
+        <CategoryLineItemSelect
+          id={`check-category-item-${line.key}`}
+          operatingCompanyId={operatingCompanyId}
+          accountId={categoryRows.find((r) => r.id === line.categoryMapId)?.account_id ?? null}
+          value={line.itemId}
+          onChange={(next) => updateLine(line.key, { itemId: next })}
+        />
       ),
     },
     {
@@ -1098,6 +1144,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           line_kind: "category",
           category_kind: row?.category_kind ?? null,
           category_code: row?.category_code ?? null,
+          // 443.113 DEGH-03 — the item the operator named on the category line (server validates it posts to that account).
+          item_id: l.itemId,
           amount_cents: l.amountCents ?? 0,
           description: l.description || null,
           ...linkage,
