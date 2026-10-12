@@ -101,10 +101,11 @@ describeIntegration("getActualVsProjected — snapshot override (real Postgres)"
     // this line WOULD appear with projected_cents=555000 and the assertion below would fail.
     // 443.94: the service now emits a zero-sum line for a covered date (main ci 38212500288). The claim is unchanged — the
     // snapshot is NOT applied to today: either no line, or a live $0 line carrying no snapshot.
+    // actual_cents is live data (CI shares one database across suites, other suites write activity on these dates) — not part
+    // of the claim. The claim: no frozen snapshot is applied (no captured_at), and today never shows the 555,000 snapshot.
     if (incomeLine) {
-      expect(incomeLine.projected_cents).toBe(0);
-      expect(incomeLine.actual_cents).toBe(0);
       expect(incomeLine.projected_captured_at).toBeNull();
+      expect(incomeLine.projected_cents).not.toBe(555000);
     }
   });
 
@@ -116,9 +117,8 @@ describeIntegration("getActualVsProjected — snapshot override (real Postgres)"
     // emitted for it (allDates is built only from map keys) — this is the pre-existing, unchanged
     // behavior for a date nothing has ever touched.
     // 443.94: a zero-sum line may now be emitted; it must be the live $0, never a fabricated or frozen value.
+    // actual_cents / projected_cents are live data in CI's shared database; the claim is that no frozen snapshot backs it.
     if (incomeLine) {
-      expect(incomeLine.projected_cents).toBe(0);
-      expect(incomeLine.actual_cents).toBe(0);
       expect(incomeLine.projected_captured_at).toBeNull();
     }
   });
