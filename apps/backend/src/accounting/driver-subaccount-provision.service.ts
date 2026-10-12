@@ -17,7 +17,7 @@
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
-import { allocateDriverSubAccountNnn } from "./driver-subaccount-number.js";
+import { allocateDriverSubAccountNnn, claimDriverSubAccountNumber } from "./driver-subaccount-number.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -355,6 +355,9 @@ export async function provisionDriverAdvanceSubAccount(
   }
 
   const nnn = input.nnn ?? (await allocateDriverSubAccountNnn(client, input.operatingCompanyId, input.driverId));
+  // 443.94: the target <parent>-00-nnn must be free or already this driver's — never a raw duplicate key.
+  const claim = await claimDriverSubAccountNumber(client as never, { operatingCompanyId: input.operatingCompanyId, parentId, driverId: input.driverId, nnn, joiner: "-00-" });
+  if (claim.ownAccountId) return { created: false, reason: "already_exists", accountId: claim.ownAccountId };
   const ins = await client.query<{ id: string; account_number: string }>(
     `
       INSERT INTO catalogs.accounts (
@@ -430,6 +433,9 @@ export async function provisionDriverEscrowSubAccount(
   if (existingId) return { created: false, reason: "already_exists", accountId: existingId };
 
   const nnn = input.nnn ?? (await allocateDriverSubAccountNnn(client, input.operatingCompanyId, input.driverId));
+  // 443.94: the target <parent>-nnn must be free or already this driver's — never a raw duplicate key.
+  const claim = await claimDriverSubAccountNumber(client as never, { operatingCompanyId: input.operatingCompanyId, parentId, driverId: input.driverId, nnn, joiner: "-" });
+  if (claim.ownAccountId) return { created: false, reason: "already_exists", accountId: claim.ownAccountId };
   const ins = await client.query<{ id: string }>(
     `
       INSERT INTO catalogs.accounts (
