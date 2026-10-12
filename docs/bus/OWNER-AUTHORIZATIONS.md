@@ -7880,3 +7880,13 @@ action: DATABASE_URL=<prod> GOOGLE_PLACES_*=<server key> node --import tsx scrip
 rehearsal: throwaway br-young-mode-akzqje1f (COMMITTED, deleted): 3 moved; re-measure 5 of 6 stops verified on the 3 loads (the 6th listed); found and fixed: the resolver's re-resolve pulled 13530 #1 back by name to the owner's older Samsara address — a gps_dwell_* stop now keeps its own point
 expires_at: 2026-10-12T23:33:07Z
 status: OPEN
+
+## AUTH-443
+issued_at: 2026-10-12T01:40:52Z
+issued_by: Lead 443.84 #3 ("build the multi-document accept WITH the card discount … through a new ITEM 'Fuel Card Discount' (item mapped to 5000 — detail in the item, no new account)"; lane cross authorized). Recorded by CC-2 in the PR that ships the engine and the script, as with AUTH-404..442
+owner_quotes: "Your next message to me will be confirmation everything is done … ready for me to match in banking" (2026-10-11 18:10 CT, via Lead 443.78)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — ONE catalog row: the item "Fuel Card Discount" (code FUEL-CARD-DISCOUNT), default expense account = the account of "Fuel-Truck Diesel" ("Fuel & Diesel" 5000, refused otherwise), category = that item's category; idempotent (an existing live item of that name is reused, refused if it maps elsewhere). No money, no posting. Accepting a card line stays the owner's action in Banking.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-84-fuel-card-discount-item.mts --apply --auth AUTH-443
+rehearsal: throwaway br-bitter-mountain-aknqy9f1 (COMMITTED, deleted): item created -> 5000 + category; then acceptExactMultiDocumentMatch(card_discount) on 3 Dreamline receipt groups: fuel cost on the load = what the card charged (75067 -> 70219, 78973 -> 76233, 67733 -> 64113), Dr 2510 / Cr 5000 split per receipt with its load + driver, TB 0; 9 of 12 groups refused by the 8% cap (listed)
+expires_at: 2026-10-13T01:40:52Z
+status: OPEN

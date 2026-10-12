@@ -26,9 +26,12 @@ for (const [name, id] of ACCOUNTS.filter(([n]) => !only || n.toLowerCase().inclu
     else if (o.result === "group") rows.push([name, o.bank_transaction_id, "group", `${o.reference ?? ""} = ${o.members.join("+")}${o.variance_cents ? ` variance ${o.variance_cents}` : ""}`].join("\t"));
   }
   const several = out.outcomes.filter((o) => o.result === "several").length;
+  // 443.84 #3: a card suggestion with a variance is acceptable only within the cap (posted as "Fuel Card Discount").
+  const withVar = out.outcomes.filter((o) => (o.result === "suggested" || o.result === "group") && (o as { variance_cents?: number }).variance_cents);
+  const overCap = withVar.filter((o) => (o as { within_card_cap?: boolean }).within_card_cap === false).length;
   const group = out.outcomes.filter((o) => o.result === "group").length;
   const already = out.outcomes.filter((o) => o.result === "already_suggested_or_matched").length;
-  console.log(`${name}: ${out.lines} lines — one suggestion ${out.suggested}, group suggestion ${group}, several ${several}, already matched ${already}, none ${JSON.stringify(reasons)} (${Math.round((Date.now() - t0) / 1000)}s)`);
+  console.log(`${name}: ${out.lines} lines — one suggestion ${out.suggested}, group suggestion ${group}, several ${several}, already matched ${already}, none ${JSON.stringify(reasons)}${withVar.length ? `; card variance ${withVar.length} (within the 8% cap ${withVar.length - overCap}, above the cap or above the receipt ${overCap} — listed)` : ""} (${Math.round((Date.now() - t0) / 1000)}s)`);
 }
 if (tsv) { fs.writeFileSync(tsv, rows.join("\n") + "\n"); console.log(`tsv -> ${tsv}`); }
 process.exit(0);

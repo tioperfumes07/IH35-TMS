@@ -248,6 +248,8 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
           ledger_entry_kind: asLedgerKind(e.ledger_entry_kind),
           ledger_entry_id: e.ledger_entry_id,
         })),
+        // LEAD 443.84 #3: a fuel-card line paying its receipt(s) at the card's price — the difference posts as "Fuel Card Discount".
+        card_discount: (req.body as { card_discount?: unknown } | null)?.card_discount === true,
       });
       return { ok: true, result };
     } catch (error) {
