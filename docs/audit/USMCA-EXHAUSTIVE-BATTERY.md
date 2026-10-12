@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 342 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **create** (collection POST) | 343 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 279 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 253 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 72 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 946 | |
+| **TOTAL POST endpoints** | 947 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -592,14 +592,14 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| create | `/api/v1/form-425c` | `apps/backend/src/compliance/form-425c.routes.ts:730` | — | — | — |
-| nested | `/api/v1/form-425c/:id/amend` | `apps/backend/src/compliance/form-425c.routes.ts:1310` | — | — | — |
-| nested | `/api/v1/form-425c/:id/exhibit-a` | `apps/backend/src/compliance/form-425c.routes.ts:1495` | — | — | — |
-| nested | `/api/v1/form-425c/:id/exhibit-b` | `apps/backend/src/compliance/form-425c.routes.ts:1539` | — | — | — |
-| nested | `/api/v1/form-425c/:id/generate-filing-pdf` | `apps/backend/src/compliance/form-425c.routes.ts:1105` | — | — | — |
-| nested | `/api/v1/form-425c/:id/import-banking` | `apps/backend/src/compliance/form-425c.routes.ts:998` | — | — | — |
-| nested | `/api/v1/form-425c/:id/mark-filed` | `apps/backend/src/compliance/form-425c.routes.ts:1223` | — | — | — |
-| create | `/api/v1/form-425c/profiles` | `apps/backend/src/compliance/form-425c.routes.ts:639` | — | — | — |
+| create | `/api/v1/form-425c` | `apps/backend/src/compliance/form-425c.routes.ts:732` | — | — | — |
+| nested | `/api/v1/form-425c/:id/amend` | `apps/backend/src/compliance/form-425c.routes.ts:1312` | — | — | — |
+| nested | `/api/v1/form-425c/:id/exhibit-a` | `apps/backend/src/compliance/form-425c.routes.ts:1497` | — | — | — |
+| nested | `/api/v1/form-425c/:id/exhibit-b` | `apps/backend/src/compliance/form-425c.routes.ts:1541` | — | — | — |
+| nested | `/api/v1/form-425c/:id/generate-filing-pdf` | `apps/backend/src/compliance/form-425c.routes.ts:1107` | — | — | — |
+| nested | `/api/v1/form-425c/:id/import-banking` | `apps/backend/src/compliance/form-425c.routes.ts:1000` | — | — | — |
+| nested | `/api/v1/form-425c/:id/mark-filed` | `apps/backend/src/compliance/form-425c.routes.ts:1225` | — | — | — |
+| create | `/api/v1/form-425c/profiles` | `apps/backend/src/compliance/form-425c.routes.ts:641` | — | — | — |
 
 ### fuel — 8 create-surface(s)
 
@@ -690,6 +690,16 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/scheduled-reports/:id/send-now` | `apps/backend/src/scheduled-reports/scheduled-reports.routes.ts:501` | — | — | — |
 | create | `/api/v1/scheduled-reports/test-send` | `apps/backend/src/scheduled-reports/scheduled-reports.routes.ts:586` | — | — | — |
 
+### telematics — 5 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/telematics/geofences` | `apps/backend/src/telematics/geofences.routes.ts:227` | — | — | — |
+| create | `/api/v1/telematics/odometer-readings` | `apps/backend/src/telematics/odometer-manual.routes.ts:57` | — | — | — |
+| create | `/api/v1/telematics/stops/geocode-backfill` | `apps/backend/src/telematics/stops-geocode-backfill.routes.ts:13` | — | — | — |
+| create | `/api/v1/telematics/stops/push-fences` | `apps/backend/src/telematics/stops-geocode-backfill.routes.ts:64` | — | — | — |
+| create | `/api/v1/telematics/stops/zip-center-resolve` | `apps/backend/src/telematics/stops-geocode-backfill.routes.ts:26` | — | — | — |
+
 ### master-data — 5 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -726,15 +736,6 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/expenses/:expenseId/change-payment-source` | `apps/backend/src/accounting/expenses.routes.ts:2109` | — | — | — |
 | nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:1502` | — | — | — |
 | nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1904` | — | — | — |
-
-### telematics — 4 create-surface(s)
-
-| kind | endpoint | route file | created | registered | gap |
-|---|---|---|---|---|---|
-| create | `/api/v1/telematics/geofences` | `apps/backend/src/telematics/geofences.routes.ts:227` | — | — | — |
-| create | `/api/v1/telematics/odometer-readings` | `apps/backend/src/telematics/odometer-manual.routes.ts:57` | — | — | — |
-| create | `/api/v1/telematics/stops/geocode-backfill` | `apps/backend/src/telematics/stops-geocode-backfill.routes.ts:13` | — | — | — |
-| create | `/api/v1/telematics/stops/zip-center-resolve` | `apps/backend/src/telematics/stops-geocode-backfill.routes.ts:26` | — | — | — |
 
 ### finance — 3 create-surface(s)
 

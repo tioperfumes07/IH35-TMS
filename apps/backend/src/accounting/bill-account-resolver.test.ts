@@ -19,10 +19,14 @@ import { BillLineAccountError, resolveBillLineDebitAccount } from "./bill-accoun
 import { ExpenseCategoryMapResolutionError } from "./expense-category-map/resolver.service.js";
 
 const TRANSP = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
-const client = { query: vi.fn() } as never;
+const clientQuery = vi.fn();
+const client = { query: clientQuery } as never;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // The resolver now confirms every resolved account is ACTIVE in the operating company (bill-account-resolver.ts
+  // assertActiveAccount): the catalog answers with the account itself.
+  clientQuery.mockImplementation(async (_sql: string, params: unknown[]) => ({ rows: [{ id: String(params?.[0]) }] }));
   resolveRoleAccountOptional.mockImplementation(async (_c: unknown, _o: string, role: string) =>
     role === "uncategorized_expense" ? "acct-uncat" : null
   );

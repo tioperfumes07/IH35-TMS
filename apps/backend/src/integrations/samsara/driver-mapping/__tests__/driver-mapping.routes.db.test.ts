@@ -67,16 +67,18 @@ describeIntegration("Samsara driver-mapping routes (E20 Part A, real Postgres)",
       driverId = driverRes.rows[0]!.id;
 
       const vendorRes = await db.query<{ id: string }>(
-        `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_code)
-         VALUES ($1::uuid, $2, $3) RETURNING id`,
+        // mdata.vendors requires a vendor_type (vendors_vendor_type CHECK) — a vendor is created with its type, as the app does.
+        `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_code, vendor_type)
+         VALUES ($1::uuid, $2, $3, 'Other') RETURNING id`,
         [companyId, `Mapping Vendor ${suffix}`, `MV-${suffix}`]
       );
       vendorId = vendorRes.rows[0]!.id;
 
       for (const samsaraId of [samsaraA, samsaraB, samsaraUnmapped]) {
         await db.query(
-          `INSERT INTO integrations.samsara_drivers (operating_company_id, samsara_driver_id, raw_payload, last_seen_at)
-           VALUES ($1::uuid, $2, $3::jsonb, now())`,
+          // driver_activation_status is required (active | deactivated) — Samsara's own activation state.
+          `INSERT INTO integrations.samsara_drivers (operating_company_id, samsara_driver_id, raw_payload, last_seen_at, driver_activation_status)
+           VALUES ($1::uuid, $2, $3::jsonb, now(), 'active')`,
           [companyId, samsaraId, JSON.stringify({ firstName: "Unmapped", lastName: `Profile ${suffix}` })]
         );
       }

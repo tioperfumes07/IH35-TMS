@@ -72,6 +72,8 @@ export async function buildExhibitC(
           AND bt.transaction_date >= $2::date
           AND bt.transaction_date <= $3::date
           AND bt.review_state IS DISTINCT FROM 'transfer'
+          -- banking.bank_line_classify derives review_state ('matched' for a transfer): a transfer is status / resolution_kind / matched_transfer_id
+          AND bt.status IS DISTINCT FROM 'transfer' AND bt.resolution_kind IS DISTINCT FROM 'transfer' AND bt.matched_transfer_id IS NULL
           AND bt.transfer_kind IS NULL
           AND bt.destination_bank_account_id IS NULL
           -- BANK-F30013: voided (reversed/superseded) bank_transactions rows must never reach a court filing.

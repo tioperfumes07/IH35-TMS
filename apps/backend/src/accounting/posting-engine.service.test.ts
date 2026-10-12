@@ -421,6 +421,8 @@ describe("posting engine service", () => {
         if (values) insertedLines.push(values);
         return { rows: [{ id: `bbbbbbbb-bbbb-4bbb-8bbb-${String(insertedLines.length).padStart(12, "0")}` }] };
       }
+      // AUTH-400: the back-link claim (UPDATE ... reversed_by_line_id IS NULL) must claim exactly one live line.
+      if (sql.includes("SET reversed_by_line_id")) return { rows: [], rowCount: 1 };
       return { rows: [] };
     });
 
