@@ -6,6 +6,7 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { formatUsd } from "../../../lib/money";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 export type NeedsCategorizingRow = {
   id: string;
@@ -82,6 +83,45 @@ export function NeedsCategorizingQueue({ companyId, rows, onChange, onAccepted }
     if (fail) pushToast(`${fail} row(s) could not be accepted.`, "error");
   };
 
+  const columns: Array<ParityColumn<NeedsCategorizingRow>> = [
+    {
+      key: "date",
+      label: "Date",
+      sortable: true,
+      minWidth: 132,
+      sortValue: (row) => row.date,
+      render: (row) => (row.date ? formatDateUS(row.date) : "—"),
+    },
+    {
+      key: "description",
+      label: "Description",
+      sortable: true,
+      sortValue: (row) => row.description,
+      cellClass: "text-left text-[#0F1219]",
+      render: (row) => missing(row.description),
+    },
+    {
+      key: "suggestedAccount",
+      label: "Suggested account",
+      sortable: true,
+      sortValue: (row) => row.suggestedAccount,
+      cellClass: "text-[#1F2A44]",
+      render: (row) => missing(row.suggestedAccount),
+    },
+    { key: "unit", label: "Unit", sortable: true, sortValue: (row) => row.unit, render: (row) => missing(row.unit) },
+    {
+      key: "amountCents",
+      label: "Amount",
+      kind: "money",
+      sortable: true,
+      minWidth: 120,
+      sortValue: (row) => row.amountCents,
+      render: (row) => (
+        <MoneyCell cents={row.amountCents / 100} format={formatUsd} drill={{ entity: { kind: "bank_transaction", id: row.id } }} />
+      ),
+    },
+  ];
+
   return (
     <section
       className="rounded-sm border border-[#E5E7EB] bg-white"
@@ -91,87 +131,44 @@ export function NeedsCategorizingQueue({ companyId, rows, onChange, onAccepted }
       <div className="border-b border-[#E5E7EB] px-3 py-2">
         <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Needs categorizing</p>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-xs tabular-nums">
-          <thead>
-            <tr className="border-b border-[#E5E7EB] bg-[#F7F8FA] text-center text-xs font-bold uppercase tracking-wide text-[#4B5563]">
-              <th className="px-2 py-1.5 font-bold" style={{ width: 132 }}>
-                Date
-              </th>
-              <th className="px-2 py-1.5 text-left font-bold">Description</th>
-              <th className="px-2 py-1.5 font-bold">Suggested account</th>
-              <th className="px-2 py-1.5 font-bold">Unit</th>
-              <th className="px-2 py-1.5 text-right font-bold" style={{ width: 120 }}>
-                Amount
-              </th>
-              <th className="px-2 py-1.5 font-bold" style={{ width: 160 }}>
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-4 text-center text-[#6B7280]">
-                  Nothing waiting to categorize
-                </td>
-              </tr>
-            ) : (
-              rows.map((row) => {
-                const amt = row.amountCents / 100;
-                const dateLabel = row.date ? formatDateUS(row.date) : "—";
-                return (
-                  <tr
-                    key={row.id}
-                    className="border-b border-[#E5E7EB] last:border-b-0"
-                    data-testid={`needs-cat-row-${row.id}`}
-                  >
-                    <td className="px-2 py-1.5 text-center tabular-nums" style={{ width: 132 }}>
-                      {dateLabel}
-                    </td>
-                    <td className="max-w-[220px] truncate px-2 py-1.5 text-left text-[#0F1219]">
-                      {missing(row.description)}
-                    </td>
-                    <td className="px-2 py-1.5 text-center text-[#1F2A44]">
-                      {missing(row.suggestedAccount)}
-                    </td>
-                    <td className="px-2 py-1.5 text-center">{missing(row.unit)}</td>
-                    <td className="px-2 py-1.5 font-medium text-[#0F1219]" style={{ width: 120 }}>
-                      <MoneyCell cents={amt} format={formatUsd} drill={{ entity: { kind: "bank_transaction", id: row.id } }} />
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          type="button"
-                          disabled={!row.suggestedAccountId || busyId === row.id}
-                          className="inline-flex h-[34px] items-center rounded-sm bg-[#14314F] px-2 text-xs font-bold text-white disabled:opacity-40"
-                          onClick={() => {
-                            setBusyId(row.id);
-                            acceptOne
-                              .mutateAsync(row)
-                              .then(() => pushToast("Accepted suggestion.", "success"))
-                              .catch((err) => pushToast(userFacingApiError(err, "Could not accept suggestion"), "error"))
-                              .finally(() => setBusyId(null));
-                          }}
-                        >
-                          Accept
-                        </button>
-                        <button
-                          type="button"
-                          className="inline-flex h-[34px] items-center rounded-sm border border-[#E5E7EB] px-2 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
-                          onClick={() => onChange(row)}
-                        >
-                          Change
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table): sortable headers, gear, export. */}
+      <ParityTable<NeedsCategorizingRow>
+        embedded
+        rows={rows}
+        rowKey={(row) => row.id}
+        columns={columns}
+        emptyText="Nothing waiting to categorize"
+        storageKey="banking-needs-categorizing"
+        exportFilename="needs-categorizing"
+        rowTestId={(row) => `needs-cat-row-${row.id}`}
+        suppressToolbarRange
+        rowActions={(row) => (
+          <div className="flex items-center justify-center gap-1">
+            <button
+              type="button"
+              disabled={!row.suggestedAccountId || busyId === row.id}
+              className="inline-flex h-[34px] items-center rounded-sm bg-[#14314F] px-2 text-xs font-bold text-white disabled:opacity-40"
+              onClick={() => {
+                setBusyId(row.id);
+                acceptOne
+                  .mutateAsync(row)
+                  .then(() => pushToast("Accepted suggestion.", "success"))
+                  .catch((err) => pushToast(userFacingApiError(err, "Could not accept suggestion"), "error"))
+                  .finally(() => setBusyId(null));
+              }}
+            >
+              Accept
+            </button>
+            <button
+              type="button"
+              className="inline-flex h-[34px] items-center rounded-sm border border-[#E5E7EB] px-2 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
+              onClick={() => onChange(row)}
+            >
+              Change
+            </button>
+          </div>
+        )}
+      />
       <div className="flex items-center justify-between border-t border-[#E5E7EB] px-3 py-2">
         <p className="text-xs text-[#6B7280]">
           {rows.length} row{rows.length === 1 ? "" : "s"} · suggestions only — never auto-matched

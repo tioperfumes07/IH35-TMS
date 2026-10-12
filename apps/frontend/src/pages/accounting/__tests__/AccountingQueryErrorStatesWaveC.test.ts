@@ -41,6 +41,9 @@ vi.mock("../../../components/bulk/useEntityBulkAction", () => ({
     setProgressOpen: vi.fn(),
     progressLoading: false,
     progress: { requested: 0, succeeded: 0, failed: [], bulk_call_id: "" },
+    // 443.99: the hook now also returns the void pre-check dialog's props (BulkPreValidationDialog);
+    // the mock omitted them, so every page that spreads them crashed before its error state rendered.
+    precheckDialogProps: { open: false, blocked: [], voidableCount: 0, onCancel: vi.fn(), onProceedVoidable: vi.fn() },
   }),
 }));
 
@@ -53,6 +56,10 @@ vi.mock("../../../api/accounting", async (importOriginal) => {
     getCashForecastSettings: vi.fn(),
     getPayment: vi.fn(),
     listBills: vi.fn(),
+    // 443.99: BillsPage reads the unified vendor+driver register (ROUND 432-CUR #5) and PaymentDetailPage
+    // mounts the money proof trail — both were unmocked, so the pages crashed before their error states.
+    listBillRegister: vi.fn(),
+    getMoneyProofTrail: vi.fn(),
     listCoaAccountsForJe: vi.fn(),
     listExpenseCategoryMappings: vi.fn(),
     listInvoices: vi.fn(),
@@ -165,6 +172,19 @@ async function clickScopedRefresh(message: RegExp) {
 describe("Accounting Wave C query error behavior", () => {
   beforeEach(() => {
     vi.mocked(accountingApi.listBills).mockResolvedValue({ rows: [bill()] });
+    vi.mocked(accountingApi.listBillRegister).mockResolvedValue({
+      rows: [{ bill_type: "vendor_bill", bill: bill() }],
+      totals: { vendor_bill: { count: 1, amount_cents: 10_000 }, driver_bill: { count: 0, amount_cents: 0 } },
+    } as Awaited<ReturnType<typeof accountingApi.listBillRegister>>);
+    vi.mocked(accountingApi.getMoneyProofTrail).mockResolvedValue({
+      document_type: "payment",
+      document_id: "payment-1",
+      display_id: "PAY-100",
+      status: null,
+      trace_no: "T-1",
+      trace_key: "payment:payment-1",
+      postings: [],
+    } as Awaited<ReturnType<typeof accountingApi.getMoneyProofTrail>>);
     vi.mocked(accountingApi.listPaymentsForBill).mockResolvedValue({ payments: [] });
     vi.mocked(accountingApi.getPayment).mockResolvedValue(payment());
     vi.mocked(accountingApi.listInvoices).mockResolvedValue({ invoices: [] });
@@ -226,14 +246,14 @@ describe("Accounting Wave C query error behavior", () => {
     expect(await screen.findByText(/Failed to load bill payments: planted query failure/)).toBeInTheDocument();
     expect(screen.queryByText("Loading payments…")).not.toBeInTheDocument();
     expect(screen.queryByText(/Failed to load vendor filters/)).not.toBeInTheDocument();
-    const billsCalls = vi.mocked(accountingApi.listBills).mock.calls.length;
+    const billsCalls = vi.mocked(accountingApi.listBillRegister).mock.calls.length;
     const vendorCalls = vi.mocked(mdataApi.listVendors).mock.calls.length;
     const paymentCalls = vi.mocked(accountingApi.listPaymentsForBill).mock.calls.length;
 
     await clickScopedRefresh(/Failed to load bill payments/);
 
     await waitFor(() => expect(accountingApi.listPaymentsForBill).toHaveBeenCalledTimes(paymentCalls + 1));
-    expect(accountingApi.listBills).toHaveBeenCalledTimes(billsCalls);
+    expect(accountingApi.listBillRegister).toHaveBeenCalledTimes(billsCalls);
     expect(mdataApi.listVendors).toHaveBeenCalledTimes(vendorCalls);
   });
 
@@ -243,13 +263,13 @@ describe("Accounting Wave C query error behavior", () => {
 
     expect(await screen.findByText(/Failed to load vendor filters: planted query failure/)).toBeInTheDocument();
     expect(screen.queryByText(/Failed to load bill payments/)).not.toBeInTheDocument();
-    const billsCalls = vi.mocked(accountingApi.listBills).mock.calls.length;
+    const billsCalls = vi.mocked(accountingApi.listBillRegister).mock.calls.length;
     const vendorCalls = vi.mocked(mdataApi.listVendors).mock.calls.length;
 
     await clickScopedRefresh(/Failed to load vendor filters/);
 
     await waitFor(() => expect(mdataApi.listVendors).toHaveBeenCalledTimes(vendorCalls + 1));
-    expect(accountingApi.listBills).toHaveBeenCalledTimes(billsCalls);
+    expect(accountingApi.listBillRegister).toHaveBeenCalledTimes(billsCalls);
     expect(accountingApi.listPaymentsForBill).not.toHaveBeenCalled();
   });
 

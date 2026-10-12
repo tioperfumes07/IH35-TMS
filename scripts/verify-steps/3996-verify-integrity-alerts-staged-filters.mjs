@@ -15,5 +15,9 @@ export default {
     await ctx.run("node", ["scripts/verify-bank-feed-action-buttons.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-bank-feed-action-buttons.mjs"]);
     await ctx.run("node", ["scripts/verify-creator-relay-row-posts-through-its-fill.mjs"]);
+    // 443.99 — related-party bank<->Relay pair guard (R443.54-7) ran nowhere; it owns the
+    // banking.panel.related_party_pair_suggestions Required leaf.
+    await ctx.run("node", ["scripts/verify-related-party-bank-pair-suggestions.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-related-party-bank-pair-suggestions.mjs"]);
   },
 };

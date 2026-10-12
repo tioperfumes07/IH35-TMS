@@ -4,6 +4,7 @@ import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown"
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
@@ -327,56 +328,59 @@ export function SamsaraDriverMappingPage() {
               }}
             />
           )}
-          <table className="ih-table sdm-table">
-            <thead>
-              <tr>
-                <th>Driver / vendor (our app)</th>
-                <th>CDL</th>
-                <th>Samsara users</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {leftRows.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="sdm-empty">
-                    No people match these filters.
-                  </td>
-                </tr>
-              ) : (
-                leftRows.map((row) => {
-                  const selected = selectedPerson?.id === row.id && selectedPerson.kind === row.kind;
-                  return (
-                    <tr
-                      key={`${row.kind}-${row.id}`}
-                      className={selected ? "sdm-row-selected" : undefined}
-                      data-testid={`sdm-person-${row.kind}-${row.id}`}
-                      onClick={() => setSelectedPerson(row)}
-                    >
-                      <td>
-                        <EntityLink kind={row.kind} id={row.id} label={row.active ? row.name : `${row.name} (inactive)`} />
-                      </td>
-                      <td>{row.kind === "driver" ? row.cdl_number || "—" : "—"}</td>
-                      <td className="tabular-nums text-center">{row.mapped_samsara_count ?? 0}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="sdm-map-btn de-ctrl"
-                          data-testid={`sdm-map-btn-${row.id}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedPerson(row);
-                          }}
-                        >
-                          Map
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+          {/* 443.99 — both panes are the shared ParityTable (were hand-rolled HTML tables); the page's own filters
+              stay above each pane, so the table's toolbar search / range are suppressed. */}
+          <ParityTable<MappingTarget>
+            embedded
+            rows={leftRows}
+            rowKey={(row) => `${row.kind}-${row.id}`}
+            loading={driversQuery.isLoading || vendorsQuery.isLoading}
+            emptyText="No people match these filters."
+            storageKey="samsara-driver-mapping-people"
+            exportFilename="samsara-mapping-people"
+            suppressToolbarSearch
+            suppressToolbarRange
+            rowTestId={(row) => `sdm-person-${row.kind}-${row.id}`}
+            rowClassName={(row) => (selectedPerson?.id === row.id && selectedPerson.kind === row.kind ? "sdm-row-selected" : "")}
+            onRowClick={(row) => setSelectedPerson(row)}
+            columns={[
+              {
+                key: "name",
+                label: "Driver / vendor (our app)",
+                sortable: true,
+                sortValue: (row) => row.name,
+                render: (row) => <EntityLink kind={row.kind} id={row.id} label={row.active ? row.name : `${row.name} (inactive)`} />,
+              },
+              {
+                key: "cdl_number",
+                label: "CDL",
+                sortable: true,
+                sortValue: (row) => (row.kind === "driver" ? row.cdl_number ?? null : null),
+                render: (row) => (row.kind === "driver" ? row.cdl_number || "—" : "—"),
+              },
+              {
+                key: "mapped_samsara_count",
+                label: "Samsara users",
+                kind: "number",
+                sortable: true,
+                sortValue: (row) => row.mapped_samsara_count ?? 0,
+                render: (row) => row.mapped_samsara_count ?? 0,
+              },
+            ]}
+            rowActions={(row) => (
+              <button
+                type="button"
+                className="sdm-map-btn de-ctrl"
+                data-testid={`sdm-map-btn-${row.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedPerson(row);
+                }}
+              >
+                Map
+              </button>
+            )}
+          />
           {leftCapped && (
             <div className="sdm-empty" data-testid="sdm-left-capped">
               Showing the first 500 matching people — narrow the filters to see the rest.
@@ -451,85 +455,97 @@ export function SamsaraDriverMappingPage() {
                 />
               ) : (
               <>
-              <table className="ih-table sdm-table">
-                <thead>
-                  <tr>
-                    <th className="sdm-tick-col" />
-                    <th>Samsara username</th>
-                    <th>Samsara ID</th>
-                    <th className="wd text-left">Account created</th>
-                    <th>Samsara status</th>
-                    <th>Mapped to</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rightRows.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="sdm-empty">
-                        No Samsara users match these filters.
-                      </td>
-                    </tr>
-                  ) : (
-                    rightRows.map((p) => {
+              <ParityTable<SamsaraProfile>
+                embedded
+                rows={rightRows}
+                rowKey={(p) => p.samsara_driver_id}
+                loading={profilesQuery.isLoading}
+                emptyText="No Samsara users match these filters."
+                storageKey="samsara-driver-mapping-users"
+                exportFilename="samsara-users"
+                suppressToolbarSearch
+                suppressToolbarRange
+                rowTestId={(p) => `sdm-sam-${p.samsara_driver_id}`}
+                columns={[
+                  {
+                    key: "tick",
+                    label: "Select",
+                    sortable: false,
+                    render: (p) => {
                       const mine = mappedToThis(p, selectedPerson);
                       const elsewhere = mappedElsewhere(p, selectedPerson);
-                      const checked = ticked.has(p.samsara_driver_id);
                       return (
-                        <tr key={p.samsara_driver_id} data-testid={`sdm-sam-${p.samsara_driver_id}`}>
-                          <td className="sdm-tick-col">
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              disabled={mine || elsewhere}
-                              title={
-                                mine
-                                  ? "Already mapped here — locked (additive save)"
-                                  : elsewhere
-                                    ? `Mapped to ${mappedLabel(p)} — unmap there first`
-                                    : undefined
-                              }
-                              onChange={() => toggleTick(p)}
-                              data-testid={`profile-select-${p.samsara_driver_id}`}
-                            />
-                          </td>
-                          <td>{p.samsara_name || "—"}</td>
-                          <td className="font-mono text-xs">{p.samsara_driver_id}</td>
-                          <td className="wd tabular-nums text-left" data-testid={`sdm-created-${p.samsara_driver_id}`}>
-                            {formatDateUS(p.samsara_created_at) || "—"}
-                          </td>
-                          <td>{p.samsara_status || "—"}</td>
-                          <td>
-                            {mine ? (
-                              <span data-testid={`sdm-mapped-here-${p.samsara_driver_id}`}>This person</span>
-                            ) : elsewhere ? (
-                              <span className="sdm-elsewhere">
-                                {p.local_driver_id ? (
-                                  <EntityLink kind="driver" id={p.local_driver_id} label={mappedLabel(p)} />
-                                ) : p.local_vendor_id ? (
-                                  <EntityLink kind="vendor" id={p.local_vendor_id} label={mappedLabel(p)} />
-                                ) : (
-                                  mappedLabel(p)
-                                )}
-                                <button
-                                  type="button"
-                                  className="sdm-unmap-link"
-                                  data-testid={`sdm-unmap-${p.samsara_driver_id}`}
-                                  disabled={unmapMutation.isPending}
-                                  onClick={() => unmapMutation.mutate([p.samsara_driver_id])}
-                                >
-                                  Unmap
-                                </button>
-                              </span>
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                        </tr>
+                        <input
+                          type="checkbox"
+                          checked={ticked.has(p.samsara_driver_id)}
+                          disabled={mine || elsewhere}
+                          title={
+                            mine
+                              ? "Already mapped here — locked (additive save)"
+                              : elsewhere
+                                ? `Mapped to ${mappedLabel(p)} — unmap there first`
+                                : undefined
+                          }
+                          onChange={() => toggleTick(p)}
+                          data-testid={`profile-select-${p.samsara_driver_id}`}
+                        />
                       );
-                    })
-                  )}
-                </tbody>
-              </table>
+                    },
+                  },
+                  { key: "samsara_name", label: "Samsara username", sortable: true, sortValue: (p) => p.samsara_name, render: (p) => p.samsara_name || "—" },
+                  {
+                    key: "samsara_driver_id",
+                    label: "Samsara ID",
+                    sortable: true,
+                    sortValue: (p) => p.samsara_driver_id,
+                    cellClass: "font-mono text-xs",
+                    render: (p) => p.samsara_driver_id,
+                  },
+                  {
+                    key: "samsara_created_at",
+                    label: "Account created",
+                    sortable: true,
+                    sortValue: (p) => p.samsara_created_at,
+                    cellClass: "tabular-nums",
+                    render: (p) => <span data-testid={`sdm-created-${p.samsara_driver_id}`}>{formatDateUS(p.samsara_created_at) || "—"}</span>,
+                  },
+                  { key: "samsara_status", label: "Samsara status", sortable: true, sortValue: (p) => p.samsara_status, render: (p) => p.samsara_status || "—" },
+                  {
+                    key: "mapped_to",
+                    label: "Mapped to",
+                    sortable: true,
+                    sortValue: (p) => (mappedToThis(p, selectedPerson) ? "This person" : mappedLabel(p)),
+                    render: (p) => {
+                      const mine = mappedToThis(p, selectedPerson);
+                      const elsewhere = mappedElsewhere(p, selectedPerson);
+                      return mine ? (
+                        <span data-testid={`sdm-mapped-here-${p.samsara_driver_id}`}>This person</span>
+                      ) : elsewhere ? (
+                        <span className="sdm-elsewhere">
+                          {p.local_driver_id ? (
+                            <EntityLink kind="driver" id={p.local_driver_id} label={mappedLabel(p)} />
+                          ) : p.local_vendor_id ? (
+                            <EntityLink kind="vendor" id={p.local_vendor_id} label={mappedLabel(p)} />
+                          ) : (
+                            mappedLabel(p)
+                          )}
+                          <button
+                            type="button"
+                            className="sdm-unmap-link"
+                            data-testid={`sdm-unmap-${p.samsara_driver_id}`}
+                            disabled={unmapMutation.isPending}
+                            onClick={() => unmapMutation.mutate([p.samsara_driver_id])}
+                          >
+                            Unmap
+                          </button>
+                        </span>
+                      ) : (
+                        "—"
+                      );
+                    },
+                  },
+                ]}
+              />
               {(() => {
                 const total = profilesQuery.data?.total ?? profilesQuery.data?.scope_total;
                 const capped = (profilesQuery.data?.profiles?.length ?? 0) >= 500 || profilesQuery.data?.next_cursor != null;

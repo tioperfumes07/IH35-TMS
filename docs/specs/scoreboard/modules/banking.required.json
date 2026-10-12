@@ -530,6 +530,20 @@
       ]
     },
     {
+      "id": "banking.panel.related_party_pair_suggestions",
+      "tab": "Panels",
+      "sub": "Panel: Related-Party Bank \u2194 Relay Pair Suggestions (suggest only; owner confirms, never auto-pairs)",
+      "route_hint": "surface://pages/banking/components/RelatedPartyPairSuggestionsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/banking/components/RelatedPartyPairSuggestionsPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome",
+        "bank",
+        "reverse_link"
+      ]
+    },
+    {
       "id": "banking.panel.plaid_sync_status",
       "tab": "Panels",
       "sub": "Panel: Plaid Sync Status Panel",

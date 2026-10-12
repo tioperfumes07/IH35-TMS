@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — the lines of ONE deposit; the deposit date is shown in the header above, a line has no date of its own.
 /**
  * B-1 §5 — Deposit original document: lines + JE + online banking match banner / Unmatch.
  * Register Edit for source_transaction_type=bank_deposit opens this page.
@@ -18,6 +19,9 @@ import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useToast } from "../../components/Toast";
+import { ParityTable } from "../../components/parity/ParityTable";
+
+type DepositLine = NonNullable<NonNullable<Awaited<ReturnType<typeof getBankDeposit>>["deposit"]>["lines"]>[number];
 
 export function DepositDetailPage() {
   const { id = "" } = useParams();
@@ -130,79 +134,52 @@ export function DepositDetailPage() {
 
             <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
               <h2 className="mb-2 font-bold uppercase text-[#4B5563]">Lines</h2>
-              <table className="w-full border-collapse text-xs tabular-nums">
-                <thead>
-                  <tr className="border-b border-[#E5E7EB] text-center font-bold uppercase text-[#4B5563]">
-                    <th className="px-2 py-[7px]">Type</th>
-                    <th className="px-2 py-[7px]">Payment / Advance</th>
-                    <th className="px-2 py-[7px]">Customer</th>
-                    <th className="px-2 py-[7px]">Invoice</th>
-                    <th className="px-2 py-[7px]">Load</th>
-                    <th className="px-2 py-[7px]">Amount</th>
-                    <th className="px-2 py-[7px]">Memo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(deposit.lines ?? []).map((line) => (
-                    <tr key={line.id} className="border-b border-[#E5E7EB] text-center text-[#0F1219]">
-                      <td className="px-2 py-[7px]">{(line.line_type ?? "—").replaceAll("_", " ")}</td>
-                      <td className="px-2 py-[7px]">
-                        {line.source_payment_id ? (
-                          <EntityLink
-                            kind="payment"
-                            id={line.source_payment_id}
-                            label={line.payment_display_id ?? "Payment"}
-                          />
-                        ) : line.source_factoring_advance_id ? (
-                          <EntityLink
-                            kind="factoring_advance"
-                            id={line.source_factoring_advance_id}
-                            label={line.factoring_advance_display_id ?? line.faro_invoice_number ?? "Advance"}
-                          />
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="px-2 py-[7px]">
-                        {line.customer_id ? (
-                          <EntityLink kind="customer" id={line.customer_id} label={line.customer_name ?? "Customer"} />
-                        ) : line.received_from_customer_id ? (
-                          <EntityLink kind="customer" id={line.received_from_customer_id} label={line.received_from_customer_name ?? "Customer"} />
-                        ) : line.received_from_vendor_id ? (
-                          <EntityLink kind="vendor" id={line.received_from_vendor_id} label={line.received_from_vendor_name ?? "Vendor"} />
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="px-2 py-[7px]">
-                        {line.invoice_id ? (
-                          <EntityLink kind="invoice" id={line.invoice_id} label={line.invoice_display_id ?? "Invoice"} />
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="px-2 py-[7px]">
-                        {line.load_id ? (
-                          <EntityLink kind="load" id={line.load_id} label={line.load_number ?? "Load"} />
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="px-2 py-[7px] tabular-nums">
-                        {formatCurrencyFromCents(Number(line.amount_cents ?? 0))}
-                      </td>
-                      <td className="px-2 py-[7px]">{line.memo ?? "—"}</td>
-                    </tr>
-                  ))}
-                  {(deposit.lines ?? []).length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-2 py-[7px] text-center text-[#6B7280]">
-                        No lines.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
+              <ParityTable<DepositLine>
+                storageKey="deposit-detail-lines"
+                tableTestId="deposit-detail-lines"
+                rows={deposit.lines ?? []}
+                rowKey={(line) => line.id}
+                emptyText="No lines."
+                suppressToolbarSearch
+                suppressToolbarRange
+                hidePager
+                initialPageSize={300}
+                columns={[
+                  { key: "line_type", label: "Type", render: (line) => (line.line_type ?? "—").replaceAll("_", " ") },
+                  {
+                    key: "payment", label: "Payment / Advance", sortValue: (line) => line.payment_display_id ?? line.factoring_advance_display_id ?? "",
+                    render: (line) =>
+                      line.source_payment_id ? (
+                        <EntityLink kind="payment" id={line.source_payment_id} label={line.payment_display_id ?? "Payment"} />
+                      ) : line.source_factoring_advance_id ? (
+                        <EntityLink
+                          kind="factoring_advance"
+                          id={line.source_factoring_advance_id}
+                          label={line.factoring_advance_display_id ?? line.faro_invoice_number ?? "Advance"}
+                        />
+                      ) : (
+                        "—"
+                      ),
+                  },
+                  {
+                    key: "customer", label: "Customer", sortValue: (line) => line.customer_name ?? line.received_from_customer_name ?? line.received_from_vendor_name ?? "",
+                    render: (line) =>
+                      line.customer_id ? (
+                        <EntityLink kind="customer" id={line.customer_id} label={line.customer_name ?? "Customer"} />
+                      ) : line.received_from_customer_id ? (
+                        <EntityLink kind="customer" id={line.received_from_customer_id} label={line.received_from_customer_name ?? "Customer"} />
+                      ) : line.received_from_vendor_id ? (
+                        <EntityLink kind="vendor" id={line.received_from_vendor_id} label={line.received_from_vendor_name ?? "Vendor"} />
+                      ) : (
+                        "—"
+                      ),
+                  },
+                  { key: "invoice_display_id", label: "Invoice", render: (line) => (line.invoice_id ? <EntityLink kind="invoice" id={line.invoice_id} label={line.invoice_display_id ?? "Invoice"} /> : "—") },
+                  { key: "load_number", label: "Load", render: (line) => (line.load_id ? <EntityLink kind="load" id={line.load_id} label={line.load_number ?? "Load"} /> : "—") },
+                  { key: "amount_cents", label: "Amount", kind: "money", sortValue: (line) => Number(line.amount_cents ?? 0), render: (line) => formatCurrencyFromCents(Number(line.amount_cents ?? 0)) },
+                  { key: "memo", label: "Memo", render: (line) => line.memo ?? "—" },
+                ]}
+              />
             </section>
 
             {voidOpen ? (

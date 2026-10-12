@@ -24,6 +24,7 @@ import { CollapsibleProfileCard } from "./CollapsibleProfileCard";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
 import { formatUsdCentsTable } from "../../lib/money";
+import { ParityTable } from "../parity/ParityTable";
 
 type Integrity = { key: string; label: string; his: number | null; fleet: number | null; worse: "higher" | "lower"; unit?: string; money?: boolean };
 type Overview = {
@@ -218,46 +219,37 @@ export function DriverOverviewBoard(props: {
               action={<Link className="pb-link" to={driverProfileTabHref(o.driver.id, "Settlements")}>All {int(o.settlement_count)} →</Link>}
             >
               {o.settlements.length === 0 ? <div className="dd-note">No settlement has been issued to this driver.</div> : (
-                <table className="ih-table">
-                  <thead>
-                    <tr>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>Settlement</th>
-                      <th className="ih-hd" style={{ textAlign: "right", width: 92 }}>Closed</th>
-                      <th className="ih-hd" style={{ textAlign: "right", width: 54 }}>Loads</th>
-                      <th className="ih-hd" style={{ textAlign: "right", width: 70 }}>Miles</th>
-                      <th className="ih-hd" style={{ textAlign: "right" }}>Line haul</th>
-                      <th className="ih-hd" style={{ textAlign: "right" }}>Additional</th>
-                      <th className="ih-hd" style={{ textAlign: "right" }}>Deductions</th>
-                      <th className="ih-hd" style={{ textAlign: "right" }}>Net pay</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {o.settlements.map((s) => (
-                      <tr key={s.id}>
-                        <td><EntityLink kind="settlement" id={s.id} label={s.display_id} /></td>
-                        <td className="ih-num pb-muted">{s.status === "closed" ? day(s.closed_at) : s.status}</td>
-                        <td className="ih-num">{int(s.loads)}</td>
-                        <td className="ih-num">{s.miles ? int(s.miles) : <span className="ih-empty">—</span>}</td>
-                        {/* ROUND 433.2 — every amount on a settlement row opens that settlement. */}
-                        <td className="ih-num text-right tabular-nums"><EntityLink kind="settlement" id={s.id} label={money(s.line_haul_cents)} /></td>
-                        <td className="ih-num text-right tabular-nums">{s.additional_cents ? <EntityLink kind="settlement" id={s.id} label={usd(s.additional_cents)} /> : <span className="ih-empty">—</span>}</td>
-                        <td className="ih-num text-right tabular-nums"><EntityLink kind="settlement" id={s.id} label={money(s.deductions_cents)} /></td>
-                        <td className="ih-num pb-strong text-right tabular-nums"><EntityLink kind="settlement" id={s.id} label={money(s.net_cents)} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="pb-foot">
-                      <td colSpan={2}>{int(o.settlements.length)} settlements</td>
-                      <td className="ih-num">{int(sum("loads"))}</td>
-                      <td className="ih-num">{int(sum("miles"))}</td>
-                      <td className="ih-num"><MoneyCell cents={sum("line_haul_cents")} format={money} drill={{ none: "Total of the rows above — each row opens its own record (the 12 most recent settlements)" }} /></td>
-                      <td className="ih-num"><MoneyCell cents={sum("additional_cents")} format={money} drill={{ none: "Total of the rows above — each row opens its own record (the 12 most recent settlements)" }} /></td>
-                      <td className="ih-num"><MoneyCell cents={sum("deductions_cents")} format={money} drill={{ none: "Total of the rows above — each row opens its own record (the 12 most recent settlements)" }} /></td>
-                      <td className="ih-num"><MoneyCell cents={sum("net_cents")} format={money} drill={{ none: "Total of the rows above — each row opens its own record (the 12 most recent settlements)" }} /></td>
-                    </tr>
-                  </tfoot>
-                </table>
+                <ParityTable<Overview["settlements"][number]>
+                  appearance="board"
+                  suppressToolbarSearch
+                  suppressToolbarRange
+                  hidePager
+                  initialPageSize={300}
+                  storageKey="driver-overview-settlements"
+                  tableTestId="driver-overview-settlements"
+                  rows={o.settlements}
+                  rowKey={(r) => r.id}
+                  columns={[
+                    { key: "display_id", label: "Settlement", render: (r) => <EntityLink kind="settlement" id={r.id} label={r.display_id} /> },
+                    { key: "closed_at", label: "Closed", minWidth: 92, sortValue: (r) => r.closed_at ?? "", render: (r) => <span className="ih-num pb-muted">{r.status === "closed" ? day(r.closed_at) : r.status}</span> },
+                    { key: "loads", label: "Loads", kind: "number", minWidth: 54, render: (r) => <span className="ih-num">{int(r.loads)}</span> },
+                    { key: "miles", label: "Miles", kind: "number", minWidth: 70, render: (r) => <span className="ih-num">{r.miles ? int(r.miles) : <span className="ih-empty">—</span>}</span> },
+                    // ROUND 433.2 — every amount on a settlement row opens that settlement.
+                    { key: "line_haul_cents", label: "Line haul", kind: "money", render: (r) => <EntityLink kind="settlement" id={r.id} label={money(r.line_haul_cents)} /> },
+                    { key: "additional_cents", label: "Additional", kind: "money", render: (r) => (r.additional_cents ? <EntityLink kind="settlement" id={r.id} label={usd(r.additional_cents)} /> : <span className="ih-empty">—</span>) },
+                    { key: "deductions_cents", label: "Deductions", kind: "money", render: (r) => <EntityLink kind="settlement" id={r.id} label={money(r.deductions_cents)} /> },
+                    { key: "net_cents", label: "Net pay", kind: "money", render: (r) => <span className="pb-strong"><EntityLink kind="settlement" id={r.id} label={money(r.net_cents)} /></span> },
+                  ]}
+                  footerCells={{
+                    display_id: `${int(o.settlements.length)} settlements`,
+                    loads: int(sum("loads")),
+                    miles: int(sum("miles")),
+                    line_haul_cents: <MoneyCell cents={sum("line_haul_cents")} format={money} drill={{ none: "Total of the rows above — each row opens its own record (the 12 most recent settlements)" }} />,
+                    additional_cents: <MoneyCell cents={sum("additional_cents")} format={money} drill={{ none: "Total of the rows above — each row opens its own record (the 12 most recent settlements)" }} />,
+                    deductions_cents: <MoneyCell cents={sum("deductions_cents")} format={money} drill={{ none: "Total of the rows above — each row opens its own record (the 12 most recent settlements)" }} />,
+                    net_cents: <MoneyCell cents={sum("net_cents")} format={money} drill={{ none: "Total of the rows above — each row opens its own record (the 12 most recent settlements)" }} />,
+                  }}
+                />
               )}
             </CollapsibleProfileCard>
 
@@ -270,38 +262,30 @@ export function DriverOverviewBoard(props: {
               action={<button type="button" className="dd-add" onClick={runSettlement}>+ Add</button>}
             >
               {o.additional.length === 0 ? <div className="dd-note">No additional payment in the last 90 days.</div> : (
-                <table className="ih-table">
-                  <thead>
-                    <tr>
-                      <th className="ih-hd" style={{ textAlign: "right", width: 92 }}>Date</th>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>Kind</th>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>Reason</th>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>Load</th>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>Settlement</th>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>Approved by</th>
-                      <th className="ih-hd" style={{ textAlign: "right" }}>Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {o.additional.map((p) => (
-                      <tr key={p.id}>
-                        <td className="ih-num pb-muted">{day(p.at)}</td>
-                        <td><span className={`dd-tag${kindTone(p.kind) ? ` dd-tag--${kindTone(p.kind)}` : ""}`}>{p.kind.replace(/_/g, " ")}</span></td>
-                        <td className="pb-muted2">{p.description ?? "—"}</td>
-                        <td>{p.load_id ? <button type="button" className="pb-name" onClick={() => go("load", p.load_id)}>{p.load_number}</button> : "—"}</td>
-                        <td><button type="button" className="pb-name" onClick={() => go("settlement", p.settlement_id)}>{p.settlement ?? "—"}</button></td>
-                        <td className="pb-muted2">{p.approved_by ?? "—"}</td>
-                        <td className="ih-num pb-strong text-right tabular-nums">{p.settlement_id ? <EntityLink kind="settlement" id={p.settlement_id} label={usd(p.amount_cents)} /> : usd(p.amount_cents)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="pb-foot">
-                      <td colSpan={6}>{int(o.additional.length)} payments, last 90 days</td>
-                      <td className="ih-num"><MoneyCell cents={t.additional_pay_cents} format={money} drill={{ none: "Total of the rows above — each row opens its own record (additional pay, last 90 days)" }} /></td>
-                    </tr>
-                  </tfoot>
-                </table>
+                <ParityTable<Overview["additional"][number]>
+                  appearance="board"
+                  suppressToolbarSearch
+                  suppressToolbarRange
+                  hidePager
+                  initialPageSize={300}
+                  storageKey="driver-overview-additional"
+                  tableTestId="driver-overview-additional"
+                  rows={o.additional}
+                  rowKey={(p) => p.id}
+                  columns={[
+                    { key: "at", label: "Date", minWidth: 92, sortValue: (p) => p.at, render: (p) => <span className="ih-num pb-muted">{day(p.at)}</span> },
+                    { key: "kind", label: "Kind", render: (p) => <span className={`dd-tag${kindTone(p.kind) ? ` dd-tag--${kindTone(p.kind)}` : ""}`}>{p.kind.replace(/_/g, " ")}</span> },
+                    { key: "description", label: "Reason", render: (p) => <span className="pb-muted2">{p.description ?? "—"}</span> },
+                    { key: "load_number", label: "Load", render: (p) => (p.load_id ? <button type="button" className="pb-name" onClick={() => go("load", p.load_id)}>{p.load_number}</button> : "—") },
+                    { key: "settlement", label: "Settlement", render: (p) => <button type="button" className="pb-name" onClick={() => go("settlement", p.settlement_id)}>{p.settlement ?? "—"}</button> },
+                    { key: "approved_by", label: "Approved by", render: (p) => <span className="pb-muted2">{p.approved_by ?? "—"}</span> },
+                    { key: "amount_cents", label: "Amount", kind: "money", render: (p) => <span className="pb-strong">{p.settlement_id ? <EntityLink kind="settlement" id={p.settlement_id} label={usd(p.amount_cents)} /> : usd(p.amount_cents)}</span> },
+                  ]}
+                  footerCells={{
+                    at: `${int(o.additional.length)} payments, last 90 days`,
+                    amount_cents: <MoneyCell cents={t.additional_pay_cents} format={money} drill={{ none: "Total of the rows above — each row opens its own record (additional pay, last 90 days)" }} />,
+                  }}
+                />
               )}
             </CollapsibleProfileCard>
 
@@ -328,67 +312,54 @@ export function DriverOverviewBoard(props: {
               }
             >
               {o.complaints.length === 0 ? <div className="dd-note">No complaint against this driver in the last 90 days · fleet average {t.fleet_complaints_avg_90d}.</div> : (
-                <table className="ih-table">
-                  <thead>
-                    <tr>
-                      <th className="ih-hd" style={{ textAlign: "right", width: 92 }}>Date</th>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>Kind</th>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>What happened</th>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>Load</th>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>Raised by</th>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>Outcome</th>
-                      <th className="ih-hd" style={{ textAlign: "right" }}>Cost</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {o.complaints.map((c) => (
-                      <tr key={c.id}>
-                        <td className="ih-num pb-muted">{day(c.at)}</td>
-                        <td><span className={`dd-tag${kindTone(c.kind) ? ` dd-tag--${kindTone(c.kind)}` : ""}`}>{c.kind.replace(/_/g, " ")}</span></td>
-                        <td className="pb-muted2">{c.summary ?? "—"}</td>
-                        <td>{c.load_id ? <button type="button" className="pb-name" onClick={() => go("load", c.load_id)}>{c.load_number}</button> : "—"}</td>
-                        <td className="pb-muted2">{c.raised_by ?? "—"}</td>
-                        <td className="pb-muted2">{c.outcome ?? "—"}</td>
-                        <td className={`ih-num${c.cost_cents ? " dd-red" : ""} text-right tabular-nums`}>{c.cost_cents ? <EntityLink kind="complaint" id={c.id} label={money(c.cost_cents)} /> : money(c.cost_cents)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="pb-foot">
-                      <td colSpan={6}>{int(o.complaints.length)} complaints, 90 days · fleet average {t.fleet_complaints_avg_90d}</td>
-                      <td className="ih-num"><MoneyCell cents={o.complaints.reduce((s, c) => s + (c.cost_cents ?? 0), 0)} format={money} drill={{ none: "Total of the rows above — each row opens its own record (complaints, last 90 days)" }} /></td>
-                    </tr>
-                  </tfoot>
-                </table>
+                <ParityTable<Overview["complaints"][number]>
+                  appearance="board"
+                  suppressToolbarSearch
+                  suppressToolbarRange
+                  hidePager
+                  initialPageSize={300}
+                  storageKey="driver-overview-complaints"
+                  tableTestId="driver-overview-complaints"
+                  rows={o.complaints}
+                  rowKey={(c) => c.id}
+                  columns={[
+                    { key: "at", label: "Date", minWidth: 92, sortValue: (c) => c.at, render: (c) => <span className="ih-num pb-muted">{day(c.at)}</span> },
+                    { key: "kind", label: "Kind", render: (c) => <span className={`dd-tag${kindTone(c.kind) ? ` dd-tag--${kindTone(c.kind)}` : ""}`}>{c.kind.replace(/_/g, " ")}</span> },
+                    { key: "summary", label: "What happened", render: (c) => <span className="pb-muted2">{c.summary ?? "—"}</span> },
+                    { key: "load_number", label: "Load", render: (c) => (c.load_id ? <button type="button" className="pb-name" onClick={() => go("load", c.load_id)}>{c.load_number}</button> : "—") },
+                    { key: "raised_by", label: "Raised by", render: (c) => <span className="pb-muted2">{c.raised_by ?? "—"}</span> },
+                    { key: "outcome", label: "Outcome", render: (c) => <span className="pb-muted2">{c.outcome ?? "—"}</span> },
+                    { key: "cost_cents", label: "Cost", kind: "money", render: (c) => <span className={c.cost_cents ? "dd-red" : ""}>{c.cost_cents ? <EntityLink kind="complaint" id={c.id} label={money(c.cost_cents)} /> : money(c.cost_cents)}</span> },
+                  ]}
+                  footerCells={{
+                    at: `${int(o.complaints.length)} complaints, 90 days · fleet average ${t.fleet_complaints_avg_90d}`,
+                    cost_cents: <MoneyCell cents={o.complaints.reduce((s, c) => s + (c.cost_cents ?? 0), 0)} format={money} drill={{ none: "Total of the rows above — each row opens its own record (complaints, last 90 days)" }} />,
+                  }}
+                />
               )}
             </CollapsibleProfileCard>
 
             <CollapsibleProfileCard scope={scope} cardId="reports" title="Reports &amp; damage he filed" count={o.reports.length}>
               {o.reports.length === 0 ? <div className="dd-note">No driver report and no DVIR defect filed by this driver.</div> : (
-                <table className="ih-table">
-                  <thead>
-                    <tr>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>Kind</th>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>Unit</th>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>What</th>
-                      <th className="ih-hd" style={{ textAlign: "right", width: 92 }}>Reported</th>
-                      <th className="ih-hd" style={{ textAlign: "left" }}>Outcome</th>
-                      <th className="ih-hd" style={{ textAlign: "right" }}>Cost</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {o.reports.map((r) => (
-                      <tr key={`${r.entity}:${r.id}`}>
-                        <td><span className={`dd-tag${kindTone(r.kind) ? ` dd-tag--${kindTone(r.kind)}` : ""}`}>{r.kind}</span></td>
-                        <td className="pb-strong">{r.unit ?? "—"}</td>
-                        <td className="pb-muted2">{r.what ?? "—"}</td>
-                        <td className="ih-num pb-muted">{day(r.at)}</td>
-                        <td className="pb-muted2">{r.outcome ?? "—"}</td>
-                        <td className="ih-num text-right tabular-nums">{r.wo_id ? <EntityLink kind="work_order" id={r.wo_id} label={money(r.cost_cents)} /> : money(r.cost_cents)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <ParityTable<Overview["reports"][number]>
+                  appearance="board"
+                  suppressToolbarSearch
+                  suppressToolbarRange
+                  hidePager
+                  initialPageSize={300}
+                  storageKey="driver-overview-reports"
+                  tableTestId="driver-overview-reports"
+                  rows={o.reports}
+                  rowKey={(r) => `${r.entity}:${r.id}`}
+                  columns={[
+                    { key: "kind", label: "Kind", render: (r) => <span className={`dd-tag${kindTone(r.kind) ? ` dd-tag--${kindTone(r.kind)}` : ""}`}>{r.kind}</span> },
+                    { key: "unit", label: "Unit", render: (r) => <span className="pb-strong">{r.unit ?? "—"}</span> },
+                    { key: "what", label: "What", render: (r) => <span className="pb-muted2">{r.what ?? "—"}</span> },
+                    { key: "at", label: "Reported", minWidth: 92, sortValue: (r) => r.at ?? "", render: (r) => <span className="ih-num pb-muted">{day(r.at)}</span> },
+                    { key: "outcome", label: "Outcome", render: (r) => <span className="pb-muted2">{r.outcome ?? "—"}</span> },
+                    { key: "cost_cents", label: "Cost", kind: "money", render: (r) => (r.wo_id ? <EntityLink kind="work_order" id={r.wo_id} label={money(r.cost_cents)} /> : money(r.cost_cents)) },
+                  ]}
+                />
               )}
             </CollapsibleProfileCard>
           </div>
@@ -425,18 +396,24 @@ export function DriverOverviewBoard(props: {
               count={o.trucks.length}
             >
               {o.trucks.length === 0 ? <div className="dd-note">No truck assignment recorded for this driver.</div> : (
-                <table className="ih-table">
-                  <tbody>
-                    {o.trucks.map((a) => (
-                      <tr key={`${a.unit_id}:${a.from}`} style={{ cursor: "pointer" }} onClick={() => go("unit", a.unit_id)}>
-                        <td className="pb-strong">{a.unit}</td>
-                        <td className="ih-num pb-muted">{day(a.from)} — {a.to ? day(a.to) : "now"}</td>
-                        <td className="ih-num">{a.miles ? `${int(a.miles)} mi` : <span className="ih-empty">—</span>}</td>
-                        <td className="ih-num">{a.mpg == null ? <span className="ih-empty">—</span> : `${a.mpg} mpg`}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <ParityTable<Overview["trucks"][number]>
+                  appearance="board"
+                  suppressToolbarSearch
+                  suppressToolbarRange
+                  hidePager
+                  initialPageSize={300}
+                  storageKey="driver-overview-trucks"
+                  tableTestId="driver-overview-trucks"
+                  rows={o.trucks}
+                  rowKey={(a) => `${a.unit_id}:${a.from}`}
+                  onRowClick={(a) => go("unit", a.unit_id)}
+                  columns={[
+                    { key: "unit", label: "Unit", render: (a) => <span className="pb-strong">{a.unit}</span> },
+                    { key: "from", label: "Held", sortValue: (a) => a.from, render: (a) => <span className="ih-num pb-muted">{day(a.from)} — {a.to ? day(a.to) : "now"}</span> },
+                    { key: "miles", label: "Miles", kind: "number", render: (a) => <span className="ih-num">{a.miles ? `${int(a.miles)} mi` : <span className="ih-empty">—</span>}</span> },
+                    { key: "mpg", label: "MPG", kind: "number", render: (a) => <span className="ih-num">{a.mpg == null ? <span className="ih-empty">—</span> : `${a.mpg} mpg`}</span> },
+                  ]}
+                />
               )}
             </CollapsibleProfileCard>
 

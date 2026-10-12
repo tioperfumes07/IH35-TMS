@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per miles field (Practical / Short / Empty) of ONE load; the evidence dates sit inside the Historical / Google cells.
 /**
  * Lead 443.57 (owner 2026-10-11): "for the mileage it should also be the same in settlement creator".
  *
@@ -9,16 +10,18 @@
  */
 import type { MilesField, MilesRecommendations } from "../../api/milesRecommendations";
 import { MILES_FIELDS } from "../../api/milesRecommendations";
+import { ParityTable } from "../../components/parity/ParityTable";
 
 export type CreatorMilesFieldChoice = { source: "document" | "historical" | "google" | "manual"; manual_value?: number | null; reason?: string | null };
 export type CreatorMilesChoice = Partial<Record<MilesField, CreatorMilesFieldChoice>>;
 export type CreatorSavedMiles = Record<MilesField, { value: number | null; source: string | null }>;
 
 const LABEL: Record<MilesField, string> = { practical: "Practical", short: "Short", empty: "Empty" };
-const th = "h-[30px] px-2 text-center text-section-header font-bold uppercase text-[#1F2937]";
-const td = "px-2 py-1 align-top text-xs text-gray-900";
+const td = "align-top text-xs text-gray-900";
 const sub = "text-xs text-[#4B5563]";
 const fmt = (n: number | null | undefined) => (n == null ? null : n.toLocaleString("en-US", { maximumFractionDigits: 1 }));
+
+type MilesFieldRow = { field: MilesField };
 
 export function CreatorMilesChoicePanel({
   idx,
@@ -52,29 +55,45 @@ export function CreatorMilesChoicePanel({
           Recommendations unavailable: {error}
         </div>
       ) : null}
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="border-b border-[#E5E7EB] bg-[#EEF2F6]">
-            <th className={th}>Field</th>
-            <th className={th}>Document (pay)</th>
-            <th className={th}>Historical</th>
-            <th className={th}>Google</th>
-            <th className={`${th} w-[170px]`}>Use for the load</th>
-          </tr>
-        </thead>
-        <tbody>
-          {MILES_FIELDS.map((f) => {
-            const r = rec?.fields[f];
-            const doc = documentValues[f] ?? null;
-            const c = choice?.[f] ?? { source: "document" as const };
-            const h = r?.historical ?? null;
-            const g = r?.google ?? null;
-            const s = saved?.[f];
-            return (
-              <tr key={f} className="border-b border-[#E5E7EB] last:border-b-0" data-testid={`sc-load-miles-row-${idx}-${f}`}>
-                <td className={`${td} whitespace-nowrap font-semibold`}>{LABEL[f]}</td>
-                <td className={`${td} text-center`}>{fmt(doc) ?? <span className={sub}>not on the settlement</span>}</td>
-                <td className={`${td} text-center`} data-testid={`sc-load-miles-historical-${idx}-${f}`}>
+      {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table). One row per miles field. */}
+      <ParityTable<MilesFieldRow>
+        embedded
+        rows={MILES_FIELDS.map((f) => ({ field: f }))}
+        rowKey={(row) => row.field}
+        storageKey="settlement-creator-miles-choice"
+        suppressToolbarSearch
+        suppressToolbarRange
+        hidePager
+        rowTestId={(row) => `sc-load-miles-row-${idx}-${row.field}`}
+        columns={[
+          {
+            key: "field",
+            label: "Field",
+            sortable: true,
+            sortValue: (row) => MILES_FIELDS.indexOf(row.field),
+            cellClass: `${td} whitespace-nowrap font-semibold`,
+            render: (row) => LABEL[row.field],
+          },
+          {
+            key: "document",
+            label: "Document (pay)",
+            kind: "number",
+            sortable: true,
+            sortValue: (row) => documentValues[row.field] ?? null,
+            cellClass: td,
+            render: (row) => fmt(documentValues[row.field] ?? null) ?? <span className={sub}>not on the settlement</span>,
+          },
+          {
+            key: "historical",
+            label: "Historical",
+            sortable: true,
+            sortValue: (row) => rec?.fields[row.field]?.historical?.value ?? null,
+            cellClass: td,
+            render: (row) => {
+              const r = rec?.fields[row.field];
+              const h = r?.historical ?? null;
+              return (
+                <div data-testid={`sc-load-miles-historical-${idx}-${row.field}`}>
                   {loading ? (
                     <span className={sub}>Looking up…</span>
                   ) : !rec ? (
@@ -92,8 +111,21 @@ export function CreatorMilesChoicePanel({
                   ) : (
                     <span className={sub}>{r?.historical_missing_reason ?? "no history for this lane"}</span>
                   )}
-                </td>
-                <td className={`${td} text-center`} data-testid={`sc-load-miles-google-${idx}-${f}`}>
+                </div>
+              );
+            },
+          },
+          {
+            key: "google",
+            label: "Google",
+            sortable: true,
+            sortValue: (row) => rec?.fields[row.field]?.google?.value ?? null,
+            cellClass: td,
+            render: (row) => {
+              const r = rec?.fields[row.field];
+              const g = r?.google ?? null;
+              return (
+                <div data-testid={`sc-load-miles-google-${idx}-${row.field}`}>
                   {loading ? (
                     <span className={sub}>Looking up…</span>
                   ) : !rec ? (
@@ -106,8 +138,27 @@ export function CreatorMilesChoicePanel({
                   ) : (
                     <span className={sub}>{r?.google_missing_reason ?? "Google had no route"}</span>
                   )}
-                </td>
-                <td className={td}>
+                </div>
+              );
+            },
+          },
+          {
+            key: "use_for_load",
+            label: "Use for the load",
+            sortable: false,
+            minWidth: 170,
+            overflowVisible: true,
+            cellClass: td,
+            render: (row) => {
+              const f = row.field;
+              const r = rec?.fields[f];
+              const doc = documentValues[f] ?? null;
+              const c = choice?.[f] ?? { source: "document" as const };
+              const h = r?.historical ?? null;
+              const g = r?.google ?? null;
+              const s = saved?.[f];
+              return (
+                <>
                   <select
                     className="w-full rounded-sm border border-[#E5E7EB] px-1 py-0.5 text-xs"
                     value={c.source}
@@ -151,12 +202,12 @@ export function CreatorMilesChoicePanel({
                       Preview saves {fmt(s.value)} ({s.source})
                     </div>
                   ) : null}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                </>
+              );
+            },
+          },
+        ]}
+      />
     </div>
   );
 }

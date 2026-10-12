@@ -6,6 +6,7 @@
  * Every figure comes from GET /api/v1/mdata/boards/:kind — nothing on this screen is a board constant.
  */
 import { useMemo, useRef, useState, type ReactNode } from "react";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ApiError, apiRequest } from "../../api/client";
@@ -120,40 +121,33 @@ function BoardTable<R extends { id: string }>(props: {
         </div>
       ) : null}
       <div className="pb-card">
-        <table className="ih-table">
-          <thead>
-            <tr>
-              {visible.map((c) => (
-                <th key={c.key} className="ih-hd pb-th" style={{ textAlign: c.num ? "right" : "left", width: c.width }}
-                  aria-sort={sort?.key === c.key ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
-                  onClick={() => setSort((s) => (s?.key === c.key ? { key: c.key, dir: s.dir === 1 ? -1 : 1 } : { key: c.key, dir: c.num ? -1 : 1 }))}>
-                  {c.label}{sort?.key === c.key ? (sort.dir === 1 ? " ▲" : " ▼") : ""}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((r) => (
-              <tr key={r.id}>
-                {visible.map((c, i) => (
-                  <td key={c.key} className={c.num ? "ih-num" : undefined}>
-                    {i === 0 ? <button type="button" className="pb-name" onClick={() => props.onOpen(r)}>{c.cell(r)}</button> : c.cell(r)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-            {sorted.length === 0 ? (
-              <tr><td colSpan={visible.length} className="pb-muted">Nothing matches this filter.</td></tr>
-            ) : null}
-          </tbody>
-          <tfoot>
-            <tr className="pb-foot">
-              {visible.map((c, i) => (
-                <td key={c.key} className={c.num ? "ih-num" : undefined}>{i === 0 ? props.footLabel : c.foot ?? null}</td>
-              ))}
-            </tr>
-          </tfoot>
-        </table>
+        <ParityTable<R>
+          appearance="board"
+          storageKey={`${props.storageKey}-table`}
+          tableTestId="party-board-table"
+          columns={visible.map((c, i): ParityColumn<R> => ({
+            key: c.key,
+            label: c.label,
+            kind: c.num ? "number" : undefined,
+            minWidth: c.width,
+            sortValue: c.sort,
+            exportValue: c.sort,
+            render: (r) => (i === 0 ? <button type="button" className="pb-name" onClick={() => props.onOpen(r)}>{c.cell(r)}</button> : c.cell(r)),
+          }))}
+          rows={sorted}
+          rowKey={(r) => r.id}
+          emptyText="Nothing matches this filter."
+          sortKey={sort?.key}
+          sortDirection={sort ? (sort.dir === 1 ? "asc" : "desc") : undefined}
+          onSortChange={(key, direction) => setSort({ key, dir: direction === "asc" ? 1 : -1 })}
+          sortMode="external"
+          footerCells={Object.fromEntries(visible.map((c, i) => [c.key, i === 0 ? props.footLabel : c.foot ?? null]))}
+          suppressToolbarSearch
+          suppressToolbarRange
+          initialPageSize={100}
+          pageSizeOptions={[100, 300]}
+          allowAllPageSize
+        />
       </div>
     </>
   );

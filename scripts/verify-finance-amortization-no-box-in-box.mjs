@@ -13,7 +13,15 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TARGET = "apps/frontend/src/pages/finance/AmortizationPage.tsx";
 const LABEL = "verify-finance-amortization-no-box-in-box";
-const NESTED_TILE_RE = /className="[^"]*rounded-sm border border-slate-200 bg-white p-4[^"]*"/g;
+// LEAD 443.99 class B (2026-10-12) — chrome tokens.
+//   old rule: frame / divider / header strip / nested tile matched only the slate-* palette and lowercase navy.
+//   new rule: each class accepts the slate-* spelling OR the house token it was swept to (border #E5E7EB,
+//             divider #E5E7EB, header strip bg #F7F8FA, navy #1F2A44 in either hex case); the nested-tile
+//             detector now also catches a nested tile drawn in house tokens (stricter).
+//   why: BANK-F91052 (#25984, 27ea52d41a) moved this page from slate-* to house tokens and LST-F44122
+//        (#25891, 331ea0dfdc) upper-cased the hex — the flat single-frame layout itself did not change.
+const BORDER = String.raw`(?:slate-200|\[#E5E7EB\])`;
+const NESTED_TILE_RE = new RegExp(String.raw`className="[^"]*rounded-sm border border-${BORDER} bg-white p-4[^"]*"`, "gi");
 
 function stripComments(src) {
   return src
@@ -47,7 +55,7 @@ export function collectProblems(section) {
   if (!section.includes("Schedule")) {
     problems.push(`${TARGET}: missing Schedule column header`);
   }
-  if (!/\<section className="overflow-hidden rounded-sm border border-slate-200 bg-white"\>/.test(section)) {
+  if (!new RegExp(String.raw`<section className="overflow-hidden rounded-sm border border-${BORDER} bg-white">`, "i").test(section)) {
     problems.push(`${TARGET}: workspace must use a single overflow-hidden section frame`);
   }
   const nested = section.match(NESTED_TILE_RE) ?? [];
@@ -59,13 +67,13 @@ export function collectProblems(section) {
   if (/grid grid-cols-1 gap-6 lg:grid-cols-3/.test(section)) {
     problems.push(`${TARGET}: must not use gap-6 nested tile grid (box-in-box chrome)`);
   }
-  if (!/lg:divide-x lg:divide-slate-100/.test(section)) {
+  if (!/lg:divide-x lg:divide-(?:slate-100|\[#E5E7EB\])/i.test(section)) {
     problems.push(`${TARGET}: workspace grid must flatten with lg:divide-x columns`);
   }
-  if (!/border-b border-slate-200 bg-slate-50/.test(section)) {
+  if (!new RegExp(String.raw`border-b border-${BORDER} bg-(?:slate-50|\[#F7F8FA\])`, "i").test(section)) {
     problems.push(`${TARGET}: column headers must use border-b strips inside single frame`);
   }
-  if (!/bg-\[#1f2a44\]/.test(section)) {
+  if (!/bg-\[#1f2a44\]/i.test(section)) {
     problems.push(`${TARGET}: primary Create action must use navy bg-[#1f2a44]`);
   }
   return problems;
@@ -97,7 +105,18 @@ function selftest() {
       </div>
     </div>`;
 
+  // 443.99 — the same layout in house tokens (the current page) must pass; a nested tile in house tokens must fail.
+  const goodHouse = good
+    .replaceAll("border-slate-200", "border-[#E5E7EB]")
+    .replaceAll("divide-slate-100", "divide-[#E5E7EB]")
+    .replaceAll("bg-slate-50", "bg-[#F7F8FA]")
+    .replaceAll("bg-[#1f2a44]", "bg-[#1F2A44]");
+  const badNestedHouse = badNested.replaceAll("border-slate-200", "border-[#E5E7EB]");
+  const noNavyHouse = goodHouse.replaceAll("bg-[#1F2A44]", "bg-[#16A34A]");
   const cases = [
+    { name: "house-token flat section → 0 errors", section: goodHouse, want: 0 },
+    { name: "house-token nested tile → fail", section: badNestedHouse, wantMin: 1 },
+    { name: "house-token page without navy primary → fail", section: noNavyHouse, wantMin: 1 },
     { name: "flat section + divide-x columns → 0 errors", section: good, want: 0 },
     { name: "nested rounded border white cards → fail", section: badNested, wantMin: 1 },
   ];

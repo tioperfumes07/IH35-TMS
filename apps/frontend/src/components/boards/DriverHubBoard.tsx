@@ -16,6 +16,7 @@ import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
 import { formatUsdCentsTable } from "../../lib/money";
 import { SelectCombobox } from "../Combobox";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 type HubRow = { id: string; name: string; status: string; phone: string | null; cdl: string | null; unit: string | null; basis: string | null; due_cents: number; due_count: number; on_load: boolean };
 type Hub = {
@@ -66,6 +67,21 @@ function GearIcon() {
   );
 }
 
+/** Recent activity: date, kind, what, amount (drills to the document when it resolves). */
+const ACTIVITY_COLUMNS: Array<ParityColumn<Panel["activity"][number]>> = [
+  { key: "at", label: "Date", minWidth: 84, sortValue: (a) => a.at, render: (a) => <span className="pb-sub-sm">{formatDateUS(a.at)}</span> },
+  { key: "kind", label: "Type", minWidth: 70, render: (a) => <span className={`pb-badge pb-badge--${a.kind}`}>{a.kind}</span> },
+  { key: "what", label: "Activity", render: (a) => <span className="pb-muted2">{a.what}</span> },
+  {
+    key: "cents", label: "Amount", kind: "money", minWidth: 96, sortValue: (a) => a.cents,
+    render: (a) => (
+      <span className="ih-num pb-strong">
+        {a.id && resolveEntityRoute(a.entity as EntityKind, a.id) ? <EntityLink kind={a.entity as EntityKind} id={a.id} label={money(a.cents)} /> : money(a.cents)}
+      </span>
+    ),
+  },
+];
+
 function DriverPanel({ operatingCompanyId, driverId }: { operatingCompanyId: string; driverId: string }) {
   const navigate = useNavigate();
   const q = useQuery({
@@ -106,24 +122,20 @@ function DriverPanel({ operatingCompanyId, driverId }: { operatingCompanyId: str
         <div className="pb-section">
           <div className="ih-hd" style={{ marginBottom: 6 }}>Recent activity</div>
           {p.activity.length === 0 ? <div className="pb-muted">No activity recorded for this driver.</div> : (
-            <table className="ih-table">
-              <tbody>
-                {p.activity.map((a, i) => (
-                  <tr key={`${a.kind}:${a.id ?? i}`} style={{ cursor: a.id ? "pointer" : undefined }} onClick={() => go(a.entity, a.id)}>
-                    <td className="pb-sub-sm" style={{ width: 84 }}>{formatDateUS(a.at)}</td>
-                    <td style={{ width: 70 }}><span className={`pb-badge pb-badge--${a.kind}`}>{a.kind}</span></td>
-                    <td className="pb-muted2">{a.what}</td>
-                    <td className="ih-num pb-strong text-right tabular-nums" style={{ width: 96 }}>
-                      {a.id && resolveEntityRoute(a.entity as EntityKind, a.id) ? (
-                        <EntityLink kind={a.entity as EntityKind} id={a.id} label={money(a.cents)} />
-                      ) : (
-                        money(a.cents)
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <ParityTable<Panel["activity"][number]>
+              appearance="board"
+              storageKey="driver-hub-activity"
+              tableTestId="driver-hub-activity"
+              columns={ACTIVITY_COLUMNS}
+              rows={p.activity}
+              rowKey={(a) => `${a.kind}:${a.id ?? a.at}:${a.what}`}
+              onRowClick={(a) => go(a.entity, a.id)}
+              emptyText="No activity recorded for this driver."
+              suppressToolbarSearch
+              suppressToolbarRange
+              hidePager
+              initialPageSize={300}
+            />
           )}
         </div>
         <div className="pb-section">
@@ -168,6 +180,12 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
     { key: "unit", label: "Unit" }, { key: "basis", label: "Pay basis" }, { key: "due", label: "Due" },
   ];
   const show = (k: string) => !hidden.includes(k);
+  const listColumns: Array<ParityColumn<HubRow>> = [
+    { key: "name", label: "Driver", alwaysVisible: true, render: (r) => <button type="button" className="pb-name" onClick={() => setSelected(r.id)}>{r.name}</button> },
+    { key: "unit", label: "Unit", minWidth: 62, render: (r) => <span className="pb-strong">{r.unit ?? <span className="ih-empty">—</span>}</span> },
+    { key: "basis", label: "Pay basis", minWidth: 86, render: (r) => <span className="pb-sub-sm">{r.basis ?? "—"}</span> },
+    { key: "due", label: "Due", kind: "money", minWidth: 96, sortValue: (r) => r.due_cents, render: (r) => <span className="ih-num pb-strong"><MoneyCell cents={r.due_cents} format={money} drill={{ entity: { kind: "driver", id: r.id } }} /></span> },
+  ];
   const statusLabel: Record<keyof Hub["chips"], string> = { Active: "Active", Probation: "Probation", OnLeave: "On leave", Inactive: "Inactive", All: "All" };
   const tiles = h ? [
     { label: "Active", value: `${int(h.kpis.active)} / ${int(h.kpis.total)}`, tone: "navy", onClick: () => setStatus("Active") },
@@ -251,27 +269,22 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
             <span className="pb-sub-sm">Sorted by settlement due</span>
           </div>
           <div style={{ overflow: "auto", minHeight: 0 }}>
-            <table className="ih-table">
-              <thead>
-                <tr>
-                  <th className="ih-hd" style={{ textAlign: "left" }}>Driver</th>
-                  {show("unit") ? <th className="ih-hd" style={{ textAlign: "left", width: 62 }}>Unit</th> : null}
-                  {show("basis") ? <th className="ih-hd" style={{ textAlign: "left", width: 86 }}>Pay basis</th> : null}
-                  {show("due") ? <th className="ih-hd" style={{ textAlign: "right", width: 96 }}>Due</th> : null}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id} className={r.id === current ? "pb-row-sel" : undefined} style={{ cursor: "pointer" }} onClick={() => setSelected(r.id)}>
-                    <td><button type="button" className="pb-name" onClick={() => setSelected(r.id)}>{r.name}</button></td>
-                    {show("unit") ? <td className="pb-strong">{r.unit ?? <span className="ih-empty">—</span>}</td> : null}
-                    {show("basis") ? <td className="pb-sub-sm">{r.basis ?? "—"}</td> : null}
-                    {show("due") ? <td className="ih-num pb-strong"><MoneyCell cents={r.due_cents} format={money} drill={{ entity: { kind: "driver", id: r.id } }} /></td> : null}
-                  </tr>
-                ))}
-                {h && rows.length === 0 ? <tr><td colSpan={4} className="pb-muted">No driver matches this filter.</td></tr> : null}
-              </tbody>
-            </table>
+            <ParityTable<HubRow>
+              appearance="board"
+              storageKey="driver-hub-list"
+              tableTestId="driver-hub-list"
+              columns={listColumns.filter((c) => c.key === "name" || show(String(c.key)))}
+              rows={rows}
+              rowKey={(r) => r.id}
+              loading={!h}
+              onRowClick={(r) => setSelected(r.id)}
+              rowClassName={(r) => (r.id === current ? "pb-row-sel" : "")}
+              emptyText="No driver matches this filter."
+              suppressToolbarSearch
+              suppressToolbarRange
+              hidePager
+              initialPageSize={300}
+            />
           </div>
         </div>
         <div className="pb-card">

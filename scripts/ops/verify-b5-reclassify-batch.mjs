@@ -70,7 +70,14 @@ function main() {
   assertIncludes(reclassify, "undoReclassifyBatch", RECLASSIFY);
   // BANK-F91042 — ORDERS §B-5 grid ACCOUNT NO. separate from ACCOUNT
   assertIncludes(reclassify, 'data-b5-account-no-col="1"', RECLASSIFY);
-  assertIncludes(reclassify, 'data-testid="reclassify-col-account-no"', RECLASSIFY);
+  // 443.100 class B (verify-table-header-and-date-column hand-rolled <table> ratchet).
+  //   old rule: the hand-rolled grid header carries data-testid="reclassify-col-account-no".
+  //   new rule: the grid is the shared ParityTable and the Account no. column declares
+  //             testId: "reclassify-col-account-no" (ParityTable renders it as the header cell's data-testid).
+  //   why: the table law sends every list through ParityTable; the header is rendered there now. Same id, same column.
+  if (!/testId: c\.key === "account_no" \? "reclassify-col-account-no"/.test(reclassify) && !reclassify.includes('data-testid="reclassify-col-account-no"')) {
+    throw new Error(`${RECLASSIFY}: missing the Account no. header id reclassify-col-account-no`);
+  }
   assertIncludes(reclassify, "Account no.", RECLASSIFY);
   assertIncludes(reclassify, 'data-b5-account-no="1"', RECLASSIFY);
   assertIncludes(reclassify, "showNumber: false", RECLASSIFY);

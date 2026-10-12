@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: these tables have no fixed date column by design — the breakdown is one row per KPI BUCKET, and the drill-row columns come per KPI from the server (a dated KPI's rows carry their own *_date column, formatted by cell()).
 // ROUND 326.2 items 1-2 — one panel for every server-side KPI engine (factoring, banking). Every value comes from the
 // engine's GET .../kpis (ledger / bank feed / document, computed on the server); every tile drills to the exact rows
 // behind it (GET .../kpis/:key/drill), each id an EntityLink back to its record. A KPI with no data says why.
@@ -5,6 +6,7 @@ import { MoneyCell } from "./MoneyCell";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Modal } from "../Modal";
+import { ParityTable } from "../parity/ParityTable";
 import { EntityLink, type EntityKind } from "./EntityLink";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../lib/money";
@@ -218,48 +220,50 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
             {drillKpi?.buckets?.length ? (
               <div className="mb-3" data-testid={`${domain}-kpi-drill-breakdown`}>
                 <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Breakdown</div>
-                <table className="w-full tabular-nums">
-                  <thead>
-                    <tr>
-                      <th className="text-left font-semibold text-[#4B5563]">bucket</th>
-                      <th className="text-right font-semibold text-[#4B5563]">rows</th>
-                      {drillKpi.unit === "cents" ? <th className="text-right font-semibold text-[#4B5563]">amount</th> : null}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {drillKpi.buckets.map((b) => (
-                      <tr key={b.label}>
-                        <td className="text-left">{b.label}</td>
-                        <td className="text-right">{b.count}</td>
-                        {drillKpi.unit === "cents" ? <td><MoneyCell cents={b.cents} drill={{ none: "Breakdown bucket of this KPI — the rows listed below in this drill are its transactions" }} /></td> : null}
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="border-t border-[#E5E7EB] font-semibold">
-                      <td className="text-left">Total</td>
-                      <td className="text-right">{drillKpi.buckets.reduce((s, b) => s + b.count, 0)}</td>
-                      {drillKpi.unit === "cents" ? (
-                        <td><MoneyCell cents={drillKpi.buckets.reduce((s, b) => s + b.cents, 0)} drill={{ none: "Total of the buckets above; it ties to the KPI tile and to the rows listed below" }} /></td>
-                      ) : null}
-                    </tr>
-                  </tfoot>
-                </table>
+                <ParityTable<NonNullable<LedgerKpi["buckets"]>[number]>
+                  storageKey={`${domain}-kpi-drill-buckets`}
+                  tableTestId={`${domain}-kpi-drill-buckets`}
+                  rows={drillKpi.buckets}
+                  rowKey={(b) => b.label}
+                  suppressToolbarSearch
+                  suppressToolbarRange
+                  hidePager
+                  initialPageSize={300}
+                  columns={[
+                    { key: "label", label: "Bucket" },
+                    { key: "count", label: "Rows", kind: "number" },
+                    ...(drillKpi.unit === "cents"
+                      ? [{ key: "cents", label: "Amount", kind: "money" as const, render: (b: NonNullable<LedgerKpi["buckets"]>[number]) => <MoneyCell cents={b.cents} drill={{ none: "Breakdown bucket of this KPI — the rows listed below in this drill are its transactions" }} /> }]
+                      : []),
+                  ]}
+                  footerCells={{
+                    label: "Total",
+                    count: drillKpi.buckets.reduce((s, b) => s + b.count, 0),
+                    cents: drillKpi.unit === "cents" ? <MoneyCell cents={drillKpi.buckets.reduce((s, b) => s + b.cents, 0)} drill={{ none: "Total of the buckets above; it ties to the KPI tile and to the rows listed below" }} /> : null,
+                  }}
+                />
               </div>
             ) : null}
             {drill.isLoading ? <p>Loading rows…</p> : null}
             {drill.data && !drill.data.rows.length ? <p className="text-[#4B5563]">{drillKpi?.empty_reason ?? "No rows."}</p> : null}
             {cols.length ? (
-              <table className="w-full tabular-nums">
-                <thead>
-                  <tr>{cols.map((c) => <th key={c} className="text-left font-semibold text-[#4B5563]">{c.replace(/_cents$/, "").replaceAll("_", " ")}</th>)}</tr>
-                </thead>
-                <tbody>
-                  {drill.data!.rows.map((r, i) => (
-                    <tr key={i}>{cols.map((c) => <td key={c} className={c.endsWith("_cents") ? "text-right" : ""}>{cell(c, r)}</td>)}</tr>
-                  ))}
-                </tbody>
-              </table>
+              <ParityTable<Record<string, unknown> & { __row: string }>
+                storageKey={`${domain}-kpi-drill-rows`}
+                tableTestId={`${domain}-kpi-drill-rows`}
+                rows={drill.data!.rows.map((r, i) => ({ ...r, __row: String(i) }))}
+                rowKey={(r) => r.__row}
+                suppressToolbarRange
+                initialPageSize={100}
+                pageSizeOptions={[100, 300]}
+                allowAllPageSize
+                columns={cols.map((c) => ({
+                  key: c,
+                  label: c.replace(/_cents$/, "").replaceAll("_", " "),
+                  kind: c.endsWith("_cents") ? ("money" as const) : undefined,
+                  sortValue: (r: Record<string, unknown>) => { const v = r[c]; return typeof v === "number" || typeof v === "string" ? v : v == null ? null : String(v); },
+                  render: (r: Record<string, unknown>) => cell(c, r),
+                }))}
+              />
             ) : null}
           </div>
         </Modal>

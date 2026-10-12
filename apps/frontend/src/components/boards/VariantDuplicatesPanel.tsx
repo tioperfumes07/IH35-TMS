@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per candidate duplicate PAIR of parties (match score, the two records, the merge action); a pair has no date of its own.
 import { useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
@@ -5,6 +6,7 @@ import { useAuth } from "../../auth/useAuth";
 import { formatUsdCentsTable } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { SelectCombobox } from "../Combobox";
+import { ParityTable } from "../parity/ParityTable";
 
 /**
  * ROUND 297 — possible duplicates the name-equality engine cannot see (variants: "S E Mares ..." / "Semares ...",
@@ -27,6 +29,8 @@ const REASON_LABEL: Record<string, string> = {
   phonetic: "sounds alike",
 };
 const DOC_NOUN: Record<PartyKind, string> = { customer: "invoices", vendor: "bills", factoring_debtor: "Faro lines" };
+
+const pairKey = (p: Pair) => `${p.a.kind}:${p.a.id}~${p.b.kind}:${p.b.id}`;
 
 export function variantPairsFor(pairs: Pair[], board: "customers" | "vendors"): Pair[] {
   const kind: PartyKind = board === "customers" ? "customer" : "vendor";
@@ -89,66 +93,74 @@ export function VariantDuplicatesPanel(props: { board: "customers" | "vendors"; 
 
   return (
     <div className="pb-card" data-testid="variant-duplicates-panel">
-      <table className="ih-table">
-        <thead>
-          <tr>
-            <th className="ih-hd">Match</th>
-            <th className="ih-hd">Record</th>
-            <th className="ih-hd">Possible same party</th>
-            <th className="ih-hd">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pairs.map((p) => {
-            const key = `${p.a.kind}:${p.a.id}~${p.b.kind}:${p.b.id}`;
-            const editing = open === key;
-            const s = survivor === "a" ? p.a : p.b;
-            const d = survivor === "a" ? p.b : p.a;
-            return (
-              <tr key={key} data-testid="variant-duplicate-row">
-                <td>
-                  <div className="pb-strong">{Math.round(p.score * 100)}%</div>
-                  <div className="pb-sub-sm">{p.reasons.map((r) => REASON_LABEL[r] ?? r).join(" · ")}</div>
-                </td>
-                <td><PartyCell p={p.a} /></td>
-                <td><PartyCell p={p.b} /></td>
-                <td>
-                  {!p.mergeable ? (
-                    <span className="pb-muted2" title="Different modules: linked, never merged">Same party in two modules — link, not a merge</span>
-                  ) : !isOwner ? (
-                    <span className="pb-muted2">Owner approves merges</span>
-                  ) : !editing ? (
-                    <button type="button" className="pb-chip" onClick={() => { setOpen(key); setSurvivor(p.a.docs >= p.b.docs ? "a" : "b"); setReason(""); setError(null); }}>
-                      Review merge
-                    </button>
-                  ) : (
-                    <div data-testid="variant-merge-confirm" style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 260 }}>
-                      <label className="pb-sub-sm">
-                        Keep{" "}
-                        <SelectCombobox className="pb-select" value={survivor} onChange={(e) => setSurvivor(e.target.value as "a" | "b")}>
-                          <option value="a">{p.a.name}</option>
-                          <option value="b">{p.b.name}</option>
-                        </SelectCombobox>
-                      </label>
-                      <div className="pb-sub-sm">
-                        {d.docs} {DOC_NOUN[d.kind]} ({formatUsdCentsTable(d.total_cents)}) move to {s.name}; {d.name} is removed (reversible). Totals are re-checked to the cent.
-                      </div>
-                      <input className="pb-search" style={{ minWidth: 0 }} placeholder="Reason (required)" value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Merge reason" />
-                      {error ? <div className="pb-sub-sm" style={{ color: "var(--ih-red)" }}>{error}</div> : null}
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <button type="button" className="pb-create" disabled={reason.trim().length < 5 || merge.isPending} onClick={() => merge.mutate(p)}>
-                          {merge.isPending ? "Merging…" : "Save"}
-                        </button>
-                        <button type="button" className="pb-refresh" onClick={() => { setOpen(null); setError(null); }}>Close</button>
-                      </div>
+      <ParityTable<Pair>
+        appearance="board"
+        storageKey={`variant-duplicates-${props.board}`}
+        tableTestId="variant-duplicates-table"
+        rows={pairs}
+        rowKey={pairKey}
+        rowTestId={() => "variant-duplicate-row"}
+        suppressToolbarSearch
+        suppressToolbarRange
+        hidePager
+        initialPageSize={300}
+        columns={[
+          {
+            key: "score", label: "Match", sortValue: (p) => p.score,
+            render: (p) => (
+              <>
+                <div className="pb-strong">{Math.round(p.score * 100)}%</div>
+                <div className="pb-sub-sm">{p.reasons.map((r) => REASON_LABEL[r] ?? r).join(" · ")}</div>
+              </>
+            ),
+          },
+          { key: "a", label: "Record", sortValue: (p) => p.a.name, render: (p) => <PartyCell p={p.a} /> },
+          { key: "b", label: "Possible same party", sortValue: (p) => p.b.name, render: (p) => <PartyCell p={p.b} /> },
+          {
+            key: "action", label: "Action", sortable: false, overflowVisible: true, allowWrap: true,
+            render: (p) => {
+              const key = pairKey(p);
+              const editing = open === key;
+              const s = survivor === "a" ? p.a : p.b;
+              const d = survivor === "a" ? p.b : p.a;
+              return (
+                <>
+                {!p.mergeable ? (
+                  <span className="pb-muted2" title="Different modules: linked, never merged">Same party in two modules — link, not a merge</span>
+                ) : !isOwner ? (
+                  <span className="pb-muted2">Owner approves merges</span>
+                ) : !editing ? (
+                  <button type="button" className="pb-chip" onClick={() => { setOpen(key); setSurvivor(p.a.docs >= p.b.docs ? "a" : "b"); setReason(""); setError(null); }}>
+                    Review merge
+                  </button>
+                ) : (
+                  <div data-testid="variant-merge-confirm" style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 260 }}>
+                    <label className="pb-sub-sm">
+                      Keep{" "}
+                      <SelectCombobox className="pb-select" value={survivor} onChange={(e) => setSurvivor(e.target.value as "a" | "b")}>
+                        <option value="a">{p.a.name}</option>
+                        <option value="b">{p.b.name}</option>
+                      </SelectCombobox>
+                    </label>
+                    <div className="pb-sub-sm">
+                      {d.docs} {DOC_NOUN[d.kind]} ({formatUsdCentsTable(d.total_cents)}) move to {s.name}; {d.name} is removed (reversible). Totals are re-checked to the cent.
                     </div>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                    <input className="pb-search" style={{ minWidth: 0 }} placeholder="Reason (required)" value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Merge reason" />
+                    {error ? <div className="pb-sub-sm" style={{ color: "var(--ih-red)" }}>{error}</div> : null}
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button type="button" className="pb-create" disabled={reason.trim().length < 5 || merge.isPending} onClick={() => merge.mutate(p)}>
+                        {merge.isPending ? "Merging…" : "Save"}
+                      </button>
+                      <button type="button" className="pb-refresh" onClick={() => { setOpen(null); setError(null); }}>Close</button>
+                    </div>
+                  </div>
+                )}
+                </>
+              );
+            },
+          },
+        ]}
+      />
     </div>
   );
 }

@@ -3,7 +3,13 @@
  * ROUND 443.54-7 — related-party bank↔Relay SUGGESTED pairs (5-day same amount).
  * Owner confirms; nothing auto-pairs. Confirm = categorize Due to/from + party_transfer_out
  * document + optional deposit link; loan poster OFF (0 duplicate postings).
+ *
+ * 443.99: also owns the Required leaf banking.panel.related_party_pair_suggestions (the inventory had no leaf for this
+ * panel): connectivity (panel -> getRelatedPartyPairSuggestions / confirmRelatedPartyPair -> GET related-party-pairs /
+ * POST related-party-pairs/confirm -> the two services) and reverse_link (the amount drills back to its bank line;
+ * a confirmed pair links to the loan it created).
  */
+/** @matrix-built {"modules":["banking"],"cols":["connectivity","reverse_link"],"leaves":["banking.panel.related_party_pair_suggestions"],"task":"443.99-RELATED-PARTY-PAIR-PANEL-LEAF"} */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -143,6 +149,27 @@ export function findErrors(src) {
   if (!feView.includes("RelatedPartyPairSuggestionsPanel")) {
     errors.push(`${FILES.feView} must mount RelatedPartyPairSuggestionsPanel`);
   }
+  // Leaf banking.panel.related_party_pair_suggestions — connectivity + reverse_link.
+  if (!/queryFn: \(\) => getRelatedPartyPairSuggestions\(companyId, \d+\)/.test(fePanel)) {
+    errors.push(`${FILES.fePanel} must read getRelatedPartyPairSuggestions (connectivity)`);
+  }
+  if (!/mutationFn: \(row: RelatedPartyPairSuggestionRow\) =>\s*confirmRelatedPartyPair\(/.test(fePanel)) {
+    errors.push(`${FILES.fePanel} Confirm must call confirmRelatedPartyPair (connectivity)`);
+  }
+  if (!/"\/api\/v1\/banking\/related-party-pairs"[\s\S]{0,600}listRelatedPartyPairSuggestions\(/.test(routes) ||
+      !/"\/api\/v1\/banking\/related-party-pairs\/confirm"[\s\S]{0,900}confirmRelatedPartyPair\(/.test(routes)) {
+    errors.push(`${FILES.routes} related-party-pairs GET/confirm must be served by their services`);
+  }
+  if (!/<RelatedPartyPairSuggestionsPanel companyId=\{companyId\} \/>/.test(feView)) {
+    errors.push(`${FILES.feView} must mount <RelatedPartyPairSuggestionsPanel companyId={companyId} />`);
+  }
+  const cells = fePanel.match(/<MoneyCell[\s\S]*?\/>/g) ?? [];
+  if (cells.length === 0 || cells.some((c) => !/drill=\{\{ entity: \{ kind: "bank_transaction", id: r\.bank_transaction_id \} \}\}/.test(c))) {
+    errors.push(`${FILES.fePanel} every money cell must drill back to its bank line (reverse_link)`);
+  }
+  if (!/to=\{`\/accounting\/loans-advances\?loan_id=\$\{confirmMut\.data\.related_party_loan_id\}`\}/.test(fePanel)) {
+    errors.push(`${FILES.fePanel} a confirmed pair must link to the loan it created (reverse_link)`);
+  }
   return errors;
 }
 
@@ -157,6 +184,10 @@ if (process.argv.includes("--selftest")) {
     ["confirm trusts .ok instead of .posted", { confirm: sources.confirm.replaceAll("posted !== true", "ok !== true") }],
     ["confirm route unregistered", { routes: sources.routes.replaceAll("related-party-pairs/confirm", "related-party-pairs/x") }],
     ["panel unmounted", { feView: sources.feView.replaceAll("RelatedPartyPairSuggestionsPanel", "Nothing") }],
+    ["panel reads a stub instead of the API", { fePanel: sources.fePanel.replace(/queryFn: \(\) => getRelatedPartyPairSuggestions\(companyId, \d+\)/, "queryFn: async () => ({ rows: [], total: 0 })") }],
+    ["Confirm no longer calls the confirm API", { fePanel: sources.fePanel.replace(/mutationFn: \(row: RelatedPartyPairSuggestionRow\) =>\s*confirmRelatedPartyPair\(/, "mutationFn: (row: RelatedPartyPairSuggestionRow) => Promise.resolve(") }],
+    ["amount loses its bank-line drill", { fePanel: sources.fePanel.replace(/(cents=\{r\.amount_cents\}\s*)drill=\{\{ entity: \{ kind: "bank_transaction", id: r\.bank_transaction_id \} \}\}/, "$1") }],
+    ["confirmed pair no longer links to its loan", { fePanel: sources.fePanel.replace("/accounting/loans-advances?loan_id=", "/accounting/loans-advances?x=") }],
   ];
   let caught = 0;
   for (const [name, patch] of planted) {

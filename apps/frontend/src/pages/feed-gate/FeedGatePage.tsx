@@ -14,6 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { closeFeedIntake, getFeedIntake, listFeedIntakes, runFeedGate, type FeedCheck, type FeedIntake, type FeedKind } from "../../api/feedGate";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const STATUS_CLS: Record<string, string> = {
   passed: "bg-[#0F1219] text-white", closed: "bg-[#1F2A44] text-white", blocked: "bg-red-600 text-white", open: "bg-[#E5E7EB] text-[#1F2A44]", voided: "bg-[#F7F8FA] text-[#6B7280]",
@@ -75,19 +76,38 @@ function Badge({ status }: { status: string }) {
   return <span className={`rounded px-1.5 py-0.5 text-xs font-semibold uppercase ${STATUS_CLS[status] ?? "bg-[#E5E7EB]"}`} data-testid={`feed-gate-status-${status}`}>{status}</span>;
 }
 
-function CheckRow({ c, feedKind }: { c: FeedCheck; feedKind?: string | null }) {
-  const cls = c.status === "fail" ? "border-l-4 border-red-600 bg-red-50" : c.status === "pass" ? "border-l-4 border-[#1F2A44]" : "border-l-4 border-[#E5E7EB] text-[#6B7280]";
-  return (
-    <tr className={cls} data-testid={`feed-gate-check-${c.check_key}`} data-status={c.status}>
-      <td className="p-2 text-xs font-semibold uppercase">{c.status}</td>
-      <td className="p-2 text-xs">{c.check_key}</td>
-      <td className="p-2 text-xs">
-        <FeedSubjectLabel label={c.subject_label} subjectId={c.subject_id} feedKind={feedKind} subjectTable={c.subject_table} />
-      </td>
-      <td className="p-2 text-xs">{c.status === "fail" ? c.missing : c.status === "na" ? (c.missing ?? "not applicable") : "ok"}</td>
-      <td className="p-2 text-xs">{c.status === "fail" && c.fix_link ? <Link className="underline" to={c.fix_link}>Fix →</Link> : null}</td>
-    </tr>
-  );
+// 443.99 — both registers are the shared ParityTable (were hand-rolled HTML tables): sortable headers, gear, export.
+const CHECK_ROW_CLS: Record<string, string> = {
+  fail: "border-l-4 border-red-600 bg-red-50",
+  pass: "border-l-4 border-[#1F2A44]",
+};
+
+function checkColumns(feedKind?: string | null): Array<ParityColumn<FeedCheck>> {
+  return [
+    { key: "status", label: "Status", sortable: true, sortValue: (c) => c.status, cellClass: "text-xs font-semibold uppercase", render: (c) => c.status },
+    { key: "check_key", label: "Check", sortable: true, sortValue: (c) => c.check_key, render: (c) => c.check_key },
+    {
+      key: "subject_label",
+      label: "Subject",
+      sortable: true,
+      sortValue: (c) => c.subject_label,
+      render: (c) => <FeedSubjectLabel label={c.subject_label} subjectId={c.subject_id} feedKind={feedKind} subjectTable={c.subject_table} />,
+    },
+    {
+      key: "missing",
+      label: "What is missing",
+      sortable: true,
+      allowWrap: true,
+      sortValue: (c) => c.missing,
+      render: (c) => (c.status === "fail" ? c.missing : c.status === "na" ? (c.missing ?? "not applicable") : "ok"),
+    },
+    {
+      key: "fix_link",
+      label: "Fix",
+      sortable: false,
+      render: (c) => (c.status === "fail" && c.fix_link ? <Link className="underline" to={c.fix_link}>Fix →</Link> : null),
+    },
+  ];
 }
 
 export function FeedGateIntakePage() {
@@ -138,8 +158,17 @@ export function FeedGateIntakePage() {
       {groups.map((g) => (
         <div key={g} className="mb-4">
           <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">{GROUP_LABEL[g] ?? g} · {checks.filter((c) => c.check_group === g && c.status === "fail").length} red</h2>
-          <table className="w-full border-collapse"><thead><tr className="text-left text-xs text-[#6B7280]"><th className="p-2">Status</th><th className="p-2">Check</th><th className="p-2">Subject</th><th className="p-2">What is missing</th><th className="p-2">Fix</th></tr></thead>
-            <tbody>{checks.filter((c) => c.check_group === g).map((c) => <CheckRow key={c.id} c={c} feedKind={intake?.feed_kind} />)}</tbody></table>
+          <ParityTable<FeedCheck>
+            rows={checks.filter((c) => c.check_group === g)}
+            rowKey={(c) => c.id}
+            columns={checkColumns(intake?.feed_kind)}
+            storageKey="feed-gate-checks"
+            exportFilename={`feed-gate-checks-${g}`}
+            suppressToolbarRange
+            hidePager
+            rowTestId={(c) => `feed-gate-check-${c.check_key}`}
+            rowClassName={(c) => CHECK_ROW_CLS[c.status] ?? "border-l-4 border-[#E5E7EB] text-[#6B7280]"}
+          />
         </div>
       ))}
     </div>
@@ -175,39 +204,66 @@ export function FeedGatePage() {
       <h1 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Feed gate</h1>
       <p className="mb-3 text-xs text-[#4B5563]">Every feed — a settlement, a load, an invoice, an expense, a bill, a fuel purchase — is verified for full linkage, wiring, accounts and date stamps before it is accepted. A settlement commits only when every check is green and the next settlement for the same driver cannot open until the previous one is closed; an invoice is sent and an expense is saved only through this gate. Red rows carry the link to the screen that fixes them.</p>
       {error ? <div className="mb-2 rounded border border-red-600 bg-red-50 p-2 text-xs text-red-800" role="alert">{error}</div> : null}
-      <table className="w-full border-collapse">
-        <thead><tr className="text-left text-xs text-[#6B7280]"><th className="p-2">Feed</th><th className="p-2">Driver</th><th className="p-2">Status</th><th className="p-2">Red / total</th><th className="p-2">Last run</th><th className="p-2"></th></tr></thead>
-        <tbody>
-          {rows.length === 0 && !list.isLoading && !list.isError ? <tr><td className="p-2 text-xs text-[#6B7280]" colSpan={6}>No feed has been run yet. Approving a settlement runs its gate automatically.</td></tr> : null}
-          {rows.map((i) => (
-            <tr key={i.id} className="border-t border-[#E5E7EB]" data-testid="feed-gate-row">
-              <td className="p-2 text-xs">
-                {feedKindToEntityKind(i.feed_kind) && i.subject_id ? (
-                  <span className="inline-flex items-center gap-1">
-                    <EntityLink
-                      kind={feedKindToEntityKind(i.feed_kind)!}
-                      id={i.subject_id}
-                      label={i.subject_label ?? `${i.feed_kind} — name not available`}
-                    />
-                    <Link className="underline text-[#4B5563]" to={`/feed-gate/${i.id}`}>Gate</Link>
-                  </span>
-                ) : (
-                  <Link className="underline" to={`/feed-gate/${i.id}`}>
-                    {i.subject_label ?? `${i.feed_kind} — name not available`}
-                  </Link>
-                )}
-              </td>
-              <td className="p-2 text-xs">
-                <EntityLinkOrTombstone kind="driver" id={i.driver_id} name={i.driver_name} noun="Driver" />
-              </td>
-              <td className="p-2"><Badge status={i.status} /></td>
-              <td className="p-2 text-xs">{i.checks_failed} / {i.checks_total}</td>
-              <td className="p-2 text-xs">{i.last_run_at ? formatDateTimeUS(i.last_run_at) : "—"}</td>
-              <td className="p-2"><button type="button" className="h-7 rounded-sm border border-[#1F2A44] px-2 text-xs" disabled={rerun.isPending || i.status === "closed"} onClick={() => rerun.mutate(i)}>Run again</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ParityTable<FeedIntake>
+        rows={rows}
+        rowKey={(i) => i.id}
+        loading={list.isLoading}
+        storageKey="feed-gate-intakes"
+        exportFilename="feed-gate"
+        suppressToolbarRange
+        emptyText="No feed has been run yet. Approving a settlement runs its gate automatically."
+        rowTestId={() => "feed-gate-row"}
+        columns={[
+          {
+            key: "subject_label",
+            label: "Feed",
+            sortable: true,
+            sortValue: (i) => i.subject_label ?? i.feed_kind,
+            render: (i) =>
+              feedKindToEntityKind(i.feed_kind) && i.subject_id ? (
+                <span className="inline-flex items-center gap-1">
+                  <EntityLink
+                    kind={feedKindToEntityKind(i.feed_kind)!}
+                    id={i.subject_id}
+                    label={i.subject_label ?? `${i.feed_kind} — name not available`}
+                  />
+                  <Link className="underline text-[#4B5563]" to={`/feed-gate/${i.id}`}>Gate</Link>
+                </span>
+              ) : (
+                <Link className="underline" to={`/feed-gate/${i.id}`}>
+                  {i.subject_label ?? `${i.feed_kind} — name not available`}
+                </Link>
+              ),
+          },
+          {
+            key: "driver_name",
+            label: "Driver",
+            sortable: true,
+            sortValue: (i) => i.driver_name,
+            render: (i) => <EntityLinkOrTombstone kind="driver" id={i.driver_id} name={i.driver_name} noun="Driver" />,
+          },
+          { key: "status", label: "Status", sortable: true, sortValue: (i) => i.status, render: (i) => <Badge status={i.status} /> },
+          {
+            key: "checks_failed",
+            label: "Red / total",
+            sortable: true,
+            sortValue: (i) => i.checks_failed,
+            render: (i) => `${i.checks_failed} / ${i.checks_total}`,
+          },
+          {
+            key: "last_run_at",
+            label: "Last run",
+            sortable: true,
+            sortValue: (i) => i.last_run_at,
+            render: (i) => (i.last_run_at ? formatDateTimeUS(i.last_run_at) : "—"),
+          },
+        ]}
+        rowActions={(i) => (
+          <button type="button" className="h-7 rounded-sm border border-[#1F2A44] px-2 text-xs" disabled={rerun.isPending || i.status === "closed"} onClick={() => rerun.mutate(i)}>
+            Run again
+          </button>
+        )}
+      />
     </div>
   );
 }

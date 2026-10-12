@@ -268,6 +268,26 @@ export function InvoicesListPage() {
       { replace: true },
     );
   }
+  // 443.99 — Clear all resets status, has_balance, not_sent, customer_id AND source_load_id in ONE write.
+  // It used to call applyStatusFilters + setCustomerFilterAndUrl + setSourceLoadFilter back to back; each
+  // functional setSearchParams reads the same render snapshot (react-router does not chain them), so only
+  // the last write survived and Clear all left the status / balance / customer filters applied.
+  function clearUrlFilters() {
+    setCustomerFilter([]);
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete("status");
+        params.append("status", "active");
+        params.delete("has_balance");
+        params.delete("not_sent");
+        params.delete("customer_id");
+        params.delete("source_load_id");
+        return params;
+      },
+      { replace: true },
+    );
+  }
   function setSourceLoadFilter(next: string) {
     setSearchParams(
       (prev) => {
@@ -599,11 +619,9 @@ export function InvoicesListPage() {
         searchTestId="invoices-search-input"
         onClearAll={() => {
           setSearch("");
-          applyStatusFilters({ statuses: ["active"], hasBalance: false, notSent: false });
-          setCustomerFilterAndUrl([]);
+          clearUrlFilters();
           setFromDate("");
           setToDate("");
-          setSourceLoadFilter("");
         }}
         activeFilterCount={invoicesActiveFilterCount}
         testIdPrefix="invoices"

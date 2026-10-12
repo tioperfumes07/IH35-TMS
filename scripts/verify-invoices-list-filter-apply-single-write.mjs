@@ -27,76 +27,75 @@ const ROOT = path.join(__dirname, "..");
 const LABEL = "verify-invoices-list-filter-apply-single-write";
 const FILE = "apps/frontend/src/pages/accounting/InvoicesListPage.tsx";
 
+// LEAD 443.99 class B (2026-10-12).
+//   old rule: a staged useStagedListFilters onApply must exist and route through ONE combined-write helper that
+//             touches status, has_balance, customer_id and source_load_id.
+//   new rule: the invariant without the retired shape —
+//             (1) every URL writer is a function whose body makes exactly ONE functional setSearchParams call;
+//             (2) no handler (onApply, onClearAll) synchronously invokes more than one URL writer or more than one
+//                 setSearchParams — react-router's functional setSearchParams reads the render snapshot, so a
+//                 second call drops the first call's fields;
+//             (3) the reset path (onClearAll, or a staged onApply when present) goes through one writer that touches
+//                 status, has_balance, customer_id and source_load_id.
+//   why: FILTER-MULTI-01 (#22497, 8d2aab421e) replaced the staged Apply with immediate per-control writers. The
+//        old anchor no longer matched — and Clear all had reintroduced the exact multi-write defect (three writers
+//        back to back), now fixed in the page and pinned here.
+function writerFunctions(src) {
+  const writers = new Map();
+  for (const m of src.matchAll(/function (\w+)\([^)]*\)\s*\{([\s\S]*?)\n  \}/g)) {
+    const calls = (m[2].match(/setSearchParams\(/g) ?? []).length;
+    if (calls > 0) writers.set(m[1], { body: m[2], calls });
+  }
+  return writers;
+}
+
+function handlerBody(src, prop) {
+  const i = src.indexOf(`${prop}: (next) => {`) >= 0 ? src.indexOf(`${prop}: (next) => {`) : src.indexOf(`${prop}={() => {`);
+  if (i < 0) return null;
+  const end = src.indexOf("\n        }", i);
+  return src.slice(i, end < 0 ? i + 800 : end);
+}
+
 export function check(src) {
   const failures = [];
   if (src === null) return [`${FILE} not found`];
-
-  // The onApply callback passed to useStagedListFilters must call setSearchParams (directly or via
-  // one combined helper) exactly ONCE — never one call per field.
-  const onApplyMatch = src.match(/onApply:\s*\(next\)\s*=>\s*\{([\s\S]{0,600}?)\},\s*\}\);/);
-  if (!onApplyMatch) {
-    failures.push("useStagedListFilters onApply callback not found in expected shape");
-  } else {
-    const body = onApplyMatch[1];
-    const setSearchParamsCallCount = (body.match(/setSearchParams\(/g) ?? []).length;
-    // onApply may call setSearchParams 0 times directly if it delegates to a helper — but that
-    // helper itself must only call setSearchParams once. Either way, count total setSearchParams
-    // invocations reachable from onApply's own body plus a directly-referenced single-write helper.
-    if (setSearchParamsCallCount > 1) {
-      failures.push(
-        `onApply calls setSearchParams ${setSearchParamsCallCount} times directly — react-router does not chain multiple synchronous calls, so only the last field would survive Apply`
-      );
-    }
+  const writers = writerFunctions(src);
+  if (writers.size === 0) failures.push("no URL writer function (setSearchParams((prev) => …)) found — parser stale, refusing to pass vacuously");
+  for (const [name, w] of writers) {
+    if (w.calls > 1) failures.push(`URL writer ${name}() calls setSearchParams ${w.calls} times — it must be a single write`);
   }
-
-  // The combined helper (however named) must exist and write status/has_balance, customer_id, and
-  // source_load_id from a SINGLE setSearchParams call.
-  const helperMatch = src.match(/function (\w+)\([^)]*\)\s*\{\s*setSearchParams\(\s*\(prev\)\s*=>\s*\{([\s\S]{0,900}?)return params;/);
-  if (!helperMatch) {
-    failures.push("no single setSearchParams((prev) => {...return params}) combined-write helper found");
+  const resetProp = src.includes("onApply: (next) => {") ? "onApply" : "onClearAll";
+  const reset = handlerBody(src, resetProp);
+  if (reset === null) {
+    failures.push("no reset path (staged onApply or onClearAll) found");
   } else {
-    const helperBody = helperMatch[2];
-    const fields = ["status", "has_balance", "customer_id", "source_load_id"];
-    for (const field of fields) {
-      if (!helperBody.includes(`"${field}"`)) {
-        failures.push(`combined-write helper does not touch "${field}"`);
+    const invoked = [...writers.keys()].filter((name) => new RegExp(`\\b${name}\\(`).test(reset));
+    const direct = (reset.match(/setSearchParams\(/g) ?? []).length;
+    if (invoked.length + direct > 1) {
+      failures.push(`${resetProp} makes ${invoked.length + direct} URL writes (${invoked.join(", ") || "direct"}) — react-router does not chain them, only the last survives`);
+    }
+    const resetWriter = writers.get(invoked[0] ?? "");
+    for (const field of ["status", "has_balance", "customer_id", "source_load_id"]) {
+      if (!resetWriter || !resetWriter.body.includes(`"${field}"`)) {
+        failures.push(`${resetProp}'s single writer does not touch "${field}"`);
       }
     }
-    // The helper's own body must call setSearchParams only once (it IS the single write).
-    const nestedCalls = (helperMatch[0].match(/setSearchParams\(/g) ?? []).length;
-    if (nestedCalls > 1) {
-      failures.push("combined-write helper itself calls setSearchParams more than once");
-    }
   }
-
   return failures;
 }
 
 if (process.argv.includes("--selftest")) {
-  const GOOD = `
-    function applyUrlFilters(next) {
-      setSearchParams((prev) => {
-        const params = new URLSearchParams(prev);
-        params.delete("status");
-        params.delete("has_balance");
-        if (next.status === "with_balance") params.set("has_balance", "true");
-        else if (next.status) params.set("status", next.status);
-        if (next.customerId) params.set("customer_id", next.customerId);
-        else params.delete("customer_id");
-        if (next.sourceLoadId) params.set("source_load_id", next.sourceLoadId);
-        else params.delete("source_load_id");
-        return params;
-      }, { replace: true });
-    }
-    const staged = useStagedListFilters({
-      applied: { status, customerId, fromDate, toDate, sourceLoadId },
-      empty: EMPTY,
-      onApply: (next) => {
-        applyUrlFilters({ status: next.status, customerId: next.customerId, sourceLoadId: next.sourceLoadId });
-        setFromDate(next.fromDate);
-        setToDate(next.toDate);
-      },
-    });
+  const writer = (name, sig, body) => `  function ${name}(${sig}) {\n    setSearchParams(\n      (prev) => {\n        const params = new URLSearchParams(prev);\n${body}        return params;\n      },\n      { replace: true },\n    );\n  }\n`;
+  const STATUS = writer("applyStatusFilters", "next", '        params.delete("status");\n        params.delete("has_balance");\n');
+  const LOAD = writer("setSourceLoadFilter", "next", '        params.delete("source_load_id");\n');
+  const CUSTOMER = writer("setCustomerFilterAndUrl", "next", '        params.delete("customer_id");\n');
+  const CLEAR = writer("clearUrlFilters", "", '        params.delete("status");\n        params.delete("has_balance");\n        params.delete("customer_id");\n        params.delete("source_load_id");\n');
+  const GOOD = `${STATUS}${LOAD}${CUSTOMER}${CLEAR}
+        onClearAll={() => {
+          setSearch("");
+          clearUrlFilters();
+          setFromDate("");
+        }}
   `;
   const goodFailures = check(GOOD);
   if (goodFailures.length) {
@@ -104,35 +103,32 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
-  const REGRESSED = `
-    function setCustomerId(next) {
-      setSearchParams((prev) => {
-        const params = new URLSearchParams(prev);
-        if (next) params.set("customer_id", next); else params.delete("customer_id");
-        return params;
-      }, { replace: true });
-    }
-    function setStatus(next) {
-      setSearchParams((prev) => {
-        const params = new URLSearchParams(prev);
-        params.delete("status");
-        params.delete("has_balance");
-        if (next) params.set("status", next);
-        return params;
-      }, { replace: true });
-    }
-    const staged = useStagedListFilters({
-      applied: { status, customerId, fromDate, toDate, sourceLoadId },
-      empty: EMPTY,
-      onApply: (next) => {
-        setStatus(next.status);
-        setCustomerId(next.customerId);
-        setFromDate(next.fromDate);
-        setToDate(next.toDate);
-        setSourceLoadId(next.sourceLoadId);
-      },
-    });
+  // The defect this file exists for, in today's shape: Clear all fires three writers back to back.
+  const REGRESSED = `${STATUS}${LOAD}${CUSTOMER}
+        onClearAll={() => {
+          setSearch("");
+          applyStatusFilters({ statuses: ["active"] });
+          setCustomerFilterAndUrl([]);
+          setSourceLoadFilter("");
+        }}
   `;
+  // A writer that itself calls setSearchParams twice.
+  const DOUBLE = GOOD.replace("  function clearUrlFilters() {\n", "  function clearUrlFilters() {\n    setSearchParams((prev) => prev);\n");
+  if (!check(DOUBLE).some((f) => /calls setSearchParams 2 times/.test(f))) {
+    console.error(`[${LABEL}] selftest FAIL: a double-write writer should fail`);
+    process.exit(1);
+  }
+  // Clear all through one writer that forgets a field.
+  const PARTIAL = GOOD.replace('        params.delete("source_load_id");\n        return params;\n      },\n      { replace: true },\n    );\n  }\n\n        onClearAll', "        return params;\n      },\n      { replace: true },\n    );\n  }\n\n        onClearAll");
+  if (PARTIAL === GOOD || !check(PARTIAL).some((f) => /source_load_id/.test(f))) {
+    console.error(`[${LABEL}] selftest FAIL: a reset writer missing source_load_id should fail`);
+    process.exit(1);
+  }
+  const realFailures = check(fs.existsSync(path.join(ROOT, FILE)) ? fs.readFileSync(path.join(ROOT, FILE), "utf8") : null);
+  if (realFailures.length) {
+    console.error(`[${LABEL}] selftest FAIL: real page flagged — ${realFailures.join("; ")}`);
+    process.exit(1);
+  }
   const regressedFailures = check(REGRESSED);
   if (!regressedFailures.length) {
     console.error(`[${LABEL}] selftest FAIL: regressed (multi-call) fixture should fail`);
@@ -158,4 +154,4 @@ if (failures.length) {
   for (const f of failures) console.error("  ✗", f);
   process.exit(1);
 }
-console.log(`[${LABEL}] PASS — InvoicesListPage's staged-filter Apply writes status/customer_id/source_load_id in one combined setSearchParams call`);
+console.log(`[${LABEL}] PASS — every InvoicesListPage URL writer is one setSearchParams; the reset path is one combined write`);
