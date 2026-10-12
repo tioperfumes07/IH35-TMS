@@ -7,7 +7,8 @@ export default {
     if (!ok) {
       ctx.fail(message);
     } else {
-      ctx.pass(message);
+      // _context.mjs exposes no ctx.pass (443.99): a step reports success by logging and returning.
+      console.log(message);
     }
   },
 };

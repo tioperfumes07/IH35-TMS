@@ -22,6 +22,9 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { createRequire } from "node:module";
+// 443.99: TLS only off loopback — a hard-coded ssl option fails "The server does not support SSL connections" on CI's postgres service.
+const { buildPgPoolConfig } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
@@ -74,7 +77,7 @@ async function main() {
     console.error("verify-settlement-lines-load-id-backfilled: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
     process.exit(1);
   }
-  const pool = new pg.Pool({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool(buildPgPoolConfig(url));
   const client = await pool.connect();
   try {
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");

@@ -32,6 +32,9 @@ export const REQUIRES_LIVE_DB =
   "silent skip), which is incompatible with verify-static's no-DB dead-port sentinel.";
 
 import pg from "pg";
+import { createRequire } from "node:module";
+// 443.99: TLS only off loopback — a hard-coded ssl option fails "The server does not support SSL connections" on CI's postgres service.
+const { buildPgClientConfig } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -46,7 +49,7 @@ async function live() {
     process.exitCode = 1;
     return;
   }
-  const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const client = new pg.Client(buildPgClientConfig(url));
   try {
     await client.connect();
   } catch (err) {
