@@ -8,6 +8,9 @@
  *   RULE 2 — adoptRelayFillExpenseDocument writes it through fillRelayFillExpenseSettlementRef (new and existing documents),
  *            and fillRelayFillExpenseSettlementRef is fill-once (coalesce — never overwrites).
  *   RULE 3 — owner law 443.52 B: the fill never writes a settlement number on an expense with no load.
+ *   RULE 4 — LEAD 443.121 #3: the ENGINE stamps it when a receipt document lands on a load ONE live settlement already
+ *            holds (stampReceiptDocumentSettlementRef: adoption without a Creator number, both paths; same predicate as
+ *            the live check; exactly one holder; the Creator's reference source_document_ref ?? display_id).
  * LIVE (read-only, USMCA): Relay-fill documents with settlement_no NULL whose load is held by exactly ONE live settlement
  *   <= CEILING (shrink-only; lowered to 0 when AUTH-425 is applied).
  * --selftest plants each regression.
@@ -33,6 +36,11 @@ export function check(creator, doc) {
   const fill = doc.slice(doc.indexOf("export async function fillRelayFillExpenseSettlementRef("), doc.indexOf("export async function adoptRelayFillExpenseDocument("));
   if (!/settlement_no = coalesce\(settlement_no, \$3\)/.test(fill) || !/source_settlement_ref = coalesce\(source_settlement_ref, \$3\)/.test(fill)) f.push(`RULE 2 ${DOC}: the settlement reference is not fill-once`);
   if (!/AND load_id IS NOT NULL/.test(fill)) f.push(`RULE 3 ${DOC}: a settlement number can be written on an expense with no load (owner law 443.52 B)`);
+  if ((adopt.match(/stampReceiptDocumentSettlementRef\(client/g) ?? []).length < 2) f.push(`RULE 4 ${DOC}: adoption without a Creator number does not stamp the holding settlement on both a new and an existing document (443.121 #3)`);
+  const stamp = doc.slice(doc.indexOf("export async function stampReceiptDocumentSettlementRef("), doc.indexOf("export async function adoptRelayFillExpenseDocument("));
+  if (!/driver_settlement_gl_bills/.test(stamp) || !/settlement_lines sl WHERE sl\.load_id = doc\.load_id/.test(stamp)) f.push(`RULE 4 ${DOC}: the stamp does not use the live check's settlement predicate`);
+  if (!/row\.n !== 1/.test(stamp)) f.push(`RULE 4 ${DOC}: the stamp must name a settlement only when exactly ONE live settlement holds the load`);
+  if (!/COALESCE\(NULLIF\(btrim\(s\.source_document_ref\), ''\), s\.display_id\)/.test(stamp)) f.push(`RULE 4 ${DOC}: the stamp must use the Creator's reference (source_document_ref ?? display_id)`);
   return f;
 }
 export const judge = (n) => (n > CEILING ? [`${n} Relay-fill expense documents name no settlement although one live settlement holds their load — ceiling ${CEILING}`] : []);
@@ -47,6 +55,9 @@ if (process.argv.includes("--selftest")) {
     ["an overwriting fill fails", check(c, d.replace("settlement_no = coalesce(settlement_no, $3)", "settlement_no = $3")).some((x) => x.startsWith("RULE 2"))],
     ["a fill without the load requirement fails", check(c, d.replace("AND load_id IS NOT NULL", "")).some((x) => x.startsWith("RULE 3"))],
     ["over the ceiling fails", judge(CEILING + 1).length === 1 && judge(CEILING).length === 0],
+    ["adoption that never stamps the holding settlement fails", check(c, d.replace(/stampReceiptDocumentSettlementRef\(client/g, "noop(client")).some((x) => x.startsWith("RULE 4"))],
+    ["a stamp that picks one of several settlements fails", check(c, d.replace("row.n !== 1", "row.n < 1")).some((x) => x.startsWith("RULE 4"))],
+    ["a stamp on another predicate fails", check(c, d.replace("settlement_lines sl WHERE sl.load_id = doc.load_id", "settlement_lines sl WHERE true")).some((x) => x.startsWith("RULE 4"))],
   ];
   for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
   const bad = cases.filter(([, ok]) => !ok).length;

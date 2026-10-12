@@ -63,6 +63,46 @@ export function checkOneFuelLoadRule(src) {
   return p;
 }
 
+/**
+ * LEAD 443.121 #2 — a fuel receipt with no load covering its fill time posts ON RECEIPT with the deadhead/yard reason
+ * (never refused, never left for the bank match), and is ATTACHED to its load when one covering the fill time is booked:
+ * the SAME postings (load_id filled once — refuse_posting_fact_update untouched), the SAME document (load-spine number +
+ * the one link writer), the fuel row first. Every booking / edit / rematch goes through the one attach.
+ */
+export function checkFuelReceiptAttach(src) {
+  const p = [];
+  if (/"fuel_fill_missing_load"\s*,\s*`/.test(src.relay)) p.push("bank-match-fuel-post: a fill with no load must post with the deadhead/yard reason, not be refused (fuel_fill_missing_load)");
+  if (!/load_exemption_reason: noLoadReason/.test(src.relay)) p.push("the Relay fill with no load must carry the deadhead/yard reason onto its document");
+  if (!/SET load_exemption_reason = \$3[\s\S]{0,160}load_id IS NULL AND load_exemption_reason IS NULL/.test(src.relay)) p.push("the card fill with no load must carry the deadhead/yard reason on its fuel row");
+  const attach = src.repoint.match(/export async function attachFuelReceiptToLoad\([\s\S]*?\n\}/)?.[0] ?? "";
+  if (!attach) p.push("fuel-receipt-repoint.service.ts: attachFuelReceiptToLoad missing");
+  else {
+    const ft = attach.indexOf("UPDATE fuel.fuel_transactions"), jp = attach.indexOf("UPDATE accounting.journal_entry_postings");
+    if (ft < 0 || jp < 0 || ft > jp) p.push("attach must move the fuel row BEFORE the postings (posting_source_load_id reads the fuel row)");
+    if (!/UPDATE accounting\.journal_entry_postings\s+SET load_id = \$2::uuid[\s\S]{0,200}AND load_id IS NULL/.test(attach)) p.push("attach must fill the postings' load once (only where load_id IS NULL), never move it");
+    if (/INSERT INTO accounting\.journal_entr|reverse|postFuelExpenseOnClient/i.test(attach)) p.push("attach must not repost or reverse — the SAME journal entry moves");
+    if (!/generateExpenseNumber\(/.test(attach) || !/insertExpenseLoadLink\(/.test(attach)) p.push("attach must give the document its load-spine number through the one link writer");
+    if (!/stampReceiptDocumentSettlementRef\(/.test(attach)) p.push("attach must stamp the settlement reference (443.121 #3)");
+  }
+  if (!/resolveFuelLoadAtTime\(/.test(src.repoint)) p.push("the attach must decide coverage by the one rule (resolveFuelLoadAtTime)");
+  if (!/repointFuelReceiptsToLoad\(/.test(src.bookLoad)) p.push("bookLoadOnClient must attach the receipts the new load covers");
+  if (!/repointFuelReceiptsToLoad\(/.test(src.updateLoad)) p.push("updateDispatchLoad must attach the receipts the edited load covers");
+  if (!/attachFuelReceiptToLoad\(/.test(src.rematch)) p.push("the Relay load rematch must move a posted receipt through attachFuelReceiptToLoad, never the fuel row alone");
+  if (!/\/api\/v1\/fuel\/receipts\/repoint-to-loads/.test(src.route) || !/String\(user\.role \?\? ""\) !== "Owner"/.test(src.route)) p.push("the history route must exist and be Owner only");
+  return p;
+}
+
+function readAttachSources() {
+  return {
+    relay: read("apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts"),
+    repoint: read("apps/backend/src/fuel/fuel-receipt-repoint.service.ts"),
+    bookLoad: read("apps/backend/src/dispatch/book-load.service.ts"),
+    updateLoad: read("apps/backend/src/dispatch/update-load.service.ts"),
+    rematch: read("apps/backend/src/integrations/relay-payments/relay-fuel-load-rematch.service.ts"),
+    route: read("apps/backend/src/fuel/fuel-receipt-repoint.routes.ts"),
+  };
+}
+
 function readRuleSources() {
   return {
     importer: read("apps/backend/src/fuel/fuel-transaction-import.ts"),
@@ -88,6 +128,21 @@ function selftest() {
     ["Creator accepting a load off the settlement is caught", checkOneFuelLoadRule({ ...real, creator: real.creator.replace('"line_load_not_on_settlement"', '"x"') }).length > 0],
     ["Creator fuel row stamping the draft's driver/unit is caught", checkOneFuelLoadRule({ ...real, creator: real.creator.replace("fillLoad.driverId,\n        fillLoad.unitId,", "draft.driver_id,\n        draft.unit_id ?? null,") }).length > 0],
     ["Creator company expense stamping the draft's unit is caught", checkOneFuelLoadRule({ ...real, creator: real.creator.replace("unit_id: expLoad.unitId", "unit_id: draft.unit_id ?? null") }).length > 0],
+    // LEAD 443.121 #2
+    ...(() => {
+      const a = readAttachSources();
+      const bad = (patch) => checkFuelReceiptAttach({ ...a, ...patch }).length > 0;
+      return [
+        ["receipt attach: real tree passes", checkFuelReceiptAttach(a).length === 0],
+        ["a no-load fill refused again is caught", bad({ relay: a.relay + '\nthrow new FuelMatchPostError("fuel_fill_missing_load", `x`);' })],
+        ["attach moving an already-set posting load is caught", bad({ repoint: a.repoint.replace(/AND source_transaction_id::text = \$3\n\s+AND load_id IS NULL/, "AND source_transaction_id::text = $3") })],
+        ["attach reposting the fill is caught", bad({ repoint: a.repoint.replace("// 2) The SAME postings", "await postFuelExpenseOnClient(client, {}); // 2) The SAME postings") })],
+        ["attach skipping the link writer is caught", bad({ repoint: a.repoint.replace("await insertExpenseLoadLink(client", "await noLink(client") })],
+        ["attach skipping the settlement stamp is caught", bad({ repoint: a.repoint.replace("settlementNo = await stampReceiptDocumentSettlementRef(", "settlementNo = await noStamp(") })],
+        ["Book Load not attaching is caught", bad({ bookLoad: a.bookLoad.replaceAll("repointFuelReceiptsToLoad(", "noop(") })],
+        ["rematch moving the fuel row alone is caught", bad({ rematch: a.rematch.replaceAll("attachFuelReceiptToLoad(", "noop(") })],
+      ];
+    })(),
   ];
   const failed = cases.filter(([, ok]) => !ok);
   for (const [n] of failed) console.error(`verify-fuel-g18-load-link-rematch: selftest FAIL — ${n}`);
@@ -112,7 +167,7 @@ function main() {
   assertIncludes(rematch, "skipped_no_driver_or_unit", "skip counter when no driver/unit");
   assertIncludes(rematch, "skipped_no_load_in_window", "skip counter when no load in window");
 
-  const ruleProblems = checkOneFuelLoadRule(readRuleSources());
+  const ruleProblems = [...checkOneFuelLoadRule(readRuleSources()), ...checkFuelReceiptAttach(readAttachSources())];
   if (ruleProblems.length) throw new Error(ruleProblems.join("; "));
 
   const routes = read("apps/backend/src/integrations/relay-payments/relay-fuel-load-rematch.routes.ts");

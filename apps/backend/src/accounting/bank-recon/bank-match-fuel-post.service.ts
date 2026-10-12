@@ -5,7 +5,8 @@
  * matched in Banking, through postFuelExpenseOnClient on the caller's client (same transaction as
  * the match). This module is the match engine's sole caller of that hook.
  *
- * Fail-closed: null unit_id or null load_id is an ENGINE defect (owner), not a data soft-skip.
+ * Fail-closed: null unit_id is an ENGINE defect (owner), not a data soft-skip. A fill with no load covering its time
+ * posts with the explicit deadhead/yard reason (LEAD 443.121 #2) and is re-pointed when its load is booked.
  */
 import { adoptRelayFillExpenseDocument, createExpenseFromFuelTransaction } from "../../fuel/fuel-expense-document.service.js";
 import { resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
@@ -62,6 +63,15 @@ async function postFuelFill(
     return postCanonicalFuelTxn(client, input);
   }
   return postRelayFuelFill(client, input);
+}
+
+/**
+ * LEAD 443.121 #2 — the explicit reason a fuel receipt carries while no load covers its fill time (the truck was deadheading
+ * or in the yard). Prefix is stable (repointFuelReceiptsToLoad clears it when a covering load is booked).
+ */
+export const FUEL_NO_LOAD_REASON_PREFIX = "deadhead_or_yard";
+export function fuelNoLoadReason(at: string | null, unitNumber?: string | null): string {
+  return `${FUEL_NO_LOAD_REASON_PREFIX}: no load covered ${unitNumber ? `unit ${unitNumber}` : "the unit"} at the fill time ${at ?? "unknown"} (LEAD 443.121 #2)`;
 }
 
 /** Audit event the receipt poster writes: the bank match that later names this JE did NOT create it (unmatch keeps it). */
@@ -149,10 +159,14 @@ async function postCanonicalFuelTxn(
       `fuel_transaction ${input.fill_id}: unit_id is null — engine defect (owner: fuel posting requires unit)`
     );
   }
+  // LEAD 443.121 #2 — a fill the truck bought while running no load (deadhead / yard) posts ON RECEIPT with that reason on
+  // its fuel row; when a load covering the fill time is booked later, repointFuelReceiptsToLoad attaches the SAME posting
+  // and document to it (load_id is fill-once on postings). Never a refusal that leaves the receipt out of the books.
   if (!row.load_id) {
-    throw new FuelMatchPostError(
-      "fuel_fill_missing_load",
-      `fuel_transaction ${input.fill_id}: load_id is null — engine defect (owner: fuel posting requires load)`
+    await client.query(
+      `UPDATE fuel.fuel_transactions SET load_exemption_reason = $3
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND load_id IS NULL AND load_exemption_reason IS NULL`,
+      [input.fill_id, input.operating_company_id, fuelNoLoadReason(row.transaction_at)]
     );
   }
   const amountCents = Math.round(Number(row.amount_cents ?? 0));
@@ -279,12 +293,9 @@ async function postRelayFuelFill(
     driverId: row.driver_id,
     at: row.transaction_at,
   });
-  if (!load?.load_id) {
-    throw new FuelMatchPostError(
-      "fuel_fill_missing_load",
-      `relay_fuel ${input.fill_id}: no active load on unit ${row.unit_id} at fill time — engine defect (owner: fuel posting requires load)`
-    );
-  }
+  // LEAD 443.121 #2 — no load covered the unit at fill time (deadhead / yard): the fill still posts on receipt, with the
+  // explicit no-load reason on its document lines; repointFuelReceiptsToLoad attaches it when a covering load is booked.
+  const noLoadReason = load?.load_id ? null : fuelNoLoadReason(row.transaction_at, row.unit_number);
   // RELAY-F442 — total_amount_paid is fuel only; wallet / GL credit = paid + sender_fee.
   const paidCents = Math.round(Number(row.amount_cents ?? 0));
   if (!Number.isFinite(paidCents) || paidCents <= 0) {
@@ -346,14 +357,14 @@ async function postRelayFuelFill(
     unit_id: row.unit_id,
     // 443.116 #1 — the load the one rule resolved above, and its trailer: a fill posted on receipt has no settlement row
     // to carry them, so the poster stamps them (the document then takes the load-spine number).
-    load_id: load.load_id,
-    trailer_id: load.trailer_id,
+    load_id: load?.load_id ?? null,
+    trailer_id: load?.trailer_id ?? null,
     ifta_state: row.location_state,
     ifta_gallons: row.gallons != null ? Number(row.gallons) : null,
     company_direct_credit: "relay_fuel_wallet",
     memo: buildFuelTxnJeMemo({
       fuel_type: costLines.map((l) => l.fuel_kind).join("+"),
-      load_number: load.load_number,
+      load_number: load?.load_number ?? null,
       unit_number: row.unit_number,
       vendor_name: row.merchant_name,
       fuel_card_code: "RELAY",
@@ -366,7 +377,8 @@ async function postRelayFuelFill(
       relay_fill_id: input.fill_id,
       journal_entry_id: posted.journal_entry_id,
       requesting_user_uuid: input.actor_user_uuid,
-      trailer_id: load.trailer_id,
+      trailer_id: load?.trailer_id ?? null,
+      load_exemption_reason: noLoadReason,
     });
     if (doc.outcome === "refused") throw new FuelMatchPostError("relay_fill_document_refused", doc.reason);
   }

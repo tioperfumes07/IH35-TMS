@@ -1133,6 +1133,13 @@ export async function updateDispatchLoad(
     if (prop.driver_bill_mint) driverBillMint = prop.driver_bill_mint;
   }
 
+  // LEAD 443.121 #2 — an edit can make this load cover a fuel receipt that posted with no load (truck, driver or stop
+  // times changed): attach it now through the one rule — same JE, same document. Never fails the edit.
+  {
+    const { repointFuelReceiptsToLoad } = await import("../fuel/fuel-receipt-repoint.service.js");
+    await repointFuelReceiptsToLoad(client as never, { operatingCompanyId, loadId, actorUserId: requestingUserUuid });
+  }
+
   return {
     load: updatedLoadRes.rows[0] ?? old,
     stops: updatedStopsRes.rows,
