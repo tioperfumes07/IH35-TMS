@@ -53,9 +53,11 @@ export async function registerDriverMergeRoutes(app: FastifyInstance) {
     if (!p.success || !q.success) return reply.code(400).send({ error: "invalid_request" });
     await assertCompanyMembership(user.uuid, q.data.operating_company_id);
     try {
-      const preview = await scoped(user.uuid, q.data.operating_company_id, (c) =>
-        previewDriverMerge(c, { companyId: q.data.operating_company_id, survivorId: p.data.id, mergedId: q.data.merged_id })
-      );
+      // AJK-05 (443.113): a GET never writes — the preview runs in a READ ONLY transaction, so any write is refused (25006).
+      const preview = await scoped(user.uuid, q.data.operating_company_id, async (c) => {
+        await (c as { query: (sql: string) => Promise<unknown> }).query("SET LOCAL transaction_read_only = on");
+        return previewDriverMerge(c, { companyId: q.data.operating_company_id, survivorId: p.data.id, mergedId: q.data.merged_id });
+      });
       return preview;
     } catch (e) {
       if ((e as Error).message === "driver_merge_driver_not_found") return reply.code(404).send({ error: "driver_merge_driver_not_found" });

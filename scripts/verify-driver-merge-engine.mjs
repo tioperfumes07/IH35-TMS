@@ -14,6 +14,7 @@
  *   5. the driver's vendor folds into the survivor's (one driver-vendor profile)
  *   6. Samsara is never written; mdata.driver_samsara_accounts follows the driver
  *   7. execute is Owner-only; the page exists and the Drivers page links it
+ *   8. AJK-05: the GET preview is read-only (planRepoint SELECTs; READ ONLY transaction)
  * Run: node scripts/verify-driver-merge-engine.mjs [--selftest]
  */
 import fs from "node:fs";
@@ -44,6 +45,13 @@ export function problems(src) {
   if (!/driverVendorPlan\(/.test(s) || !/repointAll\(client, "mdata\.vendors"/.test(s)) p.push("the duplicate's driver-vendor must fold into the survivor's vendor");
   if (/UPDATE\s+integrations\.samsara_drivers\s+SET\s+(raw_payload|driver_activation_status)/i.test(s) || /SamsaraClient/.test(s)) p.push("Samsara must never be written by a merge");
   if (!/merged_into_driver_id = \$2::uuid/.test(s)) p.push("the merged record must retire with merged_into_driver_id");
+  // AJK-05 (443.113): the GET preview never writes. previewDriverMerge plans with planRepoint (SELECTs only); no dry-run
+  // UPDATE + ROLLBACK TO SAVEPOINT; the GET route runs the preview in a READ ONLY transaction.
+  const pv = s.slice(s.indexOf("export async function previewDriverMerge"), s.indexOf("export type MergeResult"));
+  const plan = s.slice(s.indexOf("export async function planRepoint"), s.indexOf("/** Polymorphic references"));
+  if (!/planRepoint\(client, "mdata\.drivers"/.test(pv) || /repointAll\(/.test(pv)) p.push("the merge preview must plan with planRepoint (read-only), never run repointAll");
+  if (/\bUPDATE\s+\S+\s+SET\b|\bINSERT\s+INTO\b|\bDELETE\s+FROM\b/i.test(plan) || /SAVEPOINT/.test(plan) || /dryRun/.test(s)) p.push("planRepoint must be SELECTs only (no UPDATE / INSERT / DELETE / savepoint dry run)");
+  if (!/SET LOCAL transaction_read_only = on[\s\S]{0,200}previewDriverMerge\(/.test(src.routes)) p.push("GET merge-preview must run the preview in a READ ONLY transaction");
   if (!/String\(user\.role\) !== "Owner"/.test(src.routes) || !/\/api\/v1\/drivers\/:id\/merge"/.test(src.routes)) p.push("POST /drivers/:id/merge must be Owner-only");
   if (!/registerDriverMergeRoutes\(app\)/.test(src.drivers)) p.push("merge routes are not registered");
   if (!/driverMergeApi\.preview\(/.test(src.page) || !/driverMergeApi\.merge\(/.test(src.page)) p.push("the duplicates page must preview before it merges");
@@ -61,8 +69,11 @@ function selftest() {
   if (!problems(m("svc", /driver_merge_incomplete/g, "noop")).some((x) => /prove/.test(x))) bad.push("a merge without the proof passed");
   if (!problems(m("routes", 'String(user.role) !== "Owner"', "false")).some((x) => /Owner-only/.test(x))) bad.push("a non-owner merge passed");
   if (!problems(m("svc", /driverVendorPlan\(/g, "noVendor(")).some((x) => /driver-vendor/.test(x))) bad.push("a merge that leaves two vendors passed");
+  if (!problems(m("svc", 'planRepoint(client, "mdata.drivers", m.id, s.id)', 'repointAll(client, "mdata.drivers", m.id, s.id)')).some((x) => /planRepoint/.test(x))) bad.push("AJK-05: a preview running repointAll passed");
+  if (!problems(m("svc", "const out: RepointOutcome[] = [];\n  for (const r of await discoverReferences(client, target)) {\n    const ref = `${r.table}.${r.column}`;\n    const has = Number((await client.query(`SELECT count(*)::int AS n FROM ${qi(r.table)} WHERE ${qi(r.column)} = $1::uuid`, [from])).rows[0]?.n ?? 0);\n    if (has === 0) continue;\n    const priv", "const out: RepointOutcome[] = [];\n  for (const r of await discoverReferences(client, target)) {\n    const ref = `${r.table}.${r.column}`;\n    const has = Number((await client.query(`SELECT count(*)::int AS n FROM ${qi(r.table)} WHERE ${qi(r.column)} = $1::uuid`, [from])).rows[0]?.n ?? 0);\n    if (has === 0) continue;\n    await client.query(`UPDATE x SET y = 1`);\n    const priv")).some((x) => /SELECTs only/.test(x))) bad.push("AJK-05: a write inside planRepoint passed");
+  if (!problems(m("routes", "SET LOCAL transaction_read_only = on", "SELECT 1")).some((x) => /READ ONLY/.test(x))) bad.push("AJK-05: a writable preview transaction passed");
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }
-  console.log(`${LABEL} SELFTEST OK — 5/5 (real tree passes; hand list, missing proof, non-owner merge, two vendors each caught)`);
+  console.log(`${LABEL} SELFTEST OK — 8/8 (real tree passes; hand list, missing proof, non-owner merge, two vendors, preview running repointAll, a write in planRepoint, writable preview txn each caught)`);
   process.exit(0);
 }
 if (process.argv.includes("--selftest")) selftest();
