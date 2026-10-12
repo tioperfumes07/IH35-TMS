@@ -40,6 +40,8 @@ scripts/audit-creator-settlement.mjs
 # ROUND 443.113 BCF-01 (CC-1, 2026-10-12) — cash-advance disburse + atomic GL post
 apps/backend/src/cash-advances/cash-advance-disburse.ts
 apps/backend/src/cash-advances/__tests__/bcf01-atomic-disburse.test.ts
+# ROUND 443.113 BCF-02 (CC-1, 2026-10-12) — cash-advance test for BCF-02 driver/bill validation
+apps/backend/src/cash-advances/__tests__/bcf02-bill-driver-load-lock.test.ts
 # ROUND 372.1 (Lead, 2026-10-03) — files no seat owned are CC-1's from now on:
 apps/backend/src/health/health.routes.ts
 apps/backend/src/integrations/samsara/fuel-purchase-push.service.ts
