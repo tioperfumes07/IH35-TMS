@@ -37,6 +37,9 @@ apps/backend/src/maintenance/__tests__/pm-auto-engine-e14.test.ts
 apps/backend/src/system/engine-status.catalog.ts
 scripts/db-migrate.mjs
 scripts/audit-creator-settlement.mjs
+# ROUND 443.139 8c (CC-1, 2026-10-12) — basis (accrual/cash) on all 7 money reports
+scripts/verify-steps/18441-verify-all-money-reports-take-basis.mjs
+apps/backend/src/accounting/__tests__/8c-money-reports-basis.db.test.ts
 # ROUND 443.113 BCF-01 (CC-1, 2026-10-12) — cash-advance disburse + atomic GL post
 apps/backend/src/cash-advances/cash-advance-disburse.ts
 apps/backend/src/cash-advances/__tests__/bcf01-atomic-disburse.test.ts
