@@ -54,6 +54,9 @@
 // Skips gracefully (prints, exits 0) when DATABASE_URL is not set -- same convention every other
 // live-Neon guard in this repo uses.
 import pg from "pg";
+import { createRequire } from "node:module";
+// 443.99: TLS by host (localhost / CI postgres service = off, Neon = on) — a hard-coded ssl option cannot connect to CI's local postgres.
+const { inferPgSslOption } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
@@ -83,7 +86,7 @@ async function live() {
     console.error("verify-usmca-settlement-linkage: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
     process.exit(1);
   }
-  const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const client = new pg.Client({ connectionString: url, ssl: inferPgSslOption(url) });
   await client.connect();
   try {
     let failures = 0;
