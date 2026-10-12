@@ -91,6 +91,23 @@ jobs:
             scripts/verify-settlement-net-equals-document.mjs \
             scripts/verify-diesel-expense-fuel-dedupe.mjs \
             scripts/verify-fuel-relay-txn-vendor-unmatched.mjs \
+            scripts/verify-acc13-no-test-accounts-in-usmca-coa.mjs \
+            scripts/verify-dispute-window-unified.mjs \
+            scripts/verify-driver-bill-settlement-link.mjs \
+            scripts/verify-driver-licence-documents-linked.mjs \
+            scripts/verify-every-posting-has-a-spine-link.mjs \
+            scripts/verify-load-exception-reasons-catalog.mjs \
+            scripts/verify-manual-delivery-authorization.mjs \
+            scripts/verify-needs-delivery-authorization-wired.mjs \
+            scripts/verify-no-duplicate-seed-deductions.mjs \
+            scripts/verify-no-empty-zero-settlement.mjs \
+            scripts/verify-no-future-dated-seed-expenses.mjs \
+            scripts/verify-open-tour-posts-nothing.mjs \
+            scripts/verify-reg030-bofa-usmca-freight-reconciliation.mjs \
+            scripts/verify-safety-events-with-driver-view-live.mjs \
+            scripts/verify-settled-load-carries-settled-status.mjs \
+            scripts/verify-settlement-deduction-balance-derived.mjs \
+            scripts/verify-transp-ar-control-opening-balance-integrity.mjs \
             scripts/verify-no-test-markers-in-live-tables.mjs
       # ROUND 389 (LEAD) — the ONLY place a credential-gated derived artifact's freshness can actually be
       # proven. scripts/canonical-relations.json is regenerated from the live schema, so its generator
