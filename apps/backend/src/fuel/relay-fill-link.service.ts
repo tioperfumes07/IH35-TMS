@@ -39,7 +39,8 @@ const MATCHED_KIND_SQL = `(CASE
          AND abs(f.gallons - ${fillGallonsSql("'reefer'")}) < 0.6 THEN 'reefer'
   END)`;
 
-const PAIR_SQL = `
+// LEAD 443.133 A — the PAIRING evidence (same truck, ±1 day, same product, gallons within 0.6), without the rail.
+const PAIR_EVIDENCE_SQL = `
   FROM fuel.fuel_transactions f
   JOIN integrations.relay_fuel_transactions r
     ON r.operating_company_id = f.operating_company_id AND r.voided_at IS NULL
@@ -56,6 +57,34 @@ const PAIR_SQL = `
     AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions o
                      WHERE o.relay_fuel_transaction_id = r.id AND o.voided_at IS NULL AND o.id <> f.id
                        AND ${fuelRowKindSql("o")} = ${MATCHED_KIND_SQL})`;
+
+/**
+ * LEAD 443.133 A — ONLY a row PAID BY THE RELAY CARD can be a Relay fill's settlement row. The rule above matched on truck /
+ * day / product / gallons alone, so the 2026-10-12 18:36 Relay backfill linked 4 DREAMLINE-paid rows (settlements P-0055,
+ * P-0064, posted Dr fuel / Cr 2510 at the statement's retail) to 2 Relay fills: the fill's live rows then read retail
+ * against Relay's discounted charge (verify-fuel-transactions-per-load red) and the fill looked "settled" though no Relay
+ * posting exists. A row on another rail that pairs with a fill is a CROSS-RAIL CANDIDATE — reported, never linked.
+ */
+export const RELAY_CARD_ROW_SQL = `EXISTS (SELECT 1 FROM catalogs.fuel_card_types ct
+    WHERE ct.id = f.fuel_card_id AND ct.operating_company_id = f.operating_company_id AND upper(ct.code) = 'RELAY')`;
+
+const PAIR_SQL = `${PAIR_EVIDENCE_SQL}
+    AND ${RELAY_CARD_ROW_SQL}`;
+
+/** Live fuel rows on ANOTHER rail (not the Relay card) that pair with this Relay fill — the owner decides; never linked. */
+export async function crossRailFuelRowsForRelayFill(
+  client: DbClient,
+  operatingCompanyId: string,
+  relayFuelTransactionId: string,
+): Promise<{ fuel_transaction_id: string; card: string | null }[]> {
+  const res = await client.query<{ fuel_transaction_id: string; card: string | null }>(
+    `SELECT f.id::text AS fuel_transaction_id,
+            (SELECT ct.code FROM catalogs.fuel_card_types ct WHERE ct.id = f.fuel_card_id) AS card
+       ${PAIR_EVIDENCE_SQL} AND r.id = $2::uuid AND NOT ${RELAY_CARD_ROW_SQL}`,
+    [operatingCompanyId, relayFuelTransactionId]
+  );
+  return res.rows;
+}
 
 /**
  * Write the link. The fill's product wins: a row the fill proves reefer becomes 'reefer_diesel' (a category, no money
