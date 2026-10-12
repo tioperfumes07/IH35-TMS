@@ -25,7 +25,7 @@
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
-import { facilityAtPoint, isGooglePlacesConfigured, isGooglePlacesEnabled } from "../integrations/google/google-places-client.js";
+import { facilityAtPoint, isGooglePlacesConfigured, isGooglePlacesEnabled, searchAddress } from "../integrations/google/google-places-client.js";
 import { detectStops, type PositionFix, type StopEvent } from "./stop-odometer-capture.service.js";
 import { geocodeStopsWithClient } from "./stops-geocode-backfill.service.js";
 
@@ -267,6 +267,63 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
         if (cands.length && !pick) reason = others.length
           ? `the truck's dwell in that city is at another business, not "${docFacility}": ${others.join("; ")}`
           : "the dwell resolves to no facility with a street (truck stop or no Google / Samsara place)";
+      }
+      // 443.90 #1: the DOCUMENT names the business — resolve the business when the dwell does not.
+      //  a. the same business (facility + zip) already resolved on another stop -> that stop's place (one location, one fence)
+      //  b. Google Places text search "<facility> <city> <state> <zip>" -> only a result whose name carries the document
+      //     business and whose zip / city match (zipFacilityConfirmed + place check); no match = not fenced.
+      let byName: { source: "same_business" | "google_place"; street: string; city: string; state: string; zip: string; lat: number; lng: number;
+        place_id: string | null; name: string | null; geocode_source: string; from: string } | null = null;
+      if (!pick && zipStop.facility_name) {
+        const same = (await client.query<{ stop_id: string; load_number: string; address_line1: string; city: string; state: string; postal_code: string | null;
+          lat: number; lng: number; google_place_id: string | null; geocode_source: string }>(
+          `SELECT s.id::text AS stop_id, l.load_number::text, s.address_line1, s.city, s.state, s.postal_code, s.latitude::float8 AS lat, s.longitude::float8 AS lng,
+                  s.google_place_id, s.geocode_source
+             FROM mdata.load_stops s JOIN mdata.loads l ON l.id = s.load_id
+            WHERE l.operating_company_id = $1::uuid AND s.soft_deleted_at IS NULL AND s.id <> $2::uuid
+              AND upper(regexp_replace(s.facility_name, '\\s+', ' ', 'g')) = upper(regexp_replace($3, '\\s+', ' ', 'g'))
+              AND coalesce(s.postal_code, '') = coalesce($4, '') AND s.address_line1 IS NOT NULL AND s.latitude IS NOT NULL
+              AND s.geocode_source IN ('gps_dwell_google', 'gps_dwell_samsara', 'google_place', 'samsara_address')
+            ORDER BY s.updated_at DESC LIMIT 1`,
+          [input.operatingCompanyId, v.stop_id, zipStop.facility_name, zipStop.postal_code])).rows[0];
+        if (same) byName = { source: "same_business", street: same.address_line1, city: same.city, state: same.state, zip: same.postal_code ?? "", lat: same.lat, lng: same.lng,
+          place_id: same.google_place_id, name: zipStop.facility_name, geocode_source: same.geocode_source, from: `load ${same.load_number}` };
+        else if (isGooglePlacesEnabled() && isGooglePlacesConfigured()) {
+          const q = [zipStop.facility_name.split(/\bc\/o\b/i).pop()!.trim(), zipStop.city, zipStop.state, zipStop.postal_code].filter(Boolean).join(" ");
+          const hits = await searchAddress(q, 5);
+          const zipNorm = String(zipStop.postal_code ?? "").slice(0, 5);
+          const ok = hits.find((h) => h.lat != null && h.lon != null && h.address_line1 && h.name
+            && zipFacilityConfirmed(zipStop.facility_name, h.name, [zipStop.city, zipStop.state, h.city, h.state])
+            && ((zipNorm && h.zip?.slice(0, 5) === zipNorm) || (h.city ?? "").toLowerCase() === String(zipStop.city ?? "").toLowerCase()));
+          if (ok) byName = { source: "google_place", street: ok.address_line1, city: ok.city, state: ok.state, zip: ok.zip, lat: ok.lat!, lng: ok.lon!,
+            place_id: ok.place_id ?? null, name: ok.name ?? null, geocode_source: "google_place", from: `Google: ${q}` };
+          else reason = `${reason ?? "no dwell"}; Google "${q}": ${hits.length ? hits.map((h) => h.name ?? h.formatted).slice(0, 3).join(" | ") : "no result"} — no result carries the business at that zip / city`;
+        }
+      }
+      if (byName && input.apply) {
+        await client.query(
+          `UPDATE mdata.load_stops
+              SET address_line1 = $2, city = $3, state = $4, postal_code = coalesce(nullif($5, ''), postal_code),
+                  latitude = $6, longitude = $7, google_place_id = $8, location_id = NULL,
+                  geocode_source = $9, geocode_precision = 'rooftop', geocode_confidence = 1, geocode_failure_reason = NULL,
+                  geocode_attempted_at = now(), updated_at = now()
+            WHERE id = $1::uuid AND geocode_source = 'zip_center'`,
+          [v.stop_id, byName.street, byName.city, byName.state, byName.zip, byName.lat, byName.lng, byName.place_id, byName.geocode_source]);
+        await appendCrudAudit(client as never, input.actorUserId, "dispatch.load_stop.zip_center_resolved_by_business", {
+          resource_type: "mdata.load_stops", resource_id: v.stop_id, operating_company_id: input.operatingCompanyId, load_id: input.loadId,
+          load_number: load.load_number, sequence_number: v.sequence_number, document_address: v.document_address,
+          resolved_address: `${byName.street}, ${byName.city}, ${byName.state} ${byName.zip}`, business: byName.name, source: byName.source, from: byName.from,
+          google_place_id: byName.place_id, reason: "443.90 #1 the document names the business",
+        }, "warning", "443.90");
+        moved++;
+      }
+      if (byName) {
+        out.push({ ...v, verdict: "zip_center_resolved", reason: undefined, dwell: null, distance_m: st.lat != null ? metersBetween(st.lat, st.lng!, byName.lat, byName.lng) : null,
+          load_id: input.loadId, load_number: load.load_number,
+          facility: { source: "google", name: byName.name, street: byName.street, city: byName.city, state: byName.state, zip: byName.zip, lat: byName.lat, lng: byName.lng,
+            place_id: byName.place_id, samsara_address_id: null },
+          confirmed: true, applied: Boolean(input.apply) });
+        continue;
       }
       let applied = false;
       if (pick && input.apply) {
