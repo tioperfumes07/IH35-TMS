@@ -2532,5 +2532,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
     "purpose": "443.110 G9: driver_finance.driver_bills.unit_id / trailer_id / non_owned_trailer_id stamped at mint from the load"
+  },
+  "202615830700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.116 #2 + (c): driver_finance.driver_bills.due_date (projected delivery date, fixed at delivery) + accrued_bill_id (the per-load A/P bill posted at delivery)"
   }
 }
