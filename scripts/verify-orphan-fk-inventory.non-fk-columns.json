@@ -1,0 +1,158 @@
+{
+  "_comment": "443.101 R2 — per-column register of *_id columns that CANNOT take a foreign key, each with its kind and reason. Shrink-only: an entry whose column no longer appears (or gained an FK) fails the guard until removed. Kinds are name-checked (external_id must name an external system, display_label must be a display id, authorization_code must be auth_id, tombstone_id must be merged_*, polymorphic must name a type column present in the same migration). Everything else is a missing FK — add it.",
+  "columns": {
+    "202615180100_fleet_roster_findings.sql::samsara_vehicle_id": {
+      "kind": "external_id",
+      "reason": "Samsara telematics id (text) — an id in Samsara's system, not a row in ours; there is no parent table to reference."
+    },
+    "202615181000_samsara_route_progress.sql::samsara_route_id": {
+      "kind": "external_id",
+      "reason": "Samsara telematics id (text) — an id in Samsara's system, not a row in ours; there is no parent table to reference."
+    },
+    "202615181000_samsara_route_progress.sql::samsara_route_id#2": {
+      "kind": "external_id",
+      "reason": "Samsara telematics id (text) — an id in Samsara's system, not a row in ours; there is no parent table to reference."
+    },
+    "202615181000_samsara_route_progress.sql::samsara_stop_id": {
+      "kind": "external_id",
+      "reason": "Samsara telematics id (text) — an id in Samsara's system, not a row in ours; there is no parent table to reference."
+    },
+    "202615181100_samsara_fuel_reports.sql::samsara_subject_id": {
+      "kind": "external_id",
+      "reason": "Samsara telematics id (text) — an id in Samsara's system, not a row in ours; there is no parent table to reference."
+    },
+    "202615220900_preserve_telematics_geocode.sql::samsara_vehicle_id": {
+      "kind": "external_id",
+      "reason": "Samsara telematics id (text) — an id in Samsara's system, not a row in ours; there is no parent table to reference."
+    },
+    "202615220900_preserve_telematics_geocode.sql::samsara_address_id": {
+      "kind": "external_id",
+      "reason": "Samsara telematics id (text) — an id in Samsara's system, not a row in ours; there is no parent table to reference."
+    },
+    "202615220900_preserve_telematics_geocode.sql::samsara_address_id#2": {
+      "kind": "external_id",
+      "reason": "Samsara telematics id (text) — an id in Samsara's system, not a row in ours; there is no parent table to reference."
+    },
+    "202615220900_preserve_telematics_geocode.sql::samsara_route_id": {
+      "kind": "external_id",
+      "reason": "Samsara telematics id (text) — an id in Samsara's system, not a row in ours; there is no parent table to reference."
+    },
+    "202615220900_preserve_telematics_geocode.sql::samsara_stop_id": {
+      "kind": "external_id",
+      "reason": "Samsara telematics id (text) — an id in Samsara's system, not a row in ours; there is no parent table to reference."
+    },
+    "202615220900_preserve_telematics_geocode.sql::observation_id": {
+      "kind": "external_id",
+      "reason": "Samsara vehicle-position observation id (text) preserved verbatim from the Samsara feed — no parent table in our schema."
+    },
+    "202615570900_stop_and_location_google_place_id.sql::google_place_id": {
+      "kind": "external_id",
+      "reason": "Google Places place_id (text) — Google's identifier for a business/address, not a row in our schema."
+    },
+    "202615570900_stop_and_location_google_place_id.sql::google_place_id#2": {
+      "kind": "external_id",
+      "reason": "Google Places place_id (text) — Google's identifier for a business/address, not a row in our schema."
+    },
+    "202615250600_faro_reserve_entries.sql::faro_entry_id": {
+      "kind": "external_id",
+      "reason": "Faro (factor) report entry id (text) copied from Faro's reserve report — Faro's identifier, not a row in our schema."
+    },
+    "202615171200_accounting_bank_deposits.sql::display_id": {
+      "kind": "display_label",
+      "reason": "Human-readable display number (text, e.g. a document number) — a label on THIS row, not a reference to another row."
+    },
+    "202615180800_factoring_purchase_document.sql::display_id": {
+      "kind": "display_label",
+      "reason": "Human-readable display number (text, e.g. a document number) — a label on THIS row, not a reference to another row."
+    },
+    "202615441200_related_party_loan_facility_loc.sql::display_id": {
+      "kind": "display_label",
+      "reason": "Human-readable display number (text, e.g. a document number) — a label on THIS row, not a reference to another row."
+    },
+    "202615720912_phantom_read_tables_downtime_catalogs_safety_accidents.sql::display_id": {
+      "kind": "display_label",
+      "reason": "Human-readable display number (text, e.g. a document number) — a label on THIS row, not a reference to another row."
+    },
+    "202615380700_document_work_order_copies.sql::work_order_display_id": {
+      "kind": "display_label",
+      "reason": "Snapshot of the work order's display number captured with the frozen copy (text label); the live link is work_order_id."
+    },
+    "202615201000_customer_aliases.sql::auth_id": {
+      "kind": "authorization_code",
+      "reason": "Owner authorization code (text 'AUTH-NNN', CHECK-constrained) issued on the bus — no authorizations table exists to reference."
+    },
+    "202615201100_vendor_aliases.sql::auth_id": {
+      "kind": "authorization_code",
+      "reason": "Owner authorization code (text 'AUTH-NNN', CHECK-constrained) issued on the bus — no authorizations table exists to reference."
+    },
+    "202615210200_complete_delete_route_and_inbound_entity.sql::auth_id": {
+      "kind": "authorization_code",
+      "reason": "Owner authorization code (text 'AUTH-NNN', CHECK-constrained) issued on the bus — no authorizations table exists to reference."
+    },
+    "202615210200_complete_delete_route_and_inbound_entity.sql::auth_id#2": {
+      "kind": "authorization_code",
+      "reason": "Owner authorization code (text 'AUTH-NNN', CHECK-constrained) issued on the bus — no authorizations table exists to reference."
+    },
+    "202615290200_purge_route.sql::auth_id": {
+      "kind": "authorization_code",
+      "reason": "Owner authorization code (text 'AUTH-NNN', CHECK-constrained) issued on the bus — no authorizations table exists to reference."
+    },
+    "202615290200_purge_route.sql::auth_id#2": {
+      "kind": "authorization_code",
+      "reason": "Owner authorization code (text 'AUTH-NNN', CHECK-constrained) issued on the bus — no authorizations table exists to reference."
+    },
+    "202615201000_customer_aliases.sql::merged_customer_id": {
+      "kind": "tombstone_id",
+      "reason": "Id of the duplicate customer DELETED by the merge (owner law 2026-10-02); the row is gone by design, reversal recreates it from snapshot. Prod: 22/22 point at deleted rows, as designed."
+    },
+    "202615201100_vendor_aliases.sql::merged_vendor_id": {
+      "kind": "tombstone_id",
+      "reason": "Id of the duplicate vendor DELETED by the merge (owner law 2026-10-02); the row is gone by design, reversal recreates it from snapshot. Prod: 2/2 point at deleted rows, as designed."
+    },
+    "202614330000_check_engine_expenses_fields_and_registry.sql::source_id": {
+      "kind": "polymorphic",
+      "reason": "Check-number registry source: the row it points at is in the table named by source_kind (expense / bill payment / ...), so no single FK can hold.",
+      "type_column": "source_kind"
+    },
+    "202615170000_reclassify_batches.sql::to_entity_uuid": {
+      "kind": "polymorphic",
+      "reason": "Reclassify target entity: customer / vendor / driver / unit per to_entity_type (CHECK-constrained), so no single FK can hold.",
+      "type_column": "to_entity_type"
+    },
+    "202615170000_reclassify_batches.sql::to_entity_uuid#2": {
+      "kind": "polymorphic",
+      "reason": "Reclassify line target entity: customer / vendor / driver / unit per to_entity_type, so no single FK can hold.",
+      "type_column": "to_entity_type"
+    },
+    "202615170000_reclassify_batches.sql::from_entity_uuid": {
+      "kind": "polymorphic",
+      "reason": "Reclassify line source entity: customer / vendor / driver / unit per from_entity_type, so no single FK can hold.",
+      "type_column": "from_entity_type"
+    },
+    "202615170000_reclassify_batches.sql::source_transaction_id": {
+      "kind": "polymorphic",
+      "reason": "The posting's source document (text id) in the table named by source_transaction_type (bill / expense / invoice / ...), the ledger's polymorphic spine key.",
+      "type_column": "source_transaction_type"
+    },
+    "202615170000_reclassify_batches.sql::source_transaction_line_id": {
+      "kind": "polymorphic",
+      "reason": "The source document's line (text id) in the line table implied by source_transaction_type — polymorphic like source_transaction_id.",
+      "type_column": "source_transaction_type"
+    },
+    "202615170400_feed_gate_intakes.sql::subject_id": {
+      "kind": "polymorphic",
+      "reason": "Feed-gate intake subject: the row it points at depends on feed_kind (settlement document / fuel report / ...), so no single FK can hold.",
+      "type_column": "feed_kind"
+    },
+    "202615170400_feed_gate_intakes.sql::subject_id#2": {
+      "kind": "polymorphic",
+      "reason": "Feed-gate check subject: the row lives in the table named by subject_table, so no single FK can hold.",
+      "type_column": "subject_table"
+    },
+    "202615380700_document_work_order_copies.sql::source_id": {
+      "kind": "polymorphic",
+      "reason": "The document a work-order copy is attached to, in the table named by source_kind (bill / expense / ...), so no single FK can hold.",
+      "type_column": "source_kind"
+    }
+  }
+}
