@@ -12,10 +12,8 @@ import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
 import { isBillGlPostingEnabled } from "../accounting/bill-gl.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { logger } from "../observability/structured-logger.js";
-import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import {
   computeInsuranceDispersal,
-  coverageTypeToPsItem,
   INSURANCE_PS_CATEGORY,
   type InsuranceDispersalBill,
   type InsuranceDispersalUnit,
@@ -85,50 +83,13 @@ async function persistBillsOnClient(
   // ACCT-F353 — derive from the insurer vendor being billed (same relationship the FK derives from).
   const vendorIsSampleData = vendorRes.rows[0]?.is_sample_data === true;
 
-  // BANK-ACCOUNT-HIDE: an account hidden for THIS entity must never be auto-picked to seed insurance
-  // premium bill transactions (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
-  const hideOnPolicy = await isBankAccountHideEnabled(client, input.operatingCompanyId);
-  const bankAccountRes = await client.query<{ id: string }>(
-    `SELECT id::text FROM banking.bank_accounts
-     WHERE operating_company_id = $1::uuid AND is_active = true
-     ${bankAccountHiddenFilterSql(hideOnPolicy, "banking.bank_accounts")}
-     ORDER BY created_at ASC LIMIT 1`,
-    [input.operatingCompanyId]
-  );
-  const bankAccountId = bankAccountRes.rows[0]?.id;
-  if (!bankAccountId) throw new Error("insurance_seed_bank_account_not_found");
-
-  const psItem = input.bills[0]?.ps_item ?? "Insurance Premium";
+  // K-10 (443.113 / 443.115-C) — insurance creates A/P bills only. Never invent
+  // banking.bank_transactions against the oldest bank account. The real bank line is matched
+  // later by the operator (Owner Law B: banking suggests, the user accepts).
   const billIds: string[] = [];
 
   for (const bill of input.bills) {
     const idempotencyKey = `ins:${input.policyId}:${bill.sequence}`;
-
-    const txnRes = await client.query<{ id: string }>(
-      `INSERT INTO banking.bank_transactions (
-         bank_account_id, operating_company_id, transaction_date, posted_date,
-         amount_cents, description, merchant_name, status, category, category_kind, notes
-       )
-       VALUES ($1,$2,$3::date,$3::date,$4,$5,$6,'pending_categorization',NULL,NULL,$7)
-       RETURNING id::text`,
-      [
-        bankAccountId,
-        input.operatingCompanyId,
-        bill.due_date,
-        Math.abs(bill.amount_cents),
-        `Insurance dispersal ${input.policyNumber} #${String(bill.sequence).padStart(2, "0")}`,
-        input.insurerName,
-        // ACCT-F6284 — banking.bank_transactions.notes is rendered verbatim in
-        // BankTransactionAttachmentsNotesModal.tsx ({tx.notes}) and string-matched by several
-        // BankingTransactionsDesignView.tsx filters; a serialized object here both displays raw
-        // JSON to the user and silently breaks those substring checks. policy_id/policy_number/
-        // sequence/due_date are all already columns or derivable from the linked bill this
-        // transaction seeds; idempotency_key is stored on the bill's own qbo_idempotency_key.
-        `Insurance wizard seed transaction — policy ${input.policyNumber}, installment ${bill.sequence}`,
-      ]
-    );
-    const txnId = txnRes.rows[0]?.id;
-    if (!txnId) throw new Error("insurance_seed_transaction_insert_failed");
 
     const billRes = await client.query<{ id: string }>(
       // LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — vendorId is already a resolved, entity-scoped
@@ -158,10 +119,9 @@ async function persistBillsOnClient(
         Math.abs(bill.amount_cents),
         Math.abs(bill.amount_cents) / 100,
         // ACCT-F6284 — plain sentence, not a serialized object, in this free-text memo column;
-        // qbo_idempotency_key (bound below) already carries idempotencyKey losslessly and
-        // category_kind (set on the linked bank_transactions row) already carries ps_category/
-        // ps_item.
-        `Insurance wizard bill — policy ${input.policyNumber}, installment ${bill.sequence} (${bill.phase})`,
+        // qbo_idempotency_key (bound below) already carries idempotencyKey losslessly.
+        // ps_category/ps_item live on bill.ps_category / bill.ps_item from dispersal math.
+        `Insurance wizard bill — policy ${input.policyNumber}, installment ${bill.sequence} (${bill.phase}) · ${INSURANCE_PS_CATEGORY}::${bill.ps_item ?? "Insurance Premium"}`,
         idempotencyKey,
         input.userId,
         vendorIsSampleData,
@@ -179,26 +139,6 @@ async function persistBillsOnClient(
         input.operatingCompanyId,
         `${input.policyNumber}-INS-${String(bill.sequence).padStart(2, "0")}`,
         bill.memo,
-      ]
-    );
-
-    await client.query(
-      `UPDATE banking.bank_transactions
-       SET status = 'categorized', category = 'bill',
-           category_kind = $2, linked_entity_id = $3::uuid,
-           categorization_vendor_id = $4::uuid,
-           categorization_memo = $5, categorized_at = now(), updated_at = now()
-       WHERE id = $1 AND operating_company_id = $6::uuid`,
-      [
-        txnId,
-        `${INSURANCE_PS_CATEGORY}::${psItem}`,
-        billId,
-        vendorId,
-        // ACCT-F6284 — plain sentence, not a serialized object, in this free-text memo column;
-        // linked_entity_id (bound above) already carries billId losslessly and category_kind
-        // already carries INSURANCE_PS_CATEGORY/psItem.
-        `${INSURANCE_PS_CATEGORY} — ${psItem} (bill ${billId})`,
-        input.operatingCompanyId,
       ]
     );
 
