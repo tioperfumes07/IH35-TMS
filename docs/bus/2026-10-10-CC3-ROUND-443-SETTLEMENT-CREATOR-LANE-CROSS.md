@@ -55,3 +55,6 @@ The order also says: "One PR + one named guard per step, guard wired in scripts/
 ## 443.86 #1 + #2 — G5 deadhead + zip-center stops (Lead 02:38 UTC 10-12: items 1 and 2 are CC-3's)
 - `apps/backend/src/dispatch/mileage/**` (deadhead fill engine + Owner route) and `apps/backend/src/telematics/stop-gps-verification.service.ts` / `stops-geocode-backfill.routes.ts` (zip-center stop → GPS dwell, Owner route), with migration 202615640900 (deadhead method values) and two guards.
 - No amount, rate or pay miles change.
+
+## 443.95+ — selftest arms for guards listed by verify-guard-selftests-are-real (Lead: main ci last red)
+- CC-3 batch 1 (Lead 443.96 split): verify-b2-session-bypass-node-env-gate, verify-control-totals, verify-diesel-expense-fuel-dedupe, verify-driver-bill-settlement-link, verify-faro-purchase-day-feed-law, verify-fuel-expense-line-and-number-engine — refactor into exported pure checks + a real --selftest; normal-path rules unchanged.

@@ -93,6 +93,37 @@ const CHECKS = [
 
 const money = (n) => Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/** Pure: the verdict for one control given its live value — 'pass' (ties to the cent), 'empty_by_purge'
+ *  (live 0 inside an open purge window, for a control that allows it), or 'fail' (with the delta). */
+export function verdict(c, got, purgeOpen) {
+  const delta = Math.round((got - c.expect) * 100) / 100;
+  // AUTH-001 / Aug refeed: settlement HEADERS for 5804–5815 can remint with net_pay=0 before
+  // pay lines land. Inside the purge window, a live sum of 0 is EMPTY BY PURGE whether or not
+  // those headers exist — requiring zero settlement rows made the control unsatisfiable the
+  // moment any reminted shell appeared, which is not a real money variance.
+  if (c.emptyByPurgeWhenNoRows && Math.abs(delta) >= 0.005 && got === 0 && purgeOpen) return { kind: 'empty_by_purge', delta };
+  if (Math.abs(delta) < 0.005) return { kind: 'pass', delta };
+  return { kind: 'fail', delta };
+}
+
+if (process.argv.includes('--selftest')) {
+  const settlement = CHECKS[0];
+  const count = CHECKS[1];
+  const cases = [
+    ['a control that ties to the cent passes', verdict(settlement, 21743.54, false).kind === 'pass'],
+    ['a half-cent float wobble still ties', verdict(settlement, 21743.544, false).kind === 'pass'],
+    ['a one-cent variance fails with its delta', verdict(settlement, 21743.55, false).kind === 'fail' && verdict(settlement, 21743.55, false).delta === 0.01],
+    ['live 0 inside an open purge window is EMPTY BY PURGE', verdict(settlement, 0, true).kind === 'empty_by_purge'],
+    ['live 0 with the purge window closed fails', verdict(settlement, 0, false).kind === 'fail'],
+    ['a count control (no purge allowance) at 0 passes', verdict(count, 0, true).kind === 'pass'],
+    ['a count control with violations fails even inside the window', verdict(count, 3, true).kind === 'fail'],
+  ];
+  for (const [n, p] of cases) console.log(`  ${p ? '✓' : '✗'} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 async function columnsExist(client, refs) {
   for (const ref of refs) {
     const [schema, table, column] = ref.split('.');
@@ -154,17 +185,14 @@ try {
       console.log(`        query error: ${e.message}`);
       continue;
     }
-    const delta = Math.round((got - c.expect) * 100) / 100;
-    // AUTH-001 / Aug refeed: settlement HEADERS for 5804–5815 can remint with net_pay=0 before
-    // pay lines land. Inside the purge window, a live sum of 0 is EMPTY BY PURGE whether or not
-    // those headers exist — requiring zero settlement rows made the control unsatisfiable the
-    // moment any reminted shell appeared, which is not a real money variance.
-    if (c.emptyByPurgeWhenNoRows && Math.abs(delta) >= 0.005 && got === 0 && purgeWindowFor(LABEL).open) {
+    const v = verdict(c, got, purgeWindowFor(LABEL).open);
+    const delta = v.delta;
+    if (v.kind === 'empty_by_purge') {
       emptyByPurge.push(c.name);
       console.log(`  EMPTY BY PURGE  ${c.name} — live sum 0 inside purge window (${c.emptyByPurgeWhenNoRows}); named skip, not a pass.`);
       continue;
     }
-    if (Math.abs(delta) < 0.005) {
+    if (v.kind === 'pass') {
       console.log(`  PASS  ${c.name} = ${money(got)}`);
     } else {
       failures++;
