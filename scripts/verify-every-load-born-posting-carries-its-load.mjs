@@ -11,7 +11,7 @@
  *            statement explains with "NULL by design" (a posting whose source has no load: recurring template,
  *            period close, reconciliation variance). A poster that does not name the column is the defect —
  *            it would leave a load-born posting unstamped.
- * LIVE (direct endpoint, unscoped, read-only):
+ * LIVE (USMCA plus NULL-company violations, read-only):
  *   RULE 2 — every posting created since 202615350500 applied carries exactly the load its resolver names
  *            (stamp = accounting.posting_source_load_id(type, id, line, reversal_of)). Ceiling 0. This proves the
  *            writers, not the history: pre-existing rows are CC-3's provable backfill (363-CC3-A).
@@ -36,6 +36,7 @@ export const REQUIRES_LIVE_DB = "the load stamp is live ledger lineage — fails
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-every-load-born-posting-carries-its-load";
 const MIGRATION = "202615350500_journal_entry_postings_load_id_stamp.sql";
+const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const INSERT_RE = /INSERT\s+INTO\s+accounting\.journal_entry_postings\b/gi;
 
 /** The SQL statement text (template literal) that starts at each posting INSERT in `src`. */
@@ -195,15 +196,18 @@ export function run() {
   return { failures, inserts, resolver: resolver?.rel };
 }
 
-export function liveFailures({ mismatched }) {
-  return mismatched.map((r) => `RULE 2 posting ${r.id} (${r.source_transaction_type} ${r.source_transaction_id}) stamp=${r.load_id ?? "NULL"} source says ${r.expected ?? "NULL"}`);
+export function liveFailures({ mismatched, null_company = 0 }) {
+  return [
+    ...(null_company > 0 ? [`RULE 2 ${null_company} posting(s) have NULL operating_company_id`] : []),
+    ...mismatched.map((r) => `RULE 2 posting ${r.id} (${r.source_transaction_type} ${r.source_transaction_id}) stamp=${r.load_id ?? "NULL"} source says ${r.expected ?? "NULL"}`),
+  ];
 }
 
 export function liveErrorFailures(err) {
   return [`RULE 2 the live check could not run — ${err?.code ? `SQLSTATE ${err.code} ` : ""}${err?.where ? `(${err.where}) ` : ""}${err?.message ?? err}`];
 }
 
-async function measure(client) {
+export async function measure(client) {
   await client.query("BEGIN READ ONLY");
   await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
   const applied = (await client.query(`SELECT applied_at FROM _system._schema_migrations WHERE filename = $1`, [MIGRATION])).rows[0];
@@ -214,7 +218,7 @@ async function measure(client) {
       -- for it in accounting.reclassify_batch_lines (from_load_id on the leg that takes the line off its old load,
       -- to_load_id on the leg that puts it on the new one; the undo entry the other way round). Every other posting is
       -- expected to carry what its source resolves to. Same strictness, read from the engine's own record.
-      SELECT jep.id, jep.source_transaction_type, jep.source_transaction_id, jep.load_id, jep.created_at,
+      SELECT jep.id, jep.operating_company_id, jep.source_transaction_type, jep.source_transaction_id, jep.load_id, jep.created_at,
              COALESCE(rc.expected_load, accounting.posting_source_load_id(jep.source_transaction_type, jep.source_transaction_id, jep.source_transaction_line_id, jep.reversal_of_line_id), sx.line_load, fx.doc_load) AS expected
         FROM accounting.journal_entry_postings jep
         -- 443.110 G8 (RULE 4): a factoring lifecycle event is sourced by its factoring advance and carries the advance's
@@ -242,7 +246,8 @@ async function measure(client) {
           SELECT jep.load_id AS line_load
            WHERE jep.source_transaction_type IN ('driver_settlement', 'settlement') AND jep.load_id IS NOT NULL
              AND EXISTS (SELECT 1 FROM driver_finance.settlement_lines sl
-                          WHERE sl.settlement_id::text = jep.source_transaction_id AND sl.load_id = jep.load_id)
+                          WHERE sl.operating_company_id = jep.operating_company_id
+                            AND sl.settlement_id::text = jep.source_transaction_id AND sl.load_id = jep.load_id)
         ) sx ON true
         LEFT JOIN LATERAL (
           SELECT CASE
@@ -251,19 +256,21 @@ async function measure(client) {
                    ELSE CASE WHEN jep.debit_or_credit = bl.debit_or_credit THEN bl.from_load_id ELSE bl.to_load_id END
                  END AS expected_load
             FROM accounting.reclassify_batch_lines bl
-           WHERE bl.to_load_id IS NOT NULL
+           WHERE bl.operating_company_id = jep.operating_company_id AND bl.to_load_id IS NOT NULL
              AND (bl.reclass_journal_entry_id = jep.journal_entry_uuid OR bl.undo_journal_entry_id = jep.journal_entry_uuid)
              AND bl.source_transaction_id = jep.source_transaction_id
              AND bl.amount_cents = jep.amount_cents
            LIMIT 1
-        ) rc ON true)
+        ) rc ON true
+       WHERE (jep.operating_company_id = $2::uuid OR jep.operating_company_id IS NULL))
     SELECT
+      (SELECT count(*) FROM p WHERE operating_company_id IS NULL)::int AS null_company,
       (SELECT count(*) FROM p WHERE expected IS NOT NULL)::int                         AS load_born,
       (SELECT count(*) FROM p WHERE expected IS NOT NULL AND load_id IS NOT NULL)::int AS stamped,
       (SELECT count(*) FROM p WHERE created_at >= $1)::int                             AS since,
       (SELECT coalesce(json_agg(x), '[]') FROM (
          SELECT id, source_transaction_type, source_transaction_id, load_id, expected FROM p
-          WHERE created_at >= $1 AND load_id IS DISTINCT FROM expected LIMIT 50) x)    AS mismatched`, [applied.applied_at])).rows[0];
+          WHERE created_at >= $1 AND load_id IS DISTINCT FROM expected LIMIT 50) x)    AS mismatched`, [applied.applied_at, USMCA])).rows[0];
   await client.query("ROLLBACK");
   return { ...rows, appliedAt: applied.applied_at };
 }
@@ -288,6 +295,7 @@ if (isMain) {
       ["a comment that mentions the INSERT is not an insert", f("// Nine services INSERT INTO accounting.journal_entry_postings directly.\n *   INSERT INTO accounting.journal_entry_postings x\n" + ok).length === 0],
       ["a real insert after a comment is still checked", f("// note\n" + missing).some((x) => x.startsWith("RULE 1"))],
       ["live clean passes", liveFailures({ mismatched: [] }).length === 0],
+      ["NULL-company money fails even without a recent mismatch", liveFailures({ mismatched: [], null_company: 1 }).length === 1],
       // RULE 3 plants the multi-row case: 202615520300's Relay fallback, keyed on the non-unique relay id.
       ["resolver lookup on a non-unique key fails (the 443.64 crash)", r3(relayOld).some((x) => x.startsWith("RULE 3") && x.includes("relay_fuel_transaction_id"))],
       ["resolver lookup on a non-unique key that aggregates passes", r3(relayNew).length === 0],
@@ -337,7 +345,7 @@ if (isMain) {
     let lf = [];
     try {
       m = await measure(client);
-      lf = m ? liveFailures({ mismatched: m.mismatched }) : [];
+      lf = m ? liveFailures(m) : [];
     } catch (err) {
       await client.query("ROLLBACK").catch(() => {});
       lf = liveErrorFailures(err);
