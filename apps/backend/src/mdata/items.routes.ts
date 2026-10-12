@@ -54,19 +54,21 @@ export async function registerMdataItemsRoutes(app: FastifyInstance) {
       const filters = ["operating_company_id = $1::uuid"];
       if (typeof active === "boolean") {
         values.push(active);
-        filters.push(`active = $${values.length}`);
+        filters.push(`(deactivated_at IS NULL) = $${values.length}`);
       }
       if (search) {
         values.push(`%${search}%`);
         const idx = values.length;
-        filters.push(`(name ILIKE $${idx} OR COALESCE(sku, '') ILIKE $${idx})`);
+        filters.push(`(item_name ILIKE $${idx} OR COALESCE(item_code, '') ILIKE $${idx})`);
       }
       values.push(limit, offset);
       const whereClause = `WHERE ${filters.join(" AND ")}`;
       const res = await client.query(
         `
-          SELECT id, operating_company_id, qbo_id, name, sku, item_type, unit_price_cents, active, mirrored_at, created_at, updated_at
-          FROM mdata.qbo_items
+          SELECT id, operating_company_id, qbo_item_id AS qbo_id, item_name AS name, item_code AS sku,
+                 item_type, unit_price_cents, (deactivated_at IS NULL) AS active,
+                 updated_at AS mirrored_at, created_at, updated_at
+          FROM catalogs.items
           ${whereClause}
           ORDER BY updated_at DESC
           LIMIT $${values.length - 1}
@@ -95,8 +97,10 @@ export async function registerMdataItemsRoutes(app: FastifyInstance) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const res = await client.query(
         `
-          SELECT id, operating_company_id, qbo_id, name, sku, item_type, unit_price_cents, active, mirrored_at, created_at, updated_at
-          FROM mdata.qbo_items
+          SELECT id, operating_company_id, qbo_item_id AS qbo_id, item_name AS name, item_code AS sku,
+                 item_type, unit_price_cents, (deactivated_at IS NULL) AS active,
+                 updated_at AS mirrored_at, created_at, updated_at
+          FROM catalogs.items
           WHERE id = $1::uuid
             AND operating_company_id = $2::uuid
           LIMIT 1
@@ -128,12 +132,17 @@ export async function registerMdataItemsRoutes(app: FastifyInstance) {
       values.push(value);
       setParts.push(`${column} = $${values.length}`);
     };
-    if ("name" in body) add("name", body.name ?? null);
-    if ("sku" in body) add("sku", body.sku ?? null);
+    if ("name" in body) add("item_name", body.name ?? null);
+    if ("sku" in body) add("item_code", body.sku ?? null);
     if ("item_type" in body) add("item_type", body.item_type ?? null);
     if ("unit_price_cents" in body) add("unit_price_cents", body.unit_price_cents ?? null);
-    if ("active" in body) add("active", body.active ?? null);
-    setParts.push("mirrored_at = now()");
+    if ("active" in body) {
+      if (body.active === false) {
+        setParts.push("deactivated_at = now()");
+      } else if (body.active === true) {
+        setParts.push("deactivated_at = NULL");
+      }
+    }
     setParts.push("updated_at = now()");
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
@@ -143,11 +152,13 @@ export async function registerMdataItemsRoutes(app: FastifyInstance) {
       values.push(parsedParams.data.id, resolvedOperatingCompanyId);
       const res = await client.query(
         `
-          UPDATE mdata.qbo_items
+          UPDATE catalogs.items
           SET ${setParts.join(", ")}
           WHERE id = $${values.length - 1}::uuid
             AND operating_company_id = $${values.length}::uuid
-          RETURNING id, operating_company_id, qbo_id, name, sku, item_type, unit_price_cents, active, mirrored_at, created_at, updated_at
+          RETURNING id, operating_company_id, qbo_item_id AS qbo_id, item_name AS name, item_code AS sku,
+                    item_type, unit_price_cents, (deactivated_at IS NULL) AS active,
+                    updated_at AS mirrored_at, created_at, updated_at
         `,
         values
       );
