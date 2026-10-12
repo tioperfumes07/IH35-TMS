@@ -22,6 +22,14 @@
  * user-facing create route and nothing else. A guard that only checked "the field is required
  * somewhere" would happily pass a change that broke the importer.
  *
+ * ACCT-F4431380 (Lead 443.137 item 9e) — OLD: the scope boundary asserted the QBO clone writer
+ * (qbo-sync/items-write-sql.ts) never acquired the income-account requirement; once that file was deleted
+ * the check read null and was SKIPPED (vacuous pass). NEW: the boundary asserts the QBO clone writer does
+ * not exist at all — a re-created QBO -> catalogs.items writer fails here — and the create-route checks
+ * are unchanged. WHY: QuickBooks is a read-only archive; the native write was removed and the reconciler
+ * refuses by name. With no QBO item import, the user-facing create route is the ONLY item writer, so the
+ * requirement there is now total.
+ *
  * Run:  node scripts/verify-item-income-account-required.mjs [--selftest]
  */
 import fs from "node:fs";
@@ -40,7 +48,7 @@ const read = (rel) => {
 /** Comments stripped: this fix ships with a comment naming every token checked below. */
 const strip = (s) => s.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
-export function collectProblems(routesSrc, qboSrc) {
+export function collectProblems(routesSrc, qboWriterExists) {
   const problems = [];
   if (routesSrc == null) return [`missing ${ROUTES}`];
   const r = strip(routesSrc);
@@ -74,12 +82,13 @@ export function collectProblems(routesSrc, qboSrc) {
     }
   }
 
-  // SCOPE BOUNDARY: the QBO clone writer must stay unconstrained.
-  if (qboSrc != null && /INCOME_ACCOUNT_REQUIRED_TYPES|default_income_account_id is required/.test(strip(qboSrc))) {
+  // SCOPE BOUNDARY (ACCT-F4431380): the QBO clone writer must stay GONE. If it comes back it would create
+  // catalogs.items rows that bypass this requirement entirely (and write a native table from QuickBooks).
+  if (qboWriterExists) {
     problems.push(
-      `${QBO_WRITER} has acquired the income-account requirement. QBO clones legitimately carry no ` +
-        `local account mapping — enforcing it there BREAKS THE IMPORT. The requirement belongs to the ` +
-        `user-facing create route only.`
+      `${QBO_WRITER} exists again. The QBO item clone writer was removed by ACCT-F4431380 (QuickBooks is a ` +
+        `read-only archive); a re-created writer would insert catalogs.items rows that bypass the ` +
+        `income-account requirement on the create route.`
     );
   }
   return problems;
@@ -87,7 +96,7 @@ export function collectProblems(routesSrc, qboSrc) {
 
 if (process.argv.includes("--selftest")) {
   const routes = read(ROUTES);
-  const qbo = read(QBO_WRITER);
+  const qbo = read(QBO_WRITER) != null;
   const baseline = collectProblems(routes, qbo);
   if (baseline.length) {
     console.error(`${LABEL} SELFTEST FAIL — clean tree is not green:`);
@@ -115,9 +124,9 @@ if (process.argv.includes("--selftest")) {
     ],
     ["superRefine no longer tests the field", routes.replace(/!b\.default_income_account_id/, "false"), qbo],
     [
-      "requirement leaked into the QBO clone writer (would break the import)",
+      "QBO clone writer re-created (would bypass the requirement)",
       routes,
-      (qbo ?? "") + "\nif (INCOME_ACCOUNT_REQUIRED_TYPES.has(t)) throw new Error('x');",
+      true,
     ],
   ];
   const inert = [];
@@ -133,11 +142,11 @@ if (process.argv.includes("--selftest")) {
     for (const p of inert) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST OK — ${mutations.length}/${mutations.length} mutations detected (incl. the scope-boundary leak that would break the QBO import)`);
+  console.log(`${LABEL} SELFTEST OK — ${mutations.length}/${mutations.length} mutations detected (incl. a re-created QBO item clone writer)`);
   process.exit(0);
 }
 
-const problems = collectProblems(read(ROUTES), read(QBO_WRITER));
+const problems = collectProblems(read(ROUTES), read(QBO_WRITER) != null);
 if (problems.length) {
   console.error(`${LABEL} FAIL — ${problems.length} issue(s):`);
   for (const p of problems) console.error("  ✗ " + p);
@@ -145,5 +154,5 @@ if (problems.length) {
 }
 console.log(
   `${LABEL} OK — Service/Inventory/NonInventory require an income account on create, Bundle/Discount/` +
-    `Charge are deliberately exempt, and the QBO clone writer is unconstrained.`
+    `Charge are deliberately exempt, and no QBO item clone writer exists to bypass it.`
 );

@@ -19,7 +19,7 @@ type AcctRow = {
 };
 
 describeIntegration("chart-of-accounts reconciler — entity isolation (lucia-bypass write path)", () => {
-  it("a TRANSP reconcile does not touch USMCA catalogs.accounts rows, and inserts under the correct entity", async () => {
+  it("a TRANSP reconcile is REFUSED BY NAME: USMCA rows untouched and no native account materialized from QBO", async () => {
     const transp = await ensureIntegrationPrerequisites();
     const { companyId: usmca } = await ensureSecondEntityLoad();
     expect(usmca).not.toBe(transp);
@@ -47,7 +47,16 @@ describeIntegration("chart-of-accounts reconciler — entity isolation (lucia-by
       );
     });
 
-    await reconcileChartOfAccounts(transp);
+    // ACCT-F4431380 (Lead 443.137 item 9e; QuickBooks is a READ-ONLY ARCHIVE).
+    //   OLD: the reconcile ran and this test asserted it materialized the TRANSP mirror row into
+    //        catalogs.accounts under TRANSP (createMissingFromMirror) without touching USMCA.
+    //   NEW: the reconciler refuses by name and writes NOTHING native — for either entity. The entity-
+    //        isolation half (USMCA sentinel untouched) is kept; the "materialized under TRANSP" half is
+    //        inverted, because materializing a native account from QBO is exactly what is now forbidden.
+    await expect(reconcileChartOfAccounts(transp)).rejects.toMatchObject({
+      code: "QBO_NATIVE_WRITE_REFUSED",
+      nativeTables: ["catalogs.accounts"],
+    });
 
     await withLuciaBypass(async (client) => {
       // 1) USMCA sentinel UNTOUCHED — still 'synced' (markLocalOnlyDrift was TRANSP-scoped).
@@ -59,17 +68,19 @@ describeIntegration("chart-of-accounts reconciler — entity isolation (lucia-by
       expect(sentinel.rows).toHaveLength(1);
       expect(sentinel.rows[0]?.qbo_sync_status).toBe("synced");
 
-      // 2) createMissingFromMirror materialized the TRANSP mirror row under TRANSP — NOT USMCA.
+      // 2) NOTHING was materialized from the mirror — no catalogs.accounts row carries this qbo_id in any
+      //    entity (the mirror row itself is kept: QuickBooks data stays in the archive).
       const created = await client.query<AcctRow>(
         `SELECT id, operating_company_id, qbo_sync_status, account_name
            FROM catalogs.accounts WHERE qbo_account_id = $1`,
         [transpQboId]
       );
-      expect(created.rows.length).toBeGreaterThanOrEqual(1);
-      for (const row of created.rows) {
-        // No row for this qbo_id may be attributed to USMCA, and none may be NULL-entity.
-        expect(row.operating_company_id).toBe(transp);
-      }
+      expect(created.rows).toHaveLength(0);
+      const mirror = await client.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM mdata.qbo_accounts WHERE operating_company_id = $1::uuid AND qbo_id = $2`,
+        [transp, transpQboId]
+      );
+      expect(mirror.rows[0]?.n).toBe(1);
     });
   });
 });

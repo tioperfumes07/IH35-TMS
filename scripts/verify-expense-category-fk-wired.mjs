@@ -94,13 +94,17 @@ function checkWriters(routes, puller, twoSection, failures) {
     failures.push(`${EXPENSES_ROUTES}: the category write must be column-gated`);
   }
 
-  if (!/expense_category_uuid/.test(puller)) {
-    failures.push(`${PURCHASES_PULLER}: QBO expense projection must stamp expense_category_uuid when it is knowable`);
+  // ACCT-F4431380 (Lead 443.137 item 9e) — OLD: the QBO expense projection had to stamp expense_category_uuid
+  //   only when exactly one active category bound the account (WHEN ecm.matches = 1).
+  //   NEW: the QBO purchases puller writes NO expense line at all — it must contain no write into
+  //   accounting.expenses / expense_lines, and projectPurchasesToExpenses must refuse by name
+  //   (refuseQboNativeWrite). So no QBO path can stamp an unvalidated category. TMS writers above keep the checks.
+  //   WHY: QuickBooks is a read-only archive; the projection/write was removed and its entry point refuses by name.
+  if (/(?:INSERT\s+INTO|UPDATE)\s+accounting\.expense(?:s|_lines)\b/i.test(puller)) {
+    failures.push(`${PURCHASES_PULLER}: the QBO purchases puller must not write accounting.expenses / expense_lines (QuickBooks is a read-only archive)`);
   }
-  if (!/WHEN ecm\.matches = 1/.test(puller)) {
-    failures.push(
-      `${PURCHASES_PULLER}: the projection may only stamp a category when exactly one active category binds the account`
-    );
+  if (!/export async function projectPurchasesToExpenses[\s\S]{0,400}refuseQboNativeWrite\(/.test(puller)) {
+    failures.push(`${PURCHASES_PULLER}: projectPurchasesToExpenses must refuse by name (refuseQboNativeWrite)`);
   }
 
   if (!/resolveExpenseCategoryById\(/.test(twoSection)) {
@@ -139,7 +143,8 @@ function selftest() {
       return { categoryNotInEntityCatalog: true as const };
       await columnExists(client, "accounting", "expense_lines", "expense_category_uuid")
     `,
-    puller: `expense_category_uuid, CASE WHEN ecm.matches = 1 THEN ecm.id END`,
+    // ACCT-F4431380 (9e): the good puller fixture is the refusing shape (no native expense write).
+    puller: `export async function projectPurchasesToExpenses(id: string) { return refuseQboNativeWrite("x", ["accounting.expenses"], id); }`,
     twoSection: `await resolveExpenseCategoryById(client, {})`,
   };
 
@@ -167,9 +172,21 @@ function selftest() {
     process.exit(1);
   }
 
-  const guessingProjection = { ...good, puller: "expense_category_uuid, ecm.id" };
-  if (!collectFailures(guessingProjection).some((f) => f.includes("exactly one active category"))) {
-    console.error(`${LABEL} SELFTEST FAILED — an ambiguous projection stamp was not caught`);
+  // ACCT-F4431380 (9e) — OLD plant: an ambiguous category stamp in the projection. NEW plants: a re-added
+  // native expense_lines write in the REAL puller, and the REAL puller with its refusal reverted.
+  const realPuller = fs.readFileSync(path.join(ROOT, PURCHASES_PULLER), "utf8");
+  if (collectFailures({ ...good, puller: realPuller }).length) {
+    console.error(`${LABEL} SELFTEST FAILED — the real refusing puller was rejected`);
+    process.exit(1);
+  }
+  const nativeWrite = { ...good, puller: realPuller + "\nconst P = `INSERT INTO accounting.expense_lines (expense_category_uuid) VALUES ($1)`;\n" };
+  if (!collectFailures(nativeWrite).some((f) => f.includes("must not write accounting.expenses"))) {
+    console.error(`${LABEL} SELFTEST FAILED — a native expense_lines write in the QBO puller was not caught`);
+    process.exit(1);
+  }
+  const noRefusal = { ...good, puller: realPuller.split("refuseQboNativeWrite(").join("noop(") };
+  if (!collectFailures(noRefusal).some((f) => f.includes("refuse by name"))) {
+    console.error(`${LABEL} SELFTEST FAILED — a reverted refusal was not caught`);
     process.exit(1);
   }
 

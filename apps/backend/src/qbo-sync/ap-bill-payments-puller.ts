@@ -1,3 +1,8 @@
+// ACCT-F4431380 (Lead 443.137 item 9e, owner ruling: QuickBooks is a READ-ONLY ARCHIVE): the Stage 2
+// projection described below is REMOVED. Its entry point now throws QboNativeWriteRefusedError
+// (QBO_NATIVE_WRITE_REFUSED); this file writes ONLY its mirror (mdata.qbo_*) and qbo.sync_runs.
+// Guard: scripts/verify-qbo-paths-never-write-native-tables.mjs. The Stage 2 text is kept as history.
+//
 // C6-MONEY-JE-EXEMPT: this file's own header (below) already states it — "NO GL/journal posting is
 // performed here... GL stays QBO's job." QBO is the system-of-record for these rows; the TMS side
 // is a read-only mirror/subledger projection, never a live TMS money event needing its own JE.
@@ -33,12 +38,12 @@ import { withLuciaBypass } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { AP_BILL_PAYMENTS_MIRROR_SYNC_KIND } from "./ap-bill-payments-sync-kind.js";
 import { recordFlagDisabledMirrorSyncRun } from "./record-flag-disabled-sync-run.js";
+import { refuseQboNativeWrite } from "./qbo-native-write-refused.js";
 
 // Default-OFF financial flags. SINGLE SOURCE OF TRUTH is the DB feature flag resolved PER-ENTITY via
 // isEnabled() (lib.feature_flag_overrides keyed on operating_company_id) — NOT a process.env var.
 // isEnabled() returns false when the flag row/override is absent, so an unregistered flag stays SAFE-OFF.
 const AP_BILL_PAYMENT_MIRROR_PULL_FLAG = "QBO_AP_BILL_PAYMENT_MIRROR_PULL_ENABLED";
-const AP_BILL_PAYMENTS_PROJECTION_FLAG = "QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED";
 
 export { AP_BILL_PAYMENTS_MIRROR_SYNC_KIND };
 
@@ -315,158 +320,16 @@ export async function pullApBillPaymentsFromQbo(operatingCompanyId: string): Pro
 }
 
 /**
- * Stage 2 — fan the QBO A/P payment mirror out into accounting.bill_payments (source_system='qbo').
- * Set-based, idempotent upsert on uq_bill_payments_company_qbo_bp_bill
- * (operating_company_id, qbo_bill_payment_id, bill_id). Each mirror BillPayment's Line[].LinkedTxn(Bill)
- * becomes one allocation row; multiple lines to the SAME bill inside one payment are summed so the
- * ON CONFLICT target is hit at most once per statement. Allocations whose Bill is not present in
- * accounting.bills (qbo_bill_id match) are SKIPPED and counted (paymentsUnlinked) — never invented, and
- * the mirror row is retained so a later bills pull can resolve them. NO GL posting. Non-positive
- * allocations are skipped (accounting.bill_payments enforces amount_cents > 0). PayType maps to
- * payment_method; from_bank_account_id is intentionally left NULL for now. No-op unless
- * QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED is ON for this entity.
+ * ACCT-F4431380 (Lead 443.137 item 9e) — REFUSED BY NAME. This formerly projected mdata.qbo_ap_bill_payments into accounting.bill_payments.
+ * QuickBooks is a read-only archive: a QBO path writes only its mirror table, never a native money/master
+ * table. Throws QboNativeWriteRefusedError (code QBO_NATIVE_WRITE_REFUSED) instead of returning a
+ * "0 rows projected" result a caller could mistake for success. The mirror (mdata.qbo_ap_bill_payments) is kept and still
+ * filled by the pull stage; native records are created only through the TMS service layer.
  */
 export async function projectApBillPaymentsToLedger(operatingCompanyId: string): Promise<ApBillPaymentsProjectResult> {
-  const projectedAt = new Date().toISOString();
-
-  let enabled = false;
-  let rowsProjected = 0;
-  let paymentsUnlinked = 0;
-
-  await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    enabled = await isEnabled(client, AP_BILL_PAYMENTS_PROJECTION_FLAG, {
-      operating_company_id: operatingCompanyId,
-    });
-    if (!enabled) return;
-
-    // Explode payload -> one (payment, bill) allocation per LinkedTxn(Bill); sum duplicate lines that
-    // reference the same bill inside one payment so ON CONFLICT fires at most once per key per statement.
-    const projectRes = await client.query(
-      `
-        WITH exploded AS (
-          SELECT
-            m.operating_company_id,
-            m.qbo_id                                    AS qbo_bill_payment_id,
-            m.qbo_sync_token,
-            m.vendor_qbo_id,
-            COALESCE(m.txn_date, CURRENT_DATE)          AS payment_date,
-            m.pay_type,
-            m.private_note,
-            (lt->>'TxnId')                              AS linked_bill_qbo_id,
-            (lt->>'TxnType')                            AS linked_txn_type,
-            ROUND(COALESCE((line->>'Amount')::numeric, 0) * 100)::bigint AS line_amount_cents
-          FROM mdata.qbo_ap_bill_payments m
-          CROSS JOIN LATERAL jsonb_array_elements(COALESCE(m.payload_json->'Line', '[]'::jsonb)) AS line
-          CROSS JOIN LATERAL jsonb_array_elements(COALESCE(line->'LinkedTxn', '[]'::jsonb)) AS lt
-          WHERE m.operating_company_id = $1::uuid
-        ),
-        agg AS (
-          SELECT
-            operating_company_id,
-            qbo_bill_payment_id,
-            MAX(qbo_sync_token)  AS qbo_sync_token,
-            MAX(vendor_qbo_id)   AS vendor_qbo_id,
-            MAX(payment_date)    AS payment_date,
-            MAX(pay_type)        AS pay_type,
-            MAX(private_note)    AS private_note,
-            linked_bill_qbo_id,
-            SUM(line_amount_cents)::bigint AS amount_cents
-          FROM exploded
-          WHERE linked_txn_type = 'Bill'
-            AND linked_bill_qbo_id IS NOT NULL
-            AND line_amount_cents > 0
-          GROUP BY operating_company_id, qbo_bill_payment_id, linked_bill_qbo_id
-        )
-        INSERT INTO accounting.bill_payments (
-          operating_company_id,
-          bill_id,
-          vendor_id,
-          payment_date,
-          amount_cents,
-          amount,
-          payment_method,
-          memo,
-          qbo_bill_payment_id,
-          qbo_sync_token,
-          source_system,
-          status,
-          last_qbo_synced_at,
-          created_at,
-          updated_at
-        )
-        SELECT
-          a.operating_company_id,
-          b.id,
-          a.vendor_qbo_id,
-          a.payment_date,
-          a.amount_cents,
-          (a.amount_cents / 100.0),
-          CASE a.pay_type
-            WHEN 'Check'      THEN 'check'
-            WHEN 'CreditCard' THEN 'credit_card'
-            WHEN 'Cash'       THEN 'cash'
-            ELSE 'check'
-          END,
-          a.private_note,
-          a.qbo_bill_payment_id,
-          a.qbo_sync_token,
-          'qbo',
-          'posted',
-          now(),
-          now(),
-          now()
-        FROM agg a
-        JOIN accounting.bills b
-          ON b.operating_company_id = a.operating_company_id
-         AND b.qbo_bill_id = a.linked_bill_qbo_id
-        ON CONFLICT (operating_company_id, qbo_bill_payment_id, bill_id) WHERE qbo_bill_payment_id IS NOT NULL
-        DO UPDATE SET
-          vendor_id = EXCLUDED.vendor_id,
-          payment_date = EXCLUDED.payment_date,
-          amount_cents = EXCLUDED.amount_cents,
-          amount = EXCLUDED.amount,
-          payment_method = EXCLUDED.payment_method,
-          memo = EXCLUDED.memo,
-          qbo_sync_token = EXCLUDED.qbo_sync_token,
-          last_qbo_synced_at = now(),
-          updated_at = now()
-        WHERE accounting.bill_payments.source_system = 'qbo'
-      `,
-      [operatingCompanyId]
-    );
-    rowsProjected = projectRes.rowCount ?? 0;
-
-    // Unlinked metric: Bill allocations whose bill is not (yet) in accounting.bills — kept in the mirror,
-    // never invented. Read-only count for observability.
-    const unlinkedRes = await client.query<{ n: string }>(
-      `
-        WITH exploded AS (
-          SELECT
-            m.operating_company_id,
-            (lt->>'TxnId')   AS linked_bill_qbo_id,
-            (lt->>'TxnType') AS linked_txn_type,
-            ROUND(COALESCE((line->>'Amount')::numeric, 0) * 100)::bigint AS line_amount_cents
-          FROM mdata.qbo_ap_bill_payments m
-          CROSS JOIN LATERAL jsonb_array_elements(COALESCE(m.payload_json->'Line', '[]'::jsonb)) AS line
-          CROSS JOIN LATERAL jsonb_array_elements(COALESCE(line->'LinkedTxn', '[]'::jsonb)) AS lt
-          WHERE m.operating_company_id = $1::uuid
-        )
-        SELECT count(*)::text AS n
-        FROM exploded e
-        WHERE e.linked_txn_type = 'Bill'
-          AND e.linked_bill_qbo_id IS NOT NULL
-          AND e.line_amount_cents > 0
-          AND NOT EXISTS (
-            SELECT 1 FROM accounting.bills b
-            WHERE b.operating_company_id = e.operating_company_id
-              AND b.qbo_bill_id = e.linked_bill_qbo_id
-          )
-      `,
-      [operatingCompanyId]
-    );
-    paymentsUnlinked = Number(unlinkedRes.rows[0]?.n ?? 0);
-  });
-
-  return { enabled, rowsProjected, paymentsUnlinked, projectedAt };
+  return refuseQboNativeWrite(
+    "qbo-sync/ap-bill-payments-puller#projectApBillPaymentsToLedger",
+    ["accounting.bill_payments"],
+    operatingCompanyId
+  );
 }

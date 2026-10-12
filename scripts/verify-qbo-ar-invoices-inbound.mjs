@@ -22,11 +22,11 @@ function read(p) {
   return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null;
 }
 
-function analyze() {
+function analyze(over = {}) {
   const failures = [];
-  const puller = read(PULLER);
+  const puller = over.puller ?? read(PULLER);
   const kind = read(KIND);
-  const scheduler = read(SCHEDULER);
+  const scheduler = over.scheduler ?? read(SCHEDULER);
   const migMirror = read(MIG_MIRROR);
   const migEnable = read(MIG_ENABLE);
 
@@ -55,43 +55,33 @@ function analyze() {
   if (!/export async function pullArInvoicesFromQbo/.test(puller)) failures.push("puller missing pullArInvoicesFromQbo");
   if (!/export async function projectArInvoicesToLedger/.test(puller)) failures.push("puller missing projectArInvoicesToLedger");
   if (!/qboPaginateEntity[\s\S]{0,80}"Invoice"/.test(puller)) failures.push("puller must paginate QBO entity Invoice");
-  if (!/INSERT\s+INTO\s+accounting\.invoices/.test(puller)) failures.push("projector must INSERT INTO accounting.invoices");
-  if (!/C6-MONEY-JE-EXEMPT:/.test(puller)) {
-    failures.push("projector INSERT must carry C6-MONEY-JE-EXEMPT (subledger-only; no TMS JE)");
+  // ACCT-F4431380 (Lead 443.137 item 9e) — OLD: the projector had to INSERT INTO accounting.invoices (+ lines)
+  //   with a C6 exemption, INNER JOIN mdata.customers, alias rules and INV- display_id minting.
+  //   NEW: the projector must REFUSE BY NAME (projectArInvoicesToLedger calls refuseQboNativeWrite) and the
+  //   puller must contain NO write into any accounting.* table; its only data write is the mdata.qbo_ar_invoices mirror.
+  //   WHY: QuickBooks is a read-only archive; the projection/write was removed and its entry point refuses by name.
+  if (!/export async function projectArInvoicesToLedger[\s\S]{0,400}refuseQboNativeWrite\(/.test(puller)) {
+    failures.push("projectArInvoicesToLedger must refuse by name (refuseQboNativeWrite) — never project or silently no-op");
   }
+  if (/(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+accounting\.(?!qbo_)[a-z_]+/i.test(puller)) {
+    failures.push("puller must not write any native accounting.* table (QuickBooks is a read-only archive)");
+  }
+  if (!/INSERT\s+INTO\s+mdata\.qbo_ar_invoices/.test(puller)) failures.push("puller must still upsert the mdata.qbo_ar_invoices mirror");
   if (/postSourceTransaction|createJournalEntry/.test(puller)) {
     failures.push("puller must not reference a GL poster — subledger-only (NO GL)");
   }
-  if (/INSERT\s+INTO\s+accounting\.invoices[\s\S]{0,500}amount_open_cents/i.test(puller)) {
-    failures.push("projector must NOT insert GENERATED amount_open_cents");
-  }
-  if (!/INNER JOIN mdata\.customers/.test(puller)) failures.push("projector must INNER JOIN mdata.customers (skip unresolved)");
-  // sql-read-targets binds the first alias for a table in a SQL string. Reusing `c` for
-  // mdata.customers AND later for the candidates CTE falsely flags cand columns as customer phantoms.
-  if (!/INNER JOIN mdata\.customers cust\b/.test(puller)) {
-    failures.push("projector must alias mdata.customers as cust (not c) for sql-read-targets");
-  }
-  if (!/FROM candidates cand\b/.test(puller)) {
-    failures.push("projector must alias candidates CTE as cand (not c) for sql-read-targets");
-  }
-  if (/INNER JOIN mdata\.customers c\b/.test(puller) || /FROM candidates c\b/.test(puller)) {
-    failures.push("projector must not reuse alias c for customers or candidates (sql-read-targets collision)");
-  }
-  if (!/INV-' \|\|/.test(puller)) failures.push("projector must mint INV-YYYY-NNNNN display_ids for new rows");
   if (!/QBO_AR_INVOICES_MIRROR_SYNC_KIND/.test(kind) || !/QBO_AR_INVOICES_PROJECTION_SYNC_KIND/.test(kind)) {
     failures.push("sync-kind constants missing");
   }
-  if (!/pullArInvoicesFromQbo/.test(scheduler) || !/projectArInvoicesToLedger/.test(scheduler)) {
-    failures.push("sync-scheduler must wire invoice pull + project steps");
+  // ACCT-F4431380 (Lead 443.137 item 9e) — OLD: scheduler wired ar_invoices_pull + ar_invoices_project, with
+  //   project ordered before ar_payments_project. NEW: only ar_invoices_pull is scheduled; the refused projector
+  //   must NOT be scheduled (it would record a refused step every tick). WHY: QuickBooks is a read-only archive;
+  //   the projection/write was removed and its entry point refuses by name.
+  if (!/pullArInvoicesFromQbo/.test(scheduler) || !/runStep\("ar_invoices_pull"/.test(scheduler)) {
+    failures.push("sync-scheduler must wire the ar_invoices_pull mirror step");
   }
-  if (!/ar_invoices_pull/.test(scheduler) || !/ar_invoices_project/.test(scheduler)) {
-    failures.push("sync-scheduler step names ar_invoices_pull/project required");
-  }
-  // Ordering: invoices project must appear before ar_payments_project
-  const invIdx = scheduler.indexOf('runStep("ar_invoices_project"');
-  const payIdx = scheduler.indexOf('runStep("ar_payments_project"');
-  if (invIdx < 0 || payIdx < 0 || invIdx > payIdx) {
-    failures.push("ar_invoices_project must be scheduled before ar_payments_project");
+  if (/projectArInvoicesToLedger|"ar_invoices_project"/.test(scheduler)) {
+    failures.push("sync-scheduler must NOT schedule the refused ar_invoices_project step");
   }
 
   return failures;
@@ -105,6 +95,17 @@ if (process.argv.includes("--selftest")) {
   const puller = read(PULLER);
   if (/qboPaginateEntity[\s\S]{0,80}"Invoice"/.test(puller.replace(/"Invoice"/g, '"Purchase"'))) {
     failures.push("selftest: renamed entity still matched Invoice");
+  }
+  // ACCT-F4431380 (9e) plants on the REAL puller/scheduler source: a re-added native write, a reverted refusal,
+  // and a re-scheduled projection must each be flagged.
+  const scheduler = read(SCHEDULER);
+  const plants = [
+    ["native write planted", { puller: puller + "\nconst P = `INSERT INTO accounting.invoices (id) VALUES ($1)`;\n" }, /native accounting/],
+    ["refusal reverted", { puller: puller.replace(/refuseQboNativeWrite\(/g, "noop(") }, /refuse by name/],
+    ["projection re-scheduled", { scheduler: scheduler + '\nawait runStep("ar_invoices_project", id, () => projectArInvoicesToLedger(id));\n' }, /NOT schedule/],
+  ];
+  for (const [name, over, re] of plants) {
+    if (!analyze(over).some((f) => re.test(f))) failures.push(`selftest: ${name} was NOT caught`);
   }
 
   if (failures.length) {
@@ -122,5 +123,5 @@ if (failures.length) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log("verify-qbo-ar-invoices-inbound: PASS — mirror+flags+puller+projector+scheduler wired (payment_applications unblock)");
+console.log("verify-qbo-ar-invoices-inbound: PASS — mirror+flags+pull wired; projector refuses by name (QBO read-only archive, 9e)");
 process.exit(0);

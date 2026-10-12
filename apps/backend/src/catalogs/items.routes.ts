@@ -58,8 +58,9 @@ const createBodySchema = z.object({
     // path that skipped the field — created an item that can never post revenue. Enforced HERE
     // rather than in the DB so the caller gets a 400 naming the field, not a constraint violation.
     //
-    // Scoped to the create route ON PURPOSE: qbo-sync/items-write-sql.ts inserts CLONES of QBO items
-    // that legitimately carry no local account mapping. Requiring it there would break the import.
+    // Scoped to the create route. The former QBO item clone path (qbo-sync/items-write-sql.ts, which
+    // inserted QBO items with no local account mapping) was removed by ACCT-F4431380 — QuickBooks is a
+    // read-only archive — so no QBO path writes catalogs.items any more.
     if (INCOME_ACCOUNT_REQUIRED_TYPES.has(b.item_type) && !b.default_income_account_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

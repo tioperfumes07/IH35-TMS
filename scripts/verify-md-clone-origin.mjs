@@ -33,18 +33,42 @@ for (const tbl of ["customers", "vendors"]) {
 if (!/CHECK\s*\(\s*source_system IN \('tms','qbo'\)\s*\)/i.test(migBlob))
   errs.push("source_system CHECK must pin ('tms','qbo')");
 
+// ACCT-F4431380 (Lead 443.137 item 9e) — OLD: customers-puller / vendors-puller had to UPSERT native
+//   mdata.customers / mdata.vendors stamped source_system='qbo' + source='qbo_clone', and run a guarded
+//   void-gone-from-QBO UPDATE of those native rows.
+//   NEW: a QBO pull writes ONLY its mirror (mdata.qbo_customers / mdata.qbo_vendors). The pullers must contain
+//   no INSERT/UPDATE/DELETE of native mdata.customers / mdata.vendors at all (so no clone stamping and no
+//   void-gone mutation of native rows), and must still upsert their mirror. The origin-marker migrations above
+//   are kept: they still classify the existing frozen clone rows.
+//   WHY: QuickBooks is a read-only archive; the projection/write was removed and its entry point refuses by name.
 const pullers = {
-  "apps/backend/src/qbo-sync/customers-puller.ts": "qbo_customer_id",
-  "apps/backend/src/qbo-sync/vendors-puller.ts": "qbo_vendor_id",
+  "apps/backend/src/qbo-sync/customers-puller.ts": { native: "customers", mirror: "qbo_customers" },
+  "apps/backend/src/qbo-sync/vendors-puller.ts": { native: "vendors", mirror: "qbo_vendors" },
 };
-for (const [file, idCol] of Object.entries(pullers)) {
-  const src = read(file);
-  if (!src) { errs.push(`missing ${file}`); continue; }
-  if (!/source_system = 'qbo'/.test(src) || !/source = 'qbo_clone'/.test(src))
-    errs.push(`${path.basename(file)} must stamp cloned rows source_system='qbo' + source='qbo_clone'`);
-  // void-gone: a guarded UPDATE that deactivates source='qbo_clone' rows NOT in the pulled id set.
-  if (!/pulledQboIds\.length\s*>\s*0/.test(src) || !new RegExp(`NOT \\(${idCol} = ANY`).test(src) || !/source = 'qbo_clone'/.test(src))
-    errs.push(`${path.basename(file)} must void-gone-from-QBO (guarded UPDATE of source='qbo_clone' rows not in the pull)`);
+export function checkPuller(file, src, { native, mirror }) {
+  const out = [];
+  if (!src) return [`missing ${file}`];
+  if (new RegExp(`(?:INSERT\\s+INTO|UPDATE|DELETE\\s+FROM)\\s+mdata\\.${native}\\b`, "i").test(src))
+    out.push(`${path.basename(file)} must not write native mdata.${native} (no clone upsert, no void-gone) — QuickBooks is a read-only archive`);
+  if (!new RegExp(`INSERT\\s+INTO\\s+mdata\\.${mirror}\\b`, "i").test(src))
+    out.push(`${path.basename(file)} must still upsert its mirror mdata.${mirror}`);
+  return out;
+}
+for (const [file, spec] of Object.entries(pullers)) errs.push(...checkPuller(file, read(file), spec));
+
+if (process.argv.includes("--selftest")) {
+  const st = [];
+  for (const [file, spec] of Object.entries(pullers)) {
+    const real = read(file);
+    if (checkPuller(file, real, spec).length) st.push(`real ${file} flagged`);
+    const plantUpsert = real + `\nconst P = \`INSERT INTO mdata.${spec.native} (operating_company_id, source) VALUES ($1, 'qbo_clone')\`;\n`;
+    if (!checkPuller(file, plantUpsert, spec).length) st.push(`planted native clone upsert in ${file} not caught`);
+    const plantVoid = real + `\nconst V = \`UPDATE mdata.${spec.native} SET deactivated_at = now() WHERE source = 'qbo_clone'\`;\n`;
+    if (!checkPuller(file, plantVoid, spec).length) st.push(`planted native void-gone in ${file} not caught`);
+  }
+  if (st.length) { console.error("verify:md-clone-origin --selftest FAILED"); for (const e of st) console.error(`  ✗ ${e}`); process.exit(1); }
+  console.log("verify:md-clone-origin --selftest PASS");
+  process.exit(0);
 }
 
 if (errs.length) {
@@ -52,4 +76,4 @@ if (errs.length) {
   for (const e of errs) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log("[md-clone-origin] OK — explicit origin marker + clone tagging + guarded void-gone-from-QBO intact.");
+console.log("[md-clone-origin] OK — origin marker migrations intact; QBO customer/vendor pullers write only their mirror (9e).");

@@ -47,49 +47,54 @@ export function analyzePuller(text) {
   if (!IS_ENABLED_CALL_RE.test(text)) {
     failures.push("qbo-ar-payments-puller.ts does not call isEnabled() — both stages must gate on the DB flag.");
   }
-  for (const flag of FLAGS) {
-    if (!text.includes(flag)) failures.push(`qbo-ar-payments-puller.ts no longer references ${flag} — a stage gate was lost.`);
+  // ACCT-F4431380 (Lead 443.137 item 9e) — OLD: required both flags referenced, rows projected as
+  // source_system='qbo', and projectArPaymentsToLedger to be a set-based INSERT INTO accounting.payments …
+  // FROM mdata.qbo_ar_payments plus an accounting.payment_applications INSERT.
+  // NEW: QuickBooks is a read-only archive — the projection was REMOVED and projectArPaymentsToLedger()
+  // REFUSES BY NAME. Required now: the MIRROR flag is still referenced (Stage 1 gate), no GL poster, the entry
+  // point still exists and calls refuseQboNativeWrite(, the per-row mirror loop stays absent, and the file
+  // writes NO accounting.payments / payment_applications row. (The old flag + source_system checks were
+  // being satisfied by header-comment text alone.)
+  // WHY: a QBO path never writes a native money table; a silent no-op would report success.
+  if (!text.includes("QBO_AR_PAYMENT_MIRROR_PULL_ENABLED")) {
+    failures.push("qbo-ar-payments-puller.ts no longer references QBO_AR_PAYMENT_MIRROR_PULL_ENABLED — the Stage 1 mirror gate was lost.");
   }
   if (POSTER_RE.test(text)) {
     failures.push("qbo-ar-payments-puller.ts references a GL poster — the payment clone must be subledger-only (NO GL).");
   }
-  if (!text.includes("source_system") || !/'qbo'/.test(text)) {
-    failures.push("qbo-ar-payments-puller.ts must project rows as source_system='qbo'.");
-  }
-  // Idle-in-transaction root fix: projection must be set-based, not a per-row await loop.
-  const projIdx = text.indexOf("export async function projectArPaymentsToLedger");
+  const projIdx = text.search(/^export async function projectArPaymentsToLedger\b/m);
   if (projIdx < 0) {
-    failures.push("qbo-ar-payments-puller.ts missing export async function projectArPaymentsToLedger.");
+    failures.push("qbo-ar-payments-puller.ts missing export async function projectArPaymentsToLedger (callers must get the named refusal).");
   } else {
-    const projectFn = text.slice(projIdx);
-    if (!/INSERT\s+INTO\s+accounting\.payments/i.test(projectFn) || !/FROM\s+mdata\.qbo_ar_payments/i.test(projectFn)) {
-      failures.push(
-        "projectArPaymentsToLedger must use set-based INSERT INTO accounting.payments … FROM mdata.qbo_ar_payments " +
-          "(idle_in_transaction timeout — no per-row await loop)."
-      );
+    const endIdx = text.indexOf("\n}\n", projIdx);
+    const projectFn = text.slice(projIdx, endIdx === -1 ? undefined : endIdx + 3);
+    if (!/refuseQboNativeWrite\(/.test(projectFn)) {
+      failures.push("projectArPaymentsToLedger must REFUSE BY NAME via refuseQboNativeWrite( (QuickBooks is a read-only archive).");
     }
     if (/for\s*\(\s*const\s+\w+\s+of\s+mirror\.rows\s*\)/.test(projectFn)) {
       failures.push(
         "projectArPaymentsToLedger still loops mirror.rows — that pattern caused prod idle_in_transaction FATAL (IH35-TMS-PROD-25)."
       );
     }
-    if (!/INSERT\s+INTO\s+accounting\.payment_applications/i.test(projectFn)) {
-      failures.push("projectArPaymentsToLedger must set-based INSERT into accounting.payment_applications.");
-    }
+  }
+  if (/(?:INSERT\s+INTO|UPDATE)\s+accounting\.(?:payments|payment_applications)\b/i.test(text)) {
+    failures.push("qbo-ar-payments-puller.ts writes accounting.payments / payment_applications — the QBO -> native projection was removed (ACCT-F4431380).");
   }
   return failures;
 }
 
 export function analyzeScheduler(text) {
   const failures = [];
-  if (!/pullArPaymentsFromQbo|projectArPaymentsToLedger/.test(text)) {
+  if (!/pullArPaymentsFromQbo/.test(text)) {
     failures.push("sync-scheduler.ts does not import the QBO AR payments puller — the stage is unwired.");
   }
   if (!/runStep\(\s*["']ar_payments_pull["']/.test(text)) {
     failures.push("sync-scheduler.ts does not run an isolated 'ar_payments_pull' step.");
   }
-  if (!/runStep\(\s*["']ar_payments_project["']/.test(text)) {
-    failures.push("sync-scheduler.ts does not run an isolated 'ar_payments_project' step.");
+  // ACCT-F4431380 (9e) — OLD: required an isolated 'ar_payments_project' step. NEW: the projection refuses
+  // by name, so scheduling it would record a refused step every tick — it must be ABSENT.
+  if (/ar_payments_project|projectArPaymentsToLedger/.test(text)) {
+    failures.push("sync-scheduler.ts still schedules ar_payments_project — the projection refuses by name (ACCT-F4431380).");
   }
   return failures;
 }
@@ -150,23 +155,25 @@ function analyzeMigrations() {
 }
 
 if (process.argv.includes("--selftest")) {
+  // ACCT-F4431380 (9e) — plants updated to the refusal contract.
   const goodPuller = `import { isEnabled } from "../lib/feature-flags/service.js";
     const A = "QBO_AR_PAYMENT_MIRROR_PULL_ENABLED";
-    const B = "QBO_AR_PAYMENTS_PROJECTION_ENABLED";
     await isEnabled(client, A, { operating_company_id });
-    source_system, 'qbo',
-    export async function projectArPaymentsToLedger() {
-      await client.query(\`INSERT INTO accounting.payments SELECT FROM mdata.qbo_ar_payments\`);
-      await client.query(\`INSERT INTO accounting.payment_applications SELECT …\`);
-    }`;
+export async function projectArPaymentsToLedger(id: string) {
+  return refuseQboNativeWrite("x", ["accounting.payments"], id);
+}
+`;
   const badEnv = `const A = process.env.QBO_AR_PAYMENT_MIRROR_PULL_ENABLED === "true";
-    export async function projectArPaymentsToLedger() {
-      for (const m of mirror.rows) { await client.query("x"); }
-    }`;
+export async function projectArPaymentsToLedger() {
+  for (const m of mirror.rows) { await client.query("x"); }
+}
+`;
   const badPoster = goodPuller + "\n postJournalEntry(client, je);";
-  const goodSched = `runStep("ar_payments_pull", id, () => pullArPaymentsFromQbo(id));
-    runStep("ar_payments_project", id, () => projectArPaymentsToLedger(id));`;
+  const badNativeWrite = goodPuller + "const S = \`INSERT INTO accounting.payment_applications SELECT 1\`;\n";
+  const badSilentNoop = goodPuller.replace('return refuseQboNativeWrite("x", ["accounting.payments"], id);', "return { enabled: false };");
+  const goodSched = `runStep("ar_payments_pull", id, () => pullArPaymentsFromQbo(id));`;
   const badSched = `runStep("ap_bills_pull", id, () => pullApBillsFromQbo(id));`;
+  const badSchedProject = goodSched + `\nrunStep("ar_payments_project", id, () => projectArPaymentsToLedger(id));`;
   const goodPost = `code !== "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED"; if (payment.qbo_payment_id) throw x;`;
   const badPost = `no guard here`;
   const goodMig = `INSERT INTO lib.feature_flags QBO_AR_PAYMENT_MIRROR_PULL_ENABLED QBO_AR_PAYMENTS_PROJECTION_ENABLED mdata.qbo_ar_payments`;
@@ -176,8 +183,11 @@ if (process.argv.includes("--selftest")) {
     pullerGoodPasses: analyzePuller(goodPuller).length === 0,
     pullerEnvFails: analyzePuller(badEnv).length > 0,
     pullerPosterFails: analyzePuller(badPoster).length > 0,
+    pullerNativeWriteFails: analyzePuller(badNativeWrite).length > 0,
+    pullerSilentNoopFails: analyzePuller(badSilentNoop).length > 0,
     schedGoodPasses: analyzeScheduler(goodSched).length === 0,
     schedBadFails: analyzeScheduler(badSched).length > 0,
+    schedProjectFails: analyzeScheduler(badSchedProject).length > 0,
     postGoodPasses: analyzePosting(goodPost).length === 0,
     postBadFails: analyzePosting(badPost).length > 0,
   };
@@ -222,6 +232,6 @@ if (failures.length > 0) {
 }
 
 console.log(
-  "verify-qbo-ar-payments-projection-wired: PASS (DB-flag gate; both flags registered OFF; scheduler wired; GL refuse present; mirror table present)"
+  "verify-qbo-ar-payments-projection-wired: PASS (DB-flag mirror gate; both flags registered OFF; GL refuse present; mirror table present; ACCT-F4431380: projection refuses by name, no native payments write, not scheduled)"
 );
 process.exit(0);

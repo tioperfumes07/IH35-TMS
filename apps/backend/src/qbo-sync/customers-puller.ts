@@ -1,3 +1,6 @@
+// ACCT-F4431380 (Lead 443.137 item 9e) — QuickBooks is a READ-ONLY ARCHIVE. This puller writes ONLY the
+// mirror (mdata.qbo_customers). The former native write (mdata.customers) is REMOVED: a QBO pull never creates,
+// heals or deactivates a native master row. Guard: scripts/verify-qbo-paths-never-write-native-tables.mjs.
 import type { PoolClient } from "pg";
 import { qboCompanyContext, qboPaginateEntity } from "../integrations/qbo/qbo-client.js";
 import { withLuciaBypass } from "../auth/db.js";
@@ -81,71 +84,10 @@ async function upsertMirror(client: PoolClient, operatingCompanyId: string, row:
   );
 }
 
-async function upsertLocalCustomer(client: PoolClient, operatingCompanyId: string, row: Record<string, unknown>): Promise<void> {
-  const qboId = String(row.Id ?? "");
-  if (!qboId) return;
-  const name = displayName(row);
-  if (!name) return;
-  const primaryEmail = qboEmail(row);
-  const primaryPhone = qboPhone(row);
-  const active = row.Active === undefined ? true : Boolean(row.Active);
-
-  await client.query(
-    `
-      INSERT INTO mdata.customers (
-        operating_company_id,
-        customer_name,
-        billing_email,
-        billing_phone,
-        qbo_customer_id,
-        status,
-        notes,
-        deactivated_at,
-        qbo_synced_at,
-        qbo_sync_status,
-        qbo_sync_error,
-        source_system,
-        source
-      )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now(),'synced',NULL,'qbo','qbo_clone')
-      ON CONFLICT (operating_company_id, qbo_customer_id)
-      DO UPDATE SET
-        source_system = 'qbo',
-        source = 'qbo_clone',
-        customer_name = EXCLUDED.customer_name,
-        billing_email = EXCLUDED.billing_email,
-        billing_phone = EXCLUDED.billing_phone,
-        status = CASE
-          WHEN $9::boolean THEN
-            CASE WHEN mdata.customers.status = 'inactive'::mdata.customer_status THEN 'active'::mdata.customer_status ELSE mdata.customers.status END
-          ELSE 'inactive'::mdata.customer_status
-        END,
-        deactivated_at = CASE WHEN $9::boolean THEN NULL ELSE COALESCE(mdata.customers.deactivated_at, now()) END,
-        qbo_synced_at = now(),
-        qbo_sync_status = 'synced',
-        qbo_sync_error = NULL,
-        updated_at = now()
-    `,
-    [
-      operatingCompanyId,
-      name,
-      primaryEmail,
-      primaryPhone,
-      qboId,
-      active ? "active" : "inactive",
-      `Synced from QBO (${operatingCompanyId})`,
-      active ? null : new Date(),
-      active,
-    ]
-  );
-}
-
 export async function pullCustomersFromQbo(operatingCompanyId: string): Promise<CustomersPullResult> {
   const pulledAt = new Date().toISOString();
   let rowsPulled = 0;
   let rowsUpserted = 0;
-
-  const pulledQboIds: string[] = [];
 
   // G5-2: fetch ALL QBO pages over HTTP with NO pooled DB connection or open transaction held.
   // qboCompanyContext (token fetch) and qboPaginateEntity (the outbound QuickBooks REST calls) manage
@@ -158,8 +100,6 @@ export async function pullCustomersFromQbo(operatingCompanyId: string): Promise<
   for await (const page of qboPaginateEntity<Record<string, unknown>>(ctx, "Customer", "", { pageSize: 1000 })) {
     for (const row of page) {
       rowsPulled += 1;
-      const qboId = String(row.Id ?? "");
-      if (qboId) pulledQboIds.push(qboId);
       pulledRows.push(row);
     }
   }
@@ -167,29 +107,7 @@ export async function pullCustomersFromQbo(operatingCompanyId: string): Promise<
   await withLuciaBypass(async (client) => {
     for (const row of pulledRows) {
       await upsertMirror(client, operatingCompanyId, row);
-      await upsertLocalCustomer(client, operatingCompanyId, row);
       rowsUpserted += 1;
-    }
-
-    // MD-1 void-gone-from-QBO: a cloned customer absent from the FULL QBO pull was deleted in QBO →
-    // void it (deactivate, never delete). Guarded: only runs when the pull returned rows, so a transient
-    // empty/failed pull can never mass-deactivate. Only touches origin='qbo_clone' rows — never a
-    // TMS-created customer.
-    if (pulledQboIds.length > 0) {
-      await client.query(
-        `
-          UPDATE mdata.customers
-          SET status = 'inactive'::mdata.customer_status,
-              deactivated_at = COALESCE(deactivated_at, now()),
-              updated_at = now()
-          WHERE operating_company_id = $1::uuid
-            AND source = 'qbo_clone'
-            AND deactivated_at IS NULL
-            AND qbo_customer_id IS NOT NULL
-            AND NOT (qbo_customer_id = ANY($2::text[]))
-        `,
-        [operatingCompanyId, pulledQboIds]
-      );
     }
   });
 

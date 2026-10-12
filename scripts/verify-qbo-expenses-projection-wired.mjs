@@ -44,55 +44,50 @@ export function analyzePuller(text) {
   if (!IS_ENABLED_CALL_RE.test(text)) {
     failures.push("qbo-purchases-puller.ts does not call isEnabled() — both stages must gate on the DB flag.");
   }
-  for (const flag of FLAGS) {
-    if (!text.includes(flag)) failures.push(`qbo-purchases-puller.ts no longer references ${flag} — a stage gate was lost.`);
+  // ACCT-F4431380 (Lead 443.137 item 9e) — OLD: required both flags referenced and projectPurchasesToExpenses
+  // to be a set-based INSERT INTO accounting.expenses … SELECT … FROM mdata.qbo_purchases plus an
+  // accounting.expense_lines INSERT that carries operating_company_id (the IH35-TMS-PROD-25 and expenses=0 fixes).
+  // NEW: QuickBooks is a read-only archive — the projection was REMOVED and projectPurchasesToExpenses()
+  // REFUSES BY NAME. Required now: the MIRROR flag is still referenced (Stage 1 gate), the entry point still
+  // exists and calls refuseQboNativeWrite(, the file writes NO accounting.expenses / expense_lines row, and the
+  // per-row mirror loop stays absent. (The old flag loop was being satisfied by header-comment text alone.)
+  // WHY: a QBO path never writes a native money table; a silent no-op would report success.
+  if (!text.includes("QBO_PURCHASES_MIRROR_PULL_ENABLED")) {
+    failures.push("qbo-purchases-puller.ts no longer references QBO_PURCHASES_MIRROR_PULL_ENABLED — the Stage 1 mirror gate was lost.");
   }
-  // Idle-in-transaction root fix: projection must be set-based INSERT…SELECT, not a per-row await loop.
-  const projIdx = text.indexOf("export async function projectPurchasesToExpenses");
+  const projIdx = text.search(/^export async function projectPurchasesToExpenses\b/m);
   if (projIdx < 0) {
-    failures.push("qbo-purchases-puller.ts missing export async function projectPurchasesToExpenses.");
+    failures.push("qbo-purchases-puller.ts missing export async function projectPurchasesToExpenses (callers must get the named refusal).");
   } else {
-    const projectFn = text.slice(projIdx);
-    if (!/INSERT\s+INTO\s+accounting\.expenses/i.test(projectFn) || !/SELECT[\s\S]*FROM\s+mdata\.qbo_purchases/i.test(projectFn)) {
-      failures.push(
-        "projectPurchasesToExpenses must use set-based INSERT INTO accounting.expenses … SELECT … FROM mdata.qbo_purchases " +
-          "(idle_in_transaction timeout — no per-row await loop)."
-      );
+    const endIdx = text.indexOf("\n}\n", projIdx);
+    const projectFn = text.slice(projIdx, endIdx === -1 ? undefined : endIdx + 3);
+    if (!/refuseQboNativeWrite\(/.test(projectFn)) {
+      failures.push("projectPurchasesToExpenses must REFUSE BY NAME via refuseQboNativeWrite( (QuickBooks is a read-only archive).");
     }
     if (/for\s*\(\s*const\s+\w+\s+of\s+mirror\.rows\s*\)/.test(projectFn)) {
       failures.push(
         "projectPurchasesToExpenses still loops mirror.rows — that pattern caused prod idle_in_transaction FATAL (IH35-TMS-PROD-25)."
       );
     }
-    // Prod 2026-07-29: QBO_EXPENSES_PROJECTION_ENABLED ON TRANSP, mirror 28k rows, expenses stayed 0
-    // because expense_lines.operating_company_id is NOT NULL (no default) and the set-based line INSERT
-    // omitted it — the whole projection txn rolled back. Never ship that shape again.
-    const lineInserts = projectFn.match(/INSERT\s+INTO\s+accounting\.expense_lines\s*\(([^)]+)\)/gi) ?? [];
-    if (lineInserts.length === 0) {
-      failures.push("projectPurchasesToExpenses must INSERT INTO accounting.expense_lines (at least once).");
-    }
-    for (const ins of lineInserts) {
-      if (!/\boperating_company_id\b/i.test(ins)) {
-        failures.push(
-          "projectPurchasesToExpenses expense_lines INSERT must include operating_company_id " +
-            "(NOT NULL, no default — omitting it rolls the whole projection txn back to expenses=0)."
-        );
-      }
-    }
+  }
+  if (/(?:INSERT\s+INTO|UPDATE)\s+accounting\.expense(?:s|_lines)\b/i.test(text)) {
+    failures.push("qbo-purchases-puller.ts writes accounting.expenses / expense_lines — the QBO -> native projection was removed (ACCT-F4431380).");
   }
   return failures;
 }
 
 export function analyzeScheduler(text) {
   const failures = [];
-  if (!/pullPurchasesFromQbo|projectPurchasesToExpenses/.test(text)) {
+  if (!/pullPurchasesFromQbo/.test(text)) {
     failures.push("sync-scheduler.ts does not import the QBO purchases puller — the stage is unwired.");
   }
   if (!/runStep\(\s*["']qbo_purchases_pull["']/.test(text)) {
     failures.push("sync-scheduler.ts does not run an isolated 'qbo_purchases_pull' step.");
   }
-  if (!/runStep\(\s*["']qbo_purchases_project["']/.test(text)) {
-    failures.push("sync-scheduler.ts does not run an isolated 'qbo_purchases_project' step.");
+  // ACCT-F4431380 (9e) — OLD: required an isolated 'qbo_purchases_project' step. NEW: the projection refuses
+  // by name, so scheduling it would record a refused step every tick — it must be ABSENT.
+  if (/qbo_purchases_project|projectPurchasesToExpenses/.test(text)) {
+    failures.push("sync-scheduler.ts still schedules qbo_purchases_project — the projection refuses by name (ACCT-F4431380).");
   }
   return failures;
 }
@@ -152,34 +147,35 @@ function analyzeMigrations() {
 }
 
 if (process.argv.includes("--selftest")) {
+  // ACCT-F4431380 (9e) — plants updated to the refusal contract.
   const goodPuller = `import { isEnabled } from "../lib/feature-flags/service.js";
     const PURCHASES_MIRROR_PULL_FLAG = "QBO_PURCHASES_MIRROR_PULL_ENABLED";
-    const EXPENSES_PROJECTION_FLAG = "QBO_EXPENSES_PROJECTION_ENABLED";
     await isEnabled(client, PURCHASES_MIRROR_PULL_FLAG, { operating_company_id });
-    export async function projectPurchasesToExpenses() {
-      await client.query(\`INSERT INTO accounting.expenses (...) SELECT ... FROM mdata.qbo_purchases m\`);
-      await client.query(\`INSERT INTO accounting.expense_lines (operating_company_id, expense_id, line_sequence) SELECT ...\`);
-    }`;
+export async function projectPurchasesToExpenses(id: string) {
+  return refuseQboNativeWrite("x", ["accounting.expenses"], id);
+}
+`;
   const badEnv = `const A = process.env.QBO_PURCHASES_MIRROR_PULL_ENABLED === "true";
-    export async function projectPurchasesToExpenses() {
-      for (const m of mirror.rows) { await client.query("x"); }
-    }`;
-  const badMissingOpco = `export async function projectPurchasesToExpenses() {
-      await client.query(\`INSERT INTO accounting.expenses (...) SELECT ... FROM mdata.qbo_purchases m\`);
-      await client.query(\`INSERT INTO accounting.expense_lines (expense_id, line_sequence, amount) SELECT ...\`);
-    }`;
-  const goodSched = `runStep("qbo_purchases_pull", id, () => pullPurchasesFromQbo(id));
-    runStep("qbo_purchases_project", id, () => projectPurchasesToExpenses(id));`;
+export async function projectPurchasesToExpenses() {
+  for (const m of mirror.rows) { await client.query("x"); }
+}
+`;
+  const badNativeWrite = goodPuller + "const S = \`INSERT INTO accounting.expense_lines (operating_company_id) SELECT 1\`;\n";
+  const badSilentNoop = goodPuller.replace('return refuseQboNativeWrite("x", ["accounting.expenses"], id);', "return { enabled: false };");
+  const goodSched = `runStep("qbo_purchases_pull", id, () => pullPurchasesFromQbo(id));`;
   const badSched = `runStep("ap_bills_pull", id, () => pullApBillsFromQbo(id));`;
+  const badSchedProject = goodSched + `\nrunStep("qbo_purchases_project", id, () => projectPurchasesToExpenses(id));`;
   const goodPost = `code !== "EXPENSE_POST_GL_REFUSED"; if (exp.qbo_purchase_id) throw x;`;
   const badPost = `no guard here`;
 
   const checks = {
     pullerGoodPasses: analyzePuller(goodPuller).length === 0,
     pullerEnvFails: analyzePuller(badEnv).length > 0,
-    pullerMissingOpcoFails: analyzePuller(badMissingOpco).length > 0,
+    pullerNativeWriteFails: analyzePuller(badNativeWrite).length > 0,
+    pullerSilentNoopFails: analyzePuller(badSilentNoop).length > 0,
     schedGoodPasses: analyzeScheduler(goodSched).length === 0,
     schedBadFails: analyzeScheduler(badSched).length > 0,
+    schedProjectFails: analyzeScheduler(badSchedProject).length > 0,
     postGoodPasses: analyzePosting(goodPost).length === 0,
     postBadFails: analyzePosting(badPost).length > 0,
   };
@@ -218,5 +214,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log("verify-qbo-expenses-projection-wired: PASS (DB-flag gate; both flags registered OFF; scheduler wired; GL refuse present; projection key present)");
+console.log("verify-qbo-expenses-projection-wired: PASS (DB-flag mirror gate; both flags registered OFF; GL refuse present; projection key migration kept; ACCT-F4431380: projection refuses by name, no native expenses write, not scheduled)");
 process.exit(0);
