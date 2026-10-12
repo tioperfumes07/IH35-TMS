@@ -1,10 +1,10 @@
 {
-  "healthzSha": "39c77cf",
-  "generated_at": "2026-10-12T00:31:39.634Z",
+  "healthzSha": "1238065",
+  "generated_at": "2026-10-12T02:48:39.691Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "39c77cf",
+    "deployedSha": "1238065",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 26437,
-      "title": "FINDING: ACCT-F2026101202 LANE: FINANCIAL — 443.80 #4: the GPS stop engine classed 4 deliveries \"truck elsewhere\" while their own truck dwelled there 2-3 days after the day-level document date, and a shared CITY word confirmed a facility (13605 Campbell Soup ~ a Lumberton cold storage); window -2..+3 days, place words excluded",
+      "number": 26452,
+      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615640900 — reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 07:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26437",
-      "sha": "d7a2b4a6d9",
-      "committedAtIso": "2026-10-11T19:27:30-05:00"
+      "mergedAtCt": "10/11/2026, 09:42 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26452",
+      "sha": "1238065437",
+      "committedAtIso": "2026-10-11T21:42:21-05:00"
     },
     {
-      "number": 26436,
-      "title": "FINDING: ACCT-F44380 LANE: FINANCIAL -- 443.80 #2: a bank SUGGESTION needs no pointer on the line (G6), fuel duplicate refused on the base invoice (G4), category create route scoped (RLS 42501)",
+      "number": 26451,
+      "title": "chore(bus): CC-1 OUTBOX — 443.86 #6: #26450 merged 128d72efa5, main CI list",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 07:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26436",
-      "sha": "39c77cf8c5",
-      "committedAtIso": "2026-10-11T19:25:14-05:00"
+      "mergedAtCt": "10/11/2026, 09:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26451",
+      "sha": "2ee869c6bf",
+      "committedAtIso": "2026-10-11T21:33:44-05:00"
     },
     {
-      "number": 26435,
-      "title": "FINDING: ACCT-F2026101201 LANE: FINANCIAL — G6: the Relay wallet / Dreamline / BofA lines had no measurable suggested document — the ranking the Lead decided (443.80 #3) is now one read-only function, suggestBankMatches, used by GET /api/v1/bank-recon/suggestions and the per-account report; nothing is persisted (Owner Law B)",
+      "number": 26450,
+      "title": "FINDING: ACCT-F443840003 — two guards fail every PR: outbox-handler-parity + money-evidence",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 07:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26435",
-      "sha": "13dcc01a2e",
-      "committedAtIso": "2026-10-11T19:13:58-05:00"
+      "mergedAtCt": "10/11/2026, 09:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26450",
+      "sha": "128d72efa5",
+      "committedAtIso": "2026-10-11T21:28:18-05:00"
     },
     {
-      "number": 26434,
-      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615610900 — reservation-only commit, no code fix)",
+      "number": 26447,
+      "title": "FINDING: ACCT-F443840001 — guard baseline must exempt applied migrations; financial-buildability stale date",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 07:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26434",
-      "sha": "90a97e0a1c",
-      "committedAtIso": "2026-10-11T19:06:03-05:00"
+      "mergedAtCt": "10/11/2026, 09:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26447",
+      "sha": "903a8fac3b",
+      "committedAtIso": "2026-10-11T21:14:45-05:00"
     },
     {
-      "number": 26432,
-      "title": "FINDING: ACCT-F2026101116 LANE: FINANCIAL — 443.74: no engine checked a stop against where the truck actually stopped — 13660's pickup is a Warsaw NC address the truck never came within 96 km of; the stop GPS verification engine measures every USMCA stop against the unit's GPS dwells and corrects a stop only to a confirmed facility (AUTH-441)",
+      "number": 26414,
+      "title": "Cursor-Party ledger MoneyCell drills + tip unblock (ACCT-F433)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 06:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26432",
-      "sha": "726c5bc12b",
-      "committedAtIso": "2026-10-11T18:36:18-05:00"
+      "mergedAtCt": "10/11/2026, 09:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26414",
+      "sha": "9aab851c65",
+      "committedAtIso": "2026-10-11T21:08:19-05:00"
     },
     {
-      "number": 26430,
-      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615600900 — reservation-only commit, no code fix)",
+      "number": 26376,
+      "title": "Cursor- R443.54-7 related-party bank↔Relay pair confirm (party_transfer_out)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 06:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26430",
-      "sha": "eed44c9224",
-      "committedAtIso": "2026-10-11T18:30:13-05:00"
+      "mergedAtCt": "10/11/2026, 09:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26376",
+      "sha": "04ae209084",
+      "committedAtIso": "2026-10-11T21:03:34-05:00"
     },
     {
-      "number": 26429,
-      "title": "FINDING: ACCT-F2026101115 LANE: FINANCIAL — 443.77 #3 follow-up: after AUTH-440 the fuel guards drop the two disclosed pairs (now resolved) and settlement 5783's hand-typed second DEF entry of receipt 99448116 is shown as a second entry (evidence quoted in the source extract), not missing",
+      "number": 26449,
+      "title": "FINDING: ACCT-F443842 LANE: FINANCIAL -- 443.84 #2: Creator company expenses on a load are numbered on the load spine (64 were EXP-2026-00006..00069); categorize D6 renumbers them (number only)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 06:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26429",
-      "sha": "7332ba9a70",
-      "committedAtIso": "2026-10-11T18:21:53-05:00"
+      "mergedAtCt": "10/11/2026, 09:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26449",
+      "sha": "b5814b1935",
+      "committedAtIso": "2026-10-11T21:02:09-05:00"
     },
     {
-      "number": 26427,
-      "title": "Claude-3- 443.66 D1/D3/D4/D5: Creator-born lines categorized at write + categorize engine for the 68; QBO AR guard removed (443.71); live A/R tie guard",
+      "number": 26448,
+      "title": "FINDING: ACCT-F2026101205 LANE: FINANCIAL — 443.84 #3: a Dreamline line pays its receipt(s) at the card price (median 3.6% under the pump receipt) and the multi-document accept refused every such group (multi_match_nonzero_variance); it now accepts with the card discount posted Dr 2510 / Cr 5000 through the item \"Fuel Card Discount\" (no new account), split per receipt with its load / driver, posted by the ONE variance poster (reversed on unmatch), capped at 8%, refused when the line is above the receipt — AUTH-443 creates the item",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 06:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26427",
-      "sha": "07b6d0b7eb",
-      "committedAtIso": "2026-10-11T18:19:35-05:00"
+      "mergedAtCt": "10/11/2026, 09:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26448",
+      "sha": "dbe6ab80a1",
+      "committedAtIso": "2026-10-11T21:00:36-05:00"
     },
     {
-      "number": 26428,
-      "title": "FINDING: ACCT-F2026101114 LANE: FINANCIAL — 443.77 #3: the last double-expensed fuel lines decided by GPS and logic — 1848853 stays on 13543 (13547 copies voided), 99448116 stays on 13519 (second DEF entry on 13535 voided); AUTH-440, 3 lines, $656.14; double-cost lines -> 0",
+      "number": 26446,
+      "title": "FINDING: ACCT-F44384 LANE: FINANCIAL -- 443.84 #1 G7: Faro's report rows are the live writers of the customer payment (Dr 2150 / Cr 1100, per invoice) and the reserve release (Dr cash clearing / Cr 1235); S6 50/50",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 06:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26428",
-      "sha": "65162a35fe",
-      "committedAtIso": "2026-10-11T18:15:25-05:00"
+      "mergedAtCt": "10/11/2026, 08:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26446",
+      "sha": "117c395b4c",
+      "committedAtIso": "2026-10-11T20:54:26-05:00"
     },
     {
-      "number": 26426,
-      "title": "FINDING: ACCT-F2026101113 LANE: FINANCIAL — 443.73 #6(d): every fuel writer let a second expense of the same purchase through when the reference carried a \"<invoice>-<load>\" suffix — providerTransactionId read it as \"no provider key\"; the suffix is now stripped, so the writers and the hash index refuse the second copy",
+      "number": 26445,
+      "title": "FINDING: ACCT-F44384 LANE: FINANCIAL -- deploy blocker: #26431 edited APPLIED migration 202615441200 (ledger checksum 97efec7a..., disk 70afe787...) -> every prod pre-deploy failed since 01:04Z; file restored byte-exact (sha256 97efec7a0253229f4b2492aecbb84bd3a65b908eb5b814f010caf74d428f174b)",
       "state": "merged",
-      "mergedAtCt": "10/11/2026, 05:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26426",
-      "sha": "e9cebac40c",
-      "committedAtIso": "2026-10-11T17:29:02-05:00"
+      "mergedAtCt": "10/11/2026, 08:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26445",
+      "sha": "c1ee886df9",
+      "committedAtIso": "2026-10-11T20:35:50-05:00"
     }
   ]
 }

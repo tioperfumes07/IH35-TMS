@@ -1,3 +1,4 @@
+import { fillLoadDeadhead } from "../dispatch/mileage/miles-recommendations.service.js";
 import { randomUUID } from "node:crypto";
 import { looksLikeStreet } from "../telematics/stops-geocode-backfill.service.js";
 /**
@@ -442,6 +443,11 @@ export async function ensureDispatchedLoadsForCreator(
     if (delivered && bookedId) {
       stopStamps.push(...(await stampStopsFromTracking(client, bookedId, { pickupDate: load.pickup_date, deliveryDate: load.delivery_date })));
       await deliverLoadThroughDispatch(client, actor.uuid, draft.operating_company_id, bookedId, load.delivery_date);
+    }
+    // RULING 443.86 #1: a document that prints no empty miles still has a deadhead when the truck ran a load before this
+    // one (or sat somewhere at dispatch) — the one engine fills it (Google practical, method recorded); never the pay basis.
+    if (bookedId && load.empty_miles == null) {
+      await fillLoadDeadhead(client as never, { operatingCompanyId: draft.operating_company_id, loadId: bookedId, actorUserId: actor.uuid });
     }
   }
 

@@ -16,10 +16,18 @@ import {
   MilesChoiceError,
   milesRecommendationsForLoad,
   setMilesChoice,
+  fillLoadDeadhead,
+  type DeadheadFillResult,
 } from "./miles-recommendations.service.js";
 
 const READ_ROLES = new Set(["Owner", "Administrator", "Manager", "Dispatcher", "Accountant", "Safety"]);
 const WRITE_ROLES = new Set(["Owner", "Administrator", "Manager", "Dispatcher"]);
+const DEADHEAD_FILL_ROLES = new Set(["Owner", "Administrator"]);
+const deadheadFillBody = z.object({
+  operating_company_id: z.string().uuid(),
+  dry_run: z.boolean().default(true),
+  load_ids: z.array(z.string().uuid()).max(500).optional(),
+});
 
 const idParams = z.object({ id: z.string().uuid() });
 const companyQuery = z.object({ operating_company_id: z.string().uuid().optional() });
@@ -123,5 +131,43 @@ export async function registerMilesRecommendationsRoutes(app: FastifyInstance) {
       if (e instanceof MilesChoiceError) return reply.code(e.code === "load_not_found" ? 404 : 409).send({ error: e.code });
       throw e;
     }
+  });
+
+  // RULING 443.86 #1 — fill every live load's NULL deadhead through the one engine (fillLoadDeadhead): the previous load's
+  // last stop -> first pickup, else the truck's Samsara position at dispatch, else listed with the reason. Owner /
+  // Administrator; dry_run computes inside a savepoint and rolls back. Runs server side, where the Google key lives.
+  app.post("/api/v1/mdata/loads/deadhead-fill", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const u = authUser(req, reply, DEADHEAD_FILL_ROLES);
+    if (!u) return reply;
+    const b = deadheadFillBody.safeParse(req.body ?? {});
+    if (!b.success) return reply.code(400).send({ error: "invalid_request" });
+    const out = await withCurrentUser(u.uuid, async (client) => {
+      const companyId = await scope(client, u.uuid, b.data.operating_company_id);
+      if (!companyId) return null;
+      const ids = (
+        await client.query<{ id: string }>(
+          `SELECT l.id::text FROM mdata.loads l
+            WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL AND l.voided_at IS NULL AND l.miles_deadhead IS NULL
+              AND l.status::text NOT IN ('cancelled', 'canceled', 'void', 'voided')
+              AND ($2::uuid[] IS NULL OR l.id = ANY($2::uuid[]))
+            ORDER BY l.load_number`,
+          [companyId, b.data.load_ids ?? null]
+        )
+      ).rows.map((r) => r.id);
+      await client.query("SAVEPOINT deadhead_fill");
+      const results: DeadheadFillResult[] = [];
+      for (const id of ids) results.push(await fillLoadDeadhead(client as never, { operatingCompanyId: companyId, loadId: id, actorUserId: u.uuid }));
+      if (b.data.dry_run) await client.query("ROLLBACK TO SAVEPOINT deadhead_fill");
+      else await client.query("RELEASE SAVEPOINT deadhead_fill");
+      const count = (st: string, m?: string) => results.filter((r) => r.status === st && (!m || r.method === m)).length;
+      return {
+        dry_run: b.data.dry_run, loads: results.length,
+        filled_prev_stop: count("filled", "google_practical_prev_stop"), filled_samsara_position: count("filled", "google_practical_samsara_position"),
+        not_filled: results.filter((r) => r.status === "not_filled").map((r) => `${r.load_number}: ${r.reason}`),
+        filled: results.filter((r) => r.status === "filled").map((r) => `${r.load_number} ${r.miles} (${r.method})`),
+      };
+    });
+    if (!out) return reply.code(404).send({ error: "company_not_found" });
+    return out;
   });
 }

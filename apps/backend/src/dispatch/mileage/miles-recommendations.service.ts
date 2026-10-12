@@ -399,3 +399,85 @@ export async function recordDocumentMilesSources(
   }
   return { recorded };
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// RULING 443.86 #1 (CC-3) — DEADHEAD where a previous load exists. The Settlement Creator writes miles_deadhead only from
+// the document's printed empty miles (settlement-creator-seed-loads.ts), so a load whose document prints none was left
+// NULL even when the truck ran a load before it. fillLoadDeadhead computes it with the same Google engine the empty-miles
+// recommendation uses:
+//   google_practical_prev_stop          the unit's previous load's last stop -> this load's first pickup
+//   google_practical_samsara_position   the unit's FIRST load: the truck's Samsara position at dispatch (last fix at or before
+//                                       the first pickup, within 48 h) -> the first pickup
+//   otherwise                           nothing written; the reason is returned and listed ("no previous load", ...)
+// Only a NULL miles_deadhead is filled — a document or user value is never replaced. Only miles_deadhead, its method and
+// miles_choice.empty are written: loaded miles, pay and invoice amounts are untouched (document miles stay the pay basis).
+export type DeadheadFillResult = {
+  load_id: string; load_number: string | null;
+  status: "filled" | "already_set" | "not_filled";
+  miles: number | null; method: "google_practical_prev_stop" | "google_practical_samsara_position" | null; reason: string | null;
+};
+
+export async function fillLoadDeadhead(
+  client: Queryable,
+  args: { operatingCompanyId: string; loadId: string; actorUserId: string },
+  route: RouteFn = computeRouteReference
+): Promise<DeadheadFillResult> {
+  const row = (
+    await client.query<{ load_number: string | null; miles_deadhead: string | null; unit: string | null }>(
+      `SELECT load_number, miles_deadhead::text, assigned_unit_id::text AS unit FROM mdata.loads
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL FOR UPDATE`,
+      [args.loadId, args.operatingCompanyId]
+    )
+  ).rows[0];
+  const base = { load_id: args.loadId, load_number: row?.load_number ?? null };
+  if (!row) return { ...base, status: "not_filled", miles: null, method: null, reason: "load not found" };
+  if (row.miles_deadhead != null) return { ...base, status: "already_set", miles: Number(row.miles_deadhead), method: null, reason: null };
+  const recs = await milesRecommendationsForLoad(client, { operatingCompanyId: args.operatingCompanyId, loadId: args.loadId }, route);
+  const empty = recs?.fields.empty;
+  let miles: number | null = empty?.google?.value ?? null;
+  let method: DeadheadFillResult["method"] = miles != null ? "google_practical_prev_stop" : null;
+  let reason: string | null = miles != null ? null : empty?.google_missing_reason ?? "no recommendation";
+  let from: string | null = miles != null ? "previous load's last stop" : null;
+
+  if (miles == null && reason === "no previous load for this unit" && row.unit) {
+    const { stops, firstAt } = await loadStopPoints(client, args.operatingCompanyId, args.loadId);
+    const first = stops[0];
+    if (!first || !located(first) || !firstAt) reason = "no previous load; the first stop has no real point or time";
+    else {
+      const fix = (
+        await client.query<{ lat: number; lng: number; captured_at: string }>(
+          `SELECT lat::float8 AS lat, lng::float8 AS lng, captured_at::text FROM telematics.vehicle_locations
+            WHERE unit_id = $1::uuid AND captured_at <= $2::timestamptz AND captured_at > $2::timestamptz - interval '48 hours'
+              AND lat IS NOT NULL AND lng IS NOT NULL
+            ORDER BY captured_at DESC LIMIT 1`,
+          [row.unit, firstAt]
+        )
+      ).rows[0];
+      if (!fix) reason = "no previous load and no Samsara position for the truck in the 48 h before the first pickup";
+      else {
+        const leg = await googleLegMiles(client, { lat: Number(fix.lat), lng: Number(fix.lng) }, { lat: Number(first.latitude), lng: Number(first.longitude) }, route);
+        if (!leg) reason = "Google had no route from the truck's Samsara position";
+        else { miles = leg.miles; method = "google_practical_samsara_position"; reason = null; from = `truck Samsara position ${fix.captured_at}`; }
+      }
+    }
+  }
+  if (miles == null || !method) return { ...base, status: "not_filled", miles: null, method: null, reason };
+
+  const choice = {
+    value: miles, source: "google", historical: empty?.historical?.value ?? null, google: miles, document_value: null,
+    reason: `443.86 deadhead: ${from} -> first pickup (Google practical)`, flag_far_from_both: false,
+    chosen_by: args.actorUserId, chosen_at: new Date().toISOString(),
+  };
+  await client.query(
+    `UPDATE mdata.loads
+        SET miles_deadhead = $3::numeric, deadhead_miles_calculation_method = $4,
+            miles_choice = coalesce(miles_choice, '{}'::jsonb) || jsonb_build_object('empty', $5::jsonb), updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND miles_deadhead IS NULL`,
+    [args.loadId, args.operatingCompanyId, miles, method, JSON.stringify(choice)]
+  );
+  await appendCrudAudit(client as never, args.actorUserId, "dispatch.load.deadhead_filled", {
+    resource_type: "mdata.loads", resource_id: args.loadId, load_id: args.loadId, operating_company_id: args.operatingCompanyId,
+    miles_deadhead: miles, method, from,
+  });
+  return { ...base, status: "filled", miles, method, reason: null };
+}
