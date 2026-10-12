@@ -43,13 +43,17 @@ export async function backlinkBankTransactionToBill(
 ): Promise<BankBillBacklinkResult> {
   // Optional read inside a transaction must use its own SAVEPOINT so a failure does not
   // poison the caller's transaction with a 25P02 (current transaction is aborted).
-  await client.query("SAVEPOINT svp_backlink_optional");
+  // Refuse several bills BEFORE touching the database (no savepoint left open, no query).
+  const unique = Array.from(new Set(billIds.filter(Boolean)));
+  if (unique.length !== 1) {
+    return { linked: false, reason: "no_single_bill", detail: `${unique.length} bill target(s) in this apply` };
+  }
+  const billId = unique[0];
+  // The backlink is optional: it never throws into the money path — not even when the SAVEPOINT itself fails.
+  let savepoint = false;
   try {
-    const unique = Array.from(new Set(billIds.filter(Boolean)));
-    if (unique.length !== 1) {
-      return { linked: false, reason: "no_single_bill", detail: `${unique.length} bill target(s) in this apply` };
-    }
-    const billId = unique[0];
+    await client.query("SAVEPOINT svp_backlink_optional");
+    savepoint = true;
 
     const payRes = await client.query<{ source_bank_transaction_id: string | null }>(
       `
@@ -101,8 +105,11 @@ export async function backlinkBankTransactionToBill(
     await client.query("RELEASE SAVEPOINT svp_backlink_optional");
     return { linked: false, reason: "already_matched", detail: `already matched to bill ${exists.rows[0]?.matched}` };
   } catch (error) {
-    await client.query("ROLLBACK TO SAVEPOINT svp_backlink_optional");
-    await client.query("RELEASE SAVEPOINT svp_backlink_optional");
+    if (savepoint) {
+      // Best effort: a connection that is already gone cannot roll back; the caller's transaction reports its own failure.
+      await client.query("ROLLBACK TO SAVEPOINT svp_backlink_optional").catch(() => undefined);
+      await client.query("RELEASE SAVEPOINT svp_backlink_optional").catch(() => undefined);
+    }
     return { linked: false, reason: "error", detail: error instanceof Error ? error.message : String(error) };
   }
 }

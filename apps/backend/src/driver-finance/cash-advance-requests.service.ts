@@ -54,6 +54,10 @@ export const driverCreateCashAdvanceRequestSchema = z.object({
 
 export const officeApproveBodySchema = z.object({
   approval_notes: z.string().trim().max(4000).optional(),
+  // 443.91 #4: the approval disburses through Comdata, and the disbursement engine refuses a Comdata advance without its
+  // instrument number (cash-advance-create.ts cash_advance_instrument_reference_required). The approver supplies it here;
+  // without it the refusal stands (never a fabricated number).
+  bank_reference: z.string().trim().min(1).max(120).optional(),
   // B5: optional book/document date for the disbursement post. Back-dating is role-gated
   // (Owner/Administrator) at the disburse step. YYYY-MM-DD.
   posting_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -756,7 +760,7 @@ export async function approveCashAdvanceRequest(
   const recipientInfo = {
     recipient_type: "driver" as const,
     recipient_name: null,
-    bank_reference: null,
+    bank_reference: input.bank_reference ?? null,
     notes: null,
   };
   const core =
