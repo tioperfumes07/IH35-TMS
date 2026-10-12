@@ -31,6 +31,7 @@ import {
 } from "./reinstate-document.service.js";
 import { nextBillDisplayId } from "./display-id.js";
 import { BillUnitStampError, refuseNonOwnerBillUnitStamp, stampDriverBillUnitsFromLoads } from "./bill-unit-stamp.service.js";
+import { BillTrailerStampError, refuseNonOwnerBillTrailerStamp, stampDriverBillTrailersFromLoads } from "./bill-trailer-stamp.service.js";
 import {
   DuplicateDocumentNumberError,
   duplicateDocumentNumberBody,
@@ -762,6 +763,31 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     }
     const result = await withCompanyScope(user.uuid, opco, (client) =>
       stampDriverBillUnitsFromLoads(client, { operatingCompanyId: opco, actorUserId: String(user.uuid), actorRole: "Owner", dryRun: body.data.dry_run })
+    );
+    return result;
+  });
+
+  // LEAD 443.105 item 1 (P38 Wave-A) — POSTED driver bills take their load's trailer (company -> trailer_id + line
+  // equipment_id; customer -> non_owned_trailer_id), metadata only, one audit row per bill. Owner only: a refusal is
+  // audited in its own committed scope.
+  app.post("/api/v1/accounting/bills/stamp-trailers-from-loads", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = stampUnitsBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    const opco = query.data.operating_company_id;
+    if (String(user.role ?? "") !== "Owner") {
+      await withCompanyScope(user.uuid, opco, (client) =>
+        refuseNonOwnerBillTrailerStamp(client, { userId: String(user.uuid), role: String(user.role ?? "") }, opco).catch((e) => {
+          if (!(e instanceof BillTrailerStampError)) throw e;
+        })
+      );
+      return reply.code(403).send({ error: "owner_only", message: "Only the Owner can stamp trailers on posted bills." });
+    }
+    const result = await withCompanyScope(user.uuid, opco, (client) =>
+      stampDriverBillTrailersFromLoads(client, { operatingCompanyId: opco, actorUserId: String(user.uuid), actorRole: "Owner", dryRun: body.data.dry_run })
     );
     return result;
   });

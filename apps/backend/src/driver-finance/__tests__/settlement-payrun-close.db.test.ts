@@ -101,6 +101,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
 
   type Scenario = { driverId: string; escrowSub: string; settlementId: string; displayId: string; advanceId?: string; liabilityId?: string };
   const unitBySettlement = new Map<string, string>();
+  const trailerBySettlement = new Map<string, string>();
   const below: Scenario = { driverId: randomUUID(), escrowSub: randomUUID(), settlementId: randomUUID(), displayId: `PR-BELOW-${suffix}` };
   const atcap: Scenario = { driverId: randomUUID(), escrowSub: randomUUID(), settlementId: randomUUID(), displayId: `PR-ATCAP-${suffix}` };
   const off: Scenario = { driverId: randomUUID(), escrowSub: randomUUID(), settlementId: randomUUID(), displayId: `PR-OFF-${suffix}` };
@@ -263,6 +264,16 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, load_trailer_equipment_id, assigned_unit_id)
        VALUES ($1::uuid,$2::uuid,$3,$4::uuid,'delivered_pending_docs',300000,$5::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1),$6::uuid)`,
       [loadId, companyId, loadNumber, custId, userId, unitId]);
+    // 443.105 item 1 — the load's assignment records the company trailer it rides, so the per-load A/P bill carries it.
+    const trailerId = randomUUID();
+    await db.query(
+      `INSERT INTO mdata.equipment (id, equipment_number, equipment_type, owner_company_id, is_sample_data) VALUES ($1::uuid,$2,'DryVan',$3::uuid,true)`,
+      [trailerId, `PRT${loadNumber.slice(-6)}`, companyId]);
+    await db.query(
+      `INSERT INTO dispatch.load_assignment_history (operating_company_id, load_id, assignment_method, assigned_by_user_id, new_trailer_id)
+       VALUES ($1::uuid,$2::uuid,'inline_quicksave_trailer',$3::uuid,$4::uuid)`,
+      [companyId, loadId, userId, trailerId]);
+    trailerBySettlement.set(s.settlementId, trailerId);
     // ...and its per-load driver bill (numbered as the load), settled in this settlement — a settlement pays loads.
     await db.query(
       `INSERT INTO driver_finance.driver_bills (id, operating_company_id, load_id, load_number, bill_number, driver_id, gross_amount_cents, status, settled_in_settlement_id)
@@ -539,14 +550,18 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     );
     expect(chainRows.length).toBe(1); // one load -> one A/P bill
     // 443.101 (P38 Wave-A) — the per-load driver-pay bill links to the load's unit as well as its vendor and load.
-    const billUnit = await read<{ unit_id: string | null; vendor: string | null; line_load: string | null }>(
-      `SELECT b.unit_id::text AS unit_id, b.mdata_vendor_id::text AS vendor,
+    const billUnit = await read<{ unit_id: string | null; trailer_id: string | null; line_equipment: string | null; vendor: string | null; line_load: string | null }>(
+      `SELECT b.unit_id::text AS unit_id, b.trailer_id::text AS trailer_id, b.mdata_vendor_id::text AS vendor,
+              (SELECT bl.equipment_id::text FROM accounting.bill_lines bl WHERE bl.bill_id = b.id AND bl.load_id IS NOT NULL LIMIT 1) AS line_equipment,
               (SELECT bl.load_id::text FROM accounting.bill_lines bl WHERE bl.bill_id = b.id AND bl.load_id IS NOT NULL LIMIT 1) AS line_load
          FROM driver_finance.driver_settlement_gl_bills g JOIN accounting.bills b ON b.id = g.accounting_bill_id
         WHERE g.settlement_id = $1::uuid`,
       [below.settlementId]
     );
     expect(billUnit[0]!.unit_id).toBe(unitBySettlement.get(below.settlementId));
+    // 443.105 item 1 — and to the load's trailer (header + its load line).
+    expect(billUnit[0]!.trailer_id).toBe(trailerBySettlement.get(below.settlementId));
+    expect(billUnit[0]!.line_equipment).toBe(trailerBySettlement.get(below.settlementId));
     expect(billUnit[0]!.vendor).toBeTruthy();
     expect(billUnit[0]!.line_load).toBeTruthy();
     const billBal = await jeBalance(chainRows[0]!.bill_je!);

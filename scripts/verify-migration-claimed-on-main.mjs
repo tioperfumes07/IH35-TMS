@@ -133,6 +133,13 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-3/c103-r11",
     new Set(["db/migrations/202615760910_claim_prod_only_downtime_and_archived_driver_catalogs.sql"]),
   ],
+  // LEAD 443.105 item 1 (CC-3, R12): accounting.bills.non_owned_trailer_id — a driver bill on a customer-trailer load
+  // carries its non-owned trailer. Claimed first on main under claimed_by CC-3 inside the cc-3 band (HH 09) — #26592
+  // 29b737ab2e. Same exact-branch + exact-file shape.
+  [
+    "cc-3/c105-r12",
+    new Set(["db/migrations/202615770910_driver_bill_non_owned_trailer.sql"]),
+  ],
   // RULING 443.62 #3/#4/#7 (Lead 16:35 UTC): 2410-00-001..004 "Due to / from <party>" rename (taken from CC-1 #26377) +
   // google_place_id on stop / location for CC-2. Claimed first on main (#26389); exact branch + exact files.
   [
