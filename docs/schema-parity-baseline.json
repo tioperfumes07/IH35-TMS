@@ -10800,7 +10800,9 @@
       "prepared_by_user_uuid",
       "quarter",
       "status",
-      "uuid"
+      "supersedes_filing_uuid",
+      "uuid",
+      "version"
     ],
     "reports.lane_profitability_cache": [
       "avg_deadhead_pct",

@@ -1,10 +1,10 @@
 {
-  "healthzSha": "733b56b",
-  "generated_at": "2026-10-12T21:21:26.251Z",
+  "healthzSha": "e256697",
+  "generated_at": "2026-10-12T21:34:38.871Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "733b56b",
+    "deployedSha": "e256697",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,51 @@
   },
   "recentActivity": [
     {
+      "number": 26718,
+      "title": "Claude-3- FINDING: ACCT-F4431341 LANE: FINANCIAL -- 443.134 related-party due-to account by the app (Alberto Lozano)",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 04:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26718",
+      "sha": "933fa78c3c",
+      "committedAtIso": "2026-10-12T16:33:03-05:00"
+    },
+    {
+      "number": 26717,
+      "title": "FINDING: ACCT-F4431342 LANE: FINANCIAL — AJK-09 (443.134): a legal reserve / fee bill dropped the matter's load (and its driver / unit / trailer), and a generated LR- / LF- number was refused as the bill's display id",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 04:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26717",
+      "sha": "e2566972e6",
+      "committedAtIso": "2026-10-12T16:28:23-05:00"
+    },
+    {
+      "number": 26716,
+      "title": "FINDING: ACCT-F4431343 LANE: FINANCIAL — reserve migration 202615910700 for 443.134 AJK-13 (IFTA filing versions) before authoring",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 04:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26716",
+      "sha": "23084ece90",
+      "committedAtIso": "2026-10-12T16:26:50-05:00"
+    },
+    {
+      "number": 26715,
+      "title": "FINDING: N/A (AUTH-447 CONSUMED — 443.134 #4 trailer picks applied on prod, record only)",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 04:25 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26715",
+      "sha": "e756af032d",
+      "committedAtIso": "2026-10-12T16:25:14-05:00"
+    },
+    {
+      "number": 26714,
+      "title": "FINDING: N/A (443.134 #4 — owner-picked company trailers for loads 13498 / 13520 / 13525 / 13562: engine runner + AUTH-447, record only)",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 04:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26714",
+      "sha": "8d955e80ea",
+      "committedAtIso": "2026-10-12T16:24:17-05:00"
+    },
+    {
       "number": 26712,
       "title": "FINDING: ACCT-F4431341 LANE: FINANCIAL — AJK-04 (443.134): a same-name vendor returned \"already_present\" without linking the driver — the driver still had no payee",
       "state": "merged",
@@ -2166,51 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26708",
       "sha": "a9ec441762",
       "committedAtIso": "2026-10-12T15:47:09-05:00"
-    },
-    {
-      "number": 26707,
-      "title": "Cursor- G11+AJK-03 fences at booking + load status via ONE transition engine",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 03:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26707",
-      "sha": "3b90a7f77b",
-      "committedAtIso": "2026-10-12T15:44:26-05:00"
-    },
-    {
-      "number": 26706,
-      "title": "FINDING: ACCT-F4431283 LANE: FINANCIAL — 443.128 C: team driver bills were never recognized at delivery, and a team load could not be settled by both drivers",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 03:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26706",
-      "sha": "9400cdf351",
-      "committedAtIso": "2026-10-12T15:41:20-05:00"
-    },
-    {
-      "number": 26705,
-      "title": "FINDING: ACCT-F4431282 LANE: FINANCIAL — 443.128 B (N1): an expense that names a load did not take the load's driver and trailer; a mismatched driver / trailer was stored silently",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 03:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26705",
-      "sha": "4e1741d703",
-      "committedAtIso": "2026-10-12T15:39:02-05:00"
-    },
-    {
-      "number": 26704,
-      "title": "FINDING: ACCT-F4431334 LANE: FINANCIAL -- WO->bill line account = its item's account (no description-keyword guess); a WO line with no item is refused by name",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 03:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26704",
-      "sha": "659d3c7187",
-      "committedAtIso": "2026-10-12T15:31:41-05:00"
-    },
-    {
-      "number": 26703,
-      "title": "FINDING: ACCT-F4431331 LANE: FINANCIAL -- 443.133 A: a Relay fill links only to a Relay-card fuel row; cross-rail links undone; the poster refuses a fill that pairs with another rail",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 03:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26703",
-      "sha": "9f45f099af",
-      "committedAtIso": "2026-10-12T15:31:32-05:00"
     }
   ]
 }
