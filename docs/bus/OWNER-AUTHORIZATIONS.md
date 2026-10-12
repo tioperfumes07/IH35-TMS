@@ -7915,3 +7915,14 @@ consumed_at: 2026-10-12T14:00:15Z
 consumed_by: CC-2 (443.107 #1)
 row_counts: 5 expense lines stamped with load_exemption_reason (EXP-2026-00001..00005, 20314 cents) through stampExpenseLineLoadExemption; amounts + journal entries identical (runner money check); 5 audit rows accounting.expense_line.load_exemption_stamped
 proof_query: USMCA live expense lines with load_id NULL AND load_exemption_reason NULL -> 0 of 865 (read on prod 2026-10-12 via Neon read-only)
+
+## AUTH-445
+issued_at: 2026-10-12T16:34:45Z
+issued_by: Lead 443.112 #2 ("CC-2 (with G9): 11 driver_finance.driver_advances with load_id and NO trailer_id while the load has a trailer in load_assignment_history. Forward: advance takes unit/trailer from the load. History: stamp the 11 through the engine (dry run, audit). Prod read-back 0.") + 443.115 ("CC-2 keeps: repair 11 advance trailers"). Recorded by CC-2, as with AUTH-404..444
+owner_quotes: "Every engine ... must record correctly with truck / driver / load / trailer / vendor / item / account" (owner 2026-10-12 07:50 CT, via Lead 443.105)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — trailer_id fill on EXACTLY the 11 driver advances on a load that records a trailer: CA-2026-0001, 0002, 0004, 0005, 0006, 0007, 0008, 0009, 0010, 0011, 0012 (2026-10-11, all recovered; each load has exactly one trailer; each unit already matches). Through stampAdvanceUnitTrailerFromLoad (apps/backend/src/cash-advances/advance-unit-trailer-stamp.service.ts): fill-only from the load via accounting/load-trailer.sql.ts, a different value refused, one audit row each; the runner refuses unless exactly 11 and rolls back if amount / balance / status / reversal moves.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-112-advance-trailer-stamp.mts --apply --auth AUTH-445
+rehearsal: throwaway br-wandering-forest-ak9rj87a (COMMITTED, deleted): 11 stamped (trailer_id), money identical, 0 left; a second run refused (0 found)
+expires_at: 2026-10-13T16:34:45Z
+status: OPEN
+
