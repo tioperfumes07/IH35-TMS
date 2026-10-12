@@ -48,7 +48,7 @@ export function CreatorMilesChoicePanel({
         <span className={sub}>Driver pay = rate × the settlement&apos;s miles; this choice sets only the load&apos;s saved operating miles.</span>
       </div>
       {error ? (
-        <div className="px-2 py-1 text-xs font-semibold text-slate-700" data-testid={`sc-load-miles-choice-error-${idx}`}>
+        <div className="px-2 py-1 text-xs font-semibold text-[#4B5563]" data-testid={`sc-load-miles-choice-error-${idx}`}>
           Recommendations unavailable: {error}
         </div>
       ) : null}
@@ -87,7 +87,7 @@ export function CreatorMilesChoicePanel({
                         {h.min != null && h.max != null ? ` · ${fmt(h.min)}–${fmt(h.max)}` : ""}
                         {h.last_seen ? ` · last ${String(h.last_seen).slice(0, 10)}` : ""}
                       </div>
-                      {h.untrustworthy_reason ? <div className="text-xs font-semibold text-slate-700">{h.untrustworthy_reason}</div> : null}
+                      {h.untrustworthy_reason ? <div className="text-xs font-semibold text-[#4B5563]">{h.untrustworthy_reason}</div> : null}
                     </>
                   ) : (
                     <span className={sub}>{r?.historical_missing_reason ?? "no history for this lane"}</span>

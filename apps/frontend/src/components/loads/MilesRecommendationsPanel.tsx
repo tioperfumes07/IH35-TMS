@@ -118,7 +118,7 @@ function MilesFieldRow({
             <div className="text-gray-600">avg of {h.n_loads} load{h.n_loads === 1 ? "" : "s"}</div>
             {h.min != null && h.max != null ? <div className="text-gray-600">range {miles(h.min)} – {miles(h.max)}</div> : null}
             {h.last_seen ? <div className="text-gray-600">last seen {day(h.last_seen)}</div> : null}
-            {h.untrustworthy_reason ? <div className="font-semibold text-slate-700">flagged: {h.untrustworthy_reason}</div> : null}
+            {h.untrustworthy_reason ? <div className="font-semibold text-[#4B5563]">flagged: {h.untrustworthy_reason}</div> : null}
           </div>
         ) : (
           <span className="text-gray-600">{rec.historical_missing_reason || "no history for this lane"}</span>
