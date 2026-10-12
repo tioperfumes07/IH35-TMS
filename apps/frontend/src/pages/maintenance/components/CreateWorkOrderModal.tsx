@@ -35,6 +35,7 @@ import { ParityTable } from "../../../components/parity/ParityTable";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { NumberInput } from "../../../components/forms/NumberInput";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
+import { WoLineItemSelect } from "../../../components/forms/shared/WoLineItemSelect";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
 import { Modal } from "../../../components/Modal";
@@ -232,6 +233,8 @@ export type EditWorkOrderLine = {
   quantity: number;
   unit_cost: number;
   amount: number;
+  /** ACCT-F4431382 — the catalogs.items row this line bills (its own, else its Section B parent's). */
+  item_id?: string | null;
 };
 
 export type EditWorkOrderTarget = {
@@ -272,6 +275,9 @@ const typeTabs: Array<{ id: WorkOrderType; label: string }> = [
   { id: "tire", label: "Tire" },
   { id: "accident", label: "Accident" },
 ];
+
+const EDIT_LINE_ITEM_REQUIRED =
+  "Every new or changed cost line needs its item — the bill posts each line to its item's account.";
 
 const G18_EXPENSE_REGEX = /\b(fuel|diesel|roadside|toll|parking)\b/i;
 const DEFAULT_SOURCE_BY_TYPE: Record<WorkOrderType, CreateWOFormValues["source_type"]> = {
@@ -442,6 +448,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         quantity: Number(li.quantity ?? 0),
         unit_cost: Number(li.unit_cost ?? 0),
         amount: Number(li.amount ?? 0),
+        item_id: li.item_id ?? null,
       }))
     );
   }, [open, editWorkOrder]);
@@ -528,6 +535,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       quantity: Number(line.quantity || 0),
       amount: Number(line.unit_cost || 0),
       expense_category_uuid: line.expense_category_uuid || "",
+      // ACCT-F4431382: the line's item — the WO->bill copy posts the line to this item's account.
+      ...(line.item_id ? { item_id: line.item_id } : {}),
     }))
     .filter((line) => line.expense_category_uuid);
 
@@ -538,7 +547,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       quantity: Number(line.quantity || 0),
       unit_cost: Number(line.unit_cost || 0),
       amount: Number(line.amount || 0),
-      ...(line.service_item_uuid ? { service_item_uuid: line.service_item_uuid } : {}),
+      // ACCT-F4431382: the Section B service item IS the line's catalogs.items row; its part / labor rows inherit it.
+      ...(line.service_item_uuid ? { service_item_uuid: line.service_item_uuid, item_id: line.service_item_uuid } : {}),
       sub_rows: (line.sub_rows ?? []).map((row) => ({
         line_type: row.line_type,
         description: String(row.description ?? "").trim(),
@@ -558,6 +568,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   // Backend sectionALineSchema requires description.min(1). A blank "Part # / Task" used to reach
   // POST and 400 with a misleading header-level Zod dump. Gate it here with a named check.
   const sectionAPartTaskOk = sectionALines.every((line) => line.description.length > 0);
+  // ACCT-F4431382: every cost line names its item — the bill copy refuses a line with no item (wo_line_item_required),
+  // so a WO saved without one could never be billed. A category line whose category maps to exactly one item already
+  // carries it (picked in the Item column); otherwise the operator picks it before save.
+  const sectionAItemsOk = sectionALines.every((line) => Boolean(line.item_id));
+  const sectionBItemsOk = sectionBLines.every((line) => Boolean(line.item_id));
   const sectionBDescriptionsOk = sectionBLines.every(
     (line) =>
       line.description.length > 0 &&
@@ -611,6 +626,10 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     {
       label: "Description required on every Section B cost line",
       ok: sectionBLines.length === 0 || sectionBDescriptionsOk,
+    },
+    {
+      label: "Item required on every cost line (the bill posts to the item's account)",
+      ok: sectionAItemsOk && sectionBItemsOk,
     },
     ...(reconcileRequired
       ? [{ label: "Vendor invoice reconciles — WO parts & labor tie to invoice", ok: reconcileOk }]
@@ -829,7 +848,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         a.description !== b.description ||
         Number(a.quantity) !== Number(b.quantity) ||
         Number(a.unit_cost) !== Number(b.unit_cost) ||
-        Number(a.amount) !== Number(b.amount);
+        Number(a.amount) !== Number(b.amount) ||
+        (a.item_id ?? null) !== (b.item_id ?? null);
       for (const line of editLines) {
         if (!line.id) {
           toAdd.push(line);
@@ -841,6 +861,14 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           toAdd.push({ ...line, id: undefined });
         }
       }
+      // ACCT-F4431382: a line written here bills through the WO->bill copy, which takes the item's account and
+      // refuses a line with no item. Refuse it here, by name, before anything is written.
+      if (toAdd.some((line) => !line.item_id)) {
+        setEditBlockMessage(EDIT_LINE_ITEM_REQUIRED);
+        pushToast(EDIT_LINE_ITEM_REQUIRED, "error");
+        setSavingEdit(false);
+        return;
+      }
       for (const id of toDelete) await deleteWorkOrderLineItem(woId, id, operatingCompanyId);
       for (const line of toAdd)
         await addWorkOrderLineItem(woId, operatingCompanyId, {
@@ -849,6 +877,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           quantity: Number(line.quantity) || 0,
           unit_cost: Number(line.unit_cost) || 0,
           amount: Number(line.amount) || 0,
+          item_id: String(line.item_id),
         });
 
       pushToast("Work order updated", "success");
@@ -1032,6 +1061,19 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                         value={row.description}
                         onChange={(e) => patchEditLine(row._idx, { description: e.target.value })}
                         className={FLD}
+                      />
+                    ),
+                  },
+                  {
+                    key: "item_id",
+                    label: "Item",
+                    alwaysVisible: true,
+                    render: (row) => (
+                      <WoLineItemSelect
+                        testId={`edit-wo-line-item-${row._idx}`}
+                        operatingCompanyId={operatingCompanyId}
+                        value={row.item_id ?? null}
+                        onChange={(itemId) => patchEditLine(row._idx, { item_id: itemId })}
                       />
                     ),
                   },

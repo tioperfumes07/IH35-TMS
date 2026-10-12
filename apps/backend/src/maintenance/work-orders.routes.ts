@@ -7,9 +7,11 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import {
   allocateInHouseFromWO,
+  assertWorkOrderLineItem,
   autoCreateBillFromWO,
   autoCreateExpenseFromWO,
   createWorkOrderWithLines,
+  WorkOrderLineItemError,
 } from "./two-section-service.js";
 import { openWorkOrderPredicate } from "../kpi/canonical-kpis.js";
 import { operatorWorkOrderListSql } from "./work-order-visibility.js";
@@ -281,6 +283,9 @@ const lineItemCreateSchema = z.object({
   quantity: z.number().min(0),
   unit_cost: z.number().min(0),
   amount: z.number().min(0),
+  // ACCT-F4431382: the catalogs.items row this line bills. The WO->bill copy takes the item's account and refuses a
+  // line with no item (wo_line_item_required) — so a line added here without one is refused now, by the same name.
+  item_id: z.string().uuid().optional().nullable(),
 });
 
 const allowedTransitions: Record<z.infer<typeof workOrderStatusSchema>, z.infer<typeof workOrderStatusSchema>[]> = {
@@ -1112,6 +1117,11 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
               "Work-order line total does not match the vendor invoice amount. Correct the lines or the invoice before closing.",
           });
         }
+        // ACCT-F4431382: a line with no item (the bill copy refuses it) or an item of another company — 422 by name,
+        // the whole WO + bill rolled back, instead of an unexplained 500.
+        if (error instanceof WorkOrderLineItemError) {
+          return reply.code(422).send({ error: error.code, message: error.message });
+        }
         const message = String((error as Error)?.message ?? "");
         if (message.includes("E_DIESEL_REQUIRES_LOAD")) {
           return reply.code(422).send({
@@ -1879,13 +1889,20 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         // already posted/paid, adding a cost line would diverge the WO from its Bill — refuse.
         const posted = await findPostedApForWo(client, companyId, params.data.id);
         if (posted) throw new WoPostedApError(posted);
+        if (!parsed.data.item_id) {
+          throw new WorkOrderLineItemError(
+            "wo_line_item_required",
+            `work-order line "${parsed.data.description}" names no catalog item — pick the item; the bill posts the line to its account`
+          );
+        }
+        const itemId = await assertWorkOrderLineItem(client as never, companyId, parsed.data.item_id);
         const res = await client.query(
           `
-            INSERT INTO maintenance.work_order_lines (work_order_uuid, line_type, description, quantity, unit_cost, total_cost)
-            VALUES ($1,$2,$3,$4,$5,$6)
+            INSERT INTO maintenance.work_order_lines (work_order_uuid, line_type, description, quantity, unit_cost, total_cost, item_id)
+            VALUES ($1,$2,$3,$4,$5,$6,$7::uuid)
             RETURNING *
           `,
-          [params.data.id, parsed.data.line_type, parsed.data.description, parsed.data.quantity, parsed.data.unit_cost, parsed.data.amount]
+          [params.data.id, parsed.data.line_type, parsed.data.description, parsed.data.quantity, parsed.data.unit_cost, parsed.data.amount, itemId]
         );
         await validateWoVendorInvoiceTotals(client, String(params.data.id), companyId);
         return res.rows[0];
@@ -1895,6 +1912,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         return reply.code(409).send({ error: error.message, status: error.status });
       }
       if (isWoPostedApError(error)) return postedApReply(reply, error.detail);
+      // ACCT-F4431382: no item / an item of another company — refused by name (422), nothing written.
+      if (error instanceof WorkOrderLineItemError) {
+        return reply.code(422).send({ error: error.code, message: error.message });
+      }
       if (isWoInvoiceMismatch(error)) {
         const err = error;
         return reply.code(409).send({

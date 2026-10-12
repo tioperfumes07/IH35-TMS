@@ -140,7 +140,7 @@ export class WorkOrderLineItemError extends Error {
   }
 }
 
-async function assertWorkOrderLineItem(client: DbClient, operatingCompanyId: string, itemId: string | null | undefined): Promise<string | null> {
+export async function assertWorkOrderLineItem(client: DbClient, operatingCompanyId: string, itemId: string | null | undefined): Promise<string | null> {
   if (!itemId) return null;
   const hit = await client.query<{ id: string }>(
     `SELECT id::text FROM catalogs.items WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
