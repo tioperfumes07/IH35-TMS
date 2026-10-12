@@ -24,7 +24,7 @@
  * finds no reversing entries at all, and it SKIPs (rather than crashing as a false money finding) when
  * handed a reachable but unmigrated database — the ACCT-F333 lesson.
  */
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "3053-verify-reversing-je-carries-je-level-fk";
 
@@ -99,20 +99,8 @@ if (process.argv.includes("--selftest")) {
   process.exit(ok ? 0 : 1);
 }
 
-const url = process.env.DATABASE_URL;
-if (!url) {
-  console.log(`[${LABEL}] SKIP — no DATABASE_URL (static context); this guard is DB-backed by design`);
-  process.exit(0);
-}
-
-const pool = new pg.Pool({ connectionString: url, ssl: url.includes("localhost") ? false : { rejectUnauthorized: false } });
-let client;
-try {
-  client = await pool.connect();
-} catch {
-  console.log(`[${LABEL}] SKIP — database unreachable (static context)`);
-  process.exit(0);
-}
+// 443.100: a live money guard that cannot connect FAILS (ROUND 29.9-B, verify-no-silent-db-skip) — never a skip-pass.
+const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
 
 try {
   await client.query("BEGIN");
@@ -125,10 +113,9 @@ try {
   const present = await client.query(`SELECT to_regclass('accounting.journal_entries') IS NOT NULL AS present`);
   if (!present.rows[0]?.present) {
     await client.query("ROLLBACK").catch(() => {});
-    console.log(`[${LABEL}] SKIP — database reachable but the accounting schema is not present (fresh/unmigrated DB)`);
     client.release();
     await pool.end();
-    process.exit(0);
+    fail("database reachable but the accounting schema is not present (fresh/unmigrated DB) — an unmigrated database cannot verify this money invariant, so it is not a pass");
   }
 
   // ROUND 393.2 (ACCT-F2026100402, 7e1105eef6): a RECLASSIFICATION entry's out-leg names the ONE line it undoes
