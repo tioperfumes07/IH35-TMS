@@ -99,6 +99,8 @@ describeIntegration("OB-01 opening balance commit gate (real Postgres)", () => {
     await db.connect();
     await db.query("SET ROLE ih35_app");
     await bypass(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       const mkUser = (id: string, email: string) =>
         db.query(
           `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en')

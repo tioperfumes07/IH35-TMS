@@ -75,7 +75,8 @@ function parseExecutableCounterSql(sql: string) {
 function parseExecutableGucSql(sql: string) {
   const executable = stripSqlComments(sql).replace(/\s+/g, " ").trim();
   if (
-    !/^SELECT\s+set_config\(\s*'app\.operating_company_id'\s*,\s*\$1\s*,\s*true\s*\)$/i.test(
+    // 443.93: the route casts the parameter ($1::text) — same GUC, same company, still parameterized.
+    !/^SELECT\s+set_config\(\s*'app\.operating_company_id'\s*,\s*\$1(::text)?\s*,\s*true\s*\)$/i.test(
       executable,
     )
   ) {
