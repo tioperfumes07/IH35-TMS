@@ -82,7 +82,13 @@ if (process.argv.includes("--selftest")) {
 }
 const problems = [...checkStatic(real), ...checkCreator(creatorSrc)];
 // ROUND 29.9-B: a live guard that cannot connect is a FAIL, never a pass (verify-no-silent-db-skip ratchet).
-await requireLiveDbOrExit({ label: LABEL });
+// 443.99: the probe's pool + client are released at once — discarding them kept Node alive after "OK" and hung
+// verify:pre-commit at step 12073 until the job timed out.
+{
+  const probe = await requireLiveDbOrExit({ label: LABEL });
+  probe?.client?.release?.();
+  await probe?.pool?.end?.();
+}
 if (process.env.DATABASE_URL) {
   const { default: pg } = await import("pg");
   const c = new pg.Client({ connectionString: process.env.DATABASE_URL });
