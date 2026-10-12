@@ -14,7 +14,12 @@ export function collectFailures(src = source) {
   const requireText = (token, message) => { if (!src.includes(token)) failures.push(message); };
   requireText('queryFn: () => getPreSettlementForDriver(driverId, operatingCompanyId)', "reader must bind canonical driver and selected company");
   requireText('enabled: Boolean(driverId && operatingCompanyId)', "reader must require both scope keys");
-  requireText('kind="settlement" id={settlement.id} name={settlement.display_id}', "settlement drill must bind canonical id and human display id");
+  // LEAD 443.107 (2026-10-12) — old rule: the settlement drill named the row by raw settlement.display_id.
+  //   new rule: it names it by settlementLabel(settlement) — the canonical settlement naming helper (a real AlwaysTrack
+  //             number wins, else the display id) — still bound to the canonical settlement.id.
+  //   why: Lead 443.104 ruled PreSettlementPanel uses settlementLabel(...) (the settlement naming law); fb17a4b687 had swapped
+  //        it for raw display_id, which this guard then pinned.
+  requireText('kind="settlement" id={settlement.id} name={settlementLabel(settlement)}', "settlement drill must bind canonical id and the canonical settlement label");
   requireText('data-testid="pre-settlement-panel-driver-entitylink"', "driver reverse surface must remain mounted");
   requireText('kind="driver"\n              id={settlement.driver_id || driverId}', "driver drill must bind the returned driver with scoped fallback");
   requireText('name={settlement.driver_name ?? null}', "driver drill must resolve the human driver name");
@@ -41,7 +46,8 @@ function selftest() {
   const mutations = [
     ['getPreSettlementForDriver(driverId, operatingCompanyId)', 'getPreSettlementForDriver(driverId, "wrong-company")'],
     ['Boolean(driverId && operatingCompanyId)', 'Boolean(driverId)'],
-    ['kind="settlement" id={settlement.id} name={settlement.display_id}', 'kind="settlement" id={driverId} name={settlement.display_id}'],
+    ['kind="settlement" id={settlement.id} name={settlementLabel(settlement)}', 'kind="settlement" id={driverId} name={settlementLabel(settlement)}'],
+    ['kind="settlement" id={settlement.id} name={settlementLabel(settlement)}', 'kind="settlement" id={settlement.id} name={settlement.display_id}'],
     ['data-testid="pre-settlement-panel-driver-entitylink"', 'data-testid="planted-missing"'],
     ['id={settlement.driver_id || driverId}', 'id={settlement.id}'],
     ['name={settlement.driver_name ?? null}', 'name={null}'],
