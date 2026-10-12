@@ -39,6 +39,22 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 // is a hard FAIL -- the fix above is what prevents new occurrences.
 const KNOWN_PRE_FIX_CORRUPTED_COUNT = 130;
 
+/** Voided fuel transactions with a non-zero net GL balance may not exceed the pre-fix baseline (shrink-only). */
+export function overBaseline(corruptedCount, baseline = KNOWN_PRE_FIX_CORRUPTED_COUNT) {
+  return corruptedCount > baseline;
+}
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["at the pre-fix baseline passes", overBaseline(KNOWN_PRE_FIX_CORRUPTED_COUNT) === false],
+    ["0 corrupted passes", overBaseline(0) === false],
+    ["one NEW double-reversal above the baseline fails", overBaseline(KNOWN_PRE_FIX_CORRUPTED_COUNT + 1) === true],
+  ];
+  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? "verify-no-double-reversed-fuel-postings --selftest FAIL" : `verify-no-double-reversed-fuel-postings --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 async function main() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
@@ -84,7 +100,7 @@ async function main() {
     await client.query("ROLLBACK");
 
     const corrupted = res.rows;
-    if (corrupted.length > KNOWN_PRE_FIX_CORRUPTED_COUNT) {
+    if (overBaseline(corrupted.length)) {
       console.error(`${LABEL}: FAIL — ${corrupted.length} voided fuel_transaction(s) carry a non-zero net GL balance, more than the known pre-fix baseline (${KNOWN_PRE_FIX_CORRUPTED_COUNT}). A NEW double-reversal occurred.`);
       for (const r of corrupted.slice(0, 30)) {
         console.error(`  ✗ fuel_transaction=${r.ft_id} abs_misstatement_cents=${r.abs_misstatement_cents}`);

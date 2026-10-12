@@ -88,6 +88,23 @@ function read(rel) {
   return fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
 }
 
+if (process.argv.includes("--selftest")) {
+  const alloc = read(ALLOCATOR);
+  const pre = read(PRESETTLEMENT);
+  const cases = [
+    ["the real allocator passes", auditAllocator(alloc).length === 0],
+    ["the real presettlement passes", auditPresettlement(pre).length === 0],
+    ["an allocator calling the retired AlwaysTrack minter fails", auditAllocator(`${alloc}\nconst x = ${RETIRED_CALL}(client);`).length > 0],
+    ["an allocator without the P- display_id series fails", auditAllocator(alloc.split("substring(display_id from '^P-([0-9]+)$')").join("x")).length > 0],
+    ["a presettlement that mints a document number fails", auditPresettlement(`${pre}\nawait ${RETIRED_CALL}(client);`).length > 0],
+    ["a retired call only inside a comment is ignored", auditPresettlement(`${pre}\n// ${RETIRED_CALL}(client) was retired`).length === 0],
+  ];
+  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const failures = [...auditAllocator(read(ALLOCATOR)), ...auditPresettlement(read(PRESETTLEMENT))];
   if (failures.length > 0) {

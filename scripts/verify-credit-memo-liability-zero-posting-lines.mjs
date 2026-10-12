@@ -23,6 +23,23 @@ const LABEL = "verify-credit-memo-liability-zero-posting-lines";
 export const REQUIRES_LIVE_DB =
   "live-data money guard (TASK 18 tripwire); fails closed via requireLiveDbOrExit with no DATABASE_URL";
 
+/** ZERO-TOLERANCE verdict over the measured rows (source_transaction_type, n): any row at all fails. */
+export function verdict(rows) {
+  return rows.length > 0 ? { ok: false, rows } : { ok: true, rows: [] };
+}
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["no credit_memo / liability postings passes", verdict([]).ok === true],
+    ["one liability posting fails", verdict([{ source_transaction_type: "liability", n: 1 }]).ok === false],
+    ["one credit_memo posting fails", verdict([{ source_transaction_type: "credit_memo", n: 3 }]).ok === false],
+  ];
+  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? "verify-credit-memo-liability-zero-posting-lines --selftest FAIL" : `verify-credit-memo-liability-zero-posting-lines --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 async function live() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
@@ -38,7 +55,7 @@ async function live() {
 
     await client.query("COMMIT");
 
-    if (res.rows.length > 0) {
+    if (!verdict(res.rows).ok) {
       console.error(`${LABEL}: LIVE FAIL — a source type this codebase treats as zero-posting-line/subledger-only just posted for real:`);
       for (const r of res.rows) {
         console.error(

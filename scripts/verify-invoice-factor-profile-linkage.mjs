@@ -34,6 +34,22 @@ const KNOWN_PRE_FIX_UNRESOLVED = new Set([
   "c1618066-5d65-4553-b51f-363db453af5f",
 ]);
 
+/** Submitted/advanced invoices with NULL factor_profile_id that are NOT on the named pre-fix allowlist. */
+export function unexpectedRows(rows) {
+  return rows.filter((r) => !KNOWN_PRE_FIX_UNRESOLVED.has(r.id));
+}
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["only allowlisted pre-fix rows passes", unexpectedRows([{ id: "218a2a1d-0d94-421b-b5b3-24c3e681e581" }]).length === 0],
+    ["a NEW submitted invoice without factor_profile_id fails", unexpectedRows([{ id: "00000000-0000-4000-8000-0000000000aa" }]).length === 1],
+    ["no rows passes", unexpectedRows([]).length === 0],
+  ];
+  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? "verify-invoice-factor-profile-linkage --selftest FAIL" : `verify-invoice-factor-profile-linkage --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 async function main() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
@@ -48,7 +64,7 @@ async function main() {
     `);
 
     await client.query("ROLLBACK");
-    const unexpected = res.rows.filter((r) => !KNOWN_PRE_FIX_UNRESOLVED.has(r.id));
+    const unexpected = unexpectedRows(res.rows);
 
     if (unexpected.length > 0) {
       console.error(`${LABEL}: FAIL — ${unexpected.length} submitted/advanced invoice(s) with NULL factor_profile_id, not on the known pre-fix list:`);

@@ -85,6 +85,30 @@ async function measureLive(client) {
   return { perCompany, total };
 }
 
+/**
+ * The decision over the measured dead-target count and the reconciled baseline (null = no file):
+ *   clean / matches_baseline pass; no_baseline_nonzero, stale_baseline (clean but a baseline left), diverged fail.
+ */
+export function baselineVerdict(total, baseline) {
+  if (!baseline) return total > 0 ? "no_baseline_nonzero" : "clean";
+  if (total === 0) return "stale_baseline";
+  if (total !== baseline.total) return "diverged";
+  return "matches_baseline";
+}
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["0 dead targets and no baseline passes", baselineVerdict(0, null) === "clean"],
+    ["dead targets with no baseline fail", baselineVerdict(3, null) === "no_baseline_nonzero"],
+    ["the reconciled baseline count passes", baselineVerdict(5, { total: 5 }) === "matches_baseline"],
+    ["debt that grew past the baseline fails", baselineVerdict(6, { total: 5 }) === "diverged"],
+    ["clean with a stale baseline file fails", baselineVerdict(0, { total: 5 }) === "stale_baseline"],
+  ];
+  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? "verify-bank-line-status-has-live-target --selftest FAIL" : `verify-bank-line-status-has-live-target --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 async function live() {
   const url = process.env.DATABASE_URL;
   if (!url) {
@@ -113,16 +137,17 @@ async function live() {
     );
 
     const baseline = loadBaseline();
+    const verdict = baselineVerdict(measured.total, baseline);
     let failures = 0;
     if (!baseline) {
-      if (measured.total > 0) {
+      if (verdict === "no_baseline_nonzero") {
         console.error(`${LABEL}: LIVE FAIL — no baseline file and ${measured.total} bank line(s) with a dead matched target. A reconciled baseline must exist before this guard can pass on a nonzero total.`);
         failures++;
       }
-    } else if (measured.total === 0) {
+    } else if (verdict === "stale_baseline") {
       console.error(`${LABEL}: LIVE FAIL — now CLEAN (0 lines), but a baseline for ${baseline.total} line(s) still exists — remove ${path.basename(BASELINE_PATH)} (good news; confirm it, don't leave stale debt on the books).`);
       failures++;
-    } else if (measured.total !== baseline.total) {
+    } else if (verdict === "diverged") {
       const worse = measured.total > baseline.total;
       console.error(
         `${LABEL}: LIVE FAIL — diverges from the reconciled baseline (${baseline.total} line(s), established ${baseline.established}). ` +

@@ -16,6 +16,19 @@ function assertSeparation(code) {
     'reopenSettlementForContinuationInClientTx(client,',
   ]) if (!code.includes(required)) throw new Error('NB tour separation missing: ' + required);
 }
+const MUTATIONS = [
+  ['occupied-open NB check disabled', source.replace('!open.is_closed && open.has_other_nb', 'false')],
+  ['second NB allowed', source.replace('open_settlement_already_has_nb', 'allow_second_nb')],
+  ['tour_id not stamped', source.replace('SET presettlement_link_id = $1::uuid, tour_id = $3::uuid', 'SET presettlement_link_id = $1::uuid')],
+];
+if (process.argv.includes('--selftest')) {
+  const throws = (code) => { try { assertSeparation(code); return false; } catch { return true; } };
+  const cases = [['the real service passes', !throws(source)], ...MUTATIONS.map(([n, code]) => [`${n} fails`, throws(code)])];
+  for (const [n, p] of cases) console.log(`  ${p ? '✓' : '✗'} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? 'verify-nb-open-tour-split --selftest FAIL' : `verify-nb-open-tour-split --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
 assertSeparation(source);
 for (const oldBehavior of [
   source.replace('!open.is_closed && open.has_other_nb', 'false'),

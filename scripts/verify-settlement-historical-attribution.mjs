@@ -16,6 +16,20 @@ function assertEvidence(source) {
     throw new Error('Identity attribution must not rewrite original financial records');
   }
 }
+if (process.argv.includes('--selftest')) {
+  const throws = (code) => { try { assertEvidence(code); return false; } catch { return true; } };
+  const cases = [
+    ['the real service passes', !throws(service)],
+    ['a non-NULL identity allocation fails', throws(service.replace("'identity_only',NULL", "'identity_only',0"))],
+    ['no journal row lock fails', throws(service.replace('FOR UPDATE OF r, je', 'FOR UPDATE OF r'))],
+    ['a rewrite of an original financial record fails', throws(service + '\nUPDATE accounting.journal_entries SET x = 1')],
+    ['a missing idempotency conflict fails', throws(service.split('Historical attribution idempotency conflict').join('x'))],
+  ];
+  for (const [n, p] of cases) console.log(`  ${p ? '✓' : '✗'} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? 'verify-settlement-historical-attribution --selftest FAIL' : `verify-settlement-historical-attribution --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
 assertEvidence(service);
 for (const broken of [service.replace("'identity_only',NULL", "'identity_only',0"), service.replace('FOR UPDATE OF r, je', 'FOR UPDATE OF r')]) {
   let caught = false;
