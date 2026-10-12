@@ -3162,6 +3162,26 @@
       "updated_at",
       "violation_code"
     ],
+    "catalogs.downtime_categories": [
+      "code",
+      "created_at",
+      "description",
+      "display_order",
+      "id",
+      "is_active",
+      "label",
+      "operating_company_id"
+    ],
+    "catalogs.downtime_fault_parties": [
+      "code",
+      "created_at",
+      "description",
+      "display_order",
+      "id",
+      "is_active",
+      "label",
+      "operating_company_id"
+    ],
     "catalogs.driver_deduction_types": [
       "default_recovery_rail",
       "may_draw_escrow",
@@ -10747,6 +10767,29 @@
       "updated_at",
       "vendor_id",
       "vendor_invoice_number"
+    ],
+    "safety.accidents": [
+      "accident_type",
+      "created_at",
+      "display_id",
+      "dot_reportable",
+      "driver_id",
+      "event_datetime",
+      "fatality_count",
+      "id",
+      "injury_count",
+      "location_lat",
+      "location_lng",
+      "location_text",
+      "narrative",
+      "operating_company_id",
+      "other_party_info",
+      "police_report_number",
+      "tow_away_required",
+      "unit_id",
+      "updated_at",
+      "voided_at",
+      "voided_reason"
     ],
     "safety.anomaly_alert_rules": [
       "cadence_minutes",
