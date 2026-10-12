@@ -628,6 +628,8 @@ export async function postSettlementBillPayment(
           driverId: settlement.driver_id,
           // 443.101 (P38 Wave-A) — the driver-pay bill links to the load's unit, not only its vendor and load.
           unitId: b.unit_id ?? null,
+          // 443.106 (trg_refuse_driver_bill_without_links, BEFORE INSERT): the load rides the header INSERT row.
+          loadId: b.load_id,
           // GO-19 slice 03 (owner reversal of the prior AP-BILL-NUMBER-IS-THE-LOAD-NUMBER rationale
           // below) — driver bill number EQUALS the load number, no 'B-' prefix, matching
           // driver-bill-number.ts's driverBillNumberFromLoadNumber contract everywhere else a driver
