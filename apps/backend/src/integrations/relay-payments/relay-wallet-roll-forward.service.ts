@@ -11,7 +11,7 @@
  * Canceled deposits move nothing. Voided / inactive rows move nothing. Read-only.
  */
 import type { DbClient } from "./db-client.type.js";
-import { relayFillFeeCents } from "./relay-sender-fee-cents.js";
+import { relayFuelPaidCents } from "./relay-sender-fee-cents.js";
 
 export type RollForwardDoc = { id: string; ref: string; cents: number };
 export type RollForwardDay = {
@@ -36,7 +36,11 @@ const cents = (v: unknown): number => {
   return Number.isFinite(n) ? Math.round(n * 100) : 0;
 };
 
-export type FillRow = { id: string; transaction_id: string; day: string; paid_cents: number; fees: unknown[] | null; line_fee_cents: Array<number | null>; is_lumper: boolean };
+export type FillRow = {
+  id: string; transaction_id: string; day: string; paid_cents: number; fees: unknown[] | null; line_fee_cents: Array<number | null>; is_lumper: boolean;
+  /** LEAD 443.123 — product lines + ingest source let the ONE paid rule recognise a legacy CSV row (paid already carries its fee). */
+  product_cents?: number | null; ingest_source?: string | null;
+};
 export type DepositRow = { id: string; deposit_id: string; day: string; amount_cents: number; fee_cents: number };
 
 /** Pure: the roll-forward from fills and settled deposits. */
@@ -58,14 +62,21 @@ export function buildRollForward(fills: FillRow[], deposits: DepositRow[]): Roll
   }
   for (const f of fills) {
     const x = day(f.day);
-    const fee = relayFillFeeCents({ transaction_id: f.transaction_id, fees: f.fees, line_fee_amount_cents: f.line_fee_cents });
+    const p = relayFuelPaidCents({
+      transaction_id: f.transaction_id,
+      stored_paid_cents: f.paid_cents,
+      product_lines_cents: f.product_cents ?? null,
+      fees: f.fees,
+      line_fee_amount_cents: f.line_fee_cents,
+      ingest_source: f.ingest_source ?? null,
+    });
     if (f.is_lumper) {
-      x.lumper_cents += f.paid_cents + fee;
-      x.lumper.push({ id: f.id, ref: f.transaction_id, cents: f.paid_cents + fee });
+      x.lumper_cents += p.wallet_cents;
+      x.lumper.push({ id: f.id, ref: f.transaction_id, cents: p.wallet_cents });
     } else {
-      x.fills_cents += f.paid_cents;
-      x.fill_fees_cents += fee;
-      x.fills.push({ id: f.id, ref: f.transaction_id, cents: f.paid_cents + fee });
+      x.fills_cents += p.fuel_paid_cents;
+      x.fill_fees_cents += p.fee_cents;
+      x.fills.push({ id: f.id, ref: f.transaction_id, cents: p.wallet_cents });
     }
   }
   const ordered = [...days.values()].sort((a, b) => a.day.localeCompare(b.day));
@@ -86,11 +97,14 @@ export function buildRollForward(fills: FillRow[], deposits: DepositRow[]): Roll
 
 export async function computeRelayWalletRollForward(client: DbClient, operatingCompanyId: string): Promise<RollForward> {
   const fills = (
-    await client.query<{ id: string; transaction_id: string; day: string; paid_cents: string; fees: unknown; line_fee_cents: Array<string | null> | null; fuel_code_type: string | null }>(
+    await client.query<{ id: string; transaction_id: string; day: string; paid_cents: string; fees: unknown; line_fee_cents: Array<string | null> | null; fuel_code_type: string | null; product_cents: string | null; ingest_source: string | null }>(
       `SELECT r.id::text, r.transaction_id, (r.relay_created_at AT TIME ZONE 'America/Chicago')::date::text AS day,
               abs(r.total_amount_paid_cents)::text AS paid_cents, r.fees, r.fuel_code_type,
               (SELECT array_agg(l.fee_amount_cents::text) FROM integrations.relay_fuel_transaction_lines l
-                WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND l.is_active) AS line_fee_cents
+                WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND l.is_active) AS line_fee_cents,
+              (SELECT sum(l.total_discounted_price_cents)::text FROM integrations.relay_fuel_transaction_lines l
+                WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND l.is_active) AS product_cents,
+              r.ingest_source::text AS ingest_source
          FROM integrations.relay_fuel_transactions r
         WHERE r.operating_company_id = $1::uuid AND r.voided_at IS NULL AND r.is_active`,
       [operatingCompanyId]
@@ -103,6 +117,8 @@ export async function computeRelayWalletRollForward(client: DbClient, operatingC
     fees: Array.isArray(r.fees) ? r.fees : null,
     line_fee_cents: (r.line_fee_cents ?? []).map((c) => (c == null ? null : Number(c))),
     is_lumper: /lumper/i.test(r.fuel_code_type ?? ""),
+    product_cents: r.product_cents == null ? null : Number(r.product_cents),
+    ingest_source: r.ingest_source,
   }));
   const deposits = (
     await client.query<{ id: string; deposit_id: string; day: string; raw_payload: Record<string, unknown> | null; total_amount_cents: string }>(

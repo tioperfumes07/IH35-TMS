@@ -15,7 +15,7 @@ import { buildFuelTxnJeMemo, mapFuelTypeToPostingKind } from "../fuel-posting/fu
 import { loadFuelTxnCreditSignals, resolveCompanyDirectCreditPreference } from "../fuel-posting/fuel-credit-preference.js";
 import { findPostedFuelEvent, postFuelExpenseOnClient, type FuelCategoryCode, type FuelPostingResult } from "../fuel-posting/poster.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
-import { relayFillFeeCents, relayWalletDrawdownCents } from "../../integrations/relay-payments/relay-sender-fee-cents.js";
+import { relayFuelPaidCents } from "../../integrations/relay-payments/relay-sender-fee-cents.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -240,6 +240,7 @@ async function postRelayFuelFill(
     amount_cents: string;
     transaction_id: string;
     fees_json: unknown;
+    ingest_source: string | null;
     driver_id: string | null;
     unit_id: string | null;
     unit_number: string | null;
@@ -252,6 +253,7 @@ async function postRelayFuelFill(
              ABS(COALESCE(r.total_amount_paid_cents, 0))::bigint::text AS amount_cents,
              r.transaction_id::text AS transaction_id,
              r.fees AS fees_json,
+             r.ingest_source::text AS ingest_source,
              r.matched_driver_id::text AS driver_id,
              -- BANK-F2026100403: Relay printed the unit number but ingest never resolved its id (fc461eb6, T169). The
              -- number proves the unit only when exactly ONE active unit in the fleet carries it (one number, one truck); else refused.
@@ -330,17 +332,21 @@ async function postRelayFuelFill(
     throw new FuelMatchPostError("relay_fill_has_no_fuel_lines", `relay_fuel ${input.fill_id}: no fuel product line (e.g. a scale ticket) — this is not a fuel posting; categorize the bank line instead`);
   }
   const linesCents = costLines.reduce((t, l) => t + l.amount_cents, 0);
-  if (linesCents !== paidCents) {
+  // LEAD 443.123 — the ONE paid rule (relayFuelPaidCents): a legacy CSV row whose stored paid carries its recorded fee
+  // (paid = lines + fees[] exactly) is fuel = lines; ANY other difference is still refused by name, never plugged.
+  const paid = relayFuelPaidCents({
+    transaction_id: row.transaction_id,
+    stored_paid_cents: paidCents,
+    product_lines_cents: linesCents,
+    fees: Array.isArray(row.fees_json) ? row.fees_json : [],
+    line_fee_amount_cents: linesRes.rows.map((l) => Math.round(Number(l.fee_cents ?? 0))),
+    ingest_source: row.ingest_source,
+  });
+  if (linesCents !== paid.fuel_paid_cents) {
     throw new FuelMatchPostError("relay_fill_lines_do_not_foot", `relay_fuel ${input.fill_id}: product lines ${linesCents} != paid ${paidCents} — refusing rather than plugging the difference`);
   }
-  const lineFeeCents = linesRes.rows.map((l) => Math.round(Number(l.fee_cents ?? 0)));
-  const feesArr = Array.isArray(row.fees_json) ? row.fees_json : [];
-  const feeCents = relayFillFeeCents({
-    transaction_id: row.transaction_id,
-    fees: feesArr,
-    line_fee_amount_cents: lineFeeCents,
-  });
-  const amountCents = relayWalletDrawdownCents(paidCents, feeCents);
+  const feeCents = paid.fee_cents;
+  const amountCents = paid.wallet_cents;
   const primary = [...costLines].sort((a, b) => b.amount_cents - a.amount_cents)[0]!.fuel_kind;
 
   const posted = await postFuelExpenseOnClient(client, {

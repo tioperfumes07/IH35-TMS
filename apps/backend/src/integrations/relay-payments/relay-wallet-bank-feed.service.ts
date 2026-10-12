@@ -18,7 +18,7 @@ import { createHash } from "node:crypto";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
 import type { DbClient } from "./db-client.type.js";
-import { relayFillFeeCents, relayWalletDrawdownCents } from "./relay-sender-fee-cents.js";
+import { relayFuelPaidCents } from "./relay-sender-fee-cents.js";
 import { normalizeBankTransactionDescription } from "../../banking/transaction-ingestion.js";
 
 export const RELAY_WALLET_SOURCE_REF_PREFIX = "relay_fuel:";
@@ -461,6 +461,8 @@ export async function backfillRelayWalletBankFeedForCompany(
     total_amount_paid_cents: string;
     fees: unknown[] | null;
     line_fee_cents: Array<string | null> | null;
+    product_cents: string | null;
+    ingest_source: string | null;
     merchant_name: string | null;
     location_city: string | null;
     location_state: string | null;
@@ -481,6 +483,12 @@ export async function backfillRelayWalletBankFeedForCompany(
           WHERE l.relay_fuel_transaction_id = r.id
             AND l.voided_at IS NULL
             AND l.is_active = true) AS line_fee_cents,
+        (SELECT sum(l.total_discounted_price_cents)::text
+           FROM integrations.relay_fuel_transaction_lines l
+          WHERE l.relay_fuel_transaction_id = r.id
+            AND l.voided_at IS NULL
+            AND l.is_active = true) AS product_cents,
+        r.ingest_source::text AS ingest_source,
         r.merchant_name,
         r.location_city,
         r.location_state,
@@ -520,14 +528,15 @@ export async function backfillRelayWalletBankFeedForCompany(
         // ROUND 443.29 a: the ONE fee rule (relayFillFeeCents — Relay's reported fees[] first, line fees only when that is
         // empty) and the ONE drawdown rule, the same pair ingest and the bank-match poster use. This backfill used to sum
         // line fees only, so a fill whose fee lives in fees[] mirrored a wallet line $2.00 short of its posting.
-        amount_cents: relayWalletDrawdownCents(
-          Math.round(Number(row.total_amount_paid_cents)),
-          relayFillFeeCents({
-            transaction_id: row.transaction_id,
-            fees: Array.isArray(row.fees) ? row.fees : null,
-            line_fee_amount_cents: (row.line_fee_cents ?? []).map((c) => (c == null ? null : Number(c))),
-          })
-        ),
+        // LEAD 443.123 — the ONE paid rule: a legacy CSV row whose paid already carries its fee is not drawn twice.
+        amount_cents: relayFuelPaidCents({
+          transaction_id: row.transaction_id,
+          stored_paid_cents: Math.round(Number(row.total_amount_paid_cents)),
+          product_lines_cents: row.product_cents == null ? null : Number(row.product_cents),
+          fees: Array.isArray(row.fees) ? row.fees : null,
+          line_fee_amount_cents: (row.line_fee_cents ?? []).map((c) => (c == null ? null : Number(c))),
+          ingest_source: row.ingest_source,
+        }).wallet_cents,
         merchant_name: row.merchant_name,
         location_city: row.location_city,
         location_state: row.location_state,

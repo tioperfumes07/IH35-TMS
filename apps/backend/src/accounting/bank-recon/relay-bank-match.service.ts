@@ -10,7 +10,7 @@
  *
  * USMCA Relay floor 2026-08-03: a fill dated before the floor is refused, never matched.
  */
-import { relayFillFeeCents, relayWalletDrawdownCents } from "../../integrations/relay-payments/relay-sender-fee-cents.js";
+import { relayFuelPaidCents, relayFuelWalletAmountSql } from "../../integrations/relay-payments/relay-sender-fee-cents.js";
 import {
   isBeforeRelayUsmcaFloor,
   RELAY_USMCA_DATA_FLOOR,
@@ -168,6 +168,8 @@ type FillRow = {
   matched_unit_number: string | null;
   merchant_name: string | null;
   line_fee_cents: number;
+  product_cents: number;
+  ingest_source: string | null;
 };
 
 async function loadBankRow(client: DbClient, operatingCompanyId: string, bankTransactionId: string): Promise<BankRow | null> {
@@ -197,7 +199,13 @@ async function loadFillRow(client: DbClient, operatingCompanyId: string, fillId:
               SELECT sum(l.fee_amount_cents)::int
                 FROM integrations.relay_fuel_transaction_lines l
                WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL
-            ), 0)::int AS line_fee_cents
+            ), 0)::int AS line_fee_cents,
+            COALESCE((
+              SELECT sum(l.total_discounted_price_cents)::int
+                FROM integrations.relay_fuel_transaction_lines l
+               WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL
+            ), 0)::int AS product_cents,
+            r.ingest_source::text AS ingest_source
        FROM integrations.relay_fuel_transactions r
       WHERE r.id = $1::uuid AND r.operating_company_id = $2::uuid AND r.voided_at IS NULL
       LIMIT 1`,
@@ -207,13 +215,16 @@ async function loadFillRow(client: DbClient, operatingCompanyId: string, fillId:
 }
 
 function walletCentsForFill(fill: FillRow): number {
-  const fees = Array.isArray(fill.fees) ? fill.fees : [];
-  const fee = relayFillFeeCents({
+  // LEAD 443.123 — the ONE paid rule (relayFuelPaidCents): fuel paid + fee, a legacy CSV row's stored paid already
+  // carrying its fee is not counted twice.
+  return relayFuelPaidCents({
     transaction_id: fill.transaction_id,
-    fees,
+    stored_paid_cents: fill.total_amount_paid_cents,
+    product_lines_cents: fill.product_cents,
+    fees: Array.isArray(fill.fees) ? fill.fees : [],
     line_fee_amount_cents: [fill.line_fee_cents],
-  });
-  return relayWalletDrawdownCents(fill.total_amount_paid_cents, fee);
+    ingest_source: fill.ingest_source,
+  }).wallet_cents;
 }
 
 function refuseIfBankBlocked(bank: BankRow): void {
@@ -319,7 +330,13 @@ async function recommendForBankLine(
               SELECT sum(l.fee_amount_cents)::int
                 FROM integrations.relay_fuel_transaction_lines l
                WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL
-            ), 0)::int AS line_fee_cents
+            ), 0)::int AS line_fee_cents,
+            COALESCE((
+              SELECT sum(l.total_discounted_price_cents)::int
+                FROM integrations.relay_fuel_transaction_lines l
+               WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL
+            ), 0)::int AS product_cents,
+            r.ingest_source::text AS ingest_source
        FROM integrations.relay_fuel_transactions r
       WHERE r.operating_company_id = $1::uuid
         AND r.voided_at IS NULL
@@ -649,11 +666,4 @@ export async function scanCategorizedLinesForAlreadyMatchedToBill(
 }
 
 /** SQL amount expression for Match drawer candidates — wallet drawdown (F442). */
-export const RELAY_FUEL_WALLET_AMOUNT_SQL = `(
-  ABS(COALESCE(r.total_amount_paid_cents, 0))
-  + COALESCE((
-      SELECT ROUND(SUM((f->>'amount')::numeric * 100))::int
-        FROM jsonb_array_elements(CASE WHEN jsonb_typeof(r.fees) = 'array' THEN r.fees ELSE '[]'::jsonb END) f
-       WHERE (f->>'amount') ~ '^[0-9]+(\\.[0-9]+)?$'
-    ), 0)
-)`;
+export const RELAY_FUEL_WALLET_AMOUNT_SQL = relayFuelWalletAmountSql("r");
