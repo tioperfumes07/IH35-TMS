@@ -1,6 +1,6 @@
 {
   "healthzSha": "659d3c7",
-  "generated_at": "2026-10-12T20:40:18.309Z",
+  "generated_at": "2026-10-12T20:42:11.152Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 26706,
+      "title": "FINDING: ACCT-F4431283 LANE: FINANCIAL — 443.128 C: team driver bills were never recognized at delivery, and a team load could not be settled by both drivers",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 03:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26706",
+      "sha": "9400cdf351",
+      "committedAtIso": "2026-10-12T15:41:20-05:00"
+    },
+    {
       "number": 26705,
       "title": "FINDING: ACCT-F4431282 LANE: FINANCIAL — 443.128 B (N1): an expense that names a load did not take the load's driver and trailer; a mismatched driver / trailer was stored silently",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26698",
       "sha": "63bbb3dfba",
       "committedAtIso": "2026-10-12T15:12:57-05:00"
-    },
-    {
-      "number": 26693,
-      "title": "FINDING: ACCT-F4431310 LANE: FINANCIAL -- voiding a fuel-receipt expense reverses its posting (one document reverser for all four void paths; never a swallowed reversal error)",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 03:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26693",
-      "sha": "4d20a7f6af",
-      "committedAtIso": "2026-10-12T15:10:45-05:00"
     }
   ]
 }
