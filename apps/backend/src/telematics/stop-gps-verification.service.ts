@@ -28,6 +28,7 @@ import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { facilityAtPoint, isGooglePlacesConfigured, isGooglePlacesEnabled, searchAddress } from "../integrations/google/google-places-client.js";
 import { detectStops, type PositionFix, type StopEvent } from "./stop-odometer-capture.service.js";
 import { geocodeStopsWithClient } from "./stops-geocode-backfill.service.js";
+import { learnLoadLanes } from "../dispatch/load-lane-learning.service.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -162,6 +163,19 @@ async function resolveFacility(client: DbClient, companyId: string, lat: number,
     lat: g.lat, lng: g.lon, place_id: g.place_id ?? null, samsara_address_id: null };
 }
 
+/** LEAD 443.124 — the load's lane key: first pickup and last delivery city / state / zip (the lane engine's own endpoints). */
+async function loadRouteKey(client: DbClient, loadId: string): Promise<string> {
+  const r = await client.query<{ k: string | null }>(
+    `SELECT concat_ws('|',
+              (SELECT concat_ws(',', upper(btrim(s.city)), upper(btrim(s.state)), btrim(s.postal_code)) FROM mdata.load_stops s
+                WHERE s.load_id = $1::uuid AND s.soft_deleted_at IS NULL AND s.stop_type::text = 'pickup' ORDER BY s.sequence_number LIMIT 1),
+              (SELECT concat_ws(',', upper(btrim(s.city)), upper(btrim(s.state)), btrim(s.postal_code)) FROM mdata.load_stops s
+                WHERE s.load_id = $1::uuid AND s.soft_deleted_at IS NULL AND s.stop_type::text = 'delivery' ORDER BY s.sequence_number DESC LIMIT 1)) AS k`,
+    [loadId]
+  );
+  return r.rows[0]?.k ?? "";
+}
+
 /** Verify (and with apply: correct) every pickup / delivery stop of one load against the unit's GPS. Caller owns the transaction. */
 export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
   operatingCompanyId: string; loadId: string; apply: boolean; actorUserId: string; reason?: string;
@@ -175,6 +189,7 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
     `SELECT load_number::text, assigned_unit_id::text AS unit_id FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     [input.loadId, input.operatingCompanyId])).rows[0];
   if (!load) return [];
+  const routeBefore = await loadRouteKey(client, input.loadId);
   const stops = (await client.query<{ stop_id: string; sequence_number: number; stop_type: string; lat: number | null; lng: number | null;
     day: string | null; facility_name: string | null; address_line1: string | null; city: string | null; state: string | null; postal_code: string | null;
     geocode_source: string | null }>(
@@ -416,6 +431,21 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
     out.push({ ...v, load_id: input.loadId, load_number: load.load_number, facility, confirmed, applied });
   }
   if (moved > 0) {
+    // LEAD 443.124 — a corrected origin / destination is a different lane: learn it through the ONE lane engine (savepoint,
+    // like Book Load — a learning failure is audited, never a refused correction). The leg relearn below never counts lanes.
+    const routeAfter = await loadRouteKey(client, input.loadId);
+    if (routeAfter !== routeBefore) {
+      await client.query("SAVEPOINT gps_route_lane_learning");
+      try {
+        await learnLoadLanes(client as never, { operatingCompanyId: input.operatingCompanyId, loadId: input.loadId, fresh: false, routeCorrected: true, actorUserId: input.actorUserId });
+        await client.query("RELEASE SAVEPOINT gps_route_lane_learning");
+      } catch (laneError) {
+        await client.query("ROLLBACK TO SAVEPOINT gps_route_lane_learning");
+        await appendCrudAudit(client as never, input.actorUserId, "dispatch.load.lane_learning_failed", {
+          load_uuid: input.loadId, operating_company_id: input.operatingCompanyId, error: String((laneError as Error)?.message ?? laneError), route_before: routeBefore, route_after: routeAfter,
+        }, "warning", "443.124");
+      }
+    }
     // The ONE fence writer draws the verified location + fence (queued to Samsara); the mileage engine re-learns legs + deadhead.
     await geocodeStopsWithClient(client as never, input.actorUserId, input.operatingCompanyId, input.loadId, { reresolve: true });
     await enqueueOutboxEvent(client as never, "dispatch.relearn_load_miles", { aggregate_type: "mdata.loads", aggregate_id: input.loadId },

@@ -389,7 +389,12 @@ export async function recomputeFirstStopDeadhead(
 
 export async function learnLoadLanes(
   client: Queryable,
-  args: { operatingCompanyId: string; loadId: string; fresh: boolean; actorUserId?: string | null },
+  args: {
+    operatingCompanyId: string; loadId: string; fresh: boolean; actorUserId?: string | null;
+    /** LEAD 443.124 — the load's origin / destination was corrected after booking (GPS stop verification): its lane is the
+     *  corrected route, learned once even though no leg was filled. */
+    routeCorrected?: boolean;
+  },
   provider?: MileageProvider
 ): Promise<LaneLearningResult> {
   const load = (
@@ -517,7 +522,7 @@ export async function learnLoadLanes(
   }
 
   // A backfill re-run must not count the same load twice.
-  if (!args.fresh && out.legs_filled === 0) {
+  if (!args.fresh && !args.routeCorrected && out.legs_filled === 0) {
     out.lane_skip_reason = "already_learned";
     out.customer_lane_skip_reason = "already_learned";
     return out;
