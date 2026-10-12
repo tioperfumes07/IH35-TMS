@@ -95,6 +95,7 @@ async function loadCandidates(client: Queryable, opco: string): Promise<Candidat
        LEFT JOIN mdata.loads l ON l.id = bl.load_id AND l.operating_company_id = b.operating_company_id
        LEFT JOIN LATERAL (SELECT ${sameEntityLoadUnitSql("bl.load_id", "b.operating_company_id")} AS unit_id) d ON true
        LEFT JOIN mdata.units u ON u.id = d.unit_id
+                              AND (u.owner_company_id = b.operating_company_id OR u.currently_leased_to_company_id = b.operating_company_id)
       WHERE b.operating_company_id = $1::uuid
         AND b.driver_id IS NOT NULL
         AND b.voided_at IS NULL AND b.revoked_at IS NULL AND COALESCE(b.status, '') <> 'void'
