@@ -16,6 +16,7 @@
  *  3. Static: return-trip second row keeps the unit number (data-return-trip).
  *  4. Static: universal filter + per-load status dropdown wired.
  */
+import { createRequire } from "node:module";
 import { register } from "tsx/esm/api";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -140,7 +141,10 @@ async function liveChecks() {
   }
   const { canonicalDispatchWorkStatusClause, currentTruckLineLoadSql, UNIT_IN_SERVICE_SQL } = await loadFragments();
   const { default: pg } = await import("pg");
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  // 443.105: SSL per the shared connection policy (scripts/lib/pg-connection-options.cjs) — a hard-coded ssl:{} could not
+  // reach CI's plain local Postgres ("The server does not support SSL connections"); TLS stays on for Neon.
+  const { buildPgPoolConfig } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
+  const pool = new pg.Pool(buildPgPoolConfig(process.env.DATABASE_URL));
   const client = await pool.connect();
   try {
     await client.query("BEGIN");

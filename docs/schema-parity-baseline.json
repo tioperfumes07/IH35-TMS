@@ -6301,6 +6301,7 @@
       "load_id",
       "load_required",
       "location_city",
+      "location_id",
       "location_lat",
       "location_lng",
       "location_state",

@@ -3066,7 +3066,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     }
                     removeLabel="Remove escrow line"
                     removeTestId={`sc-escrow-remove-${idx}`}
-                    onRemove={escrow.length > 1 ? () => setEscrow(escrow.filter((_, i) => i !== idx)) : undefined}
+                    // 443.105 — every escrow row keeps its X, the lone default $25 included (ACCT-F9757 owner rule: X to remove; + Add
+                    // puts the $25 line back when the section is empty). 0afc0d2710 hid the X on the last line.
+                    onRemove={() => setEscrow(escrow.filter((_, i) => i !== idx))}
                   />
                 </div>
               ))}

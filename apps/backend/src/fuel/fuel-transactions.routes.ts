@@ -67,6 +67,8 @@ const createFuelTransactionBodySchema = z
     total_cost: z.coerce.number().positive(),
     location_city: z.string().trim().max(200).optional(),
     location_state: z.string().trim().max(10).optional(),
+    // 443.105 — the fuel stop the office picked (mdata.locations); its text still lands in location_city / location_state.
+    location_id: z.string().uuid().nullable().optional(),
     transaction_reference: z.string().trim().max(200).optional(),
     notes: z.string().trim().max(2000).optional(),
     load_id: z.string().uuid().nullable().optional(),
@@ -243,6 +245,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
             ft.total_cost,
             ft.location_city,
             ft.location_state,
+            ft.location_id::text AS location_id,
             ft.source,
             ft.load_required,
             ft.load_exemption_reason,
@@ -426,6 +429,16 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
         if (!trailerRes.rows[0]) return { error: "trailer_not_found_for_company" as const };
       }
 
+      // 443.105 — the picked fuel stop must be this company's location (the DB also refuses it:
+      // fuel_transactions_location_same_company_fkey); answered by name, not as a raw FK error.
+      if (b.location_id) {
+        const locationRes = (await client.query(
+          `SELECT id::text AS id FROM mdata.locations WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+          [b.location_id, b.operating_company_id]
+        )) as { rows: Array<{ id: string }> };
+        if (!locationRes.rows[0]) return { error: "location_not_found_for_company" as const };
+      }
+
       // ROUND 367.2 — one provider transaction is one purchase (database side: 202615370600).
       const sameProviderTxn = await findLiveFuelByProviderTransactionId(client, {
         operatingCompanyId: b.operating_company_id,
@@ -460,11 +473,12 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
             load_exemption_reason,
             created_by_user_id,
             source_doc_id,
-            source_row_hash
+            source_row_hash,
+            location_id
           )
           VALUES (
             $1::uuid, $2::timestamptz, $2::timestamptz, $3, $4, $5, $6, $7, $8, $9,
-            $10, $11, $12, $13, $14, $15, 'manual', $16, $18, $17, $19::uuid, $20::uuid, $21
+            $10, $11, $12, $13, $14, $15, 'manual', $16, $18, $17, $19::uuid, $20::uuid, $21, $22::uuid
           )
           RETURNING id::text AS id
         `,
@@ -496,6 +510,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           b.source_doc_id ?? null,
           // NOT NULL since 202614220000; this INSERT never set it, so every manual fuel entry failed with 23502.
           enteredFuelRowHash(b.operating_company_id, b.vendor_id ?? null, b.transaction_reference, b.fuel_type),
+          b.location_id ?? null,
         ]
       )) as { rows: Array<{ id: string }> };
       const fuelTransactionId = insertRes.rows[0]?.id;

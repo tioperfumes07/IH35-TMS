@@ -293,6 +293,8 @@ export type CreateFuelTransactionInput = {
   total_cost: number;
   location_city?: string;
   location_state?: string;
+  /** 443.105 — the fuel stop (mdata.locations) picked in the office form. */
+  location_id?: string | null;
   transaction_reference?: string;
   notes?: string;
   load_id?: string | null;

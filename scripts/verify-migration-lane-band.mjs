@@ -89,6 +89,13 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // Lead 443.105 run #4 (owner 2026-10-12 07:50 CT "Every engine ... must record correctly with truck / driver / load / trailer /
+  // vendor / item / account"; owner 2026-10-01 no-handoff): the office fuel form's picked stop is linked
+  // (fuel.fuel_transactions.location_id). Claimed #(202615780700) in #26602.
+  [
+    "cc-2/443-105-fuel-location",
+    new Set(["db/migrations/202615780700_fuel_transaction_location_link.sql"]),
+  ],
   // Lead 443.105 #2 (owner 2026-10-12 07:50 CT "Every engine ... must record correctly with truck / driver / load / trailer /
   // vendor / item / account"; owner 2026-10-01 "fully complete and build their own engine, no handing off"): an expense line
   // carries its load or a load_exemption_reason, refused at the DB. Claimed #(202615770700) in #26593.

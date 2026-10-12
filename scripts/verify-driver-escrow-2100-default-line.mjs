@@ -23,7 +23,16 @@ export function problems(src) {
   const drawer = strip(src.drawer);
   if (!/DEFAULT_ESCROW_HOLD_CENTS\s*=\s*2_?500\b/.test(drawer)) p.push("the creator's default escrow hold must be $25 (DEFAULT_ESCROW_HOLD_CENTS = 2_500)");
   if (!/useState<MoneyDraft\[\]>\(\(\)\s*=>\s*\[defaultEscrowLine\(\)\]\)/.test(drawer)) p.push("the Escrow section must start with the default $25 line (useState(() => [defaultEscrowLine()]))");
-  if (!/aria-label="Remove escrow line"[\s\S]{0,300}setEscrow\(escrow\.filter\(/.test(drawer)) p.push("every escrow row needs its X (Remove escrow line -> setEscrow(escrow.filter(...)))");
+  // LEAD 443.105 (2026-10-12).
+  //   old rule: a hand-built <button aria-label="Remove escrow line"> calling setEscrow(escrow.filter(...)).
+  //   new rule: the shared row's removeLabel="Remove escrow line" with an UNCONDITIONAL onRemove={() => setEscrow(escrow.filter(...))}
+  //             (the old hand-built button is still accepted); a remove hidden behind a row count fails.
+  //   why: SETL-CREATOR-SIDE-ADD (0afc0d2710) moved the rows onto the shared row component and made the X conditional on
+  //        escrow.length > 1, so the lone default $25 line could not be removed — the ACCT-F9757 owner rule is an X on
+  //        every row (+ Add restores the $25 line when the section is empty).
+  const sharedRowX = /removeLabel="Remove escrow line"[\s\S]{0,400}onRemove=\{\(\) => setEscrow\(escrow\.filter\(/.test(drawer);
+  const legacyX = /aria-label="Remove escrow line"[\s\S]{0,300}setEscrow\(escrow\.filter\(/.test(drawer);
+  if (!sharedRowX && !legacyX) p.push("every escrow row needs its X (Remove escrow line -> setEscrow(escrow.filter(...)))");
   if (!/title="Escrow"\s+subtotalCents=\{escrowNet\}/.test(drawer)) p.push("the Escrow section must show its own subtotal (subtotalCents={escrowNet})");
   const creator = strip(src.creator);
   const block = creator.slice(creator.indexOf("let escrowCents = 0;"), creator.indexOf("let advanceCents = 0;"));
@@ -46,7 +55,8 @@ if (isMain) {
     const plants = [
       ["no default line", { ...src, drawer: src.drawer.replace("[defaultEscrowLine()]", "[]") }],
       ["default not $25", { ...src, drawer: src.drawer.replace("DEFAULT_ESCROW_HOLD_CENTS = 2_500", "DEFAULT_ESCROW_HOLD_CENTS = 25_000") }],
-      ["X removed", { ...src, drawer: src.drawer.replace('aria-label="Remove escrow line"', 'aria-label="x"') }],
+      ["X removed", { ...src, drawer: src.drawer.replace('removeLabel="Remove escrow line"', 'removeLabel="x"').replace('aria-label="Remove escrow line"', 'aria-label="x"') }],
+      ["X hidden on the last line", { ...src, drawer: src.drawer.replace("onRemove={() => setEscrow(escrow.filter(", "onRemove={escrow.length > 1 ? () => setEscrow(escrow.filter(") }],
       ["shared default back", { ...src, creator: src.creator.replace("const liab = driverEscrow;", 'const liab = await accountByRole(client, o, "escrow_liability_default");') }],
       ["no first-load fallback", { ...src, creator: src.creator.replace("e.load_number?.trim() || draft.loads?.[0]?.load_number", "e.load_number") }],
     ];
