@@ -22,7 +22,7 @@
  * paired with a completeness discriminator, and if there are no voided documents at all it says so
  * rather than reporting a clean run.
  */
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "3049-verify-voided-money-doc-has-gl-reversal";
 
@@ -119,56 +119,9 @@ function fail(msg) {
   process.exit(1);
 }
 
-const url = process.env.DATABASE_URL;
-if (!url) {
-  console.log(`[${LABEL}] SKIP — no DATABASE_URL (static context); this guard is DB-backed by design`);
-  process.exit(0);
-}
-
-const pool = new pg.Pool({ connectionString: url, ssl: url.includes("localhost") ? false : { rejectUnauthorized: false } });
-let client;
-try {
-  client = await pool.connect();
-} catch {
-  console.log(`[${LABEL}] SKIP — database unreachable (static context)`);
-  process.exit(0);
-}
-
-try {
-  await client.query("BEGIN");
-  // FORCED RLS on accounting.*: without this every count reads 0 and the guard certifies a ledger it
-  // never saw. SET LOCAL inside the txn — a bare SET does not reliably persist on a pooled connection.
-  await client.query("SET LOCAL app.bypass_rls = 'lucia'");
-
-  const problems = [];
-  const summary = [];
-  let totalVoided = 0;
-
-  // A REACHABLE DATABASE IS NOT A MIGRATED ONE. CI's build-typecheck job hands this guard a live
-  // DATABASE_URL pointing at a fresh Postgres that has never had the accounting schema applied, so the
-  // first query died with `relation "accounting.bills" does not exist` and the guard reported FAIL —
-  // a crash dressed up as a money finding. The existing SKIP only covered "no URL" and "cannot
-  // connect"; this is the third static context and it needs the same treatment. Keyed on the oldest,
-  // most fundamental money table: if accounting.bills is absent, no migrations ran here at all.
-  const schemaProbe = await client.query(`SELECT to_regclass('accounting.bills') IS NOT NULL AS present`);
-  if (!schemaProbe.rows[0]?.present) {
-    await client.query("ROLLBACK").catch(() => {});
-    console.log(`[${LABEL}] SKIP — database reachable but the accounting schema is not present (fresh/unmigrated DB); this guard is DB-backed by design`);
-    client.release();
-    await pool.end();
-    process.exit(0);
-  }
-
-  for (const doc of DOC_TYPES) {
-    // A doc type whose table is missing must be NAMED, never silently skipped — an unchecked type that
-    // reports nothing is exactly the coverage hole that let ACCT-F333 through.
-    const tbl = await client.query(`SELECT to_regclass($1) IS NOT NULL AS present`, [doc.table]);
-    if (!tbl.rows[0]?.present) {
-      summary.push(`${doc.type}: TABLE ABSENT — not checked`);
-      continue;
-    }
-    const { rows } = await client.query(
-      `
+/** The per-document probe: a voided doc with GL postings and NO reversal on any of the 4 linkage paths. */
+export function docProbeSql(doc) {
+  return `
         SELECT
           count(*) FILTER (WHERE ${doc.voided}) AS voided_docs,
           count(*) FILTER (
@@ -208,7 +161,73 @@ try {
               )
           ) AS voided_posted_without_reversal
         FROM ${doc.table} d
-      `,
+      `;
+}
+
+/** The 4 linkage paths every probe must accept (a probe missing one fails CI on correctly reversed data). */
+export function probeProblems(doc, sql) {
+  const p = [];
+  if (!/transaction_source_links tsl[\s\S]*relationship_role = ANY\(\$2::text\[\]\)/.test(sql)) p.push(`${doc.type}: PATH 1 (source link, both role spellings) missing`);
+  if (doc.jeLinkColumn && !new RegExp(`d\\.${doc.jeLinkColumn} IS NULL`).test(sql)) p.push(`${doc.type}: PATH 2 (document JE pointer) missing`);
+  if (!/rev\.reverses_je_id = orig\.journal_entry_uuid/.test(sql)) p.push(`${doc.type}: PATH 3 (reverses_je_id chain) missing`);
+  if (!/orig\.reversed_by_line_id IS NOT NULL/.test(sql)) p.push(`${doc.type}: PATH 4 (line-level pointer) missing`);
+  if (!/jep\.source_transaction_type = \$1/.test(sql)) p.push(`${doc.type}: probe no longer requires GL postings`);
+  return p;
+}
+
+if (process.argv.includes("--selftest")) {
+  let ok = true;
+  const ex = (n, c) => { if (!c) { console.error(`SELFTEST FAIL: ${n}`); ok = false; } };
+  ex("every real probe carries all 4 paths", DOC_TYPES.every((d) => probeProblems(d, docProbeSql(d)).length === 0));
+  ex("ACCT-F333: bill_payment is covered", DOC_TYPES.some((d) => d.type === "bill_payment"));
+  ex("ACCT-F336: bank_categorization is covered", DOC_TYPES.some((d) => d.type === "bank_categorization"));
+  ex("both reversal role spellings accepted", REVERSAL_ROLES.includes("reversal_of") && REVERSAL_ROLES.includes("reversal"));
+  const bill = DOC_TYPES.find((d) => d.type === "bill"), exp = DOC_TYPES.find((d) => d.type === "expense");
+  ex("dropping PATH 4 is caught", probeProblems(bill, docProbeSql(bill).replace("orig.reversed_by_line_id IS NOT NULL", "true")).length > 0);
+  ex("dropping PATH 3 is caught", probeProblems(bill, docProbeSql(bill).replace("rev.reverses_je_id = orig.journal_entry_uuid", "false")).length > 0);
+  ex("dropping PATH 1 is caught", probeProblems(bill, docProbeSql(bill).replace("relationship_role = ANY($2::text[])", "relationship_role = 'reversal'")).length > 0);
+  ex("dropping expense PATH 2 is caught", probeProblems(exp, docProbeSql(exp).replace("d.reversed_by_je_id IS NULL", "")).length > 0);
+  console.log(ok ? `[${LABEL}] --selftest PASS (8/8)` : `[${LABEL}] --selftest FAIL`);
+  process.exit(ok ? 0 : 1);
+}
+
+// 443.100: a live money guard that cannot connect FAILS (ROUND 29.9-B, verify-no-silent-db-skip) — never a skip-pass.
+const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
+
+try {
+  await client.query("BEGIN");
+  // FORCED RLS on accounting.*: without this every count reads 0 and the guard certifies a ledger it
+  // never saw. SET LOCAL inside the txn — a bare SET does not reliably persist on a pooled connection.
+  await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+
+  const problems = [];
+  const summary = [];
+  let totalVoided = 0;
+
+  // A REACHABLE DATABASE IS NOT A MIGRATED ONE. CI's build-typecheck job hands this guard a live
+  // DATABASE_URL pointing at a fresh Postgres that has never had the accounting schema applied, so the
+  // first query died with `relation "accounting.bills" does not exist` and the guard reported FAIL —
+  // a crash dressed up as a money finding. The existing SKIP only covered "no URL" and "cannot
+  // connect"; this is the third static context and it needs the same treatment. Keyed on the oldest,
+  // most fundamental money table: if accounting.bills is absent, no migrations ran here at all.
+  const schemaProbe = await client.query(`SELECT to_regclass('accounting.bills') IS NOT NULL AS present`);
+  if (!schemaProbe.rows[0]?.present) {
+    await client.query("ROLLBACK").catch(() => {});
+    client.release();
+    await pool.end();
+    fail("database reachable but the accounting schema is not present (fresh/unmigrated DB) — an unmigrated database cannot verify this money invariant, so it is not a pass");
+  }
+
+  for (const doc of DOC_TYPES) {
+    // A doc type whose table is missing must be NAMED, never silently skipped — an unchecked type that
+    // reports nothing is exactly the coverage hole that let ACCT-F333 through.
+    const tbl = await client.query(`SELECT to_regclass($1) IS NOT NULL AS present`, [doc.table]);
+    if (!tbl.rows[0]?.present) {
+      summary.push(`${doc.type}: TABLE ABSENT — not checked`);
+      continue;
+    }
+    const { rows } = await client.query(
+      docProbeSql(doc),
       [doc.type, REVERSAL_ROLES]
     );
     const voidedDocs = Number(rows[0]?.voided_docs ?? 0);
