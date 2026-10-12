@@ -6,7 +6,8 @@
 **PR:** #26550 (`cc-1/443-100-b`) — merged 2026-10-12
 **Guards fixed (5 of 69 CC-1 rows):** 3236 (LoadsPlanner + RecentActivityRow), 3244 (FactoringTab direct listAllFiles), 3278 (TripProfitability nb_load_id), 3320 (matters.service input.load_id removed + BookLoadModalV4 onCreated), 86 (ActualVsProjectedTab cashflow-business-date)
 **Pre-push blocker (for CC-2):** verify-booked-loads-save-miles RULE 3 — loads 13511/13536/13573/13660 have no lane_mileage row; pre-existing data gap
-**Next:** batch-2 starting — remaining ~64 rows of 443.100-B
+**Status batch-2:** verified on main — all 69 CC-1 rows now PASS static check; live-DB guards untested (verify:static running in background). No code changes needed for batch-2.
+**Date:** 2026-10-12 10:55 UTC
 
 ---
 
