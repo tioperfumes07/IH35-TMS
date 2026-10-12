@@ -23,6 +23,7 @@ import {
 import { insertInvoiceLine, insertLoadForInvoice } from "../../../test-helpers/load-born-invoice.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
 import { computeRevenueGlLinkage } from "../revenue-gl-linkage.service.js";
+import { writeTransactionSourceLink } from "../../accounting/accounting-spine-emit.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -112,6 +113,27 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
     await db.query(`SELECT set_config('app.bypass_rls', '', false)`);
     await db.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [companyId]);
     return db;
+  }
+
+  /**
+   * ROUND 373.3: trg_new_posting_has_spine_link refuses at COMMIT a posting with no transaction_source_links row.
+   * Fixture postings written raw carry their spine link through the same writer the engines use.
+   */
+  async function linkPostings(
+    postingIds: string[],
+    linkedObjectType: string,
+    linkedObjectId: string,
+    relationshipRole: string
+  ): Promise<void> {
+    for (const postingId of postingIds) {
+      await writeTransactionSourceLink(db, {
+        operating_company_id: companyId,
+        journal_entry_posting_id: postingId,
+        linked_object_type: linkedObjectType,
+        linked_object_id: linkedObjectId,
+        relationship_role: relationshipRole,
+      });
+    }
   }
 
   beforeAll(async () => {
@@ -226,14 +248,17 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
          VALUES ($1::uuid,$2::uuid,$3::date,'revgl wrong acct','posted','auto')`,
         [wrongJeId, companyId, today]
       );
-      await db.query(
+      const wrongPostings = await db.query<{ id: string }>(
         `INSERT INTO accounting.journal_entry_postings
            (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents,
             source_transaction_type, source_transaction_id, load_id)
          VALUES ($1::uuid,$2::uuid,1,$3::uuid,'debit',9000,'invoice',$4,$6::uuid),
-                ($1::uuid,$2::uuid,2,$5::uuid,'credit',9000,'invoice',$4,$6::uuid)`,
+                ($1::uuid,$2::uuid,2,$5::uuid,'credit',9000,'invoice',$4,$6::uuid)
+         RETURNING id::text AS id`,
         [companyId, wrongJeId, arAccountId, wrongAcctInvoiceId, expenseAccountId, loadIds.wrong]
       );
+      // Still wrong-account (credit on Expense): the link names the same invoice its source columns already name.
+      await linkPostings(wrongPostings.rows.map((r) => r.id), "invoice", wrongAcctInvoiceId, "source_transaction");
 
       // Voided JE for an invoice.
       await db.query(
@@ -248,14 +273,16 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
          VALUES ($1::uuid,$2::uuid,$3::date,'revgl voided','voided','auto',now())`,
         [voidedJeId, companyId, today]
       );
-      await db.query(
+      const voidedPostings = await db.query<{ id: string }>(
         `INSERT INTO accounting.journal_entry_postings
            (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents,
             source_transaction_type, source_transaction_id, load_id)
          VALUES ($1::uuid,$2::uuid,1,$3::uuid,'debit',6000,'invoice',$4,$6::uuid),
-                ($1::uuid,$2::uuid,2,$5::uuid,'credit',6000,'invoice',$4,$6::uuid)`,
+                ($1::uuid,$2::uuid,2,$5::uuid,'credit',6000,'invoice',$4,$6::uuid)
+         RETURNING id::text AS id`,
         [companyId, voidedJeId, arAccountId, voidedInvoiceId, incomeAccountId, loadIds.voided]
       );
+      await linkPostings(voidedPostings.rows.map((r) => r.id), "invoice", voidedInvoiceId, "source_transaction");
 
       // Draft exclusion plant — large draft must not enter invoice basis.
       await db.query(
@@ -314,16 +341,22 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
                 ($4::uuid,$2::uuid,$3::date,'revgl compensating','posted','auto')`,
         [reversedJeId, companyId, today, compensatingJeId]
       );
-      await db.query(
+      const batchPostings = await db.query<{ id: string; je: string }>(
         `INSERT INTO accounting.journal_entry_postings
            (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit, amount_cents, posting_batch_id)
          VALUES
            ($1::uuid,$2::uuid,1,$3::uuid,'debit',4000,$4::uuid),
            ($1::uuid,$2::uuid,2,$5::uuid,'credit',4000,$4::uuid),
            ($1::uuid,$6::uuid,1,$5::uuid,'debit',4000,$7::uuid),
-           ($1::uuid,$6::uuid,2,$3::uuid,'credit',4000,$7::uuid)`,
+           ($1::uuid,$6::uuid,2,$3::uuid,'credit',4000,$7::uuid)
+         RETURNING id::text AS id, journal_entry_uuid::text AS je`,
         [companyId, reversedJeId, arAccountId, reversedBatchId, incomeAccountId, compensatingJeId, compensatingBatchId]
       );
+      // Manual (no invoice) entries: the link names the journal entry itself, as createJournalEntryOnClient does
+      // for a manual entry — never an invoice, so these stay unlinked revenue for the service.
+      for (const row of batchPostings.rows) {
+        await linkPostings([row.id], "journal_entry", row.je, "manual_entry");
+      }
     });
 
     // Other-company plant MUST run under otherCompanyId GUC — invoices WITH CHECK is company-scoped.
@@ -366,7 +399,7 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
         ];
         const jeIds = [matchedJeId, wrongJeId, voidedJeId, tslOnlyJeId, reversedJeId, compensatingJeId];
         await db.query(`DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1::text[])`, [
-          invoiceIds.map(String),
+          [...invoiceIds, ...jeIds].map(String),
         ]);
         await db.query(`DELETE FROM accounting.journal_entry_postings WHERE journal_entry_uuid = ANY($1::uuid[])`, [jeIds]);
         await db.query(`DELETE FROM accounting.journal_entries WHERE id = ANY($1::uuid[])`, [jeIds]);
