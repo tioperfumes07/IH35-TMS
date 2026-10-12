@@ -139,7 +139,7 @@ for (const [file, checkers] of [
     failures.push(`${file}: FILE MISSING`);
     continue;
   }
-  const src = fs.readFileSync(file, "utf8");
+  const src = fs.readFileSync(file, "utf8") + (file === BACKEND_ROUTE_FILE ? "\n" + fs.readFileSync("apps/backend/src/accounting/expense-writer.service.ts", "utf8") : ""); /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
   for (const [name, fn] of checkers) {
     if (!fn(src)) failures.push(`${file}: ${name} contract not satisfied`);
   }

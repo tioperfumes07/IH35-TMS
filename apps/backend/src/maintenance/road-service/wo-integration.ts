@@ -258,10 +258,8 @@ export async function createWorkOrderFromRoadServiceTicket(
     operating_company_id: input.operatingCompanyId,
     wo_type: "repair",
     source_type: "RS",
-    // Created OPEN: the shared creator finalizes the V5 display id (REG-048), which refuses a work order that is
-    // already complete (E_WO_DISPLAY_ID_LOCKED) — the roadside path created it complete and always failed there.
-    // It is closed below, once its document exists.
-    status: "open",
+    // Born complete: createWorkOrderWithLines inserts it open, finalizes its V5 display id, then completes it (443.129 D).
+    status: "complete",
     unit_id: ticket.unit_id,
     driver_id: linkage.driver_id,
     load_id: linkage.load_id,
@@ -271,6 +269,9 @@ export async function createWorkOrderFromRoadServiceTicket(
     vendor_id: ticket.vendor_id,
     external_vendor_id: ticket.vendor_id,
     external_vendor_invoice_number: ticket.ticket_number,
+    // 443.129 D — the WO is born complete, so the completion trigger needs the vendor's WO number + invoice amount.
+    external_vendor_wo_number: ticket.ticket_number,
+    external_vendor_invoice_amount: totalAmount,
     description: description || serviceLabel,
     payment_timing: route === "vendor_bill" ? "vendor_invoice" : "paid_same_day",
     payment_account_uuid: paymentAccountUuid,
@@ -298,6 +299,8 @@ export async function createWorkOrderFromRoadServiceTicket(
     const bill = await autoCreateBillFromWO(client, userId, String(woUuid), {
       billNumber: ticket.ticket_number,
       memo: `Road service ticket ${ticket.ticket_number} — ${ticket.vendor_name}`,
+      // LEAD 443.129 D / AJK-08 — the ticket becomes 'invoiced' below, so its bill posts here or nothing is written.
+      requirePosted: true,
     });
     billId = bill?.uuid ? String(bill.uuid) : null;
     if (billId) {
@@ -344,21 +347,6 @@ export async function createWorkOrderFromRoadServiceTicket(
     }
     expenseId = String(result.expense_id);
   }
-
-  // The roadside work is done: the work order closes with its document (opened above only to finalize its V5 id).
-  // Completion law (maintenance.enforce_wo_completion_invariants): an outside-vendor (RS) work order closes with the
-  // vendor's references — the roadside ticket IS the vendor's work-order / invoice reference — and its invoice amount
-  // must equal the work order's cost.
-  await client.query(
-    `UPDATE maintenance.work_orders
-        SET external_vendor_wo_number = COALESCE(NULLIF(trim(external_vendor_wo_number), ''), $3),
-            external_vendor_invoice_number = COALESCE(NULLIF(trim(external_vendor_invoice_number), ''), $3),
-            external_vendor_invoice_amount = COALESCE(external_vendor_invoice_amount, $4::numeric),
-            status = 'complete',
-            updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-    [woUuid, input.operatingCompanyId, ticket.ticket_number, totalAmount]
-  );
 
   // MAINT-MONEY-F6803A: the ticket row is FOR-UPDATE-locked above; this CAS + checked rowCount is defense in depth
   // against a bypassed lock (a duplicate WO / orphan document would otherwise win silently).

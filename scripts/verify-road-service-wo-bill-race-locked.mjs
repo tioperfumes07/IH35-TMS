@@ -70,10 +70,10 @@ export function check(src) {
   if (billCall < 0 || !/if \(route === "vendor_bill"\) \{\s*const bill = $/.test(guardBefore)) {
     failures.push(`${FILE}: the A/P bill is not created ONLY on the vendor-invoice route — a paid ticket would become an unpaid vendor bill (AJK-02)`);
   }
-  // The engine is a plain module (it may not import a route module): the HTTP route hands it THE shared writer.
+  // The HTTP route hands the engine THE shared writer (accounting/expense-writer.service.ts, 443.130 #3 — the plain module).
   const routeSrc = fs.readFileSync(path.join(root, ROUTES), "utf8");
   if (!/await input\.writeExpense\(/.test(src) || !/writeExpense: createExpenseInClientTx/.test(routeSrc)
-      || !/import \{ createExpenseInClientTx \} from "\.\.\/\.\.\/accounting\/expenses\.routes\.js"/.test(routeSrc)) {
+      || !/import \{ createExpenseInClientTx \} from "\.\.\/\.\.\/accounting\/expense-writer\.service\.js"/.test(routeSrc)) {
     failures.push(`${FILE}: card / advance-paid tickets do not go through the shared expense writer (createExpenseInClientTx, handed in by ${ROUTES}) — AJK-02`);
   }
   // AJK-06 — hub links from the one load-at-time rule, stamped on ticket + work order.

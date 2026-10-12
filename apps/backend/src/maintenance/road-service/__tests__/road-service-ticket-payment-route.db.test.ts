@@ -17,7 +17,7 @@ import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { refuseProductionConnectionString, refuseProductionDatabase } from "../../../../test-helpers/refuse-production.js";
 import { TEST_OWNER_USER_ID } from "../../../../test-helpers/constants.js";
 import { prepareCompanyForLoadInserts } from "../../../../test-helpers/db-fixture.js";
-import { createExpenseInClientTx } from "../../../accounting/expenses.routes.js";
+import { createExpenseInClientTx } from "../../../accounting/expense-writer.service.js";
 import { createIsolatedOperatingCompany, deactivateIsolatedOperatingCompany, insertMaintenanceCategoryMap } from "../../../../test-helpers/isolated-company.js";
 import {
   createWorkOrderFromRoadServiceTicket,
@@ -175,6 +175,19 @@ describeIntegration("roadside ticket payment route + linkage + item (443.129 A/B
       const t2 = await one<{ load_exemption_reason: string | null }>(`SELECT load_exemption_reason FROM maintenance.road_service_tickets WHERE id = $1`, [advance]);
       expect(t2.load_exemption_reason).toMatch(/^roadside_no_load: no load covered unit /);
 
+      // A + D — vendor invoice: exactly one A/P bill, and it posts in the same transaction or nothing is written (443.129 D):
+      // bill GL posting ON and the A/P control role bound for the isolated company.
+      const ap = await account("2992", "Liability", null, "A/P control");
+      await db.query(
+        `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, enabled, set_by_user_uuid) VALUES ('BILL_GL_POSTING_ENABLED', $1::uuid, true, $2::uuid)
+         ON CONFLICT (flag_key, operating_company_id) WHERE operating_company_id IS NOT NULL AND user_uuid IS NULL DO UPDATE SET enabled = true`,
+        [opco, TEST_OWNER_USER_ID]);
+      for (const [role, acct] of [["ap_control", ap], ["uncategorized_expense", repairAccount]] as const) {
+        await db.query(
+          `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active) VALUES ($1, $2, $3, true)
+           ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE SET account_id = EXCLUDED.account_id`,
+          [opco, role, acct]);
+      }
       // A — vendor invoice: exactly one A/P bill, no expense. (Outside a load: accounting.refuse_driver_bill_without_links
       // (Cursor, 443.106) today treats ANY bill carrying a load as a driver bill and demands a driver on it, and a bill's
       // driver_id is its posting party — a vendor's repair bill on a load is reported to the Lead, not worked around.)
@@ -188,6 +201,12 @@ describeIntegration("roadside ticket payment route + linkage + item (443.129 A/B
       expect(t3.status).toBe("invoiced");
       expect(t3.bill_id).toBe(r3.bill_id);
       expect(t3.load_exemption_reason).toMatch(/^roadside_no_load: /);
+      const billNet = await one<{ n: string; net: string }>(
+        `SELECT count(*)::text AS n, COALESCE(sum(CASE WHEN debit_or_credit = 'debit' THEN amount_cents ELSE -amount_cents END), 0)::text AS net
+           FROM accounting.journal_entry_postings WHERE operating_company_id = $1 AND source_transaction_type = 'bill' AND source_transaction_id = $2`,
+        [opco, r3.bill_id]);
+      expect(Number(billNet.n)).toBeGreaterThan(0); // the bill is posted (443.129 D)
+      expect(Number(billNet.net)).toBe(0);
 
       // Idempotent: a second call returns the existing link and writes nothing new.
       const again = await run(card);

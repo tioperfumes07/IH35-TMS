@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["claim","work_order","expense"],"leafRe":"^expenses\\.","task":"CLAIM-WO-BILL-EXPENSE-FK"}
  * Claim→WO→Bill/Expense wiring guard (follow-on to held migration 202607740000).
  * Ensures create/list reverse paths accept insurance_claim_id and claim graph probes columns.
  */
@@ -20,7 +21,7 @@ function read(rel) {
 
 const billsService = read("apps/backend/src/accounting/bills.service.ts");
 const billsRoutes = read("apps/backend/src/accounting/bills.routes.ts");
-const expensesRoutes = read("apps/backend/src/accounting/expenses.routes.ts");
+const expensesRoutes = (read("apps/backend/src/accounting/expenses.routes.ts") + "\n" + read("apps/backend/src/accounting/expense-writer.service.ts")) /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */;
 const claimRoutes = read("apps/backend/src/insurance/claim.routes.ts");
 
 if (!/listClaimLinkedFinancials/.test(billsService)) {

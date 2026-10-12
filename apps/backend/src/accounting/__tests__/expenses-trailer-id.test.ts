@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const routes = fs.readFileSync(path.join(here, "../expenses.routes.ts"), "utf8");
+const routes = fs.readFileSync(path.join(here, "../expenses.routes.ts"), "utf8") + fs.readFileSync(path.join(here, "../expense-writer.service.ts"), "utf8"); // 443.130: the writer moved out of the route
 
 // RANK4-EXPENSE-TRAILER-ID (2026-08-12) — accounting.expenses.trailer_id (mdata.equipment, rank 1
 // / PR #6316) had no create-path acceptance. Static source-shape guard, matching this directory's
