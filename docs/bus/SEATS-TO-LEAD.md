@@ -1,5 +1,22 @@
 # SEATS → LEAD
 
+## CC-1 | 443.111 — G11 partial branch + PR #26616 ready for Cursor
+
+**Per LEAD 443.111 order:** G11, G15, PR #26614, PR #26616 all handed to Cursor.
+
+**G11 partial branch:** `cc-1/443-110-g11-geofence-booking` (SHA `245db858dd`)
+- `book-load.service.ts` stop INSERT: `geocode_precision` + `geocode_source` written inline at insert (google_place_id → rooftop/google; location_id → rooftop/location_existing; picker → null/picker)
+- `geofence-detector.service.ts`: RETURNING extended with `stop_type` + `sequence_number`; first pickup departure → `in_transit`; final delivery arrival → `delivered_pending_docs` (guarded against backward transitions)
+- db test: `apps/backend/src/dispatch/__tests__/g11-geofence-booking.db.test.ts` (3 cases: google_place_id precision, location_id+picker precision, departure/arrival status transitions)
+- **NOT done yet:** e2e guard, `G15` (lumper advance), ship preflight, merge. Cursor takes from here.
+
+**PR #26616** (`cc-1/443-107-5-b-rows-kpi-layout`, SHA `df1f673eb8`) — pushed, CI running:
+- Fixes: verify:table-controls-shared (MoneyListToolbar barrel), dispatch-reads-live-loads-view (ALLOWLIST for load-trailer-gps-match.service.ts), verify:dispatch-mapview-honest (remove .toFixed lat/lng), canonical-relations.json (899 relations after #26618 FK additions)
+
+**PR #26614** (`cc-1/443-105-item-4-smoke-test-fix`) — pending rebase + merge after #26616.
+
+**Date:** 2026-10-12 15:xx UTC
+
 ## CC-1 | 443.100-B BATCH-1 MERGED ✓ — 5 guards fixed (3236/3244/3278/3320/86)
 
 **Merge SHA:** `3ede53c75397`
