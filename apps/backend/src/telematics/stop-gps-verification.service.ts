@@ -59,9 +59,11 @@ const GENERIC = new Set(["inc", "llc", "corp", "company", "the", "and", "logisti
   "service", "foods", "food", "group", "transport", "trucking", "freight", "site", "dock", "plant", "store", "texas", "laredo",
   "manufacturing", "industries", "supply", "international", "world", "wide", "depot", "terminal", "cold"]);
 /** True when the two facility names share a distinctive word (US COLD STORAGE ~ United States Cold Storage; WAL MART ~ Walmart). */
-export function sameFacilityName(a: string | null | undefined, b: string | null | undefined): boolean {
+export function sameFacilityName(a: string | null | undefined, b: string | null | undefined, places: Array<string | null | undefined> = []): boolean {
   const norm = (v: string | null | undefined) => String(v ?? "").toLowerCase().replace(/wal[\s-]*mart/g, "walmart").replace(/\bu\.?\s?s\.?\b/g, "united states");
-  const words = (v: string | null | undefined) => new Set(norm(v).split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !GENERIC.has(w)));
+  // A city / state word is where, not who (13605: "CAMPBELL SOUP CO.- LUMBERTON, NC" is not "… Lumberton" cold storage).
+  const placeWords = new Set(places.flatMap((p) => norm(p).split(/[^a-z0-9]+/)).filter(Boolean));
+  const words = (v: string | null | undefined) => new Set(norm(String(v ?? "").split(" — ")[0]).split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !GENERIC.has(w) && !placeWords.has(w)));
   const A = words(a), B = words(b);
   return [...A].some((w) => B.has(w));
 }
@@ -83,7 +85,9 @@ export function classifyStops(stops: StopIn[], dwells: Dwell[], hasFixesOn: (day
   for (const s of stops) {
     const base = { stop_id: s.stop_id, sequence_number: s.sequence_number, stop_type: s.stop_type, document_address: s.document_address };
     if (s.lat == null || s.lng == null || !s.day) { out.push({ ...base, verdict: "no_point", dwell: null, distance_m: null }); continue; }
-    const dayStart = s.day.getTime() - DAY_MS, dayEnd = s.day.getTime() + 2 * DAY_MS;
+    // 443.80 #4: a document date is day-level and a delivery often lands after it — measured on 4 of the 65 "elsewhere" stops
+    // (13498 #2, 13566 #2, 13614 #2, 13659 #2: the load's own truck dwelled at the stop on day +2..+3). Window -2 .. +3 days.
+    const dayStart = s.day.getTime() - 2 * DAY_MS, dayEnd = s.day.getTime() + 3 * DAY_MS;
     const inWindow = dwells.filter((d) => d.startedAt.getTime() >= Math.max(dayStart, after) && d.startedAt.getTime() <= dayEnd);
     const near = inWindow.map((d) => ({ d, m: metersBetween(s.lat!, s.lng!, d.lat, d.lng) })).filter((x) => x.m <= VERIFY_RADIUS_M).sort((a, b) => a.m - b.m)[0];
     // A disagreement needs a LOADING-length dwell on the stop's own day (+- 1 day), never a short pause.
@@ -164,7 +168,7 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
   let fixDays = new Set<string>();
   let fixPoints: Array<{ lat: number; lng: number }> = [];
   if (load.unit_id && days.length) {
-    const from = new Date(Math.min(...days) - 1.5 * DAY_MS), to = new Date(Math.max(...days) + 2 * DAY_MS);
+    const from = new Date(Math.min(...days) - 2 * DAY_MS), to = new Date(Math.max(...days) + 3 * DAY_MS);
     const fixes = (await client.query<{ captured_at: string; lat: string | null; lng: string | null; speed_mph: string | null; engine_state: string | null; odometer_mi: string | null; city: string | null; state: string | null }>(
       `SELECT captured_at::text, lat::text, lng::text, speed_mph::text, engine_state, odometer_mi::text, city, state
          FROM telematics.vehicle_locations WHERE unit_id = $1::uuid AND captured_at BETWEEN $2 AND $3 ORDER BY captured_at`,
@@ -236,7 +240,9 @@ export async function verifyLoadStopsAgainstGps(client: DbClient, input: {
     let applied = false;
     // Confirmed = the facility at the dwell carries the document's own distinctive name (any source). An owner Samsara address
     // with ANOTHER name (Semares -> Vilore Foods) is a different business: listed for the owner, never written.
-    const confirmed = Boolean(facility && facility.name !== "TRUCK_STOP" && sameFacilityName(docFacility, facility.name));
+    const docStop = stops.find((x) => x.stop_id === v.stop_id);
+    const confirmed = Boolean(facility && facility.name !== "TRUCK_STOP" &&
+      sameFacilityName(docFacility, facility.name, [docStop?.city, docStop?.state, facility.city, facility.state]));
     if (input.apply && v.verdict === "disagrees" && facility && confirmed) {
       await client.query(
         `UPDATE mdata.load_stops

@@ -54,4 +54,8 @@ describe("classifyStops (443.74)", () => {
     expect(sameFacilityName("Semares", "Robert A Martinez MD")).toBe(false);
     expect(sameFacilityName("RLS Logistics Delanco", "ID Logistics")).toBe(false);
   });
+  it("a shared CITY word never confirms a facility", () => {
+    expect(sameFacilityName("CAMPBELL SOUP CO.- LUMBERTON, NC", "United States Cold Storage — 2901 Kenny Biggs Road, Lumberton, NC", ["LUMBERTON", "NC", "Lumberton", "NC"])).toBe(false);
+    expect(sameFacilityName("US COLD STORAGE WARSAW NC", "United States Cold Storage", ["WARSAW", "NC", "Lumberton", "NC"])).toBe(true);
+  });
 });
