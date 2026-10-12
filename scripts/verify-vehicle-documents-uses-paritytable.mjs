@@ -44,10 +44,27 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="vp-documents-table"')) {
     errors.push(`${PAGE}: must set tableTestId="vp-documents-table"`);
   }
-  if (!src.includes('data-testid="vp-docs-upload-button"')) {
+  // 443.99 class B (CC-2, 2026-10-12) — upload control anchor.
+  //   old rule: the file contains a literal data-testid="vp-docs-upload-button" button and the text "UploadModal".
+  //   new rule: EITHER that inline shape (the button test id + a real <UploadModal ...> element), OR the shared
+  //             <EntityDocumentUpload> (imported from ../documents/EntityDocumentUpload, which renders the button
+  //             with data-testid={buttonTestId} and the UploadModal) with entityType="unit", entityId={unitId},
+  //             operatingCompanyId={companyId} (FIX-2: upload files under the VIEWED entity) and
+  //             buttonTestId="vp-docs-upload-button".
+  //   why: LAY-01/UPL-01 (#19219, db6ca177ba) replaced every profile's hand-wired UploadModal with the one shared
+  //        component. The upload still exists; the literal anchors could not see it (and "UploadModal" was only
+  //        matching a code comment). Stricter, not looser: the shared shape must also pass the viewed company.
+  const inlineUpload = src.includes('data-testid="vp-docs-upload-button"') && /<UploadModal\b/.test(src);
+  const sharedTag = /<EntityDocumentUpload\b[\s\S]*?\/>/.exec(src)?.[0] ?? "";
+  const sharedUpload =
+    /import\s*\{\s*EntityDocumentUpload\s*\}\s*from\s*["'][./]+documents\/EntityDocumentUpload["']/.test(src) &&
+    sharedTag.includes('buttonTestId="vp-docs-upload-button"') &&
+    sharedTag.includes('entityType="unit"') &&
+    /entityId=\{unitId\}/.test(sharedTag);
+  if (!inlineUpload && !sharedUpload) {
     errors.push(`${PAGE}: must keep vp-docs-upload-button upload control`);
   }
-  if (!src.includes("UploadModal")) {
+  if (!inlineUpload && !(sharedUpload && /operatingCompanyId=\{companyId\}/.test(sharedTag))) {
     errors.push(`${PAGE}: must keep UploadModal for entity-scoped upload`);
   }
   if (!src.includes("No documents linked.")) {
@@ -96,6 +113,29 @@ function selftest() {
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
     process.exit(1);
+  }
+  // The shared EntityDocumentUpload shape (today's component) passes; dropping its test id, its unit scope or
+  // the viewed company is caught.
+  const sharedGood = good
+    .replace('import { UploadModal } from "../documents/UploadModal";', 'import { EntityDocumentUpload } from "../documents/EntityDocumentUpload";')
+    .replace('<button data-testid="vp-docs-upload-button">+ Upload</button>\n    <UploadModal entityType="unit" />',
+      '<EntityDocumentUpload\n      entityType="unit"\n      entityId={unitId}\n      operatingCompanyId={companyId}\n      buttonTestId="vp-docs-upload-button"\n      onUploadSuccess={onUploaded}\n    />');
+  if (sharedGood === good || assertMigrated(sharedGood).length) {
+    console.error(`${LABEL} --selftest FAIL shared EntityDocumentUpload fixture rejected:`, assertMigrated(sharedGood));
+    process.exit(1);
+  }
+  const plants = [
+    ["upload control removed", sharedGood.replace(/<EntityDocumentUpload[\s\S]*?\/>/, "")],
+    ["test id dropped", sharedGood.replace('buttonTestId="vp-docs-upload-button"', "")],
+    ["upload not scoped to the unit", sharedGood.replace('entityType="unit"', 'entityType="vendor"')],
+    ["viewed company not passed (files under the uploader's default entity)", sharedGood.replace("operatingCompanyId={companyId}", "")],
+    ["inline button with no modal", good.replace('<UploadModal entityType="unit" />', "")],
+  ];
+  for (const [name, fixture] of plants) {
+    if (fixture === sharedGood || fixture === good || !assertMigrated(fixture).length) {
+      console.error(`${LABEL} --selftest FAIL planted violation escaped — ${name}`);
+      process.exit(1);
+    }
   }
   console.log(`${LABEL} --selftest PASS`);
 }

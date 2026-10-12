@@ -7,9 +7,17 @@
 import { readFileSync } from "node:fs";
 
 const FILE = "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx";
+// 443.99 (CC-2, 2026-10-12) split anchor:
+//   old: 'costTab !== "costs" ? <TransactionRegister' — Costs → board, every other tab → register.
+//   new: 'costTab !== "costs" && costTab !== "resettlement" ? <TransactionRegister' — Costs and Resettlement → board
+//        (Resettlement is the board filtered to invoiced loads), every other transaction tab → its own register.
+//   why: REG-040 owner follow-up (#21674, f1ec6457a6) added the Resettlement view, which is a load view, not a
+//        transaction register. Same regression still fails: removing the register branch, or routing the transaction
+//        tabs back to the shared board, drops this anchor.
+const SPLIT = 'costTab !== "costs" && costTab !== "resettlement" ? <TransactionRegister';
 const REQUIRED = [
-  // the split: costs → board, everything else → register
-  'costTab !== "costs" ? <TransactionRegister',
+  // the split: costs/resettlement → board, every transaction tab → register
+  SPLIT,
   "function TransactionRegister",
   'data-testid="load-costs-register"',
   // each type reads its OWN real source, not the board rows
@@ -25,7 +33,7 @@ const REQUIRED = [
 function check(src, file) {
   const missing = REQUIRED.filter((s) => !src.includes(s));
   // hard-guard against the regression: the register table must NOT be the load board's testid
-  const boardOnlyEverywhere = src.includes("<ParityTable columns={columns}") && !src.includes('costTab !== "costs" ? <TransactionRegister');
+  const boardOnlyEverywhere = src.includes("<ParityTable columns={columns}") && !src.includes(SPLIT);
   return { missing, boardOnlyEverywhere };
 }
 
@@ -37,13 +45,22 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   // planted regression: strip the register split → must fail
-  const bad = good.replace('costTab !== "costs" ? <TransactionRegister tab={costTab} companyId={companyId} /> : ', "");
-  const b = check(bad, "planted");
-  if (!(b.missing.length || b.boardOnlyEverywhere)) {
-    console.error("SELFTEST planted-regression did NOT fail — guard is toothless");
-    process.exit(1);
+  const plants = [
+    ["register branch stripped", good.replace(/costTab !== "costs" && costTab !== "resettlement" \? <TransactionRegister [^>]*\/> : /, "")],
+    ["transaction tabs routed to the shared board", good.replace(SPLIT, 'false ? <TransactionRegister')],
+    ["bills register reads board rows", good.replaceAll("listBills(companyId", "listBoardRows(companyId")],
+    ["driver pay register reads board rows", good.replaceAll("listDriverBills(companyId", "listBoardRows(companyId")],
+    ["Costs board removed", good.replace('tableTestId="accounting-load-costs-board"', 'tableTestId="x"')],
+  ];
+  let caught = 0;
+  for (const [name, bad] of plants) {
+    if (bad === good) { console.error(`SELFTEST anchor missing for plant: ${name}`); process.exit(1); }
+    const b = check(bad, "planted");
+    if (b.missing.length || b.boardOnlyEverywhere) caught += 1;
+    else console.error(`SELFTEST planted regression NOT caught: ${name}`);
   }
-  console.log("SELFTEST PASS — live file clean, planted regression caught");
+  if (caught !== plants.length) process.exit(1);
+  console.log(`SELFTEST PASS — live file clean, ${caught}/${plants.length} planted regressions caught`);
   process.exit(0);
 }
 

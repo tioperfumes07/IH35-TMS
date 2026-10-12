@@ -49,7 +49,7 @@ function assertMigrated(src) {
   if (!src.includes('?? "Period 1"') || !src.includes('?? "Period 2"')) {
     errors.push(`${PAGE}: must keep "Period 1"/"Period 2" fallback header labels`);
   }
-  if (!src.includes("function money(") || !src.includes('currency: "USD"')) {
+  if (!src.includes("function money(") || !usesUsdFormatter(src)) {
     errors.push(`${PAGE}: must keep the money() USD cents formatter`);
   }
   if (!src.includes("text-red-700")) {
@@ -66,6 +66,23 @@ function assertMigrated(src) {
   }
   return errors;
 }
+
+// 443.99 class B (CC-2, 2026-10-12) — USD formatter anchor.
+//   old rule: the page must contain an inline `currency: "USD"` Intl formatter.
+//   new rule: the page formats USD either inline (`currency: "USD"`) OR through the shared cents formatter
+//             (`import { formatUsdCents } from "../../lib/money"` AND a `formatUsdCents(` call) — lib/money.ts's
+//             formatUsdCents is the same Intl en-US/USD formatter (plus the C-35 never-"-$0.00" rule).
+//   why: BANK-F10011 (#20272) moved this page's local money() onto the shared formatter; the page still formats
+//        USD, but the literal anchor could not see it. Not looser: a page that drops USD formatting (raw cents,
+//        toFixed, no shared import) still fails — planted below.
+function usesUsdFormatter(src) {
+  if (src.includes('currency: "USD"')) return true;
+  return /import\s*\{[^}]*\bformatUsdCents\b[^}]*\}\s*from\s*["'][./]+lib\/money["']/.test(src) && /\bformatUsdCents\(/.test(src);
+}
+
+const INLINE_MONEY = `    function money(cents) {
+      return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+    }`;
 
 function selftest() {
   const good = `
@@ -104,6 +121,22 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  // USD formatter: the shared lib/money formatter passes; a raw toFixed money() is caught.
+  const sharedGood = good.replace(INLINE_MONEY, `    import { formatUsdCents } from "../../lib/money";
+    function money(cents) {
+      return formatUsdCents(cents);
+    }`);
+  if (sharedGood === good || assertMigrated(sharedGood).length) {
+    console.error(`${LABEL} --selftest FAIL: shared formatUsdCents formatter fixture rejected`, assertMigrated(sharedGood));
+    process.exit(1);
+  }
+  const rawBad = good.replace(INLINE_MONEY, `    function money(cents) {
+      return "$" + (cents / 100).toFixed(2);
+    }`);
+  if (!assertMigrated(rawBad).includes(`${PAGE}: must keep the money() USD cents formatter`)) {
+    console.error(`${LABEL} --selftest FAIL: a money() with no USD formatter was NOT caught`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
