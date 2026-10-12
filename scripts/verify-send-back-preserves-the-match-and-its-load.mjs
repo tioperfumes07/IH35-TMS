@@ -151,6 +151,14 @@ if (process.argv.includes("--selftest")) {
     const matchScoped = (await db.query(tempQuery(DATA_QUERIES.orphanAccepted), [USMCA])).rows[0].n;
     const matchMutant = tempQuery(DATA_QUERIES.orphanAccepted).replace("m.operating_company_id = $1 AND ", "");
     cases.push(["orphanAccepted: match scope removal rejected", matchScoped === 0 && (await db.query(matchMutant, [USMCA])).rows[0].n === 1]);
+    const { nullCompanyCountSql, liveFailures } = await import("./verify-no-row-escapes-its-company.mjs");
+    await db.query("CREATE TEMP TABLE nullable_money (operating_company_id uuid) ON COMMIT DROP");
+    await db.query("INSERT INTO pg_temp.nullable_money VALUES ($1), ($2), (NULL)", [USMCA, other]);
+    const nullSql = nullCompanyCountSql("pg_temp.nullable_money");
+    const nullCount = Number((await db.query(nullSql, [USMCA])).rows[0].n);
+    cases.push(["nullable scope counts NULL money", nullCount === 1]);
+    cases.push(["NULL money fails despite attempted baseline", liveFailures({ "accounting.expenses": nullCount }, 0, { "accounting.expenses": { max: 999 } }).out.length === 1]);
+    cases.push(["removing NULL arm is rejected", Number((await db.query(nullSql.replace(" OR operating_company_id IS NULL", ""), [USMCA])).rows[0].n) === 0 && nullCount === 1]);
   } finally {
     await db.query("ROLLBACK").catch(() => {});
     await db.end();

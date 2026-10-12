@@ -19,7 +19,7 @@ describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("BCF-09 selected pay item
       cwd: root, env: { ...process.env, SELFTEST_DATABASE_URL: cs }, encoding: "utf8",
     });
     expect(result.status, result.stderr + result.stdout).toBe(0);
-    expect(result.stdout).toContain("selftest 21/21");
+    expect(result.stdout).toContain("selftest 24/24");
   });
   it("rejects the old extra-pay INSERT, accepts every pay kind with its item's account, and refuses unavailable items", async () => {
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;

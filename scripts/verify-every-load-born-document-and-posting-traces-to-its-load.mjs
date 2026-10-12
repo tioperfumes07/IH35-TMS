@@ -103,7 +103,7 @@ const facts = await withUnscopedReadOnly(LABEL, async (c) => {
      WHERE i.invoice_type = 'from_load' AND i.source_load_id IS NULL AND i.operating_company_id = $1
     UNION ALL SELECT 'driver_finance.driver_bills', b.id::text FROM driver_finance.driver_bills b WHERE b.load_id IS NULL AND b.operating_company_id = $1
     UNION ALL SELECT 'accounting.load_revenue_recognition_postings', r.id::text FROM accounting.load_revenue_recognition_postings r WHERE r.load_id IS NULL AND r.operating_company_id = $1
-    UNION ALL SELECT 'dispatch.load_charge_lines', l.id::text FROM dispatch.load_charge_lines l WHERE l.load_id IS NULL AND l.operating_company_id = $1`, [USMCA])).rows;
+    UNION ALL SELECT 'dispatch.load_charge_lines', l.id::text FROM dispatch.load_charge_lines l WHERE l.load_id IS NULL AND (l.operating_company_id = $1 OR l.operating_company_id IS NULL)`, [USMCA])).rows;
   // 363-CC3-A: once 202615390931 has stamped every provable EXISTING posting, the unstamped / broken-walk rules hold for
   // ALL TIME, not only since the stamp; history without a provable load (documents gone) stays reported.
   const backfilled = (await c.query(`SELECT 1 FROM _system._schema_migrations WHERE filename = $1`, [BACKFILL_MIGRATION])).rowCount > 0;

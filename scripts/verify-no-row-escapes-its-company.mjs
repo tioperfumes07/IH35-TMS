@@ -4,8 +4,8 @@
  *
  * A row with a NULL operating_company_id is invisible to every company-scoped query, guard, trial balance and to the
  * purge, and it disarms every MATCH SIMPLE composite same-entity FK on that row. A company-scoped guard cannot see the
- * rows that escaped a company — so THIS guard runs with NO company filter, by construction (standing rule from the
- * same order: every defect-counting guard runs unscoped or says in writing why a company filter is sound).
+ * rows that escaped a company. ROUND 443.122: read USMCA OR NULL, never another named company.
+ * Every NULL-company money row fails, even if someone attempts to add a debt allowance.
  *
  * LIVE (fails closed without a database), every base table that has an operating_company_id column:
  *   1. zero rows with operating_company_id NULL — except SHARED_BY_DESIGN (a NULL company there MEANS "every company",
@@ -31,6 +31,11 @@ export const REQUIRES_LIVE_DB = "a NULL company is a live data fact — fails cl
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const MIG = resolve(ROOT, "db/migrations");
 const LABEL = "verify-no-row-escapes-its-company";
+const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
+const isMoneyTable = (t) => /^(accounting|banking|driver_finance|fuel|expense_attribution)\./.test(t) || t === "dispatch.load_charge_lines";
+
+export const nullCompanyCountSql = (table) => `SELECT count(*) FILTER (WHERE operating_company_id IS NULL)::bigint AS n
+  FROM ${table} WHERE (operating_company_id = $1 OR operating_company_id IS NULL)`;
 
 /** NULL operating_company_id means "shared by every company" — by design, never a defect. */
 export const SHARED_BY_DESIGN = {
@@ -82,6 +87,10 @@ export function liveFailures(nullCounts, parentless, debt = DEBT, parentlessDebt
   const out = [];
   const notes = [];
   for (const [t, n] of Object.entries(nullCounts)) {
+    if (n > 0 && isMoneyTable(t)) {
+      out.push(`RULE 1: ${t} has ${n} NULL-company money row(s) — zero tolerance under ROUND 443.122; no debt allowance permitted.`);
+      continue;
+    }
     if (SHARED_BY_DESIGN[t]) continue;
     const d = debt[t];
     if (!d) out.push(`RULE 1: ${t} has ${n} row(s) with NO company — invisible to every company-scoped query, guard and the purge.`);
@@ -119,12 +128,13 @@ async function measure(client) {
      ORDER BY 1, 2`);
   const nullCounts = {};
   for (const { s, t } of tables) {
-    // NO company filter — that is the whole point of this guard.
-    const r = await client.query(`SELECT count(*)::bigint AS n FROM "${s}"."${t}" WHERE operating_company_id IS NULL`);
+    // Identifiers come only from the schema catalog; the company value is always bound.
+    const quoted = [s, t].map(v => `"${v.replaceAll('"', '""')}"`).join('.');
+    const r = await client.query(nullCompanyCountSql(quoted), [USMCA]);
     const n = Number(r.rows[0].n);
     if (n > 0) nullCounts[`${s}.${t}`] = n;
   }
-  const p = await client.query(`SELECT count(*)::bigint AS n FROM accounting.expense_lines WHERE operating_company_id = $1 AND expense_id IS NULL`, ["5c854333-6ea5-4faa-af31-67cb272fef80"]);
+  const p = await client.query(`SELECT count(*)::bigint AS n FROM accounting.expense_lines WHERE (operating_company_id = $1 OR operating_company_id IS NULL) AND expense_id IS NULL`, [USMCA]);
   await client.query("ROLLBACK");
   return { nullCounts, parentless: Number(p.rows[0].n), scanned: tables.length };
 }
@@ -133,15 +143,16 @@ const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(imp
 if (isMain) {
   if (process.argv.includes("--selftest")) {
     // Own fixture debt — never the live DEBT (see liveFailures).
-    const FX = { "accounting.expense_lines": { max: 506 }, "accounting.bill_lines": { max: 28 }, "dispatch.load_charge_lines": { max: 136 } };
+    const FX = { "maintenance.fixture_a": { max: 506 }, "maintenance.fixture_b": { max: 28 }, "maintenance.fixture_c": { max: 136 } };
     const FXP = { max: 506 };
     const lf = (n, p, d = FX, pd = FXP) => liveFailures(n, p, d, pd);
-    const base = { "accounting.expense_lines": 506, "accounting.bill_lines": 28, "dispatch.load_charge_lines": 136, "audit.row_changes": 160000 };
+    const base = { "maintenance.fixture_a": 506, "maintenance.fixture_b": 28, "maintenance.fixture_c": 136, "audit.row_changes": 160000 };
     const cases = [
       ["named debt + shared passes", lf(base, 506).out.length === 0],
       ["a new company-less table fails", lf({ ...base, "driver_finance.settlement_lines": 1 }, 506).out.length === 1],
-      ["debt growing fails", lf({ ...base, "accounting.bill_lines": 29 }, 506).out.length === 1],
-      ["debt at zero fails until removed", lf({ "accounting.expense_lines": 506, "dispatch.load_charge_lines": 136 }, 506).out.some((f) => f.startsWith("DEBT RATCHET"))],
+      ["debt growing fails", lf({ ...base, "maintenance.fixture_b": 29 }, 506).out.length === 1],
+      ["debt at zero fails until removed", lf({ "maintenance.fixture_a": 506, "maintenance.fixture_c": 136 }, 506).out.some((f) => f.startsWith("DEBT RATCHET"))],
+      ["NULL money cannot be baselined", liveFailures({ "accounting.bill_lines": 1 }, 0, { "accounting.bill_lines": { max: 999 } }).out.some(f => f.includes("zero tolerance"))],
       ["parentless growing fails", lf(base, 507).out.length === 1],
       ["parentless at zero fails while its debt is still named", lf(base, 0).out.some((f) => f.includes("PARENTLESS_EXPENSE_LINES_DEBT.max to 0"))],
       ["shared-by-design is never a defect", lf({ ...base, "catalogs.detail_types": 144 }, 506).out.length === 0],
@@ -163,11 +174,11 @@ if (isMain) {
     for (const n of notes) console.log(`${LABEL}: NOTE — ${n}`);
     const all = [...sf, ...out];
     if (all.length) {
-      console.error(`${LABEL}: FAIL (unscoped, ${m.scanned} nullable-company tables scanned)\n  ${all.join("\n  ")}`);
+      console.error(`${LABEL}: FAIL (USMCA or NULL, ${m.scanned} nullable-company tables scanned)\n  ${all.join("\n  ")}`);
       process.exitCode = 1;
     } else {
       const debt = Object.keys(DEBT).map((t) => `${t} ${m.nullCounts[t] ?? 0}`).join(", ");
-      console.log(`${LABEL}: OK — unscoped; ${m.scanned} nullable-company tables scanned; company-less rows only in shared-by-design tables and the named debt (${debt}); parentless expense lines ${m.parentless} (debt ${PARENTLESS_EXPENSE_LINES_DEBT.max}).`);
+      console.log(`${LABEL}: OK — USMCA or NULL; ${m.scanned} nullable-company tables scanned; NULL-company money rows 0; non-money company-less rows only in shared-by-design tables and the named debt (${debt}); parentless expense lines ${m.parentless} (debt ${PARENTLESS_EXPENSE_LINES_DEBT.max}).`);
     }
   } finally {
     client.release?.();
