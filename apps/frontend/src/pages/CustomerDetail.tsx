@@ -83,6 +83,7 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
 import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
 import { CustomerNotifyReverseSection } from "../components/dispatch/CustomerNotifyReverseSection";
 import { Modal } from "../components/Modal";
+import { ConfirmModal } from "../components/shared/ConfirmModal";
 import { CoiRequestsTab } from "./customers/tabs/CoiRequestsTab";
 import { PortalUsersTab } from "./customers/components/PortalUsersTab";
 import { parseApiErrorPayload } from "../components/forms/useFormValidation";
@@ -971,6 +972,8 @@ export function CustomerDetailPage() {
     onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to deactivate lane", "error"),
   });
 
+  const [unapplyConfirmPayment, setUnapplyConfirmPayment] = useState<CustomerPaymentListRow | null>(null);
+
   const unapplyCustomerPaymentMutation = useMutation({
     mutationFn: async (payment: CustomerPaymentListRow) => {
       const applications = payment.applied_to_invoices ?? [];
@@ -979,6 +982,7 @@ export function CustomerDetailPage() {
       }
     },
     onSuccess: () => {
+      setUnapplyConfirmPayment(null);
       void queryClient.invalidateQueries({ queryKey: ["customer-payments", id] });
       pushToast("Payment unapplied", "success");
     },
@@ -2305,10 +2309,34 @@ export function CustomerDetailPage() {
                     },
                   },
                   { key: "qbo_payment_id", label: "Reference", sortable: true, render: (p) => p.qbo_payment_id ?? "—" },
+                  {
+                    key: "actions",
+                    label: "",
+                    render: (p) =>
+                      (p.applied_to_invoices ?? []).length > 0 ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          loading={unapplyCustomerPaymentMutation.isPending && unapplyConfirmPayment?.id === p.id}
+                          onClick={() => setUnapplyConfirmPayment(p)}
+                        >
+                          Unapply
+                        </Button>
+                      ) : null,
+                  },
                 ]}
               />
             )}
           </div>
+          <ConfirmModal
+            open={unapplyConfirmPayment !== null}
+            title="Unapply payment?"
+            message={`Remove all invoice applications from payment ${unapplyConfirmPayment?.display_id ?? ""}? This cannot be undone automatically.`}
+            confirmLabel="Unapply"
+            danger
+            onClose={() => setUnapplyConfirmPayment(null)}
+            onConfirm={() => unapplyCustomerPaymentMutation.mutate(unapplyConfirmPayment!)}
+          />
           <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-semibold text-gray-900">Receivables Aging</div>
             {/* CUST-MONEY-F6984 — same billingSummaryQuery-retained-on-error gate as the three cards
