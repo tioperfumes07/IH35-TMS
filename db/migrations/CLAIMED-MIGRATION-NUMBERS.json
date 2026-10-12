@@ -163,6 +163,16 @@
       "claimed_at": "2026-10-12",
       "purpose": "LEAD 443.134 #1: accounting.related_party_accounts — the durable link related party (vendor) -> its ONE running 'Due to / from <party>' account, filled by ensureRelatedPartyAccount; backfilled from the owner's card map for the 4 existing 2410-00-00N accounts"
     },
+    "202615920910": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-12",
+      "purpose": "LEAD 443.136 #1: the Relay deposit posting registry trigger stamps the deposit row (posted_to_gl + posted_journal_entry_id) and clears it on reversal, so app code never writes the flag by hand"
+    },
+    "202615930910": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-12",
+      "purpose": "LEAD 443.136 #2: WORM (accounting.refuse_financial_row_delete) on accounting.related_party_accounts"
+    },
     "202615890910": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-12",
