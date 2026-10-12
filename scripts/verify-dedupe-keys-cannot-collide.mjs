@@ -107,6 +107,21 @@ export function auditSource(rel, source) {
   return failures;
 }
 
+if (import.meta.url === `file://${process.argv[1]}` && process.argv.includes("--selftest")) {
+  const T = (body) => "const dedupKey = `" + body + "`;";
+  const cases = [
+    ["ids / dates / cents only pass", auditSource("x.ts", T("${loadId}|${date}|${cents}")).length === 0],
+    ["free text LAST passes (cannot collide)", auditSource("x.ts", T("${loadId}|${cents}|${row.description}")).length === 0],
+    ["JSON.stringify key passes", auditSource("x.ts", "const dedupKey = JSON.stringify([a, b.description, c]);").length === 0],
+    ["free text in the middle joined by a space is caught", auditSource("x.ts", T("${section} ${description} ${amountCents}")).length > 0],
+    ["free text with NO separator is caught", auditSource("x.ts", T("${vendorName}${cents}")).length > 0],
+  ];
+  const bad = cases.filter(([, ok]) => !ok).length;
+  for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
+  console.log(bad ? `${LABEL} --selftest FAIL (${cases.length - bad}/${cases.length} caught)` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const files = fs.existsSync(SRC) ? walk(SRC) : [];
   const failures = [];

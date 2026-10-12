@@ -28,6 +28,29 @@ const LABEL = "verify-fixed-monthly-costs-never-attach-to-load";
 // account (fuel, tolls, repairs — the 9 categories that DO require a load).
 const NAME_PATTERNS = ["%insurance%", "%plate%", "%registration%", "%note payable%", "%notes payable%", "%equipment loan%"];
 
+/** True when an account name is a fixed-monthly-cost account (the SQL ILIKE patterns, in JS). */
+export function isFixedMonthlyAccount(name) {
+  const n = String(name ?? "").toLowerCase();
+  return NAME_PATTERNS.some((p) => n.includes(p.replaceAll("%", "")));
+}
+/** Violations = load-tagged rows on a fixed-monthly-cost account (pure — --selftest plants into it). */
+export function fixedCostViolations(rows) {
+  return rows.filter((r) => r.load_id && isFixedMonthlyAccount(r.account_name));
+}
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["a load-tagged fuel line is not a violation", fixedCostViolations([{ id: "1", account_name: "Fuel & Diesel", load_id: "L" }]).length === 0],
+    ["an insurance line without a load is not a violation", fixedCostViolations([{ id: "2", account_name: "Truck Insurance", load_id: null }]).length === 0],
+    ["a load-tagged insurance line is caught", fixedCostViolations([{ id: "3", account_name: "Truck Insurance", load_id: "L" }]).length === 1],
+    ["a load-tagged plates / notes payable line is caught", fixedCostViolations([{ id: "4", account_name: "License Plates", load_id: "L" }, { id: "5", account_name: "Notes Payable - Truck", load_id: "L" }]).length === 2],
+  ];
+  const bad = cases.filter(([, ok]) => !ok).length;
+  for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
+  console.log(bad ? `${LABEL} --selftest FAIL (${cases.length - bad}/${cases.length} caught)` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 async function main() {
   const url = process.env.DATABASE_URL;
   // GATE-LIVELOCK-01 / dead-port-forbidden: skip cleanly with no DATABASE_URL (static sweep), run
@@ -56,7 +79,7 @@ async function main() {
         WHERE bl.load_id IS NOT NULL AND (${nameClause})`,
       NAME_PATTERNS
     );
-    const violations = [...expenseRes.rows, ...billRes.rows];
+    const violations = fixedCostViolations([...expenseRes.rows, ...billRes.rows]);
     if (violations.length > 0) {
       const sample = violations.slice(0, 5).map((r) => `${r.id} (${r.account_name}) -> load_id=${r.load_id}`).join("\n  ");
       throw new Error(
@@ -72,7 +95,7 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+if (!process.argv.includes("--selftest")) main().catch((err) => {
   console.error(`${LABEL} FAIL: ${err.message}`);
   process.exit(1);
 });

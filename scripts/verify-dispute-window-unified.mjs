@@ -33,6 +33,25 @@ export const REQUIRES_LIVE_DB =
   "live-data money guard; fails closed via requireLiveDbOrExit with no DATABASE_URL (ROUND 29.9-B) and runs in money-pr-local-gate.mjs only when its own domain paths change or a live DB is present (Lead ruling R56-B, 2026-09-22)";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
+/** Which variances have no dispute (pure — --selftest plants into it). */
+export function uncoveredVariances(variances, disputedInvoiceIds) {
+  return variances.filter((v) => !disputedInvoiceIds.has(v.invoice_id));
+}
+
+if (process.argv.includes("--selftest")) {
+  const v = (id) => ({ invoice_id: id, display_id: id, variance_cents: -56000 });
+  const cases = [
+    ["no variances -> nothing uncovered", uncoveredVariances([], new Set()).length === 0],
+    ["a variance with a dispute is covered", uncoveredVariances([v("a")], new Set(["a"])).length === 0],
+    ["a variance with NO dispute is caught", uncoveredVariances([v("a"), v("b")], new Set(["a"])).length === 1],
+    ["either direction counts (positive variance without dispute is caught)", uncoveredVariances([{ ...v("c"), variance_cents: 3000 }], new Set()).length === 1],
+  ];
+  const bad = cases.filter(([, ok]) => !ok).length;
+  for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
+  console.log(bad ? `${LABEL} --selftest FAIL (${cases.length - bad}/${cases.length} caught)` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 async function live() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
@@ -77,17 +96,19 @@ async function live() {
           AND i.id IS NOT NULL AND f.gross_amount_cents <> i.total_cents`,
       [USMCA_COMPANY_ID]
     );
-    let uncovered = 0;
+    const disputed = new Set();
     for (const v of varianceRes.rows) {
       const disputeRes = await client.query(
         `SELECT id FROM accounting.invoice_disputes WHERE operating_company_id = $1::uuid AND invoice_id = $2::uuid LIMIT 1`,
         [USMCA_COMPANY_ID, v.invoice_id]
       );
-      if (disputeRes.rows.length === 0) {
-        console.error(`${LABEL}: LIVE FAIL — invoice ${v.display_id} has a Faro-vs-face variance ($${(Number(v.variance_cents) / 100).toFixed(2)}) with no accounting.invoice_disputes row`);
-        uncovered++;
-      }
+      if (disputeRes.rows.length > 0) disputed.add(v.invoice_id);
     }
+    const missing = uncoveredVariances(varianceRes.rows, disputed);
+    for (const v of missing) {
+      console.error(`${LABEL}: LIVE FAIL — invoice ${v.display_id} has a Faro-vs-face variance ($${(Number(v.variance_cents) / 100).toFixed(2)}) with no accounting.invoice_disputes row`);
+    }
+    const uncovered = missing.length;
     if (uncovered > 0) failures++;
 
     await client.query("COMMIT");
