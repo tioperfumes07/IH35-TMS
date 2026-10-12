@@ -220,6 +220,7 @@ export const TABLE_REGISTRY = {
   "fuel.fuel_card_overage_policies": { status: "NOT_TRANSACTIONAL", reason: "config" },
   "fuel.fuel_planner_settings": { status: "NOT_TRANSACTIONAL", reason: "config" },
   // E-23 / 202615110000: on-read derived pump time + IFTA state; never writes fuel_transactions.
+  "fuel.fuel_receipt_postings": { status: "NOT_TRANSACTIONAL", reason: "443.121 #1 receipt-identity registry: one live row per fuel receipt, no amount; links posting_batch_id -> posting batch -> journal entry, receipt_key -> its fuel transaction / Relay fill (which carries unit + driver + load); the money lives on those TIER1 rows" },
   "fuel.fuel_transaction_derivations": { status: "NOT_TRANSACTIONAL", reason: "derived output side-table; source fuel_transactions stay TIER1" },
   "fuel.fuel_transactions": { status: TIER.TIER1, reason: "the purest TIER1 table -- always unit+driver+load" },
   "fuel.load_fuel_cost": { status: "OUT_OF_SCOPE", reason: "derived/aggregated rollup, not itself a transaction" },
