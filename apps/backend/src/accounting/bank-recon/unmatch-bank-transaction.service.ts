@@ -118,9 +118,22 @@ export async function unmatchBankTransactionOnClient(
   // OWNER-ORDER 2026-10-02 §4 — reverse ONLY JEs this match writer created (fuel/relay fill post
   // or factoring chargeback on 1230). Do NOT reverse a JE that was merely matched as the ledger
   // target (kind=je) or that categorize wrote — those use undo-categorization / void of the JE.
-  const matchCreatedJe = Boolean(
+  let matchCreatedJe = Boolean(
     row.prev_fuel_transaction_id || row.prev_relay_fuel_transaction_id || row.prev_factoring_advance_id
   );
+  // LEAD 443.116 #1 — a fill that posted when it was RECEIVED (fuel.posted_on_receipt names this JE) was only matched by
+  // this line: unmatch releases the link and the fill's posting stands, exactly like a deposit match.
+  if (matchCreatedJe && row.prev_journal_entry_id && (row.prev_fuel_transaction_id || row.prev_relay_fuel_transaction_id)) {
+    const onReceipt = await client.query(
+      `SELECT 1 FROM audit.audit_events
+        WHERE event_class = 'fuel.posted_on_receipt'
+          AND payload->>'journal_entry_id' = $1
+          AND payload->>'operating_company_id' = $2
+        LIMIT 1`,
+      [row.prev_journal_entry_id, input.operating_company_id]
+    );
+    if (onReceipt.rows.length) matchCreatedJe = false;
+  }
   if (row.prev_journal_entry_id && matchCreatedJe) {
     await reverseJournalEntryNoFlip(client, {
       operatingCompanyId: input.operating_company_id,

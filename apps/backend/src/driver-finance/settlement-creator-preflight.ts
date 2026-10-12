@@ -12,6 +12,7 @@
  */
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
 import { findLiveFuelByProviderTransactionId, fuelPurchaseAlreadyRecordedMessage, providerTransactionId } from "../fuel/fuel-provider-reference.js";
+import { findReceivedCardFillToAdopt } from "./creator-received-fill-adoption.js";
 import { findCreatorCustomer } from "./settlement-creator-seed-loads.js";
 import { creatorLineLoadNumber } from "./settlement-creator-line-load.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
@@ -116,7 +117,16 @@ export async function creatorPreflightRefusals(client: Q, draft: SettlementCreat
         reference: f.invoice,
         fuelType: f.fuel_type ?? "diesel",
       });
-      if (existing && !draft.edit_void_repost) {
+      // LEAD 443.116 #1 — a card fill already RECEIVED (imported, posted on receipt) on this line's own load is ADOPTED by
+      // the post (findReceivedCardFillToAdopt, the same rule the post uses); every other existing receipt is refused.
+      const lineLoadId = f.load_id
+        ?? (f.load_number?.trim()
+          ? ((await client.query(`SELECT id::text FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL LIMIT 1`, [co, f.load_number.trim()])).rows[0]?.id as string | undefined) ?? null
+          : null);
+      const adoptable = existing && vid
+        ? await findReceivedCardFillToAdopt(client as never, { operatingCompanyId: co, vendorId: vid, reference: f.invoice, fuelType: f.fuel_type ?? "diesel", loadId: lineLoadId })
+        : null;
+      if (existing && !draft.edit_void_repost && !adoptable) {
         out.push(`${label}: ${fuelPurchaseAlreadyRecordedMessage(providerTransactionId(f.invoice)!, existing.id, existing.load_number)}`);
       }
     }

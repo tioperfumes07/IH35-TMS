@@ -47,6 +47,12 @@ export type FuelPostingInput = {
   driver_id?: string | null;
   /** RANK2-FUEL-JE-CLASS — tractor pulling the load at fuel-purchase time; drives the QBO Class dimension. */
   unit_id?: string | null;
+  /**
+   * LEAD 443.116 #1 — the load the fill was bought for (the one fuel-to-load rule, fuel/fuel-load-at-time.ts). Stamped on
+   * every leg, so a Relay fill posted when it is RECEIVED (no settlement row linked yet) carries its load and its expense
+   * document takes the load-spine number. The writer still refuses another company's load (443.110 G8).
+   */
+  load_id?: string | null;
   /** RANK2-FUEL-JE-CLASS — physical trailer (mdata.equipment), fuel.fuel_transactions.trailer_id. */
   trailer_id?: string | null;
   ifta_state?: string | null;
@@ -248,6 +254,25 @@ async function resolveExistingPostedResult(
     idempotency_key: idempotencyKey,
     account_resolution_trace: [],
   };
+}
+
+/**
+ * LEAD 443.116 #1 — the fill's existing company-direct posting, if it already posted (on receipt, or by an earlier match).
+ * The bank match calls this FIRST: a fill that posted when it was received is only matched, never posted or re-validated
+ * again. Same key the poster itself uses (buildFuelIdempotencyKey, company_direct, revision 0) — one definition.
+ */
+export async function findPostedFuelEvent(
+  client: DbClient,
+  operatingCompanyId: string,
+  fuelEventId: string
+): Promise<FuelPostingResult | null> {
+  const key = buildFuelIdempotencyKey({
+    operating_company_id: operatingCompanyId,
+    fuel_event_id: fuelEventId,
+    posting_path: "company_direct",
+    correction_revision: 0,
+  });
+  return resolveExistingPostedResult(client, operatingCompanyId, key);
 }
 
 /**
@@ -501,6 +526,7 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
       idempotency_key: idempotencyKey,
       class_id: classResolution.class_id,
       relationship_role: line.debit_or_credit === "debit" ? "fuel_expense" : "fuel_offset",
+      ...(input.load_id ? { load_id: input.load_id } : {}),
     });
     postingIds.push(postingId);
 
