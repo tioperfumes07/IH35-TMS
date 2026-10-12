@@ -235,13 +235,13 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/mdata/equipment-log` | `apps/backend/src/mdata/equipment-log.routes.ts:146` | — | — | — |
 | nested | `/api/v1/mdata/equipment/:id/plates` | `apps/backend/src/mdata/equipment-plates.routes.ts:83` | — | — | — |
 | nested | `/api/v1/mdata/equipment/:id/status-change` | `apps/backend/src/mdata/equipment.routes.ts:417` | — | — | — |
-| create | `/api/v1/mdata/loads` | `apps/backend/src/mdata/loads.routes.ts:424` | — | — | — |
+| create | `/api/v1/mdata/loads` | `apps/backend/src/mdata/loads.routes.ts:425` | — | — | — |
 | nested | `/api/v1/mdata/loads/:id/miles-choice` | `apps/backend/src/dispatch/mileage/miles-recommendations.routes.ts:106` | — | — | — |
-| nested | `/api/v1/mdata/loads/:id/remint-driver-bill` | `apps/backend/src/mdata/loads.routes.ts:1449` | — | — | — |
-| nested | `/api/v1/mdata/loads/:id/stops` | `apps/backend/src/mdata/loads.routes.ts:2012` | — | — | — |
+| nested | `/api/v1/mdata/loads/:id/remint-driver-bill` | `apps/backend/src/mdata/loads.routes.ts:1453` | — | — | — |
+| nested | `/api/v1/mdata/loads/:id/stops` | `apps/backend/src/mdata/loads.routes.ts:2016` | — | — | — |
 | create | `/api/v1/mdata/loads/deadhead-fill` | `apps/backend/src/dispatch/mileage/miles-recommendations.routes.ts:140` | — | — | — |
 | create | `/api/v1/mdata/loads/printed-trailer-decide` | `apps/backend/src/dispatch/mileage/miles-recommendations.routes.ts:176` | — | — | — |
-| create | `/api/v1/mdata/loads/remint-driver-bill/apply-all` | `apps/backend/src/mdata/loads.routes.ts:1598` | — | — | — |
+| create | `/api/v1/mdata/loads/remint-driver-bill/apply-all` | `apps/backend/src/mdata/loads.routes.ts:1602` | — | — | — |
 | create | `/api/v1/mdata/locations` | `apps/backend/src/mdata/locations.routes.ts:282` | — | — | — |
 | nested | `/api/v1/mdata/locations/:id/contacts` | `apps/backend/src/mdata/locations.routes.ts:686` | — | — | — |
 | nested | `/api/v1/mdata/locations/:id/contacts/:contactId/set-primary` | `apps/backend/src/mdata/locations.routes.ts:879` | — | — | — |

@@ -89,7 +89,7 @@ describeIntegration("expense → GL posting (real Postgres)", () => {
         await db.query(`DELETE FROM accounting.posting_batches WHERE source_transaction_id = ANY($1) AND source_transaction_type='expense'`, [createdExpenseIds]);
         await db.query(`DELETE FROM accounting.expense_lines WHERE expense_id = ANY($1::uuid[])`, [createdExpenseIds]);
         await db.query(`DELETE FROM accounting.expenses WHERE id = ANY($1::uuid[])`, [createdExpenseIds]);
-        await db.query(`DELETE FROM catalogs.items WHERE id=$1::uuid`, [uncatItemId]).catch(() => {});
+        await db.query(`DELETE FROM catalogs.items WHERE id=$1::uuid`, [uncatItemId]);
         await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid AND role='uncategorized_expense'`, [companyId]);
         await db.query(`DELETE FROM mdata.drivers WHERE id=$1::uuid`, [driverId]);
       });
