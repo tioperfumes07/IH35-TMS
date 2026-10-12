@@ -123,6 +123,30 @@ const LINK1_PENDING_REAL_MILEAGE_SOURCE = new Set([
   ...R224_LINK1_PENDING,
 ]);
 
+// LINK 1 — the SALARIED WEEK (Lead 443.33 / 443.36 / 443.45 Ask C, closed owner ruling 2026-09-28): a load of a
+// salaried driver has NO per-load driver bill; the weekly salary is one pay line on the signed settlement, billed on
+// the A/P chain with driver_bill_id NULL and pay_basis 'salaried'. Read STRUCTURALLY, never from a list of load
+// numbers: (a) the load carries the 0-rate "Salaried" override — exactly the predicate the engine bills by
+// (loadSalariedSettlementLoads, settlement-ap-chain.service.ts) — AND (b) the live settlement it is linked to has a
+// live 'salaried' A/P-chain row, i.e. the salary was actually billed. A salaried override whose settlement never
+// billed the salary is still a LINK 1 failure.
+export const SALARIED_LOAD_SQL = `(l.driver_pay_rate_per_mile = 0
+             AND length(btrim(COALESCE(l.driver_pay_rate_override_reason, ''))) >= 10
+             AND l.driver_pay_rate_override_reason ~* '^\\s*(salaried|local driver — weekly salary)')`;
+export const SALARIED_BILLED_SQL = `EXISTS (SELECT 1 FROM driver_finance.driver_settlements s
+                       JOIN driver_finance.driver_settlement_gl_bills g
+                         ON g.settlement_id = s.id AND g.operating_company_id = s.operating_company_id
+                      WHERE s.id = l.presettlement_link_id AND s.operating_company_id = l.operating_company_id
+                        AND s.voided_at IS NULL AND g.pay_basis = 'salaried' AND g.superseded_at IS NULL)`;
+
+/** LINK 1 verdict for one load row: ok (bill or no driver), salaried (recorded salaried week, salary billed), pending, fail. */
+export function link1Verdict(r, pending = LINK1_PENDING_REAL_MILEAGE_SOURCE) {
+  if (!r.has_driver || r.has_bill) return "ok";
+  if (r.salaried_reason && r.salaried_billed) return "salaried";
+  if (pending.has(r.load_number)) return "pending";
+  return "fail";
+}
+
 export function expenseNumberMismatch(loadNumber, expenseNumber) {
   if (!expenseNumber) return false; // no expense_number at all is a separate, pre-existing gap class, not this check's concern
   if (!loadNumber) return true; // an expense claims a load_id but that load has no number to derive from — can't possibly match
@@ -148,7 +172,9 @@ async function live() {
              (l.trip_type IS NULL) AS trip_type_missing,
              EXISTS (SELECT 1 FROM driver_finance.presettlement_link_suggestions s
                       WHERE s.load_id = l.id AND s.status = 'pending' AND s.suggested_settlement_id IS NULL) AS in_review_queue,
-             EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id) AS has_bill
+             EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id) AS has_bill,
+             ${SALARIED_LOAD_SQL} AS salaried_reason,
+             ${SALARIED_BILLED_SQL} AS salaried_billed
         FROM mdata.loads l
        WHERE l.soft_deleted_at IS NULL
          AND l.status <> 'cancelled'
@@ -168,12 +194,9 @@ async function live() {
     // NULL, so a load with no seated driver CANNOT have a driver bill — LINK 1 hard-fails only on
     // loads that HAVE a driver and still lack a bill. A load that reached a delivered/closed status
     // with no driver at all is a separate DATA anomaly, reported below (not conflated into LINK 1).
-    const link1Fail = loads
-      .filter((r) => r.has_driver && !r.has_bill && !LINK1_PENDING_REAL_MILEAGE_SOURCE.has(r.load_number))
-      .map((r) => r.load_number);
-    const link1PendingPresent = loads
-      .filter((r) => r.has_driver && !r.has_bill && LINK1_PENDING_REAL_MILEAGE_SOURCE.has(r.load_number))
-      .map((r) => r.load_number);
+    const link1Fail = loads.filter((r) => link1Verdict(r) === "fail").map((r) => r.load_number);
+    const link1PendingPresent = loads.filter((r) => link1Verdict(r) === "pending").map((r) => r.load_number);
+    const salariedWeek = loads.filter((r) => link1Verdict(r) === "salaried").map((r) => r.load_number);
     const driverlessDelivered = loads
       .filter((r) => !r.has_driver && DELIVERED_STATUSES.includes(r.status))
       .map((r) => r.load_number);
@@ -206,6 +229,9 @@ async function live() {
     }
     if (awaitingTripType.length > 0) {
       console.log(`${LABEL}: REPORT — ${awaitingTripType.length} driver-having load(s) sit in the pre-settlement review queue with NO trip type (owner sets NB/TR/SB/LOCAL in Edit Load; the linker then runs): ${awaitingTripType.join(", ")}`);
+    }
+    if (salariedWeek.length > 0) {
+      console.log(`${LABEL}: REPORT — ${salariedWeek.length} load(s) of a salaried week: no per-load driver bill by owner ruling (Lead 443.33/443.36/443.45); each carries the 0-rate "Salaried" override and its settlement billed the salary on the A/P chain (driver_settlement_gl_bills.pay_basis='salaried'): ${salariedWeek.join(", ")}`);
     }
     if (link1PendingPresent.length > 0) {
       console.log(`${LABEL}: REPORT — ${link1PendingPresent.length} load(s) pending a real mileage source before a driver bill can mint (never fabricated, owner-locked P1 rule): ${link1PendingPresent.join(", ")}`);
@@ -260,6 +286,16 @@ if (process.argv.includes("--selftest")) {
   assert.equal(expenseNumberMismatch(null, "13565-3"), true, "an expense_number with no load_number to derive from cannot pass");
   assert.equal(expenseNumberMismatch("VOID-13515-44eae7f5", "13515-25"), false, "a voided load's renumber keeps its expenses matched to the original");
   assert.equal(expenseNumberMismatch("VOID-13515-44eae7f5", "13516-1"), true, "a voided load still refuses an expense from another load");
+  const row = (o) => ({ load_number: "1", has_driver: true, has_bill: false, salaried_reason: false, salaried_billed: false, ...o });
+  assert.equal(link1Verdict(row({ has_bill: true })), "ok", "a load with its driver bill passes");
+  assert.equal(link1Verdict(row({ has_driver: false })), "ok", "a driverless load is not a LINK 1 case");
+  assert.equal(link1Verdict(row({ salaried_reason: true, salaried_billed: true })), "salaried", "a recorded salaried week whose salary was billed passes");
+  assert.equal(link1Verdict(row({ salaried_reason: true, salaried_billed: false })), "fail", "a salaried override whose settlement never billed the salary fails");
+  assert.equal(link1Verdict(row({ salaried_reason: false, salaried_billed: true })), "fail", "a per-mile load on a salaried settlement without its own bill fails");
+  assert.equal(link1Verdict(row({})), "fail", "a per-mile load without a driver bill fails");
+  assert.equal(link1Verdict(row({ load_number: "X" }), new Set(["X"])), "pending", "a named pending-mileage load is reported, not passed silently");
+  assert.ok(/driver_pay_rate_per_mile = 0/.test(SALARIED_LOAD_SQL) && /salaried\|local driver/.test(SALARIED_LOAD_SQL), "the salaried test is the engine's own predicate (0 rate + Salaried reason)");
+  assert.ok(/pay_basis = 'salaried'/.test(SALARIED_BILLED_SQL) && /voided_at IS NULL/.test(SALARIED_BILLED_SQL) && /superseded_at IS NULL/.test(SALARIED_BILLED_SQL), "the salary must be billed on a live, non-superseded A/P-chain row");
   console.log(`${LABEL} --selftest PASS`);
   process.exit(0);
 }
