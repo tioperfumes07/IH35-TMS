@@ -11,7 +11,7 @@
  * Nothing is written. Each finding names its load / line so the operator fixes the file once.
  */
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
-import { providerTransactionId } from "../fuel/fuel-provider-reference.js";
+import { findLiveFuelByProviderTransactionId, fuelPurchaseAlreadyRecordedMessage, providerTransactionId } from "../fuel/fuel-provider-reference.js";
 import { findCreatorCustomer } from "./settlement-creator-seed-loads.js";
 import { creatorLineLoadNumber } from "./settlement-creator-line-load.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
@@ -108,13 +108,17 @@ export async function creatorPreflightRefusals(client: Q, draft: SettlementCreat
         if (!r.rows.length) out.push(`${label}: Relay transaction ${f.relay_transaction_id} is not in this company's Relay fills.`);
       }
     } else if (vid && providerTransactionId(f.invoice)) {
-      const d = await client.query<{ load_number: string | null }>(
-        `SELECT l.load_number FROM fuel.fuel_transactions ft LEFT JOIN mdata.loads l ON l.id = ft.load_id AND l.operating_company_id = ft.operating_company_id
-          WHERE ft.operating_company_id = $1::uuid AND ft.vendor_id = $2::uuid AND btrim(ft.transaction_reference) = $3
-            AND ft.fuel_type = $4 AND ft.voided_at IS NULL LIMIT 1`,
-        [co, vid, providerTransactionId(f.invoice), f.fuel_type ?? "diesel"],
-      );
-      if (d.rows.length && !draft.edit_void_repost) out.push(`${label}: already recorded on load ${d.rows[0].load_number ?? "?"} — a cross-load duplicate is entered as <ticket>-<load>.`);
+      // 443.110 G12 — the SAME lookup and the SAME message as the post's refusal (refuseDuplicateProviderTransaction): the
+      // base invoice is one purchase (a reference carrying a load suffix is that same invoice), shown with its existing load.
+      const existing = await findLiveFuelByProviderTransactionId(client as never, {
+        operatingCompanyId: co,
+        vendorId: vid,
+        reference: f.invoice,
+        fuelType: f.fuel_type ?? "diesel",
+      });
+      if (existing && !draft.edit_void_repost) {
+        out.push(`${label}: ${fuelPurchaseAlreadyRecordedMessage(providerTransactionId(f.invoice)!, existing.id, existing.load_number)}`);
+      }
     }
   }
   for (const e of draft.expenses ?? []) {
