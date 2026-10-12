@@ -1229,6 +1229,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       const hasExpenseAccount = await columnExists(client, "accounting", "expense_lines", "expense_account_uuid");
       const hasAmountCents = await columnExists(client, "accounting", "expense_lines", "amount_cents");
       const hasItemId = await columnExists(client, "accounting", "expense_lines", "item_id");
+      const hasOverrideReason = await columnExists(client, "accounting", "expense_lines", "item_account_override_reason");
       const hasQuantity = await columnExists(client, "accounting", "expense_lines", "quantity");
       const hasRateCents = await columnExists(client, "accounting", "expense_lines", "rate_cents");
       const hasUnitOfMeasure = await columnExists(client, "accounting", "expense_lines", "unit_of_measure");
@@ -1323,6 +1324,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             ${hasRateCents ? "el.rate_cents::text" : "NULL::text"} AS rate_cents,
             ${hasUnitOfMeasure ? "el.unit_of_measure" : "NULL::text"} AS unit_of_measure,
             ${hasItemId ? "item.item_name" : "NULL::text"} AS item_name,
+            -- 443.67 G3 — why this line's account differs from its item's default (null when it does not).
+            ${hasOverrideReason ? "el.item_account_override_reason" : "NULL::text"} AS item_account_override_reason,
             ${hasExpenseAccount ? "el.expense_account_uuid::text" : "NULL::text"} AS expense_account_uuid,
             acct.account_number                          AS expense_account_number,
             acct.account_name                            AS expense_account_name

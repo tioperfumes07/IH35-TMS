@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { lineCategorizationRefusal } from "./line-categorization.js";
 import { AGING_BUCKET_IDS, agingWindowFromBucket } from "./aging/buckets.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -148,6 +149,8 @@ const createBillLineSchema = z.object({
   // GO-18 — mirrors expenses' identical field; the DB trigger (accounting.enforce_load_fk_invariant)
   // enforces >=20 chars when this line's category requires a load and none was given.
   load_exemption_reason: z.string().trim().min(20).max(2000).optional().nullable(),
+  // 443.67 G3 — who / why this line's account differs from its item's default; the DB trigger enforces >= 10 chars.
+  item_account_override_reason: z.string().trim().min(10).max(2000).optional().nullable(),
   // Round 92/94 item lines remainder (migration 202614271200) — catalogs.items FK + qty x rate =
   // amount. bills.service.ts enforces all-four-or-none and the qty*rate=amount identity.
   item_id: z.string().uuid().optional().nullable(),
@@ -626,6 +629,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
             categoryCode: line.category_code,
             loadId: line.load_id,
             loadExemptionReason: line.load_exemption_reason,
+            itemAccountOverrideReason: line.item_account_override_reason,
             itemId: line.item_id,
             quantity: line.quantity,
             rateCents: line.rate_cents,
@@ -657,6 +661,9 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       ) {
         return reply.code(400).send({ error: message });
       }
+      // 443.67 G3 — the line-categorization refusal names the field the operator fills.
+      const categorization = lineCategorizationRefusal(error);
+      if (categorization) return reply.code(422).send(categorization);
       // LV-AP-DUP — a duplicate vendor invoice is a CONFLICT the operator can resolve, not a server
       // fault. 409 carries the colliding bill id so the UI can link straight to it, and names the
       // field that overrides it -- a warning the caller cannot act on is just a failure.

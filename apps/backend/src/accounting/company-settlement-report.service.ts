@@ -606,7 +606,8 @@ export async function buildCompanySettlementReport(
           OR e.preceding_load_id = ANY($5::uuid[])
           OR e.following_load_id = ANY($5::uuid[])
         )
-      ORDER BY e.started_at NULLS LAST
+      -- same-start events list in the catalogs' own display order (category, then fault party)
+      ORDER BY e.started_at NULLS LAST, cat.display_order NULLS LAST, fp.display_order NULLS LAST
     `,
     [
       input.operatingCompanyId,
