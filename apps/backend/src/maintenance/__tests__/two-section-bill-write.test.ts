@@ -53,6 +53,9 @@ function makeClient() {
             part_uuid: "part-1",
             labor_rate_uuid: null,
             part_location_codes: null,
+            // the line names its catalog item; the bill line takes that item's account (no description guess)
+            item_id: "item-1",
+            item_account_id: "acct-item-1",
           },
         ],
       };
@@ -87,8 +90,11 @@ describe("autoCreateBillFromWO — bill_lines write (Phase 1.5 bill-branch regre
     // Bill branch writes the dollar `amount` column and NOT the Phase-1.5 cents column.
     expect(billLineInsert!.sql).toMatch(/\bamount\b/);
     expect(billLineInsert!.sql).not.toMatch(/amount_cents/);
-    // Bill-specific account-resolution columns preserved.
+    // Bill-specific account-resolution columns preserved — and the account is the line ITEM's account.
     expect(billLineInsert!.sql).toMatch(/account_id/);
+    expect(billLineInsert!.params).toContain("acct-item-1");
+    expect(billLineInsert!.params).toContain("item-1");
+    expect(mockResolve).not.toHaveBeenCalled();
     // The dollar amount value (asNumber(amount) = 50) is bound, not a cents value.
     expect(billLineInsert!.params).toContain(50);
 

@@ -288,6 +288,8 @@ export async function createWorkOrderFromRoadServiceTicket(
       quantity: 1,
       amount: totalAmount,
       expense_category_uuid: item.category_id,
+      // the ticket's item (AJK-07) — the WO->bill copy takes its account
+      item_id: item.item_id,
     },
   ];
 

@@ -8219,6 +8219,7 @@
       "created_at",
       "description",
       "expense_category_uuid",
+      "item_id",
       "labor_rate_uuid",
       "line_type",
       "parent_line_uuid",
