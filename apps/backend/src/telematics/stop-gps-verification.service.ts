@@ -79,8 +79,11 @@ export function zipFacilityConfirmed(documentFacility: string | null | undefined
   if (sameFacilityName(documentFacility, found, places)) return true;
   const placeWords = new Set(places.flatMap((p) => String(p ?? "").toLowerCase().split(/[^a-z0-9]+/)).filter(Boolean));
   const acr = String(documentFacility ?? "").split(/[^A-Za-z0-9]+/).filter((w) => w.length === 3 && w === w.toUpperCase() && /[A-Z]/.test(w) && !placeWords.has(w.toLowerCase()));
-  const f = new Set(String(found ?? "").toUpperCase().split(/[^A-Z0-9]+/));
-  return acr.some((w) => f.has(w));
+  const words = String(found ?? "").toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean);
+  const f = new Set(words);
+  // ... or the acronym is the initials of three consecutive words (GFS = Gordon Food Service).
+  const initials = new Set(words.slice(0, -2).map((w, i) => w[0]! + words[i + 1]![0]! + words[i + 2]![0]!));
+  return acr.some((w) => f.has(w) || initials.has(w));
 }
 export function metersBetween(aLat: number, aLng: number, bLat: number, bLng: number): number {
   const r = Math.PI / 180;
