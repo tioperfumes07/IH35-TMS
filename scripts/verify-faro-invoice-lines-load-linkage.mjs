@@ -28,6 +28,26 @@ export const REQUIRES_LIVE_DB =
   "live-data money guard; fails closed via requireLiveDbOrExit with no DATABASE_URL (ROUND 29.9-B) and runs in money-pr-local-gate.mjs only when its own domain paths change or a live DB is present (Lead ruling R56-B, 2026-09-22)";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
+/** The verdict over the measured rows (pure — --selftest plants into it). */
+export function faroLinkageVerdict(total, nullLoadRows) {
+  if (total === 0) return { kind: "empty" };
+  if (nullLoadRows.length > 0) return { kind: "fail", rows: nullLoadRows };
+  return { kind: "pass" };
+}
+
+if (process.argv.includes("--selftest")) {
+  const row = { invoice_number: "039", customer_name: "Big G", gross_amount_cents: 350000 };
+  const cases = [
+    ["34 live rows, all linked -> PASS", faroLinkageVerdict(34, []).kind === "pass"],
+    ["a live row with no load_id -> FAIL", faroLinkageVerdict(34, [row]).kind === "fail"],
+    ["0 live rows -> the instrument-problem branch (never a pass)", faroLinkageVerdict(0, []).kind === "empty"],
+  ];
+  const bad = cases.filter(([, ok]) => !ok).length;
+  for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
+  console.log(bad ? `${LABEL} --selftest FAIL (${cases.length - bad}/${cases.length} caught)` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 async function live() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
@@ -48,13 +68,14 @@ async function live() {
       [USMCA_COMPANY_ID]
     );
     const total = Number(totalRes.rows[0].n);
-    if (total === 0) {
+    const verdict = faroLinkageVerdict(total, res.rows);
+    if (verdict.kind === "empty") {
       exitIfEmptyByPurge(LABEL, "factor.faro_invoice_lines (USMCA, live)");
       console.error(`${LABEL}: LIVE FAIL — 0 live USMCA factor.faro_invoice_lines rows found; completeness discriminator says this is an instrument problem, not a real zero — re-run before trusting this`);
       process.exit(1);
     }
 
-    if (res.rows.length > 0) {
+    if (verdict.kind === "fail") {
       console.error(`${LABEL}: LIVE FAIL — ${res.rows.length} of ${total} live USMCA faro_invoice_lines row(s) have no load_id:`);
       for (const r of res.rows) {
         console.error(`  ✗ invoice_number=${r.invoice_number} customer=${r.customer_name} gross=$${(Number(r.gross_amount_cents) / 100).toFixed(2)}`);

@@ -100,5 +100,23 @@ assert.throws(() => verifySharedConsumer(cashFlow.replaceAll('BILL_HAS_ACTIVE_SE
 assert.throws(() => verifyColumns(page.replace('key: "settlement_number"', 'key: "settlement_display_id"')));
 assert.throws(() => verifyColumns(page.replace('id={b.settlement_id}', 'id={b.settled_in_settlement_id}')));
 
+if (process.argv.includes('--selftest')) {
+  const LABEL = 'verify-bills-settlement-column-linkage';
+  const throws = (fn) => { try { fn(); return false; } catch { return true; } };
+  const cases = [
+    ['the shipped register / shared module / consumers / column pass', !throws(() => { verifyRegister(route, shared); verifyColumns(page); verifySharedConsumer(driverBillsList, ['RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL']); verifySharedConsumer(cashFlow, ['BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL']); })],
+    ...mutations.map((token) => [`shared module without "${token}" is caught`, throws(() => verifySharedModule(shared.replaceAll(token, 'REMOVED')))]),
+    ['register not executing the proven SQL is caught', throws(() => verifyRegister(route.replace('DRIVER_BILL_REGISTER_SQL,', 'REMOVED'), shared))],
+    ['register with a private copy (no shared import) is caught', throws(() => verifyRegister(route.replaceAll('RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL', 'REMOVED'), shared))],
+    ['driver-bills-list without the shared predicate is caught', throws(() => verifySharedConsumer(driverBillsList.replaceAll('RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL', 'REMOVED'), ['RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL']))],
+    ['cash-flow without the shared EXISTS is caught', throws(() => verifySharedConsumer(cashFlow.replaceAll('BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL', 'REMOVED'), ['BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL']))],
+    ['a column keyed off the retired display id is caught', throws(() => verifyColumns(page.replace('key: "settlement_number"', 'key: "settlement_display_id"')))],
+    ['a link to the empty settled stamp is caught', throws(() => verifyColumns(page.replace('id={b.settlement_id}', 'id={b.settled_in_settlement_id}')))],
+  ];
+  const bad = cases.filter(([, ok]) => !ok).length;
+  for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
+  console.log(bad ? `${LABEL} --selftest FAIL (${cases.length - bad}/${cases.length} caught)` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
 if (process.argv.includes('--sql')) console.log(sql);
 else console.log('verify-bills-settlement-column-linkage PASS — actual route, scoped active lines, unique identity, stable bill rows, canonical column/link, ALL THREE call sites (register, driver-bills-list, cash-flow) share the one exported predicate; 12 mutations caught');

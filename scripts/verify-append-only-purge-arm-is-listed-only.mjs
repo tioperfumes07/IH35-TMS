@@ -56,6 +56,19 @@ const snapPlants = [
 ];
 for (const [n, src] of snapPlants) if (snapshotProblems(src).length === 0) missed.push(n);
 if (problems(pma.replace("r.table_name = 'maintenance.pm_alerts' AND r.row_pk = (to_jsonb(OLD) ->> 'id')", "true")).length === 0) missed.push("pm_alerts arm without the listed-row check");
+if (process.argv.includes("--selftest")) {
+  const pmaPlant = pma.replace("r.table_name = 'maintenance.pm_alerts' AND r.row_pk = (to_jsonb(OLD) ->> 'id')", "true");
+  const cases = [
+    ["the shipped migrations pass every rule", own.length === 0],
+    ...plants.map(([n, s]) => [`plant '${n}' is caught`, problems(s).length > 0]),
+    ...snapPlants.map(([n, s]) => [`plant '${n}' is caught`, snapshotProblems(s).length > 0]),
+    ["plant 'pm_alerts arm without the listed-row check' is caught", problems(pmaPlant).length > 0],
+  ];
+  const bad = cases.filter(([, ok]) => !ok).length;
+  for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
+  console.log(bad ? `${LABEL} --selftest FAIL (${cases.length - bad}/${cases.length} caught)` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
 if (own.length || missed.length) {
   console.error(`${LABEL}: FAIL — ${[...own, ...missed.map((n) => `plant '${n}' not caught`)].join("; ")}`);
   process.exit(1);
