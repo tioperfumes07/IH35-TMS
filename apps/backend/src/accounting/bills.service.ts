@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { agingWindowPredicate } from "./aging/buckets.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
+import { assertLineAccountMatchesItem } from "./line-categorization.js";
 import { resolveBillDisplayId } from "./display-id.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import type pg from "pg";
@@ -54,6 +55,8 @@ export type CreateBillLineInput = {
    * (accounting.enforce_load_fk_invariant, now covers bill_lines too).
    */
   loadExemptionReason?: string | null;
+  /** 443.67 G3 — who / why this line's account differs from its item's default (>= 10 chars; line-categorization.ts). */
+  itemAccountOverrideReason?: string | null;
   /**
    * Round 92/94 (item lines remainder) — catalogs.items FK + qty x rate = amount, migration
    * 202614271200 (accounting.bill_lines.item_id/quantity/rate_cents/unit_of_measure). The
@@ -3039,6 +3042,15 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         if (!cls.rows[0]) throw new Error("bill_line_class_not_in_company");
       }
 
+      // 443.67 G3 — an enforcing company's line posts to its item's default account, or says why it does not.
+      await assertLineAccountMatchesItem(client, {
+        operatingCompanyId: input.operatingCompanyId,
+        side: "expense",
+        itemId,
+        accountId,
+        overrideReason: line.itemAccountOverrideReason,
+      });
+
       await client.query(
         `
           INSERT INTO accounting.bill_lines (
@@ -3064,13 +3076,14 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
             equipment_id,
             lease_contract_id,
             lease_asset_line_id,
-            operating_company_id
+            operating_company_id,
+            item_account_override_reason
           )
           VALUES (
             $1::uuid, $2, $3, $4, $5,
             $6::uuid, $7::uuid, $8, $9, $10::uuid, $11::uuid, $12, $13,
             $14::uuid, $15, $16, $17,
-            $18::uuid, $19::uuid, $20::uuid, $21::uuid, $22::uuid, $23::uuid
+            $18::uuid, $19::uuid, $20::uuid, $21::uuid, $22::uuid, $23::uuid, $24
           )
         `,
         [
@@ -3108,6 +3121,7 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
           line.leaseContractId ?? null,
           line.leaseAssetLineId ?? null,
           input.operatingCompanyId,
+          line.itemAccountOverrideReason?.trim() || null,
         ]
       );
     }

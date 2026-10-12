@@ -9,6 +9,7 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { ExpenseCategoryMapResolutionError, resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import { invoiceLineTotalCents } from "./invoice-line-total.js";
+import { assertLineAccountMatchesItem, lineCategorizationRefusal } from "./line-categorization.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -35,6 +36,8 @@ const createLineBodySchema = z.object({
    */
   item_id: z.string().uuid().optional(),
   display_order: z.coerce.number().int().min(0).optional(),
+  /** 443.67 G3 — who / why this line's account differs from its item's default income account (>= 10 chars). */
+  item_account_override_reason: z.string().trim().min(10).max(2000).optional().nullable(),
 });
 
 async function assertExplicitIncomeAccount(
@@ -72,6 +75,7 @@ const patchLineBodySchema = z
     /** ACCT-F329 — nullable so an operator can CLEAR a wrongly-linked item, not only set one. */
     item_id: z.string().uuid().nullable().optional(),
     display_order: z.coerce.number().int().min(0).optional(),
+    item_account_override_reason: z.string().trim().min(10).max(2000).nullable().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
 
@@ -123,6 +127,13 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
           revenueCode = revenueResolution.revenue_code;
           accountId = revenueResolution.account_id;
         }
+        await assertLineAccountMatchesItem(client, {
+          operatingCompanyId: query.data.operating_company_id,
+          side: "income",
+          itemId: body.data.item_id,
+          accountId,
+          overrideReason: body.data.item_account_override_reason,
+        });
         const rowRes = await client.query(
           `
             INSERT INTO accounting.invoice_lines (
@@ -139,9 +150,10 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
               qbo_class_snapshot,
               qbo_item_id,
               item_id,
+              item_account_override_reason,
               display_order
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$15,
               COALESCE($14, (
                 SELECT COALESCE(MAX(display_order), -1) + 1
                 FROM accounting.invoice_lines
@@ -165,6 +177,7 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
             body.data.qbo_item_id ?? null,
             body.data.item_id ?? null,
             body.data.display_order ?? null,
+            body.data.item_account_override_reason?.trim() || null,
           ]
         );
         const line = rowRes.rows[0] ?? null;
@@ -197,6 +210,8 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
       if (error instanceof ExpenseCategoryMapResolutionError) {
         return reply.code(409).send({ error: "invoice_line_revenue_account_mapping_missing" });
       }
+      const categorization = lineCategorizationRefusal(error);
+      if (categorization) return reply.code(422).send(categorization);
       if ((error as { code?: string }).code === "invoice_line_income_account_invalid") {
         return reply.code(422).send({ error: "invoice_line_income_account_invalid" });
       }
@@ -257,6 +272,7 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
       // is the same dead end in slower motion.
       if ("item_id" in body.data) add("item_id", body.data.item_id ?? null);
       if ("display_order" in body.data) add("display_order", body.data.display_order);
+      if ("item_account_override_reason" in body.data) add("item_account_override_reason", body.data.item_account_override_reason?.trim() || null);
       add("line_total_cents", nextLineTotal);
 
         const resolvedLineType = body.data.line_type ?? String(oldRow.line_type ?? "");
@@ -265,6 +281,16 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
         });
         add("revenue_code", revenueResolution.revenue_code);
         add("account_id", revenueResolution.account_id);
+        await assertLineAccountMatchesItem(client, {
+          operatingCompanyId: query.data.operating_company_id,
+          side: "income",
+          itemId: "item_id" in body.data ? body.data.item_id : (oldRow.item_id as string | null),
+          accountId: revenueResolution.account_id,
+          overrideReason:
+            "item_account_override_reason" in body.data
+              ? body.data.item_account_override_reason
+              : (oldRow.item_account_override_reason as string | null),
+        });
         // Keep WHERE identifiers last. Pushing them before the derived revenue fields left two
         // unused, untyped parameters in the query and production PostgreSQL rejected PATCH with 42P18.
         values.push(params.data.lineId);
@@ -312,6 +338,8 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
       if (error instanceof ExpenseCategoryMapResolutionError) {
         return reply.code(409).send({ error: "invoice_line_revenue_account_mapping_missing" });
       }
+      const categorization = lineCategorizationRefusal(error);
+      if (categorization) return reply.code(422).send(categorization);
       throw error;
     }
     }

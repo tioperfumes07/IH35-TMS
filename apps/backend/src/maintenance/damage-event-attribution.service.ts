@@ -102,7 +102,9 @@ export async function computeDamageEventAttribution(
       "te.operating_company_id = $1::uuid"
     ),
     eventSelect(
-      "'safety_accident'", "acc.id", "acc.unit_id", "acc.event_datetime", "NULL::text", "NULL::text",
+      // detail = who the other party was (safety.accidents.other_party_info) — the attribution reviewer needs it to
+      // tell a driver-caused accident from a third-party one; blank text reads as no detail.
+      "'safety_accident'", "acc.id", "acc.unit_id", "acc.event_datetime", "NULL::text", "NULLIF(btrim(acc.other_party_info), '')",
       "safety.accidents acc",
       "acc.operating_company_id = $1::uuid AND acc.voided_at IS NULL"
     ),
