@@ -93,11 +93,11 @@ async function measure(url) {
          FROM mdata.load_stops s JOIN mdata.loads l ON l.id = s.load_id
         WHERE l.operating_company_id = $1::uuid AND s.updated_at >= $2::timestamptz AND s.soft_deleted_at IS NULL
           AND lower(coalesce(s.geocode_precision,'')) = 'rooftop'
-          AND coalesce(s.address_line1,'') !~ '^\\s*[0-9]+[A-Za-z]?\\s+\\S'`, [USMCA, CUTOFF])).rows;
+          AND coalesce(s.address_line1,'') !~* '^\\s*([0-9]+[A-Za-z]?|one|two|three|four|five|six|seven|eight|nine|ten)\\s+\\S'`, [USMCA, CUTOFF])).rows;
     const autoZipFences = (await client.query(
       `SELECT id::text, label FROM geo.geofences
         WHERE operating_company_id = $1::uuid AND is_active AND source = 'auto_dispatch' AND location_kind = 'customer_site'
-          AND created_at >= $2::timestamptz AND coalesce(label,'') !~ '^\\s*[0-9]+[A-Za-z]?\\s+\\S'`, [USMCA, AUTO_FENCE_CUTOFF])).rows;
+          AND created_at >= $2::timestamptz AND coalesce(label,'') !~* '^\\s*([0-9]+[A-Za-z]?|one|two|three|four|five|six|seven|eight|nine|ten)\\s+\\S'`, [USMCA, AUTO_FENCE_CUTOFF])).rows;
     const zipCenterFences = (await client.query(
       `SELECT g.id::text, g.label FROM geo.geofences g
          LEFT JOIN mdata.locations lo ON lo.id = g.location_ref_id
