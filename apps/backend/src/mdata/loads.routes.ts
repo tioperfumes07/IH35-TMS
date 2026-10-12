@@ -15,6 +15,7 @@ import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
 import { canonicalDispatchWorkStatusClause } from "../dispatch/canonical-active-load-set.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
 import { writeLoadCancellationRecord } from "../dispatch/cancellation.service.js";
 import {
@@ -468,6 +469,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     await assertCompanyMembership(authUser.uuid, b.operating_company_id);
 
     const created = await withCurrentUser(authUser.uuid, async (client) => {
+      // LEAD 443.91 #3: the company catalogs (load trailer equipment, flag colors) are company-GUC scoped; without the
+      // scope set here every create refused load_trailer_equipment_catalog_missing (500). Same call bookLoadOnClient makes.
+      await setScopedCompanyContext(client, authUser.uuid, b.operating_company_id);
       const customerRes = await client.query<{ id: string }>(
         `
           SELECT id
