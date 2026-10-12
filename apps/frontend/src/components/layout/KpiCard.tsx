@@ -89,7 +89,7 @@ export function KpiCard({ label, number, accent, to, onClick, disabled, disabled
         type="button"
         onClick={onClick}
         aria-label={`${label} — view details`}
-        className="block h-full w-full min-w-0 rounded-sm text-left transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-[#6B7280]"
+        className="inline-block shrink-0 rounded-sm text-left transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-[#6B7280]"
       >
         {card}
       </button>
