@@ -21,6 +21,7 @@ import {
 } from "./miles-recommendations.service.js";
 import { decidePrintedTrailers } from "../printed-trailer-decision.service.js";
 import { matchLoadTrailersByGps } from "../load-trailer-gps-match.service.js";
+import { stampLoadTrailersFromExpenses } from "../load-trailer-expense-document.service.js";
 import { stampDriverBillTrailersFromLoads } from "../../accounting/bill-trailer-stamp.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { SamsaraClient } from "../../integrations/samsara/samsara-client.js";
@@ -210,6 +211,35 @@ export async function registerMilesRecommendationsRoutes(app: FastifyInstance) {
     });
     if (out.status === 404) return reply.code(404).send({ error: "company_not_found" });
     if (out.status === 403) return reply.code(403).send({ error: "owner_only", message: "Only the Owner can record trailers from GPS." });
+    return out.body;
+  });
+
+  // LEAD 443.109 — the load's own expense documents name its trailer: record it as the LOAD trailer (assignment row),
+  // then stamp driver bills. Owner only; dry run by default; metadata only.
+  app.post("/api/v1/dispatch/loads/trailers-from-expenses", { config: { rateLimit: { max: 6, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return reply;
+    const u = req.user as { uuid: string; role: string };
+    const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    const b = z.object({ dry_run: z.boolean().default(true), load_ids: z.array(z.string().uuid()).max(500).optional() }).safeParse(req.body ?? {});
+    if (!q.success || !b.success) return reply.code(400).send({ error: "invalid_request" });
+    const out = await withCurrentUser(u.uuid, async (client) => {
+      const companyId = await scope(client, u.uuid, q.data.operating_company_id);
+      if (!companyId) return { status: 404 as const };
+      if (u.role !== "Owner") {
+        await appendCrudAudit(client as never, u.uuid, "load.trailer_from_expense_document_refused_non_owner",
+          { resource_type: "mdata.loads", operating_company_id: companyId, role: u.role ?? null }, "warning", "LEAD-443.109-OWNER-ONLY");
+        return { status: 403 as const };
+      }
+      const loads = await stampLoadTrailersFromExpenses(client as never, {
+        operatingCompanyId: companyId, actorUserId: u.uuid, dryRun: b.data.dry_run, loadIds: b.data.load_ids,
+      });
+      const bills = await stampDriverBillTrailersFromLoads(client as never, {
+        operatingCompanyId: companyId, actorUserId: u.uuid, actorRole: "Owner", dryRun: b.data.dry_run,
+      });
+      return { status: 200 as const, body: { ...loads, driver_bill_stamp: { dry_run: b.data.dry_run, bills_changed: bills.bills_changed, header_stamps: bills.header_stamps, line_stamps: bills.line_stamps, no_trailer_bills: bills.no_trailer_bills, refused_bills: bills.refused_bills } } };
+    });
+    if (out.status === 404) return reply.code(404).send({ error: "company_not_found" });
+    if (out.status === 403) return reply.code(403).send({ error: "owner_only", message: "Only the Owner can record trailers from expense documents." });
     return out.body;
   });
 
