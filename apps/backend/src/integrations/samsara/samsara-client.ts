@@ -18,6 +18,7 @@ export type SamsaraConfig = {
 export type SamsaraDriver = { id: string; raw: Record<string, unknown> };
 export type SamsaraVehicle = { id: string; raw: Record<string, unknown> };
 export type SamsaraTrailer = { id: string; raw: Record<string, unknown> };
+export type TrailerGpsFix = { t: number; lat: number; lng: number };
 export type SamsaraAddress = { id: string; raw: Record<string, unknown> };
 export type SamsaraRouteStopInput = {
   externalIds: Ih35SamsaraExternalIds;
@@ -537,7 +538,7 @@ async function fetchSamsaraStatsPage(
 
 async function fetchSamsaraPage(
   token: string,
-  endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/fleet/trailers" | "/addresses" | "/fleet/safety-events",
+  endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/fleet/trailers" | "/fleet/trailers/stats/history" | "/addresses" | "/fleet/safety-events",
   after: string | null,
   extraParams?: Record<string, string>
 ): Promise<{
@@ -1256,6 +1257,45 @@ export class SamsaraClient {
     } catch {
       return [];
     }
+    return out;
+  }
+
+  /**
+   * LEAD 443.107 item 2 — trailer GPS history (GET /fleet/trailers/stats/history?types=gps) for the given Samsara trailer
+   * ids over [startTime, endTime] (RFC 3339). Returns trailer id -> time-ordered fixes. Unlike listTrailers this THROWS on
+   * an API failure: the GPS trailer match must report "Samsara unavailable", never read a failure as "no trailer GPS".
+   */
+  async trailerGpsHistory(trailerIds: string[], startTime: string, endTime: string): Promise<Map<string, TrailerGpsFix[]>> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_not_configured", null, null, false);
+    const out = new Map<string, TrailerGpsFix[]>();
+    for (let i = 0; i < trailerIds.length; i += 50) {
+      const ids = trailerIds.slice(i, i + 50);
+      let after: string | null = null;
+      for (let page = 0; page < 100; page += 1) {
+        const { data, hasNextPage, cursor } = await fetchSamsaraPage(token, "/fleet/trailers/stats/history", after, {
+          types: "gps",
+          startTime,
+          endTime,
+          trailerIds: ids.join(","),
+        });
+        for (const row of data) {
+          const id = typeof row.id === "string" ? row.id.trim() : row.id != null ? String(row.id) : "";
+          if (!id) continue;
+          const fixes = out.get(id) ?? [];
+          for (const g of Array.isArray(row.gps) ? (row.gps as Record<string, unknown>[]) : []) {
+            const t = Date.parse(String(g.time ?? ""));
+            const lat = Number(g.latitude ?? (g.location as Record<string, unknown> | undefined)?.latitude);
+            const lng = Number(g.longitude ?? (g.location as Record<string, unknown> | undefined)?.longitude);
+            if (Number.isFinite(t) && Number.isFinite(lat) && Number.isFinite(lng)) fixes.push({ t, lat, lng });
+          }
+          out.set(id, fixes);
+        }
+        if (!hasNextPage || !cursor) break;
+        after = cursor;
+      }
+    }
+    for (const fixes of out.values()) fixes.sort((a, b) => a.t - b.t);
     return out;
   }
 

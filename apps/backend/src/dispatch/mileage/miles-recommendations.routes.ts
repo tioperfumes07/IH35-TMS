@@ -20,6 +20,12 @@ import {
   type DeadheadFillResult,
 } from "./miles-recommendations.service.js";
 import { decidePrintedTrailers } from "../printed-trailer-decision.service.js";
+import { matchLoadTrailersByGps } from "../load-trailer-gps-match.service.js";
+import { stampDriverBillTrailersFromLoads } from "../../accounting/bill-trailer-stamp.service.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
+import { SamsaraClient } from "../../integrations/samsara/samsara-client.js";
+import { resolveSamsaraApiToken } from "../../integrations/samsara/samsara-token.js";
+import { getSamsaraConfigForCompany } from "../../integrations/samsara/samsara.service.js";
 import { canonicalHappenedNotVoidedLoadClause } from "../canonical-active-load-set.js";
 
 const READ_ROLES = new Set(["Owner", "Administrator", "Manager", "Dispatcher", "Accountant", "Safety"]);
@@ -171,6 +177,40 @@ export async function registerMilesRecommendationsRoutes(app: FastifyInstance) {
     });
     if (!out) return reply.code(404).send({ error: "company_not_found" });
     return out;
+  });
+
+  // LEAD 443.107 item 2 (owner: GPS is the source of truth) — each load with no physical trailer gets the fleet trailer
+  // whose Samsara GPS stayed with its truck from pickup to delivery; one clear match -> recorded on the load (assignment
+  // history), its expenses and (through the Owner bill stamp) its driver bills. Metadata only. Owner only; a refusal is
+  // audited. dry_run (default) returns every load's decision + candidate scores and writes nothing.
+  app.post("/api/v1/dispatch/loads/trailers-from-gps", { config: { rateLimit: { max: 6, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return reply;
+    const u = req.user as { uuid: string; role: string };
+    const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    const b = z.object({ dry_run: z.boolean().default(true), load_ids: z.array(z.string().uuid()).max(500).optional() }).safeParse(req.body ?? {});
+    if (!q.success || !b.success) return reply.code(400).send({ error: "invalid_request" });
+    const out = await withCurrentUser(u.uuid, async (client) => {
+      const companyId = await scope(client, u.uuid, q.data.operating_company_id);
+      if (!companyId) return { status: 404 as const };
+      if (u.role !== "Owner") {
+        await appendCrudAudit(client as never, u.uuid, "load.trailer_gps_match_refused_non_owner",
+          { resource_type: "mdata.loads", operating_company_id: companyId, role: u.role ?? null }, "warning", "LEAD-443.107-OWNER-ONLY");
+        return { status: 403 as const };
+      }
+      const cfg = await getSamsaraConfigForCompany(client as never, companyId);
+      const api = new SamsaraClient({ apiToken: resolveSamsaraApiToken(cfg as Record<string, unknown>), samsaraOrgId: cfg?.samsara_org_id ? String(cfg.samsara_org_id) : null });
+      const loads = await matchLoadTrailersByGps(client as never, {
+        operatingCompanyId: companyId, actorUserId: u.uuid, dryRun: b.data.dry_run, loadIds: b.data.load_ids,
+        fetchTrailerGps: (ids, start, end) => api.trailerGpsHistory(ids, start, end),
+      });
+      const bills = b.data.dry_run || loads.stamped_loads === 0
+        ? null
+        : await stampDriverBillTrailersFromLoads(client as never, { operatingCompanyId: companyId, actorUserId: u.uuid, actorRole: "Owner", dryRun: false });
+      return { status: 200 as const, body: { ...loads, driver_bill_stamp: bills && { bills_changed: bills.bills_changed, header_stamps: bills.header_stamps, line_stamps: bills.line_stamps, refused_bills: bills.refused_bills } } };
+    });
+    if (out.status === 404) return reply.code(404).send({ error: "company_not_found" });
+    if (out.status === 403) return reply.code(403).send({ error: "owner_only", message: "Only the Owner can record trailers from GPS." });
+    return out.body;
   });
 
   // RULING 443.90 #4 — every printed trailer number gets a decision (company equipment / Samsara unmapped / customer trailer).
