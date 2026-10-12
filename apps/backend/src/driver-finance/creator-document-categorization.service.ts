@@ -14,11 +14,14 @@
  *   D4  expense status 'draft'          -> 'posted' only where posting_status = 'posted' AND a journal entry exists
  *   D5  expense line driver / unit      <- its header's; header trailer <- the settlement document's trailer number
  *                                          (this company's equipment, exactly one); line trailer <- header
+ *   D6  (443.84 #2) the settlement's load-attributed expense numbered EXP-YYYY-##### -> its load's spine number (load,
+ *       load-1, load-2 ... — generateExpenseNumber, the one load-scoped series). Number only: no amount, account or JE.
  *
  * Fail-closed: an ambiguous or missing match changes nothing on that line and is reported, never guessed. dry_run
  * computes everything inside a savepoint and rolls it back. One audit row per settlement with every count.
  */
 import { resolveCreatorTrailerId } from "./settlement-creator.service.js";
+import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -52,6 +55,8 @@ export type CategorizeCreatorSettlementResult = {
   d5_headers_document_trailer: number;
   trailer_unresolved: string | null;
   reimbursements_unmatched: string[];
+  /** 443.84 #2 — "EXP-2026-00006 -> 13518" for each expense renumbered onto its load's spine. */
+  d6_expenses_renumbered: string[];
 };
 
 export class CreatorCategorizationError extends Error {
@@ -92,7 +97,7 @@ export async function categorizeCreatorSettlement(
     settlement_no: input.settlementNo, settlement_id: sid, dry_run: Boolean(input.dryRun),
     d1_settlement_lines_itemed: 0, d1_bill_lines_itemed: 0, d1_bill_lines_unmatched: [], d3_invoice_lines_itemed: 0,
     d4_expenses_status_posted: 0, d5_lines_driver_unit: 0, d5_headers_trailer: 0, d5_lines_trailer: 0, d5_headers_document_trailer: 0,
-    trailer_unresolved: null, reimbursements_unmatched: [],
+    trailer_unresolved: null, reimbursements_unmatched: [], d6_expenses_renumbered: [],
   };
   await client.query("SAVEPOINT creator_categorize");
   try {
@@ -240,6 +245,23 @@ export async function categorizeCreatorSettlement(
       [co, input.settlementNo]
     );
     out.d5_lines_trailer = dt.rowCount ?? 0;
+
+    // ---- D6: a load-attributed expense carries its load's spine number ---------------------------------------
+    const offSpine = (
+      await client.query<{ id: string; expense_number: string; load_id: string; load_number: string }>(
+        `SELECT e.id::text, e.expense_number, e.load_id::text, l.load_number
+           FROM accounting.expenses e JOIN mdata.loads l ON l.id = e.load_id AND l.operating_company_id = e.operating_company_id
+          WHERE e.operating_company_id = $1::uuid AND e.settlement_no = $2 AND e.voided_at IS NULL
+            AND e.expense_number ~ '^EXP-[0-9]{4}-[0-9]+$' AND l.load_number IS NOT NULL
+          ORDER BY e.created_at, e.id`,
+        [co, input.settlementNo]
+      )
+    ).rows;
+    for (const e of offSpine) {
+      const { number } = await generateExpenseNumber(client as never, e.load_id, co);
+      await client.query(`UPDATE accounting.expenses SET expense_number = $2, updated_at = now() WHERE id = $1::uuid AND expense_number = $3`, [e.id, number, e.expense_number]);
+      out.d6_expenses_renumbered.push(`${e.expense_number} -> ${number}`);
+    }
 
     if (input.dryRun) {
       await client.query("ROLLBACK TO SAVEPOINT creator_categorize");
