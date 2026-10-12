@@ -20,7 +20,8 @@ import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../..");
+// __tests__ → accounting → src → backend → apps → repo root (5 levels)
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../../../");
 const TRAILER_MIGRATION = join(ROOT, "db/migrations/202615891200_driver_bill_trailer_clause.sql");
 
 /** Pre-DEGH-05 body (443.106) — vendor/driver/load/unit only; no trailer. */
