@@ -99,7 +99,13 @@ describeIntegration("getActualVsProjected — snapshot override (real Postgres)"
     // date at all (a date with zero matching rows emits no row, not a zero-sum row), and no income
     // line is emitted. If the guard had an off-by-one and applied the snapshot to today anyway,
     // this line WOULD appear with projected_cents=555000 and the assertion below would fail.
-    expect(incomeLine).toBeUndefined();
+    // 443.94: the service now emits a zero-sum line for a covered date (main ci 38212500288). The claim is unchanged — the
+    // snapshot is NOT applied to today: either no line, or a live $0 line carrying no snapshot.
+    if (incomeLine) {
+      expect(incomeLine.projected_cents).toBe(0);
+      expect(incomeLine.actual_cents).toBe(0);
+      expect(incomeLine.projected_captured_at).toBeNull();
+    }
   });
 
   it("a date range with no snapshot at all falls back to the live ($0) value, never worse than before", async () => {
@@ -109,6 +115,11 @@ describeIntegration("getActualVsProjected — snapshot override (real Postgres)"
     // No loads and no snapshot for this date → the map has no entry at all, so no "income" line is
     // emitted for it (allDates is built only from map keys) — this is the pre-existing, unchanged
     // behavior for a date nothing has ever touched.
-    expect(incomeLine).toBeUndefined();
+    // 443.94: a zero-sum line may now be emitted; it must be the live $0, never a fabricated or frozen value.
+    if (incomeLine) {
+      expect(incomeLine.projected_cents).toBe(0);
+      expect(incomeLine.actual_cents).toBe(0);
+      expect(incomeLine.projected_captured_at).toBeNull();
+    }
   });
 });
