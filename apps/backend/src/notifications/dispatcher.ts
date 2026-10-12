@@ -307,18 +307,19 @@ export async function dispatchNotification(input: DispatchNotificationInput): Pr
         const body = buildSmsBody(input.event_type, payload);
         let smsQueueId: string | null = null;
         // sms.queue / whatsapp.queue (0166_block_h_notification_queues) carry to_number|to_phone, status, error,
-        // attempts, sent_at and NO operating_company_id. The old column names (provider_status, provider_error, ...)
-        // never existed, so every insert failed and rolled back the whole dispatch, email and audit included; both
-        // queues held 0 rows on 2026-10-05. The company stays on the notification audit row.
+        // attempts, sent_at. The old column names (provider_status, provider_error, ...) never existed, so every insert
+        // failed and rolled back the whole dispatch, email and audit included; both queues held 0 rows on 2026-10-05.
+        // 443.91: both queues now carry operating_company_id NOT NULL (entity scope) and sms.queue requires to_phone
+        // (to_number kept, legacy) — every row names its company and its phone.
         const smsQueueEnabled = await regclassExists(client as QueryableClient, "sms.queue");
         if (smsQueueEnabled) {
           const ins = await client.query<{ id: string }>(
             `
-              INSERT INTO sms.queue (to_number, body, status)
-              VALUES ($1, $2, 'queued')
+              INSERT INTO sms.queue (to_phone, to_number, body, status, operating_company_id)
+              VALUES ($1, $1, $2, 'queued', $3::uuid)
               RETURNING id
             `,
-            [smsTo, body]
+            [smsTo, body, operatingCompanyId]
           );
           smsQueueId = String(ins.rows[0]?.id ?? "");
         }
@@ -347,12 +348,12 @@ export async function dispatchNotification(input: DispatchNotificationInput): Pr
           const initialStatus = waVerified ? "queued" : "skipped";
           const ins = await client.query<{ id: string }>(
             `
-              INSERT INTO whatsapp.queue (to_phone, template_name, body, status)
-              VALUES ($1, $2, $3, $4)
+              INSERT INTO whatsapp.queue (to_phone, template_name, body, status, operating_company_id)
+              VALUES ($1, $2, $3, $4, $5::uuid)
               RETURNING id
             `,
             // body is NOT NULL and the table has no variables column: the template variables are the body.
-            [waPlan.to, waPlan.template_name, JSON.stringify(waPlan.variables), initialStatus]
+            [waPlan.to, waPlan.template_name, JSON.stringify(waPlan.variables), initialStatus, operatingCompanyId]
           );
           waQueueId = String(ins.rows[0]?.id ?? "");
         }

@@ -33,6 +33,9 @@ describeIntegration("bookLoadOnClient books inside the CALLER's transaction (ROU
     await db.query("SET ROLE ih35_app");
     await db.query(`SELECT set_config('app.bypass_rls', 'lucia', false)`);
     await db.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [companyId]);
+    // The caller's transaction names its user, as withCurrentUser does: bookLoadOnClient's membership check
+    // (setScopedCompanyContext -> org.user_accessible_company_ids()) reads identity.current_user_id().
+    await db.query(`SELECT set_config('app.current_user_id', $1::text, false)`, [TEST_OWNER_USER_ID]);
     await db.query("BEGIN");
     await prepareCompanyForLoadInserts(db, companyId);
     const suf = randomUUID().slice(0, 8);
@@ -78,6 +81,9 @@ describeIntegration("bookLoadOnClient books inside the CALLER's transaction (ROU
       miles_practical: 950,
       charges: [{ code: "linehaul", amount_cents: 150_000 }],
       customer_po_number: "PO-443-14",
+      // book-load refuses a company's first load without a typed number (first_load_number_required); the
+      // test company may have none yet, so the fixture types one, unique per run.
+      requested_load_number: String(700000 + Math.floor(Math.random() * 200000)),
       trip_type: "NB",
       stops: [
         { stop_type: "pickup", sequence_number: 1, city: "Laredo", state: "TX", scheduled_arrival_at: tomorrow },
@@ -113,7 +119,9 @@ describeIntegration("bookLoadOnClient books inside the CALLER's transaction (ROU
     expect(extras.refMiles).not.toHaveBeenCalled();
     // The extras are wired to afterCommit, and only to it.
     afterCommit();
-    expect(extras.geofences).toHaveBeenCalledTimes(1);
+    // 443.70 S1 (book-load.service.ts queueAfterBookExtras): ONE fence per stop, drawn by geocodeStopsBackfill —
+    // autoCreateGeofencesForLoad is no longer called from booking at all.
+    expect(extras.geofences).not.toHaveBeenCalled();
     expect(extras.geocode).toHaveBeenCalledTimes(1);
     expect(extras.refMiles).toHaveBeenCalledTimes(1);
   });

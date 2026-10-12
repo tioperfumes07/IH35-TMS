@@ -25,7 +25,11 @@ async function seedPrintLaterCheck(): Promise<string> {
   return result.id;
 }
 
-const describeDb = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
+// 443.91 #4: this suite is pinned to REAL USMCA ids (bank account e83028a5…, vendor a94a93d2…) that exist only on a
+// fork of prod (its own header: "rehearsal branch only"). CI's fresh, migrated Postgres has no such rows, so the FK
+// check_stock_settings_bank_account_id_fkey refused its beforeAll on every CI run. It runs where its data exists:
+// IH35_CHECK_REHEARSAL_DB=1 against a prod-fork DATABASE_URL. A self-contained fixture is the follow-up.
+const describeDb = describe.skipIf(process.env.GITHUB_ACTIONS !== "true" || process.env.IH35_CHECK_REHEARSAL_DB !== "1");
 
 describeDb("check-print-batch.service (real Postgres, rehearsal branch only)", () => {
   beforeAll(async () => {
