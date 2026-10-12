@@ -2327,12 +2327,12 @@
       "claimed_by": "cursor",
       "purpose": "ROUND 443.29 Part B: bank_transactions.matched_relay_deposit_id + reconciliation_matches relay_deposit kind; bank-line functions restated (renumbered from 202610101430 — must run after accounting.deposits / 202615441200 loan LOC)"
     },
-  "202615441302": {
-    "claimed_at": "2026-10-11",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 443.29-B: WORM delete-refusal on accounting.related_party_loan_facilities (from 202615441200); lowers worm unprotected 90->89"
-  }
-},
+    "202615441302": {
+      "claimed_at": "2026-10-11",
+      "claimed_by": "cursor",
+      "purpose": "ROUND 443.29-B: WORM delete-refusal on accounting.related_party_loan_facilities (from 202615441200); lowers worm unprotected 90->89"
+    }
+  },
   "202610100200": {
     "desc": "invoices_display_id_check add invoice-dash-load alternative (renumbered from 202610100100 per 443.20 collision repair)",
     "lane": "CC-1",
@@ -2487,5 +2487,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-12",
     "purpose": "443.101 R2: add the missing FKs found by verify-orphan-fk-inventory (users / companies / same-entity JE, account, item, load, fuel, relay, bank-line parents); 0 prod orphans per column"
+  },
+  "202615770700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.105 #2: refuse an accounting.expense_lines row with no load_id AND no load_exemption_reason for companies that enforce line categorization (USMCA); prod has exactly 5 such lines (EXP-2026-00001..00005), stamped by AUTH before the refusal is validated"
   }
 }
