@@ -7869,7 +7869,11 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — governed void (exec
 action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-11-cc2-443-77-void-last-double-cost.mts --apply --auth AUTH-440
 rehearsal: throwaway br-raspy-cell-akj7dzk2 (full path, rolled back; deleted): 3 voided, 65614 cents, TB 0 -> 0
 expires_at: 2026-10-12T23:12:58Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-11T23:16:02Z
+consumed_by: CC-2 (443.77 #3)
+row_counts: 3 receipt lines voided through executeVoidCancel — fuel efb9ccba (voided 23:15:51Z) + b6095998 (23:15:56Z) on 13547, f542a157 (23:16:01Z) on 13535; 65614 cents; TB 0 -> 0
+proof_query: SELECT voided_at FROM fuel.fuel_transactions WHERE left(id::text,8) IN (efb9ccba,b6095998,f542a157) -> 3 voided (read on prod 2026-10-12 04:27Z)
 
 ## AUTH-441
 issued_at: 2026-10-11T23:33:07Z
@@ -7879,7 +7883,10 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the stop GPS verifi
 action: DATABASE_URL=<prod> GOOGLE_PLACES_*=<server key> node --import tsx scripts/ops/2026-10-11-cc2-443-74-stop-gps-verification.mts --apply --auth AUTH-441
 rehearsal: throwaway br-young-mode-akzqje1f (COMMITTED, deleted): 3 moved; re-measure 5 of 6 stops verified on the 3 loads (the 6th listed); found and fixed: the resolver's re-resolve pulled 13530 #1 back by name to the owner's older Samsara address — a gps_dwell_* stop now keeps its own point
 expires_at: 2026-10-12T23:33:07Z
-status: OPEN
+status: CONSUMED
+consumed_by: CC-2 (443.74 / 443.77)
+row_counts: 3 stops moved — 13660 #1, 13530 #1, 13559 #2 (geocode_source gps_dwell_google, audit row keeps the document address); fences read back from Samsara
+proof_query: mdata.load_stops geocode_source LIKE gps_dwell% on prod includes 13660 #1, 13530 #1, 13559 #2 (read 2026-10-12 04:27Z)
 
 ## AUTH-443
 issued_at: 2026-10-12T01:40:52Z
@@ -7889,4 +7896,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — ONE catalog row: th
 action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-84-fuel-card-discount-item.mts --apply --auth AUTH-443
 rehearsal: throwaway br-bitter-mountain-aknqy9f1 (COMMITTED, deleted): item created -> 5000 + category; then acceptExactMultiDocumentMatch(card_discount) on 3 Dreamline receipt groups: fuel cost on the load = what the card charged (75067 -> 70219, 78973 -> 76233, 67733 -> 64113), Dr 2510 / Cr 5000 split per receipt with its load + driver, TB 0; 9 of 12 groups refused by the 8% cap (listed)
 expires_at: 2026-10-13T01:40:52Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-12T02:00:51Z
+consumed_by: CC-2 (443.85)
+row_counts: 1 catalog row — item 5ef541cb "Fuel Card Discount" -> 5000, category of Fuel-Truck Diesel; no money, no posting
+proof_query: catalogs.items id 5ef541cb created_at 2026-10-12T02:00:51Z on prod
