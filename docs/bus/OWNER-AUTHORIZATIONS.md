@@ -7955,3 +7955,13 @@ status: CONSUMED
 consumed_by: CC-2 (443.134 #4)
 row_counts: 4 loads trailer choice recorded (company): 13498 538306, 13520 10222, 13525 10380, 13562 10870 (4 assignment-history rows + 4 audit rows); A/P driver bill stamp: 4 bills, 4 header trailers, 7 line equipment stamps, 0 refused (4 bill.trailer_stamped_from_load audit rows)
 proof_query: USMCA live A/P driver bills (bill_category driver) with trailer_id AND non_owned_trailer_id NULL -> 0 of 146 (read on prod via Neon read-only, bypass, 2026-10-12 ~21:40 UTC)
+
+## AUTH-448
+issued_at: 2026-10-12T22:10:00Z
+issued_by: Lead 443.137 #1 (~/Downloads/10-12-2026-CC2-Next-Lane-1710.md: "GO on the 145 settled driver bills without truck / trailer. The owner never issues 'authorization numbers' (the AUTH-NNN scheme is a seat convention he did not create) — this box is the go."). Recorded by CC-2 only so the runner's verify-owner-authorization gate can trace the GO; the GO is the Lead box, not this number
+owner_quotes: none — the Lead box is the go (443.137)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the SETTLED driver_finance.driver_bills (settled_in_settlement_id set, not voided) with no unit or no trailer choice: unit_id from the load's assigned unit, and (only when both are NULL) trailer_id = the load's same-entity company trailer or non_owned_trailer_id = the load's customer trailer, through driver-finance/driver-bill-unit-trailer.ts backStampSettledDriverBillUnitAndTrailer (fill-only, one audit row per bill). Metadata only: no amount, status, settlement, GL or repost change. The runner refuses unless the md5 of (id, gross, status, settled, void) is unchanged and settled bills missing unit = 0 and missing trailer choice = 0 after.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-137-settled-driver-bill-backstamp.mts --apply --auth AUTH-448
+rehearsal: throwaway br-sparkling-unit-akfox9bi (COMMITTED, deleted): 145 settled bills stamped (unit 145; 135 company trailer, 10 customer trailer); after: missing unit 0, missing trailer choice 0; money md5 unchanged; a second run stamped 0
+expires_at: 2026-10-13T22:10:00Z
+status: OPEN
