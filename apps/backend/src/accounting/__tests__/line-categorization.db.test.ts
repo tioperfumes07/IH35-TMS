@@ -7,6 +7,7 @@
 import pg from "pg";
 import { describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
+import { refuseProductionConnectionString, refuseProductionDatabase } from "../../../test-helpers/refuse-production.js";
 import { assertLineAccountMatchesItem, LineCategorizationError, lineCategorizationRefusal } from "../line-categorization.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -15,8 +16,10 @@ describeIntegration("line categorization — item account override reason (real 
   it("refuses an off-item account without a reason, accepts it with one; the app check agrees", async () => {
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL or DATABASE_DIRECT_URL is required");
+    refuseProductionConnectionString(cs);
     const db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
+    await refuseProductionDatabase(db);
     try {
       await db.query("BEGIN");
       await db.query("SET LOCAL app.bypass_rls = 'lucia'");
