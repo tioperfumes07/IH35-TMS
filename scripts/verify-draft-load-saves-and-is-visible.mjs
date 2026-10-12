@@ -180,14 +180,22 @@ async function runReal() {
     process.exit(1);
   }
 
-  try {
-    execSync(`npx vitest run ${DB_TEST_REL.replace(/^apps\/backend\//, "")}`, {
-      cwd: path.join(ROOT, "apps/backend"),
-      stdio: "inherit",
-    });
-  } catch {
-    console.error(`[${LABEL}] FAIL — vitest run failed for ${DB_TEST_REL}`);
-    process.exit(1);
+  // 443.101 — the two halves run where each can be true. --db-test (verify:pre-commit heavy step, fresh CI database):
+  // the real-Postgres round-trip writes fixtures, so it runs ONLY on a throwaway database — its fixture helper refuses
+  // production (ROUND 390.1), which is what turned the live-DB job red when this guard was moved there whole (#26546).
+  // Default (the live-DB job, prod read-only): the live USMCA invariant — never the fixture-writing test.
+  if (process.argv.includes("--db-test")) {
+    try {
+      execSync(`npx vitest run ${DB_TEST_REL.replace(/^apps\/backend\//, "")}`, {
+        cwd: path.join(ROOT, "apps/backend"),
+        stdio: "inherit",
+      });
+    } catch {
+      console.error(`[${LABEL}] FAIL — vitest run failed for ${DB_TEST_REL}`);
+      process.exit(1);
+    }
+    console.log(`[${LABEL}] PASS (--db-test) — "draft" is not in the Kanban Assigned lane, and a real Postgres round-trip proves a minimum-fields draft save persists a row, mints no money, and completion stamping is proven`);
+    return;
   }
 
   const liveOk = await liveCheck();
@@ -197,7 +205,7 @@ async function runReal() {
   }
 
   console.log(
-    `[${LABEL}] PASS — "draft" is not in the Kanban Assigned lane (has its own lane), a real Postgres round-trip proves a minimum-fields draft save persists a row and mints no money, and completion stamping is proven`
+    `[${LABEL}] PASS — "draft" is not in the Kanban Assigned lane (has its own lane), and no live USMCA draft carries money (the real-Postgres round-trip runs with --db-test on the fresh CI database)`
   );
 }
 

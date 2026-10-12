@@ -222,8 +222,13 @@ export async function peekNextLoadNumber(client: DbClient, operatingCompanyId: s
  * row yet, seed it with THIS exact office-typed number — never a MAX() scan reconstructed later
  * from whatever rows happen to exist by then. That reconstruction is exactly what let a
  * status='cancelled' test booking win the seed 154 numbers above the true working max in the
- * incident this fix closes. Idempotent (ON CONFLICT DO NOTHING) — a no-op on every booking after
- * the company's first, which is the normal, expected case.
+ * incident this fix closes.
+ *
+ * 443.101 — an office-typed number ABOVE an existing counter now ADVANCES it to that number (never rewinds: the
+ * upsert only fires when the typed number is higher). Before, the seed was ON CONFLICT DO NOTHING, so once a
+ * counter existed every higher typed number left it behind the true working max (verify-load-counter-not-ahead-
+ * of-reality, LIVE: USMCA counter 13618 vs working max 13660 on 2026-10-12) and the next Book Load auto-number
+ * walked back into the typed range. The source is still THIS exact typed number — never a MAX() reconstruction.
  */
 export async function seedLoadNumberCounterFromManualEntry(
   client: DbClient,
@@ -235,7 +240,9 @@ export async function seedLoadNumberCounterFromManualEntry(
     `
       INSERT INTO lib.trace_counters (operating_company_id, doc_type, last_trace_no, updated_at)
       VALUES ($1::uuid, 'LOAD', $2::bigint, now())
-      ON CONFLICT (operating_company_id, doc_type) DO NOTHING
+      ON CONFLICT (operating_company_id, doc_type) DO UPDATE
+        SET last_trace_no = EXCLUDED.last_trace_no, updated_at = now()
+        WHERE lib.trace_counters.last_trace_no < EXCLUDED.last_trace_no
     `,
     [operatingCompanyId, loadNumber]
   );

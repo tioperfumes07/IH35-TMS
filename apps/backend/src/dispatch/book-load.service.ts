@@ -2811,7 +2811,8 @@ export async function createLoadWithFullSideEffects(
     try {
       // P1 2026-09-14 (LOAD-NUMBER-COUNTER-POISONED) — a manually-typed number (requestedLoadNumber === loadNumber,
       // i.e. not an auto-allocated one) seeds the company's LOAD counter if it has none yet — see
-      // seedLoadNumberCounterFromManualEntry's own header for why. A no-op once the counter exists.
+      // seedLoadNumberCounterFromManualEntry's own header for why. Once the counter exists it only ADVANCES it to a
+      // higher typed number (443.101), never rewinds.
       // 443.100 LOCK ORDER: the seed runs BEFORE the INSERT, inside this savepoint. The INSERT's trg_assign_trace_no
       // upserts the company's 'LD' counter row and the auto-allocated path takes the 'LOAD' row before its INSERT, so
       // seeding 'LOAD' after the INSERT inverted the order ('LD' then 'LOAD' vs 'LOAD' then 'LD') and two concurrent

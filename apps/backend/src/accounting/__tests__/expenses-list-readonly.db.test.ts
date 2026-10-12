@@ -34,6 +34,12 @@ describeIntegration("GAP-EXPENSES expenses list read-only (real Postgres)", () =
 
   // FORCE RLS is enabled on accounting.expenses + banking.reconciliation_matches; set BOTH the bypass
   // flag and the company scope so seed writes are permitted for the given scopeCompanyId.
+  // 443.101: these fixtures write match rows directly (not through the accept handler, which audits
+  // bank_match.accepted). Left live on the shared fixture company they read, to verify-no-match-persisted-
+  // outside-accept-handler, as matches persisted outside the handler. Nothing is deletable: they are VOIDED
+  // on teardown, which takes them out of the live-match set the guard checks.
+  const seededMatches: Array<{ id: string; companyId: string }> = [];
+
   async function bypass<T>(scopeCompanyId: string, fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
@@ -68,12 +74,13 @@ describeIntegration("GAP-EXPENSES expenses list read-only (real Postgres)", () =
       if (matchState !== "rejected") {
         await db.query(`UPDATE banking.bank_transactions SET matched_expense_id = $2::uuid WHERE id = $1::uuid`, [ownBankTxnId, expenseId]);
       }
-      await db.query(
+      const seeded = await db.query<{ id: string }>(
         `INSERT INTO banking.reconciliation_matches
            (operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id, match_state)
-         VALUES ($1::uuid, $2::uuid, 'expense', $3::uuid, $4)`,
+         VALUES ($1::uuid, $2::uuid, 'expense', $3::uuid, $4) RETURNING id`,
         [scopeCompanyId, ownBankTxnId, expenseId, matchState]
       );
+      seededMatches.push({ id: seeded.rows[0]!.id, companyId: scopeCompanyId });
     });
   }
 
@@ -119,6 +126,16 @@ describeIntegration("GAP-EXPENSES expenses list read-only (real Postgres)", () =
   });
 
   afterAll(async () => {
+    for (const m of seededMatches) {
+      await bypass(m.companyId, async () => {
+        await db.query(
+          `UPDATE banking.reconciliation_matches
+              SET voided_at = now(), void_reason = 'test fixture teardown (443.101)'
+            WHERE id = $1::uuid AND voided_at IS NULL`,
+          [m.id]
+        );
+      });
+    }
     await db.end();
   });
 
