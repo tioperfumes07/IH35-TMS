@@ -261,9 +261,9 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/mdata/units/:id/plates` | `apps/backend/src/mdata/unit-plates.routes.ts:137` | — | — | — |
 | nested | `/api/v1/mdata/units/:id/quick-availability` | `apps/backend/src/mdata/units.routes.ts:1000` | — | — | — |
 | nested | `/api/v1/mdata/units/:id/trip-cost` | `apps/backend/src/mdata/unit-trip-cost.routes.ts:43` | — | — | — |
-| create | `/api/v1/mdata/vendors` | `apps/backend/src/mdata/vendors.routes.ts:590` | — | — | — |
+| create | `/api/v1/mdata/vendors` | `apps/backend/src/mdata/vendors.routes.ts:601` | — | — | — |
 | nested | `/api/v1/mdata/vendors/:id/payment-methods` | `apps/backend/src/mdata/vendor-payment-methods.routes.ts:147` | — | — | — |
-| nested | `/api/v1/mdata/vendors/:id/reactivate` | `apps/backend/src/mdata/vendors.routes.ts:1061` | — | — | — |
+| nested | `/api/v1/mdata/vendors/:id/reactivate` | `apps/backend/src/mdata/vendors.routes.ts:1072` | — | — | — |
 | create | `/api/v1/mdata/vendors/ensure-drivers` | `apps/backend/src/mdata/vendors.routes.ts:518` | — | — | — |
 | create | `/api/v1/mdata/workflow-requests` | `apps/backend/src/mdata/workflow-routes.ts:212` | — | — | — |
 
