@@ -19,6 +19,9 @@ import { assertNotProduction } from "../lib/assert-not-production.mjs";
 
 const CO = "5c854333-6ea5-4faa-af31-67cb272fef80"; // USMCA
 const OWNER = "e4117991-d2c0-406d-8cda-74e98d95bccd";
+// 443.105: the trailer the load is booked on (real USMCA-leased trailer 10380) — the owner books every load with its trailer,
+// and every document the load produces must carry it (company trailer) or the customer trailer (printed-trailer decision).
+const TRAILER = "d3aca32f-40fe-40d3-b144-5101e85c1335";
 const only = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7).split(",").filter(Boolean);
 const runs = (s) => only.length === 0 || only.includes(s);
 
@@ -153,7 +156,7 @@ async function s1() {
     operating_company_id: CO, customer_id: customer.id, status: "assigned_not_dispatched", trip_type: "NB",
     override_reason: "443.70 acceptance run on a throwaway fork: owner override of driver documents",
     customer_po_number: "PO-ACCEPT-443-70", customer_wo_number: "WO-ACCEPT-443-70", commodity: "Produce", weight_lbs: 40000,
-    assigned_unit_id: unit.unit_id, assigned_primary_driver_id: unit.driver_id,
+    assigned_unit_id: unit.unit_id, assigned_primary_driver_id: unit.driver_id, assigned_trailer_unit_id: TRAILER,
     miles_practical: choice.practical.value, miles_shortest: choice.short.value, miles_deadhead: choice.empty.value,
     miles_choice: choice, charges: [{ code: "linehaul", amount_cents: 590000 }], stops,
   };
@@ -472,7 +475,7 @@ async function ensureLoad(t) {
     operating_company_id: CO, customer_id: customer.id, status: "assigned_not_dispatched", trip_type: "NB",
     override_reason: "443.70 acceptance run on a throwaway fork: owner override of driver documents",
     customer_po_number: "PO-ACCEPT-443-70-S2", commodity: "Produce", weight_lbs: 40000,
-    assigned_unit_id: unit.unit_id, assigned_primary_driver_id: unit.driver_id,
+    assigned_unit_id: unit.unit_id, assigned_primary_driver_id: unit.driver_id, assigned_trailer_unit_id: TRAILER,
     miles_practical: 1210, miles_shortest: 1180, miles_deadhead: 12,
     miles_choice: { practical: manual(1210), short: manual(1180), empty: manual(12) },
     charges: [{ code: "linehaul", amount_cents: 590000 }],
@@ -1147,8 +1150,16 @@ async function linkage(stepName, since) {
   let docs = 0;
   const pass = () => { docs += 1; };
   // loads
-  for (const l of await read(`SELECT id::text, load_number, assigned_primary_driver_id AS drv, assigned_unit_id AS unit, load_trailer_equipment_id AS tr,
-      non_owned_trailer_id AS nt, customer_id AS cust FROM mdata.loads WHERE operating_company_id=$1::uuid AND created_at >= $2::timestamptz`, [CO, since])) {
+  // The load's PHYSICAL trailer (load_trailer_equipment_id is only the trailer TYPE catalog, e.g. "Dry Van"): the company
+  // trailer the assignment recorded (dispatch.load_assignment_history.new_trailer_id, owned or leased by the company) or,
+  // for a customer trailer, the printed-trailer decision (trailer_source = 'customer' + non_owned_trailer_id).
+  for (const l of await read(`SELECT l.id::text, l.load_number, l.assigned_primary_driver_id AS drv, l.assigned_unit_id AS unit,
+      (SELECT h.new_trailer_id FROM dispatch.load_assignment_history h JOIN mdata.equipment e ON e.id = h.new_trailer_id
+        WHERE h.load_id = l.id AND h.new_trailer_id IS NOT NULL
+          AND (e.owner_company_id = l.operating_company_id OR e.currently_leased_to_company_id = l.operating_company_id)
+        ORDER BY h.created_at DESC LIMIT 1) AS tr,
+      CASE WHEN l.trailer_source = 'customer' THEN l.non_owned_trailer_id END AS nt, l.customer_id AS cust
+      FROM mdata.loads l WHERE l.operating_company_id=$1::uuid AND l.created_at >= $2::timestamptz AND l.voided_at IS NULL`, [CO, since])) {
     const miss = [!l.drv && "driver", !l.unit && "unit", !l.tr && !l.nt && "trailer", !l.cust && "customer"].filter(Boolean);
     miss.length ? miss.forEach((f) => fail("load", l.load_number ?? l.id, f)) : pass();
   }
@@ -1182,7 +1193,7 @@ async function linkage(stepName, since) {
     const trailerMiss = (b.load || b.drv) && !b.tr && !b.nt;
     const m = miss.filter(Boolean);
     m.forEach((f) => fail("bill", b.display_id ?? b.id, f));
-    if (trailerMiss) fail("bill", b.display_id ?? b.id, "trailer", `${billNot === "NULL" && b.lnt ? "customer trailer, bills.non_owned_trailer_id absent — " : ""}pending R12 (443.105 item 1) if not merged`);
+    if (trailerMiss) fail("bill", b.display_id ?? b.id, "trailer", billNot === "NULL" && b.lnt ? "customer trailer, bills.non_owned_trailer_id absent" : "");
     if (!m.length && !trailerMiss) pass();
   }
   for (const ln of await read(`SELECT bl.id::text, b.display_id, bl.item_id AS item, bl.account_id::text AS acct, it.default_expense_account_id::text AS item_acct,
