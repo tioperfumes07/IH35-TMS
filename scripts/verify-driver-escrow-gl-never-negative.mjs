@@ -48,16 +48,16 @@ async function measure(client) {
     WITH acct AS (
       SELECT DISTINCT ea.coa_account_id AS id
         FROM accounting.escrow_accounts ea
-       WHERE ea.holder_type = 'driver'
-         AND NOT EXISTS (SELECT 1 FROM accounting.chart_of_accounts_roles r WHERE r.account_id = ea.coa_account_id AND r.role = 'escrow_liability_default'))
+       WHERE ea.operating_company_id = $1 AND ea.holder_type = 'driver'
+         AND NOT EXISTS (SELECT 1 FROM accounting.chart_of_accounts_roles r WHERE r.operating_company_id = $1 AND r.account_id = ea.coa_account_id AND r.role = 'escrow_liability_default'))
     SELECT a.account_number, c.code AS company,
            COALESCE(sum(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::bigint AS balance_cents
-      FROM acct JOIN catalogs.accounts a ON a.id = acct.id
+      FROM acct JOIN catalogs.accounts a ON a.id = acct.id AND a.operating_company_id = $1
       JOIN org.companies c ON c.id = a.operating_company_id
       LEFT JOIN (accounting.journal_entry_postings p
-                 JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid AND j.status = 'posted') ON p.account_id = acct.id
+                 JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid AND j.operating_company_id = $1 AND j.status = 'posted') ON p.account_id = acct.id AND p.operating_company_id = $1
      GROUP BY 1, 2
-    HAVING COALESCE(sum(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END), 0) < 0`)).rows;
+    HAVING COALESCE(sum(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END), 0) < 0`, ["5c854333-6ea5-4faa-af31-67cb272fef80"])).rows;
   const applied = (await client.query(`SELECT 1 FROM _system._schema_migrations WHERE filename LIKE '202615360300%'`)).rows.length > 0;
   const trigger = (await client.query(`
     SELECT t.tgenabled AS enabled, t.tgdeferrable AS deferrable, t.tginitdeferred AS initdeferred

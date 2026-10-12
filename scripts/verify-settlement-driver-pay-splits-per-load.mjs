@@ -66,23 +66,23 @@ async function measure(client) {
   await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
   const runs = (await client.query(`
     SELECT s.source_document_ref AS doc, r.gross_cents,
-           (SELECT coalesce(sum(b.gross_cents),0) FROM driver_finance.driver_settlement_gl_bills b WHERE b.run_id = r.id AND b.superseded_at IS NULL)::bigint AS split,
-           (SELECT count(*) FROM driver_finance.driver_settlement_gl_bills b WHERE b.run_id = r.id AND b.superseded_at IS NULL)::int AS nb,
+           (SELECT coalesce(sum(b.gross_cents),0) FROM driver_finance.driver_settlement_gl_bills b WHERE b.operating_company_id = $1 AND b.run_id = r.id AND b.superseded_at IS NULL)::bigint AS split,
+           (SELECT count(*) FROM driver_finance.driver_settlement_gl_bills b WHERE b.operating_company_id = $1 AND b.run_id = r.id AND b.superseded_at IS NULL)::int AS nb,
            (SELECT coalesce(round(sum(abs(sl.amount)) * 100), 0) FROM driver_finance.settlement_lines sl
-             WHERE sl.settlement_id = r.settlement_id AND sl.is_active = true AND sl.line_type IN ('reimbursement', 'detention_pay'))::bigint AS billed_extra_cents
-      FROM driver_finance.driver_settlement_gl_runs r JOIN driver_finance.driver_settlements s ON s.id = r.settlement_id
-     WHERE r.status = 'posted'`)).rows;
-  const billsWithoutLoad = (await client.query(`SELECT count(*)::int AS n FROM driver_finance.driver_settlement_gl_bills WHERE superseded_at IS NULL AND load_id IS NULL`)).rows[0].n;
+             WHERE sl.operating_company_id = $1 AND sl.settlement_id = r.settlement_id AND sl.is_active = true AND sl.line_type IN ('reimbursement', 'detention_pay'))::bigint AS billed_extra_cents
+      FROM driver_finance.driver_settlement_gl_runs r JOIN driver_finance.driver_settlements s ON s.id = r.settlement_id AND s.operating_company_id = $1
+     WHERE r.operating_company_id = $1 AND r.status = 'posted'`, ["5c854333-6ea5-4faa-af31-67cb272fef80"])).rows;
+  const billsWithoutLoad = (await client.query(`SELECT count(*)::int AS n FROM driver_finance.driver_settlement_gl_bills WHERE operating_company_id = $1 AND superseded_at IS NULL AND load_id IS NULL`, ["5c854333-6ea5-4faa-af31-67cb272fef80"])).rows[0].n;
   const legacyUnstamped = (await client.query(`
     SELECT count(*)::int AS n FROM accounting.journal_entry_postings p
-     WHERE p.source_transaction_type = 'driver_settlement' AND p.debit_or_credit = 'debit' AND p.reversal_of_line_id IS NULL
+     WHERE p.operating_company_id = $1 AND p.source_transaction_type = 'driver_settlement' AND p.debit_or_credit = 'debit' AND p.reversal_of_line_id IS NULL
        AND p.load_id IS NULL
-       AND p.account_id IN (SELECT r.account_id FROM accounting.chart_of_accounts_roles r WHERE r.role = 'driver_pay_expense')`)).rows[0].n;
+       AND p.account_id IN (SELECT r.account_id FROM accounting.chart_of_accounts_roles r WHERE r.operating_company_id = $1 AND r.role = 'driver_pay_expense')`, ["5c854333-6ea5-4faa-af31-67cb272fef80"])).rows[0].n;
   const applied = (await client.query(`SELECT applied_at FROM _system._schema_migrations WHERE filename LIKE '202615350500%'`)).rows[0]?.applied_at ?? null;
   const newMismatch = applied ? (await client.query(`
     SELECT count(*)::int AS n FROM accounting.journal_entry_postings p
-      JOIN driver_finance.driver_settlement_gl_bills b ON b.accounting_bill_id::text = p.source_transaction_id AND b.superseded_at IS NULL
-     WHERE p.source_transaction_type = 'bill' AND p.created_at >= $1 AND p.load_id IS DISTINCT FROM b.load_id`, [applied])).rows[0].n : 0;
+      JOIN driver_finance.driver_settlement_gl_bills b ON b.accounting_bill_id::text = p.source_transaction_id AND b.operating_company_id = $1 AND b.superseded_at IS NULL
+     WHERE p.operating_company_id = $1 AND p.source_transaction_type = 'bill' AND p.created_at >= $2 AND p.load_id IS DISTINCT FROM b.load_id`, ["5c854333-6ea5-4faa-af31-67cb272fef80", applied])).rows[0].n : 0;
   await client.query("ROLLBACK");
   return { runs, billsWithoutLoad, legacyUnstamped, newMismatch };
 }

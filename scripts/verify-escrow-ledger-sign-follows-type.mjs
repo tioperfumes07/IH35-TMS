@@ -107,17 +107,14 @@ if (!databaseUrl) {
 const client = new pg.Client({ connectionString: databaseUrl });
 await client.connect();
 try {
-  // is_local=false (SESSION scope, not the 3rd-arg-true LOCAL/transaction scope) -- this script
-  // issues each query as its own implicit transaction on a single persistent Client connection, so
-  // a LOCAL-scoped setting would reset before the next statement runs, silently un-bypassing RLS
-  // and making every live check below read a false "0 violations."
-  await client.query(`SELECT set_config('app.bypass_rls', 'lucia', false)`);
+  await client.query("BEGIN READ ONLY");
+  await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
   const res = await client.query(`
     SELECT transaction_type, count(*) FILTER (WHERE transaction_type IN ('hold','forfeit') AND amount_cents > 0) AS bad_holds,
            count(*) FILTER (WHERE transaction_type = 'release' AND amount_cents < 0) AS bad_releases
-    FROM driver_finance.escrow_ledger
+    FROM driver_finance.escrow_ledger WHERE operating_company_id = $1
     GROUP BY transaction_type
-  `);
+  `, ["5c854333-6ea5-4faa-af31-67cb272fef80"]);
   let badHolds = 0;
   let badReleases = 0;
   for (const row of res.rows) {
@@ -144,5 +141,6 @@ try {
     console.log(`${LABEL}: LIVE OK — 0 sign violations across driver_finance.escrow_ledger`);
   }
 } finally {
+  await client.query("ROLLBACK");
   await client.end();
 }

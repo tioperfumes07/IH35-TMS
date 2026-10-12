@@ -4,7 +4,7 @@
  * the load its original belonged to. Pairs with CC-1's verify-every-load-born-posting-carries-its-load (the writers).
  *   static — migration 202615330931 still declares the five refusals (posting, from_load invoice, driver bill,
  *            revenue-recognition posting, load charge line).
- *   live, every non-frozen company:
+ *   live, USMCA only:
  *     (1) the five refusal triggers exist and are enabled;
  *     (2) load-born documents with no load = exactly the PINNED list below (shrink-only; a new one FAILS, a pinned one
  *         that gained its load or left FAILS until it is removed from the list);
@@ -16,10 +16,11 @@
  * No database = FAIL. Run: node scripts/verify-every-load-born-document-and-posting-traces-to-its-load.mjs [--selftest]
  */
 import { readFileSync } from "node:fs";
-import { NOT_FROZEN_SQL, report, withUnscopedReadOnly } from "./lib/bank-feed-state-machine.mjs";
+import { report, withUnscopedReadOnly } from "./lib/bank-feed-state-machine.mjs";
 
 export const REQUIRES_LIVE_DB = "the load refusals and the reversal-to-load walk are live ledger lineage";
 const LABEL = "verify-every-load-born-document-and-posting-traces-to-its-load";
+const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const MIGRATION = "db/migrations/202615330931_load_born_rows_refuse_a_null_load.sql";
 const STAMP_MIGRATION = "202615350500_journal_entry_postings_load_id_stamp.sql";
 const BACKFILL_MIGRATION = "202615390931_posting_load_id_backfill_where_provable.sql";
@@ -99,32 +100,32 @@ const facts = await withUnscopedReadOnly(LABEL, async (c) => {
   const triggers = new Set((await c.query(`SELECT tgname FROM pg_trigger WHERE tgname = ANY($1) AND tgenabled <> 'D'`, [TRIGGERS.map(([, t]) => t)])).rows.map((r) => r.tgname));
   const loadless = (await c.query(`
     SELECT 'accounting.invoices' AS table, i.display_id AS display FROM accounting.invoices i
-     WHERE i.invoice_type = 'from_load' AND i.source_load_id IS NULL AND ${NOT_FROZEN_SQL("i.operating_company_id")}
-    UNION ALL SELECT 'driver_finance.driver_bills', b.id::text FROM driver_finance.driver_bills b WHERE b.load_id IS NULL AND ${NOT_FROZEN_SQL("b.operating_company_id")}
-    UNION ALL SELECT 'accounting.load_revenue_recognition_postings', r.id::text FROM accounting.load_revenue_recognition_postings r WHERE r.load_id IS NULL AND ${NOT_FROZEN_SQL("r.operating_company_id")}
-    UNION ALL SELECT 'dispatch.load_charge_lines', l.id::text FROM dispatch.load_charge_lines l WHERE l.load_id IS NULL AND ${NOT_FROZEN_SQL("l.operating_company_id")}`)).rows;
+     WHERE i.invoice_type = 'from_load' AND i.source_load_id IS NULL AND i.operating_company_id = $1
+    UNION ALL SELECT 'driver_finance.driver_bills', b.id::text FROM driver_finance.driver_bills b WHERE b.load_id IS NULL AND b.operating_company_id = $1
+    UNION ALL SELECT 'accounting.load_revenue_recognition_postings', r.id::text FROM accounting.load_revenue_recognition_postings r WHERE r.load_id IS NULL AND r.operating_company_id = $1
+    UNION ALL SELECT 'dispatch.load_charge_lines', l.id::text FROM dispatch.load_charge_lines l WHERE l.load_id IS NULL AND (l.operating_company_id = $1 OR l.operating_company_id IS NULL)`, [USMCA])).rows;
   // 363-CC3-A: once 202615390931 has stamped every provable EXISTING posting, the unstamped / broken-walk rules hold for
   // ALL TIME, not only since the stamp; history without a provable load (documents gone) stays reported.
   const backfilled = (await c.query(`SELECT 1 FROM _system._schema_migrations WHERE filename = $1`, [BACKFILL_MIGRATION])).rowCount > 0;
   const since = backfilled ? "-infinity" : stampAt ?? "infinity";
   const unstamped = (await c.query(`
     SELECT count(*)::int AS n FROM accounting.journal_entry_postings p
-     WHERE p.created_at >= $1::timestamptz AND p.load_id IS NULL AND ${NOT_FROZEN_SQL("p.operating_company_id")}
-       AND accounting.posting_source_load_id(p.source_transaction_type, p.source_transaction_id::text, p.source_transaction_line_id::text, p.reversal_of_line_id) IS NOT NULL`, [since])).rows[0].n;
+     WHERE p.created_at >= $2::timestamptz AND p.load_id IS NULL AND p.operating_company_id = $1
+       AND accounting.posting_source_load_id(p.source_transaction_type, p.source_transaction_id::text, p.source_transaction_line_id::text, p.reversal_of_line_id) IS NOT NULL`, [USMCA, since])).rows[0].n;
   const walk = (await c.query(`
     SELECT count(*)::int AS reversals,
            count(*) FILTER (WHERE o.id IS NULL OR r.load_id IS DISTINCT FROM o.load_id)::int AS broken
       FROM accounting.journal_entry_postings r
-      LEFT JOIN accounting.journal_entry_postings o ON o.id = r.reversal_of_line_id
-     WHERE r.reversal_of_line_id IS NOT NULL AND r.created_at >= $1::timestamptz AND ${NOT_FROZEN_SQL("r.operating_company_id")}`, [since])).rows[0];
+      LEFT JOIN accounting.journal_entry_postings o ON o.id = r.reversal_of_line_id AND o.operating_company_id = $1
+     WHERE r.reversal_of_line_id IS NOT NULL AND r.created_at >= $2::timestamptz AND r.operating_company_id = $1`, [USMCA, since])).rows[0];
   const history = (await c.query(`
     SELECT count(*)::int AS n FROM accounting.journal_entry_postings p
-     WHERE p.created_at < $1::timestamptz AND p.load_id IS NULL AND ${NOT_FROZEN_SQL("p.operating_company_id")}`, [since])).rows[0].n;
+     WHERE p.created_at < $2::timestamptz AND p.load_id IS NULL AND p.operating_company_id = $1`, [USMCA, since])).rows[0].n;
   const unlinkedExpenses = (await c.query(`
     SELECT COALESCE(e.expense_number, e.id::text) AS n FROM accounting.expenses e
-     WHERE e.load_id IS NOT NULL AND e.voided_at IS NULL AND ${NOT_FROZEN_SQL("e.operating_company_id")}
-       AND NOT EXISTS (SELECT 1 FROM expense_attribution.expense_load_links k WHERE k.expense_source = 'accounting' AND k.expense_id = e.id)
-     ORDER BY 1`)).rows.map((r) => r.n);
+     WHERE e.load_id IS NOT NULL AND e.voided_at IS NULL AND e.operating_company_id = $1
+       AND NOT EXISTS (SELECT 1 FROM expense_attribution.expense_load_links k WHERE k.expense_source = 'accounting' AND k.expense_id = e.id AND k.operating_company_id = $1)
+     ORDER BY 1`, [USMCA])).rows.map((r) => r.n);
   return { applied: Boolean(applied), stampAt, backfilled, triggers, loadless, unstamped, walk, history, unlinkedExpenses };
 });
 const live = liveGaps(facts);

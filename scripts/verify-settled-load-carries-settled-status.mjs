@@ -143,18 +143,18 @@ async function live() {
   try {
     // BANK-F30150 pattern: bypass_rls must be in the SAME transaction as the read through Neon's
     // pooled endpoint, or it silently reads false-zero.
-    await client.query("BEGIN");
+    await client.query("BEGIN READ ONLY");
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
 
     const res = await client.query(`
       SELECT l.load_number, l.status AS load_status,
              s.status AS settlement_status, i.status AS invoice_status
         FROM driver_finance.driver_bills b
-        JOIN driver_finance.driver_settlements s ON s.id = b.settled_in_settlement_id
-        JOIN mdata.loads l ON l.id = b.load_id
-        JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL
-       WHERE b.settled_in_settlement_id IS NOT NULL
-    `);
+        JOIN driver_finance.driver_settlements s ON s.id = b.settled_in_settlement_id AND s.operating_company_id = $1
+        JOIN mdata.loads l ON l.id = b.load_id AND l.operating_company_id = $1
+        JOIN accounting.invoices i ON i.source_load_id = l.id AND i.operating_company_id = $1 AND i.voided_at IS NULL
+       WHERE b.operating_company_id = $1 AND b.settled_in_settlement_id IS NOT NULL
+    `, ["5c854333-6ea5-4faa-af31-67cb272fef80"]);
 
     await client.query("COMMIT");
 

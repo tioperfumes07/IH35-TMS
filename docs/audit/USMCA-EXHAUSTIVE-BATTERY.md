@@ -464,7 +464,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/driver-finance/settlements/:id/close-trip` | `apps/backend/src/driver-finance/settlement-payrun-close.routes.ts:147` | — | — | — |
 | nested | `/api/v1/driver-finance/settlements/:id/pay-lines` | `apps/backend/src/driver-finance/settlements.routes.ts:1273` | — | — | — |
 | nested | `/api/v1/driver-finance/settlements/:id/payrun-close` | `apps/backend/src/driver-finance/settlement-payrun-close.routes.ts:104` | — | — | — |
-| nested | `/api/v1/driver-finance/settlements/:id/unlock` | `apps/backend/src/driver-finance/settlements.routes.ts:1607` | — | — | — |
+| nested | `/api/v1/driver-finance/settlements/:id/unlock` | `apps/backend/src/driver-finance/settlements.routes.ts:1609` | — | — | — |
 
 ### legal — 22 create-surface(s)
 
