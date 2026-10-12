@@ -2408,6 +2408,11 @@
     "claimed_at": "2026-10-12",
     "purpose": "RULING 443.86 #1: deadhead method values for the Google practical deadhead (previous load last stop / truck Samsara position -> first pickup)"
   },
+  "202615650900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-12",
+    "purpose": "RULING 443.90 #4: printed trailer decision — mdata.loads.trailer_source + non_owned_trailer_id, accounting.expenses.non_owned_trailer_id"
+  },
   "202615451400": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-12",
