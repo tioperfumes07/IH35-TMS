@@ -744,7 +744,7 @@ export async function stampReceiptDocumentSettlementRef(
 
 export async function adoptRelayFillExpenseDocument(
   client: QueryableClient,
-  input: { operating_company_id: string; relay_fill_id: string; journal_entry_id: string; requesting_user_uuid?: string | null; settlement_no?: string | null; trailer_id?: string | null; load_exemption_reason?: string | null },
+  input: { operating_company_id: string; relay_fill_id: string; journal_entry_id: string; requesting_user_uuid?: string | null; settlement_no?: string | null; trailer_id?: string | null; load_exemption_reason?: string | null; driver_id?: string | null },
 ): Promise<RelayFillDocumentOutcome> {
   const company = input.operating_company_id;
   const existing = await client.query<{ id: string }>(
@@ -813,7 +813,9 @@ export async function adoptRelayFillExpenseDocument(
         [loadId, company],
       )).rows[0]?.d ?? null
     : null;
-  const driverId = primary?.driver_id ?? fills.rows[0]?.driver_id ?? relayRow.rows[0]?.matched_driver_id ?? loadDriver;
+  // LEAD 443.126 2a — the poster's one fill-driver rule (card / truck assignment at fill time) when the purchase record and
+  // Relay named nobody: a no-load fill still carries who fueled.
+  const driverId = primary?.driver_id ?? fills.rows[0]?.driver_id ?? relayRow.rows[0]?.matched_driver_id ?? input.driver_id ?? loadDriver;
   const unitId = primary?.unit_id ?? fills.rows[0]?.unit_id ?? relayRow.rows[0]?.matched_unit_id ?? null;
   const txnDate = primary?.txn_date ?? fills.rows[0]?.txn_date ?? legs.rows[0]!.entry_date;
 

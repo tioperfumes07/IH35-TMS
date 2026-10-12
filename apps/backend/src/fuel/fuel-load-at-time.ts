@@ -70,3 +70,48 @@ export async function resolveFuelLoadAtTime(
     non_owned_trailer_id: row.non_owned_trailer_id,
   };
 }
+
+/**
+ * LEAD 443.121 #2 / 443.126 2a — THE one fill-driver rule ("unit and driver from the card / truck"). A fill whose
+ * provider named no driver still has one: the driver the fuel card was assigned to at the fill time, else the truck's
+ * ONE driver assignment at that moment (telematics.vehicle_driver_assignments), else the driver of the load the fill was
+ * bought for. Two candidates at a step = no answer from that step (never a guess). Same company only.
+ */
+export async function resolveFillDriverAtTime(
+  client: DbClient,
+  input: { operatingCompanyId: string; matchedDriverId: string | null; unitId: string | null; at: string; loadId?: string | null }
+): Promise<{ driver_id: string; matched_by: "provider" | "card_assignment" | "truck_assignment" | "load" } | null> {
+  if (input.matchedDriverId) return { driver_id: input.matchedDriverId, matched_by: "provider" };
+  if (input.unitId) {
+    const card = await client.query<{ d: string }>(
+      `SELECT DISTINCT a.driver_id::text AS d
+         FROM fuel.fuel_card_assignments a
+         JOIN mdata.drivers dr ON dr.id = a.driver_id AND dr.operating_company_id = a.operating_company_id
+        WHERE a.operating_company_id = $1::uuid AND a.unit_id = $2::uuid AND a.voided_at IS NULL AND a.driver_id IS NOT NULL
+          AND a.effective_from <= $3::timestamptz AND (a.effective_to IS NULL OR a.effective_to > $3::timestamptz)
+        LIMIT 2`,
+      [input.operatingCompanyId, input.unitId, input.at]
+    );
+    if (card.rows.length === 1) return { driver_id: card.rows[0]!.d, matched_by: "card_assignment" };
+    if (card.rows.length === 0) {
+      const truck = await client.query<{ d: string }>(
+        `SELECT DISTINCT v.driver_id::text AS d
+           FROM telematics.vehicle_driver_assignments v
+           JOIN mdata.drivers dr ON dr.id = v.driver_id AND dr.operating_company_id = $1::uuid
+          WHERE v.operating_company_id = $1::uuid AND v.unit_id = $2::uuid AND v.driver_id IS NOT NULL
+            AND v.started_at <= $3::timestamptz AND (v.ended_at IS NULL OR v.ended_at > $3::timestamptz)
+          LIMIT 2`,
+        [input.operatingCompanyId, input.unitId, input.at]
+      );
+      if (truck.rows.length === 1) return { driver_id: truck.rows[0]!.d, matched_by: "truck_assignment" };
+    }
+  }
+  if (input.loadId) {
+    const ld = await client.query<{ d: string | null }>(
+      `SELECT assigned_primary_driver_id::text AS d FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [input.loadId, input.operatingCompanyId]
+    );
+    if (ld.rows[0]?.d) return { driver_id: ld.rows[0].d, matched_by: "load" };
+  }
+  return null;
+}
