@@ -67,11 +67,19 @@ export function collectProblems(root = ROOT) {
   for (const [field, label] of [
     ["customer_id", "customer"],
     ["assigned_unit_id", "unit"],
-    ["assigned_trailer_unit_id", "trailer"],
   ]) {
     if (!new RegExp(`${field}:\\s*values\\.${field}`).test(modal)) {
       problems.push(`${MODAL_FILE}: submit payload must carry the canonical ${label} FK (${field})`);
     }
+  }
+  // LEAD 443.116 (main ci) — trailer FK.
+  //   old rule: assigned_trailer_unit_id: values.assigned_trailer_unit_id (sent unconditionally).
+  //   new rule: the canonical trailer FK is sent for the COMPANY trailer choice — unconditionally (old form) or gated on
+  //             values.trailer_source === "owned"; dropping it entirely still fails.
+  //   why: 443.107 #3 (#26620) made the trailer choice required (company / customer / interchange / none); the company
+  //        trailer id is now sent only when the company choice is made, so the old unconditional anchor failed main ci.
+  if (!/assigned_trailer_unit_id:\s*(?:values\.trailer_source\s*===\s*"owned"\s*\?\s*)?values\.assigned_trailer_unit_id/.test(modal)) {
+    problems.push(`${MODAL_FILE}: submit payload must carry the canonical trailer FK (assigned_trailer_unit_id)`);
   }
   if (!/assigned_primary_driver_id:\s*values\.assignment_mode\s*===\s*["']solo["'][\s\S]{0,120}?values\.assigned_primary_driver_id/.test(modal)) {
     problems.push(`${MODAL_FILE}: submit payload must carry the canonical driver FK (assigned_primary_driver_id)`);
@@ -117,7 +125,7 @@ if (process.argv.includes("--selftest")) {
     [MODAL_FILE, realModal, /customer_id:\s*values\.customer_id/, "customer_id: undefined", "customer FK"],
     [MODAL_FILE, realModal, /assigned_unit_id:\s*values\.assigned_unit_id\s*\|\|\s*undefined/, "assigned_unit_id: undefined", "unit FK"],
     [MODAL_FILE, realModal, /assigned_primary_driver_id:\s*values\.assignment_mode[\s\S]*?undefined,/, "assigned_primary_driver_id: undefined,", "driver FK"],
-    [MODAL_FILE, realModal, /assigned_trailer_unit_id:\s*values\.assigned_trailer_unit_id\s*\|\|\s*undefined/, "assigned_trailer_unit_id: undefined", "trailer FK"],
+    [MODAL_FILE, realModal, /assigned_trailer_unit_id:\s*(?:values\.trailer_source\s*===\s*"owned"\s*\?\s*)?values\.assigned_trailer_unit_id\s*\|\|\s*undefined(?:\s*:\s*undefined)?/, "assigned_trailer_unit_id: undefined", "trailer FK"],
     [BOOK_LOAD_SERVICE, realService, /new_trailer_id,/, "removed_trailer_column,", "trailer sink"],
   ];
   for (const [rel, original, pattern, replacement, label] of fkMutations) {
