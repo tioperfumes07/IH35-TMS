@@ -16471,5 +16471,10 @@
     "lane": "cc-1",
     "name": "verify-settlement-bill-je-carries-settlement-id",
     "claimed": "2026-10-11"
+  },
+  "18405": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-10-12",
+    "purpose": "CC-3 443.99 C lane 3: wire the 4 orphan guards (deadhead-where-previous-load, related-party-bank-pair-suggestions, relay-fill-not-a-bank-match-candidate, zip-center-stops-resolved-by-gps)"
   }
 }
