@@ -274,7 +274,7 @@ export function FleetHomePage() {
           ) : null}
 
           {tab === "units" || tab === "trailers" ? (
-            <div className="mt-3 min-h-0 flex-1" data-testid={`fleet-tab-${tab}`}>
+            <div className="mt-3 min-h-0 flex-1" data-testid={`fleet-tab-${tab}`} data-c55-fleet-view={viewMode}>
               {viewMode === "list" ? (
                 <FleetTablePage operatingCompanyId={companyId} defaultActiveOnly />
               ) : (

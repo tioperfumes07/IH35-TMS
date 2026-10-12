@@ -65,8 +65,21 @@ export function findProblems({ groupSrc, routesSrc, boardSrc, helperSrc }) {
   if (/Next appointment/.test(boardCode)) {
     problems.push('TruckLineBoard must not render "Next appointment" column (ROUND 155.6)');
   }
-  if (!/label="TOUR \/ PRE-SETTLEMENT"/.test(boardSrc) || !/label="PU DATE"/.test(boardSrc) || !/label="DELIVERY DATE"/.test(boardSrc) || !/label="UNIT"/.test(boardSrc) || !/label="LOAD"/.test(boardSrc)) {
-    problems.push("TruckLineBoard columns must be UNIT · TOUR / PRE-SETTLEMENT · LOAD · PU DATE · DELIVERY DATE (ROUND 255)");
+  // 443.99 (2026-10-12) — header-label check re-anchored.
+  //   old rule: labels UNIT, "TOUR / PRE-SETTLEMENT", LOAD, PU DATE, DELIVERY DATE each present (any order).
+  //   new rule: labels UNIT · TOUR · LOAD · PU DATE · DELIVERY DATE present IN THAT ORDER, and the retired
+  //             "TOUR / PRE-SETTLEMENT" label absent.
+  //   why: owner 2026-09-30 ("I want the transit line to be more visible") — PRE-SETTLEMENT came off the
+  //        TOUR header so the column could narrow and TRANSIT take the width; landed in #23330
+  //        (a4ba611c96) and documented on GRID_TEMPLATE_COLUMNS. The guard still demanded the retired
+  //        label. Stricter than before: column order is now checked, and the old label is refused.
+  const COLUMN_ORDER = ["UNIT", "TOUR", "LOAD", "PU DATE", "DELIVERY DATE"];
+  const at = COLUMN_ORDER.map((label) => boardCode.search(new RegExp(`label="${label}"`)));
+  if (at.some((i) => i < 0) || at.some((i, k) => k > 0 && i < at[k - 1])) {
+    problems.push("TruckLineBoard columns must be UNIT · TOUR · LOAD · PU DATE · DELIVERY DATE, in that order (ROUND 255; owner 2026-09-30)");
+  }
+  if (/label="TOUR \/ PRE-SETTLEMENT"/.test(boardCode)) {
+    problems.push('TruckLineBoard must not print the retired "TOUR / PRE-SETTLEMENT" header (owner 2026-09-30)');
   }
   // ROUND 255 + LAW-5: useLoadCostRollups MUST stay wired (verify-one-source-per-number).
   // What 155.6 forbids is painting expenses/income/Net as a board column or row cell —
@@ -135,7 +148,7 @@ const CLEAN_FIXTURE = {
     "<div data-testid={`truck-line-section-${section}`} />",
     '<div data-testid="truck-line-empty" />',
     "const showLoading = q.isPending && !q.isFetched;",
-    '<H label="UNIT" /><H label="TOUR / PRE-SETTLEMENT" /><H label="LOAD" /><H label="PU DATE" /><H label="DELIVERY DATE" />',
+    '<H label="UNIT" /><H label="TOUR" /><H label="LOAD" /><H label="PU DATE" /><H label="DELIVERY DATE" />',
     "const costRollups = useLoadCostRollups(ids); const c = costRollups.get(r.load.load_id);",
   ].join("\n"),
 };
@@ -154,6 +167,8 @@ if (process.argv.includes("--selftest")) {
     ["Next appointment column painted", { boardSrc: f.boardSrc + '\n<H label="Next appointment" />' }],
     ["Net painted in the row", { boardSrc: f.boardSrc + "\n<span>Net {fmt(c.net)}</span>" }],
     ["cost rollup hook unwired", { boardSrc: f.boardSrc.replace("useLoadCostRollups(ids)", "new Map()") }],
+    ["retired TOUR / PRE-SETTLEMENT header back", { boardSrc: f.boardSrc.replace('<H label="TOUR" />', '<H label="TOUR / PRE-SETTLEMENT" />') }],
+    ["LOAD before TOUR (column order)", { boardSrc: f.boardSrc.replace('<H label="TOUR" /><H label="LOAD" />', '<H label="LOAD" /><H label="TOUR" />') }],
   ];
   let caught = 0;
   for (const [name, patch] of planted) {

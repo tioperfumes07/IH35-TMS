@@ -128,7 +128,12 @@ export function verify(files) {
 
   // (j) ROUND 255 grid — UNIT · TOUR · LOAD · PU DATE · DELIVERY DATE (transit under LOAD).
   // Still never a ParityTable / storageKey. No mandatory 1fr live-signal column.
-  const gridColumnsConst = boardTsx.match(/const GRID_TEMPLATE_COLUMNS\s*=\s*(["'`])([\s\S]*?)\1/);
+  // 443.99 (2026-10-12) — old rule: the string literal must follow `const GRID_TEMPLATE_COLUMNS =` directly.
+  //   new rule: line comments may sit between `=` and the literal; the literal itself is still required.
+  //   why: the owner's 09-30 transit-width change documented the widths in a comment between the two,
+  //   so the guard reported a defined, wired constant as "not defined". Not looser: a missing or
+  //   non-literal value still fails, and the wiring check below is unchanged.
+  const gridColumnsConst = boardTsx.match(/const GRID_TEMPLATE_COLUMNS\s*=\s*(?:\/\/[^\n]*\n\s*)*(["'`])([\s\S]*?)\1/);
   if (!gridColumnsConst) {
     problems.push("(j) TruckLineBoard.tsx must define GRID_TEMPLATE_COLUMNS");
   }

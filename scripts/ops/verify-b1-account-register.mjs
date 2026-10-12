@@ -39,7 +39,20 @@ function main() {
   assertIncludes(page, '"Journal Entry": "journal_entry"', PAGE);
   assertIncludes(page, 'Deposit: "bank_deposit"', PAGE);
   assertIncludes(page, '"Factoring Advance": "factoring_advance"', PAGE);
-  assertIncludes(page, "Bank Categorization", PAGE);
+  // 443.99 class B (CC-2, 2026-10-12) — bank-feed categorize type chip.
+  //   old rule: the register Type filter carries a "Bank Categorization" chip.
+  //   new rule: there is NO "Bank Categorization" chip — a bank-feed categorize surfaces as Expense (money OUT)
+  //             or Deposit (money IN), and both chips stay mapped (Expense -> expense, Deposit -> bank_deposit,
+  //             which the backend expands to bank_categorization money-IN).
+  //   why: BANK-F91152 (ed22a78301, QBO Category parity) removed the third chip and updated its sibling guards
+  //        (verify-account-register-page-uses-paritytable, verify-acct-surf-07-register) but not this ops pack,
+  //        so its selftest failed on correct code. Stricter: the chip coming back now fails.
+  if (/"Bank Categorization"/.test(page)) {
+    throw new Error(`${PAGE}: "Bank Categorization" type chip is back — QBO shows bank-feed categorize as Expense / Deposit (BANK-F91152)`);
+  }
+  assertIncludes(page, '  Expense: "expense",', PAGE);
+  assertIncludes(page, '  "Expense",', PAGE);
+  assertIncludes(page, '  "Deposit",', PAGE);
   assertIncludes(page, "renderExpanded", PAGE);
   assertIncludes(page, "toggleAccountRegisterCleared", PAGE);
   assertIncludes(page, 'data-testid="b1-reconcile-toggle"', PAGE);

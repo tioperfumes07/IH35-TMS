@@ -42,6 +42,11 @@ const PNL_SERVICE = fs.readFileSync(
   path.join(ROOT, "apps/backend/src/accounting/profit-loss.service.ts"),
   "utf8",
 );
+// 443.99: the P&L rules moved into shared modules (ACCT-F413 sections table, ACCT-F2026100601 one
+// ledger-membership rule) and the line drill moved onto the shared AmountLink (Lead #25488). Read them.
+const PNL_SECTIONS = fs.readFileSync(path.join(ROOT, "apps/backend/src/accounting/profit-loss-sections.ts"), "utf8");
+const LEDGER_MEMBERSHIP = fs.readFileSync(path.join(ROOT, "apps/backend/src/accounting/ledger-membership.ts"), "utf8");
+const AMOUNT_LINK = fs.readFileSync(path.join(ROOT, "apps/frontend/src/components/shared/AmountLink.tsx"), "utf8");
 const ACCOUNT_REGISTER = fs.readFileSync(
   path.join(ROOT, "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx"),
   "utf8",
@@ -51,81 +56,131 @@ const ROUTES = fs.readFileSync(
   "utf8",
 );
 
-const errors = [];
+const SOURCES = { COA_LIST, PNL_PAGE, PNL_SERVICE, PNL_SECTIONS, LEDGER_MEMBERSHIP, AMOUNT_LINK, ACCOUNT_REGISTER, ROUTES };
 
-// --- CLICK-THROUGH: CoA list → register ---
-if (!/accounting\/chart-of-accounts\/register\/\$\{row\.id\}/.test(COA_LIST)) {
-  errors.push("CoA list: missing 'View register' deep-link to /accounting/chart-of-accounts/register/${row.id}");
-}
-// --- CLICK-THROUGH: CoA list → P&L report ---
-const coaRunReportLink =
-  /to=["']\/reports\/profit-loss["']/.test(COA_LIST) ||
-  /window\.location\.assign\(["']\/reports\/profit-loss["']\)/.test(COA_LIST);
-if (!coaRunReportLink) {
-  errors.push("CoA list: missing 'Run report' link to /reports/profit-loss for P&L accounts");
-}
-// --- CLICK-THROUGH: CoA list → Edit drawer ---
-if (!/AccountDrawer/.test(COA_LIST) || !/setDrawerMode\(["']edit["']\)/.test(COA_LIST)) {
-  errors.push("CoA list: missing Edit → AccountDrawer wiring");
-}
-// --- CLICK-THROUGH: P&L line → register ---
-if (!/registerHref/.test(PNL_PAGE) || !/accounting\/chart-of-accounts\/register\/\$\{accountId\}/.test(PNL_PAGE)) {
-  errors.push("P&L page: missing registerHref deep-link from report lines to /accounting/chart-of-accounts/register/:accountId");
-}
-if (!/<Link\s+to=\{registerHref\(/.test(PNL_PAGE)) {
-  errors.push("P&L page: lines must use <Link to={registerHref(...)}> for click-through");
-}
-// --- Route manifest has both routes ---
-if (!/accounting\/chart-of-accounts\/register\/:accountId/.test(ROUTES)) {
-  errors.push("Route manifest: missing /accounting/chart-of-accounts/register/:accountId route");
-}
-if (!/path=["']\/reports\/profit-loss["']/.test(ROUTES)) {
-  errors.push("Route manifest: missing /reports/profit-loss route");
-}
-// --- AccountRegisterPage consumes the param ---
-if (!/useParams/.test(ACCOUNT_REGISTER) || !/accountId/.test(ACCOUNT_REGISTER)) {
-  errors.push("AccountRegisterPage: does not consume accountId route param");
+/** Every check, over in-memory sources — --selftest plants regressions through the same function. */
+export function collectErrors({ COA_LIST, PNL_PAGE, PNL_SERVICE, PNL_SECTIONS, LEDGER_MEMBERSHIP, AMOUNT_LINK, ACCOUNT_REGISTER, ROUTES }) {
+  const errors = [];
+
+  // --- CLICK-THROUGH: CoA list → register ---
+  if (!/accounting\/chart-of-accounts\/register\/\$\{row\.id\}/.test(COA_LIST)) {
+    errors.push("CoA list: missing 'View register' deep-link to /accounting/chart-of-accounts/register/${row.id}");
+  }
+  // --- CLICK-THROUGH: CoA list → P&L report ---
+  const coaRunReportLink =
+    /to=["']\/reports\/profit-loss["']/.test(COA_LIST) ||
+    /window\.location\.assign\(["']\/reports\/profit-loss["']\)/.test(COA_LIST);
+  if (!coaRunReportLink) {
+    errors.push("CoA list: missing 'Run report' link to /reports/profit-loss for P&L accounts");
+  }
+  // --- CLICK-THROUGH: CoA list → Edit drawer ---
+  if (!/AccountDrawer/.test(COA_LIST) || !/setDrawerMode\(["']edit["']\)/.test(COA_LIST)) {
+    errors.push("CoA list: missing Edit → AccountDrawer wiring");
+  }
+  // --- CLICK-THROUGH: P&L line → register ---
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: ProfitLossPage defines its own registerHref() and wraps each line in <Link to={registerHref(...)}>.
+  //   new rule: each line's name AND amount are <AmountLink filter={plFilter(line.account_id, applied)}>, plFilter
+  //             targets "register" with the account id, and AmountLink resolves the register target to
+  //             /accounting/chart-of-accounts/register/:accountId.
+  //   why: Lead #25488 moved every report drill onto the shared AmountLink (one route table, basis-aware) and
+  //        deleted the page-local registerHref. The destination is unchanged; a line with no drill still fails.
+  if (!/<AmountLink\s+filter=\{plFilter\(line\.account_id, applied\)\}[\s\S]{0,200}data-testid=\{`pl-name-/.test(PNL_PAGE) ||
+      !/<AmountLink\s+filter=\{plFilter\(line\.account_id, applied\)\}[\s\S]{0,200}data-testid=\{`pl-amount-/.test(PNL_PAGE)) {
+    errors.push("P&L page: each line's name and amount must drill via <AmountLink filter={plFilter(line.account_id, applied)}>");
+  }
+  if (!/target:\s*"register",\s*accountId/.test(PNL_PAGE)) {
+    errors.push("P&L page: plFilter must target the account register");
+  }
+  if (!/\/accounting\/chart-of-accounts\/register\/\$\{filter\.accountId\}/.test(AMOUNT_LINK)) {
+    errors.push("AmountLink: register target must resolve to /accounting/chart-of-accounts/register/:accountId");
+  }
+  // --- Route manifest has both routes ---
+  if (!/accounting\/chart-of-accounts\/register\/:accountId/.test(ROUTES)) {
+    errors.push("Route manifest: missing /accounting/chart-of-accounts/register/:accountId route");
+  }
+  if (!/path=["']\/reports\/profit-loss["']/.test(ROUTES)) {
+    errors.push("Route manifest: missing /reports/profit-loss route");
+  }
+  // --- AccountRegisterPage consumes the param ---
+  if (!/useParams/.test(ACCOUNT_REGISTER) || !/accountId/.test(ACCOUNT_REGISTER)) {
+    errors.push("AccountRegisterPage: does not consume accountId route param");
+  }
+
+  // --- REPORT FIGURES RECONCILE: P&L reads from GL ---
+  if (!/accounting\.journal_entry_postings/.test(PNL_SERVICE)) {
+    errors.push("P&L service: does not read from accounting.journal_entry_postings (the GL source table)");
+  }
+  if (!/accounting\.journal_entries/.test(PNL_SERVICE)) {
+    errors.push("P&L service: does not join accounting.journal_entries (status/date/void filtering)");
+  }
+  if (!/catalogs\.accounts/.test(PNL_SERVICE)) {
+    errors.push("P&L service: does not join catalogs.accounts (account_type classification)");
+  }
+  // LEAD 443.99 class B (2026-10-12) — P&L figure rules.
+  //   old rule: REVENUE_TYPES / COGS_TYPES / OPERATING_EXPENSE_TYPES sets, inline credits-debits arithmetic and
+  //             inline void / sample filters, all inside profit-loss.service.ts.
+  //   new rule: the service places every account through profit-loss-sections.ts (Income + OtherIncome ->
+  //             revenue, credit-positive; CostOfGoodsSold -> cogs and Expense + OtherExpense ->
+  //             operating_expenses, debit-positive; signedSectionAmount = credits - debits when credit-positive,
+  //             else debits - credits) and filters through ledger-membership.ts's one rule (status <> 'voided',
+  //             is_sample_data excluded); the period-close exclusion stays in the service.
+  //   why: ACCT-F413 made one section table for both P&L bases and ACCT-F2026100601 replaced 15 hand-typed
+  //        membership filters with one; the same facts are now asserted where they live, none dropped.
+  if (!/from "\.\/profit-loss-sections\.js"/.test(PNL_SERVICE) || !/signedSectionAmount\(placement, totalDebits, totalCredits\)/.test(PNL_SERVICE)) {
+    errors.push("P&L service: amounts must be signed through profit-loss-sections signedSectionAmount");
+  }
+  for (const [type, section, credit] of [["Income", "revenue", true], ["OtherIncome", "revenue", true], ["CostOfGoodsSold", "cogs", false], ["Expense", "operating_expenses", false], ["OtherExpense", "operating_expenses", false]]) {
+    const re = new RegExp(`\\b${type}: \\{ kind: "profit_loss", section: "${section}", creditPositive: ${credit} \\}`);
+    if (!re.test(PNL_SECTIONS)) errors.push(`P&L sections: ${type} must be ${section} (${credit ? "credits - debits" : "debits - credits"})`);
+  }
+  if (!/return creditPositive \? totalCredits - totalDebits : totalDebits - totalCredits;/.test(PNL_SECTIONS)) {
+    errors.push("P&L sections: revenue must be credits - debits and COGS/expenses debits - credits");
+  }
+  if (!/LEDGER_POSTING_COUNTS_SQL/.test(PNL_SERVICE)) {
+    errors.push("P&L service: must filter through the one ledger-membership rule (LEDGER_POSTING_COUNTS_SQL)");
+  }
+  if (!/status <> 'voided'/.test(LEDGER_MEMBERSHIP)) {
+    errors.push("ledger membership: must exclude voided journal entries (je.status <> 'voided')");
+  }
+  if (!/COALESCE\(\$\{je\}\.is_sample_data, false\) = false/.test(LEDGER_MEMBERSHIP)) {
+    errors.push("ledger membership: must exclude sample data (COALESCE(je.is_sample_data, false) = false)");
+  }
+  if (!/retained_earnings_entry_id/.test(PNL_SERVICE)) {
+    errors.push("P&L service: must exclude period-close retained-earnings entries");
+  }
+  return errors;
 }
 
-// --- REPORT FIGURES RECONCILE: P&L reads from GL ---
-if (!/accounting\.journal_entry_postings/.test(PNL_SERVICE)) {
-  errors.push("P&L service: does not read from accounting.journal_entry_postings (the GL source table)");
-}
-if (!/accounting\.journal_entries/.test(PNL_SERVICE)) {
-  errors.push("P&L service: does not join accounting.journal_entries (status/date/void filtering)");
-}
-if (!/catalogs\.accounts/.test(PNL_SERVICE)) {
-  errors.push("P&L service: does not join catalogs.accounts (account_type classification)");
-}
-// --- Revenue = credits - debits ---
-if (!/REVENUE_TYPES/.test(PNL_SERVICE) || !/Income.*OtherIncome/.test(PNL_SERVICE)) {
-  errors.push("P&L service: REVENUE_TYPES must include Income and OtherIncome");
-}
-if (!/totalCredits\s*-\s*totalDebits/.test(PNL_SERVICE)) {
-  errors.push("P&L service: revenue must be credits - debits");
-}
-// --- COGS = debits - credits ---
-if (!/COGS_TYPES/.test(PNL_SERVICE) || !/CostOfGoodsSold/.test(PNL_SERVICE)) {
-  errors.push("P&L service: COGS_TYPES must include CostOfGoodsSold");
-}
-if (!/totalDebits\s*-\s*totalCredits/.test(PNL_SERVICE)) {
-  errors.push("P&L service: COGS/expenses must be debits - credits");
-}
-// --- Excludes voided, sample, closing entries ---
-if (!/status\s*<>\s*['"]voided['"]/.test(PNL_SERVICE)) {
-  errors.push("P&L service: must exclude voided journal entries (je.status <> 'voided')");
-}
-if (!/is_sample_data/.test(PNL_SERVICE)) {
-  errors.push("P&L service: must exclude sample data (COALESCE(je.is_sample_data, false) = false)");
-}
-if (!/retained_earnings_entry_id/.test(PNL_SERVICE)) {
-  errors.push("P&L service: must exclude period-close retained-earnings entries");
-}
-// --- Operating expenses ---
-if (!/OPERATING_EXPENSE_TYPES/.test(PNL_SERVICE) || !/Expense.*OtherExpense/.test(PNL_SERVICE)) {
-  errors.push("P&L service: OPERATING_EXPENSE_TYPES must include Expense and OtherExpense");
+// --- Selftest --- (443.99: was a no-op that only checked the mutation changed the text; now each plant must
+// be caught by collectErrors, and the real sources must pass.)
+if (process.argv.includes("--selftest")) {
+  const plants = [
+    ["CoA list without register link", { COA_LIST: SOURCES.COA_LIST.replace(/accounting\/chart-of-accounts\/register\/\$\{row\.id\}/g, "/no-register") }],
+    ["P&L service not reading the GL", { PNL_SERVICE: SOURCES.PNL_SERVICE.replace(/accounting\.journal_entry_postings/g, "accounting.other_table") }],
+    ["P&L line amount not drilled", { PNL_PAGE: SOURCES.PNL_PAGE.replace(/data-testid=\{`pl-amount-/g, "data-testid={`pl-plain-") }],
+    ["P&L drill not to the register", { PNL_PAGE: SOURCES.PNL_PAGE.replace(/target:\s*"register",\s*accountId/, 'target: "journal", accountId') }],
+    ["AmountLink register route changed", { AMOUNT_LINK: SOURCES.AMOUNT_LINK.replace("/accounting/chart-of-accounts/register/${filter.accountId}", "/accounting/register?id=${filter.accountId}") }],
+    ["revenue made debit-positive", { PNL_SECTIONS: SOURCES.PNL_SECTIONS.replace('Income: { kind: "profit_loss", section: "revenue", creditPositive: true }', 'Income: { kind: "profit_loss", section: "revenue", creditPositive: false }') }],
+    ["OtherExpense dropped from operating expenses", { PNL_SECTIONS: SOURCES.PNL_SECTIONS.replace('OtherExpense: { kind: "profit_loss", section: "operating_expenses", creditPositive: false }', "OtherExpense: { kind: \"balance_sheet\" }") }],
+    ["sign rule inverted", { PNL_SECTIONS: SOURCES.PNL_SECTIONS.replace("return creditPositive ? totalCredits - totalDebits : totalDebits - totalCredits;", "return totalDebits - totalCredits;") }],
+    ["voided entries counted", { LEDGER_MEMBERSHIP: SOURCES.LEDGER_MEMBERSHIP.replaceAll("status <> 'voided'", "true") }],
+    ["sample data counted", { LEDGER_MEMBERSHIP: SOURCES.LEDGER_MEMBERSHIP.replace("COALESCE(${je}.is_sample_data, false) = false", "true") }],
+    ["service bypasses the membership rule", { PNL_SERVICE: SOURCES.PNL_SERVICE.replaceAll("LEDGER_POSTING_COUNTS_SQL", "TRUE_SQL") }],
+    ["period-close entries counted", { PNL_SERVICE: SOURCES.PNL_SERVICE.replaceAll("retained_earnings_entry_id", "other_id") }],
+  ];
+  let caught = 0;
+  for (const [name, patch] of plants) {
+    if (collectErrors({ ...SOURCES, ...patch }).length > 0) caught += 1;
+    else console.error(`${LABEL} SELFTEST: planted violation escaped — ${name}`);
+  }
+  const clean = collectErrors(SOURCES);
+  if (clean.length) console.error(`${LABEL} SELFTEST: real sources flagged — ${clean.join("; ")}`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${plants.length} planted violations caught`);
+  process.exit(caught === plants.length && clean.length === 0 ? 0 : 1);
 }
 
+const errors = collectErrors(SOURCES);
 if (errors.length > 0) {
   console.error(`${LABEL} FAIL:`);
   for (const e of errors) console.error(`  - ${e}`);
@@ -133,37 +188,3 @@ if (errors.length > 0) {
 }
 
 console.log(`${LABEL} PASS — CoA click-through chain wired (list→register, list→P&L, P&L→register) + P&L figures reconcile to source GL (journal_entry_postings)`);
-
-// --- Selftest ---
-if (process.argv.includes("--selftest")) {
-  const tests = [
-    {
-      name: "CoA list without register link fails",
-      mutate: (s) => s.replace(/accounting\/chart-of-accounts\/register\/\$\{row\.id\}/, "/no-register"),
-      file: "coa",
-    },
-    {
-      name: "P&L service not reading GL fails",
-      mutate: (s) => s.replace(/accounting\.journal_entry_postings/g, "accounting.other_table"),
-      file: "pnl-service",
-    },
-    {
-      name: "P&L page without registerHref fails",
-      mutate: (s) => s.replace(/registerHref/g, "noRegisterHref"),
-      file: "pnl-page",
-    },
-  ];
-  let pass = 0;
-  for (const t of tests) {
-    const src = t.file === "coa" ? COA_LIST : t.file === "pnl-service" ? PNL_SERVICE : PNL_PAGE;
-    const mutated = t.mutate(src);
-    // Quick check: the mutation removes a required pattern
-    if (mutated !== src) {
-      pass++;
-    } else {
-      console.error(`${LABEL} SELFTEST FAIL — ${t.name}: mutation had no effect`);
-      process.exit(1);
-    }
-  }
-  console.log(`${LABEL} SELFTEST PASS — ${pass}/${tests.length} mutations detected`);
-}

@@ -27,10 +27,24 @@ const contracts = [
     (s) => /for \(const load of dedupeLoadsByUnit\(loads\)\)/.test(s),
     (s) => s.replaceAll("for (const load of dedupeLoadsByUnit(loads))", "for (const load of loads)"),
   ],
+  // 443.99 (2026-10-12) — old rule: `active.length > 0 ? active : list`.
+  //   new rule: the cancelled set filters the unit's loads (`!KANBAN_TERMINAL_CANCELLED_STATUSES.has(`)
+  //             and the pool falls back to all loads ONLY when every one is cancelled
+  //             (`notCancelled.length > 0 ? notCancelled : list`).
+  //   why: #23295 (fb5ab557e3, "Kanban threw away a real dispatched leg") renamed `active` to
+  //        `notCancelled` when it stopped collapsing two live legs; the cancelled-never-wins rule is
+  //        unchanged. Not looser: two mutations now (pool ignores the filter; filter drops the negation).
   [
     "a cancelled/abandoned load never wins the unit's card over a real active one",
-    (s) => /KANBAN_TERMINAL_CANCELLED_STATUSES/.test(s) && /active\.length > 0 \? active : list/.test(s),
-    (s) => s.replace("active.length > 0 ? active : list", "list"),
+    (s) =>
+      /const notCancelled = list\.filter\(\(load\) => !KANBAN_TERMINAL_CANCELLED_STATUSES\.has\(/.test(s) &&
+      /notCancelled\.length > 0 \? notCancelled : list/.test(s),
+    (s) => s.replace("notCancelled.length > 0 ? notCancelled : list", "list"),
+  ],
+  [
+    "the cancelled filter keeps the NON-cancelled loads (negation intact)",
+    (s) => /const notCancelled = list\.filter\(\(load\) => !KANBAN_TERMINAL_CANCELLED_STATUSES\.has\(/.test(s),
+    (s) => s.replace("list.filter((load) => !KANBAN_TERMINAL_CANCELLED_STATUSES.has(", "list.filter((load) => KANBAN_TERMINAL_CANCELLED_STATUSES.has("),
   ],
   [
     "a unit with no assigned_unit_id never dedupes against other unassigned loads",
