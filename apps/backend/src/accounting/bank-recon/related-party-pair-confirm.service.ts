@@ -319,6 +319,16 @@ export async function confirmRelatedPartyPair(
       };
     }
 
+    // 443.99: every write below is one unit. A refusal returned after the first write (poster threw, posted:false,
+    // loan document refused) used to return ok:false while withCompanyScope COMMITTED the work already done — a bank
+    // line categorized to the party account with no JE, or a JE with no loan document. Each such return rolls back
+    // to this savepoint first, so a refusal leaves nothing behind (and a poster SQL error no longer poisons the tx).
+    await client.query("SAVEPOINT related_party_pair_confirm");
+    const refuse = async <R>(r: R): Promise<R> => {
+      await client.query("ROLLBACK TO SAVEPOINT related_party_pair_confirm");
+      return r;
+    };
+
     if (!bt.matched_journal_entry_id) {
       await client.query(
         `UPDATE banking.bank_transactions
@@ -350,6 +360,8 @@ export async function confirmRelatedPartyPair(
           bankTransactionId: bankTxId,
         });
       } catch (e) {
+        // The poster may have failed in SQL — roll back to the savepoint before anything else touches the tx.
+        await client.query("ROLLBACK TO SAVEPOINT related_party_pair_confirm");
         return {
           ok: false as const,
           error: "categorize_failed" as const,
@@ -358,12 +370,12 @@ export async function confirmRelatedPartyPair(
       }
       // BankFeedGlResult is { posted: true|false }, never { ok }.
       if (!gl || (gl as { posted?: boolean }).posted !== true) {
-        return {
+        return refuse({
           ok: false as const,
           error: "categorize_failed" as const,
           message: `Bank categorization did not post: ${JSON.stringify(gl)}`,
           detail: gl,
-        };
+        });
       }
     }
 
@@ -390,12 +402,12 @@ export async function confirmRelatedPartyPair(
       actor
     );
     if ("error" in loan) {
-      return {
+      return refuse({
         ok: false as const,
         error: "loan_create_failed" as const,
         message: `createRelatedPartyLoanEntry failed: ${JSON.stringify(loan)}`,
         detail: loan,
-      };
+      });
     }
 
     // 3) Link deposit (pointer only — 0 additional postings).

@@ -650,6 +650,10 @@ export async function sendDraftInvoice(
   // makes it a rule: historical_backfill posts skip enqueue unconditionally.
   if (customerEmail && notify && mode !== "historical_backfill") {
     const total = (Number(notify.total_cents ?? 0) / 100).toFixed(2);
+    // 443.99: the scoped enqueue runs on the SEND's own transaction, so a failed INSERT INTO email.email_queue aborted
+    // it — the audit below then died 25P02 and the whole send threw. The savepoint keeps a failed enqueue from
+    // poisoning the send: roll back to it, then record the failure on the same (healthy) transaction.
+    await client.query("SAVEPOINT invoice_send_enqueue");
     try {
       // R14 (Lead ruling 2026-10-11, CC-3 authorized for this one call): the customer email is queued on the SAME
       // transaction as the send whenever this transaction is scoped to the invoice's company (the queue's RLS), so a
@@ -671,7 +675,9 @@ export async function sendDraftInvoice(
         },
         queuedByUserId: input.userId,
       });
+      await client.query("RELEASE SAVEPOINT invoice_send_enqueue");
     } catch (err) {
+      await client.query("ROLLBACK TO SAVEPOINT invoice_send_enqueue");
       await appendCrudAudit(
         client as never,
         input.userId,
