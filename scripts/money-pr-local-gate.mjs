@@ -76,6 +76,7 @@ const STEPS = [
   // R443.117 9a — QBO provenance must not block native-document GL; real eligibility, period,
   // balance, and idempotency controls remain independently guarded.
   ["verify-native-document-gl-independent-of-qbo", "scripts/verify-native-document-gl-independent-of-qbo.mjs"],
+  ["verify-qbo-origin-bill-payment-writers-post-native-gl", "scripts/verify-qbo-origin-bill-payment-writers-post-native-gl.mjs"],
   ["verify-expense-item-lines", "scripts/verify-expense-item-lines.mjs"],
   ["verify-account-number-hidden-by-default", "scripts/verify-account-number-hidden-by-default.mjs"],
   ["verify-definition-of-done-evidence", "scripts/verify-definition-of-done-evidence.mjs"],

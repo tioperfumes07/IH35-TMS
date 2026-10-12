@@ -713,18 +713,12 @@ export async function postSettlementBillPayment(
           paymentDate: billDate,
           amountCents: alloc.deductionCents,
           paymentMethod: "other",
+          settlementDeductionNoncash: true,
           memo: `${label} — deduction recovery (non-cash), load ${b.load_number ?? b.load_id}`,
         },
         actor.userId
       );
       deductionBpId = dedPayment.id;
-      await scoped(actor, opco, (client) =>
-        client.query(
-          `UPDATE accounting.bill_payments SET settlement_deduction_noncash = true, updated_at = now()
-            WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-          [deductionBpId, opco]
-        )
-      );
     }
 
     // (c) net cash BillPayment from Wells Fargo — DIP + post Dr A/P / Cr DIP.
