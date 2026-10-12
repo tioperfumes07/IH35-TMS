@@ -24,27 +24,50 @@ function walk(dir) {
   return out;
 }
 
+/** Pure: the dead-button violations of one file's source (relPath only labels the finding). */
+export function findDeadButtons(relPath, src) {
+  const out = [];
+  const lines = src.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Flag bare `disabled` attribute on <Button (not disabled={...} which is conditional)
+    if (/<Button\b/.test(line) && /\bdisabled\b/.test(line) && !/disabled=\{/.test(line)) {
+      // Exempt "honest-disabled": has both title= and aria-disabled="true"
+      const chunk = lines.slice(i, Math.min(i + 8, lines.length)).join("\n");
+      const isHonestDisabled = /\btitle\s*=/.test(chunk) && /aria-disabled="true"/.test(chunk);
+      if (!isHonestDisabled) {
+        out.push(
+          `${relPath}:${i + 1} permanently disabled <Button> (dead control, no honest title+aria-disabled): ${line.trim().slice(0, 100)}`
+        );
+      }
+    }
+  }
+  return out;
+}
+
+function runSelftest() {
+  const cases = [
+    ["a conditional disabled={expr} Button passes", findDeadButtons("x.tsx", `<Button disabled={busy}>Save</Button>`).length === 0],
+    ["a Button with no disabled passes", findDeadButtons("x.tsx", `<Button onClick={go}>Go</Button>`).length === 0],
+    ["an honest-disabled Button (title + aria-disabled) passes", findDeadButtons("x.tsx", `<Button disabled title="Needs a match first" aria-disabled="true">Match</Button>`).length === 0],
+    ["a bare disabled Button is flagged", findDeadButtons("x.tsx", `<Button disabled>Export</Button>`).length === 1],
+    ["disabled with title but no aria-disabled is flagged", findDeadButtons("x.tsx", `<Button disabled title="why">Export</Button>`).length === 1],
+    ["disabled with aria-disabled but no title is flagged", findDeadButtons("x.tsx", `<Button disabled aria-disabled="true">Export</Button>`).length === 1],
+  ];
+  for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, ok]) => !ok).length;
+  console.log(bad ? "verify-reports-lists-no-dead-buttons --selftest FAIL" : `verify-reports-lists-no-dead-buttons --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
+if (process.argv.includes("--selftest")) runSelftest();
+
 const violations = [];
 
 for (const dir of SCAN_DIRS) {
   if (!fs.existsSync(dir)) continue;
   for (const file of walk(dir)) {
-    const src = fs.readFileSync(file, "utf8");
-    const lines = src.split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      // Flag bare `disabled` attribute on <Button (not disabled={...} which is conditional)
-      if (/<Button\b/.test(line) && /\bdisabled\b/.test(line) && !/disabled=\{/.test(line)) {
-        // Exempt "honest-disabled": has both title= and aria-disabled="true"
-        const chunk = lines.slice(i, Math.min(i + 8, lines.length)).join("\n");
-        const isHonestDisabled = /\btitle\s*=/.test(chunk) && /aria-disabled="true"/.test(chunk);
-        if (!isHonestDisabled) {
-          violations.push(
-            `${path.relative(ROOT, file)}:${i + 1} permanently disabled <Button> (dead control, no honest title+aria-disabled): ${line.trim().slice(0, 100)}`
-          );
-        }
-      }
-    }
+    violations.push(...findDeadButtons(path.relative(ROOT, file), fs.readFileSync(file, "utf8")));
   }
 }
 
