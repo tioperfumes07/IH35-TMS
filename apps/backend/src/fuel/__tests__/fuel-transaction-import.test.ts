@@ -98,15 +98,20 @@ function makeClient(opts: {
   driverId?: string | null;
   vendorId?: string | null;
   loadId?: string | null;
-  /** When set, the mdata.loads query returns this exact row set (overrides loadId) --
-   * used to simulate an ambiguous stop-window match (>1 candidate load). */
-  loadIds?: string[];
+  /** The load's company trailer the one trailer rule returns with the load (443.110 G7). */
+  trailerId?: string | null;
   insertRowCount?: number;
   captured: Captured[];
 }): DbClient {
   return {
     query: vi.fn(async (sql: string, values?: unknown[]) => {
       opts.captured.push({ sql, values });
+      // 443.110 G7 — the one fuel-to-load rule (fuel-load-at-time.ts): unit lateral, then driver lateral.
+      if (sql.includes("by_unit") && sql.includes("by_driver")) {
+        return opts.loadId
+          ? { rows: [{ load_id: opts.loadId, load_number: "L1", matched_by: "unit", trailer_id: opts.trailerId ?? null, non_owned_trailer_id: null }] }
+          : { rows: [{ load_id: null, load_number: null, matched_by: null, trailer_id: null, non_owned_trailer_id: null }] };
+      }
       if (sql.includes("FROM mdata.units")) {
         return opts.unitId ? { rows: [{ id: opts.unitId }] } : { rows: [] };
       }
@@ -115,10 +120,6 @@ function makeClient(opts: {
       }
       if (sql.includes("FROM mdata.vendors")) {
         return opts.vendorId ? { rows: [{ id: opts.vendorId }] } : { rows: [] };
-      }
-      if (sql.includes("FROM mdata.loads")) {
-        if (opts.loadIds) return { rows: opts.loadIds.map((id) => ({ id })) };
-        return opts.loadId ? { rows: [{ id: opts.loadId }] } : { rows: [] };
       }
       if (sql.includes("INSERT INTO fuel.fuel_transactions")) {
         const rc = opts.insertRowCount ?? 1;
@@ -231,55 +232,38 @@ describe("importFuelCardTransactionsForCompany", () => {
     expect(counts.rows_unlinked_to_load).toBe(0);
   });
 
-  it("does NOT guess a load when the stop-date window matches more than one (ambiguous), flags the G18 gap instead", async () => {
-    // ALWAYSTRACK-PARITY-FUEL-MISLINK-01 regression guard. Two loads (e.g. back-to-back runs by
-    // the same driver a day apart) both satisfy resolveLoadId's ±1-day window -- confirmed live
-    // shape on load 13518/document 5774. The old `ORDER BY ... LIMIT 1` silently picked one;
-    // the fix must leave the fuel row unlinked (load_exemption_reason set), never guess.
+  it("resolves the load through the ONE fuel-to-load rule and carries the load's trailer (443.110 G7)", async () => {
+    // The import used its own ±1-day SCHEDULED window (ignored actual stamps; null on any overlap). It now asks the same
+    // rule the Relay post asks (resolveFuelLoadAtTime -> loadAtTimeSql, driver fallback): overlaps are decided by actual
+    // time inside SQL (proved on real Postgres in fuel-load-at-time.db.test.ts), never by sort order.
     const captured: Captured[] = [];
-    const client = makeClient({
-      unitId: UNIT_ID,
-      driverId: DRIVER_ID,
-      vendorId: null,
-      loadIds: [LOAD_ID, "55555555-5555-4555-8555-555555555555"], // 2 candidates -> ambiguous
-      captured,
-    });
-
+    const TRAILER = "88888888-8888-4888-8888-888888888888";
+    const client = makeClient({ unitId: UNIT_ID, driverId: DRIVER_ID, vendorId: null, loadId: LOAD_ID, trailerId: TRAILER, captured });
     const counts = await importFuelCardTransactionsForCompany(client, COMPANY, parsed);
-
     expect(counts.rows_inserted).toBe(1);
+    const resolver = captured.find((c) => c.sql.includes("by_unit") && c.sql.includes("by_driver"));
+    expect(resolver).toBeTruthy();
+    expect(resolver!.sql).not.toMatch(/interval '1 day'\s*$/m);
+    expect(captured.some((c) => /HAVING MIN\(COALESCE\(s\.scheduled_arrival_at/.test(c.sql))).toBe(false);
+    const v = insertCall(captured).values!;
+    expect(v[2]).toBe(LOAD_ID);
+    expect(v[18]).toBe(TRAILER);
+  });
+
+  it("no load at the fill time -> unlinked with a G18 reason, never a guess", async () => {
+    const captured: Captured[] = [];
+    const client = makeClient({ unitId: UNIT_ID, driverId: DRIVER_ID, vendorId: null, loadId: null, captured });
+    const counts = await importFuelCardTransactionsForCompany(client, COMPANY, parsed);
     expect(counts.rows_unlinked_to_load).toBe(1);
-
-    const ins = insertCall(captured);
-    const v = ins.values!;
-    expect(v[2]).toBeNull(); // no load -- ambiguity is NOT resolved by picking one
-    const reason = v[15] as string;
-    expect(reason).toBeTruthy();
-    expect(reason.length).toBeGreaterThanOrEqual(20);
+    const v = insertCall(captured).values!;
+    expect(v[2]).toBeNull();
+    expect(v[18]).toBeNull();
+    expect((v[15] as string).length).toBeGreaterThanOrEqual(20);
   });
 
-  it("resolveLoadId: returns the single unambiguous candidate directly", async () => {
-    const captured: Captured[] = [];
-    const client = makeClient({ loadIds: [LOAD_ID], captured });
-    const id = await resolveLoadId(client, COMPANY, UNIT_ID, DRIVER_ID, "2026-08-12T00:00:00Z");
-    expect(id).toBe(LOAD_ID);
-  });
-
-  it("resolveLoadId: returns null on zero candidates (unchanged behavior)", async () => {
-    const captured: Captured[] = [];
-    const client = makeClient({ loadIds: [], captured });
-    const id = await resolveLoadId(client, COMPANY, UNIT_ID, DRIVER_ID, "2026-08-12T00:00:00Z");
-    expect(id).toBeNull();
-  });
-
-  it("resolveLoadId: returns null on multiple candidates -- MUTATION check, the old ORDER BY LIMIT 1 behavior must not silently return rows[0] again", async () => {
-    const captured: Captured[] = [];
-    const client = makeClient({
-      loadIds: [LOAD_ID, "66666666-6666-4666-8666-666666666666", "77777777-7777-4777-8777-777777777777"],
-      captured,
-    });
-    const id = await resolveLoadId(client, COMPANY, UNIT_ID, DRIVER_ID, "2026-08-12T00:00:00Z");
-    expect(id).toBeNull();
-    expect(id).not.toBe(LOAD_ID); // guards against reverting to "pick rows[0]"
+  it("resolveLoadId delegates to the one rule: the rule's load, else null", async () => {
+    expect(await resolveLoadId(makeClient({ loadId: LOAD_ID, captured: [] }), COMPANY, UNIT_ID, DRIVER_ID, "2026-08-12T00:00:00Z")).toBe(LOAD_ID);
+    expect(await resolveLoadId(makeClient({ loadId: null, captured: [] }), COMPANY, UNIT_ID, DRIVER_ID, "2026-08-12T00:00:00Z")).toBeNull();
+    expect(await resolveLoadId(makeClient({ loadId: LOAD_ID, captured: [] }), COMPANY, null, null, "2026-08-12T00:00:00Z")).toBeNull();
   });
 });
