@@ -1,10 +1,10 @@
 {
-  "healthzSha": "9438c4d",
-  "generated_at": "2026-10-12T17:15:03.903Z",
+  "healthzSha": "e345db8",
+  "generated_at": "2026-10-12T17:19:01.803Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "9438c4d",
+    "deployedSha": "e345db8",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 26657,
+      "title": "FINDING: ACCT-F443116 LANE: FINANCIAL — reserve migration 202615830700 for 443.116 #2 + (c) before authoring",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 12:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26657",
+      "sha": "0715be0570",
+      "committedAtIso": "2026-10-12T12:15:56-05:00"
+    },
+    {
+      "number": 26660,
+      "title": "FINDING: ACCT-F4431061 LANE: FINANCIAL — settlement close refused on prod: the driver bill header INSERT lacked driver and load",
+      "state": "merged",
+      "mergedAtCt": "10/12/2026, 12:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26660",
+      "sha": "7e79ac5770",
+      "committedAtIso": "2026-10-12T12:15:43-05:00"
+    },
+    {
       "number": 26656,
       "title": "FINDING: CI-BOOKLOAD-TRAILER-FK-01 LANE: claude — main ci red: two Book Load guards demanded the unconditional trailer FK after the trailer choice became required",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26647",
       "sha": "05c031c602",
       "committedAtIso": "2026-10-12T11:27:38-05:00"
-    },
-    {
-      "number": 26646,
-      "title": "chore: claim migration 202615820910 (443.114 AJK-12 fine lock)",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 11:27 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26646",
-      "sha": "966947fd54",
-      "committedAtIso": "2026-10-12T11:27:07-05:00"
-    },
-    {
-      "number": 26644,
-      "title": "FINDING: ACCT-F4431133 LANE: FINANCIAL -- 443.113 DEGH-03 + DEGH-04: check category lines name their item (no account->item guess); a check exists only if it posts",
-      "state": "merged",
-      "mergedAtCt": "10/12/2026, 11:24 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26644",
-      "sha": "43a52f5a89",
-      "committedAtIso": "2026-10-12T11:24:15-05:00"
     }
   ]
 }
