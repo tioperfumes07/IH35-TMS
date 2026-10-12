@@ -62,7 +62,7 @@ function dialogSizeCheck(text) {
   // SETL-F441 / owner: discard is a normal centered dialog box, never a full-page panel.
   assert(/className="fixed inset-0[^"]*\bitems-center\b[^"]*\bjustify-center\b/.test(text),
     "ConfirmDiscardDialog.tsx must center its dialog with items-center justify-center on the outer backdrop.");
-  const inner = text.match(/<div(?:\s|\n)*className="([^"]*rounded-sm[^"]*)"/);
+  const inner = text.match(/<div\s*className="([^"]*rounded-sm[^"]*)"/);
   assert(inner, "ConfirmDiscardDialog.tsx must have a rounded-sm inner dialog container.");
   const innerClass = inner[1];
   assert(/\bw-\[\d+(px|rem)\]/.test(innerClass),
@@ -95,6 +95,12 @@ function check(root = ROOT) {
 }
 
 function selftest() {
+  // Newlines already belong to \s: repeated alternatives must not cause exponential backtracking.
+  dialogSizeCheck('className="fixed inset-0 items-center justify-center" <div' + '\n'.repeat(10000) + 'className="rounded-sm w-[320px]"');
+  let missingContainerFailed = false;
+  try { dialogSizeCheck('className="fixed inset-0 items-center justify-center" <div' + '\n'.repeat(10000) + 'no-class'); }
+  catch { missingContainerFailed = true; }
+  assert(missingContainerFailed, 'missing container must fail even after long whitespace');
   const live = () => {
     try {
       check();

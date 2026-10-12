@@ -65,7 +65,7 @@ export function fileGuardsTable(src, table, readinessHelpers = []) {
   // that throws a typed error carrying 501/503 (the route maps the status) naming the migration.
   const canRefuse =
     /reply\.code\((?:501|503)\)/.test(src) ||
-    /throw\s+new\s+\w+\((?:[^;]|\n)*?,\s*50[13]\s*\)/.test(src);
+    /throw\s+new\s+\w+\([^;]*?,\s*50[13]\s*\)/.test(src);
   return provesExistence && canRefuse;
 }
 
@@ -178,6 +178,11 @@ export const KNOWN_RED = [];
 
 function selftest() {
   let ok = true;
+  const proof = "SELECT to_regclass('maintenance.position_history'); ";
+  if (!fileGuardsTable(proof + 'throw new Error(' + '\n'.repeat(10000) + '"missing", 503)', 'maintenance.position_history') ||
+      fileGuardsTable(proof + 'throw new Error(' + '\n'.repeat(10000) + '"missing")', 'maintenance.position_history')) {
+    throw new Error('multiline refusal must retain its 501/503 requirement without overlapping regex alternatives');
+  }
 
   // The detector must still see every known-red site. A shrinking set means someone fixed one (good
   // — update this list) or the detector silently stopped working (bad). Either way it must be noticed.
