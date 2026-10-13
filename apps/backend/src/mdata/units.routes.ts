@@ -7,6 +7,7 @@ import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { countOpenWorkOrdersForUnit } from "../kpi/canonical-kpis.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { QBO_NATIVE_WRITE_REFUSED } from "../qbo-sync/qbo-native-write-refused.js";
 import {
   resolveDefaultOperatingCompanyId,
   resolveOperatingCompanyId,
@@ -713,6 +714,19 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
       if (!parsedBody.success)
         return sendValidationError(reply, parsedBody.error);
       const b = parsedBody.data;
+      // 443.137 9e last gaps — refuse writing a QuickBooks vendor id onto the native unit row.
+      // qbo_class_id stays writable: it stores the TMS catalogs.accounting_classes id (legacy column
+      // name); the unit profile picker is the only UI writer. EditVehicleModal no longer exposes
+      // free-text QBO Vendor ID / QBO Class ID fields.
+      if ("qbo_vendor_id" in b) {
+        return reply.code(409).send({
+          error: QBO_NATIVE_WRITE_REFUSED,
+          message:
+            `${QBO_NATIVE_WRITE_REFUSED}: PATCH /api/v1/mdata/units/:id would write qbo_vendor_id ` +
+            `onto mdata.units from QuickBooks. QuickBooks is a read-only archive — set the TMS ` +
+            `asset class on the unit profile (qbo_class_id = catalogs.accounting_classes id).`,
+        });
+      }
       // A fleet status transition is the canonical operational-state write. Keep the legacy
       // dispatch guard flag in lockstep so Change Status cannot render OutOfService while
       // dispatch and Program probes still treat the unit as available.

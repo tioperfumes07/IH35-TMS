@@ -1076,6 +1076,20 @@ export function getDriverApVendor(driverId: string, operatingCompanyId: string) 
   );
 }
 
+/**
+ * 443.137 9e last gaps — atomic native A/P payee relink (one transaction).
+ * Never writes mdata.drivers.qbo_vendor_id. vendorId null clears the link.
+ */
+export function putDriverApVendor(driverId: string, operatingCompanyId: string, vendorId: string | null) {
+  return apiRequest<{ vendor: DriverApVendorLink | null; operating_company_id?: string; driver_id?: string }>(
+    `/api/v1/mdata/drivers/${encodeURIComponent(driverId)}/ap-vendor`,
+    {
+      method: "PUT",
+      body: { operating_company_id: operatingCompanyId, vendor_id: vendorId },
+    }
+  );
+}
+
 export function listDriverQualifications(driverId: string, operatingCompanyId: string, includeInactive?: boolean) {
   const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (includeInactive) query.set("include_inactive", "true");
