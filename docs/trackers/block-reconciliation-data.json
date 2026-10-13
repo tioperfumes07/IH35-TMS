@@ -1,6 +1,6 @@
 {
  "date": "2026-10-13",
- "generated_at_iso": "2026-10-13T06:55:33.545Z",
+ "generated_at_iso": "2026-10-13T12:49:15.422Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 26748,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-13T06:56:16Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 26747,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-13T01:15:52Z",
@@ -17330,12 +17336,6 @@
    "title": "Cursor- BANK-F91196 InlineUnit/Trailer/Accessorial slate → house",
    "mergedAt": "2026-10-09T10:45:33Z",
    "branch": "cursor/bank-f91196-next-leftover-c89b"
-  },
-  {
-   "number": 26131,
-   "title": "Cursor- BANK-F91195 KpiStatCard/EntityLink/Freshness slate → house",
-   "mergedAt": "2026-10-09T10:41:05Z",
-   "branch": "cursor/bank-f91195-next-leftover-c89b"
   }
  ],
  "merged_pr_total": 3000,
