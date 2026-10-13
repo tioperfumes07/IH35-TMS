@@ -87,18 +87,18 @@ export function RelatedPartyPairSuggestionsPanel({ companyId }: Props) {
                 </p>
               ) : null}
               {confirmMut.isSuccess && confirmMut.data.related_party_loan_id ? (
-                <p className="mb-2 text-xs text-[#16A34A]">
+                <p className="mb-2 text-xs text-slate-700">
                   Confirmed{" "}
                   <Link
                     to={`/accounting/loans-advances?loan_id=${confirmMut.data.related_party_loan_id}`}
-                    className="font-medium text-[#16A34A] underline hover:text-[#15803D]"
+                    className="font-medium text-slate-700 underline hover:text-slate-900"
                   >
                     {confirmMut.data.related_party_loan_display_id}
                   </Link>{" "}
                   — 1 transfer, 0 duplicate postings.
                 </p>
               ) : confirmMut.isSuccess ? (
-                <p className="mb-2 text-xs text-[#16A34A]">
+                <p className="mb-2 text-xs text-slate-700">
                   Confirmed — 1 transfer, 0 duplicate postings.
                 </p>
               ) : null}
