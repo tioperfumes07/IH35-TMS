@@ -224,3 +224,266 @@ export async function createAndPostBankLineExpenseOnClient(
     posting_batch_id: (posting as { posting_batch_id?: string | null }).posting_batch_id ?? null,
   };
 }
+
+/**
+ * DEGH-02 / G6 adopt — a legacy bare bank_categorization JE that already debited an expense account
+ * gets an expense DOCUMENT that ADOPTS that JE (one JE, never two). Same shape as fuel's
+ * adoptRelayFillExpenseDocument: INSERT expense + line pointing at the live JE, stamp matched_expense_id.
+ * Never re-posts. The caller's itemId must already be resolved (preferred name / create-if-missing is
+ * the backfill's job — resolveExpenseItemForAccount still refuses ambiguous / empty accounts).
+ */
+export type AdoptBankCategorizationExpenseInput = {
+  operatingCompanyId: string;
+  bankTransactionId: string;
+  itemId: string;
+  /** Optional override when the bank line's description is empty. */
+  memo?: string | null;
+};
+
+export type AdoptBankCategorizationExpenseResult =
+  | { outcome: "created"; expense_id: string; journal_entry_id: string; expense_number: string }
+  | { outcome: "already_exists"; expense_id: string; journal_entry_id: string };
+
+export async function adoptBankCategorizationExpenseDocument(
+  client: Queryable,
+  input: AdoptBankCategorizationExpenseInput,
+  actor: { userId: string }
+): Promise<AdoptBankCategorizationExpenseResult> {
+  const company = input.operatingCompanyId;
+
+  const lineRes = await client.query<{
+    transaction_date: string;
+    description: string | null;
+    categorization_memo: string | null;
+    vendor_id: string | null;
+    load_id: string | null;
+    unit_id: string | null;
+    trailer_id: string | null;
+    driver_id: string | null;
+    amount_cents: string;
+    matched_je: string | null;
+    matched_expense: string | null;
+  }>(
+    `SELECT bt.transaction_date::text AS transaction_date, bt.description, bt.categorization_memo,
+            bt.categorization_vendor_id::text AS vendor_id, bt.categorization_load_id::text AS load_id,
+            bt.categorization_unit_id::text AS unit_id, bt.categorization_trailer_id::text AS trailer_id,
+            bt.categorization_driver_id::text AS driver_id, bt.amount_cents::text AS amount_cents,
+            bt.matched_journal_entry_id::text AS matched_je, bt.matched_expense_id::text AS matched_expense
+       FROM banking.bank_transactions bt
+      WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid AND bt.voided_at IS NULL
+      LIMIT 1`,
+    [input.bankTransactionId, company]
+  );
+  const line = lineRes.rows[0];
+  if (!line) throw new BankLineExpenseError("expense_insert_failed", `Bank line ${input.bankTransactionId} not found for this company.`);
+  if (!line.matched_je) {
+    throw new BankLineExpenseError("expense_insert_failed", `Bank line ${input.bankTransactionId} has no matched journal entry to adopt.`);
+  }
+
+  if (line.matched_expense) {
+    return { outcome: "already_exists", expense_id: line.matched_expense, journal_entry_id: line.matched_je };
+  }
+  const byJe = await client.query<{ id: string }>(
+    `SELECT id::text FROM accounting.expenses
+      WHERE operating_company_id = $1::uuid AND journal_entry_id = $2::uuid AND voided_at IS NULL LIMIT 1`,
+    [company, line.matched_je]
+  );
+  if (byJe.rows[0]) {
+    await client.query(
+      `UPDATE banking.bank_transactions
+          SET matched_expense_id = $1::uuid, review_state = 'matched', resolution_kind = COALESCE(resolution_kind, 'added'),
+              reviewed_at = COALESCE(reviewed_at, now()), updated_at = now()
+        WHERE id = $2::uuid AND operating_company_id = $3::uuid AND matched_expense_id IS NULL`,
+      [byJe.rows[0].id, input.bankTransactionId, company]
+    );
+    return { outcome: "already_exists", expense_id: byJe.rows[0].id, journal_entry_id: line.matched_je };
+  }
+  const bySource = await client.query<{ id: string; je: string | null }>(
+    `SELECT id::text, journal_entry_id::text AS je FROM accounting.expenses
+      WHERE operating_company_id = $1::uuid AND source_bank_transaction_id = $2::uuid AND voided_at IS NULL LIMIT 1`,
+    [company, input.bankTransactionId]
+  );
+  if (bySource.rows[0]) {
+    await client.query(
+      `UPDATE banking.bank_transactions
+          SET matched_expense_id = $1::uuid, review_state = 'matched', resolution_kind = COALESCE(resolution_kind, 'added'),
+              reviewed_at = COALESCE(reviewed_at, now()), updated_at = now()
+        WHERE id = $2::uuid AND operating_company_id = $3::uuid AND matched_expense_id IS NULL`,
+      [bySource.rows[0].id, input.bankTransactionId, company]
+    );
+    return {
+      outcome: "already_exists",
+      expense_id: bySource.rows[0].id,
+      journal_entry_id: bySource.rows[0].je ?? line.matched_je,
+    };
+  }
+
+  // Live bank_categorization legs of this JE for this bank line — refuse if not exactly one expense debit + one credit.
+  const legs = await client.query<{
+    account_id: string;
+    debit_or_credit: string;
+    amount_cents: string;
+    account_type: string;
+    account_number: string | null;
+    account_name: string | null;
+  }>(
+    `SELECT p.account_id::text, p.debit_or_credit, p.amount_cents::text,
+            a.account_type, a.account_number, a.account_name
+       FROM accounting.journal_entry_postings p
+       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+       JOIN catalogs.accounts a ON a.id = p.account_id
+      WHERE p.journal_entry_uuid = $1::uuid AND p.operating_company_id = $2::uuid
+        AND p.source_transaction_type = 'bank_categorization'
+        AND p.source_transaction_id::text = $3
+        AND je.status = 'posted' AND je.voided_at IS NULL
+        AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
+      ORDER BY p.line_sequence`,
+    [line.matched_je, company, input.bankTransactionId]
+  );
+  const expenseDebits = legs.rows.filter(
+    (l) => l.debit_or_credit === "debit" && ["Expense", "CostOfGoodsSold", "OtherExpense"].includes(l.account_type)
+  );
+  const credits = legs.rows.filter((l) => l.debit_or_credit === "credit");
+  if (expenseDebits.length !== 1 || credits.length !== 1) {
+    throw new BankLineExpenseError(
+      "expense_insert_failed",
+      `Journal entry ${line.matched_je} is not one live bank_categorization expense posting of line ${input.bankTransactionId} (expense debits ${expenseDebits.length}, credits ${credits.length}).`
+    );
+  }
+  const debit = expenseDebits[0]!;
+  const credit = credits[0]!;
+  const totalCents = Math.round(Number(debit.amount_cents));
+  if (totalCents !== Math.round(Number(credit.amount_cents)) || totalCents <= 0) {
+    throw new BankLineExpenseError(
+      "expense_insert_failed",
+      `Journal entry ${line.matched_je} does not foot (debit ${debit.amount_cents} vs credit ${credit.amount_cents}).`
+    );
+  }
+
+  // Confirm the caller's item is this company's and active (never invent one here).
+  await resolveExpenseItemForAccount(client, {
+    operatingCompanyId: company,
+    accountId: debit.account_id,
+    explicitItemId: input.itemId,
+    accountLabel: [debit.account_number, debit.account_name].filter(Boolean).join(" "),
+  });
+
+  const txnDate = line.transaction_date;
+  const description =
+    (input.memo ?? "").trim() ||
+    (line.categorization_memo ?? "").trim() ||
+    (line.description ?? "").trim() ||
+    "Bank categorization";
+  const memo = `${description.slice(0, 400)} — document for journal entry ${line.matched_je} (G6: one JE, the document adopts it)`;
+
+  let expenseNumber: string;
+  let loadAttribution: { number: string; seq: number; loadNumber: string } | null = null;
+  if (line.load_id) {
+    loadAttribution = await generateExpenseNumber(client as never, line.load_id, company);
+    expenseNumber = loadAttribution.number;
+  } else {
+    expenseNumber = await nextExpenseDisplayId(client as never, company, new Date(`${txnDate}T00:00:00.000Z`));
+  }
+
+  const inserted = await client.query<{ id: string }>(
+    `INSERT INTO accounting.expenses (
+        operating_company_id, status, posting_status, transaction_date, total_amount_cents,
+        memo, expense_number, vendor_uuid, payment_account_uuid,
+        is_sample_data, is_company_expense, is_reimbursable,
+        source_bank_transaction_id, load_id, unit_id, trailer_id, driver_uuid,
+        journal_entry_id, posted_at,
+        created_by_user_id, updated_by_user_id
+      ) VALUES (
+        $1::uuid, 'posted', 'posted', $2::date, $3::bigint,
+        $4, $5, $6::uuid, $7::uuid,
+        false, true, false,
+        $8::uuid, $9::uuid, $10::uuid, $11::uuid, $12::uuid,
+        $13::uuid, now(),
+        $14::uuid, $14::uuid
+      )
+      RETURNING id::text AS id`,
+    [
+      company,
+      txnDate,
+      totalCents,
+      memo.slice(0, 500),
+      expenseNumber,
+      line.vendor_id,
+      credit.account_id,
+      input.bankTransactionId,
+      line.load_id,
+      line.unit_id,
+      line.trailer_id,
+      line.driver_id,
+      line.matched_je,
+      actor.userId,
+    ]
+  );
+  const expenseId = inserted.rows[0]?.id;
+  if (!expenseId) throw new BankLineExpenseError("expense_insert_failed", "The adopting expense could not be created.");
+
+  if (loadAttribution && line.load_id) {
+    await insertExpenseLoadLink(client as never, {
+      operatingCompanyId: company,
+      expenseId,
+      loadId: line.load_id,
+      loadNumber: loadAttribution.loadNumber,
+      seq: loadAttribution.seq,
+      expenseNumber: loadAttribution.number,
+      method: "user_assigned",
+      confidence: "high",
+      reason: "Adopted bank-categorization expense attributed to its tagged load",
+      userId: actor.userId,
+    });
+  }
+
+  const accountLabel = [debit.account_number, debit.account_name].filter(Boolean).join(" ") || null;
+  const loadExemptionReason = resolveLineLoadExemption({
+    loadId: line.load_id,
+    reason: null,
+    accountLabel,
+    context: `bank line ${txnDate} — adopted categorization`,
+  });
+
+  await client.query(
+    `INSERT INTO accounting.expense_lines (
+        operating_company_id, expense_id, line_sequence, amount, amount_cents,
+        description, load_required, expense_account_uuid, item_id,
+        quantity, rate_cents, unit_of_measure,
+        load_id, unit_id, trailer_id, driver_id, load_exemption_reason
+      ) VALUES (
+        $1::uuid, $2::uuid, 1, $3::numeric, $4::bigint,
+        $5, false, $6::uuid, $7::uuid,
+        1, $4::bigint, 'each',
+        $8::uuid, $9::uuid, $10::uuid, $11::uuid, $12
+      )`,
+    [
+      company,
+      expenseId,
+      totalCents / 100,
+      totalCents,
+      description.slice(0, 500),
+      debit.account_id,
+      input.itemId,
+      line.load_id,
+      line.unit_id,
+      line.trailer_id,
+      line.driver_id,
+      loadExemptionReason,
+    ]
+  );
+
+  await client.query(
+    `UPDATE banking.bank_transactions
+        SET matched_expense_id = $1::uuid,
+            matched_journal_entry_id = COALESCE(matched_journal_entry_id, $2::uuid),
+            review_state = 'matched',
+            resolution_kind = COALESCE(resolution_kind, 'added'),
+            reviewed_at = COALESCE(reviewed_at, now()),
+            updated_at = now()
+      WHERE id = $3::uuid AND operating_company_id = $4::uuid AND matched_expense_id IS NULL`,
+    [expenseId, line.matched_je, input.bankTransactionId, company]
+  );
+
+  return { outcome: "created", expense_id: expenseId, journal_entry_id: line.matched_je, expense_number: expenseNumber };
+}

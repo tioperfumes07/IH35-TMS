@@ -18,6 +18,7 @@ import { stableProviderFailureReason, geocodeAddressWithEvidence } from "./stop-
 import { matchSamsaraAddressForStop, normName } from "./samsara-stop-match.js";
 import { isGooglePlacesConfigured, isGooglePlacesEnabled, searchAddress, type AddressResult } from "../integrations/google/google-places-client.js";
 import { ensureSamsaraAddressLocation, parseFormattedAddress } from "../integrations/samsara/geofences/address-import.service.js";
+import { bindLoadToGeofences } from "../dispatch/geofences/load-geofence-binding.service.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 type StopRow = {
@@ -242,6 +243,14 @@ export async function geocodeStopsWithClient(
   // (dedupe key samsara.create_geofence:<fence id>, the same key and payload the AUTH-431 pushes used); a fence already in
   // Samsara or imported from it is never re-sent.
   if (touched.length) await queueStopFencesToSamsara(client, actorId, companyId, touched);
+  // G11 / 443.129 leftover — location_ref fences above are not the load-{id}-stop-{seq} fences the
+  // detector reads. bindLoadToGeofences runs at booking + update-load, but the geocode pass (cron /
+  // backfill / post-book) used to skip it, leaving fenceable stops with coords and no stop-label
+  // fence. Idempotent: unchanged centers are left alone.
+  const loadsToBind = [...new Set(stops.map((s) => s.load_id).filter(Boolean))];
+  for (const lid of loadsToBind) {
+    await bindLoadToGeofences(client, companyId, lid);
+  }
   return { stops_checked: stops.length, stops_geocoded: geocoded, locations_linked: locations, geofences_created: fences, rooftop, locality, failures, samsara_matched: samsara, zip_center_listed: listed, street_from_location: streetFromLocation, street_from_place: streetFromPlace };
 
   /**

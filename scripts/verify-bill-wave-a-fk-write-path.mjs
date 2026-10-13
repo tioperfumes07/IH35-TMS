@@ -54,7 +54,13 @@ export function checkWritePath(text) {
   billsInserts.forEach((stmt, i) => {
     if (!/\bunit_id\b/.test(stmt)) problems.push(`bills.service.ts variant ${i + 1}: unit_id is no longer bound in the INSERT`);
     if (!/\bmdata_vendor_id\b/.test(stmt)) problems.push(`bills.service.ts variant ${i + 1}: mdata_vendor_id is no longer bound in the INSERT`);
+    // DEGH-05: trailer rides INSERT (BEFORE INSERT refuse). Both columns bound; one or both may be NULL.
+    if (!/\btrailer_id\b/.test(stmt)) problems.push(`bills.service.ts variant ${i + 1}: trailer_id is no longer bound in the INSERT (DEGH-05)`);
+    if (!/\bnon_owned_trailer_id\b/.test(stmt)) problems.push(`bills.service.ts variant ${i + 1}: non_owned_trailer_id is no longer bound in the INSERT (DEGH-05)`);
   });
+  if (!/resolveDriverBillTrailerFromLoad/.test(text)) {
+    problems.push("bills.service.ts: createBill no longer resolves the load's trailer before INSERT (resolveDriverBillTrailerFromLoad)");
+  }
   lineInserts.forEach((stmt, i) => {
     if (!/\bload_id\b/.test(stmt)) problems.push(`bills.service.ts line variant ${i + 1}: load_id is no longer bound in the INSERT`);
   });
@@ -101,8 +107,10 @@ if (process.argv.includes("--selftest")) {
   ex("real write path passes", checkWritePath(src).problems.length === 0);
   ex("a bills variant dropping unit_id is caught", checkWritePath(src.replace(/(INSERT INTO accounting\.bills\s*\([^)]*?)\bunit_id\b,?/, "$1")).problems.some((p) => /unit_id/.test(p)));
   ex("a bills variant dropping mdata_vendor_id is caught", checkWritePath(src.replace(/(INSERT INTO accounting\.bills\s*\([^)]*?)\bmdata_vendor_id\b,?/, "$1")).problems.some((p) => /mdata_vendor_id/.test(p)));
+  ex("a bills variant dropping trailer_id is caught", checkWritePath(src.replace(/(INSERT INTO accounting\.bills\s*\([^)]*?)\btrailer_id\b,?/, "$1")).problems.some((p) => /trailer_id/.test(p)));
+  ex("dropping resolveDriverBillTrailerFromLoad is caught", checkWritePath(src.replaceAll("resolveDriverBillTrailerFromLoad", "noop")).problems.some((p) => /resolveDriverBillTrailerFromLoad/.test(p)));
   ex("a line variant dropping load_id is caught", checkWritePath(src.replace(/(INSERT INTO accounting\.bill_lines\s*\([^)]*?)\bload_id\b,?/, "$1")).problems.some((p) => /load_id/.test(p)));
-  ex("write path removed is caught", checkWritePath("export {}").problems.length === 2);
+  ex("write path removed is caught", checkWritePath("export {}").problems.length >= 2);
   ex("no live bills is not a pass", liveVerdict(0, 0) !== null);
   ex("live bills with none linked is not a pass", liveVerdict(146, 0) !== null);
   ex("a linked live bill passes", liveVerdict(146, 146) === null);
@@ -114,7 +122,7 @@ if (process.argv.includes("--selftest")) {
   ex("a helper off the one trailer rule is caught", checkTrailerWriters(writers, helper.replaceAll("loadNonOwnedTrailerSql", "x")).length > 0);
   ex("an unstamped derivable trailer fails", trailerVerdict(3) !== null);
   ex("no unstamped derivable trailer passes", trailerVerdict(0) === null);
-  console.log(ok ? `[${LABEL}] --selftest PASS (14/14)` : `[${LABEL}] --selftest FAIL`);
+  console.log(ok ? `[${LABEL}] --selftest PASS (16/16)` : `[${LABEL}] --selftest FAIL`);
   process.exit(ok ? 0 : 1);
 }
 

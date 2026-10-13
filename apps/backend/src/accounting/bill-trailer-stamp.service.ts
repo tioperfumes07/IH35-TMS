@@ -271,12 +271,14 @@ export async function stampDriverBillTrailersFromLoads(
 }
 
 /**
- * Forward path (443.105 item 1): stamp ONE just-created per-load driver bill with its load's trailer, in the writer's own
- * transaction, from the same rule as the back-stamp. Company trailer -> bills.trailer_id + its load lines' equipment_id;
- * customer trailer -> bills.non_owned_trailer_id. Only where NULL; metadata only. Returns the kind stamped (or null when
- * the load has no recorded trailer).
+ * DEGH-05 / 443.131 — THE trailer for a load-born driver bill BEFORE INSERT. Same rule as the back-stamp
+ * (load-trailer.sql.ts). createBill puts these on the INSERT row (BEFORE INSERT refuse); stampNewDriverBillTrailerFromLoad
+ * then stamps company-trailer equipment_id on the load lines. Never both kinds.
  */
-export async function stampNewDriverBillTrailerFromLoad(client: Queryable, input: { operatingCompanyId: string; billId: string; loadId: string }): Promise<TrailerKind | null> {
+export async function resolveDriverBillTrailerFromLoad(
+  client: Queryable,
+  input: { operatingCompanyId: string; loadId: string }
+): Promise<{ kind: TrailerKind | null; companyTrailerId: string | null; nonOwnedTrailerId: string | null }> {
   const r = await client.query<{ company_trailer_id: string | null; non_owned_trailer_id: string | null }>(
     `SELECT ${sameEntityLoadCompanyTrailerSql("$2::uuid", "$1::uuid")}::text AS company_trailer_id,
             ${loadNonOwnedTrailerSql("$2::uuid", "$1::uuid")}::text AS non_owned_trailer_id`,
@@ -284,23 +286,40 @@ export async function stampNewDriverBillTrailerFromLoad(client: Queryable, input
   );
   const row = r.rows[0];
   if (row?.company_trailer_id) {
+    return { kind: "company", companyTrailerId: row.company_trailer_id, nonOwnedTrailerId: null };
+  }
+  if (row?.non_owned_trailer_id) {
+    return { kind: "non_owned", companyTrailerId: null, nonOwnedTrailerId: row.non_owned_trailer_id };
+  }
+  return { kind: null, companyTrailerId: null, nonOwnedTrailerId: null };
+}
+
+/**
+ * Forward path (443.105 item 1): after createBill INSERT (which already carries trailer_id / non_owned_trailer_id from
+ * resolveDriverBillTrailerFromLoad), stamp company-trailer equipment_id on the load lines and backfill the header only
+ * when still NULL. Customer trailer lives on the header only. Returns the kind stamped (or null when the load has no
+ * recorded trailer).
+ */
+export async function stampNewDriverBillTrailerFromLoad(client: Queryable, input: { operatingCompanyId: string; billId: string; loadId: string }): Promise<TrailerKind | null> {
+  const resolved = await resolveDriverBillTrailerFromLoad(client, input);
+  if (resolved.companyTrailerId) {
     await client.query(
       `UPDATE accounting.bills SET trailer_id = $3::uuid
         WHERE id = $1::uuid AND operating_company_id = $2::uuid AND trailer_id IS NULL AND non_owned_trailer_id IS NULL`,
-      [input.billId, input.operatingCompanyId, row.company_trailer_id]
+      [input.billId, input.operatingCompanyId, resolved.companyTrailerId]
     );
     await client.query(
       `UPDATE accounting.bill_lines SET equipment_id = $4::uuid
         WHERE bill_id = $1::uuid AND operating_company_id = $2::uuid AND load_id = $3::uuid AND equipment_id IS NULL`,
-      [input.billId, input.operatingCompanyId, input.loadId, row.company_trailer_id]
+      [input.billId, input.operatingCompanyId, input.loadId, resolved.companyTrailerId]
     );
     return "company";
   }
-  if (row?.non_owned_trailer_id) {
+  if (resolved.nonOwnedTrailerId) {
     await client.query(
       `UPDATE accounting.bills SET non_owned_trailer_id = $3::uuid
         WHERE id = $1::uuid AND operating_company_id = $2::uuid AND trailer_id IS NULL AND non_owned_trailer_id IS NULL`,
-      [input.billId, input.operatingCompanyId, row.non_owned_trailer_id]
+      [input.billId, input.operatingCompanyId, resolved.nonOwnedTrailerId]
     );
     return "non_owned";
   }

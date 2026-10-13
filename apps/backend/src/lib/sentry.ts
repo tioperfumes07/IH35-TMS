@@ -24,13 +24,13 @@ export function initBackendSentry(): void {
     dataCollection: {
       userInfo: false,
       cookies: false,
-      httpHeaders: false,
+      // SDK types require request/response CollectBehavior objects (boolean is not allowed).
+      httpHeaders: { request: false, response: false },
       httpBodies: [],
       urlQueryParams: false,
       graphQL: { document: false, variables: false },
       genAI: { inputs: false, outputs: false },
       databaseQueryData: false,
-      queues: false,
       stackFrameVariables: false,
     },
     sampleRate: 1.0,
