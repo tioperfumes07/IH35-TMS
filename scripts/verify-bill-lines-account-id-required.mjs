@@ -15,6 +15,41 @@ function fail(messages) {
 
 const failures = [];
 
+// Item-account resolution replaced description/category inference in #26736.
+// Assert the actual bill-copy data flow, not a retired function's spelling.
+function billCopyFailures(source) {
+  const copy = source.split('async function copyToAccountingLines(')[1]?.split('export async function autoCreateBillFromWO(')[0] ?? '';
+  const rules = [
+    ['i.default_expense_account_id::text AS item_account_id', 'account must come from the catalog item'],
+    ['i.operating_company_id = $2::uuid', 'item lookup must remain company scoped'],
+    ['if (!row.item_id || !row.item_account_id)', 'missing item/account must be refused'],
+    ['throw new WorkOrderLineItemError(', 'missing item must throw'],
+    ['account_id: row.item_account_id', 'resolved account must be the item account'],
+    ['category_kind, category_code, account_id, item_id, quantity, rate_cents, unit_of_measure', 'bill insert must carry account and item contract'],
+    ['resolution.account_id,\n              row.item_id,', 'insert values must carry the resolved account and item'],
+  ];
+  return rules.filter(([text]) => !copy.includes(text)).map(([, message]) => message);
+}
+
+if (process.argv.includes('--selftest')) {
+  const source = fs.readFileSync(twoSectionPath, 'utf8');
+  if (billCopyFailures(source).length) fail(billCopyFailures(source));
+  const mutations = [
+    'i.default_expense_account_id::text AS item_account_id',
+    'i.operating_company_id = $2::uuid',
+    'if (!row.item_id || !row.item_account_id)',
+    'throw new WorkOrderLineItemError(',
+    'account_id: row.item_account_id',
+    'category_kind, category_code, account_id, item_id, quantity, rate_cents, unit_of_measure',
+    'resolution.account_id,\n              row.item_id,',
+  ];
+  for (const token of mutations) {
+    if (!billCopyFailures(source.replaceAll(token, 'BROKEN')).length) fail([`mutation escaped: ${token}`]);
+  }
+  console.log('verify:bill-lines-account-id-required selftest — 7/7 mutations rejected');
+  process.exit(0);
+}
+
 if (!fs.existsSync(resolverPath)) {
   failures.push("missing apps/backend/src/bills/bill-line-account-resolution.service.ts");
 } else {
@@ -31,9 +66,7 @@ if (!fs.existsSync(twoSectionPath)) {
   failures.push("missing apps/backend/src/maintenance/two-section-service.ts");
 } else {
   const source = fs.readFileSync(twoSectionPath, "utf8");
-  if (!/resolveBillLineAccountId\(/.test(source)) {
-    failures.push("two-section bill line copy must resolve account_id via bill-line resolver service");
-  }
+  failures.push(...billCopyFailures(source));
   if (!/category_kind,\s*category_code,\s*account_id/.test(source)) {
     failures.push("accounting.bill_lines inserts must include category_kind, category_code, account_id");
   }
