@@ -18,8 +18,12 @@
  *
  * Usage:
  *   DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-d6-backfill-posting-entity.ts            (dry run)
- *   DATABASE_URL=<fork> npx tsx scripts/ops/2026-10-11-cc2-d6-backfill-posting-entity.ts --rehearse (write, check, roll back)
- *   DATABASE_URL=<prod> OWNER_AUTH_ID=AUTH-406 npx tsx scripts/ops/2026-10-11-cc2-d6-backfill-posting-entity.ts --apply
+ *   DATABASE_URL=<fork> npx tsx scripts/ops/2026-10-11-cc2-d6-backfill-posting-entity.ts --rehearse [--since=ISO]
+ *   DATABASE_URL=<prod> OWNER_AUTH_ID=AUTH-449 npx tsx scripts/ops/2026-10-11-cc2-d6-backfill-posting-entity.ts --apply --since=2026-10-07T00:00:00Z
+ *
+ * AUTH-406 (CONSUMED) covered Creator posts since 2026-10-11T00:50Z. AUTH-449 covers the residual
+ * I-02 window (EXP-2026-00001..00005 bank expenses posted 2026-10-07, entity NULL despite vendor).
+ * Both require operating_company_id on the Row passed to resolvePostingSourceEntity (I-02 OCI fix).
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -39,10 +43,11 @@ const sinceArg = process.argv.find((a) => a.startsWith("--since="));
 const CREATOR_SOURCES = ["invoice", "bill", "bill_payment", "expense", "driver_settlement", "driver_advance"];
 const since = sinceArg ? sinceArg.slice("--since=".length) : "2026-10-11T00:50:00Z";
 
+const APPLY_AUTHS = new Set(["AUTH-449"]);
 if (apply) {
   const auth = process.env.OWNER_AUTH_ID ?? "";
-  if (auth !== "AUTH-406") {
-    console.error(`FAIL: --apply requires OWNER_AUTH_ID=AUTH-406 (got ${JSON.stringify(auth || null)}).`);
+  if (!APPLY_AUTHS.has(auth)) {
+    console.error(`FAIL: --apply requires OWNER_AUTH_ID in {${[...APPLY_AUTHS].join(", ")}} (got ${JSON.stringify(auth || null)}).`);
     process.exit(1);
   }
   execFileSync(process.execPath, [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), auth], { stdio: "inherit" });
@@ -50,6 +55,7 @@ if (apply) {
 
 type Row = {
   id: string;
+  operating_company_id: string;
   source_transaction_type: string | null;
   source_transaction_id: string | null;
   reversal_of_line_id: string | null;
@@ -76,8 +82,12 @@ async function main() {
     );
   const before = (await tb()).rows[0];
 
+  // I-02 / D6: resolvePostingSourceEntity requires operating_company_id as $2 on every document lookup.
+  // Omitting it left every expense (and every other PARTY_FROM_DOCUMENT source) unresolved — the 10
+  // EXP-2026-00001..00005 Bank-of-America lines stayed entity-null after AUTH-406 because $2 was undefined.
   const res = await client.query<Row>(
-    `SELECT p.id::text, p.source_transaction_type, p.source_transaction_id::text, p.reversal_of_line_id::text, a.account_number,
+    `SELECT p.id::text, p.operating_company_id::text, p.source_transaction_type, p.source_transaction_id::text,
+            p.reversal_of_line_id::text, a.account_number,
             (p.entity_uuid IS NULL) AS entity_null, (p.load_id IS NULL) AS load_null,
             accounting.posting_source_load_id(p.source_transaction_type, p.source_transaction_id::text,
                                               p.source_transaction_line_id::text, p.reversal_of_line_id)::text AS source_load_id

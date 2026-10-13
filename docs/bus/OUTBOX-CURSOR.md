@@ -1,3 +1,14 @@
+## 2026-10-13 · I-02 D6 OCI FIX + AUTH-449 (ship)
+
+FINDING: I-02 — 10 expense postings (EXP-2026-00001..00005, 2 lines each) entity_uuid NULL despite vendor_uuid. D6 backfill resolved 0 because Row lacked operating_company_id → resolvePostingSourceEntity $2 undefined.
+LANE: MONEY (fill-once entity_uuid only; no amount/account/JE rewrite; refuse_posting_fact_update NULL→set once)
+Files Modified: scripts/ops/2026-10-11-cc2-d6-backfill-posting-entity.ts (SELECT + Row operating_company_id; apply AUTH-449) · docs/bus/OWNER-AUTHORIZATIONS.md AUTH-449 OPEN · OUTBOX-CURSOR · SEATS-TO-LEAD
+GUARD/PROOF: fork br-odd-field-akxo1bh7 --rehearse --since=2026-10-07T00:00:00Z → fill 10 expense→vendor; Unresolved 0; Entity NULL in scope after fill 0; TB 0 across 3963 postings unchanged; ROLLBACK
+AJK-04: closed on fork (0 Rule-49 active drivers without vendor) — no code
+N1: NOT absorbed — naive load_trailer_equipment_id vs expense.trailer_id is 626 stale hits (company trailer cdfee422…); going-forward engine refuse only
+PROD APPLY: blocked until AUTH-449 on main then `OWNER_AUTH_ID=AUTH-449 … --apply --since=2026-10-07T00:00:00Z`
+NEXT: merge this PR → consume AUTH-449 on prod → Q022→0
+
 ## 2026-10-12 · 443.140 DONE — ORPHAN-GEOFENCE + DEGH-05-ALL + RE-AUDIT
 
 FINDING: CURSOR-443.140 — tip red orphan geofence wired; DEGH-05 all driver-bill trailer rows floored at L3=0; Codex READ-BACK + deep-wiring re-audit posted.
