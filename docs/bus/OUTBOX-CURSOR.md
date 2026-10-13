@@ -1,3 +1,12 @@
+## 2026-10-13 · I-02 AUTH-449 CONSUMED — Q022 → 0
+
+FINDING: I-02 closed on prod.
+LANE: MONEY (fill-once; TB unchanged)
+MERGED: #26765 squash `74ae971c2b`
+LIVE PROOF: Neon br-fancy-credit-akjnd07a USMCA bypass_rls=lucia — expense postings with source payee + entity_uuid NULL = **0 / 1038**; EXP-2026-00001..00005 null_lines=0; apply filled 10; TB 0 across 3935 postings unchanged
+REMAINING: CC-3 fuel_event load-null; DEGH-02 bank_cat (G6 closed bare lines earlier); N1 not absorbed
+NEXT: Codex paste; tip census
+
 ## 2026-10-13 · I-02 D6 OCI FIX + AUTH-449 (ship)
 
 FINDING: I-02 — 10 expense postings (EXP-2026-00001..00005, 2 lines each) entity_uuid NULL despite vendor_uuid. D6 backfill resolved 0 because Row lacked operating_company_id → resolvePostingSourceEntity $2 undefined.

@@ -7977,4 +7977,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — accounting.journal_
 action: OWNER_AUTH_ID=AUTH-449 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-d6-backfill-posting-entity.ts --apply --since=2026-10-07T00:00:00Z
 rehearsal: throwaway br-odd-field-akxo1bh7 (REHEARSE rolled back): Scope 115; fill 10 expense→vendor (5×1000, 3×6300, 1×6310, 1×6900); Unresolved 0; Entity NULL in scope after fill 0; trial balance 0 across 3963 postings unchanged
 expires_at: 2026-10-14T20:45:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-13T22:34:00Z
+consumed_by: Cursor (I-02 / AUTH-449)
+row_counts: prod — 10 expense postings filled ONCE (5×1000, 3×6300, 1×6310, 1×6900 → vendor); Unresolved 0; Entity NULL in scope after fill 0; trial balance 0 across 3935 postings unchanged; COMMITTED
+proof_query: USMCA expense postings with source payee and entity_uuid NULL → 0 of 1038; EXP-2026-00001..00005 null_lines=0 (Neon br-fancy-credit-akjnd07a, bypass_rls=lucia, 2026-10-13T22:34Z)
