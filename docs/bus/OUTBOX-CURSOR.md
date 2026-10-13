@@ -1,3 +1,19 @@
+## 2026-10-13 · GO-20 HOOK CENSUS #2 (lead · no GUARD sweep)
+
+FINDING: Repeat hook — `git pull --ff-only origin main` still **BLOCKED** (`MERGE_HEAD` on `cursor/g11-ajk03-fences-status-c89b`). `git fetch origin main` → tip **`2cf3cd3110`** (advanced since hook #1 `defe99ed1a`).
+435-CUR static: `rg navigate\\(-1\\)` under `apps/frontend/src/pages/{customers,vendors}` → **0** hits; non-test `.tsx` app code has **0** live `navigate(-1)` calls (only comments + test files). INBOX item 2 (Customers/Vendors tabs) still needs **owner Chrome** click-through, not more grep.
+NEXT unchanged: G11 conclude merge → ff-only main; then ship 432 categorize modal / multi-select off tip.
+
+## 2026-10-13 · GO-20 HOOK CENSUS (lead · no GUARD sweep)
+
+FINDING: Hook `git pull --ff-only origin main` **BLOCKED** on branch `cursor/g11-ajk03-fences-status-c89b` — `MERGE_HEAD` in progress (cannot ff until merge committed or aborted). `git fetch origin main` OK → tip **`defe99ed1a`** (Handlebars deps #26152).
+LANE: Lead coordination only — USMCA; never POST Book Load; no `GUARD-WORKORDERS` / `Downloads/abb`.
+INBOX (435-CUR / 432-CUR / 433-CUR): back-arrow module integrity · money UI measured items · visual hard four (categorize modal, QBO format layer, r392/r388, B7 junk descriptions). Full text in `docs/bus/INBOX-CURSOR.md` + `~/Downloads/10-06-2026-CURSOR-*.md`.
+GO-20: eight half-built features unchanged; slices 9/10 = repoint not new tables; QBO/bank-feed health checks blocked.
+LOCAL GUARD (this tree, merge dirty): `verify-every-route-has-a-structural-breadcrumb` PASS 544/544 · 0 history-back; `verify-backarrowheader-and-accounting-back-wired` PASS (ROUND 435-CUR inModuleBackHref).
+PARALLEL LANES: **CC-1** DEGH-02 — 4 bare `bank_categorization` expense JEs without `accounting.expenses` (repair via `scripts/ops/round-441-5-convert-categorized-costs-to-expenses.ts`, owner `--execute`; no agent Neon writes). **CC-2** F44366 Relay/Dreamline `fill_exists_no_expense_document` 93+113 (OUTBOX 2026-10-12). **G11 seat** finish merge on `cursor/g11-ajk03-fences-status-c89b` then rebase to main.
+NEXT: Cursor — INBOX **435** customer/vendor tab Chrome census + any remaining `navigate(-1)` in non-test pages; **432** money surfaces (multi-select, categorize modal); ship on clean branch off `origin/main` after G11 merge lands or park G11 and branch from main.
+
 ## 2026-10-12 · BANK-F44366 LIVE MEASURE + MILES SLATE LEFTOVER
 
 FINDING: BANK-F44366 — Relay Fuel Wallet + Dreamline Diesel Card list-suggest live counts on Neon USMCA (owner Law B: suggest only, never categorize/match). Plus BANK-F91151 leftover `text-slate-700` on Creator/Miles panels → house `#4B5563`.
