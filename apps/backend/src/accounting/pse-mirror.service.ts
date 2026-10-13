@@ -14,17 +14,19 @@ export async function syncPseMirror(userId: string, operatingCompanyId: string) 
           active
         )
         SELECT
-          qa.operating_company_id,
-          NULLIF(regexp_replace(qa.qbo_id, '[^0-9]', '', 'g'), '')::numeric AS qbo_id,
-          NULLIF(split_part(qa.full_qualified_name, ':', 1), '') AS number,
-          qa.name,
-          qa.account_type AS type,
-          qa.account_sub_type AS detail_type,
-          qa.active
-        FROM mdata.qbo_accounts qa
-        WHERE qa.operating_company_id = $1::uuid
-          AND NULLIF(regexp_replace(qa.qbo_id, '[^0-9]', '', 'g'), '') IS NOT NULL
-          AND coalesce(qa.account_type, '') IN ('Expense', 'Cost of Goods Sold', 'Other Expense')
+          ca.operating_company_id,
+          COALESCE(
+            NULLIF(regexp_replace(COALESCE(ca.qbo_account_id, ''), '[^0-9]', '', 'g'), '')::numeric,
+            (abs(hashtext(ca.id::text)) % 9000000000 + 1000000000)::numeric
+          ) AS qbo_id,
+          ca.account_number AS number,
+          ca.account_name AS name,
+          ca.account_type AS type,
+          ca.account_subtype AS detail_type,
+          (ca.deactivated_at IS NULL) AS active
+        FROM catalogs.accounts ca
+        WHERE ca.operating_company_id = $1::uuid
+          AND coalesce(ca.account_type, '') IN ('Expense', 'CostOfGoodsSold', 'OtherExpense', 'Cost of Goods Sold', 'Other Expense')
         ON CONFLICT (operating_company_id, qbo_id)
         DO UPDATE SET
           number = EXCLUDED.number,
@@ -46,17 +48,26 @@ export async function syncPseMirror(userId: string, operatingCompanyId: string) 
           active
         )
         SELECT
-          qi.operating_company_id,
-          lower(trim(coalesce(qi.item_type, 'uncategorized'))) AS qbo_id,
-          initcap(replace(lower(trim(coalesce(qi.item_type, 'uncategorized'))), '_', ' ')) AS name,
+          ci.operating_company_id,
+          lower(trim(coalesce(ci.item_type, 'uncategorized'))) AS qbo_id,
+          initcap(replace(lower(trim(coalesce(ci.item_type, 'uncategorized'))), '_', ' ')) AS name,
           ca.id AS coa_account_id,
-          bool_or(qi.active) AS active
-        FROM mdata.qbo_items qi
+          bool_or(ci.deactivated_at IS NULL) AS active
+        FROM catalogs.items ci
         LEFT JOIN accounting.coa_account ca
-          ON ca.operating_company_id = qi.operating_company_id
-         AND ca.qbo_id = NULLIF(qi.payload_json #>> '{IncomeAccountRef,value}', '')::numeric
-        WHERE qi.operating_company_id = $1::uuid
-        GROUP BY qi.operating_company_id, lower(trim(coalesce(qi.item_type, 'uncategorized'))), ca.id
+          ON ca.operating_company_id = ci.operating_company_id
+         AND ca.qbo_id = (
+           SELECT COALESCE(
+             NULLIF(regexp_replace(COALESCE(a.qbo_account_id, ''), '[^0-9]', '', 'g'), '')::numeric,
+             (abs(hashtext(a.id::text)) % 9000000000 + 1000000000)::numeric
+           )
+           FROM catalogs.accounts a
+           WHERE a.id = ci.default_income_account_id
+             AND a.operating_company_id = ci.operating_company_id
+           LIMIT 1
+         )
+        WHERE ci.operating_company_id = $1::uuid
+        GROUP BY ci.operating_company_id, lower(trim(coalesce(ci.item_type, 'uncategorized'))), ca.id
         ON CONFLICT (operating_company_id, qbo_id)
         DO UPDATE SET
           name = EXCLUDED.name,
@@ -77,17 +88,26 @@ export async function syncPseMirror(userId: string, operatingCompanyId: string) 
           active
         )
         SELECT
-          qi.operating_company_id,
-          qi.qbo_id,
-          qi.name,
-          lower(trim(coalesce(qi.item_type, 'uncategorized'))) AS category_qbo_id,
+          ci.operating_company_id,
+          ci.id::text AS qbo_id,
+          ci.item_name AS name,
+          lower(trim(coalesce(ci.item_type, 'uncategorized'))) AS category_qbo_id,
           ca.id AS coa_account_id,
-          qi.active
-        FROM mdata.qbo_items qi
+          (ci.deactivated_at IS NULL) AS active
+        FROM catalogs.items ci
         LEFT JOIN accounting.coa_account ca
-          ON ca.operating_company_id = qi.operating_company_id
-         AND ca.qbo_id = NULLIF(qi.payload_json #>> '{IncomeAccountRef,value}', '')::numeric
-        WHERE qi.operating_company_id = $1::uuid
+          ON ca.operating_company_id = ci.operating_company_id
+         AND ca.qbo_id = (
+           SELECT COALESCE(
+             NULLIF(regexp_replace(COALESCE(a.qbo_account_id, ''), '[^0-9]', '', 'g'), '')::numeric,
+             (abs(hashtext(a.id::text)) % 9000000000 + 1000000000)::numeric
+           )
+           FROM catalogs.accounts a
+           WHERE a.id = ci.default_income_account_id
+             AND a.operating_company_id = ci.operating_company_id
+           LIMIT 1
+         )
+        WHERE ci.operating_company_id = $1::uuid
         ON CONFLICT (operating_company_id, qbo_id)
         DO UPDATE SET
           name = EXCLUDED.name,

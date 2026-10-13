@@ -4,9 +4,13 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 const LABEL = "verify-combobox-outside-dismiss";
+// 443.137 9e (CC-2), guard change — OLD: three governed engines incl. components/forms/QboCombobox.tsx
+// (+ its test). NEW: two — QboCombobox.tsx and QboCombobox.test.tsx were deleted (QBO is a read-only
+// archive; no screen picks a QBO-mirror record any more). WHY: the file no longer exists; dropping
+// it is not a loosening — the "ungoverned production combobox engine" sweep below still fails any
+// new role=combobox / aria-autocomplete engine, so a QBO picker cannot come back unaudited.
 const ENGINE_FILES = [
   "apps/frontend/src/components/Combobox.tsx",
-  "apps/frontend/src/components/forms/QboCombobox.tsx",
   // AddressGeocodeInput (PR #20720) had role=combobox + Escape dismiss but no outside-click —
   // fixed here (real mousedown+containerRef.contains dismiss added, matching the other two
   // engines), not just allowlisted; see the dedicated audit block below.
@@ -14,7 +18,6 @@ const ENGINE_FILES = [
 ];
 const TEST_FILES = [
   "apps/frontend/src/components/Combobox.test.tsx",
-  "apps/frontend/src/components/forms/QboCombobox.test.tsx",
 ];
 
 function read(rel) {
@@ -33,9 +36,7 @@ function productionTsx(dir, out = []) {
 function audit(files) {
   const failures = [];
   const base = files[ENGINE_FILES[0]];
-  const qbo = files[ENGINE_FILES[1]];
   const baseTest = files[TEST_FILES[0]];
-  const qboTest = files[TEST_FILES[1]];
 
   if (!/addEventListener\("mousedown",\s*onDocumentClick\)/.test(base) || !/containerRef\.current\?\.contains\(target\)/.test(base)) {
     failures.push("shared Combobox must dismiss on an outside mousedown");
@@ -43,23 +44,17 @@ function audit(files) {
   if (!/event\.key === "Escape"[\s\S]{0,160}closeListbox\(\)/.test(base)) {
     failures.push("shared Combobox must dismiss on Escape");
   }
-  if (!/addEventListener\("mousedown",\s*onPointerDown\)/.test(qbo) || !/rootRef\.current\.contains\(event\.target\)/.test(qbo)) {
-    failures.push("QboCombobox must dismiss on an outside mousedown");
-  }
-  if (!/event\.key === "Escape"[\s\S]{0,120}setOpen\(false\)/.test(qbo)) {
-    failures.push("QboCombobox must dismiss on Escape");
-  }
   // 2026-09-05 — Book Load §C address picker (AddressGeocodeInput.tsx), added the SAME day as this
   // was found ungoverned. No companion .test.tsx exists yet for this one (flagged as REMAINING,
   // not silently skipped) — the source-level outside/Escape checks below are real, not a rubber stamp.
-  const address = files[ENGINE_FILES[2]];
+  const address = files[ENGINE_FILES[1]];
   if (!/addEventListener\("mousedown",\s*onDocumentClick\)/.test(address) || !/containerRef\.current\?\.contains\(target\)/.test(address)) {
     failures.push("AddressGeocodeInput must dismiss on an outside mousedown");
   }
   if (!/e\.key === "Escape" && open/.test(address) || !/setOpen\(false\)/.test(address)) {
     failures.push("AddressGeocodeInput must dismiss on Escape");
   }
-  for (const [name, body] of [["shared", baseTest], ["QBO", qboTest]]) {
+  for (const [name, body] of [["shared", baseTest]]) {
     const escapeCase = body.match(/it\("Escape closes[\s\S]*?\n\s*}\);/)?.[0] ?? "";
     const outsideCase = body.match(/it\("outside click closes[\s\S]*?\n\s*}\);/)?.[0] ?? "";
     if (!/not\.toHaveBeenCalled/.test(escapeCase)) failures.push(`${name} test must prove Escape does not force a pick`);
@@ -80,9 +75,9 @@ const failures = [...audit(files), ...rogue.map((rel) => `ungoverned production 
 if (process.argv.includes("--selftest")) {
   const mutations = [
     { file: ENGINE_FILES[0], from: 'event.key === "Escape"', to: 'event.key === "Never"' },
-    { file: ENGINE_FILES[1], from: 'document.addEventListener("mousedown", onPointerDown)', to: "void onPointerDown" },
+    { file: ENGINE_FILES[0], from: 'addEventListener("mousedown", onDocumentClick)', to: "void onDocumentClick" },
     { file: TEST_FILES[0], from: "expect(onChange).not.toHaveBeenCalled()", to: "expect(onChange).toHaveBeenCalled()" },
-    { file: ENGINE_FILES[2], from: 'addEventListener("mousedown", onDocumentClick)', to: "void onDocumentClick" },
+    { file: ENGINE_FILES[1], from: 'addEventListener("mousedown", onDocumentClick)', to: "void onDocumentClick" },
   ];
   for (const mutation of mutations) {
     const changed = { ...files, [mutation.file]: files[mutation.file].replace(mutation.from, mutation.to) };
@@ -100,4 +95,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`${LABEL} PASS — 3 governed engines; outside/Escape dismiss without forced selection`);
+console.log(`${LABEL} PASS — ${ENGINE_FILES.length} governed engines; outside/Escape dismiss without forced selection`);

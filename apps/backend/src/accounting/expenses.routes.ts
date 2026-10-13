@@ -18,15 +18,14 @@ import { createJournalEntryOnClient } from "./journal-entries.service.js";
 import { openAndRunIntake } from "../driver-finance/feed-gate/feed-gate.service.js";
 
 import { todayIso } from "./void.service.js";
-import { reverseExpenseDocumentInClientTx } from "./expense-void-reversal.js";
-import { canVoid, isVoidEnforcementEnabled, releaseBankLinesNamingDocument } from "./void.service.js";
+import { voidExpenseDocumentInClientTx } from "./expense-void.service.js";
+import { canVoid, isVoidEnforcementEnabled } from "./void.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { listExpenseDuplicateGroups } from "./expense-duplicate.service.js";
 import { nextExpenseDisplayId } from "./display-id.js";
 import { parseOperatorDocumentNumber, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { buildListSearchClause, expenseListSearchFields } from "../lib/list-search/build-list-search.js";
-import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
 import {
   reinstateDocumentThenVoidReversal,
   ReinstateDocumentError,
@@ -1115,38 +1114,10 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     // already exports for exactly this) inside the SAME withCompanyScope transaction as the UPDATE --
     // no new GL math, reuses the identical posting-engine reversal semantics this route already used.
     try {
-      const voided = await withCompanyScope(user.uuid, oci, async (client) => {
-        let reversingJeId: string | null = null;
-        // ACCT-F4431310 — reverse everything LIVE for this document (its own 'expense' lines AND a fuel receipt's
-        // 'fuel_event' entry), decided by reading; EXP-POSTED-NO-JE-01's unposted case is "nothing live", not a swallowed
-        // SOURCE_NOT_FOUND. Any reversal error propagates and the void is refused.
-        const rev = await reverseExpenseDocumentInClientTx(client, {
-          operatingCompanyId: oci, expenseId, actorUserId: String(user.uuid), currentBusinessDate: todayIso(),
-          memo: `Void reversal of expense ${expenseId}: ${body.data.reason}`, expenseReverser: "source",
-        });
-        reversingJeId = rev.reversal_journal_entry_id;
-
-        // ROUND 368.2(b) — a bank line that names this expense goes back to For review (match kept, release recorded) before it dies.
-        await releaseBankLinesNamingDocument(client as never, { operatingCompanyId: oci, pointerColumn: "matched_expense_id", documentId: expenseId }, {
-          userId: String(user.uuid),
-          reason: `void: expense ${expenseId} — ${body.data.reason}`,
-        });
-        await client.query(
-          `UPDATE accounting.expenses
-           SET status='void',
-               posting_status = CASE WHEN posting_status='posted' THEN 'reversed' ELSE posting_status END,
-               reversed_by_je_id = COALESCE($2::uuid, reversed_by_je_id),
-               voided_at=now(), voided_by_user_id=$3::uuid, void_reason=$4, updated_at=now()
-           WHERE id=$1::uuid AND operating_company_id=$5::uuid`,
-          [expenseId, reversingJeId, user.uuid, body.data.reason, oci]
-        );
-        // ROUND 138 -- this route is "the third writer" (per the ACCT-F5635 comment above) of
-        // accounting.expenses.voided_at; cascade here directly, same as the other two.
-        await cascadeVoidChildren(client, "expense", expenseId, oci);
-        await appendCrudAudit(client, user.uuid, "expense.voided",
-          { expense_id: expenseId, reversing_journal_entry_id: reversingJeId, reason: body.data.reason }, "warning");
-        return { reversingJeId };
-      });
+      // 443.136 follow-up — the ONE in-transaction expense void (accounting/expense-void.service.ts): reversal of everything
+      // live (ACCT-F4431310), bank-line release, header flip, cascade and audit, atomically on this client.
+      const voided = await withCompanyScope(user.uuid, oci, async (client) =>
+        voidExpenseDocumentInClientTx(client as never, { operatingCompanyId: oci, expenseId, actorUserId: String(user.uuid), reason: body.data.reason }));
       return reply.code(200).send({ expense_id: expenseId, status: "void", reversing_journal_entry_id: voided.reversingJeId });
     } catch (err) {
       if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: "period_locked" });

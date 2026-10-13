@@ -82,19 +82,25 @@ export function audit(src) {
   if (!/patchUnit\(input\.unitId, input\.companyId, input\.patch\)/.test(src.profile)) {
     failures.push(`${FILES.profile}: profile-level unit edits (e.g. QBO mapping) must patch the real unit id`);
   }
-  if (!/const qboAvailable = selectedCompany\?\.code === ["']TRANSP["']/.test(src.profile)) {
-    failures.push(`${FILES.profile}: QBO mapping capability must derive from selected TRANSP company`);
+  // 443.137 9e (CC-2), guard change — OLD: the QBO vendor control had to exist, gated to TRANSP
+  // (`qboAvailable ? <label>QBO vendor (ownership / lease entity)`), and the save had to send
+  // `...(qboAvailable ? { qbo_vendor_id } : {})`. NEW: no QBO vendor control and no qbo_vendor_id
+  // write on ANY company — the card is "Asset classification" (TMS class) everywhere. WHY: QBO is a
+  // read-only archive ("USMCA is entirely our TMS ERP"); the control searched the QuickBooks mirror
+  // and wrote its id onto the native unit row. The native ownership / lease entity is the unit's
+  // Owner Company / Leased To Company (EditVehicleModal). Strictly tighter: the TRANSP branch that
+  // used to be allowed is now refused too.
+  const profileCode = src.profile.replace(/\/\*[\s\S]*?\*\/|\{\/\*[\s\S]*?\*\/\}|^\s*\/\/.*$/gm, "");
+  if (/QboCombobox|QBO vendor \(ownership/.test(profileCode)) {
+    failures.push(`${FILES.profile}: the unit profile must not offer a QBO vendor picker (QBO is a read-only archive)`);
   }
-  if (!/qboAvailable \? <label[\s\S]{0,180}?QBO vendor \(ownership \/ lease entity\)/.test(src.profile)) {
-    failures.push(`${FILES.profile}: QBO vendor control must be absent outside TRANSP`);
+  if (/qbo_vendor_id\s*:/.test(profileCode)) {
+    failures.push(`${FILES.profile}: the classification save must not write qbo_vendor_id onto the unit`);
   }
-  if (!/\.\.\.\(qboAvailable \? \{ qbo_vendor_id:[\s\S]{0,80}?\} : \{\}\)/.test(src.profile)) {
-    failures.push(`${FILES.profile}: non-QBO class saves must not overwrite qbo_vendor_id`);
-  }
-  if (!/qboAvailable \? "QBO mapping" : "Asset classification"/.test(src.profile) ||
+  if (!/>Asset classification</.test(src.profile) ||
       !/<SelectCombobox[\s\S]{0,180}value=\{qboClassTmsId\}/.test(src.profile) ||
       !/qbo_class_id: qboClassTmsId \|\| null/.test(src.profile)) {
-    failures.push(`${FILES.profile}: unit.profile.qbo_mapping must retain USMCA TMS class connectivity while gating QBO vendor mapping to TRANSP`);
+    failures.push(`${FILES.profile}: unit.profile.qbo_mapping must retain TMS class connectivity under the "Asset classification" card`);
   }
   if (!/classesQuery\.isError[\s\S]{0,240}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void classesQuery\.refetch\(\)\}/.test(src.profile)) {
     failures.push(`${FILES.profile}: failed TMS class catalog read must expose exact retry`);
@@ -204,9 +210,10 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["profile-query", "profile", /fetchUnitProfile\(id, companyId(?:, signal)?\)/g, "fetchSomethingElse(id, companyId)"],
     ["profile-patch", "profile", /patchUnit\(input\.unitId, input\.companyId, input\.patch\)/, "patchSomethingElse(input.unitId, input.companyId, input.patch)"],
-    ["profile-qbo-capability", "profile", /const qboAvailable = selectedCompany\?\.code === "TRANSP";/, "const qboAvailable = true;"],
-    ["profile-qbo-control", "profile", /qboAvailable \? <label/, "true ? <label"],
-    ["profile-qbo-write", "profile", /\.\.\.\(qboAvailable \? \{ qbo_vendor_id:/, "...({ qbo_vendor_id:"],
+    // 443.137 9e: plant the retired QBO vendor picker / its qbo_vendor_id write back — both must fail.
+    ["profile-qbo-control", "profile", />Asset classification<\/div>/, '>Asset classification</div><label>QBO vendor (ownership / lease entity)<QboCombobox entityType="vendor" /></label>'],
+    ["profile-qbo-write", "profile", /qbo_class_id: qboClassTmsId \|\| null,/, "qbo_vendor_id: qboVendorId || null,\n                qbo_class_id: qboClassTmsId || null,"],
+    ["profile-class-card-label", "profile", />Asset classification</, ">QBO mapping<"],
     // 443.99: plant anchor no longer pins the font size — GLB-01 (13d356e228) moved this select text-sm -> text-xs.
     ["profile-class-control", "profile", /<SelectCombobox className="[^"]*" value=\{qboClassTmsId\}/, "<SelectCombobox value={undefined}"],
     ["profile-class-write", "profile", /qbo_class_id: qboClassTmsId \|\| null/, "qbo_class_id: null"],

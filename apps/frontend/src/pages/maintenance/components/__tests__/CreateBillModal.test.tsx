@@ -50,7 +50,6 @@ vi.mock("../../../../components/forms/TwoSectionLineEditor", () => ({
 }));
 vi.mock("../../../../components/forms/shared/TotalsStack", () => ({ TotalsStack: () => <div /> }));
 vi.mock("../../../../components/UploadZone", () => ({ UploadZone: () => <div /> }));
-vi.mock("../../../../components/forms/QboCombobox", () => ({ QboCombobox: () => <div data-testid="qbo" /> }));
 vi.mock("../../../../components/Combobox", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../../components/Combobox")>();
   return {

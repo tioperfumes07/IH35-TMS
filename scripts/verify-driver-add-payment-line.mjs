@@ -3,7 +3,7 @@
 // Fails if:
 //   1. the driver board's Add payment stops opening AddPayLineModal (back to the creator / runSettlement);
 //   2. the form stops saving through addSettlementPayLine (the pay-line engine) or loses Save and close;
-//   3. the pay-line engine stops stamping the line's GL account (driver_pay_expense role) at insert.
+//   3. the pay-line engine stops stamping the selected item's GL account at insert (BCF-09).
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,7 +21,7 @@ export function problems(src) {
   if (!/onClick=\{\(\) => setAddPayOpen\(true\)\}[^>]*>Add payment</.test(src.board) || !/<AddPayLineModal /.test(src.board)) p.push("the driver board's Add payment must open AddPayLineModal");
   if (/onClick=\{runSettlement\}>Add payment</.test(src.board)) p.push("Add payment opens the Settlement Creator again");
   if (!/addSettlementPayLine\(chosen,/.test(src.modal) || !/>Save and close</.test(src.modal)) p.push("the form must save through addSettlementPayLine with Save and close");
-  if (!/resolveRoleAccountOptional\(client as never, input\.operatingCompanyId, "driver_pay_expense"\)/.test(src.engine) || !/posting_account_id, is_active/.test(src.engine)) p.push("the pay-line engine must stamp the driver-pay GL account at insert");
+  if (!/const postingAccountId = payItem\.account_id;/.test(src.engine) || !/posting_account_id, item_id, quantity, rate_cents, unit_of_measure, is_active/.test(src.engine) || !/input\.kind, postingAccountId, payItem\.id, input\.amountCents/.test(src.engine)) p.push("the pay-line engine must stamp the selected pay item's GL account at insert");
   return p;
 }
 
@@ -38,7 +38,8 @@ if (isMain) {
     const plants = [
       ["back to creator", { ...src, board: src.board.replace(/onClick=\{\(\) => setAddPayOpen\(true\)\}[^>]*>Add payment</, "onClick={runSettlement}>Add payment<") }],
       ["direct insert", { ...src, modal: src.modal.replace("addSettlementPayLine(chosen,", "apiRequest(chosen,") }],
-      ["no GL stamp", { ...src, engine: src.engine.replace('"driver_pay_expense")', '"x")') }],
+      ["wrong account source", { ...src, engine: src.engine.replace('const postingAccountId = payItem.account_id;', 'const postingAccountId = genericRoleAccount;') }],
+      ["no GL stamp", { ...src, engine: src.engine.replace('input.kind, postingAccountId, payItem.id, input.amountCents', 'input.kind, null, payItem.id, input.amountCents') }],
     ];
     for (const [name, planted] of plants) {
       if (!problems(planted).length) { console.error(`${LABEL} --selftest FAIL — plant "${name}" not caught`); process.exit(1); }

@@ -19,7 +19,11 @@ export function run() {
   // Scheduler isolation
   if (!/function runStep\(/.test(s)) failures.push(`${SCHED}: missing runStep() isolation helper`);
   if (!/runStep\("ap_bills_pull"/.test(s)) failures.push(`${SCHED}: A/P pull must run inside runStep() (isolated, must run even if an earlier step failed)`);
-  if (!/runStep\("ap_bills_project"/.test(s)) failures.push(`${SCHED}: A/P projection must run inside runStep()`);
+  // ACCT-F4431380 (Lead 443.137 item 9e) — OLD: required runStep("ap_bills_project") (the A/P projection
+  // isolated like every other step). NEW: QuickBooks is a read-only archive; the projection was REMOVED and
+  // its entry point refuses by name, so it must NOT be scheduled at all (a refused step every tick). The
+  // isolation rules for the remaining pull steps are unchanged. WHY: a QBO path never writes native money.
+  if (/runStep\("ap_bills_project"|projectApBillsToLedger\s*\(/.test(s)) failures.push(`${SCHED}: the A/P projection refuses by name (ACCT-F4431380) — it must not be scheduled`);
   // A bare `await pullApBillsFromQbo(...)` NOT wrapped in runStep would re-introduce the abort bug.
   if (/await\s+pullApBillsFromQbo\(/.test(s)) failures.push(`${SCHED}: bare 'await pullApBillsFromQbo(...)' — A/P must go through runStep(), never a bare await`);
   // No silent swallow: failures must be captured to Sentry.

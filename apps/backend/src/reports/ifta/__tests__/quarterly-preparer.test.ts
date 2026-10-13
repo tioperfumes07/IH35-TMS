@@ -23,6 +23,8 @@ vi.mock("../../shared.js", async () => {
 function mockClient() {
   return {
     query: vi.fn(async (sql: string) => {
+      // 443.134 AJK-13: prepareFiling first reads the quarter's latest version — none yet, so it inserts version 1.
+      if (sql.includes("ORDER BY version DESC LIMIT 1 FOR UPDATE")) return { rows: [] };
       if (sql.includes("INSERT INTO reports.ifta_filings")) {
         return {
           rows: [

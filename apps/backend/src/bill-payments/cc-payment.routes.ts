@@ -1,11 +1,8 @@
-import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
-import { buildQboCcBillPaymentPayload } from "./qbo-cc-payment-poster.js";
 import { postBillPaymentGlIfEnabledInClientTx } from "../accounting/bill-payment-gl.service.js";
 
 const createCcPaymentBodySchema = z.object({
@@ -78,7 +75,6 @@ export async function registerCcPaymentRoutes(app: FastifyInstance) {
         if (body.data.payment_amount_cents > remaining) return { code: 400 as const, error: "payment_exceeds_remaining_balance" as const };
 
         const vendorId = String(billRaw.vendor_id ?? billRaw.vendor_uuid ?? "");
-        const qboBillId = billRaw.qbo_bill_id ? String(billRaw.qbo_bill_id) : null;
 
         const paymentRes = await client.query(
           // ACCT-F353 — derive from the BILL being paid (billRaw.is_sample_data, already fetched
@@ -112,40 +108,16 @@ export async function registerCcPaymentRoutes(app: FastifyInstance) {
           storageStatus,
         ]);
 
-        let qboBillPaymentId: string | null = null;
-        if (qboBillId && ccAccount.qbo_account_id) {
-          const vendorQboRes = await client.query(
-            // ACCT-ECON-05: canonical QBO vendor masters live in mdata.qbo_vendors (Rule 14).
-            // RETIRE mdata.qbo_vendors must not be the write/read path for AP credit-card bill pay.
-            `SELECT qbo_id
-               FROM mdata.qbo_vendors
-              WHERE operating_company_id = $1::uuid
-                AND active = true
-                AND id::text = $2
-              ORDER BY mirrored_at DESC NULLS LAST
-              LIMIT 1`,
-            [query.data.operating_company_id, vendorId]
-          );
-          const vendorQboId = (vendorQboRes.rows[0] as { qbo_id?: string } | undefined)?.qbo_id ?? null;
-          if (vendorQboId) {
-            const qboPayload = buildQboCcBillPaymentPayload({
-              vendorQboId,
-              ccLiabilityQboAccountId: String(ccAccount.qbo_account_id),
-              paymentDate: body.data.payment_date,
-              memo: body.data.memo,
-              allocations: [{ billId: body.data.bill_id, qboBillId, amountCents: body.data.payment_amount_cents }],
-            });
-            qboBillPaymentId = `qbo-cc-${randomUUID()}`;
-            await client.query(
-              `UPDATE accounting.bill_payments SET qbo_bill_payment_id = $3, qbo_idempotency_key = $4, updated_at = now() WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-              [paymentId, query.data.operating_company_id, qboBillPaymentId, `cc-pay-${paymentId}`]
-            );
-            await enqueueAccountingOutbox(client, query.data.operating_company_id, "qbo.cc_bill_payment.created", "vendor_bill_payment", paymentId, {
-              bill_payment_id: paymentId,
-              qbo_payload: qboPayload,
-            });
-          }
-        }
+        // ACCT-F4431380 (Lead 443.137 item 9e; owner ruling — QuickBooks is a READ-ONLY ARCHIVE).
+        //   OLD: when the bill carried a qbo_bill_id, this route read mdata.qbo_vendors, stamped a FABRICATED
+        //        qbo_bill_payment_id ('qbo-cc-<uuid>' — never issued by QuickBooks) onto the native
+        //        accounting.bill_payments row and enqueued a 'qbo.cc_bill_payment.created' outbox event to
+        //        push the payment to QuickBooks (no handler consumed it).
+        //   NEW: the native payment + GL posting below are the whole write. No QBO id is stamped, nothing
+        //        is queued for QuickBooks, and the response reports qbo_billpayment_id: null honestly.
+        //   WHY: a native money row must never carry a QuickBooks identity QuickBooks did not issue, and
+        //        nothing in the TMS writes to QuickBooks. Guard: scripts/verify-qbo-paths-never-write-native-tables.mjs.
+        const qboBillPaymentId: string | null = null;
 
         // ROUND 363-CC1-B — Dr the bill's payable / Cr the CC-liability account, posted on THIS transaction as the payment
         // is created (it used to post after commit and log a failure, leaving a committed payment with no postings).

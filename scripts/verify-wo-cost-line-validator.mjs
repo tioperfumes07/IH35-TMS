@@ -19,6 +19,22 @@
  * sectionBLines) and does NOT watch `line_items`.
  *
  * DETAIL RATCHET (2026-08-16): WorkOrderDetailPage must not normalize optional service_item_uuid to "".
+ *
+ * ITEM RATCHET (ACCT-F4431382, 2026-10-12): the WO -> A/P bill copy posts every bill line to its work-order line's
+ * ITEM account and refuses a line with no item (wo_line_item_required, #26704). Every live WO line writer must
+ * therefore send the item:
+ *   I1 create payload: Section A lines carry item_id (the category line's item)
+ *   I2 create payload: Section B lines carry item_id = their service item (part / labor rows inherit it)
+ *   I3 a named pre-save check refuses a cost line with no item
+ *   I4 edit mode: every line POSTed to /line-items carries item_id
+ *   I5 the /line-items route accepts item_id, writes it, and refuses an itemless line by name
+ *   I6 the edit target keys persisted lines on work_order_lines.uuid (raw.id made every line "new" -> duplicates)
+ *   I7 the Section A item picker offers only the items that post to the category's account (DEGH-03) and picks the
+ *      single one — never a guess from the description
+ *   I8 the legacy flat create body refuses a PRICED line with no item (422 wo_line_item_required) before any write,
+ *      and writes item_id on its lines ($0 engine placeholders stay allowed — the bill copy skips them)
+ *   I9 DEGH-03 on the server: ONE shared helper (assertWorkOrderCategoryLineItem) refuses a category line whose item
+ *      posts to another account (wo_line_item_account_mismatch); the V5 create route AND the /line-items route call it
  */
 import { readFileSync, existsSync } from "node:fs";
 
@@ -26,6 +42,10 @@ const LABEL = "verify:wo-cost-line-validator";
 const MODAL = "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx";
 const DETAIL = "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx";
 const SERVICE = "apps/backend/src/maintenance/two-section-service.ts";
+const ROUTES = "apps/backend/src/maintenance/work-orders.routes.ts";
+const BOX = "apps/frontend/src/components/forms/shared/CostBreakdownBox.tsx";
+const PICKER = "apps/frontend/src/components/forms/shared/WoLineItemSelect.tsx";
+const ITEM_RULE = "Item required on every cost line";
 const RULE = "At least one cost line item";
 const EMPTY_OPTIONAL_SERVICE_ITEM =
   /service_item_uuid:\s*(?:String\(\s*)?line\.service_item_uuid[\s\S]{0,80}(?:\|\||\?\?)\s*["']{2}/;
@@ -92,6 +112,97 @@ export function analyse(files) {
       problems.push(`${SERVICE}: maintenance.work_order_lines has uuid, not a phantom id column.`);
     }
   }
+  problems.push(...analyseItems(files, src));
+  return problems;
+}
+
+/** ACCT-F4431382 — every live WO line writer sends the line's item (I1..I7 above). */
+function analyseItems(files, modalSrc) {
+  const problems = [];
+  const aBuilder = modalSrc.slice(modalSrc.indexOf("const sectionALines"), modalSrc.indexOf("const sectionBLines"));
+  if (!/item_id:\s*line\.item_id/.test(aBuilder)) {
+    problems.push(`${MODAL}: I1 the Section A create payload does not carry item_id — the bill copy refuses an itemless line (wo_line_item_required).`);
+  }
+  const bStart = modalSrc.indexOf("const sectionBLines");
+  const bBuilder = bStart === -1 ? "" : modalSrc.slice(bStart, bStart + 1600);
+  if (!/item_id:\s*line\.service_item_uuid/.test(bBuilder)) {
+    problems.push(`${MODAL}: I2 the Section B create payload does not carry item_id = the line's service item.`);
+  }
+  const ruleAt = modalSrc.indexOf(ITEM_RULE);
+  if (ruleAt === -1 || !/ok:\s*sectionAItemsOk\s*&&\s*sectionBItemsOk/.test(modalSrc.slice(ruleAt, ruleAt + 300))) {
+    problems.push(`${MODAL}: I3 no "${ITEM_RULE}" pre-save check gating BOTH sections — an itemless WO line would save and never bill.`);
+  }
+  const addAt = modalSrc.indexOf("await addWorkOrderLineItem(");
+  if (addAt === -1 || !/item_id:/.test(modalSrc.slice(addAt, addAt + 500))) {
+    problems.push(`${MODAL}: I4 the edit-mode line POST (addWorkOrderLineItem) does not send item_id.`);
+  }
+  const routesRaw = files[ROUTES];
+  if (routesRaw == null) {
+    problems.push(`${ROUTES} is missing — cannot verify the line-items route writes the item.`);
+  } else {
+    const routes = stripComments(routesRaw);
+    const schemaAt = routes.indexOf("const lineItemCreateSchema");
+    const routeAt = routes.indexOf('"/api/v1/maintenance/work-orders/:id/line-items"');
+    const routeBody = routeAt === -1 ? "" : routes.slice(routeAt, routeAt + 4000);
+    if (schemaAt === -1 || !/item_id:/.test(routes.slice(schemaAt, schemaAt + 400))) {
+      problems.push(`${ROUTES}: I5 lineItemCreateSchema does not accept item_id.`);
+    }
+    if (!/INSERT INTO maintenance\.work_order_lines \([^)]*\bitem_id\b/.test(routeBody) || !/wo_line_item_required/.test(routeBody)) {
+      problems.push(`${ROUTES}: I5 the /line-items route must write item_id and refuse an itemless line by name (wo_line_item_required).`);
+    }
+  }
+  if (routesRaw != null) {
+    const routes = stripComments(routesRaw);
+    const legacyAt = routes.indexOf("const itemlessPriced");
+    const legacyEnd = legacyAt === -1 ? -1 : routes.indexOf('app.patch("/api/v1/maintenance/work-orders/:id"', legacyAt);
+    const legacyWindow = legacyAt === -1 ? "" : routes.slice(legacyAt, legacyEnd === -1 ? legacyAt + 12000 : legacyEnd);
+    if (
+      legacyAt === -1 ||
+      !/!line\.item_id/.test(legacyWindow) ||
+      !/wo_line_item_required/.test(legacyWindow) ||
+      !/INSERT INTO maintenance\.work_order_lines \([^)]*\bitem_id\b/.test(legacyWindow)
+    ) {
+      problems.push(`${ROUTES}: I8 the legacy flat create must refuse a priced line with no item (wo_line_item_required) and write item_id on its lines.`);
+    }
+    const helperCalls = routes.match(/await assertWorkOrderCategoryLineItem\(/g)?.length ?? 0;
+    const routeAt2 = routes.indexOf('"/api/v1/maintenance/work-orders/:id/line-items"');
+    const v5At = routes.indexOf("const created = await createWorkOrderWithLines(");
+    if (
+      helperCalls < 2 ||
+      routeAt2 === -1 ||
+      !/assertWorkOrderCategoryLineItem\(/.test(routes.slice(routeAt2, routeAt2 + 4000)) ||
+      v5At === -1 ||
+      !/assertWorkOrderCategoryLineItem\(/.test(routes.slice(Math.max(0, v5At - 600), v5At))
+    ) {
+      problems.push(`${ROUTES}: I9 both the V5 create (Section A, before createWorkOrderWithLines) and /line-items must call assertWorkOrderCategoryLineItem.`);
+    }
+  }
+  const serviceForI9 = files[SERVICE] == null ? "" : stripComments(files[SERVICE]);
+  const helperAt = serviceForI9.indexOf("export async function assertWorkOrderCategoryLineItem");
+  const helperBody = helperAt === -1 ? "" : serviceForI9.slice(helperAt, helperAt + 2000);
+  if (helperAt === -1 || !/default_expense_account_id/.test(helperBody) || !/wo_line_item_account_mismatch/.test(helperBody)) {
+    problems.push(`${SERVICE}: I9 the shared helper assertWorkOrderCategoryLineItem must compare the item's default_expense_account_id to the category account and refuse wo_line_item_account_mismatch.`);
+  }
+  const detailRaw = files[DETAIL];
+  if (detailRaw != null && /id:\s*raw\.id\s*!=\s*null\s*\?\s*String\(raw\.id\)/.test(stripComments(detailRaw))) {
+    problems.push(`${DETAIL}: I6 the edit target keys lines on raw.id — work_order_lines has no id column (uuid), so every persisted line looks new and is re-posted.`);
+  }
+  const boxRaw = files[BOX];
+  const pickerRaw = files[PICKER];
+  if (boxRaw == null || !/<WoCategoryLineItemSelect\b/.test(stripComments(boxRaw))) {
+    problems.push(`${BOX}: I7 the WO Section A row has no item picker (WoCategoryLineItemSelect).`);
+  }
+  if (pickerRaw == null) {
+    problems.push(`${PICKER} is missing — I7 cannot verify the category-line item mapping.`);
+  } else {
+    const picker = stripComments(pickerRaw);
+    if (!/expenseAccountId:\s*accountId/.test(picker) || !/options\.length\s*===\s*1/.test(picker)) {
+      problems.push(`${PICKER}: I7 the category-line item must come from the items that post to the category's account, the single one picked (DEGH-03).`);
+    }
+    if (/\.description\b/.test(picker)) {
+      problems.push(`${PICKER}: I7 the item picker reads a line description — the item is never guessed from description keywords.`);
+    }
+  }
   return problems;
 }
 
@@ -100,6 +211,9 @@ function readAll() {
     [MODAL]: existsSync(MODAL) ? readFileSync(MODAL, "utf8") : null,
     [DETAIL]: existsSync(DETAIL) ? readFileSync(DETAIL, "utf8") : null,
     [SERVICE]: existsSync(SERVICE) ? readFileSync(SERVICE, "utf8") : null,
+    [ROUTES]: existsSync(ROUTES) ? readFileSync(ROUTES, "utf8") : null,
+    [BOX]: existsSync(BOX) ? readFileSync(BOX, "utf8") : null,
+    [PICKER]: existsSync(PICKER) ? readFileSync(PICKER, "utf8") : null,
   };
 }
 
@@ -107,16 +221,69 @@ function selftest() {
   const failures = [];
   const t = (l, c) => { if (!c) failures.push(l); };
   const goodDetail = `...(serviceItemUuid ? { service_item_uuid: serviceItemUuid } : {}),`;
-  const good = `...(line.service_item_uuid ? { service_item_uuid: line.service_item_uuid } : {}),\n{ label: "${RULE}", ok: sectionALines.length + sectionBLines.length > 0 },`;
+  const itemGood =
+    `const sectionALines = lines.map((line) => ({ ...(line.item_id ? { item_id: line.item_id } : {}) }));\n` +
+    `const sectionBLines = lines.map((line) => ({ ...(line.service_item_uuid ? { service_item_uuid: line.service_item_uuid, item_id: line.service_item_uuid } : {}) }));\n` +
+    `{ label: "${ITEM_RULE} (the bill posts to the item's account)", ok: sectionAItemsOk && sectionBItemsOk },\n` +
+    `await addWorkOrderLineItem(woId, operatingCompanyId, { amount: 1, item_id: String(line.item_id) });\n`;
+  const good = `...(line.service_item_uuid ? { service_item_uuid: line.service_item_uuid } : {}),\n{ label: "${RULE}", ok: sectionALines.length + sectionBLines.length > 0 },\n${itemGood}`;
+  // legacy create + V5 create come BEFORE the /line-items route, as in the real file; plants edit one part only.
+  const legacyGood =
+    `const itemlessPriced = body.line_items.find((line) => !line.item_id && Number(line.amount) !== 0); if (itemlessPriced) reply.send({ error: "wo_line_item_required" });\n` +
+    "INSERT INTO maintenance.work_order_lines (work_order_uuid, line_type, description, quantity, unit_cost, total_cost, item_id) VALUES ($1);\n" +
+    `app.patch("/api/v1/maintenance/work-orders/:id", async () => {});\n`;
+  const v5Good = "await assertWorkOrderCategoryLineItem(client, oc, line.item_id, line.expense_category_uuid);\nconst created = await createWorkOrderWithLines(client);\n";
+  const lineItemsGood =
+    `const lineItemCreateSchema = z.object({ amount: z.number(), item_id: z.string().uuid().optional().nullable() });\n` +
+    `app.post("/api/v1/maintenance/work-orders/:id/line-items", async () => { if (!item) throw new WorkOrderLineItemError("wo_line_item_required", "x");\n` +
+    "INSERT INTO maintenance.work_order_lines (work_order_uuid, line_type, description, quantity, unit_cost, total_cost, item_id) VALUES ($1); await assertWorkOrderCategoryLineItem(c, o, i, a); });";
+  const routesGood = legacyGood + v5Good + lineItemsGood;
+  const boxGood = `<WoCategoryLineItemSelect lineId={line.id} />`;
+  const pickerGood = `const q = useAccountingItemsQuery({ kind: "all", expenseAccountId: accountId });\nconst sole = options.length === 1 ? options[0].value : null;`;
   const bug = `{ label: "${RULE}", ok: (form.watch("line_items") ?? []).length > 0 },`;
   const emptyUuidBug = `service_item_uuid: line.service_item_uuid || "",\n${good}`;
   const emptyDetailBug = `service_item_uuid: String(line.service_item_uuid ?? line.ps_item_id ?? ""),`;
-  const serviceGood = `INSERT INTO maintenance.work_order_lines (work_order_uuid) VALUES ($1) RETURNING uuid AS id;\nINSERT INTO maintenance.work_order_lines (work_order_uuid) VALUES ($1) RETURNING uuid AS id;`;
-  const filesGood = { [MODAL]: good, [DETAIL]: goodDetail, [SERVICE]: serviceGood };
+  const serviceGood = `INSERT INTO maintenance.work_order_lines (work_order_uuid) VALUES ($1) RETURNING uuid AS id;\nINSERT INTO maintenance.work_order_lines (work_order_uuid) VALUES ($1) RETURNING uuid AS id;\n` +
+    `export async function assertWorkOrderCategoryLineItem(c) { SELECT default_expense_account_id; throw new E("wo_line_item_account_mismatch"); }`;
+  const filesGood = { [MODAL]: good, [DETAIL]: goodDetail, [SERVICE]: serviceGood, [ROUTES]: routesGood, [BOX]: boxGood, [PICKER]: pickerGood };
 
   t("counting the submitted arrays passes", analyse(filesGood).length === 0);
-  t("the REAL pre-fix line_items rule FAILS", analyse({ ...filesGood, [MODAL]: bug }).length === 2);
+  // the pre-fix rule plants carry no item payload either -> + I1..I4 (4)
+  t("the REAL pre-fix line_items rule FAILS", analyse({ ...filesGood, [MODAL]: bug }).length === 6);
   t("deleting the rule entirely FAILS", analyse({ ...filesGood, [MODAL]: "no such rule here" }).length === 1);
+  // ACCT-F4431382 item ratchet — each plant is the REAL origin/main shape.
+  t("I1 Section A payload without item_id FAILS",
+    analyse({ ...filesGood, [MODAL]: good.replace("...(line.item_id ? { item_id: line.item_id } : {})", "") }).length === 1);
+  t("I2 Section B payload without item_id FAILS",
+    analyse({ ...filesGood, [MODAL]: good.replace(", item_id: line.service_item_uuid }", " }") }).length === 1);
+  t("I3 no item pre-save check FAILS", analyse({ ...filesGood, [MODAL]: good.replace(ITEM_RULE, "Something else") }).length === 1);
+  t("I3 a check that gates only Section A FAILS",
+    analyse({ ...filesGood, [MODAL]: good.replace("ok: sectionAItemsOk && sectionBItemsOk", "ok: sectionAItemsOk") }).length === 1);
+  t("I4 edit-mode line POST without item_id FAILS",
+    analyse({ ...filesGood, [MODAL]: good.replace(", item_id: String(line.item_id)", "") }).length === 1);
+  t("I5 the old line-items route (no item_id anywhere) FAILS",
+    analyse({ ...filesGood, [ROUTES]: legacyGood + v5Good + lineItemsGood.replace(/, item_id[^,)]*(?=\))/g, "").replace(", item_id: z.string().uuid().optional().nullable()", "").replace('if (!item) throw new WorkOrderLineItemError("wo_line_item_required", "x");', "") }).length === 2);
+  t("I5 a route that writes the item but never refuses an itemless line FAILS",
+    analyse({ ...filesGood, [ROUTES]: legacyGood + v5Good + lineItemsGood.replace("wo_line_item_required", "other") }).length === 1);
+  t("I6 the old edit target keyed on raw.id FAILS",
+    analyse({ ...filesGood, [DETAIL]: `${goodDetail}\nid: raw.id != null ? String(raw.id) : undefined,` }).length === 1);
+  t("I7 no Section A item picker FAILS", analyse({ ...filesGood, [BOX]: "<ReferenceSelect />" }).length === 1);
+  t("I7 a picker that guesses from the description FAILS",
+    analyse({ ...filesGood, [PICKER]: `${pickerGood}\nconst guess = line.description.includes("tire");` }).length === 1);
+  t("I8 the old legacy create (no priced-line refusal) FAILS",
+    analyse({ ...filesGood, [ROUTES]: routesGood.replace("const itemlessPriced", "const anyLine") }).length === 1);
+  t("I8 a legacy refusal that never checks the item FAILS",
+    analyse({ ...filesGood, [ROUTES]: routesGood.replace("!line.item_id && ", "") }).length === 1);
+  t("I9 no shared account-match helper FAILS",
+    analyse({ ...filesGood, [SERVICE]: serviceGood.replace("export async function assertWorkOrderCategoryLineItem", "async function other") }).length === 1);
+  t("I9 a helper that never compares the item account FAILS",
+    analyse({ ...filesGood, [SERVICE]: serviceGood.replace("default_expense_account_id", "item_name") }).length === 1);
+  t("I9 the V5 create route not calling the helper FAILS",
+    analyse({ ...filesGood, [ROUTES]: routesGood.replace("await assertWorkOrderCategoryLineItem(client, oc, line.item_id, line.expense_category_uuid);\n", "") }).length === 1);
+  t("I9 the /line-items route not calling the helper FAILS",
+    analyse({ ...filesGood, [ROUTES]: routesGood.replace(" await assertWorkOrderCategoryLineItem(c, o, i, a);", "") }).length === 1);
+  t("I7 a picker not filtered by the category account FAILS",
+    analyse({ ...filesGood, [PICKER]: pickerGood.replace("expenseAccountId: accountId", "search") }).length === 1);
   t("a comment mentioning line_items does not trip it",
     analyse({ ...filesGood, [MODAL]: `// used to watch line_items\n${good}` }).length === 0);
   t("an empty optional service-item UUID FAILS", analyse({ ...filesGood, [MODAL]: emptyUuidBug }).length === 1);
@@ -133,7 +300,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 8 cases (detail empty-uuid ratchet included)`);
+  console.log(`${LABEL} selftest OK — 25 cases (detail empty-uuid ratchet + ACCT-F4431382 item ratchet I1..I9 included)`);
   process.exit(0);
 }
 const problems = analyse(readAll());
@@ -141,4 +308,4 @@ if (problems.length) {
   console.error(`${LABEL} FAILED:\n  - ${problems.join("\n  - ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — the cost-line rule counts the lines actually submitted`);
+console.log(`${LABEL} OK — the cost-line rule counts the lines actually submitted; every WO line writer sends its item (I1..I9)`);

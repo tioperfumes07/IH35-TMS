@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["docs"],"cols":["vendor"],"leafRe":"^(home|tab\\.(all|vendor)|upload|table\\.entity_link)$","task":"LINK-F5166-DOCS-VENDOR"} */
 /** @matrix-built {"modules":["customers"],"cols":["vendor"],"leafRe":"^(list\\.segment\\.factored|detail\\.(profile|edit))$","task":"LINK-F5166-CUSTOMERS-VENDOR"} */
-/** @matrix-built {"modules":["fleet"],"cols":["vendor"],"leafRe":"^(unit\\.profile\\.(maintenance|qbo_mapping)|unit\\.detail\\.finance_linkage)$","task":"LINK-F5166-FLEET-VENDOR"} */
+/** @matrix-built {"modules":["fleet"],"cols":["vendor"],"leafRe":"^(unit\\.profile\\.maintenance|unit\\.detail\\.finance_linkage)$","task":"LINK-F5166-FLEET-VENDOR"} */
 /** @matrix-built {"modules":["banking"],"cols":["vendor"],"leafRe":"^transactions\\.(list|categorize)$","task":"LINK-F5166-BANKING-VENDOR"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["vendor"],"leafRe":"^queues\\.border(_history)?$","task":"LINK-F5166-DISPATCH-VENDOR"} */
 /** @matrix-built {"modules":["factoring"],"cols":["vendor"],"leafRe":"^home\\.(equipment_loans|vendor_merges)$","task":"LINK-F5166-FACTORING-VENDOR"} */
@@ -67,7 +67,14 @@ export function audit(src) {
       /vp-maint-snapshot-last-service-vendor-link/.test(src.maintSnapshot),
     `${FILES.maintSnapshot}: maintenance snapshot must EntityLinkOrTombstone the backend-joined last-service vendor (not plain text)`,
   );
-  need(/entityType="vendor"/.test(src.vehicleProfile), `${FILES.vehicleProfile}: unit QBO mapping must have a real vendor combobox`);
+  // 443.137 9e (CC-2), guard change — OLD: required `entityType="vendor"` (the QboCombobox QBO-mirror
+  // vendor picker) on the unit profile, and claimed the vendor cell of unit.profile.qbo_mapping.
+  // NEW: the unit profile must NOT carry that QBO vendor picker, its vendor surface is the
+  // maintenance snapshot (already asserted above via maintSnapshot), and the qbo_mapping leaf is no
+  // longer claimed for the vendor column. WHY: QBO is a read-only archive; the picker was removed
+  // and the unit's native ownership / lease entity is a company (Owner Company / Leased To Company),
+  // not a vendor — claiming a vendor cell there would be a false Built.
+  need(!/QboCombobox|entityType="vendor"/.test(src.vehicleProfile) && /<MaintenanceSnapshotSection\b/.test(src.vehicleProfile), `${FILES.vehicleProfile}: unit profile vendor surface is the maintenance snapshot; no QBO vendor picker may return`);
   need(/lender_vendor_name(?!_)/.test(src.financeLinkage), `${FILES.financeLinkage}: finance linkage must show the real linked lender vendor`);
   need(/kind="vendor"/.test(src.banking), `${FILES.banking}: banking transactions must render a real vendor EntityLink`);
   need(/customs_broker(?!_)/.test(src.borderWizard), `${FILES.borderWizard}: border crossing wizard must resolve a real customs-broker vendor`);
@@ -107,7 +114,8 @@ if (process.argv.includes("--selftest")) {
     ["maint-snapshot-field", "maintSnapshot", /lastService\.vendor_id/g, "lastService_vendor_id_unused"],
     ["maint-snapshot-vendor-kind", "maintSnapshot", /kind="vendor"/g, 'kind="unit"'],
     ["maint-snapshot-vendor-testid", "maintSnapshot", /vp-maint-snapshot-last-service-vendor-link/g, "vp-maint-last-svc-vendor-gone"],
-    ["vehicle-profile-combobox", "vehicleProfile", /entityType="vendor"/, 'entityType="unit"'],
+    ["vehicle-profile-qbo-picker-returns", "vehicleProfile", /<MaintenanceSnapshotSection\b/, '<QboCombobox entityType="vendor" /><MaintenanceSnapshotSection'],
+    ["vehicle-profile-maint-snapshot", "vehicleProfile", /<MaintenanceSnapshotSection\b/, "<MaintenanceSnapshotGone"],
     ["finance-linkage-field", "financeLinkage", /lender_vendor_name/g, "lender_vendor_name_unused"],
     ["banking-link", "banking", /kind="vendor"/g, 'kind="unit"'],
     ["border-wizard-broker", "borderWizard", /customs_broker/g, "customs_broker_unused"],
@@ -143,4 +151,4 @@ if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — the remaining 26 vendor-column leaves across 13 modules are real`);
+console.log(`${LABEL} PASS — the remaining 25 vendor-column leaves across 13 modules are real (443.137 9e: unit.profile.qbo_mapping no longer claims the vendor column)`);

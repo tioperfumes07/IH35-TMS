@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { expenseCategoriesCatalogClient } from "../../api/catalogs-accounting";
 // ACCT-F92: one shared definition of which accounts belong in which picker.
 import { isExpenseAccount } from "../../lib/account-picker-scope";
@@ -39,6 +39,8 @@ export type TwoSectionLine = {
   expense_category_kind?: string;
   expense_category_map_code?: string;
   service_item_uuid?: string;
+  /** ACCT-F4431382 — WO mode, Section A: the catalogs.items row this category line bills. */
+  item_id?: string;
   location_label?: string;
   sub_rows?: ItemSubRow[];
 };
@@ -117,10 +119,22 @@ export function TwoSectionLineEditor({
     staleTime: 60_000,
   });
 
+  // ACCT-F4431382: the latest lines, updated synchronously, so a Section A item picked for the operator (the one
+  // item that posts to the category's account) composes with any other line update in the same commit.
+  const linesRef = useRef<TwoSectionLine[]>(initialLines);
   const updateLines = (next: TwoSectionLine[]) => {
+    linesRef.current = next;
     setLines(next);
     onChange(next);
   };
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const onSectionAItemChange = useCallback((lineId: string, itemId: string | null) => {
+    const next = linesRef.current.map((line) => (line.id === lineId ? { ...line, item_id: itemId ?? undefined } : line));
+    linesRef.current = next;
+    setLines(next);
+    onChangeRef.current(next);
+  }, []);
 
   const sectionA = useMemo(() => lines.filter((line) => line.section === "A"), [lines]) as CategoryLine[];
   const sectionB = useMemo(() => lines.filter((line) => line.section === "B"), [lines]) as ItemLine[];
@@ -319,6 +333,7 @@ export function TwoSectionLineEditor({
         onQuickCreatePart={(lineId, subId) => setQuickCreateTarget({ kind: "part", lineId, subId })}
         partsLaborMode={partsLaborMode ?? (mode === "wo" || mode === "bill" ? "parts-and-labor" : "parts-only")}
         variant={mode === "wo" ? "wo" : "default"}
+        onSectionAItemChange={mode === "wo" ? onSectionAItemChange : undefined}
         onSectionAChange={onSectionAChange}
         onSectionBChange={onSectionBChange}
         onOpenLocationMap={(lineId, subId) => setLocationTarget({ lineId, subId })}

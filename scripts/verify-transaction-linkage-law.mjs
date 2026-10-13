@@ -68,8 +68,8 @@ const WORK_ORDERS_ROUTES_PATH = "apps/backend/src/maintenance/work-orders.routes
 // the standing law-of-the-land rule "classify row origin before calling any gap a defect" (imported/
 // pre-TMS-native history is NOT a defect, and inventing a load FK for it would be), this guard
 // enforces TIER1/TIER2/TIER3 row-value checks against USMCA ONLY -- the entity the law was actually
-// measured against -- and reports other entities' same metrics as informational only, explicitly
-// out of this law's current measured scope pending its own origin-classification pass. Silently
+// measured against. ROUND 443.122 supersedes the old informational cross-company read: frozen
+// entities must not be read or reported, including for diagnostics. Silently
 // enforcing against TRANSP's unverified 1,631-row gap would either red the gate for history nobody
 // has ruled on, or (if exempted without evidence) fabricate an "expected state" finding this guard
 // has no basis to claim. Filed as docs/audit/GUARD-WORKORDERS.md finding
@@ -170,6 +170,7 @@ export const TABLE_REGISTRY = {
   "accounting.payments": { status: "OUT_OF_SCOPE" },
   "accounting.period_cash_basis_snapshot": { status: "NOT_TRANSACTIONAL" },
   "accounting.periods": { status: "NOT_TRANSACTIONAL", reason: "config" },
+  "accounting.related_party_accounts": { status: "NOT_TRANSACTIONAL", reason: "443.134 #1 link related party (vendor) -> its one running Due to / from account; master data, no amount" },
   "accounting.posting_batches": { status: "NOT_TRANSACTIONAL" },
   "accounting.prepaid_amortization_rows": { status: "NEEDS_JOIN_PATH", reason: "usually company-level (TIER3); TIER2 if a specific unit's prepaid item -- needs the source join" },
   "accounting.prepaid_assets": { status: "NEEDS_JOIN_PATH" },
@@ -461,6 +462,13 @@ function checkTableRegistryDrift(liveTables) {
 function runSelftest() {
   const failures = [];
 
+  const source = readFileSync(fileURLToPath(import.meta.url), "utf8");
+  const liveSource = source.slice(source.indexOf("// --- LIVE HALF ---"));
+  if (/operating_company_id\s*<>/.test(liveSource)) failures.push("live reader must never query frozen companies");
+  if (!liveSource.includes("el.operating_company_id = $1 OR el.operating_company_id IS NULL")) failures.push("nullable expense-line scope must include NULL");
+  if (!liveSource.includes("BEGIN READ ONLY")) failures.push("bypass must be inside a read-only transaction");
+  if (TABLE_REGISTRY["fuel.fuel_receipt_postings"]?.status !== "NOT_TRANSACTIONAL") failures.push("receipt posting identity registry must remain explicitly classified");
+
   if (classifyWorkOrderSourceType("AC") !== TIER.TIER1) failures.push("AC should classify TIER1 (accident)");
   if (classifyWorkOrderSourceType("RS") !== TIER.TIER1) failures.push("RS should classify TIER1 (roadside)");
   if (classifyWorkOrderSourceType("IS") !== TIER.TIER2) failures.push("IS should classify TIER2 (in-shop)");
@@ -580,7 +588,8 @@ async function main() {
   // --- LIVE HALF ---
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
-    await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+    await client.query("BEGIN READ ONLY");
+    await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);
 
     // A) table registry drift
     const { rows: liveTableRows } = await client.query(
@@ -610,15 +619,7 @@ async function main() {
       } else {
         infoLines.push(`[OK] fuel.fuel_transactions (USMCA): ${n} rows missing a TIER1 link (baseline ceiling ${baselineN})`);
       }
-      const { rows: otherRows } = await client.query(
-        `SELECT operating_company_id, count(*)::int AS n FROM fuel.fuel_transactions
-         WHERE operating_company_id <> $1 AND voided_at IS NULL AND (unit_id IS NULL OR driver_id IS NULL OR load_id IS NULL)
-         GROUP BY operating_company_id`,
-        [USMCA_OPERATING_COMPANY_ID]
-      );
-      for (const r of otherRows) {
-        infoLines.push(`[INFO, NOT ENFORCED] fuel.fuel_transactions: ${r.n} rows missing a TIER1 link in operating_company_id ${r.operating_company_id} -- outside this law's measured scope (USMCA only), needs its own origin-classification pass before any ceiling applies`);
-      }
+      // 443.119 / 443.122: frozen entities are not read, even for informational output.
     }
 
     // C) maintenance.work_orders -- MIXED_BY_SOURCE_TYPE, USMCA-scoped
@@ -672,12 +673,15 @@ async function main() {
       const { rows: tier1Rows } = await client.query(`SELECT line_category FROM accounting.line_category_load_required`);
       const tier1Codes = new Set(tier1Rows.map((r) => r.line_category));
       const { rows } = await client.query(
-        `SELECT el.id, el.line_category, ec.code, el.unit_id, el.driver_id
+        `SELECT el.id, el.operating_company_id, el.line_category, ec.code, el.unit_id, el.driver_id
          FROM accounting.expense_lines el
          LEFT JOIN catalogs.expense_categories ec ON ec.id = el.expense_category_uuid
-         WHERE el.operating_company_id = $1`,
+           AND (ec.operating_company_id = $1 OR ec.operating_company_id IS NULL)
+         WHERE (el.operating_company_id = $1 OR el.operating_company_id IS NULL)`,
         [USMCA_OPERATING_COMPANY_ID]
       );
+      const nullCompanyRows = rows.filter((row) => row.operating_company_id == null).length;
+      if (nullCompanyRows > 0) failures.push(`accounting.expense_lines: ${nullCompanyRows} NULL-company money rows (no baseline permitted)`);
       const { tier1MissingUnitOrDriver, tier2MissingUnit, tier3UnitPresent } = expenseLineVerdict(rows, tier1Codes);
       const baselineCeiling = baseline["accounting.expense_lines"]?.tier1_missing_unit_or_driver_max ?? 0;
       if (tier1MissingUnitOrDriver > baselineCeiling) {
@@ -706,6 +710,7 @@ async function main() {
     }
     console.log(`${LABEL}: OK`);
   } finally {
+    await client.query("ROLLBACK");
     client.release();
     await pool.end();
   }

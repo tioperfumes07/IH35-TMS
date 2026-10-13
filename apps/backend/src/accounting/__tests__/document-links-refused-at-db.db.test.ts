@@ -1,8 +1,16 @@
 /**
- * ROUND 443.106 — real Postgres: the database refuses a broken document link, and a correctly-linked
- * row (the shape the load wizard / Settlement Creator / feed writers already produce) still commits.
- * Every fixture lives in ONE transaction that is rolled back — nothing is left behind.
+ * ROUND 443.106 + DEGH-05 / 443.131 — real Postgres: the database refuses a broken document link,
+ * and a correctly-linked row (the shape the load wizard / Settlement Creator / feed writers already
+ * produce) still commits. DEGH-05 finishes the trailer clause (trailer_id OR non_owned_trailer_id OR
+ * load.trailer_source='none') and compares expense-line driver/unit even when the header is NULL.
+ *
+ * Fails on old code: with the pre-DEGH-05 refuse_driver_bill_without_links body, a driver bill without
+ * trailer commits; after 202615891200, the same INSERT is refused by name. Every fixture lives in ONE
+ * transaction that is rolled back — nothing is left behind.
  */
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
@@ -12,8 +20,71 @@ import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
-describeIntegration("document links refused at DB (443.106, real Postgres)", () => {
-  it("accepts linked driver bill + bill payment + matching expense line; refuses planted broken rows", async () => {
+// __tests__ → accounting → src → backend → apps → repo root (5 levels)
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../../../");
+const TRAILER_MIGRATION = join(ROOT, "db/migrations/202615891200_driver_bill_trailer_clause.sql");
+
+/** Pre-DEGH-05 body (443.106) — vendor/driver/load/unit only; no trailer. */
+const OLD_REFUSE_DRIVER_BILL = `
+CREATE OR REPLACE FUNCTION accounting.refuse_driver_bill_without_links()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog
+AS $fn$
+DECLARE
+  missing text[] := ARRAY[]::text[];
+  bill_label text;
+  load_born boolean;
+BEGIN
+  IF NEW.voided_at IS NOT NULL THEN RETURN NEW; END IF;
+  load_born := (NEW.bill_category = 'driver') OR (NEW.load_id IS NOT NULL);
+  IF NOT load_born THEN RETURN NEW; END IF;
+  IF NEW.mdata_vendor_id IS NULL AND NULLIF(btrim(COALESCE(NEW.vendor_id, '')), '') IS NULL THEN
+    missing := array_append(missing, 'vendor');
+  END IF;
+  IF NEW.driver_id IS NULL THEN missing := array_append(missing, 'driver'); END IF;
+  IF NEW.load_id IS NULL THEN missing := array_append(missing, 'load'); END IF;
+  IF NEW.unit_id IS NULL THEN missing := array_append(missing, 'unit'); END IF;
+  IF coalesce(array_length(missing, 1), 0) = 0 THEN RETURN NEW; END IF;
+  bill_label := COALESCE(NULLIF(btrim(COALESCE(NEW.bill_number, '')), ''), NEW.id::text);
+  RAISE EXCEPTION 'refuse_driver_bill_without_links: bill % is a live driver/load-born bill but is missing % — every driver bill carries vendor, driver, load and unit (ROUND 443.106)',
+    bill_label, array_to_string(missing, ', ')
+    USING ERRCODE = 'check_violation';
+END;
+$fn$;
+`;
+
+const OLD_REFUSE_EXPENSE_LINE = `
+CREATE OR REPLACE FUNCTION accounting.refuse_expense_line_attr_mismatch()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog
+AS $fn$
+DECLARE
+  h record;
+  v_number text;
+  missing text[] := ARRAY[]::text[];
+BEGIN
+  SELECT e.load_id, e.driver_uuid, e.unit_id, e.voided_at, e.expense_number
+    INTO h FROM accounting.expenses e WHERE e.id = NEW.expense_id;
+  IF NOT FOUND OR h.voided_at IS NOT NULL OR h.load_id IS NULL THEN RETURN NEW; END IF;
+  IF h.driver_uuid IS NOT NULL AND NEW.driver_id IS DISTINCT FROM h.driver_uuid THEN
+    missing := array_append(missing, 'driver');
+  END IF;
+  IF h.unit_id IS NOT NULL AND NEW.unit_id IS DISTINCT FROM h.unit_id THEN
+    missing := array_append(missing, 'unit');
+  END IF;
+  IF coalesce(array_length(missing, 1), 0) = 0 THEN RETURN NEW; END IF;
+  v_number := COALESCE(h.expense_number, NEW.expense_id::text);
+  RAISE EXCEPTION 'refuse_expense_line_attr_mismatch: expense % line % attribution (%) does not match its load-bearing header — driver/unit on the line must match the header (ROUND 443.106)',
+    v_number, NEW.line_sequence, array_to_string(missing, ', ')
+    USING ERRCODE = 'check_violation';
+END;
+$fn$;
+`;
+
+describeIntegration("document links refused at DB (443.106 + DEGH-05, real Postgres)", () => {
+  it("accepts linked driver bill + bill payment + matching expense line; refuses planted broken rows; trailer clause fails on old code", async () => {
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL or DATABASE_DIRECT_URL is required");
     refuseProductionConnectionString(cs);
@@ -31,7 +102,7 @@ describeIntegration("document links refused at DB (443.106, real Postgres)", () 
       const opco = (
         await one(
           `INSERT INTO org.companies (code, legal_name, company_type, enforce_line_categorization)
-           VALUES ($1, '443.106 document links', 'operating_carrier', true) RETURNING id::text AS id`,
+           VALUES ($1, '443.131 document links', 'operating_carrier', true) RETURNING id::text AS id`,
           [tag]
         )
       ).id;
@@ -75,11 +146,25 @@ describeIntegration("document links refused at DB (443.106, real Postgres)", () 
           [`${tag}-U2`, `${tag}VIN2`, opco]
         )
       ).id;
+      const trailer = (
+        await one(
+          `INSERT INTO mdata.equipment (equipment_number, equipment_type, owner_company_id, is_sample_data)
+           VALUES ($1, 'DryVan', $2::uuid, true) RETURNING id::text AS id`,
+          [`${tag}-T1`, opco]
+        )
+      ).id;
       const load = (
         await one(
-          `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, dispatcher_user_id, load_trailer_equipment_id)
-           VALUES ($1, $2, $3, $4, $5) RETURNING id::text AS id`,
+          `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, dispatcher_user_id, load_trailer_equipment_id, trailer_source)
+           VALUES ($1, $2, $3, $4, $5, 'company') RETURNING id::text AS id`,
           [opco, `${tag}1`, customer, TEST_OWNER_USER_ID, trailerType]
+        )
+      ).id;
+      const bobtailLoad = (
+        await one(
+          `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, dispatcher_user_id, load_trailer_equipment_id, trailer_source)
+           VALUES ($1, $2, $3, $4, $5, 'none') RETURNING id::text AS id`,
+          [opco, `${tag}2`, customer, TEST_OWNER_USER_ID, trailerType]
         )
       ).id;
       const account = (
@@ -115,18 +200,85 @@ describeIntegration("document links refused at DB (443.106, real Postgres)", () 
         }
       };
 
-      // --- Engine-shaped good writes still commit ---
-      const goodBill = await atSave("good_bill", () =>
+      // --- DEGH-05 fail-on-old: plant 443.106 body → bill without trailer commits ---
+      await db.query(OLD_REFUSE_DRIVER_BILL);
+      await db.query(OLD_REFUSE_EXPENSE_LINE);
+      const oldAcceptsNoTrailer = await atSave("old_no_trailer", () =>
         db.query(
           `INSERT INTO accounting.bills (
              operating_company_id, bill_category, mdata_vendor_id, vendor_id, driver_id, load_id, unit_id,
              bill_number, bill_date, amount_cents, total_amount, status
-           ) VALUES ($1::uuid, 'driver', $2::uuid, $2::text, $3::uuid, $4::uuid, $5::uuid, $6, current_date, 1000, 10, 'unpaid')
+           ) VALUES ($1::uuid, 'driver', $2::uuid, $2::text, $3::uuid, $4::uuid, $5::uuid, $6, current_date, 1000, 10, 'unpaid')`,
+          [opco, vendor, driver, load, unit, `${tag}-B-OLD`]
+        )
+      );
+      expect(oldAcceptsNoTrailer, "pre-DEGH-05 body must accept a driver bill without trailer").toBeNull();
+
+      const nullHeaderOld = await atSave("old_null_hdr", async () => {
+        const exp = (
+          await one(
+            `INSERT INTO accounting.expenses (
+               operating_company_id, transaction_date, total_amount_cents, status, posting_status,
+               load_id, driver_uuid, unit_id, memo
+             ) VALUES ($1::uuid, current_date, 500, 'draft', 'unposted', $2::uuid, NULL, NULL, 'old null hdr')
+             RETURNING id::text AS id`,
+            [opco, load]
+          )
+        ).id;
+        await db.query(
+          `INSERT INTO accounting.expense_lines (
+             expense_id, line_sequence, operating_company_id, amount, amount_cents, description,
+             expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure,
+             load_id, driver_id, unit_id
+           ) VALUES ($1::uuid, 1, $2::uuid, 5, 500, 'line has driver', $3::uuid, $4::uuid, 1, 500, 'each', $5::uuid, $6::uuid, $7::uuid)`,
+          [exp, opco, account, item, load, driver, unit]
+        );
+      });
+      expect(nullHeaderOld, "pre-DEGH-05 body must accept line driver when header driver is NULL").toBeNull();
+
+      // --- Apply DEGH-05 migration in this transaction ---
+      const migSql = readFileSync(TRAILER_MIGRATION, "utf8")
+        .replace(/^BEGIN;\s*/i, "")
+        .replace(/\s*COMMIT;\s*$/i, "");
+      await db.query(migSql);
+
+      // Same shape without trailer now refuses
+      const noTrailer = await atSave("no_trailer", () =>
+        db.query(
+          `INSERT INTO accounting.bills (
+             operating_company_id, bill_category, mdata_vendor_id, vendor_id, driver_id, load_id, unit_id,
+             bill_number, bill_date, amount_cents, total_amount, status
+           ) VALUES ($1::uuid, 'driver', $2::uuid, $2::text, $3::uuid, $4::uuid, $5::uuid, $6, current_date, 1000, 10, 'unpaid')`,
+          [opco, vendor, driver, load, unit, `${tag}-B-NOTR`]
+        )
+      );
+      expect(noTrailer?.message).toMatch(/refuse_driver_bill_without_links/);
+      expect(noTrailer?.message).toMatch(/trailer/);
+
+      // Engine-shaped good write with company trailer still commits
+      const goodBill = await atSave("good_bill", () =>
+        db.query(
+          `INSERT INTO accounting.bills (
+             operating_company_id, bill_category, mdata_vendor_id, vendor_id, driver_id, load_id, unit_id, trailer_id,
+             bill_number, bill_date, amount_cents, total_amount, status
+           ) VALUES ($1::uuid, 'driver', $2::uuid, $2::text, $3::uuid, $4::uuid, $5::uuid, $6::uuid, $7, current_date, 1000, 10, 'unpaid')
            RETURNING id`,
-          [opco, vendor, driver, load, unit, `${tag}-B-OK`]
+          [opco, vendor, driver, load, unit, trailer, `${tag}-B-OK`]
         )
       );
       expect(goodBill).toBeNull();
+
+      // Explicit no-trailer load allows NULL trailer_id / non_owned_trailer_id
+      const bobtailBill = await atSave("bobtail_bill", () =>
+        db.query(
+          `INSERT INTO accounting.bills (
+             operating_company_id, bill_category, mdata_vendor_id, vendor_id, driver_id, load_id, unit_id,
+             bill_number, bill_date, amount_cents, total_amount, status
+           ) VALUES ($1::uuid, 'driver', $2::uuid, $2::text, $3::uuid, $4::uuid, $5::uuid, $6, current_date, 1000, 10, 'unpaid')`,
+          [opco, vendor, driver, bobtailLoad, unit, `${tag}-B-NONE`]
+        )
+      );
+      expect(bobtailBill).toBeNull();
 
       const billId = (
         await one<{ id: string }>(`SELECT id::text AS id FROM accounting.bills WHERE bill_number = $1`, [`${tag}-B-OK`])
@@ -147,7 +299,7 @@ describeIntegration("document links refused at DB (443.106, real Postgres)", () 
           `INSERT INTO accounting.expenses (
              operating_company_id, transaction_date, total_amount_cents, status, posting_status,
              load_id, driver_uuid, unit_id, memo
-           ) VALUES ($1::uuid, current_date, 500, 'draft', 'unposted', $2::uuid, $3::uuid, $4::uuid, '443.106 fuel')
+           ) VALUES ($1::uuid, current_date, 500, 'draft', 'unposted', $2::uuid, $3::uuid, $4::uuid, '443.131 fuel')
            RETURNING id::text AS id`,
           [opco, load, driver, unit]
         )
@@ -169,10 +321,10 @@ describeIntegration("document links refused at DB (443.106, real Postgres)", () 
       const noLoad = await atSave("no_load", () =>
         db.query(
           `INSERT INTO accounting.bills (
-             operating_company_id, bill_category, mdata_vendor_id, driver_id, unit_id,
+             operating_company_id, bill_category, mdata_vendor_id, driver_id, unit_id, trailer_id,
              bill_number, bill_date, amount_cents, total_amount, status
-           ) VALUES ($1::uuid, 'driver', $2::uuid, $3::uuid, $4::uuid, $5, current_date, 1000, 10, 'unpaid')`,
-          [opco, vendor, driver, unit, `${tag}-B-NOLOAD`]
+           ) VALUES ($1::uuid, 'driver', $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6, current_date, 1000, 10, 'unpaid')`,
+          [opco, vendor, driver, unit, trailer, `${tag}-B-NOLOAD`]
         )
       );
       expect(noLoad?.message).toMatch(/refuse_driver_bill_without_links/);
@@ -200,12 +352,35 @@ describeIntegration("document links refused at DB (443.106, real Postgres)", () 
       );
       expect(badAttr?.message).toMatch(/refuse_expense_line_attr_mismatch/);
 
+      // Null header vs set line refuses after DEGH-05
+      const nullHdrExp = (
+        await one(
+          `INSERT INTO accounting.expenses (
+             operating_company_id, transaction_date, total_amount_cents, status, posting_status,
+             load_id, driver_uuid, unit_id, memo
+           ) VALUES ($1::uuid, current_date, 500, 'draft', 'unposted', $2::uuid, NULL, NULL, 'null hdr')
+           RETURNING id::text AS id`,
+          [opco, load]
+        )
+      ).id;
+      const nullHdrMismatch = await atSave("null_hdr_line", () =>
+        db.query(
+          `INSERT INTO accounting.expense_lines (
+             expense_id, line_sequence, operating_company_id, amount, amount_cents, description,
+             expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure,
+             load_id, driver_id, unit_id
+           ) VALUES ($1::uuid, 1, $2::uuid, 5, 500, 'line has driver', $3::uuid, $4::uuid, 1, 500, 'each', $5::uuid, $6::uuid, $7::uuid)`,
+          [nullHdrExp, opco, account, item, load, driver, unit]
+        )
+      );
+      expect(nullHdrMismatch?.message).toMatch(/refuse_expense_line_attr_mismatch/);
+
       // Voided driver bill is not judged (void-not-delete path stays open).
       const voidOk = await atSave("voided_bill", () =>
         db.query(
           `INSERT INTO accounting.bills (
              operating_company_id, bill_category, bill_number, bill_date, amount_cents, total_amount, status, voided_at, void_reason
-           ) VALUES ($1::uuid, 'driver', $2, current_date, 1000, 10, 'void', now(), '443.106 planted void — skip link refusal')`,
+           ) VALUES ($1::uuid, 'driver', $2, current_date, 1000, 10, 'void', now(), '443.131 planted void — skip link refusal')`,
           [opco, `${tag}-B-VOID`]
         )
       );

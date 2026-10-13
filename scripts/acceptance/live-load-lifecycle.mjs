@@ -254,6 +254,17 @@ async function pickRealDeliveredLoad() {
         AND (SELECT count(*) FROM telematics.vehicle_locations v WHERE v.unit_id = l.assigned_unit_id
               AND v.captured_at BETWEEN min(coalesce(s.actual_arrival_at, s.scheduled_arrival_at, s.appointment_start_at)) - interval '12 hours'
                                     AND max(coalesce(s.actual_departure_at, s.actual_arrival_at, s.scheduled_arrival_at, s.appointment_start_at)) + interval '12 hours') > 50
+        -- Every stop must have a recorded fix within ~3.3 km (0.03°) — same window the replay uses.
+        -- Without this, pick can return a load whose delivery stop is hundreds of km from any fix (S3 stop2 false red).
+        AND bool_and(EXISTS (
+              SELECT 1 FROM telematics.vehicle_locations v
+               WHERE v.unit_id = l.assigned_unit_id
+                 AND v.lat IS NOT NULL AND v.lng IS NOT NULL
+                 AND s.latitude IS NOT NULL AND s.longitude IS NOT NULL
+                 AND abs(v.lat - s.latitude) < 0.03 AND abs(v.lng - s.longitude) < 0.03
+                 AND v.captured_at BETWEEN coalesce(s.actual_arrival_at, s.scheduled_arrival_at, s.appointment_start_at) - interval '36 hours'
+                                       AND coalesce(s.actual_departure_at, s.actual_arrival_at, s.scheduled_arrival_at, s.appointment_start_at) + interval '48 hours'
+            ))
       ORDER BY max(s.scheduled_arrival_at) DESC
       LIMIT 1`, [CO]))[0];
 }
@@ -280,13 +291,15 @@ async function s3() {
   await db.query("COMMIT");
   t.ok("fork reset: load back in transit, stop stamps cleared", true, `was ${before[0]?.load_status}, stops ${before.map((b) => `${b.actual_arrival_source ?? "NULL"}/${b.status}`).join(", ")}`);
 
+  // ROUND 315 / g11: GPS processing + load transition latch must run inside withLuciaBypass
+  // (SET LOCAL + after-commit queue). Raw BEGIN/COMMIT has no after-commit scope → E_LATCH_OUTSIDE_AFTER_COMMIT_SCOPE.
+  const { withLuciaBypass } = await import("../../apps/backend/src/auth/db.ts");
   // The cron's binder (cron/load-stop-geofence-sync.cron.ts -> syncLoadStopGeofences -> bindLoadToGeofences).
   const { syncLoadStopGeofences } = await import("../../apps/backend/src/telematics/load-stop-geofence-sync.service.ts");
-  await db.query("BEGIN");
-  await db.query("SELECT set_config('app.bypass_rls','lucia',true)");
-  await db.query("SELECT set_config('app.operating_company_id',$1,true)", [CO]);
-  const bound = await syncLoadStopGeofences(db, CO);
-  await db.query("COMMIT");
+  const bound = await withLuciaBypass(async (client) => {
+    await client.query("SELECT set_config('app.operating_company_id',$1,true)", [CO]);
+    return syncLoadStopGeofences(client, CO);
+  });
   const stopFences = await read(`SELECT label FROM geo.geofences WHERE operating_company_id = $1::uuid AND is_active AND label LIKE $2`, [CO, `load-${load.id}-stop-%`]);
   t.ok("binder minted a live fence for every stop", stopFences.length === before.length, `${stopFences.length}/${before.length} (created ${bound.created}, skipped low precision ${bound.skipped})`);
 
@@ -302,14 +315,13 @@ async function s3() {
   const { processGeofenceDetectionsForGpsPoint } = await import("../../apps/backend/src/telematics/geofence-detector.service.ts");
   let transitions = 0, stamped = 0;
   for (const f of fixes) {
-    await db.query("BEGIN");
-    await db.query("SELECT set_config('app.bypass_rls','lucia',true)");
-    await db.query("SELECT set_config('app.operating_company_id',$1,true)", [CO]);
-    const r = await processGeofenceDetectionsForGpsPoint(db, {
-      operating_company_id: CO, unit_id: load.unit_id, latitude: Number(f.lat), longitude: Number(f.lng),
-      occurred_at: new Date(f.captured_at).toISOString(), source: "samsara_gps", driver_id: load.driver_id,
+    const r = await withLuciaBypass(async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id',$1,true)", [CO]);
+      return processGeofenceDetectionsForGpsPoint(client, {
+        operating_company_id: CO, unit_id: load.unit_id, latitude: Number(f.lat), longitude: Number(f.lng),
+        occurred_at: new Date(f.captured_at).toISOString(), source: "samsara_gps", driver_id: load.driver_id,
+      });
     });
-    await db.query("COMMIT");
     transitions += r.transitions_written;
     stamped += r.stop_arrivals_stamped;
   }
@@ -317,10 +329,9 @@ async function s3() {
   // The odometer at each crossing is the 10-minute cron's engine (cron/geofence-odometer-captures.cron.ts) — run it once,
   // as production would within ten minutes of the crossing.
   const { captureGeofenceOdometerEvents } = await import("../../apps/backend/src/integrations/samsara/geofences/geofence-odometer-capture.service.ts");
-  await db.query("BEGIN");
-  await db.query("SELECT set_config('app.bypass_rls','lucia',true)");
-  const captures = await captureGeofenceOdometerEvents(db, { operatingCompanyId: CO });
-  await db.query("COMMIT");
+  const captures = await withLuciaBypass(async (client) =>
+    captureGeofenceOdometerEvents(client, { operatingCompanyId: CO })
+  );
   t.ok("odometer capture engine ran over the replayed crossings", true, `${captures.length} capture(s)`);
   const after = await read(
     `SELECT s.id::text, s.sequence_number, s.actual_arrival_at, s.actual_arrival_source, s.actual_departure_at, s.actual_departure_source,

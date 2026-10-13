@@ -113,18 +113,18 @@ try {
   await c.connect();
   await c.query("BEGIN READ ONLY");
   await c.query("SET LOCAL app.bypass_rls = 'lucia'");
-  // Same derivation as the view, inlined so the guard also runs before 202615340800 is applied. UNSCOPED.
+  // Same derivation as the view, inlined before migration; USMCA population only.
   const rows = (await c.query(`
     WITH app AS (
       SELECT sl.source_reference_id AS did, sum(round(abs(sl.amount) * 100))::bigint AS applied
         FROM driver_finance.settlement_lines sl
-        JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id
-       WHERE sl.line_type = 'deduction' AND sl.voided_at IS NULL AND COALESCE(sl.is_active, true) AND s.voided_at IS NULL
+        JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id AND s.operating_company_id = $1
+       WHERE sl.operating_company_id = $1 AND sl.line_type = 'deduction' AND sl.voided_at IS NULL AND COALESCE(sl.is_active, true) AND s.voided_at IS NULL
        GROUP BY 1)
     SELECT d.id::text, d.amount_cents::bigint AS amount, COALESCE(a.applied, 0)::bigint AS applied,
            COALESCE(d.remaining_balance_cents, d.amount_cents)::bigint AS stored, d.voided_at IS NOT NULL AS voided
       FROM driver_finance.driver_settlement_deductions d
-      LEFT JOIN app a ON a.did = d.id`)).rows;
+      LEFT JOIN app a ON a.did = d.id WHERE d.operating_company_id = $1`, ["5c854333-6ea5-4faa-af31-67cb272fef80"])).rows;
   await c.query("ROLLBACK");
   if (rows.length === 0) {
     // Lead ruling 2026-10-05: measured empty after a verified purge — the exemption ends on the first deduction row.
@@ -135,7 +135,7 @@ try {
   const drifted = rows.filter((r) => !r.voided && Number(r.stored) !== Math.max(Number(r.amount) - Number(r.applied), 0)).map((r) => r.id);
   const bad = judge({ overApplied, drifted });
   if (bad.length) { console.error(`${LABEL}: FAIL\n  ${bad.join("\n  ")}`); process.exit(1); }
-  console.log(`${LABEL}: PASS — ${rows.length} deductions (all companies); 0 over-applied; stored drift only on the ${DRIFT_DEBT.size} named purge rows (${drifted.length} now); ${COLUMN_DEBT.length} backend files still to repoint`);
+  console.log(`${LABEL}: PASS — ${rows.length} deductions (USMCA only); 0 over-applied; stored drift only on the ${DRIFT_DEBT.size} named purge rows (${drifted.length} now); ${COLUMN_DEBT.length} backend files still to repoint`);
 } catch (err) {
   console.error(`${LABEL}: FAIL — live check could not run: ${err.message}`);
   process.exit(1);

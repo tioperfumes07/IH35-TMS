@@ -18,8 +18,11 @@ describe("qbo item expense account map", () => {
     expect(src).toContain("qbo_account_id");
   });
 
-  it("upserts default_expense_account_id without inventing accounts", () => {
-    expect(src).toContain("default_expense_account_id");
-    expect(src).not.toMatch(/INSERT INTO catalogs\.accounts/);
+  // ACCT-F4431380 (9e) — OLD: the puller upserted catalogs.items.default_expense_account_id from this lookup.
+  // NEW: the puller writes only mdata.qbo_items (QuickBooks is a read-only archive), so it must write
+  // NEITHER catalog — the lookup stays read-only and never invents an account.
+  it("never writes catalogs.items or catalogs.accounts (read-only lookup, mirror-only puller)", () => {
+    expect(src).not.toMatch(/(?:INSERT INTO|UPDATE)\s+catalogs\.(?:items|accounts)/);
+    expect(src).toMatch(/INSERT INTO mdata\.qbo_items/);
   });
 });

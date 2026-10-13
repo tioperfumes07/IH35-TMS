@@ -1,3 +1,6 @@
+// ACCT-F4431380 (Lead 443.137 item 9e) — QuickBooks is a READ-ONLY ARCHIVE. This puller writes ONLY the
+// mirror (mdata.qbo_vendors). The former native write (mdata.vendors) is REMOVED: a QBO pull never creates,
+// heals or deactivates a native master row. Guard: scripts/verify-qbo-paths-never-write-native-tables.mjs.
 import type { PoolClient } from "pg";
 import { qboCompanyContext, qboPaginateEntity } from "../integrations/qbo/qbo-client.js";
 import { withLuciaBypass } from "../auth/db.js";
@@ -84,65 +87,10 @@ async function upsertMirror(client: PoolClient, operatingCompanyId: string, row:
   );
 }
 
-async function upsertLocalVendor(client: PoolClient, operatingCompanyId: string, row: Record<string, unknown>): Promise<void> {
-  const qboId = String(row.Id ?? "");
-  if (!qboId) return;
-  const name = displayName(row);
-  if (!name) return;
-  const primaryEmail = qboEmail(row);
-  const primaryPhone = qboPhone(row);
-  const active = row.Active === undefined ? true : Boolean(row.Active);
-
-  await client.query(
-    `
-      INSERT INTO mdata.vendors (
-        operating_company_id,
-        vendor_name,
-        vendor_type,
-        phone,
-        email,
-        qbo_vendor_id,
-        notes,
-        deactivated_at,
-        qbo_synced_at,
-        qbo_sync_status,
-        qbo_sync_error,
-        source_system,
-        source
-      )
-      VALUES ($1,$2,'Other',$3,$4,$5,$6,$7,now(),'synced',NULL,'qbo','qbo_clone')
-      ON CONFLICT (operating_company_id, qbo_vendor_id)
-      DO UPDATE SET
-        source_system = 'qbo',
-        source = 'qbo_clone',
-        vendor_name = EXCLUDED.vendor_name,
-        phone = EXCLUDED.phone,
-        email = EXCLUDED.email,
-        deactivated_at = CASE WHEN $8::boolean THEN NULL ELSE COALESCE(mdata.vendors.deactivated_at, now()) END,
-        qbo_synced_at = now(),
-        qbo_sync_status = 'synced',
-        qbo_sync_error = NULL,
-        updated_at = now()
-    `,
-    [
-      operatingCompanyId,
-      name,
-      primaryPhone,
-      primaryEmail,
-      qboId,
-      `Synced from QBO (${operatingCompanyId})`,
-      active ? null : new Date(),
-      active,
-    ]
-  );
-}
-
 export async function pullVendorsFromQbo(operatingCompanyId: string): Promise<VendorsPullResult> {
   const pulledAt = new Date().toISOString();
   let rowsPulled = 0;
   let rowsUpserted = 0;
-
-  const pulledQboIds: string[] = [];
 
   // G5-2: fetch ALL QBO pages over HTTP with NO pooled DB connection or open transaction held.
   // qboCompanyContext (token fetch) and qboPaginateEntity (the outbound QuickBooks REST calls) manage
@@ -155,8 +103,6 @@ export async function pullVendorsFromQbo(operatingCompanyId: string): Promise<Ve
   for await (const page of qboPaginateEntity<Record<string, unknown>>(ctx, "Vendor", "", { pageSize: 1000 })) {
     for (const row of page) {
       rowsPulled += 1;
-      const qboId = String(row.Id ?? "");
-      if (qboId) pulledQboIds.push(qboId);
       pulledRows.push(row);
     }
   }
@@ -164,26 +110,7 @@ export async function pullVendorsFromQbo(operatingCompanyId: string): Promise<Ve
   await withLuciaBypass(async (client) => {
     for (const row of pulledRows) {
       await upsertMirror(client, operatingCompanyId, row);
-      await upsertLocalVendor(client, operatingCompanyId, row);
       rowsUpserted += 1;
-    }
-
-    // MD-2 void-gone-from-QBO (mirror of MD-1): a cloned vendor absent from the FULL pull was deleted in
-    // QBO → deactivate (never delete). Guarded on a non-empty pull; only touches origin='qbo_clone' rows.
-    if (pulledQboIds.length > 0) {
-      await client.query(
-        `
-          UPDATE mdata.vendors
-          SET deactivated_at = COALESCE(deactivated_at, now()),
-              updated_at = now()
-          WHERE operating_company_id = $1::uuid
-            AND source = 'qbo_clone'
-            AND deactivated_at IS NULL
-            AND qbo_vendor_id IS NOT NULL
-            AND NOT (qbo_vendor_id = ANY($2::text[]))
-        `,
-        [operatingCompanyId, pulledQboIds]
-      );
     }
   });
 

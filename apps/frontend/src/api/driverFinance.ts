@@ -1058,9 +1058,9 @@ export function getDriverEscrow(driverId: string, operatingCompanyId: string) {
 export type SettlementPayLineKind = "detention" | "layover" | "bonus" | "stop_pay" | "other";
 export function addSettlementPayLine(
   settlementId: string,
-  payload: { operating_company_id: string; kind: SettlementPayLineKind; amount_cents: number; transaction_date: string; description?: string | null; load_id?: string | null }
+  payload: { operating_company_id: string; kind: SettlementPayLineKind; item_id: string; amount_cents: number; transaction_date: string; description?: string | null; load_id?: string | null }
 ) {
-  return apiRequest<{ settlement_line_id: string; line_type: "detention_pay" | "extra_pay"; load_id: string; load_number: string; amount_cents: number }>(
+  return apiRequest<{ settlement_line_id: string; line_type: "detention_pay" | "extra_pay"; item_id: string; load_id: string; load_number: string; amount_cents: number }>(
     `/api/v1/driver-finance/settlements/${settlementId}/pay-lines`,
     { method: "POST", body: payload }
   );

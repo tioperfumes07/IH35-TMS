@@ -3161,20 +3161,20 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
       [input.coaAccountId, input.operatingCompanyId]
     );
     if (!acct.rows[0]) throw new Error("bill_line_account_not_in_company");
-    // ACCT-F5452: load_id is named explicitly, not omitted. This header-only path (caller supplied
-    // coaAccountId, no per-line lines[]) has no per-line loadId to draw from — CreateBillInput has
-    // no BILL-level loadId either, only CreateBillLineInput's per-line one used by the lines[]
-    // branch above — so NULL here is the honest value for "this synthesized line carries no load
-    // association," not a silently-dropped column. Naming it lets a report tell "never wired" from
-    // "wired, no load" for this bill-creation path.
+    // ACCT-F5452 / LEAD 443.134 AJK-09: load_id is named explicitly. This header-only path (caller supplied
+    // coaAccountId, no per-line lines[]) takes the BILL-level loadId (CreateBillInput.loadId, added with the 443.106 header
+    // load) — NULL only when the bill names no load — and the bill's unit / trailer (equipment_id), so the one line carries
+    // the same load / truck / trailer as its header.
     await client.query(
       `
         INSERT INTO accounting.bill_lines (
-          bill_id, line_sequence, amount, description, section, account_id, load_id
+          bill_id, line_sequence, amount, description, section, account_id, load_id, unit_id, equipment_id
         )
-        VALUES ($1::uuid, 1, $2, $3, 'A', $4::uuid, NULL)
+        VALUES ($1::uuid, 1, $2, $3, 'A', $4::uuid, $5::uuid, $6::uuid, $7::uuid)
       `,
-      [created.id, input.amountCents / 100, input.memo ?? null, input.coaAccountId]
+      // LEAD 443.134 AJK-09 — the synthesized single line carries the bill's own load / unit / trailer (was NULL load always:
+      // a legal reserve / fee bill on a load lost the load on its line).
+      [created.id, input.amountCents / 100, input.memo ?? null, input.coaAccountId, input.loadId ?? null, input.unitId ?? null, input.trailerId ?? null]
     );
   }
 
@@ -3483,12 +3483,9 @@ async function payBillRowInClientTx(
       "P5-D2-BILL-PAYMENT"
     );
 
-    // Parallel books: QBO-origin bills never receive a TMS Bill→GL leg. Attempting BillPayment→GL
-    // would throw BILL_AP_NOT_POSTED (or invent a second JE) and — because posting runs in THIS txn —
-    // roll back the entire subledger payment. Skip GL for source_system=qbo; keep payment + bank cache.
-    const isQboBill = String(bill.source_system ?? "").toLowerCase() === "qbo";
-
-    // When posting is ON for this entity (and the bill is TMS-native), post the balanced DR ap_control /
+    // ROUND 443.117 9b: imported provenance never changes native payment posting ownership.
+    // The shared poster requires the bill's native A/P leg and refuses an unposted bill atomically.
+    // When posting is ON for this entity, post the balanced DR ap_control /
     // CR bank JE ATOMICALLY in THIS transaction (GUARD 2026-07-11: the bank-balance cache and the GL cash
     // account are SEPARATE stores — recording −amount in both is correct double-entry + cache coherence,
     // not double-counting). Running it on the same client means a posting failure rolls back the payment
@@ -3498,7 +3495,7 @@ async function payBillRowInClientTx(
     // Outer `if (flags.glPostingEnabled)` is required by verify-bill-payment-posts-gl (flag-OFF must still pay).
     if (flags.glPostingEnabled) {
       // ROUND 326: a non-cash settlement application's GL is the settlement close's application JE, never a cash leg.
-      if (!isQboBill && input.settlementDeductionNoncash !== true) {
+      if (input.settlementDeductionNoncash !== true) {
         await postSourceTransactionInClientTx(
           client,
           {
@@ -3527,8 +3524,8 @@ async function payBillRowInClientTx(
     return {
       ...paymentRes.rows[0],
       amount_cents: Number(paymentRes.rows[0].amount_cents ?? Math.round(Number(paymentRes.rows[0].amount ?? 0) * 100)),
-      gl_posting: isQboBill
-        ? ({ posted: false, reason: "qbo_parallel_books" } as const)
+      gl_posting: input.settlementDeductionNoncash === true
+        ? ({ posted: false, reason: "settlement_noncash_application" } as const)
         : flags.glPostingEnabled
           ? ({ posted: true } as const)
           : ({ posted: false, reason: "blocked_flag_off" } as const),

@@ -356,6 +356,8 @@ export type CreateWorkOrderTwoSectionPayload = {
     quantity: number;
     amount: number;
     expense_category_uuid: string;
+    /** ACCT-F4431382 — the catalogs.items row this line bills; the WO->bill copy takes its account. */
+    item_id?: string;
   }>;
   sectionB: Array<{
     description: string;
@@ -363,6 +365,8 @@ export type CreateWorkOrderTwoSectionPayload = {
     unit_cost: number;
     amount: number;
     service_item_uuid?: string | null;
+    /** ACCT-F4431382 — the line's item (its part / labor rows inherit it on the bill copy). */
+    item_id?: string;
     sub_rows: Array<{
       line_type: "parts" | "labor";
       description: string;
@@ -739,6 +743,8 @@ export type WorkOrderLineItemPayload = {
   quantity: number;
   unit_cost: number;
   amount: number;
+  /** ACCT-F4431382 — required: the catalogs.items row this line bills (the server refuses wo_line_item_required). */
+  item_id: string;
 };
 
 // Cost-line edits reuse the EXISTING line-item endpoints. The backend refuses (409

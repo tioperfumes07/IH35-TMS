@@ -1,26 +1,17 @@
-/**
- * Parallel books: QBO bill Pay Bill must not invent a TMS JE / must not roll back subledger.
- */
+/** R443.117: the historical entry point now enforces native GL, never parallel books. */
 import { describe, expect, it } from "vitest";
-import fs from "node:fs";
+import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../../");
-const enginePath = path.join(ROOT, "apps/backend/src/accounting/posting-engine.service.ts");
-const billsPath = path.join(ROOT, "apps/backend/src/accounting/bills.service.ts");
-
-describe("QBO bill payment subledger-only (static contract)", () => {
-  const engine = fs.readFileSync(enginePath, "utf8");
-  const bills = fs.readFileSync(billsPath, "utf8");
-
-  it("refuses BillPayment→GL for source_system=qbo", () => {
-    expect(engine).toContain('"QBO_BILL_PAYMENT_POST_GL_REFUSED"');
-    expect(engine).toMatch(/source_system[\s\S]{0,120}qbo[\s\S]{0,220}QBO_BILL_PAYMENT_POST_GL_REFUSED/);
-  });
-
-  it("payBill skips GL for QBO bills and reports qbo_parallel_books", () => {
-    expect(bills).toContain("qbo_parallel_books");
-    expect(bills).toMatch(/if\s*\(\s*(?:flags\.)?glPostingEnabled\s*\)\s*\{[\s\S]*?if\s*\(\s*!isQboBill(?:\s*&&[^)]*)?\s*\)\s*\{[\s\S]*?postSourceTransactionInClientTx/);
-  });
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../../");
+describe("native bill-payment writer contract", () => {
+  for (const args of [[], ["--selftest"]]) {
+    it("enforces the real AST contract " + args.join(" "), () => {
+      const result = spawnSync(process.execPath, [path.join(root, "scripts/verify-qbo-bill-payment-subledger-only.mjs"), ...args], { encoding: "utf8" });
+      expect(result.error, result.stderr).toBeUndefined();
+      expect(result.signal, result.stderr).toBeNull();
+      expect(result.status, result.stdout + result.stderr).toBe(0);
+    });
+  }
 });

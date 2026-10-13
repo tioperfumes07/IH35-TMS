@@ -157,16 +157,11 @@ const SIBLINGS = [
     bad: /row\.actor_name\s*\?\?\s*row\.actor_user_id/,
     good: /entityLabel\(\s*row\.actor_name\s*,\s*row\.actor_user_id\s*,\s*"User"\s*\)/,
   },
-  {
-    rel: "apps/frontend/src/pages/accounting/PayrollAggregatedPage.tsx",
-    bad: /row\.qbo_payroll_run_name\s*\?\?\s*row\.qbo_payroll_run_id/,
-    good: /entityLabel\(\s*row\.qbo_payroll_run_name\s*,\s*row\.qbo_payroll_run_id\s*,\s*"Payroll run"\s*\)/,
-  },
-  {
-    rel: "apps/frontend/src/components/qbo/VendorLinkageModal.tsx",
-    bad: /row\.company_name\s*\?\?\s*row\.qbo_vendor_id/,
-    good: /entityLabel\(\s*row\.company_name\s*,\s*row\.qbo_vendor_id\s*,\s*"QBO vendor"\s*\)/,
-  },
+  // ACCT-F4431379 (Lead 443.137 9d) — old: PayrollAggregatedPage.tsx qbo_payroll_run_name site;
+  // new: entry removed; why: the QBO Payroll W-2 runs table it pinned was deleted (driver pay comes
+  // ONLY from driver_finance). verify-payroll-aggregated-page-uses-paritytable now fails if it returns.
+  // 443.137 9e part 2 (CC-2) — old: VendorLinkageModal.tsx company_name site; new: entry removed; why:
+  // the modal was deleted (its QBO vendor-link routes answer 409 QBO_NATIVE_WRITE_REFUSED).
   {
     rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
     bad: /links\.vendor_name\s*\|\|\s*"Vendor"|links\.customer_name\s*\|\|\s*"Customer"/,

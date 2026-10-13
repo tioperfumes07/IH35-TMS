@@ -4,6 +4,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { pullVendorsFromQbo } from "./vendors-puller.js";
 import { fetchVendorsSyncStatus, reconcileVendors } from "./vendors-reconciler.js";
+import { isQboNativeWriteRefusedError, QBO_NATIVE_WRITE_REFUSED } from "./qbo-native-write-refused.js";
 
 const bodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -69,6 +70,11 @@ export async function registerVendorsSyncRoutes(app: FastifyInstance) {
       const result = await reconcileVendors(parsed.data.operating_company_id);
       return reply.send({ ok: true, ...result });
     } catch (error) {
+      // ACCT-F4431380 — the reconciler refuses by name (QuickBooks is a read-only archive); surface the
+      // refusal as a 409 with its code rather than a generic 500 the caller would retry.
+      if (isQboNativeWriteRefusedError(error)) {
+        return reply.code(409).send({ error: QBO_NATIVE_WRITE_REFUSED, message: error.message });
+      }
       app.log.error({ err: error }, "Vendors reconcile failed");
       return reply.code(500).send({ error: "reconcile_failed", message: error instanceof Error ? error.message : "unknown" });
     }

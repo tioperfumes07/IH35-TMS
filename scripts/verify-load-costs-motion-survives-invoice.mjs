@@ -94,7 +94,7 @@ if (process.argv.includes("--selftest")) {
   expect(
     "bare-is-invoiced",
     good.replace(
-      /const isClosed = \(r: BoardRow\) => CLOSED\.includes\(r\.status\) \|\| \(r\.is_invoiced && !MOTION\.includes\(r\.status\)\);/,
+      /const isClosed = \(r: BoardRow\) => [^;]+;/,
       "const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced;"
     ),
     "bare `r.is_invoiced`"
@@ -104,7 +104,7 @@ if (process.argv.includes("--selftest")) {
   expect(
     "invoice-without-motion",
     good.replace(
-      /const isClosed = \(r: BoardRow\) => CLOSED\.includes\(r\.status\) \|\| \(r\.is_invoiced && !MOTION\.includes\(r\.status\)\);/,
+      /const isClosed = \(r: BoardRow\) => [^;]+;/,
       'const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || (r.is_invoiced && r.status !== "draft");'
     ),
     "without consulting MOTION"

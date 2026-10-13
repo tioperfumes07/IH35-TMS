@@ -37,6 +37,30 @@ apps/backend/src/maintenance/__tests__/pm-auto-engine-e14.test.ts
 apps/backend/src/system/engine-status.catalog.ts
 scripts/db-migrate.mjs
 scripts/audit-creator-settlement.mjs
+# ROUND 443.140 8b (CC-1, 2026-10-12) — cash-flow projections: card_payable_2510 + relay_topup + late-load receipt
+apps/backend/src/cash-flow/cash-flow.service.ts
+apps/backend/src/cash-flow/projected-cash-date.ts
+apps/backend/src/cash-flow/__tests__/8b-cash-flow-projections.db.test.ts
+scripts/verify-steps/18445-verify-cash-flow-projections-8b.mjs
+# ROUND 443.139 8c (CC-1, 2026-10-12) — basis (accrual/cash) on all 7 money reports
+scripts/verify-steps/18441-verify-all-money-reports-take-basis.mjs
+apps/backend/src/accounting/__tests__/8c-money-reports-basis.db.test.ts
+# ROUND 443.113 BCF-01 (CC-1, 2026-10-12) — cash-advance disburse + atomic GL post
+apps/backend/src/cash-advances/cash-advance-disburse.ts
+apps/backend/src/cash-advances/__tests__/bcf01-atomic-disburse.test.ts
+# ROUND 443.113 BCF-02 (CC-1, 2026-10-12) — cash-advance test for BCF-02 driver/bill validation
+apps/backend/src/cash-advances/__tests__/bcf02-bill-driver-load-lock.test.ts
+# ROUND 443.138 9c (CC-1, 2026-10-12) — master-data-native: no QBO mirror reads in money paths
+apps/backend/src/work-orders/work-orders.routes.ts
+apps/backend/src/mdata/accounts.routes.ts
+apps/backend/src/mdata/items.routes.ts
+apps/backend/src/accounting/qbo-master-read.routes.ts
+apps/backend/src/lists/names-master.routes.ts
+apps/backend/src/cash-advances/cash-advances.routes.ts
+apps/backend/src/reports/form-425c/exhibits/exhibit-f-supporting-docs.ts
+apps/backend/src/accounting/pse-mirror.service.ts
+apps/backend/src/accounting/__tests__/9c-native-master-data-reads.db.test.ts
+scripts/verify-steps/18437-verify-no-qbo-mirror-reads-in-money-paths.mjs
 # ROUND 372.1 (Lead, 2026-10-03) — files no seat owned are CC-1's from now on:
 apps/backend/src/health/health.routes.ts
 apps/backend/src/integrations/samsara/fuel-purchase-push.service.ts

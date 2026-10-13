@@ -1,21 +1,27 @@
 #!/usr/bin/env node
 /**
- * verify-document-links-enforced-at-db — ROUND 443.106 (Lead 2026-10-12).
+ * verify-document-links-enforced-at-db — ROUND 443.106 + DEGH-05 / 443.131 (Lead 2026-10-12).
  * The database refuses a broken document link for every writer:
- *   STATIC  S1 migration 202615781200 defines refuse_driver_bill_without_links,
- *              refuse_bill_payment_without_vendor, refuse_expense_line_attr_mismatch;
+ *   STATIC  S1 migration 202615781200 defines refuse_driver_bill_without_links (core links),
+ *              refuse_bill_payment_without_vendor, refuse_expense_line_attr_mismatch (pre-DEGH-05);
+ *           S1b migration 202615891200 finishes the trailer clause + null-header line attribution;
  *           S2 expense load-or-reason refusal stays in 202615770700 (not re-authored here).
- *   LIVE    L1 the three new triggers + the expense load-or-reason trigger exist and are ENABLED
+ *   LIVE    L1 the three triggers + the expense load-or-reason trigger exist and are ENABLED
  *              (or 202615781200 is not yet applied — pending-deploy INFO, L1/L2 for the three new ones skipped);
  *           L2 bill_payments.vendor_id is NOT NULL when the three new triggers are applied
  *              (skipped while migration pending; trigger alone still refuses blanks);
  *           L3 USMCA live counts: 0 driver bills missing vendor/driver/load/unit,
+ *              0 driver bills missing trailer (trailer_id OR non_owned_trailer_id OR load.trailer_source='none'),
  *              0 bill payments missing vendor, 0 expense lines with no load and no reason,
- *              0 expense lines whose driver/unit differ from a load-bearing header.
+ *              0 expense lines whose driver/unit differ from a load-bearing header (IS DISTINCT FROM).
+ *           DEGH-05-all (ROUND 443.140): live USMCA trailer census is L3-zeroed — measured 146/0
+ *           on Neon br-fancy-credit (loads 13498/13520/13525/13562 stamped). INSERT/UPDATE trigger
+ *           still refuse blanks; L3 keeps the historical floor from reopening.
  * --selftest plants each failure class (in-memory) → exit non-zero.
  *
  * Owned paths (gate-step-map):
  *   "db/migrations/202615781200_document_links_refused_at_db.sql"
+ *   "db/migrations/202615891200_driver_bill_trailer_clause.sql"
  *   "db/migrations/202615770700_expense_line_load_or_exemption_refused.sql"
  *   "scripts/verify-document-links-enforced-at-db.mjs"
  *   "apps/backend/src/accounting/__tests__/document-links-refused-at-db.db.test.ts"
@@ -31,6 +37,7 @@ export const REQUIRES_LIVE_DB =
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-document-links-enforced-at-db";
 const MIGRATION = "db/migrations/202615781200_document_links_refused_at_db.sql";
+const TRAILER_MIGRATION = "db/migrations/202615891200_driver_bill_trailer_clause.sql";
 const EXPENSE_LOAD_MIGRATION = "db/migrations/202615770700_expense_line_load_or_exemption_refused.sql";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
@@ -48,7 +55,7 @@ const REFUSAL_WORDS = [
   "ALTER COLUMN vendor_id SET NOT NULL",
 ];
 
-export function staticFailures(sql, expenseSql) {
+export function staticFailures(sql, expenseSql, trailerSql = "") {
   const f = [];
   for (const [, t] of TRIGGERS.slice(0, 3)) {
     if (!sql.includes(t)) f.push(`S1 ${MIGRATION}: ${t} missing`);
@@ -56,8 +63,25 @@ export function staticFailures(sql, expenseSql) {
   for (const w of REFUSAL_WORDS) {
     if (!sql.includes(w)) f.push(`S1 ${MIGRATION}: refusal "${w}" missing`);
   }
-  if (sql.includes("trailer_id IS NULL") && sql.includes("array_append(missing, 'trailer')")) {
-    f.push("S1 trailer clause must stay deferred until prod driver bills without trailer = 0");
+  // 443.106 intentionally deferred trailer — that file must stay without the finished clause.
+  if (sql.includes("array_append(missing, 'trailer')")) {
+    f.push(`S1 ${MIGRATION}: trailer clause belongs in ${TRAILER_MIGRATION}, not the deferred 443.106 file`);
+  }
+  if (!trailerSql) {
+    f.push(`S1b ${TRAILER_MIGRATION}: missing`);
+  } else {
+    if (!trailerSql.includes("array_append(missing, 'trailer')")) {
+      f.push(`S1b ${TRAILER_MIGRATION}: trailer clause (array_append missing 'trailer') missing`);
+    }
+    if (!trailerSql.includes("trailer_source = 'none'")) {
+      f.push(`S1b ${TRAILER_MIGRATION}: load.trailer_source = 'none' escape missing`);
+    }
+    if (!trailerSql.includes("non_owned_trailer_id")) {
+      f.push(`S1b ${TRAILER_MIGRATION}: non_owned_trailer_id clause missing`);
+    }
+    if (!trailerSql.includes("IS DISTINCT FROM h.driver_uuid") || !trailerSql.includes("IS DISTINCT FROM h.unit_id")) {
+      f.push(`S1b ${TRAILER_MIGRATION}: expense-line IS DISTINCT FROM null-header comparison missing`);
+    }
   }
   if (!expenseSql.includes("trg_expense_line_load_or_reason")) {
     f.push(`S2 ${EXPENSE_LOAD_MIGRATION}: trg_expense_line_load_or_reason missing`);
@@ -128,6 +152,19 @@ async function measure(client) {
              AND (mdata_vendor_id IS NULL AND NULLIF(btrim(COALESCE(vendor_id, '')), '') IS NULL
                   OR driver_id IS NULL OR load_id IS NULL OR unit_id IS NULL)
          ) AS driver_bills_missing_core_links,
+         (SELECT count(*) FROM accounting.bills b
+           WHERE b.operating_company_id = $1::uuid AND b.voided_at IS NULL
+             AND (b.bill_category = 'driver' OR b.load_id IS NOT NULL)
+             AND b.load_id IS NOT NULL
+             AND b.trailer_id IS NULL
+             AND b.non_owned_trailer_id IS NULL
+             AND NOT EXISTS (
+               SELECT 1 FROM mdata.loads l
+                WHERE l.id = b.load_id
+                  AND l.operating_company_id = b.operating_company_id
+                  AND l.trailer_source = 'none'
+             )
+         ) AS driver_bills_missing_trailer,
          (SELECT count(*) FROM accounting.bill_payments
            WHERE operating_company_id = $1::uuid AND voided_at IS NULL
              AND NULLIF(btrim(COALESCE(vendor_id, '')), '') IS NULL
@@ -142,8 +179,8 @@ async function measure(client) {
             JOIN accounting.expenses e ON e.id = el.expense_id
            WHERE el.operating_company_id = $1::uuid AND e.voided_at IS NULL
              AND e.load_id IS NOT NULL
-             AND ((e.driver_uuid IS NOT NULL AND el.driver_id IS DISTINCT FROM e.driver_uuid)
-                  OR (e.unit_id IS NOT NULL AND el.unit_id IS DISTINCT FROM e.unit_id))
+             AND (el.driver_id IS DISTINCT FROM e.driver_uuid
+                  OR el.unit_id IS DISTINCT FROM e.unit_id)
          ) AS expense_lines_attr_mismatch`,
       [USMCA]
     )
@@ -156,28 +193,60 @@ const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(imp
 if (isMain) {
   const sql = readFileSync(join(ROOT, MIGRATION), "utf8");
   const expenseSql = readFileSync(join(ROOT, EXPENSE_LOAD_MIGRATION), "utf8");
+  let trailerSql = "";
+  try {
+    trailerSql = readFileSync(join(ROOT, TRAILER_MIGRATION), "utf8");
+  } catch {
+    trailerSql = "";
+  }
   if (process.argv.includes("--selftest")) {
     const good = {
       triggers: TRIGGERS.map(([, t]) => ({ tgname: t, tgenabled: "O" })),
       vendorNotNull: true,
       violations: {
         driver_bills_missing_core_links: 0,
+        driver_bills_missing_trailer: 0,
         bill_payments_missing_vendor: 0,
         expense_lines_no_load_no_reason: 0,
         expense_lines_attr_mismatch: 0,
       },
     };
+    const trailerOk = trailerSql || [
+      "array_append(missing, 'trailer')",
+      "trailer_source = 'none'",
+      "non_owned_trailer_id",
+      "IS DISTINCT FROM h.driver_uuid",
+      "IS DISTINCT FROM h.unit_id",
+    ].join("\n");
     const cases = [
-      ["the migration passes the static rule", staticFailures(sql, expenseSql).length === 0],
+      ["the migrations pass the static rule", staticFailures(sql, expenseSql, trailerOk).length === 0],
       [
         "a migration without the driver-bill trigger fails S1",
-        staticFailures(sql.split("trg_refuse_driver_bill_without_links").join("x"), expenseSql).some((x) =>
-          x.startsWith("S1")
+        staticFailures(sql.split("trg_refuse_driver_bill_without_links").join("x"), expenseSql, trailerOk).some((x) =>
+          x.startsWith("S1 ")
         ),
       ],
       [
+        "443.106 file with a planted trailer clause fails S1",
+        staticFailures(sql + "\narray_append(missing, 'trailer')", expenseSql, trailerOk).some((x) =>
+          x.includes("trailer clause belongs")
+        ),
+      ],
+      [
+        "missing DEGH-05 trailer migration fails S1b",
+        staticFailures(sql, expenseSql, "").some((x) => x.startsWith("S1b")),
+      ],
+      [
+        "DEGH-05 without trailer_source=none fails S1b",
+        staticFailures(
+          sql,
+          expenseSql,
+          "array_append(missing, 'trailer')\nnon_owned_trailer_id\nIS DISTINCT FROM h.driver_uuid\nIS DISTINCT FROM h.unit_id"
+        ).some((x) => x.includes("trailer_source")),
+      ],
+      [
         "a missing expense load-or-reason migration fails S2",
-        staticFailures(sql, expenseSql.split("trg_expense_line_load_or_reason").join("x")).some((x) =>
+        staticFailures(sql, expenseSql.split("trg_expense_line_load_or_reason").join("x"), trailerOk).some((x) =>
           x.startsWith("S2")
         ),
       ],
@@ -213,6 +282,13 @@ if (isMain) {
         }).some((x) => x.startsWith("L3") && x.includes("driver_bills_missing_core_links")),
       ],
       [
+        "a planted driver-bill missing-trailer violation fails L3",
+        liveFailures({
+          ...good,
+          violations: { ...good.violations, driver_bills_missing_trailer: 1 },
+        }).some((x) => x.startsWith("L3") && x.includes("driver_bills_missing_trailer")),
+      ],
+      [
         "a planted bill-payment violation fails L3",
         liveFailures({
           ...good,
@@ -239,7 +315,7 @@ if (isMain) {
     console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
     process.exit(bad ? 1 : 0);
   }
-  const sf = staticFailures(sql, expenseSql);
+  const sf = staticFailures(sql, expenseSql, trailerSql);
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     let lf = [];
@@ -260,7 +336,7 @@ if (isMain) {
       process.exitCode = 1;
     } else {
       console.log(
-        `${LABEL}: OK — DB refuses driver bills without core links, blank bill-payment vendors, and expense-line attribution mismatches; expense load-or-reason still enforced; 0 USMCA live violations.`
+        `${LABEL}: OK — DB refuses driver bills without core links + trailer clause (DEGH-05), blank bill-payment vendors, and expense-line attribution mismatches (null-header aware); expense load-or-reason still enforced; 0 USMCA live core-link + missing-trailer violations (DEGH-05-all L3 floor).`
       );
     }
   } finally {

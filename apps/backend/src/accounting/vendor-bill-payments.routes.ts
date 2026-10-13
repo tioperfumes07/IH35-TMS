@@ -262,8 +262,8 @@ export async function applyVendorBillPaymentBatch(
       [applyRow.bill_id, newPaidCents, newPaidCents / 100, storageStatus]
     );
 
-    const isQboBill = String(billRaw.source_system ?? "").toLowerCase() === "qbo";
-    if (glPostingEnabled && !isQboBill) {
+    // ROUND 443.117 9b: QBO provenance does not exempt a native payment from its A/P/cash posting.
+    if (glPostingEnabled) {
       await postSourceTransactionInClientTx(
         client as never,
         {

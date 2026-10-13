@@ -10,6 +10,7 @@
  */
 import { processDotDwellForGeofenceEvent } from "./dot-dwell-detector.service.js";
 import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
+import { assertCanonicalSubset } from "../dispatch/canonical-active-load-set.js";
 import { GEOFENCE_AUTO_DELIVERY_ACTOR } from "../dispatch/geofence-auto-delivery.service.js";
 import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.service.js";
 import { fromMdataStatus, type DispatchStatus } from "../dispatch/load-state-machine.js";
@@ -27,6 +28,7 @@ const FENCE_STATUS_PATH: DispatchStatus[] = [
   "in_transit",
   "delivered_pending_docs",
 ];
+assertCanonicalSubset("FENCE_STATUS_PATH", FENCE_STATUS_PATH);
 
 /**
  * G11 + AJK-03: advance load status from fence evidence ONLY via transitionDispatchLoadInClientTx

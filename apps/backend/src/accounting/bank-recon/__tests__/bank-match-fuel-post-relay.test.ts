@@ -25,6 +25,7 @@ function client(
   ingestSource: string | null = "daily_pull",
   matchedDriverId: string | null = "d1",
   loadRows: unknown[] = [{ load_id: "load-1", load_number: "13558", matched_by: "unit", trailer_id: null, non_owned_trailer_id: null }],
+  twinRows: unknown[] = [],
 ) {
   const calls: string[] = [];
   return {
@@ -32,6 +33,8 @@ function client(
     c: {
       query: vi.fn(async (sql: string) => {
         calls.push(sql);
+        // 443.136 — the duplicate-purchase rule (fuel/relay-duplicate-purchase.service.ts): an already-posted Relay twin.
+        if (sql.includes("JOIN s b ON")) return { rows: twinRows };
         if (sql.includes("FROM integrations.relay_fuel_transactions r")) {
           return {
             rows: [
@@ -94,6 +97,14 @@ describe("Relay fill posting — one leg per product", () => {
     ]);
     // Lead 443.41 A: the fill's expense document adopts the SAME journal entry the poster returned.
     expect(mockAdopt).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ journal_entry_id: "je-1" }));
+  });
+
+  it("443.136 — the same purchase already posted under another Relay transaction id is refused by name and never posts", async () => {
+    const { c } = client(17104, [{ fuel_type: "diesel", cents: 17104 }], [], "daily_pull", "d1", undefined,
+      [{ fill_id: "fill-0", transaction_id: "txn_AJyrss5NZ141mg" }]);
+    await expect(postFuelFillOnBankMatch(c, input)).rejects.toMatchObject({ code: "relay_fill_duplicate_purchase" });
+    await expect(postFuelFillOnBankMatch(c, input)).rejects.toThrow(/fill-0 txn_AJyrss5NZ141mg/);
+    expect(mockPost).not.toHaveBeenCalled();
   });
 
   it("RELAY-F442 — sender_fee is its own fee_amount_cents; wallet amount = paid + fee", async () => {

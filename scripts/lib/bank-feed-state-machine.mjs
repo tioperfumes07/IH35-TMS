@@ -81,7 +81,9 @@ export async function withUnscopedReadOnly(label, fn) {
     await c.query("BEGIN READ ONLY");
     await c.query("SET LOCAL app.bypass_rls = 'lucia'");
     const bypass = (await c.query("SELECT identity.is_lucia_bypass() AS b")).rows[0].b;
-    const total = Number((await c.query(`SELECT count(*) AS n FROM banking.bank_transactions bt WHERE ${NOT_FROZEN_SQL()}`)).rows[0].n);
+    // Reader visibility proof is USMCA-only; bypass must never broaden a gate's company scope.
+    const total = Number((await c.query(`SELECT count(*) AS n FROM banking.bank_transactions bt WHERE bt.operating_company_id = $1`,
+      ["5c854333-6ea5-4faa-af31-67cb272fef80"])).rows[0].n);
     if (total === 0) {
       console.error(`${label}: FAIL — 0 bank lines read (bypass=${bypass}); an empty result is an instrument problem, not a pass`);
       process.exit(1);

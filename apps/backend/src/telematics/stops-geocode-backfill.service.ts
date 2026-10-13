@@ -18,6 +18,7 @@ import { stableProviderFailureReason, geocodeAddressWithEvidence } from "./stop-
 import { matchSamsaraAddressForStop, normName } from "./samsara-stop-match.js";
 import { isGooglePlacesConfigured, isGooglePlacesEnabled, searchAddress, type AddressResult } from "../integrations/google/google-places-client.js";
 import { ensureSamsaraAddressLocation, parseFormattedAddress } from "../integrations/samsara/geofences/address-import.service.js";
+import { bindLoadToGeofences } from "../dispatch/geofences/load-geofence-binding.service.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 type StopRow = {
@@ -235,6 +236,13 @@ export async function geocodeStopsWithClient(
         WHERE s.id = ANY($1::uuid[]) AND lo.id = s.location_id AND lo.operating_company_id = $2::uuid
           AND s.google_place_id IS NULL AND lo.google_place_id IS NOT NULL`,
       [touched, companyId]);
+  }
+  // G11: geocode may upgrade precision after book-load bound zero fences; re-bind canonical load-{loadId}-stop-{seq} labels.
+  if (stops.length > 0) {
+    const bindLoadIds = [...new Set(stops.map((s) => s.load_id))];
+    for (const lid of bindLoadIds) {
+      await bindLoadToGeofences(client, companyId, lid);
+    }
   }
   // 443.70 S1 (owner 443.53 / 443.64: "We keep them and we need the real address geo fences"): the ONE fence on each
   // street-resolved stop's location is the fence Samsara gets. Before this, the location fence was never queued (only ops

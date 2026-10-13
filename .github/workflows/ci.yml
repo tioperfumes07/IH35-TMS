@@ -48,6 +48,10 @@ jobs:
       - run: npm ci
       - name: Prove batch failure propagation
         run: node --test scripts/lib/run-required-guards.test.mjs
+      - name: Sentry SDK and privacy contract
+        run: |
+          node scripts/verify-sentry-sdk-contract.mjs
+          node scripts/verify-sentry-sdk-contract.mjs --selftest
 
   # X-16: live-population assertions must never be proved on empty CI Postgres.
   # Audited read-only check; fixture writers do NOT belong in this job.

@@ -113,12 +113,18 @@ export function analyzeProjectionFunction(text, fnName, insertTable, sourceTable
         `idle_in_transaction anti-pattern (Sentry IH35-TMS-PROD-25) #3433 fixed. It must NOT return.`
     );
   }
-  const insertRe = new RegExp(`INSERT\\s+INTO\\s+${insertTable.replace(".", "\\.")}`, "i");
-  const fromRe = new RegExp(`FROM\\s+${sourceTable.replace(".", "\\.")}`, "i");
-  if (!insertRe.test(body) || !fromRe.test(body)) {
-    failures.push(
-      `${fnName} must remain a set-based INSERT INTO ${insertTable} … FROM ${sourceTable} (no per-row round trips).`
-    );
+  // ACCT-F4431380 (Lead 443.137 item 9e) — OLD: the #3433 replacement had to be PRESENT — a set-based
+  // INSERT INTO ${insertTable} … FROM ${sourceTable}. NEW: QuickBooks is a read-only archive; the projection
+  // was REMOVED and the entry point REFUSES BY NAME. The per-row-loop ban above is kept; now the function
+  // must call refuseQboNativeWrite( and must contain NO write into ${insertTable} (set-based or otherwise).
+  // WHY: the strongest fix for an idle-in-transaction projection is no projection; a silent no-op would
+  // report success.
+  if (!/refuseQboNativeWrite\(/.test(body)) {
+    failures.push(`${fnName} must REFUSE BY NAME via refuseQboNativeWrite( — the QBO -> native projection was removed (ACCT-F4431380).`);
+  }
+  const insertRe = new RegExp(`(?:INSERT\\s+INTO|UPDATE)\\s+${insertTable.replace(".", "\\.")}\\b`, "i");
+  if (insertRe.test(body)) {
+    failures.push(`${fnName} writes ${insertTable} — a QBO path never writes a native money table (ACCT-F4431380).`);
   }
   return failures;
 }
@@ -351,6 +357,19 @@ if (process.argv.includes("--selftest")) {
       "mdata.qbo_ar_payments"
     );
     if (removedFindings.length === 0) failures.push("selftest: removed projectArPaymentsToLedger was NOT flagged.");
+
+    // Case D (ACCT-F4431380): restore the OLD set-based projection shape in a REAL copy (refusal replaced by
+    // INSERT INTO accounting.expenses … FROM mdata.qbo_purchases) — must be flagged (native write, no refusal).
+    const refuseStart = realPurchasesSrc.indexOf("export async function projectPurchasesToExpenses");
+    const refuseEnd = realPurchasesSrc.indexOf("\n}\n", refuseStart);
+    const oldShape =
+      realPurchasesSrc.slice(0, refuseStart) +
+      `export async function projectPurchasesToExpenses(operatingCompanyId) {
+        await client.query('INSERT INTO accounting.expenses (operating_company_id) SELECT m.operating_company_id FROM mdata.qbo_purchases m');
+      }` +
+      (refuseEnd > 0 ? realPurchasesSrc.slice(refuseEnd + 2) : "");
+    const oldShapeFindings = analyzeProjectionFunction(oldShape, "projectPurchasesToExpenses", "accounting.expenses", "mdata.qbo_purchases");
+    if (oldShapeFindings.length < 2) failures.push(`selftest: restored set-based native projection was NOT flagged twice (got ${oldShapeFindings.length}).`);
   }
 
   // --- Assertion 1 selftest: mutate REAL migration SQL to claim default_enabled=true ---
@@ -476,6 +495,6 @@ if (failures.length > 0) {
 
 console.log(
   "verify-projection-flags-off-by-design: PASS (projection flags default OFF; SAFE-OFF resolver intact; " +
-    "#3433 set-based fix intact; ACCT-ECON-03/04 FAIL-BY-DESIGN or Neon-density PASS)"
+    "projections refuse by name, no native write, no per-row loop (ACCT-F4431380); ACCT-ECON-03/04 FAIL-BY-DESIGN or Neon-density PASS)"
 );
 process.exit(0);

@@ -61,16 +61,12 @@ export function ChartOfAccountsSyncPanel({ operatingCompanyId, showDriftFilter, 
     },
   });
 
-  const reconcileMutation = useMutation({
-    mutationFn: () => postCoaAction("/api/v1/qbo-sync/chart-of-accounts/reconcile-now", operatingCompanyId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coa-sync-status", operatingCompanyId] }),
-    onError: (error) => {
-      pushToast(error instanceof Error ? error.message : "Chart of accounts reconcile failed", "error");
-    },
-  });
+  // 443.137 9e (ACCT-F4431380): the chart-of-accounts reconcile-now route always answers 409 QBO_NATIVE_WRITE_REFUSED —
+  // QuickBooks is a read-only archive, nothing reconciles it into native tables — so this panel offers no
+  // Reconcile action (never a broken button). "Refresh from QBO" still refreshes the read-only mirror.
 
   const status = statusQuery.data;
-  const busy = pullMutation.isPending || reconcileMutation.isPending;
+  const busy = pullMutation.isPending;
 
   const toggleDrift = () => {
     const next = !driftOnly;
@@ -102,14 +98,6 @@ export function ChartOfAccountsSyncPanel({ operatingCompanyId, showDriftFilter, 
         onClick={() => pullMutation.mutate()}
       >
         {pullMutation.isPending ? "Refreshing…" : "Refresh from QBO"}
-      </button>
-      <button
-        type="button"
-        className="rounded-sm border border-border px-3 py-1 disabled:opacity-50"
-        disabled={busy}
-        onClick={() => reconcileMutation.mutate()}
-      >
-        {reconcileMutation.isPending ? "Reconciling…" : "Reconcile"}
       </button>
       {(showDriftFilter ?? true) && (
         <button

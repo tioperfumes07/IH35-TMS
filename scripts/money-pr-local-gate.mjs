@@ -53,6 +53,7 @@ const STEPS = [
   // asserted AT CLOSE/SEND TIME by source-wiring, not swept up later by a one-shot. Pure static
   // text check, no DB.
   ["verify-settlement-close-advances-load-status", "scripts/verify-settlement-close-advances-load-status.mjs"],
+  ["verify-settlement-pay-line-item-account", "scripts/verify-settlement-pay-line-item-account.mjs"],
   // ROUND 203/205 (owner, 2026-09-28) — "white background, wrong contrast... tokens for surface/
   // border/text." TruckLineBoard.tsx had drifted off the LOCKED GLOBAL-TYPE-SIZE-BASELINE.md
   // surface/border/text palette; this asserts the retired values never reappear and the file
@@ -72,6 +73,11 @@ const STEPS = [
   // settlement/tour (presettlement_link_id) without a tour_id check nearby.
   ["verify-tour-groups-by-tour-id-only", "scripts/verify-tour-groups-by-tour-id-only.mjs"],
   ["verify-no-posting-to-inactive-account", "scripts/verify-no-posting-to-inactive-account.mjs"],
+  // R443.117 9a — QBO provenance must not block native-document GL; real eligibility, period,
+  // balance, and idempotency controls remain independently guarded.
+  ["verify-native-document-gl-independent-of-qbo", "scripts/verify-native-document-gl-independent-of-qbo.mjs"],
+  ["verify-qbo-origin-bill-payment-writers-post-native-gl", "scripts/verify-qbo-origin-bill-payment-writers-post-native-gl.mjs"],
+  ["verify-load-costs-live-documents", "scripts/verify-load-costs-live-documents.mjs"],
   ["verify-expense-item-lines", "scripts/verify-expense-item-lines.mjs"],
   ["verify-account-number-hidden-by-default", "scripts/verify-account-number-hidden-by-default.mjs"],
   ["verify-definition-of-done-evidence", "scripts/verify-definition-of-done-evidence.mjs"],

@@ -1931,6 +1931,14 @@
       "template_payload",
       "updated_at"
     ],
+    "accounting.related_party_accounts": [
+      "account_id",
+      "created_at",
+      "created_by_user_id",
+      "id",
+      "operating_company_id",
+      "party_vendor_id"
+    ],
     "accounting.related_party_loan_entries": [
       "account_id",
       "bank_transaction_id",
@@ -7083,14 +7091,28 @@
     "integrations.relay_company_cards": [
       "card_last4",
       "created_at",
+      "funding_account_number",
       "funding_bank_account_id",
+      "funding_kind",
+      "funding_system_purpose",
       "id",
       "is_active",
       "label",
       "operating_company_id",
+      "owner_ruling",
+      "party_relationship",
+      "party_vendor_id",
       "source_hint",
       "updated_at",
       "voided_at"
+    ],
+    "integrations.relay_deposit_postings": [
+      "created_at",
+      "id",
+      "journal_entry_id",
+      "operating_company_id",
+      "relay_deposit_id",
+      "released_at"
     ],
     "integrations.relay_deposits": [
       "classification",
@@ -7103,6 +7125,7 @@
       "matched_bank_transaction_id",
       "note_raw",
       "operating_company_id",
+      "posted_journal_entry_id",
       "posted_to_gl",
       "raw_payload",
       "relay_created_at",
@@ -10777,7 +10800,9 @@
       "prepared_by_user_uuid",
       "quarter",
       "status",
-      "uuid"
+      "supersedes_filing_uuid",
+      "uuid",
+      "version"
     ],
     "reports.lane_profitability_cache": [
       "avg_deadhead_pct",

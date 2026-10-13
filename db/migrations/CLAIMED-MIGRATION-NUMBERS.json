@@ -153,6 +153,31 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202615891200": {
+      "claimed_by": "cursor",
+      "claimed_at": "2026-10-12",
+      "purpose": "DEGH-05 / 443.129+443.131: refuse_driver_bill_without_links trailer clause (trailer_id OR non_owned_trailer_id OR load.trailer_source=none) on INSERT/UPDATE only; expense_lines attribution compared even when header driver/unit is NULL"
+    },
+    "202615900910": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-12",
+      "purpose": "LEAD 443.134 #1: accounting.related_party_accounts — the durable link related party (vendor) -> its ONE running 'Due to / from <party>' account, filled by ensureRelatedPartyAccount; backfilled from the owner's card map for the 4 existing 2410-00-00N accounts"
+    },
+    "202615920910": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-12",
+      "purpose": "LEAD 443.136 #1: the Relay deposit posting registry trigger stamps the deposit row (posted_to_gl + posted_journal_entry_id) and clears it on reversal, so app code never writes the flag by hand"
+    },
+    "202615940910": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-12",
+      "purpose": "443.136 follow-up: accounting.posting_source_load_id fuel_event resolves a Relay fill with no fuel row to its adopted expense document's load"
+    },
+    "202615930910": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-12",
+      "purpose": "LEAD 443.136 #2: WORM (accounting.refuse_financial_row_delete) on accounting.related_party_accounts"
+    },
     "202615890910": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-12",
@@ -2567,5 +2592,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
     "purpose": "443.128 C: team driver bills recognized at delivery — driver_bills.accrued_team_bill_id (the co-driver's delivery-posted A/P bill) + the settlement spine keyed per driver bill AND accounting bill (two team drivers close the same driver bill)"
+  },
+  "202615910700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-12",
+    "purpose": "443.134 AJK-13: reports.ifta_filings versions — a re-prepare of an approved / filed quarter is a NEW draft version (version + supersedes_filing_uuid); the unique key becomes (company, quarter, version); a filed / approved filing is never modified"
   }
 }

@@ -1,3 +1,8 @@
+// ACCT-F4431380 (Lead 443.137 item 9e, owner ruling: QuickBooks is a READ-ONLY ARCHIVE): the Stage 2
+// projection described below is REMOVED. Its entry point now throws QboNativeWriteRefusedError
+// (QBO_NATIVE_WRITE_REFUSED); this file writes ONLY its mirror (mdata.qbo_*) and qbo.sync_runs.
+// Guard: scripts/verify-qbo-paths-never-write-native-tables.mjs. The Stage 2 text is kept as history.
+//
 // QBO-EXPENSES-PULL — INBOUND QuickBooks Purchase (cash/card spend) sync (QBO is system-of-record).
 //
 // Two flag-gated, idempotent stages so the owner can roll out the QBO->TMS expense clone safely:
@@ -29,13 +34,13 @@ import { withLuciaBypass } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { QBO_PURCHASES_MIRROR_SYNC_KIND, QBO_PURCHASES_EXPENSES_PROJECTION_SYNC_KIND } from "./qbo-purchases-sync-kind.js";
 import { recordFlagDisabledMirrorSyncRun } from "./record-flag-disabled-sync-run.js";
+import { refuseQboNativeWrite } from "./qbo-native-write-refused.js";
 
 // Default-OFF financial flags (financial cluster — HOLD for owner approval). SINGLE SOURCE OF TRUTH is the
 // DB feature flag resolved PER-ENTITY via isEnabled() (lib.feature_flag_overrides keyed on
 // operating_company_id) — NOT a process.env var. isEnabled() returns false when the flag row/override is
 // absent, so an unregistered flag stays SAFE-OFF.
 const PURCHASES_MIRROR_PULL_FLAG = "QBO_PURCHASES_MIRROR_PULL_ENABLED";
-const EXPENSES_PROJECTION_FLAG = "QBO_EXPENSES_PROJECTION_ENABLED";
 
 export { QBO_PURCHASES_MIRROR_SYNC_KIND, QBO_PURCHASES_EXPENSES_PROJECTION_SYNC_KIND };
 
@@ -333,210 +338,16 @@ export function parsePurchaseLines(payload: unknown): PurchaseLine[] {
 }
 
 /**
- * Stage 2 + 2b — project the QBO Purchase mirror into accounting.expenses (header) + accounting.expense_lines.
- *
- * ROOT FIX (Sentry IH35-TMS-PROD-25 / idle_in_transaction_session_timeout):
- * Must be set-based INSERT…SELECT (same pattern as projectApBillPaymentsToLedger / ops backfill).
- * The prior per-row await loop held one withLuciaBypass txn open across tens of thousands of
- * round-trips; Postgres marked the session idle_in_transaction, killed the connection, rolled
- * the entire projection back to 0 rows, and the uncaught pool error bounced the API worker.
- *
- * ROOT FIX (prod 2026-07-29 — flag ON, mirror full, expenses=0): every expense_lines INSERT must
- * stamp operating_company_id. That column is NOT NULL with no default; omitting it fails the line
- * INSERT and the deferred header/line balance trigger rolls the WHOLE projection txn (headers too)
- * back to zero. Do not "fix" this by flipping QBO_EXPENSES_PROJECTION_ENABLED off — the flag is correct.
- *
- * Flag check runs in its OWN short txn; projection runs in a separate short txn. Never shares a
- * connection/tx with Stage 1 QBO HTTP pull. posting_status stays 'unposted' (NO GL). No-op unless
- * QBO_EXPENSES_PROJECTION_ENABLED is ON for this entity. Writes qbo.sync_runs kind
- * qbo_purchases_expenses_projection (NOT mdata.qbo_sync_runs — that table is CoA/customer/vendor CDC only).
+ * ACCT-F4431380 (Lead 443.137 item 9e) — REFUSED BY NAME. This formerly projected mdata.qbo_purchases into accounting.expenses + accounting.expense_lines.
+ * QuickBooks is a read-only archive: a QBO path writes only its mirror table, never a native money/master
+ * table. Throws QboNativeWriteRefusedError (code QBO_NATIVE_WRITE_REFUSED) instead of returning a
+ * "0 rows projected" result a caller could mistake for success. The mirror (mdata.qbo_purchases) is kept and still
+ * filled by the pull stage; native records are created only through the TMS service layer.
  */
 export async function projectPurchasesToExpenses(operatingCompanyId: string): Promise<PurchasesProjectResult> {
-  const projectedAt = new Date().toISOString();
-
-  let enabled = false;
-  await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    enabled = await isEnabled(client, EXPENSES_PROJECTION_FLAG, { operating_company_id: operatingCompanyId });
-  });
-  if (!enabled) {
-    await recordFlagDisabledMirrorSyncRun({
-      operatingCompanyId,
-      kind: QBO_PURCHASES_EXPENSES_PROJECTION_SYNC_KIND,
-      flagKey: EXPENSES_PROJECTION_FLAG,
-      mirrorTable: "accounting.expenses",
-    });
-    return { enabled: false, expensesProjected: 0, linesProjected: 0, projectedAt };
-  }
-
-  const runId = await beginPurchasesMirrorSyncRun(operatingCompanyId, QBO_PURCHASES_EXPENSES_PROJECTION_SYNC_KIND, {
-    direction: "mirror_to_subledger",
-    source_table: "mdata.qbo_purchases",
-    target_table: "accounting.expenses",
-  });
-  let expensesProjected = 0;
-  let linesProjected = 0;
-
-  try {
-    // Separate short txn — busy set-based SQL only (no per-row awaits, no QBO network).
-    await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-
-      const header = await client.query(
-        `
-        INSERT INTO accounting.expenses (
-          operating_company_id, qbo_purchase_id, vendor_uuid, transaction_date,
-          total_amount_cents, memo, status, posting_status, qbo_sync_pending, is_active, created_at, updated_at
-        )
-        SELECT
-          m.operating_company_id,
-          m.qbo_id,
-          v.id,
-          COALESCE(m.txn_date, CURRENT_DATE),
-          m.total_cents,
-          m.private_note,
-          'posted', 'unposted', false, true, now(), now()
-        FROM mdata.qbo_purchases m
-        LEFT JOIN mdata.vendors v
-          ON v.operating_company_id = m.operating_company_id
-         AND v.qbo_vendor_id = m.entity_qbo_id
-         AND (m.entity_type IS NULL OR m.entity_type = 'Vendor')
-        WHERE m.operating_company_id = $1::uuid
-          AND m.active = true
-          AND m.total_cents > 0
-        ON CONFLICT (operating_company_id, qbo_purchase_id) WHERE qbo_purchase_id IS NOT NULL
-        DO UPDATE SET
-          vendor_uuid = EXCLUDED.vendor_uuid,
-          transaction_date = EXCLUDED.transaction_date,
-          total_amount_cents = EXCLUDED.total_amount_cents,
-          memo = EXCLUDED.memo,
-          is_active = true,
-          updated_at = now()
-      `,
-        [operatingCompanyId]
-      );
-      expensesProjected = header.rowCount ?? 0;
-
-      const lines = await client.query(
-        `
-        WITH src AS (
-          SELECT
-            e.id AS expense_id,
-            e.operating_company_id,
-            ln.ord AS orig_ord,
-            (ln.elem->>'Amount')::numeric AS amt,
-            ln.elem->>'Description' AS description,
-            ln.elem->'AccountBasedExpenseLineDetail'->'AccountRef'->>'value' AS account_qbo_id
-          FROM accounting.expenses e
-          JOIN mdata.qbo_purchases m
-            ON m.operating_company_id = e.operating_company_id
-           AND m.qbo_id = e.qbo_purchase_id
-          CROSS JOIN LATERAL jsonb_array_elements(COALESCE(m.payload_json->'Line', '[]'::jsonb))
-            WITH ORDINALITY AS ln(elem, ord)
-          WHERE e.operating_company_id = $1::uuid
-            AND e.qbo_purchase_id IS NOT NULL
-            AND COALESCE((ln.elem->>'Amount')::numeric, 0) > 0
-        ),
-        seq AS (
-          SELECT
-            src.*,
-            row_number() OVER (PARTITION BY src.expense_id ORDER BY src.orig_ord)::int AS line_sequence
-          FROM src
-        )
-        INSERT INTO accounting.expense_lines (
-          operating_company_id,
-          expense_id, line_sequence, amount, amount_cents, description, expense_account_uuid, ps_category_qbo_id, section,
-          expense_category_uuid
-        )
-        SELECT
-          s.operating_company_id,
-          s.expense_id,
-          s.line_sequence,
-          s.amt,
-          round(s.amt * 100)::bigint,
-          s.description,
-          ca.id,
-          s.account_qbo_id,
-          'B',
-          CASE WHEN ecm.matches = 1 THEN ecm.id END
-        FROM seq s
-        LEFT JOIN catalogs.accounts ca
-          ON ca.operating_company_id = s.operating_company_id
-         AND ca.qbo_account_id = s.account_qbo_id
-         AND ca.deactivated_at IS NULL
-        -- ACCT-LINK-04: QBO Purchase lines carry an AccountRef, never a category. The only honest
-        -- bridge to catalogs.expense_categories is the category's own account binding — the same
-        -- metadata the posting engine reads forward — and only when exactly one active category in
-        -- this entity claims the account. Ambiguous or unbound leaves the line uncategorized.
-        LEFT JOIN LATERAL (
-          -- ACCT-F63: min(uuid) is not a Postgres aggregate, so this whole projector step failed at
-          -- parse time on every run and had NEVER succeeded. Only the matches=1 branch is ever
-          -- read, so any deterministic pick is equivalent; array_agg ORDER BY keeps it stable.
-          SELECT (array_agg(ec.id ORDER BY ec.id))[1] AS id, count(*) AS matches
-          FROM catalogs.expense_categories ec
-          WHERE ec.operating_company_id = s.operating_company_id
-            AND ec.is_active
-            AND COALESCE(
-                  NULLIF(ec.metadata->>'account_id', ''),
-                  NULLIF(ec.metadata->>'account_uuid', ''),
-                  NULLIF(ec.metadata->>'coa_account_id', '')
-                ) = ca.id::text
-        ) ecm ON ca.id IS NOT NULL
-        ON CONFLICT (expense_id, line_sequence)
-        DO UPDATE SET
-          amount = EXCLUDED.amount,
-          amount_cents = EXCLUDED.amount_cents,
-          description = EXCLUDED.description,
-          expense_account_uuid = EXCLUDED.expense_account_uuid,
-          ps_category_qbo_id = EXCLUDED.ps_category_qbo_id,
-          expense_category_uuid = COALESCE(EXCLUDED.expense_category_uuid, accounting.expense_lines.expense_category_uuid)
-      `,
-        [operatingCompanyId]
-      );
-      linesProjected = lines.rowCount ?? 0;
-
-      const synth = await client.query(
-        `
-        INSERT INTO accounting.expense_lines (
-          operating_company_id,
-          expense_id, line_sequence, amount, amount_cents, description, section
-        )
-        SELECT
-          e.operating_company_id,
-          e.id,
-          1,
-          (e.total_amount_cents / 100.0),
-          e.total_amount_cents,
-          e.memo,
-          'B'
-        FROM accounting.expenses e
-        WHERE e.operating_company_id = $1::uuid
-          AND e.qbo_purchase_id IS NOT NULL
-          AND NOT EXISTS (SELECT 1 FROM accounting.expense_lines l WHERE l.expense_id = e.id)
-        ON CONFLICT (expense_id, line_sequence) DO NOTHING
-      `,
-        [operatingCompanyId]
-      );
-      linesProjected += synth.rowCount ?? 0;
-    });
-
-    await finishPurchasesMirrorSyncRun({
-      runId,
-      operatingCompanyId,
-      success: true,
-      recordsProcessed: expensesProjected,
-    });
-    return { enabled: true, expensesProjected, linesProjected, projectedAt };
-  } catch (error) {
-    await finishPurchasesMirrorSyncRun({
-      runId,
-      operatingCompanyId,
-      success: false,
-      recordsProcessed: expensesProjected,
-      errorMessage: String((error as Error)?.message ?? error),
-    }).catch(() => {
-      /* audit best-effort; rethrow original */
-    });
-    throw error;
-  }
+  return refuseQboNativeWrite(
+    "qbo-sync/qbo-purchases-puller#projectPurchasesToExpenses",
+    ["accounting.expenses", "accounting.expense_lines"],
+    operatingCompanyId
+  );
 }

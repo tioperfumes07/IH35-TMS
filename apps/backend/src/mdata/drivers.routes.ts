@@ -36,6 +36,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
 import { enqueueEmail } from "../email/queue.service.js";
+import { QBO_NATIVE_WRITE_REFUSED } from "../qbo-sync/qbo-native-write-refused.js";
 import { findReturningDriverMatches } from "./driver-returning-detection.routes.js";
 import { findRosterDuplicates } from "./driver-roster-duplicate.service.js";
 import { emitMasterDataCreatedSpineEvent } from "./master-data-spine-emit.js";
@@ -1791,6 +1792,176 @@ export async function registerDriverRoutes(app: FastifyInstance) {
   );
 
   /**
+   * 443.137 9e last gaps — atomic native A/P payee relink.
+   *
+   * The Profile picker used to fire two audited vendor PATCHes (unlink previous, link new) with a
+   * client-side restore on failure. That is two transactions: a crashed second call leaves the
+   * driver without a payee. This PUT does both writes in one withCurrentUser transaction under
+   * uq_vendors_driver_active_per_company. vendor_id null clears the link. Never touches qbo_vendor_id.
+   */
+  app.put(
+    "/api/v1/mdata/drivers/:id/ap-vendor",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+
+      const parsedParams = idParamSchema.safeParse(req.params ?? {});
+      if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+      const parsedBody = z
+        .object({
+          operating_company_id: z.string().uuid(),
+          vendor_id: z.string().uuid().nullable(),
+        })
+        .safeParse(req.body ?? {});
+      if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+
+      const driverId = parsedParams.data.id;
+      const { operating_company_id: companyId, vendor_id: nextVendorId } = parsedBody.data;
+
+      const result = await withCurrentUser(authUser.uuid, async (client) => {
+        const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, companyId);
+        if (!scopedCompanyId) return { error: "operating_company_id_required" as const };
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
+
+        const driverExists = await client.query(
+          `SELECT 1
+             FROM mdata.drivers d
+            WHERE d.id = $1::uuid
+              AND (
+                d.operating_company_id = $2::uuid
+                OR EXISTS (
+                  SELECT 1
+                    FROM mdata.driver_company_authorizations ap_put_dca
+                   WHERE ap_put_dca.driver_id = d.id
+                     AND ap_put_dca.company_id = $2::uuid
+                     AND ap_put_dca.is_authorized = true
+                     AND ap_put_dca.deactivated_at IS NULL
+                )
+              )
+            LIMIT 1`,
+          [driverId, scopedCompanyId]
+        );
+        if (!driverExists.rows[0]) return { error: "mdata_driver_not_found" as const };
+
+        if (nextVendorId) {
+          const vendorOk = await client.query<{ id: string; driver_id: string | null }>(
+            `SELECT id, driver_id::text AS driver_id
+               FROM mdata.vendors
+              WHERE id = $1::uuid
+                AND operating_company_id = $2::uuid
+                AND deactivated_at IS NULL
+              LIMIT 1
+              FOR UPDATE`,
+            [nextVendorId, scopedCompanyId]
+          );
+          if (!vendorOk.rows[0]) return { error: "mdata_vendor_not_found" as const };
+          if (vendorOk.rows[0].driver_id && vendorOk.rows[0].driver_id !== driverId) {
+            return { error: "mdata_vendor_already_linked" as const };
+          }
+        }
+
+        const previous = await client.query<{ id: string; vendor_name: string | null }>(
+          `SELECT id, vendor_name
+             FROM mdata.vendors
+            WHERE operating_company_id = $1::uuid
+              AND driver_id = $2::uuid
+              AND deactivated_at IS NULL
+            FOR UPDATE`,
+          [scopedCompanyId, driverId]
+        );
+
+        for (const row of previous.rows) {
+          if (nextVendorId && row.id === nextVendorId) continue;
+          await client.query(
+            `UPDATE mdata.vendors
+                SET driver_id = NULL, updated_at = now(), updated_by_user_id = $2::uuid
+              WHERE id = $1::uuid`,
+            [row.id, authUser.uuid]
+          );
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "mdata.vendors.updated",
+            {
+              id: row.id,
+              operating_company_id: scopedCompanyId,
+              changes: { driver_id: { from: driverId, to: null } },
+              source: "driver_ap_vendor_put",
+            },
+            "info",
+            "443.137-9e-ap-vendor"
+          );
+        }
+
+        if (nextVendorId) {
+          const already = previous.rows.some((r) => r.id === nextVendorId);
+          if (!already) {
+            await client.query(
+              `UPDATE mdata.vendors
+                  SET driver_id = $2::uuid, updated_at = now(), updated_by_user_id = $3::uuid
+                WHERE id = $1::uuid
+                  AND operating_company_id = $4::uuid`,
+              [nextVendorId, driverId, authUser.uuid, scopedCompanyId]
+            );
+            await appendCrudAudit(
+              client,
+              authUser.uuid,
+              "mdata.vendors.updated",
+              {
+                id: nextVendorId,
+                operating_company_id: scopedCompanyId,
+                changes: { driver_id: { from: null, to: driverId } },
+                source: "driver_ap_vendor_put",
+              },
+              "info",
+              "443.137-9e-ap-vendor"
+            );
+          }
+        }
+
+        try {
+          const link = await resolveDriverVendorLink(client, scopedCompanyId, driverId);
+          return {
+            vendor: {
+              id: link.vendorId,
+              name: link.vendorName,
+              qbo_vendor_id: link.qboVendorId,
+              operating_company_id: scopedCompanyId,
+              driver_id: driverId,
+            },
+          };
+        } catch (err) {
+          if (err instanceof DriverVendorMissingError) {
+            return { vendor: null, operating_company_id: scopedCompanyId, driver_id: driverId };
+          }
+          throw err;
+        }
+      });
+
+      if ("error" in result) {
+        if (result.error === "operating_company_id_required") {
+          return reply.code(400).send({ error: "operating_company_id_required" });
+        }
+        if (result.error === "mdata_driver_not_found") {
+          return reply.code(404).send({ error: "mdata_driver_not_found" });
+        }
+        if (result.error === "mdata_vendor_not_found") {
+          return reply.code(404).send({ error: "mdata_vendor_not_found" });
+        }
+        if (result.error === "mdata_vendor_already_linked") {
+          return reply.code(409).send({
+            error: "mdata_vendor_already_linked",
+            message: "That vendor is already linked to another driver in this company.",
+          });
+        }
+      }
+      return result;
+    }
+  );
+
+  /**
    * BULK INVITE — grant app access to drivers who have none.
    *
    * WHY THIS EXISTS: 86 of 88 active drivers on prod have no identity_user_id (verified 2026-08-03,
@@ -2217,6 +2388,18 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     const b = parsedBody.data;
+    // 443.137 9e last gaps — refuse writing a QuickBooks vendor id onto the native driver row.
+    // Native payee is mdata.vendors.driver_id via PUT /ap-vendor. qbo_class_id remains the TMS
+    // catalogs.accounting_classes id (column name is legacy; Vehicle/Driver profile pickers use it).
+    if ("qbo_vendor_id" in b) {
+      return reply.code(409).send({
+        error: QBO_NATIVE_WRITE_REFUSED,
+        message:
+          `${QBO_NATIVE_WRITE_REFUSED}: PATCH /api/v1/mdata/drivers/:id would write qbo_vendor_id ` +
+          `onto mdata.drivers from QuickBooks. QuickBooks is a read-only archive — set the A/P ` +
+          `payee via PUT /api/v1/mdata/drivers/:id/ap-vendor (mdata.vendors.driver_id).`,
+      });
+    }
     const setParts: string[] = [];
     const values: unknown[] = [];
     const add = (col: string, val: unknown) => {
@@ -2276,7 +2459,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     }
     if ("notes" in b) add("notes", b.notes ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
-    if ("qbo_vendor_id" in b) add("qbo_vendor_id", b.qbo_vendor_id ?? null);
+    // qbo_vendor_id refused above — never reach the UPDATE.
     if ("qbo_class_id" in b) add("qbo_class_id", b.qbo_class_id ?? null);
     if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
     if ("settlement_auto_pay_enabled" in b) add("settlement_auto_pay_enabled", b.settlement_auto_pay_enabled);

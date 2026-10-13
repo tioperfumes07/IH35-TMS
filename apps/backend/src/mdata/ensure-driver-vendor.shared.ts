@@ -136,20 +136,26 @@ export async function ensureDriverVendor(
   );
   if (adopt.rows[0]?.id) return "linked";
 
-  // A pre-existing name-matched vendor (e.g. the ~52 TRANSP rows mirrored from QBO) is left alone —
-  // no duplicate is created and no link is invented.
-  const nameMatch = await client.query<{ id: string }>(
+  // LEAD 443.113 AJK-04 — a same-name vendor used to return "already_present" WITHOUT linking driver_id: the caller
+  // counted a success while the driver still had no payee. Now it is linked or refused, never silently passed:
+  //   LINK only when it is unambiguous — exactly one active same-name vendor, not linked to anyone, no OTHER active
+  //   driver in the company sharing the name, in a company that is not a frozen QBO mirror
+  //   (org.companies.enforce_line_categorization is set for USMCA only; TRANSP / TRK are frozen mirrors).
+  //   Otherwise REFUSE with the vendor's name — DriverVendorIdentityUnresolvedError — so the operator decides.
+  const nameMatch = await client.query<{ id: string; vendor_name: string; driver_id: string | null }>(
     `
-      SELECT id::text AS id
+      SELECT id::text AS id, vendor_name, driver_id::text AS driver_id
         FROM mdata.vendors
        WHERE operating_company_id = $1::uuid
          AND deactivated_at IS NULL
          AND lower(btrim(vendor_name)) = lower(btrim($2))
-       LIMIT 1
+       ORDER BY created_at, id
     `,
     [input.operatingCompanyId, displayName]
   );
-  if (nameMatch.rows[0]?.id) return "already_present";
+  if (nameMatch.rows.length > 0) {
+    return linkSameNameVendorOrRefuse(client, input, displayName, nameMatch.rows);
+  }
 
   // ACCT-F5435: is_sample_data is how a report answers "is this real money?" — a row minted
   // without it is indistinguishable from real financial data no matter what its memo says (that
@@ -201,8 +207,102 @@ export async function ensureDriverVendor(
     return "created";
   } catch (err) {
     await client.query("ROLLBACK TO SAVEPOINT ensure_driver_vendor");
-    // 23505 = unique_violation: a concurrent run already produced this payee.
+    // 23505 = unique_violation: a concurrent run already produced this payee. AJK-04 — only a payee actually linked
+    // to THIS driver is "already present"; any other collision is refused, not counted as a success.
     if ((err as { code?: string })?.code !== "23505") throw err;
-    return "already_present";
+    const raced = await client.query<{ id: string }>(
+      `SELECT id::text AS id FROM mdata.vendors
+        WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL AND driver_id = $2::uuid LIMIT 1`,
+      [input.operatingCompanyId, input.driverId]
+    );
+    if (raced.rows[0]?.id) return "already_present";
+    throw new DriverVendorIdentityUnresolvedError(input.driverId, displayName, "insert_collided_without_link");
   }
+}
+
+export type DriverVendorUnresolvedReason =
+  | "vendor_linked_to_another_driver"
+  | "ambiguous_same_name_vendors"
+  | "ambiguous_same_name_drivers"
+  | "company_frozen_mirror"
+  | "insert_collided_without_link";
+
+/** AJK-04 — the driver's payee could not be linked unambiguously; carries the vendor name so the refusal names it. */
+export class DriverVendorIdentityUnresolvedError extends Error {
+  readonly code = "driver_vendor_identity_unresolved";
+  constructor(
+    readonly driverId: string,
+    readonly vendorName: string,
+    readonly reason: DriverVendorUnresolvedReason
+  ) {
+    super(`driver_vendor_identity_unresolved: vendor "${vendorName}" (${reason}) — driver ${driverId} has no linked payee`);
+    this.name = "DriverVendorIdentityUnresolvedError";
+  }
+}
+
+async function linkSameNameVendorOrRefuse(
+  client: EnsureDriverVendorClient,
+  input: EnsureDriverVendorInput,
+  displayName: string,
+  matches: Array<{ id: string; vendor_name: string; driver_id: string | null }>
+): Promise<EnsureDriverVendorOutcome> {
+  const vendorName = matches[0]!.vendor_name;
+  const refuse = (reason: DriverVendorUnresolvedReason): never => {
+    throw new DriverVendorIdentityUnresolvedError(input.driverId, vendorName, reason);
+  };
+  if (matches.length > 1) refuse("ambiguous_same_name_vendors");
+  const match = matches[0]!;
+  if (match.driver_id) refuse("vendor_linked_to_another_driver");
+
+  const company = await client.query<{ enforce: boolean | null }>(
+    `SELECT enforce_line_categorization AS enforce FROM org.companies WHERE id = $1::uuid`,
+    [input.operatingCompanyId]
+  );
+  if (company.rows[0]?.enforce !== true) refuse("company_frozen_mirror");
+
+  const namesakes = await client.query<{ n: string }>(
+    `
+      SELECT count(*)::text AS n
+        FROM mdata.drivers d
+       WHERE d.operating_company_id = $1::uuid
+         AND d.id <> $2::uuid
+         AND d.deactivated_at IS NULL
+         AND lower(btrim(concat_ws(' ', d.first_name, d.last_name))) = lower(btrim($3))
+    `,
+    [input.operatingCompanyId, input.driverId, displayName]
+  );
+  if (Number(namesakes.rows[0]?.n ?? 0) > 0) refuse("ambiguous_same_name_drivers");
+
+  const linked = await client.query<{ id: string }>(
+    `
+      UPDATE mdata.vendors
+         SET driver_id = $3::uuid,
+             vendor_type = 'Driver',
+             vendor_category = 'driver',
+             updated_by_user_id = $4::uuid,
+             updated_at = now()
+       WHERE id = $1::uuid
+         AND operating_company_id = $2::uuid
+         AND driver_id IS NULL
+         AND deactivated_at IS NULL
+      RETURNING id::text AS id
+    `,
+    [match.id, input.operatingCompanyId, input.driverId, input.actorUserId]
+  );
+  // Lost a race to another link between the read and the write — refuse rather than report a link that did not happen.
+  if (!linked.rows[0]?.id) refuse("vendor_linked_to_another_driver");
+
+  await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, $4::uuid, $5)`, [
+    "vendor.driver_linked_by_name",
+    "info",
+    JSON.stringify({
+      vendor_id: match.id,
+      vendor_name: vendorName,
+      driver_id: input.driverId,
+      operating_company_id: input.operatingCompanyId,
+    }),
+    input.actorUserId,
+    "AJK-04-DRIVER-VENDOR-LINK-OR-REFUSE",
+  ]);
+  return "linked";
 }

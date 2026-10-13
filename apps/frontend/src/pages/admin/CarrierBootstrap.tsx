@@ -19,6 +19,8 @@ type BootstrapResult = {
   template_carrier_id: string;
   new_carrier_id: string;
   coa_cloned: number;
+  // ACCT-F4431381 (443.137 9e) — the chart-of-accounts step refuses by name; show why instead of "0 cloned".
+  coa_refused?: { code: string; reason: string };
   storage_prefix: string;
   steps: Array<{ table: string; inserted: number; skipped: boolean }>;
 };
@@ -115,7 +117,13 @@ export function CarrierBootstrapPage() {
       {lastResult ? (
         <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs">
           <p className="font-medium text-green-900">Bootstrap complete</p>
-          <p className="text-green-800">CoA rows cloned: {lastResult.coa_cloned}</p>
+          {lastResult.coa_refused ? (
+            <p className="text-slate-700" data-testid="carrier-bootstrap-coa-refused">
+              Chart of accounts: not cloned ({lastResult.coa_refused.code}). {lastResult.coa_refused.reason}
+            </p>
+          ) : (
+            <p className="text-green-800">CoA rows cloned: {lastResult.coa_cloned}</p>
+          )}
           <p className="text-green-800">Storage prefix: {lastResult.storage_prefix}</p>
           <ul className="mt-2 list-disc pl-5 text-green-900">
             {lastResult.steps.map((step) => (

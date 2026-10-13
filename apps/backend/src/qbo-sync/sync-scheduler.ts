@@ -4,15 +4,13 @@ import * as Sentry from "@sentry/node";
 import { withLuciaBypass } from "../auth/db.js";
 import { recordBackgroundJobRun, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { pullChartOfAccountsFromQbo } from "./chart-of-accounts-puller.js";
-import { reconcileChartOfAccounts } from "./chart-of-accounts-reconciler.js";
 import { pullItemsFromQbo } from "./items-puller.js";
-import { reconcileItems } from "./items-reconciler.js";
-import { pullApBillsFromQbo, projectApBillsToLedger } from "./ap-bills-puller.js";
-import { pullApBillPaymentsFromQbo, projectApBillPaymentsToLedger } from "./ap-bill-payments-puller.js";
-import { pullPurchasesFromQbo, projectPurchasesToExpenses } from "./qbo-purchases-puller.js";
-import { pullVendorCreditsFromQbo, projectVendorCreditsToLedger } from "./qbo-vendor-credits-puller.js";
-import { pullArInvoicesFromQbo, projectArInvoicesToLedger } from "./qbo-ar-invoices-puller.js";
-import { pullArPaymentsFromQbo, projectArPaymentsToLedger } from "./qbo-ar-payments-puller.js";
+import { pullApBillsFromQbo } from "./ap-bills-puller.js";
+import { pullApBillPaymentsFromQbo } from "./ap-bill-payments-puller.js";
+import { pullPurchasesFromQbo } from "./qbo-purchases-puller.js";
+import { pullVendorCreditsFromQbo } from "./qbo-vendor-credits-puller.js";
+import { pullArInvoicesFromQbo } from "./qbo-ar-invoices-puller.js";
+import { pullArPaymentsFromQbo } from "./qbo-ar-payments-puller.js";
 import { countUnresolvedDrift, detectDriftForCompany } from "./drift-detector.js";
 import { maybeFireDriftAlert } from "./sync-alerts.js";
 
@@ -98,148 +96,36 @@ async function runScheduledSyncForCompany(
   failures: SyncStepFailure[],
   log?: FastifyInstance["log"]
 ): Promise<void> {
+  // ACCT-F4431380 (Lead 443.137 item 9e; owner ruling — QuickBooks is a READ-ONLY ARCHIVE, USMCA is the TMS
+  // ERP, TRANSPORTATION/TRUCKING are frozen QBO mirrors). The scheduler runs ONLY the mirror pulls below.
+  //   OLD: each pull was followed by a *_reconcile step (chart_of_accounts / items / customers / vendors ->
+  //        catalogs.accounts / catalogs.items / mdata.customers / mdata.vendors) or a *_project step
+  //        (ap_bills / ap_bill_payments / qbo_purchases / qbo_vendor_credits / ar_invoices / ar_payments ->
+  //        accounting.bills / bill_lines / bill_payments / expenses / expense_lines / vendor_credits /
+  //        invoices / invoice_lines / payments / payment_applications).
+  //   NEW: those steps are gone. Their entry points now throw QboNativeWriteRefusedError
+  //        (QBO_NATIVE_WRITE_REFUSED); scheduling them would record a refused step every tick, so they are
+  //        not scheduled at all. Each pull still fills its own mirror (mdata.qbo_*) and qbo.sync_runs.
+  //   WHY: a QBO path must never write a native money or master table. Guard:
+  //        scripts/verify-qbo-paths-never-write-native-tables.mjs.
+  // Every step stays ISOLATED (B-A2): one pull failing never skips the next.
   await runStep("chart_of_accounts_pull", operatingCompanyId, () => pullChartOfAccountsFromQbo(operatingCompanyId), failures, log);
-  await runStep("chart_of_accounts_reconcile", operatingCompanyId, () => reconcileChartOfAccounts(operatingCompanyId), failures, log);
-
   await runStep("items_pull", operatingCompanyId, () => pullItemsFromQbo(operatingCompanyId), failures, log);
-  await runStep("items_reconcile", operatingCompanyId, () => reconcileItems(operatingCompanyId), failures, log);
 
   const customersPull = await loadOptionalFn("./customers-puller.js", "pullCustomersFromQbo");
   if (customersPull) await runStep("customers_pull", operatingCompanyId, () => customersPull(operatingCompanyId), failures, log);
-  const customersReconcile = await loadOptionalFn("./customers-reconciler.js", "reconcileCustomers");
-  if (customersReconcile) await runStep("customers_reconcile", operatingCompanyId, () => customersReconcile(operatingCompanyId), failures, log);
 
   const vendorsPull = await loadOptionalFn("./vendors-puller.js", "pullVendorsFromQbo");
   if (vendorsPull) await runStep("vendors_pull", operatingCompanyId, () => vendorsPull(operatingCompanyId), failures, log);
-  const vendorsReconcile = await loadOptionalFn("./vendors-reconciler.js", "reconcileVendors");
-  if (vendorsReconcile) await runStep("vendors_reconcile", operatingCompanyId, () => vendorsReconcile(operatingCompanyId), failures, log);
 
-  // Inbound A/P (QBO Bills -> mdata.qbo_ap_bills mirror -> accounting.bills + bill_lines). MUST run even if
-  // an earlier step failed — that isolation IS the A/P-shows-$0 / bill_lines≈1 fix. Both stages are
-  // internally gated by default-OFF flags (QBO_AP_MIRROR_PULL_ENABLED / QBO_AP_BILLS_PROJECTION_ENABLED)
-  // and idempotent (header upsert / incremental line upsert + orphan-delete), so re-running is safe.
-  // NO GL poster on this path.
+  // Inbound mirrors only. Each pull is internally gated by its default-OFF mirror flag (blocked permanently
+  // by migration 202614530000) and idempotent (upsert by qbo_id). NO GL poster, NO native projection.
   await runStep("ap_bills_pull", operatingCompanyId, () => pullApBillsFromQbo(operatingCompanyId), failures, log);
-  await runStep("ap_bills_project", operatingCompanyId, async () => {
-    const res = await projectApBillsToLedger(operatingCompanyId);
-    log?.info(
-      {
-        operating_company_id: operatingCompanyId,
-        enabled: res.enabled,
-        rows_projected: res.rowsProjected,
-        lines_projected: res.lines.linesProjected,
-        lines_orphan_deleted: res.lines.linesOrphanDeleted,
-        lines_unmapped_account: res.lines.linesUnmappedAccount,
-        lines_unmapped_item: res.lines.linesUnmappedItem,
-        header_line_sum_mismatch: res.lines.headerLineSumMismatch,
-      },
-      "[qbo-sync-scheduler] ap_bills_project complete (headers + incremental lines from payload_json)"
-    );
-    return res;
-  }, failures, log);
-
-  // Inbound A/P PAYMENTS (QBO BillPayment -> mdata.qbo_ap_bill_payments mirror -> accounting.bill_payments).
-  // MUST run AFTER ap_bills_project so the bills the payments link to are already projected (a payment whose
-  // bill isn't projected yet is left in the mirror as paymentsUnlinked, never invented). Both stages are
-  // internally gated by default-OFF flags (QBO_AP_BILL_PAYMENT_MIRROR_PULL_ENABLED /
-  // QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED) and idempotent (upsert), so re-running is safe. NO GL poster.
   await runStep("ap_bill_payments_pull", operatingCompanyId, () => pullApBillPaymentsFromQbo(operatingCompanyId), failures, log);
-  await runStep("ap_bill_payments_project", operatingCompanyId, async () => {
-    const res = await projectApBillPaymentsToLedger(operatingCompanyId);
-    log?.info(
-      {
-        operating_company_id: operatingCompanyId,
-        enabled: res.enabled,
-        rows_projected: res.rowsProjected,
-        payments_unlinked: res.paymentsUnlinked,
-      },
-      "[qbo-sync-scheduler] ap_bill_payments_project complete (fan-out BillPayment -> bill_payments allocations)"
-    );
-    return res;
-  }, failures, log);
-
-  // Inbound QBO Purchases (cash/card spend) -> mdata.qbo_purchases mirror -> accounting.expenses + expense_lines.
-  // ISOLATED like the A/P stages: MUST run even if an earlier step failed (so a transient COA/items/AP blip
-  // never silently skips the expense clone). Both stages are internally gated by default-OFF flags
-  // (QBO_PURCHASES_MIRROR_PULL_ENABLED / QBO_EXPENSES_PROJECTION_ENABLED) and idempotent (header upsert /
-  // line upsert by (expense_id,line_sequence)). SUBLEDGER ONLY — NO GL poster on this path; the posting
-  // engine additionally REFUSES to post qbo-sourced expenses (EXPENSE_POST_GL_REFUSED).
   await runStep("qbo_purchases_pull", operatingCompanyId, () => pullPurchasesFromQbo(operatingCompanyId), failures, log);
-  await runStep("qbo_purchases_project", operatingCompanyId, async () => {
-    const res = await projectPurchasesToExpenses(operatingCompanyId);
-    log?.info(
-      {
-        operating_company_id: operatingCompanyId,
-        enabled: res.enabled,
-        expenses_projected: res.expensesProjected,
-        lines_projected: res.linesProjected,
-      },
-      "[qbo-sync-scheduler] qbo_purchases_project complete (expense headers + lines from payload_json)"
-    );
-    return res;
-  }, failures, log);
-
-  // Inbound QBO VendorCredit -> mdata.qbo_vendor_credits mirror -> accounting.vendor_credits.
-  // ISOLATED like purchases/AR: MUST run even if an earlier step failed. Both stages gated default-OFF
-  // (QBO_VENDOR_CREDIT_MIRROR_PULL_ENABLED / QBO_VENDOR_CREDITS_PROJECTION_ENABLED). SUBLEDGER ONLY — NO GL.
   await runStep("qbo_vendor_credits_pull", operatingCompanyId, () => pullVendorCreditsFromQbo(operatingCompanyId), failures, log);
-  await runStep("qbo_vendor_credits_project", operatingCompanyId, async () => {
-    const res = await projectVendorCreditsToLedger(operatingCompanyId);
-    log?.info(
-      {
-        operating_company_id: operatingCompanyId,
-        enabled: res.enabled,
-        credits_projected: res.creditsProjected,
-        vendors_unresolved: res.vendorsUnresolved,
-      },
-      "[qbo-sync-scheduler] qbo_vendor_credits_project complete (vendor credit headers from mirror)"
-    );
-    return res;
-  }, failures, log);
-
-  // Inbound QBO A/R invoices -> mdata.qbo_ar_invoices -> accounting.invoices (qbo_invoice_id).
-  // MUST run before ar_payments_project so Stage 2b payment_applications can resolve LinkedTxn Invoice ids.
-  // Gated QBO_AR_INVOICE_MIRROR_PULL_ENABLED / QBO_AR_INVOICES_PROJECTION_ENABLED (default OFF; TRANSP
-  // armed by 202610191400). SUBLEDGER ONLY — NO GL.
   await runStep("ar_invoices_pull", operatingCompanyId, () => pullArInvoicesFromQbo(operatingCompanyId), failures, log);
-  await runStep("ar_invoices_project", operatingCompanyId, async () => {
-    const res = await projectArInvoicesToLedger(operatingCompanyId);
-    log?.info(
-      {
-        operating_company_id: operatingCompanyId,
-        enabled: res.enabled,
-        invoices_projected: res.invoicesProjected,
-        customers_unresolved: res.customersUnresolved,
-      },
-      "[qbo-sync-scheduler] ar_invoices_project complete (invoice headers from mirror; unblocks payment_applications)"
-    );
-    return res;
-  }, failures, log);
-
-  // Inbound QBO A/R receipts (Payment) -> mdata.qbo_ar_payments mirror -> accounting.payments +
-  // payment_applications. ISOLATED like the AP/expense stages: MUST run even if an earlier step failed.
-  // Both stages are internally gated by default-OFF flags (QBO_AR_PAYMENT_MIRROR_PULL_ENABLED /
-  // QBO_AR_PAYMENTS_PROJECTION_ENABLED) and idempotent (header upsert on the existing
-  // uq_payments_company_qbo_payment_id; allocation upsert on the existing uq_payment_applications_target).
-  // SUBLEDGER ONLY — NO GL poster on this path; the posting engine additionally REFUSES to post
-  // qbo-sourced customer payments (QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED). Runs AFTER the AP stages
-  // (ap_bills/ap_bill_payments/qbo_purchases) per the AP-side sequencing convention.
   await runStep("ar_payments_pull", operatingCompanyId, () => pullArPaymentsFromQbo(operatingCompanyId), failures, log);
-  await runStep("ar_payments_project", operatingCompanyId, async () => {
-    const res = await projectArPaymentsToLedger(operatingCompanyId);
-    log?.info(
-      {
-        operating_company_id: operatingCompanyId,
-        enabled: res.enabled,
-        payments_projected: res.paymentsProjected,
-        customers_unresolved: res.customersUnresolved,
-        applications_projected: res.applicationsProjected,
-        applications_unlinked: res.applicationsUnlinked,
-      },
-      "[qbo-sync-scheduler] ar_payments_project complete (payment headers + invoice allocations from payload_json)"
-    );
-    return res;
-  }, failures, log);
 
   await runStep(
     "drift_detect",

@@ -29,6 +29,9 @@ const FILES = {
   importRoute: "apps/backend/src/integrations/relay-payments/relay-fuel-csv-import.routes.ts",
   rollForward: "apps/backend/src/integrations/relay-payments/relay-wallet-roll-forward.service.ts",
   feeRule: "apps/backend/src/integrations/relay-payments/relay-sender-fee-cents.ts",
+  depositMigration: "db/migrations/202615870910_relay_deposit_card_map_and_one_posting.sql",
+  depositStampMigration: "db/migrations/202615920910_relay_deposit_stamped_by_posting_registry.sql",
+  depositRoute: "apps/backend/src/integrations/relay-payments/relay-deposit-review.routes.ts",
 };
 
 // LEAD 443.123 — the ONE paid rule (relayFuelPaidCents) wraps the one fee rule and the one drawdown rule; a consumer that
@@ -56,6 +59,20 @@ export function check(src) {
   if (!/reason: "card_owner_not_named"/.test(dep)) f.push(`${FILES.deposit}: an unnamed card must be held, never guessed`);
   if (!/"relay_fuel_wallet"[\s\S]{0,200}"5005"/.test(dep)) f.push(`${FILES.deposit}: deposit must debit 1295 and the fee on 5005`);
   if (!/postRelayDeposit\(/.test(src.importRoute ?? "")) f.push(`${FILES.importRoute}: settled deposits must post on import`);
+  // LEAD 443.133 B — the owner's card map is DATA, a deposit enters 1295 once, and there is ONE deposit writer.
+  if (!/FROM integrations\.relay_company_cards/.test(dep) || /"[0-9]{4}":\s*\{\s*kind:/.test(dep)) f.push(`${FILES.deposit}: the funding-card map must be read from integrations.relay_company_cards, never a code constant`);
+  if (!/party_account_missing/.test(dep)) f.push(`${FILES.deposit}: a party card with no Due to / from account must be refused by name`);
+  // LEAD 443.136 #1 — every posted / already-posted deposit carries its classification (app), and its POSTED state is stamped
+  // by the posting registry trigger (set on registration, cleared on reversal) — never written by hand in the poster.
+  if ((dep.match(/await stampDepositClassification\(client,/g) ?? []).length < 3) f.push(`${FILES.deposit}: every posted / already-posted deposit must carry its classification`);
+  if (/posted_to_gl\s*=\s*true|posted_journal_entry_id\s*=/i.test(dep)) f.push(`${FILES.deposit}: the deposit's posted state is written by hand — the posting registry trigger stamps it`);
+  const stampMig = src.depositStampMigration ?? "";
+  if (!/FUNCTION integrations\.tg_register_relay_deposit_posting\(\)[\s\S]*reversal_of_line_id IS NOT NULL[\s\S]*SET posted_to_gl = false, posted_journal_entry_id = NULL[\s\S]*SET posted_to_gl = true, posted_journal_entry_id = NEW\.journal_entry_uuid/.test(stampMig)) f.push(`${FILES.depositStampMigration}: the posting registry trigger must stamp the deposit row on registration and clear it on reversal`);
+  const mig = src.depositMigration ?? "";
+  if (!/relay_deposit_postings_one_live_uk/.test(mig) || !/relay_deposit_already_posted/.test(mig) || !/AFTER INSERT ON accounting\.journal_entry_postings/.test(mig)) f.push(`${FILES.depositMigration}: one live journal entry per deposit must be a database refusal`);
+  if (!/"\/api\/integrations\/relay\/deposits\/classify-and-post"/.test(src.depositRoute ?? "") || !/postRelayDeposit\(/.test(src.depositRoute ?? "") || !/owner_only/.test(src.depositRoute ?? "")) f.push(`${FILES.depositRoute}: the Owner classify-and-post route must post through postRelayDeposit`);
+  for (const w of src.relayDepositWriters ?? []) if (w !== FILES.deposit) f.push(`${w}: writes relay_deposit postings — the deposit poster is the ONE deposit writer`);
+  for (const w of src.stage1Importers ?? []) f.push(`${w}: wires the CONN-3 stage-1 transfer path — deposits post through the ONE deposit poster`);
   // ROUND 443.29 c — roll-forward.
   const rfw = src.rollForward ?? "";
   if (!/relayFillFeeCents\(\{/.test(rfw) && !viaPaidRule("rollForward")) f.push(`${FILES.rollForward}: fill fees must come from relayFillFeeCents`);
@@ -89,7 +106,21 @@ export function judgeLive(item, rows) {
   return f;
 }
 
-const read = () => Object.fromEntries(Object.entries(FILES).map(([k, p]) => [k, fs.existsSync(path.join(ROOT, p)) ? fs.readFileSync(path.join(ROOT, p), "utf8") : ""]));
+function walk(dir, out = []) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) { if (e.name !== "node_modules" && e.name !== "__tests__") walk(p, out); }
+    else if (/\.ts$/.test(e.name) && !/\.test\.ts$/.test(e.name)) out.push(p);
+  }
+  return out;
+}
+const read = () => {
+  const src = Object.fromEntries(Object.entries(FILES).map(([k, p]) => [k, fs.existsSync(path.join(ROOT, p)) ? fs.readFileSync(path.join(ROOT, p), "utf8") : ""]));
+  const backend = walk(path.join(ROOT, "apps/backend/src")).map((p) => [path.relative(ROOT, p), fs.readFileSync(p, "utf8")]);
+  src.relayDepositWriters = backend.filter(([, t]) => /source_transaction_type:\s*"relay_deposit"/.test(t)).map(([r]) => r);
+  src.stage1Importers = backend.filter(([r, t]) => !r.endsWith("relay-deposit-stage1-transfer.service.ts") && /relay-deposit-stage1-transfer/.test(t)).map(([r]) => r);
+  return src;
+};
 
 if (process.argv.includes("--selftest")) {
   const real = read();
@@ -108,6 +139,16 @@ if (process.argv.includes("--selftest")) {
     ["roll-forward fee constant", { ...real, rollForward: real.rollForward.replace("relayFillFeeCents({", "constantFee({").replace("relayFuelPaidCents({", "constantFee({") }],
     ["paid rule stops using the fee rule", { ...real, feeRule: real.feeRule.replace(/(export function relayFuelPaidCents[\s\S]*?)relayFillFeeCents\(\{/, "$1constantFee({") }],
     ["R6 rule removed", { ...real, importRoute: real.importRoute.replace("item.fuel_type_description = `DEF — ${DEF_ESTIMATED_FLAG}`", "void 0") }],
+    ["deposit card map back in code", { ...real, deposit: real.deposit.replace(/FROM integrations\.relay_company_cards/g, "FROM nowhere") }],
+    ["party with no account guessed", { ...real, deposit: real.deposit.replace(/party_account_missing/g, "party_ok") }],
+    ["deposit row not classified", { ...real, deposit: real.deposit.replace(/await stampDepositClassification\(client,/g, "void (client,") }],
+    ["deposit posted state written by hand", { ...real, deposit: real.deposit + "\nconst x = `UPDATE integrations.relay_deposits SET posted_to_gl = true`;" }],
+    ["registry trigger no longer stamps the deposit", { ...real, depositStampMigration: real.depositStampMigration.replace("SET posted_to_gl = true, posted_journal_entry_id = NEW.journal_entry_uuid", "SET updated_at = now()") }],
+    ["reversal no longer clears the stamp", { ...real, depositStampMigration: real.depositStampMigration.replace("SET posted_to_gl = false, posted_journal_entry_id = NULL", "SET updated_at = now()") }],
+    ["second deposit entry allowed", { ...real, depositMigration: real.depositMigration.replace(/relay_deposit_already_posted/g, "fine") }],
+    ["owner route posts around the poster", { ...real, depositRoute: real.depositRoute.replace(/postRelayDeposit\(/g, "postSomethingElse(") }],
+    ["second deposit writer", { ...real, relayDepositWriters: [...real.relayDepositWriters, "apps/backend/src/other/second-writer.ts"] }],
+    ["stage-1 transfer path wired", { ...real, stage1Importers: ["apps/backend/src/other/route.ts"] }],
     ["R6 average not passed", { ...real, importRoute: real.importRoute.replace("csvRowToApiShape(g, { defAveragePricePerGallon: defAverage })", "csvRowToApiShape(g)") }],
   ];
   for (const [name, s] of plants) if (check(s).length === 0) fails.push(`plant escaped: ${name}`);

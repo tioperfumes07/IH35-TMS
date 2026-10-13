@@ -41,10 +41,18 @@
  * operator input. A duplicate there fails ONE interactive request visibly; it does not abort a batch
  * sync, and it is the operator's own name to choose. Different class, tracked separately — widening
  * this guard to cover it would force a rename convention onto hand-created items that no one has ruled on.
+ *
+ * ACCT-F4431380 (Lead 443.137 item 9e) — OLD: bundled items-write-sql.ts and proved each QBO-sourced
+ * item_name write (HEAL_ITEM_DRIFT_SQL / CREATE_MISSING_ITEMS_SQL / PULLER_UPSERT_ITEM_SQL) carried a
+ * name-free test, a peer clause, a WHERE gate, and that no sibling re-inlined a catalogs.items write.
+ * NEW: there is no QBO-sourced item_name write left to make safe, so the guard asserts the stronger
+ * property: items-write-sql.ts does not exist, no qbo-sync source (recursive, non-test) INSERTs/UPDATEs/
+ * DELETEs catalogs.items, and none references the removed statement constants. Check (f) — "no sibling
+ * re-inlines a raw catalogs.items write" — is kept and widened from "outside the SQL module" to "anywhere".
+ * WHY: QuickBooks is a read-only archive; the native write was removed and the reconciler refuses by name.
+ * A collision-safe QBO write is still a QBO write into a native catalog.
  */
-import { build } from "esbuild";
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -52,242 +60,99 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SQL_MODULE = "apps/backend/src/qbo-sync/items-write-sql.ts";
 const QBO_SYNC_DIR = "apps/backend/src/qbo-sync";
 const LABEL = "verify-items-write-name-collision-safe";
+const REMOVED_CONSTANTS = ["HEAL_ITEM_DRIFT_SQL", "CREATE_MISSING_ITEMS_SQL", "PULLER_UPSERT_ITEM_SQL"];
 
-/** Statements that write item_name from QBO data. Each must survive every check below. */
-const WRITING_CONSTANTS = ["HEAL_ITEM_DRIFT_SQL", "CREATE_MISSING_ITEMS_SQL", "PULLER_UPSERT_ITEM_SQL"];
-/** Set-based statements: these alone can collide with themselves inside one statement. */
-const SET_BASED = ["HEAL_ITEM_DRIFT_SQL", "CREATE_MISSING_ITEMS_SQL"];
-
-async function expand(sourceText) {
-  // CodeQL js/insecure-temporary-file (high) — the first version built a PREDICTABLE path in the
-  // shared temp dir (`items-write-sql.<pid>.<hash>.ts`). On a multi-user host /tmp is world-writable,
-  // so another user can pre-create that exact name as a symlink and writeFileSync follows it — an
-  // arbitrary-file-write primitive, and the module this guard then imports could be attacker-chosen.
-  // A guard that can be made to import a hostile file is worse than no guard.
-  //
-  // mkdtempSync creates a fresh directory with 0700 permissions and a random suffix the caller cannot
-  // predict, so both the write and the subsequent import are confined to a directory only this
-  // process owns. The whole directory is removed in the finally.
-  const dir = mkdtempSync(join(tmpdir(), "ih35-items-write-sql-"));
-  const tmpTs = join(dir, "items-write-sql.ts");
-  const tmpMjs = join(dir, "items-write-sql.mjs");
-  writeFileSync(tmpTs, sourceText);
-  try {
-    await build({ entryPoints: [tmpTs], outfile: tmpMjs, format: "esm", bundle: true, platform: "node", logLevel: "silent" });
-    return await import(`file://${tmpMjs}`);
-  } finally {
-    rmSync(dir, { force: true, recursive: true });
-  }
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
-/** Strip SQL line comments so a rationale mentioning `item_name = qi.name` is not read as code. */
-function stripSqlComments(sql) {
-  return sql.replace(/--[^\n]*/g, "");
-}
-
-export async function auditSql(sourceText, siblingFiles) {
+/** @param sqlModuleExists boolean  @param files Map<rel, content> of qbo-sync sources */
+export function audit(sqlModuleExists, files) {
   const problems = [];
-  let mod;
-  try {
-    mod = await expand(sourceText);
-  } catch (err) {
-    return [`${SQL_MODULE}: could not be bundled/evaluated (${String(err?.message ?? err)}) — cannot verify.`];
+  if (sqlModuleExists) {
+    problems.push(
+      `${SQL_MODULE} exists again. It was the home of the QBO -> catalogs.items write SQL, removed by ` +
+        `ACCT-F4431380; QBO paths write only mdata.qbo_items.`
+    );
   }
-
-  for (const name of WRITING_CONSTANTS) {
-    const raw = mod[name];
-    if (typeof raw !== "string") {
-      problems.push(
-        `${SQL_MODULE}: ${name} is missing or is not a SQL string. This guard's anchor is gone, so the ` +
-          `name-collision checks below cannot run — re-point the guard at wherever the statement moved ` +
-          `rather than letting it pass silently.`
-      );
-      continue;
-    }
-    const sql = stripSqlComments(raw);
-    const writesName = /item_name\s*=\s*[^,\n]+/i.test(sql) || /INSERT\s+INTO\s+catalogs\.items\s*\([^)]*item_name/i.test(sql);
-    if (!writesName) continue;
-
-    // (a) the bug in its exact original form.
-    //
-    // The lookbehind is load-bearing: the name-free test itself contains `other.item_name = qi.name`
-    // as a COMPARISON. Without excluding an alias-qualified left side, this check flags the fix as if
-    // it were the bug — which it did on first run. An assignment is unqualified (`item_name = ...` in
-    // a SET or an INSERT column list); a comparison here is always `<alias>.item_name = ...`.
-    if (/(?<![.\w])item_name\s*=\s*qi\.name\s*(,|$)/im.test(sql)) {
-      problems.push(
-        `${SQL_MODULE}: ${name} assigns item_name = qi.name unconditionally. This is the ACCT-F83 defect ` +
-          `verbatim — it renames a '[QBO n]' twin onto a name another row already holds and aborts the ` +
-          `whole sync step on uq_items_company_item_name.`
-      );
-    }
-
-    // (b) a name-free test must be present in the same statement.
-    const hasFreeTest =
-      /NOT\s+EXISTS\s*\([\s\S]*?FROM\s+catalogs\.items\s+other[\s\S]*?item_name\s*=/i.test(sql) ||
-      /NOT\s+EXISTS\s*\([\s\S]*?FROM\s+catalogs\.items\s+other[\s\S]*?other\.item_name/i.test(sql);
-    if (!hasFreeTest) {
-      problems.push(
-        `${SQL_MODULE}: ${name} writes item_name with no "is this name already taken in this entity" ` +
-          `test. uq_items_company_item_name is NOT partial, so every such write is constraint-bearing.`
-      );
-    }
-
-    // (c) it must be able to land SOMEWHERE — either it disambiguates, or it declines the write.
-    const disambiguates = /\[QBO\s*'/i.test(sql) || /\|\|\s*'\s*\[QBO/i.test(sql);
-    const declines = /ELSE\s+ci\.item_name/i.test(sql);
-    if (!disambiguates && !declines) {
-      problems.push(
-        `${SQL_MODULE}: ${name} tests the name but neither disambiguates it (the '[QBO n]' suffix already ` +
-          `used by prod rows) nor stands down (ELSE ci.item_name). It would still write a colliding name.`
-      );
-    }
-  }
-
-  // (d) set-based statements need the peer/mirror clause for the intra-statement collision.
-  for (const name of SET_BASED) {
-    const raw = mod[name];
-    if (typeof raw !== "string") continue; // already reported above
-    const sql = stripSqlComments(raw);
-    // Must be the NAME peer clause specifically. A bare /qbo_items peer/ test was satisfied by the
-    // item_code peer clause, so deleting the name one went undetected — the guard has to enumerate the
-    // column it is actually protecting.
-    if (!/FROM\s+mdata\.qbo_items\s+peer[\s\S]{0,240}?peer\.name\s*=\s*qi\.name/i.test(sql)) {
-      problems.push(
-        `${SQL_MODULE}: ${name} is set-based but carries no "peer" check against mdata.qbo_items. Two QBO ` +
-          `items sharing a name in one entity would both resolve to the same bare name inside a single ` +
-          `statement — no EXISTS can see a row its own statement is inserting. TRK really does carry two ` +
-          `mirror rows named 'Freight' (qbo_id 12 and 179), verified on prod.`
-      );
-    }
-  }
-
-  // (e) the heal must gate the rename in the WHERE as well as the SET, or declined renames are
-  //     re-counted as "healed" on every run forever.
-  const heal = typeof mod.HEAL_ITEM_DRIFT_SQL === "string" ? stripSqlComments(mod.HEAL_ITEM_DRIFT_SQL) : "";
-  if (heal) {
-    const whereIdx = heal.search(/\bWHERE\b/i);
-    const whereClause = whereIdx >= 0 ? heal.slice(whereIdx) : "";
-    const gatedInWhere = /item_name\s+IS\s+DISTINCT\s+FROM\s+qi\.name\s+AND[\s\S]*?NOT\s+EXISTS/i.test(whereClause);
-    if (!gatedInWhere) {
-      problems.push(
-        `${SQL_MODULE}: HEAL_ITEM_DRIFT_SQL does not gate the name-drift branch of its WHERE with the ` +
-          `name-free test. Rows whose rename is declined would match "name drift" on every run, be ` +
-          `counted as healed, and change nothing — the step would never converge.`
-      );
-    }
-  }
-
-  // (f) no qbo-sync file may re-inline a raw catalogs.items write.
-  for (const [rel, content] of siblingFiles) {
-    const code = content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
-    if (/INSERT\s+INTO\s+catalogs\.items/i.test(code) || /UPDATE\s+catalogs\.items[\s\S]{0,400}?\bitem_name\s*=/i.test(code)) {
-      problems.push(
-        `${rel}: writes catalogs.item_name with SQL inlined in the file instead of using the reviewed ` +
-          `builders in ${SQL_MODULE}. Every inline copy is a place the name-free test has to be ` +
-          `remembered again, which is exactly how this defect survived its own first fix.`
-      );
+  if (files.size < 5) problems.push(`only ${files.size} qbo-sync sources found — instrument broken, cannot verify`);
+  for (const [rel, content] of files) {
+    const code = stripComments(content);
+    const w = /(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+catalogs\.items\b/i.exec(code);
+    if (w) problems.push(`${rel}: writes catalogs.items (\`${w[0]}\`) from a QBO path — forbidden (ACCT-F4431380).`);
+    for (const c of REMOVED_CONSTANTS) {
+      if (new RegExp(`\\b${c}\\b`).test(code)) problems.push(`${rel}: references removed QBO item write constant ${c}.`);
     }
   }
   return problems;
 }
 
-function siblingSources() {
-  const dir = join(ROOT, QBO_SYNC_DIR);
+function qboSyncSources(root = ROOT) {
   const out = new Map();
-  for (const f of readdirSync(dir)) {
-    if (!f.endsWith(".ts")) continue;
-    if (f === "items-write-sql.ts") continue; // the reviewed home of this SQL
-    if (/\.test\.ts$/.test(f)) continue; // tests may contain illustrative SQL
-    out.set(`${QBO_SYNC_DIR}/${f}`, readFileSync(join(dir, f), "utf8"));
-  }
+  const walk = (rel) => {
+    for (const ent of readdirSync(join(root, rel), { withFileTypes: true })) {
+      const r = `${rel}/${ent.name}`;
+      if (ent.isDirectory()) { if (ent.name !== "__tests__") walk(r); continue; }
+      if (!ent.name.endsWith(".ts") || /\.test\.ts$/.test(ent.name)) continue;
+      out.set(r, readFileSync(join(root, r), "utf8"));
+    }
+  };
+  walk(QBO_SYNC_DIR);
   return out;
 }
 
-async function auditTree() {
-  return auditSql(readFileSync(join(ROOT, SQL_MODULE), "utf8"), siblingSources());
+function auditTree() {
+  return audit(existsSync(join(ROOT, SQL_MODULE)), qboSyncSources());
 }
 
-async function selftest() {
+function selftest() {
   const failures = [];
-  const real = readFileSync(join(ROOT, SQL_MODULE), "utf8");
-  const clean = siblingSources();
+  const clean = qboSyncSources();
+  const c0 = auditTree();
+  if (c0.length !== 0) failures.push(`case0 FAIL — real source flagged: ${c0.join(" | ")}`);
 
-  const clean0 = await auditTree();
-  if (clean0.length !== 0) failures.push(`case0 FAIL — real source flagged: ${clean0.join(" | ")}`);
+  if (!audit(true, clean).some((p) => p.includes("exists again")))
+    failures.push("case1 FAIL — a re-created items-write-sql.ts was NOT caught");
 
-  // case1 — reintroduce the exact ACCT-F83 defect in the heal.
-  const bugHeal = real.replace(
-    /item_name = CASE WHEN \$\{nameIsFree\("ci\.id"\)\} THEN qi\.name ELSE ci\.item_name END,/,
-    "item_name = qi.name,"
-  );
-  if (bugHeal === real) failures.push("case1 SETUP FAIL — could not locate the heal's guarded assignment to mutate");
-  else if (!(await auditSql(bugHeal, clean)).some((p) => p.includes("unconditionally")))
-    failures.push("case1 FAIL — an unconditional item_name = qi.name in the heal was NOT caught");
+  const plantInsert = new Map(clean);
+  const rec = `${QBO_SYNC_DIR}/items-reconciler.ts`;
+  plantInsert.set(rec, clean.get(rec) + "\nawait client.query(`INSERT INTO catalogs.items (operating_company_id, item_name) VALUES ($1,$2)`);\n");
+  if (!audit(false, plantInsert).some((p) => p.includes("writes catalogs.items")))
+    failures.push("case2 FAIL — a planted INSERT INTO catalogs.items in the real reconciler was NOT caught");
 
-  // case2 — gut the shared helper. The source still *calls* nameIsFree, so any guard that only checked
-  // for the call site would pass this. This is the case that justifies expanding the SQL.
-  const gutted = real.replace(
-    /export function nameIsFree\(self: "NULL" \| "ci\.id"\): string \{[\s\S]*?\n\}/,
-    'export function nameIsFree(_self: "NULL" | "ci.id"): string {\n  return " TRUE ";\n}'
-  );
-  if (gutted === real) failures.push("case2 SETUP FAIL — could not locate nameIsFree to gut");
-  else {
-    const found = await auditSql(gutted, clean);
-    if (!found.some((p) => p.includes("no \"is this name already taken") || p.includes("peer")))
-      failures.push("case2 FAIL — a gutted nameIsFree helper was NOT caught");
-  }
+  const plantHeal = new Map(clean);
+  const pul = `${QBO_SYNC_DIR}/items-puller.ts`;
+  plantHeal.set(pul, clean.get(pul) + "\nconst H = `UPDATE catalogs.items ci SET item_name = qi.name FROM mdata.qbo_items qi`;\n");
+  if (!audit(false, plantHeal).some((p) => p.includes("writes catalogs.items")))
+    failures.push("case3 FAIL — the ACCT-F83 heal shape planted in the real puller was NOT caught");
 
-  // case3 — drop the peer clause only (intra-statement collision returns).
-  const noPeer = real.replace(
-    /\n  AND NOT EXISTS \(\n    SELECT 1 FROM mdata\.qbo_items peer\n     WHERE peer\.operating_company_id = qi\.operating_company_id\n       AND peer\.name = qi\.name\n       AND peer\.qbo_id IS DISTINCT FROM qi\.qbo_id\n  \)/,
-    ""
-  );
-  if (noPeer === real) failures.push("case3 SETUP FAIL — could not locate the peer clause to remove");
-  else if (!(await auditSql(noPeer, clean)).some((p) => p.includes("peer")))
-    failures.push("case3 FAIL — removing the peer/mirror clause was NOT caught");
+  const plantConst = new Map(clean);
+  plantConst.set(pul, clean.get(pul) + "\nimport { HEAL_ITEM_DRIFT_SQL } from './items-write-sql.js';\n");
+  if (!audit(false, plantConst).some((p) => p.includes("HEAL_ITEM_DRIFT_SQL")))
+    failures.push("case4 FAIL — a re-import of a removed constant was NOT caught");
 
-  // case4 — remove the WHERE gate so declined renames churn forever.
-  const noWhereGate = real.replace(
-    /OR \(ci\.item_name IS DISTINCT FROM qi\.name AND \$\{nameIsFree\("ci\.id"\)\}\)/,
-    "OR (ci.item_name IS DISTINCT FROM qi.name)"
-  );
-  if (noWhereGate === real) failures.push("case4 SETUP FAIL — could not locate the WHERE gate to remove");
-  else if (!(await auditSql(noWhereGate, clean)).some((p) => p.includes("never converge")))
-    failures.push("case4 FAIL — an ungated name-drift WHERE branch was NOT caught");
+  const commentOnly = new Map(clean);
+  commentOnly.set(pul, clean.get(pul) + "\n// formerly: INSERT INTO catalogs.items (history)\n");
+  if (audit(false, commentOnly).length !== 0) failures.push("case5 FAIL — a comment-only mention was flagged");
 
-  // case5 — a constant disappearing must fail closed, not pass by absence.
-  const noConst = real.replace("export const PULLER_UPSERT_ITEM_SQL", "const PULLER_UPSERT_ITEM_SQL_UNUSED");
-  if (!(await auditSql(noConst, clean)).some((p) => p.includes("anchor is gone")))
-    failures.push("case5 FAIL — a missing statement constant did NOT fail closed");
-
-  // case6 — a sibling re-inlining raw SQL must be caught.
-  const dirty = new Map(clean);
-  dirty.set(
-    `${QBO_SYNC_DIR}/items-reconciler.ts`,
-    "await client.query(`INSERT INTO catalogs.items (operating_company_id, item_name) VALUES ($1,$2)`);"
-  );
-  if (!(await auditSql(real, dirty)).some((p) => p.includes("inlined in the file")))
-    failures.push("case6 FAIL — a re-inlined raw catalogs.items write was NOT caught");
+  if (!audit(false, new Map()).some((p) => p.includes("instrument broken")))
+    failures.push("case6 FAIL — an empty scan did NOT fail closed");
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
     process.exit(1);
   }
-  console.log(
-    `${LABEL}: selftest PASS — unconditional rename caught, gutted helper caught, peer-clause removal caught, ` +
-      `ungated WHERE caught, missing constant fails closed, re-inlined SQL caught`
-  );
+  console.log(`${LABEL}: selftest PASS — re-created module caught, planted insert/heal caught, removed constant caught, comment ignored, empty scan fails closed`);
 }
 
-async function main() {
+function main() {
   if (process.argv.includes("--selftest")) return selftest();
-  const problems = await auditTree();
+  const problems = auditTree();
   if (problems.length) {
     for (const p of problems) console.error(`  ✗ ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — every QBO-sourced item_name write proves the name is free, in the statement that writes it`);
+  console.log(`${LABEL} OK — no QBO path writes catalogs.items (item_name collisions are impossible because the QBO write is gone)`);
 }
 
-await main();
+main();

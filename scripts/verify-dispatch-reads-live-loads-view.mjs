@@ -144,6 +144,9 @@ export function findViolations(relPath, src) {
       let templateEnd = src.indexOf("`", m.index);
       if (templateEnd === -1) templateEnd = src.length;
       const statement = templateStart === -1 ? "" : src.slice(templateStart, templateEnd);
+      // R443.139: current-cost membership is owned by the shared cost predicate.
+      // Permission is per query and only for this board, never a whole-file exemption.
+      if (relPath === "accounting/load-costs-board.routes.ts" && /\$\{\s*canonicalLoadCostsOpenClause\s*\(/.test(statement)) continue;
       if (/\$\{\s*canonicalDispatchWorkWhereClause\s*\(|\$\{\s*canonicalDispatchWorkStatusClause\s*\(|currentTruckLineLoadSql\s*\(|CURRENT_TRUCK_LINE_LOAD_SQL\b/.test(statement)) continue;
     }
     const lineNo = src.slice(0, m.index).split("\n").length;
@@ -299,6 +302,11 @@ function selftest() {
   ]);
 
   let bad = 0;
+  const costSrc = dispatchWorkSrc.replaceAll("canonicalDispatchWorkWhereClause", "canonicalLoadCostsOpenClause");
+  checks.push(["current-cost query uses its canonical predicate", findViolations("accounting/load-costs-board.routes.ts", costSrc).length === 0]);
+  checks.push(["removing current-cost predicate is red", findViolations("accounting/load-costs-board.routes.ts", costSrc.replaceAll("canonicalLoadCostsOpenClause", "localPredicate")).length === 1]);
+  checks.push(["second ungated cost query remains red", findViolations("accounting/load-costs-board.routes.ts", costSrc + "\nconst other = `SELECT id FROM mdata.loads`; ").length === 1]);
+  checks.push(["cost scope cannot replace dispatch scope", findViolations("dispatch/some-dispatch-work-board.service.ts", costSrc).length === 1]);
   for (const [name, ok] of checks) { if (!ok) bad++; console.log(`${ok ? "ok  " : "FAIL"}  ${name}`); }
   if (bad > 0) {
     console.error(`${LABEL} SELFTEST FAIL — ${bad} check(s) failed`);

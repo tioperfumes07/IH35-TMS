@@ -15,7 +15,7 @@
  * (Linehaul Service, Fuel Surcharge, Detention, Layover, Lumper, Relay fuel).
  *
  * WHY ADOPTION AND NOT A RENAME: the local row is the SAME product the operator created by hand.
- * Adoption keeps its id, so existing FKs stay valid — accounting.invoice_lines resolves revenue via
+ * Adoption keeps its id, so existing foreign-key references stay valid — accounting.invoice_lines resolves revenue via
  * catalogs.items.default_income_account_id, and inserting a twin would strand lines on an orphaned
  * item while the QBO-linked copy held the mapping. Renaming to dodge the constraint would silently
  * diverge the operator's catalogue from QuickBooks.
@@ -37,51 +37,27 @@ function stripComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1").replace(/--[^\n]*/g, "");
 }
 
+// ACCT-F4431380 (Lead 443.137 item 9e) — OLD: asserted the puller's catalogs.items ADOPT step (unclaimed
+// predicate, entity scope, short-circuit before the INSERT). NEW: asserts the puller writes NO catalogs.items
+// row at all (no adopt UPDATE, no INSERT, no PULLER_UPSERT_ITEM_SQL) and still fills its mirror
+// mdata.qbo_items. WHY: QuickBooks is a read-only archive; the native write was removed and the reconciler
+// refuses by name. "Adopt only unclaimed rows" is subsumed by "never touch catalogs.items": a puller that
+// cannot write the native catalog cannot rebind a revenue mapping.
 export function auditPuller(src) {
   const code = stripComments(src);
   const problems = [];
-  const upd = /UPDATE\s+catalogs\.items[\s\S]*?RETURNING/i.exec(code);
-  if (!upd) {
+  const write = /(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+catalogs\.items\b/i.exec(code);
+  if (write) {
     problems.push(
-      `${SVC}: no adopt step. A QBO item whose name matches an unclaimed local row falls through to an ` +
-        `INSERT that violates uq_items_company_item_name, and the whole items pull never succeeds.`
-    );
-    return problems;
-  }
-  const adopt = upd[0];
-  if (!/qbo_item_id\s+IS\s+NULL/i.test(adopt)) {
-    problems.push(
-      `${SVC}: the adopt UPDATE does not require qbo_item_id IS NULL. Without it a QBO item can adopt ` +
-        `a row already bound to a DIFFERENT QBO item, silently rebinding revenue mappings.`
+      `${SVC}: writes catalogs.items (\`${write[0]}\`). A QBO pull must write only mdata.qbo_items — ` +
+        `adopting or inserting a native item from QuickBooks is forbidden (ACCT-F4431380).`
     );
   }
-  if (!/item_name\s*=/.test(adopt)) {
-    problems.push(`${SVC}: the adopt UPDATE does not match on item_name — name is the natural key that collides.`);
+  if (/PULLER_UPSERT_ITEM_SQL|items-write-sql/.test(code)) {
+    problems.push(`${SVC}: references the removed QBO item write SQL (PULLER_UPSERT_ITEM_SQL / items-write-sql).`);
   }
-  if (!/operating_company_id\s*=/.test(adopt)) {
-    problems.push(`${SVC}: the adopt UPDATE is not entity-scoped — it could adopt another company's item.`);
-  }
-  // Adoption must SHORT-CIRCUIT, or the insert still runs and still collides.
-  //
-  // ACCT-F83 — this check was FAIL-OPEN for one commit and the fix is the anchor below. It located the
-  // insert with `code.indexOf("INSERT INTO catalogs.items")`. When ACCT-F83 moved that SQL into
-  // items-write-sql.ts, indexOf returned -1, `slice(start, -1)` silently became "everything after the
-  // adopt", and the `return` inside pullItemsFromQbo satisfied the test from anywhere in the file. The
-  // guard would have reported OK with the short-circuit deleted. A missing anchor must FAIL, never
-  // widen the search — that is the difference between a guard and a decoration.
-  const tail = code.slice(code.indexOf(adopt) + adopt.length);
-  const insertAnchor = /await\s+client\.query\(\s*PULLER_UPSERT_ITEM_SQL|INSERT\s+INTO\s+catalogs\.items/i.exec(tail);
-  if (!insertAnchor) {
-    problems.push(
-      `${SVC}: could not locate the insert that follows adoption (neither an inline INSERT INTO ` +
-        `catalogs.items nor a PULLER_UPSERT_ITEM_SQL call). The short-circuit check cannot run, so this ` +
-        `guard would be fail-open — re-anchor it to wherever the insert now lives.`
-    );
-    return problems;
-  }
-  const after = tail.slice(0, insertAnchor.index);
-  if (!/return\b/.test(after)) {
-    problems.push(`${SVC}: adoption does not short-circuit before the INSERT — the colliding insert would still run.`);
+  if (!/INSERT\s+INTO\s+mdata\.qbo_items\b/i.test(code)) {
+    problems.push(`${SVC}: no INSERT INTO mdata.qbo_items — the pull no longer fills its mirror (instrument/anchor lost).`);
   }
   return problems;
 }
@@ -92,51 +68,35 @@ function auditTree() {
 
 function selftest() {
   const failures = [];
-  const noAdopt = `await client.query(\`INSERT INTO catalogs.items (operating_company_id) VALUES ($1) ON CONFLICT (operating_company_id, qbo_item_id) WHERE qbo_item_id IS NOT NULL DO UPDATE SET x=1\`);`;
-  if (auditPuller(noAdopt).length === 0) failures.push("case1 FAIL — a puller with no adopt step was NOT caught");
-
-  const unsafe = `
-    const adopted = await client.query(\`UPDATE catalogs.items SET qbo_item_id = $3 WHERE operating_company_id = $1 AND item_name = $2 RETURNING id\`);
-    if (adopted.rowCount) return;
-    await client.query(\`INSERT INTO catalogs.items (operating_company_id) VALUES ($1)\`);
-  `;
-  if (!auditPuller(unsafe).some((p) => p.includes("does not require qbo_item_id IS NULL")))
-    failures.push("case2 FAIL — an adopt without the unclaimed predicate was NOT caught");
-
-  const noShortCircuit = `
+  const mirror = `await client.query(\`INSERT INTO mdata.qbo_items (operating_company_id, qbo_id) VALUES ($1,$2)\`);`;
+  // ACCT-F4431380 — plants are now the forbidden native writes; the mirror-only shape must pass.
+  const adoptPlant = mirror + `
     const adopted = await client.query(\`UPDATE catalogs.items SET qbo_item_id = $3 WHERE operating_company_id = $1 AND item_name = $2 AND qbo_item_id IS NULL RETURNING id\`);
-    await client.query(\`INSERT INTO catalogs.items (operating_company_id) VALUES ($1)\`);
-  `;
-  if (!auditPuller(noShortCircuit).some((p) => p.includes("short-circuit")))
-    failures.push("case3 FAIL — adoption without a short-circuit was NOT caught");
-
-  // ACCT-F83 case 3b — the same omission, expressed against the CURRENT shape where the insert lives
-  // behind PULLER_UPSERT_ITEM_SQL. Without this case, case3 alone would keep passing on a file that no
-  // longer contains a literal INSERT, which is precisely how this guard went fail-open.
-  const noShortCircuitConst = `
-    const adopted = await client.query(\`UPDATE catalogs.items SET qbo_item_id = $3 WHERE operating_company_id = $1 AND item_name = $2 AND qbo_item_id IS NULL RETURNING id\`);
-    await client.query(PULLER_UPSERT_ITEM_SQL, [operatingCompanyId]);
-  `;
-  if (!auditPuller(noShortCircuitConst).some((p) => p.includes("short-circuit")))
-    failures.push("case3b FAIL — missing short-circuit was NOT caught when the insert sits behind PULLER_UPSERT_ITEM_SQL");
-
-  // ACCT-F83 case 3c — if the insert anchor disappears entirely, the guard must SAY SO rather than
-  // silently widening its search window and passing.
-  const noAnchor = `
-    const adopted = await client.query(\`UPDATE catalogs.items SET qbo_item_id = $3 WHERE operating_company_id = $1 AND item_name = $2 AND qbo_item_id IS NULL RETURNING id\`);
-    if (adopted.rowCount) return;
-    await someOtherHelper();
-  `;
-  if (!auditPuller(noAnchor).some((p) => p.includes("fail-open")))
-    failures.push("case3c FAIL — a missing insert anchor did NOT raise the fail-open warning");
-
+    if (adopted.rowCount) return;`;
+  if (!auditPuller(adoptPlant).some((p) => p.includes("writes catalogs.items")))
+    failures.push("case1 FAIL — a planted catalogs.items adopt UPDATE was NOT caught");
+  const insertPlant = mirror + `await client.query(\`INSERT INTO catalogs.items (operating_company_id) VALUES ($1)\`);`;
+  if (!auditPuller(insertPlant).some((p) => p.includes("writes catalogs.items")))
+    failures.push("case2 FAIL — a planted INSERT INTO catalogs.items was NOT caught");
+  const constPlant = mirror + `await client.query(PULLER_UPSERT_ITEM_SQL, [operatingCompanyId]);`;
+  if (!auditPuller(constPlant).some((p) => p.includes("removed QBO item write SQL")))
+    failures.push("case3 FAIL — a re-introduced PULLER_UPSERT_ITEM_SQL call was NOT caught");
+  const noMirror = `await someOtherHelper();`;
+  if (!auditPuller(noMirror).some((p) => p.includes("no INSERT INTO mdata.qbo_items")))
+    failures.push("case4 FAIL — a puller with no mirror write did NOT fail (instrument would be blind)");
+  const commentOnly = mirror + `\n// formerly: INSERT INTO catalogs.items ...\n`;
+  if (auditPuller(commentOnly).length !== 0) failures.push("case5 FAIL — a comment-only mention was flagged");
+  // Real-file plant: the actual puller with an adopt UPDATE appended must fail.
+  const real = readFileSync(join(ROOT, SVC), "utf8");
+  if (!auditPuller(real + "\nconst P = `UPDATE catalogs.items SET qbo_item_id = $2 WHERE id = $1`;\n").length)
+    failures.push("case6 FAIL — real puller with a planted catalogs.items UPDATE was NOT caught");
   const tree = auditTree();
-  if (tree.length !== 0) failures.push(`case4 FAIL — real source flagged: ${tree.join(" | ")}`);
+  if (tree.length !== 0) failures.push(`case7 FAIL — real source flagged: ${tree.join(" | ")}`);
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS — missing adopt caught, unclaimed-predicate removal caught, missing short-circuit caught`);
+  console.log(`${LABEL}: selftest PASS — planted adopt/insert/const writes caught, missing mirror caught, comment ignored, real tree clean`);
 }
 
 function main() {
@@ -146,7 +106,7 @@ function main() {
     for (const p of problems) console.error(`  ✗ ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — the items pull adopts only UNCLAIMED local rows, entity-scoped, and short-circuits the insert`);
+  console.log(`${LABEL} OK — the items pull writes only mdata.qbo_items; it never adopts, inserts or updates a catalogs.items row`);
 }
 
 main();

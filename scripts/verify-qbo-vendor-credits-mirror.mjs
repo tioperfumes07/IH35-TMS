@@ -25,11 +25,11 @@ function read(p) {
   return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null;
 }
 
-function analyze() {
+function analyze(over = {}) {
   const failures = [];
-  const puller = read(PULLER);
+  const puller = over.puller ?? read(PULLER);
   const kind = read(KIND);
-  const scheduler = read(SCHEDULER);
+  const scheduler = over.scheduler ?? read(SCHEDULER);
   const migMirror = read(MIG_MIRROR);
   const migKey = read(MIG_KEY);
 
@@ -72,26 +72,31 @@ function analyze() {
   if (!/qboPaginateEntity[\s\S]{0,80}VendorCredit/.test(puller)) {
     failures.push("puller must paginate QBO entity VendorCredit");
   }
-  if (!/INSERT\s+INTO\s+accounting\.vendor_credits/.test(puller)) {
-    failures.push("projector must INSERT INTO accounting.vendor_credits");
+  // ACCT-F4431380 (Lead 443.137 item 9e) — OLD: the projector had to INSERT INTO accounting.vendor_credits
+  //   (no GENERATED amount_unapplied_cents, INNER JOIN mdata.vendors, VC- display_id minting).
+  //   NEW: projectVendorCreditsToLedger must REFUSE BY NAME (refuseQboNativeWrite) and the puller must contain
+  //   no write into any native accounting.* table; its only data write is the mdata.qbo_vendor_credits mirror.
+  //   WHY: QuickBooks is a read-only archive; the projection/write was removed and its entry point refuses by name.
+  if (!/export async function projectVendorCreditsToLedger[\s\S]{0,400}refuseQboNativeWrite\(/.test(puller)) {
+    failures.push("projectVendorCreditsToLedger must refuse by name (refuseQboNativeWrite) — never project or silently no-op");
   }
-  if (/INSERT\s+INTO\s+accounting\.vendor_credits[\s\S]{0,400}amount_unapplied_cents/i.test(puller)) {
-    failures.push("projector must NOT insert GENERATED amount_unapplied_cents");
+  if (/(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+accounting\.(?!qbo_)[a-z_]+/i.test(puller)) {
+    failures.push("puller must not write any native accounting.* table (QuickBooks is a read-only archive)");
   }
-  if (!/INNER JOIN mdata\.vendors/.test(puller)) {
-    failures.push("projector must INNER JOIN mdata.vendors (skip unresolved)");
-  }
-  if (!/VC-' \|\| c\.yr::text/.test(puller) && !/VC-' \|\|/.test(puller)) {
-    failures.push("projector must mint VC-YYYY-NNNN display_ids for new rows");
+  if (!/INSERT\s+INTO\s+mdata\.qbo_vendor_credits/.test(puller)) {
+    failures.push("puller must still upsert the mdata.qbo_vendor_credits mirror");
   }
   if (!/QBO_VENDOR_CREDITS_MIRROR_SYNC_KIND/.test(kind) || !/QBO_VENDOR_CREDITS_PROJECTION_SYNC_KIND/.test(kind)) {
     failures.push("sync-kind constants missing");
   }
-  if (!/pullVendorCreditsFromQbo/.test(scheduler) || !/projectVendorCreditsToLedger/.test(scheduler)) {
-    failures.push("sync-scheduler must wire vendor credit pull + project steps");
+  // ACCT-F4431380 (Lead 443.137 item 9e) — OLD: scheduler wired qbo_vendor_credits_pull + _project.
+  //   NEW: only the pull is scheduled; the refused projector must NOT be (it would record a refused step every
+  //   tick). WHY: QuickBooks is a read-only archive; the projection/write was removed and its entry point refuses by name.
+  if (!/pullVendorCreditsFromQbo/.test(scheduler) || !/runStep\("qbo_vendor_credits_pull"/.test(scheduler)) {
+    failures.push("sync-scheduler must wire the qbo_vendor_credits_pull mirror step");
   }
-  if (!/qbo_vendor_credits_pull/.test(scheduler) || !/qbo_vendor_credits_project/.test(scheduler)) {
-    failures.push("sync-scheduler step names qbo_vendor_credits_pull/project required");
+  if (/projectVendorCreditsToLedger|"qbo_vendor_credits_project"/.test(scheduler)) {
+    failures.push("sync-scheduler must NOT schedule the refused qbo_vendor_credits_project step");
   }
 
   return failures;
@@ -126,6 +131,18 @@ if (process.argv.includes("--selftest")) {
     fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
 
+  // ACCT-F4431380 (9e) plants on the REAL puller/scheduler source: re-added native write, reverted refusal,
+  // re-scheduled projection — each must be flagged by analyze().
+  const realScheduler = read(SCHEDULER);
+  const plants9e = [
+    ["native write planted", { puller: puller + "\nconst P = `INSERT INTO accounting.vendor_credits (id) VALUES ($1)`;\n" }, /native accounting/],
+    ["refusal reverted", { puller: puller.replace(/refuseQboNativeWrite\(/g, "noop(") }, /refuse by name/],
+    ["projection re-scheduled", { scheduler: realScheduler + '\nawait runStep("qbo_vendor_credits_project", id, () => projectVendorCreditsToLedger(id));\n' }, /NOT schedule/],
+  ];
+  for (const [name, over, re] of plants9e) {
+    if (!analyze(over).some((f) => re.test(f))) failures.push(`selftest: ${name} was NOT caught`);
+  }
+
   // Direct plant assertion
   if (/qboPaginateEntity[\s\S]{0,80}VendorCredit/.test(puller.replace(/"VendorCredit"/g, '"Purchase"'))) {
     failures.push("selftest: renamed entity still matched VendorCredit");
@@ -146,5 +163,5 @@ if (failures.length) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log("verify-qbo-vendor-credits-mirror: PASS — mirror+flags+puller+projector+scheduler wired (ACCT-F47)");
+console.log("verify-qbo-vendor-credits-mirror: PASS — mirror+flags+pull wired; projector refuses by name (ACCT-F47; QBO read-only archive, 9e)");
 process.exit(0);

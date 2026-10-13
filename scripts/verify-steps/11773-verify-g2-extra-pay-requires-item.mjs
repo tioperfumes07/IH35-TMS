@@ -4,6 +4,10 @@
 export default {
   name: "verify:g2-extra-pay-requires-item",
   run(ctx) {
+    const selftest = ctx.run("node", ["scripts/verify-settlement-pay-line-item-account.mjs", "--selftest"]);
+    if (selftest) return selftest;
+    const writer = ctx.run("node", ["scripts/verify-settlement-pay-line-item-account.mjs"]);
+    if (writer) return writer;
     ctx.run("node", ["scripts/verify-g2-extra-pay-requires-item.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-g2-extra-pay-requires-item.mjs"]);
   },

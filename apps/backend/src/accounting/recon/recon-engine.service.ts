@@ -15,7 +15,8 @@ export type ReconRunType =
   | "pm_categorization_diff"
   | "on_demand_bank_count"
   | "on_demand_categorization_diff"
-  // AF-2 — DETECT-ONLY master-data anchor-drift passes (see ../../qbo-sync/master-data-anchor-drift.ts).
+  // AF-2 — DETECT-ONLY master-data anchor-drift run types. Their runner (qbo-sync/master-data-anchor-drift.ts)
+  // had no callers and was removed in 443.137 9e; the run types stay so historical recon_runs rows still type-check.
   // These record ANCHOR_DRIFT exceptions read from mdata.vendors/mdata.customers/catalogs.accounts vs
   // their QBO mirror; they never write to the source table (write-back stays OFF per the locked decision).
   | "master_data_drift_vendors"
@@ -109,7 +110,7 @@ export type QboReconSource = {
   bankEntries(opco: string, windowStart: string, windowEnd: string): Promise<ReconEntry[]>;
 };
 
-// Exported (not just used internally) so AF-2's master-data-anchor-drift.ts can reuse the SAME audited
+// Exported (not just used internally) so another recon pass can reuse the SAME audited
 // recon_runs/recon_exceptions write path instead of standing up a parallel table.
 export async function insertRun(client: PoolClient, opco: string, runType: ReconRunType, ws: string, we: string, preparer: string | null): Promise<string> {
   const res = await client.query<{ id: string }>(

@@ -54,19 +54,21 @@ export async function registerMdataAccountsRoutes(app: FastifyInstance) {
       const filters = ["operating_company_id = $1::uuid"];
       if (typeof active === "boolean") {
         values.push(active);
-        filters.push(`active = $${values.length}`);
+        filters.push(`(deactivated_at IS NULL) = $${values.length}`);
       }
       if (search) {
         values.push(`%${search}%`);
         const idx = values.length;
-        filters.push(`(name ILIKE $${idx} OR COALESCE(full_qualified_name, '') ILIKE $${idx})`);
+        filters.push(`(account_name ILIKE $${idx} OR COALESCE(account_number, '') ILIKE $${idx})`);
       }
       values.push(limit, offset);
       const whereClause = `WHERE ${filters.join(" AND ")}`;
       const res = await client.query(
         `
-          SELECT id, operating_company_id, qbo_id, name, full_qualified_name, account_type, account_sub_type, active, mirrored_at, created_at, updated_at
-          FROM mdata.qbo_accounts
+          SELECT id, operating_company_id, qbo_account_id AS qbo_id, account_name AS name,
+                 account_number AS full_qualified_name, account_type, account_subtype AS account_sub_type,
+                 (deactivated_at IS NULL) AS active, updated_at AS mirrored_at, created_at, updated_at
+          FROM catalogs.accounts
           ${whereClause}
           ORDER BY updated_at DESC
           LIMIT $${values.length - 1}
@@ -95,8 +97,10 @@ export async function registerMdataAccountsRoutes(app: FastifyInstance) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const res = await client.query(
         `
-          SELECT id, operating_company_id, qbo_id, name, full_qualified_name, account_type, account_sub_type, active, mirrored_at, created_at, updated_at
-          FROM mdata.qbo_accounts
+          SELECT id, operating_company_id, qbo_account_id AS qbo_id, account_name AS name,
+                 account_number AS full_qualified_name, account_type, account_subtype AS account_sub_type,
+                 (deactivated_at IS NULL) AS active, updated_at AS mirrored_at, created_at, updated_at
+          FROM catalogs.accounts
           WHERE id = $1::uuid
             AND operating_company_id = $2::uuid
           LIMIT 1
@@ -128,12 +132,17 @@ export async function registerMdataAccountsRoutes(app: FastifyInstance) {
       values.push(value);
       setParts.push(`${column} = $${values.length}`);
     };
-    if ("name" in body) add("name", body.name ?? null);
-    if ("full_qualified_name" in body) add("full_qualified_name", body.full_qualified_name ?? null);
+    if ("name" in body) add("account_name", body.name ?? null);
+    if ("full_qualified_name" in body) add("account_number", body.full_qualified_name ?? null);
     if ("account_type" in body) add("account_type", body.account_type ?? null);
-    if ("account_sub_type" in body) add("account_sub_type", body.account_sub_type ?? null);
-    if ("active" in body) add("active", body.active ?? null);
-    setParts.push("mirrored_at = now()");
+    if ("account_sub_type" in body) add("account_subtype", body.account_sub_type ?? null);
+    if ("active" in body) {
+      if (body.active === false) {
+        setParts.push("deactivated_at = now()");
+      } else if (body.active === true) {
+        setParts.push("deactivated_at = NULL");
+      }
+    }
     setParts.push("updated_at = now()");
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
@@ -143,11 +152,13 @@ export async function registerMdataAccountsRoutes(app: FastifyInstance) {
       values.push(parsedParams.data.id, resolvedOperatingCompanyId);
       const res = await client.query(
         `
-          UPDATE mdata.qbo_accounts
+          UPDATE catalogs.accounts
           SET ${setParts.join(", ")}
           WHERE id = $${values.length - 1}::uuid
             AND operating_company_id = $${values.length}::uuid
-          RETURNING id, operating_company_id, qbo_id, name, full_qualified_name, account_type, account_sub_type, active, mirrored_at, created_at, updated_at
+          RETURNING id, operating_company_id, qbo_account_id AS qbo_id, account_name AS name,
+                    account_number AS full_qualified_name, account_type, account_subtype AS account_sub_type,
+                    (deactivated_at IS NULL) AS active, updated_at AS mirrored_at, created_at, updated_at
         `,
         values
       );

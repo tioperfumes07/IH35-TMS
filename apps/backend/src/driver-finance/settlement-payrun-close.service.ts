@@ -409,7 +409,7 @@ async function loadDetentionPayCents(client: DbClient, operatingCompanyId: strin
  * load for exactly what the header sums: the earnings bucket (earnings / extra pay / deadhead / team splits →
  * driver pay), reimbursements (per-type account, the same rows loadReimbursementsByType sums) and detention pay.
  */
-async function loadSettlementPayItems(
+export async function loadSettlementPayItems(
   client: DbClient,
   operatingCompanyId: string,
   settlementId: string,
@@ -417,9 +417,9 @@ async function loadSettlementPayItems(
 ): Promise<ApChainPayItem[]> {
   const items: ApChainPayItem[] = [];
   // RULING 443.66 D1 — every pay row carries the item of its settlement line, so the per-load A/P bill line does too.
-  const earn = await client.query<{ amount: string; line_type: string; load_id: string | null; d: string | null; description: string | null; item_id: string | null }>(
+  const earn = await client.query<{ amount: string; line_type: string; load_id: string | null; d: string | null; description: string | null; item_id: string | null; posting_account_id: string | null }>(
     `SELECT sl.amount::text, sl.line_type, COALESCE(sl.load_id, db.load_id)::text AS load_id, sl.created_at::date::text AS d, sl.description,
-            sl.item_id::text AS item_id
+            sl.item_id::text AS item_id, sl.posting_account_id::text AS posting_account_id
        FROM driver_finance.settlement_lines sl
        JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
        LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
@@ -435,7 +435,7 @@ async function loadSettlementPayItems(
     if (!componentItem.has(c)) componentItem.set(c, await resolvePayComponentItem(client as never, operatingCompanyId, c));
     return componentItem.get(c) ?? null;
   };
-  for (const r of earn.rows) items.push({ kind: "pay", cents: dollarsToCents(r.amount), accountId: accounts.driverPay, loadId: r.load_id, date: r.d, description: r.description || r.line_type.replace(/_/g, " "), itemId: r.item_id ?? (await itemOf(r.line_type, r.description)) });
+  for (const r of earn.rows) items.push({ kind: "pay", cents: dollarsToCents(r.amount), accountId: r.posting_account_id ?? accounts.driverPay, loadId: r.load_id, date: r.d, description: r.description || r.line_type.replace(/_/g, " "), itemId: r.item_id ?? (await itemOf(r.line_type, r.description)) });
   const reimb = await client.query<{ amount: string; reimbursement_type: string | null; posting_account_id: string | null; load_id: string | null; d: string | null; item_id: string | null }>(
     `SELECT ABS(sl.amount)::text AS amount, dr.reimbursement_type, sl.posting_account_id::text AS posting_account_id, COALESCE(sl.load_id, dr.load_id)::text AS load_id,
             sl.item_id::text AS item_id,
@@ -452,16 +452,17 @@ async function loadSettlementPayItems(
     if (!acct) throw new SettlementPayRunError("REIMBURSEMENT_EXPENSE_ACCOUNT_MISSING", `No active reimbursement expense account resolved for type '${r.reimbursement_type ?? "unknown"}'`);
     items.push({ kind: "reimbursement", cents: dollarsToCents(r.amount), accountId: acct, loadId: r.load_id, date: r.d, description: `${r.reimbursement_type ?? "driver"} reimbursement`, itemId: r.item_id });
   }
-  const det = await client.query<{ amount: string; load_id: string | null; d: string | null; item_id: string | null }>(
-    `SELECT ABS(sl.amount)::text AS amount, sl.load_id::text, sl.created_at::date::text AS d, sl.item_id::text AS item_id
+  const det = await client.query<{ amount: string; load_id: string | null; d: string | null; item_id: string | null; posting_account_id: string | null }>(
+    `SELECT ABS(sl.amount)::text AS amount, sl.load_id::text, sl.created_at::date::text AS d, sl.item_id::text AS item_id, sl.posting_account_id::text AS posting_account_id
        FROM driver_finance.settlement_lines sl
        JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
       WHERE sl.settlement_id = $2::uuid AND ds.operating_company_id = $1::uuid AND sl.line_type = 'detention_pay' AND sl.is_active = true`,
     [operatingCompanyId, settlementId]
   );
   for (const r of det.rows) {
-    if (!accounts.detention) throw new SettlementPayRunError("DETENTION_PAY_EXPENSE_ACCOUNT_MISSING", "No active 'detention_pay_expense' CoA role designation for settlement detention pay");
-    items.push({ kind: "detention_pay", cents: dollarsToCents(r.amount), accountId: accounts.detention, loadId: r.load_id, date: r.d, description: "detention pay", itemId: r.item_id });
+    const accountId = r.posting_account_id ?? accounts.detention;
+    if (!accountId) throw new SettlementPayRunError("DETENTION_PAY_EXPENSE_ACCOUNT_MISSING", "No active 'detention_pay_expense' CoA role designation for settlement detention pay");
+    items.push({ kind: "detention_pay", cents: dollarsToCents(r.amount), accountId, loadId: r.load_id, date: r.d, description: "detention pay", itemId: r.item_id });
   }
   return items;
 }

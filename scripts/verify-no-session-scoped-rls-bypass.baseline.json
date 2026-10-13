@@ -23,7 +23,6 @@
     "scripts/verify-bank-match-suggest-is-read-only.mjs": true,
     "scripts/verify-costs-are-expenses-not-handwritten-jes.mjs": true,
     "scripts/verify-customer-activity-statements.mjs": true,
-    "scripts/verify-escrow-ledger-sign-follows-type.mjs": true,
     "scripts/verify-every-match-kind-is-acceptable-or-declared.mjs": true,
     "scripts/verify-feed-is-whole.mjs": true,
     "scripts/verify-fleet-apd-trailer-identity.mjs": true,

@@ -191,6 +191,37 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-3/c133-woacct",
     new Set(["db/migrations/202615890910_work_order_line_item.sql"]),
   ],
+  // LEAD 443.133 B (CC-3): Relay deposit card map as data + one live entry per deposit. Claimed first on main (#26684)
+  // under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c133-b",
+    new Set(["db/migrations/202615870910_relay_deposit_card_map_and_one_posting.sql"]),
+  ],
+  // LEAD 443.134 #1 (CC-3): related party -> its one running Due to / from account (accounting.related_party_accounts).
+  // Claimed first on main (#26711, 733b56ba67) under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c134-rp",
+    new Set(["db/migrations/202615900910_related_party_accounts_link.sql"]),
+  ],
+  // LEAD 443.136 #1 (CC-3): the Relay deposit posting registry trigger stamps the deposit row. Claimed first on main
+  // (#26721, 31695686ae) under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c136-deposit",
+    new Set(["db/migrations/202615920910_relay_deposit_stamped_by_posting_registry.sql"]),
+  ],
+  // LEAD 443.136 #2 (CC-3): WORM on accounting.related_party_accounts. Claimed first on main (#26721, 31695686ae) under
+  // claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c136-worm",
+    new Set(["db/migrations/202615930910_related_party_accounts_worm.sql"]),
+  ],
+  // LEAD 443.136 follow-up (CC-3, ACCT-F4431372): posting_source_load_id resolves a Relay receipt fill with no fuel row to
+  // its adopted expense document's load. Claimed first on main (#26729, b1152c0449) under claimed_by CC-3 in the cc-3 band
+  // (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c137",
+    new Set(["db/migrations/202615940910_posting_source_load_id_relay_receipt_document.sql"]),
+  ],
   // RULING 443.62 #3/#4/#7 (Lead 16:35 UTC): 2410-00-001..004 "Due to / from <party>" rename (taken from CC-1 #26377) +
   // google_place_id on stop / location for CC-2. Claimed first on main (#26389); exact branch + exact files.
   [

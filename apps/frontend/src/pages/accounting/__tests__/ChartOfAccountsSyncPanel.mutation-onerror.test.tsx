@@ -50,12 +50,16 @@ describe("ChartOfAccountsSyncPanel mutation onError", () => {
     });
   });
 
-  it("surfaces reconcile-now failures via pushToast", async () => {
+  // 443.137 9e: chart-of-accounts/reconcile-now always answers 409 QBO_NATIVE_WRITE_REFUSED (QuickBooks
+  // is a read-only archive), so the panel offers no Reconcile action at all — never a broken button.
+  it("offers no Reconcile action and never calls reconcile-now (443.137 9e)", async () => {
     renderPanel();
     expect(await screen.findByText(/Cloned from QBO: 42/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Reconcile" }));
-    await waitFor(() => {
-      expect(pushToast).toHaveBeenCalledWith("QBO sync unavailable", "error");
-    });
+    expect(screen.queryByRole("button", { name: /Reconcil/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Refresh from QBO" }));
+    await waitFor(() => expect(pushToast).toHaveBeenCalled());
+    for (const call of vi.mocked(clientApi.apiRequest).mock.calls) {
+      expect(String(call[0])).not.toContain("reconcile-now");
+    }
   });
 });

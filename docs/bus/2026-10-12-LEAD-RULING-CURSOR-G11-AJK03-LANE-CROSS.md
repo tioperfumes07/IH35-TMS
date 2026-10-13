@@ -9,6 +9,7 @@
 ```
 apps/backend/src/dispatch/book-load.service.ts
 apps/backend/src/dispatch/__tests__/g11-geofence-booking.db.test.ts
+apps/backend/src/telematics/stops-geocode-backfill.service.ts
 apps/backend/src/telematics/geofence-detector.service.ts
 apps/backend/src/telematics/__tests__/geofence-stop-arrival-prompt.test.ts
 scripts/verify-geofence-at-booking-and-status-follows.mjs
@@ -29,6 +30,8 @@ move G15 / BCF-06 / AJK-02 / AJK-06 / AJK-07 / AJK-08 off Cursor's queue. The de
    `bindLoadToGeofences` bound nothing at booking (fences waited on cron).
 2. `geofence-detector.service.ts` advanced load status with a raw
    `UPDATE mdata.loads SET status`, bypassing the one transition engine (AJK-03).
+3. Post-book `geocodeStopsBackfill` upgraded precision but never called `bindLoadToGeofences`,
+   leaving coords-without-`load-*-stop-*` fence (measured 309-stop gap on re-audit 2026-10-13).
 
 The fix, db test, unit mocks, and `verify-geofence-at-booking-and-status-follows` guard are one
 ship. The samsara-history guard touch is tip-unblock only (OPERATIONAL classify for

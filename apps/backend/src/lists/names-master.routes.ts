@@ -3,10 +3,8 @@ import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "../mdata/driver-pseudo-user.js";
 import {
-  EXCLUDE_ARCHIVED_DRIVERS_SQL,
   EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_ALIAS_SQL,
   EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL,
-  EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL,
 } from "../mdata/test-seed-archive.js";
 import {
   buildArchivedFilter,
@@ -223,76 +221,6 @@ async function searchCompanies(
   return res.rows.map((row) => mapRow("company", row, `/lists/names`));
 }
 
-async function searchUnlinkedQboCustomers(
-  client: Queryable,
-  companyId: string,
-  q: string,
-  includeArchived: boolean,
-  perTypeLimit: number
-) {
-  const values: unknown[] = [companyId];
-  const archivedFilter = includeArchived ? "TRUE" : EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL;
-  const search = searchClause(q, ["qc.display_name"], values);
-  const res = await client.query(
-    `
-      SELECT
-        qc.id AS entity_id,
-        qc.display_name,
-        NULL::text AS primary_email,
-        NULL::text AS primary_phone,
-        qc.qbo_id,
-        qc.archived_at
-      FROM mdata.qbo_customers qc
-      WHERE qc.operating_company_id = $1::uuid
-        AND ${archivedFilter}
-        AND NOT EXISTS (
-          SELECT 1 FROM mdata.customers c
-          WHERE c.operating_company_id = $1::uuid AND c.qbo_customer_id = qc.qbo_id
-        )
-        ${search.sql}
-      ORDER BY qc.display_name ASC
-      LIMIT ${perTypeLimit}
-    `,
-    values
-  );
-  return res.rows.map((row) => mapRow("customer", row, "/accounting/customers"));
-}
-
-async function searchUnlinkedQboVendors(
-  client: Queryable,
-  companyId: string,
-  q: string,
-  includeArchived: boolean,
-  perTypeLimit: number
-) {
-  const values: unknown[] = [companyId];
-  const archivedFilter = includeArchived ? "TRUE" : "qv.active = true";
-  const search = searchClause(q, ["qv.display_name"], values);
-  const res = await client.query(
-    `
-      SELECT
-        qv.id AS entity_id,
-        qv.display_name,
-        NULL::text AS primary_email,
-        NULL::text AS primary_phone,
-        qv.qbo_id,
-        NULL::timestamptz AS archived_at
-      FROM mdata.qbo_vendors qv
-      WHERE qv.operating_company_id = $1::uuid
-        AND ${archivedFilter}
-        AND NOT EXISTS (
-          SELECT 1 FROM mdata.vendors v
-          WHERE v.operating_company_id = $1::uuid AND v.qbo_vendor_id = qv.qbo_id
-        )
-        ${search.sql}
-      ORDER BY qv.display_name ASC
-      LIMIT ${perTypeLimit}
-    `,
-    values
-  );
-  return res.rows.map((row) => mapRow("vendor", row, "/accounting/vendors"));
-}
-
 async function countActive(
   client: Queryable,
   sql: string,
@@ -325,14 +253,8 @@ export async function registerNamesMasterRoutes(app: FastifyInstance) {
         buckets.push(...(await fn()));
       };
 
-      await run("customer", async () => [
-        ...(await searchCustomers(client, operating_company_id, q, include_archived, perTypeLimit)),
-        ...(await searchUnlinkedQboCustomers(client, operating_company_id, q, include_archived, perTypeLimit)),
-      ]);
-      await run("vendor", async () => [
-        ...(await searchVendors(client, operating_company_id, q, include_archived, perTypeLimit)),
-        ...(await searchUnlinkedQboVendors(client, operating_company_id, q, include_archived, perTypeLimit)),
-      ]);
+      await run("customer", () => searchCustomers(client, operating_company_id, q, include_archived, perTypeLimit));
+      await run("vendor", () => searchVendors(client, operating_company_id, q, include_archived, perTypeLimit));
       await run("driver", () => searchDrivers(client, operating_company_id, q, include_archived, perTypeLimit));
       await run("contact", () => searchContacts(client, operating_company_id, q, include_archived, perTypeLimit));
       await run("company", () => searchCompanies(client, q, include_archived, perTypeLimit));
@@ -393,30 +315,9 @@ export async function registerNamesMasterRoutes(app: FastifyInstance) {
         `,
         []
       );
-      const unlinkedQboCustomers = await countActive(
-        client,
-        `
-          SELECT count(*)::text AS count FROM mdata.qbo_customers qc
-          WHERE qc.operating_company_id = $1::uuid AND ${include_archived ? "TRUE" : EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL}
-            AND NOT EXISTS (
-              SELECT 1 FROM mdata.customers c WHERE c.operating_company_id = $1::uuid AND c.qbo_customer_id = qc.qbo_id
-            )
-        `,
-        [operating_company_id]
-      );
-      const unlinkedQboVendors = await countActive(
-        client,
-        `
-          SELECT count(*)::text AS count FROM mdata.qbo_vendors qv
-              WHERE qv.operating_company_id = $1::uuid AND ${include_archived ? "TRUE" : "qv.active = true"}
-            AND NOT EXISTS (
-              SELECT 1 FROM mdata.vendors v WHERE v.operating_company_id = $1::uuid AND v.qbo_vendor_id = qv.qbo_id
-            )
-        `,
-        [operating_company_id]
-      );
-      const customerTotal = customers + unlinkedQboCustomers;
-      const vendorTotal = vendors + unlinkedQboVendors;
+      // 9c: QBO mirror unlinked counts removed — native mdata tables are canonical.
+      const customerTotal = customers;
+      const vendorTotal = vendors;
       return {
         customers: customerTotal,
         vendors: vendorTotal,

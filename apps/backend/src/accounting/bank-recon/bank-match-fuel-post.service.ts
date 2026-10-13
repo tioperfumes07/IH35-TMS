@@ -9,6 +9,7 @@
  * posts with the explicit deadhead/yard reason (LEAD 443.121 #2) and is re-pointed when its load is booked.
  */
 import { crossRailFuelRowsForRelayFill } from "../../fuel/relay-fill-link.service.js";
+import { postedRelayTwinsOf } from "../../fuel/relay-duplicate-purchase.service.js";
 import { adoptRelayFillExpenseDocument, createExpenseFromFuelTransaction } from "../../fuel/fuel-expense-document.service.js";
 import { resolveFillDriverAtTime, resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
 import { relayLineIsGallonsSql, relayLineKindSql } from "../../fuel/relay-product-kind.js";
@@ -27,7 +28,7 @@ export class FuelMatchPostError extends Error {
     public code:
       | "fuel_fill_not_found" | "fuel_fill_missing_unit" | "fuel_fill_missing_load" | "fuel_fill_zero_amount"
       | "relay_fill_unknown_product" | "relay_fill_has_no_fuel_lines" | "relay_fill_lines_do_not_foot" | "relay_fill_document_refused"
-      | "fuel_fill_document_refused" | "relay_fill_matches_other_rail_fill",
+      | "fuel_fill_document_refused" | "relay_fill_matches_other_rail_fill" | "relay_fill_duplicate_purchase",
     message: string
   ) {
     super(message);
@@ -296,6 +297,15 @@ async function postRelayFuelFill(
     throw new FuelMatchPostError(
       "relay_fill_matches_other_rail_fill",
       `relay_fuel ${input.fill_id}: pairs with ${crossRail.length} fuel row(s) paid on another rail (${crossRail.map((r) => `${r.fuel_transaction_id} ${r.card ?? "no card"}`).join(", ")}) — the owner decides which rail paid before it posts`
+    );
+  }
+  // 443.136 — Relay can list ONE pump purchase under two transaction ids (same truck, place, products, volume, amount).
+  // The receipt identity keys on the transaction id, so it cannot see this; the purchase rule can. Refused by name.
+  const twins = await postedRelayTwinsOf(client, input.operating_company_id, input.fill_id);
+  if (twins.length) {
+    throw new FuelMatchPostError(
+      "relay_fill_duplicate_purchase",
+      `relay_fuel ${input.fill_id}: same purchase as already-posted Relay fill(s) ${twins.map((t) => `${t.fill_id} ${t.transaction_id ?? ""}`.trim()).join(", ")} — one purchase posts once`
     );
   }
   // 443.110 G7 — the one fuel-to-load rule (fuel/fuel-load-at-time.ts), same as the fuel-card import: unit first,

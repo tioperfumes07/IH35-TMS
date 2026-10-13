@@ -111,24 +111,39 @@ export async function prepareFiling(
   const fuelByJurisdiction = await aggregateFuelByJurisdiction(client, operatingCompanyId, quarterLabel);
   const filingData = buildFilingCalculations({ quarterLabel, milesByJurisdiction, fuelByJurisdiction });
 
+  // LEAD 443.134 AJK-13 — never modify an approved / filed return. The quarter's latest version decides:
+  //   none                   -> version 1 draft;
+  //   draft / review (open)  -> that open version is re-prepared in place (still a draft — nothing was approved);
+  //   owner_approved / filed -> a NEW draft version (version + 1, supersedes the approved / filed one), which is the
+  //                             amendment; the approved / filed row is untouched (the DB refuses changing it).
+  const latest = (await client.query(
+    `SELECT uuid::text, status, version FROM reports.ifta_filings
+      WHERE operating_company_id = $1::uuid AND quarter = $2
+      ORDER BY version DESC LIMIT 1 FOR UPDATE`,
+    [operatingCompanyId, quarterLabel]
+  )).rows[0] as { uuid: string; status: string; version: number } | undefined;
+
+  if (latest && (latest.status === "draft" || latest.status === "review")) {
+    const updated = await client.query(
+      `UPDATE reports.ifta_filings
+          SET status = 'draft', filing_data = $3::jsonb, prepared_by_user_uuid = $4::uuid,
+              approved_by_user_uuid = NULL, approved_at = NULL
+        WHERE uuid = $1::uuid AND operating_company_id = $2::uuid AND status IN ('draft', 'review')
+        RETURNING *`,
+      [latest.uuid, operatingCompanyId, JSON.stringify(filingData), preparedByUserUuid]
+    );
+    return updated.rows[0];
+  }
+
   const insertRes = await client.query(
     `
       INSERT INTO reports.ifta_filings (
-        operating_company_id, quarter, status, filing_data, prepared_by_user_uuid
+        operating_company_id, quarter, status, filing_data, prepared_by_user_uuid, version, supersedes_filing_uuid
       )
-      VALUES ($1::uuid, $2, 'draft', $3::jsonb, $4::uuid)
-      ON CONFLICT (operating_company_id, quarter)
-      DO UPDATE SET
-        status = 'draft',
-        filing_data = EXCLUDED.filing_data,
-        prepared_by_user_uuid = EXCLUDED.prepared_by_user_uuid,
-        approved_by_user_uuid = NULL,
-        approved_at = NULL,
-        filed_at = NULL,
-        confirmation_number = NULL
+      VALUES ($1::uuid, $2, 'draft', $3::jsonb, $4::uuid, $5, $6::uuid)
       RETURNING *
     `,
-    [operatingCompanyId, quarterLabel, JSON.stringify(filingData), preparedByUserUuid]
+    [operatingCompanyId, quarterLabel, JSON.stringify(filingData), preparedByUserUuid, latest ? Number(latest.version) + 1 : 1, latest?.uuid ?? null]
   );
 
   return insertRes.rows[0];
@@ -267,10 +282,10 @@ export async function listFilings(client: Queryable, operatingCompanyId: string)
   const res = await client.query(
     `
       SELECT uuid, operating_company_id, quarter, status, filing_data, prepared_by_user_uuid,
-             approved_by_user_uuid, approved_at, filed_at, confirmation_number, created_at
+             approved_by_user_uuid, approved_at, filed_at, confirmation_number, created_at, version, supersedes_filing_uuid
       FROM reports.ifta_filings
       WHERE operating_company_id = $1::uuid
-      ORDER BY quarter DESC, created_at DESC
+      ORDER BY quarter DESC, version DESC, created_at DESC
     `,
     [operatingCompanyId]
   );

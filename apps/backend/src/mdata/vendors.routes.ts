@@ -1,5 +1,5 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
-import { ensureDriverVendor } from "./ensure-driver-vendor.shared.js";
+import { DriverVendorIdentityUnresolvedError, ensureDriverVendor } from "./ensure-driver-vendor.shared.js";
 import { looksLikeSampleDataName } from "./sample-data-name-detection.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -555,28 +555,39 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       let created = 0;
       let alreadyPresent = 0;
       let linked = 0;
+      const unresolved: Array<{ driver_id: string; vendor_name: string; reason: string }> = [];
       for (const driver of drivers.rows) {
         // DRIVER->VENDOR: extracted to ensure-driver-vendor.shared.ts so the HIRE path
         // (mdata/drivers.routes.ts create) mints the same payee, by the same rules. Before the
         // extraction this logic lived only here, in an on-demand maintenance route, so a driver had
         // a payee exactly as often as somebody remembered to press the button — 3 of 3 USMCA
         // operator-created drivers had none.
-        const outcome = await ensureDriverVendor(client, {
-          operatingCompanyId: scopedCompanyId,
-          driverId: driver.id,
-          displayName: driver.display_name,
-          phone: driver.phone,
-          email: driver.email,
-          actorUserId: authUser.uuid,
-        });
+        // AJK-04: a same-name vendor that cannot be linked unambiguously is refused BY NAME and reported per driver —
+        // it is never counted as already present.
+        let outcome: Awaited<ReturnType<typeof ensureDriverVendor>>;
+        try {
+          outcome = await ensureDriverVendor(client, {
+            operatingCompanyId: scopedCompanyId,
+            driverId: driver.id,
+            displayName: driver.display_name,
+            phone: driver.phone,
+            email: driver.email,
+            actorUserId: authUser.uuid,
+          });
+        } catch (err) {
+          if (!(err instanceof DriverVendorIdentityUnresolvedError)) throw err;
+          unresolved.push({ driver_id: err.driverId, vendor_name: err.vendorName, reason: err.reason });
+          continue;
+        }
         if (outcome === "created") created += 1;
         else if (outcome === "linked") linked += 1;
-        else alreadyPresent += 1;
+        else if (outcome === "already_present") alreadyPresent += 1;
       }
       return {
         created,
         linked,
         already_present: alreadyPresent,
+        unresolved,
         total_active_drivers: drivers.rows.length,
       };
     });

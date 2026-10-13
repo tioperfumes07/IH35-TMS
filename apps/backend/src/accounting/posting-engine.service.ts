@@ -941,14 +941,8 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
   );
   const invoice = invoiceRes.rows[0];
   if (!invoice) throw new PostingEngineError("SOURCE_NOT_FOUND", "Invoice not found");
-  // Parallel books: QBO-origin invoices already have A/R + revenue in QBO. Posting them here would
-  // create duplicate journal entries. Mirror the bill/payment refuse pattern.
-  if ((invoice.source_system ?? "").toLowerCase() === "qbo") {
-    throw new PostingEngineError(
-      "QBO_INVOICE_POST_GL_REFUSED",
-      "Refusing Invoice\u2192GL post for source_system=qbo \u2014 parallel books; QBO already holds this A/R + revenue. Do not invent a second TMS journal entry."
-    );
-  }
+  // ROUND 443.117: QBO metadata is reconciliation provenance, never GL ownership.
+  // The native document posts through this engine's source idempotency and eligibility checks.
   if (!INVOICE_ELIGIBLE_STATUSES.has(invoice.status)) {
     throw new PostingEngineError(
       "INVOICE_NOT_POSTING_ELIGIBLE",
@@ -1229,15 +1223,6 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
       "Draft bill is not posting-eligible — a draft is not yet an approved liability. Finalise the bill (its amounts, vendor and account mapping can still change) before posting to the ledger."
     );
   }
-  // Parallel books: QBO-origin bills already have A/P economics in QBO. Projecting Line[] into
-  // accounting.bill_lines must NOT unlock a second TMS JE via post-gl (BILL_GL_POSTING_ENABLED is ON
-  // for live entities). Mirror the JE-push refuse pattern — clone/reconcile only, never invent GL.
-  if ((bill.source_system ?? "").toLowerCase() === "qbo") {
-    throw new PostingEngineError(
-      "QBO_BILL_POST_GL_REFUSED",
-      "Refusing Bill→GL post for source_system=qbo — parallel books; QBO already holds this A/P. Do not invent a second TMS journal entry."
-    );
-  }
 
   const apAccountId = await resolveApAccountForCompany(client, operatingCompanyId);
   if (!apAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account mapping is missing");
@@ -1382,16 +1367,6 @@ async function buildExpenseLines(client: DbClient, operatingCompanyId: string, s
   if (!exp) throw new PostingEngineError("SOURCE_NOT_FOUND", "Expense not found");
   if (exp.status === "void" || exp.posting_status === "reversed") {
     throw new PostingEngineError("EXPENSE_NOT_POSTING_ELIGIBLE", "Voided/reversed expense is not posting-eligible");
-  }
-  // Parallel books: a QBO-origin expense (projected from a QBO Purchase — qbo_purchase_id set) already
-  // has its GL economics in QuickBooks. It is projected into accounting.expenses as SUBLEDGER ONLY
-  // (posting_status='unposted'). Refuse to build a second TMS journal entry for it — mirrors the
-  // buildBillLines QBO_BILL_POST_GL_REFUSED guard. Never invent GL for source_system=qbo.
-  if ((exp.qbo_purchase_id ?? "").trim() !== "") {
-    throw new PostingEngineError(
-      "EXPENSE_POST_GL_REFUSED",
-      "Refusing Expense→GL post for a QBO-origin expense (qbo_purchase_id set) — parallel books; QBO already holds this spend's GL. Do not invent a second TMS journal entry."
-    );
   }
 
   const lineRows = await client.query<{
@@ -1552,16 +1527,6 @@ async function buildCustomerPaymentLines(client: DbClient, operatingCompanyId: s
   if (!payment) throw new PostingEngineError("SOURCE_NOT_FOUND", "Customer payment not found");
   if (payment.voided_at) throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided customer payment is not posting-eligible");
 
-  // Parallel books: a QBO-origin customer payment (projected from a QBO Payment — qbo_payment_id set)
-  // already has its GL recorded IN QuickBooks. Posting it here would invent a second TMS journal entry
-  // for a receipt QuickBooks already owns — refuse (mirrors QBO_BILL_PAYMENT_POST_GL_REFUSED /
-  // EXPENSE_POST_GL_REFUSED). Never invent GL for source_system=qbo.
-  if ((payment.source_system ?? "").toLowerCase() === "qbo" || (payment.qbo_payment_id ?? "").trim() !== "") {
-    throw new PostingEngineError(
-      "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
-      "Refusing Customer Payment→GL post for a QBO-origin payment (source_system=qbo / qbo_payment_id set) — parallel books; QBO already holds this receipt's GL. Do not invent a second TMS journal entry."
-    );
-  }
 
   const arAccountId = await resolveArAccountForCompany(client, operatingCompanyId);
   if (!arAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AR account mapping is missing");
@@ -1646,12 +1611,6 @@ async function buildCustomerPaymentDepositSweepLines(client: DbClient, operating
     throw new PostingEngineError(
       "DEPOSIT_ALREADY_AT_BANK",
       "Customer payment already included on a live bank deposit (Make Deposit) — match sweep skipped"
-    );
-  }
-  if ((payment.source_system ?? "").toLowerCase() === "qbo" || (payment.qbo_payment_id ?? "").trim() !== "") {
-    throw new PostingEngineError(
-      "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
-      "Refusing Customer Payment deposit-sweep for a QBO-origin payment — parallel books; QBO already holds this receipt's GL."
     );
   }
   if (!payment.source_bank_transaction_id) {
@@ -1759,12 +1718,6 @@ async function buildFactoringAdvanceDepositSweepLines(client: DbClient, operatin
     throw new PostingEngineError(
       "DEPOSIT_ALREADY_AT_BANK",
       "Factoring advance already included on a live bank deposit (Make Deposit) — match sweep skipped"
-    );
-  }
-  if ((advance.source_system ?? "").toLowerCase() === "qbo") {
-    throw new PostingEngineError(
-      "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
-      "Refusing factoring advance deposit-sweep for a QBO-origin advance — parallel books; QBO already holds this receipt's GL."
     );
   }
 
@@ -1996,10 +1949,7 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
     );
   }
 
-  // Parallel books: QBO-origin bills never get a TMS Bill→GL leg (#3386 QBO_BILL_POST_GL_REFUSED).
-  // Paying them must NOT invent a TMS bill_payment JE either — that would DR ap_control with no matching
-  // TMS CR (BILL_AP_NOT_POSTED) or invent a second cash/AP story already in QBO. Subledger payment stands;
-  // refuse GL here so payBill can skip without rolling back the payment row.
+  // Every native bill payment requires its bill's native A/P leg, regardless of import provenance.
   if (!payment.bill_id) {
     throw new PostingEngineError("BILL_AP_NOT_POSTED", "Bill payment has no bill_id; cannot verify the bill's A/P leg is posted");
   }
@@ -2013,12 +1963,6 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
     `,
     [operatingCompanyId, payment.bill_id]
   );
-  if ((billSrcRes.rows[0]?.source_system ?? "").toLowerCase() === "qbo") {
-    throw new PostingEngineError(
-      "QBO_BILL_PAYMENT_POST_GL_REFUSED",
-      "Refusing BillPayment→GL post for source_system=qbo — parallel books; QBO already holds this A/P settlement. TMS records the subledger payment only."
-    );
-  }
 
   // CHAIN-04 GAP #3 — accrual-sequencing guard (bill-posted-first). The payment JE always does
   // DR ap_control / CR bank, which ASSUMES CHAIN-03 already posted DR expense / CR ap_control for
@@ -2157,9 +2101,6 @@ async function buildCreditMemoLines(client: DbClient, operatingCompanyId: string
   if (!memo) throw new PostingEngineError("SOURCE_NOT_FOUND", "Credit memo not found");
   if (memo.voided_at || memo.status === "voided") {
     throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided credit memo is not posting-eligible");
-  }
-  if ((memo.source_system ?? "").toLowerCase() === "qbo") {
-    throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "QBO-origin credit memo — parallel books, QBO holds its GL");
   }
   if (!memo.account_id) {
     throw new PostingEngineError("CREDIT_MEMO_NO_ACCOUNT", "This credit memo names no account — its GL is owned elsewhere or it was never coded");

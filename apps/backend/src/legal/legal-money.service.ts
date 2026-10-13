@@ -12,6 +12,7 @@
  */
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
+import { readLoadAttribution } from "../accounting/expense-load-attribution.js";
 import { createBill, voidBill } from "../accounting/bills.service.js";
 import { createExpandedInvoice } from "../accounting/invoices.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -120,6 +121,27 @@ async function loadMatterForMoney(
   return row ?? null;
 }
 
+/**
+ * LEAD 443.134 AJK-09 — a legal reserve / fee bill carries the matter's load and that load's driver / unit / trailer (the
+ * matter's own unit / driver first; the load's fill what the matter leaves empty; the trailer is the load's company trailer,
+ * accounting/load-trailer.sql.ts via readLoadAttribution). A matter with no load keeps its own unit / driver and no load.
+ */
+export async function matterBillAttribution(
+  client: DbClient,
+  operatingCompanyId: string,
+  m: { unit_id: string | null; related_driver_id: string | null; load_id: string | null }
+): Promise<{ loadId: string | null; unitId: string | null; driverId: string | null; trailerId: string | null }> {
+  if (!m.load_id) return { loadId: null, unitId: m.unit_id, driverId: m.related_driver_id, trailerId: null };
+  const onLoad = await readLoadAttribution(client as never, operatingCompanyId, m.load_id);
+  if (!onLoad) throw new Error("legal_matter_load_not_in_company");
+  return {
+    loadId: m.load_id,
+    unitId: m.unit_id ?? onLoad.unitId,
+    driverId: m.related_driver_id ?? onLoad.primaryDriverId,
+    trailerId: onLoad.companyTrailerId,
+  };
+}
+
 /** Live reserve bills for a matter (engine-posted, not handwritten). */
 export async function listMatterReserveBills(
   client: DbClient,
@@ -183,7 +205,8 @@ export async function postMatterReserve(args: {
     const postedFromBills = bills.reduce((s, b) => s + b.amount_cents, 0);
     const target = input.reserve_cents ?? Number(m.financial_reserve_cents ?? 0);
     const delta = reserveDelta(target, postedFromBills);
-    return { m, bills, postedFromBills, target, delta };
+    const attr = await matterBillAttribution(client as DbClient, args.operatingCompanyId, m);
+    return { m, bills, postedFromBills, target, delta, attr };
   });
 
   if (planned.delta === 0) {
@@ -206,13 +229,19 @@ export async function postMatterReserve(args: {
         operatingCompanyId: args.operatingCompanyId,
         vendorId: planned.m.vendor_id as string,
         billNumber: `LR-${planned.m.matter_number}-${Date.now().toString(36).slice(-6)}`,
+        // AJK-09: the generated LR- reference is the bill's vendor reference (bill_number), never its document number — it
+        // fails the bill display_id shape, so every reserve bill was refused (InvalidDisplayIdShapeError). Fresh display id.
+        autoDisplayId: true,
         billDate: input.entry_date,
         amountCents: amount,
         memo: reserveMemo(planned.m.matter_number, planned.m.id),
         coaAccountId: input.expense_account_id,
         legalMatterId: planned.m.id,
-        unitId: planned.m.unit_id,
-        driverId: planned.m.related_driver_id,
+        // AJK-09: the matter's load and that load's driver / unit / trailer ride the bill and its line.
+        loadId: planned.attr.loadId,
+        unitId: planned.attr.unitId,
+        driverId: planned.attr.driverId,
+        trailerId: planned.attr.trailerId,
         duplicateOverrideReason: "legal_matter_reserve_delta",
       },
       args.actor.userId
@@ -318,7 +347,8 @@ export async function postMatterLegalFee(args: {
       [input.expense_account_id, args.operatingCompanyId]
     );
     if (!ok.rows.length) throw new Error("legal_matter_fee_account_not_in_company");
-    return { ...row, vendor_id: vendorId };
+    const attr = await matterBillAttribution(client as DbClient, args.operatingCompanyId, row);
+    return { ...row, vendor_id: vendorId, attr };
   });
 
   const label = input.kind === "retainer" ? "Retainer" : "Legal fee";
@@ -327,14 +357,20 @@ export async function postMatterLegalFee(args: {
       operatingCompanyId: args.operatingCompanyId,
       vendorId: m.vendor_id as string,
       billNumber: input.bill_number?.trim() || `LF-${m.matter_number}-${Date.now().toString(36).slice(-6)}`,
+      // AJK-09: a generated LF- reference fails the bill display_id shape (every fee without a typed number was refused);
+      // the bill takes a fresh display id and keeps the reference as its bill_number.
+      autoDisplayId: true,
       billDate: input.bill_date,
       dueDate: input.due_date,
       amountCents: input.amount_cents,
       memo: input.memo?.trim() || `${label} — matter ${m.matter_number}`,
       coaAccountId: input.expense_account_id,
       legalMatterId: m.id,
-      unitId: m.unit_id,
-      driverId: m.related_driver_id,
+      // AJK-09: the matter's load and that load's driver / unit / trailer ride the bill and its line.
+      loadId: m.attr.loadId,
+      unitId: m.attr.unitId,
+      driverId: m.attr.driverId,
+      trailerId: m.attr.trailerId,
       duplicateOverrideReason: `legal_matter_${input.kind}`,
     },
     args.actor.userId

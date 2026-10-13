@@ -23,9 +23,27 @@ import type pg from "pg";
 import { logger } from "../observability/structured-logger.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-balance.js";
-import { projectedCashDateSql } from "./projected-cash-date.js";
+import {
+  projectedCashDateSql,
+  rawDeliveryDateSql,
+  lateLoadInvoiceDueDateSql,
+  expensePaymentDueDateSql,
+  driverBillCashDueDateSql,
+  factoringCashDateSql,
+  relayTopupCashDateSql,
+  addPaymentTermsDays,
+} from "./projected-cash-date.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
-import { isFactoringPathLoadStatus, DELIVERY_EVIDENCE_MDATA_STATUSES } from "../dispatch/delivery-evidence-status.js";
+import {
+  isFactoringPathLoadStatus,
+  DELIVERY_EVIDENCE_MDATA_STATUSES,
+  FACTORING_PATH_LOAD_MDATA_STATUSES,
+} from "../dispatch/delivery-evidence-status.js";
+
+/** Statuses where late-load receipt stays on the invoice due_date (not re-projected from the stop). */
+const LATE_LOAD_KEEP_INVOICE_DUE_SQL = ["delivered", "cancelled", ...FACTORING_PATH_LOAD_MDATA_STATUSES]
+  .map((s) => `'${s}'`)
+  .join(",");
 import { BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL } from "../driver-finance/settlement-resolution.sql.js";
 
 type Queryable = pg.PoolClient;
@@ -237,7 +255,7 @@ export async function getDailyPrediction(
     JOIN mdata.load_stops ls
       ON ls.load_id = l.id
       AND ls.stop_type = 'delivery'
-      AND ls.scheduled_arrival_at::date = $2::date
+      AND ${rawDeliveryDateSql("ls.scheduled_arrival_at")} = $2::date
     LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                AND c.operating_company_id = l.operating_company_id
     WHERE l.operating_company_id = $1::uuid
@@ -267,7 +285,7 @@ export async function getDailyPrediction(
           ${
             cashFollowsEta
               ? projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })
-              : "fd.scheduled_arrival_at::date"
+              : rawDeliveryDateSql("fd.scheduled_arrival_at")
           } AS bucket_date
         FROM accounting.invoices i
         JOIN mdata.loads l
@@ -473,6 +491,140 @@ export async function getDailyPrediction(
     });
   }
 
+  // 443.140 #8(b) — unmatched expenses land on their payment-due date (engine), not purchase day.
+  try {
+    const expenseDueRows = await client.query<{
+      id: string;
+      vendor_name: string;
+      amount_cents: number;
+      load_id: string | null;
+    }>(
+      `
+      SELECT
+        e.id::text,
+        COALESCE(v.vendor_name, 'Expense') AS vendor_name,
+        COALESCE(e.total_amount_cents, 0)::int AS amount_cents,
+        e.load_id::text AS load_id
+      FROM accounting.expenses e
+      LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = $1::uuid
+      LEFT JOIN catalogs.payment_terms ept ON ept.id = COALESCE(e.payment_term_id, v.payment_terms_id)
+                                          AND ept.operating_company_id = $1::uuid
+      WHERE e.operating_company_id = $1::uuid
+        AND e.status = 'posted'
+        AND e.voided_at IS NULL
+        AND COALESCE(e.total_amount_cents, 0) <> 0
+        AND ${expensePaymentDueDateSql({ transactionDateExpr: "e.transaction_date", paymentTermsAlias: "ept" })} = $2::date
+        AND NOT EXISTS (
+          -- match-only EXISTS; bank direction elsewhere uses is_credit (never amount_cents sign)
+          SELECT 1 FROM banking.bank_transactions bt
+          WHERE bt.matched_expense_id = e.id AND bt.voided_at IS NULL
+        )
+      ORDER BY e.created_at ASC
+      `,
+      [operatingCompanyId, date]
+    );
+    for (const row of expenseDueRows.rows) {
+      expenseItems.push({
+        label: `Expense — ${row.vendor_name}`,
+        amount_cents: row.amount_cents,
+        kind: "bill_due",
+        load_id: row.load_id ?? undefined,
+        bill_id: row.id,
+      });
+    }
+  } catch (err) {
+    logger.warn("cash-flow: expense-due subquery failed — daily prediction is missing expense lines", {
+      operating_company_id: operatingCompanyId,
+      date,
+      error_stack: err instanceof Error ? err.stack : String(err),
+    });
+  }
+
+  // 443.140 #8(b) — Relay wallet top-ups (ingested deposits) on their created day.
+  try {
+    const relayDueRows = await client.query<{
+      id: string;
+      label: string;
+      amount_cents: number;
+    }>(
+      `
+      SELECT
+        rd.id::text,
+        COALESCE('Relay deposit ' || rd.deposit_id, 'Relay wallet top-up') AS label,
+        COALESCE(rd.total_amount_cents, 0)::int AS amount_cents
+      FROM integrations.relay_deposits rd
+      WHERE rd.operating_company_id = $1::uuid
+        AND COALESCE(rd.total_amount_cents, 0) <> 0
+        AND ${relayTopupCashDateSql("rd.relay_created_at")} = $2::date
+        AND NOT EXISTS (
+          -- match-only EXISTS; bank direction elsewhere uses is_credit (never amount_cents sign)
+          SELECT 1 FROM banking.bank_transactions bt
+          WHERE bt.matched_relay_deposit_id = rd.id AND bt.voided_at IS NULL
+        )
+      ORDER BY rd.relay_created_at ASC
+      `,
+      [operatingCompanyId, date]
+    );
+    for (const row of relayDueRows.rows) {
+      expenseItems.push({
+        label: row.label,
+        amount_cents: row.amount_cents,
+        kind: "adjustment",
+        adjustment_id: row.id,
+      });
+    }
+  } catch (err) {
+    logger.warn("cash-flow: relay-due subquery failed — daily prediction is missing relay lines", {
+      operating_company_id: operatingCompanyId,
+      date,
+      error_stack: err instanceof Error ? err.stack : String(err),
+    });
+  }
+
+  // 443.140 #8(b) — open driver bills on their due date (= projected delivery).
+  try {
+    const dueCols = await driverBillDueDateColumnsExist(client);
+    const driverBillDueRows = await client.query<{
+      id: string;
+      driver_name: string;
+      amount_cents: number;
+      load_id: string | null;
+    }>(
+      `
+      SELECT
+        db.id::text,
+        COALESCE(NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), ''), 'Driver') AS driver_name,
+        COALESCE(db.gross_amount_cents, 0)::int AS amount_cents,
+        db.load_id::text AS load_id
+      FROM driver_finance.driver_bills db
+      LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
+      WHERE db.operating_company_id = $1::uuid
+        AND NOT ${BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL}
+        AND db.voided_at IS NULL
+        ${dueCols ? "AND db.accrued_bill_id IS NULL" : ""}
+        AND COALESCE(db.gross_amount_cents, 0) > 0
+        AND ${driverBillCashDueDateSql({ hasDueColumns: dueCols, todayParam: "$2::date" })} = $2::date
+      ORDER BY db.created_at ASC
+      `,
+      [operatingCompanyId, date]
+    );
+    for (const row of driverBillDueRows.rows) {
+      expenseItems.push({
+        label: `Driver Bill — ${row.driver_name}`,
+        amount_cents: row.amount_cents,
+        kind: "driver_pay",
+        load_id: row.load_id ?? undefined,
+        settlement_id: row.id,
+      });
+    }
+  } catch (err) {
+    logger.warn("cash-flow: driver-bill-due subquery failed — daily prediction is missing driver bill lines", {
+      operating_company_id: operatingCompanyId,
+      date,
+      error_stack: err instanceof Error ? err.stack : String(err),
+    });
+  }
+
   const incomeTotalCents = incomeItems.reduce((s, i) => s + i.amount_cents, 0);
   const expenseTotalCents = expenseItems.reduce((s, i) => s + i.amount_cents, 0);
   const predictedNetCents = incomeTotalCents - expenseTotalCents;
@@ -577,7 +729,7 @@ async function buildSevenDayStrip(
           FROM mdata.loads l
           JOIN mdata.load_stops ls
             ON ls.load_id = l.id AND ls.stop_type = 'delivery'
-            AND ls.scheduled_arrival_at::date = $2::date
+            AND ${rawDeliveryDateSql("ls.scheduled_arrival_at")} = $2::date
           WHERE l.operating_company_id = $1::uuid
             AND ${ACTIVE_LOAD_FILTER}
             AND ${noLiveProformaInvoiceSql("l")}
@@ -598,7 +750,7 @@ async function buildSevenDayStrip(
               AND i.voided_at IS NULL
               AND i.source_load_id IS NOT NULL
               AND ${ACTIVE_LOAD_FILTER}
-              AND fd.scheduled_arrival_at::date = $2::date
+              AND ${rawDeliveryDateSql("fd.scheduled_arrival_at")} = $2::date
             ORDER BY l.id, i.created_at DESC NULLS LAST
           ) pf
         ), 0)`;
@@ -726,16 +878,16 @@ export async function getActualVsProjected(
     SELECT delivery_date, SUM(projected_income_cents)::int AS projected_income_cents
     FROM (
       SELECT
-        ls.scheduled_arrival_at::date::text AS delivery_date,
+        ${rawDeliveryDateSql("ls.scheduled_arrival_at")}::text AS delivery_date,
         SUM(COALESCE(l.rate_total_cents, 0))::int AS projected_income_cents
       FROM mdata.loads l
       JOIN mdata.load_stops ls
         ON ls.load_id = l.id AND ls.stop_type = 'delivery'
       WHERE l.operating_company_id = $1::uuid
-        AND ls.scheduled_arrival_at::date BETWEEN $2::date AND $3::date
+        AND ${rawDeliveryDateSql("ls.scheduled_arrival_at")} BETWEEN $2::date AND $3::date
         AND ${ACTIVE_LOAD_FILTER}
         AND ${noLiveProformaInvoiceSql("l")}
-      GROUP BY ls.scheduled_arrival_at::date
+      GROUP BY ${rawDeliveryDateSql("ls.scheduled_arrival_at")}
       UNION ALL
       -- CASH-FLOW-CASHFOLLOWSETA-FALSE-BRANCH-ALIAS-SCOPE-BUG (found as a drive-by while fixing
       -- CASH-FLOW-ACTUAL-VS-PROJECTED-INCOME-STRUCTURALLY-ALWAYS-ZERO): this branch only runs when
@@ -746,7 +898,7 @@ export async function getActualVsProjected(
       -- outer SELECT/GROUP BY referenced it anyway, which Postgres rejects at parse time
       -- ("missing FROM-clause entry for table fd") on every call, not merely when rows are absent.
       SELECT
-        pf.scheduled_arrival_at::date::text AS delivery_date,
+        ${rawDeliveryDateSql("pf.scheduled_arrival_at")}::text AS delivery_date,
         SUM(amount_cents)::int AS projected_income_cents
       FROM (
         SELECT DISTINCT ON (l.id)
@@ -762,10 +914,10 @@ export async function getActualVsProjected(
           AND i.voided_at IS NULL
           AND i.source_load_id IS NOT NULL
           AND ${ACTIVE_LOAD_FILTER}
-          AND fd.scheduled_arrival_at::date BETWEEN $2::date AND $3::date
+          AND ${rawDeliveryDateSql("fd.scheduled_arrival_at")} BETWEEN $2::date AND $3::date
         ORDER BY l.id, i.created_at DESC NULLS LAST
       ) pf
-      GROUP BY pf.scheduled_arrival_at::date
+      GROUP BY ${rawDeliveryDateSql("pf.scheduled_arrival_at")}
     ) u
     GROUP BY delivery_date
     ORDER BY delivery_date
@@ -997,7 +1149,9 @@ export type RollingLedgerRow = {
     | "loan_amortization_row"
     | "invoice"
     | "factoring_advance"
-    | "load";
+    | "load"
+    | "card_payable"
+    | "relay_topup";
   document_id: string;
   document_label: string;
   counterparty: string;
@@ -1184,10 +1338,9 @@ export async function getRollingLedgerRows(
   // pay was posted at delivery (accrued_bill_id) is an open A/P bill and is already in section 1 — never counted twice.
   // Column-gated: until migration 202615830700 is applied the read is exactly the pre-443.116 one (a missing column would
   // abort this whole read's transaction, not only this subquery — measured against prod before the deploy).
+  // Date engine (projected-cash-date.ts) emits:
+  //   COALESCE(driver_finance.driver_bill_effective_due_date(db.due_date, db.due_date_basis, $2::date), db.created_at::date)
   const dueCols = await driverBillDueDateColumnsExist(client);
-  const driverBillDueSql = dueCols
-    ? "COALESCE(driver_finance.driver_bill_effective_due_date(db.due_date, db.due_date_basis, $2::date), db.created_at::date)::text"
-    : "db.created_at::date::text";
   const driverBillsPromise = client
     .query<{
       id: string;
@@ -1203,7 +1356,7 @@ export async function getRollingLedgerRows(
         db.bill_number,
         COALESCE(NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), ''), 'Driver') AS driver_name,
         db.created_at::date::text AS created_at,
-        ${driverBillDueSql} AS due_date,
+        ${driverBillCashDueDateSql({ hasDueColumns: dueCols })}::text AS due_date,
         COALESCE(db.gross_amount_cents, 0)::int AS amount_cents
       FROM driver_finance.driver_bills db
       LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
@@ -1247,10 +1400,12 @@ export async function getRollingLedgerRows(
       e.id::text,
       e.expense_number,
       COALESCE(v.vendor_name, 'Expense') AS vendor_name,
-      e.transaction_date::text AS transaction_date,
+      ${expensePaymentDueDateSql({ transactionDateExpr: "e.transaction_date", paymentTermsAlias: "ept" })}::text AS transaction_date,
       COALESCE(e.total_amount_cents, 0)::int AS amount_cents
     FROM accounting.expenses e
     LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = $1::uuid
+    LEFT JOIN catalogs.payment_terms ept ON ept.id = COALESCE(e.payment_term_id, v.payment_terms_id)
+                                        AND ept.operating_company_id = $1::uuid
     WHERE e.operating_company_id = $1::uuid
       AND e.status = 'posted'
       AND e.voided_at IS NULL
@@ -1259,7 +1414,7 @@ export async function getRollingLedgerRows(
         SELECT 1 FROM banking.bank_transactions bt
         WHERE bt.matched_expense_id = e.id AND bt.voided_at IS NULL
       )
-    ORDER BY e.transaction_date ASC
+    ORDER BY 4 ASC
     `,
     [operatingCompanyId]
   );
@@ -1302,6 +1457,10 @@ export async function getRollingLedgerRows(
 
   // 1) accounting.invoices — sent, real open balance, NOT factored (factored invoices are tracked
   // via factoring_advances below instead, so a factored invoice's cash isn't double-counted here).
+  // 443.140 #8(b) — LATE LOAD MOVES ITS RECEIPT: when the underlying load is still in transit,
+  // the effective receipt date is recomputed from the load's CURRENT delivery appointment
+  // + payment_terms (same rule as not-invoiced loads). This matches the driver-bill effective_due_date
+  // behaviour — both the bill and the receipt move together when a load is late.
   const invoicesPromise = client.query<{
     id: string;
     display_id: string | null;
@@ -1318,13 +1477,32 @@ export async function getRollingLedgerRows(
       i.display_id,
       COALESCE(c.customer_name, 'Customer') AS customer_name,
       i.issue_date::text AS issue_date,
-      i.due_date::text AS due_date,
+      -- LATE LOAD MOVES ITS RECEIPT: for an in-transit load recompute from current delivery appt
+      -- + terms; once on the factoring/billing path (delivery-evidence-status.ts) keep invoice due_date.
+      COALESCE(
+        CASE
+          WHEN l.id IS NOT NULL
+            AND l.status::text NOT IN (${LATE_LOAD_KEEP_INVOICE_DUE_SQL})
+            AND fd.scheduled_arrival_at IS NOT NULL
+          THEN ${lateLoadInvoiceDueDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })}::text
+          ELSE i.due_date::text
+        END,
+        i.due_date::text
+      ) AS due_date,
       COALESCE(i.amount_open_cents, 0)::int AS amount_open_cents,
       l.id::text AS load_id,
       l.load_number AS load_number
     FROM accounting.invoices i
     LEFT JOIN mdata.customers c ON c.id = i.customer_id AND c.operating_company_id = $1::uuid
+    LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id AND pt.operating_company_id = $1::uuid
     LEFT JOIN mdata.loads l ON l.id = i.source_load_id AND l.operating_company_id = $1::uuid
+    LEFT JOIN LATERAL (
+      SELECT scheduled_arrival_at
+      FROM mdata.load_stops
+      WHERE load_id = l.id AND stop_type = 'delivery'
+      ORDER BY sequence_number DESC
+      LIMIT 1
+    ) fd ON l.id IS NOT NULL
     WHERE i.operating_company_id = $1::uuid
       AND i.status IN ('sent', 'partial')
       AND i.voided_at IS NULL
@@ -1360,7 +1538,7 @@ export async function getRollingLedgerRows(
       fa.display_id,
       inv.customer_name,
       COALESCE(inv.n_invoices, 0)::int AS n_invoices,
-      fa.advanced_at::date::text AS advanced_at,
+      ${factoringCashDateSql("fa.advanced_at")}::text AS advanced_at,
       COALESCE(fa.advance_amount_cents, 0)::int AS advance_amount_cents
     FROM accounting.factoring_advances fa
     LEFT JOIN LATERAL (
@@ -1401,7 +1579,7 @@ export async function getRollingLedgerRows(
       fa.display_id,
       inv.customer_name,
       COALESCE(inv.n_invoices, 0)::int AS n_invoices,
-      fa.collected_at::date::text AS collected_at,
+      ${factoringCashDateSql("fa.collected_at")}::text AS collected_at,
       COALESCE(fa.reserve_amount_cents, 0)::int AS reserve_amount_cents
     FROM accounting.factoring_advances fa
     LEFT JOIN LATERAL (
@@ -1439,7 +1617,7 @@ export async function getRollingLedgerRows(
     load_number: string;
     customer_name: string;
     delivery_date: string | null;
-    terms_days: number | null;
+    due_date: string | null;
     rate_total_cents: number;
   }>(
     `
@@ -1447,8 +1625,8 @@ export async function getRollingLedgerRows(
       l.id::text,
       l.load_number,
       COALESCE(c.customer_name, 'Customer') AS customer_name,
-      fd.scheduled_arrival_at::date::text AS delivery_date,
-      pt.days_until_due AS terms_days,
+      ${rawDeliveryDateSql("fd.scheduled_arrival_at")}::text AS delivery_date,
+      ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })}::text AS due_date,
       COALESCE(l.rate_total_cents, 0)::int AS rate_total_cents
     FROM mdata.loads l
     LEFT JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = $1::uuid
@@ -1468,10 +1646,112 @@ export async function getRollingLedgerRows(
     [operatingCompanyId, notInvoicedStatuses]
   );
 
-  // All 9 above are independent reads (each keyed only on operatingCompanyId/today) -- fire them
-  // concurrently instead of paying 9 sequential Neon round-trips, then process in the exact same
+  // 443.140 #8(b) — CARD PAYABLE (2510): The Dreamline Diesel Card Payable account (2510) accumulates
+  // a credit balance each time fuel posts (Dr fuel / Cr 2510). The bank match that pays the card
+  // clears 2510 via debit. The outstanding net credit balance on 2510 is a real cash obligation that
+  // must appear in the rolling ledger. Due date defaults to today (it is an already-incurred
+  // liability); the owner can roll it forward via cash_flow_row_adjustments if the card payment
+  // date is in the future.
+  const cardPayable2510Promise = client.query<{
+    account_id: string;
+    account_name: string;
+    balance_cents: number;
+    due_date: string;
+  }>(
+    `
+    SELECT
+      ca.id::text AS account_id,
+      ca.account_name,
+      GREATEST(
+        COALESCE(SUM(
+          CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE -jep.amount_cents END
+        ), 0)::int,
+        0
+      ) AS balance_cents,
+      $2::date AS due_date
+    FROM catalogs.accounts ca
+    JOIN accounting.journal_entry_postings jep ON jep.account_id = ca.id
+      AND jep.operating_company_id = $1::uuid
+    JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+      AND je.operating_company_id = $1::uuid
+      AND je.voided_at IS NULL
+    WHERE ca.operating_company_id = $1::uuid
+      AND (ca.account_number = '2510' OR ca.account_name ILIKE '%diesel card payable%')
+      AND ca.deactivated_at IS NULL
+    GROUP BY ca.id, ca.account_name
+    HAVING GREATEST(
+      COALESCE(SUM(
+        CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE -jep.amount_cents END
+      ), 0)::int,
+      0
+    ) > 0
+    `,
+    [operatingCompanyId, today]
+  ).catch((err) => {
+    logger.warn("cash-flow rolling-ledger: card_payable_2510 subquery failed", {
+      operating_company_id: operatingCompanyId,
+      error_stack: err instanceof Error ? err.stack : String(err),
+    });
+    return { rows: [] as { account_id: string; account_name: string; balance_cents: number; due_date: string }[] };
+  });
+
+  // 443.140 #8(b) — RELAY WALLET TOP-UPS: (1) owner-scheduled cash_flow_adjustments (label
+  // contains 'relay') and (2) ingested integrations.relay_deposits not yet matched to a bank
+  // line. Both are cash outflows that fund the Relay fuel wallet (1295). Dates come from the
+  // projected-cash-date engine — never re-derived inline.
+  const relayTopupPromise = client.query<{
+    id: string;
+    entry_date: string;
+    label: string;
+    amount_cents: number;
+  }>(
+    `
+    SELECT id::text, entry_date::text AS entry_date, label, amount_cents::int
+    FROM (
+      SELECT
+        id,
+        entry_date,
+        label,
+        amount_cents,
+        created_at
+      FROM accounting.cash_flow_adjustments
+      WHERE operating_company_id = $1::uuid
+        AND label ILIKE '%relay%'
+        AND amount_cents <> 0
+        AND archived_at IS NULL
+        AND entry_date >= $2::date
+      UNION ALL
+      SELECT
+        rd.id,
+        ${relayTopupCashDateSql("rd.relay_created_at")} AS entry_date,
+        COALESCE('Relay deposit ' || rd.deposit_id, 'Relay wallet top-up') AS label,
+        COALESCE(rd.total_amount_cents, 0) AS amount_cents,
+        rd.relay_created_at AS created_at
+      FROM integrations.relay_deposits rd
+      WHERE rd.operating_company_id = $1::uuid
+        AND COALESCE(rd.total_amount_cents, 0) <> 0
+        AND ${relayTopupCashDateSql("rd.relay_created_at")} >= $2::date
+        AND NOT EXISTS (
+          -- match-only EXISTS; bank direction elsewhere uses is_credit (never amount_cents sign)
+          SELECT 1 FROM banking.bank_transactions bt
+          WHERE bt.matched_relay_deposit_id = rd.id AND bt.voided_at IS NULL
+        )
+    ) relay_src
+    ORDER BY entry_date ASC, created_at ASC
+    `,
+    [operatingCompanyId, today]
+  ).catch((err) => {
+    logger.warn("cash-flow rolling-ledger: relay_topup subquery failed", {
+      operating_company_id: operatingCompanyId,
+      error_stack: err instanceof Error ? err.stack : String(err),
+    });
+    return { rows: [] as { id: string; entry_date: string; label: string; amount_cents: number }[] };
+  });
+
+  // All 11 above are independent reads (each keyed only on operatingCompanyId/today) -- fire them
+  // concurrently instead of paying sequential Neon round-trips, then process in the exact same
   // order the old sequential-await code did so row order/content is unchanged.
-  const [billRows, settlementRows, driverBillRows, expenseRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows] =
+  const [billRows, settlementRows, driverBillRows, expenseRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows, cardPayable2510Rows, relayTopupRows] =
     await Promise.all([
       billsPromise,
       settlementsPromise,
@@ -1482,6 +1762,8 @@ export async function getRollingLedgerRows(
       advancesPromise,
       reservesPromise,
       notInvoicedPromise,
+      cardPayable2510Promise,
+      relayTopupPromise,
     ]);
 
   for (const b of billRows.rows) {
@@ -1625,10 +1907,9 @@ export async function getRollingLedgerRows(
 
   for (const l of notInvoicedRows.rows) {
     const origin = l.delivery_date ?? today;
-    const termsDays = l.terms_days ?? 0;
-    const due = new Date(origin + "T00:00:00Z");
-    due.setUTCDate(due.getUTCDate() + termsDays);
-    const dueStr = due.toISOString().slice(0, 10);
+    // Projected cash date comes from the engine in SQL (factoring lag 0 / customer terms).
+    // Fallback only if the delivery stop is missing — never re-derive terms here.
+    const dueStr = l.due_date ?? addPaymentTermsDays(origin, 0);
     const daysOverdue = daysBetween(today, dueStr);
     rows.push({
       row_kind: "income",
@@ -1644,6 +1925,42 @@ export async function getRollingLedgerRows(
       status: rowStatus(daysOverdue),
       load_id: l.id,
       load_number: l.load_number,
+    });
+  }
+
+  // 443.140 #8(b) — CARD PAYABLE (2510) rows
+  for (const cp of cardPayable2510Rows.rows) {
+    const daysOverdue = daysBetween(today, cp.due_date);
+    rows.push({
+      row_kind: "expense",
+      type: "Card Payable (Fuel Card)",
+      document_kind: "card_payable",
+      document_id: cp.account_id,
+      document_label: cp.account_name,
+      counterparty: cp.account_name,
+      origin_date: cp.due_date,
+      due_date: cp.due_date,
+      amount_cents: cp.balance_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  // 443.140 #8(b) — RELAY WALLET TOP-UP rows
+  for (const rt of relayTopupRows.rows) {
+    const daysOverdue = daysBetween(today, rt.entry_date);
+    rows.push({
+      row_kind: "expense",
+      type: "Relay Wallet Top-Up",
+      document_kind: "relay_topup",
+      document_id: rt.id,
+      document_label: rt.label,
+      counterparty: "Relay",
+      origin_date: rt.entry_date,
+      due_date: rt.entry_date,
+      amount_cents: rt.amount_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
     });
   }
 

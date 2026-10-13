@@ -37,10 +37,6 @@ const LABEL = "verify-driver-create-mints-vendor";
  */
 const KNOWN_GAPS = new Map([
   [
-    "apps/backend/src/integrations/qbo/qbo-vendor-linkage.service.ts",
-    "QBO mirror projection: rows are clones of QBO records. Minting a payee from a mirror would fabricate an A/P counterparty the source system does not have.",
-  ],
-  [
     "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts",
     "Samsara master sync: telematics-derived drivers. A device projection is not a hire, and it carries no pay relationship.",
   ],
@@ -128,7 +124,7 @@ function selftest() {
     },
     {
       name: "a stale KNOWN_GAPS entry is caught",
-      files: [mk("apps/backend/src/integrations/qbo/qbo-vendor-linkage.service.ts", "INSERT INTO mdata.drivers (a); await ensureDriverVendor(c, {});")],
+      files: [mk("apps/backend/src/integrations/samsara/samsara-master-sync.service.ts", "INSERT INTO mdata.drivers (a); await ensureDriverVendor(c, {});")],
       expectAtLeast: 1,
     },
   ];

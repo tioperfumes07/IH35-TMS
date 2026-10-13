@@ -212,12 +212,9 @@ export async function registerApPaymentApplicationRoutes(app: FastifyInstance) {
             [applyRow.bill_id, newPaidCents, newPaidCents / 100, storageStatus]
           );
 
-          // VEND-F-VENDOR-BILL-PAYMENT-NEVER-POSTS-GL — same reasoning as
-          // vendor-bill-payments.routes.ts's identical fix: parallel books never post a TMS
-          // Bill→GL leg for a QBO-origin bill; posting inside THIS transaction keeps bank and GL
-          // from ever diverging. Flag-OFF still pays — no regression to bill-paying.
-          const isQboBill = String(billRaw.source_system ?? "").toLowerCase() === "qbo";
-          if (glPostingEnabled && !isQboBill) {
+          // ROUND 443.117 9b: provenance never exempts a native payment from the shared poster.
+          // Same client: a missing bill A/P posting rolls the transaction back, including cash.
+          if (glPostingEnabled) {
             await postSourceTransactionInClientTx(
               client,
               {

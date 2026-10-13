@@ -24,6 +24,37 @@ vi.mock("../../../api/maintenance", () => ({
   addWorkOrderLineItem: (...args: unknown[]) => addWorkOrderLineItem(...(args as [])),
   deleteWorkOrderLineItem: (...args: unknown[]) => deleteWorkOrderLineItem(...(args as [])),
 }));
+// ACCT-F4431382: each edit cost line picks its catalogs.items row. The item query + ReferenceSelect are mocked to a
+// plain <select> so this file drives the modal's own save logic.
+vi.mock("../../../hooks/useAccountingItemsQuery", () => ({
+  useAccountingItemsQuery: () => ({
+    data: [{ id: "item-brakes", qbo_id: null, name: "Brake service", item_type: "service", unit_price_cents: null }],
+    isLoading: false,
+    isSuccess: true,
+  }),
+}));
+vi.mock("../../../components/parity/ReferenceSelect", () => ({
+  ReferenceSelect: ({
+    value,
+    onChange,
+    options,
+    placeholder,
+  }: {
+    value: string | null;
+    onChange: (v: string | null) => void;
+    options: Array<{ value: string; label: string }>;
+    placeholder?: string;
+  }) => (
+    <select aria-label={placeholder ?? "Reference"} value={value ?? ""} onChange={(e) => onChange(e.target.value || null)}>
+      <option value="">{placeholder ?? "Select…"}</option>
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  ),
+}));
 vi.mock("../../../api/identity", () => ({
   listUsers: () => Promise.resolve({ users: [] }),
   listAssignableUsers: () => Promise.resolve({ users: [] }),
@@ -52,7 +83,7 @@ const editTarget: EditWorkOrderTarget = {
   bucket: "external",
   wo_priority: "routine",
   line_items: [
-    { id: "line-1", line_type: "parts", description: "Brake pads", quantity: 2, unit_cost: 40, amount: 80 },
+    { id: "line-1", line_type: "parts", description: "Brake pads", quantity: 2, unit_cost: 40, amount: 80, item_id: "item-brakes" },
   ],
 };
 
@@ -76,6 +107,11 @@ function renderEdit(overrides?: Partial<EditWorkOrderTarget>, onCreated = () => 
       </MemoryRouter>
     </QueryClientProvider>
   );
+}
+
+function pickEditLineItem(index: number, itemId: string) {
+  const select = screen.getByTestId(`edit-wo-line-item-${index}`).querySelector("select") as HTMLSelectElement;
+  fireEvent.change(select, { target: { value: itemId } });
 }
 
 describe("CreateWorkOrderModal — edit mode", () => {
@@ -115,6 +151,7 @@ describe("CreateWorkOrderModal — edit mode", () => {
     // that instead of Description. Target the description field by its stable testid.
     const descInput = screen.getAllByTestId(/^edit-wo-line-description-/).at(-1) as HTMLInputElement;
     fireEvent.change(descInput, { target: { value: "Labor: 1.5h" } });
+    pickEditLineItem(1, "item-brakes");
     fireEvent.click(screen.getByTestId("edit-wo-save-btn"));
     await waitFor(() => expect(addWorkOrderLineItem).toHaveBeenCalledTimes(1));
     const [id, companyId, payload] = addWorkOrderLineItem.mock.calls[0] as unknown as [
@@ -125,6 +162,29 @@ describe("CreateWorkOrderModal — edit mode", () => {
     expect(id).toBe("wo-1");
     expect(companyId).toBe(COMPANY);
     expect(payload.description).toBe("Labor: 1.5h");
+    // ACCT-F4431382: the line names its item — the WO->bill copy posts it to the item's account.
+    expect((payload as { item_id?: string }).item_id).toBe("item-brakes");
+  });
+
+  it("ACCT-F4431382: a new cost line with NO item is refused by name before anything is written", async () => {
+    renderEdit();
+    fireEvent.click(screen.getByTestId("edit-wo-add-line"));
+    const descInput = screen.getAllByTestId(/^edit-wo-line-description-/).at(-1) as HTMLInputElement;
+    fireEvent.change(descInput, { target: { value: "Shop supplies" } });
+    fireEvent.click(screen.getByTestId("edit-wo-save-btn"));
+    await waitFor(() => expect(screen.getByTestId("edit-wo-posted-lock").textContent).toMatch(/needs its item/i));
+    expect(addWorkOrderLineItem).not.toHaveBeenCalled();
+    expect(deleteWorkOrderLineItem).not.toHaveBeenCalled();
+  });
+
+  it("ACCT-F4431382: picking an item for an existing itemless line re-writes it WITH the item", async () => {
+    renderEdit({ line_items: [{ id: "line-9", line_type: "labor", description: "Labor", quantity: 1, unit_cost: 50, amount: 50 }] });
+    pickEditLineItem(0, "item-brakes");
+    fireEvent.click(screen.getByTestId("edit-wo-save-btn"));
+    await waitFor(() => expect(addWorkOrderLineItem).toHaveBeenCalledTimes(1));
+    expect(deleteWorkOrderLineItem).toHaveBeenCalledWith("wo-1", "line-9", COMPANY);
+    const payload = (addWorkOrderLineItem.mock.calls[0] as unknown as [string, string, { item_id?: string }])[2];
+    expect(payload.item_id).toBe("item-brakes");
   });
 
   it("removes an existing cost line → DELETEs via the existing line-item endpoint", async () => {
@@ -146,6 +206,7 @@ describe("CreateWorkOrderModal — edit mode", () => {
     );
     renderEdit();
     fireEvent.click(screen.getByTestId("edit-wo-add-line"));
+    pickEditLineItem(1, "item-brakes");
     fireEvent.click(screen.getByTestId("edit-wo-save-btn"));
     await waitFor(() => expect(screen.getByTestId("edit-wo-posted-lock")).toBeInTheDocument());
     expect(screen.getByTestId("edit-wo-posted-lock").textContent).toMatch(/Void the linked bill first/i);

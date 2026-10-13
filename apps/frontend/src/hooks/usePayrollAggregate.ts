@@ -24,9 +24,7 @@ export type PayrollAggregateResponse = {
   period_start: string;
   period_end: string;
   driver_total: number;
-  w2_total: number;
-  benefits: number;
-  taxes: number;
+  // ACCT-F4431379: w2_total / benefits / taxes (QBO Payroll) removed — driver_finance is the only source.
   grand_total: number;
   by_class: PayrollClassAllocation[];
   by_person: PayrollPerson[];
