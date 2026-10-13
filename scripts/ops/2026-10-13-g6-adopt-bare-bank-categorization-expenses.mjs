@@ -14,6 +14,7 @@
  * Proof: rows written · batches · seconds · rows/second · single transaction per batch (Rule 53).
  */
 import { createRequire } from "node:module";
+import { execFileSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,6 +25,19 @@ const { Client } = require("pg");
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const DRY = process.argv.includes("--dry-run");
+
+// ROUND 133 P0 — every scripts/ops/ financial writer must call verify-owner-authorization.mjs
+// before a live write. Dry-run stays ungated; live requires OWNER_AUTH_ID = OPEN AUTH-<NNN>.
+if (!DRY) {
+  const authId = process.env.OWNER_AUTH_ID;
+  if (!authId) {
+    console.error("OWNER_AUTH_ID required for live G6 adopt (ROUND 133 P0). Use --dry-run to rehearse.");
+    process.exit(1);
+  }
+  execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), authId], {
+    stdio: "inherit",
+  });
+}
 
 /** Preferred item name substring when an account has several mapped items (6100). */
 const PREFERRED_ITEM_BY_ACCOUNT = {
