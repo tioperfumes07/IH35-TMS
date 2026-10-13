@@ -1,10 +1,56 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import assert from "node:assert/strict";
 
 const repoRoot = process.cwd();
 const migrationsDir = path.join(repoRoot, "db/migrations");
-const UUID_REF_PATTERN = /REFERENCES\s+[\w."]+\s*\(\s*uuid\s*\)/gi;
+const UUID_REF_PATTERN = /REFERENCES\s+([\w."]+)\s*\(\s*uuid\s*\)/gi;
+
+const uncomment = (source) => source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/--[^\n]*/g, " ");
+const relationName = (name) => name.replaceAll('"', '').toLowerCase();
+
+// Prove the referenced key from DDL instead of exempting an entire new file.
+// A later rename/drop revokes the proof (notably identity.users uuid -> id).
+function declaredUuidParents(sources) {
+  const parents = new Set();
+  for (const source of sources) {
+    const sql = uncomment(source);
+    for (const statement of sql.split(';')) {
+      const create = statement.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w."]+)\s*\(/i);
+      if (create) {
+        const name = relationName(create[1]);
+        const body = statement.slice(create.index + create[0].length);
+        if (/(?:^|,)\s*"?uuid"?\s+uuid\s+(?:NOT\s+NULL\s+)?PRIMARY\s+KEY\b/i.test(body)) parents.add(name);
+        else parents.delete(name);
+      }
+      const altered = statement.match(/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?([\w."]+)\s+(?:RENAME\s+COLUMN\s+"?uuid"?\s+TO\b|DROP\s+COLUMN\s+(?:IF\s+EXISTS\s+)?"?uuid"?\b)/i);
+      if (altered) parents.delete(relationName(altered[1]));
+      const dropped = statement.match(/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?([\w."]+)/i);
+      if (dropped) parents.delete(relationName(dropped[1]));
+    }
+  }
+  return parents;
+}
+
+function invalidReferences(source, parents) {
+  return [...uncomment(source).matchAll(UUID_REF_PATTERN)].filter(match => !parents.has(relationName(match[1])));
+}
+
+if (process.argv.includes('--selftest')) {
+  const ddl = 'CREATE TABLE reports.filing (uuid uuid PRIMARY KEY, company_id uuid);';
+  const ref = 'ALTER TABLE reports.filing ADD prior uuid REFERENCES reports.filing(uuid);';
+  assert.equal(invalidReferences(ref, declaredUuidParents([ddl])).length, 0);
+  assert.equal(invalidReferences(ref, declaredUuidParents([ddl.replace('uuid uuid PRIMARY KEY', 'id uuid PRIMARY KEY')])).length, 1);
+  assert.equal(invalidReferences(ref, declaredUuidParents(['-- ' + ddl])).length, 1);
+  assert.equal(invalidReferences(ref, declaredUuidParents([ddl, 'ALTER TABLE reports.filing RENAME COLUMN uuid TO id;'])).length, 1);
+  assert.equal(invalidReferences(ref, declaredUuidParents([ddl, 'ALTER TABLE reports.filing DROP COLUMN uuid;'])).length, 1);
+  assert.equal(invalidReferences(ref, declaredUuidParents([ddl, 'DROP TABLE reports.filing;'])).length, 1);
+  assert.equal(invalidReferences(ref.replace('REFERENCES reports.filing', 'REFERENCES identity.users'), declaredUuidParents([ddl])).length, 1);
+  assert.equal(invalidReferences(ref + ' REFERENCES identity.users(uuid)', declaredUuidParents([ddl])).length, 1);
+  console.log('verify:migrations-no-uuid-pk-reference SELFTEST PASS 8/8');
+  process.exit(0);
+}
 
 // Historical exceptions where the parent key really is `uuid` or predates identity.users id rename.
 const LEGACY_ALLOWED_FILES = new Set([
@@ -43,11 +89,11 @@ const entries = fs
   .sort();
 
 const failures = [];
+const sources = new Map(entries.map(name => [name, fs.readFileSync(path.join(migrationsDir, name), 'utf8')]));
+const uuidParents = declaredUuidParents(sources.values());
 for (const name of entries) {
   if (LEGACY_ALLOWED_FILES.has(name)) continue;
-  const fullPath = path.join(migrationsDir, name);
-  const source = fs.readFileSync(fullPath, "utf8");
-  const matches = [...source.matchAll(UUID_REF_PATTERN)];
+  const matches = invalidReferences(sources.get(name), uuidParents);
   if (matches.length === 0) continue;
   failures.push(`${name}: contains REFERENCES ...(uuid) (${matches.length} match${matches.length === 1 ? "" : "es"})`);
 }
