@@ -146,7 +146,9 @@ if (process.argv.includes("--selftest")) {
       failed += 1;
       continue;
     }
-    const mutated = { ...real, [file]: real[file].replace(from, to) };
+    // replaceAll: cash-flow has the accrued_bill_id filter in both daily + rolling reads;
+    // a one-shot .replace leaves the twin and the plant looks inert.
+    const mutated = { ...real, [file]: real[file].split(from).join(to) };
     if (deliveryPayErrors(mutated).length === 0) {
       console.error(`${LABEL} SELFTEST FAIL: planted "${label}" was not refused`);
       failed += 1;

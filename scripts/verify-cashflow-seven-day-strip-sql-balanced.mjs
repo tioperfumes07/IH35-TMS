@@ -101,11 +101,11 @@ if (process.argv.includes("--selftest")) {
       name: "reintroduce the extra trailing ) in the cashFollowsEta=false branch",
       mutate: (t) =>
         t.replace(
-          `              AND fd.scheduled_arrival_at::date = $2::date
+          `              AND \${rawDeliveryDateSql("fd.scheduled_arrival_at")} = $2::date
             ORDER BY l.id, i.created_at DESC NULLS LAST
           ) pf
         ), 0)\`;`,
-          `              AND fd.scheduled_arrival_at::date = $2::date
+          `              AND \${rawDeliveryDateSql("fd.scheduled_arrival_at")} = $2::date
             ORDER BY l.id, i.created_at DESC NULLS LAST
           ) pf
         ), 0)
