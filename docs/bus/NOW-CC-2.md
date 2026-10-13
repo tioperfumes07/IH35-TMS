@@ -1,4 +1,11 @@
-<!-- heartbeat 2026-10-06T17:52Z Cursor lead — file touched so verify-bus-files-are-readable 48h arm stays green -->
+<!-- heartbeat 2026-10-10T20:15Z Claude Lead -->
+# NOW — CC-2 — ROUND 443.10 (2026-10-10) — READ FIRST
+
+**READ: `docs/bus/2026-10-10-LEAD-ROUND-443-ORDERS.md` — execute the block headed CC-2 (ROUND 443.10, deadline 22:30 UTC). CC-3 is blocked on it.**
+FAST MERGE IS ON (`docs/bus/FAST-MERGE-4MIN-LAW.md`). USMCA only. Nobody seeds data.
+
+---
+
 # NOW — CC-2 — P0 OVERRIDE 2026-10-04
 
 **READ FIRST: `docs/bus/10-04-2026-ALL-SEATS-P0-STOP-MAIN-CANNOT-BOOT.md`**

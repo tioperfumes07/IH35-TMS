@@ -17,6 +17,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { settleWorkOrderFinancialLinkage } from "../work-orders/work-order-financial-settle.service.js";
 import { auditVoid, isVoidEnforcementEnabled, postVoidReversal, releaseBankLinesNamingDocument } from "../accounting/void.service.js";
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
+import { reverseExpenseDocumentInClientTx } from "../accounting/expense-void-reversal.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { reverseSettlementBillPaymentInClientTx } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
 import { voidBillPaymentInClientTx } from "../accounting/bills.service.js";
@@ -449,16 +450,15 @@ const executeExpense: EntityExecutor = async (ctx) => {
   if (!flagOn) return { kind: "void_not_enabled" };
 
   let reversingEntryRef: string | null = null;
-  if (String(pre.rows[0].posting_status) === "posted") {
-    const td = pre.rows[0].transaction_date;
-    const originalDate = td && td.length >= 10 ? td.slice(0, 10) : new Date().toISOString().slice(0, 10);
-    const reversal = await postVoidReversal(
-      client,
-      { operatingCompanyId, entityType: "expense", entityId, originalDate, memo: `Void reversal of expense ${entityId}: ${reason}` },
-      { userId }
-    );
+  // ACCT-F4431310 — every LIVE posting of the document (own 'expense' lines through postVoidReversal as before, plus a fuel
+  // receipt's 'fuel_event' entry), decided by reading; errors propagate.
+  {
+    const reversal = await reverseExpenseDocumentInClientTx(client as never, {
+      operatingCompanyId, expenseId: entityId, actorUserId: userId, currentBusinessDate: new Date().toISOString().slice(0, 10),
+      memo: `Void reversal of expense ${entityId}: ${reason}`, expenseReverser: "void",
+    });
     reversingEntryRef = reversal.reversal_journal_entry_id;
-    await auditVoid(client, userId, "expense", { operatingCompanyId, entityId, reason, reversal });
+    if (reversal.reversed.length) await auditVoid(client, userId, "expense", { operatingCompanyId, entityId, reason, reversal: { reversal_journal_entry_id: reversingEntryRef, reversed: reversal.reversed } as never });
   }
 
   const flipped = await client.query<{ id: string }>(

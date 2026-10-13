@@ -204,6 +204,8 @@ export type DispatchBookLoadPayload = {
   // Persisted after load creation through dispatch.load_assignment_history.new_trailer_id;
   // mdata.loads intentionally has no trailer FK column.
   assigned_trailer_unit_id?: string;
+  /** LEAD 443.107 item 3: required trailer choice (company / customer number / interchange / none). */
+  trailer_choice?: import("../pages/dispatch/components/book-load-v4/trailerChoice").TrailerChoicePayload;
   temperature_type?: "frozen" | "fresh"; // W-FIX-1: reefer Frozen/Fresh → mdata.loads.temperature_type
   assigned_primary_driver_id?: string;
   historical_import_driver_id?: string;
@@ -240,6 +242,7 @@ export type DispatchBookLoadPayload = {
     postal_code?: string;
     latitude?: number;
     longitude?: number;
+    google_place_id?: string;
     geocode_precision?: "rooftop" | "range" | "locality" | null;
   }>;
   save_mode: "draft" | "book_dispatch";
@@ -271,6 +274,8 @@ export type DispatchBookLoadPayload = {
   // Operator entered). Do not add a confidence-qualified variant here again — display concerns
   // (ZIP mismatch, verify, etc.) belong in the lane-mileage response's own provenance field.
   mileage_source?: "History" | "Manual" | "Routing engine" | "Operator entered";
+  /** 443.55 — per miles field, the source the dispatcher chose (historical | google | manual) and its value; manual needs a reason. */
+  miles_choice?: Partial<Record<"practical" | "short" | "empty", { source: "historical" | "google" | "manual" | "document"; value: number; reason?: string }>>;
   stop_count?: string;
   pickup_number?: string;
   border_routing?: string;

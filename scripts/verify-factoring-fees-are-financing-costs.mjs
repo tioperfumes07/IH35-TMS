@@ -26,6 +26,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+// 443.99: TLS is inferred per host (scripts/lib/pg-connection-options.cjs) — a hardcoded ssl option failed every
+// non-TLS Postgres (CI's fresh-migrated ih35_verify) with "The server does not support SSL connections".
+import pgConnectionOptions from "./lib/pg-connection-options.cjs";
 
 export const ALLOW_OFFLINE_SKIP =
   "structural asserts account numbers/purposes; live Neon CoA shape only when DATABASE_URL is set";
@@ -153,10 +156,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 const { Client } = await import("pg");
-const client = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL.includes("sslmode=") ? undefined : { rejectUnauthorized: false },
-});
+const client = new Client(pgConnectionOptions.buildPgClientConfig(process.env.DATABASE_URL));
 await client.connect();
 try {
   await client.query("BEGIN");

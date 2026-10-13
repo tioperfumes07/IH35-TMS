@@ -72,18 +72,18 @@ async function loadIftaItem(client: DbClient, operatingCompanyId: string, entity
     `${filingYear}${info.quarter}`,
   ];
 
-  const res = await client.query<{ status: string }>(
+  // LEAD 443.134 AJK-13: a quarter may carry versions (an amendment drafted after filing); the quarter is filed when ANY
+  // version is filed — the newest row being an open amendment does not make the return due again.
+  const res = await client.query<{ filed: boolean }>(
     `
-      SELECT status
+      SELECT bool_or(status = 'filed') AS filed
       FROM reports.ifta_filings
       WHERE operating_company_id = $1::uuid
         AND quarter = ANY($2::text[])
-      ORDER BY created_at DESC
-      LIMIT 1
     `,
     [operatingCompanyId, candidateQuarterStrings]
   );
-  if (res.rows[0]?.status === "filed") return null;
+  if (res.rows[0]?.filed === true) return null;
 
   return {
     id: `ifta:${filingYear}-${info.quarter}`,

@@ -84,6 +84,50 @@ async function main() {
   }
 }
 
+/** In-memory pg catalog for --selftest: answers measureLive's own queries, no database. */
+function fakeCatalogClient({ fnExists = true, triggers }) {
+  return {
+    query: async (sql, params) => {
+      if (/^\s*(BEGIN|ROLLBACK)/.test(sql)) return { rows: [] };
+      if (sql.includes("FROM pg_proc")) return { rows: fnExists ? [{ "?column?": 1 }] : [] };
+      if (sql.includes("FROM pg_trigger")) {
+        const row = triggers[`${params[0]}.${params[1]}`];
+        return { rows: row ? [row] : [] };
+      }
+      throw new Error(`selftest: unrecognised query ${sql.slice(0, 60)}`);
+    },
+  };
+}
+
+function cleanTriggers() {
+  return Object.fromEntries(EXPECTED_TABLES.map((t) => [`${t.schema}.${t.table}`, {
+    tgenabled: "O", tgdeferrable: true, tginitdeferred: true,
+    def: `CREATE CONSTRAINT TRIGGER trg_block_void_with_live_postings AFTER UPDATE ON ${t.schema}.${t.table} DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION accounting.fn_block_void_with_live_postings('${t.sourceType}')`,
+  }]));
+}
+
+async function selftest() {
+  const plant = (key, patch) => { const triggers = cleanTriggers(); triggers[key] = patch === null ? undefined : { ...triggers[key], ...patch }; return { triggers }; };
+  const planted = [
+    ["trigger function dropped", { fnExists: false, triggers: cleanTriggers() }],
+    ["trigger missing on accounting.payments", plant("accounting.payments", null)],
+    ["trigger DISABLED on accounting.expenses", plant("accounting.expenses", { tgenabled: "D" })],
+    ["trigger not deferrable on accounting.bills", plant("accounting.bills", { tgdeferrable: false })],
+    ["trigger deferrable but INITIALLY IMMEDIATE on accounting.invoices", plant("accounting.invoices", { tginitdeferred: false })],
+    ["fuel trigger checks 'fuel_transaction' not 'fuel_event'", plant("fuel.fuel_transactions", { def: "... fn_block_void_with_live_postings('fuel_transaction')" })],
+  ];
+  let caught = 0;
+  for (const [name, catalog] of planted) {
+    if ((await measureLive(fakeCatalogClient(catalog))).length > 0) caught += 1;
+    else console.error(`${LABEL} SELFTEST: planted violation escaped — ${name}`);
+  }
+  const clean = await measureLive(fakeCatalogClient({ triggers: cleanTriggers() }));
+  if (clean.length) console.error(`${LABEL} SELFTEST: clean catalog flagged — ${clean.join("; ")}`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught`);
+  process.exit(caught === planted.length && clean.length === 0 ? 0 : 1);
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
-  await main();
+  if (process.argv.includes("--selftest")) await selftest();
+  else await main();
 }

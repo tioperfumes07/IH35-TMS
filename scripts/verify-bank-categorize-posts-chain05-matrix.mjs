@@ -11,7 +11,9 @@
  * Deposit documents on top of this; 441.18/441.19 reverted it.
  *
  * STATIC (always runs), on apps/backend/src/banking/bank-feed-gl-posting.service.ts and the posting engine:
- *   M1 the categorize poster creates NO document (no expense / deposit / bill / check writer, no INSERT into those tables)
+ *   M1 Categorize never creates Deposit / Bill / Check documents. Money-out to Expense/COGS/OtherExpense MAY create an
+ *      Expense document (DEGH-02 / 443.113-C) only when gated by EXPENSE_DOCUMENT_ACCOUNT_TYPES — never a bare createExpense /
+ *      createBill / Deposit writer. Asset / liability / equity / money-in stay the CHAIN-05 bank_categorization JE.
  *   M2 it posts source_transaction_type 'bank_categorization' through postSourceTransactionInClientTx (caller's client)
  *   M3 buildBankCategorizationLines puts the category on the debit side for money out and the credit side for money in, the
  *      bank on the opposite side, direction from is_credit only
@@ -57,8 +59,14 @@ function fnBody(src, name) {
 
 export function staticProblems(src) {
   const p = [];
-  if (/createAndPostBankLine(Expense|Deposit)OnClient|createBill\(|createExpense\(|INSERT INTO accounting\.(expenses|expense_lines|deposits|deposit_lines|bills|bill_payments|checks)\b/.test(src.poster)) {
-    p.push("M1: the categorize poster creates a document — Categorize is a journal entry (CHAIN-05 §10.2); Match links an existing record");
+  // M1 (DEGH-02 / 443.113-C soften): Deposit / Bill / Check / bare createExpense / createBill / INSERT into those
+  // tables stay forbidden. createAndPostBankLineExpenseOnClient is allowed only when gated by
+  // EXPENSE_DOCUMENT_ACCOUNT_TYPES (expense-document guard owns the full S1–S6 bar).
+  if (/createAndPostBankLineDepositOnClient|createBill\(|createExpense\(|INSERT INTO accounting\.(deposits|deposit_lines|bills|bill_payments|checks)\b/.test(src.poster)) {
+    p.push("M1: the categorize poster creates a Deposit / Bill / Check document — only an Expense document is allowed for money-out Expense/COGS/OtherExpense (DEGH-02); Match links an existing record");
+  }
+  if (/createAndPostBankLineExpenseOnClient/.test(src.poster) && !/EXPENSE_DOCUMENT_ACCOUNT_TYPES\.has\(/.test(src.poster)) {
+    p.push("M1: createAndPostBankLineExpenseOnClient is not gated by EXPENSE_DOCUMENT_ACCOUNT_TYPES — expense documents only for Expense/COGS/OtherExpense money-out");
   }
   const poster = fnBody(src.poster, "postBankCategorizationOnClient");
   if (!/postSourceTransactionInClientTx\(\s*client\b[\s\S]{0,200}source_transaction_type: "bank_categorization"/.test(poster)) {
@@ -124,7 +132,7 @@ if (process.argv.includes("--selftest")) {
   const goodOut = { je: "j", money_in: false, amount: 1000, n_lines: 2, net: 0, dr_cat: 1000, cr_cat: 0, dr_bank: 0, cr_bank: 1000, on_control: false };
   const goodIn = { je: "j", money_in: true, amount: 1000, n_lines: 2, net: 0, dr_cat: 0, cr_cat: 1000, dr_bank: 1000, cr_bank: 0, on_control: false };
   const cases = [
-    ["M1", staticProblems({ ...src, poster: src.poster + "\nawait createAndPostBankLineExpenseOnClient(client, x, y);" })],
+    ["M1", staticProblems({ ...src, poster: src.poster + "\nawait createAndPostBankLineDepositOnClient(client, x, y);" })],
     ["M2", staticProblems(plant("poster", 'source_transaction_type: "bank_categorization"', 'source_transaction_type: "expense"'))],
     ["M3", staticProblems(plant("engine", 'debit_or_credit: moneyIn ? "credit" : "debit"', 'debit_or_credit: moneyIn ? "debit" : "credit"'))],
     ["M4", staticProblems(plant("poster", 'reason: "already_matched_to_bill"', 'reason: "skipped"'))],
@@ -167,4 +175,4 @@ if (problems.length) {
   for (const x of problems) console.error(`  ✗ ${x}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — categorize posts one CHAIN-05 entry and creates no document${checked === null ? " (static only — no DATABASE_URL)" : `; live: ${checked} entr${checked === 1 ? "y" : "ies"} match their matrix row`}`);
+console.log(`${LABEL}: OK — categorize posts one CHAIN-05 entry (Expense docs only for money-out Expense/COGS/OtherExpense per DEGH-02; no Deposit/Bill/Check)${checked === null ? " (static only — no DATABASE_URL)" : `; live: ${checked} entr${checked === 1 ? "y" : "ies"} match their matrix row`}`);

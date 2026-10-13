@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per load IN MOTION now with its approximate cost so far; the full dated Load costs board is one click away (Open load costs →).
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -8,6 +9,7 @@ import "../../design/ih35-design-tokens.css";
 import "../../pages/dispatch/dispatch-board.css";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 import { formatUsdCents } from "../../lib/money";
+import { ParityTable } from "../parity/ParityTable";
 
 type SortKey = "load" | "unit" | "line_haul" | "revenue" | "costs" | "driver" | "margin";
 
@@ -16,6 +18,19 @@ const formatMoney = (cents: number) => formatUsdCents(cents);
 const formatDash = (cents: number | null | undefined) => (cents && cents > 0 ? formatMoney(cents) : "—");
 
 type Props = { operatingCompanyId: string };
+type PanelRow = {
+  load: Awaited<ReturnType<typeof listAllLoads>>["loads"][number];
+  revenue: number;
+  lineHaul: number | null;
+  fuelSurcharge: number | null;
+  accessorials: number | null;
+  detention: number | null;
+  layover: number | null;
+  costSoFar: number;
+  driverPay: number;
+  margin: number;
+  hasRollup: boolean;
+};
 
 export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("margin");
@@ -43,8 +58,8 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
   });
   const costRollups = useLoadCostRollups(operatingCompanyId, (query.data?.loads ?? []).map((load) => load.id));
 
-  const rows = useMemo(() => {
-    const joined = (query.data?.loads ?? []).map((load) => {
+  const rows = useMemo((): PanelRow[] => {
+    const joined = (query.data?.loads ?? []).map((load): PanelRow => {
       const r = costRollups.get(load.id);
       return {
         load,
@@ -82,20 +97,8 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
     }
   };
 
-  // OWNER DESIGN LAW 2026-10-02: one board table — lines for rows, never columns; ih-hd sortable headers; money
-  // right-aligned tabular; "—" for anything never recorded (never $0.00).
-  const headerBtn = (key: SortKey, label: string) => (
-    <button
-      type="button"
-      className="ih-hd dpo-sort"
-      aria-sort={sortKey === key ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-      onClick={() => clickSort(key)}
-    >
-      {label}
-      {sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}
-    </button>
-  );
-
+  // OWNER DESIGN LAW 2026-10-02: one board table — lines for rows, never columns; sortable headers (the shared
+  // ParityTable in board appearance); money right-aligned tabular; "—" for anything never recorded (never $0.00).
   return (
     <section className="ih-card dpo dpo-card" data-testid="dispatch-load-costs-panel">
       <div className="ih-card-header dpo-card-head">
@@ -117,43 +120,51 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
       ) : rows.length === 0 ? (
         <div className="dpo-state">No loads in motion.</div>
       ) : (
-        <table className="ih-table">
-          <thead>
-            <tr>
-              <th className="dpo-sticky">{headerBtn("load", "Load")}</th>
-              <th>{headerBtn("unit", "Truck")}</th>
-              <th className="ih-num">{headerBtn("line_haul", "Line haul")}</th>
-              <th className="ih-hd ih-num">FSC</th>
-              <th className="ih-hd ih-num">Accessorials</th>
-              <th className="ih-hd ih-num">Detention</th>
-              <th className="ih-hd ih-num">Layover</th>
-              <th className="ih-num">{headerBtn("costs", "Costs so far")}</th>
-              <th className="ih-num">{headerBtn("driver", "Driver pay so far")}</th>
-              <th className="ih-num">{headerBtn("margin", "Approximate margin")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.load.id} data-testid="dispatch-load-costs-row">
-                <td className="dpo-sticky">
+        <ParityTable<PanelRow>
+          appearance="board"
+          storageKey="dispatch-overview-load-costs"
+          tableTestId="dispatch-load-costs-table"
+          rows={rows}
+          rowKey={(row) => row.load.id}
+          rowTestId={() => "dispatch-load-costs-row"}
+          // The panel owns the order (the same comparator as before); ParityTable paints the arrow and reports clicks.
+          sortKey={sortKey}
+          sortDirection={sortDir}
+          onSortChange={(key) => clickSort(key as SortKey)}
+          sortMode="external"
+          suppressToolbarSearch
+          suppressToolbarRange
+          initialPageSize={50}
+          pageSizeOptions={[50, 100, 300]}
+          stickyLeftCount={1}
+          columns={[
+            {
+              key: "load", label: "Load",
+              render: (row) => (
+                <>
                   <EntityLink kind="load" id={row.load.id} label={entityLabel(row.load.load_number, row.load.id, "Load")} />{" "}
                   <Link className="dpo-link" to={`/dispatch/loads/${encodeURIComponent(row.load.id)}?tab=Costs`}>Costs</Link>
-                </td>
-                <td>{row.load.assigned_unit_number ?? "Unassigned"}</td>
-                <td className="ih-num" data-testid="dispatch-wizard-line-haul">{formatDash(row.lineHaul)}</td>
-                <td className="ih-num" data-testid="dispatch-wizard-fsc">{formatDash(row.fuelSurcharge)}</td>
-                <td className="ih-num" data-testid="dispatch-wizard-accessorials">{formatDash(row.accessorials)}</td>
-                <td className="ih-num" data-testid="dispatch-wizard-detention">{formatDash(row.detention)}</td>
-                <td className="ih-num" data-testid="dispatch-wizard-layover">{formatDash(row.layover)}</td>
-                <td className="ih-num text-right tabular-nums" title={row.hasRollup ? undefined : "no costs linked to this load yet"}>
+                </>
+              ),
+            },
+            { key: "unit", label: "Truck", render: (row) => row.load.assigned_unit_number ?? "Unassigned" },
+            { key: "line_haul", label: "Line haul", kind: "money", render: (row) => <span data-testid="dispatch-wizard-line-haul">{formatDash(row.lineHaul)}</span> },
+            { key: "fsc", label: "FSC", kind: "money", sortable: false, render: (row) => <span data-testid="dispatch-wizard-fsc">{formatDash(row.fuelSurcharge)}</span> },
+            { key: "accessorials", label: "Accessorials", kind: "money", sortable: false, render: (row) => <span data-testid="dispatch-wizard-accessorials">{formatDash(row.accessorials)}</span> },
+            { key: "detention", label: "Detention", kind: "money", sortable: false, render: (row) => <span data-testid="dispatch-wizard-detention">{formatDash(row.detention)}</span> },
+            { key: "layover", label: "Layover", kind: "money", sortable: false, render: (row) => <span data-testid="dispatch-wizard-layover">{formatDash(row.layover)}</span> },
+            {
+              key: "costs", label: "Costs so far", kind: "money",
+              render: (row) => (
+                <span title={row.hasRollup ? undefined : "no costs linked to this load yet"}>
                   {row.hasRollup ? <EntityLink kind="load" id={row.load.id} label={formatMoney(row.costSoFar)} /> : <span className="ih-empty">—</span>}
-                </td>
-                <td className="ih-num text-right tabular-nums">{row.hasRollup ? <EntityLink kind="load" id={row.load.id} label={formatMoney(row.driverPay)} /> : <span className="ih-empty">—</span>}</td>
-                <td className="ih-num dpo-strong text-right tabular-nums">{row.hasRollup ? <EntityLink kind="load" id={row.load.id} label={formatMoney(row.margin)} /> : <span className="ih-empty">—</span>}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </span>
+              ),
+            },
+            { key: "driver", label: "Driver pay so far", kind: "money", render: (row) => (row.hasRollup ? <EntityLink kind="load" id={row.load.id} label={formatMoney(row.driverPay)} /> : <span className="ih-empty">—</span>) },
+            { key: "margin", label: "Approximate margin", kind: "money", render: (row) => <span className="dpo-strong">{row.hasRollup ? <EntityLink kind="load" id={row.load.id} label={formatMoney(row.margin)} /> : <span className="ih-empty">—</span>}</span> },
+          ]}
+        />
       )}
     </section>
   );

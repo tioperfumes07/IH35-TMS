@@ -250,7 +250,7 @@ export function SubscriptionManager() {
         real worker + 6 report generators, tracked in GUARD-WORKORDERS.md), but it stops the deception now.
       */}
       <div
-        className="rounded-sm border border-[#E5E7EB] bg-[#E5E7EB] p-4 text-xs"
+        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs"
         data-testid="q8-subscriptions-delivery-not-implemented"
       >
         <p className="font-semibold text-[#1F2A44]">Email delivery is not implemented yet</p>

@@ -7,7 +7,12 @@
  * reads — at the right amount, vendor, and entity, WITHOUT double-counting TMS-native bills and
  * WITHOUT ever posting to the GL.
  *
- * Guards, in order:
+ * ACCT-F4431380 (9e): the projection now REFUSES BY NAME (QBO_NATIVE_WRITE_REFUSED); see the cases below.
+ *
+ * 443.91: QBO_AP_BILLS_PROJECTION_ENABLED is BLOCKED PERMANENTLY (ROUND 195, migration 202614530000; RULING 443.71) —
+ * the flag-ON guards below are now asserted as the DB refusal + a projection that writes nothing.
+ *
+ * Guards, in order (historical design):
  *   1. Flag OFF (QBO_AP_BILLS_PROJECTION_ENABLED unset) -> projection no-ops; the mirrored bill is
  *      NOT in accounting.bills and the A/P aging is unchanged.
  *   2. Flag ON -> the mirrored bill lands in accounting.bills (source_system='qbo') and views.ap_aging
@@ -30,8 +35,6 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
-// Top-level import: evaluated with QBO_AP_BILLS_PROJECTION_ENABLED unset -> the OFF variant.
-import { projectApBillsToLedger as projectWhenFlagOff } from "../ap-bills-puller.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -235,105 +238,60 @@ describeIntegration("QBO-AP-PULL Stage 2 projection -> A/P aging (real Postgres)
     return r.rows[0] ? Number(r.rows[0].total_open_cents) : null;
   }
 
-  it("flag OFF: projection no-ops — the mirrored QBO bill is NOT in accounting.bills or the A/P aging", async () => {
-    const res = await projectWhenFlagOff(companyId);
-    expect(res.enabled).toBe(false);
-    expect(res.rowsProjected).toBe(0);
+  // ACCT-F4431380 (Lead 443.137 item 9e; owner ruling — QuickBooks is a READ-ONLY ARCHIVE).
+  //   OLD: these cases asserted projectApBillsToLedger() RESOLVED with { enabled:false, rowsProjected:0 } — a
+  //        silent no-op a caller (the scheduler) recorded as a SUCCESSFUL step, with the INSERT INTO
+  //        accounting.bills / bill_lines SQL still in the file one flag-flip away from running.
+  //   NEW: the projection REFUSES BY NAME — it rejects with QboNativeWriteRefusedError (code
+  //        QBO_NATIVE_WRITE_REFUSED) — and the native tables stay untouched. This is the representative DB
+  //        proof for 9e: on the pre-fix code the first case FAILS (the promise resolves instead of rejecting).
+  //   The DB-level flag block (QBO_FLAG_PERMANENTLY_BLOCKED) is still asserted — it is a separate, kept layer.
+  it("projectApBillsToLedger REFUSES BY NAME (QBO_NATIVE_WRITE_REFUSED) and writes no native accounting.bills row", async () => {
+    const mod = await import("../ap-bills-puller.js");
+    const refused = await mod.projectApBillsToLedger(companyId).then(
+      () => null,
+      (error: unknown) => error as { code?: string; name?: string; nativeTables?: string[]; message?: string }
+    );
+    expect(refused, "projectApBillsToLedger resolved — a QBO path must refuse to write native tables, not no-op").not.toBeNull();
+    expect(refused?.code).toBe("QBO_NATIVE_WRITE_REFUSED");
+    expect(refused?.name).toBe("QboNativeWriteRefusedError");
+    expect(refused?.nativeTables).toEqual(["accounting.bills", "accounting.bill_lines"]);
 
     expect(await billRowCount(qboBillMatchedId)).toBe(0);
     expect(await billRowCount(qboBillUnmatchedId)).toBe(0);
-    // Matched QBO vendor has no local id key yet; its aging row must be absent while OFF.
     expect(await agingOpenCents(vendorMatchedUuid)).toBeNull();
-    // The TMS-native bill is already visible on its own (unaffected by the flag).
+    // The TMS-native bill is visible on its own, untouched and never doubled.
     expect(await agingOpenCents(vendorNativeUuid)).toBe(NATIVE_CENTS);
   });
 
-  it("flag ON: mirrored QBO bill is projected and appears in views.ap_aging at the right amount/vendor/entity", async () => {
-    // The puller now resolves the flag from the DB (isEnabled), NOT process.env — enable it in the test
-    // DB. (resolveFlagEnabled honors default_enabled for this non-per-entity-gated flag.)
-    await db.query(
-      `UPDATE lib.feature_flags SET default_enabled = true WHERE flag_key = 'QBO_AP_BILLS_PROJECTION_ENABLED'`
-    );
+  it("projectApBillLinesToLedger REFUSES BY NAME even with the old skipFlagCheck bypass; the native line survives", async () => {
     const mod = await import("../ap-bills-puller.js");
-    const res = await mod.projectApBillsToLedger(companyId);
-    expect(res.enabled).toBe(true);
-    expect(res.rowsProjected).toBeGreaterThanOrEqual(2);
-    expect(res.lines.enabled).toBe(true);
-    expect(res.lines.linesProjected).toBeGreaterThanOrEqual(3); // 2 AccountBased + 1 ItemBased
-
-    // Exactly one accounting.bills row per QBO bill, source_system='qbo', matched vendor linked.
-    expect(await billRowCount(qboBillMatchedId)).toBe(1);
-    const matched = await db.query<{ source_system: string; vendor_uuid: string; amount_cents: string; status: string; id: string }>(
-      `SELECT id::text, source_system, vendor_uuid, amount_cents, status FROM accounting.bills WHERE operating_company_id=$1::uuid AND qbo_bill_id=$2`,
-      [companyId, qboBillMatchedId]
+    await expect(mod.projectApBillLinesToLedger(companyId, { skipFlagCheck: true })).rejects.toMatchObject({
+      code: "QBO_NATIVE_WRITE_REFUSED",
+      nativeTables: ["accounting.bill_lines"],
+    });
+    const qboLines = await db.query<{ n: string }>(
+      `SELECT count(*)::int AS n FROM accounting.bill_lines bl JOIN accounting.bills b ON b.id = bl.bill_id
+        WHERE b.operating_company_id = $1::uuid AND b.qbo_bill_id = ANY($2::text[])`,
+      [companyId, [qboBillMatchedId, qboBillUnmatchedId]]
     );
-    expect(matched.rows[0]!.source_system).toBe("qbo");
-    expect(matched.rows[0]!.vendor_uuid).toBe(vendorMatchedUuid);
-    expect(Number(matched.rows[0]!.amount_cents)).toBe(MATCHED_CENTS);
-    expect(matched.rows[0]!.status).toBe("unpaid");
-
-    // Stage 2b: AccountBased lines projected with mapped account_id; DescriptionOnly skipped.
-    const lines = await db.query<{ n: string; with_acct: string }>(
-      `SELECT count(*)::int AS n,
-              count(*) FILTER (WHERE account_id = $2::uuid)::int AS with_acct
-       FROM accounting.bill_lines WHERE bill_id = $1::uuid`,
-      [matched.rows[0]!.id, coaAccountId]
-    );
-    expect(Number(lines.rows[0]!.n)).toBe(2);
-    expect(Number(lines.rows[0]!.with_acct)).toBe(2);
-
-    // The A/P aging (what FIN-20 reads) now returns the QBO bill under its matched LOCAL vendor.
-    expect(await agingOpenCents(vendorMatchedUuid)).toBe(MATCHED_CENTS);
-  });
-
-  it("flag ON: a QBO vendor with no local match is recorded + surfaced (not silently dropped)", async () => {
-    // Projection already ran in the previous test (flag ON module cached). Verify the unmatched row.
-    expect(await billRowCount(qboBillUnmatchedId)).toBe(1);
-    const unmatched = await db.query<{ vendor_uuid: string | null; vendor_id: string }>(
-      `SELECT vendor_uuid, vendor_id FROM accounting.bills WHERE operating_company_id=$1::uuid AND qbo_bill_id=$2`,
-      [companyId, qboBillUnmatchedId]
-    );
-    expect(unmatched.rows[0]!.vendor_uuid).toBeNull();
-    expect(unmatched.rows[0]!.vendor_id).toBe(qboVendorUnmatchedId);
-    // Surfaced in aging under the QBO vendor id key at the right amount.
-    expect(await agingOpenCents(qboVendorUnmatchedId)).toBe(UNMATCHED_CENTS);
-  });
-
-  it("flag ON: idempotent re-run creates no duplicate and does not change the aging; native bill not doubled", async () => {
-    const mod = await import("../ap-bills-puller.js");
-    await mod.projectApBillsToLedger(companyId);
-    const mid = await db.query<{ n: string }>(
-      `SELECT count(*)::int AS n FROM accounting.bill_lines bl
-       JOIN accounting.bills b ON b.id = bl.bill_id
-       WHERE b.operating_company_id=$1::uuid AND b.qbo_bill_id=$2`,
-      [companyId, qboBillMatchedId]
-    );
-    await mod.projectApBillsToLedger(companyId);
-    const after = await db.query<{ n: string }>(
-      `SELECT count(*)::int AS n FROM accounting.bill_lines bl
-       JOIN accounting.bills b ON b.id = bl.bill_id
-       WHERE b.operating_company_id=$1::uuid AND b.qbo_bill_id=$2`,
-      [companyId, qboBillMatchedId]
-    );
-    expect(Number(after.rows[0]!.n)).toBe(Number(mid.rows[0]!.n));
-    expect(Number(after.rows[0]!.n)).toBe(2);
-
-    expect(await billRowCount(qboBillMatchedId)).toBe(1);
-    expect(await billRowCount(qboBillUnmatchedId)).toBe(1);
-    expect(await agingOpenCents(vendorMatchedUuid)).toBe(MATCHED_CENTS);
-    expect(await agingOpenCents(qboVendorUnmatchedId)).toBe(UNMATCHED_CENTS);
-    // TMS-native bill untouched — exactly its own amount, never doubled by the QBO projection.
-    expect(await agingOpenCents(vendorNativeUuid)).toBe(NATIVE_CENTS);
-    const native = await db.query<{ n: string }>(
-      `SELECT count(*)::int AS n FROM accounting.bills WHERE operating_company_id=$1::uuid AND id=$2::uuid AND source_system='tms'`,
-      [companyId, nativeBillId]
-    );
-    expect(Number(native.rows[0]!.n)).toBe(1);
+    expect(Number(qboLines.rows[0]!.n)).toBe(0);
     const nativeLines = await db.query<{ n: string; desc: string }>(
       `SELECT count(*)::int AS n, max(description) AS desc FROM accounting.bill_lines WHERE bill_id=$1::uuid`,
       [nativeBillId]
     );
     expect(Number(nativeLines.rows[0]!.n)).toBe(1);
     expect(nativeLines.rows[0]!.desc).toContain("TMS native line must survive");
+  });
+
+  it("flag ON is still refused by the database (QBO_FLAG_PERMANENTLY_BLOCKED) — a second, independent layer", async () => {
+    await expect(
+      db.query(`UPDATE lib.feature_flags SET default_enabled = true WHERE flag_key = 'QBO_AP_BILLS_PROJECTION_ENABLED'`)
+    ).rejects.toThrow(/QBO_FLAG_PERMANENTLY_BLOCKED/);
+    const native = await db.query<{ n: string }>(
+      `SELECT count(*)::int AS n FROM accounting.bills WHERE operating_company_id=$1::uuid AND id=$2::uuid AND source_system='tms'`,
+      [companyId, nativeBillId]
+    );
+    expect(Number(native.rows[0]!.n)).toBe(1);
   });
 });

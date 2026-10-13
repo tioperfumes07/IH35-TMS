@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import * as accountingApi from "../../api/accounting";
@@ -9,12 +9,12 @@ import * as mdataApi from "../../api/mdata";
 import { ToastProvider } from "../../components/Toast";
 import { VehicleProfilePage } from "../fleet/VehicleProfilePage";
 
+// TRANSP: the one company where the retired QBO vendor picker used to render (443.137 9e).
 vi.mock("../../contexts/CompanyContext", () => ({
-  useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
-}));
-
-vi.mock("../../components/forms/QboCombobox", () => ({
-  QboCombobox: () => <div data-testid="qbo-vendor-combobox" />,
+  useCompanyContext: () => ({
+    selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+    selectedCompany: { id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071", code: "TRANSP" },
+  }),
 }));
 
 vi.mock("../../components/maintenance/ServiceTimeline", () => ({
@@ -103,6 +103,7 @@ function wrap(ui: ReactElement) {
 
 describe("VehicleProfilePage", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(clientApi.apiRequest).mockResolvedValue(profileFixture);
     vi.mocked(mdataApi.patchUnit).mockResolvedValue(profileFixture.unit);
     vi.mocked(accountingApi.listClassesForJe).mockResolvedValue({ classes: [] });
@@ -148,14 +149,37 @@ describe("VehicleProfilePage", () => {
     expect(await screen.findByText(/differs from currently driving/i)).toBeInTheDocument();
   });
 
+  // 443.137 9e: QBO is a read-only archive. Even on TRANSP the unit profile no longer offers a
+  // QuickBooks vendor picker, and saving the classification card never writes qbo_vendor_id.
+  it("has no QBO vendor picker and saves only the TMS class (443.137 9e)", async () => {
+    const { container } = render(wrap(<VehicleProfilePage />));
+    await screen.findAllByText(/Unit T-501/);
+    const card = container.querySelector("#asset-financial") as HTMLElement;
+    expect(card).not.toBeNull();
+    expect(within(card).getByText("Asset classification")).toBeInTheDocument();
+    expect(within(card).queryByText(/QBO vendor/i)).not.toBeInTheDocument();
+    expect(within(card).queryByText("QBO mapping")).not.toBeInTheDocument();
+    expect(within(card).queryByPlaceholderText(/search QuickBooks/i)).not.toBeInTheDocument();
+    fireEvent.click(within(card).getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(mdataApi.patchUnit).toHaveBeenCalledTimes(1));
+    const patch = vi.mocked(mdataApi.patchUnit).mock.calls[0]?.[2] as Record<string, unknown>;
+    expect(patch).toEqual({ qbo_class_id: null });
+    expect(patch).not.toHaveProperty("qbo_vendor_id");
+  });
+
   it("opens status modal when changing to OOS", async () => {
     render(wrap(<VehicleProfilePage />));
     // Load gate, not an assertion: wait until the unit has rendered before touching the status select.
     // The page now shows "Unit T-501" in more than one place, so the singular findByText threw
     // "Found multiple elements" — it was asserting a uniqueness this test never meant to claim.
     await screen.findAllByText(/Unit T-501/);
-    const select = screen.getByDisplayValue("InService");
-    fireEvent.change(select, { target: { value: "OutOfService" } });
+    // The status control is the canonical SelectCombobox now (GLB-01), not a native <select>: it shows
+    // the option LABEL, and a pick is a click on the listbox option. getByDisplayValue("InService")
+    // matched nothing, so this case was red on origin/main independent of any other change.
+    const input = screen.getByDisplayValue("Active (In Service)");
+    fireEvent.focus(input);
+    fireEvent.click(input);
+    fireEvent.click(await screen.findByRole("option", { name: "Out of Service" }));
     expect(await screen.findByTestId("vp-status-change-modal")).toBeInTheDocument();
   });
 });

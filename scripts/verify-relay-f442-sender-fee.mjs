@@ -34,6 +34,28 @@ function assertContains(src, rel, re, why) {
   if (!re.test(src)) fail(`${rel}: ${why}`);
 }
 
+
+/**
+ * LEAD 443.123 — THE one paid rule. relayFuelPaidCents recognises a legacy CSV row (stored paid already carries its
+ * recorded fee) ONLY on exact equality with ingest_source csv_import and no per-line fee; never a tolerance or plug.
+ * Every wallet / match / roll-forward consumer goes through it (or its SQL twin relayFuelWalletAmountSql).
+ */
+export function checkOnePaidRule(srcs) {
+  const p = [];
+  const h = srcs.helper ?? "";
+  const fn = h.slice(h.indexOf("export function relayFuelPaidCents"), h.indexOf("export function relayFuelWalletAmountSql"));
+  if (!/export function relayFuelPaidCents/.test(h)) p.push("relay-sender-fee-cents.ts: relayFuelPaidCents missing (the one paid rule)");
+  if (!/stored === product \+ fee/.test(fn)) p.push("relayFuelPaidCents: legacy shape must be EXACT equality stored === product + fee");
+  if (!/ingest_source === "csv_import"/.test(fn) || !/lineFees === 0/.test(fn)) p.push("relayFuelPaidCents: legacy shape must require csv_import AND no per-line fee");
+  if (/Math\.abs\(|<=\s*\d|tolerance/i.test(fn)) p.push("relayFuelPaidCents: a tolerance / plug is forbidden (exact cents only)");
+  if (!/export function relayFuelWalletAmountSql/.test(h) || !/= \$\{product\} \+ \$\{fees\}/.test(h)) p.push("relay-sender-fee-cents.ts: SQL twin relayFuelWalletAmountSql must use the same exact equality");
+  if (!/relayFuelPaidCents\(/.test(srcs.match ?? "") || !/amountCents = paid\.wallet_cents/.test(srcs.match ?? "")) p.push("bank-match-fuel-post.service.ts: the poster must take paid / fee / wallet from relayFuelPaidCents");
+  if (!/RELAY_FUEL_WALLET_AMOUNT_SQL = relayFuelWalletAmountSql\("r"\)/.test(srcs.bankMatch ?? "") || !/relayFuelPaidCents\(/.test(srcs.bankMatch ?? "")) p.push("relay-bank-match.service.ts: wallet SQL + walletCentsForFill must use the one paid rule");
+  if (!/relayFuelPaidCents\(/.test(srcs.rollForward ?? "")) p.push("relay-wallet-roll-forward.service.ts: must use the one paid rule");
+  if (!/relayFuelPaidCents\(/.test(srcs.bankFeed ?? "")) p.push("relay-wallet-bank-feed.service.ts: must use the one paid rule");
+  return p;
+}
+
 function selftest() {
   // Planted defect shapes — each must be detectable by the live assertions below.
   const plants = [
@@ -56,9 +78,33 @@ function selftest() {
   for (const p of plants) {
     if (!p.check(p.src)) fail(`--selftest could not plant detectable defect: ${p.name}`);
   }
+  // LEAD 443.123 — the one paid rule: real sources pass; a tolerance, a dropped csv_import gate, a consumer that
+  // bypasses the rule are each caught.
+  const real = onePaidRuleSources();
+  if (checkOnePaidRule(real).length) fail(`--selftest: real sources fail the one paid rule: ${checkOnePaidRule(real).join("; ")}`);
+  const paidPlants = [
+    ["tolerance plug", { ...real, helper: real.helper.replace("stored === product + fee", "Math.abs(stored - (product + fee)) <= 200") }],
+    ["csv_import gate dropped", { ...real, helper: real.helper.replace('input.ingest_source === "csv_import" && ', "") }],
+    ["poster bypasses the rule", { ...real, match: real.match.replace("amountCents = paid.wallet_cents", "amountCents = paidCents + feeCents") }],
+    ["drawer SQL bypasses the rule", { ...real, bankMatch: real.bankMatch.replace('RELAY_FUEL_WALLET_AMOUNT_SQL = relayFuelWalletAmountSql("r")', "RELAY_FUEL_WALLET_AMOUNT_SQL = `(paid + fees)`") }],
+    ["roll-forward bypasses the rule", { ...real, rollForward: real.rollForward.replaceAll("relayFuelPaidCents(", "relayFillFeeCents(") }],
+  ];
+  for (const [name, srcs] of paidPlants) {
+    if (checkOnePaidRule(srcs).length === 0) fail(`--selftest could not catch planted defect: ${name}`);
+  }
   // Owner arithmetic must stay locked.
   if (59433 + 200 !== 59633) fail("--selftest arithmetic lock broken");
-  console.log(`${LABEL} --selftest PASS — ${plants.length} planted defects detectable + 59433+200=59633`);
+  console.log(`${LABEL} --selftest PASS — ${plants.length + 5} planted defects detectable + 59433+200=59633`);
+}
+
+function onePaidRuleSources() {
+  return {
+    helper: read("apps/backend/src/integrations/relay-payments/relay-sender-fee-cents.ts"),
+    match: read("apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts"),
+    bankMatch: read("apps/backend/src/accounting/bank-recon/relay-bank-match.service.ts"),
+    rollForward: read("apps/backend/src/integrations/relay-payments/relay-wallet-roll-forward.service.ts"),
+    bankFeed: read("apps/backend/src/integrations/relay-payments/relay-wallet-bank-feed.service.ts"),
+  };
 }
 
 function main() {
@@ -96,7 +142,11 @@ function main() {
   assertContains(poster, "poster.service.ts", /fuel_kind:\s*"fuel_card_fee"/, "fee must be its own debit leg, not folded into diesel/reefer/DEF");
 
   assertContains(match, "bank-match-fuel-post.service.ts", /fee_amount_cents:\s*feeCents/, "Relay match poster must pass fee_amount_cents");
-  assertContains(match, "bank-match-fuel-post.service.ts", /relayWalletDrawdownCents\s*\(\s*paidCents/, "match amount_cents must be paid + fee");
+  // LEAD 443.123: paid + fee now comes from the one paid rule (relayFuelPaidCents -> relayWalletDrawdownCents(fuel, fee)).
+  assertContains(match, "bank-match-fuel-post.service.ts", /amountCents = paid\.wallet_cents/, "match amount_cents must be the one paid rule's wallet (paid + fee)");
+  assertContains(helper, "relay-sender-fee-cents.ts", /wallet_cents: relayWalletDrawdownCents\(fuel, fee\)/, "the one paid rule's wallet must be fuel + fee");
+  const paidProblems = checkOnePaidRule(onePaidRuleSources());
+  if (paidProblems.length) fail(paidProblems.join("; "));
   assertContains(
     matchDrawer,
     "match.service.ts",

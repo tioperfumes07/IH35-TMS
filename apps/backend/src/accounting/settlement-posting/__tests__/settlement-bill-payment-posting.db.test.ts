@@ -82,7 +82,10 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
   const driverVendorId = `VND-${suffix}`; // QBO text key, written to accounting.bills.vendor_id
   const driverVendorUuid = randomUUID(); // mdata.vendors.id, written to accounting.bills.mdata_vendor_id
   const loadIds = [randomUUID(), randomUUID(), randomUUID()];
-  const loadNumbers = [`L-${suffix}-1`, `L-${suffix}-2`, `L-${suffix}-3`];
+  // 443.93: a load number is digits (the app's load-number spine), and the driver-pay bill is numbered EXACTLY as its load
+  // (BILL_DISPLAY_ID_PATTERN, display-id.ts:49) — unique per run.
+  const loadBase = 700000000 + Math.floor(Math.random() * 90000000);
+  const loadNumbers = [`${loadBase + 1}`, `${loadBase + 2}`, `${loadBase + 3}`];
   const billIds = [randomUUID(), randomUUID(), randomUUID()];
   const grossCents = [52500, 48000, 51000]; // 1,515.00 total
   const advanceCents = 20000;
@@ -251,15 +254,20 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       await db.query(
         `INSERT INTO driver_finance.driver_settlements
            (id, operating_company_id, display_id, driver_id, period_start, period_end, status, locked_at,
-            gross_pay, deductions_total, reimbursements_total, net_pay)
-         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),1515,275,0,1240)`,
+            gross_pay, deductions_total, reimbursements_total, net_pay, settlement_model)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),1515,275,0,1240,'load_bookended')`,
         [settlementId, companyId, `S-${suffix}`, driverId]
       );
+      // 443.106 (trg_refuse_driver_bill_without_links): a driver bill carries its load's truck — the loads run on a company unit.
+      const unitId = (await db.query<{ id: string }>(
+        `INSERT INTO mdata.units (unit_number, vin, owner_company_id, is_sample_data) VALUES ($1, $2, $3::uuid, true) RETURNING id::text AS id`,
+        [`SBP-${suffix}`, `VINSBP${suffix}`.slice(0, 17), companyId]
+      )).rows[0]!.id;
       for (let i = 0; i < 3; i += 1) {
         await db.query(
-          `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, id, load_trailer_equipment_id)
-           VALUES ($1::uuid,$2,$3::uuid,'delivered_pending_docs',$4,$5::uuid,$6::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $1::uuid AND code = 'DRY_VAN' LIMIT 1))`,
-          [companyId, loadNumbers[i], customerId, grossCents[i]! * 3, userId, loadIds[i]]
+          `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, id, load_trailer_equipment_id, assigned_unit_id)
+           VALUES ($1::uuid,$2,$3::uuid,'delivered_pending_docs',$4,$5::uuid,$6::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $1::uuid AND code = 'DRY_VAN' LIMIT 1),$7::uuid)`,
+          [companyId, loadNumbers[i], customerId, grossCents[i]! * 3, userId, loadIds[i], unitId]
         );
         await db.query(
           `INSERT INTO driver_finance.driver_bills
@@ -302,6 +310,8 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     await acquireGlobalAccountRoleBindingsLock(db);
     heldGlobalBindingsLock = true;
     await bypass(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `sbp-${suffix}@test.local`]
@@ -618,6 +628,18 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     expect(Number(conn[0]!.runs)).toBe(1);
     expect(Number(conn[0]!.billrows)).toBe(3);
 
+    // 443.100 (verify-step 18393): every bill JE line names its settlement at INSERT — the pay-run path posted its bills
+    // with no settlement_id, so the settlement -> bill JE drill had no posting-level link.
+    const unstamped = await read<{ total: string; missing: string }>(
+      `SELECT count(*)::text AS total, count(*) FILTER (WHERE jep.settlement_id IS DISTINCT FROM $1::uuid)::text AS missing
+         FROM accounting.journal_entry_postings jep
+         JOIN driver_finance.driver_settlement_gl_bills g ON g.bill_journal_entry_id = jep.journal_entry_uuid
+        WHERE g.settlement_id = $1::uuid AND jep.source_transaction_type = 'bill'`,
+      [settlementId]
+    );
+    expect(Number(unstamped[0]!.total)).toBeGreaterThan(0);
+    expect(Number(unstamped[0]!.missing)).toBe(0);
+
     // SETL-POST-01 — a real post through this poster stamps the header's posted_at/posted_by_user_id
     // (migration 202607520000 added the columns; this is the writer-repoint that never landed until now).
     const posted = await read<{ posted_at: string | null; posted_by_user_id: string | null }>(
@@ -859,8 +881,8 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       await db.query(
         `INSERT INTO driver_finance.driver_settlements
            (id, operating_company_id, display_id, driver_id, period_start, period_end, status, locked_at,
-            gross_pay, deductions_total, reimbursements_total, net_pay)
-         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),297.60,0,0,297.60)`,
+            gross_pay, deductions_total, reimbursements_total, net_pay, settlement_model)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),297.60,0,0,297.60,'load_bookended')`,
         [interlockSettlementId, companyId, `S-INTERLOCK-${suffix}`, driverId]
       );
       // A minimal but real journal_entries row so the FK on payrun_gl_runs.journal_entry_id resolves —

@@ -2291,6 +2291,20 @@ export function CustomerDetailPage() {
                     },
                   },
                   { key: "qbo_payment_id", label: "Reference", sortable: true, render: (p) => p.qbo_payment_id ?? "—" },
+                  // 443.104 — the customer profile is A/R READ ONLY (owner ORDERS 2026-10-01 §3, CUST-F20 #23767): unapply
+                  // happens on the payment itself in Accounting (confirmed, mounted DELETE .../applications/:id).
+                  {
+                    key: "unapply",
+                    label: "Unapply",
+                    render: (p) =>
+                      (p.applied_to_invoices ?? []).length > 0 ? (
+                        <a href={`/accounting/payments/${p.id}`} className="text-[#1F2A44] hover:underline" data-testid={`customer-payment-unapply-in-accounting-${p.id}`}>
+                          Unapply in Accounting
+                        </a>
+                      ) : (
+                        "—"
+                      ),
+                  },
                 ]}
               />
             )}

@@ -1,4 +1,12 @@
-<!-- heartbeat 2026-10-06T17:52Z Cursor lead — file touched so verify-bus-files-are-readable 48h arm stays green -->
+<!-- heartbeat 2026-10-10T20:12Z Claude Lead -->
+# NOW — CC-3 — ROUND 443 (2026-10-10) — READ FIRST
+
+**READ: `docs/bus/2026-10-10-LEAD-ROUND-443-ORDERS.md` — execute every block headed CC-3, top to bottom; later blocks override earlier ones.**
+FAST MERGE IS ON (`docs/bus/FAST-MERGE-4MIN-LAW.md`): gate exit 0 -> push -> PR -> squash-merge by API in the same 15 seconds -> Neon proof -> one NOW line.
+USMCA only. Nobody seeds data. Banking rows are never touched.
+
+---
+
 # NOW — CC-3 — P0 OVERRIDE 2026-10-04
 
 **READ FIRST: `docs/bus/10-04-2026-ALL-SEATS-P0-STOP-MAIN-CANNOT-BOOT.md`**

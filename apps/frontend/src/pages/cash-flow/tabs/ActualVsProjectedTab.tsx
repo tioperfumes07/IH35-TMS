@@ -204,11 +204,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
   // LV-CASH-FLOW-ACTUAL-SPLIT-FILTER-APPLY — From/To + Net variance share one staged Filters draft.
   const defaultFrom = sevenDaysAgoIso();
   const defaultTo = todayIso();
-  const [applied, setApplied] = useState<AvpFilterDraft>({
-    from: defaultFrom,
-    to: defaultTo,
-    varianceFilter: "all",
-  });
+  const [applied, setApplied] = useState<AvpFilterDraft>({ from: defaultFrom, to: defaultTo, varianceFilter: "all" });
   const staged = useStagedListFilters({
     applied,
     empty: { from: defaultFrom, to: defaultTo, varianceFilter: "all" as VarianceFilter },

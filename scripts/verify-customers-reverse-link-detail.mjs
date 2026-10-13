@@ -253,7 +253,9 @@ const CHECKS = [
   {
     name: "customer recent invoices View all preserves canonical customer id",
     file: DETAIL,
-    pattern: /navigate\(`\/accounting\/invoices\?customer_id=\$\{encodeURIComponent\(id\)\}`\)/,
+    // LEAD 443.99 class B (2026-10-12): View all now also carries &status=active — LST-F3282 (9a738dd0b0, round 297
+    // audit) lands the drill on the counted (non-void) set. The canonical customer id is still carried.
+    pattern: /navigate\(`\/accounting\/invoices\?customer_id=\$\{encodeURIComponent\(id\)\}(?:&status=active)?`\)/,
   },
   {
     name: "invoice list destination reads customer_id deep link",
@@ -263,7 +265,13 @@ const CHECKS = [
   {
     name: "invoice list destination sends customer_id to producer",
     file: INVOICES_PAGE,
-    pattern: /customer_id: customerId \|\| undefined/,
+    // LEAD 443.99 class B (2026-10-12).
+    //   old rule: listInvoices({ customer_id: customerId || undefined }).
+    //   new rule: the ?customer_id= deep link seeds the customer multi-select, and a single selected customer is
+    //             what the producer receives (customer_id: customerParam).
+    //   why: FILTER-MULTI-01 (#22497, 8d2aab421e) made the customer filter multi-select; the deep link still
+    //        reaches the producer's canonical i.customer_id filter.
+    pattern: /useState<string\[\]>\(\(\) => \(customerId \? \[customerId\] : \[\]\)\)[\s\S]*const customerParam = customerFilter\.length === 1 \? customerFilter\[0\] : undefined;[\s\S]{0,1600}listInvoices\(selectedCompanyId!, \{[\s\S]{0,500}customer_id: customerParam,/,
   },
   {
     name: "invoice producer applies canonical customer filter",

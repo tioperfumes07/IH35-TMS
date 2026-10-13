@@ -20,7 +20,9 @@ export type BatchExpenseRow = {
   categoryText: string;
   classId: string; // unit / class
   classText: string;
-  loadNumber: string;
+  loadNumber: string; // load number as typed / pasted — a hint until a load is picked
+  /** 443.102 — the picked load's id, sent as the expense's load_id (the number alone used to reach the memo only). */
+  loadId: string;
   memo: string;
   status: "draft" | "saving" | "saved" | "error";
   error: string | null;
@@ -37,7 +39,7 @@ export function newRow(partial: Partial<BatchExpenseRow> = {}): BatchExpenseRow 
   return {
     key: `r${Date.now().toString(36)}${seq}`,
     date: "", payee: "", payeeText: "", paymentAccount: "", paymentMethod: "", refNo: "", amount: "",
-    category: "", categoryText: "", classId: "", classText: "", loadNumber: "", memo: "",
+    category: "", categoryText: "", classId: "", classText: "", loadNumber: "", loadId: "", memo: "",
     status: "draft", error: null, expenseId: null, feedGate: null, ...partial,
   };
 }
@@ -76,6 +78,7 @@ export function validateRow(r: BatchExpenseRow): Partial<Record<BatchExpenseFiel
   if (!r.category) e.category = r.categoryText ? `No account named "${r.categoryText}"` : "Category (expense account) required";
   if (r.payeeText && !r.payee) e.payee = `No vendor named "${r.payeeText}"`;
   if (r.classText && !r.classId) e.classId = `No class/unit named "${r.classText}"`;
+  if (r.loadNumber.trim() && !r.loadId) e.loadNumber = `Pick the load for "${r.loadNumber.trim()}"`;
   if (r.paymentMethod === "check" && !r.refNo.trim()) e.refNo = "Check number required for a check";
   return e;
 }
@@ -130,7 +133,7 @@ export function fillDown(rows: BatchExpenseRow[], field: BatchExpenseField, from
   const value = src[field];
   return rows.map((r, i) =>
     i > fromIndex && !r[field] && r.status !== "saved"
-      ? { ...r, [field]: value, ...(field === "payee" ? { payeeText: src.payeeText } : {}), ...(field === "category" ? { categoryText: src.categoryText } : {}), ...(field === "classId" ? { classText: src.classText } : {}) }
+      ? { ...r, [field]: value, ...(field === "payee" ? { payeeText: src.payeeText } : {}), ...(field === "category" ? { categoryText: src.categoryText } : {}), ...(field === "classId" ? { classText: src.classText } : {}), ...(field === "loadNumber" ? { loadId: src.loadId } : {}) }
       : r,
   );
 }

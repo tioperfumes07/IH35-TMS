@@ -68,6 +68,9 @@ const DRAFT_INVOICE_ROW = {
   source_load_id: LOAD_ID,
   customer_id: "cccccccc-3333-4333-8333-333333333333",
   issue_date: "2026-08-15",
+  // ROUND 443.1 (invoice-send.service.ts:485): a $0 invoice is records-only and returns reason zero_revenue_no_posting;
+  // this fixture is a REVENUE invoice, so it carries its line's total.
+  total_cents: 250000,
 };
 
 const REVENUE_LINE_ROW = {

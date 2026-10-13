@@ -4,6 +4,7 @@
  */
 
 export type SettlementCreatorFactorOption = "faro_usmca" | "faro_transportation" | "direct";
+export type SettlementCreatorExpensePaymentSource = "relay" | "dreamline" | "owed";
 
 export type SettlementCreatorFuelCard = "dreamline" | "relay";
 
@@ -11,6 +12,22 @@ export type SettlementCreatorAccessorialLine = {
   item_name: string;
   description?: string | null;
   amount_cents: number;
+};
+
+/**
+ * CC-3 2026-10-11 (CC-2 finding): one stop of a multi-stop load, in the order the owner's settlement lists it.
+ * The pickup_* / delivery_* fields describe only the first pickup and the last delivery; a P/D/D or P/P/D load
+ * carries every stop here so booking never collapses it to two.
+ */
+export type SettlementCreatorDraftStop = {
+  stop_type: "pickup" | "delivery";
+  date?: string | null; // YYYY-MM-DD
+  address?: string | null; // street or facility name, as pickup_address
+  city: string;
+  state: string;
+  zip?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 };
 
 export type SettlementCreatorLoadBlock = {
@@ -43,14 +60,33 @@ export type SettlementCreatorLoadBlock = {
   delivery_zip?: string | null;
   delivery_lat?: number | null;
   delivery_lng?: number | null;
+  /** Every stop in order when the load has more than one pickup or delivery (see SettlementCreatorDraftStop). */
+  stops?: SettlementCreatorDraftStop[] | null;
   line_haul_miles?: number | null;
   line_haul_rate_cents?: number | null;
   line_haul_amount_cents?: number | null;
   accessorials?: SettlementCreatorAccessorialLine[];
   factoring: SettlementCreatorFactorOption;
+  /**
+   * ROUND 443.3 — the "Invoice no." box (law doc §5): the owner's Faro / QuickBooks invoice number (USMCA 1..118),
+   * digits only. The invoice service builds <invoice>-<load>; blank -> <next>-<load> (CC-1 ROUND 443.8).
+   */
+  invoice_number?: string | null;
   date_sent_to_factoring?: string | null;
   loaded_miles?: number | null;
+  /**
+   * Driver pay miles (short). Company practical miles stay on loaded_miles — they differ.
+   * When set, earnings / driver-bill mint use this; otherwise fall back to loaded_miles.
+   */
+  miles_shortest?: number | null;
   empty_miles?: number | null;
+  /**
+   * Lead 443.57 (owner) — the LOAD's saved operating miles, per field: which source the owner chose next to the settlement's
+   * own miles (Document | Historical | Google | Manual with a reason). Applied through CC-2's mileage engine
+   * (setMilesChoice) after the settlement is posted, so driver pay — rate × the settlement's miles — never moves with it.
+   * Omitted field = 'document'.
+   */
+  miles_choice?: SettlementCreatorMilesChoice | null;
   /** Driver empty-miles rate ($/mi). When null, empty miles contribute $0 (operator types extras). */
   empty_rate_cents?: number | null;
   picks?: number | null;
@@ -86,6 +122,10 @@ export type SettlementCreatorFuelLine = {
   card: SettlementCreatorFuelCard;
   load_number?: string | null;
   fuel_type?: "diesel" | "def" | "reefer_diesel";
+  /** D2 — a note stored on the fuel row (e.g. gallons estimated at average price). */
+  notes?: string | null;
+  /** A Relay fill's Relay transaction id (txn_…): the row links to the ingested Relay fill and posts no fuel itself. */
+  relay_transaction_id?: string | null;
   /** ROUND 363-CC2-D — picked at creation. The account wins over the item's default; load_id wins over load_number. */
   item_id?: string | null;
   account_id?: string | null;
@@ -102,7 +142,17 @@ export type SettlementCreatorExpenseLine = {
   is_company_expense: boolean;
   /** PDF flag Reimb. (Drv) — paid back on driver settlement; never Cr 1000 cash. */
   is_reimbursable: boolean;
-  card?: SettlementCreatorFuelCard | null;
+  /**
+   * ROUND 443.6 — how a company expense was paid: relay / dreamline (card rail, paid now) or owed (A/P bill to the
+   * vendor). Required on every company expense; no default (law doc §3: a record with no payment account is an orphan).
+   */
+  card?: SettlementCreatorExpensePaymentSource | null;
+  /** ROUND 443.6 — the vendor (by name, as the fuel lines), the vendor's own document number (settlement INVOICE
+   *  column, e.g. 2870483), and the source quantity / unit (gallons of DEF). */
+  vendor_name?: string | null;
+  vendor_document_number?: string | null;
+  quantity?: number | null;
+  unit_of_measure?: string | null;
   /** ROUND 363-CC2-D — picked at creation. The account wins over the item's default; load_id wins over load_number. */
   item_id?: string | null;
   account_id?: string | null;
@@ -113,6 +163,9 @@ export type SettlementCreatorMoneyLine = {
   description: string;
   amount_cents: number;
   load_number?: string | null;
+  /** Product/service catalog id (deductions). */
+  item_id?: string | null;
+  quantity?: number | null;
 };
 
 export type SettlementCreatorAdvanceLine = {
@@ -121,6 +174,10 @@ export type SettlementCreatorAdvanceLine = {
   load_number?: string | null;
   /** When set, advance links as a bill payment against that load's driver bill. */
   linked_driver_bill_id?: string | null;
+  /** Resolved from load_number when omitted — ties the advance bill payment to the load. */
+  load_id?: string | null;
+  /** The advance date (YYYY-MM-DD). Owner 9:46 PM CT 2026-10-10: the advance pays the bill of the load the driver was on THAT DAY. */
+  date?: string | null;
 };
 
 export type SettlementCreatorAdditionalPayLine = {
@@ -128,6 +185,9 @@ export type SettlementCreatorAdditionalPayLine = {
   amount_cents: number;
   load_number?: string | null;
   pay_kind?: "detention" | "layover" | "bonus" | "stop_pay" | "other";
+  /** Product/service catalog id (additional driver pay). */
+  item_id?: string | null;
+  quantity?: number | null;
 };
 
 export type SettlementCreatorDraft = {
@@ -143,6 +203,8 @@ export type SettlementCreatorDraft = {
   unit_id?: string | null;
   trailer_equipment_number?: string | null;
   trailer_id?: string | null;
+  /** LEAD 443.109 — the operator's explicit "No trailer (bobtail / power only)" when the document names no trailer. */
+  trailer_none?: boolean;
   period_start: string; // YYYY-MM-DD
   period_end: string;
   loads: SettlementCreatorLoadBlock[];
@@ -182,6 +244,8 @@ export type SettlementCreatorDraft = {
    * Creator settlement + companion docs then repost. FE confirms; never silent.
    */
   edit_void_repost?: boolean;
+  /** Lead 443.36 — salaried driver: loads carry no per-load pay; the salary is an additional_pay line. */
+  salaried?: boolean;
   /** Optional uploaded AT PDF (docs.files id). */
   source_pdf_file_id?: string | null;
 };
@@ -193,7 +257,7 @@ export type SettlementCreatorJeLine = {
   debit_cents: number;
   credit_cents: number;
   memo: string;
-  section: "fuel" | "expense" | "mileage" | "accessorial" | "advance" | "escrow" | "deduction" | "reimbursement" | "invoice" | "factoring" | "admin_fee" | "other";
+  section: "fuel" | "expense" | "mileage" | "accessorial" | "advance" | "escrow" | "deduction" | "reimbursement" | "invoice" | "factoring" | "admin_fee" | "other" | "posted";
 };
 
 /** ROUND 326 item 18 — the close engine's figures for this settlement (the ONE calculator Post writes with). */
@@ -214,6 +278,8 @@ export type SettlementCreatorCloseTotals = {
 export type SettlementCreatorPreview = {
   /** Present when the preview ran through the posting engine (previewSettlementCreatorThroughClose). */
   close_totals?: SettlementCreatorCloseTotals | null;
+  /** Lead 443.57 — the rehearsal's per-load miles (value + source + Historical/Google), read before the rollback. */
+  miles_choices?: SettlementCreatorPostResult["miles_choices"] | null;
   je_lines: SettlementCreatorJeLine[];
   debit_total_cents: number;
   credit_total_cents: number;
@@ -234,6 +300,8 @@ export type SettlementCreatorPostResult = {
   display_id: string;
   load_ids: string[];
   expense_ids: string[];
+  /** 443.110 G4 — vendor bills for company expenses owed to the vendor (posted; voided on Edit). */
+  owed_bill_ids?: string[];
   fuel_transaction_ids: string[];
   advance_ids: string[];
   journal_entry_ids: string[];
@@ -243,4 +311,14 @@ export type SettlementCreatorPostResult = {
   factoring_advance_ids?: string[];
   preview: SettlementCreatorPreview;
   close_totals?: SettlementCreatorCloseTotals | null;
+  /** Lead 443.57 — per load, each miles field's saved value + source + both recommendations (CC-2's engine). */
+  miles_choices?: Array<{ load_id: string; load_number: string; fields: Record<"practical" | "short" | "empty", { value: number | null; source: string | null; historical: number | null; google: number | null }> }>;
 };
+
+/** Lead 443.57 — per-field miles choice on a Creator load (see SettlementCreatorLoadDraft.miles_choice). */
+export type SettlementCreatorMilesFieldChoice = {
+  source: "document" | "historical" | "google" | "manual";
+  manual_value?: number | null;
+  reason?: string | null;
+};
+export type SettlementCreatorMilesChoice = Partial<Record<"practical" | "short" | "empty", SettlementCreatorMilesFieldChoice>>;

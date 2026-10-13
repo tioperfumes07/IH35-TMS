@@ -8,6 +8,7 @@
  */
 import { AmountLink } from "../../components/shared/AmountLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useMemo, useState, type ReactNode } from "react";
 import { useAuth } from "../../auth/useAuth";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -60,6 +61,7 @@ type Filters = {
 const NO_FILTERS: Filters = { accountIds: [], types: [], classIds: [], itemIds: [], loadIds: [], truckIds: [], driverIds: [], trailerIds: [], vendorIds: [], search: "" };
 
 /** ROUND 370 (owner) — the register's columns. Optional ones are added from the Columns chooser; the choice is per viewer. */
+type BatchRow = Awaited<ReturnType<typeof listReclassifyBatches>>["batches"][number];
 type ColKey = "date" | "type" | "num" | "name" | "item" | "memo" | "account_no" | "account" | "load" | "truck" | "driver" | "trailer" | "vendor" | "class" | "debit" | "credit" | "amount" | "balance";
 const COLUMNS: Array<{ key: ColKey; label: string; sort?: SortKey; optional?: boolean; right?: boolean; entityKind?: "load" }> = [
   { key: "date", label: "Date", sort: "date" },
@@ -248,7 +250,6 @@ export function ReclassifyTransactionsPage() {
   const facetOptions = (k: keyof ReclassifyFacets) => ((facetsQ.data as ReclassifyFacets | undefined)?.[k] ?? []).map((o: ReclassifyFacet) => ({ value: o.id, label: `${k === "types" ? o.label.replace(/_/g, " ") : o.label} (${o.n})` }));
   const accountOptions = useMemo(() => (accountsQ.data?.accounts ?? []).map((a) => ({ value: a.account_id, label: formatAccountDisplayLabel({ account_name: a.account_name, account_number: a.account_number }, { showNumber: showAccountNumbers }) })), [accountsQ.data, showAccountNumbers]);
   const toggleSort = (key: SortKey) => { setSort((cur) => (cur.key === key ? { key, dir: cur.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" })); setOffset(0); setGotoPageDraft("1"); };
-  const sortMark = (key: SortKey) => (sort.key === key ? (sort.dir === "asc" ? " ▲" : " ▼") : "");
   const toggle = (l: ReclassifyLine) => { if (notReclassifiable(l)) return; setSelected((prev) => { const n = new Map(prev); if (n.has(l.posting_id)) n.delete(l.posting_id); else n.set(l.posting_id, l); return n; }); };
   const togglePage = () => setSelected((prev) => { const n = new Map(prev); if (pageAllSelected) selectableLines.forEach((l) => n.delete(l.posting_id)); else selectableLines.forEach((l) => n.set(l.posting_id, l)); return n; });
 
@@ -434,46 +435,55 @@ export function ReclassifyTransactionsPage() {
               ) : null}
               {linesQ.error ? <ListErrorState {...formatQueryErrorDetail(linesQ.error)} onRetry={() => void linesQ.refetch()} /> : null}
               <div className="mt-1 overflow-x-auto rounded border border-gray-200 bg-white">
-                <table className="w-full text-xs" data-testid="reclassify-grid" data-b5-account-no-col="1">
-                  <thead className="bg-[#F7F8FA] text-center uppercase tracking-wide text-gray-600">
-                    <tr>
-                      <th className="p-2 w-6"></th>
-                      {shownCols.map((c) =>
-                        c.key === "account_no" ? (
-                          <th key={c.key} className="p-2 text-center" data-testid="reclassify-col-account-no">{c.label}</th>
-                        ) : c.sort ? (
-                          <th key={c.key} className="p-2 text-center" aria-sort={sort.key === c.sort ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
-                            <button type="button" className="font-bold uppercase" onClick={() => toggleSort(c.sort!)} data-testid={`reclassify-sort-${c.sort}`}>{c.label}{sortMark(c.sort)}</button>
-                          </th>
-                        ) : (
-                          <th key={c.key} className="p-2 text-center" data-testid={`reclassify-col-${c.key.replace("_", "-")}`}>{c.label}</th>
-                        ),
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {linesQ.isLoading ? <tr><td colSpan={shownCols.length + 1} className="p-3 text-[#4B5563]">Finding…</td></tr> : null}
-                    {/* LAW 368.3 — "could not read" and "nothing here" are different sentences. */}
-                    {linesQ.error ? <tr><td colSpan={shownCols.length + 1} className="p-3 font-semibold text-red-700" data-testid="reclassify-could-not-read">Could not read the transactions for this selection — the list below is not empty, it failed to load.</td></tr> : null}
-                    {!linesQ.isLoading && !linesQ.error && lines.length === 0 ? <tr><td colSpan={shownCols.length + 1} className="p-3 text-[#4B5563]" data-testid="reclassify-genuinely-empty">No transactions in this period{oneAccountId ? " for this account" : ""} (from {formatDateQboList(applied!.from)} to {formatDateQboList(applied!.to)}).</td></tr> : null}
-                    {lines.map((l) => {
-                      const why = notReclassifiable(l);
-                      const doc = docTarget(l);
-                      return (
-                      <tr key={l.posting_id} className={`border-t border-gray-100 ${selected.has(l.posting_id) ? "bg-[#F7F8FA]" : ""} ${why ? "text-[#4B5563]" : ""}`} data-testid={`reclassify-line-${l.posting_id}`} title={why ?? undefined}>
-                        <td className="p-2"><input type="checkbox" checked={selected.has(l.posting_id)} onChange={() => toggle(l)} disabled={!!why} aria-label={why ? `Not reclassifiable: ${why}` : "Select line"} /></td>
-                        {shownCols.map((c) =>
-                          c.key === "account_no" ? (
-                            <td key={c.key} className="p-2 whitespace-nowrap" data-b5-account-no="1">{cell(c.key, l, doc)}</td>
-                          ) : (
-                            <td key={c.key} className={`p-2${c.right ? " text-right tabular-nums" : ""}${c.key === "date" ? " whitespace-nowrap" : ""}${c.key === "memo" ? " max-w-[22rem] truncate" : ""}`} title={c.key === "memo" ? l.description ?? "" : undefined}>{c.key === "balance" ? <MoneyCell cents={oneAccountId ? acctNatural(l.running_balance_cents) : null} format={formatCurrencyFromCents} drill={{ none: "Running balance of this account through this line — each line opens its own document" }} /> : cell(c.key, l, doc)}</td>
-                          ),
-                        )}
-                      </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                {/* LAW 368.3 — "could not read" and "nothing here" are different sentences. */}
+                {linesQ.error ? <div className="p-3 text-xs font-semibold text-red-700" data-testid="reclassify-could-not-read">Could not read the transactions for this selection — the list below is not empty, it failed to load.</div> : null}
+                {!linesQ.isLoading && !linesQ.error && lines.length === 0 ? <div className="p-3 text-xs text-[#4B5563]" data-testid="reclassify-genuinely-empty">No transactions in this period{oneAccountId ? " for this account" : ""} (from {formatDateQboList(applied!.from)} to {formatDateQboList(applied!.to)}).</div> : null}
+                {!linesQ.error && (linesQ.isLoading || lines.length > 0) ? (
+                  <div data-b5-account-no-col="1">
+                    <ParityTable<ReclassifyLine>
+                      storageKey="reclassify-grid"
+                      tableTestId="reclassify-grid"
+                      rows={lines}
+                      rowKey={(l) => l.posting_id}
+                      loading={linesQ.isLoading}
+                      rowTestId={(l) => `reclassify-line-${l.posting_id}`}
+                      rowClassName={(l) => `${selected.has(l.posting_id) ? "bg-[#F7F8FA]" : ""} ${notReclassifiable(l) ? "text-[#4B5563]" : ""}`}
+                      // The server sorts and pages (offset / PAGE); ParityTable paints the arrow, the page owns the order and the pager below.
+                      sortKey={COLUMNS.find((c) => c.sort === sort.key)?.key}
+                      sortDirection={sort.dir}
+                      onSortChange={(key) => { const col = COLUMNS.find((c) => c.key === key); if (col?.sort) toggleSort(col.sort); }}
+                      sortMode="external"
+                      hidePager
+                      initialPageSize={PAGE}
+                      suppressToolbarSearch
+                      suppressToolbarRange
+                      columns={[
+                        {
+                          key: "select", label: "Select", sortable: false, minWidth: 28,
+                          render: (l) => {
+                            const why = notReclassifiable(l);
+                            return <input type="checkbox" checked={selected.has(l.posting_id)} onChange={() => toggle(l)} disabled={!!why} aria-label={why ? `Not reclassifiable: ${why}` : "Select line"} title={why ?? undefined} />;
+                          },
+                        },
+                        ...shownCols.map((c): ParityColumn<ReclassifyLine> => ({
+                          key: c.key,
+                          label: c.label,
+                          sortable: Boolean(c.sort),
+                          kind: c.right ? "money" : undefined,
+                          testId: c.key === "account_no" ? "reclassify-col-account-no" : c.sort ? `reclassify-sort-${c.sort}` : `reclassify-col-${c.key.replace("_", "-")}`,
+                          allowWrap: c.key !== "date",
+                          render: (l) => {
+                            const doc = docTarget(l);
+                            if (c.key === "account_no") return <span className="whitespace-nowrap" data-b5-account-no="1">{cell(c.key, l, doc)}</span>;
+                            if (c.key === "memo") return <span className="block max-w-[22rem] truncate" title={l.description ?? ""}>{cell(c.key, l, doc)}</span>;
+                            if (c.key === "balance") return <MoneyCell cents={oneAccountId ? acctNatural(l.running_balance_cents) : null} format={formatCurrencyFromCents} drill={{ none: "Running balance of this account through this line — each line opens its own document" }} />;
+                            return cell(c.key, l, doc);
+                          },
+                        })),
+                      ]}
+                    />
+                  </div>
+                ) : null}
               </div>
               <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-[#4B5563]" data-b5-goto-page="1" data-testid="reclassify-pager">
                 <span>{linesQ.data ? `${Math.min(offset + 1, linesQ.data.total_lines)}–${Math.min(offset + PAGE, linesQ.data.total_lines)} of ${linesQ.data.total_lines}` : ""}</span>
@@ -522,19 +532,27 @@ export function ReclassifyTransactionsPage() {
 
           <div className="mt-3 rounded border border-gray-200 bg-white" data-testid="reclassify-batches">
             <div className="border-b border-gray-200 px-2 py-1 text-xs font-bold uppercase tracking-wide text-gray-600">Reclassify batches</div>
-            <table className="w-full text-xs">
-              <thead className="bg-[#F7F8FA] text-left"><tr><th className="p-2">When</th><th className="p-2">By</th><th className="p-2">Change</th><th className="p-2">Reason</th><th className="p-2 text-right">Lines</th><th className="p-2 text-right">Moved</th><th className="p-2">Status</th><th className="p-2"></th></tr></thead>
-              <tbody>
-                {(batchesQ.data?.batches ?? []).map((b) => (
-                  <tr key={b.id} className="border-t border-gray-100">
-                    <td className="p-2 whitespace-nowrap">{formatDateQboList(b.created_at)}</td>
-                    <td className="p-2">{b.created_by_email ?? "—"}</td>
-                    <td className="p-2">{[b.to_account_name ? `→ ${formatAccountDisplayLabel({ account_name: b.to_account_name, account_number: b.to_account_number }, { showNumber: showAccountNumbers })}` : null, b.to_class_name ? `class → ${b.to_class_name}` : null, b.to_location_name ? `location → ${b.to_location_name}` : null, b.to_entity_uuid ? `${b.to_entity_type ?? "entity"} → ${entityLabel(b.to_entity_name ?? null, b.to_entity_uuid, b.to_entity_type === "vendor" ? "Vendor" : b.to_entity_type === "customer" ? "Customer" : b.to_entity_type === "driver" ? "Driver" : b.to_entity_type === "unit" ? "Unit" : "Entity")}` : null].filter(Boolean).join(" · ")}</td>
-                    <td className="p-2 max-w-[18rem] truncate" title={b.reason}>{b.reason}</td>
-                    <td data-quantity className="p-2 text-right tabular-nums">{b.lines_applied}/{b.lines_requested}{b.lines_refused ? ` (${b.lines_refused} refused)` : ""}</td>
-                    <td className="p-2"><MoneyCell cents={b.amount_cents_moved} format={formatCurrencyFromCents} drill={{ none: "Amount this batch moved — its reclassification entries show on each reclassified line (marked reclassified)" }} /></td>
-                    <td className="p-2">{b.status}{b.undone_at ? ` ${formatDateQboList(b.undone_at)}` : ""}{b.override_refusals ? <span className="ml-1 font-semibold text-[#1F2A44]" data-testid={`reclassify-batch-override-${b.id}`}>· owner override</span> : null}</td>
-                    <td className="p-2">
+            <ParityTable<BatchRow>
+              storageKey="reclassify-batches"
+              tableTestId="reclassify-batches"
+              rows={batchesQ.data?.batches ?? []}
+              rowKey={(b) => b.id}
+              loading={batchesQ.isLoading}
+              emptyText="No batches yet."
+              suppressToolbarRange
+              initialPageSize={25}
+              columns={[
+                { key: "created_at", label: "When", render: (b) => <span className="whitespace-nowrap">{formatDateQboList(b.created_at)}</span> },
+                { key: "created_by_email", label: "By", render: (b) => b.created_by_email ?? "—" },
+                { key: "change", label: "Change", sortable: false, allowWrap: true, render: (b) => {[b.to_account_name ? `→ ${formatAccountDisplayLabel({ account_name: b.to_account_name, account_number: b.to_account_number }, { showNumber: showAccountNumbers })}` : null, b.to_class_name ? `class → ${b.to_class_name}` : null, b.to_location_name ? `location → ${b.to_location_name}` : null, b.to_entity_uuid ? `${b.to_entity_type ?? "entity"} → ${entityLabel(b.to_entity_name ?? null, b.to_entity_uuid, b.to_entity_type === "vendor" ? "Vendor" : b.to_entity_type === "customer" ? "Customer" : b.to_entity_type === "driver" ? "Driver" : b.to_entity_type === "unit" ? "Unit" : "Entity")}` : null].filter(Boolean).join(" · ")} },
+                { key: "reason", label: "Reason", render: (b) => <span className="block max-w-[18rem] truncate" title={b.reason}>{b.reason}</span> },
+                { key: "lines_applied", label: "Lines", kind: "number", render: (b) => <span data-quantity>{b.lines_applied}/{b.lines_requested}{b.lines_refused ? ` (${b.lines_refused} refused)` : ""}</span> },
+                { key: "amount_cents_moved", label: "Moved", kind: "money", render: (b) => <MoneyCell cents={b.amount_cents_moved} format={formatCurrencyFromCents} drill={{ none: "Amount this batch moved — its reclassification entries show on each reclassified line (marked reclassified)" }} /> },
+                { key: "status", label: "Status", render: (b) => <>{b.status}{b.undone_at ? ` ${formatDateQboList(b.undone_at)}` : ""}{b.override_refusals ? <span className="ml-1 font-semibold text-[#1F2A44]" data-testid={`reclassify-batch-override-${b.id}`}>· owner override</span> : null}</> },
+                {
+                  key: "undo", label: "Undo", sortable: false, overflowVisible: true,
+                  render: (b) => (
+                    <>
                       {b.status === "applied" && b.lines_applied > 0 ? (
                         undoTarget === b.id ? (
                           <span className="flex items-center gap-1">
@@ -546,12 +564,11 @@ export function ReclassifyTransactionsPage() {
                           <Button type="button" size="sm" variant="tertiary" onClick={() => setUndoTarget(b.id)} data-testid={`reclassify-undo-${b.id}`}>Undo</Button>
                         )
                       ) : null}
-                    </td>
-                  </tr>
-                ))}
-                {batchesQ.data && batchesQ.data.batches.length === 0 ? <tr><td colSpan={8} className="p-2 text-[#4B5563]">No batches yet.</td></tr> : null}
-              </tbody>
-            </table>
+                    </>
+                  ),
+                },
+              ]}
+            />
             {undoMut.error ? <div className="p-2"><ListErrorState {...formatQueryErrorDetail(undoMut.error)} onRetry={() => undoMut.reset()} /></div> : null}
           </div>
         </section>

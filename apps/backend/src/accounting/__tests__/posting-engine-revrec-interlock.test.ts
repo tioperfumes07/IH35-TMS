@@ -80,7 +80,8 @@ function installQueryMock({ sourceLoadId, latchRows, loadStatus = "in_transit" }
     if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
     if (sql.includes("load_revenue_recognition_postings")) return { rows: latchRows };
     // ACCT-F59 second arm reads the load's own status (order-independent interlock).
-    if (sql.includes("FROM mdata.loads")) return { rows: [{ status: loadStatus }] };
+    // The posting INSERT also names mdata.loads (its same-company load check, 443.110 G8) — only the load READ answers here.
+    if (sql.includes("FROM mdata.loads") && !sql.includes("INSERT INTO")) return { rows: [{ status: loadStatus }] };
     if (sql.includes("FROM accounting.invoice_lines")) {
       return {
         rows: [

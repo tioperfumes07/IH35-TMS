@@ -14,9 +14,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLOSE = "apps/backend/src/driver-finance/settlement-payrun-close.service.ts";
 const RESTORE = "apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts";
 
+// 443.99: SETL-F44333 D5 (fe7e5f4ca9) added a 5th out-arg (each deduction's role / load / cents, so the A/P chain applies
+// it to ITS load's bill); the ids are still collected through the 4th — the call may carry further args after it.
 export function problems(close, restore) {
   const p = [];
-  if (!/collectedIds\.push\(r\.id\)/.test(close) || !/loadOtherDeductionsByRole\(client, opco, settlementId, collectedDeductionIds\)/.test(close)) p.push(`${CLOSE}: the close must collect the ids of the deductions it sums`);
+  if (!/collectedIds\.push\(r\.id\)/.test(close) || !/loadOtherDeductionsByRole\(client, opco, settlementId, collectedDeductionIds[,)]/.test(close)) p.push(`${CLOSE}: the close must collect the ids of the deductions it sums`);
   if (!/SET status = 'applied', remaining_balance_cents = 0[\s\S]{0,300}id = ANY\(\$3::uuid\[\]\)/.test(close)) p.push(`${CLOSE}: collected deductions must be stamped status 'applied', remaining 0`);
   if (!/"DEDUCTION_STATE_TRANSITION_FAILED"/.test(close)) p.push(`${CLOSE}: a partial applied-transition must refuse`);
   if (!/SET applied_to_settlement_id = NULL,\s*status = 'pending',\s*remaining_balance_cents = amount_cents/.test(restore)) p.push(`${RESTORE}: the settlement reverser must return deductions to 'pending' at the full amount`);

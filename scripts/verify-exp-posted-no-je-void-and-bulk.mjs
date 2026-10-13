@@ -28,6 +28,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-exp-posted-no-je-void-and-bulk";
 const EXPENSES_FILE = "apps/backend/src/accounting/expenses.routes.ts";
 const BILLS_FILE = "apps/backend/src/accounting/bills.service.ts";
+const HELPER_FILE = "apps/backend/src/accounting/expense-void-reversal.ts";
 const BULK_FILE = "apps/backend/src/bulk/bulk-update.factory.ts";
 const MIGRATION_FILE = "db/migrations/202613310500_expenses_bills_posted_requires_je_check_not_valid.sql";
 
@@ -36,12 +37,30 @@ function read(rel) {
   return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null;
 }
 
-export function assertGuard(expensesSrc, billsSrc, bulkSrc, migrationSrc) {
+export function assertGuard(expensesSrc, billsSrc, bulkSrc, migrationSrc, helperSrc) {
   const errs = [];
   if (!expensesSrc) return [`${EXPENSES_FILE}: missing`];
 
-  if (!/revErr\.code !== "SOURCE_NOT_FOUND"\) throw revErr;/.test(expensesSrc)) {
-    errs.push(`${EXPENSES_FILE}: expense void must catch PostingEngineError SOURCE_NOT_FOUND specifically and fall through to a status-only void, never a fabricated reversal`);
+  // ACCT-F4431310 (2026-10-12) — re-pointed, same intent, stricter.
+  //   old rule: the route catches PostingEngineError SOURCE_NOT_FOUND from an 'expense'-only reversal and falls through to
+  //             a status-only void.
+  //   new rule: the route calls reverseExpenseDocumentInClientTx, which decides POSITIVELY what is live for the document
+  //             (its own 'expense' lines + a fuel receipt's 'fuel_event' entry): nothing live -> a status-only void (still
+  //             never a fabricated reversal); something live -> reversed; any reversal error propagates (no catch).
+  //   why: the SOURCE_NOT_FOUND catch also swallowed the fuel receipt case — a voided fuel receipt document kept its JE live.
+  if (!/await reverseExpenseDocumentInClientTx\(client, \{/.test(expensesSrc)) {
+    errs.push(`${EXPENSES_FILE}: expense void must reverse through reverseExpenseDocumentInClientTx (every live posting of the document)`);
+  }
+  if (/SOURCE_NOT_FOUND"\) throw revErr|code !== "SOURCE_NOT_FOUND"/.test(expensesSrc)) {
+    errs.push(`${EXPENSES_FILE}: expense void must not catch SOURCE_NOT_FOUND — "nothing posted" is decided by reading, never by swallowing a reversal error`);
+  }
+  if (helperSrc !== undefined) {
+    if (!helperSrc) errs.push(`${HELPER_FILE}: missing`);
+    else {
+      if (!/if \(live\.expense_source_live\) \{/.test(helperSrc)) errs.push(`${HELPER_FILE}: the document's own 'expense' lines must be reversed only when live (an unposted document is a status-only void, never a fabricated reversal)`);
+      if (!/for \(const fillId of live\.fuel_event_sources\)[\s\S]{0,200}entityType: "fuel_event"/.test(helperSrc)) errs.push(`${HELPER_FILE}: a fuel receipt document's live 'fuel_event' entry must be reversed (postVoidReversal fuel_event)`);
+      if (/\bcatch\b/.test(helperSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, ""))) errs.push(`${HELPER_FILE}: a reversal error must never be swallowed (no catch)`);
+    }
   }
 
   if (!billsSrc) errs.push(`${BILLS_FILE}: missing`);
@@ -92,14 +111,19 @@ function selftest() {
   const goodBills = read(BILLS_FILE) ?? "";
   const goodBulk = read(BULK_FILE) ?? "";
   const goodMigration = read(MIGRATION_FILE) ?? "";
-  const goodErrs = assertGuard(goodExpenses, goodBills, goodBulk, goodMigration);
+  const goodHelper = read(HELPER_FILE) ?? "";
+  const goodErrs = assertGuard(goodExpenses, goodBills, goodBulk, goodMigration, goodHelper);
   if (goodErrs.length) {
     console.error(`${LABEL} --selftest FAIL good (${goodErrs.length}): ${goodErrs.join("; ")}`);
     process.exit(1);
   }
 
   const mutations = [
-    ["bad1-expense-void-not-fixed", assertGuard(goodExpenses.replace('revErr.code !== "SOURCE_NOT_FOUND") throw revErr;', "throw revErr;"), goodBills, goodBulk, goodMigration)],
+    ["bad1-expense-void-bypasses-helper", assertGuard(goodExpenses.replace("await reverseExpenseDocumentInClientTx(client, {", "await somethingElse(client, {"), goodBills, goodBulk, goodMigration, goodHelper)],
+    ["bad1b-expense-void-swallows-source-not-found", assertGuard(goodExpenses + '\nif (revErr.code !== "SOURCE_NOT_FOUND") throw revErr;', goodBills, goodBulk, goodMigration, goodHelper)],
+    ["bad1c-helper-fabricates-reversal-when-nothing-live", assertGuard(goodExpenses, goodBills, goodBulk, goodMigration, goodHelper.replace("if (live.expense_source_live) {", "if (true) {"))],
+    ["bad1d-helper-skips-fuel-receipt", assertGuard(goodExpenses, goodBills, goodBulk, goodMigration, goodHelper.replace('entityType: "fuel_event", entityId: fillId', 'entityType: "expense", entityId: fillId'))],
+    ["bad1e-helper-swallows-reversal-error", assertGuard(goodExpenses, goodBills, goodBulk, goodMigration, goodHelper.replace("for (const fillId of live.fuel_event_sources) {", "for (const fillId of live.fuel_event_sources) { try { void 0; } catch { /* x */ }"))],
     ["bad2-bill-void-not-fixed", assertGuard(goodExpenses, goodBills.replace("const hasPostedBatch = Boolean(postedBatchRes.rows[0]?.exists);\n\n  const reversal = hasPostedBatch", "const hasPostedBatch = true;\n\n  const reversal = hasPostedBatch"), goodBulk, goodMigration)],
     ["bad3-bill-reversal-not-null-safe", assertGuard(goodExpenses, goodBills.replace(/reversal\?\.journal_entry_id \?\? null/g, "reversal.journal_entry_id"), goodBulk, goodMigration)],
     ["bad4-no-prevalidation-error-class", assertGuard(goodExpenses, goodBills, goodBulk.replace(/class BulkPreValidationError extends Error/g, "class RemovedError extends Error"), goodMigration)],
@@ -123,7 +147,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const errs = assertGuard(read(EXPENSES_FILE), read(BILLS_FILE), read(BULK_FILE), read(MIGRATION_FILE));
+const errs = assertGuard(read(EXPENSES_FILE), read(BILLS_FILE), read(BULK_FILE), read(MIGRATION_FILE), read(HELPER_FILE));
 if (errs.length) {
   console.error(`[${LABEL}] FAILED — ${errs.length} issue(s):`);
   for (const e of errs) console.error(`  ✗ ${e}`);

@@ -75,6 +75,10 @@ describe("PaymentDetailPage mutation error handling", () => {
 
     const unapplyButton = await screen.findByRole("button", { name: "Unapply" });
     fireEvent.click(unapplyButton);
+    // 443.104 — Unapply is confirmed before it is sent: nothing reaches the API until the dialog's Unapply is clicked.
+    expect(unapplyPaymentMock).not.toHaveBeenCalled();
+    const unapplyButtons = await screen.findAllByRole("button", { name: "Unapply" });
+    fireEvent.click(unapplyButtons[unapplyButtons.length - 1]!);
 
     await waitFor(() => expect(unapplyPaymentMock).toHaveBeenCalledOnce());
     await waitFor(() =>

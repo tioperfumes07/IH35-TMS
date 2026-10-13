@@ -1,10 +1,5 @@
-import type { PoolClient } from "pg";
 import { withLuciaBypass } from "../auth/db.js";
-import {
-  COUNT_NAME_CONFLICTS_SQL,
-  CREATE_MISSING_ITEMS_SQL,
-  HEAL_ITEM_DRIFT_SQL,
-} from "./items-write-sql.js";
+import { refuseQboNativeWrite } from "./qbo-native-write-refused.js";
 
 export type ItemsReconcileResult = {
   driftDetected: number;
@@ -22,73 +17,14 @@ export type ItemsReconcileResult = {
   reconciledAt: string;
 };
 
-async function markLocalOnlyDrift(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  // Entity-scoped: runs under lucia-bypass (RLS off), so without operating_company_id this would
-  // drift-flag EVERY entity's items. Same fix the COA reconciler already carries.
-  const res = await client.query<{ c: string }>(
-    `
-      WITH updated AS (
-        UPDATE catalogs.items
-        SET
-          qbo_sync_status = 'drift_detected',
-          qbo_sync_error = 'local row has no qbo_item_id link',
-          updated_at = now()
-        WHERE operating_company_id = $1::uuid
-          AND qbo_item_id IS NULL
-          AND deactivated_at IS NULL
-          AND COALESCE(qbo_sync_status, '') <> 'local_only'
-        RETURNING 1
-      )
-      SELECT COUNT(*)::text AS c FROM updated
-    `,
-    [operatingCompanyId]
-  );
-  return Number(res.rows[0]?.c ?? 0);
-}
-
-async function createMissingFromMirror(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(CREATE_MISSING_ITEMS_SQL, [
-    operatingCompanyId,
-    `Reconciled from QBO mirror (${operatingCompanyId})`,
-  ]);
-  return Number(res.rows[0]?.c ?? 0);
-}
-
-async function healFieldDrift(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(HEAL_ITEM_DRIFT_SQL, [operatingCompanyId]);
-  return Number(res.rows[0]?.c ?? 0);
-}
-
-async function countNameConflictsRetained(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(COUNT_NAME_CONFLICTS_SQL, [operatingCompanyId]);
-  return Number(res.rows[0]?.c ?? 0);
-}
-
-async function countLocalOnly(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(
-    `SELECT COUNT(*)::text AS c FROM catalogs.items WHERE operating_company_id = $1::uuid AND qbo_sync_status = 'local_only' AND deactivated_at IS NULL`,
-    [operatingCompanyId]
-  );
-  return Number(res.rows[0]?.c ?? 0);
-}
-
+/**
+ * ACCT-F4431380 (Lead 443.137 item 9e) — REFUSED BY NAME. This formerly created, healed and drift-flagged
+ * native catalogs.items rows from the QuickBooks mirror (mdata.qbo_items). QuickBooks is a read-only archive: a QBO
+ * reconciler never writes a native master table. Throws QboNativeWriteRefusedError (QBO_NATIVE_WRITE_REFUSED)
+ * instead of reporting a reconcile that did nothing. The read-only sync status below is unchanged.
+ */
 export async function reconcileItems(operatingCompanyId: string): Promise<ItemsReconcileResult> {
-  const reconciledAt = new Date().toISOString();
-  let driftDetected = 0;
-  let createdFromQbo = 0;
-  let healed = 0;
-  let localOnly = 0;
-  let nameConflictsRetained = 0;
-
-  await withLuciaBypass(async (client) => {
-    driftDetected = await markLocalOnlyDrift(client, operatingCompanyId);
-    createdFromQbo = await createMissingFromMirror(client, operatingCompanyId);
-    healed = await healFieldDrift(client, operatingCompanyId);
-    localOnly = await countLocalOnly(client, operatingCompanyId);
-    nameConflictsRetained = await countNameConflictsRetained(client, operatingCompanyId);
-  });
-
-  return { driftDetected, createdFromQbo, healed, localOnly, nameConflictsRetained, reconciledAt };
+  return refuseQboNativeWrite("qbo-sync/items-reconciler#reconcileItems", ["catalogs.items"], operatingCompanyId);
 }
 
 export type ItemsSyncStatus = {

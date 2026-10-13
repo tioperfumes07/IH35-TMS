@@ -12,6 +12,9 @@
 // storeMatch, passing the actor explicitly (never a session var) -- that event is the real,
 // reliable "this went through the accept handler" signal this guard checks for.
 import pg from "pg";
+import { createRequire } from "node:module";
+// 443.100: TLS by host (Neon keeps TLS; CI/local postgres has none) — a hard-coded ssl option cannot connect in CI.
+const { inferPgSslOption } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 
 export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
 
@@ -56,7 +59,7 @@ async function main() {
     console.log(`${LABEL}: SKIP — no DATABASE_URL (live-data invariant by design).`);
     process.exit(0);
   }
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: inferPgSslOption(process.env.DATABASE_URL) });
   const client = await pool.connect();
   try {
     await client.query("BEGIN READ ONLY");

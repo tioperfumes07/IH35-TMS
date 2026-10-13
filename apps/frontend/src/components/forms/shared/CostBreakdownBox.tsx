@@ -4,6 +4,7 @@ import { NumberInput } from "../NumberInput";
 import { ParityTable } from "../../parity/ParityTable";
 import { ReferenceSelect } from "../../parity/ReferenceSelect";
 import { QBO_MONEY_CELL_CLASS, formatUsdTable } from "../../../lib/money";
+import { WoCategoryLineItemSelect } from "./WoLineItemSelect";
 
 export type CategoryLine = {
   id: string;
@@ -14,6 +15,8 @@ export type CategoryLine = {
   expense_category_kind?: string;
   /** ECON-012 — expense_category_account_map.category_code from catalog metadata. */
   expense_category_map_code?: string;
+  /** ACCT-F4431382 — WO mode: the catalogs.items row this category line bills (its account = the bill line account). */
+  item_id?: string;
   description: string;
   quantity: number;
   unit_cost: number;
@@ -81,6 +84,9 @@ type Props = {
    * Unit/Rate | Total). Default keeps Category | Description | Qty | Cost | Total — this box is SHARED
    * with the bill/expense forms, so the WO labels must not leak into them (FIX-4). */
   variant?: "default" | "wo";
+  /** ACCT-F4431382 — WO mode: set a Section A line's item. When given (with operatingCompanyId), Section A
+   * shows an Item column: the items that post to the line's category account, the single one picked for you. */
+  onSectionAItemChange?: (lineId: string, itemId: string | null) => void;
 };
 
 function emptyCategoryLine(): CategoryLine {
@@ -129,7 +135,9 @@ export function CostBreakdownBox({
   onOpenLocationMap,
   readOnly = false,
   variant = "default",
+  onSectionAItemChange,
 }: Props) {
+  const showSectionAItem = variant === "wo" && Boolean(operatingCompanyId) && Boolean(onSectionAItemChange);
   // FIX-4: WO mode uses the render-v5 §C column labels; default keeps the bill/expense labels unchanged.
   const col =
     variant === "wo"
@@ -175,6 +183,8 @@ export function CostBreakdownBox({
                                 ? {
                                     ...entry,
                                     expense_category_uuid: next ?? undefined,
+                                    // ACCT-F4431382: the item belongs to the old category's account — re-pick it.
+                                    ...(showSectionAItem && next !== entry.expense_category_uuid ? { item_id: undefined } : {}),
                                     expense_category_code: match?.code,
                                     expense_category_kind: match?.category_kind,
                                     expense_category_map_code: match?.category_map_code,
@@ -199,6 +209,7 @@ export function CostBreakdownBox({
                                     ...entry,
                                     expense_category_uuid: opt.value,
                                     expense_category_code: undefined,
+                                    ...(showSectionAItem ? { item_id: undefined } : {}),
                                   }
                                 : entry
                             )
@@ -231,6 +242,24 @@ export function CostBreakdownBox({
                       </div>
                     ),
                 },
+                ...(showSectionAItem && operatingCompanyId && onSectionAItemChange
+                  ? [
+                      {
+                        key: "item",
+                        label: "Item",
+                        render: (line: CategoryLine) => (
+                          <WoCategoryLineItemSelect
+                            lineId={line.id}
+                            operatingCompanyId={operatingCompanyId}
+                            accountId={line.expense_category_uuid || null}
+                            value={line.item_id || null}
+                            onChange={(itemId) => onSectionAItemChange(line.id, itemId)}
+                            readOnly={readOnly}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
                 {
                   key: "description",
                   label: col.description,

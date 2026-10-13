@@ -39,12 +39,14 @@ const CHECKS = [
   {
     name: "parts-inventory-posting poster reuses the real createBill function",
     file: "apps/backend/src/accounting/parts-inventory-posting/poster.service.ts",
-    pattern: /import \{ createBill \}/,
+    // ROUND 301 (bce4805935): posters write through the in-transaction variant of the SAME bill writer, so the bill,
+    // its GL post and the idempotency latch commit together. Either name is the real writer; a hand-rolled INSERT is not.
+    pattern: /import \{[^}]*\bcreateBill(?:InClientTx)?\b[^}]*\} from "\.\.\/bills\.service\.js"/,
   },
   {
     name: "parts-inventory-posting poster reuses the real createJournalEntry function",
     file: "apps/backend/src/accounting/parts-inventory-posting/poster.service.ts",
-    pattern: /import \{ createJournalEntry \}/,
+    pattern: /import \{[^}]*\bcreateJournalEntry(?:OnClient)?\b[^}]*\} from "\.\.\/journal-entries\.service\.js"/,
   },
   {
     name: "PartsInventoryTable.tsx wires the real recordPartsPurchase API",
@@ -80,6 +82,17 @@ if (process.argv.includes("--selftest")) {
   const goodFailures = checkAll((f) => GOOD_FIXTURES[f] ?? null);
   if (goodFailures.length) {
     console.error(`[${LABEL}] selftest FAIL: known-good fixture should pass — ${goodFailures.join("; ")}`);
+    process.exit(1);
+  }
+  const current = { ...GOOD_FIXTURES, "apps/backend/src/accounting/parts-inventory-posting/poster.service.ts": 'import { createBillInClientTx } from "../bills.service.js";\nimport { createJournalEntryOnClient } from "../journal-entries.service.js";' };
+  const currentFailures = checkAll((f) => current[f] ?? null);
+  if (currentFailures.length) {
+    console.error(`[${LABEL}] selftest FAIL: the ROUND 301 in-transaction writers should pass — ${currentFailures.join("; ")}`);
+    process.exit(1);
+  }
+  const foreign = { ...GOOD_FIXTURES, "apps/backend/src/accounting/parts-inventory-posting/poster.service.ts": 'import { createBillInClientTx } from "./my-own-bills.js";\nimport { createJournalEntryOnClient } from "./my-own-je.js";' };
+  if (checkAll((f) => foreign[f] ?? null).length !== 2) {
+    console.error(`[${LABEL}] selftest FAIL: a writer imported from anywhere but the real bills / journal-entries service must fail`);
     process.exit(1);
   }
   const regressedFailures = checkAll(() => "nothing matches here");

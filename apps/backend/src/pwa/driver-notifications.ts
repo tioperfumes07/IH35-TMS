@@ -2,6 +2,7 @@
  * LV-DRIVER-PWA-NOTIFY-SILENTLY-DROPPED — shared insert for pwa.driver_notifications.
  * Never bare-return when the table is missing: record an outbox undelivered event.
  */
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 export type QueryableClient = {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
@@ -68,4 +69,37 @@ export async function insertDriverPwaNotification(
   );
   if (!inserted.rows[0]?.id) throw new Error("pwa_driver_notification_insert_failed");
   return true;
+}
+
+
+/**
+ * Lead 443.42 #7: hide driver-app notices that should never have reached a driver (e.g. "Load N dispatched" fired for loads
+ * that already ran, recorded by the Settlement Creator before 443.41 stopped it). Kept in history: the row stays, payload
+ * gains hidden / hidden_reason / hidden_at, read_at is stamped; the inbox never lists a hidden row. Audited per row.
+ */
+export async function hideDriverPwaNotifications(
+  client: QueryableClient,
+  args: { operatingCompanyId: string; ids: string[]; reason: string; actorUserId: string }
+): Promise<string[]> {
+  if (args.ids.length === 0) return [];
+  const res = await client.query(
+    `UPDATE pwa.driver_notifications
+        SET payload = coalesce(payload, '{}'::jsonb) || jsonb_build_object('hidden', true, 'hidden_reason', $3::text, 'hidden_at', now()),
+            read_at = coalesce(read_at, now())
+      WHERE operating_company_id = $1::uuid AND id = ANY($2::uuid[]) AND coalesce(payload->>'hidden', 'false') <> 'true'
+      RETURNING id::text`,
+    [args.operatingCompanyId, args.ids, args.reason]
+  );
+  const hidden = res.rows.map((r) => String(r.id));
+  for (const id of hidden) {
+    await appendCrudAudit(
+      client as never,
+      args.actorUserId,
+      "pwa.driver_notification.hidden",
+      { operating_company_id: args.operatingCompanyId, notification_id: id, reason: args.reason },
+      "info",
+      "443.42"
+    );
+  }
+  return hidden;
 }

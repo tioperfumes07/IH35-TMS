@@ -5,22 +5,29 @@
  * by default but toggle-able (owner order 2026-09-04) -- draft has no such toggle, ever.
  */
 import fs from "node:fs";
+import { register } from 'tsx/esm/api';
+register();
+const { canonicalLoadCostsOpenClause } = await import('../apps/backend/src/dispatch/canonical-active-load-set.ts');
+const normal = canonicalLoadCostsOpenClause('l',false);
+const history = canonicalLoadCostsOpenClause('l',true);
 
 const BACKEND = "apps/backend/src/accounting/load-costs-board.routes.ts";
 
-function violations(backend) {
+function violations(backend, current = normal, voided = history) {
   const errors = [];
-  if (!/AND l\.status <> 'draft'/.test(backend)) errors.push("no unconditional status <> 'draft' predicate in the board's WHERE clause");
+  if (!backend.includes('canonicalLoadCostsOpenClause("l", parsed.data.show_voided)')) errors.push('board does not mount the shared predicate');
+  if (!current.includes("l.status <> 'draft'") || !voided.includes("l.status <> 'draft'")) errors.push("draft must be excluded in both normal and show_voided scopes");
   // The draft exclusion must not be inside the show_voided ternary -- it is unconditional, unlike cancelled.
   const showVoidedLine = backend.match(/\$\{parsed\.data\.show_voided[^}]*\}/);
   if (showVoidedLine && showVoidedLine[0].includes("draft")) errors.push("draft exclusion is gated behind show_voided -- it must be unconditional");
   if (!backend.includes("show_voided")) errors.push("no show_voided toggle for cancelled loads");
-  if (!backend.includes("AND l.status <> 'cancelled'")) errors.push("cancelled loads are not excluded by default");
+  if (!current.includes("l.status NOT IN ('cancelled','voided',")) errors.push("cancelled loads are not excluded by default");
+  if (voided.includes("l.status NOT IN ('cancelled','voided',")) errors.push("show_voided does not allow cancelled loads");
   return errors;
 }
 
-function check(backend) {
-  const errors = violations(backend);
+function check(backend, current = normal, voided = history) {
+  const errors = violations(backend, current, voided);
   if (errors.length) throw new Error(errors.join("; "));
 }
 
@@ -29,12 +36,15 @@ const backend = fs.readFileSync(BACKEND, "utf8");
 if (process.argv.includes("--selftest")) {
   let caught = 0;
   const mutations = [
-    backend.replace("AND l.status <> 'draft'", ""),
-    backend.replace("AND l.status <> 'cancelled'", "TRUE"),
-    backend.replaceAll("show_voided", ""),
+    [backend, normal.replace("AND l.status <> 'draft'", ""), history],
+    [backend, normal, history.replace("AND l.status <> 'draft'", "")],
+    [backend, normal.replace("l.status NOT IN ('cancelled','voided',", "l.status NOT IN ("), history],
+    [backend, normal, normal],
+    [backend.replaceAll("show_voided", "")],
+    [backend.replaceAll("canonicalLoadCostsOpenClause", "localPredicate")],
   ];
   for (const mutated of mutations) {
-    try { check(mutated); }
+    try { check(...mutated); }
     catch { caught += 1; continue; }
     throw new Error("a drafts-exclusion mutation escaped detection");
   }

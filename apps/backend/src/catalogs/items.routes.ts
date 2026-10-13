@@ -58,8 +58,9 @@ const createBodySchema = z.object({
     // path that skipped the field — created an item that can never post revenue. Enforced HERE
     // rather than in the DB so the caller gets a 400 naming the field, not a constraint violation.
     //
-    // Scoped to the create route ON PURPOSE: qbo-sync/items-write-sql.ts inserts CLONES of QBO items
-    // that legitimately carry no local account mapping. Requiring it there would break the import.
+    // Scoped to the create route. The former QBO item clone path (qbo-sync/items-write-sql.ts, which
+    // inserted QBO items with no local account mapping) was removed by ACCT-F4431380 — QuickBooks is a
+    // read-only archive — so no QBO path writes catalogs.items any more.
     if (INCOME_ACCOUNT_REQUIRED_TYPES.has(b.item_type) && !b.default_income_account_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -81,6 +82,8 @@ const updateBodySchema = z
     default_income_account_id: z.string().uuid().nullable().optional(),
     default_expense_account_id: z.string().uuid().nullable().optional(),
     default_class_id: z.string().uuid().nullable().optional(),
+    // RULING 443.68 #3c — an item's category is set through this route (same-entity FK items_category_same_entity_fkey).
+    category_id: z.string().uuid().nullable().optional(),
     qbo_item_id: z.string().trim().max(100).nullable().optional(),
     taxable: z.boolean().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
@@ -307,6 +310,7 @@ export async function registerItemRoutes(app: FastifyInstance) {
     if ("default_income_account_id" in b) add("default_income_account_id", b.default_income_account_id ?? null);
     if ("default_expense_account_id" in b) add("default_expense_account_id", b.default_expense_account_id ?? null);
     if ("default_class_id" in b) add("default_class_id", b.default_class_id ?? null);
+    if ("category_id" in b) add("category_id", b.category_id ?? null);
     if ("qbo_item_id" in b) add("qbo_item_id", b.qbo_item_id ?? null);
     if ("taxable" in b) add("taxable", b.taxable);
     if ("notes" in b) add("notes", b.notes ?? null);

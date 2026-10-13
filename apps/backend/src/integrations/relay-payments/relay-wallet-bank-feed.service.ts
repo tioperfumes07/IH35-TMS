@@ -16,7 +16,9 @@
  */
 import { createHash } from "node:crypto";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
+import { resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
 import type { DbClient } from "./db-client.type.js";
+import { relayFuelPaidCents } from "./relay-sender-fee-cents.js";
 import { normalizeBankTransactionDescription } from "../../banking/transaction-ingestion.js";
 
 export const RELAY_WALLET_SOURCE_REF_PREFIX = "relay_fuel:";
@@ -124,47 +126,23 @@ async function resolveDriverFallbackFromUnit(
   return res.rows[0]?.id ?? null;
 }
 
-async function resolveLoadForUnitAt(
+/** 443.110 G6 — one fuel-to-load rule (same as import + Relay bank-match post). */
+async function resolveDriverIdForLoad(
   client: DbClient,
   operatingCompanyId: string,
-  unitId: string | null,
-  atIso: string,
-): Promise<{ load_id: string; load_number: string | null; driver_id: string | null } | null> {
-  if (!unitId) return null;
-  const res = await client.query<{
-    load_id: string;
-    load_number: string | null;
-    driver_id: string | null;
-  }>(
+  loadId: string,
+): Promise<string | null> {
+  const res = await client.query<{ driver_id: string | null }>(
     `
-      SELECT
-        l.id::text AS load_id,
-        l.load_number,
-        l.assigned_primary_driver_id::text AS driver_id
-      FROM mdata.loads l
-      WHERE l.operating_company_id = $1::uuid
-        AND l.assigned_unit_id = $2::uuid
-        -- Cast to text BEFORE coalesce: coalesce(enum, '') is typed as the enum and 22P02's on ''
-        -- (empty string is not a valid mdata.load_status_enum). That aborted every wallet upsert
-        -- whenever a fuel txn had a matched unit — leaving Banking → Relay Fuel Wallet empty.
-        AND coalesce(l.status::text, '') NOT IN ('cancelled', 'canceled', 'void', 'voided')
-        AND l.created_at <= ($3::timestamptz + interval '1 day')
-        AND (
-          l.status IN ('draft', 'booked', 'planned', 'dispatched', 'in_transit', 'at_pickup', 'at_delivery', 'delivered')
-          OR l.updated_at >= ($3::timestamptz - interval '21 days')
-        )
-      ORDER BY
-        CASE
-          WHEN l.status IN ('in_transit', 'dispatched', 'at_pickup', 'at_delivery') THEN 0
-          WHEN l.status IN ('delivered') THEN 1
-          ELSE 2
-        END,
-        l.updated_at DESC NULLS LAST
+      SELECT assigned_primary_driver_id::text AS driver_id
+      FROM mdata.loads
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [operatingCompanyId, unitId, atIso],
+    [loadId, operatingCompanyId],
   );
-  return res.rows[0] ?? null;
+  return res.rows[0]?.driver_id ?? null;
 }
 
 async function resolveSettlementForLoadOrDriver(
@@ -283,15 +261,17 @@ export async function upsertRelayWalletBankFeedRow(
     );
   }
 
-  const loadHit = await resolveLoadForUnitAt(
-    client,
-    input.operating_company_id,
-    input.matched_unit_id,
-    input.relay_created_at,
-  );
-  if (!driverId && loadHit?.driver_id) driverId = loadHit.driver_id;
-
+  // 443.110 G6: Relay wallet feed asks the ONE fuel-to-load rule (G7), never a local guess.
+  const loadHit = await resolveFuelLoadAtTime(client, {
+    operatingCompanyId: input.operating_company_id,
+    unitId: input.matched_unit_id,
+    driverId,
+    at: input.relay_created_at,
+  });
   const loadId = loadHit?.load_id ?? null;
+  if (!driverId && loadId) {
+    driverId = await resolveDriverIdForLoad(client, input.operating_company_id, loadId);
+  }
   const settlementId = await resolveSettlementForLoadOrDriver(
     client,
     input.operating_company_id,
@@ -479,7 +459,10 @@ export async function backfillRelayWalletBankFeedForCompany(
     transaction_id: string;
     relay_created_at: string;
     total_amount_paid_cents: string;
-    fee_cents: string;
+    fees: unknown[] | null;
+    line_fee_cents: Array<string | null> | null;
+    product_cents: string | null;
+    ingest_source: string | null;
     merchant_name: string | null;
     location_city: string | null;
     location_state: string | null;
@@ -494,13 +477,18 @@ export async function backfillRelayWalletBankFeedForCompany(
         r.transaction_id,
         r.relay_created_at::text AS relay_created_at,
         r.total_amount_paid_cents::text AS total_amount_paid_cents,
-        coalesce((
-          SELECT sum(coalesce(l.fee_amount_cents, 0))
-            FROM integrations.relay_fuel_transaction_lines l
-           WHERE l.relay_fuel_transaction_id = r.id
-             AND l.voided_at IS NULL
-             AND l.is_active = true
-        ), 0)::bigint::text AS fee_cents,
+        r.fees,
+        (SELECT array_agg(l.fee_amount_cents::text)
+           FROM integrations.relay_fuel_transaction_lines l
+          WHERE l.relay_fuel_transaction_id = r.id
+            AND l.voided_at IS NULL
+            AND l.is_active = true) AS line_fee_cents,
+        (SELECT sum(l.total_discounted_price_cents)::text
+           FROM integrations.relay_fuel_transaction_lines l
+          WHERE l.relay_fuel_transaction_id = r.id
+            AND l.voided_at IS NULL
+            AND l.is_active = true) AS product_cents,
+        r.ingest_source::text AS ingest_source,
         r.merchant_name,
         r.location_city,
         r.location_state,
@@ -537,7 +525,18 @@ export async function backfillRelayWalletBankFeedForCompany(
         operating_company_id: operatingCompanyId,
         transaction_id: row.transaction_id,
         relay_created_at: row.relay_created_at,
-        amount_cents: Math.round(Number(row.total_amount_paid_cents)) + Math.round(Number(row.fee_cents ?? 0)),
+        // ROUND 443.29 a: the ONE fee rule (relayFillFeeCents — Relay's reported fees[] first, line fees only when that is
+        // empty) and the ONE drawdown rule, the same pair ingest and the bank-match poster use. This backfill used to sum
+        // line fees only, so a fill whose fee lives in fees[] mirrored a wallet line $2.00 short of its posting.
+        // LEAD 443.123 — the ONE paid rule: a legacy CSV row whose paid already carries its fee is not drawn twice.
+        amount_cents: relayFuelPaidCents({
+          transaction_id: row.transaction_id,
+          stored_paid_cents: Math.round(Number(row.total_amount_paid_cents)),
+          product_lines_cents: row.product_cents == null ? null : Number(row.product_cents),
+          fees: Array.isArray(row.fees) ? row.fees : null,
+          line_fee_amount_cents: (row.line_fee_cents ?? []).map((c) => (c == null ? null : Number(c))),
+          ingest_source: row.ingest_source,
+        }).wallet_cents,
         merchant_name: row.merchant_name,
         location_city: row.location_city,
         location_state: row.location_state,

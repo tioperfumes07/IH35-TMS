@@ -194,12 +194,46 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
         // invoices_display_id_check: ^INV-[0-9]{4}-[0-9]{5}$ — must be unique per opco (shared CI company).
         const invKey = parseInt(invId.replace(/\D/g, "").slice(0, 9) || "1", 10);
         const invDisplay = `INV-${String(1000 + (invKey % 8000)).padStart(4, "0")}-${String(invKey % 100000).padStart(5, "0")}`;
+        // LAW 363.2: a load-born invoice is written with its load — the fixture gives it a real (delivered) load.
+        const loadId = randomUUID();
+        await db.query(
+          `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, dispatcher_user_id, status, rate_total_cents,
+                                    load_trailer_equipment_id)
+           VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, 'delivered', $6,
+                   (SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1))`,
+          [loadId, companyId, `8${String(invKey).slice(-8)}`, customerId, TEST_OWNER_USER_ID, opts.invoiceTotalCents]
+        );
         await db.query(
           `INSERT INTO accounting.invoices
              (id, operating_company_id, customer_id, display_id, issue_date, due_date,
-              subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status)
-           VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,$5,0,$5,'factored',$6::uuid,'advanced')`,
-          [invId, companyId, customerId, invDisplay, opts.invoiceTotalCents, id]
+              subtotal_cents, tax_cents, total_cents, status, factoring_advance_id, factoring_status, source_load_id)
+           VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,$5,0,$5,'factored',$6::uuid,'advanced',$7::uuid)`,
+          [invId, companyId, customerId, invDisplay, opts.invoiceTotalCents, id, loadId]
+        );
+        // An invoice header commits with at least one line (deferred check); the line takes the "Line Haul" item and
+        // its income account when the company has one (line categorization, 443.67), else an active income account.
+        const lh = (await db.query<{ item_id: string | null; account_id: string }>(
+          `SELECT i.id::text AS item_id, i.default_income_account_id::text AS account_id FROM catalogs.items i
+            WHERE i.operating_company_id = $1::uuid AND i.item_name = 'Line Haul' AND i.deactivated_at IS NULL AND i.default_income_account_id IS NOT NULL
+           UNION ALL
+           SELECT NULL, a.id::text FROM catalogs.accounts a
+            WHERE a.operating_company_id = $1::uuid AND a.deactivated_at IS NULL AND a.account_type ILIKE 'income%'
+           LIMIT 1`,
+          [companyId]
+        )).rows[0] ?? {
+          item_id: null,
+          // The isolated company carries no income account — create one (accounts_active_requires_account_number).
+          account_id: (await db.query<{ id: string }>(
+            `INSERT INTO catalogs.accounts (operating_company_id, account_name, account_type, account_number)
+             VALUES ($1::uuid, $2, 'Income', $3) RETURNING id::text`,
+            [companyId, `T06 Linehaul ${suffix}-${advanceIds.length + 1}`, `T06-${suffix}-${advanceIds.length + 1}`]
+          )).rows[0]!.id,
+        };
+        await db.query(
+          `INSERT INTO accounting.invoice_lines
+             (operating_company_id, invoice_id, line_type, account_id, item_id, description, quantity, unit_amount_cents, line_total_cents, display_order)
+           VALUES ($1::uuid,$2::uuid,'linehaul',$3::uuid,$4::uuid,'Linehaul',1,$5,$5,0)`,
+          [companyId, invId, lh.account_id, lh.item_id, opts.invoiceTotalCents]
         );
         invoiceIds.push(invId);
       }
@@ -438,7 +472,7 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
   });
 
   it("Leg B — CATCHES a fabricated funding JE that DOES touch ar_control (proves the guard is not a no-op)", async () => {
-    const { displayId } = await seedAdvance({ invoiceTotalCents: 40_000, advanceCents: 36_000, reserveCents: 3_000, feeCents: 1_000 });
+    const { id: fabricatedAdvanceId, displayId } = await seedAdvance({ invoiceTotalCents: 40_000, advanceCents: 36_000, reserveCents: 3_000, feeCents: 1_000 });
     const arAccountId = await liveRole("ar_control");
     const cashAccountId = await liveRole("cash_clearing");
     // Deliberately mimic the retired SALE-MODEL defect: a "funding" JE that credits ar_control directly.
@@ -448,6 +482,10 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
         entry_date: new Date().toISOString().slice(0, 10),
         memo: `Factoring funding ${displayId}`,
         source: "auto",
+        // ROUND 393.2: the one posting-line writer refuses an unsourced line at INSERT — the fabricated entry names its
+        // advance, as a real funding JE does.
+        source_transaction_type: "factoring_advance",
+        source_transaction_id: fabricatedAdvanceId,
         postings: [
           { account_id: cashAccountId, debit_or_credit: "debit", amount_cents: 40_000 },
           { account_id: arAccountId, debit_or_credit: "credit", amount_cents: 40_000 },

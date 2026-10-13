@@ -15,6 +15,7 @@ import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
 import { canonicalDispatchWorkStatusClause } from "../dispatch/canonical-active-load-set.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
 import { writeLoadCancellationRecord } from "../dispatch/cancellation.service.js";
 import {
@@ -36,6 +37,22 @@ import {
 import { planCreateStatus, type WideLoadStatus } from "./loads-create-status.js";
 import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
 import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
+import { geocodeStopsWithClient } from "../telematics/stops-geocode-backfill.service.js";
+import { relearnLoadStopLegs } from "../dispatch/load-lane-learning.service.js";
+
+/**
+ * Lead 443.43 (CC-3, with CC-2 #26313): a stop added or moved after booking changes the load's legs. In the SAME
+ * transaction: resolve the load's stops to their Samsara address / coordinates (443.38, reresolve), then recompute every
+ * non-first leg (relearnLoadStopLegs — keeps owner-typed legs and the first-stop deadhead, never re-counts a lane).
+ */
+async function relearnStopsAfterEdit(client: PoolClient, actorUserId: string, operatingCompanyId: string, loadId: string) {
+  const geocode = await geocodeStopsWithClient(client as never, actorUserId, operatingCompanyId, loadId, { reresolve: true });
+  const legs = await relearnLoadStopLegs(client as never, { operatingCompanyId, loadId, actorUserId });
+  return { geocode, legs };
+}
+
+/** A PATCH that moves a stop or changes where it is re-derives the legs; a status / note / time edit does not. */
+const STOP_LEG_FIELDS = ["sequence_number", "stop_type", "address_line1", "facility_name", "city", "state", "postal_code", "latitude", "longitude", "location_id"];
 import {
   ACTIVE_UNIT_STATUSES,
   UnitAlreadyActiveOnLoadError,
@@ -280,6 +297,12 @@ const createStopBodySchema = z.object({
   stop_type: stopTypeSchema,
   location_id: z.string().uuid().optional(),
   address_line1: z.string().trim().max(300).optional(),
+  // Lead 443.43 (CC-3): a stop added after booking carries what booking writes — the facility as the owner names it and
+  // its zip — so the Samsara address resolver (443.38) can place it. Coordinates when the caller already has them.
+  facility_name: z.string().trim().max(240).optional(),
+  postal_code: z.string().trim().max(20).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
   city: z.string().trim().max(120).optional(),
   state: z.string().trim().max(120).optional(),
   country: z.string().trim().max(120).optional(),
@@ -297,6 +320,12 @@ const updateStopBodySchema = z
     stop_type: stopTypeSchema.optional(),
     location_id: z.string().uuid().nullable().optional(),
     address_line1: z.string().trim().max(300).nullable().optional(),
+    // Lead 443.43 follow-up (CC-3): correct a stop's facility / zip / coordinates in place (13628, 13576 were booked with
+    // another pickup's facility). Same fields the add-stop route takes; null clears a wrongly resolved coordinate.
+    facility_name: z.string().trim().max(240).nullable().optional(),
+    postal_code: z.string().trim().max(20).nullable().optional(),
+    latitude: z.number().min(-90).max(90).nullable().optional(),
+    longitude: z.number().min(-180).max(180).nullable().optional(),
     city: z.string().trim().max(120).nullable().optional(),
     state: z.string().trim().max(120).nullable().optional(),
     country: z.string().trim().max(120).nullable().optional(),
@@ -440,6 +469,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     await assertCompanyMembership(authUser.uuid, b.operating_company_id);
 
     const created = await withCurrentUser(authUser.uuid, async (client) => {
+      // LEAD 443.91 #3: the company catalogs (load trailer equipment, flag colors) are company-GUC scoped; without the
+      // scope set here every create refused load_trailer_equipment_catalog_missing (500). Same call bookLoadOnClient makes.
+      await setScopedCompanyContext(client, authUser.uuid, b.operating_company_id);
       const customerRes = await client.query<{ id: string }>(
         `
           SELECT id
@@ -2015,11 +2047,13 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             INSERT INTO mdata.load_stops (
               load_id, sequence_number, stop_type, location_id, address_line1, city, state, country,
               scheduled_arrival_at, scheduled_departure_at, actual_arrival_at, actual_departure_at,
-              actual_arrival_source, actual_departure_source, status, notes
+              actual_arrival_source, actual_departure_source, status, notes,
+              facility_name, postal_code, latitude, longitude
             ) VALUES (
               $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
               CASE WHEN $11::timestamptz IS NULL THEN NULL ELSE 'manual' END,
-              CASE WHEN $12::timestamptz IS NULL THEN NULL ELSE 'manual' END,$13,$14
+              CASE WHEN $12::timestamptz IS NULL THEN NULL ELSE 'manual' END,$13,$14,
+              $15,$16,$17,$18
             )
             RETURNING
               id, load_id, sequence_number, stop_type, location_id, address_line1, city, state, country,
@@ -2040,6 +2074,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             b.actual_departure_at ?? null,
             b.status,
             b.notes ?? null,
+            b.facility_name ?? null,
+            b.postal_code ?? null,
+            b.latitude ?? null,
+            b.longitude ?? null,
           ]
         );
         const row = res.rows[0];
@@ -2058,6 +2096,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           "info",
           "BT-3-LOADS-SCHEMA"
         );
+        const stopLegs = await relearnStopsAfterEdit(client as PoolClient, authUser.uuid, scopedCompanyId, String(row.load_id));
         const pickupMint = await mintProformaInvoiceOnFirstPickup(client, {
           operatingCompanyId: scopedCompanyId,
           loadId: String(row.load_id),
@@ -2068,7 +2107,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           pickupMint.outcome === "minted" || pickupMint.outcome === "idempotent"
             ? pickupMint.invoice
             : null;
-        return { ...row, proforma_invoice: proformaInvoice };
+        return { ...row, proforma_invoice: proformaInvoice, stop_legs: stopLegs };
       });
 
       if (!created) return reply.code(404).send({ error: "mdata_load_not_found" });
@@ -2102,6 +2141,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if ("stop_type" in b) add("stop_type", b.stop_type);
     if ("location_id" in b) add("location_id", b.location_id ?? null);
     if ("address_line1" in b) add("address_line1", b.address_line1 ?? null);
+    if ("facility_name" in b) add("facility_name", b.facility_name ?? null);
+    if ("postal_code" in b) add("postal_code", b.postal_code ?? null);
+    if ("latitude" in b) add("latitude", b.latitude ?? null);
+    if ("longitude" in b) add("longitude", b.longitude ?? null);
     if ("city" in b) add("city", b.city ?? null);
     if ("state" in b) add("state", b.state ?? null);
     if ("country" in b) add("country", b.country ?? null);
@@ -2209,6 +2252,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           );
         }
 
+        const stopLegs = STOP_LEG_FIELDS.some((f) => f in (b as Record<string, unknown>))
+          ? await relearnStopsAfterEdit(client as PoolClient, authUser.uuid, scopedCompanyId, String(row.load_id))
+          : null;
+
         const pickupMint = await mintProformaInvoiceOnFirstPickup(client, {
           operatingCompanyId: scopedCompanyId,
           loadId: String(row.load_id),
@@ -2220,7 +2267,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             ? pickupMint.invoice
             : null;
 
-        return { ...row, proforma_invoice: proformaInvoice };
+        return { ...row, proforma_invoice: proformaInvoice, stop_legs: stopLegs };
       });
 
       if (!updated) return reply.code(404).send({ error: "mdata_load_stop_not_found" });

@@ -26,7 +26,14 @@ export function collectSourceProblems(filter, dispatch) {
   if (!/customerSearch\s*\?[\s\S]*listCustomers\(\{[\s\S]*search:\s*customerSearch[\s\S]*:\s*listAllCustomers\(\{[\s\S]*operating_company_id:\s*operatingCompanyId[\s\S]*status:\s*"active"/.test(filter)) {
     problems.push(`${FILTER}: unsearched customer filter must exhaust the canonical scoped roster while typed search stays server-bounded`);
   }
-  if (/listCustomers\(\{[\s\S]{0,180}limit:\s*5000/.test(filter)) {
+  // 443.99 — old rule: only a literal `limit: 5000` inside listCustomers({ ... }). #20318 (54aa510235) moved the
+  // search bound onto a named const (CUSTOMER_SEARCH_LIMIT), which the literal check could not see. New rule: the
+  // literal OR a named limit whose const value is >= 5000 is the same silent roster cap.
+  const limitRef = /listCustomers\(\{[\s\S]{0,180}limit:\s*([A-Za-z_][A-Za-z0-9_]*|\d+)/.exec(filter)?.[1];
+  const limitValue = limitRef == null ? null
+    : /^\d+$/.test(limitRef) ? Number(limitRef)
+    : Number(new RegExp(`const ${limitRef}\\s*=\\s*(\\d+)`).exec(filter)?.[1] ?? NaN);
+  if (/listCustomers\(\{[\s\S]{0,180}limit:\s*5000/.test(filter) || (Number.isFinite(limitValue) && limitValue >= 5000)) {
     problems.push(`${FILTER}: retains a silent 5,000-row customer cap`);
   }
   return problems;
@@ -45,7 +52,8 @@ if (process.argv.includes("--selftest")) {
   if (collectSourceProblems(filter, dispatch).length) throw new Error("clean dispatch filter rejected");
   const mutations = [
     filter.replace("listAllCustomers({", "listCustomers({"),
-    filter.replace("limit: 200", "limit: 5000"),
+    filter.replace("limit: CUSTOMER_SEARCH_LIMIT,", "limit: 5000,"),
+    filter.replace(/const CUSTOMER_SEARCH_LIMIT = \d+;/, "const CUSTOMER_SEARCH_LIMIT = 5000;"),
     filter.replace("search: customerSearch", "search: undefined"),
   ];
   for (const [index, mutated] of mutations.entries()) {
@@ -53,7 +61,7 @@ if (process.argv.includes("--selftest")) {
       throw new Error(`customer-filter mutation ${index + 1} escaped`);
     }
   }
-  console.log(LABEL, "SELFTEST OK — 3/3 complete-roster/search mutations red");
+  console.log(LABEL, `SELFTEST OK — ${mutations.length}/${mutations.length} complete-roster/search mutations red`);
   process.exit(0);
 }
 const p = collectProblems();

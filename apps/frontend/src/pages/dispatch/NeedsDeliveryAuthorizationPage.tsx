@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — a current-state exception queue (one row per load awaiting delivery authorization); the row carries no date from the API.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";

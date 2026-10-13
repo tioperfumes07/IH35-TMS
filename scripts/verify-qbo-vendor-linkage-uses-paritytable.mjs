@@ -14,8 +14,14 @@ const LABEL = "verify-qbo-vendor-linkage-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx";
 const MODAL = "apps/frontend/src/components/qbo/VendorLinkageModal.tsx";
 
-const DRIVER_LABELS = ["Driver", "Current Vendor", "Status", "Actions"];
-const ASSET_LABELS = ["Unit", "QBO Class", "Actions"];
+// 443.137 9e part 2 (CC-2), guard change — OLD: both grids had to carry an "Actions" column, and the
+// VendorLinkageModal file was ratcheted for leftover tokens. NEW: no "Actions" column (the page is a
+// read-only archive view), no QBO link/unlink call or VendorLinkageModal anywhere on it, and the modal
+// file is gone (so its leftover ratchet now asserts it stays absent). WHY: the seven QBO vendor-linkage
+// write routes answer 409 QBO_NATIVE_WRITE_REFUSED (#26732) — QuickBooks is a read-only archive — so the
+// actions were removed, never left broken. Grid grammar, labels, empty/error states are unchanged.
+const DRIVER_LABELS = ["Driver", "Current Vendor", "Status"];
+const ASSET_LABELS = ["Unit", "QBO Class"];
 
 /** BANK-F91425 leftover refuse — VendorLinkageModal page-scoped text token ratchet. */
 export function checkVendorLinkageModalLeftovers(src) {
@@ -76,6 +82,10 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="qbo-vendor-linkage-assets-table"')) {
     errors.push(`${PAGE}: must preserve tableTestId for assets grid`);
   }
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  if (/label: "Actions"|linkDriverQboVendor|linkUnitQboClass|linkTrailerQboClass|linkQboVendor|unlinkQboVendor|VendorLinkageModal/.test(code)) {
+    errors.push(`${PAGE}: must be read-only — no Actions column / QBO link-unlink call / VendorLinkageModal (routes answer 409 QBO_NATIVE_WRITE_REFUSED)`);
+  }
   return errors;
 }
 
@@ -87,12 +97,10 @@ function selftest() {
       { key: "driver", label: "Driver" },
       { key: "qbo_vendor_id", label: "Current Vendor" },
       { key: "linked", label: "Status" },
-      { key: "actions", label: "Actions" },
     ];
     const unitColumns = [
       { key: "unit_number", label: "Unit" },
       { key: "qbo_class_id", label: "QBO Class" },
-      { key: "actions", label: "Actions" },
     ];
     <ListErrorState title="Couldn't load driver vendor linkage" status={0} onRetry={() => {}} />
     <ListErrorState title="Couldn't load unit class linkage" status={0} onRetry={() => {}} />
@@ -118,16 +126,22 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
     process.exit(1);
   }
-  // BANK-F91425 leftover plant — VendorLinkageModal page-scoped text token ratchet
-  const liveModal = fs.readFileSync(path.join(ROOT, MODAL), "utf8");
-  if (checkVendorLinkageModalLeftovers(liveModal).length) {
-    console.error(`${LABEL} --selftest FAIL: live VendorLinkageModal already failing leftover refuse`);
-    process.exit(1);
-  }
-  const leftoverPlant = liveModal + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  // BANK-F91425 leftover plant — VendorLinkageModal page-scoped text token ratchet (kept for any revival)
+  const leftoverPlant = '<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
   if (!checkVendorLinkageModalLeftovers(leftoverPlant).some((f) => f.includes("leftover"))) {
     console.error(`${LABEL} --selftest FAIL: leftover text-[11px]/#8A92AB plant escaped`);
     process.exit(1);
+  }
+  // 443.137 9e part 2 plants — each puts a refused QBO write action back on the page.
+  for (const [name, plant] of [
+    ["Actions column", good.replace('{ key: "linked", label: "Status" },', '{ key: "linked", label: "Status" },\n      { key: "actions", label: "Actions" },')],
+    ["link call", good + "\n void linkUnitQboClass(row.id, body);"],
+    ["linkage modal", good + "\n <VendorLinkageModal open />"],
+  ]) {
+    if (plant === good || !assertMigrated(plant).some((e) => /must be read-only/.test(e))) {
+      console.error(`${LABEL} --selftest FAIL: plant not caught: ${name}`);
+      process.exit(1);
+    }
   }
   console.log(`${LABEL} --selftest PASS`);
 }
@@ -140,7 +154,9 @@ function main() {
   const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   const errors = [
     ...assertMigrated(src),
-    ...checkVendorLinkageModalLeftovers(fs.readFileSync(path.join(ROOT, MODAL), "utf8")),
+    ...(fs.existsSync(path.join(ROOT, MODAL))
+      ? [`${MODAL}: must stay deleted — its QBO vendor-link routes answer 409 QBO_NATIVE_WRITE_REFUSED`]
+      : []),
   ];
   if (errors.length) {
     console.error(`FAIL ${LABEL}:`);

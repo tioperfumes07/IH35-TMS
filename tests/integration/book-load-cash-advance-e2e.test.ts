@@ -12,6 +12,7 @@ import {
 } from "../../apps/backend/test-helpers/db-fixture";
 import {
   approveCashAdvanceRequest,
+  detectCashAdvanceCascadeBranch,
   createCashAdvanceRequest,
 } from "../../apps/backend/src/driver-finance/cash-advance-requests.service.js";
 import { bookLoad, type BookLoadInput } from "../../apps/backend/src/dispatch/book-load.service.js";
@@ -57,13 +58,37 @@ describeE2E("book-load cash advance — E2E (real DB, #1440)", () => {
     client = new pg.Client(buildPgClientConfig(cs));
     await client.connect();
     await client.query("SET ROLE ih35_app");
+    // 443.91 #4: the disbursement parents the driver's advance sub-account under the account bound to the
+    // advance_recovery COA role (driver-subaccount-provision.service.ts, ROUND 389.3 — by role, never by name). A fresh
+    // CI database has no binding; bind it once for the integration company, as the chart setup does in production.
+    await tx(async () => {
+      await asCompany(companyId);
+      const bound = await client.query(
+        `SELECT 1 FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1::uuid AND role = 'advance_recovery' AND is_active`, [companyId]);
+      if (!bound.rows.length) {
+        const acct = await client.query<{ id: string }>(
+          `INSERT INTO catalogs.accounts (operating_company_id, account_number, account_name, account_type, is_postable)
+           VALUES ($1::uuid, '1245', 'Driver Cash Advances Receivable', 'Asset', true)
+           ON CONFLICT DO NOTHING RETURNING id::text`, [companyId]);
+        const accountId = acct.rows[0]?.id ?? (await client.query<{ id: string }>(
+          `SELECT id::text FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_number = '1245' LIMIT 1`, [companyId])).rows[0]!.id;
+        await client.query(
+          `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id) VALUES ($1::uuid, 'advance_recovery', $2::uuid)`,
+          [companyId, accountId]);
+      }
+    });
   });
 
   afterAll(async () => {
     try {
       await tx(async () => {
         await client.query("SET LOCAL app.bypass_rls = 'lucia'");
-        await client.query(`DELETE FROM driver_finance.driver_advances WHERE load_id = $1::uuid`, [loadId]);
+        // 443.101: a loan-branch advance carries no load, so clean up through the request's linked advance too.
+        await client.query(
+          `DELETE FROM driver_finance.driver_advances WHERE load_id = $1::uuid
+              OR id IN (SELECT linked_advance_id FROM driver_finance.cash_advance_requests WHERE load_id = $1::uuid AND linked_advance_id IS NOT NULL)`,
+          [loadId]
+        );
         await client.query(`DELETE FROM driver_finance.cash_advance_requests WHERE load_id = $1::uuid`, [loadId]);
       });
     } catch {
@@ -93,34 +118,51 @@ describeE2E("book-load cash advance — E2E (real DB, #1440)", () => {
     expect(Number(row?.requested_amount_cents)).toBe(AMOUNT_CENTS);
   });
 
-  it("(b) owner approval → forwards load_id onto the disbursed driver_advances row (the fix the harness caught)", async () => {
-    const advLoadId = await tx(async () => {
+  // 443.101: the #1440 load trace is forwarded onto the advance ONLY off the loan branch — a loan is the "no active
+  // load, no open bill" outcome and never links to a load (verify-cash-advance-close-time-three-way-routing, the
+  // 2026-09-06 law). The branch is read from the engine's own detector (the same call approval makes), and each
+  // outcome is asserted for what it must be — never a skip.
+  it("(b) owner approval → load_id forwarded on the bill-payment branches, never on the loan branch", async () => {
+    const out = await tx(async () => {
       await asCompany(companyId);
-      const reqRow = await client.query<{ id: string }>(
-        `SELECT id::text FROM driver_finance.cash_advance_requests WHERE load_id = $1::uuid AND status = 'pending' ORDER BY created_at DESC LIMIT 1`,
+      const reqRow = await client.query<{ id: string; driver_id: string }>(
+        `SELECT id::text, driver_id::text FROM driver_finance.cash_advance_requests WHERE load_id = $1::uuid AND status = 'pending' ORDER BY created_at DESC LIMIT 1`,
         [loadId]
       );
       const requestId = reqRow.rows[0]!.id;
+      const { branch } = await detectCashAdvanceCascadeBranch(client, companyId, reqRow.rows[0]!.driver_id);
       const res = await approveCashAdvanceRequest(client, {
         operatingCompanyId: companyId,
         requestId,
         actorUserId: TEST_OWNER_USER_ID,
         actorRole: "Owner",
-        body: { approval_notes: "e2e approve" },
+        // 443.91 #4: approval disburses via Comdata; the engine refuses a Comdata advance without its instrument number
+        // (cash-advance-create.ts cash_advance_instrument_reference_required) — the approver supplies it.
+        body: { approval_notes: "e2e approve", bank_reference: "E2E-COMCHEK-0001" },
       });
       expect(res).not.toHaveProperty("error");
-      const adv = await client.query<{ load_id: string | null }>(
-        `SELECT da.load_id::text FROM driver_finance.driver_advances da
-         JOIN driver_finance.cash_advance_requests r ON r.linked_advance_id = da.id
-         WHERE r.id = $1::uuid LIMIT 1`,
+      const adv = await client.query<{ load_id: string | null; type: string | null }>(
+        `SELECT da.load_id::text, l.type::text
+           FROM driver_finance.driver_advances da
+           JOIN driver_finance.cash_advance_requests r ON r.linked_advance_id = da.id
+           LEFT JOIN driver_finance.driver_liabilities l ON l.id = da.liability_id
+          WHERE r.id = $1::uuid LIMIT 1`,
         [requestId]
       );
-      return adv.rows[0]?.load_id ?? null;
+      expect(adv.rows.length, "approval must disburse a driver_advances row linked from the request").toBe(1);
+      return { branch, loadId: adv.rows[0]!.load_id, type: adv.rows[0]!.type };
     });
-    expect(advLoadId, "driver_advances.load_id must be forwarded from the request").toBe(loadId);
+    if (out.branch === "loan") {
+      expect(out.loadId, "a loan never links to a load").toBeNull();
+    } else {
+      expect(out.loadId, "driver_advances.load_id must be forwarded from the request on a bill-payment branch").toBe(loadId);
+    }
   });
 
-  it("(d) cash advance with NO driver → bookLoad rejects 422 and writes NO request row", async () => {
+  // 443.91 #4: bookLoad no longer books a cash advance (cash_advance_cents is read nowhere in the backend — advances are
+  // created only through the cash-advance requests path, which requires a driver). The invariant that still holds and is
+  // asserted: a booking that cannot proceed writes NO cash_advance_requests row (it fails on its own stop rule first).
+  it("(d) cash advance with NO driver → bookLoad rejects and writes NO request row", async () => {
     const before = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM driver_finance.cash_advance_requests`)).rows[0]!.n);
     const input: BookLoadInput = {
       requestingUserUuid: TEST_OWNER_USER_ID,
@@ -131,11 +173,12 @@ describeE2E("book-load cash advance — E2E (real DB, #1440)", () => {
       charges: [],
       stops: [],
       save_mode: "book_dispatch",
+      trailer_choice: { kind: "none" }, // 443.107: Book Load requires the trailer choice
       cash_advance_cents: 5000,
     };
     const result = await bookLoad(input);
     expect(result.kind).toBe("error");
-    if (result.kind === "error") expect(result.status).toBe(422);
+    if (result.kind === "error") expect(result.status).toBeGreaterThanOrEqual(400);
     const after = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM driver_finance.cash_advance_requests`)).rows[0]!.n);
     expect(after).toBe(before); // no partial/floating write
   });

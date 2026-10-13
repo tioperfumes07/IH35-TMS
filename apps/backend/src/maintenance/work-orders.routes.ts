@@ -7,9 +7,12 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import {
   allocateInHouseFromWO,
+  assertWorkOrderCategoryLineItem,
+  assertWorkOrderLineItem,
   autoCreateBillFromWO,
   autoCreateExpenseFromWO,
   createWorkOrderWithLines,
+  WorkOrderLineItemError,
 } from "./two-section-service.js";
 import { openWorkOrderPredicate } from "../kpi/canonical-kpis.js";
 import { operatorWorkOrderListSql } from "./work-order-visibility.js";
@@ -102,6 +105,8 @@ const createWorkOrderSchema = z.object({
       quantity: z.number().min(0),
       unit_cost: z.number().min(0),
       amount: z.number().min(0),
+      // ACCT-F4431382: the catalogs.items row this line bills (the WO->bill copy takes its account).
+      item_id: z.string().uuid().optional().nullable(),
     })
   ).default([]),
   roadside_callout_at: z.string().datetime({ offset: true }).optional(),
@@ -124,6 +129,8 @@ const sectionALineSchema = z.object({
   quantity: z.number().min(0).default(1),
   amount: z.number().min(0),
   expense_category_uuid: z.string().uuid(),
+  // The catalog item this line bills — the WO->bill copy takes its account (no description-keyword guess).
+  item_id: z.string().uuid().optional().nullable(),
 });
 
 const sectionBSubRowSchema = z.object({
@@ -135,6 +142,7 @@ const sectionBSubRowSchema = z.object({
   part_uuid: z.string().uuid().optional(),
   labor_rate_uuid: z.string().uuid().optional(),
   part_location_codes: z.array(z.string()).optional(),
+  item_id: z.string().uuid().optional().nullable(),
 });
 
 const sectionBLineSchema = z.object({
@@ -145,6 +153,7 @@ const sectionBLineSchema = z.object({
   // Nullable by schema: permit an honestly described cost line when the service-item catalog is
   // degraded. The linkage can be completed later without losing the operational WO/cost record.
   service_item_uuid: z.string().uuid().optional().nullable(),
+  item_id: z.string().uuid().optional().nullable(),
   sub_rows: z.array(sectionBSubRowSchema).default([]),
 });
 
@@ -277,6 +286,11 @@ const lineItemCreateSchema = z.object({
   quantity: z.number().min(0),
   unit_cost: z.number().min(0),
   amount: z.number().min(0),
+  // ACCT-F4431382: the catalogs.items row this line bills. The WO->bill copy takes the item's account and refuses a
+  // line with no item (wo_line_item_required) — so a line added here without one is refused now, by the same name.
+  item_id: z.string().uuid().optional().nullable(),
+  // ACCT-F4431382 (DEGH-03): when the line names a category account, its item must post to that account.
+  expense_category_uuid: z.string().uuid().optional().nullable(),
 });
 
 const allowedTransitions: Record<z.infer<typeof workOrderStatusSchema>, z.infer<typeof workOrderStatusSchema>[]> = {
@@ -950,6 +964,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
               }
               if (body.header.source_type !== "IT") throw new Error("E_SOURCE_INTRANSIT_TYPE_MISMATCH");
             }
+            // ACCT-F4431382 (DEGH-03): a Section A category line's item must post to that category's account.
+            for (const line of body.sectionA) {
+              await assertWorkOrderCategoryLineItem(client as never, body.header.operating_company_id, line.item_id, line.expense_category_uuid);
+            }
             const created = await createWorkOrderWithLines(client as never, user.uuid, body.header, body.sectionA, body.sectionB);
             if (sourceIssue) {
               const woLineage = await client.query(
@@ -1108,6 +1126,11 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
               "Work-order line total does not match the vendor invoice amount. Correct the lines or the invoice before closing.",
           });
         }
+        // ACCT-F4431382: a line with no item (the bill copy refuses it) or an item of another company — 422 by name,
+        // the whole WO + bill rolled back, instead of an unexplained 500.
+        if (error instanceof WorkOrderLineItemError) {
+          return reply.code(422).send({ error: error.code, message: error.message });
+        }
         const message = String((error as Error)?.message ?? "");
         if (message.includes("E_DIESEL_REQUIRES_LOAD")) {
           return reply.code(422).send({
@@ -1176,6 +1199,17 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       }
     }
 
+    // ACCT-F4431382: the legacy flat body follows the same item law as the two-section body. A PRICED line (the
+    // bill copy reads every non-zero line) must name its item — refused by name before anything is written. $0
+    // lines (the server engines' placeholders) stay allowed: the bill copy skips them.
+    const itemlessPriced = body.line_items.find((line) => !line.item_id && (Number(line.amount) !== 0 || Number(line.unit_cost) * Number(line.quantity) !== 0));
+    if (itemlessPriced) {
+      return reply.code(422).send({
+        error: "wo_line_item_required",
+        message: `work-order line "${itemlessPriced.description}" names no catalog item — pick the item; the bill posts the line to its account`,
+      });
+    }
+
     let created:
       | { unavailable: true }
       | { unavailable: false; row: Record<string, unknown> }
@@ -1184,6 +1218,11 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       created = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       if (!(await maintenanceReady(client))) {
         return { unavailable: true as const };
+      }
+      // Every named item must be an item of THIS company — checked before the work order is written.
+      const legacyLineItemIds: Array<string | null> = [];
+      for (const line of body.line_items) {
+        legacyLineItemIds.push(await assertWorkOrderLineItem(client as never, body.operating_company_id, line.item_id));
       }
 
       const displayIdRes = await client.query(
@@ -1246,13 +1285,13 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       const refreshedWo = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 LIMIT 1`, [wo.id]);
       if (refreshedWo.rows[0]) wo = refreshedWo.rows[0];
 
-      for (const line of body.line_items) {
+      for (const [idx, line] of body.line_items.entries()) {
         await client.query(
           `
-            INSERT INTO maintenance.work_order_lines (work_order_uuid, line_type, description, quantity, unit_cost, total_cost)
-            VALUES ($1,$2,$3,$4,$5,$6)
+            INSERT INTO maintenance.work_order_lines (work_order_uuid, line_type, description, quantity, unit_cost, total_cost, item_id)
+            VALUES ($1,$2,$3,$4,$5,$6,$7::uuid)
           `,
-          [wo.id, line.line_type, line.description, line.quantity, line.unit_cost, line.amount]
+          [wo.id, line.line_type, line.description, line.quantity, line.unit_cost, line.amount, legacyLineItemIds[idx] ?? null]
         );
       }
 
@@ -1345,6 +1384,9 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       return { unavailable: false as const, row: wo };
     });
     } catch (error) {
+      if (error instanceof WorkOrderLineItemError) {
+        return reply.code(422).send({ error: error.code, message: error.message });
+      }
       if (isWoInvoiceMismatch(error)) {
         const err = error;
         return reply.code(409).send({
@@ -1875,13 +1917,23 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         // already posted/paid, adding a cost line would diverge the WO from its Bill — refuse.
         const posted = await findPostedApForWo(client, companyId, params.data.id);
         if (posted) throw new WoPostedApError(posted);
+        if (!parsed.data.item_id) {
+          throw new WorkOrderLineItemError(
+            "wo_line_item_required",
+            `work-order line "${parsed.data.description}" names no catalog item — pick the item; the bill posts the line to its account`
+          );
+        }
+        const itemId = await assertWorkOrderLineItem(client as never, companyId, parsed.data.item_id);
+        // ACCT-F4431382 (DEGH-03): a line that names its category posts to it — its item must post to the same account.
+        await assertWorkOrderCategoryLineItem(client as never, companyId, itemId, parsed.data.expense_category_uuid);
         const res = await client.query(
           `
-            INSERT INTO maintenance.work_order_lines (work_order_uuid, line_type, description, quantity, unit_cost, total_cost)
-            VALUES ($1,$2,$3,$4,$5,$6)
+            INSERT INTO maintenance.work_order_lines (work_order_uuid, line_type, description, quantity, unit_cost, total_cost, item_id, expense_category_uuid)
+            VALUES ($1,$2,$3,$4,$5,$6,$7::uuid,$8::uuid)
             RETURNING *
           `,
-          [params.data.id, parsed.data.line_type, parsed.data.description, parsed.data.quantity, parsed.data.unit_cost, parsed.data.amount]
+          [params.data.id, parsed.data.line_type, parsed.data.description, parsed.data.quantity, parsed.data.unit_cost, parsed.data.amount, itemId,
+           parsed.data.expense_category_uuid ?? null]
         );
         await validateWoVendorInvoiceTotals(client, String(params.data.id), companyId);
         return res.rows[0];
@@ -1891,6 +1943,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         return reply.code(409).send({ error: error.message, status: error.status });
       }
       if (isWoPostedApError(error)) return postedApReply(reply, error.detail);
+      // ACCT-F4431382: no item / an item of another company — refused by name (422), nothing written.
+      if (error instanceof WorkOrderLineItemError) {
+        return reply.code(422).send({ error: error.code, message: error.message });
+      }
       if (isWoInvoiceMismatch(error)) {
         const err = error;
         return reply.code(409).send({

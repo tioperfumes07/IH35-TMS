@@ -30,6 +30,7 @@ import { TourSettlementTab } from "./TourSettlementTab";
 import { LoadDetailGeofenceTimelineTab } from "./LoadDetailGeofenceTimelineTab";
 import { TelematicsLinksPanel } from "../telematics/TelematicsLinksPanel";
 import { LoadStopsRecordTab } from "./LoadStopsRecordTab";
+import { LoadMilesRecommendations } from "../loads/MilesRecommendationsPanel";
 import { LoadAuditTab } from "./LoadAuditTab";
 import { STATUS_LABEL, formatMoneyCents } from "./constants";
 import { LoadReassignModal } from "../../pages/dispatch/LoadReassignModal";
@@ -1117,6 +1118,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                       },
                     ]}
                   />
+                  {/* 443.55 — Historical + Google recommendation per miles field, with the per-field source selector. */}
+                  <div className="mt-2">
+                    <LoadMilesRecommendations loadId={load.id} operatingCompanyId={effectiveOperatingCompanyId} canEdit={Boolean(canEdit)} />
+                  </div>
                 </OverviewWizardSection>
 
                 {/* §C — Stops · PC*MILER Routing (per-stop, from the live payload). */}

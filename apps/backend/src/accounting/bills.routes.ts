@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { lineCategorizationRefusal } from "./line-categorization.js";
 import { AGING_BUCKET_IDS, agingWindowFromBucket } from "./aging/buckets.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -29,6 +30,8 @@ import {
   ReinstateDocumentError,
 } from "./reinstate-document.service.js";
 import { nextBillDisplayId } from "./display-id.js";
+import { BillUnitStampError, refuseNonOwnerBillUnitStamp, stampDriverBillUnitsFromLoads } from "./bill-unit-stamp.service.js";
+import { BillTrailerStampError, refuseNonOwnerBillTrailerStamp, stampDriverBillTrailersFromLoads } from "./bill-trailer-stamp.service.js";
 import {
   DuplicateDocumentNumberError,
   duplicateDocumentNumberBody,
@@ -148,6 +151,8 @@ const createBillLineSchema = z.object({
   // GO-18 — mirrors expenses' identical field; the DB trigger (accounting.enforce_load_fk_invariant)
   // enforces >=20 chars when this line's category requires a load and none was given.
   load_exemption_reason: z.string().trim().min(20).max(2000).optional().nullable(),
+  // 443.67 G3 — who / why this line's account differs from its item's default; the DB trigger enforces >= 10 chars.
+  item_account_override_reason: z.string().trim().min(10).max(2000).optional().nullable(),
   // Round 92/94 item lines remainder (migration 202614271200) — catalogs.items FK + qty x rate =
   // amount. bills.service.ts enforces all-four-or-none and the qty*rate=amount identity.
   item_id: z.string().uuid().optional().nullable(),
@@ -202,6 +207,11 @@ const payBillBodySchema = z.object({
   check_number: z.string().trim().max(80).optional(),
   reference_number: z.string().trim().max(120).optional(),
   memo: z.string().trim().max(2000).optional(),
+});
+
+// LEAD 443.102 ruling 1 — the Owner's stamp of posted driver bills' unit from their loads. Dry run unless asked.
+const stampUnitsBodySchema = z.object({
+  dry_run: z.boolean().optional().default(true),
 });
 
 const voidBodySchema = z.object({
@@ -626,6 +636,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
             categoryCode: line.category_code,
             loadId: line.load_id,
             loadExemptionReason: line.load_exemption_reason,
+            itemAccountOverrideReason: line.item_account_override_reason,
             itemId: line.item_id,
             quantity: line.quantity,
             rateCents: line.rate_cents,
@@ -657,6 +668,9 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       ) {
         return reply.code(400).send({ error: message });
       }
+      // 443.67 G3 — the line-categorization refusal names the field the operator fills.
+      const categorization = lineCategorizationRefusal(error);
+      if (categorization) return reply.code(422).send(categorization);
       // LV-AP-DUP — a duplicate vendor invoice is a CONFLICT the operator can resolve, not a server
       // fault. 409 carries the colliding bill id so the UI can link straight to it, and names the
       // field that overrides it -- a warning the caller cannot act on is just a failure.
@@ -727,6 +741,55 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       }
       throw error;
     }
+  });
+
+  // LEAD 443.102 ruling 1 (P38 Wave-A) — POSTED driver bills take their load's same-entity unit, metadata only (no
+  // amount / account / JE change), one audit row per bill. Owner only: a refusal is audited in its own committed scope.
+  app.post("/api/v1/accounting/bills/stamp-units-from-loads", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = stampUnitsBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    const opco = query.data.operating_company_id;
+    if (String(user.role ?? "") !== "Owner") {
+      await withCompanyScope(user.uuid, opco, (client) =>
+        refuseNonOwnerBillUnitStamp(client, { userId: String(user.uuid), role: String(user.role ?? "") }, opco).catch((e) => {
+          if (!(e instanceof BillUnitStampError)) throw e;
+        })
+      );
+      return reply.code(403).send({ error: "owner_only", message: "Only the Owner can stamp units on posted bills." });
+    }
+    const result = await withCompanyScope(user.uuid, opco, (client) =>
+      stampDriverBillUnitsFromLoads(client, { operatingCompanyId: opco, actorUserId: String(user.uuid), actorRole: "Owner", dryRun: body.data.dry_run })
+    );
+    return result;
+  });
+
+  // LEAD 443.105 item 1 (P38 Wave-A) — POSTED driver bills take their load's trailer (company -> trailer_id + line
+  // equipment_id; customer -> non_owned_trailer_id), metadata only, one audit row per bill. Owner only: a refusal is
+  // audited in its own committed scope.
+  app.post("/api/v1/accounting/bills/stamp-trailers-from-loads", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = stampUnitsBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    const opco = query.data.operating_company_id;
+    if (String(user.role ?? "") !== "Owner") {
+      await withCompanyScope(user.uuid, opco, (client) =>
+        refuseNonOwnerBillTrailerStamp(client, { userId: String(user.uuid), role: String(user.role ?? "") }, opco).catch((e) => {
+          if (!(e instanceof BillTrailerStampError)) throw e;
+        })
+      );
+      return reply.code(403).send({ error: "owner_only", message: "Only the Owner can stamp trailers on posted bills." });
+    }
+    const result = await withCompanyScope(user.uuid, opco, (client) =>
+      stampDriverBillTrailersFromLoads(client, { operatingCompanyId: opco, actorUserId: String(user.uuid), actorRole: "Owner", dryRun: body.data.dry_run })
+    );
+    return result;
   });
 
   app.post("/api/v1/accounting/bills/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {

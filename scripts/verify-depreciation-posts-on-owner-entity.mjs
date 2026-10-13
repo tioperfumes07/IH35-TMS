@@ -34,8 +34,13 @@ export function assertOwnerBooks(src) {
   if (!/insertJournalEntryHeader\s*\(\s*[\s\S]*?booksCompanyId/.test(body)) {
     problems.push("insertJournalEntryHeader must receive booksCompanyId (owner books)");
   }
-  if (!/findExistingPostedJe\s*\(\s*[\s\S]*?booksCompanyId/.test(body)) {
-    problems.push("findExistingPostedJe must receive booksCompanyId (owner books)");
+  // 443.99: ROUND 300 (fadc8e0c28) replaced the existing-post lookup findExistingPostedJe with resolvePostingAttempt
+  // (attempt keys after a reversal). The law is unchanged: the lookup runs on the owner's books.
+  if (!/(?:findExistingPostedJe|resolvePostingAttempt)\s*\(\s*client\s*,\s*booksCompanyId\b/.test(body)) {
+    problems.push("the existing-post lookup (resolvePostingAttempt / findExistingPostedJe) must receive booksCompanyId (owner books)");
+  }
+  if (/(?:findExistingPostedJe|resolvePostingAttempt)\s*\(\s*client\s*,\s*input\.operatingCompanyId/.test(body)) {
+    problems.push("the existing-post lookup still runs on input.operatingCompanyId");
   }
   if (!/buildDepreciationIdempotencyKey\s*\(\s*booksCompanyId/.test(body)) {
     problems.push("idempotency key must be scoped to booksCompanyId (owner books)");
@@ -93,8 +98,12 @@ export async function postDepreciation() {
 }
 export async function other() {}
 `;
-  if (assertOwnerBooks(good).length || !assertOwnerBooks(bad).length) {
-    console.error("SELFTEST FAIL", assertOwnerBooks(good), assertOwnerBooks(bad));
+  // ROUND 300 shape: resolvePostingAttempt on owner books passes; on input.operatingCompanyId fails.
+  const goodR300 = good.replace("findExistingPostedJe(client, booksCompanyId, idempotencyKey);", "const attempt = await resolvePostingAttempt(client, booksCompanyId, buildDepreciationIdempotencyKey(booksCompanyId, input.assetId, row.period_number));");
+  const badR300 = goodR300.replace("resolvePostingAttempt(client, booksCompanyId", "resolvePostingAttempt(client, input.operatingCompanyId");
+  if (goodR300 === good || badR300 === goodR300) { console.error("SELFTEST SETUP FAILED"); process.exit(1); }
+  if (assertOwnerBooks(good).length || !assertOwnerBooks(bad).length || assertOwnerBooks(goodR300).length || !assertOwnerBooks(badR300).length) {
+    console.error("SELFTEST FAIL", assertOwnerBooks(good), assertOwnerBooks(bad), assertOwnerBooks(goodR300), assertOwnerBooks(badR300));
     process.exit(1);
   }
   console.log("SELFTEST PASS");

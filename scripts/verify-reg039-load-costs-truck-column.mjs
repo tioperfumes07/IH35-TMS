@@ -14,7 +14,14 @@ function check(panel, board) {
   if (!/type SortKey = [^;]*"unit"/.test(panel)) {
     errors.push("DispatchLoadCostsPanel SortKey must include unit");
   }
-  if (!/headerBtn\("unit", "Truck"\)/.test(panel)) {
+  // 443.100 class B (verify-table-header-and-date-column hand-rolled <table> ratchet).
+  //   old rule: the panel's hand-rolled <table> renders headerBtn("unit", "Truck").
+  //   new rule: the panel's ParityTable has a { key: "unit", label: "Truck" } column that is not sortable:false,
+  //             and header clicks reach the panel's own comparator (onSortChange -> clickSort, sortMode external).
+  //   why: the table law sends every list through the shared ParityTable; headerBtn was the hand-rolled header.
+  //        Same contract: a Truck header that sorts by assigned_unit_number.
+  const truckCol = /\{ key: "unit", label: "Truck"([^}]*)\}/.exec(panel);
+  if (!truckCol || /sortable:\s*false/.test(truckCol[1]) || !/onSortChange=\{\(key\) => clickSort\(key as SortKey\)\}/.test(panel)) {
     errors.push("Approximate load costs must expose a sortable Truck header");
   }
   if (!/assigned_unit_number \?\? "Unassigned"/.test(panel)) {
@@ -37,7 +44,8 @@ function selftest() {
     console.error("SELFTEST FAIL — clean:\n  " + good.join("\n  "));
     process.exit(1);
   }
-  if (check(panel.replace('headerBtn("unit", "Truck")', 'headerBtn("load", "Load")'), board).length === 0) {
+  if (check(panel.replace('{ key: "unit", label: "Truck",', '{ key: "unit", label: "Truck", sortable: false,'), board).length === 0
+    || check(panel.replace('{ key: "unit", label: "Truck"', '{ key: "unit", label: "Unit"'), board).length === 0) {
     console.error("SELFTEST FAIL — Truck header mutation not caught");
     process.exit(1);
   }

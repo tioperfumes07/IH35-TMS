@@ -59,18 +59,19 @@ if (process.argv.includes("--selftest")) {
 
 const statik = check(fs.readFileSync(path.join(ROOT, ENGINE), "utf8"));
 if (statik.length) report(LABEL, statik, "");
-const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket }) => {
-  const open = `bt.voided_at IS NULL AND ${NOT_FROZEN_SQL()} AND ${BUCKET_SQL(hasBucket)} IN ('for_review', 'excluded')`;
+const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket, linkColumns }) => {
+  const bucket = (a = "bt") => BUCKET_SQL(hasBucket, a, linkColumns);
+  const open = `bt.voided_at IS NULL AND ${NOT_FROZEN_SQL()} AND ${bucket()} IN ('for_review', 'excluded')`;
   const one = async (kind, sql) => {
     const row = (await c.query(`SELECT count(*)::int AS n, (array_agg(x.id))[1:3] AS ids, min(x.bucket) AS bucket FROM (${sql}) x`)).rows[0];
     return { kind, n: row.n, ids: row.ids ?? [], bucket: row.bucket };
   };
   const rows = [
-    await one("bill", `SELECT d.id::text AS id, ${BUCKET_SQL(hasBucket)} AS bucket FROM accounting.bills d JOIN banking.bank_transactions bt ON bt.id = d.source_bank_transaction_id WHERE d.voided_at IS NULL AND d.revoked_at IS NULL AND ${open}`),
-    await one("bill payment", `SELECT d.id::text AS id, ${BUCKET_SQL(hasBucket)} AS bucket FROM accounting.bill_payments d JOIN banking.bank_transactions bt ON bt.id = d.source_bank_transaction_id WHERE d.voided_at IS NULL AND d.revoked_at IS NULL AND ${open}`),
-    await one("customer payment", `SELECT d.id::text AS id, ${BUCKET_SQL(hasBucket)} AS bucket FROM accounting.payments d JOIN banking.bank_transactions bt ON bt.id = d.source_bank_transaction_id WHERE d.voided_at IS NULL AND ${open}`),
+    await one("bill", `SELECT d.id::text AS id, ${bucket()} AS bucket FROM accounting.bills d JOIN banking.bank_transactions bt ON bt.id = d.source_bank_transaction_id WHERE d.voided_at IS NULL AND d.revoked_at IS NULL AND ${open}`),
+    await one("bill payment", `SELECT d.id::text AS id, ${bucket()} AS bucket FROM accounting.bill_payments d JOIN banking.bank_transactions bt ON bt.id = d.source_bank_transaction_id WHERE d.voided_at IS NULL AND d.revoked_at IS NULL AND ${open}`),
+    await one("customer payment", `SELECT d.id::text AS id, ${bucket()} AS bucket FROM accounting.payments d JOIN banking.bank_transactions bt ON bt.id = d.source_bank_transaction_id WHERE d.voided_at IS NULL AND ${open}`),
     // a categorization entry still standing: posted, never reversed, and not itself a reversal (reverses_je_id)
-    await one("categorization journal entry", `SELECT DISTINCT je.id::text AS id, ${BUCKET_SQL(hasBucket)} AS bucket FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid JOIN banking.bank_transactions bt ON bt.id::text = p.source_transaction_id::text WHERE p.source_transaction_type = 'bank_categorization' AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL AND ${open}`),
+    await one("categorization journal entry", `SELECT DISTINCT je.id::text AS id, ${bucket()} AS bucket FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid JOIN banking.bank_transactions bt ON bt.id::text = p.source_transaction_id::text WHERE p.source_transaction_type = 'bank_categorization' AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL AND ${open}`),
   ];
   // ROUND 441.5 — an Expense created by categorizing the line (column exists once migration 202615440500 is applied).
   const hasExpenseLink = (
@@ -85,9 +86,9 @@ const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket }) => {
         WHERE table_schema = 'accounting' AND table_name = 'deposits' AND column_name = 'source_bank_transaction_id'`
     )
   ).rows.length > 0;
-  if (hasDepositLink) rows.push(await one("deposit", `SELECT d.id::text AS id, ${BUCKET_SQL(hasBucket)} AS bucket FROM accounting.deposits d JOIN banking.bank_transactions bt ON bt.id = d.source_bank_transaction_id WHERE d.voided_at IS NULL AND ${open}`));
-  if (hasExpenseLink) rows.push(await one("expense", `SELECT d.id::text AS id, ${BUCKET_SQL(hasBucket)} AS bucket FROM accounting.expenses d JOIN banking.bank_transactions bt ON bt.id = d.source_bank_transaction_id WHERE d.voided_at IS NULL AND ${open}`));
-  if (hasBucket) rows.push(await one("minted transfer", `SELECT t.id::text AS id, ${BUCKET_SQL(hasBucket)} AS bucket FROM banking.transfers t JOIN banking.bank_transactions bt ON bt.id = t.minted_from_bank_transaction_id WHERE t.revoked_at IS NULL AND ${open}`));
+  if (hasDepositLink) rows.push(await one("deposit", `SELECT d.id::text AS id, ${bucket()} AS bucket FROM accounting.deposits d JOIN banking.bank_transactions bt ON bt.id = d.source_bank_transaction_id WHERE d.voided_at IS NULL AND ${open}`));
+  if (hasExpenseLink) rows.push(await one("expense", `SELECT d.id::text AS id, ${bucket()} AS bucket FROM accounting.expenses d JOIN banking.bank_transactions bt ON bt.id = d.source_bank_transaction_id WHERE d.voided_at IS NULL AND ${open}`));
+  if (hasBucket) rows.push(await one("minted transfer", `SELECT t.id::text AS id, ${bucket()} AS bucket FROM banking.transfers t JOIN banking.bank_transactions bt ON bt.id = t.minted_from_bank_transaction_id WHERE t.revoked_at IS NULL AND ${open}`));
   const seen = (await c.query(`SELECT count(*)::int AS n FROM banking.bank_transactions bt WHERE ${open}`)).rows[0].n;
   return { rows, seen };
 });

@@ -110,10 +110,23 @@ export function assertOpenBalanceFailureTruth(sources) {
   if (!list.includes('c.open_balance == null ? "Unavailable" : fmtMoney(c.open_balance)')) {
     errors.push("customer CSV export must preserve unavailable, never fabricate $0");
   }
-  if (!list.includes('disabled={!openBalancesAvailable && (chip.id === "overdue" || chip.id === "with_open")}')) {
+  // 443.102 — old rules: a `disabled={!openBalancesAvailable && …}` chip, and a one-line sidebar ternary. New rules: the
+  // balance-dependent options are withheld (BANK-F4321 6903e980d0 moved the chips into the MoneyListToolbar select —
+  // `openBalancesAvailable || (opt.value !== "overdue" && opt.value !== "with_open")`) AND the filter predicate itself
+  // refuses them while unavailable; the sidebar's open_balance cell renders "Unavailable" in the false branch of
+  // `openBalancesAvailable ? (…)` (ACCT-F3635 c48527cdb7 split it into Cleared / Not cleared). Why: same truth, new
+  // shape. Offering the chips, or a $0 / blank sidebar cell, still fails.
+  const chipsDisabled = list.includes('disabled={!openBalancesAvailable && (chip.id === "overdue" || chip.id === "with_open")}');
+  const chipsWithheld =
+    list.includes('(opt) => openBalancesAvailable || (opt.value !== "overdue" && opt.value !== "with_open")') &&
+    list.includes('if (f === "overdue") return openBalancesAvailable && ') &&
+    list.includes('if (f === "with_open") return openBalancesAvailable && ');
+  if (!chipsDisabled && !chipsWithheld) {
     errors.push("balance-dependent filter chips must disable while the rollup is unavailable");
   }
-  if (!sidebar.includes('openBalancesAvailable ? fmtMoney(openByCustomerId.get(customer.id) ?? 0) : "Unavailable"')) {
+  const sidebarOneLine = sidebar.includes('openBalancesAvailable ? fmtMoney(openByCustomerId.get(customer.id) ?? 0) : "Unavailable"');
+  const sidebarBranch = /\{openBalancesAvailable \? \([\s\S]{0,800}?\) : \(\s*"Unavailable"\s*\)\}/.test(sidebar);
+  if (!sidebarOneLine && !sidebarBranch) {
     errors.push("master-detail sidebar must render unavailable, never $0, on rollup failure");
   }
   if (!drill.includes('openBalanceCents == null ? "Unavailable" : fmtMoney(openBalanceCents)')) {
@@ -168,8 +181,8 @@ function selftest() {
     [
       "transaction-list Balance reverted to raw amount_open_cents",
       live.replace(
-        "{ key: \"balance\", label: \"Balance\", render: (r) => fmtMoney(invoiceOpenCentsForDisplay(r)) },",
-        "{ key: \"balance\", label: \"Balance\", render: (r) => fmtMoney(r.amount_open_cents) },"
+        "{ key: \"balance\", label: \"Balance\", sortable: true, render: (r) => fmtMoney(invoiceOpenCentsForDisplay(r)) },",
+        "{ key: \"balance\", label: \"Balance\", sortable: true, render: (r) => fmtMoney(r.amount_open_cents) },"
       ),
       "transaction-list Balance",
     ],
@@ -198,8 +211,8 @@ function selftest() {
     [TARGET_REL, "openBalancesAvailable={!allInvoicesQuery.isError}", "both list and master-detail"],
     [LIST_REL, "open_balance: number | null", "customer list"],
     [LIST_REL, 'c.open_balance == null ? "Unavailable" : fmtMoney(c.open_balance)', "CSV export"],
-    [LIST_REL, 'disabled={!openBalancesAvailable && (chip.id === "overdue" || chip.id === "with_open")}', "filter chips"],
-    [SIDEBAR_REL, 'openBalancesAvailable ? fmtMoney(openByCustomerId.get(customer.id) ?? 0) : "Unavailable"', "sidebar"],
+    [LIST_REL, '(opt) => openBalancesAvailable || (opt.value !== "overdue" && opt.value !== "with_open")', "filter chips"],
+    [SIDEBAR_REL, '"Unavailable"\n                      )}', "sidebar"],
     [DRILL_REL, 'openBalanceCents == null ? "Unavailable" : fmtMoney(openBalanceCents)', "quick-view"],
   ]) {
     const mutatedSources = { ...sources, [file]: sources[file].replace(needle, "BROKEN_OPEN_BALANCE_FAILURE_TRUTH") };

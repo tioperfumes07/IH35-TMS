@@ -102,6 +102,135 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
       "db/migrations/202615110000_fuel_transaction_derivations.sql",
     ]),
   ],
+  // Same owner order (2026-10-01, no handoff): CC-2's advance path — 5785's advance recovered 4x by
+  // v_driver_advance_balances. Claimed first (#26277) under claimed_by CC-2. Same exact-branch + exact-file shape.
+  [
+    "cc-2/advance-once-5785",
+    new Set(["db/migrations/202615500300_driver_advance_balances_one_row_per_posting.sql"]),
+  ],
+  // LEAD RULING 443.45 Ask C (CC-3): the A/P chain bills a salaried week with no per-load driver bill (5780). Claimed first
+  // (#26330, d7e60ead0c) under claimed_by CC-3, inside the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/443-51-salaried-ap-chain",
+    new Set(["db/migrations/202615530900_driver_settlement_gl_bills_pay_basis_salaried.sql"]),
+  ],
+  // OWNER RULING (Lead 443.52 B, CC-3): expense settlement number requires a load. Claimed first (#26347, 782e96cd82).
+  [
+    "cc-3/443-59-expense-settlement-needs-load",
+    new Set(["db/migrations/202615540900_expenses_settlement_no_requires_load.sql"]),
+  ],
+  // LEAD 443.101 R6 (CC-3): verify:arch-design / entity-isolation — FORCE RLS on the two downtime catalogs, the first red
+  // step on every main CI run. Claimed first on main under claimed_by CC-3 inside the cc-3 band (HH 09) — #26574
+  // ac43266e9f, placed under "claimed" by a601c5bf9a. Same exact-branch + exact-file shape.
+  [
+    "cc-3/c101-r6-arch",
+    new Set(["db/migrations/202615750915_downtime_catalogs_force_rls.sql"]),
+  ],
+  // LEAD 443.103 item 3 (CC-3, R11): schema drift — claim the prod-only LIVE+USED downtime.* / archived catalogs.* relations.
+  // Claimed first on main under claimed_by CC-3 inside the cc-3 band (HH 09) — #26586 d62aaadbaa. Same exact-branch +
+  // exact-file shape.
+  [
+    "cc-3/c103-r11",
+    new Set(["db/migrations/202615760910_claim_prod_only_downtime_and_archived_driver_catalogs.sql"]),
+  ],
+  // LEAD 443.105 item 1 (CC-3, R12): accounting.bills.non_owned_trailer_id — a driver bill on a customer-trailer load
+  // carries its non-owned trailer. Claimed first on main under claimed_by CC-3 inside the cc-3 band (HH 09) — #26592
+  // 29b737ab2e. Same exact-branch + exact-file shape.
+  [
+    "cc-3/c105-r12",
+    new Set(["db/migrations/202615770910_driver_bill_non_owned_trailer.sql"]),
+  ],
+  // LEAD RULINGS 443.107 item 3 (CC-3 R16): loads.trailer_source 'none' + expense trailer trigger carries the non-owned
+  // trailer. Claimed first on main (#26607, 45ed85e395). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c107-r16",
+    new Set(["db/migrations/202615790910_load_trailer_source_none.sql"]),
+  ],
+  // LEAD RULINGS 443.113 AJK-10/11 (CC-3): invoices_invoice_type_check accepts 'cancellation_tonu' (the TONU writer's own
+  // type). Claimed first on main (#26638, d1fabb4cb7) under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch +
+  // exact-file shape.
+  [
+    "cc-3/c113-cancel",
+    new Set(["db/migrations/202615810910_invoice_type_accepts_cancellation_tonu.sql"]),
+  ],
+  // LEAD 443.114 (CC-3, AJK-12 ruling): safety.enforce_fine_lock_after_conversion allows converted -> dismissed only when the
+  // driver liability is voided, and clearing the pointer only when its liability does not exist. Claimed first on main
+  // (#26646, 966947fd54). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c114-fines",
+    new Set(["db/migrations/202615820910_fine_dismiss_after_liability_void.sql"]),
+  ],
+  // LEAD RULINGS 443.116 #1 (CC-3): FUEL_POSTS_ON_RECEIPT_ENABLED flag seed (default OFF) — a fill posts when it is
+  // received. Claimed first on main (#26653, 9438c4d8da) under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch +
+  // exact-file shape.
+  [
+    "cc-3/c116-fuel",
+    new Set(["db/migrations/202615830910_fuel_posts_on_receipt_flag.sql"]),
+  ],
+  // LEAD 443.120 A (CC-3): FK safety.civil_fines.converted_to_liability_id -> driver_liabilities(id). Claimed first on main
+  // (#26662 + #26665) under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c120-a",
+    new Set(["db/migrations/202615840910_fine_converted_liability_fk.sql"]),
+  ],
+  // LEAD 443.121 #1 (CC-3): ONE fuel receipt identity (fuel.fuel_receipt_postings). Claimed first on main (#26669) under
+  // claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c121-1",
+    new Set(["db/migrations/202615850910_fuel_receipt_one_posting_identity.sql"]),
+  ],
+  // LEAD 443.129 A/B/C (CC-3): roadside ticket payment source + hub linkage + item (maintenance.road_service_tickets).
+  // Claimed first on main (#26686) under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c129-abc",
+    new Set(["db/migrations/202615880910_road_service_ticket_payment_source_and_linkage.sql"]),
+  ],
+  // CC-3 (443.132 standing orders): WO->bill line account = its item's account — maintenance.work_order_lines.item_id.
+  // Claimed first on main (#26700) under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c133-woacct",
+    new Set(["db/migrations/202615890910_work_order_line_item.sql"]),
+  ],
+  // LEAD 443.133 B (CC-3): Relay deposit card map as data + one live entry per deposit. Claimed first on main (#26684)
+  // under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c133-b",
+    new Set(["db/migrations/202615870910_relay_deposit_card_map_and_one_posting.sql"]),
+  ],
+  // LEAD 443.134 #1 (CC-3): related party -> its one running Due to / from account (accounting.related_party_accounts).
+  // Claimed first on main (#26711, 733b56ba67) under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c134-rp",
+    new Set(["db/migrations/202615900910_related_party_accounts_link.sql"]),
+  ],
+  // LEAD 443.136 #1 (CC-3): the Relay deposit posting registry trigger stamps the deposit row. Claimed first on main
+  // (#26721, 31695686ae) under claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c136-deposit",
+    new Set(["db/migrations/202615920910_relay_deposit_stamped_by_posting_registry.sql"]),
+  ],
+  // LEAD 443.136 #2 (CC-3): WORM on accounting.related_party_accounts. Claimed first on main (#26721, 31695686ae) under
+  // claimed_by CC-3 in the cc-3 band (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c136-worm",
+    new Set(["db/migrations/202615930910_related_party_accounts_worm.sql"]),
+  ],
+  // LEAD 443.136 follow-up (CC-3, ACCT-F4431372): posting_source_load_id resolves a Relay receipt fill with no fuel row to
+  // its adopted expense document's load. Claimed first on main (#26729, b1152c0449) under claimed_by CC-3 in the cc-3 band
+  // (HH 09). Same exact-branch + exact-file shape.
+  [
+    "cc-3/c137",
+    new Set(["db/migrations/202615940910_posting_source_load_id_relay_receipt_document.sql"]),
+  ],
+  // RULING 443.62 #3/#4/#7 (Lead 16:35 UTC): 2410-00-001..004 "Due to / from <party>" rename (taken from CC-1 #26377) +
+  // google_place_id on stop / location for CC-2. Claimed first on main (#26389); exact branch + exact files.
+  [
+    "cc-3/443-62-due-to-from-and-place-id",
+    new Set([
+      "db/migrations/202615560900_due_to_from_related_party_accounts.sql",
+      "db/migrations/202615570900_stop_and_location_google_place_id.sql",
+    ]),
+  ],
 ]);
 
 function isOwnerAuthorizedOneOff(branch, files) {

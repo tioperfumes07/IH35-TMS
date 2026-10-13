@@ -26,7 +26,14 @@ const contracts = [
   ],
   [
     "a set width overrides flex-1 min-width with an explicit px width",
-    (s) => /flex:\s*"0 0 auto"/.test(s) && /width\s*\?\s*\{\s*width:\s*`\$\{width\}px`/.test(s),
+    // LEAD 443.99 class B (2026-10-12):
+    //   old rule: the set-width style literal starts with the width — width ? { width: `${width}px` ...
+    //   new rule: the set-width style object (optionally spreading the locked KANBAN_COLUMN_STYLE first) carries
+    //             width: `${width}px` AND flex: "0 0 auto" in the same object.
+    //   why: #23282 (5f292613f4) spread the locked lane surface/border into the column style
+    //        ({ ...KANBAN_COLUMN_STYLE, width: `${width}px`, flex: "0 0 auto" }); the width override is unchanged.
+    //        Still fails if the px width or the flex override is dropped.
+    (s) => /width\s*\?\s*\{\s*(?:\.\.\.KANBAN_COLUMN_STYLE,\s*)?width:\s*`\$\{width\}px`,\s*flex:\s*"0 0 auto"\s*\}/.test(s),
     (s) => s.replaceAll('flex: "0 0 auto"', "flex: undefined"),
   ],
   [

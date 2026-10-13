@@ -1,6 +1,5 @@
 import { resolveExpenseCategoryById } from "../accounting/expense-category-catalog.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { resolveBillLineAccountId } from "../bills/bill-line-account-resolution.service.js";
 import { resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { postSourceTransactionInClientTx, PostingEngineError } from "../accounting/posting-engine.service.js";
@@ -8,9 +7,19 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 
 // The one expense GL-posting flag key (accounting/expense-gl-posting-flag.ts), shared with every expense-GL call site.
 import { EXPENSE_GL_POSTING_FLAG_KEY as WO_EXPENSE_GL_POSTING_FLAG_KEY } from "../accounting/expense-gl-posting-flag.js";
+import { resolveLineLoadExemption } from "../accounting/expense-line-load-exemption.js";
 // Same flag key as accounting/bill-gl.service.ts's own BILL_GL_POSTING_FLAG_KEY, redefined here for
 // the same reason (avoid a service->service import cycle risk) — same value, same semantics.
 const WO_BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
+
+/** LEAD 443.129 D / AJK-08 — a requirePosted caller cannot complete while the company's bill GL posting is OFF. */
+export class WoBillGlPostingDisabledError extends Error {
+  readonly code = "bill_gl_posting_disabled";
+  constructor(operatingCompanyId: string) {
+    super(`bill_gl_posting_disabled: ${WO_BILL_GL_POSTING_FLAG_KEY} is off for company ${operatingCompanyId} — the document cannot be completed on an unposted bill`);
+    this.name = "WoBillGlPostingDisabledError";
+  }
+}
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -40,6 +49,8 @@ export type TwoSectionHeader = {
   external_vendor_id?: string | null;
   external_vendor_wo_number?: string | null;
   external_vendor_invoice_number?: string | null;
+  /** 443.129 D — the vendor invoice amount a WO born 'complete' must carry (wo completion trigger reconciles it to cost). */
+  external_vendor_invoice_amount?: number | null;
   description: string;
   severity?: string | null;
   payment_timing: "in_house" | "paid_same_day" | "vendor_invoice";
@@ -91,6 +102,8 @@ export type SectionALine = {
   quantity: number;
   amount: number;
   expense_category_uuid: string;
+  /** The catalog item this line bills — the WO->bill copy takes its account (no description guess). */
+  item_id?: string | null;
 };
 
 export type SectionBSubLine = {
@@ -102,6 +115,8 @@ export type SectionBSubLine = {
   part_uuid?: string;
   labor_rate_uuid?: string;
   part_location_codes?: string[];
+  /** The catalog item this part / labor row bills (falls back to its parent line's item on the bill copy). */
+  item_id?: string | null;
 };
 
 export type SectionBLine = {
@@ -110,8 +125,69 @@ export type SectionBLine = {
   unit_cost: number;
   amount: number;
   service_item_uuid?: string | null;
+  /** The catalog item this line bills; its part / labor rows inherit it unless they name their own. */
+  item_id?: string | null;
   sub_rows?: SectionBSubLine[];
 };
+
+/** A work-order line names a catalog item of the WORK ORDER's company (work_order_lines has no company column). */
+export class WorkOrderLineItemError extends Error {
+  readonly code: string;
+  constructor(code: "wo_line_item_not_in_company" | "wo_line_item_required" | "wo_line_item_account_mismatch", message: string) {
+    super(`${code}: ${message}`);
+    this.code = code;
+    this.name = "WorkOrderLineItemError";
+  }
+}
+
+export async function assertWorkOrderLineItem(client: DbClient, operatingCompanyId: string, itemId: string | null | undefined): Promise<string | null> {
+  if (!itemId) return null;
+  const hit = await client.query<{ id: string }>(
+    `SELECT id::text FROM catalogs.items WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [itemId, operatingCompanyId]
+  );
+  if (!hit.rows[0]) throw new WorkOrderLineItemError("wo_line_item_not_in_company", `item ${itemId} is not an item of this company`);
+  return itemId;
+}
+
+/**
+ * ACCT-F4431382 (DEGH-03, 443.113 — the rule a check category line uses, and the WO Section A item picker's filter):
+ * a CATEGORY line's item must post to that category's account. The category is a catalogs.accounts row of the work
+ * order's company and the item's default_expense_account_id must be that account — otherwise the bill line (which posts
+ * to the ITEM's account) would book somewhere other than the category the operator chose. Refused by name, never fixed
+ * up. One helper, called by the V5 create route (Section A) and the edit /line-items route (when a category is named).
+ */
+export async function assertWorkOrderCategoryLineItem(
+  client: DbClient,
+  operatingCompanyId: string,
+  itemId: string | null | undefined,
+  categoryAccountId: string | null | undefined
+): Promise<void> {
+  if (!itemId || !categoryAccountId) return;
+  const row = (
+    await client.query<{ item_account_id: string | null; item_name: string; category_account_id: string | null }>(
+      `SELECT i.default_expense_account_id::text AS item_account_id, i.item_name,
+              (SELECT a.id::text FROM catalogs.accounts a
+                WHERE a.id = $3::uuid AND a.operating_company_id = $2::uuid) AS category_account_id
+         FROM catalogs.items i
+        WHERE i.id = $1::uuid AND i.operating_company_id = $2::uuid`,
+      [itemId, operatingCompanyId, categoryAccountId]
+    )
+  ).rows[0];
+  if (!row) throw new WorkOrderLineItemError("wo_line_item_not_in_company", `item ${itemId} is not an item of this company`);
+  if (!row.category_account_id) {
+    throw new WorkOrderLineItemError(
+      "wo_line_item_account_mismatch",
+      `category ${categoryAccountId} is not an account of this company — a category line's item must post to its category account`
+    );
+  }
+  if (row.item_account_id !== row.category_account_id) {
+    throw new WorkOrderLineItemError(
+      "wo_line_item_account_mismatch",
+      `item "${row.item_name}" posts to a different account than this line's category — pick an item of that category, or add the cost as a Section B item line`
+    );
+  }
+}
 
 function asNumber(value: number | string | null | undefined) {
   const next = Number(value ?? 0);
@@ -221,6 +297,7 @@ export async function createWorkOrderWithLines(
   }, 0);
   const totalCost = Number((sectionATotal + sectionBTotal).toFixed(2));
 
+  const bornComplete = header.status === "complete";
   const woRes = await client.query<{ id: string; display_id: string }>(
     `
       INSERT INTO maintenance.work_orders (
@@ -240,7 +317,10 @@ export async function createWorkOrderWithLines(
       header.operating_company_id,
       header.wo_type,
       header.source_type,
-      header.status ?? "open",
+      // 443.129 D: a WO born 'complete' (road service) is inserted OPEN, its V5 display id finalized below, THEN completed —
+      // maintenance.refresh_wo_display_id refuses a complete WO (E_WO_DISPLAY_ID_LOCKED), so every road-service ticket's
+      // create-wo used to die here before its bill was ever written.
+      bornComplete ? "open" : header.status ?? "open",
       header.unit_id,
       header.driver_id ?? null,
       header.load_id ?? null,
@@ -278,6 +358,16 @@ export async function createWorkOrderWithLines(
   );
   if (refreshedDisplay.rows[0]?.display_id) {
     wo = { ...wo, display_id: refreshedDisplay.rows[0].display_id };
+  }
+  if (bornComplete) {
+    await client.query(
+      `UPDATE maintenance.work_orders
+          SET status = $2,
+              external_vendor_invoice_amount = COALESCE($3::numeric, external_vendor_invoice_amount),
+              updated_at = now()
+        WHERE id = $1`,
+      [wo.id, header.status, header.external_vendor_invoice_amount ?? null]
+    );
   }
 
   // Block 8 (migration 202606221100) — persist VMRS repair detail post-insert (same pattern as the dispatch
@@ -388,10 +478,11 @@ export async function createWorkOrderWithLines(
       `
         INSERT INTO maintenance.work_order_lines (
           work_order_uuid, line_type, description, quantity, unit_cost, total_cost,
-          section, expense_category_uuid
-        ) VALUES ($1,'other',$2,$3,$4,$5,'A',$6)
+          section, expense_category_uuid, item_id
+        ) VALUES ($1,'other',$2,$3,$4,$5,'A',$6,$7::uuid)
       `,
-      [wo.id, line.description, quantity, amount, amount * quantity, line.expense_category_uuid]
+      [wo.id, line.description, quantity, amount, amount * quantity, line.expense_category_uuid,
+       await assertWorkOrderLineItem(client, header.operating_company_id, line.item_id)]
     );
     await appendCrudAudit(
       client as never,
@@ -408,11 +499,12 @@ export async function createWorkOrderWithLines(
       `
         INSERT INTO maintenance.work_order_lines (
           work_order_uuid, line_type, description, quantity, unit_cost, total_cost,
-          section, service_item_uuid
-        ) VALUES ($1,'other',$2,$3,$4,$5,'B',$6)
+          section, service_item_uuid, item_id
+        ) VALUES ($1,'other',$2,$3,$4,$5,'B',$6,$7::uuid)
         RETURNING uuid AS id
       `,
-      [wo.id, parent.description, Math.max(1, asNumber(parent.quantity)), asNumber(parent.unit_cost), asNumber(parent.amount), parent.service_item_uuid]
+      [wo.id, parent.description, Math.max(1, asNumber(parent.quantity)), asNumber(parent.unit_cost), asNumber(parent.amount), parent.service_item_uuid,
+       await assertWorkOrderLineItem(client, header.operating_company_id, parent.item_id)]
     );
     const parentId = parentInsert.rows[0]?.id;
     await appendCrudAudit(
@@ -429,9 +521,9 @@ export async function createWorkOrderWithLines(
         `
           INSERT INTO maintenance.work_order_lines (
             work_order_uuid, line_type, description, quantity, unit_cost, total_cost, section,
-            parent_line_uuid, part_uuid, labor_rate_uuid, part_location_codes
+            parent_line_uuid, part_uuid, labor_rate_uuid, part_location_codes, item_id
           ) VALUES (
-            $1,$2,$3,$4,$5,$6,'B',$7,$8,$9,$10
+            $1,$2,$3,$4,$5,$6,'B',$7,$8,$9,$10,$11::uuid
           )
           RETURNING uuid AS id
         `,
@@ -446,6 +538,7 @@ export async function createWorkOrderWithLines(
           sub.part_uuid ?? null,
           sub.labor_rate_uuid ?? null,
           sub.part_location_codes ?? null,
+          await assertWorkOrderLineItem(client, header.operating_company_id, sub.item_id ?? parent.item_id),
         ]
       );
       await appendCrudAudit(
@@ -528,7 +621,10 @@ async function copyToAccountingLines(
   sourceWoId: string,
   destinationTable: "accounting.bill_lines" | "accounting.expense_lines",
   destinationFkColumn: "bill_id" | "expense_id",
-  destinationId: string
+  destinationId: string,
+  // 443.105 #2 — expense lines are written WITH their load or the reason they have none (never a bare line the DB
+  // has to refuse and a later UPDATE has to fix).
+  expenseLineLink?: { loadId: string | null; loadExemptionReason: string | null }
 ) {
   const woContext = await client.query<{ operating_company_id: string }>(
     `
@@ -556,14 +652,21 @@ async function copyToAccountingLines(
     part_uuid: string | null;
     labor_rate_uuid: string | null;
     part_location_codes: string[] | null;
+    item_id: string | null;
+    item_account_id: string | null;
   }>(
     `
       SELECT
-        uuid as id, line_type, description, quantity, unit_cost, total_cost AS amount,
-        COALESCE(section, 'B') AS section,
-        parent_line_uuid, expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes
-      FROM maintenance.work_order_lines
-      WHERE work_order_uuid = $1
+        l.uuid as id, l.line_type, l.description, l.quantity, l.unit_cost, l.total_cost AS amount,
+        COALESCE(l.section, 'B') AS section,
+        l.parent_line_uuid, l.expense_category_uuid, l.service_item_uuid, l.part_uuid, l.labor_rate_uuid, l.part_location_codes,
+        -- the line's item, else its parent line's item (part / labor rows inherit the Section B item)
+        COALESCE(l.item_id, p.item_id)::text AS item_id,
+        i.default_expense_account_id::text AS item_account_id
+      FROM maintenance.work_order_lines l
+      LEFT JOIN maintenance.work_order_lines p ON p.uuid = l.parent_line_uuid AND p.work_order_uuid = l.work_order_uuid
+      LEFT JOIN catalogs.items i ON i.id = COALESCE(l.item_id, p.item_id) AND i.operating_company_id = $2::uuid
+      WHERE l.work_order_uuid = $1
         -- WO-BILL-ZERO-LINE-JE-CHECK-VIOLATION: a Section B "item line" that carries typed
         -- part/labor sub_rows (the normal, expected shape — see SectionBLine's own sub_rows
         -- field) always has its OWN total_cost = 0; the real cost lives entirely in its
@@ -580,12 +683,12 @@ async function copyToAccountingLines(
         -- same for both the bill and expense branches this function already serves, and adds
         -- no new GL math — sub_rows still copy with their real amounts, just without a
         -- bill_lines-level parent reference when their own container was $0.
-        AND total_cost <> 0
+        AND l.total_cost <> 0
         -- MAINT-MONEY-F6797: a voided line must never be copied into a real AP bill/expense.
-        AND voided_at IS NULL
-      ORDER BY created_at ASC
+        AND l.voided_at IS NULL
+      ORDER BY l.created_at ASC
     `,
-    [sourceWoId]
+    [sourceWoId, operatingCompanyId]
   );
 
   const idMap = new Map<string, string>();
@@ -596,11 +699,25 @@ async function copyToAccountingLines(
     const isBillLineCopy = destinationTable === "accounting.bill_lines";
     const insert = isBillLineCopy
       ? await (async () => {
-          const resolution = await resolveBillLineAccountId(operatingCompanyId, {
-            description: row.description,
-            line_type: row.line_type,
-            category_kind: "maintenance",
-          });
+          // WO -> bill: the line's account is its ITEM's account (443.67 G3: line account = item account). The old path
+          // guessed a maintenance category from the line's description keywords ("tire", "brake", …) and could post a
+          // line to a different account than the item it names. No item -> refused by name; never guessed.
+          if (!row.item_id || !row.item_account_id) {
+            throw new WorkOrderLineItemError(
+              "wo_line_item_required",
+              `work-order line "${row.description}" names no catalog item with an expense account — pick the item before billing`
+            );
+          }
+          const resolution = { category_kind: "maintenance" as const, category_code: null as string | null, account_id: row.item_account_id };
+          // An item line carries quantity x rate = amount (bill_lines_item_qty_rate_amount_check): the WO line's own
+          // quantity and unit cost when they foot to its amount exactly, else one unit at the line amount.
+          const amountCents = Math.round(asNumber(row.amount) * 100);
+          const woQty = asNumber(row.quantity);
+          const woRateCents = Math.round(asNumber(row.unit_cost) * 100);
+          const footsExactly = woQty > 0 && woRateCents > 0 && Math.round(woQty * woRateCents) === amountCents;
+          const itemQty = footsExactly ? woQty : 1;
+          const itemRateCents = footsExactly ? woRateCents : amountCents;
+          const itemUom = row.line_type === "labor" ? "hour" : "each";
           // ACCT-LINK-04 (bill branch — mirrors the expense branch below): work_order_lines.expense_category_uuid
           // points at catalogs.qbo_categories, while accounting.bill_lines.expense_category_uuid is FK'd to
           // catalogs.expense_categories, same-entity (bill_lines_expense_category_same_entity_fkey). Passing the
@@ -608,7 +725,7 @@ async function copyToAccountingLines(
           // WO→Bill with a categorized cost line) because it never exists in catalogs.expense_categories. Resolve
           // it the same way the expense branch already does: keep the pointer only when it resolves in THIS
           // entity's expense-category catalog, otherwise the projected line is uncategorized. Never touches
-          // account_id/category_kind/category_code (the actual GL posting target), which resolveBillLineAccountId
+          // account_id/category_kind/category_code (the actual GL posting target), which the line's item
           // already resolves correctly above — this only fixes the separate categorization pointer.
           const projectedBillCategoryId = row.expense_category_uuid
             ? await resolveExpenseCategoryById(client, {
@@ -621,8 +738,8 @@ async function copyToAccountingLines(
               INSERT INTO accounting.bill_lines (
                 ${destinationFkColumn}, line_sequence, amount, description, section, parent_line_uuid,
                 expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes, linked_wo_line_uuid,
-                category_kind, category_code, account_id
-              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+                category_kind, category_code, account_id, item_id, quantity, rate_cents, unit_of_measure
+              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::uuid,$17,$18,$19)
               RETURNING id
             `,
             [
@@ -641,6 +758,10 @@ async function copyToAccountingLines(
               resolution.category_kind,
               resolution.category_code,
               resolution.account_id,
+              row.item_id,
+              itemQty,
+              itemRateCents,
+              itemUom,
             ]
           );
         })()
@@ -666,8 +787,9 @@ async function copyToAccountingLines(
             `
               INSERT INTO accounting.expense_lines (
                 expense_id, line_sequence, amount_cents, amount, description, section, parent_line_uuid,
-                expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes, linked_wo_line_uuid
-              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+                expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes, linked_wo_line_uuid,
+                load_id, load_exemption_reason
+              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
               RETURNING id
             `,
             [
@@ -684,6 +806,8 @@ async function copyToAccountingLines(
               row.labor_rate_uuid,
               row.part_location_codes ?? null,
               row.id,
+              expenseLineLink?.loadId ?? null,
+              expenseLineLink?.loadExemptionReason ?? null,
             ]
           );
         })();
@@ -710,8 +834,8 @@ export async function autoCreateBillFromWO(
   client: DbClient,
   userId: string,
   woUuid: string,
-  opts?: { billNumber?: string | null; memo?: string | null }
-) {
+  opts?: { billNumber?: string | null; memo?: string | null; requirePosted?: boolean }
+): Promise<{ uuid: string; posted: boolean } | null> {
   if (!(await relationExists(client, "accounting.bills"))) return null;
   // Law §9: stamp unit_id from the WO header (migration 202607050810 hard FK). Vendor preserved via COALESCE.
   // WO-AUTO-BILL-NEVER-POSTS-GL-JE: this INSERT used to write status='draft' and never set the
@@ -791,18 +915,42 @@ export async function autoCreateBillFromWO(
   // fixed once this session for the revenue latch (LV-REVREC-NOT-FIRING) and again for this same
   // file's autoCreateExpenseFromWO (MAINT-F5697-CLASS, just below). Runs IN THE CALLER'S OWN OPEN
   // TRANSACTION via postSourceTransactionInClientTx instead — no new GL math, same poster.
+  // LEAD 443.129 D / AJK-08 — a caller whose document is FINANCIALLY COMPLETE only when its bill is posted (a road-service
+  // ticket becomes 'invoiced') passes requirePosted: the bill posts in this same transaction or NOTHING is written. A
+  // posting refusal propagates by name (never caught-and-logged) and a company whose bill posting flag is OFF is refused
+  // up front (WoBillGlPostingDisabledError) — a deferred posting must never leave an "invoiced" ticket on an unposted bill.
+  let posted = false;
   if (billOperatingCompanyId) {
     const flagOn = await isEnabled(client as never, WO_BILL_GL_POSTING_FLAG_KEY, {
       operating_company_id: billOperatingCompanyId,
       user_uuid: userId,
     });
-    if (flagOn) {
+    if (!flagOn && opts?.requirePosted) {
+      throw new WoBillGlPostingDisabledError(billOperatingCompanyId);
+    }
+    if (flagOn && opts?.requirePosted) {
+      await postSourceTransactionInClientTx(
+        client as never,
+        { operating_company_id: billOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: billId },
+        { userId }
+      );
+      posted = true;
+      await appendCrudAudit(
+        client as never,
+        userId,
+        "accounting.bill.gl_posted",
+        { work_order_id: woUuid, bill_id: billId, source: "auto_created_from_wo", require_posted: true },
+        "info",
+        "WO-AUTO-BILL-NEVER-POSTS-GL-JE"
+      );
+    } else if (flagOn) {
       try {
         await postSourceTransactionInClientTx(
           client as never,
           { operating_company_id: billOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: billId },
           { userId }
         );
+        posted = true;
         await appendCrudAudit(
           client as never,
           userId,
@@ -836,7 +984,7 @@ export async function autoCreateBillFromWO(
     "info",
     "P3-T11.17-TWO-SECTION-V5"
   );
-  return { uuid: billId };
+  return { uuid: billId, posted };
 }
 
 export async function autoCreateExpenseFromWO(
@@ -852,6 +1000,7 @@ export async function autoCreateExpenseFromWO(
     vendor_uuid: string | null;
     unit_id: string | null;
     load_id: string | null;
+    display_id: string | null;
     total_amount_cents: number | null;
   }>(
     `
@@ -860,6 +1009,7 @@ export async function autoCreateExpenseFromWO(
         COALESCE(w.external_vendor_id, w.vendor_id) AS vendor_uuid,
         w.unit_id::text AS unit_id,
         w.load_id,
+        w.display_id::text AS display_id,
         -- ACT-F5414: accounting.expenses has no "total_amount" dollars column (unlike
         -- accounting.bills, which this function's sibling autoCreateBillFromWO targets) — it only
         -- has total_amount_cents. This INSERT always referenced the non-existent "total_amount"
@@ -1016,7 +1166,17 @@ export async function autoCreateExpenseFromWO(
     );
   }
   if (await relationExists(client, "accounting.expense_lines")) {
-    await copyToAccountingLines(client, woUuid, "accounting.expense_lines", "expense_id", expenseId);
+    const lineLoadExemption = resolveLineLoadExemption({
+      loadId: wo.load_id ?? null,
+      reason: exemptionReason.length >= 20 ? exemptionReason : null,
+      loadRequired: Boolean(expenseCategoryRequiresLoad.rows[0]?.requires_load),
+      accountLabel: "Maintenance work order cost",
+      context: `work order ${wo.display_id ?? woUuid}`,
+    });
+    await copyToAccountingLines(client, woUuid, "accounting.expense_lines", "expense_id", expenseId, {
+      loadId: wo.load_id ?? null,
+      loadExemptionReason: lineLoadExemption,
+    });
 
     const hasLoadId = await columnExists(client, "accounting.expense_lines", "load_id");
     const hasLoadRequired = await columnExists(client, "accounting.expense_lines", "load_required");
@@ -1034,7 +1194,7 @@ export async function autoCreateExpenseFromWO(
         updates.push(`load_required = $${values.length}`);
       }
       if (hasExemption) {
-        values.push(exemptionReason.length >= 20 ? exemptionReason : null);
+        values.push(lineLoadExemption);
         updates.push(`load_exemption_reason = $${values.length}`);
       }
       if (hasLineCategory) {

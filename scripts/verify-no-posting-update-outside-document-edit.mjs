@@ -10,7 +10,8 @@
  *   RULE 1 — an UPDATE of accounting.journal_entry_postings sets only bookkeeping columns (description, updated_at,
  *            idempotency_key, source_trace_key, register_cleared*) or link columns that fill once from NULL
  *            (source_transaction_type/id/line_id, load_id, reversed_by_line_id). Account, amount, side, company, JE,
- *            class, location, entity, batch and reversal pointer are never SET.
+ *            class, location, batch and reversal pointer are never SET; entity only as a fill-once from NULL
+ *            (the statement carries `entity_uuid IS NULL`; D6 ruling 2026-10-11).
  *   RULE 2 — the reclassify engine never UPDATEs a posting (it posts a reclassification entry).
  * LIVE (direct endpoint, read-only), once migration 202615360200 is applied:
  *   RULE 3 — trg_refuse_posting_fact_update is installed and enabled BEFORE UPDATE on journal_entry_postings, and its
@@ -29,6 +30,13 @@ const SELF = "scripts/verify-no-posting-update-outside-document-edit.mjs";
 
 export const BOOKKEEPING = new Set(["description", "updated_at", "idempotency_key", "source_trace_key", "register_cleared", "register_cleared_at", "register_cleared_by_user_id"]);
 export const LINK_ONCE = new Set(["source_transaction_type", "source_transaction_id", "source_transaction_line_id", "load_id", "reversed_by_line_id"]);
+// D6 (Lead ruling 2026-10-11 443.35: "(a) fill-once — set entity + load on the 221 postings where NULL, no reclassification"):
+// entity_uuid / entity_type fill ONCE from NULL, exactly as trg_refuse_posting_fact_update allows (migration
+// 202610090200_allow_entity_uuid_entity_type_fill_from_null.sql). Statically the statement itself must carry
+// `entity_uuid IS NULL`; the trigger refuses any repoint or clear at runtime.
+export const ENTITY_FILL_ONCE = new Set(["entity_uuid", "entity_type"]);
+// 443.37 — settlement_id on bill JE postings: fill once from NULL in the same transaction as initial_post (settlement-ap-chain).
+export const SETTLEMENT_FILL_ONCE = new Set(["settlement_id"]);
 
 const UPDATE_RE = /UPDATE\s+accounting\.journal_entry_postings\b(?:\s+(?:AS\s+)?(?!SET\b)([a-z_][a-z0-9_]*))?\s+SET\s+([\s\S]*?)(?:\bWHERE\b|\bFROM\b|\bRETURNING\b|`|"|$)/gi;
 
@@ -53,7 +61,16 @@ export function fileFailures(rel, src) {
   for (const m of src.matchAll(UPDATE_RE)) {
     const line = src.slice(0, m.index).split("\n").length;
     const cols = setColumns(m[2]);
-    const bad = cols.filter((c) => !BOOKKEEPING.has(c) && !LINK_ONCE.has(c));
+    const statement = src.slice(m.index, m.index + m[0].length + 600);
+    const fillsEntityOnce = /\bentity_uuid\s+IS\s+NULL\b/i.test(statement);
+    const fillsSettlementOnce = /\bsettlement_id\s+IS\s+NULL\b/i.test(statement);
+    const bad = cols.filter(
+      (c) =>
+        !BOOKKEEPING.has(c) &&
+        !LINK_ONCE.has(c) &&
+        !(ENTITY_FILL_ONCE.has(c) && fillsEntityOnce) &&
+        !(SETTLEMENT_FILL_ONCE.has(c) && fillsSettlementOnce)
+    );
     if (bad.length) out.push(`RULE 1 ${rel}:${line} moves a posting in place (SET ${bad.join(", ")}) — restate the document (reclassify engine / void-and-reissue)`);
     if (/accounting\/reclassify\//.test(rel)) out.push(`RULE 2 ${rel}:${line} the reclassify engine UPDATEs a posting — it must post a reclassification entry`);
   }
@@ -122,6 +139,9 @@ if (isMain) {
       ["the register tick passes", ok("`UPDATE accounting.journal_entry_postings\n SET register_cleared = $3::boolean,\n register_cleared_at = CASE WHEN $3 THEN now() ELSE NULL END\n WHERE id = $1`").length === 0],
       ["a link fill passes", ok("`UPDATE accounting.journal_entry_postings SET source_transaction_type = 'bill', source_transaction_id = $1 WHERE id = $2`").length === 0],
       ["an aliased idempotency clear passes", ok("`UPDATE accounting.journal_entry_postings jep SET idempotency_key = NULL, updated_at = now() FROM x WHERE jep.id = x.id`").length === 0],
+      ["an entity fill-once from NULL passes", ok("`UPDATE accounting.journal_entry_postings SET entity_uuid = $1::uuid, entity_type = $2\n WHERE id = $3::uuid AND entity_uuid IS NULL`").length === 0],
+      ["a settlement_id fill-once from NULL passes", ok("`UPDATE accounting.journal_entry_postings SET settlement_id = $1::uuid WHERE journal_entry_uuid = $2::uuid AND settlement_id IS NULL`").length === 0],
+      ["an entity repoint (no IS NULL) fails", ok("`UPDATE accounting.journal_entry_postings SET entity_uuid = $1::uuid WHERE id = $2::uuid`").some((x) => x.includes("entity_uuid"))],
       ["moving the account fails", ok("`UPDATE accounting.journal_entry_postings SET account_id = $2 WHERE id = $1`").some((x) => x.startsWith("RULE 1"))],
       ["moving the amount behind a bookkeeping column fails", ok("`UPDATE accounting.journal_entry_postings SET updated_at = now(), amount_cents = $2 WHERE id = $1`").some((x) => x.includes("amount_cents"))],
       ["an aliased class move fails", ok("`UPDATE accounting.journal_entry_postings p SET p.class_id = $2 WHERE p.id = $1`").some((x) => x.includes("class_id"))],

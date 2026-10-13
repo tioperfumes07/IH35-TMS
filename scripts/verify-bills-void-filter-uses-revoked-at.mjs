@@ -60,6 +60,19 @@ export function billsAliases(src) {
   return aliases;
 }
 
+/** The table bound to `alias` by the FROM/JOIN nearest to `at` (within 1500 chars either side), or null. */
+export function nearestBindingTable(clean, alias, at) {
+  const lo = Math.max(0, at - 1500);
+  const slice = clean.slice(lo, at + 1500);
+  const re = new RegExp(`\\b(?:FROM|JOIN)\\s+([a-zA-Z_][\\w]*\\.[a-zA-Z_][\\w]*)\\s+(?:AS\\s+)?${alias}\\b`, "gi");
+  let best = null, bestDist = Infinity, m;
+  while ((m = re.exec(slice)) !== null) {
+    const d = Math.abs(lo + m.index - at);
+    if (d < bestDist) { bestDist = d; best = m[1].toLowerCase(); }
+  }
+  return best;
+}
+
 /**
  * A filter on <billsAlias>.voided_at that is NOT accompanied by a revoked_at test in the same
  * statement window. The window is generous (1200 chars) because these predicates are multi-line.
@@ -74,6 +87,10 @@ export function offendingFilters(src) {
     const re = new RegExp(`\\b${esc}\\.voided_at\\b`, "gi");
     let m;
     while ((m = re.exec(clean)) !== null) {
+      // An alias letter is per statement, not per file: feed-gate.checks.ts / match.service.ts bind `b` to
+      // accounting.bills in one query and to driver_finance.driver_bills (no revoked_at column) in another.
+      // The binding NEAREST the hit decides; with no binding in reach, the file-level binding still applies.
+      if (alias !== "accounting.bills" && nearestBindingTable(clean, alias, m.index) !== "accounting.bills" && nearestBindingTable(clean, alias, m.index) !== null) continue;
       const window = clean.slice(Math.max(0, m.index - 600), m.index + 600);
       if (!/\brevoked_at\b/i.test(window)) problems.push(`${alias}.voided_at`);
     }
@@ -133,6 +150,14 @@ if (process.argv.includes("--selftest")) {
     failures.push("a COMMENT naming revoked_at satisfied the check — false green");
   }
 
+  // Same alias letter bound to accounting.bills in one statement and driver_bills in another (feed-gate shape).
+  const mixed =
+    "SELECT 1 FROM accounting.bills b WHERE b.revoked_at IS NULL AND b.voided_at IS NULL;\n" + " ".repeat(1700) +
+    "SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.voided_at IS NULL;\n" + " ".repeat(1700) +
+    "SELECT 1 FROM x JOIN accounting.bills b ON b.id = x.bill_id AND b.voided_at IS NULL";
+  const mixedHits = offendingFilters(mixed);
+  if (mixedHits.length !== 1) failures.push(`per-statement alias binding: expected exactly the accounting.bills defect, got ${mixedHits.length}`);
+
   // JOIN binding and AS-alias forms must both resolve.
   const joined = "SELECT 1 FROM x JOIN accounting.bills AS bb ON bb.id=x.id WHERE bb.voided_at IS NULL";
   if (offendingFilters(joined).length !== 1) failures.push("a JOIN ... AS alias was NOT resolved");
@@ -147,7 +172,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — 7/7 (defect caught, both-column fix passes, other-table alias NOT flagged, ` +
+    `${LABEL} SELFTEST OK — 8/8 (defect caught, both-column fix passes, other-table alias NOT flagged, per-statement alias binding, ` +
       `expenses ignored, comment cannot fake a pass, JOIN/AS alias resolved, end-to-end)`
   );
   process.exit(0);

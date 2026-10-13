@@ -39,10 +39,6 @@ const KNOWN_GAPS = new Map([
     "Bulk CSV importer. Imported rows are exempt under the row-origin ruling — a seed file is not an operator surface.",
   ],
   [
-    "apps/backend/src/integrations/qbo/qbo-vendor-linkage.service.ts",
-    "QBO mirror projection: rows are clones of QBO records, and minting assets from a mirror would fabricate fleet the source system does not have.",
-  ],
-  [
     "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts",
     "Samsara master sync: telematics-derived units. Asset minting belongs to the operator create path, not to a device projection.",
   ],

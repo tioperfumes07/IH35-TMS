@@ -22,6 +22,7 @@ describeIntegration("expense → GL posting (real Postgres)", () => {
   const driverId = randomUUID();
   const uncatAccountId = randomUUID();
   const cashAccountId = randomUUID();
+  const uncatItemId = randomUUID();
   const userId = "00000000-0000-4000-8000-0000000000aa";
   const createdExpenseIds: string[] = [];
 
@@ -52,6 +53,8 @@ describeIntegration("expense → GL posting (real Postgres)", () => {
     await db.query("SET ROLE ih35_app");
     await bypass(async () => {
       // a real user for withCurrentUser(app.current_user_id)
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `gl-post-${suffix}@test.local`]
@@ -65,6 +68,12 @@ describeIntegration("expense → GL posting (real Postgres)", () => {
          VALUES ($1::uuid,'uncategorized_expense',$2::uuid,true)
          ON CONFLICT (operating_company_id, role) WHERE is_active = true DO NOTHING`,
         [companyId, uncatAccountId]
+      );
+      // 443.93: every expense line names its account and its item (expense_lines_expense_account_required /
+      // expense_lines_item_id_required, qty x rate) — the fixture item posts to the same uncategorized account.
+      await db.query(
+        `INSERT INTO catalogs.items (id, operating_company_id, item_name, item_type, default_expense_account_id) VALUES ($1::uuid,$2::uuid,$3,'Service',$4::uuid)`,
+        [uncatItemId, companyId, `Uncat Item ${suffix.slice(0, 6)}`, uncatAccountId]
       );
       await db.query(`INSERT INTO mdata.drivers (id, operating_company_id, first_name, last_name, phone) VALUES ($1::uuid,$3::uuid,'GL','Post',$2)`, [driverId, `+1002${suffix.slice(0,7)}`, companyId]);
     });
@@ -80,6 +89,7 @@ describeIntegration("expense → GL posting (real Postgres)", () => {
         await db.query(`DELETE FROM accounting.posting_batches WHERE source_transaction_id = ANY($1) AND source_transaction_type='expense'`, [createdExpenseIds]);
         await db.query(`DELETE FROM accounting.expense_lines WHERE expense_id = ANY($1::uuid[])`, [createdExpenseIds]);
         await db.query(`DELETE FROM accounting.expenses WHERE id = ANY($1::uuid[])`, [createdExpenseIds]);
+        await db.query(`DELETE FROM catalogs.items WHERE id=$1::uuid`, [uncatItemId]);
         await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid AND role='uncategorized_expense'`, [companyId]);
         await db.query(`DELETE FROM mdata.drivers WHERE id=$1::uuid`, [driverId]);
       });
@@ -98,8 +108,10 @@ describeIntegration("expense → GL posting (real Postgres)", () => {
       let seq = 1;
       for (const c of opts.lines) {
         await db.query(
-          `INSERT INTO accounting.expense_lines (expense_id, line_sequence, amount_cents, amount, description) VALUES ($1::uuid,$2,$3,$4,'uncat')`,
-          [id, seq++, c, c / 100]
+          `INSERT INTO accounting.expense_lines (expense_id, operating_company_id, line_sequence, amount_cents, amount, description,
+                                                 expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure)
+           VALUES ($1::uuid,$5::uuid,$2,$3::bigint,$4,'uncat',$6::uuid,$7::uuid,1,$3::bigint,'each')`,
+          [id, seq++, c, c / 100, companyId, uncatAccountId, uncatItemId]
         );
       }
     });

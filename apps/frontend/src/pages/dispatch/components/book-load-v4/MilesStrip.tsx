@@ -139,7 +139,7 @@ export function MilesStrip({
               step={0.1}
               required={practicalRequired}
               className={`mt-1 w-full max-w-[7rem] rounded-sm border px-1.5 py-1 font-mono text-xs ${
-                practicalRequired ? "border-[#E5E7EB] text-[#0F1219]" : "border-[#E5E7EB] text-[#0F1219]"
+                practicalRequired ? "border-[#4B5563] font-semibold text-[#0F1219]" : "border-[#E5E7EB] text-[#0F1219]"
               }`}
               value={inputValue(practical)}
               onChange={(e) => onPracticalChange?.(numFromInput(e.target.value))}
@@ -162,7 +162,7 @@ export function MilesStrip({
               step={0.1}
               required={shortestRequired}
               className={`mt-1 w-full max-w-[7rem] rounded-sm border px-1.5 py-1 font-mono text-xs ${
-                shortestRequired ? "border-[#E5E7EB] text-[#0F1219]" : "border-[#E5E7EB] text-[#0F1219]"
+                shortestRequired ? "border-[#4B5563] font-semibold text-[#0F1219]" : "border-[#E5E7EB] text-[#0F1219]"
               }`}
               value={inputValue(shortest)}
               onChange={(e) => onShortestChange?.(numFromInput(e.target.value))}

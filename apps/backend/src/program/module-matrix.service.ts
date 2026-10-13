@@ -12,7 +12,6 @@
  */
 
 import { execFileSync, execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -50,16 +49,26 @@ const REPO_ROOT = (() => {
   }
 })();
 
-/** Scoreboard columns with group "economics" (C25–C31). Loaded from shared.json — not a second id list. */
-function isEconomicsMatrixColumn(colId: string): boolean {
+/** Scoreboard columns with group "economics" (C25–C31). Loaded from shared.json — not a second id list.
+ *  443.99: read ONCE at module load with async readFile. It used to readFileSync + JSON.parse the whole
+ *  shared.json on EVERY call — and it is called per column inside the matrix builders, on the request path,
+ *  blocking the event loop (verify-no-execsync-on-request-path). The file is a deployed repo asset, static
+ *  for the life of the process; an unreadable file still yields "not economics", exactly as before. */
+const ECONOMICS_MATRIX_COLUMN_IDS: ReadonlySet<string> = await (async () => {
   try {
     const shared = JSON.parse(
-      readFileSync(path.join(REPO_ROOT, "docs/specs/scoreboard/columns.shared.json"), "utf8"),
+      await readFile(path.join(REPO_ROOT, "docs/specs/scoreboard/columns.shared.json"), "utf8"),
     ) as { columns?: Array<{ id?: string; group?: string }> };
-    return (shared.columns ?? []).some((c) => c.group === "economics" && c.id === colId);
+    return new Set(
+      (shared.columns ?? []).filter((c) => c.group === "economics" && typeof c.id === "string").map((c) => c.id as string),
+    );
   } catch {
-    return false;
+    return new Set<string>();
   }
+})();
+
+function isEconomicsMatrixColumn(colId: string): boolean {
+  return ECONOMICS_MATRIX_COLUMN_IDS.has(colId);
 }
 
 const SCOREBOARD_SCRIPT = path.join(REPO_ROOT, "scripts/audit-coverage-scoreboard.mjs");

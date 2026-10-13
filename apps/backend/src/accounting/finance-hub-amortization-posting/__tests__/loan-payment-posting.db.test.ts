@@ -125,6 +125,8 @@ describeIntegration("FH-3 loan-payment GL posting (real Postgres)", () => {
     await db.connect();
     await db.query("SET ROLE ih35_app");
     await bypass(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `fh3-loan-${suffix}@test.local`]
@@ -347,7 +349,16 @@ describeIntegration("FH-3 loan-payment GL posting (real Postgres)", () => {
     expect(secondJeId).not.toBe(firstJeId);
     const status = await scopedRead<{ status: string }>(`SELECT status FROM accounting.journal_entries WHERE id=$1::uuid`, [secondJeId]);
     expect(status[0]!.status).toBe("posted");
-    // 3 legs voided + 3 legs live under the revision key.
-    expect(await jeLineCount(loanId)).toBe(6);
+    // 443.93: the ledger is append-only (WORM) — a reversal writes its own reversing legs instead of voiding in place:
+    // 3 original + 3 reversing + 3 live re-posted legs, and exactly the 3 re-posted legs are live.
+    expect(await jeLineCount(loanId)).toBe(9);
+    const live = await scopedRead<{ c: string }>(
+      `SELECT count(*)::text AS c FROM accounting.journal_entry_postings p
+         JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+        WHERE p.source_transaction_id = $1 AND p.source_transaction_type = 'loan_payment'
+          AND p.reversed_by_line_id IS NULL AND p.reversal_of_line_id IS NULL AND je.id = $2::uuid`,
+      [loanId, secondJeId]
+    );
+    expect(Number(live[0]!.c)).toBe(3);
   });
 });

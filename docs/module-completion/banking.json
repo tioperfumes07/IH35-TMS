@@ -511,9 +511,9 @@
       }
     ]
   },
-  "pass_count": 17,
+  "pass_count": 19,
   "total_count": 20,
-  "progress": "17 of 20",
+  "progress": "19 of 20",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,

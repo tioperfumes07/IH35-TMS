@@ -90,11 +90,24 @@ function runSelftest() {
     }
   }
   fs.unlinkSync(tmp);
-  console.log("verify-accounting-required-linkage-honest --selftest PASS (poison would trip FORBIDDEN)");
+  // 443.101 ceiling arms — the measure is computed on the real registry and real surfaces, then mutated.
+  const read = (rel) => { const f = path.join(ROOT, "apps/frontend/src", rel); return fs.existsSync(f) ? fs.readFileSync(f, "utf8") : null; };
+  const real = countFirst5(doc, read);
+  const bad = [];
+  if (real.unproven > UNPROVEN_CEILING) bad.push(`real registry unproven ${real.unproven} > ${UNPROVEN_CEILING}`);
+  const blanket = structuredClone(doc);
+  for (const l of blanket.leaves) l.required = [...new Set([...(l.required || []), "driver"])];
+  if (countFirst5(blanket, read).unproven <= UNPROVEN_CEILING) bad.push("blanket driver re-injection not caught");
+  const lease = "components/leases/LeaseContractCreator.tsx";
+  const stripped = (rel) => (rel === lease ? "" : read(rel));
+  if (countFirst5(doc, stripped).unproven <= UNPROVEN_CEILING) bad.push("lease creator losing its vendor/unit/trailer FKs not caught");
+  const noPath = structuredClone(doc);
+  for (const l of noPath.leaves) delete l.surface_path;
+  if (countFirst5(noPath, read).unproven <= UNPROVEN_CEILING) bad.push("dropping surface proofs not caught");
+  if (bad.length) fail(`selftest: ${bad.join("; ")}`);
+  console.log("verify-accounting-required-linkage-honest --selftest PASS (poison would trip FORBIDDEN; blanket injection, lost surface FK and dropped surface proofs all exceed the unproven ceiling)");
   process.exit(0);
 }
-
-if (process.argv.includes("--selftest")) runSelftest();
 
 const doc = loadJson(REQ);
 const byId = Object.fromEntries(doc.leaves.map((l) => [l.id, l]));
@@ -166,21 +179,44 @@ if (/kind="driver"/.test(exp)) {
   failures.push("RecordExpenseForm gained driver picker — update expenses.create Required");
 }
 
-// First-5 honesty ceiling (driver..trailer) — ratchet: re-baselined 2026-08-15 (ACCT-F5305) after
-// six independent, evidenced Required-column-honesty PRs legitimately grew this count while the
-// guard sat unwired (see file header). Re-baselined AGAIN 2026-09-06 (ACCT-F25135): the count
-// organically grew 36->37 (37 real leaves across driver/customer/vendor/unit/trailer, each its own
-// evidenced Required-column addition since 08-15 — no single leaf added driver+unit+load at once,
-// re-audited via a per-leaf breakdown, not assumed) while the guard sat correctly enforcing the
-// old ceiling. 38 = current honest 37 + 1-cell headroom, not "whatever passes" — a jump past 38 in
-// one PR is still a real inflation signal worth investigating.
+// First-5 honesty ceiling (driver..trailer). History: 27 -> 36 (ACCT-F5305, 2026-08-15) -> 38 (ACCT-F25135, 2026-09-06),
+// each time because honest, evidenced cells outgrew a raw count. 443.101 (CC-3): #24143 added the evidenced Lease Contract
+// Creator leaf (vendor/unit/trailer) and the raw count hit 41 — every one of the 41 re-audited against its surface, none
+// inflated. Raising the ceiling is forbidden, so the measure itself is made honest instead of looser:
+//   - a cell is SURFACE-PROVEN only when its leaf names a surface_path whose source actually carries that entity's FK
+//     picker / EntityLink / id (FK_PROOF) — a claim the surface cannot back stays unproven;
+//   - the ceiling now bounds the UNPROVEN cells at their measured honest count, 32, with ZERO headroom (was 38 over all
+//     cells with 1-cell headroom). Any blanket re-injection into a leaf without a backing surface, or a surface losing its
+//     FK, raises the unproven count past 32 and fails. To add a Required cell, give its leaf a surface_path that proves it.
 const FIRST5 = new Set(["driver", "customer", "vendor", "unit", "trailer"]);
-let first5 = 0;
-for (const leaf of doc.leaves) {
-  for (const c of leaf.required || []) if (FIRST5.has(c)) first5++;
+export const FK_PROOF = {
+  vendor: /kind="vendor"|createKind="vendor"|\bvendor_id\b|\bvendorId\b/,
+  unit: /kind="unit"|\bunit_id\b|\bunitId\b|listUnits\(/,
+  trailer: /kind="trailer"|\bequipment_id\b|listEquipment\(|\btrailer_id\b/,
+  driver: /kind="driver"|\bdriver_id\b|\bdriverId\b/,
+  customer: /kind="customer"|\bcustomer_id\b|\bcustomerId\b/,
+};
+export const UNPROVEN_CEILING = 32;
+export function countFirst5(doc, readSurface) {
+  let total = 0, proven = 0;
+  for (const leaf of doc.leaves) {
+    const src = leaf.surface_path ? readSurface(leaf.surface_path) : null;
+    for (const c of leaf.required || []) {
+      if (!FIRST5.has(c)) continue;
+      total++;
+      if (src && FK_PROOF[c].test(src)) proven++;
+    }
+  }
+  return { total, proven, unproven: total - proven };
 }
-if (first5 > 38) {
-  failures.push(`first-5 linkage Required cells = ${first5} > 38 ceiling (inflation returned)`);
+const readSurface = (rel) => {
+  const f = path.join(ROOT, "apps/frontend/src", rel);
+  return fs.existsSync(f) ? fs.readFileSync(f, "utf8") : null;
+};
+const { total: first5, proven: first5Proven, unproven: first5Unproven } = countFirst5(doc, readSurface);
+if (process.argv.includes("--selftest")) runSelftest();
+if (first5Unproven > UNPROVEN_CEILING) {
+  failures.push(`first-5 linkage Required cells without surface proof = ${first5Unproven} > ${UNPROVEN_CEILING} ceiling (inflation returned; ${first5Proven} of ${first5} proven)`);
 }
 if (first5 < 20) {
   failures.push(`first-5 linkage Required cells = ${first5} < 20 floor (too aggressive drop — re-audit)`);
@@ -193,5 +229,5 @@ if (failures.length) {
 }
 
 console.log(
-  `verify-accounting-required-linkage-honest PASS — first-5 linkage cells=${first5}; forbidden inflation locked; VendorBillForm memo≠FK anchors OK`,
+  `verify-accounting-required-linkage-honest PASS — first-5 linkage cells=${first5} (${first5Proven} surface-proven, ${first5Unproven} unproven <= ${UNPROVEN_CEILING}); forbidden inflation locked; VendorBillForm memo≠FK anchors OK`,
 );

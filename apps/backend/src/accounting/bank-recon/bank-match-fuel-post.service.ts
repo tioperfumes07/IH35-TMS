@@ -5,18 +5,19 @@
  * matched in Banking, through postFuelExpenseOnClient on the caller's client (same transaction as
  * the match). This module is the match engine's sole caller of that hook.
  *
- * Fail-closed: null unit_id or null load_id is an ENGINE defect (owner), not a data soft-skip.
+ * Fail-closed: null unit_id is an ENGINE defect (owner), not a data soft-skip. A fill with no load covering its time
+ * posts with the explicit deadhead/yard reason (LEAD 443.121 #2) and is re-pointed when its load is booked.
  */
-import { loadAtTimeSql } from "../../maintenance/driver-attribution.js";
+import { crossRailFuelRowsForRelayFill } from "../../fuel/relay-fill-link.service.js";
+import { postedRelayTwinsOf } from "../../fuel/relay-duplicate-purchase.service.js";
+import { adoptRelayFillExpenseDocument, createExpenseFromFuelTransaction } from "../../fuel/fuel-expense-document.service.js";
+import { resolveFillDriverAtTime, resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
 import { relayLineIsGallonsSql, relayLineKindSql } from "../../fuel/relay-product-kind.js";
-import {
-  buildFuelTxnJeMemo,
-  loadFuelTxnCreditSignals,
-  mapFuelTypeToPostingKind,
-  resolveCompanyDirectCreditPreference,
-} from "../fuel-posting/maybe-post-from-fuel-transaction.service.js";
-import { postFuelExpenseOnClient, type FuelCategoryCode, type FuelPostingResult } from "../fuel-posting/poster.service.js";
-import { relayFillFeeCents, relayWalletDrawdownCents } from "../../integrations/relay-payments/relay-sender-fee-cents.js";
+import { buildFuelTxnJeMemo, mapFuelTypeToPostingKind } from "../fuel-posting/fuel-txn-memo.js";
+import { loadFuelTxnCreditSignals, resolveCompanyDirectCreditPreference } from "../fuel-posting/fuel-credit-preference.js";
+import { findPostedFuelEvent, postFuelExpenseOnClient, type FuelCategoryCode, type FuelPostingResult } from "../fuel-posting/poster.service.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
+import { relayFuelPaidCents } from "../../integrations/relay-payments/relay-sender-fee-cents.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -26,7 +27,8 @@ export class FuelMatchPostError extends Error {
   constructor(
     public code:
       | "fuel_fill_not_found" | "fuel_fill_missing_unit" | "fuel_fill_missing_load" | "fuel_fill_zero_amount"
-      | "relay_fill_unknown_product" | "relay_fill_has_no_fuel_lines" | "relay_fill_lines_do_not_foot",
+      | "relay_fill_unknown_product" | "relay_fill_has_no_fuel_lines" | "relay_fill_lines_do_not_foot" | "relay_fill_document_refused"
+      | "fuel_fill_document_refused" | "relay_fill_matches_other_rail_fill" | "relay_fill_duplicate_purchase",
     message: string
   ) {
     super(message);
@@ -47,10 +49,69 @@ export async function postFuelFillOnBankMatch(
     fill_id: string;
   }
 ): Promise<FuelPostingResult> {
+  // LEAD 443.116 #1 — a fill that already posted (when it was RECEIVED, or by an earlier match) is only matched: the
+  // bank line names that entry and nothing posts, nothing is re-validated, no document is re-adopted.
+  const already = await findPostedFuelEvent(client, input.operating_company_id, input.fill_id);
+  if (already) return already;
+  return postFuelFill(client, input);
+}
+
+/** The ONE fill poster (canonical card fill or Relay fill). Called on receipt (import) and, for a fill not yet posted, at match. */
+async function postFuelFill(
+  client: DbClient,
+  input: { operating_company_id: string; actor_user_uuid: string; kind: "fuel_transaction" | "relay_fuel"; fill_id: string }
+): Promise<FuelPostingResult> {
   if (input.kind === "fuel_transaction") {
     return postCanonicalFuelTxn(client, input);
   }
   return postRelayFuelFill(client, input);
+}
+
+/**
+ * LEAD 443.121 #2 — the explicit reason a fuel receipt carries while no load covers its fill time (the truck was deadheading
+ * or in the yard). Prefix is stable (repointFuelReceiptsToLoad clears it when a covering load is booked).
+ */
+export const FUEL_NO_LOAD_REASON_PREFIX = "deadhead_or_yard";
+export function fuelNoLoadReason(at: string | null, unitNumber?: string | null): string {
+  return `${FUEL_NO_LOAD_REASON_PREFIX}: no load covered ${unitNumber ? `unit ${unitNumber}` : "the unit"} at the fill time ${at ?? "unknown"} (LEAD 443.121 #2)`;
+}
+
+/** Audit event the receipt poster writes: the bank match that later names this JE did NOT create it (unmatch keeps it). */
+export const FUEL_POSTED_ON_RECEIPT_EVENT = "fuel.posted_on_receipt";
+
+/**
+ * LEAD RULINGS 443.116 #1 (owner design 2026-10-12: "THE COSTS SHOULD POST DAILY, AS THEY ARE RECEIVED FROM RELAY,
+ * ETC") — supersedes the posting MOMENT of OWNER RULING 2026-10-02 (fuel cards are bank accounts): a fill posts when it
+ * is received, through the SAME poster the match uses (postFuelFill); the card / wallet bank line then only matches it.
+ * Idempotent per fill (the poster's key). A canonical card fill gets its expense document adopting the same JE; a Relay
+ * fill's document is adopted inside postRelayFuelFill. Writes fuel.posted_on_receipt so unmatch never reverses this JE.
+ */
+export async function postFuelFillOnReceipt(
+  client: DbClient,
+  input: { operating_company_id: string; actor_user_uuid: string; kind: "fuel_transaction" | "relay_fuel"; fill_id: string }
+): Promise<FuelPostingResult> {
+  const already = await findPostedFuelEvent(client, input.operating_company_id, input.fill_id);
+  if (already) return already;
+  const posted = await postFuelFill(client, input);
+  if (input.kind === "fuel_transaction" && posted.journal_entry_id) {
+    const { createExpenseFromFuelTransaction } = await import("../../fuel/fuel-expense-document.service.js");
+    const doc = await createExpenseFromFuelTransaction(client as never, {
+      operating_company_id: input.operating_company_id,
+      fuel_transaction_id: input.fill_id,
+      requesting_user_uuid: input.actor_user_uuid,
+    });
+    if (doc.outcome === "refused") throw new FuelMatchPostError("fuel_fill_document_refused", `fuel_transaction ${input.fill_id}: ${doc.reason}`);
+  }
+  if (posted.result === "posted") {
+    await appendCrudAudit(client as never, input.actor_user_uuid, FUEL_POSTED_ON_RECEIPT_EVENT, {
+      operating_company_id: input.operating_company_id,
+      fill_kind: input.kind,
+      fill_id: input.fill_id,
+      journal_entry_id: posted.journal_entry_id,
+      posting_batch_id: posted.posting_batch_id,
+    }, "info", "LEAD-443.116");
+  }
+  return posted;
 }
 
 async function postCanonicalFuelTxn(
@@ -100,10 +161,14 @@ async function postCanonicalFuelTxn(
       `fuel_transaction ${input.fill_id}: unit_id is null — engine defect (owner: fuel posting requires unit)`
     );
   }
+  // LEAD 443.121 #2 — a fill the truck bought while running no load (deadhead / yard) posts ON RECEIPT with that reason on
+  // its fuel row; when a load covering the fill time is booked later, repointFuelReceiptsToLoad attaches the SAME posting
+  // and document to it (load_id is fill-once on postings). Never a refusal that leaves the receipt out of the books.
   if (!row.load_id) {
-    throw new FuelMatchPostError(
-      "fuel_fill_missing_load",
-      `fuel_transaction ${input.fill_id}: load_id is null — engine defect (owner: fuel posting requires load)`
+    await client.query(
+      `UPDATE fuel.fuel_transactions SET load_exemption_reason = $3
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND load_id IS NULL AND load_exemption_reason IS NULL`,
+      [input.fill_id, input.operating_company_id, fuelNoLoadReason(row.transaction_at)]
     );
   }
   const amountCents = Math.round(Number(row.amount_cents ?? 0));
@@ -125,7 +190,7 @@ async function postCanonicalFuelTxn(
     signals
   );
 
-  return postFuelExpenseOnClient(client, {
+  const posted = await postFuelExpenseOnClient(client, {
     operating_company_id: input.operating_company_id,
     actor_user_id: input.actor_user_uuid,
     fuel_event_id: input.fill_id,
@@ -135,6 +200,7 @@ async function postCanonicalFuelTxn(
     posting_path: "company_direct",
     driver_id: row.driver_id,
     unit_id: row.unit_id,
+    load_id: row.load_id,
     trailer_id: row.trailer_id ?? signals.trailer_id,
     ifta_state: row.location_state,
     ifta_gallons: row.gallons != null ? Number(row.gallons) : null,
@@ -148,29 +214,19 @@ async function postCanonicalFuelTxn(
       fuel_card_code: signals.fuel_card_code,
     }),
   });
-}
-
-async function resolveLoadForUnitAt(
-  client: DbClient,
-  operatingCompanyId: string,
-  unitId: string,
-  atIso: string
-): Promise<{ load_id: string; load_number: string | null } | null> {
-  // The load on this unit at fill time — the ONE canonical rule (maintenance/driver-attribution.ts loadAtTimeSql: the
-  // trip under way by its first pickup / last delivery stop, NB-then-return aware; never created_at). This used to read
-  // l.unit_id / l.dispatched_at / l.delivered_at / l.completed_at — none of which exist on mdata.loads (it carries
-  // assigned_unit_id; delivery time lives on the stops), so the query raised on every call (verify-no-phantom-load-
-  // assignments). Never invent — no load at that time returns null.
-  const res = await client.query<{ load_id: string; load_number: string | null }>(
-    `
-      SELECT lat.load_id::text AS load_id, l.load_number::text AS load_number
-        FROM (SELECT $2::uuid AS unit_id) u
-        ${loadAtTimeSql("u.unit_id", "$3::timestamptz", "lat")}
-        JOIN mdata.loads l ON l.id = lat.load_id
-    `,
-    [operatingCompanyId, unitId, atIso]
-  );
-  return res.rows[0] ?? null;
+  // DEGH-07 / 443.113-C — canonical fuel accept adopts the expense DOCUMENT for the same JE
+  // (Relay already does this via adoptRelayFillExpenseDocument). One JE, never two; refuse by name.
+  if (posted.journal_entry_id) {
+    const doc = await createExpenseFromFuelTransaction(client as never, {
+      operating_company_id: input.operating_company_id,
+      fuel_transaction_id: input.fill_id,
+      requesting_user_uuid: input.actor_user_uuid,
+    });
+    if (doc.outcome === "refused") {
+      throw new FuelMatchPostError("fuel_fill_document_refused", doc.reason);
+    }
+  }
+  return posted;
 }
 
 async function postRelayFuelFill(
@@ -186,6 +242,7 @@ async function postRelayFuelFill(
     amount_cents: string;
     transaction_id: string;
     fees_json: unknown;
+    ingest_source: string | null;
     driver_id: string | null;
     unit_id: string | null;
     unit_number: string | null;
@@ -198,6 +255,7 @@ async function postRelayFuelFill(
              ABS(COALESCE(r.total_amount_paid_cents, 0))::bigint::text AS amount_cents,
              r.transaction_id::text AS transaction_id,
              r.fees AS fees_json,
+             r.ingest_source::text AS ingest_source,
              r.matched_driver_id::text AS driver_id,
              -- BANK-F2026100403: Relay printed the unit number but ingest never resolved its id (fc461eb6, T169). The
              -- number proves the unit only when exactly ONE active unit in the fleet carries it (one number, one truck); else refused.
@@ -231,13 +289,46 @@ async function postRelayFuelFill(
       `relay_fuel ${input.fill_id}: matched_unit_id is null — engine defect (owner: fuel posting requires unit)`
     );
   }
-  const load = await resolveLoadForUnitAt(client, input.operating_company_id, row.unit_id, row.transaction_at);
-  if (!load?.load_id) {
+  // LEAD 443.133 A — a Relay fill that pairs with a fuel row ON ANOTHER RAIL (e.g. a DREAMLINE settlement row, already posted
+  // Cr 2510) may be the same purchase recorded twice. Posting the fill too would book the fuel twice; the owner decides which
+  // rail paid. Refused by name, listing the rows — never posted, never guessed.
+  const crossRail = await crossRailFuelRowsForRelayFill(client, input.operating_company_id, input.fill_id);
+  if (crossRail.length) {
     throw new FuelMatchPostError(
-      "fuel_fill_missing_load",
-      `relay_fuel ${input.fill_id}: no active load on unit ${row.unit_id} at fill time — engine defect (owner: fuel posting requires load)`
+      "relay_fill_matches_other_rail_fill",
+      `relay_fuel ${input.fill_id}: pairs with ${crossRail.length} fuel row(s) paid on another rail (${crossRail.map((r) => `${r.fuel_transaction_id} ${r.card ?? "no card"}`).join(", ")}) — the owner decides which rail paid before it posts`
     );
   }
+  // 443.136 — Relay can list ONE pump purchase under two transaction ids (same truck, place, products, volume, amount).
+  // The receipt identity keys on the transaction id, so it cannot see this; the purchase rule can. Refused by name.
+  const twins = await postedRelayTwinsOf(client, input.operating_company_id, input.fill_id);
+  if (twins.length) {
+    throw new FuelMatchPostError(
+      "relay_fill_duplicate_purchase",
+      `relay_fuel ${input.fill_id}: same purchase as already-posted Relay fill(s) ${twins.map((t) => `${t.fill_id} ${t.transaction_id ?? ""}`.trim()).join(", ")} — one purchase posts once`
+    );
+  }
+  // 443.110 G7 — the one fuel-to-load rule (fuel/fuel-load-at-time.ts), same as the fuel-card import: unit first,
+  // driver fallback, date-only stamps count to the end of their day.
+  const load = await resolveFuelLoadAtTime(client, {
+    operatingCompanyId: input.operating_company_id,
+    unitId: row.unit_id,
+    driverId: row.driver_id,
+    at: row.transaction_at,
+  });
+  // LEAD 443.121 #2 — no load covered the unit at fill time (deadhead / yard): the fill still posts on receipt, with the
+  // explicit no-load reason on its document lines; repointFuelReceiptsToLoad attaches it when a covering load is booked.
+  const noLoadReason = load?.load_id ? null : fuelNoLoadReason(row.transaction_at, row.unit_number);
+  // LEAD 443.126 2a — the one fill-driver rule: Relay's matched driver, else the card's / truck's driver at fill time,
+  // else the load's driver. A no-load (deadhead / yard) fill still names who fueled.
+  const fillDriver = await resolveFillDriverAtTime(client, {
+    operatingCompanyId: input.operating_company_id,
+    matchedDriverId: row.driver_id,
+    unitId: row.unit_id,
+    at: row.transaction_at,
+    loadId: load?.load_id ?? null,
+  });
+  const fillDriverId = fillDriver?.driver_id ?? null;
   // RELAY-F442 — total_amount_paid is fuel only; wallet / GL credit = paid + sender_fee.
   const paidCents = Math.round(Number(row.amount_cents ?? 0));
   if (!Number.isFinite(paidCents) || paidCents <= 0) {
@@ -272,20 +363,24 @@ async function postRelayFuelFill(
     throw new FuelMatchPostError("relay_fill_has_no_fuel_lines", `relay_fuel ${input.fill_id}: no fuel product line (e.g. a scale ticket) — this is not a fuel posting; categorize the bank line instead`);
   }
   const linesCents = costLines.reduce((t, l) => t + l.amount_cents, 0);
-  if (linesCents !== paidCents) {
+  // LEAD 443.123 — the ONE paid rule (relayFuelPaidCents): a legacy CSV row whose stored paid carries its recorded fee
+  // (paid = lines + fees[] exactly) is fuel = lines; ANY other difference is still refused by name, never plugged.
+  const paid = relayFuelPaidCents({
+    transaction_id: row.transaction_id,
+    stored_paid_cents: paidCents,
+    product_lines_cents: linesCents,
+    fees: Array.isArray(row.fees_json) ? row.fees_json : [],
+    line_fee_amount_cents: linesRes.rows.map((l) => Math.round(Number(l.fee_cents ?? 0))),
+    ingest_source: row.ingest_source,
+  });
+  if (linesCents !== paid.fuel_paid_cents) {
     throw new FuelMatchPostError("relay_fill_lines_do_not_foot", `relay_fuel ${input.fill_id}: product lines ${linesCents} != paid ${paidCents} — refusing rather than plugging the difference`);
   }
-  const lineFeeCents = linesRes.rows.map((l) => Math.round(Number(l.fee_cents ?? 0)));
-  const feesArr = Array.isArray(row.fees_json) ? row.fees_json : [];
-  const feeCents = relayFillFeeCents({
-    transaction_id: row.transaction_id,
-    fees: feesArr,
-    line_fee_amount_cents: lineFeeCents,
-  });
-  const amountCents = relayWalletDrawdownCents(paidCents, feeCents);
+  const feeCents = paid.fee_cents;
+  const amountCents = paid.wallet_cents;
   const primary = [...costLines].sort((a, b) => b.amount_cents - a.amount_cents)[0]!.fuel_kind;
 
-  return postFuelExpenseOnClient(client, {
+  const posted = await postFuelExpenseOnClient(client, {
     operating_company_id: input.operating_company_id,
     actor_user_id: input.actor_user_uuid,
     fuel_event_id: input.fill_id,
@@ -295,19 +390,37 @@ async function postRelayFuelFill(
     posted_at: row.transaction_at,
     amount_cents: amountCents,
     posting_path: "company_direct",
-    driver_id: row.driver_id,
+    driver_id: fillDriverId,
     unit_id: row.unit_id,
+    // 443.116 #1 — the load the one rule resolved above, and its trailer: a fill posted on receipt has no settlement row
+    // to carry them, so the poster stamps them (the document then takes the load-spine number).
+    load_id: load?.load_id ?? null,
+    trailer_id: load?.trailer_id ?? null,
     ifta_state: row.location_state,
     ifta_gallons: row.gallons != null ? Number(row.gallons) : null,
     company_direct_credit: "relay_fuel_wallet",
     memo: buildFuelTxnJeMemo({
       fuel_type: costLines.map((l) => l.fuel_kind).join("+"),
-      load_number: load.load_number,
+      load_number: load?.load_number ?? null,
       unit_number: row.unit_number,
       vendor_name: row.merchant_name,
       fuel_card_code: "RELAY",
     }),
   });
+  // Lead 443.41 A: the Relay fill gets its expense DOCUMENT, adopting the SAME journal entry (one JE, never two).
+  if (posted.journal_entry_id) {
+    const doc = await adoptRelayFillExpenseDocument(client as never, {
+      operating_company_id: input.operating_company_id,
+      relay_fill_id: input.fill_id,
+      journal_entry_id: posted.journal_entry_id,
+      requesting_user_uuid: input.actor_user_uuid,
+      trailer_id: load?.trailer_id ?? null,
+      load_exemption_reason: noLoadReason,
+      driver_id: fillDriverId,
+    });
+    if (doc.outcome === "refused") throw new FuelMatchPostError("relay_fill_document_refused", doc.reason);
+  }
+  return posted;
 }
 
 /**

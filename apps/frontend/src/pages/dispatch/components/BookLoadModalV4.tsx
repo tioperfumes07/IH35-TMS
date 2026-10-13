@@ -14,6 +14,8 @@ import { createPortal } from "react-dom";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad, createTrailerInterchange, distributeLoadInstructions, getLaneMileage, getChainDeadhead, getRouteMileage } from "../../../api/dispatch";
+import { previewMilesRecommendations, valueForSource, type MilesChoicePayload } from "../../../api/milesRecommendations";
+import { MilesRecommendationsPanel } from "../../../components/loads/MilesRecommendationsPanel";
 import { resolveStopPlace } from "./book-load-city-state";
 import { geocodeRouteReference } from "../../../api/geocoding";
 import { historicalImportReasonsCatalogClient, listAllDispatchCatalogRows, loadCommoditiesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
@@ -24,6 +26,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { getLoad, getDispatchLoadEditLock, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
 import { buildEditPrefill, buildEditPatchBody, shouldApplyEditPrefill } from "./book-load-v4/editLoadMapping";
+import { buildTrailerChoice, TRAILER_CHOICE_REQUIRED_MESSAGE, type TrailerSource } from "./book-load-v4/trailerChoice";
 import { bookLoadToastMessage, bookLoadToastTone, serverStatusOf } from "./book-load-toast";
 import { searchCustomersAutocomplete } from "../../../api/mdata";
 import { heldEntityIsSelectable, heldEntityMergedMessage } from "../../../lib/resolve-held-entity";
@@ -102,8 +105,10 @@ type FormValues = BookLoadFormValues & {
   assigned_unit_id: string;
   assigned_trailer_unit_id: string;
   /** GO-23 A1 — our trailer XOR an interchange (non-owned) trailer, never both. */
-  trailer_source: "owned" | "interchange";
+  trailer_source: TrailerSource;
   interchange_trailer_id: string;
+  /** LEAD 443.107: the customer / shipper trailer number when trailer_source = "customer". */
+  customer_trailer_number: string;
   assignment_mode: "solo" | "team";
   team_id: string;
   assigned_primary_driver_id: string;
@@ -197,6 +202,7 @@ type FormValues = BookLoadFormValues & {
     postal_code?: string;
     latitude?: string;
     longitude?: string;
+    google_place_id?: string;
     scheduled_arrival_at: string;
     time_window_type?: "appointment" | "open_window" | "select_hours" | "refused";
     pickup_time_type_id?: string;
@@ -391,6 +397,7 @@ export function BookLoadModalV4({
       assigned_trailer_unit_id: "",
       trailer_source: "owned",
       interchange_trailer_id: "",
+      customer_trailer_number: "",
       assignment_mode: "solo",
       team_id: "",
       assigned_primary_driver_id: prefillDriverId ?? "",
@@ -658,6 +665,29 @@ export function BookLoadModalV4({
   const originPlace = resolveStopPlace(originCity, originState);
   const destPlace = resolveStopPlace(destCity, destState);
   const milesOperatorTouched = useRef(false);
+
+  // 443.55 — BOTH mileage recommendations (Historical lane averages + Google driving distance) for the stops as typed, and
+  // the dispatcher's per-field choice. A choice fills the form field AND travels in the payload as miles_choice (source,
+  // value, reason) so the server records the source per field.
+  const [milesChoice, setMilesChoice] = useState<MilesChoicePayload>({});
+  const coord = (v: unknown) => {
+    const t = String(v ?? "").trim();
+    return t && Number.isFinite(Number(t)) ? Number(t) : null;
+  };
+  const milesRecStops = (stops ?? []).map((s) => ({
+    latitude: coord(s.latitude),
+    longitude: coord(s.longitude),
+    city: String(s.city ?? "").trim() || null,
+    state: String(s.state ?? "").trim() || null,
+    postal_code: String(s.postal_code ?? "").trim() || null,
+  }));
+  const milesRecReady = milesRecStops.length >= 2 && milesRecStops.every((s) => Boolean(s.city && s.state) || (s.latitude != null && s.longitude != null));
+  const milesRecsQuery = useQuery({
+    queryKey: ["dispatch", "miles-recommendations", operatingCompanyId, assignedUnitId || null, JSON.stringify(milesRecStops)],
+    queryFn: () => previewMilesRecommendations({ operating_company_id: operatingCompanyId as string, unit_id: assignedUnitId || null, stops: milesRecStops }),
+    enabled: Boolean(operatingCompanyId && milesRecReady),
+    staleTime: 5 * 60_000,
+  });
 
   // DSP-48 / LDT-1 (owner ruling 2026-09-05, "Google distance = REFERENCE ONLY", LAW §2): once the
   // picked pickup/delivery carry coordinates, quote two Google Routes legs — the linehaul
@@ -1259,6 +1289,13 @@ export function BookLoadModalV4({
     // Block 7 — EDIT mode: PATCH only the fields the user changed (dirtyFields-gated, anti-data-loss).
     // Trip-type is not editable here, so the create-only trip_type gate below does not apply.
     if (isEditMode && editLoadId) {
+      // LEAD 443.107 item 3: Edit Load saves the trailer choice too — never without one.
+      if (!buildTrailerChoice(values)) {
+        form.setError("assigned_trailer_unit_id", { type: "required", message: TRAILER_CHOICE_REQUIRED_MESSAGE });
+        setSubmitErrorMessage(TRAILER_CHOICE_REQUIRED_MESSAGE);
+        pushToast("Choose the trailer before saving", "error");
+        return;
+      }
       try {
         if (loadIsEditLocked && canOwnerLockOverride && !(effectiveOverrideReason && effectiveOverrideReason.length >= 10)) {
           setSubmitErrorMessage(
@@ -1452,6 +1489,13 @@ export function BookLoadModalV4({
         pushToast("Enter practical miles before booking", "error");
         return;
       }
+      // LEAD 443.107 item 3: no booking without the trailer choice (company / customer / interchange / none).
+      if (!buildTrailerChoice(values)) {
+        form.setError("assigned_trailer_unit_id", { type: "required", message: TRAILER_CHOICE_REQUIRED_MESSAGE });
+        setSubmitErrorMessage(TRAILER_CHOICE_REQUIRED_MESSAGE);
+        pushToast("Choose the trailer before booking", "error");
+        return;
+      }
       // RG-03 / MIL-01 (owner CONSOLIDATED, DSP-22): shortest (short) miles drive driver pay —
       // once a driver is seated, booking without them would settle the driver on $0 miles. Not
       // required before a driver is assigned (the load can still be booked open).
@@ -1571,6 +1615,7 @@ export function BookLoadModalV4({
         miles_shortest: numOrUndef(values.miles_shortest),
         miles_deadhead: numOrUndef(values.miles_deadhead),
         mileage_source: values.mileage_source || undefined,
+        miles_choice: Object.keys(milesChoice).length ? milesChoice : undefined,
         stop_count: String((submitStops ?? []).length),
         pickup_number: values.pickup_number || undefined,
         border_routing: values.border_routing || undefined,
@@ -1597,7 +1642,9 @@ export function BookLoadModalV4({
         assigned_unit_id: values.assigned_unit_id || undefined,
         // The service persists this through dispatch.load_assignment_history.new_trailer_id after
         // creating the load; mdata.loads intentionally has no trailer FK column.
-        assigned_trailer_unit_id: values.assigned_trailer_unit_id || undefined,
+        assigned_trailer_unit_id: values.trailer_source === "owned" ? values.assigned_trailer_unit_id || undefined : undefined,
+        // LEAD 443.107 item 3: the required trailer choice (the server refuses a booking without it).
+        trailer_choice: buildTrailerChoice(values) ?? undefined,
         team_id: values.assignment_mode === "team" ? values.team_id || undefined : undefined,
         assigned_primary_driver_id:
           values.assignment_mode === "solo"
@@ -1640,6 +1687,7 @@ export function BookLoadModalV4({
           postal_code: stop.postal_code || undefined,
           latitude: numOrUndef(stop.latitude),
           longitude: numOrUndef(stop.longitude),
+          google_place_id: stop.google_place_id?.trim() || undefined,
           country: stop.country,
           address_line1: stop.address_line1?.trim() ? properPersonOrPlaceName(stop.address_line1) : "",
           scheduled_arrival_at: stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toISOString() : undefined,
@@ -1727,6 +1775,7 @@ export function BookLoadModalV4({
       }
       if (createdId) {
         if (applyPostSaveIntent(createdId, createdLabel || createdId)) return;
+        onCreated(createdId ? { id: createdId, label: createdLabel } : undefined);
         setSaveAck({
           id: createdId,
           loadNumber: createdLabel || createdId,
@@ -2433,9 +2482,10 @@ export function BookLoadModalV4({
                     {/* is_sample_data stays form-backed and still submits — it just can no longer be SET
                         from Book Load (STOP-NO-SEAT-LOADS). */}
                     <input type="hidden" {...form.register("is_sample_data")} data-testid="book-load-is-sample-data" />
-                    {/* catalog_load_type_id kept in form state for edit hydrate of legacy rows only —
-                        no operator control (duplicates Trailer type). Never written from create. */}
-                    <input type="hidden" {...form.register("catalog_load_type_id")} />
+                    {/* catalog_load_type_id stays in form STATE (editLoadMapping hydrates it for legacy rows) but is
+                        no longer a registered input: there is no operator control (duplicates Trailer type, owner #20072)
+                        and the edit patch never writes it, so a registered input only made it look like a silently
+                        discarded entry (443.101, verify-form-field-roundtrip). */}
 
                   <div className="overflow-x-auto border-t border-b border-gray-200">
                     <table className="w-full border-collapse text-xs">
@@ -2724,6 +2774,27 @@ export function BookLoadModalV4({
                     form.setValue("miles_deadhead", n, { shouldDirty: true, shouldValidate: true });
                   }}
                 />
+                <div data-testid="book-load-miles-recommendations" className="mt-2">
+                  {milesRecReady ? (
+                    <MilesRecommendationsPanel
+                      data={milesRecsQuery.data}
+                      isLoading={milesRecsQuery.isLoading}
+                      error={milesRecsQuery.error ? userFacingApiError(milesRecsQuery.error, "could not load") : null}
+                      pending={milesChoice}
+                      onChoose={(input) => {
+                        const rec = milesRecsQuery.data?.fields[input.field];
+                        const value = input.source === "manual" ? input.manual_value ?? null : rec ? valueForSource(rec, input.source) : null;
+                        if (value == null) return;
+                        milesOperatorTouched.current = true;
+                        setMilesChoice((prev) => ({ ...prev, [input.field]: { source: input.source, value, ...(input.reason ? { reason: input.reason } : {}) } }));
+                        const formField = input.field === "practical" ? "miles_practical" : input.field === "short" ? "miles_shortest" : "miles_deadhead";
+                        form.setValue(formField, value, { shouldDirty: true, shouldValidate: true });
+                      }}
+                    />
+                  ) : (
+                    <div className="text-xs text-gray-600">Mileage recommendations appear once every stop has a city and state.</div>
+                  )}
+                </div>
                 <div data-testid="book-load-stops-section">
                 <BookLoadStopsSection
                   operatingCompanyId={operatingCompanyId}

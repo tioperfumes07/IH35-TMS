@@ -40,7 +40,13 @@ function main() {
     if (audit(m1).length === 0) { console.error("SELFTEST FAIL: collapsing the Costs width to 600px did not trip"); process.exit(1); }
     const m2 = src.replace(/activeTab === "Costs"/, 'false && activeTab === "Costs"');
     // still has the literal string, so target the branch marker instead
-    const m3 = src.replace(/activeTab (=== "Costs"|!== "Overview")\s*\n?\s*\?/, "false ?");
+    // 443.99 (CC-2, 2026-10-12) selftest mutation:
+    //   old: replaced only the FIRST tab branch (non-global regex).
+    //   new: replaces EVERY tab branch (global regex).
+    //   why: #20831 made the drawer chain two branches (activeTab === "Costs" ? … : activeTab !== "Overview" ? …), so
+    //        removing only the first left the second for audit() to find and the mutation could never trip. The audit
+    //        rule itself is unchanged; the plant now removes the tab-chosen width completely, which is the violation.
+    const m3 = src.replace(/activeTab (=== "Costs"|!== "Overview")\s*\n?\s*\?/g, "false ?");
     if (audit(m3).length === 0) { console.error("SELFTEST FAIL: removing the tab branch did not trip"); process.exit(1); }
     void m2;
     console.log("SELFTEST OK: guard trips on all mutations");

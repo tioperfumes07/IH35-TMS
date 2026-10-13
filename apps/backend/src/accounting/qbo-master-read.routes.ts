@@ -3,7 +3,6 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
-import { EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL } from "../mdata/test-seed-archive.js";
 
 const listQuerySchema = companyQuerySchema.extend({
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -32,26 +31,6 @@ function encodeCursor(row: { mirrored_at: string | Date; id: string }) {
   return Buffer.from(payload, "utf8").toString("base64url");
 }
 
-async function columnExists(
-  client: { query: (sql: string, args?: unknown[]) => Promise<{ rows: Array<{ ok: boolean }> }> },
-  schema: string,
-  table: string,
-  column: string
-): Promise<boolean> {
-  const res = await client.query(
-    `
-      SELECT EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_schema = $1
-          AND table_name = $2
-          AND column_name = $3
-      ) AS ok
-    `,
-    [schema, table, column]
-  );
-  return Boolean(res.rows[0]?.ok);
-}
 
 export async function registerQboMasterReadRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/customers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
@@ -70,19 +49,19 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
       let cursorSql = "";
       if (cur) {
         values.push(cur.mirrored_at, cur.id);
-        cursorSql = `AND (qc.mirrored_at, qc.id) < ($${values.length - 1}::timestamptz, $${values.length}::uuid)`;
+        cursorSql = `AND (c.updated_at, c.id) < ($${values.length - 1}::timestamptz, $${values.length}::uuid)`;
       }
       values.push(limit + 1);
       const limIdx = values.length;
       const res = await client.query(
         `
-          SELECT qc.id, qc.qbo_id, qc.display_name, qc.active AS is_active, qc.mirrored_at AS last_synced_at
-          FROM mdata.qbo_customers qc
-          WHERE qc.operating_company_id = $1::uuid
-            AND qc.active = true
-            AND ${EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL}
+          SELECT c.id, c.qbo_customer_id AS qbo_id, c.customer_name AS display_name,
+                 (c.deactivated_at IS NULL) AS is_active, c.updated_at AS last_synced_at
+          FROM mdata.customers c
+          WHERE c.operating_company_id = $1::uuid
+            AND c.deactivated_at IS NULL
             ${cursorSql}
-          ORDER BY qc.mirrored_at DESC, qc.id DESC
+          ORDER BY c.updated_at DESC, c.id DESC
           LIMIT $${limIdx}
         `,
         values
@@ -124,9 +103,10 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
     const row = await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT id, qbo_id, display_name, active AS is_active, mirrored_at AS last_synced_at
-          FROM mdata.qbo_customers
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND active = true AND archived_at IS NULL
+          SELECT id, qbo_customer_id AS qbo_id, customer_name AS display_name,
+                 (deactivated_at IS NULL) AS is_active, updated_at AS last_synced_at
+          FROM mdata.customers
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL
           LIMIT 1
         `,
         [params.data.id, q.data.operating_company_id]
@@ -157,33 +137,23 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
     const cur = decodeCursor(cursor);
 
     const rows = await withCompanyScope(user.uuid, operating_company_id, async (client) => {
-      const hasQboVendorCol = await columnExists(client, "mdata", "vendors", "qbo_vendor_id");
       const values: unknown[] = [operating_company_id];
       let cursorSql = "";
       if (cur) {
         values.push(cur.mirrored_at, cur.id);
-        cursorSql = `AND (qv.mirrored_at, qv.id) < ($${values.length - 1}::timestamptz, $${values.length}::uuid)`;
+        cursorSql = `AND (v.updated_at, v.id) < ($${values.length - 1}::timestamptz, $${values.length}::uuid)`;
       }
       values.push(limit + 1);
       const limIdx = values.length;
-      const vendorCategorySelect = hasQboVendorCol
-        ? `v.vendor_category AS vendor_category`
-        : `NULL::text AS vendor_category`;
-      const joinSql = hasQboVendorCol
-        ? `LEFT JOIN mdata.vendors v
-             ON v.operating_company_id = qv.operating_company_id
-            AND v.qbo_vendor_id IS NOT NULL
-            AND trim(v.qbo_vendor_id) = trim(qv.qbo_id)`
-        : ``;
       const res = await client.query(
         `
-          SELECT qv.id, qv.qbo_id, qv.display_name, qv.active AS is_active, qv.mirrored_at AS last_synced_at,
-                 ${vendorCategorySelect}
-          FROM mdata.qbo_vendors qv
-          ${joinSql}
-          WHERE qv.operating_company_id = $1::uuid
+          SELECT v.id, v.qbo_vendor_id AS qbo_id, v.vendor_name AS display_name,
+                 (v.deactivated_at IS NULL) AS is_active, v.updated_at AS last_synced_at,
+                 v.vendor_category
+          FROM mdata.vendors v
+          WHERE v.operating_company_id = $1::uuid
             ${cursorSql}
-          ORDER BY qv.mirrored_at DESC, qv.id DESC
+          ORDER BY v.updated_at DESC, v.id DESC
           LIMIT $${limIdx}
         `,
         values
@@ -225,21 +195,13 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
     if (!q.success) return validationError(reply, q.error);
 
     const row = await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
-      const hasQboVendorCol = await columnExists(client, "mdata", "vendors", "qbo_vendor_id");
-      const vendorCategorySelect = hasQboVendorCol ? `v.vendor_category AS vendor_category` : `NULL::text AS vendor_category`;
-      const joinSql = hasQboVendorCol
-        ? `LEFT JOIN mdata.vendors v
-             ON v.operating_company_id = qv.operating_company_id
-            AND v.qbo_vendor_id IS NOT NULL
-            AND trim(v.qbo_vendor_id) = trim(qv.qbo_id)`
-        : ``;
       const res = await client.query(
         `
-          SELECT qv.id, qv.qbo_id, qv.display_name, qv.active AS is_active, qv.mirrored_at AS last_synced_at,
-                 ${vendorCategorySelect}
-          FROM mdata.qbo_vendors qv
-          ${joinSql}
-          WHERE qv.id = $1::uuid AND qv.operating_company_id = $2::uuid
+          SELECT v.id, v.qbo_vendor_id AS qbo_id, v.vendor_name AS display_name,
+                 (v.deactivated_at IS NULL) AS is_active, v.updated_at AS last_synced_at,
+                 v.vendor_category
+          FROM mdata.vendors v
+          WHERE v.id = $1::uuid AND v.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, q.data.operating_company_id]
@@ -282,22 +244,23 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
       let cursorSql = "";
       if (cur) {
         values.push(cur.mirrored_at, cur.id);
-        cursorSql = `AND (qi.mirrored_at, qi.id) < ($${values.length - 1}::timestamptz, $${values.length}::uuid)`;
+        cursorSql = `AND (ci.updated_at, ci.id) < ($${values.length - 1}::timestamptz, $${values.length}::uuid)`;
       }
       values.push(limit + 1);
       const limIdx = values.length;
       const res = await client.query(
         `
-          SELECT qi.id, qi.qbo_id, qi.name AS display_name, qi.active AS is_active, qi.mirrored_at AS last_synced_at
-          FROM mdata.qbo_items qi
-          WHERE qi.operating_company_id = $1::uuid
-            AND qi.active = true
+          SELECT ci.id, ci.qbo_item_id AS qbo_id, ci.item_name AS display_name,
+                 (ci.deactivated_at IS NULL) AS is_active, ci.updated_at AS last_synced_at
+          FROM catalogs.items ci
+          WHERE ci.operating_company_id = $1::uuid
+            AND ci.deactivated_at IS NULL
             AND (
-              lower(trim(coalesce(qi.item_type, ''))) IN ('inventory', 'service')
-              OR lower(replace(trim(coalesce(qi.item_type, '')), ' ', '')) = 'noninventory'
+              lower(trim(coalesce(ci.item_type, ''))) IN ('inventory', 'service')
+              OR lower(replace(trim(coalesce(ci.item_type, '')), ' ', '')) = 'noninventory'
             )
             ${cursorSql}
-          ORDER BY qi.mirrored_at DESC, qi.id DESC
+          ORDER BY ci.updated_at DESC, ci.id DESC
           LIMIT $${limIdx}
         `,
         values

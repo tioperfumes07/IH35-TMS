@@ -4,9 +4,25 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
+import { assertNotProdTarget } from './lib/prod-target-guard.mjs';
 
 export const REQUIRES_LIVE_DB = 'Production RLS metadata and isolated local behavior are independently required.';
 const LABEL = 'verify-workflow-requests-entity-scoped';
+/**
+ * 443.100: is the server we reached really on this machine? Loopback (or a unix socket, null) is. A Docker Postgres —
+ * CI's `services: postgres` container and the local verify container alike — answers from its bridge address
+ * (e.g. 172.18.0.2), with our client on the same bridge (172.18.0.1): private, same /24. A remote server (Neon) is
+ * never on our own bridge. Before this, CI's service container always failed the loopback-only test.
+ */
+export function serverIsLocal(server, client) {
+  if (server == null || server === '127.0.0.1' || server === '::1') return true;
+  const v4 = (a) => (typeof a === 'string' && /^\d{1,3}(\.\d{1,3}){3}$/.test(a) ? a.split('.').map(Number) : null);
+  const s = v4(server), c = v4(client);
+  if (!s || !c) return false;
+  const priv = (o) => o[0] === 10 || (o[0] === 172 && o[1] >= 16 && o[1] <= 31) || (o[0] === 192 && o[1] === 168);
+  return priv(s) && priv(c) && s[0] === c[0] && s[1] === c[1] && s[2] === c[2] && s[3] !== c[3];
+}
+
 export function isolatedTarget(value) {
   try {
     const u = new URL(value);
@@ -68,20 +84,25 @@ async function main() {
   if (process.argv.includes('--selftest')) {
     for (const u of [undefined,'postgres://reader@production.neon.tech/neondb','postgres://reader@localhost/neondb','postgres://reader@production.neon.tech/ih35_test']) assert.equal(isolatedTarget(u), false);
     for (const u of ['postgres://test@localhost/ih35_verify','postgres://test@127.0.0.1/ih35_test_rls']) assert.equal(isolatedTarget(u), true);
-    console.log(`${LABEL}: target safety PASS 6/6`); return;
+    for (const [srv, cli] of [[null, null], ['127.0.0.1', '127.0.0.1'], ['::1', '::1'], ['172.18.0.2', '172.18.0.1'], ['192.168.117.2', '192.168.117.1']]) assert.equal(serverIsLocal(srv, cli), true);
+    // remote (public), private-but-different-network, same address, and non-IPv4 client: never local
+    for (const [srv, cli] of [['54.12.3.4', '10.0.0.5'], ['10.1.2.3', '73.22.1.9'], ['172.18.0.2', '172.19.0.1'], ['172.18.0.2', '172.18.0.2'], ['10.0.0.2', 'fe80::1']]) assert.equal(serverIsLocal(srv, cli), false);
+    console.log(`${LABEL}: target safety PASS 16/16`); return;
   }
   const isolated = process.argv.includes('--isolated');
   const url = isolated ? process.env.WORKFLOW_RLS_TEST_DATABASE_URL : process.env.DATABASE_URL;
   assert.ok(url, isolated ? 'WORKFLOW_RLS_TEST_DATABASE_URL required; no production fixture fallback' : 'DATABASE_URL required');
   if (isolated) assert.ok(isolatedTarget(url), 'fixtures forbidden outside local ih35_verify/ih35_test database');
   const local = isolatedTarget(url);
+  // LST-SEED-01: the fixture arm writes rows — the shared prod refusal runs before connecting, on top of isolatedTarget.
+  if (local) assertNotProdTarget({ label: LABEL, connectionString: url });
   const client = new Client({connectionString:url, connectionTimeoutMillis:10000});
   await client.connect();
   try {
     if (local) {
-      const identity = (await client.query('SELECT current_database() db, host(inet_server_addr()) address')).rows[0];
+      const identity = (await client.query('SELECT current_database() db, host(inet_server_addr()) address, host(inet_client_addr()) client')).rows[0];
       assert.match(identity.db, /^ih35_(?:verify|test)(?:[_-].*)?$/);
-      assert.ok(['127.0.0.1','::1',null].includes(identity.address), 'server must actually be local');
+      assert.ok(serverIsLocal(identity.address, identity.client), 'server must actually be local');
     }
     await client.query(local ? 'BEGIN' : 'BEGIN READ ONLY');
     await client.query("SET LOCAL statement_timeout='30s'");

@@ -27,8 +27,18 @@ export const ALLOW_OFFLINE_SKIP = "live-telematics invariant by design, no stati
 const LABEL = "verify-telematics-feed-is-live";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const STALE_MINUTES = 20;
+// LEAD 443.91 #3 (2026-10-12): old rule — outside operating hours the guard printed SKIP and never connected, so the
+// required live-load job failed it as "REQUIRED CI SKIP IS A FAILURE — no execution proof" on every overnight run; new
+// rule — it always executes read-only: is_enabled is checked at every hour, and outside operating hours a position newer
+// than OFF_HOURS_STALE_MINUTES is required instead of 20 minutes; why — a quiet feed overnight is still not an outage,
+// but a feed silent for a whole day is one at any hour, and a required guard must prove it ran.
+const OFF_HOURS_STALE_MINUTES = 24 * 60;
 const OPERATING_HOURS_START = 6; // 06:00 America/Chicago
 const OPERATING_HOURS_END = 22; // 22:00 America/Chicago
+
+export function staleMinutesAt(nowUtc) {
+  return isWithinOperatingHours(nowUtc) ? STALE_MINUTES : OFF_HOURS_STALE_MINUTES;
+}
 
 export function isWithinOperatingHours(nowUtc) {
   // America/Chicago is UTC-5 (CDT) or UTC-6 (CST) -- this repo's fleet operates in Texas/Central
@@ -47,12 +57,14 @@ function selftest() {
   t("3am UTC (10pm Central prior day) is NOT within operating hours", isWithinOperatingHours(new Date("2026-09-28T03:00:00Z")) === false);
   t("8am UTC (3am Central) is NOT within operating hours", isWithinOperatingHours(new Date("2026-09-28T08:00:00Z")) === false);
   t("20:00 UTC (3pm Central) is within operating hours", isWithinOperatingHours(new Date("2026-09-28T20:00:00Z")) === true);
+  t("operating hours require a 20-minute position", staleMinutesAt(new Date("2026-09-28T20:00:00Z")) === 20);
+  t("off hours still execute, requiring a position within 24 hours", staleMinutesAt(new Date("2026-09-28T08:00:00Z")) === 1440);
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} selftest OK — 4 cases`);
+  console.log(`${LABEL} selftest OK — 6 cases`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -62,10 +74,8 @@ if (process.argv.includes("--selftest")) {
 
 async function main() {
   const now = new Date();
-  if (!isWithinOperatingHours(now)) {
-    console.log(`${LABEL}: SKIP — outside operating hours (06:00-22:00 America/Chicago); a quiet feed overnight is not an outage.`);
-    process.exit(0);
-  }
+  const staleMinutes = staleMinutesAt(now);
+  const window = isWithinOperatingHours(now) ? "operating hours" : "outside operating hours 06:00-22:00 America/Chicago";
 
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
@@ -92,16 +102,16 @@ async function main() {
          FROM telematics.vehicle_latest_position
         WHERE operating_company_id = $1::uuid
           AND captured_at > now() - ($2 || ' minutes')::interval`,
-      [USMCA, STALE_MINUTES]
+      [USMCA, staleMinutes]
     );
     const row = posRes.rows[0];
     await client.query("ROLLBACK");
 
     if (!row.latest || Number(row.fresh_units) === 0) {
-      console.error(`${LABEL}: FAIL — no USMCA unit has a telematics position newer than ${STALE_MINUTES} minutes during operating hours. is_enabled=${config.is_enabled}, last_health_status=${config.last_health_status}, last_error=${config.last_error ?? "none"}.`);
+      console.error(`${LABEL}: FAIL — no USMCA unit has a telematics position newer than ${staleMinutes} minutes (${window}). is_enabled=${config.is_enabled}, last_health_status=${config.last_health_status}, last_error=${config.last_error ?? "none"}.`);
       process.exit(1);
     }
-    console.log(`${LABEL}: PASS — ${row.fresh_units} unit(s) with a position newer than ${STALE_MINUTES} minutes, latest ${row.latest}.`);
+    console.log(`${LABEL}: PASS — ${row.fresh_units} unit(s) with a position newer than ${staleMinutes} minutes (${window}), latest ${row.latest}.`);
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
     console.error(`${LABEL}: FAIL — ${err.message}`);

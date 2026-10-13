@@ -27,20 +27,37 @@ const LABEL = "verify-form425c-exhibits-route-mounted";
 const INDEX = join(ROOT, "apps/backend/src/index.ts");
 const ROUTES = join(ROOT, "apps/backend/src/reports/form-425c/exhibits/routes.ts");
 const VIEWER = join(ROOT, "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx");
+const REPORTS = join(ROOT, "apps/backend/src/reports/index.ts");
 
-export function audit(indexSrc, routesSrc, viewerSrc = "") {
+// 443.99: the canonical mount moved. BOOT-F396 (#25300) removed the direct index.ts call because the reports
+// aggregator (reports/index.ts, GAP-44) already mounts it — two mounts made Fastify throw "Method 'POST' already
+// declared" at boot and five Render deploys timed out. The mount is now proven as a chain, each link checked as an
+// import AND a call: index.ts -> registerReportsRoutes(app) -> registerForm425cExhibitsRoutes(app); and index.ts must
+// NOT mount it a second time.
+export function audit(indexSrc, routesSrc, viewerSrc = "", reportsSrc = readFileSync(REPORTS, "utf8")) {
   const problems = [];
 
-  if (!/import\s*\{[^}]*registerForm425cExhibitsRoutes[^}]*\}\s*from\s*["'][^"']*reports\/form-425c\/exhibits\/routes\.js["']/.test(indexSrc)) {
-    problems.push("index.ts does not IMPORT registerForm425cExhibitsRoutes from the exhibits routes module");
+  if (!/import\s*\{[^}]*registerForm425cExhibitsRoutes[^}]*\}\s*from\s*["']\.\/form-425c\/exhibits\/routes\.js["']/.test(reportsSrc)) {
+    problems.push("reports/index.ts does not IMPORT registerForm425cExhibitsRoutes from the exhibits routes module");
   }
 
   // The invocation, checked independently of the import — an import alone is not a mount.
-  if (!/await\s+registerForm425cExhibitsRoutes\s*\(\s*app\s*\)/.test(indexSrc)) {
+  if (!/await\s+registerForm425cExhibitsRoutes\s*\(\s*app\s*\)/.test(reportsSrc)) {
     problems.push(
-      "index.ts never CALLS `await registerForm425cExhibitsRoutes(app)` — the generator would be an " +
+      "reports/index.ts never CALLS `await registerForm425cExhibitsRoutes(app)` — the generator would be an " +
         "orphan route again and /reports/form-425c/exhibits would 404"
     );
+  }
+
+  if (
+    !/import\s*\{[^}]*\bregisterReportsRoutes\b[^}]*\}\s*from\s*["']\.\/reports\/index\.js["']/.test(indexSrc) ||
+    !/await\s+registerReportsRoutes\s*\(\s*app\s*\)/.test(indexSrc)
+  ) {
+    problems.push("index.ts does not IMPORT and CALL registerReportsRoutes(app) — the reports aggregator (and the exhibits mount inside it) is unmounted");
+  }
+
+  if (/await\s+registerForm425cExhibitsRoutes\s*\(\s*app\s*\)/.test(indexSrc)) {
+    problems.push("index.ts mounts registerForm425cExhibitsRoutes a SECOND time — duplicate POST route crashes boot (BOOT-F396)");
   }
 
   if (!/app\.post\(\s*["']\/api\/v1\/reports\/form-425c\/exhibits\/build["']/.test(routesSrc)) {
@@ -97,20 +114,34 @@ function selftest() {
   const clean = audit(indexSrc, routesSrc, viewerSrc);
   if (clean.length !== 0) failures.push(`case0 FAIL — corrected source flagged: ${clean.join("; ")}`);
 
+  const reportsSrc = readFileSync(REPORTS, "utf8");
+
   // Case 1 — the ORIGINAL defect: imported but never called. Must be caught.
-  const importOnly = indexSrc.replace(/await\s+registerForm425cExhibitsRoutes\s*\(\s*app\s*\);?/, "");
-  if (importOnly === indexSrc) failures.push("case1 INERT — mutation did not change the source");
-  else if (!audit(importOnly, routesSrc, viewerSrc).some((p) => /never CALLS/.test(p)))
+  const importOnly = reportsSrc.replace(/await\s+registerForm425cExhibitsRoutes\s*\(\s*app\s*\);?/, "");
+  if (importOnly === reportsSrc) failures.push("case1 INERT — mutation did not change the source");
+  else if (!audit(indexSrc, routesSrc, viewerSrc, importOnly).some((p) => /never CALLS/.test(p)))
     failures.push("case1 FAIL — import-without-call not caught (the original defect)");
 
   // Case 2 — import removed entirely.
-  const noImport = indexSrc.replace(
+  const noImport = reportsSrc.replace(
     /import\s*\{\s*registerForm425cExhibitsRoutes\s*\}\s*from[^\n]*\n/,
     ""
   );
-  if (noImport === indexSrc) failures.push("case2 INERT — mutation did not change the source");
-  else if (!audit(noImport, routesSrc, viewerSrc).some((p) => /IMPORT/.test(p)))
+  if (noImport === reportsSrc) failures.push("case2 INERT — mutation did not change the source");
+  else if (!audit(indexSrc, routesSrc, viewerSrc, noImport).some((p) => /IMPORT/.test(p)))
     failures.push("case2 FAIL — missing import not caught");
+
+  // Case 6 — the aggregator itself unmounted from index.ts.
+  const noAggregator = indexSrc.replace(/await\s+registerReportsRoutes\s*\(\s*app\s*\);?/, "");
+  if (noAggregator === indexSrc) failures.push("case6 INERT — mutation did not change the source");
+  else if (!audit(noAggregator, routesSrc, viewerSrc, reportsSrc).some((p) => /registerReportsRoutes/.test(p)))
+    failures.push("case6 FAIL — unmounted reports aggregator not caught");
+
+  // Case 7 — BOOT-F396: a second direct mount in index.ts.
+  const dupMount = indexSrc.replace(/await\s+registerReportsRoutes\s*\(\s*app\s*\);/, "$&\n  await registerForm425cExhibitsRoutes(app);");
+  if (dupMount === indexSrc) failures.push("case7 INERT — mutation did not change the source");
+  else if (!audit(dupMount, routesSrc, viewerSrc, reportsSrc).some((p) => /SECOND time/.test(p)))
+    failures.push("case7 FAIL — duplicate mount (BOOT-F396) not caught");
 
   // Case 3 — the role gate stripped from the handler.
   const noGate = routesSrc.replace(/reply\.code\(403\)/g, "reply.code(200)");
@@ -132,7 +163,7 @@ function selftest() {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS — orphan-mount, missing import and stripped role gate all caught; correct shape clean`);
+  console.log(`${LABEL}: selftest PASS — orphan-mount, missing import, unmounted aggregator, duplicate mount and stripped role gate all caught; correct shape clean`);
 }
 
 function main() {

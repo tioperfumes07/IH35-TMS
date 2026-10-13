@@ -18,6 +18,33 @@ export type SamsaraConfig = {
 export type SamsaraDriver = { id: string; raw: Record<string, unknown> };
 export type SamsaraVehicle = { id: string; raw: Record<string, unknown> };
 export type SamsaraTrailer = { id: string; raw: Record<string, unknown> };
+export type TrailerGpsFix = { t: number; lat: number; lng: number };
+/** Trailer id -> time-ordered fixes, plus what the calls cost (diagnostics for the dry run). */
+export type TrailerGpsHistory = { fixes: Map<string, TrailerGpsFix[]>; requests: number; rows: number; retries: number };
+
+/** Samsara allows 10 requests/s; pace below it and back off on 429 / 5xx (Retry-After honoured). */
+export const SAMSARA_MIN_REQUEST_GAP_MS = 150;
+export const SAMSARA_MAX_ATTEMPTS = 6;
+let lastSamsaraRequestAt = 0;
+export let samsaraSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+export function setSamsaraSleepForTests(fn: (ms: number) => Promise<void>) { samsaraSleep = fn; }
+
+export async function withSamsaraRateLimit<T>(stats: { requests: number; retries: number }, call: () => Promise<T>): Promise<T> {
+  for (let attempt = 1; ; attempt += 1) {
+    const wait = lastSamsaraRequestAt + SAMSARA_MIN_REQUEST_GAP_MS - Date.now();
+    if (wait > 0) await samsaraSleep(wait);
+    lastSamsaraRequestAt = Date.now();
+    stats.requests += 1;
+    try {
+      return await call();
+    } catch (e) {
+      const err = e as SamsaraApiError;
+      if (!(err instanceof SamsaraApiError) || !err.retryable || attempt >= SAMSARA_MAX_ATTEMPTS) throw e;
+      stats.retries += 1;
+      await samsaraSleep(err.retryAfterMs ?? Math.min(30_000, 1000 * 2 ** (attempt - 1)));
+    }
+  }
+}
 export type SamsaraAddress = { id: string; raw: Record<string, unknown> };
 export type SamsaraRouteStopInput = {
   externalIds: Ih35SamsaraExternalIds;
@@ -148,14 +175,25 @@ export class SamsaraApiError extends Error {
   readonly statusCode: number | null;
   readonly body: Record<string, unknown> | null;
   readonly retryable: boolean;
+  /** Server-sent Retry-After (429), in ms, when present. */
+  readonly retryAfterMs: number | null;
 
-  constructor(message: string, statusCode: number | null, body: Record<string, unknown> | null, retryable: boolean) {
+  constructor(message: string, statusCode: number | null, body: Record<string, unknown> | null, retryable: boolean, retryAfterMs: number | null = null) {
     super(message);
     this.name = "SamsaraApiError";
     this.statusCode = statusCode;
     this.body = body;
     this.retryable = retryable;
+    this.retryAfterMs = retryAfterMs;
   }
+}
+
+/** Samsara's own error text from a non-2xx body, as ":<reason>" (≤ 200 chars), or "" when there is none. */
+export function samsaraReason(json: unknown): string {
+  const o = json && typeof json === "object" ? (json as Record<string, unknown>) : null;
+  const raw = o?.message ?? o?.error ?? (o?.errors ? JSON.stringify(o.errors) : null);
+  const text = typeof raw === "string" ? raw : raw != null ? JSON.stringify(raw) : "";
+  return text.trim() ? `:${text.replace(/\s+/g, " ").trim().slice(0, 200)}` : "";
 }
 
 const SAMSARA_API_BASE = "https://api.samsara.com";
@@ -527,9 +565,18 @@ async function fetchSamsaraStatsPage(
   return { data, hasNextPage, cursor, typesUsed, fullSetError };
 }
 
+/** Retry-After is either delta-seconds or an HTTP date. */
+export function parseRetryAfterMs(v: string | null): number | null {
+  if (!v) return null;
+  const secs = Number(v);
+  if (Number.isFinite(secs) && secs >= 0) return Math.round(secs * 1000);
+  const at = Date.parse(v);
+  return Number.isFinite(at) ? Math.max(0, at - Date.now()) : null;
+}
+
 async function fetchSamsaraPage(
   token: string,
-  endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/fleet/trailers" | "/addresses" | "/fleet/safety-events",
+  endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/fleet/trailers" | "/fleet/trailers/stats/history" | "/addresses" | "/fleet/safety-events",
   after: string | null,
   extraParams?: Record<string, string>
 ): Promise<{
@@ -558,7 +605,7 @@ async function fetchSamsaraPage(
   if (!res.ok) {
     const body = await readJsonResponse(res);
     const retryable = res.status === 429 || res.status >= 500;
-    throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, body, retryable);
+    throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, body, retryable, parseRetryAfterMs(res.headers?.get?.("retry-after") ?? null));
   }
   const json = await readJsonResponse(res);
   const data = Array.isArray(json.data)
@@ -1251,6 +1298,48 @@ export class SamsaraClient {
     return out;
   }
 
+  /**
+   * LEAD 443.107 item 2 — trailer GPS history (GET /fleet/trailers/stats/history?types=gps) for the given Samsara trailer
+   * ids over [startTime, endTime] (RFC 3339). Returns trailer id -> time-ordered fixes. Unlike listTrailers this THROWS on
+   * an API failure: the GPS trailer match must report "Samsara unavailable", never read a failure as "no trailer GPS".
+   */
+  async trailerGpsHistory(trailerIds: string[], startTime: string, endTime: string): Promise<TrailerGpsHistory> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_not_configured", null, null, false);
+    const out: TrailerGpsHistory = { fixes: new Map(), requests: 0, rows: 0, retries: 0 };
+    for (let i = 0; i < trailerIds.length; i += 50) {
+      const ids = trailerIds.slice(i, i + 50);
+      let after: string | null = null;
+      for (let page = 0; page < 100; page += 1) {
+        const { data, hasNextPage, cursor } = await withSamsaraRateLimit(out, () =>
+          fetchSamsaraPage(token, "/fleet/trailers/stats/history", after, {
+            types: "gps",
+            startTime,
+            endTime,
+            trailerIds: ids.join(","),
+          })
+        );
+        out.rows += data.length;
+        for (const row of data) {
+          const id = typeof row.id === "string" ? row.id.trim() : row.id != null ? String(row.id) : "";
+          if (!id) continue;
+          const fixes = out.fixes.get(id) ?? [];
+          for (const g of Array.isArray(row.gps) ? (row.gps as Record<string, unknown>[]) : []) {
+            const t = Date.parse(String(g.time ?? ""));
+            const lat = Number(g.latitude ?? (g.location as Record<string, unknown> | undefined)?.latitude);
+            const lng = Number(g.longitude ?? (g.location as Record<string, unknown> | undefined)?.longitude);
+            if (Number.isFinite(t) && Number.isFinite(lat) && Number.isFinite(lng)) fixes.push({ t, lat, lng });
+          }
+          out.fixes.set(id, fixes);
+        }
+        if (!hasNextPage || !cursor) break;
+        after = cursor;
+      }
+    }
+    for (const fixes of out.fixes.values()) fixes.sort((a, b) => a.t - b.t);
+    return out;
+  }
+
   /** Real trailers (GET /fleet/trailers) — distinct Samsara resource from vehicles. */
   async listTrailers(): Promise<SamsaraTrailer[]> {
     const token = this._token();
@@ -1502,7 +1591,9 @@ export class SamsaraClient {
     const json = await readJsonResponse(res);
     if (!res.ok) {
       const retryable = res.status === 429 || res.status >= 500;
-      throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, json, retryable);
+      // 443.49: keep Samsara's own reason (same shape as routes-integration.service.ts) — a bare "samsara_http_400" hid
+      // why 11 address creates were refused.
+      throw new SamsaraApiError(`samsara_http_${res.status}${samsaraReason(json)}`, res.status, json, retryable);
     }
     const nested = asObject(json.data);
     const idRaw = json.id ?? nested?.id;
@@ -1510,6 +1601,39 @@ export class SamsaraClient {
     if (!id) {
       throw new SamsaraApiError("samsara_address_missing_id", res.status, json, false);
     }
+    return { id };
+  }
+
+  /**
+   * Lead 443.49 (owner 2026-10-11: "We keep them and we need the real address geo fences"): move an EXISTING Samsara address
+   * (one this TMS created) to the facility's real point — PATCH /addresses/{id}, same id; nothing is created or deleted.
+   */
+  async updateAddress(
+    addressId: string,
+    input: { name: string; formattedAddress: string; latitude: number; longitude: number; radiusMeters: number }
+  ): Promise<{ id: string }> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_not_configured", null, null, false);
+    const id = String(addressId ?? "").trim();
+    if (!id) throw new SamsaraApiError("samsara_address_id_missing", null, null, false);
+    const url = new URL(`${SAMSARA_API_BASE}/addresses/${encodeURIComponent(id)}`);
+    const body = {
+      name: input.name.slice(0, 255),
+      formattedAddress: input.formattedAddress.slice(0, 1024),
+      latitude: input.latitude,
+      longitude: input.longitude,
+      geofence: { circle: { latitude: input.latitude, longitude: input.longitude, radiusMeters: Math.round(input.radiusMeters) } },
+    };
+    let res: Response;
+    try {
+      res = await withCircuitBreaker("samsara", () =>
+        samsaraFetch(url, { method: "PATCH", headers: { ...bearerHeaders(token), "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      );
+    } catch (error) {
+      throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+    }
+    const json = await readJsonResponse(res);
+    if (!res.ok) throw new SamsaraApiError(`samsara_http_${res.status}${samsaraReason(json)}`, res.status, json, res.status === 429 || res.status >= 500);
     return { id };
   }
 

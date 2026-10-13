@@ -76,7 +76,7 @@ describeIntegration("ACCT-F5622 — payment void reverts the invoice's paid stat
         `INSERT INTO accounting.invoices
            (id, operating_company_id, customer_id, display_id, issue_date, due_date,
             subtotal_cents, tax_cents, total_cents, status, source_load_id)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,$5,0,$5,'sent',$6::uuid)`,
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,$5,0,$5,'draft',$6::uuid)`,
         [invoiceId, companyId, customerId, `INV-2026-${String(++invoiceSeq).padStart(5, "0")}`, INVOICE_CENTS, loadId]
       );
       await db.query(
@@ -85,6 +85,8 @@ describeIntegration("ACCT-F5622 — payment void reverts the invoice's paid stat
          VALUES ($1::uuid,$2::uuid,'linehaul',$3::uuid,'Linehaul',1,$4,$4,0)`,
         [companyId, invoiceId, incomeAccountId, INVOICE_CENTS]
       );
+      // 443.93: the send path writes the line first (fn_invoice_sent_requires_live_line) — the invoice is born draft, gets its line, then is sent.
+      await db.query(`UPDATE accounting.invoices SET status = 'sent' WHERE id = $1::uuid`, [invoiceId]);
     });
     return invoiceId;
   }
@@ -138,6 +140,8 @@ describeIntegration("ACCT-F5622 — payment void reverts the invoice's paid stat
     await db.connect();
 
     await bypass(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language)
          VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
@@ -168,6 +172,21 @@ describeIntegration("ACCT-F5622 — payment void reverts the invoice's paid stat
          VALUES ($1::uuid,'undeposited_funds',$2::uuid,true)`,
         [companyId, undepositedAccountId]
       );
+      // 443.93: a payment with no deposit account picked lands on the company's OPERATING BANK (customer-payments /
+      // payments routes, owner ruling 2026-10-02: no holding accounts) — the fixture company carries that mapping like every
+      // real company does.
+      {
+        const bankLedgerId = (await db.query(
+          `INSERT INTO catalogs.accounts (operating_company_id, account_number, account_name, account_type, is_postable)
+           VALUES ($1::uuid,$2,'Operating Bank Test','Asset',true) RETURNING id::text`,
+          [companyId, `OB${suffix}`]
+        )).rows[0].id;
+        await db.query(
+          `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+           VALUES ($1::uuid,'operating_bank',$2::uuid,true)`,
+          [companyId, bankLedgerId]
+        );
+      }
       await db.query(
         `INSERT INTO mdata.customers (id, operating_company_id, customer_name) VALUES ($1::uuid,$2::uuid,$3)`,
         [customerId, companyId, `F5622 Cust ${suffix}`]

@@ -24,11 +24,13 @@
 import { linkRelayFillToSettlementFuelRows } from "../../fuel/relay-fill-link.service.js";
 import { relayMoneyField, type RelayFuelTransaction } from "./relay-client.js";
 import type { DbClient } from "./db-client.type.js";
+import { isUsmcaOperatingCompany } from "./relay-usmca-date-floor.js";
 import { resolveRelayDriverMatch, type RelayDriverUnresolvedReason } from "./relay-fuel-driver-match.js";
 import { relayFillFeeCents, relayWalletDrawdownCents } from "./relay-sender-fee-cents.js";
 import { upsertRelayWalletBankFeedRow } from "./relay-wallet-bank-feed.service.js";
 
 export type { DbClient } from "./db-client.type.js";
+import type { FuelTxnGlPostCandidate } from "../../accounting/fuel-posting/fuel-credit-preference.js";
 
 export type RelayIngestSource = "daily_pull" | "webhook" | "csv_import";
 
@@ -42,14 +44,16 @@ export type RelayIngestResult = {
   matched_unit_id: string | null;
   line_count: number;
   /**
-   * ROUND 43 FOLLOW-UP item 2: this ingest no longer bridges into fuel.fuel_transactions — always
-   * null now. Kept on the type (rather than removed) so the two existing callers'
-   * `if (result.gl_post_candidate)` / `if (res.gl_post_candidate)` checks keep compiling as inert
-   * no-ops instead of needing a simultaneous cross-file edit under this same change.
+   * ROUND 43 FOLLOW-UP item 2: this ingest no longer bridges into fuel.fuel_transactions — always null.
    */
   fuel_transaction_id: null;
-  /** Always null now — see fuel_transaction_id's comment. */
-  gl_post_candidate: null;
+  /**
+   * LEAD 443.116 #1 — the Relay fill itself is the receipt: a NEWLY received fill is a post candidate (kind relay_fuel,
+   * fill id = this Relay fill), flushed after commit through maybePostFuelExpenseFromCanonicalTxn, which posts it only
+   * when the company's FUEL_POSTS_ON_RECEIPT_ENABLED is ON. A re-pulled fill (already stored) is never a candidate here —
+   * flipping the flag does not post history; a fill already posted is found and never posts twice.
+   */
+  gl_post_candidate: FuelTxnGlPostCandidate | null;
   /**
    * Lead ruling (ROUND 310 / 10-01): ONE fill = ONE live row = ONE company — the company operating the unit that took
    * the fuel. Every Relay fill arrives through one Relay org ("IH 35 TRANSPORTATION LLC"), so each company's pull sees
@@ -57,7 +61,7 @@ export type RelayIngestResult = {
    *   owned_by_other_company        the fill's unit is operated by another company
    *   already_held_by_other_company  the unit is unresolved and another company already holds the fill
    */
-  skipped_reason: "owned_by_other_company" | "already_held_by_other_company" | null;
+  skipped_reason: "not_usmca_relay_company" | "owned_by_other_company" | "already_held_by_other_company" | null;
 };
 
 /**
@@ -151,9 +155,18 @@ export async function upsertRelayFuelTransaction(
     gl_post_candidate: null,
     skipped_reason: reason,
   });
+  // ROUND 443.15 (owner, 2026-10-10): USMCA runs on the IH 35 Transportation Relay key and is the ONLY company
+  // whose Relay fills are stored. Measured: the RELAY_FUEL_INGEST_ENABLED override was ON for TRANSP (10-01) and
+  // USMCA (09-08); both pulls returned the same fills (one Relay org), so any non-USMCA pull can only duplicate.
+  // Refused here, at the one writer every path (daily pull, backfill, webhook, CSV) goes through.
+  if (!isUsmcaOperatingCompany(operatingCompanyId)) return skipped("not_usmca_relay_company");
   const ownerCompanyId = await resolveRelayFillOwnerCompany(client, truckNumber);
   if (ownerCompanyId && ownerCompanyId !== operatingCompanyId) return skipped("owned_by_other_company");
-  if (!ownerCompanyId) {
+  // ROUND 443.15: this check used to run ONLY when the unit was unresolved. Measured: on 2026-10-08 the USMCA pull
+  // stored 53 fills whose unit resolved to USMCA but which TRANSP already held -- 53 new cross-company duplicates
+  // (119 -> 172). A fill already stored under another company is never stored a second time, resolved unit or not.
+  // The existing copy is left exactly where it is: moving or voiding a Relay row needs the owner's word.
+  {
     const heldElsewhere = await client.query<{ ok: boolean }>(
       `SELECT EXISTS (
          SELECT 1 FROM integrations.relay_fuel_transactions
@@ -281,17 +294,18 @@ export async function upsertRelayFuelTransaction(
     .concat(["updated_at = now()"])
     .join(", ");
 
-  const res = await client.query<{ id: string }>(
+  const res = await client.query<{ id: string; inserted: boolean }>(
     `
       INSERT INTO integrations.relay_fuel_transactions (${columns.join(", ")})
       VALUES (${placeholders.join(", ")})
       ON CONFLICT (operating_company_id, transaction_id)
       DO UPDATE SET ${updateSet}
-      RETURNING id::text AS id
+      RETURNING id::text AS id, (xmax = 0) AS inserted
     `,
     values
   );
   const relayFuelTransactionId = res.rows[0]?.id;
+  const newlyReceived = res.rows[0]?.inserted === true;
   if (!relayFuelTransactionId) {
     throw new Error(`relay_fuel_ingest: upsert did not return an id for transaction_id=${tx.transaction_id}`);
   }
@@ -400,7 +414,19 @@ export async function upsertRelayFuelTransaction(
     matched_unit_id: matchedUnitId,
     line_count: fuelItems.length,
     fuel_transaction_id: null,
-    gl_post_candidate: null,
+    gl_post_candidate: newlyReceived && walletAmountCents > 0
+      ? {
+          operating_company_id: operatingCompanyId,
+          fuel_transaction_id: relayFuelTransactionId,
+          relay_fuel_transaction_id: relayFuelTransactionId,
+          fuel_type: "diesel",
+          transaction_at: tx.created_at,
+          amount_cents: walletAmountCents,
+          driver_id: matchedDriverId,
+          location_state: tx.location?.state ?? null,
+          cash_advance: Boolean(tx.cash_advance),
+        }
+      : null,
     skipped_reason: null,
   };
 }

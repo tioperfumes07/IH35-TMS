@@ -128,9 +128,12 @@ async function liveDeliberateFailureProof() {
   }
   const { default: pg } = await import("pg");
   const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
-  const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
-  await client.connect();
+  // TLS by host through the shared helper (CI's postgres service has no TLS; a hard-coded ssl:{} crashed the step).
+  const { createRequire } = await import("node:module");
+  const { buildPgClientConfig } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
+  const client = new pg.Client(buildPgClientConfig(url));
   try {
+    await client.connect();
     await client.query("BEGIN");
     await client.query(`SELECT set_config('app.bypass_rls','lucia',true)`);
     const window = ["2026-01-01", "2027-01-01"];

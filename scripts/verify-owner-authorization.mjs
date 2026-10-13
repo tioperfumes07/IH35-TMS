@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input origin/main — reads the AUTH block's own adding commit and its merge (git log -S / git show origin/main), not only the declaration file. */
 // ROUND 133 (owner law, P0): "A production write is authorized ONLY by an OPEN, unexpired
 // AUTH-<NNN> on main. Verify with scripts/verify-owner-authorization.mjs before you run it."
 //
@@ -38,6 +39,42 @@ function run(cmd) {
   return execSync(cmd, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 }
 
+if (process.argv.includes("--selftest")) {
+  const NOW = Date.parse("2026-10-12T09:00:00Z");
+  const auth = (id, lines) => `## ${id}\n${lines.join("\n")}\n`;
+  const good = ["status: OPEN", "expires_at: 2026-10-13T00:00:00Z", "action: node scripts/ops/run.mts --apply"];
+  const doc = [
+    auth("AUTH-900", good),
+    auth("AUTH-901", ["status: CONSUMED", ...good.slice(1)]),
+    auth("AUTH-902", [good[0], "expires_at: 2026-10-11T00:00:00Z", good[2]]),
+    auth("AUTH-903", [good[0], "expires_at: tomorrow", good[2]]),
+    auth("AUTH-904", [good[0], good[2]]),
+    auth("AUTH-905", good.slice(0, 2)),
+  ].join("\n");
+  const planted = [
+    ["unknown AUTH id", evaluateAuthBlock(doc, "AUTH-999", NOW)],
+    ["status not OPEN", evaluateAuthBlock(doc, "AUTH-901", NOW)],
+    ["expired", evaluateAuthBlock(doc, "AUTH-902", NOW)],
+    ["unparseable expires_at", evaluateAuthBlock(doc, "AUTH-903", NOW)],
+    ["no expires_at", evaluateAuthBlock(doc, "AUTH-904", NOW)],
+    ["no action", evaluateAuthBlock(doc, "AUTH-905", NOW)],
+    ["action text differs", evaluateAuthBlock(doc, "AUTH-900", NOW, "node scripts/ops/other.mts --apply")],
+    ["a later block's fields do not leak into an earlier one", evaluateAuthBlock(`${auth("AUTH-906", ["status: OPEN"])}\n${auth("AUTH-907", good.slice(1))}`, "AUTH-906", NOW)],
+  ];
+  const escaped = planted.filter(([, v]) => !v.reason).map(([n]) => n);
+  const clean = [evaluateAuthBlock(doc, "AUTH-900", NOW), evaluateAuthBlock(doc, "AUTH-900", NOW, good[2].slice("action: ".length))];
+  const cleanFailed = clean.filter((v) => v.reason);
+  for (const n of escaped) console.error(`  ✗ planted violation escaped: ${n}`);
+  for (const v of cleanFailed) console.error(`  ✗ clean OPEN block refused: ${v.reason}`);
+  const caught = planted.length - escaped.length;
+  if (escaped.length || cleanFailed.length) {
+    console.error(`verify-owner-authorization SELFTEST: FAIL ${caught}/${planted.length}`);
+    process.exit(1);
+  }
+  console.log(`verify-owner-authorization SELFTEST: ${caught}/${planted.length} planted violations caught; ${clean.length} clean inputs pass`);
+  process.exit(0);
+}
+
 const authId = process.argv[2];
 if (!authId || !/^AUTH-\d+$/.test(authId)) {
   fail(`first argument must be an AUTH-<NNN> id (got ${JSON.stringify(authId ?? null)}).`);
@@ -60,52 +97,54 @@ try {
   fail(`${FILE_PATH} does not exist at origin/main (${e instanceof Error ? e.message : String(e)}).`);
 }
 
-const blockRe = new RegExp(
-  `## ${authId}\\n((?:(?!\\n## AUTH-)[\\s\\S])*)`,
-  "m"
-);
-const m = fileAtMain.match(blockRe);
-if (!m) {
-  fail(`${authId} does not exist in ${FILE_PATH} at origin/main.`);
+/**
+ * Pure: reads the AUTH block out of the OWNER-AUTHORIZATIONS text and returns { reason } on the first
+ * failed condition, or { expiresAt } when the block is OPEN, unexpired, has an action and (if given)
+ * that action matches actualAction byte for byte.
+ */
+export function evaluateAuthBlock(fileText, authId, nowMs, actualAction = null) {
+  const blockRe = new RegExp(
+    `## ${authId}\\n((?:(?!\\n## AUTH-)[\\s\\S])*)`,
+    "m"
+  );
+  const m = fileText.match(blockRe);
+  if (!m) return { reason: `${authId} does not exist in ${FILE_PATH} at origin/main.` };
+  const block = m[1];
+  const field = (name) => {
+    const fm = block.match(new RegExp(`^${name}:\\s*(.*)$`, "m"));
+    return fm ? fm[1].trim() : null;
+  };
+  const status = field("status");
+  if (status !== "OPEN") return { reason: `${authId} status is ${JSON.stringify(status)}, not OPEN.` };
+  const expiresAt = field("expires_at");
+  if (!expiresAt) return { reason: `${authId} has no expires_at field.` };
+  const expiresMs = Date.parse(expiresAt);
+  if (Number.isNaN(expiresMs)) return { reason: `${authId} expires_at ${JSON.stringify(expiresAt)} is not a valid ISO timestamp.` };
+  if (nowMs >= expiresMs) return { reason: `${authId} expired at ${expiresAt} (now: ${new Date(nowMs).toISOString()}).` };
+  const declaredAction = field("action");
+  if (!declaredAction) return { reason: `${authId} has no action field.` };
+  if (actualAction !== null && actualAction !== declaredAction.trim()) {
+    return {
+      reason:
+        `${authId}'s action text does not match --action-file byte for byte.\n` +
+        `  DECLARED: ${JSON.stringify(declaredAction)}\n` +
+        `  ACTUAL:   ${JSON.stringify(actualAction)}`,
+    };
+  }
+  return { expiresAt };
 }
-const block = m[1];
 
-function field(name) {
-  const fm = block.match(new RegExp(`^${name}:\\s*(.*)$`, "m"));
-  return fm ? fm[1].trim() : null;
-}
-
-const status = field("status");
-if (status !== "OPEN") {
-  fail(`${authId} status is ${JSON.stringify(status)}, not OPEN.`);
-}
-
-const expiresAt = field("expires_at");
-if (!expiresAt) fail(`${authId} has no expires_at field.`);
-const expiresMs = Date.parse(expiresAt);
-if (Number.isNaN(expiresMs)) fail(`${authId} expires_at ${JSON.stringify(expiresAt)} is not a valid ISO timestamp.`);
-if (Date.now() >= expiresMs) {
-  fail(`${authId} expired at ${expiresAt} (now: ${new Date().toISOString()}).`);
-}
-
-const declaredAction = field("action");
-if (!declaredAction) fail(`${authId} has no action field.`);
-
+let actualAction = null;
 if (actionFile) {
-  let actualAction;
   try {
     actualAction = fs.readFileSync(actionFile, "utf8").trim();
   } catch (e) {
     fail(`could not read --action-file ${actionFile}: ${e instanceof Error ? e.message : String(e)}`);
   }
-  if (actualAction !== declaredAction.trim()) {
-    fail(
-      `${authId}'s action text does not match --action-file byte for byte.\n` +
-        `  DECLARED: ${JSON.stringify(declaredAction)}\n` +
-        `  ACTUAL:   ${JSON.stringify(actualAction)}`
-    );
-  }
 }
+const verdict = evaluateAuthBlock(fileAtMain, authId, Date.now(), actualAction);
+if (verdict.reason) fail(verdict.reason);
+const expiresAt = verdict.expiresAt;
 
 // Which commit introduced the "## <authId>" heading line, and who merged the PR that landed it.
 let blameLine;

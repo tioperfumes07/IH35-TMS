@@ -8,6 +8,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import pg from "pg";
+// 443.99: TLS is inferred per host (scripts/lib/pg-connection-options.cjs) — a hardcoded ssl option failed every
+// non-TLS Postgres (CI's fresh-migrated ih35_verify) with "The server does not support SSL connections".
+import pgConnectionOptions from "./lib/pg-connection-options.cjs";
 
 export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
 const LABEL = "verify-reclassify-batches-are-whole";
@@ -47,7 +50,7 @@ if (!process.env.DATABASE_URL) {
   console.log(`${LABEL}: SKIP — no DATABASE_URL (live-data invariant by design). static PASS.`);
   process.exit(0);
 }
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const pool = new pg.Pool(pgConnectionOptions.buildPgPoolConfig(process.env.DATABASE_URL));
 const client = await pool.connect();
 try {
   await client.query("BEGIN READ ONLY");

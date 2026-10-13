@@ -1,3 +1,96 @@
+## 2026-10-12 · BANK-F44366 LIVE MEASURE + MILES SLATE LEFTOVER
+
+FINDING: BANK-F44366 — Relay Fuel Wallet + Dreamline Diesel Card list-suggest live counts on Neon USMCA (owner Law B: suggest only, never categorize/match). Plus BANK-F91151 leftover `text-slate-700` on Creator/Miles panels → house `#4B5563`.
+LANE: NON-FINANCIAL (read-only measure + FE tokens; no money rewrite; no Book Load)
+MERGED (prior): #26456 squash `3de5832ba1b436f55098b534ec55a5498c58051d` (suggest engine)
+Files Modified: CreatorMilesChoicePanel.tsx · MilesRecommendationsPanel.tsx · verify-settlement-creator-miles-choice.mjs (RULE 3 leftover slate refuse) · scripts/ops/2026-10-12-cursor-44366-suggest-measure.mts · OUTBOX-CURSOR.md · .gate-step-map ownedPaths
+GUARD: `node scripts/verify-settlement-creator-miles-choice.mjs --selftest` → PASS 13/13
+LIVE PROOF: Neon `br-fancy-credit-akjnd07a` USMCA bypass_rls=lucia — wallet pending **258** / suggested **150** (OUT 122 · IN 28); gaps fill_exists_no_expense_document=93 · no_document_card_owner_pending=10 · several_deposits=4 · several_expenses=1. Dreamline pending **397** / suggested **192** / none 205; gaps dreamline_no_expense_at_store=113 · dreamline_no_amount_band=58 · several_expenses=30 · dreamline_store_city_unparsed=4. Measure EXIT:0 (~617s). S4-bank already on main via CC-1 #26459 `4c24d77ead` (443.88 → CC-3). Failed PRs in owner screenshot #26376 + #26414 already MERGED.
+REMAINING: owner Chrome Match drawer accept on Relay/Dreamline suggestions (Rule 42 FE deploy); CC-2 mint missing fuel expenses for the 93+113 gap rows; owner cards for 10 unclassified Relay cards
+NEXT: tip census INBOX 435/432/433 (back-arrow guard already PASS 0 cross-module; money-cells shrink-only 0)
+
+## 2026-10-11 · MONEY-CELLS PARTY LEDGER — PR #26414 OPEN (pushed 43faa66861)
+
+FINDING: ACCT-F433-PARTY-LEDGER — same as below; branch pushed with LANE_CROSS ruling; pre-push verify-static 6171/6171 OK.
+PR: https://github.com/tioperfumes07/IH35-TMS/pull/26414 · head `43faa66861` · base main `2976364474`
+NEXT: merge on CI green → owner Chrome Party Ledger; then INBOX 435-CUR
+
+## 2026-10-11 · MONEY-CELLS PARTY LEDGER — SHIP + TIP UNBLOCK (rebased on 443.65)
+
+FINDING: ACCT-F433-PARTY-LEDGER — tip `verify-money-cells-click-through` FAIL after 443.65 due-to/from engine: shrink-only=4 (party-accounts Balance + party-ledger Debit/Credit/Running). Push also blocked by tip alwaysRun: loans raw `<table>`, RPL guards asserting create in routes.ts, deleted_at BASELINE 15, geofence stale token, MilesRecommendations unselected `bg-white`, and alwaysRun `verify-creator-relay-row-posts-through-its-fill` ETIMEDOUT under noDbEnv (legacy HOME file read bypassed ROUND 370 IH35_NO_GATE_CREDENTIAL_FALLBACK).
+LANE: NON-FINANCIAL (FE + guard retarget; no money rewrite; no Book Load)
+LANE_CROSS: docs/bus/2026-10-11-LEAD-RULING-CURSOR-PARTY-LEDGER-MONEY-CELLS-LANE-CROSS.md
+Files Modified: LoansAdvancesPage.tsx (MoneyCell drills + CSS grid party-accounts/party-ledger) · MilesRecommendationsPanel.tsx · verify-related-party-loan-{advance-note,bank-loan,facility}-*.mjs · verify-no-new-deleted-at-columns.mjs (BASELINE=16) · verify-no-geofence-around-unresolved-point.mjs · verify-creator-relay-row-posts-through-its-fill.mjs (resolveGateReadonlyDbUrl) · LANE_CROSS ruling · OUTBOX-CURSOR.md
+GUARD: verify-money-cells-click-through OK shrink-only 0; verify-money-table-cells-aligned PASS; verify-loans-advances-parity-surface-bar PASS; RPL three PASS; deleted_at OK 16; geofence PASS; unselected-boxes PASS; creator-relay selftest 11/11 + noDbEnv SKIP <1s + live OK 0 new violations
+LIVE PROOF: Debit/Credit → MoneyCell journal_entry (journal_entry_id from 443.65); Running + party Balance → MoneyCell register on account_id; data-testids party-accounts-table / party-ledger-table kept as grids; money-pr-local-gate PASS exit 0
+REMAINING: owner Chrome Loans & Advances → Party Ledger after FE deploy (Rule 42)
+NEXT: open Cursor- PR on cursor/loans-party-ledger-money-cells-556e; then INBOX 435/432/433 tip census
+
+## 2026-10-11 · BANK-F44329-MONEY MERGED (#26366) — OUTBOX DONE
+
+FINDING: BANK-F44329-MONEY — Relay match-hint Bank/Wallet/Fee/Charged/Gap were unclickable; now MoneyCell → bank_transaction.
+LANE: NON-FINANCIAL (FE drill only)
+MERGED: #26366 squash `8e9ceac859`
+Files Modified: RelayDepositCategorizedMatchHintsPanel.tsx (prior tip); this tip OUTBOX only
+GUARD: verify-money-cells-click-through OK on tip — shrink-only 0; combined 33 <= 33
+LIVE PROOF: gh pr view 26366 state=MERGED mergeCommit=8e9ceac859; tip `node scripts/verify-money-cells-click-through.mjs` exit 0; five MoneyCell entity drills in RelayDepositCategorizedMatchHintsPanel
+REMAINING: owner Chrome Match drawer (wallet + 3.25% fee) after FE deploy (Rule 42); CC-2 wires createPaidDirectVendorAdvance for Relay cards 0210/6248/9855 (5007 Amex ≠ loan)
+NEXT: INBOX 435/432/433 tip census — money-cells defect from 443.29-B is closed; back-arrow / hard-four / multi-select already on tip
+
+## 2026-10-11 · ROUND 443.29 Neon 301+302 APPLIED — OUTBOX DONE
+
+FINDING: BANK-F44329-NEON — Relay match DDL + facilities WORM now on USMCA Neon; refuse-delete proven.
+LANE: FINANCIAL (DDL only; no money rewrite)
+MERGED: code already on main via #26363@96ce637c3d; OUTBOX merge census #26364@885be48062
+Files Modified: none this tip — Neon apply + OUTBOX proof
+GUARD: N/A (apply-only); refuse_financial_row_delete on related_party_loan_facilities live
+LIVE PROOF: non-pooled neondb_owner @ ep-broad-block-akykk7bw (br-fancy-credit-akjnd07a); ledger has 202610101430 + 202615441301 + 202615441302; trg_worm_refuse_delete BEFORE DELETE; DELETE of live facility row → `is WORM: DELETE is refused for every role`; matched_relay_deposit_id EXISTS
+REMAINING: owner Chrome Match drawer (wallet + 3.25% fee) after FE deploy (Rule 42); CC-2 wires createPaidDirectVendorAdvance for Relay cards 0210/6248/9855 (5007 Amex ≠ loan)
+NEXT: INBOX 435-CUR back-arrow / 432-CUR / 433-CUR; do not re-open 443.29-B feature PR; stale remote `cursor/bank-44329-relay-deposit-match-7fe0` deleted
+
+## 2026-10-11 · ROUND 443.29 B MERGED (#26363) — OUTBOX DONE
+
+FINDING: BANK-F44329-MERGED — Relay deposit bank match on main; no duplicate PR from stale feature branch.
+LANE: NON-FINANCIAL
+MERGED: #26363 squash `96ce637c3d`
+Files Modified: none this tip — OUTBOX proof only
+GUARD: verify-relay-deposit-is-a-bank-match-candidate.mjs --selftest PASS on tip
+LIVE PROOF: gh pr view 26363 state=MERGED mergeCommit=96ce637c3d; Neon USMCA `banking.bank_transactions.matched_relay_deposit_id` EXISTS; WORM trigger on `accounting.related_party_loan_facilities` NOT yet on Neon (apply `202615441302`)
+REMAINING: Neon apply `202615441302` WORM; owner Chrome Match drawer wallet+3.25% fee; retire `cursor/bank-44329-relay-deposit-match-7fe0`; resume INBOX 435/432/433
+NEXT: apply 302 → Chrome proof; do not re-open 443.29-B feature PR
+
+## 2026-10-11 · ROUND 443.22-2f OPTION 2 + paid_direct EXPORT MERGED
+
+FINDING: ACCT-F44322-2f-OPT2-MERGED — Option 2 Scentsx backfill + `createPaidDirectVendorAdvance` export both on main.
+LANE: FINANCIAL
+MERGED: #26259 squash `98832809f3` (Option 2); #26258 claim `9cccb067ee`; #26257 export `3a7635261d`
+Files Modified: none this tip — OUTBOX proof only
+GUARD: verify-related-party-loan-scentsx-option2-backfill (18374); createPaidDirectVendorAdvance in create-entry.service.ts
+LIVE PROOF: gh pr view 26259 state=MERGED mergeCommit=98832809f3; Neon facility 161616ff… / 2410-00-002 open=1145000 entries=9 bank_links=9; CC-2 callable `createPaidDirectVendorAdvance` for cards 0210/6248/9855; card 5007 Amex → 2500-00-001 NOT loan
+REMAINING: Chrome Loans/Advances after deploy (Rule 42); CC-2 Relay deposit poster wires `createPaidDirectVendorAdvance` then re-measure Jorge/Tio
+NEXT: idle on 443.22 until CC-2 paid_direct deposits land
+
+## 2026-10-11 · ROUND 443.22-2f BACKFILL PROPOSAL (READ-ONLY) MERGED (#26225)
+
+FINDING: ACCT-F44322-2f — read-only map of 209 RPL GL lines → person facilities; no JE rewrite; backfill only on owner word
+LANE: FINANCIAL
+MERGED: #26225 squash `469589cf93`
+Files Modified: RELATED-PARTY-LOAN-BACKFILL-PROPOSAL-44322-2f.md · .json · r44322-2f-measure-rpl-postings.mjs · verify-related-party-loan-backfill-proposal.mjs · 18372 step · OUTBOX
+GUARD: verify-related-party-loan-backfill-proposal (18372) selftest+static PASS; counts 209/27/182 locked
+LIVE PROOF: Neon USMCA measured_all_posted=209 live=27 reversed=182; rewrite_journal=false on every live candidate; Scentsx +$11450 / Jorge -$4530 / Tio -$3030 / Laura $0
+REMAINING: owner chooses backfill option 1/2/3 on bus; Chrome proofs after deploy (Rule 42). 443.22 steps 1–2f complete except owner-authorized backfill execute.
+NEXT: idle on 443.22 until owner word on backfill option; no JE rewrite
+
+## 2026-10-10 · ROUND 443.22-MIG MERGED (#26208) + 2b shipping
+
+FINDING: ROUND-443.22-MIG — migration 202615441200 on main at 51c255f57b; collision guard green (maxLedger=maxRepo=202615441200). 2b facility register shipping next.
+LANE: FINANCIAL
+Files Modified (2b): facility.service.ts · related-party-loan-posting/routes.ts · related-party-loans.ts · LoansAdvancesPage.tsx · verify-related-party-loan-facility-bank-categorize-document.mjs · 18362 step · OUTBOX
+GUARD: verify-related-party-loan-facility-bank-categorize-document (18362) selftest+static PASS; verify-migration-no-number-collision OK
+LIVE PROOF: #26208 squash 51c255f57b; collision live maxLedger=202615441200 maxRepo=202615441200; no USMCA seed
+REMAINING: FAST-MERGE 2b then 443.22-2a Loan bank action → wizard @ 4%; 2c note; 2d repay; 2e paid-direct; 2f read-only backfill proposal
+NEXT: squash-merge 2b
+
 ## 2026-10-09 · BANK-F432 #26144 FAST-MERGED + Devin inbox live
 
 FINDING: BANK-F432-MERGED — leftover register type + match-drawer record type now MultiSelect; Devin FAST-MERGE orders on main

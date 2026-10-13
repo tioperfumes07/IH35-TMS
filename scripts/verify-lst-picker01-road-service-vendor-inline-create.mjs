@@ -39,10 +39,17 @@ export function collectProblems(root = ROOT, overrides = null) {
   if (!modal) problems.push(`missing ${MODAL}`);
   else {
     const code = stripComments(modal);
-    if (!/import[\s\S]*EntityPicker[\s\S]*from\s*["']\.\.\/\.\.\/components\/parity\/EntityPicker["']/.test(code)) {
+    // LEAD 443.99 class B (2026-10-12).
+    //   old rule: EntityPicker imported from ../../components/parity/EntityPicker.
+    //   new rule: EntityPicker imported from ../../components/EntityPicker (its one home).
+    //   why: GO-23 K2 batch 3 (ACCT-F19949, #19950, 8b97b82c85) `git mv`'d components/parity/EntityPicker.tsx to
+    //        components/EntityPicker.tsx; the old path no longer exists. A modal without the picker import fails.
+    if (!/import\s*\{[^}]*\bEntityPicker\b[^}]*\}\s*from\s*["']\.\.\/\.\.\/components\/EntityPicker["']/.test(code)) {
       problems.push(`${MODAL}: must import EntityPicker`);
     }
-    if (!/kind=["']vendor["']/.test(code) || !/allowCreate/.test(code)) {
+    // 443.99: anchored on the <EntityPicker> element itself — the file also renders <EntityLink kind="vendor">,
+    // which let a picker switched to another kind slip past the old file-wide kind="vendor" test.
+    if (!/<EntityPicker\b(?:(?!\/>)[\s\S]){0,400}?kind=["']vendor["'](?:(?!\/>)[\s\S]){0,400}?\ballowCreate\b/.test(code)) {
       problems.push(`${MODAL}: Vendor picker must use EntityPicker kind=vendor allowCreate`);
     }
     if (!/vendor_id:\s*vendorId/.test(code) && !/vendor_id:\s*vendorId,/.test(modal)) {
@@ -96,6 +103,12 @@ if (process.argv.includes("--selftest")) {
     }
   };
 
+  expectCaught(
+    "modal-entitypicker-import-removed",
+    MODAL,
+    (s) => s.replace(/import\s*\{\s*EntityPicker\s*\}\s*from\s*["']\.\.\/\.\.\/components\/EntityPicker["'];?\n/, ""),
+    "must import EntityPicker"
+  );
   expectCaught(
     "modal-kind-vendor-removed",
     MODAL,

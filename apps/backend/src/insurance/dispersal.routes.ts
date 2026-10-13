@@ -1,16 +1,10 @@
-// C6-MONEY-JE-EXEMPT: this "seeds" a bank_transactions row per bill (see the seeded/seed comments
-// below) — a matching-queue entry for the normal bank-feed bill-creation flow
-// (bulkPostTransactionsAsBills), not a live disbursement. No categorization_gl_account_id is set
-// here; the real GL post happens later at categorization via maybePostBankCategorizationToGl
-// (banking/categorization.routes.ts) — verified 2026-09-02, GO-23 C6.
+// K-10 (443.113 / 443.115-C) — insurance generate-bills creates A/P bills only.
+// Never invent banking.bank_transactions. The real bank line is matched later (Owner Law B).
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import type { PoolClient } from "pg";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { bulkPostTransactionsAsBills } from "../banking/bulk-transactions.js";
-import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import {
   buildInsuranceGenerateBillsResponse,
   computeInsuranceDispersal,
@@ -111,9 +105,9 @@ export async function persistInsuranceDispersalBills(input: {
   if (!input.bills.length) return [];
 
   return withCompanyScope(input.userId, input.operatingCompanyId, async (client) => {
-    const vendorRes = await client.query<{ id: string }>(
+    const vendorRes = await client.query<{ id: string; is_sample_data: boolean | null }>(
       `
-        SELECT id::text
+        SELECT id::text, is_sample_data
         FROM mdata.vendors
         WHERE operating_company_id = $1::uuid
           AND deactivated_at IS NULL
@@ -125,97 +119,40 @@ export async function persistInsuranceDispersalBills(input: {
     );
     const vendorId = vendorRes.rows[0]?.id;
     if (!vendorId) throw new Error("insurance_vendor_not_found");
+    const vendorIsSampleData = vendorRes.rows[0]?.is_sample_data === true;
 
-    // BANK-ACCOUNT-HIDE: an account hidden for THIS entity must never be auto-picked to seed insurance
-    // premium bill transactions (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
-    const hideOnInsurance = await isBankAccountHideEnabled(client, input.operatingCompanyId);
-    const bankAccountRes = await client.query<{ id: string }>(
-      `
-        SELECT id::text
-        FROM banking.bank_accounts
-        WHERE operating_company_id = $1::uuid
-          AND is_active = true
-          ${bankAccountHiddenFilterSql(hideOnInsurance, "banking.bank_accounts")}
-        ORDER BY created_at ASC
-        LIMIT 1
-      `,
-      [input.operatingCompanyId]
-    );
-    const bankAccountId = bankAccountRes.rows[0]?.id;
-    if (!bankAccountId) throw new Error("insurance_seed_bank_account_not_found");
-
-    const seeded: Array<{ transaction_id: string; bill: InsuranceDispersalBill }> = [];
+    // K-10 — A/P bills only. No synthetic bank-line invent; no bank-feed bulk-post path.
+    const created: Array<{ bill_id: string; sequence: number; amount_cents: number }> = [];
     for (const bill of input.bills) {
-      const insertRes = await client.query<{ id: string }>(
+      const idempotencyKey = `ins:${input.policyId}:${bill.sequence}`;
+
+      const billRes = await client.query<{ id: string }>(
         `
-          INSERT INTO banking.bank_transactions (
-            bank_account_id,
-            operating_company_id,
-            transaction_date,
-            posted_date,
-            amount_cents,
-            description,
-            merchant_name,
-            status,
-            category,
-            category_kind,
-            notes
+          INSERT INTO accounting.bills (
+            operating_company_id, vendor_id, vendor_uuid, mdata_vendor_id,
+            bill_date, due_date, amount_cents, total_amount,
+            paid_cents, paid_amount, status, memo,
+            qbo_idempotency_key, created_by_user_id, created_at, updated_at,
+            is_sample_data
           )
-          VALUES ($1, $2, $3::date, $3::date, $4, $5, $6, 'pending_categorization', NULL, NULL, $7)
+          VALUES ($1,$2,$2,$2::uuid,$3,$3,$4,$5,0,0,'unpaid',$6,$7,$8,now(),now(),$9)
+          ON CONFLICT (operating_company_id, qbo_idempotency_key)
+            WHERE qbo_idempotency_key IS NOT NULL DO NOTHING
           RETURNING id::text
         `,
         [
-          bankAccountId,
           input.operatingCompanyId,
+          vendorId,
           bill.due_date,
           Math.abs(bill.amount_cents),
-          `Insurance dispersal ${input.policyNumber} #${String(bill.sequence).padStart(2, "0")}`,
-          input.insurerName,
-          JSON.stringify({
-            source: "insurance_dispersal_seed",
-            policy_id: input.policyId,
-            policy_number: input.policyNumber,
-            sequence: bill.sequence,
-            due_date: bill.due_date,
-          }),
+          Math.abs(bill.amount_cents) / 100,
+          `Insurance dispersal bill — policy ${input.policyNumber}, installment ${bill.sequence} (${bill.phase}) · ${INSURANCE_PS_CATEGORY}::${bill.ps_item ?? "Insurance Premium"}`,
+          idempotencyKey,
+          input.userId,
+          vendorIsSampleData,
         ]
       );
-      const transactionId = insertRes.rows[0]?.id;
-      if (!transactionId) throw new Error("insurance_seed_transaction_insert_failed");
-      seeded.push({ transaction_id: transactionId, bill });
-    }
-
-    const postResult = await bulkPostTransactionsAsBills(
-      client as unknown as PoolClient,
-      {
-        operatingCompanyId: input.operatingCompanyId,
-        txnIds: seeded.map((row) => row.transaction_id),
-        vendorId,
-        psCategory: INSURANCE_PS_CATEGORY,
-        psItem: seeded[0]?.bill.ps_item ?? "Insurance Premium",
-      },
-      input.userId
-    );
-    if (postResult.bill_ids.length !== seeded.length) {
-      throw new Error("insurance_bulk_post_bill_count_mismatch");
-    }
-
-    const linkedRes = await client.query<{ transaction_id: string; bill_id: string | null }>(
-      `
-        SELECT id::text AS transaction_id, linked_entity_id::text AS bill_id
-        FROM banking.bank_transactions
-        WHERE operating_company_id = $1::uuid
-          AND id = ANY($2::uuid[])
-      `,
-      [input.operatingCompanyId, seeded.map((row) => row.transaction_id)]
-    );
-    const billIdByTransaction = new Map(linkedRes.rows.map((row) => [row.transaction_id, row.bill_id]));
-
-    const created: Array<{ bill_id: string; sequence: number; amount_cents: number }> = [];
-    for (let index = 0; index < seeded.length; index += 1) {
-      const seededRow = seeded[index]!;
-      const bill = seededRow.bill;
-      const createdBillId = billIdByTransaction.get(seededRow.transaction_id) ?? postResult.bill_ids[index] ?? null;
+      const createdBillId = billRes.rows[0]?.id;
       if (!createdBillId) throw new Error("insurance_created_bill_not_found");
 
       await client.query(
@@ -351,9 +288,6 @@ export async function registerInsuranceDispersalRoutes(app: FastifyInstance) {
       const message = String((error as Error)?.message ?? "insurance_generate_bills_failed");
       if (
         message === "insurance_vendor_not_found" ||
-        message === "insurance_seed_bank_account_not_found" ||
-        message === "insurance_seed_transaction_insert_failed" ||
-        message === "insurance_bulk_post_bill_count_mismatch" ||
         message === "insurance_created_bill_not_found"
       ) {
         return reply.code(409).send({ error: message });

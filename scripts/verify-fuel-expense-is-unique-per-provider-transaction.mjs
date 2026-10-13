@@ -22,19 +22,25 @@ export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USM
 // provider ID -> the duplicated fuel rows awaiting an owner AUTH. Shrink-only; empty means every duplicate is resolved.
 // 99530579 (USMCA 510.61, loads 13533 / 13548) resolved 2026-10-04 by AUTH-212 (#25356): the 13533 copy voided through the
 // void engine. Removed here once the live check showed it no longer duplicated.
+// 443.73 #6(e): keyed on the BASE invoice — a re-feed's "<invoice>-<load>" suffix hid 9 doubled lines from this guard.
+// 1848853 (USMCA, diesel 585.36 + DEF 29.43, loads 13543 / 13547): OPEN for the owner — GPS puts the purchase on 13543's printed
+// empty leg (T152 at Love's #471 Natalia 2026-08-26 16:10Z, after the Temple delivery), the owner's words name 13547 (443.74 #4).
+// 99448116 (USMCA DEF, 13519 $47.45 / 13535 "99448116-13535" $41.35): same receipt number, DIFFERENT amounts — surfaced by the
+// base-invoice key 2026-10-11; not a proven duplicate, listed for the Lead / owner, no write.
+// 1848853 and 99448116 resolved 2026-10-11 by AUTH-440 (GPS + one transaction number = one purchase): 13547 and 13535 copies voided.
 const AWAITING_OWNER_AUTH = new Map([]);
 
 const out = await withUnscopedReadOnly(LABEL, async (c) => {
   const dup = await c.query(
-    `SELECT co.code, btrim(f.transaction_reference) AS ref, count(*)::int AS n,
+    `SELECT co.code, regexp_replace(btrim(f.transaction_reference), '-1[0-9]{4}$', '') AS ref, count(*)::int AS n,
             string_agg(f.id::text || ' load ' || COALESCE(l.load_number::text, '-') || ' ' || f.total_cost::text, ' | ' ORDER BY f.created_at) AS rows
        FROM fuel.fuel_transactions f
        JOIN org.companies co ON co.id = f.operating_company_id
        LEFT JOIN mdata.loads l ON l.id = f.load_id
       WHERE f.voided_at IS NULL
-        AND btrim(f.transaction_reference) ~ '^[0-9]+$'
+        AND regexp_replace(btrim(f.transaction_reference), '-1[0-9]{4}$', '') ~ '^[0-9]+$'
         AND ${NOT_FROZEN_SQL("f.operating_company_id")}
-      GROUP BY co.code, f.operating_company_id, f.vendor_id, btrim(f.transaction_reference), f.fuel_type -- one purchase per PRODUCT LINE (202615410930)
+      GROUP BY co.code, f.operating_company_id, f.vendor_id, regexp_replace(btrim(f.transaction_reference), '-1[0-9]{4}$', ''), f.fuel_type -- one purchase per PRODUCT LINE (202615410930)
      HAVING count(*) > 1
       ORDER BY 1, 2`
   );

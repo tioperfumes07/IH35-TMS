@@ -23,6 +23,11 @@ const CUSTOMER_DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
 const VENDOR_DETAIL = "apps/frontend/src/pages/VendorDetail.tsx";
 const VEHICLE_PROFILE = "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx";
 const LOAD_DRAWER = "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx";
+// 443.99 — old rule: LoadDetailDrawer.tsx itself carries entityType="load" (its inline <DocumentsTab>). New rule:
+// the drawer mounts <LdtDocumentsTab (Documents tab) and LdtDocumentsTab mounts the load-scoped upload/list with
+// entityType="load". Why: LDT-D #20882 (ca42c9771d) replaced the inline DocumentsTab with LdtDocumentsTab; the
+// load reverse link moved one file down, unchanged. Removing either hop still fails.
+const LOAD_DOCUMENTS_TAB = "apps/frontend/src/components/dispatch/tabs/LdtDocumentsTab.tsx";
 
 function fail(msg) {
   console.error(`FAIL verify-docs-module-reverse-link-wired: ${msg}`);
@@ -57,7 +62,8 @@ function selftest() {
     [CUSTOMER_DETAIL, 'entityType="customer"', "customer Documents tab"],
     [VENDOR_DETAIL, 'entityType="vendor"', "vendor Documents tab"],
     [VEHICLE_PROFILE, "DocumentsSection", "unit Documents section"],
-    [LOAD_DRAWER, 'entityType="load"', "load Documents tab"],
+    [LOAD_DRAWER, "<LdtDocumentsTab", "load Documents tab mount"],
+    [LOAD_DOCUMENTS_TAB, 'entityType="load"', "load Documents tab"],
   ];
   let probesProven = 0;
   for (const [file, checker, needle, replacement] of cases) {
@@ -100,7 +106,8 @@ if (process.argv.includes("--selftest")) {
   checkReverse(CUSTOMER_DETAIL, 'entityType="customer"', "customer Documents tab");
   checkReverse(VENDOR_DETAIL, 'entityType="vendor"', "vendor Documents tab");
   checkReverse(VEHICLE_PROFILE, "DocumentsSection", "unit Documents section");
-  checkReverse(LOAD_DRAWER, 'entityType="load"', "load Documents tab");
+  checkReverse(LOAD_DRAWER, "<LdtDocumentsTab", "load Documents tab mount");
+  checkReverse(LOAD_DOCUMENTS_TAB, 'entityType="load"', "load Documents tab");
   if (process.exitCode !== 1) {
     console.log(
       "PASS verify-docs-module-reverse-link-wired — docs <-> driver/customer/vendor/unit/load forward+reverse connectivity (Wave-B reverse_link/connectivity) confirmed wired."

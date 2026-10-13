@@ -115,6 +115,44 @@ export function audit({ createdIn, protectedTables }, grandfatheredBefore = GRAN
   return { failures, checked };
 }
 
+if (import.meta.url === `file://${process.argv[1]}` && process.argv.includes("--selftest")) {
+  // Plant each violation in a temp migrations dir and prove audit() names it; clean dir passes.
+  const os = await import("node:os");
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "worm-selftest-"));
+  const write = (files) => {
+    for (const f of fs.readdirSync(tmp)) fs.rmSync(path.join(tmp, f));
+    for (const [name, sql] of Object.entries(files)) fs.writeFileSync(path.join(tmp, name), sql);
+    return audit(scan(tmp), "202700000000");
+  };
+  const CREATE = "CREATE TABLE IF NOT EXISTS banking.check_stub (id uuid);";
+  const LITERAL = "CREATE TRIGGER trg_worm BEFORE DELETE ON banking.check_stub FOR EACH ROW EXECUTE FUNCTION accounting.refuse_financial_row_delete();";
+  const LOOP = "DO $$ DECLARE t text; BEGIN FOREACH t IN ARRAY ARRAY['banking.check_stub'] LOOP EXECUTE 'CREATE TRIGGER trg_worm_refuse_delete ...'; END LOOP; END $$;";
+  let planted = 0;
+  let caught = 0;
+  const expect = (label, cond) => { planted += 1; if (cond) caught += 1; else console.error(`  ESCAPED: ${label}`); };
+  try {
+    const cleanLiteral = write({ "202700000001_a.sql": CREATE + "\n" + LITERAL });
+    const cleanLater = write({ "202700000001_a.sql": CREATE, "202700000002_b.sql": LOOP });
+    const cleanGrandfathered = write({ "202600000001_a.sql": CREATE });
+    const cleanNonFinancial = write({ "202700000001_a.sql": "CREATE TABLE mdata.thing (id uuid);" });
+    for (const [n, r] of Object.entries({ cleanLiteral, cleanLater, cleanGrandfathered, cleanNonFinancial })) {
+      if (r.failures.length) throw new Error(`clean fixture ${n} flagged: ${r.failures[0]}`);
+    }
+    expect("financial table with no trigger", write({ "202700000001_a.sql": CREATE }).failures.length === 1);
+    expect("trigger is BEFORE UPDATE only (no DELETE)", write({ "202700000001_a.sql": CREATE + "\n" + LITERAL.replace("BEFORE DELETE", "BEFORE UPDATE") }).failures.length === 1);
+    expect("trigger on a different table", write({ "202700000001_a.sql": CREATE + "\n" + LITERAL.replace("ON banking.check_stub", "ON banking.other") }).failures.length === 1);
+    expect("ARRAY loop that is not the WORM function", write({ "202700000001_a.sql": CREATE, "202700000002_b.sql": LOOP.replace("trg_worm_refuse_delete", "trg_touch_updated_at") }).failures.length === 1);
+    expect("driver_finance schema covered", write({ "202700000001_a.sql": "CREATE TABLE driver_finance.advance_x (id uuid);" }).failures.length === 1);
+  } catch (e) {
+    console.error(`${LABEL} SELFTEST FAIL: ${e.message}`);
+    process.exit(1);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted} planted violations caught`);
+  process.exit(caught === planted ? 0 : 1);
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const { failures, checked } = audit(scan());
   if (failures.length > 0) {

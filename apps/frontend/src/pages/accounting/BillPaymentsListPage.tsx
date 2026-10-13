@@ -363,7 +363,7 @@ export function BillPaymentsListPage() {
             selected={statusFilter}
             onChange={setStatusFilter}
             allLabel="All (include voided)"
-            data-testid="bill-payments-status-filter"
+            data-testid="bill-payments-hide-voided"
           />
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             From

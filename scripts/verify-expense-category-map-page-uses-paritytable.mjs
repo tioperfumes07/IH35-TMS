@@ -64,7 +64,16 @@ function assertMigrated(src) {
   if (!src.includes("ConfirmModal")) {
     errors.push(`${PAGE}: must keep the deactivate ConfirmModal (void, never delete)`);
   }
-  if (!src.includes("event_class=expense_category_map_change")) {
+  // 443.99 (CC-2) — old rule: the audit link must carry event_class=expense_category_map_change.
+  //   new rule: it must carry action=expense_category_map_change AND entity_id=<row id> (the params ActivityLogPage
+  //             reads: searchParams.get("action") / get("entity_id")), and must not use event_class/resource_id.
+  //   why: ADMIN-ACTIVITY-F1 (8425a7d49b, #14942) found event_class/resource_id were silently ignored — the link
+  //        landed on the unfiltered log — and fixed the page; this guard still pinned the dead filter. Stricter:
+  //        the dead params now fail.
+  if (
+    !/\/admin\/activity\?action=expense_category_map_change&entity_id=\$\{encodeURIComponent\(row\.id\)\}/.test(src) ||
+    /event_class=expense_category_map_change|resource_id=/.test(src)
+  ) {
     errors.push(`${PAGE}: must keep the admin-activity audit drill-through link`);
   }
   return errors;
@@ -82,7 +91,7 @@ function selftest() {
       { key: "account_number", label: "Account" },
       { key: "posting_side", label: "Side" },
       { key: "is_active", label: "Status" },
-      { key: "audit", label: "Audit", render: (row) => <Link to={\`/admin/activity?event_class=expense_category_map_change&resource_id=\${row.id}\`}>View audit</Link> },
+      { key: "audit", label: "Audit", render: (row) => <Link to={\`/admin/activity?action=expense_category_map_change&entity_id=\${encodeURIComponent(row.id)}\`}>View audit</Link> },
       { key: "actions", label: "Actions", render: (row) => <Button onClick={() => setDeactivateTarget(row.id)}>Deactivate</Button> },
     ];
     {accountsQuery.isError ? <ListErrorBanner onRetry={() => void accountsQuery.refetch()} /> : null}
@@ -112,6 +121,12 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  // The dead-filter link ADMIN-ACTIVITY-F1 removed must redden.
+  const deadFilter = good.replace("action=expense_category_map_change&entity_id=\${encodeURIComponent(row.id)}", "event_class=expense_category_map_change&resource_id=\${row.id}");
+  if (deadFilter === good || !assertMigrated(deadFilter).some((e) => e.includes("audit drill-through"))) {
+    console.error(`${LABEL} --selftest FAIL: dead event_class/resource_id audit link not caught`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);

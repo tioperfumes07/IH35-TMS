@@ -21,6 +21,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { assertNotProdTarget } from "./lib/prod-target-guard.mjs";
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
@@ -67,7 +68,11 @@ async function liveCheck() {
     process.exit(1);
   }
   const { Client } = await import("pg");
-  const client = new Client({ connectionString: process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL });
+  const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
+  // 443.99 (LST-SEED-01): the insert-proof below is a fixture write (rolled back, but still an INSERT + a sequence
+  // nextval). Refuse it on a production target BEFORE connecting; the grant check stays a read.
+  const { refused } = assertNotProdTarget({ label: LABEL, connectionString, exit: false });
+  const client = new Client({ connectionString });
   await client.connect();
   try {
     const grantRes = await client.query(
@@ -81,6 +86,10 @@ async function liveCheck() {
       return;
     }
 
+    if (refused) {
+      console.log(`${LABEL} LIVE OK (grant only) — ih35_app has USAGE on ${SEQUENCE}; the rolled-back insert-proof is refused on a production target (LST-SEED-01).`);
+      return;
+    }
     // Real end-to-end proof: attempt the exact write the API performs, rolled back, never committed.
     await client.query("BEGIN");
     try {

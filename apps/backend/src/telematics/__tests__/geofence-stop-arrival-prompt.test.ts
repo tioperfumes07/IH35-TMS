@@ -1,6 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../dot-dwell-detector.service.js", () => ({ processDotDwellForGeofenceEvent: vi.fn(async () => undefined) }));
+vi.mock("../../dispatch/load-transition.service.js", () => ({
+  transitionDispatchLoadInClientTx: vi.fn(async () => ({ ok: true as const, status: "in_transit" })),
+}));
+vi.mock("../../dispatch/geofence-auto-delivery.service.js", () => ({
+  GEOFENCE_AUTO_DELIVERY_ACTOR: "00000000-0000-4000-8000-000000000001",
+}));
+vi.mock("../../accounting/proforma-mint-on-first-pickup.js", () => ({
+  mintProformaInvoiceOnFirstPickup: vi.fn(async () => undefined),
+}));
 
 import { processGeofenceDetectionsForGpsPoint } from "../geofence-detector.service.js";
 
@@ -22,7 +31,18 @@ function clientFor(lastEventKind: "entered" | "exited" | null, stamped: boolean)
       if (sql.includes("INSERT INTO geo.geofence_events")) return { rows: [], rowCount: 1 };
       if (sql.includes("UPDATE mdata.load_stops")) {
         return stamped
-          ? { rows: [{ load_id: "22222222-2222-4222-8222-222222222222", stop_id: "33333333-3333-4333-8333-333333333333", booked_by_user_id: null }] }
+          ? {
+              rows: [
+                {
+                  load_id: "22222222-2222-4222-8222-222222222222",
+                  stop_id: "33333333-3333-4333-8333-333333333333",
+                  booked_by_user_id: null,
+                  // Prompt-only fixture: not a pickup/delivery status walk (no stop_type → walk skipped).
+                  stop_type: null,
+                  sequence_number: 1,
+                },
+              ],
+            }
           : { rows: [] };
       }
       return { rows: [] };
@@ -66,5 +86,21 @@ describe("geofence detector — the one stop-arrival detector", () => {
     expect(res.transitions_written).toBe(1);
     expect(res.stop_arrivals_stamped).toBe(0);
     expect(notifyDriver).not.toHaveBeenCalled();
+  });
+
+  // 443.70 S3 (acceptance run, load 13660): the fence event must move the STOP, not only its time — before this the stop
+  // stayed 'pending' with an eld_geofence arrival and departure stamped on it.
+  it("an entry moves a pending stop to arrived in the same write as the arrival time", async () => {
+    const c = clientFor(null, true);
+    await processGeofenceDetectionsForGpsPoint(c, point(true), {});
+    const upd = c.query.mock.calls.map((x) => String(x[0])).find((q) => q.includes("UPDATE mdata.load_stops") && q.includes("actual_arrival_at"));
+    expect(upd).toMatch(/status = CASE WHEN ls\.status IS NULL OR ls\.status = 'pending' THEN 'arrived'::mdata\.stop_status_enum ELSE ls\.status END/);
+  });
+
+  it("an exit moves the stop to departed (a cancelled stop keeps its state)", async () => {
+    const c = clientFor("entered", true);
+    await processGeofenceDetectionsForGpsPoint(c, point(false), {});
+    const upd = c.query.mock.calls.map((x) => String(x[0])).find((q) => q.includes("UPDATE mdata.load_stops") && q.includes("actual_departure_at"));
+    expect(upd).toMatch(/status = CASE WHEN ls\.status = 'cancelled' THEN ls\.status ELSE 'departed'::mdata\.stop_status_enum END/);
   });
 });

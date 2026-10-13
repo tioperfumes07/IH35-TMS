@@ -4,7 +4,13 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { BankingRuleRow, PlaidCategoryRuleRow, mergeSuggestionPreferHigher, suggestionFromPlaidCategory, suggestionFromRules } from "./suggestion-engine.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { bankMatchFilterKindSchema } from "../accounting/bank-recon/match-api-kinds.js";
+import { listRelayDepositCategorizedMatchHints } from "../accounting/bank-recon/relay-deposit-categorized-match-hints.service.js";
+import { listRelatedPartyPairSuggestions } from "../accounting/bank-recon/related-party-pair-suggestions.service.js";
+import { confirmRelatedPartyPair } from "../accounting/bank-recon/related-party-pair-confirm.service.js";
 import { findCandidates, MATCH_WINDOW_STEPS } from "../accounting/bank-recon/match.service.js";
+import { suggestRelayWalletLine } from "../accounting/bank-recon/relay-wallet-suggest.service.js";
+import { suggestDreamlineCardLine } from "../accounting/bank-recon/dreamline-card-suggest.service.js";
 import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 import { supersedePlaidPendingByExactPostedCandidate } from "./bank-tx-dedup.js";
 import { runDriftDetectors } from "./drift-alerts.service.js";
@@ -208,7 +214,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
           .max(120)
           .optional()
           .transform((v) => (v ? v.split(",").map((k) => k.trim()).filter(Boolean) : undefined))
-          .pipe(z.array(z.enum(["payment", "bill_payment", "transfer", "je", "bill", "expense"])).optional()),
+          .pipe(z.array(bankMatchFilterKindSchema).optional()),
         payee: z.string().max(200).optional(),
         date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
         date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -270,6 +276,83 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     };
   });
 
+  /** ROUND 443.29-B — read-only pairing of wallet-categorized Relay outflows with deposit suggestions (no writes). */
+  app.get(
+    "/api/v1/banking/relay-deposit-match-review",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = financeUser(req, reply);
+      if (!user) return;
+
+      const parsed = companyQuerySchema
+        .extend({ limit: z.coerce.number().int().min(1).max(5000).optional().default(2000) })
+        .safeParse(req.query ?? {});
+      if (!parsed.success) return validationError(reply, parsed.error);
+      const operatingCompanyId = parsed.data.operating_company_id;
+      await assertCompanyMembership(user.uuid, operatingCompanyId);
+
+      const payload = await listRelayDepositCategorizedMatchHints(operatingCompanyId, parsed.data.limit);
+      return payload;
+    }
+  );
+
+  /**
+   * ROUND 443.54-7 — SUGGESTED related-party bank↔Relay pairs (read-only).
+   * Same amount within 5 days; owner confirms via POST …/confirm. Nothing auto-pairs.
+   */
+  app.get(
+    "/api/v1/banking/related-party-pairs",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = financeUser(req, reply);
+      if (!user) return;
+
+      const parsed = companyQuerySchema
+        .extend({ limit: z.coerce.number().int().min(1).max(5000).optional().default(2000) })
+        .safeParse(req.query ?? {});
+      if (!parsed.success) return validationError(reply, parsed.error);
+      const operatingCompanyId = parsed.data.operating_company_id;
+      await assertCompanyMembership(user.uuid, operatingCompanyId);
+
+      return listRelatedPartyPairSuggestions(operatingCompanyId, parsed.data.limit);
+    }
+  );
+
+  /**
+   * ROUND 443.54-7 — owner confirms one suggested (or unpaired) related-party transfer.
+   * Categorizes bank line → Due to/from (one JE), creates party_transfer_out document,
+   * optionally links Relay deposit. Loan poster OFF — 0 duplicate postings.
+   */
+  app.post(
+    "/api/v1/banking/related-party-pairs/confirm",
+    { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = financeUser(req, reply);
+      if (!user) return;
+
+      const body = z
+        .object({
+          operating_company_id: z.string().uuid(),
+          bank_transaction_id: z.string().uuid(),
+          relay_deposit_id: z.string().uuid().nullable().optional(),
+        })
+        .safeParse(req.body ?? {});
+      if (!body.success) return validationError(reply, body.error);
+      await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+
+      const result = await confirmRelatedPartyPair({
+        operating_company_id: body.data.operating_company_id,
+        bank_transaction_id: body.data.bank_transaction_id,
+        relay_deposit_id: body.data.relay_deposit_id,
+        actor_user_uuid: user.uuid,
+      });
+      if (!result.ok) {
+        return reply.code(409).send(result);
+      }
+      return result;
+    }
+  );
+
   // B.1 (owner order 2026-09-05, CODER-SEQUENCE-NUMBERED-2026-09-05.md CC-2 §6): a bulk version of
   // match-candidates above so the transactions LIST can show a "suggested match" per row without
   // opening the drawer for each one — same underlying findCandidates (zero new matching math),
@@ -294,6 +377,33 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
 
     const results = await Promise.all(
       body.data.bank_transaction_ids.map(async (bankTransactionId) => {
+        // ROUND 443.66-C — Relay Fuel Wallet: txn_id → fill expense (fee-inclusive) / IN → relay_deposit.
+        // Runs before the general matcher so wallet lines are not lost to exact-cents-only + 500-row caps.
+        const wallet = await suggestRelayWalletLine({
+          operating_company_id: operatingCompanyId,
+          bank_transaction_id: bankTransactionId,
+        });
+        if (wallet.applies) {
+          return {
+            bank_transaction_id: bankTransactionId,
+            suggestion: wallet.suggestion,
+            gap_reason: wallet.gap_reason ?? null,
+          };
+        }
+
+        // ROUND 443.66-C — Dreamline Diesel Card: store city + invoice group within card-pricing band.
+        const dreamline = await suggestDreamlineCardLine({
+          operating_company_id: operatingCompanyId,
+          bank_transaction_id: bankTransactionId,
+        });
+        if (dreamline.applies) {
+          return {
+            bank_transaction_id: bankTransactionId,
+            suggestion: dreamline.suggestion,
+            gap_reason: dreamline.gap_reason ?? null,
+          };
+        }
+
         const result = await findCandidates({
           operating_company_id: operatingCompanyId,
           bank_transaction_id: bankTransactionId,
@@ -302,11 +412,21 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         // "suggest exact cents +-5d to expenses/bills" — literal filter, narrower than the general
         // auto_match flag (which also requires memo_similarity >= 0.8): amount_gap_cents === 0 and
         // date_gap_days <= AUTO_MATCH_DATE_WINDOW_DAYS (5), kind in {expense, bill} only.
-        const qualifying = result.candidates.filter(
-          (c) => c.exact_amount && c.date_gap_days <= 5 && (c.ledger_entry_kind === "expense" || c.ledger_entry_kind === "bill")
-        );
+        // ROUND 443.66-C — also relay_deposit (wallet funding credits) when exact (incl. wallet leg).
+        const qualifying = result.candidates.filter((c) => {
+          if (c.date_gap_days > 5) return false;
+          if (c.ledger_entry_kind === "expense" || c.ledger_entry_kind === "bill") return c.exact_amount;
+          if (c.ledger_entry_kind === "relay_deposit") {
+            return (
+              c.exact_amount ||
+              (c.relay_deposit_wallet_cents != null &&
+                Math.abs(Number(c.relay_deposit_wallet_cents)) === Math.abs(Number(result.bank_amount_cents)))
+            );
+          }
+          return false;
+        });
         const best = qualifying[0];
-        if (!best) return { bank_transaction_id: bankTransactionId, suggestion: null };
+        if (!best) return { bank_transaction_id: bankTransactionId, suggestion: null, gap_reason: null };
         return {
           bank_transaction_id: bankTransactionId,
           suggestion: {
@@ -325,12 +445,16 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
             // BANK-F91062 — ORDERS §18: "N match found" (not hardcoded 1). Count of exact±5d expense/bill.
             suggested_match_count: qualifying.length,
           },
+          gap_reason: null,
         };
       })
     );
 
     return {
       suggestions: Object.fromEntries(results.map((r) => [r.bank_transaction_id, r.suggestion])),
+      gap_reasons: Object.fromEntries(
+        results.filter((r) => r.gap_reason).map((r) => [r.bank_transaction_id, r.gap_reason])
+      ),
     };
   });
 

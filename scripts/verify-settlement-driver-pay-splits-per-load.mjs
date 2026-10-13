@@ -12,7 +12,11 @@
  *   RULE 1 — the chain still refuses a split that does not tie (GROSS_DOES_NOT_TIE_TO_LOAD_BILLS), still gives every
  *            bill line its load, and the bill header still takes its single load (bills.service.ts).
  * LIVE (direct endpoint, unscoped, read-only):
- *   RULE 2 — every posted settlement GL run: its per-load bills exist and sum to the run's gross to the cent. Excepted by
+ *   RULE 2 — every posted settlement GL run: its per-load bills exist and sum to the run's gross PLUS the settlement's
+ *            active reimbursement and detention-pay lines, to the cent — exactly the rows settlement-ap-chain bills per load
+ *            (loadSettlementPayItems: pay + reimbursement + detention_pay; only the pay rows must tie to the gross, which the
+ *            chain refuses at post time with GROSS_DOES_NOT_TIE_TO_LOAD_BILLS). 2026-10-11 (CC-3): measured on prod
+ *            5772/5774/5776/5778 — each gap was the settlement's reimbursement lines to the cent (1525/11547/6150/1525). Excepted by
  *            name, shrink-only: the five 2026-09-28 A/P-adoption runs (settlements 5769, 5773, 5775, 5780, 5786) —
  *            closed settlements (claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md), closed
  *            August/September, purge population.
@@ -46,9 +50,9 @@ export function staticFailures(read = (p) => readFileSync(join(ROOT, p), "utf8")
 export function liveFailures(m) {
   const out = [];
   for (const r of m.runs) {
-    const bad = r.nb === 0 || Number(r.split) !== Number(r.gross_cents);
+    const bad = r.nb === 0 || Number(r.split) !== Number(r.gross_cents) + Number(r.billed_extra_cents ?? 0);
     if (bad && !LEGACY_UNSPLIT_RUN_DOCS.has(String(r.doc))) {
-      out.push(`RULE 2 settlement ${r.doc}: per-load bills ${r.nb} sum ${r.split}c vs run gross ${r.gross_cents}c — the split must tie to the cent`);
+      out.push(`RULE 2 settlement ${r.doc}: per-load bills ${r.nb} sum ${r.split}c vs run gross ${r.gross_cents}c + reimbursement/detention ${Number(r.billed_extra_cents ?? 0)}c — the split must tie to the cent`);
     }
   }
   if (m.billsWithoutLoad > 0) out.push(`RULE 3 ${m.billsWithoutLoad} live per-load settlement bill(s) carry no load_id`);
@@ -62,21 +66,23 @@ async function measure(client) {
   await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
   const runs = (await client.query(`
     SELECT s.source_document_ref AS doc, r.gross_cents,
-           (SELECT coalesce(sum(b.gross_cents),0) FROM driver_finance.driver_settlement_gl_bills b WHERE b.run_id = r.id AND b.superseded_at IS NULL)::bigint AS split,
-           (SELECT count(*) FROM driver_finance.driver_settlement_gl_bills b WHERE b.run_id = r.id AND b.superseded_at IS NULL)::int AS nb
-      FROM driver_finance.driver_settlement_gl_runs r JOIN driver_finance.driver_settlements s ON s.id = r.settlement_id
-     WHERE r.status = 'posted'`)).rows;
-  const billsWithoutLoad = (await client.query(`SELECT count(*)::int AS n FROM driver_finance.driver_settlement_gl_bills WHERE superseded_at IS NULL AND load_id IS NULL`)).rows[0].n;
+           (SELECT coalesce(sum(b.gross_cents),0) FROM driver_finance.driver_settlement_gl_bills b WHERE b.operating_company_id = $1 AND b.run_id = r.id AND b.superseded_at IS NULL)::bigint AS split,
+           (SELECT count(*) FROM driver_finance.driver_settlement_gl_bills b WHERE b.operating_company_id = $1 AND b.run_id = r.id AND b.superseded_at IS NULL)::int AS nb,
+           (SELECT coalesce(round(sum(abs(sl.amount)) * 100), 0) FROM driver_finance.settlement_lines sl
+             WHERE sl.operating_company_id = $1 AND sl.settlement_id = r.settlement_id AND sl.is_active = true AND sl.line_type IN ('reimbursement', 'detention_pay'))::bigint AS billed_extra_cents
+      FROM driver_finance.driver_settlement_gl_runs r JOIN driver_finance.driver_settlements s ON s.id = r.settlement_id AND s.operating_company_id = $1
+     WHERE r.operating_company_id = $1 AND r.status = 'posted'`, ["5c854333-6ea5-4faa-af31-67cb272fef80"])).rows;
+  const billsWithoutLoad = (await client.query(`SELECT count(*)::int AS n FROM driver_finance.driver_settlement_gl_bills WHERE operating_company_id = $1 AND superseded_at IS NULL AND load_id IS NULL`, ["5c854333-6ea5-4faa-af31-67cb272fef80"])).rows[0].n;
   const legacyUnstamped = (await client.query(`
     SELECT count(*)::int AS n FROM accounting.journal_entry_postings p
-     WHERE p.source_transaction_type = 'driver_settlement' AND p.debit_or_credit = 'debit' AND p.reversal_of_line_id IS NULL
+     WHERE p.operating_company_id = $1 AND p.source_transaction_type = 'driver_settlement' AND p.debit_or_credit = 'debit' AND p.reversal_of_line_id IS NULL
        AND p.load_id IS NULL
-       AND p.account_id IN (SELECT r.account_id FROM accounting.chart_of_accounts_roles r WHERE r.role = 'driver_pay_expense')`)).rows[0].n;
+       AND p.account_id IN (SELECT r.account_id FROM accounting.chart_of_accounts_roles r WHERE r.operating_company_id = $1 AND r.role = 'driver_pay_expense')`, ["5c854333-6ea5-4faa-af31-67cb272fef80"])).rows[0].n;
   const applied = (await client.query(`SELECT applied_at FROM _system._schema_migrations WHERE filename LIKE '202615350500%'`)).rows[0]?.applied_at ?? null;
   const newMismatch = applied ? (await client.query(`
     SELECT count(*)::int AS n FROM accounting.journal_entry_postings p
-      JOIN driver_finance.driver_settlement_gl_bills b ON b.accounting_bill_id::text = p.source_transaction_id AND b.superseded_at IS NULL
-     WHERE p.source_transaction_type = 'bill' AND p.created_at >= $1 AND p.load_id IS DISTINCT FROM b.load_id`, [applied])).rows[0].n : 0;
+      JOIN driver_finance.driver_settlement_gl_bills b ON b.accounting_bill_id::text = p.source_transaction_id AND b.operating_company_id = $1 AND b.superseded_at IS NULL
+     WHERE p.operating_company_id = $1 AND p.source_transaction_type = 'bill' AND p.created_at >= $2 AND p.load_id IS DISTINCT FROM b.load_id`, ["5c854333-6ea5-4faa-af31-67cb272fef80", applied])).rows[0].n : 0;
   await client.query("ROLLBACK");
   return { runs, billsWithoutLoad, legacyUnstamped, newMismatch };
 }
@@ -95,6 +101,8 @@ if (isMain) {
       ["dropping the tie refusal fails", staticFailures((p) => goodSrc[p].replace("GROSS_DOES_NOT_TIE_TO_LOAD_BILLS", "")).some((x) => x.startsWith("RULE 1"))],
       ["live clean (+ named legacy) passes", liveFailures(ok).length === 0],
       ["a new run that does not tie fails", liveFailures({ ...ok, runs: [{ doc: "5901", gross_cents: 100, split: 90, nb: 2 }] }).some((x) => x.startsWith("RULE 2"))],
+      ["a run whose bills carry gross + its reimbursements passes", liveFailures({ ...ok, runs: [{ doc: "5903", gross_cents: 105195, split: 116742, nb: 2, billed_extra_cents: 11547 }] }).length === 0],
+      ["a run whose bills exceed gross + reimbursements fails", liveFailures({ ...ok, runs: [{ doc: "5904", gross_cents: 105195, split: 116743, nb: 2, billed_extra_cents: 11547 }] }).some((x) => x.startsWith("RULE 2"))],
       ["a new run with no per-load bills fails", liveFailures({ ...ok, runs: [{ doc: "5902", gross_cents: 100, split: 0, nb: 0 }] }).some((x) => x.startsWith("RULE 2"))],
       ["a bill without a load fails", liveFailures({ ...ok, billsWithoutLoad: 1 }).some((x) => x.startsWith("RULE 3"))],
       ["legacy unstamped growing fails", liveFailures({ ...ok, legacyUnstamped: 142 }).some((x) => x.startsWith("RULE 4"))],
@@ -110,7 +118,7 @@ if (isMain) {
   try {
     const m = await measure(client);
     const all = [...sf, ...liveFailures(m)];
-    const tie = m.runs.filter((r) => r.nb > 0 && Number(r.split) === Number(r.gross_cents)).length;
+    const tie = m.runs.filter((r) => r.nb > 0 && Number(r.split) === Number(r.gross_cents) + Number(r.billed_extra_cents ?? 0)).length;
     if (all.length) { console.error(`${LABEL}: FAIL\n  ${all.join("\n  ")}`); process.exitCode = 1; }
     else console.log(`${LABEL}: OK — ${m.runs.length} posted settlement runs: ${tie} split per load to the cent, ${m.runs.length - tie} named 09-28 adoption runs (closed, purge population); ${m.billsWithoutLoad} per-load bills without a load; ${m.legacyUnstamped} legacy clearing-JE driver-pay lines (≤ ${LEGACY_UNSTAMPED_DRIVER_PAY_LINES}, shrink-only); ${m.newMismatch} unstamped settlement-bill postings since 202615350500.`);
   } finally {

@@ -32,6 +32,8 @@ export type DamageEvent = {
   unit_fleet_class: FleetClass | "not_in_company_fleet" | null;
   cost_cents: number | null;
   detail: string | null;
+  /** Where the event happened, when the source records it (safety.accidents.location_lat/lng) — the reviewer sees the scene. */
+  location: { lat: number; lng: number } | null;
   driver_id: string | null;
   attribution: "attributed" | "gap";
   gap_reason: FindingGapReason | null;
@@ -61,15 +63,21 @@ type Row = {
   unit_number: string | null;
   cost_cents: string | null;
   detail: string | null;
+  location_lat: number | null;
+  location_lng: number | null;
   driver_id: string | null;
   unit_ever_assigned: boolean;
   covered_at_time: boolean;
 };
 
-function eventSelect(sourceExpr: string, idExpr: string, unitExpr: string, tsExpr: string, costExpr: string, detailExpr: string, from: string, where: string): string {
+function eventSelect(
+  sourceExpr: string, idExpr: string, unitExpr: string, tsExpr: string, costExpr: string, detailExpr: string, from: string, where: string,
+  location: { lat: string; lng: string } = { lat: "NULL", lng: "NULL" }
+): string {
   return `
     SELECT (${sourceExpr})::text AS source, ${idExpr}::text AS event_id, ${tsExpr} AS occurred_at,
            ${unitExpr}::text AS unit_id, u.unit_number, ${costExpr} AS cost_cents, ${detailExpr} AS detail,
+           (${location.lat})::float8 AS location_lat, (${location.lng})::float8 AS location_lng,
            dat.driver_id::text AS driver_id,
            EXISTS (SELECT 1 FROM telematics.vehicle_driver_assignments a
                     WHERE a.operating_company_id = $1::uuid AND ${assignmentInCompanySql("a")} AND a.unit_id = ${unitExpr}) AS unit_ever_assigned,
@@ -102,9 +110,13 @@ export async function computeDamageEventAttribution(
       "te.operating_company_id = $1::uuid"
     ),
     eventSelect(
-      "'safety_accident'", "acc.id", "acc.unit_id", "acc.event_datetime", "NULL::text", "NULL::text",
+      // detail = who the other party was (safety.accidents.other_party_info) — the attribution reviewer needs it to
+      // tell a driver-caused accident from a third-party one; blank text reads as no detail.
+      "'safety_accident'", "acc.id", "acc.unit_id", "acc.event_datetime", "NULL::text", "NULLIF(btrim(acc.other_party_info), '')",
       "safety.accidents acc",
-      "acc.operating_company_id = $1::uuid AND acc.voided_at IS NULL"
+      "acc.operating_company_id = $1::uuid AND acc.voided_at IS NULL",
+      // where the accident happened (safety.accidents.location_lat / location_lng) — shown with the event.
+      { lat: "acc.location_lat", lng: "acc.location_lng" }
     ),
     eventSelect(
       "'accident_report'", "ar.id", "ar.unit_id", "ar.accident_at", "NULL::text", "NULL::text",
@@ -139,6 +151,7 @@ export async function computeDamageEventAttribution(
     unit_fleet_class: r.unit_id ? classById.get(r.unit_id) ?? "not_in_company_fleet" : null,
     cost_cents: r.cost_cents === null ? null : Number(r.cost_cents),
     detail: r.detail,
+    location: r.location_lat != null && r.location_lng != null ? { lat: Number(r.location_lat), lng: Number(r.location_lng) } : null,
     driver_id: r.driver_id,
     ...attributionFor({
       unit_id: r.unit_id,

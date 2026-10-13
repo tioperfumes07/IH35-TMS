@@ -61,6 +61,8 @@ describeIntegration("customer payment → GL posting end-to-end (real Postgres)"
     await db.connect();
     await db.query("SET ROLE ih35_app");
     await bypass(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `customer-payment-gl-${suffix}@test.local`]
@@ -107,7 +109,7 @@ describeIntegration("customer payment → GL posting end-to-end (real Postgres)"
       await db.query(
         `INSERT INTO accounting.payments (id, operating_company_id, customer_id, display_id, payment_method, payment_date, amount_cents)
          VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'check',CURRENT_DATE,$5)`,
-        [id, companyId, customerId, `PMT-${suffix}-${createdPaymentIds.length + 1}`, amountCents]
+        [id, companyId, customerId, `PMT-2026-${String(createdPaymentIds.length + 1).padStart(5, "0")}` /* 443.93: payments_display_id_check ^PMT-YYYY-NNNNN$; per-company unique, isolated company */, amountCents]
       );
     });
     createdPaymentIds.push(id);

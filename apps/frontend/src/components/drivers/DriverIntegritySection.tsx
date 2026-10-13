@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per integrity CHECK on the driver (component / status / arithmetic) — a current-state checklist, not a time series.
 /**
  * C-57 — per-driver integrity profile (tiles already on KPI strip; this is the evidence table).
  * Lines on rows via ParityTable — never vertical column borders.

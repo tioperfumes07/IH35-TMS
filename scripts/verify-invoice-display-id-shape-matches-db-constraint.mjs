@@ -21,13 +21,14 @@ import { readFileSync } from "node:fs";
 
 const DISPLAY_ID_PATH = "apps/backend/src/accounting/display-id.ts";
 
-// Captured live, verbatim, 2026-09-04 (see header). The four alternatives, in the SAME order
-// pg_get_constraintdef returned them.
+// The first four alternatives were captured live, verbatim, 2026-09-04 (see header).
+// The fifth (^[0-9]{1,6}-[0-9]{1,12}$) was added by migration 202610100100 (ROUND 443.8).
 const LIVE_DB_CONSTRAINT_ALTERNATIVES = [
   "^INV-[0-9]{4}-[0-9]{5}$",
   "^L-[0-9]{8}-[0-9]{4}$",
   "^LUSMCAFREIGHT-[0-9]{8}-[0-9]{4}$",
   "^[0-9]{1,12}$",
+  "^[0-9]{1,6}-[0-9]{1,12}$",
 ];
 const LIVE_DB_CONSTRAINT_PATTERN = new RegExp(
   `^(${LIVE_DB_CONSTRAINT_ALTERNATIVES.map((p) => p.slice(1, -1)).join("|")})$`
@@ -41,12 +42,20 @@ const TEST_VALUES = [
   { value: "13508", expectAccepted: true }, // the exact load that was blocked
   { value: "1", expectAccepted: true },
   { value: "123456789012", expectAccepted: true }, // 12 digits, the max
+  // ROUND 443.8: invoice-dash-load format.
+  { value: "3-13508", expectAccepted: true },
+  { value: "59-13577", expectAccepted: true },
+  { value: "119-13600", expectAccepted: true },
   // Must be REJECTED by both.
   { value: "1234567890123", expectAccepted: false }, // 13 digits, over the max
   { value: "INV-26-1", expectAccepted: false },
   { value: "hello-123", expectAccepted: false },
   { value: "", expectAccepted: false },
   { value: "13508 ", expectAccepted: false }, // trailing space
+  { value: "3-", expectAccepted: false }, // missing load part
+  { value: "-13508", expectAccepted: false }, // missing invoice part
+  { value: "3-13508-1", expectAccepted: false }, // three segments
+  { value: "1234567-13508", expectAccepted: false }, // 7-digit invoice number (over 6)
 ];
 
 function loadSource() {
@@ -93,6 +102,12 @@ export function collectFailures(src = loadSource()) {
   if (!/assertDisplayIdShape\(fallback, INVOICE_DISPLAY_ID_PATTERN, "invoice"\)/.test(src)) {
     failures.push("resolveInvoiceDisplayId's autoFallback path (the exact path from-load.ts's load_number write uses) does not validate against INVOICE_DISPLAY_ID_PATTERN");
   }
+  if (!/opts\?\.loadNumber/.test(src)) {
+    failures.push("resolveInvoiceDisplayId does not have an opts.loadNumber from-load branch (ROUND 443.8 — every from-load invoice must be <N>-<load>)");
+  }
+  if (!/assertDisplayIdShape\(composed, INVOICE_DISPLAY_ID_PATTERN, "invoice"\)/.test(src)) {
+    failures.push("resolveInvoiceDisplayId's from-load typed-digits path does not validate the composed <typed>-<load> shape");
+  }
   if (!/assertDisplayIdShape\(manual, PAYMENT_DISPLAY_ID_PATTERN, "payment"\)/.test(src)) {
     failures.push("resolvePaymentDisplayId's manual path does not validate its shape -- the same hole, unfixed");
   }
@@ -113,7 +128,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     [
       "plain-digits alternative dropped from the code pattern (reintroduces the exact bug this PR fixes)",
-      "INV-[0-9]{4}-[0-9]{5}|L-[0-9]{8}-[0-9]{4}|LUSMCAFREIGHT-[0-9]{8}-[0-9]{4}|[0-9]{1,12}",
+      "INV-[0-9]{4}-[0-9]{5}|L-[0-9]{8}-[0-9]{4}|LUSMCAFREIGHT-[0-9]{8}-[0-9]{4}|[0-9]{1,12}|[0-9]{1,6}-[0-9]{1,12}",
       "INV-[0-9]{4}-[0-9]{5}|L-[0-9]{8}-[0-9]{4}|LUSMCAFREIGHT-[0-9]{8}-[0-9]{4}",
     ],
     [

@@ -222,7 +222,6 @@ export function LoadsPlanner() {
             const lane = [load.pickup_city, load.pickup_state].filter(Boolean).join(", ") || "—";
             return {
               id: load.id,
-              name: <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />,
               // Planners lists, item 3 — plain-text keys for the sortable frozen columns.
               sortKey: load.load_number ?? undefined,
               statusSortKey: load.status ?? undefined,
@@ -234,6 +233,7 @@ export function LoadsPlanner() {
               ),
               // ROUND 20.6 L1 -- same STATUS_LABEL mapping as the list view above.
               status: STATUS_LABEL[load.status as keyof typeof STATUS_LABEL] ?? load.status,
+              name: <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />,
               bars: [
                 {
                   id: `${load.id}-bar`,

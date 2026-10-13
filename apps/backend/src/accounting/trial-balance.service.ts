@@ -1,3 +1,4 @@
+import type { PoolClient } from "pg";
 import { withCurrentUser } from "../auth/db.js";
 import { LEDGER_POSTING_COUNTS_SQL } from "./ledger-membership.js";
 
@@ -26,31 +27,31 @@ export type TrialBalanceSummary = {
   balanced: boolean;
 };
 
-export async function getTrialBalanceReport(input: {
-  userId: string;
-  operating_company_id: string;
-  from_date?: string;
-  to_date?: string;
-}): Promise<{ rows: TrialBalanceRow[]; summary: TrialBalanceSummary }> {
-  return withCurrentUser(input.userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+/**
+ * THE trial-balance query (I-01, 443.113): every TB reader runs this one statement, which counts only the postings the
+ * ledger-membership rule admits (entry not voided, not sample data, batch posted or reversed). The legacy
+ * /api/v1/accounting/reports/trial-balance endpoint delegates here instead of summing postings on its own.
+ */
+export async function queryTrialBalanceRows(
+  client: Pick<PoolClient, "query">,
+  input: { operating_company_id: string; from_date?: string | null; to_date?: string | null }
+): Promise<TrialBalanceRow[]> {
+  const values: unknown[] = [input.operating_company_id];
+  const dateFilters: string[] = [];
 
-    const values: unknown[] = [input.operating_company_id];
-    const dateFilters: string[] = [];
+  if (input.from_date) {
+    values.push(input.from_date);
+    dateFilters.push(`je.entry_date >= $${values.length}::date`);
+  }
+  if (input.to_date) {
+    values.push(input.to_date);
+    dateFilters.push(`je.entry_date <= $${values.length}::date`);
+  }
 
-    if (input.from_date) {
-      values.push(input.from_date);
-      dateFilters.push(`je.entry_date >= $${values.length}::date`);
-    }
-    if (input.to_date) {
-      values.push(input.to_date);
-      dateFilters.push(`je.entry_date <= $${values.length}::date`);
-    }
+  const dateSql = dateFilters.length > 0 ? `\n          AND ${dateFilters.join("\n          AND ")}` : "";
 
-    const dateSql = dateFilters.length > 0 ? `\n          AND ${dateFilters.join("\n          AND ")}` : "";
-
-    const res = await client.query<TrialBalanceRowDb>(
-      `
+  const res = await client.query<TrialBalanceRowDb>(
+    `
         SELECT
           p.account_id::text AS account_id,
           COALESCE(a.account_number, '') AS account_code,
@@ -73,22 +74,34 @@ export async function getTrialBalanceReport(input: {
         GROUP BY p.account_id, a.account_number, a.account_name, a.account_type
         ORDER BY a.account_number ASC NULLS LAST, a.account_name ASC
       `,
-      values
-    );
+    values
+  );
 
-    const rows: TrialBalanceRow[] = res.rows.map((row) => {
-      const totalDebits = Number(row.total_debits ?? 0);
-      const totalCredits = Number(row.total_credits ?? 0);
-      return {
-        account_id: row.account_id,
-        account_code: row.account_code,
-        account_name: row.account_name,
-        account_type: row.account_type,
-        total_debits: totalDebits,
-        total_credits: totalCredits,
-        net_balance: totalDebits - totalCredits,
-      };
-    });
+  return res.rows.map((row) => {
+    const totalDebits = Number(row.total_debits ?? 0);
+    const totalCredits = Number(row.total_credits ?? 0);
+    return {
+      account_id: row.account_id,
+      account_code: row.account_code,
+      account_name: row.account_name,
+      account_type: row.account_type,
+      total_debits: totalDebits,
+      total_credits: totalCredits,
+      net_balance: totalDebits - totalCredits,
+    };
+  });
+}
+
+export async function getTrialBalanceReport(input: {
+  userId: string;
+  operating_company_id: string;
+  from_date?: string;
+  to_date?: string;
+}): Promise<{ rows: TrialBalanceRow[]; summary: TrialBalanceSummary }> {
+  return withCurrentUser(input.userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+
+    const rows = await queryTrialBalanceRows(client, input);
 
     const grandTotalDebits = rows.reduce((sum, row) => sum + row.total_debits, 0);
     const grandTotalCredits = rows.reduce((sum, row) => sum + row.total_credits, 0);

@@ -88,6 +88,8 @@ describeIntegration("ap_control isolation stress — concurrent cash/CC bill-pay
     // Actor must exist BEFORE createIsolatedOperatingCompany({ actorUserId }) — fail-loud grant.
     await client.query("BEGIN");
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+    await client.query("SET LOCAL app.allow_owner_bootstrap = '1'");
     await client.query(
       `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
       [userId, `stress-${kind}-${suffix}@test.local`]
@@ -189,18 +191,18 @@ describeIntegration("ap_control isolation stress — concurrent cash/CC bill-pay
       if (w.kind === "cash") {
         await w.client.query(
           `INSERT INTO accounting.bill_payments
-             (id, operating_company_id, bill_id, payment_date, amount_cents, amount, payment_method,
+             (id, operating_company_id, bill_id, vendor_id, payment_date, amount_cents, amount, payment_method,
               from_bank_account_id, status, created_by_user_id)
-           VALUES ($1::uuid,$2::uuid,$3::uuid,CURRENT_DATE,$4,$5,'ach',$6::uuid,'posted',$7::uuid)`,
-          [paymentId, w.companyId, billId, amount, amount / 100, w.bankAccountId, w.userId]
+           VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,$5,$6,'ach',$7::uuid,'posted',$8::uuid)`,
+          [paymentId, w.companyId, billId, `STRESS-VENDOR-${billId.slice(0, 8)}`, amount, amount / 100, w.bankAccountId, w.userId]
         );
       } else {
         await w.client.query(
           `INSERT INTO accounting.bill_payments
-             (id, operating_company_id, bill_id, payment_date, amount_cents, amount, payment_method,
+             (id, operating_company_id, bill_id, vendor_id, payment_date, amount_cents, amount, payment_method,
               cc_account_id, status, payment_source_kind, created_by_user_id)
-           VALUES ($1::uuid,$2::uuid,$3::uuid,CURRENT_DATE,$4,$5,'cc',$6::uuid,'posted','cc_bill_payment',$7::uuid)`,
-          [paymentId, w.companyId, billId, amount, amount / 100, w.ccLiabilityAccountId, w.userId]
+           VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,$5,$6,'cc',$7::uuid,'posted','cc_bill_payment',$8::uuid)`,
+          [paymentId, w.companyId, billId, `STRESS-VENDOR-${billId.slice(0, 8)}`, amount, amount / 100, w.ccLiabilityAccountId, w.userId]
         );
       }
     });

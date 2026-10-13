@@ -13,6 +13,23 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const SRC = path.join(ROOT, 'apps/backend/src');
 const OUT = path.join(ROOT, 'artifacts/engine-audit-632');
+if (process.argv.includes('--selftest')) {
+  const cases = [
+    ['empty binding', 'catch (e) { }', true],
+    ['empty optional binding', 'catch {}', true],
+    ['comment-only', 'catch { /* note */ // note\n }', true],
+    ['rethrow', 'catch (e) { throw e; }', false],
+    ['comment then rethrow', 'catch { /* note */ throw e; }', false],
+    ['unterminated comment', 'catch { /* note }', false],
+    ['ambiguous comments', 'catch{{/*' + '*//*'.repeat(10000), false],
+    ['later empty catch', 'catch { throw e; } catch { /* documented */ }', true],
+  ];
+  for (const [name, source, expected] of cases) {
+    if (emptyCatch(source) !== expected) throw new Error(`empty-catch selftest failed: ${name}`);
+  }
+  console.log(`engine-audit-632-independent selftest ${cases.length}/${cases.length}`);
+  process.exit(0);
+}
 fs.mkdirSync(OUT, { recursive: true });
 
 const ENGINE_RE = /\.(service|cron|worker|job|engine)\.ts$/;
@@ -163,7 +180,31 @@ function leadingHeader(text) {
 
 function emptyCatch(text) {
   // empty catch that discards — catch (...) { } or catch { } with only whitespace/comments
-  return /catch\s*(?:\([^)]*\))?\s*\{\s*(?:\/\/[^\n]*\n\s*|\/\*[\s\S]*?\*\/\s*)*\}/.test(text);
+  // Consume each comment once; nested repeated regex alternatives can backtrack exponentially.
+  const headers = /catch\s*(?:\([^)]*\))?\s*\{/g;
+  let header;
+  while ((header = headers.exec(text))) {
+    let i = headers.lastIndex;
+    while (i < text.length) {
+      if (/\s/.test(text[i])) { i++; continue; }
+      if (text.startsWith('//', i)) {
+        const end = text.indexOf('\n', i + 2);
+        if (end < 0) break;
+        i = end + 1;
+        continue;
+      }
+      if (text.startsWith('/*', i)) {
+        const end = text.indexOf('*/', i + 2);
+        if (end < 0) break;
+        i = end + 2;
+        continue;
+      }
+      if (text[i] === '}') return true;
+      break;
+    }
+    headers.lastIndex = Math.max(headers.lastIndex, i);
+  }
+  return false;
 }
 
 function updateDeleteUnscoped(text) {

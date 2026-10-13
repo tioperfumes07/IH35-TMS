@@ -403,7 +403,8 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
            WHERE e.operating_company_id = $1::uuid
              AND e.is_sample_data IS NOT TRUE
              AND e.idle_source IS NULL
-           ORDER BY e.started_at DESC NULLS LAST
+           -- same-start events list in the catalogs' own display order (category, then fault party)
+           ORDER BY e.started_at DESC NULLS LAST, cat.display_order NULLS LAST, fp.display_order NULLS LAST
            LIMIT $2
         `,
         [companyId, limit]

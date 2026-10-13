@@ -40,10 +40,19 @@ function assert(src) {
       problems.push(`${FILE}: wired tab ${key} must not remain in COMING_STATE_COPY`);
     }
   }
-  if (!/activeTab === "statements"[\s\S]*customer-statements-invoices[\s\S]*customer-statements-payments/.test(src)) problems.push(`${FILE}: statements must render real invoice+payment tables`);
+  // LEAD 443.99 class B (2026-10-12) — statements + activity anchors.
+  //   old rule: statements render the two customer-statements-invoices / -payments tables; activity_feed renders
+  //             <CustomerActivityFeed (audit events).
+  //   new rule: statements render <CounterpartyStatementView kind="customer" counterpartyId={selectedCustomer.id}
+  //             (the real statement of account, same read model as Vendors); activity_feed renders
+  //             <CustomerFinancialActivityTab (invoices + payments + credits + advances).
+  //   why: LST-F01 (#20806, 5326c4f496) replaced the two-table placeholder with the real statement and the audit
+  //        feed with financial activity; the old anchors no longer exist. Each branch is now pinned to its own
+  //        render (immediately after the ternary), tighter than the old [\s\S]* spans.
+  if (!/activeTab === "statements" \? \(\s*<CounterpartyStatementView kind="customer" counterpartyId=\{selectedCustomer\.id\}/.test(src)) problems.push(`${FILE}: statements must render the real customer statement of account`);
   if (!/activeTab === "recurring_transactions"[\s\S]*customer-recurring-templates/.test(src)) problems.push(`${FILE}: recurring transactions must render real templates`);
   if (!/activeTab === "late_fees"[\s\S]*customer-late-fees-overdue/.test(src)) problems.push(`${FILE}: late fees must render real overdue invoices`);
-  if (!/activeTab === "activity_feed"[\s\S]*<CustomerActivityFeed/.test(src)) problems.push(`${FILE}: activity feed must render its real reader`);
+  if (!/activeTab === "activity_feed" \? \(\s*<CustomerFinancialActivityTab\b/.test(src)) problems.push(`${FILE}: activity feed must render its real reader`);
   if (!/activeTab === "notes"[\s\S]*<CustomerNotesTab/.test(src)) problems.push(`${FILE}: notes must render profile notes`);
   if (!/activeTab === "tasks"[\s\S]*<TasksTab/.test(src)) problems.push(`${FILE}: tasks must render the canonical task surface`);
   // Each copy must name the missing source / follow-up — not silent empty.
@@ -67,13 +76,18 @@ function assert(src) {
 const src = readFileSync(path.join(ROOT, FILE), "utf8");
 
 if (SELFTEST) {
-  const planted = src.replace(/projects:\s*"[^"]+"/, 'projects: ""');
-  const caught = assert(planted);
-  if (!caught.length) {
-    console.error(`${LABEL} SELFTEST FAIL — planted empty copy not caught`);
+  const plants = [
+    ["empty coming-state copy", src.replace(/projects:\s*"[^"]+"/, 'projects: ""')],
+    ["statements back to a placeholder", src.replace(/(activeTab === "statements" \? \(\s*)<CounterpartyStatementView/, "$1<CustomerTabComingState")],
+    ["activity back to the audit feed", src.replace(/(activeTab === "activity_feed" \? \(\s*)<CustomerFinancialActivityTab/, "$1<CustomerActivityFeed")],
+  ];
+  const escaped = plants.filter(([, planted]) => planted === src || assert(planted).length === 0).map(([n]) => n);
+  const clean = assert(src);
+  if (escaped.length || clean.length) {
+    console.error(`${LABEL} SELFTEST FAIL — escaped: ${escaped.join(", ") || "none"}; clean source flagged: ${clean.join("; ") || "none"}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS`);
+  console.log(`${LABEL} SELFTEST PASS — ${plants.length}/${plants.length} planted violations caught`);
   process.exit(0);
 }
 

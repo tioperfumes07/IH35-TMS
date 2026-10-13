@@ -44,7 +44,10 @@ requireText(routes, "operating_company_id = $1::uuid", "yard endpoint entity pre
 requireText(bias, "SELECT latitude, longitude", "boot yard-coordinate read missing");
 requireText(google, "getYardBiasCoordinates()", "Google bias does not consume yard row");
 requireText(stops, "coalesce(s.geocode_precision, 'rooftop') <> 'locality'", "picker-coordinate candidate predicate missing");
-requireText(stops, 'source: "picker"', "picker coordinates are not classified rooftop/picker");
+// ROUND 443.38 (owner 2026-10-11, Lead): supersedes TEL-42's "unstamped coordinates are a rooftop picker pin" — 'rooftop' only
+// with a street; unstamped coordinates without a street are the zip / city center, labelled so, with no fence.
+requireText(stops, 'stop.geocode_source !== "picker"', "unstamped coordinates are treated as a rooftop picker pin again");
+requireText(stops, '"zip_center"', "zip-center stops are not labelled zip_center");
 requireText(book, "geocodeStopsBackfill(input.requestingUserUuid", "post-book backfill hook missing");
 
 if (process.argv.includes("--selftest")) {

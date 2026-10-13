@@ -15,7 +15,14 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-wo-console-list-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx";
 
-const REQUIRED_LABELS = ["WO #", "Billing", "Class", "Status", "Est / Act", "Labor ¢", "Opened", "Actions"];
+// 443.99 class B (CC-2, 2026-10-12) — cost columns.
+//   old rule: one compound "Est / Act" column label.
+//   new rule: separate "Estimated" and "Actual" column labels, and the compound "Est / Act" label is REJECTED.
+//   why: REG-050 (#21695, f8321cf414) split two independent money facts out of one column (each with its own
+//        server sort); verify-reg050-work-orders-module-home already rejects the compound label, so this guard
+//        demanded the opposite of the REG-050 law. Stricter: dropping either column, or re-merging them, fails.
+const REQUIRED_LABELS = ["WO #", "Billing", "Class", "Status", "Estimated", "Actual", "Labor ¢", "Opened", "Actions"];
+const RETIRED_COMPOUND_LABEL = "Est / Act";
 
 function assertMigrated(src) {
   const errors = [];
@@ -38,6 +45,9 @@ function assertMigrated(src) {
     if (!src.includes(`label: "${label}"`)) {
       errors.push(`${PAGE}: missing column label: "${label}"`);
     }
+  }
+  if (src.includes(`label: "${RETIRED_COMPOUND_LABEL}"`)) {
+    errors.push(`${PAGE}: must not merge estimated and actual cost into one "${RETIRED_COMPOUND_LABEL}" column (REG-050)`);
   }
   if (!src.includes('storageKey="work-orders-console-list"')) {
     errors.push(`${PAGE}: must set storageKey="work-orders-console-list"`);
@@ -79,7 +89,8 @@ function selftest() {
       { key: "wo_billing_type", label: "Billing" },
       { key: "wo_service_class", label: "Class" },
       { key: "status", label: "Status" },
-      { key: "total_estimated_cost", label: "Est / Act" },
+      { key: "total_estimated_cost", label: "Estimated" },
+      { key: "total_actual_cost", label: "Actual" },
       { key: "labor_cost_cents", label: "Labor ¢" },
       { key: "opened_at", label: "Opened" },
       { key: "actions", label: "Actions" },
@@ -117,6 +128,17 @@ function selftest() {
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
     process.exit(1);
+  }
+  const plants = [
+    ["Actual column dropped", good.replace('      { key: "total_actual_cost", label: "Actual" },\n', "")],
+    ["Estimated column dropped", good.replace('{ key: "total_estimated_cost", label: "Estimated" }', '{ key: "total_estimated_cost", label: "Cost" }')],
+    ["compound Est / Act column back", good.replace('{ key: "total_estimated_cost", label: "Estimated" }', '{ key: "total_estimated_cost", label: "Est / Act" }')],
+  ];
+  for (const [name, fixture] of plants) {
+    if (fixture === good || !assertMigrated(fixture).length) {
+      console.error(`${LABEL} --selftest FAIL planted violation escaped — ${name}`);
+      process.exit(1);
+    }
   }
   console.log(`${LABEL} --selftest PASS`);
 }

@@ -28,26 +28,21 @@ export function analyze(puller, posting) {
     return failures;
   }
 
-  // Set-based deposit bridge: join CoA by qbo_account_id, postable only.
-  if (!/LEFT\s+JOIN\s+catalogs\.accounts\s+dep/i.test(projectFn)) {
-    failures.push(
-      "projectArPaymentsToLedger must LEFT JOIN catalogs.accounts dep for DepositToAccountRef (set-based deposit bridge)."
-    );
+  // ACCT-F4431380 (Lead 443.137 item 9e) — OLD: projectArPaymentsToLedger had to carry the set-based deposit
+  //   bridge (LEFT JOIN catalogs.accounts dep on qbo_account_id + is_postable, writing deposited_to_account_id)
+  //   and must not await resolveCustomerPaymentDepositAccount per row.
+  //   NEW: there is no QBO projection to bridge — projectArPaymentsToLedger must REFUSE BY NAME
+  //   (refuseQboNativeWrite) and the puller must write no native accounting.* table (payments,
+  //   payment_applications, deposits). The deposit resolver lives only in the TMS posting engine (kept below).
+  //   WHY: QuickBooks is a read-only archive; the projection/write was removed and its entry point refuses by name.
+  if (!/^export async function projectArPaymentsToLedger[^\n]*\n[\s\S]{0,300}?refuseQboNativeWrite\(/m.test(projectFn)) {
+    failures.push("projectArPaymentsToLedger must refuse by name (refuseQboNativeWrite) — no QBO deposit bridge / projection.");
   }
-  if (!/dep\.qbo_account_id\s*=\s*m\.deposit_to_account_qbo_id/i.test(projectFn)) {
-    failures.push("deposit bridge must match dep.qbo_account_id = m.deposit_to_account_qbo_id.");
+  if (/(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+accounting\.(?!qbo_)[a-z_]+/i.test(puller)) {
+    failures.push("qbo-ar-payments-puller.ts must not write any native accounting.* table (QuickBooks is a read-only archive).");
   }
-  if (!/dep\.is_postable\s*=\s*true/i.test(projectFn)) {
-    failures.push("deposit bridge must require dep.is_postable = true (never header/non-postable CoA).");
-  }
-  if (!/deposited_to_account_id\s*=\s*dep\.id/i.test(projectFn) && !/n\.deposited_to_account_id/i.test(projectFn)) {
-    failures.push("projection must write deposited_to_account_id from the CoA deposit join.");
-  }
-  // Must NOT reintroduce per-row JS resolver inside the long projection (idle_in_transaction).
-  if (/await\s+resolveCustomerPaymentDepositAccount\s*\(/.test(projectFn)) {
-    failures.push(
-      "projectArPaymentsToLedger must not await resolveCustomerPaymentDepositAccount per row — that caused idle_in_transaction FATAL; use set-based CoA join."
-    );
+  if (/resolveCustomerPaymentDepositAccount\s*\(/.test(projectFn)) {
+    failures.push("projectArPaymentsToLedger must not resolve a deposit account — it no longer projects anything.");
   }
 
   // Shared resolver still exists for TMS receive-payment paths.
@@ -72,8 +67,9 @@ function replaceAll(source, before, after) {
 if (process.argv.includes("--selftest")) {
   const puller = fs.readFileSync(pullerPath, "utf8");
   const posting = fs.readFileSync(postingPath, "utf8");
-  const missingJoin = replaceAll(puller, "LEFT JOIN catalogs.accounts dep", "LEFT JOIN catalogs.accounts other_alias");
-  const missingPostable = replaceAll(puller, "AND dep.is_postable = true", "AND dep.deactivated_at IS NULL /* no postable */");
+  // ACCT-F4431380 (9e) plants on the REAL puller: a re-added native payment write and a reverted refusal must fail.
+  const nativeWrite = puller + "\nconst P = `UPDATE accounting.payments SET deposited_to_account_id = $2 WHERE id = $1`;\n";
+  const refusalReverted = replaceAll(puller, "refuseQboNativeWrite(", "noop(");
   const missingBridge = replaceAll(
     posting,
     "const bankLedger = await resolveBankLedgerAccountId(client, operatingCompanyId, raw);",
@@ -81,8 +77,8 @@ if (process.argv.includes("--selftest")) {
   );
   const checks = {
     correctedShapePasses: analyze(puller, posting).length === 0,
-    missingJoinFails: analyze(missingJoin, posting).length > 0,
-    missingPostableFails: analyze(missingPostable, posting).length > 0,
+    nativeWriteFails: analyze(nativeWrite, posting).length > 0,
+    refusalRevertedFails: analyze(refusalReverted, posting).length > 0,
     missingBridgeFails: analyze(puller, missingBridge).length > 0,
   };
   if (Object.values(checks).every(Boolean)) {
@@ -100,4 +96,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("verify-qbo-ar-payment-deposit-bridge: PASS (set-based CoA deposit join; TMS resolver retained in posting-engine)");
+console.log("verify-qbo-ar-payment-deposit-bridge: PASS (QBO payment projection refuses by name — no deposit bridge from QuickBooks; TMS resolver retained in posting-engine)");

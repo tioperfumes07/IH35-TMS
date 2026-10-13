@@ -33,6 +33,27 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const FIX_LANDED_AT = "2026-09-22T23:01:40Z"; // converted to UTC (source commit is -05:00)
 const KNOWN_PRE_FIX_COUNT = { revrec: 71, payrun: 52 };
 
+/**
+ * Pure decision (443.97: shared by the live run and --selftest). offenders = post-fix NULL-source entries from either
+ * writer; pre = { revrec_n, payrun_n } frozen pre-fix debt. Returns { ok, err: string[], out: string[] }.
+ */
+export function evaluate(offenders, pre) {
+  if (offenders.length > 0) {
+    const err = [`${LABEL}: FAIL — ${offenders.length} NEW (post-fix) NULL-source journal entr(ies) from the revrec-earn or payrun-close writer:`];
+    for (const r of offenders.slice(0, 30)) err.push(`  ✗ ${r.id} created_at=${r.created_at} revrec=${r.is_revrec} payrun=${r.is_payrun}`);
+    err.push(`Both writers were fixed 2026-09-22 to always tag source_transaction_type/source_transaction_id -- a new NULL-source row from either one after that is a real regression, not known debt.`);
+    return { ok: false, err, out: [] };
+  }
+  return {
+    ok: true,
+    err: [],
+    out: [
+      `${LABEL}: OK — 0 new (post-fix) NULL-source journal entries from the revrec-earn or payrun-close writer.`,
+      `  (pre-fix historical debt, frozen, not this guard's concern: revrec=${pre.revrec_n} payrun=${pre.payrun_n} -- named baseline revrec=${KNOWN_PRE_FIX_COUNT.revrec} payrun=${KNOWN_PRE_FIX_COUNT.payrun})`,
+    ],
+  };
+}
+
 async function main() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
@@ -77,19 +98,10 @@ async function main() {
 
     await client.query("ROLLBACK");
 
-    const offenders = res.rows;
-    if (offenders.length > 0) {
-      console.error(`${LABEL}: FAIL — ${offenders.length} NEW (post-fix) NULL-source journal entr(ies) from the revrec-earn or payrun-close writer:`);
-      for (const r of offenders.slice(0, 30)) {
-        console.error(`  ✗ ${r.id} created_at=${r.created_at} revrec=${r.is_revrec} payrun=${r.is_payrun}`);
-      }
-      console.error(`Both writers were fixed 2026-09-22 to always tag source_transaction_type/source_transaction_id -- a new NULL-source row from either one after that is a real regression, not known debt.`);
-      process.exit(1);
-    }
-
-    console.log(`${LABEL}: OK — 0 new (post-fix) NULL-source journal entries from the revrec-earn or payrun-close writer.`);
-    console.log(`  (pre-fix historical debt, frozen, not this guard's concern: revrec=${pre.rows[0].revrec_n} payrun=${pre.rows[0].payrun_n} -- named baseline revrec=${KNOWN_PRE_FIX_COUNT.revrec} payrun=${KNOWN_PRE_FIX_COUNT.payrun})`);
-    process.exit(0);
+    const verdict = evaluate(res.rows, pre.rows[0]);
+    for (const l of verdict.err) console.error(l);
+    for (const l of verdict.out) console.log(l);
+    process.exit(verdict.ok ? 0 : 1);
   } catch (e) {
     await client.query("ROLLBACK").catch(() => {});
     console.error(`${LABEL}: FAIL —`, e);
@@ -100,4 +112,21 @@ async function main() {
   }
 }
 
-main();
+function selftest() {
+  const row = (id, revrec, payrun) => ({ id, created_at: "2026-10-01 00:00:00+00", is_revrec: revrec, is_payrun: payrun });
+  const pre = { revrec_n: "0", payrun_n: "0" };
+  const cases = [
+    ["no post-fix NULL-source entry passes", evaluate([], pre).ok === true],
+    ["a post-fix NULL-source revrec-earn entry fails", evaluate([row("a", true, false)], pre).ok === false],
+    ["a post-fix NULL-source payrun-close entry fails", evaluate([row("b", false, true)], pre).ok === false],
+    ["the failure names the offending entry", evaluate([row("c", true, false)], pre).err.some((l) => l.includes("✗ c "))],
+    ["pre-fix debt alone never fails (frozen baseline)", evaluate([], { revrec_n: "71", payrun_n: "52" }).ok === true],
+  ];
+  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
+if (process.argv.includes("--selftest")) selftest();
+else main();

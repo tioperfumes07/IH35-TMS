@@ -75,6 +75,7 @@ describeIntegration("MOR/425C cash lines — is_credit grouping + own-transfer e
     bankAccountId?: string;
     description?: string;
     reviewState?: string;
+    status?: string;
     transferKind?: string | null;
     destinationBankAccountId?: string | null;
   }): Promise<string> {
@@ -83,8 +84,8 @@ describeIntegration("MOR/425C cash lines — is_credit grouping + own-transfer e
       await db.query(
         `INSERT INTO banking.bank_transactions
            (id, bank_account_id, operating_company_id, transaction_date, amount_cents, is_credit,
-            description, review_state, transfer_kind, destination_bank_account_id)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4::date,$5,$6,$7,$8,$9,$10)`,
+            description, review_state, transfer_kind, destination_bank_account_id, status)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4::date,$5,$6,$7,$8,$9,$10,$11)`,
         [
           id,
           opts.bankAccountId ?? realAcct,
@@ -96,6 +97,7 @@ describeIntegration("MOR/425C cash lines — is_credit grouping + own-transfer e
           opts.reviewState ?? "for_review",
           opts.transferKind ?? null,
           opts.destinationBankAccountId ?? null,
+          opts.status ?? "pending_categorization", // the column default
         ]
       );
     });
@@ -135,7 +137,8 @@ describeIntegration("MOR/425C cash lines — is_credit grouping + own-transfer e
     // Real disbursement (money OUT). is_credit=false stored POSITIVE.
     await seedTxn({ amountCents: 42050, isCredit: false, description: "Fuel payment" }); // $420.50
     // Own-transfers — must be excluded from BOTH lines (three distinct signals).
-    await seedTxn({ amountCents: 99999, isCredit: false, description: "xfer via review_state", reviewState: "transfer" });
+    // A transfer the way banking.bank_line_classify reads it: status 'transfer' (review_state is derived by the trigger).
+    await seedTxn({ amountCents: 99999, isCredit: false, description: "xfer via status", status: "transfer" });
     await seedTxn({ amountCents: -88888, isCredit: true, description: "xfer via transfer_kind", transferKind: "in" });
     await seedTxn({ amountCents: 77777, isCredit: false, description: "xfer via destination", destinationBankAccountId: otherAcct });
     // Virtual account (factoring) — excluded by account_type NOT LIKE 'virtual_%'.

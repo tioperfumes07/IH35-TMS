@@ -44,12 +44,12 @@ export function problems(src) {
   if (!/"totals_differ_from_posting_engine"/.test(post)) p.push("the creator must refuse when the posting engine's NET differs from the AlwaysTrack TOTAL DUE");
   if (/createHistoricalEscrowHold\(/.test(c)) p.push("the creator writes the escrow ledger itself (createHistoricalEscrowHold) — escrow is an escrow_contribution line the close engine posts once");
   if (!/'escrow_contribution'/.test(post)) p.push("the creator must write escrow as an escrow_contribution settlement line");
-  if (!/if \(opts\.dryRun\) continue;\s*let built;/.test(post)) p.push("the dry run must skip invoice mint / send");
+  // R14 (Lead 443.x, 443.60 guard review): the preview IS the real post rolled back — there is no dry-run branch any more,
+  // so the old "dry run skips invoice mint / send" and "dryRun: true" rules contradicted verify-settlement-creator-preview-is-
+  // the-post (which refuses any dryRun) and were removed here; that guard owns the preview contract.
   if (!/onlyAdvanceIds:\s*advanceIds/.test(post)) p.push("the creator must recover only the advances it booked (onlyAdvanceIds)");
-  const dry = c.slice(c.indexOf("export async function previewSettlementCreatorThroughClose"));
-  if (!/SAVEPOINT settlement_creator_dry_run/.test(dry) || !/ROLLBACK TO SAVEPOINT settlement_creator_dry_run/.test(dry) || !/dryRun:\s*true/.test(dry)) p.push("previewSettlementCreatorThroughClose must dry-run Post inside a savepoint it rolls back");
   if (!/payrun_gl_runs[\s\S]{0,200}status = 'posted'[\s\S]{0,600}"settlement_posted_through_close"/.test(c)) p.push("Edit = void and repost must refuse a settlement posted through the per-load A/P chain");
-  if (!/previewSettlementCreatorThroughClose\(client,\s*user\.uuid,\s*draft\)/.test(strip(src.routes))) p.push("the preview route must compute through the posting engine (previewSettlementCreatorThroughClose)");
+  if (!/previewSettlementCreatorThroughClose\(client,\s*user\.uuid,\s*draft(?:,\s*user\.role)?\)/.test(strip(src.routes))) p.push("the preview route must compute through the posting engine (previewSettlementCreatorThroughClose)");
   const close = strip(src.close);
   if (!/onlyAdvanceIds\?: string\[\] \| null/.test(close) || !/onlyAdvanceIds == null \|\| onlyAdvanceIds\.has\(a\.id\)/.test(close)) p.push("closeSettlementPayRun must honor onlyAdvanceIds");
   if (!/data-testid="sc-posting-engine-totals"/.test(src.drawer) || !/preview\.close_totals\.net_cents/.test(src.drawer)) p.push("the creator's totals block must render the posting engine's chain (sc-posting-engine-totals)");
@@ -74,7 +74,7 @@ if (isMain) {
       ["no real close", { ...src, creator: src.creator.replace("closeSettlementPayRun(closeInput, closeActor, { client", "noop(closeInput, closeActor, { client") }],
       ["no mismatch refusal", { ...src, creator: src.creator.replace('"totals_differ_from_posting_engine"', '"x"') }],
       ["escrow ledger back", { ...src, creator: src.creator + "\nawait createHistoricalEscrowHold(client, {});" }],
-      ["preview off the engine", { ...src, routes: src.routes.replace("previewSettlementCreatorThroughClose(client, user.uuid, draft)", "previewSettlementCreator(client, draft)") }],
+      ["preview off the engine", { ...src, routes: src.routes.replace("previewSettlementCreatorThroughClose(client, user.uuid, draft, user.role)", "previewSettlementCreator(client, draft)") }],
       ["all advances", { ...src, close: src.close.replace("onlyAdvanceIds == null || onlyAdvanceIds.has(a.id)", "true") }],
       ["edit over a posted chain", { ...src, creator: src.creator.replace('"settlement_posted_through_close"', '"x"') }],
       ["drawer unmounted", { ...src, page: src.page.replace("<SettlementCreatorDrawer open={creatorOpen}", "<div") }],

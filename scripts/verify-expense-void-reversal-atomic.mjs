@@ -18,8 +18,16 @@ export function run(root = process.cwd()) {
   const failures = [];
   const src = fs.readFileSync(`${root}/apps/backend/src/accounting/expenses.routes.ts`, "utf8");
 
-  if (!src.includes('import { postSourceTransaction, reversePostedSourceTransactionInClientTx, PostingEngineError } from "./posting-engine.service.js"')) {
-    failures.push("expenses.routes.ts must import reversePostedSourceTransactionInClientTx (the client-taking, atomic variant), not the non-atomic reversePostedSourceTransaction");
+  // The posting-engine import list grows (postSourceTransactionInClientTx, ensureOpenPeriod, ...); what matters is that
+  // the atomic, client-taking reverser is imported from the posting engine — an exact whole-line match broke on every
+  // unrelated addition to that import.
+  // ACCT-F4431310 (2026-10-12): the void route now reverses through reverseExpenseDocumentInClientTx (expense-void-reversal.ts),
+  // the client-taking reversal of EVERY live posting of the document (own 'expense' lines + a fuel receipt's fuel_event
+  // entry); it takes the same client, so the rule — reversal and status flip in ONE transaction — is unchanged.
+  const engineImport = src.match(/import\s*\{([^}]*)\}\s*from\s*"\.\/posting-engine\.service\.js"/);
+  const docImport = /import\s*\{[^}]*\breverseExpenseDocumentInClientTx\b[^}]*\}\s*from\s*"\.\/expense-void-reversal\.js"/.test(src);
+  if (!docImport && (!engineImport || !/\breversePostedSourceTransactionInClientTx\b/.test(engineImport[1]))) {
+    failures.push("expenses.routes.ts must import a client-taking, atomic reverser (reverseExpenseDocumentInClientTx or reversePostedSourceTransactionInClientTx), not the non-atomic reversePostedSourceTransaction");
   }
   if (/\breversePostedSourceTransaction\(/.test(src.replace(/reversePostedSourceTransactionInClientTx/g, ""))) {
     failures.push("expenses.routes.ts must not call the non-atomic reversePostedSourceTransaction anywhere");
@@ -41,12 +49,12 @@ export function run(root = process.cwd()) {
       `expected exactly 2 withCompanyScope calls in the void route (pre-check + atomic reversal-and-flip), found ${withCompanyScopeCalls} — the reversal and the status flip must share one transaction`
     );
   }
-  if (!/reversePostedSourceTransactionInClientTx\(\s*client,/.test(routeBody)) {
-    failures.push("the reversal call must pass the same `client` used by the subsequent UPDATE — anchored on reversePostedSourceTransactionInClientTx(client, ...)");
+  if (!/(?:reversePostedSourceTransactionInClientTx|reverseExpenseDocumentInClientTx)\(\s*client,/.test(routeBody)) {
+    failures.push("the reversal call must pass the same `client` used by the subsequent UPDATE — anchored on reverseExpenseDocumentInClientTx(client, ...) / reversePostedSourceTransactionInClientTx(client, ...)");
   }
   // The UPDATE must appear AFTER the reversal call within the same callback body, not in a separate
   // withCompanyScope block.
-  const reversalIdx = routeBody.search(/reversePostedSourceTransactionInClientTx\(/);
+  const reversalIdx = routeBody.search(/(?:reversePostedSourceTransactionInClientTx|reverseExpenseDocumentInClientTx)\(/);
   const updateIdx = routeBody.search(/UPDATE accounting\.expenses/);
   if (reversalIdx === -1 || updateIdx === -1 || reversalIdx > updateIdx) {
     failures.push("the status-flip UPDATE must run after the reversal call within the same transaction");
@@ -105,6 +113,19 @@ import { postSourceTransaction, reversePostedSourceTransactionInClientTx, Postin
   mk("apps/backend/src/accounting/expenses.routes.ts", bad);
   const f = run(tmp);
   if (!f.length) throw new Error("FAIL fail: non-atomic split (two transactions) should be caught");
+
+  // ACCT-F4431310 shape: the document reverser on the same client, before the UPDATE -> PASS; moved after the UPDATE -> caught.
+  const goodDoc = good
+    .replace('import { postSourceTransaction, reversePostedSourceTransactionInClientTx, PostingEngineError } from "./posting-engine.service.js";',
+      'import { postSourceTransaction, PostingEngineError } from "./posting-engine.service.js";\nimport { reverseExpenseDocumentInClientTx } from "./expense-void-reversal.js";')
+    .replace(/const rev = await reversePostedSourceTransactionInClientTx\([\s\S]*?todayIso\(\)\n        \);/, "const rev = await reverseExpenseDocumentInClientTx(client, { operatingCompanyId: oci, expenseId });");
+  mk("apps/backend/src/accounting/expenses.routes.ts", goodDoc);
+  if (run(tmp).length) throw new Error("PASS fail (document reverser): " + run(tmp).join("; "));
+  const badDoc = goodDoc
+    .replace("const rev = await reverseExpenseDocumentInClientTx(client, { operatingCompanyId: oci, expenseId });\n", "")
+    .replace("return { reversingJeId: rev.journal_entry_id };", "const rev = await reverseExpenseDocumentInClientTx(client, { operatingCompanyId: oci, expenseId });\n        return { reversingJeId: rev.journal_entry_id };");
+  mk("apps/backend/src/accounting/expenses.routes.ts", badDoc);
+  if (!run(tmp).length) throw new Error("FAIL fail: document reversal after the status flip should be caught");
 
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-expense-void-reversal-atomic --selftest OK");

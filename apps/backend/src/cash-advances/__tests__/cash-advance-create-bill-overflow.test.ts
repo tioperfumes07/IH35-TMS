@@ -32,7 +32,7 @@ type Captured = {
 /** grossAmountCents: what driver_finance.driver_bills reports owed. priorCoveredDollars: sum of
  * non-voided prior advances already linked to it (as the SQL's own COALESCE(SUM(amount)) would
  * read it — dollars, matching driver_advances.amount's numeric type). */
-function makeClient(grossAmountCents: number, priorCoveredDollars = 0, billExists = true) {
+function makeClient(grossAmountCents: number, priorCoveredDollars = 0, billExists = true, billOverrides: Record<string, unknown> = {}) {
   const captured: Captured = { liabilityInserts: [], advanceInserts: [] };
   const client = {
     query: vi.fn(async (sql: string, params: unknown[] = []) => {
@@ -40,7 +40,11 @@ function makeClient(grossAmountCents: number, priorCoveredDollars = 0, billExist
       if (sql.includes("FROM mdata.drivers")) return { rows: [{ id: params[0], status: "active" }] };
       if (sql.includes("FROM banking.bank_accounts")) return { rows: [{ id: params[0] }] };
       if (sql.includes("FROM driver_finance.driver_bills") && sql.includes("gross_amount_cents")) {
-        return billExists ? { rows: [{ gross_amount_cents: grossAmountCents }] } : { rows: [] };
+        // 443.113 BCF-02: the bill now reports its driver / load / live state (it is locked and matched before allocation);
+        // this fixture's bill belongs to the advancing driver, open, unsettled.
+        return billExists
+          ? { rows: [{ gross_amount_cents: grossAmountCents, driver_id: DRIVER, team_driver_id: null, load_id: null, status: "open", voided_at: null, settled_in_settlement_id: null, ...billOverrides }] }
+          : { rows: [] };
       }
       if (sql.includes("FROM driver_finance.driver_advances") && sql.includes("COALESCE(SUM(amount)")) {
         return { rows: [{ covered: priorCoveredDollars }] };
@@ -142,5 +146,53 @@ describe("createDriverCashAdvanceCore — B5 advance/bill-payment/loan overflow 
     expect(res.ok).toBe(false);
     if (res.ok) return;
     expect(res.error).toBe("linked_driver_bill_not_found");
+  });
+});
+
+// LEAD 443.113 BCF-02 — the bill an advance applies to must be live and belong to this driver + load, locked FOR UPDATE
+// before its remaining balance is read; anything else is refused by name and nothing is written.
+describe("createDriverCashAdvanceCore — BCF-02 linked bill must match driver + load + be live", () => {
+  const LOAD = "88888888-8888-4888-8888-888888888888";
+  const OTHER = "99999999-9999-4999-8999-999999999999";
+  const refused = async (billOverrides: Record<string, unknown>, extra: Record<string, unknown> = {}) => {
+    const { client, captured } = makeClient(50000, 0, true, billOverrides);
+    const res = await createDriverCashAdvanceCore(client, ACTOR, OPCO, { ...baseInput, amount: 100, ...extra });
+    expect(captured.advanceInserts).toHaveLength(0);
+    expect(captured.liabilityInserts).toHaveLength(0);
+    return { res, client };
+  };
+
+  it("locks the bill FOR UPDATE before reading its remaining balance", async () => {
+    const { client } = makeClient(50000);
+    await createDriverCashAdvanceCore(client, ACTOR, OPCO, { ...baseInput, amount: 100 });
+    const billSql = client.query.mock.calls.map((c) => String(c[0])).find((q) => q.includes("FROM driver_finance.driver_bills"));
+    expect(billSql).toMatch(/FOR UPDATE/);
+  });
+
+  it("refuses another driver's bill (422 linked_driver_bill_driver_mismatch)", async () => {
+    const { res } = await refused({ driver_id: OTHER });
+    expect(res).toMatchObject({ ok: false, code: 422, error: "linked_driver_bill_driver_mismatch" });
+  });
+
+  it("accepts the bill when the advancing driver is its team driver", async () => {
+    const { client, captured } = makeClient(50000, 0, true, { driver_id: OTHER, team_driver_id: DRIVER });
+    const res = await createDriverCashAdvanceCore(client, ACTOR, OPCO, { ...baseInput, amount: 100 });
+    expect(res.ok).toBe(true);
+    expect(captured.advanceInserts).toHaveLength(1);
+  });
+
+  it("refuses a voided bill (409 linked_driver_bill_voided)", async () => {
+    const { res } = await refused({ status: "void", voided_at: "2026-10-01T00:00:00Z" });
+    expect(res).toMatchObject({ ok: false, code: 409, error: "linked_driver_bill_voided" });
+  });
+
+  it("refuses a settled bill (409 linked_driver_bill_settled)", async () => {
+    const { res } = await refused({ settled_in_settlement_id: OTHER });
+    expect(res).toMatchObject({ ok: false, code: 409, error: "linked_driver_bill_settled" });
+  });
+
+  it("refuses a bill for another load (422 linked_driver_bill_load_mismatch)", async () => {
+    const { res } = await refused({ load_id: LOAD }, { load_id: OTHER });
+    expect(res).toMatchObject({ ok: false, code: 422, error: "linked_driver_bill_load_mismatch" });
   });
 });

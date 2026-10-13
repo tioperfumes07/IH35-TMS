@@ -55,9 +55,15 @@ import { classesCatalogClient, itemsCatalogClient, type AccountingCatalogRow } f
 import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
 import { BankTransactionAttachmentsNotesModal } from "./BankTransactionAttachmentsNotesModal";
 import { MatchDrawer } from "./MatchDrawer";
+import { RelayDepositCategorizedMatchHintsPanel } from "./RelayDepositCategorizedMatchHintsPanel";
+import { RelatedPartyPairSuggestionsPanel } from "./RelatedPartyPairSuggestionsPanel";
 import { buildBankingTransactionsXlsx } from "./banking-transactions-xlsx";
 import { RecordTransferModal } from "../RecordTransferModal";
 import { RecordCCPaymentModal } from "../RecordCCPaymentModal";
+import {
+  BANK_LOAN_DEFAULT_INTEREST_PCT,
+  LoanApplicationWizard,
+} from "../../accounting/loans/LoanApplicationWizard";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import {
@@ -103,7 +109,7 @@ type Props = {
 };
 
 type RowDetailDraft = {
-  mode: "match" | "categorize" | "transfer" | "cc_payment";
+  mode: "match" | "categorize" | "transfer" | "cc_payment" | "loan";
   transactionType: string;
   fromTo: string;
   /** QBO Transfer: explicit From bank account id (inline picker). */
@@ -152,10 +158,13 @@ type RowDetailDraft = {
  * "Action type" column printing the same word beside it. `categorize` maps to QBO's "Add", which is
  * what QuickBooks calls categorizing a line into an account.
  */
-export function qboActionLabel(mode: "match" | "categorize" | "transfer" | "cc_payment"): string {
+export function qboActionLabel(
+  mode: "match" | "categorize" | "transfer" | "cc_payment" | "loan",
+): string {
   if (mode === "match") return QBO_BANKING_ACTIONS.match;
   if (mode === "transfer") return QBO_BANKING_ACTIONS.recordTransfer;
   if (mode === "cc_payment") return QBO_BANKING_ACTIONS.recordCcPayment;
+  if (mode === "loan") return QBO_BANKING_ACTIONS.loan;
   return QBO_BANKING_ACTIONS.add;
 }
 
@@ -188,6 +197,8 @@ const MATCH_CANDIDATE_KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   bill: "Bill",
   expense: "Expense",
   deposit: "Deposit",
+  relay_fuel: "Relay fuel",
+  relay_deposit: "Relay deposit",
 };
 
 // Match candidates — EntityLink for every kind with a real detail route (Law §9).
@@ -199,6 +210,8 @@ const MATCH_CANDIDATE_ENTITY_KIND: Record<BankMatchCandidateKind, EntityKind> = 
   bill: "bill",
   expense: "expense",
   deposit: "deposit",
+  relay_fuel: "expense",
+  relay_deposit: "deposit",
 };
 
 // ROUND 433-CUR B3 (owner 2026-10-06): match candidates ARE filterable by transaction type
@@ -211,6 +224,8 @@ const MATCH_KIND_FILTER_OPTIONS: ReadonlyArray<{ value: BankMatchCandidateKind; 
   { value: "transfer", label: "Transfer" },
   { value: "je", label: "Journal Entry" },
   { value: "deposit", label: "Deposit" },
+  { value: "relay_deposit", label: "Relay deposit" },
+  { value: "relay_fuel", label: "Relay fuel" },
 ];
 const SETTLEMENT_BORN_MATCH_NOTE =
   "Settlement-born documents by default — narrow by transaction type with the multi-selector.";
@@ -251,6 +266,7 @@ function buildMatchCandidateColumns(
     {
       key: "event_date",
       label: "Date",
+      sortable: true,
       testId: "banking-match-candidate-date",
       sortValue: (c) => String(c.event_date ?? ""),
       cellClass: "ldt-k",
@@ -259,6 +275,7 @@ function buildMatchCandidateColumns(
     {
       key: "ledger_entry_kind",
       label: "Type",
+      sortable: true,
       sortValue: (c) => MATCH_CANDIDATE_KIND_LABELS[c.ledger_entry_kind] ?? "",
       render: (c) => (
         <EntityLink
@@ -272,6 +289,7 @@ function buildMatchCandidateColumns(
     {
       key: "reference",
       label: "Ref no.",
+      sortable: true,
       sortValue: (c) => c.reference ?? "",
       cellClass: "ldt-k",
       render: (c) => <span title={c.reference ?? undefined}>{c.reference?.trim() ? c.reference : "—"}</span>,
@@ -279,6 +297,7 @@ function buildMatchCandidateColumns(
     {
       key: "counterparty_name",
       label: "Payee",
+      sortable: true,
       testId: "banking-match-candidate-payee-header",
       sortValue: (c) => c.counterparty_name ?? "",
       render: (c) => (
@@ -290,6 +309,7 @@ function buildMatchCandidateColumns(
     {
       key: "description",
       label: "Description",
+      sortable: true,
       sortValue: (c) => c.description ?? c.memo ?? "",
       render: (c) => {
         // B7 — never paint a session uuid / bare id that slipped into a memo (humanMemo strips UUIDs).
@@ -301,6 +321,7 @@ function buildMatchCandidateColumns(
     {
       key: "open_balance_cents",
       label: "Open balance",
+      sortable: true,
       cellClass: "ldt-m",
       sortValue: (c) => Number(c.open_balance_cents ?? 0),
       render: (c) => (c.open_balance_cents == null ? "—" : formatUsdCents(Math.abs(Number(c.open_balance_cents)))),
@@ -308,6 +329,7 @@ function buildMatchCandidateColumns(
     {
       key: "amount_cents",
       label: "Amount",
+      sortable: true,
       cellClass: "ldt-m",
       sortValue: (c) => Math.abs(Number(c.amount_cents ?? 0)),
       render: (c) => formatUsdCents(Math.abs(Number(c.amount_cents ?? 0))),
@@ -315,6 +337,7 @@ function buildMatchCandidateColumns(
     {
       key: "difference",
       label: "Difference",
+      sortable: true,
       testId: "banking-match-candidate-difference-header",
       cellClass: "ldt-m",
       sortValue: (c) => Math.abs(matchDifferenceCents(tx.amount_cents, c.amount_cents)),
@@ -340,6 +363,7 @@ function buildMatchCandidateColumns(
     {
       key: "days_off",
       label: "Days off",
+      sortable: true,
       testId: "banking-match-candidate-days-off-header",
       cellClass: "ldt-k",
       sortValue: (c) => matchDaysOff(c.event_date, tx.transaction_date) ?? 0,
@@ -651,7 +675,14 @@ export function formatSuggestedMatchInline(
   formatCents: (cents: number) => string = (c) => formatUsdCents(Math.abs(c)),
 ): string {
   const kind = String(suggestion.suggested_ledger_entry_kind ?? "").trim();
-  const kindLabel = kind === "bill" ? "Bill" : kind === "expense" ? "Expense" : kind || "Match";
+  const kindLabel =
+    kind === "bill"
+      ? "Bill"
+      : kind === "expense"
+        ? "Expense"
+        : kind === "relay_deposit"
+          ? "Relay deposit"
+          : kind || "Match";
   const ref = String(suggestion.suggested_reference ?? "").trim();
   const date = formatBankTransactionDate(suggestion.suggested_event_date ?? null);
   const cents = Number(suggestion.suggested_amount_cents ?? 0);
@@ -877,6 +908,8 @@ export function BankingTransactionsDesignView({
   const [confirmingMatchKey, setConfirmingMatchKey] = useState<string | null>(null);
   const [transferModalTx, setTransferModalTx] = useState<PlaidBankTransaction | null>(null);
   const [ccPaymentModalTx, setCcPaymentModalTx] = useState<PlaidBankTransaction | null>(null);
+  // ROUND 443.22-2a — Loan radio opens the EXISTING LoanApplicationWizard (4% default); never silent-mint.
+  const [loanModalTx, setLoanModalTx] = useState<PlaidBankTransaction | null>(null);
   // ACCT-F5621 — the transaction whose attachments/notes drawer is currently open. Replaces the two
   // permanently-disabled paperclip/note icons now that bank_transaction is an attachable entity_type
   // and a real notes PATCH route exists (see BankTransactionAttachmentsNotesModal.tsx).
@@ -2764,6 +2797,11 @@ export function BankingTransactionsDesignView({
                 ["match", QBO_BANKING_ACTIONS.match],
                 ["transfer", QBO_BANKING_ACTIONS.recordAsTransfer],
                 ["cc_payment", QBO_BANKING_ACTIONS.recordCcPayment],
+                // ROUND 443.22-2d — money OUT = Apply repayment; money IN = Loan funding.
+                [
+                  "loan",
+                  tx.is_credit ? QBO_BANKING_ACTIONS.loan : QBO_BANKING_ACTIONS.applyRepayment,
+                ],
               ] as const
             ).map(([modeId, label]) => (
               <label
@@ -2797,13 +2835,18 @@ export function BankingTransactionsDesignView({
                           ? "Transfer"
                           : modeId === "cc_payment"
                             ? "CC Payment"
-                            : tx.is_credit
-                              ? "Money in"
-                              : "Money out",
+                            : modeId === "loan"
+                              ? tx.is_credit
+                                ? QBO_BANKING_ACTIONS.loan
+                                : QBO_BANKING_ACTIONS.applyRepayment
+                              : tx.is_credit
+                                ? "Money in"
+                                : "Money out",
                     });
                     setExpandedTxId(tx.id);
                     if (modeId === "transfer") setTransferModalTx(tx);
                     if (modeId === "cc_payment") setCcPaymentModalTx(tx);
+                    if (modeId === "loan") setLoanModalTx(tx);
                   }}
                 />
                 {label}
@@ -4090,6 +4133,9 @@ export function BankingTransactionsDesignView({
         </div>
       </div>
 
+      <RelayDepositCategorizedMatchHintsPanel companyId={companyId} />
+      <RelatedPartyPairSuggestionsPanel companyId={companyId} />
+
       <BulkActionBar
         {...bulkSelection.bulkActionBarProps([
           {
@@ -4544,6 +4590,35 @@ export function BankingTransactionsDesignView({
         onClose={() => setCcPaymentModalTx(null)}
         onSaved={() => {
           setCcPaymentModalTx(null);
+          onDataChanged();
+        }}
+      />
+      {/* ROUND 443.22-2a/2d — ONE WRITER: credit → bank_funding Loan; debit → bank_repayment Apply (overpay stop). */}
+      <LoanApplicationWizard
+        open={Boolean(loanModalTx)}
+        operatingCompanyId={companyId}
+        prefill={
+          loanModalTx
+            ? {
+                principal_cents: Math.abs(Number(loanModalTx.amount_cents ?? 0)),
+                entry_date: loanModalTx.transaction_date?.slice(0, 10),
+                counterparty_name:
+                  loanModalTx.merchant_name?.trim() ||
+                  loanModalTx.description?.trim() ||
+                  undefined,
+                direction: loanModalTx.is_credit ? "in" : "out",
+                funding_source_note: `Bank line ${transactionLabel(loanModalTx)}`,
+                bank_transaction_id: loanModalTx.id,
+                interest_rate_pct: BANK_LOAN_DEFAULT_INTEREST_PCT,
+                interest_method: "simple",
+                // Credit = person funds company; debit = company pays person back (never bank_funding out).
+                target_type: loanModalTx.is_credit ? "bank_funding" : "bank_repayment",
+              }
+            : null
+        }
+        onClose={() => setLoanModalTx(null)}
+        onCreated={() => {
+          setLoanModalTx(null);
           onDataChanged();
         }}
       />

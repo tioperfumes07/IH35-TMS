@@ -502,6 +502,8 @@ export function FleetTable({
   const renderFleetCell = (row: FleetRow, key: string) => {
     switch (key) {
       case "unit_number":
+        // Maintenance view: Link to the profile; the two arms stay distinct (LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES).
+        // Base /fleet: EntityLink, never plain text or Link, so the reverse_link is Live-clickable.
         return <td key={key} className="px-2 py-1" onClick={(e) => e.stopPropagation()}>{showMaintenanceColumns ? <Link to={fleetProfilePath(row)} className="font-semibold text-[#1F2A44] hover:underline">{entityLabel(row.unit_number, row.id, "Unit")}</Link> : <EntityLink kind={row.kind === "trailer" ? "trailer" : "unit"} id={row.id} label={entityLabel(row.unit_number, row.id, row.kind === "trailer" ? "Trailer" : "Unit")} className="font-semibold text-[#1F2A44] hover:underline" />}</td>;
       case "vin": return <td key={key} className="truncate px-2 py-1">{String(row.vin ?? "—")}</td>;
       case "type": return <td key={key} className="truncate px-2 py-1">{displayType(row)}</td>;

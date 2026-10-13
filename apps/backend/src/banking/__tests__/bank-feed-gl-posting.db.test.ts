@@ -169,6 +169,8 @@ describeIntegration("CHAIN-05 bank-feed categorization → GL posting (real Post
     // two files' setup/teardown of that shared row can never overlap. Serialization only — no GL behavior.
     await db.query("SELECT pg_advisory_lock($1::bigint)", [CASH_ADVANCE_MAP_TEST_LOCK_KEY]);
     await bypass(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `c5-${suffix}@test.local`]
@@ -348,6 +350,12 @@ describeIntegration("CHAIN-05 bank-feed categorization → GL posting (real Post
     expect(res.posted).toBe(false);
     if (!res.posted) expect(res.reason).toBe("no_account");
     expect((await jeLines(txn)).length).toBe(0);
+    // 443.100: the no-account line is an impossible state planted only to prove the poster fails closed. afterAll's
+    // DELETE is refused once any sibling posted (WORM), so return this fixture line to For review rather than leave a
+    // "categorized with nothing" row that verify-bank-feed-live-tieout rightly fails on later in the same CI run.
+    await bypass(async () => {
+      await db.query(`UPDATE banking.bank_transactions SET status = 'pending_categorization' WHERE id = $1::uuid`, [txn]);
+    });
   });
 
   it("(8) idempotent -> second call already_posted; exactly ONE batch + TWO lines", async () => {

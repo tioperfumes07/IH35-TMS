@@ -42,6 +42,8 @@ export type TripProfitabilityRow = {
   period_start: string;
   period_end: string;
   status: string;
+  first_load_id: string | null;
+  first_load_number: string | null;
   load_links: Array<{ id: string; label: string | null }>;
   revenue_cents: number;
   quick_pay_cents: number;
@@ -435,6 +437,8 @@ export async function computeTripProfitabilityReport(
       sip.period_start::text,
       sip.period_end::text,
       sip.status,
+      nb.load_id::text AS first_load_id,
+      nb.load_number AS first_load_number,
       COALESCE(lr.load_links, '[]'::jsonb) AS load_links,
       COALESCE(lr.revenue_cents, 0)::bigint AS revenue_cents,
       COALESCE(qp.quick_pay_cents, 0)::bigint AS quick_pay_cents,
@@ -447,6 +451,28 @@ export async function computeTripProfitabilityReport(
     LEFT JOIN mdata.drivers d
       ON d.id = sip.driver_id
      AND d.operating_company_id = $1::uuid
+    -- The northbound (first) load of the period, taken from canonical settlement_loads membership — the
+    -- member load with the earliest pickup appointment — never from the first_load_id bookend
+    -- (verify-trip-profitability-single-load-no-double-count: bookend joins are forbidden in this report).
+    LEFT JOIN LATERAL (
+      SELECT l.id AS load_id, l.load_number
+      FROM settlement_loads sl
+      JOIN mdata.loads l
+        ON l.id = sl.load_id
+       AND l.operating_company_id = $1::uuid
+       AND l.soft_deleted_at IS NULL
+       AND l.is_sample_data = false
+      LEFT JOIN LATERAL (
+        SELECT MIN(COALESCE(st.appointment_start_at, st.scheduled_arrival_at)) AS pickup_at
+        FROM mdata.load_stops st
+        WHERE st.load_id = l.id
+          AND st.operating_company_id = $1::uuid
+          AND st.stop_type = 'pickup'
+      ) pu ON true
+      WHERE sl.settlement_id = sip.id
+      ORDER BY pu.pickup_at NULLS LAST, l.load_number
+      LIMIT 1
+    ) nb ON true
     LEFT JOIN load_rollup lr ON lr.settlement_id = sip.id
     LEFT JOIN settlement_lines sln ON sln.settlement_id = sip.id
     LEFT JOIN quick_pay qp ON qp.settlement_id = sip.id
@@ -481,6 +507,8 @@ export async function computeTripProfitabilityReport(
       period_start: String(r.period_start),
       period_end: String(r.period_end),
       status: String(r.status),
+      first_load_id: r.first_load_id ? String(r.first_load_id) : null,
+      first_load_number: r.first_load_number ? String(r.first_load_number) : null,
       load_links: rawLoadLinks.map((link) => {
         const value = link as Record<string, unknown>;
         return { id: String(value.id), label: value.label == null ? null : String(value.label) };

@@ -67,7 +67,8 @@ const SOURCES = [
   { table: "accounting.expenses", textCols: ["memo"], idCol: "id", labelCol: "expense_number" },
   { table: "accounting.payments", textCols: ["notes"], idCol: "id", labelCol: "id" },
   { table: "driver_finance.driver_settlements", textCols: ["void_reason", "reversal_reason"], idCol: "id", labelCol: "display_id" },
-  { table: "driver_finance.driver_bills", textCols: ["notes"], idCol: "id", labelCol: "display_id" },
+  // LEAD 443.94: driver_bills has no display_id — its human id is bill_number (the guard died on "column display_id does not exist").
+  { table: "driver_finance.driver_bills", textCols: ["notes"], idCol: "id", labelCol: "bill_number" },
 ];
 
 async function auditLive(databaseUrl) {

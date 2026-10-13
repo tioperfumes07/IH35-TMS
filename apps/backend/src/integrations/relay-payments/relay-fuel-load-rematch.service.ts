@@ -78,6 +78,38 @@ export async function rematchRelayFuelLoads(
     }
     matched += 1;
 
+    // LEAD 443.121 #2 — a fill that already POSTED (on receipt, with the deadhead/yard reason) moves to its load through
+    // the ONE attach (fuel row + the SAME postings + the SAME document + link + settlement ref), never the fuel row alone.
+    const postedFill = await client.query<{ fill_id: string; kind: "fuel_transaction" | "relay_fuel" }>(
+      `SELECT CASE WHEN EXISTS (SELECT 1 FROM accounting.journal_entry_postings p
+                                 WHERE p.source_transaction_type = 'fuel_event' AND p.source_transaction_id::text = ft.id::text)
+                   THEN ft.id::text ELSE ft.relay_fuel_transaction_id::text END AS fill_id,
+              CASE WHEN EXISTS (SELECT 1 FROM accounting.journal_entry_postings p
+                                 WHERE p.source_transaction_type = 'fuel_event' AND p.source_transaction_id::text = ft.id::text)
+                   THEN 'fuel_transaction' ELSE 'relay_fuel' END AS kind
+         FROM fuel.fuel_transactions ft
+        WHERE ft.id = $1::uuid
+          AND EXISTS (SELECT 1 FROM accounting.journal_entry_postings p
+                       WHERE p.source_transaction_type = 'fuel_event'
+                         AND p.source_transaction_id::text IN (ft.id::text, ft.relay_fuel_transaction_id::text)
+                         AND p.load_id IS NULL)`,
+      [row.id],
+    );
+    if (postedFill.rows[0]) {
+      const { attachFuelReceiptToLoad } = await import("../../fuel/fuel-receipt-repoint.service.js");
+      const l = await client.query<{ load_number: string | null }>(`SELECT load_number::text FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [loadId, row.operating_company_id]);
+      await attachFuelReceiptToLoad(client as never, {
+        operatingCompanyId: row.operating_company_id,
+        actorUserId: process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001",
+        receipt: { fill_kind: postedFill.rows[0].kind, fill_id: postedFill.rows[0].fill_id, at: row.transaction_at, unit_id: row.unit_id, driver_id: row.driver_id },
+        loadId,
+        loadNumber: l.rows[0]?.load_number ?? null,
+        trailerId: null,
+      });
+      updated += 1;
+      continue;
+    }
+
     const up = await client.query(
       `
         UPDATE fuel.fuel_transactions

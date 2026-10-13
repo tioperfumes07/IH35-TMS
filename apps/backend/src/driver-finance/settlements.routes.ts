@@ -787,7 +787,8 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             dsd.held_by_user_id AS deduction_held_by_user_id,
             hu.email AS deduction_held_by_user_email,
             pa.account_number AS posting_account_number,
-            pa.account_name AS posting_account_name
+            pa.account_name AS posting_account_name,
+            line_item.item_name AS line_item_name
           FROM driver_finance.settlement_lines sl
           LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
           LEFT JOIN mdata.loads l
@@ -826,6 +827,12 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           LEFT JOIN catalogs.accounts pa
             ON pa.id = sl.posting_account_id
            AND pa.operating_company_id = $2::uuid
+          -- Lead 443.53 #7: a line priced from a catalog item reads that item's CURRENT name, so a catalog rename
+          -- (Driver Pay-Weekly Salary -> Local Driver-Weekly Salary) reaches the settlement it was paid on.
+          -- The stored sl.description is history and is never rewritten.
+          LEFT JOIN catalogs.items line_item
+            ON line_item.id = sl.item_id
+           AND line_item.operating_company_id = $2::uuid
           WHERE sl.settlement_id = $1
           ORDER BY sl.created_at ASC
         `,
@@ -877,7 +884,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       const matchedBank = matchedBankRes.rows[0] ?? null;
       return {
         ...row,
-        lines: linesRes.rows,
+        lines: linesRes.rows.map((l: Record<string, unknown>) => ({ ...l, description: l.line_item_name ?? l.description })),
         debt_summary: debt,
         linked_bills: linkedBillsRes.rows,
         historical_attributions: await readHistoricalSettlementAttributions(client, companyId, params.data.id),
@@ -1271,6 +1278,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     const body = z.object({
       operating_company_id: z.string().uuid(),
       kind: z.enum(PAY_LINE_KINDS),
+      item_id: z.string().uuid(),
       amount_cents: z.number().int().positive(),
       description: z.string().trim().max(500).nullable().optional(),
       transaction_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -1283,6 +1291,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           operatingCompanyId: body.data.operating_company_id,
           settlementId: params.data.id,
           kind: body.data.kind,
+          itemId: body.data.item_id,
           amountCents: body.data.amount_cents,
           description: body.data.description ?? null,
           transactionDate: body.data.transaction_date,

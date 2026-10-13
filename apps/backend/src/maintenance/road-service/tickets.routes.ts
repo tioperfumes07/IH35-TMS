@@ -4,7 +4,10 @@ import { z } from "zod";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
-import { createWorkOrderFromRoadServiceTicket } from "./wo-integration.js";
+import { createWorkOrderFromRoadServiceTicket, RoadServiceTicketRefused, type SharedExpenseWriter } from "./wo-integration.js";
+import { createExpenseInClientTx } from "../../accounting/expense-writer.service.js";
+import { WoBillGlPostingDisabledError } from "../two-section-service.js";
+import { PostingEngineError } from "../../accounting/posting-engine.service.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 
 export type { DbClient } from "./db-client.type.js";
@@ -31,6 +34,10 @@ const createTicketSchema = z.object({
   initial_complaint: z.string().trim().max(4000).optional(),
   payment_method: paymentMethodSchema.default("vendor_bill"),
   attached_doc_ids: z.array(z.string().uuid()).optional(),
+  // LEAD 443.129 C (AJK-07): the item the cost is booked to — its category + account, never guessed.
+  item_id: z.string().uuid().optional(),
+  // LEAD 443.129 A (AJK-02): the card / bank account a card-paid ticket was paid with.
+  payment_account_uuid: z.string().uuid().optional(),
 });
 
 const listQuerySchema = z.object({
@@ -56,7 +63,12 @@ const completeBodySchema = z.object({
 });
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
-const createWoBodySchema = z.object({ operating_company_id: z.string().uuid() });
+const createWoBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  // LEAD 443.129 A / C — may be supplied (or corrected) when the work order is created.
+  item_id: z.string().uuid().optional(),
+  payment_account_uuid: z.string().uuid().optional(),
+});
 
 function auth(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -213,11 +225,13 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
             initial_complaint,
             payment_method,
             attached_doc_ids,
+            item_id,
+            payment_account_uuid,
             status
           )
           VALUES (
             $1::uuid, $2, $3, $4::uuid, $5::uuid, $6::uuid, $7::uuid, $8::timestamptz,
-            $9, $10, $11, $12, $13, $14, $15::uuid[], 'open'
+            $9, $10, $11, $12, $13, $14, $15::uuid[], $16::uuid, $17::uuid, 'open'
           )
           RETURNING *
         `,
@@ -237,6 +251,8 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
           body.data.initial_complaint ?? null,
           body.data.payment_method,
           body.data.attached_doc_ids ?? null,
+          body.data.item_id ?? null,
+          body.data.payment_account_uuid ?? null,
         ]
       );
       const ticket = res.rows[0];
@@ -317,12 +333,31 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
     const body = createWoBodySchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
 
-    const result = await withCompany(user.uuid, body.data.operating_company_id, async (client) =>
-      createWorkOrderFromRoadServiceTicket(client, user.uuid, {
-        operatingCompanyId: body.data.operating_company_id,
-        ticketId: params.data.id,
-      })
-    );
+    // LEAD 443.129 D / AJK-08 — the ticket posts or nothing: a posting refusal / posting-disabled company rolls the whole
+    // create back (withCompany's transaction) and is surfaced BY NAME, never as a 500 or a half-invoiced ticket.
+    // LEAD 443.129 A/B/C — a named roadside refusal (route / item / account / linkage) likewise rolls back and is named.
+    let result: Awaited<ReturnType<typeof createWorkOrderFromRoadServiceTicket>>;
+    try {
+      result = await withCompany(user.uuid, body.data.operating_company_id, async (client) =>
+        createWorkOrderFromRoadServiceTicket(client, user.uuid, {
+          operatingCompanyId: body.data.operating_company_id,
+          ticketId: params.data.id,
+          itemId: body.data.item_id ?? null,
+          paymentAccountUuid: body.data.payment_account_uuid ?? null,
+          // A paid ticket posts through THE shared expense writer (443.129 A).
+          writeExpense: createExpenseInClientTx as unknown as SharedExpenseWriter,
+        })
+      );
+    } catch (err) {
+      if (err instanceof RoadServiceTicketRefused) return reply.code(err.httpStatus).send({ error: err.code, message: err.message });
+      if (err instanceof WoBillGlPostingDisabledError) {
+        return reply.code(409).send({ error: err.code, message: err.message });
+      }
+      if (err instanceof PostingEngineError) {
+        return reply.code(422).send({ error: "bill_posting_refused", code: err.code, message: err.message });
+      }
+      throw err;
+    }
 
     return { ...result };
   });

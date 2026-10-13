@@ -75,8 +75,10 @@ export type RelayFuelBackfillStatus = {
   operating_company_id: string;
   run: null | {
     run_id: string;
-    status: "running" | "completed" | "failed";
+    // LEAD 443.126 2b — "interrupted": the worker was gone (deploy / restart); last_window_end = where to resume.
+    status: "running" | "completed" | "failed" | "interrupted";
     months: number;
+    last_window_end?: string | null;
     started_at: string;
     completed_at: string | null;
     pulled: number | null;

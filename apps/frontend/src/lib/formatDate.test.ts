@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { formatDateUS, formatDateTimeUS, formatDateQboList, parseDateUS, DATE_PLACEHOLDER_US } from "./formatDate";
+import {
+  formatDateUS,
+  formatDateTimeUS,
+  formatDateQboList,
+  parseDateUS,
+  maskTypedDateUS,
+  DATE_PLACEHOLDER_US,
+} from "./formatDate";
 
 describe("formatDateUS", () => {
   it("formats a bare ISO date as MM/DD/YYYY with no timezone shift", () => {
@@ -61,10 +68,30 @@ describe("DATE_PLACEHOLDER_US", () => {
   });
 });
 
+describe("maskTypedDateUS", () => {
+  it("auto-inserts slashes as digits are typed (08052026 → 08/05/2026)", () => {
+    expect(maskTypedDateUS("08")).toBe("08");
+    expect(maskTypedDateUS("0805")).toBe("08/05");
+    expect(maskTypedDateUS("08052026")).toBe("08/05/2026");
+    expect(maskTypedDateUS("8")).toBe("8");
+  });
+
+  it("strips non-digits and caps at 8 digits", () => {
+    expect(maskTypedDateUS("08/05/2026")).toBe("08/05/2026");
+    expect(maskTypedDateUS("08a05b2026c99")).toBe("08/05/2026");
+    expect(maskTypedDateUS("")).toBe("");
+  });
+});
+
 describe("parseDateUS", () => {
   it("parses MM/DD/YYYY to ISO date without timezone shift", () => {
     expect(parseDateUS("07/25/2026")).toBe("2026-07-25");
     expect(parseDateUS("1/5/2026")).toBe("2026-01-05");
+  });
+
+  it("parses digits-only MMDDYYYY / MMDDYY without requiring slash keys", () => {
+    expect(parseDateUS("08052026")).toBe("2026-08-05");
+    expect(parseDateUS("080526")).toBe("2026-08-05");
   });
 
   it("rejects invalid calendar dates", () => {

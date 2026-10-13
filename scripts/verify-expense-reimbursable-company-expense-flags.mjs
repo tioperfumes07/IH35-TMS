@@ -80,7 +80,7 @@ export function checkMigration(sql) {
 }
 
 function selftest() {
-  const routeSrc = readFileSync(path.join(ROOT, ROUTE_FILE), "utf8");
+  const routeSrc = readFileSync(path.join(ROOT, ROUTE_FILE), "utf8") + "\n" + readFileSync(path.join(ROOT, "apps/backend/src/accounting/expense-writer.service.ts"), "utf8"); // 443.130 #3 follow-up — old: expenses.routes.ts; new: the writer lives in expense-writer.service.ts (createExpenseInClientTx moved there so a service never imports a route)
   const formSrc = readFileSync(path.join(ROOT, FORM_FILE), "utf8");
   const submitSrc = readFileSync(path.join(ROOT, SUBMIT_FILE), "utf8");
   const migrationSql = readFileSync(path.join(ROOT, MIGRATION_FILE), "utf8");
@@ -94,8 +94,9 @@ function selftest() {
   if (noSchemaField === routeSrc) { console.error(`${LABEL} SELFTEST SETUP FAILED: schema-field anchor not found`); process.exit(1); }
   if (!checkBackend(noSchemaField).some((f) => f.includes("must accept is_reimbursable"))) { console.error(`${LABEL} SELFTEST FAILED: dropping the zod fields was not caught`); process.exit(1); }
 
+  // 443.99: indentation-agnostic — the writer moved out of a nested block (cb335ba96c), the planted removal is the same four lines.
   const noWriter = routeSrc.replace(
-    "        columns.push(`is_reimbursable`);\n        values.push(body.is_reimbursable === true);\n        columns.push(`is_company_expense`);\n        values.push(body.is_company_expense === true);\n\n",
+    /[ \t]*columns\.push\(`is_reimbursable`\);\n[ \t]*values\.push\(body\.is_reimbursable === true\);\n[ \t]*columns\.push\(`is_company_expense`\);\n[ \t]*values\.push\(body\.is_company_expense === true\);\n/,
     ""
   );
   if (noWriter === routeSrc) { console.error(`${LABEL} SELFTEST SETUP FAILED: writer anchor not found`); process.exit(1); }
@@ -149,7 +150,7 @@ async function liveCheck() {
 if (process.argv.includes("--selftest")) {
   selftest();
 } else {
-  const routeSrc = readFileSync(path.join(ROOT, ROUTE_FILE), "utf8");
+  const routeSrc = readFileSync(path.join(ROOT, ROUTE_FILE), "utf8") + "\n" + readFileSync(path.join(ROOT, "apps/backend/src/accounting/expense-writer.service.ts"), "utf8"); // 443.130 #3 follow-up — old: expenses.routes.ts; new: the writer lives in expense-writer.service.ts (createExpenseInClientTx moved there so a service never imports a route)
   const formSrc = readFileSync(path.join(ROOT, FORM_FILE), "utf8");
   const submitSrc = readFileSync(path.join(ROOT, SUBMIT_FILE), "utf8");
   const migrationSql = readFileSync(path.join(ROOT, MIGRATION_FILE), "utf8");

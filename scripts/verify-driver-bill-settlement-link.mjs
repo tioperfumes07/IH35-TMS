@@ -63,8 +63,13 @@ const KNOWN_UNLINKED_EXCLUSIONS = [
   { id: "6e8fbe14-f068-4be4-8c49-c7d61eb7bc22", load_number: "13634", owner: "CC-1", expires_at: "2026-10-05T00:00:00.000Z" },
   { id: "4e5633e5-08c1-4a43-895c-cd6161e93476", load_number: "13618", owner: "CC-1", expires_at: "2026-10-05T00:00:00.000Z" },
 ];
-function activeExcludedIds(now = new Date()) {
-  return KNOWN_UNLINKED_EXCLUSIONS.filter((r) => now.getTime() < new Date(r.expires_at).getTime()).map((r) => r.id);
+export function activeExcludedIds(now = new Date(), list = KNOWN_UNLINKED_EXCLUSIONS) {
+  return list.filter((r) => now.getTime() < new Date(r.expires_at).getTime()).map((r) => r.id);
+}
+/** Pure — the rule of this guard (same predicate as the badRes SQL): a live bill is a violation only when its
+ *  settled_in_settlement_id is NULL, its load's linked settlement has CLOSED, and it is not an active exclusion. */
+export function isViolation(row, excludeIds) {
+  return row.settled_in_settlement_id == null && row.settlement_status === "closed" && !excludeIds.includes(row.id);
 }
 
 const LABEL = "verify-driver-bill-settlement-link";
@@ -91,7 +96,7 @@ async function live() {
 
     const excludeIds = activeExcludedIds();
     const badRes = await client.query(
-      `SELECT db.id, db.load_number, ds.display_id AS settlement_display_id FROM driver_finance.driver_bills db
+      `SELECT db.id, db.load_number, ds.display_id AS settlement_display_id, db.settled_in_settlement_id, ds.status AS settlement_status FROM driver_finance.driver_bills db
          JOIN mdata.loads l ON l.id = db.load_id AND l.operating_company_id = db.operating_company_id
          JOIN driver_finance.driver_settlements ds ON ds.id = l.presettlement_link_id
         WHERE db.operating_company_id = $1::uuid AND db.voided_at IS NULL
@@ -122,9 +127,10 @@ async function live() {
 
     await client.query("COMMIT");
 
-    if (badRes.rows.length > 0) {
-      console.error(`${LABEL}: LIVE FAIL — ${badRes.rows.length} driver bill(s) unlinked despite their settlement already being CLOSED:`);
-      for (const r of badRes.rows) console.error(`  ✗ ${r.id} load ${r.load_number} settlement ${r.settlement_display_id}`);
+    const violations = badRes.rows.filter((r) => isViolation(r, excludeIds));
+    if (violations.length > 0) {
+      console.error(`${LABEL}: LIVE FAIL — ${violations.length} driver bill(s) unlinked despite their settlement already being CLOSED:`);
+      for (const r of violations) console.error(`  ✗ ${r.id} load ${r.load_number} settlement ${r.settlement_display_id}`);
       process.exit(1);
     }
     console.log(
@@ -136,6 +142,22 @@ async function live() {
     client.release();
     await pool.end();
   }
+}
+
+if (process.argv.includes("--selftest")) {
+  const ex = [{ id: "x1", expires_at: "2026-10-05T00:00:00.000Z" }];
+  const cases = [
+    ["an unlinked bill on a CLOSED settlement is a violation", isViolation({ id: "b", settled_in_settlement_id: null, settlement_status: "closed" }, [])],
+    ["an unlinked bill on an OPEN settlement is expected", !isViolation({ id: "b", settled_in_settlement_id: null, settlement_status: "open" }, [])],
+    ["a linked bill on a CLOSED settlement passes", !isViolation({ id: "b", settled_in_settlement_id: "s", settlement_status: "closed" }, [])],
+    ["an active named exclusion is not counted", !isViolation({ id: "x1", settled_in_settlement_id: null, settlement_status: "closed" }, ["x1"])],
+    ["an exclusion is active before its expiry", activeExcludedIds(new Date("2026-10-04T00:00:00Z"), ex).includes("x1")],
+    ["an exclusion lapses at its expiry", activeExcludedIds(new Date("2026-10-05T00:00:00Z"), ex).length === 0],
+  ];
+  for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, p]) => !p).length;
+  console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
 }
 
 await live();

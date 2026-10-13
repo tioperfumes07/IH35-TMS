@@ -46,3 +46,11 @@ jobs:
           BACKEND_URL: https://api.ih35dispatch.com
           MAX_COMMITS_BEHIND: "5"
         run: node scripts/verify-deployed-sha-matches-main.mjs
+      # 443.102 (LEAD ruling 4): the geocode provider key exists only in the Render environment, so the
+      # provider check runs INSIDE the deployed app (GET /api/v1/healthz/geocode, fixed address, cached) and is
+      # read here post-deploy — never skipped, never run on a CI runner that holds no key (ROUND 168).
+      - name: Geocode provider reachable (deployed app)
+        if: always()
+        env:
+          GEOCODE_HEALTH_URL: https://api.ih35dispatch.com/api/v1/healthz/geocode
+        run: node scripts/verify-geocode-provider-is-reachable.mjs

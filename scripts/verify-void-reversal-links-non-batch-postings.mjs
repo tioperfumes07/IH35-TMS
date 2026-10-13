@@ -7,24 +7,15 @@
  * revenue-recognition two-event latch) tag postings with source_transaction_type/id but never populate
  * posting_batch_id.
  *
- * Consequence, proven live: voiding invoice 13541 (load ebf7e233-b78e-48f3-bbec-2d5fdd887274, owner rate
- * correction $3,500 -> $2,500) correctly posted a balanced, net-zero reversal of the revenue-recognition
- * latch's "bill" JE (1bf5606c) via a NEW JE (df6dff65) — but reversed_by_je_id was never written on
- * 1bf5606c, because the FK-linking lookup's posting_batch_id filter matched zero rows. standingLatchJePredicate
- * (ACCT-F66) keys ONLY on journal_entries.reversed_by_je_id IS NULL to decide whether a revrec latch is
- * still "standing", so the fully-reversed, net-zero old latch JE still read as standing — and the
- * ACCT-F205 interlock in invoice-gl.service.ts refused to let the corrected, reissued invoice
- * (INV-2026-00002, $2,500) ever post its own A/R. Live effect: GL A/R for the load stayed at $0
- * (correctly net after the reversal) while the subledger correctly carried $2,500 open on the new
- * invoice — a $2,500.00 ledger.ar_tieout variance and a ledger.posted_without_posting hit, both on
- * healthz, from ONE missing FK write.
+ * ROUND 134.1 (Lead P0): multi-JE documents (common for fuel) must get reversed_by_je_id on EVERY
+ * original in the (source_transaction_type, source_transaction_id) set — not only when LIMIT 2 found
+ * exactly one row. DISTINCT + ORDER BY 1 ASC; loop all src.rows; reverses_je_id names the first only.
  *
  * This guard asserts the FK-linking lookup in postVoidReversal():
- *   1. Does NOT require p.posting_batch_id IS NOT NULL (the exact drift vs readOriginalGlPostings).
+ *   1. Does NOT require p.posting_batch_id IS NOT NULL (ACCT-F5723).
  *   2. Still matches on source_transaction_type + source_transaction_id, scoped to operating_company_id.
  *   3. Still excludes the just-inserted reversal JE itself (journal_entry_uuid <> reversalJeId).
- *   4. Still uses DISTINCT + LIMIT 2 and only links when exactly one candidate resolves (src.rows.length === 1)
- *      — "linked only when unambiguous" must survive this fix untouched.
+ *   4. Uses DISTINCT + ORDER BY (no LIMIT 2 cap) and links when src.rows.length > 0 (ROUND 134.1).
  *
  * Run:
  *   node scripts/verify-void-reversal-links-non-batch-postings.mjs --selftest   (no DB, source-only)
@@ -51,8 +42,7 @@ function extractSrcBlock(source) {
   const anchor = "const src = await client.query<{ je_id: string }>(";
   const idx = source.indexOf(anchor);
   if (idx === -1) return null;
-  // Grab a generous window after the anchor — the SQL template literal plus bind array.
-  return source.slice(idx, idx + 900);
+  return source.slice(idx, idx + 1200);
 }
 
 function runChecks(source) {
@@ -91,18 +81,36 @@ function runChecks(source) {
     ok("still excludes the just-inserted reversal JE");
   }
 
-  if (!/DISTINCT/i.test(block) || !/LIMIT\s+2/i.test(block)) {
-    fail("the FK-linking lookup no longer uses DISTINCT + LIMIT 2 — 'linked only when unambiguous' depends on this shape");
+  if (!/DISTINCT/i.test(block)) {
+    fail("the FK-linking lookup no longer uses DISTINCT — ROUND 134.1 multi-JE linking depends on it");
   } else {
-    ok("still uses DISTINCT + LIMIT 2 (unambiguous-match detection preserved)");
+    ok("still uses DISTINCT");
   }
 
-  const afterBlockIdx = source.indexOf(extractSrcBlock(source));
-  const tail = source.slice(afterBlockIdx, afterBlockIdx + 1600);
-  if (!/src\.rows\.length\s*===\s*1/.test(tail)) {
-    fail("the caller no longer requires src.rows.length === 1 before linking — ambiguous matches must stay unlinked");
+  if (/LIMIT\s+2/i.test(block)) {
+    fail("the FK-linking lookup still uses LIMIT 2 — ROUND 134.1 must link every original JE in the set, not cap at two");
   } else {
-    ok("still requires exactly one unambiguous match before writing reversed_by_je_id/reverses_je_id");
+    ok("no LIMIT 2 cap (ROUND 134.1 multi-JE linking)");
+  }
+
+  if (!/ORDER\s+BY\s+1\s+ASC/i.test(block)) {
+    fail("the FK-linking lookup must ORDER BY 1 ASC so reverses_je_id names the lowest-id original deterministically");
+  } else {
+    ok("ORDER BY 1 ASC for deterministic first original");
+  }
+
+  const afterBlockIdx = source.indexOf(block);
+  const tail = source.slice(afterBlockIdx, afterBlockIdx + 2000);
+  if (!/src\.rows\.length\s*>\s*0/.test(tail)) {
+    fail("the caller no longer gates on src.rows.length > 0 — ROUND 134.1 must link when any original resolves");
+  } else {
+    ok("still gates on src.rows.length > 0 before linking");
+  }
+
+  if (!/for\s*\(\s*const\s+row\s+of\s+src\.rows\s*\)/.test(tail)) {
+    fail("the caller no longer loops all src.rows to write reversed_by_je_id — ROUND 134.1 regression");
+  } else {
+    ok("loops every src.rows entry for reversed_by_je_id (ROUND 134.1)");
   }
 }
 
@@ -115,16 +123,19 @@ function main() {
         \`
           SELECT DISTINCT p.journal_entry_uuid::text AS je_id
           FROM accounting.journal_entry_postings p
+          JOIN accounting.journal_entries je2 ON je2.id = p.journal_entry_uuid
           WHERE p.operating_company_id = $1::uuid
             AND p.source_transaction_type = $3
             AND p.source_transaction_id = $2
             AND p.journal_entry_uuid <> $4::uuid
-          LIMIT 2
+          ORDER BY 1 ASC
         \`,
         [params.operatingCompanyId, params.entityId, params.entityType, reversalJeId]
       );
-      if (src.rows.length === 1 && src.rows[0]?.je_id) {
-        // link both directions
+      if (src.rows.length > 0) {
+        for (const row of src.rows) {
+          // link reversed_by_je_id
+        }
       }
     `;
     runChecks(good);

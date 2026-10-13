@@ -2,7 +2,7 @@
 /**
  * LDT-PAGE guard (owner 2026-09-06 04:0xZ: "I DO NOT SEE THE APP LIKE THE PICTURES. EXACTLY DESIGNED. THE BOXES, WITH ALL
  * THE DATA"). The approved render (docs/design/reference/LOAD-DETAIL-TABS-RENDERS-LIVE-13526-2026-09-05.html) is a PAGE:
- * breadcrumb Accounting › Load costs › <load>, shared header stats, tab row, tab body — reached from Dispatch → Load costs.
+ * breadcrumb Dispatch › Load costs › <load> (U3 + U18), shared header stats, tab row, tab body — reached from Dispatch → Load costs.
  * Pins: route /dispatch/load-costs/:loadId → LoadCostsLoadPage; the page mounts LoadDetailDrawer mode="page" (one
  * component for drawer + page, so tabs cannot drift), default tab Costs, openedFrom accounting; the drawer's page mode
  * renders inline (no portal/backdrop), with the breadcrumb and no Close button; every board Load link points at the page.
@@ -25,7 +25,13 @@ function audit(s) {
   if (!/params\.get\("tab"\) \?\? "Costs"/.test(s.page)) p.push("default tab is not Costs");
   if (!/return isPage \? body : createPortal\(body, document\.body\);/.test(s.drawer)) p.push("page mode still portals to body");
   if (!/data-testid="load-costs-load-breadcrumb"/.test(s.drawer)) p.push("breadcrumb missing in page mode");
-  if (!/Accounting<\/Link>[\s\S]{0,120}Load costs<\/Link>/.test(s.drawer)) p.push("breadcrumb is not Accounting › Load costs › load");
+  // 443.99 (CC-2, 2026-10-12) breadcrumb rule:
+  //   old: breadcrumb text "Accounting › Load costs › load".
+  //   new: breadcrumb "Dispatch › Load costs › load", each crumb a Link to its module path (/dispatch, /dispatch/load-costs).
+  //   why: owner-approved moves — U3 (#24830) moved Load costs into Dispatch and U18 (#24920) made every breadcrumb parent
+  //        the module home. The page was right and the guard still pinned the pre-move parent. Not looser: the crumbs must
+  //        now also link to the module paths (the U18 rule), and a breadcrumb parented on Accounting fails.
+  if (!/<Link[^>]*to="\/dispatch">Dispatch<\/Link>[\s\S]{0,160}<Link[^>]*to="\/dispatch\/load-costs">Load costs<\/Link>/.test(s.drawer)) p.push("breadcrumb is not Dispatch › Load costs › load (module-path links)");
   if (!/\{isPage \? null : <div className="fixed inset-0 z-\[200\] bg-black\/30"/.test(s.drawer)) p.push("backdrop rendered in page mode");
   if (!/data-testid="load-costs-load-back"/.test(s.drawer)) p.push("page mode lacks the ← Load costs link (Close replaced)");
   if (!/data-testid="ldt0-header-stats"/.test(s.drawer)) p.push("shared header stat boxes missing");
@@ -42,6 +48,8 @@ if (process.argv.includes("--selftest")) {
     ["default tab Overview", { ...clean, page: clean.page.replace('params.get("tab") ?? "Costs"', 'params.get("tab") ?? "Overview"') }],
     ["portal in page mode", { ...clean, drawer: clean.drawer.replace("return isPage ? body : createPortal(body, document.body);", "return createPortal(body, document.body);") }],
     ["breadcrumb removed", { ...clean, drawer: clean.drawer.replace('data-testid="load-costs-load-breadcrumb"', 'data-testid="crumbs"') }],
+    ["breadcrumb parented on Accounting again", { ...clean, drawer: clean.drawer.replace('<Link className="hover:underline" to="/dispatch">Dispatch</Link>', '<Link className="hover:underline" to="/accounting">Accounting</Link>') }],
+    ["breadcrumb crumb not a module-path link", { ...clean, drawer: clean.drawer.replace('to="/dispatch/load-costs">Load costs</Link>', 'to={-1}>Load costs</Link>') }],
     ["board links back to drawer", { ...clean, board: clean.board.replace("/dispatch/load-costs/${r.load_id}?tab=Costs", "/dispatch/loads/${r.load_id}?tab=Costs") }],
   ];
   let escaped = 0;

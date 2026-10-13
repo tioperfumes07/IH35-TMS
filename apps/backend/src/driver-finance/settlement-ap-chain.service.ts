@@ -23,6 +23,8 @@ import { postSourceTransactionInClientTx } from "../accounting/posting-engine.se
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { resolveDriverVendorLink, DriverVendorMissingError } from "../accounting/driver-vendor-link.service.js";
+import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
+import { stampNewDriverBillTrailerFromLoad } from "../accounting/bill-trailer-stamp.service.js";
 
 export class SettlementApChainError extends Error {
   constructor(public code: string, message: string, public details: Record<string, unknown> = {}) {
@@ -30,8 +32,24 @@ export class SettlementApChainError extends Error {
   }
 }
 
-export type ApChainLoadBill = { driverBillId: string; loadId: string; loadNumber: string; grossCents: number; spanStart: string | null; spanEnd: string | null };
-export type ApChainPayItem = { kind: "pay" | "reimbursement" | "detention_pay"; cents: number; accountId: string; loadId: string | null; date: string | null; description: string };
+/**
+ * One load the chain bills. driverBillId is the load's per-load driver bill — or NULL for a SALARIED week (LEAD RULING
+ * 443.45 Ask C): a salaried load has no per-load driver bill (Lead 443.36 #2), so its salary pay line is billed on the
+ * load's own A/P bill with payBasis 'salaried' (driver_settlement_gl_bills.pay_basis; the CHECK allows a NULL driver bill
+ * only then).
+ */
+/**
+ * 443.101 (P38 Wave-A linkage) — unitId: the load's assigned unit when the load's company owns or currently leases it
+ * (the same rule mdata.refuse_cross_company_reference enforces on accounting.bills.unit_id). The per-load A/P bill carries
+ * it, so a driver-pay bill links to its UNIT as well as its vendor and load (unit cost / load profitability). Measured
+ * prod 2026-10-12: 146 of 146 live USMCA driver bills sat on loads with a same-entity assigned unit and carried none.
+ */
+export type ApChainLoadBill = { driverBillId: string | null; loadId: string; loadNumber: string; grossCents: number; spanStart: string | null; spanEnd: string | null; payBasis?: "per_load_driver_bill" | "salaried"; unitId?: string | null; /** LEAD 443.116 (c) — the A/P bill its pay was posted on AT DELIVERY (driver_bills.accrued_bill_id). */ accruedBillId?: string | null };
+
+/** The key a load's lines / bill are tracked under: its driver bill, or (salaried) the load itself. */
+export const apChainBillKey = (b: ApChainLoadBill): string => b.driverBillId ?? `salaried-load:${b.loadId}`;
+/** RULING 443.66 D1 — itemId: the settlement line's item; the A/P bill line carries it (detail in the item, rollup in the account). */
+export type ApChainPayItem = { kind: "pay" | "reimbursement" | "detention_pay"; cents: number; accountId: string; loadId: string | null; date: string | null; description: string; itemId?: string | null };
 export type ApChainApplication = { kind: "advance" | "deduction" | "chargeback" | "escrow"; cents: number; accountId: string; description: string; advanceId?: string; preferredLoadId?: string | null; /** ROUND 389.3 R1 — the driver a per-driver receivable credit belongs to (1257 recovery). */ entityDriverId?: string | null };
 
 /** Pure: the load a dated item belongs to — the load whose dates cover the date, else the nearest load by date. */
@@ -86,10 +104,40 @@ export function allocateApplication(remaining: Map<string, number>, order: strin
   return out;
 }
 
+export type ApChainBillLine = { kind: ApChainPayItem["kind"]; accountId: string; amountCents: number; description: string; itemId: string | null };
+
+/**
+ * LEAD 443.116 (c) — pure: a load whose pay was posted at delivery. Its pay lines are covered by the delivery-accrued bill up to
+ * the accrued amount (in line order; a line straddling the boundary is split, same item); whatever pay is left (extra pay) and
+ * every non-pay line (reimbursement, detention) is the close-time SUPPLEMENT. Pay below the accrual is refused by name — the
+ * accrual is restated first, never silently under-applied.
+ */
+export function splitLoadLinesAgainstDeliveryAccrual(ls: ApChainBillLine[], accruedCents: number, loadNumber: string): { supplement: ApChainBillLine[] } {
+  const payCents = ls.filter((l) => l.kind === "pay").reduce((n, l) => n + l.amountCents, 0);
+  if (payCents < accruedCents) {
+    throw new SettlementApChainError("PAY_BELOW_DELIVERY_ACCRUAL", `Load ${loadNumber}: the settlement pays ${payCents}c of driver pay but ${accruedCents}c was posted at delivery — restate the load's pay before closing`, { load_number: loadNumber, pay_cents: payCents, accrued_cents: accruedCents });
+  }
+  let left = accruedCents;
+  const supplement: ApChainBillLine[] = [];
+  for (const l of ls) {
+    if (l.kind !== "pay") {
+      supplement.push(l);
+      continue;
+    }
+    const take = Math.min(left, l.amountCents);
+    left -= take;
+    if (l.amountCents - take > 0) supplement.push({ ...l, amountCents: l.amountCents - take, description: take > 0 ? `${l.description} (above delivery accrual)` : l.description });
+  }
+  return { supplement };
+}
+
 /** The settlement's per-load driver bills with each load's date span (stops). */
 export async function loadSettlementLoadBills(client: pg.PoolClient, opco: string, settlementId: string, driverId: string): Promise<ApChainLoadBill[]> {
-  const r = await client.query<{ id: string; load_id: string; load_number: string | null; gross: string; span_start: string | null; span_end: string | null }>(
+  const r = await client.query<{ id: string; load_id: string; load_number: string | null; gross: string; span_start: string | null; span_end: string | null; unit_id: string | null; accrued_bill_id: string | null }>(
     `SELECT db.id::text, db.load_id::text, COALESCE(l.load_number, db.load_number) AS load_number, db.gross_amount_cents::text AS gross,
+            -- LEAD 443.128 C: a team bill's two drivers each settle their own delivery-posted A/P bill.
+            (CASE WHEN db.team_driver_id = $3::uuid AND db.driver_id IS DISTINCT FROM $3::uuid THEN db.accrued_team_bill_id ELSE db.accrued_bill_id END)::text AS accrued_bill_id,
+            ${sameEntityLoadUnitSql("l.id", "l.operating_company_id")}::text AS unit_id,
             (SELECT min(COALESCE(st.actual_arrival_at, st.appointment_start_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = db.load_id) AS span_start,
             (SELECT max(COALESCE(st.actual_departure_at, st.actual_arrival_at, st.appointment_end_at, st.scheduled_departure_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = db.load_id) AS span_end
        FROM driver_finance.driver_bills db
@@ -100,7 +148,32 @@ export async function loadSettlementLoadBills(client: pg.PoolClient, opco: strin
       ORDER BY span_start NULLS LAST, l.load_number`,
     [opco, settlementId, driverId]
   );
-  return r.rows.map((x) => ({ driverBillId: x.id, loadId: x.load_id, loadNumber: String(x.load_number ?? x.load_id), grossCents: Number(x.gross), spanStart: x.span_start, spanEnd: x.span_end }));
+  return r.rows.map((x) => ({ driverBillId: x.id, loadId: x.load_id, loadNumber: String(x.load_number ?? x.load_id), grossCents: Number(x.gross), spanStart: x.span_start, spanEnd: x.span_end, unitId: x.unit_id ?? null, accruedBillId: x.accrued_bill_id ?? null }));
+}
+
+/**
+ * LEAD RULING 443.45 Ask C — a settlement with NO per-load driver bills whose loads carry the 0-rate "Salaried" override
+ * (rate exactly 0 AND reason starting "Salaried", the same test as isSalariedZeroRateOverride): the settlement's own loads,
+ * in stop order, each billed with no driver bill. A settlement whose loads are not salaried returns nothing here, so it is
+ * still refused NO_LOAD_BILLS exactly as before.
+ */
+export async function loadSalariedSettlementLoads(client: pg.PoolClient, opco: string, settlementId: string): Promise<ApChainLoadBill[]> {
+  const r = await client.query<{ load_id: string; load_number: string; span_start: string | null; span_end: string | null; unit_id: string | null }>(
+    `SELECT l.id::text AS load_id, l.load_number,
+            ${sameEntityLoadUnitSql("l.id", "l.operating_company_id")}::text AS unit_id,
+            (SELECT min(COALESCE(st.actual_arrival_at, st.appointment_start_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = l.id AND st.soft_deleted_at IS NULL) AS span_start,
+            (SELECT max(COALESCE(st.actual_departure_at, st.actual_arrival_at, st.appointment_end_at, st.scheduled_departure_at, st.scheduled_arrival_at))::text FROM mdata.load_stops st WHERE st.load_id = l.id AND st.soft_deleted_at IS NULL) AS span_end
+       FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL
+        AND (l.presettlement_link_id = $2::uuid
+             OR l.id IN (SELECT sl.load_id FROM driver_finance.settlement_lines sl WHERE sl.settlement_id = $2::uuid AND sl.is_active AND sl.load_id IS NOT NULL))
+        AND l.driver_pay_rate_per_mile = 0
+        AND length(btrim(COALESCE(l.driver_pay_rate_override_reason, ''))) >= 10
+        AND l.driver_pay_rate_override_reason ~* '^\\s*(salaried|local driver — weekly salary)'
+      ORDER BY span_start NULLS LAST, l.load_number`,
+    [opco, settlementId]
+  );
+  return r.rows.map((x) => ({ driverBillId: null, loadId: x.load_id, loadNumber: x.load_number, grossCents: 0, spanStart: x.span_start, spanEnd: x.span_end, payBasis: "salaried" as const, unitId: x.unit_id ?? null }));
 }
 
 /** The bank a payment posts from: the payment method's bank, else the entity's operating bank (owner: BofA). Never a holding account. */
@@ -141,6 +214,8 @@ export type ApChainInput = {
   shortfallAccountId?: string | null;
   payoutBankAccountId: string | null;
   paymentReference?: string | null;
+  /** LEAD RULING R12 — no net-pay bill payment and no bank: each bill keeps its remaining balance open on A/P. */
+  leaveNetOpen?: boolean;
 };
 
 export type ApChainResult = {
@@ -161,14 +236,16 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
   const apAccount = await resolveRoleAccountOptional(client as never, opco, "ap_control");
   if (!apAccount) throw new SettlementApChainError("AP_ACCOUNT_MISSING", "No A/P control account (ap_control) designated");
 
-  const bills = await loadSettlementLoadBills(client, opco, input.settlementId, input.driverId);
+  let bills = await loadSettlementLoadBills(client, opco, input.settlementId, input.driverId);
+  // LEAD RULING 443.45 Ask C — a salaried week has no per-load driver bills: bill its own salaried loads instead.
+  if (!bills.length) bills = await loadSalariedSettlementLoads(client, opco, input.settlementId);
   if (!bills.length) throw new SettlementApChainError("NO_LOAD_BILLS", `${input.label} has no per-load driver bills — a settlement pays loads`);
 
   // Lines per load, from the settlement's own pay lines (the same rows the header gross sums — earnings, extra pay,
   // deadhead, team splits — so a team load bills each driver's share, never the whole load twice), plus
   // reimbursements and detention. A line names its load; one that does not goes to the load whose dates cover it.
-  const lines = new Map<string, Array<{ accountId: string; amountCents: number; description: string }>>();
-  for (const b of bills) lines.set(b.driverBillId, []);
+  const lines = new Map<string, ApChainBillLine[]>();
+  for (const b of bills) lines.set(apChainBillKey(b), []);
   let payCents = 0;
   for (const item of input.payItems) {
     if (item.cents <= 0) continue;
@@ -177,7 +254,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
     }
     const target = (item.loadId && bills.find((b) => b.loadId === item.loadId)) || attributeToLoad(bills, item.date);
     if (!target) throw new SettlementApChainError("PAY_ITEM_HAS_NO_LOAD", `${item.description} could not be tied to a load of ${input.label}`);
-    lines.get(target.driverBillId)!.push({ accountId: item.accountId, amountCents: item.cents, description: `Load ${target.loadNumber} — ${item.description}` });
+    lines.get(apChainBillKey(target))!.push({ kind: item.kind, accountId: item.accountId, amountCents: item.cents, description: `Load ${target.loadNumber} — ${item.description}`, itemId: item.itemId ?? null });
     if (item.kind === "pay") payCents += item.cents;
   }
   const billsGross = payCents;
@@ -198,37 +275,46 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
   if (!run.rows[0]) throw new SettlementApChainError("SETTLEMENT_ALREADY_POSTED", `${input.label} already has a settlement GL run — it is never posted twice`);
   const runId = run.rows[0].id;
 
-  // 1. One A/P bill per load, GL posted in this transaction.
-  const posted: Array<{ b: ApChainLoadBill; billId: string; billJeId: string; total: number }> = [];
-  for (const b of bills) {
-    const ls = lines.get(b.driverBillId)!;
+  // 1. One A/P bill per load, GL posted in this transaction. LEAD 443.116 (c): a load whose pay was posted AT DELIVERY keeps
+  //    that bill (the pay is never posted again); only what the delivery did not carry posts here, on one supplement.
+  const posted: Array<{ b: ApChainLoadBill; billId: string; billJeId: string; total: number; role: "close" | "delivery_accrued" | "close_supplement" }> = [];
+  const postLoadBill = async (b: ApChainLoadBill, ls: ApChainBillLine[], billNumber: string, memo: string): Promise<{ billId: string; billJeId: string; total: number }> => {
     const total = ls.reduce((s, l) => s + l.amountCents, 0);
-    if (total <= 0) continue;
     const dup = await client.query(
       `SELECT 1 FROM accounting.bills WHERE operating_company_id = $1::uuid AND mdata_vendor_id = $2::uuid AND bill_number = $3 AND voided_at IS NULL LIMIT 1`,
-      [opco, vendorId, b.loadNumber]
+      [opco, vendorId, billNumber]
     );
-    if (dup.rows.length) throw new SettlementApChainError("LOAD_BILL_ALREADY_EXISTS", `An A/P bill numbered ${b.loadNumber} already exists for this driver — a load is billed once`, { load_number: b.loadNumber });
+    if (dup.rows.length) throw new SettlementApChainError("LOAD_BILL_ALREADY_EXISTS", `An A/P bill numbered ${billNumber} already exists for this driver — a load is billed once`, { load_number: b.loadNumber, bill_number: billNumber });
     // Lead ROUND 330.6 ruling 1: a reversed settlement's bill keeps its number forever. A re-post bills the same load
     // (bill_number = the load number, the reference the owner reads) under a FRESH display number, never the spent one.
     const spent = await client.query(
       `SELECT 1 FROM accounting.bills WHERE operating_company_id = $1::uuid AND display_id = $2 LIMIT 1`,
-      [opco, b.loadNumber]
+      [opco, billNumber]
     );
     const bill = await createBillInClientTx(client, {
       operatingCompanyId: opco,
       vendorId,
       driverId: input.driverId,
-      billNumber: b.loadNumber,
+      // 443.106 (trg_refuse_driver_bill_without_links, BEFORE INSERT): a driver bill carries vendor, driver, load and unit on
+      // its INSERT row — the load goes on the header, not only on the lines.
+      loadId: b.loadId,
+      unitId: b.unitId ?? null,
+      billNumber,
       autoDisplayId: spent.rows.length > 0,
       billDate: input.billDate,
       amountCents: total,
-      memo: `${input.label} — driver pay, load ${b.loadNumber}`,
+      memo,
       coaAccountId: input.driverPayAccountId,
-      lines: ls.map((l) => ({ accountId: l.accountId, amountCents: l.amountCents, description: l.description, loadId: b.loadId })),
+      // An item line is 1 x amount, 'each' (bill_lines_item_qty_rate_amount_check); no item -> all four NULL.
+      lines: ls.map((l) => ({
+        accountId: l.accountId, amountCents: l.amountCents, description: l.description, loadId: b.loadId,
+        ...(l.itemId ? { itemId: l.itemId, quantity: 1, rateCents: l.amountCents, unitOfMeasure: "each" } : {}),
+      })),
     } as never, input.actorUserId);
     const billId = String((bill as { id: string }).id);
-    const p = await postSourceTransactionInClientTx(client as never, { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: billId, posting_purpose: "initial_post" } as never, { userId: input.actorUserId } as never);
+    // 443.105 item 1: the bill carries its load's trailer (company -> trailer_id + line equipment_id; customer -> non_owned_trailer_id).
+    await stampNewDriverBillTrailerFromLoad(client, { operatingCompanyId: opco, billId, loadId: b.loadId });
+    const p = await postSourceTransactionInClientTx(client as never, { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: billId, posting_purpose: "initial_post", settlement_id: input.settlementId } as never, { userId: input.actorUserId } as never);
     const billJeId = (p as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
     // AUTH-400 rehearsal (2026-10-04): 90 settlement GL-bill rows with NO bill_journal_entry_id made 45 settlements
     // unvoidable ("missing its original journal-entry linkage") — the reversal engine reverses exactly what this row names.
@@ -236,14 +322,45 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
     if (!billJeId) {
       throw new SettlementApChainError("BILL_JOURNAL_ENTRY_MISSING", `${input.label}: load ${b.loadNumber}'s A/P bill posted no journal entry — the settlement could never be reversed`, { load_number: b.loadNumber, bill_id: billId });
     }
-    posted.push({ b, billId, billJeId, total });
+    return { billId, billJeId, total };
+  };
+  for (const b of bills) {
+    const ls = lines.get(apChainBillKey(b))!;
+    if (b.accruedBillId) {
+      const acc = (await client.query<{ amount: number; open: number; voided: boolean; vendor: string | null; je: string | null }>(
+        `SELECT b.amount_cents::int AS amount, (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0))::int AS open, (b.voided_at IS NOT NULL) AS voided,
+                b.mdata_vendor_id::text AS vendor,
+                (SELECT p.journal_entry_uuid::text FROM accounting.journal_entry_postings p
+                  WHERE p.operating_company_id = b.operating_company_id AND p.source_transaction_type = 'bill' AND p.source_transaction_id::text = b.id::text
+                    AND p.reversal_of_line_id IS NULL AND p.reversed_by_line_id IS NULL LIMIT 1) AS je
+           FROM accounting.bills b WHERE b.id = $1::uuid AND b.operating_company_id = $2::uuid FOR UPDATE OF b`,
+        [b.accruedBillId, opco]
+      )).rows[0];
+      if (!acc || acc.voided || acc.vendor !== vendorId) {
+        throw new SettlementApChainError("DELIVERY_ACCRUED_BILL_INVALID", `${input.label}: load ${b.loadNumber}'s delivery-posted pay bill is missing, voided or not this driver's`, { load_number: b.loadNumber, accrued_bill_id: b.accruedBillId });
+      }
+      if (!acc.je) throw new SettlementApChainError("BILL_JOURNAL_ENTRY_MISSING", `${input.label}: load ${b.loadNumber}'s delivery-posted pay bill has no live journal entry`, { load_number: b.loadNumber, bill_id: b.accruedBillId });
+      const { supplement } = splitLoadLinesAgainstDeliveryAccrual(ls, acc.amount, b.loadNumber);
+      posted.push({ b, billId: b.accruedBillId, billJeId: acc.je, total: Math.max(0, acc.open), role: "delivery_accrued" });
+      if (supplement.reduce((n, l) => n + l.amountCents, 0) > 0) {
+        const sup = await postLoadBill(b, supplement, `${b.loadNumber}-S`, `${input.label} — load ${b.loadNumber}: pay above the delivery accrual and reimbursements`);
+        posted.push({ b, ...sup, role: "close_supplement" });
+      }
+      continue;
+    }
+    if (ls.reduce((s, l) => s + l.amountCents, 0) <= 0) continue;
+    const one = await postLoadBill(b, ls, b.loadNumber, `${input.label} — ${b.payBasis === "salaried" ? "salary" : "driver pay"}, load ${b.loadNumber}`);
+    posted.push({ b, ...one, role: "close" });
   }
 
   // 2. Non-cash applications: advances (own load first), deductions + chargebacks, escrow last.
   const remaining = new Map(posted.map((x) => [x.billId, x.total]));
   const order = posted.map((x) => x.billId);
   const applied = new Map<string, number>();
-  const appPostings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }> = [];
+  const appPostings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string; load_id?: string | null; entity_type?: "vendor" | "driver"; entity_uuid?: string }> = [];
+  // 443.42 #6 — every application line carries the load of the load bill it is applied to (the settlement lines all
+  // carry their load); measured on prod: 412 settlement application lines had load_id NULL.
+  const billLoad = new Map(posted.map((x) => [x.billId, x.b.loadId ?? null]));
   const firstNoncashBp = new Map<string, string>();
   const rank = { advance: 0, deduction: 1, chargeback: 1, escrow: 2 } as const;
   let unappliedCents = 0;
@@ -265,7 +382,10 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
       const bpId = String((bp as { id: string }).id);
       if (!firstNoncashBp.has(part.key)) firstNoncashBp.set(part.key, bpId);
       applied.set(part.key, (applied.get(part.key) ?? 0) + part.cents);
-      appPostings.push({ account_id: apAccount, debit_or_credit: "debit", amount_cents: part.cents, description: `${input.label} — ${app.description}` });
+      // 443.102 — the A/P debit names the VENDOR whose bill it pays down (every bill in this chain is the driver's own
+      // vendor record), so the A/P sub-ledger reads per vendor from the line itself. Measured on prod: 185 legs over 65
+      // settlements carried no vendor and 16 driver-vendors read $6,608.21 high against accounting.vendor_balances.
+      appPostings.push({ account_id: apAccount, debit_or_credit: "debit", amount_cents: part.cents, description: `${input.label} — ${app.description}`, load_id: billLoad.get(part.key) ?? null, entity_type: "vendor", entity_uuid: vendorId });
       if (app.kind === "advance" && app.advanceId) {
         await client.query(
           `UPDATE driver_finance.driver_advances SET linked_bill_id = COALESCE(linked_bill_id, $2::uuid), linked_bill_payment_id = COALESCE(linked_bill_payment_id, $3::uuid), updated_at = now()
@@ -274,7 +394,16 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
         );
       }
     }
-    appPostings.push({ account_id: app.accountId, debit_or_credit: "credit", amount_cents: app.cents, description: `${input.label} — ${app.description}`, ...(app.entityDriverId ? { entity_type: "driver", entity_uuid: app.entityDriverId } : {}) } as never);
+    // The credit is split the same way the debit was: one line per load bill it was applied to, each on that bill's load;
+    // a remainder the bills could not hold (a negative settlement) stays one line on the application's own load.
+    const entity = app.entityDriverId ? { entity_type: "driver", entity_uuid: app.entityDriverId } : {};
+    for (const part of parts) {
+      appPostings.push({ account_id: app.accountId, debit_or_credit: "credit", amount_cents: part.cents, description: `${input.label} — ${app.description}`, load_id: billLoad.get(part.key) ?? null, ...entity } as never);
+    }
+    const creditRemainder = app.cents - parts.reduce((n, part) => n + part.cents, 0);
+    if (creditRemainder > 0) {
+      appPostings.push({ account_id: app.accountId, debit_or_credit: "credit", amount_cents: creditRemainder, description: `${input.label} — ${app.description}`, load_id: app.preferredLoadId ?? null, ...entity } as never);
+    }
   }
   // ROUND 389.3 R1 — the excess is a DRIVER RECEIVABLE: Dr 1257 driver_negative_settlement_receivable, the driver on the
   // line and the settlement as the entry's source (both directions). It must equal the pay-run's shortfall exactly.
@@ -305,13 +434,13 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
   if (netTotal !== input.netCents) {
     throw new SettlementApChainError("NET_DOES_NOT_TIE", `${input.label}: the load bills leave ${netTotal}c to pay but the pay-run net is ${input.netCents}c`, { bills_net_cents: netTotal, payrun_net_cents: input.netCents });
   }
-  if (netTotal > 0 && !input.payoutBankAccountId) throw new SettlementApChainError("PAYOUT_BANK_MISSING", `${input.label} pays ${netTotal}c and has no bank account to pay from`);
+  if (netTotal > 0 && !input.leaveNetOpen && !input.payoutBankAccountId) throw new SettlementApChainError("PAYOUT_BANK_MISSING", `${input.label} pays ${netTotal}c and has no bank account to pay from`);
   const out: ApChainResult["bills"] = [];
   for (const x of posted) {
     const cash = remaining.get(x.billId) ?? 0;
     let cashBpId: string | null = null;
     let cashJeId: string | null = null;
-    if (cash > 0) {
+    if (cash > 0 && !input.leaveNetOpen) {
       const bp = await payBillInClientTx(client, {
         operatingCompanyId: opco, billId: x.billId, paymentDate: input.billDate, amountCents: cash, paymentMethod: "ach",
         fromBankAccountId: input.payoutBankAccountId!, referenceNumber: input.paymentReference ?? undefined,
@@ -328,18 +457,28 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
         throw new SettlementApChainError("CASH_PAYMENT_JOURNAL_ENTRY_MISSING", `${input.label}: load ${x.b.loadNumber}'s net-pay payment posted no journal entry — the settlement could never be reversed`, { load_number: x.b.loadNumber, bill_payment_id: cashBpId });
       }
     }
-    await client.query(
-      `UPDATE driver_finance.driver_bills SET settled_in_settlement_id = $2::uuid, status = 'paid', updated_at = now()
-        WHERE id = $1::uuid AND operating_company_id = $3::uuid AND status <> 'void'`,
-      [x.b.driverBillId, input.settlementId, opco]
-    );
+    // A salaried load has no driver bill to settle (443.45 Ask C); a close-time supplement settles nothing on its own —
+    // its load's delivery-accrued row does (443.116 (c)).
+    if (x.b.driverBillId && x.role !== "close_supplement") {
+      const leftOpen = Boolean(input.leaveNetOpen) && posted.some((y) => y.b.driverBillId === x.b.driverBillId && (remaining.get(y.billId) ?? 0) > 0);
+      await client.query(
+        `UPDATE driver_finance.driver_bills SET settled_in_settlement_id = $2::uuid, status = $4, updated_at = now()
+          WHERE id = $1::uuid AND operating_company_id = $3::uuid AND status <> 'void'`,
+        // R12 — a bill whose net is left open on A/P is approved, not paid.
+        [x.b.driverBillId, input.settlementId, opco, leftOpen ? "approved" : "paid"]
+      );
+    }
     await client.query(
       `INSERT INTO driver_finance.driver_settlement_gl_bills
          (operating_company_id, run_id, settlement_id, driver_bill_id, load_id, load_number, accounting_bill_id, bill_journal_entry_id,
-          cash_bill_payment_id, cash_journal_entry_id, deduction_bill_payment_id, gross_cents, deduction_cents, cash_cents)
-       VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6,$7::uuid,$8::uuid,$9::uuid,$10::uuid,$11::uuid,$12,$13,$14)`,
-      [opco, runId, input.settlementId, x.b.driverBillId, x.b.loadId, x.b.loadNumber, x.billId, x.billJeId, cashBpId, cashJeId,
-        firstNoncashBp.get(x.billId) ?? null, x.total, applied.get(x.billId) ?? 0, cash]
+          cash_bill_payment_id, cash_journal_entry_id, deduction_bill_payment_id, gross_cents, deduction_cents, cash_cents, pay_basis,
+          bill_posted_at_delivery, supplements_driver_bill_id)
+       VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6,$7::uuid,$8::uuid,$9::uuid,$10::uuid,$11::uuid,$12,$13,$14,$15,$16,$17::uuid)`,
+      [opco, runId, input.settlementId, x.role === "close_supplement" ? null : x.b.driverBillId, x.b.loadId, x.b.loadNumber, x.billId, x.billJeId, cashBpId, cashJeId,
+        firstNoncashBp.get(x.billId) ?? null, x.total, applied.get(x.billId) ?? 0, input.leaveNetOpen ? 0 : cash,
+        x.role === "close_supplement" ? "close_supplement" : x.b.payBasis ?? "per_load_driver_bill",
+        // LEAD 443.116 (c): the delivery-accrued bill predates this settlement — a settlement void reverses its payments, never the bill.
+        x.role === "delivery_accrued", x.role === "close_supplement" ? x.b.driverBillId : null]
     );
     out.push({ load_number: x.b.loadNumber, accounting_bill_id: x.billId, bill_journal_entry_id: x.billJeId, cash_bill_payment_id: cashBpId, cash_journal_entry_id: cashJeId, total_cents: x.total, applied_cents: applied.get(x.billId) ?? 0, cash_cents: cash });
   }

@@ -102,6 +102,8 @@ describeIntegration("ACCT-F5623 — bill payment nets non-voided vendor credits"
     await db.connect();
 
     await bypass(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language)
          VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,

@@ -159,9 +159,22 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
             </div>
           ))
         ) : (
-          <div className="rounded-sm border border-dashed border-gray-200 px-2 py-1.5 text-xs text-gray-400">
-            Return (SB) load not yet linked — use "Add to it" from the board
-          </div>
+          <>
+            <EntityLinkOrTombstone
+              kind="load"
+              id={settlement.first_load_id}
+              name={settlement.first_load_number}
+              noun="Outbound Load"
+              className="font-mono text-xs font-semibold text-[#1F2A44]"
+            />
+            <EntityLinkOrTombstone
+              kind="load"
+              id={settlement.last_load_id}
+              name={settlement.last_load_number}
+              noun="Return Load"
+              className="font-mono text-xs font-semibold text-[#1F2A44]"
+            />
+          </>
         )}
       </div>
 

@@ -33,7 +33,7 @@ function fail(msg) {
 
 export function staticChecks(sources = {}) {
   const problems = [];
-  const expenses = sources.expenses ?? read("apps/backend/src/accounting/expenses.routes.ts");
+  const expenses = sources.expenses ?? (read("apps/backend/src/accounting/expenses.routes.ts") + "\n" + read("apps/backend/src/accounting/expense-writer.service.ts")) /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */;
   const invoices = sources.invoices ?? read("apps/backend/src/accounting/invoices.routes.ts");
   const bridge = sources.bridge ?? read("apps/backend/src/integrations/relay-payments/relay-fuel-canonical-bridge.ts");
   const drawer = sources.drawer ?? read("apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx");

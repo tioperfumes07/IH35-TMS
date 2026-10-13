@@ -19,8 +19,17 @@ export function collectFailures(sources) {
     ["No notes recorded for this customer.", "Notes tab lacks honest empty state"],
     ["Edit notes", "Notes tab lacks a route to the canonical profile writer"],
     ['activeTab === "notes"', "Notes tab is not mounted"],
-    ["navigate(`/customers/${selectedCustomer.id}`)", "Edit notes does not reach the canonical customer editor"],
   ]) if (!sources.page.includes(needle)) failures.push(message);
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: Edit notes navigates to the full-page editor: navigate(`/customers/${selectedCustomer.id}`).
+  //   new rule: the Notes tab's Edit opens the side CustomerEditDrawer for THIS customer
+  //             (onEdit={() => setEditDrawerCustomer(selectedCustomer)}), and that drawer is mounted with
+  //             customer={editDrawerCustomer} — it saves through the same updateCustomer PATCH.
+  //   why: CUR-2 (#20812, cda6f7b4e3) moved customer edit into a QBO-style side drawer; same canonical writer.
+  if (!/<CustomerNotesTab\s+customer=\{selectedCustomer\}\s+onEdit=\{\(\) => setEditDrawerCustomer\(selectedCustomer\)\}/.test(sources.page) ||
+      !/<CustomerEditDrawer[\s\S]{0,120}customer=\{editDrawerCustomer\}/.test(sources.page)) {
+    failures.push("Edit notes does not reach the canonical customer editor");
+  }
   if (sources.page.includes(PLACEHOLDER)) failures.push("static Notes placeholder remains");
 
   let required;
@@ -42,6 +51,8 @@ if (process.argv.includes("--selftest")) {
     ["page", "No notes recorded for this customer.", "Notes unavailable"],
     ["page", "function CustomerNotesTab", `${PLACEHOLDER}\nfunction CustomerNotesTab`],
     ["page", 'activeTab === "notes"', 'activeTab === "removed_notes"'],
+    ["page", /(<CustomerNotesTab\s+customer=\{selectedCustomer\}\s+)onEdit=\{\(\) => setEditDrawerCustomer\(selectedCustomer\)\}/, "$1onEdit={() => undefined}"],
+    ["page", "<CustomerEditDrawer", "<SomethingElse"],
     ["built", '"leafRe": "^md\\\\.notes$"', '"leafRe": ".*"'],
   ];
   for (const [key, from, to] of mutations) {

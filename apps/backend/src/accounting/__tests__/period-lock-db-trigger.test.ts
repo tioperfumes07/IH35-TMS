@@ -44,15 +44,17 @@ describe("period lock DB trigger guard (AI-1)", () => {
     const REV_ACCOUNT = "aaaa2222-0000-4000-8000-000000000001";
 
     const client = {
-      query: vi.fn(async (sql: string) => {
+      query: vi.fn(async (sql: string, values?: unknown[]) => {
         queryCalls.push(sql.trim().slice(0, 60));
         if (sql.includes("set_config")) return { rows: [] };
         if (sql.includes("FROM accounting.posting_batches")) return { rows: [] };
         if (sql.includes("FOR UPDATE")) return { rows: [makeInvoiceRow()] }; // invoice fetch
         // Account resolution (happens in buildPostingDraft, before ensureOpenPeriod)
         if (sql.includes("FROM accounting.chart_of_accounts_roles")) {
-          if (sql.includes("'ar_control'")) return { rows: [{ account_id: AR_ACCOUNT }] };
-          if (sql.includes("'revenue_default'")) return { rows: [{ account_id: REV_ACCOUNT }] };
+          // The role resolver binds the role as a parameter (coa-roles/resolver.service.ts listMappedRoleAccountIds: car.role = $2).
+          const role = sql.includes("'ar_control'") ? "ar_control" : sql.includes("'revenue_default'") ? "revenue_default" : String(values?.[1] ?? "");
+          if (role === "ar_control") return { rows: [{ account_id: AR_ACCOUNT }] };
+          if (role === "revenue_default") return { rows: [{ account_id: REV_ACCOUNT }] };
           return { rows: [] };
         }
         if (sql.includes("FROM catalogs.account_role_bindings")) return { rows: [] };
@@ -116,7 +118,7 @@ describe("period lock DB trigger guard (AI-1)", () => {
     );
 
     const client = {
-      query: vi.fn(async (sql: string) => {
+      query: vi.fn(async (sql: string, values?: unknown[]) => {
         if (sql.includes("set_config")) return { rows: [] };
         if (sql.includes("FROM accounting.posting_batches")) return { rows: [] };
         if (sql.includes("FOR UPDATE")) return { rows: [makeInvoiceRow()] }; // invoice fetch
@@ -124,8 +126,10 @@ describe("period lock DB trigger guard (AI-1)", () => {
           return { rows: [{ cutoff: null }] }; // app guard passes
         // AR/revenue account resolution
         if (sql.includes("FROM accounting.chart_of_accounts_roles")) {
-          if (sql.includes("'ar_control'")) return { rows: [{ account_id: AR_ACCOUNT }] };
-          if (sql.includes("'revenue_default'")) return { rows: [{ account_id: REV_ACCOUNT }] };
+          // The role resolver binds the role as a parameter (coa-roles/resolver.service.ts listMappedRoleAccountIds: car.role = $2).
+          const role = sql.includes("'ar_control'") ? "ar_control" : sql.includes("'revenue_default'") ? "revenue_default" : String(values?.[1] ?? "");
+          if (role === "ar_control") return { rows: [{ account_id: AR_ACCOUNT }] };
+          if (role === "revenue_default") return { rows: [{ account_id: REV_ACCOUNT }] };
           return { rows: [] };
         }
         if (sql.includes("FROM catalogs.account_role_bindings")) return { rows: [] };

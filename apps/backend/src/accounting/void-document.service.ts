@@ -55,6 +55,7 @@ import {
 } from "./void.service.js";
 import { voidBillInClientTx, voidBillPaymentInClientTx, type BillMutationClient } from "./bills.service.js";
 import { reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
+import { reverseExpenseDocumentInClientTx } from "./expense-void-reversal.js";
 import { reverseFactoringAdvanceEvent } from "./factoring-posting/poster.service.js";
 import { reverseSettlementForVoid, reverseDeductionForVoid } from "../driver-finance/void-document-callees.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -137,25 +138,13 @@ export async function voidDocument(
     }
 
     case "expense": {
-      // Matches expenses.routes.ts's own SOURCE_NOT_FOUND handling — an unposted expense
-      // legitimately has nothing to reverse; every other posting-engine error still throws.
-      let reversalJournalEntryId: string | null = null;
-      try {
-        const rev = await reversePostedSourceTransactionInClientTx(
-          client,
-          {
-            operating_company_id: input.operatingCompanyId,
-            source_transaction_type: "expense",
-            source_transaction_id: input.id,
-          },
-          { userId: input.actor.userId },
-          input.currentBusinessDate
-        );
-        reversalJournalEntryId = rev.journal_entry_id ?? null;
-      } catch (err) {
-        const code = (err as { code?: string })?.code;
-        if (code !== "SOURCE_NOT_FOUND") throw err;
-      }
+      // ACCT-F4431310 — reverse everything LIVE for the document (own 'expense' lines + a fuel receipt's 'fuel_event'
+      // entry), decided by reading; nothing live = unposted. Never a swallowed SOURCE_NOT_FOUND.
+      const rev = await reverseExpenseDocumentInClientTx(client as never, {
+        operatingCompanyId: input.operatingCompanyId, expenseId: input.id, actorUserId: input.actor.userId,
+        currentBusinessDate: input.currentBusinessDate, memo: `Void reversal of expense ${input.id}: ${input.reason}`, expenseReverser: "source",
+      });
+      const reversalJournalEntryId: string | null = rev.reversal_journal_entry_id;
       // AUTH-400 — a void is WHOLE at this door: the ledger reversed AND the header stamped, in this transaction. Callers
       // that also stamp (check-void) pass the same reason and actor, which the stamp treats as an idempotent replay.
       const stamped = await stampDocumentVoided(client as never, { operatingCompanyId: input.operatingCompanyId, family: "expense", documentId: input.id, voidReason: input.reason, voidedByUserId: input.actor.userId });
@@ -243,13 +232,45 @@ export async function voidDocument(
       return { voidedAt: result.voidedAt, reversalJournalEntryId: result.reversalJournalEntryId };
     }
 
-    case "credit_memo":
+    case "credit_memo": {
+      // ROUND 373.4 (202615370000, CC-1): a credit memo that names its account POSTS at creation (Dr account / Cr A/R),
+      // so the TASK 18 "zero posting lines" premise no longer holds for this type — the tripwire
+      // (verify-credit-memo-liability-zero-posting-lines) fired in CI the first time one posted. The void reverses that
+      // posting through the engine on this transaction, exactly as credit-memos.routes.ts's /void does; a credit memo whose
+      // GL is owned elsewhere (payment overpayment, Faro short-pay) never posted and has nothing to reverse.
+      let reversalJournalEntryId: string | null = null;
+      try {
+        const rev = await reversePostedSourceTransactionInClientTx(
+          client,
+          {
+            operating_company_id: input.operatingCompanyId,
+            source_transaction_type: "credit_memo",
+            source_transaction_id: input.id,
+          },
+          { userId: input.actor.userId },
+          input.currentBusinessDate
+        );
+        reversalJournalEntryId = rev.journal_entry_id ?? null;
+      } catch (err) {
+        const code = (err as { code?: string })?.code;
+        if (code !== "SOURCE_NOT_FOUND") throw err;
+      }
+      await appendCrudAudit(
+        client,
+        input.actor.userId,
+        "accounting.credit_memo.voided",
+        { resource_type: input.type, resource_id: input.id, reason: input.reason, reversal_journal_entry_id: reversalJournalEntryId },
+        "warning",
+        "ACCT-F5606"
+      );
+      return { voidedAt: nowIso(), reversalJournalEntryId };
+    }
+
     case "liability": {
-      // TASK 18 — see this file's header. Verified live, zero posting lines at either source type
-      // today; nothing to reverse. Register the void event ourselves (the real routes for both
-      // types — credit-memos.routes.ts, liabilities.routes.ts — flip status directly and never call
-      // an underlying reversal engine that would otherwise write this audit entry) and return a
-      // clean null, never a thrown refusal for a case verified genuinely empty.
+      // TASK 18 — see this file's header. Verified live, zero posting lines at this source type
+      // today; nothing to reverse. Register the void event ourselves (liabilities.routes.ts flips
+      // status directly and never calls an underlying reversal engine that would otherwise write this
+      // audit entry) and return a clean null, never a thrown refusal for a case verified genuinely empty.
       await appendCrudAudit(
         client,
         input.actor.userId,

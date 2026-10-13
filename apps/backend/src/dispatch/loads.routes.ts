@@ -17,6 +17,7 @@ import {
   updateDispatchLoad,
   LoadNotFoundError,
   LoadEditLockedError,
+  TrailerChoiceRefusedError,
   OwnerLockPropagationRefuseError,
   detectLoadEditLock,
   type UpdateDispatchLoadFields,
@@ -273,6 +274,19 @@ const createDispatchLoadBodySchema = z.object({
   miles_practical: z.number().min(0).multipleOf(0.1).optional(),
   miles_shortest: z.number().min(0).multipleOf(0.1).optional(),
   miles_deadhead: z.number().min(0).multipleOf(0.1).optional(),
+  // 443.55 — per miles field, which recommendation the dispatcher chose on Book Load (historical | google | manual + reason).
+  miles_choice: z
+    .record(
+      z.enum(["practical", "short", "empty"]),
+      z.object({
+        source: z.enum(["historical", "google", "manual", "document"]),
+        value: z.number().min(0).nullable().optional(),
+        historical: z.number().nullable().optional(),
+        google: z.number().nullable().optional(),
+        reason: z.string().max(500).nullable().optional(),
+      })
+    )
+    .optional(),
   // P0 (owner 2026-09-14, "BOOK LOAD 500s") — this schema used to accept 2 literals
   // ("History — verify", "History — ZIP mismatch, verify") that the DB's own
   // loads_mileage_source_english_check CHECK constraint has never allowed (its em-dash confidence
@@ -301,11 +315,20 @@ const createDispatchLoadBodySchema = z.object({
   assigned_unit_id: z.string().uuid().optional(),
   // W-FIX-3b: persisted after load creation to dispatch.load_assignment_history.new_trailer_id.
   assigned_trailer_unit_id: z.string().uuid().optional(),
+  // LEAD 443.107 item 3: the trailer choice — company trailer / customer trailer number / none (bobtail, power only).
+  trailer_choice: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("company"), equipment_id: z.string().uuid() }),
+    z.object({ kind: z.literal("customer"), trailer_number: z.string().trim().min(1).max(40) }),
+    z.object({ kind: z.literal("interchange"), non_owned_trailer_id: z.string().uuid() }),
+    z.object({ kind: z.literal("none") }),
+  ]).optional(),
   temperature_type: z.enum(["frozen", "fresh"]).optional(), // W-FIX-1: reefer Frozen/Fresh → loads.temperature_type
   assigned_primary_driver_id: z.string().uuid().optional(),
   // Historical imports deliberately do not widen the live active-driver picker. The existing inactive
   // driver is supplied by UUID with an attributed reason and validated again inside bookLoad().
   historical_import_driver_id: z.string().uuid().optional(),
+  // ROUND 443.10: owner-authorized $0 Transportation load (Creator, faro_transportation at $0 only).
+  authorizedZeroRevenue: z.boolean().optional(),
   historical_import_reason: z.string().trim().min(10).max(1000).optional(),
   // ROUND 326: an imported load names its source company; book-load rejects a missing / mismatched one.
   inbound_source: z.object({
@@ -364,6 +387,8 @@ const createDispatchLoadBodySchema = z.object({
         postal_code: z.string().trim().max(20).optional(),
         latitude: z.number().finite().gte(-90).lte(90).optional(),
         longitude: z.number().finite().gte(-180).lte(180).optional(),
+        // 443.67: Google's place id from the address picker (stored on the stop; the resolver shares it with the location).
+        google_place_id: z.string().trim().min(1).max(255).optional(),
       })
     ),
   // ROUND 24.3 (owner, 2026-09-14): ">=2 stops, each with a real city" is correct to BOOK a load,
@@ -403,6 +428,13 @@ const createDispatchLoadBodySchema = z.object({
 // stops (>=2 when provided) are replaced evidence-safely in the service.
 const updateDispatchLoadBodySchema = z.object({
   operating_company_id: z.string().uuid(),
+  // LEAD 443.107 item 3: the trailer choice — company trailer / customer trailer number / none (bobtail, power only).
+  trailer_choice: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("company"), equipment_id: z.string().uuid() }),
+    z.object({ kind: z.literal("customer"), trailer_number: z.string().trim().min(1).max(40) }),
+    z.object({ kind: z.literal("interchange"), non_owned_trailer_id: z.string().uuid() }),
+    z.object({ kind: z.literal("none") }),
+  ]).optional(),
   customer_id: z.string().uuid().optional(),
   dispatch_flag_color_id: z.string().uuid().optional(),
   customer_wo_number: z.string().trim().max(120).nullable().optional(),
@@ -512,6 +544,8 @@ const updateDispatchLoadBodySchema = z.object({
         postal_code: z.string().trim().max(20).optional(),
         latitude: z.number().finite().gte(-90).lte(90).optional(),
         longitude: z.number().finite().gte(-180).lte(180).optional(),
+        // 443.67: Google's place id from the address picker (stored on the stop; the resolver shares it with the location).
+        google_place_id: z.string().trim().min(1).max(255).optional(),
       })
     )
     .min(2)
@@ -1249,6 +1283,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  -- joins above; NOT added to the view, which would widen it unscoped for every consumer.
                  ml.trip_type AS trip_type,
                  ml.load_trailer_equipment_id AS load_trailer_equipment_id,
+                 -- LEAD 443.107 item 3: the recorded trailer choice, so Edit Load prefills it and the drawer shows it.
+                 ml.trailer_source AS trailer_source,
+                 (SELECT h.new_trailer_id::text FROM dispatch.load_assignment_history h
+                   WHERE h.load_id = ml.id AND h.operating_company_id = ml.operating_company_id AND h.new_trailer_id IS NOT NULL
+                   ORDER BY h.created_at DESC LIMIT 1) AS assigned_trailer_unit_id,
+                 (SELECT nt.trailer_number FROM dispatch.non_owned_trailers nt
+                   WHERE nt.id = ml.non_owned_trailer_id AND nt.operating_company_id = ml.operating_company_id) AS non_owned_trailer_number,
                  ml.dispatch_flag_color_id AS dispatch_flag_color_id,
                  df.flag_code AS flag_code,
                  df.display_name AS flag_display_name,
@@ -1824,7 +1865,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const body = updateDispatchLoadBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
-    const { operating_company_id, charges, stops, override_reason, override_rules, ...fields } = body.data;
+    const { operating_company_id, charges, stops, override_reason, override_rules, trailer_choice, ...fields } = body.data;
     try {
       const result = await withCompanyScope(authUser.uuid, operating_company_id, (client) =>
         updateDispatchLoad(client, {
@@ -1837,11 +1878,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           fields: fields as UpdateDispatchLoadFields,
           charges,
           stops,
+          trailer_choice,
         })
       );
       return reply.send(result);
     } catch (error) {
       if (error instanceof LoadNotFoundError) return reply.code(404).send({ error: "load_not_found" });
+      if (error instanceof TrailerChoiceRefusedError) return reply.code(422).send({ error: error.code });
       if (error instanceof LoadEditLockedError) {
         return reply.code(409).send({ error: "load_edit_locked", lock: error.lock });
       }

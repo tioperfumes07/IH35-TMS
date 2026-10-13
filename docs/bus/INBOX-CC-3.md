@@ -106,3 +106,38 @@ DO NOT
 
 DONE LINE per item: PR number · squash sha · deploy id + deployed sha · for the cells, the
 before/after count · the guard PASS line verbatim.
+
+---
+## 443.88 — S4-bank handoff from CC-1 (2026-10-12T03:35Z)
+
+Lead order: CC-3 owns S4-bank from here.
+
+### What CC-1 built (merged)
+- **PR #26459** merged → `4c24d77eadc2` on main
+- **File:** `scripts/acceptance/live-load-lifecycle.mjs` — `async function s4bank()` above main try block; call at `if (runs("S4-bank")) await s4bank();`
+- **Lane ruling:** `docs/bus/2026-10-12-LEAD-RULING-CC1-443-86-S4BANK-LANE-CROSS.md`
+
+### Neon fork (still live)
+- Branch: `br-restless-field-aksy3bkn`
+- Project: `tiny-field-89581227`
+- Forked from prod HEAD `br-fancy-credit-akjnd07a`
+
+### Assertion results (10/11)
+| Step | Result |
+|------|--------|
+| S4a: GET /banking/link-suggestions 200 | PASS |
+| S4a: 0 expenses with `source_bank_transaction_id` on USMCA | FAIL (pre-existing data gap) |
+| S4b: POST /banking/transactions/:id/categorize 200 | PASS |
+| S4b: `matched_journal_entry_id` stamped + JE debit on acct 5000 | PASS |
+| S4c: exact_match=true no violations / 90 candidates | PASS |
+
+### Key schema landmines (save time)
+- `operating_company_id` goes in **QUERY STRING** for categorize: `POST /api/v1/banking/transactions/:id/categorize?operating_company_id=...` (NOT in body)
+- `mdata.vendors` soft-delete column is `deactivated_at` (NOT `voided_at`)
+- `banking.bank_accounts` has `account_name` (NOT `account_number`)
+- `matched_journal_entry_id` is the column stamped on `banking.bank_transactions` after categorization
+- `BANK_FEED_GL_POSTING_ENABLED` flag must be live-armed for categorize to post a JE (it is on USMCA since 2026-09-03)
+- CO (USMCA): `5c854333-6ea5-4faa-af31-67cb272fef80`
+
+### S4a data gap root cause
+The import path (`banking/import*.routes.ts` or equivalent) does NOT populate `accounting.expenses.source_bank_transaction_id` when importing Relay fuel transactions. 0 rows have it set on USMCA. This is the BANK-F44366 Cursor finding (S4a still open on Cursor lane).

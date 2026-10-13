@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Calendar } from "lucide-react";
-import { formatDateUS, parseDateUS, DATE_PLACEHOLDER_US } from "../../lib/formatDate";
+import { formatDateUS, parseDateUS, maskTypedDateUS, DATE_PLACEHOLDER_US } from "../../lib/formatDate";
 import "../../design/ih35-design-tokens.css";
 
 // Shared QuickBooks-style date field. Value is "YYYY-MM-DD".
 // MOD-02/03 (GO-MECH-0901): typed MM/DD/YYYY + month/year jump + Escape closes
 // picker only (not parent wizard) — same pattern as DateTimePicker (#19067).
+// Owner 2026-10-10: digits-only typing auto-inserts `/` via maskTypedDateUS (08052026 → 08/05/2026).
 //
 // ROUND 297 / UI-F9637 sibling: DateTimePicker (d47a908929) portaled to document.body because
 // `absolute` inside the field wrapper was clipped by every modal's overflow. DatePicker had the
@@ -280,7 +281,7 @@ export function DatePicker({
             setEditingDate(true);
             setDateDraft(value ? formatDateUS(value) : "");
           }}
-          onChange={(e) => setDateDraft(e.target.value)}
+          onChange={(e) => setDateDraft(maskTypedDateUS(e.target.value))}
           onBlur={commitDateDraft}
           onKeyDown={(e) => {
             if (e.key === "Enter") {

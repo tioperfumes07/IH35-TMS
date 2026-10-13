@@ -52,7 +52,8 @@ export const SHARED_FILTER_CONTROLS = [
   "apps/frontend/src/components/forms/MultiSelectDropdown.tsx",
   "apps/frontend/src/components/forms/DatePicker.tsx",
   "apps/frontend/src/components/forms/StateSelect.tsx",
-  "apps/frontend/src/components/forms/QboCombobox.tsx",
+  // 443.137 9e (CC-2): components/forms/QboCombobox.tsx removed from this list — the file was deleted
+  // (QBO is a read-only archive; no screen imports it). Not a loosening: nothing renders it any more.
   "apps/frontend/src/components/table/TableSearch.tsx",
 ];
 

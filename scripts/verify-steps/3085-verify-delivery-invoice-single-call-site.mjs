@@ -31,12 +31,20 @@ import path from "node:path";
 
 const LABEL = "3085-verify-delivery-invoice-single-call-site";
 const LATCH = path.join("apps", "backend", "src", "dispatch", "delivery-evidence-latch.ts");
+// The five files that call the latch. Two delivery paths were later consolidated into shared services and their
+// routes now delegate: the office transition moved to load-transition.service.ts (#23821, ROUND 313/315), the driver
+// PWA stop departure to stop-stamp.service.ts (#21859, truck-line view). DELEGATES pins each route to its service.
 const CALLERS = [
   path.join("apps", "backend", "src", "driver", "loads.routes.ts"),
   path.join("apps", "backend", "src", "dispatch", "loads-bulk.routes.ts"),
-  path.join("apps", "backend", "src", "dispatch", "loads.routes.ts"),
-  path.join("apps", "backend", "src", "dispatch", "driver-pwa", "dispatch-view.routes.ts"),
+  path.join("apps", "backend", "src", "dispatch", "load-transition.service.ts"),
+  path.join("apps", "backend", "src", "dispatch", "stop-stamp.service.ts"),
   path.join("apps", "backend", "src", "mdata", "loads.routes.ts"),
+];
+const DELEGATES = [
+  [path.join("apps", "backend", "src", "dispatch", "loads.routes.ts"), "transitionDispatchLoadInClientTx"],
+  [path.join("apps", "backend", "src", "dispatch", "driver-pwa", "dispatch-view.routes.ts"), "stampStopDeparture"],
+  [path.join("apps", "backend", "src", "dispatch", "truck-line", "stop-stamp.routes.ts"), "stampStopDeparture"],
 ];
 
 function fail(msg) {
@@ -81,10 +89,19 @@ function checkB(callerPath, callerSrc) {
   }
 }
 
+/** A route whose delivery path lives in a shared service must still delegate to it and hold no second copy. */
+function delegateProblem(routePath, routeSrc, serviceFn) {
+  const code = stripComments(routeSrc);
+  if (/convertProformaToOfficial\s*\(/.test(code)) return `${routePath} calls convertProformaToOfficial directly — a second invoice-conversion copy (ACCT-F351 regression)`;
+  if (!new RegExp(`\\b${serviceFn}\\s*\\(`).test(code)) return `${routePath} no longer delegates to ${serviceFn} — its delivery path dropped the revenue latch`;
+  return null;
+}
+
 function run() {
   checkA(read(LATCH));
   for (const c of CALLERS) checkB(c, read(c));
-  console.log(`[${LABEL}] PASS: invoice-raising is wired inside latchOnDeliveryEvidence; no caller holds a second copy (5/5 callers checked)`);
+  for (const [p, fn] of DELEGATES) { const msg = delegateProblem(p, read(p), fn); if (msg) fail(msg); }
+  console.log(`[${LABEL}] PASS: invoice-raising is wired inside latchOnDeliveryEvidence; no caller holds a second copy (${CALLERS.length} callers + ${DELEGATES.length} delegating routes checked)`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -108,6 +125,12 @@ if (process.argv.includes("--selftest")) {
   if (mutatedBulk === bulkSrc) fail("selftest setup: mutation B anchor not found in " + CALLERS[1]);
   if (!/convertProformaToOfficial\s*\(/.test(mutatedBulk)) {
     fail("selftest mutation B did not insert a detectable duplicate call — test harness bug");
+  }
+
+  for (const [p, fn] of DELEGATES) {
+    const src = read(p);
+    if (delegateProblem(p, src, fn)) fail(`selftest baseline: ${p} should PASS the delegate check`);
+    if (!delegateProblem(p, src.replaceAll(`${fn}(`, `noop(`), fn)) fail(`selftest mutation C: ${p} dropping ${fn} did not FAIL`);
   }
 
   console.log(`[${LABEL}] selftest: PASS — invariant A trips on removal, invariant B trips on a reintroduced duplicate call`);

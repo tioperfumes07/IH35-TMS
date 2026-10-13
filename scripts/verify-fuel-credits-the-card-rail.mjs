@@ -5,14 +5,16 @@
  * 66 of this week's 982 purged voided USMCA expenses were fuel documents that wrongly credited
  * 1090 "Undeposited Funds" instead of the driver's actual card rail (Dreamline 2510 / Relay
  * 1295). That writer bug is already fixed (R-153.6/153.7): fuel-expense-document.service.ts
- * resolves payment_account_uuid via resolveCompanyDirectCreditAccount() (poster.service.ts),
- * whose resolveFuelCardRailAccount() maps ONLY to account_number "2510" or "1295" and throws
- * rather than falling back to any other account (never 1090, never ap_control, never a guess).
+ * resolves payment_account_uuid via resolveCompanyDirectCreditAccount() (company-direct-credit-account.ts,
+ * re-exported from poster.service.ts), whose resolveFuelCardRailAccount() maps ONLY to CoA roles
+ * fuel_wallet_relay / fuel_card_payable_dreamline and throws rather than falling back to any other
+ * account (never 1090, never ap_control, never a guess).
  *
  * This guard is STATIC (no DATABASE_URL, never skips) and asserts the shape of the fix:
  *   - fuel-expense-document.service.ts still calls resolveCompanyDirectCreditAccount() to set
  *     the document's payment_account_uuid (not a hardcoded id, not a different resolver)
- *   - poster.service.ts's card-rail resolver still maps only to "2510"/"1295"
+ *   - company-direct-credit-account.ts's resolveFuelCardRailAccount still resolves both rails
+ *     via CoA roles (fuel_wallet_relay / fuel_card_payable_dreamline)
  *   - neither file contains the literal string "1090" as an account_number
  *
  * It deliberately does NOT assert a dollar total (moves with real business). It asserts the
@@ -24,7 +26,7 @@
 
 export const REQUIRES_LIVE_DB = "Neon live verification required";
 export const ALLOW_OFFLINE_SKIP =
-  "Static source-shape guard: reads fuel-expense-document.service.ts and poster.service.ts off disk, asserts the card-rail resolution shape. No DB connection on the static path.";
+  "Static source-shape guard: reads fuel-expense-document.service.ts and company-direct-credit-account.ts off disk, asserts the card-rail resolution shape. No DB connection on the static path.";
 
 import fs from "node:fs";
 import path from "node:path";
@@ -33,7 +35,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-fuel-credits-the-card-rail";
 const DOC_TARGET = "apps/backend/src/fuel/fuel-expense-document.service.ts";
-const POSTER_TARGET = "apps/backend/src/accounting/fuel-posting/poster.service.ts";
+const POSTER_TARGET = "apps/backend/src/accounting/fuel-posting/company-direct-credit-account.ts";
 
 const fail = (m) => {
   console.error(`\n  ${LABEL} FAIL: ${m}\n`);
@@ -65,12 +67,12 @@ export function analyse(docSrc, posterSrc) {
   // drifted to -$33,839.80 unseen. The invariant is two rails, role-resolved, fail-closed.
   if (!/resolveFuelCardRailAccount[\s\S]{0,800}fuel_wallet_relay[\s\S]{0,800}fuel_card_payable_dreamline/.test(poster)) {
     problems.push(
-      "poster.service.ts's card-rail resolver no longer resolves both rails to their CoA roles " +
+      "company-direct-credit-account.ts's card-rail resolver no longer resolves both rails to their CoA roles " +
         "(fuel_wallet_relay / fuel_card_payable_dreamline) — a branch was dropped, or a fallback was added."
     );
   }
   if (/["']1090["']/.test(poster)) {
-    problems.push('poster.service.ts references account "1090" — the card-rail resolver must never fall back to it.');
+    problems.push('company-direct-credit-account.ts references account "1090" — the card-rail resolver must never fall back to it.');
   }
   return problems;
 }
@@ -109,7 +111,7 @@ if (!fs.existsSync(docAbs)) fail(`${DOC_TARGET} is missing. Refusing to pass a g
 if (!fs.existsSync(posterAbs)) fail(`${POSTER_TARGET} is missing. Refusing to pass a guard whose subject does not exist.`);
 const problems = analyse(fs.readFileSync(docAbs, "utf8"), fs.readFileSync(posterAbs, "utf8"));
 if (problems.length) fail(problems.map((p) => `\n    - ${p}`).join(""));
-ok(`${DOC_TARGET} resolves the card rail via resolveCompanyDirectCreditAccount(); ${POSTER_TARGET} maps only to 2510/1295, never 1090.`);
+ok(`${DOC_TARGET} resolves the card rail via resolveCompanyDirectCreditAccount(); company-direct-credit-account.ts maps only to fuel_wallet_relay/fuel_card_payable_dreamline roles, never 1090.`);
 
 // --- Live layer, ADDITIONAL to the static shape check above, not a replacement. Only runs when
 // DATABASE_URL is present; never turns the static PASS above into a FAIL on its own account.

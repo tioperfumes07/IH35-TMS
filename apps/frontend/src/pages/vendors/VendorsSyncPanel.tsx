@@ -95,14 +95,12 @@ export function VendorsSyncPanel({ operatingCompanyId }: Props) {
     onError: (err) => pushToast(userFacingApiError(err, "Could not refresh vendors from QBO"), "error"),
   });
 
-  const reconcileMutation = useMutation({
-    mutationFn: () => postVendorsAction("/api/v1/qbo-sync/vendors/reconcile-now", operatingCompanyId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["vendors-sync-status", operatingCompanyId] }),
-    onError: (err) => pushToast(userFacingApiError(err, "Could not reconcile vendors"), "error"),
-  });
+  // 443.137 9e (ACCT-F4431380): the vendors reconcile-now route always answers 409 QBO_NATIVE_WRITE_REFUSED —
+  // QuickBooks is a read-only archive, nothing reconciles it into native tables — so this panel offers no
+  // Reconcile action (never a broken button). "Refresh from QBO" still refreshes the read-only mirror.
 
   const status = statusQuery.data;
-  const busy = pullMutation.isPending || reconcileMutation.isPending;
+  const busy = pullMutation.isPending;
 
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/30 px-4 py-3 text-xs">
@@ -134,14 +132,6 @@ export function VendorsSyncPanel({ operatingCompanyId }: Props) {
         onClick={() => pullMutation.mutate()}
       >
         {pullMutation.isPending ? "Refreshing…" : "Refresh from QBO"}
-      </button>
-      <button
-        type="button"
-        className="rounded-sm border border-border px-3 py-1 disabled:opacity-50"
-        disabled={busy || !operatingCompanyId}
-        onClick={() => reconcileMutation.mutate()}
-      >
-        {reconcileMutation.isPending ? "Reconciling…" : "Reconcile"}
       </button>
     </div>
   );

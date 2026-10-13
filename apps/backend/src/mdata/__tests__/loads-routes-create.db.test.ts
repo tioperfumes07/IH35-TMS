@@ -13,7 +13,7 @@ import type { FastifyInstance } from "fastify";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import { ensureIntegrationPrerequisites, prepareCompanyForLoadInserts } from "../../../test-helpers/db-fixture.js";
 import { testAuthHeaders } from "../../../test-helpers/auth-fixture.js";
 import { createIntegrationApp } from "../../../test-helpers/http-app.js";
 import { registerLoadRoutes } from "../loads.routes.js";
@@ -49,6 +49,9 @@ describeIntegration("POST /api/v1/mdata/loads (real Postgres, shared create path
     await db.connect();
 
     await bypass(async () => {
+      // A load names its trailer equipment from the company catalog (load_trailer_equipment_catalog_missing otherwise);
+      // the office's company has it — the fixture company gets it the way every other load test does.
+      await prepareCompanyForLoadInserts(db, companyId);
       const customerRes = await db.query<{ id: string }>(
         `INSERT INTO mdata.customers (operating_company_id, customer_name)
          VALUES ($1::uuid, $2) RETURNING id`,
@@ -76,6 +79,9 @@ describeIntegration("POST /api/v1/mdata/loads (real Postgres, shared create path
         operating_company_id: companyId,
         customer_id: customerId,
         status: "draft",
+        // GO-10 REV-B: the allocator refuses to invent a company's first load number (first_load_number_required, 422);
+        // the office types it. A fresh numeric one per run (UNIQUE(operating_company_id, load_number) on the shared company).
+        load_number: String(800_000_000 + Math.floor(Math.random() * 99_999_999)),
         rate_total_cents: 150000,
         currency_code: "USD",
         pickup: {

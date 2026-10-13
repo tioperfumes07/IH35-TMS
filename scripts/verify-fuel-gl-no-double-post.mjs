@@ -43,6 +43,11 @@ import { readFileSync, existsSync } from "node:fs";
 const LABEL = "verify:fuel-gl-no-double-post";
 
 const PLAID = "apps/backend/src/integrations/plaid/plaid.service.ts";
+// BANK-F02 / BANK-F25011 (a9096f7a10): the scorer was extracted VERBATIM into one shared module that plaid.service
+// imports (and the For-Review suggestion engine reuses). The discriminator is asserted where it now lives, and only
+// while plaid.service still selects through that very module — never a mention in some unrelated file.
+const SCORER = "apps/backend/src/banking/category-scoring.ts";
+const SCORER_IMPORT = /import\s*\{[^}]*\bscoreRuleMatch\b[^}]*\}\s*from\s*["']\.\.\/\.\.\/banking\/category-scoring\.js["']/;
 const BANKING = "apps/backend/src/banking/bank-line-state-machine.service.ts"; // ROUND 360: every bank-line Undo runs here
 const ENGINE = "apps/backend/src/accounting/posting-engine.service.ts";
 const SELF = "scripts/verify-fuel-gl-no-double-post.mjs";
@@ -60,7 +65,8 @@ export function analyse(files) {
           `broad TRANSPORTATION rule outranks TOLL and bridge tolls post to Fuel Expense again.`
       );
     }
-    if (!/isParentRule/.test(plaid)) {
+    const scorer = SCORER_IMPORT.test(plaid) && /export function scoreRuleMatch\(/.test(files[SCORER] ?? "") ? files[SCORER] : "";
+    if (!/isParentRule/.test(plaid) && !/isParentRule/.test(scorer)) {
       problems.push(
         `${PLAID}: the parent-rule discriminator is gone. Substring matching makes a parent pattern ` +
           `also "match" the leaf (TRANSPORTATION_TOLLS contains TRANSPORTATION); without it the parent ` +
@@ -127,7 +133,7 @@ export function analyse(files) {
 
 function readAll() {
   const out = {};
-  for (const f of [PLAID, BANKING, ENGINE, SELF]) out[f] = existsSync(f) ? readFileSync(f, "utf8") : null;
+  for (const f of [PLAID, SCORER, BANKING, ENGINE, SELF]) out[f] = existsSync(f) ? readFileSync(f, "utf8") : null;
   return out;
 }
 
@@ -136,7 +142,8 @@ function selftest() {
   const t = (l, c) => { if (!c) failures.push(l); };
 
   const good = {
-    [PLAID]: "export function scoreRuleMatch(){} const isParentRule = true;",
+    [PLAID]: 'import { scoreRuleMatch } from "../../banking/category-scoring.js"; scoreRuleMatch(p, c);',
+    [SCORER]: "export function scoreRuleMatch(p, c) { const isParentRule = true; }",
     [BANKING]: "await reverseJournalEntryNoFlip(client,{}); if(!POSTING_ENGINE_SUPPORTS_REPOST){}",
     [ENGINE]: 'export type PostingPurpose = "initial_post" | "reversal" | "repost";',
     [SELF]: 'problems.push("x"); // SCOPE LESSON: all-sources vs card-only',
@@ -146,7 +153,9 @@ function selftest() {
   t("removing scoreRuleMatch AND the discriminator FAILS twice",
     analyse({ ...good, [PLAID]: "export function other(){}" }).length === 2);
   t("removing only the parent discriminator FAILS",
-    analyse({ ...good, [PLAID]: "export function scoreRuleMatch(){}" }).length === 1);
+    analyse({ ...good, [SCORER]: "export function scoreRuleMatch(p, c) {}" }).length === 1);
+  t("plaid.service no longer selecting through the shared scorer FAILS (its discriminator no longer counts)",
+    analyse({ ...good, [PLAID]: "function scoreRuleMatch(){}" }).length === 1);
   t("removing the reversal FAILS",
     analyse({ ...good, [BANKING]: "if(!POSTING_ENGINE_SUPPORTS_REPOST){}" }).length === 1);
   t("removing the repost interlock FAILS",
@@ -167,7 +176,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 9 cases (1 pass-shape, 8 fail-shapes incl. reverting this guard to the exit-0 stub and losing the scope lesson)`);
+  console.log(`${LABEL} selftest OK — 10 cases (1 pass-shape, 9 fail-shapes incl. reverting this guard to the exit-0 stub and losing the scope lesson)`);
   process.exit(0);
 }
 

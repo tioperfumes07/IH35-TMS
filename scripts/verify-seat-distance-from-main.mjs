@@ -44,12 +44,24 @@ function getCurrentBranch() {
   return git("rev-parse --abbrev-ref HEAD");
 }
 
+/** 443.102: the name to report for HEAD — local branch, else GitHub's ref, else "detached@<sha>". */
+export function resolveBranchLabel(localBranch, env, shortSha) {
+  const b = (localBranch || "").trim();
+  if (b && b !== "HEAD") return b;
+  const ref = (env.GITHUB_HEAD_REF || env.GITHUB_REF_NAME || "").trim();
+  if (ref) return ref;
+  return shortSha ? `detached@${shortSha.trim()}` : null;
+}
+
 function getAheadBehind() {
   // Fetch first to get accurate origin/main
   git("fetch origin main --quiet 2>/dev/null || true");
-  const branch = getCurrentBranch();
-  if (!branch || branch === "HEAD") {
-    return { error: "cannot determine current branch (detached HEAD?)" };
+  // 443.102: a CI pull_request checkout is a DETACHED merge commit, and a worktree can be detached too.
+  // The distance is measured from HEAD either way (the rev-list below never needed the name), so a
+  // detached HEAD is named by GitHub's ref when there is one, else by its sha — never left unmeasured.
+  const branch = resolveBranchLabel(getCurrentBranch(), process.env, git("rev-parse --short HEAD"));
+  if (!branch) {
+    return { error: "cannot determine HEAD (not a git checkout?)" };
   }
 
   const ahead = git(`rev-list --count origin/main..HEAD 2>/dev/null`);
@@ -147,6 +159,12 @@ function runSelftest() {
   // GREEN: exactly at ceiling (boundary)
   const greenBoundary = classifySeatDistance({ branch: "devin-b/edge", ahead: 30, behind: 10, maxAhead: 30, maxBehind: 10 });
   if (!greenBoundary.allPass) { console.error(`${LABEL} --selftest FAIL — at ceiling: expected PASS (boundary is ok)`); fail += 1; } else pass += 1;
+  // 443.102: detached checkouts are measured, never skipped and never auto-passed.
+  if (resolveBranchLabel("HEAD", { GITHUB_HEAD_REF: "cc-3/x" }, "abc1234") !== "cc-3/x") { console.error(`${LABEL} --selftest FAIL — detached PR checkout must report the pushed branch`); fail += 1; } else pass += 1;
+  if (resolveBranchLabel("HEAD", {}, "abc1234") !== "detached@abc1234") { console.error(`${LABEL} --selftest FAIL — detached local checkout must be named by sha`); fail += 1; } else pass += 1;
+  if (resolveBranchLabel("cc-1/z", { GITHUB_HEAD_REF: "cc-3/x" }, "abc1234") !== "cc-1/z") { console.error(`${LABEL} --selftest FAIL — a real branch must not be overridden`); fail += 1; } else pass += 1;
+  const redDetached = classifySeatDistance({ branch: "detached@abc1234", ahead: 1, behind: 15, maxAhead: 30, maxBehind: 10 });
+  if (redDetached.allPass) { console.error(`${LABEL} --selftest FAIL — a detached HEAD far behind main must still FAIL`); fail += 1; } else pass += 1;
 
   if (fail > 0) {
     process.exitCode = 1;

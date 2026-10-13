@@ -1007,6 +1007,10 @@ export async function pingSettlementOnLoadEvent(
   // mapped to their narrow DispatchStatus equivalents before the exact-match checks below.
   // fromMdataStatus is idempotent on already-narrow values (e.g. "in_transit" -> "in_transit").
   const normalizedStatus = fromMdataStatus(opts.dispatchTargetStatus);
+  // LEAD RULING ROUND 443.7 (Option A): inside a Settlement Creator post the Creator owns this tour settlement and
+  // closes it through the pay-run close; the ping never opens a second one or closes it mid-post.
+  const creatorPost = await client.query<{ v: string | null }>(`SELECT current_setting('app.settlement_creator_post', true) AS v`);
+  if (creatorPost.rows[0]?.v === "on") return;
 
   const loadRes = await client.query<{
     assigned_primary_driver_id: string | null;

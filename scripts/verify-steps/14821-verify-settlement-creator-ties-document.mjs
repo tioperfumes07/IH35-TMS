@@ -2,6 +2,11 @@ export default {
   name: "verify:settlement-creator-ties-document",
   run(ctx) {
     ctx.run("node", ["scripts/verify-settlement-creator-ties-document.mjs"]);
+    // RULING 443.66 — every Creator-born line has its item on the item's account; status = posting_status; driver/unit/trailer.
+    // The live run joins this step once the 68 posted settlements are categorized through the engine route (follow-up PR).
+    ctx.run("node", ["scripts/verify-creator-documents-categorized.mjs", "--selftest"]);
+    // RULING 443.67 — the DB refuses uncategorized lines for every writer (202615620900). Live run joins once deployed.
+    ctx.run("node", ["scripts/verify-line-categorization-refused-at-db.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-decimals-f443.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-decimals-f443.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-google-address-wiring.mjs", "--selftest"]);
@@ -10,5 +15,72 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-ux-f441.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-ux-f442.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-ux-f442.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-no-quickpay-on-factored.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-no-quickpay-on-factored.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-invoice-number-and-zero-invoice.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-invoice-number-and-zero-invoice.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-driver-pay-independent-of-invoice.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-driver-pay-independent-of-invoice.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-every-line-has-load.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-every-line-has-load.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-expense-stamped-and-sourced.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-expense-stamped-and-sourced.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-atomic-post.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-atomic-post.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-stop-stamps-from-tracking.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-stop-stamps-from-tracking.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-fuel-row-hash-per-product.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-fuel-row-hash-per-product.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-books-signed-settlement-rate.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-books-signed-settlement-rate.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-deduction-has-settlement-line.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-deduction-has-settlement-line.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-post-writes-no-bank-posting.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-post-writes-no-bank-posting.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-preview-is-the-post.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-preview-is-the-post.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-gate-gross-includes-extra-pay.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-gate-gross-includes-extra-pay.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-mileage-source.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-mileage-source.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-edit-adopts-prior-loads.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-edit-adopts-prior-loads.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-relay-row-fill-path.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-relay-row-fill-path.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-books-historical.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-books-historical.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-salaried.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-salaried.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-no.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-no.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-multistop.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-multistop.mjs"]);
+    // 443.60 guard review: lane guards that existed but were never wired into this step.
+    ctx.run("node", ["scripts/verify-settlement-creator-posts-through-close.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-posts-through-close.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-books-with-po-and-real-stop-state.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-books-with-po-and-real-stop-state.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-fuel-gate.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-fuel-gate.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-preflight-all-refusals.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-preflight-all-refusals.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-has-load.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-expense-settlement-has-load.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-card-rate-is-settlement-rate.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-card-rate-is-settlement-rate.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-miles-choice.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-miles-choice.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-travel-off-driver-pay.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-travel-off-driver-pay.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-ap-tieout-counts-chain-bills.mjs", "--selftest"]);
+    // 443.100: the live half of verify-settlement-creator-ap-tieout-counts-chain-bills runs in the live-DB job (ci.yml required-live-load-guard); its selftest stays here.
+    ctx.run("node", ["scripts/verify-settlement-creator-owed-bill-posted.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-owed-bill-posted.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-salaried-ap-chain.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-salaried-ap-chain.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-salaried-stray-bill-void.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-salaried-stray-bill-void.mjs"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-stop-add-carries-facility.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-settlement-creator-stop-add-carries-facility.mjs"]);
   },
 };

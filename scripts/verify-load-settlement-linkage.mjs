@@ -94,8 +94,14 @@ async function auditLive(databaseUrl) {
        FROM driver_finance.settlement_lines sl
        LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
        JOIN mdata.loads l ON l.id = COALESCE(db.load_id, sl.load_id)
+       -- 443.64 (CC-3): a VOIDED line on a VOIDED settlement is history, not money sitting on the wrong settlement.
+       -- Creator settlement e1cdb1b9 was cancelled 2026-10-11 03:52 UTC (voided_at set on it and on its 6 lines) and its
+       -- loads re-settled; counting those dead lines turned this guard red (2 -> 6) with nothing attached anywhere.
+       JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
        WHERE l.operating_company_id = $1
-         AND COALESCE(db.load_id, sl.load_id) IS NOT NULL`,
+         AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
+         AND sl.voided_at IS NULL AND sl.is_active
+         AND ds.voided_at IS NULL`,
       [USMCA_OPCO_ID]
     );
 

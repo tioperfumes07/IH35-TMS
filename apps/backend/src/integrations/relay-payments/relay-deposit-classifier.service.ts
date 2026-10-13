@@ -31,7 +31,10 @@ export type RelayDepositInput = {
   raw: unknown;
 };
 
-export type RelayDepositClassification = "company" | "unclassified" | "canceled";
+export type RelayDepositClassification = "company" | "party" | "intercompany" | "unclassified" | "canceled";
+
+/** LEAD 443.133 B: card -> its class from the owner's card map (integrations.relay_company_cards.funding_kind). */
+export type CompanyCardClasses = Map<string, "company" | "party" | "intercompany">;
 
 export type RelayDepositResult = {
   relay_deposit_id: string;
@@ -59,14 +62,18 @@ function toCents(value: string | number | null | undefined, field: string): numb
   return Math.round(n * 100);
 }
 
-/** Load the owner-editable company-card set for one operating company (active cards only). */
-export async function loadCompanyCardSet(client: DbClient, operatingCompanyId: string): Promise<Set<string>> {
-  const res = await client.query<{ card_last4: string }>(
-    `SELECT card_last4 FROM integrations.relay_company_cards
+/** Load the owner-editable card map for one operating company (active cards only). LEAD 443.133 B: the map's
+ *  funding_kind decides the class — party / intercompany cards are named as such, a company account card (or a legacy
+ *  row with no funding kind) is 'company'. */
+export async function loadCompanyCardSet(client: DbClient, operatingCompanyId: string): Promise<CompanyCardClasses> {
+  const res = await client.query<{ card_last4: string; funding_kind: string | null }>(
+    `SELECT card_last4, funding_kind FROM integrations.relay_company_cards
      WHERE operating_company_id = $1::uuid AND is_active AND voided_at IS NULL`,
     [operatingCompanyId]
   );
-  return new Set(res.rows.map((r) => r.card_last4));
+  return new Map(
+    res.rows.map((r) => [r.card_last4, r.funding_kind === "party" ? "party" : r.funding_kind === "intercompany" ? "intercompany" : "company"] as const)
+  );
 }
 
 /** Classify one deposit given its status, funding card, and the company-card set. Canceled pre-auths
@@ -74,12 +81,13 @@ export async function loadCompanyCardSet(client: DbClient, operatingCompanyId: s
 export function classifyDeposit(
   status: string,
   fundingCardLast4: string | null,
-  companyCards: Set<string>
+  companyCards: CompanyCardClasses | Set<string>
 ): RelayDepositClassification {
   const st = (status ?? "").trim().toLowerCase();
   if (st === "canceled" || st === "cancelled" || st === "voided") return "canceled";
-  if (fundingCardLast4 && companyCards.has(fundingCardLast4)) return "company";
-  return "unclassified";
+  if (!fundingCardLast4) return "unclassified";
+  if (companyCards instanceof Map) return companyCards.get(fundingCardLast4) ?? "unclassified";
+  return companyCards.has(fundingCardLast4) ? "company" : "unclassified";
 }
 
 /**
@@ -91,7 +99,7 @@ export async function upsertRelayDeposit(
   client: DbClient,
   operatingCompanyId: string,
   deposit: RelayDepositInput,
-  companyCards: Set<string>,
+  companyCards: CompanyCardClasses | Set<string>,
   ingestSource: RelayDepositIngestSource
 ): Promise<RelayDepositResult> {
   const fundingCardLast4 = parseFundingCardLast4(deposit.note);

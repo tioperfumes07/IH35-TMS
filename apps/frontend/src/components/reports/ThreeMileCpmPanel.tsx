@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per truck aggregated over the period chosen in the panel's own date picker — the period is the panel's filter, not a column.
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getThreeMileCpm, type ThreeMileBasisFigure, type ThreeMileGroupBy, type ThreeMileMpg, type ThreeMileRow } from "../../api/reports-three-mile";

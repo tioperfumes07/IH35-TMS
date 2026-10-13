@@ -26,9 +26,13 @@ export function collectProblems(sources) {
   // option before merging (keeps a scoped value visible even when it's not on the current roster
   // page), so `created` alone is no longer the second argument; the canonical-id merge call is
   // otherwise unchanged.
+  // 443.102: old rule = mergePickerOptionsByValue(roster, selected+created). ACCT-F19949 (#19950, MOD-05) added an
+  // in-scope VIN unit and WIZ-38 (#20192) gated the held value on heldQuery, so the optimistic side is now its own
+  // merge. New rule: the canonical roster is still the OUTER first argument (server precedence) and the optimistic
+  // side is a merge of selected+created with the VIN option — a flat spread or optimistic-first still fails.
   requirePattern(
     "entityPicker",
-    /mergePickerOptionsByValue\(\s*rosterQuery\.data \?\? \[\],\s*selectedOption \? \[selectedOption, \.\.\.created\] : created,?\s*\)/,
+    /mergePickerOptionsByValue\(\s*rosterQuery\.data \?\? \[\],\s*mergePickerOptionsByValue\(\s*selectedOption && heldQuery\.data !== false \? \[selectedOption, \.\.\.created\] : created,\s*vinScopedOption,?\s*\),?\s*\)/,
     "EntityPicker must use the shared canonical-id merge",
   );
   requirePattern("entityPicker", /const rosterShown = options\.length/, "EntityPicker cap notice must count unique visible rows");
@@ -45,8 +49,8 @@ if (process.argv.includes("--selftest")) {
     {
       ...sources,
       entityPicker: sources.entityPicker.replace(
-        /mergePickerOptionsByValue\(\s*rosterQuery\.data \?\? \[\],\s*selectedOption \? \[selectedOption, \.\.\.created\] : created,?\s*\)/,
-        "[...(rosterQuery.data ?? []), ...(selectedOption ? [selectedOption, ...created] : created)]",
+        /mergePickerOptionsByValue\(\s*rosterQuery\.data \?\? \[\],\s*mergePickerOptionsByValue\(\s*selectedOption && heldQuery\.data !== false \? \[selectedOption, \.\.\.created\] : created,\s*vinScopedOption,?\s*\),?\s*\)/,
+        "[...(rosterQuery.data ?? []), ...(selectedOption ? [selectedOption, ...created] : created), ...vinScopedOption]",
       ),
     },
     { ...sources, entityPicker: sources.entityPicker.replace("const rosterShown = options.length", "const rosterShown = created.length") },

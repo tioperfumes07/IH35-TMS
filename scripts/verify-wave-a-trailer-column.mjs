@@ -5,7 +5,9 @@ import fs from "node:fs";
 const SELFTEST = process.argv.includes("--selftest");
 
 const checks = [
-  ["apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx", /assigned_trailer_unit_id:\s*values\.assigned_trailer_unit_id\s*\|\|\s*undefined/],
+  // LEAD 443.116 (main ci): the company trailer FK may be gated on the required trailer choice (values.trailer_source === "owned",
+  // 443.107 #3 #26620) — old rule demanded the unconditional form; dropping the FK still fails.
+  ["apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx", /assigned_trailer_unit_id:\s*(?:values\.trailer_source\s*===\s*"owned"\s*\?\s*)?values\.assigned_trailer_unit_id\s*\|\|\s*undefined/],
   ["apps/frontend/src/pages/dispatch/components/QuickAssignModal.tsx", /trailer_id:\s*trailerId\s*\|\|\s*undefined/],
   ["apps/frontend/src/pages/dispatch/DispatchBoard.tsx", /<EntityLink[\s\S]*kind="trailer"[\s\S]*trailer_id/],
   ["apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx", /trailer_id:\s*str\(selected\.trailer_id\)\s*\|\|\s*null/],

@@ -53,7 +53,8 @@ function selftest() {
   if (!/confirm\s*!==\s*true/.test(closeSrc)) failures.push("close-manual service does not require explicit confirm=true (human-confirmed close)");
   if (failures.length) {
     for (const f of failures) console.error(`${LABEL} --selftest FAIL — ${f}`);
-    return 1;
+    // Exit here, not via main()'s return value: a selftest that finds a problem must end the process non-zero itself.
+    process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS — all M.3 files present, close-manual service checks GL-posting linkage and requires explicit confirmation`);
   return 0;

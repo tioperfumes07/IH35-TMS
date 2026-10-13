@@ -18,7 +18,8 @@
  *  5) apps/frontend/.../api/dispatch.ts: DispatchBookLoadPayload carries the field
  *  6) apps/frontend/.../BookLoadModalV4.tsx: form type + submit payload send it (only when a rate
  *     is actually typed)
- *  7) apps/frontend/.../BookLoadEquipmentSection.tsx: a real input is registered for it
+ *  7) apps/frontend/.../BookLoadEquipmentSection.tsx: a typed rate has a registered reason input, or the rate
+ *     control is read-only and unregistered (443.99 — see link 7 below)
  *
  * --selftest removes one link at a time in a scratch copy and expects each to redden alone.
  */
@@ -73,10 +74,28 @@ const CHECKS = [
     file: FILES.modal,
     test: (src) => /driver_pay_rate_override_reason:\s*\n[\s\S]{0,200}values\.driver_pay_rate_override_reason/.test(src),
   },
+  // 443.99 (CC-2) — link 7.
+  //   old rule: BookLoadEquipmentSection must register an input for driver_pay_rate_override_reason.
+  //   new rule: the section must not let the operator type a per-load rate without a reason path — EITHER a reason
+  //             input is registered, OR the rate control is read-only and no input is registered for
+  //             driver_pay_rate_per_mile at all (nothing typed, so nothing can be silently discarded).
+  //   why: WIZ-32 / WIZ-16 (LST-F6134, #20187, 81101be203) made "Driver pay rate / mi" a read-only display of the
+  //        driver's rate card — the load stores no override — and removed the reason input with it. The defect
+  //        this guard exists for (a typed rate that is silently ignored) cannot occur with no typed rate. Not
+  //        looser: re-registering an editable rate without the reason input fails, as before.
   {
-    label: "BookLoadEquipmentSection registers a real input for driver_pay_rate_override_reason",
+    label: "BookLoadEquipmentSection: a typed rate has a registered reason input, or the rate is read-only and unregistered",
     file: FILES.equipmentSection,
-    test: (src) => /register\("driver_pay_rate_override_reason"\)/.test(src),
+    test: (src) =>
+      /register\("driver_pay_rate_override_reason"\)/.test(src) ||
+      (!/register\("driver_pay_rate_per_mile"/.test(src) &&
+        /id="book-load-driver-pay-rate-per-mile"[\s\S]{0,200}readOnly/.test(src)),
+    // planted regression for this link: an editable, registered rate with no reason input
+    plant: (src) =>
+      src.replace(/register\("driver_pay_rate_override_reason"\)/g, "").replace(
+        /id="book-load-driver-pay-rate-per-mile"/,
+        'id="book-load-driver-pay-rate-per-mile" {...register("driver_pay_rate_per_mile")}',
+      ).replace(/(id="book-load-driver-pay-rate-per-mile"[\s\S]{0,200}?)readOnly/, "$1"),
   },
 ];
 
@@ -125,7 +144,7 @@ function selftest() {
           }
           const targetPath = path.join(isolated, c.file);
           let src = fs.readFileSync(targetPath, "utf8");
-          src = src.replace(/driver_pay_rate_override_reason/g, "REDACTED_field_name");
+          src = c.plant ? c.plant(src) : src.replace(/driver_pay_rate_override_reason/g, "REDACTED_field_name");
           fs.writeFileSync(targetPath, src);
           const errs = check(isolated);
           if (!errs.some((e) => e.startsWith(c.file))) escaped.push(c.label);

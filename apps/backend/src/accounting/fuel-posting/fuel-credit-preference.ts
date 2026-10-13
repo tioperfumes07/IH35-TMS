@@ -32,6 +32,13 @@ export type FuelTxnGlPostCandidate = {
   has_fuel_card?: boolean;
   /** Explicit override — when set, wins over inferred signals. */
   company_direct_credit?: CompanyDirectCredit;
+  /**
+   * R13 (Lead ruling 2026-10-10) — Settlement Creator fuel: the card rail is known at entry
+   * (fuel.card = "dreamline" | "relay"), so the row posts immediately (Dr fuel / Cr rail).
+   * When true, bypasses RelayFillLinksNotPostsError so relay_fuel_wallet credits the wallet
+   * directly instead of deferring to a Banking match.
+   */
+  creator_manual_entry?: boolean;
 };
 
 
@@ -78,7 +85,8 @@ export function resolveCompanyDirectCreditPreference(
   candidate: FuelTxnGlPostCandidate,
   txnSignals?: { fuel_card_id?: string | null; fuel_card_code?: string | null; notes?: string | null; source?: string | null } | null
 ): CompanyDirectCredit {
-  if (candidate.company_direct_credit === "relay_fuel_wallet") throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);
+  // R13: Creator-entered fuel has a known card rail; post immediately (never defer to Banking match).
+  if (candidate.company_direct_credit === "relay_fuel_wallet" && !candidate.creator_manual_entry) throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);
   if (candidate.company_direct_credit) return candidate.company_direct_credit;
 
   const code = (txnSignals?.fuel_card_code ?? "").toUpperCase();

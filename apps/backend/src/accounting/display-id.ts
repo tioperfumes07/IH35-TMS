@@ -27,12 +27,12 @@ export class InvalidDisplayIdShapeError extends Error {
   }
 }
 
-/** accounting.invoices.invoices_display_id_check, widened 2026-09-04 (SET-25) to also accept the
- * plain-digit load_number shape GO-10 REV-B L3 locked. All four alternatives are live-accepted;
- * none may be removed without a matching migration (the two YYYYMMDD-prefixed ones are dead --
- * 0 live rows -- but are KEPT per owner order, not silently dropped from validation either). */
+/** accounting.invoices.invoices_display_id_check, widened 2026-09-04 (SET-25) to accept plain-digit
+ * load_number shape, widened 2026-10-10 (ROUND 443.8) to accept <invoice-number>-<load-number>
+ * (e.g. 3-13508). All five alternatives are live-accepted; none may be removed without a matching
+ * migration (the two YYYYMMDD-prefixed ones are dead -- 0 live rows -- but KEPT per owner order). */
 export const INVOICE_DISPLAY_ID_PATTERN =
-  /^(INV-[0-9]{4}-[0-9]{5}|L-[0-9]{8}-[0-9]{4}|LUSMCAFREIGHT-[0-9]{8}-[0-9]{4}|[0-9]{1,12})$/;
+  /^(INV-[0-9]{4}-[0-9]{5}|L-[0-9]{8}-[0-9]{4}|LUSMCAFREIGHT-[0-9]{8}-[0-9]{4}|[0-9]{1,12}|[0-9]{1,6}-[0-9]{1,12})$/;
 
 /** accounting.payments.payments_display_id_check -- unchanged by this PR, live-verified. */
 export const PAYMENT_DISPLAY_ID_PATTERN = /^PMT-[0-9]{4}-[0-9]{5}$/;
@@ -46,7 +46,10 @@ export const PAYMENT_DISPLAY_ID_PATTERN = /^PMT-[0-9]{4}-[0-9]{5}$/;
 // EXACTLY as the load" — settlement-ap-chain passes the load number (e.g. 13619) as the bill number, and this pattern
 // refused it (InvalidDisplayIdShapeError), so EVERY settlement close through the per-load A/P chain failed. The
 // plain-digit load-number shape is the same alternative invoices accept (INVOICE_DISPLAY_ID_PATTERN, GO-10 REV-B L3).
-export const BILL_DISPLAY_ID_PATTERN = /^(BILL-[0-9]{4}-[0-9]{5}|[0-9]{1,12})$/;
+// 443.110 G4: a vendor bill born on a load (the Settlement Creator's owed company expense) is numbered on that load's
+// spine — load-1, load-2 ... (expense-number.ts formatLoadExpenseNumber), the same series every load document uses; the
+// bare load number stays the driver bill's. Exactly that shape is added: digits, a dash, a sequence.
+export const BILL_DISPLAY_ID_PATTERN = /^(BILL-[0-9]{4}-[0-9]{5}|[0-9]{1,12}|[0-9]{1,12}-[0-9]{1,4})$/;
 
 function assertDisplayIdShape(value: string, pattern: RegExp, docType: string): string {
   if (!pattern.test(value)) {
@@ -285,8 +288,60 @@ export async function resolveInvoiceDisplayId(
   operatingCompanyId: string,
   referenceDate: Date,
   requested?: string | null,
-  autoFallback?: string | null
+  autoFallback?: string | null,
+  opts?: { loadNumber?: string; authorizedZeroRevenue?: boolean }
 ): Promise<string> {
+  // ROUND 443.8: every from-load invoice is numbered <invoice-number>-<load-number>.
+  // When opts.loadNumber is set we are in from-load context; all other paths are unchanged.
+  if (opts?.loadNumber) {
+    const loadNum = opts.loadNumber;
+    await withDisplayLock(client, `accounting.invoice.display_id:${operatingCompanyId}`);
+
+    const typedDigits = parseOperatorDocumentNumber(requested);
+    if (typedDigits) {
+      // Typed raw digits only (1-6 digits, no dashes). Build <typed>-<load>.
+      if (!/^[0-9]{1,6}$/.test(typedDigits)) {
+        // Non-digit manual number in from-load context: fall through to standard path below.
+        // (Should not happen — CC-3 only passes digits for from-load invoices.)
+      } else {
+        const composed = `${typedDigits}-${loadNum}`;
+        assertDisplayIdShape(composed, INVOICE_DISPLAY_ID_PATTERN, "invoice");
+        // Same load + same typed number -> DuplicateDocumentNumberError (prevents double-mint).
+        // Different load + same typed number -> allowed (59-13577 and 59-13578 are both real).
+        const taken = await client.query(
+          `SELECT 1 FROM accounting.invoices
+            WHERE operating_company_id = $1::uuid AND display_id = $2 LIMIT 1`,
+          [operatingCompanyId, composed]
+        );
+        if (taken.rows[0]) throw new DuplicateDocumentNumberError("display_id", composed, "invoice");
+        return composed;
+      }
+    }
+
+    // Blank: $0 authorized path returns 0-<load>.
+    if (opts.authorizedZeroRevenue) {
+      return `0-${loadNum}`;
+    }
+
+    // Blank, non-$0: allocate <next>-<load> where next = MAX(split_part(display_id, '-', 1)
+    // cast as int) over invoice-dash-load rows (excludes 0), + 1; 1 when none.
+    const maxRes = await client.query(
+      `
+        SELECT COALESCE(
+          MAX(split_part(display_id, '-', 1)::int),
+          0
+        ) AS max_num
+          FROM accounting.invoices
+         WHERE operating_company_id = $1::uuid
+           AND display_id ~ '^[0-9]{1,6}-[0-9]{1,12}$'
+           AND split_part(display_id, '-', 1) <> '0'
+      `,
+      [operatingCompanyId]
+    );
+    const next = Number(maxRes.rows[0]?.max_num ?? 0) + 1;
+    return `${next}-${loadNum}`;
+  }
+
   const manual = parseOperatorDocumentNumber(requested);
   if (manual) {
     assertDisplayIdShape(manual, INVOICE_DISPLAY_ID_PATTERN, "invoice");

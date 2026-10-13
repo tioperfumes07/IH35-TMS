@@ -1,7 +1,5 @@
-import type { PoolClient } from "pg";
 import { withLuciaBypass } from "../auth/db.js";
-import { isEnabled } from "../lib/feature-flags/service.js";
-import { detectAnchorDrift } from "./master-data-anchor-drift.js";
+import { refuseQboNativeWrite } from "./qbo-native-write-refused.js";
 
 export type CustomersReconcileResult = {
   driftDetected: number;
@@ -11,146 +9,14 @@ export type CustomersReconcileResult = {
   reconciledAt: string;
 };
 
-async function markLocalOnlyDrift(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(
-    `
-      WITH updated AS (
-        UPDATE mdata.customers
-        SET
-          qbo_sync_status = 'drift_detected',
-          qbo_sync_error = 'local row has no qbo_customer_id link',
-          updated_at = now()
-        WHERE operating_company_id = $1::uuid
-          AND qbo_customer_id IS NULL
-          AND deactivated_at IS NULL
-          AND archived_at IS NULL
-          AND COALESCE(qbo_sync_status, '') <> 'local_only'
-        RETURNING 1
-      )
-      SELECT COUNT(*)::text AS c FROM updated
-    `,
-    [operatingCompanyId]
-  );
-  return Number(res.rows[0]?.c ?? 0);
-}
-
-async function createMissingFromMirror(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(
-    `
-      WITH inserted AS (
-        INSERT INTO mdata.customers (
-          operating_company_id,
-          customer_name,
-          billing_email,
-          billing_phone,
-          qbo_customer_id,
-          status,
-          notes,
-          deactivated_at,
-          qbo_synced_at,
-          qbo_sync_status
-        )
-        SELECT
-          qc.operating_company_id,
-          CASE
-            WHEN qc.display_name ~ 'Ã.|Â.' THEN convert_from(convert_to(qc.display_name, 'LATIN1'), 'UTF8')
-            ELSE qc.display_name
-          END,
-          qc.primary_email,
-          qc.primary_phone,
-          qc.qbo_id,
-          CASE WHEN qc.active THEN 'active'::mdata.customer_status ELSE 'inactive'::mdata.customer_status END,
-          $2,
-          CASE WHEN qc.active THEN NULL ELSE now() END,
-          now(),
-          'synced'
-        FROM mdata.qbo_customers qc
-        WHERE qc.operating_company_id = $1::uuid
-          AND qc.qbo_id IS NOT NULL
-          AND NOT EXISTS (
-            SELECT 1 FROM mdata.customers c
-            WHERE c.operating_company_id = qc.operating_company_id
-              AND c.qbo_customer_id = qc.qbo_id
-          )
-        RETURNING 1
-      )
-      SELECT COUNT(*)::text AS c FROM inserted
-    `,
-    [operatingCompanyId, `Reconciled from QBO mirror (${operatingCompanyId})`]
-  );
-  return Number(res.rows[0]?.c ?? 0);
-}
-
-async function healFieldDrift(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(
-    `
-      WITH healed AS (
-        UPDATE mdata.customers c
-        SET
-          customer_name = qc.display_name,
-          billing_email = qc.primary_email,
-          billing_phone = qc.primary_phone,
-          qbo_sync_status = 'synced',
-          qbo_sync_error = NULL,
-          qbo_synced_at = now(),
-          updated_at = now()
-        FROM mdata.qbo_customers qc
-        WHERE qc.operating_company_id = $1::uuid
-          AND qc.qbo_id = c.qbo_customer_id
-          AND c.operating_company_id = qc.operating_company_id
-          AND (
-            c.customer_name IS DISTINCT FROM qc.display_name
-            OR c.billing_email IS DISTINCT FROM qc.primary_email
-            OR c.billing_phone IS DISTINCT FROM qc.primary_phone
-          )
-        RETURNING 1
-      )
-      SELECT COUNT(*)::text AS c FROM healed
-    `,
-    [operatingCompanyId]
-  );
-  return Number(res.rows[0]?.c ?? 0);
-}
-
-async function countLocalOnly(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(
-    `
-      SELECT COUNT(*)::text AS c
-      FROM mdata.customers
-      WHERE operating_company_id = $1::uuid
-        AND qbo_sync_status = 'local_only'
-        AND deactivated_at IS NULL
-        AND archived_at IS NULL
-    `,
-    [operatingCompanyId]
-  );
-  return Number(res.rows[0]?.c ?? 0);
-}
-
+/**
+ * ACCT-F4431380 (Lead 443.137 item 9e) — REFUSED BY NAME. This formerly created, healed and drift-flagged
+ * native mdata.customers rows from the QuickBooks mirror (mdata.qbo_customers). QuickBooks is a read-only archive: a QBO
+ * reconciler never writes a native master table. Throws QboNativeWriteRefusedError (QBO_NATIVE_WRITE_REFUSED)
+ * instead of reporting a reconcile that did nothing. The read-only sync status below is unchanged.
+ */
 export async function reconcileCustomers(operatingCompanyId: string): Promise<CustomersReconcileResult> {
-  const reconciledAt = new Date().toISOString();
-  let driftDetected = 0;
-  let createdFromQbo = 0;
-  let healed = 0;
-  let localOnly = 0;
-
-  await withLuciaBypass(async (client) => {
-    driftDetected = await markLocalOnlyDrift(client, operatingCompanyId);
-    createdFromQbo = await createMissingFromMirror(client, operatingCompanyId);
-    // AF-2: healFieldDrift() is a write-back — locked decision is "detect only, write stays OFF". Gate
-    // it behind QBO_MASTER_DATA_HEAL_ENABLED (default OFF); when off, record the same drift as a
-    // read-only accounting.recon_exceptions row (ANCHOR_DRIFT) instead of mutating mdata.customers.
-    const healEnabled = await isEnabled(client, "QBO_MASTER_DATA_HEAL_ENABLED", { operating_company_id: operatingCompanyId });
-    if (healEnabled) {
-      healed = await healFieldDrift(client, operatingCompanyId);
-    } else {
-      await detectAnchorDrift(client, operatingCompanyId, "customers");
-      healed = 0;
-    }
-    localOnly = await countLocalOnly(client, operatingCompanyId);
-  });
-
-  return { driftDetected, createdFromQbo, healed, localOnly, reconciledAt };
+  return refuseQboNativeWrite("qbo-sync/customers-reconciler#reconcileCustomers", ["mdata.customers"], operatingCompanyId);
 }
 
 export type CustomersSyncStatus = {

@@ -18,8 +18,6 @@ export const REQUIRES_LIVE_DB =
 export const ALLOW_OFFLINE_SKIP =
   "live network health check (real geocode API call, no DATABASE_URL involved) -- honors SKIP_LIVE_NETWORK_CHECKS=true for environments with no provider credentials configured, same declared pattern verify-no-silent-db-skip.mjs requires.";
 
-import { register } from "tsx/esm/api";
-register();
 
 const LABEL = "verify-geocode-provider-is-reachable";
 
@@ -33,11 +31,30 @@ const KNOWN_GOOD_ADDRESS = {
   country: "US",
 };
 
+/**
+ * 443.102 (LEAD ruling 4): the provider key lives only in the Render environment, so the real check runs
+ * INSIDE the deployed app (GET /api/v1/healthz/geocode, apps/backend/src/health/geocode-health.ts) and this
+ * guard reads it post-deploy from the job that can reach it (.github/workflows/deploy-parity-monitor.yml,
+ * GEOCODE_HEALTH_URL). Without GEOCODE_HEALTH_URL it still geocodes in-process (a machine that holds the key).
+ */
+export function classifyDeployedProbe(status, body) {
+  if (status === 404) return { ok: false, why: "probe endpoint missing (deployed app predates /api/v1/healthz/geocode)" };
+  if (!body || typeof body !== "object") return { ok: false, why: `unreadable probe response (HTTP ${status})` };
+  if (body.ok === true && status === 200 && body.source) return { ok: true, why: `${body.source} geocoded the fixed address (precision=${body.precision ?? "?"}, checked ${body.checked_at})` };
+  return { ok: false, why: `deployed geocode probe failed: reason=${body.reason ?? "unknown"} (HTTP ${status})` };
+}
+
 function selftest() {
-  // Pure config-shape check -- the real network call is exercised in main() only, matching the
-  // house pattern (verify-no-duplicate-non-owned-trailer.mjs etc.) of a fast selftest plus a live
-  // check gated behind DATABASE_URL/network access.
-  console.log(`${LABEL} selftest OK — no pure logic to unit test (this guard is a live network health check by design)`);
+  let bad = 0;
+  const ex = (n, c) => { if (!c) { console.error(`${LABEL} selftest FAIL: ${n}`); bad += 1; } };
+  ex("healthy probe passes", classifyDeployedProbe(200, { ok: true, source: "google", precision: "range", checked_at: "t" }).ok === true);
+  ex("provider_unavailable fails", classifyDeployedProbe(503, { ok: false, reason: "provider_unavailable" }).ok === false);
+  ex("ok:true without a provider source fails", classifyDeployedProbe(200, { ok: true, source: null }).ok === false);
+  ex("ok:true on a non-200 fails", classifyDeployedProbe(503, { ok: true, source: "google" }).ok === false);
+  ex("missing endpoint fails (never a pass)", classifyDeployedProbe(404, null).ok === false);
+  ex("unreadable body fails", classifyDeployedProbe(200, null).ok === false);
+  if (bad) process.exit(1);
+  console.log(`${LABEL} selftest OK — 6/6 deployed-probe verdicts`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -50,6 +67,25 @@ async function main() {
     console.log(`${LABEL}: SKIP — SKIP_LIVE_NETWORK_CHECKS=true (live-network invariant by design).`);
     process.exit(0);
   }
+  const url = (process.env.GEOCODE_HEALTH_URL || "").trim();
+  if (url) {
+    let status = 0, body = null;
+    try {
+      const res = await fetch(url, { headers: { accept: "application/json" } });
+      status = res.status;
+      body = await res.json().catch(() => null);
+    } catch (err) {
+      console.error(`${LABEL}: FAIL — could not reach ${url}: ${err.message}`);
+      process.exit(1);
+    }
+    const v = classifyDeployedProbe(status, body);
+    if (!v.ok) { console.error(`${LABEL}: FAIL — ${v.why}`); process.exit(1); }
+    console.log(`${LABEL}: PASS — deployed app: ${v.why}`);
+    process.exit(0);
+  }
+  // In-process mode only: tsx is loaded here so the deployed-probe mode (post-deploy job, no npm ci) needs no deps.
+  const { register } = await import("tsx/esm/api");
+  register();
   const { geocodeAddressWithEvidence } = await import("../apps/backend/src/telematics/stop-geocode-fallback.service.ts");
   const outcome = await geocodeAddressWithEvidence(KNOWN_GOOD_ADDRESS);
   if (!outcome.ok) {

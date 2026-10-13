@@ -17,12 +17,21 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-load-settlement-summary-resolves-line-linked";
 const ROUTES = path.join(ROOT, "apps/backend/src/dispatch/load-settlement-summary.routes.ts");
+// ROUND 150 / ONE-LOAD-SERVICE (#22941) moved the settlement WHERE out of the route into this resolver; the route
+// must call it. 443.99: the guard reads the resolution where it now lives (it read the route alone and failed).
+const RESOLVER = path.join(ROOT, "apps/backend/src/dispatch/resolve-settlement-for-load.ts");
+const readSources = () => fs.readFileSync(ROUTES, "utf8") + "\n/* --- resolve-settlement-for-load.ts --- */\n" + fs.readFileSync(RESOLVER, "utf8");
 
 function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check(src = fs.readFileSync(ROUTES, "utf8")) {
+function check(src = readSources()) {
+  assert(
+    /import\s*\{[^}]*\bresolveSettlementForLoad\b[^}]*\}\s*from\s*["']\.\/resolve-settlement-for-load\.js["']/.test(src) &&
+      /await\s+resolveSettlementForLoad\(client,/.test(src),
+    "route must resolve the settlement through resolveSettlementForLoad (ROUND 150 one load service)"
+  );
   assert(
     /\/api\/v1\/dispatch\/loads\/:loadId\/settlement-summary/.test(src),
     "must mount GET /api/v1/dispatch/loads/:loadId/settlement-summary"
@@ -47,7 +56,7 @@ function check(src = fs.readFileSync(ROUTES, "utf8")) {
 }
 
 function selftest() {
-  const original = fs.readFileSync(ROUTES, "utf8");
+  const original = readSources();
   const broken = original.replace(
     /AND \(\s*s\.first_load_id[\s\S]*?\)\s*ORDER BY/m,
     `AND s.settlement_model = 'load_bookended'\n           AND (s.first_load_id = $2 OR s.last_load_id = $2)\n         ORDER BY`
@@ -69,6 +78,15 @@ function selftest() {
     failed = true;
   }
   assert(failed, "--selftest expected FAIL when shared-driver authorization is disabled");
+  const inlineAgain = original.replace(/await\s+resolveSettlementForLoad\(client,/, "await inlineSettlementLookup(client,");
+  assert(inlineAgain !== original, "--selftest plant must mutate the resolver call");
+  failed = false;
+  try {
+    check(inlineAgain);
+  } catch {
+    failed = true;
+  }
+  assert(failed, "--selftest expected FAIL when the route stops calling resolveSettlementForLoad");
   check();
   console.log(`${LABEL}: OK — selftest PASS`);
 }

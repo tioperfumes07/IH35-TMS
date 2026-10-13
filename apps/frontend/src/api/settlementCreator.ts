@@ -2,6 +2,8 @@ import { apiRequest } from "./client";
 
 export type SettlementCreatorFactorOption = "faro_usmca" | "faro_transportation" | "direct";
 export type SettlementCreatorFuelCard = "dreamline" | "relay";
+/** ROUND 443.6 — how a company expense was paid: a card (paid now) or owed to the vendor (A/P bill). Required. */
+export type SettlementCreatorExpensePaymentSource = "dreamline" | "relay" | "owed";
 
 export type SettlementCreatorDraft = {
   operating_company_id: string;
@@ -9,6 +11,8 @@ export type SettlementCreatorDraft = {
   driver_id: string;
   unit_id?: string | null;
   trailer_equipment_number?: string | null;
+  /** LEAD 443.109 — explicit "No trailer (bobtail / power only)" when the document names no trailer. */
+  trailer_none?: boolean;
   trailer_id?: string | null;
   period_start: string;
   period_end: string;
@@ -43,8 +47,12 @@ export type SettlementCreatorDraft = {
       amount_cents: number;
     }>;
     factoring: SettlementCreatorFactorOption;
+    /** ROUND 443.3 — Invoice no. (Faro / QuickBooks number, digits). Invoice = <invoice>-<load>; blank = next number. */
+    invoice_number?: string | null;
     date_sent_to_factoring?: string | null;
     loaded_miles?: number | null;
+    /** Driver pay miles (short) — company loaded_miles are practical / different. */
+    miles_shortest?: number | null;
     empty_miles?: number | null;
     empty_rate_cents?: number | null;
     picks?: number | null;
@@ -52,6 +60,8 @@ export type SettlementCreatorDraft = {
     trip_type?: "NB" | "TR" | "SB" | "LOCAL" | null;
     join_outbound_load_number?: string | null;
     not_yet_delivered?: boolean | null;
+    /** Lead 443.57 — per-field source of the LOAD's saved operating miles (CC-2's engine). Omitted = document. Pay never reads it. */
+    miles_choice?: Partial<Record<"practical" | "short" | "empty", { source: "document" | "historical" | "google" | "manual"; manual_value?: number | null; reason?: string | null }>> | null;
   }>;
   seed_dispatched_loads?: boolean;
   fuel_purchases: Array<{
@@ -82,19 +92,32 @@ export type SettlementCreatorDraft = {
     load_number?: string | null;
     is_company_expense: boolean;
     is_reimbursable: boolean;
-    card?: SettlementCreatorFuelCard | null;
+    card?: SettlementCreatorExpensePaymentSource | null;
+    /** ROUND 443.6 — vendor, the vendor's own document number, and the source quantity / unit (gallons of DEF). */
+    vendor_name?: string | null;
+    vendor_document_number?: string | null;
+    quantity?: number | null;
+    unit_of_measure?: string | null;
     /** ROUND 363-CC2-D — picked at creation; the account wins over the item's default, load_id over load_number. */
     item_id?: string | null;
     account_id?: string | null;
     load_id?: string | null;
   }>;
-  deductions: Array<{ description: string; amount_cents: number; load_number?: string | null }>;
+  deductions: Array<{
+    description: string;
+    amount_cents: number;
+    load_number?: string | null;
+    item_id?: string | null;
+    quantity?: number | null;
+  }>;
   reimbursements: Array<{ description: string; amount_cents: number; load_number?: string | null }>;
   additional_pay?: Array<{
     description: string;
     amount_cents: number;
     load_number?: string | null;
     pay_kind?: "detention" | "layover" | "bonus" | "stop_pay" | "other";
+    item_id?: string | null;
+    quantity?: number | null;
   }>;
   escrow: Array<{ description: string; amount_cents: number; load_number?: string | null }>;
   advances: Array<{
@@ -137,6 +160,8 @@ export type SettlementCreatorCloseTotals = {
 
 export type SettlementCreatorPreview = {
   close_totals?: SettlementCreatorCloseTotals | null;
+  /** Lead 443.57 — what the rehearsal saved on each load's miles (value + source + both recommendations). */
+  miles_choices?: Array<{ load_id: string; load_number: string; fields: Record<"practical" | "short" | "empty", { value: number | null; source: string | null; historical: number | null; google: number | null }> }> | null;
   je_lines: SettlementCreatorJeLine[];
   debit_total_cents: number;
   credit_total_cents: number;
@@ -156,9 +181,26 @@ export async function previewSettlementCreator(draft: SettlementCreatorDraft) {
   );
 }
 
+/** ROUND 443.7 b — each stage of a post, in plain English; ok only when every required stage succeeded. */
+export type SettlementCreatorStage = { ok: boolean; status: string; message: string };
+export type SettlementCreatorStages = {
+  documents: SettlementCreatorStage;
+  ledger: SettlementCreatorStage;
+  factoring: SettlementCreatorStage;
+  billing: SettlementCreatorStage;
+};
+
+export async function retrySettlementCreatorAfterCommit(operatingCompanyId: string, settlementId: string) {
+  return apiRequest<{ ok: boolean; stages: Pick<SettlementCreatorStages, "factoring" | "billing"> }>(
+    `/api/v1/driver-finance/settlement-creator/${encodeURIComponent(settlementId)}/retry-after-commit`,
+    { method: "POST", body: { operating_company_id: operatingCompanyId } },
+  );
+}
+
 export async function postSettlementCreator(draft: SettlementCreatorDraft) {
   return apiRequest<{
-    ok: true;
+    ok: boolean;
+    stages?: SettlementCreatorStages;
     settlement_id: string;
     source_document_ref: string;
     display_id: string;

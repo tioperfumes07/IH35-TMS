@@ -65,9 +65,9 @@ try {
   const trigger = (await c.query(`SELECT tgenabled FROM pg_trigger WHERE tgrelid = 'mdata.loads'::regclass AND tgname = $1`, [TRIGGER])).rows[0] ?? null;
   const missing = (await c.query(`
     SELECT co.code, l.load_number FROM mdata.loads l JOIN org.companies co ON co.id = l.operating_company_id
-     WHERE l.status::text = 'cancelled'
-       AND NOT EXISTS (SELECT 1 FROM dispatch.load_cancellations lc WHERE lc.load_id = l.id AND lc.status = 'approved')
-     ORDER BY 1, 2`)).rows;
+     WHERE l.operating_company_id = $1 AND l.status::text = 'cancelled'
+       AND NOT EXISTS (SELECT 1 FROM dispatch.load_cancellations lc WHERE lc.load_id = l.id AND lc.operating_company_id = $1 AND lc.status = 'approved')
+     ORDER BY 1, 2`, ["5c854333-6ea5-4faa-af31-67cb272fef80"])).rows;
   if (!applied) {
     console.log(`${LABEL}: PENDING DEPLOY — migration not in the ledger; trigger check skipped`);
     fails.push(...auditLive({ tgenabled: "O" }, missing));

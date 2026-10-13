@@ -67,6 +67,21 @@ const CHECKS = [
   ["short_max", "short_max IS NOT NULL"],
 ];
 
+/** Pure verdict over the live counts (total USMCA lanes, populated rows per tracked column) — main() and --selftest share it. */
+export function columnProblems(total, populatedByColumn) {
+  if (total === 0) {
+    return ["catalogs.lane_mileage has ZERO rows for USMCA -- an import that ran and left the table empty is itself the failure mode this guard exists to catch."];
+  }
+  const problems = [];
+  for (const [column] of CHECKS) {
+    if (KNOWN_SOURCE_HAS_NO_DATA_FOR.has(column)) continue;
+    if ((populatedByColumn[column] ?? 0) === 0) {
+      problems.push(`${column}: 0 of ${total} live rows populated (source carries real data for this column -- an import silently dropped it)`);
+    }
+  }
+  return problems;
+}
+
 function fail(message) {
   console.error(`${LABEL} — FAILED\n${message}`);
   process.exit(1);
@@ -90,19 +105,15 @@ async function main() {
       [USMCA]
     );
     const total = totalRes.rows[0].n;
-    if (total === 0) {
-      fail("catalogs.lane_mileage has ZERO rows for USMCA -- an import that ran and left the table empty is itself the failure mode this guard exists to catch.");
-    }
-
-    const problems = [];
-    for (const [column, predicate] of CHECKS) {
-      if (KNOWN_SOURCE_HAS_NO_DATA_FOR.has(column)) continue;
-      const res = await client.query(`SELECT count(*)::int AS n FROM catalogs.lane_mileage WHERE operating_company_id = $1::uuid AND ${predicate}`, [USMCA]);
-      const n = res.rows[0].n;
-      if (n === 0) {
-        problems.push(`${column}: 0 of ${total} live rows populated (source carries real data for this column -- an import silently dropped it)`);
+    const populatedByColumn = {};
+    if (total > 0) {
+      for (const [column, predicate] of CHECKS) {
+        if (KNOWN_SOURCE_HAS_NO_DATA_FOR.has(column)) continue;
+        const res = await client.query(`SELECT count(*)::int AS n FROM catalogs.lane_mileage WHERE operating_company_id = $1::uuid AND ${predicate}`, [USMCA]);
+        populatedByColumn[column] = res.rows[0].n;
       }
     }
+    const problems = columnProblems(total, populatedByColumn);
 
     if (problems.length > 0) {
       fail(problems.map((p) => `- ${p}`).join("\n"));
@@ -127,7 +138,24 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL — short_miles/empty_miles must be tracked (the exact columns this guard was authored to catch dropping)`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST OK — static shape valid; live behavior requires DATABASE_URL + ENABLE_LIVE_DB_UNIT_TEST_GUARD=true`);
+  // Planted import regressions through the same verdict main() uses.
+  const full = Object.fromEntries(CHECKS.map(([c]) => [c, 5]));
+  if (columnProblems(40, full).length) {
+    console.error(`${LABEL} SELFTEST FAIL — a fully populated import was rejected`);
+    process.exit(1);
+  }
+  const plants = [
+    ["import dropped short_miles", columnProblems(40, { ...full, short_miles: 0 })],
+    ["import wrote empty_miles as zero everywhere", columnProblems(40, { ...full, empty_miles: 0 })],
+    ["import dropped practical_min/max", columnProblems(40, { ...full, practical_min: 0, practical_max: 0 })],
+    ["import left the table empty", columnProblems(0, full)],
+  ];
+  const escaped = plants.filter(([, p]) => p.length === 0).map(([n]) => n);
+  if (escaped.length) {
+    console.error(`${LABEL} SELFTEST FAIL — planted violation(s) escaped: ${escaped.join(", ")}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST: ${plants.length}/${plants.length} planted violations caught — live behavior requires DATABASE_URL + ENABLE_LIVE_DB_UNIT_TEST_GUARD=true`);
   process.exit(0);
 }
 

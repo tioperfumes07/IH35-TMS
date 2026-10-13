@@ -15,8 +15,9 @@
  *            receivable in their transaction and pass liabilityId to the deduction.
  *   RULE 3 — pay-run close and settlement-line materialization credit the receivable for a deduction that
  *            names its liability.
- *   RULE 4 — void (route + governance executor) writes off through writeOffDriverReceivableInClientTx (reversing
- *            entry); mark-paid-off refuses a receivable; escrow forfeit credits the receivable.
+ *   RULE 4 — void route calls the ONE engine voidDriverLiabilityInClientTx, which writes off through
+ *            writeOffDriverReceivableInClientTx (reversing entry); governance executor writes off the same way;
+ *            mark-paid-off refuses a receivable; escrow forfeit credits the receivable.
  *   RULE 5 — migration 202615390100 adds driver_settlement_deductions.liability_id with its FK.
  * LIVE (direct, read-only, USMCA only):
  *   RULE 6 — every damage / fine liability created on or after SINCE has its 'driver_liability' posting, and
@@ -41,6 +42,7 @@ export const F = {
   payrun: `${SRC}/driver-finance/settlement-payrun-close.service.ts`,
   materialize: `${SRC}/driver-finance/settlement-lines-materialize.service.ts`,
   liabRoutes: `${SRC}/liabilities/liabilities.routes.ts`,
+  liabVoid: `${SRC}/liabilities/driver-liability-void.service.ts`,
   governance: `${SRC}/governance/void-cancel-executors.ts`,
   forfeit: `${SRC}/driver-finance/escrow-forfeit.service.ts`,
   migration: "db/migrations/202615390100_settlement_deduction_links_its_driver_receivable.sql",
@@ -69,7 +71,9 @@ export function staticProblems(read) {
   if (!/driverReceivableFor\(r\.liability_type\)\?\.receivable \?\? bucketRecoveryRoleKey/.test(read(F.payrun) ?? "")) out.push("RULE 3 pay-run close does not credit the receivable for a linked deduction");
   if (!/driverReceivableFor\(d\.liability_type\)/.test(read(F.materialize) ?? "")) out.push("RULE 3 settlement-line materialization does not post a linked deduction to the receivable");
   const lr = read(F.liabRoutes) ?? "";
-  if (!/writeOffDriverReceivableInClientTx\(/.test(lr)) out.push("RULE 4 the liability void route does not write off through the reversing entry");
+  // AJK-12 / LEAD 443.114: route calls the ONE void engine; the engine (not the route) calls the write-off.
+  if (!/voidDriverLiabilityInClientTx\(/.test(lr)) out.push("RULE 4 the liability void route does not call the ONE void engine");
+  if (!/writeOffDriverReceivableInClientTx\(/.test(read(F.liabVoid) ?? "")) out.push("RULE 4 the liability void engine does not write off through the reversing entry");
   if (!/driver_receivable_recovers_through_settlement_or_void/.test(lr)) out.push("RULE 4 mark-paid-off does not refuse a driver receivable");
   if (!/writeOffDriverReceivableInClientTx\(/.test(read(F.governance) ?? "")) out.push("RULE 4 the governance void executor does not write off through the reversing entry");
   if (!/receivable\?\.receivable \?\? "damage_recovery"/.test(read(F.forfeit) ?? "")) out.push("RULE 4 escrow forfeit does not credit a linked receivable");
@@ -102,6 +106,8 @@ if (isMain) {
       ["an internal fine deduction without its liability fails", has(plant(F.internal, 'sourceType: "fine",\n              liabilityId,', 'sourceType: "fine",'), "RULE 2")],
       ["pay-run close crediting the recovery account fails", has(plant(F.payrun, "driverReceivableFor(r.liability_type)?.receivable ?? bucketRecoveryRoleKey", "bucketRecoveryRoleKey"), "RULE 3")],
       ["mark-paid-off zeroing a receivable fails", has(plant(F.liabRoutes, "driver_receivable_recovers_through_settlement_or_void", "x"), "RULE 4")],
+      ["a void route that skips the ONE engine fails", has(plant(F.liabRoutes, "voidDriverLiabilityInClientTx(", "noopVoid("), "RULE 4")],
+      ["a void engine that skips the reversing write-off fails", has(plant(F.liabVoid, "writeOffDriverReceivableInClientTx(", "noopWriteOff("), "RULE 4")],
       ["a forfeit crediting damage_recovery fails", has(plant(F.forfeit, 'receivable?.receivable ?? "damage_recovery"', '"damage_recovery"'), "RULE 4")],
       ["a missing migration fails", has((f) => (f === F.migration ? null : real(f)), "RULE 5")],
       ["live clean passes", liveProblems({ unposted: 0, voidedUnreversed: 0 }).length === 0],

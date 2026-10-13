@@ -105,10 +105,10 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     await bypass(async () => {
       await db.query(
         `INSERT INTO accounting.bill_payments
-           (id, operating_company_id, bill_id, payment_date, amount_cents, amount, payment_method,
+           (id, operating_company_id, bill_id, vendor_id, payment_date, amount_cents, amount, payment_method,
             from_bank_account_id, status, created_by_user_id)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,CURRENT_DATE,$4,$5,'ach',$6,$7,$8::uuid)`,
-        [id, companyId, opts.billId, opts.amountCents, opts.amountCents / 100, opts.fromBankAccountId, opts.status ?? "posted", userId]
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,$5,$6,'ach',$7,$8,$9::uuid)`,
+        [id, companyId, opts.billId, `BP-VENDOR-${suffix}`, opts.amountCents, opts.amountCents / 100, opts.fromBankAccountId, opts.status ?? "posted", userId]
       );
     });
     createdPaymentIds.push(id);
@@ -122,10 +122,10 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     await bypass(async () => {
       await db.query(
         `INSERT INTO accounting.bill_payments
-           (id, operating_company_id, bill_id, payment_date, amount_cents, amount, payment_method,
+           (id, operating_company_id, bill_id, vendor_id, payment_date, amount_cents, amount, payment_method,
             cc_account_id, status, payment_source_kind, created_by_user_id)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,CURRENT_DATE,$4,$5,'cc',$6::uuid,'posted','cc_bill_payment',$7::uuid)`,
-        [id, companyId, opts.billId, opts.amountCents, opts.amountCents / 100, opts.ccAccountId, userId]
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,$5,$6,'cc',$7::uuid,'posted','cc_bill_payment',$8::uuid)`,
+        [id, companyId, opts.billId, `BP-VENDOR-${suffix}`, opts.amountCents, opts.amountCents / 100, opts.ccAccountId, userId]
       );
     });
     createdPaymentIds.push(id);
@@ -144,6 +144,8 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     await db.connect();
     await db.query("SET ROLE ih35_app");
     await bypass(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `bill-payment-gl-${suffix}@test.local`]

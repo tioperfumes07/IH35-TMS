@@ -98,7 +98,10 @@ describeIntegration("scheduled-reports-worker smoke (integration)", () => {
             'pdf',
             'active',
             $2::uuid,
-            now() - interval '1 minute'
+            -- 443.105: the earliest due row in the shared DB. The worker drains due rows oldest-first, 10 per tick, and
+            -- this suite pins the tick to 10 min; the fixture setup leaves ~18 company schedules due earlier today, so a
+            -- row due "1 minute ago" never got its turn inside the 20 s wait (status '' on every fresh DB).
+            now() - interval '30 days'
           )
           RETURNING id
         `,
@@ -119,7 +122,21 @@ describeIntegration("scheduled-reports-worker smoke (integration)", () => {
     } as unknown as FastifyInstance["log"];
 
     initializeScheduledReportsWorker({ log } as unknown as FastifyInstance);
-    await new Promise((resolve) => setTimeout(resolve, 750));
+    // 443.91 #4: a fixed 750 ms sleep raced the worker on a loaded CI runner (the run row was not written yet, status '').
+    // Wait for the worker's own run row (up to 20 s), then stop it — the assertions below are unchanged.
+    const deadline = Date.now() + 20_000;
+    while (Date.now() < deadline) {
+      const done = await withLuciaBypass(async (client) => {
+        await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+        const r = await client.query(
+          `SELECT 1 FROM reporting.scheduled_report_runs WHERE scheduled_report_id = $1::uuid AND status IS NOT NULL AND status <> 'running' LIMIT 1`,
+          [scheduleId]
+        );
+        return r.rows.length > 0;
+      });
+      if (done) break;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
     stopScheduledReportsWorker();
 
     await withLuciaBypass(async (client) => {
@@ -141,5 +158,5 @@ describeIntegration("scheduled-reports-worker smoke (integration)", () => {
     });
 
     expect(vi.mocked(deliverScheduledReportToEmail).mock.calls.length).toBeGreaterThan(0);
-  });
+  }, 30_000);
 });

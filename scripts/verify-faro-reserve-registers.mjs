@@ -4,8 +4,11 @@
 // Static:
 //   1. each poster kind resolves exactly its ruled accounts — schedule fee 6405 factor_transaction_fee / 1235; short-pay
 //      2150 factoring_advance_liability / 1235 (never A/R); client payable to IH 35 8000 intercompany / 1235; escrow -> cash
-//      1235 / 1230 — and no Faro poster ever resolves ar_control (A/R never left, secured borrowing);
-//   2. a Rsv Deposit and a client payable to us refuse (they post with their payment / transfer match);
+//      1235 / 1230. LEAD 443.84 #1 (2026-10-12): Faro's own report is the evidence that the debtor paid, so A/R goes down
+//      HERE and only as the customer payment: ar_control is resolved exactly once, as the CREDIT of the payment legs
+//      (DR 2150 / CR 1100) that escrow -> cash (unpaid face) and short-pay ("Paid") carry; never a debit, never elsewhere;
+//      a client payable to us is the reserve release, DR cash_clearing / CR 1235;
+//   2. a Rsv Deposit refuses (it posts with its payment match);
 //   3. the report import is Owner-only and rejects the Inv/PO swap (row 405560) instead of guessing;
 //   4. every leg is stamped source 'faro_reserve_entry' (the per-customer reserve joins through it).
 // Live (DATABASE_URL): every posted entry's journal entry carries a leg on its register's GL account and is stamped to the
@@ -32,11 +35,15 @@ export function check(src) {
   const need = [
     [/const pos = await interestPositionThrough\(client, oci, link!\.purchase_line_id, entry\.entry_date\);\s*if \(pos\.due_cents > 0\) \{\s*const run = await proposeEventInterestAccrual/, "schedule fee (= Faro's Default Interest) must accrue interest through its date first (event run)"],
     [/account: await role\("factor_default_interest_payable"\), dc: "debit" as const, amount: accruedAll/, "schedule fee must relieve 2155 (factor_default_interest_payable)"],
-    [/entry_kind === "short_pay"\) \{\s*legs = \[\s*\{ account: await role\("factoring_advance_liability"\), dc: "debit"/, "short-pay must debit factoring_advance_liability (2150)"],
+    [/entry_kind === "short_pay"\) \{\s*(?:if \(await faroInvoiceClosed\([^;]+;\s*)?legs = \[\s*\{ account: await role\("factoring_advance_liability"\), dc: "debit"/, "short-pay must debit factoring_advance_liability (2150)"],
+    [/payment = \{ cents: Number\(entry\.short_pay_paid_cents \?\? 0\), entry \}/, "short-pay must carry Faro's \"Paid\" as the customer payment"],
+    [/payment = \{ cents: await faroUnpaidFaceCents\(/, "escrow -> cash must carry the unpaid face as the customer payment"],
+    [/\{ account: await role\("factoring_advance_liability"\), dc: "debit", amount: payment\.cents, entry: payment\.entry \},\s*\{ account: await role\("ar_control"\), dc: "credit", amount: payment\.cents, entry: payment\.entry \}/, "the customer payment must be DR 2150 / CR 1100"],
+    [/if \(payment\.cents > Number\(inv\.total\) - Number\(inv\.paid\)\) throw new FaroReserveError\("faro_payment_exceeds_invoice_open_balance"\)/, "the customer payment must be capped at the invoice's open balance"],
     [/\{ account: await role\("intercompany_receivable_ih35_transportation"\), dc: "debit"/, "client payable to IH 35 must debit the intercompany receivable (8000)"],
     [/\{ account: cash, dc: "debit", amount, entry: cashSide \},\s*\{ account: await role\("factor_reserve_held"\), dc: "credit"/, "escrow -> cash must be DR 1235 / CR 1230"],
     [/throw new FaroReserveError\("faro_rsv_deposit_posts_with_its_payment_match"\)/, "a Rsv Deposit must refuse here"],
-    [/throw new FaroReserveError\("faro_client_payable_to_us_posts_as_a_transfer"\)/, "a client payable to us must refuse here"],
+    [/else if \(entry\.counterparty !== "ih35_transportation"\) \{\s*legs = \[\s*\{ account: await role\("cash_clearing"\), dc: "debit", amount, entry \},\s*\{ account: cash, dc: "credit", amount, entry \}/, "a client payable to us (the release) must be DR cash_clearing / CR 1235"],
     [/"inv_po_swapped"/, "the Inv/PO swap must be rejected"],
     [/source_transaction_type: "faro_reserve_entry"/, "every leg must be stamped source faro_reserve_entry"],
   ];
@@ -54,7 +61,7 @@ export function check(src) {
   if (!/resolveRoleAccount\(client as never, oci, "ar_control"\)/.test(sp) || !/debit_or_credit: "credit", amount_cents: amount, description: jeMemo/.test(sp)) fails.push(`${F.shortpay}: the write-down must credit A/R (ar_control)`);
   if (!/await writeFactoringSpineLinks\(client, oci, je\.id, "faro_short_pay_write_down"\)/.test(sp)) fails.push(`${F.shortpay}: the write-down lost its shared spine link`);
   if (/role\("factor_transaction_fee"\)/.test(s)) fails.push(`${F.svc}: a Faro poster expenses to 6405 — Faro's Schedule Fee is the Default Interest already accrued in 2155`);
-  if (/role\("ar_control"\)|"ar_control"/.test(s)) fails.push(`${F.svc}: a Faro poster resolves ar_control — A/R never left under secured borrowing`);
+  if ((s.match(/"ar_control"/g) ?? []).length !== 1) fails.push(`${F.svc}: ar_control may be resolved only once — as the customer payment's credit (LEAD 443.84)`);
   // KILL THE SECOND SYSTEM (owner 2026-10-03), tables 10 + 11: Faro's printed running balance and the short-pay "Balance:"
   // are recomputable (the parser refuses a discontinuous row and checks the short-pay arithmetic), so neither is stored or
   // read; the register's balance is derived from the statement balance kept on the register account, which the tie-out
@@ -82,6 +89,8 @@ if (process.argv.includes("--selftest")) {
     ["fee expensed to 6405", { svc: g.svc.replace('account: await role("factor_default_interest_payable"), dc: "debit" as const, amount: accruedAll', 'account: await role("factor_transaction_fee"), dc: "debit" as const, amount: accruedAll') }],
     ["fee posts without accrual", { svc: g.svc.replace("if (pos.due_cents > 0) {", "if (false) {") }],
     ["deposit posts", { svc: g.svc.replace('throw new FaroReserveError("faro_rsv_deposit_posts_with_its_payment_match")', "void 0") }],
+    ["customer payment uncapped", { svc: g.svc.replace('if (payment.cents > Number(inv.total) - Number(inv.paid)) throw new FaroReserveError("faro_payment_exceeds_invoice_open_balance");', "") }],
+    ["release credits escrow", { svc: g.svc.replace('{ account: await role("cash_clearing"), dc: "debit", amount, entry },\n      { account: cash, dc: "credit", amount, entry },', '{ account: await role("cash_clearing"), dc: "debit", amount, entry },\n      { account: await role("factor_reserve_held"), dc: "credit", amount, entry },') }],
     ["swap accepted", { svc: g.svc.replace('"inv_po_swapped"', '"ok"') }],
     ["spine write dropped", { svc: g.svc.replace("await writeFactoringSpineLinks(client, oci, je.id,", "void (client, oci, je.id,") }],
     ["stored running balance written again", { svc: g.svc.replace("entry_date, amount_cents,\n          faro_invoice_number", "entry_date, amount_cents, running_balance_cents,\n          faro_invoice_number") }],

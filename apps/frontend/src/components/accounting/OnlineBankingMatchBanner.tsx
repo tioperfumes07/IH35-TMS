@@ -63,46 +63,45 @@ export function OnlineBankingMatchBanner({
       data-testid="b1-online-banking-match-banner"
     >
       <div className="mb-1 text-xs font-bold uppercase text-[#4B5563]">1 online banking match</div>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-xs text-[#0F1219]">
-          <thead>
-            <tr className="border-b border-[#E5E7EB] text-center text-xs font-bold uppercase text-[#4B5563]">
-              <th className="px-1 py-1">Date</th>
-              <th className="px-1 py-1">Type</th>
-              <th className="px-1 py-1">Amount</th>
-              <th className="px-1 py-1 text-left">Bank detail</th>
-              <th className="px-1 py-1">Mode</th>
-              <th className="px-1 py-1" />
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="text-center">
-              <td className="px-1 py-1 whitespace-nowrap">{txnDate ? formatDateUS(txnDate) : "—"}</td>
-              <td className="px-1 py-1">Bank</td>
-              <td className="px-1 py-1 tabular-nums whitespace-nowrap">{amount}</td>
-              <td className="px-1 py-1 text-left">
-                <EntityLink
-                  kind="bank_transaction"
-                  id={bankTransactionId}
-                  label={description?.trim() || "Bank transaction"}
-                />
-              </td>
-              <td className="px-1 py-1 whitespace-nowrap">{modeLabel}</td>
-              <td className="px-1 py-1 text-right">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  disabled={unmatchMutation.isPending}
-                  onClick={() => unmatchMutation.mutate()}
-                  data-testid="b1-online-banking-unmatch"
-                >
-                  Unmatch
-                </Button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div
+        className="grid min-w-[640px] grid-cols-[auto_auto_auto_1fr_auto_auto] gap-x-1 text-xs text-[#0F1219]"
+        role="grid"
+        aria-label="Online banking match"
+      >
+        {["Date", "Type", "Amount", "Bank detail", "Mode", ""].map((h, i) => (
+          <div
+            key={h || "action"}
+            role="columnheader"
+            className={`border-b border-[#E5E7EB] px-1 py-1 text-center text-xs font-bold uppercase text-[#4B5563] ${i === 3 ? "text-left" : ""}`}
+          >
+            {h}
+          </div>
+        ))}
+        <div role="gridcell" className="px-1 py-1 text-center whitespace-nowrap">
+          {txnDate ? formatDateUS(txnDate) : "—"}
+        </div>
+        <div role="gridcell" className="px-1 py-1 text-center">Bank</div>
+        <div role="gridcell" className="px-1 py-1 text-center tabular-nums whitespace-nowrap">{amount}</div>
+        <div role="gridcell" className="px-1 py-1 text-left">
+          <EntityLink
+            kind="bank_transaction"
+            id={bankTransactionId}
+            label={description?.trim() || "Bank transaction"}
+          />
+        </div>
+        <div role="gridcell" className="px-1 py-1 text-center whitespace-nowrap">{modeLabel}</div>
+        <div role="gridcell" className="px-1 py-1 text-right">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={unmatchMutation.isPending}
+            onClick={() => unmatchMutation.mutate()}
+            data-testid="b1-online-banking-unmatch"
+          >
+            Unmatch
+          </Button>
+        </div>
       </div>
     </div>
   );

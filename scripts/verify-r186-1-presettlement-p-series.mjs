@@ -88,6 +88,35 @@ function read(rel) {
   return fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
 }
 
+if (import.meta.url === `file://${process.argv[1]}` && process.argv.includes("--selftest")) {
+  const allocator = read(ALLOCATOR);
+  const presettlement = read(PRESETTLEMENT);
+  const planted = [
+    ["allocator calls the retired AlwaysTrack mint",
+      auditAllocator(`${allocator}\nexport async function x(c) { return ${RETIRED_CALL}(c); }\n`)],
+    ["allocator stops querying the P-series", auditAllocator(allocator.replace("substring(display_id from '^P-([0-9]+)$')", "substring(display_id from '^([0-9]+)$')"))],
+    ["allocator stops validating /^P-\\d{4,}$/", auditAllocator(allocator.replace(/\/\^P-\\d\{4,\}\$\//g, "/^\\d+$/"))],
+    ["allocator file missing", auditAllocator(null)],
+    ["opening a tour mints an AlwaysTrack number", auditPresettlement(`${presettlement}\nconst ref = await ${RETIRED_CALL}(client, opco);\n`)],
+  ];
+  const clean = [
+    ["real allocator", auditAllocator(allocator)],
+    ["real presettlement-link", auditPresettlement(presettlement)],
+    ["retired name in a comment only", auditPresettlement(`// R-186.1 stopped calling ${RETIRED_CALL}\n/* ${RETIRED_CALL} */\nconst a = 1;\n`)],
+  ];
+  const escaped = planted.filter(([, f]) => f.length === 0);
+  const dirty = clean.filter(([, f]) => f.length > 0);
+  for (const [n] of escaped) console.error(`  ✗ planted violation escaped: ${n}`);
+  for (const [n, f] of dirty) console.error(`  ✗ clean input failed: ${n}: ${f.join("; ")}`);
+  const caught = planted.length - escaped.length;
+  if (escaped.length || dirty.length) {
+    console.error(`${LABEL} SELFTEST: FAIL ${caught}/${planted.length}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught; ${clean.length} clean inputs pass`);
+  process.exit(0);
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const failures = [...auditAllocator(read(ALLOCATOR)), ...auditPresettlement(read(PRESETTLEMENT))];
   if (failures.length > 0) {

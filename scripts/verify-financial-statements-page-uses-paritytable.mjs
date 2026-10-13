@@ -79,7 +79,7 @@ function assertMigrated(src) {
       errors.push(`${PAGE}: missing preserved total/footer label: "${total}"`);
     }
   }
-  if (!src.includes('currency: "USD"')) {
+  if (!usesUsdFormatter(src)) {
     errors.push(`${PAGE}: must keep the money() USD currency formatter`);
   }
   if (!src.includes("account-register")) {
@@ -99,6 +99,24 @@ function assertMigrated(src) {
   }
   return errors;
 }
+
+// 443.99 class B (CC-2, 2026-10-12) — USD formatter anchor.
+//   old rule: the page must contain an inline `currency: "USD"` Intl formatter.
+//   new rule: the page formats USD either inline (`currency: "USD"`) OR through the shared cents formatter
+//             (`import { formatUsdCents } from "../../lib/money"` AND a `formatUsdCents(` call) — lib/money.ts's
+//             formatUsdCents is the same Intl en-US/USD formatter (plus the C-35 never-"-$0.00" rule).
+//   why: BANK-F10011 (#20272) moved this page's local money() onto the shared formatter; the page still formats
+//        USD, but the literal anchor could not see it. Not looser: a page that drops USD formatting (raw cents,
+//        toFixed, no shared import) still fails — planted below.
+function usesUsdFormatter(src) {
+  if (src.includes('currency: "USD"')) return true;
+  return /import\s*\{[^}]*\bformatUsdCents\b[^}]*\}\s*from\s*["'][./]+lib\/money["']/.test(src) && /\bformatUsdCents\(/.test(src);
+}
+
+const INLINE = `function money(cents) { return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100); }`;
+const SHARED = `    import { formatUsdCents } from "../../lib/money";
+    function money(cents) { return formatUsdCents(cents); }`;
+const RAW = `    function money(cents) { return "$" + (cents / 100).toFixed(2); }`;
 
 function selftest() {
   const good = `
@@ -155,6 +173,18 @@ function selftest() {
   const liveTableBad = good + "\n    <table />\n";
   if (!assertMigrated(liveTableBad).includes(`${PAGE}: must not contain hand-rolled <table>`)) {
     console.error(`${LABEL} --selftest FAIL: a real <table> in live JSX (outside any template literal) was NOT caught`);
+    process.exit(1);
+  }
+
+  // USD formatter: the shared lib/money formatter passes; a raw toFixed money() is caught.
+  const sharedGood = good.replace(`    ${INLINE}`, SHARED);
+  if (sharedGood === good || assertMigrated(sharedGood).length) {
+    console.error(`${LABEL} --selftest FAIL: shared formatUsdCents formatter fixture rejected`, assertMigrated(sharedGood));
+    process.exit(1);
+  }
+  const rawBad = good.replace(`    ${INLINE}`, RAW);
+  if (!assertMigrated(rawBad).includes(`${PAGE}: must keep the money() USD currency formatter`)) {
+    console.error(`${LABEL} --selftest FAIL: a money() with no USD formatter was NOT caught`);
     process.exit(1);
   }
 

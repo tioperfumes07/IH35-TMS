@@ -219,16 +219,16 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
             SELECT b.id,
                    COALESCE(
                      NULLIF(b.bill_number, ''),
-                     '— ' || COALESCE(NULLIF(qv.display_name, ''), 'vendor not recorded')
+                     '— ' || COALESCE(NULLIF(v.vendor_name, ''), 'vendor not recorded')
                           || ', ' || COALESCE(b.bill_date::text, 'date not recorded')
                           || ', ' || to_char(COALESCE(b.total_amount, 0), 'FM$999,999,990.00')
                           || ' (no vendor bill number on file)'
                    ) AS display_id,
                    b.vendor_id, b.total_amount, b.status, b.due_date
             FROM accounting.bills b
-            LEFT JOIN mdata.qbo_vendors qv
-              ON qv.qbo_id = b.vendor_id
-             AND qv.operating_company_id = b.operating_company_id
+            LEFT JOIN mdata.vendors v
+              ON (v.id::text = b.vendor_id OR v.qbo_vendor_id = b.vendor_id)
+             AND v.operating_company_id = b.operating_company_id
             WHERE b.operating_company_id = $1::uuid
               -- ACCT-F183 class: this picker is named "unpaid-bills" but its actual purpose is
               -- linking a cash advance to a bill that still owes money — a 'partial' bill (paid
@@ -385,12 +385,18 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
             INSERT INTO accounting.bill_payments (
               operating_company_id,
               bill_id,
+              vendor_id,
               amount,
               payment_method,
               advance_id,
               is_sample_data
             )
-            VALUES ($1, $2, $3, $4, $5,
+            VALUES ($1, $2,
+              -- ROUND 443.106 — stamp vendor from the bill being paid (DB refuses a blank vendor_id).
+              (SELECT COALESCE(NULLIF(btrim(COALESCE(b.vendor_id, '')), ''), b.mdata_vendor_id::text)
+                 FROM accounting.bills b
+                WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid),
+              $3, $4, $5,
               -- ACCT-F265 — inherit the parent bill's sample flag (see bills.service.ts). A cash advance
               -- settled against a SAMPLE bill must not produce a REAL payment; the driver-advance path
               -- is the one most likely to be exercised with fixture data.

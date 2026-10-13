@@ -172,6 +172,8 @@ type PostSourceInput = {
   // company-default cash-like account is used (same fallback as bill_payment). B5's approve
   // path passes the operator-chosen source account here. Ignored by other source types.
   credit_account_id?: string | null;
+  /** 443.37 — the settlement this bill posting belongs to; stamped at INSERT via the writer (bill source only). */
+  settlement_id?: string | null;
 };
 
 type ReverseBatchInput = {
@@ -864,6 +866,7 @@ async function insertPostingLines(input: {
   sourceType: PostingSourceType;
   sourceId: string;
   lines: PostingLineDraft[];
+  settlement_id?: string | null;
 }) {
   // ROUND 391 — the posting insert and its transaction_source_links row used to live here, inline.
   // Eight OTHER services also INSERT INTO accounting.journal_entry_postings directly, and only one of
@@ -889,6 +892,7 @@ async function insertPostingLines(input: {
       relationship_role: line.relationship_role ?? "source_transaction",
       entity_uuid: line.entity_uuid ?? null,
       entity_type: line.entity_type ?? null,
+      settlement_id: input.settlement_id ?? null,
     }))
   );
 }
@@ -914,6 +918,7 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
     display_id: string | null;
     source_load_id: string | null;
     source_system: string | null;
+    customer_id: string | null;
   }>(
     `
       SELECT
@@ -924,7 +929,8 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
         tax_cents::bigint AS tax_cents,
         display_id,
         source_load_id::text,
-        source_system::text
+        source_system::text,
+        customer_id::text
       FROM accounting.invoices
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -935,14 +941,8 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
   );
   const invoice = invoiceRes.rows[0];
   if (!invoice) throw new PostingEngineError("SOURCE_NOT_FOUND", "Invoice not found");
-  // Parallel books: QBO-origin invoices already have A/R + revenue in QBO. Posting them here would
-  // create duplicate journal entries. Mirror the bill/payment refuse pattern.
-  if ((invoice.source_system ?? "").toLowerCase() === "qbo") {
-    throw new PostingEngineError(
-      "QBO_INVOICE_POST_GL_REFUSED",
-      "Refusing Invoice\u2192GL post for source_system=qbo \u2014 parallel books; QBO already holds this A/R + revenue. Do not invent a second TMS journal entry."
-    );
-  }
+  // ROUND 443.117: QBO metadata is reconciliation provenance, never GL ownership.
+  // The native document posts through this engine's source idempotency and eligibility checks.
   if (!INVOICE_ELIGIBLE_STATUSES.has(invoice.status)) {
     throw new PostingEngineError(
       "INVOICE_NOT_POSTING_ELIGIBLE",
@@ -1133,6 +1133,8 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
         amount_cents: arAmount,
         description: `${descriptionBase} AR`,
         source_transaction_line_id: null,
+        entity_uuid: invoice.customer_id ?? null,
+        entity_type: invoice.customer_id ? "customer" : null,
       },
       ...creditLines,
     ],
@@ -1171,6 +1173,7 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
     revoked_at: string | null;
     source_system: string | null;
     class_id: string | null;
+    mdata_vendor_id: string | null;
   }>(
     `
       SELECT
@@ -1184,7 +1187,8 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
         bill_number,
         revoked_at::text,
         source_system::text,
-        class_id::text
+        class_id::text,
+        mdata_vendor_id::text
       FROM accounting.bills
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -1217,15 +1221,6 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
     throw new PostingEngineError(
       "BILL_NOT_POSTING_ELIGIBLE",
       "Draft bill is not posting-eligible — a draft is not yet an approved liability. Finalise the bill (its amounts, vendor and account mapping can still change) before posting to the ledger."
-    );
-  }
-  // Parallel books: QBO-origin bills already have A/P economics in QBO. Projecting Line[] into
-  // accounting.bill_lines must NOT unlock a second TMS JE via post-gl (BILL_GL_POSTING_ENABLED is ON
-  // for live entities). Mirror the JE-push refuse pattern — clone/reconcile only, never invent GL.
-  if ((bill.source_system ?? "").toLowerCase() === "qbo") {
-    throw new PostingEngineError(
-      "QBO_BILL_POST_GL_REFUSED",
-      "Refusing Bill→GL post for source_system=qbo — parallel books; QBO already holds this A/P. Do not invent a second TMS journal entry."
     );
   }
 
@@ -1330,6 +1325,8 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
         amount_cents: totalDebit,
         description: `${billLabel} AP`,
         source_transaction_line_id: null,
+        entity_uuid: bill.mdata_vendor_id ?? null,
+        entity_type: bill.mdata_vendor_id ? "vendor" : null,
       },
     ],
     accountResolutionTrace,
@@ -1370,16 +1367,6 @@ async function buildExpenseLines(client: DbClient, operatingCompanyId: string, s
   if (!exp) throw new PostingEngineError("SOURCE_NOT_FOUND", "Expense not found");
   if (exp.status === "void" || exp.posting_status === "reversed") {
     throw new PostingEngineError("EXPENSE_NOT_POSTING_ELIGIBLE", "Voided/reversed expense is not posting-eligible");
-  }
-  // Parallel books: a QBO-origin expense (projected from a QBO Purchase — qbo_purchase_id set) already
-  // has its GL economics in QuickBooks. It is projected into accounting.expenses as SUBLEDGER ONLY
-  // (posting_status='unposted'). Refuse to build a second TMS journal entry for it — mirrors the
-  // buildBillLines QBO_BILL_POST_GL_REFUSED guard. Never invent GL for source_system=qbo.
-  if ((exp.qbo_purchase_id ?? "").trim() !== "") {
-    throw new PostingEngineError(
-      "EXPENSE_POST_GL_REFUSED",
-      "Refusing Expense→GL post for a QBO-origin expense (qbo_purchase_id set) — parallel books; QBO already holds this spend's GL. Do not invent a second TMS journal entry."
-    );
   }
 
   const lineRows = await client.query<{
@@ -1540,16 +1527,6 @@ async function buildCustomerPaymentLines(client: DbClient, operatingCompanyId: s
   if (!payment) throw new PostingEngineError("SOURCE_NOT_FOUND", "Customer payment not found");
   if (payment.voided_at) throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided customer payment is not posting-eligible");
 
-  // Parallel books: a QBO-origin customer payment (projected from a QBO Payment — qbo_payment_id set)
-  // already has its GL recorded IN QuickBooks. Posting it here would invent a second TMS journal entry
-  // for a receipt QuickBooks already owns — refuse (mirrors QBO_BILL_PAYMENT_POST_GL_REFUSED /
-  // EXPENSE_POST_GL_REFUSED). Never invent GL for source_system=qbo.
-  if ((payment.source_system ?? "").toLowerCase() === "qbo" || (payment.qbo_payment_id ?? "").trim() !== "") {
-    throw new PostingEngineError(
-      "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
-      "Refusing Customer Payment→GL post for a QBO-origin payment (source_system=qbo / qbo_payment_id set) — parallel books; QBO already holds this receipt's GL. Do not invent a second TMS journal entry."
-    );
-  }
 
   const arAccountId = await resolveArAccountForCompany(client, operatingCompanyId);
   if (!arAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AR account mapping is missing");
@@ -1634,12 +1611,6 @@ async function buildCustomerPaymentDepositSweepLines(client: DbClient, operating
     throw new PostingEngineError(
       "DEPOSIT_ALREADY_AT_BANK",
       "Customer payment already included on a live bank deposit (Make Deposit) — match sweep skipped"
-    );
-  }
-  if ((payment.source_system ?? "").toLowerCase() === "qbo" || (payment.qbo_payment_id ?? "").trim() !== "") {
-    throw new PostingEngineError(
-      "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
-      "Refusing Customer Payment deposit-sweep for a QBO-origin payment — parallel books; QBO already holds this receipt's GL."
     );
   }
   if (!payment.source_bank_transaction_id) {
@@ -1747,12 +1718,6 @@ async function buildFactoringAdvanceDepositSweepLines(client: DbClient, operatin
     throw new PostingEngineError(
       "DEPOSIT_ALREADY_AT_BANK",
       "Factoring advance already included on a live bank deposit (Make Deposit) — match sweep skipped"
-    );
-  }
-  if ((advance.source_system ?? "").toLowerCase() === "qbo") {
-    throw new PostingEngineError(
-      "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
-      "Refusing factoring advance deposit-sweep for a QBO-origin advance — parallel books; QBO already holds this receipt's GL."
     );
   }
 
@@ -1911,18 +1876,18 @@ async function buildBankDepositLines(client: DbClient, operatingCompanyId: strin
       source_transaction_line_id: null,
     });
   }
-  const fromUndepositedFunds = totalReceipts - accountLinesTotal;
-  if (fromUndepositedFunds < 0) {
+  const undepositedClearanceCents = totalReceipts - accountLinesTotal;
+  if (undepositedClearanceCents < 0) {
     throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Bank deposit account lines exceed the deposit total");
   }
-  if (fromUndepositedFunds > 0) {
+  if (undepositedClearanceCents > 0) {
     if (!dep.undeposited_funds_account_id) {
       throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Bank deposit has receipt lines but no Undeposited Funds account");
     }
     lines.push({
       account_id: dep.undeposited_funds_account_id,
       debit_or_credit: "credit",
-      amount_cents: fromUndepositedFunds,
+      amount_cents: undepositedClearanceCents,
       description: `${label} cleared from Undeposited Funds`,
       source_transaction_line_id: null,
     });
@@ -1984,10 +1949,7 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
     );
   }
 
-  // Parallel books: QBO-origin bills never get a TMS Bill→GL leg (#3386 QBO_BILL_POST_GL_REFUSED).
-  // Paying them must NOT invent a TMS bill_payment JE either — that would DR ap_control with no matching
-  // TMS CR (BILL_AP_NOT_POSTED) or invent a second cash/AP story already in QBO. Subledger payment stands;
-  // refuse GL here so payBill can skip without rolling back the payment row.
+  // Every native bill payment requires its bill's native A/P leg, regardless of import provenance.
   if (!payment.bill_id) {
     throw new PostingEngineError("BILL_AP_NOT_POSTED", "Bill payment has no bill_id; cannot verify the bill's A/P leg is posted");
   }
@@ -2001,12 +1963,6 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
     `,
     [operatingCompanyId, payment.bill_id]
   );
-  if ((billSrcRes.rows[0]?.source_system ?? "").toLowerCase() === "qbo") {
-    throw new PostingEngineError(
-      "QBO_BILL_PAYMENT_POST_GL_REFUSED",
-      "Refusing BillPayment→GL post for source_system=qbo — parallel books; QBO already holds this A/P settlement. TMS records the subledger payment only."
-    );
-  }
 
   // CHAIN-04 GAP #3 — accrual-sequencing guard (bill-posted-first). The payment JE always does
   // DR ap_control / CR bank, which ASSUMES CHAIN-03 already posted DR expense / CR ap_control for
@@ -2145,9 +2101,6 @@ async function buildCreditMemoLines(client: DbClient, operatingCompanyId: string
   if (!memo) throw new PostingEngineError("SOURCE_NOT_FOUND", "Credit memo not found");
   if (memo.voided_at || memo.status === "voided") {
     throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided credit memo is not posting-eligible");
-  }
-  if ((memo.source_system ?? "").toLowerCase() === "qbo") {
-    throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "QBO-origin credit memo — parallel books, QBO holds its GL");
   }
   if (!memo.account_id) {
     throw new PostingEngineError("CREDIT_MEMO_NO_ACCOUNT", "This credit memo names no account — its GL is owned elsewhere or it was never coded");
@@ -3201,6 +3154,7 @@ async function executePostingOnClient(client: DbClient, ctx: PostingExecCtx): Pr
     sourceType,
     sourceId,
     lines: draft.lines,
+    settlement_id: input.settlement_id ?? null,
   });
 
   await client.query(
@@ -3367,12 +3321,13 @@ async function executeSourceReversalOnClient(
     account_id: string;
     class_id: string | null;
     entity_uuid: string | null;
+    entity_type: string | null;
     debit_or_credit: "debit" | "credit";
     amount_cents: number;
     description: string | null;
   }>(
     `
-      SELECT id::text, account_id::text, class_id::text, entity_uuid::text,
+      SELECT id::text, account_id::text, class_id::text, entity_uuid::text, entity_type,
              debit_or_credit, amount_cents::bigint, description
       FROM accounting.journal_entry_postings
       WHERE operating_company_id = $1::uuid
@@ -3490,6 +3445,7 @@ async function executeSourceReversalOnClient(
           account_id,
           class_id,
           entity_uuid,
+          entity_type,
           debit_or_credit,
           amount_cents,
           description,
@@ -3504,7 +3460,8 @@ async function executeSourceReversalOnClient(
           updated_at
         )
         -- ROUND 363-CC1-A: a reversal carries the load of the line it reverses (its document may already be gone).
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6::uuid, $7, $8, $9, $10, $11, NULL, $12::uuid, $13, $14::uuid,
+        -- 443.93: and its party PAIR — entity_uuid without entity_type is refused (journal_entry_postings_entity_pair_check).
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6::uuid, $15, $7, $8, $9, $10, $11, NULL, $12::uuid, $13, $14::uuid,
                 accounting.posting_source_load_id($10::text, $11::text, NULL, $14::uuid), now(), now())
         RETURNING id::text
       `,
@@ -3523,6 +3480,7 @@ async function executeSourceReversalOnClient(
         reversalBatchId,
         idempotencyKey,
         row.id,
+        row.entity_type,
       ]
     );
     const reversalLineId = ins.rows[0]?.id;

@@ -29,6 +29,8 @@ import type { FuelTxnGlPostCandidate } from "../accounting/fuel-posting/fuel-cre
  * a no-op. Nothing is invented — every persisted field maps from a real import cell.
  */
 
+import { resolveFuelLoadAtTime } from "./fuel-load-at-time.js";
+
 export type DbClient = {
   query: <T = Record<string, unknown>>(
     sql: string,
@@ -309,6 +311,12 @@ export async function resolveVendorId(
  * returns null when nothing matches so the caller records an exemption reason.
  * Exported for Relay→canonical bridge (WAVE-H2 — stop hardcoding load_id NULL).
  */
+// LEAD 443.110 G7 — the import no longer has its own load rule. It used a ±1-day SCHEDULED-stop window that ignored
+// actual times and returned null whenever two loads overlapped (ALWAYSTRACK-PARITY-FUEL-MISLINK-01: a driver's
+// back-to-back runs); the Relay post used loadAtTimeSql — so one fill could land on two different loads by source.
+// Both now ask resolveFuelLoadAtTime (fuel-load-at-time.ts): the load the unit was running at the fill time (actual
+// stamps, date-only = that whole day, NB-then-return aware), driver fallback, else null. The overlap that
+// MISLINK-01 refused to guess is now DECIDED by actual time, never by sort order.
 export async function resolveLoadId(
   client: DbClient,
   companyId: string,
@@ -316,42 +324,7 @@ export async function resolveLoadId(
   driverId: string | null,
   transactionAt: string
 ): Promise<string | null> {
-  if (!unitId && !driverId) return null;
-  // ALWAYSTRACK-PARITY-FUEL-MISLINK-01 -- this query used to `ORDER BY ... LIMIT 1` and silently
-  // pick ONE of possibly several candidate loads whose ±1-day stop window brackets the
-  // transaction date. A driver running back-to-back loads a day or two apart (routine, not an
-  // edge case) produces overlapping windows, and this function would guess -- confirmed live on
-  // load 13518 (settlement doc 5774): 3 real, non-duplicate Dreamline fuel purchases dated
-  // outside that load's own 8/11-8/12 stop window (8/10, 8/12, 8/13, in three different states)
-  // were attached to it anyway, inflating that document's live FUEL total to 9 rows against a
-  // 3-row ground truth -- the same shape repeats across most of the 29 AlwaysTrack-parity
-  // documents this broke. Fixed the same way this session's own "if it can't be decided from the
-  // source document, don't guess" rule has been applied everywhere else: return every candidate,
-  // not just one, and only resolve a load when EXACTLY ONE satisfies the window -- an ambiguous
-  // match now returns null (unresolved, flagged via load_exemption_reason downstream) instead of
-  // silently attaching to whichever load happens to sort first.
-  const res = await client.query<{ id: string }>(
-    `
-      SELECT l.id::text
-      FROM mdata.loads l
-      JOIN mdata.load_stops s ON s.load_id = l.id
-      WHERE l.operating_company_id = $1::uuid
-        AND l.soft_deleted_at IS NULL
-        AND s.soft_deleted_at IS NULL
-        AND (
-          ($2::uuid IS NOT NULL AND l.assigned_unit_id = $2::uuid)
-          OR ($3::uuid IS NOT NULL AND (
-                l.assigned_primary_driver_id = $3::uuid
-             OR l.assigned_secondary_driver_id = $3::uuid))
-        )
-      GROUP BY l.id
-      HAVING MIN(COALESCE(s.scheduled_arrival_at, s.appointment_start_at)) <= $4::timestamptz + interval '1 day'
-         AND MAX(COALESCE(s.scheduled_arrival_at, s.appointment_start_at)) >= $4::timestamptz - interval '1 day'
-    `,
-    [companyId, unitId, driverId, transactionAt]
-  );
-  if (res.rows.length !== 1) return null;
-  return res.rows[0].id;
+  return (await resolveFuelLoadAtTime(client, { operatingCompanyId: companyId, unitId, driverId, at: transactionAt }))?.load_id ?? null;
 }
 
 export async function importFuelCardTransactionsForCompany(
@@ -381,7 +354,10 @@ export async function importFuelCardTransactionsForCompany(
     const driverId =
       (await resolveDriverId(client, companyId, row.driver_name)) ?? (byCard?.resolved ? byCard.driver_id : null);
     const vendorId = await resolveVendorId(client, companyId, row.merchant);
-    const loadId = await resolveLoadId(client, companyId, unitId, driverId, row.transaction_at);
+    // 443.110 G7 — the one fuel-to-load rule; the fill also carries the load's company trailer (the one trailer rule).
+    const loadHit = await resolveFuelLoadAtTime(client, { operatingCompanyId: companyId, unitId, driverId, at: row.transaction_at });
+    const loadId = loadHit?.load_id ?? null;
+    const trailerId = loadHit?.trailer_id ?? null;
     const loadExemptionReason = loadId ? null : NO_LOAD_EXEMPTION;
 
     const notes = [
@@ -420,12 +396,13 @@ export async function importFuelCardTransactionsForCompany(
             imported_at,
             load_required,
             load_exemption_reason,
-            created_by_user_id
+            created_by_user_id,
+            trailer_id
           )
           VALUES (
             $1, $2::timestamptz, $2::timestamptz, $3, $4, $5, $6, $7,
             $8, $9, $10, $11, $12, $13, 'import', $14, NULLIF($15, ''), now(),
-            $18, $16, $17
+            $18, $16, $17, $19::uuid
           )
           ON CONFLICT (operating_company_id, source_row_hash) DO NOTHING
           RETURNING id::text
@@ -453,6 +430,7 @@ export async function importFuelCardTransactionsForCompany(
           // loadExemptionReason set above) still claimed it needed a load it will never get
           // (CLS-LINKAGE-ONEWAY / verify-disp-wire-06-load-expense-link).
           Boolean(loadId),
+          trailerId,
         ]
       )
       .catch((err) => {

@@ -9,6 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-usmca-fleet-fuel-tasks-neon-pv";
@@ -25,6 +26,25 @@ function assertNotPooler(connectionString) {
   if (/-pooler\./.test(String(connectionString ?? ""))) {
     throw new Error(`${LABEL}: refusing -pooler DATABASE_URL (session GUC would not survive)`);
   }
+}
+
+/**
+ * Prod proof per item. The 2026-08-29 GUARD rewrite (#17642) moved proof out of a free-text "PROD-VERIFIED / Neon lucia"
+ * citation into STRUCTURED fields — live_verified_at + live_verified_sha — plus a GUARD PACKET that records the guard
+ * seat's own independent live re-verification. 9 items carry only the new shape, so the text-only check reported them
+ * unproven although their proof is present and stronger. 443.101: every item must now carry the structured fields
+ * (a real timestamp + a git sha) — required of ALL 21, which the text check never asked — AND either the legacy Neon
+ * citation or a GUARD PACKET that states a live re-verification. A bare phrase alone no longer passes.
+ */
+export function prodProofProblems(row) {
+  const p = [];
+  const ev = String(row.evidence ?? "");
+  if (!(typeof row.live_verified_at === "string" && !Number.isNaN(Date.parse(row.live_verified_at)))) p.push("must carry live_verified_at (timestamp of the live proof)");
+  if (!(typeof row.live_verified_sha === "string" && /^[0-9a-f]{7,40}$/.test(row.live_verified_sha))) p.push("must carry live_verified_sha (the deployed sha it was proven on)");
+  const legacy = /PROD-VERIFIED|Neon lucia/i.test(ev);
+  const packet = /GUARD PACKET[\s\S]*(re-verified live|re-confirm|spot-checked live|live Chrome)/i.test(ev);
+  if (!legacy && !packet) p.push("evidence must cite PROD-VERIFIED / Neon lucia proof or a GUARD PACKET live re-verification");
+  return p;
 }
 
 export function auditManifests(root = ROOT, manifests = MANIFESTS) {
@@ -50,9 +70,7 @@ export function auditManifests(root = ROOT, manifests = MANIFESTS) {
       if (row.prod_verified !== true) {
         problems.push(`${file}: ${id} prod_verified must be true`);
       }
-      if (!/PROD-VERIFIED|Neon lucia/i.test(String(row.evidence ?? ""))) {
-        problems.push(`${file}: ${id} evidence must cite PROD-VERIFIED / Neon lucia proof`);
-      }
+      for (const why of prodProofProblems(row)) problems.push(`${file}: ${id} ${why}`);
     }
   }
   return problems;
@@ -135,7 +153,23 @@ async function main() {
         console.error(`${LABEL} SELFTEST FAIL: planted prod_verified:false not caught`);
         process.exit(1);
       }
-      console.log(`${LABEL} SELFTEST PASS`);
+      // 443.101 proof arms: the real manifests are clean; each planted gap is caught.
+      if (auditManifests().length !== 0) {
+        console.error(`${LABEL} SELFTEST FAIL: real manifests report problems`);
+        process.exit(1);
+      }
+      const base = { live_verified_at: "2026-08-30T02:20:00.000Z", live_verified_sha: "ed4e2f2", evidence: "PASS | GUARD PACKET (CC-2): Independently re-verified live myself via live Chrome." };
+      const arms = [
+        ["structured proof passes", prodProofProblems(base).length === 0],
+        ["missing live_verified_at caught", prodProofProblems({ ...base, live_verified_at: undefined }).length > 0],
+        ["garbage live_verified_at caught", prodProofProblems({ ...base, live_verified_at: "soon" }).length > 0],
+        ["missing live_verified_sha caught", prodProofProblems({ ...base, live_verified_sha: "" }).length > 0],
+        ["bare PROD-VERIFIED phrase without structured fields caught", prodProofProblems({ evidence: "PROD-VERIFIED Neon lucia" }).length > 0],
+        ["GUARD PACKET with no live re-verification caught", prodProofProblems({ ...base, evidence: "GUARD PACKET (CC-2): bound on the coder's word." }).length > 0],
+        ["legacy Neon citation + structured fields passes", prodProofProblems({ ...base, evidence: "PROD-VERIFIED Neon lucia 2026-08-09" }).length === 0],
+      ];
+      for (const [name, ok] of arms) if (!ok) { console.error(`${LABEL} SELFTEST FAIL: ${name}`); process.exit(1); }
+      console.log(`${LABEL} SELFTEST PASS (${arms.length + 2} arms)`);
       process.exit(0);
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
@@ -143,19 +177,15 @@ async function main() {
   }
 
   const problems = auditManifests();
-  if (process.env.DATABASE_URL) {
-    assertNotPooler(process.env.DATABASE_URL);
-    const pg = (await import("pg")).default;
-    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
-    const client = await pool.connect();
-    try {
-      problems.push(...(await auditNeonLive(client)));
-    } finally {
-      client.release();
-      await pool.end();
-    }
-  } else {
-    console.log(`[${LABEL}] DATABASE_URL unset — static manifest checks only`);
+  // 443.101: the live half fails closed (ROUND 29.9-B, verify-no-silent-db-skip) — a fleet/fuel prod-proof guard that
+  // cannot reach a database is a FAIL, never a static-only pass.
+  if (process.env.DATABASE_URL) assertNotPooler(process.env.DATABASE_URL);
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
+  try {
+    problems.push(...(await auditNeonLive(client)));
+  } finally {
+    client.release();
+    await pool.end();
   }
 
   if (problems.length) {

@@ -4,13 +4,14 @@
  */
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { enqueueEmail } from "../email/queue.service.js";
+import { enqueueEmail, enqueueEmailWithClient } from "../email/queue.service.js";
 import { postInvoiceGlIfEnabled } from "./invoice-gl.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import {
   assertLoadRevenueHasSourceLoad,
   assertInvoiceHasRevenueLines,
   assertRevenueLinesHaveIncomeAccount,
+  isLoadRevenueLineType,
   InvoiceLoadSourceRequiredError,
   InvoiceHasNoRevenueLinesError,
   InvoiceLineIncomeAccountRequiredError,
@@ -63,7 +64,7 @@ type SendClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
 
-export type SendDraftInvoiceOk = { ok: true };
+export type SendDraftInvoiceOk = { ok: true; reason?: string };
 export type SendDraftInvoiceErr = {
   ok: false;
   code: 404 | 409 | 422;
@@ -232,7 +233,17 @@ export async function sendDraftInvoice(
     // ACCT-F124 — FIRST, because the two guards below iterate the lines and therefore pass vacuously
     // on an empty set. INV-2026-00004 sent with zero lines and left a receivable the poster correctly
     // refused to recognise.
-    assertInvoiceHasRevenueLines(input.operatingCompanyId, input.invoiceId, sendLines);
+    // ROUND 443.12 / 443.13c — an authorized $0 invoice (total_cents=0, minted with
+    // authorizedZeroRevenue=true) carries one linehaul line with line_total_cents=0.
+    // isRevenueBearingLine requires cents>0, so assertInvoiceHasRevenueLines would refuse it.
+    // Skip the guard ONLY for that case: total=0 AND at least one load-revenue-type line exists.
+    // Zero-line invoices (sendLines.length===0) and plain $0 drafts with no load lines still fail.
+    const isAuthorizedZeroInvoice =
+      Number(current.total_cents ?? 0) === 0 &&
+      sendLines.some((l) => isLoadRevenueLineType(l.line_type));
+    if (!isAuthorizedZeroInvoice) {
+      assertInvoiceHasRevenueLines(input.operatingCompanyId, input.invoiceId, sendLines);
+    }
     assertLoadRevenueHasSourceLoad(
       current.source_load_id ? String(current.source_load_id) : null,
       sendLines
@@ -467,6 +478,14 @@ export async function sendDraftInvoice(
     [input.invoiceId, input.userId, input.operatingCompanyId]
   );
 
+  // ROUND 443.1 — a $0 invoice (authorizedZeroRevenue=true mint) is a records-only document.
+  // It is stamped sent above (the document IS issued), but writes no GL entry, no receivable, and
+  // no revrec latch entry — there is nothing to recognize. Return an explicit reason so callers
+  // can distinguish "sent with no posting" from a posting failure.
+  if (Number(current.total_cents ?? 0) === 0) {
+    return { ok: true, reason: "zero_revenue_no_posting" };
+  }
+
   // OWNER DECISION B (2026-08-27 23:00 CT,
   // docs/lockdown/OWNER-DECISION-ACCT-F5692-OPTION-B-2026-08-27.md) — invoice ISSUANCE fires revrec
   // Event 2 when earn already exists, in addition to dispatch reaching completed_docs_received. This
@@ -624,10 +643,24 @@ export async function sendDraftInvoice(
   // The invoice legitimately stays 'sent' — it IS issued and posted to A/R. What was missing is a
   // truthful record that the transmission never happened; changing the invoice status vocabulary
   // needs a migration and an owner decision, and is not smuggled in here.
-  if (customerEmail && notify) {
+  // Lead ruling 2026-10-10 (CC-1 ACCT-F44334): Settlement Creator always passes
+  // mode='historical_backfill'. Emailing a customer about a historical invoice entry is
+  // never correct — the post is a ledger repair, not a live transmission. 5769's zero
+  // email_queue rows were luck (customer had no email on file), not a rule. This guard
+  // makes it a rule: historical_backfill posts skip enqueue unconditionally.
+  if (customerEmail && notify && mode !== "historical_backfill") {
     const total = (Number(notify.total_cents ?? 0) / 100).toFixed(2);
+    // 443.99: the scoped enqueue runs on the SEND's own transaction, so a failed INSERT INTO email.email_queue aborted
+    // it — the audit below then died 25P02 and the whole send threw. The savepoint keeps a failed enqueue from
+    // poisoning the send: roll back to it, then record the failure on the same (healthy) transaction.
+    await client.query("SAVEPOINT invoice_send_enqueue");
     try {
-      await enqueueEmail({
+      // R14 (Lead ruling 2026-10-11, CC-3 authorized for this one call): the customer email is queued on the SAME
+      // transaction as the send whenever this transaction is scoped to the invoice's company (the queue's RLS), so a
+      // rolled-back send (a Settlement Creator preview, any refused post) never emails the customer. A caller without
+      // that scope keeps the separate-connection enqueue it had.
+      const scoped = (await client.query<{ c: string | null }>(`SELECT current_setting('app.operating_company_id', true) AS c`))?.rows?.[0]?.c === input.operatingCompanyId;
+      await (scoped ? (x: Parameters<typeof enqueueEmail>[0]) => enqueueEmailWithClient(client as never, x) : enqueueEmail)({
         operatingCompanyId: input.operatingCompanyId,
         toAddresses: [customerEmail],
         subject: `Invoice ${notify.display_id} — IH 35 TMS`,
@@ -642,7 +675,9 @@ export async function sendDraftInvoice(
         },
         queuedByUserId: input.userId,
       });
+      await client.query("RELEASE SAVEPOINT invoice_send_enqueue");
     } catch (err) {
+      await client.query("ROLLBACK TO SAVEPOINT invoice_send_enqueue");
       await appendCrudAudit(
         client as never,
         input.userId,

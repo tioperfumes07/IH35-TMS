@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["platform"],"cols":["migration","lane"],"leafRe":"^db/migrations/","task":"MIGRATION-LANE-BAND"}
  * Migration numbers are allocated from a RESERVED PER-LANE BAND, so two lanes cannot pick the same one.
  *
  * On 2026-07-28 two lanes independently chose `202610060000` for unrelated migrations. Both applied;
@@ -89,6 +90,64 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // Lead 443.134 AJK-13 (moved from Codex; owner 2026-10-01 no-handoff): IFTA filing versions — a filed / approved return is
+  // never modified, a re-prepare is a new draft version. Claimed #(202615910700).
+  [
+    "cc-2/443-134-ajk13-ifta-versions",
+    new Set(["db/migrations/202615910700_ifta_filing_versions_filed_immutable.sql"]),
+  ],
+  // Lead 443.128 C (+ 443.132 standing order; locked design READ-FIRST §3; owner 2026-10-01 no-handoff): team driver bills
+  // recognized at delivery, one A/P bill per driver. Claimed #(202615890700) in #26692.
+  [
+    "cc-2/443-128c-team-bills-at-delivery",
+    new Set(["db/migrations/202615890700_team_driver_bill_accrued_at_delivery.sql"]),
+  ],
+  // Lead 443.116 #2 + (c) CORRECTION (locked design, READ-FIRST §3 "three dates, three columns"; owner 2026-10-01 no-handoff):
+  // driver bills carry their due date and the per-load A/P bill posted at delivery. Claimed #(202615830700) in #26657.
+  [
+    "cc-2/443-116-driver-pay-accrual",
+    new Set(["db/migrations/202615830700_driver_bill_due_date_and_delivery_accrual.sql"]),
+  ],
+  // Lead 443.110 G9 (owner 2026-10-12 09:50 CT full load-creation mapping; owner 2026-10-01 no-handoff): driver bills carry the
+  // load's truck and trailer. Claimed #(202615800700) in #26619.
+  [
+    "cc-2/443-110-g9-driver-bill-unit-trailer",
+    new Set(["db/migrations/202615800700_driver_bill_unit_and_trailer.sql"]),
+  ],
+  // Lead 443.105 run #4 (owner 2026-10-12 07:50 CT "Every engine ... must record correctly with truck / driver / load / trailer /
+  // vendor / item / account"; owner 2026-10-01 no-handoff): the office fuel form's picked stop is linked
+  // (fuel.fuel_transactions.location_id). Claimed #(202615780700) in #26602.
+  [
+    "cc-2/443-105-fuel-location",
+    new Set(["db/migrations/202615780700_fuel_transaction_location_link.sql"]),
+  ],
+  // Lead 443.105 #2 (owner 2026-10-12 07:50 CT "Every engine ... must record correctly with truck / driver / load / trailer /
+  // vendor / item / account"; owner 2026-10-01 "fully complete and build their own engine, no handing off"): an expense line
+  // carries its load or a load_exemption_reason, refused at the DB. Claimed #(202615770700) in #26593.
+  [
+    "cc-2/443-105-expense-load-or-reason",
+    new Set(["db/migrations/202615770700_expense_line_load_or_exemption_refused.sql"]),
+  ],
+  // 5785 (CC-3 report 2026-10-11; owner 2026-10-01 "fully complete and build their own engine, no handing off"): the
+  // advance-balance view counted a posting once per bridge row, so the Creator close recovered a $301.99 advance 4x.
+  // CC-2's advance path; claimed #(202615500300) in #26277.
+  [
+    "cc-2/advance-once-5785",
+    new Set(["db/migrations/202615500300_driver_advance_balances_one_row_per_posting.sql"]),
+  ],
+  // Lead 443.55 (owner 2026-10-11 09:33 CT "In loads it should show both recommendations historical and google ..."; owner
+  // 2026-10-01 "fully complete and build their own engine, no handing off"): CC-2's mileage engine stores the per-field
+  // choice. Claimed #(202615550300) in #26372.
+  [
+    "cc-2/443-55-miles-choice",
+    new Set(["db/migrations/202615550300_loads_miles_choice.sql"]),
+  ],
+  // ROUND 443.29 a (owner 2026-10-10 7:15/7:19 PM CT): the "Fuel Card Fee" item the Relay fill poster resolves its fee leg
+  // by did not exist in any company, so no Relay fill could post. Claimed #(202615490300).
+  [
+    "cc-2/relay-fuel-card-fee-item",
+    new Set(["db/migrations/202615490300_usmca_fuel_card_fee_item.sql"]),
+  ],
   // FARO-F435: the Lead authored it (read-only credential), the owner ordered "SO YOU BUILD THE FARO VIEWS", CC-2
   // applies it as the reserving seat (#25569).
   [

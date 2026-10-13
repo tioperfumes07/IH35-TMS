@@ -6,6 +6,9 @@
 // from this list to make CI green. New guards get their own claimed step (claim-before-write) — this list is the backlog.
 // MATRIX-BUILT-OPTIONAL: this aggregate runner executes guards; it asserts no module/leaf
 // linkage itself and must not auto-green unrelated matrix cells from its filename inventory.
+// 443.100: verify-no-duplicate-seed-deductions and verify-no-future-dated-seed-expenses left this backlog because they
+// now have their own CI wiring — the live-DB job (ci.yml required-live-load-guard, prod read-only, #26531), where their
+// live half has a ledger to read. They are wired, not exempted.
 import { spawnSync } from "node:child_process";
 
 export const CENSUS_ORPHAN_GUARDS = [
@@ -91,8 +94,6 @@ export const CENSUS_ORPHAN_GUARDS = [
   "verify-load-costs-tab-manifest.mjs",
   "verify-load-costs-tab-registers.mjs",
   "verify-locations-list.mjs",
-  "verify-no-duplicate-seed-deductions.mjs",
-  "verify-no-future-dated-seed-expenses.mjs",
   "verify-no-geofence-around-unresolved-point.mjs",
   "verify-no-nul-bytes-in-source.mjs",
   "verify-parity-table-header-one-row.mjs",

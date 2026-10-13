@@ -17,6 +17,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect, type ReferenceOption } from "../../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
@@ -29,12 +30,15 @@ import { Link } from "react-router-dom";
 import { isExpenseAccount, isPaymentAccount } from "../../../lib/account-picker-scope";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { SelectCombobox } from "../../../components/Combobox";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import {
   batchTotals, dollarsToCents, duplicateRow, fillDown, isRowEmpty, newRow, parsePastedRows, validateRow,
   type BatchExpenseField, type BatchExpenseRow,
 } from "./batchExpenseRows";
 
 const METHODS = ["ach", "card", "check", "wire", "cash"] as const;
+/** A grid row plus its position in the batch — the # column, Dup and Fill↓ act on the batch order, not the sorted view. */
+type IndexedRow = BatchExpenseRow & { rowIndex: number };
 const VENDOR_PICKER_LIMIT = 1000;
 
 export function BatchExpensesPage() {
@@ -117,6 +121,9 @@ export function BatchExpensesPage() {
           memo: [r.memo.trim(), `Payment: ${r.paymentMethod.toUpperCase()}`, r.refNo.trim() ? `Ref: ${r.refNo.trim()}` : null, r.loadNumber.trim() ? `Load: ${r.loadNumber.trim()}` : null, "Batch transactions"].filter(Boolean).join(" · "),
           ...(r.payee ? { vendor_uuid: r.payee } : {}),
           ...(r.classId ? { class_id: r.classId } : {}),
+          // 443.102 — the expense links to its load (G18). The number used to reach the memo only, so every batch
+          // expense was saved with no load.
+          ...(r.loadId ? { load_id: r.loadId } : {}),
           ...(r.refNo.trim() ? { vendor_document_number: r.refNo.trim() } : {}),
         });
         saved += 1; cents += amount;
@@ -179,52 +186,81 @@ export function BatchExpensesPage() {
       />
       {lastBatch ? <div className="mb-2 rounded border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs" data-testid="batch-expenses-result">Batch saved: {lastBatch.saved} expense(s) posted ({formatCurrencyFromCents(lastBatch.cents)}), {lastBatch.failed} kept unsaved with their reason.</div> : null}
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="w-full min-w-[80rem] text-xs" data-testid="batch-expenses-grid">
-          <thead className="bg-[#F7F8FA] text-left uppercase tracking-wide text-gray-600">
-            <tr><th className="p-1 w-8">#</th><th className="p-1">Date</th><th className="p-1">Payee</th><th className="p-1">Paid from</th><th className="p-1">Method</th><th className="p-1">Ref / check no.</th><th className="p-1 text-right">Amount</th><th className="p-1">Category</th><th className="p-1">Class / unit</th><th className="p-1">Load</th><th className="p-1">Memo</th><th className="p-1">Status</th><th className="p-1"></th></tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={r.key} className="border-t border-gray-100" data-testid={`batch-expenses-row-${i}`}>
-                <td className="p-1 text-[#6B7280]">{i + 1}</td>
-                <td className="p-1" title={title(r, "date")}><DatePicker value={r.date} onChange={(next) => set(r.key, { date: next })} className={cellCls(r, "date")} disabled={r.status === "saved"} /></td>
-                <td className="p-1 min-w-[12rem]" title={title(r, "payee") || r.payeeText}>
-                  <ReferenceSelect size="sm" value={r.payee || null} onChange={(next) => set(r.key, { payee: next ?? "", payeeText: "" })} options={vendorOptions} createKind="vendor" operatingCompanyId={companyId} placeholder={r.payeeText ? `? ${r.payeeText}` : "— no payee —"} disabled={r.status === "saved"} loading={vendorsQ.isLoading} onSearch={setVendorSearch} onOptionCreated={() => void vendorsQ.refetch()} />
-                </td>
-                <td className="p-1 min-w-[12rem]" title={title(r, "paymentAccount")}>
-                  <ReferenceSelect size="sm" value={r.paymentAccount || null} onChange={(next) => set(r.key, { paymentAccount: next ?? "" })} options={paymentOptions} createKind="account" operatingCompanyId={companyId} placeholder="Select…" disabled={r.status === "saved"} loading={accountsQ.isLoading} onOptionCreated={() => void accountsQ.refetch()} />
-                </td>
-                <td className="p-1">
-                  <SelectCombobox value={r.paymentMethod} onChange={(e) => set(r.key, { paymentMethod: e.target.value as BatchExpenseRow["paymentMethod"] })} className={cellCls(r, "paymentMethod")} title={title(r, "paymentMethod")} disabled={r.status === "saved"}>
-                    <option value="">Select…</option>
-                    {METHODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
-                  </SelectCombobox>
-                </td>
-                <td className="p-1"><input value={r.refNo} onChange={(e) => set(r.key, { refNo: e.target.value })} className={cellCls(r, "refNo")} title={title(r, "refNo")} disabled={r.status === "saved"} /></td>
-                <td className="p-1" title={title(r, "amount")}><MoneyInput valueDollars={r.amount === "" ? null : Number(String(r.amount).replace(/[$,\s]/g, ""))} onChangeDollars={(next) => set(r.key, { amount: next == null ? "" : String(next) })} className={`${cellCls(r, "amount")} text-right tabular-nums`} disabled={r.status === "saved"} ariaLabel="Amount" /></td>
-                <td className="p-1 min-w-[12rem]" title={title(r, "category") || r.categoryText}>
-                  <ReferenceSelect size="sm" value={r.category || null} onChange={(next) => set(r.key, { category: next ?? "", categoryText: "" })} options={categoryOptions} createKind="account" operatingCompanyId={companyId} placeholder={r.categoryText ? `? ${r.categoryText}` : "Select…"} disabled={r.status === "saved"} loading={accountsQ.isLoading} onOptionCreated={() => void accountsQ.refetch()} />
-                </td>
-                <td className="p-1">
-                  <SelectCombobox value={r.classId} onChange={(e) => set(r.key, { classId: e.target.value, classText: "" })} className={cellCls(r, "classId")} title={title(r, "classId") || r.classText} disabled={r.status === "saved"}>
-                    <option value="">{r.classText ? `? ${r.classText}` : "—"}</option>
-                    {classes.map((c) => <option key={c.id} value={c.id}>{c.display_name || c.code}</option>)}
-                  </SelectCombobox>
-                </td>
-                <td className="p-1"><input value={r.loadNumber} onChange={(e) => set(r.key, { loadNumber: e.target.value })} className={cellCls(r, "loadNumber")} disabled={r.status === "saved"} placeholder="13xxx" /></td>
-                <td className="p-1"><input value={r.memo} onChange={(e) => set(r.key, { memo: e.target.value })} className={cellCls(r, "memo")} disabled={r.status === "saved"} /></td>
-                <td className="p-1 whitespace-nowrap">
-                  {r.status === "saved" && r.expenseId ? <span className="inline-flex items-center gap-1"><EntityLink kind="expense" id={r.expenseId} label="Saved → open" />{r.feedGate ? <Link to={`/feed-gate/${r.feedGate.intake_id}`} className={`rounded px-1 text-xs ${r.feedGate.status === "passed" ? "bg-[#1F2A44] text-white" : "bg-red-600 text-white"}`} data-testid="batch-expenses-feed-gate">{r.feedGate.status === "passed" ? "gate green" : `gate: ${r.feedGate.checks_failed} red`}</Link> : null}</span> : r.status === "error" ? <span className="text-red-700" title={r.error ?? ""}>Error: {r.error}</span> : r.status === "saving" ? "Saving…" : isRowEmpty(r) ? "" : Object.keys(validateRow(r)).length ? <span className="text-[#1F2A44]">Fix red cells</span> : "Ready"}
-                </td>
-                <td className="p-1 whitespace-nowrap">
-                  <button type="button" className="mr-1 underline" onClick={() => setRows((p) => duplicateRow(p, i))} title="Duplicate row">Dup</button>
-                  <button type="button" className="mr-1 underline" onClick={() => setRows((p) => fillDown(fillDown(fillDown(p, "date", i), "paymentAccount", i), "paymentMethod", i))} title="Fill date / paid-from / method down into blank rows">Fill↓</button>
-                  {r.status !== "saved" ? <button type="button" className="underline" onClick={() => setRows((p) => p.filter((x) => x.key !== r.key))} title="Remove row">✕</button> : null}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ParityTable<IndexedRow>
+          storageKey="batch-expenses-grid"
+          tableTestId="batch-expenses-grid"
+          rows={rows.map((r, i) => ({ ...r, rowIndex: i }))}
+          rowKey={(r) => r.key}
+          rowTestId={(r) => `batch-expenses-row-${r.rowIndex}`}
+          minWidthPx={1280}
+          suppressToolbarSearch
+          suppressToolbarRange
+          initialPageSize={300}
+          allowAllPageSize
+          columns={[
+            { key: "rowIndex", label: "#", minWidth: 32, render: (r) => <span className="text-[#6B7280]">{r.rowIndex + 1}</span> },
+            { key: "date", label: "Date", overflowVisible: true, render: (r) => <span title={title(r, "date")}><DatePicker value={r.date} onChange={(next) => set(r.key, { date: next })} className={cellCls(r, "date")} disabled={r.status === "saved"} /></span> },
+            { key: "payeeText", label: "Payee", minWidth: 192, overflowVisible: true, sortable: false, render: (r) => (
+              <span title={title(r, "payee") || r.payeeText}>
+                <ReferenceSelect size="sm" value={r.payee || null} onChange={(next) => set(r.key, { payee: next ?? "", payeeText: "" })} options={vendorOptions} createKind="vendor" operatingCompanyId={companyId} placeholder={r.payeeText ? `? ${r.payeeText}` : "— no payee —"} disabled={r.status === "saved"} loading={vendorsQ.isLoading} onSearch={setVendorSearch} onOptionCreated={() => void vendorsQ.refetch()} />
+              </span>
+            ) },
+            { key: "paymentAccount", label: "Paid from", minWidth: 192, overflowVisible: true, sortable: false, render: (r) => (
+              <span title={title(r, "paymentAccount")}>
+                <ReferenceSelect size="sm" value={r.paymentAccount || null} onChange={(next) => set(r.key, { paymentAccount: next ?? "" })} options={paymentOptions} createKind="account" operatingCompanyId={companyId} placeholder="Select…" disabled={r.status === "saved"} loading={accountsQ.isLoading} onOptionCreated={() => void accountsQ.refetch()} />
+              </span>
+            ) },
+            { key: "paymentMethod", label: "Method", overflowVisible: true, render: (r) => (
+              <SelectCombobox value={r.paymentMethod} onChange={(e) => set(r.key, { paymentMethod: e.target.value as BatchExpenseRow["paymentMethod"] })} className={cellCls(r, "paymentMethod")} title={title(r, "paymentMethod")} disabled={r.status === "saved"}>
+                <option value="">Select…</option>
+                {METHODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
+              </SelectCombobox>
+            ) },
+            { key: "refNo", label: "Ref / check no.", render: (r) => <input value={r.refNo} onChange={(e) => set(r.key, { refNo: e.target.value })} className={cellCls(r, "refNo")} title={title(r, "refNo")} disabled={r.status === "saved"} /> },
+            { key: "amount", label: "Amount", kind: "money", sortValue: (r) => (r.amount === "" ? null : Number(String(r.amount).replace(/[$,\s]/g, ""))), render: (r) => <span title={title(r, "amount")}><MoneyInput valueDollars={r.amount === "" ? null : Number(String(r.amount).replace(/[$,\s]/g, ""))} onChangeDollars={(next) => set(r.key, { amount: next == null ? "" : String(next) })} className={`${cellCls(r, "amount")} text-right tabular-nums`} disabled={r.status === "saved"} ariaLabel="Amount" /></span> },
+            { key: "category", label: "Category", minWidth: 192, overflowVisible: true, sortable: false, render: (r) => (
+              <span title={title(r, "category") || r.categoryText}>
+                <ReferenceSelect size="sm" value={r.category || null} onChange={(next) => set(r.key, { category: next ?? "", categoryText: "" })} options={categoryOptions} createKind="account" operatingCompanyId={companyId} placeholder={r.categoryText ? `? ${r.categoryText}` : "Select…"} disabled={r.status === "saved"} loading={accountsQ.isLoading} onOptionCreated={() => void accountsQ.refetch()} />
+              </span>
+            ) },
+            { key: "classId", label: "Class / unit", overflowVisible: true, sortable: false, render: (r) => (
+              <SelectCombobox value={r.classId} onChange={(e) => set(r.key, { classId: e.target.value, classText: "" })} className={cellCls(r, "classId")} title={title(r, "classId") || r.classText} disabled={r.status === "saved"}>
+                <option value="">{r.classText ? `? ${r.classText}` : "—"}</option>
+                {classes.map((c) => <option key={c.id} value={c.id}>{c.display_name || c.code}</option>)}
+              </SelectCombobox>
+            ) },
+            { key: "loadNumber", label: "Load", overflowVisible: true, sortValue: (r) => r.loadNumber, render: (r) => (
+              r.status === "saved" ? (
+                r.loadId ? <EntityLink kind="load" id={r.loadId} label={r.loadNumber || "Load"} /> : <span>—</span>
+              ) : (
+                <span className={cellCls(r, "loadNumber")} title={title(r, "loadNumber") || r.loadNumber}>
+                  <EntityPicker
+                    kind="load"
+                    operatingCompanyId={companyId}
+                    value={r.loadId || null}
+                    onChange={(id, option) => set(r.key, { loadId: id ?? "", loadNumber: id ? option?.label ?? r.loadNumber : "" })}
+                    allowCreate={false}
+                    allowClear
+                    placeholder={r.loadNumber && !r.loadId ? `? ${r.loadNumber}` : "Load"}
+                    ariaLabel={`Load for row ${r.rowIndex + 1}`}
+                  />
+                </span>
+              )
+            ) },
+            { key: "memo", label: "Memo", render: (r) => <input value={r.memo} onChange={(e) => set(r.key, { memo: e.target.value })} className={cellCls(r, "memo")} disabled={r.status === "saved"} /> },
+            { key: "status", label: "Status", allowWrap: true, render: (r) => <span className="whitespace-nowrap">{r.status === "saved" && r.expenseId ? <span className="inline-flex items-center gap-1"><EntityLink kind="expense" id={r.expenseId} label="Saved → open" />{r.feedGate ? <Link to={`/feed-gate/${r.feedGate.intake_id}`} className={`rounded px-1 text-xs ${r.feedGate.status === "passed" ? "bg-[#1F2A44] text-white" : "bg-red-600 text-white"}`} data-testid="batch-expenses-feed-gate">{r.feedGate.status === "passed" ? "gate green" : `gate: ${r.feedGate.checks_failed} red`}</Link> : null}</span> : r.status === "error" ? <span className="text-red-700" title={r.error ?? ""}>Error: {r.error}</span> : r.status === "saving" ? "Saving…" : isRowEmpty(r) ? "" : Object.keys(validateRow(r)).length ? <span className="text-[#1F2A44]">Fix red cells</span> : "Ready"}</span> },
+            { key: "actions", label: "Actions", sortable: false, render: (r) => {
+              const i = r.rowIndex;
+              return (
+                <span className="whitespace-nowrap">
+                <button type="button" className="mr-1 underline" onClick={() => setRows((p) => duplicateRow(p, i))} title="Duplicate row">Dup</button>
+                <button type="button" className="mr-1 underline" onClick={() => setRows((p) => fillDown(fillDown(fillDown(p, "date", i), "paymentAccount", i), "paymentMethod", i))} title="Fill date / paid-from / method down into blank rows">Fill↓</button>
+                {r.status !== "saved" ? <button type="button" className="underline" onClick={() => setRows((p) => p.filter((x) => x.key !== r.key))} title="Remove row">✕</button> : null}
+                </span>
+              );
+            } },
+          ]}
+        />
       </div>
     </AccountingSubNavWrapper>
   );

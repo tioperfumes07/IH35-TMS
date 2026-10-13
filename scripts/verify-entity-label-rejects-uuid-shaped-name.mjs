@@ -157,16 +157,11 @@ const SIBLINGS = [
     bad: /row\.actor_name\s*\?\?\s*row\.actor_user_id/,
     good: /entityLabel\(\s*row\.actor_name\s*,\s*row\.actor_user_id\s*,\s*"User"\s*\)/,
   },
-  {
-    rel: "apps/frontend/src/pages/accounting/PayrollAggregatedPage.tsx",
-    bad: /row\.qbo_payroll_run_name\s*\?\?\s*row\.qbo_payroll_run_id/,
-    good: /entityLabel\(\s*row\.qbo_payroll_run_name\s*,\s*row\.qbo_payroll_run_id\s*,\s*"Payroll run"\s*\)/,
-  },
-  {
-    rel: "apps/frontend/src/components/qbo/VendorLinkageModal.tsx",
-    bad: /row\.company_name\s*\?\?\s*row\.qbo_vendor_id/,
-    good: /entityLabel\(\s*row\.company_name\s*,\s*row\.qbo_vendor_id\s*,\s*"QBO vendor"\s*\)/,
-  },
+  // ACCT-F4431379 (Lead 443.137 9d) — old: PayrollAggregatedPage.tsx qbo_payroll_run_name site;
+  // new: entry removed; why: the QBO Payroll W-2 runs table it pinned was deleted (driver pay comes
+  // ONLY from driver_finance). verify-payroll-aggregated-page-uses-paritytable now fails if it returns.
+  // 443.137 9e part 2 (CC-2) — old: VendorLinkageModal.tsx company_name site; new: entry removed; why:
+  // the modal was deleted (its QBO vendor-link routes answer 409 QBO_NATIVE_WRITE_REFUSED).
   {
     rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
     bad: /links\.vendor_name\s*\|\|\s*"Vendor"|links\.customer_name\s*\|\|\s*"Customer"/,
@@ -496,8 +491,14 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
-    bad: /String\(suggestion\.id\s*\?\?\s*""\)/,
-    good: /entityLabel\(\s*suggestion\.description\s*,\s*suggestion\.id\s*,\s*"Transaction"\s*\)/,
+    // LEAD 443.99 class B (2026-10-12).
+    //   old rule: the match-suggestion label must be entityLabel(suggestion.description, suggestion.id, "Transaction").
+    //   new rule: it must be humanMemo(suggestion.description) falling back to the suggestion's category/kind, and
+    //             the suggestion id must never be rendered (String(suggestion.id …) or {suggestion.id}).
+    //   why: BANK-F4334 / 433-CUR B7 (#25611, 7c2e82458b) — the description cell may never carry an internal id,
+    //        not even entityLabel's short-id fallback; the label now has no path to the id at all (stricter).
+    bad: /String\(suggestion\.id\s*\?\?\s*""\)|\{\s*suggestion\.id\s*\}|entityLabel\(\s*suggestion\.description\s*,\s*suggestion\.id/,
+    good: /humanMemo\(suggestion\.description\)\s*:\s*String\(suggestion\.category \?\? suggestion\.kind \?\? "[^"]+"\)/,
   },
   {
     rel: "apps/frontend/src/pages/safety/AccidentsPage.tsx",

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
   FUEL_EXPENSE_GL_POSTING_FLAG_KEY,
+  FUEL_POSTS_ON_RECEIPT_FLAG_KEY,
   mapFuelTypeToPostingKind,
   maybePostFuelExpenseFromCanonicalTxn,
   flushFuelGlPostsAfterCommit,
@@ -8,12 +9,13 @@ import {
   type FuelTxnGlPostCandidate,
 } from "../maybe-post-from-fuel-transaction.service.js";
 
-const { mockIsEnabled, mockWithLuciaBypass, mockPostFuelExpenseFromEvent } = vi.hoisted(() => {
+const { mockIsEnabled, mockWithLuciaBypass, mockPostFuelExpenseFromEvent, mockPostOnReceipt } = vi.hoisted(() => {
   const query = vi.fn(async () => ({ rows: [] }));
   return {
     mockIsEnabled: vi.fn(),
     mockWithLuciaBypass: vi.fn(async (fn: (client: { query: typeof query }) => unknown) => fn({ query })),
     mockPostFuelExpenseFromEvent: vi.fn(),
+    mockPostOnReceipt: vi.fn(),
   };
 });
 
@@ -27,6 +29,11 @@ vi.mock("../../../lib/feature-flags/service.js", () => ({
 
 vi.mock("../poster.service.js", () => ({
   postFuelExpenseFromEvent: mockPostFuelExpenseFromEvent,
+}));
+
+// 443.116 #1 — the receipt post goes through the ONE fill poster (bank-match-fuel-post.service.ts).
+vi.mock("../../bank-recon/bank-match-fuel-post.service.js", () => ({
+  postFuelFillOnReceipt: mockPostOnReceipt,
 }));
 
 const BASE: FuelTxnGlPostCandidate = {
@@ -129,22 +136,58 @@ describe("maybePostFuelExpenseFromCanonicalTxn", () => {
     mockIsEnabled.mockReset();
     mockWithLuciaBypass.mockClear();
     mockPostFuelExpenseFromEvent.mockReset();
+    mockPostOnReceipt.mockReset();
   });
+  const flags = (receipt: boolean, expense: boolean) =>
+    mockIsEnabled.mockImplementation(async (_c: unknown, key: string) => (key === FUEL_POSTS_ON_RECEIPT_FLAG_KEY ? receipt : key === FUEL_EXPENSE_GL_POSTING_FLAG_KEY ? expense : false));
+  const POSTED = { result: "posted", posting_batch_id: "b1", journal_entry_id: "je-1", journal_entry_posting_ids: ["p1", "p2"], idempotency_key: "k", account_resolution_trace: [] };
 
-  it("documents the gate flag as EXPENSE_GL_POSTING_ENABLED", () => {
+  it("flag keys: EXPENSE_GL_POSTING_ENABLED + the per-company FUEL_POSTS_ON_RECEIPT_ENABLED", () => {
     expect(FUEL_EXPENSE_GL_POSTING_FLAG_KEY).toBe("EXPENSE_GL_POSTING_ENABLED");
+    expect(FUEL_POSTS_ON_RECEIPT_FLAG_KEY).toBe("FUEL_POSTS_ON_RECEIPT_ENABLED");
   });
 
-  // OWNER RULING 2026-10-02 + competing-engine audit: a fuel fill never posts at import. It posts when its card bank line
-  // is matched in Banking (postFuelExpenseOnClient inside the match transaction). The import-time path is a no-op for
-  // every input — flag on or off, any amount, any rail.
-  it("import never posts: returns skipped_posts_on_bank_match without reading the flag or calling the poster", async () => {
-    mockIsEnabled.mockResolvedValue(true);
-    for (const candidate of [BASE, { ...BASE, amount_cents: 0 }, { ...BASE, cash_advance: true, driver_id: "d1" }]) {
-      expect(await maybePostFuelExpenseFromCanonicalTxn(candidate)).toEqual({ status: "skipped_posts_on_bank_match" });
-    }
+  it("receipt flag OFF (default): the fill posts at bank match — nothing posts at import", async () => {
+    flags(false, true);
+    expect(await maybePostFuelExpenseFromCanonicalTxn(BASE)).toEqual({ status: "skipped_posts_on_bank_match" });
+    expect(mockPostOnReceipt).not.toHaveBeenCalled();
     expect(mockPostFuelExpenseFromEvent).not.toHaveBeenCalled();
-    expect(mockIsEnabled).not.toHaveBeenCalled();
+  });
+
+  it("receipt flag ON but expense posting OFF: skipped_flag_off, nothing posts", async () => {
+    flags(true, false);
+    expect(await maybePostFuelExpenseFromCanonicalTxn(BASE)).toEqual({ status: "skipped_flag_off" });
+    expect(mockPostOnReceipt).not.toHaveBeenCalled();
+  });
+
+  it("ON: a card fill posts through the one fill poster as kind fuel_transaction — never the retired postFuelExpenseFromEvent", async () => {
+    flags(true, true);
+    mockPostOnReceipt.mockResolvedValue(POSTED);
+    expect(await maybePostFuelExpenseFromCanonicalTxn(BASE)).toEqual({ status: "posted", posting: POSTED });
+    expect(mockPostOnReceipt).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ kind: "fuel_transaction", fill_id: BASE.fuel_transaction_id }));
+    expect(mockPostFuelExpenseFromEvent).not.toHaveBeenCalled();
+  });
+
+  it("ON: a Relay fill posts as kind relay_fuel with the Relay fill id (the receipt), once", async () => {
+    flags(true, true);
+    mockPostOnReceipt.mockResolvedValue({ ...POSTED, result: "already_posted" });
+    const relay = { ...BASE, relay_fuel_transaction_id: "66666666-6666-4666-8666-666666666666" };
+    expect((await maybePostFuelExpenseFromCanonicalTxn(relay)).status).toBe("already_posted");
+    expect(mockPostOnReceipt).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ kind: "relay_fuel", fill_id: relay.relay_fuel_transaction_id }));
+  });
+
+  it("a Relay cash advance is not a fill; a zero amount posts nothing", async () => {
+    flags(true, true);
+    expect(await maybePostFuelExpenseFromCanonicalTxn({ ...BASE, cash_advance: true })).toEqual({ status: "skipped_not_a_fill" });
+    expect(await maybePostFuelExpenseFromCanonicalTxn({ ...BASE, amount_cents: 0 })).toEqual({ status: "skipped_zero_amount" });
+    expect(mockPostOnReceipt).not.toHaveBeenCalled();
+  });
+
+  it("a fill the poster refuses by name (no load at fill time) stays unposted for its bank match — not an error", async () => {
+    flags(true, true);
+    const err = Object.assign(new Error("fuel_transaction x: load_id is null"), { name: "FuelMatchPostError" });
+    mockPostOnReceipt.mockRejectedValue(err);
+    expect(await maybePostFuelExpenseFromCanonicalTxn(BASE)).toEqual({ status: "unposted_at_receipt", message: err.message });
   });
 });
 
@@ -152,12 +195,20 @@ describe("flushFuelGlPostsAfterCommit", () => {
   beforeEach(() => {
     mockIsEnabled.mockReset();
     mockPostFuelExpenseFromEvent.mockReset();
+    mockPostOnReceipt.mockReset();
   });
 
-  it("counts every candidate as posting on bank match, never posts, does not throw", async () => {
-    mockIsEnabled.mockResolvedValue(true);
+  it("receipt flag OFF: counts every candidate as posting on bank match, never posts, does not throw", async () => {
+    mockIsEnabled.mockResolvedValue(false);
     const stats = await flushFuelGlPostsAfterCommit([BASE, BASE]);
-    expect(stats).toEqual({ attempted: 2, posted: 0, skipped_flag_off: 0, skipped_posts_on_bank_match: 2, errors: 0 });
-    expect(mockPostFuelExpenseFromEvent).not.toHaveBeenCalled();
+    expect(stats).toEqual({ attempted: 2, posted: 0, skipped_flag_off: 0, skipped_posts_on_bank_match: 2, unposted_at_receipt: 0, errors: 0 });
+    expect(mockPostOnReceipt).not.toHaveBeenCalled();
+  });
+
+  it("receipt flag ON: posts each fill once through the one fill poster", async () => {
+    mockIsEnabled.mockResolvedValue(true);
+    mockPostOnReceipt.mockResolvedValue({ result: "posted", posting_batch_id: "b", journal_entry_id: "je", journal_entry_posting_ids: [], idempotency_key: "k", account_resolution_trace: [] });
+    const stats = await flushFuelGlPostsAfterCommit([BASE]);
+    expect(stats).toEqual({ attempted: 1, posted: 1, skipped_flag_off: 0, skipped_posts_on_bank_match: 0, unposted_at_receipt: 0, errors: 0 });
   });
 });

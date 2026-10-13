@@ -27,7 +27,13 @@ import { readFileSync, existsSync } from "node:fs";
 const LABEL = "verify:entity-expense-category-map-complete";
 const MIGRATION = "db/migrations/202611190000_usmca_expense_category_map_and_driver_subaccount_numbering.sql";
 const PROVISIONER = "apps/backend/src/accounting/driver-subaccount-provision.service.ts";
-const MAINT_POSTER = "apps/backend/src/accounting/maintenance-posting/poster.service.ts";
+// 443.99: ROUND 389.3 ruling 2 (f96c83c9c1) moved the local numbering out of the provisioner's SQL lpad into
+// allocateDriverSubAccountNnn (one stable zero-padded nnn per driver, <parent>-00-nnn).
+const NUMBERER = "apps/backend/src/accounting/driver-subaccount-number.ts";
+// 443.99: ACCT-F19470 (97c844afd1, #19507) removed the WO-close poster's per-line MaintenanceCategoryCode union (WO-close
+// bills now resolve ONE CoA-role account by the $7,000 capitalize threshold). The one remaining emitter of maintenance
+// category codes is the bill-line resolver, deriveMaintenanceCategoryCode -> resolveAccountForCategory("maintenance", code).
+const MAINT_POSTER = "apps/backend/src/bills/bill-line-account-resolution.service.ts";
 
 /** The kinds TRANSP maps on prod — a new entity missing any of these will fail-loud at post time. */
 export const REQUIRED_KINDS = [
@@ -112,17 +118,17 @@ export function analyse(files) {
   if (poster == null) {
     problems.push(`${MAINT_POSTER} is missing — cannot verify the maintenance category codes are covered.`);
   } else {
-    const decl = /type\s+MaintenanceCategoryCode\s*=\s*([^;]+);/.exec(stripComments(poster));
+    const decl = /function\s+deriveMaintenanceCategoryCode\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/.exec(poster);
     if (!decl) {
       problems.push(
-        `${MAINT_POSTER}: could not find the MaintenanceCategoryCode union. It is the source of truth ` +
-          `for which maintenance codes the poster emits; if it moved, this guard must be repointed ` +
+        `${MAINT_POSTER}: could not find deriveMaintenanceCategoryCode. It is the source of truth ` +
+          `for which maintenance codes the bill-line resolver emits; if it moved, this guard must be repointed ` +
           `rather than left silently unable to check anything.`
       );
     } else {
-      const declared = [...decl[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+      const declared = [...decl[1].matchAll(/\breturn\s+"([^"]+)"/g)].map((m) => m[1]);
       if (declared.length === 0) {
-        problems.push(`${MAINT_POSTER}: MaintenanceCategoryCode union parsed to zero codes — refusing to pass vacuously.`);
+        problems.push(`${MAINT_POSTER}: deriveMaintenanceCategoryCode parsed to zero literal codes — refusing to pass vacuously.`);
       }
       const covered = new Set(REQUIRED_PAIRS.filter(([k]) => k === "maintenance").map(([, c]) => c));
       for (const code of declared) {
@@ -150,7 +156,11 @@ export function analyse(files) {
           `be numbered and every new hire mints another NULL, breaking reconciliation and sorting.`
       );
     }
-    if (!/lpad\s*\(/.test(body) || !/account_subtype/.test(body)) {
+    const num = files[NUMBERER];
+    const localNumber =
+      /lpad\s*\(/.test(body) ||
+      (/allocateDriverSubAccountNnn\s*\(/.test(body) && num != null && /allocateDriverSubAccountNnn/.test(num) && /padStart\(\s*3\s*,\s*"0"\s*\)/.test(num));
+    if (!localNumber || !/account_subtype/.test(body)) {
       problems.push(
         `${PROVISIONER}: no local number derivation (lpad) and/or no account_subtype inheritance. ` +
           `Both must be derived locally — under parallel books TMS is authoritative for its own chart.`
@@ -163,7 +173,7 @@ export function analyse(files) {
 
 function readAll() {
   const out = {};
-  for (const f of [MIGRATION, PROVISIONER, MAINT_POSTER]) out[f] = existsSync(f) ? readFileSync(f, "utf8") : null;
+  for (const f of [MIGRATION, PROVISIONER, MAINT_POSTER, NUMBERER]) out[f] = existsSync(f) ? readFileSync(f, "utf8") : null;
   return out;
 }
 
@@ -173,9 +183,11 @@ function selftest() {
   const goodMig = REQUIRED_KINDS.map((k) => `('${k}','x','1')`).join(",");
   const goodProv = "INSERT INTO catalogs.accounts (...) SELECT p.account_number || lpad(x,3,'0'), p.account_subtype FROM catalogs.accounts p";
   const bugProv = "INSERT INTO catalogs.accounts (a,b) VALUES ( NULL, $1, 'Asset', NULL, $2::uuid )";
-  // The REAL declaration shape from maintenance-posting/poster.service.ts.
+  // The REAL declaration shape from bills/bill-line-account-resolution.service.ts.
   const MAINT_CODES = ["tires", "brakes", "engine", "dot", "pm_preventive", "body", "electrical", "ac", "misc"];
-  const posterSrc = (codes) => `type MaintenanceCategoryCode = ${codes.map((c) => `"${c}"`).join(" | ")};`;
+  const posterSrc = (codes) =>
+    `export function deriveMaintenanceCategoryCode(input: BillLineCategoryInput) {\n  const explicitCode = normalize(input.category_code);\n  if (explicitCode) return explicitCode;\n` +
+    codes.map((c, i) => (i === codes.length - 1 ? `  return "${c}";` : `  if (/x${i}/.test(text)) return "${c}";`)).join("\n") + `\n}\n`;
   const goodPoster = posterSrc(MAINT_CODES);
   const base = { [MIGRATION]: goodMig, [PROVISIONER]: goodProv, [MAINT_POSTER]: goodPoster };
 
@@ -192,9 +204,9 @@ function selftest() {
   t("REQUIRED_PAIRS actually covers every code the real poster declares today",
     MAINT_CODES.every((c) => REQUIRED_PAIRS.some(([k, cc]) => k === "maintenance" && cc === c)));
   t("a moved/renamed union is a FAILURE, not a silent skip",
-    analyse({ ...base, [MAINT_POSTER]: "type SomethingElse = \"tires\";" }).length === 1);
+    analyse({ ...base, [MAINT_POSTER]: "export function somethingElse() {\n  return \"tires\";\n}\n" }).length === 1);
   t("an empty union is a FAILURE, not a vacuous pass",
-    analyse({ ...base, [MAINT_POSTER]: "type MaintenanceCategoryCode = ;" }).length >= 1);
+    analyse({ ...base, [MAINT_POSTER]: "export function deriveMaintenanceCategoryCode(input) {\n  return input.category_code;\n}\n" }).length >= 1);
   t("missing poster file FAILS", analyse({ ...base, [MAINT_POSTER]: null }).length === 1);
 
   // The REAL pre-fix provisioner.
@@ -202,6 +214,12 @@ function selftest() {
   t("a comment mentioning the old NULL does not trip it",
     analyse({ ...base, [PROVISIONER]: `-- used to be VALUES ( NULL,\n${goodProv}` }).length === 0);
   t("missing migration FAILS", analyse({ ...base, [MIGRATION]: null }).length === 1);
+  // ROUND 389.3 shape: the provisioner allocates through the numberer, which zero-pads locally.
+  const r389Prov = "const nnn = input.nnn ?? (await allocateDriverSubAccountNnn(client, a, b));\nINSERT INTO catalogs.accounts (account_number, account_subtype) SELECT p.account_number || '-00-' || $6, p.account_subtype FROM catalogs.accounts p";
+  const r389Num = "export async function allocateDriverSubAccountNnn() {\n  return String(next).padStart(3, \"0\");\n}";
+  t("ROUND 389.3 numberer shape passes", analyse({ ...base, [PROVISIONER]: r389Prov, [NUMBERER]: r389Num }).length === 0);
+  t("numberer that does not pad FAILS", analyse({ ...base, [PROVISIONER]: r389Prov, [NUMBERER]: "export async function allocateDriverSubAccountNnn() { return null; }" }).length === 1);
+  t("numberer file missing FAILS", analyse({ ...base, [PROVISIONER]: r389Prov, [NUMBERER]: null }).length === 1);
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
@@ -212,7 +230,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 11 cases (3 pass-shapes incl. comment-immunity, 8 fail-shapes incl. the row-666 uncovered-poster-code shape, a moved union, and an empty union)`);
+  console.log(`${LABEL} selftest OK — 14 cases (4 pass-shapes incl. comment-immunity, 10 fail-shapes incl. the row-666 uncovered-poster-code shape, a moved union, and an empty union)`);
   process.exit(0);
 }
 const problems = analyse(readAll());

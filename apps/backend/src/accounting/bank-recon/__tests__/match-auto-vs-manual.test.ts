@@ -31,7 +31,8 @@ describe("bank-recon auto vs manual matching", () => {
     setupBaseMocks();
     mockQuery.mockImplementation(async (sql: string) => {
       if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
-      if (sql.includes("FROM banking.bank_transactions")) {
+      // The bank-line loader only (loadTransaction) — candidate queries (e.g. Relay deposits) also read banking.bank_transactions.
+      if (sql.includes("FROM banking.bank_transactions bt") && sql.includes("WHERE bt.id = $1::uuid")) {
         return {
           rows: [
             {
@@ -82,7 +83,8 @@ describe("bank-recon auto vs manual matching", () => {
     setupBaseMocks();
     mockQuery.mockImplementation(async (sql: string) => {
       if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
-      if (sql.includes("FROM banking.bank_transactions")) {
+      // The bank-line loader only (loadTransaction) — candidate queries (e.g. Relay deposits) also read banking.bank_transactions.
+      if (sql.includes("FROM banking.bank_transactions bt") && sql.includes("WHERE bt.id = $1::uuid")) {
         return {
           rows: [
             {
@@ -136,7 +138,8 @@ describe("bank-recon auto vs manual matching", () => {
     setupBaseMocks();
     mockQuery.mockImplementation(async (sql: string) => {
       if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
-      if (sql.includes("FROM banking.bank_transactions")) {
+      // The bank-line loader only (loadTransaction) — candidate queries (e.g. Relay deposits) also read banking.bank_transactions.
+      if (sql.includes("FROM banking.bank_transactions bt") && sql.includes("WHERE bt.id = $1::uuid")) {
         return {
           rows: [
             {

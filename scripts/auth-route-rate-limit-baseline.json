@@ -717,7 +717,6 @@
     "apps/backend/src/org/companies.routes.ts|PATCH|/api/v1/org/me/default-company",
     "apps/backend/src/org/companies.routes.ts|POST|/api/v1/org/user-company-access",
     "apps/backend/src/payroll/aggregated.routes.ts|GET|/api/v1/payroll/aggregated",
-    "apps/backend/src/payroll/aggregated.routes.ts|POST|/api/v1/payroll/aggregated/refresh",
     "apps/backend/src/payroll/settlement-shadow.routes.ts|GET|/api/v1/payroll/settlement-shadow-run",
     "apps/backend/src/program/program-board.routes.ts|GET|/api/v1/program/board",
     "apps/backend/src/program/program-board.routes.ts|GET|/api/v1/program/tracker",

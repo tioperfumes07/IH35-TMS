@@ -39,7 +39,7 @@ function read(rel) {
   return fs.readFileSync(p, "utf8");
 }
 
-const route = read(ROUTE);
+const route = read(ROUTE) + "\n" + read("apps/backend/src/accounting/expense-writer.service.ts"); /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
 if (route) {
   if (/amount_cents\s*\/\s*100/.test(route)) {
     fail(`${ROUTE} reintroduces floating dollars (\`amount_cents / 100\`) — the expenses money path must stay on integer cents (Gate 2).`);

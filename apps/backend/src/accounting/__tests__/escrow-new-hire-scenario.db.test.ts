@@ -26,6 +26,8 @@ import {
   type IsolatedOperatingCompany,
 } from "../../../test-helpers/db-fixture.js";
 import { openEscrow, depositEscrow, releaseEscrow } from "../escrow/service.js";
+import { provisionDriverEscrowSubAccount, upsertDriverEscrowAccountLink } from "../driver-subaccount-provision.service.js";
+import { allocateDriverSubAccountNnn } from "../driver-subaccount-number.js";
 
 const run = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -69,6 +71,8 @@ run("stage-3 · new-hire driver escrow (real engine)", () => {
       // ordering guarantee between separate test files/workers, so any FK on this actor 23503'd
       // whenever this file ran before that one. Seed it here too (idempotent) so this file is
       // self-sufficient.
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [actor.userId, `escrow-hire-${s}@test.local`]);
@@ -77,8 +81,26 @@ run("stage-3 · new-hire driver escrow (real engine)", () => {
       // back to the driver; booking it anywhere else would recognise someone else's money as ours.
       await db.query(`INSERT INTO catalogs.accounts (id,operating_company_id,account_number,account_name,account_type,is_postable) VALUES ($1::uuid,$2::uuid,$3,'Driver Escrow - Held in Trust','Liability',true)`, [id.escrow, companyId, `2100${s}`]);
       await db.query(`INSERT INTO accounting.chart_of_accounts_roles (operating_company_id,role,account_id,is_active) VALUES ($1::uuid,'cash_clearing',$2::uuid,true)`, [companyId, id.cash]);
+      // 443.93: a DRIVER-held escrow posts against driver net-pay clearing, not cash (escrow/service.ts:376-381) — the
+      // isolated company binds that role the way every live entity does.
+      const payrollClearing = randomUUID();
+      await db.query(`INSERT INTO catalogs.accounts (id,operating_company_id,account_number,account_name,account_type,is_postable) VALUES ($1::uuid,$2::uuid,$3,'Driver Net-Pay Clearing','Liability',true)`, [payrollClearing, companyId, `PRC${s}`]);
+      await db.query(`INSERT INTO accounting.chart_of_accounts_roles (operating_company_id,role,account_id,is_active) VALUES ($1::uuid,'driver_payroll_clearing',$2::uuid,true)`, [companyId, payrollClearing]);
       await db.query(`INSERT INTO accounting.chart_of_accounts_roles (operating_company_id,role,account_id,is_active) VALUES ($1::uuid,'escrow_liability_default',$2::uuid,true)`, [companyId, id.escrow]);
       await db.query(`INSERT INTO mdata.drivers (id,operating_company_id,first_name,last_name,phone,status) VALUES ($1::uuid,$2::uuid,'NewHire','Driver',$3,'Active')`, [id.driver, companyId, `95606${s.slice(0,5)}`]);
+      // 443.93: a driver's escrow lives on HIS OWN liability sub-account (driver_finance.v_driver_escrow_balance counts
+      // only that; the shared escrow_liability_default account is the parent, never a driver's balance). Driver creation
+      // provisions it (mdata/drivers.routes.ts:1031-1048): the leaf under "Driver Escrow" beneath the top-level trust
+      // account, then the escrow_accounts link openEscrow returns. The fixture provisions it through the same engine.
+      // The "Driver Escrow" sub-parent is an owner-numbered chart row on every live entity (USMCA 2100-00, TRANSP
+      // QBO-1150040187-00; no code mints account numbers — ROUND 181), so the isolated chart carries it the same way.
+      await db.query(`INSERT INTO catalogs.accounts (operating_company_id,account_number,account_name,account_type,parent_account_id,is_postable) VALUES ($1::uuid,$2,'Driver Escrow','Liability',$3::uuid,false)`, [companyId, `2100${s}-00`, id.escrow]);
+      const nnn = await allocateDriverSubAccountNnn(db as never, companyId, id.driver);
+      const esc = await provisionDriverEscrowSubAccount(db as never, {
+        operatingCompanyId: companyId, driverId: id.driver, driverName: "NewHire Driver", actorUserId: actor.userId, nnn,
+      });
+      if (!esc.accountId) throw new Error(`driver escrow sub-account not provisioned: ${JSON.stringify(esc)}`);
+      await upsertDriverEscrowAccountLink(db as never, { operatingCompanyId: companyId, driverId: id.driver, coaAccountId: esc.accountId });
     });
   });
 
@@ -99,13 +121,19 @@ run("stage-3 · new-hire driver escrow (real engine)", () => {
     escrowAccountId = String(acct?.escrow_account?.id ?? "");
     expect(escrowAccountId).toBeTruthy();
 
+    // The driver's own escrow leaf: a LIABILITY under "Driver Escrow", under the top-level trust account.
     const [bound] = await read(`
-      SELECT a.account_type, a.account_name
+      SELECT a.account_type, a.account_name, p.account_name AS parent_name, g.account_name AS grandparent_name, g.account_type AS grandparent_type
         FROM accounting.escrow_accounts e
         JOIN catalogs.accounts a ON a.id = e.coa_account_id
+        LEFT JOIN catalogs.accounts p ON p.id = a.parent_account_id
+        LEFT JOIN catalogs.accounts g ON g.id = p.parent_account_id
        WHERE e.id = $1::uuid`, [escrowAccountId]);
     expect(bound.account_type).toBe("Liability");
-    expect(bound.account_name).toBe("Driver Escrow - Held in Trust");
+    expect(bound.account_name).toContain("Driver Escrow");
+    expect(bound.parent_name).toBe("Driver Escrow");
+    expect(bound.grandparent_name).toBe("Driver Escrow - Held in Trust");
+    expect(bound.grandparent_type).toBe("Liability");
   });
 
   it("deposit posts Dr cash / Cr escrow liability, balanced, and moves the balance by exactly the deposit", async () => {
@@ -134,7 +162,7 @@ run("stage-3 · new-hire driver escrow (real engine)", () => {
 
   it("release reverses the direction and REFUSES to over-draw the trust balance", async () => {
     await releaseEscrow(
-      { operating_company_id: companyId, escrow_account_id: escrowAccountId, amount_cents: RELEASE_CENTS, source_type: "manual" as never, note: "TEST DATA — partial escrow return" },
+      { operating_company_id: companyId, escrow_account_id: escrowAccountId, amount_cents: RELEASE_CENTS, source_type: "manual" as never, source_id: randomUUID(), note: "TEST DATA — partial escrow return" },
       actor
     );
     const [bal] = await read(`SELECT COALESCE((SELECT balance_cents FROM driver_finance.v_driver_escrow_balance WHERE escrow_account_id=$1::uuid), 0)::text AS balance_cents`, [escrowAccountId]);
@@ -151,7 +179,7 @@ run("stage-3 · new-hire driver escrow (real engine)", () => {
 
     // Over-draw must be refused outright. Trust money that was never collected cannot be paid out.
     await expect(releaseEscrow(
-      { operating_company_id: companyId, escrow_account_id: escrowAccountId, amount_cents: OVER_RELEASE_CENTS, source_type: "manual" as never, note: "TEST DATA — over-draw attempt" },
+      { operating_company_id: companyId, escrow_account_id: escrowAccountId, amount_cents: OVER_RELEASE_CENTS, source_type: "manual" as never, source_id: randomUUID(), note: "TEST DATA — over-draw attempt" },
       actor
     )).rejects.toThrow();
 

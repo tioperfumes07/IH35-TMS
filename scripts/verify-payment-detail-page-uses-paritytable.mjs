@@ -57,8 +57,14 @@ function assertMigrated(src) {
   if (!src.includes('EntityLink kind="invoice"')) {
     errors.push(`${PAGE}: must keep the EntityLink invoice drill-through in the Invoice # cell`);
   }
-  if (!src.includes("unapplyMutation.mutate(app.id)")) {
-    errors.push(`${PAGE}: must keep the per-row Unapply action calling unapplyMutation.mutate(app.id)`);
+  // LEAD 443.107 (2026-10-12) — old rule: the per-row Unapply called unapplyMutation.mutate(app.id) directly.
+  //   new rule: the per-row Unapply opens the confirmation (setPendingUnapplyId(app.id)) and the ConfirmModal sends
+  //             unapplyMutation.mutateAsync(pendingUnapplyId); the old direct call is still accepted.
+  //   why: 443.104 (Lead: "confirm before submit") put Unapply behind ConfirmModal (#26591); the row action is still there.
+  const directUnapply = src.includes("unapplyMutation.mutate(app.id)");
+  const confirmedUnapply = src.includes("setPendingUnapplyId(app.id)") && /<ConfirmModal[\s\S]{0,900}unapplyMutation\.mutateAsync\(pendingUnapplyId\)/.test(src);
+  if (!directUnapply && !confirmedUnapply) {
+    errors.push(`${PAGE}: must keep the per-row Unapply action (unapplyMutation.mutate(app.id), or setPendingUnapplyId(app.id) confirmed through ConfirmModal)`);
   }
   return errors;
 }

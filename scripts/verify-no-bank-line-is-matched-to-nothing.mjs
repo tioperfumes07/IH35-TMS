@@ -11,7 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { LINKED_SQL, NOT_FROZEN_SQL, report, withUnscopedReadOnly } from "./lib/bank-feed-state-machine.mjs";
+import { linkedSql, NOT_FROZEN_SQL, report, withUnscopedReadOnly } from "./lib/bank-feed-state-machine.mjs";
 export const REQUIRES_LIVE_DB = "no bank line is matched to nothing, every non-frozen company, on the direct endpoint";
 
 const LABEL = "verify-no-bank-line-is-matched-to-nothing";
@@ -59,7 +59,7 @@ if (process.argv.includes("--selftest")) {
 
 const statik = check(fs.readFileSync(path.join(ROOT, MIG), "utf8"));
 if (statik.length) report(LABEL, statik, "");
-const r = await withUnscopedReadOnly(LABEL, async (c) => {
+const r = await withUnscopedReadOnly(LABEL, async (c, { linkColumns }) => {
   const applied = (await c.query(`SELECT to_regprocedure('banking.bank_line_dead_link(uuid)') IS NOT NULL AS a`)).rows[0].a;
   const lines = (await c.query(`SELECT count(*)::int AS n FROM banking.bank_transactions bt WHERE bt.voided_at IS NULL AND ${NOT_FROZEN_SQL()}`)).rows[0].n;
   let dead = [];
@@ -73,7 +73,7 @@ const r = await withUnscopedReadOnly(LABEL, async (c) => {
   const staleRows = (await c.query(`
     SELECT count(*)::int AS n FROM banking.reconciliation_matches m JOIN banking.bank_transactions bt ON bt.id = m.bank_transaction_id
      WHERE m.voided_at IS NULL AND m.match_state IN ('auto_matched', 'user_matched') AND ${NOT_FROZEN_SQL("m.operating_company_id")}
-       AND (bt.voided_at IS NOT NULL OR NOT ${LINKED_SQL()})`)).rows[0].n;
+       AND (bt.voided_at IS NOT NULL OR NOT ${linkedSql("bt", linkColumns)})`)).rows[0].n;
   const present = applied
     ? (await c.query(`SELECT c.relnamespace::regnamespace::text || '.' || c.relname AS t, tg.tgname FROM pg_trigger tg JOIN pg_class c ON c.oid = tg.tgrelid WHERE tg.tgname LIKE 'trg_%' AND tg.tgconstraint <> 0`)).rows.map((x) => `${x.t}|${x.tgname}`)
     : [];

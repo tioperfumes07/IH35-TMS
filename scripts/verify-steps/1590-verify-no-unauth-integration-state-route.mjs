@@ -65,6 +65,10 @@ const AUTH_GATES = [
   // "unauthenticated" would push a correct implementation toward a bogus allowlist entry.
   "verifyIntuitWebhookSignature",
   "verifyWebhookSignature",
+  // integrations/samsara/samsara-webhook.routes.ts: Samsara v1 HMAC (samsara-webhook-verify.ts, timingSafeEqual) +
+  // timestamp freshness, 401 on mismatch, reject-before-persist; an unresolved org answers the SAME 401 so the
+  // pre-verify tenant lookup never tells an anonymous caller whether Samsara is configured (443.99).
+  "verifySamsaraWebhookSignature",
   "timingSafeEqual",
 ];
 

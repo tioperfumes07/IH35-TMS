@@ -14,7 +14,11 @@ const SELFTEST = process.argv.includes("--selftest");
 
 const PATHS = {
   poster: "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts",
-  loads: "apps/backend/src/dispatch/loads.routes.ts",
+  // 25f2a8faa4 (#23821, R313-E31) moved the office transition out of dispatch/loads.routes.ts into
+  // load-transition.service.ts; since 30ce12a690 (#4730, LV-REVREC-NOT-FIRING) it latches through the ONE
+  // after-commit helper delivery-evidence-latch.ts, which is what calls postLoadRevenueLatch per event.
+  transition: "apps/backend/src/dispatch/load-transition.service.ts",
+  latch: "apps/backend/src/dispatch/delivery-evidence-latch.ts",
   resolver: "apps/backend/src/accounting/coa-roles/resolver.service.ts",
   coaRoles: "apps/frontend/src/pages/accounting/CoaRolesPage.tsx",
   flags: "apps/backend/src/lib/feature-flags/service.ts",
@@ -34,7 +38,7 @@ function stripComments(src) {
 /** @param {Record<string, string>} sources */
 export function check(sources) {
   const problems = [];
-  const { poster, loads, resolver, coaRoles, flags, mig, held } = sources;
+  const { poster, transition, latch, resolver, coaRoles, flags, mig, held } = sources;
 
   if (!poster) problems.push("missing revrec-delivery-posting/poster.service.ts");
   else {
@@ -75,11 +79,16 @@ export function check(sources) {
     }
   }
 
-  if (!loads) problems.push("missing loads.routes.ts");
-  else if (!/postLoadRevenueLatch/.test(loads)) {
-    problems.push("load transition must call postLoadRevenueLatch");
-  } else if (!/delivered_pending_docs/.test(loads) || !/completed_docs_received/.test(loads)) {
-    problems.push("load transition must wire earn + bill statuses");
+  if (!transition) problems.push("missing load-transition.service.ts");
+  else if (!/await latchOnDeliveryEvidence\(client,/.test(stripComments(transition))) {
+    problems.push("load transition must call postLoadRevenueLatch (through latchOnDeliveryEvidence)");
+  }
+  if (!latch) problems.push("missing delivery-evidence-latch.ts");
+  else {
+    const code = stripComments(latch);
+    if (!/postLoadRevenueLatch\(\{[\s\S]{0,200}?target_status: "delivered_pending_docs"/.test(code) || !/postLoadRevenueLatch\(\{[\s\S]{0,200}?target_status: "completed_docs_received"/.test(code)) {
+      problems.push("load transition must wire earn + bill statuses (delivery-evidence-latch.ts posts both events)");
+    }
   }
 
   if (!resolver) problems.push("missing resolver.service.ts");
@@ -134,7 +143,8 @@ export function check(sources) {
 function selftest() {
   const good = {
     poster: `REVENUE_RECOGNITION_POST_ENABLED\ncreateJournalEntry\nresolveRoleAccount\nunbilled_revenue\nar_control\nrevenue_default\nbuildEarnEvent1Postings\nbuildBillEvent2Postings\nTRK excluded\nconst LATCH_REGCLASS = "accounting.load_revenue_recognition_postings";\nasync function latchTablePresent() { SELECT to_regclass($1::text) IS NOT NULL [LATCH_REGCLASS] }\nexport async function postLoadRevenueLatch() { if (!(await latchTablePresent(client))) return { gate: "latch_table_missing" as const }; await loadLatchExists(); }\nif (prepared.gate === "latch_table_missing") return { posted: false, reason: "latch_table_missing" };`,
-    loads: `postLoadRevenueLatch\ndelivered_pending_docs\ncompleted_docs_received`,
+    transition: `await latchOnDeliveryEvidence(client, { operatingCompanyId, loadId, targetStatus });`,
+    latch: `await postLoadRevenueLatch({\n  target_status: "delivered_pending_docs",\n});\nawait postLoadRevenueLatch({\n  target_status: "completed_docs_received",\n});`,
     resolver: `export const COA_ROLE_VALUES = ["unbilled_revenue"] as const;\nconst ROLE_FALLBACKS = { ar_control: {} };`,
     coaRoles: `const ROLE_LABELS = { unbilled_revenue: "Unbilled revenue (ASC 606 earn latch)" };`,
     flags: `POSTING_FLAG_KEYS\nREVENUE_RECOGNITION_POST_ENABLED`,
@@ -148,6 +158,8 @@ function selftest() {
     ["missing user FK", { ...good, mig: good.mig.replace("voided_by_user_id uuid REFERENCES identity.users(id)", "voided_by_user_id uuid") }],
     ["missing canonical check", { ...good, mig: good.mig.replace("CANONICAL-CHECK:", "CANONICAL-CHECK-REMOVED:") }],
     ["missing CoA label", { ...good, coaRoles: "const ROLE_LABELS = {};" }],
+    ["transition no longer latches", { ...good, transition: "// await latchOnDeliveryEvidence(client, { ... })" }],
+    ["bill event dropped", { ...good, latch: good.latch.replace('target_status: "completed_docs_received"', 'target_status: "invoiced"') }],
   ];
   const goodProblems = check(good);
   if (goodProblems.length) {

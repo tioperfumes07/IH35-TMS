@@ -20,10 +20,16 @@ export function audit(sources) {
   const recurringApi = sources.recurringApi;
   const recurringRoute = sources.recurringRoute;
 
+  // 443.102 — old rule: transactions read listAllInvoices(companyId…) and the statement read listAllPayments(companyId…)
+  // in the page. New rule: transactions read the customer-scoped listAllCustomerInvoices (VC-06 — the route carrying the
+  // load / settlement / unit joins), which must page by offset to its total; the statement is the server-side
+  // CounterpartyStatementView kind="customer" (LST-F01 #20806), which owns its own range — a page-level capped
+  // payments query must not come back. Why: both moves were deliberate; the old anchors no longer existed, so the
+  // selftest could not even set up. A capped or single-page reader still fails.
   for (const [name, pattern] of [
-    ["transaction invoices", /const invoicesQuery[\s\S]{0,350}listAllInvoices\(companyId/],
+    ["transaction invoices", /const invoicesQuery[\s\S]{0,700}listAllCustomerInvoices\(selectedCustomer!\.id, companyId/],
     ["statement invoices", /const statementInvoicesQuery[\s\S]{0,350}listAllInvoices\(companyId/],
-    ["statement payments", /const statementPaymentsQuery[\s\S]{0,350}listAllPayments\(companyId/],
+    ["customer statement", /<CounterpartyStatementView kind="customer" counterpartyId=\{selectedCustomer\.id\}/],
     ["recurring templates", /const recurringQuery[\s\S]{0,350}listAllAccountingRecurringTemplates\(companyId/],
   ]) if (!pattern.test(page)) failures.push(`${name} must consume the complete canonical range`);
 
@@ -34,6 +40,7 @@ export function audit(sources) {
   for (const [name, source, required] of [
     ["invoice scan", api, ["export async function listAllInvoices", "invoices.push(...page.invoices)", "offset += page.invoices.length"]],
     ["payment scan", api, ["export async function listAllPayments", "rows.push(...page.rows)", "offset += page.rows.length"]],
+    ["customer invoice scan", api, ["export async function listAllCustomerInvoices", "invoices.push(...page.invoices)", "listCustomerInvoices(customerId, operatingCompanyId, { ...params, limit, offset })", "if (invoices.length >= total || page.invoices.length === 0)"]],
     ["recurring scan", recurringApi, ["export async function listAllAccountingRecurringTemplates", "rows.push(...page.rows)", "offset += page.rows.length"]],
   ]) for (const needle of required) if (!source.includes(needle)) failures.push(`${name} missing ${needle}`);
 
@@ -51,7 +58,8 @@ const live = Object.fromEntries(Object.entries(files).map(([key, rel]) => [key, 
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["transaction invoices", "page", "const invoicesQuery = useQuery({", "const cappedInvoicesQuery = useQuery({"],
-    ["statement payments", "page", "const statementPaymentsQuery = useQuery({", "const cappedStatementPaymentsQuery = useQuery({"],
+    ["customer statement unmounted", "page", '<CounterpartyStatementView kind="customer"', '<CounterpartyStatementView kind="vendor"'],
+    ["customer invoice single page", "api", "if (invoices.length >= total || page.invoices.length === 0)", "if (true)"],
     ["payment offset", "api", "offset += page.rows.length", "offset += 500"],
     ["recurring total", "recurringRoute", "SELECT COUNT(*)::int AS total", "SELECT 0::int AS total"],
     ["recurring offset", "recurringRoute", "LIMIT $4 OFFSET $5", "LIMIT $4"],

@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — the candidate profiles of ONE person (keep / profile / status / CDL / loads); a profile carries no event date.
 /**
  * DUPLICATE DRIVER PROFILES (owner 2026-10-06): "what we do need to merge are the drivers that have multiple profiles in
  * the app. Only one driver-vendor profile, can have many Samsara usernames and accounts."
@@ -12,6 +13,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -59,41 +61,51 @@ function ClusterCard({ cluster, companyId }: { cluster: DuplicateCluster; compan
   return (
     <section className="rounded border border-[#E5E7EB] bg-white p-3" data-testid={`dup-cluster-${cluster.survivor.id}`}>
       <div className="mb-2 text-xs text-[#4B5563]">Why these look like one person: {cluster.why.join(" · ")}</div>
-      <table className="w-full text-xs">
-        <thead>
-          <tr>
-            <th className="ih-hd text-center">Keep</th>
-            <th className="ih-hd text-left">Profile</th>
-            <th className="ih-hd text-center">Status</th>
-            <th className="ih-hd text-center">CDL</th>
-            <th className="ih-hd text-center">Loads</th>
-          </tr>
-        </thead>
-        <tbody>
-          {members.map((m) => (
-            <tr key={m.id} className="border-t border-[#E5E7EB]">
-              <td className="text-center">
-                <input
-                  type="radio"
-                  name={`survivor-${cluster.survivor.id}`}
-                  checked={survivorId === m.id}
-                  onChange={() => {
-                    setSurvivorId(m.id);
-                    setPreviews({});
-                  }}
-                  aria-label={`Keep ${nameOf(m)}`}
-                />
-              </td>
-              <td>
-                <EntityLink kind="driver" id={m.id} label={nameOf(m)} />
-              </td>
-              <td className="text-center">{m.status}</td>
-              <td className="text-center">{m.cdl_number ?? "—"}</td>
-              <td data-quantity className="text-center tabular-nums">{m.loads}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table). */}
+      <ParityTable<DuplicateDriver>
+        embedded
+        rows={members}
+        rowKey={(m) => m.id}
+        storageKey="driver-duplicates-cluster"
+        suppressToolbarSearch
+        suppressToolbarRange
+        hidePager
+        rowTestId={(m) => `dup-member-${m.id}`}
+        columns={[
+          {
+            key: "keep",
+            label: "Keep",
+            sortable: false,
+            render: (m) => (
+              <input
+                type="radio"
+                name={`survivor-${cluster.survivor.id}`}
+                checked={survivorId === m.id}
+                onChange={() => {
+                  setSurvivorId(m.id);
+                  setPreviews({});
+                }}
+                aria-label={`Keep ${nameOf(m)}`}
+              />
+            ),
+          },
+          { key: "profile", label: "Profile", sortable: true, sortValue: (m) => nameOf(m), render: (m) => <EntityLink kind="driver" id={m.id} label={nameOf(m)} /> },
+          { key: "status", label: "Status", sortable: true, sortValue: (m) => m.status, render: (m) => m.status },
+          { key: "cdl_number", label: "CDL", sortable: true, sortValue: (m) => m.cdl_number, render: (m) => m.cdl_number ?? "—" },
+          {
+            key: "loads",
+            label: "Loads",
+            kind: "number",
+            sortable: true,
+            sortValue: (m) => m.loads,
+            render: (m) => (
+              <span data-quantity className="tabular-nums">
+                {m.loads}
+              </span>
+            ),
+          },
+        ]}
+      />
 
       {previewed ? (
         <div className="mt-2 space-y-2" data-testid="dup-preview">

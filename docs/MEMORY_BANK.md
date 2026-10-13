@@ -112,6 +112,43 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Active Architectural Decisions
 
+### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
+
+- **Option 2 (owner):** backfill papers an RPL facility from existing bank categorizations via
+  `createRelatedPartyLoanEntry` only — document + reverse bank pointer. **No JE rewrite.** GL stays
+  on the bank cats. Interest 400 bps (4.00%).
+- **Scentsx LIVE:** facility `161616ff-f570-4327-9e01-7f81d8cff0e0` / CoA `2410-00-002`
+  (`7e755038-8385-4453-8934-fef604656471`). 9 entries (8 bank_funding + 1 bank_repayment 07-22
+  $2,000). Open = advanced $13,450 − repaid $2,000 = **$11,450.00**. 9 bank
+  `matched_related_party_loan_id` links. Ops:
+  `scripts/ops/r44322-2f-scentsx-option2-backfill.ts` (Rule 53 one txn; `--execute` + `--expect-host`).
+  Guard 18374.
+- **HOLD:** Jorge `2410-00-001` and Tio Perfumes 2 `2410-00-003` until debit-balance ruling + CC-2
+  Relay `paid_direct_vendor` deposits. Laura `2410-00-004` = 0 live lines.
+- **CC-2 callable writer (merged #26257):** `createPaidDirectVendorAdvance` in
+  `apps/backend/src/accounting/related-party-loan-posting/create-entry.service.ts`. Cards **0210 /
+  6248** (Jorge personal) and **9855** (Tio) → this writer. Card **5007 Amex Scentsx is NOT a loan**
+  — credits Amex Credit Card Payable `2500-00-001`. Never pass a company `bank_transaction_id` into
+  paid_direct (fail closed).
+- Card map (owner): 0680=USMCA BoA; 9708/1354/4823=Laura Transportation → 8000 (not USMCA RPL).
+
+### Active Architectural Decisions — Related-party bank↔Relay SUGGESTED pairs (Cursor, ROUND 443.54-7, 2026-10-11)
+
+- **Owner:** USMCA bank outflow to a related party + Relay deposit (or Dreamline) same amount within
+  **5 days** = SUGGESTED PAIR. Owner confirms; **nothing auto-pairs**.
+- **Confirm order (0 duplicate postings):** (1) `postBankCategorizationOnClient` → one JE
+  Dr Due to/from / Cr bank (`BankFeedGlResult.posted === true`); (2) `createRelatedPartyLoanEntry`
+  with `target_type=party_transfer_out` (document + `matched_related_party_loan_id` only — **loan
+  poster OFF**); (3) stamp `matched_relay_deposit_id` ↔ deposit `matched_bank_transaction_id`.
+- **Card map:** 0210/6248→Jorge `2410-00-001`; 9855→Tio `2410-00-003`; **0275→Scentsx suggestion
+  only** (`card_confirmed=false`); 1354/4823/9708→Transportation `8000`; **0680 exclude**.
+- **Replaces item-3 Cr 2410 loan for card-0210 deposits:** deposit Cr Due to/from Jorge is **CC-2**;
+  Banking only suggests/confirm on the USMCA bank outflow.
+- **API/UI:** GET `/api/v1/banking/related-party-pairs` · POST `…/confirm` ·
+  `RelatedPartyPairSuggestionsPanel`. Mig `202615561540`. Guard EVEN **18376**.
+- **Fork proof** (`br-dark-voice-ak5riprg`): known N=4 (Scentsx+0210 suggested; two 10-08 unpaired);
+  confirm Scentsx → RPL-2026-0012 · JE Dr 2410-00-002 / Cr 1000 · `extra_jes_for_loan=0`.
+
 ### Active Architectural Decisions — Bank Categorize = CoA Category like QBO (Cursor, Martin audit, 2026-10-09)
 
 - **Live audit (USMCA, last 3d categorized):** 66 bank_transactions status=categorized; **0 missing JE**;
@@ -1734,3 +1771,17 @@ Owner artifact `DriverDetail.dc.html`: one profile, nine tabs, URL-synced, modul
 - **Not extra tabs:** Rule 14 reverse mounts that the design does not name stay on Overview. They are linkage, not a second tab list.
 - **Module nav:** Home (`/drivers`) + Roster (`/drivers/roster`) + 8 peers = 10. `DRIVERS_CANONICAL_SUBNAV_COUNT = 10`. Filters are `SegmentedControl`, never a second `NavyPageSubNav`.
 - **Guard:** `scripts/verify-driver-profile-matches-approved-tabs.mjs` (unnumbered — Rule 37; claim EVEN after merge).
+
+## Active Architectural Decisions — Settlement Creator fix pack (Cursor, 2026-10-10)
+
+Owner: Add/+ under last load / under next fuel row — not a side rail (side + × stole PU/DEL space). Company practical miles ≠ driver short pay miles. Salary + QuickPay on company Control. Deductions/additional pay from real item catalog. Cash advances go through `createDriverCashAdvanceCore` with load resolved by number.
+
+- **Under-Add:** `ItemUnderRail` / `AddUnderButton` / `EmptyUnderAdd` (aliases keep Side names). Guard F442 RULE 7a/7b.
+- **Miles:** company `loaded_miles` (practical) + `miles_shortest` (driver pay). BE earnings/salary use `payMiles = miles_shortest ?? loaded_miles`. Driver carry editable short + empty + rate.
+- **Rate autofill:** `getDriverPayCard` → `line_haul_rate_cents` / empty rate on loads when blank (no `basis_type` gate).
+- **Company Control:** live `driverSalaryCents` + QuickPay (0.50% Faro) via `sc-driver-salary` / `sc-quickpay-expense`.
+- **Escrow:** one $25 hold per distinct load number (sync effect).
+- **Deductions / add-pay:** `item_id` + `quantity` + amount; `ReferenceSelect` on accounting items / driver additional-pay catalog.
+- **Advances:** FE sends `load_number`; BE `resolveLoadIdByNumber` then `createDriverCashAdvanceCore` (bill payment / loan overflow inside core).
+- **Fuel Location:** capped-list helper text removed from `FuelStopLocationPicker`.
+- **Guard:** `scripts/verify-settlement-creator-ux-f442.mjs` RULE 7d–7g + selftest bad count 23.

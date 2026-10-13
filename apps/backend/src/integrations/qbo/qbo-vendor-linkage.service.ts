@@ -1,6 +1,15 @@
-import { appendCrudAudit } from "../../audit/crud-audit.js";
+// ACCT-F4431381 (Lead 443.137 item 9e, part 2) — QuickBooks is a READ-ONLY ARCHIVE.
+//
+// This service READS the QuickBooks vendor snapshot (qbo_archive.entities_snapshot) and the linkage
+// event history. It used to also WRITE native master tables from QuickBooks: it INSERTed mdata.drivers /
+// mdata.units (createDriverWithQboVendor / createUnitWithQboClass) and UPDATEd qbo_vendor_id /
+// qbo_class_id on mdata.drivers / mdata.units / mdata.equipment (link/unlink). No mdata.qbo_* link table
+// exists to move that link into, so every one of those writers now REFUSES BY NAME
+// (QBO_NATIVE_WRITE_REFUSED) with its SQL removed; the routes answer 409 with that code.
+// Guard: scripts/verify-qbo-paths-never-write-native-tables.mjs (R1 scope + R3 refusal sites).
 import { withCurrentUser } from "../../auth/db.js";
 import { QBO_WRITE_DISABLED_CODE } from "./qbo-write-disabled.js";
+import { refuseQboNativeWrite } from "../../qbo-sync/qbo-native-write-refused.js";
 
 type LinkableEntityType = "driver" | "unit" | "equipment" | "asset";
 type QboClassEntityType = "unit" | "trailer";
@@ -40,6 +49,11 @@ function normalizeEntityType(entityType: LinkableEntityType): "driver" | "unit" 
   return entityType;
 }
 
+function nativeTableFor(entityType: LinkableEntityType): string {
+  const t = normalizeEntityType(entityType);
+  return t === "driver" ? "mdata.drivers" : t === "unit" ? "mdata.units" : "mdata.equipment";
+}
+
 function safeVendorName(value: string) {
   return value.trim().slice(0, 100) || "IH35 Vendor";
 }
@@ -61,51 +75,6 @@ function similarityScore(source: string, candidate: string) {
   return Math.min(1, Number((jaccard + containsBoost).toFixed(4)));
 }
 
-async function appendLinkageEvent(
-  client: { query: (sql: string, values?: unknown[]) => Promise<unknown> },
-  operatingCompanyId: string,
-  payload: {
-    entityType: "driver" | "unit" | "equipment";
-    entityId: string;
-    qboVendorId?: string | null;
-    qboClassId?: string | null;
-    previousQboVendorId?: string | null;
-    previousQboClassId?: string | null;
-    action: "linked" | "unlinked" | "changed" | "auto_suggested";
-    reason: string;
-    userId: string;
-  }
-) {
-  await client.query(
-    `
-      INSERT INTO integrations.qbo_vendor_linkage_events (
-        operating_company_id,
-        entity_type,
-        entity_id,
-        qbo_vendor_id,
-        qbo_class_id,
-        previous_qbo_vendor_id,
-        previous_qbo_class_id,
-        action,
-        reason,
-        user_id
-      )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-    `,
-    [
-      operatingCompanyId,
-      payload.entityType,
-      payload.entityId,
-      payload.qboVendorId ?? null,
-      payload.qboClassId ?? null,
-      payload.previousQboVendorId ?? null,
-      payload.previousQboClassId ?? null,
-      payload.action,
-      payload.reason,
-      payload.userId,
-    ]
-  );
-}
 
 // QBO-WRITE-KILL — reconcile-only architecture lock. This helper POSTed a new Vendor / Class INTO
 // QuickBooks (createQboVendor / createQboClass). Under the parallel-books, reconcile-only architecture
@@ -211,24 +180,6 @@ export async function suggestMatches(
     .slice(0, 10);
 }
 
-async function ensureVendorExists(
-  client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
-  operatingCompanyId: string,
-  qboVendorId: string
-) {
-  const res = await client.query<{ id: string }>(
-    `
-      SELECT es.qbo_entity_id AS id
-      FROM qbo_archive.entities_snapshot es
-      WHERE es.operating_company_id = $1::uuid
-        AND es.qbo_entity_type = 'Vendor'
-        AND es.qbo_entity_id = $2
-      LIMIT 1
-    `,
-    [operatingCompanyId, qboVendorId]
-  );
-  return Boolean(res.rows[0]?.id);
-}
 
 export async function linkVendor(
   userId: string,
@@ -240,69 +191,13 @@ export async function linkVendor(
     reason: string;
     force?: boolean;
   }
-) {
-  const entityType = normalizeEntityType(input.entityType);
-  return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
-    if (!(await ensureVendorExists(client, input.operatingCompanyId, input.qboVendorId))) {
-      throw new Error("qbo_vendor_not_found");
-    }
-
-    const table = entityType === "driver" ? "mdata.drivers" : entityType === "unit" ? "mdata.units" : "mdata.equipment";
-    const column = "qbo_vendor_id";
-    const current = await client.query<{ current_id: string | null }>(
-      `SELECT ${column} AS current_id FROM ${table} WHERE id = $1 LIMIT 1`,
-      [input.entityId]
-    );
-    const previous = current.rows[0]?.current_id ?? null;
-    if (!current.rows[0]) throw new Error("entity_not_found");
-    if (previous && previous !== input.qboVendorId && !input.force) {
-      throw new Error("qbo_vendor_already_linked_use_force");
-    }
-    if (previous === input.qboVendorId) {
-      return { ok: true, idempotent: true };
-    }
-
-    await client.query(
-      `
-        UPDATE ${table}
-        SET qbo_vendor_id = $2,
-            qbo_vendor_linked_at = now(),
-            qbo_vendor_linked_by_user_id = $3,
-            updated_at = now()
-        WHERE id = $1
-      `,
-      [input.entityId, input.qboVendorId, userId]
-    );
-
-    await appendLinkageEvent(client, input.operatingCompanyId, {
-      entityType,
-      entityId: input.entityId,
-      qboVendorId: input.qboVendorId,
-      previousQboVendorId: previous,
-      action: previous ? "changed" : "linked",
-      reason: input.reason,
-      userId,
-    });
-
-    await appendCrudAudit(
-      client,
-      userId,
-      previous ? "driver.qbo_vendor.linked" : "driver.qbo_vendor.linked",
-      {
-        resource_type: table,
-        resource_id: input.entityId,
-        operating_company_id: input.operatingCompanyId,
-        qbo_vendor_id: input.qboVendorId,
-        previous_qbo_vendor_id: previous,
-        reason: input.reason,
-      },
-      "info",
-      "P5-D3-QBO-LINKAGE"
-    );
-
-    return { ok: true, idempotent: false };
-  });
+): Promise<{ ok: true; idempotent: boolean }> {
+  void userId;
+  return refuseQboNativeWrite(
+    "integrations/qbo/qbo-vendor-linkage#linkVendor",
+    [nativeTableFor(input.entityType)],
+    input.operatingCompanyId
+  );
 }
 
 export async function unlinkVendor(
@@ -313,54 +208,13 @@ export async function unlinkVendor(
     entityId: string;
     reason: string;
   }
-) {
-  const entityType = normalizeEntityType(input.entityType);
-  return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
-    const table = entityType === "driver" ? "mdata.drivers" : entityType === "unit" ? "mdata.units" : "mdata.equipment";
-    const row = await client.query<{ current_id: string | null }>(
-      `SELECT qbo_vendor_id AS current_id FROM ${table} WHERE id = $1 LIMIT 1`,
-      [input.entityId]
-    );
-    if (!row.rows[0]) throw new Error("entity_not_found");
-    const previous = row.rows[0].current_id;
-    if (!previous) return { ok: true, idempotent: true };
-
-    await client.query(
-      `
-        UPDATE ${table}
-        SET qbo_vendor_id = NULL,
-            qbo_vendor_linked_at = NULL,
-            qbo_vendor_linked_by_user_id = NULL,
-            updated_at = now()
-        WHERE id = $1
-      `,
-      [input.entityId]
-    );
-    await appendLinkageEvent(client, input.operatingCompanyId, {
-      entityType,
-      entityId: input.entityId,
-      previousQboVendorId: previous,
-      action: "unlinked",
-      reason: input.reason,
-      userId,
-    });
-    await appendCrudAudit(
-      client,
-      userId,
-      "driver.qbo_vendor.unlinked",
-      {
-        resource_type: table,
-        resource_id: input.entityId,
-        operating_company_id: input.operatingCompanyId,
-        previous_qbo_vendor_id: previous,
-        reason: input.reason,
-      },
-      "warning",
-      "P5-D3-QBO-LINKAGE"
-    );
-    return { ok: true, idempotent: false };
-  });
+): Promise<{ ok: true; idempotent: boolean }> {
+  void userId;
+  return refuseQboNativeWrite(
+    "integrations/qbo/qbo-vendor-linkage#unlinkVendor",
+    [nativeTableFor(input.entityType)],
+    input.operatingCompanyId
+  );
 }
 
 export async function linkClass(
@@ -373,52 +227,13 @@ export async function linkClass(
     reason: string;
     force?: boolean;
   }
-) {
-  const isUnit = input.entityType === "unit";
-  const table = isUnit ? "mdata.units" : "mdata.equipment";
-  return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
-    const current = await client.query<{ current_id: string | null }>(
-      `SELECT qbo_class_id AS current_id FROM ${table} WHERE id = $1 LIMIT 1`,
-      [input.entityId]
-    );
-    if (!current.rows[0]) throw new Error("entity_not_found");
-    const previous = current.rows[0].current_id;
-    if (previous && previous !== input.qboClassId && !input.force) {
-      throw new Error("qbo_class_already_linked_use_force");
-    }
-    if (previous === input.qboClassId) return { ok: true, idempotent: true };
-
-    await client.query(
-      `UPDATE ${table} SET qbo_class_id = $2, updated_at = now() WHERE id = $1`,
-      [input.entityId, input.qboClassId]
-    );
-    await appendLinkageEvent(client, input.operatingCompanyId, {
-      entityType: isUnit ? "unit" : "equipment",
-      entityId: input.entityId,
-      qboClassId: input.qboClassId,
-      previousQboClassId: previous,
-      action: previous ? "changed" : "linked",
-      reason: input.reason,
-      userId,
-    });
-    await appendCrudAudit(
-      client,
-      userId,
-      "asset.qbo_class.linked",
-      {
-        resource_type: table,
-        resource_id: input.entityId,
-        operating_company_id: input.operatingCompanyId,
-        qbo_class_id: input.qboClassId,
-        previous_qbo_class_id: previous,
-        reason: input.reason,
-      },
-      "info",
-      "P5-D3-QBO-LINKAGE"
-    );
-    return { ok: true, idempotent: false };
-  });
+): Promise<{ ok: true; idempotent: boolean }> {
+  void userId;
+  return refuseQboNativeWrite(
+    "integrations/qbo/qbo-vendor-linkage#linkClass",
+    [input.entityType === "unit" ? "mdata.units" : "mdata.equipment"],
+    input.operatingCompanyId
+  );
 }
 
 export async function unlinkClass(
@@ -429,42 +244,13 @@ export async function unlinkClass(
     entityId: string;
     reason: string;
   }
-) {
-  const table = input.entityType === "unit" ? "mdata.units" : "mdata.equipment";
-  return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
-    const row = await client.query<{ current_id: string | null }>(
-      `SELECT qbo_class_id AS current_id FROM ${table} WHERE id = $1 LIMIT 1`,
-      [input.entityId]
-    );
-    if (!row.rows[0]) throw new Error("entity_not_found");
-    const previous = row.rows[0].current_id;
-    if (!previous) return { ok: true, idempotent: true };
-    await client.query(`UPDATE ${table} SET qbo_class_id = NULL, updated_at = now() WHERE id = $1`, [input.entityId]);
-    await appendLinkageEvent(client, input.operatingCompanyId, {
-      entityType: input.entityType === "unit" ? "unit" : "equipment",
-      entityId: input.entityId,
-      previousQboClassId: previous,
-      action: "unlinked",
-      reason: input.reason,
-      userId,
-    });
-    await appendCrudAudit(
-      client,
-      userId,
-      "asset.qbo_class.unlinked",
-      {
-        resource_type: table,
-        resource_id: input.entityId,
-        operating_company_id: input.operatingCompanyId,
-        previous_qbo_class_id: previous,
-        reason: input.reason,
-      },
-      "warning",
-      "P5-D3-QBO-LINKAGE"
-    );
-    return { ok: true, idempotent: false };
-  });
+): Promise<{ ok: true; idempotent: boolean }> {
+  void userId;
+  return refuseQboNativeWrite(
+    "integrations/qbo/qbo-vendor-linkage#unlinkClass",
+    [input.entityType === "unit" ? "mdata.units" : "mdata.equipment"],
+    input.operatingCompanyId
+  );
 }
 
 export async function listDriverMappingStatus(userId: string, operatingCompanyId: string) {
@@ -525,146 +311,32 @@ export async function listLinkageHistory(
   });
 }
 
-export async function createDriverWithQboVendor(userId: string, input: DriverCreateInput) {
-  return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
-    const driverRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO mdata.drivers (
-          operating_company_id,
-          first_name,
-          last_name,
-          phone,
-          email,
-          status,
-          created_by_user_id,
-          updated_by_user_id
-        )
-        VALUES ($1,$2,$3,$4,$5,'Active',$6,$6)
-        RETURNING id
-      `,
-      [input.operatingCompanyId, input.firstName, input.lastName, input.phone, input.email ?? null, userId]
-    );
-    const driverId = String(driverRes.rows[0]?.id ?? "");
-    if (!driverId) throw new Error("driver_create_failed");
-
-    // Parallel-books / IMPORT-P0b #3: driver onboarding must NOT depend on a TMS→QBO vendor write. Under
-    // reconcile-only the driver's vendor is created in QBO independently and the daily reconcile match
-    // populates qbo_vendor_id; TMS creating it is a courtesy, not a requirement. So this is BEST-EFFORT —
-    // a failed or missing QBO vendor is LOGGED and we CONTINUE (driver still created, vendor left to be
-    // linked by reconcile). This also removes a real fragility: driver-create used to hard-fail whenever
-    // QuickBooks was unavailable.
-    const vendorResult = await createQboVendor(input.operatingCompanyId, input.qboVendorName);
-    const qboVendorId = vendorResult.ok
-      ? String(((vendorResult.value?.Vendor as { Id?: string } | undefined)?.Id ?? ""))
-      : "";
-    if (!qboVendorId) {
-      await appendLinkageEvent(client, input.operatingCompanyId, {
-        entityType: "driver",
-        entityId: driverId,
-        action: "auto_suggested",
-        reason: vendorResult.ok
-          ? "qbo_vendor_missing_id_deferred_to_reconcile"
-          : `qbo_vendor_deferred_to_reconcile:${vendorResult.error}`,
-        userId,
-      });
-      return { driver_id: driverId, qbo_vendor_id: null as string | null };
-    }
-
-    await client.query(
-      `
-        UPDATE mdata.drivers
-        SET qbo_vendor_id = $2,
-            qbo_vendor_linked_at = now(),
-            qbo_vendor_linked_by_user_id = $3,
-            updated_at = now()
-        WHERE id = $1
-      `,
-      [driverId, qboVendorId, userId]
-    );
-    await appendLinkageEvent(client, input.operatingCompanyId, {
-      entityType: "driver",
-      entityId: driverId,
-      qboVendorId,
-      action: "linked",
-      reason: "driver_created_with_qbo_vendor",
-      userId,
-    });
-    await appendCrudAudit(
-      client,
-      userId,
-      "driver.qbo_vendor.linked",
-      {
-        resource_type: "mdata.drivers",
-        resource_id: driverId,
-        operating_company_id: input.operatingCompanyId,
-        qbo_vendor_id: qboVendorId,
-      },
-      "info",
-      "P5-D3-QBO-LINKAGE"
-    );
-    return { driver_id: driverId, qbo_vendor_id: qboVendorId };
-  });
+export async function createDriverWithQboVendor(
+  userId: string,
+  input: DriverCreateInput
+): Promise<{ driver_id: string; qbo_vendor_id: string | null }> {
+  void userId;
+  // Drivers are created through the canonical driver create path (createDriverCanonical), which also
+  // mints the driver's A/P payee. A QuickBooks vendor never creates a native driver.
+  return refuseQboNativeWrite(
+    "integrations/qbo/qbo-vendor-linkage#createDriverWithQboVendor",
+    ["mdata.drivers"],
+    input.operatingCompanyId
+  );
 }
 
-export async function createUnitWithQboClass(userId: string, input: UnitCreateInput & { operatingCompanyId: string }) {
-  return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
-    const unitRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO mdata.units (
-          unit_number,
-          vin,
-          status,
-          created_by_user_id,
-          updated_by_user_id
-        )
-        VALUES ($1,$2,'InService',$3,$3)
-        RETURNING id
-      `,
-      [input.unitNumber, input.vin, userId]
-    );
-    const unitId = String(unitRes.rows[0]?.id ?? "");
-    if (!unitId) throw new Error("unit_create_failed");
-
-    const classResult = await createQboClass(input.operatingCompanyId, input.qboClassName);
-    if (!classResult.ok) {
-      await appendLinkageEvent(client, input.operatingCompanyId, {
-        entityType: "unit",
-        entityId: unitId,
-        action: "auto_suggested",
-        reason: `outbox_retry_required:${classResult.error}`,
-        userId,
-      });
-      throw new Error(classResult.error);
-    }
-    const qboClassId = String(((classResult.value?.Class as { Id?: string } | undefined)?.Id ?? ""));
-    if (!qboClassId) throw new Error("qbo_class_create_missing_id");
-
-    await client.query(`UPDATE mdata.units SET qbo_class_id = $2, updated_at = now() WHERE id = $1`, [unitId, qboClassId]);
-    await appendLinkageEvent(client, input.operatingCompanyId, {
-      entityType: "unit",
-      entityId: unitId,
-      qboClassId,
-      action: "linked",
-      reason: "unit_created_with_qbo_class",
-      userId,
-    });
-    await appendCrudAudit(
-      client,
-      userId,
-      "asset.qbo_class.linked",
-      {
-        resource_type: "mdata.units",
-        resource_id: unitId,
-        operating_company_id: input.operatingCompanyId,
-        qbo_class_id: qboClassId,
-      },
-      "info",
-      "P5-D3-QBO-LINKAGE"
-    );
-    return { unit_id: unitId, qbo_class_id: qboClassId };
-  });
+export async function createUnitWithQboClass(
+  userId: string,
+  input: UnitCreateInput & { operatingCompanyId: string }
+): Promise<{ unit_id: string; qbo_class_id: string }> {
+  void userId;
+  // Units are created through the canonical unit create path (mdata/units.routes.ts), which also mints
+  // the unit's asset row. A QuickBooks class never creates a native unit.
+  return refuseQboNativeWrite(
+    "integrations/qbo/qbo-vendor-linkage#createUnitWithQboClass",
+    ["mdata.units"],
+    input.operatingCompanyId
+  );
 }
 
 export async function linkExistingDriverToQboVendor(

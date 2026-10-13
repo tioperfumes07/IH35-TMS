@@ -20,6 +20,10 @@
  *      which names its basis on every row (miles_basis_type);
  *  10. the truck-level CPM reports (Per-truck CPM dashboard, Maintenance cost per unit) stop taking real driven
  *      miles from the one odometer engine, or the Per-truck dashboard counts voided driver bills as pay.
+ *  11. (443.103) the hourly tick writes a load or leg whose computed values did not change, runs on more than one
+ *      instance, or picks the deadhead start by time alone. Measured on prod 2026-10-12: every hour 2 passes rewrote all
+ *      148 USMCA loads with identical values (~296 audit.row_changes rows/hour, mdata.loads.updated_at bumped for every
+ *      load), and a time tie between two stops of the prior load flipped a leg reason between "stop 1" and "stop 2".
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve } from "node:path";
@@ -37,6 +41,19 @@ const REPORT_PANEL = "apps/frontend/src/components/reports/ThreeMileCpmPanel.tsx
 const REPORT_PAGE = "apps/frontend/src/pages/reports/ProfitPerTruckPage.tsx";
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
+const CRON = "apps/backend/src/telematics/load-real-driven-miles.cron.ts";
+
+/** 443.103: writes only on change, one instance per tick, deterministic deadhead start. */
+export function checkChurn(engineSrc, cronSrc) {
+  const p = [];
+  const code = strip(engineSrc);
+  const persist = code.match(/export async function persistLoadRealDrivenMiles\([\s\S]*?\n\}/)?.[0] ?? "";
+  if (!/UPDATE mdata\.load_stops[^`]*?\)\s*IS DISTINCT FROM\s*\(/.test(persist)) p.push(`${ENGINE}: the leg UPDATE no longer writes only when a leg value changed.`);
+  if (!/UPDATE mdata\.loads[^`]*?miles_driven_actual_computed_at IS NULL[^`]*?\)\s*IS DISTINCT FROM\s*\(/.test(persist)) p.push(`${ENGINE}: the load UPDATE no longer writes only when the load was never computed or a value changed.`);
+  if (!/ORDER BY COALESCE\(s\.actual_departure_at, s\.actual_arrival_at, s\.scheduled_arrival_at\) DESC, s\.sequence_number DESC, s\.id DESC/.test(code)) p.push(`${ENGINE}: the deadhead start is picked by time alone — a tie between two stops flips the result run to run.`);
+  if (!/leaseSeconds:\s*JOB_LEASE_SECONDS/.test(strip(cronSrc))) p.push(`${CRON}: the tick no longer runs under the job lease — every instance rewrites the loads.`);
+  return p;
+}
 
 export function checkEngine(src) {
   const p = [];
@@ -144,7 +161,13 @@ if (process.argv.includes("--selftest")) {
   expect("IFTA exemption honoured", checkNoBlendedBasis([["apps/backend/src/ifta/ifta-state-miles-aggregator.ts", "COALESCE(SUM(COALESCE(l.miles_practical, l.miles_shortest, 0)), 0)"]]), false);
   expect("real truck reports", checkTruckReports(read(PPT), read(MCPU)), false);
   expect("voided driver bills counted", checkTruckReports(read(PPT).replace("db.status <> 'void'", "true"), read(MCPU)), true);
-  console.log(ok ? `${LABEL} --selftest PASS (16/16)` : `${LABEL} --selftest FAIL`);
+  const cr = read(CRON);
+  expect("real churn guards", checkChurn(e, cr), false);
+  expect("load rewritten without a change", checkChurn(e.replace(/AND \(miles_driven_actual_computed_at IS NULL[\s\S]*?IS DISTINCT FROM \(\$3::numeric, \$4::text, \$5::text\)\)/, ""), cr), true);
+  expect("leg rewritten without a change", checkChurn(e.replace(/AND \(leg_miles_driven_actual, leg_miles_driven_actual_source, leg_miles_driven_actual_reason\)\s*IS DISTINCT FROM \(\$2::numeric, \$3::text, \$4::text\)/, ""), cr), true);
+  expect("deadhead start by time alone", checkChurn(e.replace(", s.sequence_number DESC, s.id DESC", ""), cr), true);
+  expect("tick on every instance", checkChurn(e, cr.replace("{ leaseSeconds: JOB_LEASE_SECONDS }", "undefined")), true);
+  console.log(ok ? `${LABEL} --selftest PASS (21/21)` : `${LABEL} --selftest FAIL`);
   process.exit(ok ? 0 : 1);
 }
 const problems = [
@@ -153,6 +176,7 @@ const problems = [
   ...checkReport(read(REPORT), read(INDEX), read(REPORT_PANEL), read(REPORT_PAGE)),
   ...checkNoBlendedBasis(backendFiles().map((f) => [f, read(f)])),
   ...checkTruckReports(read(PPT), read(MCPU)),
+  ...checkChurn(read(ENGINE), read(CRON)),
 ];
 if (problems.length) { console.error(`${LABEL} FAILED:\n  - ${problems.join("\n  - ")}`); process.exit(1); }
-console.log(`${LABEL}: OK -- load/leg real driven miles from geofence or device-recorded odometer only; NULL with reason, never 0 or partial; one anchor rule; stored, cron and screen wired; three-mile CPM report on the canonical cost rollup, every basis named; no blended mileage basis; truck CPM reports on the odometer engine.`);
+console.log(`${LABEL}: OK -- load/leg real driven miles from geofence or device-recorded odometer only; NULL with reason, never 0 or partial; one anchor rule; stored, cron and screen wired; three-mile CPM report on the canonical cost rollup, every basis named; no blended mileage basis; truck CPM reports on the odometer engine; the hourly tick writes only what changed, on one instance, with a deterministic deadhead start.`);

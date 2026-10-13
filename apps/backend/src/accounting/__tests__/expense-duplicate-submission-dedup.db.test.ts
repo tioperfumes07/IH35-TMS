@@ -39,6 +39,8 @@ describeIntegration("expense create — memo duplicate-submission dedup (real Po
     }
   }
 
+  // A voided row carries status='void' WITH voided_at — CHECK expenses_status_matches_voided_at
+  // (voided_at IS NULL OR status = 'void') refuses any other pairing.
   async function insertExpense(memo: string, createdAtOffset: string, voided: boolean) {
     const id = randomUUID();
     await bypass(async () => {
@@ -46,7 +48,7 @@ describeIntegration("expense create — memo duplicate-submission dedup (real Po
         `INSERT INTO accounting.expenses
            (id, operating_company_id, status, transaction_date, total_amount_cents, memo, created_at, voided_at)
          VALUES
-           ($1::uuid, $2::uuid, 'posted', current_date, 1000, $3,
+           ($1::uuid, $2::uuid, CASE WHEN $5 THEN 'void' ELSE 'posted' END, current_date, 1000, $3,
             now() + ($4)::interval,
             CASE WHEN $5 THEN now() ELSE NULL END)`,
         [id, companyId, memo, createdAtOffset, voided]
@@ -83,10 +85,11 @@ describeIntegration("expense create — memo duplicate-submission dedup (real Po
 
   afterAll(async () => {
     // void-not-delete: accounting.expenses is a money table, ih35_app has no DELETE grant on it.
+    // CHECK expenses_status_matches_voided_at (r274): voided_at may only be set together with status='void'.
     if (createdIds.length) {
       await bypass(async () => {
         await db.query(
-          `UPDATE accounting.expenses SET voided_at = now() WHERE id = ANY($1::uuid[]) AND voided_at IS NULL`,
+          `UPDATE accounting.expenses SET status = 'void', voided_at = now() WHERE id = ANY($1::uuid[]) AND voided_at IS NULL`,
           [createdIds]
         );
       });

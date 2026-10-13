@@ -17,13 +17,22 @@ const VENDOR_CREDITS = "apps/backend/src/accounting/vendor-credits.routes.ts";
 const VENDORS_PULLER = "apps/backend/src/qbo-sync/vendors-puller.ts";
 const MASTER_DATA_SYNC = "apps/backend/src/qbo/master-data-sync.service.ts";
 
+// ACCT-F4431380 (Lead 443.137 item 9e) — OLD: the CC bill-pay route had to SELECT qbo_id from the canonical
+//   mdata.qbo_vendors (never the RETIRE accounting.qbo_vendors) to build a QuickBooks BillPayment push.
+//   NEW: the route has no QuickBooks branch at all — it must read NEITHER vendor mirror, stamp no
+//   qbo_bill_payment_id onto the native payment and queue no qbo.* event. The RETIRE-table check is kept.
+//   WHY: QuickBooks is a read-only archive; the projection/write was removed and its entry point refuses by name.
 export function assertCcPayment(src) {
   const problems = [];
-  if (/FROM\s+accounting\.qbo_vendors/i.test(src)) {
+  const code = src.split("\n").filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join("\n");
+  if (/FROM\s+accounting\.qbo_vendors/i.test(code)) {
     problems.push(`${CC_PAYMENT}: still SELECTs RETIRE accounting.qbo_vendors — repoint to mdata.qbo_vendors`);
   }
-  if (!/FROM\s+mdata\.qbo_vendors/i.test(src)) {
-    problems.push(`${CC_PAYMENT}: must SELECT qbo_id from mdata.qbo_vendors`);
+  if (/FROM\s+mdata\.qbo_vendors/i.test(code)) {
+    problems.push(`${CC_PAYMENT}: must not read the QBO vendor mirror — CC bill-pay is TMS-native only (QuickBooks is a read-only archive)`);
+  }
+  if (/qbo_bill_payment_id\s*=|["'`]qbo\.cc_bill_payment/i.test(code)) {
+    problems.push(`${CC_PAYMENT}: must not stamp a qbo_bill_payment_id or queue a qbo.* push for a native CC payment`);
   }
   return problems;
 }
@@ -81,7 +90,7 @@ function main() {
     process.exit(1);
   }
   console.log(
-    `${LABEL} OK — AP paths and inbound vendor writers use canonical mdata.qbo_vendors`
+    `${LABEL} OK — CC bill-pay has no QuickBooks branch (9e); vendor-credit + inbound vendor writers use canonical mdata.qbo_vendors`
   );
 }
 
@@ -91,8 +100,17 @@ function selftest() {
   const failures = [];
   const bad = assertCcPayment(`SELECT qbo_id FROM accounting.qbo_vendors WHERE id = $1`);
   if (!bad.some((p) => /RETIRE accounting/.test(p))) failures.push("did not catch retire SELECT");
-  const good = assertCcPayment(`SELECT qbo_id FROM mdata.qbo_vendors WHERE id::text = $2`);
-  if (good.length) failures.push(`false positive: ${good.join("; ")}`);
+  // ACCT-F4431380 (9e): the REAL route must pass; planting the old QBO branch (canonical mirror read, fabricated
+  // qbo_bill_payment_id stamp) into it must each be caught.
+  const cc = fs.readFileSync(path.join(ROOT, CC_PAYMENT), "utf8");
+  const good = assertCcPayment(cc);
+  if (good.length) failures.push(`false positive on real cc-payment route: ${good.join("; ")}`);
+  if (!assertCcPayment(cc + "\nconst P = `SELECT qbo_id FROM mdata.qbo_vendors WHERE id::text = $2`;\n").some((p) => /must not read the QBO vendor mirror/.test(p))) {
+    failures.push("did not catch a planted mdata.qbo_vendors read in the CC route");
+  }
+  if (!assertCcPayment(cc + "\nconst P = `UPDATE accounting.bill_payments SET qbo_bill_payment_id = $3 WHERE id = $1`;\n").some((p) => /must not stamp/.test(p))) {
+    failures.push("did not catch a planted qbo_bill_payment_id stamp in the CC route");
+  }
   const retiredPuller = puller.replace("INSERT INTO mdata.qbo_vendors", "INSERT INTO accounting.qbo_vendors");
   if (retiredPuller === puller) failures.push("puller mutation was inert");
   if (!assertVendorsPuller(retiredPuller).some((p) => /RETIRE/.test(p))) failures.push("did not catch retire inbound pull INSERT");

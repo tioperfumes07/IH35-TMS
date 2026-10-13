@@ -33,11 +33,26 @@ const SIX_TABS = [
   "messages_support",
 ];
 
+// 443.99 class B (CC-2, 2026-10-12) — render-block anchor.
+//   old rule: each tab renders behind the literal `tab === "<id>"`.
+//   new rule: each tab renders behind `{show("<id>") ? (` — the one section gate FactoringHome uses.
+//   why: bdd45147f8 (ROUND-435-CC2, owner's ten-tab set) moved every section behind show(), which maps a
+//        section to its parent Faro tab; `tab === "<id>"` no longer appears anywhere in the file, so this
+//        check failed on correct code. Not looser: a tab with no show() render block still fails.
+export function missingRenderBlocks(home) {
+  return SIX_TABS.filter((tab) => !home.includes(`{show("${tab}") ? (`)).map(
+    (tab) => `FactoringHome.tsx missing render block for tab "${tab}"`,
+  );
+}
+
 function selftest() {
-  // Minimal selftest: the check functions throw on bad input.
-  const bad = 'factoring-stub-request_debtor_credit_check';
-  if (!bad.includes("factoring-stub-")) throw new Error("selftest: stub detection broken");
-  console.log("selftest OK — stub detection works");
+  const home = readFileSync(FACTORING_HOME, "utf8");
+  const clean = missingRenderBlocks(home);
+  if (clean.length) throw new Error(`selftest: real FactoringHome.tsx rejected — ${clean.join("; ")}`);
+  const planted = SIX_TABS.map((tab) => [tab, home.replace(`{show("${tab}") ? (`, `{false ? (`)]);
+  const escaped = planted.filter(([tab, src]) => !missingRenderBlocks(src).some((f) => f.includes(`"${tab}"`)));
+  if (escaped.length) throw new Error(`selftest: removed render block not caught for ${escaped.map(([t]) => t).join(", ")}`);
+  console.log(`selftest OK — ${planted.length}/${planted.length} removed render blocks caught; real page passes`);
 }
 
 function main() {
@@ -108,12 +123,7 @@ function main() {
   }
 
   // 6. Each tab has a real render block (not just a stub div).
-  for (const tab of SIX_TABS) {
-    const renderPattern = `tab === "${tab}"`;
-    if (!factoringHome.includes(renderPattern)) {
-      failures.push(`FactoringHome.tsx missing render block for tab "${tab}"`);
-    }
-  }
+  failures.push(...missingRenderBlocks(factoringHome));
 
   if (failures.length > 0) {
     console.error(`verify-factoring-six-stubs-real-tabs FAILED (${failures.length}):`);

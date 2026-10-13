@@ -682,9 +682,21 @@ export function WorkOrderDetailPage() {
   const editTarget = useMemo<EditWorkOrderTarget | null>(() => {
     if (!wo || !id) return null;
     const str = (v: unknown): string | null => (v === null || v === undefined ? null : String(v));
-    const lineItems: EditWorkOrderLine[] = Array.isArray(wo.line_items)
-      ? (wo.line_items as Array<Record<string, unknown>>).map((raw) => ({
-          id: raw.id != null ? String(raw.id) : undefined,
+    // ACCT-F4431382: maintenance.work_order_lines' key is `uuid` (there is no `id` column), so reading raw.id made every
+    // persisted line look NEW in Edit — saving re-posted each one as a duplicate. Voided lines are history, not editable
+    // cost. Each line carries its item (its own, else its Section B parent's — the bill copy reads the same fallback).
+    const rawLines = Array.isArray(wo.line_items) ? (wo.line_items as Array<Record<string, unknown>>) : [];
+    const lineKey = (raw: Record<string, unknown>) => (raw.uuid ?? raw.id) as string | null | undefined;
+    const itemByLine = new Map(rawLines.map((raw) => [String(lineKey(raw) ?? ""), raw.item_id != null ? String(raw.item_id) : null]));
+    const lineItems: EditWorkOrderLine[] = rawLines.length
+      ? rawLines.filter((raw) => raw.voided_at == null).map((raw) => ({
+          id: lineKey(raw) != null ? String(lineKey(raw)) : undefined,
+          item_id:
+            raw.item_id != null
+              ? String(raw.item_id)
+              : raw.parent_line_uuid != null
+                ? itemByLine.get(String(raw.parent_line_uuid)) ?? null
+                : null,
           line_type: (["parts", "labor", "other"].includes(String(raw.line_type)) ? String(raw.line_type) : "other") as
             | "parts"
             | "labor"

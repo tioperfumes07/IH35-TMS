@@ -9,6 +9,11 @@
  * must be preserved unchanged). Columns Period/Status/Net and Run/Employees/Net preserved 1:1;
  * money() cents formatting, right-aligned numeric cells, the ListErrorBanner error surface, and
  * both empty-state messages preserved.
+ *
+ * ACCT-F4431379 (Lead 443.137 9d) — old: TWO ParityTables (driver settlements + QBO W-2 runs), the
+ * Run/Employees labels, the qbo-w2-runs storageKey/empty text and the sync Refresh mutation were
+ * required; new: ONE ParityTable (driver settlements) is required and the QBO W-2 table + Refresh
+ * must be ABSENT; why: driver pay comes ONLY from driver_finance and QBO is out of scope for USMCA.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -18,11 +23,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-payroll-aggregated-page-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/accounting/PayrollAggregatedPage.tsx";
 
-const REQUIRED_LABELS = ["Period", "Status", "Net", "Run", "Employees"];
+const REQUIRED_LABELS = ["Period", "Status", "Net"];
 
 const REQUIRED_STORAGE_KEYS = [
   "payroll-aggregated-driver-settlements",
-  "payroll-aggregated-qbo-w2-runs",
 ];
 
 function assertMigrated(src) {
@@ -33,8 +37,8 @@ function assertMigrated(src) {
   ) {
     errors.push(`${PAGE}: must import ParityTable from components/parity/ParityTable`);
   }
-  if ((src.match(/<ParityTable\b/g) ?? []).length < 2) {
-    errors.push(`${PAGE}: expected ≥2 <ParityTable> (driver settlements + QBO W-2 runs)`);
+  if ((src.match(/<ParityTable\b/g) ?? []).length < 1) {
+    errors.push(`${PAGE}: expected a <ParityTable> (driver settlements)`);
   }
   if (/<table[\s>]/.test(src)) {
     errors.push(`${PAGE}: must not contain hand-rolled <table>`);
@@ -58,14 +62,14 @@ function assertMigrated(src) {
   if (!src.includes("No driver settlements.")) {
     errors.push(`${PAGE}: must keep the driver-settlements empty text`);
   }
-  if (!src.includes("No QBO payroll runs linked yet.")) {
-    errors.push(`${PAGE}: must keep the QBO W-2 runs empty text`);
+  if (/qbo_w2_runs|qbo_payroll_run|payroll-aggregated-qbo-w2-runs/.test(src)) {
+    errors.push(`${PAGE}: must not render a QBO Payroll W-2 runs table (driver pay comes ONLY from driver_finance)`);
   }
   if (!src.includes("money(Number(row.net_cents ?? 0))")) {
     errors.push(`${PAGE}: must keep money() cents formatting for Net columns`);
   }
-  if (!src.includes("refreshAggregatedPayroll")) {
-    errors.push(`${PAGE}: must keep the sync Refresh mutation (unchanged, outside the tables)`);
+  if (src.includes("refreshAggregatedPayroll")) {
+    errors.push(`${PAGE}: must not offer the QBO payroll sync Refresh`);
   }
   return errors;
 }
@@ -74,19 +78,17 @@ function selftest() {
   const good = `
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
     import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
-    import { refreshAggregatedPayroll } from "../../api/payrollAggregated";
     const SETTLEMENT_COLUMNS = [
       { key: "pay_period_start", label: "Period" },
       { key: "status", label: "Status" },
       { key: "net_cents", label: "Net", render: (row) => money(Number(row.net_cents ?? 0)) },
     ];
-    const W2_RUN_COLUMNS = [
-      { key: "qbo_payroll_run_name", label: "Run" },
-      { key: "employee_count", label: "Employees" },
-      { key: "net_cents", label: "Net", render: (row) => money(Number(row.net_cents ?? 0)) },
-    ];
     <ParityTable storageKey="payroll-aggregated-driver-settlements" emptyText="No driver settlements." rows={[]} columns={[]} rowKey={(r) => r.id} />
-    <ParityTable storageKey="payroll-aggregated-qbo-w2-runs" emptyText="No QBO payroll runs linked yet." rows={[]} columns={[]} rowKey={(r) => r.id} />
+  `;
+  // ACCT-F4431379 plant: a page that re-adds the QBO W-2 runs table and its Refresh must fail.
+  const qboBack = good + `
+    import { refreshAggregatedPayroll } from "../../api/payrollAggregated";
+    <ParityTable storageKey="payroll-aggregated-qbo-w2-runs" rows={data?.qbo_w2_runs ?? []} columns={[]} rowKey={(r) => r.qbo_payroll_run_id} />
   `;
   const bad = `
     export function PayrollAggregatedPage() {
@@ -103,6 +105,11 @@ function selftest() {
   const badErrors = assertMigrated(bad);
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
+    process.exit(1);
+  }
+  const qboErrors = assertMigrated(qboBack);
+  if (!qboErrors.some((e) => e.includes("QBO Payroll W-2 runs table")) || !qboErrors.some((e) => e.includes("sync Refresh"))) {
+    console.error(`${LABEL} --selftest FAIL qbo-back fixture should fail on the QBO table and Refresh:`, qboErrors);
     process.exit(1);
   }
   if (badErrors.length < 3) {
@@ -125,7 +132,7 @@ function main() {
     process.exit(1);
   }
   console.log(
-    `OK ${LABEL}: ${PAGE} renders both tables via ParityTable; columns, money formatting, empty texts, and Refresh preserved.`,
+    `OK ${LABEL}: ${PAGE} renders driver settlements via ParityTable; no QBO W-2 runs table or Refresh.`,
   );
 }
 

@@ -83,8 +83,22 @@ assert(JOB, job, /initializeDriverActive30dWorker/, "worker export");
 const idx = read(IDX);
 assert(IDX, idx, /initializeDriverActive30dWorker/, "index wires worker");
 
+// LEAD 443.99 class B (2026-10-12) — Drivers list copy.
+//   old rule: the Active tab copy names the 30-day rule ("last 30 days").
+//   new rule: the roster copy names the canonical Active definition — movement in the last 15 days (Rule 49) —
+//             and never re-advertises the 30-day window as what "Active" means on the list.
+//   why: RULE 49 (owner ruling 2026-09-05, .cursor/rules/49-active-entity-hardline.mdc, alwaysApply) made the
+//        Drivers list's Active = Samsara movement in 15 days; ROUND 298.1 (#23495, 584f51c792) updated the copy.
+//        The 30-day worker this guard locks is unchanged — it ages the stale HR status flag, which Rule 49 says
+//        is NOT what Active means — so the list copy must describe the 15-day rule, not this one.
+export function feCopyFailures(source) {
+  const f = [];
+  if (!/Active = movement in the last 15 days \(Rule 49\)/.test(source)) f.push("Active roster copy must name the Rule 49 15-day movement window");
+  if (/Active = [^<]*last 30 days/.test(source)) f.push("Active roster copy must not define Active as the 30-day status rule");
+  return f;
+}
 const fe = read(FE);
-assert(FE, fe, /last 30 days/, "Active tab copy names 30-day rule");
+for (const f of feCopyFailures(fe)) fail(`${FE}: ${f}`);
 
 function selftest() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "drv-active-30d-"));
@@ -117,6 +131,12 @@ process.exit(0);
   ];
   const escaped = serviceMutations.filter((source) => sharedActivityFailures(source).length === 0);
   if (escaped.length > 0) fail(`--selftest: ${escaped.length}/${serviceMutations.length} shared-activity mutations escaped`);
+  const copyMutations = [
+    fe.replace("Active = movement in the last 15 days (Rule 49).", "Active = load or driving activity in the last 30 days."),
+    fe.replace("Active = movement in the last 15 days (Rule 49).", "Status chips only."),
+  ];
+  const copyEscaped = copyMutations.filter((source) => source === fe || feCopyFailures(source).length === 0);
+  if (copyEscaped.length > 0) fail(`--selftest: ${copyEscaped.length}/${copyMutations.length} Active-copy mutations escaped`);
 }
 
 if (process.argv.includes("--selftest")) {

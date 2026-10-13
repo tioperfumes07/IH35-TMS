@@ -71,7 +71,8 @@ function selftest() {
   if (!/driver_finance\.escrow_ledger/.test(LEDGER_RUNNING_BALANCE_QUERY)) failures.push("ledger query does not read driver_finance.escrow_ledger");
   if (failures.length) {
     for (const f of failures) console.error(`${LABEL} --selftest FAIL — ${f}`);
-    return 1;
+    // Exit here, not via main()'s return value: a selftest that finds a problem must end the process non-zero itself.
+    process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS — query shape correct (GL join by driver identity, ledger join by driver identity)`);
   return 0;

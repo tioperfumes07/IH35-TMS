@@ -1,329 +1,248 @@
 #!/usr/bin/env node
-// ROUND 23.3 (owner/Lead, 2026-09-13) — B1 "FUEL AS A REAL COST": live proof that
-// the fuel-purchase absorption (scripts/ops/absorption-b1-fuel-ingest.mjs) actually
-// landed and stays true. "one FUEL PURCHASES row -> one fuel.fuel_transactions row."
-// Original target: 171 receipts / $110,072.33 across the 34 USMCA settlement documents.
+// verify-fuel-transactions-per-load — "one fuel purchase on a settlement document -> one live
+// fuel.fuel_transactions row, on the same load, for the same dollars, on the same date."
 //
-// ROUND 30.6 (Lead ruling, 2026-09-23 00:35 CT, docs/bus/INBOX-CC-1.md): the hardcoded
-// 171/$110,072.33 total was written before Dreamline, Relay, and the batch-2 AlwaysTrack
-// settlement fuel rows landed — "it is measuring its own obsolescence, not a defect."
-// Assertions 2 (exact row count) and its dollar total are now a SHRINK-ONLY four-arm ratchet
-// against scripts/verify-fuel-transactions-per-load.baseline.json, same shape as the already-
-// merged, already-proven verify-alwaystrack-parity.baseline.json:
-//   no baseline / doesn't match hardcoded original    -> FAIL (first-run / no-baseline edge)
-//   in baseline, live DIVERGES from it (either way)    -> FAIL — new, unreconciled drift; a
-//                                                          human re-reconciles (like CC-3 did
-//                                                          for the 625/$271,499.26 figure) and
-//                                                          regenerates the baseline with a cited
-//                                                          reason before this can pass again
-//   in baseline, live MATCHES it exactly               -> PASS, printed as the known, reconciled
-//                                                          total (not silent)
-//   live returns to the ORIGINAL hardcoded 171/$110,072.33 exactly -> FAIL "remove me from the
-//                                                          baseline" (a return to the pre-growth
-//                                                          state is itself suspicious and worth a
-//                                                          human look, not a silent pass)
-// ROUND 30.6, SELF-CORRECTED (Lead ruling, 2026-09-23 02:00 CT, docs/bus/INBOX-CC-1.md): the
-// original assertion 3 ("DEF is an expense, never fuel — zero fuel_type='def' rows") was wrong
-// about WHERE the row lives. fuel.fuel_transactions.fuel_type carries a canonical 'def' value BY
-// DESIGN (fuel-transaction-import.ts:112), and FUEL_CATEGORY_CODES
-// (accounting/fuel-posting/poster.service.ts:25) treats 'def' as a first-class fuel posting
-// category. DEF purchases are real fuel-card transactions and belong in this table — the real
-// invariant is TREATMENT, not STORAGE:
-//   (a) DEF must NEVER count as taxable IFTA gallons -> fixed + guarded elsewhere,
-//       apps/backend/src/ifta/ifta-state-gallons-aggregator.ts + its own verify-ifta-* guard,
-//       commit 0df952f337 (PR #22171). NOT this guard's concern.
-//   (b) DEF must post to its own GL account, never the same account a diesel debit hits -> THIS
-//       is what assertion 3 now tests. Verified live 2026-09-23: it currently does NOT hold — all
-//       335 live DEF debit posting lines ($10,970.23) hit catalogs.accounts 5000 "Fuel & Diesel",
-//       the exact same account diesel purchases hit, and no dedicated DEF-named account exists in
-//       the chart of accounts at all yet. This is a REAL, CONFIRMED, SEPARATE defect in the fuel
-//       posting engine / chart of accounts (CC-3's lane, apps/backend/src/accounting/fuel-posting/
-//       poster.service.ts's resolveAccountForCategory) — named here, not fixed here, per explicit
-//       instruction: "delete nothing, move no rows, archive nothing." This guard therefore
-//       currently, correctly, honestly FAILS on assertion 3 until that poster fix lands — that is
-//       not a bug in this guard, it is the guard doing its job.
+// LEAD 443.69 item 2 (2026-10-11) — rebuilt at root. Old rule -> new rule -> why:
+//   (1) OLD: the expected set was data/alwaystrack/settlements-truth-2026-09-13.json (171 receipts), and a
+//       receipt purged under a governed purge (audit.record_deletions, AUTH-400) counted as "missing".
+//       NEW: the expected set is DERIVED from the Settlement Creator documents (one per signed settlement,
+//       extracted to data/settlement-creator/fuel-source-documents.json by scripts/build-fuel-source-documents.mjs)
+//       and matched ROW BY ROW — load, invoice, cents — then summed per load (count and dollars). A document
+//       line with no live row whose receipt was deleted by a governed purge (deletion_route = 'auth_purge' with
+//       an auth_id) is reported as purged under that AUTH, not missing.
+//       WHY: the 2026-09-13 truth file predates the AUTH-400 purge and the Creator re-feed; it reported 38
+//       "missing" receipts that were governed deletions.
+//   (2) OLD: a frozen whole-table ratchet (321 rows / $172,553.14 in the .baseline.json), re-stamped by hand
+//       after every seeding or void. NEW: no frozen count. Every live row must be SOURCED — matched to a
+//       document line, or named in a driver_finance.settlement_creator.posted audit event (the Creator's own
+//       record of the fuel rows it wrote), or tied to a Relay file transaction (integrations.relay_fuel_transactions)
+//       — and each Relay transaction's live rows must sum to the Relay file's total_amount_paid_cents.
+//       WHY: the next seeding adds its documents; it never needs a rebaseline.
+//   (3) OLD: the SOURCE_DATE_CORRECTED flag came from the B1 ingestion. NEW: date_corrections in the source
+//       extract, each quoting the printed settlement; every other line's date must equal its document's.
+//   Kept unchanged: DEF/diesel GL segregation (assertion 3) and the cross-load duplicate receipt list.
 //
-// ROUND 30.6, "DEF DEADLOCK BROKEN" (Lead ruling, docs/bus/INBOX-CC-1.md, 2026-09-23): the
-// unconditional hard-fail above proved UNSATISFIABLE, not wrong — there is no DEF/Urea/Exhaust
-// Fluid account anywhere in the chart of accounts to route to (5000 Fuel & Diesel / 5005 Fuel Card
-// Fees exist; 5010 is free, confirmed live independently by CC-1 and the Lead). "The ruling changes
-// because you proved the assertion is currently unsatisfiable, not because it is wrong." Assertion
-// 3 becomes a SECOND shrink-only four-arm ratchet, same shape and same file as assertion 2's,
-// seeded at today's measured state — 335 postings / $10,970.23 — under the `def_gl_segregation` key
-// in scripts/verify-fuel-transactions-per-load.baseline.json:
-//   no baseline entry, DEF sharing an account with diesel (>0)  -> FAIL (new contamination)
-//   baseline entry exists, live DIVERGES from it (either way)   -> FAIL — new, unreconciled drift;
-//                                                                   a human re-reconciles and
-//                                                                   regenerates the baseline entry
-//                                                                   with a cited reason
-//   baseline entry exists, live MATCHES it exactly               -> PASS, printed as known,
-//                                                                   disclosed debt (never silent)
-//   live is now CLEAN (0 shared postings) but a baseline entry
-//   still exists                                                 -> FAIL "remove me from the
-//                                                                   baseline" (same pattern as
-//                                                                   assertion 2's arm)
-// This is NOT relaxing the assertion — it is dating it. Keep the dynamic account_id comparison —
-// NEVER hardcode "5000" — so the ratchet only caps this already-measured, already-named debt; any
-// NEW account collision (a different account than the ones already in the baseline) still hard-
-// fails immediately, same as before.
-//
-// Checks, against the SAME ground-truth JSON the ingestion reads
-// (data/alwaystrack/settlements-truth-2026-09-13.json):
-//   1. Every fuel_purchases row across the 34 USMCA docs has a matching live
-//      fuel.fuel_transactions row (by source_row_hash, reproduced from the pure
-//      buildFuelRows() transform — not re-derived independently, so this guard
-//      and the ingestion can never silently drift apart). UNCHANGED — this checks a subset
-//      (the original 171 rows) that must remain present regardless of later growth.
-//   2. Row count / dollar total — see the ratchet above.
-//   3. DEF GL SEGREGATION — every live DEF debit posting must hit a DIFFERENT account_id than any
-//      live diesel debit posting (dynamic comparison, no hardcoded account number — stays correct
-//      once a dedicated DEF account is created and wired). Shrink-only ratchet — see above.
-//   4. The 5 disclosed data-quality flags (1 date correction + 4 cross-load
-//      duplicate-invoice rows) are present and still flagged low-confidence —
-//      proves the ingestion's disclosed corrections weren't silently dropped
-//      or silently "cleaned up" by a later hand-edit. UNCHANGED.
-//
-// Fails closed with no DATABASE_URL (requireLiveDbOrExit, ROUND 29.9-B). money-pr-local-gate.mjs runs
-// it only when this guard's own domain paths change or a live DB is present (Lead ruling R56-B).
+// --selftest runs the pure comparator against fixtures (no DB). Live: fails closed with no DATABASE_URL
+// (requireLiveDbOrExit, ROUND 29.9-B); money-pr-local-gate.mjs runs it when its own domain paths change.
 import fs from "node:fs";
 import path from "node:path";
-import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
-import { exitIfEmptyByPurge } from "./lib/purge-window.mjs";
-import { buildFuelRows } from "./ops/absorption-b1-fuel-ingest.mjs";
+import { fileURLToPath } from "node:url";
 
 const LABEL = "verify-fuel-transactions-per-load";
 export const REQUIRES_LIVE_DB =
   "live-data money guard; fails closed via requireLiveDbOrExit with no DATABASE_URL (ROUND 29.9-B) and runs in money-pr-local-gate.mjs only when its own domain paths change or a live DB is present (Lead ruling R56-B, 2026-09-22)";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
-const USMCA_SCOPE_START = "2026-08-07";
-const ORIGINAL_COUNT = 171;
-const ORIGINAL_TOTAL_CENTS = 11007233; // $110,072.33 — the pre-Dreamline B1 target, kept only
-// as the "now clean, remove me" comparison point (see the ratchet arm above), never the pass bar.
-const TRUTH_JSON_PATH = path.join(
-  process.cwd(),
-  "data/alwaystrack/settlements-truth-2026-09-13.json"
-);
+const SOURCE_PATH = path.join(process.cwd(), "data/settlement-creator/fuel-source-documents.json");
 const BASELINE_PATH = path.join(process.cwd(), "scripts/verify-fuel-transactions-per-load.baseline.json");
 
-function loadBaseline() {
-  if (!fs.existsSync(BASELINE_PATH)) return null;
-  return JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8"));
+const cents = (v) => Math.round(Number(v) * 100);
+const money = (c) => `$${(c / 100).toFixed(2)}`;
+/** A copy re-booked on a second load carries "<invoice>-<load>" (AUTH-209/398 pattern). */
+const baseRef = (ref, load) => String(ref ?? "").replace(new RegExp(`-${load}$`), "");
+/** 443.73 #6(e): the receipt's own number, whatever load suffix a re-feed hung on it. */
+export const baseInvoice = (ref) => String(ref ?? "").replace(/-1[0-9]{4}$/, "");
+
+/**
+ * Pure comparator. documents: [{settlement_no, fuel_purchases:[{load_number, invoice, date, receipt_cents, card}]}]
+ * live: active rows [{id, load_number, ref, cents, date, relay_id}]; purged: [{ref, cents, auth_id}];
+ * relayTotals: Map(relay_id -> {paid_cents, dead}); creatorIds: Set(fuel id named by a Creator posted event).
+ */
+export function compareFuel({ documents, corrections = [], documentDuplicates = [], live, purged = [], relayTotals = new Map(), creatorIds = new Set() }) {
+  const failures = [];
+  const notes = [];
+  const fix = new Map(corrections.map((c) => [`${c.load_number}|${c.invoice}|${c.receipt_cents}`, c]));
+  const byLoad = new Map();
+  for (const r of live) {
+    if (!byLoad.has(r.load_number)) byLoad.set(r.load_number, []);
+    byLoad.get(r.load_number).push(r);
+  }
+  const used = new Set();
+  const purgedLeft = purged.map((p) => ({ ...p }));
+  const perLoad = new Map();
+  let expectedRows = 0;
+  for (const doc of documents) {
+    for (const line of doc.fuel_purchases) {
+      expectedRows++;
+      const load = String(line.load_number);
+      const t = perLoad.get(load) || { docN: 0, docC: 0 };
+      t.docN++; t.docC += line.receipt_cents;
+      perLoad.set(load, t);
+      const pool = byLoad.get(load) || [];
+      const hit = pool.find((r) => !used.has(r.id) && r.cents === line.receipt_cents && baseRef(r.ref, load) === String(line.invoice))
+        ?? pool.find((r) => !used.has(r.id) && r.cents === line.receipt_cents && r.date === line.date);
+      if (hit) {
+        used.add(hit.id);
+        const c = fix.get(`${load}|${line.invoice}|${line.receipt_cents}`);
+        const want = c ? c.true_date : line.date;
+        if (hit.date !== want) {
+          failures.push(c
+            ? `date: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} is ${hit.date} live; the document proves ${want} — ${c.evidence}`
+            : `date: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} — document ${line.date}, live ${hit.date} (row ${hit.id.slice(0, 8)})`);
+        }
+        if (line.card === "relay" && !hit.relay_id) {
+          failures.push(`relay: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} is a Relay purchase on the document but live row ${hit.id.slice(0, 8)} is not tied to a Relay file transaction`);
+        }
+        continue;
+      }
+      const p = purgedLeft.findIndex((x) => x.cents === line.receipt_cents && baseRef(x.ref, load) === String(line.invoice));
+      if (p >= 0) {
+        notes.push(`purged, not missing: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} — deleted under ${purgedLeft[p].auth_id} (audit.record_deletions)`);
+        purgedLeft.splice(p, 1);
+        continue;
+      }
+      // 443.73 #6(d): a receipt printed on two settlement documents is posted ONCE; the second document SHOWS it as already
+      // on the load that carries it — not missing, and never a second expense.
+      const elsewhere = live.find((r) => r.load_number !== load && baseInvoice(r.ref) === baseInvoice(line.invoice) && r.cents === line.receipt_cents &&
+        (!line.fuel_type || !r.fuel_type || r.fuel_type === line.fuel_type));
+      if (elsewhere) {
+        notes.push(`already on load ${elsewhere.load_number}: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} — one receipt, one expense`);
+        continue;
+      }
+      // A document line proven to be a second entry of a receipt kept on another load (source extract document_duplicates,
+      // each with its evidence quoted) is shown, not missing — and only while the kept line is still live.
+      const dup = documentDuplicates.find((x) => String(x.load_number) === load && String(x.invoice) === String(line.invoice) && x.receipt_cents === line.receipt_cents);
+      if (dup && live.some((r) => r.load_number === String(dup.kept_on_load) && baseInvoice(r.ref) === baseInvoice(dup.kept_invoice) && (!dup.fuel_type || r.fuel_type === dup.fuel_type))) {
+        notes.push(`second entry of receipt ${dup.kept_invoice}: settlement ${doc.settlement_no} load ${load} ${money(line.receipt_cents)} — the receipt is on load ${dup.kept_on_load}`);
+        continue;
+      }
+      failures.push(`missing: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} ${line.date} has no live fuel row`);
+    }
+  }
+  for (const r of live) {
+    const t = perLoad.get(r.load_number);
+    if (t) { t.liveN = (t.liveN || 0) + 1; t.liveC = (t.liveC || 0) + r.cents; }
+    if (used.has(r.id)) continue;
+    if (t) {
+      failures.push(`unsourced: load ${r.load_number} live row ${r.id.slice(0, 8)} invoice ${r.ref} ${money(r.cents)} ${r.date} is on no settlement document line`);
+    } else if (!creatorIds.has(r.id) && !r.relay_id) {
+      failures.push(`unsourced: live row ${r.id.slice(0, 8)} load ${r.load_number ?? "(none)"} invoice ${r.ref} ${money(r.cents)} — no settlement document, no Creator posting, no Relay transaction`);
+    }
+  }
+  let loadsTied = 0;
+  for (const [load, t] of perLoad) {
+    if (t.docN === (t.liveN || 0) && t.docC === (t.liveC || 0)) loadsTied++;
+    else notes.push(`load ${load}: document ${t.docN} / ${money(t.docC)} vs live ${t.liveN || 0} / ${money(t.liveC || 0)}`);
+  }
+  const relaySums = new Map();
+  for (const r of live) if (r.relay_id) relaySums.set(r.relay_id, (relaySums.get(r.relay_id) || 0) + r.cents);
+  for (const [rid, sum] of relaySums) {
+    const rt = relayTotals.get(rid);
+    if (!rt) failures.push(`relay: live rows point at Relay transaction ${rid} which is not in the Relay file`);
+    else if (rt.dead) failures.push(`relay: Relay transaction ${rid} is voided/inactive but ${money(sum)} of live fuel rows still point at it`);
+    else if (rt.paid_cents !== sum) failures.push(`relay: Relay transaction ${rid} paid ${money(rt.paid_cents)} but its live fuel rows sum to ${money(sum)}`);
+  }
+  return { failures, notes, expectedRows, loads: perLoad.size, loadsTied, relayTxns: relaySums.size };
 }
 
-// Assertion 3's ratchet entry lives nested under the same baseline file (`def_gl_segregation` key)
-// rather than a separate file — one reviewable baseline per guard, same precedent as assertion 2.
-function loadDefSegregationBaseline() {
-  const baseline = loadBaseline();
-  return baseline && baseline.def_gl_segregation ? baseline.def_gl_segregation : null;
+function selftest() {
+  const doc = (lines) => [{ settlement_no: "1", fuel_purchases: lines }];
+  const L = (o) => ({ load_number: "100", invoice: "A1", date: "2026-08-01", receipt_cents: 5000, card: "dreamline", ...o });
+  const R = (o) => ({ id: "aaaaaaaa-1", load_number: "100", ref: "A1", cents: 5000, date: "2026-08-01", relay_id: null, ...o });
+  const cases = [
+    ["exact match passes", { documents: doc([L()]), live: [R()] }, 0],
+    ["missing row fails", { documents: doc([L()]), live: [] }, 1],
+    ["governed purge is not missing", { documents: doc([L()]), live: [], purged: [{ ref: "A1", cents: 5000, auth_id: "AUTH-400" }] }, 0],
+    ["purge of a different amount does not excuse", { documents: doc([L()]), live: [], purged: [{ ref: "A1", cents: 4999, auth_id: "AUTH-400" }] }, 1],
+    ["extra row on a documented load fails", { documents: doc([L()]), live: [R(), R({ id: "bbbbbbbb-2", ref: "B2" })] }, 1],
+    ["wrong cents fails twice (missing + unsourced)", { documents: doc([L()]), live: [R({ cents: 5001 })] }, 2],
+    ["re-booked copy ref <invoice>-<load> matches", { documents: doc([L()]), live: [R({ ref: "A1-100" })] }, 0],
+    ["date drift fails", { documents: doc([L()]), live: [R({ date: "2026-08-02" })] }, 1],
+    ["corrected date passes", { documents: doc([L({ date: "2026-09-29" })]), corrections: [{ load_number: "100", invoice: "A1", receipt_cents: 5000, true_date: "2026-08-29", evidence: "q" }], live: [R({ date: "2026-08-29" })] }, 0],
+    ["uncorrected misprint fails", { documents: doc([L({ date: "2026-09-29" })]), corrections: [{ load_number: "100", invoice: "A1", receipt_cents: 5000, true_date: "2026-08-29", evidence: "q" }], live: [R({ date: "2026-09-29" })] }, 1],
+    ["row on undocumented load with no source fails", { documents: doc([]), live: [R({ load_number: "200" })] }, 1],
+    ["row on undocumented load named by Creator passes", { documents: doc([]), live: [R({ load_number: "200" })], creatorIds: new Set(["aaaaaaaa-1"]) }, 0],
+    ["relay line not tied to Relay fails", { documents: doc([L({ card: "relay" })]), live: [R()] }, 1],
+    ["relay sum equals paid passes", { documents: doc([L({ card: "relay" })]), live: [R({ relay_id: "r1" })], relayTotals: new Map([["r1", { paid_cents: 5000, dead: false }]]) }, 0],
+    ["relay sum differs fails", { documents: doc([L({ card: "relay" })]), live: [R({ relay_id: "r1" })], relayTotals: new Map([["r1", { paid_cents: 4000, dead: false }]]) }, 1],
+    ["relay txn voided fails", { documents: doc([L({ card: "relay" })]), live: [R({ relay_id: "r1" })], relayTotals: new Map([["r1", { paid_cents: 5000, dead: true }]]) }, 1],
+    ["relay txn absent fails", { documents: doc([L({ card: "relay" })]), live: [R({ relay_id: "r1" })] }, 1],
+    ["receipt printed on two documents, live once on the other load = already on load N",
+      { documents: [{ settlement_no: "1", fuel_purchases: [L()] }, { settlement_no: "2", fuel_purchases: [L({ load_number: "200" })] }], live: [R()] }, 0],
+    ["the second document prints the suffixed number <invoice>-<load>: still already on load N",
+      { documents: [{ settlement_no: "1", fuel_purchases: [L()] }, { settlement_no: "2", fuel_purchases: [L({ load_number: "13621", invoice: "A1-13621" })] }], live: [R()] }, 0],
+    ["a listed second entry with a different amount is shown while the kept line is live",
+      { documents: [{ settlement_no: "2", fuel_purchases: [L({ load_number: "13535", invoice: "A1-13535", receipt_cents: 4135, fuel_type: "def" })] }],
+        documentDuplicates: [{ load_number: "13535", invoice: "A1-13535", receipt_cents: 4135, fuel_type: "def", kept_on_load: "100", kept_invoice: "A1" }],
+        live: [R({ fuel_type: "def" })] }, 1],
+    ["receipt printed on two documents, live on neither load fails twice",
+      { documents: [{ settlement_no: "1", fuel_purchases: [L()] }, { settlement_no: "2", fuel_purchases: [L({ load_number: "200" })] }], live: [] }, 2],
+  ];
+  let bad = 0;
+  for (const [name, input, want] of cases) {
+    const got = compareFuel(input).failures.length;
+    console.log(`${got === want ? "ok  " : "FAIL"} ${name} (${got} failure(s), want ${want})`);
+    if (got !== want) bad++;
+  }
+  console.log(`${LABEL} selftest: ${cases.length - bad}/${cases.length}`);
+  process.exit(bad ? 1 : 0);
 }
 
 async function live() {
+  const { requireLiveDbOrExit } = await import("./lib/require-live-db.mjs");
+  const { exitIfEmptyByPurge } = await import("./lib/purge-window.mjs");
+  const source = JSON.parse(fs.readFileSync(SOURCE_PATH, "utf8"));
+  const baseline = fs.existsSync(BASELINE_PATH) ? JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8")) : {};
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
-    // BANK-F30150 (found this session, verify-alwaystrack-parity.mjs): a bare session-level
-    // set_config is unreliable through Neon's POOLED endpoint — wrap every read in one explicit
-    // transaction with a transaction-scoped bypass so a pooler can't split it across backends.
+    // BANK-F30150: one explicit transaction with a transaction-scoped bypass, never a session SET on the pooler.
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
-
-    // ROUND-30.4 (CC-3, PR #22176) introduced a gross_cost/total_cost fallback + a cohort-scoped,
-    // $25-tolerance version of assertion 2 below. SUPERSEDED by the Lead's ROUND-30.6 ruling
-    // (docs/bus/INBOX-CC-1.md, 2026-09-23 00:35 CT): "it is measuring its own obsolescence, not a
-    // defect" — the fix is the shrink-only whole-table ratchet below, not a narrower cohort + a
-    // tolerance. gross_cost is not read by this guard; total_cost (the column that has always
-    // existed, no fresh-CI-DB fallback needed) is authoritative for the ratchet.
-    const raw = JSON.parse(fs.readFileSync(TRUTH_JSON_PATH, "utf8"));
-    const docs = raw.company.filter((d) => d.end_date >= USMCA_SCOPE_START);
-    const loadNumbers = new Set();
-    for (const doc of docs) for (const fp of doc.fuel_purchases || []) loadNumbers.add(fp.load);
-
-    const loadRes = await client.query(
-      // stampDocumentVoided renumbers a voided load VOID-<original>-<id8> (#22442); its documents still name the original.
-      `SELECT id, regexp_replace(load_number, '^VOID-(.+)-[0-9a-f]{8}$', '\\1') AS load_number, assigned_primary_driver_id, assigned_unit_id
-         FROM mdata.loads
-        WHERE operating_company_id = $1::uuid AND regexp_replace(load_number, '^VOID-(.+)-[0-9a-f]{8}$', '\\1') = ANY($2::text[])`,
-      [USMCA_COMPANY_ID, Array.from(loadNumbers)]
-    );
-    const loadMap = new Map(
-      loadRes.rows.map((r) => [
-        r.load_number,
-        { id: r.id, driver_id: r.assigned_primary_driver_id, unit_id: r.assigned_unit_id },
-      ])
-    );
-    const expectedRows = buildFuelRows(docs, (loadNumber) => loadMap.get(loadNumber));
-
-    let failures = 0;
-
-    // 1. completeness discriminator (an empty result is an instrument claim) +
-    //    per-row existence check.
-    // ROUND 30.6 bug fix: this query never filtered archived_at IS NULL — 2 archived/voided rows
-    // ($807.03 total) were silently counted as live, live-measured as the exact cause of a
-    // 625-vs-627 / $271,499.26-vs-$272,306.29 discrepancy against CC-3's and the Lead's own
-    // independently-reconciled figures. Every other live-row read in this codebase excludes
-    // archived rows by convention; this one had drifted.
     const liveRes = await client.query(
-      `SELECT ft.id::text AS id, ft.source_row_hash, ft.total_cost, ft.fuel_type,
-              ft.transaction_reference, ft.transaction_at::date::text AS txn_date,
-              ft.voided_at, ft.archived_at, ft.voided_by_user_id::text AS voided_by_user_id, ft.notes, ft.void_reason, regexp_replace(l.load_number, '^VOID-(.+)-[0-9a-f]{8}$', '\\1') AS load_number
+      // stampDocumentVoided renumbers a voided load VOID-<original>-<id8> (#22442); its documents still name the original.
+      `SELECT ft.id::text AS id, ft.transaction_reference AS ref, round(ft.total_cost * 100)::bigint AS cents,
+              ft.transaction_at::date::text AS date, ft.fuel_type, ft.relay_fuel_transaction_id::text AS relay_id,
+              regexp_replace(l.load_number, '^VOID-(.+)-[0-9a-f]{8}$', '\\1') AS load_number
          FROM fuel.fuel_transactions ft
          LEFT JOIN mdata.loads l ON l.id = ft.load_id
-        WHERE ft.operating_company_id = $1::uuid`,
+        WHERE ft.operating_company_id = $1::uuid AND ft.archived_at IS NULL AND ft.voided_at IS NULL`,
       [USMCA_COMPANY_ID]
     );
-    const undocumentedActiveRows = liveRes.rows.filter((r) => r.archived_at == null);
-    if (undocumentedActiveRows.length === 0) {
+    const liveRows = liveRes.rows.map((r) => ({ ...r, cents: Number(r.cents) }));
+    if (liveRows.length === 0) {
       exitIfEmptyByPurge(LABEL, "fuel.fuel_transactions (USMCA, live)");
-      console.error(`${LABEL}: LIVE FAIL — 0 live fuel.fuel_transactions rows for USMCA; completeness discriminator says this is an instrument problem, not a real zero — re-run before trusting this`);
+      console.error(`${LABEL}: LIVE FAIL — 0 live fuel.fuel_transactions rows for USMCA; an empty result is an instrument claim, not a real zero`);
       process.exit(1);
     }
-    const liveHashes = new Set(undocumentedActiveRows.map((r) => r.source_row_hash));
-    const hasReason = (r) => (r.notes && !/^\s*$/.test(r.notes)) || (r.void_reason && !/^\s*$/.test(r.void_reason));
-    // ROUND 30.6 finding: fixing the archived_at filter above (for the count/total ratchet)
-    // correctly surfaced that 2 of the original 171 rows are now archived — NOT a silent drop:
-    // both carry a real void note citing an owner ruling (settlement 5796 stands exactly as
-    // printed; the row came from a stale duplicate PDF, see docs/bus/OUTBOX-CC-3.md). This
-    // assertion's own purpose is catching SILENT drops, not forbidding a documented void — a row
-    // found archived WITH a real reason counts as accounted-for, same as live.
-    // 2026-09-28 fix (this session): (a) a documented void was only ever recognized via the legacy
-    // `notes` column; the Direction-1 silent-void fix this session (verify-void-is-whole, AUTH-075/
-    // scripts/ops/2026-09-28-cc2-r148-void-stamp-242-silent-voids.ts) stamps the CANONICAL
-    // `void_reason` column via stampDocumentVoided() -- the single writer every other family in this
-    // codebase uses -- never `notes`. (b) the hash-based documentedVoidHashes lookup below suffers
-    // the EXACT same "instrument failure" ROUND 191 already fixed for the live-hash lookup (the
-    // AlwaysTrack re-feed's source_row_hash scheme doesn't match buildFuelRows' computed hash for
-    // these rows) -- so archived-but-documented rows now also join the NATURAL KEY search pool
-    // naturalKeyMatch already uses for live rows, not just the hash set. `notes` is kept as a
-    // fallback for any older rows that only ever used it.
-    const archivedDocumented = liveRes.rows.filter((r) => r.archived_at != null && hasReason(r));
-    const documentedVoidHashes = new Set(archivedDocumented.map((r) => r.source_row_hash));
-    // ROUND 191 (Lead, 2026-09-25): the AUTH-001 wipe deleted every B1-ingested row, and the
-    // AlwaysTrack re-feed (scripts/feed/feed-settlement-day.mts + the R-178 date reissue) writes
-    // its OWN source_row_hash scheme ("alwaystrack:<co>:<load>:<date>:<vendor>:<invoice>",
-    // "alwaystrack-settl:…", "alwaystrack-gt-fuel:…"). A hash-only lookup therefore reported
-    // 171/171 "missing" while every receipt was live — an instrument failure, not a data one.
-    // Completeness is now proven by the receipt's NATURAL KEY — same load, same invoice, same
-    // cents — one live row consumed per expected row (so a receipt printed twice needs two live
-    // rows, and one live row can never satisfy two expected rows). The old hash is still
-    // accepted, so a B1-era row keeps counting.
-    const usedLiveIds = new Set();
-    // 2026-09-28: the search pool is un-voided ACTIVE rows plus archived-but-DOCUMENTED rows (see
-    // above) -- a receipt that was correctly superseded and stamped still satisfies its own expected
-    // row; only a truly silent/undocumented drop should ever show as missing.
-    // 2026-09-28: a row is in the search pool when it was never voided at all, OR when it was
-    // voided/archived WITH a real, non-empty reason (stampDocumentVoided() always sets voided_at
-    // AND archived_at together for this family in the SAME write -- a row can be "voided but
-    // undocumented" only if void_reason/notes are both empty, which never happens through that
-    // single writer). Excludes only a genuinely silent/undocumented drop.
-    const liveActive = liveRes.rows.filter((r) => !r.voided_at || hasReason(r));
-    const naturalKeyMatch = (exp) => {
-      const cents = Math.round(Number(exp.amount) * 100);
-      const hit = liveActive.find(
-        (r) =>
-          !usedLiveIds.has(r.id) &&
-          r.load_number === exp.load_number &&
-          Math.round(Number(r.total_cost) * 100) === cents &&
-          (exp.invoice ? String(r.transaction_reference) === String(exp.invoice) : true)
-      );
-      if (hit) usedLiveIds.add(hit.id);
-      return Boolean(hit);
-    };
-    const missing = expectedRows.filter(
-      (r) => !liveHashes.has(r.hash) && !documentedVoidHashes.has(r.hash) && !naturalKeyMatch(r)
+    const purgedRes = await client.query(
+      `SELECT row_data->>'transaction_reference' AS ref, round((row_data->>'total_cost')::numeric * 100)::bigint AS cents, auth_id
+         FROM audit.record_deletions
+        WHERE table_name = 'fuel.fuel_transactions' AND deletion_route = 'auth_purge' AND auth_id IS NOT NULL
+          AND row_data->>'operating_company_id' = $1`,
+      [USMCA_COMPANY_ID]
     );
-    if (missing.length > 0) {
-      console.error(`${LABEL}: LIVE FAIL — ${missing.length} of ${expectedRows.length} expected fuel_purchases rows have NO matching fuel.fuel_transactions row (live or documented-voided):`);
-      for (const r of missing.slice(0, 20)) {
-        console.error(`  ✗ doc ${r.settlement_no} load ${r.load_number} invoice=${r.invoice} amount=$${r.amount}`);
-      }
-      failures++;
-    }
+    const relayRes = await client.query(
+      `SELECT id::text, total_amount_paid_cents::bigint AS paid, (voided_at IS NOT NULL OR is_active IS FALSE) AS dead
+         FROM integrations.relay_fuel_transactions WHERE operating_company_id = $1::uuid`,
+      [USMCA_COMPANY_ID]
+    );
+    const creatorRes = await client.query(
+      `SELECT DISTINCT jsonb_array_elements_text(payload->'fuel_transaction_ids') AS id
+         FROM audit.audit_events
+        WHERE event_class = 'driver_finance.settlement_creator.posted' AND payload->>'operating_company_id' = $1
+          AND jsonb_typeof(payload->'fuel_transaction_ids') = 'array'`,
+      [USMCA_COMPANY_ID]
+    );
+    const result = compareFuel({
+      documents: source.documents,
+      corrections: source.date_corrections || [],
+      documentDuplicates: source.document_duplicates || [],
+      live: liveRows,
+      purged: purgedRes.rows.map((r) => ({ ...r, cents: Number(r.cents) })),
+      relayTotals: new Map(relayRes.rows.map((r) => [r.id, { paid_cents: Number(r.paid), dead: r.dead }])),
+      creatorIds: new Set(creatorRes.rows.map((r) => r.id)),
+    });
+    let failures = result.failures.length;
+    for (const n of result.notes) console.log(`${LABEL}: ${n}`);
+    for (const f of result.failures) console.error(`  ✗ ${f}`);
 
-    // 2. row count / dollar total — shrink-only four-arm ratchet against
-    // scripts/verify-fuel-transactions-per-load.baseline.json (Lead ruling, ROUND 30.6). See the
-    // file header for the full rationale; this is deliberately NOT the old exact-match-171 check.
-    const liveCount0 = undocumentedActiveRows.length;
-    const liveCents0 = undocumentedActiveRows.reduce((s, r) => s + Math.round(Number(r.total_cost) * 100), 0);
-    const baseline = loadBaseline();
-    // 2026-10-04 (CC-2, at CC-3's request): a GOVERNED void after the baseline was measured is reconciled movement, not
-    // drift — before this, every owner-authorized void turned the gate red for every seat until someone re-stamped the
-    // baseline by hand. Governed = stampDocumentVoided's full signature on the row: voided_at = archived_at, a
-    // voided_by_user_id, and a non-empty void_reason. A silent drop (any part missing) and any GROWTH still fail.
-    const isGovernedVoid = (r) =>
-      r.archived_at != null && r.voided_at != null && r.voided_by_user_id &&
-      r.void_reason && !/^\s*$/.test(r.void_reason) &&
-      new Date(r.voided_at).getTime() === new Date(r.archived_at).getTime();
-    const sinceBaseline = baseline && baseline.measured_at ? new Date(baseline.measured_at).getTime() : null;
-    const governedOut = sinceBaseline == null ? [] :
-      liveRes.rows.filter((r) => isGovernedVoid(r) && new Date(r.archived_at).getTime() > sinceBaseline);
-    const liveCount = liveCount0 + governedOut.length;
-    const liveCents = liveCents0 + governedOut.reduce((s, r) => s + Math.round(Number(r.total_cost) * 100), 0);
-    if (governedOut.length > 0) {
-      console.log(
-        `${LABEL}: ${governedOut.length} governed void(s) since the baseline (${baseline.measured_at}) counted as reconciled ` +
-          `movement — live ${liveCount0} rows / $${(liveCents0 / 100).toFixed(2)}; re-stamp the baseline when convenient: ` +
-          governedOut.map((r) => `${r.id.slice(0, 8)} $${Number(r.total_cost).toFixed(2)}`).join(", ")
-      );
-    }
-    if (!baseline) {
-      if (liveCount === ORIGINAL_COUNT && liveCents === ORIGINAL_TOTAL_CENTS) {
-        // No baseline yet AND live still matches the original B1 target exactly — the pre-ratchet
-        // state, nothing to ratchet. Falls through to PASS below.
-      } else {
-        console.error(
-          `${LABEL}: LIVE FAIL — no baseline file (${path.basename(BASELINE_PATH)}) and live ` +
-            `(${liveCount}/${(liveCents / 100).toFixed(2)}) does not match the original B1 target ` +
-            `(${ORIGINAL_COUNT}/${(ORIGINAL_TOTAL_CENTS / 100).toFixed(2)}) — a reconciled baseline ` +
-            `must exist before this guard can pass on a grown total.`
-        );
-        failures++;
-      }
-    } else if (liveCount === ORIGINAL_COUNT && liveCents === ORIGINAL_TOTAL_CENTS) {
-      console.error(
-        `${LABEL}: LIVE FAIL — live (${liveCount}/${(liveCents / 100).toFixed(2)}) has returned to the ` +
-          `ORIGINAL pre-growth B1 target exactly, but a baseline for ${baseline.count}/` +
-          `${(baseline.total_cents / 100).toFixed(2)} still exists — remove ${path.basename(BASELINE_PATH)} ` +
-          `(a return to the pre-Dreamline state is itself suspicious and worth a human look, not a silent pass).`
-      );
-      failures++;
-    } else if (liveCount !== baseline.count || liveCents !== baseline.total_cents) {
-      console.error(
-        `${LABEL}: LIVE FAIL — live (${liveCount} rows / $${(liveCents / 100).toFixed(2)}) diverges from ` +
-          `the reconciled baseline (${baseline.count} rows / $${(baseline.total_cents / 100).toFixed(2)}, ` +
-          `established ${baseline.established}). New, unreconciled drift either way (grew or shrank) — a ` +
-          `human re-reconciles (see the baseline file's own 'reconciliation' field for the last one CC-3 ` +
-          `and the Lead did) and regenerates the baseline with a cited reason before this can pass again.`
-      );
-      failures++;
-    } else {
-      console.log(
-        `${LABEL}: known, reconciled total — ${liveCount} rows / $${(liveCents / 100).toFixed(2)} ` +
-          `(baseline established ${baseline.established}; see the baseline file for CC-3's/the Lead's ` +
-          `reconciliation of the delta vs the original B1 target).`
-      );
-    }
-
-    // 3. DEF GL segregation — shrink-only four-arm ratchet (ROUND 30.6, "DEF DEADLOCK BROKEN" —
-    // see file header for the full ruling). Real invariant is TREATMENT not STORAGE: every DEF
-    // debit posting must hit a DIFFERENT account_id than any diesel debit posting. Dynamic
-    // comparison — no hardcoded account number ("5000" never appears below) — so a NEW account
-    // collision still hard-fails immediately; only the already-measured, already-named debt (335
-    // postings / $10,970.23) is capped, pending CC-3's real fix (create a dedicated DEF account,
-    // repost, drive this to zero).
-    const defIds = undocumentedActiveRows.filter((r) => r.fuel_type === "def").map((r) => r.id);
-    const dieselIds = undocumentedActiveRows.filter((r) => r.fuel_type === "diesel").map((r) => r.id);
+    // 3. DEF GL segregation — every DEF debit posting must hit a DIFFERENT account than any diesel debit posting
+    // (dynamic, no hardcoded account). Liveness = je.reversed_by_je_id IS NULL (void posts a reversing JE).
+    const defIds = liveRows.filter((r) => r.fuel_type === "def").map((r) => r.id);
+    const dieselIds = liveRows.filter((r) => r.fuel_type === "diesel").map((r) => r.id);
     let sharedCount = 0;
     let sharedCents = 0;
     let sharedDetailRows = [];
     if (defIds.length > 0) {
-      // LIVENESS FIX (CC-3, 2026-09-23, GL 5010 fix): this query originally had no status/
-      // reversed_by_je_id filter at all. voidJournalEntry's Option-1 reversing-entry model
-      // (journal-entries.service.ts) NEVER flips a voided JE's status or deletes its lines -- it
-      // posts a separate, equal-and-opposite reversing JE instead (void-not-delete). So an
-      // already-voided-and-correctly-reposted DEF debit line still physically exists at its
-      // original (wrong) account and was being counted here as live contamination forever, even
-      // after the real fix landed -- the exact same landmine already documented and fixed in
-      // verify-no-fuel-event-credits-ap-control.mjs. je.reversed_by_je_id IS NULL is the correct
-      // liveness predicate (status alone cannot distinguish a live posting from a voided one).
       const glRes = await client.query(
         `SELECT ft.fuel_type, a.id::text AS account_id, a.account_number, a.account_name,
                 count(*) AS n, sum(jep.amount_cents) AS cents
@@ -347,103 +266,53 @@ async function live() {
       sharedCount = sharedDetailRows.reduce((s, r) => s + Number(r.n), 0);
       sharedCents = sharedDetailRows.reduce((s, r) => s + Number(r.cents), 0);
     }
-    const printShared = (label) => {
-      console.error(`${LABEL}: ${label} — DEF debit postings sharing an account with diesel debit postings:`);
-      for (const r of sharedDetailRows) {
-        console.error(`  ✗ DEF debits hit ${r.account_number} "${r.account_name}" — ${r.n} posting(s), $${(Number(r.cents) / 100).toFixed(2)} (the same account diesel purchases hit)`);
-      }
-      console.error(`  This is a fuel-posting-engine / chart-of-accounts defect (CC-3's lane), not this guard's to fix — see docs/bus/OUTBOX-CC-3.md.`);
-    };
-    const defBaseline = loadDefSegregationBaseline();
-    if (!defBaseline) {
-      if (sharedCount > 0) {
-        printShared("LIVE FAIL (no baseline)");
-        console.error(`  A reconciled baseline entry (def_gl_segregation) must exist before this guard can pass on a nonzero, disclosed total.`);
-        failures++;
-      }
-    } else if (sharedCount === 0) {
-      console.error(`${LABEL}: LIVE FAIL — DEF/diesel account segregation is now CLEAN (0 shared postings), but a baseline entry for ${defBaseline.count} postings / $${(defBaseline.total_cents / 100).toFixed(2)} still exists — remove def_gl_segregation from ${path.basename(BASELINE_PATH)} (this is good news; confirm it, don't silently keep stale debt on the books).`);
+    const defBaseline = baseline.def_gl_segregation || null;
+    if (sharedCount > 0 && (!defBaseline || sharedCount !== defBaseline.count || sharedCents !== defBaseline.total_cents)) {
+      console.error(`${LABEL}: LIVE FAIL — DEF debit postings share an account with diesel debit postings${defBaseline ? ` (diverges from the disclosed ${defBaseline.count} / ${money(defBaseline.total_cents)})` : ""}:`);
+      for (const r of sharedDetailRows) console.error(`  ✗ DEF debits hit ${r.account_number} "${r.account_name}" — ${r.n} posting(s), ${money(Number(r.cents))}`);
       failures++;
-    } else if (sharedCount !== defBaseline.count || sharedCents !== defBaseline.total_cents) {
-      printShared("LIVE FAIL");
-      console.error(`  Diverges from the reconciled baseline (${defBaseline.count} postings / $${(defBaseline.total_cents / 100).toFixed(2)}, established ${defBaseline.established}). New, unreconciled drift either way — a human re-reconciles and regenerates the def_gl_segregation baseline entry with a cited reason before this can pass again.`);
+    } else if (sharedCount === 0 && defBaseline) {
+      console.error(`${LABEL}: LIVE FAIL — DEF/diesel segregation is CLEAN but def_gl_segregation is still disclosed in ${path.basename(BASELINE_PATH)} — remove it`);
       failures++;
-    } else {
-      console.log(`${LABEL}: known, disclosed DEF/GL-segregation debt — ${sharedCount} posting(s) / $${(sharedCents / 100).toFixed(2)} (baseline established ${defBaseline.established}; CC-3's lane to fix, see def_gl_segregation.reconciliation in the baseline file).`);
     }
 
-    // 4. The disclosed data-quality cases, tested on the DATA, not on a notes string.
-    // ROUND 191 (Lead, 2026-09-25): the old check looked for "confidence=low" in notes written by
-    // the B1 ingestion; the wipe deleted those rows and the re-feed never wrote that text, so it
-    // failed 5/5 forever regardless of the books. The real invariants are:
-    //   (a) SOURCE_DATE_CORRECTED rows carry the corrected date, never the typo'd one;
-    //   (b) the same fuel receipt (same invoice + same cents) live on MORE THAN ONE load is a
-    //       possible double-booked fill. The live set must equal the disclosed
-    //       `cross_load_duplicate_receipts` list in the baseline exactly: a NEW pair fails, and a
-    //       RESOLVED pair still listed fails "remove me" (shrink-only, same four-arm shape).
-    for (const exp of expectedRows.filter((r) => r.flag && r.flag.startsWith("SOURCE_DATE_CORRECTED"))) {
-      const cents = Math.round(Number(exp.amount) * 100);
-      const rows = liveActive.filter(
-        (r) => r.load_number === exp.load_number && String(r.transaction_reference) === String(exp.invoice) &&
-          Math.round(Number(r.total_cost) * 100) === cents
-      );
-      const wrong = rows.filter((r) => r.txn_date !== exp.date);
-      if (rows.length === 0 || wrong.length > 0) {
-        console.error(`${LABEL}: LIVE FAIL — date-corrected receipt load ${exp.load_number} invoice ${exp.invoice} must be dated ${exp.date}; live: ${rows.map((r) => r.txn_date).join(", ") || "none"}`);
-        failures++;
-      }
-    }
-    const dupKey = (r) => `${r.transaction_reference}|${Math.round(Number(r.total_cost) * 100)}`;
+    // 4. The same receipt (invoice + cents) live on MORE THAN ONE load is a possible double-booked fill. The live set
+    // must equal the disclosed cross_load_duplicate_receipts list exactly (a new pair fails; a resolved pair still listed fails).
     const loadsByReceipt = new Map();
-    for (const r of liveActive) {
-      // A copy voided through the governed executor is no longer booked on its load: liveActive keeps documented
-      // voids for assertion 1 (receipt accounted for), but a double-booking is about LIVE copies only.
-      if (r.voided_at || r.archived_at) continue;
-      if (!r.transaction_reference || !/^\d{5,}$/.test(String(r.transaction_reference)) || !r.load_number) continue;
-      const k = dupKey(r);
+    for (const r of liveRows) {
+      // 443.73 #6(e) — RULE REPLACED. Old (443.69): keyed on the raw reference, so a copy re-booked as "<invoice>-<load>" was
+      // never seen as a pair. New: keyed on the BASE invoice + cents + product — the suffix cannot hide a second expense of the
+      // same purchase. Why: 9 lines / $2,906.21 were expensed twice under that suffix (443.72 #4).
+      if (!r.load_number || !/^\d{5,}$/.test(baseInvoice(r.ref))) continue;
+      const k = `${baseInvoice(r.ref)}|${r.cents}|${r.fuel_type}`;
       if (!loadsByReceipt.has(k)) loadsByReceipt.set(k, new Set());
       loadsByReceipt.get(k).add(r.load_number);
     }
-    const liveDupes = [...loadsByReceipt.entries()]
-      .filter(([, loads]) => loads.size > 1)
-      .map(([k, loads]) => `${k}|${[...loads].sort().join(",")}`)
-      .sort();
-    const disclosedDupes = ((baseline && baseline.cross_load_duplicate_receipts) || []).map((d) => d.key).sort();
-    const newDupes = liveDupes.filter((k) => !disclosedDupes.includes(k));
-    const resolvedDupes = disclosedDupes.filter((k) => !liveDupes.includes(k));
-    if (newDupes.length > 0) {
-      console.error(`${LABEL}: LIVE FAIL — ${newDupes.length} NEW receipt(s) live on more than one load (invoice|cents|loads), not in the disclosed baseline list: ${newDupes.join("; ")}`);
-      failures++;
-    }
-    // A disclosed pair resolved by a governed void of one copy is reported, not failed (same rule as the count above).
-    const governedRefs = new Set(governedOut.map((r) => `${r.transaction_reference}|${Math.round(Number(r.total_cost) * 100)}`));
-    const resolvedByGovernedVoid = resolvedDupes.filter((k) => governedRefs.has(k.split("|").slice(0, 2).join("|")));
-    const resolvedUnexplained = resolvedDupes.filter((k) => !resolvedByGovernedVoid.includes(k));
-    if (resolvedByGovernedVoid.length > 0) {
-      console.log(`${LABEL}: disclosed duplicate(s) resolved by a governed void — remove from cross_load_duplicate_receipts when re-stamping: ${resolvedByGovernedVoid.join("; ")}`);
-    }
-    if (resolvedUnexplained.length > 0) {
-      console.error(`${LABEL}: LIVE FAIL — disclosed duplicate receipt(s) no longer live on >1 load — good news; remove from cross_load_duplicate_receipts: ${resolvedUnexplained.join("; ")}`);
-      failures++;
-    }
-    if (liveDupes.length > 0 && newDupes.length === 0 && resolvedDupes.length === 0) {
-      console.log(`${LABEL}: known, disclosed, OPEN — ${liveDupes.length} receipt(s) booked on two loads (see cross_load_duplicate_receipts in the baseline; resolution is the Dreamline statement tie-out): ${liveDupes.join("; ")}`);
-    }
-    const expectedLowConfHashes = new Set(expectedRows.filter((r) => r.flag).map((r) => r.hash));
+    const liveDupes = [...loadsByReceipt.entries()].filter(([, s]) => s.size > 1).map(([k, s]) => `${k}|${[...s].sort().join(",")}`).sort();
+    const disclosed = (baseline.cross_load_duplicate_receipts || []).map((d) => d.key).sort();
+    const newDupes = liveDupes.filter((k) => !disclosed.includes(k));
+    const resolved = disclosed.filter((k) => !liveDupes.includes(k));
+    if (newDupes.length) { console.error(`${LABEL}: LIVE FAIL — receipt(s) live on more than one load, not disclosed: ${newDupes.join("; ")}`); failures++; }
+    if (resolved.length) { console.error(`${LABEL}: LIVE FAIL — disclosed duplicate(s) resolved; remove from cross_load_duplicate_receipts: ${resolved.join("; ")}`); failures++; }
+    if (liveDupes.length && !newDupes.length && !resolved.length) console.log(`${LABEL}: known, disclosed — ${liveDupes.join("; ")}`);
 
     await client.query("COMMIT");
-    if (failures > 0) process.exit(1);
-    console.log(
-      `${LABEL}: LIVE PASS — ${liveCount} fuel_transactions rows / $${(liveCents / 100).toFixed(2)} ` +
-        `(original B1 target ${ORIGINAL_COUNT}/$${(ORIGINAL_TOTAL_CENTS / 100).toFixed(2)}; ` +
-        `${baseline ? `reconciled baseline ${baseline.count}/$${(baseline.total_cents / 100).toFixed(2)} holds` : "no growth beyond original target"}), ` +
-        `${defIds.length} DEF row(s) present (${sharedCount > 0 ? `${sharedCount} posting(s)/$${(sharedCents / 100).toFixed(2)} known GL-segregation debt, capped by ratchet` : "0 shared with diesel, fully GL-segregated"}), ` +
-        `${expectedLowConfHashes.size} disclosed low-confidence rows intact.`
-    );
+    const liveCents = liveRows.reduce((s, r) => s + r.cents, 0);
+    const summary = `${source.documents.length} settlement documents, ${result.expectedRows} fuel lines; live ${liveRows.length} rows / ${money(liveCents)}; ` +
+      `${result.loadsTied}/${result.loads} loads tie in count and dollars; ${result.relayTxns} Relay transactions tie to the Relay file; ` +
+      `${purgedRes.rows.length} governed-purge deletions read; DEF shares ${sharedCount} posting(s) with diesel`;
+    if (failures > 0) {
+      console.error(`${LABEL}: LIVE FAIL — ${failures} failure(s). ${summary}`);
+      process.exit(1);
+    }
+    console.log(`${LABEL}: LIVE PASS — ${summary}`);
   } finally {
     client.release();
     await pool.end();
   }
 }
 
-await live();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  if (process.argv.includes("--selftest")) selftest();
+  else await live();
+}

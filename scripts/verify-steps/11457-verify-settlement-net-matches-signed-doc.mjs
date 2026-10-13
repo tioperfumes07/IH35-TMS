@@ -13,7 +13,8 @@ const repoRoot = join(__dirname, "..", "..");
 const SCRIPT = join(repoRoot, "scripts", "verify-settlement-net-matches-signed-doc.mjs");
 
 function main() {
-  execFileSync(process.execPath, [SCRIPT], { stdio: "inherit" });
+  // 443.101: the live half runs in the live-DB job (ci.yml required-live-load-guard); the selftest stays here.
+  execFileSync(process.execPath, [SCRIPT, "--selftest"], { stdio: "inherit" });
 }
 
 main();

@@ -1408,6 +1408,18 @@
       ]
     },
     {
+      "id": "accounting.modal.open_dispute",
+      "tab": "Modals",
+      "sub": "Modal: Open Dispute",
+      "route_hint": "surface://pages/accounting/DisputesHubPage.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/DisputesHubPage.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "accounting.modal.decide_fault",
       "tab": "Modals",
       "sub": "Modal: Decide Fault",

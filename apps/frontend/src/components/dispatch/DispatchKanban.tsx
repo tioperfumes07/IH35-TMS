@@ -1427,7 +1427,7 @@ export function KanbanDispatchColumn({
         {loads.length === 0 ? (
           <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">
             {column.key === "drafts"
-              ? "No open drafts."
+              ? "No open drafts. Drafts come only from Save draft — you can't drag a card here."
               : column.manualStamp
                 ? `Fills from geofence / driver PWA — or drop a card here to stamp the ${column.manualStamp.stop} ${column.manualStamp.event === "arrive" ? "arrival" : "departure"} manually.`
                 : "(empty)"}
@@ -1672,7 +1672,7 @@ function KanbanSwimLaneColumn({
         {visibleUnits.length === 0 ? (
           <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">
             {column.key === "drafts"
-              ? "No open drafts."
+              ? "No open drafts. Drafts come only from Save draft — you can't drag a card here."
               : column.manualStamp
                 ? `Fills from geofence / driver PWA — or drop a card here to stamp the ${column.manualStamp.stop} ${column.manualStamp.event === "arrive" ? "arrival" : "departure"} manually.`
                 : "(empty)"}

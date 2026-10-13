@@ -45,7 +45,10 @@ describe("bank-recon bill/expense candidates + direction awareness", () => {
   it("withdrawal ranks an open bill + surfaces an expense, and never AR payments", async () => {
     mockQuery.mockReset();
     mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("FROM banking.bank_transactions")) return { rows: [withdrawalTxn()] };
+      // Only the bank-line loader (WHERE bt.id = $1) returns the line; the Relay-deposit candidate query also names
+      // banking.bank_transactions (its NOT EXISTS) and must not receive the bank line as a "deposit".
+      if (sql.includes("FROM integrations.relay_deposits")) return { rows: [] };
+      if (sql.includes("FROM banking.bank_transactions") && sql.includes("WHERE bt.id = $1::uuid")) return { rows: [withdrawalTxn()] };
       if (sql.includes("FROM accounting.payments")) {
         // AR receipt fixture — must NOT be offered for a withdrawal.
         return { rows: [{ id: "pay-should-not-appear", amount_cents: 50000, event_date: "2026-05-20", memo: "Pilot Fuel 8842" }] };
@@ -88,7 +91,10 @@ describe("bank-recon bill/expense candidates + direction awareness", () => {
   it("deposit surfaces AR payments and NEVER bills/expenses (never crosses the streams)", async () => {
     mockQuery.mockReset();
     mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("FROM banking.bank_transactions")) return { rows: [depositTxn()] };
+      // Only the bank-line loader (WHERE bt.id = $1) returns the line; the Relay-deposit candidate query also names
+      // banking.bank_transactions (its NOT EXISTS) and must not receive the bank line as a "deposit".
+      if (sql.includes("FROM integrations.relay_deposits")) return { rows: [] };
+      if (sql.includes("FROM banking.bank_transactions") && sql.includes("WHERE bt.id = $1::uuid")) return { rows: [depositTxn()] };
       if (sql.includes("FROM accounting.payments")) {
         return { rows: [{ id: "pay-1", amount_cents: 250000, event_date: "2026-05-20", memo: "ACME Invoice 4500" }] };
       }

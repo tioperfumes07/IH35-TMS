@@ -15,8 +15,17 @@ export const REQUIRES_LIVE_DB = "counts Relay fills stored under more than one c
 const LABEL = "verify-relay-fill-one-company";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SVC = "apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts";
-/** COMMITTED ceiling (shrink-only): cross-company duplicate fills that existed before the writer fix. */
-export const DUPLICATE_CEILING = 119;
+/**
+ * COMMITTED ceiling (shrink-only): fills LIVE in more than one company.
+ * Lead 443.47 #3 (CC-2, 2026-10-11): the law is "ONE fill = ONE LIVE row = ONE company", but the count included retired
+ * (voided / inactive) copies — 172 on prod, of which 76 had their other-company copy already retired (USMCA holds the only
+ * live row) and 96 are live in both. Counting live rows only, and lowering the ceiling 119 -> 96: of the 96, 58 are on
+ * USMCA-operated units and 38 have no unit resolved, 0 on another company's unit — every USMCA copy belongs to USMCA; the
+ * other entity's live copies (pulled 10-01 / 10-02) are the extra rows, retired only by that entity's owner (USMCA-only scope).
+ */
+export const DUPLICATE_CEILING = 96;
+/** Only live rows are "held": a retired copy (voided or inactive) is history, not a second owner. */
+export const LIVE_ROW_PREDICATE = "is_active AND voided_at IS NULL";
 
 export function check(svc) {
   const f = [];
@@ -75,13 +84,14 @@ try {
   const r = await c.query(`
     SELECT (SELECT count(*) FROM integrations.relay_fuel_transactions)::int AS total,
            (SELECT count(*) FROM (SELECT transaction_id FROM integrations.relay_fuel_transactions
+                                   WHERE ${LIVE_ROW_PREDICATE}
                                    GROUP BY transaction_id HAVING count(DISTINCT operating_company_id) > 1) d)::int AS duplicates`);
   await c.query("ROLLBACK");
   const { total, duplicates } = r.rows[0];
   if (total === 0) { console.error(`${LABEL}: FAIL — 0 Relay rows read; an empty result is an instrument problem, not a pass`); process.exit(1); }
   const bad = judge(duplicates);
   if (bad.length) { console.error(`${LABEL}: FAIL\n  ${bad.join("\n  ")}`); process.exit(1); }
-  console.log(`${LABEL}: PASS — ${total} Relay rows; ${duplicates} fills held by more than one company (committed ceiling ${DUPLICATE_CEILING}, shrink-only)`);
+  console.log(`${LABEL}: PASS — ${total} Relay rows; ${duplicates} fills LIVE in more than one company (committed ceiling ${DUPLICATE_CEILING}, shrink-only)`);
 } catch (err) {
   console.error(`${LABEL}: FAIL — live check could not run: ${err.message}`);
   process.exit(1);

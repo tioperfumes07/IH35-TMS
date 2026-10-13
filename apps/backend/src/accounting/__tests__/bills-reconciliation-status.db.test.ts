@@ -41,6 +41,12 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
   // their policies for a non-owner role — the policy predicate is purely
   // operating_company_id = current_setting('app.operating_company_id'). Set BOTH so writes for a
   // given scopeCompanyId are actually permitted.
+  // 443.101: these fixtures write match rows directly (not through the accept handler, which audits
+  // bank_match.accepted). Left live on the shared fixture company they read, to verify-no-match-persisted-
+  // outside-accept-handler, as matches persisted outside the handler. Nothing is deletable: they are VOIDED
+  // on teardown, which takes them out of the live-match set the guard checks.
+  const seededMatches: Array<{ id: string; companyId: string }> = [];
+
   async function bypass<T>(scopeCompanyId: string, fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
@@ -73,9 +79,9 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
     await bypass(scopeCompanyId, async () => {
       await db.query(
         `INSERT INTO accounting.bill_payments
-           (id, operating_company_id, bill_id, payment_date, amount_cents, amount, payment_method, status, created_by_user_id)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, CURRENT_DATE, $4, $5, 'cash', 'posted', $6::uuid)`,
-        [id, scopeCompanyId, billId, amountCents, amountCents / 100, TEST_OWNER_USER_ID]
+           (id, operating_company_id, bill_id, vendor_id, payment_date, amount_cents, amount, payment_method, status, created_by_user_id)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, CURRENT_DATE, $5, $6, 'cash', 'posted', $7::uuid)`,
+        [id, scopeCompanyId, billId, `bankrec-vendor-${suffix}`, amountCents, amountCents / 100, TEST_OWNER_USER_ID]
       );
     });
     return id;
@@ -88,12 +94,13 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
     matchState: "auto_matched" | "rejected"
   ): Promise<void> {
     await bypass(scopeCompanyId, async () => {
-      await db.query(
+      const seeded = await db.query<{ id: string }>(
         `INSERT INTO banking.reconciliation_matches
            (operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id, match_state)
-         VALUES ($1::uuid, $2::uuid, 'bill_payment', $3::uuid, $4)`,
+         VALUES ($1::uuid, $2::uuid, 'bill_payment', $3::uuid, $4) RETURNING id`,
         [scopeCompanyId, bankTransactionId, ledgerEntryId, matchState]
       );
+      seededMatches.push({ id: seeded.rows[0]!.id, companyId: scopeCompanyId });
     });
   }
 
@@ -139,6 +146,16 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
   });
 
   afterAll(async () => {
+    for (const m of seededMatches) {
+      await bypass(m.companyId, async () => {
+        await db.query(
+          `UPDATE banking.reconciliation_matches
+              SET voided_at = now(), void_reason = 'test fixture teardown (443.101)'
+            WHERE id = $1::uuid AND voided_at IS NULL`,
+          [m.id]
+        );
+      });
+    }
     await db.end();
   });
 
@@ -156,22 +173,25 @@ describeIntegration("BANKREC-LISTSTATUS-01 bills/bill-payments reconciliation st
     const billC = await seedBill(companyId, 4321, `BANKREC-LISTSTATUS bill C ${suffix}`);
     await seedPayment(companyId, billC, 4321);
 
+    // A live match row must sit on a bank line that carries its document (trg_live_match_row_has_a_linked_line,
+    // ROUND 368.2(b)): the match service stamps the line's pointer and writes the row together — the fixture does the same.
+    const stampLine = (scope: string, bankTxnId: string, paymentId: string) =>
+      bypass(scope, async () => {
+        await db.query(
+          `UPDATE banking.bank_transactions
+              SET matched_bill_payment_id = $1::uuid
+            WHERE id = $2::uuid
+              AND operating_company_id = $3::uuid`,
+          [paymentId, bankTxnId, scope]
+        );
+      });
     // Active match for payment A — this is the ONLY row that should flip is_reconciled true.
+    await stampLine(companyId, ownBankTxnId, paymentA);
     await seedMatch(companyId, ownBankTxnId, paymentA, "auto_matched");
-    // Match service writes the canonical bank-side reverse FK. The list/detail projection must expose
-    // this direct banking.bank_transactions relation, not only a reconciled boolean from bank.* history.
-    await bypass(companyId, async () => {
-      await db.query(
-        `UPDATE banking.bank_transactions
-            SET matched_bill_payment_id = $1::uuid
-          WHERE id = $2::uuid
-            AND operating_company_id = $3::uuid`,
-        [paymentA, ownBankTxnId, companyId]
-      );
-    });
     // Rejected match for payment B — must NOT count as matched (the reversed/void analog).
     await seedMatch(companyId, ownBankTxnId, paymentB, "rejected");
     // Active match for payment B, but under the FOREIGN entity — must NOT count (entity isolation).
+    await stampLine(foreignCompanyId, foreignBankTxnId, paymentB);
     await seedMatch(foreignCompanyId, foreignBankTxnId, paymentB, "auto_matched");
 
     // --- Bills list rolls the payment-level match up to the bill ---

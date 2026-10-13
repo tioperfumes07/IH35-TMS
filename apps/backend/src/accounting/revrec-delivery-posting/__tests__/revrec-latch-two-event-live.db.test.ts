@@ -125,6 +125,8 @@ describeIntegration("LV-REVREC-LEDGER-DBTEST — two-event revenue latch posts a
     await db.connect();
 
     await bypass(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language)
          VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
@@ -327,10 +329,18 @@ describeIntegration("LV-REVREC-LEDGER-DBTEST — two-event revenue latch posts a
     await bypass(async () => {
       await db.query(
         `INSERT INTO accounting.invoices
-           (id, operating_company_id, customer_id, display_id, source_load_id, due_date, status, sent_at)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5::uuid, (now() + interval '30 days')::date, 'sent', now())`,
-        [invoiceId, companyId, customerId, `INV-2026-${loadId.slice(0, 5)}`, loadId]
+           (id, operating_company_id, customer_id, display_id, source_load_id, due_date, status, subtotal_cents, total_cents)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5::uuid, (now() + interval '30 days')::date, 'draft', $6, $6)`,
+        [invoiceId, companyId, customerId, `INV-2026-${String(Number.parseInt(loadId.slice(0, 5), 16) % 100000).padStart(5, "0")}`, loadId, RATE_CENTS]
       );
+      // 443.93: the send path — header (INV-YYYY-NNNNN, invoices_display_id_check), its linehaul line (invoice_must_have_lines,
+      // fn_invoice_sent_requires_live_line), then sent.
+      await db.query(
+        `INSERT INTO accounting.invoice_lines (operating_company_id, invoice_id, line_type, account_id, description, quantity, unit_amount_cents, line_total_cents, display_order)
+         VALUES ($1::uuid,$2::uuid,'linehaul',$3::uuid,'Linehaul',1,$4,$4,0)`,
+        [companyId, invoiceId, revenueAccountId, RATE_CENTS]
+      );
+      await db.query(`UPDATE accounting.invoices SET status = 'sent', sent_at = now() WHERE id = $1::uuid`, [invoiceId]);
     });
 
     const billed = await postLoadRevenueLatch({
@@ -361,10 +371,18 @@ describeIntegration("LV-REVREC-LEDGER-DBTEST — two-event revenue latch posts a
       // draft/proforma alone) as its evidence gate; a draft-status row here would refuse the bill.
       await db.query(
         `INSERT INTO accounting.invoices
-           (id, operating_company_id, customer_id, display_id, source_load_id, due_date, status, sent_at)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5::uuid, (now() + interval '30 days')::date, 'sent', now())`,
-        [invoiceId, companyId, customerId, `INV-2026-${String(Number.parseInt(suffix, 16) % 100000).padStart(5, "0")}`, loadId]
+           (id, operating_company_id, customer_id, display_id, source_load_id, due_date, status, subtotal_cents, total_cents)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5::uuid, (now() + interval '30 days')::date, 'draft', $6, $6)`,
+        [invoiceId, companyId, customerId, `INV-2026-${String(Number.parseInt(suffix, 16) % 100000).padStart(5, "0")}`, loadId, RATE_CENTS]
       );
+      // 443.93: the send path — header (INV-YYYY-NNNNN, invoices_display_id_check), its linehaul line (invoice_must_have_lines,
+      // fn_invoice_sent_requires_live_line), then sent.
+      await db.query(
+        `INSERT INTO accounting.invoice_lines (operating_company_id, invoice_id, line_type, account_id, description, quantity, unit_amount_cents, line_total_cents, display_order)
+         VALUES ($1::uuid,$2::uuid,'linehaul',$3::uuid,'Linehaul',1,$4,$4,0)`,
+        [companyId, invoiceId, revenueAccountId, RATE_CENTS]
+      );
+      await db.query(`UPDATE accounting.invoices SET status = 'sent', sent_at = now() WHERE id = $1::uuid`, [invoiceId]);
     });
 
     const earned = await postLoadRevenueLatch({

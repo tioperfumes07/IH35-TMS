@@ -3,6 +3,8 @@
  * POST preview + POST commit. USMCA + Owner/Admin/Accountant only. No Book Load.
  */
 import { FeedGateError } from "./feed-gate/feed-gate.service.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
+import { CreatorCategorizationError, categorizeCreatorSettlement } from "./creator-document-categorization.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -19,8 +21,19 @@ import {
 } from "./settlement-creator-seed-loads.js";
 import { peekNextSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
-import { autoSubmitDeliveredLoadToFactor } from "../factoring/auto-submit-on-delivery.service.js";
-import { syncSettlementLoadsToBilling } from "../dispatch/load-billing-lifecycle.service.js";
+import { assertCreatorDraftAdmissible } from "./settlement-creator-admission.js";
+import { loadLastAfterCommit, overallOk, recordAfterCommit, runCreatorAfterCommit, type CreatorStages } from "./settlement-creator-after-commit.js";
+
+/** Lead 443.57 — one miles field's source for the LOAD's saved operating miles (CC-2's engine). Manual needs a value + reason. */
+const milesFieldChoiceSchema = z
+  .object({
+    source: z.enum(["document", "historical", "google", "manual"]),
+    manual_value: z.number().nonnegative().nullable().optional(),
+    reason: z.string().max(500).nullable().optional(),
+  })
+  .refine((c) => c.source !== "manual" || (c.manual_value != null && Boolean(c.reason?.trim())), {
+    message: "manual miles need a value and a reason",
+  });
 
 const AUTHORITY_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
 const WRITE_RL = { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } };
@@ -30,15 +43,19 @@ const moneyLine = z.object({
   description: z.string().trim().min(1).max(500),
   amount_cents: z.number().int(),
   load_number: z.string().trim().max(40).nullable().optional(),
+  item_id: z.string().uuid().nullable().optional(),
+  quantity: z.number().nullable().optional(),
 });
 
 const draftSchema = z.object({
   operating_company_id: z.string().uuid(),
   settlement_no: z.string().trim().max(40).default(""),
   driver_id: z.string().uuid(),
-  unit_id: z.string().uuid().nullable().optional(),
+  // 443.110 G5 — the truck is required: every Creator load is booked on it and every line carries it.
+  unit_id: z.string().uuid(),
   trailer_equipment_number: z.string().trim().max(40).nullable().optional(),
   trailer_id: z.string().uuid().nullable().optional(),
+  trailer_none: z.boolean().optional(),
   period_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   period_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   seed_dispatched_loads: z.boolean().optional().default(true),
@@ -64,6 +81,22 @@ const draftSchema = z.object({
         delivery_zip: z.string().trim().max(20).nullable().optional(),
         delivery_lat: z.number().nullable().optional(),
         delivery_lng: z.number().nullable().optional(),
+        stops: z
+          .array(
+            z.object({
+              stop_type: z.enum(["pickup", "delivery"]),
+              date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+              address: z.string().trim().max(240).nullable().optional(),
+              city: z.string().trim().min(1).max(120),
+              state: z.string().trim().min(2).max(6),
+              zip: z.string().trim().max(20).nullable().optional(),
+              lat: z.number().nullable().optional(),
+              lng: z.number().nullable().optional(),
+            }),
+          )
+          .max(20)
+          .nullable()
+          .optional(),
         line_haul_miles: z.number().nullable().optional(),
         line_haul_rate_cents: z.number().int().nullable().optional(),
         line_haul_amount_cents: z.number().int().nullable().optional(),
@@ -77,9 +110,19 @@ const draftSchema = z.object({
           )
           .optional(),
         factoring: z.enum(["faro_usmca", "faro_transportation", "direct"]),
+        // ROUND 443.3 — Invoice no. box: digits; blank -> null (the load number is used).
+        invoice_number: z
+          .preprocess((v) => (typeof v === "string" && v.trim() === "" ? null : v), z.string().trim().regex(/^[0-9]{1,12}$/).nullable())
+          .optional(),
         date_sent_to_factoring: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
         loaded_miles: z.number().nullable().optional(),
+        miles_shortest: z.number().nullable().optional(),
         empty_miles: z.number().nullable().optional(),
+        // Lead 443.57 — per-field source of the LOAD's saved operating miles (CC-2's mileage engine); pay never reads it.
+        miles_choice: z
+          .object({ practical: milesFieldChoiceSchema.optional(), short: milesFieldChoiceSchema.optional(), empty: milesFieldChoiceSchema.optional() })
+          .nullable()
+          .optional(),
         empty_rate_cents: z.number().int().nullable().optional(),
         picks: z.number().nullable().optional(),
         drops: z.number().nullable().optional(),
@@ -110,6 +153,10 @@ const draftSchema = z.object({
         item_id: z.string().uuid().nullable().optional(),
         account_id: z.string().uuid().nullable().optional(),
         load_id: z.string().uuid().nullable().optional(),
+        // D2 (Lead audit 2026-10-11) — e.g. "gallons estimated at average price (owner 10-10)"; stored on the fill.
+        notes: z.string().trim().max(500).nullable().optional(),
+        // 5772 fork rehearsal (Lead 2026-10-11): a Relay fill names its Relay transaction (txn_…); the row links to it.
+        relay_transaction_id: z.string().trim().regex(/^txn_[A-Za-z0-9]+$/).nullable().optional(),
       }),
     )
     .default([]),
@@ -127,7 +174,12 @@ const draftSchema = z.object({
         item_id: z.string().uuid().nullable().optional(),
         account_id: z.string().uuid().nullable().optional(),
         load_id: z.string().uuid().nullable().optional(),
-        card: z.enum(["dreamline", "relay"]).nullable().optional(),
+        // ROUND 443.6 — payment source (owed = A/P bill), vendor, vendor document number, quantity / unit.
+        card: z.enum(["dreamline", "relay", "owed"]).nullable().optional(),
+        vendor_name: z.string().trim().max(200).nullable().optional(),
+        vendor_document_number: z.string().trim().max(60).nullable().optional(),
+        quantity: z.number().positive().nullable().optional(),
+        unit_of_measure: z.string().trim().toLowerCase().regex(/^[a-z][a-z_]*$/).max(20).nullable().optional(),
       }),
     )
     .default([]),
@@ -140,6 +192,8 @@ const draftSchema = z.object({
         amount_cents: z.number().int(),
         load_number: z.string().trim().max(40).nullable().optional(),
         pay_kind: z.enum(["detention", "layover", "bonus", "stop_pay", "other"]).optional(),
+        item_id: z.string().uuid().nullable().optional(),
+        quantity: z.number().nullable().optional(),
       }),
     )
     .default([]),
@@ -151,6 +205,7 @@ const draftSchema = z.object({
         amount_cents: z.number().int(),
         load_number: z.string().trim().max(40).nullable().optional(),
         linked_driver_bill_id: z.string().uuid().nullable().optional(),
+        load_id: z.string().uuid().nullable().optional(),
       }),
     )
     .default([]),
@@ -158,6 +213,11 @@ const draftSchema = z.object({
   pdf_driver_net_cents: z.number().int(),
   pdf_company_expenses_cents: z.number().int(),
   edit_void_repost: z.boolean().optional().default(false),
+  // Lead 443.36 (owner closed ruling): a SALARIED driver's settlement — loads booked with the 0-rate "Salaried" override
+  // (no per-load driver bill, card untouched); pay is the settlement's own salary line (additional_pay).
+  salaried: z.boolean().optional().default(false),
+  // The signed settlement shows NO card fuel (5796 / 5816): the operator confirms it so the fuel-frontier check passes.
+  confirmed_zero_fuel_purchases: z.boolean().optional().default(false),
   source_pdf_file_id: z.string().uuid().nullable().optional(),
 });
 
@@ -217,7 +277,7 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
         draft.operating_company_id,
       ]);
-      return previewSettlementCreatorThroughClose(client, user.uuid, draft);
+      return previewSettlementCreatorThroughClose(client, user.uuid, draft, user.role);
     });
     return reply.code(200).send({ preview });
   });
@@ -239,103 +299,54 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
     await assertCompanyMembership(user.uuid, draft.operating_company_id);
 
     try {
-      // R-186.1 — book missing dispatched loads via bookLoad (own tx) BEFORE settlement post.
-      await withCurrentUser(user.uuid, async (client) => {
-        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
-        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
-          draft.operating_company_id,
-        ]);
-        await ensureDispatchedLoadsForCreator(client, { uuid: user.uuid, role: user.role }, draft);
-      });
-
+      // ROUND 443.7 a — ONE transaction: admission, booking the loads (bookLoadOnClient), every document, the ledger
+      // and the settlement close. Any refusal rolls ALL of it back (zero rows); the same draft can be posted again.
+      let afterBook: Array<() => void> = [];
+      let stopStamps: unknown[] = [];
       const result = await withCurrentUser(user.uuid, async (client) => {
         // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
           draft.operating_company_id,
         ]);
+        await assertCreatorDraftAdmissible(client, draft);
+        const seeded = await ensureDispatchedLoadsForCreator(client, { uuid: user.uuid, role: user.role }, draft);
+        afterBook = seeded.afterCommit;
+        stopStamps = seeded.stop_stamps;
         return postSettlementCreatorInClientTx(client, user.uuid, draft);
       });
+      // COMMITTED — only now the after-book extras (never after a rollback).
+      for (const run of afterBook) run();
 
-      // AFTER COMMIT — Faro auto-submit + billing sync use own connections (never share Creator tx).
-      // FACT-DELIVERED-AUTO: faro_usmca only (USMCA factor). faro_transportation / direct = no-op.
-      const factoringAdvanceIds: string[] = [];
-      for (let i = 0; i < draft.loads.length; i++) {
-        const load = draft.loads[i]!;
-        const loadId = result.load_ids[i];
-        if (!loadId) continue;
-        if (load.factoring !== "faro_usmca") continue;
-        // Not-delivered: no invoice yet → autoSubmit no-ops on no_invoice; skip the call.
-        if (load.not_yet_delivered !== false && !load.delivery_date) continue;
-        try {
-          const submitted = await autoSubmitDeliveredLoadToFactor({
-            operatingCompanyId: draft.operating_company_id,
-            loadId,
-            actorUserId: user.uuid,
-          });
-          if (submitted.submitted && submitted.advanceId) {
-            factoringAdvanceIds.push(submitted.advanceId);
-            // ROUND 180 — stamp purchase/submitted date from AT "Date sent to factoring"
-            // when provided (funding JE still posts at actual Faro funding — never invent cash).
-            if (load.date_sent_to_factoring) {
-              try {
-                await withCurrentUser(user.uuid, async (client) => {
-        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
-                  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
-                    draft.operating_company_id,
-                  ]);
-                  await client.query(
-                    `
-                      UPDATE accounting.factoring_advances
-                         SET submitted_at = $2::timestamptz
-                       WHERE id = $1::uuid
-                         AND operating_company_id = $3::uuid
-                    `,
-                    [
-                      submitted.advanceId,
-                      `${load.date_sent_to_factoring}T12:00:00.000Z`,
-                      draft.operating_company_id,
-                    ],
-                  );
-                });
-              } catch (stampErr) {
-                console.warn(
-                  { err: stampErr, advance_id: submitted.advanceId },
-                  "settlement_creator_faro_date_stamp_failed",
-                );
-              }
-            }
-          } else if (!submitted.submitted) {
-            console.warn(
-              {
-                load_id: loadId,
-                load_number: load.load_number,
-                reason: submitted.reason,
-              },
-              "settlement_creator_faro_auto_submit_noop",
-            );
-          }
-        } catch (err) {
-          console.warn(
-            { err, load_id: loadId, load_number: load.load_number },
-            "settlement_creator_faro_auto_submit_failed",
-          );
-        }
-      }
-
-      try {
-        await syncSettlementLoadsToBilling({
-          operatingCompanyId: draft.operating_company_id,
-          loadIds: result.load_ids,
-          actorUserId: user.uuid,
-        });
-      } catch (err) {
-        console.warn({ err, settlement_id: result.settlement_id }, "settlement_creator_billing_sync_failed");
-      }
-
+      // AFTER COMMIT — factoring submit + billing sync on their own connections (never the Creator tx). ROUND 443.7 b:
+      // every stage is reported; ok is true only when all required stages succeeded; a failure is stored + retryable.
+      const afterInput = {
+        operating_company_id: draft.operating_company_id,
+        settlement_id: result.settlement_id,
+        loads: draft.loads
+          .map((load, i) => ({
+            load_id: result.load_ids[i] ?? "",
+            load_number: load.load_number,
+            factoring: load.factoring,
+            delivered: !(load.not_yet_delivered !== false && !load.delivery_date),
+          }))
+          .filter((l) => l.load_id),
+      };
+      const after = await runCreatorAfterCommit(user.uuid, afterInput);
+      const stages: CreatorStages = {
+        documents: { ok: true, status: "committed", message: `Settlement ${result.source_document_ref || result.display_id} and its documents are saved.` },
+        ledger: result.journal_entry_ids.length > 0
+          ? { ok: true, status: "posted", message: `${result.journal_entry_ids.length} journal entr${result.journal_entry_ids.length === 1 ? "y" : "ies"} posted.` }
+          : { ok: false, status: "not_posted", message: "Nothing was posted to the ledger for this settlement." },
+        ...after,
+      };
+      await recordAfterCommit(user.uuid, afterInput, after);
       return reply.code(200).send({
-        ok: true,
+        ok: overallOk(stages),
+        stages,
+        // ROUND 443.16 — every stop: tracked (stop event id, nearest when several) or date only, with the reason.
+        stop_stamps: stopStamps,
         ...result,
-        factoring_advance_ids: factoringAdvanceIds,
+        factoring_advance_ids: [],
       });
     } catch (err) {
       if (err instanceof FeedGateError) {
@@ -356,5 +367,73 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       }
       throw err;
     }
+  });
+
+  // RULING 443.66 — bring a POSTED Creator settlement's documents to the categorization the engine now writes at post
+  // time (D1 items on reimbursement + A/P bill lines, D3 "Line Haul" on invoice lines, D4 posted status, D5 line driver /
+  // unit / trailer). The named engine path: no amount, account, journal entry or posting moves. dry_run rolls back.
+  app.post("/api/v1/driver-finance/settlement-creator/categorize", WRITE_RL, async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    if (!AUTHORITY_ROLES.has(user.role)) {
+      return reply.code(403).send({ error: "forbidden", message: "Owner/Administrator/Accountant only" });
+    }
+    const parsed = z
+      .object({
+        operating_company_id: z.string().uuid(),
+        settlement_no: z.string().trim().min(1).max(40),
+        reimbursement_items: z
+          .array(z.object({ description: z.string(), amount_cents: z.number().int().positive(), load_number: z.string().nullable().optional(), item_id: z.string().uuid() }))
+          .max(200)
+          .default([]),
+        trailer_equipment_number: z.string().trim().max(40).nullable().optional(),
+        dry_run: z.boolean().default(true),
+      })
+      .safeParse(req.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const b = parsed.data;
+    if (b.operating_company_id !== USMCA) return reply.code(400).send({ error: "usmca_only" });
+    await assertCompanyMembership(user.uuid, b.operating_company_id);
+    try {
+      const result = await withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [b.operating_company_id]);
+        return categorizeCreatorSettlement(
+          client as never,
+          {
+            operatingCompanyId: b.operating_company_id,
+            settlementNo: b.settlement_no,
+            actorUserId: user.uuid,
+            reimbursementItems: b.reimbursement_items.map((r) => ({ ...r, load_number: r.load_number ?? null })),
+            trailerEquipmentNumber: b.trailer_equipment_number ?? null,
+            dryRun: b.dry_run,
+          },
+          (eventClass, payload) => appendCrudAudit(client as never, user.uuid, eventClass, payload, "info", "SC-443-66")
+        );
+      });
+      return reply.code(200).send(result);
+    } catch (err) {
+      if (err instanceof CreatorCategorizationError) return reply.code(400).send({ error: err.code, message: err.message });
+      throw err;
+    }
+  });
+
+  // ROUND 443.7 b — re-run a stored after-commit stage (factoring submit / billing sync) for a posted settlement.
+  app.post("/api/v1/driver-finance/settlement-creator/:settlementId/retry-after-commit", WRITE_RL, async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    if (!AUTHORITY_ROLES.has(user.role)) {
+      return reply.code(403).send({ error: "forbidden", message: "Owner/Administrator/Accountant only" });
+    }
+    const params = z.object({ settlementId: z.string().uuid() }).safeParse(req.params ?? {});
+    const body = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.body ?? {});
+    if (!params.success || !body.success) return reply.code(400).send({ error: "validation_error" });
+    if (body.data.operating_company_id !== USMCA) return reply.code(400).send({ error: "usmca_only" });
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+    const last = await loadLastAfterCommit(user.uuid, body.data.operating_company_id, params.data.settlementId);
+    if (!last) return reply.code(404).send({ error: "no_after_commit_record", message: "This settlement has no stored after-commit run." });
+    const after = await runCreatorAfterCommit(user.uuid, last.retry);
+    await recordAfterCommit(user.uuid, last.retry, after);
+    return reply.code(200).send({ ok: after.factoring.ok && after.billing.ok, stages: after });
   });
 }

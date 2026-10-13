@@ -56,8 +56,7 @@ const REQUIRED_ENTITY_TYPES = [
 const STATUS_DRIFT_BASELINE = 0;
 const PLAID_ORPHAN_MATCH_BASELINE = 0; // measured 0 live after re-point (match 2d1f3f73… now on survivor 52c51c10…)
 
-function assertExecutorsWired() {
-  const src = fs.readFileSync(EXECUTORS_FILE, "utf8");
+function assertExecutorsWired(src = fs.readFileSync(EXECUTORS_FILE, "utf8")) {
   const mapMatch = src.match(/const EXECUTORS[\s\S]*?=\s*\{([\s\S]*?)\n\};/);
   if (!mapMatch) throw new Error(`${LABEL}: EXECUTORS map not found in void-cancel-executors.ts`);
   const mapBody = mapMatch[1];
@@ -77,9 +76,19 @@ function assertExecutorsWired() {
   return missing;
 }
 
+/** Live verdicts as pure functions so --selftest can plant a growth without a database. */
+function driftVerdict(rows, baseline = STATUS_DRIFT_BASELINE) {
+  const total = rows.reduce((sum, r) => sum + Number(r.n), 0);
+  return { total, grew: total > baseline };
+}
+function orphanVerdict(n, baseline = PLAID_ORPHAN_MATCH_BASELINE) {
+  return n > baseline;
+}
+
 async function selftest() {
   const failures = [];
-  const missing = assertExecutorsWired();
+  const src = fs.readFileSync(EXECUTORS_FILE, "utf8");
+  const missing = assertExecutorsWired(src);
   if (missing.length) failures.push(`static wiring: ${missing.join(", ")}`);
   if (!Number.isInteger(STATUS_DRIFT_BASELINE) || STATUS_DRIFT_BASELINE < 0) {
     failures.push("STATUS_DRIFT_BASELINE must be non-negative int");
@@ -92,11 +101,22 @@ async function selftest() {
   if (!dedup.includes("repointReconciliationMatchesOnPlaidMerge")) {
     failures.push("bank-tx-dedup.ts missing repointReconciliationMatchesOnPlaidMerge");
   }
+  // Planted violations — each must be caught by the same function the live run uses.
+  const planted = [
+    ["executor removed", assertExecutorsWired(src.replace(/\n(\s*)driver_bill\s*:[^\n]*/, "\n")).some((m) => m.startsWith("driver_bill "))],
+    ["executor stubbed supported:false", assertExecutorsWired(src.replace(/\n(\s*)work_order\s*:[^\n]*/, "\n$1work_order: { supported: false },")).includes("work_order (supported:false)")],
+    ["voided invoice with status open", driftVerdict([{ t: "invoices", n: 1 }]).grew],
+    ["drift spread over two tables", driftVerdict([{ t: "expenses", n: 1 }, { t: "driver_bills", n: 1 }], 1).grew],
+    ["plaid merge orphan match", orphanVerdict(1)],
+  ];
+  const caught = planted.filter(([, ok]) => ok).length;
+  for (const [name, ok] of planted) if (!ok) failures.push(`planted violation escaped: ${name}`);
+  if (driftVerdict([{ t: "invoices", n: 0 }]).grew || orphanVerdict(0)) failures.push("clean zero counts flagged");
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — ${REQUIRED_ENTITY_TYPES.length} entity types wired; plaid re-point present`);
+  console.log(`${LABEL} SELFTEST: ${caught}/${planted.length} planted violations caught — ${REQUIRED_ENTITY_TYPES.length} entity types wired; plaid re-point present`);
 }
 
 async function live() {
@@ -141,8 +161,8 @@ async function live() {
     return q.rows;
   });
 
-  const driftTotal = drift.reduce((s, r) => s + Number(r.n), 0);
-  if (driftTotal > STATUS_DRIFT_BASELINE) {
+  const { total: driftTotal, grew } = driftVerdict(drift);
+  if (grew) {
     console.error(`${LABEL}: FAIL — voided_at/status drift GREW to ${driftTotal} (baseline ${STATUS_DRIFT_BASELINE}):`);
     for (const r of drift) if (Number(r.n) > 0) console.error(`  ✗ ${r.t}=${r.n}`);
     process.exit(1);
@@ -163,7 +183,7 @@ async function live() {
     return Number(q.rows[0]?.n ?? 0);
   });
 
-  if (orphan > PLAID_ORPHAN_MATCH_BASELINE) {
+  if (orphanVerdict(orphan)) {
     console.error(
       `${LABEL}: FAIL — Plaid-merge orphan matches GREW to ${orphan} (baseline ${PLAID_ORPHAN_MATCH_BASELINE})`
     );
@@ -175,8 +195,7 @@ async function live() {
   );
 }
 
-const args = process.argv.slice(2);
-if (args.includes("--selftest")) {
+if (process.argv.includes("--selftest")) {
   await selftest();
 } else {
   await live();

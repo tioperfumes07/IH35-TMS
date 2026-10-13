@@ -109,8 +109,14 @@ function check(rawSrc) {
         "a customer was billed when nothing was produced (LV-013)"
     );
   }
-  if (/void\s+enqueueEmail\s*\(/.test(code)) {
+  // 443.100: the call became `await (scoped ? (x) => enqueueEmailWithClient(client, x) : enqueueEmail)({` (R14, the
+  // send-transaction enqueue) — the `void enqueueEmail(` check alone could no longer see it. The enqueue must be AWAITED
+  // in either shape, and never prefixed with `void`.
+  if (/void\s+enqueueEmail\s*\(/.test(code) || /void\s+\([^\n]*enqueueEmail[^\n]*\)\s*\(\{/.test(code)) {
     errors.push("enqueueEmail is fire-and-forget (`void`) — a transmission failure would be swallowed");
+  }
+  if (!/await\s+enqueueEmail(?:WithClient)?\s*\(|await\s+\([^\n]*enqueueEmail[^\n]*\)\s*\(\{/.test(code)) {
+    errors.push("the customer-email enqueue is not awaited — a transmission failure would be swallowed");
   }
 
   // The gate itself must still be present and must still reuse the revenue latch's evidence rule.
@@ -153,7 +159,8 @@ function selftest() {
     ["gate re-nested under source_load_id", (s) => s.replace("if (evidenceReason) {", "if (current.source_load_id) {")],
     ["no-load reason removed", (s) => s.split("no_source_load").join("something_else")],
     ["transmission silence restored", (s) => s.split("sent_without_transmission").join("nothing_recorded")],
-    ["enqueue back to fire-and-forget", (s) => s.replace("await enqueueEmail({", "void enqueueEmail({")],
+    ["enqueue back to fire-and-forget", (s) => s.replace("await (scoped ?", "void (scoped ?")],
+    ["enqueue no longer awaited", (s) => s.replace("await (scoped ?", "(scoped ?")],
     ["flag constant removed", (s) => s.split("INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE").join("X_GONE")],
   ];
 

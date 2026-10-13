@@ -52,7 +52,7 @@ describeIntegration("notification e2e — settlement.approved (Block H)", () => 
 
     try {
       await client.query(`DELETE FROM sms.queue WHERE body LIKE $1`, [`%${settlementNo}%`]);
-      await client.query(`DELETE FROM whatsapp.queue WHERE variables::text LIKE $1`, [`%${settlementNo}%`]);
+      await client.query(`DELETE FROM whatsapp.queue WHERE body LIKE $1`, [`%${settlementNo}%`]);
       await client.query(`DELETE FROM email.email_queue WHERE subject ILIKE $1`, [`%${settlementNo}%`]);
 
       await client.query("COMMIT");
@@ -95,12 +95,14 @@ describeIntegration("notification e2e — settlement.approved (Block H)", () => 
         const smsRow = await client.query(`SELECT id FROM sms.queue WHERE body LIKE $1 ORDER BY created_at DESC LIMIT 1`, [`%${settlementNo}%`]);
         expect(smsRow.rows.length).toBe(1);
 
+        // The dispatcher writes the template variables as the row's body and the state in status
+        // (apps/backend/src/notifications/dispatcher.ts, whatsapp.queue insert).
         const waRow = await client.query(
-          `SELECT provider_status FROM whatsapp.queue WHERE variables::text LIKE $1 ORDER BY created_at DESC LIMIT 1`,
+          `SELECT status FROM whatsapp.queue WHERE body LIKE $1 ORDER BY created_at DESC LIMIT 1`,
           [`%${settlementNo}%`]
         );
         expect(waRow.rows.length).toBe(1);
-        expect(waRow.rows[0]?.provider_status).toBe("skipped");
+        expect(waRow.rows[0]?.status).toBe("skipped");
 
         await client.query("COMMIT");
       } catch (err) {

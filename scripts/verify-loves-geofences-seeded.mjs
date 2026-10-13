@@ -154,7 +154,12 @@ async function main() {
   }
 
   const { Client } = await import("pg");
-  const client = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  // 443.99: SSL per the shared connection policy (scripts/lib/pg-connection-options.cjs), as
+  // requireLiveDbOrExit does — a hard-coded ssl:{} could not reach CI's plain local Postgres
+  // ("The server does not support SSL connections"), so the guard never measured anything there.
+  const { createRequire } = await import("node:module");
+  const { buildPgPoolConfig } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
+  const client = new Client(buildPgPoolConfig(url));
   try {
     await client.connect();
   } catch (error) {

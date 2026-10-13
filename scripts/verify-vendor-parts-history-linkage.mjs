@@ -20,13 +20,22 @@ function audit(s) {
   if (!/linked_entity_not_in_operating_company/.test(s.route)) failures.push("invalid links must fail before insert");
   if (!/vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.route) || !/pil\.vendor_id = \$\$\{values\.length\}::uuid/.test(s.route)) failures.push("list route must apply exact vendor predicate");
   if (!/filters\?: \{ vendor_id\?: string; work_order_id\?: string; unit_id\?: string \}/.test(s.api) || !/query\.set\("vendor_id", filters\.vendor_id\)/.test(s.api)) failures.push("client must forward vendor reverse filter alongside WO/unit filters");
-  if (!/getPartsAssignmentsPage\(operatingCompanyId, \{ vendor_id: vendorId \}\)/.test(s.reverse)) failures.push("vendor profile must request exact reverse page");
+  // LEAD 443.99 class B (2026-10-12) — reverse page + range anchors.
+  //   old rule: getPartsAssignmentsPage(operatingCompanyId, { vendor_id: vendorId }) and, when capped,
+  //             "Showing {rows.length} of {totalCount} parts invoices".
+  //   new rule: the same vendor-scoped reader, now paged (limit: PAGE_SIZE, offset: page * PAGE_SIZE), disclosing
+  //             "{first}–{last} of {totalCount} parts invoices" with Previous/Next that stop at totalCount.
+  //   why: MAINT-F6884 (#16736, 919f7e0ed5) replaced the silent cap with a real pager — every row is reachable.
+  if (!/getPartsAssignmentsPage\(operatingCompanyId, \{ vendor_id: vendorId(?:, limit: PAGE_SIZE, offset: page \* PAGE_SIZE)? \}\)/.test(s.reverse)) failures.push("vendor profile must request exact reverse page");
   if (/\.filter\(\(row\) => row\.vendor_id === vendorId\)/.test(s.reverse)) failures.push("vendor profile must not browser-filter capped company response");
   if (!/ListErrorBanner/.test(s.reverse) || !/No parts invoices are linked/.test(s.reverse)) failures.push("reverse surface must preserve honest states");
   if (!/<EntityLinkOrTombstone kind="work_order" id=\{row\.work_order_id\} name=\{row\.work_order_display_id\} noun="Work order"/.test(s.reverse)) failures.push("reverse rows must drill to canonical work order or show its tombstone");
   if (!/kind="inventory_part"[\s\S]{0,140}parts_inventory_id[\s\S]{0,140}part_description/.test(s.reverse)) failures.push("reverse rows must drill to canonical part or show its tombstone");
   if (!/kind="unit"[\s\S]{0,140}unit_id[\s\S]{0,140}unit_number/.test(s.reverse)) failures.push("reverse rows must drill to canonical unit or show its tombstone");
-  if (!/totalCount > rows\.length/.test(s.reverse) || !/Showing \{rows\.length\} of \{totalCount\} parts invoices/.test(s.reverse)) failures.push("capped vendor reverse must disclose exact range");
+  const cappedDisclosed = /totalCount > rows\.length/.test(s.reverse) && /Showing \{rows\.length\} of \{totalCount\} parts invoices/.test(s.reverse);
+  const pagedDisclosed = /\{page \* PAGE_SIZE \+ 1\}–\{Math\.min\(\(page \+ 1\) \* PAGE_SIZE, totalCount\)\} of \{totalCount\} parts invoices/.test(s.reverse) &&
+    /disabled=\{\(page \+ 1\) \* PAGE_SIZE >= totalCount/.test(s.reverse) && /const totalCount = query\.data\?\.total_count/.test(s.reverse);
+  if (!cappedDisclosed && !pagedDisclosed) failures.push("capped vendor reverse must disclose exact range");
   if (!/case "work_order":[\s\S]{0,100}maintenance\/work-orders/.test(s.link)) failures.push("work order route must be canonical");
   return failures;
 }
@@ -41,13 +50,15 @@ if (process.argv.includes("--selftest")) {
     ["schema", "route", /vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, ""],
     ["filter", "route", /pil\.vendor_id = \$\$\{values\.length\}::uuid/, "TRUE"],
     ["api", "api", /query\.set\("vendor_id", filters\.vendor_id\)/g, 'query.set("status", filters.vendor_id)'],
-    ["reverse", "reverse", /getPartsAssignmentsPage\(operatingCompanyId, \{ vendor_id: vendorId \}\)/, "getPartsAssignmentsPage(operatingCompanyId)"],
+    ["reverse", "reverse", /getPartsAssignmentsPage\(operatingCompanyId, \{ vendor_id: vendorId,/, "getPartsAssignmentsPage(operatingCompanyId, {"],
     ["error", "reverse", /ListErrorBanner/g, "MissingError"],
     ["drill", "reverse", /<EntityLinkOrTombstone kind="work_order" id=\{row\.work_order_id\} name=\{row\.work_order_display_id\} noun="Work order"/, '<EntityLinkOrTombstone kind="vendor" id={row.work_order_id} name={null} noun="Vendor"'],
     ["part drill", "reverse", /kind="inventory_part"/, 'kind="vendor"'],
     ["unit drill", "reverse", /kind="unit"/, 'kind="vendor"'],
     ["route", "link", /case "work_order":/, 'case "work_order_missing":'],
-    ["range", "reverse", /totalCount > rows\.length/, "false"],
+    ["range", "reverse", / of \{totalCount\} parts invoices/, " parts invoices"],
+    ["pager runs past the total", "reverse", /disabled=\{\(page \+ 1\) \* PAGE_SIZE >= totalCount/, "disabled={false"],
+    ["total from the page length", "reverse", /const totalCount = query\.data\?\.total_count/, "const totalCount = rows.length; const _x = query.data?.total_count"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };

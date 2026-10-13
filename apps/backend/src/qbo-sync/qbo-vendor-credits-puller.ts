@@ -1,3 +1,8 @@
+// ACCT-F4431380 (Lead 443.137 item 9e, owner ruling: QuickBooks is a READ-ONLY ARCHIVE): the Stage 2
+// projection described below is REMOVED. Its entry point now throws QboNativeWriteRefusedError
+// (QBO_NATIVE_WRITE_REFUSED); this file writes ONLY its mirror (mdata.qbo_*) and qbo.sync_runs.
+// Guard: scripts/verify-qbo-paths-never-write-native-tables.mjs. The Stage 2 text is kept as history.
+//
 // ACCT-F47 / ACCT-ECON-05 — INBOUND QuickBooks VendorCredit sync (QBO is system-of-record).
 //
 // Two flag-gated, idempotent stages (same architecture as purchases / AR payments):
@@ -23,9 +28,9 @@ import {
   QBO_VENDOR_CREDITS_PROJECTION_SYNC_KIND,
 } from "./qbo-vendor-credits-sync-kind.js";
 import { recordFlagDisabledMirrorSyncRun } from "./record-flag-disabled-sync-run.js";
+import { refuseQboNativeWrite } from "./qbo-native-write-refused.js";
 
 const MIRROR_PULL_FLAG = "QBO_VENDOR_CREDIT_MIRROR_PULL_ENABLED";
-const PROJECTION_FLAG = "QBO_VENDOR_CREDITS_PROJECTION_ENABLED";
 
 export { QBO_VENDOR_CREDITS_MIRROR_SYNC_KIND, QBO_VENDOR_CREDITS_PROJECTION_SYNC_KIND };
 
@@ -278,199 +283,16 @@ export async function pullVendorCreditsFromQbo(operatingCompanyId: string): Prom
 }
 
 /**
- * Stage 2 — project mdata.qbo_vendor_credits → accounting.vendor_credits (subledger only, no GL).
- * Set-based INSERT…SELECT. Skips unresolved vendors. Preserves display_id on upsert.
+ * ACCT-F4431380 (Lead 443.137 item 9e) — REFUSED BY NAME. This formerly projected mdata.qbo_vendor_credits into accounting.vendor_credits.
+ * QuickBooks is a read-only archive: a QBO path writes only its mirror table, never a native money/master
+ * table. Throws QboNativeWriteRefusedError (code QBO_NATIVE_WRITE_REFUSED) instead of returning a
+ * "0 rows projected" result a caller could mistake for success. The mirror (mdata.qbo_vendor_credits) is kept and still
+ * filled by the pull stage; native records are created only through the TMS service layer.
  */
-export async function projectVendorCreditsToLedger(
-  operatingCompanyId: string
-): Promise<VendorCreditsProjectResult> {
-  const projectedAt = new Date().toISOString();
-
-  let enabled = false;
-  await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    enabled = await isEnabled(client, PROJECTION_FLAG, { operating_company_id: operatingCompanyId });
-  });
-  if (!enabled) {
-    await recordFlagDisabledMirrorSyncRun({
-      operatingCompanyId,
-      kind: QBO_VENDOR_CREDITS_PROJECTION_SYNC_KIND,
-      flagKey: PROJECTION_FLAG,
-      mirrorTable: "accounting.vendor_credits",
-    });
-    return { enabled: false, creditsProjected: 0, vendorsUnresolved: 0, projectedAt };
-  }
-
-  const runId = await beginVendorCreditSyncRun(operatingCompanyId, QBO_VENDOR_CREDITS_PROJECTION_SYNC_KIND, {
-    direction: "mirror_to_subledger",
-    source_table: "mdata.qbo_vendor_credits",
-    target_table: "accounting.vendor_credits",
-  });
-  let creditsProjected = 0;
-  let vendorsUnresolved = 0;
-
-  try {
-    await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-
-      const unresolved = await client.query<{ n: string }>(
-        `
-        SELECT count(*)::text AS n
-        FROM mdata.qbo_vendor_credits m
-        WHERE m.operating_company_id = $1::uuid
-          AND m.active = true
-          AND m.total_cents > 0
-          AND (
-            m.vendor_qbo_id IS NULL
-            OR NOT EXISTS (
-              SELECT 1 FROM mdata.vendors v
-              WHERE v.operating_company_id = m.operating_company_id
-                AND v.qbo_vendor_id = m.vendor_qbo_id
-            )
-          )
-        `,
-        [operatingCompanyId]
-      );
-      vendorsUnresolved = Number(unresolved.rows[0]?.n ?? 0);
-
-      const projected = await client.query(
-        `
-        WITH candidates AS (
-          SELECT
-            m.operating_company_id,
-            m.qbo_id,
-            m.qbo_sync_token,
-            m.txn_date,
-            m.total_cents,
-            m.balance_cents,
-            m.private_note,
-            v.id::text AS vendor_uuid,
-            EXTRACT(YEAR FROM COALESCE(m.txn_date, CURRENT_DATE))::int AS yr,
-            vc.display_id AS existing_display_id,
-            vc.id AS existing_id,
-            LEAST(GREATEST(m.total_cents - m.balance_cents, 0), m.total_cents) AS amount_applied_cents,
-            CASE WHEN m.balance_cents <= 0 THEN 'applied' ELSE 'open' END AS status
-          FROM mdata.qbo_vendor_credits m
-          INNER JOIN mdata.vendors v
-            ON v.operating_company_id = m.operating_company_id
-           AND v.qbo_vendor_id = m.vendor_qbo_id
-          LEFT JOIN accounting.vendor_credits vc
-            ON vc.operating_company_id = m.operating_company_id
-           AND vc.qbo_id = m.qbo_id
-          WHERE m.operating_company_id = $1::uuid
-            AND m.active = true
-            AND m.total_cents > 0
-            AND m.vendor_qbo_id IS NOT NULL
-        ),
-        new_ranked AS (
-          SELECT
-            c.*,
-            row_number() OVER (
-              PARTITION BY c.yr
-              ORDER BY c.txn_date NULLS LAST, c.qbo_id
-            ) AS rn
-          FROM candidates c
-          WHERE c.existing_id IS NULL
-        ),
-        max_by_year AS (
-          SELECT
-            EXTRACT(YEAR FROM issue_date)::int AS yr,
-            COALESCE(
-              MAX(
-                CASE
-                  WHEN display_id ~ '^VC-[0-9]{4}-[0-9]{4}$' THEN right(display_id, 4)::int
-                  ELSE 0
-                END
-              ),
-              0
-            ) AS max_seq
-          FROM accounting.vendor_credits
-          WHERE operating_company_id = $1::uuid
-          GROUP BY 1
-        ),
-        prepared AS (
-          SELECT
-            c.operating_company_id,
-            c.vendor_uuid,
-            c.qbo_id,
-            c.qbo_sync_token,
-            c.txn_date,
-            c.total_cents,
-            c.amount_applied_cents,
-            c.private_note,
-            c.status,
-            COALESCE(
-              c.existing_display_id,
-              'VC-' || c.yr::text || '-' || lpad((COALESCE(mx.max_seq, 0) + nr.rn)::text, 4, '0')
-            ) AS display_id
-          FROM candidates c
-          LEFT JOIN new_ranked nr
-            ON nr.operating_company_id = c.operating_company_id
-           AND nr.qbo_id = c.qbo_id
-          LEFT JOIN max_by_year mx ON mx.yr = c.yr
-        )
-        INSERT INTO accounting.vendor_credits (
-          operating_company_id,
-          vendor_id,
-          display_id,
-          status,
-          issue_date,
-          amount_cents,
-          amount_applied_cents,
-          notes,
-          qbo_id,
-          source_system,
-          qbo_sync_token,
-          last_qbo_synced_at
-        )
-        SELECT
-          p.operating_company_id,
-          p.vendor_uuid,
-          p.display_id,
-          p.status,
-          COALESCE(p.txn_date, CURRENT_DATE),
-          p.total_cents,
-          p.amount_applied_cents,
-          p.private_note,
-          p.qbo_id,
-          'qbo',
-          p.qbo_sync_token,
-          now()
-        FROM prepared p
-        ON CONFLICT (operating_company_id, qbo_id) WHERE qbo_id IS NOT NULL
-        DO UPDATE SET
-          vendor_id = EXCLUDED.vendor_id,
-          status = EXCLUDED.status,
-          issue_date = EXCLUDED.issue_date,
-          amount_cents = EXCLUDED.amount_cents,
-          amount_applied_cents = EXCLUDED.amount_applied_cents,
-          notes = EXCLUDED.notes,
-          source_system = 'qbo',
-          qbo_sync_token = EXCLUDED.qbo_sync_token,
-          last_qbo_synced_at = now()
-        `,
-        [operatingCompanyId]
-      );
-      creditsProjected = projected.rowCount ?? 0;
-    });
-
-    await finishVendorCreditSyncRun({
-      runId,
-      operatingCompanyId,
-      success: true,
-      recordsProcessed: creditsProjected,
-    });
-    return { enabled: true, creditsProjected, vendorsUnresolved, projectedAt };
-  } catch (error) {
-    await finishVendorCreditSyncRun({
-      runId,
-      operatingCompanyId,
-      success: false,
-      recordsProcessed: creditsProjected,
-      errorMessage: String((error as Error)?.message ?? error),
-    }).catch(() => {
-      /* audit best-effort */
-    });
-    throw error;
-  }
+export async function projectVendorCreditsToLedger(operatingCompanyId: string): Promise<VendorCreditsProjectResult> {
+  return refuseQboNativeWrite(
+    "qbo-sync/qbo-vendor-credits-puller#projectVendorCreditsToLedger",
+    ["accounting.vendor_credits"],
+    operatingCompanyId
+  );
 }

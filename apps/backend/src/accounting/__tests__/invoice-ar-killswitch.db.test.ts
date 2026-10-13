@@ -114,6 +114,8 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
     await db.query("SET ROLE ih35_app");
 
     await bypass(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `chain06-${suffix}@test.local`]
@@ -155,7 +157,7 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
       );
       await db.query(
         `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status, source_load_id)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,$5,0,$5,'sent',$6::uuid)`,
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,$5,0,$5,'draft',$6::uuid)`,
         [invoiceId, companyId, customerId, invoiceDisplayId, revenueCents, loadId]
       );
       await db.query(
@@ -163,6 +165,8 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
          VALUES ($1::uuid,$2::uuid,'linehaul',$3::uuid,'Linehaul',1,$4,$4,0)`,
         [companyId, invoiceId, incomeAccountId, revenueCents]
       );
+      // 443.93: the send path writes the line first (fn_invoice_sent_requires_live_line) — the invoice is born draft, gets its line, then is sent.
+      await db.query(`UPDATE accounting.invoices SET status = 'sent' WHERE id = $1::uuid`, [invoiceId]);
       // Ensure the flag starts OFF for this entity (remove any leftover override from a prior run).
       await db.query(
         `DELETE FROM lib.feature_flag_overrides WHERE flag_key=$1 AND operating_company_id=$2::uuid`,

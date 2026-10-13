@@ -218,7 +218,7 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
     expect(within(table).getByRole("columnheader", {name:/Source settlement reference/i})).toBeInTheDocument();
   });
 
-  it("REG-040 moves invoiced loads from every active bucket into Resettlement with the same links", async () => {
+  it("R443.139 keeps issued-but-unsettled loads in current costs and preserves Resettlement links", async () => {
     apiRequestMock.mockImplementation(async (path: string) => {
       if (path.includes("/api/v1/accounting/load-costs-board")) return { rows: [
         { ...BOARD_ROW, load_id: "issued-load", load_number: "13601", status: "invoiced", is_invoiced: true },
@@ -231,9 +231,13 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
     });
     renderPage();
     await screen.findByRole("link", { name: "13603" });
-    for (const filter of ["in_motion", "delivered_open", "all_open", "this_week"]) {
+    for (const filter of ["in_motion", "delivered_open", "this_week"]) {
       fireEvent.click(screen.getByTestId(`load-costs-pill-${filter}`));
       expect(screen.queryByRole("link", { name: "13601" })).not.toBeInTheDocument();
+    }
+    fireEvent.click(screen.getByTestId("load-costs-pill-all_open"));
+    for (const number of ["13601", "13602", "13603", "13604", "13605"]) {
+      expect(screen.getByRole("link", { name: number })).toBeInTheDocument();
     }
     // ROUND 18.2 (owner-live 2026-09-30, "LOAD COSTS SHOULD SHOW ALL 16"): a load still in a MOTION status stays on
     // the active pills even when it carries an invoice — invoicing cannot take a truck off the road; it is the anomaly to
@@ -245,13 +249,15 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
     expect(original).toHaveAttribute("href", expect.stringContaining("issued-load"));
     expect(screen.queryByRole("link", { name: "13602" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "13603" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "13604" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "13605" })).not.toBeInTheDocument();
+    // Lifecycle labels alone do not prove actual settlement closure. The server owns that
+    // exclusion; issued rows it returns retain their links in this secondary register too.
+    expect(screen.getByRole("link", { name: "13604" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "13605" })).toBeInTheDocument();
     expect(within(original.closest("tr")!).getByRole("link", { name: "S-2026-0042" })).toHaveAttribute("href", expect.stringContaining("settlement-42"));
-    expect(screen.getByTestId("load-costs-tab-resettlement")).toHaveTextContent("1");
+    expect(screen.getByTestId("load-costs-tab-resettlement")).toHaveTextContent("3");
   });
 
-  it("ROUND 18.1 (owner ruling 2026-09-12, OVERTURNS REG-040's is_resettlement inclusion): a dispatched continuation on a closed tour stays on every active filter; the closed+invoiced original still moves to Resettlement, both with the SAME settlement link", async () => {
+  it("R443.139 keeps current costs despite invoice/status claims; a sibling's history flag never hides a continuation", async () => {
     // A load's own state decides whether it is current, never a sibling load's tour-level flag.
     // Live incident: 7 in-route USMCA loads (13587/13590-13595) went invisible on every Costs pill
     // because is_resettlement (set whenever the tour's FIRST load is closed/invoiced) used to close
@@ -268,7 +274,8 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
     for (const filter of ["in_motion", "all_open", "this_week"]) {
       fireEvent.click(screen.getByTestId(`load-costs-pill-${filter}`));
       expect(await screen.findByRole("link", { name: "13577" })).toBeInTheDocument();
-      expect(screen.queryByRole("link", { name: "13569" })).not.toBeInTheDocument();
+      if (filter === "all_open") expect(screen.getByRole("link", { name: "13569" })).toBeInTheDocument();
+      else expect(screen.queryByRole("link", { name: "13569" })).not.toBeInTheDocument();
     }
     // "dispatched" is never in DELIVERED, so delivered_open correctly shows neither — this pill's
     // membership test, not is_resettlement, is what excludes an in-route load here.

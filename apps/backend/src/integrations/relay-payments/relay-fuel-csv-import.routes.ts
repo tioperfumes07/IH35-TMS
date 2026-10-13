@@ -16,13 +16,15 @@ import { withLuciaBypass } from "../../auth/db.js";
 import { parseRelayFuelTransactionRow, RelayRowRejectedError, type RelayRejectedRow } from "./relay-client.js";
 import { upsertRelayFuelTransaction } from "./relay-fuel-ingest.service.js";
 import { loadCompanyCardSet, upsertRelayDeposit } from "./relay-deposit-classifier.service.js";
+import { postRelayDeposit, type DepositPostOutcome } from "./relay-deposit-post.service.js";
+import { createJournalEntryOnClient } from "../../accounting/journal-entries.service.js";
 import {
   flushFuelGlPostsAfterCommit,
   type FuelTxnGlPostCandidate,
 } from "../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 
 // RFC-4180-ish CSV parser: quoted fields, embedded commas/quotes/newlines.
-function parseCsv(text: string): string[][] {
+export function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [], field = "", inQ = false;
   for (let i = 0; i < text.length; i++) {
@@ -52,7 +54,27 @@ function toIso(v: string | undefined, fallbackDate: string | undefined): string 
 }
 
 /** Map one CSV row (by header name) to the raw Relay API transaction shape parseRelayFuelTransactionRow expects. */
-function csvRowToApiShape(g: (name: string) => string | undefined): Record<string, unknown> | null {
+/** R6 flag text (owner 2026-10-10). One wording, read by the guard. */
+export const DEF_ESTIMATED_FLAG = "gallons estimated at average price (owner 10-10)";
+
+/**
+ * ROUND 443.29 d (Lead R6, owner 2026-10-10 7:10 PM CT "classify as def on average price so you get gallons"): the file's
+ * average DEF price = sum(total_price def) / sum(volume def) over settled code rows that report both. Computed once per file.
+ */
+export function fileDefAveragePricePerGallon(rows: Array<(name: string) => string | undefined>): number | null {
+  let price = 0, vol = 0;
+  for (const g of rows) {
+    if ((g("type") ?? "").trim().toLowerCase() !== "code" || (g("status") ?? "").trim().toLowerCase() !== "settled") continue;
+    const v = Number(g("volume def") ?? ""), p = Number(g("total_price def") ?? "");
+    if (Number.isFinite(v) && v > 0 && Number.isFinite(p) && p > 0) { vol += v; price += p; }
+  }
+  return vol > 0 ? price / vol : null;
+}
+
+export function csvRowToApiShape(
+  g: (name: string) => string | undefined,
+  opts: { defAveragePricePerGallon?: number | null } = {}
+): Record<string, unknown> | null {
   const id = S(g("id"));
   if (!id) return null;
   // CRITICAL (verified 2026-07-12): the Relay CSV mixes type=code (fuel PURCHASED at the pump) with
@@ -90,16 +112,38 @@ function csvRowToApiShape(g: (name: string) => string | undefined): Record<strin
   if (fuel_items.length === 0 && Number.isFinite(amount) && amount > 0) {
     fuel_items.push({ fuel_type: "other", volume: null, volume_uom: null, total_discounted_price: S(g("amount")), total_retail_price: S(g("amount")) });
   }
+  // ROUND 443.29 d (Lead R6): a fill whose product lines do NOT add up to its amount, and whose products are all DEF, carries
+  // the remainder as DEF at the file's average DEF price — never 0 gallons, never a plug on another product — and says so.
+  // Measured: txn_8LZfDKWFvFv1oD $38.89 shows only 0.112 gal / $0.45; the other $38.44 at $4.8711/gal = 7.891 gal -> 8.003 gal.
+  const avgDef = opts.defAveragePricePerGallon ?? null;
+  if (avgDef && avgDef > 0 && fuel_items.length > 0 && fuel_items.every((i) => i.fuel_type === "def") && Number.isFinite(amount) && amount > 0) {
+    const toCents = (v: unknown) => Math.round(Number(v ?? 0) * 100);
+    const linesCents = fuel_items.reduce((t, i) => t + toCents(i.total_discounted_price), 0);
+    const remainderCents = Math.round(amount * 100) - linesCents;
+    if (remainderCents > 0) {
+      const item = fuel_items[0]!;
+      const vol = Number(item.volume ?? 0) || 0;
+      const addGal = remainderCents / 100 / avgDef;
+      const newCents = toCents(item.total_discounted_price) + remainderCents;
+      item.volume = (vol + addGal).toFixed(3);
+      item.total_discounted_price = (newCents / 100).toFixed(2);
+      item.total_retail_price = (Math.max(toCents(item.total_retail_price), toCents(item.total_discounted_price)) / 100).toFixed(2);
+      item.fuel_type_description = `DEF — ${DEF_ESTIMATED_FLAG}`;
+    }
+  }
   const prompts = ([["Truck #", "Truck #"], ["Load #", "Load #"], ["Odometer", "Odometer"], ["Trailer #", "Trailer #"], ["Trip #", "Trip #"], ["Driver #", "Driver #"]] as const)
     .map(([label, col]) => ({ label, value: S(g(col)) }))
     .filter((p) => p.value != null) as { label: string; value: string }[];
   const relayDriverId = S(g("relay driver id"));
   const name = (S(g("driver")) ?? "").split(/\s+/);
-  const total = S(g("total"));
+  // 443.52 C (CC-2): the API's total_amount_paid EXCLUDES Relay's fee (the fee travels in fees[]); the CSV's `total` INCLUDES
+  // it (amount + fee). Mapping `total` stored the fee twice for 32 CSV fills — once in the paid amount, once in fees[] — and
+  // a poster reading lines saw no fee. A CSV fill must equal the API fill of the same transaction: paid = `amount`, else
+  // `total` − `fee`; neither present stays missing (parseRelayFuelTransactionRow rejects the row by name, never $0.00).
+  const paid = csvPaidExcludingFee(S(g("amount")), S(g("total")), S(g("fee")));
   return {
     transaction_id: id, created_at, relay_fuel_code: S(g("relay code")),
-    // A missing `total` stays missing — parseRelayFuelTransactionRow rejects the row by name instead of storing $0.00.
-    total_amount_paid: total, total_retail_price: hasRetail ? String(retailSum) : total,
+    total_amount_paid: paid, total_retail_price: hasRetail ? String(retailSum) : paid,
     currency_code: "USD", is_direct_bill: false, cash_advance: false, fuel_code_type: S(g("sub-type")),
     linked_org: { name: S(g("organization")) },
     // integration_id is NOT taken from "relay driver id": Relay has not confirmed driver.integration_id == driver.id,
@@ -114,6 +158,14 @@ function csvRowToApiShape(g: (name: string) => string | undefined): Record<strin
     fees: S(g("fee")) && Number(g("fee")) > 0 ? [{ type: "relay_fee", amount: S(g("fee")) }] : [],
     products: S(g("products")) ? [{ name: S(g("products")) }] : [],
   };
+}
+
+/** The API definition of total_amount_paid from a CSV row: `amount` (fuel, fee excluded), else `total` − `fee`. */
+export function csvPaidExcludingFee(amount: string | null, total: string | null, fee: string | null): string | null {
+  if (amount != null && Number.isFinite(Number(amount))) return amount;
+  if (total == null || !Number.isFinite(Number(total))) return null;
+  const feeCents = fee != null && Number.isFinite(Number(fee)) ? Math.round(Number(fee) * 100) : 0;
+  return ((Math.round(Number(total) * 100) - feeCents) / 100).toFixed(2);
 }
 
 export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
@@ -134,8 +186,14 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
     if (rows.length < 2) return reply.code(400).send({ error: "no data rows" });
     const header = rows[0].map((h) => h.trim());
     const idx = new Map(header.map((h, i) => [h, i]));
+    // ROUND 443.29 d (R6): the file's average DEF price, once, for DEF-remainder rows.
+    const defAverage = fileDefAveragePricePerGallon(
+      rows.slice(1).map((r) => (name: string) => (r && idx.has(name) ? r[idx.get(name)!] : undefined))
+    );
 
     let imported = 0, skipped = 0, lines = 0, deposits = 0, depositCompany = 0, depositUnclassified = 0;
+    // ROUND 443.29 b: a settled deposit posts (Dr 1295 + Dr 5005 fee / Cr funding account) or is HELD by name.
+    const depositOutcomes: DepositPostOutcome[] = [];
     const rejected: RelayRejectedRow[] = [];
     const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
     const actorUserId = String((req.user as { uuid?: string } | undefined)?.uuid ?? "");
@@ -168,11 +226,20 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
           deposits++;
           if (dres.classification === "company") depositCompany++;
           else if (dres.classification === "unclassified") depositUnclassified++;
+          if (String(g("status") ?? "").trim().toLowerCase() === "settled") {
+            depositOutcomes.push(
+              await postRelayDeposit(
+                client,
+                { operatingCompanyId: opco, relayDepositId: dres.relay_deposit_id, actorUserId, actorRole: role },
+                { createJournalEntryOnClient: createJournalEntryOnClient as never }
+              )
+            );
+          }
           continue;
         }
 
         // type=code → fuel purchased at the pump.
-        const raw = csvRowToApiShape(g);
+        const raw = csvRowToApiShape(g, { defAveragePricePerGallon: defAverage });
         let tx: ReturnType<typeof parseRelayFuelTransactionRow>;
         try {
           tx = raw ? parseRelayFuelTransactionRow(raw) : null;
@@ -183,11 +250,10 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
           continue;
         }
         if (!tx) { skipped++; continue; }
-        // ROUND 43 FOLLOW-UP item 2: upsertRelayFuelTransaction no longer bridges into
-        // fuel.fuel_transactions or produces a GL post candidate — gl_post_candidate is always
-        // null now (see that file's own header for why). pendingGlPosts stays declared/flushed
-        // below so a future real candidate source is a one-line change, not a signature change.
-        await upsertRelayFuelTransaction(client, opco, tx, "csv_import");
+        // LEAD 443.116 #1 — a newly received Relay fill is a post candidate (posted after commit only when the company's
+        // FUEL_POSTS_ON_RECEIPT_ENABLED is ON; see relay-fuel-ingest.service.ts gl_post_candidate).
+        const upserted = await upsertRelayFuelTransaction(client, opco, tx, "csv_import");
+        if (upserted.gl_post_candidate) pendingGlPosts.push(upserted.gl_post_candidate);
         imported++;
         lines += Array.isArray(tx.fuel_items) ? tx.fuel_items.length : 0;
       }
@@ -208,6 +274,9 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
       deposits,
       depositCompany,
       depositUnclassified,
+      deposits_posted: depositOutcomes.filter((o) => o.outcome === "posted").length,
+      deposits_held: depositOutcomes.filter((o) => o.outcome === "held"),
+      deposits_refused: depositOutcomes.filter((o) => o.outcome === "refused"),
     });
   });
 }

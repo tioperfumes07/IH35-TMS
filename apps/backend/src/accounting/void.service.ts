@@ -111,6 +111,8 @@ type GlPostingRow = {
   account_id: string;
   class_id: string | null;
   entity_uuid: string | null;
+  /** Travels with entity_uuid — journal_entry_postings_entity_pair_check refuses one without the other. */
+  entity_type?: string | null;
   debit_or_credit: "debit" | "credit";
   amount_cents: number;
   description: string | null;
@@ -168,6 +170,7 @@ export function flipPostingsForReversal(
     account_id: row.account_id,
     class_id: row.class_id,
     entity_uuid: row.entity_uuid,
+    entity_type: row.entity_type ?? null,
     debit_or_credit: row.debit_or_credit === "debit" ? "credit" : "debit",
     amount_cents: row.amount_cents,
     description: row.description ? `Void reversal: ${row.description}` : "Void reversal",
@@ -398,7 +401,7 @@ async function readOriginalGlPostings(
 
     const res = await client.query<GlPostingRow>(
       `
-        SELECT id::text, account_id::text, class_id::text, entity_uuid::text,
+        SELECT id::text, account_id::text, class_id::text, entity_uuid::text, entity_type,
                debit_or_credit, amount_cents::bigint AS amount_cents, description, line_sequence,
                source_transaction_type, source_transaction_id
         FROM accounting.journal_entry_postings
@@ -434,7 +437,7 @@ async function readOriginalGlPostings(
   // JE that IS still live; only already-dead JEs are now excluded.
   const res = await client.query<GlPostingRow>(
     `
-      SELECT id::text, account_id::text, class_id::text, entity_uuid::text,
+      SELECT id::text, account_id::text, class_id::text, entity_uuid::text, entity_type,
              debit_or_credit, amount_cents::bigint AS amount_cents, description, line_sequence,
              source_transaction_type, source_transaction_id
       FROM accounting.journal_entry_postings
@@ -604,6 +607,7 @@ const BANK_TX_UNMATCH_RESET_SQL = `
          matched_factoring_advance_id = NULL,
          matched_fuel_transaction_id = NULL,
          matched_relay_fuel_transaction_id = NULL,
+         matched_relay_deposit_id = NULL,
          matched_invoice_id = NULL,
          matched_advance_id = NULL,
          matched_deposit_id = NULL,
@@ -907,6 +911,7 @@ export async function postVoidReversal(
       account_id: line.account_id,
       class_id: line.class_id,
       entity_uuid: line.entity_uuid,
+      entity_type: line.entity_type ?? null,
       debit_or_credit: line.debit_or_credit,
       amount_cents: line.amount_cents,
       description: line.description,

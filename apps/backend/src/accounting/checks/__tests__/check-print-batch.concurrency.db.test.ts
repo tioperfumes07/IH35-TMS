@@ -10,15 +10,58 @@
 // CI-gated (GITHUB_ACTIONS), rehearsal Neon branch only (br-empty-rice-akqh08we,
 // "cc2-check-engine-pr3-rehearsal") -- same rationale and same branch as the sibling PR 5/7 test in
 // this directory. Never touches prod.
-import { describe, expect, it } from "vitest";
+// 443.91 #4: CI's database is fresh (migrations only) — the live USMCA ids this suite was pinned to do not exist there. It now
+// runs on its own isolated company (same fixture as check-print-batch.service.db.test.ts); the concurrency claim is unchanged.
+import pg from "pg";
+import { beforeAll, describe, expect, it } from "vitest";
 import { withLuciaBypass } from "../../../auth/db.js";
+import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
+import { createIsolatedOperatingCompany } from "../../../../test-helpers/isolated-company.js";
 import { createCheck } from "../check-create.service.js";
 import { assignPrintBatch } from "../check-print-batch.service.js";
 
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
-const USMCA_BOA_CHECKING = "e83028a5-dcda-4233-b660-5b9923b3d39c";
-const REAL_VENDOR_ID = "a94a93d2-37b4-4179-82c3-9e155eb33af7";
+let USMCA_COMPANY_ID = "";
+let USMCA_BOA_CHECKING = "";
+let REAL_VENDOR_ID = "";
+let REPAIR_ITEM_ID = "";
 const ACTOR_USER_ID = "00000000-0000-4000-8000-000000000001";
+
+async function seedFixtureCompany(): Promise<void> {
+  const { companyId } = await createIsolatedOperatingCompany({ codePrefix: "CPC", legalNamePrefix: "Check concurrency fixture" });
+  USMCA_COMPANY_ID = companyId;
+  const client = new pg.Client(buildPgClientConfig(process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL ?? ""));
+  await client.connect();
+  try {
+    await client.query("SET ROLE ih35_app");
+    await client.query("BEGIN");
+    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    const acct = async (number: string, name: string, type: string) =>
+      (await client.query<{ id: string }>(
+        `INSERT INTO catalogs.accounts (operating_company_id, account_number, account_name, account_type, is_postable)
+         VALUES ($1::uuid, $2, $3, $4, true) RETURNING id::text`, [companyId, number, name, type])).rows[0]!.id;
+    const bankLedger = await acct("1000", "Checking", "Asset");
+    const cogs = await acct("5300", "Repairs & Maintenance", "CostOfGoodsSold");
+    USMCA_BOA_CHECKING = (await client.query<{ id: string }>(
+      `INSERT INTO banking.bank_accounts (operating_company_id, account_name, account_class, is_active, ledger_account_id, sync_status)
+       VALUES ($1::uuid, 'Fixture Checking', 'depository', true, $2::uuid, 'active') RETURNING id::text`, [companyId, bankLedger])).rows[0]!.id;
+    REPAIR_ITEM_ID = (await client.query<{ id: string }>(
+      `INSERT INTO catalogs.items (operating_company_id, item_name, item_type, default_expense_account_id)
+       VALUES ($1::uuid, 'Fixture Repair', 'Service', $2::uuid) RETURNING id::text`, [companyId, cogs])).rows[0]!.id;
+    REAL_VENDOR_ID = (await client.query<{ id: string }>(
+      `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type)
+       VALUES ($1::uuid, 'Fixture Repair Shop', 'repair_shop') RETURNING id::text`, [companyId])).rows[0]!.id;
+    // DEGH-04 (443.113): a check exists only if it posts, so the fixture company has expense GL posting ON (as the owner's does).
+    await client.query(
+      `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
+       VALUES ('EXPENSE_GL_POSTING_ENABLED', $1::uuid, NULL, true, $2::uuid)`,
+      [companyId, ACTOR_USER_ID]
+    );
+    await client.query("COMMIT");
+  } finally {
+    await client.end();
+  }
+}
 const CONCURRENCY = 8;
 
 async function seedPrintLaterCheck(amountCents: number): Promise<string> {
@@ -28,14 +71,18 @@ async function seedPrintLaterCheck(amountCents: number): Promise<string> {
     payee_id: REAL_VENDOR_ID,
     check_date: "2026-09-27",
     print_later: true,
-    lines: [{ line_kind: "category", category_kind: "maintenance", category_code: "maintenance", amount_cents: amountCents }],
+    lines: [{ line_kind: "item", item_id: REPAIR_ITEM_ID, quantity: 1, rate_cents: amountCents, amount_cents: amountCents }],
   });
   return result.id;
 }
 
 const describeDb = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
-describeDb("check-print-batch.service concurrency (real Postgres, rehearsal branch only)", () => {
+describeDb("check-print-batch.service concurrency (real Postgres, isolated fixture company)", () => {
+  beforeAll(async () => {
+    await seedFixtureCompany();
+  }, 60_000);
+
   it(
     `${CONCURRENCY} concurrent single-check print batches on the same bank account never double-issue or skip a number`,
     async () => {

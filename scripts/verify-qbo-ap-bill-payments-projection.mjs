@@ -45,34 +45,40 @@ export function analyzePuller(text) {
   if (!IS_ENABLED_CALL_RE.test(text)) {
     failures.push("ap-bill-payments-puller.ts does not call isEnabled() — both stages must gate on the DB flag.");
   }
-  for (const flag of FLAGS) {
-    if (!text.includes(flag)) {
-      failures.push(`ap-bill-payments-puller.ts no longer references ${flag} — the stage gate was lost.`);
-    }
+  // ACCT-F4431380 (Lead 443.137 item 9e) — OLD: required BOTH flags referenced, rows projected as
+  // source_system='qbo', and the composite ON CONFLICT (operating_company_id, qbo_bill_payment_id, bill_id).
+  // NEW: QuickBooks is a read-only archive — the Stage 2 projection into accounting.bill_payments was REMOVED
+  // and projectApBillPaymentsToLedger() REFUSES BY NAME. Required now: the MIRROR flag is still referenced
+  // (Stage 1 gate), the projection entry point exists and calls refuseQboNativeWrite(, and the file has NO
+  // write into accounting.bill_payments. (Those old checks were also being satisfied by comment text alone.)
+  // WHY: a QBO path never writes a native money table; a silent no-op would report success.
+  if (!text.includes("QBO_AP_BILL_PAYMENT_MIRROR_PULL_ENABLED")) {
+    failures.push("ap-bill-payments-puller.ts no longer references QBO_AP_BILL_PAYMENT_MIRROR_PULL_ENABLED — the Stage 1 mirror gate was lost.");
   }
   if (POSTER_RE.test(text)) {
     failures.push("ap-bill-payments-puller.ts references a GL poster — the payment clone must be subledger-only (NO GL).");
   }
-  if (!text.includes("source_system") || !/'qbo'/.test(text)) {
-    failures.push("ap-bill-payments-puller.ts must project rows as source_system='qbo'.");
+  const m = /^export\s+async\s+function\s+projectApBillPaymentsToLedger\b/m.exec(text);
+  const endIdx = m ? text.indexOf("\n}\n", m.index) : -1;
+  const body = m ? text.slice(m.index, endIdx === -1 ? undefined : endIdx + 3) : null;
+  if (!body) {
+    failures.push("ap-bill-payments-puller.ts no longer exports projectApBillPaymentsToLedger — callers must get the named refusal, not an import error.");
+  } else if (!/refuseQboNativeWrite\(/.test(body)) {
+    failures.push("projectApBillPaymentsToLedger must REFUSE BY NAME via refuseQboNativeWrite( (QuickBooks is a read-only archive).");
   }
-  if (!text.includes(`(operating_company_id, qbo_bill_payment_id, bill_id)`)) {
-    failures.push(
-      "ap-bill-payments-puller.ts projection does not use the composite ON CONFLICT target " +
-        "(operating_company_id, qbo_bill_payment_id, bill_id) — fan-out would collapse allocations."
-    );
+  if (/(?:INSERT\s+INTO|UPDATE)\s+accounting\.bill_payments\b/i.test(text)) {
+    failures.push("ap-bill-payments-puller.ts writes accounting.bill_payments — the QBO -> native projection was removed (ACCT-F4431380).");
   }
   return failures;
 }
 
 function analyzeScheduler(text) {
+  // ACCT-F4431380 (9e) — OLD: required ap_bill_payments_project wired AFTER ap_bills_project.
+  // NEW: the projection refuses by name, so the scheduler must NOT schedule it (a refused step every tick);
+  // the ap_bill_payments_pull mirror step stays required.
   const failures = [];
-  const payIdx = text.indexOf("ap_bill_payments_project");
-  const billIdx = text.indexOf("ap_bills_project");
-  if (payIdx < 0) {
-    failures.push("sync-scheduler.ts does not wire the ap_bill_payments_project step.");
-  } else if (billIdx < 0 || payIdx < billIdx) {
-    failures.push("sync-scheduler.ts must wire ap_bill_payments stages AFTER ap_bills_project.");
+  if (/ap_bill_payments_project|projectApBillPaymentsToLedger/.test(text)) {
+    failures.push("sync-scheduler.ts still schedules ap_bill_payments_project — the projection refuses by name (ACCT-F4431380).");
   }
   if (!text.includes("ap_bill_payments_pull")) {
     failures.push("sync-scheduler.ts does not wire the ap_bill_payments_pull step.");
@@ -107,23 +113,30 @@ export function analyzeMigrations(sql) {
 }
 
 if (process.argv.includes("--selftest")) {
+  // ACCT-F4431380 (9e) — plants updated to the refusal contract.
   const goodPuller = `import { isEnabled } from "../lib/feature-flags/service.js";
     const A = "QBO_AP_BILL_PAYMENT_MIRROR_PULL_ENABLED";
-    const B = "QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED";
     await isEnabled(client, A, { operating_company_id });
-    'qbo' source_system ON CONFLICT (operating_company_id, qbo_bill_payment_id, bill_id)`;
+export async function projectApBillPaymentsToLedger(id: string) {
+  return refuseQboNativeWrite("x", ["accounting.bill_payments"], id);
+}
+`;
   const badEnv = `const A = process.env.QBO_AP_BILL_PAYMENT_MIRROR_PULL_ENABLED === "true";`;
   const badPoster = goodPuller + "\n postJournalEntry(client, je);";
+  const badNativeWrite = goodPuller + "\n const S = `INSERT INTO accounting.bill_payments (id) VALUES ($1)`;";
+  const badSilentNoop = goodPuller.replace('return refuseQboNativeWrite("x", ["accounting.bill_payments"], id);', "return { enabled: false };");
   const goodMig = `INSERT INTO lib.feature_flags QBO_AP_BILL_PAYMENT_MIRROR_PULL_ENABLED QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED
     CREATE UNIQUE INDEX IF NOT EXISTS uq_bill_payments_company_qbo_bp_bill
     DROP INDEX IF EXISTS accounting.uq_bill_payments_company_qbo_bp_id`;
   const badMig = `INSERT INTO lib.feature_flags QBO_AP_BILL_PAYMENT_MIRROR_PULL_ENABLED`;
-  const goodSched = `ap_bills_project ... ap_bill_payments_pull ... ap_bill_payments_project`;
-  const badSched = `ap_bill_payments_project ... ap_bills_project`;
+  const goodSched = `runStep("ap_bills_pull") ... runStep("ap_bill_payments_pull")`;
+  const badSched = `ap_bill_payments_pull ... ap_bill_payments_project`;
   const ok =
     analyzePuller(goodPuller).length === 0 &&
     analyzePuller(badEnv).length > 0 &&
     analyzePuller(badPoster).length > 0 &&
+    analyzePuller(badNativeWrite).length > 0 &&
+    analyzePuller(badSilentNoop).length > 0 &&
     analyzeMigrations(goodMig).length === 0 &&
     analyzeMigrations(badMig).length > 0 &&
     analyzeScheduler(goodSched).length === 0 &&
@@ -160,6 +173,6 @@ if (failures.length > 0) {
 }
 
 console.log(
-  "verify-qbo-ap-bill-payments-projection: PASS (DB-flag gate; both flags registered; composite fan-out index replaces the 2-col unique; subledger-only; scheduler wired after ap_bills_project)"
+  "verify-qbo-ap-bill-payments-projection: PASS (DB-flag mirror gate; both flags registered; composite index migration kept; ACCT-F4431380: projection refuses by name, no native bill_payments write, not scheduled)"
 );
 process.exit(0);

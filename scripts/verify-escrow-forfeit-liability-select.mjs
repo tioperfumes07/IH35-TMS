@@ -21,7 +21,16 @@ export function collectProblems(src) {
   if (!/SelectCombobox/.test(code) || !/setLinkedLiabilityId/.test(code)) {
     problems.push(`${TARGET}: liability picker must use SelectCombobox`);
   }
-  if (/from ["'].*\/Combobox["']/.test(src) || /<Combobox[\s\S]{0,200}linkedLiabilityId/.test(code)) {
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: any import from a module path ending `/Combobox` fails.
+  //   new rule: importing the bare `Combobox` named export (from any module) fails, as does rendering
+  //             `<Combobox` on the liability; `SelectCombobox` from components/Combobox is the required control.
+  //   why: K2 (GO-23 Wave 4, 2026-09-02) folded components/shared/SelectCombobox.tsx into components/Combobox.tsx,
+  //        so the REQUIRED SelectCombobox now arrives from a path ending `/Combobox`; the path test flagged the
+  //        correct control. Re-introducing the old Combobox still fails on its import name or its JSX.
+  const importsBareCombobox = [...code.matchAll(/import\s*\{([^}]*)\}\s*from\s*["'][^"']+["']/g)]
+    .some((m) => m[1].split(",").map((n) => n.trim().split(/\s+as\s+/)[0]).includes("Combobox"));
+  if (importsBareCombobox || /<Combobox\b[\s\S]{0,200}linkedLiabilityId/.test(code)) {
     problems.push(`${TARGET}: Combobox must not remain on liability picker`);
   }
   return problems;
@@ -39,10 +48,14 @@ if (SELFTEST) {
       <SelectCombobox value={linkedLiabilityId ?? ""} onChange={(e) => setLinkedLiabilityId(e.target.value || null)} />
     </div>
   `;
+  const goodRealImport = `import { SelectCombobox } from "../../../components/Combobox";\n${good}`;
+  const badAliased = `import { Combobox as Picker, SelectCombobox } from "../../../components/Combobox";\n${good}`;
   const badP = collectProblems(bad);
   const goodP = collectProblems(good);
-  if (badP.length < 1 || goodP.length !== 0) {
-    console.error(`${LABEL} SELFTEST FAIL`, { badP, goodP });
+  const goodImportP = collectProblems(goodRealImport);
+  const badAliasedP = collectProblems(badAliased);
+  if (badP.length < 1 || goodP.length !== 0 || goodImportP.length !== 0 || badAliasedP.length < 1) {
+    console.error(`${LABEL} SELFTEST FAIL`, { badP, goodP, goodImportP, badAliasedP });
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST OK`);

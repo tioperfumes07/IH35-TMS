@@ -12,7 +12,14 @@ function inspect(value, backend = backendSource) {
   const createBackend = createStart >= 0 && createEnd > createStart ? backend.slice(createStart, createEnd) : "";
   const checks = [
     [/companyGenerationRef = useRef\(0\)/, "missing company generation"],
-    [/createDotInspection\(input\.companyId, input\.payload\)/, "create uses mutable company/form"],
+    // LEAD 443.99 class B (2026-10-12).
+    //   old rule: create calls createDotInspection(input.companyId, input.payload).
+    //   new rule: create uploads the evidence under operating_company_id: input.companyId, then calls
+    //             createDotInspection(input.companyId, { ...input.payload, pdf_evidence_id }) — company and form both
+    //             from the immutable input.
+    //   why: UPL-06 (#19162, 78253f0dcb) stopped discarding the PDF evidence; the create now carries its id. A
+    //        create or upload that reads the live company/form instead of the input still fails.
+    [/uploadSourceDocumentFromFile\(input\.evidenceFile, \{\s*operating_company_id: input\.companyId,[\s\S]{0,800}?createDotInspection\(input\.companyId, \{\s*\.\.\.input\.payload,/, "create uses mutable company/form"],
     [/driver_id: form\.driver_id \|\| undefined[\s\S]*unit_id: form\.unit_id \|\| undefined[\s\S]*trailer_id: form\.trailer_id \|\| undefined/, "create does not snapshot driver/unit/trailer FKs"],
     [/voidDotInspection\(input\.companyId, input\.id, input\.reason\)/, "void uses mutable company"],
     [/uploadDotInspectionPdf\(input\.companyId, input\.id, input\.file\)/, "upload uses mutable company"],
@@ -51,7 +58,8 @@ function inspect(value, backend = backendSource) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     "companyGenerationRef = useRef(0)",
-    "createDotInspection(input.companyId, input.payload)",
+    "createDotInspection(input.companyId, {",
+    "operating_company_id: input.companyId,",
     "voidDotInspection(input.companyId, input.id, input.reason)",
     "uploadDotInspectionPdf(input.companyId, input.id, input.file)",
     "followUpDotInspectionEvent(input.id, input.companyId, input.state)",

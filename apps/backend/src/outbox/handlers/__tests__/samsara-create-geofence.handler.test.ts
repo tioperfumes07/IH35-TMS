@@ -76,8 +76,6 @@ describe("SamsaraCreateGeofenceHandler", () => {
         longitude: -99.5,
         radiusMeters: 76,
         externalIds: {
-          ih35Load: LOAD,
-          ih35Stop: STOP,
           ih35Site: GEOFENCE,
         },
       })
@@ -106,6 +104,27 @@ describe("SamsaraCreateGeofenceHandler", () => {
       { client: { query: vi.fn().mockResolvedValue({ rows: [] }) } as never, eventId: "e3", instanceId: "t", log: () => {} }
     )).rejects.toThrow("samsara_geofence_projection_not_persisted");
     expect(appendCrudAudit).not.toHaveBeenCalled();
+  });
+
+  it("does not create a second Samsara address when the fence already has one (443.49)", async () => {
+    const { SamsaraCreateGeofenceHandler } = await import("../samsara-create-geofence.handler.js");
+    const handler = new SamsaraCreateGeofenceHandler();
+    const query = vi.fn().mockResolvedValue({ rows: [{ samsara_address_id: "samsara-existing" }] });
+    const result = await handler.deliver(
+      {
+        operating_company_id: OPCO,
+        geofence_id: GEOFENCE,
+        load_id: LOAD,
+        stop_id: STOP,
+        latitude: 27.5,
+        longitude: -99.5,
+        label: "Laredo, TX",
+        actor_user_id: ACTOR,
+      },
+      { client: { query } as never, eventId: "e4", instanceId: "t", log: () => {} }
+    );
+    expect(result?.message).toBe("already_in_samsara");
+    expect(createAddress).not.toHaveBeenCalled();
   });
 
   it("skips when Samsara is not configured", async () => {

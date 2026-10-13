@@ -7,6 +7,7 @@
 export default {
   name: "verify-load-costs-board-excludes-settled",
   async run(ctx) {
+    await ctx.run("node", ["scripts/verify-load-costs-live-documents.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-load-costs-board-excludes-settled.mjs"]);
   },
 };

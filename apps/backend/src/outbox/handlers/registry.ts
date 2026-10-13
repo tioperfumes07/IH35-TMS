@@ -11,6 +11,7 @@ import { TmsBillPushHandler } from "./tms-bill-push.handler.js";
 import { buildTrailEventHandlers } from "./trail-events.handler.js";
 import { SamsaraMasterDataPushHandler } from "./samsara-master-data-push.handler.js";
 import { SamsaraCreateGeofenceHandler } from "./samsara-create-geofence.handler.js";
+import { SamsaraUpdateGeofenceHandler } from "./samsara-update-geofence.handler.js";
 import { FmcsaCustomerVerifyHandler } from "./fmcsa-customer-verify.handler.js";
 // WF-064: dispatch.wf064.override_notice and dispatch.wf064.distribution_failure had NO consumer.
 // Corrected 2026-08-03: the override notice was not "failing permanently" — it was written to
@@ -24,6 +25,7 @@ import { AuthEmailVerificationHandler } from "./auth-email-verification.handler.
 import { IdentityUserPasswordSetupHandler } from "./identity-user-password-setup.handler.js";
 import { OnboardingTeamInviteHandler } from "./onboarding-team-invite.handler.js";
 import { IdentityPasswordResetEmailHandler } from "./identity-password-reset-email.handler.js";
+import { DispatchRelearnLoadMilesHandler } from "./dispatch-relearn-load-miles.handler.js";
 import { LegalAttorneyDecisionEmailHandler } from "./legal-attorney-decision-email.handler.js";
 import { LegalContractSignEmailHandler } from "./legal-contract-sign-email.handler.js";
 import { LegalContractVerificationEmailHandler } from "./legal-contract-verification-email.handler.js";
@@ -132,6 +134,8 @@ export function buildOutboxHandlerRegistry() {
     new TmsBillPushHandler(),
     new SamsaraMasterDataPushHandler(),
     new SamsaraCreateGeofenceHandler(),
+    new SamsaraUpdateGeofenceHandler(),
+    new DispatchRelearnLoadMilesHandler(),
     new FmcsaCustomerVerifyHandler(),
     new DispatchOverrideNoticeHandler(),
     new DispatchDistributionFailureHandler(),

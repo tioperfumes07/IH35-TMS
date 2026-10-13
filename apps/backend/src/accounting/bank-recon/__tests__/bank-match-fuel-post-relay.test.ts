@@ -3,7 +3,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockPost } = vi.hoisted(() => ({ mockPost: vi.fn(async () => ({ result: "posted", journal_entry_id: "je-1" })) }));
-vi.mock("../../fuel-posting/poster.service.js", () => ({ postFuelExpenseOnClient: mockPost }));
+// 443.116 #1 — the match first looks for a fill already posted on receipt; none here, so it posts.
+vi.mock("../../fuel-posting/poster.service.js", () => ({ postFuelExpenseOnClient: mockPost, findPostedFuelEvent: vi.fn(async () => null) }));
+// Lead 443.41 A: after the fill posts, its expense document adopts that SAME entry (asserted below).
+const { mockAdopt } = vi.hoisted(() => ({ mockAdopt: vi.fn(async () => ({ outcome: "created", expense_id: "exp-1", expense_number: "1", journal_entry_id: "je-1", amount_cents: 0 })) }));
+vi.mock("../../../fuel/fuel-expense-document.service.js", () => ({
+  adoptRelayFillExpenseDocument: mockAdopt,
+  // DEGH-07 — canonical path imports createExpenseFromFuelTransaction from the same module
+  createExpenseFromFuelTransaction: vi.fn(async () => ({ outcome: "created", expense_id: "exp-c", expense_number: "1" })),
+}));
 
 import { FuelMatchPostError, postFuelFillOnBankMatch } from "../bank-match-fuel-post.service.js";
 
@@ -14,6 +22,10 @@ function client(
   paid: number,
   lines: Array<{ fuel_type: string; cents: number; fee_cents?: number }>,
   fees: unknown[] = [],
+  ingestSource: string | null = "daily_pull",
+  matchedDriverId: string | null = "d1",
+  loadRows: unknown[] = [{ load_id: "load-1", load_number: "13558", matched_by: "unit", trailer_id: null, non_owned_trailer_id: null }],
+  twinRows: unknown[] = [],
 ) {
   const calls: string[] = [];
   return {
@@ -21,6 +33,8 @@ function client(
     c: {
       query: vi.fn(async (sql: string) => {
         calls.push(sql);
+        // 443.136 — the duplicate-purchase rule (fuel/relay-duplicate-purchase.service.ts): an already-posted Relay twin.
+        if (sql.includes("JOIN s b ON")) return { rows: twinRows };
         if (sql.includes("FROM integrations.relay_fuel_transactions r")) {
           return {
             rows: [
@@ -29,7 +43,8 @@ function client(
                 amount_cents: String(paid),
                 transaction_id: "txn_4ypX8FQCRzHr5n",
                 fees_json: fees,
-                driver_id: "d1",
+                ingest_source: ingestSource,
+                driver_id: matchedDriverId,
                 unit_id: "u1",
                 unit_number: "T169",
                 location_state: "TX",
@@ -39,7 +54,10 @@ function client(
             ],
           };
         }
-        if (sql.includes("JOIN mdata.loads l ON l.id = lat.load_id")) return { rows: [{ load_id: "load-1", load_number: "13558" }] };
+        // 443.110 G7 — the one fuel-to-load rule (fuel/fuel-load-at-time.ts)
+        if (sql.includes("by_unit") && sql.includes("by_driver")) return { rows: loadRows };
+        // 443.126 2a — the truck's ONE driver assignment at fill time (telematics.vehicle_driver_assignments).
+        if (sql.includes("FROM telematics.vehicle_driver_assignments")) return { rows: [{ d: "truck-driver" }] };
         if (sql.includes("FROM integrations.relay_fuel_transaction_lines l") && sql.includes("AS fuel_type")) {
           return {
             rows: lines.map((l) => ({
@@ -77,6 +95,16 @@ describe("Relay fill posting — one leg per product", () => {
       { fuel_kind: "def", amount_cents: 3000 },
       { fuel_kind: "reefer", amount_cents: 7000 },
     ]);
+    // Lead 443.41 A: the fill's expense document adopts the SAME journal entry the poster returned.
+    expect(mockAdopt).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ journal_entry_id: "je-1" }));
+  });
+
+  it("443.136 — the same purchase already posted under another Relay transaction id is refused by name and never posts", async () => {
+    const { c } = client(17104, [{ fuel_type: "diesel", cents: 17104 }], [], "daily_pull", "d1", undefined,
+      [{ fill_id: "fill-0", transaction_id: "txn_AJyrss5NZ141mg" }]);
+    await expect(postFuelFillOnBankMatch(c, input)).rejects.toMatchObject({ code: "relay_fill_duplicate_purchase" });
+    await expect(postFuelFillOnBankMatch(c, input)).rejects.toThrow(/fill-0 txn_AJyrss5NZ141mg/);
+    expect(mockPost).not.toHaveBeenCalled();
   });
 
   it("RELAY-F442 — sender_fee is its own fee_amount_cents; wallet amount = paid + fee", async () => {
@@ -121,5 +149,35 @@ describe("Relay fill posting — one leg per product", () => {
       await expect(postFuelFillOnBankMatch(c, input)).rejects.toBeInstanceOf(FuelMatchPostError);
     }
     expect(mockPost).not.toHaveBeenCalled();
+  });
+  it("LEAD 443.123 — a legacy CSV row whose stored paid carries its recorded fee posts fuel = lines + its own fee leg (was refused)", async () => {
+    // Real shape (counts only): paid 917.64 = DEF 20.82 + reefer 894.82 + relay_fee 2.00, fee only in top-level fees[].
+    const { c } = client(91764, [{ fuel_type: "def", cents: 2082 }, { fuel_type: "reefer", cents: 89482 }], [{ type: "relay_fee", amount: "2.00" }], "csv_import");
+    await postFuelFillOnBankMatch(c, input);
+    const arg = mockPost.mock.calls[0]![1] as { amount_cents: number; fee_amount_cents: number | null; cost_lines: Array<{ amount_cents: number }> };
+    expect(arg.cost_lines.reduce((t, l) => t + l.amount_cents, 0)).toBe(91564);
+    expect(arg.fee_amount_cents).toBe(200);
+    // Wallet credit = what Relay drew: 917.64 — the fee is not added a second time.
+    expect(arg.amount_cents).toBe(91764);
+  });
+
+  it("LEAD 443.123 — any difference that is NOT exactly the recorded fee is still refused (no plug, no tolerance)", async () => {
+    for (const [paid, src] of [[91701, "csv_import"], [91764, "daily_pull"], [91764 + 1, "csv_import"]] as const) {
+      const { c } = client(paid, [{ fuel_type: "def", cents: 2082 }, { fuel_type: "reefer", cents: 89482 }], [{ type: "relay_fee", amount: "2.00" }], src);
+      await expect(postFuelFillOnBankMatch(c, input)).rejects.toMatchObject({ code: "relay_fill_lines_do_not_foot" });
+    }
+    // A legacy-shaped row that ALSO carries a per-line fee is not the legacy CSV shape -> refused.
+    const { c } = client(91764, [{ fuel_type: "def", cents: 2082, fee_cents: 200 }, { fuel_type: "reefer", cents: 89482 }], [{ type: "relay_fee", amount: "2.00" }], "csv_import");
+    await expect(postFuelFillOnBankMatch(c, input)).rejects.toMatchObject({ code: "relay_fill_lines_do_not_foot" });
+    expect(mockPost).not.toHaveBeenCalled();
+  });
+  it("LEAD 443.126 2a — a no-load fill whose provider named no driver posts and documents the truck's driver at fill time (old: no driver)", async () => {
+    mockAdopt.mockClear();
+    const { c } = client(5000, [{ fuel_type: "diesel", cents: 5000 }], [], "daily_pull", null, []);
+    await postFuelFillOnBankMatch(c, input);
+    const arg = mockPost.mock.calls[0]![1] as { driver_id: string | null; load_id: string | null };
+    expect(arg.load_id).toBeNull();
+    expect(arg.driver_id).toBe("truck-driver");
+    expect(mockAdopt).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ driver_id: "truck-driver" }));
   });
 });

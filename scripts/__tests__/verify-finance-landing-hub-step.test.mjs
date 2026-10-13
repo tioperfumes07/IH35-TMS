@@ -41,7 +41,11 @@ for (const [index, check] of FINANCE_LANDING_CORE_CHECKS.entries()) {
 
 test("current aggregate runner rejects a planted behavioral-test failure", async () => {
   const calls = [];
-  const statuses = [0, 0, 23, 0];
+  // 443.99: plant the failure on the behavioral route test BY LABEL — a hard-coded index ([0, 0, 23, 0]) went
+  // stale when the S01..S08 checks were inserted ahead of it, so the plant landed on the wrong check.
+  const behavioral = FINANCE_LANDING_CORE_CHECKS.findIndex((check) => check.label === "behavioral route test");
+  assert.ok(behavioral >= 0, "behavioral route test must remain a core check");
+  const statuses = FINANCE_LANDING_CORE_CHECKS.map((_, i) => (i === behavioral ? 23 : 0));
   const ctx = {
     run(command, args) {
       calls.push([command, args]);

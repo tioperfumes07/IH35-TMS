@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { agingWindowPredicate } from "./aging/buckets.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
+import { assertLineAccountMatchesItem } from "./line-categorization.js";
 import { resolveBillDisplayId } from "./display-id.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import type pg from "pg";
@@ -54,6 +55,8 @@ export type CreateBillLineInput = {
    * (accounting.enforce_load_fk_invariant, now covers bill_lines too).
    */
   loadExemptionReason?: string | null;
+  /** 443.67 G3 — who / why this line's account differs from its item's default (>= 10 chars; line-categorization.ts). */
+  itemAccountOverrideReason?: string | null;
   /**
    * Round 92/94 (item lines remainder) — catalogs.items FK + qty x rate = amount, migration
    * 202614271200 (accounting.bill_lines.item_id/quantity/rate_cents/unit_of_measure). The
@@ -88,6 +91,9 @@ type CreateBillInput = {
    * billNumber as the display number (used when a re-posted settlement bills a load whose number a reversed bill holds).
    */
   autoDisplayId?: boolean;
+  /** 443.110 G4 — the bill's own document number when it differs from billNumber (the vendor's reference): the
+   *  Settlement Creator's owed bill keeps the vendor's invoice number as bill_number and its load-spine number here. */
+  displayId?: string;
   billDate: string;
   dueDate?: string;
   amountCents: number;
@@ -151,6 +157,13 @@ type CreateBillInput = {
    * Never invent GL accounts — accountId must be caller-supplied or left null for poster tiers.
    */
   lines?: CreateBillLineInput[];
+  /** ROUND 443.13 (CC-1) — explicit bill→load header link from the Settlement Creator. Applied
+   * before the auto-derive UPDATE so the auto-derive's `WHERE load_id IS NULL` skips rows the
+   * caller already stamped. The auto-derive still runs and sets this from lines when not provided. */
+  loadId?: string | null;
+  /** ROUND 443.13 (CC-1) — the vendor's own document/invoice reference number. Semantic alias for
+   * `billNumber` for programmatic callers (Settlement Creator); takes precedence when both are set. */
+  vendorDocumentNumber?: string | null;
 };
 
 type PayBillInput = {
@@ -2582,7 +2595,7 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
   // WARN, DO NOT HARD-BLOCK (QBO/McLeod behaviour): carriers legitimately reuse invoice numbers
   // across vendors, and a hard block would make a real bill unenterable. Voided bills never
   // collide -- a voided duplicate is precisely what a re-entry is meant to replace.
-  const billNumber = input.billNumber?.trim();
+  const billNumber = (input.vendorDocumentNumber ?? input.billNumber)?.trim();
   if (billNumber) {
     const dup = await client.query<{ id: string }>(
       `
@@ -2656,13 +2669,15 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         coa_account_id,
         linked_work_order_uuid,
         unit_id,
+        driver_id,
+        load_id,
         insurance_claim_id,
         class_id,
         created_by_user_id,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$16,$12,now(),now())
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$17::uuid,$18::uuid,$15,$16,$12,now(),now())
       RETURNING *
     `
       : hasInsuranceClaimId
@@ -2684,12 +2699,14 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         coa_account_id,
         linked_work_order_uuid,
         unit_id,
+        driver_id,
+        load_id,
         insurance_claim_id,
         created_by_user_id,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$12,now(),now())
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$16::uuid,$17::uuid,$15,$12,now(),now())
       RETURNING *
     `
       : hasClassId
@@ -2711,12 +2728,14 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         coa_account_id,
         linked_work_order_uuid,
         unit_id,
+        driver_id,
+        load_id,
         class_id,
         created_by_user_id,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$12,now(),now())
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$16::uuid,$17::uuid,$15,$12,now(),now())
       RETURNING *
     `
       : `
@@ -2737,11 +2756,13 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         coa_account_id,
         linked_work_order_uuid,
         unit_id,
+        driver_id,
+        load_id,
         created_by_user_id,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$12,now(),now())
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15::uuid,$16::uuid,$12,now(),now())
       RETURNING *
     `,
     hasInsuranceClaimId && hasClassId
@@ -2762,6 +2783,8 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
           input.unitId ?? null,
           insuranceClaimId,
           classId,
+          input.driverId ?? null,
+          input.loadId ?? null,
         ]
       : hasInsuranceClaimId
       ? [
@@ -2780,6 +2803,8 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
           input.workOrderId ?? null,
           input.unitId ?? null,
           insuranceClaimId,
+          input.driverId ?? null,
+          input.loadId ?? null,
         ]
       : hasClassId
         ? [
@@ -2798,6 +2823,8 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
             input.workOrderId ?? null,
             input.unitId ?? null,
             classId,
+            input.driverId ?? null,
+            input.loadId ?? null,
           ]
       : [
           input.operatingCompanyId,
@@ -2814,6 +2841,8 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
           userId,
           input.workOrderId ?? null,
           input.unitId ?? null,
+          input.driverId ?? null,
+          input.loadId ?? null,
         ]
   );
   if ((res.rowCount ?? 0) === 0 || !res.rows[0]) throw new Error("bill_insert_failed");
@@ -2934,7 +2963,7 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
   // INSERT, as it does for every writer. Only an operator-typed number replaces it, and only the id the
   // trigger just assigned (never another writer's stamp).
   const triggerDisplayId = (res.rows[0] as { display_id?: string | null }).display_id ?? null;
-  const requestedDisplayId = input.autoDisplayId ? null : billNumber ?? null;
+  const requestedDisplayId = input.displayId?.trim() || (input.autoDisplayId ? null : billNumber ?? null);
   if (insertedId && (!triggerDisplayId || (requestedDisplayId && requestedDisplayId !== triggerDisplayId))) {
     const billDisplayId = await resolveBillDisplayId(
       client,
@@ -3032,6 +3061,15 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         if (!cls.rows[0]) throw new Error("bill_line_class_not_in_company");
       }
 
+      // 443.67 G3 — an enforcing company's line posts to its item's default account, or says why it does not.
+      await assertLineAccountMatchesItem(client, {
+        operatingCompanyId: input.operatingCompanyId,
+        side: "expense",
+        itemId,
+        accountId,
+        overrideReason: line.itemAccountOverrideReason,
+      });
+
       await client.query(
         `
           INSERT INTO accounting.bill_lines (
@@ -3057,13 +3095,14 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
             equipment_id,
             lease_contract_id,
             lease_asset_line_id,
-            operating_company_id
+            operating_company_id,
+            item_account_override_reason
           )
           VALUES (
             $1::uuid, $2, $3, $4, $5,
             $6::uuid, $7::uuid, $8, $9, $10::uuid, $11::uuid, $12, $13,
             $14::uuid, $15, $16, $17,
-            $18::uuid, $19::uuid, $20::uuid, $21::uuid, $22::uuid, $23::uuid
+            $18::uuid, $19::uuid, $20::uuid, $21::uuid, $22::uuid, $23::uuid, $24
           )
         `,
         [
@@ -3101,6 +3140,7 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
           line.leaseContractId ?? null,
           line.leaseAssetLineId ?? null,
           input.operatingCompanyId,
+          line.itemAccountOverrideReason?.trim() || null,
         ]
       );
     }
@@ -3121,20 +3161,20 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
       [input.coaAccountId, input.operatingCompanyId]
     );
     if (!acct.rows[0]) throw new Error("bill_line_account_not_in_company");
-    // ACCT-F5452: load_id is named explicitly, not omitted. This header-only path (caller supplied
-    // coaAccountId, no per-line lines[]) has no per-line loadId to draw from — CreateBillInput has
-    // no BILL-level loadId either, only CreateBillLineInput's per-line one used by the lines[]
-    // branch above — so NULL here is the honest value for "this synthesized line carries no load
-    // association," not a silently-dropped column. Naming it lets a report tell "never wired" from
-    // "wired, no load" for this bill-creation path.
+    // ACCT-F5452 / LEAD 443.134 AJK-09: load_id is named explicitly. This header-only path (caller supplied
+    // coaAccountId, no per-line lines[]) takes the BILL-level loadId (CreateBillInput.loadId, added with the 443.106 header
+    // load) — NULL only when the bill names no load — and the bill's unit / trailer (equipment_id), so the one line carries
+    // the same load / truck / trailer as its header.
     await client.query(
       `
         INSERT INTO accounting.bill_lines (
-          bill_id, line_sequence, amount, description, section, account_id, load_id
+          bill_id, line_sequence, amount, description, section, account_id, load_id, unit_id, equipment_id
         )
-        VALUES ($1::uuid, 1, $2, $3, 'A', $4::uuid, NULL)
+        VALUES ($1::uuid, 1, $2, $3, 'A', $4::uuid, $5::uuid, $6::uuid, $7::uuid)
       `,
-      [created.id, input.amountCents / 100, input.memo ?? null, input.coaAccountId]
+      // LEAD 443.134 AJK-09 — the synthesized single line carries the bill's own load / unit / trailer (was NULL load always:
+      // a legal reserve / fee bill on a load lost the load on its line).
+      [created.id, input.amountCents / 100, input.memo ?? null, input.coaAccountId, input.loadId ?? null, input.unitId ?? null, input.trailerId ?? null]
     );
   }
 
@@ -3146,6 +3186,15 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
     draftId: input.attachmentDraftId,
     newId: created.id,
   });
+  // ROUND 443.13 (CC-1) — explicit load→bill header stamp. Applied before the auto-derive so the
+  // auto-derive's `WHERE b.load_id IS NULL` leaves caller-supplied values in place.
+  if (insertedId && input.loadId) {
+    await client.query(
+      `UPDATE accounting.bills SET load_id = $3::uuid WHERE id = $1::uuid AND operating_company_id = $2::uuid AND load_id IS NULL`,
+      [insertedId, input.operatingCompanyId, input.loadId]
+    );
+    (created as { load_id?: string | null }).load_id = input.loadId;
+  }
   // ROUND 363-CC1-A follow-through (LAW 363.2 — the posting carries its load): a bill whose every line names the
   // SAME single load is that load's bill, so its header carries the load too. That is the document's own data, never
   // an allocation: a bill with lines on two loads, or a line with no load, keeps a NULL header and each line keeps
@@ -3434,12 +3483,9 @@ async function payBillRowInClientTx(
       "P5-D2-BILL-PAYMENT"
     );
 
-    // Parallel books: QBO-origin bills never receive a TMS Bill→GL leg. Attempting BillPayment→GL
-    // would throw BILL_AP_NOT_POSTED (or invent a second JE) and — because posting runs in THIS txn —
-    // roll back the entire subledger payment. Skip GL for source_system=qbo; keep payment + bank cache.
-    const isQboBill = String(bill.source_system ?? "").toLowerCase() === "qbo";
-
-    // When posting is ON for this entity (and the bill is TMS-native), post the balanced DR ap_control /
+    // ROUND 443.117 9b: imported provenance never changes native payment posting ownership.
+    // The shared poster requires the bill's native A/P leg and refuses an unposted bill atomically.
+    // When posting is ON for this entity, post the balanced DR ap_control /
     // CR bank JE ATOMICALLY in THIS transaction (GUARD 2026-07-11: the bank-balance cache and the GL cash
     // account are SEPARATE stores — recording −amount in both is correct double-entry + cache coherence,
     // not double-counting). Running it on the same client means a posting failure rolls back the payment
@@ -3449,7 +3495,7 @@ async function payBillRowInClientTx(
     // Outer `if (flags.glPostingEnabled)` is required by verify-bill-payment-posts-gl (flag-OFF must still pay).
     if (flags.glPostingEnabled) {
       // ROUND 326: a non-cash settlement application's GL is the settlement close's application JE, never a cash leg.
-      if (!isQboBill && input.settlementDeductionNoncash !== true) {
+      if (input.settlementDeductionNoncash !== true) {
         await postSourceTransactionInClientTx(
           client,
           {
@@ -3478,8 +3524,8 @@ async function payBillRowInClientTx(
     return {
       ...paymentRes.rows[0],
       amount_cents: Number(paymentRes.rows[0].amount_cents ?? Math.round(Number(paymentRes.rows[0].amount ?? 0) * 100)),
-      gl_posting: isQboBill
-        ? ({ posted: false, reason: "qbo_parallel_books" } as const)
+      gl_posting: input.settlementDeductionNoncash === true
+        ? ({ posted: false, reason: "settlement_noncash_application" } as const)
         : flags.glPostingEnabled
           ? ({ posted: true } as const)
           : ({ posted: false, reason: "blocked_flag_off" } as const),

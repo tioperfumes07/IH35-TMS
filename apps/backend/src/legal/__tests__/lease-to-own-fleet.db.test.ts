@@ -85,7 +85,8 @@ describeIntegration("legal lease-to-own fleet picker (real Postgres schema)", ()
     const rows = await withBypass(() => listFleetUnitsForPicker(db, { ownerCompanyId: companyId }));
     const seeded = rows.find((r) => r.id === unitId);
     expect(seeded, "seeded unit should be in the owner-scoped picker").toBeDefined();
-    expect(seeded?.unit_type).toBe("tractor"); // proves vehicle_type -> unit_type alias, real column
+    // The seeded value as stored: mdata.units vehicle_type CHECK admits 'Tractor' (capitalized) only.
+    expect(seeded?.unit_type).toBe("Tractor"); // proves vehicle_type -> unit_type alias, real column
     expect(seeded?.status).toBe("InService");
     expect(seeded?.owner_company_id).toBe(companyId);
   });

@@ -104,12 +104,40 @@ const ACCEPT_PATH_FILE = path.join(ROOT, "apps/backend/src/accounting/bank-recon
 const KNOWN_NULL_LINKAGE_COUNT = 0;
 
 /**
+ * Lead 443.42 #4 (2026-10-11, accepted as CC-2 proposed): a live fuel_event posting is ADOPTED — not an orphan — when
+ *   (1) a LIVE (voided_at IS NULL) accounting.expenses row carries journal_entry_id = that posting's entry (the 443.41 A
+ *       Relay-fill document is written on the SAME JE the fill posted; its source_fuel_transaction_id can never equal the
+ *       posting's source, a Relay fill id, because that column points at fuel.fuel_transactions), or
+ *   (2) a LIVE expense's relay fill (fuel.fuel_transactions.relay_fuel_transaction_id of its source_fuel_transaction_id)
+ *       equals the posting's source.
+ * Nothing wider: a voided expense adopts nothing, and an expense on another entry adopts only through its own relay fill.
+ * The SQL below and this pure mirror are the ONE rule; the selftest holds them together.
+ */
+export const CHECK_A_ADOPTED_SQL = `(
+          EXISTS (SELECT 1 FROM accounting.expenses e
+                   WHERE e.operating_company_id = jep.operating_company_id AND e.journal_entry_id = je.id AND e.voided_at IS NULL)
+          OR EXISTS (SELECT 1 FROM accounting.expenses e
+                       JOIN fuel.fuel_transactions ft ON ft.id = e.source_fuel_transaction_id
+                      WHERE e.operating_company_id = jep.operating_company_id AND e.voided_at IS NULL
+                        AND ft.relay_fuel_transaction_id::text = jep.source_transaction_id::text)
+        )`;
+
+export function fuelEntryIsAdopted({ entryId, postingSource, expenses }) {
+  return expenses.some((e) => !e.voided && (e.journal_entry_id === entryId || (e.relay_fill_id != null && e.relay_fill_id === postingSource)));
+}
+
+/**
  * Classify the fuel-cost-posts-once state. Pure function — exported for selftest.
  */
 export function classifyFuelPostsOnce(input) {
   const { fuelJesCount, fuelExpensesWithSource, duplicateFuelPointers,
-    fuel5000NetCents, fuelExpenseTotalCents, expensesWithNullLinkage,
+    fuel5000NetCents, fuelExpenseTotalCents: expenseLineCents, expensesWithNullLinkage,
     expensesWithNullLinkageDetails, docsDoublePosted } = input;
+
+  // Lead 443.42 #4: a driver bill's fuel line (e.g. the $10.00 settlement fuel reimbursement) posts to 5000 through the
+  // bill's own JE — it is on the GL side, so it is counted on the document side too. Nothing else is added.
+  const driverBillFuelLineCents = Number(input.driverBillFuelLineCents ?? 0);
+  const fuelExpenseTotalCents = expenseLineCents + driverBillFuelLineCents;
 
   const problems = [];
   const checks = [];
@@ -142,12 +170,12 @@ export function classifyFuelPostsOnce(input) {
   checks.push({
     id: "C",
     name: "FUEL_5000_EQUALS_OWN_LINE_TOTAL",
-    expected: `$${(fuelExpenseTotalCents / 100).toFixed(2)} (account 5000 expense-line total)`,
+    expected: `$${(fuelExpenseTotalCents / 100).toFixed(2)} (account 5000 expense lines + driver-bill fuel lines)`,
     live: `$${(fuel5000NetCents / 100).toFixed(2)} (5000 Fuel & Diesel GL net)`,
     pass: fuel5000NetCents === fuelExpenseTotalCents,
   });
   if (fuel5000NetCents !== fuelExpenseTotalCents) {
-    problems.push(`FUEL_5000_MISMATCH: 5000 Fuel & Diesel net $${(fuel5000NetCents / 100).toFixed(2)} != its own posted expense-line total $${(fuelExpenseTotalCents / 100).toFixed(2)}. Difference: $${((fuel5000NetCents - fuelExpenseTotalCents) / 100).toFixed(2)}.`);
+    problems.push(`FUEL_5000_MISMATCH: 5000 Fuel & Diesel net $${(fuel5000NetCents / 100).toFixed(2)} != its own posted expense-line + driver-bill fuel-line total $${(fuelExpenseTotalCents / 100).toFixed(2)}. Difference: $${((fuel5000NetCents - fuelExpenseTotalCents) / 100).toFixed(2)}.`);
   }
 
   // D. Inherited linkage — shrink-only ratchet (trailer_id is often genuinely unknown)
@@ -306,6 +334,45 @@ function runSelftest() {
     fail += 1;
   } else pass += 1;
 
+  // Lead 443.42 #4 — C: a driver-bill fuel line is on both sides.
+  const greenCBill = classifyFuelPostsOnce({ ...baseInput, fuel5000NetCents: 54700, fuelExpenseTotalCents: 50000, driverBillFuelLineCents: 4700 });
+  if (!greenCBill.checks.find((c) => c.id === "C").pass) {
+    console.error(`${LABEL} --selftest FAIL — GREEN C (driver-bill fuel lines on both sides): expected PASS`);
+    fail += 1;
+  } else pass += 1;
+  const redCBill = classifyFuelPostsOnce({ ...baseInput, fuel5000NetCents: 54701, fuelExpenseTotalCents: 50000, driverBillFuelLineCents: 4700 });
+  if (redCBill.checks.find((c) => c.id === "C").pass) {
+    console.error(`${LABEL} --selftest FAIL — RED C (a cent not covered by any document): expected FAIL`);
+    fail += 1;
+  } else pass += 1;
+  const redCBillNotPosted = classifyFuelPostsOnce({ ...baseInput, fuel5000NetCents: 50000, fuelExpenseTotalCents: 50000, driverBillFuelLineCents: 4700 });
+  if (redCBillNotPosted.checks.find((c) => c.id === "C").pass) {
+    console.error(`${LABEL} --selftest FAIL — RED C (driver-bill fuel line with no GL behind it): expected FAIL`);
+    fail += 1;
+  } else pass += 1;
+
+  // Lead 443.42 #4 — A: adoption by a live expense on the same entry, or by the expense's relay fill; nothing wider.
+  const adoptCases = [
+    ["live expense on the same JE adopts", { entryId: "je1", postingSource: "fill1", expenses: [{ journal_entry_id: "je1", voided: false }] }, true],
+    ["voided expense on the same JE does not adopt", { entryId: "je1", postingSource: "fill1", expenses: [{ journal_entry_id: "je1", voided: true }] }, false],
+    ["live expense whose relay fill = the posting source adopts", { entryId: "je1", postingSource: "fill1", expenses: [{ journal_entry_id: "je9", relay_fill_id: "fill1", voided: false }] }, true],
+    ["live expense on another JE for another fill does not adopt", { entryId: "je1", postingSource: "fill1", expenses: [{ journal_entry_id: "je9", relay_fill_id: "fill2", voided: false }] }, false],
+    ["no expense: orphan", { entryId: "je1", postingSource: "fill1", expenses: [] }, false],
+  ];
+  for (const [name, args, want] of adoptCases) {
+    if (fuelEntryIsAdopted(args) !== want) {
+      console.error(`${LABEL} --selftest FAIL — A adoption: ${name}`);
+      fail += 1;
+    } else pass += 1;
+  }
+  const sqlOk = /e\.journal_entry_id = je\.id AND e\.voided_at IS NULL/.test(CHECK_A_ADOPTED_SQL)
+    && /ft\.relay_fuel_transaction_id::text = jep\.source_transaction_id::text/.test(CHECK_A_ADOPTED_SQL)
+    && (CHECK_A_ADOPTED_SQL.match(/e\.voided_at IS NULL/g) ?? []).length === 2;
+  if (!sqlOk) {
+    console.error(`${LABEL} --selftest FAIL — A adoption SQL no longer matches the ruled rule (live expense on the JE, or its relay fill)`);
+    fail += 1;
+  } else pass += 1;
+
   const redE = classifyFuelPostsOnce({ ...baseInput, docsDoublePosted: 3 });
   if (redE.allPass || redE.checks.find((c) => c.id === "E").pass) {
     console.error(`${LABEL} --selftest FAIL — RED E: expected check E FAIL`);
@@ -341,9 +408,7 @@ async function measureLive(client) {
         AND je.reversed_by_je_id IS NULL
         AND je.reverses_je_id IS NULL
         AND je.status = 'posted'
-        AND NOT EXISTS (SELECT 1 FROM accounting.expenses e
-                         WHERE e.operating_company_id = jep.operating_company_id AND e.journal_entry_id = je.id
-                           AND e.source_fuel_transaction_id::text = jep.source_transaction_id::text AND e.voided_at IS NULL)
+        AND NOT ${CHECK_A_ADOPTED_SQL}
         AND NOT EXISTS (SELECT 1 FROM accounting.reclassify_batch_lines rl
                          WHERE rl.operating_company_id = jep.operating_company_id AND rl.reclass_journal_entry_id = je.id
                            AND rl.result = 'applied')`,
@@ -401,6 +466,20 @@ async function measureLive(client) {
        JOIN accounting.expense_lines el ON el.expense_id = e.id
        JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
       WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.posting_status = 'posted'
+        AND a.operating_company_id = $1::uuid
+        AND a.account_number = '5000'`,
+    [USMCA_COMPANY_ID],
+  );
+
+  // C (Lead 443.42 #4): driver-bill fuel lines on 5000 — live (non-voided) driver bills and lines; their bill JE is already
+  // on the GL side of C.
+  const driverBillFuelRes = await client.query(
+    `SELECT COALESCE(SUM(round(bl.amount * 100)), 0)::bigint AS total_cents
+       FROM accounting.bills b
+       JOIN accounting.bill_lines bl ON bl.bill_id = b.id
+       JOIN catalogs.accounts a ON a.id = bl.account_id
+      WHERE b.operating_company_id = $1::uuid AND b.voided_at IS NULL AND bl.voided_at IS NULL
+        AND b.driver_id IS NOT NULL
         AND a.operating_company_id = $1::uuid
         AND a.account_number = '5000'`,
     [USMCA_COMPANY_ID],
@@ -484,6 +563,7 @@ async function measureLive(client) {
     duplicateFuelPointers: dupPtrRes.rows[0].cnt,
     fuel5000NetCents: Number(fuel5000Res.rows[0].net_cents),
     fuelExpenseTotalCents: Number(fuelTotalRes.rows[0].total_cents),
+    driverBillFuelLineCents: Number(driverBillFuelRes.rows[0].total_cents),
     expensesWithNullLinkage: nullLinkRes.rows[0].cnt,
     trailerOnlyGapCount: trailerOnlyRes.rows[0].cnt,
     expensesWithNullLinkageDetails: linkageDetails.join(", "),

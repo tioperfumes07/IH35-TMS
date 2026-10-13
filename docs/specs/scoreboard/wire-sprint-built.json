@@ -392,7 +392,7 @@
     {
       "task": "P38",
       "pr": "#5805",
-      "guard": "scripts/verify-steps/3061-verify-bill-wave-a-fk-write-path.mjs",
+      "guard": "scripts/verify-bill-wave-a-fk-write-path.mjs",
       "modules": [
         "accounting"
       ],
@@ -618,7 +618,7 @@
     {
       "task": "P29",
       "pr": "#5821",
-      "guard": "scripts/verify-steps/3073-verify-failed-posting-batch-is-retriable.mjs",
+      "guard": "scripts/verify-failed-posting-batch-is-retriable.mjs",
       "modules": [
         "settlements",
         "accounting"
@@ -633,7 +633,7 @@
     {
       "task": "P28",
       "pr": "#5826",
-      "guard": "scripts/verify-steps/3077-verify-account-register-orders-by-document-not-line.mjs",
+      "guard": "scripts/verify-account-register-orders-by-document-not-line.mjs",
       "modules": [
         "accounting"
       ],

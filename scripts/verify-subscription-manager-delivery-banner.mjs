@@ -53,7 +53,10 @@ function audit(text) {
   // or any other conditional block, since the underlying defect is unconditional (true for every row,
   // not just on an API error or once data loads).
   const bannerBlockMatch = stripped.match(
-    /<div\s+className="rounded-sm border border-slate-200[^"]*"\s+data-testid="q8-subscriptions-delivery-not-implemented"[\s\S]*?<\/div>/
+    // LEAD 443.105 (2026-10-12) — old rule: the banner block was found by `border border-slate-200`; new rule: by the house
+    // border token `border border-[#E5E7EB]` (BANK-F91208 / verify-rpt-sub-slate-leftover-chrome forbid slate on this page,
+    // so the two guards could not both pass after fb17a4b687). The unconditional-banner checks below are unchanged.
+    /<div\s+className="rounded-sm border border-\[#E5E7EB\][^"]*"\s+data-testid="q8-subscriptions-delivery-not-implemented"[\s\S]*?<\/div>/
   );
   need(bannerBlockMatch, "could not isolate the banner's own <div> block to check it is unconditional");
   if (bannerBlockMatch) {

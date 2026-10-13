@@ -56,6 +56,8 @@ run("cross-module scenario battery (real engine)", () => {
     db = new pg.Client(buildPgClientConfig(process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL!));
     await db.connect(); await db.query("SET ROLE ih35_app");
     await tx(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(`INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`, [userId, `battery-${s}@test.local`]);
       const acct=(i:string,n:string,nm:string,t:string)=>db.query(`INSERT INTO catalogs.accounts (id,operating_company_id,account_number,account_name,account_type,is_postable) VALUES ($1::uuid,$2::uuid,$3,$4,$5,true)`,[i,companyId,n,nm,t]);
       await acct(id.ap,`AP${s}`,"Accounts Payable","Liability");
@@ -118,8 +120,10 @@ run("cross-module scenario battery (real engine)", () => {
     const det = randomUUID(); const inv = randomUUID();
     await tx(async () => {
       await db.query(`INSERT INTO dispatch.detention_events (id,operating_company_id,load_id,stop_id,started_at,accrued_minutes,free_time_minutes,accrued_amount_cents,status) VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid, now()-interval '3 hours', 180, 120, $5, 'billed')`,[det,companyId,id.load,id.stop,CENTS]);
-      await db.query(`INSERT INTO accounting.invoices (id,operating_company_id,customer_id,display_id,due_date,status,issue_date,total_cents,tax_cents,source_load_id) VALUES ($1::uuid,$2::uuid,$3::uuid,'INV-2026-00002',CURRENT_DATE,'sent',CURRENT_DATE,$4,0,$5::uuid)`,[inv,companyId,id.customer,CENTS,id.load]);
+      await db.query(`INSERT INTO accounting.invoices (id,operating_company_id,customer_id,display_id,due_date,status,issue_date,total_cents,tax_cents,source_load_id) VALUES ($1::uuid,$2::uuid,$3::uuid,'INV-2026-00002',CURRENT_DATE,'draft',CURRENT_DATE,$4,0,$5::uuid)`,[inv,companyId,id.customer,CENTS,id.load]);
       await db.query(`INSERT INTO accounting.invoice_lines (operating_company_id,invoice_id,line_type,description,unit_amount_cents,line_total_cents,account_id) VALUES ($1::uuid,$2::uuid,'detention','Detention 1hr over free time',$3,$3,$4::uuid)`,[companyId,inv,CENTS,id.revenue]);
+      // 443.93: the send path writes the line first (fn_invoice_sent_requires_live_line) — the invoice is born draft, gets its line, then is sent.
+      await db.query(`UPDATE accounting.invoices SET status='sent' WHERE id=$1::uuid`,[inv]);
     });
     const d = await read(`SELECT status, load_id::text load, accrued_amount_cents::text amt FROM dispatch.detention_events WHERE id=$1::uuid`,[det]);
     expect(d[0].load).toBe(id.load); expect(d[0].status).toBe("billed");

@@ -44,6 +44,9 @@ export const ALLOW_OFFLINE_SKIP =
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+// 443.99: TLS is inferred per host (scripts/lib/pg-connection-options.cjs) — a hardcoded ssl option failed every
+// non-TLS Postgres (CI's fresh-migrated ih35_verify) with "The server does not support SSL connections".
+import pgConnectionOptions from "./lib/pg-connection-options.cjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-driver-paid-expense-credits-2175";
@@ -210,7 +213,7 @@ async function liveCheck() {
     return;
   }
   const { default: pg } = await import("pg");
-  const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const client = new pg.Client(pgConnectionOptions.buildPgClientConfig(url));
   await client.connect();
   try {
     await client.query("BEGIN");

@@ -224,6 +224,10 @@ export async function stampStopsFromGeofenceEvents(
           SET actual_arrival_at = $2::timestamptz, actual_arrival_source = 'eld_geofence',
               actual_departure_at = COALESCE(actual_departure_at, $3::timestamptz),
               actual_departure_source = CASE WHEN actual_departure_at IS NULL AND $3::timestamptz IS NOT NULL THEN 'eld_geofence' ELSE actual_departure_source END,
+              -- 443.70 S3: the recorded events move the stop's status with its times (cancelled is never overwritten)
+              status = CASE WHEN status = 'cancelled' THEN status
+                            WHEN COALESCE(actual_departure_at, $3::timestamptz) IS NOT NULL THEN 'departed'::mdata.stop_status_enum
+                            ELSE 'arrived'::mdata.stop_status_enum END,
               updated_at = now()
         WHERE id = $1::uuid AND actual_arrival_at IS NULL
         RETURNING id::text`,

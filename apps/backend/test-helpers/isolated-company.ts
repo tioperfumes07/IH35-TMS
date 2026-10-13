@@ -202,3 +202,29 @@ export async function deactivateIsolatedOperatingCompany(
   );
   await client.query(`DELETE FROM org.user_company_access WHERE company_id = $1::uuid`, [companyId]);
 }
+
+/**
+ * 443.100 — a fixture company that maps maintenance carries the WHOLE family the poster resolves: the
+ * maintenance/maintenance anchor plus its 9 sub-codes (migration 202611280000; maintenance-posting/poster.service.ts),
+ * in ONE statement. An anchor-only fixture is exactly the partial entity
+ * expense-category-map-posting-side-coherence.db.test.ts refuses ("fails loud at post time"), and with files running in
+ * parallel on one database that test saw these fixture companies mid-setup.
+ */
+export const MAINTENANCE_CATEGORY_CODES = [
+  "maintenance", "tires", "brakes", "engine", "dot", "pm_preventive", "body", "electrical", "ac", "misc",
+] as const;
+
+export async function insertMaintenanceCategoryMap(
+  db: { query: (sql: string, params?: unknown[]) => Promise<unknown> },
+  companyId: string,
+  accountId: string
+): Promise<void> {
+  await db.query(
+    `INSERT INTO accounting.expense_category_account_map
+       (operating_company_id, category_kind, category_code, account_id, posting_side, is_active)
+     SELECT $1::uuid, 'maintenance', code, $2::uuid, 'debit', true FROM unnest($3::text[]) AS code
+     ON CONFLICT (operating_company_id, category_kind, category_code, is_active) WHERE is_active = true
+     DO UPDATE SET account_id = EXCLUDED.account_id`,
+    [companyId, accountId, [...MAINTENANCE_CATEGORY_CODES]]
+  );
+}

@@ -22,15 +22,30 @@ export function check(filePath = path.join(ROOT, PAGE)) {
   assert(src.includes('storageKey="geofence-recon"'), "GeofenceReconciliationReport: must use one always-mounted storageKey=geofence-recon");
   assert(!/Object\.entries\(\s*byClass\s*\)/.test(src), "GeofenceReconciliationReport: must not group into multiple ParityTables (missing surface bar on empty)");
   assert(!/bg-green-50[\s\S]*No anomalies found/.test(src), "GeofenceReconciliationReport: must not green-only bypass that skips ParityTable");
+  // LEAD 443.99 class B (2026-10-12) — empty text, export name and Apply-staged date.
+  //   old rule: emptyText interpolates appliedDate or formatDateUS(appliedDate); exportFilename uses
+  //             `${appliedDate}`; Apply commits through setAppliedDate(date | next.reportDate).
+  //   new rule: emptyText interpolates mmmDd(appliedDate) (raw appliedDate / formatDateUS still accepted);
+  //             exportFilename is `geofence-recon-${appliedDate}` or `${appliedFilters.appliedDate}`; Apply
+  //             commits through useStagedListFilters({ ..., onApply: setAppliedFilters }) with the bar's
+  //             onApply={staged.apply} and fromDate={staged.draft.appliedDate} — or the old setAppliedDate.
+  //   why: RPT-04 (#21363, ff3721a970) moved every report onto useStagedListFilters (draft -> Apply) and
+  //        GLB-08 (#25795, b466548ae0) moved report dates to mmmDd. Same contract: one empty-state sentence
+  //        naming the applied date, and the date applies only on Apply. A live (un-staged) date still fails.
   assert(
-    /emptyText=\{`No anomalies found for \$\{(appliedDate|formatDateUS\(appliedDate\))\}\.`\}/.test(src),
+    /emptyText=\{`No anomalies found for \$\{(appliedDate|formatDateUS\(appliedDate\)|mmmDd\(appliedDate\))\}\.`\}/.test(src),
     "GeofenceReconciliationReport: honest emptyText on ParityTable",
   );
-  assert(/exportFilename=\{`geofence-recon-\$\{appliedDate\}`\}/.test(src) || src.includes("geofence-recon-${appliedDate}"), "GeofenceReconciliationReport: exportFilename for surface Export");
   assert(
-    src.includes("appliedDate") && /setAppliedDate\((date|next\.reportDate)\)/.test(src),
-    "GeofenceReconciliationReport: keep Apply-staged date",
+    /exportFilename=\{`geofence-recon-\$\{(appliedDate|appliedFilters\.appliedDate)\}`\}/.test(src),
+    "GeofenceReconciliationReport: exportFilename for surface Export",
   );
+  const legacyApply = /setAppliedDate\((date|next\.reportDate)\)/.test(src);
+  const stagedApply =
+    /useStagedListFilters\(\{[\s\S]{0,160}onApply:\s*setAppliedFilters/.test(src) &&
+    /onApply=\{staged\.apply\}/.test(src) &&
+    /fromDate=\{staged\.draft\.appliedDate\}/.test(src);
+  assert(src.includes("appliedDate") && (legacyApply || stagedApply), "GeofenceReconciliationReport: keep Apply-staged date");
 }
 
 // GUARD-SELFTEST-MUTATES-SOURCE fix: never write the plant into the real tracked file. Copy it
@@ -69,6 +84,23 @@ async function selftest() {
     },
   );
   assert(failed, "selftest: expected FAIL on green-only/grouped bypass");
+  let liveDateFailed = false;
+  await withMutatedCopy(
+    realPath,
+    (good) => {
+      const bad = good.replace("fromDate={staged.draft.appliedDate}", "fromDate={appliedDate}");
+      assert(bad !== good, "selftest fixture must un-stage the date");
+      return bad;
+    },
+    (tmpPath) => {
+      try {
+        check(tmpPath);
+      } catch {
+        liveDateFailed = true;
+      }
+    },
+  );
+  assert(liveDateFailed, "selftest: expected FAIL when the date bypasses Apply");
   console.log("verify-geofence-recon-surface-bar --selftest PASS");
 }
 

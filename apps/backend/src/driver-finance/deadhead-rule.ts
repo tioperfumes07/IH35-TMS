@@ -13,7 +13,17 @@ export function deadheadRateCents(input: { emptyRateCents?: number | null; loade
   return Number.isFinite(loaded) && loaded > 0 ? loaded : null;
 }
 
+/**
+ * ROUND 443.4 — miles x rate in cents, rounded the way Postgres numeric rounds. settlement_lines_item_qty_rate_amount_check
+ * compares round(quantity * rate_cents) (numeric, exact) with round(amount * 100); a JS float product such as
+ * 19.9 * 45 = 895.4999999999999 rounds to 895 where Postgres gives 896, and the line is refused. Snapping the product to
+ * 6 decimals first removes the float error (rates are whole cents, miles carry at most a few decimals).
+ */
+export function milesTimesRateCents(miles: number, rateCents: number): number {
+  return Math.round(Number((miles * rateCents).toFixed(6)));
+}
+
 export function deadheadPayCents(miles: number | null | undefined, rateCents: number | null): number {
   const m = Number(miles ?? 0);
-  return Number.isFinite(m) && m > 0 && rateCents != null && rateCents > 0 ? Math.round(m * rateCents) : 0;
+  return Number.isFinite(m) && m > 0 && rateCents != null && rateCents > 0 ? milesTimesRateCents(m, rateCents) : 0;
 }

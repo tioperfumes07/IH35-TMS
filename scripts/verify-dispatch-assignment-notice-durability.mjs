@@ -6,6 +6,7 @@ const FILES = {
   reassign: "apps/backend/src/dispatch/dispatch-refinements.service.ts",
   routes: "apps/backend/src/outbox/handlers/operational-notice.routes.ts",
   loads: "apps/backend/src/dispatch/loads.routes.ts",
+  transition: "apps/backend/src/dispatch/load-transition.service.ts",
   dispatcher: "apps/backend/src/notifications/dispatcher.ts",
   noticeHandler: "apps/backend/src/outbox/handlers/operational-notice.handler.ts",
   trailHandlers: "apps/backend/src/outbox/handlers/trail-events.handler.ts",
@@ -25,6 +26,7 @@ export function problems(files) {
   const reassignBlock = reassign.match(/export async function manualReassignLoad[\s\S]*?(?=\nexport async function listLoadStopsRefined)/)?.[0] ?? "";
   const routes = files.routes ?? "";
   const loads = files.loads ?? "";
+  const transition = files.transition ?? "";
   const dispatcher = files.dispatcher ?? "";
   const noticeHandler = files.noticeHandler ?? "";
   const trailHandlers = files.trailHandlers ?? "";
@@ -71,18 +73,29 @@ export function problems(files) {
   if (count(routes, 'audience: { kind: "driver", driverIdKey: "driver_id"') < 2) {
     failures.push("both assignment lifecycle notices must target the canonical driver audience");
   }
-  if (!loads.includes('enqueueOutboxEvent(\n          client,\n          "load.abandoned"')) {
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: dispatch/loads.routes.ts itself enqueues "load.abandoned" on `client` (10-space indent) before the
+  //             transition's `driver_bill_mint: driverBillOutcome` return.
+  //   new rule: the route runs transitionDispatchLoadInClientTx(client, ...) inside withCompanyScope, and that service
+  //             (load-transition.service.ts) enqueues "load.abandoned" on the same `client` before its return.
+  //   why: ROUND 313/315 (#23821, 25f2a8faa4; f21671a323) moved the whole transition body out of the route into
+  //        load-transition.service.ts so the geofence auto-delivery path shares it. Same transaction, same ordering;
+  //        dropping the enqueue, moving it after the return, or the route leaving the scoped transaction still fails.
+  if (!/withCompanyScope\(authUser\.uuid, operatingCompanyId, async \(client\) => \{\s*return transitionDispatchLoadInClientTx\(client,/.test(loads)) {
+    failures.push("dispatch transition route must run transitionDispatchLoadInClientTx on its scoped transaction client");
+  }
+  if (!/enqueueOutboxEvent\(\s*client,\s*"load\.abandoned"/.test(transition)) {
     failures.push("abandoned transition must enqueue load.abandoned on its scoped transaction client");
   }
-  const abandonedEvent = loads.indexOf('"load.abandoned"');
-  const transitionReturn = loads.indexOf("driver_bill_mint: driverBillOutcome", abandonedEvent);
+  const abandonedEvent = transition.indexOf('"load.abandoned"');
+  const transitionReturn = transition.indexOf("driver_bill_mint: driverBillOutcome", abandonedEvent);
   if (abandonedEvent < 0 || transitionReturn < 0 || abandonedEvent > transitionReturn) {
     failures.push("load.abandoned enqueue must occur before the transition transaction returns");
   }
   if (!routes.includes('eventType: "load.abandoned"')) {
     failures.push("load.abandoned needs a registered operational-notice route");
   }
-  if (/notifyAbandonedLoadStakeholders/.test(loads)) {
+  if (/notifyAbandonedLoadStakeholders/.test(loads) || /notifyAbandonedLoadStakeholders\([^)]*\)\.catch\(\(\) => undefined\)/.test(transition)) {
     failures.push("abandoned transition must not launch a swallowed post-commit delivery outside the durable outbox");
   }
   if (/new TrailEventHandler\(["']load\.abandoned["']\)/.test(trailHandlers)) {
@@ -141,9 +154,12 @@ if (process.argv.includes("--selftest")) {
     ["reassign notice precedes history proof", { ...production, reassign: production.reassign.replace("if (!assignmentHistory.rows[0]?.id) {", 'await enqueueOutboxEvent(client, "load.reassigned", {}, {});\n      if (!assignmentHistory.rows[0]?.id) {') }],
     ["reassign wrapper removed", { ...production, reassign: production.reassign.replace("return withCurrentUser(userId, async (client) => {", "return noTransaction(userId, async (client) => {") }],
     ["reassign nested commit", { ...production, reassign: production.reassign.replace("const loadRes = await client.query(", 'await client.query("COMMIT");\n      const loadRes = await client.query(') }],
-    ["abandoned durable enqueue", { ...production, loads: production.loads.replace('"load.abandoned"', '"load.abandoned_REMOVED"') }],
+    ["abandoned durable enqueue", { ...production, transition: production.transition.replace('"load.abandoned"', '"load.abandoned_REMOVED"') }],
+    ["abandoned enqueue on a non-transaction client", { ...production, transition: production.transition.replace(/await enqueueOutboxEvent\(\s*client,\s*"load\.abandoned"/, 'await enqueueOutboxEvent(\n      otherClient,\n      "load.abandoned"') }],
+    ["route leaves the scoped transaction", { ...production, loads: production.loads.replace("return transitionDispatchLoadInClientTx(client,", "return transitionDispatchLoadInClientTx(pool,") }],
     ["abandoned handler", { ...production, routes: production.routes.replace('eventType: "load.abandoned"', 'eventType: "load.abandoned_REMOVED"') }],
     ["abandoned detached delivery restored", { ...production, loads: `${production.loads}\nvoid notifyAbandonedLoadStakeholders({}).catch(() => undefined);` }],
+    ["abandoned detached delivery restored in the service", { ...production, transition: `${production.transition}\nvoid notifyAbandonedLoadStakeholders({}).catch(() => undefined);` }],
     ["abandoned trail overwrite restored", { ...production, trailHandlers: `${production.trailHandlers}\nnew TrailEventHandler("load.abandoned");` }],
     ["abandoned multichannel route removed", { ...production, routes: production.routes.replace('multiChannelRoles: ["Owner", "Administrator"],', "") }],
     ["abandoned delivery failure ignored", { ...production, noticeHandler: production.noticeHandler.replace("if (failures.length) {", "if (false) {") }],

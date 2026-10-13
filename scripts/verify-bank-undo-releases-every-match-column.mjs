@@ -105,7 +105,16 @@ export function checkTabsBindUndoActions(source) {
     problems.push("no isUndoEligible(tx) eligibility gate found — Categorized/Excluded rows have no way to distinguish themselves for a row action");
   }
   // Row-level: an eligibility-gated control whose onClick actually calls the undo handler.
-  if (!/isUndoEligible\(tx\)[\s\S]{0,400}?onClick=\{\(\)\s*=>\s*void undoCategorization/.test(source)) {
+  // 443.102 — old rule: the undo onClick within 400 chars of the literal `isUndoEligible(tx)`. New rule: that, OR the
+  // gate bound to a const (`const g = isUndoEligible(tx)`) and the undo onClick inside that const's `{g ? (` branch.
+  // Why: BANK-F44329 (#26363) put the suggested-match block between the gate and the Undo button; the control is still
+  // gated and bound, the fixed distance was not. A branch with no undo call, or an ungated undo, still fails.
+  const direct = /isUndoEligible\(tx\)[\s\S]{0,400}?onClick=\{\(\)\s*=>\s*void undoCategorization/.test(source);
+  const gateVar = /const\s+(\w+)\s*=\s*isUndoEligible\(tx\)/.exec(source)?.[1];
+  const viaGate = gateVar
+    ? new RegExp(`\\{${gateVar}\\s*\\?\\s*\\([\\s\\S]{0,400}?onClick=\\{\\(\\)\\s*=>\\s*void undoCategorization\\(\\[tx\\.id\\]\\)`).test(source)
+    : false;
+  if (!direct && !viaGate) {
     problems.push("row-level Action column: no control gated on isUndoEligible(tx) calling undoCategorization(...) — the Action column can render with nothing bound");
   }
   // Bulk: an "undo" entry in the bulk action bar array, bound to a real onClick (not a no-op).
@@ -196,6 +205,12 @@ function selftest() {
   const emptySource = "export function X() { return null; }";
   const emptyProblems = checkTabsBindUndoActions(emptySource);
   if (emptyProblems.length === 0) failures.push("checkTabsBindUndoActions did not flag a file with no Undo bindings at all");
+  // 443.102 — gate bound to a const: an unbound branch and a never-used gate are both flagged; the bound branch passes.
+  const bulk = 'id: "undo", label: "Undo", onClick: () => void bulkUndo() }';
+  const viaConst = `function isUndoEligible(tx) {} const g = isUndoEligible(tx); ${"x".repeat(600)} {g ? (<Button onClick={() => void undoCategorization([tx.id])}>Undo</Button>) : null} ${bulk}`;
+  if (checkTabsBindUndoActions(viaConst).length !== 0) failures.push("a const-bound gate whose branch calls undoCategorization was flagged");
+  if (checkTabsBindUndoActions(viaConst.replace("void undoCategorization([tx.id])", "undefined")).length === 0) failures.push("a const-bound gate whose branch binds nothing was not flagged");
+  if (checkTabsBindUndoActions(viaConst.replace("{g ? (", "{other ? (")).length === 0) failures.push("an undo button outside the gate's branch was not flagged");
 
   if (!fs.existsSync(VIEW_PATH)) {
     failures.push(`selftest: ${path.relative(ROOT, VIEW_PATH)} does not exist`);

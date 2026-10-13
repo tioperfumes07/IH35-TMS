@@ -498,6 +498,9 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return validationError(reply, parsedBody.error);
     const b = parsedBody.data;
     const created = await withCurrentUser(authUser.uuid, async (client) => {
+      // LEAD 443.79 #3: the category insert ran with no company scope, so RLS refused every new category (42501).
+      // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [parsedQuery.data.operating_company_id]);
       const res = await client.query(
         `
           INSERT INTO catalogs.qbo_categories (operating_company_id, code, display_name, description, metadata, is_active, sort_order)

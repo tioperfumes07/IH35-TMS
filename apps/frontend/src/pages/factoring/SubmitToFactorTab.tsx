@@ -547,62 +547,97 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
                 Faro holds one 1.5% Security Reserve per invoice — normally as escrow reserve, on some invoices as cash reserve instead. Enter
                 Faro's purchase-report figures here when they differ from the expected split.
               </p>
-              <table className="w-full tabular-nums">
-                <thead>
-                  <tr>
-                    <th className="text-left uppercase" style={FIELD_LABEL_STYLE}>Invoice</th>
-                    <th className="text-left uppercase" style={FIELD_LABEL_STYLE}>Faro Inv #</th>
-                    <th className="text-right uppercase" style={FIELD_LABEL_STYLE}>Escrow reserve</th>
-                    <th className="text-right uppercase" style={FIELD_LABEL_STYLE}>Cash reserve</th>
-                    <th className="text-right uppercase" style={FIELD_LABEL_STYLE}>Fee</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedRows.map((r) => {
-                    const f = lineFigures(r, lineActuals[r.invoice_id]);
-                    const setF = (patch: Partial<LineActuals>) => setLineActuals((m) => ({ ...m, [r.invoice_id]: { ...f, ...patch } }));
-                    return (
-                      <tr key={r.invoice_id} data-testid={`submit-factor-actuals-row-${r.invoice_id}`}>
-                        <td>
-                          <EntityLink kind="invoice" id={r.invoice_id} label={r.invoice_display_id ?? "invoice"} />
-                        </td>
-                        <td className="py-1">
-                          <input
-                            value={faroNumbers[r.invoice_id] ?? ""}
-                            onChange={(e) => setFaroNumbers((m) => ({ ...m, [r.invoice_id]: e.target.value.replace(/[^0-9]/g, "").slice(0, 6) }))}
-                            inputMode="numeric"
-                            placeholder="001"
-                            className={`${FORM_FIELD_CONTROL_SIZE_CLASS} w-[104px] tabular-nums`}
-                            aria-label={`Faro invoice number ${r.invoice_display_id ?? ""}`}
-                            data-testid={`submit-factor-faro-inv-${r.invoice_id}`}
-                          />
-                        </td>
-                        <td className="py-1 text-right">
-                          <MoneyInput valueCents={f.escrow_reserve_cents} onChangeCents={(c) => setF({ escrow_reserve_cents: c ?? 0 })} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel={`Escrow reserve ${r.invoice_display_id ?? ""}`} />
-                        </td>
-                        <td className="py-1 text-right">
-                          <MoneyInput valueCents={f.cash_reserve_cents} onChangeCents={(c) => setF({ cash_reserve_cents: c ?? 0 })} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel={`Cash reserve ${r.invoice_display_id ?? ""}`} />
-                        </td>
-                        <td className="py-1 text-right">
-                          <MoneyInput valueCents={f.fee_cents} onChangeCents={(c) => setF({ fee_cents: c ?? 0 })} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel={`Fee ${r.invoice_display_id ?? ""}`} />
-                        </td>
-                        <td className="py-1 pl-2 text-right">
-                          <button
-                            type="button"
-                            className="rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-[#1F2A44]"
-                            onClick={() => setF({ cash_reserve_cents: f.cash_reserve_cents + f.escrow_reserve_cents, escrow_reserve_cents: 0 })}
-                            disabled={f.escrow_reserve_cents === 0}
-                            data-testid={`submit-factor-reserve-to-cash-${r.invoice_id}`}
-                          >
-                            Reserve in cash
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table). */}
+              <ParityTable<PurchaseCandidate>
+                embedded
+                rows={selectedRows}
+                rowKey={(r) => r.invoice_id}
+                storageKey="submit-factor-actuals"
+                suppressToolbarSearch
+                suppressToolbarRange
+                hidePager
+                rowTestId={(r) => `submit-factor-actuals-row-${r.invoice_id}`}
+                columns={[
+                  {
+                    key: "invoice_display_id",
+                    label: "Invoice",
+                    sortable: true,
+                    sortValue: (r) => r.invoice_display_id,
+                    render: (r) => <EntityLink kind="invoice" id={r.invoice_id} label={r.invoice_display_id ?? "invoice"} />,
+                  },
+                  {
+                    key: "faro_invoice_number",
+                    label: "Faro Inv #",
+                    sortable: true,
+                    sortValue: (r) => faroNumbers[r.invoice_id] ?? "",
+                    overflowVisible: true,
+                    render: (r) => (
+                      <input
+                        value={faroNumbers[r.invoice_id] ?? ""}
+                        onChange={(e) => setFaroNumbers((m) => ({ ...m, [r.invoice_id]: e.target.value.replace(/[^0-9]/g, "").slice(0, 6) }))}
+                        inputMode="numeric"
+                        placeholder="001"
+                        className={`${FORM_FIELD_CONTROL_SIZE_CLASS} w-[104px] tabular-nums`}
+                        aria-label={`Faro invoice number ${r.invoice_display_id ?? ""}`}
+                        data-testid={`submit-factor-faro-inv-${r.invoice_id}`}
+                      />
+                    ),
+                  },
+                  {
+                    key: "escrow_reserve_cents",
+                    label: "Escrow reserve",
+                    kind: "money",
+                    sortable: true,
+                    sortValue: (r) => lineFigures(r, lineActuals[r.invoice_id]).escrow_reserve_cents,
+                    overflowVisible: true,
+                    render: (r) => {
+                      const f = lineFigures(r, lineActuals[r.invoice_id]);
+                      const setF = (patch: Partial<LineActuals>) => setLineActuals((m) => ({ ...m, [r.invoice_id]: { ...f, ...patch } }));
+                      return <MoneyInput valueCents={f.escrow_reserve_cents} onChangeCents={(c) => setF({ escrow_reserve_cents: c ?? 0 })} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel={`Escrow reserve ${r.invoice_display_id ?? ""}`} />;
+                    },
+                  },
+                  {
+                    key: "cash_reserve_cents",
+                    label: "Cash reserve",
+                    kind: "money",
+                    sortable: true,
+                    sortValue: (r) => lineFigures(r, lineActuals[r.invoice_id]).cash_reserve_cents,
+                    overflowVisible: true,
+                    render: (r) => {
+                      const f = lineFigures(r, lineActuals[r.invoice_id]);
+                      const setF = (patch: Partial<LineActuals>) => setLineActuals((m) => ({ ...m, [r.invoice_id]: { ...f, ...patch } }));
+                      return <MoneyInput valueCents={f.cash_reserve_cents} onChangeCents={(c) => setF({ cash_reserve_cents: c ?? 0 })} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel={`Cash reserve ${r.invoice_display_id ?? ""}`} />;
+                    },
+                  },
+                  {
+                    key: "fee_cents",
+                    label: "Fee",
+                    kind: "money",
+                    sortable: true,
+                    sortValue: (r) => lineFigures(r, lineActuals[r.invoice_id]).fee_cents,
+                    overflowVisible: true,
+                    render: (r) => {
+                      const f = lineFigures(r, lineActuals[r.invoice_id]);
+                      const setF = (patch: Partial<LineActuals>) => setLineActuals((m) => ({ ...m, [r.invoice_id]: { ...f, ...patch } }));
+                      return <MoneyInput valueCents={f.fee_cents} onChangeCents={(c) => setF({ fee_cents: c ?? 0 })} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel={`Fee ${r.invoice_display_id ?? ""}`} />;
+                    },
+                  },
+                ]}
+                rowActions={(r) => {
+                  const f = lineFigures(r, lineActuals[r.invoice_id]);
+                  return (
+                    <button
+                      type="button"
+                      className="rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-[#1F2A44]"
+                      onClick={() => setLineActuals((m) => ({ ...m, [r.invoice_id]: { ...f, cash_reserve_cents: f.cash_reserve_cents + f.escrow_reserve_cents, escrow_reserve_cents: 0 } }))}
+                      disabled={f.escrow_reserve_cents === 0}
+                      data-testid={`submit-factor-reserve-to-cash-${r.invoice_id}`}
+                    >
+                      Reserve in cash
+                    </button>
+                  );
+                }}
+              />
             </div>
           </DataPanel>
         ) : null}

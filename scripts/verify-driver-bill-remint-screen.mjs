@@ -53,8 +53,18 @@ export function assertGuard(routesSrc, screenSrc, manifestSrc, overviewSrc) {
     if (!/listLoadsNeedingDriverBillRemint/.test(screenSrc)) {
       errs.push(`${SCREEN_FILE}: must call the list API, not hand-roll a query`);
     }
-    if (!/window\.prompt/.test(screenSrc)) {
-      errs.push(`${SCREEN_FILE}: reason must be required (typed prompt), matching every other void/remint action in this app`);
+    // 443.99 (CC-2) — old rule: the screen must call window.prompt for the reason.
+    //   new rule: the reason is collected by the shared VoidReasonModal (onSubmit wired), and the submit handler
+    //             refuses an empty/whitespace reason before any remint call; window.prompt is no longer allowed.
+    //   why: LST-F423-P13 (#25702, 74375ea356) eliminated every native browser dialog from guarded surfaces and moved
+    //        this screen to VoidReasonModal — the same reason-required behaviour, so the old anchor reported a real,
+    //        compliant screen as broken. Not looser: dropping the modal, the empty-reason refusal, or reintroducing a
+    //        native prompt all fail.
+    const modalWired = /<VoidReasonModal[\s\S]{0,600}onSubmit=\{submitRemintReason\}/.test(screenSrc);
+    const handler = screenSrc.slice(screenSrc.indexOf("async function submitRemintReason("), screenSrc.indexOf("async function submitRemintReason(") + 400);
+    const refusesEmpty = /const trimmed = reason\.trim\(\);\s*if \(!trimmed\) \{[\s\S]{0,120}return;/.test(handler);
+    if (!modalWired || !refusesEmpty || /window\.prompt/.test(screenSrc)) {
+      errs.push(`${SCREEN_FILE}: reason must be required (VoidReasonModal, empty reason refused), matching every other void/remint action in this app`);
     }
   }
 
@@ -88,7 +98,9 @@ function selftest() {
     ["bad3-no-role-gate", assertGuard(goodRoutes.replace(/REMINT_ROLES\.has\(authUser\.role\)/g, "true"), goodScreen, goodManifest, goodOverview)],
     ["bad4-not-reused", assertGuard(goodRoutes.replace(/ensureDriverBillArtifactsForLoad\(client, \{/g, "ensureDriverBillArtifactsForLoadXXX(client, {"), goodScreen, goodManifest, goodOverview)],
     ["bad5-no-audit", assertGuard(goodRoutes.replace(/driver_bill_remint_all_attempted/g, "REMOVED"), goodScreen, goodManifest, goodOverview)],
-    ["bad6-no-reason-prompt", assertGuard(goodRoutes, goodScreen.replace(/window\.prompt/g, "REMOVED"), goodManifest, goodOverview)],
+    ["bad6-no-reason-modal", assertGuard(goodRoutes, goodScreen.replace(/onSubmit=\{submitRemintReason\}/g, "onSubmit={() => {}}"), goodManifest, goodOverview)],
+    ["bad6b-empty-reason-accepted", assertGuard(goodRoutes, goodScreen.replace(/if \(!trimmed\) \{[\s\S]*?return;\s*\}/, ""), goodManifest, goodOverview)],
+    ["bad6c-native-prompt-back", assertGuard(goodRoutes, goodScreen + "\nconst r = window.prompt(\"Reason\");\n", goodManifest, goodOverview)],
     ["bad7-not-registered", assertGuard(goodRoutes, goodScreen, goodManifest.replace(/path="\/dispatch\/driver-bill-remint"/g, "REMOVED"), goodOverview)],
     ["bad8-orphan-route-no-link", assertGuard(goodRoutes, goodScreen, goodManifest, goodOverview.replace(/\/dispatch\/driver-bill-remint/g, "REMOVED"))],
   ];

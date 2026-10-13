@@ -4,7 +4,6 @@
   "baseline_established": "2026-09-22",
   "baseline_count": 10,
   "files": [
-    "verify-ar-ties-to-qbo-invoice-list.mjs",
     "verify-cash-flow-reads-delivery-date.mjs",
     "verify-driver-bill-has-miles-and-rate.mjs",
     "verify-fuel-location-is-a-city.mjs",

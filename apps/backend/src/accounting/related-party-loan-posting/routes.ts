@@ -22,17 +22,29 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 
 import { currentAuthUser, validationError, withCompanyScope } from "../shared.js";
-import { appendCrudAudit } from "../../audit/crud-audit.js";
-import { buildLoanSchedule } from "./schedule.service.js";
 import { prepareInterestAccrual } from "./interest-accrual.service.js";
 import { statusListCondition, statusListParam } from "../../lib/status-list.js";
+import { listRelatedPartyLoanFacilities } from "./facility.service.js";
+import {
+  RELATED_PARTY_LOAN_TARGET_TYPES,
+  createRelatedPartyLoanEntry,
+} from "./create-entry.service.js";
+import { getPartyLedger, listPartyAccounts } from "./party-ledger.service.js";
+import {
+  RelatedPartyAccountError,
+  ensureRelatedPartyAccount,
+  refuseNonOwnerRelatedPartyAccount,
+} from "./party-account.service.js";
+import { pairPartyTransfer, postPartyEntry } from "./party-entry-post.service.js";
+import { createJournalEntryOnClient } from "../journal-entries.service.js";
+
+const TARGET_TYPES = RELATED_PARTY_LOAN_TARGET_TYPES; // includes party_transfer_out (443.59)
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   direction: z.enum(["in", "out"]).optional(),
-  target_type: z
-    .enum(["bill", "settlement", "cash_advance", "expense", "loan_out", "repayment", "intercompany"])
-    .optional(),
+  target_type: z.enum(TARGET_TYPES).optional(),
+  facility_id: z.string().uuid().optional(),
   counterparty_id: z.string().uuid().optional(),
   // U12 — multi-select: ?status=a&status=b (one value still accepted).
   status: statusListParam(["draft", "open", "paid", "reversed"] as const),
@@ -50,15 +62,7 @@ const createBodySchema = z.object({
   counterparty_id: z.string().uuid().nullable().optional(),
   counterparty_name: z.string().trim().max(200).optional(),
   account_id: z.string().uuid(),
-  target_type: z.enum([
-    "bill",
-    "settlement",
-    "cash_advance",
-    "expense",
-    "loan_out",
-    "repayment",
-    "intercompany",
-  ]),
+  target_type: z.enum(TARGET_TYPES),
   target_id: z.string().uuid().nullable().optional(),
   principal_cents: z.number().int().positive(),
   entry_date: z.string().date(),
@@ -70,11 +74,37 @@ const createBodySchema = z.object({
   payment_count: z.number().int().positive().nullable().optional(),
   first_payment_date: z.string().date().optional(),
   funding_source_note: z.string().trim().max(500).optional(),
+  /** ROUND 443.22-2a — optional bank line that opened the Loan wizard (reverse pointer). */
+  bank_transaction_id: z.string().uuid().nullable().optional(),
+  /**
+   * ROUND 443.22-2e — CoA debit for paid_direct_vendor (what was paid for: Relay Fuel Wallet, etc.).
+   * Required when target_type is paid_direct_vendor; must be null/omitted for bank-line fundings.
+   */
+  funding_account_id: z.string().uuid().nullable().optional(),
+  /** ROUND 443.22-2e — optional intermediary who paid from a personal account (Alberto). */
+  intermediary_name: z.string().trim().max(200).optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
 
 export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
+  // ── FACILITIES — Option 1: one running LOC per person (ROUND 443.22-2b). ─────────────────────────
+  app.get(
+    "/api/v1/accounting/related-party-loan-facilities",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const parsed = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+      if (!parsed.success) return validationError(reply, parsed.error);
+
+      const facilities = await withCompanyScope(authUser.uuid, parsed.data.operating_company_id, async (client) =>
+        listRelatedPartyLoanFacilities(client, parsed.data.operating_company_id)
+      );
+      return { facilities, total_count: facilities.length };
+    }
+  );
+
   // ── LIST — the register. Every filter is applied in SQL, entity-scoped. ──────────────────────────
   app.get(
     "/api/v1/accounting/related-party-loans",
@@ -99,6 +129,10 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
         if (q.target_type) {
           values.push(q.target_type);
           filters.push(`e.target_type = $${values.length}`);
+        }
+        if (q.facility_id) {
+          values.push(q.facility_id);
+          filters.push(`e.facility_id = $${values.length}::uuid`);
         }
         if (q.counterparty_id) {
           values.push(q.counterparty_id);
@@ -146,6 +180,15 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
                    e.first_payment_date::text,
                    e.status,
                    e.je_id::text,
+                   e.facility_id::text,
+                   e.display_id,
+                   e.document_kind,
+                   e.funding_account_id::text,
+                   fa.account_number AS funding_account_number,
+                   fa.account_name AS funding_account_name,
+                   e.intermediary_name,
+                   e.note_file_id::text,
+                   CASE WHEN e.note_html IS NOT NULL AND length(e.note_html) > 0 THEN true ELSE false END AS has_note,
                    -- Reversal + related-party state belong in the REGISTER, not just the detail page:
                    -- a row that has been reversed must never read as live, and ASC 850 related-party
                    -- disclosure depends on the tag being visible where the balances are reviewed.
@@ -170,6 +213,8 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
               FROM accounting.related_party_loan_entries e
               LEFT JOIN catalogs.accounts a
                 ON a.id = e.account_id AND a.operating_company_id = e.operating_company_id
+              LEFT JOIN catalogs.accounts fa
+                ON fa.id = e.funding_account_id AND fa.operating_company_id = e.operating_company_id
             ${where}
              ORDER BY e.entry_date DESC, e.created_at DESC
              LIMIT $${values.length - 1} OFFSET $${values.length}
@@ -346,101 +391,177 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
       if (!parsed.success) return validationError(reply, parsed.error);
       const b = parsed.data;
 
-      const result = await withCompanyScope(authUser.uuid, b.operating_company_id, async (client) => {
-        // The account must belong to THIS entity. A loan booked against another company's account
-        // moves money between books.
-        const acct = (await client.query(
-          `SELECT id::text FROM catalogs.accounts
-            WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
-          [b.account_id, b.operating_company_id]
-        )) as { rows: Array<{ id: string }> };
-        if (!acct.rows[0]) return { error: "account_not_found_for_company" as const };
+      // Writer lives in create-entry.service.ts so CC-2 Relay deposit poster can call
+      // createPaidDirectVendorAdvance for cards 0210 / 6248 / 9855 (not 5007 Amex).
+      const result = await withCompanyScope(authUser.uuid, b.operating_company_id, async (client) =>
+        createRelatedPartyLoanEntry(client, b, authUser.uuid)
+      );
 
-        const inserted = (await client.query(
-          `INSERT INTO accounting.related_party_loan_entries
-             (operating_company_id, direction, relationship, counterparty_kind, counterparty_id,
-              counterparty_name, account_id, target_type, target_id, principal_cents, entry_date,
-              interest_rate_bps, interest_method, payment_frequency, payment_count, first_payment_date,
-              funding_source_note, status, created_by_user_id)
-           VALUES ($1::uuid,$2,$3,$4,$5::uuid,$6,$7::uuid,$8,$9::uuid,$10,$11::date,$12,$13,$14,$15,$16::date,$17,'open',$18::uuid)
-           RETURNING id::text, direction, principal_cents, entry_date::text`,
-          [
-            b.operating_company_id,
-            b.direction,
-            b.relationship,
-            b.counterparty_kind,
-            b.counterparty_id ?? null,
-            b.counterparty_name ?? null,
-            b.account_id,
-            b.target_type,
-            b.target_id ?? null,
-            b.principal_cents,
-            b.entry_date,
-            b.interest_rate_bps,
-            b.interest_method ?? null,
-            b.payment_frequency ?? null,
-            b.payment_count ?? null,
-            b.first_payment_date ?? null,
-            b.funding_source_note ?? null,
-            authUser.uuid,
-          ]
-        )) as { rows: Array<{ id: string }> };
-        const loanId = inserted.rows[0].id;
-
-        // Schedule in the SAME transaction — a loan without one is a loan nobody gets reminded about.
-        let scheduleRows = 0;
-        if (b.payment_frequency && b.first_payment_date) {
-          const rows = buildLoanSchedule({
-            principalCents: b.principal_cents,
-            interestRateBps: b.interest_rate_bps,
-            paymentFrequency: b.payment_frequency,
-            paymentCount: b.payment_count ?? null,
-            firstPaymentDate: b.first_payment_date,
+      if ("error" in result) {
+        if (result.error === "repayment_exceeds_facility_open_balance") {
+          return reply.code(400).send({
+            error: result.error,
+            open_balance_cents: result.open_balance_cents,
+            principal_cents: result.principal_cents,
+            facility_id: result.facility_id,
+            message: result.message,
           });
-          for (const r of rows) {
-            await client.query(
-              `INSERT INTO accounting.related_party_loan_schedule
-                 (operating_company_id, loan_id, payment_number, due_date, payment_cents,
-                  principal_cents, interest_cents, remaining_balance_cents, created_by_user_id)
-               VALUES ($1::uuid,$2::uuid,$3,$4::date,$5,$6,$7,$8,$9::uuid)`,
-              [
-                b.operating_company_id,
-                loanId,
-                r.payment_number,
-                r.due_date,
-                r.payment_cents,
-                r.principal_cents,
-                r.interest_cents,
-                r.remaining_balance_cents,
-                authUser.uuid,
-              ]
-            );
-          }
-          scheduleRows = rows.length;
         }
-
-        await appendCrudAudit(
-          client,
-          authUser.uuid,
-          "accounting.related_party_loan.created",
-          {
-            resource_type: "accounting.related_party_loan_entries",
-            resource_id: loanId,
-            operating_company_id: b.operating_company_id,
-            direction: b.direction,
-            principal_cents: b.principal_cents,
-            account_id: b.account_id,
-            schedule_rows: scheduleRows,
-          },
-          "info",
-          "LOAN-05"
-        );
-
-        return { id: loanId, schedule_rows: scheduleRows };
-      });
-
-      if ("error" in result) return reply.code(400).send({ error: result.error });
+        return reply.code(400).send({ error: result.error });
+      }
       return reply.code(201).send(result);
+    }
+  );
+
+  // ── PARTY LEDGER (443.59 item 4 / RULING 443.65 #2c) — read from the party's GL account. ─────────────────
+  // Every "Due to / from <party>" account, with its GL balance (credit-positive).
+  app.get(
+    "/api/v1/accounting/related-party-loans/parties",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+      if (!q.success) return validationError(reply, q.error);
+      const parties = await withCompanyScope(authUser.uuid, q.data.operating_company_id, (client) =>
+        listPartyAccounts(client as never, q.data.operating_company_id)
+      );
+      return { parties };
+    }
+  );
+
+  // LEAD 443.134 #1 — the app creates a related party's ONE running "Due to / from <party>" account (2410-00-nnn, linked to
+  // the party, card-map rows for the party pointed at it). Owner only; dry_run defaults true; idempotent. Posts nothing.
+  app.post(
+    "/api/v1/accounting/related-parties/accounts/ensure",
+    { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+      if (!q.success) return validationError(reply, q.error);
+      const b = z
+        .object({ party_type: z.literal("vendor"), party_id: z.string().uuid(), dry_run: z.boolean().default(true) })
+        .safeParse(req.body ?? {});
+      if (!b.success) return validationError(reply, b.error);
+      const opco = q.data.operating_company_id;
+      const role = String((authUser as { role?: string }).role ?? "");
+      if (role !== "Owner") {
+        await withCompanyScope(authUser.uuid, opco, (client) =>
+          refuseNonOwnerRelatedPartyAccount(client as never, { userId: authUser.uuid, role }, opco).catch((e) => {
+            if (!(e instanceof RelatedPartyAccountError)) throw e;
+          })
+        );
+        return reply.code(403).send({ error: "owner_only", message: "Only the Owner can create a related party's account." });
+      }
+      try {
+        return await withCompanyScope(authUser.uuid, opco, (client) =>
+          ensureRelatedPartyAccount(client as never, {
+            operatingCompanyId: opco,
+            partyType: b.data.party_type,
+            partyId: b.data.party_id,
+            actorUserId: authUser.uuid,
+            dryRun: b.data.dry_run,
+          })
+        );
+      } catch (e) {
+        if (e instanceof RelatedPartyAccountError) return reply.code(e.status).send({ error: e.code, message: e.message });
+        throw e;
+      }
+    }
+  );
+
+  // Every movement on one party account: date, document, bank line, running balance, pair / "unpaired".
+  app.get(
+    "/api/v1/accounting/related-party-loans/party-ledger/:accountId",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const params = z.object({ accountId: z.string().uuid() }).safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+      if (!q.success) return validationError(reply, q.error);
+      const ledger = await withCompanyScope(authUser.uuid, q.data.operating_company_id, (client) =>
+        getPartyLedger(client as never, q.data.operating_company_id, params.data.accountId)
+      );
+      if (!ledger) return reply.code(404).send({ error: "party_account_not_found" });
+      return ledger;
+    }
+  );
+
+  // Facility shortcut (443.59 #26377): the facility's account, same ledger.
+  app.get(
+    "/api/v1/accounting/related-party-loans/ledger/:facilityId",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const params = z.object({ facilityId: z.string().uuid() }).safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+      if (!q.success) return validationError(reply, q.error);
+      const ledger = await withCompanyScope(authUser.uuid, q.data.operating_company_id, async (client) => {
+        const fac = (await client.query(
+          `SELECT account_id::text FROM accounting.related_party_loan_facilities
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deleted_at IS NULL LIMIT 1`,
+          [params.data.facilityId, q.data.operating_company_id]
+        )) as { rows: Array<{ account_id: string }> };
+        if (!fac.rows[0]) return null;
+        return getPartyLedger(client as never, q.data.operating_company_id, fac.rows[0].account_id);
+      });
+      if (!ledger) return reply.code(404).send({ error: "facility_not_found" });
+      return ledger;
+    }
+  );
+
+  // ── POST one party entry (443.59 a / c / d / e) through the shared JE writer. ──────────────────────────
+  app.post(
+    "/api/v1/accounting/related-party-loans/:id/post",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const params = idParamSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.body ?? {});
+      if (!q.success) return validationError(reply, q.error);
+      const role = String((authUser as { role?: string }).role ?? "");
+      const result = await withCompanyScope(authUser.uuid, q.data.operating_company_id, (client) =>
+        postPartyEntry(
+          client as never,
+          { operatingCompanyId: q.data.operating_company_id, entryId: params.data.id, actorUserId: authUser.uuid, actorRole: role },
+          { createJournalEntryOnClient: createJournalEntryOnClient as never }
+        )
+      );
+      if (result.outcome === "refused") return reply.code(400).send({ error: result.reason });
+      return result;
+    }
+  );
+
+  // ── PAIR (443.59 item 5) — the owner confirms which party funding a money-out answers. Posts nothing. ──────
+  app.post(
+    "/api/v1/accounting/related-party-loans/:id/pair",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const params = idParamSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const b = z
+        .object({ operating_company_id: z.string().uuid(), funding_entry_id: z.string().uuid() })
+        .safeParse(req.body ?? {});
+      if (!b.success) return validationError(reply, b.error);
+      const result = await withCompanyScope(authUser.uuid, b.data.operating_company_id, (client) =>
+        pairPartyTransfer(client as never, {
+          operatingCompanyId: b.data.operating_company_id,
+          transferEntryId: params.data.id,
+          fundingEntryId: b.data.funding_entry_id,
+          actorUserId: authUser.uuid,
+        })
+      );
+      if (!result.ok) return reply.code(400).send({ error: result.reason });
+      return result;
     }
   );
 }

@@ -41,6 +41,8 @@
 // that same due_date -- proving the service function actually reads it once the invoice is
 // visible to it at all.
 import { register } from "tsx/esm/api";
+import { createRequire } from "node:module";
+const { inferPgSslOption } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 
 export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
 register();
@@ -53,7 +55,11 @@ const BATCH_LOAD_NUMBERS = [
 ];
 // Pinned regression values, per the Lead's own order.
 const PINNED_DATES = {
-  "13630": "2026-09-30",
+  // CC-3 2026-10-11 (Lead 443.x settlement entry): 13630 was re-booked through the Settlement Creator and re-invoiced from
+  // its 09-30 delivery. Its customer, Refrigerx Transportation LLC (684f5776), has NO payment terms on file
+  // (payment_terms_id NULL), so the owner's 2026-10-01 rule (same as 13637 below) makes it Net-30: due 10-30. Measured live:
+  // all 24 of Refrigerx's live invoices (08-10 .. 10-07) are Net-30. The old 09-30 pin was the pre-rule zero-terms reading.
+  "13630": "2026-10-30",
   "13634": "2026-09-30",
   "13635": "2026-10-01",
   // Owner 2026-10-01 (in chat to CC-2): "CUSTOMERS WITH NO PAYMENT TERMS 30 DAYS" -- 13637 (Westgate, no terms on file) is
@@ -118,7 +124,7 @@ async function main() {
   const { getRollingLedgerRows } = await import("../apps/backend/src/cash-flow/cash-flow.service.ts");
   const { default: pg } = await import("pg");
 
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: inferPgSslOption(process.env.DATABASE_URL) });
   const client = await pool.connect();
   try {
     // ROUND 241 (CC-3 finding, folded in here since this is the same file): `SET LOCAL ROLE

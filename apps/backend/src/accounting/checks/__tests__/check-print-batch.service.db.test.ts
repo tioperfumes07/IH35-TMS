@@ -1,17 +1,61 @@
-// Real Postgres proof for check-print-batch.service.ts -- CI-gated (GITHUB_ACTIONS), rehearsal Neon
-// branch only (br-empty-rice-akqh08we, "cc2-check-engine-pr3-rehearsal"), same rationale as PR 3/7's
-// check-create.service.db.test.ts. banking.check_stock_settings.next_check_number is seeded on THIS
-// rehearsal branch only, in the test's own beforeAll -- never touched on prod by this suite.
+// Real Postgres proof for check-print-batch.service.ts -- CI-gated (GITHUB_ACTIONS).
+// 443.91 #4: CI's database is FRESH (migrations only) — no USMCA company, bank account or vendor. The suite used to be pinned
+// to live USMCA ids (rehearsal branch only) and so failed every CI run. It now builds its own isolated company
+// (createIsolatedOperatingCompany, the canonical helper — same pattern as check-account-rules.service.db.test.ts) with exactly
+// the rows the engine reads: a depository bank account on a ledger account, the maintenance expense-category map entry and an
+// active vendor. The engine is unchanged.
 import { randomUUID } from "node:crypto";
+import pg from "pg";
 import { beforeAll, describe, expect, it } from "vitest";
 import { withLuciaBypass } from "../../../auth/db.js";
+import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
+import { createIsolatedOperatingCompany, insertMaintenanceCategoryMap } from "../../../../test-helpers/isolated-company.js";
 import { createCheck } from "../check-create.service.js";
 import { assignPrintBatch, confirmPrintBatch, CheckPrintBatchError } from "../check-print-batch.service.js";
 
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
-const USMCA_BOA_CHECKING = "e83028a5-dcda-4233-b660-5b9923b3d39c";
-const REAL_VENDOR_ID = "a94a93d2-37b4-4179-82c3-9e155eb33af7";
+let USMCA_COMPANY_ID = "";
+let USMCA_BOA_CHECKING = "";
+let REAL_VENDOR_ID = "";
+let REPAIR_ITEM_ID = "";
 const ACTOR_USER_ID = "00000000-0000-4000-8000-000000000001";
+
+async function seedFixtureCompany(): Promise<void> {
+  const { companyId } = await createIsolatedOperatingCompany({ codePrefix: "CPB", legalNamePrefix: "Check print fixture" });
+  USMCA_COMPANY_ID = companyId;
+  const client = new pg.Client(buildPgClientConfig(process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL ?? ""));
+  await client.connect();
+  try {
+    await client.query("SET ROLE ih35_app");
+    await client.query("BEGIN");
+    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    const acct = async (number: string, name: string, type: string) =>
+      (await client.query<{ id: string }>(
+        `INSERT INTO catalogs.accounts (operating_company_id, account_number, account_name, account_type, is_postable)
+         VALUES ($1::uuid, $2, $3, $4, true) RETURNING id::text`, [companyId, number, name, type])).rows[0]!.id;
+    const bankLedger = await acct("1000", "Checking", "Asset");
+    const cogs = await acct("5300", "Repairs & Maintenance", "CostOfGoodsSold");
+    USMCA_BOA_CHECKING = (await client.query<{ id: string }>(
+      `INSERT INTO banking.bank_accounts (operating_company_id, account_name, account_class, is_active, ledger_account_id, sync_status)
+       VALUES ($1::uuid, 'Fixture Checking', 'depository', true, $2::uuid, 'active') RETURNING id::text`, [companyId, bankLedger])).rows[0]!.id;
+    await insertMaintenanceCategoryMap(client, companyId, cogs); // anchor + 9 sub-codes, one statement (443.100)
+    REPAIR_ITEM_ID = (await client.query<{ id: string }>(
+      `INSERT INTO catalogs.items (operating_company_id, item_name, item_type, default_expense_account_id)
+       VALUES ($1::uuid, 'Fixture Repair', 'Service', $2::uuid) RETURNING id::text`, [companyId, cogs])).rows[0]!.id;
+    REAL_VENDOR_ID = (await client.query<{ id: string }>(
+      `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type)
+       VALUES ($1::uuid, 'Fixture Repair Shop', 'repair_shop') RETURNING id::text`, [companyId])).rows[0]!.id;
+    // DEGH-04 (443.113): a check exists only if it posts, so the fixture company has expense GL posting ON (as the owner's does).
+    await client.query(
+      `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
+       VALUES ('EXPENSE_GL_POSTING_ENABLED', $1::uuid, NULL, true, $2::uuid)`,
+      [companyId, ACTOR_USER_ID]
+    );
+    await client.query("COMMIT");
+  } finally {
+    await client.end();
+  }
+}
 
 async function seedPrintLaterCheck(): Promise<string> {
   const result = await createCheck(USMCA_COMPANY_ID, ACTOR_USER_ID, {
@@ -20,15 +64,20 @@ async function seedPrintLaterCheck(): Promise<string> {
     payee_id: REAL_VENDOR_ID,
     check_date: "2026-09-25",
     print_later: true,
-    lines: [{ line_kind: "category", category_kind: "maintenance", category_code: "maintenance", amount_cents: 750 }],
+    lines: [{ line_kind: "item", item_id: REPAIR_ITEM_ID, quantity: 1, rate_cents: 750, amount_cents: 750 }],
   });
   return result.id;
 }
 
+// 443.91 #4: this suite is pinned to REAL USMCA ids (bank account e83028a5…, vendor a94a93d2…) that exist only on a
+// fork of prod (its own header: "rehearsal branch only"). CI's fresh, migrated Postgres has no such rows, so the FK
+// check_stock_settings_bank_account_id_fkey refused its beforeAll on every CI run. It runs where its data exists:
+// IH35_CHECK_REHEARSAL_DB=1 against a prod-fork DATABASE_URL. A self-contained fixture is the follow-up.
 const describeDb = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
-describeDb("check-print-batch.service (real Postgres, rehearsal branch only)", () => {
+describeDb("check-print-batch.service (real Postgres, isolated fixture company)", () => {
   beforeAll(async () => {
+    await seedFixtureCompany();
     // Seed a starting number ONLY if this rehearsal branch has none yet -- never overwrite an
     // in-progress sequence, and never run this against a branch without confirming it's the
     // disposable rehearsal one first (the hardcoded USMCA_COMPANY_ID + connection are the guard --
@@ -77,7 +126,7 @@ describeDb("check-print-batch.service (real Postgres, rehearsal branch only)", (
         check_date: "2026-09-25",
         print_later: false,
         check_number: `ALREADY-${Date.now()}`,
-        lines: [{ line_kind: "category", category_kind: "maintenance", category_code: "maintenance", amount_cents: 100 }],
+        lines: [{ line_kind: "item", item_id: REPAIR_ITEM_ID, quantity: 1, rate_cents: 100, amount_cents: 100 }],
       }).then((r) => r.id);
 
       await expect(

@@ -256,10 +256,11 @@ export async function payDriverReimbursementImmediately(
   // (an explicit credit_account_id is not guaranteed to be a banking.bank_accounts row).
   const posting = await withCurrentUser(actorUserUuid, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
-    if (!input.credit_account_id && phase1.fromBankAccountId) {
-      await updateBankBalance(client, companyId, phase1.fromBankAccountId, -Math.abs(phase1.amountCents));
-    }
-    return postSourceTransactionInClientTx(
+    // BCF-10 (443.120 B) — exactly-once on the reimbursement id. The poster is idempotent on the source id and
+    // locks the reimbursement row; a retry of an already-paid reimbursement comes back "already_posted". The
+    // cache is decremented only when THIS call created the posting, in the same transaction, so a retry can
+    // never subtract the amount a second time, and a failed post (rolled back) is decremented on its retry.
+    const posted = await postSourceTransactionInClientTx(
       client,
       {
         operating_company_id: companyId,
@@ -269,6 +270,10 @@ export async function payDriverReimbursementImmediately(
       },
       { userId: actorUserUuid }
     );
+    if (posted.result === "posted" && !input.credit_account_id && phase1.fromBankAccountId) {
+      await updateBankBalance(client, companyId, phase1.fromBankAccountId, -Math.abs(phase1.amountCents));
+    }
+    return posted;
   });
 
   try {

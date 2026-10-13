@@ -86,6 +86,13 @@ const REVERSAL_WRAPPERS = [
   // reverseFactoringAdvanceEventInClientTx (the factoring_advance engine named above) and stamps the advance via
   // stampDocumentVoided, one transaction. Verified in source (purchase.routes.ts POST /factoring/purchases/:id/void).
   "voidPurchase",
+  // 443.136 (CC-3) — accounting/expense-void.service.ts voidExpenseDocumentInClientTx(), the ONE expense void (extracted
+  // from expenses.routes.ts POST /:expenseId/void), reverses through reverseExpenseDocumentInClientTx ->
+  // reversePostedSourceTransactionInClientTx (own lines) + postVoidReversal (fuel_event) before it stamps. Verified in source.
+  "voidExpenseDocumentInClientTx",
+  // 443.136 (CC-3) — fuel/relay-duplicate-purchase.service.ts voidLaterRelayDuplicatePurchases() (fuel-receipt-repoint.routes.ts
+  // POST /api/v1/fuel/relay-duplicates/void-later) voids each duplicate copy only through voidExpenseDocumentInClientTx above.
+  "voidLaterRelayDuplicatePurchases",
 ];
 
 /** All function names that satisfy the reversal requirement. */
@@ -115,6 +122,7 @@ const EXEMPT_ROUTES = [
   { pattern: /\/daily-tasks\/.*\/cancel/, reason: "task cancellation" },
   { pattern: /\/safety\/scheduler\/temp-assignments\/.*\/cancel/, reason: "temp assignment cancellation" },
   { pattern: /\/maintenance\/parts\/.*\/void/, reason: "part record void — no GL" },
+  { pattern: /\/driver-finance\/driver-bills\/:id\/void-stray-salaried$/, reason: "LEAD 443.44 B — voids ONLY an unposted, unsettled, unlinked per-load bill on a Salaried week; the service REFUSES any bill with a journal posting, settlement line or A/P-chain run (enforced by verify-settlement-creator-salaried-stray-bill-void RULE 1), so there is no ledger to reverse" },
   { pattern: /\/maintenance\/vehicles\/.*\/void/, reason: "vehicle record void — no GL" },
   { pattern: /\/maintenance\/drivers\/.*\/void/, reason: "driver record void — no GL" },
   { pattern: /\/maintenance\/vendors\/.*\/void/, reason: "vendor record void — no GL" },

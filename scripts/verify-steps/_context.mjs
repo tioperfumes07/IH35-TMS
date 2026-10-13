@@ -60,6 +60,11 @@ export function createVerifyPrecommitContext(rootDir) {
     console.error(message);
     process.exit(exitCode);
   };
+  // Structured steps (2982 2984 2988 2990 2994 …) report success with ctx.pass(message); the context never
+  // carried it, so every one of them threw "ctx.pass is not a function" exactly when its guard PASSED.
+  const pass = (message) => {
+    if (message) console.log(message);
+  };
 
   const assertDockerAvailable = () => {
     const result = spawnSync("docker", ["--version"], { stdio: "ignore" });
@@ -129,9 +134,13 @@ export function createVerifyPrecommitContext(rootDir) {
   return {
     ROOT: rootDir,
     VITEST_REPORT_PATH,
+    // 443.100: step 11723 hands this to its --isolated run; it was never exported, so CI passed undefined and the
+    // workflow-RLS behavior check failed closed ("WORKFLOW_RLS_TEST_DATABASE_URL required") on every run.
+    VERIFY_DB_URL,
     run,
     runAllowFailure,
     fail,
+    pass,
     ensureDatabaseUrl,
     parseBackendVitestReport,
     cleanup,

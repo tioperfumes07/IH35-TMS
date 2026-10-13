@@ -12,10 +12,16 @@ import crypto from "node:crypto";
 // purchases (99530579, 1848853, 99794138) were recorded and posted twice. The database refusal is migration
 // 202615370600; this helper is the writers' side of it, so a duplicate is refused with its name before the INSERT.
 
-/** The provider's transaction ID, or null when the reference is not one (blank, placeholder, parse fragment). */
+/**
+ * The provider's transaction ID, or null when the reference is not one (blank, placeholder, parse fragment).
+ * 443.73 #6(d): a re-feed wrote the second copy of a receipt as "<invoice>-<load>" (99794138-13571, 1848853-13547 …); that
+ * reference was "no provider key", so the second expense of the same purchase was never refused — 9 lines / $2,906.21
+ * were posted twice. The load suffix is not part of the receipt: "<digits>-1NNNN" is the provider ID <digits>.
+ */
 export function providerTransactionId(reference: string | null | undefined): string | null {
   const ref = (reference ?? "").trim();
-  return /^[0-9]+$/.test(ref) ? ref : null;
+  const m = /^([0-9]+)(?:-1[0-9]{4})?$/.exec(ref);
+  return m ? m[1]! : null;
 }
 
 /**
@@ -23,11 +29,38 @@ export function providerTransactionId(reference: string | null | undefined): str
  * 202614220000; both writers omitted it, so every hand-entered fuel line failed with 23502. Keyed on the provider ID when
  * there is one (the unique index then refuses a second copy too); a line with no provider key gets its own hash.
  */
-export function enteredFuelRowHash(operatingCompanyId: string, vendorId: string | null, reference: string | null | undefined): string {
+export function enteredFuelRowHash(
+  operatingCompanyId: string,
+  vendorId: string | null,
+  reference: string | null | undefined,
+  fuelType?: string | null,
+): string {
   const providerId = providerTransactionId(reference);
+  // ROUND 443.28 — one ticket can carry several products (diesel + DEF on Loves 2870483); the live duplicate index is
+  // per (vendor, reference, fuel_type). Diesel keeps its original hash (existing rows unchanged); another product
+  // appends its type so the DEF line of the same ticket is its own row, and a second copy of it is still refused.
+  const product = fuelType && fuelType !== "diesel" ? `:${fuelType}` : "";
   return providerId
-    ? `provider:${operatingCompanyId}:${vendorId ?? "no-vendor"}:${providerId}`
+    ? `provider:${operatingCompanyId}:${vendorId ?? "no-vendor"}:${providerId}${product}`
     : `entered:${crypto.randomUUID()}`;
+}
+
+/**
+ * LEAD 443.110 G12 — ONE duplicate rule, ONE message: the base provider invoice is one purchase. The Settlement Creator
+ * preflight and the post's refusal both say this, naming the load the purchase already sits on. The preflight used to
+ * tell the operator to type "<ticket>-<load>", which providerTransactionId strips back to the same invoice, so the post
+ * refused the very line the preflight had suggested.
+ */
+export function fuelPurchaseAlreadyRecordedMessage(
+  providerId: string,
+  existingFuelTransactionId: string,
+  existingLoadNumber: string | null
+): string {
+  return (
+    `Fuel purchase ${providerId} is already recorded (fuel transaction ${existingFuelTransactionId}` +
+    `${existingLoadNumber ? `, load ${existingLoadNumber}` : ", no load"}). One provider transaction is one purchase — ` +
+    `open the existing one instead of entering it again.`
+  );
 }
 
 export class FuelProviderTransactionDuplicateError extends Error {
@@ -37,11 +70,7 @@ export class FuelProviderTransactionDuplicateError extends Error {
     readonly existingFuelTransactionId: string,
     readonly existingLoadNumber: string | null
   ) {
-    super(
-      `Fuel purchase ${providerId} is already recorded (fuel transaction ${existingFuelTransactionId}` +
-        `${existingLoadNumber ? `, load ${existingLoadNumber}` : ", no load"}). One provider transaction is one purchase — ` +
-        `open the existing one instead of entering it again.`
-    );
+    super(fuelPurchaseAlreadyRecordedMessage(providerId, existingFuelTransactionId, existingLoadNumber));
   }
 }
 
@@ -64,7 +93,7 @@ export async function findLiveFuelByProviderTransactionId(
        LEFT JOIN mdata.loads l ON l.id = f.load_id
       WHERE f.operating_company_id = $1::uuid
         AND f.vendor_id IS NOT DISTINCT FROM $2::uuid
-        AND btrim(f.transaction_reference) = $3
+        AND regexp_replace(btrim(f.transaction_reference), '-1[0-9]{4}$', '') = $3
         AND f.fuel_type::text IS NOT DISTINCT FROM $4::text
         AND f.voided_at IS NULL
       ORDER BY f.created_at

@@ -19,7 +19,13 @@ const base = JSON.parse(read("scripts/verify-no-cross-entity-loads.baseline.json
 
 export function staticProblems(s) {
   const p = [];
-  if ((s.cancel.match(/await settleRevrecOnCancel\(/g) ?? []).length < 2) p.push("cancellation.service.ts: the canonical cancel AND the approval must settle revrec (settleRevrecOnCancel)");
+  // 443.113 AJK-10: revrec settles ONCE, inside finalizeLoadCancellationInClientTx, which the canonical cancel AND the
+  // Owner's approval both call (a second inline copy in the approval was the AJK-10 defect).
+  {
+    const fin = s.cancel.slice(s.cancel.indexOf("export async function finalizeLoadCancellationInClientTx("), s.cancel.indexOf("/** Client-accepting cancel"));
+    const calls = (s.cancel.match(/await finalizeLoadCancellationInClientTx\(client, userId, \{/g) ?? []).length;
+    if (!/await settleRevrecOnCancel\(/.test(fin) || calls < 2) p.push("cancellation.service.ts: the canonical cancel AND the approval must settle revrec (settleRevrecOnCancel)");
+  }
   if (!/await settleRevrecOnCancel\(client as never, current\.operating_company_id, row\.id/.test(s.board)) p.push("mdata/loads.routes.ts: the board PATCH cancel must settle revrec");
   if (!/export async function settleRevrecOnCancel/.test(s.poster) || !/accounting\.delete_cancelled_load_revrec\(/.test(s.poster)) p.push("poster.service.ts: settleRevrecOnCancel must delete through accounting.delete_cancelled_load_revrec");
   if (!/resolveInboundLoadEntity\(\{ targetCompanyCode: code, isImport: true/.test(s.book)) p.push("book-load.service.ts: an imported load must pass resolveInboundLoadEntity");

@@ -21,7 +21,7 @@ function loadSource() {
 export function collectFailures(src = loadSource()) {
   const failures = [];
 
-  if (!/await reverseDriverAdvanceInClientTx\(client, userId, input\.operating_company_id, \{/.test(src)) {
+  if (!/await reverseDriverAdvanceInClientTx\(client, userId, (?:input|args)\.operating_company_id, \{/.test(src)) { // 443.113: args. inside finalizeLoadCancellationInClientTx
     failures.push("cancellation.service.ts does not call reverseDriverAdvanceInClientTx");
   }
   if (!/const expResult = await executeVoidCancel\("expense", \{/.test(src)) {
@@ -58,7 +58,7 @@ if (process.argv.includes("--selftest")) {
     ["expense-void loop removed", 'const expResult = await executeVoidCancel("expense", {', "const expResult = REMOVED({"],
     [
       "advance-reversal call removed",
-      "await reverseDriverAdvanceInClientTx(client, userId, input.operating_company_id, {",
+      "await reverseDriverAdvanceInClientTx(client, userId, args.operating_company_id, {",
       "REMOVED({",
     ],
     [

@@ -21,7 +21,15 @@ export function verify(sources = {}) {
     ["client exposes complete load scanner", /export async function listAllLoads\(filters: Omit<LoadsListFilters, "limit" \| "offset">\)/.test(api)],
     ["scanner advances exact pages", /for \(;;\)/.test(api) && /limit: pageSize, offset/.test(api) && /offset \+= page\.loads\.length/.test(api)],
     ["scanner rejects drift duplicates and incomplete ranges", /page\.total_count !== expectedTotal/.test(api) && /seen\.has\(load\.id\)/.test(api) && /pagination stopped before the reported total/.test(api) && /loads\.length !== \(expectedTotal \?\? 0\)/.test(api)],
-    ["customer load tab and related-load picker use complete range", /queryFn: \(\) =>\s*listAllLoads\(\{[\s\S]*?customer_id: id,[\s\S]*?sort: "created_at:desc"/.test(detail)],
+    // LEAD 443.99 class B (2026-10-12).
+    //   old rule: queryFn: () => listAllLoads({ customer_id: id, ..., sort: "created_at:desc" }) — one scan.
+    //   new rule: the customer-loads queryFn scans BOTH board scopes with listAllLoads (live + history, each
+    //             customer_id: id, sort "created_at:desc") and merges them de-duplicated by load id.
+    //   why: ROUND 283.2 (#23212, 8915dd1d81) made listLoads fail closed without a board_scope, so a complete
+    //        customer history is now live + history merged. Dropping either scope still fails.
+    ["customer load tab and related-load picker use complete range", ["live", "history"].every((scope) =>
+      new RegExp(`listAllLoads\\(\\{\\s*customer_id: id,[^}]*board_scope: "${scope}",\\s*sort: "created_at:desc"`).test(detail)) &&
+      /queryKey: \["customer-loads", id, operatingCompanyId\][\s\S]{0,1600}if \(seen\.has\(row\.id\)\) continue;/.test(detail)],
     ["customer detail no longer hard-caps shared load source", !/queryFn: \(\) =>\s*listLoads\(\{[\s\S]*?customer_id: id,[\s\S]*?limit: 200/.test(detail)],
   ];
   return checks.filter(([, ok]) => !ok).map(([name]) => name);
@@ -34,6 +42,8 @@ if (process.argv.includes("--selftest")) {
     ["duplicate protection removed", { ...live, api: live.api.replace("if (seen.has(load.id))", "if (false)") }],
     ["incomplete range accepted", { ...live, api: live.api.replace("if (loads.length !== (expectedTotal ?? 0))", "if (false)") }],
     ["customer remounted on capped reader", { ...live, detail: live.detail.replace("listAllLoads({", "listLoads({\n        limit: 200,") }],
+    ["customer history scope dropped", { ...live, detail: live.detail.replace('board_scope: "history",', 'board_scope: "live",') }],
+    ["customer live+history merge not de-duplicated", { ...live, detail: live.detail.replace("if (seen.has(row.id)) continue;", "") }],
     ["unstable created order", { ...live, route: live.route.replace("`${sortColumn} ${sortDirection}, l.id ASC`", "`${sortColumn} ${sortDirection}`") }],
   ];
   for (const [name, mutated] of mutations) {

@@ -10,7 +10,7 @@
  *   - with both flags ON, the bill's own bill_lines row (Tier-3 uncategorized_expense) lets the bill post
  *     DR uncategorized_expense / CR ap_control, then the bill_payment posts DR ap_control / CR the real
  *     bank ledger — GL == subledger tie-out: the bill_payment's amount_cents equals both JE legs.
- *   - idempotent re-post: calling postCreatedBillsGl again for the same pair never duplicates the JE.
+ *   - idempotent re-post: calling postCreatedBillsGlInClientTx again for the same pair never duplicates the JE.
  * Runs only in CI (GITHUB_ACTIONS=true) where a migrated Postgres is available.
  */
 import { randomUUID } from "node:crypto";
@@ -18,7 +18,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites, createIsolatedOperatingCompany, deactivateIsolatedOperatingCompany, type IsolatedOperatingCompany } from "../../../test-helpers/db-fixture.js";
-import { bulkPostTransactionsAsBills, postCreatedBillsGl } from "../bulk-transactions.js";
+import { bulkPostTransactionsAsBills, postCreatedBillsGlInClientTx } from "../bulk-transactions.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -137,6 +137,8 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
     // Actor must exist BEFORE createIsolatedOperatingCompany({ actorUserId }).
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
+    // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+    await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
     await db.query(
       `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
       [userId, `bulk-post-bill-${suffix}@test.local`]
@@ -318,7 +320,20 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
     expect(Number(paymentRow[0]?.amount_cents)).toBe(amountCents);
 
     // Idempotent re-post — a second postCreatedBillsGl call for the SAME pair never duplicates the JE.
-    const again = await postCreatedBillsGl(companyId, [{ billId, billPaymentId: paymentId }], userId);
+    // 443.93: the GL step runs ON THE CALLER'S TRANSACTION now (ROUND 363-CC1-B postCreatedBillsGlInClientTx); the test
+    // opens that transaction the way bulkPostTransactionsAsBills does.
+    const reClient = await pool.connect();
+    let again: Awaited<ReturnType<typeof postCreatedBillsGlInClientTx>>;
+    try {
+      await reClient.query("BEGIN");
+      again = await postCreatedBillsGlInClientTx(reClient, companyId, [{ billId, billPaymentId: paymentId }], userId);
+      await reClient.query("COMMIT");
+    } catch (e) {
+      await reClient.query("ROLLBACK").catch(() => {});
+      throw e;
+    } finally {
+      reClient.release();
+    }
     expect(again[0]?.bill_posted).toBe(true);
     expect(again[0]?.bill_payment_posted).toBe(true);
     const billLinesAfter = await scopedRead<{ c: string }>(

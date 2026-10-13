@@ -36,9 +36,12 @@ export async function pullTmsSettlements(
     SELECT
       ds.driver_id::text,
       COALESCE(d.first_name || ' ' || d.last_name, 'Unknown') AS driver_name,
-      COALESCE(ds.gross_pay_cents, 0)::text AS gross_cents,
-      COALESCE(ds.total_deductions_cents, 0)::text AS deductions_cents,
-      COALESCE(ds.net_pay_cents, 0)::text AS net_cents,
+      -- ACCT-F4431379: the canonical header stores DOLLARS (gross_pay / deductions_total / net_pay);
+      -- gross_pay_cents / total_deductions_cents / net_pay_cents never existed and threw on first
+      -- query. Cents via ROUND(x * 100), the same conversion payroll/aggregated.routes.ts uses.
+      ROUND(ds.gross_pay * 100)::bigint::text AS gross_cents,
+      ROUND(ds.deductions_total * 100)::bigint::text AS deductions_cents,
+      ROUND(ds.net_pay * 100)::bigint::text AS net_cents,
       ds.period_start::text,
       ds.period_end::text
     FROM driver_finance.driver_settlements ds

@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — a reference catalog of exception reasons (code / name / order) — not a time series.
 import { useEffect, useMemo, useState } from "react";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

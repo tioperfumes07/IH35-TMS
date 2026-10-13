@@ -64,8 +64,16 @@ function assertComponent(src) {
     errors.push(`${COMPONENT}: groups must be computed over the current page's rows (groupedPageRows over pageRows)`);
   }
   // The ungrouped fallback path must be preserved for the ~130 existing call sites.
-  if (!/pageRows\.map\(\(row\) => renderDataRow\(row\)\)/.test(src)) {
-    errors.push(`${COMPONENT}: ungrouped fallback \`pageRows.map((row) => renderDataRow(row))\` must be preserved`);
+  // 443.99 class B (CC-2, 2026-10-12):
+  //   old rule: the fallback is literally `pageRows.map((row) => renderDataRow(row))`.
+  //   new rule: the fallback is `pageRows.map((row, i) => renderDataRow(row, i))` — every page row still goes
+  //             through the one shared renderer, and it carries its row index.
+  //   why: GLB-14 (5fcdec8121, owner ruling 2026-09-04) added zebra striping, which needs the row index; the
+  //        grouped path already passes it (group.rows.map((row, i) => renderDataRow(row, i))). The old literal no
+  //        longer exists, so this failed on correct code. Stricter: a fallback that drops the index (no zebra
+  //        striping) now fails too.
+  if (!/pageRows\.map\(\(row, i\) => renderDataRow\(row, i\)\)/.test(src)) {
+    errors.push(`${COMPONENT}: ungrouped fallback \`pageRows.map((row, i) => renderDataRow(row, i))\` must be preserved`);
   }
   // The precedents this API mirrors must still exist.
   if (!/isSortControlled\s*=\s*onSortChange\s*!=\s*null/.test(src)) {
@@ -118,7 +126,7 @@ function selftest() {
         if (isCollapseControlled) { groupBy?.onCollapsedChange?.([key]); return; }
         setInternalCollapsed((prev) => prev);
       }
-      return groupBy ? <td colSpan={colSpan} /> : pageRows.map((row) => renderDataRow(row));
+      return groupBy ? <td colSpan={colSpan} /> : pageRows.map((row, i) => renderDataRow(row, i));
     }
   `;
   const badComponent = `
@@ -140,6 +148,12 @@ function selftest() {
   }
   if (assertComponent(badComponent).length < 10) {
     console.error(`${LABEL} --selftest FAIL bad component fixture should fail hard`);
+    process.exit(1);
+  }
+  // Planted: the ungrouped fallback reverts to the index-less renderer call (drops zebra striping).
+  const indexless = goodComponent.replace("pageRows.map((row, i) => renderDataRow(row, i))", "pageRows.map((row) => renderDataRow(row))");
+  if (!assertComponent(indexless).some((e) => e.includes("ungrouped fallback"))) {
+    console.error(`${LABEL} --selftest FAIL index-less ungrouped fallback was not caught`);
     process.exit(1);
   }
   if (assertTests(goodTests).length) {

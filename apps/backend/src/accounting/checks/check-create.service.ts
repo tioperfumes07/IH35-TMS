@@ -17,6 +17,7 @@ import { reassignDraftAttachments } from "../../documents/attachments.service.js
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "../expense-gl-posting-flag.js";
 import { advanceCheckStockAfterUse } from "./check-stock.service.js";
+import { resolveLineLoadExemption } from "../expense-line-load-exemption.js";
 
 export type CreateCheckLineInput = {
   line_kind: "category" | "item";
@@ -96,9 +97,8 @@ export type CreateCheckResult = {
   payee_kind: string;
   print_on_check_name: string;
   total_amount_cents: number;
-  // R-172 step 7 -- honest posting outcome (never a silent fake success): 'unposted' when the
-  // EXPENSE_GL_POSTING_ENABLED flag is off for this entity, the check's load has an open tour, or
-  // the poster itself threw a PostingEngineError -- the check row is still valid and re-postable.
+  // DEGH-04 (443.113): a created check is always 'posted' -- flag off or a posting refusal now refuses the
+  // whole create (nothing saved). The union stays for API compatibility with readers of older rows.
   posting_status: "posted" | "unposted";
   journal_entry_id: string | null;
 };
@@ -274,13 +274,37 @@ export async function createCheck(
               accountId: resolved.account_id,
             })
           : null;
+      // Items law (443.92 #1b): expense_lines_item_id_required demands item_id on every line.
+      // DEGH-03 (443.113): the category line's item is the one the operator NAMED, or the ONE active item whose
+      // default expense account is the line's account — never an arbitrary item picked by `account ... LIMIT 1`.
+      const categoryItemId =
+        line.line_kind === "category"
+          ? await resolveCheckCategoryItem(client, operating_company_id, resolved.account_id, line.item_id ?? null)
+          : null;
+      // 443.105 #2 — a check line with no load says why (company cost on <account>, check #).
+      const lineLoadId = line.load_id ?? input.load_id ?? null;
+      const lineAccountLabel = lineLoadId
+        ? null
+        : (
+            await client.query<{ label: string | null }>(
+              `SELECT NULLIF(concat_ws(' ', a.account_number, a.account_name), '') AS label
+                 FROM catalogs.accounts a WHERE a.id = $1::uuid AND a.operating_company_id = $2::uuid`,
+              [resolved.account_id, operating_company_id]
+            )
+          ).rows[0]?.label ?? null;
+      const lineLoadExemption = resolveLineLoadExemption({
+        loadId: lineLoadId,
+        accountLabel: lineAccountLabel,
+        context: checkNumber ? `check #${checkNumber}` : "check (print later)",
+      });
       await client.query(
         `INSERT INTO accounting.expense_lines (
            expense_id, line_sequence, amount, amount_cents, description, expense_account_uuid,
            expense_category_uuid, item_id, billable_customer_uuid, load_id, operating_company_id,
-           driver_id, unit_id, trailer_id, linked_work_order_uuid, quantity, rate_cents, unit_of_measure
+           driver_id, unit_id, trailer_id, linked_work_order_uuid, quantity, rate_cents, unit_of_measure,
+           load_exemption_reason
          ) VALUES ($1::uuid, $2, $3, $4, $5, $6::uuid, $7::uuid, $8::uuid, $9::uuid, $10::uuid, $11::uuid,
-                   $12::uuid, $13::uuid, $14::uuid, $15::uuid, $16, $17, $18)`,
+                   $12::uuid, $13::uuid, $14::uuid, $15::uuid, $16, $17, $18, $19)`,
         [
           expenseId,
           seq++,
@@ -289,9 +313,9 @@ export async function createCheck(
           line.description ?? payee.print_on_check_name,
           resolved.account_id,
           expenseCategoryUuid,
-          line.line_kind === "item" ? line.item_id : null,
+          line.line_kind === "item" ? line.item_id : categoryItemId,
           line.billable_customer_uuid ?? null,
-          line.load_id ?? input.load_id ?? null,
+          lineLoadId,
           operating_company_id,
           // A per-line value wins; omitted/null falls back to the check header's own dimension --
           // e.g. a single-truck repair check needs no per-line override at all.
@@ -299,11 +323,22 @@ export async function createCheck(
           line.unit_id ?? input.unit_id ?? null,
           line.trailer_id ?? input.trailer_id ?? null,
           line.linked_work_order_uuid ?? input.linked_work_order_uuid ?? null,
-          // R-83: quantity/rate_cents/unit_of_measure travel together, item lines only (normalized
-          // above); a category line sends null for all three, matching the DB's own CHECK.
-          line.line_kind === "item" ? line.quantity : null,
-          line.line_kind === "item" ? line.rate_cents : null,
-          line.line_kind === "item" ? line.unit_of_measure : null,
+          // R-83: quantity/rate_cents/unit_of_measure travel together with item_id (normalized above
+          // for item lines). Category lines that resolved a categoryItemId must satisfy the same
+          // CHECK (expense_lines_item_qty_rate_amount_check): quantity=1, rate_cents=amount_cents,
+          // unit_of_measure='each' so that round(1 × amount_cents) = amount_cents holds exactly.
+          // Category lines WITHOUT a resolved item_id still send null for all three (item_id is also
+          // null in that case, so the "all null" branch of the CHECK is satisfied).
+          line.line_kind === "item"
+            ? line.quantity
+            : categoryItemId !== null ? 1 : null,
+          line.line_kind === "item"
+            ? line.rate_cents
+            : categoryItemId !== null ? line.amount_cents : null,
+          line.line_kind === "item"
+            ? line.unit_of_measure
+            : categoryItemId !== null ? "each" : null,
+          lineLoadExemption,
         ]
       );
     }
@@ -313,33 +348,44 @@ export async function createCheck(
     // feature-flag gate as a regular expense's own create-time post (expenses.routes.ts) -- a check
     // IS an accounting.expenses row (R-154 §2), so it gets no posting shortcut. ACC-50 REMOVED
     // (claude/00-SEAT-CONTRACT.md §3 corollary, owner ruling 2026-09-29) -- no tour-open check here.
+    // DEGH-04 (443.113): a check is a FINAL money document — it exists only if it posts. Flag off, or a posting refusal,
+    // throws here and withLuciaBypass rolls back the check, its lines, its registry number and its attachments.
+    // (Before: both branches returned 201 with a persisted, unposted "final" check.)
     let postingStatus: "posted" | "unposted" = "unposted";
     let journalEntryId: string | null = null;
-    if (await isEnabled(client, EXPENSE_GL_POSTING_FLAG_KEY, { operating_company_id, user_uuid: actorUserId })) {
-      try {
-        const posting = await postSourceTransactionInClientTx(
-          client,
-          { operating_company_id, source_transaction_type: "expense", source_transaction_id: expenseId },
-          { userId: actorUserId }
-        );
-        journalEntryId = posting.journal_entry_id;
-        // Spec step 7: "after posting, READ the JE back and assert Dr = Cr and the accounts are
-        // correct (the engine is idempotent and can return stale JEs)." Never trust the posting
-        // result alone -- a stale/idempotency-collided JE id would otherwise silently mark this check
-        // posted against the wrong journal entry.
-        await assertCheckJournalEntryBalanced(client, operating_company_id, journalEntryId, expenseId, bankAccount.ledger_account_id, totalCents);
-        await client.query(
-          `UPDATE accounting.expenses
-              SET posting_status = 'posted', posted_at = now(), journal_entry_id = $2::uuid, updated_at = now()
-            WHERE id = $1::uuid`,
-          [expenseId, journalEntryId]
-        );
-        postingStatus = "posted";
-      } catch (err) {
-        if (!(err instanceof PostingEngineError)) throw err;
-        // leave unposted -- surfaced honestly via posting_status, never a silent fake success.
-      }
+    if (!(await isEnabled(client, EXPENSE_GL_POSTING_FLAG_KEY, { operating_company_id, user_uuid: actorUserId }))) {
+      throw new CheckAccountError(
+        "CHECK_GL_POSTING_DISABLED",
+        `Expense GL posting (${EXPENSE_GL_POSTING_FLAG_KEY}) is off for this company, so a check cannot post — nothing was saved.`
+      );
     }
+    let posting: Awaited<ReturnType<typeof postSourceTransactionInClientTx>>;
+    try {
+      posting = await postSourceTransactionInClientTx(
+        client,
+        { operating_company_id, source_transaction_type: "expense", source_transaction_id: expenseId },
+        { userId: actorUserId }
+      );
+    } catch (err) {
+      // A closed period keeps its own named refusal (route -> 409 PERIOD_LOCKED); any other posting refusal is named too.
+      if (err instanceof PostingEngineError && err.code !== "PERIOD_LOCKED") {
+        throw new CheckAccountError("CHECK_POSTING_REFUSED", `The check could not post (${err.code}): ${err.message} — nothing was saved.`);
+      }
+      throw err;
+    }
+    journalEntryId = posting.journal_entry_id;
+    // Spec step 7: "after posting, READ the JE back and assert Dr = Cr and the accounts are
+    // correct (the engine is idempotent and can return stale JEs)." Never trust the posting
+    // result alone -- a stale/idempotency-collided JE id would otherwise silently mark this check
+    // posted against the wrong journal entry.
+    await assertCheckJournalEntryBalanced(client, operating_company_id, journalEntryId, expenseId, bankAccount.ledger_account_id, totalCents);
+    await client.query(
+      `UPDATE accounting.expenses
+          SET posting_status = 'posted', posted_at = now(), journal_entry_id = $2::uuid, updated_at = now()
+        WHERE id = $1::uuid AND operating_company_id = $3::uuid`,
+      [expenseId, journalEntryId, operating_company_id]
+    );
+    postingStatus = "posted";
 
     return {
       id: expenseId,
@@ -352,6 +398,54 @@ export async function createCheck(
       journal_entry_id: journalEntryId,
     };
   });
+}
+
+type ItemResolveClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
+
+/**
+ * DEGH-03 (443.113) — the item on a check CATEGORY line. A named item must be this company's active item AND default to the
+ * line's account; with no item named, exactly one active item may default to that account. Zero or several = refused by
+ * name (the owner picks the item on an Item line), never an arbitrary `LIMIT 1` pick — 17 USMCA account groups hold 101 items.
+ */
+export async function resolveCheckCategoryItem(
+  client: ItemResolveClient,
+  operatingCompanyId: string,
+  accountId: string,
+  namedItemId: string | null
+): Promise<string> {
+  if (namedItemId) {
+    const named = (
+      await client.query<{ id: string; account_id: string | null; item_name: string }>(
+        `SELECT id::text, default_expense_account_id::text AS account_id, item_name FROM catalogs.items
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL`,
+        [namedItemId, operatingCompanyId]
+      )
+    ).rows[0];
+    if (!named) throw new CheckAccountError("ITEM_NOT_FOUND", `Item ${namedItemId} is not an active item of this company.`);
+    if (named.account_id !== accountId) {
+      throw new CheckAccountError(
+        "CATEGORY_ITEM_ACCOUNT_MISMATCH",
+        `Item "${named.item_name}" posts to a different account than this category line — pick the item on an Item line.`
+      );
+    }
+    return named.id;
+  }
+  const candidates = (
+    await client.query<{ id: string; item_name: string }>(
+      `SELECT id::text, item_name FROM catalogs.items
+        WHERE operating_company_id = $1::uuid AND default_expense_account_id = $2::uuid AND deactivated_at IS NULL
+        ORDER BY item_name, id`,
+      [operatingCompanyId, accountId]
+    )
+  ).rows;
+  if (candidates.length === 1) return candidates[0].id;
+  if (candidates.length === 0) {
+    throw new CheckAccountError("CATEGORY_ITEM_REQUIRED", "No active item posts to this category's account — add the line as an Item line.");
+  }
+  throw new CheckAccountError(
+    "CATEGORY_ITEM_AMBIGUOUS",
+    `${candidates.length} items post to this category's account (${candidates.slice(0, 5).map((c) => c.item_name).join(", ")}${candidates.length > 5 ? ", …" : ""}) — name the item (Item line).`
+  );
 }
 
 type PostVerifyClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };

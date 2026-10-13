@@ -10,12 +10,13 @@
  *
  * USMCA Relay floor 2026-08-03: a fill dated before the floor is refused, never matched.
  */
-import { relayFillFeeCents, relayWalletDrawdownCents } from "../../integrations/relay-payments/relay-sender-fee-cents.js";
+import { relayFuelPaidCents, relayFuelWalletAmountSql } from "../../integrations/relay-payments/relay-sender-fee-cents.js";
 import {
   isBeforeRelayUsmcaFloor,
   RELAY_USMCA_DATA_FLOOR,
 } from "../../integrations/relay-payments/relay-usmca-date-floor.js";
 import { reversePostedSourceTransactionInClientTx } from "../posting-engine.service.js";
+import { unmatchBankTransactionOnClient } from "./unmatch-bank-transaction.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -149,6 +150,8 @@ type BankRow = {
   notes: string | null;
   matched_bill_id: string | null;
   matched_relay_fuel_transaction_id: string | null;
+  matched_fuel_transaction_id: string | null;
+  matched_factoring_advance_id: string | null;
   matched_journal_entry_id: string | null;
   review_state: string | null;
   status: string | null;
@@ -165,6 +168,8 @@ type FillRow = {
   matched_unit_number: string | null;
   merchant_name: string | null;
   line_fee_cents: number;
+  product_cents: number;
+  ingest_source: string | null;
 };
 
 async function loadBankRow(client: DbClient, operatingCompanyId: string, bankTransactionId: string): Promise<BankRow | null> {
@@ -172,6 +177,7 @@ async function loadBankRow(client: DbClient, operatingCompanyId: string, bankTra
     `SELECT id::text, operating_company_id::text, transaction_date::text,
             amount_cents::int, description, merchant_name, notes,
             matched_bill_id::text, matched_relay_fuel_transaction_id::text,
+            matched_fuel_transaction_id::text, matched_factoring_advance_id::text,
             matched_journal_entry_id::text, review_state::text, status::text
        FROM banking.bank_transactions
       WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
@@ -193,7 +199,13 @@ async function loadFillRow(client: DbClient, operatingCompanyId: string, fillId:
               SELECT sum(l.fee_amount_cents)::int
                 FROM integrations.relay_fuel_transaction_lines l
                WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL
-            ), 0)::int AS line_fee_cents
+            ), 0)::int AS line_fee_cents,
+            COALESCE((
+              SELECT sum(l.total_discounted_price_cents)::int
+                FROM integrations.relay_fuel_transaction_lines l
+               WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL
+            ), 0)::int AS product_cents,
+            r.ingest_source::text AS ingest_source
        FROM integrations.relay_fuel_transactions r
       WHERE r.id = $1::uuid AND r.operating_company_id = $2::uuid AND r.voided_at IS NULL
       LIMIT 1`,
@@ -203,13 +215,16 @@ async function loadFillRow(client: DbClient, operatingCompanyId: string, fillId:
 }
 
 function walletCentsForFill(fill: FillRow): number {
-  const fees = Array.isArray(fill.fees) ? fill.fees : [];
-  const fee = relayFillFeeCents({
+  // LEAD 443.123 — the ONE paid rule (relayFuelPaidCents): fuel paid + fee, a legacy CSV row's stored paid already
+  // carrying its fee is not counted twice.
+  return relayFuelPaidCents({
     transaction_id: fill.transaction_id,
-    fees,
+    stored_paid_cents: fill.total_amount_paid_cents,
+    product_lines_cents: fill.product_cents,
+    fees: Array.isArray(fill.fees) ? fill.fees : [],
     line_fee_amount_cents: [fill.line_fee_cents],
-  });
-  return relayWalletDrawdownCents(fill.total_amount_paid_cents, fee);
+    ingest_source: fill.ingest_source,
+  }).wallet_cents;
 }
 
 function refuseIfBankBlocked(bank: BankRow): void {
@@ -315,7 +330,13 @@ async function recommendForBankLine(
               SELECT sum(l.fee_amount_cents)::int
                 FROM integrations.relay_fuel_transaction_lines l
                WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL
-            ), 0)::int AS line_fee_cents
+            ), 0)::int AS line_fee_cents,
+            COALESCE((
+              SELECT sum(l.total_discounted_price_cents)::int
+                FROM integrations.relay_fuel_transaction_lines l
+               WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL
+            ), 0)::int AS product_cents,
+            r.ingest_source::text AS ingest_source
        FROM integrations.relay_fuel_transactions r
       WHERE r.operating_company_id = $1::uuid
         AND r.voided_at IS NULL
@@ -533,16 +554,19 @@ export async function acceptRelayBankMatch(
     });
   }
 
+  // 443.100: the actor column is matched_by_user_uuid — created_by_user_id does not exist on banking.reconciliation_matches
+  // (prod or any migration). The old swallowed .catch hid that failure while it ABORTED the caller's transaction, so the
+  // link stamp above would silently roll back at COMMIT. match_score is on the 0..1 scale
+  // (reconciliation_matches_match_score_check) — the old 100 violated it too; a user match is 1. ON CONFLICT DO NOTHING
+  // needs no named target, so no catch.
   await client.query(
     `INSERT INTO banking.reconciliation_matches (
        operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id,
-       match_score, match_state, created_by_user_id
-     ) VALUES ($1::uuid, $2::uuid, 'relay_fuel', $3::uuid, 100, 'user_matched', $4::uuid)
+       match_score, match_state, matched_by_user_uuid
+     ) VALUES ($1::uuid, $2::uuid, 'relay_fuel', $3::uuid, 1, 'user_matched', $4::uuid)
      ON CONFLICT DO NOTHING`,
     [input.operating_company_id, bank.id, fill.id, input.actor_user_uuid]
-  ).catch(() => {
-    // reconciliation_matches may lack a unique conflict target on older schemas — link stamp above is the authority.
-  });
+  );
 
   return {
     linked: true,
@@ -554,8 +578,15 @@ export async function acceptRelayBankMatch(
 }
 
 /**
- * Re-match: reverse any prior bank_categorization / match-created JE via reversePostedSourceTransaction
- * (never void), clear the prior link, then accept the new link.
+ * Re-match: reverse a prior categorize-written JE via reversePostedSourceTransaction (never void), release the prior
+ * link through the ONE unmatch writer, then accept the new link.
+ *
+ * 443.100: the release used to be an inline UPDATE here — it skipped releaseBankLineMatches (LAW 363.9: the release is
+ * written beside the accepted match), left matched_fuel_transaction_id / matched_factoring_advance_id / the deposit and
+ * invoice pointers set (half-release), and dropped matched_journal_entry_id for any other JE source with no reversal
+ * (orphan JE). unmatchBankTransactionOnClient clears every pointer, records the release, and reverses a JE the prior
+ * MATCH created (fill / chargeback) exactly once; a categorize-written JE is the re-match's own job (ROUND 360: unmatch
+ * never reverses what categorize wrote), so it is reversed here first and only when no match created the JE.
  */
 export async function rematchRelayBankMatch(
   client: DbClient,
@@ -573,7 +604,10 @@ export async function rematchRelayBankMatch(
     });
   }
 
-  if (bank.matched_journal_entry_id) {
+  const matchCreatedJe = Boolean(
+    bank.matched_fuel_transaction_id || bank.matched_relay_fuel_transaction_id || bank.matched_factoring_advance_id
+  );
+  if (bank.matched_journal_entry_id && !matchCreatedJe) {
     const src = await client.query<{ source_transaction_type: string | null; source_transaction_id: string | null }>(
       `SELECT DISTINCT ON (source_transaction_type) source_transaction_type::text, source_transaction_id::text
          FROM accounting.journal_entry_postings
@@ -586,7 +620,7 @@ export async function rematchRelayBankMatch(
     const st = src.rows[0]?.source_transaction_type;
     const sid = src.rows[0]?.source_transaction_id ?? bank.id;
     if (st === "bank_categorization" || st === "fuel_expense" || st === "relay_fuel" || st === "bank_match_fuel") {
-      // CHAIN-05 re-match: reverse the prior posting (never void).
+      // CHAIN-05 re-match: reverse the prior categorize posting (never void).
       await reversePostedSourceTransactionInClientTx(
         client as never,
         {
@@ -595,22 +629,16 @@ export async function rematchRelayBankMatch(
           source_transaction_id: sid,
         },
         { userId: input.actor_user_uuid },
-        new Date().toISOString().slice(0, 10)
+        bank.transaction_date
       );
     }
   }
 
-  await client.query(
-    `UPDATE banking.bank_transactions
-        SET matched_relay_fuel_transaction_id = NULL,
-            matched_journal_entry_id = NULL,
-            matched_bill_id = NULL,
-            review_state = 'for_review',
-            resolution_kind = NULL,
-            updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-    [bank.id, input.operating_company_id]
-  );
+  await unmatchBankTransactionOnClient(client as never, {
+    operating_company_id: input.operating_company_id,
+    bank_transaction_id: bank.id,
+    actor_user_uuid: input.actor_user_uuid,
+  });
 
   return acceptRelayBankMatch(client, input);
 }
@@ -638,11 +666,4 @@ export async function scanCategorizedLinesForAlreadyMatchedToBill(
 }
 
 /** SQL amount expression for Match drawer candidates — wallet drawdown (F442). */
-export const RELAY_FUEL_WALLET_AMOUNT_SQL = `(
-  ABS(COALESCE(r.total_amount_paid_cents, 0))
-  + COALESCE((
-      SELECT ROUND(SUM((f->>'amount')::numeric * 100))::int
-        FROM jsonb_array_elements(CASE WHEN jsonb_typeof(r.fees) = 'array' THEN r.fees ELSE '[]'::jsonb END) f
-       WHERE (f->>'amount') ~ '^[0-9]+(\\.[0-9]+)?$'
-    ), 0)
-)`;
+export const RELAY_FUEL_WALLET_AMOUNT_SQL = relayFuelWalletAmountSql("r");

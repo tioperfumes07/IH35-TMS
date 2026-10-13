@@ -61,6 +61,8 @@ describeIntegration("settlement approval.service canonical repoint (real Postgre
 
     await bypass(async () => {
       // approved_by is an FK to identity.users — seed the approver or the approve UPDATE FK-violates.
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language)
          VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
@@ -75,8 +77,8 @@ describeIntegration("settlement approval.service canonical repoint (real Postgre
       await db.query(
         `INSERT INTO driver_finance.driver_settlements
            (id, operating_company_id, display_id, driver_id, period_start, period_end, status,
-            gross_pay, deductions_total, reimbursements_total, net_pay)
-         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'draft',100.00,25.00,0,75.00)`,
+            gross_pay, deductions_total, reimbursements_total, net_pay, settlement_model)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'draft',100.00,25.00,0,75.00,'load_bookended')`,
         [settlementId, companyId, `P24A-${suffix}`, driverId]
       );
       // one line: $12.34, pending, entity-scoped

@@ -56,6 +56,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -89,7 +91,90 @@ jobs:
             scripts/verify-settlement-net-equals-document.mjs \
             scripts/verify-diesel-expense-fuel-dedupe.mjs \
             scripts/verify-fuel-relay-txn-vendor-unmatched.mjs \
-            scripts/verify-no-test-markers-in-live-tables.mjs
+            scripts/verify-acc13-no-test-accounts-in-usmca-coa.mjs \
+            scripts/verify-dispute-window-unified.mjs \
+            scripts/verify-driver-bill-settlement-link.mjs \
+            scripts/verify-driver-licence-documents-linked.mjs \
+            scripts/verify-every-posting-has-a-spine-link.mjs \
+            scripts/verify-load-exception-reasons-catalog.mjs \
+            scripts/verify-manual-delivery-authorization.mjs \
+            scripts/verify-needs-delivery-authorization-wired.mjs \
+            scripts/verify-no-duplicate-seed-deductions.mjs \
+            scripts/verify-no-empty-zero-settlement.mjs \
+            scripts/verify-no-future-dated-seed-expenses.mjs \
+            scripts/verify-open-tour-posts-nothing.mjs \
+            scripts/verify-reg030-bofa-usmca-freight-reconciliation.mjs \
+            scripts/verify-safety-events-with-driver-view-live.mjs \
+            scripts/verify-settled-load-carries-settled-status.mjs \
+            scripts/verify-settlement-deduction-balance-derived.mjs \
+            scripts/verify-transp-ar-control-opening-balance-integrity.mjs \
+            scripts/verify-no-test-markers-in-live-tables.mjs \
+            scripts/verify-bank-match-suggest-is-read-only.mjs \
+            scripts/verify-one-profile-per-driver.mjs \
+            scripts/verify-every-load-born-document-and-posting-traces-to-its-load.mjs \
+            scripts/verify-factoring-writers-write-the-spine.mjs \
+            scripts/verify-list-count-matches-its-own-banner-count.mjs \
+            scripts/verify-reclassify-shows-every-coa-account-including-zero.mjs \
+            scripts/verify-ap-control-ties-subledger.mjs \
+            scripts/verify-every-bill-posting-carries-its-source-link.mjs \
+            scripts/verify-usmca-settlement-linkage.mjs \
+            scripts/verify-relay-ingest-usmca-only.mjs \
+            scripts/verify-reclassify-list-sums-to-its-balance.mjs \
+            scripts/verify-factor-reserve-roles-match-faro-bank-accounts.mjs \
+            scripts/verify-fuel-expense-is-unique-per-provider-transaction.mjs \
+            scripts/verify-no-bank-line-is-matched-to-nothing.mjs \
+            scripts/verify-undo-leaves-no-document-behind.mjs \
+            scripts/verify-invoice-copies-export-safe.mjs \
+            scripts/verify-draft-load-saves-and-is-visible.mjs \
+            scripts/verify-round173-8-stops-have-addresses.mjs \
+            scripts/verify-categorized-has-a-document.mjs \
+            scripts/verify-factoring-fees-are-financing-costs.mjs \
+            scripts/verify-unmatched-document-is-matchable-again.mjs \
+            scripts/verify-no-duplicate-active-account-names.mjs \
+            scripts/verify-load-to-cash-chain.mjs \
+            scripts/verify-usmca-app-path-list-apis.mjs \
+            scripts/verify-reversing-je-carries-je-level-fk.mjs \
+            scripts/verify-cancelled-settlement-not-reusable.mjs \
+            scripts/verify-register-reversal-never-precedes-original.mjs \
+            scripts/verify-vendor-customer-merge.mjs \
+            scripts/verify-fuel-transactions-per-load.mjs \
+            scripts/verify-new-units-have-gps-or-deactivation-reason.mjs \
+            scripts/verify-bank-possible-duplicates-flagged-never-removed.mjs \
+            scripts/verify-for-review-has-no-document.mjs \
+            scripts/verify-relay-fill-one-company.mjs \
+            scripts/verify-expense-postings-name-their-payee.mjs \
+            scripts/verify-geofence-odometer-capture-freshness.mjs \
+            scripts/verify-bank-line-buckets-are-the-three-tabs.mjs \
+            scripts/verify-no-future-dated-or-untagged-sample-money.mjs \
+            scripts/verify-failed-posting-batch-is-retriable.mjs \
+            scripts/verify-account-register-orders-by-document-not-line.mjs \
+            scripts/verify-bill-wave-a-fk-write-path.mjs \
+            scripts/verify-trial-balance-and-balance-sheet.mjs \
+            scripts/verify-factoring-interest-at-close-2150-ties.mjs \
+            scripts/verify-factoring-advance-links-its-load.mjs \
+            scripts/verify-loves-geofences-seeded.mjs \
+            scripts/verify-samsara-mapping-integrity.mjs \
+            scripts/verify-driver-vendor-financial-identity-invariant.mjs \
+            scripts/verify-lease-engine-owner-only-and-unit-derivation.mjs \
+            scripts/verify-send-back-preserves-the-match-and-its-load.mjs \
+            scripts/verify-relay-fill-documents-sum-to-relay-total.mjs \
+            scripts/verify-faro-reserve-registers.mjs \
+            scripts/verify-csv-statement-upload-idempotent.mjs \
+            scripts/verify-faro-cash-reserve-presents-as-payable.mjs \
+            scripts/verify-settlement-creator-ap-tieout-counts-chain-bills.mjs \
+            scripts/verify-ar-subledger-ties-to-gl.mjs \
+            scripts/verify-no-journal-entry-has-zero-postings.mjs \
+            scripts/verify-voided-money-doc-has-gl-reversal.mjs \
+            scripts/verify-factoring-purchase-owner-only.mjs \
+            scripts/verify-usmca-fleet-fuel-tasks-neon-pv.mjs \
+            scripts/verify-settlement-net-matches-signed-doc.mjs \
+            scripts/verify-usmca-settlement-cutover.mjs \
+            scripts/verify-expense-dedupe-never-keys-on-load-and-amount.mjs \
+            scripts/verify-faro-invoice-lines-load-linkage.mjs \
+            scripts/verify-disbursement-never-credits-receipt-clearing.mjs \
+            scripts/verify-yard-location-and-fence.mjs \
+            scripts/verify-vendor-balances-equals-ap-control.mjs \
+            scripts/verify-document-links-enforced-at-db.mjs
       # ROUND 389 (LEAD) — the ONLY place a credential-gated derived artifact's freshness can actually be
       # proven. scripts/canonical-relations.json is regenerated from the live schema, so its generator
       # declares requiresDatabase; every other job runs guards through scripts/verify-static.mjs, which
@@ -263,9 +348,12 @@ jobs:
       - name: Apply migrations to the fresh CI DB (vitest + consistency guard both read it)
         run: npm run db:migrate
 
-      - name: Verification source of truth (local + CI parity)
-        run: npm run verify:pre-commit
-
+      # 443.99 (2026-10-12): the backend build now runs BEFORE verify:pre-commit, not after it.
+      # verify:pre-commit step 05 (verify:arch-design) runs verify-no-boot-throwing-env-checks, which
+      # scans the compiled dist/ for boot-time env throws and fails closed when dist/ is absent
+      # ("dist root not found"). With the build below pre-commit, that step could never pass in CI —
+      # the same step-order class as CI-DIST-COVERAGE. The autoload-coverage check further down still
+      # runs after this build (verify-ci-dist-coverage-step-order).
       # CI-DIST-COVERAGE — verify:accounting-autoload-coverage checks BOTH src/ (always present) and
       # dist/accounting (compiled .js route files). The job's only `npm run build` step ran ~500 lines
       # BELOW this one, so dist/accounting never existed yet when this check ran — every PR this
@@ -274,6 +362,9 @@ jobs:
       # re-run harmlessly by the later "Build" step) makes dist/ exist before the step that reads it.
       - name: Build backend (dist for autoload coverage check below)
         run: npm run build:backend
+
+      - name: Verification source of truth (local + CI parity)
+        run: npm run verify:pre-commit
 
       - name: Verify accounting autoload coverage (src + dist)
         run: npm run verify:accounting-autoload-coverage

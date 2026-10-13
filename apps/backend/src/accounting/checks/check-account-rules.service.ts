@@ -36,7 +36,14 @@ export type CheckAccountErrorCode =
   | "DRIVER_ADVANCE_IS_A_BILL_PAYMENT"
   | "CHECK_NUMBER_REQUIRED"
   | "TOTAL_MUST_BE_POSITIVE"
-  | "ITEM_QTY_RATE_REQUIRED";
+  | "ITEM_QTY_RATE_REQUIRED"
+  // DEGH-03 (443.113) — a category line names its item; never an arbitrary item sharing the account.
+  | "CATEGORY_ITEM_REQUIRED"
+  | "CATEGORY_ITEM_AMBIGUOUS"
+  | "CATEGORY_ITEM_ACCOUNT_MISMATCH"
+  // DEGH-04 (443.113) — a check is final only when it posts; otherwise nothing is saved.
+  | "CHECK_GL_POSTING_DISABLED"
+  | "CHECK_POSTING_REFUSED";
 
 export class CheckAccountError extends Error {
   code: CheckAccountErrorCode;

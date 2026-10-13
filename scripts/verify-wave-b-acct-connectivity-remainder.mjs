@@ -30,8 +30,11 @@ const CHECKS = [
     // a genuine regression (link removed or de-styled).
     name: "AP aging vendor EntityLink (by-type expand)",
     file: "apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx",
+    // LEAD 443.99 class B (2026-10-12): old rule required the text-slate-700 class; new rule accepts it OR the
+    // house token text-[#1F2A44] it was swept to (BANK-F91054, #25982, 2660d459bb). A de-styled or removed link
+    // still fails.
     pattern:
-      /<EntityLink kind="vendor" id=\{v\.vendor_id\} label=\{entityLabel\(v\.vendor_name, v\.vendor_id, "Vendor"\)\} className="[^"]*text-slate-700[^"]*"/,
+      /<EntityLink kind="vendor" id=\{v\.vendor_id\} label=\{entityLabel\(v\.vendor_name, v\.vendor_id, "Vendor"\)\} className="[^"]*text-(?:slate-700|\[#1F2A44\])[^"]*"/i,
   },
   {
     name: "Pay bill modal vendor EntityLink via billVendorDrillId",

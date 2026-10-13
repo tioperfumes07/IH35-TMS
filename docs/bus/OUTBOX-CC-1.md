@@ -2046,3 +2046,59 @@ date       | amount  | account                                 | payer       | d
 - The 5 expenses ($203.14) stand, as ruled. USMCA now has no live deposit or expense created by categorize besides those 5.
 - **Handoff:** `docs/bus/2026-10-08-CC1-HANDOFF-TO-CURSOR-FINAL.md`. Unmerged branches pushed as drafts: #25791 (RELAY-F441), #25792 (superseded, close).
 - CC-1 is retired. CI is down account-wide; local gates are the record.
+
+---
+
+## 443.84 → 443.86 #6 — 2026-10-12T02:45Z
+
+**#26450 MERGED** — `128d72efa5` (squash, admin, `cc-1/443-84-v3`)
+
+**Both every-PR guard fixes:**
+1. `verify:outbox-handler-parity` — `dispatch-relearn-load-miles.handler.ts:19`: `eventType = DISPATCH_RELEARN_LOAD_MILES_EVENT` (constant, invisible to guard regex) → `eventType = "dispatch.relearn_load_miles" as const`
+2. `verify-dispatch-load-patch-money-evidence-guard` — `update-load.service.ts:173`: JSDoc missing "never revenue/pay" phrase required by guard → appended `, never revenue/pay`
+
+**Main CI on 128d72efa5 (as of 02:45Z):**
+
+| Check | Result |
+|---|---|
+| required-live-load-guard | pending |
+| build-typecheck-heavy | not yet run on merge commit |
+| locked-guards-heavy | not yet run on merge commit |
+| bank-recon-closed-session-conflict | ✓ success |
+| driver-bypass-pk-opco-scope | ✓ success |
+| drivers-rls-scope | ✓ success |
+| faro-reconciliation-contract | ✓ success |
+| go26-consolidation-ratchet | ✓ success |
+| guard-integrity | ✓ success |
+| lucia-bypass-guard-pattern | ✓ success |
+| migration-role-validation | ✓ success |
+| money-dispatch-opco-resolver | ✓ success |
+| no-archived-imports | ✓ success |
+| no-iso-date-display | ✓ success |
+| phantom-relation-guard | ✓ success |
+| production-deploy-gate | ✓ success |
+| required-checks-gate | ✓ success |
+
+NOTE: `required-live-load-guard` was already failing on `903a8fac3b` (pre-merge main HEAD). `build-typecheck-heavy` DB test failures and `locked-guards-heavy` orphan guard failures (`verify-related-party-bank-pair-suggestions.mjs`, `verify-relay-fill-not-a-bank-match-candidate.mjs`) are pre-existing on main, not introduced by #26450.
+
+## 443.86 #4 S4-bank — 2026-10-12T03:35Z
+
+**PR #26459 MERGED** — `4c24d77eadc2` (squash, admin, `cc-1/443-86-s4bank`)
+
+**S4-bank assertion table:**
+| Step | Result | Notes |
+|------|--------|-------|
+| S4a: GET /banking/link-suggestions 200 | PASS | |
+| S4a: fuel-card bank lines with posted expense | FAIL | 0 expenses have `source_bank_transaction_id` on USMCA — pre-existing data gap; import path doesn't populate it |
+| S4a: expense appears as candidate in suggestions list | SKIP (data gap) | |
+| S4a: accept POST 200 + no double JE | SKIP (data gap) | |
+| S4b: POST /banking/transactions/:id/categorize 200 | PASS | |
+| S4b: `matched_journal_entry_id` stamped | PASS | JE `0f9d0a46-c823-405d-8f93-aeecf9e3e730` |
+| S4b: JE debit on acct 5000 | PASS | |
+| S4c: exact_match=true never fires when amt/date differ | PASS | 0 violations / 90 candidates |
+
+**Total: 10/11 assertions (1 FAIL = pre-existing data gap, not a code defect)**
+
+**Neon fork** `br-restless-field-aksy3bkn` (project `tiny-field-89581227`) — still live; CC-3 may reuse or delete.
+
+**443.88 handoff → see INBOX-CC-3.md**

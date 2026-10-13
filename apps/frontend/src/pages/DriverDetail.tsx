@@ -29,6 +29,8 @@ import {
   disableDriverPhoneLogin,
   enableDriverPhoneLogin,
   getDriver,
+  getDriverApVendor,
+  putDriverApVendor,
   resendDriverInvite,
   getDriverQualificationRateHistory,
   listDriverCompanyAuthorizations,
@@ -72,8 +74,6 @@ import { DriverWholeProfile } from "../components/driver-profile/DriverWholeProf
 import { StatusBadge } from "../components/StatusBadge";
 import { MissingRequiredChip } from "../components/compliance/MissingRequiredChip";
 import { useToast } from "../components/Toast";
-import { QboCombobox } from "../components/forms/QboCombobox";
-import { VendorLinkageModal } from "../components/qbo/VendorLinkageModal";
 import { CertExpiryBadge } from "../components/safety/CertExpiryBadge";
 import { EldEditHistoryTimeline } from "../components/safety/EldEditHistoryTimeline";
 import { UnitDriverHistoryStrip } from "./units/UnitDriverHistoryStrip";
@@ -256,7 +256,6 @@ export function DriverDetailPage() {
   });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState<Record<string, string>>({});
-  const [qboModalOpen, setQboModalOpen] = useState(false);
   const [newQualificationForm, setNewQualificationForm] = useState<Record<string, string>>({
     equipment_type_id: "",
     qualified_at: companyToday(),
@@ -273,8 +272,10 @@ export function DriverDetailPage() {
     change_notes: "",
   });
   const [authorizationNotesByCompany, setAuthorizationNotesByCompany] = useState<Record<string, string>>({});
-  const [qboVendorPickId, setQboVendorPickId] = useState<string | null>(null);
-  const [qboVendorPickLabel, setQboVendorPickLabel] = useState("");
+  // 443.137 9e: the driver's vendor is the NATIVE A/P payee (mdata.vendors.driver_id), picked from
+  // the canonical mdata.vendors roster. QBO is a read-only archive — this screen no longer picks a
+  // QuickBooks vendor or writes mdata.drivers.qbo_vendor_id.
+  const [apVendorPickId, setApVendorPickId] = useState<string | null>(null);
   const [qboClassTmsId, setQboClassTmsId] = useState("");
   // Hazmat "H" CDL endorsement (mdata.drivers.endorsement_h, migration 0301) — separate boolean state
   // since `form`/`hydratedForm` are string-keyed text-field state; reset whenever a different driver loads.
@@ -354,12 +355,21 @@ export function DriverDetailPage() {
   });
   const [w8benOpen, setW8benOpen] = useState(false);
 
+  const apVendorQuery = useQuery({
+    queryKey: ["driver-ap-vendor", id, driver?.operating_company_id],
+    queryFn: () => getDriverApVendor(id, String(driver?.operating_company_id)),
+    enabled: activeTab === "Profile" && Boolean(id && driver?.operating_company_id),
+  });
+  const linkedApVendor = apVendorQuery.data?.vendor ?? null;
+
   useEffect(() => {
     if (!driver) return;
-    setQboVendorPickId(driver.qbo_vendor_id);
-    setQboVendorPickLabel("");
     setQboClassTmsId(driver.qbo_class_id ?? "");
-  }, [driver?.id, driver?.qbo_vendor_id, driver?.qbo_class_id]);
+  }, [driver?.id, driver?.qbo_class_id]);
+
+  useEffect(() => {
+    setApVendorPickId(linkedApVendor?.id ?? null);
+  }, [linkedApVendor?.id]);
 
   useEffect(() => {
     if (!driver) return;
@@ -367,20 +377,28 @@ export function DriverDetailPage() {
   }, [driver?.id, driver?.endorsement_h]);
 
   const saveDriverQboMutation = useMutation({
-    mutationFn: () =>
-      updateDriver(id, {
-        qbo_vendor_id: qboVendorPickId || null,
-        qbo_class_id: qboClassTmsId || null,
-      }),
+    mutationFn: async () => {
+      // 443.137 9e last gaps: native payee relink is one PUT (server transaction) — never two
+      // client-side vendor PATCHes that can leave the driver without a payee mid-failure.
+      const previousVendorId = linkedApVendor?.id ?? null;
+      if (apVendorPickId !== previousVendorId && driver?.operating_company_id) {
+        await putDriverApVendor(id, String(driver.operating_company_id), apVendorPickId);
+      }
+      return updateDriver(id, { qbo_class_id: qboClassTmsId || null });
+    },
     onSuccess: (updated) => {
       // LV-DRIVER-EDIT-SAVE-DISPLAY-STALE: the read query key is ["driver", id, companyId] (L252),
       // but this wrote to the 2-part key ["driver", id] — setQueryData does an EXACT key match, so
       // that write landed in a phantom cache entry nothing reads. The save genuinely persisted
       // server-side; the screen just never refreshed. Write to the real key.
       queryClient.setQueryData(["driver", id, companyId], updated);
-      pushToast("QBO fields updated", "success");
+      void queryClient.invalidateQueries({ queryKey: ["driver-ap-vendor", id] });
+      pushToast("Vendor & class updated", "success");
     },
-    onError: () => pushToast("Failed to update QBO fields", "error"),
+    onError: () => {
+      void queryClient.invalidateQueries({ queryKey: ["driver-ap-vendor", id] });
+      pushToast("Failed to update vendor & class", "error");
+    },
   });
 
   const canManageRates = user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Manager";
@@ -1198,20 +1216,30 @@ export function DriverDetailPage() {
           </div>
 
           <div className="col-span-full rounded-md border border-gray-200 p-3">
-            <div className="mb-2 text-xs font-semibold text-gray-600">QBO reporting (vendor & class)</div>
+            <div className="mb-2 text-xs font-semibold text-gray-600">Vendor & class</div>
             <div className="grid gap-3 md:grid-cols-2">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-gray-600">QBO vendor</label>
-                {driver?.operating_company_id ? (
-                  <QboCombobox
-                    entityType="vendor"
-                    operatingCompanyId={driver.operating_company_id}
-                    value={qboVendorPickId}
-                    displayValue={qboVendorPickLabel}
-                    onChange={(qboId, displayName) => {
-                      setQboVendorPickId(qboId);
-                      setQboVendorPickLabel(displayName);
-                    }}
+              <div className="flex flex-col gap-1" data-testid="driver-ap-vendor-select">
+                <label className="text-xs font-semibold text-gray-600">A/P vendor (driver payee)</label>
+                {apVendorQuery.isError ? (
+                  <ListErrorState
+                    title="Couldn't load A/P vendor"
+                    status={0}
+                    message={(apVendorQuery.error as Error | null)?.message}
+                    onRetry={() => void apVendorQuery.refetch()}
+                  />
+                ) : driver?.operating_company_id ? (
+                  <EntityPicker
+                    kind="vendor"
+                    operatingCompanyId={String(driver.operating_company_id)}
+                    value={apVendorPickId}
+                    selectedOption={
+                      linkedApVendor ? { value: linkedApVendor.id, label: linkedApVendor.name || "Linked vendor" } : null
+                    }
+                    onChange={(value) => setApVendorPickId(value ?? null)}
+                    placeholder={apVendorQuery.isLoading ? "Loading vendor…" : "Select vendor"}
+                    disabled={apVendorQuery.isLoading}
+                    ariaLabel="A/P vendor (driver payee)"
+                    dataTestId="driver-ap-vendor-picker"
                   />
                 ) : null}
               </div>
@@ -1242,8 +1270,13 @@ export function DriverDetailPage() {
               </div>
             </div>
             <div className="mt-2">
-              <Button size="sm" loading={saveDriverQboMutation.isPending} onClick={() => saveDriverQboMutation.mutate()}>
-                Save QBO fields
+              <Button
+                size="sm"
+                loading={saveDriverQboMutation.isPending}
+                disabled={apVendorQuery.isLoading || apVendorQuery.isError}
+                onClick={() => saveDriverQboMutation.mutate()}
+              >
+                Save vendor & class
               </Button>
             </div>
           </div>
@@ -1406,11 +1439,9 @@ export function DriverDetailPage() {
                 </span>
               </p>
             </div>
-            {isOwner ? (
-              <Button variant="secondary" onClick={() => setQboModalOpen(true)}>
-                {driver.qbo_vendor_id ? "Edit Linkage" : "Link to existing"}
-              </Button>
-            ) : null}
+            {/* 443.137 9e part 2: no "Edit Linkage" / "Link to existing" — the QBO vendor-link routes answer
+                409 QBO_NATIVE_WRITE_REFUSED (QuickBooks is a read-only archive). This tab is read-only; the
+                driver's payee is the A/P vendor on the Profile tab. */}
           </div>
           <div className="border-t border-gray-200 bg-gray-50 p-2 text-xs">
             <div>
@@ -2447,24 +2478,6 @@ export function DriverDetailPage() {
           </div>
         </div>
       </Modal>
-      {driver.operating_company_id ? (
-        <VendorLinkageModal
-          open={qboModalOpen}
-          operatingCompanyId={driver.operating_company_id}
-          entityType="driver"
-          entityId={driver.id}
-          entityName={`${driver.first_name} ${driver.last_name}`}
-          currentQboVendorId={driver.qbo_vendor_id}
-          canManage={isOwner}
-          onClose={() => setQboModalOpen(false)}
-          onSaved={() => {
-            setQboModalOpen(false);
-            void queryClient.invalidateQueries({ queryKey: ["driver", id] });
-            void queryClient.invalidateQueries({ queryKey: ["qbo-linkage-history", driver.operating_company_id, id] });
-            pushToast("QBO linkage updated", "success");
-          }}
-        />
-      ) : null}
     </div>
   );
 }

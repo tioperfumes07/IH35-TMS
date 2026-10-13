@@ -209,7 +209,7 @@ for (const f of [EXPENSES, BILLS, PAYMENTS]) {
   }
 }
 const problems = collectProblems(
-  fs.readFileSync(path.join(root, EXPENSES), "utf8"),
+  fs.readFileSync(path.join(root, EXPENSES), "utf8") + "\n" + fs.readFileSync(path.join(root, "apps/backend/src/accounting/expense-writer.service.ts"), "utf8"), /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
   fs.readFileSync(path.join(root, BILLS), "utf8"),
   fs.existsSync(path.join(root, PAYMENTS)) ? fs.readFileSync(path.join(root, PAYMENTS), "utf8") : ""
 );

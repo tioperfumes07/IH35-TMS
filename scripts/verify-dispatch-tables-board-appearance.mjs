@@ -15,7 +15,11 @@ const files = execFileSync("git", ["ls-files", "--", "apps/frontend/src/pages/di
 export function audit(sources, pt) {
   const f = [];
   for (const [file, src] of Object.entries(sources)) {
-    for (const m of src.matchAll(/<ParityTable\b[\s\S]*?(?=\/>|>\s*\n)/g)) {
+    // 443.100: old rule matched `<ParityTable\b … >\n`, so a generic-typed opening tag
+    // (`<ParityTable<Row>` + newline) ended at the type argument's `>` and every prop after it was
+    // invisible — a correctly-attributed table read as "without appearance". New rule skips an optional
+    // type argument first; the same omission still fails (selftest plants a generic table without it).
+    for (const m of src.matchAll(/<ParityTable(?:<[\w\s,|.[\]]+>)?(?![\w<])[\s\S]*?(?=\/>|>\s*\n)/g)) {
       if (!/appearance="board"/.test(m[0])) f.push(`${file}:${src.slice(0, m.index).split("\n").length} ParityTable without appearance="board"`);
     }
   }
@@ -32,6 +36,7 @@ if (process.argv.includes("--selftest")) {
   const [one] = Object.keys(sources).filter((f) => /appearance="board"/.test(sources[f]));
   const m = [
     ["table opts out", { ...sources, [one]: sources[one].replace(/ appearance="board"/, "") }, pt],
+    ["generic-typed table opts out", { "x/Generic.tsx": "<ParityTable<Row>\n  rows={rows}\n/>" }, pt],
     ["zebra token gone", sources, pt.replace('"var(--ih-zebra)"', '"#FAFAFA"')],
   ];
   for (const [n, s, p] of m) if (audit(s, p).length === 0) { console.error(`selftest FAIL: ${n}`); process.exit(1); }

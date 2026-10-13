@@ -140,6 +140,10 @@ function collectErrors() {
   if (!dp.includes("parseDateUS")) {
     errors.push("DatePicker must import/use parseDateUS for typed MM/DD/YYYY entry (MOD-03)");
   }
+  // Owner 2026-10-10: digits-only typing must auto-insert `/` (08052026 → 08/05/2026) on ALL calendars.
+  if (!dp.includes("maskTypedDateUS")) {
+    errors.push("DatePicker must use maskTypedDateUS so typing 08052026 becomes 08/05/2026 without slash keys");
+  }
   if (!/type="text"/.test(dp) || !/inputMode="numeric"/.test(dp)) {
     errors.push("DatePicker must render a text input for typed date entry (MOD-03) — not button-only value");
   }
@@ -168,6 +172,9 @@ function collectErrors() {
   const dtp = readSrc(DATETIMEPICKER);
   if (!dtp.includes("parseDateUS")) {
     errors.push("DateTimePicker must import/use parseDateUS for typed MM/DD/YYYY entry (MOD-03)");
+  }
+  if (!dtp.includes("maskTypedDateUS")) {
+    errors.push("DateTimePicker must use maskTypedDateUS so typing 08052026 becomes 08/05/2026 without slash keys");
   }
   if (!/type="text"/.test(dtp) || !/inputMode="numeric"/.test(dtp)) {
     errors.push("DateTimePicker must render a text input for typed date entry (MOD-03) — not button-only value");

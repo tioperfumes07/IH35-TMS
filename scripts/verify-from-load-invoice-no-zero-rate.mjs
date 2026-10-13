@@ -40,8 +40,10 @@ function check(root = ROOT) {
     errors.push(`${FILES.fromLoad}: from-load mint must not call nextInvoiceDisplayId`);
   }
   // LST-F418: 98edb380d9 — resolveInvoiceDisplayId(…, loadNumber) falls back to the load number (display-id.ts).
-  if (!/resolveInvoiceDisplayId\([\s\S]{0,200}?loadNumber\s*\)/.test(fromLoad)) {
-    errors.push(`${FILES.fromLoad}: displayId must fall back to load.load_number (resolveInvoiceDisplayId(…, loadNumber))`);
+  // ROUND 443.8 (#26173): the load number moved into the opts bag — resolveInvoiceDisplayId(…, { loadNumber, … }) —
+  // and every from-load invoice is <invoice-number>-<load-number>; the load number is still what it numbers by.
+  if (!/resolveInvoiceDisplayId\([\s\S]{0,300}?\{\s*loadNumber\b/.test(fromLoad)) {
+    errors.push(`${FILES.fromLoad}: displayId must be numbered by load.load_number (resolveInvoiceDisplayId(…, { loadNumber }))`);
   }
 
   const bookLoad = fs.readFileSync(path.join(root, FILES.bookLoad), "utf8");
@@ -127,7 +129,7 @@ function selftest() {
 
     copyTree(tmp);
     fromLoad = fs.readFileSync(path.join(tmp, FILES.fromLoad), "utf8");
-    fromLoad = fromLoad.replace(/resolveInvoiceDisplayId\(([\s\S]{0,200}?),\s*loadNumber\s*\)/, "nextInvoiceDisplayId($1)");
+    fromLoad = fromLoad.replace(/resolveInvoiceDisplayId\(([\s\S]{0,300}?),\s*\{\s*loadNumber\b[^}]*\}\s*\)/, "nextInvoiceDisplayId($1)");
     fs.writeFileSync(path.join(tmp, FILES.fromLoad), fromLoad);
     const mintErrs = check(tmp);
     if (!mintErrs.some((e) => e.includes("nextInvoiceDisplayId"))) {

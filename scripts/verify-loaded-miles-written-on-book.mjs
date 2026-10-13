@@ -62,8 +62,12 @@ function assert(files) {
     problems.push(`${SVC}: lockstep broken — ${columns.length} columns vs ${valueEntries.length} VALUES entries`);
   }
   // loaded_miles VALUE SLOT sits after is_sample_data. P0: shortest when typed, else practical.
+  // fab68f23f3 (#24006, LST-F3270): the rule lives in ONE exported helper, loadedMilesFor(shortest, practical),
+  // recomputed by every writer — so the slot must call it and the helper must carry the practical fallback.
+  const helperBody = (src.match(/export function loadedMilesFor\(shortest: unknown, practical: unknown\): number \| null \{([\s\S]*?)\n\}/) ?? [])[1] ?? "";
   if (
-    !/input\.is_sample_data \?\? false,[\s\S]{0,900}?miles_shortest[\s\S]{0,120}?miles_practical \?\? null/.test(src)
+    !/input\.is_sample_data \?\? false,[\s\S]{0,900}?loadedMilesFor\(input\.miles_shortest, input\.miles_practical\),/.test(src) ||
+    !/if \(Number\.isFinite\(s\) && s > 0\) return s;\s*return practical == null \? null : Number\(practical\);/.test(helperBody)
   ) {
     problems.push(
       `${SVC}: loaded_miles must fall back to miles_practical when miles_shortest is missing — ` +
@@ -197,16 +201,18 @@ if (SELFTEST) {
   checks.push(["column dropped", assert(dropped).some((p) => /must write loaded_miles|lockstep broken/.test(p))]);
   const noFallback = {
     ...files,
-    [SVC]: files[SVC].replace(
-      /Number\(input\.miles_shortest \?\? 0\) > 0 \? input\.miles_shortest : input\.miles_practical \?\? null,/,
-      "input.miles_shortest ?? null,",
-    ),
+    [SVC]: files[SVC].replace("loadedMilesFor(input.miles_shortest, input.miles_practical),", "input.miles_shortest ?? null,"),
   };
-  if (noFallback[SVC] === files[SVC]) {
+  const helperNoFallback = {
+    ...files,
+    [SVC]: files[SVC].replace("return practical == null ? null : Number(practical);", "return null;"),
+  };
+  if (noFallback[SVC] === files[SVC] || helperNoFallback[SVC] === files[SVC]) {
     console.error(`${LABEL} SELFTEST FAIL — could not plant the loaded_miles no-fallback mutation`);
     process.exit(1);
   }
   checks.push(["loaded_miles practical fallback removed", assert(noFallback).some((p) => /fall back to miles_practical/.test(p))]);
+  checks.push(["loadedMilesFor practical fallback removed", assert(helperNoFallback).some((p) => /fall back to miles_practical/.test(p))]);
   const hiddenMiles = {
     ...files,
     [STRIP]: files[STRIP].replace(/data-testid="book-miles-shortest"/g, 'data-testid="book-miles-shortest-GONE"'),
@@ -251,8 +257,13 @@ if (SELFTEST) {
   checks.push(["save_proof dropped", assert(noProof).some((p) => /save_proof from buildLoadSaveProof/.test(p))]);
   const greenLinked = {
     ...files,
-    [PROOF_FE]: files[PROOF_FE].replace("text-slate-900", "text-green-600"),
+    // 428b5269a6 (#25833, BANK-F91178) moved the Linked span from text-slate-900 to the house token text-[#0F1219].
+    [PROOF_FE]: files[PROOF_FE].replace('text-[#0F1219]" data-proof-state="linked"', 'text-green-600" data-proof-state="linked"'),
   };
+  if (greenLinked[PROOF_FE] === files[PROOF_FE]) {
+    console.error(`${LABEL} SELFTEST FAIL — could not plant the Linked painted-green mutation`);
+    process.exit(1);
+  }
   checks.push(["Linked painted green", assert(greenLinked).some((p) => /green\/emerald/.test(p))]);
   const failed = checks.filter(([, c]) => !c).map(([n]) => n);
   if (failed.length) { console.error(`${LABEL} SELFTEST FAIL — not caught: ${failed.join(", ")}`); process.exit(1); }

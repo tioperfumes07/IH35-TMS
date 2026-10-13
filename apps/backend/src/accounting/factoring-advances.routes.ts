@@ -579,6 +579,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         if (String(row.status) !== "sent") return { code: 409 as const, error: "invoice_not_sent" };
         if (String(row.factoring_status) !== "not_factored") return { code: 409 as const, error: "invoice_already_factored" };
         if (!row.factoring_eligible) return { code: 409 as const, error: "customer_not_factoring_eligible" };
+        if (Number(row.total_cents ?? 0) === 0) return { code: 409 as const, error: "zero_revenue_invoice_not_factorable" };
         if (Number(row.pledge_cents ?? 0) <= 0) return { code: 409 as const, error: "invoice_zero_open" };
       }
 

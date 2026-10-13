@@ -1,5 +1,6 @@
 import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../../auth/db.js";
+import { milesTimesRateCents } from "../../driver-finance/deadhead-rule.js";
 
 export const DEFAULT_DEADHEAD_RATE_PER_MILE_CENTS = 250;
 export const DEFAULT_MAX_DEADHEAD_MILES = 200;
@@ -79,7 +80,7 @@ export function cityStateToLatLng(city: string, state: string): { lat: number; l
 }
 
 export function computeDeadheadCostCents(deadheadMiles: number, ratePerMileCents = DEFAULT_DEADHEAD_RATE_PER_MILE_CENTS): number {
-  return Math.round(Math.max(0, deadheadMiles) * Math.max(0, ratePerMileCents));
+  return milesTimesRateCents(Math.max(0, deadheadMiles), Math.max(0, ratePerMileCents)); // ROUND 443.33: the one money rule
 }
 
 export function computeSuggestionScore(

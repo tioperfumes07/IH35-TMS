@@ -4,7 +4,7 @@
  * the load its original belonged to. Pairs with CC-1's verify-every-load-born-posting-carries-its-load (the writers).
  *   static — migration 202615330931 still declares the five refusals (posting, from_load invoice, driver bill,
  *            revenue-recognition posting, load charge line).
- *   live, every non-frozen company:
+ *   live, USMCA only:
  *     (1) the five refusal triggers exist and are enabled;
  *     (2) load-born documents with no load = exactly the PINNED list below (shrink-only; a new one FAILS, a pinned one
  *         that gained its load or left FAILS until it is removed from the list);
@@ -16,10 +16,11 @@
  * No database = FAIL. Run: node scripts/verify-every-load-born-document-and-posting-traces-to-its-load.mjs [--selftest]
  */
 import { readFileSync } from "node:fs";
-import { NOT_FROZEN_SQL, report, withUnscopedReadOnly } from "./lib/bank-feed-state-machine.mjs";
+import { report, withUnscopedReadOnly } from "./lib/bank-feed-state-machine.mjs";
 
 export const REQUIRES_LIVE_DB = "the load refusals and the reversal-to-load walk are live ledger lineage";
 const LABEL = "verify-every-load-born-document-and-posting-traces-to-its-load";
+const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const MIGRATION = "db/migrations/202615330931_load_born_rows_refuse_a_null_load.sql";
 const STAMP_MIGRATION = "202615350500_journal_entry_postings_load_id_stamp.sql";
 const BACKFILL_MIGRATION = "202615390931_posting_load_id_backfill_where_provable.sql";
@@ -50,11 +51,23 @@ export function liveGaps(x, pinnedList = PINNED_LOADLESS) {
   const seen = new Set(x.loadless.map(key));
   for (const p of pinnedList) if (!seen.has(key(p))) f.push(`pinned ${p.table} ${p.display} no longer lacks a load — remove it from PINNED_LOADLESS (shrink-only)`);
   if (x.unstamped > 0) f.push(`${x.unstamped} posting(s) written since the stamp went live name a load in their resolver but carry load_id NULL`);
+  // LEAD 443.112 #1 — a load-attributed expense carries its expense_attribution.expense_load_links row.
+  for (const n of x.unlinkedExpenses ?? []) f.push(`load expense ${n} has a load but no expense_load_links row (backfill: POST /api/v1/accounting/expenses/link-loads)`);
   if (x.walk.broken > 0) f.push(`${x.walk.broken} of ${x.walk.reversals} reversal line(s) cannot walk reversal -> original -> load, or the load does not list them`);
   return f;
 }
 
+/** LEAD 443.112 #1 — the shared expense writer writes its load link through the ONE helper, never a raw INSERT. */
+export const EXPENSE_WRITER = "apps/backend/src/accounting/expenses.routes.ts";
+export function writerGaps(src) {
+  const f = [];
+  if (/INSERT INTO expense_attribution\.expense_load_links/.test(src)) f.push(`${EXPENSE_WRITER} writes expense_load_links with a raw INSERT — use insertExpenseLoadLink`);
+  if (!/await insertExpenseLoadLink\(client, \{/.test(src)) f.push(`${EXPENSE_WRITER} no longer writes the load link through insertExpenseLoadLink`);
+  return f;
+}
+
 const sql = readFileSync(MIGRATION, "utf8");
+const writerSrc = readFileSync(EXPENSE_WRITER, "utf8");
 if (process.argv.includes("--selftest")) {
   const all = new Set(TRIGGERS.map(([, t]) => t));
   // The selftest pins its OWN fixture row, so it does not depend on what the real (shrink-only) list holds today.
@@ -69,6 +82,10 @@ if (process.argv.includes("--selftest")) {
     ["pinned row fixed but still pinned", liveGaps({ ...clean, loadless: [] }, PIN).length === 1],
     ["unstamped posting", liveGaps({ ...clean, unstamped: 2 }, PIN).length === 1],
     ["broken walk", liveGaps({ ...clean, walk: { reversals: 3, broken: 1 } }, PIN).length === 1],
+    ["load expense without its link", liveGaps({ ...clean, unlinkedExpenses: ["13500-1"] }, PIN).length === 1],
+    ["writer real", writerGaps(writerSrc).length === 0],
+    ["writer raw link INSERT", writerGaps(writerSrc + "\nINSERT INTO expense_attribution.expense_load_links (x)").length === 1],
+    ["writer drops the helper", writerGaps(writerSrc.replaceAll("await insertExpenseLoadLink(client, {", "await other(client, {")).length === 1],
   ];
   const bad = cases.filter(([, v]) => !v);
   if (bad.length) { console.error(`${LABEL} selftest FAIL: ${bad.map(([n]) => n).join(", ")}`); process.exit(1); }
@@ -76,35 +93,40 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const fails = migrationGaps(sql);
+const fails = [...migrationGaps(sql), ...writerGaps(writerSrc)];
 const facts = await withUnscopedReadOnly(LABEL, async (c) => {
   const applied = (await c.query(`SELECT applied_at FROM _system._schema_migrations WHERE filename = $1`, [MIGRATION.split("/").pop()])).rows[0];
   const stampAt = (await c.query(`SELECT applied_at FROM _system._schema_migrations WHERE filename = $1`, [STAMP_MIGRATION])).rows[0]?.applied_at ?? null;
   const triggers = new Set((await c.query(`SELECT tgname FROM pg_trigger WHERE tgname = ANY($1) AND tgenabled <> 'D'`, [TRIGGERS.map(([, t]) => t)])).rows.map((r) => r.tgname));
   const loadless = (await c.query(`
     SELECT 'accounting.invoices' AS table, i.display_id AS display FROM accounting.invoices i
-     WHERE i.invoice_type = 'from_load' AND i.source_load_id IS NULL AND ${NOT_FROZEN_SQL("i.operating_company_id")}
-    UNION ALL SELECT 'driver_finance.driver_bills', b.id::text FROM driver_finance.driver_bills b WHERE b.load_id IS NULL AND ${NOT_FROZEN_SQL("b.operating_company_id")}
-    UNION ALL SELECT 'accounting.load_revenue_recognition_postings', r.id::text FROM accounting.load_revenue_recognition_postings r WHERE r.load_id IS NULL AND ${NOT_FROZEN_SQL("r.operating_company_id")}
-    UNION ALL SELECT 'dispatch.load_charge_lines', l.id::text FROM dispatch.load_charge_lines l WHERE l.load_id IS NULL AND ${NOT_FROZEN_SQL("l.operating_company_id")}`)).rows;
+     WHERE i.invoice_type = 'from_load' AND i.source_load_id IS NULL AND i.operating_company_id = $1
+    UNION ALL SELECT 'driver_finance.driver_bills', b.id::text FROM driver_finance.driver_bills b WHERE b.load_id IS NULL AND b.operating_company_id = $1
+    UNION ALL SELECT 'accounting.load_revenue_recognition_postings', r.id::text FROM accounting.load_revenue_recognition_postings r WHERE r.load_id IS NULL AND r.operating_company_id = $1
+    UNION ALL SELECT 'dispatch.load_charge_lines', l.id::text FROM dispatch.load_charge_lines l WHERE l.load_id IS NULL AND (l.operating_company_id = $1 OR l.operating_company_id IS NULL)`, [USMCA])).rows;
   // 363-CC3-A: once 202615390931 has stamped every provable EXISTING posting, the unstamped / broken-walk rules hold for
   // ALL TIME, not only since the stamp; history without a provable load (documents gone) stays reported.
   const backfilled = (await c.query(`SELECT 1 FROM _system._schema_migrations WHERE filename = $1`, [BACKFILL_MIGRATION])).rowCount > 0;
   const since = backfilled ? "-infinity" : stampAt ?? "infinity";
   const unstamped = (await c.query(`
     SELECT count(*)::int AS n FROM accounting.journal_entry_postings p
-     WHERE p.created_at >= $1::timestamptz AND p.load_id IS NULL AND ${NOT_FROZEN_SQL("p.operating_company_id")}
-       AND accounting.posting_source_load_id(p.source_transaction_type, p.source_transaction_id::text, p.source_transaction_line_id::text, p.reversal_of_line_id) IS NOT NULL`, [since])).rows[0].n;
+     WHERE p.created_at >= $2::timestamptz AND p.load_id IS NULL AND p.operating_company_id = $1
+       AND accounting.posting_source_load_id(p.source_transaction_type, p.source_transaction_id::text, p.source_transaction_line_id::text, p.reversal_of_line_id) IS NOT NULL`, [USMCA, since])).rows[0].n;
   const walk = (await c.query(`
     SELECT count(*)::int AS reversals,
            count(*) FILTER (WHERE o.id IS NULL OR r.load_id IS DISTINCT FROM o.load_id)::int AS broken
       FROM accounting.journal_entry_postings r
-      LEFT JOIN accounting.journal_entry_postings o ON o.id = r.reversal_of_line_id
-     WHERE r.reversal_of_line_id IS NOT NULL AND r.created_at >= $1::timestamptz AND ${NOT_FROZEN_SQL("r.operating_company_id")}`, [since])).rows[0];
+      LEFT JOIN accounting.journal_entry_postings o ON o.id = r.reversal_of_line_id AND o.operating_company_id = $1
+     WHERE r.reversal_of_line_id IS NOT NULL AND r.created_at >= $2::timestamptz AND r.operating_company_id = $1`, [USMCA, since])).rows[0];
   const history = (await c.query(`
     SELECT count(*)::int AS n FROM accounting.journal_entry_postings p
-     WHERE p.created_at < $1::timestamptz AND p.load_id IS NULL AND ${NOT_FROZEN_SQL("p.operating_company_id")}`, [since])).rows[0].n;
-  return { applied: Boolean(applied), stampAt, backfilled, triggers, loadless, unstamped, walk, history };
+     WHERE p.created_at < $2::timestamptz AND p.load_id IS NULL AND p.operating_company_id = $1`, [USMCA, since])).rows[0].n;
+  const unlinkedExpenses = (await c.query(`
+    SELECT COALESCE(e.expense_number, e.id::text) AS n FROM accounting.expenses e
+     WHERE e.load_id IS NOT NULL AND e.voided_at IS NULL AND e.operating_company_id = $1
+       AND NOT EXISTS (SELECT 1 FROM expense_attribution.expense_load_links k WHERE k.expense_source = 'accounting' AND k.expense_id = e.id AND k.operating_company_id = $1)
+     ORDER BY 1`, [USMCA])).rows.map((r) => r.n);
+  return { applied: Boolean(applied), stampAt, backfilled, triggers, loadless, unstamped, walk, history, unlinkedExpenses };
 });
 const live = liveGaps(facts);
 if (!facts.applied) {
@@ -112,5 +134,5 @@ if (!facts.applied) {
 } else {
   fails.push(...live);
 }
-console.log(`${LABEL}: load-less load-born documents ${facts.loadless.length} (pinned ${PINNED_LOADLESS.length}); ${facts.backfilled ? "postings (all time, backfill applied)" : "postings since the stamp"} unstamped ${facts.unstamped}; reversals ${facts.backfilled ? "(all time)" : "since the stamp"} ${facts.walk.reversals}, broken walks ${facts.walk.broken}${facts.backfilled ? "" : `; pre-stamp postings without a load ${facts.history} (purge population, reported)`}`);
+console.log(`${LABEL}: load-less load-born documents ${facts.loadless.length} (pinned ${PINNED_LOADLESS.length}); ${facts.backfilled ? "postings (all time, backfill applied)" : "postings since the stamp"} unstamped ${facts.unstamped}; reversals ${facts.backfilled ? "(all time)" : "since the stamp"} ${facts.walk.reversals}, broken walks ${facts.walk.broken}${facts.backfilled ? "" : `; pre-stamp postings without a load ${facts.history} (purge population, reported)`}; load expenses without their link ${facts.unlinkedExpenses.length}`);
 report(LABEL, fails, "every load-born row carries its load and every reversal walks back to it");

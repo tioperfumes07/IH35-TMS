@@ -20,9 +20,6 @@
     "customers/relationship-score/scorer.service.ts": {
       "count": 1
     },
-    "dispatch/cancellation.service.ts": {
-      "count": 1
-    },
     "dispatch/load-billing-lifecycle.service.ts": {
       "count": 1
     },
@@ -93,9 +90,6 @@
       "count": 1
     },
     "telematics/geofence-detector.service.ts": {
-      "count": 1
-    },
-    "telematics/stops-geocode-backfill.service.ts": {
       "count": 1
     }
   },

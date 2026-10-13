@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const routes = fs.readFileSync(path.join(here, "../expenses.routes.ts"), "utf8");
+const routes = fs.readFileSync(path.join(here, "../expenses.routes.ts"), "utf8") + fs.readFileSync(path.join(here, "../expense-writer.service.ts"), "utf8"); // 443.130: the writer moved out of the route
 
 // RANK4-EXPENSE-TRAILER-ID (2026-08-12) — accounting.expenses.trailer_id (mdata.equipment, rank 1
 // / PR #6316) had no create-path acceptance. Static source-shape guard, matching this directory's
@@ -18,7 +18,10 @@ describe("accounting/expenses.routes RANK4-EXPENSE-TRAILER-ID", () => {
     expect(routes).toContain('await columnExists(client, "accounting", "expenses", "trailer_id")');
     expect(routes).toContain("if (hasTrailerId) {");
     expect(routes).toContain("columns.push(`trailer_id`);");
-    expect(routes).toContain("values.push(body.trailer_id ?? null);");
+    // 443.128 B (N1): the body's trailer is written when the expense names no load; on a load the load's trailer is (a
+    // different one is refused before the INSERT — expense-load-attribution.db.test.ts).
+    expect(routes).toContain("const expenseTrailerId = loadAttribution ? loadAttribution.trailerId : body.trailer_id ?? null;");
+    expect(routes).toContain("values.push(expenseTrailerId);");
   });
 
   it("returns trailer_id + a trailer_display_id (mdata.equipment.equipment_number) on the detail GET", () => {

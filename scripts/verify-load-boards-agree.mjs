@@ -8,6 +8,9 @@
 // unit carrying this load right now," canonicalDispatchWorkWhereClause) and must all agree with
 // EACH OTHER, never with the money-aware set.
 import { register } from "tsx/esm/api";
+import { createRequire } from "node:module";
+// 443.99: TLS by host (localhost / CI postgres service = off, Neon = on) — a hard-coded ssl option cannot connect to CI's local postgres.
+const { inferPgSslOption } = createRequire(import.meta.url)("./lib/pg-connection-options.cjs");
 
 export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
 register();
@@ -19,6 +22,7 @@ async function loadFragments() {
   const {
     canonicalActiveLoadWhereClause,
     canonicalActiveLoadNotFinishedByMoneyCte,
+    canonicalLoadCostsOpenClause,
     canonicalDispatchWorkStatusClause,
   } = await import("../apps/backend/src/dispatch/canonical-active-load-set.ts");
   const { currentTruckLineLoadSql } = await import("../apps/backend/src/dispatch/current-truck-line-load.ts");
@@ -26,6 +30,7 @@ async function loadFragments() {
   return {
     canonicalActiveLoadWhereClause,
     canonicalActiveLoadNotFinishedByMoneyCte,
+    canonicalLoadCostsOpenClause,
     canonicalDispatchWorkStatusClause,
     currentTruckLineLoadSql,
     UNIT_IN_SERVICE_SQL,
@@ -64,23 +69,24 @@ async function main() {
   const {
     canonicalActiveLoadWhereClause,
     canonicalActiveLoadNotFinishedByMoneyCte,
+    canonicalLoadCostsOpenClause,
     canonicalDispatchWorkStatusClause,
     currentTruckLineLoadSql,
     UNIT_IN_SERVICE_SQL,
   } = await loadFragments();
   const { default: pg } = await import("pg");
 
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: inferPgSslOption(process.env.DATABASE_URL) });
   const client = await pool.connect();
   try {
-    await client.query("BEGIN");
+    await client.query("BEGIN READ ONLY");
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
 
     // ACCOUNTING canonical — Load Costs only.
     const canonical = await client.query(
       `SELECT l.load_number FROM mdata.loads l
         WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL
-          AND ${canonicalActiveLoadWhereClause("l")}
+          AND ${canonicalLoadCostsOpenClause("l")}
         ORDER BY l.load_number`,
       [USMCA]
     );
@@ -109,9 +115,7 @@ async function main() {
     const loadCosts = await client.query(
       `SELECT l.load_number FROM mdata.loads l
         WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL
-          AND l.status <> 'draft' AND l.status <> 'cancelled'
-          AND l.status NOT IN ('closed', 'invoiced', 'paid')
-          AND ${canonicalActiveLoadNotFinishedByMoneyCte("l.id", "l.status")}
+          AND ${canonicalLoadCostsOpenClause("l")}
         ORDER BY l.load_number`,
       [USMCA]
     );
@@ -159,7 +163,7 @@ async function main() {
 
     for (const [name, set, reference] of [...accountingBoards, ...dispatchBoards]) {
       const drift = [...diff(set, reference), ...diff(reference, set)];
-      if (drift.length) failures.push(`${name} disagrees with its reference set: ${drift.join(", ")}`);
+      if (drift.length) failures.push(`${name} disagrees with its reference set: count=${drift.length}`);
     }
 
     if (failures.length) {

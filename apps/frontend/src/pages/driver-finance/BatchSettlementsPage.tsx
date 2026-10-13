@@ -15,6 +15,7 @@ import { EntityPicker } from "../../components/EntityPicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
+import { ParityTable } from "../../components/parity/ParityTable";
 import {
   listBatchSettlementEligibleLoads,
   postBatchSettlements,
@@ -194,6 +195,9 @@ export function BatchSettlementsPage() {
     if (pasteRef.current) pasteRef.current.value = "";
   };
 
+  /** The row's position in `rows` — edits address rows by position, and the table may be sorted. */
+  const rowIndex = (row: BatchRow) => rows.findIndex((r) => r.key === row.key);
+
   const fillDown = (field: "period_start" | "period_end" | "driver_id", fromIdx: number) => {
     setRows((prev) => {
       const src = prev[fromIdx];
@@ -293,25 +297,29 @@ export function BatchSettlementsPage() {
             )}
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-[#E5E7EB] text-column-header font-bold uppercase text-[#4B5563]">
-                  <th className="px-2 py-1.5 text-center">Driver</th>
-                  <th className="px-2 py-1.5 text-center">Period start</th>
-                  <th className="px-2 py-1.5 text-center">Period end</th>
-                  <th className="px-2 py-1.5 text-center">Settlement #</th>
-                  <th className="px-2 py-1.5 text-center">SET-01 loads</th>
-                  <th className="px-2 py-1.5 text-center">Deduction</th>
-                  <th className="px-2 py-1.5 text-center">Advance</th>
-                  <th className="px-2 py-1.5 text-center">Admin fee</th>
-                  <th className="px-2 py-1.5 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, idx) => (
-                  <tr key={row.key} className="border-b border-[#E5E7EB] align-top" data-testid={`batch-settlement-row-${idx}`}>
-                    <td className="px-2 py-1.5">
+          {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table). Rows are edited in place, so each cell
+              resolves its row's position by key (sorting the view never re-targets an edit to another row). */}
+          <ParityTable<BatchRow>
+            embedded
+            rows={rows}
+            rowKey={(row) => row.key}
+            storageKey="batch-settlements-grid"
+            suppressToolbarSearch
+            suppressToolbarRange
+            hidePager
+            rowTestId={(row) => `batch-settlement-row-${rowIndex(row)}`}
+            rowClassName={() => "align-top"}
+            columns={[
+              {
+                key: "driver_id",
+                label: "Driver",
+                sortable: true,
+                sortValue: (row) => row.driver_id,
+                overflowVisible: true,
+                render: (row) => {
+                  const idx = rowIndex(row);
+                  return (
+                    <>
                       <EntityPicker
                         kind="driver"
                         operatingCompanyId={companyId}
@@ -336,8 +344,20 @@ export function BatchSettlementsPage() {
                       >
                         Fill down
                       </button>
-                    </td>
-                    <td className="px-2 py-1.5">
+                    </>
+                  );
+                },
+              },
+              {
+                key: "period_start",
+                label: "Period start",
+                sortable: true,
+                sortValue: (row) => row.period_start,
+                overflowVisible: true,
+                render: (row) => {
+                  const idx = rowIndex(row);
+                  return (
+                    <>
                       <DatePicker
                         value={row.period_start}
                         onChange={(v) => {
@@ -347,8 +367,20 @@ export function BatchSettlementsPage() {
                         }}
                         disabled={row.status === "saved"}
                       />
-                    </td>
-                    <td className="px-2 py-1.5">
+                    </>
+                  );
+                },
+              },
+              {
+                key: "period_end",
+                label: "Period end",
+                sortable: true,
+                sortValue: (row) => row.period_end,
+                overflowVisible: true,
+                render: (row) => {
+                  const idx = rowIndex(row);
+                  return (
+                    <>
                       <DatePicker
                         value={row.period_end}
                         onChange={(v) => {
@@ -358,8 +390,19 @@ export function BatchSettlementsPage() {
                         }}
                         disabled={row.status === "saved"}
                       />
-                    </td>
-                    <td className="px-2 py-1.5">
+                    </>
+                  );
+                },
+              },
+              {
+                key: "settlement_no",
+                label: "Settlement #",
+                sortable: true,
+                sortValue: (row) => row.settlement_no,
+                render: (row) => {
+                  const idx = rowIndex(row);
+                  return (
+                    <>
                       <input
                         className="h-7 w-24 rounded-sm border border-[#E5E7EB] px-2 text-center text-xs"
                         value={row.settlement_no}
@@ -371,8 +414,20 @@ export function BatchSettlementsPage() {
                         placeholder="AT #"
                         disabled={row.status === "saved"}
                       />
-                    </td>
-                    <td className="px-2 py-1.5 text-center">
+                    </>
+                  );
+                },
+              },
+              {
+                key: "loads",
+                label: "SET-01 loads",
+                sortable: true,
+                sortValue: (row) => row.loads.length,
+                allowWrap: true,
+                render: (row) => {
+                  const idx = rowIndex(row);
+                  return (
+                    <>
                       {row.loads_error ? (
                         <span className="text-[#B91C1C]">{row.loads_error}</span>
                       ) : row.loads.length === 0 ? (
@@ -404,8 +459,21 @@ export function BatchSettlementsPage() {
                       >
                         Refresh SET-01
                       </button>
-                    </td>
-                    <td className="px-2 py-1.5">
+                    </>
+                  );
+                },
+              },
+              {
+                key: "deduction_cents",
+                label: "Deduction",
+                kind: "money",
+                sortable: true,
+                sortValue: (row) => row.deduction_cents,
+                overflowVisible: true,
+                render: (row) => {
+                  const idx = rowIndex(row);
+                  return (
+                    <>
                       <MoneyInput
                         valueCents={row.deduction_cents}
                         onChangeCents={(cents) =>
@@ -415,8 +483,21 @@ export function BatchSettlementsPage() {
                         }
                         disabled={row.status === "saved"}
                       />
-                    </td>
-                    <td className="px-2 py-1.5">
+                    </>
+                  );
+                },
+              },
+              {
+                key: "advance_cents",
+                label: "Advance",
+                kind: "money",
+                sortable: true,
+                sortValue: (row) => row.advance_cents,
+                overflowVisible: true,
+                render: (row) => {
+                  const idx = rowIndex(row);
+                  return (
+                    <>
                       <MoneyInput
                         valueCents={row.advance_cents}
                         onChangeCents={(cents) =>
@@ -426,8 +507,21 @@ export function BatchSettlementsPage() {
                         }
                         disabled={row.status === "saved"}
                       />
-                    </td>
-                    <td className="px-2 py-1.5">
+                    </>
+                  );
+                },
+              },
+              {
+                key: "admin_fee_cents",
+                label: "Admin fee",
+                kind: "money",
+                sortable: true,
+                sortValue: (row) => row.admin_fee_cents,
+                overflowVisible: true,
+                render: (row) => {
+                  const idx = rowIndex(row);
+                  return (
+                    <>
                       <MoneyInput
                         valueCents={row.admin_fee_cents}
                         onChangeCents={(cents) =>
@@ -437,8 +531,18 @@ export function BatchSettlementsPage() {
                         }
                         disabled={row.status === "saved"}
                       />
-                    </td>
-                    <td className="px-2 py-1.5 text-center">
+                    </>
+                  );
+                },
+              },
+              {
+                key: "status",
+                label: "Status",
+                sortable: true,
+                sortValue: (row) => row.status,
+                render: (row) => {
+                  return (
+                    <>
                       {row.status === "saved" && row.settlement_id ? (
                         <EntityLink
                           kind="settlement"
@@ -450,12 +554,12 @@ export function BatchSettlementsPage() {
                       ) : (
                         <span className="text-[#6B7280]">Draft</span>
                       )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </>
+                  );
+                },
+              },
+            ]}
+          />
         </section>
       </div>
     </div>

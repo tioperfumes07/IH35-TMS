@@ -18,6 +18,13 @@
  * dims fields on transactions that carry dependents. A silent cascade would reach into a driver's
  * debt without anyone looking at it.
  *
+ * 443.113 AJK-12 (2026-10-12) held /dismiss to the same block; LEAD 443.114 (same day) RULED the other way for
+ * dismissal: a fine dismissed (e.g. in court) must clear the driver charge in ONE action. /dismiss on a converted fine
+ * therefore calls the ONE liability void engine (voidDriverLiabilityInClientTx — voids the pending deduction, reverses
+ * the receivable, refuses when any of it was already recovered) INSIDE its transaction and BEFORE the dismiss UPDATE,
+ * and the DB lock (migration 202615820910) allows converted -> dismissed only once that liability is voided.
+ * /reduce keeps the Option B block.
+
  * Also enforced: contest/dismiss/reduce must refuse VOIDED fines. void-not-delete means a voided row
  * is immutable history; editing it is never correct.
  *
@@ -34,6 +41,7 @@ const LABEL = "verify-fine-amend-guards";
 const SELFTEST = process.argv.includes("--selftest");
 
 const read = () => fs.readFileSync(path.join(ROOT, FILE), "utf8");
+const readOpt = (rel) => { try { return fs.readFileSync(path.join(ROOT, rel), "utf8"); } catch { return null; } };
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
 
 /** Body of one route handler, from its app.post(...) to the next app.<verb>( at the same level. */
@@ -44,6 +52,26 @@ function routeBody(code, route) {
   const nextIdx = rest.search(/app\.(post|get|patch|put|delete)\(/);
   return nextIdx === -1 ? code.slice(start) : code.slice(start, start + 10 + nextIdx);
 }
+
+/** LEAD 443.120 A: a migration must declare the FK safety.civil_fines.converted_to_liability_id -> driver_liabilities(id). */
+export function assertFineLiabilityFk(migrations) {
+  const declared = migrations.some(
+    (m) =>
+      /ALTER TABLE\s+safety\.civil_fines\s+ADD CONSTRAINT[\s\S]*?FOREIGN KEY\s*\(\s*converted_to_liability_id\s*\)\s*REFERENCES\s+driver_finance\.driver_liabilities/i.test(
+        stripComments(m)
+      )
+  );
+  return declared
+    ? []
+    : [
+        "db/migrations: no migration declares FOREIGN KEY (converted_to_liability_id) REFERENCES driver_finance.driver_liabilities " +
+          "on safety.civil_fines (443.120 A) — a fine pointer may outlive its liability without it.",
+      ];
+}
+const readMigrations = () => {
+  const dir = path.join(ROOT, "db/migrations");
+  return fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).map((f) => fs.readFileSync(path.join(dir, f), "utf8"));
+};
 
 export function assertFineAmendGuards(source) {
   const code = stripComments(source ?? read());
@@ -75,6 +103,38 @@ export function assertFineAmendGuards(source) {
     if (!/driver_liability_id/.test(reduce)) {
       problems.push(`${FILE} /reduce: the refusal does not return driver_liability_id (the record to reverse first).`);
     }
+  }
+
+  // LEAD 443.114 (AJK-12 ruling): dismissing a converted fine clears the driver charge in ONE action — inside the one
+  // withCompanyScope transaction it calls the ONE liability void engine (voidDriverLiabilityInClientTx) BEFORE the
+  // dismiss UPDATE, and surfaces the engine's "already recovered" refusal by name.
+  const dismiss = routeBody(code, "dismiss");
+  if (dismiss) {
+    const txStart = dismiss.indexOf("withCompanyScope(");
+    const voidAt = dismiss.indexOf("voidDriverLiabilityInClientTx(");
+    const updateAt = dismiss.search(/UPDATE safety\.civil_fines[\s\S]*?SET status = 'dismissed'/);
+    if (voidAt === -1) {
+      problems.push(`${FILE} /dismiss: does not void the converted driver liability through voidDriverLiabilityInClientTx (443.114).`);
+    } else {
+      if (txStart === -1 || voidAt < txStart) {
+        problems.push(`${FILE} /dismiss: the liability void runs outside the dismissal transaction (443.114: one action).`);
+      }
+      if (updateAt !== -1 && voidAt > updateAt) {
+        problems.push(`${FILE} /dismiss: the fine is marked dismissed BEFORE its liability is voided (443.114: void THEN dismiss).`);
+      }
+    }
+    const update = /UPDATE safety\.civil_fines[\s\S]*?RETURNING \*/.exec(dismiss)?.[0] ?? "";
+    if (!/converted_to_liability_id IS NOT DISTINCT FROM/.test(update)) {
+      problems.push(`${FILE} /dismiss: the UPDATE does not re-check the converted pointer it voided (race with a concurrent convert).`);
+    }
+    if (!/driver_receivable_partly_recovered/.test(dismiss)) {
+      problems.push(`${FILE} /dismiss: the void engine's "already recovered" refusal is not surfaced by name.`);
+    }
+  }
+  // The liability void route and the dismissal share ONE engine.
+  const liabRoutes = readOpt("apps/backend/src/liabilities/liabilities.routes.ts");
+  if (liabRoutes !== null && !/voidDriverLiabilityInClientTx\(/.test(stripComments(liabRoutes))) {
+    problems.push(`apps/backend/src/liabilities/liabilities.routes.ts: PATCH /liabilities/:id/void no longer calls voidDriverLiabilityInClientTx (one engine).`);
   }
 
   for (const route of ["contest", "dismiss"]) {
@@ -112,29 +172,83 @@ if (SELFTEST) {
     }
   };
 
-  // Case 1: the converted-liability predicate is dropped from the UPDATE (the money defect).
+  /** Apply a replacement inside ONE route's handler only, so a case cannot be satisfied by another route. */
+  const inRoute = (route, from, to) => {
+    const start = live.indexOf(`app.post("/api/v1/safety/fines/:id/${route}"`);
+    const rest = live.slice(start + 10);
+    const next = rest.search(/app\.(post|get|patch|put|delete)\(/);
+    const end = next === -1 ? live.length : start + 10 + next;
+    return live.slice(0, start) + live.slice(start, end).replace(from, to) + live.slice(end);
+  };
+
+  // Case 1: the converted-liability predicate is dropped from the /reduce UPDATE (the money defect).
   expectCaught(
     "converted-guard-removed",
-    live.replace(/\n\s*AND converted_to_liability_id IS NULL/, ""),
-    "converted_to_liability_id IS NULL"
+    inRoute("reduce", /\n\s*AND converted_to_liability_id IS NULL/, ""),
+    "/reduce: the UPDATE does not carry `converted_to_liability_id IS NULL`"
   );
 
   // Case 2: the refusal stops naming the blocking liability.
   expectCaught(
     "remedy-not-named",
-    live.replace(/driver_liability_id: outcome\.liabilityId,\n/, ""),
-    "does not return driver_liability_id"
+    inRoute("reduce", /driver_liability_id: outcome\.liabilityId,\n/, ""),
+    "/reduce: the refusal does not return driver_liability_id"
+  );
+
+  // Case 4 (443.114): /dismiss dismisses without voiding the liability.
+  expectCaught(
+    "dismiss-without-void",
+    inRoute("dismiss", /const voided = await voidDriverLiabilityInClientTx\(/, "const voided = await noopVoid("),
+    "/dismiss: does not void the converted driver liability"
+  );
+
+  // Case 5 (443.114): /dismiss voids the liability but marks the fine dismissed FIRST (void after dismiss).
+  {
+    const start = live.indexOf('app.post("/api/v1/safety/fines/:id/dismiss"');
+    const rest = live.slice(start + 10);
+    const end = start + 10 + rest.search(/app\.(post|get|patch|put|delete)\(/);
+    const body = live.slice(start, end);
+    const voidCall = /\n\s*const voided = await voidDriverLiabilityInClientTx\([\s\S]*?\}\);\n/.exec(body)?.[0] ?? "";
+    const swapped = voidCall
+      ? body.replace(voidCall, "\n").replace(/(RETURNING \*\n\s*`,\n[^\n]*\n\s*\);\n)/, `$1${voidCall}`)
+      : body;
+    expectCaught("dismiss-void-after-dismiss", live.slice(0, start) + swapped + live.slice(end), "BEFORE its liability is voided");
+  }
+
+  // Case 6 (443.114): the liability void runs outside the dismissal transaction.
+  expectCaught(
+    "dismiss-void-outside-txn",
+    inRoute("dismiss", /const outcome = await withCompanyScope\(/, "await voidDriverLiabilityInClientTx(pool, {});\n    const outcome = await withCompanyScope("),
+    "outside the dismissal transaction"
+  );
+
+  // Case 7 (443.114): the void engine's recovered refusal is swallowed.
+  expectCaught(
+    "dismiss-recovered-refusal-dropped",
+    inRoute("dismiss", /driver_receivable_partly_recovered/g, "conflict"),
+    "\"already recovered\" refusal is not surfaced"
   );
 
   // Case 3: contest loses its voided guard.
   expectCaught(
     "contest-void-guard-removed",
     live.replace(
-      "SET status = 'contested',\n              notes = COALESCE($3, notes),\n              updated_by_user_id = $4\n          WHERE id = $1\n            AND operating_company_id = $2\n            AND voided_at IS NULL",
-      "SET status = 'contested',\n              notes = COALESCE($3, notes),\n              updated_by_user_id = $4\n          WHERE id = $1\n            AND operating_company_id = $2"
+      // The live predicate is "operating_company_id = $2::uuid" (typed bind) — the fixture must match it or the case is inert.
+      "SET status = 'contested',\n              notes = COALESCE($3, notes),\n              updated_by_user_id = $4\n          WHERE id = $1\n            AND operating_company_id = $2::uuid\n            AND voided_at IS NULL",
+      "SET status = 'contested',\n              notes = COALESCE($3, notes),\n              updated_by_user_id = $4\n          WHERE id = $1\n            AND operating_company_id = $2::uuid"
     ),
     "/contest: the UPDATE does not carry"
   );
+
+  // Case 8 (443.120 A): the fine -> liability FK migration is removed.
+  {
+    const migs = readMigrations();
+    const without = migs.filter((m) => !/civil_fines_converted_to_liability_id_fkey/.test(m));
+    if (without.length === migs.length) failures.push("fk-migration-removed: no migration declares the FK — inert case");
+    else if (!assertFineLiabilityFk(without).some((p) => p.includes("443.120 A")))
+      failures.push("fk-migration-removed: planted defect NOT caught");
+    if (assertFineLiabilityFk(migs).length) failures.push("live migrations FAIL the 443.120 A FK check");
+  }
 
   const liveProblems = assertFineAmendGuards(live);
   if (liveProblems.length) failures.push(`live source FAILS: ${liveProblems.join(" | ")}`);
@@ -144,11 +258,11 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 3 planted defects caught, live source clean`);
+  console.log(`${LABEL} SELFTEST PASS — 8 planted defects caught, live source clean`);
   process.exit(0);
 }
 
-const problems = assertFineAmendGuards();
+const problems = [...assertFineAmendGuards(), ...assertFineLiabilityFk(readMigrations())];
 if (problems.length) {
   console.error(`${LABEL} FAILED:`);
   for (const p of problems) console.error(`  ${p}`);

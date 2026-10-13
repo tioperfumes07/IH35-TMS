@@ -6,7 +6,11 @@
 // #19618 — postBillPaymentGlIfEnabled) for the linked_bill_id branch. Both were verified before
 // this exemption; neither was assumed — GO-23 C6, 2026-09-02.
 import { releaseBankLinesNamingDocument } from "../accounting/void.service.js";
+import { sameEntityLoadCompanyTrailerSql } from "../accounting/load-trailer.sql.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 import { voidSettlementDeduction } from "../driver-finance/settlement-deduction-void.service.js";
 import { nextCashAdvanceDisplayId } from "./display-id.js";
 import { DriverAdvanceAccountError, ensureDriverAdvanceSubAccount } from "../driver-finance/driver-advance-account-resolver.js";
@@ -57,6 +61,8 @@ export type CreateDriverCashAdvanceCoreInput = {
   // B5 (additive): the driver_finance.driver_bills the advance is applied against (cascade
   // branches 1/2). NULL for the loan branch. Recorded on driver_advances for settlement netting.
   linked_driver_bill_id?: string | null;
+  // The advance's book date (the wire / check date on the signed settlement); the Banking match posts on it.
+  historical_posting_date?: string | null;
   // Wizard-depth 2026-07-22 — ops + recovery + purpose→economics (parity with Book Load / requests).
   load_id?: string | null;
   unit_id?: string | null;
@@ -107,6 +113,15 @@ export type CreateDriverCashAdvanceCoreResult =
 // an explicit caller override requests. Enforced HERE, at the service boundary, not in a React
 // dropdown -- a rule only the UI enforces is not enforced (owner's own words).
 import { USMCA_COMPANY_ID } from "../org/company-ids.js";
+
+/** OWNER 9:44 / 9:46 PM CT 2026-10-10: an advance linked to a driver bill is a bill payment on that load (driver debt the
+ *  settlement recovers); every other advance follows resolveEconomicRouting (USMCA load_expense, LST-F25011). */
+export function advanceEconomicRouting(
+  body: Pick<CreateDriverCashAdvanceCoreInput, "purpose" | "economic_routing" | "linked_driver_bill_id">,
+  companyId: string
+): CashAdvanceEconomicRouting {
+  return body.linked_driver_bill_id ? "driver_settlement" : resolveEconomicRouting(body.purpose, body.economic_routing, companyId);
+}
 
 export function resolveEconomicRouting(
   purpose: CashAdvancePurpose,
@@ -181,18 +196,36 @@ export async function createDriverCashAdvanceCore(
   // actually owes the driver. The recursive call never carries linked_driver_bill_id, so this
   // cannot loop past one level.
   if (body.linked_driver_bill_id) {
+    // LEAD 443.113 BCF-02 (Codex): the bill is LOCKED before its remaining balance is read, so two concurrent advances
+    // cannot both allocate the same remainder; and it must be live and belong to this driver + load — an advance applied
+    // to another driver's bill, a voided bill, a settled bill or another load's bill is refused by name.
     const billRes = await client.query(
       `
-        SELECT gross_amount_cents
+        SELECT gross_amount_cents, driver_id::text AS driver_id, team_driver_id::text AS team_driver_id,
+               load_id::text AS load_id, status, voided_at, settled_in_settlement_id::text AS settled_in_settlement_id
         FROM driver_finance.driver_bills
         WHERE id = $1
           AND operating_company_id = $2::uuid
         LIMIT 1
+        FOR UPDATE
       `,
       [body.linked_driver_bill_id, companyId]
     );
     const bill = billRes.rows[0];
     if (!bill) return { ok: false, code: 404, error: "linked_driver_bill_not_found" };
+    if (bill.voided_at || bill.status === "void") {
+      return { ok: false, code: 409, error: "linked_driver_bill_voided", message: "The driver bill this advance applies to is voided." };
+    }
+    if (bill.settled_in_settlement_id) {
+      return { ok: false, code: 409, error: "linked_driver_bill_settled", message: "The driver bill this advance applies to is already settled." };
+    }
+    if (body.driver_id !== bill.driver_id && body.driver_id !== bill.team_driver_id) {
+      return { ok: false, code: 422, error: "linked_driver_bill_driver_mismatch", message: "The driver bill belongs to another driver." };
+    }
+    if (body.load_id && bill.load_id && body.load_id !== bill.load_id) {
+      return { ok: false, code: 422, error: "linked_driver_bill_load_mismatch", message: "The driver bill is for another load." };
+    }
+    if (!body.load_id && bill.load_id) body = { ...body, load_id: String(bill.load_id) };
 
     const priorRes = await client.query(
       `
@@ -252,19 +285,52 @@ export async function createDriverCashAdvanceCore(
     }
   }
 
-  const economicRouting = resolveEconomicRouting(body.purpose, body.economic_routing, companyId);
+  // OWNER 9:44 / 9:46 PM CT 2026-10-10: an advance LINKED TO A DRIVER BILL is a bill payment on that load (B5 above) —
+  // money the settlement recovers from what it owes the driver, not a company load expense. It routes driver_settlement
+  // so it stays outstanding until the close nets it (loadRecoverableAdvances); the USMCA load_expense rule (LST-F25011)
+  // still governs every advance NOT applied to a driver bill.
+  const economicRouting = advanceEconomicRouting(body, companyId);
   const isLoadExpense = economicRouting === "load_expense";
 
   if (isLoadExpense && !body.load_id) {
     return { ok: false, code: 400, error: "load_id_required_for_load_expense", message: "Lumper / load expense requires a load" };
   }
-  if (body.purpose === "fuel_deposit" && (!body.load_id || !body.unit_id)) {
+  // 443.110 G9: the unit comes from the load (checked again below, after the load is read).
+  if (body.purpose === "fuel_deposit" && !body.load_id) {
     return {
       ok: false,
       code: 400,
       error: "fuel_deposit_requires_load_and_unit",
       message: "Fuel deposit requires load and unit",
     };
+  }
+  if (body.load_id) {
+    // 443.110 G9 — the advance takes its truck and trailer FROM THE LOAD (one rule: accounting/load-trailer.sql.ts), never
+    // from the request body: a request that names a different unit / trailer than the load's is refused by name.
+    const loadRes = await client.query(
+      `
+        SELECT l.id, l.assigned_unit_id::text AS assigned_unit_id,
+               ${sameEntityLoadCompanyTrailerSql("l.id", "l.operating_company_id")}::text AS company_trailer_id
+        FROM mdata.loads l
+        WHERE l.id = $1
+          AND l.operating_company_id = $2::uuid
+          AND l.soft_deleted_at IS NULL
+        LIMIT 1
+      `,
+      [body.load_id, companyId]
+    );
+    const load = loadRes.rows[0] as { id: string; assigned_unit_id: string | null; company_trailer_id: string | null } | undefined;
+    if (!load) return { ok: false, code: 404, error: "load_not_found" };
+    if (body.unit_id && load.assigned_unit_id && body.unit_id !== load.assigned_unit_id) {
+      return { ok: false, code: 422, error: "advance_unit_differs_from_load", message: "The truck on this advance is not the load's truck" };
+    }
+    if (body.trailer_id && load.company_trailer_id && body.trailer_id !== load.company_trailer_id) {
+      return { ok: false, code: 422, error: "advance_trailer_differs_from_load", message: "The trailer on this advance is not the load's trailer" };
+    }
+    body = { ...body, unit_id: load.assigned_unit_id ?? body.unit_id ?? null, trailer_id: load.company_trailer_id ?? body.trailer_id ?? null };
+  }
+  if (body.purpose === "fuel_deposit" && !body.unit_id) {
+    return { ok: false, code: 400, error: "fuel_deposit_requires_load_and_unit", message: "Fuel deposit requires load and unit" };
   }
   // B8 (GO-23 wave 2) — the FE wizard's own zod schema already requires from_bank_account_id for
   // direct_bank_transfer (cash-advances.routes.ts createAdvanceBodySchema superRefine), but this
@@ -334,20 +400,6 @@ export async function createDriverCashAdvanceCore(
     throw err;
   }
 
-  if (body.load_id) {
-    const loadRes = await client.query(
-      `
-        SELECT id, assigned_unit_id
-        FROM mdata.loads
-        WHERE id = $1
-          AND operating_company_id = $2::uuid
-          AND soft_deleted_at IS NULL
-        LIMIT 1
-      `,
-      [body.load_id, companyId]
-    );
-    if (!loadRes.rows[0]) return { ok: false, code: 404, error: "load_not_found" };
-  }
 
   if (body.from_bank_account_id) {
     const bankRes = await client.query(
@@ -638,6 +690,39 @@ export async function createDriverCashAdvanceCore(
     "info",
     "WIZARD-CASH-ADVANCE-CREATE-DEPTH"
   );
+
+  if (body.historical_posting_date) {
+    await client.query(
+      `UPDATE driver_finance.driver_advances SET posting_date = $3::date, updated_at = now() WHERE operating_company_id = $1::uuid AND id = $2::uuid`,
+      [companyId, advanceId, body.historical_posting_date]
+    );
+  }
+
+  // LEAD RULING (OPTION 1) on owner 9:44 / 9:46 PM CT 2026-10-10: a HISTORICAL advance applied to its load's driver bill
+  // (B5) is disbursed in the ledger at Creator post — Dr the driver's own advance sub-account / Cr the company's existing
+  // driver NET-PAY CLEARING role account (2170 "Driver Net-Pay Clearing" in USMCA, a liability): not a bank, not A/P.
+  // NOT 1090 Undeposited Funds: an asset may not hold a credit balance (deferred guard, measured by CC-3 on prod HEAD:
+  // "1090 would hold a credit balance of -148.00"). 2170 is where driver pay waits for its bank payment already. The owner's manual Banking match of
+  // the wire / check clears it to the bank. Without this posting v_driver_advance_balances reads the advance as 0
+  // outstanding and the close cannot recover it (measured: 5775 net 1,334.40 vs TOTAL DUE 1,186.40). The one driver_advance
+  // builder posts it (credit override), behind DRIVER_ADVANCE_GL_POSTING_ENABLED like a live disbursement.
+  if (body.disbursement_method === "historical_backfill" && body.linked_driver_bill_id && !isLoadExpense) {
+    await client.query(
+      `UPDATE driver_finance.driver_advances
+          SET disbursement_status = 'disbursed', disbursed_at = now(),
+              posting_date = COALESCE(posting_date, $3::date, CURRENT_DATE), updated_at = now()
+        WHERE operating_company_id = $1::uuid AND id = $2::uuid`,
+      [companyId, advanceId, body.historical_posting_date ?? null]
+    );
+    if (await isEnabled(client as never, "DRIVER_ADVANCE_GL_POSTING_ENABLED", { operating_company_id: companyId, user_uuid: actorUserUuid })) {
+      const clearing = await resolveRoleAccount(client as never, companyId, "driver_payroll_clearing");
+      await postSourceTransactionInClientTx(
+        client as never,
+        { operating_company_id: companyId, source_transaction_type: "driver_advance", source_transaction_id: advanceId, credit_account_id: clearing },
+        { userId: actorUserUuid }
+      );
+    }
+  }
 
   const detailRes = await client
     .query(

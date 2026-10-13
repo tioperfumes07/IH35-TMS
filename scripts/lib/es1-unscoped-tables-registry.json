@@ -14,7 +14,7 @@
       "disposition": "inherit_via_parent",
       "parentIdCol": "bill_id",
       "parent": "accounting.bills",
-      "fkStatus": "deferred",
+      "fkStatus": "enforced",
       "parentIsolationStatus": "enforced"
     },
     {

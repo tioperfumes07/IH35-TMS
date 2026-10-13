@@ -7379,3 +7379,592 @@ consumed_at: 2026-10-05T16:15:00Z
 consumed_by: CC-2
 row_counts: 0 table rows. 1 role created (ih35_guard_reader) on br-fancy-credit-akjnd07a; 1 role grant (pg_read_all_data); 1 role setting (default_transaction_read_only=on).
 proof_query: SELECT rolname, rolconfig, member_of FROM pg_roles ... WHERE rolname IN ('ih35_guard_reader','ih35_ci_readonly') on br-fancy-credit-akjnd07a -> ih35_guard_reader {default_transaction_read_only=on} member_of {pg_read_all_data}. Logged in as it: 12,521 bank lines readable across companies; INSERT refused ("cannot execute INSERT in a read-only transaction"); with READ WRITE forced, refused ("permission denied for table journal_entries"). The gate credential on this machine (~/.ih35-gate.env) now connects as ih35_guard_reader; the previous file is kept as ~/.ih35-gate.env.ih35_ci_readonly.bak. Live guards under it: no-row-escapes, vendor-balances, spine-link, void-releases-bank-lines, qbo-flags-blocked, no-test-markers, void-is-whole PASS; draft-load EMPTY BY PURGE.
+
+## AUTH-403
+issued_at: 2026-10-10T20:09:00Z
+scope: production Neon project tiny-field-89581227, branch br-fancy-credit-akjnd07a, USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) ONLY. Rows whose parent load / invoice / settlement / driver bill / fuel transaction / expense no longer exists, in the tables of scripts/purge/usmca-purge-classification.json ORPHANS. Banking never: journal entries, postings, bank transactions, expenses must be unchanged or the run rolls back.
+action: OWNER_AUTH_ID=AUTH-403 DATABASE_URL=<prod owner> npx tsx scripts/purge/purge-orphans-of-purged-documents.mts --commit (after migration 202615450900 is applied)
+expires_at: 2026-10-11T08:30:00Z
+status: CONSUMED
+owner_words: "there should be nothing from before that is why we deleted and purged" and "delete anything related to the purge. Not any banking transactions." (2026-10-10, relayed by the Lead in ROUND 443.9, docs/bus/2026-10-10-LEAD-ROUND-443-ORDERS.md)
+why: the AUTH-400 purge left rows pointing at purged documents — the generator censused 9 schemas (reports, pwa never seen), never classified the feed-gate tables, and feed_intake_checks' WORM trigger had no listed-row arm.
+expected_row_counts (dry run on prod 2026-10-10 20:15Z, rolled back): feed_intake_checks 24, feed_intakes 2, lane_profitability_cache 2,891, deadhead_cache 22, driver_notifications 273 (1 kept), docs.file_links 382 (422 kept), docs.files 12 (484 kept: owner uploads and files linked to live drivers / customers / units stay), fuel_gps_matches 0 (85 kept — they point at kept bank transactions), tank_events 0 (1 kept), load_stops 0. Total 3,606.
+consumed_at: 2026-10-10T23:11:44Z
+consumed_by: CC-3
+row_counts: removed 3,606 — feed_intake_checks 24, feed_intakes 2, lane_profitability_cache 2,891, deadhead_cache 22, driver_notifications 273 (1 kept), docs.file_links 382 (422 kept), docs.files 12 (484 kept), fuel_gps_matches 0 (85 kept), tank_events 0 (1 kept), load_stops 0; audit.record_deletions 3,606 rows (auth_id AUTH-403). Banking before = after: journal entries 280, postings 560, bank transactions 1,291, expenses 5.
+proof_query: node scripts/verify-no-orphan-of-purged-documents.mjs (prod) -> OK, every ORPHANS predicate 0. Ran as neondb_owner (session role forced to neondb_owner; the login's default role ih35_app cannot list purge rows), migration 202615450900 live.
+rehearsed: throwaway fork br-wild-grass-akimpgdv (deleted): migration applied twice; --commit removed exactly 3,606 rows, 3,606 audit.record_deletions rows, every orphan count 0, banking 280 / 560 / 1,291 / 5 unchanged.
+
+## AUTH-404
+issued_at: 2026-10-11T00:05:00Z
+issued_by: Lead, on the owner's order (ROUND 443.26), recorded by CC-2 in the PR that ships the script, as the Lead instructed
+owner_quotes: "all drivers must have only one profile and escrow and liability account. they can have multiple users in samsara. those should already be mapped." (6:58 PM CT 2026-10-10) · "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10) · near-duplicates, 7:02 PM CT: "that is obvious they are the same person"
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — mdata.drivers merges through executeDriverMerge (apps/backend/src/mdata/driver-merge.service.ts:231) only, one transaction per merge, and the references that engine repoints. No other write. No DELETE. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-404 MERGE_CONCURRENCY=8 DATABASE_URL=<prod direct> npx tsx apps/backend/scripts/auth404-merge-duplicate-drivers.mts --branch=br-fancy-credit-akjnd07a --apply --report=<local report.json>
+rehearsal: same command on throwaway Neon branch br-damp-hall-aknn9itq (deleted after); counts in the PR and SEATS-TO-LEAD
+expires_at: 2026-10-12T00:05:00Z
+status: CONSUMED
+consumed_at: 2026-10-11T00:43:00Z
+consumed_by: CC-2
+row_counts: 67 merges through executeDriverMerge, 0 failed (59 clusters). USMCA unmerged drivers 159 -> 92; Samsara accounts 95 -> 95; distinct Samsara ids 95 -> 95; active escrow accounts 29 -> 29 (every merged profile's escrow balance was $0). 6 test/dummy profiles listed, not merged; 9 near-but-different pairs listed for the owner.
+proof_query: node scripts/verify-one-profile-per-driver.mjs (prod) -> zero same-name unmerged pairs, every Samsara id on one survivor; ONE item left, outside AUTH-404: driver 49427973 (owner's own profile) holds 2 active escrow accounts, 2100-00-011 and QBO-1150040187-00-001, both 0 postings / $0 — rule 4 deactivation needs its own authorization.
+rehearsed: throwaway br-damp-hall-aknn9itq (deleted): same 67 merges, 0 failed, identical counts.
+
+## AUTH-405
+issued_at: 2026-10-11T04:50:00Z
+issued_by: Lead, on the owner's orders (ROUND 443.29 / 5772), recorded by CC-2 in the PR that ships the script, as with AUTH-404
+owner_quotes: "the engine be correctly built ... parse the relay transactions" (7:15 PM CT 2026-10-10) · "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10) · card map 7:26-7:30 PM CT 2026-10-10
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — load ~/IH35-LEAD-CHANNEL/Relay-All-Transactions-2026-10-10.csv through the EXISTING route POST /api/integrations/relay/fuel/import-csv (registerRelayFuelCsvImportRoute, mounted by the script, one transaction) and post each SETTLED deposit with postRelayDeposit (443.29 b): 0680 -> 1000; 9708/1354/4823 -> 8000; 5007 -> 2500-00-001; personal + unnamed cards HELD; a deposit whose card charge is already categorized on the funding account's bank feed (same amount, +/- 3 days) HELD. Canceled deposits post nothing. No DELETE. No other write. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-405 DATABASE_URL=<prod> npx tsx apps/backend/scripts/auth405-relay-csv-import.mts --branch=br-fancy-credit-akjnd07a --file=<Relay-All-Transactions-2026-10-10.csv>
+rehearsal: same command on throwaway Neon branch br-delicate-unit-ak8o63r7 (COMMITTED, deleted after): HTTP 200, 259 fuel rows imported, 0 rejected, 126 deposits stored, 26 settled deposits posted, 16 held (2 Jorge personal 0210, 14 card owner not named), 0 refused; 1295 end of day 08-03 1,200.00 · 08-04 2,200.00 · 08-06..08-10 2,600.00
+expires_at: 2026-10-12T04:50:00Z
+status: CONSUMED
+consumed_at: 2026-10-11T05:10:00Z
+consumed_by: CC-2
+row_counts: route HTTP 200 — 259 fuel rows imported, 0 rejected, 126 deposits stored (42 settled): 26 posted as 26 journal entries (Dr 1295 83,800.00 + Dr 5005 2,723.50 = Cr 1000 63,808.50 [17, card 0680] + Cr 2500-00-001 10,118.50 [5, card 5007] + Cr 8000 12,596.50 [4, cards 1354/9708]), 16 HELD (2 Jorge personal 0210 = 7,227.50; 14 card owner not named — cards 1993 0275 3088 7180 9830 1222), 0 refused, 0 held as already-categorized (17 0680 charges have BofA lines in window, none categorized). Identical to the rehearsal.
+proof_query: SELECT account_number, debit_or_credit, count(*), sum(amount_cents) FROM accounting.journal_entry_postings JOIN catalogs.accounts ... WHERE source_transaction_type='relay_deposit' AND operating_company_id=USMCA -> 26 JEs, balanced; 1295 end of day 08-03 1,200.00 · 08-04 2,200.00 · 08-05 2,200.00 · 08-06..08-10 2,600.00
+
+## AUTH-408
+issued_at: 2026-10-11T05:36:00Z
+issued_by: Lead order 443.35 item 4 ("Backfill the 20 loads already on prod through the same engine path (no hand SQL)"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404 / AUTH-405
+owner_quotes: owner order 2026-10-11 00:25 CT (stop addresses + miles saved for estimates) · "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — loads booked since 2026-10-11T00:00Z with a stop whose leg_miles is NULL, through learnLoadLanes (apps/backend/src/dispatch/load-lane-learning.service.ts, the booking engine's own module): mdata.load_stops.leg_miles filled once where NULL; catalogs.lane_mileage running stats on the load's lane (update or create); catalogs.point_mileage (engine load_document, ON CONFLICT DO NOTHING); mdata.customer_lanes created when missing (load with a rate). No DELETE. No money. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-408 DATABASE_URL=<prod> npx tsx apps/backend/scripts/auth408-backfill-load-lanes.mts --branch=br-fancy-credit-akjnd07a --apply
+rehearsal: throwaway br-sparkling-grass-aktgy39p (COMMITTED, deleted): 24 loads, 38 legs filled (24 delivery legs + 14 known deadheads), stops after the first with leg_miles NULL 24 -> 0, 10 first stops stay NULL (deadhead unknown, never 0); lane_mileage 23 updated + 1 created; point_mileage 23; customer_lanes 14 created, 10 listed (load has no rate); re-run = no-op; verify-booked-loads-save-miles PASS
+expires_at: 2026-10-12T05:36:01Z
+status: CONSUMED
+consumed_at: 2026-10-11T05:55:00Z
+consumed_by: CC-2
+row_counts: prod, identical to the rehearsal — 24 loads, 38 leg_miles filled; stops after the first with leg_miles NULL 24 -> 0 (all stops NULL 48 -> 10: first stops whose deadhead is unknown, never 0); catalogs.lane_mileage 23 rows updated + 1 created; catalogs.point_mileage 23 (engine load_document); mdata.customer_lanes 0 -> 14 (10 loads listed, no rate on the load: 13497 13498 13502 13504 13505 13506 13507 13517 13525 13527). NOTE: this block's own expires_at/status lines were collapsed into AUTH-406's identical lines by the bus union merge; restored here (expires_at made distinct so a union merge cannot collapse it again).
+proof_query: node scripts/verify-booked-loads-save-miles.mjs (prod) -> PASS, 24 loads, exit 0
+
+## AUTH-406
+issued_at: 2026-10-11T05:36:00Z
+issued_by: Lead ruling 443.35 (D6): "(a) fill-once — set entity + load on the 221 postings where NULL, no reclassification. Do it now." Recorded by CC-2 in the PR that ships the script, as with AUTH-404 / AUTH-405
+owner_quotes: "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — accounting.journal_entry_postings of the Settlement Creator documents (invoice, bill, bill_payment, expense, driver_settlement, driver_advance) created since 2026-10-11T00:50Z: entity_uuid/entity_type filled ONCE where NULL through resolvePostingSourceEntity (the writer's own rule), load_id filled ONCE where NULL through accounting.posting_source_load_id. No amount, account, side or JE changes; trial balance and posting count asserted unchanged before COMMIT. No DELETE. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-406 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-d6-backfill-posting-entity.ts --apply
+rehearsal: throwaway br-weathered-block-akkbl55d (COMMITTED, deleted): 317 in scope (221 of the ruling + Creator posts before #26269 went live at 05:00Z), 317 entity filled, 0 unresolved, 0 loads fillable (74 settlement-level aggregates have no single load), trial balance 0 across 1,026 postings unchanged; audit on the 7: ENTITY-ON-POSTINGS PASS on all 7
+expires_at: 2026-10-12T05:36:00Z
+status: CONSUMED
+consumed_at: 2026-10-11T06:00:00Z
+consumed_by: CC-2
+row_counts: prod — 317 Creator postings filled ONCE (entity: invoice -> customer, driver bills / bill payments / settlement / advance -> driver, expense + 2510 -> vendor), 0 unresolved, 0 loads fillable (74 settlement-level aggregates have no single load); trial balance 0 across 1,026 postings unchanged; identical to the rehearsal
+proof_query: prod since 05:00Z every new Creator posting carries its entity; scope query entity NULL after fill = 0
+
+## AUTH-409
+issued_at: 2026-10-11T05:42:00Z
+issued_by: Lead orders 443.35 item 3/4 ("Correct the 40 existing stops through the engine", "backfill the 20 loads ... through the same engine path") and 443.38 item 2 ("Correct through the engine the 34 locations and the 51 geofences created today ... deactivate zip-center geofences, do not delete history"), on the owner's orders 2026-10-11 00:25 / 00:30 CT. Recorded by CC-2 in the PR that ships the script, as with AUTH-404..406
+owner_quotes: "This must be fixed and done automatically for the next seedings, none should ever fail." (2026-10-11 00:30 CT) · "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — loads created since 2026-10-11T00:00Z: every stop re-resolved by geocodeStopsWithClient(reresolve) (Samsara address > owner street > zip center, no fence); active non-Samsara geofences created since then on a location with no street RETIRED (is_active=false); street-less locations created since then that no stop or active fence uses DEACTIVATED. No DELETE. No money. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-409 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-38-reresolve-creator-stops.ts --apply
+rehearsal: throwaway br-morning-king-ak5hyvy8 (COMMITTED, deleted): 24 loads / 48 stops; 6 on a Samsara address (street + facility + its own fence), 42 zip / city center listed, 0 failed; false rooftop 48 -> 0; zip-center fences active 33 -> 0 (retired); 33 street-less locations deactivated; Samsara-linked fences active 1 -> 6
+expires_at: 2026-10-12T05:42:00Z
+status: CONSUMED
+consumed_at: 2026-10-11T06:20:41Z
+consumed_by: CC-2 (443.38 stop re-resolution)
+row_counts: prod run 1 (06:20Z) identical to the rehearsal — 24 loads / 48 stops; 6 on a Samsara address, 42 zip / city center listed, 0 failed; false rooftop 48 -> 0; 33 location-linked zip-center fences retired; 33 street-less locations deactivated. Run 2 (06:5xZ, idempotent, 130 loads): 0 changes.
+proof_query: node scripts/verify-stops-resolve-samsara-no-zip-fence.mjs (prod) -> PASS
+
+## AUTH-412
+issued_at: 2026-10-11T06:41:12Z
+issued_by: Lead ruling 443.41 G(2): "first-stop deadhead = miles from the same unit's previous load's last stop, from the mileage engine, source 'computed'; NULL only when no previous load." Recorded by CC-2 in the PR that ships the script, as with AUTH-404..410
+owner_quotes: "This must be fixed and done automatically for the next seedings, none should ever fail." (2026-10-11 00:30 CT) · "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — mdata.load_stops.leg_miles of the FIRST stop of loads booked since 2026-10-11T00:00Z, filled ONCE where NULL through learnLoadLanes -> computeFirstStopDeadhead (point_mileage cache / routing provider, else the owner-ruled chain-deadhead haversine), each fill with its audit row dispatch.load_stop.leg_miles_computed (source 'computed'). No money. No DELETE. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-412 DATABASE_URL=<prod> npx tsx apps/backend/scripts/auth412-backfill-first-stop-deadhead.mts --branch=br-fancy-credit-akjnd07a --apply
+rehearsal: throwaway br-wild-rice-akq8fxt9 (COMMITTED, deleted): first-stop leg_miles NULL 48 -> 12; 36 computed (haversine_chain — routing provider osrm_not_configured, 0 osrm rows ever in point_mileage); 12 NULL = no previous load for the unit; verify-booked-loads-save-miles PASS over 107 loads
+expires_at: 2026-10-12T06:41:12Z
+status: CONSUMED
+reconsumed_at: 2026-10-11T06:48:40Z
+tail_row_counts: tail runs after 06:46Z — 13627, 13657 and one more booked mid-rollover filled (3 computed, haversine_chain); first-stop NULL ends at 13 = no previous unit load; verify-booked-loads-save-miles PASS over 141 loads; bb78b509f6 live 06:47:47Z
+reopened_at: 2026-10-11T06:50:10Z
+reopened_reason: tail run — load 13627 (and any other) booked by CC-3 after the 06:46Z run and before bb78b509f6 went live; same scope, same command, unexpired (coordinator order)
+previous_status: CONSUMED
+consumed_at: 2026-10-11T06:46:30Z
+consumed_by: CC-2 (443.41 G2 deadhead backfill)
+row_counts: prod, two idempotent runs — first-stop leg_miles NULL 60 -> 13 (47 computed) then 14 -> 13 (1 more: load 13588 booked by CC-3 between run 1 and the deploy); 48 computed in total, all haversine_chain (routing provider osrm_not_configured); 13 NULL = no previous load for the unit: 13497 13498 13502 13504 13505 13506 13517 13525 13527 13551 13565 13569 13625
+proof_query: node scripts/verify-booked-loads-save-miles.mjs (prod) -> PASS over 135 loads (RULE 4 first-stop deadhead included)
+
+## AUTH-413
+issued_at: 2026-10-11T06:41:07Z
+issued_by: Lead 443.41 / 443.38 item 2 ("deactivate zip-center geofences, do not delete history"), owner order 2026-10-11 00:30 CT. Recorded by CC-2 in the PR that ships the script, as with AUTH-404..410
+owner_quotes: "This must be fixed and done automatically for the next seedings, none should ever fail." (2026-10-11 00:30 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — geo.geofences with source 'auto_dispatch', location_kind 'customer_site', created since 2026-10-11T00:00Z, ACTIVE, whose label has no street: is_active=false (history kept). Nothing deleted. Their copies in the owner's Samsara account are NOT touched by this AUTH.
+action: OWNER_AUTH_ID=AUTH-413 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-41-retire-auto-zip-fences.ts --apply
+rehearsal: throwaway br-rapid-boat-akfob38g (COMMITTED, deleted): 57 retired, all 57 had been pushed to Samsara; verify-stops-resolve-samsara-no-zip-fence PASS after
+expires_at: 2026-10-12T06:41:07Z
+status: CONSUMED
+consumed_at: 2026-10-11T06:52:33Z
+consumed_by: CC-2 (443.41 zip-center fence retirement)
+row_counts: prod run 1: 63 auto-dispatch customer-site zip-center fences retired (is_active=false), all 63 had been pushed to the owner's Samsara (copies untouched; list ~/IH35-LEAD-CHANNEL/2026-10-11-CC2-AUTH-413-retired-zip-fences-pushed-to-samsara.txt). Run 2 after 6f84ffa6bf went live (06:51Z): 0.
+proof_query: node scripts/verify-stops-resolve-samsara-no-zip-fence.mjs (prod) RULE 8 -> PASS
+
+## AUTH-411
+issued_at: 2026-10-11T06:40:11Z
+issued_by: Lead ruling 443.41 A: "A Relay fill gets an accounting.expenses DOCUMENT (fuel line(s) + 'Fuel Card Fee' $2.00 line, vendor Relay Purchases f87771ce, paid from 1295 Relay Fuel Wallet), linked to the SAME JE the fill already posts — one JE, never two ... CC-2 writer + backfill through the engine of every Relay fill already posted (5772's 3 + whatever the 59 post). Fork-proven first." Recorded by CC-2 in the PR that ships the script, as with AUTH-404..410
+owner_quotes: "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — every live journal entry whose postings carry source_transaction_type 'fuel_event' + an integrations.relay_fuel_transactions id and that has no live accounting.expenses document: one posted document written through adoptRelayFillExpenseDocument (vendor Relay, payment account = the entry's own credit leg, lines = the entry's own debit legs, journal_entry_id = that entry). No new JE, no posting change, trial balance + posting + JE counts asserted unchanged. No DELETE. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-411 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-41a-relay-fill-expense-docs.ts --apply
+rehearsal: throwaway br-ancient-sea-akm9yugn (COMMITTED, deleted): 65 Relay-fill entries, 65 documents created, 0 refused; JEs 1,054 / postings 2,597 / trial balance 0 unchanged; verify-costs-are-expenses-not-handwritten-jes LIVE PASS (0 violations); 5000 GL vs expense lines gap 33,026.28 -> 30.00 (the 30.00 = three driver bills 13597 / 13579 / 13582 with a $10 fuel line on 5000 — bills, not Relay)
+expires_at: 2026-10-12T06:40:11Z
+status: CONSUMED
+consumed_at: 2026-10-11T07:00:41Z
+consumed_by: CC-2 (443.41 A)
+row_counts: prod — 141 live Relay-fill journal entries, 141 expense documents written through adoptRelayFillExpenseDocument, 0 refused; JEs 1,276 / postings 3,233 / trial balance 0 unchanged; verify-costs-are-expenses-not-handwritten-jes LIVE PASS (141 -> 0 violations); 5000 GL vs expense-line gap 69,488.85 -> 47.00 (driver-bill fuel lines on 5000, not Relay)
+
+## AUTH-410
+issued_at: 2026-10-11T06:00:00Z
+issued_by: Lead ruling 443.40: "put entity = vendor Relay on the 1295 and 5005 lines in D6". Recorded by CC-2 in the PR that ships the script, as with AUTH-404..409
+owner_quotes: "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — accounting.journal_entry_postings with source_transaction_type 'relay_deposit' on the Relay Fuel Wallet (role fuel_wallet_relay) and 5005 Fuel Card Fees: entity_uuid / entity_type filled ONCE where NULL with the one active vendor named Relay ("Relay Purchases"). Funding legs untouched. No amount / account / side / JE change; trial balance + count asserted. No DELETE.
+action: OWNER_AUTH_ID=AUTH-410 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-40-relay-deposit-entity.ts --apply
+rehearsal: throwaway br-tiny-darkness-ak6eitry (COMMITTED, deleted): 52 filled (1295: 26, 5005: 26), trial balance 0 across 1,026 postings unchanged
+expires_at: 2026-10-12T06:00:00Z
+status: CONSUMED
+consumed_at: 2026-10-11T07:02:19Z
+consumed_by: CC-2 (443.40 Relay vendor on deposit legs)
+row_counts: prod identical to the rehearsal — 52 relay_deposit lines filled with vendor Relay Purchases (1295: 26, 5005: 26); trial balance 0 across 3,233 postings unchanged
+proof_query: SELECT count(*) FROM accounting.journal_entry_postings WHERE source_transaction_type='relay_deposit' AND entity_uuid IS NULL AND account in (1295, 5005) -> 0
+
+## AUTH-414
+issued_at: 2026-10-11T07:13:44Z
+issued_by: Lead ruling 443.42 #6 (D6): "Root cause at POST time ... fix the posters, then fill-once backfill. A line that legitimately has no load (deposit, wallet funding) must still carry its entity". Recorded by CC-2 in the PR that ships the script, as with AUTH-404..413
+owner_quotes: "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — accounting.journal_entry_postings created since 2026-10-11T00:50Z: entity_uuid/entity_type filled ONCE where NULL through resolvePostingSourceEntity; load_id filled ONCE where NULL and provable (Relay fill -> its fill's one load; settlement application line -> the load bill its non-cash bill payment sits on; reversal -> the reversed line). No amount / account / side / JE change; trial balance + count asserted. No DELETE.
+action: OWNER_AUTH_ID=AUTH-414 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-42-d6-entity-load-fill.ts --apply
+rehearsal: throwaway br-little-boat-ak3f0ftu (COMMITTED, deleted): 2,673 postings; entity NULL 487 -> 0; load NULL 899 -> 183 (78 Relay deposit legs = wallet funding, 105 settlement credits spread over several load bills — both legitimately load-less); trial balance 0 across 3,233 postings unchanged
+expires_at: 2026-10-12T07:13:44Z
+status: CONSUMED
+consumed_at: 2026-10-11T07:24:18Z
+consumed_by: CC-2 (443.42 #6 D6 entity + load fill)
+row_counts: prod (2,714 postings since 00:50Z at apply): entity NULL 507 -> 0; load NULL 921 -> 183 (78 Relay deposit legs = wallet funding, 105 settlement credits already spread over several load bills — legitimately load-less); trial balance 0 across 3,274 postings unchanged. First attempt refused itself (concurrent CC-3 posts changed the company row count mid-transaction) and rolled back; the retry committed.
+
+## AUTH-415
+issued_at: 2026-10-11T07:11:23Z
+issued_by: Lead 443.42 #7 ("the 81 driver-app notices for August loads — hide/dismiss them through the notifications engine (kept in history)"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..413
+owner_quotes: "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — pwa.driver_notifications titled "Load N dispatched" created 2026-10-11 for a load that already ran (first stop due before the notice) and belongs to a driver settlement: hidden through hideDriverPwaNotifications (payload.hidden + read_at; row kept; audit pwa.driver_notification.hidden per row). No DELETE.
+action: OWNER_AUTH_ID=AUTH-415 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-42-hide-historical-dispatch-notices.ts --apply
+rehearsal: throwaway br-square-hat-akj1365j (COMMITTED, deleted): 141 matched (81 at the 443.41 measure + later Creator posts before 6f84ffa6bf went live), 141 hidden, 0 still visible
+expires_at: 2026-10-12T07:11:23Z
+status: CONSUMED
+consumed_at: 2026-10-11T07:44:12Z
+consumed_by: CC-2 (443.42 #7 hide historical dispatch notices)
+row_counts: prod identical to the rehearsal — 141 "Load N dispatched" notices for loads that already ran hidden (payload.hidden + read_at, rows kept, audited); 0 still visible
+
+## AUTH-416
+issued_at: 2026-10-11T07:13:37Z
+issued_by: Lead 443.42 #5 ("CC-2: run it through the stop-resolution engine (Samsara match first, then street geocode), fences only where a street exists"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..415
+owner_quotes: "This must be fixed and done automatically for the next seedings, none should ever fail." (2026-10-11 00:30 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the loads in ~/IH35-LEAD-CHANNEL/443-42-stop-addresses.json (CC-3, from the owner's settlements workbook): mdata.load_stops.facility_name filled ONCE where NULL with the owner's value (stop order + type must match, else the load is listed and untouched); every stop of those loads re-resolved by geocodeStopsWithClient(reresolve) (Samsara by name, else zip / city center, no fence). No street invented (the workbook has none). No DELETE.
+action: OWNER_AUTH_ID=AUTH-416 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-42-stop-addresses-from-workbook.ts --file=<443-42-stop-addresses.json> --apply
+rehearsal: throwaway br-polished-pine-ako72hz1 (COMMITTED, deleted): 141 loads / 282 stops; facility_name NULL 42 -> 0; on a Samsara address 60 -> 66; no street 222 -> 216; 10 loads listed whose workbook has more stops than were booked (13528 13537 13538 13570 13576 13583 13589 13599 13600 13628)
+expires_at: 2026-10-12T07:13:37Z
+status: CONSUMED
+consumed_at: 2026-10-11T07:44:48Z
+consumed_by: CC-2 (443.42 #5 workbook facility names)
+row_counts: prod identical to the rehearsal — 141 loads / 282 stops: facility_name NULL 42 -> 0; on a Samsara address 60 -> 66; no street 222 -> 216; 10 loads with more workbook stops than booked listed and untouched (CC-3 repairs them, 443.43 #3)
+
+## AUTH-417
+issued_at: 2026-10-11T07:48:51Z
+issued_by: Lead 443.43 #1 ("If not written by 07:55 UTC, CC-2 takes it" — provision the Damage-Claim escrow sub-account for driver e3ac0879, settlement 5829). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..416
+owner_quotes: "all drivers must have only one profile and escrow and liability account" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — driver e3ac0879-8558-4c01-922f-0cc2d94b937b (EDUARDO AZAEL FLORES ORTIZ): escrow sub-account (and advance sub-account if missing) through provisionDriverEscrowSubAccount / provisionDriverAdvanceSubAccount + link upserts. Idempotent. No money moves. No DELETE.
+action: OWNER_AUTH_ID=AUTH-417 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-43-provision-escrow-e3ac0879.ts --apply
+rehearsal: throwaway br-old-sea-ak9we4lm (COMMITTED, deleted): escrow 2100-00-043 "EDUARDO AZAEL FLORES ORTIZ — Driver Escrow (hired unknown)" + advance sub-account created; escrow before NULL
+expires_at: 2026-10-12T07:48:51Z
+status: CONSUMED
+consumed_at: 2026-10-11T07:57:30Z
+consumed_by: CC-2 (443.43 #1, taken at 07:55Z)
+row_counts: prod identical to the rehearsal — driver e3ac0879 escrow 2100-00-043 "EDUARDO AZAEL FLORES ORTIZ — Driver Escrow (hired unknown)" + Driver Cash Advance sub-account created; escrow before: none
+
+## AUTH-418
+issued_at: 2026-10-11T08:01:14Z
+issued_by: CC-2 correcting its own AUTH-417 run under Lead 443.43 #1 (same scope: driver e3ac0879's sub-accounts), recorded in the PR that ships the script, as with AUTH-404..417
+owner_quotes: "all drivers must have only one profile and escrow and liability account" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the ONE advance sub-account of driver e3ac0879 (1245-00-042, 0 postings, created 07:57Z by AUTH-417): account_number renamed IN PLACE to 1245-00-<his escrow nnn = 043>, the rename migration 202615390200 applies to every advance sub-account; refused if it has postings or the target number is taken. No money, no DELETE.
+action: OWNER_AUTH_ID=AUTH-418 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-43-align-e3ac0879-advance-number.ts --apply
+rehearsal: throwaway br-restless-leaf-akcnheyz (COMMITTED, deleted): 1245-00-042 -> 1245-00-043; verify-driver-subaccount-numbers-one-per-driver OK (58 sub-accounts, one nnn per driver)
+expires_at: 2026-10-12T08:01:14Z
+status: CONSUMED
+consumed_at: 2026-10-11T08:24:09Z
+consumed_by: CC-2 (correction of AUTH-417)
+row_counts: prod identical to the rehearsal — e3ac0879 advance 1245-00-042 renamed in place to 1245-00-043 (0 postings); escrow 2100-00-043 (5829 / P-0068, 2 postings) untouched
+proof_query: node scripts/verify-driver-subaccount-numbers-one-per-driver.mjs (prod) -> OK, 58 sub-accounts, one nnn per driver
+
+## AUTH-420
+issued_at: 2026-10-11T08:52:17Z
+issued_by: Lead 443.45 #3 ("merge each pair through the driver-merge engine (survivor = the profile the settlements posted on), nothing left pointing at the merged-away id"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..418
+owner_quotes: "all drivers must have only one profile and escrow and liability account" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — finish two 2026-09-28 merges through executeDriverMerge(resume): GENARO GUERRERO CHAVEZ 6e908ee1 -> 6edcb351 and ANGEL ALFONSO SOSA fba21d80 -> 52037e93 (survivors carry all 12 settlements): merged profile's duplicate advance link retired (is_active=false), every discovered reference repointed by repointAll, merged profile Inactive. Append-only history kept. No DELETE, no money (escrow already on the survivor; no JE).
+action: OWNER_AUTH_ID=AUTH-420 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-45-finish-driver-merges.ts --apply
+rehearsal: throwaway br-quiet-flower-akqk6rvo (COMMITTED, deleted): both pairs Active/1 active advance link -> Inactive/0; repointed Genaro 6 refs (incl. samsara.hos_snapshots 17,275, docs 12), Angel 5 refs (hos_snapshots 15,655, docs 10); remaining only history_kept (HOS / telematics / geofence events) + kept_on_survivor duplicates; verify-driver-subaccount-numbers-one-per-driver OK, verify-driver-advance-posts-to-drivers-own-subaccount OK
+expires_at: 2026-10-12T08:52:17Z
+status: CONSUMED
+consumed_at: 2026-10-11T08:58:44Z
+consumed_by: CC-2 (443.45 #3 finish driver merges)
+row_counts: prod identical to the rehearsal — 6e908ee1 and fba21d80 Active -> Inactive, active advance links 1 -> 0 each; repointed Genaro 6 refs (samsara.hos_snapshots 17,275, docs 12, retention 10, insurance 3, DQ 2, leave 1), Angel 5 refs (hos_snapshots 15,655, docs 10, retention 10, insurance 1, leave 1); left only append-only history + kept-on-survivor duplicates
+proof_query: verify-driver-subaccount-numbers-one-per-driver OK; verify-driver-advance-posts-to-drivers-own-subaccount OK
+
+## AUTH-421
+issued_at: 2026-10-11T09:01:37Z
+issued_by: Lead 443.45 #4 ("resolve them now (do not wait 6 h for the sweep), relearn those loads"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..418
+owner_quotes: "This must be fixed and done automatically for the next seedings, none should ever fail." (2026-10-11 00:30 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — every load created since 2026-10-11T00:00Z (not cancelled): relearnLoadStopLegs (module-written legs only; owner / document legs kept; first-stop deadhead kept; lane counts untouched; each change audited). No money, no DELETE.
+action: OWNER_AUTH_ID=AUTH-421 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-45-relearn-creator-loads.ts --apply
+rehearsal: throwaway br-autumn-wildflower-akplgu31 (COMMITTED, deleted): 146 loads, 7 legs changed (13570: NULL->159.4, 266.3->150.2; 13589: NULL->1373.7, 1588.7->11.6; 13599: NULL->33.6, NULL->50.9, 1617.3->1351.1), 0 owner legs, 0 unresolved; non-first legs NULL 4 -> 0; verify-booked-loads-save-miles PASS over 146
+expires_at: 2026-10-12T09:01:37Z
+status: CONSUMED
+consumed_at: 2026-10-11T09:21:52Z
+consumed_by: CC-2 (443.45 #4 relearn Creator loads)
+row_counts: prod identical to the rehearsal — 146 loads, 7 legs changed (13570: NULL->159.4, 266.3->150.2; 13589: NULL->1373.7, 1588.7->11.6; 13599: NULL->33.6, NULL->50.9, 1617.3->1351.1), 0 owner legs touched; non-first legs NULL 4 -> 0
+proof_query: node scripts/verify-booked-loads-save-miles.mjs (prod) -> PASS over 146 loads
+
+## AUTH-422
+issued_at: 2026-10-11T10:52:41Z
+issued_by: Lead 443.49 items 1 + 3 on the owner's ruling 2026-10-11 05:39 CT (10:39 UTC), verbatim: "We keep them and we need the real address geo fences." Recorded by CC-2 in the PR that ships the script, as with AUTH-404..421
+owner_quotes: "We keep them and we need the real address geo fences." (2026-10-11 05:39 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — geo.geofences: the auto-dispatch customer-site fences drawn 2026-10-11 whose stop now has a real address AND whose fence has a Samsara copy are moved to the real point, re-activated as that location's one fence, and their EXISTING Samsara address is updated in place by id (outbox samsara.update_geofence — same id; nothing created or deleted in Samsara); a fence whose stop resolved to an owner Samsara address is left in Samsara untouched (local copy retired if active); every real-address location of a Creator stop keeps exactly ONE active fence, pushed to Samsara once (outbox samsara.create_geofence) when it has no Samsara copy; active TMS-drawn fences on a zip / city center are retired locally (history kept). No DELETE anywhere.
+action: OWNER_AUTH_ID=AUTH-422 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-49-real-address-fences.ts --apply
+rehearsal: throwaway br-holy-heart-ak6dqkfe (COMMITTED, deleted): 64 auto fences — 3 moved (Samsara update enqueued: 2000000762878, 2000000762880, 2000000762885), 5 on an owner Samsara address (Indiana Packers local copy retired), 17 real address never in Samsara, 39 still no street; 83 real-address locations: 25 owner Samsara-import, 3 already in Samsara, 55 pushed once; 2 active zip-center fences retired; re-run = 0 changes; verify-stops-resolve-samsara-no-zip-fence PASS after
+expires_at: 2026-10-12T10:52:41Z
+status: CONSUMED
+consumed_at: 2026-10-11T12:34:46Z
+consumed_by: CC-2 (443.49 real-address fences; final run re-sent the 11 creates Samsara refused)
+row_counts: final --apply 12:34:46Z — 84 real-address locations: 25 owner Samsara-import, 48 already in Samsara, 11 re-sent after samsara_http_400 ("Duplicate external id value already exists: <load id>" — fixed in #26359 / #26360); 0 moved, 0 retired. Measured 12:34:58Z: 11 of 11 delivered, 0 errored, 11 fences with a distinct Samsara id (2000000762949..762959); active fences sharing a Samsara id 0
+proof_query: SELECT count(*) FILTER (WHERE delivered_at IS NOT NULL), count(*) FILTER (WHERE last_error IS NOT NULL) FROM outbox.events WHERE dedupe_key LIKE 'samsara.create_geofence:%:443.49-retry-extid' -> 11, 0
+
+## AUTH-424
+issued_at: 2026-10-11T11:01:43Z
+issued_by: Lead 443.51 #3 + #4 ("engine fix + backfill through the engine"; "stamp them from the workbook stop date (date_only precision), through the stop-stamp engine"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..421
+owner_quotes: "Were all the documents created correctly? ... Find the root cause of the red and permanently fix" (owner, 443.51)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the stops of every load created since 2026-10-11T00:00Z (Settlement Creator): stampStopsFromTracking (unstamped stops stamped from their workbook date — tracked stop event when one matches, else date_only / manual; a stamped stop never overwritten), then settleStampedStopStatuses (a stamped stop's status -> 'departed'). No money, no DELETE.
+action: OWNER_AUTH_ID=AUTH-424 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-51-creator-stop-status.ts --file=<443-42-stop-addresses.json> --apply
+rehearsal: throwaway br-red-lake-akjfnqlx (COMMITTED, deleted): 148 loads / 309 stops — pending 309 -> 0, departed 0 -> 309; stamped 296 -> 309 (13 date_only from the workbook, 0 tracked matches); verify-delivered-load-stops-terminal PASS after
+expires_at: 2026-10-12T11:01:43Z
+status: CONSUMED
+consumed_at: 2026-10-11T11:12:06Z
+consumed_by: CC-2 (443.51 #3/#4 Creator stop status + stamps)
+row_counts: prod identical to the rehearsal — 148 loads / 309 stops: pending 309 -> 0, departed 0 -> 309; stamped 296 -> 309 (13 date_only from the workbook dates, 0 tracked)
+proof_query: node scripts/verify-delivered-load-stops-terminal.mjs (prod) -> PASS
+
+## AUTH-425
+issued_at: 2026-10-11T11:03:47Z
+issued_by: Lead 443.51 #5 ("141 Relay-fill expense documents have no settlement reference ... Fill from the fill's settlement at adoption time + engine backfill"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..423
+owner_quotes: "Were all the documents created correctly? ... Find the root cause of the red and permanently fix" (2026-10-11) · owner law 443.52 B "All expense records if they have a settlement number must have a load number."
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — Relay-fill accounting.expenses documents (vendor Relay, adopting a fuel_event journal entry) with settlement_no or source_settlement_ref NULL: both filled ONCE through fillRelayFillExpenseSettlementRef with the ONE live settlement that holds the document's load (source_document_ref, else display_id); a document with no load, or a load held by 0 / 2+ live settlements, is listed and untouched. No money, no DELETE.
+action: OWNER_AUTH_ID=AUTH-425 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-51-relay-fill-expense-settlement-ref.ts --apply
+rehearsal: throwaway br-spring-flower-akal6c4b (COMMITTED, deleted): 152 Relay-fill documents; settlement_no NULL 141 -> 0, source_settlement_ref NULL 152 -> 0; 0 listed; verify-relay-fill-expense-settlement-ref PASS at ceiling 0
+expires_at: 2026-10-12T11:03:47Z
+status: CONSUMED
+consumed_at: 2026-10-11T11:16:02Z
+consumed_by: CC-2 (443.51 #5 Relay-fill expense settlement reference)
+row_counts: prod identical to the rehearsal — 152 Relay-fill documents; settlement_no NULL 141 -> 0, source_settlement_ref NULL 152 -> 0, 0 listed; settlement_no set with load_id NULL = 0 (owner law 443.52 B)
+proof_query: node scripts/verify-relay-fill-expense-settlement-ref.mjs (prod) -> PASS, 0 (ceiling lowered 141 -> 0)
+
+## AUTH-426
+issued_at: 2026-10-11T11:35:17Z
+issued_by: CC-2 directive 443.52 C ("32 Relay fills from the AUTH-405 CSV import were posted without their $2.00 fee line ... ENGINE CORRECTION of the 32 posted fills — through the posting engine ... Ops runner AUTH-426"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..425
+owner_quotes: "Find the root cause of the red and permanently fix" (owner, 443.51) · 443.52 C audit red verify-relay-fill-documents-sum-to-relay-total
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the 32 csv_import Relay fills whose one live fuel_event JE carries no 5005 fee leg: per fill voidDocument('expense') on its document, postVoidReversal('fuel_event', fill), re-upsert the Relay row from the owner CSV through upsertRelayFuelTransaction (fixed mapping: total_amount_paid = amount excluding fee), postFuelExpenseOnClient as the Creator posts a Relay fill (correction_revision 1), adoptRelayFillExpenseDocument keeping settlement_no. Net GL: Dr 5005 / Cr 1295 32 x 2.00 = 64.00. No settlement, fuel transaction or driver deduction touched. No DELETE.
+action: OWNER_AUTH_ID=AUTH-426 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-52-csv-relay-fill-fee.ts --apply
+rehearsal: throwaway br-patient-sky-akreb5dd and br-icy-mud-ak7qchl9 (both COMMITTED, deleted): CORRECTED 32 of 32; 1295 credit on the fills 1600131 -> 1606531; TB net 0 -> 0; 1295 net 596780 -> 590380, 5005 296350 -> 302750; fuel_transactions 51 / 16001.31 unchanged; verify-relay-fill-documents-sum-to-relay-total PASS. Scope widened after the 12:00Z daily pull re-sourced 2 of the 32 to daily_pull (still fee-less, still 32).
+expires_at: 2026-10-12T11:35:17Z
+status: CONSUMED
+consumed_at: 2026-10-11T12:18:18Z
+consumed_by: CC-2 (443.52 C CSV Relay fill fee correction)
+row_counts: prod identical to the rehearsal — CORRECTED 32 of 32; 1295 credit on the fills 1600131 -> 1606531 (+6400); TB net 0 -> 0; 1295 net 596780 -> 590380, 5005 296350 -> 302750; fuel_transactions 51 / 16001.31 unchanged; no settlement touched
+proof_query: node scripts/verify-relay-fill-documents-sum-to-relay-total.mjs (prod) -> PASS (152 fills)
+
+## AUTH-427
+issued_at: 2026-10-11T14:47:07Z
+issued_by: Lead 443.53 #3 + #4 on the owner's ruling 2026-10-11 09:23 CT (14:23 UTC). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..426
+owner_quotes: "Corona are the same person, Neftali are the same person, my escrow accounts should be Tests only I've never driven. Merge all" (2026-10-11 09:23 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — #3 executeDriverMerge (the driver-merge engine; survivor = the profile the settlements posted on): LUIS CORONA e6933af3 -> Jorge Luis Infante Corona 3e138476 (9 settlements); NEFTALI URBANO CORONADO fc5c88b5 -> Neftali Coronado Urbano a32a35c8 (6 settlements). #4 retireDriverSubAccountsWithoutPostings on owner profile 49427973: each USMCA escrow / advance sub-account with 0 postings deactivated + link closed (history kept); any posted account listed, untouched. The two QBO- accounts on that profile belong to another company (91e0bf0a) and are out of scope. No DELETE, no money.
+action: OWNER_AUTH_ID=AUTH-427 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-53-driver-merges-owner-escrow.ts --apply
+rehearsal: throwaway br-blue-lake-akak6jwm (COMMITTED, deleted): both merged profiles Inactive with merged_into = survivor; repointed incl. mdata.driver_samsara_accounts + integrations.samsara_drivers (each survivor 2 Samsara users, 1 escrow, 1 advance); left on merged ids only history_kept / kept_on_survivor rows; owner 2100-00-011 + 1245-00-011 (0 postings, 0 balance) retired, USMCA links active after 0
+expires_at: 2026-10-12T14:47:07Z
+status: CONSUMED
+consumed_at: 2026-10-11T14:45:00Z
+consumed_by: CC-2 (443.53 #3 driver merges + #4 owner sub-accounts)
+row_counts: prod identical to the rehearsal — e6933af3 -> 3e138476 and fc5c88b5 -> a32a35c8 merged (Inactive, merged_into set; Samsara users, fuel reports, vendors, DVIRs repointed); each survivor 2 Samsara users / 1 escrow / 1 advance; owner 2100-00-011 + 1245-00-011 retired (0 postings, 0 balance); owner USMCA active escrow/advance links 0
+proof_query: SELECT merged_into_driver_id FROM mdata.drivers WHERE id IN ('e6933af3-8362-4dae-805c-31ca7b2ca091','fc5c88b5-2f56-409f-a634-adfd507bc659') -> survivors
+
+## AUTH-429
+issued_at: 2026-10-11T14:58:29Z
+issued_by: Lead 443.58 on the owner's order 2026-10-11 09:43 CT (14:43 UTC). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..427
+owner_quotes: "Ok I'll send later today, the others get them done create the docs etc." (2026-10-11 09:43 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — exactly two settled Relay deposits on the owner's personal card 0210: txn_5upWmFMZU9S6H4 (2026-10-02, 5,162.50 = 5,000.00 + 162.50) and txn_AVWoStcXbLRGbq (2026-10-08, 2,065.00 = 2,000.00 + 65.00). Each through postRelayDeposit's loan path: related-party loan document via createPaidDirectVendorAdvance (lender Jorge, paid direct to Relay, amount = charged, date = deposit date, target = the deposit), then Dr 1295 Relay Fuel Wallet + Dr 5005 Fuel Card Fees (vendor Relay) / Cr 2410-00-001 Jorge Related-Party Loan (vendor Jorge), loan.je_id = the JE. The 14 unnamed-card deposits are not touched. No DELETE.
+action: OWNER_AUTH_ID=AUTH-429 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-58-relay-0210-loan-deposits.ts --apply
+rehearsal: throwaway br-long-frost-akhyfbz4 (COMMITTED, deleted): 2 posted (loan RPL-2026-0010 / RPL-2026-0011 on the fork); 2410-00-001 credit +722750, 1295 +700000, 5005 +22750; held deposits 16 -> 14; trial balance 0 -> 0; re-run = already_posted x2, deltas 0
+expires_at: 2026-10-12T14:58:29Z
+status: CONSUMED
+consumed_at: 2026-10-11T14:54:00Z
+consumed_by: CC-2 (443.58; closed under 443.64 3a)
+row_counts: 2 deposits posted 14:54Z — JEs 76d45127 (5,162.50) + 3060fe52 (2,065.00), Cr 2410-00-001 now "Due to / from Jorge" 7,227.50; loan documents RPL-2026-0010 / -0011; kept as posted (no reversal, no void) per 443.60 #3 / 443.64 3a. Card map 0210 + 6248 -> Due to / from Jorge, 9855 -> Due to / from Tio Perfumes 2 live (#26402 c790a4841f, in live build 3d2233b)
+proof_query: SELECT sum(amount_cents) FROM accounting.journal_entry_postings WHERE journal_entry_uuid IN ('76d45127-34a4-454a-85e3-40d6f3f2d4f2','3060fe52-4ab3-4431-b599-78c991cfdb63') AND debit_or_credit='credit' -> 722750
+
+## AUTH-428
+issued_at: 2026-10-11T15:00:41Z
+issued_by: Lead 443.53 #2 on the owner's ruling 2026-10-11 09:23 CT (14:23 UTC). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..427
+owner_quotes: "Yes we can calculate we are supposed to be using estimates from google, and from estimates another Claude agent created basted on averages etc for all the loads historically moved ... the payment to any driver is the payment that is in the settlements" (2026-10-11 09:23 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — one outbox event dispatch.relearn_load_miles per USMCA load created since 2026-10-11 (not cancelled; 148): the server handler first resolves the load's stops through geocodeStopsWithClient (reresolve: Samsara address > existing street location > Google place in the stop's city/state, 443.53 #1 > recorded Google no-result), then re-derives planning leg miles (relearnLoadStopLegs) + first-stop deadhead (recomputeFirstStopDeadhead) through chooseLegMiles (point_mileage cache -> Google routing -> lane_mileage average -> NULL; never haversine; a module-computed leg / deadhead the engine can no longer source is set NULL with an audit row, never kept as a straight line). The script writes only outbox rows. --pass=<name> re-runs the same event under a fresh dedupe key. 443.55 pass (--record-sources, dedupe key ...:443.55-sources): the same handler also records source 'document' (the settlement's own miles) on every miles field that has a value and no recorded source, with both recommendations at that moment, via recordDocumentMilesSources — never changes a value. No pay / settlement table, no money, no DELETE.
+action: OWNER_AUTH_ID=AUTH-428 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-53-relearn-creator-miles.ts --apply   (then once more with --record-sources after 202615550300 is live)
+rehearsal: throwaway br-red-hat-ak392uy0 (COMMITTED, deleted): 148 loads, 148 events enqueued; re-run 0 enqueued / 148 already queued
+expires_at: 2026-10-12T15:00:41Z
+status: CONSUMED
+consumed_at: 2026-10-11T16:21:47Z
+consumed_by: CC-2 (443.53 #2 + 443.55 per-field sources)
+row_counts: passes 443.53 / 443.55-sources / 443.53-null-sources / 443.53-rls, 148 events each, all delivered, 0 errored (the first three ran without RLS context — fixed #26387 — and the last one carried the work); 309 Creator stops latest figure: document / load miles 215, google 74, point_mileage cache 3, lane average 1, NULL 16, haversine 0; Creator loads with a recorded source per field 148 of 148
+proof_query: node scripts/verify-no-haversine-leg-miles.mjs (live 0) + node scripts/verify-load-miles-source-recorded.mjs (live 148 of 148, unsourced 0)
+
+## AUTH-430
+issued_at: 2026-10-11T15:35:52Z
+issued_by: Lead 443.60 #2 ("every miles write carries its source; fix writer + row, G4 green"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..429
+owner_quotes: "Make sure the engines are updated and fixed correctly so these issues never occur again." (owner, 443.55, 2026-10-11 09:33 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — every USMCA load with miles and mileage_source NULL (measured: 13498 a113130e, 13508 f3745414, both booked by the Settlement Creator at 01:04Z before the writer named its source) gets mileage_source "Operator entered" through recordMissingMileageSource (audited "dispatch.load.mileage_source_recorded"). Only mileage_source is written; no miles value, pay, settlement or money. No DELETE.
+action: OWNER_AUTH_ID=AUTH-430 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-60-mileage-source.ts --apply
+rehearsal: throwaway br-flat-bonus-akaoi28p (COMMITTED, deleted): recorded 2 (13498, 13508 -> Operator entered); loads with miles_practical and no source after 0; re-run recorded 0
+expires_at: 2026-10-12T15:35:52Z
+status: CONSUMED
+consumed_at: 2026-10-11T15:51:30Z
+consumed_by: CC-2 (443.60 #2 mileage source)
+row_counts: recorded 2 (13498, 13508 -> Operator entered); USMCA loads with miles_practical and no mileage_source after 0
+proof_query: node scripts/verify-mileage-g1-g5-live.mjs -> OK (G4 0)
+
+## AUTH-431
+issued_at: 2026-10-11T15:41:27Z
+issued_by: Lead 443.53 #1 ("one location + one fence per facility at the real point (pushed to Samsara once, ih35Site id)") on the owner's ruling 2026-10-11 09:23 CT and 443.49 ("We keep them and we need the real address geo fences."). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..430
+owner_quotes: "We have google in our app, get the addresses from there and fix the engine to parse the warehouse name, street address so this does not occur anymore." (2026-10-11 09:23 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the AUTH-422 passes again over the Creator stops now that 443.53 gave them Google streets: item 1 moves an auto zip-center fence whose stop now has a real address and updates its EXISTING Samsara copy in place by id; item 3 keeps ONE active fence per real-address location and pushes it to Samsara once (outbox samsara.create_geofence, externalIds ih35Site only) — formattedAddress = the street address (not the "Facility — street" label). No Samsara delete, no DELETE.
+action: OWNER_AUTH_ID=AUTH-431 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-53-push-facility-fences.ts --apply
+rehearsal: throwaway br-muddy-recipe-ak14cfys (COMMITTED, deleted): item 1 moved 3 (Samsara update enqueued); item 3 192 real-address locations = 27 owner import + 60 already in Samsara + 105 pushed; duplicates retired 0; re-run 0 moved / 0 pushed
+expires_at: 2026-10-12T15:41:27Z
+status: CONSUMED
+consumed_at: 2026-10-11T15:52:10Z
+consumed_by: CC-2 (443.53 #1 facility fences to Samsara)
+row_counts: item 1 moved 3 (Samsara copy updated in place); item 3 192 real-address locations = 27 owner import + 60 already in Samsara + 105 pushed; 118 Samsara events delivered, 0 errored; 191 of 191 street locations of Creator stops have one active fence with a Samsara id
+proof_query: SELECT count(*) FILTER (WHERE delivered_at IS NOT NULL), count(*) FILTER (WHERE last_error IS NOT NULL) FROM outbox.events WHERE event_type IN ('samsara.create_geofence','samsara.update_geofence') AND created_at > '2026-10-11 15:50' -> 118, 0
+
+## AUTH-432
+issued_at: 2026-10-11T16:29:47Z
+issued_by: Lead 443.53 #2 (straight-line legs replaced; "legs by source google / lane average / NULL, haversine 0") — the one re-run after the same-point rule. Recorded by CC-2 in the PR that ships the change, as with AUTH-404..431
+owner_quotes: "Yes we can calculate we are supposed to be using estimates from google, and from estimates another Claude agent created basted on averages etc for all the loads historically moved" (2026-10-11 09:23 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — one dispatch.relearn_load_miles (record_sources) per USMCA Creator load (148) under key :443.53-same-point: chooseLegMiles now returns 0.0 / method same_point for two stops at one real point (13628: two White Toque docks at 11 Enterprise Ave N), so the leg the NULL rule emptied is measured again. Outbox rows only; planning legs only; no pay / settlement / money; no DELETE.
+action: OWNER_AUTH_ID=AUTH-432 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-53-relearn-creator-miles.ts --apply --record-sources --pass=443.53-same-point
+rehearsal: throwaway br-rapid-recipe-ak79l7zq (COMMITTED, deleted): 148 enqueued; re-run 0 enqueued / 148 already queued
+expires_at: 2026-10-12T16:29:47Z
+status: CONSUMED
+consumed_at: 2026-10-11T16:51:00Z
+consumed_by: CC-2 (443.53 #2 same-point re-run)
+row_counts: 148 events delivered, 0 errored; verify-no-haversine-leg-miles live 0; Creator loads with a recorded source per field 148 of 148
+proof_query: node scripts/verify-no-haversine-leg-miles.mjs (live 0)
+
+## AUTH-433
+issued_at: 2026-10-11T16:44:13Z
+issued_by: Lead 443.62 #6 ("fix the 2 workbook-typo stop cities (Laedo->Laredo, ALBERTIVILLE->Albertville) via the stop-edit route and re-resolve; finish 13545 Calavo + 13599 Manfredi; other 12 stay listed"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..432
+owner_quotes: "We have google in our app, get the addresses from there and fix the engine to parse the warehouse name, street address so this does not occur anymore." (2026-10-11 09:23 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — (1) stop city 13506 Laedo -> Laredo, 13543 ALBERTIVILLE -> Albertville, written as the stop-edit route writes (UPDATE + "mdata.load_stops.updated" audit); (2) locations dde190cf (Calavo) + a75b5792 (Manfredi) re-imported through ensureSamsaraAddressLocation so their street is "100 Dartmouth Drive" / "290 Chambers Road" (not the "Facility — street" label); (2b) a stop whose address_line1 is still the "Facility — street" label takes its (now clean) location street, audited "mdata.load_stops.updated" (the resolver's existing-location step reuses the point but not the text); (3) one dispatch.relearn_load_miles (record_sources) for 13506, 13543, 13545, 13599 so the server re-resolves (Google) and relearns. No money, no DELETE.
+action: OWNER_AUTH_ID=AUTH-433 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-62-stop-fixes.ts --apply
+rehearsal: throwaway br-long-truth-ak872891 (step 2b, COMMITTED, deleted): 2 stops street -> "290 Chambers Road" / "100 Dartmouth Drive", re-run 0; earlier throwaway br-little-mountain-aku4iotq (COMMITTED, deleted): 2 cities corrected; both locations street clean; 4 relearn events enqueued; re-run 0 city changes, locations unchanged, 4 already queued
+expires_at: 2026-10-12T16:44:13Z
+status: CONSUMED
+consumed_at: 2026-10-11T17:01:30Z
+consumed_by: CC-2 (443.62 #6 stop fixes)
+row_counts: 2 cities (13506 Laredo, 13543 Albertville); 2 locations re-imported clean; 2 stops street from location (13545, 13599); 4 relearn events delivered, 0 errored
+proof_query: node scripts/verify-stops-resolve-samsara-no-zip-fence.mjs -> PASS
+
+## AUTH-434
+issued_at: 2026-10-11T17:25:31Z
+issued_by: Lead 443.63 ("GO on learnLoadLanes for 13543 under a new AUTH; write google_place_id on stops/locations now the column is live"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..433
+owner_quotes: "We have google in our app, get the addresses from there and fix the engine to parse the warehouse name, street address so this does not occur anymore." (2026-10-11 09:23 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — (1) mdata.load_stops.google_place_id for every 'google_place' stop from its own latest street_from_google_place audit row (only when that row's street is the stop's current street), and the stop's mdata.locations.google_place_id when empty; audited per stop. (2) learnLoadLanes(fresh: true) once for 13543 (city corrected under AUTH-433) so Albertville, AL -> Temple, TX is learned; idempotent by audit marker dispatch.load.lane_relearned; the typo lane ALBERTIVILLE row is kept and listed. No money, no DELETE.
+action: OWNER_AUTH_ID=AUTH-434 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-63-place-id-and-lane.ts --apply
+rehearsal: throwaway br-winter-wave-ak19iruf (COMMITTED, deleted): 150 stops + 111 locations given google_place_id (150 of 150 google_place stops); 13543 lane city_row_created; re-run 0 / 0 / "already relearned"; verify-booked-loads-save-miles PASS on the fork (first fork br-jolly-recipe-aky2d8f6 showed the lane counted twice on re-run — idempotency fixed before this one)
+expires_at: 2026-10-12T17:25:31Z
+status: CONSUMED
+consumed_at: 2026-10-11T17:33:40Z
+consumed_by: CC-2 (443.63 google_place_id + 13543 lane)
+row_counts: 150 stops + 111 locations given google_place_id (150 of 150 google_place stops); 13543 lane Albertville, AL -> Temple, TX created; typo lane ALBERTIVILLE kept (n 2)
+proof_query: node scripts/verify-booked-loads-save-miles.mjs -> PASS
+
+## AUTH-435
+issued_at: 2026-10-11T18:32:19Z
+issued_by: Lead 443.64 3b ("We keep them and we need the real address geo fences" — measure and finish). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..434
+owner_quotes: "We keep them and we need the real address geo fences." (2026-10-11 05:39 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — exactly two fences: (A) 13543 AMERICOLD fence 4937a83d adopts the existing Samsara address 2000000762879 already at its point (no duplicate) and one samsara.update_geofence renames it in place to "AMERICOLD — 1355 Railroad Avenue, Albertville, AL 35951"; (B) the 822 Union Pacific Boulevard fence (Samsara 2000000762951; stops 13540 #2, 13568 #2) and its location move 345 m to the Google rooftop point both stops resolved to, radius kept, and one samsara.update_geofence moves the Samsara copy in place by id. Each step refuses unless its precondition still holds. Nothing created or deleted in Samsara; no DELETE; no money.
+action: OWNER_AUTH_ID=AUTH-435 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-64-fence-finish.ts --apply
+rehearsal: throwaway br-weathered-shadow-aks5emk5 (COMMITTED, deleted): A adopted (0 m), rename enqueued; B moved 345 m, update enqueued; re-run: both skipped
+expires_at: 2026-10-12T18:32:19Z
+status: CONSUMED
+consumed_at: 2026-10-11T18:39:30Z
+consumed_by: CC-2 (443.64 3b fences)
+row_counts: A AMERICOLD fence adopted Samsara 2000000762879 (0 m), renamed; B 822 Union Pacific fence + location moved 345 m; both updates delivered 18:39Z and READ BACK from Samsara 18:41Z (name "AMERICOLD — 1355 Railroad Avenue, Albertville, AL 35951"; 2000000762951 at 27.62222,-99.47099)
+proof_query: SELECT name, lat, lng, synced_at FROM integrations.samsara_addresses WHERE samsara_address_id IN ('2000000762879','2000000762951')
+
+## AUTH-436
+issued_at: 2026-10-11T18:44:58Z
+issued_by: Lead 443.64 3b ("the zip-center fences that never reached Samsara: retired on our side or re-pointed, count") with owner 443.49 #4 (no active TMS fence on a zip / city center). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..435
+owner_quotes: "We keep them and we need the real address geo fences." (2026-10-11 05:39 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — (1) retire on our side (is_active false, history kept, audited) every active auto_dispatch fence with no Samsara copy whose place has no street and whose label carries no street (measured 37, drawn 2026-09-09..28, none linked to a Creator load); the 2 with a street label are kept and listed. (2) one dispatch.relearn_load_miles (record_sources) for 13587 so its 822 Union Pacific stop follows the location AUTH-435 moved. Nothing in Samsara touched; no DELETE; no money.
+action: OWNER_AUTH_ID=AUTH-436 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-64-zip-fences-13587.ts --apply
+rehearsal: throwaway br-bitter-mouse-ak1amx3c (COMMITTED, deleted): retired 37, kept 2 ("100 Warehouse Dr, Laredo", "200 Cold Storage Rd, San Antonio"), 13587 enqueued; re-run 0 / already queued
+expires_at: 2026-10-12T18:44:58Z
+status: CONSUMED
+consumed_at: 2026-10-11T18:46:10Z
+consumed_by: CC-2 (443.64 3b zip fences + 13587)
+row_counts: retired 37 zip / city-center fences (history kept); kept + listed 2 street-label fences; 13587 relearn delivered 18:46Z (stop kept its stamped point — finished under AUTH-437); active TMS fences on a zip / city center with no Samsara copy after: 0
+proof_query: active auto_dispatch fences, no Samsara copy, no street in place or label -> 0
+
+## AUTH-437
+issued_at: 2026-10-11T18:48:31Z
+issued_by: Lead 443.64 3b (fences on the real point N of N). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..436
+owner_quotes: "We keep them and we need the real address geo fences." (2026-10-11 05:39 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the stops on location 8cbff6c3 (822 Union Pacific Boulevard, Laredo) not at that location's point take it (geocode_source location_existing, audited) and get one dispatch.relearn_load_miles each; measured: 1 stop (13587 #2 Grupo MS, 345 m off). No money, no DELETE, nothing in Samsara.
+action: OWNER_AUTH_ID=AUTH-437 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-443-64-13587-point.ts --apply
+rehearsal: throwaway br-still-math-akgk9nis (COMMITTED, deleted): 1 stop moved (5402f34c), relearn enqueued; re-run 0
+expires_at: 2026-10-12T18:48:31Z
+status: CONSUMED
+consumed_at: 2026-10-11T18:55:30Z
+consumed_by: CC-2 (443.64 3b 13587 point)
+row_counts: 1 stop (13587 #2, 5402f34c) moved to its location's point; relearn delivered 18:55Z; Creator street stops on their fence's point 297 of 297, Samsara read-back on the point 297 of 297
+proof_query: fence-on-point + Samsara read-back count over Creator street stops -> 297 / 297
+
+## AUTH-438
+issued_at: 2026-10-11T21:30:32Z
+issued_by: Lead 443.72 item 3 ("GO on the two fuel dates … through the existing engine path, fork-rehearsed"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..437
+owner_quotes: "Do not drift your job is to fix the engines and create perfect engines that follow the process correctly." (2026-10-11 16:07 CT, via Lead 443.72)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — exactly two Dreamline receipts on settlement 5789: load 13557 invoice 99462408 diesel $840.00 (fuel 40ea84c2, expense 13557) 2026-09-29 -> 2026-08-29; load 13550 invoice 99460605 DEF $42.38 (fuel 89bd8842, expense 13550-4) 2026-09-27 -> 2026-08-27. Per receipt: governed void of the expense (reversing JE on its original date) + correctFuelTransactionDate on the source row (one transaction), then createExpenseFromFuelTransaction -> postSourceTransactionInClientTx -> stampExpensePosted (the Creator's own sequence). Amounts, accounts (Dr 5000 / 5010, Cr 2510), item, load, unit, driver, vendor unchanged. $882.38 moves September -> August. TB 0. No DELETE, nothing in Samsara.
+evidence: Company_Settlement_5789.pdf (printed 2026-09-25, period 2026-08-26..2026-09-01) prints "2026-09-29 LOVES 10465LONESOME PINE 99462408 146.879 5.719 840.00" and "2026-09-27 LOVES 10465LONESOME 99460605 Fuel-DEF-Diesel Exhaust Fluid Y 42.38", while the diesel line of the same invoice prints "2026-08-27 LOVES 10465LONESOME PINE 99460605 148.502 5.759 855.22".
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-11-cc2-443-72-fuel-date-reissue.mts --apply --auth AUTH-438
+rehearsal: throwaway br-red-tree-akt27jdd (COMMITTED, deleted): 13557 -> 13557-3 and 13550-4 -> 13550-5, fuel row + document + JE on the true dates, legs unchanged, reversals on the original September dates, TB 0 before and after, verify-fuel-transactions-per-load LIVE PASS (654/654, 142/142); a re-run refuses (already voided). Rehearsals 1-2 (deleted) found: void-and-recreate is refused by fuel_tx_source_row_hash_uk, and the document engine leaves a draft unposted — hence the date-correction engine and the Creator's post+stamp step.
+partial_apply: 2026-10-11T21:35Z first --apply (#26416 runner) re-dated 13557 -> 13557-3 correctly (fuel row + document + JE 2026-08-29, Dr 5000 84000 / Cr 2510, original void with reversal 2026-09-29, TB 0 — read back through the bypass) and then STOPPED on a false 'no document': its post-check read ran outside the RLS bypass while the production string connects as ih35_app. 13550-4 untouched. Runner fixed (every read in a bypass transaction; a receipt already re-dated is recognized and skipped); rehearsal 4 on a fork of prod HEAD br-fragrant-rice-aklp1r3q (COMMITTED, deleted): 13557 skipped, 13550-4 -> 13550-5 on 2026-08-27, TB 0, fuel guard LIVE PASS, re-run = no-op.
+expires_at: 2026-10-12T21:30:32Z
+status: CONSUMED
+consumed_at: 2026-10-11T21:41:00Z
+consumed_by: CC-2 (443.72 #3 fuel dates)
+row_counts: 2 receipts re-dated on prod — 13557 (fuel 40ea84c2) -> expense 13557-3 on 2026-08-29 (Dr 5000 84000 / Cr 2510), original 13557 void with reversal 2026-09-29; 13550-4 (fuel 89bd8842) -> expense 13550-5 on 2026-08-27 (Dr 5010 4238 / Cr 2510), original void with reversal 2026-09-27. $882.38 September -> August. TB 0 before and after each apply.
+proof_query: node scripts/verify-fuel-transactions-per-load.mjs on prod -> LIVE PASS, 0 failures (654/654 rows, 142/142 loads, 152/152 Relay transactions)
+
+## AUTH-439
+issued_at: 2026-10-11T22:07:23Z
+issued_by: Lead 443.73 item 6 (a)+(b) ("A receipt is ONE expense … remove the other copy through the engine … fork first"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..438
+owner_quotes: 99794138 — "YES VOID DUPLICTATS" ... "YES I AUTHOROIZE YOU" (CC-2 chat 2026-10-04, AUTH-207: keep 13557); 1848853 — "IT BELONGS TO THE SECOND LOAD, 547" (CC-2 chat 2026-10-04, AUTH-209: keep 13547); 99530579 — "FUEL AUTH: BOTH AUTHORIZED" (CC-3 chat 2026-10-04, AUTH-398: keep 13548). 99416535 / 99477699: Lead 443.73 6(b) — the receipt's diesel is on 13604 only, its DEF line belongs with it.
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — phase 1: governed void (executeVoidCancel expense + fuel_transaction: reversing JE + stampDocumentVoided) of EXACTLY 7 duplicate receipt lines, $2,291.25: 99794138 diesel + DEF on 13571 (fuel 2d53888f / 4478f31d, expenses 13571 / 13571-4); 1848853 diesel + DEF on 13543 (fuel 393fdb0c / 3bda3614, expenses 13543 / 13543-2); 99530579 diesel on 13533 (fuel 6779ab91, expense 13533); 99416535 DEF and 99477699 DEF on 13615 (fuel 3a054214 / 2d4f677b, expenses 13615-4 / 13615-5). Each refuses unless the copy is as measured AND the kept copy is live and posted exactly once. TB 0. 99549122 (13603 / 13621) NOT touched. Phase 2 (complete delete of the voided copies with their reversal pairs) is a separate AUTH with its exact list.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-11-cc2-443-73-void-fuel-double-cost.mts --apply --auth AUTH-439
+rehearsal: throwaway br-royal-math-akze7yz4 (full path, rolled back; deleted): 7 voided, 229125 cents, TB 0 -> 0, the 5 receipts each live exactly once per product after
+amended: 2026-10-11T22:16Z, before any apply — Lead 443.74 #4 (owner 16:57 CT: "Probably the gps is source of truth or verification"): every receipt tested against the unit's GPS at the store and the settlement legs. CONFIRMED: 99794138 -> 13557 (T177 at Love's #719 Troy TX 08-31 19:34Z, on 13557's printed empty leg Irving -> EBT Yard Laredo); 99530579 -> 13548 (T163 at Love's #471 Natalia 08-26 20:49Z on 13548's run into Laredo; the store's invoice sequence puts 99530579 after its 08-26 invoices 99530096..99530416); 99416535 / 99477699 -> 13604 (T177's Laredo -> Edison run). DECIDED BY GPS: 99549122 -> 13603 (T175 at Natalia 09-20 01:29Z on 13603's printed empty leg Bryan TX -> EBT Yard Laredo; 13621 picks up 09-22) — void the 13621 copies (fuel 5ac73acf / 57da823d, expenses 13621 / 13621-4). CONTRADICTED -> REMOVED FROM SCOPE, listed for the owner: 1848853 (T152 at Natalia 08-26 16:10Z after delivering 13543 at Temple 13:25Z, on 13543's printed empty leg "Empty 295.5mi 2026-08-26 EBT Yard, Laredo"; the owner's words name 13547). Scope now: 7 lines, 229142 cents — 99794138 diesel + DEF on 13571, 99530579 on 13533, 99416535 DEF + 99477699 DEF on 13615, 99549122 diesel + DEF on 13621.
+expires_at: 2026-10-12T22:07:23Z
+status: CONSUMED
+consumed_at: 2026-10-11T22:19:00Z
+consumed_by: CC-2 (443.73 #6 / 443.74 #4)
+row_counts: 7 duplicate receipt lines voided through executeVoidCancel (expense + fuel row, reversing JE each), 229142 cents — 99794138 diesel + DEF on 13571, 99530579 on 13533, 99416535 DEF + 99477699 DEF on 13615, 99549122 diesel + DEF on 13621; TB 0 -> 0. 1848853 not touched (GPS contradicts the recorded ruling, listed for the owner).
+proof_query: verify-fuel-transactions-per-load on prod LIVE PASS (647 live rows, 6 second-document lines 'already on load N', 1848853 disclosed OPEN); verify-fuel-expense-is-unique-per-provider-transaction PASS with 2 named pairs (1848853, 99448116)
+
+## AUTH-440
+issued_at: 2026-10-11T23:12:58Z
+issued_by: Lead 443.77 item 3 ("1848853 … DECIDED BY GPS … stays on 13543; remove the copy on 13547 through the engine (fork first) … 99448116: same test, decide, do not ask"). Recorded by CC-2 in the PR that ships the script, as with AUTH-404..439
+owner_quotes: "Probably the gps is source of truth or verification" (2026-10-11 16:57 CT); "Use logic, get this done now. I need closed immediately." and "Any comment by me made before the seed for the previous seed is irrelevant, use your logic" (2026-10-11 18:07 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — governed void (executeVoidCancel expense + fuel_transaction) of EXACTLY 3 duplicate receipt lines, $656.14: 1848853 diesel $585.36 + DEF $29.43 on 13547 (fuel efb9ccba / b6095998, expenses 13547 / 13547-3; T152 fueled at Love's #471 Natalia 2026-08-26 16:10Z on 13543's printed empty leg home — 13543 keeps them); 99448116 DEF $41.35 on 13535 (fuel f542a157, expense 13535-2; one transaction number = one purchase, its diesel + DEF lines are on 13519, which keeps them). Each refuses unless as measured and the kept copy is live and posted. TB 0.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-11-cc2-443-77-void-last-double-cost.mts --apply --auth AUTH-440
+rehearsal: throwaway br-raspy-cell-akj7dzk2 (full path, rolled back; deleted): 3 voided, 65614 cents, TB 0 -> 0
+expires_at: 2026-10-12T23:12:58Z
+status: CONSUMED
+consumed_at: 2026-10-11T23:16:02Z
+consumed_by: CC-2 (443.77 #3)
+row_counts: 3 receipt lines voided through executeVoidCancel — fuel efb9ccba (voided 23:15:51Z) + b6095998 (23:15:56Z) on 13547, f542a157 (23:16:01Z) on 13535; 65614 cents; TB 0 -> 0
+proof_query: SELECT voided_at FROM fuel.fuel_transactions WHERE left(id::text,8) IN (efb9ccba,b6095998,f542a157) -> 3 voided (read on prod 2026-10-12 04:27Z)
+
+## AUTH-441
+issued_at: 2026-10-11T23:33:07Z
+issued_by: Lead 443.74 items 1-3 + 443.77 ("finish 443.74 and apply it"). Recorded by CC-2 in the PR that ships the engine and its runner, as with AUTH-404..440
+owner_quotes: "Probably the gps is source of truth or verification" (2026-10-11 16:57 CT); "Use logic, get this done now. I need closed immediately." (18:07 CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the stop GPS verification engine (apps/backend/src/telematics/stop-gps-verification.service.ts) applied over every USMCA load; it moves ONLY a stop whose truck dwell lies elsewhere AND whose dwell facility carries the document's own distinctive name (confirmed). Measured 23:30Z over 148 loads / 309 pickup-delivery stops: verified 186, GPS disagrees 40 (confirmed 3, unconfirmed 37 listed for the owner), truck elsewhere on the document's dates listed separately, no qualifying dwell 18. The 3 moves: 13660 #1 US COLD STORAGE WARSAW NC 240 Bruce Costin Rd -> United States Cold Storage 2901 Kenny Biggs Rd Lumberton NC (96.2 km); 13530 #1 Mexus Cold Storage 1601 Justo Penn St -> Mexus Cold Storage 1214 Beltway Pkwy Laredo (15.4 km); 13559 #2 WAL MART LANCASTER 150 N I-35 E -> Walmart Distribution Center 8348, 940 E Pleasant Run Rd Lancaster (7.4 km). Each: the stop takes the facility (street, point, place id, geocode_source gps_dwell_google), an audit row keeps the document address + distance, the stop resolver draws its location + ONE fence and queues it to Samsara (outbox), dispatch.relearn_load_miles re-learns legs + deadhead. Pay miles, amounts, rates untouched. Nothing deleted.
+action: DATABASE_URL=<prod> GOOGLE_PLACES_*=<server key> node --import tsx scripts/ops/2026-10-11-cc2-443-74-stop-gps-verification.mts --apply --auth AUTH-441
+rehearsal: throwaway br-young-mode-akzqje1f (COMMITTED, deleted): 3 moved; re-measure 5 of 6 stops verified on the 3 loads (the 6th listed); found and fixed: the resolver's re-resolve pulled 13530 #1 back by name to the owner's older Samsara address — a gps_dwell_* stop now keeps its own point
+expires_at: 2026-10-12T23:33:07Z
+status: CONSUMED
+consumed_by: CC-2 (443.74 / 443.77)
+row_counts: 3 stops moved — 13660 #1, 13530 #1, 13559 #2 (geocode_source gps_dwell_google, audit row keeps the document address); fences read back from Samsara
+proof_query: mdata.load_stops geocode_source LIKE gps_dwell% on prod includes 13660 #1, 13530 #1, 13559 #2 (read 2026-10-12 04:27Z)
+
+## AUTH-443
+issued_at: 2026-10-12T01:40:52Z
+issued_by: Lead 443.84 #3 ("build the multi-document accept WITH the card discount … through a new ITEM 'Fuel Card Discount' (item mapped to 5000 — detail in the item, no new account)"; lane cross authorized). Recorded by CC-2 in the PR that ships the engine and the script, as with AUTH-404..442
+owner_quotes: "Your next message to me will be confirmation everything is done … ready for me to match in banking" (2026-10-11 18:10 CT, via Lead 443.78)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — ONE catalog row: the item "Fuel Card Discount" (code FUEL-CARD-DISCOUNT), default expense account = the account of "Fuel-Truck Diesel" ("Fuel & Diesel" 5000, refused otherwise), category = that item's category; idempotent (an existing live item of that name is reused, refused if it maps elsewhere). No money, no posting. Accepting a card line stays the owner's action in Banking.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-84-fuel-card-discount-item.mts --apply --auth AUTH-443
+rehearsal: throwaway br-bitter-mountain-aknqy9f1 (COMMITTED, deleted): item created -> 5000 + category; then acceptExactMultiDocumentMatch(card_discount) on 3 Dreamline receipt groups: fuel cost on the load = what the card charged (75067 -> 70219, 78973 -> 76233, 67733 -> 64113), Dr 2510 / Cr 5000 split per receipt with its load + driver, TB 0; 9 of 12 groups refused by the 8% cap (listed)
+expires_at: 2026-10-13T01:40:52Z
+status: CONSUMED
+consumed_at: 2026-10-12T02:00:51Z
+consumed_by: CC-2 (443.85)
+row_counts: 1 catalog row — item 5ef541cb "Fuel Card Discount" -> 5000, category of Fuel-Truck Diesel; no money, no posting
+proof_query: catalogs.items id 5ef541cb created_at 2026-10-12T02:00:51Z on prod
+
+## AUTH-444
+issued_at: 2026-10-12T14:00:00Z
+issued_by: Lead RULINGS 443.107 #1 ("CC-2 — AUTH-444 (Lead, not owner): apply scripts/ops/2026-10-12-cc2-443-105-expense-exemption-reasons.mts --apply on prod for EXP-2026-00001..00005 (metadata only, rehearsed: money identical). Post prod read-back 0 and mark AUTH-444 CONSUMED."). Recorded by CC-2, as with AUTH-404..443
+owner_quotes: "Every engine (load wizard, feed, Settlement Creator, bills, bill payments, expenses, invoices, Faro) must record correctly with truck / driver / load / trailer / vendor / item / account" (owner 2026-10-12 07:50 CT, via Lead 443.105)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — load_exemption_reason on EXACTLY the 5 live expense lines with neither a load nor a reason: EXP-2026-00001 / 00002 / 00003 / 00004 / 00005 (Bank of America fees x4 + ED-HER PLASTICS, $203.14, company overhead from bank-line categorization 2026-10-07). Through stampExpenseLineLoadExemption (apps/backend/src/accounting/expense-line-exemption-stamp.service.ts): metadata only, refuses a line that already has a load or a reason, one audit row per line; the runner refuses unless exactly these 5 are found and rolls back if any amount or journal entry moves.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-105-expense-exemption-reasons.mts --apply --auth AUTH-444
+rehearsal: throwaway br-broad-brook-akb5n54v (real runner, prod mode; COMMITTED, deleted): 5 stamped, money + JE identical, USMCA lines with neither load nor reason 0, 5 audit rows; clearing a reason refused by trg_expense_line_load_or_reason
+expires_at: 2026-10-13T13:58:48Z
+status: CONSUMED
+consumed_at: 2026-10-12T14:00:15Z
+consumed_by: CC-2 (443.107 #1)
+row_counts: 5 expense lines stamped with load_exemption_reason (EXP-2026-00001..00005, 20314 cents) through stampExpenseLineLoadExemption; amounts + journal entries identical (runner money check); 5 audit rows accounting.expense_line.load_exemption_stamped
+proof_query: USMCA live expense lines with load_id NULL AND load_exemption_reason NULL -> 0 of 865 (read on prod 2026-10-12 via Neon read-only)
+
+## AUTH-445
+issued_at: 2026-10-12T16:34:45Z
+issued_by: Lead 443.112 #2 ("CC-2 (with G9): 11 driver_finance.driver_advances with load_id and NO trailer_id while the load has a trailer in load_assignment_history. Forward: advance takes unit/trailer from the load. History: stamp the 11 through the engine (dry run, audit). Prod read-back 0.") + 443.115 ("CC-2 keeps: repair 11 advance trailers"). Recorded by CC-2, as with AUTH-404..444
+owner_quotes: "Every engine ... must record correctly with truck / driver / load / trailer / vendor / item / account" (owner 2026-10-12 07:50 CT, via Lead 443.105)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — trailer_id fill on EXACTLY the 11 driver advances on a load that records a trailer: CA-2026-0001, 0002, 0004, 0005, 0006, 0007, 0008, 0009, 0010, 0011, 0012 (2026-10-11, all recovered; each load has exactly one trailer; each unit already matches). Through stampAdvanceUnitTrailerFromLoad (apps/backend/src/cash-advances/advance-unit-trailer-stamp.service.ts): fill-only from the load via accounting/load-trailer.sql.ts, a different value refused, one audit row each; the runner refuses unless exactly 11 and rolls back if amount / balance / status / reversal moves.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-112-advance-trailer-stamp.mts --apply --auth AUTH-445
+rehearsal: throwaway br-wandering-forest-ak9rj87a (COMMITTED, deleted): 11 stamped (trailer_id), money identical, 0 left; a second run refused (0 found)
+expires_at: 2026-10-13T16:34:45Z
+status: CONSUMED
+consumed_by: CC-2 (443.112 #2 / 443.115)
+row_counts: 11 driver advances trailer_id filled from their loads (CA-2026-0001, 0002, 0004-0012) through stampAdvanceUnitTrailerFromLoad; amounts / balances / status / reversals identical (runner check); 11 audit rows driver_finance.driver_advance.unit_trailer_stamped
+proof_query: USMCA driver advances on a load that records a trailer with trailer_id NULL -> 0 (read on prod via Neon read-only, bypass)
+
+
+## AUTH-446
+issued_at: 2026-10-12T18:35:00Z
+issued_by: Lead 443.124 ("Repair the 4 through the engine (relearnLoadStopLegs / learnLoadLanes on their saved stops) — no hand-typed miles; owner-set legs untouched. Prod read-back: the guard's live check = 0 findings over 148+ loads."). Recorded by CC-2, as with AUTH-404..445
+owner_quotes: "every booked load, any source, saves its miles for the next estimate" (owner 2026-10-11 00:25 CT, ROUND 443.35)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the corrected route's lane on EXACTLY 4 loads: 13511, 13536, 13573, 13660 (booked 2026-10-11; their origin / destination moved by the 443.74 / 443.86 / 443.90 GPS stop correction; corrected lane never learned). Through learnLoadLanes({ fresh: false, routeCorrected: true }) (apps/backend/src/dispatch/load-lane-learning.service.ts): catalogs.lane_mileage / point_mileage / mdata.customer_lanes for the corrected route; leg_miles untouched (runner check); refuses unless exactly the 4 loads and each lane still unlearned; rolls back if a leg moves or a lane stays unlearned.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-124-relearn-corrected-lanes.mts --apply --auth AUTH-446
+rehearsal: throwaway br-twilight-leaf-ak94h0q1 (COMMITTED, deleted): 13511 / 13536 / 13573 city lane created, 13660 city lane updated, leg_miles identical; a second run refused (already learned); verify-booked-loads-save-miles live on the fork: PASS, 148 loads, 0 findings
+expires_at: 2026-10-13T18:35:00Z
+status: CONSUMED
+consumed_by: CC-2 (443.124)
+row_counts: 4 corrected-route lanes learned through learnLoadLanes(routeCorrected) — 13511, 13536, 13573 catalogs.lane_mileage city rows created, 13660 city row updated; mdata.customer_lanes created for the 4; point_mileage already present; leg_miles identical (runner check)
+proof_query: verify-booked-loads-save-miles live on prod 2026-10-12 18:37 UTC — PASS, 148 USMCA loads booked since 2026-10-11, 0 findings
+
+## AUTH-447
+issued_at: 2026-10-12T21:30:00Z
+issued_by: Lead 443.134 #4 ("OWNER 16:19 CT 'ok yes': 13498 = 538306 · 13520 = 10222 · 13525 = 10380 (owner confirmed). 13562 = 10870 (Lead by the owner's 'use logic' rule ...). Set all 4 through the ONE Edit Load trailer path (company trailer), re-run the stamp (dry run first) ... Prod read-back: driver bills without trailer = 0."). Recorded by CC-2, as with AUTH-404..446
+owner_quotes: "ok yes" (owner 2026-10-12 16:19 CT, the trailer picks); "they are ours" (owner 15:00 CT, company trailers)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the company trailer of EXACTLY 4 loads: 13498 -> 538306, 13520 -> 10222, 13525 -> 10380, 13562 -> 10870, through dispatch/load-trailer-choice.ts resolveTrailerChoice + applyTrailerChoice (the Edit Load path: same-company active trailer, assignment history, trailer_source company), one audit row each; then accounting/bill-trailer-stamp.service.ts stampDriverBillTrailersFromLoads (Owner, only-where-NULL) on the A/P driver bills. Metadata only. The runner refuses unless each load has no trailer yet, each trailer is exactly one active USMCA trailer, and the stamp adds exactly 4 header trailers leaving 0.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-134-trailer-picks.mts --apply --auth AUTH-447
+rehearsal: throwaway br-twilight-dawn-akcer3yd (COMMITTED, deleted): 4 trailer choices recorded; stamp 4 bills changed, 4 header stamps, 7 line stamps, 0 refused, all on these 4 loads' bills (one bill.trailer_stamped_from_load audit each); A/P driver bills without a trailer 4 -> 0; a second run refused (already has a trailer choice)
+expires_at: 2026-10-13T21:30:00Z
+status: CONSUMED
+consumed_by: CC-2 (443.134 #4)
+row_counts: 4 loads trailer choice recorded (company): 13498 538306, 13520 10222, 13525 10380, 13562 10870 (4 assignment-history rows + 4 audit rows); A/P driver bill stamp: 4 bills, 4 header trailers, 7 line equipment stamps, 0 refused (4 bill.trailer_stamped_from_load audit rows)
+proof_query: USMCA live A/P driver bills (bill_category driver) with trailer_id AND non_owned_trailer_id NULL -> 0 of 146 (read on prod via Neon read-only, bypass, 2026-10-12 ~21:40 UTC)
+
+## AUTH-448
+issued_at: 2026-10-12T22:10:00Z
+issued_by: Lead 443.137 #1 (~/Downloads/10-12-2026-CC2-Next-Lane-1710.md: "GO on the 145 settled driver bills without truck / trailer. The owner never issues 'authorization numbers' (the AUTH-NNN scheme is a seat convention he did not create) — this box is the go."). Recorded by CC-2 only so the runner's verify-owner-authorization gate can trace the GO; the GO is the Lead box, not this number
+owner_quotes: none — the Lead box is the go (443.137)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the SETTLED driver_finance.driver_bills (settled_in_settlement_id set, not voided) with no unit or no trailer choice: unit_id from the load's assigned unit, and (only when both are NULL) trailer_id = the load's same-entity company trailer or non_owned_trailer_id = the load's customer trailer, through driver-finance/driver-bill-unit-trailer.ts backStampSettledDriverBillUnitAndTrailer (fill-only, one audit row per bill). Metadata only: no amount, status, settlement, GL or repost change. The runner refuses unless the md5 of (id, gross, status, settled, void) is unchanged and settled bills missing unit = 0 and missing trailer choice = 0 after.
+action: DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-12-cc2-443-137-settled-driver-bill-backstamp.mts --apply --auth AUTH-448
+rehearsal: throwaway br-sparkling-unit-akfox9bi (COMMITTED, deleted): 145 settled bills stamped (unit 145; 135 company trailer, 10 customer trailer); after: missing unit 0, missing trailer choice 0; money md5 unchanged; a second run stamped 0
+expires_at: 2026-10-13T22:10:00Z
+status: CONSUMED
+consumed_by: CC-2 (443.137 #1)
+row_counts: 145 settled USMCA driver bills stamped (unit 145; company trailer 135, customer trailer 10); 145 driver_finance.driver_bill.unit_trailer_backstamped audit rows; money md5 unchanged (runner check); COMMITTED
+proof_query: USMCA settled, non-voided driver_finance.driver_bills -> 145; missing unit 0; missing trailer choice 0; both trailers set 0; 145 audit rows (read on prod via Neon read-only, bypass, 2026-10-12 ~22:45 UTC)

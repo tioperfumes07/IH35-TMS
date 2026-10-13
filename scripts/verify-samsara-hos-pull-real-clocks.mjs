@@ -38,7 +38,24 @@ if (!/runScoped[\s\S]{0,200}set_config\('app\.operating_company_id'/.test(cron))
   fail("hos-pull cron must run each tenant in its own short tenant-scoped tx (runScoped), not one giant tx");
 if (/withLuciaBypass\(async \(client\) => \{\s*\n\s*const activeTenantIds/.test(cron))
   fail("hos-pull cron must NOT wrap the whole tenant loop + all /fleet/hos/logs fetches in one withLuciaBypass tx");
-if (!/runScoped\(operatingCompanyId, async \(c\) => \{[\s\S]{0,200}syncSamsaraHosLogs\(c, operatingCompanyId\)/.test(cron))
+// 443.99: containment is read from the runScoped callback BODY (brace-matched), not a 200-char window — #24219
+// (F-RETRY) put the advisory claim + 45-min recency check ahead of the call inside the same tx, which a fixed
+// window cannot see past. Stricter than the window: the call must sit inside the callback's own braces.
+export function hosSyncInsideRunScoped(source) {
+  const open = "runScoped(operatingCompanyId, async (c) => {";
+  for (let i = source.indexOf(open); i !== -1; i = source.indexOf(open, i + 1)) {
+    let depth = 0;
+    for (let j = i + open.length - 1; j < source.length; j++) {
+      if (source[j] === "{") depth++;
+      else if (source[j] === "}" && --depth === 0) {
+        if (/\bsyncSamsaraHosLogs\(c, operatingCompanyId\)/.test(source.slice(i + open.length, j))) return true;
+        break;
+      }
+    }
+  }
+  return false;
+}
+if (!hosSyncInsideRunScoped(cron))
   fail("hos-pull cron must call syncSamsaraHosLogs inside a runScoped tenant tx");
 // The pull must be observable on the clean path — a committed integration_sync_log row (sync_kind='samsara_hos_pull').
 if (!/integration_sync_log[\s\S]{0,260}'samsara_hos_pull'/.test(cron))
@@ -226,8 +243,13 @@ if (process.argv.includes("--selftest")) {
     ["batch dedupe", svc.replace("closedIntervalKeys.add(closedIntervalKey)", "closedIntervalKeys.delete(closedIntervalKey)")],
   ];
   const dedupeCatches = dedupePlanted.filter(([, source]) => closedIntervalDedupeProblems(source).length > 0).length;
-  const allCaught = totalCaught + dedupeCatches;
-  const total = scopePlanted.length + schemaPlanted.length + enabledCheckPlanted.length + dedupePlanted.length;
+  const runScopedPlanted = [
+    ["sync call outside the tenant tx", cron.replace("const stats = await syncSamsaraHosLogs(c, operatingCompanyId);", "const stats = { inserted: 0 };") + "\nawait syncSamsaraHosLogs(c, operatingCompanyId);\n"],
+    ["tenant tx removed", cron.replaceAll("runScoped(operatingCompanyId, async (c) => {", "withLuciaBypass(async (c) => {")],
+  ];
+  const runScopedCatches = (hosSyncInsideRunScoped(cron) ? 0 : -99) + runScopedPlanted.filter(([, source]) => !hosSyncInsideRunScoped(source)).length;
+  const allCaught = totalCaught + dedupeCatches + runScopedCatches;
+  const total = scopePlanted.length + schemaPlanted.length + enabledCheckPlanted.length + dedupePlanted.length + runScopedPlanted.length;
   if (allCaught !== total) fail(`selftest caught ${allCaught}/${total} planted scope/schema/capability/dedupe defects`);
   console.log(`OK verify-samsara-hos-pull-real-clocks --selftest: caught ${allCaught}/${total} planted scope/schema/capability/dedupe defects`);
 } else {

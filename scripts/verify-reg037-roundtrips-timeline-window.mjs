@@ -19,11 +19,27 @@ function check(legs, timeline, dispatch, routes) {
   if (!/RT_PAIRING_ACTIVE_STATUSES/.test(legs)) {
     errors.push("pairing engine set RT_PAIRING_ACTIVE_STATUSES must remain the source for board pairing");
   }
-  if (!/RT_TIMELINE_WINDOW_START = "2026-08-25"/.test(timeline)) {
-    errors.push("default timeline window must start 2026-08-25");
+  // LEAD 443.99 class B (2026-10-12).
+  //   old rule: RT_TIMELINE_WINDOW_START = "2026-08-25" and defaultTimelineRange starts there (window = Aug 25 → today).
+  //   new rule: defaultTimelineRange is RELATIVE to companyToday() and FIXED in length — from = today − RT_TIMELINE_DAYS_BACK,
+  //             to = today + RT_TIMELINE_DAYS_FORWARD, the two constants spanning the owner's default 10 days
+  //             (back + today + forward = 10); no literal date may seed the window.
+  //   why: Lead #23270 (f686b095a3, 2026-09-30) with the owner's same-session correction ("caps at 7-10 days … if i
+  //        want to see more days, i change in calendar"): the hard-coded start was a ratchet that grew one column per day
+  //        (37 on 2026-09-30). A literal start date, a window that stops tracking today, or a span other than 10 days fails.
+  const back = Number(/export const RT_TIMELINE_DAYS_BACK = (\d+);/.exec(timeline)?.[1] ?? NaN);
+  const forward = Number(/export const RT_TIMELINE_DAYS_FORWARD = (\d+);/.exec(timeline)?.[1] ?? NaN);
+  const rangeFn = /export function defaultTimelineRange\(\)[\s\S]*?\n\}/.exec(timeline)?.[0] ?? "";
+  if (!/const today = companyToday\(\);/.test(rangeFn) ||
+      !/from: shiftIsoDay\(today, -RT_TIMELINE_DAYS_BACK\)/.test(rangeFn) ||
+      !/to: shiftIsoDay\(today, RT_TIMELINE_DAYS_FORWARD\)/.test(rangeFn)) {
+    errors.push("defaultTimelineRange must be relative to companyToday(): today − RT_TIMELINE_DAYS_BACK → today + RT_TIMELINE_DAYS_FORWARD");
   }
-  if (!/from: RT_TIMELINE_WINDOW_START/.test(timeline)) {
-    errors.push("defaultTimelineRange must use RT_TIMELINE_WINDOW_START, not last-13-days");
+  if (!(back + 1 + forward === 10)) {
+    errors.push(`default timeline window must span the owner's 10 days (back ${back} + today + forward ${forward})`);
+  }
+  if (/\d{4}-\d{2}-\d{2}/.test(rangeFn)) {
+    errors.push("defaultTimelineRange must not seed the window with a literal date (the 2026-08-25 ratchet)");
   }
   if (/addDaysIso\(to, -13\)/.test(timeline)) {
     errors.push("last-13-days default must not return");
@@ -69,10 +85,16 @@ function selftest() {
     console.error("SELFTEST FAIL — clean:\n  " + good.join("\n  "));
     process.exit(1);
   }
-  const badTimeline = timeline.replace("2026-08-25", "2026-09-01");
-  if (check(legs, badTimeline, dispatch, routes).length === 0) {
-    console.error("SELFTEST FAIL — window start mutation not caught");
-    process.exit(1);
+  for (const [name, badTimeline] of [
+    ["literal start date returns", timeline.replace("from: shiftIsoDay(today, -RT_TIMELINE_DAYS_BACK)", 'from: "2026-08-25"')],
+    ["window stops tracking today", timeline.replace("const today = companyToday();", 'const today = "2026-09-30";')],
+    ["window widened past 10 days", timeline.replace(/RT_TIMELINE_DAYS_FORWARD = \d+;/, "RT_TIMELINE_DAYS_FORWARD = 35;")],
+    ["last-13-days default returns", timeline.replace("from: shiftIsoDay(today, -RT_TIMELINE_DAYS_BACK)", "from: addDaysIso(to, -13)")],
+  ]) {
+    if (badTimeline === timeline || check(legs, badTimeline, dispatch, routes).length === 0) {
+      console.error(`SELFTEST FAIL — window mutation not caught: ${name}`);
+      process.exit(1);
+    }
   }
   const badGroup = routes.replace(
     /p\.captured_at,\s*loc\.city, loc\.state, loc\.formatted_location/,

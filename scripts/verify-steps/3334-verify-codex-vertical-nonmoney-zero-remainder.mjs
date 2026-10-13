@@ -28,7 +28,8 @@ export default {
     await ctx.run("node", ["scripts/verify-stops-geocoded.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-stops-geocoded.mjs"]);
     await ctx.run("node", ["scripts/verify-yard-location-and-fence.mjs", "--selftest"]);
-    await ctx.run("node", ["scripts/verify-yard-location-and-fence.mjs"]);
+    // 443.101: the yard guard reads the live yard (0 on a fresh CI DB, PASS on prod read-only) — its live half runs in the
+    // live-DB job (ci.yml required-live-load-guard, LEAD 443.99 class A ruling); its offline --selftest stays here.
     await ctx.run("node", ["scripts/verify-geofence-events-from-positions.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-geofence-events-from-positions.mjs"]);
   },

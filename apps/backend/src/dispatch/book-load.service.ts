@@ -1,7 +1,7 @@
 /**
  * ENGINE: Book Load — creates the load with its stops, charges, assignment, driver bill, pre-settlement link, geofences and dispatch events
  * SCHEDULE: on demand — POST /api/v1/dispatch/loads (dispatch/loads.routes.ts), POST /api/v1/mdata/loads (mdata/loads.routes.ts), EDI 204 (inbound-204.handler.ts), seed/csv-seed-import.ts, feed/seed-settlement-document.service.ts, driver-finance/settlement-creator-seed-loads.ts
- * WRITES: mdata.loads, mdata.load_stops, dispatch.load_charge_lines, dispatch.load_assignment_history, dispatch.load_id_reservations, lib.trace_counters, docs.files, docs.file_links, driver_finance.driver_bills, driver_finance.settlement_lines, driver_finance.driver_settlements + presettlement_link_suggestions, geo.geofences, outbox.events, audit.audit_events
+ * WRITES: mdata.loads, mdata.load_stops, dispatch.load_charge_lines, dispatch.load_assignment_history, dispatch.load_id_reservations, lib.trace_counters, docs.files, docs.file_links, driver_finance.driver_bills, driver_finance.settlement_lines, driver_finance.driver_settlements + presettlement_link_suggestions, geo.geofences, outbox.events, audit.audit_events + (443.35, load-lane-learning.service.ts) mdata.load_stops.leg_miles, catalogs.lane_mileage, catalogs.point_mileage, mdata.customer_lanes
  * IDEMPOTENCY: UNIQUE(operating_company_id, load_number) loads_operating_company_id_load_number_key — INSERT under SAVEPOINT, 23505 becomes a 409 (no ON CONFLICT); driver bill mint under ADVISORY LOCK hashtextextended(load id); a booking with no typed number mints a new load each call
  * OVERLAP: two bookings with the same number — the second gets 409 duplicate_load_number; two with no number each get their own number and create two loads
  * REVERSE: dispatch/cancellation.service.ts:cancelLoad
@@ -9,9 +9,12 @@
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
+import { learnLoadLanes } from "./load-lane-learning.service.js";
 import { randomUUID } from "node:crypto";
+import { restampDriverBillUnitAndTrailer } from "../driver-finance/driver-bill-unit-trailer.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { applyTrailerChoice, resolveTrailerChoice, trailerChoiceShapeRefusal, type ResolvedTrailerChoice, type TrailerChoice } from "./load-trailer-choice.js";
 import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-number.js";
 import {
   appendSettlementLineFromDriverBillIfMissing,
@@ -41,11 +44,10 @@ import {
   recordDeferredPresettlementSuggestion,
 } from "./presettlement-link.service.js";
 import { geocodeStopsBackfill } from "../telematics/stops-geocode-backfill.service.js";
-import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
 import { computeAndPersistGoogleReferenceMilesForLoad } from "./google-reference-miles.service.js";
 import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "./unit-active-load-guard.js";
 import { resolveInboundLoadEntity, type InboundSource } from "./inbound-load-entity.js";
-import { deadheadPayCents, deadheadRateCents } from "../driver-finance/deadhead-rule.js";
+import { deadheadPayCents, deadheadRateCents, milesTimesRateCents } from "../driver-finance/deadhead-rule.js";
 
 // FEED PARITY (docs/manuals/04-RULING-FEED-PARITY-THE-VERIFIED-SIDE-EFFECT-LIST.md, 2026-09-22).
 // Minimal client shape (same pattern as presettlement-link.service.ts's DbClient) so
@@ -69,6 +71,15 @@ export function loadedMilesFor(shortest: unknown, practical: unknown): number | 
   const s = shortest == null ? 0 : Number(shortest);
   if (Number.isFinite(s) && s > 0) return s;
   return practical == null ? null : Number(practical);
+}
+
+/**
+ * 443.60 #2 — every miles write carries its source (verify-mileage-g1-g5-live G4). A caller that sends miles with no source
+ * typed them: "Operator entered". A source the caller named is kept; no miles = no source.
+ */
+export function mileageSourceFor(source: string | null | undefined, ...miles: unknown[]): string | null {
+  if (source) return source;
+  return miles.some((m) => m != null && m !== "" && Number.isFinite(Number(m))) ? "Operator entered" : null;
 }
 
 export type LoadCreateSource = "live_feed" | "historical_backfill";
@@ -152,6 +163,8 @@ export type BookLoadStop = {
   postal_code?: string;
   latitude?: number;
   longitude?: number;
+  /** 443.67: Google's place id from the Book Load address picker. */
+  google_place_id?: string;
 };
 
 type BookLoadCharge = {
@@ -166,6 +179,14 @@ export type BookLoadInput = {
   requestingUserRole: string;
   /** Derived at the authenticated route boundary; never trust the public override flag here. */
   creditLimitOverrideAuthorized?: boolean;
+  /**
+   * ROUND 443.10 (owner, 2026-10-10): the owner-authorized $0 Transportation load -- the Creator
+   * passes it ONLY for a faro_transportation load at $0, so USMCA holds the load and its settlement
+   * without a customer charge. Default false. true + $0 -> the zero-dollar dispatch gate records an
+   * exception (reason owner_authorized_zero_revenue) and proceeds; true + any charge -> refused
+   * (zero_revenue_flag_on_rated_load). Absent/false -> the gate is unchanged.
+   */
+  authorizedZeroRevenue?: boolean;
   operating_company_id: string;
   customer_id: string;
   status: DispatchStatus;
@@ -241,6 +262,8 @@ export type BookLoadInput = {
   miles_practical?: number | null;
   miles_shortest?: number | null;
   miles_deadhead?: number | null;
+  /** 443.55 — per miles field the source chosen on Book Load (+ both recommendations, manual reason). */
+  miles_choice?: Partial<Record<"practical" | "short" | "empty", { source: string; value?: number | null; historical?: number | null; google?: number | null; reason?: string | null }>>;
   // P0 (owner 2026-09-14, "BOOK LOAD 500s") — a controlled vocabulary of exactly the 4 literals
   // loads_mileage_source_english_check allows (NULL, History, Manual, Routing engine,
   // Operator entered). Do not add a confidence-qualified variant here again — display concerns
@@ -263,6 +286,12 @@ export type BookLoadInput = {
   // W-FIX-3b: the selected trailer (mdata.equipment id) → persisted post-insert to the real link
   // dispatch.load_assignment_history.new_trailer_id (mdata.loads has no trailer-equipment column).
   assigned_trailer_unit_id?: string;
+  /**
+   * LEAD 443.107 item 3: the REQUIRED trailer choice (company trailer / customer trailer number / no trailer).
+   * Book Load refuses a non-draft live booking without it (422 trailer_choice_required); load-trailer-choice.ts
+   * validates and records it. A historical_backfill caller (the Settlement Creator) passes it when its source names one.
+   */
+  trailer_choice?: TrailerChoice;
   // W-FIX-1: reefer Frozen/Fresh → mdata.loads.temperature_type (migration 202606231600).
   temperature_type?: "frozen" | "fresh";
   assigned_primary_driver_id?: string;
@@ -546,6 +575,11 @@ async function collectAssignedDriverIdsForDrugGate(
  */
 /** Set by resolveDriverBasePayCents so the created bill can label a §7 placeholder rate. */
 let lastResolvedRateWasTestData = false;
+/**
+ * ROUND 443.31: set by resolveDriverBasePayCents when it refuses to price a load by name — the skipped_no_pay_rate
+ * audit carries this reason instead of the generic one. null when the load priced (or was not refused for a card).
+ */
+let lastRateCardRefusal: { reason: "no_pickup_date" | "no_rate_card_effective_on_pickup_date"; pickup_date: string | null } | null = null;
 
 /**
  * MILES SPEC FOR DISPATCH, FINAL (owner direct instruction, 2026-09-02): "DRIVER PAY =
@@ -572,6 +606,20 @@ type DriverPayResolution = {
   rateLoadedPerMileCentsUsed: number | null;
 };
 
+/**
+ * Lead 443.36 #2 (owner ruling 2026-09-28, project doc: a LOCAL driver on WEEKLY SALARY): a load priced by the signed
+ * settlement at a rate of 0 is not "no rate" — it is a salaried week. It counts ONLY as a GO-21-B5 override: the rate is
+ * exactly 0 AND the reason is a real one (>= 10 chars, the same bar as any override) that starts with "Salaried". Such a
+ * load has NO per-load driver bill (the salary is paid on the settlement as its own pay line) and the driver's per-mile
+ * card is NOT used and NOT ended. A 0 without that reason behaves exactly as before (ignored; the card prices the load).
+ */
+export function isSalariedZeroRateOverride(load: Record<string, unknown>): boolean {
+  const reason = typeof load.driver_pay_rate_override_reason === "string" ? load.driver_pay_rate_override_reason.trim() : "";
+  const raw = load.driver_pay_rate_per_mile;
+  if (raw === null || raw === undefined || String(raw).trim() === "") return false;
+  return Number(raw) === 0 && reason.length >= 10 && /^(salaried|local driver — weekly salary)/i.test(reason);
+}
+
 async function resolveDriverBasePayCents(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   operatingCompanyId: string,
@@ -579,7 +627,48 @@ async function resolveDriverBasePayCents(
   load: Record<string, unknown>,
   actorUserId?: string
 ): Promise<DriverPayResolution | null> {
+  lastRateCardRefusal = null;
   if (!driverId) return null;
+
+  if (isSalariedZeroRateOverride(load)) {
+    if (actorUserId) {
+      await appendCrudAudit(
+        client as Parameters<typeof appendCrudAudit>[0],
+        actorUserId,
+        "driver_finance.driver_pay_rate.overridden",
+        {
+          load_id: load.id ?? null,
+          driver_id: driverId,
+          operating_company_id: operatingCompanyId,
+          override_rate_per_mile_dollars: 0,
+          override_cents: 0,
+          override_reason: String(load.driver_pay_rate_override_reason).trim(),
+          salaried: true,
+        },
+        "warning",
+        "GO-21-B5"
+      );
+    }
+    lastResolvedRateWasTestData = false;
+    return { totalCents: 0, loadedCents: 0, deadheadCents: 0, milesDeadheadUsed: null, rateEmptyPerMileCentsUsed: null, rateLoadedPerMileCentsUsed: 0 };
+  }
+
+  // ROUND 443.31 (Lead, 2026-10-10): the card that prices a load is the one EFFECTIVE ON ITS PICKUP DATE — never the
+  // newest card. Measured: Angel 52037e93's only card (48c) starts 2026-08-07, yet load 13498 picked up 2026-08-03 was
+  // priced with it (606.67). Pickup date = the first pickup stop's actual arrival, else appointment, else scheduled
+  // (stops are inserted before the bill is minted). effective_to is INCLUSIVE (measured: a card closed 08-30, the next
+  // starts 08-31). A superseded card is is_active=false with an effective_to — it still governs its own dates, so the
+  // filter is (is_active OR effective_to IS NOT NULL); a deactivated card with no end date never prices anything.
+  // No pickup date, or no card on that date -> refused by name (lastRateCardRefusal), never the newest card.
+  const pickupRes = await client.query<{ d: string | null }>(
+    `SELECT COALESCE(actual_arrival_at, appointment_start_at, scheduled_arrival_at)::date::text AS d
+       FROM mdata.load_stops
+      WHERE load_id = $1::uuid AND stop_type = 'pickup' AND soft_deleted_at IS NULL
+      ORDER BY sequence_number ASC
+      LIMIT 1`,
+    [String(load.id ?? "")]
+  );
+  const pickupDate = pickupRes.rows[0]?.d ?? null;
 
   const rateRes = await client.query<{
     basis_type: string;
@@ -595,14 +684,21 @@ async function resolveDriverBasePayCents(
         FROM driver_finance.driver_pay_rates
        WHERE operating_company_id = $1::uuid
          AND driver_id = $2::uuid
-         AND is_active
-         AND effective_to IS NULL
+         AND (is_active OR effective_to IS NOT NULL)
+         AND $3::date IS NOT NULL
+         AND effective_from <= $3::date
+         AND (effective_to IS NULL OR effective_to >= $3::date)
        ORDER BY effective_from DESC
        LIMIT 1
     `,
-    [operatingCompanyId, driverId]
+    [operatingCompanyId, driverId, pickupDate]
   );
   const rate = rateRes.rows[0];
+  if (!rate) {
+    lastRateCardRefusal = pickupDate
+      ? { reason: "no_rate_card_effective_on_pickup_date", pickup_date: pickupDate }
+      : { reason: "no_pickup_date", pickup_date: null };
+  }
 
   let cardCents: number | null = null;
   let cardIsTestData = false;
@@ -633,7 +729,10 @@ async function resolveDriverBasePayCents(
           ? Number(load.miles_practical ?? Number.NaN)
           : Number(load.miles_shortest ?? Number.NaN);
       const perMile = Number(rate.rate_per_mile_cents ?? 0);
-      cardCents = Number.isFinite(miles) && miles > 0 && Number.isFinite(perMile) && perMile > 0 ? Math.round(perMile * miles) : null;
+      // ROUND 443.33: THE one money rule (driver-finance/deadhead-rule.ts milesTimesRateCents — integer cents, half-up, float
+      // noise removed). A raw Math.round(perMile * miles) priced 1303.1 mi x 45c as 58639 (float 58639.4999…) while the
+      // settlement, on the shared rule, said 58640 — 1 cent off on 5778 / 5779.
+      cardCents = Number.isFinite(miles) && miles > 0 && Number.isFinite(perMile) && perMile > 0 ? milesTimesRateCents(miles, perMile) : null;
     }
   }
 
@@ -703,7 +802,7 @@ async function resolveDriverBasePayCents(
   }
 
   if (hasValidOverride) {
-    const overrideCents = Math.round(perLoadRateDollars * 100 * perLoadMiles);
+    const overrideCents = milesTimesRateCents(perLoadMiles, perLoadRateDollars * 100);
     if (actorUserId) {
       await appendCrudAudit(
         client as Parameters<typeof appendCrudAudit>[0],
@@ -787,6 +886,26 @@ const skipReason =
  * miles_shortest, 18 skip events exist, and 2 USMCA driver bills. The refusal to invent a wage is
  * CORRECT — the silence about it is the defect.
  */
+/**
+ * 443.113 AJK-01 — a reassignment that would move a driver bill that is no longer open (settled into a settlement,
+ * closed or voided) to another driver is refused by name: the money belongs to the driver it was settled for. Callers
+ * roll the reassignment back (quick-assign, Edit Load, Book Load all run inside one transaction).
+ */
+export class DriverBillReassignRefusedError extends Error {
+  readonly code = "driver_bill_reassign_refused";
+  constructor(
+    readonly billId: string,
+    readonly fromDriverId: string | null,
+    readonly toDriverId: string | null,
+    readonly billStatus: string
+  ) {
+    super(
+      `driver_bill_reassign_refused: the driver bill on this load is ${billStatus} — it cannot move from driver ${fromDriverId ?? "(none)"} to ${toDriverId ?? "(none)"}; void and reissue it through the settlement first`
+    );
+    this.name = "DriverBillReassignRefusedError";
+  }
+}
+
 export type DriverBillMintOutcome =
   | { outcome: "not_applicable" }
   | { outcome: "already_exists" }
@@ -800,7 +919,9 @@ export type DriverBillMintOutcome =
   // practical-miles fallback (2026-09-04, verify-driver-pay-practical-fallback-locked.mjs) is never
   // touched or reached for this case — that fallback stays exactly as ruled and guarded; this is a
   // stricter, additive gate placed in front of it, not a rewrite of it.
-  | { outcome: "refused_no_shortest_miles"; reason: string };
+  | { outcome: "refused_no_shortest_miles"; reason: string }
+  // Lead 443.36 #2: a salaried week (isSalariedZeroRateOverride) has NO per-load driver bill — recorded, never silent.
+  | { outcome: "not_minted_salaried"; reason: string };
 
 export async function createDriverBillArtifacts(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
@@ -826,8 +947,11 @@ export async function createDriverBillArtifacts(
     gross_amount_cents: string | number | null;
     voided_at: string | null;
     settled_in_settlement_id: string | null;
+    driver_id: string | null;
+    team_driver_id: string | null;
   }>(
-    `SELECT id::text, status, gross_amount_cents, voided_at, settled_in_settlement_id::text
+    `SELECT id::text, status, gross_amount_cents, voided_at, settled_in_settlement_id::text,
+            driver_id::text, team_driver_id::text
        FROM driver_finance.driver_bills
       WHERE operating_company_id = $1::uuid
         AND load_id = $2::uuid
@@ -839,6 +963,30 @@ export async function createDriverBillArtifacts(
   // ACCT-F277 — a voided bill is an intentional reversal. Never remint over it.
   if (existing && (String(existing.status) === "void" || existing.voided_at != null)) {
     return { outcome: "already_exists" };
+  }
+
+  // Lead 443.36 #2 — a salaried week mints NO per-load driver bill (owner ruling: "A load of a salaried driver has NO
+  // per-load driver bill"); the salary is its own settlement pay line. The decision is recorded on the load (the
+  // mint-or-audit control), and the override itself is audited by resolveDriverBasePayCents' GO-21-B5 event. An
+  // already-existing open bill is left to the path below, where the 0 pay never re-prices it from the card.
+  if (!existing && isSalariedZeroRateOverride(load)) {
+    await resolveDriverBasePayCents(client, input.operating_company_id, primaryDriverForPay, load, input.requestingUserUuid);
+    const reason = String(load.driver_pay_rate_override_reason).trim();
+    await appendCrudAudit(
+      client,
+      input.requestingUserUuid,
+      "driver_finance.driver_bill.not_minted_salaried",
+      {
+        load_id: String(load.id),
+        load_number: String(load.load_number ?? loadNumber),
+        operating_company_id: input.operating_company_id,
+        driver_id: primaryDriverForPay,
+        override_reason: reason,
+      },
+      "info",
+      "LEAD-443.36"
+    );
+    return { outcome: "not_minted_salaried", reason };
   }
 
   // P1 (owner 2026-09-14) — "a driver_finance.driver_bills row may not be minted from a load with
@@ -947,7 +1095,8 @@ export async function createDriverBillArtifacts(
           load_id: String(load.id),
           load_number: String(load.load_number ?? loadNumber),
           operating_company_id: input.operating_company_id,
-          reason: skipReason,
+          reason: lastRateCardRefusal?.reason ?? skipReason,
+          rate_card_refusal: lastRateCardRefusal,
           driver_id: primaryDriverForPay,
           miles_shortest: load.miles_shortest ?? null,
           extra_stop_bonus_cents: extraStopBonusCents,
@@ -1012,14 +1161,54 @@ export async function createDriverBillArtifacts(
     // only on booking/assignment/edit/delivery events that already call this function) — only
     // whether an already-priced-but-still-open bill is eligible to be recalculated when it does.
     const isRecalculable = String(existing.status) === "open" && existing.settled_in_settlement_id == null;
+    // 443.113 AJK-01 — WHO the bill belongs to is compared as well as how much. Before, a reassignment from driver A to
+    // driver B at the same pay hit `totalBillCents === existingGross` (or an unpriced / $0 bill) and returned
+    // already_exists before driver_id was ever read, leaving A's bill on B's load.
+    const toDriverId = input.assigned_primary_driver_id ?? null;
+    const toTeamDriverId = input.assigned_secondary_driver_id ?? null;
+    const identityChanged =
+      (existing.driver_id ?? null) !== toDriverId || (existing.team_driver_id ?? null) !== toTeamDriverId;
     if (!isRecalculable) {
+      if (identityChanged) {
+        throw new DriverBillReassignRefusedError(
+          existing.id,
+          existing.driver_id ?? null,
+          toDriverId,
+          existing.settled_in_settlement_id != null ? "settled" : String(existing.status)
+        );
+      }
       return { outcome: "already_exists" };
     }
     if (unpriced || totalBillCents <= 0) {
+      if (!identityChanged) return { outcome: "already_exists" };
+      // The bill moves to the new driver; its money is not re-priced from an unpriced / $0 resolution.
+      await client.query(
+        `UPDATE driver_finance.driver_bills SET driver_id = $2::uuid, team_driver_id = $3::uuid
+          WHERE id = $1::uuid AND status = 'open' AND settled_in_settlement_id IS NULL`,
+        [existing.id, toDriverId, toTeamDriverId]
+      );
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "driver_finance.driver_bill.reassigned",
+        { operating_company_id: input.operating_company_id, driver_bill_id: existing.id, load_id: String(load.id), from_driver_id: existing.driver_id, to_driver_id: toDriverId, repriced: false },
+        "info",
+        "443.113-AJK-01"
+      );
       return { outcome: "already_exists" };
     }
-    if (totalBillCents === existingGross) {
+    if (totalBillCents === existingGross && !identityChanged) {
       return { outcome: "already_exists" };
+    }
+    if (identityChanged) {
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "driver_finance.driver_bill.reassigned",
+        { operating_company_id: input.operating_company_id, driver_bill_id: existing.id, load_id: String(load.id), from_driver_id: existing.driver_id, to_driver_id: toDriverId, repriced: totalBillCents !== existingGross },
+        "info",
+        "443.113-AJK-01"
+      );
     }
     await client.query(
       `
@@ -1164,6 +1353,8 @@ export async function createDriverBillArtifacts(
           row.deadheadCents,
         ]
       );
+      // 443.110 G9 — the bill carries the load's truck and trailer (one rule: driver-finance/driver-bill-unit-trailer.ts).
+      await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.operating_company_id, loadId: String(load.id) });
       const billId = billRes.rows[0]?.id ? String(billRes.rows[0].id) : "";
       if (billId && !firstBillId) firstBillId = billId;
     }
@@ -1248,6 +1439,8 @@ export async function createDriverBillArtifacts(
       deadheadPayCentsForBill,
     ]
   );
+  // 443.110 G9 — the bill carries the load's truck and trailer (one rule: driver-finance/driver-bill-unit-trailer.ts).
+  await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.operating_company_id, loadId: String(load.id) });
   const billId = billRes.rows[0]?.id;
   if (!billId) return mintOutcome(billNumber);
 
@@ -1300,11 +1493,14 @@ export async function ensureDriverBillArtifactsForLoad(
   // held — the same class of "column exists on the row but this caller's SELECT drops it" bug as
   // SETL-45 (driver_pay_rate_per_mile) above. createDriverBillArtifacts() itself never had this
   // gap; only the loadRes projection here did.
+  // CC-3 2026-10-11 (5780 preview, Lead 443.42): the same class again — this SELECT carried driver_pay_rate_per_mile but not
+  // driver_pay_rate_override_reason, so isSalariedZeroRateOverride() read a 0 rate with no reason as "no override" and the
+  // 48c card minted a $169.92 bill (354 mi) on a salaried week's load. The reason travels with the rate.
   const loadRes = await client.query<Record<string, unknown>>(
     `SELECT id, operating_company_id, load_number, customer_id, status,
             assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
             requires_tarps, miles_shortest, miles_practical, driver_pay_rate_per_mile,
-            miles_deadhead
+            driver_pay_rate_override_reason, miles_deadhead
        FROM mdata.loads
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
@@ -1432,7 +1628,12 @@ export async function assertClosedLoadHasPricedDriverBill(
   };
 }
 
-export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
+/**
+ * ROUND 443.14: Book Load's inline input checks, as ONE pure function (no database access), so the
+ * HTTP path (bookLoad) and the caller's-transaction path (bookLoadOnClient) refuse exactly the same
+ * inputs with exactly the same errors. null = every check passed.
+ */
+function bookLoadInputPrecheck(input: BookLoadInput, source: LoadCreateSource = "live_feed"): BookLoadResult | null {
   if (input.assigned_primary_driver_id && input.team_id) {
     return { kind: "error", status: 400, payload: { error: "solo_or_team_assignment_required_not_both" } };
   }
@@ -1494,9 +1695,82 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     if (input.assigned_primary_driver_id && !input.trip_type) {
       return { kind: "error", status: 400, payload: { error: "trip_type_required_when_driver_assigned" } };
     }
+    // LEAD 443.107 item 3 (owner, 2026-10-12): a live booking records WHICH trailer moves the load — a company
+    // trailer, a customer / shipper trailer number, or an explicit "no trailer (bobtail / power only)". Measured:
+    // 138 USMCA loads carried no physical trailer, so driver bills and expenses had nothing to inherit. The
+    // server refuses the booking without the choice, whatever client sent it. Drafts stay exempt; a
+    // historical_backfill caller is validated when it passes a choice (its source may not name a trailer).
+    if (source === "live_feed" || input.trailer_choice) {
+      const refusal = trailerChoiceShapeRefusal(input.trailer_choice);
+      if (refusal) return { kind: "error", status: 422, payload: refusal };
+    }
   }
+  return null;
+}
 
-  const result = await bookLoadInTransaction(input);
+/** What bookLoadOnClient returns: the booking result plus the after-book extras, NOT yet run. */
+export type BookLoadOnClientResult = { result: BookLoadResult; afterCommit: () => void };
+
+/**
+ * ROUND 443.14 (Lead, 2026-10-10): Book Load on the CALLER's client, inside the CALLER's
+ * transaction -- the same inline checks, setScopedCompanyContext and createLoadWithFullSideEffects
+ * that bookLoad() runs, but no transaction of its own. Measured: bookLoad() always booked in its own
+ * committed transaction, so the Settlement Creator could only book loads separately from its post; a
+ * refused post stranded the loads and the retry died on load_already_exists. A caller that books
+ * here and then rolls back leaves no load behind.
+ *
+ * The three after-book extras (geofences, stop-geocode backfill, Google reference miles) run in their
+ * OWN transactions and read the committed load, so they are NOT run here: they are returned as
+ * afterCommit, which the caller invokes only AFTER its own COMMIT succeeds (never on rollback --
+ * a rolled-back load has nothing to geofence). afterCommit is a no-op for a refused booking.
+ */
+export async function bookLoadOnClient(
+  client: DbClient,
+  input: BookLoadInput,
+  opts?: { source?: LoadCreateSource }
+): Promise<BookLoadOnClientResult> {
+  const refused = bookLoadInputPrecheck(input, opts?.source === "historical_backfill" ? "historical_backfill" : "live_feed");
+  if (refused) return { result: refused, afterCommit: () => {} };
+  await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);
+  // Book Load is the "running now" case -- every gate below blocks. A caller recording a load that
+  // already ran (the Settlement Creator: a signed AlwaysTrack settlement) declares historical_backfill,
+  // where each gate is still evaluated and its outcome audited as an exception. Anything else is
+  // live_feed (fail-closed). See createLoadWithFullSideEffects's own header.
+  const source: LoadCreateSource = opts?.source === "historical_backfill" ? "historical_backfill" : "live_feed";
+  const result = await createLoadWithFullSideEffects(client, input, { source });
+  // LEAD 443.121 #2 — a fuel receipt posted before this load existed (deadhead / yard reason) whose fill time this load
+  // covers is attached to it now: same JE, same document (fuel/fuel-receipt-repoint.service.ts). Never fails the booking.
+  if (result.kind === "ok" && result.row?.id) {
+    const { repointFuelReceiptsToLoad } = await import("../fuel/fuel-receipt-repoint.service.js");
+    await repointFuelReceiptsToLoad(client as never, {
+      operatingCompanyId: input.operating_company_id,
+      loadId: String(result.row.id),
+      actorUserId: input.requestingUserUuid,
+    });
+  }
+  return { result, afterCommit: () => queueAfterBookExtras(input, result, source) };
+}
+
+/**
+ * Book Load in its own transaction (the HTTP route and every other single-load caller). A thin
+ * wrapper since ROUND 443.14: the input checks still run before any database access, then
+ * bookLoadOnClient inside one withCurrentUser transaction, then the after-book extras once that
+ * transaction has committed -- the same order and the same results as before.
+ */
+export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
+  const refused = bookLoadInputPrecheck(input);
+  if (refused) return refused;
+  let afterCommit: () => void = () => {};
+  const result = await withCurrentUser(input.requestingUserUuid, async (client) => {
+    const booked = await bookLoadOnClient(client, input);
+    afterCommit = booked.afterCommit;
+    return booked.result;
+  });
+  afterCommit();
+  return result;
+}
+
+function queueAfterBookExtras(input: BookLoadInput, result: BookLoadResult, source: LoadCreateSource = "live_feed"): void {
 
   // Inv #40 (owner order 2026-09-05, SAMSARA-CAPABILITIES-AND-INTEGRATION-PLAN-2026-09-05.md §4):
   // this hook used to fire ONLY from the HTTP route (dispatch/loads.routes.ts), so any OTHER
@@ -1517,12 +1791,10 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
   if (result.kind === "ok") {
     const createdLoadId = String(result.row.id ?? "");
     if (createdLoadId) {
-      void autoCreateGeofencesForLoad(input.requestingUserUuid, {
-        operating_company_id: input.operating_company_id,
-        load_id: createdLoadId,
-      }).catch((err) => {
-        console.error("auto_geofence_post_book_failed", { err, load_id: createdLoadId });
-      });
+      // 443.70 S1: ONE fence per stop. geocodeStopsBackfill below resolves each stop to its location, draws the location's
+      // fence on the real point and queues THAT fence to Samsara. autoCreateGeofencesForLoad used to add a second,
+      // customer-keyed fence for the same stop and push it instead (its own header: "OVERLAP"), so the location fence the
+      // stop actually uses never reached Samsara. It is no longer called from booking.
       void geocodeStopsBackfill(input.requestingUserUuid, input.operating_company_id, createdLoadId).catch((err) => {
         console.error("stops_geocode_backfill_post_book_failed", { err, load_id: createdLoadId });
       });
@@ -1539,17 +1811,6 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       });
     }
   }
-
-  return result;
-}
-
-async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResult> {
-  return withCurrentUser(input.requestingUserUuid, async (client) => {
-    await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);
-    // Book Load is always the "running now" case -- every gate below blocks, unchanged from
-    // before this function existed. See createLoadWithFullSideEffects's own header.
-    return createLoadWithFullSideEffects(client, input, { source: "live_feed" });
-  });
 }
 
 /**
@@ -1595,6 +1856,20 @@ export async function createLoadWithFullSideEffects(
   opts: { source: LoadCreateSource }
 ): Promise<BookLoadResult> {
   const source = opts.source;
+  // ROUND 443.10: the zero-revenue flag is only ever honest on a $0 load. On a rated load it is a
+  // contradiction -- refuse before anything is written, never silently ignore it.
+  if (input.authorizedZeroRevenue === true && input.charges.reduce((sum, c) => sum + c.amount_cents, 0) !== 0) {
+    return { kind: "error", status: 422, payload: { error: "zero_revenue_flag_on_rated_load" } };
+  }
+  // LEAD 443.107 item 3: validate the trailer choice against the company BEFORE anything is written — a foreign or
+  // deactivated trailer is refused (422), never silently dropped the way assigned_trailer_unit_id used to be.
+  let resolvedTrailerChoice: ResolvedTrailerChoice | null = null;
+  if (input.trailer_choice && input.save_mode !== "draft") {
+    const resolved = await resolveTrailerChoice(client, input.operating_company_id, input.trailer_choice);
+    if (!resolved.ok) return { kind: "error", status: 422, payload: resolved.refusal };
+    resolvedTrailerChoice = resolved.choice;
+  }
+
   // B6 — resolve the uploaded rate confirmation inside the SAME transaction that creates the load.
     // Never trust a browser-supplied R2 key as document identity, and never return 201 unless the
     // completed, entity-scoped docs.files row can also be linked to the created load.
@@ -2609,7 +2884,7 @@ export async function createLoadWithFullSideEffects(
     // reefer / trip_type below, so the 39-column lockstep INSERT is untouched). Only attach a trailer this
     // operating company owns or currently leases — never a foreign company's trailer.
     let trailerIdForInsert: string | null = null;
-    if (input.assigned_trailer_unit_id) {
+    if (input.assigned_trailer_unit_id && !resolvedTrailerChoice) {
       const trailerRows = await optionalQuery(
         client,
         `
@@ -2637,6 +2912,17 @@ export async function createLoadWithFullSideEffects(
     await client.query(`SAVEPOINT book_load_insert`);
     let loadRes: { rows: Record<string, unknown>[] };
     try {
+      // P1 2026-09-14 (LOAD-NUMBER-COUNTER-POISONED) — a manually-typed number (requestedLoadNumber === loadNumber,
+      // i.e. not an auto-allocated one) seeds the company's LOAD counter if it has none yet — see
+      // seedLoadNumberCounterFromManualEntry's own header for why. Once the counter exists it only ADVANCES it to a
+      // higher typed number (443.101), never rewinds.
+      // 443.100 LOCK ORDER: the seed runs BEFORE the INSERT, inside this savepoint. The INSERT's trg_assign_trace_no
+      // upserts the company's 'LD' counter row and the auto-allocated path takes the 'LOAD' row before its INSERT, so
+      // seeding 'LOAD' after the INSERT inverted the order ('LD' then 'LOAD' vs 'LOAD' then 'LD') and two concurrent
+      // bookings in one company deadlocked. A rolled-back INSERT still never seeds: ROLLBACK TO SAVEPOINT undoes it.
+      if (requestedLoadNumber && requestedLoadNumber === loadNumber) {
+        await seedLoadNumberCounterFromManualEntry(client, input.operating_company_id, loadNumber);
+      }
       loadRes = await client.query(
       `
         INSERT INTO mdata.loads (
@@ -2711,7 +2997,7 @@ export async function createLoadWithFullSideEffects(
         // (the schema allows "" through max(120), the column should not store it as a real value).
         input.commodity?.trim() || null,
         input.weight_lbs ?? null,
-        input.mileage_source ?? null,
+        mileageSourceFor(input.mileage_source, input.miles_practical, input.miles_shortest, input.miles_deadhead),
         input.stop_count ?? (Array.isArray(input.stops) ? String(input.stops.length) : null),
         // REEFER-LUMPER-CONFIRMATION follow-up (live-caught 2026-09-09 booking a real reefer load
         // end to end): trailer_type was declared on this input interface and driven the frontend's
@@ -2728,14 +3014,6 @@ export async function createLoadWithFullSideEffects(
       ]
       );
       await client.query(`RELEASE SAVEPOINT book_load_insert`);
-      // P1 2026-09-14 (LOAD-NUMBER-COUNTER-POISONED) — the load just saved for real, inside this
-      // same transaction. If this was a manually-typed number (requestedLoadNumber === loadNumber,
-      // i.e. not an auto-allocated one) and the company has no counter yet, seed it with THIS exact
-      // number now — see seedLoadNumberCounterFromManualEntry's own header for why. A no-op once
-      // the counter already exists (every booking after the company's first).
-      if (requestedLoadNumber && requestedLoadNumber === loadNumber) {
-        await seedLoadNumberCounterFromManualEntry(client, input.operating_company_id, loadNumber);
-      }
     } catch (err) {
       await client.query(`ROLLBACK TO SAVEPOINT book_load_insert`).catch(() => undefined);
       if ((err as { code?: string }).code !== "23505") throw err;
@@ -2770,6 +3048,15 @@ export async function createLoadWithFullSideEffects(
       };
     }
     const load = loadRes.rows[0] as Record<string, unknown>;
+
+    // 443.55: the per-field miles source the dispatcher chose (Historical | Google | Manual + reason), who and when.
+    if (input.miles_choice && Object.keys(input.miles_choice).length > 0) {
+      const at = new Date().toISOString();
+      const choice = Object.fromEntries(
+        Object.entries(input.miles_choice).map(([f, c]) => [f, { ...c, reason: c?.reason?.trim() || null, chosen_by: (load.booked_by_user_id as string | null | undefined) ?? null, chosen_at: at }])
+      );
+      await client.query(`UPDATE mdata.loads SET miles_choice = $2::jsonb WHERE id = $1::uuid`, [load.id, JSON.stringify(choice)]);
+    }
 
     if (rateConfirmationFile) {
       await client.query(
@@ -2816,7 +3103,28 @@ export async function createLoadWithFullSideEffects(
     //   undeclared source   -> fail-closed live_feed (LoadCreateSource's own default) -> BLOCK.
     if (load.status === "dispatched") {
       const totalChargeCents = input.charges.reduce((sum, c) => sum + c.amount_cents, 0);
-      if (totalChargeCents === 0) {
+      // ROUND 443.10: the owner-authorized $0 Transportation load files the SAME exception row the
+      // historical_backfill case files below (reason owner_authorized_zero_revenue) and proceeds.
+      // Flag absent/false falls through to the gate below, unchanged.
+      if (totalChargeCents === 0 && input.authorizedZeroRevenue === true) {
+        await appendCrudAudit(
+          client,
+          input.requestingUserUuid,
+          "dispatch.historical_backfill_gate_exception",
+          {
+            operating_company_id: input.operating_company_id,
+            gate: "zero_dollar_charge_lines_at_dispatch",
+            reason: "owner_authorized_zero_revenue",
+            load_id: load.id,
+            load_number: load.load_number,
+            authorized_zero_revenue: true,
+            would_have_blocked_with: `E_LOAD_DISPATCHED_NO_CHARGE_LINES:Load ${String(load.load_number ?? load.id)} is dispatching with $0.00 in charge lines -- the customer would never be billed.`,
+          },
+          "warning",
+          "FEED-PARITY-ZERO-CHARGE-GATE"
+        );
+      }
+      if (totalChargeCents === 0 && input.authorizedZeroRevenue !== true) {
         const zeroChargeMessage = `E_LOAD_DISPATCHED_NO_CHARGE_LINES:Load ${String(load.load_number ?? load.id)} is dispatching with $0.00 in charge lines -- the customer would never be billed.`;
         if (source !== "historical_backfill") {
           throw new Error(zeroChargeMessage);
@@ -2879,7 +3187,15 @@ export async function createLoadWithFullSideEffects(
     // 'full_form' (the Book Load full-form wizard) is one of the allowed CHECK values
     // (full_form|quicksave|drag_drop|auto_reassign|manual_reassign). Only writes when an entity-scoped
     // trailer was resolved above.
-    if (trailerIdForInsert) {
+    if (resolvedTrailerChoice) {
+      await applyTrailerChoice(client, {
+        operatingCompanyId: input.operating_company_id,
+        loadId: String(load.id),
+        actorUserId: input.requestingUserUuid,
+        choice: resolvedTrailerChoice,
+        assignmentMethod: "full_form",
+      });
+    } else if (trailerIdForInsert) {
       await client.query(
         `
           INSERT INTO dispatch.load_assignment_history (
@@ -2892,6 +3208,8 @@ export async function createLoadWithFullSideEffects(
         [input.operating_company_id, String(load.id), trailerIdForInsert, input.requestingUserUuid]
       );
     }
+    // 443.110 G9 — the trailer is recorded after the bill was minted: complete the bill's truck / trailer stamp now.
+    await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.operating_company_id, loadId: String(load.id) });
 
     // HOP-ASSIGN-ZERO-RATECARD-DRIVER-BILLS — an initial driver/unit assignment made directly in
     // the lockstep INSERT above (mdata.loads.assigned_primary_driver_id / assigned_unit_id) never
@@ -3051,15 +3369,27 @@ export async function createLoadWithFullSideEffects(
       const isBackfill = source === "historical_backfill";
       const actualArrivalAt = isBackfill ? stop.actual_arrival_at ?? null : null;
       const actualDepartureAt = isBackfill ? stop.actual_departure_at ?? null : null;
+      // G11: derive geocode precision at insert so bindLoadToGeofences can fence the stop immediately.
+      // google_place_id → Google Places rooftop; location_id → existing catalog rooftop;
+      // raw lat/lng without either → picker coords (NULL precision, no fence until cron backfill).
+      const geocodeSource = stop.google_place_id?.trim()
+        ? "google"
+        : stop.location_id
+          ? "location_existing"
+          : stop.latitude != null
+            ? "picker"
+            : null;
+      const geocodePrecision = stop.google_place_id?.trim() || stop.location_id ? "rooftop" : null;
       await client.query(
         `
           INSERT INTO mdata.load_stops (
             load_id, sequence_number, stop_type, location_id, facility_name, address_line1, city, state, country, scheduled_arrival_at, status,
             time_window_type, pickup_time_type_id, appointment_start_at, appointment_end_at, lumper_required, lumper_provider_id, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
             site_contact_name, site_contact_phone, gate_dock_text, postal_code, latitude, longitude, leg_miles,
-            actual_arrival_at, actual_departure_at, actual_arrival_source, actual_departure_source
+            actual_arrival_at, actual_departure_at, actual_arrival_source, actual_departure_source, google_place_id,
+            geocode_precision, geocode_source
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35)
         `,
         [
           load.id,
@@ -3094,7 +3424,34 @@ export async function createLoadWithFullSideEffects(
           actualDepartureAt,
           actualArrivalAt ? "manual" : null,
           actualDepartureAt ? "manual" : null,
+          stop.google_place_id?.trim() || null,
+          geocodePrecision,
+          geocodeSource,
         ]
+      );
+    }
+
+    // ROUND 443.35: every booked load, any source, saves its miles for the next estimate -- per-stop leg_miles,
+    // catalogs.lane_mileage, catalogs.point_mileage, mdata.customer_lanes (load-lane-learning.service.ts). Inside a
+    // savepoint: a learning failure is audited and left for verify-booked-loads-save-miles to catch, never a refused booking.
+    await client.query("SAVEPOINT load_lane_learning");
+    try {
+      await learnLoadLanes(client, {
+        operatingCompanyId: input.operating_company_id,
+        loadId: String(load.id),
+        fresh: true,
+        actorUserId: input.requestingUserUuid,
+      });
+      await client.query("RELEASE SAVEPOINT load_lane_learning");
+    } catch (laneError) {
+      await client.query("ROLLBACK TO SAVEPOINT load_lane_learning");
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "dispatch.load.lane_learning_failed",
+        { load_uuid: load.id, operating_company_id: input.operating_company_id, error: String((laneError as Error)?.message ?? laneError) },
+        "warning",
+        "443.35"
       );
     }
 
@@ -3296,7 +3653,18 @@ export async function createLoadWithFullSideEffects(
       // This is the head of the driver-notification chain: the handler calls
       // distributeLoadInstructions(), which enqueues the WhatsApp message to the driver. Both links
       // pointed at the orphaned outbox table, so no driver has ever received a dispatch message.
-      await enqueueOutboxEvent(
+      // 443.41: a load that already ran (historical_backfill — the Settlement Creator recording a signed
+      // AlwaysTrack settlement) is not dispatched now: no driver packet, no email, no driver-app notice. Audited.
+      if (source === "historical_backfill") {
+        await appendCrudAudit(
+          client,
+          input.requestingUserUuid,
+          "dispatch.historical_backfill_distribution_skipped",
+          { operating_company_id: load.operating_company_id, load_id: load.id, load_number: load.load_number },
+          "info",
+          "443.41"
+        );
+      } else await enqueueOutboxEvent(
         client,
         "dispatch.load.dispatched",
         // `load` is a loosely-typed row here, so coerce rather than assert — the aggregate id is
@@ -3335,7 +3703,7 @@ export async function createLoadWithFullSideEffects(
     const save_proof = await buildLoadSaveProof(client, {
       operatingCompanyId: input.operating_company_id,
       load,
-      trailerId: input.assigned_trailer_unit_id ?? null,
+      trailerId: (resolvedTrailerChoice?.kind === "company" ? resolvedTrailerChoice.equipment_id : null) ?? input.assigned_trailer_unit_id ?? null,
       driverBillMint,
     });
 

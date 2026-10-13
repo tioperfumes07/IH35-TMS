@@ -69,14 +69,13 @@ if (service) {
   if (/journal_entr|postJournal|EXPENSE_GL/.test(service)) {
     failures.push("wallet feed must NOT post GL (visibility only)");
   }
-  // Planted regression: coalesce(enum, '') is typed as the enum → 22P02 on '' → zero bank feed rows.
-  if (/coalesce\(\s*l\.status\s*,\s*['"]['"]\s*\)/.test(service)) {
-    failures.push(
-      "resolveLoadForUnitAt must cast status::text BEFORE coalesce(..., '') — bare coalesce(l.status, '') 22P02's",
-    );
+  // 443.110 G6: wallet feed asks the ONE fuel-to-load rule (resolveFuelLoadAtTime) — never a local
+  // loads SQL guess. The old coalesce(l.status::text, '') local resolver is retired.
+  if (!/resolveFuelLoadAtTime\(/.test(service)) {
+    failures.push("wallet feed must resolve its load through resolveFuelLoadAtTime (443.110 G6 / G7 one rule)");
   }
-  if (!/coalesce\(\s*l\.status::text\s*,\s*['"]['"]\s*\)/.test(service)) {
-    failures.push("resolveLoadForUnitAt must use coalesce(l.status::text, '') for cancelled filter");
+  if (/async function resolveLoadForUnitAt\b/.test(service)) {
+    failures.push("REGRESSION: wallet feed brought back resolveLoadForUnitAt — must call resolveFuelLoadAtTime only");
   }
   if (!/SAVEPOINT relay_wallet_feed_row/.test(service)) {
     failures.push("backfill must use per-row SAVEPOINT so one linkage failure cannot abort the company");

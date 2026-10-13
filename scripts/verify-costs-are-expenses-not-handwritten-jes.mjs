@@ -59,6 +59,13 @@
 // account) still applies to these postings; the exemption is scoped exactly as narrow as ordered.
 // The 86 factoring_default_interest JEs are NOT owner-approved for posting (R-101.2) — this
 // exemption only stops the GUARD from flagging their existing shape; it authorizes no new writer.
+// Lead 443.29 b + owner 7:19 PM CT 2026-10-10 ("that is the correct account"): a Relay wallet DEPOSIT is a journal entry
+// by design (Dr 1295 Relay Fuel Wallet + Dr 5005 Fuel Card Fees for Relay's 3.25% / Cr the funding source). Its source
+// document is the integrations.relay_deposits row (CC-2 AUTH-405). LEAD RULING 443.40: exempt ONLY when the line resolves
+// to that row — source_transaction_id = a live integrations.relay_deposits.id of the same company (measure sets
+// relay_deposit_resolved). A relay_deposit-labelled line with no such row is a handwritten cost JE and fails.
+export const RELAY_DEPOSIT_SOURCE_TYPE = "relay_deposit";
+
 const DOCUMENT_ENGINE_EXEMPT_SOURCE_TYPES = new Set([
   "factoring_advance",
   "driver_settlement",
@@ -133,7 +140,9 @@ export function classifyCostJe(row) {
   // of its cost-debiting lines carries an exempt source — a JE mixing an exempt line with a
   // genuinely handwritten one still fails, on the handwritten line's own account.
   const nonExemptCostDebits = debits5xxx6xxx.filter(
-    (p) => !DOCUMENT_ENGINE_EXEMPT_SOURCE_TYPES.has(p.source_transaction_type),
+    (p) =>
+      !DOCUMENT_ENGINE_EXEMPT_SOURCE_TYPES.has(p.source_transaction_type) &&
+      !(p.source_transaction_type === RELAY_DEPOSIT_SOURCE_TYPE && p.relay_deposit_resolved === true),
   );
   if (nonExemptCostDebits.length > 0 && !row.has_expense_row) return "handwritten_cost_je";
 
@@ -190,7 +199,11 @@ async function measure(client) {
   // which timed out under concurrent seat gates and blocked every push. Same rows, same classification, 2 queries.
   const postAll = await client.query(
     `SELECT jep.journal_entry_uuid::text AS je_id, jep.debit_or_credit, jep.amount_cents::text,
-            jep.source_transaction_type, a.account_number, a.account_name, a.account_type
+            jep.source_transaction_type, a.account_number, a.account_name, a.account_type,
+            (jep.source_transaction_type = 'relay_deposit' AND EXISTS (
+              SELECT 1 FROM integrations.relay_deposits rd
+               WHERE rd.id::text = jep.source_transaction_id::text AND rd.operating_company_id = je.operating_company_id
+                 AND rd.voided_at IS NULL)) AS relay_deposit_resolved
        FROM accounting.journal_entry_postings jep
        JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
        JOIN catalogs.accounts a ON a.id = jep.account_id
@@ -438,6 +451,31 @@ function runClassifierSelftest() {
     // R-153.7 SCOPE — RED: a fuel_event cost debit with no expense row is STILL caught. The
     // exemption is by source_transaction_type on the posting alone; fuel_event is not in the
     // exempt set, so this must keep failing exactly as before the scope change.
+    {
+      name: "relay_deposit resolving to its integrations.relay_deposits row: Dr 1295 + Dr 5005 fee / Cr funding — exempt (Lead 443.40)",
+      row: {
+        je_id: "test-relay-deposit", memo: "Relay wallet deposit txn_x",
+        postings: [
+          { account_number: "1295", account_type: "Asset", debit_or_credit: "debit", amount_cents: "100000", source_transaction_type: "relay_deposit", relay_deposit_resolved: true },
+          { account_number: "5005", account_type: "Expense", debit_or_credit: "debit", amount_cents: "3250", source_transaction_type: "relay_deposit", relay_deposit_resolved: true },
+          { account_number: "2400", account_type: "Liability", debit_or_credit: "credit", amount_cents: "103250", source_transaction_type: "relay_deposit", relay_deposit_resolved: true },
+        ],
+        has_expense_row: false,
+      },
+      expect: null,
+    },
+    {
+      name: "relay_deposit label with NO integrations.relay_deposits row — NOT exempt, fails (Lead 443.40)",
+      row: {
+        je_id: "test-relay-deposit-unresolved", memo: "Relay wallet deposit (no deposit row)",
+        postings: [
+          { account_number: "5005", account_type: "Expense", debit_or_credit: "debit", amount_cents: "3250", source_transaction_type: "relay_deposit", relay_deposit_resolved: false },
+          { account_number: "2400", account_type: "Liability", debit_or_credit: "credit", amount_cents: "3250", source_transaction_type: "relay_deposit", relay_deposit_resolved: false },
+        ],
+        has_expense_row: false,
+      },
+      expect: "handwritten_cost_je",
+    },
     {
       name: "fuel_event cost debit, no expense row — NOT exempt, still fails",
       row: {

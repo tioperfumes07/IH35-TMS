@@ -29,6 +29,9 @@ describeIntegration("seedSampleData -> the shared create path (E6)", () => {
     await db.query("SET ROLE ih35_app");
     await db.query(`SELECT set_config('app.bypass_rls', 'lucia', false)`);
     await db.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [companyId]);
+    // The session acts as the Owner the way the app's withCurrentUser does: tables whose RLS reads
+    // org.user_accessible_company_ids() (e.g. dispatch.load_charge_lines) scope by the acting user, not the bypass GUC.
+    await db.query(`SELECT set_config('app.current_user_id', $1::text, false)`, [TEST_OWNER_USER_ID]);
     await db.query("BEGIN");
     await prepareCompanyForLoadInserts(db, companyId);
     await db.query("COMMIT");

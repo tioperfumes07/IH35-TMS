@@ -9,9 +9,8 @@
 //      Loads history never key their variant off view/boardScope state (that was the double-
 //      filled-button bug: Book Load is always primary, and whichever of Home/Live/History was
 //      active was ALSO primary at the same time).
-//   2. The board-view toolbar (Kanban | List | Round Trips) is a role="group" segmented control
-//      with exactly those three buttons — "Trip Pairing" (an exact duplicate of DispatchSubnav's
-//      own "Trip Pairing" nav item, still fully reachable there) does not reappear in it.
+//   2. The board-view toolbar is a role="group" segmented control with no button repeated in it, and
+//      the owner-named views (Kanban | List | Round Trips | Trip Pairing — DISPATCH item #2) present.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -58,8 +57,23 @@ export function collectProblems(root = ROOT) {
     }
     const arrayEnd = src.indexOf("] as const", boardViewIdx);
     const toolbarArray = arrayEnd > 0 ? src.slice(boardViewIdx, arrayEnd) : "";
-    if (/id:\s*"trip-pairing"/.test(toolbarArray)) {
-      problems.push(`${FILE}: "Trip Pairing" must not duplicate DispatchSubnav's own nav item inside the board-view toolbar`);
+    // 443.99 (2026-10-12) — toolbar-duplicate check re-anchored.
+    //   old rule: "Trip Pairing" (id "trip-pairing") must NOT appear in the board-view toolbar.
+    //   new rule: every board-view id appears in the toolbar exactly ONCE (no duplicated button), and the
+    //             owner-named views Kanban / List / Round Trips / Trip Pairing are each present.
+    //   why: the owner ruled (DISPATCH item #2, 2026-09-04) that Trip Pairing IS a peer button in this
+    //        one board-view row while its queues sub-nav entry is retained — pinned by
+    //        verify-dispatch-trip-pairing-in-board-view-row.mjs. #20614 removed it as a "duplicate"; it
+    //        was restored with the correction recorded in Dispatch.tsx, so this guard and that one could
+    //        never both pass. L.4b's actual defect ("4 duplicate tabs") is a button repeated inside the
+    //        toolbar, which this still fails on.
+    const ids = [...toolbarArray.matchAll(/\bid:\s*"([^"]+)"/g)].map((m) => m[1]);
+    const dupes = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
+    if (dupes.length) {
+      problems.push(`${FILE}: board-view toolbar repeats a button: ${dupes.join(", ")}`);
+    }
+    for (const id of ["kanban", "list", "round-trips", "trip-pairing"]) {
+      if (!ids.includes(id)) problems.push(`${FILE}: board-view toolbar is missing the owner-named "${id}" view`);
     }
   }
 
@@ -80,7 +94,7 @@ if (process.argv.includes("--selftest")) {
   try {
     fs.mkdirSync(path.join(tmpRoot, path.dirname(FILE)), { recursive: true });
     // Planted stub reproduces the exact pre-fix defect shape: variant keyed off state (double
-    // filled button), missing test-ids, tablist role, and "Trip Pairing" back in the toolbar array.
+    // filled button), missing test-ids, tablist role, and a button repeated in the toolbar array.
     fs.writeFileSync(
       path.join(tmpRoot, FILE),
       `
@@ -88,7 +102,10 @@ if (process.argv.includes("--selftest")) {
       <div data-testid="dispatch-board-view-row" role="tablist">
         {[
           { id: "kanban", label: "Kanban" },
+          { id: "list", label: "List" },
+          { id: "round-trips", label: "Round Trips" },
           { id: "trip-pairing", label: "Trip Pairing" },
+          { id: "kanban", label: "Kanban" },
         ] as const}
       </div>
       `
@@ -107,5 +124,5 @@ if (process.argv.includes("--selftest")) {
 } else {
   const problems = collectProblems();
   if (problems.length > 0) fail(problems);
-  console.log(`${LABEL} OK — Book Load is the only filled button; board-view toolbar is a 3-button role="group" with no duplicate Trip Pairing`);
+  console.log(`${LABEL} OK — Book Load is the only filled button; board-view toolbar is a role="group" with each owner-named view exactly once`);
 }

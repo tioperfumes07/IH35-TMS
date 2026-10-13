@@ -86,8 +86,15 @@ export function TripProfitability() {
       render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />,
     },
     {
-      key: "load_links",
+      key: "first_load_id",
       label: "Loads",
+      sortable: true,
+      sortValue: (row) => row.first_load_number ?? "",
+      render: (row) => <EntityLinkOrTombstone kind="load" id={row.first_load_id} name={row.first_load_number} noun="Load" />,
+    },
+    {
+      key: "load_links",
+      label: "All Loads",
       sortable: true,
       sortValue: (row) => row.load_links.length,
       render: (row) => (

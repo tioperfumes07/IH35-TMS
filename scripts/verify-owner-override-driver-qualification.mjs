@@ -247,7 +247,21 @@ function analyse(files) {
     }
     // E (edit) — the Edit submit path must thread the panel's override click into buildEditPatchBody,
     // or clicking "Override & dispatch" while editing silently does a normal save with no reason.
-    if (!/buildEditPatchBody\([\s\S]{0,800}overrideReason/.test(modal)) {
+    // LEAD 443.99 class B (2026-10-12).
+    //   old rule: the text `overrideReason` appears within 800 chars after `buildEditPatchBody(`.
+    //   new rule: either that direct threading, OR the D-H0 chain — buildEditPatchBody(..., effectiveOverrideReason, ...)
+    //             where effectiveOverrideReason = lockOverrideReason ?? primaryOverrideReason, primaryOverrideReason
+    //             takes overrideReason.trim() when applyOverrides, and applyOverrides is true on opts?.override.
+    //   why: D-H0 #23758 (462bc66f75) folded the owner lock-override reason in and renamed the argument;
+    //        `effectiveOverrideReason` does not contain the lowercase text, so the guard went red on correct code.
+    //        A chain that drops opts?.override (the original silent no-op on Edit) still fails.
+    const directThread = /buildEditPatchBody\([\s\S]{0,800}overrideReason/.test(modal);
+    const chainThread =
+      /buildEditPatchBody\([\s\S]{0,400}effectiveOverrideReason/.test(modal) &&
+      /const effectiveOverrideReason = lockOverrideReason \?\? primaryOverrideReason/.test(modal) &&
+      /const applyOverrides = Boolean\(opts\?\.override\b/.test(modal) &&
+      /const primaryOverrideReason = applyOverrides\s*\?\s*overrideReason\.trim\(\)\.length >= 10\s*\?\s*overrideReason\.trim\(\)/.test(modal);
+    if (!directThread && !chainThread) {
       problems.push(
         `${MODAL}: the Edit-mode submit path does not pass overrideReason into buildEditPatchBody. ` +
           `Clicking "Override & dispatch" while editing an existing load silently falls through to a ` +
@@ -419,6 +433,19 @@ function selftest() {
       .length === 1
   );
 
+  // 443.99 — the D-H0 chain form: passes when wired, fails when opts?.override is dropped from applyOverrides.
+  const chainModal =
+    `overrideReason={overrideReason}\nonOverrideReasonChange={setOverrideReason}\n` +
+    `const applyOverrides = Boolean(opts?.override || recordedOverrides.length);\n` +
+    `const primaryOverrideReason = applyOverrides\n ? overrideReason.trim().length >= 10\n ? overrideReason.trim()\n : undefined\n : undefined;\n` +
+    `const effectiveOverrideReason = lockOverrideReason ?? primaryOverrideReason;\n` +
+    `const body = buildEditPatchBody(values, dirty, companyId, effectiveOverrideReason);`;
+  t("edit path: D-H0 effectiveOverrideReason chain passes", analyse({ ...editBase, [MODAL]: chainModal }).length === 0);
+  t(
+    "edit path: D-H0 chain that drops opts?.override FAILS",
+    analyse({ ...editBase, [MODAL]: chainModal.replace("Boolean(opts?.override || recordedOverrides.length)", "Boolean(recordedOverrides.length)") }).length === 1
+  );
+
   // Exit INSIDE selftest — verify-selftests-can-fail.mjs treats "collects failures but cannot exit
   // non-zero" as fake-green, correctly: an unreachable failure path proves nothing.
   if (failures.length) {
@@ -430,7 +457,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 21 cases (create-path 14 + GO-23 edit-path extension 7)`);
+  console.log(`${LABEL} selftest OK — 23 cases (create-path 14 + GO-23 edit-path extension 7 + D-H0 chain 2)`);
   process.exit(0);
 }
 

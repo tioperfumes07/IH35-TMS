@@ -1,4 +1,6 @@
 import { assertNoHistoricalSettlementCoverage } from "../../driver-finance/settlement-historical-attribution.service.js";
+import { sameEntityLoadUnitSql } from "../load-unit.sql.js";
+import { stampNewDriverBillTrailerFromLoad } from "../bill-trailer-stamp.service.js";
 // SETTLEMENT-BILL-PAYMENT — the canonical driver-settlement GL posting engine (blueprint §3, LOCKED).
 // TIER-1 FINANCIAL, BUILD-AND-HOLD. Flag SETTLEMENT_GL_POSTING_ENABLED (default OFF) => NO-OP.
 //
@@ -102,6 +104,8 @@ type DriverBillRow = {
   load_id: string;
   load_number: string | null;
   gross_amount_cents: number;
+  /** 443.101 — the load's same-entity unit (owned or currently leased), or null. */
+  unit_id?: string | null;
 };
 
 type DeductionRow = {
@@ -247,7 +251,9 @@ async function loadDriverBills(client: DbClient, operatingCompanyId: string, set
   // by creation so the load# numbering + deduction allocation are deterministic.
   const res = await client.query<DriverBillRow>(
     `
-      SELECT db.id::text, db.load_id::text, db.load_number, db.gross_amount_cents::int AS gross_amount_cents
+      SELECT db.id::text, db.load_id::text, db.load_number, db.gross_amount_cents::int AS gross_amount_cents,
+             -- 443.101 (P38 Wave-A) — the load's same-entity unit (owned or currently leased), stamped on the per-load bill.
+             ${sameEntityLoadUnitSql("db.load_id", "db.operating_company_id")}::text AS unit_id
       FROM driver_finance.driver_bills db
       WHERE db.operating_company_id = $1::uuid
         AND db.driver_id = $3::uuid
@@ -620,6 +626,10 @@ export async function postSettlementBillPayment(
           // bills already stamp it via the Costs-tab bill-creator path; this is the matching
           // driver-pay-side stamp, forward-fix only (does not touch any already-posted bill).
           driverId: settlement.driver_id,
+          // 443.101 (P38 Wave-A) — the driver-pay bill links to the load's unit, not only its vendor and load.
+          unitId: b.unit_id ?? null,
+          // 443.106 (trg_refuse_driver_bill_without_links, BEFORE INSERT): the load rides the header INSERT row.
+          loadId: b.load_id,
           // GO-19 slice 03 (owner reversal of the prior AP-BILL-NUMBER-IS-THE-LOAD-NUMBER rationale
           // below) — driver bill number EQUALS the load number, no 'B-' prefix, matching
           // driver-bill-number.ts's driverBillNumberFromLoadNumber contract everywhere else a driver
@@ -656,6 +666,9 @@ export async function postSettlementBillPayment(
           [accountingBillId, b.gross_amount_cents / 100, lineDescription, driverPayAccount, b.load_id]
         )
       );
+      // 443.105 item 1: the bill carries its load's trailer (company -> trailer_id + line equipment_id; customer ->
+      // non_owned_trailer_id), from the same rule as the Owner back-stamp (load-trailer.sql.ts).
+      await scoped(actor, opco, (client) => stampNewDriverBillTrailerFromLoad(client, { operatingCompanyId: opco, billId: accountingBillId, loadId: b.load_id }));
       // ACCT-F348 — PERSIST THE LINK THE INSTANT THE BILL EXISTS, not at the end of the leg.
       //
       // The per-load link row was written only in step (d), AFTER the bill JE and both payments. A crash
@@ -674,7 +687,7 @@ export async function postSettlementBillPayment(
               (operating_company_id, run_id, settlement_id, driver_bill_id, load_id, load_number,
                accounting_bill_id, gross_cents, deduction_cents, cash_cents)
             VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6,$7::uuid,$8,$9,$10)
-            ON CONFLICT (operating_company_id, driver_bill_id) DO UPDATE SET
+            ON CONFLICT (operating_company_id, driver_bill_id, accounting_bill_id) WHERE superseded_at IS NULL DO UPDATE SET
               accounting_bill_id = EXCLUDED.accounting_bill_id
           `,
           [opco, runId, settlementId, b.id, b.load_id, b.load_number, accountingBillId, b.gross_amount_cents, alloc.deductionCents, alloc.cashCents]
@@ -682,8 +695,10 @@ export async function postSettlementBillPayment(
       );
     }
     if (!billJeId) {
+      // 443.100: stamp the settlement on every bill JE line at INSERT (the ap-chain path's 443.37-v2 rule, 7ef5410e20) —
+      // the pay-run path posted its bill with no settlement_id, so verify-step 18393 found its lines unlinked.
       const billPost = await postSourceTransaction(
-        { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: accountingBillId, posting_purpose: "initial_post" },
+        { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: accountingBillId, posting_purpose: "initial_post", settlement_id: settlementId },
         { userId: actor.userId }
       );
       billJeId = billPost.journal_entry_id;
@@ -698,18 +713,12 @@ export async function postSettlementBillPayment(
           paymentDate: billDate,
           amountCents: alloc.deductionCents,
           paymentMethod: "other",
+          settlementDeductionNoncash: true,
           memo: `${label} — deduction recovery (non-cash), load ${b.load_number ?? b.load_id}`,
         },
         actor.userId
       );
       deductionBpId = dedPayment.id;
-      await scoped(actor, opco, (client) =>
-        client.query(
-          `UPDATE accounting.bill_payments SET settlement_deduction_noncash = true, updated_at = now()
-            WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-          [deductionBpId, opco]
-        )
-      );
     }
 
     // (c) net cash BillPayment from Wells Fargo — DIP + post Dr A/P / Cr DIP.
@@ -750,7 +759,7 @@ export async function postSettlementBillPayment(
              accounting_bill_id, bill_journal_entry_id, cash_bill_payment_id, cash_journal_entry_id,
              deduction_bill_payment_id, gross_cents, deduction_cents, cash_cents)
           VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6,$7::uuid,$8::uuid,$9::uuid,$10::uuid,$11::uuid,$12,$13,$14)
-          ON CONFLICT (operating_company_id, driver_bill_id) DO UPDATE SET
+          ON CONFLICT (operating_company_id, driver_bill_id, accounting_bill_id) WHERE superseded_at IS NULL DO UPDATE SET
             accounting_bill_id = EXCLUDED.accounting_bill_id,
             bill_journal_entry_id = COALESCE(EXCLUDED.bill_journal_entry_id, driver_settlement_gl_bills.bill_journal_entry_id),
             cash_bill_payment_id = COALESCE(EXCLUDED.cash_bill_payment_id, driver_settlement_gl_bills.cash_bill_payment_id),
@@ -777,7 +786,9 @@ export async function postSettlementBillPayment(
   // ── Deduction JE (ONE balanced entry): Dr A/P (total) / Cr each driver-own-or-recovery target. ───
   if (totalDeductions > 0 && !deductionJournalEntryId) {
     const postings = [
-      { account_id: apAccount, debit_or_credit: "debit" as const, amount_cents: totalDeductions, description: `${label} — A/P reduced by deductions` },
+      // 443.102 — the A/P debit names the driver's vendor (the payee of the bills it reduces), so the A/P sub-ledger
+      // reads per vendor from the line itself.
+      { account_id: apAccount, debit_or_credit: "debit" as const, amount_cents: totalDeductions, description: `${label} — A/P reduced by deductions`, entity_type: "vendor" as const, entity_uuid: driverVendorId },
       ...resolvedDeductions.map((d) => ({
         account_id: d.accountId,
         debit_or_credit: "credit" as const,
@@ -959,10 +970,12 @@ export async function reverseSettlementBillPaymentInClientTx(
       cash_bill_payment_id: string | null;
       cash_journal_entry_id: string | null;
       deduction_bill_payment_id: string | null;
+      bill_posted_at_delivery: boolean;
+      pay_basis: string;
     }>(
       `SELECT driver_bill_id::text, accounting_bill_id::text, bill_journal_entry_id::text,
               cash_bill_payment_id::text, cash_journal_entry_id::text,
-              deduction_bill_payment_id::text
+              deduction_bill_payment_id::text, bill_posted_at_delivery, pay_basis
          FROM driver_finance.driver_settlement_gl_bills WHERE run_id = $1::uuid`,
       [run.id]
     );
@@ -1006,7 +1019,9 @@ export async function reverseSettlementBillPaymentInClientTx(
           `Settlement ${settlementId} bill ${gb.accounting_bill_id} is missing its original journal-entry linkage`
         );
       }
-      originalJeIds.push(gb.bill_journal_entry_id);
+      // LEAD 443.116 (c): a bill posted AT DELIVERY predates this settlement — the void reverses what the close did to it
+      // (cash + non-cash payments below), never the bill or its pay posting; it returns to open A/P.
+      if (!gb.bill_posted_at_delivery) originalJeIds.push(gb.bill_journal_entry_id);
 
       if (gb.cash_bill_payment_id) {
         if (!gb.cash_journal_entry_id) {
@@ -1058,6 +1073,7 @@ export async function reverseSettlementBillPaymentInClientTx(
         );
       }
 
+      if (gb.bill_posted_at_delivery) continue;
       const billReversal = await voidBillInClientTx(
         client,
         {
@@ -1217,7 +1233,8 @@ export async function reverseSettlementBillPaymentInClientTx(
       );
     }
 
-    const driverBillIds = glBills.map((row) => row.driver_bill_id);
+    // LEAD 443.116 (c): a close-time supplement row settles no driver bill of its own (its load's accrued row does).
+    const driverBillIds = glBills.filter((row) => row.pay_basis !== "close_supplement").map((row) => row.driver_bill_id);
     if (new Set(driverBillIds).size !== driverBillIds.length) throw new Error("settlement_reversal_duplicate_driver_bill_link");
     const restoredDriverBills = await client.query<{ id: string }>(
       `UPDATE driver_finance.driver_bills
@@ -1240,7 +1257,7 @@ export async function reverseSettlementBillPaymentInClientTx(
       unrestored_driver_bill_count: number;
     }>(
       `WITH linked AS (
-         SELECT accounting_bill_id, driver_bill_id, cash_bill_payment_id, deduction_bill_payment_id
+         SELECT accounting_bill_id, driver_bill_id, cash_bill_payment_id, deduction_bill_payment_id, bill_posted_at_delivery
            FROM driver_finance.driver_settlement_gl_bills WHERE run_id = $1::uuid
        ), payment_ids AS (
          SELECT cash_bill_payment_id AS id FROM linked WHERE cash_bill_payment_id IS NOT NULL
@@ -1251,7 +1268,7 @@ export async function reverseSettlementBillPaymentInClientTx(
          (SELECT COUNT(*)::int FROM accounting.bill_payments bp JOIN payment_ids p ON p.id = bp.id
            WHERE bp.operating_company_id = $2::uuid AND bp.revoked_at IS NULL) AS active_payment_count,
          (SELECT COUNT(*)::int FROM accounting.bills b JOIN linked l ON l.accounting_bill_id = b.id
-           WHERE b.operating_company_id = $2::uuid AND b.revoked_at IS NULL) AS nonvoid_bill_count,
+           WHERE b.operating_company_id = $2::uuid AND b.revoked_at IS NULL AND NOT l.bill_posted_at_delivery) AS nonvoid_bill_count,
          (SELECT COUNT(*)::int FROM accounting.bills b JOIN linked l ON l.accounting_bill_id = b.id
            WHERE b.operating_company_id = $2::uuid AND COALESCE(b.paid_cents, 0) <> 0) AS nonzero_paid_bill_count,
          (SELECT COUNT(*)::int FROM driver_finance.driver_bills db JOIN linked l ON l.driver_bill_id = db.id
@@ -1283,7 +1300,8 @@ export async function reverseSettlementBillPaymentInClientTx(
     );
     if (!transitioned.rows[0]?.id) throw new Error("settlement_reversal_state_transition_failed");
     // Lead ROUND 330.6: the reversed run's spine rows stay (audit trail) but are superseded, so a re-post of the same
-    // driver bills can write its own live spine rows (uq_driver_settlement_gl_bills_live_driver_bill).
+    // driver bills can write its own live spine rows (uq_driver_settlement_gl_bills_live_driver_bill_ap_bill, 443.128 C:
+    // one live row per driver bill AND A/P bill — a team load's two drivers settle the same driver bill on their own bills).
     await client.query(
       `UPDATE driver_finance.driver_settlement_gl_bills SET superseded_at = now()
         WHERE run_id = $1::uuid AND operating_company_id = $2::uuid AND superseded_at IS NULL`,

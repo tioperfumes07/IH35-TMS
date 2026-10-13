@@ -28,14 +28,11 @@
     "apps/backend/src/maintenance/work-orders.routes.ts#accounting.expenses.revoked_at",
     "apps/backend/src/mdata/equipment-aggregate.service.ts#mdata.loads.assigned_primary_unit_id",
     "apps/backend/src/notifications/dispatcher.ts#identity.users.uuid",
-    "apps/backend/src/payroll-integration/tms-settlements-pull.ts#driver_finance.driver_settlements.gross_pay_cents",
-    "apps/backend/src/payroll-integration/tms-settlements-pull.ts#driver_finance.driver_settlements.net_pay_cents",
-    "apps/backend/src/payroll-integration/tms-settlements-pull.ts#driver_finance.driver_settlements.total_deductions_cents",
     "apps/backend/src/safety/events/safety-events.routes.ts#identity.users.name",
     "apps/backend/src/search/universal/indexer.service.ts#mdata.drivers.driver_code",
     "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.delivery_appointment_end",
     "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.delivery_appointment_start",
     "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.pickup_appointment_start"
   ],
-  "total_entries": 38
+  "total_entries": 32
 }

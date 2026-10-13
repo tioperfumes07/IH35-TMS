@@ -6,7 +6,7 @@
  * duplicate, never a hardcoded figure. A load with no per-mile rate at all (flat line-haul amount) has no rate
  * to borrow: empty pay stays unpriced (null) rather than invented.
  */
-import { deadheadPayCents, deadheadRateCents } from "./deadhead-rule.js";
+import { deadheadPayCents, deadheadRateCents, milesTimesRateCents } from "./deadhead-rule.js";
 
 type EmptyPayLoad = {
   empty_miles?: number | null;
@@ -23,4 +23,25 @@ export function creatorEmptyRateCents(load: EmptyPayLoad): number | null {
 /** Empty-mile pay in cents: miles × the resolved empty rate; 0 when there are no empty miles or no rate. */
 export function creatorEmptyPayCents(load: EmptyPayLoad): number {
   return deadheadPayCents(load.empty_miles, creatorEmptyRateCents(load));
+}
+
+/**
+ * ROUND 443.4 — DRIVER PAY NEVER READS CUSTOMER REVENUE. Driver pay miles are the short miles (company practical
+ * miles stay on loaded_miles); the loaded line is pay rate x short miles. line_haul_amount_cents (the customer's
+ * "Invoice Amt") and customer accessorials feed the invoice only — a $0 Transportation invoice must not zero the
+ * driver's pay. One function for the preview and the post, so the totals the owner checks are the ones written.
+ */
+type LoadedPayLoad = { miles_shortest?: number | null; loaded_miles?: number | null; line_haul_rate_cents?: number | null };
+
+export function creatorPayMiles(load: LoadedPayLoad): number | null {
+  const miles = Number(load.miles_shortest ?? load.loaded_miles ?? NaN);
+  return Number.isFinite(miles) && miles > 0 ? miles : null;
+}
+
+/** Loaded-miles pay in cents (pay rate x short miles), or null when the load carries no miles or no pay rate. */
+export function creatorLoadedPayCents(load: LoadedPayLoad): number | null {
+  const miles = creatorPayMiles(load);
+  const rate = Number(load.line_haul_rate_cents ?? NaN);
+  if (miles == null || !Number.isFinite(rate) || rate <= 0) return null;
+  return milesTimesRateCents(miles, rate);
 }

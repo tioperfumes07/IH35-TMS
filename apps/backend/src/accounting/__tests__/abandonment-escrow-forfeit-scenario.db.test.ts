@@ -68,6 +68,8 @@ run("stage-3 · load abandonment → escrow forfeit (real engine)", () => {
       // to have already inserted into identity.users as a beforeAll side effect — vitest gives no
       // ordering guarantee between separate test files/workers, so this FK'd 23503 whenever this file
       // ran before that one. Seed it here too (idempotent) so this file is self-sufficient.
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(
         `INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `abandon-${s}@test.local`]);
@@ -83,9 +85,10 @@ run("stage-3 · load abandonment → escrow forfeit (real engine)", () => {
       await db.query(`INSERT INTO mdata.customers (id,operating_company_id,customer_name) VALUES ($1::uuid,$2::uuid,'TEST DATA Abandon Customer')`, [id.customer, companyId]);
       await db.query(`INSERT INTO mdata.units (id,owner_company_id,unit_number,vin,is_sample_data) VALUES ($1::uuid,$2::uuid,$3,$4,true)`, [id.unit, companyId, `TRK${s}`, `1ABANDON${s}TEST01`]);
       await db.query(`INSERT INTO mdata.drivers (id,operating_company_id,first_name,last_name,phone,status) VALUES ($1::uuid,$2::uuid,'Walkoff','Driver',$3,'Active')`, [id.driver, companyId, `95607${s.slice(0,5)}`]);
+      // 443.93: only a load on the road can be abandoned (dispatch/load-state-machine.ts:68, abandonment.service.ts:211-214).
       await db.query(
         `INSERT INTO mdata.loads (id,operating_company_id,load_number,customer_id,dispatcher_user_id,status,assigned_primary_driver_id,assigned_unit_id,rate_total_cents,load_trailer_equipment_id)
-         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,'dispatched',$6::uuid,$7::uuid,$8,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1))`,
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,'in_transit',$6::uuid,$7::uuid,$8,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1))`,
         [id.load, companyId, `LOAD-ABD-${s}`, id.customer, userId, id.driver, id.unit, LOAD_RATE_CENTS]
       );
     });

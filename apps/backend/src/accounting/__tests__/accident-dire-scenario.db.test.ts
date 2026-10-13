@@ -54,6 +54,8 @@ run("dire accident scenario — full linkage (real engine)", () => {
     db = new pg.Client(buildPgClientConfig(process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL!));
     await db.connect(); await db.query("SET ROLE ih35_app");
     await tx(async () => {
+      // 443.93: identity.guard_role_escalation (202613312000) admits a fixture Owner only through its documented seed path.
+      await db.query("SET LOCAL app.allow_owner_bootstrap = '1'");
       await db.query(`INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`, [userId, `dire-${s}@test.local`]);
       // CI-BUILD-TYPECHECK-ACCIDENT-TYPE-ID-NOT-NULL: safety.accident_reports.accident_type_id is
       // NOT NULL with an FK to catalogs.accident_types(operating_company_id, id) — a per-entity
@@ -67,6 +69,15 @@ run("dire accident scenario — full linkage (real engine)", () => {
       await db.query(`INSERT INTO catalogs.accounts (id,operating_company_id,account_number,account_name,account_type,is_postable) VALUES ($1::uuid,$2::uuid,$3,'Uncategorized Expense','Expense',true)`, [id.uncat, companyId, `UNC${s}`]);
       await db.query(`INSERT INTO accounting.chart_of_accounts_roles (operating_company_id,role,account_id,is_active) VALUES ($1::uuid,'ap_control',$2::uuid,true)`, [companyId, id.ap]);
       await db.query(`INSERT INTO accounting.chart_of_accounts_roles (operating_company_id,role,account_id,is_active) VALUES ($1::uuid,'uncategorized_expense',$2::uuid,true)`, [companyId, id.uncat]);
+      // 443.93: the spawn-liability engine charges the driver to the company's driver_damage_receivable role and fails
+      // closed (ACCOUNT_MAPPING_MISSING) without it — bind it in this isolated company, as every live entity has it.
+      const damageRecv = randomUUID();
+      await db.query(`INSERT INTO catalogs.accounts (id,operating_company_id,account_number,account_name,account_type,is_postable) VALUES ($1::uuid,$2::uuid,$3,'Driver Damage Receivable','Asset',true)`, [damageRecv, companyId, `DDR${s}`]);
+      await db.query(`INSERT INTO accounting.chart_of_accounts_roles (operating_company_id,role,account_id,is_active) VALUES ($1::uuid,'driver_damage_receivable',$2::uuid,true)`, [companyId, damageRecv]);
+      // ...and credits its damage_recovery role (ROUND 394 RULING 2: Dr 1255 driver_damage_receivable / Cr damage_recovery).
+      const damageRecovery = randomUUID();
+      await db.query(`INSERT INTO catalogs.accounts (id,operating_company_id,account_number,account_name,account_type,is_postable) VALUES ($1::uuid,$2::uuid,$3,'Driver Damage Recovery','Expense',true)`, [damageRecovery, companyId, `DRC${s}`]);
+      await db.query(`INSERT INTO accounting.chart_of_accounts_roles (operating_company_id,role,account_id,is_active) VALUES ($1::uuid,'damage_recovery',$2::uuid,true)`, [companyId, damageRecovery]);
       await db.query(`INSERT INTO accounting.expense_category_account_map (operating_company_id,category_kind,category_code,account_id,posting_side,is_active) VALUES ($1::uuid,'maintenance',$2,$3::uuid,'debit',true)`, [companyId, `RPR-${s}`, id.repair]);
       // operational: Tio Perfumes customer, unit, driver, delivered load
       await db.query(`INSERT INTO mdata.customers (id,operating_company_id,customer_name) VALUES ($1::uuid,$2::uuid,'Tio Perfumes')`, [id.customer, companyId]);

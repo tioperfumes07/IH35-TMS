@@ -1,7 +1,5 @@
-import type { PoolClient } from "pg";
 import { withLuciaBypass } from "../auth/db.js";
-import { isEnabled } from "../lib/feature-flags/service.js";
-import { detectAnchorDrift } from "./master-data-anchor-drift.js";
+import { refuseQboNativeWrite } from "./qbo-native-write-refused.js";
 
 export type VendorsReconcileResult = {
   driftDetected: number;
@@ -11,142 +9,14 @@ export type VendorsReconcileResult = {
   reconciledAt: string;
 };
 
-async function markLocalOnlyDrift(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(
-    `
-      WITH updated AS (
-        UPDATE mdata.vendors
-        SET
-          qbo_sync_status = 'drift_detected',
-          qbo_sync_error = 'local row has no qbo_vendor_id link',
-          updated_at = now()
-        WHERE operating_company_id = $1::uuid
-          AND qbo_vendor_id IS NULL
-          AND deactivated_at IS NULL
-          AND COALESCE(qbo_sync_status, '') <> 'local_only'
-        RETURNING 1
-      )
-      SELECT COUNT(*)::text AS c FROM updated
-    `,
-    [operatingCompanyId]
-  );
-  return Number(res.rows[0]?.c ?? 0);
-}
-
-async function createMissingFromMirror(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(
-    `
-      WITH inserted AS (
-        INSERT INTO mdata.vendors (
-          operating_company_id,
-          vendor_name,
-          vendor_type,
-          phone,
-          email,
-          qbo_vendor_id,
-          notes,
-          deactivated_at,
-          qbo_synced_at,
-          qbo_sync_status
-        )
-        SELECT
-          qv.operating_company_id,
-          qv.display_name,
-          'Other',
-          qv.primary_phone,
-          qv.primary_email,
-          qv.qbo_id,
-          $2,
-          CASE WHEN qv.active THEN NULL ELSE now() END,
-          now(),
-          'synced'
-        FROM mdata.qbo_vendors qv
-        WHERE qv.operating_company_id = $1::uuid
-          AND qv.qbo_id IS NOT NULL
-          AND NOT EXISTS (
-            SELECT 1 FROM mdata.vendors v
-            WHERE v.operating_company_id = qv.operating_company_id
-              AND v.qbo_vendor_id = qv.qbo_id
-          )
-        RETURNING 1
-      )
-      SELECT COUNT(*)::text AS c FROM inserted
-    `,
-    [operatingCompanyId, `Reconciled from QBO mirror (${operatingCompanyId})`]
-  );
-  return Number(res.rows[0]?.c ?? 0);
-}
-
-async function healFieldDrift(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(
-    `
-      WITH healed AS (
-        UPDATE mdata.vendors v
-        SET
-          vendor_name = qv.display_name,
-          phone = qv.primary_phone,
-          email = qv.primary_email,
-          qbo_sync_status = 'synced',
-          qbo_sync_error = NULL,
-          qbo_synced_at = now(),
-          updated_at = now()
-        FROM mdata.qbo_vendors qv
-        WHERE qv.operating_company_id = $1::uuid
-          AND qv.qbo_id = v.qbo_vendor_id
-          AND v.operating_company_id = qv.operating_company_id
-          AND (
-            v.vendor_name IS DISTINCT FROM qv.display_name
-            OR v.phone IS DISTINCT FROM qv.primary_phone
-            OR v.email IS DISTINCT FROM qv.primary_email
-          )
-        RETURNING 1
-      )
-      SELECT COUNT(*)::text AS c FROM healed
-    `,
-    [operatingCompanyId]
-  );
-  return Number(res.rows[0]?.c ?? 0);
-}
-
-async function countLocalOnly(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(
-    `
-      SELECT COUNT(*)::text AS c
-      FROM mdata.vendors
-      WHERE operating_company_id = $1::uuid
-        AND qbo_sync_status = 'local_only'
-        AND deactivated_at IS NULL
-    `,
-    [operatingCompanyId]
-  );
-  return Number(res.rows[0]?.c ?? 0);
-}
-
+/**
+ * ACCT-F4431380 (Lead 443.137 item 9e) — REFUSED BY NAME. This formerly created, healed and drift-flagged
+ * native mdata.vendors rows from the QuickBooks mirror (mdata.qbo_vendors). QuickBooks is a read-only archive: a QBO
+ * reconciler never writes a native master table. Throws QboNativeWriteRefusedError (QBO_NATIVE_WRITE_REFUSED)
+ * instead of reporting a reconcile that did nothing. The read-only sync status below is unchanged.
+ */
 export async function reconcileVendors(operatingCompanyId: string): Promise<VendorsReconcileResult> {
-  const reconciledAt = new Date().toISOString();
-  let driftDetected = 0;
-  let createdFromQbo = 0;
-  let healed = 0;
-  let localOnly = 0;
-
-  await withLuciaBypass(async (client) => {
-    driftDetected = await markLocalOnlyDrift(client, operatingCompanyId);
-    createdFromQbo = await createMissingFromMirror(client, operatingCompanyId);
-    // AF-2: healFieldDrift() is a write-back (overwrites local vendor_name/phone/email from the QBO
-    // mirror) — the locked decision is "detect only, write stays OFF". Gate it behind
-    // QBO_MASTER_DATA_HEAL_ENABLED (default OFF); when off, record the SAME drift as a read-only
-    // accounting.recon_exceptions row (ANCHOR_DRIFT) instead of mutating mdata.vendors.
-    const healEnabled = await isEnabled(client, "QBO_MASTER_DATA_HEAL_ENABLED", { operating_company_id: operatingCompanyId });
-    if (healEnabled) {
-      healed = await healFieldDrift(client, operatingCompanyId);
-    } else {
-      await detectAnchorDrift(client, operatingCompanyId, "vendors");
-      healed = 0;
-    }
-    localOnly = await countLocalOnly(client, operatingCompanyId);
-  });
-
-  return { driftDetected, createdFromQbo, healed, localOnly, reconciledAt };
+  return refuseQboNativeWrite("qbo-sync/vendors-reconciler#reconcileVendors", ["mdata.vendors"], operatingCompanyId);
 }
 
 export type VendorsSyncStatus = {

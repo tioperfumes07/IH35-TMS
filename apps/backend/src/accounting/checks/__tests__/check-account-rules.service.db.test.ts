@@ -1,12 +1,57 @@
-// Real Postgres proof for check-account-rules.service.ts -- CI-gated (GITHUB_ACTIONS), real USMCA
-// company id, same rationale as check-payee.service.db.test.ts and the R-153 accept-bill-match tests.
-import { describe, it, expect } from "vitest";
+// Real Postgres proof for check-account-rules.service.ts -- CI-gated (GITHUB_ACTIONS).
+// 443.91 #4: the CI database is FRESH (migrations only) — it has no USMCA company, no live bank account, no live item. The
+// suite used to read live USMCA ids ("Live-verified 09-25-2026") and so could never pass in CI. It now builds its own
+// isolated company (createIsolatedOperatingCompany, the canonical helper) with exactly the rows the engine reads: a
+// depository bank account on a ledger account, an item with a default expense account, and two expense-category map
+// entries (maintenance/maintenance -> CostOfGoodsSold, revenue/linehaul -> Income). The engine is unchanged.
+import { afterAll, beforeAll, describe, it, expect } from "vitest";
+import pg from "pg";
+import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
+import { createIsolatedOperatingCompany, insertMaintenanceCategoryMap } from "../../../../test-helpers/isolated-company.js";
 import { resolveCheckBankAccount, resolveCheckLineDebitAccount, assertNotDriverAdvanceCheck, CheckAccountError } from "../check-account-rules.service.js";
 
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
-// Live-verified 09-25-2026.
-const USMCA_BOA_CHECKING = "e83028a5-dcda-4233-b660-5b9923b3d39c"; // depository, ledger_account_id -> 1000
-const REAL_ITEM_ID = "aa07ce99-127c-4a29-af59-68d2bb694ff6"; // has default_expense_account_id
+let USMCA_COMPANY_ID = "";
+let USMCA_BOA_CHECKING = "";
+let REAL_ITEM_ID = "";
+
+const runDb = process.env.GITHUB_ACTIONS === "true";
+
+beforeAll(async () => {
+  if (!runDb) return;
+  const { companyId } = await createIsolatedOperatingCompany({ codePrefix: "CHK", legalNamePrefix: "Check rules fixture" });
+  USMCA_COMPANY_ID = companyId;
+  const client = new pg.Client(buildPgClientConfig(process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL ?? ""));
+  await client.connect();
+  try {
+    await client.query("SET ROLE ih35_app");
+    await client.query("BEGIN");
+    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    const acct = async (number: string, name: string, type: string) =>
+      (await client.query<{ id: string }>(
+        `INSERT INTO catalogs.accounts (operating_company_id, account_number, account_name, account_type, is_postable)
+         VALUES ($1::uuid, $2, $3, $4, true) RETURNING id::text`, [companyId, number, name, type])).rows[0]!.id;
+    const bankLedger = await acct("1000", "Checking", "Asset");
+    const cogs = await acct("5300", "Repairs & Maintenance", "CostOfGoodsSold");
+    const income = await acct("4000", "Linehaul Revenue", "Income");
+    USMCA_BOA_CHECKING = (await client.query<{ id: string }>(
+      `INSERT INTO banking.bank_accounts (operating_company_id, account_name, account_class, is_active, ledger_account_id, sync_status)
+       VALUES ($1::uuid, 'Fixture Checking', 'depository', true, $2::uuid, 'active') RETURNING id::text`, [companyId, bankLedger])).rows[0]!.id;
+    REAL_ITEM_ID = (await client.query<{ id: string }>(
+      `INSERT INTO catalogs.items (operating_company_id, item_name, item_type, default_expense_account_id)
+       VALUES ($1::uuid, 'Fixture Repair', 'Service', $2::uuid) RETURNING id::text`, [companyId, cogs])).rows[0]!.id;
+    await client.query(
+      `INSERT INTO accounting.expense_category_account_map (operating_company_id, category_kind, category_code, account_id, posting_side)
+       VALUES ($1::uuid, 'revenue', 'linehaul', $2::uuid, 'debit')`,
+      [companyId, income]);
+    await insertMaintenanceCategoryMap(client, companyId, cogs); // anchor + 9 sub-codes, one statement (443.100)
+    await client.query("COMMIT");
+  } finally {
+    await client.end();
+  }
+}, 60_000);
+
+afterAll(() => undefined);
 
 describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("check-account-rules.service (real Postgres)", () => {
   it(

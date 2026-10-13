@@ -42,20 +42,25 @@ if (!migration.includes("local_only") || !migration.includes("drift_detected")) 
   fail("migration must constrain qbo_sync_status values including local_only and drift_detected");
 }
 
-const customersReconciler = fs.readFileSync(customersReconcilerPath, "utf8");
-if (!customersReconciler.includes("qbo_customer_id IS NULL")) {
-  fail("customers reconciler must detect local rows without qbo_customer_id");
-}
-if (!customersReconciler.includes("local_only")) {
-  fail("customers reconciler must respect local_only status");
-}
-
-const vendorsReconciler = fs.readFileSync(vendorsReconcilerPath, "utf8");
-if (!vendorsReconciler.includes("qbo_vendor_id IS NULL")) {
-  fail("vendors reconciler must detect local rows without qbo_vendor_id");
-}
-if (!vendorsReconciler.includes("local_only")) {
-  fail("vendors reconciler must respect local_only status");
+// ACCT-F4431380 (Lead 443.137 item 9e) — OLD: each reconciler had to detect local rows with qbo_customer_id/qbo_vendor_id IS NULL (markLocalOnlyDrift UPDATE of the native table). NEW: reconcileCustomers()/reconcileVendors() must call refuseQboNativeWrite(), neither reconciler nor puller may write mdata.customers/mdata.vendors, each puller must still fill its mdata.qbo_* mirror, and the read-only status keeps its local_only count. WHY: QuickBooks is a read-only archive; the native write was removed and the reconciler refuses by name.
+const stripJs = (src) => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+for (const [label, reconcilerPath, pullerPath, fnName, nativeTable, mirrorTable] of [
+  ["customers", customersReconcilerPath, customersPullerPath, "reconcileCustomers", "customers", "qbo_customers"],
+  ["vendors", vendorsReconcilerPath, vendorsPullerPath, "reconcileVendors", "vendors", "qbo_vendors"],
+]) {
+  const nativeWrite = new RegExp(`(?:INSERT\\s+INTO|UPDATE|DELETE\\s+FROM)\\s+mdata\\.${nativeTable}\\b`, "i");
+  const reconciler = stripJs(fs.readFileSync(reconcilerPath, "utf8"));
+  const fn = new RegExp(`^export\\s+async\\s+function\\s+${fnName}\\b[\\s\\S]*?\\n\\}`, "m").exec(reconciler);
+  if (!fn || !/\brefuseQboNativeWrite\s*\(/.test(fn[0])) {
+    fail(`${label} reconciler ${fnName}() must refuse by name (refuseQboNativeWrite) — never mark/create/heal mdata.${nativeTable} from QBO`);
+  }
+  if (nativeWrite.test(reconciler)) fail(`${label} reconciler must not write mdata.${nativeTable}`);
+  if (!reconciler.includes("local_only")) fail(`${label} reconciler sync status must still report local_only counts`);
+  const puller = stripJs(fs.readFileSync(pullerPath, "utf8"));
+  if (nativeWrite.test(puller)) fail(`${label} puller must write only mdata.${mirrorTable}, never mdata.${nativeTable}`);
+  if (!new RegExp(`INSERT\\s+INTO\\s+mdata\\.${mirrorTable}\\b`, "i").test(puller)) {
+    fail(`${label} puller must still fill its mirror mdata.${mirrorTable}`);
+  }
 }
 
 for (const [label, routes, paths] of [
