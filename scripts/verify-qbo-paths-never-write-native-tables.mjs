@@ -41,6 +41,9 @@
  *       chart into the new carrier's mdata.qbo_accounts with qbo_id NULL — rows QuickBooks never had), and
  *       names its chart refusal (coa_refused).
  *   R8  The dead QBO files removed in part 2 stay absent (qbo-cc-payment-poster.ts, master-data-anchor-drift.ts).
+ *   R9  POST /api/v1/qbo/bulk-link refuses by name (409 + QBO_NATIVE_WRITE_REFUSED) and carries no
+ *       UPDATE/INSERT into mdata.drivers / mdata.units / mdata.equipment. Driver/unit PATCH routes
+ *       refuse a qbo_vendor_id body key the same way (class may still be a TMS catalog id).
  *
  * Comments are stripped before scanning, so prose that names a table never trips the guard.
  *
@@ -86,6 +89,13 @@ const DYNAMIC_ALLOWED_TABLES = new Set([
   "catalogs.load_cancellation_reasons",
   "catalogs.dispatch_flag_colors",
 ]);
+
+/** R9 — bulk QBO id writes stay refused; native PATCH never accepts qbo_vendor_id. */
+const BULK_LINK_ROUTES = "apps/backend/src/qbo/bulk-link.routes.ts";
+const DRIVER_ROUTES = "apps/backend/src/mdata/drivers.routes.ts";
+const UNIT_ROUTES = "apps/backend/src/mdata/units.routes.ts";
+const R9_NATIVE_WRITE_RE =
+  /\b(INSERT\s+INTO|UPDATE)\s+(?:ONLY\s+)?"?mdata"?\s*\.\s*"?(drivers|units|equipment)"?/gi;
 
 /** R3 — former QBO -> native entry points that must refuse by name. */
 const REFUSAL_SITES = {
@@ -316,6 +326,38 @@ export function analyze(root = REPO_ROOT) {
     }
   }
 
+  // R9 — bulk-link + driver/unit PATCH refuse qbo_vendor_id writes onto native master rows
+  const bulkAbs = path.join(root, BULK_LINK_ROUTES);
+  if (!fs.existsSync(bulkAbs)) {
+    failures.push(`R9 ${BULK_LINK_ROUTES} missing — bulk-link must stay registered and refuse by name`);
+  } else {
+    const bulk = stripComments(fs.readFileSync(bulkAbs, "utf8"));
+    if (!/reply\.code\(409\)\.send\(\{\s*error:\s*QBO_NATIVE_WRITE_REFUSED/.test(bulk)) {
+      failures.push(`R9 ${BULK_LINK_ROUTES} — POST /api/v1/qbo/bulk-link must answer 409 QBO_NATIVE_WRITE_REFUSED`);
+    }
+    R9_NATIVE_WRITE_RE.lastIndex = 0;
+    const nativeWrite = R9_NATIVE_WRITE_RE.exec(bulk);
+    if (nativeWrite) {
+      failures.push(
+        `R9 ${BULK_LINK_ROUTES}:${lineOf(bulk, nativeWrite.index)} — bulk-link must not write mdata.${nativeWrite[2]}`,
+      );
+    }
+  }
+  for (const [rel, label] of [
+    [DRIVER_ROUTES, "drivers"],
+    [UNIT_ROUTES, "units"],
+  ]) {
+    const abs = path.join(root, rel);
+    if (!fs.existsSync(abs)) {
+      failures.push(`R9 ${rel} missing — ${label} PATCH must refuse qbo_vendor_id`);
+      continue;
+    }
+    const code = stripComments(fs.readFileSync(abs, "utf8"));
+    if (!/"qbo_vendor_id"\s+in\s+b/.test(code) || !/QBO_NATIVE_WRITE_REFUSED/.test(code)) {
+      failures.push(`R9 ${rel} — PATCH must refuse body key qbo_vendor_id with QBO_NATIVE_WRITE_REFUSED`);
+    }
+  }
+
   return { files, failures };
 }
 
@@ -334,7 +376,17 @@ function copyInto(tmp, rel, root = REPO_ROOT) {
 function selftest() {
   const results = [];
   const realFiles = [
-    ...new Set([...scopedFiles(REPO_ROOT), ...Object.keys(REFUSAL_SITES), SCHEDULER, CC_PAYMENT, VENDOR_LINKAGE_ROUTES, ...opsQboFiles(REPO_ROOT)]),
+    ...new Set([
+      ...scopedFiles(REPO_ROOT),
+      ...Object.keys(REFUSAL_SITES),
+      SCHEDULER,
+      CC_PAYMENT,
+      VENDOR_LINKAGE_ROUTES,
+      BULK_LINK_ROUTES,
+      DRIVER_ROUTES,
+      UNIT_ROUTES,
+      ...opsQboFiles(REPO_ROOT),
+    ]),
   ];
   const fresh = () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "ih35-qbo-native-"));
@@ -412,6 +464,16 @@ function selftest() {
     fs.mkdirSync(path.dirname(f), { recursive: true });
     fs.writeFileSync(f, "export const PayType = 'CreditCard';\n");
   }, true, /R8 .*qbo-cc-payment-poster/);
+
+  // ACCT-F4431381 (9e last gaps) — R9
+  check("R9 plant: bulk-link stops answering 409", (t) =>
+    edit(t, BULK_LINK_ROUTES, (s) => s.replace("reply.code(409).send({", "reply.code(200).send({")), true, /R9 .*409/);
+  check("R9 plant: bulk-link re-adds UPDATE mdata.drivers", (t) =>
+    edit(t, BULK_LINK_ROUTES, (s) => s + "\nconst PLANT = `UPDATE mdata.drivers SET qbo_vendor_id = $2 WHERE id = $1`;\n"), true, /R9 .*mdata\.drivers/);
+  check("R9 plant: drivers PATCH loses qbo_vendor_id refusal", (t) =>
+    edit(t, DRIVER_ROUTES, (s) => s.replace(/if\s*\(\s*"qbo_vendor_id"\s+in\s+b\s*\)/, 'if ("__gone__" in b)')), true, /R9 .*drivers.*qbo_vendor_id/);
+  check("R9 plant: units PATCH loses QBO_NATIVE_WRITE_REFUSED", (t) =>
+    edit(t, UNIT_ROUTES, (s) => s.split("QBO_NATIVE_WRITE_REFUSED").join("X")), true, /R9 .*units.*qbo_vendor_id/);
 
   const pass = results.filter((r) => r.ok).length;
   for (const r of results) console.log(`${r.ok ? "PASS" : "FAIL"}  ${r.name}${r.detail ? `  ${r.detail}` : ""}`);
