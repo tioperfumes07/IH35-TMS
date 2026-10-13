@@ -47,7 +47,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Prove batch failure propagation
-        run: node --test scripts/lib/run-required-guards.test.mjs
+        run: node --test scripts/lib/run-required-guards.test.mjs scripts/__tests__/verify-static-classification.test.mjs
       - name: Sentry SDK and privacy contract
         run: |
           node scripts/verify-sentry-sdk-contract.mjs

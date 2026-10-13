@@ -1164,7 +1164,7 @@
     "arctic": "^3.7.0",
     "bullmq": "^5.81.5",
     "cron-parser": "^5.10.2",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.7",
     "drizzle-orm": "^0.45.4",
     "eta": "^4.6.0",
     "exceljs": "4.4.0",

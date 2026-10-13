@@ -207,6 +207,8 @@ export function noDbEnv() {
   // queried PRODUCTION — measured 2026-10-04: a 5,739-guard sweep ran hundreds of live reads in parallel, timed out
   // (ETIMEDOUT), and reported live findings as static "new rot". The static sweep never touches a database.
   env.IH35_NO_GATE_CREDENTIAL_FALLBACK = "1";
+  // dotenv v18 prefers DOTENV_PATH over its legacy alias; pin both.
+  env.DOTENV_PATH = "/dev/null";
   env.DOTENV_CONFIG_PATH = "/dev/null";
   env.PGHOST = "127.0.0.1";
   env.PGPORT = "59999";
