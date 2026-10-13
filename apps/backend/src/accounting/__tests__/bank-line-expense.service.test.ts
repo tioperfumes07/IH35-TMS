@@ -12,9 +12,12 @@ vi.mock("../display-id.js", () => ({ nextExpenseDisplayId }));
 vi.mock("../../expense-attribution/expense-number.js", () => ({ generateExpenseNumber, insertExpenseLoadLink }));
 vi.mock("../posting-engine.service.js", () => ({ postSourceTransactionInClientTx }));
 
-const { resolveExpenseItemForAccount, createAndPostBankLineExpenseOnClient, BankLineExpenseError } = await import(
-  "../bank-line-expense.service.js"
-);
+const {
+  resolveExpenseItemForAccount,
+  createAndPostBankLineExpenseOnClient,
+  adoptBankCategorizationExpenseDocument,
+  BankLineExpenseError,
+} = await import("../bank-line-expense.service.js");
 
 const CO = "11111111-1111-4111-8111-111111111111";
 
@@ -160,5 +163,91 @@ describe("createAndPostBankLineExpenseOnClient — load or exemption reason (443
   it("a reconciliation service charge (no bank line) names that context", async () => {
     const line = await run({ sourceBankTransactionId: null });
     expect(line.values?.[11]).toBe("Company cost — 6300 Bank Service Charges & Wire Fees — not tied to a load (reconciliation service charge 2026-01-15)");
+  });
+});
+
+describe("adoptBankCategorizationExpenseDocument — G6 (one JE, document adopts it)", () => {
+  it("inserts posted expense+line on the live JE, stamps matched_expense_id, never re-posts", async () => {
+    postSourceTransactionInClientTx.mockClear();
+    nextExpenseDisplayId.mockClear();
+    const calls: Array<{ text: string; values?: unknown[] }> = [];
+    const client = {
+      query: vi.fn(async (text: string, values?: unknown[] ) => {
+        calls.push({ text, values });
+        if (/FROM banking\.bank_transactions bt/.test(text) && /matched_je/.test(text)) {
+          return {
+            rows: [{
+              transaction_date: "2026-04-30",
+              description: "NP WIRELESS",
+              categorization_memo: null,
+              vendor_id: "v-np",
+              load_id: null,
+              unit_id: null,
+              trailer_id: null,
+              driver_id: null,
+              amount_cents: "-2705",
+              matched_je: "je-legacy",
+              matched_expense: null,
+            }],
+          };
+        }
+        if (/FROM accounting\.expenses/.test(text) && /journal_entry_id/.test(text)) return { rows: [] };
+        if (/source_bank_transaction_id/.test(text) && /FROM accounting\.expenses/.test(text)) return { rows: [] };
+        if (/FROM accounting\.journal_entry_postings p/.test(text)) {
+          return {
+            rows: [
+              { account_id: "acct-6100", debit_or_credit: "debit", amount_cents: "2705", account_type: "Expense", account_number: "6100", account_name: "Telephone" },
+              { account_id: "acct-bank", debit_or_credit: "credit", amount_cents: "2705", account_type: "Bank", account_number: "1000", account_name: "Checking" },
+            ],
+          };
+        }
+        if (/WHERE id = \$1::uuid AND operating_company_id/.test(text) && /catalogs\.items/.test(text)) {
+          return { rows: [{ id: "item-phone" }] };
+        }
+        if (/INSERT INTO accounting\.expenses/.test(text)) return { rows: [{ id: "exp-adopt" }] };
+        return { rows: [] };
+      }),
+    };
+    const out = await adoptBankCategorizationExpenseDocument(
+      client as never,
+      { operatingCompanyId: CO, bankTransactionId: "bt-legacy", itemId: "item-phone" },
+      { userId: "u-1" }
+    );
+    expect(out).toEqual({
+      outcome: "created",
+      expense_id: "exp-adopt",
+      journal_entry_id: "je-legacy",
+      expense_number: "EXP-2026-00042",
+    });
+    expect(postSourceTransactionInClientTx).not.toHaveBeenCalled();
+    expect(nextExpenseDisplayId).toHaveBeenCalled();
+    const header = calls.find((c) => /INSERT INTO accounting\.expenses/.test(c.text))!;
+    expect(header.values?.[12]).toBe("je-legacy"); // journal_entry_id adopted
+    expect(header.values?.[4]).toBe("EXP-2026-00042");
+    expect(calls.some((c) => /SET matched_expense_id = \$1::uuid/.test(c.text))).toBe(true);
+  });
+
+  it("returns already_exists when the bank line already names an expense", async () => {
+    const client = {
+      query: vi.fn(async (text: string) => {
+        if (/FROM banking\.bank_transactions bt/.test(text)) {
+          return {
+            rows: [{
+              transaction_date: "2026-04-30", description: "x", categorization_memo: null, vendor_id: null,
+              load_id: null, unit_id: null, trailer_id: null, driver_id: null, amount_cents: "-1",
+              matched_je: "je-1", matched_expense: "exp-existing",
+            }],
+          };
+        }
+        return { rows: [] };
+      }),
+    };
+    await expect(
+      adoptBankCategorizationExpenseDocument(
+        client as never,
+        { operatingCompanyId: CO, bankTransactionId: "bt-1", itemId: "item-x" },
+        { userId: "u-1" }
+      )
+    ).resolves.toEqual({ outcome: "already_exists", expense_id: "exp-existing", journal_entry_id: "je-1" });
   });
 });

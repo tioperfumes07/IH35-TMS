@@ -30,6 +30,7 @@ import {
   postVoidReversal,
   type VoidReversalResult,
 } from "./void.service.js";
+import { resolveDriverBillTrailerFromLoad } from "./bill-trailer-stamp.service.js";
 
 type BillStatus = "open" | "partial" | "paid" | "voided";
 // 'other' is a DB-valid method (accounting.bill_payments.payment_method CHECK) used for non-cash
@@ -111,9 +112,9 @@ type CreateBillInput = {
   unitId?: string | null;
   /**
    * GO-18 (design docs/lockdown/GO-18-LOAD-COSTS-DESIGN.md §3.5) — accounting.expenses has carried
-   * driver_uuid/trailer_id since Block-basis; accounting.bills never did (live-verified gap,
-   * 2026-09-01). Column-gated UPDATE-after-INSERT, same pattern as legalMatterId below (avoids
-   * exploding the already-4-way-branched header INSERT for 2 more optional columns).
+   * driver_uuid/trailer_id since Block-basis; accounting.bills carries driver_id + trailer_id /
+   * non_owned_trailer_id on the INSERT (DEGH-05 BEFORE INSERT refuse — UPDATE-after is too late for
+   * trailer). recover_* still UPDATE-after-INSERT.
    *
    * Owner 2026-09-02: the packet asked for bills.driver_uuid; what shipped is bills.driver_id.
    * Both FKs point at mdata.drivers. The split is INTENTIONAL — do not rename or dual-column.
@@ -122,6 +123,11 @@ type CreateBillInput = {
    */
   driverId?: string | null;
   trailerId?: string | null;
+  /**
+   * DEGH-05 / 443.131 — customer trailer on a load-born driver bill. Rides the INSERT with trailerId
+   * (never both). When omitted and loadId is set, createBill resolves from load-trailer.sql.ts.
+   */
+  nonOwnedTrailerId?: string | null;
   recoverFromDriver?: boolean;
   recoverDeductionType?: string | null;
   // Claim→Bill hop (held migration 202607740000). Only persisted when the column exists on the
@@ -2579,6 +2585,22 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
   const classId = hasClassId ? (input.classId ?? null) : null;
   const vendorCols = await resolveBillVendorWriteColumns(client, input.operatingCompanyId, input.vendorId);
 
+  // DEGH-05 / 443.131 — trailer rides the INSERT (BEFORE INSERT refuse_driver_bill_without_links). UPDATE-after
+  // is too late. Resolve from the load when the caller did not name one (same rule as stampNewDriverBillTrailerFromLoad).
+  let trailerId = input.trailerId ?? null;
+  let nonOwnedTrailerId = input.nonOwnedTrailerId ?? null;
+  if (input.loadId && !trailerId && !nonOwnedTrailerId) {
+    const resolved = await resolveDriverBillTrailerFromLoad(client, {
+      operatingCompanyId: input.operatingCompanyId,
+      loadId: input.loadId,
+    });
+    trailerId = resolved.companyTrailerId;
+    nonOwnedTrailerId = resolved.nonOwnedTrailerId;
+  }
+  if (trailerId && nonOwnedTrailerId) {
+    throw new Error("bill_trailer_one_kind_only");
+  }
+
   // LV-AP-DUP — DUPLICATE VENDOR-INVOICE CONTROL (live-proven: two identical $743.21 bills 10.3 s
   // apart, BOTH posted, leaving $1,486.42 of expense and A/P for one $743.21 invoice).
   //
@@ -2671,13 +2693,15 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         unit_id,
         driver_id,
         load_id,
+        trailer_id,
+        non_owned_trailer_id,
         insurance_claim_id,
         class_id,
         created_by_user_id,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$17::uuid,$18::uuid,$15,$16,$12,now(),now())
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$17::uuid,$18::uuid,$19::uuid,$20::uuid,$15,$16,$12,now(),now())
       RETURNING *
     `
       : hasInsuranceClaimId
@@ -2701,12 +2725,14 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         unit_id,
         driver_id,
         load_id,
+        trailer_id,
+        non_owned_trailer_id,
         insurance_claim_id,
         created_by_user_id,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$16::uuid,$17::uuid,$15,$12,now(),now())
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$16::uuid,$17::uuid,$18::uuid,$19::uuid,$15,$12,now(),now())
       RETURNING *
     `
       : hasClassId
@@ -2730,12 +2756,14 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         unit_id,
         driver_id,
         load_id,
+        trailer_id,
+        non_owned_trailer_id,
         class_id,
         created_by_user_id,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$16::uuid,$17::uuid,$15,$12,now(),now())
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$16::uuid,$17::uuid,$18::uuid,$19::uuid,$15,$12,now(),now())
       RETURNING *
     `
       : `
@@ -2758,11 +2786,13 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
         unit_id,
         driver_id,
         load_id,
+        trailer_id,
+        non_owned_trailer_id,
         created_by_user_id,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15::uuid,$16::uuid,$12,now(),now())
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15::uuid,$16::uuid,$17::uuid,$18::uuid,$12,now(),now())
       RETURNING *
     `,
     hasInsuranceClaimId && hasClassId
@@ -2785,6 +2815,8 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
           classId,
           input.driverId ?? null,
           input.loadId ?? null,
+          trailerId,
+          nonOwnedTrailerId,
         ]
       : hasInsuranceClaimId
       ? [
@@ -2805,6 +2837,8 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
           insuranceClaimId,
           input.driverId ?? null,
           input.loadId ?? null,
+          trailerId,
+          nonOwnedTrailerId,
         ]
       : hasClassId
         ? [
@@ -2825,6 +2859,8 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
             classId,
             input.driverId ?? null,
             input.loadId ?? null,
+            trailerId,
+            nonOwnedTrailerId,
           ]
       : [
           input.operatingCompanyId,
@@ -2843,6 +2879,8 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
           input.unitId ?? null,
           input.driverId ?? null,
           input.loadId ?? null,
+          trailerId,
+          nonOwnedTrailerId,
         ]
   );
   if ((res.rowCount ?? 0) === 0 || !res.rows[0]) throw new Error("bill_insert_failed");

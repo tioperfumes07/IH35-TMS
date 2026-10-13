@@ -8,10 +8,12 @@ const files = ['apps/backend/src/lib/sentry.ts', 'apps/frontend/src/observabilit
 const sources = files.map(file => readFileSync(new URL(file, root), 'utf8'));
 const pkg = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'));
 const privacy = {
-  userInfo: false, cookies: false, httpHeaders: false, httpBodies: [],
+  userInfo: false, cookies: false,
+  // v11 DataCollection.httpHeaders is { request?, response? }, not a boolean.
+  httpHeaders: { request: false, response: false }, httpBodies: [],
   urlQueryParams: false, graphQL: { document: false, variables: false },
   genAI: { inputs: false, outputs: false }, databaseQueryData: false,
-  queues: false, stackFrameVariables: false,
+  stackFrameVariables: false,
 };
 
 function literal(node) {

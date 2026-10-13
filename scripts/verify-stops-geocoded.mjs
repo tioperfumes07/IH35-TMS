@@ -42,6 +42,11 @@ export function failures(files = canonical) {
   if (!files.book.includes("geocodeStopsBackfill") || !files.edit.includes("await geocodeStopsWithClient")) out.push("new-stop service hooks missing");
   if (!files.migration.includes("load_stops_coordinates_not_zero_check") || !files.migration.includes("latitude <> 0 OR longitude <> 0") || !files.migration.includes("enter_radius_m") || !files.migration.includes("exit_radius_m")) out.push("schema constraints missing");
   if (!files.step.includes("verify-stops-geocoded.mjs")) out.push("CI registration missing");
+  // G11 leftover — after geocode, bind load-{id}-stop-{seq} fences (detector labels), not only location_ref fences
+  if (!/import \{ bindLoadToGeofences \} from "\.\.\/dispatch\/geofences\/load-geofence-binding\.service\.js"/.test(files.service) ||
+      !/await bindLoadToGeofences\(client, companyId, lid\)/.test(files.service)) {
+    out.push("G11: geocodeStopsWithClient must call bindLoadToGeofences after geocode for every touched load");
+  }
   return out;
 }
 export function liveFailures(row) {
@@ -97,6 +102,7 @@ if (process.argv.includes("--selftest")) {
     { ...canonical, fallback: canonical.fallback.replace("reason: stableProviderFailureReason(error)", "reason: 'provider_error'") },
     { ...canonical, google: canonical.google.replace('headers.get("retry-after")', 'headers.get("ignored")') },
     { ...canonical, drawer: canonical.drawer.replace("city-level only — no arrival fence", "Geocoded") },
+    { ...canonical, service: canonical.service.replaceAll("bindLoadToGeofences", "bindSomethingElse") },
   ];
   plants.forEach((plant, i) => { if (failures(plant).length === 0) throw new Error(`planted regression ${i + 1} escaped`); });
   const localityFencePlant = { unexplained_null: 0, generic_provider_error: 0, zero_zero: 0, locality_fences: 1, geofences: 1, locations: 0 };

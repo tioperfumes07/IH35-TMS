@@ -16,8 +16,9 @@
  *   S5 Undo of the line voids the expense it created (voidDocumentsCreatedByLine reads accounting.expenses)
  *   S6 voiding the expense releases the line (void.service BANK_MATCH_REVERSE_TABLE expense)
  * LIVE (with DATABASE_URL), USMCA:
- *   L1 bare bank_categorization JEs that debit Expense/COGS/OtherExpense must not GROW past MAX_LEGACY_BARE_EXPENSE_CATS
- *      (DEGH-02 engine fix stops new ones; historical rows need a separate back-post, never a baseline raise)
+ *   L1 bare bank_categorization JEs that debit Expense/COGS/OtherExpense AND have no expense document
+ *      (matched_expense_id NULL) must not GROW past MAX_LEGACY_BARE_EXPENSE_CATS (DEGH-02 stops new ones;
+ *      G6 adopt clears the legacy 4 — never raise the ceiling)
  *   L2 every live expense with source_bank_transaction_id is named back by that line (matched_expense_id) and the line's
  *      matched_journal_entry_id is the expense's own entry
  *   L3 that entry balances
@@ -35,8 +36,8 @@ import pg from "pg";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-bank-categorized-cost-is-expense-document";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
-/** Measured 2026-10-12 USMCA: 4 legacy bare bank_categorization JEs on expense accounts (pre-DEGH-02). Never raise. */
-export const MAX_LEGACY_BARE_EXPENSE_CATS = 4;
+/** Measured 2026-10-13 USMCA after G6 adopt: 0 bare bank_categorization JEs on expense accounts (documents adopt the 4 legacy JEs). Never raise. */
+export const MAX_LEGACY_BARE_EXPENSE_CATS = 0;
 // verify-no-silent-db-skip (03d): the static rules S1–S8 always run and fail closed; the live rules run whenever
 // DATABASE_URL is set, and the OK line says "static only" when they did not.
 export const ALLOW_OFFLINE_SKIP = "static S1–S8 always run and fail closed; live L1–L6 run whenever DATABASE_URL is set";
@@ -100,6 +101,13 @@ export function staticProblems(src) {
     p.push("S8/DEGH-07: postCanonicalFuelTxn must call createExpenseFromFuelTransaction and refuse on outcome===refused");
   }
   void fuel;
+  // G6 / DEGH-02 adopt — legacy bare bank_categorization JEs get an expense document without re-posting
+  if (!/export async function adoptBankCategorizationExpenseDocument\(/.test(src.writer) ||
+      !/journal_entry_id, posted_at/.test(src.writer) ||
+      !/SET matched_expense_id = \$1::uuid/.test(src.writer) ||
+      /postSourceTransactionInClientTx\(/.test(fnBody(src.writer, "adoptBankCategorizationExpenseDocument"))) {
+    p.push("S9/G6: adoptBankCategorizationExpenseDocument must INSERT expense+line adopting the live JE (no re-post) and stamp matched_expense_id");
+  }
   return p;
 }
 
@@ -110,6 +118,8 @@ async function liveProblems(url) {
   try {
     await c.query("BEGIN READ ONLY");
     await c.query(`SET LOCAL app.bypass_rls = 'lucia'`);
+    // Bare = bank_categorization debiting an expense account with NO expense document yet
+    // (matched_expense_id NULL). G6 adopt stamps the pointer; those JEs stay on the books but are no longer bare.
     const l1 = await c.query(
       `SELECT DISTINCT je.id::text AS je, a.account_number
          FROM accounting.journal_entries je
@@ -118,7 +128,7 @@ async function liveProblems(url) {
          JOIN catalogs.accounts a ON a.id = p.account_id
         WHERE je.operating_company_id = $1::uuid AND je.status = 'posted' AND je.voided_at IS NULL
           AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
-          AND bt.is_credit = false AND p.debit_or_credit = 'debit'
+          AND bt.is_credit = false AND bt.matched_expense_id IS NULL AND p.debit_or_credit = 'debit'
           AND a.account_type IN ('Expense', 'CostOfGoodsSold', 'OtherExpense')`,
       [USMCA]
     );
@@ -195,6 +205,7 @@ if (process.argv.includes("--selftest")) {
     ["S6", staticProblems(plant("void", 'expense: "accounting.expenses"', ""))],
     ["S7", staticProblems({ ...src, writer: src.writer.replaceAll("generateExpenseNumber", "generateSomethingElse") })],
     ["S8", staticProblems({ ...src, fuelPost: src.fuelPost.replaceAll("fuel_fill_document_refused", "fuel_fill_skipped") })],
+    ["S9", staticProblems({ ...src, writer: src.writer.replaceAll("adoptBankCategorizationExpenseDocument", "adoptSomethingElse") })],
     ["L2", linkageProblems({ ...good, bt_expense: null })],
     ["L3", linkageProblems({ ...good, net: 5 })],
     ["L4", linkageProblems({ ...good, dr_cat: 0 })],
@@ -207,7 +218,7 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL — not caught: ${missed.join(", ")}${clean.length ? `; clean row flagged: ${clean.join("; ")}` : ""}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS — real tree clean; ${cases.length}/${cases.length} rules proven able to fail (S1–S8, L2–L6)`);
+  console.log(`${LABEL} --selftest PASS — real tree clean; ${cases.length}/${cases.length} rules proven able to fail (S1–S9, L2–L6)`);
   process.exit(0);
 }
 
