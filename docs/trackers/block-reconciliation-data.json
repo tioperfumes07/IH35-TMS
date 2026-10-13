@@ -1,6 +1,6 @@
 {
  "date": "2026-10-13",
- "generated_at_iso": "2026-10-13T01:15:13.573Z",
+ "generated_at_iso": "2026-10-13T06:55:33.545Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 26747,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-13T01:15:52Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 26745,
    "title": "Cursor- fix(document-links): DEGH-05-ALL L3 floor — driver_bills_missing_trailer=0",
    "mergedAt": "2026-10-12T23:56:56Z",
@@ -17330,12 +17336,6 @@
    "title": "Cursor- BANK-F91195 KpiStatCard/EntityLink/Freshness slate → house",
    "mergedAt": "2026-10-09T10:41:05Z",
    "branch": "cursor/bank-f91195-next-leftover-c89b"
-  },
-  {
-   "number": 26130,
-   "title": "Cursor-BANK-F91194 UnclearedDocs/WorkOrderCopy/JeTypePicker slate → house",
-   "mergedAt": "2026-10-09T10:34:45Z",
-   "branch": "cursor/bank-f91194-next-leftover-c89b"
   }
  ],
  "merged_pr_total": 3000,
