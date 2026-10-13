@@ -7968,3 +7968,13 @@ status: CONSUMED
 consumed_by: CC-2 (443.137 #1)
 row_counts: 145 settled USMCA driver bills stamped (unit 145; company trailer 135, customer trailer 10); 145 driver_finance.driver_bill.unit_trailer_backstamped audit rows; money md5 unchanged (runner check); COMMITTED
 proof_query: USMCA settled, non-voided driver_finance.driver_bills -> 145; missing unit 0; missing trailer choice 0; both trailers set 0; 145 audit rows (read on prod via Neon read-only, bypass, 2026-10-12 ~22:45 UTC)
+
+## AUTH-449
+issued_at: 2026-10-13T20:45:00Z
+issued_by: Lead (Cursor) — I-02 residual after AUTH-406 CONSUMED. Owner "ok continue" 2026-10-13; prior standing "you and all codres have full permission and authorizations" (2026-10-10). Root cause: D6 backfill omitted operating_company_id so resolvePostingSourceEntity $2 was undefined and the 10 EXP-2026-00001..00005 Bank-of-America lines stayed entity-null.
+owner_quotes: "ok continue" (2026-10-13) · "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — accounting.journal_entry_postings of Creator-document sources (invoice, bill, bill_payment, expense, driver_settlement, driver_advance) with entity_uuid IS NULL created since 2026-10-07T00:00:00Z: entity_uuid/entity_type filled ONCE where NULL through resolvePostingSourceEntity (now with operating_company_id), load_id filled ONCE where NULL through accounting.posting_source_load_id. No amount, account, side or JE changes; trial balance and posting count asserted unchanged before COMMIT. No DELETE. TRANSPORTATION / TRUCKING not touched. Targets the residual I-02 cohort (10 lines on EXP-2026-00001..00005).
+action: OWNER_AUTH_ID=AUTH-449 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-11-cc2-d6-backfill-posting-entity.ts --apply --since=2026-10-07T00:00:00Z
+rehearsal: throwaway br-odd-field-akxo1bh7 (REHEARSE rolled back): Scope 115; fill 10 expense→vendor (5×1000, 3×6300, 1×6310, 1×6900); Unresolved 0; Entity NULL in scope after fill 0; trial balance 0 across 3963 postings unchanged
+expires_at: 2026-10-14T20:45:00Z
+status: OPEN

@@ -1,5 +1,20 @@
 # SEATS → LEAD
 
+## CURSOR | I-02 D6 OCI + AUTH-449 SHIP (2026-10-13)
+
+**Tip base:** `bc5ee92f32` (#26764 S7+G6+G11)
+**Branch:** `cursor/i02-entity-fill-oci-c89b`
+**What:** D6 ops now SELECT/pass `operating_company_id` into `resolvePostingSourceEntity`. AUTH-449 OPEN for residual I-02 window since 2026-10-07 (AUTH-406 CONSUMED + too narrow).
+**Fork proof:** br-odd-field-akxo1bh7 rehearse → 10 fills, Unresolved 0, Entity NULL after=0, TB unchanged, rolled back.
+**Leftovers absorbed this turn:**
+| Item | Status |
+|---|---|
+| I-02 10 entity-null expense postings | **SHIP** (code+AUTH; prod apply after merge) |
+| AJK-04 5 drivers no vendor | **CLOSED** (0 on fork Rule-49) |
+| N1 physical trailer mismatches | **NOT ABSORBED** (unsafe bulk; engine refuse going forward) |
+
+---
+
 ## CURSOR | 443.140 DONE — orphan-geofence + DEGH-05-ALL + READ-BACK + RE-AUDIT ✓
 
 **Tip main at report:** `7a570c3432` (Codex load-costs #26744 after Cursor merges)
