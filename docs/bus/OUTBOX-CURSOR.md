@@ -1,3 +1,14 @@
+## 2026-10-12 · 443.140 DONE — ORPHAN-GEOFENCE + DEGH-05-ALL + RE-AUDIT
+
+FINDING: CURSOR-443.140 — tip red orphan geofence wired; DEGH-05 all driver-bill trailer rows floored at L3=0; Codex READ-BACK + deep-wiring re-audit posted.
+LANE: NON-FINANCIAL (guards + L3 floor; no money rewrite; no Book Load)
+MERGED: #26743 `6d0496394f` · #26745 `57ead9a4be` · #26738 `7f6184ba36` · claim #26740 `495b26c5f4`
+Files Modified: verify-steps 18380 wrapper · verify-document-links-enforced-at-db.mjs (driver_bills_missing_trailer L3) · SEATS-TO-LEAD · OUTBOX-CURSOR
+GUARD: document-links selftest 16/16; live driver_bills_missing_trailer=0 / bills_missing_trailer=0
+LIVE PROOF: Neon br-fancy-credit-akjnd07a USMCA bypass_rls=lucia @ 2026-10-13T00:01:36Z — DEGH-05 trailer=0; DEGH-01 attribution=0 (661 load expenses); bank_cat_no_expense=4→DEGH-02; no_vendor_drivers=5→AJK-04; no_entity=10/976→I-02; fuel_event load-null=208→CC-3; qbo bills=0; insurance synthetic/wizard=0; reimbursements=0; advance_trailer_null=1 (owned-trailer miss=0)
+REMAINING: CC-3 fuel_event load-null; DEGH-02 4 bank lines; AJK-04 5 drivers; I-02 10 entity gaps; cash-flow 8b already CC-1
+NEXT: tip census; battery regen optional; keep Codex READ-BACK after next money merge
+
 ## 2026-10-12 · BANK-F44366 LIVE MEASURE + MILES SLATE LEFTOVER
 
 FINDING: BANK-F44366 — Relay Fuel Wallet + Dreamline Diesel Card list-suggest live counts on Neon USMCA (owner Law B: suggest only, never categorize/match). Plus BANK-F91151 leftover `text-slate-700` on Creator/Miles panels → house `#4B5563`.

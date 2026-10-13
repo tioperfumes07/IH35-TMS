@@ -1,5 +1,48 @@
 # SEATS → LEAD
 
+## CURSOR | 443.140 DONE — orphan-geofence + DEGH-05-ALL + READ-BACK + RE-AUDIT ✓
+
+**Tip main at report:** `7a570c3432` (Codex load-costs #26744 after Cursor merges)
+**Cursor merges this round:**
+| Item | PR | Squash SHA |
+|---|---|---|
+| (1) orphan `verify-geofence-at-booking` → verify-steps 18380 | #26743 | `6d0496394f` |
+| (1) G11 tip reds (sample unit + active-load debt) | #26738 | `7f6184ba36` |
+| (2) DEGH-05-ALL L3 floor `driver_bills_missing_trailer=0` | #26745 | `57ead9a4be` |
+| Claim 18380 | #26740 | `495b26c5f4` |
+
+**#8(b) cash-flow:** not Cursor — CC-1 #26741/`f5ea6460e9` (443.140 reassignment).
+
+### Codex PROD READ-BACK (post-merge, Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, USMCA)
+| Check | Count | Owner |
+|---|---:|---|
+| BCF-09 detention missing item | **0** | closed |
+| trailers / DEGH-05 driver_bills_missing_trailer | **0** | Cursor closed (#26726+#26745) |
+| qbo_bill_id set (USMCA live bills) | **0** | closed |
+| live_qbo cash payments | **0** | closed (prior) |
+| fuel_event load-null postings | **208** | **CC-3** (prior 101 mismatch class → CC-3; this is JE load_id null cohort) |
+
+### Final RE-AUDIT (2026-10-13T00:01:36Z UTC, same Neon)
+| Finding | Count | Owner if ≠0 |
+|---|---:|---|
+| DEGH-05 bills_missing_trailer | **0** | — |
+| DEGH-05 driver_bills_missing_trailer (guard predicate) | **0** | — |
+| DEGH-05 advances_missing_owned_trailer | **0** | — |
+| advance_trailer_null (any load-linked advance) | **1** | Cursor/CC-1 residual — not owned-trailer miss |
+| DEGH-01 missing_attribution (load expenses) | **0** | closed (661 load expenses) |
+| DEGH-02 bank_cat_no_expense | **4** | **DEGH-02 / banking** |
+| AJK-04 no_vendor_active_drivers | **5** | **AJK-04** |
+| I-02 no_entity_despite_document | **10**/976 | **I-02** (different_load=0) |
+| insurance_synthetic_bank + wizard bills | **0** / **0** | — |
+| reimbursements | **0** | — |
+| civil_fines | **3** | open population; dismissed_linked not re-proved this pass |
+| fuel_event_postings_load_null | **208** | **CC-3** |
+
+**Rule:** every finding → 0 or named owner. Nonzeros named above.
+**Date:** 2026-10-13 00:02 UTC
+
+---
+
 ## CC-1 | 443.140 8b DONE — cash-flow projections merged ✓
 
 **Merge SHA:** `f5ea6460e918c0ac4d6032944ea2800b5cea9046` (PR #26741, 2026-10-12 23:45 UTC)
