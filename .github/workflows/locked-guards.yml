@@ -161,6 +161,12 @@ jobs:
 
       - name: verify:guard-wired
         run: npm run verify:guard-wired
+      - name: Cash-flow projection date contract
+        run: |
+          node scripts/verify-cash-flow-projection-dates.mjs --selftest
+          node scripts/verify-cash-flow-projection-dates.mjs
+      - name: Migration UUID-key contract mutations
+        run: node scripts/verify-migrations-no-uuid-pk-reference.mjs --selftest
 
       - name: verify:load-detail-costs-tab --selftest
         run: node scripts/verify-load-detail-costs-tab.mjs --selftest
