@@ -29,6 +29,20 @@ export async function initFrontendSentry(): Promise<void> {
     dsn,
     environment: import.meta.env.MODE,
     tracesSampleRate: 0.1,
+    traceLifecycle: "static",
+    // v11 must not expand collection of customer/financial payloads by default.
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: false,
+      httpBodies: [],
+      urlQueryParams: false,
+      graphQL: { document: false, variables: false },
+      genAI: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      queues: false,
+      stackFrameVariables: false,
+    },
     integrations: [],
   });
   initialized = true;

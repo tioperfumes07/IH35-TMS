@@ -148,6 +148,8 @@ test('live phase is required even for doc-only changes; no DB remains a live fai
   const env = { ...process.env };
   delete env.DATABASE_URL;
   delete env.DATABASE_DIRECT_URL;
+  // This is deliberately the missing-credential case, even on a configured Mac.
+  env.IH35_NO_GATE_CREDENTIAL_FALLBACK = '1';
   const args = ['scripts/verify-one-load-create-path.mjs'];
   assert.equal(spawnSync(process.execPath, [...args, '--static'], { env }).status, 0);
   assert.equal(spawnSync(process.execPath, args, { env }).status, 1);
