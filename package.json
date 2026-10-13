@@ -1179,7 +1179,7 @@
     "opossum": "^10.0.0",
     "oslo": "^1.2.1",
     "pg": "^8.23.1",
-    "plaid": "^47.0.0",
+    "plaid": "^48.0.0",
     "puppeteer": "^25.13.0",
     "rate-limiter-flexible": "^11.2.1",
     "resend": "^6.32.1",
