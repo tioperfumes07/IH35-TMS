@@ -91,8 +91,9 @@ const FIELD_DEFS: FieldDef[] = [
     { value: "owned", label: "Owned" }, { value: "financed", label: "Financed" }, { value: "leased", label: "Leased" },
   ]},
   { key: "lien_holder", label: "Lien Holder", type: "text", tab: "Financial" },
-  { key: "qbo_vendor_id", label: "QBO Vendor ID", type: "text", tab: "Financial" },
-  { key: "qbo_class_id", label: "QBO Class ID", type: "text", tab: "Financial" },
+  // 443.137 9e last gaps: QuickBooks is a read-only archive. Free-text QBO Vendor ID / QBO Class ID
+  // fields removed — class is set on the unit profile via the TMS class picker (qbo_class_id column
+  // still stores the TMS catalogs.accounting_classes id; no QBO id is written from this modal).
   { key: "sold_date", label: "Sale Date", type: "date", tab: "Lifecycle", lifecycleStatus: "Sold", ownerOnly: true },
   { key: "sold_price", label: "Sale Price", type: "number", tab: "Lifecycle", lifecycleStatus: "Sold", ownerOnly: true },
   { key: "sold_to", label: "Sale Buyer", type: "text", tab: "Lifecycle", lifecycleStatus: "Sold", ownerOnly: true },

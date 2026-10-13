@@ -34,7 +34,7 @@ vi.mock("../../api/mdata", async (importOriginal) => {
     ...actual,
     getDriver: vi.fn(),
     getDriverApVendor: vi.fn(),
-    updateVendor: vi.fn(),
+    putDriverApVendor: vi.fn(),
     updateDriver: vi.fn(),
     listVendors: vi.fn(),
   };
@@ -83,7 +83,9 @@ describe("DriverDetail — vendor is the native A/P payee picker, never a QBO pi
         { id: NEW_VENDOR, name: "Ana Lopez LLC", vendor_type: "Driver" },
       ],
     } as never);
-    vi.mocked(mdataApi.updateVendor).mockResolvedValue({} as never);
+    vi.mocked(mdataApi.putDriverApVendor).mockResolvedValue({
+      vendor: { id: NEW_VENDOR, name: "Ana Lopez LLC", qbo_vendor_id: null, operating_company_id: COMPANY, driver_id: DRIVER },
+    } as never);
     vi.mocked(mdataApi.updateDriver).mockResolvedValue(driverFixture as never);
   });
 
@@ -96,7 +98,7 @@ describe("DriverDetail — vendor is the native A/P payee picker, never a QBO pi
     expect(screen.queryByPlaceholderText(/search QuickBooks/i)).not.toBeInTheDocument();
   });
 
-  it("relinks the payee on mdata.vendors.driver_id and never writes qbo_vendor_id", async () => {
+  it("relinks the payee with one atomic PUT and never writes qbo_vendor_id", async () => {
     renderPage();
     const field = await screen.findByTestId("driver-ap-vendor-select");
     const input = await within(field).findByDisplayValue("Ana Lopez (driver)");
@@ -105,21 +107,16 @@ describe("DriverDetail — vendor is the native A/P payee picker, never a QBO pi
     fireEvent.click(await screen.findByRole("option", { name: /Ana Lopez LLC/ }));
     fireEvent.click(screen.getByRole("button", { name: "Save vendor & class" }));
 
+    await waitFor(() => expect(mdataApi.putDriverApVendor).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(mdataApi.putDriverApVendor).mock.calls).toEqual([[DRIVER, COMPANY, NEW_VENDOR]]);
     await waitFor(() => expect(mdataApi.updateDriver).toHaveBeenCalledTimes(1));
-    expect(vi.mocked(mdataApi.updateVendor).mock.calls).toEqual([
-      [OLD_VENDOR, { driver_id: null }],
-      [NEW_VENDOR, { driver_id: DRIVER }],
-    ]);
     const driverPatch = vi.mocked(mdataApi.updateDriver).mock.calls[0]?.[1] as Record<string, unknown>;
     expect(driverPatch).not.toHaveProperty("qbo_vendor_id");
     expect(driverPatch).toEqual({ qbo_class_id: null });
   });
 
-  it("restores the previous payee when linking the new vendor fails", async () => {
-    vi.mocked(mdataApi.updateVendor).mockImplementation(async (id: string, body: { driver_id?: string | null }) => {
-      if (id === NEW_VENDOR) throw new Error("mdata_vendor_conflict");
-      return { id, ...body } as never;
-    });
+  it("does not patch class when the atomic payee PUT fails", async () => {
+    vi.mocked(mdataApi.putDriverApVendor).mockRejectedValue(new Error("mdata_vendor_conflict"));
     renderPage();
     const field = await screen.findByTestId("driver-ap-vendor-select");
     const input = await within(field).findByDisplayValue("Ana Lopez (driver)");
@@ -128,12 +125,8 @@ describe("DriverDetail — vendor is the native A/P payee picker, never a QBO pi
     fireEvent.click(await screen.findByRole("option", { name: /Ana Lopez LLC/ }));
     fireEvent.click(screen.getByRole("button", { name: "Save vendor & class" }));
 
-    await waitFor(() => expect(mdataApi.updateVendor).toHaveBeenCalledTimes(3));
-    expect(vi.mocked(mdataApi.updateVendor).mock.calls).toEqual([
-      [OLD_VENDOR, { driver_id: null }],
-      [NEW_VENDOR, { driver_id: DRIVER }],
-      [OLD_VENDOR, { driver_id: DRIVER }],
-    ]);
+    await waitFor(() => expect(mdataApi.putDriverApVendor).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(mdataApi.putDriverApVendor).mock.calls).toEqual([[DRIVER, COMPANY, NEW_VENDOR]]);
     expect(mdataApi.updateDriver).not.toHaveBeenCalled();
   });
 });

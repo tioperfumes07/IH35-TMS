@@ -1,9 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { appendCrudAudit } from "../audit/crud-audit.js";
-import { withCurrentUser } from "../auth/db.js";
-import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { QBO_NATIVE_WRITE_REFUSED } from "../qbo-sync/qbo-native-write-refused.js";
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -30,6 +28,15 @@ const bodySchema = z.object({
   mappings: z.array(mappingSchema).min(1).max(500),
 });
 
+/**
+ * ACCT-F4431381 (443.137 9e last gaps) — QuickBooks is a READ-ONLY ARCHIVE.
+ *
+ * This route used to UPDATE mdata.drivers / mdata.units / mdata.equipment qbo_vendor_id /
+ * qbo_class_id from a bulk QBO mapping payload. The FE review page is already read-only
+ * (verify-qbo-bulk-link-uses-paritytable); the POST still accepted writes with no UI caller.
+ * Refuse by name — never a silent 0-row success — so a resurrected caller cannot stamp QBO
+ * ids onto native master rows.
+ */
 export async function registerQboBulkLinkRoutes(app: FastifyInstance) {
   app.post("/api/v1/qbo/bulk-link", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -39,148 +46,16 @@ export async function registerQboBulkLinkRoutes(app: FastifyInstance) {
     const parsed = bodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
-    const ignoreRaw = z.enum(["true", "false"]).safeParse(String((req.query as { ignore_errors?: string })?.ignore_errors ?? "false"));
-    const ignoreErrors = ignoreRaw.success ? ignoreRaw.data === "true" : false;
-
-    const errors: Array<{ entity_id: string; error_message: string }> = [];
-    let applied = 0;
-
-    await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
-
-    const runBatch = async () => {
-      // B10 (Devin sweep, 2026-09-28): withCurrentUser already manages the transaction for this
-      // whole callback (one request, up to 500 mappings, one commit) -- the nested
-      // BEGIN/COMMIT/ROLLBACK below was redundant on the same connection and committed the outer
-      // transaction early (see qbo-master-write.routes.ts's fix for the full explanation). A
-      // per-mapping failure when ignoreErrors=false still throws and propagates to
-      // withCurrentUser's own rollback; per-mapping failures collected in `errors` when
-      // ignoreErrors=true were never query-level failures needing a rollback in the first place.
-      await withCurrentUser(user.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [parsed.data.operating_company_id]);
-
-        const applyAudit = async (payload: Record<string, unknown>) => {
-          await appendCrudAudit(client, user.uuid, "qbo.entity_linked", payload, "info", "P6-T11196");
-        };
-
-        for (const map of parsed.data.mappings) {
-            const vendorId = map.qbo_vendor_id ?? null;
-            const classId = map.qbo_class_id ?? null;
-            if (!vendorId && !classId) {
-              throw new Error("mapping_requires_vendor_or_class");
-            }
-
-            try {
-              if (parsed.data.type === "drivers") {
-                const cur = await client.query<{
-                  qbo_vendor_id: string | null;
-                  qbo_class_id: string | null;
-                }>(
-                  `
-                    SELECT qbo_vendor_id, qbo_class_id
-                    FROM mdata.drivers
-                    WHERE id = $1
-                      AND operating_company_id = $2::uuid
-                    LIMIT 1
-                    FOR UPDATE
-                  `,
-                  [map.entity_id, parsed.data.operating_company_id]
-                );
-                if (!cur.rows[0]) throw new Error("entity_not_found");
-
-                await client.query(
-                  `
-                    UPDATE mdata.drivers
-                    SET
-                      qbo_vendor_id = CASE WHEN $3::text IS NOT NULL THEN $3 ELSE qbo_vendor_id END,
-                      qbo_class_id = CASE WHEN $4::text IS NOT NULL THEN $4 ELSE qbo_class_id END,
-                      updated_at = now()
-                    WHERE id = $1
-                      AND operating_company_id = $2::uuid
-                  `,
-                  [map.entity_id, parsed.data.operating_company_id, vendorId, classId]
-                );
-
-                await applyAudit({
-                  entity_type: "driver",
-                  entity_id: map.entity_id,
-                  qbo_vendor_id: vendorId,
-                  qbo_class_id: classId,
-                  source: "bulk_link",
-                  operating_company_id: parsed.data.operating_company_id,
-                });
-                applied += 1;
-              } else {
-                const unitRes = await client.query<{ id: string }>(
-                  `
-                    UPDATE mdata.units
-                    SET
-                      qbo_vendor_id = CASE WHEN $3::text IS NOT NULL THEN $3 ELSE qbo_vendor_id END,
-                      qbo_class_id = CASE WHEN $4::text IS NOT NULL THEN $4 ELSE qbo_class_id END,
-                      updated_at = now()
-                    WHERE id = $1
-                      AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
-                    RETURNING id
-                  `,
-                  [map.entity_id, parsed.data.operating_company_id, vendorId, classId]
-                );
-
-                if (unitRes.rows[0]?.id) {
-                  await applyAudit({
-                    entity_type: "unit",
-                    entity_id: map.entity_id,
-                    qbo_vendor_id: vendorId,
-                    qbo_class_id: classId,
-                    source: "bulk_link",
-                    operating_company_id: parsed.data.operating_company_id,
-                  });
-                  applied += 1;
-                  continue;
-                }
-
-                const equipRes = await client.query<{ id: string }>(
-                  `
-                    UPDATE mdata.equipment
-                    SET
-                      qbo_vendor_id = CASE WHEN $3::text IS NOT NULL THEN $3 ELSE qbo_vendor_id END,
-                      qbo_class_id = CASE WHEN $4::text IS NOT NULL THEN $4 ELSE qbo_class_id END,
-                      updated_at = now()
-                    WHERE id = $1
-                      AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
-                    RETURNING id
-                  `,
-                  [map.entity_id, parsed.data.operating_company_id, vendorId, classId]
-                );
-
-                if (!equipRes.rows[0]?.id) throw new Error("entity_not_found");
-
-                await applyAudit({
-                  entity_type: "equipment",
-                  entity_id: map.entity_id,
-                  qbo_vendor_id: vendorId,
-                  qbo_class_id: classId,
-                  source: "bulk_link",
-                  operating_company_id: parsed.data.operating_company_id,
-                });
-                applied += 1;
-              }
-            } catch (inner) {
-              const message = String((inner as Error)?.message ?? "link_failed");
-              if (!ignoreErrors) throw inner;
-              errors.push({ entity_id: map.entity_id, error_message: message });
-            }
-          }
-      });
-    };
-
-    try {
-      await runBatch();
-    } catch (error) {
-      const message = String((error as Error)?.message ?? "bulk_link_failed");
-      if (!ignoreErrors) {
-        return reply.code(400).send({ error: message, applied: 0, failed: parsed.data.mappings.length, errors });
-      }
-    }
-
-    return { applied, failed: errors.length, errors };
+    return reply.code(409).send({
+      error: QBO_NATIVE_WRITE_REFUSED,
+      message:
+        `${QBO_NATIVE_WRITE_REFUSED}: POST /api/v1/qbo/bulk-link would write qbo_vendor_id / ` +
+        `qbo_class_id onto native mdata.${parsed.data.type === "drivers" ? "drivers" : "units|equipment"} ` +
+        `from QuickBooks. QuickBooks is a read-only archive (owner ruling; Lead 443.137 item 9e) — ` +
+        `link native payees through the TMS A/P vendor picker; set TMS class on the unit/driver profile.`,
+      applied: 0,
+      failed: parsed.data.mappings.length,
+      errors: [],
+    });
   });
 }

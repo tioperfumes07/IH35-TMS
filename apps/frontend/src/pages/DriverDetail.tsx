@@ -30,6 +30,7 @@ import {
   enableDriverPhoneLogin,
   getDriver,
   getDriverApVendor,
+  putDriverApVendor,
   resendDriverInvite,
   getDriverQualificationRateHistory,
   listDriverCompanyAuthorizations,
@@ -40,7 +41,6 @@ import {
   voidSafetyEvent,
   upsertDriverCompanyAuthorization,
   updateDriver,
-  updateVendor,
   type DriverQualificationRateHistoryItem,
 } from "../api/mdata";
 import { listClassesForJe } from "../api/accounting";
@@ -378,22 +378,11 @@ export function DriverDetailPage() {
 
   const saveDriverQboMutation = useMutation({
     mutationFn: async () => {
-      // Native payee relink: one active vendor per driver per company
-      // (uq_vendors_driver_active_per_company), so the previous payee is unlinked before the new one
-      // is linked. If linking the new vendor fails, the previous link is restored so the driver is
-      // never left without a payee by a half-applied save. Both writes are audited by the vendor
-      // PATCH route (mdata.vendors.updated).
+      // 443.137 9e last gaps: native payee relink is one PUT (server transaction) — never two
+      // client-side vendor PATCHes that can leave the driver without a payee mid-failure.
       const previousVendorId = linkedApVendor?.id ?? null;
-      if (apVendorPickId !== previousVendorId) {
-        if (previousVendorId) await updateVendor(previousVendorId, { driver_id: null });
-        if (apVendorPickId) {
-          try {
-            await updateVendor(apVendorPickId, { driver_id: id });
-          } catch (error) {
-            if (previousVendorId) await updateVendor(previousVendorId, { driver_id: id });
-            throw error;
-          }
-        }
+      if (apVendorPickId !== previousVendorId && driver?.operating_company_id) {
+        await putDriverApVendor(id, String(driver.operating_company_id), apVendorPickId);
       }
       return updateDriver(id, { qbo_class_id: qboClassTmsId || null });
     },
