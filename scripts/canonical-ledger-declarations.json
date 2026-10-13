@@ -3,6 +3,13 @@
   "_when_to_use": "ONLY for a table whose CREATE migration was already applied before the omission was caught. A NEW table still declares INSIDE its own migration -- that is the cheaper path and it stays the default. Adding an entry here is a deliberate act with the applied timestamp recorded next to it.",
   "_added": "2026-09-30 by Claude Lead. main was RED on verify:no-duplicate-financial-ledger for both tables below, blocking every seat's PR. Verified red by running the guard against origin/main content, not inferred from one PR.",
   "declarations": {
+    "accounting.related_party_accounts": {
+      "migration": "202615900910_related_party_accounts_link.sql",
+      "applied_at_utc": "2026-10-12T21:36:17.400Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a; read-only measurement 2026-10-13",
+      "why_not_in_migration": "Already applied before the omitted declaration was caught; preserve immutable migration checksum.",
+      "text": "-- CANONICAL-CHECK: money concept = RELATED PARTY ACCOUNT IDENTITY LINK, not a financial ledger. One same-company vendor maps to one catalogs.accounts account through unique vendor and account keys. This table stores no amount, running balance, debit, credit, repayment or posting. ensureRelatedPartyAccount writes the identity link; accounting.journal_entries and accounting.journal_entry_postings remain the GL, and accounting.related_party_loans remains the loan document source. The account foreign key reuses catalogs.accounts rather than creating a second account catalog. Migration 202615930910 adds WORM protection."
+    },
     "accounting.expenses_review_queue": {
       "migration": "202614560000_expenses_review_queue.sql",
       "applied_at_utc": "2026-09-29T20:44:07.846Z",
