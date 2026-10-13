@@ -3,13 +3,37 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { spawnSync } from "node:child_process";
 
 import {
   STATIC_RESULT_CATEGORIES,
   capabilityPreflight,
   classify,
   runStatic,
+  noDbEnv,
 } from "../verify-static.mjs";
+
+test("dotenv v18 cannot reload credentials through inherited DOTENV_PATH", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "verify-static-dotenv-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const fixture = path.join(root, "fixture.env");
+  fs.writeFileSync(fixture, "DATABASE_URL=postgresql://fixture@127.0.0.1:59999/not_real\n");
+  const original = process.env.DOTENV_PATH;
+  let env;
+  try {
+    process.env.DOTENV_PATH = fixture;
+    env = noDbEnv();
+  } finally {
+    if (original === undefined) delete process.env.DOTENV_PATH;
+    else process.env.DOTENV_PATH = original;
+  }
+  const child = spawnSync(process.execPath, ["--input-type=module", "-e",
+    `await import(${JSON.stringify(import.meta.resolve("dotenv/config"))}); process.exit(process.env.DATABASE_URL ? 1 : 0);`,
+  ], { cwd: root, env, encoding: "utf8" });
+  assert.equal(child.status, 0, "static checks must not reload any database credential");
+  assert.equal(env.DOTENV_PATH, "/dev/null");
+  assert.equal(env.DOTENV_CONFIG_PATH, "/dev/null");
+});
 
 function makeFixture({ source, verifyName = "verify:fixture", dbGated = [] }) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "verify-static-classification-"));
