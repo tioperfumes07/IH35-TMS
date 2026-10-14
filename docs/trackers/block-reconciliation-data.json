@@ -1,6 +1,6 @@
 {
  "date": "2026-10-14",
- "generated_at_iso": "2026-10-14T12:42:09.532Z",
+ "generated_at_iso": "2026-10-14T18:38:13.103Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 26771,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-14T12:44:15Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 26770,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-14T06:47:54Z",
@@ -17329,12 +17335,6 @@
    "number": 26155,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-10T06:47:36Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 26154,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-10T01:12:16Z",
    "branch": "chore/tracker-artifacts-sync"
   }
  ],
