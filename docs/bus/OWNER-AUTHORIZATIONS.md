@@ -7982,3 +7982,13 @@ consumed_at: 2026-10-13T22:34:00Z
 consumed_by: Cursor (I-02 / AUTH-449)
 row_counts: prod — 10 expense postings filled ONCE (5×1000, 3×6300, 1×6310, 1×6900 → vendor); Unresolved 0; Entity NULL in scope after fill 0; trial balance 0 across 3935 postings unchanged; COMMITTED
 proof_query: USMCA expense postings with source payee and entity_uuid NULL → 0 of 1038; EXP-2026-00001..00005 null_lines=0 (Neon br-fancy-credit-akjnd07a, bypass_rls=lucia, 2026-10-13T22:34Z)
+
+## AUTH-450
+issued_at: 2026-10-14T00:31:38Z
+issued_by: Lead (Cursor) — owner "close everything from cc1,2,3 all related to banning money dispatch, factoring, settlements" (2026-10-13). DEGH-02 / G6: 4 legacy bare bank_categorization JEs still have matched_expense_id NULL on USMCA.
+owner_quotes: "close everything from cc1,2,3 all related to banning money dispatch, factoring, settlements" (owner 2026-10-13) · "you and all codres have full permission and authorizations" (6:58 PM CT 2026-10-10)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — EXACTLY the 4 bank_transactions with bare bank_categorization expense JEs and matched_expense_id NULL: 4eff83b7-979a-4d69-beba-09e785f8994a (NP Wireless 2026-04-30 @ 6100), 47ca815d-3b6b-44a8-9a5c-6e52a1654e82 (NP Wireless 2026-06-01 @ 6100), b8734660-e730-429e-b5b5-ee07cc1a403f (Intuit Checks 2026-06-03 @ 6210-00-001), 17a308c2-7abc-49e3-9232-a4e84c4b7f9c (Intuit QBooks 2026-09-28 @ 6500-00-001). Through adoptBankCategorizationExpenseDocument (apps/backend/src/accounting/bank-line-expense.service.ts): ONE JE each — the expense document adopts the live entry (no re-post, no new GL math). Set-based item ensure for 6210-00-001 / 6500-00-001 when zero mapped items; 6100 picks preferred "Telephone" item. Runner refuses unless exactly these 4 are still bare. No DELETE. TRANSPORTATION / TRUCKING not touched.
+action: OWNER_AUTH_ID=AUTH-450 DATABASE_URL=<prod> node scripts/ops/2026-10-13-g6-adopt-bare-bank-categorization-expenses.mjs
+rehearsal: prod dry-run 2026-10-14T00:30Z — would create 2 items (Office Supplies — Checks @ 6210-00-001; QuickBooks Online @ 6500-00-001), would adopt all 4 bare lines; ROLLBACK; single transaction
+expires_at: 2026-10-15T00:31:38Z
+status: OPEN
