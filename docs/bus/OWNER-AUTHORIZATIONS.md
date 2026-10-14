@@ -7991,4 +7991,8 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — EXACTLY the 4 bank_
 action: OWNER_AUTH_ID=AUTH-450 DATABASE_URL=<prod> node scripts/ops/2026-10-13-g6-adopt-bare-bank-categorization-expenses.mjs
 rehearsal: prod dry-run 2026-10-14T00:30Z — would create 2 items (Office Supplies — Checks @ 6210-00-001; QuickBooks Online @ 6500-00-001), would adopt all 4 bare lines; ROLLBACK; single transaction
 expires_at: 2026-10-15T00:31:38Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-14T00:50:00Z
+consumed_by: Cursor (DEGH-02 / AUTH-450)
+row_counts: prod — 4 expense documents created (EXP-2026-00068..00071) adopting the 4 live bank_categorization JEs; 2 items created (Office Supplies — Checks @ 6210-00-001, QuickBooks Online @ 6500-00-001); rows_written=4; already_existed=0; single transaction; 10.852s
+proof_query: USMCA bank_categorization expense JEs with matched_expense_id NULL → 0 (Neon br-fancy-credit-akjnd07a, bypass_rls=lucia, 2026-10-14)
