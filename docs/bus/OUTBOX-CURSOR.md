@@ -1,3 +1,13 @@
+## 2026-10-14 · AUTH-450 CONSUMED — DEGH-02 bare bank_cat → 0
+
+FINDING: DEGH-02 closed on prod.
+LANE: MONEY (G6 adopt; same JE; no re-post)
+MERGED: #26767 squash `48dea89de3`
+LIVE PROOF: Neon br-fancy-credit-akjnd07a USMCA bypass_rls=lucia — bare bank_cat = **0**; EXP-2026-00068..00071 created on JEs d4569a8f / 37245eb8 / 7786fc9b / 4e10efb6; 2 items minted; rows_written=4 in 10.852s single txn
+CLOSED THIS WAVE: DEGH-02 · fuel_event load-null GATED · advance trailer · CC-1/2/3 money INBOX lanes
+REMAINING: fuel residual stays gated until covering loads; N1 not absorbed; CC-3 legal contracts non-money if still open
+NEXT: tip census
+
 ## 2026-10-13 · CLOSE BANK/MONEY/DISPATCH/FACTORING/SETTLEMENT LANES (CC-1/2/3)
 
 FINDING: Owner close — CC-1/2/3 banking·money·dispatch·factoring·settlements residuals.
