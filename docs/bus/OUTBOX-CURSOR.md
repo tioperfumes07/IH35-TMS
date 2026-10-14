@@ -1,3 +1,15 @@
+## 2026-10-13 · CLOSE BANK/MONEY/DISPATCH/FACTORING/SETTLEMENT LANES (CC-1/2/3)
+
+FINDING: Owner close — CC-1/2/3 banking·money·dispatch·factoring·settlements residuals.
+LANE: MONEY (G6 adopt AUTH-450) + GATED fuel (no invent)
+Files Modified: scripts/ops/2026-10-13-g6-adopt-bare-bank-categorization-expenses.mjs (assertIsIntendedProduction) · scripts/ops/2026-10-13-fuel-receipt-repoint-load-null.mts (new) · docs/bus/OWNER-AUTHORIZATIONS.md AUTH-450 OPEN · INBOX-CC-1/2/3 rewrite · OUTBOX-CURSOR · SEATS-TO-LEAD
+LIVE PROOF (pre-apply, Neon br-fancy-credit-akjnd07a USMCA bypass_rls=lucia):
+- DEGH-02 bare bank_cat = **4** ($662.25) — G6 dry-run PASS (would adopt 4; create 2 items; single txn)
+- fuel_event load-null = **208** postings / **56** events — repoint dry-run: candidates=56 planned=0 no_covering_load=56 refused=0 → **CLOSED AS GATED** (Rule 32)
+- advance stampable trailer = **0** (CA-2026-0003 load_has_trailer=false) → **CLOSED**
+PROD APPLY: after AUTH-450 on main → `OWNER_AUTH_ID=AUTH-450 DATABASE_URL=<prod> node scripts/ops/2026-10-13-g6-adopt-bare-bank-categorization-expenses.mjs` → bare=0
+NEXT: FAST-MERGE AUTH-450 → apply G6 → CONSUME → tip census
+
 ## 2026-10-13 · I-02 AUTH-449 CONSUMED — Q022 → 0
 
 FINDING: I-02 closed on prod.

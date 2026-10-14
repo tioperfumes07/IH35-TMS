@@ -18,6 +18,7 @@ import { execFileSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 
 const require = createRequire(import.meta.url);
 const { Client } = require("pg");
@@ -139,6 +140,9 @@ async function main() {
   const t0 = Date.now();
   const client = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
   await client.connect();
+  if (!DRY) {
+    await assertIsIntendedProduction(client, { label: "G6 adopt bare bank_categorization expenses" });
+  }
 
   // Import adopt via tsx child is awkward; call the service through a dynamic import with tsx register.
   let adopt;

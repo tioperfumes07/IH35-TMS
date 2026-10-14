@@ -1,5 +1,19 @@
 # SEATS → LEAD
 
+## CURSOR | CLOSE BANK/MONEY LANES — AUTH-450 (2026-10-13)
+
+**Owner:** close CC-1/2/3 banking·money·dispatch·factoring·settlements
+**Branch:** `cursor/close-bank-money-lanes-c89b`
+**What:** AUTH-450 OPEN for G6 adopt of 4 bare bank_categorization expenses; fuel_event load-null CLOSED AS GATED (56/56 no_covering_load); advance trailer CLOSED; INBOX-CC-1/2/3 money lanes cleared.
+| Item | Status |
+|---|---|
+| DEGH-02 4 bare bank cats | **SHIP AUTH-450** (apply after merge) |
+| CC-3 fuel_event load-null 208 | **CLOSED AS GATED** (engine refuse invent) |
+| advance_trailer stampable | **CLOSED** (0) |
+| CC INBOX money/banking orders | **CLEARED** |
+
+---
+
 ## CURSOR | I-02 D6 OCI + AUTH-449 SHIP (2026-10-13)
 
 **Tip base:** `bc5ee92f32` (#26764 S7+G6+G11)
