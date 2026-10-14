@@ -1,6 +1,6 @@
 {
  "date": "2026-10-14",
- "generated_at_iso": "2026-10-14T01:00:23.665Z",
+ "generated_at_iso": "2026-10-14T06:47:04.543Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,18 @@
  ],
  "merged_prs": [
   {
+   "number": 26769,
+   "title": "Cursor- fix(banking): AUTH-450 CONSUMED — DEGH-02 bare bank_cat closed (bare=0)",
+   "mergedAt": "2026-10-14T01:06:11Z",
+   "branch": "cursor/auth-450-consumed-c89b"
+  },
+  {
+   "number": 26768,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-14T01:01:16Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 26767,
    "title": "Cursor- close CC bank/money lanes: AUTH-450 G6 + gated fuel",
    "mergedAt": "2026-10-14T00:48:22Z",
@@ -17324,18 +17336,6 @@
    "title": "Chore(deps): bump handlebars from 4.7.9 to 4.7.10 in /apps/backend in the npm_and_yarn group across 1 directory",
    "mergedAt": "2026-10-13T19:50:49Z",
    "branch": "dependabot/npm_and_yarn/apps/backend/npm_and_yarn-c6d5a854cf"
-  },
-  {
-   "number": 26151,
-   "title": "Claude-1- ROUND 442.1 — COA-F1/COA-F2/BANK-F3: account-number required, constraint message, categorize vendor on posting",
-   "mergedAt": "2026-10-09T22:16:41Z",
-   "branch": "cc-1/r4421-coa-f1-f2-bank-f3"
-  },
-  {
-   "number": 26150,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-09T18:39:15Z",
-   "branch": "chore/tracker-artifacts-sync"
   }
  ],
  "merged_pr_total": 3000,
