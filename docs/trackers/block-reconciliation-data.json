@@ -1,6 +1,6 @@
 {
  "date": "2026-10-15",
- "generated_at_iso": "2026-10-15T12:42:56.885Z",
+ "generated_at_iso": "2026-10-15T18:36:46.914Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 26775,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-15T12:45:01Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 26774,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-15T06:48:20Z",
@@ -17330,12 +17336,6 @@
    "title": "Cursor- fix(settlements): SETL-CREATOR-FIX-PACK — under-Add; short miles; salary/QuickPay; deduction catalog",
    "mergedAt": "2026-10-10T17:59:36Z",
    "branch": "cursor/setl-creator-fix-pack-c89b"
-  },
-  {
-   "number": 26158,
-   "title": "Cursor- UI-F91155 date digits auto-slash MM/DD/YYYY all calendars",
-   "mergedAt": "2026-10-10T16:07:45Z",
-   "branch": "cursor/date-auto-slash-c89b"
   }
  ],
  "merged_pr_total": 3000,
