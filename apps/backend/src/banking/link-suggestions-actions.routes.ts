@@ -247,24 +247,17 @@ export async function registerBankingLinkSuggestionActionsRoutes(app: FastifyIns
 
       await withCurrentUser(user.uuid, async (client) => {
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
-        await client.query(
-          `
-          INSERT INTO banking.reconciliation_matches (
-            operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id,
-            match_score, match_state, matched_at, matched_by_user_uuid
-          )
-          VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 0, 'rejected', now(), $5::uuid)
-          ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id) WHERE match_state <> 'released'
-          DO UPDATE SET
-            match_state = 'rejected',
-            matched_at = now(),
-            matched_by_user_uuid = EXCLUDED.matched_by_user_uuid,
-            voided_at = NULL,
-            void_reason = NULL,
-            voided_by_user_id = NULL
-          `,
-          [companyId, txnId, rmKind, obligationId, user.uuid]
-        );
+        // LEAD 443.168 M (E-50) — reject memory through the one match-row writer.
+        const { storeMatch } = await import("../accounting/bank-recon/match.service.js");
+        await storeMatch(client as never, {
+          operating_company_id: companyId,
+          bank_transaction_id: txnId,
+          ledger_entry_kind: rmKind as never, // "load" is a reject-memory kind the DB check allows; storeMatch only stores it
+          ledger_entry_id: obligationId,
+          match_score: 0,
+          match_state: "rejected",
+          actor_user_uuid: user.uuid,
+        });
         await appendCrudAudit(
           client,
           user.uuid,

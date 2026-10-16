@@ -110,7 +110,7 @@ describe("R5 recommend / accept", () => {
         return null;
       },
       (q) => {
-        if (q.sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [], rowCount: 1 };
+        if (q.sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "rm-1" }], rowCount: 1 }; // 443.168 M: storeMatch RETURNING id
         return null;
       },
       (q) => {
@@ -334,7 +334,7 @@ describe("R5 recommend / accept", () => {
         return null;
       },
       (q) => {
-        if (q.sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [], rowCount: 1 };
+        if (q.sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "rm-1" }], rowCount: 1 }; // 443.168 M: storeMatch RETURNING id
         return null;
       },
     ]);
@@ -456,7 +456,7 @@ describe("R5 recommend / accept", () => {
         return null;
       },
       (q) => {
-        if (q.sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [], rowCount: 1 };
+        if (q.sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "rm-1" }], rowCount: 1 }; // 443.168 M: storeMatch RETURNING id
         return null;
       },
     ]);

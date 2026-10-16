@@ -1275,7 +1275,12 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
   return requireLedgerAmountRow(res, kind);
 }
 
-async function storeMatch(
+/**
+ * LEAD 443.168 M (Engine Registry E-50) — THE one match-row writer: every banking.reconciliation_matches INSERT / upsert
+ * (accept, reject memory, Relay fill link) goes through here, in the caller's transaction. Release / void of match rows
+ * lives in unmatch-bank-transaction.service.ts (the one unmatch writer). scripts/verify-steps/18469 pins both.
+ */
+export async function storeMatch(
   client: DbClient,
   input: {
     operating_company_id: string;
