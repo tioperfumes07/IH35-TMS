@@ -291,6 +291,7 @@ export function MakeDepositPage() {
 
             <div className="overflow-x-auto">
               <ParityTable<Receipt>
+                title="Undeposited receipts"
                 storageKey="make-deposit-receipts"
                 tableTestId="make-deposit-receipts"
                 rows={receipts}
@@ -427,6 +428,7 @@ export function MakeDepositPage() {
             </div>
             <div className="overflow-x-auto">
               <ParityTable<BatchRow & { idx: number }>
+                title="Deposits — batch entry"
                 storageKey="make-deposit-batch"
                 tableTestId="make-deposit-batch"
                 rows={batchRows.map((row, idx) => ({ ...row, idx }))}

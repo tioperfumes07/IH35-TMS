@@ -31,6 +31,7 @@ import { humanMemo } from "../../accounting/ManualJEListPage";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ApiError } from "../../../api/client";
 
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 // ROUND 206 Resolve (owner asked 4×): exact Confirm stays link-and-clear; variance Confirm is enabled
 // when a write-off / difference account is selected (posts via acceptMatchWithResolveDifference);
 // multi-select exact sum → acceptExactMultiDocumentMatch (one bank line → many documents).
@@ -497,10 +498,13 @@ export function MatchDrawer({
               : windowHeaderLabel(win?.step, win?.from ?? "", win?.to ?? "")}
         </p>
         <p className="mb-3 text-xs text-[#6B7280]">
-          Exact-amount matches link and clear with no journal entry. A variance (partial) match requires a
-          write-off / difference account below — that posts the balanced variance JE. Select 2+ exact
-          documents whose amounts sum to the bank line for one-bank-line → many-documents. Bill
-          candidates stay held (CHAIN-04). Live production ledger rows only — never fixtures.
+          Exact-amount matches link and clear with no journal entry.{" "}
+          <InfoPopover label="About matching">
+            A variance (partial) match requires a write-off / difference account below — that posts the
+            balanced variance JE. Select 2+ exact documents whose amounts sum to the bank line for
+            one-bank-line → many-documents. Bill candidates stay held (CHAIN-04). Live production ledger rows
+            only — never fixtures.
+          </InfoPopover>
         </p>
 
         <div className="mb-3 space-y-1" data-testid="match-drawer-writeoff-account">
@@ -585,9 +589,11 @@ export function MatchDrawer({
           {resolveOpen ? (
             <div className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-2" data-testid="match-resolve-difference-grid">
               <p className="text-xs text-[#6B7280]">
-                Add resolving line(s) so Selected + Resolved equals the bank amount. Lines persist as{" "}
-                <span className="font-medium">bank transaction splits</span> (payee, category, class/unit, location,
-                memo, amount). Match / Commit only at Difference $0.00.
+                Add resolving line(s) so Selected + Resolved equals the bank amount.{" "}
+                <InfoPopover label="About resolving lines">
+                  Lines persist as <span className="font-medium">bank transaction splits</span> (payee, category,
+                  class/unit, location, memo, amount). Match / Commit only at Difference $0.00.
+                </InfoPopover>
               </p>
               {resolveRows.map((row, idx) => (
                 <div
@@ -1107,10 +1113,12 @@ export function MatchDrawer({
           className="mt-4 space-y-2 border-t border-[#E5E7EB] pt-3"
           data-testid="match-drawer-categorize-create"
         >
-          <p className="text-xs font-semibold text-[#1F2A44]">Or categorize instead</p>
-          <p className="text-xs text-[#6B7280]">
-            Nested <strong>+ Add new</strong> creates stay in this drawer (entity-scoped catalogs). Category is
-            required; vendor is optional. Uses the same categorize API as the Transactions register.
+          <p className="text-xs font-semibold text-[#1F2A44]">
+            Or categorize instead{" "}
+            <InfoPopover label="About categorizing here">
+              Nested <strong>+ Add new</strong> creates stay in this drawer (entity-scoped catalogs). Category is
+              required; vendor is optional. Uses the same categorize API as the Transactions register.
+            </InfoPopover>
           </p>
           <label className="block text-xs text-[#4B5563]">
             Payee (vendor)

@@ -35,6 +35,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 
 import { formatUsdCents } from "../../lib/money";
 
+import { InfoPopover } from "../../components/shared/InfoPopover";
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
@@ -259,9 +260,12 @@ export function BankReconciliationPage() {
         >
           <p className="font-semibold">No reconciliation sessions or matches proven live for this company.</p>
           <p className="mt-1">
-            Neon truth: reconciliation_matches / sessions can be empty while the bank feed still has a large for-review
-            backlog. Progress % here is not a period close. Start a session from Banking → Reconciliation workspace,
-            then Match / Categorize feed rows on Transactions. Do not treat this screen as books reconciled.
+            Neon truth: reconciliation_matches / sessions can be empty while the bank feed still has a large
+            for-review backlog.{" "}
+            <InfoPopover label="About reconciliation progress">
+              Progress % here is not a period close. Start a session from Banking → Reconciliation workspace,
+              then Match / Categorize feed rows on Transactions. Do not treat this screen as books reconciled.
+            </InfoPopover>
           </p>
           <div className="mt-2 flex flex-wrap gap-3">
             <Link
@@ -354,9 +358,12 @@ export function BankReconciliationPage() {
           ) : null}
           {worklistQuery.data && worklistQuery.data.progress.total_transactions === 0 && accountId && periodStart && periodEnd ? (
             <p className="mb-2 px-1 text-xs text-gray-600">
-              No bank transactions in this period. Reconciliation is statement-driven: import a bank statement (CSV) above,
-              or connect a bank feed, to populate the worklist. A posted journal entry is a match target, not a worklist row —
-              once transactions exist here, match them to the JE (Manual match → kind &ldquo;je&rdquo;).
+              No bank transactions in this period.{" "}
+              <InfoPopover label="About the reconciliation worklist">
+                Reconciliation is statement-driven: import a bank statement (CSV) above, or connect a bank
+                feed, to populate the worklist. A posted journal entry is a match target, not a worklist row —
+                once transactions exist here, match them to the JE (Manual match → kind &ldquo;je&rdquo;).
+              </InfoPopover>
             </p>
           ) : null}
           <div className="max-h-[520px] space-y-1 overflow-auto">

@@ -127,7 +127,8 @@ export function scan(src) {
     if (!branches.test(body)) counts.same_rows_toggle += 1;
   }
   // (c)
-  const noPopover = src.replace(/<InfoPopover\b[\s\S]*?<\/InfoPopover>/g, "");
+  // JSX / block comments are not rendered: a literal "<p>" in a comment is not a notice
+  const noPopover = src.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/<InfoPopover\b[\s\S]*?<\/InfoPopover>/g, "");
   for (const m of noPopover.matchAll(/<p\b/g)) {
     const tag = openingTag(noPopover, m.index);
     if (tag.endsWith("/>")) continue;
@@ -231,6 +232,7 @@ if (process.argv.includes("--selftest")) {
     ["title only inside a column", [...files, [NEW, `export function X(){return (<ParityTable columns={[{ key: "a", title: "A" }]} rows={r} rowKey={(x) => x.id} />);}`]]],
     ["same-rows toggle", [...files, [NEW, `export function X(){const [view, setView] = useState<"summary" | "detail">("summary");return (<div><h2>Bills</h2><button onClick={() => setView("detail")}>Detail</button><ParityTable title="Bills" columns={c} rows={rows} rowKey={(x) => x.id} /></div>);}`]]],
     ["inline notice", [...files, [NEW, `export function X(){return (<p className="text-xs">${long} ${long}</p>);}`]]],
+    ["notice after a comment", [...files, [NEW, `export function X(){return (<div>{/* the <p> below */}<p className="text-xs">${long} ${long}</p></div>);}`]]],
     ["baseline raised", files, { ...baseline, [NEW]: { untitled: 9, same_rows_toggle: 0, inline_notice: 0 } }, mainBaseline ?? baseline],
   ];
   // the guard must also PASS the clean forms
@@ -238,6 +240,7 @@ if (process.argv.includes("--selftest")) {
     [NEW, `export function X(){return (<ParityTable title="Bills — open" columns={c} rows={r} rowKey={(x) => x.id} />);}`],
     [NEW, `export function X(){const [view, setView] = useState<"summary" | "detail">("summary");return view === "summary" ? <A /> : <B />;}`],
     [NEW, `export function X(){return (<InfoPopover label="About"><p>${long} ${long}</p></InfoPopover>);}`],
+    [NEW, `export function X(){return (<div>{/* a hardcoded <p> once said: ${long} ${long} </p> */}<span /></div>);}`],
   ];
   for (const c of clean) {
     if (check([...files, c], baseline, mainBaseline).length) {

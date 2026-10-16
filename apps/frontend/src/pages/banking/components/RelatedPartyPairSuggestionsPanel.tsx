@@ -14,6 +14,7 @@ import { CappedListNotice } from "../../../components/CappedListNotice";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { formatDateUS } from "../../../lib/formatDate";
 
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 type Props = {
   companyId: string;
 };
@@ -69,8 +70,11 @@ export function RelatedPartyPairSuggestionsPanel({ companyId }: Props) {
         <div className="mt-2">
           <p className="mb-2 text-xs text-[#6B7280]">
             Bank outflows to a related party matched to a Relay deposit on that party&apos;s card with the
-            same amount within 5 days. Confirm categorizes the bank line as a related-party transfer (Due
-            to/from) and links the deposit — nothing posts twice. Card 0275 is a Scentsx suggestion only.
+            same amount within 5 days.{" "}
+            <InfoPopover label="About related-party pairs">
+              Confirm categorizes the bank line as a related-party transfer (Due to/from) and links the
+              deposit — nothing posts twice. Card 0275 is a Scentsx suggestion only.
+            </InfoPopover>
           </p>
           {isLoading ? (
             <p className="text-xs text-[#6B7280]">Loading…</p>

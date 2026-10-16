@@ -534,6 +534,7 @@ export function ArchivedBankAccountDetailTable() {
       </div>
 
       <ParityTable
+        title="Bank transactions — this account"
         columns={ARCHIVED_TX_COLUMNS}
         rows={transactions}
         rowKey={(row) => row.id}
