@@ -31,6 +31,7 @@ import { BankingTransactionsDesignView, spentReceived } from "./components/Banki
 import { TransferModal } from "./TransferModal";
 import { RecordTransferModal } from "./RecordTransferModal";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatDateTimeUS } from "../../utils/qboFormat";
 
 const PAGE_SIZE = 50;
 
@@ -341,7 +342,7 @@ export function BankAccountDetailPage() {
             {account?.sync_status ?? "pending"}
           </span>
           <p className="mt-1 text-xs text-gray-500">
-            {account?.last_synced_at ? `Last synced ${new Date(account.last_synced_at).toLocaleString()}` : "No sync recorded"}
+            {account?.last_synced_at ? `Last synced ${formatDateTimeUS(account.last_synced_at)}` : "No sync recorded"}
           </p>
         </div>
       </div>

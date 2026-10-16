@@ -25,8 +25,10 @@ async function selftest_verify_tables_and_tab_bars_follow_the_window() {
 const LABEL = "verify-tables-and-tab-bars-follow-the-window";
 const fails = [];
 const pt = readFileSync("apps/frontend/src/components/parity/ParityTable.tsx", "utf8");
-if (!/\$\{\(\(w \/ proportionalTotal\) \* 100\)\.toFixed\(4\)\}%/.test(pt)) fails.push("ParityTable: column widths are no longer rendered as shares of the table");
-if (!/\{ width: cssWidthFor\(w\) \}/.test(pt)) fails.push("ParityTable: header width bypasses the share (fixed pixels again)");
+// LEAD 443.156 item 3 (owner: "no truncated money") — text columns still render as shares of the table; a money / number
+// column keeps its measured pixel width (the shares are of the whole content width, figure pixels included).
+if (!/\$\{\(\(w \/ \(proportionalTotal \+ figurePx\)\) \* 100\)\.toFixed\(4\)\}%/.test(pt)) fails.push("ParityTable: column widths are no longer rendered as shares of the table");
+if (!/\{ width: cssWidthFor\(w, column\) \}/.test(pt)) fails.push("ParityTable: header width bypasses the share (fixed pixels again)");
 if (!/proportionalMinTable \? \{ minWidth: proportionalMinTable \}/.test(pt)) fails.push("ParityTable: the per-column legibility floor is gone");
 const css = readFileSync("apps/frontend/src/components/forms/shared/HoverDropdownNav.css", "utf8");
 const bar = css.slice(css.indexOf('.hover-dropdown-nav ul[role="menubar"]'), css.indexOf("}", css.indexOf('.hover-dropdown-nav ul[role="menubar"]')));

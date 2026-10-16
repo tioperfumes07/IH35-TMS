@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getPlaidBankAccounts } from "../../api/banking";
+import { formatDateTimeUS } from "../../utils/qboFormat";
 
 type Props = { operatingCompanyId: string };
 
@@ -21,7 +22,7 @@ export function PlaidSyncStatusPanel({ operatingCompanyId }: Props) {
     <section data-testid="plaid-sync-status-panel" className="rounded-sm border border-gray-200 p-3 text-xs">
       <h3 className="font-semibold">Plaid sync status</h3>
       <p>Accounts: {accounts.length}</p>
-      <p>Last sync: {lastSync ? new Date(String(lastSync)).toLocaleString() : "—"}</p>
+      <p>Last sync: {lastSync ? formatDateTimeUS(String(lastSync)) : "—"}</p>
     </section>
   );
 }

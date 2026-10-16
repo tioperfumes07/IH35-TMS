@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { X } from "lucide-react";
-import { formatUsdCents } from "../../../utils/qboFormat";
+import { formatUsdCents, formatNumber } from "../../../utils/qboFormat";
 
 export type BankingHomeAttentionFacts = {
   uncategorizedCount: number;
@@ -65,7 +65,7 @@ export function BankingHomeAttentionStrip({
     rows.push({
       id: "unmatched-7d-alert",
       tone: "bad",
-      title: `${facts.unmatchedAged7d.toLocaleString()} unmatched for 7+ days — ALERT`,
+      title: `${formatNumber(facts.unmatchedAged7d)} unmatched for 7+ days — ALERT`,
       body: facts.unmatched7dAlertOpen
         ? "Owner A1: a number is not an alert. This pages Owner/Administrator and is open on Integrity Alerts until every aged line is matched to a document."
         : "Owner A1: bank lines older than 7 days still have no bill, expense, invoice, settlement, or payment. Match them — categorizing the account is not a match.",
@@ -77,8 +77,8 @@ export function BankingHomeAttentionStrip({
     rows.push({
       id: "uncategorized",
       tone: facts.uncategorizedCount / facts.transactionCount >= 0.5 ? "bad" : "warn",
-      title: `${facts.uncategorizedCount.toLocaleString()} need Match or Categorize`,
-      body: `${facts.uncategorizedCount.toLocaleString()} of ${facts.transactionCount.toLocaleString()} bank transactions still for review.`,
+      title: `${formatNumber(facts.uncategorizedCount)} need Match or Categorize`,
+      body: `${formatNumber(facts.uncategorizedCount)} of ${formatNumber(facts.transactionCount)} bank transactions still for review.`,
       action: { label: "Categorize now", onClick: onCategorize },
     });
   }

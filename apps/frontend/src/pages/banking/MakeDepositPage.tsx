@@ -31,6 +31,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { ParityTable } from "../../components/parity/ParityTable";
+import { companyToday } from "../../lib/businessDate";
 
 type Receipt = UndepositedReceipt;
 type DepositListRow = Awaited<ReturnType<typeof listBankDeposits>>["rows"][number];
@@ -68,9 +69,7 @@ function newBatchRow(today: string): BatchRow {
 }
 
 function todayChicago(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(
-    new Date()
-  );
+  return companyToday();
 }
 
 export function MakeDepositPage() {

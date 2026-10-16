@@ -23,6 +23,7 @@ import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../auth/useAuth";
 import { companyToday } from "../../../lib/businessDate";
 import { QboDocumentNumberField } from "../../../components/forms/QboDocumentNumberField";
+import { formatUsdCents } from "../../../utils/qboFormat";
 
 type CreditLimitBlock = {
   exposure_cents: number;
@@ -593,8 +594,8 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
               Credit limit reached
             </p>
             <p className="mt-1 text-[#4B5563]">
-              Open exposure: ${((creditLimitBlock.exposure_cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })} &mdash;{" "}
-              Limit: ${((creditLimitBlock.limit_cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              Open exposure: {formatUsdCents(creditLimitBlock.exposure_cents)} &mdash;{" "}
+              Limit: {formatUsdCents(creditLimitBlock.limit_cents)}
               {creditLimitBlock.credit_limit_source === "factor" ? " (Factor-set — FARO)" : ""}
             </p>
             {canOverrideCreditLimit ? (

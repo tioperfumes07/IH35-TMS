@@ -42,7 +42,7 @@ import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
 import { Combobox, SelectCombobox } from "../../../components/Combobox";
 import { useToast } from "../../../components/Toast";
-import { formatUsdCents } from "../../../utils/qboFormat";
+import { formatUsdCents, formatDateTimeUS } from "../../../utils/qboFormat";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
 import { EntityPicker } from "../../../components/EntityPicker";
@@ -163,6 +163,20 @@ export function qboActionLabel(
   if (mode === "cc_payment") return QBO_BANKING_ACTIONS.recordCcPayment;
   if (mode === "loan") return QBO_BANKING_ACTIONS.loan;
   return QBO_BANKING_ACTIONS.add;
+}
+
+/**
+ * LEAD 443.156 item 4 (owner 11:40 CT: "IT SHOULD ONLY BE ONE COLUMN, IT IS REDUNDANT") — ONE action per row. The
+ * operator's chosen mode wins; with none chosen, a suggested match makes the action "Match" (it opens the matcher —
+ * the human accepts there, owner Law B); otherwise "Add". The button's label AND its click both read this, so the
+ * button can never say "Match" and categorize.
+ */
+export function effectiveActionMode(
+  chosen: RowDetailDraft["mode"] | undefined,
+  hasSuggestedMatch: boolean,
+): RowDetailDraft["mode"] {
+  if (chosen) return chosen;
+  return hasSuggestedMatch ? "match" : "categorize";
 }
 
 /**
@@ -2173,6 +2187,7 @@ export function BankingTransactionsDesignView({
         render: (tx) => {
           const menuOpen = actionMenuTxId === tx.id;
           const undoEligible = isUndoEligible(tx);
+          const actionMode = effectiveActionMode(drafts[tx.id]?.mode, Boolean(txnSuggestions[tx.id]) && !hasPersistedMatch(tx));
           const closeActionMenu = () => {
             setActionMenuTxId(null);
             setActionMenuAnchor(null);
@@ -2188,14 +2203,11 @@ export function BankingTransactionsDesignView({
                   data-testid={`banking-suggested-match-block-${tx.id}`}
                   data-b3-match-badge-inline="1"
                 >
+                  {/* 443.156 item 4 — "N matches found" is information (QBO prints it as text), not a second action box. */}
                   <button
                     type="button"
                     title={`${txnSuggestions[tx.id]!.suggested_ledger_entry_kind} match, ${txnSuggestions[tx.id]!.date_gap_days}d gap`}
-                    className={`h-7 rounded-sm border px-1.5 text-xs font-semibold ${
-                      txnSuggestions[tx.id]!.suggested_confidence === "high"
-                        ? "border-[#1F2A44] bg-[#1F2A44] text-white"
-                        : "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]"
-                    }`}
+                    className="text-xs font-semibold text-[#1F2A44] underline-offset-2 hover:underline"
                     onClick={() => setMatchDrawerTxId(tx.id)}
                     data-testid={`banking-suggested-match-${tx.id}`}
                     data-b3-match-count={String(
@@ -2231,14 +2243,15 @@ export function BankingTransactionsDesignView({
                   type="button"
                   variant="primary"
                   size="md"
-                  onClick={() => void postTransaction(tx)}
+                  onClick={() => (actionMode === "match" ? setMatchDrawerTxId(tx.id) : void postTransaction(tx))}
                   disabled={postingTxId === tx.id}
                   data-testid={`banking-action-primary-${tx.id}`}
+                  data-action-mode={actionMode}
                 >
                   {postingTxId === tx.id
                     ? "Posting..."
                     : suggestionIsAction()
-                      ? qboActionLabel(getDraft(tx).mode)
+                      ? qboActionLabel(actionMode)
                       : "Add"}
                 </Button>
               )}
@@ -4016,7 +4029,7 @@ export function BankingTransactionsDesignView({
               <h1>Bank transactions</h1>
               <div class="meta">${esc(selectedAccount?.account_name ?? "All accounts")} · tab ${esc(
                 activeReviewTab,
-              )} · ${esc(orientation)} · printed ${esc(new Date().toLocaleString())}</div>
+              )} · ${esc(orientation)} · printed ${esc(formatDateTimeUS(new Date()))}</div>
               <table className="tabular-nums">
                 <thead>
                   <tr>
