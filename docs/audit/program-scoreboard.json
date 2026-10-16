@@ -1,10 +1,10 @@
 {
-  "healthzSha": "6828993",
-  "generated_at": "2026-10-12T23:01:08.075Z",
+  "healthzSha": "7118025",
+  "generated_at": "2026-10-16T17:15:36.104Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "6828993",
+    "deployedSha": "7118025",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 26735,
-      "title": "FINDING: N/A LANE: FINANCIAL -- 443.139 8c: basis (accrual/cash) on all 7 money reports",
+      "number": 26791,
+      "title": "Claude-3- 443.158 M1c relevance floor; fix bank-recon unit tests my #26786/#26790 broke; architecture/blueprint match laws",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 06:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26735",
-      "sha": "e3cbfec870",
-      "committedAtIso": "2026-10-12T18:00:26-05:00"
+      "mergedAtCt": "10/16/2026, 12:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26791",
+      "sha": "7118025464",
+      "committedAtIso": "2026-10-16T12:05:15-05:00"
     },
     {
-      "number": 26733,
-      "title": "FINDING: N/A LANE: FINANCIAL -- 443.138 9c: master-data-native (no QBO mirror reads in money paths)",
+      "number": 26789,
+      "title": "FINDING: ACCT-F2026101603 LANE: claude — a voided invoice held its number forever, so a corrected reissue could never keep the number submitted to Faro",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26733",
-      "sha": "300b098fa0",
-      "committedAtIso": "2026-10-12T17:55:49-05:00"
+      "mergedAtCt": "10/16/2026, 12:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26789",
+      "sha": "566f2c2acf",
+      "committedAtIso": "2026-10-16T12:02:37-05:00"
     },
     {
-      "number": 26734,
-      "title": "FINDING: ACCT-F4431382 LANE: FINANCIAL — every live work-order line writer sends its catalog item; billing a WO from the app can no longer hit wo_line_item_required",
+      "number": 26790,
+      "title": "Claude-3- 443.158 M1b: a document already consumed by a bank line is never a candidate for another line",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26734",
-      "sha": "6828993366",
-      "committedAtIso": "2026-10-12T17:55:14-05:00"
+      "mergedAtCt": "10/16/2026, 11:49 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26790",
+      "sha": "cafe0df27e",
+      "committedAtIso": "2026-10-16T11:49:44-05:00"
     },
     {
-      "number": 26732,
-      "title": "FINDING: ACCT-F4431381 LANE: FINANCIAL — the last QBO-to-native writers (vendor linkage, three ops backfills, the carrier-bootstrap chart clone) now refuse by name; dead QBO poster and drift files removed",
+      "number": 26785,
+      "title": "FINDING: ACCT-F2026101603 LANE: claude — claim migration 202615960910 (443.151 b, void frees invoice number)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26732",
-      "sha": "ffafa3f696",
-      "committedAtIso": "2026-10-12T17:48:18-05:00"
+      "mergedAtCt": "10/16/2026, 11:46 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26785",
+      "sha": "34a9a5bfa6",
+      "committedAtIso": "2026-10-16T11:46:43-05:00"
     },
     {
-      "number": 26731,
-      "title": "FINDING: ACCT-F4431179 — Codex 443.117 9b native bill-payment posting across all native writers",
+      "number": 26788,
+      "title": "Claude-3- 443.158: commit the master engine register + the bank-match handoff register; AGENTS.md read-first entry",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:46 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26731",
-      "sha": "3a3d25df88",
-      "committedAtIso": "2026-10-12T17:46:57-05:00"
+      "mergedAtCt": "10/16/2026, 11:38 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26788",
+      "sha": "429c529ddf",
+      "committedAtIso": "2026-10-16T11:38:40-05:00"
     },
     {
-      "number": 26694,
-      "title": "FINDING: ACCT-F4431179 — native document GL must not depend on QBO provenance",
+      "number": 26787,
+      "title": "Claude-3- 443.155 F: a Faro wire suggests its purchase (exact net or same-date group) with a reason; stored 2150 not served when the purchase is on the books",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26694",
-      "sha": "f47f3783ae",
-      "committedAtIso": "2026-10-12T17:37:44-05:00"
+      "mergedAtCt": "10/16/2026, 11:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26787",
+      "sha": "add69bd031",
+      "committedAtIso": "2026-10-16T11:36:46-05:00"
     },
     {
-      "number": 26725,
-      "title": "FINDING: ACCT-F4431379 LANE: FINANCIAL — payroll views read QBO Payroll into driver-pay totals; driver_finance is now the only source",
+      "number": 26786,
+      "title": "Claude-3- 443.155 A+B: bank-match candidates scoped to the line's own account; Faro purchases + A/R invoices in the union",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26725",
-      "sha": "24ab16784a",
-      "committedAtIso": "2026-10-12T17:32:39-05:00"
+      "mergedAtCt": "10/16/2026, 11:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26786",
+      "sha": "722038f896",
+      "committedAtIso": "2026-10-16T11:32:17-05:00"
     },
     {
-      "number": 26729,
-      "title": "chore: claim migration 202615940910 (443.136 follow-up)",
+      "number": 26783,
+      "title": "FINDING: ACCT-F2026101602 LANE: claude — the Owner's override reason on a Faro purchase released documents only; \"invoice has no load\" still blocked",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26729",
-      "sha": "b1152c0449",
-      "committedAtIso": "2026-10-12T17:30:57-05:00"
+      "mergedAtCt": "10/16/2026, 11:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26783",
+      "sha": "9ece5e8a05",
+      "committedAtIso": "2026-10-16T11:19:45-05:00"
     },
     {
-      "number": 26728,
-      "title": "FINDING: ACCT-F4431380 LANE: FINANCIAL — QBO pullers, reconcilers and the CC bill-payment route no longer write native money or master tables; QuickBooks is a read-only archive",
+      "number": 26784,
+      "title": "Claude-3- 443.142 register: declare the Dreamline statement import money writer (main red on verify-money-engine-linkage)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26728",
-      "sha": "595f0687ec",
-      "committedAtIso": "2026-10-12T17:28:07-05:00"
+      "mergedAtCt": "10/16/2026, 11:12 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26784",
+      "sha": "57a3480ca8",
+      "committedAtIso": "2026-10-16T11:12:33-05:00"
     },
     {
-      "number": 26727,
-      "title": "FINDING: ACCT-F4431362 LANE: FINANCIAL -- 443.136 #2: WORM on accounting.related_party_accounts (verify-new-financial-table-ships-worm + verify-worm-coverage-ratchet red on main)",
+      "number": 26782,
+      "title": "chore: claim migration 202615950910 (443.152)",
       "state": "merged",
-      "mergedAtCt": "10/12/2026, 05:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26727",
-      "sha": "553a2cd8d1",
-      "committedAtIso": "2026-10-12T17:22:43-05:00"
+      "mergedAtCt": "10/16/2026, 10:51 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26782",
+      "sha": "7c1ada0d84",
+      "committedAtIso": "2026-10-16T10:51:34-05:00"
     }
   ]
 }

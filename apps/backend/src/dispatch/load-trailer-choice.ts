@@ -13,7 +13,16 @@
  *  - interchange -> an existing dispatch.non_owned_trailers row of this company (GO-23 A1) + trailer_source = 'customer'.
  *  - none     -> trailer_source = 'none' (migration 202615790910): an explicit, recorded "no trailer", never a gap.
  */
+import { z } from "zod";
+
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
+
+export const trailerChoiceSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("company"), equipment_id: z.string().uuid() }),
+  z.object({ kind: z.literal("customer"), trailer_number: z.string().trim().min(1).max(40) }),
+  z.object({ kind: z.literal("interchange"), non_owned_trailer_id: z.string().uuid() }),
+  z.object({ kind: z.literal("none") }),
+]);
 
 export type TrailerChoice =
   | { kind: "company"; equipment_id: string }
@@ -37,10 +46,40 @@ export function normalizeTrailerNumber(raw: string | null | undefined): string {
 /** Pure shape check — no database access. null = the choice is complete. */
 export function trailerChoiceShapeRefusal(choice: TrailerChoice | null | undefined): TrailerChoiceRefusal | null {
   if (!choice) return { error: "trailer_choice_required" };
+  if (!["company", "customer", "interchange", "none"].includes(choice.kind)) return { error: "trailer_choice_required" };
   if (choice.kind === "customer" && !normalizeTrailerNumber(choice.trailer_number)) return { error: "customer_trailer_number_required" };
   if (choice.kind === "company" && !choice.equipment_id) return { error: "trailer_choice_required" };
   if (choice.kind === "interchange" && !choice.non_owned_trailer_id) return { error: "trailer_choice_required" };
   return null;
+}
+
+/** PATCH may retain a recorded choice, but may not preserve an unresolved trailer gap. */
+export async function requireRecordedTrailerChoice(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadId: string,
+  load: Record<string, unknown>,
+): Promise<TrailerChoiceRefusal | null> {
+  if (load.trailer_source === "none" && !load.non_owned_trailer_id) return null;
+  if (load.trailer_source === "customer" && load.non_owned_trailer_id) {
+    const resolved = await resolveTrailerChoice(client, operatingCompanyId, {
+      kind: "interchange", non_owned_trailer_id: String(load.non_owned_trailer_id),
+    });
+    return resolved.ok ? null : resolved.refusal;
+  }
+  if (load.trailer_source === "company" && !load.non_owned_trailer_id) {
+    const history = await client.query<{ new_trailer_id: string | null }>(
+      `SELECT h.new_trailer_id::text FROM dispatch.load_assignment_history h
+        JOIN mdata.equipment e ON e.id = h.new_trailer_id
+        WHERE h.load_id = $1::uuid AND h.operating_company_id = $2::uuid AND h.new_trailer_id IS NOT NULL
+        ORDER BY h.created_at DESC, h.id DESC LIMIT 1`,
+      [loadId, operatingCompanyId],
+    );
+    const trailerId = history.rows[0]?.new_trailer_id;
+    // Retaining history is not a new assignment: later retirement/lease changes cannot erase a valid trip choice.
+    if (trailerId) return null;
+  }
+  return { error: "trailer_choice_required" };
 }
 
 /**

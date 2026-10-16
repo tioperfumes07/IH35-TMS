@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { randomUUID } from "crypto";
 import { z } from "zod";
+import { trailerChoiceSchema } from "./load-trailer-choice.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -316,12 +317,7 @@ const createDispatchLoadBodySchema = z.object({
   // W-FIX-3b: persisted after load creation to dispatch.load_assignment_history.new_trailer_id.
   assigned_trailer_unit_id: z.string().uuid().optional(),
   // LEAD 443.107 item 3: the trailer choice — company trailer / customer trailer number / none (bobtail, power only).
-  trailer_choice: z.discriminatedUnion("kind", [
-    z.object({ kind: z.literal("company"), equipment_id: z.string().uuid() }),
-    z.object({ kind: z.literal("customer"), trailer_number: z.string().trim().min(1).max(40) }),
-    z.object({ kind: z.literal("interchange"), non_owned_trailer_id: z.string().uuid() }),
-    z.object({ kind: z.literal("none") }),
-  ]).optional(),
+  trailer_choice: trailerChoiceSchema.optional(),
   temperature_type: z.enum(["frozen", "fresh"]).optional(), // W-FIX-1: reefer Frozen/Fresh → loads.temperature_type
   assigned_primary_driver_id: z.string().uuid().optional(),
   // Historical imports deliberately do not widen the live active-driver picker. The existing inactive
@@ -429,12 +425,7 @@ const createDispatchLoadBodySchema = z.object({
 const updateDispatchLoadBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   // LEAD 443.107 item 3: the trailer choice — company trailer / customer trailer number / none (bobtail, power only).
-  trailer_choice: z.discriminatedUnion("kind", [
-    z.object({ kind: z.literal("company"), equipment_id: z.string().uuid() }),
-    z.object({ kind: z.literal("customer"), trailer_number: z.string().trim().min(1).max(40) }),
-    z.object({ kind: z.literal("interchange"), non_owned_trailer_id: z.string().uuid() }),
-    z.object({ kind: z.literal("none") }),
-  ]).optional(),
+  trailer_choice: trailerChoiceSchema.optional(),
   customer_id: z.string().uuid().optional(),
   dispatch_flag_color_id: z.string().uuid().optional(),
   customer_wo_number: z.string().trim().max(120).nullable().optional(),

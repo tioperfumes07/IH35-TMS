@@ -1,5 +1,12 @@
 [
   {
+    "id": "R443-161-G1-TRAILER-CHOICE",
+    "title": "Canonical load creation requires a trailer choice; edits retain a proven choice or refuse",
+    "source_file": "apps/backend/src/dispatch/load-trailer-choice.ts",
+    "guard": "scripts/verify-g1-trailer-choice-required.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "R443-139-LOAD-COSTS-LIVE-DOCUMENTS",
     "title": "Load Costs reads current booking charges or issued invoices and native cost documents immediately; driver AP accrual is not a second cost; invoicing does not hide unsettled loads",
     "source_file": "apps/backend/src/accounting/load-costs-live-documents.sql.ts",

@@ -1,6 +1,7 @@
 export default {
   name: "verify:book-load-miles-required",
-  run(ctx) {
-    ctx.run("node", ["scripts/verify-book-load-miles-required.mjs"]);
+  async run(ctx) {
+    await ctx.run("node", ["scripts/verify-book-load-miles-required.mjs"]);
+    await ctx.run("node", ["scripts/verify-g1-trailer-choice-required.mjs", "--selftest"]);
   },
 };

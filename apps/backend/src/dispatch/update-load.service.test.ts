@@ -33,7 +33,12 @@ function makeClient(handlers: { match: RegExp; rows: Row[] }[]) {
   const client = {
     async query<R = Row>(sql: string, _values?: unknown[]): Promise<{ rows: R[] }> {
       sqls.push(sql);
-      for (const h of handlers) if (h.match.test(sql)) return { rows: h.rows as R[] };
+      for (const h of handlers) if (h.match.test(sql)) {
+        // These scenarios exercise money/stops/qualification, on a load with an explicit bobtail choice.
+        const rows = sql.includes("SELECT * FROM mdata.loads")
+          ? h.rows.map(row => ({ trailer_source: "none", ...row })) : h.rows;
+        return { rows: rows as R[] };
+      }
       return { rows: [] as R[] };
     },
   };
