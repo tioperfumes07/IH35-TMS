@@ -41,6 +41,7 @@ import { FUEL_POSTS_ON_RECEIPT_FLAG_KEY } from "../accounting/fuel-posting/maybe
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "../accounting/expense-gl-posting-flag.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { createExpenseInClientTx } from "../accounting/expense-writer.service.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { resolveFuelLoadAtTime, resolveFillDriverAtTime } from "./fuel-load-at-time.js";
 
 type DbClient = {
@@ -376,6 +377,51 @@ async function postStatementDifference(
   return jeId;
 }
 
+/**
+ * 443.142-FIX — a statement scale-ticket expense the earlier create path left with 0 lines / unposted gets the line the
+ * expense writer writes (item OTR-Scale Expense, its account, qty 1, the header's load / driver / unit / trailer) and is
+ * posted through the expense posting engine (Dr OTR-Scale / Cr 2510), stamped like the writer does. No-op when posted.
+ */
+export async function postStatementScaleExpense(
+  client: DbClient,
+  companyId: string,
+  expenseId: string,
+  scaleItem: { item_id: string; account_id: string },
+  actor: string
+): Promise<"posted" | "already_posted"> {
+  const e = (await client.query<{ cents: string; memo: string | null; load_id: string | null; driver: string | null; unit_id: string | null; trailer_id: string | null; posting_status: string; lines: string }>(
+    `SELECT total_amount_cents::text AS cents, memo, load_id::text, driver_uuid::text AS driver, unit_id::text, trailer_id::text, posting_status,
+            (SELECT count(*) FROM accounting.expense_lines l WHERE l.expense_id = e.id)::text AS lines
+       FROM accounting.expenses e WHERE e.id = $1::uuid AND e.operating_company_id = $2::uuid AND e.voided_at IS NULL`,
+    [expenseId, companyId]
+  )).rows[0];
+  if (!e) throw new Error(`dreamline_scale_expense_missing:${expenseId}`);
+  if (e.posting_status === "posted") return "already_posted";
+  const cents = Number(e.cents);
+  if (Number(e.lines) === 0) {
+    await client.query(
+      `INSERT INTO accounting.expense_lines (expense_id, line_sequence, amount_cents, amount, description, expense_account_uuid, operating_company_id,
+         load_id, load_exemption_reason, item_id, quantity, rate_cents, unit_of_measure, driver_id, unit_id, trailer_id)
+       VALUES ($1::uuid, 1, $2::bigint, $12::numeric, $3, $4::uuid, $5::uuid, $6::uuid, $7, $8::uuid, 1, $2::bigint, 'each', $9::uuid, $10::uuid, $11::uuid)`,
+      [expenseId, cents, e.memo ?? "Dreamline scale ticket", scaleItem.account_id, companyId, e.load_id,
+        e.load_id ? null : "Dreamline scale ticket with no load covering the truck at the fill time (443.142)",
+        scaleItem.item_id, e.driver, e.unit_id, e.trailer_id, cents / 100]
+    );
+  }
+  const posting = await postSourceTransactionInClientTx(
+    client as never,
+    { operating_company_id: companyId, source_transaction_type: "expense", source_transaction_id: expenseId },
+    { userId: actor }
+  );
+  await client.query(
+    `UPDATE accounting.expenses SET status = 'posted', posting_status = 'posted', posted_at = now(), journal_entry_id = $2::uuid, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $3::uuid`,
+    [expenseId, posting.journal_entry_id, companyId]
+  );
+  await appendCrudAudit(client as never, actor, "expense.posted", { expense_id: expenseId, journal_entry_id: posting.journal_entry_id, source: "dreamline_statement_scale_repair" }, "info", "LEAD-443.142-FIX");
+  return "posted";
+}
+
 function emptyOutcomes(): DreamlineImportSummary["by_outcome"] {
   const o = {} as DreamlineImportSummary["by_outcome"];
   for (const k of ["pre_cutoff", "already_imported", "adopted", "cross_rail", "amount_mismatch", "imported", "scale_adopted", "scale_imported", "unresolved"] as DreamlineLineOutcome[]) {
@@ -541,6 +587,9 @@ export async function importDreamlineStatement(
         amount_cents: line.gross_cents,
         vendor_uuid: vendor.id,
         payment_account_uuid: payableId,
+        // 443.142-FIX — the writer writes the expense LINE and posts only when the category account is named; with the
+        // item alone it wrote a header with 0 lines, unposted (13525-5 / 13541-1 / 13545-5).
+        category_account_id: scaleItem.account_id,
         item_id: scaleItem.item_id,
         quantity: 1,
         rate_cents: line.gross_cents,
@@ -551,10 +600,17 @@ export async function importDreamlineStatement(
         memo: `Dreamline scale ticket — EFS invoice ${line.efs_invoice}, ${line.location_name ?? ""} ${line.city ?? ""} ${line.state ?? ""}`.trim(),
         is_company_expense: true,
       } as never, input.actor_user_uuid);
-      const dup = created as { duplicateVendorDocumentNumber?: boolean; existingExpenseId?: string };
-      if (dup.duplicateVendorDocumentNumber) { record(line, "already_imported", { expense_id: dup.existingExpenseId ?? null }); continue; }
+      const dup = created as { duplicateVendorDocumentNumber?: boolean; duplicateSubmission?: boolean; existingExpenseId?: string };
+      if (dup.duplicateVendorDocumentNumber || dup.duplicateSubmission) {
+        if (dup.existingExpenseId) await postStatementScaleExpense(client, companyId, dup.existingExpenseId, scaleItem, input.actor_user_uuid);
+        record(line, "already_imported", { expense_id: dup.existingExpenseId ?? null });
+        continue;
+      }
       const createdId = (created as { expense_id?: string }).expense_id;
       if (!createdId) throw new Error(`dreamline_scale_expense_refused:${line.efs_invoice}:${JSON.stringify(created)}`);
+      if (!(created as { posted_journal_entry_id?: string | null }).posted_journal_entry_id) {
+        throw new Error(`dreamline_scale_expense_not_posted:${line.efs_invoice} — the expense writer created ${createdId} without posting it`);
+      }
       record(line, "scale_imported", { expense_id: createdId });
       continue;
     }
