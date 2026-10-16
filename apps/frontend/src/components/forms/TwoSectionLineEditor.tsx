@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { expenseCategoriesCatalogClient } from "../../api/catalogs-accounting";
 // ACCT-F92: one shared definition of which accounts belong in which picker.
-import { isExpenseAccount } from "../../lib/account-picker-scope";
 import { entityLabel } from "../../lib/entity-label";
 import { tirePositionsCatalogClient } from "../../api/catalogs-fleet";
 import { getCoaAccounts } from "../../api/banking";
@@ -34,6 +33,13 @@ export type TwoSectionLine = {
   unit_cost: number;
   amount: number;
   expense_category_uuid?: string;
+  /**
+   * 443.159 (owner 2026-10-16: "all accounts must appear when creating a bill … same picker as Banking"):
+   * the catalogs.accounts id chosen in Section A. Section A's picker is the Chart of Accounts — the SAME
+   * source Banking categorize uses (getCoaAccounts) — so the chosen id is a GL account and travels as
+   * bill_lines.account_id (the poster's explicit-override tier), never as expense_category_uuid.
+   */
+  account_id?: string;
   expense_category_code?: string;
   /** ECON-012 — map keys from catalogs.expense_categories.metadata */
   expense_category_kind?: string;
@@ -98,13 +104,16 @@ export function TwoSectionLineEditor({
         is_active: "true",
         limit: 200,
       }),
-    enabled: Boolean(operatingCompanyId) && mode === "bill",
+    // 443.159: Section A no longer reads this catalog in any mode (Chart of Accounts instead); kept only so
+    // legacy bill lines that already carry a category id still resolve on read paths that import it.
+    enabled: false,
     staleTime: 30_000,
   });
   const coaAccountsQuery = useQuery({
     queryKey: ["catalogs", "coa-accounts", "line-category", operatingCompanyId],
     queryFn: () => getCoaAccounts(operatingCompanyId),
-    enabled: Boolean(operatingCompanyId) && mode !== "bill" && (mode === "expense" || categoryFetchActive),
+    // 443.159: every mode (bill included) picks Section A from the ONE chart-of-accounts source Banking uses.
+    enabled: Boolean(operatingCompanyId),
     staleTime: 30_000,
   });
   const tirePositionsQuery = useQuery({
@@ -122,7 +131,26 @@ export function TwoSectionLineEditor({
   // ACCT-F4431382: the latest lines, updated synchronously, so a Section A item picked for the operator (the one
   // item that posts to the category's account) composes with any other line update in the same commit.
   const linesRef = useRef<TwoSectionLine[]>(initialLines);
-  const updateLines = (next: TwoSectionLine[]) => {
+  // 443.159: the Section A picker writes the chosen id into expense_category_uuid (CostBreakdownBox binding).
+  // Section A's options are now ONLY Chart of Accounts rows (incl. accounts created inline), so every id picked
+  // in this editor is a GL account → stamp it as account_id and payload builders send bill_lines.account_id.
+  // The one exception is a legacy line loaded from an existing document that still carries a
+  // catalogs.expense_categories id: that id is never in the chart and stays a category, untouched.
+  const legacyCategoryIdsRef = useRef<Set<string>>(
+    new Set(
+      initialLines
+        .filter((line) => line.section === "A" && !line.account_id && line.expense_category_uuid)
+        .map((line) => String(line.expense_category_uuid))
+    )
+  );
+  const updateLines = (raw: TwoSectionLine[]) => {
+    const next = raw.map((line) => {
+      if (line.section !== "A") return line;
+      const picked = String(line.expense_category_uuid ?? "").trim();
+      if (!picked) return line.account_id ? { ...line, account_id: undefined } : line;
+      if (legacyCategoryIdsRef.current.has(picked)) return line.account_id ? { ...line, account_id: undefined } : line;
+      return line.account_id === picked ? line : { ...line, account_id: picked };
+    });
     linesRef.current = next;
     setLines(next);
     onChange(next);
@@ -139,34 +167,9 @@ export function TwoSectionLineEditor({
   const sectionA = useMemo(() => lines.filter((line) => line.section === "A"), [lines]) as CategoryLine[];
   const sectionB = useMemo(() => lines.filter((line) => line.section === "B"), [lines]) as ItemLine[];
   const expenseCategoryOptions = useMemo<CostContextOption[]>(() => {
-    if (mode === "bill") {
-      const fromCatalog = (expenseCategoriesQuery.data?.rows ?? []).map((row) => {
-        const meta =
-          row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
-            ? (row.metadata as Record<string, unknown>)
-            : {};
-        return {
-          id: String(row.id ?? ""),
-          // BILL-EXPENSE-CATEGORY-PICKER-RAW-UUID-FALLBACK: when display_name and code are both
-          // absent, the old fallback painted the raw catalog row id as the picker label. entityLabel
-          // resolves the same missing-display-value case to "Category — not visible" instead, so the
-          // real FK/code payload (unchanged below) never gets disguised behind an unreadable uuid.
-          label: entityLabel(row.display_name ?? row.code, row.id, "Category"),
-          // Carry code so bill line payloads can set category_kind/code without a second lookup.
-          code: String(row.code ?? ""),
-          category_kind: String(meta.category_kind ?? "").trim() || undefined,
-          category_map_code: String(meta.category_code ?? "").trim() || undefined,
-        };
-      });
-      const merged = new Map<string, CostContextOption>();
-      for (const row of fromCatalog) {
-        if (row.id) merged.set(row.id, row);
-      }
-      for (const row of createdCategoryOptions) {
-        if (row.id) merged.set(row.id, row);
-      }
-      return Array.from(merged.values());
-    }
+    // 443.159 (owner 2026-10-16, his instruction is law): Section A lists the FULL active Chart of Accounts —
+    // exactly the list Banking categorize shows (getCoaAccounts) — in bill, expense and work-order mode.
+    // The earlier expense-only filter (ACCT-F92, below) is superseded by the owner's ruling.
     // Expense/WO cost line: expense-side accounts ONLY.
     // ACCT-F92 (live 2026-08-02): this mapped the FULL chart with no type filter, so the Work Order
     // "Parts & Labor > Type" picker offered Detention / Layover / Lumper / TONU Income (4210-4240
@@ -174,7 +177,7 @@ export function TwoSectionLineEditor({
     // A repair parts line could be booked to revenue or to an inter-company account — the entry would
     // still balance, so nothing downstream would catch it. Every mode this editor serves (bill,
     // expense, work order) is a COST line, so Income/asset/liability are never valid here.
-    const fromCoa = (coaAccountsQuery.data?.accounts ?? []).filter(isExpenseAccount).map((account) => ({
+    const fromCoa = (coaAccountsQuery.data?.accounts ?? []).map((account) => ({
       id: String(account.id ?? ""),
       label: `${account.account_name ?? ""}`.trim(),
     }));
@@ -303,7 +306,6 @@ export function TwoSectionLineEditor({
     updateLines([...sectionA.map((line) => ({ ...line, section: "A" as const })), ...nextSectionB.map((line) => ({ ...line, section: "B" as const }))]);
   };
 
-  const expenseCategoryRows = expenseCategoriesQuery.data?.rows ?? [];
   const tirePositionRows = tirePositionsQuery.data?.rows ?? [];
 
   return (
@@ -319,14 +321,13 @@ export function TwoSectionLineEditor({
         laborRatesCatalogStatus={laborRatesCatalogStatus}
         locationOptions={locationOptions}
         operatingCompanyId={operatingCompanyId || undefined}
-        categoryCreateKind={mode === "bill" ? "expense_category" : "category"}
+        categoryCreateKind="category"
         onCategoryOptionCreated={(_lineId, opt) => {
           setCreatedCategoryOptions((prev) => {
             if (prev.some((row) => row.id === opt.id)) return prev;
             return [...prev, { id: opt.id, label: opt.label }];
           });
-          if (mode === "bill") void expenseCategoriesQuery.refetch();
-          else void coaAccountsQuery.refetch();
+          void coaAccountsQuery.refetch();
         }}
         onQuickCreateCategory={(lineId) => setQuickCreateTarget({ kind: "category", lineId })}
         onQuickCreateItem={(lineId) => setQuickCreateTarget({ kind: "item", lineId })}
@@ -375,15 +376,6 @@ export function TwoSectionLineEditor({
             setQuickCreateTarget(null);
             void costContextQuery.refetch();
           }}
-        />
-      ) : null}
-      {mode === "bill" ? (
-        <CappedListNotice
-          shown={expenseCategoryRows.length}
-          limit={200}
-          total={expenseCategoriesQuery.data?.total ?? null}
-          hint="Type to search for an expense category not listed."
-          className="text-xs text-[#4B5563]"
         />
       ) : null}
       <CappedListNotice

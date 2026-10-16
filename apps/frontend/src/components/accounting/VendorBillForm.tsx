@@ -321,11 +321,16 @@ export function VendorBillForm({
     // explicitly — "Unknown codes keep expense_category_uuid only (poster → uncategorized) — never
     // invent a GL account" — so populating account_id client-side would be the wrong fix and would
     // re-create the same-entity FK break that comment warns about.
+    // 443.159: a Section A line carries either its GL account (account_id — the Chart of Accounts picker,
+    // same source as Banking) or, for a legacy line, its expense category. One of the two is required.
     const sectionAMissingCategory = linePayloads.some(
-      (line) => line.section === "A" && !String(line.expense_category_uuid ?? "").trim()
+      (line) =>
+        line.section === "A" &&
+        !String(line.account_id ?? "").trim() &&
+        !String(line.expense_category_uuid ?? "").trim()
     );
     if (sectionAMissingCategory) {
-      setFormError("Each Category (Section A) line needs an expense category.");
+      setFormError("Each Category (Section A) line needs an account.");
       return;
     }
 

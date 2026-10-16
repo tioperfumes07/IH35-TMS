@@ -116,6 +116,20 @@ export function buildVendorBillLinePayloads(
     if (line.section === "A") {
       const cents = Math.round(Number(line.amount || 0) * 100);
       if (cents <= 0) continue;
+      // 443.159 (owner 2026-10-16): Section A's picker is the Chart of Accounts (same source as Banking).
+      // A picked GL account travels as bill_lines.account_id — the poster's explicit tier
+      // (resolveBillLineDebitAccount) — and is NEVER written into expense_category_uuid (ACCT-F194 FK rule).
+      const accountId = String(line.account_id ?? "").trim();
+      if (accountId) {
+        out.push({
+          section: "A",
+          amount_cents: cents,
+          description: line.description?.trim() || undefined,
+          account_id: accountId,
+          ...(defaultLoadId ? { load_id: defaultLoadId } : {}),
+        });
+        continue;
+      }
       const categoryId = String(line.expense_category_uuid ?? "").trim();
       const mapped = mapExpenseCatalogCodeToBillCategory(line.expense_category_code, {
         category_kind: line.expense_category_kind,

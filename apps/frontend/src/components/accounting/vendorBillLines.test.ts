@@ -24,6 +24,33 @@ describe("mapExpenseCatalogCodeToBillCategory", () => {
 });
 
 describe("buildVendorBillLinePayloads", () => {
+  // 443.159 (owner 2026-10-16): Section A picks from the Chart of Accounts (same source as Banking). A picked
+  // GL account (e.g. 6110-01-001 Dispatch — Mexico) must travel as account_id, never as expense_category_uuid.
+  it("sends a Chart-of-Accounts pick as account_id and never as expense_category_uuid", () => {
+    const lines: TwoSectionLine[] = [
+      {
+        id: "1",
+        section: "A",
+        description: "Dispatcher Mexico — week 41",
+        quantity: 1,
+        unit_cost: 500,
+        amount: 500,
+        expense_category_uuid: "b2f4e376-031a-4620-a906-cc8f458e406e",
+        account_id: "b2f4e376-031a-4620-a906-cc8f458e406e",
+      },
+    ];
+    const out = buildVendorBillLinePayloads(lines);
+    expect(out).toEqual([
+      {
+        section: "A",
+        amount_cents: 50000,
+        description: "Dispatcher Mexico — week 41",
+        account_id: "b2f4e376-031a-4620-a906-cc8f458e406e",
+      },
+    ]);
+    expect(out[0]).not.toHaveProperty("expense_category_uuid");
+  });
+
   it("maps Section A catalog category to expense_category_uuid + map keys (not CoA as uuid)", () => {
     const lines: TwoSectionLine[] = [
       {
