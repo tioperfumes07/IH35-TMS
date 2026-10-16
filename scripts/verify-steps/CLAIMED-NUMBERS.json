@@ -16562,5 +16562,10 @@
     "claimed_at": "2026-10-16",
     "claimed_by": "claude",
     "purpose": "CC-3 LEAD 443.168 L (E-46): verify-one-faro-reserve-query (every reserve reader reads factoringBookReserveCents; no second SQL sums the reserve accounts)"
+  },
+  "18475": {
+    "claimed_at": "2026-10-16",
+    "claimed_by": "claude",
+    "purpose": "CC-2 LEAD 443.171: verify-factoring-undo-and-partial-purchase (UI undo calls voidFactoringPurchase; purchased amount capped at open; backend refuses gross > open; customer-paid-Faro leg caps 2150 at the line's unrelieved purchased gross; editable selection totals distribute exactly)"
   }
 }
