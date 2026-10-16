@@ -631,6 +631,73 @@ async function fetchLedgerCandidates(
   // ROUND 157-C narrowed bill/bill_payment to settlement-born; ROUND 259 restored expenses +
   // the explicit isCredit / !isCredit shape after that refactor red'd main CI.
 
+  // LEAD 443.168 N (register 1.4: the candidate universe is every document; supersedes ROUND 157-C's settlement-born-only
+  // removal of transfers / journal entries, #22960) — both directions, scoped per M1 to THIS bank account:
+  //   transfer — money OUT on its from-account, money IN on its to-account (bank account id or its ledger account);
+  //   je       — a hand-keyed (manual) journal entry posting to this account's ledger: DEBIT = money in, CREDIT = money
+  //              out. Auto entries belong to their documents, which are offered as those documents (never twice).
+  // Already-matched / consumed documents are excluded (M1b + the no-double-match guard).
+  if (wants("transfer")) {
+    const transfers = await client.query<RawRow>(
+      `
+        SELECT t.id::text, t.amount_cents::int AS amount_cents, t.transfer_date::text AS event_date,
+               COALESCE(NULLIF(t.memo, ''), 'Transfer')::text AS memo, NULL::text AS counterparty_id,
+               'Transfer between own accounts'::text AS counterparty_name,
+               COALESCE(NULLIF(t.reference_number, ''), t.transfer_type::text)::text AS reference,
+               t.memo::text AS description, NULL::int AS open_balance_cents
+          FROM banking.transfers t
+         WHERE t.operating_company_id = $1::uuid
+           AND t.revoked_at IS NULL
+           AND t.transfer_date BETWEEN $2::date AND $3::date
+           AND (CASE WHEN $6::boolean
+                     THEN t.to_account_id::text IN ($7::text, $8::text)
+                     ELSE t.from_account_id::text IN ($7::text, $8::text) END)
+           AND ($4::text IS NULL OR lower(COALESCE(t.memo, '') || ' ' || COALESCE(t.reference_number, '')) LIKE $4)
+           AND NOT EXISTS (
+             SELECT 1 FROM banking.reconciliation_matches m
+              WHERE m.ledger_entry_kind = 'transfer' AND m.ledger_entry_id = t.id
+                AND m.match_state IN ('auto_matched', 'user_matched')
+           )
+           AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions cbt
+                            WHERE cbt.matched_transfer_id = t.id AND cbt.voided_at IS NULL)
+         LIMIT $5
+      `,
+      [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, isCredit, _bankAccountId, ledgerId ?? ""]
+    );
+    for (const row of transfers.rows) results.push(toCandidate("transfer", row, "vendor"));
+  }
+  if (ledgerId && wants("je")) {
+    const jes = await client.query<RawRow>(
+      `
+        SELECT je.id::text, sum(p.amount_cents)::int AS amount_cents, je.entry_date::text AS event_date,
+               COALESCE(NULLIF(je.memo, ''), 'Journal entry')::text AS memo, NULL::text AS counterparty_id,
+               NULL::text AS counterparty_name, je.id::text AS reference, je.memo::text AS description,
+               NULL::int AS open_balance_cents
+          FROM accounting.journal_entries je
+          JOIN accounting.journal_entry_postings p
+            ON p.journal_entry_uuid = je.id AND p.operating_company_id = je.operating_company_id
+         WHERE je.operating_company_id = $1::uuid
+           AND je.source = 'manual'
+           AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
+           AND je.entry_date BETWEEN $2::date AND $3::date
+           AND p.account_id = $6::uuid
+           AND p.debit_or_credit = (CASE WHEN $7::boolean THEN 'debit' ELSE 'credit' END)
+           AND ($4::text IS NULL OR lower(COALESCE(je.memo, '')) LIKE $4)
+           AND NOT EXISTS (
+             SELECT 1 FROM banking.reconciliation_matches m
+              WHERE m.ledger_entry_kind = 'je' AND m.ledger_entry_id = je.id
+                AND m.match_state IN ('auto_matched', 'user_matched')
+           )
+           AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions cbt
+                            WHERE cbt.matched_journal_entry_id = je.id AND cbt.voided_at IS NULL)
+         GROUP BY je.id, je.entry_date, je.memo
+         LIMIT $5
+      `,
+      [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, ledgerId, isCredit]
+    );
+    for (const row of jes.rows) results.push(toCandidate("je", row, "vendor"));
+  }
+
   // --- MONEY IN (deposit) — customer payments ------------------------------------
   if (isCredit) {
     if (wants("payment")) {
@@ -933,6 +1000,41 @@ async function fetchLedgerCandidates(
         [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, ledgerId]
       );
       for (const row of expenses.rows) results.push(toCandidate("expense", row, "vendor"));
+    }
+
+    // LEAD 443.168 N — on the Relay Fuel Wallet register (money OUT) a Relay fill IS this account's document: offered when no
+    // live expense document adopts it (an adopted fill is offered as that expense — one purchase, never twice). Accept is
+    // the existing relay_fuel path (E-49 fill poster in the same transaction). Never on a bank register (443.54 stands).
+    if (onRelayWallet && wants("relay_fuel")) {
+      const fills = await client.query<RawRow>(
+        `
+          SELECT r.id::text, ${RELAY_FUEL_WALLET_AMOUNT_SQL} AS amount_cents,
+                 r.relay_created_at::date::text AS event_date,
+                 ('Relay fill ' || r.transaction_id)::text AS memo, NULL::text AS counterparty_id,
+                 COALESCE(r.location_name, r.merchant_name, 'Relay')::text AS counterparty_name,
+                 r.transaction_id::text AS reference,
+                 trim(COALESCE(r.location_name, '') || ' ' || COALESCE(r.location_city, '') || ' ' || COALESCE(r.location_state, ''))::text AS description,
+                 NULL::int AS open_balance_cents
+            FROM integrations.relay_fuel_transactions r
+           WHERE r.operating_company_id = $1::uuid
+             AND r.voided_at IS NULL AND COALESCE(r.is_active, true) AND r.cash_advance IS NOT TRUE
+             AND r.relay_created_at::date BETWEEN $2::date AND $3::date
+             AND ($4::text IS NULL OR lower(COALESCE(r.transaction_id, '') || ' ' || COALESCE(r.location_name, '') || ' ' || COALESCE(r.merchant_name, '')) LIKE $4)
+             AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions cbt
+                              WHERE cbt.matched_relay_fuel_transaction_id = r.id AND cbt.voided_at IS NULL)
+             AND NOT EXISTS (
+               SELECT 1 FROM banking.reconciliation_matches m
+                WHERE m.ledger_entry_kind = 'relay_fuel' AND m.ledger_entry_id = r.id
+                  AND m.voided_at IS NULL AND m.match_state IN ('auto_matched', 'user_matched')
+             )
+             AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions ft
+                               JOIN accounting.expenses e ON e.source_fuel_transaction_id = ft.id AND e.voided_at IS NULL
+                              WHERE ft.relay_fuel_transaction_id = r.id)
+           LIMIT $5
+        `,
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit]
+      );
+      for (const row of fills.rows) results.push(toCandidate("relay_fuel", row, "vendor"));
     }
 
     // ROUND 443.54 — Relay fills are paid from wallet 1295, NOT from the bank. They must never
