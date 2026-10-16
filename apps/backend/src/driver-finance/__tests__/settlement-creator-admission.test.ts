@@ -26,6 +26,13 @@ describe("ROUND 443.3 — Settlement Creator admission", () => {
     expect(r?.message).toBe(FULL_TRANSPORTATION_MESSAGE);
   });
 
+  it("443.167-R2 — a USMCA settlement document (AlwaysTrack 5796) whose only load is Transportation (13541) is admitted at $0", () => {
+    const d = { ...(draft(load("13541", "faro_transportation")) as object), settlement_no: "5796" } as unknown as SettlementCreatorDraft;
+    expect(draftAdmissionRefusal(d)).toBeNull();
+    const pSeries = { ...(draft(load("13541", "faro_transportation")) as object), settlement_no: "P-0070" } as unknown as SettlementCreatorDraft;
+    expect(draftAdmissionRefusal(pSeries)?.code).toBe("full_transportation_settlement");
+  });
+
   it("a mixed settlement (5769 shape: one Transportation, one USMCA) is admitted", () => {
     expect(draftAdmissionRefusal(draft(load("13498", "faro_transportation"), load("13508", "faro_usmca", "3")))).toBeNull();
   });

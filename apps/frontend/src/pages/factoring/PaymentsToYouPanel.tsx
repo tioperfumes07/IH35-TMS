@@ -36,6 +36,8 @@ type Props = {
   dateTo?: string;
   filterBar?: React.ReactNode;
   summaryDetailToggle?: React.ReactNode;
+  /** LEAD 443.174 — Summary = one row per month (wires, gross, fees, net); Detail = one row per purchase (wire). */
+  view?: "summary" | "detail";
   /** 443.171 — Undo purchase is the Owner's (the server refuses everyone else). */
   isOwner?: boolean;
   /** 443.171 E — clicking a purchase opens it in the Submit to Factor form in Edit mode (Owner). */
@@ -46,7 +48,53 @@ export const UNDO_PURCHASE_MATCHED_MESSAGE = "Unmatch the Faro wire in Banking f
 
 type UndoTarget = { id: string; display_id: string; bank_transaction_id: string | null; bank_account_id: string | null };
 
-export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, summaryDetailToggle, isOwner = false, onEditPurchase }: Props) {
+export type PaymentsToYouMonthRow = {
+  month: string;
+  wires: number;
+  invoices: number;
+  gross_cents: number;
+  fees_cents: number;
+  escrow_reserve_cents: number;
+  cash_reserve_cents: number;
+  net_to_company_cents: number;
+};
+
+/** LEAD 443.174 — the Summary view: purchases grouped by the month of the wire (else the purchase date). */
+export function paymentsToYouByMonth(purchases: FactoringPurchaseListRow[]): PaymentsToYouMonthRow[] {
+  const c = (v: number | string | null | undefined) => Number(v ?? 0) || 0;
+  const by = new Map<string, PaymentsToYouMonthRow>();
+  for (const p of purchases) {
+    const month = String(p.wire_date ?? p.purchase_date).slice(0, 7);
+    const m = by.get(month) ?? { month, wires: 0, invoices: 0, gross_cents: 0, fees_cents: 0, escrow_reserve_cents: 0, cash_reserve_cents: 0, net_to_company_cents: 0 };
+    m.wires += 1;
+    m.invoices += c(p.invoice_count);
+    m.gross_cents += c(p.gross_cents);
+    m.fees_cents += c(p.fee_cents) + c(p.wire_fee_cents);
+    m.escrow_reserve_cents += c(p.escrow_reserve_cents);
+    m.cash_reserve_cents += c(p.cash_reserve_cents);
+    m.net_to_company_cents += c(p.net_to_company_cents);
+    by.set(month, m);
+  }
+  return [...by.values()].sort((a, b) => a.month.localeCompare(b.month));
+}
+
+const monthLabel = (ym: string) => {
+  const [y, m] = ym.split("-");
+  return y && m ? `${m}/${y}` : ym;
+};
+
+const MONTH_COLUMNS: ParityColumn<PaymentsToYouMonthRow>[] = [
+  { key: "month", label: "Month", sortable: true, render: (r) => monthLabel(r.month) },
+  { key: "wires", label: "Wires", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => r.wires },
+  { key: "invoices", label: "Invoices", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => r.invoices },
+  { key: "gross_cents", label: "Purchased", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => formatUsdCents(r.gross_cents) },
+  { key: "escrow_reserve_cents", label: "Escrow reserve", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => formatUsdCents(r.escrow_reserve_cents) },
+  { key: "cash_reserve_cents", label: "Cash reserve", sortable: true, className: "text-right", cellClass: "text-right", defaultHidden: true, render: (r) => formatUsdCents(r.cash_reserve_cents) },
+  { key: "fees_cents", label: "Fees", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => formatUsdCents(r.fees_cents) },
+  { key: "net_to_company_cents", label: "Net to IH35", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => formatUsdCents(r.net_to_company_cents) },
+];
+
+export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, summaryDetailToggle, view = "detail", isOwner = false, onEditPurchase }: Props) {
   const canEdit = isOwner && Boolean(onEditPurchase);
   const queryClient = useQueryClient();
   const [undo, setUndo] = useState<UndoTarget | null>(null);
@@ -104,6 +152,7 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
         };
       });
   }, [listQuery.data?.purchases]);
+  const monthRows = useMemo(() => paymentsToYouByMonth(listQuery.data?.purchases ?? []), [listQuery.data?.purchases]);
 
   const totalNet = useMemo(
     () => rows.reduce((sum, row) => sum + cents(row.net_to_company_cents), 0),
@@ -274,7 +323,25 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
           />
         ) : (
           <div className="overflow-x-auto">
+            {view === "summary" ? (
             <ParityTable
+              title="Payments to you — by month"
+              columns={MONTH_COLUMNS}
+              rows={monthRows}
+              rowKey={(row) => row.month}
+              loading={listQuery.isLoading}
+              emptyText="No posted factoring purchases (wires) yet."
+              storageKey="factoring-payments-to-you-by-month"
+              tableTestId="factoring-payments-to-you-month-table"
+              footerCells={{
+                month: `${monthRows.length} month(s)`,
+                wires: String(rows.length),
+                net_to_company_cents: formatUsdCents(totalNet),
+              }}
+            />
+            ) : (
+            <ParityTable
+              title="Payments to you — by purchase"
               columns={columns}
               rows={rows}
               rowKey={(row) => row.id}
@@ -289,6 +356,7 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
                 running_net_cents: formatUsdCents(totalNet),
               }}
             />
+            )}
           </div>
         )}
       </div>

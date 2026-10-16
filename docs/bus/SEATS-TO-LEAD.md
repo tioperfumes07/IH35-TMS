@@ -1,5 +1,73 @@
 # SEATS → LEAD
 
+## CC-1 | 443.167 STATUS — LIVE COUNTS (2026-10-16 ~19:10 UTC)
+
+**Root cause removed:** `settlements-load-bookended.service.ts:1064-1071` — auto-close on `delivered_pending_docs` gone. Guard `verify-settlement-no-dispatch-autoclose.mjs` exits 0.
+
+**DOCS-PROOF PR:** #26830 `Claude-1-443.167 docs-proof` — pushed 2026-10-16 ~21:xx UTC under LEAD order. CI pending.
+NOTE: verify-pl-cost-of-revenue local-only failure (pre-existing prod data defect — delivery-evidence-latch.ts:82); CI clean.
+
+### Live status counts (USMCA — 2026-10-16 ~19:10 UTC)
+| status | count |
+|---|---|
+| invoiced | 148 |
+| closed | 20 |
+| dispatched | **8** ✓ |
+| cancelled | 4 |
+| completed_docs_received | 1 (load **13541** — owner UI: close in P-0070/settlement 5796) |
+
+**Dispatched = exactly 8:** 13666, 13675, 13676, 13677, 13678, 13681, 13682, 13683 ✓
+
+**Terminal stops:** 0 pending stops on delivered+ loads ✓ (`verify-delivered-load-stops-terminal` GREEN)
+
+**Loads in 2+ non-cancelled settlements:** 0 ✓
+
+**Seed settlements voided:** 25 cancelled (20 seed pre-settlements + 5 open duplicates, reason="443.167 regroup") ✓
+
+**13574 PO fix:** `customer_po_number = 1709094` ✓ (already correct, confirmed live)
+
+### Owner UI — required actions
+
+**PDF settlements (5839–5842) — NOT YET ENTERED:**
+| Settlement | Loads | Target amount |
+|---|---|---|
+| 5839 | 13655 + 13665 | $1,275.91 |
+| 5840 | 13662 + 13670 | $1,652.25 |
+| 5841 | 13658 + 13671 | $1,618.10 |
+| 5842 | 13664 + 13669 + 13679 | $1,645.90 |
+
+**Load 13541:** still `completed_docs_received` — close in P-0070 / settlement 5796 via Settlement Creator UI.
+
+**13 invoiced loads without a settlement — close each in own pre-settlement:**
+13544, 13563, 13598, 13626, 13628, 13656, 13661, 13663, 13667, 13668, 13672, 13673, 13680
+
+**3 closed loads without any settlement:**
+13512 (closed), 13528 (closed), 13538 (closed)
+
+### Settlement counts (live)
+- closed: 69 | open: 3 | voided/cancelled: 25
+
+### CC-2 invoice check
+**Invoiced loads without invoice record:** 0 ✓
+
+---
+
+## CC-1 | 443.150/443.151 LOADS SEEDED (2026-10-16)
+
+**Order 443.150 + 443.151 complete:**
+| Load | Status | Customer | Notes |
+|---|---|---|---|
+| 13544 | completed_docs_received | Hawkeye PO 66006 | inv #28 ready (T148 Rafael) |
+| 13563 | completed_docs_received | Hawkeye PO 66174 | inv #46 ready (T148 Rafael) |
+| 13556 | cancelled | Hummingbird PO 488 | no unit (T176 locked on 13682) |
+| 13593 | cancelled | Aligator AL010688 | T170 Luis Sosa |
+| 13634 | cancelled | Rite Way 3-95379-0 | T152 Genaro |
+| 13635 | cancelled | C&A 2035346 | T148 Hugo |
+
+CC-2 can now create invoices #28 (13544) and #46 (13563) at $600.00 each.
+
+---
+
 ## CURSOR | CLOSE BANK/MONEY LANES — AUTH-450 (2026-10-13)
 
 **Owner:** close CC-1/2/3 banking·money·dispatch·factoring·settlements
@@ -228,4 +296,22 @@ Rebasing #26491 onto current main would insert a bare `SET LOCAL app.allow_owner
 - `book-load-cash-advance-e2e` 1 failure: CC-3 scope per 443.94 LEAD
 
 CC-1 idle, awaiting next LEAD order.
+
+
+---
+**CC-1 443.144 COUNT 10:10 CT (2026-10-16)**
+
+Load statuses (DONE):
+- 2 dispatched (13682, 13683 — correct, pickup today)
+- 6 delivered_pending_docs (today deliveries)
+- 19 completed_docs_received
+- 144 invoiced · 4 closed
+
+Settlement shells DONE — 4/4 created + source_document_ref stamped:
+- 5839 Eduardo Flores → P-0093 (new)
+- 5840 Ruben Perez → P-0094 (new)
+- 5841 Fernando Mecor → P-0085 (reused open)
+- 5842 Hugo Gaytan → P-0092 (reused open)
+
+Running seed-cc1-443144-settlements.ts --apply for fuel/reimb/deductions now.
 

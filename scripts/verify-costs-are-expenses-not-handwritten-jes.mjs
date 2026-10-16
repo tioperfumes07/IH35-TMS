@@ -88,6 +88,7 @@ const DOCUMENT_ENGINE_EXEMPT_SOURCE_TYPES = new Set([
 // Self-test: node scripts/verify-costs-are-expenses-not-handwritten-jes.mjs --selftest
 export const REQUIRES_LIVE_DB = "money-relevant (cost JEs + expenses) — must fail-closed, never skip, per ROUND 29.9-B";
 
+import { readFileSync } from "node:fs";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-costs-are-expenses-not-handwritten-jes";
@@ -601,7 +602,32 @@ function runClassifierSelftest() {
   }
 }
 
+/**
+ * STATIC (Lead order 2026-10-16, the 65 Dreamline card-difference JEs): the Dreamline statement writer must route a
+ * card-charged-MORE difference (a cost) through THE expense writer, never its own journal entry. Pure — exported for selftest.
+ */
+export function dreamlineCostDifferenceProblems(src) {
+  const p = [];
+  const fn = src.match(/async function postStatementDifference\([\s\S]*?\n}\n/)?.[0] ?? "";
+  if (!/if \(input\.differenceCents < 0\) return postStatementCostDifferenceAsExpense\(client, input\);/.test(fn))
+    p.push("dreamline-statement-import.service.ts: a card-charged-more difference is not routed to the expense writer");
+  const exp = src.match(/export async function postStatementCostDifferenceAsExpense\([\s\S]*?\n}\n/)?.[0] ?? "";
+  if (!/await createExpenseInClientTx\(client,/.test(exp) || /INSERT INTO accounting\.journal_entries/.test(exp))
+    p.push("dreamline-statement-import.service.ts: the cost difference must be written by createExpenseInClientTx, never a handwritten JE");
+  return p;
+}
+
+function runStaticDreamline() {
+  const src = readFileSync(new URL("../apps/backend/src/fuel/dreamline-statement-import.service.ts", import.meta.url), "utf8");
+  const p = dreamlineCostDifferenceProblems(src);
+  const planted = dreamlineCostDifferenceProblems(src.replace("if (input.differenceCents < 0) return postStatementCostDifferenceAsExpense(client, input);", ""));
+  if (planted.length === 0) { console.error(`${LABEL} static selftest FAIL — removing the expense route was not caught`); process.exitCode = 1; }
+  if (p.length) { for (const x of p) console.error(`${LABEL} STATIC FAIL — ${x}`); process.exitCode = 1; }
+  return p.length === 0;
+}
+
 async function run({ selftest }) {
+  if (!runStaticDreamline() && !selftest) return;
   if (selftest) {
     runClassifierSelftest();
     if (process.env.DATABASE_URL || process.env.DATABASE_DIRECT_URL) {

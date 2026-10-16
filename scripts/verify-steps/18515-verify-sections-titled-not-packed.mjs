@@ -12,6 +12,7 @@
  *   (b) same-rows toggle — a "summary" | "detail" view state that no render expression ever branches on
  *       (the toggle flips a value nothing reads, so both views render the same rows).
  *   (c) inline notice — a <p> whose static text is >= 160 characters (two lines at 12px) outside an <InfoPopover>.
+ *       Handing the view to a child as `view={x}` counts as a branch (the child renders the two views).
  * Counts per file are ratcheted in 18515-sections-titled-baseline.json: a file may only go DOWN; a new file must be 0;
  * the baseline itself may only shrink against origin/main.
  *
@@ -121,7 +122,7 @@ export function scan(src) {
   // (b)
   for (const m of src.matchAll(/const \[(\w+),\s*set\w+\]\s*=\s*useState(?:<[^>]*>)?\(\s*["'](summary|detail)["']\s*\)/g)) {
     const v = m[1];
-    const branches = new RegExp(`\\b${v}\\s*(?:===|!==|==|!=)\\s*["'](?:summary|detail)["']|["'](?:summary|detail)["']\\s*(?:===|!==)\\s*${v}\\b|\\b${v}\\s*\\?|switch\\s*\\(\\s*${v}\\s*\\)`);
+    const branches = new RegExp(`\\b${v}\\s*(?:===|!==|==|!=)\\s*["'](?:summary|detail)["']|["'](?:summary|detail)["']\\s*(?:===|!==)\\s*${v}\\b|\\b${v}\\s*\\?|switch\\s*\\(\\s*${v}\\s*\\)|\\bview=\\{${v}\\}`);
     // the toggle's own active-state styling is not a render branch: drop lines that only style a button
     const body = src.split("\n").filter((l) => !/aria-pressed|className=|variant=/.test(l)).join("\n");
     if (!branches.test(body)) counts.same_rows_toggle += 1;

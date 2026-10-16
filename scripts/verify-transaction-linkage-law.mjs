@@ -145,6 +145,7 @@ export const TABLE_REGISTRY = {
   "accounting.factoring_default_interest_accruals": { status: "OUT_OF_SCOPE" },
   "accounting.factoring_lifecycle_posting_keys": { status: "OUT_OF_SCOPE" },
   "accounting.factoring_reserve_movements": { status: "OUT_OF_SCOPE" },
+  "accounting.factoring_misdirected_payment_alerts": { status: "OUT_OF_SCOPE", reason: "factoring/AR alert log — payment routed to wrong entity; no independent GL spine (alert references the original payment's JE); load/customer reached via the misrouted payment" },
   "accounting.fixed_asset_classes": { status: "NOT_TRANSACTIONAL", reason: "catalog" },
   "accounting.fixed_asset_disposals": { status: "NEEDS_JOIN_PATH", tier: TIER.TIER2 },
   "accounting.fixed_assets": { status: "NEEDS_JOIN_PATH", tier: TIER.TIER2, reason: "capital spend on a unit; no direct unit_id column found, needs join-path confirmation" },

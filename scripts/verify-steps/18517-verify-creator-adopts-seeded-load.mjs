@@ -12,6 +12,10 @@
  *   3. restateOpenDriverBillToSignedPay runs before the pay lines, voids (never deletes) and mints one -R bill, and refuses a
  *      bill settled in a live settlement or accrued at delivery;
  *   4. a load already past delivery is never re-delivered (not gated on Edit only).
+ *   5. (443.167-R2, owner standing ruling) a USMCA settlement document (AlwaysTrack number) admits an all-Transportation
+ *      draft; only a draft with no USMCA settlement number is refused;
+ *   6. an adopted Transportation load settled at $0 drops the seed's revenue (Event 1 earn reversed through the JE
+ *      reversal engine, charge lines and rate to $0) before its $0 invoice, and refuses when a live invoice exists.
  * --selftest plants each regression.
  */
 import { readFileSync } from "node:fs";
@@ -21,12 +25,26 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const SEED = "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts";
 const SVC = "apps/backend/src/driver-finance/settlement-creator.service.ts";
+const ADM = "apps/backend/src/driver-finance/settlement-creator-admission.ts";
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
 
 export function check(src = {}) {
   const seed = src.seed ?? read(SEED);
   const svc = src.svc ?? read(SVC);
+  const adm = src.adm ?? read(ADM);
   const f = [];
+  if (!/const usmcaSettlementDocument = isAlwaysTrackSettlementNumber\(String\(draft\.settlement_no/.test(adm) || !/!usmcaSettlementDocument && loads\.every\(\(l\) => l\.factoring === "faro_transportation"\)/.test(adm))
+    f.push(`${ADM}: a USMCA settlement document with only Transportation loads is refused (5: owner standing ruling 443.167-R2)`);
+  const zero = svc.match(/export async function restateAdoptedLoadToZeroRevenue\([\s\S]*?\n}\n/)?.[0] ?? "";
+  if (!zero) f.push(`${SVC}: restateAdoptedLoadToZeroRevenue missing (6)`);
+  else {
+    if (!/reverseJournalEntryNoFlip\(/.test(zero) || !/source_transaction_type = 'load'/.test(zero)) f.push(`${SVC}: the $0 restate does not reverse the load's Event 1 earn through the JE reversal engine (6)`);
+    if (!/zero_revenue_load_already_invoiced/.test(zero)) f.push(`${SVC}: the $0 restate rewrites a load that already has a live invoice (6)`);
+    if (/DELETE\s+FROM/i.test(zero)) f.push(`${SVC}: the $0 restate deletes rows (6)`);
+  }
+  const zc = svc.indexOf("await restateAdoptedLoadToZeroRevenue(client, {");
+  const bi = svc.indexOf("built = await buildInvoiceFromLoad(client, {");
+  if (zc === -1 || bi === -1 || zc > bi) f.push(`${SVC}: the $0 restate does not run before the invoice (6)`);
   const free = seed.match(/export async function isSeededLoadFreeForThisSettlement\([\s\S]*?\n}\n/)?.[0] ?? "";
   if (!free) f.push(`${SEED}: isSeededLoadFreeForThisSettlement missing (1)`);
   else {
@@ -53,7 +71,7 @@ export function check(src = {}) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const seed = read(SEED), svc = read(SVC);
+  const seed = read(SEED), svc = read(SVC), adm = read(ADM);
   if (check().length) { console.error("SELFTEST FAIL: baseline not clean", check()); process.exit(1); }
   const plants = [
     ["any driver", { seed: seed.replace("AND l.assigned_primary_driver_id = $3::uuid", "AND $3::uuid IS NOT NULL") }],
@@ -61,10 +79,13 @@ if (process.argv.includes("--selftest")) {
     ["adoption removed", { seed: seed.replace("await isSeededLoadFreeForThisSettlement(client, draft, existing.rows[0].id)", "false") }],
     ["restate skipped", { svc: svc.replace("await restateOpenDriverBillToSignedPay(client, {", "void ({") }],
     ["restate no refusal", { svc: svc.replace("state.settled || state.accrued", "false") }],
+    ["series refused", { adm: adm.replace("!usmcaSettlementDocument && loads.every", "loads.every") }],
+    ["no earn reversal", { svc: svc.replace("await reverseJournalEntryNoFlip(client as never, { operatingCompanyId: input.companyId, journalEntryId: e.je", "void ({ operatingCompanyId: input.companyId, journalEntryId: e.je") }],
+    ["zero restate skipped", { svc: svc.replace("await restateAdoptedLoadToZeroRevenue(client, {", "void ({") }],
     ["re-deliver unless edit", { svc: svc.replace('if (!["delivered", "delivered_pending_docs", "invoiced"', 'if (!(draft.edit_void_repost && ["delivered", "delivered_pending_docs", "invoiced"') }],
   ];
   for (const [n, s] of plants) {
-    const same = (s.seed ?? seed) === seed && (s.svc ?? svc) === svc;
+    const same = (s.seed ?? seed) === seed && (s.svc ?? svc) === svc && (s.adm ?? adm) === adm;
     if (same || !check(s).length) { console.error(`SELFTEST FAIL: plant "${n}" ${same ? "did not apply" : "not caught"}`); process.exit(1); }
   }
   console.log(`SELFTEST PASS: ${plants.length} plants caught`);

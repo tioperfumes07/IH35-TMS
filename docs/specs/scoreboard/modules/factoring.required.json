@@ -439,6 +439,18 @@
       ]
     },
     {
+      "id": "factoring.dialog.undo_purchase",
+      "tab": "Modals",
+      "sub": "Dialog: Undo purchase (443.171 — Owner voids a posted purchase with a reason)",
+      "route_hint": "surface://pages/factoring/PaymentsToYouPanel.tsx",
+      "surface_kind": "dialog",
+      "surface_path": "pages/factoring/PaymentsToYouPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "factoring.modal.reserve_dashboard_add_factor",
       "tab": "Modals",
       "sub": "Modal: Reserve Dashboard Add Factor",
