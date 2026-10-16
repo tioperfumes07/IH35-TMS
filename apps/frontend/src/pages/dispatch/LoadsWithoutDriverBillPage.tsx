@@ -88,7 +88,7 @@ export function LoadsWithoutDriverBillPage() {
           onRetry={() => void loadsQ.refetch()}
         />
       ) : (
-        <ParityTable<ExceptionQueueLoadRow> appearance="board"
+        <ParityTable<ExceptionQueueLoadRow> appearance="board" title="Loads without a driver bill"
           columns={columns}
           rows={loads}
           rowKey={(row) => row.id}

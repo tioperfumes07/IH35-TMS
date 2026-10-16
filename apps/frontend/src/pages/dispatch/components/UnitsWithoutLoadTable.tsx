@@ -6,6 +6,8 @@ import { entityLabel } from "../../../lib/entity-label";
 import type { DataTableErrorState } from "../../../lib/tableError";
 
 type Props = {
+  /** LEAD 443.174 — the section's real title (DataTable has no title slot). */
+  title?: string;
   rows: UnitsWithoutLoad[];
   onRowClick: (row: UnitsWithoutLoad) => void;
   loading?: boolean;
@@ -34,8 +36,10 @@ function LocationCell({ loc }: { loc: UnitLiveLocation | null }) {
   );
 }
 
-export function UnitsWithoutLoadTable({ rows, onRowClick, loading, errorState }: Props) {
+export function UnitsWithoutLoadTable({ title = "Units without a load", rows, onRowClick, loading, errorState }: Props) {
   return (
+    <>
+    <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="dispatch-units-without-load-title">{title}</h2>
     <DataTable
       rows={rows}
       tableKey="dispatch-units-without-load"
@@ -120,5 +124,6 @@ export function UnitsWithoutLoadTable({ rows, onRowClick, loading, errorState }:
         },
       ]}
     />
+    </>
   );
 }

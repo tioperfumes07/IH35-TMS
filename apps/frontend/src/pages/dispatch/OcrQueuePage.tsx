@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 import { Link } from "react-router-dom";
 import {
   convertOcrIntakeToBookLoad,
@@ -224,13 +225,6 @@ export function OcrQueuePage() {
         }
       />
 
-      <p className="text-xs text-[#4B5563]">
-        Forward rate confirmations to your company intake address. Items appear here after OCR; use{" "}
-        <strong>Convert to load</strong> to open Book Load with extracted fields, or{" "}
-        <strong>Reprocess OCR</strong> when extraction failed. ARCHIVE-not-DELETE: Book Load dropzone remains for ad-hoc
-        uploads — this page is the dedicated inbox (B21-D7).
-      </p>
-
       {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as no documents awaiting OCR. */}
       {queueQ.isError ? (
         <ListErrorState
@@ -240,7 +234,15 @@ export function OcrQueuePage() {
           onRetry={() => void queueQ.refetch()}
         />
       ) : (
-      <ParityTable<OcrRow> appearance="board"
+      <ParityTable<OcrRow> appearance="board" title="Rate confirmations — OCR queue"
+        titleInfo={
+          <InfoPopover label="About the OCR queue">
+            Forward rate confirmations to your company intake address. Items appear here after OCR; use{" "}
+            <strong>Convert to load</strong> to open Book Load with extracted fields, or{" "}
+            <strong>Reprocess OCR</strong> when extraction failed. ARCHIVE-not-DELETE: Book Load dropzone remains for ad-hoc
+            uploads — this page is the dedicated inbox (B21-D7).
+          </InfoPopover>
+        }
         columns={columns}
         rows={items}
         rowKey={(item) => item.id}

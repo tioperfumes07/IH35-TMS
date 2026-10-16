@@ -115,7 +115,7 @@ export function EquipmentTransferRequests() {
           onRetry={() => void query.refetch()}
         />
       ) : (
-        <ParityTable<TransferRow> appearance="board"
+        <ParityTable<TransferRow> appearance="board" title="Equipment transfer requests"
         columns={columns}
         rows={query.data?.requests ?? []}
         rowKey={(row) => row.uuid}
