@@ -199,6 +199,8 @@ const MATCH_CANDIDATE_KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   deposit: "Deposit",
   relay_fuel: "Relay fuel",
   relay_deposit: "Relay deposit",
+  factoring_advance: "Faro purchase",
+  invoice: "Invoice",
 };
 
 // Match candidates — EntityLink for every kind with a real detail route (Law §9).
@@ -212,6 +214,8 @@ const MATCH_CANDIDATE_ENTITY_KIND: Record<BankMatchCandidateKind, EntityKind> = 
   deposit: "deposit",
   relay_fuel: "expense",
   relay_deposit: "deposit",
+  factoring_advance: "factoring_advance",
+  invoice: "invoice",
 };
 
 // ROUND 433-CUR B3 (owner 2026-10-06): match candidates ARE filterable by transaction type

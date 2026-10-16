@@ -18,4 +18,6 @@ export type LedgerEntryKind =
   // posted (Dr bank / Cr Undeposited Funds) when it was made. The match links; it posts nothing.
   | "deposit"
   // ROUND 443.29-B — settled Relay company wallet funding (wallet + 3.25% fee = bank/card outflow).
-  | "relay_deposit";
+  | "relay_deposit"
+  // LEAD 443.155 — open A/R invoice, view-only candidate (VIEW_ONLY_MATCH_KINDS).
+  | "invoice";

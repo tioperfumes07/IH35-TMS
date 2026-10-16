@@ -554,7 +554,11 @@ export type BankMatchCandidateKind =
   | "expense"
   | "deposit"
   | "relay_fuel"
-  | "relay_deposit";
+  | "relay_deposit"
+  /** LEAD 443.155 — a Faro purchase (its advance): the Faro wire on the operating bank. */
+  | "factoring_advance"
+  /** LEAD 443.155 — open A/R invoice (view-only: settle it with its receive-payment, then match that). */
+  | "invoice";
 
 /** Kinds POST /bank-recon/accept-match accepts (bill is view-only in the drawer). */
 export type BankMatchAcceptKind = Exclude<BankMatchCandidateKind, "bill">;

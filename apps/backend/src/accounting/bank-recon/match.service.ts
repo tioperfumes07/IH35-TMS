@@ -113,6 +113,10 @@ const MATCHED_COLUMN_BY_KIND: Partial<Record<LedgerEntryKind, string>> = {
 // walked into a wall. No third state: every returnable kind is EITHER persistable OR
 // view-only-declared. Guard: scripts/verify-every-match-kind-is-acceptable-or-declared.mjs
 export const VIEW_ONLY_MATCH_KINDS: Partial<Record<LedgerEntryKind, string>> = {
+  // LEAD 443.155 (owner ruling 2026-09-30: the candidate universe is EVERY document the company creates) — an open A/R
+  // invoice is shown on a money-in line so the owner sees what the deposit pays, but a match links an EXISTING record and
+  // creates no journal entry (CHAIN-05 §10.2); an invoice is settled by its receive-payment, which is then the match.
+  invoice: "Open A/R invoices are shown so the owner sees what the deposit pays; a match links an existing record and posts nothing, so the invoice is settled by recording its receive-payment, which is then matched. Accept throws match_kind_not_acceptable:invoice by design.",
   bill: "Open bills are shown as candidates so the user can see them, but accepting a bill payment with no GL JE is an orphan write — Part 2b (BLOCK-02 CHAIN-04), still gated. Accept throws match_kind_not_acceptable:bill by design.",
 };
 
@@ -591,6 +595,26 @@ async function fetchLedgerCandidates(
   const rowLimit = hasFilters ? 2000 : 500;
   const likeParam = searchNeedle ? `%${searchNeedle}%` : null;
   const wants = (kind: LedgerEntryKind) => !options.kinds?.length || options.kinds.includes(kind);
+  // LEAD 443.155 DEFECT 1 — every candidate belongs to THIS bank line's account (QuickBooks never offers a document that
+  // does not land in the register being reconciled): a document qualifies when it moves money through this account's
+  // ledger (expense paid from it, payment / bill payment deposited to or paid from it), or is an open clearing item that
+  // lands in an operating bank (undeposited receipts, a Faro purchase net, an open invoice / settlement bill). A Relay
+  // deposit lands only in the Relay Fuel Wallet. Same scope the deposits branch always had ($6 = the bank account).
+  const register = (await client.query<{ ledger_id: string | null; operating: boolean; relay_wallet: boolean; undeposited_id: string | null }>(
+    `SELECT ba.ledger_account_id::text AS ledger_id,
+            (COALESCE(ca.system_purpose, '') = 'bank_operating' OR COALESCE(ca.account_subtype, '') IN ('Checking', 'Savings')) AS operating,
+            COALESCE(ca.system_purpose, '') = 'relay_fuel_wallet' AS relay_wallet,
+            (SELECT r.account_id::text FROM accounting.chart_of_accounts_roles r
+              WHERE r.operating_company_id = ba.operating_company_id AND r.role = 'undeposited_funds' AND r.is_active LIMIT 1) AS undeposited_id
+       FROM banking.bank_accounts ba
+       LEFT JOIN catalogs.accounts ca ON ca.id = ba.ledger_account_id AND ca.operating_company_id = ba.operating_company_id
+      WHERE ba.id = $1::uuid AND ba.operating_company_id = $2::uuid`,
+    [_bankAccountId, operatingCompanyId]
+  )).rows[0];
+  const ledgerId = register?.ledger_id ?? null;
+  const onOperatingBank = Boolean(register?.operating);
+  const onRelayWallet = Boolean(register?.relay_wallet);
+  const undepositedId = register?.undeposited_id ?? null;
 
   // Direction branches required by verify-bank-match-candidate-sources (Part 1 Match drawer).
   // ROUND 157-C narrowed bill/bill_payment to settlement-born; ROUND 259 restored expenses +
@@ -610,6 +634,9 @@ async function fetchLedgerCandidates(
            WHERE p.operating_company_id = $1::uuid
              AND p.payment_date BETWEEN $2::date AND $3::date
              AND p.voided_at IS NULL
+             -- 443.155: deposited to THIS account, or an undeposited receipt that lands in an operating bank.
+             AND (p.deposited_to_account_id::text = $6::text
+                  OR ($7::boolean AND (p.deposited_to_account_id IS NULL OR p.deposited_to_account_id::text = $8::text)))
              AND ($4::text IS NULL OR lower(COALESCE(p.display_id, '') || ' ' || COALESCE(p.reference, '') || ' ' || COALESCE(c.customer_name, '')) LIKE $4)
              AND NOT EXISTS (
                SELECT 1 FROM banking.reconciliation_matches m
@@ -626,7 +653,7 @@ async function fetchLedgerCandidates(
              )
            LIMIT $5
         `,
-        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit]
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, ledgerId, onOperatingBank, undepositedId]
       );
       for (const row of payments.rows) results.push(toCandidate("payment", row, "customer"));
     }
@@ -660,9 +687,83 @@ async function fetchLedgerCandidates(
       for (const row of deposits.rows) results.push(toCandidate("deposit", row, "customer"));
     }
 
+    // LEAD 443.155 DEFECT 2 — Faro purchases: the Faro wire lands in the operating bank and equals the purchase NET
+    // (gross − escrow − discount − wire fee − cash reserve), or the sum of the purchases Faro funded in one wire (same
+    // purchase date). Candidate id = the purchase's advance: the EXISTING factoring_advance accept (Owner-only) — the
+    // purchase is never re-posted; the match links it.
+    if (onOperatingBank && wants("factoring_advance")) {
+      const purchases = await client.query<RawRow>(
+        `
+          WITH open_fp AS (
+            SELECT fp.factoring_advance_id, fp.net_to_company_cents, fp.purchase_date, fp.display_id, fp.invoice_count,
+                   fp.gross_cents, fp.factoring_company_vendor_id
+              FROM accounting.factoring_purchases fp
+             WHERE fp.operating_company_id = $1::uuid
+               AND fp.status = 'posted'
+               AND fp.voided_at IS NULL
+               AND fp.factoring_advance_id IS NOT NULL
+               AND fp.purchase_date BETWEEN $2::date AND $3::date
+               AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions bt
+                                WHERE bt.matched_factoring_advance_id = fp.factoring_advance_id AND bt.voided_at IS NULL)
+               AND NOT EXISTS (SELECT 1 FROM banking.reconciliation_matches m
+                                WHERE m.ledger_entry_kind = 'factoring_advance' AND m.ledger_entry_id = fp.factoring_advance_id
+                                  AND m.voided_at IS NULL AND m.match_state IN ('auto_matched', 'user_matched'))
+          )
+          SELECT fp.factoring_advance_id::text AS id,
+                 fp.net_to_company_cents::int AS amount_cents,
+                 fp.purchase_date::text AS event_date,
+                 ('Faro purchase ' || fp.display_id)::text AS memo,
+                 fp.factoring_company_vendor_id::text AS counterparty_id,
+                 COALESCE(v.vendor_name, 'Faro')::text AS counterparty_name,
+                 fp.display_id::text AS reference,
+                 ('Faro purchase ' || fp.display_id || ' — ' || fp.invoice_count || ' invoice(s), gross '
+                   || to_char(fp.gross_cents / 100.0, 'FM999,999,990.00')
+                   || CASE WHEN w.n > 1 THEN ' — one of ' || w.n || ' purchases on ' || fp.purchase_date::text
+                        || ', wire total ' || to_char(w.total / 100.0, 'FM999,999,990.00') ELSE '' END)::text AS description,
+                 NULL::int AS open_balance_cents
+            FROM open_fp fp
+            JOIN (SELECT purchase_date, count(*) AS n, sum(net_to_company_cents) AS total FROM open_fp GROUP BY purchase_date) w
+              ON w.purchase_date = fp.purchase_date
+            LEFT JOIN mdata.vendors v ON v.id = fp.factoring_company_vendor_id
+           WHERE ($4::text IS NULL OR lower(COALESCE(fp.display_id, '') || ' faro purchase ' || COALESCE(v.vendor_name, '')) LIKE $4)
+           LIMIT $5
+        `,
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit]
+      );
+      for (const row of purchases.rows) results.push(toCandidate("factoring_advance", row, "vendor"));
+    }
+
+    // LEAD 443.155 DEFECT 2 — open A/R invoices (view-only, see VIEW_ONLY_MATCH_KINDS): a customer's payment lands in the
+    // operating bank. Factored invoices are paid to Faro, never to this account — excluded.
+    if (onOperatingBank && wants("invoice")) {
+      const invoices = await client.query<RawRow>(
+        `
+          SELECT i.id::text, COALESCE(i.amount_open_cents, i.total_cents)::int AS amount_cents,
+                 COALESCE(i.due_date, i.issue_date)::text AS event_date,
+                 ('Invoice ' || i.display_id)::text AS memo,
+                 i.customer_id::text AS counterparty_id, c.customer_name::text AS counterparty_name,
+                 i.display_id::text AS reference, ('Invoice ' || i.display_id)::text AS description,
+                 COALESCE(i.amount_open_cents, i.total_cents)::int AS open_balance_cents
+            FROM accounting.invoices i
+            LEFT JOIN mdata.customers c ON c.id = i.customer_id
+           WHERE i.operating_company_id = $1::uuid
+             AND i.voided_at IS NULL
+             AND i.status::text IN ('sent', 'partial', 'overdue')
+             AND COALESCE(i.factoring_status, 'not_factored') = 'not_factored'
+             AND COALESCE(i.amount_open_cents, i.total_cents) > 0
+             AND COALESCE(i.issue_date, i.created_at::date) <= $2::date
+             AND ($3::text IS NULL OR lower(COALESCE(i.display_id, '') || ' ' || COALESCE(c.customer_name, '')) LIKE $3)
+           LIMIT $4
+        `,
+        [operatingCompanyId, toDate, likeParam, rowLimit]
+      );
+      for (const row of invoices.rows) results.push(toCandidate("invoice", row, "customer"));
+    }
+
     // ROUND 443.66-C — Relay wallet funding deposits land as MONEY IN (credits on 1295).
     // Previously wrongly gated under !isCredit (443.29-B / 443.54), so wallet IN lines never saw them.
-    if (wants("relay_deposit")) {
+    // LEAD 443.155 DEFECT 1 — only on the Relay Fuel Wallet register (a BofA wire in is never a Relay deposit).
+    if (onRelayWallet && wants("relay_deposit")) {
       const deposits = await client.query<RawRow>(
         `
           SELECT rd.id::text,
@@ -724,9 +825,15 @@ async function fetchLedgerCandidates(
                   AND m.match_state IN ('auto_matched', 'user_matched')
              )
              AND bp.source_bank_transaction_id IS NULL
+             -- 443.155: paid from THIS bank account (its own column, or its posting credits this account's ledger).
+             AND (bp.from_bank_account_id = $6::uuid
+                  OR EXISTS (SELECT 1 FROM accounting.journal_entry_postings jp
+                              WHERE jp.operating_company_id = bp.operating_company_id AND jp.source_transaction_type = 'bill_payment'
+                                AND jp.source_transaction_id::text = bp.id::text AND jp.account_id = $7::uuid
+                                AND jp.reversal_of_line_id IS NULL))
            LIMIT $5
         `,
-        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit]
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, _bankAccountId, ledgerId]
       );
       for (const row of billPayments.rows) results.push(toCandidate("bill_payment", row, "vendor"));
     }
@@ -734,7 +841,8 @@ async function fetchLedgerCandidates(
     // --- Settlement-born OPEN bills (ROUND 155.25 — stay candidates until balance zero) ---
     // Do NOT drop a bill after one match. Only open_balance > 0 removes it.
     // amount = remaining open balance. Classifier offers record_partial_payment when bill > bank.
-    if (wants("bill")) {
+    // 443.155: an open settlement bill is paid from an operating bank — never offered on a card or wallet register.
+    if (onOperatingBank && wants("bill")) {
       const bills = await client.query<RawRow>(
         `
           SELECT
@@ -785,6 +893,8 @@ async function fetchLedgerCandidates(
             AND e.is_active = true
             AND e.voided_at IS NULL
             AND e.status = 'posted'
+            -- 443.155: an expense is a candidate only on the account it was paid from.
+            AND e.payment_account_uuid = $6::uuid
             AND ($4::text IS NULL OR lower(COALESCE(e.expense_number, '') || ' ' || COALESCE(e.memo, '') || ' ' || COALESCE(e.vendor_document_number, '') || ' ' || COALESCE(v.vendor_name, '')) LIKE $4)
             AND NOT EXISTS (
               SELECT 1 FROM banking.reconciliation_matches m
@@ -794,7 +904,7 @@ async function fetchLedgerCandidates(
             )
           LIMIT $5
         `,
-        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit]
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, ledgerId]
       );
       for (const row of expenses.rows) results.push(toCandidate("expense", row, "vendor"));
     }
