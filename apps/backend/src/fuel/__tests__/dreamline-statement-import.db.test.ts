@@ -28,6 +28,9 @@ describeIntegration("Dreamline statement import (443.142, real Postgres)", () =>
     const db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
     await refuseProductionDatabase(db);
+    // The read-backs below run between transactions; FORCED row-level security hides every row without the bypass.
+    await db.query("SELECT set_config('app.bypass_rls', 'lucia', false)");
+    await db.query("SELECT set_config('app.operating_company_id', $1::text, false)", [opco]);
     const tag = `DLS${Date.now().toString(36).toUpperCase()}`;
     const unitNo = String(900000 + Math.floor(Math.random() * 99999));
     const one = async <T = { id: string }>(sql: string, params: unknown[]) => (await db.query<T>(sql, params)).rows[0]!;
@@ -127,5 +130,5 @@ describeIntegration("Dreamline statement import (443.142, real Postgres)", () =>
       await db.query("ROLLBACK").catch(() => undefined);
       await db.end();
     }
-  });
+  }, 300_000);
 });

@@ -252,6 +252,9 @@ async function loadBookedReceipts(client: DbClient, companyId: string, from: str
        LEFT JOIN fuel.fuel_transactions ft ON ft.id = e.source_fuel_transaction_id
       WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.deleted_at IS NULL
         AND e.posting_status = 'posted'
+        -- a document this statement import created is never a candidate to adopt another statement line
+        AND coalesce(ft.notes, '') NOT LIKE '%443.142 Dreamline statement%'
+        AND coalesce(e.vendor_document_number, '') NOT LIKE 'EFS-%'
         AND e.transaction_date BETWEEN ($2::date - 1) AND ($3::date + 1)
       ORDER BY e.transaction_date, e.expense_number, e.id`,
     [companyId, from, to]
@@ -548,6 +551,8 @@ export async function importDreamlineStatement(
         memo: `Dreamline scale ticket — EFS invoice ${line.efs_invoice}, ${line.location_name ?? ""} ${line.city ?? ""} ${line.state ?? ""}`.trim(),
         is_company_expense: true,
       } as never, input.actor_user_uuid);
+      const dup = created as { duplicateVendorDocumentNumber?: boolean; existingExpenseId?: string };
+      if (dup.duplicateVendorDocumentNumber) { record(line, "already_imported", { expense_id: dup.existingExpenseId ?? null }); continue; }
       const createdId = (created as { expense_id?: string }).expense_id;
       if (!createdId) throw new Error(`dreamline_scale_expense_refused:${line.efs_invoice}:${JSON.stringify(created)}`);
       record(line, "scale_imported", { expense_id: createdId });
