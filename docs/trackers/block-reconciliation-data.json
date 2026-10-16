@@ -1,6 +1,6 @@
 {
  "date": "2026-10-16",
- "generated_at_iso": "2026-10-16T06:47:00.621Z",
+ "generated_at_iso": "2026-10-16T12:42:23.390Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 26778,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-16T06:47:33Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 26777,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-16T00:59:49Z",
@@ -17330,12 +17336,6 @@
    "title": "Claude-3- ROUND 443.2: Settlement Creator — no quick pay on a factored load (0.50% formula deleted)",
    "mergedAt": "2026-10-10T19:41:36Z",
    "branch": "cc-3/443-2-no-quickpay-on-factored"
-  },
-  {
-   "number": 26161,
-   "title": "Claude-1- chore: claim verify-step 18361 (ROUND 443.1 zero-revenue guard)",
-   "mergedAt": "2026-10-10T19:39:46Z",
-   "branch": "chore/claim-reserve-18361-zero-revenue-guard"
   }
  ],
  "merged_pr_total": 3000,
