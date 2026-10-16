@@ -391,11 +391,9 @@ export function LegalTemplateDetailPage() {
         </section>
 
         <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
-          <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
-            <div className="text-xs font-semibold uppercase text-[#6B7280]">Version history</div>
-          </div>
           <div className="divide-y divide-[#E5E7EB] px-3 py-3">
             <ParityTable
+              title="Template version history"
               rows={versionRows}
               columns={VERSION_COLUMNS}
               rowKey={(row) => row.id}
@@ -452,11 +450,9 @@ export function LegalTemplateDetailPage() {
       </section>
 
       <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
-        <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
-          <div className="text-xs font-semibold uppercase text-[#6B7280]">Audit log</div>
-        </div>
         <div className="px-3 py-3">
           <ParityTable
+            title="Template audit log"
             rows={auditLogRows}
             columns={AUDIT_LOG_COLUMNS}
             rowKey={(row) => String(row.id)}

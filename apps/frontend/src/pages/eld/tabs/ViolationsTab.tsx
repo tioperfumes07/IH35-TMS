@@ -109,6 +109,7 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
       ) : null}
 
       <ParityTable<EldHosViolation>
+        title="HOS violations"
         columns={columns}
         rows={rows}
         rowKey={(row) => String(row.id ?? `${row.driver_id}-${row.occurred_at}`)}

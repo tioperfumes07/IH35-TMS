@@ -149,6 +149,7 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
       </div>
 
       <ParityTable<FilingItem>
+        title="Compliance filings — due"
         columns={filingColumns}
         rows={filteredRows}
         rowKey={(row) => row.id}

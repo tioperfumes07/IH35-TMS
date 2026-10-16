@@ -690,7 +690,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
 
       {subnavTab === "roster" && activeTab === "teams" ? (
         <div className="space-y-3">
-          <div className="flex justify-end">
+          <div className="flex items-center justify-between">
+            <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Driver teams</h2>
             <Button size="sm" onClick={() => setTeamCreateOpen(true)}>+ Create Team</Button>
           </div>
           <DataTable
@@ -771,6 +772,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               ) : (
                 <ParityTable
                   rows={driversRowsFiltered}
+                  title="Driver roster"
                   storageKey="drivers-roster"
                   loading={driversQuery.isLoading}
                   rowKey={(row) => row.id}
@@ -829,6 +831,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 />
               ) : (
                 <ParityTable
+                  title="Drivers with open cash advances or debts"
                   rows={debtAlertRows}
                   storageKey="drivers-cash-advances-debt-alert"
                   rowKey={(row) => row.driver_id}

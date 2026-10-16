@@ -25,6 +25,7 @@ import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { companyToday } from "../../lib/businessDate";
 import { SelectCombobox } from "../../components/Combobox";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 function toDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
@@ -212,8 +213,11 @@ export function CoverageGapDashboard() {
         <h2 className="text-xs font-semibold text-[#0F1219]">Tractor Coverage Gap Dashboard</h2>
         <p className="mt-1 text-xs text-[#4B5563]">
           Scoped to tractors (fleet units with a Samsara-tracked unit record) — trailers are tracked
-          separately on Fleet Covered. One column per coverage type from the catalog. Gap count{" "}
-          {coverageGapsQuery.data?.coverage_gap_count ?? gapRows.length} must equal units with at least one Missing.
+          separately on Fleet Covered.{" "}
+          <InfoPopover label="About the coverage gap dashboard">
+            One column per coverage type from the catalog. Gap count{" "}
+            {coverageGapsQuery.data?.coverage_gap_count ?? gapRows.length} must equal units with at least one Missing.
+          </InfoPopover>
         </p>
         <CollapsedListFilters
           activeFilterCount={unitPickerId ? 1 : 0}
@@ -298,6 +302,7 @@ export function CoverageGapDashboard() {
         </div>
         <div className="mt-2" data-testid="kpi-drill-row-count">
           <ParityTable
+            title="Units — insurance coverage by type"
             rows={visibleRows}
             columns={gapColumns}
             rowKey={(row) => row.unit_id}

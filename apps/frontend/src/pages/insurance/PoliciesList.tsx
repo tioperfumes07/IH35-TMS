@@ -219,6 +219,7 @@ export function PoliciesList() {
         </div>
       </CollapsedListFilters>
 
+      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Insurance policies</h2>
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Filters (Type/Status/
           Expiring-soon) above feed `rows`; row-click → policy details preserved exactly. */}
       <DataTable

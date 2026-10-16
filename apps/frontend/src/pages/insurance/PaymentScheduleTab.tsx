@@ -152,6 +152,7 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
         />
       ) : (
         <ParityTable
+          title="Premium payment schedule"
           rows={rows}
           columns={columns}
           rowKey={(row) => row.id}

@@ -77,6 +77,7 @@ export function SettlementDisputeList({ driverId }: { driverId?: string } = {}) 
         </div>
       ) : null}
       {isSuccess && rows.length === 0 ? <p className="text-xs text-gray-500">No settlement disputes found.</p> : null}
+      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Settlement disputes</h2>
       {!isError ? <DataTable
         rows={rows}
         loading={isLoading}

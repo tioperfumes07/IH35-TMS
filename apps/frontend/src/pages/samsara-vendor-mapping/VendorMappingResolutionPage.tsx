@@ -325,9 +325,9 @@ export function VendorMappingResolutionPage() {
           <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#4B5563]">{totalsText(payload)}</div>
 
           <section className="rounded-sm border border-[#E5E7EB] bg-white">
-            <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]">Unmapped drivers</div>
             <div className="overflow-x-auto p-2">
               <ParityTable<UnmappedRow>
+                title="Unmapped drivers"
                 columns={unmappedColumns}
                 rows={unmappedRows}
                 rowKey={(row) => row._rowId}
@@ -341,9 +341,9 @@ export function VendorMappingResolutionPage() {
           </section>
 
           <section className="rounded-sm border border-[#E5E7EB] bg-white">
-            <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]">Duplicate mappings</div>
             <div className="overflow-x-auto p-2">
               <ParityTable<DuplicateRow>
+                title="Duplicate driver mappings"
                 columns={duplicateColumns}
                 rows={duplicateRows}
                 rowKey={(row) => row._rowId}
@@ -357,9 +357,9 @@ export function VendorMappingResolutionPage() {
           </section>
 
           <section className="rounded-sm border border-[#E5E7EB] bg-white">
-            <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]">Name mismatch</div>
             <div className="overflow-x-auto p-2">
               <ParityTable<MismatchRow>
+                title="Driver name mismatches"
                 columns={mismatchColumns}
                 rows={mismatchRows}
                 rowKey={(row) => row._rowId}

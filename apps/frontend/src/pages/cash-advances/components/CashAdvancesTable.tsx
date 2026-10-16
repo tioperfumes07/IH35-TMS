@@ -116,6 +116,7 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoadi
     // SETL-F3544: ParityTable owns Search+Range+gear; raw HTML table skipped the surface bar.
     <div data-testid="cash-advances-empty">
       <ParityTable<CashAdvanceRow>
+        title="Cash advances"
         columns={columns}
         rows={rows}
         rowKey={(row) => String(row.id)}

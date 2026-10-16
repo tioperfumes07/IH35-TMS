@@ -331,6 +331,7 @@ export function SamsaraDriverMappingPage() {
           {/* 443.99 — both panes are the shared ParityTable (were hand-rolled HTML tables); the page's own filters
               stay above each pane, so the table's toolbar search / range are suppressed. */}
           <ParityTable<MappingTarget>
+            title="App drivers and vendors to map"
             embedded
             rows={leftRows}
             rowKey={(row) => `${row.kind}-${row.id}`}
@@ -456,6 +457,7 @@ export function SamsaraDriverMappingPage() {
               ) : (
               <>
               <ParityTable<SamsaraProfile>
+                title="Samsara users"
                 embedded
                 rows={rightRows}
                 rowKey={(p) => p.samsara_driver_id}

@@ -27,6 +27,7 @@ import {
 } from "../../banking/transferAccountPicker";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { formatUsdTable } from "../../../lib/money";
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 
 type Props = {
   open: boolean;
@@ -609,9 +610,11 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
             <section className="space-y-1 border-t border-gray-100 pt-3" data-section="lumper-economics">
               <div className="font-semibold text-gray-800">Economics</div>
               <p className="text-xs text-gray-600">
-                Lumper routes as <strong>load expense</strong> (not a personal multi-period debt). Full expense JE
-                posting is financial HOLD until CPA/Neon — this create stamps purpose, load, unit, trailer, and bank
-                for linkage.
+                Lumper routes as <strong>load expense</strong> (not a personal multi-period debt).{" "}
+                <InfoPopover label="About lumper advances">
+                  The full expense journal entry is not posted from this screen yet — this step records the purpose,
+                  load, unit, trailer and bank so everything stays linked.
+                </InfoPopover>
               </p>
             </section>
           )}
