@@ -52,7 +52,7 @@ export function check(src = {}) {
     if (outStart !== -1 && service.indexOf(wallet) > outStart) findings.push(`${SERVICE}: the wallet relay_deposit branch moved into money out (e)`);
   }
   const store = service.match(/async function storeMatch\([\s\S]*?\n}\n/)?.[0] ?? "";
-  if (!/\$2::text <> 'relay_deposit' OR EXISTS[\s\S]{0,300}held_bt\.bank_account_id = this_bt\.bank_account_id/.test(store))
+  if (!/input\.ledger_entry_kind === "relay_deposit"[\s\S]{0,400}this_bt\.bank_account_id = held_bt\.bank_account_id/.test(store))
     findings.push(`${SERVICE}: storeMatch refuses the second side of a Relay deposit (c: one live match per bank account)`);
   const fills = service.match(/if \(onRelayWallet && wants\("relay_fuel"\)\) \{[\s\S]*?\n {4}\}\n/)?.[0] ?? "";
   if (!/jp\.source_transaction_type = 'fuel_event' AND jp\.source_transaction_id = r\.id::text/.test(fills))
@@ -70,7 +70,7 @@ if (process.argv.includes("--selftest")) {
     ["debit leg", { math: math.replace("fjp.debit_or_credit = 'credit'", "fjp.debit_or_credit = 'debit'") }],
     ["any account", { math: math.replace("fjp.account_id = $8::uuid", "true") }],
     ["consumed company-wide", { math: math.replace("AND cbt.bank_account_id = $7::uuid", "") }],
-    ["storeMatch one side only", { service: service.replace("$2::text <> 'relay_deposit' OR EXISTS", "true OR EXISTS") }],
+    ["storeMatch one side only", { service: service.replace('input.ledger_entry_kind === "relay_deposit"\n      ? await', 'false\n      ? await') }],
     ["duplicate fill", { service: service.replace("jp.source_transaction_type = 'fuel_event' AND jp.source_transaction_id = r.id::text", "false") }],
     ["wallet branch gone", { service: service.replace('if (onRelayWallet && wants("relay_deposit"))', 'if (wants("relay_deposit"))') }],
   ];

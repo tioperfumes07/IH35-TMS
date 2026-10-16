@@ -1291,7 +1291,24 @@ async function storeMatch(
   // documents, but accept also takes ids from routes with no candidate step (transfer / je), so the refusal lives here,
   // where every accept passes. A row on THIS line (re-match after unmatch) is revived by the upsert below.
   if (input.match_state === "user_matched" || input.match_state === "auto_matched") {
-    const held = await client.query<{ bank_transaction_id: string }>(
+    // LEAD 443.170 — a Relay deposit has two sides (the funding bank's money out, the wallet's money in): one live match
+    // PER bank account, never two on the same account.
+    const held = input.ledger_entry_kind === "relay_deposit"
+      ? await client.query<{ bank_transaction_id: string }>(
+          `SELECT m.bank_transaction_id::text
+             FROM banking.reconciliation_matches m
+             JOIN banking.bank_transactions held_bt ON held_bt.id = m.bank_transaction_id
+             JOIN banking.bank_transactions this_bt ON this_bt.id = $4::uuid AND this_bt.bank_account_id = held_bt.bank_account_id
+            WHERE m.operating_company_id = $1::uuid
+              AND m.ledger_entry_kind = $2::text
+              AND m.ledger_entry_id = $3::uuid
+              AND m.bank_transaction_id <> $4::uuid
+              AND m.voided_at IS NULL
+              AND m.match_state IN ('auto_matched', 'user_matched')
+            LIMIT 1`,
+          [input.operating_company_id, input.ledger_entry_kind, input.ledger_entry_id, input.bank_transaction_id]
+        )
+      : await client.query<{ bank_transaction_id: string }>(
       `SELECT m.bank_transaction_id::text
          FROM banking.reconciliation_matches m
         WHERE m.operating_company_id = $1::uuid
@@ -1300,12 +1317,6 @@ async function storeMatch(
           AND m.bank_transaction_id <> $4::uuid
           AND m.voided_at IS NULL
           AND m.match_state IN ('auto_matched', 'user_matched')
-          -- LEAD 443.170 — a Relay deposit has two sides (the funding bank's money out, the wallet's money in): one live
-          -- match PER bank account, never two on the same account.
-          AND ($2::text <> 'relay_deposit' OR EXISTS (
-                SELECT 1 FROM banking.bank_transactions held_bt, banking.bank_transactions this_bt
-                 WHERE held_bt.id = m.bank_transaction_id AND this_bt.id = $4::uuid
-                   AND held_bt.bank_account_id = this_bt.bank_account_id))
         LIMIT 1`,
       [input.operating_company_id, input.ledger_entry_kind, input.ledger_entry_id, input.bank_transaction_id]
     );
