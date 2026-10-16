@@ -171,6 +171,7 @@ export function FaultRulesPage() {
         />
       ) : (
         <ParityTable
+          title="Fault rules"
           rows={rules}
           columns={columns}
           rowKey={(row) => row.id}

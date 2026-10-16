@@ -14,6 +14,7 @@ import {
   type LineTemplate,
 } from "../../api/financeScenarios";
 import { computeBreakEven } from "../../api/financeBreakEven";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 /** Categories taken from Desktop `BREAK EVEN ANALYSIS IH 35 TRUCKINGS.xlsx` (2025 notes/leases + operating costs). */
 export const BREAK_EVEN_WORKBOOK_NOTE = "break-even workbook · 2025 IH35 analysis";
@@ -123,10 +124,12 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
     <section className="mt-6 rounded-sm border border-[#E5E7EB] bg-white p-4" data-testid="break-even-workbook-creator">
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="text-xs font-semibold text-[#0F1219]">+ Create break-even analysis</h2>
-          <p className="text-xs text-[#6B7280]">
-            Input the 2025 workbook shape: per-lender notes/leases, vehicle clusters (T139–T146, CCG reefers), plus operating costs. Use + Add vehicle for another unit. Saves as a Finance Scenario.
-          </p>
+          <h2 className="text-xs font-semibold text-[#0F1219]">
+            + Create break-even analysis{" "}
+            <InfoPopover label="About the break-even analysis">
+              Input the 2025 workbook shape: per-lender notes/leases, vehicle clusters (T139–T146, CCG reefers), plus operating costs. Use + Add vehicle for another unit. Saves as a Finance Scenario.
+            </InfoPopover>
+          </h2>
         </div>
         <Link className="text-xs font-semibold text-[#1F2A44] underline" to="/finance/scenarios">
           Open scenario history

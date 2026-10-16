@@ -181,7 +181,7 @@ function OverviewTable({
     <section className="ih-card dpo-card">
       <div className="ih-card-header dpo-card-head">
         <div>
-          <div className="dpo-card-title">{title}</div>
+          <h3 className="dpo-card-title">{title}</h3>
           {hint ? <div className="dpo-card-sub">{hint}</div> : null}
         </div>
         {viewAllHref ? <Link to={viewAllHref} className="dpo-link">View all →</Link> : null}

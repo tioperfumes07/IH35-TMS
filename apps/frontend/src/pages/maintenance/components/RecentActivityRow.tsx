@@ -120,6 +120,7 @@ function Table({
           </div>
         ) : null}
         <ParityTable
+          title="Recent work order activity"
           rows={rows}
           columns={columns}
           rowKey={(row) => row.id}

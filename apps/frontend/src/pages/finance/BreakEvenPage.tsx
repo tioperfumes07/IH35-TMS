@@ -312,6 +312,7 @@ export function BreakEvenPage() {
 
             {/* ACCT-F3576: embedded ParityTable owns Search+Range+gear; totals stay flat strips (no nested card). */}
             <ParityTable<(typeof data.expense_lines)[number]>
+              title="Expenses — by account"
               embedded
               rows={data.expense_lines}
               rowKey={(line) => line.account_code || line.account_name}

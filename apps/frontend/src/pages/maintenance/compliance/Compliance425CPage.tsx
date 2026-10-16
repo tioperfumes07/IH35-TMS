@@ -61,6 +61,7 @@ export function Compliance425CPage() {
         ) : (
           <>
             <ParityTable
+              title="Form 425C compliance log"
               rows={rows}
               columns={columns}
               rowKey={(row) => String(row.id)}

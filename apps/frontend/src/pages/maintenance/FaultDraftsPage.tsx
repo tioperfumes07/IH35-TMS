@@ -240,6 +240,7 @@ export function FaultDraftsPage() {
       ) : null}
 
       {!draftsQuery.isError ? <ParityTable
+        title="Work order drafts — from fault codes"
         rows={drafts}
         columns={columns}
         rowKey={(row) => row.id}

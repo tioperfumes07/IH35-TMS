@@ -17,6 +17,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../../components/
 import { ExemptOverageModal, type ExemptOverageInput } from "./ExemptOverageModal";
 import { VoidOverageModal } from "./VoidOverageModal";
 import { formatUsdCents } from "../../../lib/money";
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 
 /**
  * BANK-F10 / FUEL-03 — operator queue for fuel-card overage approve-then-recover.
@@ -339,9 +340,12 @@ export function CardOverageQueuePage() {
       />
 
       <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
-        Engine + GL posting flags default OFF. Queue stays empty until{" "}
-        <code className="font-mono">FUEL_CARD_OVERAGE_ENGINE_ENABLED</code> is on and events evaluate.
-        Approve never invents density — it calls the same poster as the API.
+        The queue stays empty until the card-overage check is turned on for this company.{" "}
+        <InfoPopover label="About the card overage queue">
+          The card-overage check and its accounting postings are off unless turned on for the company. Once on, each
+          card event is evaluated and lands here. Approving an event posts it the same way the rest of the system does —
+          it never invents an amount.
+        </InfoPopover>
       </p>
 
       <CollapsedListFilters
@@ -416,6 +420,7 @@ export function CardOverageQueuePage() {
         />
       ) : (
         <ParityTable
+          title="Card overage events"
           rows={rows}
           columns={columns}
           rowKey={(row) => row.id}

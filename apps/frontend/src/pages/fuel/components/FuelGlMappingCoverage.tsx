@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { listExpenseCategoryMappings } from "../../../api/accounting";
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 
 // FUEL-2 (verify-only, NON-posting): confirm every fuel transaction category maps to a real
 // catalogs.accounts GL account (via the EXISTING expense_category_map, category_kind='fuel') and
@@ -65,8 +66,10 @@ export function FuelGlMappingCoverage({ companyId }: { companyId: string }) {
         </span>
       </div>
       <p className="mt-1 text-xs text-gray-600">
-        Each fuel category must map to a chart-of-accounts expense account before fuel posting runs.
-        Read-only check of the expense category map (no GL posting is performed here).
+        Each fuel category must map to a chart-of-accounts expense account before fuel posting runs.{" "}
+        <InfoPopover label="About fuel mapping coverage">
+          Read-only check of the expense category map (no GL posting is performed here).
+        </InfoPopover>
       </p>
 
       {mappingsQuery.isLoading ? (

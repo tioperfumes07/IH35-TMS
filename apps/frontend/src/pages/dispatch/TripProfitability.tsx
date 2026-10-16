@@ -257,7 +257,7 @@ export function TripProfitability() {
         </div>
       )}
 
-      <ParityTable<TripProfitabilityRow> appearance="board"
+      <ParityTable<TripProfitabilityRow> appearance="board" title="Settlements — P&L by settlement"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.settlement_id}

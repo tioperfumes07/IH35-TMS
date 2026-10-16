@@ -343,6 +343,7 @@ export function InspectionsPage() {
           />
         ) : (
         <><ParityTable
+          title="Inspections"
           rows={rows}
           columns={columns}
           rowKey={(row) => String(row.id)}

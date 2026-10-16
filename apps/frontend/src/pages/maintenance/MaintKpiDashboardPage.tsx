@@ -252,6 +252,7 @@ export function MaintKpiDashboardPage() {
         ) : (
           <div className="overflow-x-auto bg-white">
             <ParityTable
+              title="Idle events — needs review"
               rows={idleReviewQ.data!.rows}
               rowKey={(r) => r.event_id}
               tableTestId="idle-events-needs-review-table"
@@ -402,9 +403,6 @@ export function MaintKpiDashboardPage() {
       </section>
 
       <section className="overflow-x-auto rounded-sm border border-gray-200 bg-white" data-testid="maint-kpi-drilldown">
-        <div className="border-b border-gray-100 px-3 py-2 text-xs font-semibold text-[#0F1219]">
-          Drill-down — {activeKpi.replace(/_/g, " ")}
-        </div>
         {drilldownQ.isError ? (
           <ListErrorState
             title="Couldn't load maintenance KPI details"
@@ -414,6 +412,7 @@ export function MaintKpiDashboardPage() {
           />
         ) : (
           <ParityTable
+            title={`Drill-down — ${activeKpi.replace(/_/g, " ")}`}
             rows={drillRows}
             columns={drillColumns}
             rowKey={(row) => String(row.__row_key)}

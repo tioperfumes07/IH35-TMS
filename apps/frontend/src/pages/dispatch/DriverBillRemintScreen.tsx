@@ -162,7 +162,7 @@ export function DriverBillRemintScreen() {
           onRetry={() => void query.refetch()}
         />
       ) : (
-        <ParityTable appearance="board"
+        <ParityTable appearance="board" title="Delivered loads — no driver bill"
           rows={rows}
           columns={columns}
           rowKey={(row) => row.id}

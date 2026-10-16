@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -43,6 +44,12 @@ export function LoadBankingLinkagePage() {
         title="Load · bank feed linkage"
         breadcrumb={["Dispatch", "Loads", entityLabel(loadNumber, id, "Load"), "Banking"]}
         actions={
+          <>
+          <InfoPopover label="About this page" align="right">
+            Reverse Law §9 for this load. Persisted categorization tags only — draft Match/Categorize fields are not
+            links. EntityLink <code className="text-xs">kind=&quot;load&quot;</code> opens the board at{" "}
+            <code className="text-xs">/dispatch/loads/:id</code>; this page is the bank-feed reverse surface only.
+          </InfoPopover>
           <EntityLinkOrTombstone
             kind="load"
             id={id}
@@ -50,6 +57,7 @@ export function LoadBankingLinkagePage() {
             noun="Load"
             className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-medium text-[#0F1219] hover:bg-[#F7F8FA]"
           />
+          </>
         }
       />
       {/* BANK-F7176: distinguish a failed canonical-label read from an honest historical tombstone. */}
@@ -59,11 +67,6 @@ export function LoadBankingLinkagePage() {
           onRetry={() => void loadQuery.refetch()}
         />
       ) : null}
-      <p className="text-xs text-gray-600">
-        Reverse Law §9 for this load. Persisted categorization tags only — draft Match/Categorize fields are not
-        links. EntityLink <code className="text-xs">kind=&quot;load&quot;</code> opens the board at{" "}
-        <code className="text-xs">/dispatch/loads/:id</code>; this page is the bank-feed reverse surface only.
-      </p>
       {companyId ? (
         <LinkedBankTransactionsPanel companyId={companyId} linkage={{ kind: "load_id", id }} />
       ) : (

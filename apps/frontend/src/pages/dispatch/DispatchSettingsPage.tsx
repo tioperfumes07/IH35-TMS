@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 import {
   getDispatchPreferences,
   updateDispatchPreferences,
@@ -104,6 +105,12 @@ export function DispatchSettingsPage() {
       <PageHeader
         title="Dispatch settings"
         subtitle="Dispatcher defaults — landing view, sort, alert thresholds, auto-routing (B21-D11)"
+        actions={
+          <InfoPopover label="About where dispatch settings are stored" align="right" testId="dispatch-settings-footnote">
+            Default view persists per user via <code>/api/v1/dispatch/preferences</code>. Sort, thresholds, and auto-routing
+            defaults are stored in this browser until backend fields ship.
+          </InfoPopover>
+        }
       />
 
       {prefsQuery.isError ? (
@@ -118,8 +125,10 @@ export function DispatchSettingsPage() {
           className="rounded-sm border bg-white p-3 text-xs text-[#4B5563]"
           data-testid="dispatch-settings-honest-empty"
         >
-          No saved default landing view yet — choose Home or Loads below to create your preference.
-          Sort and alert thresholds are stored in this browser until you change them.
+          No saved default landing view yet — choose Home or Loads below to create your preference.{" "}
+          <InfoPopover label="About where dispatch settings are stored">
+            Sort and alert thresholds are stored in this browser until you change them.
+          </InfoPopover>
         </p>
       ) : null}
 
@@ -241,10 +250,6 @@ export function DispatchSettingsPage() {
         </section>
       </div>
 
-      <p className="text-xs text-[#6B7280]" data-testid="dispatch-settings-footnote">
-        Default view persists per user via <code>/api/v1/dispatch/preferences</code>. Sort, thresholds, and auto-routing
-        defaults are stored in this browser until backend fields ship.
-      </p>
     </div>
   );
 }

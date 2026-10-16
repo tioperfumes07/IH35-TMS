@@ -591,6 +591,7 @@ export function IntegrityReportPage({ operatingCompanyId }: { operatingCompanyId
           />
         ) : (
           <ParityTable
+            title="Geofence findings"
             rows={findingRows}
             columns={findingsCols}
             loading={findingsQuery.isPending}

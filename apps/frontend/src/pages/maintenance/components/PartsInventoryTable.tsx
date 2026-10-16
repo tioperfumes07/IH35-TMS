@@ -207,6 +207,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
         />
       ) : (
       <ParityTable<PartsInventoryRow>
+        title="Parts inventory"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

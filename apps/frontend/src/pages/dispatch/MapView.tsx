@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -89,12 +90,14 @@ export function MapView() {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E7EB] text-[#1F2A44]">
             <MapPin className="h-6 w-6" />
           </div>
-          <h2 className="text-page-title font-semibold text-gray-900">Map provider not configured</h2>
-          <p className="mt-1 text-xs text-gray-600">
-            Live GPS from Samsara is available for active loads, but geographic map rendering is not wired yet.
-            Contact the owner or administrator to configure a map provider (Mapbox) before this view can plot
-            vehicle positions.
-          </p>
+          <h2 className="text-page-title font-semibold text-gray-900">
+            Map provider not configured{" "}
+            <InfoPopover label="About the map provider">
+              Live GPS from Samsara is available for active loads, but geographic map rendering is not wired yet.
+              Contact the owner or administrator to configure a map provider (Mapbox) before this view can plot
+              vehicle positions.
+            </InfoPopover>
+          </h2>
         </section>
       ) : null}
       {companyId && mapConfigured ? (
@@ -103,8 +106,11 @@ export function MapView() {
           data-testid="dispatch-map-configured"
         >
           <p className="text-xs text-[#4B5563]">
-            Map provider is configured. Position list below is live from Samsara; geographic tiles land in a
-            follow-up once the Mapbox surface is wired to these coordinates.
+            Map provider is configured.{" "}
+            <InfoPopover label="About the position list">
+              Position list below is live from Samsara; geographic tiles land in a follow-up once the Mapbox surface is
+              wired to these coordinates.
+            </InfoPopover>
           </p>
         </section>
       ) : null}

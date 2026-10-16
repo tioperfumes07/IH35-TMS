@@ -247,7 +247,7 @@ export function TruckPlanner() {
           ];
           return (
             <div data-testid="dispatch-truck-planner-list">
-              <ParityTable<TruckListRow> appearance="board"
+              <ParityTable<TruckListRow> appearance="board" title="Units in the planner range"
                 columns={columns}
                 rows={listRows}
                 rowKey={(row) => row.unitId}

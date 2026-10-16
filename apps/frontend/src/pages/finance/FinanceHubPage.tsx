@@ -8,6 +8,7 @@ import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_UI_FLAG, getFinanceHubOverview, type FinanceHubKpi } from "../../api/financeHub";
 import { formatUsdCents } from "../../lib/money";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 // AF-6 — Finance Hub landing dashboard.
 // READ-ONLY: a single GET aggregates headline KPIs from the existing read-only finance/accounting
@@ -88,11 +89,13 @@ export function FinanceHubPage() {
           data-testid="finance-hub-disabled"
           className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#1F2A44]"
         >
-          <p className="font-medium text-[#0F1219]">Finance Hub is not enabled for this entity.</p>
-          <p className="mt-1 text-[#4B5563]">
-            This read-only overview is turned on per operating company. It isn’t active for the company
-            you have selected — this is expected, not an error. Contact the owner or an administrator to
-            enable the Finance Hub for this company, or switch to a company where it’s already enabled.
+          <p className="font-medium text-[#0F1219]">
+            Finance Hub is not enabled for this entity.{" "}
+            <InfoPopover label="About the Finance Hub being off">
+              This read-only overview is turned on per operating company. It isn’t active for the company
+              you have selected — this is expected, not an error. Contact the owner or an administrator to
+              enable the Finance Hub for this company, or switch to a company where it’s already enabled.
+            </InfoPopover>
           </p>
           <p className="mt-3">
             <Link to="/finance/overview" className="font-medium text-[#1F2A44] underline underline-offset-2">

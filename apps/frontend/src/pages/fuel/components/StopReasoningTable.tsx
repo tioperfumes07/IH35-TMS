@@ -98,6 +98,7 @@ export function StopReasoningTable({ stops }: Props) {
   return (
     <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white" data-testid="fuel-stop-reasoning-table">
       <ParityTable
+        title="Planned fuel stops — why each stop"
         columns={COLUMNS}
         rows={rows}
         rowKey={(row) => row.__rowKey}

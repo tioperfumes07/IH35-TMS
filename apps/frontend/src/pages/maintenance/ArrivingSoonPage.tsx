@@ -272,6 +272,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
       {/* Desktop/tablet: full parity table. Mobile: stacked cards (same data, no horizontal scroll). */}
       <div className="hidden sm:block">
         <ParityTable<ArrivingSoonCardType>
+          title="Units arriving soon"
           columns={columns}
           rows={cards}
           rowKey={(card) => `${card.load_id}:${card.unit_id}`}

@@ -301,6 +301,7 @@ export function PartsMasterDataPage() {
           />
         ) : (
           <ParityTable<MaintenancePartRow>
+            title="Parts catalog"
             columns={columns}
             rows={rows}
             rowKey={(row) => row.id}

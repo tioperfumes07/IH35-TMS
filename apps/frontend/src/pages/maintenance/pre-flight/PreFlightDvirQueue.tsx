@@ -188,6 +188,7 @@ export function PreFlightDvirQueue() {
         />
       ) : (
       <ParityTable
+        title="Pre-flight DVIR queue"
         rows={rows}
         columns={columns}
         rowKey={(row) => row.id}

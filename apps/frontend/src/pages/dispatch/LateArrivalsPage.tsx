@@ -168,7 +168,7 @@ export function LateArrivalsPage() {
       ) : null}
 
       {!lateQ.isError ? (
-        <ParityTable<LateArrivalRow> appearance="board"
+        <ParityTable<LateArrivalRow> appearance="board" title="Loads — late arrivals"
           columns={columns}
           rows={loads}
           rowKey={(load) => load.id}

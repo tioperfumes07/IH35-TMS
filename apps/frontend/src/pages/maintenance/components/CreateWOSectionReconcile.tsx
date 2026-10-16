@@ -165,9 +165,9 @@ export function CreateWOSectionReconcile({
 
   return (
     <section data-testid="wo-vendor-invoice-reconcile" className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs">
-      <div className="mb-1 font-semibold text-[#1F2A44]">Vendor Invoice Reconcile</div>
       <div className="min-w-[360px] overflow-x-auto">
         <ParityTable<ReconcileRow>
+          title="Vendor invoice reconcile"
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}
