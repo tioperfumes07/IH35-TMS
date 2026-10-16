@@ -203,7 +203,9 @@ export async function rerateLoadMilesFromStops(
       FROM mdata.load_stops s
       WHERE s.load_id = $1::uuid
         AND s.operating_company_id = $2::uuid -- load_stops_load_same_entity_fkey: a stop's company is its load's
-        AND COALESCE(s.status, 'active') <> 'cancelled'
+        -- LEAD 443.157: 'active' is not a stop_status_enum value (pending/arrived/departed/cancelled) — the COALESCE made every
+        -- call fail "invalid input value for enum", so an Owner lock-override that touched stops could never complete.
+        AND s.status IS DISTINCT FROM 'cancelled'
         AND latitude IS NOT NULL
         AND longitude IS NOT NULL
       ORDER BY sequence_number ASC
