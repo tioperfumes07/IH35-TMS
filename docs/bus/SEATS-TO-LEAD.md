@@ -1,52 +1,53 @@
 # SEATS → LEAD
 
-## CC-1 | 443.167 PROGRESS — LIVE COUNTS (2026-10-16 ~18:00 UTC)
+## CC-1 | 443.167 STATUS — LIVE COUNTS (2026-10-16 ~19:10 UTC)
 
-**Root cause removed:** `settlements-load-bookended.service.ts:1064-1071` — `pingSettlementOnLoadEvent` no longer calls `closeSettlementForFinalLoad` on `delivered_pending_docs` (law §2 fix). Guard: `verify-settlement-no-dispatch-autoclose.mjs` exits 0.
+**Root cause removed:** `settlements-load-bookended.service.ts:1064-1071` — auto-close on `delivered_pending_docs` gone. Guard `verify-settlement-no-dispatch-autoclose.mjs` exits 0.
 
-**PR:** `Claude-1-443.167` — preflight running (lane-cross ruling filed). Push on PASS.
+**PR:** `Claude-1-443.167` — gate working (scope narrowing applied, verify-pl-cost-of-revenue blocking — pre-existing date-range defect, filing FINDING).
 
-### Live status counts (USMCA, voided_at IS NULL)
+### Live status counts (USMCA — 2026-10-16 ~19:10 UTC)
 | status | count |
 |---|---|
 | invoiced | 148 |
 | closed | 20 |
-| dispatched | **8** |
+| dispatched | **8** ✓ |
 | cancelled | 4 |
-| completed_docs_received | 1 (load 13541 — owner UI: close in P-0070/settlement 5796) |
+| completed_docs_received | 1 (load **13541** — owner UI: close in P-0070/settlement 5796) |
 
 **Dispatched = exactly 8:** 13666, 13675, 13676, 13677, 13678, 13681, 13682, 13683 ✓
 
-**Guard `verify-delivered-load-stops-terminal`:** PASS — 0 pending stops on delivered+ loads ✓
+**Terminal stops:** 0 pending stops on delivered+ loads ✓ (`verify-delivered-load-stops-terminal` GREEN)
 
 **Loads in 2+ non-cancelled settlements:** 0 ✓
 
-**Seed settlements voided:** 24 (19 auto-closed + 5 open duplicates → status=cancelled, void_reason="443.167 regroup") ✓
+**Seed settlements voided:** 25 cancelled (20 seed pre-settlements + 5 open duplicates, reason="443.167 regroup") ✓
 
-### Settlement coverage (146 ok, 0 multi, 23 no-settlement)
-**Owner UI actions needed — 23 loads without a settlement document:**
+**13574 PO fix:** `customer_po_number = 1709094` ✓ (already correct, confirmed live)
 
-**4 PDF settlements (5839–5842) — owner enters via Settlement Creator:**
-| Settlement | Loads | Amount |
+### Owner UI — required actions
+
+**PDF settlements (5839–5842) — NOT YET ENTERED:**
+| Settlement | Loads | Target amount |
 |---|---|---|
 | 5839 | 13655 + 13665 | $1,275.91 |
 | 5840 | 13662 + 13670 | $1,652.25 |
-| 5841 | 13658 + 13671* | $1,618.10 |
-| 5842 | 13664 + 13669 + 13679* | $1,645.90 |
+| 5841 | 13658 + 13671 | $1,618.10 |
+| 5842 | 13664 + 13669 + 13679 | $1,645.90 |
 
-*13671 currently in open pre-settlement P-0085 (with dispatched 13683); 13679 in open P-0092. Owner Settlement Creator will replace these when entering 5841/5842.
+**Load 13541:** still `completed_docs_received` — close in P-0070 / settlement 5796 via Settlement Creator UI.
 
-**Remaining 13 invoiced loads without a settlement — close each in own pre-settlement:**
+**13 invoiced loads without a settlement — close each in own pre-settlement:**
 13544, 13563, 13598, 13626, 13628, 13656, 13661, 13663, 13667, 13668, 13672, 13673, 13680
 
 **3 closed loads without any settlement:**
 13512 (closed), 13528 (closed), 13538 (closed)
 
-### Workbook settlements (69 closed, P-0002–P-0070)
-Full table available on request. All 69 map load ranges to unique settlements.
+### Settlement counts (live)
+- closed: 69 | open: 3 | voided/cancelled: 25
 
 ### CC-2 invoice check
-**Invoiced loads without invoice record:** 0 ✓ (CC-2: no action required on this dimension)
+**Invoiced loads without invoice record:** 0 ✓
 
 ---
 
