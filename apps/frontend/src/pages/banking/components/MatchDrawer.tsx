@@ -105,6 +105,8 @@ const KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   deposit: "Deposit",
   relay_fuel: "Relay fuel",
   relay_deposit: "Relay deposit",
+  factoring_advance: "Faro purchase",
+  invoice: "Invoice",
 };
 
 const RELAY_MATCH_KINDS = new Set<BankMatchCandidateKind>(["relay_fuel", "relay_deposit"]);
@@ -120,6 +122,8 @@ const RECORD_TYPE_CHIPS: ReadonlyArray<{ kind: BankMatchCandidateKind; label: st
   { kind: "deposit", label: "Deposit" },
   { kind: "relay_deposit", label: "Relay deposit" },
   { kind: "relay_fuel", label: "Relay fuel" },
+  { kind: "factoring_advance", label: "Faro purchase" },
+  { kind: "invoice", label: "Invoice" },
 ];
 
 function chipClassName(selected: boolean) {
@@ -140,6 +144,8 @@ const KIND_ENTITY: Record<BankMatchCandidateKind, EntityKind> = {
   deposit: "deposit",
   relay_fuel: "expense",
   relay_deposit: "deposit",
+  factoring_advance: "factoring_advance",
+  invoice: "invoice",
 };
 
 function formatMoneyCents(cents: number | null | undefined) {

@@ -4,6 +4,12 @@
  * Settlement-born only + date cascade 3→7→From/To. BUILD NO TYPE FILTER.
  * (Formerly asserted a Show multi-select of six kinds — that was WITHDRAWN by owner 2026-09-28.)
  *
+ * LEAD 443.155 (owner design 2026-10-16, handoff "Engine register" addendum):
+ *   DEFECT 1 — every candidate source in fetchLedgerCandidates() is scoped to the bank line's own account (its
+ *   ledger / paid-from / deposited-to, or an open clearing item that lands in an operating bank); no cross-account row.
+ *   DEFECT 2 — the union carries A/R invoices and factoring purchases (owner ruling 2026-09-30: every document).
+ *   A NEW candidate source fails here until its account scope is declared in SCOPED_SOURCES.
+ *
  * Usage: node scripts/verify-banking-match-qbo-engine.mjs [--selftest]
  */
 import fs from "node:fs";
@@ -21,8 +27,40 @@ const FILES = {
 const LABEL = "verify-banking-match-qbo-engine";
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 
-export function problemsFor({ service, predicate, route, api, view, drawer }) {
+/** 443.155 — each candidate source and the predicate that ties it to the bank line's account. */
+export const SCOPED_SOURCES = {
+  payment: /p\.deposited_to_account_id::text = \$6::text/,
+  deposit: /d\.bank_account_id = \$6::uuid/,
+  bill_payment: /bp\.from_bank_account_id = \$6::uuid/,
+  expense: /e\.payment_account_uuid = \$6::uuid/,
+  bill: /if \(onOperatingBank && wants\("bill"\)\)/,
+  relay_deposit: /if \(onRelayWallet && wants\("relay_deposit"\)\)/,
+  factoring_advance: /if \(onOperatingBank && wants\("factoring_advance"\)\)/,
+  invoice: /if \(onOperatingBank && wants\("invoice"\)\)/,
+};
+
+export function candidateScopeProblems(service) {
   const p = [];
+  const start = service.indexOf("async function fetchLedgerCandidates(");
+  const end = start < 0 ? -1 : service.indexOf("\n}\n", start);
+  const body = start < 0 ? "" : service.slice(start, end);
+  if (!body) return ["service: fetchLedgerCandidates() not found"];
+  const kinds = [...new Set([...body.matchAll(/wants\("([a-z_]+)"\)/g)].map((m) => m[1]))];
+  for (const k of kinds) {
+    if (!SCOPED_SOURCES[k]) p.push(`service: candidate source "${k}" has no declared bank-account scope (443.155 DEFECT 1) — declare it in SCOPED_SOURCES`);
+    else if (!SCOPED_SOURCES[k].test(body)) p.push(`service: candidate source "${k}" is not scoped to the bank line's account (443.155 DEFECT 1)`);
+  }
+  if (!/FROM accounting\.factoring_purchases/.test(body) || !kinds.includes("factoring_advance"))
+    p.push("service: factoring purchases are not in the candidate union (443.155 DEFECT 2)");
+  if (!/FROM accounting\.invoices/.test(body) || !kinds.includes("invoice"))
+    p.push("service: A/R invoices are not in the candidate union (443.155 DEFECT 2)");
+  if (!/register = \(await client\.query[\s\S]{0,1500}FROM banking\.bank_accounts ba/.test(body))
+    p.push("service: fetchLedgerCandidates must read the bank line's own account (ledger / operating / Relay wallet) before any source");
+  return p;
+}
+
+export function problemsFor({ service, predicate, route, api, view, drawer }) {
+  const p = [...candidateScopeProblems(service)];
   for (const f of ["counterparty_kind", "counterparty_name", "counterparty_id", "reference", "description", "open_balance_cents", "payee_similarity"]) {
     if (!new RegExp(`^\\s*${f}\\??:`, "m").test(service)) p.push(`service: MatchCandidate lacks ${f}`);
   }
@@ -160,6 +198,14 @@ function selftest() {
     // ROUND 369.2 retired the "no expenses / no AR payments" rule; the mutant that guards a live rule takes its place.
     ["transfers back", { ...base, service: base.service.replace("async function fetchLedgerCandidates", "async function fetchLedgerCandidates() {\n FROM banking.transfers t\n}\nasync function fetchLedgerCandidates_OLD") }],
     ["type filter back", { ...base, view: base.view + `\n<div data-testid="banking-match-filter-kind"><MultiSelectDropdown data-testid="banking-match-filter-kind-dropdown"/></div>\n` }],
+    ["expense company-wide", { ...base, service: base.service.replace("AND e.payment_account_uuid = $6::uuid", "") }],
+    ["payment company-wide", { ...base, service: base.service.replace("p.deposited_to_account_id::text = $6::text", "TRUE") }],
+    ["bill payment company-wide", { ...base, service: base.service.replace("bp.from_bank_account_id = $6::uuid", "TRUE") }],
+    ["relay deposit on every register", { ...base, service: base.service.replace('if (onRelayWallet && wants("relay_deposit"))', 'if (wants("relay_deposit"))') }],
+    ["bills on card registers", { ...base, service: base.service.replace('if (onOperatingBank && wants("bill"))', 'if (wants("bill"))') }],
+    ["factoring purchases dropped", { ...base, service: base.service.replace("FROM accounting.factoring_purchases fp", "FROM accounting.factoring_advances fp") }],
+    ["invoices dropped", { ...base, service: base.service.replace('if (onOperatingBank && wants("invoice"))', "if (false)") }],
+    ["new unscoped source", { ...base, service: base.service.replace('if (onOperatingBank && wants("invoice"))', 'if (wants("je")) {}\n    if (onOperatingBank && wants("invoice"))') }],
   ];
   for (const [name, mutant] of mutants) {
     const hits = problemsFor(mutant);
