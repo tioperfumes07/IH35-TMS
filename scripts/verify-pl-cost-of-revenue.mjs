@@ -70,6 +70,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-pl-cost-of-revenue";
 const USMCA_OPCO_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const GROUND_TRUTH_PATH = path.join(ROOT, "data/alwaystrack/settlements-truth-2026-09-13.json");
+// DEFECT 2 root-cause file — guard fires when this path changes (gate owned-path, not alwaysRun):
+const _DEFECT2_ROOT_CAUSE = "apps/backend/src/dispatch/delivery-evidence-latch.ts";
 
 // Role -> human label. Each of these MUST have posted at least once, AND its date range must
 // overlap revenue's, if in-scope loads have posted revenue. See the file header for why
