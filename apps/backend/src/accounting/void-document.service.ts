@@ -56,6 +56,7 @@ import {
 import { voidBillInClientTx, voidBillPaymentInClientTx, type BillMutationClient } from "./bills.service.js";
 import { reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { reverseExpenseDocumentInClientTx } from "./expense-void-reversal.js";
+import { expenseVoidReversalMemo } from "./expense-void.service.js";
 import { reverseFactoringAdvanceEvent } from "./factoring-posting/poster.service.js";
 import { reverseSettlementForVoid, reverseDeductionForVoid } from "../driver-finance/void-document-callees.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -142,7 +143,8 @@ export async function voidDocument(
       // entry), decided by reading; nothing live = unposted. Never a swallowed SOURCE_NOT_FOUND.
       const rev = await reverseExpenseDocumentInClientTx(client as never, {
         operatingCompanyId: input.operatingCompanyId, expenseId: input.id, actorUserId: input.actor.userId,
-        currentBusinessDate: input.currentBusinessDate, memo: `Void reversal of expense ${input.id}: ${input.reason}`, expenseReverser: "source",
+        currentBusinessDate: input.currentBusinessDate,
+        memo: await expenseVoidReversalMemo(client as never, input.operatingCompanyId, input.id, input.reason), expenseReverser: "source",
       });
       const reversalJournalEntryId: string | null = rev.reversal_journal_entry_id;
       // AUTH-400 — a void is WHOLE at this door: the ledger reversed AND the header stamped, in this transaction. Callers
