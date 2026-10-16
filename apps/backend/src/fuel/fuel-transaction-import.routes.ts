@@ -5,7 +5,8 @@ import {
   readUntrustedSpreadsheetRows,
   SpreadsheetUploadRejectedError,
 } from "../lib/untrusted-spreadsheet-read.js";
-import { withCurrentUser } from "../auth/db.js";
+import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
+import { importDreamlineStatement, parseDreamlineStatementRows } from "./dreamline-statement-import.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
@@ -157,5 +158,43 @@ export async function registerFuelTransactionImportRoutes(app: FastifyInstance) 
       overage_errors: overage.errors,
       dead_letter_details: parsed.dead_letters.slice(0, 25),
     };
+  });
+
+  // LEAD 443.142 — the Dreamline (EFS) provider statement: the export's "Discounted" sheet is the source of truth for every
+  // Dreamline receipt. Adopts receipts already on the books (never posts twice), posts the card discount / amount difference
+  // to the file's number, imports the missing fills through the one poster. dry_run=true writes nothing and returns the plan.
+  app.post("/api/v1/fuel/dreamline/statement-import", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!requireFuelWriteRole(reply, String(authUser.role ?? ""))) return;
+    const query = companyQuerySchema.extend({ dry_run: z.enum(["true", "false"]).optional() }).safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const companyId = query.data.operating_company_id;
+    const dryRun = query.data.dry_run !== "false";
+    await assertCompanyMembership(authUser.uuid, companyId);
+
+    const filePart = await req.file();
+    if (!filePart) return reply.code(400).send({ error: "file_required" });
+    if (!filePart.filename.toLowerCase().endsWith(".xlsx")) return reply.code(400).send({ error: "xlsx_required" });
+    let rawRows: Record<string, unknown>[];
+    try {
+      rawRows = await readUntrustedSpreadsheetRows(await filePart.toBuffer(), filePart.filename, { cellDates: true });
+    } catch (err) {
+      if (err instanceof SpreadsheetUploadRejectedError) return reply.code(400).send({ error: err.code });
+      return reply.code(400).send({ error: "unreadable_file", detail: String((err as Error)?.message ?? err) });
+    }
+    const parsed = parseDreamlineStatementRows(rawRows);
+    if (parsed.lines.length === 0) return reply.code(400).send({ error: "no_dreamline_lines", dead_letters: parsed.dead_letters.slice(0, 25) });
+
+    const summary = await withLuciaBypass(async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
+      return importDreamlineStatement(client as never, {
+        operating_company_id: companyId,
+        actor_user_uuid: authUser.uuid,
+        lines: parsed.lines,
+        dry_run: dryRun,
+      });
+    });
+    return { dry_run: dryRun, file: filePart.filename, dead_letters: parsed.dead_letters.slice(0, 25), ...summary };
   });
 }
