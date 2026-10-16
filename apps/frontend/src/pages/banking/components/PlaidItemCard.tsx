@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { PlaidBankAccount } from "../../../api/banking";
 import { derivePlaidConnectionBadgeClasses, derivePlaidConnectionBadgeLabel, latestPlaidLastSyncedAtMs } from "./plaid-item-display";
+import { formatDateTimeUS } from "../../../utils/qboFormat";
 
 type Props = {
   institution: string;
@@ -26,7 +27,7 @@ export function PlaidItemCard({ institution, accounts, actions, nowMs }: Props) 
           </div>
           <div className="min-w-0">
             <p className="text-xs font-semibold text-gray-900">{institution}</p>
-            <p className="text-xs text-gray-500">Last sync: {lastSyncMs ? new Date(lastSyncMs).toLocaleString() : "—"}</p>
+            <p className="text-xs text-gray-500">Last sync: {lastSyncMs ? formatDateTimeUS(lastSyncMs) : "—"}</p>
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">

@@ -140,6 +140,7 @@ export const TABLE_REGISTRY = {
   "accounting.factoring_interest_accrual_runs": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (month-end Faro default-interest accrual run, maker/checker; its JE carries the spine) — #24199" },
   "accounting.factoring_interest_accrual_run_lines": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (one accrual line per purchased invoice; purchase / invoice / customer carried, load via the invoice) — #24199" },
   "accounting.factoring_repurchase_due_events": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (day-95 repurchase decision per purchase line; invoice / customer / purchase carried, load reached via the invoice; no GL of its own)" },
+  "accounting.factoring_misdirected_payment_alerts": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (E-47 contract alert: a customer payment matched on a Faro-purchased invoice; invoice / purchase line / bank line carried, posts nothing) — 443.168 K" },
   "accounting.factoring_default_interest_accruals": { status: "OUT_OF_SCOPE" },
   "accounting.factoring_lifecycle_posting_keys": { status: "OUT_OF_SCOPE" },
   "accounting.factoring_reserve_movements": { status: "OUT_OF_SCOPE" },

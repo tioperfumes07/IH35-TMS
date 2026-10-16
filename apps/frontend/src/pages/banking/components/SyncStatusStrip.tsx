@@ -1,5 +1,6 @@
 import { MONEY_TONE_COLORS } from "../../../design/money-design-system";
 import { describeQboSyncStatus } from "../../../lib/qbo-sync-status";
+import { formatDateTimeUS } from "../../../utils/qboFormat";
 
 type Props = {
   syncedAt: string | null;
@@ -30,7 +31,7 @@ export function SyncStatusStrip({
       <span style={{ color: toneColor, fontWeight: 600 }}>{summary.label}</span>
       <span className="ml-1 text-gray-500">({summary.sub})</span>
       <span className="mx-2 text-gray-400">|</span>
-      Last sync: {syncedAt ? new Date(syncedAt).toLocaleString() : "n/a"}
+      Last sync: {syncedAt ? formatDateTimeUS(syncedAt) : "n/a"}
       <span className="mx-2 text-gray-400">|</span>
       Transactions: {transactionCount}
       <span className="mx-2 text-gray-400">|</span>

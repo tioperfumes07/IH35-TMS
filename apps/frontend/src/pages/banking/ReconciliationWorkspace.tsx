@@ -27,6 +27,7 @@ import { StatementUpload } from "../../components/banking/StatementUpload";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
 import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
@@ -216,6 +217,7 @@ function reconDocumentHref(tx: ReconGridRow): string | null {
 }
 
 import { formatUsdCents } from "../../lib/money";
+import { formatDateTimeUS } from "../../utils/qboFormat";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -227,7 +229,7 @@ function formatReconciledDate(iso: string | null | undefined) {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  return formatDateUS(d);
 }
 
 /** Prior closed session for this account — beginning = its statement_balance_cents (QBO carry). */
@@ -315,24 +317,25 @@ export function ReconciliationWorkspacePage() {
   const [periodEnd, setPeriodEnd] = useState("");
   const [statementBalanceInput, setStatementBalanceInput] = useState<number | null>(null);
   const [startLoading, setStartLoading] = useState(false);
-  const [filterMode, setFilterMode] = useState<"all" | "matched" | "unmatched">("all");
+  // LEAD 443.156 item 1 — every filter over a set is a multi-select; none picked = all.
+  const [matchStates, setMatchStates] = useState<Array<"matched" | "unmatched">>([]);
   /** B-2 QBO Reconcile tabs: Payments (money out) | Deposits (money in) | All. */
   const [directionTab, setDirectionTab] = useState<"payments" | "deposits" | "all">("all");
-  const [eventFilter, setEventFilter] = useState<"all" | "load" | "bill" | "settlement">("all");
+  const [eventFilter, setEventFilter] = useState<Array<"load" | "bill" | "settlement">>([]);
   /** B-2 ORDERS §6 — Filter popover (Find / Cleared / Type / Payee / Date / amount). Draft → Apply. */
   const [filterOpen, setFilterOpen] = useState(false);
   const [draftFind, setDraftFind] = useState("");
   const [draftPayee, setDraftPayee] = useState("");
-  const [draftCleared, setDraftCleared] = useState<"all" | "cleared" | "uncleared">("all");
-  const [draftTxnType, setDraftTxnType] = useState<ReconTxnTypeFilter>("all");
+  const [draftCleared, setDraftCleared] = useState<Array<"cleared" | "uncleared">>([]);
+  const [draftTxnType, setDraftTxnType] = useState<ReconTxnTypeFilter[]>([]);
   const [draftDateFrom, setDraftDateFrom] = useState("");
   const [draftDateTo, setDraftDateTo] = useState("");
   const [draftAmtMode, setDraftAmtMode] = useState<"any" | "eq" | "gt" | "lt">("any");
   const [draftAmtDollars, setDraftAmtDollars] = useState<number | null>(null);
   const [appliedFind, setAppliedFind] = useState("");
   const [appliedPayee, setAppliedPayee] = useState("");
-  const [appliedCleared, setAppliedCleared] = useState<"all" | "cleared" | "uncleared">("all");
-  const [appliedTxnType, setAppliedTxnType] = useState<ReconTxnTypeFilter>("all");
+  const [appliedCleared, setAppliedCleared] = useState<Array<"cleared" | "uncleared">>([]);
+  const [appliedTxnType, setAppliedTxnType] = useState<ReconTxnTypeFilter[]>([]);
   const [appliedDateFrom, setAppliedDateFrom] = useState("");
   const [appliedDateTo, setAppliedDateTo] = useState("");
   const [appliedAmtMode, setAppliedAmtMode] = useState<"any" | "eq" | "gt" | "lt">("any");
@@ -433,11 +436,11 @@ export function ReconciliationWorkspacePage() {
 
   const visibleTransactions = useMemo(() => {
     let filtered =
-      filterMode === "all"
+      matchStates.length === 0
         ? localTransactions
         : localTransactions.filter((tx) => {
             const matched = transactionIsMatched(tx);
-            return filterMode === "matched" ? matched : !matched;
+            return matchStates.includes(matched ? "matched" : "unmatched");
           });
     if (directionTab === "payments") filtered = filtered.filter((tx) => !tx.is_credit);
     else if (directionTab === "deposits") filtered = filtered.filter((tx) => tx.is_credit);
@@ -451,9 +454,8 @@ export function ReconciliationWorkspacePage() {
     const anyExplicit = localTransactions.some((t) => Boolean(t.reconciliation_cleared));
 
     filtered = filtered.filter((tx) => {
-      if (appliedTxnType !== "all" && tx.type_label !== appliedTxnType) return false;
-      if (appliedCleared === "cleared" && !transactionIsCleared(tx, anyExplicit)) return false;
-      if (appliedCleared === "uncleared" && transactionIsCleared(tx, anyExplicit)) return false;
+      if (appliedTxnType.length && !appliedTxnType.includes(tx.type_label as ReconTxnTypeFilter)) return false;
+      if (appliedCleared.length && !appliedCleared.includes(transactionIsCleared(tx, anyExplicit) ? "cleared" : "uncleared")) return false;
       if (appliedDateFrom && String(tx.transaction_date ?? "") < appliedDateFrom) return false;
       if (appliedDateTo && String(tx.transaction_date ?? "") > appliedDateTo) return false;
       if (payeeQ) {
@@ -491,7 +493,7 @@ export function ReconciliationWorkspacePage() {
     });
   }, [
     directionTab,
-    filterMode,
+    matchStates,
     localTransactions,
     txnSort,
     appliedFind,
@@ -519,16 +521,16 @@ export function ReconciliationWorkspacePage() {
   const resetReconFilters = () => {
     setDraftFind("");
     setDraftPayee("");
-    setDraftCleared("all");
-    setDraftTxnType("all");
+    setDraftCleared([]);
+    setDraftTxnType([]);
     setDraftDateFrom("");
     setDraftDateTo("");
     setDraftAmtMode("any");
     setDraftAmtDollars(null);
     setAppliedFind("");
     setAppliedPayee("");
-    setAppliedCleared("all");
-    setAppliedTxnType("all");
+    setAppliedCleared([]);
+    setAppliedTxnType([]);
     setAppliedDateFrom("");
     setAppliedDateTo("");
     setAppliedAmtMode("any");
@@ -539,8 +541,8 @@ export function ReconciliationWorkspacePage() {
     let n = 0;
     if (appliedFind.trim()) n += 1;
     if (appliedPayee.trim()) n += 1;
-    if (appliedCleared !== "all") n += 1;
-    if (appliedTxnType !== "all") n += 1;
+    if (appliedCleared.length) n += 1;
+    if (appliedTxnType.length) n += 1;
     if (appliedDateFrom || appliedDateTo) n += 1;
     if (appliedAmtMode !== "any" && appliedAmtDollars != null) n += 1;
     return n;
@@ -550,7 +552,7 @@ export function ReconciliationWorkspacePage() {
     setTxnSort((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" }));
 
   const visibleCandidates = useMemo(() => {
-    const byType = eventFilter === "all" ? allCandidates : allCandidates.filter((event) => event.event_type === eventFilter);
+    const byType = eventFilter.length === 0 ? allCandidates : allCandidates.filter((event) => eventFilter.includes(event.event_type as "load" | "bill" | "settlement"));
     return byType;
   }, [allCandidates, eventFilter]);
 
@@ -874,7 +876,7 @@ export function ReconciliationWorkspacePage() {
                 session?.period_start ? formatDateUS(session.period_start) : "—",
               )} → ${esc(session?.period_end ? formatDateUS(session.period_end) : "—")} · ${esc(
                 orientation,
-              )} · printed ${esc(new Date().toLocaleString())}</div>
+              )} · printed ${esc(formatDateTimeUS(new Date()))}</div>
               <table className="tabular-nums">
                 <tbody>
                   <tr><th>Beginning balance</th><td className="text-right tabular-nums">${esc(
@@ -1050,15 +1052,17 @@ export function ReconciliationWorkspacePage() {
                     </button>
                   ))}
                 </div>
-                <SelectCombobox
-                  value={filterMode}
-                  onChange={(event) => setFilterMode(event.target.value as "all" | "matched" | "unmatched")}
-                  className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                >
-                  <option value="all">All match states</option>
-                  <option value="matched">Matched</option>
-                  <option value="unmatched">Unmatched</option>
-                </SelectCombobox>
+                <MultiSelectDropdown
+                  label="Match state"
+                  allLabel="All match states"
+                  options={[
+                    { value: "matched", label: "Matched" },
+                    { value: "unmatched", label: "Unmatched" },
+                  ]}
+                  selected={matchStates}
+                  onChange={(next) => setMatchStates(next as Array<"matched" | "unmatched">)}
+                  data-testid="recon-filter-match-state"
+                />
                 <div className="relative" data-b2-recon-filter="1">
                   <button
                     type="button"
@@ -1096,32 +1100,29 @@ export function ReconciliationWorkspacePage() {
                       </label>
                       <label className="mb-2 flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
                         Cleared status
-                        <SelectCombobox
-                          value={draftCleared}
-                          onChange={(e) => setDraftCleared(e.target.value as "all" | "cleared" | "uncleared")}
-                          className="h-7 rounded-sm border border-gray-300 px-2 font-normal normal-case tracking-normal text-[#0F1219]"
+                        <MultiSelectDropdown
+                          label="Cleared status"
+                          options={[
+                            { value: "cleared", label: "Cleared" },
+                            { value: "uncleared", label: "Uncleared" },
+                          ]}
+                          selected={draftCleared}
+                          onChange={(next) => setDraftCleared(next as Array<"cleared" | "uncleared">)}
                           data-testid="recon-filter-cleared"
-                        >
-                          <option value="all">All</option>
-                          <option value="cleared">Cleared</option>
-                          <option value="uncleared">Uncleared</option>
-                        </SelectCombobox>
+                        />
                       </label>
                       <label className="mb-2 flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
                         Transaction type
-                        <SelectCombobox
-                          value={draftTxnType}
-                          onChange={(e) => setDraftTxnType(e.target.value as ReconTxnTypeFilter)}
-                          className="h-7 rounded-sm border border-gray-300 px-2 font-normal normal-case tracking-normal text-[#0F1219]"
-                          data-testid="recon-filter-type"
-                          data-b2-recon-filter-doc-types="1"
-                        >
-                          {RECON_TXN_TYPE_FILTERS.map((t) => (
-                            <option key={t} value={t}>
-                              {t === "all" ? "All" : t}
-                            </option>
-                          ))}
-                        </SelectCombobox>
+                        <span data-b2-recon-filter-doc-types="1">
+                          <MultiSelectDropdown
+                            label="Transaction type"
+                            allLabel="All types"
+                            options={RECON_TXN_TYPE_FILTERS.filter((t) => t !== "all").map((t) => ({ value: t, label: t }))}
+                            selected={draftTxnType}
+                            onChange={(next) => setDraftTxnType(next as ReconTxnTypeFilter[])}
+                            data-testid="recon-filter-type"
+                          />
+                        </span>
                       </label>
                       <div className="mb-2 grid grid-cols-2 gap-2">
                         <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
@@ -1369,16 +1370,17 @@ export function ReconciliationWorkspacePage() {
           <div className="border-l border-gray-200 bg-white p-3 lg:col-span-4">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-xs font-semibold text-gray-900">TMS candidate events</p>
-              <SelectCombobox
-                value={eventFilter}
-                onChange={(event) => setEventFilter(event.target.value as "all" | "load" | "bill" | "settlement")}
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              >
-                <option value="all">All</option>
-                <option value="load">Loads</option>
-                <option value="bill">Bills</option>
-                <option value="settlement">Settlements</option>
-              </SelectCombobox>
+              <MultiSelectDropdown
+                label="Events"
+                options={[
+                  { value: "load", label: "Loads" },
+                  { value: "bill", label: "Bills" },
+                  { value: "settlement", label: "Settlements" },
+                ]}
+                selected={eventFilter}
+                onChange={(next) => setEventFilter(next as Array<"load" | "bill" | "settlement">)}
+                data-testid="recon-filter-events"
+              />
             </div>
             <div className="max-h-[500px] space-y-1 overflow-auto">
               {visibleCandidates.map((event) => (

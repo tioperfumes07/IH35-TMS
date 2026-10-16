@@ -17,6 +17,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { formatUsdCents } from "../../../lib/money";
 import { BANKING_TAB_PATH } from "../../../router/route-manifest";
 import { entityLabel } from "../../../lib/entity-label";
+import { formatDateUS, formatNumber } from "../../../utils/qboFormat";
 
 export type ReconShellAccount = {
   id: string;
@@ -41,7 +42,7 @@ function formatReconciledAt(iso: string | null | undefined) {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  return formatDateUS(d);
 }
 
 /**
@@ -206,7 +207,7 @@ export function ReconciliationTabContent({
             <p className="mt-1">
               Statement reconcile is not proven live until a session is started and completed to a $0.00
               difference. Uncategorized / for-review bank transactions still need Match or Categorize (
-              {uncategorizedCount.toLocaleString()} currently flagged). Do not treat this screen as
+              {formatNumber(uncategorizedCount)} currently flagged). Do not treat this screen as
               reconciled.
             </p>
             <div className="mt-2 flex flex-wrap gap-2">

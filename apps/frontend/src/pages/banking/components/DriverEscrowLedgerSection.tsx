@@ -288,7 +288,7 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
         key: "amount",
         label: "Amount",
         cellClass: "text-[#1F2A44]",
-        render: (row) => `$${Number(row.amount ?? 0).toFixed(2)}`,
+        render: (row) => formatUsd(row.amount),
       },
       {
         key: "cleared",

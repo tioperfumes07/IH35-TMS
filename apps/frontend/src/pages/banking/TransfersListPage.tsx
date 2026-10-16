@@ -12,7 +12,6 @@ import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { SelectCombobox } from "../../components/Combobox";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -116,17 +115,18 @@ export function TransfersListPage() {
 
   const [fromDate, setFromDate] = useState(new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString().slice(0, 10));
   const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
-  const [type, setType] = useState<TransferType | "">("");
+  // LEAD 443.156 item 1 — type is a set filter: multi-select (none picked = every type).
+  const [types, setTypes] = useState<TransferType[]>([]);
   // U12 (owner UI register 2026-10-03) — status is a multi-select; default Active; none picked = every transfer.
   const [status, setStatus] = useState<Array<"active" | "revoked">>(["active"]);
   const [accountIds, setAccountIds] = useState<string[]>([]);
   const staged = useStagedListFilters({
-    applied: { fromDate, toDate, type, status, accountIds },
-    empty: { fromDate: "", toDate: "", type: "" as const, status: [] as Array<"active" | "revoked">, accountIds: [] as string[] },
+    applied: { fromDate, toDate, types, status, accountIds },
+    empty: { fromDate: "", toDate: "", types: [] as TransferType[], status: [] as Array<"active" | "revoked">, accountIds: [] as string[] },
     onApply: (next) => {
       setFromDate(next.fromDate);
       setToDate(next.toDate);
-      setType(next.type);
+      setTypes(next.types);
       setStatus(next.status);
       setAccountIds(next.accountIds);
       setOffset(0);
@@ -185,12 +185,12 @@ export function TransfersListPage() {
     enabled: Boolean(companyId),
   });
   const transfersQuery = useQuery({
-    queryKey: ["banking", "transfers", companyId, fromDate, toDate, type, status, accountIds, offset],
+    queryKey: ["banking", "transfers", companyId, fromDate, toDate, types, status, accountIds, offset],
     queryFn: () =>
       listTransfers(companyId, {
         from: fromDate || undefined,
         to: toDate || undefined,
-        type: (type || undefined) as TransferType | undefined,
+        type: types.length === 1 ? types[0] : undefined,
         status,
         accountId: accountIds.length === 1 ? accountIds[0] : undefined,
         limit: PAGE_SIZE,
@@ -215,18 +215,20 @@ export function TransfersListPage() {
 
   const rows = useMemo(() => {
     const listed = transfersQuery.data?.transfers ?? [];
-    const filtered =
+    const byAccount =
       accountIds.length <= 1
         ? listed
         : listed.filter((row) => {
             const allow = new Set(accountIds);
             return allow.has(row.from_account_id) || allow.has(row.to_account_id);
           });
+    // Two or more types: the server takes one, so the union is applied here (same shape as the account filter).
+    const filtered = types.length <= 1 ? byAccount : byAccount.filter((row) => types.includes(row.transfer_type));
     const deep = deepLinkTransferQuery.data;
     if (!deepLinkTransferId || !deep) return filtered;
     if (filtered.some((t) => t.id === deep.id)) return filtered;
     return [deep, ...filtered];
-  }, [transfersQuery.data?.transfers, deepLinkTransferQuery.data, deepLinkTransferId, accountIds]);
+  }, [transfersQuery.data?.transfers, deepLinkTransferQuery.data, deepLinkTransferId, accountIds, types]);
   const hasNext = (transfersQuery.data?.transfers ?? []).length === PAGE_SIZE;
   // Empty message renders only once the transfers query settles, never mid-fetch.
   const listState = useListState(transfersQuery, (transfersQuery.data?.transfers ?? []).length === 0 && !deepLinkTransferId);
@@ -466,7 +468,7 @@ export function TransfersListPage() {
 
       <CollapsedListFilters
         activeFilterCount={
-          (fromDate || toDate ? 1 : 0) + (type ? 1 : 0) + (accountIds.length ? 1 : 0) + (status.length ? 1 : 0)
+          (fromDate || toDate ? 1 : 0) + (types.length ? 1 : 0) + (accountIds.length ? 1 : 0) + (status.length ? 1 : 0)
         }
         onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="transfers"
@@ -483,14 +485,20 @@ export function TransfersListPage() {
           </label>
           <label className="text-xs text-gray-600">
             Type
-            <SelectCombobox value={staged.draft.type} onChange={(e) => staged.setDraft({ ...staged.draft, type: e.target.value as TransferType | "" })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs">
-              <option value="">All</option>
-              <option value="bank_to_bank">Bank-to-Bank</option>
-              <option value="cc_payment">CC Payment</option>
-              <option value="cash_deposit">Cash Deposit</option>
-              <option value="owner_contribution">Owner Contribution</option>
-              <option value="owner_distribution">Owner Distribution</option>
-            </SelectCombobox>
+            <MultiSelectDropdown
+              label="Type"
+              allLabel="All types"
+              options={[
+                { value: "bank_to_bank", label: "Bank-to-Bank" },
+                { value: "cc_payment", label: "CC Payment" },
+                { value: "cash_deposit", label: "Cash Deposit" },
+                { value: "owner_contribution", label: "Owner Contribution" },
+                { value: "owner_distribution", label: "Owner Distribution" },
+              ]}
+              selected={staged.draft.types}
+              onChange={(next) => staged.setDraft({ ...staged.draft, types: next as TransferType[] })}
+              data-testid="transfers-filter-type"
+            />
           </label>
           <label className="text-xs text-gray-600">
             Account

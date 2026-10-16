@@ -48,7 +48,7 @@ import {
   BANKING_SUBNAV_TAB_IDS,
   type BankingModuleTabId,
 } from "./BANKING_NAV_CONFIG";
-import { formatUsd } from "../../utils/qboFormat";
+import { formatUsd, formatNumber } from "../../utils/qboFormat";
 import { entityLabel } from "../../lib/entity-label";
 import { BankingNewMenu } from "./components/BankingNewMenu";
 import { LinkSuggestionsPanel } from "./components/LinkSuggestionsPanel";
@@ -1079,7 +1079,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               data-testid="banking-forreview-backlog-banner"
             >
               <p className="font-semibold">
-                For-review backlog: {uncategorizedCount.toLocaleString()} transaction(s) still need Match/Categorize
+                For-review backlog: {formatNumber(uncategorizedCount)} transaction(s) still need Match/Categorize
               </p>
               <p className="mt-1">
                 Live bank feed is not “caught up” until these are matched or categorized. Use the For review tab below —
