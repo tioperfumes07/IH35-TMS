@@ -4,6 +4,7 @@ import { isEnabled } from "../../lib/feature-flags/service.js";
 import { recordPostingFlagSkip, POSTING_FLAG_SKIP_RESULT } from "../posting-flag-skip-audit.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { backlinkBankTransactionToInvoice } from "./bank-invoice-backlink.service.js";
+import { directPaymentRoomCents } from "../../factoring/purchased-gross.service.js";
 import { getAppliedVendorCreditsCents, getAppliedBillPaymentApplicationsCents } from "../bills.service.js";
 
 // CHAIN-06 — per-entity GL-posting kill switch for the customer-payment (A/R receipt) JE. The payment and
@@ -177,6 +178,15 @@ async function applyToInvoice(
   const invoiceRemainingCents = Number(invoice.amount_open_cents ?? 0) - appliedCreditMemoCents;
   if (row.amount_cents > invoiceRemainingCents) {
     throw new ApplyPaymentError("amount_exceeds_invoice_open", "application amount exceeds invoice open amount");
+  }
+  // LEAD 443.171 C — on a factored invoice the customer may pay IH35 directly only the NON-purchased part (Faro bought 3,000
+  // of 4,000 → up to 1,000 here); the purchased gross still owed to Faro is Faro's to collect.
+  const directRoom = await directPaymentRoomCents(client as never, operatingCompanyId, invoice.id, invoiceRemainingCents);
+  if (row.amount_cents > directRoom) {
+    throw new ApplyPaymentError(
+      "amount_exceeds_non_purchased_portion",
+      `application amount exceeds the part of this invoice Faro did not purchase (${(directRoom / 100).toFixed(2)} payable to IH35; the rest belongs to Faro's purchased portion)`
+    );
   }
 
   const inserted = await client.query<{ id: string }>(

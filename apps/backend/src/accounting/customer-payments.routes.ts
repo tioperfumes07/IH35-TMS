@@ -14,6 +14,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "./posting-flag-skip-audit.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { getAppliedCreditMemoCents } from "./payments/apply.service.js";
+import { directPaymentRoomCents } from "../factoring/purchased-gross.service.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -301,6 +302,10 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
         const appliedCreditMemoCents = await getAppliedCreditMemoCents(client, query.data.operating_company_id, invoice.id);
         const invoiceRemainingCents = Number(invoice.amount_open_cents ?? 0) - appliedCreditMemoCents;
         if (Number(applyRow.amount_cents) > invoiceRemainingCents) return { code: 400 as const, error: "apply_amount_exceeds_invoice_open" as const };
+        // LEAD 443.171 C — on a factored invoice only the NON-purchased part is payable to IH35 directly (one definition).
+        if (Number(applyRow.amount_cents) > (await directPaymentRoomCents(client as never, query.data.operating_company_id, invoice.id, invoiceRemainingCents))) {
+          return { code: 400 as const, error: "apply_amount_exceeds_non_purchased_portion" as const };
+        }
 
         await client.query(
           `
