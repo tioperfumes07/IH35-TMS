@@ -163,8 +163,8 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
       </div>
 
       <div className="rounded-sm border border-gray-200 p-3">
-        <div className="mb-2 text-xs font-medium text-gray-900">Batch Invoices</div>
         <ParityTable
+          title="Invoices in this batch"
           columns={INVOICE_COLUMNS}
           rows={detail.invoices}
           rowKey={(row) => row.id}
@@ -175,7 +175,6 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
       </div>
 
       <div className="rounded-sm border border-gray-200 p-3">
-        <div className="mb-2 text-xs font-medium text-gray-900">Reserve Movements</div>
         {reserveMovementsQuery.isError ? (
           <ListErrorState
             title="Couldn't load reserve movements"
@@ -185,6 +184,7 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
           />
         ) : (
           <ParityTable
+            title="Reserve movements — this batch"
             columns={RESERVE_COLUMNS}
             rows={reserveRows}
             rowKey={(row) => row.id}

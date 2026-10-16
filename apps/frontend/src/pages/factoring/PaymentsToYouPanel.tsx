@@ -580,6 +580,7 @@ function PurchaseDetailCard(props: {
             </div>
           ) : null}
           <ParityTable
+            title="Invoices on this purchase"
             columns={[
               {
                 key: "invoice_display_id",

@@ -158,6 +158,7 @@ export function SubmissionWorkqueue() {
   return (
     // FAC-F3542: always mount ParityTable (Search+Range+gear); raw HTML table + empty early-return skipped surface bar.
     <ParityTable<WorkqueueItem>
+      title="Invoices submitted to a factor"
       columns={columns}
       rows={items}
       rowKey={(item) => item.invoice_id}
