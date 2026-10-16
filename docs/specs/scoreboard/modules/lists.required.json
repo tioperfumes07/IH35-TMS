@@ -2807,6 +2807,17 @@
       ]
     },
     {
+      "id": "lists.popover.info",
+      "tab": "Popovers",
+      "sub": "Popover: Info Popover (443.174 — explanatory text behind an i button)",
+      "route_hint": "surface://components/shared/InfoPopover.tsx",
+      "surface_kind": "popover",
+      "surface_path": "components/shared/InfoPopover.tsx",
+      "required": [
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "lists.panel.validation",
       "tab": "Panels",
       "sub": "Panel: Validation Panel",
@@ -7640,6 +7651,13 @@
             "connectivity"
           ],
           "reason": "FilterPopover.tsx filters already-fetched rows"
+        },
+        {
+          "id": "lists.popover.info",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "InfoPopover.tsx shows static explanatory text; it fetches nothing"
         },
         {
           "id": "chrome.toolbar_search",

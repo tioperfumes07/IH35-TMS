@@ -15,6 +15,8 @@
  *   D. Selection totals are editable; a total is split pro rata to the cent (distributeTotalProRata) into the lines; Post
  *      is disabled while net < 0.
  *
+ * @matrix-built {"modules":["factoring"],"cols":["connectivity"],"leaves":["factoring.dialog.undo_purchase"],"task":"LEAD-443.171-A-UNDO-PURCHASE-CONNECTIVITY","vertical":"class-sweep"}
+ *
  * --selftest: plants each regression (one per clause) and asserts the guard fails; the baseline must pass.
  * --against-main: runs the checks on origin/main's copies (red before this PR).
  */
@@ -141,6 +143,11 @@ if (process.argv.includes("--selftest")) {
 }
 
 const findings = check(load(process.argv.includes("--against-main")));
+// A's dialog wiring is also owned by its top-level connectivity guard (the Required leaf factoring.dialog.undo_purchase).
+if (!process.argv.includes("--against-main")) {
+  const dialog = spawnSync(process.execPath, [resolve(ROOT, "scripts/verify-factoring-undo-purchase-dialog-wired.mjs")], { cwd: ROOT, encoding: "utf8" });
+  if (dialog.status !== 0) findings.push(`scripts/verify-factoring-undo-purchase-dialog-wired.mjs: ${(dialog.stderr || dialog.stdout).trim().split("\n").slice(0, 3).join(" | ")}`);
+}
 if (findings.length) {
   console.error(`verify-factoring-undo-and-partial-purchase FAIL (${findings.length}):`);
   for (const f of findings) console.error(`  ${f}`);

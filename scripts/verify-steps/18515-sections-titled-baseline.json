@@ -412,12 +412,12 @@
       "inline_notice": 0
     },
     "apps/frontend/src/pages/factoring/FactoringHome.tsx": {
-      "untitled": 17,
-      "same_rows_toggle": 4,
+      "untitled": 15,
+      "same_rows_toggle": 0,
       "inline_notice": 5
     },
     "apps/frontend/src/pages/factoring/PaymentsToYouPanel.tsx": {
-      "untitled": 2,
+      "untitled": 1,
       "same_rows_toggle": 0,
       "inline_notice": 0
     },

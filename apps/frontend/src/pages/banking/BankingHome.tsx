@@ -1088,8 +1088,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <p className="mt-1">
                 Live bank feed is not “caught up” until these are matched or categorized.{" "}
                 <InfoPopover label="About the for-review queue">
-                  Use the For review tab below — Match opens candidates; Categorize posts to a GL account. Do
-                  not treat a large for-review queue as reconciled books.
+                  Use the For review tab below — Match opens candidates; Categorize posts to a GL account.
+                  Do not treat a large for-review queue as reconciled books.
                 </InfoPopover>
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
