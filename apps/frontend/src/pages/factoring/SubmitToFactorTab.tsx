@@ -11,6 +11,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
 import {
   createFactoringPurchase,
+  editFactoringPurchase,
+  getFactoringPurchase,
   listDirectPayInvoices,
   listPurchaseCandidates,
   markInvoiceDirectPay,
@@ -18,6 +20,7 @@ import {
   sendFactoringPurchase,
   undoInvoiceDirectPay,
   voidFactoringPurchase,
+  type EditFactoringPurchaseBody,
   type FactoringPurchaseDetail,
   type FeedGateBlocked,
   type PurchaseCandidate,
@@ -70,8 +73,44 @@ export function loadDocsUploadPath(loadId: string) {
 /** Faro's actual split for one invoice (from its purchase report). Absent = the expected split from the factor rates. */
 export type LineActuals = { escrow_reserve_cents: number; cash_reserve_cents: number; fee_cents: number };
 
-export function lineFigures(r: PurchaseCandidate, actuals?: LineActuals) {
-  return actuals ?? { escrow_reserve_cents: r.expected_escrow_reserve_cents ?? 0, cash_reserve_cents: r.expected_cash_reserve_cents ?? 0, fee_cents: r.expected_fee_cents ?? 0 };
+/** 443.171 — Faro may buy less than the open balance (bought 3,000 of 4,000). Purchased is editable DOWN only:
+ *  never above the open balance, never zero (an invoice Faro did not buy is simply not selected). */
+export function clampPurchased(purchasedCents: number | null | undefined, openCents: number) {
+  if (purchasedCents == null || !Number.isFinite(purchasedCents)) return openCents;
+  return Math.min(openCents, Math.max(1, Math.round(purchasedCents)));
+}
+
+/** 443.171 — split a total across lines pro rata by weight, to the cent (largest remainder): the parts always sum to
+ *  exactly `total`; ties go to the later line, so a residual cent lands on the last line. All-zero weights put the
+ *  whole total on the last line. */
+export function distributeTotalProRata(total: number, weights: number[]): number[] {
+  const n = weights.length;
+  if (n === 0) return [];
+  const t = Math.round(total);
+  const w = weights.map((x) => (Number.isFinite(x) && x > 0 ? x : 0));
+  const sumW = w.reduce((a, x) => a + x, 0);
+  if (sumW <= 0) return w.map((_, i) => (i === n - 1 ? t : 0));
+  const raw = w.map((x) => (t * x) / sumW);
+  const parts = raw.map((x) => Math.floor(x));
+  let residual = t - parts.reduce((a, x) => a + x, 0);
+  const order = raw.map((x, i) => ({ i, frac: x - Math.floor(x) })).sort((a, b) => b.frac - a.frac || b.i - a.i);
+  for (let k = 0; residual > 0; k = (k + 1) % n, residual--) parts[order[k]!.i]! += 1;
+  return parts;
+}
+
+/** The figures one line posts with. Faro's actuals win; else the expected split scaled to the purchased amount
+ *  (round(expected × purchased / open)). */
+export function lineFigures(r: PurchaseCandidate, actuals?: LineActuals, purchasedCents?: number) {
+  if (actuals) return actuals;
+  const base = r.base_cents;
+  const p = purchasedCents == null ? base : clampPurchased(purchasedCents, base);
+  const scale = (x: number | null) => (x == null ? 0 : base > 0 && p !== base ? Math.round((x * p) / base) : x);
+  return { escrow_reserve_cents: scale(r.expected_escrow_reserve_cents), cash_reserve_cents: scale(r.expected_cash_reserve_cents), fee_cents: scale(r.expected_fee_cents) };
+}
+
+/** The purchased amount of one line (default: the whole open balance). */
+export function linePurchased(r: PurchaseCandidate, purchased: Record<string, number> = {}) {
+  return clampPurchased(purchased[r.invoice_id], r.base_cents);
 }
 
 /** Lead ROUND 297: an amount with no factor agreement behind it says so — never a silent $0.00. */
@@ -84,18 +123,168 @@ function expectedCell(r: PurchaseCandidate, cents: number | null) {
   );
 }
 
-export function computeSelectionTotals(rows: PurchaseCandidate[], wireFeeCents: number, actuals: Record<string, LineActuals> = {}) {
-  const gross = rows.reduce((a, r) => a + r.base_cents, 0);
-  const escrow = rows.reduce((a, r) => a + lineFigures(r, actuals[r.invoice_id]).escrow_reserve_cents, 0);
-  const cash = rows.reduce((a, r) => a + lineFigures(r, actuals[r.invoice_id]).cash_reserve_cents, 0);
-  const fee = rows.reduce((a, r) => a + lineFigures(r, actuals[r.invoice_id]).fee_cents, 0);
+export function computeSelectionTotals(
+  rows: PurchaseCandidate[],
+  wireFeeCents: number,
+  actuals: Record<string, LineActuals> = {},
+  purchased: Record<string, number> = {},
+) {
+  const fig = (r: PurchaseCandidate) => lineFigures(r, actuals[r.invoice_id], linePurchased(r, purchased));
+  const gross = rows.reduce((a, r) => a + linePurchased(r, purchased), 0);
+  const escrow = rows.reduce((a, r) => a + fig(r).escrow_reserve_cents, 0);
+  const cash = rows.reduce((a, r) => a + fig(r).cash_reserve_cents, 0);
+  const fee = rows.reduce((a, r) => a + fig(r).fee_cents, 0);
   const advance = gross - escrow - fee;
   const net = advance - cash - wireFeeCents;
   return { count: rows.length, gross, escrow, cash, fee, wire: wireFeeCents, advance, net };
 }
 
+/** The open balance Faro did NOT buy across the selection (open − purchased). */
+export function selectionNotPurchased(rows: PurchaseCandidate[], purchased: Record<string, number> = {}) {
+  return rows.reduce((a, r) => a + r.base_cents - linePurchased(r, purchased), 0);
+}
+
+/** 443.171 D — the Owner edits a Selection total; it is written back into the per-line state (never a separate total),
+ *  split pro rata so the lines sum exactly to what was typed. Purchased: DOWN only, weighted by open, no line above its
+ *  open. Escrow / cash reserve / fee: weighted by each line's purchased amount; the result becomes that line's actuals. */
+export type TotalField = "gross" | "escrow_reserve_cents" | "cash_reserve_cents" | "fee_cents";
+
+export function applyTotalEdit(
+  rows: PurchaseCandidate[],
+  field: TotalField,
+  totalCents: number | null,
+  actuals: Record<string, LineActuals>,
+  purchased: Record<string, number>,
+): { actuals: Record<string, LineActuals>; purchased: Record<string, number> } {
+  if (!rows.length) return { actuals, purchased };
+  if (field === "gross") {
+    const open = rows.reduce((a, r) => a + r.base_cents, 0);
+    const target = totalCents == null ? open : Math.min(open, Math.max(rows.length, Math.round(totalCents)));
+    const parts = distributeTotalProRata(target, rows.map((r) => r.base_cents));
+    const next = { ...purchased };
+    rows.forEach((r, i) => {
+      const p = clampPurchased(parts[i]!, r.base_cents);
+      if (p === r.base_cents) delete next[r.invoice_id];
+      else next[r.invoice_id] = p;
+    });
+    return { actuals, purchased: next };
+  }
+  const parts = distributeTotalProRata(Math.max(0, totalCents ?? 0), rows.map((r) => linePurchased(r, purchased)));
+  const next = { ...actuals };
+  rows.forEach((r, i) => {
+    const f = lineFigures(r, actuals[r.invoice_id], linePurchased(r, purchased));
+    next[r.invoice_id] = { ...f, [field]: parts[i]! };
+  });
+  return { actuals: next, purchased };
+}
+
+/** 443.171 E — edit mode pre-fill. A posted purchase's own invoices are factored, so they are not candidates: their rows
+ *  are built from the purchase lines. base_cents (the cap a line may be edited up to) = the invoice's open balance before
+ *  this purchase when the server reports it, else the line's current gross (capFromGross lists those lines). */
+export type EditPrefill = {
+  rows: PurchaseCandidate[];
+  purchased: Record<string, number>;
+  actuals: Record<string, LineActuals>;
+  faroNumbers: Record<string, string>;
+  capFromGross: string[];
+};
+
+const toCents = (v: number | string | null | undefined) => {
+  const n = typeof v === "string" ? Number(v) : v ?? 0;
+  return Number.isFinite(n) ? Math.round(n) : 0;
+};
+
+export function editPrefillFromPurchase(detail: FactoringPurchaseDetail): EditPrefill {
+  const out: EditPrefill = { rows: [], purchased: {}, actuals: {}, faroNumbers: {}, capFromGross: [] };
+  for (const l of detail.lines ?? []) {
+    const gross = toCents(l.gross_cents);
+    const reported = l.invoice_open_cents == null ? null : toCents(l.invoice_open_cents);
+    const cap = reported != null && reported >= gross ? reported : gross;
+    if (reported == null) out.capFromGross.push(l.invoice_id);
+    out.rows.push({
+      invoice_id: l.invoice_id,
+      invoice_display_id: l.invoice_display_id,
+      invoice_status: l.invoice_status ?? "factored",
+      issue_date: null,
+      due_date: null,
+      total_cents: toCents(l.invoice_total_cents),
+      open_cents: cap,
+      customer_id: l.customer_id,
+      customer_name: l.customer_name,
+      customer_po_number: null,
+      customer_wo_number: null,
+      load_id: l.load_id,
+      load_number: l.load_number,
+      settlement_id: l.settlement_id,
+      settlement_display_id: l.settlement_display_id,
+      settlement_is_presettlement: false,
+      settlement_status: null,
+      pickup_at: null,
+      delivery_at: null,
+      factor_id: null,
+      factor_name: detail.factoring_company_name,
+      reserve_rate: 0,
+      fee_rate: 0,
+      cash_reserve_rate: 0,
+      base_cents: cap,
+      rate_source: "none",
+      rate_reason: `On ${detail.display_id}`,
+      expected_escrow_reserve_cents: null,
+      expected_cash_reserve_cents: null,
+      expected_fee_cents: null,
+      has_bol: true,
+      has_pod: true,
+      has_rate_confirmation: true,
+      docs_complete: true,
+      missing_docs: [],
+    });
+    if (gross < cap) out.purchased[l.invoice_id] = gross;
+    out.actuals[l.invoice_id] = {
+      escrow_reserve_cents: toCents(l.escrow_reserve_cents),
+      cash_reserve_cents: toCents(l.cash_reserve_cents),
+      fee_cents: toCents(l.fee_cents),
+    };
+    if (l.faro_invoice_number) out.faroNumbers[l.invoice_id] = String(l.faro_invoice_number);
+  }
+  return out;
+}
+
+/** 443.171 E — the PATCH body for Save changes: every selected line with its purchased amount and posted figures. */
+export function buildEditPurchaseBody(input: {
+  rows: PurchaseCandidate[];
+  purchased: Record<string, number>;
+  actuals: Record<string, LineActuals>;
+  faroNumbers: Record<string, string>;
+  purchaseDate: string;
+  wireDate: string;
+  reportRef: string;
+  wireFeeCents: number;
+  notes: string;
+  reason: string;
+}): EditFactoringPurchaseBody {
+  return {
+    purchase_date: input.purchaseDate,
+    wire_date: input.wireDate || null,
+    faro_report_ref: input.reportRef.trim() || null,
+    wire_fee_cents: input.wireFeeCents,
+    notes: input.notes.trim() || null,
+    reason: input.reason.trim(),
+    lines: input.rows.map((r) => {
+      const p = linePurchased(r, input.purchased);
+      const faro = input.faroNumbers[r.invoice_id]?.trim();
+      return {
+        invoice_id: r.invoice_id,
+        gross_cents: p,
+        ...lineFigures(r, input.actuals[r.invoice_id], p),
+        ...(faro ? { faro_invoice_number: faro } : {}),
+      };
+    }),
+  };
+}
+
 type SaveError =
   | { kind: "owner_only" }
+  | { kind: "bank_matched"; bankTransactionId: string | null }
   | { kind: "feed_gate"; blocked: FeedGateBlocked[] }
   | { kind: "per_invoice"; title: string; rows: Array<{ invoice_id: string; reason: string }> }
   | { kind: "missing_docs"; rows: Array<{ invoice_id: string; invoice_display_id: string | null; load_id: string | null; load_number: string | null; missing: string[] }> }
@@ -105,6 +294,28 @@ function toSaveError(err: unknown, fallback: string): SaveError {
   if (err instanceof ApiError) {
     const data = (err.data ?? {}) as { error?: string; details?: unknown; message?: string };
     if (err.status === 403 && data.error === "factoring_purchase_owner_only") return { kind: "owner_only" };
+    if (data.error === "factoring_purchase_matched_to_bank_unmatch_first") {
+      const d = (data.details ?? {}) as { bank_transaction_id?: string };
+      return { kind: "bank_matched", bankTransactionId: d.bank_transaction_id ?? null };
+    }
+    if (data.error === "purchase_invoices_not_eligible" && Array.isArray(data.details)) {
+      return {
+        kind: "per_invoice",
+        title: "These invoices cannot be on this purchase:",
+        rows: (data.details as Array<Record<string, unknown>>).map((d) => ({ invoice_id: String(d.invoice_id ?? ""), reason: String(d.reason ?? "") })),
+      };
+    }
+    const code = String(data.error ?? "");
+    const detailText = data.details && typeof data.details === "object" && !Array.isArray(data.details) ? (data.details as { message?: string }).message : undefined;
+    if (code === "purchase_line_gross_exceeds_open") {
+      return { kind: "message", text: `A line's purchased amount is above the invoice's open balance — lower it.${detailText ? ` ${detailText}` : ""}` };
+    }
+    if (code.startsWith("period_closed")) return { kind: "message", text: data.message ?? detailText ?? code };
+    if (code.startsWith("factoring_purchase_has_later_events")) {
+      const status = code.split(":")[1] ?? "";
+      return { kind: "message", text: `This purchase already has later events${status ? ` (${status})` : ""} — it cannot be edited.` };
+    }
+    if (code === "factoring_purchase_not_posted") return { kind: "message", text: "Only a posted purchase can be edited." };
     if (data.error === "feed_gate_blocked" && Array.isArray(data.details)) return { kind: "feed_gate", blocked: data.details as FeedGateBlocked[] };
     if (data.error === "factoring_send_missing_docs" && Array.isArray(data.details)) {
       return { kind: "missing_docs", rows: data.details as Extract<SaveError, { kind: "missing_docs" }>["rows"] };
@@ -125,9 +336,18 @@ function toSaveError(err: unknown, fallback: string): SaveError {
   return { kind: "message", text: err instanceof Error ? err.message : fallback };
 }
 
-type Props = { companyId: string; isOwner: boolean };
+type Props = {
+  companyId: string;
+  isOwner: boolean;
+  /** 443.171 E — open this posted purchase in the SAME form, pre-filled, in Edit mode. */
+  editPurchaseId?: string | null;
+  /** After Save changes: back to the purchase detail. */
+  onEditDone?: (purchaseId: string) => void;
+  onEditCancel?: () => void;
+};
 
-export function SubmitToFactorTab({ companyId, isOwner }: Props) {
+export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, onEditDone, onEditCancel }: Props) {
+  const editing = Boolean(editPurchaseId);
   const queryClient = useQueryClient();
   const [applied, setApplied] = useState<Filters>(EMPTY_FILTERS);
   const [draft, setDraft] = useState<Filters>(EMPTY_FILTERS);
@@ -144,6 +364,10 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
   const [lineActuals, setLineActuals] = useState<Record<string, LineActuals>>({});
   // Faro's own invoice number (Inv on its reports: 001, 002, ...) — every Faro reserve entry resolves through it.
   const [faroNumbers, setFaroNumbers] = useState<Record<string, string>>({});
+  // 443.171 — what Faro actually bought per invoice (default: the whole open balance; editable DOWN only).
+  const [purchased, setPurchased] = useState<Record<string, number>>({});
+  // 443.171 — the wire amount on Faro's report, to tie Net to IH35 out to the cent before posting.
+  const [faroWireCents, setFaroWireCents] = useState<number | null>(null);
   // Owner override approval: send although selected loads are missing BOL / POD / rate confirmation.
   const [docsOverrideReason, setDocsOverrideReason] = useState("");
   const [saving, setSaving] = useState(false);
@@ -154,6 +378,11 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
   const [directPayError, setDirectPayError] = useState<string | null>(null);
   const [directPayBusy, setDirectPayBusy] = useState(false);
   const [showDirectPayList, setShowDirectPayList] = useState(false);
+  // 443.171 E — edit mode state (the purchase's own lines, the Owner's edit reason, notes).
+  const [editRows, setEditRows] = useState<PurchaseCandidate[]>([]);
+  const [capFromGross, setCapFromGross] = useState<string[]>([]);
+  const [editReason, setEditReason] = useState("");
+  const [notes, setNotes] = useState("");
 
   const filters = { from: applied.from || undefined, to: applied.to || undefined, customer_id: applied.customerId || undefined, search: search.trim() || undefined };
   const candidatesQuery = useQuery({
@@ -167,7 +396,55 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
     enabled: Boolean(companyId) && showDirectPayList,
   });
 
-  const rows = candidatesQuery.data?.candidates ?? [];
+  const editQuery = useQuery({
+    queryKey: ["factoring", "purchases", "detail", companyId, editPurchaseId],
+    queryFn: () => getFactoringPurchase(companyId, editPurchaseId!),
+    enabled: Boolean(companyId && editPurchaseId),
+  });
+  const editDetail = editing ? editQuery.data ?? null : null;
+  // Pre-fill once per purchase opened (adjust-state-during-render, not an effect); later refetches of the same purchase
+  // must not wipe the Owner's edits.
+  const [prefilledFor, setPrefilledFor] = useState<string | null>(null);
+  if ((editDetail?.id ?? null) !== prefilledFor) {
+    setPrefilledFor(editDetail?.id ?? null);
+    const p = editDetail ? editPrefillFromPurchase(editDetail) : null;
+    setEditRows(p?.rows ?? []);
+    setCapFromGross(p?.capFromGross ?? []);
+    if (editDetail && p) {
+      setSelected(p.rows.map((r) => r.invoice_id));
+      setPurchased(p.purchased);
+      setLineActuals(p.actuals);
+      setFaroNumbers(p.faroNumbers);
+      setPurchaseDate(editDetail.purchase_date?.slice(0, 10) ?? todayIso());
+      setWireDate(editDetail.wire_date?.slice(0, 10) ?? "");
+      setReportRef(editDetail.faro_report_ref ?? "");
+      setWireFeeCents(toCents(editDetail.wire_fee_cents));
+      setNotes(editDetail.notes ?? "");
+      setEditReason("");
+      setSaveError(null);
+      setCreated(null);
+    } else if (prefilledFor) {
+      // Left Edit mode: the purchase's lines must not leak into a new submission.
+      setSelected([]);
+      setPurchased({});
+      setLineActuals({});
+      setFaroNumbers({});
+      setNotes("");
+      setEditReason("");
+      setReportRef("");
+      setWireFeeCents(0);
+      setPurchaseDate(todayIso());
+      setWireDate(todayIso());
+    }
+  }
+
+  const candidateData = candidatesQuery.data?.candidates;
+  const rows = useMemo(() => {
+    const candidateRows = candidateData ?? [];
+    if (!editing) return candidateRows;
+    const own = new Set(editRows.map((r) => r.invoice_id));
+    return [...editRows, ...candidateRows.filter((r) => !own.has(r.invoice_id))];
+  }, [editing, editRows, candidateData]);
   const vendors = candidatesQuery.data?.factoring_vendors ?? [];
   const effectiveVendorId = vendorId || vendors.find((v) => v.is_default)?.id || "";
   const vendor = vendors.find((v) => v.id === effectiveVendorId) ?? null;
@@ -176,9 +453,19 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
   // Selection survives a filter change only for rows still listed (the totals are over what is actually sent).
   const byId = useMemo(() => new Map(rows.map((r) => [r.invoice_id, r])), [rows]);
   const selectedRows = useMemo(() => selected.map((id) => byId.get(id)).filter(Boolean) as PurchaseCandidate[], [selected, byId]);
-  const totals = computeSelectionTotals(selectedRows, wireFeeCents ?? 0, lineActuals);
+  const totals = computeSelectionTotals(selectedRows, wireFeeCents ?? 0, lineActuals, purchased);
+  const figuresOf = (r: PurchaseCandidate) => lineFigures(r, lineActuals[r.invoice_id], linePurchased(r, purchased));
+  const editTotal = (field: TotalField, cents: number | null) => {
+    const next = applyTotalEdit(selectedRows, field, cents, lineActuals, purchased);
+    setLineActuals(next.actuals);
+    setPurchased(next.purchased);
+  };
+  const notPurchased = selectionNotPurchased(selectedRows, purchased);
+  const faroWireDiff = faroWireCents == null ? null : faroWireCents - totals.net;
   const docsOverrideOk = docsOverrideReason.trim().length >= 10;
-  const missingDocsRows = selectedRows.filter((r) => !r.docs_complete);
+  // Edit mode has no documents override (the PATCH takes none): the server's eligibility check answers for added invoices.
+  const missingDocsRows = editing ? [] : selectedRows.filter((r) => !r.docs_complete);
+  const editReasonOk = editReason.trim().length >= 10;
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["factoring"] });
@@ -226,7 +513,8 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
         wire_fee_cents: wireFeeCents ?? 0,
         lines: selectedRows.map((r) => ({
           invoice_id: r.invoice_id,
-          ...lineFigures(r, lineActuals[r.invoice_id]),
+          gross_cents: linePurchased(r, purchased),
+          ...figuresOf(r),
           ...(faroNumbers[r.invoice_id]?.trim() ? { faro_invoice_number: faroNumbers[r.invoice_id]!.trim() } : {}),
         })),
         ...(missingDocsRows.length && docsOverrideOk ? { docs_override_reason: docsOverrideReason.trim() } : {}),
@@ -265,11 +553,59 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
       setReportRef("");
       setLineActuals({});
       setFaroNumbers({});
+      setPurchased({});
+      setFaroWireCents(null);
       setDocsOverrideReason("");
       await refresh();
     } catch (err) {
       setSaveError(toSaveError(err, "Save failed"));
       await refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveEdit() {
+    setSaveError(null);
+    if (!editPurchaseId) return;
+    if (!isOwner) {
+      setSaveError({ kind: "owner_only" });
+      return;
+    }
+    if (!selectedRows.length) {
+      setSaveError({ kind: "message", text: "A purchase keeps at least one invoice — undo the purchase instead of removing every line." });
+      return;
+    }
+    if (!editReasonOk) {
+      setSaveError({ kind: "message", text: "Enter the reason for the change (at least 10 characters)." });
+      return;
+    }
+    if (totals.net < 0) {
+      setSaveError({ kind: "message", text: "Net to IH35 is negative — check the totals." });
+      return;
+    }
+    setSaving(true);
+    try {
+      const saved = await editFactoringPurchase(
+        companyId,
+        editPurchaseId,
+        buildEditPurchaseBody({
+          rows: selectedRows,
+          purchased,
+          actuals: lineActuals,
+          faroNumbers,
+          purchaseDate,
+          wireDate,
+          reportRef,
+          wireFeeCents: wireFeeCents ?? 0,
+          notes,
+          reason: editReason,
+        }),
+      );
+      await refresh();
+      onEditDone?.(saved.id ?? editPurchaseId);
+    } catch (err) {
+      setSaveError(toSaveError(err, "Save changes failed"));
     } finally {
       setSaving(false);
     }
@@ -393,7 +729,9 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
     {
       key: "direct_pay",
       label: "Direct pay",
-      render: (r) => (
+      render: (r) => editing && editRows.some((e) => e.invoice_id === r.invoice_id) ? (
+        <span className="text-[#4B5563]">On this purchase</span>
+      ) : (
         <Button
           type="button"
           variant="tertiary"
@@ -417,6 +755,28 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
 
   return (
     <div className="space-y-3" data-testid="submit-to-factor-tab">
+      {editing ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="submit-factor-edit-banner">
+          <span>
+            {editQuery.isLoading ? "Loading purchase…" : null}
+            {editQuery.isError ? <span className="text-red-700">Could not load the purchase to edit.</span> : null}
+            {editDetail ? (
+              <>
+                Editing purchase <strong>{editDetail.display_id}</strong>
+                {editDetail.factoring_company_name ? ` · ${editDetail.factoring_company_name}` : ""} — change dates, amounts or invoices, then Save changes.
+              </>
+            ) : null}
+          </span>
+          <Button type="button" variant="secondary" size="sm" onClick={onEditCancel} data-testid="submit-factor-edit-cancel">
+            Cancel edit
+          </Button>
+        </div>
+      ) : null}
+      {editing && editDetail && editDetail.status !== "posted" ? (
+        <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert">
+          {editDetail.display_id} is {editDetail.status} — only a posted purchase can be edited.
+        </div>
+      ) : null}
       {!isOwner ? (
         <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="submit-factor-owner-only-note">
           {OWNER_ONLY_MESSAGE} You can review the open invoices; Save is the Owner&apos;s.
@@ -493,6 +853,9 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
           <div className="grid grid-cols-2 gap-3 p-3 text-xs" data-testid="submit-factor-form">
             <label className="col-span-2 flex flex-col gap-1">
               <span className="uppercase" style={FIELD_LABEL_STYLE}>Factoring company</span>
+              {editing ? (
+                <span className="py-1 text-[#1F2A44]" data-testid="submit-factor-edit-vendor">{editDetail?.factoring_company_name ?? "—"}</span>
+              ) : (
               <ReferenceSelect
                 value={effectiveVendorId || null}
                 onChange={(next) => setVendorId(next ?? "")}
@@ -503,6 +866,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
                 onOptionCreated={() => void candidatesQuery.refetch()}
                 size="sm"
               />
+              )}
             </label>
             <label className="flex flex-col gap-1">
               <span className="uppercase" style={FIELD_LABEL_STYLE}>Purchase date</span>
@@ -526,6 +890,31 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
               <span className="uppercase" style={FIELD_LABEL_STYLE}>Wire fee</span>
               <MoneyInput valueCents={wireFeeCents} onChangeCents={(c) => setWireFeeCents(c ?? 0)} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel="Wire fee" />
             </label>
+            {editing ? (
+              <>
+                <label className="col-span-2 flex flex-col gap-1">
+                  <span className="uppercase" style={FIELD_LABEL_STYLE}>Notes</span>
+                  <input
+                    className={`${FORM_FIELD_CONTROL_SIZE_CLASS} rounded-sm border border-gray-300 px-2`}
+                    value={notes}
+                    maxLength={1000}
+                    onChange={(e) => setNotes(e.target.value)}
+                    data-testid="submit-factor-edit-notes"
+                  />
+                </label>
+                <label className="col-span-2 flex flex-col gap-1">
+                  <span className="uppercase" style={FIELD_LABEL_STYLE}>Reason for the change (required)</span>
+                  <input
+                    className={`${FORM_FIELD_CONTROL_SIZE_CLASS} rounded-sm border border-gray-300 px-2`}
+                    value={editReason}
+                    maxLength={500}
+                    placeholder="At least 10 characters — e.g. wrong purchase date entered"
+                    onChange={(e) => setEditReason(e.target.value)}
+                    data-testid="submit-factor-edit-reason"
+                  />
+                </label>
+              </>
+            ) : (
             <label className="col-span-2 flex flex-col gap-1">
               <span className="uppercase" style={FIELD_LABEL_STYLE}>Send to (Save and send)</span>
               <input
@@ -537,6 +926,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
                 data-testid="submit-factor-send-to"
               />
             </label>
+            )}
           </div>
         </DataPanel>
 
@@ -584,14 +974,54 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
                     ),
                   },
                   {
+                    key: "purchased_cents",
+                    label: "Purchased",
+                    kind: "money",
+                    sortable: true,
+                    sortValue: (r) => linePurchased(r, purchased),
+                    headerTitle: "What Faro bought — the open balance unless Faro bought less (editable down only)",
+                    overflowVisible: true,
+                    render: (r) => {
+                      const p = linePurchased(r, purchased);
+                      return (
+                        <div className="flex flex-col gap-0.5" data-testid={`submit-factor-purchased-${r.invoice_id}`}>
+                          <MoneyInput
+                            valueCents={p}
+                            onChangeCents={(c) =>
+                              setPurchased((m) => {
+                                const next = { ...m };
+                                const v = clampPurchased(c, r.base_cents);
+                                if (v === r.base_cents) delete next[r.invoice_id];
+                                else next[r.invoice_id] = v;
+                                return next;
+                              })
+                            }
+                            className={FORM_FIELD_CONTROL_SIZE_CLASS}
+                            ariaLabel={`Purchased ${r.invoice_display_id ?? ""}`}
+                          />
+                          {editing && capFromGross.includes(r.invoice_id) ? (
+                            <span className="text-[#4B5563]" data-testid={`submit-factor-cap-note-${r.invoice_id}`}>
+                              Capped at the purchased amount (open balance not reported)
+                            </span>
+                          ) : null}
+                          {p < r.base_cents ? (
+                            <span className="text-[#4B5563]" data-testid={`submit-factor-not-purchased-${r.invoice_id}`}>
+                              Not purchased: {formatUsdCents(r.base_cents - p)}
+                            </span>
+                          ) : null}
+                        </div>
+                      );
+                    },
+                  },
+                  {
                     key: "escrow_reserve_cents",
                     label: "Escrow reserve",
                     kind: "money",
                     sortable: true,
-                    sortValue: (r) => lineFigures(r, lineActuals[r.invoice_id]).escrow_reserve_cents,
+                    sortValue: (r) => figuresOf(r).escrow_reserve_cents,
                     overflowVisible: true,
                     render: (r) => {
-                      const f = lineFigures(r, lineActuals[r.invoice_id]);
+                      const f = figuresOf(r);
                       const setF = (patch: Partial<LineActuals>) => setLineActuals((m) => ({ ...m, [r.invoice_id]: { ...f, ...patch } }));
                       return <MoneyInput valueCents={f.escrow_reserve_cents} onChangeCents={(c) => setF({ escrow_reserve_cents: c ?? 0 })} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel={`Escrow reserve ${r.invoice_display_id ?? ""}`} />;
                     },
@@ -601,10 +1031,10 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
                     label: "Cash reserve",
                     kind: "money",
                     sortable: true,
-                    sortValue: (r) => lineFigures(r, lineActuals[r.invoice_id]).cash_reserve_cents,
+                    sortValue: (r) => figuresOf(r).cash_reserve_cents,
                     overflowVisible: true,
                     render: (r) => {
-                      const f = lineFigures(r, lineActuals[r.invoice_id]);
+                      const f = figuresOf(r);
                       const setF = (patch: Partial<LineActuals>) => setLineActuals((m) => ({ ...m, [r.invoice_id]: { ...f, ...patch } }));
                       return <MoneyInput valueCents={f.cash_reserve_cents} onChangeCents={(c) => setF({ cash_reserve_cents: c ?? 0 })} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel={`Cash reserve ${r.invoice_display_id ?? ""}`} />;
                     },
@@ -614,17 +1044,17 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
                     label: "Fee",
                     kind: "money",
                     sortable: true,
-                    sortValue: (r) => lineFigures(r, lineActuals[r.invoice_id]).fee_cents,
+                    sortValue: (r) => figuresOf(r).fee_cents,
                     overflowVisible: true,
                     render: (r) => {
-                      const f = lineFigures(r, lineActuals[r.invoice_id]);
+                      const f = figuresOf(r);
                       const setF = (patch: Partial<LineActuals>) => setLineActuals((m) => ({ ...m, [r.invoice_id]: { ...f, ...patch } }));
                       return <MoneyInput valueCents={f.fee_cents} onChangeCents={(c) => setF({ fee_cents: c ?? 0 })} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel={`Fee ${r.invoice_display_id ?? ""}`} />;
                     },
                   },
                 ]}
                 rowActions={(r) => {
-                  const f = lineFigures(r, lineActuals[r.invoice_id]);
+                  const f = figuresOf(r);
                   return (
                     <button
                       type="button"
@@ -666,25 +1096,53 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
         ) : null}
 
         <DataPanel title="Selection totals">
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-1 p-3 text-xs" data-testid="submit-factor-totals">
+          <dl className="grid grid-cols-2 items-center gap-x-4 gap-y-1 p-3 text-xs" data-testid="submit-factor-totals">
             <dt className="text-[#4B5563]">Invoices</dt>
             <dd className="text-right font-semibold" data-testid="submit-factor-total-count">{totals.count}</dd>
-            <dt className="text-[#4B5563]">Gross</dt>
-            <dd className="text-right font-semibold" data-testid="submit-factor-total-gross">{formatUsdCents(totals.gross)}</dd>
+            <dt className="text-[#4B5563]">Purchased (gross)</dt>
+            <dd data-testid="submit-factor-total-gross">
+              <MoneyInput valueCents={totals.gross} onChangeCents={(c) => editTotal("gross", c)} disabled={!selectedRows.length} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel="Purchased total" />
+            </dd>
+            {notPurchased > 0 ? (
+              <>
+                <dt className="text-[#4B5563]">Not purchased</dt>
+                <dd className="text-right" data-testid="submit-factor-total-not-purchased">{formatUsdCents(notPurchased)}</dd>
+              </>
+            ) : null}
             <dt className="text-[#4B5563]">Escrow reserve</dt>
-            <dd className="text-right" data-testid="submit-factor-total-escrow">{formatUsdCents(totals.escrow)}</dd>
+            <dd data-testid="submit-factor-total-escrow">
+              <MoneyInput valueCents={totals.escrow} onChangeCents={(c) => editTotal("escrow_reserve_cents", c)} disabled={!selectedRows.length} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel="Escrow reserve total" />
+            </dd>
             <dt className="text-[#4B5563]">Factoring fee</dt>
-            <dd className="text-right" data-testid="submit-factor-total-fee">{formatUsdCents(totals.fee)}</dd>
+            <dd data-testid="submit-factor-total-fee">
+              <MoneyInput valueCents={totals.fee} onChangeCents={(c) => editTotal("fee_cents", c)} disabled={!selectedRows.length} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel="Factoring fee total" />
+            </dd>
             <dt className="text-[#4B5563]">Advance (gross − escrow − fee)</dt>
             <dd className="text-right font-semibold" data-testid="submit-factor-total-advance">{formatUsdCents(totals.advance)}</dd>
             <dt className="text-[#4B5563]">Cash reserve</dt>
-            <dd className="text-right" data-testid="submit-factor-total-cash">{formatUsdCents(totals.cash)}</dd>
+            <dd data-testid="submit-factor-total-cash">
+              <MoneyInput valueCents={totals.cash} onChangeCents={(c) => editTotal("cash_reserve_cents", c)} disabled={!selectedRows.length} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel="Cash reserve total" />
+            </dd>
             <dt className="text-[#4B5563]">Wire fee</dt>
-            <dd className="text-right" data-testid="submit-factor-total-wire">{formatUsdCents(totals.wire)}</dd>
+            <dd data-testid="submit-factor-total-wire">
+              <MoneyInput valueCents={wireFeeCents} onChangeCents={(c) => setWireFeeCents(c ?? 0)} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel="Wire fee total" />
+            </dd>
             <dt className="font-semibold text-[#0F1219]">Net to IH35</dt>
             <dd className={`text-right font-semibold ${totals.net < 0 ? "text-red-700" : "text-[#16A34A]"}`} data-testid="submit-factor-total-net">
               {formatUsdCents(totals.net)}
             </dd>
+            <dt className="text-[#4B5563]">Faro wire (from Faro&apos;s report)</dt>
+            <dd data-testid="submit-factor-total-faro-wire">
+              <MoneyInput valueCents={faroWireCents} onChangeCents={setFaroWireCents} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel="Faro wire from Faro's report" />
+            </dd>
+            {faroWireDiff != null ? (
+              <>
+                <dt className="text-[#4B5563]">Difference (Faro wire − Net)</dt>
+                <dd className={`text-right font-semibold ${faroWireDiff === 0 ? "text-[#16A34A]" : "text-red-700"}`} data-testid="submit-factor-total-faro-diff">
+                  {faroWireDiff === 0 ? "Ties to the cent" : formatUsdCents(faroWireDiff)}
+                </dd>
+              </>
+            ) : null}
           </dl>
           <div className="flex items-center justify-between gap-2 border-t border-gray-200 px-3 py-2">
             <span className="text-xs text-[#4B5563]">
@@ -694,15 +1152,36 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
                   : `${missingDocsRows.length} selected invoice(s) missing docs — Save needs an Owner override approval`
                 : "Expected split from the factor rates unless Faro's actuals are entered per invoice."}
             </span>
+            {editing ? (
+              <Button
+                type="button"
+                onClick={() => void saveEdit()}
+                loading={saving}
+                disabled={!isOwner || saving || !editDetail || editDetail.status !== "posted" || selectedRows.length === 0 || totals.net < 0 || !editReasonOk}
+                title={
+                  !isOwner
+                    ? OWNER_ONLY_MESSAGE
+                    : totals.net < 0
+                      ? "Net to IH35 is negative — check the totals"
+                      : !editReasonOk
+                        ? "Enter the reason for the change (at least 10 characters)"
+                        : undefined
+                }
+                data-testid="submit-factor-save-changes"
+              >
+                Save changes
+              </Button>
+            ) : (
             <SaveDropdown
               storageKey="factoring-submit-to-factor"
               primaryLabel="Save"
               onSave={() => save(false)}
               onSaveAndSend={() => save(true)}
-              disabled={!isOwner || saving || selectedRows.length === 0}
+              disabled={!isOwner || saving || selectedRows.length === 0 || totals.net < 0}
               loading={saving}
-              title={!isOwner ? OWNER_ONLY_MESSAGE : selectedRows.length === 0 ? "Select at least one invoice" : undefined}
+              title={!isOwner ? OWNER_ONLY_MESSAGE : selectedRows.length === 0 ? "Select at least one invoice" : totals.net < 0 ? "Net to IH35 is negative — check the totals" : undefined}
             />
+            )}
           </div>
         </DataPanel>
       </div>
@@ -810,6 +1289,20 @@ function SaveErrorPanel({ error, rows, prefix = "" }: { error: SaveError; rows: 
     <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert" data-testid="submit-factor-error">
       {error.kind === "owner_only" ? <strong>{prefix}{OWNER_ONLY_MESSAGE}</strong> : null}
       {error.kind === "message" ? <span>{prefix}{error.text}</span> : null}
+      {error.kind === "bank_matched" ? (
+        <span data-testid="submit-factor-error-bank-matched">
+          {prefix}Unmatch the Faro wire in Banking first —{" "}
+          {error.bankTransactionId ? (
+            <>
+              <EntityLink kind="bank_transaction" id={error.bankTransactionId} label="open the bank line" />
+              {" · "}
+            </>
+          ) : null}
+          <Link to="/banking" className="underline">
+            Banking
+          </Link>
+        </span>
+      ) : null}
       {error.kind === "feed_gate" ? (
         <>
           <strong>{prefix}Feed Gate blocked {error.blocked.length} invoice(s) — fix these before they can enter a purchase:</strong>

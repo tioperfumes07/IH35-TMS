@@ -445,6 +445,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   // same URL-deep-link/staged-filter convention as customer_id/load_id above.
   const dateFromFromUrl = searchParams.get("date_from")?.trim() ?? "";
   const dateToFromUrl = searchParams.get("date_to")?.trim() ?? "";
+  // 443.171 E — a purchase clicked in Payments to You opens HERE, in the Submit to Factor form, in Edit mode.
+  const editPurchaseIdFromUrl = searchParams.get("edit_purchase_id")?.trim() ?? "";
 
   // BANNER-MERGE-DEEPLINK-DROPS-CONTEXT — the Duplicate factoring vendors banner
   // (DuplicateVendorsBanner.tsx) resolves real from/to vendor ids+names via its own scan and used
@@ -1273,7 +1275,17 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       {/* Lead ROUND 296 / 297 — day 95 asks the owner (EXTEND / CONFIRM REPURCHASE / MARK COLLECTED); renders only
           when a repurchase deadline is waiting, on every tab, so it is never missed. */}
       {companyId ? <RepurchaseDuePanel companyId={companyId} isOwner={user?.role === "Owner"} /> : null}
-      {show("submit_invoice") ? <SubmitToFactorTab companyId={companyId} isOwner={user?.role === "Owner"} /> : null}
+      {show("submit_invoice") ? (
+        <SubmitToFactorTab
+          companyId={companyId}
+          isOwner={user?.role === "Owner"}
+          editPurchaseId={editPurchaseIdFromUrl || null}
+          onEditDone={(id) => navigateToTab(`${FACTORING_TAB_PATH.payments_to_you}?purchase_id=${encodeURIComponent(id)}`)}
+          onEditCancel={() =>
+            navigateToTab(`${FACTORING_TAB_PATH.payments_to_you}?purchase_id=${encodeURIComponent(editPurchaseIdFromUrl)}`)
+          }
+        />
+      ) : null}
       {/* ACCT-F2026100619 (Rule 07): the batch-submission pipeline — submission queue, workqueue and batch wizard, each with
           its own queries and mutations — was mounted only by the factoring index #25601 retired. It lives under Submit invoice. */}
       {show("submit_invoice") ? (
@@ -1939,6 +1951,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           dateTo={dateToFromUrl || undefined}
           filterBar={dateRangeOnlyFilterBar("factoring-home-payments-to-you")}
           summaryDetailToggle={summaryDetailToggle(paymentsToYouView, setPaymentsToYouView, "factoring-payments-to-you")}
+          isOwner={user?.role === "Owner"}
+          onEditPurchase={(id) => navigateToTab(`${FACTORING_TAB_PATH.submit_invoice}?edit_purchase_id=${encodeURIComponent(id)}`)}
         />
       ) : null}
 
