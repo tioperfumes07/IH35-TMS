@@ -52,8 +52,8 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
     enabled: open && step === 2 && Boolean(operatingCompanyId),
   });
   const classesQuery = useQuery({
-    queryKey: ["manual-je", "classes"],
-    queryFn: listClassesForJe,
+    queryKey: ["manual-je", "classes", operatingCompanyId],
+    queryFn: () => listClassesForJe(operatingCompanyId),
     enabled: open && step === 2,
   });
 

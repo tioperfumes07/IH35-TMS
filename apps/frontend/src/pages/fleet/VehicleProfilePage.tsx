@@ -180,8 +180,8 @@ export function VehicleProfilePage() {
   });
 
   const classesQuery = useQuery({
-    queryKey: ["list-classes-je"],
-    queryFn: listClassesForJe,
+    queryKey: ["list-classes-je", companyId],
+    queryFn: () => listClassesForJe(companyId),
     enabled: Boolean(companyId),
   });
 
