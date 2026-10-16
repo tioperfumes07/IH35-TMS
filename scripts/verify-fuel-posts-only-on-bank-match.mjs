@@ -24,6 +24,11 @@
 //      fill poster (postFuelFillOnReceipt) — never the retired postFuelExpenseFromEvent. The bank match finds a fill that
 //      already posted FIRST (findPostedFuelEvent) and posts nothing; unmatch never reverses a JE posted on receipt
 //      (fuel.posted_on_receipt). The receipt poster and the match share ONE fill poster (postFuelFill).
+//  10. LEAD 443.142 — the Dreamline provider statement (fuel/dreamline-statement-import.service.ts): a statement line ADOPTS a
+//      receipt already on the books (matchBookedReceipt) BEFORE anything is inserted, a new fill carries the DREAMLINE card
+//      rail (fuel_card_id = the DREAMLINE card type — without it USMCA resolves Relay and the fill never posts) and posts
+//      only through the one fill poster (postFuelFillOnReceipt); the card-discount pair asks whether it already posted
+//      before it writes a journal entry (a re-run posts nothing).
 // Static, <1s. --selftest plants each regression.
 import fs from "node:fs";
 import path from "node:path";
@@ -46,6 +51,7 @@ const CREATOR = "apps/backend/src/driver-finance/settlement-creator.service.ts";
 const RECEIPT_MIG = "db/migrations/202615850910_fuel_receipt_one_posting_identity.sql";
 // LEAD 443.133 A — a Relay fill links ONLY to a row paid by the Relay card; a row on another rail is a cross-rail candidate.
 const LINKER = "apps/backend/src/fuel/relay-fill-link.service.ts";
+const DREAMLINE = "apps/backend/src/fuel/dreamline-statement-import.service.ts";
 /** Rule 6: the Creator's one sanctioned call — posts the Relay fill itself to the Relay wallet. */
 const CREATOR_RELAY_FILL_POST = /postFuelExpenseOnClient\(client as never, \{(?:(?!postFuelExpense)[\s\S]){0,500}?fuel_event_id: relayFillId,(?:(?!postFuelExpense)[\s\S]){0,500}?company_direct_credit: "relay_fuel_wallet",/g;
 const LINK_SITES = {
@@ -158,6 +164,20 @@ export function check(files) {
   const ref = rfBody.indexOf('"relay_fill_matches_other_rail_fill"');
   const leg = rfBody.indexOf("postFuelExpenseOnClient(");
   if (xr < 0 || ref < 0 || (leg >= 0 && xr > leg)) problems.push(`${FILLPOST}: the Relay fill poster posts a fill that pairs with a row on another rail — the fuel would book twice`);
+  // 10 (LEAD 443.142) — the Dreamline statement adopts before it imports, stamps the rail, posts through the one poster.
+  const dl = files[DREAMLINE] ?? "";
+  if (dl) {
+    const adopt = dl.indexOf("const hit = matchBookedReceipt(line, booked, used);");
+    const insert = dl.indexOf("INSERT INTO fuel.fuel_transactions");
+    if (adopt < 0 || insert < 0 || adopt > insert) problems.push(`${DREAMLINE}: a statement line is inserted before it is matched to the receipt already on the books — the purchase would post twice`);
+    if (!/operating_company_id, transaction_at, purchased_at, load_id, driver_id, unit_id, vendor_id, fuel_card_id,/.test(dl) || !/cardType\.id, line\.product/.test(dl))
+      problems.push(`${DREAMLINE}: the imported fill does not carry the DREAMLINE card rail — for USMCA it would resolve Relay and never post`);
+    if (/postFuelExpense(OnClient|FromEvent)\(/.test(dl) || !/await postFuelFillOnReceipt\(client as never, \{ operating_company_id: companyId/.test(dl))
+      problems.push(`${DREAMLINE}: the statement import must post a new fill only through the one fill poster (postFuelFillOnReceipt)`);
+    const prior = dl.indexOf("if (prior.rows[0]) return null;");
+    const je = dl.indexOf("INSERT INTO accounting.journal_entries");
+    if (prior < 0 || je < 0 || prior > je) problems.push(`${DREAMLINE}: the card-discount pair writes a journal entry without asking whether it already posted — a re-run would post the discount twice`);
+  }
   return problems;
 }
 
@@ -206,6 +226,10 @@ if (process.argv.includes("--selftest")) {
     ["linker pairs any card", { ...real, [LINKER]: real[LINKER].replace("AND ${RELAY_CARD_ROW_SQL}`;", "`;") }],
     ["linker card rule loosened", { ...real, [LINKER]: real[LINKER].replace("upper(ct.code) = 'RELAY'", "ct.code IS NOT NULL") }],
     ["poster ignores cross-rail rows", { ...real, [FILLPOST]: real[FILLPOST].replace("const crossRail = await crossRailFuelRowsForRelayFill(client, input.operating_company_id, input.fill_id);", "const crossRail = [];") }],
+    ["dreamline imports before adopting", { ...real, [DREAMLINE]: real[DREAMLINE].replace("const hit = matchBookedReceipt(line, booked, used);", "const hit = null as BookedReceipt | null;") }],
+    ["dreamline fill without the card rail", { ...real, [DREAMLINE]: real[DREAMLINE].replace("cardType.id, line.product", "null, line.product") }],
+    ["dreamline posts through another poster", { ...real, [DREAMLINE]: real[DREAMLINE].replace("await postFuelFillOnReceipt(client as never, { operating_company_id: companyId", "await postFuelExpenseOnClient(client as never, { operating_company_id: companyId") }],
+    ["dreamline discount posts twice", { ...real, [DREAMLINE]: real[DREAMLINE].replace("if (prior.rows[0]) return null;", "") }],
     ["creator posts the receipt again", { ...real, [CREATOR]: real[CREATOR].replace('findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id)', "Promise.resolve(null)") }],
   ];
   const missed = cases.filter(([, files]) => check(files).length === 0).map(([n]) => n);
