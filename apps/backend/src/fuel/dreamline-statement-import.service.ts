@@ -475,10 +475,31 @@ export async function importDreamlineStatement(
   };
 
   // Earlier runs: imported rows (hash) and adopted receipts (marker) are already reconciled.
-  const priorHashes = new Set((await client.query<{ h: string }>(
-    `SELECT source_row_hash AS h FROM fuel.fuel_transactions WHERE operating_company_id = $1::uuid AND source_row_hash IS NOT NULL AND voided_at IS NULL`,
+  // Every hash a fuel row holds (unique per company, voided rows included): live ones mean "already imported"; a VOIDED
+  // one (a line taken off the books, e.g. held for a missing load — 443.166) frees the line to come back under the next
+  // re-issue hash, never colliding with the voided row.
+  const hashRows = (await client.query<{ h: string; voided: boolean }>(
+    `SELECT source_row_hash AS h, voided_at IS NOT NULL AS voided FROM fuel.fuel_transactions
+      WHERE operating_company_id = $1::uuid AND source_row_hash IS NOT NULL`,
     [companyId]
-  )).rows.map((r) => r.h));
+  )).rows;
+  const priorHashes = new Set(hashRows.filter((r) => !r.voided).map((r) => r.h));
+  const voidedHashes = new Set(hashRows.filter((r) => r.voided).map((r) => r.h));
+  /** The hash this line imports under now: the base, else the first re-issue no voided row holds. */
+  const nextLineHash = (base: string): string => {
+    let h = base;
+    for (let n = 1; voidedHashes.has(h); n += 1) h = crypto.createHash("sha256").update(`${base}:reissue:${n}`).digest("hex");
+    return h;
+  };
+  /** True when a LIVE row already carries this line (base hash or any re-issue). */
+  const lineIsLive = (base: string): boolean => {
+    let h = base;
+    for (let n = 1; ; n += 1) {
+      if (priorHashes.has(h)) return true;
+      if (!voidedHashes.has(h)) return false;
+      h = crypto.createHash("sha256").update(`${base}:reissue:${n}`).digest("hex");
+    }
+  };
   const adoptedMarkers = new Map<string, string>();
   for (const b of booked) {
     for (const m of (b.notes ?? "").match(/dreamline_efs=[^;\s]+/g) ?? []) adoptedMarkers.set(m, b.expense_id);
@@ -494,7 +515,7 @@ export async function importDreamlineStatement(
     if (!feeSeen.has(fillKey)) { feeSeen.add(fillKey); summary.fees_not_posted_cents += line.fee_cents; }
     const hash = dreamlineLineHash(line, seq);
     const marker = dreamlineAdoptMarker(line, seq);
-    if (priorHashes.has(hash) || adoptedMarkers.has(marker)) {
+    if (lineIsLive(hash) || adoptedMarkers.has(marker)) {
       if (adoptedMarkers.has(marker)) used.add(adoptedMarkers.get(marker)!);
       record(line, "already_imported");
       continue;
@@ -651,7 +672,7 @@ export async function importDreamlineStatement(
         companyId, line.transaction_at, loadHit.load_id, driver?.driver_id ?? null, unit.id, vendor.id, cardType.id, line.product,
         line.quantity, line.quantity ? Math.round((line.net_cents / 100 / line.quantity) * 10000) / 10000 : null,
         line.net_cents, line.gross_cents, line.discount_cents, line.city, line.state,
-        line.efs_invoice, hash, notes, true, null, input.actor_user_uuid, loadHit.trailer_id ?? null,
+        line.efs_invoice, nextLineHash(hash), notes, true, null, input.actor_user_uuid, loadHit.trailer_id ?? null,
       ]
     );
     const fuelId = ins.rows[0]?.id;

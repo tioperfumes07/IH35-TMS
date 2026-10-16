@@ -174,6 +174,14 @@ export function check(files) {
       problems.push(`${DREAMLINE}: the imported fill does not carry the DREAMLINE card rail — for USMCA it would resolve Relay and never post`);
     if (/postFuelExpense(OnClient|FromEvent)\(/.test(dl) || !/await postFuelFillOnReceipt\(client as never, \{ operating_company_id: companyId/.test(dl))
       problems.push(`${DREAMLINE}: the statement import must post a new fill only through the one fill poster (postFuelFillOnReceipt)`);
+    // LEAD 443.166 — TRANSACTION LINKAGE LAW TIER 1: a working truck's fill carries its load. When the one fuel-to-load rule
+    // finds none, the line is HELD (nothing written) — never a live fuel row / scale expense with load_id NULL.
+    const hold = dl.indexOf('if (!loadHit) {\n      record(line, "held_no_load"');
+    const scaleCreate = dl.indexOf("createExpenseInClientTx(client, {");
+    if (hold < 0 || insert < 0 || hold > insert || scaleCreate < 0 || hold > scaleCreate)
+      problems.push(`${DREAMLINE}: a Dreamline line with no covering load is written (fuel row / scale expense with load_id NULL) instead of held — linkage law TIER 1`);
+    if (/load_exemption_reason: `Dreamline scale|fuelNoLoadReason\(line\.transaction_at/.test(dl))
+      problems.push(`${DREAMLINE}: the statement import still writes a no-load exemption reason (a load-less live row) — linkage law TIER 1`);
     const prior = dl.indexOf("if (prior.rows[0]) return null;");
     const je = dl.indexOf("INSERT INTO accounting.journal_entries");
     if (prior < 0 || je < 0 || prior > je) problems.push(`${DREAMLINE}: the card-discount pair writes a journal entry without asking whether it already posted — a re-run would post the discount twice`);
@@ -229,6 +237,7 @@ if (process.argv.includes("--selftest")) {
     ["dreamline imports before adopting", { ...real, [DREAMLINE]: real[DREAMLINE].replace("const hit = matchBookedReceipt(line, booked, used);", "const hit = null as BookedReceipt | null;") }],
     ["dreamline fill without the card rail", { ...real, [DREAMLINE]: real[DREAMLINE].replace("cardType.id, line.product", "null, line.product") }],
     ["dreamline posts through another poster", { ...real, [DREAMLINE]: real[DREAMLINE].replace("await postFuelFillOnReceipt(client as never, { operating_company_id: companyId", "await postFuelExpenseOnClient(client as never, { operating_company_id: companyId") }],
+    ["dreamline writes a load-less fill", { ...real, [DREAMLINE]: real[DREAMLINE].replace('if (!loadHit) {\n      record(line, "held_no_load"', 'if (false) {\n      record(line, "held_no_load"') }],
     ["dreamline discount posts twice", { ...real, [DREAMLINE]: real[DREAMLINE].replace("if (prior.rows[0]) return null;", "") }],
     ["creator posts the receipt again", { ...real, [CREATOR]: real[CREATOR].replace('findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id)', "Promise.resolve(null)") }],
   ];
