@@ -36,7 +36,7 @@ import { insertPostingLineWithSpine } from "../accounting/posting-line-writer.js
 import { ensureOpenPeriod } from "../accounting/posting-engine.service.js";
 import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "../accounting/journal-entry-type-resolver.js";
 import { FUEL_CARD_DISCOUNT_ITEM } from "../accounting/bank-recon/match.service.js";
-import { fuelNoLoadReason, postFuelFillOnReceipt } from "../accounting/bank-recon/bank-match-fuel-post.service.js";
+import { postFuelFillOnReceipt } from "../accounting/bank-recon/bank-match-fuel-post.service.js";
 import { FUEL_POSTS_ON_RECEIPT_FLAG_KEY } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "../accounting/expense-gl-posting-flag.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -90,6 +90,7 @@ export type DreamlineLineOutcome =
   | "imported"
   | "scale_adopted"
   | "scale_imported"
+  | "held_no_load"
   | "unresolved";
 
 export type DreamlineLineResult = {
@@ -424,7 +425,7 @@ export async function postStatementScaleExpense(
 
 function emptyOutcomes(): DreamlineImportSummary["by_outcome"] {
   const o = {} as DreamlineImportSummary["by_outcome"];
-  for (const k of ["pre_cutoff", "already_imported", "adopted", "cross_rail", "amount_mismatch", "imported", "scale_adopted", "scale_imported", "unresolved"] as DreamlineLineOutcome[]) {
+  for (const k of ["pre_cutoff", "already_imported", "adopted", "cross_rail", "amount_mismatch", "imported", "scale_adopted", "scale_imported", "held_no_load", "unresolved"] as DreamlineLineOutcome[]) {
     o[k] = { lines: 0, cents: 0 };
   }
   return o;
@@ -573,10 +574,26 @@ export async function importDreamlineStatement(
           [companyId, line.driver_name]
         )).rows
       : [];
-    const loadHit = await resolveFuelLoadAtTime(client as never, { operatingCompanyId: companyId, unitId: unit.id, driverId: namedDriver.length === 1 ? namedDriver[0]!.id : null, at: line.transaction_at });
+    // The one fuel-to-load rule: the load the UNIT was running at the fill time, the DRIVER as fallback (the card's named
+    // driver, else the driver the rule places on that truck at that moment — card / truck assignment).
+    const namedDriverId = namedDriver.length === 1 ? namedDriver[0]!.id : null;
+    const driverAtFill = namedDriverId
+      ? namedDriverId
+      : (await resolveFillDriverAtTime(client as never, { operatingCompanyId: companyId, matchedDriverId: null, unitId: unit.id, at: line.transaction_at }))?.driver_id ?? null;
+    const loadHit = await resolveFuelLoadAtTime(client as never, { operatingCompanyId: companyId, unitId: unit.id, driverId: driverAtFill, at: line.transaction_at });
+    // LEAD 443.166 — TRANSACTION LINKAGE LAW TIER 1: a fill (or scale ticket) of a working truck carries its load, no
+    // exceptions — "if the load is unknown, FIND IT, never write NULL". The one fuel-to-load rule (unit at fill time,
+    // driver fallback) found none, so nothing is written: the line is HELD and listed, and the next run of this
+    // statement imports it once the owner enters the load that covers it (the import is idempotent per line).
+    if (!loadHit) {
+      record(line, "held_no_load", {
+        reason: `no load covers truck ${line.unit_label ?? "?"} (or its driver) at ${line.transaction_at} — held until the load is entered`,
+      });
+      continue;
+    }
     const driver = await resolveFillDriverAtTime(client as never, {
       operatingCompanyId: companyId, matchedDriverId: namedDriver.length === 1 ? namedDriver[0]!.id : null, unitId: unit.id,
-      at: line.transaction_at, loadId: loadHit?.load_id ?? null,
+      at: line.transaction_at, loadId: loadHit.load_id,
     });
 
     if (line.product === "scale") {
@@ -595,7 +612,7 @@ export async function importDreamlineStatement(
         rate_cents: line.gross_cents,
         unit_id: unit.id,
         ...(driver ? { driver_id: driver.driver_id } : {}),
-        ...(loadHit ? { load_id: loadHit.load_id } : { load_exemption_reason: `Dreamline scale ticket with no load covering the truck at ${line.transaction_at} (443.142)` }),
+        load_id: loadHit.load_id,
         vendor_document_number: `EFS-${line.efs_invoice}-SCLE${seq > 1 ? `-${seq}` : ""}`,
         memo: `Dreamline scale ticket — EFS invoice ${line.efs_invoice}, ${line.location_name ?? ""} ${line.city ?? ""} ${line.state ?? ""}`.trim(),
         is_company_expense: true,
@@ -631,10 +648,10 @@ export async function importDreamlineStatement(
        ON CONFLICT (operating_company_id, source_row_hash) DO NOTHING
        RETURNING id::text`,
       [
-        companyId, line.transaction_at, loadHit?.load_id ?? null, driver?.driver_id ?? null, unit.id, vendor.id, cardType.id, line.product,
+        companyId, line.transaction_at, loadHit.load_id, driver?.driver_id ?? null, unit.id, vendor.id, cardType.id, line.product,
         line.quantity, line.quantity ? Math.round((line.net_cents / 100 / line.quantity) * 10000) / 10000 : null,
         line.net_cents, line.gross_cents, line.discount_cents, line.city, line.state,
-        line.efs_invoice, hash, notes, Boolean(loadHit), loadHit ? null : fuelNoLoadReason(line.transaction_at, line.unit_label), input.actor_user_uuid, loadHit?.trailer_id ?? null,
+        line.efs_invoice, hash, notes, true, null, input.actor_user_uuid, loadHit.trailer_id ?? null,
       ]
     );
     const fuelId = ins.rows[0]?.id;
