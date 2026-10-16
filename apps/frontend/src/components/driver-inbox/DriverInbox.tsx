@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "../../api/client";
+import { getCoaAccounts } from "../../api/catalog-accounts";
 import {
   cashAdvanceRequestsOfficeApi,
   type CashAdvanceRequestRow,
@@ -55,14 +55,12 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
   // Pay-from accounts (catalogs.accounts → real id for B5 credit_account_id).
   const accountsQuery = useQuery({
     queryKey: ["catalogs-accounts", companyId],
-    queryFn: () =>
-      apiRequest<{ accounts?: CatalogAccount[]; items?: CatalogAccount[] }>(
-        `/api/v1/catalogs/accounts?operating_company_id=${encodeURIComponent(companyId)}`
-      ),
+    // LEAD 443.160 — the one chart-of-accounts source (full chart, paged); the raw call read only the first page.
+    queryFn: () => getCoaAccounts<CatalogAccount>(companyId),
     enabled: Boolean(companyId) && canReview,
   });
   const payFromAccounts = useMemo(() => {
-    const list = accountsQuery.data?.accounts ?? accountsQuery.data?.items ?? [];
+    const list = accountsQuery.data?.accounts ?? [];
     return list.filter((a) => ["Bank", "Checking", "Savings", "CashOnHand", "Asset"].includes(String(a.account_type ?? "")));
   }, [accountsQuery.data]);
 

@@ -38,15 +38,18 @@ export function run(root = ROOT) {
     failures.push(`${FILES.routes}: GET list must filter is_postable = true when postable_only`);
   }
 
-  const fnMatch = api.match(/export async function listCoaAccountsForJe\([\s\S]*?\n\}/);
+  // LEAD 443.160: listCoaAccountsForJe delegates to the one chart-of-accounts source (catalog-accounts getCoaAccounts,
+  // which sends operating_company_id + postable_only); the delegation must pass the entity and the postable parameter.
+  const fnMatch = api.match(/export (?:async )?function listCoaAccountsForJe\([\s\S]*?\n\}/);
   const fn = fnMatch?.[0] ?? "";
   if (!/operatingCompanyId:\s*string/.test(fn)) {
     failures.push(`${FILES.api}: listCoaAccountsForJe must require operatingCompanyId`);
   }
-  if (!/operating_company_id/.test(fn)) {
+  const delegates = /chartOfAccountsSource<\w+>\(operatingCompanyId,\s*\{\s*postableOnly:/.test(fn);
+  if (!delegates && !/operating_company_id/.test(fn)) {
     failures.push(`${FILES.api}: listCoaAccountsForJe must send operating_company_id on the query`);
   }
-  if (!/postable_only/.test(fn)) {
+  if (!delegates && !/postable_only/.test(fn)) {
     failures.push(`${FILES.api}: listCoaAccountsForJe must send postable_only for posting pickers`);
   }
   // Bug shape: bare call with no company param (the live empty picker).

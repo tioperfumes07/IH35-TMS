@@ -1,5 +1,7 @@
 import { apiRequest } from "./client";
 import { appendStatusList } from "../lib/statusListParams";
+import { getCoaAccounts as chartOfAccountsSource } from "./catalog-accounts";
+import { classesCatalogClient } from "./catalogs-accounting";
 
 // ROUND-20.2 — "proforma" added: verified live (Neon tiny-field-89581227, accounting.invoices)
 // this is a real, currently-used status value the prior union never declared; the Round Trips
@@ -2119,34 +2121,24 @@ export type JeAccountRow = {
  * (or return [] when none resolves), which empties the CoA Roles "Select account…" dropdown while
  * the switcher entity still has a full postable chart under af1 RLS.
  */
-export async function listCoaAccountsForJe(
+export function listCoaAccountsForJe(
   operatingCompanyId: string,
   opts?: { postableOnly?: boolean }
 ) {
-  // G9-H6: /catalogs/accounts hard-caps `limit` at 200 (accounts.routes.ts). Page by offset until a
-  // short page so the FULL entity chart is selectable.
-  const PAGE = 200;
-  const accounts: JeAccountRow[] = [];
-  const postableOnly = opts?.postableOnly !== false;
-  for (let offset = 0; ; offset += PAGE) {
-    const qs = new URLSearchParams({
-      status: "active",
-      limit: String(PAGE),
-      offset: String(offset),
-      operating_company_id: operatingCompanyId,
-    });
-    if (postableOnly) qs.set("postable_only", "true");
-    const res = await apiRequest<{ accounts: JeAccountRow[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
-    accounts.push(...res.accounts);
-    if (res.accounts.length < PAGE) break;
-  }
-  return { accounts };
+  // LEAD 443.160 — the one chart-of-accounts source (./catalog-accounts getCoaAccounts); JE / CoA Roles default to the
+  // QBO posting-target parameter (postable accounts only).
+  return chartOfAccountsSource<JeAccountRow>(operatingCompanyId, { postableOnly: opts?.postableOnly !== false });
 }
 
-export function listClassesForJe() {
-  return apiRequest<{ classes: Array<{ id: string; class_name: string; class_code?: string | null }> }>(
-    "/api/v1/catalogs/classes?include_inactive=false&limit=200"
-  );
+/**
+ * LEAD 443.160 — classes come from the ONE class source (classesCatalogClient, /catalogs/accounting/classes) that every
+ * other class picker reads. The old call here sent `include_inactive=false` (not a parameter of /catalogs/classes, so
+ * inactive classes leaked into the JE picker) and no operating_company_id (the user's default company, not the switcher
+ * entity). Shape kept for its callers.
+ */
+export async function listClassesForJe(operatingCompanyId: string) {
+  const res = await classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 });
+  return { classes: res.rows.map((r) => ({ id: r.id, class_name: r.display_name, class_code: r.code ?? null })) };
 }
 
 // Accounts Payable aging (Block F) — the accounting endpoint that carries display_group for the

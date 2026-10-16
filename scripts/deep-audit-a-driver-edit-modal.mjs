@@ -56,7 +56,10 @@ if (/VendorLinkageModal|setQboModalOpen/.test(source)) {
 if (/QboCombobox/.test(source)) {
   failures.push("DriverDetail Profile must not use the QBO-mirror QboCombobox (QBO is a read-only archive)");
 }
-if (!/<EntityPicker\s+kind="vendor"[\s\S]{0,200}value=\{apVendorPickId\}/.test(source) || !/updateVendor\(apVendorPickId, \{ driver_id: id \}\)/.test(source)) {
+// 443.176 — the save moved (20faec66, 443.137 9e) from an inline updateVendor(apVendorPickId, { driver_id: id }) to the
+// dedicated PUT /api/v1/mdata/drivers/:id/ap-vendor (putDriverApVendor), whose handler writes mdata.vendors.driver_id.
+// Same invariant, one writer; the guard now pins the current writer instead of the removed inline call.
+if (!/<EntityPicker\s+kind="vendor"[\s\S]{0,200}value=\{apVendorPickId\}/.test(source) || !/putDriverApVendor\(id, [\s\S]{0,80}?apVendorPickId\)/.test(source)) {
   failures.push("DriverDetail Profile vendor must be the native A/P payee EntityPicker saved on mdata.vendors.driver_id");
 }
 

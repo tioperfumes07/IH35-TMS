@@ -192,6 +192,7 @@ export function CompanySettlementsPage() {
       ) : null}
 
       <ParityTable
+        title="Company settlements"
         columns={columns}
         rows={rows}
         rowKey={(r) => r.id}
