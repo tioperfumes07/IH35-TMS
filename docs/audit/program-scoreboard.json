@@ -1,10 +1,10 @@
 {
-  "healthzSha": "7118025",
-  "generated_at": "2026-10-16T17:15:36.104Z",
+  "healthzSha": "747999d",
+  "generated_at": "2026-10-16T17:44:33.574Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "7118025",
+    "deployedSha": "747999d",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 26794,
+      "title": "FINDING: ACCT-F443159 — bills picked Section A from the expense-categories catalog, not the Chart of Accounts Banking uses; accounts created in the app (6110-01-001 Dispatch — Mexico) never appeared on any bill",
+      "state": "merged",
+      "mergedAtCt": "10/16/2026, 12:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26794",
+      "sha": "747999d9fb",
+      "committedAtIso": "2026-10-16T12:35:12-05:00"
+    },
+    {
+      "number": 26793,
+      "title": "FINDING: R443.161-G1 trailer choice missing at shared load boundary",
+      "state": "merged",
+      "mergedAtCt": "10/16/2026, 12:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26793",
+      "sha": "6db7585fb6",
+      "committedAtIso": "2026-10-16T12:32:45-05:00"
+    },
+    {
+      "number": 26795,
+      "title": "Claude-3- 443.163 M3+M5: Categorize/Match embeds MatchDrawer (one matcher on screen); Payee / Amount from-to / types on that matcher",
+      "state": "merged",
+      "mergedAtCt": "10/16/2026, 12:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26795",
+      "sha": "8a58f20d9c",
+      "committedAtIso": "2026-10-16T12:26:13-05:00"
+    },
+    {
+      "number": 26792,
+      "title": "FINDING: N/A (CLAIM-RESERVE 18457 -- reservation-only commit, no code fix)",
+      "state": "merged",
+      "mergedAtCt": "10/16/2026, 12:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26792",
+      "sha": "63bf97aa5a",
+      "committedAtIso": "2026-10-16T12:16:52-05:00"
+    },
+    {
       "number": 26791,
       "title": "Claude-3- 443.158 M1c relevance floor; fix bank-recon unit tests my #26786/#26790 broke; architecture/blueprint match laws",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26787",
       "sha": "add69bd031",
       "committedAtIso": "2026-10-16T11:36:46-05:00"
-    },
-    {
-      "number": 26786,
-      "title": "Claude-3- 443.155 A+B: bank-match candidates scoped to the line's own account; Faro purchases + A/R invoices in the union",
-      "state": "merged",
-      "mergedAtCt": "10/16/2026, 11:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26786",
-      "sha": "722038f896",
-      "committedAtIso": "2026-10-16T11:32:17-05:00"
-    },
-    {
-      "number": 26783,
-      "title": "FINDING: ACCT-F2026101602 LANE: claude — the Owner's override reason on a Faro purchase released documents only; \"invoice has no load\" still blocked",
-      "state": "merged",
-      "mergedAtCt": "10/16/2026, 11:19 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26783",
-      "sha": "9ece5e8a05",
-      "committedAtIso": "2026-10-16T11:19:45-05:00"
-    },
-    {
-      "number": 26784,
-      "title": "Claude-3- 443.142 register: declare the Dreamline statement import money writer (main red on verify-money-engine-linkage)",
-      "state": "merged",
-      "mergedAtCt": "10/16/2026, 11:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26784",
-      "sha": "57a3480ca8",
-      "committedAtIso": "2026-10-16T11:12:33-05:00"
-    },
-    {
-      "number": 26782,
-      "title": "chore: claim migration 202615950910 (443.152)",
-      "state": "merged",
-      "mergedAtCt": "10/16/2026, 10:51 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26782",
-      "sha": "7c1ada0d84",
-      "committedAtIso": "2026-10-16T10:51:34-05:00"
     }
   ]
 }

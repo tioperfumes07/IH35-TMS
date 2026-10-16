@@ -18,14 +18,15 @@ export function run(root = process.cwd()) {
     "utf8"
   );
 
+  // LEAD 443.163 (register M3): match candidates live on the ONE matcher (MatchDrawer, embedded in Categorize / Match); the
+  // view's inline candidate table and its MATCH_CANDIDATE_ENTITY_KIND map are gone. Same requirement, on the one matcher:
+  // its KIND_ENTITY map links payment / bill_payment / transfer candidates to their EntityKind.
+  const kindMap = (drawer.match(/const KIND_ENTITY: Record<BankMatchCandidateKind, EntityKind> = \{[\s\S]*?\n\};/) ?? [""])[0];
   for (const kind of ["payment", "bill_payment", "transfer"]) {
-    if (!view.includes(`${kind}:`)) {
-      failures.push(`BankingTransactionsDesignView MATCH_CANDIDATE_ENTITY_KIND missing ${kind}`);
-    }
+    if (!new RegExp(`\\b${kind}: "`).test(kindMap)) failures.push(`MatchDrawer KIND_ENTITY missing ${kind}`);
   }
-  if (!view.includes('transfer: "transfer"') && !view.includes("transfer: \"transfer\"")) {
-    failures.push("DesignView must map transfer → EntityKind transfer");
-  }
+  if (!kindMap.includes('transfer: "transfer"')) failures.push("MatchDrawer must map transfer → EntityKind transfer");
+  if (/getMatchCandidates\(/.test(view)) failures.push("BankingTransactionsDesignView queries match candidates itself — a second matcher (register M3)");
   if (!drawer.includes("KIND_ENTITY") || !drawer.includes("EntityLink")) {
     failures.push("MatchDrawer must EntityLink candidate kinds");
   }
@@ -47,14 +48,9 @@ if (process.argv.includes("--selftest")) {
     fs.mkdirSync(`${tmp}/${rel.split("/").slice(0, -1).join("/")}`, { recursive: true });
     fs.writeFileSync(`${tmp}/${rel}`, body);
   };
-  mk(
-    "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
-    `payment:\nbill_payment:\ntransfer:\ntransfer: "transfer"\n`
-  );
-  mk(
-    "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
-    `KIND_ENTITY\nEntityLink\n`
-  );
+  mk("apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", `<MatchDrawer embedded />\n`);
+  const goodDrawer = `const KIND_ENTITY: Record<BankMatchCandidateKind, EntityKind> = {\n  payment: "payment",\n  bill_payment: "bill_payment",\n  transfer: "transfer",\n};\nEntityLink\n`;
+  mk("apps/frontend/src/pages/banking/components/MatchDrawer.tsx", goodDrawer);
   mk(
     "apps/frontend/src/components/shared/EntityLink.tsx",
     `| "transfer"\n/banking/transfers?transfer_id=\n`
@@ -63,6 +59,11 @@ if (process.argv.includes("--selftest")) {
   if (run(tmp).length) throw new Error("PASS fail: " + run(tmp).join("; "));
   mk("apps/frontend/src/pages/banking/components/MatchDrawer.tsx", "x\n");
   if (!run(tmp).length) throw new Error("FAIL fail");
+  mk("apps/frontend/src/pages/banking/components/MatchDrawer.tsx", goodDrawer.replace('  transfer: "transfer",\n', ""));
+  if (!run(tmp).length) throw new Error("transfer unmapped not caught");
+  mk("apps/frontend/src/pages/banking/components/MatchDrawer.tsx", goodDrawer);
+  mk("apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", "getMatchCandidates(a, b)\n");
+  if (!run(tmp).length) throw new Error("second matcher not caught");
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-banking-match-entitylink-kinds --selftest OK");
 } else {

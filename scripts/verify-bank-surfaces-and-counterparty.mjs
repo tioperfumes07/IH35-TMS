@@ -85,8 +85,11 @@ export function run(root = ROOT) {
   if (!match.includes("EntityLink")) {
     failures.push("MatchDrawer must EntityLink candidates");
   }
-  if (!design.includes("payment:") || !design.includes("bill_payment:") || !design.includes("transfer:")) {
-    failures.push("DesignView MATCH_CANDIDATE kinds must include payment/bill_payment/transfer");
+  // LEAD 443.163 (register M3): candidates live on the ONE matcher — its KIND_ENTITY map carries the kinds (the view's inline
+  // MATCH_CANDIDATE map is gone with the inline table). Same requirement on the one matcher.
+  const kindMap = (match.match(/const KIND_ENTITY: Record<BankMatchCandidateKind, EntityKind> = \{[\s\S]*?\n\};/) ?? [""])[0];
+  if (!/\bpayment: "/.test(kindMap) || !/\bbill_payment: "/.test(kindMap) || !/\btransfer: "/.test(kindMap)) {
+    failures.push("MatchDrawer KIND_ENTITY must include payment/bill_payment/transfer");
   }
   if (!transfers.includes("transfer_id")) {
     failures.push("TransfersListPage must honor transfer_id deep link (reverse)");
@@ -132,8 +135,8 @@ if (process.argv.includes("--selftest")) {
     FILES.entity,
     `| "vendor"\n| "customer"\n"payment"\n"bill_payment"\n"transfer"\n"bank_transaction"\n/banking/transfers?transfer_id=\n/banking/transactions?txn_id=\n\`/vendors/\${id}\`\n\`/customers/\${id}\`\n`
   );
-  mk(FILES.match, `EntityLink\n`);
-  mk(FILES.design, `payment:\nbill_payment:\ntransfer:\n`);
+  mk(FILES.match, `EntityLink\nconst KIND_ENTITY: Record<BankMatchCandidateKind, EntityKind> = {\n  payment: "payment",\n  bill_payment: "bill_payment",\n  transfer: "transfer",\n};\n`);
+  mk(FILES.design, `<MatchDrawer embedded />\n`);
   mk(FILES.transfers, `transfer_id\n`);
   fs.mkdirSync(path.join(tmp, "apps/backend/src/banking"), { recursive: true });
   fs.writeFileSync(path.join(tmp, "apps/backend/src/banking/ok.ts"), `SELECT * FROM banking.bank_transactions\n`);

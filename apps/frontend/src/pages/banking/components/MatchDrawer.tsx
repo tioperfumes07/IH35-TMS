@@ -875,14 +875,14 @@ export function MatchDrawer({
           </label>
           <label className="text-xs text-[#4B5563]">
             Amount from
-            <div className="mt-0.5 w-[120px]" data-testid="match-filter-amount-min">
-              <MoneyInput valueDollars={amountMin} onChangeDollars={setAmountMin} ariaLabel="Amount from" controlHeight="standard" />
+            <div className="mt-0.5 w-[120px] [&_input]:h-[34px]" data-testid="match-filter-amount-min">
+              <MoneyInput valueDollars={amountMin} onChangeDollars={setAmountMin} ariaLabel="Amount from" />
             </div>
           </label>
           <label className="text-xs text-[#4B5563]">
             Amount to
-            <div className="mt-0.5 w-[120px]" data-testid="match-filter-amount-max">
-              <MoneyInput valueDollars={amountMax} onChangeDollars={setAmountMax} ariaLabel="Amount to" controlHeight="standard" />
+            <div className="mt-0.5 w-[120px] [&_input]:h-[34px]" data-testid="match-filter-amount-max">
+              <MoneyInput valueDollars={amountMax} onChangeDollars={setAmountMax} ariaLabel="Amount to" />
             </div>
           </label>
         </div>
@@ -1071,14 +1071,10 @@ export function MatchDrawer({
                       {VARIANCE_NEEDS_WRITEOFF}
                     </span>
                   ) : null}
-                  <button
+                  <Button
                     type="button"
                     data-testid="match-candidate-confirm"
-                    className={
-                      canConfirm
-                        ? "rounded-sm border border-[#14314F] bg-[#14314F] px-2 py-1 text-xs text-white hover:bg-[#0F2540] disabled:opacity-60"
-                        : "rounded-sm border border-[#E5E7EB] bg-[var(--surface-unselected)] px-2 py-1 text-xs text-[#6B7280]"
-                    }
+                    variant={canConfirm ? "primary" : "secondary"}
                     disabled={!canConfirm || isConfirming}
                     title={
                       isBill
@@ -1092,7 +1088,7 @@ export function MatchDrawer({
                     onClick={canConfirm ? () => confirmMutation.mutate(c) : undefined}
                   >
                     {isConfirming ? "Confirming…" : isExactMatch ? "Confirm match" : "Resolve difference"}
-                  </button>
+                  </Button>
                 </div>
               </div>
             );

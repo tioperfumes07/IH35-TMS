@@ -13,6 +13,7 @@ import { PostingEngineError, reversePostedSourceTransactionInClientTx } from "./
 import { BATCH_VOID_ACTION } from "./bulk-void.service.js";
 import { releaseBankLinesNamingDocument, todayIso } from "./void.service.js";
 import { reverseExpenseDocumentInClientTx } from "./expense-void-reversal.js";
+import { expenseVoidReversalMemo } from "./expense-void.service.js";
 import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
 
 const emptyPayloadSchema = z.object({}).default({});
@@ -49,7 +50,7 @@ async function handleExpenseBulk(ctx: BulkPerEntityContext<Record<string, unknow
     // ACCT-F4431310 — every LIVE posting of the document (own 'expense' lines + a fuel receipt's 'fuel_event' entry).
     const rev = await reverseExpenseDocumentInClientTx(client as never, {
       operatingCompanyId, expenseId: id, actorUserId, currentBusinessDate: todayIso(),
-      memo: `Void reversal of expense ${id}: ${reason.trim()}`, expenseReverser: "source",
+      memo: await expenseVoidReversalMemo(client as never, operatingCompanyId, id, reason), expenseReverser: "source",
     });
     reversingJeId = rev.reversal_journal_entry_id;
   } catch (err) {
