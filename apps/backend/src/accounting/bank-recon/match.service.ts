@@ -2468,10 +2468,10 @@ export async function previewMatchVariance(input: {
  * -> all returned, none preselected; no exact amount / no candidate -> returned with the reason.
  */
 export type SuggestionOutcome =
-  | { bank_transaction_id: string; result: "suggested"; ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string; reference: string | null; variance_cents?: number; within_card_cap?: boolean }
+  | { bank_transaction_id: string; result: "suggested"; ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string; reference: string | null; variance_cents?: number; within_card_cap?: boolean; reason?: string }
   | { bank_transaction_id: string; result: "already_suggested_or_matched" }
   | { bank_transaction_id: string; result: "several"; documents: string[] }
-  | { bank_transaction_id: string; result: "group"; ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string; reference: string | null; members: string[]; variance_cents: number; within_card_cap?: boolean }
+  | { bank_transaction_id: string; result: "group"; ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string; reference: string | null; members: string[]; variance_cents: number; within_card_cap?: boolean; reason?: string }
   | { bank_transaction_id: string; result: "none"; reason: "no_candidate" | "no_exact_amount" | "several_exact_documents" | "document_held_by_another_line" | "document_competes_with_another_line" | "categorize_no_document" | "error"; detail?: string };
 
 export async function suggestBankMatches(input: {
@@ -2624,11 +2624,29 @@ export async function suggestBankMatches(input: {
       // One purchase: drop a Relay fill whose own expense is also exact — the expense is the suggestion.
       const expenseFills = new Set(exact.filter((c) => c.ledger_entry_kind === "expense").map((c) => fillOf.get(c.ledger_entry_id)).filter(Boolean) as string[]);
       exact = exact.filter((c) => !(c.ledger_entry_kind === "relay_fuel" && expenseFills.has(c.ledger_entry_id)));
-      if (exact.length === 0) { if (await cardVariance() || await bankDocuments()) return; outcomes.push({ bank_transaction_id: line.id, result: "none", reason: "no_exact_amount" }); return; }
+      // LEAD 443.155 F — one Faro wire can fund several purchases (ROUND 180: group by wire date): when no single document
+      // equals the line, the Faro purchases offered for this line that share a purchase date and sum to it are the suggestion.
+      const faroGroup = (): boolean => {
+        const fps = found.candidates.filter((c) => c.ledger_entry_kind === "factoring_advance");
+        const byDate = new Map<string, typeof fps>();
+        for (const c of fps) byDate.set(c.event_date, [...(byDate.get(c.event_date) ?? []), c]);
+        const hits = [...byDate.entries()].filter(([, g]) => g.length > 1 && g.reduce((t, c) => t + Math.abs(Number(c.amount_cents)), 0) === bankAbs);
+        if (hits.length !== 1) return false;
+        const [date, g] = hits[0]!;
+        outcomes.push({ bank_transaction_id: line.id, result: "group", ledger_entry_kind: "factoring_advance", ledger_entry_id: g[0]!.ledger_entry_id,
+          reference: g.map((c) => c.reference).join(" + "), members: g.map((c) => `factoring_advance:${c.ledger_entry_id}`), variance_cents: 0,
+          reason: `exact net of ${g.length} Faro purchases dated ${date} (one wire)` });
+        return true;
+      };
+      if (exact.length === 0) { if (faroGroup() || await cardVariance() || await bankDocuments()) return; outcomes.push({ bank_transaction_id: line.id, result: "none", reason: "no_exact_amount" }); return; }
       // Several exact documents (different purchases): all returned, none preselected (443.80 #3).
       if (exact.length > 1) { outcomes.push({ bank_transaction_id: line.id, result: "several", documents: exact.map((c) => `${c.ledger_entry_kind}:${c.ledger_entry_id}`) }); return; }
       const pick = exact[0]!;
-      outcomes.push({ bank_transaction_id: line.id, result: "suggested", ledger_entry_kind: pick.ledger_entry_kind, ledger_entry_id: pick.ledger_entry_id, reference: pick.reference ?? null });
+      // LEAD 443.155 F — every suggestion says why (owner Law B: "ranked candidates WITH THE REASON").
+      const reason = pick.ledger_entry_kind === "factoring_advance"
+        ? `exact net, Faro purchase ${pick.reference ?? ""} ${pick.event_date}`.replace(/\s+/g, " ").trim()
+        : `exact amount, ${pick.ledger_entry_kind.replace(/_/g, " ")} ${pick.reference ?? ""} ${pick.event_date}`.replace(/\s+/g, " ").trim();
+      outcomes.push({ bank_transaction_id: line.id, result: "suggested", ledger_entry_kind: pick.ledger_entry_kind, ledger_entry_id: pick.ledger_entry_id, reference: pick.reference ?? null, reason });
     } catch (e) {
       const msg = (e as Error).message ?? String(e);
       outcomes.push({ bank_transaction_id: line.id, result: "none", reason: "error", detail: msg.slice(0, 200) });

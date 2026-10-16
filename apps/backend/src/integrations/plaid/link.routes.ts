@@ -755,7 +755,10 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           -- up). Same human-label convention as every other FK on this SELECT.
           bt.suggested_vendor_id::text,
           sv.vendor_name AS suggested_vendor_name,
-          bt.suggested_account_id::text,
+          -- LEAD 443.155 F — the category suggestion of a Faro wire whose purchase is on the books is the PURCHASE MATCH, not
+          -- 2150 (the purchase already credited 2150; categorizing would book it twice). Hidden only then; the rule stays for
+          -- a wire with no purchase.
+          sa.id::text AS suggested_account_id,
           sa.account_number AS suggested_account_number,
           sa.account_name AS suggested_account_name,
           bt.suggested_confidence,
@@ -889,6 +892,18 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         LEFT JOIN catalogs.accounts sa
           ON sa.id = bt.suggested_account_id
          AND sa.operating_company_id = bt.operating_company_id
+         AND NOT (
+           bt.is_credit
+           AND EXISTS (SELECT 1 FROM accounting.chart_of_accounts_roles far
+                        WHERE far.account_id = bt.suggested_account_id AND far.operating_company_id = bt.operating_company_id
+                          AND far.role = 'factoring_advance_liability' AND far.is_active)
+           AND EXISTS (SELECT 1 FROM accounting.factoring_purchases fp
+                        WHERE fp.operating_company_id = bt.operating_company_id AND fp.status = 'posted' AND fp.voided_at IS NULL
+                          AND fp.purchase_date BETWEEN bt.transaction_date::date - 7 AND bt.transaction_date::date + 2
+                        GROUP BY fp.purchase_date
+                       HAVING sum(fp.net_to_company_cents) = abs(bt.amount_cents)
+                           OR bool_or(fp.net_to_company_cents = abs(bt.amount_cents)))
+         )
         LEFT JOIN catalogs.accounts cga
           ON cga.id = bt.categorization_gl_account_id
          AND cga.operating_company_id = bt.operating_company_id
