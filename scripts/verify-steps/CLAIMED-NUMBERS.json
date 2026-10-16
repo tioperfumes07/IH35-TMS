@@ -16557,5 +16557,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-16",
     "purpose": "verify-feedless-bank-account-shows-register"
+  },
+  "18465": {
+    "claimed_at": "2026-10-16",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.168 L (E-46): verify-one-faro-reserve-query (every reserve reader reads factoringBookReserveCents; no second SQL sums the reserve accounts)"
   }
 }
