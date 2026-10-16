@@ -43,6 +43,12 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import {
+  AGING_BY_DEBTOR_COLUMNS,
+  CHARGEBACKS_BY_CUSTOMER_COLUMNS,
+  groupAgingByDebtor,
+  groupChargebacksByCustomer,
+} from "./factoring-summary-groups";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { formatDateUS } from "../../lib/formatDate";
 import { Modal } from "../../components/Modal";
@@ -361,7 +367,6 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   const [feesPaidView, setFeesPaidView] = useState<"open_invoices" | "all_fees">("all_fees");
   // REG-044: Summary/Detail toggle for all factoring tabs (Account Summary, Aging,
   // Chargebacks/Overpayments, Payment-To-You, Purchase Report, Faro Import).
-  const [accountSummaryView, setAccountSummaryView] = useState<"summary" | "detail">("summary");
   const [agingView, setAgingView] = useState<"summary" | "detail">("detail");
   const [chargebacksOverpaymentsView, setChargebacksOverpaymentsView] = useState<"summary" | "detail">("detail");
   const [paymentsToYouView, setPaymentsToYouView] = useState<"summary" | "detail">("detail");
@@ -760,6 +765,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
     }
     return totals;
   }, [agingRows]);
+  // LEAD 443.174 — Summary is a different view: one row per debtor (bucket totals); Detail is one row per invoice.
+  const agingByDebtor = useMemo(() => groupAgingByDebtor(agingRows), [agingRows]);
+  const chargebacksByCustomer = useMemo(() => groupChargebacksByCustomer(feesQuery.data?.history ?? []), [feesQuery.data?.history]);
 
   // FAC-09a Fees Paid "Open Invoices" view — Accrued Fees per invoice, summed from the same
   // feesQuery.data.history (views.factoring_chargebacks_fees) rows the "All Fees" view and the
@@ -1967,6 +1975,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           dateTo={dateToFromUrl || undefined}
           filterBar={dateRangeOnlyFilterBar("factoring-home-payments-to-you")}
           summaryDetailToggle={summaryDetailToggle(paymentsToYouView, setPaymentsToYouView, "factoring-payments-to-you")}
+          view={paymentsToYouView}
           isOwner={user?.role === "Owner"}
           onEditPurchase={(id) => navigateToTab(`${FACTORING_TAB_PATH.submit_invoice}?edit_purchase_id=${encodeURIComponent(id)}`)}
         />
@@ -2021,7 +2030,20 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               />
             ) : (
               <div className="overflow-x-auto">
-                <ChargebacksTable rows={feesQuery.data?.history ?? []} fmtCurrency={fmtCurrency} fmtDate={fmtDate} />
+                {chargebacksOverpaymentsView === "summary" ? (
+                  <ParityTable
+                    title="Chargebacks & overpayments — by customer"
+                    columns={CHARGEBACKS_BY_CUSTOMER_COLUMNS(fmtCurrency)}
+                    rows={chargebacksByCustomer}
+                    rowKey={(r) => r.key}
+                    loading={feesQuery.isLoading}
+                    emptyText="No chargebacks or overpayments."
+                    storageKey="factoring-chargebacks-by-customer"
+                    tableTestId="factoring-chargebacks-by-customer-table"
+                  />
+                ) : (
+                  <ChargebacksTable rows={feesQuery.data?.history ?? []} fmtCurrency={fmtCurrency} fmtDate={fmtDate} />
+                )}
               </div>
             )}
           </div>
@@ -2048,7 +2070,6 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div className="text-xs font-medium text-gray-900">Account Summary</div>
                     <div className="flex items-center gap-2">
-                      {summaryDetailToggle(accountSummaryView, setAccountSummaryView, "factoring-account-summary")}
                       <AccountSummaryInfoPopover />
                     </div>
                   </div>
@@ -2503,7 +2524,20 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               />
             ) : (
               <div className="overflow-x-auto">
+                {agingView === "summary" ? (
                 <ParityTable
+                  title="Aging — by debtor"
+                  columns={AGING_BY_DEBTOR_COLUMNS(fmtCurrency)}
+                  rows={agingByDebtor}
+                  rowKey={(r) => r.key}
+                  loading={recourseQuery.isLoading}
+                  emptyText="No factored invoices outstanding."
+                  storageKey="factoring-aging-by-debtor"
+                  tableTestId="factoring-aging-by-debtor-table"
+                />
+                ) : (
+                <ParityTable
+                  title="Aging — by invoice"
                   columns={[
                     {
                       key: "factoring_advance_id",
@@ -2575,6 +2609,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     balance: fmtCurrency(agingTotals.balance),
                   }}
                 />
+                )}
               </div>
             )}
           </div>
