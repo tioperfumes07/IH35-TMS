@@ -140,7 +140,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
 
     return (
       <div data-testid={`${testId}-list`} className="space-y-2">
-        <ParityTable<DriverListRow> appearance="board"
+        <ParityTable<DriverListRow> appearance="board" title="Drivers — schedule and HOS"
           columns={columns}
           rows={listRows}
           rowKey={(row) => row.driverId}

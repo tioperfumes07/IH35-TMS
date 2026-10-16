@@ -323,7 +323,7 @@ export function UnifiedTimelinePlanner() {
           ];
           return (
             <div data-testid="dispatch-unified-timeline-list">
-              <ParityTable<TimelineListRow> appearance="board"
+              <ParityTable<TimelineListRow> appearance="board" title="Drivers — timeline"
                 columns={columns}
                 rows={listRows}
                 rowKey={(row) => row.driverId}

@@ -1,5 +1,6 @@
 import { useQueries } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
 import { listLateArrivalDispatchLoads } from "../../api/dispatch";
 import { getIntransitTriageQueue } from "../../api/maintenance";
@@ -128,8 +129,11 @@ export function DispatchAlertsPage() {
       ) : null}
       {allCountsKnownZero ? (
         <p className="rounded-sm border border-dashed border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="dispatch-alerts-honest-empty">
-          No open dispatch alerts for this company. Cards stay at 0 until open accidents, pending cash-advance
-          requests, late arrivals, or in-transit triage issues exist for the active entity.
+          No open dispatch alerts for this company.{" "}
+          <InfoPopover label="About dispatch alert counts">
+            Cards stay at 0 until open accidents, pending cash-advance requests, late arrivals, or in-transit triage issues
+            exist for the active entity.
+          </InfoPopover>
         </p>
       ) : null}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

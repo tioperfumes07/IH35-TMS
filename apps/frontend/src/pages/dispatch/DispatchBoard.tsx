@@ -557,17 +557,16 @@ function RiskCell({ load }: { load: DispatchLoadRow }) {
   );
 }
 
-function AssignmentBand({ title, count, children }: { title: string; count: number; children: ReactNode }) {
+// LEAD 443.174 — the band's title + count now ride on the table's own title row (one row, not a header above a header).
+function AssignmentBand({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-1" data-testid={`dispatch-assignment-band-${title.toLowerCase().replace(/\s+/g, "-")}`}>
-      <div className="flex items-center justify-between border-b border-gray-200 pb-1">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-700">{title}</h3>
-        <span className="text-xs text-gray-500">{count}</span>
-      </div>
       {children}
     </section>
   );
 }
+
+const bandTitle = (title: string, count: number) => `${title} · ${count}`;
 
 export function DispatchBoard({
   operatingCompanyId,
@@ -1671,6 +1670,7 @@ export function DispatchBoard({
           const anyLoading = loading || unitsWithoutLoadQuery.isLoading || inShopUnitsQuery.isLoading;
           return (
             <ParityTable appearance="board"
+              title="Load board — by status"
               columns={parityColumns}
               columnGroups={boardColumnGroups}
               stickyLeftCount={4}
@@ -1791,6 +1791,7 @@ export function DispatchBoard({
     );
 
     const renderUnitPanel = (
+      title: string,
       rows: BoardLoad[],
       storageKey: string,
       tableTestId: string,
@@ -1798,6 +1799,7 @@ export function DispatchBoard({
       emptyText: string,
     ) => (
       <ParityTable appearance="board"
+        title={title}
         columns={parityColumns}
         columnGroups={boardColumnGroups}
         stickyLeftCount={4}
@@ -1852,8 +1854,9 @@ export function DispatchBoard({
           </div>
         </div>
 
-        <AssignmentBand title="Assigned Units" count={assignedRows.length}>
+        <AssignmentBand title="Assigned Units">
           {renderUnitPanel(
+            bandTitle("Assigned units", assignedRows.length),
             assignedRows,
             "dispatch-board-table-assigned",
             "dispatch-board-table-assigned",
@@ -1862,8 +1865,9 @@ export function DispatchBoard({
           )}
         </AssignmentBand>
 
-        <AssignmentBand title="Unassigned Units" count={unassignedRows.length}>
+        <AssignmentBand title="Unassigned Units">
           {renderUnitPanel(
+            bandTitle("Unassigned units", unassignedRows.length),
             unassignedRows,
             "dispatch-board-table-unassigned",
             "dispatch-board-table-unassigned",
@@ -2050,6 +2054,7 @@ export function DispatchBoard({
     const assignedSort = assignmentBandSorts.assigned ?? { key: "unit", direction: "asc" as const };
 
     const renderAssignmentParityTable = (
+      title: string,
       band: "booked" | "assigned",
       columns: ParityColumn<BoardLoad>[],
       rows: BoardLoad[],
@@ -2057,6 +2062,7 @@ export function DispatchBoard({
       emptyMessage: string,
     ) => (
       <ParityTable<BoardLoad> appearance="board"
+        title={title}
         columns={columns}
         rows={rows}
         rowKey={(load) => load.id}
@@ -2080,8 +2086,9 @@ export function DispatchBoard({
 
     return (
       <div className="space-y-4" data-testid="dispatch-board-assignment-view">
-        <AssignmentBand title="Unassigned Units" count={unassignedUnits.length}>
+        <AssignmentBand title="Unassigned Units">
           <UnitsWithoutLoadTable
+            title={bandTitle("Unassigned units", unassignedUnits.length)}
             rows={unassignedUnits}
             loading={unitsWithoutLoadQuery.isLoading}
             errorState={dataTableErrorState(unitsWithoutLoadQuery.error, () => void unitsWithoutLoadQuery.refetch())}
@@ -2089,8 +2096,9 @@ export function DispatchBoard({
           />
         </AssignmentBand>
 
-        <AssignmentBand title="Booked Loads" count={bookedLoads.length}>
+        <AssignmentBand title="Booked Loads">
           {renderAssignmentParityTable(
+            bandTitle("Booked loads", bookedLoads.length),
             "booked",
             bookedAssignmentColumns,
             sortedBookedLoads,
@@ -2099,8 +2107,9 @@ export function DispatchBoard({
           )}
         </AssignmentBand>
 
-        <AssignmentBand title="Assigned Units" count={currentAssignedLoads.length}>
+        <AssignmentBand title="Assigned Units">
           {renderAssignmentParityTable(
+            bandTitle("Assigned units", currentAssignedLoads.length),
             "assigned",
             assignedAssignmentColumns,
             sortedAssignedLoads,
