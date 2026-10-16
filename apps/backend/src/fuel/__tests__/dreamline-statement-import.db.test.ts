@@ -82,6 +82,8 @@ describeIntegration("Dreamline statement import (443.142, real Postgres)", () =>
         line({}),
         line({ line_number: 3, efs_invoice: "55708", transaction_at: "2026-08-12T14:00:00.000Z", local_date: "2026-08-12", gross_cents: 50000, discount_cents: 3000, net_cents: 47000 }),
         line({ line_number: 4, efs_invoice: "15304", transaction_at: "2026-08-01T14:00:00.000Z", local_date: "2026-08-01", gross_cents: 40000, discount_cents: 0, net_cents: 40000 }),
+        // 443.142-FIX: a scale ticket not on the books -> one OTR-Scale line, POSTED Dr OTR-Scale / Cr 2510.
+        line({ line_number: 5, efs_invoice: "66602", item: "SCLE", product: "scale", transaction_at: "2026-08-12T15:00:00.000Z", local_date: "2026-08-12", quantity: 1, gross_cents: 1525, discount_cents: 0, net_cents: 1525 }),
       ];
       const payableNet = async () => Number((await one<{ n: string }>(
         `SELECT coalesce(sum(CASE WHEN debit_or_credit = 'credit' THEN amount_cents ELSE -amount_cents END), 0)::text AS n
@@ -101,8 +103,15 @@ describeIntegration("Dreamline statement import (443.142, real Postgres)", () =>
       expect(first.by_outcome.imported.lines).toBe(1);
       expect(first.by_outcome.pre_cutoff.lines).toBe(1);
       expect(first.difference_posted_cents).toBe(2000);
-      // 2510 = what the card charged for the two USMCA fills: 280.00 + 470.00. Nothing for the pre-cutoff fill.
-      expect(await payableNet()).toBe(28000 + 47000);
+      expect(first.by_outcome.scale_imported.lines).toBe(1);
+      const scale = await one<{ lines: string; posting_status: string; je: string | null; acct: string | null }>(
+        `SELECT (SELECT count(*) FROM accounting.expense_lines l WHERE l.expense_id = e.id)::text AS lines, e.posting_status, e.journal_entry_id::text AS je,
+                (SELECT l.expense_account_uuid::text FROM accounting.expense_lines l WHERE l.expense_id = e.id LIMIT 1) AS acct
+           FROM accounting.expenses e WHERE e.operating_company_id = $1::uuid AND e.vendor_document_number = 'EFS-66602-SCLE'`, [opco]);
+      expect(scale).toMatchObject({ lines: "1", posting_status: "posted", acct: scaleAcct });
+      expect(scale.je).toBeTruthy();
+      // 2510 = what the card charged for the USMCA fills: 280.00 + 470.00 + the 15.25 scale ticket. Nothing pre-cutoff.
+      expect(await payableNet()).toBe(28000 + 47000 + 1525);
       expect(await tb()).toBe(0);
       // The adopted receipt kept its ONE fuel posting; the imported fill added exactly one fuel posting pair.
       const adoptedRow = first.results.find((r) => r.outcome === "adopted")!;
@@ -122,9 +131,9 @@ describeIntegration("Dreamline statement import (443.142, real Postgres)", () =>
       await begin();
       const second = await importDreamlineStatement(db as never, { operating_company_id: opco, actor_user_uuid: TEST_OWNER_USER_ID, lines });
       await db.query("COMMIT");
-      expect(second.by_outcome.already_imported.lines).toBe(2);
+      expect(second.by_outcome.already_imported.lines).toBe(3);
       expect(second.by_outcome.imported.lines + second.by_outcome.adopted.lines).toBe(0);
-      expect(await payableNet()).toBe(28000 + 47000);
+      expect(await payableNet()).toBe(28000 + 47000 + 1525);
       expect(await fuelPostings()).toBe(fuelAfter);
     } finally {
       await db.query("ROLLBACK").catch(() => undefined);
