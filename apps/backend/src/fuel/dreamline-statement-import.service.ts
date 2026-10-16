@@ -36,7 +36,7 @@ import { insertPostingLineWithSpine } from "../accounting/posting-line-writer.js
 import { ensureOpenPeriod } from "../accounting/posting-engine.service.js";
 import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "../accounting/journal-entry-type-resolver.js";
 import { FUEL_CARD_DISCOUNT_ITEM } from "../accounting/bank-recon/match.service.js";
-import { fuelNoLoadReason, postFuelFillOnReceipt } from "../accounting/bank-recon/bank-match-fuel-post.service.js";
+import { postFuelFillOnReceipt } from "../accounting/bank-recon/bank-match-fuel-post.service.js";
 import { FUEL_POSTS_ON_RECEIPT_FLAG_KEY } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "../accounting/expense-gl-posting-flag.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -90,6 +90,7 @@ export type DreamlineLineOutcome =
   | "imported"
   | "scale_adopted"
   | "scale_imported"
+  | "held_no_load"
   | "unresolved";
 
 export type DreamlineLineResult = {
@@ -424,7 +425,7 @@ export async function postStatementScaleExpense(
 
 function emptyOutcomes(): DreamlineImportSummary["by_outcome"] {
   const o = {} as DreamlineImportSummary["by_outcome"];
-  for (const k of ["pre_cutoff", "already_imported", "adopted", "cross_rail", "amount_mismatch", "imported", "scale_adopted", "scale_imported", "unresolved"] as DreamlineLineOutcome[]) {
+  for (const k of ["pre_cutoff", "already_imported", "adopted", "cross_rail", "amount_mismatch", "imported", "scale_adopted", "scale_imported", "held_no_load", "unresolved"] as DreamlineLineOutcome[]) {
     o[k] = { lines: 0, cents: 0 };
   }
   return o;
@@ -474,10 +475,31 @@ export async function importDreamlineStatement(
   };
 
   // Earlier runs: imported rows (hash) and adopted receipts (marker) are already reconciled.
-  const priorHashes = new Set((await client.query<{ h: string }>(
-    `SELECT source_row_hash AS h FROM fuel.fuel_transactions WHERE operating_company_id = $1::uuid AND source_row_hash IS NOT NULL AND voided_at IS NULL`,
+  // Every hash a fuel row holds (unique per company, voided rows included): live ones mean "already imported"; a VOIDED
+  // one (a line taken off the books, e.g. held for a missing load — 443.166) frees the line to come back under the next
+  // re-issue hash, never colliding with the voided row.
+  const hashRows = (await client.query<{ h: string; voided: boolean }>(
+    `SELECT source_row_hash AS h, voided_at IS NOT NULL AS voided FROM fuel.fuel_transactions
+      WHERE operating_company_id = $1::uuid AND source_row_hash IS NOT NULL`,
     [companyId]
-  )).rows.map((r) => r.h));
+  )).rows;
+  const priorHashes = new Set(hashRows.filter((r) => !r.voided).map((r) => r.h));
+  const voidedHashes = new Set(hashRows.filter((r) => r.voided).map((r) => r.h));
+  /** The hash this line imports under now: the base, else the first re-issue no voided row holds. */
+  const nextLineHash = (base: string): string => {
+    let h = base;
+    for (let n = 1; voidedHashes.has(h); n += 1) h = crypto.createHash("sha256").update(`${base}:reissue:${n}`).digest("hex");
+    return h;
+  };
+  /** True when a LIVE row already carries this line (base hash or any re-issue). */
+  const lineIsLive = (base: string): boolean => {
+    let h = base;
+    for (let n = 1; ; n += 1) {
+      if (priorHashes.has(h)) return true;
+      if (!voidedHashes.has(h)) return false;
+      h = crypto.createHash("sha256").update(`${base}:reissue:${n}`).digest("hex");
+    }
+  };
   const adoptedMarkers = new Map<string, string>();
   for (const b of booked) {
     for (const m of (b.notes ?? "").match(/dreamline_efs=[^;\s]+/g) ?? []) adoptedMarkers.set(m, b.expense_id);
@@ -493,7 +515,7 @@ export async function importDreamlineStatement(
     if (!feeSeen.has(fillKey)) { feeSeen.add(fillKey); summary.fees_not_posted_cents += line.fee_cents; }
     const hash = dreamlineLineHash(line, seq);
     const marker = dreamlineAdoptMarker(line, seq);
-    if (priorHashes.has(hash) || adoptedMarkers.has(marker)) {
+    if (lineIsLive(hash) || adoptedMarkers.has(marker)) {
       if (adoptedMarkers.has(marker)) used.add(adoptedMarkers.get(marker)!);
       record(line, "already_imported");
       continue;
@@ -573,10 +595,26 @@ export async function importDreamlineStatement(
           [companyId, line.driver_name]
         )).rows
       : [];
-    const loadHit = await resolveFuelLoadAtTime(client as never, { operatingCompanyId: companyId, unitId: unit.id, driverId: namedDriver.length === 1 ? namedDriver[0]!.id : null, at: line.transaction_at });
+    // The one fuel-to-load rule: the load the UNIT was running at the fill time, the DRIVER as fallback (the card's named
+    // driver, else the driver the rule places on that truck at that moment — card / truck assignment).
+    const namedDriverId = namedDriver.length === 1 ? namedDriver[0]!.id : null;
+    const driverAtFill = namedDriverId
+      ? namedDriverId
+      : (await resolveFillDriverAtTime(client as never, { operatingCompanyId: companyId, matchedDriverId: null, unitId: unit.id, at: line.transaction_at }))?.driver_id ?? null;
+    const loadHit = await resolveFuelLoadAtTime(client as never, { operatingCompanyId: companyId, unitId: unit.id, driverId: driverAtFill, at: line.transaction_at });
+    // LEAD 443.166 — TRANSACTION LINKAGE LAW TIER 1: a fill (or scale ticket) of a working truck carries its load, no
+    // exceptions — "if the load is unknown, FIND IT, never write NULL". The one fuel-to-load rule (unit at fill time,
+    // driver fallback) found none, so nothing is written: the line is HELD and listed, and the next run of this
+    // statement imports it once the owner enters the load that covers it (the import is idempotent per line).
+    if (!loadHit) {
+      record(line, "held_no_load", {
+        reason: `no load covers truck ${line.unit_label ?? "?"} (or its driver) at ${line.transaction_at} — held until the load is entered`,
+      });
+      continue;
+    }
     const driver = await resolveFillDriverAtTime(client as never, {
       operatingCompanyId: companyId, matchedDriverId: namedDriver.length === 1 ? namedDriver[0]!.id : null, unitId: unit.id,
-      at: line.transaction_at, loadId: loadHit?.load_id ?? null,
+      at: line.transaction_at, loadId: loadHit.load_id,
     });
 
     if (line.product === "scale") {
@@ -595,7 +633,7 @@ export async function importDreamlineStatement(
         rate_cents: line.gross_cents,
         unit_id: unit.id,
         ...(driver ? { driver_id: driver.driver_id } : {}),
-        ...(loadHit ? { load_id: loadHit.load_id } : { load_exemption_reason: `Dreamline scale ticket with no load covering the truck at ${line.transaction_at} (443.142)` }),
+        load_id: loadHit.load_id,
         vendor_document_number: `EFS-${line.efs_invoice}-SCLE${seq > 1 ? `-${seq}` : ""}`,
         memo: `Dreamline scale ticket — EFS invoice ${line.efs_invoice}, ${line.location_name ?? ""} ${line.city ?? ""} ${line.state ?? ""}`.trim(),
         is_company_expense: true,
@@ -631,10 +669,10 @@ export async function importDreamlineStatement(
        ON CONFLICT (operating_company_id, source_row_hash) DO NOTHING
        RETURNING id::text`,
       [
-        companyId, line.transaction_at, loadHit?.load_id ?? null, driver?.driver_id ?? null, unit.id, vendor.id, cardType.id, line.product,
+        companyId, line.transaction_at, loadHit.load_id, driver?.driver_id ?? null, unit.id, vendor.id, cardType.id, line.product,
         line.quantity, line.quantity ? Math.round((line.net_cents / 100 / line.quantity) * 10000) / 10000 : null,
         line.net_cents, line.gross_cents, line.discount_cents, line.city, line.state,
-        line.efs_invoice, hash, notes, Boolean(loadHit), loadHit ? null : fuelNoLoadReason(line.transaction_at, line.unit_label), input.actor_user_uuid, loadHit?.trailer_id ?? null,
+        line.efs_invoice, nextLineHash(hash), notes, true, null, input.actor_user_uuid, loadHit.trailer_id ?? null,
       ]
     );
     const fuelId = ins.rows[0]?.id;
