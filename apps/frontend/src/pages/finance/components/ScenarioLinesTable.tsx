@@ -106,6 +106,7 @@ export function ScenarioLinesTable({ lines, operatingCompanyId, editable, invali
 
   return (
     <ParityTable<ForecastLine>
+      title="Scenario lines — forecast vs actual"
       columns={columns}
       rows={lines}
       rowKey={(r) => r.id}

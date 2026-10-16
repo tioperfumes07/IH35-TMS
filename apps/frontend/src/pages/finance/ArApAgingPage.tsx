@@ -27,6 +27,7 @@ import {
 } from "../../api/arApAging";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -264,6 +265,7 @@ function ArInvoicesDrill({ operatingCompanyId, customer, asOfDate }: { operating
         />
       ) : (
         <ParityTable
+          title="Open invoices — this customer"
           columns={AR_DRILL_COLUMNS}
           rows={invoices}
           rowKey={(inv) => inv.invoice_id}
@@ -296,6 +298,7 @@ function ApBillsDrill({ operatingCompanyId, vendor, asOfDate }: { operatingCompa
         />
       ) : (
         <ParityTable
+          title="Open bills — this vendor"
           columns={AP_DRILL_COLUMNS}
           rows={bills}
           rowKey={(b) => b.bill_id}
@@ -466,8 +469,10 @@ export function ArApAgingPage() {
         <PageHeader title="AR / AP Aging" subtitle="Accounts receivable & payable aging (read-only)" />
         <FinanceModuleTabs />
         <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">
-          AR / AP aging is not yet enabled for this account.
-          <p className="mt-1 text-xs text-gray-400">This report is turned on per operating company and isn’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable it, or switch to a company where it’s already on.</p>
+          AR / AP aging is not yet enabled for this account.{" "}
+          <InfoPopover label="About AR / AP aging being off">
+            This report is turned on per operating company and isn’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable it, or switch to a company where it’s already on.
+          </InfoPopover>
         </div>
       </div>
     );
@@ -554,6 +559,7 @@ export function ArApAgingPage() {
         <div className="space-y-2">
           {mode === "ar" ? (
             <ParityTable
+              title="A/R aging — by customer"
               key={appliedAsOf}
               columns={AR_COLUMNS}
               rows={arRows}
@@ -568,6 +574,7 @@ export function ArApAgingPage() {
             />
           ) : (
             <ParityTable
+              title="A/P aging — by vendor"
               key={appliedAsOf}
               columns={AP_COLUMNS}
               rows={apRows}

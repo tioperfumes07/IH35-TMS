@@ -439,6 +439,7 @@ export function FinanceScenariosPage() {
         />
       ) : (
       <ParityTable<Scenario>
+        title="Finance scenarios"
         columns={columns}
         rows={scenarios}
         rowKey={(r) => r.id}

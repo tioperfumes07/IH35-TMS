@@ -95,6 +95,7 @@ export function FuelTransactionsTable({ rows, operatingCompanyId, suppressToolba
 
   return (
     <ParityTable
+      title="Fuel transactions"
       rows={rows}
       rowKey={(row) => row.id}
       rowClassName={(row) => voidedRowClassName(row.voided_at)}
