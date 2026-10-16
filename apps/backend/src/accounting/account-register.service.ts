@@ -327,6 +327,8 @@ export async function getAccountRegister(
     type?: string | null;
     /** ACCT-F410 — defaults to accrual (@decision Q7: "Basis defaults to accrual"). */
     basis?: AccountingBasis | null;
+    /** LEAD 443.179 — true shows undone pairs (original + its full reversal); default hides them, as QuickBooks does. */
+    include_reversed?: boolean | null;
     /**
      * The company's COA role accounts, resolved by the ROUTE with resolveRoleAccountOptional, the
      * same way trial-balance.routes.ts and balance-sheet.routes.ts resolve them. Passed in rather
@@ -379,6 +381,27 @@ export async function getAccountRegister(
   let where = `p.operating_company_id = $1::uuid AND p.account_id = $2::uuid
       AND je.entry_date >= $3::date AND je.entry_date <= $4::date AND je.status <> 'voided'
       AND COALESCE(je.is_sample_data, false) = false`;
+  // LEAD 443.179 (owner 2026-10-16: "why would reversals appear here? this is like a bank register … in banking if
+  // there is a transaction undone, it does not appear there … not like QuickBooks"). A document that was undone is
+  // two journal entries — the original and its full reversal (journal_entries.reverses_je_id). QuickBooks shows an
+  // undone transaction as gone from the register, never as a funding line plus a "Reversal of journal entry" line.
+  // When BOTH halves fall inside the window, neither is shown: together they move the balance by exactly 0, so the
+  // running balance and the closing balance are unchanged and still tie to fn_account_balances_as_of. A pair that
+  // straddles from_date stays visible (hiding one half would break the opening→closing tie). The pair is still in
+  // the ledger and on Audit history; include_reversed=true returns it here too.
+  if (!input.include_reversed) {
+    where += `
+      AND NOT EXISTS (
+        SELECT 1 FROM accounting.journal_entries rv
+         WHERE rv.reverses_je_id = je.id AND rv.operating_company_id = je.operating_company_id
+           AND rv.status <> 'voided' AND rv.entry_date >= $3::date AND rv.entry_date <= $4::date
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM accounting.journal_entries og
+         WHERE je.reverses_je_id IS NOT NULL AND og.id = je.reverses_je_id AND og.operating_company_id = je.operating_company_id
+           AND og.status <> 'voided' AND og.entry_date >= $3::date AND og.entry_date <= $4::date
+      )`;
+  }
   if (input.type === "check") {
     // B-1 ORDERS — Check = expense with payment_type='check' (same expense row / JE).
     where += ` AND p.source_transaction_type = 'expense'
