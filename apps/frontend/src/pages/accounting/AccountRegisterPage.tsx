@@ -1006,7 +1006,7 @@ export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAcc
           <span>Opening balance ({normal === "debit" ? "Dr" : "Cr"})</span>
           <span className="font-medium tabular-nums">{report ? fmtCents(report.opening_balance_cents) : "—"}</span>
         </div>
-        <ParityTable
+        <ParityTable title="Register lines"
           columns={columns}
           rows={filteredRows}
           rowKey={(r) => r.posting_id}
@@ -1086,7 +1086,7 @@ export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAcc
           onRetry={() => void auditQuery.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable title="Account audit history"
           columns={auditColumns}
           rows={auditQuery.data?.events ?? []}
           rowKey={(e) => e.id}

@@ -143,7 +143,7 @@ export function PeriodComparisonPage() {
           onRetry={() => void reportQuery.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable title="Period comparison — by account"
           columns={columns}
           rows={reportQuery.data?.rows ?? []}
           rowKey={(row) => row.row_key}

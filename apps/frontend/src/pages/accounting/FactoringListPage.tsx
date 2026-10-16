@@ -199,7 +199,7 @@ export function FactoringListPage() {
         </p>
       ) : null}
 
-      <ParityTable
+      <ParityTable title="Factoring advances"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

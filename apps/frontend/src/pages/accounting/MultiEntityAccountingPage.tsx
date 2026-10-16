@@ -193,7 +193,7 @@ export function MultiEntityAccountingPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <ParityTable
+            <ParityTable title="Results — by company"
               columns={byCompanyColumns}
               rows={summaryQuery.data.by_company}
               rowKey={(row) => row.operating_company_id}
@@ -202,7 +202,7 @@ export function MultiEntityAccountingPage() {
               tableTestId="multi-entity-by-company-table"
             />
 
-            <ParityTable
+            <ParityTable title="Consolidated balances — by account"
               columns={accountColumns}
               rows={summaryQuery.data.accounts}
               rowKey={(row) => row.account_id}

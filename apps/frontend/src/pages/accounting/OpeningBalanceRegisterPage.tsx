@@ -421,7 +421,7 @@ export function OpeningBalanceRegisterPage() {
         </div>
       ) : null}
 
-      <ParityTable
+      <ParityTable title="Opening balances — by account"
         columns={columns}
         rows={view?.lines ?? []}
         rowKey={(row) => row.account_id}

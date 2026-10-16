@@ -227,7 +227,7 @@ export function FactorReconciliationPage() {
                     <span className="font-semibold">Run:</span> {selectedRun.statement_date} | <span className="font-semibold">Status:</span> {selectedRun.status} |{" "}
                     <span className="font-semibold">Mismatches:</span> {mismatchCount}
                   </div>
-                  <ParityTable
+                  <ParityTable title="Statement items — selected run"
                     columns={itemColumns}
                     rows={itemsQuery.data ?? []}
                     rowKey={(item) => item.id}

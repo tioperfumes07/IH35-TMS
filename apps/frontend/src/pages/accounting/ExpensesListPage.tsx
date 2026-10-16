@@ -709,6 +709,7 @@ export function ExpensesListPage() {
         ) : null}
 
       <ParityTable
+          title="Expenses"
           columns={columns}
           rows={rows}
           rowKey={(r) => r.id}

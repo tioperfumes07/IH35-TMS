@@ -119,7 +119,7 @@ export function CheckListPage() {
             <span className="ml-auto text-xs text-[#4B5563]" data-testid="checks-count">{rows.length} of {all.length} check{all.length === 1 ? "" : "s"}</span>
           </div>
           <div className="rounded border border-gray-200">
-            <ParityTable<AllChecksRow>
+            <ParityTable<AllChecksRow> title="Checks written"
               columns={columns}
               rows={rows}
               rowKey={(r) => `${r.kind}:${r.id}:${r.check_number ?? ""}`}

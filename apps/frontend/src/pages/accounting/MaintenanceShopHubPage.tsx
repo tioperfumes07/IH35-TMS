@@ -163,7 +163,7 @@ export function MaintenanceShopHubPage() {
     >
       {isError ? <p className="py-2 text-center text-xs text-red-600">Failed to load maintenance shop links.</p> : null}
 
-      <ParityTable
+      <ParityTable title="Maintenance shop financials — bills, expenses and work orders"
         columns={columns}
         rows={items}
         rowKey={(row) => `${row.kind}:${row.financial_id}`}

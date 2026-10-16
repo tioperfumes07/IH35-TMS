@@ -431,7 +431,7 @@ export function CheckPrintPage() {
                   </label>
                 </div>
               ) : null}
-              <ParityTable<PrintQueueRow>
+              <ParityTable<PrintQueueRow> title="Checks waiting to print"
                 columns={columns}
                 rows={rows}
                 rowKey={(row) => row.id}

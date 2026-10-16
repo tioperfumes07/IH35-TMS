@@ -337,6 +337,7 @@ export function PaymentsListPage() {
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <ParityTable
+        title="Customer payments received"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

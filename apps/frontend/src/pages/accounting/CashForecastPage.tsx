@@ -190,7 +190,7 @@ export function CashForecastPage() {
           onRetry={() => void forecastQuery.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable title="Cash forecast — by week"
           columns={forecastColumns}
           rows={forecastQuery.data?.weeks ?? []}
           rowKey={(week) => week.week_start}

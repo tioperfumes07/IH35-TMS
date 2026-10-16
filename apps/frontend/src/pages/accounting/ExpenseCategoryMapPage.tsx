@@ -203,7 +203,7 @@ export function ExpenseCategoryMapPage() {
           onRetry={() => void mapQuery.refetch()}
         />
       ) : (
-        <ParityTable<ExpenseCategoryMapRow>
+        <ParityTable<ExpenseCategoryMapRow> title="Expense category mappings"
           columns={columns}
           rows={mapQuery.data?.rows ?? []}
           rowKey={(row) => row.id}

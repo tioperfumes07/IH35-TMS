@@ -41,7 +41,7 @@ export function LeasesPage() {
       {query.isError ? (
         <ListErrorState {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />
       ) : (
-        <ParityTable rows={query.data?.leases ?? []} columns={columns} rowKey={(r) => r.id} loading={query.isLoading} storageKey="leases-list" exportFilename="leases" tableTestId="leases-table" emptyText="No lease contracts yet." />
+        <ParityTable title="Lease contracts" rows={query.data?.leases ?? []} columns={columns} rowKey={(r) => r.id} loading={query.isLoading} storageKey="leases-list" exportFilename="leases" tableTestId="leases-table" emptyText="No lease contracts yet." />
       )}
       <LeaseContractCreator open={creating} onClose={() => setCreating(false)} onCreated={(id) => navigate(`/accounting/leases/${id}`)} />
     </AccountingSubNavWrapper>

@@ -739,7 +739,7 @@ export function InvoicesListPage() {
     >
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
-      <ParityTable
+      <ParityTable title="Invoices"
         key={tableResetKey}
         columns={columns}
         rows={invoices}

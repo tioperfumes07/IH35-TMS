@@ -156,7 +156,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                 (loadPage/pageSize above, own Previous/Next below) -- hidePager stops ParityTable's
                 own internal pager from computing a contradicting total off just this page's
                 rows.length once loads exceed one server page. */}
-            <ParityTable
+            <ParityTable title="Loads to invoice"
               embedded
               rows={loads}
               rowKey={(load) => load.id}

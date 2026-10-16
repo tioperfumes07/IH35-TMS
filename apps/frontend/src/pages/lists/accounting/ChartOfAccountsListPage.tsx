@@ -558,6 +558,10 @@ export function ChartOfAccountsListPage() {
         {isLoading ? (
           <div className="px-4 py-8 text-xs text-gray-500">Loading chart of accounts…</div>
         ) : (
+          <>
+          <div className="border-b border-gray-200 px-2 py-1.5">
+            <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="coa-list-title">Accounts</h2>
+          </div>
           <ListView
             columns={columns}
             rows={filteredRows}
@@ -624,6 +628,7 @@ export function ChartOfAccountsListPage() {
               />
             )}
           />
+          </>
         )}
       </div>
 

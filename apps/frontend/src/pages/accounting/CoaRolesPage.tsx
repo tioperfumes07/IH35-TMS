@@ -296,7 +296,7 @@ export function CoaRolesPage() {
           onRetry={() => void rowsQuery.refetch()}
         />
       ) : (
-      <ParityTable
+      <ParityTable title="CoA role mappings"
         storageKey="accounting-coa-roles"
         tableTestId="coa-roles-table"
         columns={columns}

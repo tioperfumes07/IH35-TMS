@@ -268,7 +268,7 @@ export function EscrowPage() {
               />
             </div>
           ) : (
-            <ParityTable
+            <ParityTable title="Escrow accounts"
               columns={accountColumns}
               rows={accountRows}
               rowKey={(row) => row.id}
@@ -287,7 +287,7 @@ export function EscrowPage() {
           )}
 
           {selectedAccountId ? (
-            <ParityTable
+            <ParityTable title="Postings — selected escrow account"
               columns={postingColumns}
               rows={postingRows}
               rowKey={(row) => row.id}

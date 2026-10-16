@@ -26,6 +26,7 @@ import { fetchReconRuns, fetchReconExceptions, type ReconRun, type ReconExceptio
 import { ApiError } from "../../api/client";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 const FLAG = "QBO_RECONCILE_UI_ENABLED";
 
@@ -192,7 +193,7 @@ function OverviewTab({ companyId }: { companyId: string }) {
         </div>
       </div>
 
-      <ParityTable
+      <ParityTable title="QuickBooks sync health — by entity"
         rows={data.health}
         columns={HEALTH_COLUMNS}
         rowKey={(row) => row.entity}
@@ -315,7 +316,7 @@ function CapturesTab({ companyId }: { companyId: string }) {
           onRetry={() => void refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable title="QuickBooks modify captures"
           rows={items}
           columns={CAPTURE_COLUMNS}
           rowKey={(row) => row.id}
@@ -478,7 +479,7 @@ function ConflictsTab({ companyId }: { companyId: string }) {
                     <span className="text-xs text-gray-500">{conflict.resolved_at ? `Resolved ${fmtDt(conflict.resolved_at)}` : `Detected ${fmtDt(conflict.detected_at)}`}</span>
                   </div>
                 </div>
-                <ParityTable
+                <ParityTable title="Conflicting fields — app vs QuickBooks"
                   rows={snapshotPairs(conflict)}
                   columns={CONFLICT_FIELD_COLUMNS}
                   rowKey={(pair) => pair.field}
@@ -515,8 +516,10 @@ function ConflictsTab({ companyId }: { companyId: string }) {
 function ReconDisabledHint() {
   return (
     <div className="rounded-sm border border-gray-200 bg-white px-4 py-10 text-center text-xs text-gray-500">
-      The QBO↔TMS reconciliation module is not enabled for this account.
-      <p className="mt-1 text-xs text-gray-400">Reconciliation passes are turned on per operating company and aren’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable them, or switch to a company where they’re already on.</p>
+      The QBO↔TMS reconciliation module is not enabled for this account.{" "}
+      <InfoPopover label="About the reconciliation module" align="right">
+        <p>Reconciliation passes are turned on per operating company and aren’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable them, or switch to a company where they’re already on.</p>
+      </InfoPopover>
     </div>
   );
 }
@@ -588,7 +591,7 @@ function ReconRunsTab({ companyId }: { companyId: string }) {
   }
   const runs: ReconRun[] = data?.runs ?? [];
   return (
-    <ParityTable
+    <ParityTable title="Reconciliation runs"
       rows={runs}
       columns={RUN_COLUMNS}
       rowKey={(r) => r.id}
@@ -671,7 +674,7 @@ function ReconExceptionsTab({ companyId }: { companyId: string }) {
           onRetry={() => void refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable title="Reconciliation exceptions"
           rows={rows}
           columns={EXCEPTION_COLUMNS}
           rowKey={(x) => x.id}

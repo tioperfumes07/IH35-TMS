@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
@@ -272,7 +273,7 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
 
         <div className="overflow-y-auto flex-1">
           {/* FA-F3566: ParityTable owns Search+Range+gear on depreciation schedule leaf. */}
-          <ParityTable<(typeof detail.schedule)[number]>
+          <ParityTable<(typeof detail.schedule)[number]> title="Depreciation schedule"
             rows={detail.schedule}
             rowKey={(row) => String(row.period_number)}
             emptyText="No schedule to display."
@@ -484,8 +485,12 @@ export function FixedAssetsPage() {
     return (
       <AccountingSubNavWrapper title="Fixed Assets" subtitle="Fixed asset register and depreciation schedules">
         <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">
-          Fixed asset tracking is not yet enabled for this account.
-          <p className="mt-1 text-xs text-gray-400">This module is turned on per operating company and isn’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable it, or switch to a company where it’s already on.</p>
+          <span className="inline-flex items-center gap-1">
+            Fixed asset tracking is not yet enabled for this account.
+            <InfoPopover label="Why fixed assets are off" align="right">
+              This module is turned on per operating company and isn’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable it, or switch to a company where it’s already on.
+            </InfoPopover>
+          </span>
         </div>
       </AccountingSubNavWrapper>
     );
@@ -520,7 +525,7 @@ export function FixedAssetsPage() {
         />
       ) : null}
 
-      <ParityTable
+      <ParityTable title="Fixed assets"
         columns={columns}
         rows={items}
         rowKey={(row) => row.id}

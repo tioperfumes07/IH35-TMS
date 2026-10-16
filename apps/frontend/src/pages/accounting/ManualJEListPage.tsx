@@ -370,7 +370,7 @@ export function ManualJEListPage() {
           {allPageRows.length} live, {entriesQuery.data.voided_count} voided (hidden)
         </p>
       ) : null}
-      <ParityTable
+      <ParityTable title="Manual journal entries"
         columns={columns}
         rows={pageRows}
         rowKey={(entry) => entry.id}

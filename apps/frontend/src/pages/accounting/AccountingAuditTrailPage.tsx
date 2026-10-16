@@ -408,7 +408,7 @@ export function AccountingAuditTrailPage() {
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {eventQuery.isError ? <ReportBlockVPendingBanner error={eventQuery.error} onRetry={() => void eventQuery.refetch()} /> : null}
 
-      <ParityTable
+      <ParityTable title="Posting events"
         columns={columns}
         rows={events}
         rowKey={(row) => row.id}
@@ -460,7 +460,7 @@ export function AccountingAuditTrailPage() {
           </div>
           {lineageMut.isPending ? <div className="text-xs text-[#6B7280]">Loading lineage…</div> : null}
           {lineageRows ? (
-            <ParityTable
+            <ParityTable title="Source lineage — posting lines"
               columns={lineageColumns}
               rows={lineageRows}
               rowKey={(row) => `${row.posting_id}:${row.linked_object_id ?? "none"}`}

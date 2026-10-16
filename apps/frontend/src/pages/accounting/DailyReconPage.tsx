@@ -242,7 +242,7 @@ export function DailyReconPage() {
                   </div>
 
                   {/* Rows table */}
-                  <ParityTable
+                  <ParityTable title="Reconciliation items"
                     columns={RECON_COLUMNS}
                     rows={day.rows}
                     rowKey={(row) => `${row.entity_type}-${row.entity_id}`}

@@ -17,6 +17,7 @@ import {
   type AccountingPeriod,
   type ExportStatement,
 } from "../../api/my-accountant";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 const titleize = (s: string) => s.replace(/_/g, " ");
@@ -112,7 +113,7 @@ function PeriodStatusPanel({ periods }: { periods: AccountingPeriod[] }) {
           {lastClosed.closed_at ? ` (closed ${fmtDate(lastClosed.closed_at)})` : ""}
         </p>
       )}
-      <ParityTable
+      <ParityTable title="Accounting periods"
         columns={PERIOD_COLUMNS}
         rows={periods}
         rowKey={(p) => p.id}
@@ -190,8 +191,10 @@ export function MyAccountantPage() {
     return (
       <AccountingSubNavWrapper title="My Accountant" subtitle="Read-only accountant workspace">
         <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">
-          The accountant workspace is not yet enabled for this account.
-          <p className="mt-1 text-xs text-gray-400">This module is turned on per operating company and isn’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable it, or switch to a company where it’s already on.</p>
+          The accountant workspace is not yet enabled for this account.{" "}
+          <InfoPopover label="About the accountant workspace" align="right">
+            <p>This module is turned on per operating company and isn’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable it, or switch to a company where it’s already on.</p>
+          </InfoPopover>
         </div>
       </AccountingSubNavWrapper>
     );

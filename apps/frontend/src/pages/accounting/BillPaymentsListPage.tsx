@@ -421,6 +421,7 @@ export function BillPaymentsListPage() {
       {selectedBill ? <BillDetailPanel bill={selectedBill} /> : null}
 
       <ParityTable
+        title="Bill payments"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

@@ -27,6 +27,6 @@ export function AccountingPeriodCloseDetailPage() {
     {!companyId ? <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">Select an operating company to view this close.</p> : null}
     {query.isError ? <ListErrorState title="Couldn't load fiscal-year close" status={0} message={query.error instanceof Error ? query.error.message : undefined} onRetry={() => void query.refetch()} /> : null}
     {query.isPending && companyId ? <p className="text-xs text-[#6B7280]">Loading fiscal-year close…</p> : null}
-    {query.data ? <ParityTable columns={columns} rows={query.data.entries} rowKey={(row) => row.journal_entry_id} storageKey="accounting-period-close-entries" tableTestId="accounting-period-close-entries-table" emptyText="No closing entries linked to this fiscal year." /> : null}
+    {query.data ? <ParityTable title="Closing journal entries" columns={columns} rows={query.data.entries} rowKey={(row) => row.journal_entry_id} storageKey="accounting-period-close-entries" tableTestId="accounting-period-close-entries-table" emptyText="No closing entries linked to this fiscal year." /> : null}
   </AccountingSubNavWrapper>;
 }

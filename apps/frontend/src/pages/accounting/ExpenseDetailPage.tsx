@@ -406,7 +406,7 @@ export function ExpenseDetailPage() {
         </DataPanelRow>
       </DataPanel>
 
-      <DataPanel title="Lines">
+      <DataPanel title="Expense lines">
         <ParityTable<ExpenseDetailLine>
           columns={lineColumns}
           rows={lines}
