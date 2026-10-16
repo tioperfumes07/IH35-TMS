@@ -20,9 +20,10 @@ describe("bank-recon match tenant isolation", () => {
     mockWithLuciaBypass.mockClear();
 
     mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM banking.bank_accounts ba")) return { rows: [{ ledger_id: "ledger-1", operating: true, relay_wallet: false, undeposited_id: null, card: false }] }; // 443.155/443.158: the line's own account
       // Only the transaction loader (loadTransaction): candidate queries now carry a correlated
       // "SELECT 1 FROM banking.bank_transactions" (match.service.ts) and must not get the bank row as a candidate.
-      if (sql.includes("FROM banking.bank_transactions") && !sql.includes("SELECT 1 FROM banking.bank_transactions")) {
+      if (sql.includes("FROM banking.bank_transactions bt") && sql.includes("WHERE bt.id = $1::uuid")) {
         return {
           rows: [
             {
@@ -83,7 +84,8 @@ describe("bank-recon match tenant isolation", () => {
     const USMCA = "22222222-2222-4222-8222-222222222222";
 
     mockQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
-      if (sql.includes("FROM banking.bank_transactions")) {
+      if (sql.includes("FROM banking.bank_accounts ba")) return { rows: [{ ledger_id: "ledger-1", operating: true, relay_wallet: false, undeposited_id: null, card: false }] }; // 443.155/443.158: the line's own account
+      if (sql.includes("FROM banking.bank_transactions bt") && sql.includes("WHERE bt.id = $1::uuid")) {
         return {
           rows: [
             {

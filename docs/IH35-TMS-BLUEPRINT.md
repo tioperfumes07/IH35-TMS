@@ -102,6 +102,19 @@ These are not optional. They exist because breaking them has cost real rework.
 11. **Tracker discipline:** every architectural deviation gets a Section E entry in `docs/trackers/phase-X.md`.
 12. **Role split (#13):** Jorge runs `git push` and pastes; Cursor writes code; Claude does GitHub PR ops, the Render dashboard, and Neon SQL via the browser.
 
+### 5a. Bank reconciliation — match laws
+
+**Bank reconciliation — match laws (owner, 2026-10-16; source of truth: [docs/registers/00-MASTER-ENGINE-REGISTER-READ-FIRST.md](registers/00-MASTER-ENGINE-REGISTER-READ-FIRST.md) Part 1 + M1/M1b/M1c/M2):**
+- **One engine.** Candidates come only from `apps/backend/src/accounting/bank-recon/match.service.ts` (`findCandidates()` → `fetchLedgerCandidates()`); guard `verify-one-match-engine-owns-this-surface`.
+- **1.2 Match vs Categorize (QuickBooks split).** MATCH links the bank line to an EXISTING document — no new journal entry. CATEGORIZE posts a NEW journal entry from the line — no document; a categorized line carries a vendor. Categorizing to A/R or A/P control is disallowed; re-match / re-categorize reverse through `reversePostedSourceTransaction`, never the void path (CHAIN-05 :130, :236, :237).
+- **1.3 Never auto-match.** `findCandidates()` is read-only: it suggests and ranks with the reason; the owner accepts every match. No auto-accept, no matching in a cron (guards `verify-no-automatch`, `verify-bank-match-is-never-auto-written`, `verify-banking-suggest-matches-wired`).
+- **1.4 The candidate universe is every document** the company creates — A/R invoices, receive-payments, deposits, vendor expenses, bills, bill payments, transfers, journal entries, factoring purchases (owner ruling 2026-09-30).
+- **M1 Same-account scope.** A candidate belongs to the bank line's own account: paid from / deposited to / posted to that account's ledger, or an open clearing item that lands in an operating bank (undeposited receipts, a Faro purchase net, an open invoice or settlement bill). A Relay deposit is offered only on the Relay Fuel Wallet. No cross-account candidate, ever.
+- **M2 Invoices and factoring purchases are in the union** (money-in, operating bank). A Faro wire equals one purchase's net, or the sum of the purchases sharing its date; it is matched through the existing `factoring_advance` accept — the purchase is never re-posted. An open invoice is view-only (settle it with its receive-payment, then match that).
+- **M1b Consumed documents are excluded.** A document already matched to a live bank line (or born from another bank line) is never offered to another line; a partly-open bill / invoice stays a candidate while its open amount is > 0.
+- **M1c Relevance floor.** On the default search a document is offered only when its amount is within the resolve-difference tolerance (Q11: max $1.00, 0.01%; on a card register the 8% card-discount cap) OR it resembles the line (similarity = max(memo, description, payee tokens) ≥ 0.5, calibrated 2026-09-06). An explicit filter (dates, search, payee, kinds, amount) is the owner searching and has no floor.
+Guard: `scripts/verify-banking-match-qbo-engine.mjs` (+ `--selftest`).
+
 ## 6. Known carryovers / open items
 
 - **Migration drift:** ~187 migrations had drift across 6 bug classes. Fixes are root-caused with CI guards added (`verify-canonical-schema-names.mjs` live). Do not baseline the chain until it is honest.

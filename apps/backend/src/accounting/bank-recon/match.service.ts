@@ -284,6 +284,18 @@ function daysBetween(aDate: string, bDate: string) {
   return Math.round(deltaMs / (24 * 60 * 60 * 1000));
 }
 
+/**
+ * LEAD 443.158 M1c — the relevance floor of the default match search (pure): offered only when the amount is within the
+ * resolve-difference tolerance OR the document resembles the line (similarity ≥ AUTO_MATCH_MEMO_SIMILARITY_MIN = 0.5).
+ */
+export function passesMatchRelevanceFloor(input: { amountGapCents: number; similarity: number; toleranceCents: number }): boolean {
+  return input.amountGapCents <= input.toleranceCents || input.similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN;
+}
+
+export function toleranceForAmountCents(amountCents: number) {
+  return toleranceForAmount(amountCents);
+}
+
 function toleranceForAmount(amountCents: number) {
   return Math.max(Q11_FIXED_TOLERANCE_CENTS, Math.round(Math.abs(amountCents) * Q11_PERCENT_TOLERANCE));
 }
@@ -1495,6 +1507,29 @@ export async function findCandidates(input: {
     const txnMemo = `${txn.merchant_name ?? ""} ${txn.description ?? ""} ${txn.notes ?? ""}`.trim();
     const txnDate = txn.transaction_date;
 
+    // LEAD 443.158 M1c — RELEVANCE FLOOR on the default (unfiltered) search: a document is offered only when its amount is
+    // within the resolve-difference tolerance OR it resembles the line (similarity = max(memo, description, payee tokens) ≥
+    // AUTO_MATCH_MEMO_SIMILARITY_MIN = 0.5, the value calibrated 2026-09-06 BANK-MATCH-QBO). Tolerance = the Q11 amount
+    // tolerance (toleranceForAmount: max $1.00, 0.01%); on a card register (Dreamline: the card bills the discounted price)
+    // the 443.84 card-discount cap (CARD_DISCOUNT_MAX_PCT, 8%) is the difference resolve-difference accepts. Owner case: a
+    // $750.00 Zelle to a law office was offered a $2,000.00 expense of another payee (gap $1,250, similarity 0).
+    // An explicit filter (dates, search, payee, kinds, amount) is the owner searching himself — no floor there.
+    const cardRegister = (await client.query<{ card: boolean }>(
+      `SELECT COALESCE(ca.account_subtype, '') = 'CreditCard' AS card
+         FROM banking.bank_accounts ba LEFT JOIN catalogs.accounts ca ON ca.id = ba.ledger_account_id
+        WHERE ba.id = $1::uuid AND ba.operating_company_id = $2::uuid`,
+      [txn.bank_account_id, input.operating_company_id]
+    )).rows[0]?.card === true;
+    const floorToleranceCents = cardRegister
+      ? Math.max(toleranceCents, Math.round((txnAmountAbs * CARD_DISCOUNT_MAX_PCT) / 100))
+      : toleranceCents;
+    const passesRelevanceFloor = (c: MatchCandidate) =>
+      passesMatchRelevanceFloor({ amountGapCents: c.amount_gap_cents, similarity: c.memo_similarity, toleranceCents: floorToleranceCents });
+    const explicitSearch = Boolean(
+      input.date_from || input.date_to || (input.search_query ?? "").trim() || (input.payee ?? "").trim() ||
+        (input.kinds?.length ?? 0) > 0 || input.amount_min_cents != null || input.amount_max_cents != null
+    );
+
     const rank = (rawCandidates: RawLedgerCandidate[]): MatchCandidate[] =>
       rawCandidates
         .map((candidate) => {
@@ -1528,6 +1563,7 @@ export async function findCandidates(input: {
             exact_amount: amountGapCents === 0,
           };
         })
+        .filter((c) => explicitSearch || passesRelevanceFloor(c))
         .sort(compareCandidatesExactFirst)
         .slice(0, 50);
 

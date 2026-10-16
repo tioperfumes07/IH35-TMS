@@ -45,6 +45,7 @@ describe("bank-recon bill/expense candidates + direction awareness", () => {
   it("withdrawal ranks an open bill + surfaces an expense, and never AR payments", async () => {
     mockQuery.mockReset();
     mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM banking.bank_accounts ba")) return { rows: [{ ledger_id: "ledger-1", operating: true, relay_wallet: false, undeposited_id: null, card: false }] }; // 443.155/443.158: the line's own account
       // Only the bank-line loader (WHERE bt.id = $1) returns the line; the Relay-deposit candidate query also names
       // banking.bank_transactions (its NOT EXISTS) and must not receive the bank line as a "deposit".
       if (sql.includes("FROM integrations.relay_deposits")) return { rows: [] };
@@ -58,7 +59,9 @@ describe("bank-recon bill/expense candidates + direction awareness", () => {
         return { rows: [{ id: "bill-1", amount_cents: 50000, event_date: "2026-05-20", memo: "Pilot Fuel 8842" }] };
       }
       if (sql.includes("FROM accounting.expenses e")) {
-        return { rows: [{ id: "exp-1", amount_cents: 12000, event_date: "2026-05-19", memo: "Scale ticket" }] };
+        // 443.158 M1c relevance floor: a non-exact expense surfaces only when it resembles the line (similarity >= 0.5) —
+        // an unrelated "Scale ticket" for a different amount is no longer offered on a Pilot Fuel withdrawal.
+        return { rows: [{ id: "exp-1", amount_cents: 12000, event_date: "2026-05-19", memo: "Pilot Fuel 8842" }] };
       }
       if (sql.includes("FROM banking.transfers")) return { rows: [] };
       if (sql.includes("LEFT JOIN accounting.journal_entry_postings")) return { rows: [] };
@@ -91,6 +94,7 @@ describe("bank-recon bill/expense candidates + direction awareness", () => {
   it("deposit surfaces AR payments and NEVER bills/expenses (never crosses the streams)", async () => {
     mockQuery.mockReset();
     mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM banking.bank_accounts ba")) return { rows: [{ ledger_id: "ledger-1", operating: true, relay_wallet: false, undeposited_id: null, card: false }] }; // 443.155/443.158: the line's own account
       // Only the bank-line loader (WHERE bt.id = $1) returns the line; the Relay-deposit candidate query also names
       // banking.bank_transactions (its NOT EXISTS) and must not receive the bank line as a "deposit".
       if (sql.includes("FROM integrations.relay_deposits")) return { rows: [] };
