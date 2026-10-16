@@ -3763,8 +3763,16 @@ export function BankingTransactionsDesignView({
       </div>
       )}
 
-      <RelayDepositCategorizedMatchHintsPanel companyId={companyId} />
-      <RelatedPartyPairSuggestionsPanel companyId={companyId} />
+      {/* LEAD 443.179 (owner 2026-10-16: "what are these related party pairs, why would it appear in any cash reserves,
+          faro, anything related to factoring"). Both panels pair BANK-FEED lines (Relay wallet outflows, related-party
+          Zelle/wire outflows). A feedless account (Faro reserves, factoring, petty cash) has no feed lines, so neither
+          panel belongs on its screen — they render only on an account that has a bank feed. */}
+      {feedlessAccountId ? null : (
+        <>
+          <RelayDepositCategorizedMatchHintsPanel companyId={companyId} />
+          <RelatedPartyPairSuggestionsPanel companyId={companyId} />
+        </>
+      )}
 
       <BulkActionBar
         {...bulkSelection.bulkActionBarProps([

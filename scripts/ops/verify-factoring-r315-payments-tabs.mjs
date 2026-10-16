@@ -63,8 +63,8 @@ function analyze(src) {
   if (!panel.includes("payments-to-you-bank-tieout-link")) {
     e.push("FT1: purchase detail must link to bank tie-out when bank_account_id present");
   }
-  if (!entity?.includes('"factoring_purchase"') || !entity?.includes("/factoring/payments-to-you?purchase_id=")) {
-    e.push("FT1: EntityLink must resolve factoring_purchase → /factoring/payments-to-you?purchase_id=");
+  if (!entity?.includes('"factoring_purchase"') || !entity?.includes("/factoring/submit-invoice?edit_purchase_id=")) {
+    e.push("FT1 / LEAD 443.177: EntityLink must resolve factoring_purchase → /factoring/submit-invoice?edit_purchase_id= (click opens the purchase to edit)");
   }
   if (!tieout?.includes('kind="factoring_purchase"') || !tieout?.includes("factoring_purchase_id")) {
     e.push("FT1: BankTieoutHeader drill must show factoring_purchase EntityLink when factoring_purchase_id set");

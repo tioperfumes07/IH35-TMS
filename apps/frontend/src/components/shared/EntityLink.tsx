@@ -358,7 +358,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       // /accounting/factoring/:id stays as a redirect alias.
       return `/factoring/advances/${id}`;
     case "factoring_purchase":
-      return `/factoring/payments-to-you?purchase_id=${encodeURIComponent(id)}`;
+      // LEAD 443.177 (owner 2026-10-16: "i should just be able to click on it and edit"; the old target listed every
+      // purchase and put the clicked one in a card below the table). QuickBooks pattern: the link opens the purchase
+      // document itself — the Submit-invoice form in edit mode (read-only for non-owners; save is owner-only).
+      return `/factoring/submit-invoice?edit_purchase_id=${encodeURIComponent(id)}`;
     case "faro_reserve_entry":
       // The register panel moves an entry on the cash register to /factoring/cash-reserve itself.
       return `/factoring/escrow-account?faro_entry=${encodeURIComponent(id)}`;
