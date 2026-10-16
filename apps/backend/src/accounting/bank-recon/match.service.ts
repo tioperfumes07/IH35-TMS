@@ -30,6 +30,7 @@ import {
   SQL_BILL_PAYMENT_IS_CASH_SETTLEMENT_BORN,
 } from "./settlement-born-candidates.js";
 import { postFuelFillOnBankMatch } from "./bank-match-fuel-post.service.js";
+import { raiseMisdirectedPaymentAlerts } from "../../factoring/misdirected-payment-alert.service.js";
 import {
   isFaroReserveBankAccount,
   loadFaroReserveEntryForBankTxn,
@@ -1304,6 +1305,17 @@ async function storeMatch(
   // on undefined.id and leave the caller's transaction half-written.
   const matchId = res.rows[0]?.id;
   if (!matchId) throw new Error(`reconciliation_match_not_stored:${input.bank_transaction_id}:${input.ledger_entry_kind}:${input.ledger_entry_id}`);
+  // LEAD 443.168 K (E-47) — a customer payment matched here on an invoice Faro purchased must be forwarded to Faro
+  // within 1 business day; raise the alert with that deadline in the same transaction. Posts nothing.
+  if (input.match_state === "user_matched" || input.match_state === "auto_matched") {
+    await raiseMisdirectedPaymentAlerts(client as never, {
+      operating_company_id: input.operating_company_id,
+      bank_transaction_id: input.bank_transaction_id,
+      ledger_entry_kind: input.ledger_entry_kind,
+      ledger_entry_id: input.ledger_entry_id,
+      actor_user_uuid: input.actor_user_uuid,
+    });
+  }
   return matchId;
 }
 

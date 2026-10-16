@@ -765,6 +765,13 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.suggested_source,
           -- 443.168 J — the reason the engine suggested this payee/category, and the CUSTOMER on a money-in line.
           bt.suggested_reason,
+          -- 443.168 K (E-47) — a payment on a Faro-purchased invoice landed here: forward it to Faro by this date.
+          (SELECT min(a.forward_by)::text FROM accounting.factoring_misdirected_payment_alerts a
+            WHERE a.bank_transaction_id = bt.id AND a.operating_company_id = bt.operating_company_id AND a.state = 'open'
+              AND EXISTS (SELECT 1 FROM banking.reconciliation_matches m
+                           WHERE m.bank_transaction_id = a.bank_transaction_id AND m.ledger_entry_kind = a.ledger_entry_kind
+                             AND m.ledger_entry_id = a.ledger_entry_id AND m.voided_at IS NULL
+                             AND m.match_state IN ('auto_matched', 'user_matched'))) AS misdirected_forward_by,
           bt.suggested_customer_id::text,
           sc.customer_name AS suggested_customer_name,
           -- ROUND 197 (owner-raised) — the SUGGESTED gl_account/vendor/customer/item were selected

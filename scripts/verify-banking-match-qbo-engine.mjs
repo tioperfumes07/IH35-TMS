@@ -30,6 +30,9 @@ const FILES = {
   plaid: "apps/backend/src/integrations/plaid/plaid.service.ts",
   recon: "apps/backend/src/banking/reconciliation.routes.ts",
   relay: "apps/backend/src/integrations/relay-payments/relay-wallet-bank-feed.service.ts",
+  // LEAD 443.168 K — E-47 misdirected-payment alert.
+  e47: "apps/backend/src/factoring/misdirected-payment-alert.service.ts",
+  e47sql: "db/migrations/202615980910_factoring_misdirected_payment_alerts.sql",
 };
 const LABEL = "verify-banking-match-qbo-engine";
 const read = (rel) => (fs.existsSync(path.join(ROOT, rel)) ? fs.readFileSync(path.join(ROOT, rel), "utf8") : "");
@@ -135,8 +138,29 @@ export function describedPayeeProblems({ engine, payee, plaid, recon, relay, fee
   return p;
 }
 
-export function problemsFor({ service, predicate, route, api, view, drawer, feed, engine, payee, plaid, recon, relay }) {
+/**
+ * 443.168 K (Engine Registry E-47) — matching a customer payment on a Faro-purchased invoice raises the alert with the
+ * 1-business-day forward-by date in the match transaction (the one write point, storeMatch); posts nothing; the register
+ * shows the deadline.
+ */
+export function misdirectedAlertProblems({ service, e47, e47sql, feed, view }) {
+  const p = [];
+  const store = service.match(/async function storeMatch\([\s\S]*?\n}\n/)?.[0] ?? "";
+  if (!/await raiseMisdirectedPaymentAlerts\(client/.test(store)) p.push("service: storeMatch never raises the E-47 misdirected-payment alert (443.168 K)");
+  if (!/export function misdirectedForwardByDate[\s\S]{0,300}nextBusinessDay\(/.test(e47)) p.push("e47: the forward-by date is not the next business day (443.168 K)");
+  if (!/JOIN accounting\.factoring_purchase_lines l ON l\.invoice_id = d\.invoice_id AND l\.voided_at IS NULL/.test(e47)) p.push("e47: the alert is not tied to a live Faro purchase line (443.168 K)");
+  if (!/if \(!line \|\| !line\.is_credit\) return/.test(e47)) p.push("e47: money out can raise a misdirected-payment alert");
+  if (/journal_entries|posting_line|postSourceTransaction|insertPostingLine/.test(e47)) p.push("e47: the alert posts — E-47 posts nothing");
+  if (![/CREATE TABLE IF NOT EXISTS accounting\.factoring_misdirected_payment_alerts/, /forward_by date NOT NULL/, /FORCE ROW LEVEL SECURITY/, /audit\.tg_audit_row\(\)/].every((re) => re.test(e47sql)))
+    p.push("migration: factoring_misdirected_payment_alerts table / forward_by / RLS / audit missing (443.168 K)");
+  if (!/AS misdirected_forward_by/.test(feed)) p.push("feed: the forward-by deadline is not served on the bank row (443.168 K)");
+  if (!/data-testid="bank-txn-misdirected-alert"/.test(view)) p.push("view: the register does not show the forward-to-Faro deadline (443.168 K)");
+  return p;
+}
+
+export function problemsFor({ service, predicate, route, api, view, drawer, feed, engine, payee, plaid, recon, relay, e47, e47sql }) {
   const p = [
+    ...misdirectedAlertProblems({ service, e47, e47sql, feed, view }),
     ...candidateScopeProblems(service),
     ...faroSuggestionProblems({ route, feed }),
     ...describedPayeeProblems({ engine, payee, plaid, recon, relay, feed, view, api }),
@@ -283,6 +307,12 @@ function selftest() {
     ["tie suggested", { ...base, payee: base.payee.replace("if (scored.length > 1 && scored[1]!.score === scored[0]!.score) return null;", "") }],
     ["zelle unread", { ...base, payee: base.payee.replace('return { pattern: "zelle_to"', 'return { pattern: "zelle_x"') }],
     ["reason hidden", { ...base, view: base.view.replace('data-testid="bank-txn-suggested-reason"', 'data-testid="x"') }],
+    // 443.168 K
+    ["E-47 not raised on match", { ...base, service: base.service.replace("await raiseMisdirectedPaymentAlerts(client", "void (client") }],
+    ["E-47 posts", { ...base, e47: base.e47 + "\n// INSERT INTO accounting.journal_entries\n" }],
+    ["E-47 on money out", { ...base, e47: base.e47.replace("if (!line || !line.is_credit) return", "if (!line) return") }],
+    ["E-47 calendar day", { ...base, e47: base.e47.replace("return nextBusinessDay(next)", "return (next)") }],
+    ["E-47 deadline hidden", { ...base, view: base.view.replace('data-testid="bank-txn-misdirected-alert"', 'data-testid="x"') }],
     ["new unscoped source", { ...base, service: base.service.replace('if (onOperatingBank && wants("invoice"))', 'if (wants("settlement")) {}\n    if (onOperatingBank && wants("invoice"))') }],
   ];
   for (const [name, mutant] of mutants) {
