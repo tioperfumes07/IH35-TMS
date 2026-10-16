@@ -2406,6 +2406,11 @@
       "claimed_at": "2026-10-11",
       "claimed_by": "cursor",
       "purpose": "ROUND 443.29-B: WORM delete-refusal on accounting.related_party_loan_facilities (from 202615441200); lowers worm unprotected 90->89"
+    },
+    "202615960910": {
+      "claimed_by": "cc-2",
+      "claimed_at": "2026-10-16",
+      "purpose": "LEAD 443.151 (b): void-and-reissue frees an invoice number — invoices_display_id_check also accepts '<number>-V<n>' on a VOID invoice so the voided row keeps its record while its number is reissued (owner reconciliation 1-118)."
     }
   },
   "202610100200": {
