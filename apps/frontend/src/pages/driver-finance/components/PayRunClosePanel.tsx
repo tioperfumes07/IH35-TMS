@@ -18,6 +18,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { useToast } from "../../../components/Toast";
 import { FloorOverrideDecisionModal } from "./FloorOverrideDecisionModal";
 import { LoanRecoveryDecisionModal } from "./LoanRecoveryDecisionModal";
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 
 const COA_ROLES_HREF = "/accounting/settings/coa-roles";
 
@@ -237,7 +238,16 @@ export function PayRunClosePanel({
       data-testid="payrun-close-panel"
     >
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Pay-run GL close</p>
+        <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+          Pay-run GL close
+          <InfoPopover label="About pay-run GL close">
+            <span className="block">
+              Preview computes balanced JE legs. Close posts only when{" "}
+              <code className="rounded bg-[#F7F8FA] px-1">SETTLEMENT_GL_POSTING_ENABLED</code> is ON for this
+              entity. CoA roles must already be designated — this panel never invents bindings.
+            </span>
+          </InfoPopover>
+        </p>
         {!postable ? (
           <span className="text-xs text-[#4B5563]">Finalize/lock settlement before close</span>
         ) : null}
@@ -264,11 +274,6 @@ export function PayRunClosePanel({
           ))}
         </p>
       ) : null}
-      <p className="mb-2 text-xs text-gray-600">
-        Preview computes balanced JE legs. Close posts only when{" "}
-        <code className="rounded bg-[#F7F8FA] px-1">SETTLEMENT_GL_POSTING_ENABLED</code> is ON for this
-        entity. CoA roles must already be designated — this panel never invents bindings.
-      </p>
 
       <div className="mb-2 grid gap-2 sm:grid-cols-2">
         <label className="block text-xs">
@@ -404,6 +409,7 @@ export function PayRunClosePanel({
 
           {/* SETL-F3554: ParityTable owns Search+Range+gear for JE legs; raw HTML table skipped surface bar. */}
           <ParityTable<JeLegRow>
+            title="Pay-run journal entry — preview legs"
             columns={jeColumns}
             rows={jeRows}
             rowKey={(leg) => leg.rowKey}
